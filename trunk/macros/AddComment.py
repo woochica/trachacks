@@ -14,9 +14,15 @@ def execute(hdf, args, env):
     pagename = hdf.getValue("args.page", "WikiStart")
     page = WikiPage(pagename, None, perm, db)
     wikipreview = hdf.getValue("args.preview", "")
-    readonly = int(hdf.getValue("wiki.readonly", "0"))
+    appendonly = (args == 'appendonly')
+    readonlypage = int(hdf.getValue("wiki.readonly", "0"))
+    # Can this user add a comment to this page?
+    cancomment = not readonlypage
+    # Is this an "append-only" comment or are we an administrator?
+    if perm.has_permission(trac.perm.WIKI_ADMIN) or appendonly:
+        cancomment = True
 
-    if readonly and not perm.has_permission(trac.perm.WIKI_ADMIN):
+    if not cancomment:
         raise TracError('Error: Insufficient privileges to AddComment')
 
     disabled = ''
@@ -27,44 +33,53 @@ def execute(hdf, args, env):
 
     # Ensure [[AddComment]] is not present in comment, so that infinite
     # recursion does not occur.
-    comment = re.sub('(^|[^!])(\[\[AddComment\]\])', '\\1!\\2', comment)
+    comment = re.sub('(^|[^!])(\[\[AddComment)', '\\1!\\2', comment)
 
     out = StringIO()
     if wikipreview or not perm.has_permission(trac.perm.WIKI_MODIFY):
-        disabled = ' disabled'
+        disabled = ' disabled="disabled"'
 
     # If we are submitting or previewing, inject comment as it should look
-    if comment and (preview or submit):
+    if cancomment and comment and (preview or submit):
         if preview:
             out.write("<div class='wikipage' id='preview'>\n")
-        out.write("<h4>Comment by %s on %s</h4>\n<p>\n%s\n</p>\n" % (authname, time.strftime('%c', time.localtime()), wiki_to_html(comment, hdf, env, db)))
+        out.write("<h4 id='commentpreview'>Comment by %s on %s</h4>\n<p>\n%s\n</p>\n" % (authname, time.strftime('%c', time.localtime()), wiki_to_html(comment, hdf, env, db)))
         if preview:
             out.write("</div>\n")
 
     # When submitting, inject comment before macro
     if comment and submit:
+        submitted = False
         newtext = StringIO()
         for line in page.text.splitlines():
             if line.find('[[AddComment') == 0:
                 newtext.write("==== Comment by %s on %s ====\n%s\n\n" % (authname, time.strftime('%c', time.localtime()), comment))
+                submitted = True
             newtext.write(line + "\n")
-        page.set_content(newtext.getvalue())
-        # TODO: How do we get remote_addr from a macro?
-        page.commit(authname, 'Comment added', None)
-        comment = ""
+        if submitted:
+            # XXX Is this the dodigest hack ever? This is needed in 
+            # "appendonly" mode when the page is readonly. XXX
+            if appendonly:
+                perm.expand_meta_permission('WIKI_ADMIN');
+            page.set_content(newtext.getvalue())
+            # TODO: How do we get remote_addr from a macro?
+            page.commit(authname, 'Comment added', None)
+            comment = ""
+        else:
+            out.write("<div class='system-message'><strong>ERROR: [[AddComment]] macro call must be the only content on its line. Could not add comment.</strong></div>\n")
 
-    out.write("<form name='addcomment' action='%s' method='post'>\n" % env.href.wiki(pagename))
+    out.write("<form action='%s#commentpreview' method='post'>\n" % env.href.wiki(pagename))
     out.write("<fieldset>\n<legend>Add comment</legend>\n")
-    out.write("<textarea id='addcomment' name='addcomment' cols='80' rows='5' wrap='soft'%s>" % disabled)
+    out.write("<textarea id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
     if wikipreview:
-        out.write("Preview...")
+        out.write("Page preview...")
     elif not cancel:
         out.write(comment)
     out.write("</textarea>\n")
-    out.write("<br>\n")
-    out.write("<input type='submit' name='submitaddcomment' value='Add comment'%s>\n" % disabled)
-    out.write("<input type='submit' name='previewaddcomment' value='Preview comment'%s>\n" % disabled)
-    out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s>\n" % disabled)
+    out.write("<br/>\n")
+    out.write("<input type='submit' name='submitaddcomment' value='Add comment'%s/>\n" % disabled)
+    out.write("<input type='submit' name='previewaddcomment' value='Preview comment'%s/>\n" % disabled)
+    out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s/>\n" % disabled)
     out.write("<script type='text/javascript'>\naddWikiFormattingToolbar(document.getElementById('addcomment'));\n</script>\n")
     out.write("</fieldset>\n</form>\n")
     return out.getvalue()# + "<pre>" + hdf.dump() + "</pre>"
