@@ -26,7 +26,7 @@ diff -ur trac-0.8/trac/Href.py /usr/lib/python2.3/site-packages/trac/Href.py
  
 diff -ur trac-0.8/trac/WikiFormatter.py /usr/lib/python2.3/site-packages/trac/WikiFormatter.py
 --- trac-0.8/trac/WikiFormatter.py	2004-11-16 09:58:49.000000000 +1100
-+++ /usr/lib/python2.3/site-packages/trac/WikiFormatter.py	2004-11-25 19:34:56.000000000 +1100
++++ /usr/lib/python2.3/site-packages/trac/WikiFormatter.py	2005-01-14 14:35:06.000000000 +1100
 @@ -45,7 +45,7 @@
                r"""(?P<changesethref>!?\[\d+\])""",
                r"""(?P<reporthref>!?\{\d+\})""",
@@ -58,22 +58,29 @@ diff -ur trac-0.8/trac/WikiFormatter.py /usr/lib/python2.3/site-packages/trac/Wi
              return '<a class="missing" href="%s">%s?</a>' % \
                     (self._href.wiki(match), match)
          else:
-@@ -269,6 +273,7 @@
+@@ -269,7 +273,9 @@
  
      _compiled_rules = re.compile('(?:' + string.join(_rules, '|') + ')')
      _processor_re = re.compile('#\!([a-zA-Z0-9/+-]+)')
 +    _anchor_re = re.compile('[^\w\d]+')
      mime_type = ""
++    seen_anchors = []
      
  
-@@ -362,7 +367,9 @@
+     # RE patterns used by other patterna
+@@ -362,7 +368,14 @@
          self.close_paragraph()
          self.close_indentation()
          self.close_list()
 -        self.out.write('<h%d>%s</h%d>' % (depth, match[depth + 1:len(match) - depth - 1], depth))
 +        heading = match[depth + 1:len(match) - depth - 1]
-+        anchor = self._anchor_re.sub("", heading)
-+        self.out.write('<a name="%s"><h%d>%s</h%d></a>' % (anchor, depth, heading, depth))
++        anchor = default_anchor = self._anchor_re.sub("", heading)
++        anchor_n = 1
++        while anchor in self.seen_anchors:
++            anchor = default_anchor + str(anchor_n)
++            anchor_n += 1
++        self.seen_anchors.append(anchor)
++        self.out.write('<h%d id="%s">%s</h%d>' % (depth, anchor, heading, depth))
          return ''
  
      def _svnimg_formatter(self, match, fullmatch):

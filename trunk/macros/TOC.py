@@ -4,12 +4,14 @@ import re
 import string
 from trac.util import escape
 
-rules = re.compile(r"""(?P<heading>^\s*(?P<hdepth>=+)\s(?P<header>.*)\s(?P=hdepth)\s*$)""")
-anchor = re.compile('[^\w\d]+')
+rules_re = re.compile(r"""(?P<heading>^\s*(?P<hdepth>=+)\s(?P<header>.*)\s(?P=hdepth)\s*$)""")
+anchor_re = re.compile('[^\w\d]+')
 
 def parse_toc(env, out, page, body):
     depth = 1
     in_pre = False
+    seen_anchors = []
+
     for line in body.splitlines():
         line = escape(line)
 
@@ -24,7 +26,7 @@ def parse_toc(env, out, page, body):
             in_pre = True
             continue
 
-        match = rules.match(line)
+        match = rules_re.match(line)
         if match:
             header = match.group('header')
             new_depth = len(match.group('hdepth'))
@@ -38,7 +40,13 @@ def parse_toc(env, out, page, body):
                     out.write("<ol><li>\n")
             else:
                 out.write("</li><li>\n")
-            link = page + "#" + anchor.sub("", header)
+            default_anchor = anchor = anchor_re.sub("", header)
+            anchor_n = 1
+            while anchor in seen_anchors:
+                anchor = default_anchor + str(anchor_n)
+                anchor_n += 1
+            seen_anchors.append(anchor)
+            link = page + "#" + anchor
             out.write('<a href="%s">%s</a>' % (env.href.wiki(link), header))
     while depth > 1:
         out.write("</li></ol>\n")
