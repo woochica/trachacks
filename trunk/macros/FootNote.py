@@ -1,4 +1,6 @@
 from StringIO import StringIO
+from trac.util import escape
+from trac.WikiFormatter import wiki_to_oneliner
 
 footnote_set = 1
 footnotes = []
@@ -12,7 +14,7 @@ def execute(hdf, args, env):
 		out.write('<h4>Foot-notes:</h4>\n')
 		out.write('<ol>\n')
 		for i, v in enumerate(footnotes):
-			out.write('<li id="FootNote%i.%i"><span class="footnotebody">%s</span></li>\n' % (footnote_set, i + 1, v))
+			out.write('<li id="FootNote%i.%i"><span class="footnotebody">%s</span></li>\n' % (footnote_set, i + 1, wiki_to_oneliner(v, hdf, env, env.get_db_cnx())))
 		out.write('</ol>\n')
 		out.write('</div>\n');
 		footnotes = []
