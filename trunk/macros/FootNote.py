@@ -2,6 +2,15 @@ from StringIO import StringIO
 from trac.util import escape
 from trac.WikiFormatter import wiki_to_oneliner
 
+def unescape(text):
+	"""Un-escapes &, <, > and \""""
+	if not text:
+		return ''
+	return str(text).replace('&amp;', '&') \
+		.replace('&lt;', '<') \
+		.replace('&gt;', '>') \
+		.replace('&#34;', '"')
+
 footnote_set = 1
 footnotes = []
 
@@ -15,7 +24,7 @@ def execute(hdf, args, env):
 		out.write('<ol style="padding: 0 0 0 1em; margin: 0;">\n')
 		for i, v in enumerate(footnotes):
 			id = "%i.%i" % (footnote_set, i + 1)
-			out.write('<li style="list-style: none;" id="FootNote%s"><a style="font-weight: bold;" href="#FootNoteRef%s">%i.</a> %s</li>\n' % (id, id, i + 1, wiki_to_oneliner(v, hdf, env, env.get_db_cnx())))
+			out.write('<li style="list-style: none;" id="FootNote%s"><a style="font-weight: bold;" href="#FootNoteRef%s">%i.</a> %s</li>\n' % (id, id, i + 1, wiki_to_oneliner(unescape(v), hdf, env, env.get_db_cnx())))
 		out.write('</ol>\n')
 		out.write('</div>\n');
 		footnotes = []
