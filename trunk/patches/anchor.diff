@@ -62,7 +62,7 @@ diff -ur trac-0.8/trac/WikiFormatter.py /usr/lib/python2.3/site-packages/trac/Wi
  
      _compiled_rules = re.compile('(?:' + string.join(_rules, '|') + ')')
      _processor_re = re.compile('#\!([a-zA-Z0-9/+-]+)')
-+    _anchor_re = re.compile('[^\w\d]+')
++    _anchor_re = re.compile('\W+', re.LOCALE | re.UNICODE)
      mime_type = ""
 +    seen_anchors = []
      
