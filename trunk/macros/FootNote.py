@@ -15,7 +15,7 @@ def execute(hdf, args, env):
 		out.write('<ol style="padding: 0 0 0 1em; margin: 0;">\n')
 		for i, v in enumerate(footnotes):
 			id = "%i.%i" % (footnote_set, i + 1)
-			out.write('<li style="list-style: none;" id="FootNote%s"><a href="#FootNoteRef%s">%i.</a> %s</li>\n' % (id, id, i + 1, v))
+			out.write('<li style="list-style: none;" id="FootNote%s"><a style="font-size: 8pt; font-weight: bold;" href="#FootNoteRef%s">%i.</a> %s</li>\n' % (id, id, i + 1, wiki_to_oneliner(v, hdf, env, env.get_db_cnx())))
 		out.write('</ol>\n')
 		out.write('</div>\n');
 		footnotes = []
