@@ -1,79 +1,79 @@
-diff -ur site-packages/trac/Href.py /root/trac-0.8/trac/Href.py
---- site-packages/trac/Href.py	2004-11-25 19:07:11.000000000 +1100
-+++ /root/trac-0.8/trac/Href.py	2004-11-11 05:49:26.000000000 +1100
-@@ -136,18 +136,14 @@
+diff -ur trac-0.8/trac/Href.py /usr/lib/python2.3/site-packages/trac/Href.py
+--- trac-0.8/trac/Href.py	2004-11-11 05:49:26.000000000 +1100
++++ /usr/lib/python2.3/site-packages/trac/Href.py	2004-11-25 19:07:11.000000000 +1100
+@@ -136,14 +136,18 @@
              return href_join(self.base, 'about_trac')
  
      def wiki(self, page=None, version=None, diff=0, history=0):
--        anchor = ""
--        if page and page.find("#") != -1:
--            anchor = page[page.find('#'):]
--            page = page[:page.find('#')]
++        anchor = ""
++        if page and page.find("#") != -1:
++            anchor = page[page.find('#'):]
++            page = page[:page.find('#')]
          if page and version and diff:
--            return href_join(self.base, 'wiki', page) + anchor + '?version=' + str(version) + '&diff=yes'
-+            return href_join(self.base, 'wiki', page) + '?version=' + str(version) + '&diff=yes'
+-            return href_join(self.base, 'wiki', page) + '?version=' + str(version) + '&diff=yes'
++            return href_join(self.base, 'wiki', page) + anchor + '?version=' + str(version) + '&diff=yes'
          elif page and version:
--            return href_join(self.base, 'wiki', page) + anchor + '?version=' + str(version)
-+            return href_join(self.base, 'wiki', page) + '?version=' + str(version)
+-            return href_join(self.base, 'wiki', page) + '?version=' + str(version)
++            return href_join(self.base, 'wiki', page) + anchor + '?version=' + str(version)
          elif page and history:
--            return href_join(self.base, 'wiki', page) + anchor + '?history=yes'
-+            return href_join(self.base, 'wiki', page) + '?history=yes'
+-            return href_join(self.base, 'wiki', page) + '?history=yes'
++            return href_join(self.base, 'wiki', page) + anchor + '?history=yes'
          elif page:
--            return href_join(self.base, 'wiki', page) + anchor
-+            return href_join(self.base, 'wiki', page)
+-            return href_join(self.base, 'wiki', page)
++            return href_join(self.base, 'wiki', page) + anchor
          else:
              return href_join(self.base, 'wiki')
  
-diff -ur site-packages/trac/WikiFormatter.py /root/trac-0.8/trac/WikiFormatter.py
---- site-packages/trac/WikiFormatter.py	2004-11-25 19:34:56.000000000 +1100
-+++ /root/trac-0.8/trac/WikiFormatter.py	2004-11-16 09:58:49.000000000 +1100
+diff -ur trac-0.8/trac/WikiFormatter.py /usr/lib/python2.3/site-packages/trac/WikiFormatter.py
+--- trac-0.8/trac/WikiFormatter.py	2004-11-16 09:58:49.000000000 +1100
++++ /usr/lib/python2.3/site-packages/trac/WikiFormatter.py	2004-11-25 19:34:56.000000000 +1100
 @@ -45,7 +45,7 @@
                r"""(?P<changesethref>!?\[\d+\])""",
                r"""(?P<reporthref>!?\{\d+\})""",
                r"""(?P<modulehref>!?((?P<modulename>bug|ticket|browser|source|repos|report|changeset|wiki|milestone|search):(?P<moduleargs>(&#34;(.*?)&#34;|'(.*?)')|([^ ]*[^'~_\., \)]))))""",
--              r"""(?P<wikilink>!?(^|(?<=[^A-Za-z]))[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+(?:#[A-Za-z0-9]+)?(?=\Z|\s|[.,;:!?\)}\]]))""",
-+              r"""(?P<wikilink>!?(^|(?<=[^A-Za-z]))[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+(?=\Z|\s|[.,;:!?\)}\]]))""",
+-              r"""(?P<wikilink>!?(^|(?<=[^A-Za-z]))[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+(?=\Z|\s|[.,;:!?\)}\]]))""",
++              r"""(?P<wikilink>!?(^|(?<=[^A-Za-z]))[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+(?:#[A-Za-z0-9]+)?(?=\Z|\s|[.,;:!?\)}\]]))""",
                r"""(?P<fancylink>!?\[(?P<fancyurl>([a-z]+:[^ ]+)) (?P<linkname>.*?)\])"""]
  
      _open_tags = []
-@@ -162,9 +162,7 @@
+@@ -162,7 +162,9 @@
              else:
                  return self._href.ticket(args), '%s:%s' % (module, args), 1, ''
          elif module == 'wiki':
--            page = args
--            if page.find('#') != -1: page = page[:page.find('#')]
--            if not self.env._wiki_pages.has_key(page):
-+            if not self.env._wiki_pages.has_key(args):
+-            if not self.env._wiki_pages.has_key(args):
++            page = args
++            if page.find('#') != -1: page = page[:page.find('#')]
++            if not self.env._wiki_pages.has_key(page):
                  return self._href.wiki(args), '%s:%s' % (module, args), 1, None
              else:
                  return self._href.wiki(args), '%s:%s' % (module, args), 0, None
-@@ -206,9 +204,7 @@
+@@ -204,7 +206,9 @@
              return match
  
      def _wikilink_formatter(self, match, fullmatch):
--        page = match
--        if page.find('#') != -1: page = page[:page.find('#')]
--        if not self.env._wiki_pages.has_key(page):
-+        if not self.env._wiki_pages.has_key(match):
+-        if not self.env._wiki_pages.has_key(match):
++        page = match
++        if page.find('#') != -1: page = page[:page.find('#')]
++        if not self.env._wiki_pages.has_key(page):
              return '<a class="missing" href="%s">%s?</a>' % \
                     (self._href.wiki(match), match)
          else:
-@@ -273,7 +269,6 @@
+@@ -269,6 +273,7 @@
  
      _compiled_rules = re.compile('(?:' + string.join(_rules, '|') + ')')
      _processor_re = re.compile('#\!([a-zA-Z0-9/+-]+)')
--    _anchor_re = re.compile('[^\w\d]+')
++    _anchor_re = re.compile('[^\w\d]+')
      mime_type = ""
      
  
-@@ -367,9 +362,7 @@
+@@ -362,7 +367,9 @@
          self.close_paragraph()
          self.close_indentation()
          self.close_list()
--        heading = match[depth + 1:len(match) - depth - 1]
--        anchor = self._anchor_re.sub("", heading)
--        self.out.write('<a name="%s"><h%d>%s</h%d></a>' % (anchor, depth, heading, depth))
-+        self.out.write('<h%d>%s</h%d>' % (depth, match[depth + 1:len(match) - depth - 1], depth))
+-        self.out.write('<h%d>%s</h%d>' % (depth, match[depth + 1:len(match) - depth - 1], depth))
++        heading = match[depth + 1:len(match) - depth - 1]
++        anchor = self._anchor_re.sub("", heading)
++        self.out.write('<a name="%s"><h%d>%s</h%d></a>' % (anchor, depth, heading, depth))
          return ''
  
      def _svnimg_formatter(self, match, fullmatch):
