@@ -4,6 +4,7 @@ import trac.perm
 import time
 from StringIO import StringIO
 from trac.WikiFormatter import wiki_to_html
+from trac.util import TracError
 
 def execute(hdf, args, env):
     authname = hdf.getValue("trac.authname", "anonymous")
@@ -15,7 +16,7 @@ def execute(hdf, args, env):
     readonly = int(hdf.getValue("wiki.readonly", "0"))
 
     if readonly and not perm.has_permission(trac.perm.WIKI_ADMIN):
-        return "<div class='system-message'><strong>Error: Insufficient privileges to AddComment</strong></div>\n"
+        raise TracError('Error: Insufficient privileges to AddComment')
 
     disabled = ''
     comment = hdf.getValue("args.addcomment", "")
