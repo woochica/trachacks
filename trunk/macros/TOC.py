@@ -20,7 +20,7 @@ def parse_toc(env, out, page, body):
                 in_pre = False
             else:
                 continue
-        if line === '{{{':
+        if line == '{{{':
             in_pre = True
             continue
 
