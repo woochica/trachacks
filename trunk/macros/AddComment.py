@@ -5,6 +5,7 @@ import time
 from StringIO import StringIO
 from trac.WikiFormatter import wiki_to_html
 from trac.util import TracError
+import re
 
 def execute(hdf, args, env):
     authname = hdf.getValue("trac.authname", "anonymous")
@@ -23,6 +24,10 @@ def execute(hdf, args, env):
     preview = hdf.getValue("args.previewaddcomment", "")
     cancel = hdf.getValue("args.canceladdcomment", "")
     submit = hdf.getValue("args.submitaddcomment", "")
+
+    # Ensure [[AddComment]] is not present in comment, so that infinite
+    # recursion does not occur.
+    comment = re.sub('(^|[^!])(\[\[AddComment\]\])', '\\1!\\2', comment)
 
     out = StringIO()
     if wikipreview or not perm.has_permission(trac.perm.WIKI_MODIFY):

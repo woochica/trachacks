@@ -40,13 +40,15 @@ class Poll:
         html += "<input type='hidden' name='poll' value='%s'>\n" % self.label
 
         user = hdf.getValue("trac.authname", "")
+        poll = hdf.getValue("args.poll", "") 
+        pollvalue = int(hdf.getValue("args.pollvalue", ""))
 
         error = ""
 
         # Check for existing vote
-        if hdf.getValue("args.poll", "") == self.label:
+        if poll == self.label:
             for i, option in enumerate(self.options):
-                if hdf.getValue("trac.authname", "") in option[1] and int(hdf.getValue("args.pollvalue", "")) != i:
+                if user in option[1] and pollvalue != i:
                     error = "<div class='system-message'><strong>Changed your vote.</strong></div>\n"
                     del(self.options[i][1][user])
                     commit = 1
@@ -54,10 +56,10 @@ class Poll:
         for i, option in enumerate(self.options):
             label = title2label(option[0])
             checked = ""
-            if hdf.getValue("args.poll", "") == self.label and int(hdf.getValue("args.pollvalue", "")) == i:
+            if poll == self.label and pollvalue == i:
                 self.options[i][1][user] = 1
                 commit = 1
-            if hdf.getValue("trac.authname", "") in self.options[i][1]:
+            if user in self.options[i][1]:
                 checked = "checked"
             voters = ""
             if len(option[1]):
