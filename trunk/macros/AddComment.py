@@ -39,7 +39,7 @@ def execute(hdf, args, env):
     if comment and submit:
         newtext = StringIO()
         for line in page.text.splitlines():
-            if line.find('[[AddComment') != -1:
+            if line.find('[[AddComment') == 0:
                 newtext.write("==== Comment by %s on %s ====\n%s\n\n" % (authname, time.strftime('%c', time.localtime()), comment))
             newtext.write(line + "\n")
         page.set_content(newtext.getvalue())
