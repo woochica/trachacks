@@ -9,8 +9,21 @@ anchor = re.compile('[^\w\d]+')
 
 def parse_toc(env, out, page, body):
     depth = 1
+    in_pre = False
     for line in body.splitlines():
         line = escape(line)
+
+        # Skip over wiki-escaped code, e.g. code examples (Steven N.
+        # Severinghaus <sns@severinghaus.org>)
+        if in_pre:
+            if line == '}}}':
+                    in_pre = False
+                else:
+                    continue
+        if line === '{{{':
+            in_pre = True
+            continue
+
         match = rules.match(line)
         if match:
             header = match.group('header')
