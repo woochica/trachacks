@@ -39,31 +39,43 @@ class Poll:
         html += "<fieldset>\n<legend>%s</legend>\n" % self.title
         html += "<input type='hidden' name='poll' value='%s'>\n" % self.label
 
-        user = hdf.getValue("trac.authname", "")
+        user = hdf.getValue("trac.authname", "anonymous")
         poll = hdf.getValue("args.poll", "") 
-        pollvalue = int(hdf.getValue("args.pollvalue", ""))
+        pollvalue = int(hdf.getValue("args.pollvalue", "0"))
 
         error = ""
 
         # Check for existing vote
         if poll == self.label:
             for i, option in enumerate(self.options):
-                if user in option[1] and pollvalue != i:
-                    error = "<div class='system-message'><strong>Changed your vote.</strong></div>\n"
-                    del(self.options[i][1][user])
+                if user in option[1]:
+                    if pollvalue != i:
+                        error = "<div class='system-message'><strong>Changed your vote.</strong></div>\n"
+                    if user != "anonymous":
+                        del(self.options[i][1][user])
                     commit = 1
 
         for i, option in enumerate(self.options):
             label = title2label(option[0])
             checked = ""
             if poll == self.label and pollvalue == i:
-                self.options[i][1][user] = 1
+                if self.options[i][1].has_key(user):
+                    self.options[i][1][user] += 1
+                else:
+                    self.options[i][1][user] = 1
                 commit = 1
             if user in self.options[i][1]:
                 checked = "checked"
             voters = ""
             if len(option[1]):
-                voters = " <strong>(%s)</strong>" % ", ".join(option[1].keys())
+                voters = "<strong>"
+                voter_list = []
+                for voter in option[1].keys():
+                    if option[1][voter] > 1:
+                        voter_list.append('%s &times; %i' % (voter, option[1][voter]))
+                    else:
+                        voter_list.append(voter)
+                voters = " <strong>(%s)</strong>" % ", ".join(voter_list)
             html += "<input type='radio' name='pollvalue' value='%i'%s> %s%s<br>\n" % (i, checked, option[0], voters)
         html += "<input type='submit' value='Vote'>\n"
         html += error
