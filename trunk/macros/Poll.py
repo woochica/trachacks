@@ -1,6 +1,5 @@
 # vim: expandtab tabstop=4
 import re
-import neo_util
 import pickle
 from os import mkdir
 from binascii import crc32
