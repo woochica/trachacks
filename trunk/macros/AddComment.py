@@ -30,6 +30,8 @@ def execute(hdf, args, env):
     preview = hdf.getValue("args.previewaddcomment", "")
     cancel = hdf.getValue("args.canceladdcomment", "")
     submit = hdf.getValue("args.submitaddcomment", "")
+    if not cancel:
+        authname = hdf.getValue("args.authoraddcomment", authname)
 
     # Ensure [[AddComment]] is not present in comment, so that infinite
     # recursion does not occur.
@@ -70,16 +72,17 @@ def execute(hdf, args, env):
 
     out.write("<form action='%s#commentpreview' method='post'>\n" % env.href.wiki(pagename))
     out.write("<fieldset>\n<legend>Add comment</legend>\n")
-    out.write("<textarea id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
+    out.write("<div class='field'>\n<textarea id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
     if wikipreview:
         out.write("Page preview...")
     elif not cancel:
         out.write(comment)
     out.write("</textarea>\n")
-    out.write("<br/>\n")
-    out.write("<input type='submit' name='submitaddcomment' value='Add comment'%s/>\n" % disabled)
+    out.write("</div>\n")
+    out.write('<div class="field">\n<label for="authoraddcomment">Your email or username:</label>\n<br/><input id="authoraddcomment" type="text" name="authoraddcomment" size="30" value="%s" />\n</div>' % authname)
+    out.write("<div class='field'>\n<input size='30' type='submit' name='submitaddcomment' value='Add comment'%s/>\n" % disabled)
     out.write("<input type='submit' name='previewaddcomment' value='Preview comment'%s/>\n" % disabled)
-    out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s/>\n" % disabled)
+    out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s/>\n</div>\n" % disabled)
     out.write("<script type='text/javascript'>\naddWikiFormattingToolbar(document.getElementById('addcomment'));\n</script>\n")
     out.write("</fieldset>\n</form>\n")
     return out.getvalue()# + "<pre>" + hdf.dump() + "</pre>"
