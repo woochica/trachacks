@@ -11,10 +11,11 @@ def execute(hdf, args, env):
 	if not args:
 		out = StringIO()
 		out.write('<div class="footnotes">\n');
-		out.write('<h4>Foot-notes:</h4>\n')
-		out.write('<ol>\n')
+		out.write('<hr style="width: 10%; padding: 0; margin: 1em 0 1em 0;"/>\n');
+		out.write('<ol style="padding: 0 0 0 1em; margin: 0;">\n')
 		for i, v in enumerate(footnotes):
-			out.write('<li id="FootNote%i.%i"><span class="footnotebody">%s</span></li>\n' % (footnote_set, i + 1, wiki_to_oneliner(v, hdf, env, env.get_db_cnx())))
+			id = "%i.%i" % (footnote_set, i + 1)
+			out.write('<li style="list-style: none;" id="FootNote%s"><a href="#FootNoteRef%s">%i.</a> %s</li>\n' % (id, id, i + 1, v))
 		out.write('</ol>\n')
 		out.write('</div>\n');
 		footnotes = []
@@ -26,4 +27,5 @@ def execute(hdf, args, env):
 			id = int(args)
 		except ValueError:
 			footnotes.append(args)
-		return '<sup><a href="#FootNote%i.%i">%i</a></sup>' % (footnote_set, id, id)
+		full_id = "%i.%i" % (footnote_set, id)
+		return '<sup><a id="FootNoteRef%s" href="#FootNote%s">%i</a></sup>' % (full_id, full_id, id)
