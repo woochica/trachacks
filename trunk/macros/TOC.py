@@ -35,6 +35,7 @@ def execute(hdf, args, env):
     db = env.get_db_cnx()
     out = StringIO()
     out.write("<div class='wiki-toc'>\n<ol>\n")
+    out.write("<h4>Table of Contents</h4>\n")
     # Has the user supplied a list of pages?
     if args:
         pages = re.split('\s*,\s*', args)
