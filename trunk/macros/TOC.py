@@ -7,8 +7,8 @@ from trac.util import escape
 rules_re = re.compile(r"""(?P<heading>^\s*(?P<hdepth>=+)\s(?P<header>.*)\s(?P=hdepth)\s*$)""")
 anchor_re = re.compile('[^\w\d]+')
 
-def parse_toc(env, out, page, body):
-    depth = 1
+def parse_toc(env, out, page, body, max_depth = 999):
+    current_depth = 1
     in_pre = False
     seen_anchors = []
 
@@ -30,16 +30,21 @@ def parse_toc(env, out, page, body):
         if match:
             header = match.group('header')
             new_depth = len(match.group('hdepth'))
-            if new_depth < depth:
-                while new_depth < depth:
-                    depth -= 1
-                    out.write("</li></ol><li>\n")
-            elif new_depth > depth:
-                while new_depth > depth:
-                    depth += 1
-                    out.write("<ol><li>\n")
+            if new_depth < current_depth:
+                while new_depth < current_depth:
+                    current_depth -= 1
+                    if current_depth == max_depth:
+                        out.write("</li><li>\n")
+                    elif current_depth < max_depth:
+                        out.write("</li></ol><li>\n")
+            elif new_depth > current_depth:
+                while new_depth > current_depth:
+                    current_depth += 1
+                    if current_depth <= max_depth:
+                        out.write("<ol><li>\n")
             else:
-                out.write("</li><li>\n")
+                if current_depth <= max_depth:
+                    out.write("</li><li>\n")
             default_anchor = anchor = anchor_re.sub("", header)
             anchor_n = 1
             while anchor in seen_anchors:
@@ -47,10 +52,12 @@ def parse_toc(env, out, page, body):
                 anchor_n += 1
             seen_anchors.append(anchor)
             link = page + "#" + anchor
-            out.write('<a href="%s">%s</a>' % (env.href.wiki(link), header))
-    while depth > 1:
-        out.write("</li></ol>\n")
-        depth -= 1
+            if current_depth <= max_depth:
+                out.write('<a href="%s">%s</a>' % (env.href.wiki(link), header))
+    while current_depth > 1:
+        if current_depth <= max_depth:
+            out.write("</li></ol>\n")
+        current_depth -= 1
 
 def execute(hdf, args, env):
     db = env.get_db_cnx()
@@ -61,12 +68,18 @@ def execute(hdf, args, env):
     if not args:
         args = hdf.getValue("args.page", "WikiStart")
     pages = re.split('\s*,\s*', args)
+    args = {}
     for page in pages:
+        # Override arguments
+        if page[:6] == 'depth=':
+            args['max_depth'] = int(page[6:])
+            continue
+
         cursor = db.cursor()
         cursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page)
         row = cursor.fetchone()
         if row:
-            parse_toc(env, out, page, row[0])
+            parse_toc(env, out, page, row[0], **args)
         else:
             out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % page)
     out.write("</ol>\n</div>\n")
