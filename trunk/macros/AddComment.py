@@ -55,7 +55,7 @@ def execute(hdf, args, env):
 
     out.write("<form name='addcomment' action='%s' method='post'>\n" % env.href.wiki(pagename))
     out.write("<fieldset>\n<legend>Add comment</legend>\n")
-    out.write("<textarea name='addcomment' cols='80' rows='5' wrap='soft'%s>" % disabled)
+    out.write("<textarea id='addcomment' name='addcomment' cols='80' rows='5' wrap='soft'%s>" % disabled)
     if wikipreview:
         out.write("Preview...")
     elif not cancel:
