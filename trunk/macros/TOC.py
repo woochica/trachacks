@@ -37,19 +37,16 @@ def execute(hdf, args, env):
     out.write("<div class='wiki-toc'>\n<ol>\n")
     out.write("<h4>Table of Contents</h4>\n")
     # Has the user supplied a list of pages?
-    if args:
-        pages = re.split('\s*,\s*', args)
-        for page in pages:
-            cursor = db.cursor()
-            cursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page)
-            row = cursor.fetchone()
-            if row:
-                parse_toc(env, out, page, row[0])
-            else:
-                out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % page)
-    else:
-        # return current page
-        page = hdf.getValue("args.page", "WikiStart")
-        parse_toc(env, out, page, hdf.getValue("wiki.page_source", ""))
+    if not args:
+        args = hdf.getValue("args.page", "WikiStart")
+    pages = re.split('\s*,\s*', args)
+    for page in pages:
+        cursor = db.cursor()
+        cursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page)
+        row = cursor.fetchone()
+        if row:
+            parse_toc(env, out, page, row[0])
+        else:
+            out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % page)
     out.write("</ol>\n</div>\n")
     return out.getvalue()
