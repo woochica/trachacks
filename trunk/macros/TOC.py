@@ -41,7 +41,7 @@ def execute(hdf, args, env):
         pages = re.split('\s*,\s*', args)
         for page in pages:
             cursor = db.cursor()
-            cursor.execute("select text from wiki where name='%s' order by version desc" % page)
+            cursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page)
             row = cursor.fetchone()
             if row:
                 parse_toc(env, out, page, row[0])
