@@ -17,9 +17,9 @@ def parse_toc(env, out, page, body):
         # Severinghaus <sns@severinghaus.org>)
         if in_pre:
             if line == '}}}':
-                    in_pre = False
-                else:
-                    continue
+                in_pre = False
+            else:
+                continue
         if line === '{{{':
             in_pre = True
             continue
