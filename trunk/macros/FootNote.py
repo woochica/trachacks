@@ -11,7 +11,7 @@ def execute(hdf, args, env):
 	if not args:
 		out = StringIO()
 		out.write('<div class="footnotes">\n');
-		out.write('<hr style="width: 10%; padding: 0; margin: 1em 0 1em 0;"/>\n');
+		out.write('<hr style="width: 10%; padding: 0; margin: 2em 0 1em 0;"/>\n');
 		out.write('<ol style="padding: 0 0 0 1em; margin: 0;">\n')
 		for i, v in enumerate(footnotes):
 			id = "%i.%i" % (footnote_set, i + 1)
@@ -28,4 +28,4 @@ def execute(hdf, args, env):
 		except ValueError:
 			footnotes.append(args)
 		full_id = "%i.%i" % (footnote_set, id)
-		return '<sup><a id="FootNoteRef%s" href="#FootNote%s">%i</a></sup>' % (full_id, full_id, id)
+		return '<sup><a style="font-size: 8pt; font-weight: bold;" id="FootNoteRef%s" href="#FootNote%s">%i</a></sup>' % (full_id, full_id, id)
