@@ -61,26 +61,48 @@ def parse_toc(env, out, page, body, max_depth = 999):
 
 def execute(hdf, args, env):
     db = env.get_db_cnx()
-    out = StringIO()
-    out.write("<div class='wiki-toc'>\n<ol>\n")
-    out.write("<h4>Table of Contents</h4>\n")
     # Has the user supplied a list of pages?
     if not args:
         args = hdf.getValue("args.page", "WikiStart")
-    pages = re.split('\s*,\s*', args)
-    args = {}
+    pre_pages = re.split('\s*,\s*', args)
+    # Options
+    inline = False
+    heading = 'Table of Contents'
+    pages = []
+    root = ''
+    params = { }
+    # Global options
+    for page in pre_pages:
+        if page == 'inline':
+            inline = True
+        elif page == 'noheading':
+            heading = None
+        elif page[:8] == 'heading=':
+            heading = page[8:]
+        else:
+            pages.append(page)
+    out = StringIO()
+    if not inline:
+        out.write("<div class='wiki-toc'>\n")
+    out.write("<ol>\n")
+    if heading:
+        out.write("<h4>%s</h4>\n" % heading)
     for page in pages:
         # Override arguments
         if page[:6] == 'depth=':
-            args['max_depth'] = int(page[6:])
-            continue
-
-        cursor = db.cursor()
-        cursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page)
-        row = cursor.fetchone()
-        if row:
-            parse_toc(env, out, page, row[0], **args)
+            params['max_depth'] = int(page[6:])
+        elif page[:5] == 'root=':
+            root = page[5:]
         else:
-            out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % page)
-    out.write("</ol>\n</div>\n")
+            page = root + page
+            cursor = db.cursor()
+            cursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page)
+            row = cursor.fetchone()
+            if row:
+                parse_toc(env, out, page, row[0], **params)
+            else:
+                out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % page)
+    out.write("</ol>\n")
+    if not inline:
+        out.write("</div>\n")
     return out.getvalue()
