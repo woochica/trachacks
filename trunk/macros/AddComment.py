@@ -1,19 +1,25 @@
 # vim: expandtab
-from trac.Wiki import WikiPage
+
 import trac.perm
 import time
 from StringIO import StringIO
-from trac.WikiFormatter import wiki_to_html
+from trac.wiki.formatter import wiki_to_html
+from trac.wiki.model import WikiPage
 from trac.util import TracError
 import re
 
 def execute(hdf, args, env):
+    # prevents from multiple inclusions
+    if hdf.has_key('addcommentmacro'):
+       raise TracError('\'AddComment\' macro cannot be included twice')
+    hdf['addcommentmacro'] = True
+
     authname = hdf.getValue("trac.authname", "anonymous")
     db = env.get_db_cnx()
     perm = trac.perm.PermissionCache(db, authname)
-    pagename = hdf.getValue("args.page", "WikiStart")
-    page = WikiPage(pagename, None, perm, db)
-    wikipreview = hdf.getValue("args.preview", "")
+    pagename = hdf.getValue("wiki.page_name", "WikiStart")
+    page = WikiPage(env, pagename, None, db)
+    wikipreview = hdf.getValue("wiki.preview", "")
     appendonly = (args == 'appendonly')
     readonlypage = int(hdf.getValue("wiki.readonly", "0"))
     # Can this user add a comment to this page?
@@ -26,6 +32,8 @@ def execute(hdf, args, env):
         raise TracError('Error: Insufficient privileges to AddComment')
 
     disabled = ''
+    print dir(hdf)
+
     comment = hdf.getValue("args.addcomment", "")
     preview = hdf.getValue("args.previewaddcomment", "")
     cancel = hdf.getValue("args.canceladdcomment", "")
@@ -63,9 +71,9 @@ def execute(hdf, args, env):
             # "appendonly" mode when the page is readonly. XXX
             if appendonly:
                 perm.expand_meta_permission('WIKI_ADMIN');
-            page.set_content(newtext.getvalue())
             # TODO: How do we get remote_addr from a macro?
-            page.commit(authname, 'Comment added', None)
+            page.text = newtext.getvalue()
+            page.save(authname, 'Comment added', None)
             comment = ""
         else:
             out.write("<div class='system-message'><strong>ERROR: [[AddComment]] macro call must be the only content on its line. Could not add comment.</strong></div>\n")
@@ -85,4 +93,5 @@ def execute(hdf, args, env):
     out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s/>\n</div>\n" % disabled)
     out.write("<script type='text/javascript'>\naddWikiFormattingToolbar(document.getElementById('addcomment'));\n</script>\n")
     out.write("</fieldset>\n</form>\n")
+
     return out.getvalue()# + "<pre>" + hdf.dump() + "</pre>"
