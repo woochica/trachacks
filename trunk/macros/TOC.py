@@ -7,10 +7,9 @@ from trac.util import escape
 rules_re = re.compile(r"""(?P<heading>^\s*(?P<hdepth>=+)\s(?P<header>.*)\s(?P=hdepth)\s*$)""")
 anchor_re = re.compile('[^\w\d]+')
 
-def parse_toc(env, out, page, body, max_depth = 999, min_depth = 1):
-    current_depth = min_depth
+def parse_toc(env, out, page, body, max_depth = 999):
+    current_depth = 1
     in_pre = False
-    first_li = True
     seen_anchors = []
 
     for line in body.splitlines():
@@ -31,23 +30,21 @@ def parse_toc(env, out, page, body, max_depth = 999, min_depth = 1):
         if match:
             header = match.group('header')
             new_depth = len(match.group('hdepth'))
-            if new_depth < min_depth:
-                continue
-            elif new_depth < current_depth:
+            if new_depth < current_depth:
                 while new_depth < current_depth:
                     current_depth -= 1
-                    if current_depth < max_depth:
-                        out.write("</ol>")
-                out.write("<li>")
-            elif new_depth >= current_depth:
-                i = current_depth
-                while new_depth > i or first_li  :
-                    i += 1
-                    first_li = False
+                    if current_depth == max_depth:
+                        out.write("</li><li>\n")
+                    elif current_depth < max_depth:
+                        out.write("</li></ol><li>\n")
+            elif new_depth > current_depth:
+                while new_depth > current_depth:
+                    current_depth += 1
                     if current_depth <= max_depth:
-                        out.write("<ol>")
-                current_depth = new_depth
-                out.write("<li>")
+                        out.write("<ol><li>\n")
+            else:
+                if current_depth <= max_depth:
+                    out.write("</li><li>\n")
             default_anchor = anchor = anchor_re.sub("", header)
             anchor_n = 1
             while anchor in seen_anchors:
@@ -56,14 +53,15 @@ def parse_toc(env, out, page, body, max_depth = 999, min_depth = 1):
             seen_anchors.append(anchor)
             link = page + "#" + anchor
             if current_depth <= max_depth:
-                out.write('<a href="%s">%s</a></li>\n' % (env.href.wiki(link), header))
-    while current_depth >= min_depth and not first_li:
+                out.write('<a href="%s">%s</a>' % (env.href.wiki(link), header))
+    while current_depth > 1:
         if current_depth <= max_depth:
-            out.write("</ol>\n")
+            out.write("</li></ol>\n")
         current_depth -= 1
 
 def execute(hdf, args, env):
     db = env.get_db_cnx()
+    # Has the user supplied a list of pages?
     if not args:
         args = ''
     pre_pages = re.split('\s*,\s*', args)
@@ -93,7 +91,7 @@ def execute(hdf, args, env):
     if not pages:
         pages.append(hdf.getValue("args.page", "WikiStart"))
         root = ''
-        params['min_depth'] = 2     # Skip page title
+        #params['min_depth'] = 2     # Skip page title
     out = StringIO()
     if not inline:
         out.write("<div class='wiki-toc'>\n")
