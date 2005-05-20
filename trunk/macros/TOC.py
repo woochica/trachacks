@@ -95,6 +95,7 @@ def execute(hdf, args, env):
     out = StringIO()
     if not inline:
         out.write("<div class='wiki-toc'>\n")
+    out.write("<ol>\n")
     if heading:
         out.write("<h4>%s</h4>\n" % heading)
     for page in pages:
@@ -112,6 +113,7 @@ def execute(hdf, args, env):
                 parse_toc(env, out, page, row[0], **params)
             else:
                 out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % page)
+    out.write("</ol>\n")
     if not inline:
         out.write("</div>\n")
     return out.getvalue()
