@@ -63,7 +63,7 @@ def execute(hdf, args, env):
     db = env.get_db_cnx()
     # Has the user supplied a list of pages?
     if not args:
-        args = ''
+        args = hdf.getValue("args.page", "WikiStart")
     pre_pages = re.split('\s*,\s*', args)
     # Options
     inline = False
@@ -79,19 +79,8 @@ def execute(hdf, args, env):
             heading = None
         elif page[:8] == 'heading=':
             heading = page[8:]
-        elif page == '':
-            continue
-        elif page[:6] == 'depth=':
-            params['max_depth'] = int(page[6:])
-        elif page[:5] == 'root=':
-            root = page[5:]
         else:
             pages.append(page)
-    # Has the user supplied a list of pages?
-    if not pages:
-        pages.append(hdf.getValue("args.page", "WikiStart"))
-        root = ''
-        #params['min_depth'] = 2     # Skip page title
     out = StringIO()
     if not inline:
         out.write("<div class='wiki-toc'>\n")
