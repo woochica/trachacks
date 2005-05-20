@@ -35,6 +35,13 @@ def execute(hdf, args, env):
 		try:
 			id = int(args)
 		except ValueError:
-			footnotes.append(args)
+			existing = None
+			for index, note in enumerate(footnotes):
+				if args == note:
+					existing = note
+					id = index + 1
+					break
+			if not existing:
+				footnotes.append(args)
 		full_id = "%i.%i" % (footnote_set, id)
-		return '<sup><a style="font-size: 8pt; font-weight: bold;" id="FootNoteRef%s" href="#FootNote%s">%i</a></sup>' % (full_id, full_id, id)
+		return '<sup><a title="%s" style="font-size: 8pt; font-weight: bold;" id="FootNoteRef%s" href="#FootNote%s">%i</a></sup>' % (args[:16] + "...", full_id, full_id, id)
