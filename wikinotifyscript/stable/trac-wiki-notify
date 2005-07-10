@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 
 # Usage:
 #   trac-wiki-notify <trac-url> <trac-path> <wiki-notification-page> \
@@ -41,8 +41,9 @@ if row:
 	changes = q.fetchall()
 
 	if changes:
-		smtp_body = "From: %s" % smtp_from
-		smtp_body = "Subject: Notification of %i changes to Trac Wiki %s\n\n" % (len(changes), trac_url)
+		smtp_body = "From: %s\n" % smtp_from
+		smtp_body += "Reply-To: %s\n" % smtp_from
+		smtp_body += "Subject: Notification of %i changes to Trac Wiki %s\n\n" % (len(changes), trac_url)
 		smtp_body += "Changes since %s\n\n" % strftime("%Y/%d/%m %H:%M:%S", localtime(time() - float(time_delta)))
 
 		for change in changes:
