@@ -65,11 +65,12 @@ def generate_vars(hdf):
 
 def execute(hdf, template, env):
     out = StringIO()
+    errors = []
     authname = hdf.getValue("trac.authname", "anonymous")
     if not template:
         raise TracError("No template page supplied")
     if authname == "anonymous":
-        raise TracError('You need to <a href="%s">register</a> then <a href="%s">login</a> in order to create a new hack.' % (hdf.getValue("trac.href.registration", ""), hdf.getValue("trac.href.login", "")))
+        errors.append('You need to <a href="%s">register</a> then <a href="%s">login</a> in order to create a new hack.' % (hdf.getValue("trac.href.registration", ""), hdf.getValue("trac.href.login", "")))
     db = env.get_db_cnx()
     cursor = db.cursor()
 
@@ -84,8 +85,6 @@ def execute(hdf, template, env):
     TYPES = [x[0] for x in cursor.fetchall()]
     cursor.execute("SELECT name FROM wiki_namespace WHERE namespace=%s", 'release')
     RELEASES = [x[0] for x in cursor.fetchall()]
-
-    errors = []
 
     page_name = hdf.getValue('args.name', '')
     if not page_name.lower().endswith(hdf.getValue('args.type', '')):
@@ -193,7 +192,6 @@ def execute(hdf, template, env):
         for error in errors:
             out.write('<div class="system-message"><strong>Error:</strong> %s</div>\n' % error)
             
-
     out.write("""
 <form name="newhack" id="edit" method="post" action="/wiki/NewHack#preview" name="newhackform">
 <!-- <fieldset id="changeinfo">
@@ -289,7 +287,7 @@ addWikiFormattingToolbar(document.getElementById('example'));
         'example' : page_example
     })
 
-    if not errors and page_preview:
+    if page_preview:
         out.write("""
 <fieldset id="preview">
 <legend>Preview of %s</legend>
