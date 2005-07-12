@@ -6,6 +6,7 @@ from StringIO import StringIO
 from trac.wiki.formatter import wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.util import TracError
+from trac.web.chrome import add_link
 import re
 
 def execute(hdf, args, env):
@@ -16,7 +17,7 @@ def execute(hdf, args, env):
 
     authname = hdf.getValue("trac.authname", "anonymous")
     db = env.get_db_cnx()
-    perm = trac.perm.PermissionCache(db, authname)
+    perm = trac.perm.PermissionCache(env, authname)
     pagename = hdf.getValue("wiki.page_name", "WikiStart")
     page = WikiPage(env, pagename, None, db)
     wikipreview = hdf.getValue("wiki.preview", "")
@@ -25,7 +26,7 @@ def execute(hdf, args, env):
     # Can this user add a comment to this page?
     cancomment = not readonlypage
     # Is this an "append-only" comment or are we an administrator?
-    if perm.has_permission(trac.perm.WIKI_ADMIN) or appendonly:
+    if perm.has_permission('WIKI_ADMIN') or appendonly:
         cancomment = True
 
     if not cancomment:
@@ -46,14 +47,14 @@ def execute(hdf, args, env):
     comment = re.sub('(^|[^!])(\[\[AddComment)', '\\1!\\2', comment)
 
     out = StringIO()
-    if wikipreview or not perm.has_permission(trac.perm.WIKI_MODIFY):
+    if wikipreview or not perm.has_permission('WIKI_MODIFY'):
         disabled = ' disabled="disabled"'
 
     # If we are submitting or previewing, inject comment as it should look
     if cancomment and comment and (preview or submit):
         if preview:
             out.write("<div class='wikipage' id='preview'>\n")
-        out.write("<h4 id='commentpreview'>Comment by %s on %s</h4>\n<p>\n%s\n</p>\n" % (authname, time.strftime('%c', time.localtime()), wiki_to_html(comment, hdf, env, db)))
+        out.write("<h4 id='commentpreview'>Comment by %s on %s</h4>\n<p>\n%s\n</p>\n" % (authname, time.strftime('%c', time.localtime()), wiki_to_html(comment, env, None)))
         if preview:
             out.write("</div>\n")
 
@@ -78,7 +79,7 @@ def execute(hdf, args, env):
         else:
             out.write("<div class='system-message'><strong>ERROR: [[AddComment]] macro call must be the only content on its line. Could not add comment.</strong></div>\n")
 
-    out.write("<form action='%s#commentpreview' method='post'>\n" % env.href.wiki(pagename))
+    out.write("<form action='%s#commentpreview' method='get'>\n" % env.href.wiki(pagename))
     out.write("<fieldset>\n<legend>Add comment</legend>\n")
     out.write("<div class='field'>\n<textarea id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
     if wikipreview:
@@ -91,6 +92,7 @@ def execute(hdf, args, env):
     out.write("<div class='field'>\n<input size='30' type='submit' name='submitaddcomment' value='Add comment'%s/>\n" % disabled)
     out.write("<input type='submit' name='previewaddcomment' value='Preview comment'%s/>\n" % disabled)
     out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s/>\n</div>\n" % disabled)
+    out.write('<script type="text/javascript" src="%sjs/wikitoolbar.js"></script>' % hdf['htdocs_location'])
     out.write("<script type='text/javascript'>\naddWikiFormattingToolbar(document.getElementById('addcomment'));\n</script>\n")
     out.write("</fieldset>\n</form>\n")
 
