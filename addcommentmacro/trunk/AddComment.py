@@ -68,10 +68,10 @@ def execute(hdf, args, env):
                 submitted = True
             newtext.write(line + "\n")
         if submitted:
-            # XXX Is this the dodigest hack ever? This is needed in 
+            # XXX Is this the dodgiest hack ever? This is needed in 
             # "appendonly" mode when the page is readonly. XXX
-            if appendonly:
-                perm.expand_meta_permission('WIKI_ADMIN');
+#            if appendonly:
+#                perm.expand_meta_permission('WIKI_ADMIN');
             # TODO: How do we get remote_addr from a macro?
             page.text = newtext.getvalue()
             page.save(authname, 'Comment added', None)
