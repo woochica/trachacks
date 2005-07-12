@@ -1,6 +1,8 @@
 """
-Display a box with some ticket links onto right of the page.
-Tickts are sorted and uniq'ed.
+Display list of ticket numbers in a box on the right side of the page.
+The purpose of this macro is show related tickets compactly.
+You can specify ticket number or report number which would be expanded
+as ticket numbers. Tickets will be displayed as sorted and uniq'ed.
 
 Example:
 {{{
@@ -13,14 +15,16 @@ Example:
 [[TicketBox(500pt,{1})]]               ... with box width as 50 point
 [[TicketBox(200px,{1})]]               ... with box width as 200 pixel
 [[TicketBox(25%,{1})]]                 ... with box width as 25%
-[[TicketBox('Different Title',#1,#2)]] ... Use different title
+[[TicketBox('Different Title',#1,#2)]] ... Specify title
 [[TicketBox(\"Other Title\",#1,#2)]]     ... likewise
+[[TicketBox('%d tickets',#1,#2)]]      ... embed ticket count in title
 }}}
 
-[wiki:TracReports#AdvancedReports:DynamicVariables Dynamic Vaiables] 
-is supported for report. Other variables can be specified like
+[wiki:TracReports#AdvancedReports:DynamicVariables Dynamic Variables] 
+is supported for report. Variables can be specified like
 {{{[report:9?PRIORITY=high&COMPONENT=ui]}}}. Of course, the special
-variable '{{{$USER}}}' is available.
+variable '{{{$USER}}}' is available. The login name (or 'anonymous)
+is used as $USER if not specified explicitly.
 """
 
 ## NOTE: CSS2 defines 'max-width' but it seems that only few browser
@@ -71,8 +75,9 @@ def execute(hdf, txt, env):
         elif match.group('rptnum') or match.group('rptnum2'):
             num = match.group('rptnum') or match.group('rptnum2')
             dv = {}
-            # username
-            dv['USER'] = hdf.getValue('trac.authname', 'anonymous')
+            # username, do not override if specified
+            if not dv.has_key('USER'):
+                dv['USER'] = hdf.getValue('trac.authname', 'anonymous')
             if match.group('dv'):
                 for expr in string.split(match.group('dv')[1:], '&'):
                     k, v = string.split(expr, '=')
@@ -88,7 +93,7 @@ def execute(hdf, txt, env):
                     sql = re.sub(r'\$%s\b' % k, v, sql)
                 #env.log.debug('sql = %s' % sql)
                 curs.execute(sql)
-                for row in curs.fetchall():
+                for row in curs:
                     items.append(row['ticket'])
             finally:
                 if not hasattr(env, 'get_cnx_pool'):
@@ -109,6 +114,10 @@ def execute(hdf, txt, env):
         html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
                                 hdf, env, env.get_db_cnx())
     if html != '':
+        try:
+            title = title % len(items)  # process %d in title
+        except:
+            pass
         style = string.join(["%s:%s" % (k,v) for k,v in styles.items() if v <> ""], "; ")
         return '<fieldset class="ticketbox" style="%s"><legend>%s</legend>%s</fieldset>' % \
                (style, title, html)
