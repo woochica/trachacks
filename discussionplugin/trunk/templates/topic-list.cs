@@ -62,7 +62,9 @@
 			</tr>
 		<?cs /each ?>
 	</table>
+	<?cs var:debug ?>
 	<form method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>">
+		<input type="hidden" name="action" value="newtopic"/>
 		<input type="submit" name="newtopic" value="New Topic"/>
 	</form>
 <?cs elif:discussion.mode == "message-list" ?>

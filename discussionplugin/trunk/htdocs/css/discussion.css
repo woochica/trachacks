@@ -2,16 +2,16 @@
 	margin: 1em 2em 1em 2em;
 	width: 80%;
 	text-align: left;
-	border: solid 1px #bbb;
+	border: solid 1px #aaa;
 }
 
 .discussion tr {
-	border: solid 1px #eee;
+	border: solid 1px #ddd;
 }
 
 .discussion th {
 	font-weight: bold;
-	background-color: #eee;
+	background-color: #ddd;
 	padding: 0.2em;
 }
 
@@ -23,12 +23,12 @@
 }
 
 div.discussion div.topic-list a:hover {
-	background-color: #ddd;
+	background-color: #ccc;
 	color: black;
 }
 
 .discussion tr:hover {
-	background-color: #ddd;
+	background-color: #ccc;
 	color: black;
 }
 
@@ -75,14 +75,14 @@ div.topic-list .description {
 }
 
 .message-list .topic div.header {
-	border: 1px solid #ddd;
+	border: 1px solid #ccc;
 }
 
 .message-list .topic div.subject {
 	font-weight: bold;
 	margin: 0;
 	padding: 0.25em 1em 0.25em 1em;
-	background-color: #eee;
+	background-color: #ddd;
 }
 
 .message-list .topic .header div.author {
@@ -103,9 +103,9 @@ div.topic-list .description {
 	display: block;
 	margin: 0px;
 	padding: 0.25em;
-	border-right: 1px solid #ddd;
-	border-left: 1px solid #ddd;
-	border-bottom: 1px solid #ddd;
+	border-right: 1px solid #ccc;
+	border-left: 1px solid #ccc;
+	border-bottom: 1px solid #ccc;
 }
 
 .message-list .replies ul {

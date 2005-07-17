@@ -25,7 +25,7 @@ class DiscussionCore(Component):
     
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        return ['FORUM_VIEW', 'FORUM_MODIFY', 'FORUM_MODERATE']
+        return ['DISCUSSION_VIEW', 'DISCUSSION_MODIFY', 'DISCUSSION_MODERATE']
 
     # ITemplateProvider methods
     def get_htdocs_dir(self):
@@ -39,6 +39,8 @@ class DiscussionCore(Component):
         return 'discussion'
 
     def get_navigation_items(self, req):
+        if not req.perm.has_permission('DISCUSSION_VIEW'):
+            return
         yield 'mainnav', 'discussion', '<a href="%s">%s</a>' % (self.env.href.discussion(), self.env.config.get('discussion', 'title', 'Discussion'))
 
     # IRequestHandler methods
@@ -51,6 +53,7 @@ class DiscussionCore(Component):
         return match
 
     def process_request(self, req):
+        req.perm.assert_permission('DISCUSSION_VIEW')
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
@@ -80,9 +83,13 @@ class DiscussionCore(Component):
             message = self.get_message(cursor, req.args['message'], req)
             if not message: raise TracError('No such message %s' % req.args['message'])
             req.hdf['discussion.message'] = message
-            mode = 'message-view'
+            mode = 'message-list'
 
         req.hdf['discussion.mode'] = mode
+
+        # Do we have some actions?
+        if 'action' in req.args:
+            req.hdf['debug'] = req.args['action']
 
         # Do mode specific stuff
         if mode == 'forum-list':
@@ -92,7 +99,7 @@ class DiscussionCore(Component):
         elif mode == 'message-list':
             req.hdf['discussion.messages'] = self.get_messages(cursor, topic['id'], req)
 
-        return 'discussion.cs', None
+        return mode + '.cs', None
 
     # Non-extension methods
     def get_message(self, cursor, id, req):
