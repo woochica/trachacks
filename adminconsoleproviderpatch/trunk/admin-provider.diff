@@ -1,40 +1,45 @@
-Index: setup.py
-===================================================================
---- setup.py	(revision 1962)
-+++ setup.py	(working copy)
-@@ -211,7 +211,7 @@
-       url=URL,
-       packages=['trac', 'trac.mimeview', 'trac.scripts', 'trac.ticket',
-                 'trac.upgrades', 'trac.versioncontrol', 'trac.web',
--                'trac.wiki'],
-+                'trac.wiki', 'trac.admin'],
-       data_files=[(_p('share/trac/templates'), glob('templates/*')),
-                   (_p('share/trac/htdocs'), glob(_p('htdocs/*.*')) + [_p('htdocs/README')]),
-                   (_p('share/trac/htdocs/css'), glob(_p('htdocs/css/*'))),
 Index: trac/scripts/admin.py
 ===================================================================
---- trac/scripts/admin.py	(revision 1962)
+--- trac/scripts/admin.py	(revision 1976)
 +++ trac/scripts/admin.py	(working copy)
-@@ -39,6 +39,9 @@
+@@ -39,7 +39,11 @@
  from trac.Milestone import Milestone
  from trac.perm import PermissionSystem
  from trac.ticket.model import *
-+from trac.admin.console import IAdminConsoleProvider
-+from trac.core import ComponentManager, ExtensionPoint
++from trac.core import ComponentManager, ExtensionPoint, Interface
 +from trac.loader import load_components
  
++__all__ = [ 'IAdminConsoleProvider' ]
++
  try:
      sum
-@@ -50,7 +53,24 @@
+ except NameError:
+@@ -50,7 +54,40 @@
              tot += item
          return tot
  
++class IAdminConsoleProvider(Interface):
++    """
++    Extension point interface for components to provide an administrative
++    interface from within trac-admin.
++    """
+ 
++    def get_console_commands(tracadm):
++        """
++        Return an iterable of (name, help, callable, completer) tuples.
++
++        tracadm is a TracAdmin instance.
++
++        completer can be null. help is in the same format that trac-admin
++        uses.
++        """
++
 +class AdminCommands(trac.core.Component):
 +    """
 +    Component end-point for IAdminConsoleProvider extensions
 +    """
 +    admin_providers = ExtensionPoint(IAdminConsoleProvider)
- 
++
 +    def import_providers(self, env, tracadm):
 +        load_components(env)
 +        for provider in self.admin_providers:
@@ -50,7 +55,7 @@ Index: trac/scripts/admin.py
  class TracAdmin(cmd.Cmd):
      intro = ''
      license = trac.__license_long__
-@@ -64,6 +84,7 @@
+@@ -64,6 +101,7 @@
      _date_format = '%Y-%m-%d'
      _datetime_format = '%Y-%m-%d %H:%M:%S'
      _date_format_hint = 'YYYY-MM-DD'
@@ -58,7 +63,7 @@ Index: trac/scripts/admin.py
  
      def __init__(self, envdir=None):
          cmd.Cmd.__init__(self)
-@@ -72,6 +93,7 @@
+@@ -72,6 +110,7 @@
              self.env_set(os.path.abspath(envdir))
  
      def docmd(self, cmd='help'):
@@ -66,7 +71,7 @@ Index: trac/scripts/admin.py
          self.onecmd(cmd)
  
      def emptyline(self):
-@@ -84,6 +106,7 @@
+@@ -84,6 +123,7 @@
                '%(copy)s\n\n'                                    \
                "Type:  '?' or 'help' for help on commands.\n" %  \
                {'ver':trac.__version__,'copy':__copyright__}
@@ -74,7 +79,7 @@ Index: trac/scripts/admin.py
          self.cmdloop()
  
      ##
-@@ -99,6 +122,12 @@
+@@ -99,6 +139,12 @@
      def env_check(self):
          try:
              self.__env = Environment(self.envname)
@@ -87,7 +92,7 @@ Index: trac/scripts/admin.py
          except:
              return 0
          return 1
-@@ -117,6 +146,8 @@
+@@ -117,6 +163,8 @@
          try:
              if not self.__env:
                  self.__env = Environment(self.envname)
@@ -96,7 +101,7 @@ Index: trac/scripts/admin.py
              return self.__env
          except Exception, e:
              print 'Failed to open environment.', e
-@@ -209,6 +240,8 @@
+@@ -209,6 +257,8 @@
                                 xrange(0, (1 + len(sep)) * cnum + sum(colw))])
          print
  
@@ -105,7 +110,7 @@ Index: trac/scripts/admin.py
      def print_doc(self, doc, decor=False):
          if not doc: return
          self.print_listing(['Command', 'Description'], doc, '  --', decor) 
-@@ -299,15 +332,13 @@
+@@ -299,15 +349,13 @@
              except AttributeError:
                  print "No documentation found for '%s'" % arg[0]
          else:
@@ -128,55 +133,3 @@ Index: trac/scripts/admin.py
              print 'trac-admin - The Trac Administration Console %s' % trac.__version__
              if not self.interactive:
                  print
-Index: trac/admin/__init__.py
-===================================================================
---- trac/admin/__init__.py	(revision 0)
-+++ trac/admin/__init__.py	(revision 0)
-@@ -0,0 +1 @@
-+from trac.admin.console import *
-Index: trac/admin/console.py
-===================================================================
---- trac/admin/console.py	(revision 0)
-+++ trac/admin/console.py	(revision 0)
-@@ -0,0 +1,41 @@
-+# -*- coding: iso8859-1 -*-
-+#
-+# Copyright (C) 2003, 2004, 2005 Edgewall Software
-+# Copyright (C) 2003, 2004, 2005 Alec Thomas <alec@swapoff.org>
-+#
-+# Trac is free software; you can redistribute it and/or
-+# modify it under the terms of the GNU General Public License as
-+# published by the Free Software Foundation; either version 2 of the
-+# License, or (at your option) any later version.
-+#
-+# Trac is distributed in the hope that it will be useful,
-+# but WITHOUT ANY WARRANTY; without even the implied warranty of
-+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+# General Public License for more details.
-+#
-+# You should have received a copy of the GNU General Public License
-+# along with this program; if not, write to the Free Software
-+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-+#
-+# Author: Alec Thomas <alec@swapoff.org>
-+
-+from trac.core import Interface
-+import sys
-+
-+__all__ = [ 'IAdminConsoleProvider' ]
-+
-+class IAdminConsoleProvider(Interface):
-+    """
-+    Extension point interface for components to provide an administrative
-+    interface from within trac-admin.
-+    """
-+
-+    def get_console_commands(tracadm):
-+        """
-+        Return an iterable of (name, help, callable, completer) tuples.
-+
-+        tracadm is a TracAdmin instance.
-+
-+        completer can be null. help is in the same format that trac-admin
-+        uses.
-+        """
