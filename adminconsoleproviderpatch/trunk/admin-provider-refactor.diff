@@ -10,21 +10,17 @@ Index: trac/ticket/api.py
  
  class MyLinkResolver(Component):
      """
-@@ -35,7 +36,7 @@
- 
- 
- class TicketSystem(Component):
--    implements(IPermissionRequestor, IWikiSyntaxProvider)
-+    implements(IPermissionRequestor, IWikiSyntaxProvider, IAdminConsoleProvider)
- 
-     # Public API
- 
-@@ -168,4 +169,270 @@
+@@ -168,4 +169,276 @@
              return '<a class="missing ticket" href="%s" rel="nofollow">%s</a>' \
                     % (formatter.href.ticket(target), label)
  
 -    
++
++class TicketAdminConsole(Component):
++    """ Provides trac-admin with ticket related commands """
++
 +    # IAdminConsoleProvider methods
++    implements(IAdminConsoleProvider)
 +
 +    def get_console_commands(self, tracadm):
 +        self.tracadm = tracadm
@@ -291,6 +287,7 @@ Index: trac/ticket/api.py
 +    def get_version_list(self):
 +        rows = self.db_query("SELECT name FROM version")
 +        return [row[0] for row in rows]
++
 Index: trac/Milestone.py
 ===================================================================
 --- trac/Milestone.py	(revision 1976)
@@ -305,19 +302,16 @@ Index: trac/Milestone.py
  class Milestone(object):
  
      def __init__(self, env, name=None, db=None):
-@@ -252,7 +252,7 @@
- class MilestoneModule(Component):
- 
-     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
--               ITimelineEventProvider, IWikiSyntaxProvider)
-+               ITimelineEventProvider, IWikiSyntaxProvider, IAdminConsoleProvider)
- 
-     # INavigationContributor methods
- 
-@@ -465,3 +465,85 @@
+@@ -465,3 +465,91 @@
      def _format_link(self, formatter, ns, name, label):
          return '<a class="milestone" href="%s">%s</a>' \
                 % (formatter.href.milestone(name), label)
++
++
++class MilestoneAdminConsole(Component):
++    """ Provide trac-admin with commands for manipulating milestones """
++
++    implements(IAdminConsoleProvider)
 +
 +    # IAdminConsoleProvider methods
 +    def get_console_commands(self, tracadm):
@@ -1274,19 +1268,34 @@ Index: trac/perm.py
  __all__ = ['IPermissionRequestor', 'IPermissionStore',
             'IPermissionGroupProvider', 'PermissionError', 'PermissionSystem']
  
-@@ -80,7 +81,7 @@
- class PermissionSystem(Component):
-     """Sub-system that manages user permissions."""
- 
--    implements(IPermissionRequestor)
-+    implements(IPermissionRequestor, IAdminConsoleProvider)
- 
-     requestors = ExtensionPoint(IPermissionRequestor)
-     stores = ExtensionPoint(IPermissionStore)
-@@ -165,6 +166,88 @@
+@@ -165,6 +166,7 @@
                      actions.append(action)
          return [('TRAC_ADMIN', actions)]
  
++
+     # Internal methods
+ 
+     def _get_store(self):
+@@ -178,6 +180,8 @@
+     store = property(fget=lambda self: self._get_store())
+ 
+ 
++
++
+ class IPermissionGroupProvider(Interface):
+     """
+     Extension point interface for components that provide information about user
+@@ -289,3 +293,90 @@
+ 
+     def permissions(self):
+         return self.perms.keys()
++
++
++class PermissionAdminConsole(Component):
++    """ Provides trac-admin permission commands """
++
++    implements(IAdminConsoleProvider)
++
 +    # IAdminConsoleProvider methods
 +
 +    ## Permission
@@ -1367,11 +1376,6 @@ Index: trac/perm.py
 +        if clauses:
 +            sql += " WHERE " + " AND ".join(clauses)
 +        self.tracadm.db_update(sql)
-+
-+
-     # Internal methods
- 
-     def _get_store(self):
 Index: trac/wiki/api.py
 ===================================================================
 --- trac/wiki/api.py	(revision 1976)
@@ -1388,7 +1392,7 @@ Index: trac/wiki/api.py
  class IWikiChangeListener(Interface):
      """
      Extension point interface for components that should get notified about the
-@@ -83,13 +85,11 @@
+@@ -83,8 +85,6 @@
          """
          Return an iterable over (namespace, formatter) tuples.
          """
@@ -1397,16 +1401,16 @@ Index: trac/wiki/api.py
  class WikiSystem(Component):
      """
      Represents the wiki system.
-     """
--    implements(IWikiChangeListener, IWikiSyntaxProvider)
-+    implements(IWikiChangeListener, IWikiSyntaxProvider, IAdminConsoleProvider)
- 
-     change_listeners = ExtensionPoint(IWikiChangeListener)
-     macro_providers = ExtensionPoint(IWikiMacroProvider)
-@@ -158,3 +158,148 @@
+@@ -158,3 +158,154 @@
              return '<a class="wiki" href="%s">%s</a>' \
                     % (formatter.href.wiki(page) + anchor, label)
  
++
++class WikiAdminConsole(Component):
++    """ Provide trac-admin with wiki commands """
++    
++    implements(IAdminConsoleProvider)
++
 +    # IAdminConsoleProvider methods
 +
 +    _help_wiki = [('wiki list', 'List wiki pages'),
