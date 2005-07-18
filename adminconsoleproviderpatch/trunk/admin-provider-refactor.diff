@@ -1,6 +1,6 @@
 Index: trac/ticket/api.py
 ===================================================================
---- trac/ticket/api.py	(revision 1976)
+--- trac/ticket/api.py	(revision 1988)
 +++ trac/ticket/api.py	(working copy)
 @@ -25,6 +25,7 @@
  from trac.core import *
@@ -290,7 +290,7 @@ Index: trac/ticket/api.py
 +
 Index: trac/Milestone.py
 ===================================================================
---- trac/Milestone.py	(revision 1976)
+--- trac/Milestone.py	(revision 1988)
 +++ trac/Milestone.py	(working copy)
 @@ -30,8 +30,8 @@
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -396,7 +396,7 @@ Index: trac/Milestone.py
 +        return [row[0] for row in rows]
 Index: trac/scripts/admin.py
 ===================================================================
---- trac/scripts/admin.py	(revision 1976)
+--- trac/scripts/admin.py	(revision 1988)
 +++ trac/scripts/admin.py	(working copy)
 @@ -33,13 +33,14 @@
  import urllib
@@ -1120,7 +1120,7 @@ Index: trac/scripts/admin.py
          arg = self.arg_tokenize(line)
 Index: trac/scripts/tests/admin.py
 ===================================================================
---- trac/scripts/tests/admin.py	(revision 1976)
+--- trac/scripts/tests/admin.py	(revision 1988)
 +++ trac/scripts/tests/admin.py	(working copy)
 @@ -27,6 +27,7 @@
  from trac.scripts import admin
@@ -1170,7 +1170,7 @@ Index: trac/scripts/tests/admin.py
  
 Index: trac/scripts/tests/admin-tests.txt
 ===================================================================
---- trac/scripts/tests/admin-tests.txt	(revision 1976)
+--- trac/scripts/tests/admin-tests.txt	(revision 1988)
 +++ trac/scripts/tests/admin-tests.txt	(working copy)
 @@ -6,50 +6,50 @@
  Invoking trac-admin without command starts interactive mode.
@@ -1255,7 +1255,7 @@ Index: trac/scripts/tests/admin-tests.txt
  
 Index: trac/perm.py
 ===================================================================
---- trac/perm.py	(revision 1976)
+--- trac/perm.py	(revision 1988)
 +++ trac/perm.py	(working copy)
 @@ -24,8 +24,9 @@
  """Management of permissions."""
@@ -1378,9 +1378,9 @@ Index: trac/perm.py
 +        self.tracadm.db_update(sql)
 Index: trac/wiki/api.py
 ===================================================================
---- trac/wiki/api.py	(revision 1976)
+--- trac/wiki/api.py	(revision 1988)
 +++ trac/wiki/api.py	(working copy)
-@@ -27,8 +27,10 @@
+@@ -28,8 +28,10 @@
  
  from trac.core import *
  from trac.util import to_utf8
@@ -1390,21 +1390,13 @@ Index: trac/wiki/api.py
  
 -
  class IWikiChangeListener(Interface):
-     """
-     Extension point interface for components that should get notified about the
-@@ -83,8 +85,6 @@
-         """
-         Return an iterable over (namespace, formatter) tuples.
-         """
-- 
--
- class WikiSystem(Component):
-     """
-     Represents the wiki system.
-@@ -158,3 +158,154 @@
+     """Extension point interface for components that should get notified about
+     the creation, deletion and modification of wiki pages.
+@@ -151,3 +153,154 @@
+         else:
              return '<a class="wiki" href="%s">%s</a>' \
                     % (formatter.href.wiki(page) + anchor, label)
- 
++
 +
 +class WikiAdminConsole(Component):
 +    """ Provide trac-admin with wiki commands """
@@ -1555,4 +1547,3 @@ Index: trac/wiki/api.py
 +    def get_wiki_list(self):
 +        rows = self.tracadm.db_query('SELECT DISTINCT name FROM wiki')
 +        return [row[0] for row in rows]
-+
