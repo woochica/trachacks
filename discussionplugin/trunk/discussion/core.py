@@ -29,10 +29,13 @@ class DiscussionCore(Component):
 
     # ITemplateProvider methods
     def get_htdocs_dir(self):
-        return os.path.join(self.env.config.get('discussion', 'path'), 'htdocs')
+        from pkg_resources import resource_filename
+        return resource_filename(__name__, 'htdocs')
 
     def get_templates_dir(self):
-        return os.path.join(self.env.config.get('discussion', 'path'), 'templates')
+        from pkg_resources import resource_filename
+        return resource_filename(__name__, 'templates')
+
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
