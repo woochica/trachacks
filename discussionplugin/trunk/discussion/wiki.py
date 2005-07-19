@@ -25,7 +25,7 @@ class DiscussionWiki(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if ns == 'forum':
-            cursor.execute('SELECT subject FROM forum WHERE name=\'%s\'' % id)
+            cursor.execute('SELECT subject FROM forum WHERE name=%s', id)
             row = cursor.fetchone()
             if row:
                 subject = row[0]
@@ -33,13 +33,13 @@ class DiscussionWiki(Component):
             else:
                 return '<a href="%s/%s" class="missing">%s?</a>' % (self.env.href.discussion(), id, label)
         elif ns == 'topic':
-            cursor.execute('SELECT forum, (SELECT subject FROM forum WHERE id=topic.forum), subject FROM topic WHERE id=%i' % id)
+            cursor.execute('SELECT (SELECT name FROM forum WHERE id=topic.forum), (SELECT subject FROM forum WHERE id=topic.forum), subject FROM topic WHERE id=%i', id)
             row = cursor.fetchone()
             if row:
                 forum, forum_subject, subject = row
                 return '<a href="%s/%s/%s" title="%s: %s">%s</a>' % (self.env.href.discussion(), forum, id, forum_subject, subject, label)
         elif ns == 'message':
-            cursor.execute('SELECT forum, topic, (SELECT subject FROM forum WHERE id=message.forum), (SELECT subject FROM topic WHERE id=message.topic) FROM message WHERE id=%i' % id)
+            cursor.execute('SELECT (SELECT name FROM forum WHERE id=message.forum), topic, (SELECT subject FROM forum WHERE id=message.forum), (SELECT subject FROM topic WHERE id=message.topic) FROM message WHERE id=%i', id)
             row = cursor.fetchone()
             if row:
                 forum, topic, forum_subject, subject = row

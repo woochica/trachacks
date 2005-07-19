@@ -104,7 +104,7 @@ class DiscussionCore(Component):
     # Non-extension methods
     def get_message(self, cursor, id, req):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'body', 'author')
-        cursor.execute('SELECT %s FROM message WHERE id=%s' % (', '.join(columns), id))
+        cursor.execute('SELECT id, forum, topic, replyto, time, body, author FROM message WHERE id=%i', id)
         row = cursor.fetchone()
         if not row: return None
         row = dict(zip(columns, row))
@@ -113,7 +113,7 @@ class DiscussionCore(Component):
 
     def get_topic(self, cursor, id, req):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
-        cursor.execute('SELECT %s FROM topic WHERE id=%s' % (', '.join(columns), id))
+        cursor.execute('SELECT id, forum, time, subject, body, author FROM topic WHERE id=%s', id)
         row = cursor.fetchone()
         if not row: return None
         row = dict(zip(columns, row))
@@ -122,7 +122,7 @@ class DiscussionCore(Component):
 
     def get_forum(self, cursor, id, req):
         columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
-        cursor.execute('SELECT %s FROM forum WHERE name=\'%s\'' % (', '.join(columns), id))
+        cursor.execute('SELECT name, moderators, id, time, subject, description FROM forum WHERE name=%s', id)
         row = cursor.fetchone()
         if not row: return None
         row = dict(zip(columns, row))
@@ -143,7 +143,7 @@ class DiscussionCore(Component):
 
     def get_topics(self, cursor, forum, req):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author', 'replies')
-        cursor.execute('SELECT id, forum, time, subject, body, author, (SELECT COUNT(id) FROM message m WHERE m.topic = topic.id) FROM topic WHERE forum = %s ORDER BY time' % forum)
+        cursor.execute('SELECT id, forum, time, subject, body, author, (SELECT COUNT(id) FROM message m WHERE m.topic = topic.id) FROM topic WHERE forum = %i ORDER BY time', int(forum))
         topics = []
         for row in cursor.fetchall():
             row = dict(zip(columns, row))
@@ -153,7 +153,7 @@ class DiscussionCore(Component):
 
     def get_messages(self, cursor, topic, req):
         columns = ('id', 'replyto', 'time', 'body', 'author')
-        cursor.execute('SELECT %s FROM message WHERE topic=%s ORDER BY time' % (', '.join(columns), topic))
+        cursor.execute('SELECT id, replyto, time, body, author FROM message WHERE topic=%s ORDER BY time', topic)
 
         messagemap = {}
         messages = []
