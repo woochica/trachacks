@@ -1,0 +1,375 @@
+Index: /boot/home/svn/trac/trac/ticket/web_ui.py
+===================================================================
+--- /boot/home/svn/trac/trac/ticket/web_ui.py	(revision 2031)
++++ /boot/home/svn/trac/trac/ticket/web_ui.py	(working copy)
+@@ -164,7 +164,7 @@
+         db = self.env.get_db_cnx()
+         id = int(req.args.get('id'))
+ 
+-        ticket = Ticket(self.env, id, db=db)
++        ticket = Ticket(self.env, id, db=db, roles=req.perm.roles)
+         reporter_id = util.get_reporter_id(req)
+ 
+         if req.method == 'POST':
+@@ -254,8 +254,8 @@
+ 
+             db = self.env.get_db_cnx()
+             cursor = db.cursor()
+-            cursor.execute(" UNION ALL ".join(sql), (start, stop, start, stop,
+-                           start, stop))
++            cursor.execute(" UNION ALL ".join(sql), start, stop, start, stop,
++                           start, stop)
+             kinds = {'new': 'newticket', 'reopened': 'newticket',
+                      'closed': 'closedticket'}
+             verbs = {'new': 'created', 'reopened': 'reopened',
+Index: /boot/home/svn/trac/trac/ticket/report.py
+===================================================================
+--- /boot/home/svn/trac/trac/ticket/report.py	(revision 2031)
++++ /boot/home/svn/trac/trac/ticket/report.py	(working copy)
+@@ -93,6 +93,12 @@
+         actions = ['REPORT_CREATE', 'REPORT_DELETE', 'REPORT_MODIFY',  
+                    'REPORT_SQL_VIEW', 'REPORT_VIEW']  
+         return actions + [('REPORT_ADMIN', actions)]  
++    
++    # IPermissionGroupProvider methods
++    
++    def get_permission_group(self, username):
++    	pass
++    
+ 
+     # IRequestHandler methods
+ 
+@@ -156,7 +162,7 @@
+         cursor = db.cursor()
+         cursor.execute("INSERT INTO report (title,sql,description) "
+                        "VALUES (%s,%s,%s)", (title, sql, description))
+-        id = db.get_last_id(cursor, 'report')
++        id = db.get_last_id('report')
+         db.commit()
+         req.redirect(self.env.href.report(id))
+ 
+@@ -229,7 +235,7 @@
+             req.hdf['report.href'] = self.env.href.report()
+             req.hdf['report.action'] = 'new'
+         else:
+-            req.hdf['title'] = 'Edit Report {%d} %s' % (id, title)
++            req.hdf['title'] = 'Edit Report {%d} %s' % (id, row['title'])
+             req.hdf['report.href'] = self.env.href.report(id)
+             req.hdf['report.action'] = 'edit'
+ 
+@@ -275,7 +281,9 @@
+         try:
+             cols, rows = self.execute_report(req, db, id, sql, args)
+         except Exception, e:
+-            req.hdf['report.message'] = 'Report execution failed: %s' % e
++            req.hdf['report.message'] = 'Report execution failed: %s \
++            							<br>\
++            							%s <br> %s' % (e, sql, req.perm.roles)
+             return 'report.cs', None
+ 
+         # Convert the header info to HDF-format
+@@ -342,11 +350,10 @@
+                     value['hidehtml'] = 1
+                     column = column[1:]
+                 if column in ['id', 'ticket', '#', 'summary']:
+-                    id_cols = [idx for idx, col in util.enum(cols)
+-                               if col[0] in ('ticket', 'id')]
+-                    if id_cols:
+-                        id_val = row[id_cols[0]]
+-                        value['ticket_href'] = self.env.href.ticket(id_val)
++                    if row.has_key('ticket'):
++                        value['ticket_href'] = self.env.href.ticket(row['ticket'])
++                    elif row.has_key('id'):
++                        value['ticket_href'] = self.env.href.ticket(row['id'])
+                 elif column == 'description':
+                     value['parsed'] = wiki_to_html(cell, self.env, req, db)
+                 elif column == 'reporter':
+@@ -403,15 +410,26 @@
+                      'text/plain')
+ 
+     def execute_report(self, req, db, id, sql, args):
+-        sql = self.sql_sub_vars(req, sql, args)
++        cursor = db.cursor()
++        self.paras = []
++        args['ROLES'] = tuple(req.perm.roles)
++
++        #sql = self.sql_sub_vars(req, sql, args)
++        for key, value in args.items():
++        	match = "$%s" % key.upper()
++        	if sql.find(match) > 0:
++        		sql = sql.replace("$" + key.upper(), "%s")
++        		self.paras.append(value)
++        self.paras = tuple(self.paras)
++
+         if not sql:
+             raise util.TracError('Report %s has no SQL query.' % id)
+         if sql.find('__group__') == -1:
+             req.hdf['report.sorting.enabled'] = 1
+-
+-        cursor = db.cursor()
+-        cursor.execute(sql)
+-
++        if not self.paras:
++            cursor.execute(sql)
++        else:
++            cursor.execute(sql, (self.paras))
+         # FIXME: fetchall should probably not be used.
+         info = cursor.fetchall()
+         cols = cursor.description
+@@ -460,7 +478,8 @@
+         # Set some default dynamic variables
+         if not report_args.has_key('USER'):
+             report_args['USER'] = req.authname
+-
++##        if not report_args.has_key('GROUPS'):
++##            report_args['GROUPS'] = 'anonymous'
+         return report_args
+ 
+     def sql_sub_vars(self, req, sql, args):
+Index: /boot/home/svn/trac/trac/ticket/model.py
+===================================================================
+--- /boot/home/svn/trac/trac/ticket/model.py	(revision 2031)
++++ /boot/home/svn/trac/trac/ticket/model.py	(working copy)
+@@ -33,10 +33,11 @@
+ 
+ class Ticket(object):
+ 
+-    def __init__(self, env, tkt_id=None, db=None):
++    def __init__(self, env, tkt_id=None, db=None, roles=[]):
+         self.env = env
+         self.fields = TicketSystem(self.env).get_ticket_fields()
+         self.values = {}
++        self.roles = roles
+         if tkt_id:
+             self._fetch_ticket(tkt_id, db)
+         else:
+@@ -75,8 +76,12 @@
+         # Fetch the standard ticket fields
+         std_fields = [f['name'] for f in self.fields if not f.get('custom')]
+         cursor = db.cursor()
+-        cursor.execute("SELECT %s,time,changetime FROM ticket WHERE id=%%s"
+-                       % ','.join(std_fields), (tkt_id,))
++        cursor.execute("SELECT %s,time,changetime FROM ticket \
++        INNER JOIN user_role ON \
++        (user_role.username = ticket.reporter) \
++         WHERE role in %s \
++         AND id=%s"
++                       % (','.join(std_fields), tuple(self.roles), tkt_id))
+         row = cursor.fetchone()
+         if not row:
+             raise TracError('Ticket %d does not exist.' % tkt_id,
+@@ -154,15 +159,14 @@
+                           ','.join(['%s'] * (len(std_fields) + 2))),
+                        [self[name] for name in std_fields] +
+                        [self.time_created, self.time_changed])
+-        tkt_id = db.get_last_id(cursor, 'ticket')
++        tkt_id = db.get_last_id('ticket')
+ 
+         # Insert custom fields
+         custom_fields = [f['name'] for f in self.fields if f.get('custom')
+                          and f['name'] in self.values.keys()]
+-        if custom_fields:
+-            cursor.executemany("INSERT INTO ticket_custom (ticket,name,value) "
+-                               "VALUES (%s,%s,%s)", [(tkt_id, name, self[name])
+-                                                     for name in custom_fields])
++        cursor.executemany("INSERT INTO ticket_custom (ticket,name,value) "
++                           "VALUES (%s,%s,%s)", [(tkt_id, name, self[name])
++                                                 for name in custom_fields])
+ 
+         if handle_ta:
+             db.commit()
+@@ -325,11 +329,11 @@
+         self.env.log.debug("Creating new %s '%s'" % (self.type, self.name))
+         value = self.value
+         if not value:
+-            cursor.execute("SELECT COALESCE(MAX(value),0) FROM enum "
++            cursor.execute("SELECT COALESCE(MAX(value)) FROM enum "
+                            "WHERE type=%s", (self.type,))
+-            value = int(cursor.fetchone()[0]) + 1
+-        cursor.execute("INSERT INTO enum (type,name,value) VALUES (%s,%s,%s)",
+-                       (self.type, self.name, value))
++            value = int(cursor.fetchone()[0])
++        cursor.execute("INSERT INTO enum (name,value) VALUES (%s,%s)",
++                       (self.name, self.value))
+ 
+         if handle_ta:
+             db.commit()
+Index: /boot/home/svn/trac/trac/ticket/query.py
+===================================================================
+--- /boot/home/svn/trac/trac/ticket/query.py	(revision 2031)
++++ /boot/home/svn/trac/trac/ticket/query.py	(working copy)
+@@ -40,7 +40,7 @@
+ class Query(object):
+ 
+     def __init__(self, env, constraints=None, order=None, desc=0, group=None,
+-                 groupdesc = 0, verbose=0):
++                 groupdesc = 0, verbose=0, roles=[]):
+         self.env = env
+         self.constraints = constraints or {}
+         self.order = order
+@@ -48,6 +48,7 @@
+         self.group = group
+         self.groupdesc = groupdesc
+         self.verbose = verbose
++        self.roles = roles
+         self.fields = TicketSystem(self.env).get_ticket_fields()
+         self.cols = [] # lazily initialized
+ 
+@@ -198,7 +199,8 @@
+         sql.append(",priority.value AS priority_value")
+         for k in [k for k in cols if k in custom_fields]:
+             sql.append(",%s.value AS %s" % (k, k))
+-        sql.append("\nFROM ticket AS t")
++        sql.append("\nFROM ticket AS t \nINNER JOIN user_role ON \
++            		(user_role.username = t.reporter)")
+         for k in [k for k in cols if k in custom_fields]:
+            sql.append("\n  LEFT OUTER JOIN ticket_custom AS %s ON " \
+                       "(id=%s.ticket AND %s.name='%s')" % (k, k, k, k))
+@@ -229,6 +231,7 @@
+                        name, neg and '!' or '', value)
+ 
+         clauses = []
++        clauses.append("role IN %s" %(tuple(self.roles),))
+         for k, v in self.constraints.items():
+             # Determine the match mode of the constraint (contains, starts-with,
+             # negation, etc)
+@@ -350,7 +353,7 @@
+         query = Query(self.env, constraints, req.args.get('order'),
+                       req.args.has_key('desc'), req.args.get('group'),
+                       req.args.has_key('groupdesc'),
+-                      req.args.has_key('verbose'))
++                      req.args.has_key('verbose'), req.perm.roles)
+ 
+         if req.args.has_key('update'):
+             # Reset session vars
+Index: /boot/home/svn/trac/trac/perm.py
+===================================================================
+--- /boot/home/svn/trac/trac/perm.py	(revision 2031)
++++ /boot/home/svn/trac/trac/perm.py	(working copy)
+@@ -75,6 +75,9 @@
+ 
+     def revoke_permission(username, action):
+         """Revokes the permission of the given user to perform an action."""
++    
++    def get_user_roles(username):
++        """Return a list of roles for a particular user"""
+ 
+ 
+ class PermissionSystem(Component):
+@@ -165,6 +168,11 @@
+                     actions.append(action)
+         return [('TRAC_ADMIN', actions)]
+ 
++    # IPermissionGroupProvider methods
++    def get_permission_groups(self, username=None):
++    	roles = self.store.get_permission_groups(username)
++    	return roles
++
+     # Internal methods
+ 
+     def _get_store(self):
+@@ -260,7 +268,59 @@
+         self.log.info('Revoked permission for %s to %s' % (action, username))
+         db.commit()
+ 
++class RelationalPermissionStore(DefaultPermissionStore):
++    """Implementation of permission storage and simple group management with support
++    for explicit groups
++    
++    This component uses the `PERMISSION` and USER_ROLE and ROLE_ROLE table in the database to store both
++    permissions and groups.
++    """
++    implements(IPermissionStore)
+ 
++    role_providers = ExtensionPoint(IPermissionGroupProvider)
++    
++    def get_permission_groups(self, username):
++        db = self.env.get_db_cnx()
++        cursor = db.cursor()
++        
++        roles = []
++        cursor.execute("""SELECT role FROM user_role
++        				WHERE username = %s""", username)
++        role = cursor.fetchone()
++        while role:
++            roles.append(role[0])
++            cursor.execute("""SELECT parent FROM role_role
++       					WHERE role = %s""", role[0])
++            role = cursor.fetchone()
++        if not roles:
++            roles = ['anonymous']
++        return roles
++
++    def get_user_permissions(self, username):
++        """Retrieve the permissions for the given user and return them in a
++        dictionary.
++        
++        The permissions are stored in the database as (username, action)
++        records.
++        
++        Users are members of explicit groups and have both user and group
++        permissions.
++        
++        The groups that users belong to should be available outside this
++        method.
++        """
++        roles = self.get_permission_groups(username)
++        db = self.env.get_db_cnx()
++        cursor = db.cursor()
++        cursor.execute("""SELECT action FROM permission
++        				WHERE username = %s 
++        				OR 
++        				username IN %s""",
++        				 (username, tuple(roles)))
++        rows = cursor.fetchall()
++       
++        return [row[0] for row in rows]
++
+ class DefaultPermissionGroupProvider(Component):
+     """Provides the basic builtin permission groups 'anonymous' and
+     'authenticated'."""
+@@ -272,13 +332,37 @@
+         if username and username != 'anonymous':
+             groups.append('authenticated')
+         return groups
++        
++class RelationalPermissionGroupProvider(Component):
++    """Provides the basic builtin permission groups 'anonymous' and
++    'authenticated'."""
+ 
++    implements(IPermissionGroupProvider)
+ 
++    def get_permission_groups(self, username):
++        db = self.env.get_db_cnx()
++        cursor = db.cursor()
++        
++        roles = []
++        cursor.execute("""SELECT role FROM user_role
++        				WHERE username = %s""", username)
++        role = cursor.fetchone()
++        while role:
++            roles.append(role[0])
++            cursor.execute("""SELECT parent FROM role_role
++       					WHERE role = %s""", role[0])
++            role = cursor.fetchone()
++        if not roles:
++            roles = ['anonymous']
++        return roles
++
++
+ class PermissionCache:
+     """Cache that maintains the permissions of a single user."""
+ 
+     def __init__(self, env, username):
+         self.perms = PermissionSystem(env).get_user_permissions(username)
++        self.roles = PermissionSystem(env).get_permission_groups(username)
+ 
+     def has_permission(self, action):
+         return self.perms.has_key(action)
+@@ -289,3 +373,6 @@
+ 
+     def permissions(self):
+         return self.perms.keys()
++        
++    def roles(self):
++        return self.roles
