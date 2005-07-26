@@ -1,21 +1,21 @@
 Index: trac/ticket/api.py
 ===================================================================
---- trac/ticket/api.py	(revision 1988)
+--- trac/ticket/api.py	(revision 2033)
 +++ trac/ticket/api.py	(working copy)
-@@ -25,6 +25,7 @@
- from trac.core import *
+@@ -26,8 +26,8 @@
  from trac.perm import IPermissionRequestor
  from trac.wiki import IWikiSyntaxProvider
+ from trac.Search import ISearchSource, query_to_sql, shorten_result
 +from trac.scripts.admin import IAdminConsoleProvider
  
+-
  class MyLinkResolver(Component):
      """
-@@ -168,4 +169,276 @@
-             return '<a class="missing ticket" href="%s" rel="nofollow">%s</a>' \
-                    % (formatter.href.ticket(target), label)
- 
--    
-+
+     A dummy macro used by the unit test. We need to supply our own macro
+@@ -200,3 +200,274 @@
+                    date, author,
+                    util.escape(shorten_result(desc, query.split())))
+             
 +class TicketAdminConsole(Component):
 +    """ Provides trac-admin with ticket related commands """
 +
@@ -287,10 +287,9 @@ Index: trac/ticket/api.py
 +    def get_version_list(self):
 +        rows = self.db_query("SELECT name FROM version")
 +        return [row[0] for row in rows]
-+
 Index: trac/Milestone.py
 ===================================================================
---- trac/Milestone.py	(revision 1988)
+--- trac/Milestone.py	(revision 2033)
 +++ trac/Milestone.py	(working copy)
 @@ -30,8 +30,8 @@
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -396,7 +395,7 @@ Index: trac/Milestone.py
 +        return [row[0] for row in rows]
 Index: trac/scripts/admin.py
 ===================================================================
---- trac/scripts/admin.py	(revision 1988)
+--- trac/scripts/admin.py	(revision 2033)
 +++ trac/scripts/admin.py	(working copy)
 @@ -33,13 +33,14 @@
  import urllib
@@ -1120,7 +1119,7 @@ Index: trac/scripts/admin.py
          arg = self.arg_tokenize(line)
 Index: trac/scripts/tests/admin.py
 ===================================================================
---- trac/scripts/tests/admin.py	(revision 1988)
+--- trac/scripts/tests/admin.py	(revision 2033)
 +++ trac/scripts/tests/admin.py	(working copy)
 @@ -27,6 +27,7 @@
  from trac.scripts import admin
@@ -1170,7 +1169,7 @@ Index: trac/scripts/tests/admin.py
  
 Index: trac/scripts/tests/admin-tests.txt
 ===================================================================
---- trac/scripts/tests/admin-tests.txt	(revision 1988)
+--- trac/scripts/tests/admin-tests.txt	(revision 2033)
 +++ trac/scripts/tests/admin-tests.txt	(working copy)
 @@ -6,50 +6,50 @@
  Invoking trac-admin without command starts interactive mode.
@@ -1255,7 +1254,7 @@ Index: trac/scripts/tests/admin-tests.txt
  
 Index: trac/perm.py
 ===================================================================
---- trac/perm.py	(revision 1988)
+--- trac/perm.py	(revision 2033)
 +++ trac/perm.py	(working copy)
 @@ -24,8 +24,9 @@
  """Management of permissions."""
@@ -1378,9 +1377,9 @@ Index: trac/perm.py
 +        self.tracadm.db_update(sql)
 Index: trac/wiki/api.py
 ===================================================================
---- trac/wiki/api.py	(revision 1988)
+--- trac/wiki/api.py	(revision 2033)
 +++ trac/wiki/api.py	(working copy)
-@@ -28,8 +28,10 @@
+@@ -32,8 +32,10 @@
  
  from trac.core import *
  from trac.util import to_utf8
@@ -1392,7 +1391,7 @@ Index: trac/wiki/api.py
  class IWikiChangeListener(Interface):
      """Extension point interface for components that should get notified about
      the creation, deletion and modification of wiki pages.
-@@ -151,3 +153,154 @@
+@@ -161,3 +163,154 @@
          else:
              return '<a class="wiki" href="%s">%s</a>' \
                     % (formatter.href.wiki(page) + anchor, label)
