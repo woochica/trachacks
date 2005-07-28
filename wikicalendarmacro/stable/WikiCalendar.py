@@ -1,13 +1,15 @@
-# Copyright (C) 2005 Matthew Good <matt@matt-good.net>
+# Copyright (C) 2005 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2005 Jan Finell <finell@cenix-bioscience.com> 
 #
 # "THE BEER-WARE LICENSE" (Revision 42):
-# <matt@matt-good.net> wrote this file.  As long as you retain this notice you
+# <trac@matt-good.net> wrote this file.  As long as you retain this notice you
 # can do whatever you want with this stuff.  If we meet some day, and you think
 # this stuff is worth it, you can buy me a beer in return.  Matthew Good
 # (Beer-ware license written by Poul-Henning Kamp
 #  http://people.freebsd.org/~phk/)
 #
-# Author: Matthew Good <matt@matt-good.net>
+# Author: Matthew Good <trac@matt-good.net>
+# Month/Year navigation by: Jan Finell <finell@cenix-bioscience.com>
 
 import time
 import calendar
@@ -28,13 +30,38 @@ def execute(hdf, fmt, env):
     #calendar.setfirstweekday(calendar.SUNDAY)
     cal = calendar.monthcalendar(year, month)
 
-    buff = StringIO()
 
     date = [year, month] + [1] * 7
 
+    # url to the current page (used in the navigation links)
+    thispageURL = env.href.wiki(hdf.getValue('wiki.page_name', ''))
+    # for the prev/next navigation links
+    prevMonth = month-1
+    prevYear  = year
+    nextMonth = month+1
+    nextYear  = year
+    # check for year change (KISS version)
+    if prevMonth == 0:
+        prevMonth = 12
+        prevYear -= 1
+    if nextMonth == 13:
+        nextMonth = 1
+        nextYear += 1
+
+    # building the output
+    buff = StringIO()
     buff.write('<table><caption>')
+
+    # prev month link
+    prevMonthURL = thispageURL+'?month=%d&year=%d' % (prevMonth, prevYear)
+    buff.write('<a href="%s">&lt; </a>' % prevMonthURL)
+    # the caption
     buff.write(time.strftime('%B %Y', tuple(date)))
+    # next month link
+    nextMonthURL = thispageURL+'?month=%d&year=%d' % (nextMonth, nextYear)
+    buff.write('<a href="%s"> &gt;</a>' % nextMonthURL)
     buff.write('</caption>\n<thead><tr align="center">')
+    
     for day in calendar.weekheader(2).split():
         buff.write('<th scope="col">%s</th>' % day)
     buff.write('</tr></thead>\n<tbody>\n')
@@ -65,3 +92,4 @@ def execute(hdf, fmt, env):
     table = buff.getvalue()
     buff.close()
     return table
+
