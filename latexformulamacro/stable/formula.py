@@ -97,9 +97,9 @@ def render(hdf, env, texData, density, mathMode):
 	texFile = name + ".tex"
 	makeTexFile(texFile, texData, mathMode)
 
+	# the output from latex on stdout seems to cause problems, so sent it
+	# to /dev/null
 	cmd = "latex %s > /dev/null" % texFile
-	# TODO: this causes error, even though the command appears to run to
-	# completion
 	log += execprog( cmd )
 	os.chdir(cwd)
 
@@ -126,11 +126,13 @@ def makeTexFile(texFile, texData, mathMode):
     tex += "\\documentclass{article}\n"
     tex += "\\usepackage{epsfig}\n"
     tex += "\\pagestyle{empty}\n"
+    # matrix macro
     tex += "\\newcommand{\\mat}[2][rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr]{\n"
     tex += "  \\left[\\begin{array}{#1}\n"
     tex += "  #2\\\\\n"
     tex += "  \\end{array}\n"
     tex += "  \\right]}\n"
+    # start the document
     tex += "\\begin{document}\n"
     if mathMode:
 	tex += "$$\n"
