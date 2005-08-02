@@ -3,6 +3,8 @@ Convert a latex formula into an image.
 by Valient Gough <vgough@pobox.com>
 
 Changes:
+    2005-08-02:
+	* remove hard-coded paths, read from configuration. Fixes #26
     2005-07-27:
 	* figured out how to get rid of the annoying internal error after latex
 	was run.  Redirected latex output to /dev/null..
@@ -12,6 +14,17 @@ Changes:
 	* add "nomode" command, which can be used to turn off automatic
 	  enclosure of commands in display-math mode ("$$ ... $$")
     2005-07-26: first release
+
+Installation:
+    1. Copy into wiki-macros directory.
+    2. Edit conf/trac.ini and add a [latex] group with three values:
+	[latex]
+	# temp_dir points to directory where temporary files are created
+	temp_dir = /var/tmp/trac
+	# image_path is directory where final images are written
+	image_path = /var/www/html/formula
+	# display_path is URL where formula images can be accessed
+	display_path = http://foo.net/formula
 
 Usage:
 
@@ -52,16 +65,8 @@ standards (whatever those may be).  Feedback is welcome, but complaints about
 ugliness will be redirected to /dev/null.
 """
 
-# TODO: Paths to change for your system:
-# directory where temporary files are created
-tmpdir = "/var/www/html/trac/tex/"
-# directory where images are written
-imagePath = "/var/www/html/formula/"
-# URL base for accessing images
-displayPath = "http://arg0.net/formula/"
-
-# if the version string changes, then images will be regenerated
-version = "0.1"
+# if the output version string changes, then images will be regenerated
+outputVersion = "0.1"
 
 
 import re
@@ -71,10 +76,18 @@ import sha
 
 
 def render(hdf, env, texData, density, mathMode):
-    path = tmpdir # + hdf.getValue("project.name.encoded", "default") + "/"
+    # gets paths from configuration
+    tmpdir = env.get_config('latex', 'temp_dir');
+    imagePath = env.get_config('latex', 'image_path');
+    displayPath = env.get_config('latex', 'display_path');
+
+    if not tmpdir or not imagePath or not displayPath:
+	return "<b>Error: missing configuration settings in 'latex' macro</b><br>";
+
+    path = tmpdir # + hdf.getValue("project.name.encoded", "default")
     # create temporary directory if necessary
     try:
-	if os.path.exists(path) is False:
+	if not os.path.exists(path):
 	    mkdir(path)
     except:
 	return "Unable to create temporary directory " + path
@@ -83,12 +96,12 @@ def render(hdf, env, texData, density, mathMode):
     # the image, so we don't have to recreate it unless they change.
     hash = sha.new(texData);
     hash.update( "%d" % density )
-    hash.update( version )
+    hash.update( outputVersion )
     name = hash.hexdigest()
-    jpgFile = imagePath + name + ".jpg"
+    jpgFile = "%s/%s.jpg" % (imagePath, name)
 
     log = "<br>";
-    if os.path.exists(jpgFile) is False:
+    if not os.path.exists(jpgFile):
 	# latex writes out lots of stuff to the current directory, so we have
 	# to run it from there.
 	cwd = os.getcwd()
@@ -104,8 +117,8 @@ def render(hdf, env, texData, density, mathMode):
 	os.chdir(cwd)
 
 	# use dvips to convert to eps
-	dviFile = path + name + ".dvi"
-	epsFile = path + name + ".eps"
+	dviFile = "%s/%s.dvi" % (path, name)
+	epsFile = "%s/%s.eps" % (path, name)
 	cmd = "dvips -q -D 600 -E -n 1 -p 1 -o %s %s" % (epsFile, dviFile)
 	log += execprog( cmd )
 
@@ -113,7 +126,7 @@ def render(hdf, env, texData, density, mathMode):
 	cmd = "convert -antialias -density %ix%i %s %s" % (density, density, epsFile, jpgFile)
 	log += execprog( cmd )
 
-    html = "<img src='%s%s.jpg' border='0' style='vertical-align: middle;' alt='formula' />" % (displayPath, name)
+    html = "<img src='%s/%s.jpg' border='0' style='vertical-align: middle;' alt='formula' />" % (displayPath, name)
     return html
     #return log;
 
