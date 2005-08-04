@@ -93,9 +93,12 @@ def execute(hdf, txt, env):
                     sql = re.sub(r'\$%s\b' % k, v, sql)
                 #env.log.debug('sql = %s' % sql)
                 curs.execute(sql)
-                idx = [desc[0] for desc in curs.description].index('ticket')
-                for row in curs:
-                    items.append(row[idx])
+                rows = curs.fetchall()
+                if rows:
+                    descriptions = [desc[0] for desc in curs.description]
+                    idx = descriptions.index('ticket')
+                    for row in rows:
+                        items.append(row[idx])
             finally:
                 if not hasattr(env, 'get_cnx_pool'):
                     # without db connection pool, we should close db.
