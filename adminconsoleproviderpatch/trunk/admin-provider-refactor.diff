@@ -1,6 +1,6 @@
 Index: trac/ticket/api.py
 ===================================================================
---- trac/ticket/api.py	(revision 2033)
+--- trac/ticket/api.py	(revision 2048)
 +++ trac/ticket/api.py	(working copy)
 @@ -26,8 +26,8 @@
  from trac.perm import IPermissionRequestor
@@ -289,7 +289,7 @@ Index: trac/ticket/api.py
 +        return [row[0] for row in rows]
 Index: trac/Milestone.py
 ===================================================================
---- trac/Milestone.py	(revision 2033)
+--- trac/Milestone.py	(revision 2048)
 +++ trac/Milestone.py	(working copy)
 @@ -30,8 +30,8 @@
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -395,7 +395,7 @@ Index: trac/Milestone.py
 +        return [row[0] for row in rows]
 Index: trac/scripts/admin.py
 ===================================================================
---- trac/scripts/admin.py	(revision 2033)
+--- trac/scripts/admin.py	(revision 2048)
 +++ trac/scripts/admin.py	(working copy)
 @@ -33,13 +33,14 @@
  import urllib
@@ -1119,7 +1119,7 @@ Index: trac/scripts/admin.py
          arg = self.arg_tokenize(line)
 Index: trac/scripts/tests/admin.py
 ===================================================================
---- trac/scripts/tests/admin.py	(revision 2033)
+--- trac/scripts/tests/admin.py	(revision 2048)
 +++ trac/scripts/tests/admin.py	(working copy)
 @@ -27,6 +27,7 @@
  from trac.scripts import admin
@@ -1169,7 +1169,7 @@ Index: trac/scripts/tests/admin.py
  
 Index: trac/scripts/tests/admin-tests.txt
 ===================================================================
---- trac/scripts/tests/admin-tests.txt	(revision 2033)
+--- trac/scripts/tests/admin-tests.txt	(revision 2048)
 +++ trac/scripts/tests/admin-tests.txt	(working copy)
 @@ -6,50 +6,50 @@
  Invoking trac-admin without command starts interactive mode.
@@ -1254,7 +1254,7 @@ Index: trac/scripts/tests/admin-tests.txt
  
 Index: trac/perm.py
 ===================================================================
---- trac/perm.py	(revision 2033)
+--- trac/perm.py	(revision 2048)
 +++ trac/perm.py	(working copy)
 @@ -24,8 +24,9 @@
  """Management of permissions."""
@@ -1377,7 +1377,7 @@ Index: trac/perm.py
 +        self.tracadm.db_update(sql)
 Index: trac/wiki/api.py
 ===================================================================
---- trac/wiki/api.py	(revision 2033)
+--- trac/wiki/api.py	(revision 2048)
 +++ trac/wiki/api.py	(working copy)
 @@ -32,8 +32,10 @@
  
