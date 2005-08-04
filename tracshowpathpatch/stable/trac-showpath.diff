@@ -1,0 +1,39 @@
+diff -ur trac-0.8.4-orig/templates/wiki.cs trac-0.8.4-showpath/templates/wiki.cs
+--- trac-0.8.4-orig/templates/wiki.cs	2005-06-17 20:22:32.000000000 +0200
++++ trac-0.8.4-showpath/templates/wiki.cs	2005-08-04 07:40:21.000000000 +0200
+@@ -5,7 +5,15 @@
+ <div id="ctxtnav" class="nav">
+  <h2>Wiki Navigation</h2>
+  <ul>
+-  <li><a href="<?cs var:$trac.href.wiki ?>">Start Page</a></li>
++  <li><a href="<?cs var:$trac.href.wiki ?>">Start Page</a><?cs 
++    set:node_href = trac.href.wiki ?><?cs 
++    set:node_max = wiki.page_parent.node_count - 1 ?><?cs
++    each:node = wiki.page_parent.node ?><?cs
++      set:node_href = node_href + '/' + node ?> / <?cs
++      if:node_max == name(node) ?><?cs var:node ?><?cs
++      else ?><a href="<?cs var:node_href ?>"><?cs var:node ?></a><?cs
++      /if ?><?cs
++    /each ?>
+   <li><a href="<?cs var:$trac.href.wiki ?>/TitleIndex">Title Index</a></li>
+   <li><a href="<?cs var:$trac.href.wiki ?>/RecentChanges">Recent Changes</a></li>
+   <?cs if:wiki.history_href ?>
+diff -ur trac-0.8.4-orig/trac/Wiki.py trac-0.8.4-showpath/trac/Wiki.py
+--- trac-0.8.4-orig/trac/Wiki.py	2005-06-17 20:22:32.000000000 +0200
++++ trac-0.8.4-showpath/trac/Wiki.py	2005-08-04 07:42:45.000000000 +0200
+@@ -339,6 +339,15 @@
+                                                         history=1)))
+         self.req.hdf.setValue('wiki.page_name', escape(self.page.name))
+         self.req.hdf.setValue('wiki.page_source', escape(self.page.text))
++	
++        prefix = escape(self.page.name)
++        heirarchy = prefix.split('/')
++
++        if len(heirarchy) > 1 or heirarchy[0] != 'WikiStart':
++            self.req.hdf.setValue('wiki.page_parent.node_count', '%s' % len(heirarchy))
++            for i in range(len(heirarchy)):
++                self.req.hdf.setValue('wiki.page_parent.node.%d' % i, heirarchy[i])
++
+         out = StringIO.StringIO()
+         Formatter(self.req.hdf, self.env,self.db).format(self.page.text, out)
+         self.req.hdf.setValue('wiki.page_html', out.getvalue())
