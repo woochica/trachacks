@@ -62,10 +62,10 @@ class GeneralLinkSyntaxProvider(Component):
     def _load_config(self):
         self._link_info = {}
         self._exposed_names = []
-        names = self._get_config('names', '').split(',')
+        names = self._get_config('names', '')
         if len(names) == 0:
             return                      # no entry
-        for name in names:
+        for name in names.split(','):
             disp = self._get_config(name + self._disp_suffix, name)
             url = self._get_config(name + self._url_suffix)
             if not url:
