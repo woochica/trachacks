@@ -36,7 +36,7 @@ class GeneralLinkSyntaxProvider(Component):
     # [xxxx]
     # module=xxx
     # names=name1,name2,name3,...
-    # exposed_names=name1,...
+    # expose=name1,...
     # name1_url=url
     # name1_disp=url
     # name2_url=url2
@@ -72,7 +72,7 @@ class GeneralLinkSyntaxProvider(Component):
                 raise Exception("No URL defined for '%s'" % name)
             self.log.debug('Adding link: %s = (%s, %s)' % (name, disp, url))
             self._link_info[name] = (disp, url)
-        names = self._get_config('exposed_names')
+        names = self._get_config('expose')
         if names:
             self._exposed_names = [name.strip() for name in names.split(',')]
 
