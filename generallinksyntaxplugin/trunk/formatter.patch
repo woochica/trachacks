@@ -1,0 +1,15 @@
+Index: formatter.py
+===================================================================
+--- formatter.py        (revision 2066)
++++ formatter.py        (working copy)
+@@ -137,8 +137,8 @@
+                   r"(?P<inlinecode>!?\{\{\{(?P<inline>.*?)\}\}\})",
+                   r"(?P<inlinecode2>!?`(?P<inline2>.*?)`)",
+                   r"(?P<htmlescapeentity>!?&#\d+;)"]
+-    _post_rules = [r"(?P<shref>!?((?P<sns>\w+):(?P<stgt>'[^']+'|\"[^\"]+\"|((\|(?=[^| ])|[^| ])*[^|'~_\., \)]))))",
+-                   r"(?P<lhref>!?\[(?P<lns>\w+):(?P<ltgt>[^\] ]+)(?: (?P<label>.*?))?\])",
++    _post_rules = [r"(?P<shref>!?((?P<sns>\w+(?:[-+_]\w+)*):(?P<stgt>'[^']+'|\"[^\"]+\"|((\|(?=[^| ])|[^| ])*[^|'~_\., \)]))))",
++                   r"(?P<lhref>!?\[(?P<lns>\w+(?:[-+_]\w+)*):(?P<ltgt>[^\] ]+)(?: (?P<label>.*?))?\])",
+                    r"(?P<macro>!?\[\[(?P<macroname>[\w/+-]+)(\]\]|\((?P<macroargs>.*?)\)\]\]))",
+                    r"(?P<heading>^\s*(?P<hdepth>=+)\s.*\s(?P=hdepth)\s*$)",
+                    r"(?P<list>^(?P<ldepth>\s+)(?:\*|\d+\.) )",
