@@ -1,0 +1,25 @@
+/* -*-css-*- */
+#modlink input.disp {
+  width: 30%;
+}
+#modlink input.url {
+  width: 85%;
+}
+#addlink input.disp {
+  width: 90%;
+}
+#addlink input.url {
+  width: 90%;
+}
+
+span.error {
+  color: red;
+  font-size: bigger;
+  font-weight: bolder;
+}
+
+span.notify {
+  color: green;
+  font-weight: bolder;
+}
+
