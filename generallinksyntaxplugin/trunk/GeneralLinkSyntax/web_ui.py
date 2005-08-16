@@ -1,6 +1,7 @@
 from trac.core import *
-from trac.util import TracError, href_join
+from trac.util import TracError
 from trac.web.chrome import add_stylesheet, ITemplateProvider, add_stylesheet
+from trac.web.href import Href
 from webadmin.web_ui import IAdminPageProvider
 from model import LinkInfo
 from GeneralLinkSyntax import GeneralLinkSyntaxProvider
@@ -108,9 +109,10 @@ class LinkAdmin(Component):
         
         # render current links
         links = []
+        href = Href(base_href)
         for link in GeneralLinkSyntaxProvider(self.env).get_links():
             h = link.get_hash()
-            h['href'] = href_join(base_href, link.get_name())
+            h['href'] = href(link.get_name())
             links.append(h)
         req.hdf['admin.links'] = links
         # prepare notify message
