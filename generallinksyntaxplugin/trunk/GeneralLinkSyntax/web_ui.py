@@ -120,20 +120,20 @@ class LinkAdmin(Component):
         req.hdf['admin.message.text'] = message_text
         req.hdf['admin.message.class'] = message_class
         self._clear_message(req)
-        add_stylesheet(req, 'css/admin_link.css')
+        add_stylesheet(req, 'addmin/css/admin_link.css')
         return 'admin_link.cs', None
 
 
     # ITemplateProvider methods
 
-    def get_htdocs_dir(self):
+    def get_htdocs_dirs(self):
         """Return the htdocs directory.
         """
         from pkg_resources import resource_filename
-        return resource_filename(__name__, 'htdocs')
+        return [('admin', resource_filename(__name__, 'htdocs'))]
 
-    def get_templates_dir(self):
+    def get_templates_dirs(self):
         """Return the template directory.
         """
         from pkg_resources import resource_filename
-        return resource_filename(__name__, 'templates')
+        return [resource_filename(__name__, 'templates')]
