@@ -14,7 +14,7 @@ class LinkInfo:
     disp = None
     url = None
     name = None
-    name_re = re.compile(r'^\w+([-+_]\w+)*$', re.I)
+    name_re = re.compile(r'^\w[\w-+.]*$', re.I) # like sheme in RFC 2396
 
     def __init__(self, name, expose, disp, url):
         if not name or name == '':
