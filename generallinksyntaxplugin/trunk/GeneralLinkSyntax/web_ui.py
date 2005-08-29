@@ -120,7 +120,7 @@ class LinkAdmin(Component):
         req.hdf['admin.message.text'] = message_text
         req.hdf['admin.message.class'] = message_class
         self._clear_message(req)
-        add_stylesheet(req, 'addmin/css/admin_link.css')
+        add_stylesheet(req, 'admin/css/admin_link.css')
         return 'admin_link.cs', None
 
 
