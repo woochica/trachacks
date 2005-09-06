@@ -33,7 +33,6 @@ def execute(hdf, args, env):
         raise TracError('Error: Insufficient privileges to AddComment')
 
     disabled = ''
-    print dir(hdf)
 
     comment = hdf.getValue("args.addcomment", "")
     preview = hdf.getValue("args.previewaddcomment", "")
