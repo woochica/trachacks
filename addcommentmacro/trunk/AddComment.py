@@ -46,7 +46,7 @@ def execute(hdf, args, env):
     comment = re.sub('(^|[^!])(\[\[AddComment)', '\\1!\\2', comment)
 
     out = StringIO()
-    if wikipreview or not perm.has_permission('WIKI_MODIFY'):
+    if wikipreview or not (perm.has_permission('WIKI_MODIFY') or appendonly):
         disabled = ' disabled="disabled"'
 
     # If we are submitting or previewing, inject comment as it should look
