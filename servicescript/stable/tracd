@@ -1,0 +1,168 @@
+#! /bin/sh
+#
+# Author: Vassil Kriakov <vassil@gmail.com>
+#
+# inspired by the init script from to the OpenVPN project 
+#
+# /etc/init.d/tracd
+#   and its symbolic link
+# /usr/sbin/rctracd
+#
+### BEGIN INIT INFO
+# Provides:			tracd
+# Required-Start:		$local_fs $remote_fs $network 
+# X-UnitedLinux-Should-Start:	$syslog
+# Required-Stop:		$local_fs $remote_fs $network
+# X-UnitedLinux-Should-Stop:	$syslog 
+# Default-Start:		3 5
+# Default-Stop:			0 1 2 6
+# Short-Description:		trac web server
+# Description:			Start Trac Web Server
+### END INIT INFO
+
+
+# test -s /etc/sysconfig/tracd && \
+#       . /etc/sysconfig/tracd
+
+## We need the pglib dir
+LD_LIBRARY_PATH="/usr/local/pgsql/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH
+
+## TODO: Move these to sysconfig file
+DAEMON="tracd"
+tracd=/usr/bin/tracd
+port=8000
+repository=/path/to/trac/repository
+passwords=/export/claire/trac/.passwords
+project=projectname
+realm=realmname
+piddir=/var/run/tracd
+
+getpid='ps -a | grep tracd | grep -v grep ' #| sed "s/ .*//"'
+
+test -d $piddir || mkdir $piddir
+
+test -x $tracd || exit 5
+
+# Shell functions sourced from /etc/rc.status:
+#      rc_check         check and set local and overall rc status
+#      rc_status        check and set local and overall rc status
+#      rc_status -v     ditto but be verbose in local rc status
+#      rc_status -v -r  ditto and clear the local rc status
+#      rc_failed        set local and overall rc status to failed
+#      rc_failed <num>  set local and overall rc status to <num><num>
+#      rc_reset         clear local rc status (overall remains)
+#      rc_exit          exit appropriate to overall rc status
+. /etc/rc.status
+
+# First reset status of this service
+rc_reset
+
+# Return values acc. to LSB for all commands but status:
+# 0 - success
+# 1 - generic or unspecified error
+# 2 - invalid or excess argument(s)
+# 3 - unimplemented feature (e.g. "reload")
+# 4 - insufficient privilege
+# 5 - program is not installed
+# 6 - program is not configured
+# 7 - program is not running
+# 
+# Note that starting an already running service, stopping
+# or restarting a not-running service as well as the restart
+# with force-reload (in case signalling is not supported) are
+# considered a success.
+
+shopt -s nullglob
+ret=true
+
+case "$1" in
+    start)
+	echo -n "Starting $DAEMON "
+
+	$tracd \
+	  --daemonize \
+	  --port $port \
+	  --auth $project,$passwords,$realm \
+	  $repository || \
+	  ret=false
+
+	# Get the pid
+	pid=`ps -a | grep tracd | grep -v grep | grep -v rctracd | sed "s/ .*//"`
+
+	# Write the pid
+	echo $pid > $piddir/$pid.pid
+
+	# Remember status and be verbose
+	$ret
+	rc_status -v
+	;;
+    stop)
+	echo -n "Shutting down $DAEMON "
+
+	## Stop daemon with killproc(8) and if this fails
+	## set echo the echo return value.
+
+	for i in $piddir/*.pid; do
+		killproc -p $i -TERM $tracd || ret=false
+	done
+
+	# Remember status and be verbose
+	$ret
+	rc_status -v
+	;;
+    try-restart)
+        ## Do a restart only if the service was active before.
+        ## Note: try-restart is now part of LSB (as of 1.9).
+        ## RH has a similar command named condrestart.
+        $0 status
+        if test $? = 0; then
+                $0 restart
+        else
+                rc_reset        # Not running is not a failure.
+        fi
+        # Remember status and be quiet
+        rc_status
+        ;;
+    restart)
+	## Stop the service and regardless of whether it was
+	## running or not, start it again.
+	$0 stop
+	sleep 3
+	$0 start
+
+	# Remember status and be quiet
+	rc_status
+	;;
+    reload)
+	for i in $piddir/*.pid; do
+		killproc -p $i -HUP $tracd || ret=false
+	done
+	rc_status -v
+	;;
+    reopen)
+	for i in $piddir/*.pid; do
+		killproc -p $i -USR1 $tracd || ret=false
+	done
+	rc_status -v
+	;;
+    status)
+	echo -n "Checking for $DAEMON: "
+	running=false
+	for i in $piddir/*.pid; do
+		running=true
+		#killproc -p $i -USR2 $tracd || { rv=$?; ret=false; }
+	done
+	if $running; then
+		$ret
+		rc_status -v
+	else
+		rc_failed 3
+		rc_status -v
+	fi
+	;;
+    *)
+	echo "Usage: $0 {start|stop|status|try-restart|restart|reload|reopen}"
+	exit 1
+esac
+rc_exit
