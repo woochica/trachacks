@@ -3,9 +3,9 @@ from StringIO import StringIO
 import re
 import string
 from trac.util import escape
+from trac.wiki.formatter import Formatter
 
 rules_re = re.compile(r"""(?P<heading>^\s*(?P<hdepth>=+)\s(?P<header>.*)\s(?P=hdepth)\s*$)""")
-anchor_re = re.compile('[^\w\d]+')
 
 def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=False):
     current_depth = min_depth
@@ -57,7 +57,7 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
                 out.write('<a href="%s">%s</a> : %s</li>\n' % (env.href.wiki(page), page, header))
                 break
             else:
-                default_anchor = anchor = anchor_re.sub("", header)
+                default_anchor = anchor = Formatter._anchor_re.sub("", header)
                 anchor_n = 1
                 while anchor in seen_anchors:
                     anchor = default_anchor + str(anchor_n)
