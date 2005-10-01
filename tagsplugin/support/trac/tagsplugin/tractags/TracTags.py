@@ -1,29 +1,74 @@
 # vim: expandtab
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
-from trac.web.chrome import ITemplateProvider
-from StringIO import StringIO
 from trac.wiki import wiki_to_html
+from StringIO import StringIO
+
+import sys
+import inspect
 import re
 import string
 
-import sys
-
 class ListTagsMacro(Component):
-    implements(IWikiMacroProvider,ITemplateProvider)
+    implements(IWikiMacroProvider)
 
     def get_macros(self):
         yield 'ListTags'
 
     def get_macro_description(self, name):
-        import inspect
+
         return inspect.getdoc(ListTagsMacro)
 
     def render_macro(self, req, name, content):
+        if name == "ListTags":
+           macro = ListTagsMacro()
+           
+        return macro.render(self,req,content)
+
+class TagsMacro:
+    def getInfo(self,db,tag,opts):
+        cs = db.cursor()
+        desc = tag
+        linktext = tag
+        # Get the latest revision only.
+        cs.execute('SELECT text from wiki where name = \'%s\' order by version desc limit 1' % tag)
+        csrow = cs.fetchone()
+        prefix = ''
+
+        if csrow != None:
+            text = csrow[0]
+            ret = re.search('=\s+([^=]*)=',text)
+            if ret == None :
+                    title = ''
+            else :
+                    title = ret.group(1)
+            ret = re.search('==\s+([^=]*)==',text)
+            if ret == None :
+                    subtitle = ''
+            else :
+                    subtitle = ret.group(1)
+            infos = {'pagename': tag, 'none': '', 'subtitle': subtitle, 'title': title}
+            desc = infos[opts['desc']]
+            linktext =  infos[opts['link']]
+        else:
+            prefix = "Create "
+
+        title = StringIO()
+        title.write("%s%s"%(prefix, desc))
+        if prefix != '' or desc == tag:
+           desc = ''
+
+        return (linktext,title.getvalue(),desc)
+    
+
+class ListTagsMacro(TagsMacro):
+    def render(self,component, req, content):
+        
+        self.env = component.env
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cs = db.cursor()
-        
+
         tags = [ ]
         opts = {'link': 'pagename', 'desc': 'title', 'showpages': 'false'}
         if content :
@@ -32,7 +77,7 @@ class ListTagsMacro(Component):
                 opt = optre.search(tag.strip())
                 if opt != None :
                    opts[opt.group(1)] = opt.group(2)
-                else : 
+                else :
                     tags.append(tag.strip())
 
         db = self.env.get_db_cnx()
@@ -113,47 +158,3 @@ class ListTagsMacro(Component):
         msg.write('</ul>')
 
         return msg.getvalue()
-
-    def getInfo(self,db,tag,opts):
-        cs = db.cursor()
-        desc = tag
-        linktext = tag
-        # Get the latest revision only.
-        cs.execute('SELECT text from wiki where name = \'%s\' order by version desc limit 1' % tag)
-        csrow = cs.fetchone()
-        prefix = ''
-
-        if csrow != None:
-            text = csrow[0]
-            ret = re.search('=\s+([^=]*)=',text)
-            if ret == None :
-                    title = ''
-            else :
-                    title = ret.group(1)
-            ret = re.search('==\s+([^=]*)==',text)
-            if ret == None :
-                    subtitle = ''
-            else :
-                    subtitle = ret.group(1)
-            infos = {'pagename': tag, 'none': '', 'subtitle': subtitle, 'title': title}
-            desc = infos[opts['desc']]
-            linktext =  infos[opts['link']]
-        else:
-            prefix = "Create "
-
-        title = StringIO()
-        title.write("%s%s"%(prefix, desc))
-        if prefix != '' or desc == tag:
-           desc = ''
-
-        return (linktext,title.getvalue(),desc)
-
-
-    # ITemplateProvider methods
-    def get_templates_dirs(self):
-        """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
