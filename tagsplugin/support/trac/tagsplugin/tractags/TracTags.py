@@ -1,6 +1,7 @@
 # vim: expandtab
 from trac.core import *
-from trac.wiki.api import IWikiMacroProvider, ITemplateProvider
+from trac.wiki.api import IWikiMacroProvider
+from trac.web.chrome import ITemplateProvider
 
 import sys
 
