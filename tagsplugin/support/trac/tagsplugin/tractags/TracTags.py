@@ -2,6 +2,10 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.web.chrome import ITemplateProvider
+from StringIO import StringIO
+from trac.wiki import wiki_to_html
+import re
+import string
 
 import sys
 
@@ -16,10 +20,6 @@ class ListTagsMacro(Component):
         return inspect.getdoc(ListTagsMacro)
 
     def render_macro(self, req, name, content):
-        from StringIO import StringIO
-        from trac.wiki import wiki_to_html
-        import re
-        import string
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cs = db.cursor()
@@ -40,7 +40,7 @@ class ListTagsMacro(Component):
         msg = StringIO()
 
         if tags:
-            return wParameters(req.hdf,tags,opts,self.env,db,cursor)
+            return self.wParameters(req.hdf,tags,opts,db,cursor)
         
         else:
             buf = StringIO()
@@ -57,7 +57,7 @@ class ListTagsMacro(Component):
               tag = row[0]
               refcount = int(row[1])
 
-              (linktext,title,desc) = getInfo(db,tag,opts)
+              (linktext,title,desc) = self.getInfo(db,tag,opts)
 
               link = self.env.href.wiki(tag)
 
@@ -67,13 +67,13 @@ class ListTagsMacro(Component):
 
               if opts['showpages'] == 'true' :
                     t = [ tag ]
-                    msg.write(wParameters(req.hdf,t,opts,env,db,db.cursor()))
+                    msg.write(self.wParameters(req.hdf,t,opts,db,db.cursor()))
 
         msg.write('</ul>')
 
         return msg.getvalue()
 
-    def wParameters(hdf,tags,opts,env,db,cursor):
+    def wParameters(self,hdf,tags,opts,db,cursor):
         buf = StringIO()
         criteria = StringIO()
 
@@ -102,9 +102,9 @@ class ListTagsMacro(Component):
             if row == None:
                 break
             tag = row[0]
-            (linktext,title,desc) = getInfo(db,tag,opts)
+            (linktext,title,desc) = self.getInfo(db,tag,opts)
 
-            link = env.href.wiki(tag)
+            link = self.env.href.wiki(tag)
 
             msg.write('<li><a title="%s" href="%s">' % (title,link))
             msg.write(linktext)
@@ -114,7 +114,7 @@ class ListTagsMacro(Component):
 
         return msg.getvalue()
 
-    def getInfo(db,tag,opts):
+    def getInfo(self,db,tag,opts):
         cs = db.cursor()
         desc = tag
         linktext = tag
