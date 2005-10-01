@@ -8,10 +8,10 @@ class ListTagsMacro(Component):
     implements(IWikiMacroProvider,ITemplateProvider)
 
     def get_macros(self):
-        self.log.debug('Registering tags macros')
         yield 'ListTags'
 
     def get_macro_description(self, name):
+        import inspect
         return inspect.getdoc(ListTagsMacro)
 
     def render_macro(self, req, name, content):
@@ -154,6 +154,5 @@ class ListTagsMacro(Component):
         Return the absolute path of the directory containing the provided
         ClearSilver templates.
         """
-        self.log.debug("Registering tag template directories")
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
