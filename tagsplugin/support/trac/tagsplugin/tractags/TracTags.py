@@ -16,13 +16,36 @@ class ListTagsMacro(Component):
         yield 'ListTags'
 
     def get_macro_description(self, name):
-
         return inspect.getdoc(ListTagsMacro)
 
     def render_macro(self, req, name, content):
-        if name == "ListTags":
-           macro = ListTagsMacro()
-           
+        macro = ListTags()           
+        return macro.render(self,req,content)
+
+class TagCloudMacro(Component):
+    implements(IWikiMacroProvider)
+
+    def get_macros(self):
+        yield 'TagCloud'
+
+    def get_macro_description(self, name):
+        return inspect.getdoc(TagCloudMacro)
+
+    def render_macro(self, req, name, content):
+        macro = TagCloud()           
+        return macro.render(self,req,content)
+
+class TagItMacro(Component):
+    implements(IWikiMacroProvider)
+
+    def get_macros(self):
+        yield 'TagIt'
+
+    def get_macro_description(self, name):
+        return inspect.getdoc(TagItMacro)
+
+    def render_macro(self, req, name, content):
+        macro = TagIt()           
         return macro.render(self,req,content)
 
 class TagsMacro:
@@ -60,10 +83,8 @@ class TagsMacro:
 
         return (linktext,title.getvalue(),desc)
     
-
-class ListTagsMacro(TagsMacro):
+class ListTags(TagsMacro):
     def render(self,component, req, content):
-        
         self.env = component.env
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -158,3 +179,135 @@ class ListTagsMacro(TagsMacro):
         msg.write('</ul>')
 
         return msg.getvalue()
+
+class TagCloud(TagsMacro):
+    def render(self,component, req, content):
+        self.env = component.env
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cs = db.cursor()
+
+        opts = { 'smallest' : 10, 'biggest' : 22}
+        
+        if content :
+            optre = re.compile("([^=]+)=(.+)")
+            for tag in content.split(',') :
+                opt = optre.search(tag.strip())
+                if opt != None :
+                   opts[opt.group(1)] = opt.group(2)
+
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        msg = StringIO()
+
+        buf = StringIO()
+        buf.write('SELECT namespace, COUNT(*) FROM wiki_namespace ')
+
+        cursor.execute(buf.getvalue() + ' GROUP BY namespace ORDER BY namespace')
+
+        minimum = 10000
+        maximum = 0
+        tags = { }
+
+        while 1:
+              row = cursor.fetchone()
+              if row == None:
+                 break
+
+              tag = row[0]
+              refcount = int(row[1])
+
+              tags[tag] = refcount
+
+              if refcount < minimum :
+                 minimum = refcount
+              if refcount > maximum :
+                 maximum = refcount
+
+        r = maximum - minimum + 1
+
+        smallest = float(opts['smallest'])
+        biggest = float(opts['biggest'])
+
+        slots = (biggest - smallest) + 1
+
+        mult = float(slots)/float(r)
+
+        keys = tags.keys()
+        keys.sort(lambda x, y: cmp(x, y))
+        first = True
+        for tag in keys :
+            count = tags[tag]
+            size = smallest + ((count - minimum)* mult)
+
+            if first is False :
+                msg.write(", ")
+            else :
+                first = False
+            msg.write("<span style=\"font-size:%spx\">" % (size))
+            (linktext,title,link) = (tag,tags[tag],self.env.href.wiki(tag))
+            msg.write('<a rel=\"tag\" href="%s">' % (link))
+            msg.write(linktext)
+            msg.write('</a> </span> (%s)' % (count))
+        return msg.getvalue()
+
+class TagIt(TagsMacro):
+    def render(self,component, req, content):
+        self.env = component.env
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        tags = [ ]
+
+        opts = {'link': 'pagename', 'desc': 'title', 'showpages': 'false'}
+        if content :
+            optre = re.compile("([^=]+)=(.+)")
+            for tag in content.split(',') :
+                opt = optre.search(tag.strip())
+                if opt != None :
+                   opts[opt.group(1)] = opt.group(2)
+                else :
+                    tags.append(tag.strip())
+
+        current = req.hdf.getValue('wiki.page_name', '')
+
+        sql = 'DELETE FROM wiki_namespace where name = \'%s\' ' % current
+        cursor.execute(sql)
+
+        buf = StringIO()
+
+        for tag in tags:
+            if (tag != ""):
+               sql = 'INSERT INTO wiki_namespace(name,namespace) values(\'%s\',\'%s\')' % (current,tag)
+               cursor.execute(sql)
+
+        db.commit()
+
+        buf.write('SELECT namespace FROM wiki_namespace WHERE wiki_namespace.name=\'%s\' ORDER by namespace' % current)
+
+        cursor.execute(buf.getvalue())
+
+        msg = StringIO()
+        msg.write("Tags:")
+
+        count = 0;
+
+        while 1:
+            row = cursor.fetchone()
+            if row == None:
+                break
+
+            tag = row[0]
+            (linktext,title,desc) = self.getInfo(db,tag,opts)
+
+            link = self.env.href.wiki(tag)
+
+            count = count + 1
+            msg.write('<a title="%s" href="%s" rel="tag">' % (title, link))
+            msg.write(linktext)
+            msg.write('</a> \n')
+
+        if (count > 0):
+            return (msg.getvalue()[0:-2] + ('.'))
+        else:
+            return ""
