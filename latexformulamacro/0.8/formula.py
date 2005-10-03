@@ -3,6 +3,8 @@ Convert a latex formula into an image.
 by Valient Gough <vgough@pobox.com>
 
 Changes:
+    2005-09-21:
+	* add #center and #indent options to add html formatting around image.
     2005-08-02:
 	* remove hard-coded paths, read from configuration. Fixes #26
     2005-07-27:
@@ -33,16 +35,25 @@ Usage:
 [latex code]
 }}}
 
-or, a density can be specified:
+or, additional keywords can be specified before the latex code:
 {{{
 #!formula
 #density=100
 [latex code]
 }}}
 
-Options:
-    Density defaults to 100.  Larger values produces larger images.
-    Density is optional, but if it is include, it must be included first.
+Optional keywords (must be specified before the latex code):
+    #density=100
+	Density defaults to 100.  Larger values produces larger images.
+    #nomode
+	Disable the default display mode setting.  Use this if you want to
+	include things outside of tex's display mode.	
+    #center
+	Center image on the page.
+    #indent [=class name]
+	places image link in a paragraph <p>...</p>
+	If class name is specified, then it is used to specify a CSS class for
+	the paragraph.
 
 Notes:
     A matrix macro is included in the tex code.  This allows you to do things
@@ -77,12 +88,12 @@ import sha
 
 def render(hdf, env, texData, density, mathMode):
     # gets paths from configuration
-    tmpdir = env.get_config('latex', 'temp_dir');
-    imagePath = env.get_config('latex', 'image_path');
-    displayPath = env.get_config('latex', 'display_path');
+    tmpdir = env.get_config('latex', 'temp_dir')
+    imagePath = env.get_config('latex', 'image_path')
+    displayPath = env.get_config('latex', 'display_path')
 
     if not tmpdir or not imagePath or not displayPath:
-	return "<b>Error: missing configuration settings in 'latex' macro</b><br>";
+	return "<b>Error: missing configuration settings in 'latex' macro</b><br>"
 
     path = tmpdir # + hdf.getValue("project.name.encoded", "default")
     # create temporary directory if necessary
@@ -94,13 +105,13 @@ def render(hdf, env, texData, density, mathMode):
     
     # generate final image name.  Use a hash of the parameters which affect
     # the image, so we don't have to recreate it unless they change.
-    hash = sha.new(texData);
+    hash = sha.new(texData)
     hash.update( "%d" % density )
     hash.update( outputVersion )
     name = hash.hexdigest()
     jpgFile = "%s/%s.jpg" % (imagePath, name)
 
-    log = "<br>";
+    log = "<br>"
     if not os.path.exists(jpgFile):
 	# latex writes out lots of stuff to the current directory, so we have
 	# to run it from there.
@@ -128,7 +139,6 @@ def render(hdf, env, texData, density, mathMode):
 
     html = "<img src='%s/%s.jpg' border='0' style='vertical-align: middle;' alt='formula' />" % (displayPath, name)
     return html
-    #return log;
 
 def execprog(cmd):
     os.system( cmd )
@@ -167,6 +177,9 @@ def execute(hdf, text, env):
     # defaults
     density = 100
     mathMode = 1 #default to using display-math mode
+    centerImage = 0
+    indentImage = 0
+    indentClass = ""
 
     # find some number of arguments, followed by the formula
     command = re.compile('^#([^=]+)=?(.*)')
@@ -179,14 +192,25 @@ def execute(hdf, text, env):
 		density = int(m.group(2))
 	    elif m.group(1) == "nomode":
 		mathMode = 0
+	    elif m.group(1) == "center":
+		centerImage = 1
+	    elif m.group(1) == "indent":
+		indentImage = 1
+		indentClass = m.group(2)
 	    else:
 		errors = '<br>Unknown <i>formula</i> command "%s"<br>' % m.group(1)
 	else:
 	    formula += line + "\n"
 
+    format = '%s'
+    if centerImage:
+	format = '<center>%s</center>' % format
+    if indentImage:
+	if indentClass:
+	    format = '<p class="%s">%s</p>' % (indentClass, format)
+	else:
+	    format = '<p>%s</p>' % format
+    
     result = errors + render(hdf, env, formula, density, mathMode) 
-    #result += "<br> density = %d" % density
-    #result += "<br>text: %s" % formula
-    return result;
-
+    return format % result
 
