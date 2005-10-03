@@ -3,6 +3,9 @@ Convert a latex formula into an image.
 by Valient Gough <vgough@pobox.com>
 
 Changes:
+    2005-10-01:
+        * add #display and #fleqn options to add html formatting around image
+          (Christian Marquardt).
     2005-09-21:
 	* add #center and #indent options to add html formatting around image.
     2005-08-02:
@@ -27,6 +30,10 @@ Installation:
 	image_path = /var/www/html/formula
 	# display_path is URL where formula images can be accessed
 	display_path = http://foo.net/formula
+        # Set to 1 for fleqn style equations (default is centered)
+        fleqn = 0
+        # Indentation width for fleqn style equations
+        fleqn_width = '5%'
 
 Usage:
 
@@ -47,9 +54,15 @@ Optional keywords (must be specified before the latex code):
 	Density defaults to 100.  Larger values produces larger images.
     #nomode
 	Disable the default display mode setting.  Use this if you want to
-	include things outside of tex's display mode.	
+	include things outside of tex's display mode.
+    #display
+        Create a displayed equation (either centered or fleqn style,
+        depending on the fleqn variable in the config file.
     #center
-	Center image on the page.
+	Center the equation on the page.
+    #fleqn
+        fleqn style equation; indentation is controlled by fleqn_witdh in
+        conf/trac.ini.
     #indent [=class name]
 	places image link in a paragraph <p>...</p>
 	If class name is specified, then it is used to specify a CSS class for
@@ -86,14 +99,18 @@ import os
 import sha
 
 
-def render(hdf, env, texData, density, mathMode):
+def render(hdf, env, texData, density, fleqnMode, mathMode):
     # gets paths from configuration
     tmpdir = env.get_config('latex', 'temp_dir')
     imagePath = env.get_config('latex', 'image_path')
     displayPath = env.get_config('latex', 'display_path')
+    fleqnIndent = env.get_config('latex', 'fleqn_indent')
 
     if not tmpdir or not imagePath or not displayPath:
 	return "<b>Error: missing configuration settings in 'latex' macro</b><br>"
+
+    if not fleqnIndent:
+        fleqnIndent = '5%'
 
     path = tmpdir # + hdf.getValue("project.name.encoded", "default")
     # create temporary directory if necessary
@@ -137,7 +154,12 @@ def render(hdf, env, texData, density, mathMode):
 	cmd = "convert -antialias -density %ix%i %s %s" % (density, density, epsFile, jpgFile)
 	log += execprog( cmd )
 
-    html = "<img src='%s/%s.jpg' border='0' style='vertical-align: middle;' alt='formula' />" % (displayPath, name)
+    if fleqnMode:
+        margin = " margin-left: %s" % fleqnIndent
+    else:
+	margin = ""
+        
+    html = "<img src='%s/%s.jpg' border='0' style='vertical-align: middle;%s' alt='formula' />" % (displayPath, name, margin)
     return html
 
 def execprog(cmd):
@@ -147,6 +169,8 @@ def execprog(cmd):
 def makeTexFile(texFile, texData, mathMode):
     tex = "\\batchmode\n"
     tex += "\\documentclass{article}\n"
+    tex += "\\usepackage{amsmath}\n"
+    tex += "\\usepackage{amssymb}\n"
     tex += "\\usepackage{epsfig}\n"
     tex += "\\pagestyle{empty}\n"
     # matrix macro
@@ -176,13 +200,15 @@ def execute(hdf, text, env):
     
     # defaults
     density = 100
-    mathMode = 1 #default to using display-math mode
+    mathMode = 1    # default to using display-math mode for LaTeX processing
+    displayMode = 0 # default to generating inline formula
+    fleqnMode   = env.get_config('latex', 'fleqn')
     centerImage = 0
     indentImage = 0
     indentClass = ""
 
     # find some number of arguments, followed by the formula
-    command = re.compile('^#([^=]+)=?(.*)')
+    command = re.compile('^\s*#([^=]+)=?(.*)')
     formula = ""
     errors = ""
     for line in text.split("\n"):
@@ -194,14 +220,28 @@ def execute(hdf, text, env):
 		mathMode = 0
 	    elif m.group(1) == "center":
 		centerImage = 1
+                fleqnMode   = 0
 	    elif m.group(1) == "indent":
 		indentImage = 1
 		indentClass = m.group(2)
+	    elif m.group(1) == "display":
+		displayMode = 1
+	    elif m.group(1) == "fleqn":
+                displayMode = 1
+		fleqnMode   = 1
 	    else:
 		errors = '<br>Unknown <i>formula</i> command "%s"<br>' % m.group(1)
 	else:
 	    formula += line + "\n"
 
+    # Set display and fleqn defaults
+    if displayMode:
+        if fleqnMode:
+            centerImage = 0
+        else:
+            centerImage = 1
+
+    # Render formula
     format = '%s'
     if centerImage:
 	format = '<center>%s</center>' % format
@@ -211,6 +251,6 @@ def execute(hdf, text, env):
 	else:
 	    format = '<p>%s</p>' % format
     
-    result = errors + render(hdf, env, formula, density, mathMode) 
+    result = errors + render(hdf, env, formula, density, fleqnMode, mathMode) 
     return format % result
 
