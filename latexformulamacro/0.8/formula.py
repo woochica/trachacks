@@ -3,6 +3,12 @@ Convert a latex formula into an image.
 by Valient Gough <vgough@pobox.com>
 
 Changes:
+    2005-10-03:
+	* make image format selectable via 'image_format' configuration option
+	  (defaults to 'jpg')
+	* allow paths to executables to be specified in configuration by
+	  setting 'latex_path', 'dvips_path', 'convert_path' to point to
+	  executable. Based on code by Reed Cartwright.
     2005-10-01:
         * add #display and #fleqn options to add html formatting around image
           (Christian Marquardt).
@@ -105,12 +111,28 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
     imagePath = env.get_config('latex', 'image_path')
     displayPath = env.get_config('latex', 'display_path')
     fleqnIndent = env.get_config('latex', 'fleqn_indent')
+    latexPath = env.get_config('latex', 'latex_path')
+    dvipsPath = env.get_config('latex', 'dvips_path')
+    convertPath = env.get_config('latex', 'convert_path')
+    texMag = env.get_config('latex', 'mag')
+    imageFormat = env.get_config('latex', 'image_format')
 
     if not tmpdir or not imagePath or not displayPath:
 	return "<b>Error: missing configuration settings in 'latex' macro</b><br>"
 
+    # set defaults
     if not fleqnIndent:
         fleqnIndent = '5%'
+    if not latexPath:
+	latexPath = 'latex'
+    if not dvipsPath:
+	dvipsPath = 'dvips'
+    if not convertPath:
+	convertPath = 'convert'
+    if not texMag:
+	texMag = '1' # TODO: need a reasonable default here..
+    if not imageFormat:
+	imageFormat = 'jpg'
 
     path = tmpdir # + hdf.getValue("project.name.encoded", "default")
     # create temporary directory if necessary
@@ -126,32 +148,32 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
     hash.update( "%d" % density )
     hash.update( outputVersion )
     name = hash.hexdigest()
-    jpgFile = "%s/%s.jpg" % (imagePath, name)
+    imageFile = "%s/%s.%s" % (imagePath, name, imageFormat)
 
     log = "<br>"
-    if not os.path.exists(jpgFile):
+    if not os.path.exists(imageFile):
 	# latex writes out lots of stuff to the current directory, so we have
 	# to run it from there.
 	cwd = os.getcwd()
 	os.chdir(path)
 
 	texFile = name + ".tex"
-	makeTexFile(texFile, texData, mathMode)
+	makeTexFile(texFile, texData, mathMode, texMag)
 
 	# the output from latex on stdout seems to cause problems, so sent it
 	# to /dev/null
-	cmd = "latex %s > /dev/null" % texFile
+	cmd = "%s %s > /dev/null" % (latexPath, texFile)
 	log += execprog( cmd )
 	os.chdir(cwd)
 
 	# use dvips to convert to eps
 	dviFile = "%s/%s.dvi" % (path, name)
 	epsFile = "%s/%s.eps" % (path, name)
-	cmd = "dvips -q -D 600 -E -n 1 -p 1 -o %s %s" % (epsFile, dviFile)
+	cmd = "%s -q -D 600 -E -n 1 -p 1 -o %s %s" % (dvipsPath, epsFile, dviFile)
 	log += execprog( cmd )
 
-	# and finally, ImageMagick to convert from eps to jpg
-	cmd = "convert -antialias -density %ix%i %s %s" % (density, density, epsFile, jpgFile)
+	# and finally, ImageMagick to convert from eps to [imageFormat] type
+	cmd = "%s -antialias -density %ix%i %s %s" % (convertPath, density, density, epsFile, imageFile)
 	log += execprog( cmd )
 
     if fleqnMode:
@@ -159,20 +181,22 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
     else:
 	margin = ""
         
-    html = "<img src='%s/%s.jpg' border='0' style='vertical-align: middle;%s' alt='formula' />" % (displayPath, name, margin)
+    html = "<img src='%s/%s.%s' border='0' style='vertical-align: middle;%s' alt='formula' />" % (displayPath, name, imageFormat, margin)
     return html
 
 def execprog(cmd):
     os.system( cmd )
     return cmd + "<br>"
 
-def makeTexFile(texFile, texData, mathMode):
+def makeTexFile(texFile, texData, mathMode, texMag):
     tex = "\\batchmode\n"
     tex += "\\documentclass{article}\n"
     tex += "\\usepackage{amsmath}\n"
     tex += "\\usepackage{amssymb}\n"
     tex += "\\usepackage{epsfig}\n"
     tex += "\\pagestyle{empty}\n"
+# TODO: magnification doesn't work correctly..
+    #tex += "\\mag=%s\n" % texMag
     # matrix macro
     tex += "\\newcommand{\\mat}[2][rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr]{\n"
     tex += "  \\left[\\begin{array}{#1}\n"
