@@ -2,51 +2,13 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import wiki_to_html
+from trac.env import IEnvironmentSetupParticipant
 from StringIO import StringIO
 
 import sys
 import inspect
 import re
 import string
-
-class ListTagsMacro(Component):
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'ListTags'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(ListTagsMacro)
-
-    def render_macro(self, req, name, content):
-        macro = ListTags()           
-        return macro.render(self,req,content)
-
-class TagCloudMacro(Component):
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'TagCloud'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(TagCloudMacro)
-
-    def render_macro(self, req, name, content):
-        macro = TagCloud()           
-        return macro.render(self,req,content)
-
-class TagItMacro(Component):
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'TagIt'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(TagItMacro)
-
-    def render_macro(self, req, name, content):
-        macro = TagIt()           
-        return macro.render(self,req,content)
 
 class TagsMacro:
     def getInfo(self,db,tag,opts):
@@ -311,3 +273,44 @@ class TagIt(TagsMacro):
             return (msg.getvalue()[0:-2] + ('.'))
         else:
             return ""
+
+class ListTagsMacro(Component):
+    implements(IWikiMacroProvider)
+
+    __tag_macros = {
+        'ListTags' : ListTags,
+        'TagCloud' : TagCloud,
+        'TagIt' : TagIt,
+    }
+
+    def get_macros(self):
+        return self.__tag_macros.keys()
+
+    def get_macro_description(self, name):
+        return inspect.getdoc(self.__tag_macros[name])
+
+    def render_macro(self, req, name, content):
+        macro = self.__tag_macros[name]()
+        return macro.render(self, req, content)
+
+class SetupTags(Component):
+    implements(IEnvironmentSetupParticipant)
+
+    def environment_needs_upgrade(self, db):
+        cursor = db.cursor()
+        try:
+            cursor.execute("select count(*) from wiki_namespace")
+            cursor.fetchone()
+        except:
+            return True
+
+    def upgrade_environment(self, db):
+        cursor = db.cursor()
+
+        sql = 'CREATE TABLE wiki_namespace(name text,namespace text)'
+        cursor.execute(sql)
+
+        sql = 'CREATE INDEX wiki_namespace_idx on wiki_namespace(name,namespace);'
+        cursor.execute(sql)
+
+        db.commit()
