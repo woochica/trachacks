@@ -54,9 +54,6 @@ class GeneralLinkSyntaxProvider(Component):
     _disp_suffix = '_disp'
     _url_suffix = '_url'
 
-    def __init__(self):
-        self._load_config()
-
     # private config operations
     def _get_config(self, key, default=None):
         return self.config.get(self._config_section, key, default)
@@ -67,29 +64,6 @@ class GeneralLinkSyntaxProvider(Component):
     def _remove_config(self, key):
         self.config.remove(self._config_section, key)
     
-    def _load_config(self):
-        self._links = {}
-        exposes = {}
-        for name in self._get_config('expose').split(','):
-            name = name.strip()
-            if name == '':
-                continue
-            exposes[name] = True
-            
-        for name in self._get_config('names', '').split(','):
-            name = name.strip()
-            if name == '':
-                continue
-            disp = self._get_config(name + self._disp_suffix, name)
-            url = self._get_config(name + self._url_suffix)
-            if not url:
-                raise TracError("No URL defined for '%s'" % name)
-            expose = exposes.has_key(name)
-            try:
-                self._internal_add(LinkInfo(name, expose, disp, url))
-            except TracError, e:
-                self.log.debug('LinkInfo Error: ' + str(e))
-
     # private util
 
     def _change_link(self, name, expose, disp, url):
@@ -120,6 +94,29 @@ class GeneralLinkSyntaxProvider(Component):
 
     # API
     
+    def load(self):
+        self._links = {}
+        exposes = {}
+        for name in self._get_config('expose').split(','):
+            name = name.strip()
+            if name == '':
+                continue
+            exposes[name] = True
+            
+        for name in self._get_config('names', '').split(','):
+            name = name.strip()
+            if name == '':
+                continue
+            disp = self._get_config(name + self._disp_suffix, name)
+            url = self._get_config(name + self._url_suffix)
+            if not url:
+                raise TracError("No URL defined for '%s'" % name)
+            expose = exposes.has_key(name)
+            try:
+                self._internal_add(LinkInfo(name, expose, disp, url))
+            except TracError, e:
+                self.log.debug('LinkInfo Error: ' + str(e))
+
     def get_links(self):
         """Return sorted link info"""
         names = [n for n in self._links]
@@ -138,8 +135,8 @@ class GeneralLinkSyntaxProvider(Component):
     def _internal_add(self, info):
         if self._links.has_key(info.name):
             raise TracError('Already exist: ' + info.name)
-        self.log.debug('Adding link: %s = (%s, %s, %s)' % \
-                       (info.name, info.expose, info.disp, info.url))
+        #self.log.debug('Adding link: %s = (%s, %s, %s)' % \
+        #               (info.name, info.expose, info.disp, info.url))
         self._links[info.name] = info;
 
     def add(self, name, expose, disp, url):
@@ -163,6 +160,7 @@ class GeneralLinkSyntaxProvider(Component):
     
     # IWikiSyntaxProvider methods
     def get_link_resolvers(self):
+        self.load()
         ret = [(self._common_ns, self._format_link)]
         for name in [x.name for x in self._links.values() if x.expose]:
             ret.append((name, self._format_exposed_link))

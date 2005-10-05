@@ -58,6 +58,7 @@ class LinkAdmin(Component):
         #   remove ... redirect to top
         
         prov = GeneralLinkSyntaxProvider(self.env)
+        prov.load();
         try:
             if name:
                 link =  prov.get_link(name)
@@ -110,7 +111,7 @@ class LinkAdmin(Component):
         # render current links
         links = []
         href = Href(base_href)
-        for link in GeneralLinkSyntaxProvider(self.env).get_links():
+        for link in prov.get_links():
             h = link.get_hash()
             h['href'] = href(link.get_name())
             links.append(h)
