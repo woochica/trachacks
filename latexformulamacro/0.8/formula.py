@@ -114,7 +114,7 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
     latexPath = env.get_config('latex', 'latex_path')
     dvipsPath = env.get_config('latex', 'dvips_path')
     convertPath = env.get_config('latex', 'convert_path')
-    texMag = env.get_config('latex', 'mag')
+    texMag = env.get_config('latex', 'text_mag')
     imageFormat = env.get_config('latex', 'image_format')
 
     if not tmpdir or not imagePath or not displayPath:
@@ -130,7 +130,7 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
     if not convertPath:
 	convertPath = 'convert'
     if not texMag:
-	texMag = '1' # TODO: need a reasonable default here..
+	texMag = 1000 # I'm told this is latex's default value
     if not imageFormat:
 	imageFormat = 'jpg'
 
@@ -145,7 +145,8 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
     # generate final image name.  Use a hash of the parameters which affect
     # the image, so we don't have to recreate it unless they change.
     hash = sha.new(texData)
-    hash.update( "%d" % density )
+    # include some options in the hash, as they affect the output image
+    hash.update( "%d %d" % (density, int(texMag)) ) 
     hash.update( outputVersion )
     name = hash.hexdigest()
     imageFile = "%s/%s.%s" % (imagePath, name, imageFormat)
@@ -195,8 +196,7 @@ def makeTexFile(texFile, texData, mathMode, texMag):
     tex += "\\usepackage{amssymb}\n"
     tex += "\\usepackage{epsfig}\n"
     tex += "\\pagestyle{empty}\n"
-# TODO: magnification doesn't work correctly..
-    #tex += "\\mag=%s\n" % texMag
+    tex += "\\mag=%s\n" % texMag
     # matrix macro
     tex += "\\newcommand{\\mat}[2][rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr]{\n"
     tex += "  \\left[\\begin{array}{#1}\n"
