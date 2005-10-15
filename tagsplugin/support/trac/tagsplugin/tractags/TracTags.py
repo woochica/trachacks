@@ -3,6 +3,7 @@ from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import wiki_to_html
 from trac.env import IEnvironmentSetupParticipant
+from trac.web.main import IRequestHandler
 from StringIO import StringIO
 
 import sys
@@ -314,3 +315,41 @@ class SetupTags(Component):
         cursor.execute(sql)
 
         db.commit()
+
+class TagsLi(Component):
+    implements(IRequestHandler)
+    
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info == '/tagli'
+                
+    def process_request(self, req):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cs = db.cursor()
+        tag = req.args.get('tag')
+        req.send_response(200)
+        req.send_header('Content-Type', 'text/plain')
+        req.end_headers()
+        buf = StringIO()
+        if tag:
+            buf.write('WHERE namespace LIKE \'%s%s\'' % (tag,'%'))
+            
+        cursor.execute('SELECT DISTINCT namespace FROM wiki_namespace %s ORDER BY namespace' % (buf.getvalue()))
+
+        msg = StringIO()
+
+        msg.write('<ul>')
+        while 1:
+            row = cursor.fetchone()
+            if row == None:
+                 break
+
+            t = row[0]
+            msg.write('<li>')
+            msg.write(t)
+            msg.write('</li>')
+
+        msg.write('</ul>')
+
+        req.write(msg.getvalue())        
