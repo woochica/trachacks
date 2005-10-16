@@ -352,8 +352,6 @@ class TagsLi(Component):
             msg.write('</li>')
 
         msg.write('</ul>')
-        req.write(__name__)
-        return
         req.write(msg.getvalue())
 
     def get_templates_dirs(self):
