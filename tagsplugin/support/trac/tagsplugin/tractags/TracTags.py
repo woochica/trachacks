@@ -4,6 +4,7 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import wiki_to_html
 from trac.env import IEnvironmentSetupParticipant
 from trac.web.main import IRequestHandler
+from trac.web.chrome import ITemplateProvider
 from StringIO import StringIO
 
 import sys
@@ -317,7 +318,7 @@ class SetupTags(Component):
         db.commit()
 
 class TagsLi(Component):
-    implements(IRequestHandler)
+    implements(IRequestHandler,ITemplateProvider)
     
     # IRequestHandler methods
     def match_request(self, req):
@@ -351,5 +352,22 @@ class TagsLi(Component):
             msg.write('</li>')
 
         msg.write('</ul>')
+        req.write(__name__)
+        return
+        req.write(msg.getvalue())
 
-        req.write(msg.getvalue())        
+    def get_templates_dirs(self):
+        """
+        Return the absolute path of the directory containing the provided
+        ClearSilver templates.
+        """
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+    def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
+        from pkg_resources import resource_filename
+        return [('tagsupport', resource_filename(__name__, 'htdocs'))]
+    
