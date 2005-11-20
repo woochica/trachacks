@@ -64,9 +64,11 @@ class PerforceStream(object):
 
     def __init__(self, content):
         self.content = content
+        self.pos = 0
 
     def read(self, amt=None):
-        return self.content[:amt]
+        self.pos += int(amt)
+        return self.content[self.pos-int(amt):self.pos]
 
 
 
@@ -87,7 +89,7 @@ class PerforceRepository(Repository):
             self.p4c.connect()
             # cache the first few changes
             self.history = []
-            changes = self.p4c.run("changes", "-m", "options['maxItems']", "-s", "submitted")
+            changes = self.p4c.run("changes", "-m", "options['max_changes']", "-s", "submitted")
             for change in changes:
                 self.history.append(change['change'])
 
@@ -286,7 +288,7 @@ class PerforceNode(Node):
 
         #self.log.debug("*** content =  %s" % (cmd))
         type = self.p4c.run("fstat", cmd)
-        if type[0]['headType'].startswith('binary') == True:
+        if type[0]['headType'].startswith('binary') == True or type[0]['headType'].startswith('ubinary') == True:
             file = self.p4c.run("print", "-o", TmpFileName, cmd)
             f = open(TmpFileName, 'rb')
             self.content = f.read()
@@ -410,7 +412,7 @@ class PerforceNode(Node):
         type = self.p4c.run("fstat", "-Ol", self.path)
         if type[0]['headAction'].startswith('delete') == True:
             return 0
-        #self.log.debug("*** get_content_length = %s" % type)
+        #self.log.debug("*** get_content_length = %s %d" % (type, int(type[0]['fileSize'])) )
         return int(type[0]['fileSize'])
 
 
@@ -418,9 +420,9 @@ class PerforceNode(Node):
         #self.log.debug("*** get_content_type = %s  rev = %s" % (self.path, self.rev))
         if self.isdir:
             return None
-            change = self.p4c.run("fstat", self.path)[0]
-            if change['headType'].startswith('binary') == True:
-                return 'application/octet-stream'
+        change = self.p4c.run("fstat", self.path)[0]
+        if change['headType'].startswith('binary') == True or change['headType'].startswith('ubinary') == True:
+            return 'application/octet-stream'
         return None
 
 
