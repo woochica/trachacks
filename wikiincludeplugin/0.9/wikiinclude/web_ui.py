@@ -13,6 +13,8 @@ from trac.core import *
 from trac.wiki.formatter import wiki_to_html
 from trac.wiki.api import IWikiMacroProvider, WikiSystem
 
+import inspect
+
 __all__ = ['WikiIncludeMacro']
 
 class WikiIncludeMacro(Component):
@@ -31,7 +33,7 @@ class WikiIncludeMacro(Component):
         yield 'WikiInclude'
 
     def get_macro_description(self, name):
-        return inspect.getdoc(MacroListMacro)
+        return inspect.getdoc(WikiIncludeMacro)
 
     def render_macro(self, req, name, txt):
 	db = self.env.get_db_cnx()
