@@ -67,6 +67,8 @@ class PerforceStream(object):
         self.pos = 0
 
     def read(self, amt=None):
+        if amt == None:
+            return self.content[:amt]
         self.pos += int(amt)
         return self.content[self.pos-int(amt):self.pos]
 
@@ -152,6 +154,7 @@ class PerforceRepository(Repository):
                 path2 = path.rstrip('...')
                 dir = self.p4c.run("dirs", path2)
             else:
+                #path = "\"" + path + "\""
                 dir = self.p4c.run("dirs", path)
 
             if len(dir) != 0:
@@ -326,16 +329,11 @@ class PerforceNode(Node):
         #self.log.debug("---    dirs = '%s'" % (dirs))
 
         for dir in dirs:
-            myDir = _add_rev_to_path(dir['dir'] + "...", self.rev)
-            logs = self.p4c.run("fstat", myDir)
-            revs = []
-            for myLog in logs:
-                newRev = int(myLog['headChange'])
-                if not newRev in revs:
-                    revs.append(newRev)
-            revs.sort()
+            mydir = _add_rev_to_path(dir['dir'] + "...", self.rev)
+            changes = self.p4c.run("changes", "-m 1 -status submitted", mydir)
+            maxrev = str(changes[0]["change"])
 
-            yield PerforceNode(dir['dir'], str(revs[-1]), self.p4c, self.log, Node.DIRECTORY)
+            yield PerforceNode(dir['dir'], maxrev, self.p4c, self.log, Node.DIRECTORY)
 
         if self.path != '/':
             files = self.p4c.run("files", path)
