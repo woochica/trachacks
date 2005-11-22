@@ -78,26 +78,38 @@ class PerforceRepository(Repository):
     """
     Repository implementation for perforce
     """
+    p4c = 0
+    p4init = 0
 
     def __init__(self, name, log, options):
+        #log.debug("*** __init__ repository (is init: %d)" % (self.__class__.p4init))
         Repository.__init__(self, name, None, log)
-        self.p4c = p4.P4()
-        self.p4c.port = options['port']
-        self.p4c.user = options['user']
-        self.p4c.client = options['client']
-        self.p4c.password = options['passwd']
-        self.p4c.parse_forms()
+        if self.__class__.p4init == 0:
+            self.__class__.p4init = 1
+            self.__class__.p4c = p4.P4()
+            self.__class__.p4c.port = options['port']
+            self.__class__.p4c.user = options['user']
+            self.__class__.p4c.client = options['client']
+            self.__class__.p4c.password = options['passwd']
+            self.__class__.p4c.parse_forms()
+            try:
+                self.__class__.p4c.connect()
+            except self.__class__.p4c.P4Error:
+                for e in p4.errors:
+                    self.log.debug(e)
+                self.__class__.p4init = 0
+
         try:
-            self.p4c.connect()
             # cache the first few changes
             self.history = []
-            changes = self.p4c.run("changes", "-m", "options['max_changes']", "-s", "submitted")
+            changes = self.__class__.p4c.run("changes", "-m", "options['max_changes']", "-s", "submitted")
             for change in changes:
                 self.history.append(change['change'])
 
-        except self.p4c.P4Error:
+        except self.__class__.p4c.P4Error:
             for e in p4.errors:
                 self.log.debug(e)
+            self.__class__.p4init = 0
 
 
     def close(self):
@@ -115,14 +127,14 @@ class PerforceRepository(Repository):
         change = { }
         try:
             if rev != None:
-                change = self.p4c.run_describe(str(rev))[0]
+                change = self.__class__.p4c.run_describe(str(rev))[0]
             else:
                 young = self.get_youngest_rev()
-                change = self.p4c.run_describe(str(young))[0]
-        except self.p4c.P4Error:
+                change = self.__class__.p4c.run_describe(str(young))[0]
+        except self.__class__.p4c.P4Error:
             for e in p4.errors:
                 self.log.debug(e)
-        return PerforceChangeset(self.p4c, rev, change, self.log)
+        return PerforceChangeset(self.__class__.p4c, rev, change, self.log)
 
 
     def has_node(self, path, rev):
@@ -152,10 +164,10 @@ class PerforceRepository(Repository):
 
             if path.endswith("...") == True:
                 path2 = path.rstrip('...')
-                dir = self.p4c.run("dirs", path2)
+                dir = self.__class__.p4c.run("dirs", path2)
             else:
                 #path = "\"" + path + "\""
-                dir = self.p4c.run("dirs", path)
+                dir = self.__class__.p4c.run("dirs", path)
 
             if len(dir) != 0:
                 kind = Node.DIRECTORY
@@ -163,7 +175,7 @@ class PerforceRepository(Repository):
                 kind = Node.FILE
         else:
             kind = Node.DIRECTORY
-        return PerforceNode(path, rev, self.p4c, self.log, kind)
+        return PerforceNode(path, rev, self.__class__.p4c, self.log, kind)
 
 
     def get_oldest_rev(self):
@@ -175,12 +187,12 @@ class PerforceRepository(Repository):
         """
         Return the youngest revision in the repository.
         """
-        rev = self.p4c.run("changes", "-m", "1", "-s", "submitted")[0]['change']
+        rev = self.__class__.p4c.run("changes", "-m", "1", "-s", "submitted")[0]['change']
         #self.log.debug("*** get_youngest_rev rev = %s" % (rev))
 
         if rev != self.history[0]:
             count = int(rev) - int(self.history[0])
-            changes = self.p4c.run("changes", "-m", count, "-s", "submitted")
+            changes = self.__class__.p4c.run("changes", "-m", count, "-s", "submitted")
             idx = 0
             for change in changes:
                 num = change['change']
@@ -244,7 +256,7 @@ class PerforceRepository(Repository):
             if path.startswith("//") == False:
                 path = path.rstrip('/')
                 path = '/' + path
-            dir = self.p4c.run("dirs", path)
+            dir = self.__class__.p4c.run("dirs", path)
             if len(dir) != 0:
                 kind = Node.DIRECTORY
             else:
