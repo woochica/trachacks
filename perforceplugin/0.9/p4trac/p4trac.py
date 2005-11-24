@@ -241,8 +241,16 @@ class PerforceRepository(Repository):
         Retrieve all the revisions containing this path (no newer than 'rev').
         The result format should be the same as the one of Node.get_history()
         """
-        #self.log.debug("get_path_history =  %s %s %s" % (path, rev, limit))
-        raise NotImplementedError
+        histories = []
+        cmd = _add_rev_to_path('/' + _normalize_path(path), rev)
+        #self.log.debug("*** get_path_history = %s  %s" % (cmd, limit))
+        logs = self.p4c.run("changes", "-s", "submitted", "-L", "-m", str(limit), cmd)
+        for myLog in logs:
+            #self.log.debug("*** get_path_history logs %s %s %s" % (cmd, myLog, cmd))
+            histories.append([path, myLog['change'], Changeset.ADD])
+
+        for c in histories:
+            yield tuple(c)
 
 
     def normalize_path(self, path):
@@ -472,7 +480,7 @@ class PerforceChangeset(Changeset):
         #self.log.debug("*** get_changes = %s" % (self.change))
         files = self.change['depotFile']
         changes = []
-        
+
         index = 0
         for file in files:
             #rev = self.change['rev'][index]
@@ -480,7 +488,7 @@ class PerforceChangeset(Changeset):
             action = self.change['action'][index]
             #self.log.debug("*** get_changes %s %s %s" % (file, action, rev))
 
-            if action == 'integrate':
+            if action == 'integrate' or action == 'branch':
                 filelog = self.p4c.run("filelog", "-m", "1", file)
                 action = Changeset.COPY
                 changes.append([file, Node.FILE, action, filelog[0]['file'][0][0], rev])
