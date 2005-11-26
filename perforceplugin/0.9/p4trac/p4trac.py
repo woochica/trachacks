@@ -379,30 +379,35 @@ class PerforceNode(Node):
         cmd = _add_rev_to_path(_normalize_path(self.path), self.rev)
         #self.log.debug("*** get_history = %s  %s" % (cmd, limit))
         if self.isfile:
-            logs = self.p4c.run("filelog", "-m", str(limit), cmd)
+            logs = self.p4c.run("filelog", "-m", str(limit), "-i", cmd)
             #self.log.debug("*** get_history logs %s" % (logs))
-            index = 0
-            while index < len(logs[0]['rev']):
-                chg = Changeset.EDIT
-                path = self.path
-                rev = logs[0]['change'][index]
-                action = logs[0]['action'][index]
-    
-                if action == 'add':
-                    chg = Changeset.ADD
-                elif action == 'integrate':
-                    chg = Changeset.COPY
-                elif action == 'branch':
-                    chg = Changeset.COPY
-                    histories.append([path, rev, chg])
-                    path = logs[0]['file'][index][0]
+            idx = 0
+            while idx < len(logs):
+                index = 0
+                while index < len(logs[idx]['rev']):
+                    #self.log.debug("*** get_history logs %d %s" % (idx, logs[idx]))
                     chg = Changeset.EDIT
-                    rev = str(int(rev) - 1)
-                elif action == 'delete':
-                    chg = Changeset.DELETE
-                
-                histories.append([path, rev, chg])
-                index += 1
+                    path = self.path
+                    rev = logs[idx]['change'][index]
+                    action = logs[idx]['action'][index]
+
+                    if action == 'add':
+                        chg = Changeset.ADD
+                    elif action == 'integrate':
+                        chg = Changeset.COPY
+                    elif action == 'branch':
+                        chg = Changeset.COPY
+                        #histories.append([path, rev, chg])
+                        path = logs[idx]['file'][index][0]
+                        #chg = Changeset.EDIT
+                        #rev = str(int(rev) - 1)
+                    elif action == 'delete':
+                        chg = Changeset.DELETE
+
+                    histories.append([path, rev, chg])
+                    index += 1
+                idx += 1
+            #self.log.debug("*** get_history entries %s" % (histories))
         else:
             logs = self.p4c.run("changes", "-s", "submitted", "-L", "-m", str(limit), cmd)
             #self.log.debug("*** get_history logs %s %s %s" % (self.path, logs, cmd))
@@ -479,8 +484,9 @@ class PerforceChangeset(Changeset):
         """
         #self.log.debug("*** get_changes = %s" % (self.change))
         files = self.change['depotFile']
-        changes = []
 
+        changes = []
+        deletions, copies = {}, {}
         index = 0
         for file in files:
             #rev = self.change['rev'][index]
@@ -488,17 +494,40 @@ class PerforceChangeset(Changeset):
             action = self.change['action'][index]
             #self.log.debug("*** get_changes %s %s %s" % (file, action, rev))
 
-            if action == 'integrate' or action == 'branch':
-                filelog = self.p4c.run("filelog", "-m", "1", file)
+            if action == 'delete':
+                action = Changeset.DELETE
+                changes.append([file, Node.FILE, action, file, self.rev])
+                deletions[file] = index
+            elif action == 'integrate':
+                filelog = self.p4c.run("filelog", "-m", "1", _add_rev_to_path(file, self.rev))
+                #self.log.debug("*** get_changes %s %s" % (file, filelog))
                 action = Changeset.COPY
                 changes.append([file, Node.FILE, action, filelog[0]['file'][0][0], rev])
+            elif action == 'branch':
+                filelog = self.p4c.run("filelog", "-m", "1", _add_rev_to_path(file, self.rev))
+                #self.log.debug("*** get_changes %s %s" % (file, filelog))
+                action = Changeset.COPY
+                _base_path = filelog[0]['file'][0][0]
+                changes.append([file, Node.FILE, action, _base_path, rev])
+                copies[_base_path] = index
             else:
                 changes.append([file, Node.FILE, action, file, rev])
             index += 1
 
+        moves = []
+        for k,v in copies.items():
+            if k in deletions:
+                changes[v][2] = Changeset.MOVE
+                moves.append(deletions[k])
+
+        offset = 0
+        moves.sort()
+        for i in moves:
+            del changes[i - offset]
+            offset += 1
+
         for c in changes:
             yield tuple(c)
-
 
 
 ### Components
