@@ -302,26 +302,27 @@ class PerforceNode(Node):
         Node.__init__(self, path, rev, kind)
 
         if self.isfile:
+            _my_path = _add_rev_to_path(_normalize_path(path), rev)
+            self.stat = self.p4c.run("fstat", _my_path)
+            if self.stat[0]['headAction'] == 'delete':
+                raise TracError, "No node at %s in revision %s" % (path, rev)
             self.content = None
             self.info = self.p4c.run("files", path)[0]
 
 
     def _get_content(self):
-        cmd = _add_rev_to_path(self.path, self.rev)
-
-        #self.log.debug("*** content =  %s" % (cmd))
-        type = self.p4c.run("fstat", cmd)
-        if type[0]['headType'].startswith('binary') == True or type[0]['headType'].startswith('ubinary') == True:
+        if self.stat[0]['headType'].startswith('binary') == True or self.stat[0]['headType'].startswith('ubinary') == True:
             file = self.p4c.run("print", "-o", TmpFileName, cmd)
             f = open(TmpFileName, 'rb')
             self.content = f.read()
             f.close()
         else:
-            file = self.p4c.run("print", cmd)
+            _my_path = _add_rev_to_path(self.path, self.rev)
+            file = self.p4c.run("print", _my_path)
             del file[0]
             sep = '\n'
             self.content = sep.join(file)
-        ##self.log.debug("*** content =  %s" % (self.content))
+        #self.log.debug("*** content =  %s" % (self.content))
         return self.content
 
 
