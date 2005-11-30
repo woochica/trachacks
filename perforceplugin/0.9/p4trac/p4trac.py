@@ -311,13 +311,13 @@ class PerforceNode(Node):
 
 
     def _get_content(self):
+        _my_path = _add_rev_to_path(self.path, self.rev)
         if self.stat[0]['headType'].startswith('binary') == True or self.stat[0]['headType'].startswith('ubinary') == True:
-            file = self.p4c.run("print", "-o", TmpFileName, cmd)
+            file = self.p4c.run("print", "-o", TmpFileName, _my_path)
             f = open(TmpFileName, 'rb')
             self.content = f.read()
             f.close()
         else:
-            _my_path = _add_rev_to_path(self.path, self.rev)
             file = self.p4c.run("print", _my_path)
             del file[0]
             sep = '\n'
