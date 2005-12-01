@@ -65,6 +65,8 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
                 seen_anchors.append(anchor)
                 link = page
                 if current_depth <= max_depth:
+                    if anchor[0].isdigit():
+                        anchor = 'a' + anchor
                     out.write('<a href="%s#%s">%s</a></li>\n' % (env.href.wiki(link), anchor, header))
     while current_depth > min_depth:
         if current_depth <= max_depth:
