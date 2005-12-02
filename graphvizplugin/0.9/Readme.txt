@@ -51,7 +51,18 @@ will be changed in a future release.
 Installation via Source
 =======================
 
-todo
+Download the source code for the graphviz plugin from
+http://trac-hacks.swapoff.org/download/graphvizplugin.zip or checkout
+the source from the trac hacks subversion repository at:
+http://trac-hacks.swapoff.org/svn/graphvizplugin.
+
+Change to the graphvizplugin/0.9 directory and run:
+
+    python setup.py bdist_egg
+
+This will generate a python egg in the dist directory. Copy the egg
+file into the trac/plugins directory and follow the Configuration
+steps outlined below.
 
 
 Installation via Egg
@@ -104,3 +115,6 @@ prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 tmp_dir = /tmp/trac.graphviz
 dot_cmd = dot
 neato_cmd = neato
+
+
+$Id$
