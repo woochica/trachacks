@@ -130,7 +130,7 @@ def execute(hdf, template, env):
         row = cursor.fetchone()
         if row:
             errors.append("Component '%s' already exists" % page_name)
-        if subprocesss.call(["svn", "ls", "%s/%s" % (SVN_LOCAL_PATH, page_name.lower())]) == 0:
+        if subprocess.call(["svn", "ls", "%s/%s" % (SVN_LOCAL_PATH, page_name.lower())]) == 0:
             errors.append("Repository path '%s' already exists" % page_name.lower())
         if not os.access(SVN_PERMISSIONS, os.W_OK):
             errors.append("Can't write to Subversion permissions file")
