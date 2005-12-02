@@ -90,9 +90,9 @@ file with these fields:
     tmp_dir - A temporary directory used in the processing of the
               graphviz documents.
 
-    dot_cmd - The command used to invoke graphviz's dot program.
+    cmd_path - Full path to the directory where the graphviz programs
+               are located.
 
-    neato_cmd - The command used to invoke graphviz's neato program.
 
 The cache_dir and prefix_url entries are related to each other. The
 cache_dir entry points to a location on the file system and the
@@ -113,8 +113,7 @@ Here is a sample graphviz section:
 cache_dir = /tmp/trac/htdocs/graphviz
 prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 tmp_dir = /tmp/trac.graphviz
-dot_cmd = dot
-neato_cmd = neato
+cmd_path = /usr/bin
 
 
 $Id$
