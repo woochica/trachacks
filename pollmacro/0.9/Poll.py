@@ -3,6 +3,7 @@ import re
 import pickle
 from os import mkdir
 from binascii import crc32
+from trac.wiki import wiki_to_oneliner
 
 # Set this to where you want the poll state to be stored
 polldir = "/var/state/trac/polls"
@@ -11,10 +12,11 @@ def title2label(title):
 	return hex(crc32(title))[2:]
 
 class Poll:
-    def __init__(self, path, title, options):
+    def __init__(self, path, title, options, env):
         self.path = path
         self.label = title2label(title)
         self.title = title
+        self.env = env
         self.options = []
         # Set defaults
         for option in options:
@@ -76,7 +78,7 @@ class Poll:
                     else:
                         voter_list.append(voter)
                 voters = " <strong>(%s)</strong>" % ", ".join(voter_list)
-            html += "<label for='%s'><input type='radio' name='pollvalue' id='%s' value='%i'%s> %s</label>%s<br>\n" % (voteid, voteid, i, checked, option[0], voters)
+            html += "<label for='%s'><input type='radio' name='pollvalue' id='%s' value='%i'%s> %s</label>%s<br>\n" % (voteid, voteid, i, checked, wiki_to_oneliner(option[0], self.env), voters)
         html += "<input type='submit' value='Vote'>\n"
         html += error
         html += "</fieldset>\n"
@@ -97,5 +99,5 @@ def execute(hdf, txt, env):
     except:
         pass
     path += "/%s.p" % title2label(args[0])
-    poll = Poll(path, args.pop(0), args)
+    poll = Poll(path, args.pop(0), args, env)
     return poll.render(hdf)# + "<pre>" + hdf.dump() + "</pre>"
