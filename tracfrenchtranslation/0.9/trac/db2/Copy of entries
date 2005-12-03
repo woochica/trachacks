@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="69"
+   name=""
+   committed-date="2005-11-29T22:09:38.390065Z"
+   url="http://anciens.enib.fr/svn/external/tasks/trac/french-task/trac"
+   last-author="eblot"
+   kind="dir"
+   uuid="d57e0068-b6fa-0310-b702-e0a8a77854ff"
+   prop-time="2005-11-01T22:39:09.207228Z"
+   revision="69"/>
+<entry
+   committed-rev="69"
+   name="env.py"
+   text-time="2005-11-29T22:12:57.751172Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="0255ee2d21573210730e263fc0e99830"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:34.371137Z"/>
+<entry
+   committed-rev="62"
+   name="core.py"
+   text-time="2005-10-29T13:03:50.631966Z"
+   committed-date="2005-10-29T13:40:18.603628Z"
+   checksum="fae20eded39378049ad0bbf9e794df92"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:34.421209Z"/>
+<entry
+   committed-rev="69"
+   name="attachment.py"
+   text-time="2005-11-29T22:12:57.500812Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="c8dc18a0b3d2af0e29c1f2f586768b42"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:34.451252Z"/>
+<entry
+   committed-rev="69"
+   name="db_default.py"
+   text-time="2005-11-29T22:12:57.701100Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="c919f8faae6978c40cf76d52fe661259"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:34.501324Z"/>
+<entry
+   name="mimeview"
+   kind="dir"/>
+<entry
+   name="ticket"
+   kind="dir"/>
+<entry
+   name="db"
+   copied="true"
+   kind="dir"
+   copyfrom-rev="2595"
+   schedule="add"
+   copyfrom-url="http://svn.edgewall.com/repos/trac/trunk/trac/db"/>
+<entry
+   name="versioncontrol"
+   kind="dir"/>
+<entry
+   committed-rev="69"
+   name="__init__.py"
+   text-time="2005-11-29T22:13:01.105996Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="6b0fb88deb13b3e2ac4c222cab4ea8fe"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:35.993470Z"/>
+<entry
+   name="scripts"
+   kind="dir"/>
+<entry
+   committed-rev="69"
+   name="Settings.py"
+   text-time="2005-11-29T22:12:58.311979Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="6d59ddcc1f01cae4839a1796a220f70d"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:36.374017Z"/>
+<entry
+   committed-rev="36"
+   name="perm.py"
+   text-time="2005-09-17T20:40:39.857505Z"
+   committed-date="2005-09-17T21:03:11.070357Z"
+   checksum="c61237bb8f696995a5913bc51fbfb85a"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:36.844694Z"/>
+<entry
+   committed-rev="69"
+   name="Search.py"
+   text-time="2005-11-29T22:12:58.291950Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="4047660656e2a6d6cb96691928a6a831"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:36.924809Z"/>
+<entry
+   committed-rev="69"
+   name="config.py"
+   text-time="2005-11-29T22:12:57.560899Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="debebce62b21fcc68e5e078586bf7b4a"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:36.854708Z"/>
+<entry
+   committed-rev="69"
+   name="Timeline.py"
+   text-time="2005-11-29T22:12:58.902828Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="bbe048aa9e6a17f2c833f0f48f8c385c"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:37.075025Z"/>
+<entry
+   committed-rev="62"
+   name="loader.py"
+   text-time="2005-10-29T13:03:50.772168Z"
+   committed-date="2005-10-29T13:40:18.603628Z"
+   checksum="610a28a7fd7b30f54a0d78960fe4fff2"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:37.075025Z"/>
+<entry
+   committed-rev="69"
+   name="Notify.py"
+   text-time="2005-11-29T22:12:58.061619Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="3aa6dc6764860b94671da14859e771dd"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:37.085040Z"/>
+<entry
+   committed-rev="69"
+   name="About.py"
+   text-time="2005-11-29T22:12:57.350596Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="a06ab74097582ef5e67cee09218a8016"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:37.155140Z"/>
+<entry
+   name="tests"
+   kind="dir"/>
+<entry
+   name="wiki"
+   kind="dir"/>
+<entry
+   committed-rev="69"
+   name="util.py"
+   text-time="2005-11-29T22:12:59.253332Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="64c8267777d8da263b1304f2b1e548ba"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:37.906220Z"/>
+<entry
+   committed-rev="36"
+   name="test.py"
+   text-time="2005-09-17T20:40:39.877534Z"
+   committed-date="2005-09-17T21:03:11.070357Z"
+   checksum="130331897bf620610209dc923034ce9b"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:37.926249Z"/>
+<entry
+   committed-rev="69"
+   name="log.py"
+   text-time="2005-11-29T22:12:57.801244Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="01a4c4834cdcf08e7eb85dd6359ace39"
+   last-author="eblot"
+   kind="file"
+   prop-time="2005-08-24T00:07:37.936264Z"/>
+<entry
+   name="upgrades"
+   kind="dir"/>
+<entry
+   committed-rev="69"
+   name="db.py"
+   text-time="2005-11-29T22:12:57.661043Z"
+   committed-date="2005-11-29T22:09:38.390065Z"
+   checksum="2b32836a57410b4f69c8dcaa51ce6cba"
+   last-author="eblot"
+   kind="file"
+   schedule="delete"
+   prop-time="2005-08-24T00:07:38.236696Z"/>
+<entry
+   name="web"
+   kind="dir"/>
+</wc-entries>
