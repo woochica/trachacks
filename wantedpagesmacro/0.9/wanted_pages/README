@@ -1,0 +1,13 @@
+== Install ==
+You must have setuptools installed. 
+
+Run the following commands in the source directory:
+{{{
+  python setup.py bdist_egg
+  cp dist/*.egg /path/to/projenv/plugins
+}}}
+
+== Syntax ==
+[[wantedPages]]
+
+Will yield a list of wanted wiki pages.
