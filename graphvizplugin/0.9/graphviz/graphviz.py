@@ -100,9 +100,9 @@ class GraphvizMacro(Component):
             os.system(cmd + ' -T' + out_format + ' -o' + cache_name + ' ' + tmp_name)
 
         buf = StringIO()
-	if out_format in ('svg', 'svgz'):
+        if out_format in ('svg', 'svgz'):
             buf.write('<object data="%s/%s" type"image/svg+xml" width="100%%" height="100%%"/>' % (prefix_url, sha_key + '.' + out_format))
-	else:
+        else:
             buf.write('<img src="%s/%s"/>' % (prefix_url, sha_key + '.' + out_format))
 
         return buf.getvalue()
@@ -142,5 +142,5 @@ class GraphvizMacro(Component):
                     trouble = True
             else:
                 out_format = 'png'
-	
-	return trouble, buf
+
+        return trouble, buf
