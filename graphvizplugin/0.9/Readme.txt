@@ -28,24 +28,27 @@ The graphviz wiki processor supports all 5 graphviz drawing programs:
 dot, neato, twopi, circo and fdp. By default, the dot program is used
 to generate the images.
 
-The different programs can be invoked using:
+The different programs can be invoked using one of these:
 
 #!graphviz
-
 #!graphviz.dot
-
 #!graphviz.neato
-
 #!graphviz.twopi
-
 #!graphviz.circo
-
 #!graphviz.fdp
 
 
-Currently only PNG image files are supported and there is no way to
-specify the default graph, node and edge attributes. Ideally, this
-will be changed in a future release.
+The supported image formats are: PNG (default), GIF, JPEG, SVG and SVGz.
+The format can be specified using a "/format" modifier, in the hashbang,
+as shown below:
+
+#!graphviz/svg
+#!graphviz.dot/png
+#!graphviz.circo/gif
+
+
+Currently there is no way to specify the default graph, node and 
+edge attributes. Ideally, this will be changed in a future release.
 
 
 Installation via Source
@@ -94,7 +97,7 @@ file with these fields:
                are located.
 
     out_format - Graph output format. Valid formats are : png, jpg, svg, 
-                 svgz, gif. Default is png.
+                 svgz, gif. If not specified, the default is png.
 
 The cache_dir and prefix_url entries are related to each other. The
 cache_dir entry points to a location on the file system and the
@@ -117,6 +120,13 @@ prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 tmp_dir = /tmp/trac.graphviz
 cmd_path = /usr/bin
 out_format = png
+
+
+Contributors
+============
+
+I'd like to extend my thanks to Kilian Cavalotti for the code to allow
+the output format to be specified system wide and per diagram.
 
 
 $Id$

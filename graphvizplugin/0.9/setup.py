@@ -18,7 +18,7 @@ from setuptools import setup, find_packages
 
 setup (
     name = 'graphviz',
-    version = "0.1a",
+    version = "0.2",
     packages = find_packages(),
     package_data = { 
     },

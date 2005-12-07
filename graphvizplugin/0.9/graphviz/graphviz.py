@@ -27,21 +27,23 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.util import escape
 
 
+
 class GraphvizMacro(Component):
     """
     Blah, blah, blah.
     """
     implements(IWikiMacroProvider)
 
+    # Available formats and processors, default first (dot/png)
+    processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
+    formats    = ['png', 'gif', 'jpg', 'svg', 'svgz']
+
 
     def get_macros(self):
         """Return an iterable that provides the names of the provided macros."""
-        yield 'graphviz'
-        yield 'graphviz.dot'
-        yield 'graphviz.neato'
-        yield 'graphviz.twopi'
-        yield 'graphviz.circo'
-        yield 'graphviz.fdp'
+        for p in ['.' + p for p in GraphvizMacro.processors] + ['']: 
+            for f in ['/' + f for f in GraphvizMacro.formats] + ['']:
+                yield 'graphviz' + p + f
 
 
     def get_macro_description(self, name):
@@ -55,9 +57,22 @@ class GraphvizMacro(Component):
         req - ?
         
         name - Wiki macro command that resulted in this method being
-        called. In this case, it should be one of graphviz,
-        graphviz.dot, graphviz.neato, graphviz.twopi, graphviz.circo
-        or graphviz.fdp.
+               called. In this case, it should be 'graphviz', followed
+               (or not) by the processor name, then by an output
+               format, as following: graphviz.<processor>/<format>
+
+               Valid processor names are: dot, neato, twopi, circo,
+               and fdp.  The default is dot.
+
+               Valid output formats are: jpg, png, gif, svg and svgz.
+               The default is the value specified in the out_format
+               configuration parameter. If out_format is not specified
+               in the configuration, then the default is png.
+
+               examples: graphviz.dot/png   -> dot    png
+                         graphviz.neato/jpg -> neato  jpg
+                         graphviz.circo     -> circo  png
+                         graphviz/svg       -> dot    svg
 
         content - The text the user entered for the macro to process.
 
@@ -80,16 +95,37 @@ class GraphvizMacro(Component):
         cmd_path   = self.config.get('graphviz', 'cmd_path')
         out_format = self.config.get('graphviz', 'out_format')
 
-        cmd = {'graphviz':       os.path.join(cmd_path, 'dot'),
-               'graphviz.dot':   os.path.join(cmd_path, 'dot'),
-               'graphviz.neato': os.path.join(cmd_path, 'neato'),
-               'graphviz.twopi': os.path.join(cmd_path, 'twopi'),
-               'graphviz.circo': os.path.join(cmd_path, 'circo'),
-               'graphviz.fdp':   os.path.join(cmd_path, 'fdp'),
-               }[name]
+        buf = StringIO()
+
+        # Extract processor and format from name
+        d_sp = name.split('.')
+        s_sp = name.split('/')
+        if len(d_sp) > 1:
+            s_sp = d_sp[1].split('/')
+            if len(s_sp) > 1:
+                out_format = s_sp[1]
+            else:
+                out_format = GraphvizMacro.formats[0]
+            proc = s_sp[0]
+        elif len(s_sp) > 1:
+            proc   = GraphvizMacro.processors[0]
+            out_format = s_sp[1]
+        else:
+            proc   = GraphvizMacro.processors[0]
+            out_format = GraphvizMacro.formats[0]
+	
+        if proc in GraphvizMacro.processors:
+            cmd = os.path.join(cmd_path, proc)
+        else:
+            buf.write('<p>Graphviz macro processor error: requested processor <b>(%s)</b> not found.</p>' % proc)
+            return buf.getvalue()
+           
+        if out_format not in GraphvizMacro.formats:
+            buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % out_format)
+            return buf.getvalue()
 
         sha_key    = sha.new(content).hexdigest()
-        tmp_name   = os.path.join(tmp_dir, sha_key + '.' + name)
+        tmp_name   = os.path.join(tmp_dir, sha_key + '_' + out_format + '.' + proc)
         cache_name = os.path.join(cache_dir, sha_key + '.' + out_format)
 
         if not os.path.exists(cache_name):
@@ -99,7 +135,6 @@ class GraphvizMacro(Component):
 
             os.system(cmd + ' -T' + out_format + ' -o' + cache_name + ' ' + tmp_name)
 
-        buf = StringIO()
         if out_format in ('svg', 'svgz'):
             buf.write('<object data="%s/%s" type"image/svg+xml" width="100%%" height="100%%"/>' % (prefix_url, sha_key + '.' + out_format))
         else:
@@ -130,7 +165,7 @@ class GraphvizMacro(Component):
 
             if self.config.parser.has_option('graphviz', 'cmd_path'):
                 cmd_path = self.config.get('graphviz', 'cmd_path')
-                for name in ['dot', 'neato', 'twopi', 'circo', 'fdp']:
+                for name in GraphvizMacro.processors:
                     if not os.path.exists(os.path.join(cmd_path, name)):
                         buf.write('<p>The <b>%s</b> program was not found in the <b>%s</b> directory.</p>' % (name, cmd_path))
                         trouble = True
