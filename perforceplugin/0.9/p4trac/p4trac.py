@@ -383,20 +383,25 @@ class PerforceNode(Node):
             logs = self.p4c.run("filelog", "-m", str(limit), "-i", cmd)
             #self.log.debug("*** get_history logs %s" % (logs))
             idx = 0
+            path = self.path
             while idx < len(logs):
                 index = 0
                 while index < len(logs[idx]['rev']):
-                    #self.log.debug("*** get_history logs %d %s" % (idx, logs[idx]))
                     chg = Changeset.EDIT
-                    path = self.path
                     rev = logs[idx]['change'][index]
                     action = logs[idx]['action'][index]
+                    if index < len(logs[idx]['how']):
+                        how = logs[idx]['how'][index]
+                        if how != None:
+                            how = how[0]
+                    else:
+                        how = None
 
-                    if action == 'add':
+                    if action == 'add' and how != 'branch from':
                         chg = Changeset.ADD
                     elif action == 'integrate':
                         chg = Changeset.COPY
-                    elif action == 'branch':
+                    elif action == 'branch' or how == 'branch from':
                         chg = Changeset.COPY
                         #histories.append([path, rev, chg])
                         path = logs[idx]['file'][index][0]
