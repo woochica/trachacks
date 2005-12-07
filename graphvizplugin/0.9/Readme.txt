@@ -93,6 +93,8 @@ file with these fields:
     cmd_path - Full path to the directory where the graphviz programs
                are located.
 
+    out_format - Graph output format. Valid formats are : png, jpg, svg, 
+                 svgz, gif. Default is png.
 
 The cache_dir and prefix_url entries are related to each other. The
 cache_dir entry points to a location on the file system and the
@@ -114,6 +116,7 @@ cache_dir = /tmp/trac/htdocs/graphviz
 prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 tmp_dir = /tmp/trac.graphviz
 cmd_path = /usr/bin
+out_format = png
 
 
 $Id$

@@ -78,6 +78,7 @@ class GraphvizMacro(Component):
         prefix_url = self.config.get('graphviz', 'prefix_url')
         tmp_dir    = self.config.get('graphviz', 'tmp_dir')
         cmd_path   = self.config.get('graphviz', 'cmd_path')
+        out_format = self.config.get('graphviz', 'out_format')
 
         cmd = {'graphviz':       os.path.join(cmd_path, 'dot'),
                'graphviz.dot':   os.path.join(cmd_path, 'dot'),
@@ -89,17 +90,20 @@ class GraphvizMacro(Component):
 
         sha_key    = sha.new(content).hexdigest()
         tmp_name   = os.path.join(tmp_dir, sha_key + '.' + name)
-        cache_name = os.path.join(cache_dir, sha_key + '.png')
+        cache_name = os.path.join(cache_dir, sha_key + '.' + out_format)
 
         if not os.path.exists(cache_name):
             f = open(tmp_name, 'w')
             f.writelines(content)
             f.close()
 
-            os.system(cmd + ' -Tpng -o' + cache_name + ' ' + tmp_name)
+            os.system(cmd + ' -T' + out_format + ' -o' + cache_name + ' ' + tmp_name)
 
         buf = StringIO()
-        buf.write('<img src="%s/%s"/>' % (prefix_url, sha_key + '.png'))
+	if out_format in ('svg', 'svgz'):
+            buf.write('<object data="%s/%s" type"image/svg+xml" width="100%%" height="100%%"/>' % (prefix_url, sha_key + '.' + out_format))
+	else:
+            buf.write('<img src="%s/%s"/>' % (prefix_url, sha_key + '.' + out_format))
 
         return buf.getvalue()
 
@@ -130,4 +134,13 @@ class GraphvizMacro(Component):
                     if not os.path.exists(os.path.join(cmd_path, name)):
                         buf.write('<p>The <b>%s</b> program was not found in the <b>%s</b> directory.</p>' % (name, cmd_path))
                         trouble = True
-        return trouble, buf
+        
+            if self.config.parser.has_option('graphviz', 'out_format'):
+                out_format = self.config.get('graphviz', 'out_format')
+                if out_format not in ('svg', 'svgz', 'jpg', 'png', 'gif'):
+                    buf.write('<p>The specified formt (<b>%s</b>) is not recognized as a valid graphviz output format.</p>' % output_format)
+                    trouble = True
+            else:
+                out_format = 'png'
+	
+	return trouble, buf
