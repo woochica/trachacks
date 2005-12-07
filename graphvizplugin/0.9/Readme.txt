@@ -38,7 +38,7 @@ The different programs can be invoked using one of these:
 #!graphviz.fdp
 
 
-The supported image formats are: PNG (default), GIF, JPEG, SVG and SVGz.
+The supported image formats are: png (default), gif, jpg, svg and svgz.
 The format can be specified using a "/format" modifier, in the hashbang,
 as shown below:
 
