@@ -125,8 +125,14 @@ out_format = png
 Contributors
 ============
 
-I'd like to extend my thanks to Kilian Cavalotti for the code to allow
-the output format to be specified system wide and per diagram.
+I'd like to extend my thanks to following people:
+
+    - Kilian Cavalotti for the code to allow the output format to be
+      specified system wide and per diagram.
+
+    - Alec Thomas for creating Trac Hacks
+      (http://trac-hacks.swapoff.org) and providing hosting for the
+      Graphviz module.
 
 
 $Id$

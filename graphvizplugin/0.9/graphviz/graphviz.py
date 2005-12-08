@@ -21,6 +21,7 @@ except ImportError:
     from StringIO import StringIO
 import sha
 import os
+import sys
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
@@ -77,8 +78,6 @@ class GraphvizMacro(Component):
         content - The text the user entered for the macro to process.
 
         todo: allow the admin to configure cache size or count limits.
-
-        todo: allow the user to specify the image type.
 
         todo: allow the user to set the default graph, node and edge attributes.
 
@@ -146,6 +145,11 @@ class GraphvizMacro(Component):
     def check_config(self):
         buf = StringIO()
         trouble = False
+        if sys.platform == 'win32':
+            exe_suffix = '.exe'
+        else:
+            exe_suffix = ''
+
         buf.write('<p>Graphviz macro processor not configured correctly. Please fix the configuration before continuing.</p>')
         if 'graphviz' not in self.config.sections():
             buf.write('<p>The <b>graphviz</b> section was not found.</p>')
@@ -166,7 +170,8 @@ class GraphvizMacro(Component):
             if self.config.parser.has_option('graphviz', 'cmd_path'):
                 cmd_path = self.config.get('graphviz', 'cmd_path')
                 for name in GraphvizMacro.processors:
-                    if not os.path.exists(os.path.join(cmd_path, name)):
+                    exe_path = os.path.join(cmd_path, name) + exe_suffix
+                    if not os.path.exists(exe_path):
                         buf.write('<p>The <b>%s</b> program was not found in the <b>%s</b> directory.</p>' % (name, cmd_path))
                         trouble = True
         
