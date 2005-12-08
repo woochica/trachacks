@@ -1,0 +1,6 @@
+from setuptools import setup
+
+PACKAGE = 'TracHacks'
+VERSION = '0.1'
+
+setup(name=PACKAGE, version=VERSION, packages=['trachacks'])
