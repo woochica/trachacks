@@ -33,7 +33,8 @@ LDAP_MODULE_CONFIG = [ 'enable', 'permattr', 'permfilter',
                        'group_bind', 'group_user', 'group_passwd',
                        'store_bind', 'store_user', 'store_passwd' ]
 
-LDAP_DIRECTORY_PARAMS = [ 'host','port','basedn',
+LDAP_DIRECTORY_PARAMS = [ 'host','port',
+                          'basedn', 'user_basedn', 'group_basedn',
                           'groupname','groupmember',
                           'groupattr','uidattr' ]
 
@@ -61,8 +62,6 @@ class LdapPermissionGroupProvider(Component):
     # IPermissionProvider interface
 
     def get_permission_groups(self, username):
-        self.env.log.debug('get_permission_group ' + username)
-
         groups = ['anonymous']
         if username and username != 'anonymous':
             groups.append('authenticated')
@@ -108,7 +107,8 @@ class LdapPermissionGroupProvider(Component):
                     # the cache is becoming too large, discards
                     # the less recently uses entries
                     cache_keys = self._cache.keys()
-                    cache_keys.sort(lambda x,y: cmp(self._cache[x][0], self._cache[y][0]))
+                    cache_keys.sort(lambda x,y: cmp(self._cache[x][0], 
+                                                    self._cache[y][0]))
                     # discards the 5% oldest
                     old_keys = cache_keys[:(5*self._cache_size)/100]
                     for k in old_keys:
@@ -296,17 +296,29 @@ class LdapConnection(object):
         self.host = 'localhost'
         self.port = 389
         self.basedn = ''
+        self.user_basedn = None
+        self.group_basedn = None
         self.groupname = 'groupofnames'
         self.groupmember = 'member'
         self.groupattr = 'cn'
         self.uidattr = 'uid'
         for key in ldap.keys():
             self.__setattr__(key, ldap[key])
+        if not self.user_basedn:
+            self.user_basedn = self.basedn
+        if not self.group_basedn:
+            self.group_basedn = self.basedn
         self._uid = None
         self._password = None
 
     def basedn(self):
-        return self.basedn;    
+        return self.basedn
+
+    def user_basedn(self):
+        return self.user_basedn
+
+    def group_basedn(self):
+        return self.group_basedn
 
     def set_credentials(self, uid, password):
         self._uid = uid
@@ -328,7 +340,8 @@ class LdapConnection(object):
             if self._uid is not None:
                 if ( self._uid.find('=') == -1 ):
                     self._uid = '%s=%s' % (self.uidattr, self._uid)
-                self._ds.simple_bind_s(self._uid + ',' + self.basedn, self._password)
+                self._ds.simple_bind_s(self._uid + ',' + self.basedn, 
+                                       self._password)
             else:
                 self._ds.simple_bind_s()
 
@@ -340,7 +353,8 @@ class LdapConnection(object):
         try:
             if not self.__dict__.has_key('_ds') or not self.__dict__['_ds']:
                 self._open()
-            sr = self._ds.search_s(self.basedn, ldap.SCOPE_SUBTREE, filter, attributes)
+            sr = self._ds.search_s(self.basedn, ldap.SCOPE_SUBTREE, 
+                                   filter, attributes)
             return sr
 
         except ldap.LDAPError, e:
@@ -351,7 +365,7 @@ class LdapConnection(object):
         try:
             if not self.__dict__.has_key('_ds') or not self.__dict__['_ds']:
                 self._open()
-            cr = self._ds.compare_s(dn + "," + self.basedn, attribute, value)
+            cr = self._ds.compare_s(dn, attribute, value)
             return cr
         
         except ldap.LDAPError, e:
@@ -375,8 +389,8 @@ class LdapConnection(object):
         return groups
     
     def is_in_group(self, uid, group):
-        dn = self.groupattr + "=" + group
-        value = self.uidattr + "=" + uid + "," + self.basedn
+        dn = '%s=%s,%s' % (self.groupattr, group, self.group_basedn)
+        value = '%s=%s,%s' % (self.uidattr, uid, self.user_basedn)
         for attempt in range(2):
             cr = self._compare(dn, self.groupmember, value)
             if self._ds:
