@@ -48,9 +48,9 @@ class GraphvizMacro(Component):
         }
 
     def __init__(self):
-        self.log.debug('id: %s' % str(__id__))
-        self.log.debug('processors: %s' % str(GraphvizMacro.processors))
-        self.log.debug('formats: %s' % str(GraphvizMacro.formats))
+        self.log.info('id: %s' % str(__id__))
+        self.log.info('processors: %s' % str(GraphvizMacro.processors))
+        self.log.info('formats: %s' % str(GraphvizMacro.formats))
 
 
     def get_macros(self):
@@ -129,12 +129,12 @@ class GraphvizMacro(Component):
         if proc in GraphvizMacro.processors:
             cmd = os.path.join(cmd_path, proc)
         else:
-            self.log.debug('render_macro: requested processor (%s) not found.' % proc)
+            self.log.error('render_macro: requested processor (%s) not found.' % proc)
             buf.write('<p>Graphviz macro processor error: requested processor <b>(%s)</b> not found.</p>' % proc)
             return buf.getvalue()
            
         if out_format not in GraphvizMacro.formats:
-            self.log.debug('render_macro: requested format (%s) not found.' % out_format)
+            self.log.error('render_macro: requested format (%s) not found.' % out_format)
             buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % out_format)
             return buf.getvalue()
 
@@ -183,16 +183,19 @@ class GraphvizMacro(Component):
         buf.write('<p>Graphviz macro processor not configured correctly. Please fix the configuration before continuing.</p>')
         if 'graphviz' not in self.config.sections():
             buf.write('<p>The <b>graphviz</b> section was not found.</p>')
+            self.log.error('The graphviz section was not found.')
             trouble = True
         else:
             for field in ['cache_dir', 'cmd_path', 'prefix_url']:
                 if not self.config.parser.has_option('graphviz', field):
                     buf.write('<p>The <b>graphviz</b> section is missing the <b>%s</b> field.</p>' % field)
+                    self.log.error('The graphviz section is missing the %s field.</p>' % field)
                     trouble = True
 
             path = self.config.get('graphviz', 'cache_dir')
             if not os.path.exists(path):
                 buf.write('<p>The <b>%s</b> is set to <b>%s</b> but that path does not exist.' % ('cache_dir', path))
+                self.log.error('The %s is set to %s but that path does not exist.' % ('cache_dir', path))
                 trouble = True
 
 
@@ -202,12 +205,14 @@ class GraphvizMacro(Component):
                     exe_path = os.path.join(cmd_path, name) + exe_suffix
                     if not os.path.exists(exe_path):
                         buf.write('<p>The <b>%s</b> program was not found in the <b>%s</b> directory.</p>' % (name, cmd_path))
+                        self.log.error('The %s program was not found in the %s directory.' % (name, cmd_path))
                         trouble = True
         
             if self.config.parser.has_option('graphviz', 'out_format'):
                 out_format = self.config.get('graphviz', 'out_format')
                 if out_format not in ('svg', 'svgz', 'jpg', 'png', 'gif'):
                     buf.write('<p>The specified formt (<b>%s</b>) is not recognized as a valid graphviz output format.</p>' % output_format)
+                    self.log.error('The specified formt (%s) is not recognized as a valid graphviz output format.' % output_format)
                     trouble = True
             else:
                 out_format = 'png'
