@@ -39,6 +39,14 @@ class GraphvizMacro(Component):
     processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
     formats    = ['png', 'gif', 'jpg', 'svg', 'svgz']
 
+    html_strings = {
+        'png':  '<img src="%s"/>',
+        'gif':  '<img src="%s"/>',
+        'jpg':  '<img src="%s"/>',
+        'svg':  '<object data="%s" type"image/svg+xml" width="100%%" height="100%%"/>',
+        'svgz': '<object data="%s" type"image/svg+xml" width="100%%" height="100%%"/>',
+        }
+
     def __init__(self):
         self.log.debug('id: %s' % str(__id__))
         self.log.debug('processors: %s' % str(GraphvizMacro.processors))
@@ -82,11 +90,7 @@ class GraphvizMacro(Component):
 
         content - The text the user entered for the macro to process.
 
-        todo: allow the admin to configure cache size or count limits.
-
         todo: allow the user to set the default graph, node and edge attributes.
-
-        todo: show the user any errors that graphviz may produce.
         """
 
         trouble, msg = self.check_config()
@@ -95,13 +99,11 @@ class GraphvizMacro(Component):
 
         cache_dir  = self.config.get('graphviz', 'cache_dir')
         prefix_url = self.config.get('graphviz', 'prefix_url')
-        tmp_dir    = self.config.get('graphviz', 'tmp_dir')
         cmd_path   = self.config.get('graphviz', 'cmd_path')
         out_format = self.config.get('graphviz', 'out_format')
 
         self.log.debug('render_macro.cache_dir: %s' % cache_dir)
         self.log.debug('render_macro.prefix_url: %s' % prefix_url)
-        self.log.debug('render_macro.tmp_dir: %s' % tmp_dir)
         self.log.debug('render_macro.cmd_path: %s' % cmd_path)
         self.log.debug('render_macro.out_format: %s' % out_format)
 
@@ -137,26 +139,35 @@ class GraphvizMacro(Component):
             return buf.getvalue()
 
         sha_key    = sha.new(content).hexdigest()
-        tmp_name   = os.path.join(tmp_dir, sha_key + '_' + out_format + '.' + proc)
         cache_name = os.path.join(cache_dir, sha_key + '.' + out_format)
+        out_url    = '%s/%s' % (prefix_url, sha_key + '.' + out_format)
 
         if not os.path.exists(cache_name):
             self.clean_cache()
-            self.log.debug('render_macro: creating tmp file: %s' % tmp_name)
-            f = open(tmp_name, 'w')
-            f.writelines(content)
-            f.close()
 
-            full_cmd = cmd + ' -T' + out_format + ' -o' + cache_name + ' ' + tmp_name
+            full_cmd = cmd + ' -T' + out_format + ' -o' + cache_name
             self.log.debug('render_macro: running command %s' % full_cmd)
-            os.system(full_cmd)
 
-            os.unlink(tmp_name)
+            cmd_input, cmd_out_err = os.popen4(full_cmd)
+            cmd_input.writelines(content)
+            cmd_input.close()
 
-        if out_format in ('svg', 'svgz'):
-            buf.write('<object data="%s/%s" type"image/svg+xml" width="100%%" height="100%%"/>' % (prefix_url, sha_key + '.' + out_format))
+            output = cmd_out_err.readlines()
+            cmd_out_err.close()
+
+            if len(output):
+                os.unlink(cache_name)
+                buf.write('<pre class="wiki">')
+                for line in output:
+                    buf.write(line)
+                buf.write('</pre>')
+
+                self.log.debug('render_macro: cmd out/err: %s' % str(output))
+            else:
+                buf.write(GraphvizMacro.html_strings[out_format] % out_url)
+
         else:
-            buf.write('<img src="%s/%s"/>' % (prefix_url, sha_key + '.' + out_format))
+            buf.write(GraphvizMacro.html_strings[out_format] % out_url)
 
         return buf.getvalue()
 
@@ -174,16 +185,15 @@ class GraphvizMacro(Component):
             buf.write('<p>The <b>graphviz</b> section was not found.</p>')
             trouble = True
         else:
-            for field in ['cache_dir', 'cmd_path', 'prefix_url', 'tmp_dir']:
+            for field in ['cache_dir', 'cmd_path', 'prefix_url']:
                 if not self.config.parser.has_option('graphviz', field):
                     buf.write('<p>The <b>graphviz</b> section is missing the <b>%s</b> field.</p>' % field)
                     trouble = True
 
-            for name in ['cache_dir', 'tmp_dir']:
-                path = self.config.get('graphviz', name)
-                if not os.path.exists(path):
-                    buf.write('<p>The <b>%s</b> is set to <b>%s</b> but that path does not exist.' % (name, path))
-                    trouble = True
+            path = self.config.get('graphviz', 'cache_dir')
+            if not os.path.exists(path):
+                buf.write('<p>The <b>%s</b> is set to <b>%s</b> but that path does not exist.' % ('cache_dir', path))
+                trouble = True
 
 
             if self.config.parser.has_option('graphviz', 'cmd_path'):

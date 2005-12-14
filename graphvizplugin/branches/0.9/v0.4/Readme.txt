@@ -90,9 +90,6 @@ file with these fields:
                  must point to the trac server's view of the cache_dir
                  location.
 
-    tmp_dir - A temporary directory used in the processing of the
-              graphviz documents.
-
     cmd_path - Full path to the directory where the graphviz programs
                are located.
 
@@ -128,8 +125,8 @@ prefix_url points to the same location but from the trac server's
 point of view. This allows the graphviz programs to generate the
 images and the user's web browser to view them.
 
-The cache_dir and tmp_dir directories must exist and the trac server
-must have read and write access.
+The cache_dir directory must exist and the trac server must have read
+and write access.
 
 The cache manager is an attempt at keeping the cache directory under
 control. This is experimental code that may cause more problems than
@@ -150,7 +147,6 @@ Here is a sample graphviz section:
 [graphviz]
 cache_dir = /tmp/trac/htdocs/graphviz
 prefix_url = http://localhost:8000/trac/chrome/site/graphviz
-tmp_dir = /tmp/trac.graphviz
 cmd_path = /usr/bin
 out_format = png
 
@@ -160,7 +156,6 @@ Here is a sample graphviz section that activates the cache manager:
 [graphviz]
 cache_dir = /tmp/trac/htdocs/graphviz
 prefix_url = http://localhost:8000/trac/chrome/site/graphviz
-tmp_dir = /tmp/trac.graphviz
 cmd_path = /usr/bin
 out_format = png
 cache_manager = yes
