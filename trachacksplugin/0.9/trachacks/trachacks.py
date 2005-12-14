@@ -47,7 +47,7 @@ class TracHacksMacros(Component):
                     title = title.group(1).strip()
                     body = re.sub('=+\s([^=]*)=+', '', body, 1)
                 else:
-                    title = title.title()
+                    title = page
                 body = re.sub('\\[\\[TagIt.*', '', body)
                 out.write('<legend style="color: #999;"><a href="%s">%s</a></legend>\n' % (self.env.href.wiki(page), title))
                 out.write('%s\n' % wiki_to_html(body, self.env, req))
