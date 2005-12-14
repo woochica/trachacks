@@ -102,6 +102,11 @@ class GraphvizMacro(Component):
         cmd_path   = self.config.get('graphviz', 'cmd_path')
         out_format = self.config.get('graphviz', 'out_format')
 
+        self.log.debug('render_macro.req %s' % str(req))
+        self.log.debug('render_macro.req.args %s' % str(req.args))
+        self.log.debug('render_macro.dir(req) %s' % str(dir(req)))
+        self.log.debug('render_macro.name %s' % str(name))
+        self.log.debug('render_macro.content %s' % str(content))
         self.log.debug('render_macro.cache_dir: %s' % cache_dir)
         self.log.debug('render_macro.prefix_url: %s' % prefix_url)
         self.log.debug('render_macro.cmd_path: %s' % cmd_path)
@@ -138,14 +143,14 @@ class GraphvizMacro(Component):
             buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % out_format)
             return buf.getvalue()
 
-        sha_key    = sha.new(content).hexdigest()
+        sha_key    = sha.new(proc + content).hexdigest()
         cache_name = os.path.join(cache_dir, sha_key + '.' + out_format)
         out_url    = '%s/%s' % (prefix_url, sha_key + '.' + out_format)
 
         if not os.path.exists(cache_name):
             self.clean_cache()
 
-            full_cmd = cmd + ' -T' + out_format + ' -o' + cache_name
+            full_cmd = '"' + cmd + '"' + ' -T' + out_format + ' -o' + cache_name
             self.log.debug('render_macro: running command %s' % full_cmd)
 
             cmd_input, cmd_out_err = os.popen4(full_cmd)
@@ -156,13 +161,16 @@ class GraphvizMacro(Component):
             cmd_out_err.close()
 
             if len(output):
-                os.unlink(cache_name)
+                if os.path.exists(cache_name):
+                    os.unlink(cache_name)
+
                 buf.write('<pre class="wiki">')
                 for line in output:
                     buf.write(line)
                 buf.write('</pre>')
 
                 self.log.debug('render_macro: cmd out/err: %s' % str(output))
+
             else:
                 buf.write(GraphvizMacro.html_strings[out_format] % out_url)
 
