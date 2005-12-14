@@ -109,7 +109,7 @@
      if:milestone.late ?>
       <strong><?cs var:milestone.due_delta ?> en retard</strong><?cs
      else ?>
-      A livrer pour <?cs var:milestone.due_delta ?><?cs
+      A livrer dans <?cs var:milestone.due_delta ?><?cs
      /if ?> (<?cs var:milestone.due_date ?>)<?cs
     else ?>
      Pas de date définie<?cs

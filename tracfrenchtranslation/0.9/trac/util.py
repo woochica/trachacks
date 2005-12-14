@@ -207,8 +207,8 @@ def http_date(t=None):
         t = time.time()
     if not isinstance(t, (list, tuple, time.struct_time)):
         t = time.gmtime(int(t))
-    weekdays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-    months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep',
+    weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
               'Oct', 'Nov', 'Dec']
     return '%s, %d %s %04d %02d:%02d:%02d GMT' % (
            weekdays[t.tm_wday], t.tm_mday, months[t.tm_mon - 1], t.tm_year,
