@@ -20,12 +20,13 @@ try:
 except ImportError:
     from StringIO import StringIO
 import sha
-import os
+import os, popen2
 import sys
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.util import escape
+from re import match
 
 
 
@@ -37,15 +38,9 @@ class GraphvizMacro(Component):
 
     # Available formats and processors, default first (dot/png)
     processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
-    formats    = ['png', 'gif', 'jpg', 'svg', 'svgz']
-
-    html_strings = {
-        'png':  '<img src="%s"/>',
-        'gif':  '<img src="%s"/>',
-        'jpg':  '<img src="%s"/>',
-        'svg':  '<object data="%s" type"image/svg+xml" width="100%%" height="100%%"/>',
-        'svgz': '<object data="%s" type"image/svg+xml" width="100%%" height="100%%"/>',
-        }
+    bitmap_formats = ['png', 'jpg', 'gif']
+    vector_formats = ['svg', 'svgz']
+    formats = bitmap_formats + vector_formats 
 
     def __init__(self):
         self.log.info('id: %s' % str(__id__))
@@ -57,7 +52,7 @@ class GraphvizMacro(Component):
         """Return an iterable that provides the names of the provided macros."""
         for p in ['.' + p for p in GraphvizMacro.processors] + ['']: 
             for f in ['/' + f for f in GraphvizMacro.formats] + ['']:
-                yield 'graphviz' + p + f
+                yield 'graphviz%s%s' % (p, f)
 
 
     def get_macro_description(self, name):
@@ -89,143 +84,282 @@ class GraphvizMacro(Component):
                          graphviz/svg       -> dot    svg
 
         content - The text the user entered for the macro to process.
-
-        todo: allow the user to set the default graph, node and edge attributes.
         """
 
-        trouble, msg = self.check_config()
+        # check and load the configuration
+        trouble, msg = self.load_config()
         if trouble:
             return msg.getvalue()
 
-        cache_dir  = self.config.get('graphviz', 'cache_dir')
-        prefix_url = self.config.get('graphviz', 'prefix_url')
-        cmd_path   = self.config.get('graphviz', 'cmd_path')
-        out_format = self.config.get('graphviz', 'out_format')
-
-        self.log.debug('render_macro.req %s' % str(req))
-        self.log.debug('render_macro.req.args %s' % str(req.args))
-        self.log.debug('render_macro.dir(req) %s' % str(dir(req)))
-        self.log.debug('render_macro.name %s' % str(name))
-        self.log.debug('render_macro.content %s' % str(content))
-        self.log.debug('render_macro.cache_dir: %s' % cache_dir)
-        self.log.debug('render_macro.prefix_url: %s' % prefix_url)
-        self.log.debug('render_macro.cmd_path: %s' % cmd_path)
-        self.log.debug('render_macro.out_format: %s' % out_format)
-
         buf = StringIO()
 
-        # Extract processor and format from name
-        d_sp = name.split('.')
-        s_sp = name.split('/')
-        if len(d_sp) > 1:
-            s_sp = d_sp[1].split('/')
-            if len(s_sp) > 1:
-                out_format = s_sp[1]
-            else:
-                out_format = GraphvizMacro.formats[0]
-            proc = s_sp[0]
-        elif len(s_sp) > 1:
-            proc   = GraphvizMacro.processors[0]
-            out_format = s_sp[1]
+
+        ## Extract processor and format from name
+        l_proc = l_out_format = ''
+
+        # first try with the RegExp engine
+        try: 
+            m = match('graphviz\.?([a-z]*)\/?([a-z]*)', name)
+            (l_proc, l_out_format) = m.group(1, 2)
+
+        # or use the string.split method
+        except:
+            (d_sp, s_sp) = (name.split('.'), name.split('/'))
+            if len(d_sp) > 1:
+                s_sp = d_sp[1].split('/')
+                if len(s_sp) > 1:
+                    l_out_format = s_sp[1]
+                l_proc = s_sp[0]
+            elif len(s_sp) > 1:
+                l_out_format = s_sp[1]
+            
+        # assign default values, if instance ones are empty
+        self.out_format = (self.out_format, l_out_format)[bool(len(l_out_format))]
+        self.processor  = (self.processor,  l_proc)      [bool(len(l_proc))]
+
+
+        if self.processor in GraphvizMacro.processors:
+            proc_cmd = os.path.join(self.cmd_path, self.processor)
         else:
-            proc   = GraphvizMacro.processors[0]
-            out_format = GraphvizMacro.formats[0]
-	
-        if proc in GraphvizMacro.processors:
-            cmd = os.path.join(cmd_path, proc)
-        else:
-            self.log.error('render_macro: requested processor (%s) not found.' % proc)
-            buf.write('<p>Graphviz macro processor error: requested processor <b>(%s)</b> not found.</p>' % proc)
+            self.log.error('render_macro: requested processor (%s) not found.' % self.processor)
+            buf.write('<p>Graphviz macro processor error: requested processor <b>(%s)</b> not found.</p>' % self.processor)
             return buf.getvalue()
            
-        if out_format not in GraphvizMacro.formats:
-            self.log.error('render_macro: requested format (%s) not found.' % out_format)
-            buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % out_format)
+        if self.out_format not in GraphvizMacro.formats:
+            self.log.error('render_macro: requested format (%s) not found.' % self.out_format)
+            buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        sha_key    = sha.new(proc + content).hexdigest()
-        cache_name = os.path.join(cache_dir, sha_key + '.' + out_format)
-        out_url    = '%s/%s' % (prefix_url, sha_key + '.' + out_format)
+        sha_key    = sha.new(self.processor + content).hexdigest()
+        img_name   = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
+        img_path   = os.path.join(self.cache_dir, img_name)
 
-        if not os.path.exists(cache_name):
+        if not os.path.exists(img_path):
             self.clean_cache()
 
-            full_cmd = '"' + cmd + '"' + ' -T' + out_format + ' -o' + cache_name
-            self.log.debug('render_macro: running command %s' % full_cmd)
-
-            cmd_input, cmd_out_err = os.popen4(full_cmd)
-            cmd_input.writelines(content)
-            cmd_input.close()
-
-            output = cmd_out_err.readlines()
-            cmd_out_err.close()
-
-            if len(output):
-                if os.path.exists(cache_name):
-                    os.unlink(cache_name)
-
-                buf.write('<pre class="wiki">')
-                for line in output:
-                    buf.write(line)
-                buf.write('</pre>')
-
-                self.log.debug('render_macro: cmd out/err: %s' % str(output))
-
+            # Antialias PNGs with rsvg, if requested
+            if self.out_format == 'png' and self.png_anti_alias == True:
+                # SVG output
+                cmd = '"%s" %s -Tsvg -o%s.svg' % (proc_cmd, self.processor_options, img_path)
+                self.log.debug('render_macro: running command %s' % cmd)
+                ret, out, err = self.launch(cmd, content)
+                if ret != 0:
+                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
+                    return self.show_err(msg).getvalue()
+                # SVG to PNG rasterization
+                cmd = '"%s" %s.svg %s' % (self.rsvg_path, img_path, img_path)
+                self.log.debug('render_macro: running command %s' % cmd)
+                ret, out, err = self.launch(cmd, None)
+                if ret != 0:
+                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
+                    return self.show_err(msg).getvalue()
+            
+            # Render image
             else:
-                buf.write(GraphvizMacro.html_strings[out_format] % out_url)
+                cmd = '"%s" %s -T%s -o%s' % (proc_cmd, self.processor_options, self.out_format, img_path)
+                self.log.debug('render_macro: running command %s' % cmd)
+                ret, out, err = self.launch(cmd, content)
+                if ret != 0:
+                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
+                    return self.show_err(msg).getvalue()
 
+
+        # Generate a map file for binary formats
+        if self.out_format in GraphvizMacro.bitmap_formats:
+            
+            map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
+            map_path = os.path.join(self.cache_dir, map_name)
+            
+            if not os.path.exists(map_path):
+                cmd = '"%s" %s -Tcmapx -o%s' % (proc_cmd, self.processor_options, map_path)
+                self.log.debug('render_macro: running command %s' % cmd)
+                ret, out, err = self.launch(cmd, content)
+                if ret != 0:
+                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
+                    return self.show_err(msg).getvalue()
+
+
+        # Generate HTML output
+        # for SVG(z)
+        if self.out_format in GraphvizMacro.vector_formats:
+            try: # try to get SVG dimensions
+                f = open(img_path, 'r')
+                svg = f.readlines()
+                f.close()
+                svg = "".join(svg).replace('\n', '')
+                w = match('^.*width="([0-9]+)(.*?)" ', svg)
+                h = match('^.*height="([0-9]+)(.*?)"', svg)
+                (w_val, w_unit) = w.group(1,2)
+                (h_val, h_unit) = h.group(1,2)
+                # Graphviz seems to underestimate height/width for SVG images,
+                # so we have to adjust them. The correction factor seems to be constant.
+                [w_val, h_val] = [ 1.35 * x for x in (int(w_val), int(h_val))]
+                dimensions = 'width="%(w_val)s%(w_unit)s" height="%(h_val)s%(h_unit)s"' % locals()
+            except:
+                dimensions = 'width="100%" height="100%"'
+            # insert SVG, IE compatibility
+            buf.write('<!--[if IE]><embed src="%s/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (self.prefix_url, img_name, dimensions))
+            buf.write('<![if !IE]><object data="%s/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (self.prefix_url, img_name, dimensions))
+
+        # for binary formats, adding map
         else:
-            buf.write(GraphvizMacro.html_strings[out_format] % out_url)
+            f = open(map_path, 'r')
+            map = f.readlines()
+            f.close()
+            map = "".join(map).replace('\n', '')
+            buf.write('<map id="%s" name="%s">%s</map>' % (sha_key, sha_key, map))
+            buf.write('<img id="%s" src="%s/%s" usemap="#%s" alt="GraphViz image"/>' % (sha_key, self.prefix_url, img_name, sha_key))
 
         return buf.getvalue()
 
 
-    def check_config(self):
-        buf = StringIO()
-        trouble = False
+    def load_config(self):
+        """Load the graphviz trac.ini configuration into object instance variables."""
+        buf        = StringIO()
+        trouble    = False
+        self.exe_suffix = ''
         if sys.platform == 'win32':
-            exe_suffix = '.exe'
-        else:
-            exe_suffix = ''
+            self.exe_suffix = '.exe'
 
-        buf.write('<p>Graphviz macro processor not configured correctly. Please fix the configuration before continuing.</p>')
         if 'graphviz' not in self.config.sections():
-            buf.write('<p>The <b>graphviz</b> section was not found.</p>')
-            self.log.error('The graphviz section was not found.')
+            msg = 'The <b>graphviz</b> section was not found.'
+            buf = self.show_err(msg)
             trouble = True
         else:
-            for field in ['cache_dir', 'cmd_path', 'prefix_url']:
-                if not self.config.parser.has_option('graphviz', field):
-                    buf.write('<p>The <b>graphviz</b> section is missing the <b>%s</b> field.</p>' % field)
-                    self.log.error('The graphviz section is missing the %s field.</p>' % field)
-                    trouble = True
-
-            path = self.config.get('graphviz', 'cache_dir')
-            if not os.path.exists(path):
-                buf.write('<p>The <b>%s</b> is set to <b>%s</b> but that path does not exist.' % ('cache_dir', path))
-                self.log.error('The %s is set to %s but that path does not exist.' % ('cache_dir', path))
+            # check for the cache_dir entry
+            if not self.config.parser.has_option('graphviz', 'cache_dir'):
+                msg = 'The <b>graphviz</b> section is missing the <b>cache_dir</b> field.'
+                buf = self.show_err(msg)
                 trouble = True
-
-
-            if self.config.parser.has_option('graphviz', 'cmd_path'):
-                cmd_path = self.config.get('graphviz', 'cmd_path')
-                for name in GraphvizMacro.processors:
-                    exe_path = os.path.join(cmd_path, name) + exe_suffix
-                    if not os.path.exists(exe_path):
-                        buf.write('<p>The <b>%s</b> program was not found in the <b>%s</b> directory.</p>' % (name, cmd_path))
-                        self.log.error('The %s program was not found in the %s directory.' % (name, cmd_path))
-                        trouble = True
-        
-            if self.config.parser.has_option('graphviz', 'out_format'):
-                out_format = self.config.get('graphviz', 'out_format')
-                if out_format not in ('svg', 'svgz', 'jpg', 'png', 'gif'):
-                    buf.write('<p>The specified formt (<b>%s</b>) is not recognized as a valid graphviz output format.</p>' % output_format)
-                    self.log.error('The specified formt (%s) is not recognized as a valid graphviz output format.' % output_format)
-                    trouble = True
             else:
-                out_format = 'png'
+                self.cache_dir = self.config.get('graphviz', 'cache_dir')
+                if not os.path.exists(self.cache_dir):
+                    msg = 'The <b>cache_dir</b> is set to <b>%s</b> but that path does not exist.' % self.cache_dir
+                    buf = self.show_err(msg)
+                    trouble = True
+                self.log.debug('self.cache_dir: %s' % self.cache_dir)
+
+            # check for the cmd_path entry
+            if not self.config.parser.has_option('graphviz', 'cmd_path'):
+                msg = 'The <b>graphviz</b> section is missing the <b>cmd_path</b> field.'
+                buf = self.show_err(msg)
+                trouble = True
+            else:
+                self.cmd_path = self.config.get('graphviz', 'cmd_path')
+                if not os.path.exists(self.cmd_path):
+                    msg = 'The <b>cmd_path</b> is set to <b>%s</b> but that path does not exist.' % self.cmd_path
+                    buf = self.show_err(msg)
+                    trouble = True
+
+                for name in GraphvizMacro.processors:
+                    if not os.path.exists(os.path.join(self.cmd_path, name) + self.exe_suffix):
+                        msg = 'The <b>%s</b> program was not found in the <b>%s</b> directory.' % (name, self.cmd_path)
+                        buf = self.show_err(msg)
+                        trouble = True
+
+                self.log.debug('self.cmd_path: %s' % self.cmd_path)
+
+            # check for the prefix_url entry
+            if not self.config.parser.has_option('graphviz', 'prefix_url'):
+                msg = 'The <b>graphviz</b> section is missing the <b>prefix_url</b> field.'
+                buf = self.show_err(msg)
+                trouble = True
+            else:
+                self.prefix_url = self.config.get('graphviz', 'prefix_url')
+                self.log.debug('self.prefix_url: %s' % self.prefix_url)
+
+
+            #Get optional configuration parameters from trac.ini.
+
+            # check for the default output format - out_format
+            if self.config.parser.has_option('graphviz', 'out_format'):
+                self.out_format = self.config.get('graphviz', 'out_format')
+            else:
+                self.out_format = GraphvizMacro.formats[0]
+            self.log.debug('self.out_format: %s' % self.out_format)
+
+            # check for the default processor - processor
+            if self.config.parser.has_option('graphviz', 'processor'):
+                self.processor = self.config.get('graphviz', 'processor')
+            else:
+                self.processor = GraphvizMacro.processors[0]
+            self.log.debug('self.processor: %s' % self.processor)
+
+            # check if png anti aliasing should be done - png_antialias
+            if self.config.parser.has_option('graphviz', 'png_antialias'):
+                self.png_anti_alias = True
+            else:
+                self.png_anti_alias = False
+            self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
+
+            self.rsvg_path = '/usr/bin/rsvg'
+            if self.png_anti_alias == True:
+                if self.config.parser.has_option('graphviz', 'rsvg_path'):
+                    self.rsvg_path = self.config.get('graphviz', 'rsvg_path')
+
+                if not os.path.exists(self.rsvg_path):
+                    err = 'The rsvg program is set to <b>%s</b> but that path does not exist.' % self.rsvg_path
+                    buf = self.show_err(msg)
+                    trouble = True
+            self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
+
+            # get default graph/node/edge attributes
+            self.processor_options = ''
+            default_attributes = [ o for o in self.config.options('graphviz') if o[0].startswith('default_') ]
+            if default_attributes:
+               graph_attributes   = [ o for o in default_attributes if o[0].startswith('default_graph_') ]
+               node_attributes    = [ o for o in default_attributes if o[0].startswith('default_node_') ]
+               edge_attributes    = [ o for o in default_attributes if o[0].startswith('default_edge_') ]
+               if graph_attributes:
+                   self.processor_options += " ".join([ "-G" + o[0].replace('default_graph_', '') + "=" + o[1] for o in graph_attributes]) + " "
+               if node_attributes:
+                   self.processor_options += " ".join([ "-N" + o[0].replace('default_node_', '') + "=" + o[1] for o in node_attributes]) + " "
+               if edge_attributes:
+                   self.processor_options += " ".join([ "-E" + o[0].replace('default_edge_', '') + "=" + o[1] for o in edge_attributes])
+
+
+            # check if we should run the cache manager
+            if self.config.parser.has_option('graphviz', 'cache_manager'):
+                self.cache_manager = True
+
+                self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size'))
+                self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size'))
+                self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count'))
+                self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count'))
+
+                self.log.debug('self.cache_max_count: %d' % self.cache_max_count)
+                self.log.debug('self.cache_min_count: %d' % self.cache_min_count)
+                self.log.debug('self.cache_max_size: %d'  % self.cache_max_size)
+                self.log.debug('self.cache_min_size: %d'  % self.cache_min_size)
+
+            else:
+                self.cache_manager = False
 
         return trouble, buf
+
+
+    def launch(self, cmd, input):
+        """Launch a process (cmd), and returns exitcode, stdout + stderr"""
+        p = popen2.Popen3(cmd, capturestderr=1)
+        if input:
+            p.tochild.writelines(input)
+        p.tochild.close()
+        out = p.fromchild.read()
+        err = p.childerr.read()
+        ret = p.wait()
+        if os.name == "posix":
+            ret = ret >> 8
+        return ret, out, err
+
+
+    def show_err(self, msg):
+        """Display msg in an error box, using Trac style."""
+        buf = StringIO()
+        buf.write('<div id="content" class="error"><div class="message"> \n\
+                   <strong>Graphviz macro processor not configured correctly. Please fix the configuration before continuing.</strong> \n\
+                   <pre>%s</pre> \n\
+                   </div></div>' % msg)
+        return buf
 
 
     def clean_cache(self):
@@ -243,18 +377,7 @@ class GraphvizMacro(Component):
         must also be there.
         """
 
-        if self.config.parser.has_option('graphviz', 'cache_manager'):
-            max_size  = int(self.config.get('graphviz', 'cache_max_size'))
-            min_size  = int(self.config.get('graphviz', 'cache_min_size'))
-            max_count = int(self.config.get('graphviz', 'cache_max_count'))
-            min_count = int(self.config.get('graphviz', 'cache_min_count'))
-            cache_dir = self.config.get('graphviz', 'cache_dir')
-
-            self.log.debug('clean_cache.cache_dir: %s' % cache_dir)
-            self.log.debug('clean_cache.max_count: %d' % max_count)
-            self.log.debug('clean_cache.min_count: %d' % min_count)
-            self.log.debug('clean_cache.max_size: %d' % max_size)
-            self.log.debug('clean_cache.min_size: %d' % min_size)
+        if self.cache_manager:
 
             # os.stat gives back a tuple with: st_mode(0), st_ino(1),
             # st_dev(2), st_nlink(3), st_uid(4), st_gid(5),
@@ -266,9 +389,9 @@ class GraphvizMacro(Component):
             count = 0
             size = 0
 
-            for name in os.listdir(cache_dir):
+            for name in os.listdir(self.cache_dir):
                 self.log.debug('clean_cache.entry: %s' % name)
-                entry_list[name] = os.stat(os.path.join(cache_dir, name))
+                entry_list[name] = os.stat(os.path.join(self.cache_dir, name))
 
                 atime_list.setdefault(entry_list[name][7], []).append(name)
                 count = count + 1
@@ -288,12 +411,12 @@ class GraphvizMacro(Component):
             # result in the count dropping below cache_min_count if
             # multiple entries are have the same last access
             # time. Same for cache_min_size.
-            if count > max_count or size > max_size:
-                while len(atime_keys) and (min_count < count or min_size < size):
+            if count > self.cache_max_count or size > self.cache_max_size:
+                while len(atime_keys) and (self.cache_min_count < count or self.cache_min_size < size):
                     key = atime_keys.pop(0)
                     for file in atime_list[key]:
                         self.log.debug('clean_cache.unlink: %s' % file)
-                        os.unlink(os.path.join(cache_dir, file))
+                        os.unlink(os.path.join(self.cache_dir, file))
                         count = count - 1
                         size = size - entry_list[file][6]
         else:

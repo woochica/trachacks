@@ -47,8 +47,12 @@ as shown below:
 #!graphviz.circo/gif
 
 
-Currently there is no way to specify the default graph, node and 
-edge attributes. Ideally, this will be changed in a future release.
+Optional requirements
+=====================
+
+To allow antialiasing of PNG images produced by graphviz, you need to
+have rsvg, the librsvg rasterizer, installed on your system. It can be
+downloaded from <http://librsvg.sourceforge.net/>
 
 
 Installation via Source
@@ -83,41 +87,58 @@ python egg, some configuration is needed before it can be used.
 A new section called graphviz should be added to the conf/trac.ini
 file with these fields:
 
-    cache_dir - The directory that will be used to cache the generated
-                images.
+    cache_dir       - The directory that will be used to cache the 
+                      generated images.
 
-    prefix_url - The url to be used to find the cached images. This
-                 must point to the trac server's view of the cache_dir
-                 location.
+    prefix_url      - The url to be used to find the cached images. This
+                      must point to the trac server's view of the
+                      cache_dir location.
 
-    cmd_path - Full path to the directory where the graphviz programs
-               are located.
+    cmd_path        - Full path to the directory where the graphviz
+                      programs are located.
 
-    out_format - Graph output format. Valid formats are : png, jpg, svg, 
-                 svgz, gif. If not specified, the default is png.
+    out_format      - Graph output format. Valid formats are: png, jpg,
+                      svg, svgz, gif. If not specified, the default is
+                      png. This setting can be overrided on a per-graph
+                      basis.
 
-    cache_manager - If this entry exists in the configuration file,
-                    then the cache management logic will be invoked
-                    and the cache_max_size, cache_min_size,
-                    cache_max_count and cache_min_count must be
-                    defined.
+    processor       - Graphviz default processor. Valid processors are:
+                      dot, neato, twopi, fdp, circo. If not specified,
+                      the default is dot. This setting can be overrided
+                      on a per-graph basis.
 
-    cache_max_size - The maximum size in bytes that the cache should
-                     consume. This is the high watermark for disk
-                     space used.
+    png_antialias   - If this entry exists in the configuration file,
+                      then PNG outputs will be antialiased and the
+                      rsvg_path must be defined.
 
-    cache_min_size - When cleaning out the cache, remove files until
-                     this size in bytes is used by the cache. This is
-                     the low watermark for disk space used.
+    rsvg_path       - Full path to where the rsvg binary can be found.
 
-    cache_max_count - The maximum number of files that the cache
-                      should contain. This is the high watermark for
-                      the directory entry count.
+    default_*       - These settings define the default graph, node and
+                      edge attributes. They must be written as :
+                            default_TYPE_ATTRIBUTE = VALUE
+                      where TYPE      is one of graph, node, edge
+                            ATTRIBUTE is a valid graphviz attribute
+                            VALUE     is the attribute value.
+                        eg: default_edge_fontname = "Andale Mono"
+                            default_graph_fontsize = 10
 
-    cache_min_count - When cleaning out the cache, remove files until
-                      this number of files remain in the cache. This
-                      is the low watermark for the directory entry
-                      count.
+    cache_manager   - If this entry exists in the configuration file,
+                      then the cache management logic will be invoked
+                      and the cache_max_size, cache_min_size,
+                      cache_max_count and cache_min_count must be
+                      defined.
+
+    cache_max_size  - The maximum size in bytes that the cache should
+                      consume. This is the high watermark for disk space
+                      used.
+
+    cache_min_size  - When cleaning out the cache, remove files until
+                      this size in bytes is used by the cache. This is
+                      the low watermark for disk space used.
+
+    cache_max_count - The maximum number of files that the cache should
+                      contain. This is the high watermark for the
+                      directory entry count.
 
 The cache_dir and prefix_url entries are related to each other. The
 cache_dir entry points to a location on the file system and the
@@ -149,6 +170,10 @@ cache_dir = /tmp/trac/htdocs/graphviz
 prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 cmd_path = /usr/bin
 out_format = png
+png_antialias = true
+rsvg_path = /usr/bin/rsvg
+default_graph_fontname = "Andale Mono"
+default_graph_fontsize = 10
 
 
 Here is a sample graphviz section that activates the cache manager:
@@ -158,6 +183,10 @@ cache_dir = /tmp/trac/htdocs/graphviz
 prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 cmd_path = /usr/bin
 out_format = png
+png_antialias = true
+rsvg_path = /usr/bin/rsvg
+default_graph_fontname = "Andale Mono"
+default_graph_fontsize = 10
 cache_manager = yes
 cache_max_size = 10000000
 cache_min_size = 5000000
@@ -179,12 +208,11 @@ Contributors
 
 I'd like to extend my thanks to following people:
 
-    - Kilian Cavalotti for the code to allow the output format to be
-      specified system wide and per diagram.
+ * Kilian Cavalotti for the code to allow the output format to be
+   specified system wide and per diagram.
 
-    - Alec Thomas for creating Trac Hacks
-      (http://trac-hacks.swapoff.org) and providing hosting for the
-      Graphviz module.
+ * Alec Thomas for creating Trac Hacks (http://trac-hacks.swapoff.org)
+   and providing hosting for the Graphviz module.
 
 
 $Id$
