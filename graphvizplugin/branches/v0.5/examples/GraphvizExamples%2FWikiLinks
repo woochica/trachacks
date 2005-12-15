@@ -4,7 +4,7 @@ The links in the diagram use Trac wiki links to point to various places:
  * '''Ticket 1''' points to ticket:1
  * '''Report 1''' points to report:1
  * '''Changeset 1''' points to changeset:1
- * '''Wiki Page''' points to wiki:GraphvizExamples
+ * '''Graphviz Examples''' points to wiki:GraphvizExamples
  * '''Milestone 1''' points to milestone:milestone1
  * '''Source Link''' points to source:Readme.txt
 
