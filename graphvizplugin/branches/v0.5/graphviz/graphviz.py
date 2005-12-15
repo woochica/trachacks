@@ -22,11 +22,12 @@ except ImportError:
 import sha
 import os, popen2
 import sys
+import re
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.util import escape
-from re import match
+import trac.web.href
 
 
 
@@ -86,6 +87,11 @@ class GraphvizMacro(Component):
         content - The text the user entered for the macro to process.
         """
 
+        self.log.debug('dir(req): %s' % str(dir(req)))
+        self.log.debug('req.args: %s' % str(req.args))
+        self.log.debug('req.base_url: %s' % str(req.base_url))
+
+        self.base_url = req.base_url
         # check and load the configuration
         trouble, msg = self.load_config()
         if trouble:
@@ -99,7 +105,7 @@ class GraphvizMacro(Component):
 
         # first try with the RegExp engine
         try: 
-            m = match('graphviz\.?([a-z]*)\/?([a-z]*)', name)
+            m = re.match('graphviz\.?([a-z]*)\/?([a-z]*)', name)
             (l_proc, l_out_format) = m.group(1, 2)
 
         # or use the string.split method
@@ -172,6 +178,9 @@ class GraphvizMacro(Component):
             map_path = os.path.join(self.cache_dir, map_name)
 
             if not os.path.exists(map_path):
+                content = re.sub(r'(URL=)(")(ticket|report|changeset|wiki|milestone|source)(:)([A-Za-z0-9./ ]+)(")',
+                                 self.expand_wiki_links,
+                                 content)
                 cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
                 self.log.debug('render_macro: running command %s' % cmd)
                 ret, out, err = self.launch(cmd, content)
@@ -188,8 +197,8 @@ class GraphvizMacro(Component):
                 svg = f.readlines()
                 f.close()
                 svg = "".join(svg).replace('\n', '')
-                w = match('^.*width="([0-9]+)(.*?)" ', svg)
-                h = match('^.*height="([0-9]+)(.*?)"', svg)
+                w = re.match('^.*width="([0-9]+)(.*?)" ', svg)
+                h = re.match('^.*height="([0-9]+)(.*?)"', svg)
                 (w_val, w_unit) = w.group(1,2)
                 (h_val, h_unit) = h.group(1,2)
                 # Graphviz seems to underestimate height/width for SVG images,
@@ -215,6 +224,33 @@ class GraphvizMacro(Component):
             buf.write('<img src="%s/%s"/>' % (self.prefix_url, img_name))
 
         return buf.getvalue()
+
+
+    def expand_wiki_links(self, match):
+        href = trac.web.href.Href(self.base_url)
+        link_type = match.groups()[2]
+
+        self.log.debug('expand_wiki_links.match.groups: %s' % str(match.groups()))
+        self.log.debug('expand_wiki_links.link_type: %(link_type)s' % locals())
+
+        url = match.group() #default to what's in the current URL
+
+        if link_type == 'ticket':
+            url = 'URL="%s"' % href.ticket(match.groups()[4])
+        elif link_type == 'report':
+            url = 'URL="%s"' % href.report(match.groups()[4])
+        elif link_type == 'changeset':
+            url = 'URL="%s"' % href.changeset(match.groups()[4])
+        elif link_type == 'wiki':
+            url = 'URL="%s"' % href.wiki(match.groups()[4])
+        elif link_type == 'milestone':
+            url = 'URL="%s"' % href.milestone(match.groups()[4])
+        elif link_type == 'source':
+            url = 'URL="%s"' % href.browser(match.groups()[4])
+
+        self.log.debug('expand_wiki_links.url: %(url)s' % locals())
+
+        return url
 
 
     def load_config(self):

@@ -1,0 +1,29 @@
+= Graphviz Example Wiki Links =
+
+The links in the diagram use Trac wiki links to point to various places:
+ * '''Ticket 1''' points to ticket:1
+ * '''Report 1''' points to report:1
+ * '''Changeset 1''' points to changeset:1
+ * '''Wiki Page''' points to wiki:GraphvizExamples
+ * '''Milestone 1''' points to milestone:milestone1
+ * '''Source Link''' points to source:Readme.txt
+
+{{{
+#!graphviz.circo
+digraph G {
+    "Ticket 1"          [URL="ticket:1"];
+    "Report 1"          [URL="report:1"];
+    "Changeset 1"       [URL="changeset:1"];
+    "Graphviz Examples" [URL="wiki:GraphvizExamples"];
+    "Milestone 1"       [URL="milestone:milestone1"];
+    "Readme.txt"        [URL="source:Readme.txt"];
+
+    "Ticket 1";
+    "Report 1";
+    "Changeset 1";
+    "Graphviz Examples";
+    "Milestone 1";
+    "Readme.txt";
+}
+}}}
+
