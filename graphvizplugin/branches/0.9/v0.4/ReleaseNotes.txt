@@ -13,7 +13,8 @@ Changes for release v0.4
 ------------------------
 
  * Map support for bitmap images, allowing to use URL="" attributes in
-   graphs.
+   graphs. Maps are only generated if the URL= string is found in the
+   Graphviz diagram.
 
  * Antialiasing on PNG images, using rsvg, from
    <http://librsvg.sf.net>.

@@ -163,13 +163,14 @@ class GraphvizMacro(Component):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
 
-
+        use_map = 'URL=' in content
+        self.log.debug('render_macro.use_map: %s' % str(use_map))
         # Generate a map file for binary formats
-        if self.out_format in GraphvizMacro.bitmap_formats:
-            
+        if use_map and self.out_format in GraphvizMacro.bitmap_formats:
+
             map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
             map_path = os.path.join(self.cache_dir, map_name)
-            
+
             if not os.path.exists(map_path):
                 cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
                 self.log.debug('render_macro: running command %s' % cmd)
@@ -202,13 +203,16 @@ class GraphvizMacro(Component):
             buf.write('<![if !IE]><object data="%s/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (self.prefix_url, img_name, dimensions))
 
         # for binary formats, adding map
-        else:
+        elif use_map:
             f = open(map_path, 'r')
             map = f.readlines()
             f.close()
             map = "".join(map).replace('\n', '')
             buf.write('<map id="%s" name="%s">%s</map>' % (sha_key, sha_key, map))
             buf.write('<img id="%s" src="%s/%s" usemap="#%s" alt="GraphViz image"/>' % (sha_key, self.prefix_url, img_name, sha_key))
+
+        else:
+            buf.write('<img src="%s/%s"/>' % (self.prefix_url, img_name))
 
         return buf.getvalue()
 
