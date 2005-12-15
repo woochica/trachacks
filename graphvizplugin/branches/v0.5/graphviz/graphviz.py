@@ -147,7 +147,7 @@ class GraphvizMacro(Component):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
                 # SVG to PNG rasterization
-                cmd = '"%s" %s.svg %s' % (self.rsvg_path, img_path, img_path)
+                cmd = '"%s" --dpi-x=%d --dpi-y=%d %s.svg %s' % (self.rsvg_path, self.dpi, self.dpi, img_path, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
                 ret, out, err = self.launch(cmd, None)
                 if ret != 0:
@@ -226,7 +226,7 @@ class GraphvizMacro(Component):
             self.exe_suffix = '.exe'
 
         if 'graphviz' not in self.config.sections():
-            msg = 'The <b>graphviz</b> section was not found.'
+            msg = 'The <b>graphviz</b> section was not found in the trac configuration file.'
             buf = self.show_err(msg)
             trouble = True
         else:
@@ -339,6 +339,12 @@ class GraphvizMacro(Component):
             else:
                 self.cache_manager = False
 
+            # is there a graphviz default DPI setting?
+            if self.config.parser.has_option('graphviz', 'default_graph_dpi'):
+                self.dpi = int(self.config.get('graphviz', 'default_graph_dpi'))
+            else:
+                self.dpi = 96 # graphviz default
+
         return trouble, buf
 
 
@@ -360,9 +366,10 @@ class GraphvizMacro(Component):
         """Display msg in an error box, using Trac style."""
         buf = StringIO()
         buf.write('<div id="content" class="error"><div class="message"> \n\
-                   <strong>Graphviz macro processor not configured correctly. Please fix the configuration before continuing.</strong> \n\
+                   <strong>Graphviz macro processor has detected an error. Please fix the problem before continuing.</strong> \n\
                    <pre>%s</pre> \n\
                    </div></div>' % msg)
+        self.log.error(msg)
         return buf
 
 

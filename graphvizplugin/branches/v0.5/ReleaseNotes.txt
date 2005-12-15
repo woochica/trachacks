@@ -1,6 +1,6 @@
 Trac Graphviz Plugin v0.5 Release Notes
 =======================================
-Dec 14, 2005
+Dec 15, 2005
 
 Graphviz plugin v0.5 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
@@ -12,7 +12,13 @@ the resulting image.
 Changes for release v0.5
 ------------------------
 
- * 
+ * Added a note in the Readme.txt wrt using load_examples.py to import
+   the Graphviz examples into a wiki. Fixed load_examples.py so that
+   it correctly looks for Graphviz examples in directories other than
+   the working directory.
+
+ * Fixed a bug whereby image maps were a bit off when using the png
+   anti aliasing option.
 
 
 Changes for release v0.4
@@ -42,6 +48,14 @@ Changes for release v0.4
 
  * Expanded info and debugging messages to allow for better debugging
    of the running environment.
+
+ * Error messages that occur when running the grapviz programs will
+   now be displayed in the browser. This should help in resolving
+   syntax problems with graphviz code.
+
+ * Graphviz program paths are now enclosed in quotes. This should
+   resolve the problem when there are spaces in the path as is typical
+   on Windows.
 
 
 Changes for release v0.3

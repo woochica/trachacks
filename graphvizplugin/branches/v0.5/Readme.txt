@@ -20,6 +20,11 @@ A simple example would be:
 digraph G {Hello->World->Graphviz->Rules}
 }}}
 
+There are also several examples available in the examples directory.
+They can be loaded into a Trac installation by the
+examples/load_examples.py program. Once loaded, navigate to the
+wiki/GraphvizExamples page to access the examples.
+
 
 Usage Details
 +++++++++++++
