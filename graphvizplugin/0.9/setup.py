@@ -18,9 +18,9 @@ from setuptools import setup, find_packages
 
 setup (
     name = 'graphviz',
-    version = "0.3",
+    version = "0.4",
     packages = find_packages(),
-    package_data = { 
+    package_data = { 'graphviz' : ['examples/*',],
     },
     author = "Peter Kropf",
     author_email = "pkropf@gmail.com",
