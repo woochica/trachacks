@@ -20,6 +20,10 @@ Changes for release v0.5
  * Fixed a bug whereby image maps were a bit off when using the png
    anti aliasing option.
 
+ * URL= strings in diagrams can now have Trac wiki links like
+   ticket:1, report:7, changeset:47, wiki:CamelCasePage,
+   milestone:milestone1 and source:Readme.txt.
+
 
 Changes for release v0.4
 ------------------------
