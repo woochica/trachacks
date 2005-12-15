@@ -171,7 +171,7 @@ class GraphvizMacro(Component):
             map_path = os.path.join(self.cache_dir, map_name)
             
             if not os.path.exists(map_path):
-                cmd = '"%s" %s -Tcmapx -o%s' % (proc_cmd, self.processor_options, map_path)
+                cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
                 self.log.debug('render_macro: running command %s' % cmd)
                 ret, out, err = self.launch(cmd, content)
                 if ret != 0:
