@@ -37,6 +37,14 @@ Changes for release v0.4
  * Expanded info and debugging messages to allow for better debugging
    of the running environment.
 
+ * Error messages that occur when running the grapviz programs will
+   now be displayed in the browser. This should help in resolving
+   syntax problems with graphviz code.
+
+ * Graphviz program paths are now enclosed in quotes. This should
+   resolve the problem when there are spaces in the path as is typical
+   on Windows.
+
 
 Changes for release v0.3
 ------------------------
