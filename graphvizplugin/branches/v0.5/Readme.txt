@@ -20,8 +20,8 @@ A simple example would be:
 digraph G {Hello->World->Graphviz->Rules}
 }}}
 
-There are also several examples available in the examples directory.
-They can be loaded into a Trac installation by the
+There are also several additional examples available in the examples
+directory.  They can be loaded into a Trac installation by the
 examples/load_examples.py program. Once loaded, navigate to the
 wiki/GraphvizExamples page to access the examples.
 
@@ -213,8 +213,13 @@ Contributors
 
 I'd like to extend my thanks to following people:
 
- * Kilian Cavalotti for the code to allow the output format to be
-   specified system wide and per diagram.
+ * Kilian Cavalotti for
+
+   * the code to allow the output format to be specified system wide and 
+     per diagram.
+
+   * work on the code to expand Trac wiki links within Graphviz
+     diagrams.
 
  * Alec Thomas for creating Trac Hacks (http://trac-hacks.swapoff.org)
    and providing hosting for the Graphviz module.

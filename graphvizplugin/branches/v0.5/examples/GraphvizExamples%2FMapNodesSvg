@@ -2,10 +2,12 @@
 
 The individual nodes of the image point to the various pages on the Edgewall Trac project site.
 
+Notice that the entire oval for the Trac node is an active link while the others are only active on the text and the oval outline. The use of the '''style=filled''' and '''fillcolor=red''' force the SVG links to be activated for the whole node.
+
 {{{
 #!graphviz.circo/svg
 digraph G {
-    Trac [URL="http://trac.edgewall.com/"];
+    Trac [style=filled, fillcolor=red, URL="http://trac.edgewall.com/"];
     TracProject [URL="http://projects.edgewall.com/trac/"];
     Guide [URL="http://projects.edgewall.com/trac/wiki/TracGuide"];
     FAQ [URL="http://projects.edgewall.com/trac/wiki/TracFaq"];
