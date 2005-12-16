@@ -27,7 +27,7 @@ import re
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.util import escape
-import trac.web.href
+from trac.wiki.formatter import wiki_to_oneliner
 
 
 
@@ -136,23 +136,33 @@ class GraphvizMacro(Component):
             buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        sha_key    = sha.new(self.processor + content).hexdigest()
-        img_name   = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
-        img_path   = os.path.join(self.cache_dir, img_name)
+        sha_key  = sha.new(self.processor + content).hexdigest()
+        img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
+        img_path = os.path.join(self.cache_dir, img_name)
+        map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
+        map_path = os.path.join(self.cache_dir, map_name)
 
+        # Check for URL="" presence in graph code
+        URL_in_graph = 'URL=' in content
+
+        # Create image if not in cache
         if not os.path.exists(img_path):
             self.clean_cache()
 
+            self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
+            if URL_in_graph: # translate wiki TracLinks in URL
+                content = re.sub(r'URL="(.*)"', self.expand_wiki_links, content)
+
             # Antialias PNGs with rsvg, if requested
             if self.out_format == 'png' and self.png_anti_alias == True:
-                # SVG output
+                # 1. SVG output
                 cmd = '"%s" %s -Tsvg -o%s.svg' % (proc_cmd, self.processor_options, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
                 ret, out, err = self.launch(cmd, content)
                 if ret != 0:
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
-                # SVG to PNG rasterization
+                # 2. SVG to PNG rasterization
                 cmd = '"%s" --dpi-x=%d --dpi-y=%d %s.svg %s' % (self.rsvg_path, self.dpi, self.dpi, img_path, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
                 ret, out, err = self.launch(cmd, None)
@@ -160,8 +170,7 @@ class GraphvizMacro(Component):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
             
-            # Render image
-            else:
+            else: # Render other image formats
                 cmd = '"%s" %s -T%s -o%s' % (proc_cmd, self.processor_options, self.out_format, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
                 ret, out, err = self.launch(cmd, content)
@@ -169,24 +178,17 @@ class GraphvizMacro(Component):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
 
-        use_map = 'URL=' in content
-        self.log.debug('render_macro.use_map: %s' % str(use_map))
-        # Generate a map file for binary formats
-        if use_map and self.out_format in GraphvizMacro.bitmap_formats:
+            # Generate a map file for binary formats
+            if URL_in_graph and self.out_format in GraphvizMacro.bitmap_formats:
 
-            map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
-            map_path = os.path.join(self.cache_dir, map_name)
-
-            if not os.path.exists(map_path):
-                content = re.sub(r'(URL=)(")(ticket|report|changeset|wiki|milestone|source)(:)([A-Za-z0-9./ ]+)(")',
-                                 self.expand_wiki_links,
-                                 content)
-                cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
-                self.log.debug('render_macro: running command %s' % cmd)
-                ret, out, err = self.launch(cmd, content)
-                if ret != 0:
-                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
-                    return self.show_err(msg).getvalue()
+                # Create the map if not in cache
+                if not os.path.exists(map_path):
+                    cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
+                    self.log.debug('render_macro: running command %s' % cmd)
+                    ret, out, err = self.launch(cmd, content)
+                    if ret != 0:
+                        msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
+                        return self.show_err(msg).getvalue()
 
 
         # Generate HTML output
@@ -197,8 +199,8 @@ class GraphvizMacro(Component):
                 svg = f.readlines()
                 f.close()
                 svg = "".join(svg).replace('\n', '')
-                w = re.match('^.*width="([0-9]+)(.*?)" ', svg)
-                h = re.match('^.*height="([0-9]+)(.*?)"', svg)
+                w = re.search('width="([0-9]+)(.*?)" ', svg)
+                h = re.search('height="([0-9]+)(.*?)"', svg)
                 (w_val, w_unit) = w.group(1,2)
                 (h_val, h_unit) = h.group(1,2)
                 # Graphviz seems to underestimate height/width for SVG images,
@@ -211,8 +213,8 @@ class GraphvizMacro(Component):
             buf.write('<!--[if IE]><embed src="%s/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (self.prefix_url, img_name, dimensions))
             buf.write('<![if !IE]><object data="%s/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (self.prefix_url, img_name, dimensions))
 
-        # for binary formats, adding map
-        elif use_map:
+        # for binary formats, add map
+        elif URL_in_graph:
             f = open(map_path, 'r')
             map = f.readlines()
             f.close()
@@ -227,27 +229,13 @@ class GraphvizMacro(Component):
 
 
     def expand_wiki_links(self, match):
-        href = trac.web.href.Href(self.base_url)
-        link_type = match.groups()[2]
-
         self.log.debug('expand_wiki_links.match.groups: %s' % str(match.groups()))
-        self.log.debug('expand_wiki_links.link_type: %(link_type)s' % locals())
-
-        url = match.group() #default to what's in the current URL
-
-        if link_type == 'ticket':
-            url = 'URL="%s"' % href.ticket(match.groups()[4])
-        elif link_type == 'report':
-            url = 'URL="%s"' % href.report(match.groups()[4])
-        elif link_type == 'changeset':
-            url = 'URL="%s"' % href.changeset(match.groups()[4])
-        elif link_type == 'wiki':
-            url = 'URL="%s"' % href.wiki(match.groups()[4])
-        elif link_type == 'milestone':
-            url = 'URL="%s"' % href.milestone(match.groups()[4])
-        elif link_type == 'source':
-            url = 'URL="%s"' % href.browser(match.groups()[4])
-
+        
+        wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
+        html_url = wiki_to_oneliner(wiki_url, self.env)  # <a href="http://someurl">...</a>
+        href     = re.search('href="(.*?)"', html_url)   # http://someurl
+        
+        url      = 'URL="%s"' % href.groups()[0]
         self.log.debug('expand_wiki_links.url: %(url)s' % locals())
 
         return url

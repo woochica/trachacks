@@ -1,4 +1,4 @@
-= Graphviz Example Wiki Links =
+= Graphviz Example Wiki Links, SVG Image =
 
 The links in the diagram use Trac wiki links to point to various places:
  * '''Ticket 1''' points to ticket:1
@@ -9,7 +9,7 @@ The links in the diagram use Trac wiki links to point to various places:
  * '''Source Link''' points to source:Readme.txt
 
 {{{
-#!graphviz.circo
+#!graphviz.circo/svg
 digraph G {
     "Ticket 1"          [URL="ticket:1"];
     "Report 1"          [URL="report:1"];
