@@ -20,14 +20,13 @@ try:
 except ImportError:
     from StringIO import StringIO
 import sha
-import os
+import os, popen2
 import sys
-import re
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.util import escape
-from trac.wiki.formatter import wiki_to_oneliner
+from re import match
 
 
 
@@ -87,11 +86,6 @@ class GraphvizMacro(Component):
         content - The text the user entered for the macro to process.
         """
 
-        self.log.debug('dir(req): %s' % str(dir(req)))
-        self.log.debug('req.args: %s' % str(req.args))
-        self.log.debug('req.base_url: %s' % str(req.base_url))
-
-        self.base_url = req.base_url
         # check and load the configuration
         trouble, msg = self.load_config()
         if trouble:
@@ -105,7 +99,7 @@ class GraphvizMacro(Component):
 
         # first try with the RegExp engine
         try: 
-            m = re.match('graphviz\.?([a-z]*)\/?([a-z]*)', name)
+            m = match('graphviz\.?([a-z]*)\/?([a-z]*)', name)
             (l_proc, l_out_format) = m.group(1, 2)
 
         # or use the string.split method
@@ -136,59 +130,54 @@ class GraphvizMacro(Component):
             buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        sha_key  = sha.new(self.processor + content).hexdigest()
-        img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
-        img_path = os.path.join(self.cache_dir, img_name)
-        map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
-        map_path = os.path.join(self.cache_dir, map_name)
+        sha_key    = sha.new(self.processor + content).hexdigest()
+        img_name   = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
+        img_path   = os.path.join(self.cache_dir, img_name)
 
-        # Check for URL="" presence in graph code
-        URL_in_graph = 'URL=' in content
-
-        # Create image if not in cache
         if not os.path.exists(img_path):
             self.clean_cache()
 
-            self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
-            if URL_in_graph: # translate wiki TracLinks in URL
-                content = re.sub(r'URL="(.*)"', self.expand_wiki_links, content)
-
             # Antialias PNGs with rsvg, if requested
             if self.out_format == 'png' and self.png_anti_alias == True:
-                # 1. SVG output
+                # SVG output
                 cmd = '"%s" %s -Tsvg -o%s.svg' % (proc_cmd, self.processor_options, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
-                out, err = self.launch(cmd, content)
-                if len(out) or len(err):
+                ret, out, err = self.launch(cmd, content)
+                if ret != 0:
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
-                # 2. SVG to PNG rasterization
-                cmd = '"%s" --dpi-x=%d --dpi-y=%d %s.svg %s' % (self.rsvg_path, self.dpi, self.dpi, img_path, img_path)
+                # SVG to PNG rasterization
+                cmd = '"%s" %s.svg %s' % (self.rsvg_path, img_path, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
-                out, err = self.launch(cmd, None)
-                if len(out) or len(err):
+                ret, out, err = self.launch(cmd, None)
+                if ret != 0:
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
             
-            else: # Render other image formats
+            # Render image
+            else:
                 cmd = '"%s" %s -T%s -o%s' % (proc_cmd, self.processor_options, self.out_format, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
-                out, err = self.launch(cmd, content)
-                if len(out) or len(err):
+                ret, out, err = self.launch(cmd, content)
+                if ret != 0:
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
 
-            # Generate a map file for binary formats
-            if URL_in_graph and self.out_format in GraphvizMacro.bitmap_formats:
+        use_map = 'URL=' in content
+        self.log.debug('render_macro.use_map: %s' % str(use_map))
+        # Generate a map file for binary formats
+        if use_map and self.out_format in GraphvizMacro.bitmap_formats:
 
-                # Create the map if not in cache
-                if not os.path.exists(map_path):
-                    cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
-                    self.log.debug('render_macro: running command %s' % cmd)
-                    out, err = self.launch(cmd, content)
-                    if len(out) or len(err):
-                        msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
-                        return self.show_err(msg).getvalue()
+            map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
+            map_path = os.path.join(self.cache_dir, map_name)
+
+            if not os.path.exists(map_path):
+                cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
+                self.log.debug('render_macro: running command %s' % cmd)
+                ret, out, err = self.launch(cmd, content)
+                if ret != 0:
+                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
+                    return self.show_err(msg).getvalue()
 
 
         # Generate HTML output
@@ -199,8 +188,8 @@ class GraphvizMacro(Component):
                 svg = f.readlines()
                 f.close()
                 svg = "".join(svg).replace('\n', '')
-                w = re.search('width="([0-9]+)(.*?)" ', svg)
-                h = re.search('height="([0-9]+)(.*?)"', svg)
+                w = match('^.*width="([0-9]+)(.*?)" ', svg)
+                h = match('^.*height="([0-9]+)(.*?)"', svg)
                 (w_val, w_unit) = w.group(1,2)
                 (h_val, h_unit) = h.group(1,2)
                 # Graphviz seems to underestimate height/width for SVG images,
@@ -213,8 +202,8 @@ class GraphvizMacro(Component):
             buf.write('<!--[if IE]><embed src="%s/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (self.prefix_url, img_name, dimensions))
             buf.write('<![if !IE]><object data="%s/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (self.prefix_url, img_name, dimensions))
 
-        # for binary formats, add map
-        elif URL_in_graph:
+        # for binary formats, adding map
+        elif use_map:
             f = open(map_path, 'r')
             map = f.readlines()
             f.close()
@@ -228,19 +217,6 @@ class GraphvizMacro(Component):
         return buf.getvalue()
 
 
-    def expand_wiki_links(self, match):
-        self.log.debug('expand_wiki_links.match.groups: %s' % str(match.groups()))
-        
-        wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
-        html_url = wiki_to_oneliner(wiki_url, self.env)  # <a href="http://someurl">...</a>
-        href     = re.search('href="(.*?)"', html_url)   # http://someurl
-        
-        url      = 'URL="%s"' % href.groups()[0]
-        self.log.debug('expand_wiki_links.url: %(url)s' % locals())
-
-        return url
-
-
     def load_config(self):
         """Load the graphviz trac.ini configuration into object instance variables."""
         buf        = StringIO()
@@ -250,7 +226,7 @@ class GraphvizMacro(Component):
             self.exe_suffix = '.exe'
 
         if 'graphviz' not in self.config.sections():
-            msg = 'The <b>graphviz</b> section was not found in the trac configuration file.'
+            msg = 'The <b>graphviz</b> section was not found.'
             buf = self.show_err(msg)
             trouble = True
         else:
@@ -363,34 +339,30 @@ class GraphvizMacro(Component):
             else:
                 self.cache_manager = False
 
-            # is there a graphviz default DPI setting?
-            if self.config.parser.has_option('graphviz', 'default_graph_dpi'):
-                self.dpi = int(self.config.get('graphviz', 'default_graph_dpi'))
-            else:
-                self.dpi = 96 # graphviz default
-
         return trouble, buf
 
 
     def launch(self, cmd, input):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
-	p_in, p_out, p_err = os.popen3(cmd)
+        p = popen2.Popen3(cmd, capturestderr=1)
         if input:
-            p_in.writelines(input)
-        p_in.close()
-        out = p_out.read()
-        err = p_err.read()
-        return out, err
+            p.tochild.writelines(input)
+        p.tochild.close()
+        out = p.fromchild.read()
+        err = p.childerr.read()
+        ret = p.wait()
+        if os.name == "posix":
+            ret = ret >> 8
+        return ret, out, err
 
 
     def show_err(self, msg):
         """Display msg in an error box, using Trac style."""
         buf = StringIO()
         buf.write('<div id="content" class="error"><div class="message"> \n\
-                   <strong>Graphviz macro processor has detected an error. Please fix the problem before continuing.</strong> \n\
+                   <strong>Graphviz macro processor not configured correctly. Please fix the configuration before continuing.</strong> \n\
                    <pre>%s</pre> \n\
                    </div></div>' % msg)
-        self.log.error(msg)
         return buf
 
 

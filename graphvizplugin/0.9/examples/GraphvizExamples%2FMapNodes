@@ -1,9 +1,9 @@
-= Graphviz Eamples Map Nodes, PNG Image =
+= Graphviz Eamples Map Nodes =
 
 The individual nodes of the image point to the various pages on the Edgewall Trac project site.
 
 {{{
-#!graphviz.circo/png
+#!graphviz.circo
 digraph G {
     Trac [URL="http://trac.edgewall.com/"];
     TracProject [URL="http://projects.edgewall.com/trac/"];
