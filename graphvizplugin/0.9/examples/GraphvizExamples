@@ -10,5 +10,6 @@ Setting the output format to [wiki:GraphvizExamples/OutputPng png], [wiki:Graphv
 
 == Image Maps ==
 
-Using client side image maps to [wiki:GraphvizExamples/MapWhole map whole image] and [wiki:GraphvizExamples/MapNodes map nodes].
+Using client side image maps to [wiki:GraphvizExamples/MapWhole map whole image], [wiki:GraphvizExamples/MapNodesPng map nodes (png)], [wiki:GraphvizExamples/MapNodesSvg map nodes (svg)], [wiki:GraphvizExamples/WikiLinksPng wiki links (png)], and [wiki:GraphvizExamples/WikiLinksSvg wiki links (svg)].
+
 

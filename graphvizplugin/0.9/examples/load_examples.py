@@ -7,9 +7,14 @@ from trac.scripts import admin
 
 
 def main(trac_env, examples_dir='.'):
+    loaded = False
     for file in os.listdir(examples_dir):
         if 'GraphvizExamples' in file:
-            admin.run([trac_env, 'wiki', 'import', file.replace('%2F', '/'), file] )
+            admin.run([trac_env, 'wiki', 'import', file.replace('%2F', '/'), os.path.join(examples_dir, file)] )
+            loaded = True
+
+    if not loaded:
+        print 'The %(examples_dir)s does not contain any GrapgvizExamples files.' % locals()
 
 
 if __name__ == '__main__':
