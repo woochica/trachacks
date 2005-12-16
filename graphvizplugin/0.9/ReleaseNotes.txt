@@ -1,12 +1,34 @@
-Trac Graphviz Plugin v0.4 Release Notes
+Trac Graphviz Plugin v0.5 Release Notes
 =======================================
-Dec 14, 2005
+Dec 16, 2005
 
-Graphviz plugin v0.4 for Trac is now available. The Graphviz wiki
+Graphviz plugin v0.5 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
 of diagrams by the various graphviz programs. The text of a wiki page
 can contain the source text for graphviz and the web browser will show
 the resulting image.
+
+
+Changes for release v0.5
+------------------------
+
+ * Added a note in the Readme.txt wrt using load_examples.py to import
+   the Graphviz examples into a wiki. Fixed load_examples.py so that
+   it correctly looks for Graphviz examples in directories other than
+   the working directory.
+
+ * Fixed a bug whereby image maps were a bit off when using the png
+   antialiasing option.
+
+ * URL= strings in diagrams can now have Trac wiki links like
+   ticket:1, report:7, changeset:47, wiki:CamelCasePage,
+   milestone:milestone1 and source:Readme.txt.
+
+ * Added additional examples for links in SVG images and using Trac
+   wiki links.
+
+ * Fixed the bug #102 (http://trac-hacks.swapoff.org/ticket/102)
+   whereby popen2.Popen3 is not available on Windows.
 
 
 Changes for release v0.4
@@ -36,6 +58,14 @@ Changes for release v0.4
 
  * Expanded info and debugging messages to allow for better debugging
    of the running environment.
+
+ * Error messages that occur when running the grapviz programs will
+   now be displayed in the browser. This should help in resolving
+   syntax problems with graphviz code.
+
+ * Graphviz program paths are now enclosed in quotes. This should
+   resolve the problem when there are spaces in the path as is typical
+   on Windows.
 
 
 Changes for release v0.3
