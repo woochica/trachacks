@@ -20,7 +20,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 import sha
-import os, popen2
+import os
 import sys
 import re
 
@@ -158,23 +158,23 @@ class GraphvizMacro(Component):
                 # 1. SVG output
                 cmd = '"%s" %s -Tsvg -o%s.svg' % (proc_cmd, self.processor_options, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
-                ret, out, err = self.launch(cmd, content)
-                if ret != 0:
+                out, err = self.launch(cmd, content)
+                if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
                 # 2. SVG to PNG rasterization
                 cmd = '"%s" --dpi-x=%d --dpi-y=%d %s.svg %s' % (self.rsvg_path, self.dpi, self.dpi, img_path, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
-                ret, out, err = self.launch(cmd, None)
-                if ret != 0:
+                out, err = self.launch(cmd, None)
+                if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
             
             else: # Render other image formats
                 cmd = '"%s" %s -T%s -o%s' % (proc_cmd, self.processor_options, self.out_format, img_path)
                 self.log.debug('render_macro: running command %s' % cmd)
-                ret, out, err = self.launch(cmd, content)
-                if ret != 0:
+                out, err = self.launch(cmd, content)
+                if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
 
@@ -185,8 +185,8 @@ class GraphvizMacro(Component):
                 if not os.path.exists(map_path):
                     cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
                     self.log.debug('render_macro: running command %s' % cmd)
-                    ret, out, err = self.launch(cmd, content)
-                    if ret != 0:
+                    out, err = self.launch(cmd, content)
+                    if len(out) or len(err):
                         msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                         return self.show_err(msg).getvalue()
 
@@ -374,16 +374,13 @@ class GraphvizMacro(Component):
 
     def launch(self, cmd, input):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
-        p = popen2.Popen3(cmd, capturestderr=1)
+	p_in, p_out, p_err = os.popen3(cmd)
         if input:
-            p.tochild.writelines(input)
-        p.tochild.close()
-        out = p.fromchild.read()
-        err = p.childerr.read()
-        ret = p.wait()
-        if os.name == "posix":
-            ret = ret >> 8
-        return ret, out, err
+            p_in.writelines(input)
+        p_in.close()
+        out = p_out.read()
+        err = p_err.read()
+        return out, err
 
 
     def show_err(self, msg):
