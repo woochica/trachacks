@@ -102,7 +102,7 @@ class PerforceRepository(Repository):
         try:
             # cache the first few changes
             self.history = []
-            changes = self.__class__.p4c.run("changes", "-m", "options['max_changes']", "-s", "submitted")
+            changes = self.__class__.p4c.run("changes", "-m", "10", "-s", "submitted")
             for change in changes:
                 self.history.append(change['change'])
 
@@ -119,6 +119,23 @@ class PerforceRepository(Repository):
         raise NotImplementedError
 
 
+    def get_changesets(self, start, stop):
+        """
+        Generate Changeset belonging to the given time period (start, stop).
+        """
+        changes = self.__class__.p4c.run("changes", "-m", "100", "-t", "-s", "submitted")
+        #self.log.debug("*** get_changesets start = %s   stop = %s   %s" % (start, stop, changes))
+        for chgset in changes:
+            #self.log.debug("*** get_changesets  %s" % (chgset))
+            if float(chgset['time']) < start:
+                #self.log.debug("*** get_changesets end start %s  %s" % (chgset['time'], start))
+                return
+            if float(chgset['time']) < stop:
+                #self.log.debug("*** get_changesets add start %s  %s" % (chgset['time'], stop))
+                yield PerforceChangeset(self.__class__.p4c, chgset['change'], chgset, self.log)
+
+
+
     def get_changeset(self, rev):
         """
         Retrieve a Changeset object that describes the changes made in revision 'rev'.
@@ -127,10 +144,10 @@ class PerforceRepository(Repository):
         change = { }
         try:
             if rev != None:
-                change = self.__class__.p4c.run_describe(str(rev))[0]
+                change = self.__class__.p4c.run_describe( "-s", str(rev))[0]
             else:
                 young = self.get_youngest_rev()
-                change = self.__class__.p4c.run_describe(str(young))[0]
+                change = self.__class__.p4c.run_describe("-s", str(young))[0]
         except self.__class__.p4c.P4Error:
             for e in p4.errors:
                 self.log.debug(e)
@@ -179,8 +196,8 @@ class PerforceRepository(Repository):
 
 
     def get_oldest_rev(self):
-        #self.log.debug("*** get_oldest_rev rev = %s" % (self.history[-1]))
-        return self.history[-1]
+        #self.log.debug("*** get_oldest_rev rev = %s" % ('1'))
+        return '1'
 
 
     def get_youngest_rev(self):
@@ -192,7 +209,7 @@ class PerforceRepository(Repository):
 
         if rev != self.history[0]:
             count = int(rev) - int(self.history[0])
-            changes = self.__class__.p4c.run("changes", "-m", count, "-s", "submitted")
+            changes = self.__class__.p4c.run("changes", "-m", str(count), "-s", "submitted")
             idx = 0
             for change in changes:
                 num = change['change']
@@ -609,28 +626,3 @@ class PerforceChangesetModule(ChangesetModule):
 
     def _render_html(self, req, repos, chgset, diff_options):
         ChangesetModule._render_html(self, req, repos, chgset, diff_options)
-        # plus:
-        #properties = []
-        #hg = PerforceConnector(self.env)
-        #for name, value, htmlclass in chgset.properties():
-        #    if htmlclass == 'changeset':
-        #        value = ' '.join([hg.format_changeset(v, v) for v in \
-        #                          value.split()])
-        #    properties.append({'name': name,
-        #                       'value': value,
-        #                       'htmlclass': htmlclass})
-        #req.hdf['changeset.properties'] = properties
-
-
-### Helpers 
-        
-#class trac_ui(ui):
-#    def __init__(self):
-#        ui.__init__(self, interactive=False)
-#        
-#    def write(self, *args): pass
-#    def write_err(self, str): pass
-
-#    def readline(self):
-#        raise TracError('*** Perforce ui.readline called ***')                                                             
-        

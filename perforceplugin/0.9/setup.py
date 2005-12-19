@@ -8,7 +8,7 @@ setup(
     name='TracPerforce',
     description='Perforce plugin for Trac',
     keywords='trac scm plugin perforce p4',
-    version='0.1',
+    version='0.2',
     url='http://trac-hacks.swapoff.org/wiki/PerforcePlugin',
     license='''
     Copyright 2005, Thomas Tresssieres
