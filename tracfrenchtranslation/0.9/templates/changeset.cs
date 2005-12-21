@@ -4,19 +4,19 @@
 <div id="ctxtnav" class="nav">
  <h2>Consultation des versions</h2><?cs
  with:links = chrome.links ?>
-  <ul><?cs
-   if:len(links.prev) ?>
-    <li class="first<?cs if:!len(links.next) ?> last<?cs /if ?>">
-     &larr; <a class="prev" href="<?cs var:links.prev.0.href ?>" title="<?cs
-       var:links.prev.0.title ?>">Version précédente</a>
-    </li><?cs
-   /if ?><?cs
-   if:len(links.next) ?>
-    <li class="<?cs if:len(links.prev) ?>first <?cs /if ?>last">
+  <ul>
+   <li class="first">
+    <?cs if:len(links.prev) ?> &larr; 
+     <a class="prev" href="<?cs var:links.prev.0.href ?>" title="<?cs
+      var:links.prev.0.title ?>">Version précédente</a>
+     <?cs else ?><span class="missing">&larr; Version précédente</span><?cs /if ?>
+   </li>
+   <li class="last">
+    <?cs if:len(links.next) ?>
      <a class="next" href="<?cs var:links.next.0.href ?>" title="<?cs
-       var:links.next.0.title ?>">Version suivante</a> &rarr;
-    </li><?cs
-   /if ?>
+      var:links.next.0.title ?>">Version suivante</a> &rarr;
+    <?cs else ?><span class="missing">Version suivante &rarr;</span><?cs /if ?>
+   </li>
   </ul><?cs
  /with ?>
 </div>
@@ -32,7 +32,7 @@
   || diff.options.ignorecase || diff.options.ignorewhitespace ?>
 <form method="post" id="prefs" action="">
  <div>
-  <label for="style">Voir les differences</label>
+  <label for="style">Voir les différences</label>
   <select id="style" name="style">
    <option value="inline"<?cs
      if:diff.style == 'inline' ?> selected="selected"<?cs
@@ -102,7 +102,8 @@
 
 <dl id="overview">
  <dt class="time">Date:</dt>
- <dd class="time"><?cs var:changeset.time ?></dd>
+ <dd class="time"><?cs var:changeset.time ?> 
+  (<?cs alt:changeset.age ?>moins d'une heure<?cs /alt ?> auparavant)</dd>
  <dt class="author">Auteur:</dt>
  <dd class="author"><?cs var:changeset.author ?></dd>
  <dt class="message">Message:</dt>

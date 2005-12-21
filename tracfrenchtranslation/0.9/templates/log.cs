@@ -27,7 +27,7 @@
   <div>
    <input type="hidden" name="action" value="<?cs var:log.mode ?>" />
    <label>Voir le journal du dépôt à partir de <input type="text" id="rev" name="rev" value="<?cs
-    var:log.items.0.rev ?>" size="5" /></label>
+    var:log.items.0.rev ?>" size="5" /></label><br/>
    <label>et jusqu'à <input type="text" id="stop_rev" name="stop_rev" value="<?cs
     var:log.stop_rev ?>" size="5" />révisions précédentes</label>
    <br />
@@ -48,7 +48,7 @@
      <label for="path_history">
       <input type="radio" id="path_history" name="mode" value="path_history" <?cs
        if:log.mode == "path_history" ?> checked="checked" <?cs /if ?> />
-      Montrer uniquement les ajouts, déplacements et suppression
+      Ajouts, déplacements et suppression uniquement
      </label>
     </fieldset>
    </div>

@@ -21,9 +21,6 @@ import tempfile
 import re
 import md5
 
-TRUE =  ['yes', '1', 1, 'true',  'on',  'oui', 'vrai']
-FALSE = ['no',  '0', 0, 'false', 'off', 'non', 'faux']
-
 CRLF = '\r\n'
 
 def escape(text, quotes=True):
@@ -112,7 +109,7 @@ def pretty_size(size):
 
     return '%.1f %s' % (size, units[i - 1])
 
-def pretty_timedelta(time1, time2=None):
+def pretty_timedelta(time1, time2=None, resolution=None):
     """Calculate time delta (inaccurately, only for decorative purposes ;-) for
     prettyprinting. If time1 is None, the current time is used."""
     if not time1: time1 = time.time()
@@ -126,6 +123,8 @@ def pretty_timedelta(time1, time2=None):
              (3600,            'heure',   'heures'),
              (60,              'minute',  'minutes'))
     age_s = int(time2 - time1)
+    if resolution and age_s < resolution:
+        return ''
     if age_s < 60:
         return '%i seconde%s' % (age_s, age_s != 1 and 's' or '')
     for u, unit, unit_plural in units:

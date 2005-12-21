@@ -21,6 +21,7 @@ from trac.config import Configuration
 from trac.core import Component, ComponentManager, implements, Interface, \
                       ExtensionPoint, TracError
 from trac.db import DatabaseManager
+from trac.versioncontrol import RepositoryManager
 
 __all__ = ['Environment', 'IEnvironmentSetupParticipant', 'open_environment']
 
@@ -121,6 +122,10 @@ class Environment(Component, ComponentManager):
                     and component_name.startswith(pattern[:-1]):
                 return enabled
 
+        # versioncontrol components are enabled if the repository is configured
+        if component_name.startswith('trac.versioncontrol.'):
+            return self.config.get('trac', 'repository_dir') != ''
+
         # By default, all components in the trac package are enabled
         return component_name.startswith('trac.')
 
@@ -143,21 +148,14 @@ class Environment(Component, ComponentManager):
         """Return the version control repository configured for this
         environment.
         
-        The repository is wrapped in a `CachedRepository`.
-        
         @param authname: user name for authorization
         """
-        from trac.versioncontrol.cache import CachedRepository
-        from trac.versioncontrol.svn_authz import SubversionAuthorizer
-        from trac.versioncontrol.svn_fs import SubversionRepository
+        repos_type = self.config.get('trac', 'repository_type')
         repos_dir = self.config.get('trac', 'repository_dir')
         if not repos_dir:
-            raise EnvironmentError, 'Chemin du dépot non configuré'
-        authz = None
-        if authname:
-            authz = SubversionAuthorizer(self, authname)
-        repos = SubversionRepository(repos_dir, authz, self.log)
-        return CachedRepository(self.get_db_cnx(), repos, authz, self.log)
+            raise TracError, "Le chemin du dépôt n'est pas configuré"
+        return RepositoryManager(self).get_repository(repos_type, repos_dir,
+                                                      authname)
 
     def create(self, options=[]):
         """Create the basic directory structure of the environment, initialize
@@ -274,7 +272,8 @@ class Environment(Component, ComponentManager):
 
         db_str = self.config.get('trac', 'database')
         if not db_str.startswith('sqlite:'):
-            raise EnvironmentError, 'Seuls les bases de données sqlite peuvent être sauvegardées'
+            raise EnvironmentError, 'Seules les bases de données sqlite ' \
+                                    'peuvent être sauvegardées'
         db_name = os.path.join(self.path, db_str[7:])
         if not dest:
             dest = '%s.%i.bak' % (db_name, self.get_version())

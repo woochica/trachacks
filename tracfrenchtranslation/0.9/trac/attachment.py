@@ -258,6 +258,8 @@ class AttachmentModule(Component):
             segments = path.split('/')
             parent_id = '/'.join(segments[:-1])
             filename = segments[-1]
+            if len(segments) == 1 or not filename:
+                raise TracError('Mauvaise requête')            
             attachment = Attachment(self.env, parent_type, parent_id, filename)
 
         if req.method == 'POST':
@@ -384,8 +386,6 @@ class AttachmentModule(Component):
         req.perm.assert_permission(perm_map[attachment.parent_type])
 
         fmt = req.args.get('format')
-        mimetype = fmt == 'txt' and 'text/plain' or \
-                   get_mimetype(attachment.filename) or 'application/octet-stream'
 
         req.check_modified(attachment.time)
 
@@ -394,40 +394,47 @@ class AttachmentModule(Component):
         add_link(req, 'up', link, text)
 
         req.hdf['title'] = attachment.title
-        req.hdf['attachment'] = attachment_to_hdf(self.env, None, req, attachment)
+        req.hdf['attachment'] = attachment_to_hdf(self.env, None, req,
+                                                  attachment)
         req.hdf['attachment.parent'] = {
             'type': attachment.parent_type, 'id': attachment.parent_id,
             'name': text, 'href': link,
         }
 
-        raw_href = attachment.href(format='raw')
-        add_link(req, 'alternate', raw_href, 'Format original', mimetype)
-        req.hdf['attachment.raw_href'] = raw_href
-
         perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
         if req.perm.has_permission(perm_map[attachment.parent_type]):
             req.hdf['attachment.can_delete'] = 1
 
-        self.log.debug("Rendering preview of file %s with mime-type %s"
-                       % (attachment.filename, mimetype))
         fd = attachment.open()
         try:
             mimeview = Mimeview(self.env)
 
-            max_preview_size = mimeview.max_preview_size()
-            data = fd.read(max_preview_size)
+            data = fd.read(mimeview.max_preview_size())
+            
+            mime_type = fmt == 'txt' and 'text/plain' or \
+                       get_mimetype(attachment.filename, data) or \
+                       'application/octet-stream'
+
+            self.log.debug("Rendering preview of file %s with mime-type %s"
+                           % (attachment.filename, mime_type))
+            
+            raw_href = attachment.href(format='raw')
+            add_link(req, 'alternate', raw_href, 'Format Original', mime_type)
+            req.hdf['attachment.raw_href'] = util.escape(raw_href)
             
             if fmt in ('raw', 'txt'):
                 # Send raw file
-                charset = mimeview.preview_charset(data)
-                req.send_file(attachment.path, mimetype + ';charset=' + charset)
+                charset = mimeview.get_charset(data, mime_type)
+                req.send_file(attachment.path,
+                              mime_type + ';charset=' + charset)
                 return
             
             if not is_binary(data):
-                add_link(req, 'alternate', attachment.href(format='txt'),
-                         'Texte standard', mimetype)
+                plaintext_href = attachment.href(format='txt')
+                add_link(req, 'alternate', plaintext_href, 'Text Standard',
+                         mime_type)
 
-            hdf = mimeview.preview_to_hdf(req, mimetype, None, data,
+            hdf = mimeview.preview_to_hdf(req, data, mime_type,
                                           attachment.filename, None,
                                           annotations=['lineno'])
             req.hdf['attachment'] = hdf

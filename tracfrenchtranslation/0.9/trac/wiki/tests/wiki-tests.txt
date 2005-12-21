@@ -115,6 +115,7 @@ Some change.
 ticket:1
 This ticket is the first one
 changeset:123>
+changeset:123&
 ------------------------------
 <p>
 Add-on to <a class="missing changeset" href="/changeset/123" rel="nofollow">changeset:123</a>:
@@ -122,6 +123,7 @@ Some change.
 <a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a>
 This ticket is the first one
 <a class="missing changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&gt;
+<a class="missing changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&amp;
 </p>
 ------------------------------
 Add-on to <a class="missing changeset" href="/changeset/123" rel="nofollow">changeset:123</a>:
@@ -129,6 +131,7 @@ Some change.
 <a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a>
 This ticket is the first one
 <a class="missing changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&gt;
+<a class="missing changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&amp;
 ==============================
 CamelCase AlabamA ABc AlaBamA FooBar
 ------------------------------
@@ -214,6 +217,8 @@ wiki:Foo%20Bar wiki:Foo%20Bar#baz
 [wiki:Foo%20Bar Foo Bar] [wiki:Foo%20Bar#baz Foo Bar]
 
 [wiki:Argv "*argv[] versus **argv"]
+
+[wiki:test "test.txt", line 123]
 ------------------------------
 <p>
 <a class="missing wiki" href="/wiki/WikiStart" rel="nofollow">Foo?</a> <a class="ext-link" href="http://www.edgewall.com/"><span class="icon"></span>Edgewall</a>
@@ -226,6 +231,21 @@ wiki:Foo%20Bar wiki:Foo%20Bar#baz
 </p>
 <p>
 <a class="missing wiki" href="/wiki/Argv" rel="nofollow">*argv[] versus **argv?</a>
+</p>
+<p>
+<a class="missing wiki" href="/wiki/test" rel="nofollow">"test.txt", line 123?</a>
+</p>
+------------------------------
+==============================
+htdocs:release-1.0.tar.gz
+
+[htdocs:release-1.0.tar.gz Release 1.0]
+------------------------------
+<p>
+<a href="/chrome/site/release-1.0.tar.gz">htdocs:release-1.0.tar.gz</a>
+</p>
+<p>
+<a href="/chrome/site/release-1.0.tar.gz">Release 1.0</a>
 </p>
 ------------------------------
 ==============================
@@ -431,8 +451,10 @@ and block
 <pre class="wiki">number two
 </pre>
 ------------------------------
-Block  [&hellip;]
-and block [&hellip;]
+Block 
+ [&hellip;]
+and block
+ [&hellip;]
 ==============================
 {{{
 #!default
@@ -662,9 +684,7 @@ without endtags
 </p>
 ------------------------------
 <tt>verbatim</tt>
-{{{
-{{{in <tt>block</tt>
-}}}
+ [&hellip;]
 <tt>{{{this is verbatim}}}</tt> and <tt>`that` should also `be` verbatim</tt>
 ==============================
  term:: definition

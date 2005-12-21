@@ -214,6 +214,8 @@ class SearchModule(Component):
         elif kwd[0:len('milestone:')] == 'milestone:':
             return self.env.href.milestone(kwd[len('milestone:'):])
         # Source quickjump
+        elif kwd[0] == '/':
+            return self.env.href.browser(kwd)
         elif kwd[0:len('source:')] == 'source:':
             return self.env.href.browser(kwd[len('source:'):])
         # Wiki quickjump
@@ -236,8 +238,7 @@ class SearchModule(Component):
 
     def _format_link(self, formatter, ns, query, label):
         if query and query[0] == '?':
-            href = formatter.href.search() + \
-                   query.replace('&amp;', '&').replace(' ', '+')
+            href = formatter.href.search() + query.replace(' ', '+')
         else:
             href = formatter.href.search(q=query)
         return '<a class="search" href="%s">%s</a>' % (escape(href), label)
