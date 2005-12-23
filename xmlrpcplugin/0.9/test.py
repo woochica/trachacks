@@ -9,4 +9,12 @@ server = xmlrpclib.ServerProxy("http://athomas:password@localhost/trac-dev/login
 #        'component' : 'component1',
 #    })
 
-print '\n'.join(map(str, server.tracrpc.ticket.get_components()))
+#t = server.tracrpc.ticket.fetch_ticket(1)
+
+print server.tracrpc.ticket.update_ticket(1, '', {
+    'component' : 'component2'
+    })
+
+print server.tracrpc.ticket.get_changelog(1)
+
+#print '\n'.join(map(str, server.tracrpc.milestone.get_milestones()))

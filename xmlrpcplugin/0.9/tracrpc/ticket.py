@@ -15,8 +15,6 @@ class TicketRPC(Component):
         yield ('TICKET_APPEND', self.update_ticket)
         yield ('TICKET_ADMIN', self.delete_ticket)
         yield ('TICKET_VIEW', self.get_changelog)
-        yield ('TICKET_VIEW', self.get_components)
-        yield ('TICKET_VIEW', self.get_milestones)
 
     # Exported procedures
     def query_tickets(self, qstr = 'status!=closed'):
@@ -38,14 +36,16 @@ class TicketRPC(Component):
         t = model.Ticket(self.env)
         t['summary'] = summary
         t['description'] = description
-        t.values.update(values)
+        for k, v in values.iteritems():
+            t[k] = v
         t.insert()
         return self.fetch_ticket(t.id)
 
     def update_ticket(self, req, id, comment, values = {}):
         """ Update a ticket, returning the new ticket in the same form as fetch_ticket(). """
         t = model.Ticket(self.env, id)
-        t.values.update(values)
+        for k, v in values.iteritems():
+            t[k] = v
         t.save_changes(req.authname, comment)
         return self.fetch_ticket(t.id)
 
