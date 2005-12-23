@@ -10,6 +10,7 @@
 <tr>
 <th>Function</th>
 <th>Description</th>
+<th>Permission required</th>
 </tr>
 </thead>
 
@@ -17,7 +18,7 @@
 <tbody>
 <?cs each:function = xmlrpc.functions ?>
 <tr class="color3-<?cs if idx % #2 == 0 ?>even<?cs else ?>odd<?cs /if ?>" style="">
-<td><?cs var:function.0?></td><td><?cs var:function.1?></td>
+<td><?cs var:function.0?></td><td><?cs var:function.1?></td><td><?cs var:function.2 ?></td>
 </tr>
 <?cs set idx = idx + #1 ?>
 <?cs /each ?>

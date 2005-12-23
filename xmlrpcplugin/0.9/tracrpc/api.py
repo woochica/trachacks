@@ -32,13 +32,11 @@ class XMLRPCSystem(Component):
 
     # IXMLRPCHandler methods
     def get_xmlrpc_functions(self):
-        yield ('TRAC_ADMIN', self.list_xmlrpc_functions)
+        yield ('XML_RPC', self.list_xmlrpc_functions)
 
     def list_xmlrpc_functions(self, req):
-        """ List all functions exposed via XML-RPC. Returns a list of binary
-        tuples where the first element is the function signature and the second
-        element is the description. """
-        out = []
+        """ List all functions exposed via XML-RPC. Returns a list of tuples in
+            the form (function_signature, description, permission). """
         for provider in self.procedures:
             for candidate in provider.get_xmlrpc_functions():
                 c = self.resolve_candidate(candidate)
@@ -65,8 +63,7 @@ class XMLRPCSystem(Component):
                                 value = '"%s"' % value
                         arg += '=%s' % value
                     args.insert(0, arg)
-                out.append(('%s(%s)' % (c[2], ', '.join(args)), c[3].strip()))
-        return out
+                yield ('%s(%s)' % (c[2], ', '.join(args)), c[3].strip(), c[0])
 
     def resolve_candidate(self, candidate):
         """ Expand function signature returned by get_xmlrpc_functions() so

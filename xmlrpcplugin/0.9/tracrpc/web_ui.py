@@ -23,7 +23,7 @@ class XMLRPCWeb(Component):
     def process_request(self, req):
         # Dump RPC functions
         if req.get_header('Content-Type') != 'text/xml':
-            req.hdf['xmlrpc.functions'] = [[x[0]] + [wiki_to_oneliner(x[1], self.env)] for x in XMLRPCSystem(self.env).list_xmlrpc_functions(req)]
+            req.hdf['xmlrpc.functions'] = [[x[0]] + [wiki_to_oneliner(x[1], self.env)] + [x[2]] for x in XMLRPCSystem(self.env).list_xmlrpc_functions(req)]
             return 'xmlrpclist.cs', None
 
         # Handle XML-RPC call
