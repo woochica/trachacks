@@ -1,11 +1,24 @@
 from trac.core import *
-from tracrpc.api import IXMLRPCProvider
+from tracrpc.api import IXMLRPCHandler
 import trac.ticket.model as model
 import trac.ticket.query as query
+import pydoc
 
 class TicketRPC(Component):
-    implements(IXMLRPCProvider)
+    implements(IXMLRPCHandler)
 
+    # IXMLRPCHandler methods
+    def get_xmlrpc_functions(self):
+        yield ('TICKET_VIEW', self.fetch_ticket)
+        yield ('TICKET_VIEW', self.query_tickets)
+        yield ('TICKET_CREATE', self.create_ticket)
+        yield ('TICKET_APPEND', self.update_ticket)
+        yield ('TICKET_ADMIN', self.delete_ticket)
+        yield ('TICKET_VIEW', self.get_changelog)
+        yield ('TICKET_VIEW', self.get_components)
+        yield ('TICKET_VIEW', self.get_milestones)
+
+    # Exported procedures
     def query_tickets(self, qstr = 'status!=closed'):
         """ Perform a ticket query. Tickets are returned in the same format as fetch_ticket(). """
         q = query.Query.from_string(self.env, qstr)
@@ -20,25 +33,30 @@ class TicketRPC(Component):
         t = model.Ticket(self.env, id)
         return (t.id, t.time_created, t.time_changed, t.values)
 
-    def create_ticket(self, status, summary, description, reporter, cc, type, component, priority, owner, version, milestone, keywords):
-        """ Create a new ticket. """
+    def create_ticket(self, summary, description, values = {}):
+        """ Create a new ticket, returning the new ticket in the same form as fetch_ticket(). """
         t = model.Ticket(self.env)
-        t['status'] = status
         t['summary'] = summary
         t['description'] = description
-        t['reporter'] = reporter
-        t['cc'] = cc
-        t['type'] = type
-        t['component'] = component
-        t['priority'] = priority
-        t['owner'] = owner
-        t['version'] = version
-        t['milestone'] = milestone
-        t['keywords'] = keywords
+        t.values.update(values)
         t.insert()
         return self.fetch_ticket(t.id)
 
-    def get_xmlrpc_functions(self):
-        yield ('TICKET_VIEW', self.fetch_ticket)
-        yield ('TICKET_VIEW', self.query_tickets)
-        yield ('TICKET_CREATE', self.create_ticket)
+    def update_ticket(self, req, id, comment, values = {}):
+        """ Update a ticket, returning the new ticket in the same form as fetch_ticket(). """
+        t = model.Ticket(self.env, id)
+        t.values.update(values)
+        t.save_changes(req.authname, comment)
+        return self.fetch_ticket(t.id)
+
+    def delete_ticket(self, id):
+        """ Delete ticket with the given id. """
+        t = model.Ticket(self.env, id)
+        t.delete()
+
+    def get_changelog(self, id, when = 0):
+        t = model.Ticket(self.env, id)
+        return t.get_changelog()
+
+    # Use existing documentation from Ticket model
+    get_changelog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
