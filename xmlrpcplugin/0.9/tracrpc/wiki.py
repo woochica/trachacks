@@ -1,15 +1,22 @@
+# Author: Matt Good
 from trac.core import Component, implements
 from trac.wiki.api import WikiSystem
 from tracrpc.api import IXMLRPCHandler
 
-class WikiRpc(Component):
+class WikiRPC(Component):
+    """ Implementation of the WikiRPC API (http://www.jspwiki.org/Wiki.jsp?page=WikiRPCInterface2) 
+        for Trac."""
+
     implements(IXMLRPCHandler)
 
     def __init__(self):
         self.wiki = WikiSystem(self.env)
 
-    def get_xmlrpc_functions(self):
-        return [('WIKI_VIEW', rpc, 'wiki.' + rpc.__name__) for rpc in (self.getRecentChanges, self.getRPCVersionSupported, self.getPage, self.getPageVersion, self.getPageInfoVersion, self.getPageInfo, self.getAllPages)]
+    def xmlrpc_procedures(self):
+        return [('WIKI_VIEW', rpc, 'wiki.' + rpc.__name__) for rpc in (
+            self.getRecentChanges, self.getRPCVersionSupported, self.getPage,
+            self.getPageVersion, self.getPageInfoVersion, self.getPageInfo,
+            self.getAllPages)]
 
     def _to_timestamp(self, datetime):
         import time

@@ -5,58 +5,63 @@ import trac.ticket.query as query
 import pydoc
 
 class TicketRPC(Component):
+    """ An interface to Trac's ticketing system. """
+
     implements(IXMLRPCHandler)
 
     # IXMLRPCHandler methods
-    def get_xmlrpc_functions(self):
-        yield ('TICKET_VIEW', self.fetch_ticket)
-        yield ('TICKET_VIEW', self.query_tickets)
-        yield ('TICKET_CREATE', self.create_ticket)
-        yield ('TICKET_APPEND', self.update_ticket)
-        yield ('TICKET_ADMIN', self.delete_ticket)
-        yield ('TICKET_VIEW', self.get_changelog)
+    def xmlrpc_namespace(self):
+        return 'ticket'
+
+    def xmlrpc_procedures(self):
+        yield ('TICKET_VIEW', self.getTicket)
+        yield ('TICKET_VIEW', self.queryTickets)
+        yield ('TICKET_CREATE', self.createTicket)
+        yield ('TICKET_APPEND', self.updateTicket)
+        yield ('TICKET_ADMIN', self.deleteTicket)
+        yield ('TICKET_VIEW', self.ticketChangelog)
 
     # Exported procedures
-    def query_tickets(self, qstr = 'status!=closed'):
-        """ Perform a ticket query. Tickets are returned in the same format as fetch_ticket(). """
+    def queryTickets(self, qstr = 'status!=closed'):
+        """ Perform a ticket query. Tickets are returned in the same format as getTicket(). """
         q = query.Query.from_string(self.env, qstr)
         out = []
         for t in q.execute():
-            out.append(self.fetch_ticket(t['id']))
+            out.append(self.getTicket(t['id']))
         return out
 
-    def fetch_ticket(self, id):
+    def getTicket(self, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, values], where
             values is a dictionary of ticket values. """
         t = model.Ticket(self.env, id)
         return (t.id, t.time_created, t.time_changed, t.values)
 
-    def create_ticket(self, summary, description, values = {}):
-        """ Create a new ticket, returning the new ticket in the same form as fetch_ticket(). """
+    def createTicket(self, summary, description, values = {}):
+        """ Create a new ticket, returning the new ticket in the same form as getTicket(). """
         t = model.Ticket(self.env)
         t['summary'] = summary
         t['description'] = description
         for k, v in values.iteritems():
             t[k] = v
         t.insert()
-        return self.fetch_ticket(t.id)
+        return self.getTicket(t.id)
 
-    def update_ticket(self, req, id, comment, values = {}):
-        """ Update a ticket, returning the new ticket in the same form as fetch_ticket(). """
+    def updateTicket(self, req, id, comment, values = {}):
+        """ Update a ticket, returning the new ticket in the same form as getTicket(). """
         t = model.Ticket(self.env, id)
         for k, v in values.iteritems():
             t[k] = v
         t.save_changes(req.authname, comment)
-        return self.fetch_ticket(t.id)
+        return self.getTicket(t.id)
 
-    def delete_ticket(self, id):
+    def deleteTicket(self, id):
         """ Delete ticket with the given id. """
         t = model.Ticket(self.env, id)
         t.delete()
 
-    def get_changelog(self, id, when = 0):
+    def ticketChangelog(self, id, when = 0):
         t = model.Ticket(self.env, id)
-        return t.get_changelog()
+        return t.ticketChangelog()
 
     # Use existing documentation from Ticket model
-    get_changelog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
+    ticketChangelog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)

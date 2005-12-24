@@ -10,7 +10,7 @@
 <tr>
 <th>Function</th>
 <th>Description</th>
-<th>Permission required</th>
+<th><nobr>Permission required</nobr></th>
 </tr>
 </thead>
 

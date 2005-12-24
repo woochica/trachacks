@@ -7,11 +7,14 @@ class ComponentRPC(Component):
     implements(IXMLRPCHandler)
 
     # IXMLRPCHandler methods
-    def get_xmlrpc_functions(self):
-        yield ('TICKET_VIEW', self.get_components)
+    def xmlrpc_procedures(self):
+        yield ('TICKET_VIEW', self.listComponents)
+
+    def xmlrpc_namespace(self):
+        return 'component'
 
     # Implementation
-    def get_components(self):
+    def listComponents(self):
         """ Get a list of components in the form (name, owner, description). """
         for component in model.Component.select(self.env):
             yield (component.name, component.owner, component.description)
