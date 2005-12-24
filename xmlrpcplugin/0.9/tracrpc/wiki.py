@@ -20,6 +20,13 @@ class WikiRpc(Component):
                     author=author, version=int(version))
 
     def getRecentChanges(self, since):
+        """ Get list of changed pages since timestamp, which should be in UTC. The result is an array, where each element is a struct:
+
+            * name (utf8) : Name of the page.
+            * lastModified (date) : Date of last modification, in UTC.
+            * author (utf8) : Name of the author (if available).
+            * version (int) : Current version.
+        """
         since = self._to_timestamp(since)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -31,9 +38,11 @@ class WikiRpc(Component):
         return result
 
     def getRPCVersionSupported(self):
+        """Returns 2 with this version of the Trac API. """
         return 2
 
     def getPage(self, pagename, version=None):
+        """ Get the raw Wiki text of page, latest version. """
         page = WikiPage(self.env, pagename, version)
         if page.exists:
             return page.text
@@ -46,6 +55,7 @@ class WikiRpc(Component):
     getPageVersion = getPage
 
     def getPageHTML(self, pagename, version=None):
+        """ Return page in rendered HTML, latest version. """
         pass
 
     getPageHTMLVersion = getPageHTML
@@ -58,6 +68,13 @@ class WikiRpc(Component):
         return list(self.wiki.get_pages())
 
     def getPageInfo(self, pagename, version=None):
+        """ returns a struct with elements
+
+            * name (utf8): the canonical page name.
+            * lastModified (date): Last modification date, UTC.
+            * author (utf8): author name.
+            * version (int): current version 
+        """
         page = WikiPage(self.env, pagename, version)
         if page.exists:
             return self._page_info(page.name, page.time, page.author,
@@ -66,4 +83,5 @@ class WikiRpc(Component):
     getPageInfoVersion = getPageInfo
 
     def listLinks(self, pagename):
+        """ Lists all links for a given page. The returned array contains structs, with the following elements: """
         pass
