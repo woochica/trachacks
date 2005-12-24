@@ -21,6 +21,9 @@ class XMLRPCWeb(Component):
         return req.path_info in ('/login/RPC2', '/RPC2')
 
     def process_request(self, req):
+        # Need at least XML_RPC
+        req.perm.assert_permission('XML_RPC')
+
         # Dump RPC functions
         if req.get_header('Content-Type') != 'text/xml':
             req.hdf['xmlrpc.functions'] = [[x[0]] + [wiki_to_oneliner(x[1], self.env)] + [x[2]] for x in XMLRPCSystem(self.env).list_xmlrpc_functions(req)]
