@@ -16,11 +16,11 @@ class TicketRPC(AbstractRPCHandler):
     @expose_rpc('TICKET_VIEW', list)
     @expose_rpc('TICKET_VIEW', list, str)
     def query(self, qstr = 'status!=closed'):
-        """ Perform a ticket query. Tickets are returned in the same format as getTicket(). """
+        """ Perform a ticket query, returning a list of ticket ID's. """
         q = query.Query.from_string(self.env, qstr)
         out = []
         for t in q.execute():
-            out.append(self.getTicket(t['id']))
+            out.append(t['id'])
         return out
 
     @expose_rpc('TICKET_VIEW', list, int)

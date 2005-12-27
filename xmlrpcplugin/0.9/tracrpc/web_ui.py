@@ -16,6 +16,13 @@ class XMLRPCWeb(Component):
     def match_request(self, req):
         return req.path_info in ('/login/RPC2', '/RPC2')
 
+    def _send_response(self, req, response):
+        req.send_response(200)
+        req.send_header('Content-Type', 'text/xml')
+        req.send_header('Content-Length', len(response))
+        req.end_headers()
+        req.write(response)
+
     def process_request(self, req):
         # Need at least XML_RPC
         req.perm.assert_permission('XML_RPC')
@@ -39,15 +46,9 @@ class XMLRPCWeb(Component):
         args, method = xmlrpclib.loads(req.read(int(req.get_header('Content-Length'))))
         try:
             result = XMLRPCSystem(self.env).get_method(method)(req, args)
-
-            req.send_header('Content-Type', 'text/xml')
-            req.end_headers()
-            req.write(xmlrpclib.dumps(result, methodresponse=True))
-            return None
+            self._send_response(req, xmlrpclib.dumps(result, methodresponse=True))
         except xmlrpclib.Fault, e:
-            req.send_header('Content-Type', 'text/xml')
-            req.end_headers()
-            req.write(xmlrpclib.dumps(e))
+            self._send_response(req, xmlrpclib.dumps(e))
         except Exception, e:
             self.log.error(e)
             import traceback
@@ -55,10 +56,7 @@ class XMLRPCWeb(Component):
             out = StringIO()
             traceback.print_exc(file = out)
             self.log.error(out.getvalue())
-            req.send_header('Content-Type', 'text/xml')
-            req.end_headers()
-            req.write(xmlrpclib.dumps(xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), method))))
-            return None
+            self._send_response(req, xmlrpclib.dumps(xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), method))))
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
