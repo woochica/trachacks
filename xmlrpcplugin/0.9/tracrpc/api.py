@@ -62,7 +62,7 @@ class Method(object):
         self.rpc_signatures = signatures
         self.description = pydoc.getdoc(callable)
         if name is None:
-            self.name = provider.xmlrpc_namespace() + '.' + signature[2].__name__
+            self.name = provider.xmlrpc_namespace() + '.' + callable.__name__
         else:
             self.name = provider.xmlrpc_namespace() + '.' + name
         self.namespace = provider.xmlrpc_namespace()
@@ -123,9 +123,9 @@ class Method(object):
         """ Signature as an XML-RPC 'signature'. """
         return self.rpc_signatures
 
-class XMLRPCSystem(AbstractRPCHandler):
+class XMLRPCSystem(Component):
     """ Core of the XML-RPC system. """
-    implements(IPermissionRequestor)
+    implements(IPermissionRequestor, IXMLRPCHandler)
 
     method_handlers = ExtensionPoint(IXMLRPCHandler)
 
@@ -136,6 +136,12 @@ class XMLRPCSystem(AbstractRPCHandler):
     # IXMLRPCHandler methods
     def xmlrpc_namespace(self):
         return 'system'
+
+    def xmlrpc_methods(self):
+        yield ('XML_RPC', ((list, list),), self.multicall)
+        yield ('XML_RPC', ((list,),), self.listMethods)
+        yield ('XML_RPC', ((str, str),), self.methodHelp)
+        yield ('XML_RPC', ((list, str),), self.methodSignature)
 
     def get_method(self, method):
         """ Get an RPC signature by full name. """ 
@@ -156,7 +162,6 @@ class XMLRPCSystem(AbstractRPCHandler):
                 if req.perm.has_permission(c.permission):
                     yield c
 
-    @expose_rpc('XML_RPC', list, list)
     def multicall(self, req, signatures):
         """ Takes an array of XML-RPC calls encoded as structs of the form (in
             a Pythonish notation here):
@@ -171,14 +176,12 @@ class XMLRPCSystem(AbstractRPCHandler):
             except Exception, e:
                 yield xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), signature['methodName']))
 
-    @expose_rpc('XML_RPC', list)
     def listMethods(self, req):
         """ This method returns a list of strings, one for each (non-system)
         method supported by the XML-RPC server. """
         for method in self.all_methods(req):
             yield method.name
 
-    @expose_rpc('XML_RPC', str, str)
     def methodHelp(self, req, method):
         """ This method takes one parameter, the name of a method implemented
         by the XML-RPC server. It returns a documentation string describing the
@@ -188,7 +191,6 @@ class XMLRPCSystem(AbstractRPCHandler):
         req.perm.assert_permission(p.permission)
         return '\n'.join((p.signature, '', p.description))
 
-    @expose_rpc('XML_RPC', list, str)
     def methodSignature(self, req, method):
         """ This method takes one parameter, the name of a method implemented
             by the XML-RPC server.

@@ -1,20 +1,28 @@
 from trac.core import *
-from tracrpc.api import AbstractRPCHandler, expose_rpc
+from tracrpc.api import IXMLRPCHandler, expose_rpc
 import trac.ticket.model as model
 import trac.ticket.query as query
 import pydoc
 import xmlrpclib
 
-class TicketRPC(AbstractRPCHandler):
+class TicketRPC(Component):
     """ An interface to Trac's ticketing system. """
+
+    implements(IXMLRPCHandler)
 
     # IXMLRPCHandler methods
     def xmlrpc_namespace(self):
         return 'ticket'
 
+    def xmlrpc_methods(self):
+        yield ('TICKET_VIEW', ((list,), (list, str)), self.query)
+        yield ('TICKET_VIEW', ((list, int),), self.get)
+        yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict)), self.create)
+        yield ('TICKET_APPEND', ((list, int, str), (list, int, str, dict)), self.update)
+        yield ('TICKET_ADMIN', ((None, int),), self.delete)
+        yield ('TICKET_VIEW', ((dict, int), (dict, int, int)), self.changeLog)
+
     # Exported methods
-    @expose_rpc('TICKET_VIEW', list)
-    @expose_rpc('TICKET_VIEW', list, str)
     def query(self, qstr = 'status!=closed'):
         """ Perform a ticket query, returning a list of ticket ID's. """
         q = query.Query.from_string(self.env, qstr)
@@ -23,14 +31,11 @@ class TicketRPC(AbstractRPCHandler):
             out.append(t['id'])
         return out
 
-    @expose_rpc('TICKET_VIEW', list, int)
     def get(self, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
         t = model.Ticket(self.env, id)
         return (t.id, t.time_created, t.time_changed, t.values)
 
-    @expose_rpc('TICKET_CREATE', int, str, str)
-    @expose_rpc('TICKET_CREATE', int, str, str, dict)
     def create(self, summary, description, attributes = {}):
         """ Create a new ticket, returning the ticket ID. """
         t = model.Ticket(self.env)
@@ -41,8 +46,6 @@ class TicketRPC(AbstractRPCHandler):
         t.insert()
         return t.id
 
-    @expose_rpc('TICKET_APPEND', list, int, str)
-    @expose_rpc('TICKET_APPEND', list, int, str, dict)
     def update(self, req, id, comment, attributes = {}):
         """ Update a ticket, returning the new ticket in the same form as getTicket(). """
         t = model.Ticket(self.env, id)
@@ -51,14 +54,11 @@ class TicketRPC(AbstractRPCHandler):
         t.save_changes(req.authname, comment)
         return self.getTicket(t.id)
 
-    @expose_rpc('TICKET_ADMIN', str, int)
     def delete(self, id):
         """ Delete ticket with the given id. """
         t = model.Ticket(self.env, id)
         t.delete()
 
-    @expose_rpc('TICKET_VIEW', dict, int)
-    @expose_rpc('TICKET_VIEW', dict, int, int)
     def changeLog(self, id, when = 0):
         t = model.Ticket(self.env, id)
         return t.get_changelog()
@@ -69,17 +69,24 @@ class TicketRPC(AbstractRPCHandler):
 
 def ticketModelFactory(cls, cls_attributes):
     """ Return a class which exports an interface to trac.ticket.model.<cls>. """
-    class TicketModelImpl(AbstractRPCHandler):
+    class TicketModelImpl(Component):
+        implements(IXMLRPCHandler)
+
         def xmlrpc_namespace(self):
             return 'ticket.' + cls.__name__.lower()
 
-        @expose_rpc('TICKET_VIEW', list)
+        def xmlrpc_methods(self):
+            yield ('TICKET_VIEW', ((list,),), self.getAll)
+            yield ('TICKET_VIEW', ((dict, str),), self.get)
+            yield ('TICKET_ADMIN', ((None, str,),), self.delete)
+            yield ('TICKET_ADMIN', ((None, str, dict),), self.create)
+            yield ('TICKET_ADMIN', ((None, str, dict),), self.update)
+
         def getAll(self):
             for i in cls.select(self.env):
                 yield i.name
         getAll.__doc__ = """ Get a list of all ticket %s names. """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_VIEW', dict, str)
         def get(self, name):
             i = cls(self.env, name)
             attributes= {}
@@ -88,17 +95,14 @@ def ticketModelFactory(cls, cls_attributes):
             return attr
         get.__doc__ = """ Get a ticket %s. """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_ADMIN', None, str)
         def delete(self, name):
             cls(self.env, name).delete()
         delete.__doc__ = """ Delete a ticket %s """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_ADMIN', None, str, dict)
         def create(self, name, attributes):
             self._updateHelper(name, attributes).insert()
         create.__doc__ = """ Create a new ticket %s with the given attributes. """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_ADMIN', None, str, dict)
         def update(self, name, attributes):
             self._updateHelper(name, attributes).update()
         update.__doc__ = """ Update ticket %s with the given attributes. """ % cls.__name__.lower()
@@ -115,33 +119,37 @@ def ticketModelFactory(cls, cls_attributes):
 
 def ticketEnumFactory(cls):
     """ Return a class which exports an interface to one of the Trac ticket abstract enum types. """
-    class AbstractEnumImpl(AbstractRPCHandler):
+    class AbstractEnumImpl(Component):
+        implements(IXMLRPCHandler)
+
         def xmlrpc_namespace(self):
             return 'ticket.' + cls.__name__.lower()
 
-        @expose_rpc('TICKET_VIEW', list)
+        def xmlrpc_methods(self):
+            yield ('TICKET_VIEW', ((list,),), self.getAll)
+            yield ('TICKET_VIEW', ((str, str),), self.get)
+            yield ('TICKET_ADMIN', ((None, str,),), self.delete)
+            yield ('TICKET_ADMIN', ((None, str, str),), self.create)
+            yield ('TICKET_ADMIN', ((None, str, str),), self.update)
+
         def getAll(self):
             for i in cls.select(self.env):
                 yield i.name
         getAll.__doc__ = """ Get a list of all ticket %s names. """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_VIEW', str, str)
         def get(self, name):
             i = cls(self.env, name)
             return i.value
         get.__doc__ = """ Get a ticket %s. """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_ADMIN', None, str)
         def delete(self, name):
             cls(self.env, name).delete()
         delete.__doc__ = """ Delete a ticket %s """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_ADMIN', None, str, str)
         def create(self, name, value):
             self._updateHelper(name, value).insert()
         create.__doc__ = """ Create a new ticket %s with the given value. """ % cls.__name__.lower()
 
-        @expose_rpc('TICKET_ADMIN', None, str, str)
         def update(self, name, value):
             self._updateHelper(name, value).update()
         update.__doc__ = """ Update ticket %s with the given value. """ % cls.__name__.lower()

@@ -38,7 +38,10 @@ class XMLRPCWeb(Component):
                         'methods' : [],
                         'namespace' : method.namespace,
                         }
-                namespaces[namespace]['methods'].append((method.signature, wiki_to_oneliner(method.description, self.env), method.permission))
+                try:
+                    namespaces[namespace]['methods'].append((method.signature, wiki_to_oneliner(method.description, self.env), method.permission))
+                except Exception, e:
+                    raise Exception('%s: %s' % (method.name, str(e)))
             req.hdf['xmlrpc.functions'] = namespaces
             return 'xmlrpclist.cs', None
 

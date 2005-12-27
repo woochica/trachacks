@@ -11,16 +11,34 @@ from trac.wiki.api import WikiSystem
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
 from trac.attachment import Attachment
-from tracrpc.api import AbstractRPCHandler, expose_rpc
+from tracrpc.api import IXMLRPCHandler, expose_rpc
 
-class WikiRPC(AbstractRPCHandler):
+class WikiRPC(Component):
     """ Implementation of the [http://www.jspwiki.org/Wiki.jsp?page=WikiRPCInterface2 WikiRPC API]. """
+
+    implements(IXMLRPCHandler)
 
     def __init__(self):
         self.wiki = WikiSystem(self.env)
 
     def xmlrpc_namespace(self):
         return 'wiki'
+
+    def xmlrpc_methods(self):
+        yield ('WIKI_VIEW', ((dict, xmlrpclib.DateTime),), self.getRecentChanges)
+        yield ('WIKI_VIEW', ((int,),), self.getRPCVersionSupported)
+        yield ('WIKI_VIEW', ((str, str), (str, str, int),), self.getPage)
+        yield ('WIKI_VIEW', ((str, str, int),), self.getPage, 'getPageVersion')
+        yield ('WIKI_VIEW', ((str, str), (str, str, int)), self.getPageHTML)
+        yield ('WIKI_VIEW', ((str, str), (str, str, int)), self.getPageHTML, 'getPageHTMLVersion')
+        yield ('WIKI_VIEW', ((list,),), self.getAllPages)
+        yield ('WIKI_VIEW', ((dict, str), (dict, str, int)), self.getPageInfo)
+        yield ('WIKI_VIEW', ((dict, str, int),), self.getPageInfo, 'getPageInfoVersion')
+        yield ('WIKI_VIEW', ((bool, str, str, dict),), self.putPage)
+        yield ('WIKI_VIEW', ((list, str),), self.listAttachments)
+        yield ('WIKI_VIEW', ((xmlrpclib.Binary, str),), self.getAttachment)
+        yield ('WIKI_MODIFY', ((bool, str, str, xmlrpclib.Binary),), self.putAttachment)
+        yield ('WIKI_VIEW', ((list, str),), self.listLinks)
 
     def _to_timestamp(self, datetime):
         import time
@@ -30,7 +48,6 @@ class WikiRPC(AbstractRPCHandler):
         return dict(name=name, lastModified=xmlrpclib.DateTime(int(time)),
                     author=author, version=int(version))
 
-    @expose_rpc('WIKI_VIEW', dict, xmlrpclib.DateTime)
     def getRecentChanges(self, since):
         """ Get list of changed pages since timestamp """
         since = self._to_timestamp(since)
@@ -43,13 +60,10 @@ class WikiRPC(AbstractRPCHandler):
             result.append(self._page_info(name, time, author, version))
         return result
 
-    @expose_rpc('WIKI_VIEW', int)
     def getRPCVersionSupported(self):
         """ Returns 2 with this version of the Trac API. """
         return 2
 
-    @expose_rpc('WIKI_VIEW', str, str)
-    @expose_rpc('WIKI_VIEW', str, str, int)
     def getPage(self, pagename, version=None):
         """ Get the raw Wiki text of page, latest version. """
         page = WikiPage(self.env, pagename, version)
@@ -61,25 +75,16 @@ class WikiRPC(AbstractRPCHandler):
                 msg += ' at version %s' % version
             raise xmlrpclib.Fault(0, msg)
 
-    getPageVersion = getPage
-
-    @expose_rpc('WIKI_VIEW', str, str)
-    @expose_rpc('WIKI_VIEW', str, str, int)
     def getPageHTML(self, req, pagename, version=None):
         """ Return page in rendered HTML, latest version. """
         text = self.getPage(pagename, version)
         html = wiki_to_html(text, self.env, req, absurls=1)
         return '<html><body>%s</body></html>' % html
 
-    getPageHTMLVersion = getPageHTML
-
-    @expose_rpc('WIKI_VIEW', list)
     def getAllPages(self):
         """ Returns a list of all pages. The result is an array of utf8 pagenames. """
         return list(self.wiki.get_pages())
 
-    @expose_rpc('WIKI_VIEW', dict, str)
-    @expose_rpc('WIKI_VIEW', dict, str, int)
     def getPageInfo(self, pagename, version=None):
         """ Returns information about the given page. """
         page = WikiPage(self.env, pagename, version)
@@ -87,9 +92,6 @@ class WikiRPC(AbstractRPCHandler):
             return self._page_info(page.name, page.time, page.author,
                                    page.version)
 
-    getPageInfoVersion = getPageInfo
-
-    @expose_rpc('WIKI_VIEW', bool, str, str, dict)
     def putPage(self, req, pagename, content, attributes):
         """ writes the content of the page. """
         page = WikiPage(self.env, pagename)
@@ -109,19 +111,16 @@ class WikiRPC(AbstractRPCHandler):
                   req.remote_addr)
         return True
 
-    @expose_rpc('WIKI_VIEW', list, str)
     def listAttachments(self, pagename):
         """ Lists attachments on a given page. """
         return [pagename + '/' + a.filename for a in Attachment.select(self.env, 'wiki', pagename)]
 
-    @expose_rpc('WIKI_VIEW', xmlrpclib.Binary, str)
     def getAttachment(self, path):
         """ returns the content of an attachment. """
         pagename, filename = posixpath.split(path)
         attachment = Attachment(self.env, 'wiki', pagename, filename)
         return xmlrpclib.Binary(attachment.open().read())
 
-    @expose_rpc('WIKI_MODIFY', bool, str, str, xmlrpclib.Binary)
     def putAttachment(self, path, data):
         """ (over)writes an attachment. """
         pagename, filename = posixpath.split(path)
@@ -131,7 +130,6 @@ class WikiRPC(AbstractRPCHandler):
         attachment.insert(filename, StringIO(data.data), len(data.data))
         return True
 
-    @expose_rpc('WIKI_VIEW', list, str)
     def listLinks(self, pagename):
         """ ''Not implemented'' """
         pass
