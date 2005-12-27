@@ -8,13 +8,13 @@ import xmlrpclib
 class XMLRPCWeb(Component):
     """ Handle XML-RPC calls from HTTP clients, as well as presenting a list of
         methods available to the currently logged in user. Browsing to
-        <trac>/RPC2 will display this list. """
+        <trac>/xmlrpc will display this list. """
 
     implements(IRequestHandler, ITemplateProvider)
 
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info in ('/login/RPC2', '/RPC2')
+        return req.path_info in ('/login/xmlrpc', '/xmlrpc')
 
     def _send_response(self, req, response):
         req.send_response(200)

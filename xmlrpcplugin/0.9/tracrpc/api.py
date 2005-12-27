@@ -172,28 +172,30 @@ class XMLRPCSystem(AbstractRPCHandler):
                 yield xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), signature['methodName']))
 
     @expose_rpc('XML_RPC', list)
-    def listMethods(self):
+    def listMethods(self, req):
         """ This method returns a list of strings, one for each (non-system)
         method supported by the XML-RPC server. """
-        for provider in self.method_handlers:
-            for candidate in provider.xmlrpc_methods():
-                yield Method(provider, *candidate).name
+        for method in self.all_methods():
+            yield m.name
 
     @expose_rpc('XML_RPC', str, str)
-    def methodHelp(self, method):
+    def methodHelp(self, req, method):
         """ This method takes one parameter, the name of a method implemented
         by the XML-RPC server. It returns a documentation string describing the
         use of that method. If no such string is available, an empty string is
         returned. The documentation string may contain HTML markup. """
         p = self.get_method(method)
+        req.perm.assert_permission(p.permission)
         return '\n'.join((p.signature, '', p.description))
 
     @expose_rpc('XML_RPC', list, str)
-    def methodSignature(self, method):
+    def methodSignature(self, req, method):
         """ This method takes one parameter, the name of a method implemented
             by the XML-RPC server.
 
             It returns an array of possible signatures for this method. A
             signature is an array of types. The first of these types is the
             return type of the method, the rest are parameters. """
-        return [','.join([RPC_TYPES[x] for x in sig]) for sig in self.get_method(method).xmlrpc_signatures()]
+        p = self.get_method(method)
+        req.perm.assert_permission(p.permission)
+        return [','.join([RPC_TYPES[x] for x in sig]) for sig in p.xmlrpc_signatures()]
