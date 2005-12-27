@@ -7,12 +7,10 @@ import xmlrpclib
 
 class XMLRPCWeb(Component):
     """ Handle XML-RPC calls from HTTP clients, as well as presenting a list of
-        procedures available to the currently logged in user. Browsing to
+        methods available to the currently logged in user. Browsing to
         <trac>/RPC2 will display this list. """
 
     implements(IRequestHandler, ITemplateProvider)
-
-    procedures = ExtensionPoint(IXMLRPCHandler)
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -24,13 +22,23 @@ class XMLRPCWeb(Component):
 
         # Dump RPC functions
         if req.get_header('Content-Type') != 'text/xml':
-            req.hdf['xmlrpc.functions'] = [[x[0]] + [wiki_to_oneliner(x[1], self.env)] + [x[2]] for x in XMLRPCSystem(self.env).listMethodsDetailed(req)]
+            namespaces = {}
+            for method in XMLRPCSystem(self.env).all_methods(req):
+                namespace = method.namespace.replace('.', '_')
+                if namespace not in namespaces:
+                    namespaces[namespace] = {
+                        'description' : wiki_to_oneliner(method.namespace_description, self.env),
+                        'methods' : [],
+                        'namespace' : method.namespace,
+                        }
+                namespaces[namespace]['methods'].append((method.signature, wiki_to_oneliner(method.description, self.env), method.permission))
+            req.hdf['xmlrpc.functions'] = namespaces
             return 'xmlrpclist.cs', None
 
         # Handle XML-RPC call
-        args, procedure = xmlrpclib.loads(req.read(int(req.get_header('Content-Length'))))
+        args, method = xmlrpclib.loads(req.read(int(req.get_header('Content-Length'))))
         try:
-            result = XMLRPCSystem(self.env).get_procedure(procedure)(req, args)
+            result = XMLRPCSystem(self.env).get_method(method)(req, args)
 
             req.send_header('Content-Type', 'text/xml')
             req.end_headers()
@@ -49,7 +57,7 @@ class XMLRPCWeb(Component):
             self.log.error(out.getvalue())
             req.send_header('Content-Type', 'text/xml')
             req.end_headers()
-            req.write(xmlrpclib.dumps(xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), procedure))))
+            req.write(xmlrpclib.dumps(xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), method))))
             return None
 
     # ITemplateProvider
