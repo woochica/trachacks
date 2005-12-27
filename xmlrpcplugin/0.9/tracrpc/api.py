@@ -175,8 +175,8 @@ class XMLRPCSystem(AbstractRPCHandler):
     def listMethods(self, req):
         """ This method returns a list of strings, one for each (non-system)
         method supported by the XML-RPC server. """
-        for method in self.all_methods():
-            yield m.name
+        for method in self.all_methods(req):
+            yield method.name
 
     @expose_rpc('XML_RPC', str, str)
     def methodHelp(self, req, method):
