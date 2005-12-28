@@ -39,10 +39,13 @@ class DoxygenPlugin(Component):
         if req.path_info == '/doxygen':
             req.args['path'] = ''.join([self.config.get('doxygen', 'path'), '/main.html'])
             return True
-        elif req.path_info != '/':
+        elif re.match(r'''^/.*[.]html$''', req.path_info):
+            self.log.debug("path = %s" % (req.path_info))
             path = ''.join([self.config.get('doxygen', 'path'), req.path_info])
             req.args['path'] = path
             return os.path.exists(path)
+        
+        return False
 
     def process_request(self, req):
         req.hdf['doxygen.path'] = req.args['path']
@@ -53,7 +56,7 @@ class DoxygenPlugin(Component):
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
-    
+
     # ISearchProvider methods
     
     def get_search_filters(self, req):
