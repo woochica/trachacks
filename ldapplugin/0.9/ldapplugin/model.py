@@ -26,7 +26,6 @@ import ldap
 
 from trac.core import *
 from trac.perm import IPermissionGroupProvider,IPermissionStore
-from trac.util import TRUE
 
 LDAP_MODULE_CONFIG = [ 'enable', 'permattr', 'permfilter',
                        'cache_ttl', 'cache_size',
@@ -46,8 +45,7 @@ class LdapPermissionGroupProvider(Component):
 
     def __init__(self):
         # looks for groups only if LDAP support is enabled
-        enable = self.config.get('ldap', 'enable', '')
-        self.enabled = enable.lower() in TRUE
+        self.enabled = self.config.getbool('ldap', 'enable')
         if not self.enabled:
             return
         # LDAP connection
@@ -93,7 +91,7 @@ class LdapPermissionGroupProvider(Component):
                         params[name] = value
                 # new LDAP connection
                 self._ldap = LdapConnection(self.env.log, **params)
-                if self.env.config.get('ldap', 'group_bind').lower() in TRUE: 
+                if self.env.config.getbool('ldap', 'group_bind'): 
                     u = self.env.config.get('ldap', 'group_user')
                     p = self.env.config.get('ldap', 'group_passwd')
                     self._ldap.set_credentials(u, p)
@@ -139,8 +137,7 @@ class LdapPermissionStore(Component):
 
     def __init__(self):
         # looks for groups only if LDAP support is enabled
-        enable = self.config.get('ldap', 'enable', '')
-        self.enabled = enable.lower() in TRUE
+        self.enabled = self.config.getbool('ldap', 'enable')
         if not self.enabled:
             return
         # LDAP connection
@@ -262,7 +259,7 @@ class LdapPermissionStore(Component):
                 params[name] = value
         # new LDAP connection
         self._ldap = LdapConnection(self.env.log, **params)
-        if self.env.config.get('ldap', 'store_bind').lower() in TRUE:
+        if self.config.getbool('ldap', 'store_bind'):
             u = self.env.config.get('ldap', 'store_user')
             p = self.env.config.get('ldap', 'store_passwd')
             self._ldap.set_credentials(u, p)
