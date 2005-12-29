@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: GalleryPlugin
+Version: 0.1
+Summary: Image gallery plugin for Trac
+Home-page: http://trac-hacks.swapoff.org/wiki/GalleryPlugin
+Author: Bruce Christensen
+Author-email: trac@brucec.net
+License: This software is distributed under the same terms as Trac itself
+Description: UNKNOWN
+Platform: UNKNOWN
