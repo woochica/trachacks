@@ -31,7 +31,7 @@ EMOTICONS = {
     ':D': 'happy.png', ':-D': 'happy.png',
     ':P': 'razz.png', ':-P': 'razz.png',
     ':)': 'smile.png', ':-)': 'smile.png',
-    ':|': 'stoic.png', ':-|', 'stoic.png',
+    ':|': 'stoic.png', ':-|': 'stoic.png',
     ':O': 'suprised.png', ':o': 'suprised.png', ':-O': 'suprised.png',
     ':-o': 'suprised.png',
     ';)': 'wink.png', ';-)': 'wink.png'
@@ -63,7 +63,7 @@ class EmoticonsSupport(Component):
                    'height="18" style="vertical-align: middle" />' % (
                    escape(src), escape(match.group(0)))
         pattern = '|'.join([re.escape(pattern) for pattern in EMOTICONS])
-        yield pattern, _replace
+        yield '\b' + pattern + '\b', _replace
 
     def get_link_resolvers(self):
         return []
