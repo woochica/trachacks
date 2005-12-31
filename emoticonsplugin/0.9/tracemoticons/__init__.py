@@ -28,10 +28,10 @@ EMOTICONS = {
     ':/': 'annoyed.png', ':-/': 'annoyed.png',
     '8)': 'cool.png', '8-)': 'cool.png', 'B)': 'cool.png', 'B-)': 'cool.png',
     ':(': 'frown.png', ':-(': 'frown.png',
-    ':-D': 'happy.png',
-    ':-P': 'razz.png',
+    ':D': 'happy.png', ':-D': 'happy.png',
+    ':P': 'razz.png', ':-P': 'razz.png',
     ':)': 'smile.png', ':-)': 'smile.png',
-    ':-|': 'stoic.png',
+    ':|': 'stoic.png', ':-|', 'stoic.png',
     ':O': 'suprised.png', ':o': 'suprised.png', ':-O': 'suprised.png',
     ':-o': 'suprised.png',
     ';)': 'wink.png', ';-)': 'wink.png'
