@@ -233,9 +233,13 @@ class LdapPermissionStore(Component):
         if not self._ldap:
             self._openldap()
         uid = self._create_uid(username)
-        permlist = self._get_permissions(uid)
-        if action not in permlist:
-            self._ldap.add_attribute(uid, self._permattr, action)
+        try:
+            permlist = self._get_permissions(uid)
+            if action not in permlist:
+                self._ldap.add_attribute(uid, self._permattr, action)
+        except ldap.LDAPError, e:
+            raise TracError, "Unable to grant permission %s to %s: %s" \
+                             % (action, username, e[0]['desc'])
 
     def revoke_permission(self, username, action):
         self.env.log.debug('revoke_permission %s: %s' % (username, action))
@@ -244,9 +248,13 @@ class LdapPermissionStore(Component):
         if not self._ldap:
             self._openldap()
         uid = self._create_uid(username)
-        permlist = self._get_permissions(uid)
-        if action in permlist:
-            self._ldap.delete_attribute(uid, self._permattr, action)
+        try:
+            permlist = self._get_permissions(uid)
+            if action in permlist:
+                self._ldap.delete_attribute(uid, self._permattr, action)
+        except ldap.LDAPError, e:
+            raise TracError, "Unable to revoke permission %s to %s: %s" \
+                             % (action, username, e[0]['desc'])
 
     # Private implementation
 
@@ -305,6 +313,8 @@ class LdapConnection(object):
             self.user_basedn = self.basedn
         if not self.group_basedn:
             self.group_basedn = self.basedn
+        if not isinstance(self.port, int):
+            self.port = int(self.port)
         self._uid = None
         self._password = None
 
@@ -449,13 +459,12 @@ class LdapConnection(object):
                 self._open()
             dn = "%s,%s" % (uid, self.basedn)
             self._ds.modify_s(dn, [(ldap.MOD_ADD, attr, value)]) 
-            return True
 
         except ldap.LDAPError, e:
             self.log.error("unable to add attribute '%s' to uid '%s': %s" %
                            (attr, uid, e[0]['desc']))
             self._ds = False
-            return False;
+            raise e
 
     def delete_attribute(self, uid, attr, value):
         try:
@@ -463,11 +472,10 @@ class LdapConnection(object):
                 self._open()
             dn = "%s,%s" % (uid, self.basedn)
             self._ds.modify_s(dn, [(ldap.MOD_DELETE, attr, value)]) 
-            return True
 
         except ldap.LDAPError, e:
             self.log.error("unable to remove attribute '%s' from uid '%s': %s" %
                            (attr, uid, e[0]['desc']))
             self._ds = False
-            return False;
+            raise e
 

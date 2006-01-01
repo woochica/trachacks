@@ -1,4 +1,2 @@
-# -*- coding: iso-8859-1 -*-
-
-# Ldap Plugin module
-from model import *
+# Ldap Plugin python package
+from ldapplugin.model import *
