@@ -132,4 +132,4 @@ class WikiRPC(Component):
 
     def listLinks(self, pagename):
         """ ''Not implemented'' """
-        pass
+        return []
