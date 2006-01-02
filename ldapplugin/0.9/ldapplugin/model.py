@@ -28,14 +28,14 @@ from trac.core import *
 from trac.perm import IPermissionGroupProvider,IPermissionStore
 
 LDAP_MODULE_CONFIG = [ 'enable', 'permattr', 'permfilter',
-                       'cache_ttl', 'cache_size',
+                       'global_perms', 'cache_ttl', 'cache_size',
                        'group_bind', 'group_user', 'group_passwd',
                        'store_bind', 'store_user', 'store_passwd' ]
 
-LDAP_DIRECTORY_PARAMS = [ 'host','port',
+LDAP_DIRECTORY_PARAMS = [ 'host', 'port',
                           'basedn', 'user_basedn', 'group_basedn',
-                          'groupname','groupmember',
-                          'groupattr','uidattr' ]
+                          'groupname', 'groupmember',
+                          'groupattr', 'uidattr']
 
 class LdapPermissionGroupProvider(Component):
     """
@@ -151,6 +151,11 @@ class LdapPermissionStore(Component):
         self._cache_ttl = self.env.config.get('ldap', 'cache_ttl', 15*60)
         # max cache entries
         self._cache_size = min(25, self.env.config.get('ldap', 'cache_size', 100))
+        # environment name
+        envpath = self.env.path.replace('\\','/')
+        self.env_name = envpath[1+envpath.rfind('/'):]
+        # use directory-wide permissions
+        self.global_perms = self.config.getbool('ldap', 'global_perms')
 
     # IPermissionStore interface
 
@@ -223,7 +228,10 @@ class LdapPermissionStore(Component):
                         continue
             actions = self._ldap.get_attribute(dn, self._permattr)
             for action in actions:
-                perms.append((user, action))
+                xaction = self._extract_action(action)
+                if not xaction:
+                    continue
+                perms.append((user, xaction))
         return perms
 
     def grant_permission(self, username, action):
@@ -236,7 +244,8 @@ class LdapPermissionStore(Component):
         try:
             permlist = self._get_permissions(uid)
             if action not in permlist:
-                self._ldap.add_attribute(uid, self._permattr, action)
+                xaction = self._build_action(action)        
+                self._ldap.add_attribute(uid, self._permattr, xaction)
         except ldap.LDAPError, e:
             raise TracError, "Unable to grant permission %s to %s: %s" \
                              % (action, username, e[0]['desc'])
@@ -251,7 +260,8 @@ class LdapPermissionStore(Component):
         try:
             permlist = self._get_permissions(uid)
             if action in permlist:
-                self._ldap.delete_attribute(uid, self._permattr, action)
+                xaction = self._build_action(action)
+                self._ldap.delete_attribute(uid, self._permattr, xaction)
         except ldap.LDAPError, e:
             raise TracError, "Unable to revoke permission %s to %s: %s" \
                              % (action, username, e[0]['desc'])
@@ -288,8 +298,26 @@ class LdapPermissionStore(Component):
         perms = []
         for action in actions:
             if action not in perms:
-                perms.append(action)
+                xaction = self._extract_action(action)
+                if xaction:
+                    perms.append(xaction)
         return perms
+
+    def _extract_action(self, action):
+        items = action.split(':')
+        if len(items) == 1:
+            # no environment, consider global
+            return action
+        (name, xaction) = items
+        if name == self.env_name:
+            # environment, check it
+            return xaction
+        return None
+
+    def _build_action(self, action):
+        if self.global_perms:
+            return action
+        return "%s:%s" % (self.env_name, action)
 
 class LdapConnection(object):
     """
