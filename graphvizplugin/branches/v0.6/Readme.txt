@@ -63,6 +63,14 @@ downloaded from <http://librsvg.sourceforge.net/>
 Installation via Source
 =======================
 
+The installation of the graphviz plugin from source is done by
+creating a Python egg distribution file and copying the .egg file to
+the Trac plugins directory. Detailed information on Python eggs can be
+found at: http://peak.telecommunity.com/DevCenter/PythonEggs. In
+addition, the Easy Install package is required to create Python
+eggs. See http://peak.telecommunity.com/DevCenter/EasyInstall for more
+information on using and installing Easy Install.
+
 Download the source code for the graphviz plugin from
 http://trac-hacks.swapoff.org/download/graphvizplugin.zip or checkout
 the source from the trac hacks subversion repository at:
