@@ -27,7 +27,7 @@ setup(
     license = 'GPL',
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
-        'tracemoticons.htdocs': ['htdocs/*.*']
+        'tracemoticons': ['icons/*.*']
     },
     entry_points = {
         'trac.plugins': ['tracemoticons = tracemoticons']
