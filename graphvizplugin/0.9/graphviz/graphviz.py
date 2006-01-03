@@ -327,7 +327,7 @@ class GraphvizMacro(Component):
 
                 if not os.path.exists(self.rsvg_path):
                     err = 'The rsvg program is set to <b>%s</b> but that path does not exist.' % self.rsvg_path
-                    buf = self.show_err(msg)
+                    buf = self.show_err(err)
                     trouble = True
             self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
 
