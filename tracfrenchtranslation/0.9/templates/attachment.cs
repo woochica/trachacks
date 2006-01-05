@@ -13,7 +13,7 @@
    <label>Fichier:<br /><input type="file" name="attachment" /></label>
   </div>
   <fieldset>
-   <legend>Info sur la pièce jointe</legend>
+   <legend>Info sur le fichier</legend>
    <div class="field">
     <label>Compte utilisateur ou courriel:<br />
     <input type="text" name="author" size="30" value="<?cs
@@ -41,13 +41,13 @@
 <?cs elif:attachment.mode == 'delete' ?>
  <h1><a href="<?cs var:attachment.parent.href ?>"><?cs
    var:attachment.parent.name ?></a>: <?cs var:attachment.filename ?></h1>
- <p><strong>Are you sure you want to delete this attachment?</strong><br />
- This is an irreversible operation.</p>
+ <p><strong>Etes-vous sûr de supprimer ce fichier</strong><br />
+ Cette opération est irréversible.</p>
  <div class="buttons">
   <form method="post" action=""><div id="delete">
    <input type="hidden" name="action" value="delete" />
-   <input type="submit" name="cancel" value="Cancel" />
-   <input type="submit" value="Delete attachment" />
+   <input type="submit" name="cancel" value="Annuler" />
+   <input type="submit" value="Supprimer le fichier" />
   </div></form>
  </div><?cs else ?>
  <h1><a href="<?cs var:attachment.parent.href ?>"><?cs

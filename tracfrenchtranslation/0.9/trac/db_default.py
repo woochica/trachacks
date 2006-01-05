@@ -402,7 +402,7 @@ default_config = \
   ('project', 'url', 'http://example.com/'),
   ('project', 'icon', 'common/trac.ico'),
   ('project', 'footer',
-   ' Venez découvrir Trac, projet open source, sur <br />'
+   ' Découvrez Trac (project open source) sur <br />'
    '<a href="http://trac.edgewall.com/">http://trac.edgewall.com/</a>'),
   ('ticket', 'default_version', ''),
   ('ticket', 'default_type', 'defect'),

@@ -225,7 +225,6 @@ class BrowserModule(Component):
 
             raw_href = self.env.href.browser(node.path, rev=use_rev,
                                              format='raw')
-            add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
             req.hdf['file.raw_href'] = util.escape(raw_href)
             add_link(req, 'alternate', raw_href, 'Format original', mime_type)
 

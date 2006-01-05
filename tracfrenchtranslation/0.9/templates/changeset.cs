@@ -156,7 +156,7 @@
      else ?>supprimée<?cs
      /if ?><?cs
      if:prop.old && prop.new ?><em><tt><?cs var:prop.old ?></tt></em><?cs /if ?><?cs
-     if:prop.new ?> to <em><tt><?cs var:prop.new ?></tt></em><?cs /if ?></li><?cs
+     if:prop.new ?> à <em><tt><?cs var:prop.new ?></tt></em><?cs /if ?></li><?cs
     /each ?></ul><?cs
    /if ?><?cs
    if:len(item.diff) ?><table class="<?cs
