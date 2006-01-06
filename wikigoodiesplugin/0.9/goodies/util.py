@@ -9,12 +9,25 @@
 #
 # Author: Christian Boos <cboos@neuf.fr>
 
+import re
+
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
 
+
 from trac.util import escape, Markup
+
+
+def prepare_regexp(d):
+    syms = d.keys()
+    syms.sort(lambda a, b: cmp(len(b), len(a)))
+    return "|".join([r"%s%s%s"
+                     % (re.match(r"\w", s[0]) and r"\b" or "",
+                        re.escape(s),
+                        re.match(r"\w", s[-1]) and r"\b" or "")
+                     for s in syms])
 
 
 def render_table(items, colspec, render_item):

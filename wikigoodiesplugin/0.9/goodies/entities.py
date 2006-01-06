@@ -60,8 +60,8 @@ class Entities(Component):
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
-        yield (r"\B&#\d+;\B", lambda x, y, z: y)
-        yield (r"\B&(?:%s);\B" % '|'.join(ENTITIES),
+        yield (r"&#\d+;", lambda x, y, z: y)
+        yield (r"&(?:%s);" % '|'.join(ENTITIES),
                lambda x, y, z: self._format_entity(y))
 
     def get_link_resolvers(self):

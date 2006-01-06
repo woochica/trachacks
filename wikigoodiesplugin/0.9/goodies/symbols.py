@@ -9,8 +9,6 @@
 #
 # Author: Christian Boos <cboos@neuf.fr>
 
-import re
-
 from trac.core import implements, Component
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 
@@ -26,7 +24,7 @@ SYMBOLS = {
     '<=>': '&hArr;',
     '>=': '&ge;',
     '=<': '&le;', # ... as <= is already used for &lArr;
-    '<>': '&ne;', # != won't work, because of the generic '!' negation
+    '<>': '&ne;', # '!=' can't be used, because of the '!' escaping
     '--': '&mdash;',
     '(c)': '&copy;',
     '(C)': '&copy;',
@@ -37,11 +35,10 @@ SYMBOLS = {
     '+/-': '&plusmn;',
     '/\\': '&and;',
     '\\/': '&or;',
+    '(TM)': '&trade;',
+    '...': '&hellip;',
     }
 
-TEXT_SYMBOLS = {
-    'TM': '&trade;',
-    }
 
 class Symbols(Component):
 
@@ -50,19 +47,13 @@ class Symbols(Component):
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
-        yield (r"\B%s\B" % "|".join([re.escape(i) for i in SYMBOLS]),
-               lambda x, y, z: self._format_symbol(y))
-        yield (r"\b%s\b" % "|".join([re.escape(i) for i in TEXT_SYMBOLS]),
-               lambda x, y, z: self._format_text_symbol(y))
+        yield (prepare_regexp(SYMBOLS), lambda x, y, z: self._format_symbol(y))
 
     def get_link_resolvers(self):
         return []
 
     def _format_symbol(self, i):
         return SYMBOLS[i]
-
-    def _format_text_symbol(self, i):
-        return TEXT_SYMBOLS[i]
 
     # IWikiMacroProvider methods
 
@@ -76,10 +67,4 @@ class Symbols(Component):
         """
 
     def render_macro(self, req, name, content):
-        def render_symbol(s):
-            if SYMBOLS.has_key(s):
-                return self._format_symbol(s)
-            else:
-                return self._format_text_symbol(s)
-        return render_table(SYMBOLS.keys() + TEXT_SYMBOLS.keys(),
-                            content, render_symbol)
+        return render_table(SYMBOLS.keys(), content, self._format_symbol)
