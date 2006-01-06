@@ -2,6 +2,7 @@
 from StringIO import StringIO
 import re
 import string
+import os
 from trac.util import escape
 from trac.wiki.formatter import Formatter
 
@@ -14,6 +15,7 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
     seen_anchors = []
 
     if title_index:
+        min_depth = 1
         max_depth = 1
 
     for line in body.splitlines():
@@ -65,8 +67,6 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
                 seen_anchors.append(anchor)
                 link = page
                 if current_depth <= max_depth:
-                    if anchor[0].isdigit():
-                        anchor = 'a' + anchor
                     out.write('<a href="%s#%s">%s</a></li>\n' % (env.href.wiki(link), anchor, header))
     while current_depth > min_depth:
         if current_depth <= max_depth:
@@ -126,10 +126,11 @@ def execute(hdf, args, env):
     for page in pages:
         if title_index:
             cursor = db.cursor()
-            prefix = page.replace('\'', '\'\'')
+            prefix = os.path.split(page)[0]
+            prefix = prefix.replace('\'', '\'\'')
             sql = 'SELECT DISTINCT name FROM wiki '
             if prefix:
-                sql += 'WHERE name LIKE \'%s%%\' ' % prefix
+                sql += 'WHERE name LIKE \'%s/%%\' ' % prefix
             sql += 'ORDER BY name'
             cursor.execute(sql)
             i = 0
@@ -137,7 +138,7 @@ def execute(hdf, args, env):
                 page_row = cursor.fetchone()
                 if page_row == None:
                     if i == 0:
-                        out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % page)
+                        out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % prefix)
                     break
                 i += 1
                 cursor2 = db.cursor()
