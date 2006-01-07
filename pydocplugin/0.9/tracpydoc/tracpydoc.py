@@ -39,15 +39,19 @@ class TracDoc(pydoc.HTMLDoc):
                 return '<a href="%s">%s</a>' % (re.sub(self._cleanup_html_re, r'\1', dict[name]), name)
         return name
 
-    def classlink(self, object, modname):
-        module = object.__module__
-        path = '%s.%s' % (module, object.__name__)
+    def _link_components(self, path):
+        if not path: return ''
         links = []
         sofar = []
         for mod in path.split('.'):
             sofar.append(mod)
             links.append('<a href="%s">%s</a>' % (self.env.href.pydoc('.'.join(sofar)), mod))
         return '.'.join(links)
+
+    def classlink(self, object, modname):
+        module = object.__module__
+        path = '%s.%s' % (module, object.__name__)
+        return self._link_components(path)
 
     def heading(self, *args):
         return re.sub(self._cleanup_heading_re, r'href="\1"',
@@ -100,7 +104,7 @@ class PyDoc(Component):
         try:
             if not target or target == 'index':
                 import sys, os
-                doc = self.doc.heading('<big><big><strong>Python: Index of Modules</strong></big></big>', '#ffffff', '#7799ee')
+                doc = '<h1>Python: Index of Modules</h1>'
                 for dir in sys.path:
                     if os.path.isdir(dir):
                         doc += self.doc.index(dir)
@@ -125,7 +129,9 @@ class PyDoc(Component):
     def process_request(self, req):
         add_stylesheet(req, 'pydoc/css/pydoc.css')
         target = req.path_info[7:]
-        req.hdf['pydoc'] = Markup(self.generate_help(target))
+        req.hdf['trac.href.pydoc'] = self.env.href.pydoc()
+        req.hdf['pydoc.current'] = Markup(self.doc._link_components(target))
+        req.hdf['pydoc.content'] = Markup(self.generate_help(target))
         req.hdf['title'] = target
         return 'pydoc.cs', None
 
