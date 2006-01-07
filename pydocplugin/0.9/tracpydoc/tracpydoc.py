@@ -3,7 +3,7 @@
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
-from trac.util import escape
+from trac.util import escape, shorten_line
 from trac.wiki.api import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.Search import ISearchSource
 import urllib
@@ -124,7 +124,9 @@ class PyDoc(Component):
 
     def process_request(self, req):
         add_stylesheet(req, 'pydoc/css/pydoc.css')
-        req.hdf['pydoc'] = Markup(self.generate_help(req.path_info[7:]))
+        target = req.path_info[7:]
+        req.hdf['pydoc'] = Markup(self.generate_help(target))
+        req.hdf['title'] = target
         return 'pydoc.cs', None
 
     # ITemplateProvider methods
@@ -151,7 +153,12 @@ class PyDocWiki(Component):
     def _pydoc_formatter(self, formatter, ns, object, label):
         object = urllib.unquote(object)
         label = urllib.unquote(label)
-        return '<a class="wiki" href="%s">%s</a>' % (formatter.href.pydoc(object), label)
+        try:
+            target = PyDoc(self.env).load_object(object)
+            return '<a class="wiki" title="%s" href="%s">%s</a>' % (shorten_line(pydoc.getdoc(target).splitlines()[0]), formatter.href.pydoc(object), label)
+        except ImportError:
+            return '<a class="missing wiki" href="%s">%s?</a>' % (formatter.href.pydoc(object), label)
+            
 
     # IWikiMacroProvider methods
     def get_macros(self):
