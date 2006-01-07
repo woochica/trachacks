@@ -167,13 +167,16 @@ class PyDocWiki(Component):
     def _pydoc_formatter(self, formatter, ns, object, label):
         object = urllib.unquote(object)
         label = urllib.unquote(label)
-        try:
-            target = PyDoc(self.env).load_object(object)
-            doc = pydoc.getdoc(target)
-            if doc: doc = doc.strip().splitlines()[0]
-            return '<a class="wiki" title="%s" href="%s">%s</a>' % (shorten_line(doc), formatter.href.pydoc(object), label)
-        except ImportError:
-            return '<a class="missing wiki" href="%s">%s?</a>' % (formatter.href.pydoc(object), label)
+        if not object or object == 'index':
+            return '<a class="wiki" href="%s">%s</a>' % (formatter.href.pydoc(), label)
+        else:
+            try:
+                target = PyDoc(self.env).load_object(object)
+                doc = pydoc.getdoc(target)
+                if doc: doc = doc.strip().splitlines()[0]
+                return '<a class="wiki" title="%s" href="%s">%s</a>' % (shorten_line(doc), formatter.href.pydoc(object), label)
+            except ImportError:
+                return '<a class="missing wiki" href="%s">%s?</a>' % (formatter.href.pydoc(object), label)
             
 
     # IWikiMacroProvider methods
