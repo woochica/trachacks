@@ -106,7 +106,7 @@ class TracPyDocPlugin(Component):
                 for dir in sys.path:
                     if os.path.isdir(dir):
                         doc += self.doc.index(dir)
-                    return doc
+                return doc
             else:
                 return self.doc.document(self.load_object(target))
         except ImportError:
