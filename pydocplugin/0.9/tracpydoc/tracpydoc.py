@@ -46,12 +46,12 @@ class TracDoc(pydoc.HTMLDoc):
         for mod in path.split('.'):
             sofar.append(mod)
             links.append('<a href="%s">%s</a>' % (self.env.href.pydoc('.'.join(sofar)), mod))
-        return '.'.join(links)
+        return links
 
     def classlink(self, object, modname):
         module = object.__module__
         path = '%s.%s' % (module, object.__name__)
-        return self._link_components(path)
+        return '.'.join(self._link_components(path))
 
     def heading(self, *args):
         return re.sub(self._cleanup_heading_re, r'href="\1"',
@@ -100,17 +100,24 @@ class PyDoc(Component):
             mod.append(obj.pop(0))
         return object
 
-    def generate_help(self, target):
+    def generate_help(self, target, inline = False):
         try:
             if not target or target == 'index':
                 import sys, os
-                doc = '<h1>Python: Index of Modules</h1>'
+                if inline:
+                    doc = ''
+                else:
+                    doc = '<h1>Python: Index of Modules</h1>'
                 for dir in sys.path:
                     if os.path.isdir(dir):
                         doc += self.doc.index(dir)
                 return doc
             else:
-                return self.doc.document(self.load_object(target))
+                if inline:
+                    doc = ''
+                else:
+                    doc = '<h1>Python: Documentation for %s</h1>' % '.'.join(self.doc._link_components(target))
+                return doc + self.doc.document(self.load_object(target))
         except ImportError:
             return "No Python documentation found for '%s'" % target
     
@@ -130,7 +137,8 @@ class PyDoc(Component):
         add_stylesheet(req, 'pydoc/css/pydoc.css')
         target = req.path_info[7:]
         req.hdf['trac.href.pydoc'] = self.env.href.pydoc()
-        req.hdf['pydoc.current'] = Markup(self.doc._link_components(target))
+        req.hdf['pydoc.trail'] = [Markup(x) for x in self.doc._link_components(target)[:-1]]
+        req.hdf['pydoc.trail_last'] = target.split('.')[-1]
         req.hdf['pydoc.content'] = Markup(self.generate_help(target))
         req.hdf['title'] = target
         return 'pydoc.cs', None
@@ -161,7 +169,9 @@ class PyDocWiki(Component):
         label = urllib.unquote(label)
         try:
             target = PyDoc(self.env).load_object(object)
-            return '<a class="wiki" title="%s" href="%s">%s</a>' % (shorten_line(pydoc.getdoc(target).splitlines()[0]), formatter.href.pydoc(object), label)
+            doc = pydoc.getdoc(target)
+            if doc: doc = doc.strip().splitlines()[0]
+            return '<a class="wiki" title="%s" href="%s">%s</a>' % (shorten_line(doc), formatter.href.pydoc(object), label)
         except ImportError:
             return '<a class="missing wiki" href="%s">%s?</a>' % (formatter.href.pydoc(object), label)
             
@@ -174,7 +184,8 @@ class PyDocWiki(Component):
         return self.__doc__
 
     def render_macro(self, req, name, content):
-        return PyDoc(self.env).generate_help(content)
+        add_stylesheet(req, 'pydoc/css/pydoc.css')
+        return PyDoc(self.env).generate_help(content, inline = True)
 
 class PyDocSearch(Component):
     """ Provide searching of Python documentation. """
