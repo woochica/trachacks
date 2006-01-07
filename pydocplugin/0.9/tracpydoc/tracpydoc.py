@@ -21,6 +21,7 @@ class TracDoc(pydoc.HTMLDoc):
     _cleanup_re = re.compile(r'(?:bg)?color="[^"]+"')
     _cleanup_heading_re = re.compile(r'href="([^"]+).html"')
     _cleanup_html_re = re.compile(r'\.html($|#)')
+    _cleanup_inline_re = re.compile(r'<a href=".">index</a>(?:<br>)?|<a href="file:.*?</a>(?:<br>)?')
     
     def __init__(self, env):
         self.env = env
@@ -59,19 +60,15 @@ class TracDoc(pydoc.HTMLDoc):
         return self._cleanup('grey', *args)
 
     def _cleanup(self, kind, *args):
-        return re.sub(self._cleanup_re, 'class="pydoc%s"'% kind,
-                      getattr(pydoc.HTMLDoc, kind)(self, *args))
+        return re.sub(self._cleanup_inline_re, '', 
+                      re.sub(self._cleanup_re, 'class="pydoc%s"'% kind,
+                             getattr(pydoc.HTMLDoc, kind)(self, *args)))
     
 
-class TracPyDocPlugin(Component):
-    """ Allow browsing of Python documentation through Trac. Also provides a
-        pydoc:object link for linking to the browseable documentation and a
-        [[pydoc(object)]] macro which expands documentation inline. """
+class PyDoc(Component):
+    """ Allow browsing of Python documentation through Trac. """
 
-    implements(INavigationContributor, ITemplateProvider, IRequestHandler,
-        IWikiSyntaxProvider, IWikiMacroProvider, ISearchSource)
-
-    _fix_inline_re = re.compile(r'<a href=".">index</a><br>|<a href="file:.*?</a>')
+    implements(INavigationContributor, ITemplateProvider, IRequestHandler)
 
     def __init__(self):
         self.doc = TracDoc(self.env)
@@ -139,6 +136,11 @@ class TracPyDocPlugin(Component):
         from pkg_resources import resource_filename
         return [('pydoc', resource_filename(__name__, 'htdocs'))]
 
+class PyDocWiki(Component):
+    """ Provide wiki pydoc:object link and [[pydoc(object)]] macro. """
+
+    implements(IWikiSyntaxProvider, IWikiMacroProvider)
+
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
         return []
@@ -159,7 +161,12 @@ class TracPyDocPlugin(Component):
         return self.__doc__
 
     def render_macro(self, req, name, content):
-        return re.sub(self._fix_inline_re, '', self.generate_help(content))
+        return PyDoc(self.env).generate_help(content)
+
+class PyDocSearch(Component):
+    """ Provide searching of Python documentation. """
+
+    implements(ISearchSource)
 
     # ISearchSource methods
     def get_search_filters(self, req):
@@ -176,3 +183,4 @@ class TracPyDocPlugin(Component):
                         return
             pydoc.ModuleScanner().run(callback)
         return results
+
