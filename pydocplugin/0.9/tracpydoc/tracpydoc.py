@@ -7,6 +7,7 @@ from trac.util import escape
 from trac.wiki import IWikiSyntaxProvider
 import urllib
 import pydoc
+import re
 
 try:
     from trac.util import Markup
@@ -14,6 +15,11 @@ except ImportError:
     def Markup(markup): return markup
 
 class TracDoc(pydoc.HTMLDoc):
+
+    _cleanup_re = re.compile(r'(?:bg)?color="[^"]+"')
+    _cleanup_heading_re = re.compile(r'href="([^"]+).html"')
+    _cleanup_html_re = re.compile(r'\.html($|#)')
+    
     def __init__(self, env):
         self.env = env
 
@@ -27,7 +33,7 @@ class TracDoc(pydoc.HTMLDoc):
     def namelink(self, name, *dicts):
         for dict in dicts:
             if name in dict:
-                return '<a href="%s">%s</a>' % (dict[name].replace('.html', ''), name)
+                return '<a href="%s">%s</a>' % (re.sub(self._cleanup_html_re, r'\1', dict[name]), name)
         return name
 
     def classlink(self, object, modname):
@@ -39,6 +45,21 @@ class TracDoc(pydoc.HTMLDoc):
             sofar.append(mod)
             links.append('<a href="%s">%s</a>' % (self.env.href.pydoc('.'.join(sofar)), mod))
         return '.'.join(links)
+
+    def heading(self, *args):
+        return re.sub(self._cleanup_heading_re, r'href="\1"',
+            self._cleanup('heading', *args))
+        
+    def section(self, *args):
+        return self._cleanup('section', *args)
+
+    def grey(self, *args):
+        return self._cleanup('grey', *args)
+
+    def _cleanup(self, kind, *args):
+        return re.sub(self._cleanup_re, 'class="pydoc%s"'% kind,
+                      getattr(pydoc.HTMLDoc, kind)(self, *args))
+    
 
 class TracPyDocPlugin(Component):
     implements(INavigationContributor, ITemplateProvider, IRequestHandler, IWikiSyntaxProvider)
@@ -74,7 +95,7 @@ class TracPyDocPlugin(Component):
         return 'pydoc'
                 
     def get_navigation_items(self, req):
-        yield 'mainnav', 'pydoc', Markup('<a href="%s">Python Documentation</a>' \
+        yield 'mainnav', 'pydoc', Markup('<a href="%s">PyDoc</a>' \
                                   % escape(self.env.href.pydoc()))
 
     # IRequestHandler methods

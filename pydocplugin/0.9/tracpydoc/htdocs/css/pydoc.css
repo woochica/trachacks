@@ -1,1 +1,5 @@
 /* Your CSS goes here */
+
+.pydocheading { background-color: #fff; }
+.pydocsection { background-color: #f6f6f6; }
+.pydocgrey { color: grey; }
