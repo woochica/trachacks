@@ -5,10 +5,11 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_style
 from trac.web.main import IRequestHandler
 from trac.util import escape
 from trac.wiki.api import IWikiSyntaxProvider, IWikiMacroProvider
+from trac.Search import ISearchSource
 import urllib
 import pydoc
 import re
-import HTMLParser
+import time
 
 try:
     from trac.util import Markup
@@ -68,7 +69,7 @@ class TracPyDocPlugin(Component):
         [[pydoc(object)]] macro which expands documentation inline. """
 
     implements(INavigationContributor, ITemplateProvider, IRequestHandler,
-        IWikiSyntaxProvider, IWikiMacroProvider)
+        IWikiSyntaxProvider, IWikiMacroProvider, ISearchSource)
 
     _fix_inline_re = re.compile(r'<a href=".">index</a><br>|<a href="file:.*?</a>')
 
@@ -159,3 +160,19 @@ class TracPyDocPlugin(Component):
 
     def render_macro(self, req, name, content):
         return re.sub(self._fix_inline_re, '', self.generate_help(content))
+
+    # ISearchSource methods
+    def get_search_filters(self, req):
+        yield ('pydoc', 'Python Documentation')
+
+    def get_search_results(self, req, query, filters):
+        query = query.split()
+        results = []
+        if 'pydoc' in filters:
+            def callback(path, modname, desc):
+                for q in query:
+                    if q in modname or q.lower() in desc.lower():
+                        results.append((self.env.href.pydoc(modname), modname, int(time.time()), 'pydoc', desc or ''))
+                        return
+            pydoc.ModuleScanner().run(callback)
+        return results
