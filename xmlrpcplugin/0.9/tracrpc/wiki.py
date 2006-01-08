@@ -89,7 +89,8 @@ class WikiRPC(Component):
         """ Returns information about the given page. """
         page = WikiPage(self.env, pagename, version)
         if page.exists:
-            return self._page_info(page.name, page.time, page.author,
+            last_update = page.get_history().next()
+            return self._page_info(page.name, last_update[1], last_update[2],
                                    page.version)
 
     def putPage(self, req, pagename, content, attributes):
