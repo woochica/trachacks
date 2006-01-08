@@ -54,7 +54,7 @@ class WikiRPC(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT name, max(time), author, version FROM wiki'
-                       ' WHERE time >= %s GROUP BY name ORDER BY max(time) DESC', since)
+                       ' WHERE time >= %s GROUP BY name ORDER BY max(time) DESC', (since,))
         result = []
         for name, time, author, version in cursor:
             result.append(self._page_info(name, time, author, version))
