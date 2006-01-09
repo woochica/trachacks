@@ -264,6 +264,7 @@ def execute(hdf, template, env):
  <input type="submit" name="previewhack" value="Preview" onSubmit="alert('foo')"/>
  <input type="submit" name="cancel" value="Cancel" />
 </div>
+<script type="text/javascript" src="/trac/js/wikitoolbar.js"></script>
 <script type='text/javascript'>
 addWikiFormattingToolbar(document.getElementById('description'));
 addWikiFormattingToolbar(document.getElementById('example'));
