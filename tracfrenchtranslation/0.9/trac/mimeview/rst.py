@@ -83,7 +83,8 @@ class ReStructuredTextRenderer(Component):
         except ImportError:
             raise TracError, 'La librairiee Docutils est introuvable'
         if StrictVersion(__version__) < StrictVersion('0.3.3'):
-            raise TracError, 'Une version >= %s des Docutils est requise, mais la version %s a été detectée' \
+            raise TracError, 'Une version >= %s des Docutils est requise, ' \
+                             'mais la version %s a été detectée' \
                              % ('0.3.3', __version__)
 
         def trac_get_reference(rawtext, link, text):

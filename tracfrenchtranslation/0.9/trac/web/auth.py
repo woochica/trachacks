@@ -20,7 +20,7 @@ import time
 from trac.core import *
 from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor
-from trac.util import escape, hex_entropy
+from trac.util import escape, hex_entropy, Markup
 
 
 class LoginModule(Component):
@@ -62,12 +62,14 @@ class LoginModule(Component):
 
     def get_navigation_items(self, req):
         if req.authname and req.authname != 'anonymous':
-            yield 'metanav', 'login', 'connecté sous %s' % escape(req.authname)
-            yield 'metanav', 'logout', '<a href="%s">Déconnexion</a>' \
-                  % escape(self.env.href.logout())
+            yield ('metanav', 'login', 'connecté sous %s' % req.authname)
+            yield ('metanav', 'logout',
+                   Markup('<a href="%s">Déconnexion</a>' 
+                          % escape(self.env.href.logout())))
         else:
-            yield 'metanav', 'login', '<a href="%s">Connexion</a>' \
-                  % escape(self.env.href.login())
+            yield ('metanav', 'login',
+                   Markup('<a href="%s">Connexion</a>' 
+                          % escape(self.env.href.login())))
 
     # IRequestHandler methods
 

@@ -157,8 +157,7 @@ class LogModule(Component):
                 if email:
                     email_map[username] = email
             for cs in changes.values():
-                cs['message'] = util.escape(cs['message'])
-                cs['shortlog'] = util.escape(cs['shortlog'].replace('\n', ' '))
+                cs['shortlog'] = cs['shortlog'].replace('\n', ' ')
                 # For RSS, author must be an email address
                 author = cs['author']
                 author_email = ''

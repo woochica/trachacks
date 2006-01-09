@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
 # Copyright (C) 2004-2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2005-2006 Christian Boos <cboos@neuf.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -37,7 +38,7 @@ def system_message(msg, text):
  <strong>%s</strong>
  <pre>%s</pre>
 </div>
-""" % (msg, util.escape(text))
+""" % (util.escape(msg), util.escape(text))
 
 
 class WikiProcessor(object):
@@ -78,17 +79,13 @@ class WikiProcessor(object):
         return '<pre class="wiki">' + util.escape(text) + '</pre>\n'
 
     def _html_processor(self, req, text):
-        if Formatter._htmlproc_disallow_rule.search(text):
-            err = system_message('Error: HTML block contains disallowed tags.',
-                                 text)
-            self.env.log.error(err)
-            return err
-        if Formatter._htmlproc_disallow_attribute.search(text):
-            err = system_message('Error: HTML block contains disallowed attributes.',
-                                 text)
-            self.env.log.error(err)
-            return err
-        return text
+        from HTMLParser import HTMLParseError
+        try:
+            return util.Markup(text).sanitize()
+        except HTMLParseError, e:
+            self.env.log.warn(e)
+            return system_message('Erreur d\'analyse HTML: %s' % util.escape(e.msg),
+                                  text.splitlines()[e.lineno - 1].strip())
 
     def _macro_processor(self, req, text):
         from trac.wiki import WikiSystem
@@ -104,8 +101,9 @@ class WikiProcessor(object):
 
     def process(self, req, text, inline=False):
         if self.error:
-            return system_message('Error: Failed to load processor <code>%s</code>'
-                                  % self.name, self.error)
+            return system_message(util.Markup('Erreur: Echec de chargement du '
+                                              'processeur <code>%s</code>', 
+                                              self.name), self.error)
         text = self.processor(req, text)
         if inline:
             code_block_start = re.compile('^<div class="code-block">')
@@ -147,7 +145,6 @@ class Formatter(object):
     # between _pre_rules and _post_rules
 
     _pre_rules = [
-        r"(?P<htmlescape>[&<>])",
         # Font styles
         r"(?P<bolditalic>%s)" % BOLDITALIC_TOKEN,
         r"(?P<bold>%s)" % BOLD_TOKEN,
@@ -158,11 +155,10 @@ class Formatter(object):
         r"(?P<superscript>!?%s)" % SUPERSCRIPT_TOKEN,
         r"(?P<inlinecode>!?\{\{\{(?P<inline>.*?)\}\}\})",
         r"(?P<inlinecode2>!?%s(?P<inline2>.*?)%s)" \
-        % (INLINE_TOKEN, INLINE_TOKEN),
-        # Prevent HTML entities to be recognized as ticket shorthand links
-        r"(?P<htmlescapeentity>!?&#\d+;)"]
+        % (INLINE_TOKEN, INLINE_TOKEN)]
 
     _post_rules = [
+        r"(?P<htmlescape>[&<>])",
         # shref corresponds to short TracLinks, i.e. sns:stgt
         r"(?P<shref>!?((?P<sns>%s):(?P<stgt>%s|%s(?:%s*%s)?)))" \
         % (LINK_SCHEME, QUOTED_STRING,
@@ -186,10 +182,6 @@ class Formatter(object):
     _anchor_re = re.compile('[^\w\d\.-:]+', re.UNICODE)
     
     img_re = re.compile(r"\.(gif|jpg|jpeg|png)(\?.*)?$", re.IGNORECASE)
-    _htmlproc_disallow_rule = re.compile('(?i)<(script|noscript|embed|object|'
-                                         'iframe|frame|frameset|link|style|'
-                                         'meta|param|doctype)')
-    _htmlproc_disallow_attribute = re.compile('(?i)<[^>]*\s+(on\w+)=')
 
     def __init__(self, env, req=None, absurls=0, db=None):
         self.env = env
@@ -241,7 +233,7 @@ class Formatter(object):
                     tmp += self._open_tags[j][0]
                 break
         return tmp
-        
+
     def open_tag(self, open, close):
         self._open_tags.append((open, close))
 
@@ -266,11 +258,11 @@ class Formatter(object):
             self.open_tag(*italic)
         return tmp
 
-    def _unquote(self, str):
-        if str and str[0] in "'\"" and str[0] == str[-1]:
-            return str[1:-1]
+    def _unquote(self, text):
+        if text and text[0] in "'\"" and text[0] == text[-1]:
+            return text[1:-1]
         else:
-            return str
+            return text
 
     def _shref_formatter(self, match, fullmatch):
         ns = fullmatch.group('sns')
@@ -358,17 +350,10 @@ class Formatter(object):
             return self.simple_tag_handler('<sup>', '</sup>')
 
     def _inlinecode_formatter(self, match, fullmatch):
-        return '<tt>%s</tt>' % fullmatch.group('inline')
+        return '<tt>%s</tt>' % util.escape(fullmatch.group('inline'))
 
     def _inlinecode2_formatter(self, match, fullmatch):
-        return '<tt>%s</tt>' % fullmatch.group('inline2')
-
-    def _htmlescapeentity_formatter(self, match, fullmatch):
-        #dummy function that match html escape entities in the format:
-        # &#[0-9]+;
-        # This function is used to avoid these being matched by
-        # the tickethref regexp
-        return match
+        return '<tt>%s</tt>' % util.escape(fullmatch.group('inline2'))
 
     def _htmlescape_formatter(self, match, fullmatch):
         return match == "&" and "&amp;" or match == "<" and "&lt;" or "&gt;"
@@ -384,7 +369,8 @@ class Formatter(object):
         except Exception, e:
             self.env.log.error('Macro %s(%s) failed' % (name, args),
                                exc_info=True)
-            return system_message('Error: Macro %s(%s) failed' % (name, args), e)
+            return system_message('Erreur: Echec de la macro %s(%s)' % \
+                                  (name, args), e)
 
     def _heading_formatter(self, match, fullmatch):
         match = match.strip()
@@ -756,16 +742,16 @@ class OutlineFormatter(Formatter):
 def wiki_to_html(wikitext, env, req, db=None, absurls=0, escape_newlines=False):
     out = StringIO()
     Formatter(env, req, absurls, db).format(wikitext, out, escape_newlines)
-    return out.getvalue()
+    return util.Markup(out.getvalue())
 
 def wiki_to_oneliner(wikitext, env, db=None, shorten=False, absurls=0):
     out = StringIO()
     OneLinerFormatter(env, absurls, db).format(wikitext, out, shorten)
-    return out.getvalue()
+    return util.Markup(out.getvalue())
 
 def wiki_to_outline(wikitext, env, db=None, absurls=0, max_depth=None,
                     min_depth=None):
     out = StringIO()
     OutlineFormatter(env, absurls, db).format(wikitext, out, max_depth,
                                               min_depth)
-    return out.getvalue()
+    return util.Markup(out.getvalue())

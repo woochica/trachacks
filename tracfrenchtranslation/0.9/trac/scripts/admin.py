@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 # 
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -12,7 +12,7 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 
-__copyright__ = 'Copyright (c) 2003-2005 Edgewall Software'
+__copyright__ = 'Copyright (c) 2003-2006 Edgewall Software'
 
 import cmd
 import getpass
@@ -564,7 +564,7 @@ class TracAdmin(cmd.Cmd):
             return 2
         else:
             project_name, db_str, repository_type, repository_dir, \
-                          templates_dir = arg[:4]
+                          templates_dir = arg[:5]
 
         if not os.access(os.path.join(templates_dir, 'header.cs'), os.F_OK):
             print templates_dir, "doesn't look like a Trac templates directory"

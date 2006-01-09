@@ -21,7 +21,7 @@ from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.ticket import Ticket, TicketSystem
 from trac.util import escape, unescape, format_datetime, http_date, \
-                      shorten_line, CRLF
+                      shorten_line, CRLF, Markup
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
 from trac.wiki import wiki_to_html, wiki_to_oneliner, IWikiMacroProvider, \
@@ -339,8 +339,9 @@ class QueryModule(Component):
         from trac.ticket.report import ReportModule
         if req.perm.has_permission('TICKET_VIEW') and \
            not self.env.is_component_enabled(ReportModule):
-            yield 'mainnav', 'tickets', '<a href="%s">Voir les tickets</a>' \
-                  % escape(self.env.href.query())
+            yield 'mainnav', 'tickets', \
+                  Markup('<a href="%s">Voir les tickets</a>', \
+                  self.env.href.query())
 
     # IRequestHandler methods
 
@@ -501,7 +502,7 @@ class QueryModule(Component):
                                    verbose=query.verbose and 1 or None,
                                    **query.constraints)
         req.hdf['query.order'] = query.order
-        req.hdf['query.href'] = escape(href)
+        req.hdf['query.href'] = href
         if query.desc:
             req.hdf['query.desc'] = True
         if query.group:
@@ -551,11 +552,11 @@ class QueryModule(Component):
                     ticket['changed'] = True
             for field, value in ticket.items():
                 if field == 'time':
-                    ticket[field] = escape(format_datetime(value))
+                    ticket[field] = format_datetime(value)
                 elif field == 'description':
                     ticket[field] = wiki_to_html(value or '', self.env, req, db)
                 else:
-                    ticket[field] = escape(value)
+                    ticket[field] = value
 
         req.hdf['query.results'] = tickets
         req.session['query_tickets'] = ' '.join([str(t['id']) for t in tickets])
@@ -591,9 +592,10 @@ class QueryModule(Component):
             if result['reporter'].find('@') == -1:
                 result['reporter'] = ''
             if result['description']:
-                result['description'] = escape(wiki_to_html(result['description'] or '',
-                                                            self.env, req, db,
-                                                            absurls=1))
+                # str() cancels out the Markup() returned by wiki_to_html
+                result['description'] = str(wiki_to_html(result['description'] or '',
+                                                         self.env, req, db,
+                                                         absurls=1))
             if result['time']:
                 result['time'] = http_date(result['time'])
         req.hdf['query.results'] = results

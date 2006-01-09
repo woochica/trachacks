@@ -114,16 +114,14 @@ class ChangesetModule(Component):
             for chgset in repos.get_changesets(start, stop):
                 message = chgset.message or '--'
                 if format == 'rss':
-                    title = 'Version <em>[%s]</em>: %s' \
-                            % (util.escape(chgset.rev),
-                               util.escape(util.shorten_line(message)))
+                    title = util.Markup('Version <em>[%s]</em>: %s',
+                                        chgset.rev, util.shorten_line(message))
                     href = self.env.abs_href.changeset(chgset.rev)
                     message = wiki_to_html(message, self.env, req, db,
                                            absurls=True)
                 else:
-                    title = 'Version <em>[%s]</em> par %s' \
-                            % (util.escape(chgset.rev),
-                               util.escape(chgset.author))
+                    title = util.Markup('Version <em>[%s]</em> par %s',
+                                        chgset.rev, chgset.author)
                     href = self.env.href.changeset(chgset.rev)
                     message = wiki_to_oneliner(message, self.env, db,
                                                shorten=True)
@@ -138,7 +136,7 @@ class ChangesetModule(Component):
                     message = '<span class="changes">' + ', '.join(files) +\
                               '</span>: ' + message
                 yield 'changeset', href, title, chgset.date, chgset.author,\
-                      message
+                      util.Markup(message)
 
     # Internal methods
 
@@ -149,7 +147,7 @@ class ChangesetModule(Component):
             'revision': chgset.rev,
             'time': util.format_datetime(chgset.date),
             'age': util.pretty_timedelta(chgset.date, None, 3600),
-            'author': util.escape(chgset.author or 'anonymous'),
+            'author': chgset.author or 'anonymous',
             'message': wiki_to_html(chgset.message or '--', self.env, req,
                                     escape_newlines=True)
         }
@@ -254,8 +252,8 @@ class ChangesetModule(Component):
         """Raw Unified Diff version"""
         req.send_response(200)
         req.send_header('Content-Type', 'text/plain;charset=utf-8')
-        req.send_header('Content-Disposition',
-                        'filename=Version%s.diff' % req.args.get('rev'))
+        req.send_header('Content-Disposition', 'inline;'
+                        'filename=Version%s.diff' % chgset.rev)
         req.end_headers()
 
         mimeview = Mimeview(self.env)
@@ -316,7 +314,7 @@ class ChangesetModule(Component):
         """ZIP archive with all the added and/or modified files."""
         req.send_response(200)
         req.send_header('Content-Type', 'application/zip')
-        req.send_header('Content-Disposition',
+        req.send_header('Content-Disposition', 'attachment;'
                         'filename=Version%s.zip' % chgset.rev)
         req.end_headers()
 
@@ -381,6 +379,5 @@ class ChangesetModule(Component):
             if not authzperm.has_permission_for_changeset(rev):
                 continue
             yield (self.env.href.changeset(rev),
-                   '[%s]: %s' % (rev, util.escape(util.shorten_line(log))),
-                   date, author,
-                   util.escape(shorten_result(log, query.split())))
+                   '[%s]: %s' % (rev, util.shorten_line(log)),
+                   date, author, shorten_result(log, query.split()))

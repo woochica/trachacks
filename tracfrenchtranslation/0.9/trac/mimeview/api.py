@@ -24,7 +24,8 @@ except ImportError:
     from StringIO import StringIO
 
 from trac.core import *
-from trac.util import escape, to_utf8
+from trac.util import escape, to_utf8, Markup
+
 
 __all__ = ['get_mimetype', 'is_binary', 'detect_unicode', 'Mimeview']
 
@@ -62,6 +63,7 @@ MIME_MAP = {
     'm4':'text/x-m4',
     'make':'text/x-makefile', 'mk':'text/x-makefile',
     'Makefile':'text/x-makefile',
+    'makefile':'text/x-makefile', 'GNUMakefile':'text/x-makefile',
     'mail':'text/x-mail',
     'pas':'text/x-pascal',
     'pdf':'application/pdf',
@@ -240,16 +242,16 @@ class Mimeview(Component):
                 if not result:
                     continue
                 elif isinstance(result, (str, unicode)):
-                    return result
+                    return Markup(result)
                 elif annotations:
-                    return self._annotate(result, annotations)
+                    return Markup(self._annotate(result, annotations))
                 else:
                     buf = StringIO()
                     buf.write('<div class="code"><pre>')
                     for line in result:
                         buf.write(line + '\n')
                     buf.write('</pre></div>')
-                    return buf.getvalue()
+                    return Markup(buf.getvalue())
             except Exception, e:
                 self.log.warning('HTML preview using %s failed (%s)'
                                  % (renderer, e), exc_info=True)
@@ -275,6 +277,7 @@ class Mimeview(Component):
                 return div * '&nbsp; ' + mod * '&nbsp;'
             return (match.group('tag') or '') + '&nbsp;'
 
+        num = -1
         for num, line in enumerate(_html_splitlines(lines)):
             cells = []
             for annotator in annotators:
@@ -282,7 +285,7 @@ class Mimeview(Component):
             cells.append('<td>%s</td>\n' % space_re.sub(htmlify, line))
             buf.write('<tr>' + '\n'.join(cells) + '</tr>')
         else:
-            if num == 0:
+            if num < 0:
                 return ''
         buf.write('</tbody></table>')
         return buf.getvalue()

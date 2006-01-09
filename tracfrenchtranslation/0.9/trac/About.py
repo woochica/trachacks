@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2004-2005 Edgewall Software
+# Copyright (C) 2004-2006 Edgewall Software
 # Copyright (C) 2004-2005 Jonas Borgström <jonas@edgewall.com>
 # Copyright (C) 2004-2005 Daniel Lundin <daniel@edgewall.com>
-# Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2005-2006 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -22,6 +22,7 @@ import re
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.web import IRequestHandler
+from trac.util import Markup
 from trac.web.chrome import add_stylesheet, INavigationContributor
 
 
@@ -41,8 +42,8 @@ class AboutModule(Component):
    <li><a href="<?cs var:about.config_href ?>">Configuration</a></li><?cs
   /if ?><?cs
   if:about.plugins_href ?>
-   <li class="last"><a href="<?cs var:about.plugins_href ?>">Plugins</a></li><?cs
-  /if ?>
+   <li class="last"><a href="<?cs var:about.plugins_href ?>">Extensions</a></li>
+   <?cs /if ?>
  </ul>
 </div>
 <div id="content" class="about<?cs if:about.page ?>_<?cs var:about.page ?><?cs /if ?>">
@@ -67,7 +68,7 @@ class AboutModule(Component):
   </div>
 
  <?cs elif:about.page == "plugins" ?>
-  <h1>Plugins</h1>
+  <h1>Extensions</h1>
   <dl id="plugins"><?cs
    each:plugin = about.plugins ?>
     <h2 id="<?cs var:plugin.module ?>.<?cs var:plugin.name ?>"><?cs var:plugin.name ?></h2>
@@ -110,19 +111,21 @@ class AboutModule(Component):
   </a>
 <h1>A propos de Trac <?cs var:trac.version ?></h1>
 <p>
-Trac est un système de gestion de projet logiciel et de suivi de défauts via le Web,
-qui met l'accent sur la facilité d'utilisation et évite les chichis.<br />
-Il propose une interface pour le système de contrôle de source Subversion, un Wiki intégré, 
-et la création aisée de rapports.
+Trac est un système de gestion de projet logiciel et de suivi de défauts via le
+Web, qui met l'accent sur la facilité d'utilisation et évite les chichis.<br />
+Il propose une interface pour le système de contrôle de source Subversion, un 
+Wiki intégré, et la création facile de rapports.
 </p>
   <p>Trac est distribué sous une licence BSD modifiée.<br />
   Le texte complet de la licence peut être trouvé dans le fichier COPYING,
   inclus dans la distribution.</p>
   <p>Merci de consulter le projet open source Trac: 
   <a href="http://projects.edgewall.com/trac/">http://projects.edgewall.com/trac/</a></p>
-  <p>Trac est un produit de <a href="http://www.edgewall.com/">Edgewall Software</a>, fournisseur de solutions professionnelles
-  et de services de développement logiciel sous Linux.</p>
-<p>Copyright &copy; 2003-2005 <a href="http://www.edgewall.com/">Edgewall Software</a></p>
+  <p>Trac est un produit de <a href="http://www.edgewall.com/">Edgewall 
+     Software</a>, fournisseur de solutions professionnelles et de services de 
+     développement logiciel sous Linux.</p>
+  <p>Copyright &copy; 2003-2006 <a href="http://www.edgewall.com/">Edgewall 
+     Software</a></p>
   <a href="http://www.edgewall.com/">
    <img style="display: block; margin: 30px" src="<?cs var:chrome.href ?>/common/edgewall.png"
      alt="Edgewall Software"/></a>
@@ -137,8 +140,9 @@ et la création aisée de rapports.
         return 'about'
 
     def get_navigation_items(self, req):
-        yield 'metanav', 'about', '<a href="%s" accesskey="9">A propos de Trac</a>' \
-              % self.env.href.about()
+        yield ('metanav', 'about',
+               Markup('<a href="%s">A propos de Trac</a>', 
+                      self.env.href.about()))
 
     # IPermissionRequestor methods
 

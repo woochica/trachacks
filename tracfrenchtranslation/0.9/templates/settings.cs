@@ -31,7 +31,7 @@
   if:settings.session_id ?>
    <h3>Session</h3>
    <div>
-    <label for="newsid">Session Key:</label>
+    <label for="newsid">Clef de session:</label>
     <input type="text" id="newsid" name="newsid" class="textwidget" size="30"
            value="<?cs var:settings.session_id ?>" />
     <p>La clef de session est utilisée pour identifier les réglagles personnels

@@ -197,7 +197,7 @@ def attachment_to_hdf(env, db, req, attachment):
     hdf = {
         'filename': attachment.filename,
         'description': wiki_to_oneliner(attachment.description, env, db),
-        'author': util.escape(attachment.author),
+        'author': attachment.author,
         'ipnr': attachment.ipnr,
         'size': util.pretty_size(attachment.size),
         'time': util.format_datetime(attachment.time),
@@ -385,8 +385,6 @@ class AttachmentModule(Component):
         perm_map = {'ticket': 'TICKET_VIEW', 'wiki': 'WIKI_VIEW'}
         req.perm.assert_permission(perm_map[attachment.parent_type])
 
-        fmt = req.args.get('format')
-
         req.check_modified(attachment.time)
 
         # Render HTML view
@@ -408,28 +406,35 @@ class AttachmentModule(Component):
         fd = attachment.open()
         try:
             mimeview = Mimeview(self.env)
-
             data = fd.read(mimeview.max_preview_size())
-            
-            mime_type = fmt == 'txt' and 'text/plain' or \
-                       get_mimetype(attachment.filename, data) or \
-                       'application/octet-stream'
 
+            mime_type = get_mimetype(attachment.filename, data) or \
+                        'application/octet-stream'
             self.log.debug("Rendering preview of file %s with mime-type %s"
                            % (attachment.filename, mime_type))
-            
+
             raw_href = attachment.href(format='raw')
             add_link(req, 'alternate', raw_href, 'Format Original', mime_type)
-            req.hdf['attachment.raw_href'] = util.escape(raw_href)
-            
-            if fmt in ('raw', 'txt'):
-                # Send raw file
+            req.hdf['attachment.raw_href'] = raw_href
+
+            format = req.args.get('format')
+            render_unsafe = self.config.getbool('attachment',
+                                                'render_unsafe_content')
+            binary = not detect_unicode(data) and is_binary(data)
+
+            if format in ('raw', 'txt'): # Send raw file
+                if not render_unsafe and not binary:
+                    # Force browser to download HTML/SVG/etc pages that may
+                    # contain malicious code enabling XSS attacks
+                    req.send_header('Content-Disposition', 'attachment;' +
+                                    'filename=' + attachment.filename)
                 charset = mimeview.get_charset(data, mime_type)
+                if render_unsafe and not binary and format == 'txt':
+                    mime_type = 'text/plain'
                 req.send_file(attachment.path,
                               mime_type + ';charset=' + charset)
-                return
-            
-            if not is_binary(data):
+
+            if render_unsafe and not binary:
                 plaintext_href = attachment.href(format='txt')
                 add_link(req, 'alternate', plaintext_href, 'Text Standard',
                          mime_type)

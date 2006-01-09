@@ -1,4 +1,4 @@
-# -*- coding: iso8859-1 -*-
+# -*- coding: iso-8859-1 -*-
 #
 # Copyright (C) 2005 Edgewall Software
 # Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
@@ -26,7 +26,11 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from svn import core, repos
+try:
+    from svn import core, repos
+    has_svn = True
+except:
+    has_svn = False
 
 from trac.log import logger_factory
 from trac.test import TestSetup
@@ -541,11 +545,13 @@ class ScopedSubversionRepositoryTestCase(unittest.TestCase):
         self.assertRaises(StopIteration, changes.next)
 
 def suite():
+    global has_svn
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(SubversionRepositoryTestCase, 'test',
-                                     suiteClass=SubversionRepositoryTestSetup))
-    suite.addTest(unittest.makeSuite(ScopedSubversionRepositoryTestCase, 'test',
-                                     suiteClass=SubversionRepositoryTestSetup))
+    if has_svn:
+        suite.addTest(unittest.makeSuite(SubversionRepositoryTestCase,
+            'test', suiteClass=SubversionRepositoryTestSetup))
+        suite.addTest(unittest.makeSuite(ScopedSubversionRepositoryTestCase,
+            'test', suiteClass=SubversionRepositoryTestSetup))
     return suite
 
 if __name__ == '__main__':

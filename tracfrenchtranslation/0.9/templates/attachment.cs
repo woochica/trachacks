@@ -21,11 +21,11 @@
    </div>
    <div class="field">
     <label>Description (optionnelle) du fichier:<br />
-    <input type="text" name="description" size="60" /></label
+    <input type="text" name="description" size="60" /></label>
    </div>
    <br />
    <div class="options">
-    <label><input type="checkbox" name="replace" checked="checked" />
+    <label><input type="checkbox" name="replace" />
     Remplacer une pièce jointe existante portant le même nom</label>
    </div>
    <br />
