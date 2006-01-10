@@ -147,7 +147,12 @@ class PyDoc(Component):
                 raise ImportError, fullobject
         return (module, object)
 
-    def generate_help(self, target, inline = False):
+    def generate_help(self, target, inline=False, visibility=''):
+        """Show documentation for named `target`.
+
+        If `inline` is set, no header will be generated.
+        For the `visibility` argument, see `PyDocMacro`.
+        """
         try:
             if not target or target == 'index':
                 if inline:
@@ -164,15 +169,17 @@ class PyDoc(Component):
                 else:
                     doc = '<h1>Python: Documentation for %s</h1>' % \
                           '.'.join(self.doc._link_components(target))
-                return doc + self._makedoc(target)
+                return doc + self._makedoc(target, visibility)
         except ImportError:
             return "No Python documentation found for '%s'" % target
 
-    def _makedoc(self, target):
+    def _makedoc(self, target, visibility):
         module, object = self.load_object(target)
         try:
             self.makedoc_lock.acquire()
-            if any([module.__name__.startswith(p) for p in self.show_private]):
+            if visibility == 'private' or \
+                   visibility == '' and any([module.__name__.startswith(p)
+                                             for p in self.show_private]):
                 try:
                     # save pydoc's original visibility function
                     visiblename = pydoc.visiblename
@@ -232,9 +239,9 @@ class PyDoc(Component):
 
 
 class PyDocWiki(Component):
-    """ Provide wiki pydoc:object link and [[pydoc(object)]] macro. """
+    """Provide wiki pydoc:object link syntax."""
 
-    implements(IWikiSyntaxProvider, IWikiMacroProvider)
+    implements(IWikiSyntaxProvider)
 
     # IWikiSyntaxProvider methods
 
@@ -262,6 +269,21 @@ class PyDocWiki(Component):
                        (formatter.href.pydoc(object), label)
             
 
+class PyDocMacro(Component):
+    """Show the Python documentation for the given `target`.
+
+    An optional second argument (`visibility`) can be set in order
+    to control the type of documentation that will be shown:
+     * using "public", only show the documentation for exported symbols 
+     * using "private", all the documentation will be shown
+
+    If the `visibility` argument is omitted, the private documentation
+    will be shown if the `target`'s module is listed in the
+    `[pydoc] show_private` configuration setting.
+    """
+
+    implements(IWikiMacroProvider)
+
     # IWikiMacroProvider methods
 
     def get_macros(self):
@@ -269,10 +291,14 @@ class PyDocWiki(Component):
 
     def get_macro_description(self, name):
         return self.__doc__
-
+    
     def render_macro(self, req, name, content):
+        args = content.split(',')
+        target = args and args.pop(0)
+        visibility = args and args.pop(0).strip() or ''
         add_stylesheet(req, 'pydoc/css/pydoc.css')
-        return PyDoc(self.env).generate_help(content, inline = True)
+        return PyDoc(self.env).generate_help(target, inline=True,
+                                             visibility=visibility)
 
 
 class PyDocSearch(Component):
