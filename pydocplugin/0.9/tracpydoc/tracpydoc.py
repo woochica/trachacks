@@ -1,7 +1,8 @@
 # Tracpydoc plugin
 
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
+from trac.web.chrome import INavigationContributor, ITemplateProvider, \
+     add_stylesheet
 from trac.web.main import IRequestHandler
 from trac.util import escape, shorten_line
 from trac.wiki.api import IWikiSyntaxProvider, IWikiMacroProvider
@@ -21,13 +22,15 @@ class TracDoc(pydoc.HTMLDoc):
     _cleanup_re = re.compile(r'(?:bg)?color="[^"]+"')
     _cleanup_heading_re = re.compile(r'href="([^"]+).html"')
     _cleanup_html_re = re.compile(r'\.html($|#)')
-    _cleanup_inline_re = re.compile(r'<a href=".">index</a>(?:<br>)?|<a href="file:.*?</a>(?:<br>)?')
+    _cleanup_inline_re = re.compile(r'<a href=".">index</a>(?:<br>)?|'
+                                    r'<a href="file:.*?</a>(?:<br>)?')
     
     def __init__(self, env):
         self.env = env
 
     def modulelink(self, obj):
-        return '<a href="%s">%s</a>' % (self.env.href.pydoc(obj.__name__), obj.__name__)
+        return '<a href="%s">%s</a>' % \
+               (self.env.href.pydoc(obj.__name__), obj.__name__)
 
     def modpkglink(self, (name, path, ispackage, shadowed)):
         fpath = '%s%s' % (path and path + '.' or '', name)
@@ -36,7 +39,8 @@ class TracDoc(pydoc.HTMLDoc):
     def namelink(self, name, *dicts):
         for dict in dicts:
             if name in dict:
-                return '<a href="%s">%s</a>' % (re.sub(self._cleanup_html_re, r'\1', dict[name]), name)
+                return '<a href="%s">%s</a>' % \
+                       (re.sub(self._cleanup_html_re, r'\1', dict[name]), name)
         return name
 
     def _link_components(self, path):
@@ -45,7 +49,8 @@ class TracDoc(pydoc.HTMLDoc):
         sofar = []
         for mod in path.split('.'):
             sofar.append(mod)
-            links.append('<a href="%s">%s</a>' % (self.env.href.pydoc('.'.join(sofar)), mod))
+            links.append('<a href="%s">%s</a>' % \
+                         (self.env.href.pydoc('.'.join(sofar)), mod))
         return links
 
     def classlink(self, object, modname):
@@ -116,12 +121,14 @@ class PyDoc(Component):
                 if inline:
                     doc = ''
                 else:
-                    doc = '<h1>Python: Documentation for %s</h1>' % '.'.join(self.doc._link_components(target))
+                    doc = '<h1>Python: Documentation for %s</h1>' % \
+                          '.'.join(self.doc._link_components(target))
                 return doc + self.doc.document(self.load_object(target))
         except ImportError:
             return "No Python documentation found for '%s'" % target
     
     # INavigationContributor methods
+    
     def get_active_navigation_item(self, req):
         return 'pydoc'
                 
@@ -130,6 +137,7 @@ class PyDoc(Component):
                                   % escape(self.env.href.pydoc()))
 
     # IRequestHandler methods
+    
     def match_request(self, req):
         return req.path_info.startswith('/pydoc')
 
@@ -137,13 +145,15 @@ class PyDoc(Component):
         add_stylesheet(req, 'pydoc/css/pydoc.css')
         target = req.path_info[7:]
         req.hdf['trac.href.pydoc'] = self.env.href.pydoc()
-        req.hdf['pydoc.trail'] = [Markup(x) for x in self.doc._link_components(target)[:-1]]
+        req.hdf['pydoc.trail'] = [Markup(x) for x in 
+                                  self.doc._link_components(target)[:-1]]
         req.hdf['pydoc.trail_last'] = target.split('.')[-1]
         req.hdf['pydoc.content'] = Markup(self.generate_help(target))
         req.hdf['title'] = target
         return 'pydoc.cs', None
 
     # ITemplateProvider methods
+    
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
@@ -152,12 +162,14 @@ class PyDoc(Component):
         from pkg_resources import resource_filename
         return [('pydoc', resource_filename(__name__, 'htdocs'))]
 
+
 class PyDocWiki(Component):
     """ Provide wiki pydoc:object link and [[pydoc(object)]] macro. """
 
     implements(IWikiSyntaxProvider, IWikiMacroProvider)
 
     # IWikiSyntaxProvider methods
+
     def get_wiki_syntax(self):
         return []
 
@@ -168,18 +180,22 @@ class PyDocWiki(Component):
         object = urllib.unquote(object)
         label = urllib.unquote(label)
         if not object or object == 'index':
-            return '<a class="wiki" href="%s">%s</a>' % (formatter.href.pydoc(), label)
+            return '<a class="wiki" href="%s">%s</a>' % \
+                   (formatter.href.pydoc(), label)
         else:
             try:
                 target = PyDoc(self.env).load_object(object)
                 doc = pydoc.getdoc(target)
                 if doc: doc = doc.strip().splitlines()[0]
-                return '<a class="wiki" title="%s" href="%s">%s</a>' % (shorten_line(doc), formatter.href.pydoc(object), label)
+                return '<a class="wiki" title="%s" href="%s">%s</a>' % \
+                       (shorten_line(doc), formatter.href.pydoc(object), label)
             except ImportError:
-                return '<a class="missing wiki" href="%s">%s?</a>' % (formatter.href.pydoc(object), label)
+                return '<a class="missing wiki" href="%s">%s?</a>' % \
+                       (formatter.href.pydoc(object), label)
             
 
     # IWikiMacroProvider methods
+
     def get_macros(self):
         yield 'pydoc'
 
@@ -190,12 +206,14 @@ class PyDocWiki(Component):
         add_stylesheet(req, 'pydoc/css/pydoc.css')
         return PyDoc(self.env).generate_help(content, inline = True)
 
+
 class PyDocSearch(Component):
     """ Provide searching of Python documentation. """
 
     implements(ISearchSource)
 
     # ISearchSource methods
+
     def get_search_filters(self, req):
         yield ('pydoc', 'Python Documentation')
 
@@ -206,7 +224,8 @@ class PyDocSearch(Component):
             def callback(path, modname, desc):
                 for q in query:
                     if q in modname or q.lower() in desc.lower():
-                        results.append((self.env.href.pydoc(modname), modname, int(time.time()), 'pydoc', desc or ''))
+                        results.append((self.env.href.pydoc(modname), modname,
+                                        int(time.time()), 'pydoc', desc or ''))
                         return
             pydoc.ModuleScanner().run(callback)
         return results
