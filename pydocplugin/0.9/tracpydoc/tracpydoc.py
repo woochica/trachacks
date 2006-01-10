@@ -7,15 +7,20 @@ from trac.web.main import IRequestHandler
 from trac.util import escape, shorten_line
 from trac.wiki.api import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.Search import ISearchSource
+
 import urllib
 import pydoc
 import re
 import time
+import sys
+import os
+import imp
 
 try:
     from trac.util import Markup
 except ImportError:
     def Markup(markup): return markup
+
 
 class TracDoc(pydoc.HTMLDoc):
 
@@ -60,7 +65,7 @@ class TracDoc(pydoc.HTMLDoc):
 
     def heading(self, *args):
         return re.sub(self._cleanup_heading_re, r'href="\1"',
-            self._cleanup('heading', *args))
+                      self._cleanup('heading', *args))
         
     def section(self, *args):
         return self._cleanup('section', *args)
@@ -81,39 +86,60 @@ class PyDoc(Component):
 
     def __init__(self):
         self.doc = TracDoc(self.env)
+        syspath = self.config.get('pydoc', 'sys.path')
+        if syspath:
+            self.syspath = [os.path.normpath(p) for p in
+                            syspath.split(os.pathsep)]
+        else:
+            self.syspath = sys.path
 
     def load_object(self, fullobject):
         """ Load an arbitrary object from a full dotted path. """
-        mod = fullobject.split('.')
-        obj = []
-        object = None
+        fullspec = fullobject.split('.')
+        i = 0
+        module = mfile = mdescr = None
+        mpath = self.syspath
         # Find module
-        while mod:
+        if fullspec[0] in sys.builtin_module_names:
+            module = __import__(fullspec[0], None, None)
+            i += 1
+        else:
+            while i < len(fullspec):
+                try:
+                    f, p, mdescr = imp.find_module(fullspec[i], mpath)
+                    if mfile:
+                        mfile.close()
+                    mfile, mpath = f, [p]
+                    i += 1
+                except ImportError:
+                    break
             try:
-                object = __import__('.'.join(mod), None, None, [''])
-                break
-            except ImportError:
-                pass
-            obj.insert(0, mod.pop())
-        if not object: object = __builtins__
+                mname = ".".join(fullspec[0:i])
+                if sys.modules.has_key(mname):
+                    module =  sys.modules[mname]
+                elif mname and mdescr:
+                    module = imp.load_module(mname, mfile, mpath[0], mdescr)
+            finally:
+                if mfile:
+                    mfile.close()
         # Find object
-        while obj:
+        object = module
+        while i < len(fullspec):
             try:
-                object = getattr(object, obj[0])
+                object = getattr(object, fullspec[i])
+                i += 1
             except AttributeError:
                 raise ImportError, fullobject
-            mod.append(obj.pop(0))
         return object
 
     def generate_help(self, target, inline = False):
         try:
             if not target or target == 'index':
-                import sys, os
                 if inline:
                     doc = ''
                 else:
                     doc = '<h1>Python: Index of Modules</h1>'
-                for dir in sys.path:
+                for dir in self.syspath:
                     if os.path.isdir(dir):
                         doc += self.doc.index(dir)
                 return doc
