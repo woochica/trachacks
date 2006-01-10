@@ -200,7 +200,7 @@ def execute(hdf, template, env):
     <div class="field">
         <label for="description"><strong>Description</strong></label>
         <br/>
-        <textarea id="description" name="description" cols="80" rows="8" title="Comprehensive description of your hack">%(description)s</textarea>
+        <textarea class="wikitext" id="description" name="description" cols="80" rows="8" title="Comprehensive description of your hack">%(description)s</textarea>
     </div>
 </fieldset>
 <br/>
@@ -209,7 +209,7 @@ def execute(hdf, template, env):
     <div class="field">
         <label for="type" title="Type of hack"><strong>Type</strong></label>
         <br/>
-        The type that best describes your macro. The title-cased version of the type will be appended to your page name.
+        The type that best describes your hack. The title-cased version of the type will be appended to your page name.
         <br/>
 """ % {
         'name' : hdf.getValue('args.name', ''),
@@ -256,7 +256,7 @@ def execute(hdf, template, env):
     <label for="example"><strong>Example usage</strong></label>
     <br/>One or more examples illustrating how to use your hack, if appropriate.
     <br/>
-    <textarea id="example" name="example" cols="80" rows="8" title="Example of your hack in 'action'">%(example)s</textarea>
+    <textarea class="wikitext" id="example" name="example" cols="80" rows="8" title="Example of your hack in 'action'">%(example)s</textarea>
 </div>
 </fieldset>
 <div class="buttons">
@@ -264,11 +264,7 @@ def execute(hdf, template, env):
  <input type="submit" name="previewhack" value="Preview" onSubmit="alert('foo')"/>
  <input type="submit" name="cancel" value="Cancel" />
 </div>
-<script type="text/javascript" src="/trac/js/wikitoolbar.js"></script>
-<script type='text/javascript'>
-addWikiFormattingToolbar(document.getElementById('description'));
-addWikiFormattingToolbar(document.getElementById('example'));
-</script>
+<!--<script type="text/javascript" src="/trac/js/wikitoolbar.js"></script> -->
 </form>
     """ % {
         'example' : page_example
