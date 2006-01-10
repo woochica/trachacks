@@ -8,6 +8,12 @@ from trac.util import escape, shorten_line
 from trac.wiki.api import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.Search import ISearchSource
 
+try:
+    from trac.util import Markup
+except ImportError:
+    def Markup(markup): return markup
+
+
 import urllib
 import pydoc
 import re
@@ -17,9 +23,15 @@ import os
 import imp
 
 try:
-    from trac.util import Markup
+    import threading
 except ImportError:
-    def Markup(markup): return markup
+    import dummy_threading as threading
+
+
+def any(gen):
+    for p in gen:
+        if p: return True
+    return False
 
 
 class TracDoc(pydoc.HTMLDoc):
@@ -92,6 +104,9 @@ class PyDoc(Component):
                             syspath.split(os.pathsep)]
         else:
             self.syspath = sys.path
+        show_private = self.config.get('pydoc', 'show_private', '')
+        self.show_private = [p.rstrip('.*') for p in show_private.split()]
+        self.makedoc_lock = threading.Lock()
 
     def load_object(self, fullobject):
         """ Load an arbitrary object from a full dotted path. """
@@ -130,7 +145,7 @@ class PyDoc(Component):
                 i += 1
             except AttributeError:
                 raise ImportError, fullobject
-        return object
+        return (module, object)
 
     def generate_help(self, target, inline = False):
         try:
@@ -149,9 +164,36 @@ class PyDoc(Component):
                 else:
                     doc = '<h1>Python: Documentation for %s</h1>' % \
                           '.'.join(self.doc._link_components(target))
-                return doc + self.doc.document(self.load_object(target))
+                return doc + self._makedoc(target)
         except ImportError:
             return "No Python documentation found for '%s'" % target
+
+    def _makedoc(self, target):
+        module, object = self.load_object(target)
+        try:
+            self.makedoc_lock.acquire()
+            if any([module.__name__.startswith(p) for p in self.show_private]):
+                try:
+                    # save pydoc's original visibility function
+                    visiblename = pydoc.visiblename
+                    # define our own: show everything but imported symbols
+                    is_imported_from_other_module = {}
+                    for k, v in object.__dict__.iteritems():
+                        if hasattr(v, '__module__') and \
+                               v.__module__ != module.__name__:
+                            is_imported_from_other_module[k] = True
+                    def show_private(name, all=None):
+                        return not is_imported_from_other_module.has_key(name)
+                    # install our visibility function
+                    pydoc.visiblename = show_private
+                    return self.doc.document(object)
+                finally:
+                    # restore saved visibility function
+                    pydoc.visiblename = visiblename
+            else:
+                return self.doc.document(object)
+        finally:
+            self.makedoc_lock.release()
     
     # INavigationContributor methods
     
@@ -210,7 +252,7 @@ class PyDocWiki(Component):
                    (formatter.href.pydoc(), label)
         else:
             try:
-                target = PyDoc(self.env).load_object(object)
+                _, target = PyDoc(self.env).load_object(object)
                 doc = pydoc.getdoc(target)
                 if doc: doc = doc.strip().splitlines()[0]
                 return '<a class="wiki" title="%s" href="%s">%s</a>' % \
