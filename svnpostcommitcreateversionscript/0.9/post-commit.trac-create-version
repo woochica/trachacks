@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# This script should be invoked from the subversion post-commit hook like this:
+#
+#  REPOS="$1"
+#  REV="$2"
+#  $REPOS/hooks/post-commit.trac-create-version "$REPOS" "$REV"
+#
+# Daniel Serodio <dserodio gmail>
+
+import re
+import sys
+import os
+
+TRAC_ENV_ROOT = '/var/lib/trac'
+versions_re = re.compile(r'^A\W*(\w+)/tags/RELEASE_([^/]+)')
+
+def main():
+    if len(sys.argv) != 3:
+        print >> sys.stderr, 'Usage: %s <repository> <revision>' % sys.argv[0]
+        sys.exit(1)
+
+    repos = sys.argv[1]
+    rev = sys.argv[2]
+    changed_files = os.popen("svnlook changed %s %s" % (repos, rev)).readlines()
+
+    for file in changed_files:
+        match = versions_re.search(file)
+        if match:
+            project = match.group(1)
+            version = match.group(2)
+            trac_env = "%s/%s" % (TRAC_ENV_ROOT, project)
+            os.popen("trac-admin %s version add %s now" % (trac_env, version))
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main()
+
