@@ -80,7 +80,7 @@ def execute(hdf, args, env):
 
     out.write("<form action='%s#commentpreview' method='get'>\n" % env.href.wiki(pagename))
     out.write("<fieldset>\n<legend>Add comment</legend>\n")
-    out.write("<div class='field'>\n<textarea id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
+    out.write("<div class='field'>\n<textarea class='wikitext' id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
     if wikipreview:
         out.write("Page preview...")
     elif not cancel:
@@ -92,7 +92,6 @@ def execute(hdf, args, env):
     out.write("<input type='submit' name='previewaddcomment' value='Preview comment'%s/>\n" % disabled)
     out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s/>\n</div>\n" % disabled)
     out.write('<script type="text/javascript" src="%sjs/wikitoolbar.js"></script>' % hdf['htdocs_location'])
-    out.write("<script type='text/javascript'>\naddWikiFormattingToolbar(document.getElementById('addcomment'));\n</script>\n")
     out.write("</fieldset>\n</form>\n")
 
     return out.getvalue()# + "<pre>" + hdf.dump() + "</pre>"
