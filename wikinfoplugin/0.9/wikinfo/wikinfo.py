@@ -34,7 +34,7 @@ except ImportError:
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider, WikiSystem
 
-class NLWikinfoMacro(Component):
+class WikinfoMacro(Component):
 	"""
 	Output different information by keyword.
 	
@@ -50,10 +50,10 @@ class NLWikinfoMacro(Component):
 	
 	# IWikiMacroProvider methods
 	def get_macros(self):
-		yield 'NlWikinfo'
+		yield 'Wikinfo'
 	
 	def get_macro_description(self, name):
-		return inspect.getdoc(NLWikinfoMacro)
+		return inspect.getdoc(WikinfoMacro)
 	
 	def render_macro(self, req, name, content):
 		if content:
