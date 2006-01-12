@@ -4,7 +4,7 @@ import re
 import string
 import os
 from trac.util import escape
-from trac.wiki.formatter import Formatter
+from trac.wiki.formatter import Formatter, wiki_to_oneliner
 
 rules_re = re.compile(r"""(?P<heading>^\s*(?P<hdepth>=+)\s(?P<header>.*)\s(?P=hdepth)\s*$)""")
 
@@ -34,7 +34,7 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
 
         match = rules_re.match(line)
         if match:
-            header = match.group('header')
+            header = wiki_to_oneliner(match.group('header'), env)
             new_depth = len(match.group('hdepth'))
             if new_depth < min_depth:
                 continue
