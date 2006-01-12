@@ -109,7 +109,7 @@ class LoginFormModule(Component):
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-    return []
+        return []
 
     # Internal methods
 
