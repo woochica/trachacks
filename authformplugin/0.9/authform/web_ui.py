@@ -22,8 +22,8 @@ import urllib2,base64
 
 from trac.core import *
 from trac.web.api import IAuthenticator, IRequestHandler
-from trac.web.chrome import INavigationContributor
-from trac.util import escape, hex_entropy, TRUE
+from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.util import escape, hex_entropy, TRUE, Markup
 
 
 class LoginFormModule(Component):
@@ -43,7 +43,7 @@ class LoginFormModule(Component):
     requests, until it is destroyed when the user logs out.
     """
 
-    implements(IAuthenticator, INavigationContributor, IRequestHandler)
+    implements(IAuthenticator, INavigationContributor, IRequestHandler, ITemplateProvider)
 
     # IAuthenticator methods
 
@@ -69,11 +69,11 @@ class LoginFormModule(Component):
     def get_navigation_items(self, req):
         if req.authname and req.authname != 'anonymous':
             yield 'metanav', 'login', 'logged in as %s' % escape(req.authname)
-            yield 'metanav', 'logout', '<a href="%s">Logout</a>' \
-                  % escape(self.env.href.logout())
+            yield 'metanav', 'logout', Markup('<a href="%s">Logout</a>' \
+                  % escape(self.env.href.logout()))
         else:
-            yield 'metanav', 'login', '<a href="%s">Login</a>' \
-                  % escape(self.env.href.login())
+            yield 'metanav', 'login', Markup('<a href="%s">Login</a>' \
+                  % escape(self.env.href.login()))
 
     # IRequestHandler methods
 
@@ -87,6 +87,29 @@ class LoginFormModule(Component):
         elif req.path_info.startswith('/logout'):
             self._do_logout(req)
         self._redirect_back(req)
+
+    # ITemplateProvider methods
+    def get_templates_dirs(self):
+        """
+        Return the absolute path of the directory containing the provided
+        ClearSilver templates.
+        """
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+    def get_htdocs_dirs(self):
+        """
+        Return a list of directories with static resources (such as style
+        sheets, images, etc.)
+
+        Each item in the list must be a `(prefix, abspath)` tuple. The
+        `prefix` part defines the path in the URL that requests to these
+        resources are prefixed with.
+        
+        The `abspath` is the absolute path to the directory containing the
+        resources on the local file system.
+        """
+    return []
 
     # Internal methods
 
