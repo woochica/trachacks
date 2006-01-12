@@ -34,7 +34,8 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
 
         match = rules_re.match(line)
         if match:
-            header = wiki_to_oneliner(match.group('header'), env)
+            header = match.group('header')
+            formatted_header = wiki_to_oneliner(header, env)
             new_depth = len(match.group('hdepth'))
             if new_depth < min_depth:
                 continue
@@ -56,7 +57,7 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
                     first_li = False
                 current_depth = new_depth
             if title_index:
-                out.write('<a href="%s">%s</a> : %s</li>\n' % (env.href.wiki(page), page, header))
+                out.write('<a href="%s">%s</a> : %s</li>\n' % (env.href.wiki(page), page, formatted_header))
                 break
             else:
                 default_anchor = anchor = Formatter._anchor_re.sub("", header)
@@ -67,7 +68,7 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
                 seen_anchors.append(anchor)
                 link = page
                 if current_depth <= max_depth:
-                    out.write('<a href="%s#%s">%s</a></li>\n' % (env.href.wiki(link), anchor, header))
+                    out.write('<a href="%s#%s">%s</a></li>\n' % (env.href.wiki(link), anchor, formatted_header))
     while current_depth > min_depth:
         if current_depth <= max_depth:
             out.write("</ol>\n")
