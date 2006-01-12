@@ -99,17 +99,30 @@ class PerforceRepository(Repository):
                     self.log.debug(e)
                 self.__class__.p4init = 0
 
-        try:
             # cache the first few changes
-            self.history = []
+            self.__class__.history = []
             changes = self.__class__.p4c.run("changes", "-m", "10", "-s", "submitted")
             for change in changes:
-                self.history.append(change['change'])
+                self.__class__.history.append(change['change'])
 
-        except self.__class__.p4c.P4Error:
-            for e in p4.errors:
-                self.log.debug(e)
-            self.__class__.p4init = 0
+
+    def _complete_history(self, rev):
+        if int(rev) > int(self.__class__.history[-1]):
+            _strRev = "@" + rev
+            _count = int(rev) - int(self.__class__.history[0])
+            _idx = 0
+        else:
+            _strRev = "@<" + self.__class__.history[-1]
+            _count = int(self.__class__.history[-1]) - int(rev) + 1
+            _idx = len(self.__class__.history)
+
+        changes = self.__class__.p4c.run("changes", "-m", str(_count), "-s", "submitted", _strRev)
+        #self.log.debug("*** _complete history %s %s %s %s" % (rev, _count, _idx, changes))
+        for change in changes:
+            num = change['change']
+            #self.log.debug("*** _complete history add %d %s" % (_idx, num))
+            self.__class__.history.insert(_idx, num)
+            _idx += 1
 
 
     def close(self):
@@ -123,17 +136,17 @@ class PerforceRepository(Repository):
         """
         Generate Changeset belonging to the given time period (start, stop).
         """
+        #_deb = time.time()
         changes = self.__class__.p4c.run("changes", "-m", "100", "-t", "-s", "submitted")
         #self.log.debug("*** get_changesets start = %s   stop = %s   %s" % (start, stop, changes))
         for chgset in changes:
             #self.log.debug("*** get_changesets  %s" % (chgset))
             if float(chgset['time']) < start:
-                #self.log.debug("*** get_changesets end start %s  %s" % (chgset['time'], start))
+                #self.log.debug("*** get_changesets (%f)  start = %s   stop = %s " % (time.time() - _deb, start, stop))
                 return
             if float(chgset['time']) < stop:
                 #self.log.debug("*** get_changesets add start %s  %s" % (chgset['time'], stop))
                 yield PerforceChangeset(self.__class__.p4c, chgset['change'], chgset, self.log)
-
 
 
     def get_changeset(self, rev):
@@ -207,18 +220,9 @@ class PerforceRepository(Repository):
         rev = self.__class__.p4c.run("changes", "-m", "1", "-s", "submitted")[0]['change']
         #self.log.debug("*** get_youngest_rev rev = %s" % (rev))
 
-        if rev != self.history[0]:
-            count = int(rev) - int(self.history[0])
-            changes = self.__class__.p4c.run("changes", "-m", str(count), "-s", "submitted")
-            idx = 0
-            for change in changes:
-                num = change['change']
-                if rev != num:
-                    #self.log.debug("*** inserting change %s into history at %d" % (num, idx))
-                    self.history.insert(idx, num)
-                    idx += 1
-                else:
-                    break
+        if rev != self.__class__.history[0]:
+            self._complete_history(rev)
+
         return rev
 
 
@@ -226,10 +230,22 @@ class PerforceRepository(Repository):
         """
         Return the revision immediately preceding the specified revision.
         """
-        #self.log.debug("*** previous_rev rev = %s" % (rev))
-        idx = self.history.index(rev)
-        if idx + 1 < len(self.history):
-            return self.history[idx + 1]
+        #self.log.debug("*** previous_rev rev = %s  %s" % (rev, self.__class__.history))
+        try:
+            idx = self.__class__.history.index(rev)
+            #self.log.debug("*** previous_rev rev = %s  %s  %s" % (rev, idx, self.__class__.history))
+            if idx + 1 < len(self.__class__.history):
+                return self.__class__.history[idx + 1]
+            #self.log.debug("*** previous_rev2 rev = %s  %s" % (rev, self.__class__.history))
+        except ValueError:
+            #self.log.debug("*** previous_rev3 rev = %s  %s" % (rev, self.__class__.history))
+            None
+
+        self._complete_history(rev)
+        #self.log.debug("*** previous_rev4 rev = %s  %s" % (rev, self.__class__.history))
+        idx = self.__class__.history.index(rev)
+        if idx + 1 < len(self.__class__.history):
+            return self.__class__.history[idx + 1]
         return None
 
 
@@ -238,9 +254,9 @@ class PerforceRepository(Repository):
         Return the revision immediately following the specified revision.
         """
         #self.log.debug("*** next_rev rev = %s" % (rev))
-        idx = self.history.index(rev)
+        idx = self.__class__.history.index(rev)
         if idx > 0:
-            return self.history[idx - 1]
+            return self.__class__.history[idx - 1]
         return None
 
 
@@ -407,7 +423,7 @@ class PerforceNode(Node):
                     chg = Changeset.EDIT
                     rev = logs[idx]['change'][index]
                     action = logs[idx]['action'][index]
-                    if index < len(logs[idx]['how']):
+                    if logs[idx].has_key('how') and index < len(logs[idx]['how']):
                         how = logs[idx]['how'][index]
                         if how != None:
                             how = how[0]
@@ -484,6 +500,7 @@ class PerforceChangeset(Changeset):
     """
 
     def __init__(self, p4c, rev, change, log):
+        #_deb = time.time()
         self.log = log
         self.rev = rev
         self.change = change
@@ -497,6 +514,7 @@ class PerforceChangeset(Changeset):
             author = self.change['user']
             date = int(self.change['time'])
         Changeset.__init__(self, rev, message, author, date)
+        #self.log.debug("*** PerforceChangeset __init__ (%f)" % (time.time() - _deb))
 
     def get_changes(self):
         """
@@ -505,6 +523,7 @@ class PerforceChangeset(Changeset):
         Changeset.ADD, Changeset.COPY, Changeset.DELETE, Changeset.EDIT or
         Changeset.MOVE, and kind is one of Node.FILE or Node.DIRECTORY.
         """
+        #_deb = time.time()
         #self.log.debug("*** get_changes = %s" % (self.change))
         files = self.change['depotFile']
 
@@ -548,6 +567,8 @@ class PerforceChangeset(Changeset):
         for i in moves:
             del changes[i - offset]
             offset += 1
+            
+        #self.log.debug("*** PerforceChangeset get_changes (%f)" % (time.time() - _deb))
 
         for c in changes:
             yield tuple(c)
