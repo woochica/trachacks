@@ -1,86 +1,66 @@
 diff -urN trac-0.9.3/trac/db.py aw-trac-0.9.3/trac/db.py
 --- trac-0.9.3/trac/db.py	2005-12-01 12:47:37.000000000 -0800
-+++ aw-trac-0.9.3/trac/db.py	2006-01-09 11:37:38.713450000 -0800
-@@ -103,7 +103,15 @@
++++ aw-trac-0.9.3/trac/db.py	2006-01-13 12:15:13.968829000 -0800
+@@ -85,6 +85,7 @@
+                 return
+             yield row
+ 
++PGSchemaError = None
+ 
+ class ConnectionWrapper(object):
+     """Generic wrapper around connection objects.
+@@ -92,7 +93,7 @@
+     This wrapper makes cursors produced by the connection iterable using
+     `IterableCursor`.
+     """
+-    __slots__ = ['cnx']
++    __slots__ = ['cnx', 'schema']
+ 
+     def __init__(self, cnx):
+         self.cnx = cnx
+@@ -103,7 +104,17 @@
          return object.__getattr__(self, name)
  
      def cursor(self):
 -        return IterableCursor(self.cnx.cursor())
++        global PGSchemaError
 +        cur = self.cnx.cursor()
 +        try:
-+            if self.env:
-+                cur.execute("SET search_path TO %s, public;" % self.env.config.get('trac', 'schema'))
-+                cur.commit()
-+                pass
++            cur.execute("SET search_path TO %s, public", (self.schema,))
++            self.cnx.commit()
 +        except AttributeError:
++            pass
++        except PGSchemaError:
++            self.cnx.rollback()
 +            pass
 +        return IterableCursor(cur)
  
  
  class TimeoutError(Exception):
-@@ -116,9 +124,10 @@
-     to the pool.
-     """
- 
--    def __init__(self, pool, cnx):
-+    def __init__(self, pool, cnx, env):
-         ConnectionWrapper.__init__(self, cnx)
-         self._pool = pool
-+        self.env = env
- 
-     def close(self):
-         if self.cnx:
-@@ -140,15 +149,22 @@
+@@ -140,7 +151,7 @@
          self._cursize = 0 # current pool size, includes active connections
          self._cnx_class = cnx_class
          self._args = args
+-
 +       
-+        try: 
-+            self.env = args['env']
-+        except KeyError:
-+            self.env = None
-+        self.callcount = 0
- 
      def get_cnx(self, timeout=None):
-+        self.callcount += 1        
          start = time.time()
          self._available.acquire()
-         try:
-             tid = threading._get_ident()
-             if tid in self._active:
-                 self._active[tid][0] += 1
--                return PooledConnection(self, self._active[tid][1])
-+                return PooledConnection(self, self._active[tid][1], self.env)
-             while True:
-                 if self._dormant:
-                     cnx = self._dormant.pop()
-@@ -167,7 +183,7 @@
-                     else:
-                         self._available.wait()
-             self._active[tid] = [1, cnx]
--            return PooledConnection(self, cnx)
-+            return PooledConnection(self, cnx, self.env)
-         finally:
-             self._available.release()
+@@ -355,7 +366,7 @@
+ class PostgreSQLConnection(ConnectionWrapper):
+     """Connection wrapper for PostgreSQL."""
  
-@@ -252,6 +268,7 @@
+-    __slots__ = ['cnx']
++    __slots__ = ['cnx', 'schema']
  
-     poolable = False
- 
-+    #def __init__(self, path, params={}, env=None):
-     def __init__(self, path, params={}):
-         assert have_pysqlite > 0
-         self.cnx = None
-@@ -360,7 +377,7 @@
      poolable = True
  
-     def __init__(self, path, user=None, password=None, host=None, port=None,
--                 params={}):
-+                 params={}, pgschema=None, env=None):
-         if path.startswith('/'):
-             path = path[1:]
+@@ -366,14 +377,18 @@
          # We support both psycopg and PgSQL but prefer psycopg
-@@ -370,10 +387,13 @@
+         global psycopg
+         global PgSQL
++        global PGSchemaError
+         if not psycopg and not PgSQL:
              try:
                  try:
                      import psycopg2 as psycopg
@@ -94,223 +74,37 @@ diff -urN trac-0.9.3/trac/db.py aw-trac-0.9.3/trac/db.py
          if psycopg:
              dsn = []
              if path:
-@@ -389,6 +409,13 @@
+@@ -389,6 +404,13 @@
              cnx = psycopg.connect(' '.join(dsn))
          else:
              cnx = PgSQL.connect('', user, password, host, path, port)
-+        if pgschema:
-+            try:
-+                cnx.cursor().execute('SET search_path TO %s, public;' % pgschema)
-+            except PGSchemaError:
-+                cnx.rollback()
-+                pass
++        try:
++            self.schema = params['schema']
++            cnx.cursor().execute('SET search_path TO %s, public', (self.schema,))
++        except PGSchemaError:
++            cnx.rollback()
++        except (KeyError, AttributeError):
 +            pass
          ConnectionWrapper.__init__(self, cnx)
  
      def cast(self, column, type):
-@@ -407,6 +434,15 @@
+@@ -407,6 +429,11 @@
      def init_db(cls, **args):
          self = cls(**args)
          cursor = self.cursor()
-+        if args['pgschema']:
-+            try:
-+                cursor.execute('CREATE SCHEMA %s;' % args['pgschema'])
-+                cursor.execute('SET search_path TO %s, public;' % args['pgschema'])
-+            except:
-+                # This can hide some annoying errors, but I don't really know what
-+                # else to do at the moment
-+                pass
++        try:
++            cursor.execute('CREATE SCHEMA %s' % self.schema)
++            cursor.execute('SET search_path TO %s, public', (self.schema,))
++        except AttributeError:
 +            pass
          from trac.db_default import schema
          for table in schema:
              for stmt in cls.to_sql(table):
-@@ -437,12 +473,21 @@
- 
- _cnx_map = {'postgres': PostgreSQLConnection, 'sqlite': SQLiteConnection}
- 
--def init_db(env_path, db_str):
-+def init_db(env_path, db_str, schema=None):
-     cls, args = _get_cnx_class(env_path, db_str)
-+    if cls == PostgreSQLConnection:
-+        args['pgschema'] = schema
-+    elif cls == SQLiteConnection:
-+        print "SQLite Connection"
-     cls.init_db(**args)
+@@ -443,6 +470,7 @@
  
  def get_cnx_pool(env):
      cls, args = _get_cnx_class(env.path, env.config.get('trac', 'database'))
-+    if cls == PostgreSQLConnection:
-+        args['pgschema'] = env.config.get('trac', 'schema')
-+        args['env'] = env
-+        pass
-+    
++
      return ConnectionPool(5, cls, **args)
  
  def _get_cnx_class(env_path, db_str):
-@@ -518,3 +563,14 @@
-     args = zip(('user', 'password', 'host', 'port', 'path', 'params'),
-                (user, password, host, port, path, params))
-     return scheme, dict([(key, value) for key, value in args if value])
-+
-+
-+#================= Pacopablo hacking =================================
-+def printSchema(cnx, log):
-+    """
-+        Helper funtion in debugging.  Prints out the current search path
-+    """
-+    cur = cnx.cursor()
-+    cur.execute("select name, setting from pg_settings where name = 'search_path'")
-+    log.info('printSchema: %s' % str(cur.fetchall()))
-+    pass
-diff -urN trac-0.9.3/trac/env.py aw-trac-0.9.3/trac/env.py
---- trac-0.9.3/trac/env.py	2006-01-03 12:40:12.000000000 -0800
-+++ aw-trac-0.9.3/trac/env.py	2006-01-09 11:37:38.713450000 -0800
-@@ -62,7 +62,7 @@
-     """   
-     setup_participants = ExtensionPoint(IEnvironmentSetupParticipant)
- 
--    def __init__(self, path, create=False, db_str=None):
-+    def __init__(self, path, create=False, db_str=None, schema=None):
-         """Initialize the Trac environment.
-         
-         @param path:   the absolute path to the Trac environment
-@@ -76,7 +76,7 @@
-         self.path = path
-         self.__cnx_pool = None
-         if create:
--            self.create(db_str)
-+            self.create(db_str, schema)
-         else:
-             self.verify()
-             self.load_config()
-@@ -162,7 +162,7 @@
-         repos = SubversionRepository(repos_dir, authz, self.log)
-         return CachedRepository(self.get_db_cnx(), repos, authz, self.log)
- 
--    def create(self, db_str=None):
-+    def create(self, db_str=None, schema=None):
-         """Create the basic directory structure of the environment, initialize
-         the database and populate the configuration file with default values."""
-         def _create_file(fname, data=None):
-@@ -191,10 +191,11 @@
-         for section, name, value in db_default.default_config:
-             self.config.set(section, name, value)
-         self.config.set('trac', 'database', db_str)
-+        self.config.set('trac', 'schema', schema)
-         self.config.save()
- 
-         # Create the database
--        db.init_db(self.path, db_str)
-+        db.init_db(self.path, db_str, schema)
- 
-     def get_version(self, db=None):
-         """Return the current version of the database."""
-@@ -233,6 +234,13 @@
-             logfile = os.path.join(self.get_log_dir(), logfile)
-         logid = self.path # Env-path provides process-unique ID
-         self.log = logger_factory(logtype, logfile, loglevel, logid)
-+        try:
-+            for line in self.logbuf:
-+                self.log.info('%s' % line)
-+                continue
-+        except AttributeError:
-+            pass
-+
- 
-     def get_known_users(self, cnx=None):
-         """Generator that yields information about all known users, i.e. users
-diff -urN trac-0.9.3/trac/scripts/admin.py aw-trac-0.9.3/trac/scripts/admin.py
---- trac-0.9.3/trac/scripts/admin.py	2006-01-03 12:34:35.000000000 -0800
-+++ aw-trac-0.9.3/trac/scripts/admin.py	2006-01-09 13:14:25.630862000 -0800
-@@ -34,6 +34,7 @@
- from trac.perm import PermissionSystem
- from trac.ticket.model import *
- from trac.wiki import WikiPage
-+from trac.db import _parse_db_str
- 
- try:
-     sum
-@@ -134,9 +135,9 @@
-             return 0
-         return 1
- 
--    def env_create(self, db_str):
-+    def env_create(self, db_str, schema=None):
-         try:
--            self.__env = Environment(self.envname, create=True, db_str=db_str)
-+            self.__env = Environment(self.envname, create=True, db_str=db_str, schema=schema)
-             return self.__env
-         except Exception, e:
-             print 'Failed to create environment.', e
-@@ -519,7 +520,7 @@
-     ## Initenv
-     _help_initenv = [('initenv',
-                       'Create and initialize a new environment interactively'),
--                     ('initenv <projectname> <db> <repospath> <templatepath>',
-+                     ('initenv <projectname> <db> [<schema>] <repospath> <templatepath>',
-                       'Create and initialize a new environment from arguments')]
- 
-     def do_initdb(self, line):
-@@ -547,6 +548,18 @@
-         ddb = 'sqlite:db/trac.db'
-         prompt = 'Database connection string [%s]> ' % ddb
-         returnvals.append(raw_input(prompt).strip()  or ddb)
-+        scheme, rest = _parse_db_str(returnvals[-1])
-+        if scheme == 'postgres':
-+            print
-+            print ' Please specify the PostgreSQL schema to use.  Generally '
-+            print ' this should be an abbreviation of the project name, or '
-+            print ' "public" if the default schema is to be used.'
-+            print
-+            ddbs = 'public'
-+            prompt = 'PostgreSQL Schema name [%s]> ' % ddbs
-+            returnvals.append(raw_input(prompt).strip()  or ddbs)
-+        else:
-+            returnvals.append(None)
-         print
-         print ' Please specify the absolute path to the project Subversion repository.'
-         print ' Repository must be local, and trac-admin requires read+write'
-@@ -574,16 +587,21 @@
-         arg = self.arg_tokenize(line)
-         project_name = None
-         db_str = None
-+        schema = None
-+        notification_name = None
-         repository_dir = None
-         templates_dir = None
--        if len(arg) == 1 and not arg[0]:
-+        nargs = len(arg)
-+        if nargs == 1 and not arg[0]:
-             returnvals = self.get_initenv_args()
--            project_name, db_str, repository_dir, templates_dir = returnvals
--        elif len(arg) != 4:
-+            project_name, db_str, schema, repository_dir, templates_dir = returnvals
-+        elif not nargs in [5,4]:
-             print 'Wrong number of arguments to initenv: %d' % len(arg)
-             return 2
--        else:
-+        elif nargs == 4:
-             project_name, db_str, repository_dir, templates_dir = arg[:4]
-+        elif nargs == 5:
-+            project_name, db_str, schema, repository_dir, templates_dir = arg[:5]
- 
-         if not os.access(os.path.join(templates_dir, 'header.cs'), os.F_OK):
-             print templates_dir, "doesn't look like a Trac templates directory"
-@@ -591,7 +609,7 @@
- 
-         try:
-             print 'Creating and Initializing Project'
--            self.env_create(db_str)
-+            self.env_create(db_str, schema)
- 
-             print ' Configuring Project'
-             config = self.__env.config
-@@ -599,6 +617,8 @@
-             config.set('trac', 'repository_dir', repository_dir)
-             print '  trac.database'
-             config.set('trac', 'database', db_str)
-+            print '  trac.schema'
-+            config.set('trac', 'schema', schema)
-             print '  trac.templates_dir'
-             config.set('trac', 'templates_dir', templates_dir)
-             print '  project.name'
