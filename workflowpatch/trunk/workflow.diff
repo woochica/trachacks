@@ -1,6 +1,6 @@
 === templates/macros.cs
 ==================================================================
---- templates/macros.cs	(/mirror/trac)	(revision 2526)
+--- templates/macros.cs	(/mirror/trac)	(revision 2535)
 +++ templates/macros.cs	(/trac/workflow)	(local)
 @@ -179,4 +179,26 @@
      var:href ?>&amp;order=<?cs var:class ?><?cs
@@ -31,7 +31,7 @@
  /def ?>
 === templates/ticket.cs
 ==================================================================
---- templates/ticket.cs	(/mirror/trac)	(revision 2526)
+--- templates/ticket.cs	(/mirror/trac)	(revision 2535)
 +++ templates/ticket.cs	(/trac/workflow)	(local)
 @@ -227,8 +227,7 @@
    </table>
@@ -139,7 +139,7 @@
    <input type="hidden" name="action" value="leave" /><?cs
 === trac/ticket/api.py
 ==================================================================
---- trac/ticket/api.py	(/mirror/trac)	(revision 2526)
+--- trac/ticket/api.py	(/mirror/trac)	(revision 2535)
 +++ trac/ticket/api.py	(/trac/workflow)	(local)
 @@ -19,15 +19,41 @@
  from trac.perm import IPermissionRequestor
@@ -246,9 +246,9 @@
 +        """ Get single action controller for ticket actions. """
 +        controllers = list(self.action_controllers)
 +        if len(controllers) != 1:
-+            controller_name = self.env.config.get('ticket', 'controller', 'trac.ticket.api.DefaultTicketActionController')
++            controller_name = self.env.config.get('ticket', 'controller', 'trac.ticket.api.defaultticketactioncontroller').lower()
 +            for controller in controllers:
-+                if controller_name in ('.'.join([controller.__module__, controller.__class__.__name__]), controller.__class__.__name__):
++                if controller_name.lower() in ('.'.join([controller.__module__, controller.__class__.__name__]).lower(), controller.__class__.__name__.lower()):
 +                    self.env.log.debug("Using ITicketActionController %s" % controller_name)
 +                    return controller
 +            raise TracError("More than one ITicketActionController is active, set the controller option in the ticket section of trac.ini to the name of the controller to use.")
@@ -267,7 +267,7 @@
 +
 === trac/ticket/web_ui.py
 ==================================================================
---- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2526)
+--- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2535)
 +++ trac/ticket/web_ui.py	(/trac/workflow)	(local)
 @@ -28,8 +28,8 @@
  from trac.web import IRequestHandler
@@ -329,7 +329,7 @@
 +            req.hdf['ticket.actions'] = ticket_actions
 === trac/web/form.py
 ==================================================================
---- trac/web/form.py	(/mirror/trac)	(revision 2526)
+--- trac/web/form.py	(/mirror/trac)	(revision 2535)
 +++ trac/web/form.py	(/trac/workflow)	(local)
 @@ -0,0 +1,65 @@
 +# -*- coding: iso-8859-1 -*-
