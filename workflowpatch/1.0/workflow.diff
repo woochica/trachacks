@@ -43,7 +43,7 @@
   <fieldset id="action">
    <legend>Action</legend><?cs
    if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
-@@ -238,52 +237,45 @@
+@@ -238,52 +237,47 @@
       var:id ?>"<?cs if:ticket.action == id ?> checked="checked"<?cs
       /if ?> /><?cs
    /def ?>
@@ -102,12 +102,14 @@
 +   </script>
 +			<?cs call:action_radio(action.action) ?>
 +			<label for="<?cs var:action.action ?>"><?cs alt:action.label ?><?cs var:action.action ?><?cs /alt ?></label>
-+   <span id="<?cs var:action.action ?>_controls">
-+    <?cs each:control = action.controls ?>
-+      <script type="text/javascript">action_controls['<?cs var:action.action ?>'].push('<?cs var:control.name ?>');</script>
-+      <?cs call:form_control(control) ?>
-+    <?cs /each ?>
-+   </span>
++   <?cs if:action.controls.0.name ?>
++    <span id="<?cs var:action.action ?>_controls">
++     <?cs each:control = action.controls ?>
++       <script type="text/javascript">action_controls['<?cs var:action.action ?>'].push('<?cs var:control.name ?>');</script>
++       <?cs call:form_control(control) ?>
++     <?cs /each ?>
++    </span>
++   <?cs /if ?>
 +			<br />
 +  <?cs /each ?>
 +
@@ -155,7 +157,7 @@
  
 -    # Public API
 +    def get_ticket_field_controls(req, ticket, field):
-+        """ Return the HTML control for managing a propert of ticket. """
++        """ Return the HTML control for managing a ticket field. """
  
 -    def get_available_actions(self, ticket, perm_):
 -        """Returns the actions that can be performed on the ticket."""
@@ -184,7 +186,7 @@
          actions = {
              'new':      ['leave', 'resolve', 'reassign', 'accept'],
              'assigned': ['leave', 'resolve', 'reassign'          ],
-@@ -37,8 +61,69 @@
+@@ -37,8 +61,68 @@
          perms = {'resolve': 'TICKET_MODIFY', 'reassign': 'TICKET_CHGPROP',
                   'accept': 'TICKET_CHGPROP', 'reopen': 'TICKET_CREATE'}
          return [action for action in actions.get(ticket['status'], ['leave'])
@@ -215,11 +217,10 @@
 +        return controls[action]
 +
 +    def apply_ticket_action(self, req, ticket, action):
-+        self.env.log.debug(str(req.args.get('stuff', '')))
 +        if action == 'accept':
 +            ticket['status'] =  'assigned'
 +            ticket['owner'] = req.authname
-+        if action == 'resolve':
++        elif action == 'resolve':
 +            ticket['status'] = 'closed'
 +            ticket['resolution'] = req.args.get('resolve_resolution')
 +        elif action == 'reassign':
@@ -255,7 +256,7 @@
      def get_ticket_fields(self):
          """Returns the list of fields available for tickets."""
          from trac.ticket import model
-@@ -179,4 +264,4 @@
+@@ -179,4 +263,4 @@
                     '#%d: %s' % (tid, util.shorten_line(summary)),
                     date, author,
                     shorten_result(desc, query.split()))
