@@ -1,20 +1,22 @@
-==== Patch <workflow> level 2
-Source: 5349d9f9-240a-0410-8526-bdcfa9bb3cf4:/trac/workflow:2507
+==== Patch <workflow> level 3
+Source: 5349d9f9-240a-0410-8526-bdcfa9bb3cf4:/trac/workflow:2508
 Target: af82e41b-90c4-0310-8c96-b1721e28e2e2:/trunk:2762
         (http://svn.edgewall.com/repos/trac/trunk)
 Log:
- r1991@cavern:  athomas | 2006-01-12 20:34:12 +1100
+ r1991@o2zeopslin01:  athomas | 2006-01-12 20:34:12 +1100
  
- r1992@cavern:  athomas | 2006-01-12 20:35:17 +1100
+ r1992@o2zeopslin01:  athomas | 2006-01-12 20:35:17 +1100
  Initial workflow commit.
- r2507@cavern:  athomas | 2006-01-13 02:04:21 +1100
+ r2507@o2zeopslin01:  athomas | 2006-01-13 02:04:21 +1100
    * Removed some extra test form elements
    * Fixed bug where ticket entered "leave" state :\
+ r2508@o2zeopslin01:  athomas | 2006-01-13 15:18:33 +1100
+   * Action form controls are now disabled if not selected.
 
 === trac/ticket/api.py
 ==================================================================
 --- trac/ticket/api.py	(revision 2762)
-+++ trac/ticket/api.py	(patch workflow level 2)
++++ trac/ticket/api.py	(patch workflow level 3)
 @@ -19,15 +19,39 @@
  from trac.perm import IPermissionRequestor
  from trac.wiki import IWikiSyntaxProvider
@@ -60,7 +62,7 @@ Log:
          actions = {
              'new':      ['leave', 'resolve', 'reassign', 'accept'],
              'assigned': ['leave', 'resolve', 'reassign'          ],
-@@ -37,8 +61,70 @@
+@@ -37,8 +61,69 @@
          perms = {'resolve': 'TICKET_MODIFY', 'reassign': 'TICKET_CHGPROP',
                   'accept': 'TICKET_CHGPROP', 'reopen': 'TICKET_CREATE'}
          return [action for action in actions.get(ticket['status'], ['leave'])
@@ -72,7 +74,6 @@ Log:
 +        controls = {
 +            'leave': {
 +                'label': 'leave as %s' % ticket['status'],
-+                'selected': 1,
 +            },
 +            'resolve': form.Select('resolve_resolution',
 +                                   options = [val.name for val in \
@@ -132,7 +133,7 @@ Log:
      def get_ticket_fields(self):
          """Returns the list of fields available for tickets."""
          from trac.ticket import model
-@@ -179,4 +265,4 @@
+@@ -179,4 +264,4 @@
                     '#%d: %s' % (tid, util.shorten_line(summary)),
                     date, author,
                     shorten_result(desc, query.split()))
@@ -141,7 +142,7 @@ Log:
 === trac/ticket/web_ui.py
 ==================================================================
 --- trac/ticket/web_ui.py	(revision 2762)
-+++ trac/ticket/web_ui.py	(patch workflow level 2)
++++ trac/ticket/web_ui.py	(patch workflow level 3)
 @@ -28,8 +28,8 @@
  from trac.web import IRequestHandler
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -201,7 +202,7 @@ Log:
 === trac/web/form.py
 ==================================================================
 --- trac/web/form.py	(revision 2762)
-+++ trac/web/form.py	(patch workflow level 2)
++++ trac/web/form.py	(patch workflow level 3)
 @@ -0,0 +1,65 @@
 +# -*- coding: iso-8859-1 -*-
 +#
@@ -271,7 +272,7 @@ Log:
 === templates/ticket.cs
 ==================================================================
 --- templates/ticket.cs	(revision 2762)
-+++ templates/ticket.cs	(patch workflow level 2)
++++ templates/ticket.cs	(patch workflow level 3)
 @@ -227,8 +227,7 @@
    </table>
   </fieldset><?cs /if ?>
@@ -282,22 +283,51 @@ Log:
   <fieldset id="action">
    <legend>Action</legend><?cs
    if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
-@@ -238,8 +237,17 @@
+@@ -238,8 +237,46 @@
       var:id ?>"<?cs if:ticket.action == id ?> checked="checked"<?cs
       /if ?> /><?cs
    /def ?>
 -  <?cs call:action_radio('leave') ?>
 -   <label for="leave">leave as <?cs var:ticket.status ?></label><br /><?cs
 +
++  <script type="text/javascript">var action_controls = new Array();</script>
++
 +  <?cs each:action = ticket.actions ?>
++   <script type="text/javascript">
++   action_controls['<?cs var:action.action ?>'] = new Array();
++   </script>
 +			<?cs call:action_radio(action.action) ?>
 +			<label for="<?cs var:action.action ?>"><?cs alt:action.label ?><?cs var:action.action ?><?cs /alt ?></label>
-+			<?cs each:control = action.controls ?>
-+    <?cs call:form_control(control) ?>
-+			<?cs /each ?>
++   <span id="<?cs var:action.action ?>_controls">
++    <?cs each:control = action.controls ?>
++      <script type="text/javascript">action_controls['<?cs var:action.action ?>'].push('<?cs var:control.name ?>');</script>
++      <?cs call:form_control(control) ?>
++    <?cs /each ?>
++   </span>
 +			<br />
 +  <?cs /each ?>
 +
++  <script type="text/javascript">
++   var action_control_elements = new Array();
++   for (var action in action_controls) {
++    action_control_elements[action] = document.getElementById(action);
++   }
++   var updateActionFields = function() {
++    for (var action in action_controls) {
++    var action_control = action_control_elements[action];
++
++     for (control in action_controls[action]) {
++      control = action_controls[action][control];
++      enableControl(control, action_control.checked);
++     }
++    }
++   }
++   addEvent(window, 'load', updateActionFields);
++   for (var action in action_controls) {
++   var action_control = action_control_elements[action];
++    addEvent(action_control, 'click', updateActionFields);
++   }
++  </script>
 +<?cs
    if:ticket.actions.accept ?><?cs
     call:action_radio('accept') ?>
@@ -305,7 +335,7 @@ Log:
 === templates/macros.cs
 ==================================================================
 --- templates/macros.cs	(revision 2762)
-+++ templates/macros.cs	(patch workflow level 2)
++++ templates/macros.cs	(patch workflow level 3)
 @@ -179,4 +179,26 @@
      var:href ?>&amp;order=<?cs var:class ?><?cs
      if:order == class && !desc ?>&amp;desc=1<?cs /if ?>"><?cs var:title ?></a>
@@ -337,70 +367,76 @@ Log:
 ==== BEGIN SVK PATCH BLOCK ====
 Version: svk 1.06 (linux)
 
-eJzFOktz48h5zKNqs6xUOfbGteVkPdXmcIrkjEThwQfAjDTSipQ09sx4dqXZZFejpRtAQ8QOCHAB
-UBplOd4hJYqkbO1kk0ucclUqhxxyyQ/YXHPwIXff7IOvueQf5OtugAQlUpIrh7D0ANDf+9Xf1+CG
-t/NXq2JnZUXopEWhs/3RjyqVpzjQG3fEQidd6hDDClwvXezY5IDYablju/vpQsfBTQKrvtv2dHoR
-YG+fBPTC0l+QYGVFBHIKJ1djJCKyjKqGA9fx0yojXw88QtJSRxRWRbGzKtOfelpUOz6BNUa47pED
-y7dcB1hLRaEMEGmxIwIBt0Wcuue6AayIqlJelSiu0NFt1yd1Sp4SLFJwKQ0qMXjD8ogOMh0BUuBh
-ndEK8RmoMgNU7QSk2bJxQPw4PJO1GPKbQAPEmLE8gxpoSjkvcXsx6eIClGagKBzjkGhx8Ln8pTH/
-QmQn07IJdUuM8xJuWfnWEZMyLkBxCkeakpaKUG9fRJsriAw+AaJsFbda9lE9IC8Dg9gBZsLJUkcV
-FE3WFFktG4Iqi1pZN4tEUXWNqKWiIhTTclkuQDQ9SST+Y+/X77z3Sydxmk+8Hj1OnKjDO6/PC4nW
-6eLrvp349yfnf9g1PbeJqLx5EBRZzZbrBch0vWYyqdvY99HDHabHhkVsY911As+1beJlHzoB8Uys
-k1wlieCTSqXQmoOs6DGlgfQQ3nL20WEDB4jbBJmUmI907CCNoAOLHBIDYcdAegM7+8TIU3JJRtcg
-JqJBzTHrHDPrkc8XQmIh/0iGD0nQ9hyEkW35AXLNiBc+wJaNNZsLhkPkaxjVQwWmGC5wkrP5Bg2C
-tnYeP4pUZ9ya2MH71AYYtTwIFI8JNlMCboApIa7nvc6QxkpxmJDwlBPX9ADqwjVe3GlYfsyPkQm4
-AzGjMHYd6EJjBbznOheMOsOmIfL13qNWjDgFjK1HYh7ctw4IB9LbnkecAPkBlBow6pgY/YTWoHFF
-YYFrm9CY0D6DdKOeOLCMq2KNSzAnBvjibPEvBUBoJhYCDI+aa6b/w5yPC3ADvk85/XnEeQxUiYnb
-djAnEtZdSH0HbBmLhBAD7UB5oKXBJk0AwJyHObYvd1RMkTGon50TeDkOeHteYKImCRqu4V8VRT6x
-zQU0FUtwkwdbN/MN7NfpheXTjTBLL/1djriX27uRty+Rn2H7SfEMbRHWz6YLFXsMNc6gZfTFVIBm
-bIIPSKZy4TFfwhqxYYnDIOyjO34G3Qll2c3QiG/7mb2Fy6ggOQQ4MQBbnF5+NX2b8Yjv2kwCGj75
-bYaYjR7X2f821Tlzmc2Mj9viKbuMdg+wnad9Dwt/uIGCgp7fhEbsw6yY/3AsRJ4rxjyTJ85Bboby
-Mz7MkiBTBvuVm+kB8rYJYNBwgpbKz0OYzLYKymRyuUtGhWyz9p3IqjuwgWfHT+vuoUO830uOi2JM
-E+JStoMGNXfu97FIJnArmYvSY10nreCamORAYSxmrosx2hpdQ5ADXUvw1fjK45U2Sq0ot68upDdJ
-6Si48tC75w2itfezfuBlp33gB23TDL2fG6NaZlSAl5cnhpyxJU2yF4KMxiX1J+TrTFDu5r0oHENH
-z2E6TujruGZY6zmHZSzC926SBhMTEPuiPFEu3ES3eTGeu1YbhxxmrhCCR+C1VDjgDa2Smc3wB8vj
-sn4dP44xve/A3kfrZ+1lQBy6dT11oRO7dhd92tZsS0drTx9OEqC+f2lTo/s8je8L3cMmbFw+9CZ2
-1HShCTyr37M2+ojAtNy06eb1+bJaU4liEycbX6N2E6ct1iS+j/dpHU7VXgI5+wgaGzK/Y2hDb6dx
-FQ7IAkrN3W9S0J1gnyDD8lk7iW0bae2AUZ/uckDVKRqzBF+5KDf9eNgCBrRvqnme62UjXe6h1HrY
-ssYNR9vbO34+he5cW75p1cl/BlGRbeIWlKWWtxAnFa9H1wjyxA1tdUFpkCM3p85SDrvCHlu95GBw
-VDjdHGVnB18uuVqInzjwEZtPtYVCqazLuIiJaIqqqpGCKWNZL2gYa7qhqlfOxUVKgUhlo1Ayy6am
-KsUyLgtqSRWKpKApWCSSXEgrZYGPxd0397pv9O+dPkgMnyd+kfjdu8Pnr48Su/9d+Cbxy4/+p/z6
-xJ87FU/ry0Nx+8gPSHPSllyO/bE5o6Fm+bL58lcPSpfhbzoqhNIHRy3iXxDk/02bSYBNw9DWcW/S
-XtNJnVckaB9DkOlki/XWN5Dh6lnuYqpbUBShXDs6iTLeX+AtXVh2cpcTP97rZ6Ib6HB2o+u9V1M4
-bOugrhmzyAFfVkdvTjy6fDXTNLsZrl9sz5mxM0UeoGFFHGMiTqwUfJ5vGOZuJpwtQwRGdprG7DTn
-SVouqrKCJc2UigVFlIuKoBfK5bKhKqpsmhJN8xI9UyunlQ42jBC5ND7OW2IOYKdppXpa6iyK8w/T
-SpzanKJRrsOCJMi8JiS+fnX8rP/hP1b/4N8+uvWvtTu/2Fx5/XijuzSqdr/3T9Vu6p83i/3Nbq6/
-0f1WtVf/oPvdYbXbGVV7wcPen/xLrbvWf3ycPIf/Z1vHPz571ssMn/RWq7373ce9TwY/+WS0cZz8
-utpd61W74huA+nrz5MWw2n/359X+va2Tz06A5AguR7X+k0Gt//mbav9zYLzy1UZ/76tavzL84ana
-f9y/97Bvd6unH1VPtDcbJ/ZJtf9ldfDe8NEg3asNbvdrg/u1/qdbgw82Bu+fbg3eO4HF8+rJTzcH
-3wWinw6q3beq/T/vPu4/6de66eNat3NcPf7r6uBltzbcPPnh4FG3OsidVgdVoF8dfPAPIASsKIPq
-6bd/tjl8pzpSqqM/HW2c/nF3c/TtbnWo9jZH73Zro1u9jdH3e89Ghc3Rwtbgy1r/S+AICB8Pv9we
-3YXr7rPRHwH81qNR5tHZd6oDZ3Xv7FZ1+MnO2Rdbg6x2dgtobIz+7JPR7b2zj7dGtzZ/XqoN1eOt
-YeP5z172rLPv92rH73hn1e3ztzbPP+1tn+8Bmx8Ndlf/5uzW1vlbtaHHKK2vWuelrTeq8dXdjcHB
-Kj4vdTeGT37yd1u30eLdRcgHA5qcCqSXu6goRXVRTN5O3kbrbuvIs/YbAcqu55AkCEVUM/bJIe0K
-tl0zOITNeQ3mTrTTcJswht/HcLPqH+KWa5p519tfASJrAOxDhvjEOyBGHp4gBH/YUZrPE1qHho6e
-cvrQnfm6Z2lwY/FTLBrjaP3HTz9++GRzAR02LL0ByEduG/kNt20bqEGPACCuiXXQwuHpIXQvAVDh
-kzFwIiigpxyAiG3fjZ2W4QA1gqBVWVpiGxrJ625zKd8ImjbkuA9U/APoa2Hz94581MQGQdoRPbI8
-AlKWY1gHltEGknm04XqENmIItKIZtgDDEoleNlC+joFgavIXoA2gR2z+0hpMK65XSdKGEbCbro0O
-PVpgPCD3FHp8n2xVN6AI8tMiFLjr0Jp52xYMGF6S7bfZHMiiey7UcrQPzbkHfa6fTybJfh6xasSO
-GWgRCgfthcnA/wzcARNuMgnWccCc0MmGbyUq9x/o9JBTt9sGqaT8vO6n0IMVHZxeySXrdfhfr9PN
-CGXWace13iD6i/fdl9vkQ2xY7vvtIHCdNRhT+JFJBu3RU7asYelBrsJPAls4Tws7NJUg1gIEEdY1
-9yWMn6w5r1uOFdTr4Ui6sMBnfWB19+6LQzYItVsGCJr9opLJ0J9XuXwGVNqGEQUm95kFtkwLrF6U
-sCYVVVUXFFMsaWVRhz8qLqmGYoi6Pn7RoU6/6Ii9sQnfXIBN2NudyZsO+tppPhZzk38Ba25tVq5s
-6FSqiiyDzcoKKeqapBbKRBcMohSFUtlUZSIWhDTsHrx4/2bltw++09tK/CqVGCR6G7/66eveWuLv
-v/VfSwLfpWAPYw4Heo1KNBmi6X0M3J98++23GRyLg7Bl8KjDs/wmhM1FsDzSIE6XUwzvAHuVKUgA
-TK2wJWwH0RLHerAyF4UtLAEGvV5i4BPZmA7R4XK0oefHrQFIRjfriRrxrjXa1XNxZZcoxeiB5qGl
-lchc45XZGzpzkq6ZsmDSX2i3ZVkiWBY0osCmrgqyaGpXuJmFEyUhYk2QSzouQqDqMjEko1iSFMkU
-DaJpaiktygWVO/qbv/zPR2+dSYlv/iLx+kyiQiaTkE9zlWQQ0MtFBpvYfpbrIiB2cDn2XHxlynVL
-0LrNYEG7OXrukOLHlakxDPcHFK16eJAZYYTnpuNBjgkwuWOlYXLLoXFMP9pEXmZPDZ3i8XDfclpt
-PgIsh88t4wrFEb24at23/jZap4FNb+F5QYhHborXtBlk+LlmZOCr5KdlM9Ihuv8/is5ehiynDq0X
-FreE5x76MV3oLQCKF3TRIbliUDrPtbIyBXU5YCJV7y9F4l+ps073GdgmUqjTQZdWWSmKzOG3sHO1
-KaKw4yWDhw1UjAtRNwlPOvRUfsAfR0TGS7DXB5X42jKzdJY/ysVBeV7wMhQPvEuCMsWoca9Soz5e
-mJbsWk/zLd6M0Jhpoed6sILCy1gSh9LeoCjMF+fBpNCHS5cKffh8HBQz6nxkRVZ74YKuUFeHC3Nq
-zphTjEocdok2HeCTGXU8qsKY6GUTl8uaLMi4LBdlpYgVVVKwKOsiMUT2PQpJETrIE1VVXNWhJ/Wc
-CoL+kjfGHdo8lxYFcVGU4LIiFypwcU8UBSGJkgxLugFWsSKWI6yH0CRZGJpG13th2u4hxG6zaQV5
-oMa+2XIVNRkJUkUoVCQxoobQXejLmi506Mh3wWuQkR6GntDnZzvjPpSDblgvAVBr068uQJsbnYIS
-+mYcFlLslDcVvnquPE/CwBrJubIiQbck8a/07LBv5VQqzxwLpPWxfQcG3EKnBTKn5Q70z3DTblsG
-/RbLEh9zQzLhF3jScqlThC3QUE11USoIeFEoiMKiUpRKi5qhm1jVNFk3Cys5qTOPdomSbjsvKMly
-SaIksalIpCBqiyqM4IuwWQNJXQWSYlkSiaQQiUjp4s1YV6YFr1Cx/xcuRbkQ
+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
+EYiQLFyNdXlS8DIV+38A4aVWEg==
 ==== END SVK PATCH BLOCK ====
