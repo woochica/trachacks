@@ -1,22 +1,144 @@
-==== Patch <workflow> level 3
-Source: 5349d9f9-240a-0410-8526-bdcfa9bb3cf4:/trac/workflow:2508
-Target: af82e41b-90c4-0310-8c96-b1721e28e2e2:/trunk:2762
-        (http://svn.edgewall.com/repos/trac/trunk)
-Log:
- r1991@o2zeopslin01:  athomas | 2006-01-12 20:34:12 +1100
+=== templates/macros.cs
+==================================================================
+--- templates/macros.cs	(/mirror/trac)	(revision 2508)
++++ templates/macros.cs	(/trac/workflow)	(local)
+@@ -179,4 +179,26 @@
+     var:href ?>&amp;order=<?cs var:class ?><?cs
+     if:order == class && !desc ?>&amp;desc=1<?cs /if ?>"><?cs var:title ?></a>
+  </th><?cs
++/def ?><?cs
++
++def:form_control(control) ?><?cs
++ if:control.label ?><label for="<?cs var:control.name ?>"><?cs var:control.label ?><?cs /if ?><?cs
++ if:control.type == "select" ?><?cs
++  call:hdf_select(control.options, control.name, control.value, control.optional) ?><?cs
++ elif:control.type == "text" ?>
++  <input type="text" id="<?cs var:control.name ?>" name="<?cs var:control.name ?>" size="<?cs alt:size ?>40<?cs /alt ?>" value="<?cs var:control.value ?>"><?cs
++ elif:control.type == "textarea" ?>
++  <textarea id="<?cs var:control.name ?>" name="<?cs var:control.name ?>" class="wikitext" rows="<?cs alt:rows ?>10<?cs /alt ?>" cols="<?cs alt:cols ?>78<?cs /alt ?>"><?cs var:control.value ?></textarea><?cs
++ elif:control.type == "checkbox" || control.type == "radio" ?>
++  <span id="<?cs var:control.name ?>"><?cs
++   each:option = control.options ?><?cs
++    if:!option.name ?><?cs
++     set:option.name = name(option) ?><?cs
++    /if ?>
++    <input type="<?cs var:control.type ?>" id="<?cs var:control.name ?>_<?cs var:option.name ?>" name="<?cs var:control.name ?>"<?cs if:option.checked ?> checked<?cs /if ?>>
++    <label for="<?cs var:control.name ?>_<?cs var:option.name ?>" ?><?cs alt:option.label ?><?cs var:option.value ?><?cs /alt ?></label><?cs
++   /each
++  ?></span><?cs
++ /if ?><?cs
++ if:control.label ?></label><?cs /if ?><?cs
+ /def ?>
+=== templates/ticket.cs
+==================================================================
+--- templates/ticket.cs	(/mirror/trac)	(revision 2508)
++++ templates/ticket.cs	(/trac/workflow)	(local)
+@@ -227,8 +227,7 @@
+   </table>
+  </fieldset><?cs /if ?>
  
- r1992@o2zeopslin01:  athomas | 2006-01-12 20:35:17 +1100
- Initial workflow commit.
- r2507@o2zeopslin01:  athomas | 2006-01-13 02:04:21 +1100
-   * Removed some extra test form elements
-   * Fixed bug where ticket entered "leave" state :\
- r2508@o2zeopslin01:  athomas | 2006-01-13 15:18:33 +1100
-   * Action form controls are now disabled if not selected.
-
+- <?cs if:ticket.actions.accept || ticket.actions.reopen ||
+-         ticket.actions.resolve || ticket.actions.reassign ?>
++ <?cs if:ticket.actions.0.action ?>
+  <fieldset id="action">
+   <legend>Action</legend><?cs
+   if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
+@@ -238,52 +237,45 @@
+      var:id ?>"<?cs if:ticket.action == id ?> checked="checked"<?cs
+      /if ?> /><?cs
+   /def ?>
+-  <?cs call:action_radio('leave') ?>
+-   <label for="leave">leave as <?cs var:ticket.status ?></label><br /><?cs
+-  if:ticket.actions.accept ?><?cs
+-   call:action_radio('accept') ?>
+-   <label for="accept">accept ticket</label><br /><?cs
+-  /if ?><?cs
+-  if:ticket.actions.reopen ?><?cs
+-   call:action_radio('reopen') ?>
+-   <label for="reopen">reopen ticket</label><br /><?cs
+-  /if ?><?cs
+-  if:ticket.actions.resolve ?><?cs
+-   call:action_radio('resolve') ?>
+-   <label for="resolve">resolve</label><?cs
+-   if:len(ticket.fields.resolution.options) ?>
+-    <label for="resolve_resolution">as:</label>
+-    <?cs call:hdf_select(ticket.fields.resolution.options, "resolve_resolution",
+-                         ticket.resolve_resolution, 0) ?><br /><?cs
+-   /if ?><?cs
+-  /if ?><?cs
+-  if:ticket.actions.reassign ?><?cs
+-   call:action_radio('reassign') ?>
+-   <label for="reassign">reassign</label>
+-   <label>to:<?cs
+-   if:len(ticket.fields.owner.options) ?><?cs
+-    call:hdf_select(ticket.fields.owner.options, "reassign_owner",
+-                    ticket.reassign_owner, 1) ?><?cs
+-   else ?>
+-    <input type="text" id="reassign_owner" name="reassign_owner" size="40" value="<?cs
+-      var:ticket.reassign_owner ?>" /><?cs
+-   /if ?></label><?cs
+-  /if ?><?cs
+-  if ticket.actions.resolve || ticket.actions.reassign ?>
+-   <script type="text/javascript"><?cs
+-    each:action = ticket.actions ?>
+-     var <?cs var:name(action) ?> = document.getElementById("<?cs var:name(action) ?>");<?cs
+-    /each ?>
+-     var updateActionFields = function() {
+-       <?cs if:ticket.actions.resolve ?> enableControl('resolve_resolution', resolve.checked);<?cs /if ?>
+-       <?cs if:ticket.actions.reassign ?> enableControl('reassign_owner', reassign.checked);<?cs /if ?>
+-     };
+-     addEvent(window, 'load', updateActionFields);<?cs
+-     each:action = ticket.actions ?>
+-      addEvent(<?cs var:name(action) ?>, 'click', updateActionFields);<?cs
+-     /each ?>
+-   </script><?cs
+-  /if ?>
++
++  <script type="text/javascript">var action_controls = new Array();</script>
++
++  <?cs each:action = ticket.actions ?>
++   <script type="text/javascript">
++   action_controls['<?cs var:action.action ?>'] = new Array();
++   </script>
++			<?cs call:action_radio(action.action) ?>
++			<label for="<?cs var:action.action ?>"><?cs alt:action.label ?><?cs var:action.action ?><?cs /alt ?></label>
++   <span id="<?cs var:action.action ?>_controls">
++    <?cs each:control = action.controls ?>
++      <script type="text/javascript">action_controls['<?cs var:action.action ?>'].push('<?cs var:control.name ?>');</script>
++      <?cs call:form_control(control) ?>
++    <?cs /each ?>
++   </span>
++			<br />
++  <?cs /each ?>
++
++  <script type="text/javascript">
++   var action_control_elements = new Array();
++   for (var action in action_controls) {
++    action_control_elements[action] = document.getElementById(action);
++   }
++   var updateActionFields = function() {
++    for (var action in action_controls) {
++    var action_control = action_control_elements[action];
++
++     for (control in action_controls[action]) {
++      control = action_controls[action][control];
++      enableControl(control, action_control.checked);
++     }
++    }
++   }
++   addEvent(window, 'load', updateActionFields);
++   for (var action in action_controls) {
++   var action_control = action_control_elements[action];
++    addEvent(action_control, 'click', updateActionFields);
++   }
++  </script>
+  </fieldset><?cs
+  else ?>
+   <input type="hidden" name="action" value="leave" /><?cs
 === trac/ticket/api.py
 ==================================================================
---- trac/ticket/api.py	(revision 2762)
-+++ trac/ticket/api.py	(patch workflow level 3)
+--- trac/ticket/api.py	(/mirror/trac)	(revision 2508)
++++ trac/ticket/api.py	(/trac/workflow)	(local)
 @@ -19,15 +19,39 @@
  from trac.perm import IPermissionRequestor
  from trac.wiki import IWikiSyntaxProvider
@@ -141,8 +263,8 @@ Log:
 +
 === trac/ticket/web_ui.py
 ==================================================================
---- trac/ticket/web_ui.py	(revision 2762)
-+++ trac/ticket/web_ui.py	(patch workflow level 3)
+--- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2508)
++++ trac/ticket/web_ui.py	(/trac/workflow)	(local)
 @@ -28,8 +28,8 @@
  from trac.web import IRequestHandler
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -201,8 +323,8 @@ Log:
 +        req.hdf['ticket.actions'] = ticket_actions
 === trac/web/form.py
 ==================================================================
---- trac/web/form.py	(revision 2762)
-+++ trac/web/form.py	(patch workflow level 3)
+--- trac/web/form.py	(/mirror/trac)	(revision 2508)
++++ trac/web/form.py	(/trac/workflow)	(local)
 @@ -0,0 +1,65 @@
 +# -*- coding: iso-8859-1 -*-
 +#
@@ -269,174 +391,3 @@ Log:
 +class Select(Control):
 +    def __init__(self, name, options, **kwargs):
 +        Control.__init__(self, name, 'select', options = options, **kwargs)
-=== templates/ticket.cs
-==================================================================
---- templates/ticket.cs	(revision 2762)
-+++ templates/ticket.cs	(patch workflow level 3)
-@@ -227,8 +227,7 @@
-   </table>
-  </fieldset><?cs /if ?>
- 
-- <?cs if:ticket.actions.accept || ticket.actions.reopen ||
--         ticket.actions.resolve || ticket.actions.reassign ?>
-+ <?cs if:ticket.actions.0.action ?>
-  <fieldset id="action">
-   <legend>Action</legend><?cs
-   if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
-@@ -238,8 +237,46 @@
-      var:id ?>"<?cs if:ticket.action == id ?> checked="checked"<?cs
-      /if ?> /><?cs
-   /def ?>
--  <?cs call:action_radio('leave') ?>
--   <label for="leave">leave as <?cs var:ticket.status ?></label><br /><?cs
-+
-+  <script type="text/javascript">var action_controls = new Array();</script>
-+
-+  <?cs each:action = ticket.actions ?>
-+   <script type="text/javascript">
-+   action_controls['<?cs var:action.action ?>'] = new Array();
-+   </script>
-+			<?cs call:action_radio(action.action) ?>
-+			<label for="<?cs var:action.action ?>"><?cs alt:action.label ?><?cs var:action.action ?><?cs /alt ?></label>
-+   <span id="<?cs var:action.action ?>_controls">
-+    <?cs each:control = action.controls ?>
-+      <script type="text/javascript">action_controls['<?cs var:action.action ?>'].push('<?cs var:control.name ?>');</script>
-+      <?cs call:form_control(control) ?>
-+    <?cs /each ?>
-+   </span>
-+			<br />
-+  <?cs /each ?>
-+
-+  <script type="text/javascript">
-+   var action_control_elements = new Array();
-+   for (var action in action_controls) {
-+    action_control_elements[action] = document.getElementById(action);
-+   }
-+   var updateActionFields = function() {
-+    for (var action in action_controls) {
-+    var action_control = action_control_elements[action];
-+
-+     for (control in action_controls[action]) {
-+      control = action_controls[action][control];
-+      enableControl(control, action_control.checked);
-+     }
-+    }
-+   }
-+   addEvent(window, 'load', updateActionFields);
-+   for (var action in action_controls) {
-+   var action_control = action_control_elements[action];
-+    addEvent(action_control, 'click', updateActionFields);
-+   }
-+  </script>
-+<?cs
-   if:ticket.actions.accept ?><?cs
-    call:action_radio('accept') ?>
-    <label for="accept">accept ticket</label><br /><?cs
-=== templates/macros.cs
-==================================================================
---- templates/macros.cs	(revision 2762)
-+++ templates/macros.cs	(patch workflow level 3)
-@@ -179,4 +179,26 @@
-     var:href ?>&amp;order=<?cs var:class ?><?cs
-     if:order == class && !desc ?>&amp;desc=1<?cs /if ?>"><?cs var:title ?></a>
-  </th><?cs
-+/def ?><?cs
-+
-+def:form_control(control) ?><?cs
-+ if:control.label ?><label for="<?cs var:control.name ?>"><?cs var:control.label ?><?cs /if ?><?cs
-+ if:control.type == "select" ?><?cs
-+  call:hdf_select(control.options, control.name, control.value, control.optional) ?><?cs
-+ elif:control.type == "text" ?>
-+  <input type="text" id="<?cs var:control.name ?>" name="<?cs var:control.name ?>" size="<?cs alt:size ?>40<?cs /alt ?>" value="<?cs var:control.value ?>"><?cs
-+ elif:control.type == "textarea" ?>
-+  <textarea id="<?cs var:control.name ?>" name="<?cs var:control.name ?>" class="wikitext" rows="<?cs alt:rows ?>10<?cs /alt ?>" cols="<?cs alt:cols ?>78<?cs /alt ?>"><?cs var:control.value ?></textarea><?cs
-+ elif:control.type == "checkbox" || control.type == "radio" ?>
-+  <span id="<?cs var:control.name ?>"><?cs
-+   each:option = control.options ?><?cs
-+    if:!option.name ?><?cs
-+     set:option.name = name(option) ?><?cs
-+    /if ?>
-+    <input type="<?cs var:control.type ?>" id="<?cs var:control.name ?>_<?cs var:option.name ?>" name="<?cs var:control.name ?>"<?cs if:option.checked ?> checked<?cs /if ?>>
-+    <label for="<?cs var:control.name ?>_<?cs var:option.name ?>" ?><?cs alt:option.label ?><?cs var:option.value ?><?cs /alt ?></label><?cs
-+   /each
-+  ?></span><?cs
-+ /if ?><?cs
-+ if:control.label ?></label><?cs /if ?><?cs
- /def ?>
-
-==== BEGIN SVK PATCH BLOCK ====
-Version: svk 1.06 (linux)
-
-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
-EYiQLFyNdXlS8DIV+38A4aVWEg==
-==== END SVK PATCH BLOCK ====
