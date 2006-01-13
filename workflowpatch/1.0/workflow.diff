@@ -1,6 +1,6 @@
 === templates/macros.cs
 ==================================================================
---- templates/macros.cs	(/mirror/trac)	(revision 2508)
+--- templates/macros.cs	(/mirror/trac)	(revision 2526)
 +++ templates/macros.cs	(/trac/workflow)	(local)
 @@ -179,4 +179,26 @@
      var:href ?>&amp;order=<?cs var:class ?><?cs
@@ -31,7 +31,7 @@
  /def ?>
 === templates/ticket.cs
 ==================================================================
---- templates/ticket.cs	(/mirror/trac)	(revision 2508)
+--- templates/ticket.cs	(/mirror/trac)	(revision 2526)
 +++ templates/ticket.cs	(/trac/workflow)	(local)
 @@ -227,8 +227,7 @@
    </table>
@@ -139,9 +139,9 @@
    <input type="hidden" name="action" value="leave" /><?cs
 === trac/ticket/api.py
 ==================================================================
---- trac/ticket/api.py	(/mirror/trac)	(revision 2508)
+--- trac/ticket/api.py	(/mirror/trac)	(revision 2526)
 +++ trac/ticket/api.py	(/trac/workflow)	(local)
-@@ -19,15 +19,39 @@
+@@ -19,15 +19,41 @@
  from trac.perm import IPermissionRequestor
  from trac.wiki import IWikiSyntaxProvider
  from trac.Search import ISearchSource, query_to_sql, shorten_result
@@ -165,7 +165,9 @@
 +        """ Change a ticket field. """
 +
 +class ITicketActionController(Interface):
-+    """ This interface controls what actions can be performed on a ticket. """
++    """ This interface controls what actions can be performed on a ticket. It
++        accepts a ticket and returns a list of the actions available for the
++        current state of the ticket. """
 +    def get_ticket_actions(req, ticket):
 +        """ Return the actions that are available given the current state of
 +            ticket and the request object provided. """
@@ -186,7 +188,7 @@
          actions = {
              'new':      ['leave', 'resolve', 'reassign', 'accept'],
              'assigned': ['leave', 'resolve', 'reassign'          ],
-@@ -37,8 +61,68 @@
+@@ -37,8 +63,69 @@
          perms = {'resolve': 'TICKET_MODIFY', 'reassign': 'TICKET_CHGPROP',
                   'accept': 'TICKET_CHGPROP', 'reopen': 'TICKET_CREATE'}
          return [action for action in actions.get(ticket['status'], ['leave'])
@@ -230,7 +232,7 @@
 +            ticket['status'] = 'reopened'
 +            ticket['resolution'] = ''
 +        elif action != 'leave':
-+            ticket['status'] = action
++            raise TracError('Invalid ticket action %s' % action)
 +
 +
 +class TicketSystem(Component):
@@ -244,19 +246,20 @@
 +        """ Get single action controller for ticket actions. """
 +        controllers = list(self.action_controllers)
 +        if len(controllers) != 1:
-+            message = "Exactly one ITicketActionController must be active, " \
-+                      "please disable all but one implementation. "
-+            if len(controllers) > 1:
-+                raise TracError(message + "Current controllers are %s." %
-+                                ', '.join(map(repr, controllers)))
-+            raise TracError(message + "No active implementations.")
++            controller_name = self.env.config.get('ticket', 'controller', 'trac.ticket.api.DefaultTicketActionController')
++            for controller in controllers:
++                if controller_name in ('.'.join([controller.__module__, controller.__class__.__name__]), controller.__class__.__name__):
++                    self.env.log.debug("Using ITicketActionController %s" % controller_name)
++                    return controller
++            raise TracError("More than one ITicketActionController is active, set the controller option in the ticket section of trac.ini to the name of the controller to use.")
++
 +        return controllers[0]
 +    action_controller = property(_get_action_controller)
 +
      def get_ticket_fields(self):
          """Returns the list of fields available for tickets."""
          from trac.ticket import model
-@@ -179,4 +263,4 @@
+@@ -179,4 +266,4 @@
                     '#%d: %s' % (tid, util.shorten_line(summary)),
                     date, author,
                     shorten_result(desc, query.split()))
@@ -264,7 +267,7 @@
 +
 === trac/ticket/web_ui.py
 ==================================================================
---- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2508)
+--- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2526)
 +++ trac/ticket/web_ui.py	(/trac/workflow)	(local)
 @@ -28,8 +28,8 @@
  from trac.web import IRequestHandler
@@ -303,28 +306,30 @@
  
          now = int(time.time())
          ticket.save_changes(req.args.get('author', req.authname),
-@@ -445,6 +434,16 @@
+@@ -445,6 +434,17 @@
                                                                       ticket.id)
  
          # Add the possible actions to hdf
 -        actions = TicketSystem(self.env).get_available_actions(ticket, req.perm)
+-        for action in actions:
+-            req.hdf['ticket.actions.' + action] = '1'
 +        import types
 +        action_controller = TicketSystem(self.env).action_controller
 +        actions = action_controller.get_ticket_actions(req, ticket)
-+        ticket_actions = []
-         for action in actions:
--            req.hdf['ticket.actions.' + action] = '1'
-+            controls = action_controller.get_ticket_action_controls(req, ticket, action)
-+            if isinstance(controls, form.Control):
-+                controls = {'controls': [controls]}
-+            elif type(controls) is list:
-+                controls = {'controls': controls}
-+            controls['action'] = action
-+            ticket_actions.append(controls)
-+        req.hdf['ticket.actions'] = ticket_actions
++        if actions != ['leave']:
++            ticket_actions = []
++            for action in actions:
++                controls = action_controller.get_ticket_action_controls(req, ticket, action)
++                if isinstance(controls, form.Control):
++                    controls = {'controls': [controls]}
++                elif type(controls) is list:
++                    controls = {'controls': controls}
++                controls['action'] = action
++                ticket_actions.append(controls)
++            req.hdf['ticket.actions'] = ticket_actions
 === trac/web/form.py
 ==================================================================
---- trac/web/form.py	(/mirror/trac)	(revision 2508)
+--- trac/web/form.py	(/mirror/trac)	(revision 2526)
 +++ trac/web/form.py	(/trac/workflow)	(local)
 @@ -0,0 +1,65 @@
 +# -*- coding: iso-8859-1 -*-
@@ -392,3 +397,13 @@
 +class Select(Control):
 +    def __init__(self, name, options, **kwargs):
 +        Control.__init__(self, name, 'select', options = options, **kwargs)
+
+Property changes on: 
+___________________________________________________________________
+Name: svk:merge
+  8537732e-d8ef-0310-9407-9991635669ee:/trac-local/trunk:3673
+  8537732e-d8ef-0310-9407-9991635669ee:/trac-local/trunk-fastcgi:1014
+  89e4328e-11e8-0310-811a-b3a06f405a76:/trac:6844
+ +af82e41b-90c4-0310-8c96-b1721e28e2e2:/trunk:2766
+  ecde85df-87dc-0310-ab16-a9b1c1177255:/local/trac/trunk:796
+
