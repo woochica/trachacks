@@ -52,7 +52,8 @@ class TracWorkFlowPlugin(Component):
         # Permissions required to perform actions.
         perms = {'resolve':  {'allof': ('TICKET_MODIFY',),
                               'anyof': ('ROLE_DEVELOPER',)},
-                 'reassign': {'allof': ('TICKET_CHGPROP',)},
+                 'reassign': {'allof': ('TICKET_CHGPROP',),
+                              'anyof': ('ROLE_DEVELOPER', 'ROLE_QA', 'ROLE_RELEASE')},
                  'accept':   {'allof': ('TICKET_CHGPROP',),
                               'anyof': ('ROLE_DEVELOPER',)},
                  'reopen':   {'allof': ('TICKET_CREATE',),
@@ -73,7 +74,7 @@ class TracWorkFlowPlugin(Component):
                 anyof = set(perms[action].get('anyof', ()))
                 have = set([perm for perm in allof.union(anyof) if req.perm.has_permission(perm)])
 
-                if allof.intersection(have) == allof and len(anyof.intersection(have)) >= len(anyof):
+                if (not allof or allof.intersection(have) == allof) and (not anyof or anyof.intersection(have)):
                     filtered.append(action)
 
         return filtered
