@@ -1,0 +1,406 @@
+==== Patch <workflow> level 2
+Source: 5349d9f9-240a-0410-8526-bdcfa9bb3cf4:/trac/workflow:2507
+Target: af82e41b-90c4-0310-8c96-b1721e28e2e2:/trunk:2762
+        (http://svn.edgewall.com/repos/trac/trunk)
+Log:
+ r1991@cavern:  athomas | 2006-01-12 20:34:12 +1100
+ 
+ r1992@cavern:  athomas | 2006-01-12 20:35:17 +1100
+ Initial workflow commit.
+ r2507@cavern:  athomas | 2006-01-13 02:04:21 +1100
+   * Removed some extra test form elements
+   * Fixed bug where ticket entered "leave" state :\
+
+=== trac/ticket/api.py
+==================================================================
+--- trac/ticket/api.py	(revision 2762)
++++ trac/ticket/api.py	(patch workflow level 2)
+@@ -19,15 +19,39 @@
+ from trac.perm import IPermissionRequestor
+ from trac.wiki import IWikiSyntaxProvider
+ from trac.Search import ISearchSource, query_to_sql, shorten_result
++from trac.web import form
+ 
++class ITicketFieldController(Interface):
++    """ An interface for controlling what ticket fields can be viewed and changed. """
+ 
+-class TicketSystem(Component):
+-    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
++    def get_ticket_fields(req, ticket):
++        """ Return a list of fields available for a ticket. """
+ 
+-    # Public API
++    def get_ticket_field_controls(req, ticket, field):
++        """ Return the HTML control for managing a propert of ticket. """
+ 
+-    def get_available_actions(self, ticket, perm_):
+-        """Returns the actions that can be performed on the ticket."""
++    def change_ticket_field(req, ticket, field):
++        """ Change a ticket field. """
++
++class ITicketActionController(Interface):
++    """ This interface controls what actions can be performed on a ticket. """
++    def get_ticket_actions(req, ticket):
++        """ Return the actions that are available given the current state of
++            ticket and the request object provided. """
++
++    def get_ticket_action_controls(req, ticket, action):
++        """ Return HTML control for performing action on ticket. """
++
++    def apply_ticket_action(req, ticket, action):
++        """ Perform action on ticket. """
++
++class DefaultTicketActionController(Component):
++    """ Default Trac implementation of ticket actions. """
++
++    implements(ITicketActionController)
++
++    # ITicketActionController methods
++    def get_ticket_actions(self, req, ticket):
+         actions = {
+             'new':      ['leave', 'resolve', 'reassign', 'accept'],
+             'assigned': ['leave', 'resolve', 'reassign'          ],
+@@ -37,8 +61,70 @@
+         perms = {'resolve': 'TICKET_MODIFY', 'reassign': 'TICKET_CHGPROP',
+                  'accept': 'TICKET_CHGPROP', 'reopen': 'TICKET_CREATE'}
+         return [action for action in actions.get(ticket['status'], ['leave'])
+-                if action not in perms or perm_.has_permission(perms[action])]
++                if action not in perms or req.perm.has_permission(perms[action])]
+ 
++    def get_ticket_action_controls(self, req, ticket, action):
++        from trac.ticket import model
++        controls = {
++            'leave': {
++                'label': 'leave as %s' % ticket['status'],
++                'selected': 1,
++            },
++            'resolve': form.Select('resolve_resolution',
++                                   options = [val.name for val in \
++                                              model.Resolution.select(self.env)],
++                                   label = 'as:',
++                                   value = req.args.get('resolve_resolution', '')),
++            'reassign': form.Text('reassign_owner',
++                                   value =req.args.get('reassign_owner', req.authname),
++                                   label ='to:'),
++            'accept': {
++                'label': 'accept ticket',
++            },
++            'reopen': {
++                'label': 'reopen ticket',
++            },
++        }
++        return controls[action]
++
++    def apply_ticket_action(self, req, ticket, action):
++        self.env.log.debug(str(req.args.get('stuff', '')))
++        if action == 'accept':
++            ticket['status'] =  'assigned'
++            ticket['owner'] = req.authname
++        if action == 'resolve':
++            ticket['status'] = 'closed'
++            ticket['resolution'] = req.args.get('resolve_resolution')
++        elif action == 'reassign':
++            ticket['owner'] = req.args.get('reassign_owner')
++            ticket['status'] = 'new'
++        elif action == 'reopen':
++            ticket['status'] = 'reopened'
++            ticket['resolution'] = ''
++        elif action != 'leave':
++            ticket['status'] = action
++
++
++class TicketSystem(Component):
++    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
++
++    action_controllers = ExtensionPoint(ITicketActionController)
++
++    # Public API
++
++    def _get_action_controller(self):
++        """ Get single action controller for ticket actions. """
++        controllers = list(self.action_controllers)
++        if len(controllers) != 1:
++            message = "Exactly one ITicketActionController must be active, " \
++                      "please disable all but one implementation. "
++            if len(controllers) > 1:
++                raise TracError(message + "Current controllers are %s." %
++                                ', '.join(map(repr, controllers)))
++            raise TracError(message + "No active implementations.")
++        return controllers[0]
++    action_controller = property(_get_action_controller)
++
+     def get_ticket_fields(self):
+         """Returns the list of fields available for tickets."""
+         from trac.ticket import model
+@@ -179,4 +265,4 @@
+                    '#%d: %s' % (tid, util.shorten_line(summary)),
+                    date, author,
+                    shorten_result(desc, query.split()))
+-            
++
+=== trac/ticket/web_ui.py
+==================================================================
+--- trac/ticket/web_ui.py	(revision 2762)
++++ trac/ticket/web_ui.py	(patch workflow level 2)
+@@ -28,8 +28,8 @@
+ from trac.web import IRequestHandler
+ from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
+ from trac.wiki import wiki_to_html, wiki_to_oneliner
++from trac.web import form
+ 
+-
+ class NewticketModule(Component):
+ 
+     implements(IEnvironmentSetupParticipant, INavigationContributor,
+@@ -348,23 +348,12 @@
+ 
+         # Do any action on the ticket?
+         action = req.args.get('action')
+-        actions = TicketSystem(self.env).get_available_actions(ticket, req.perm)
++        action_controller = TicketSystem(self.env).action_controller
++        actions = action_controller.get_ticket_actions(req, ticket)
+         if action not in actions:
+             raise TracError('Invalid action')
+ 
+-        # TODO: this should not be hard-coded like this
+-        if action == 'accept':
+-            ticket['status'] =  'assigned'
+-            ticket['owner'] = req.authname
+-        if action == 'resolve':
+-            ticket['status'] = 'closed'
+-            ticket['resolution'] = req.args.get('resolve_resolution')
+-        elif action == 'reassign':
+-            ticket['owner'] = req.args.get('reassign_owner')
+-            ticket['status'] = 'new'
+-        elif action == 'reopen':
+-            ticket['status'] = 'reopened'
+-            ticket['resolution'] = ''
++        action_controller.apply_ticket_action(req, ticket, action)
+ 
+         now = int(time.time())
+         ticket.save_changes(req.args.get('author', req.authname),
+@@ -445,6 +434,16 @@
+                                                                      ticket.id)
+ 
+         # Add the possible actions to hdf
+-        actions = TicketSystem(self.env).get_available_actions(ticket, req.perm)
++        import types
++        action_controller = TicketSystem(self.env).action_controller
++        actions = action_controller.get_ticket_actions(req, ticket)
++        ticket_actions = []
+         for action in actions:
+-            req.hdf['ticket.actions.' + action] = '1'
++            controls = action_controller.get_ticket_action_controls(req, ticket, action)
++            if isinstance(controls, form.Control):
++                controls = {'controls': [controls]}
++            elif type(controls) is list:
++                controls = {'controls': controls}
++            controls['action'] = action
++            ticket_actions.append(controls)
++        req.hdf['ticket.actions'] = ticket_actions
+=== trac/web/form.py
+==================================================================
+--- trac/web/form.py	(revision 2762)
++++ trac/web/form.py	(patch workflow level 2)
+@@ -0,0 +1,65 @@
++# -*- coding: iso-8859-1 -*-
++#
++# Copyright (C) 2005 Edgewall Software
++# Copyright (C) 2005 Alec Thomas <alec@swapoff.org>
++# All rights reserved.
++#   
++# This software is licensed as described in the file COPYING, which
++# you should have received as part of this distribution. The terms
++# are also available at http://trac.edgewall.com/license.html.
++#       
++# This software consists of voluntary contributions made by many
++# individuals. For the exact contribution history, see the revision
++# history and logs, available at http://projects.edgewall.com/trac/.
++#       
++# Author: Alec Thomas <alec@swapoff.org>
++
++"""
++Form control wrappers. Pass these as HDF elements to the ClearSilver
++form_control() macro to get generic form controls.
++
++    eg. hdf['form.name'] = form.Text('name', label = 'Username:')
++
++Then in your template:
++
++    <?cs include:"macros.cs" ?>
++    <?cs call:form_control(form.name) ?>
++"""
++
++__all__ = [ 'Control', 'Text', 'CheckBox', 'CheckBoxSet', 'RadioSet',
++            'RadioButton', 'TextArea', 'Select' ]
++
++class Control(dict):
++    """ Represents a form control. type is one of text, select, textarea,
++        checkbox, radio"""
++    def __init__(self, name, type, value = '', **kwargs):
++        self.update({'name': name, 'type': type, 'value': value})
++        self.update(kwargs)
++
++class Text(Control):
++    def __init__(self, name, **kwargs):
++        Control.__init__(self, name, 'text', **kwargs)
++
++class TextArea(Control):
++    def __init__(self, name, **kwargs):
++        Control.__init__(self, name, 'textarea', **kwargs)
++
++class CheckBox(Control):
++    def __init__(self, value, name = '', **kwargs):
++        Control.__init__(self, name, value = value, type = 'checkbox', **kwargs)
++
++class CheckBoxSet(Control):
++    def __init__(self, name, options, **kwargs):
++        Control.__init__(self, name, type = 'checkbox', options = options, **kwargs)
++
++class RadioButton(Control):
++    def __init__(self, name, **kwargs):
++        Control.__init__(self, name, type = 'radio', **kwargs)
++
++class RadioSet(Control):
++    def __init__(self, name, options, **kwargs):
++        Control.__init__(self, name, type = 'radio', options = options, **kwargs)
++
++class Select(Control):
++    def __init__(self, name, options, **kwargs):
++        Control.__init__(self, name, 'select', options = options, **kwargs)
+=== templates/ticket.cs
+==================================================================
+--- templates/ticket.cs	(revision 2762)
++++ templates/ticket.cs	(patch workflow level 2)
+@@ -227,8 +227,7 @@
+   </table>
+  </fieldset><?cs /if ?>
+ 
+- <?cs if:ticket.actions.accept || ticket.actions.reopen ||
+-         ticket.actions.resolve || ticket.actions.reassign ?>
++ <?cs if:ticket.actions.0.action ?>
+  <fieldset id="action">
+   <legend>Action</legend><?cs
+   if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
+@@ -238,8 +237,17 @@
+      var:id ?>"<?cs if:ticket.action == id ?> checked="checked"<?cs
+      /if ?> /><?cs
+   /def ?>
+-  <?cs call:action_radio('leave') ?>
+-   <label for="leave">leave as <?cs var:ticket.status ?></label><br /><?cs
++
++  <?cs each:action = ticket.actions ?>
++			<?cs call:action_radio(action.action) ?>
++			<label for="<?cs var:action.action ?>"><?cs alt:action.label ?><?cs var:action.action ?><?cs /alt ?></label>
++			<?cs each:control = action.controls ?>
++    <?cs call:form_control(control) ?>
++			<?cs /each ?>
++			<br />
++  <?cs /each ?>
++
++<?cs
+   if:ticket.actions.accept ?><?cs
+    call:action_radio('accept') ?>
+    <label for="accept">accept ticket</label><br /><?cs
+=== templates/macros.cs
+==================================================================
+--- templates/macros.cs	(revision 2762)
++++ templates/macros.cs	(patch workflow level 2)
+@@ -179,4 +179,26 @@
+     var:href ?>&amp;order=<?cs var:class ?><?cs
+     if:order == class && !desc ?>&amp;desc=1<?cs /if ?>"><?cs var:title ?></a>
+  </th><?cs
++/def ?><?cs
++
++def:form_control(control) ?><?cs
++ if:control.label ?><label for="<?cs var:control.name ?>"><?cs var:control.label ?><?cs /if ?><?cs
++ if:control.type == "select" ?><?cs
++  call:hdf_select(control.options, control.name, control.value, control.optional) ?><?cs
++ elif:control.type == "text" ?>
++  <input type="text" id="<?cs var:control.name ?>" name="<?cs var:control.name ?>" size="<?cs alt:size ?>40<?cs /alt ?>" value="<?cs var:control.value ?>"><?cs
++ elif:control.type == "textarea" ?>
++  <textarea id="<?cs var:control.name ?>" name="<?cs var:control.name ?>" class="wikitext" rows="<?cs alt:rows ?>10<?cs /alt ?>" cols="<?cs alt:cols ?>78<?cs /alt ?>"><?cs var:control.value ?></textarea><?cs
++ elif:control.type == "checkbox" || control.type == "radio" ?>
++  <span id="<?cs var:control.name ?>"><?cs
++   each:option = control.options ?><?cs
++    if:!option.name ?><?cs
++     set:option.name = name(option) ?><?cs
++    /if ?>
++    <input type="<?cs var:control.type ?>" id="<?cs var:control.name ?>_<?cs var:option.name ?>" name="<?cs var:control.name ?>"<?cs if:option.checked ?> checked<?cs /if ?>>
++    <label for="<?cs var:control.name ?>_<?cs var:option.name ?>" ?><?cs alt:option.label ?><?cs var:option.value ?><?cs /alt ?></label><?cs
++   /each
++  ?></span><?cs
++ /if ?><?cs
++ if:control.label ?></label><?cs /if ?><?cs
+ /def ?>
+
+==== BEGIN SVK PATCH BLOCK ====
+Version: svk 1.06 (linux)
+
+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
+==== END SVK PATCH BLOCK ====
