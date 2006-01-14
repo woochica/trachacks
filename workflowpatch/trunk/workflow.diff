@@ -1,6 +1,6 @@
 === templates/macros.cs
 ==================================================================
---- templates/macros.cs	(/mirror/trac)	(revision 2535)
+--- templates/macros.cs	(/mirror/trac)	(revision 2557)
 +++ templates/macros.cs	(/trac/workflow)	(local)
 @@ -179,4 +179,26 @@
      var:href ?>&amp;order=<?cs var:class ?><?cs
@@ -31,7 +31,7 @@
  /def ?>
 === templates/ticket.cs
 ==================================================================
---- templates/ticket.cs	(/mirror/trac)	(revision 2535)
+--- templates/ticket.cs	(/mirror/trac)	(revision 2557)
 +++ templates/ticket.cs	(/trac/workflow)	(local)
 @@ -227,8 +227,7 @@
    </table>
@@ -139,60 +139,57 @@
    <input type="hidden" name="action" value="leave" /><?cs
 === trac/ticket/api.py
 ==================================================================
---- trac/ticket/api.py	(/mirror/trac)	(revision 2535)
+--- trac/ticket/api.py	(/mirror/trac)	(revision 2557)
 +++ trac/ticket/api.py	(/trac/workflow)	(local)
-@@ -19,15 +19,41 @@
+@@ -19,15 +19,36 @@
  from trac.perm import IPermissionRequestor
  from trac.wiki import IWikiSyntaxProvider
  from trac.Search import ISearchSource, query_to_sql, shorten_result
-+from trac.web import form
++from trac.ticket.field import *
  
-+class ITicketFieldController(Interface):
-+    """ An interface for controlling what ticket fields can be viewed and changed. """
- 
--class TicketSystem(Component):
--    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
-+    def get_ticket_fields(req, ticket):
-+        """ Return a list of fields available for a ticket. """
- 
--    # Public API
-+    def get_ticket_field_controls(req, ticket, field):
-+        """ Return the HTML control for managing a ticket field. """
- 
--    def get_available_actions(self, ticket, perm_):
--        """Returns the actions that can be performed on the ticket."""
-+    def change_ticket_field(req, ticket, field):
-+        """ Change a ticket field. """
-+
-+class ITicketActionController(Interface):
-+    """ This interface controls what actions can be performed on a ticket. It
-+        accepts a ticket and returns a list of the actions available for the
-+        current state of the ticket. """
++class ITicketWorkflow(Interface):
++    """ This interface controls what actions can be performed on a ticket. """
 +    def get_ticket_actions(req, ticket):
 +        """ Return the actions that are available given the current state of
 +            ticket and the request object provided. """
-+
+ 
+-class TicketSystem(Component):
+-    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
 +    def get_ticket_action_controls(req, ticket, action):
 +        """ Return HTML control for performing action on ticket. """
-+
+ 
+-    # Public API
 +    def apply_ticket_action(req, ticket, action):
 +        """ Perform action on ticket. """
+ 
+-    def get_available_actions(self, ticket, perm_):
+-        """Returns the actions that can be performed on the ticket."""
++#    def get_ticket_fields(req, ticket):
++#        """ Return a list of fields available for a ticket. """
++#
++#    def get_ticket_field_controls(req, ticket, field):
++#        """ Return the HTML control for managing a ticket field. """
++#
++#    def change_ticket_field(req, ticket, field):
++#        """ Change a ticket field. """
 +
-+class DefaultTicketActionController(Component):
++class DefaultTicketWorkflow(Component):
 +    """ Default Trac implementation of ticket actions. """
 +
-+    implements(ITicketActionController)
++    implements(ITicketWorkflow)
 +
-+    # ITicketActionController methods
++    # ITicketWorkflow methods
 +    def get_ticket_actions(self, req, ticket):
          actions = {
              'new':      ['leave', 'resolve', 'reassign', 'accept'],
              'assigned': ['leave', 'resolve', 'reassign'          ],
-@@ -37,8 +63,69 @@
+@@ -36,9 +57,81 @@
+         }
          perms = {'resolve': 'TICKET_MODIFY', 'reassign': 'TICKET_CHGPROP',
                   'accept': 'TICKET_CHGPROP', 'reopen': 'TICKET_CREATE'}
-         return [action for action in actions.get(ticket['status'], ['leave'])
+-        return [action for action in actions.get(ticket['status'], ['leave'])
 -                if action not in perms or perm_.has_permission(perms[action])]
++        return [action for action in actions.get(ticket['status'], ['leave', 'reopen'])
 +                if action not in perms or req.perm.has_permission(perms[action])]
  
 +    def get_ticket_action_controls(self, req, ticket, action):
@@ -201,14 +198,14 @@
 +            'leave': {
 +                'label': 'leave as %s' % ticket['status'],
 +            },
-+            'resolve': form.Select('resolve_resolution',
-+                                   options = [val.name for val in \
-+                                              model.Resolution.select(self.env)],
-+                                   label = 'as:',
-+                                   value = req.args.get('resolve_resolution', '')),
-+            'reassign': form.Text('reassign_owner',
-+                                   value =req.args.get('reassign_owner', req.authname),
-+                                   label ='to:'),
++            'resolve': Select('resolve_resolution',
++                              options = [val.name for val in \
++                                         model.Resolution.select(self.env)],
++                              label = 'as:',
++                              value = req.args.get('resolve_resolution', '')),
++            'reassign': Text('reassign_owner',
++                             value =req.args.get('reassign_owner', req.authname),
++                             label ='to:'),
 +            'accept': {
 +                'label': 'accept ticket',
 +            },
@@ -238,28 +235,67 @@
 +class TicketSystem(Component):
 +    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
 +
-+    action_controllers = ExtensionPoint(ITicketActionController)
++    ticket_workflow = ExtensionPoint(ITicketWorkflow)
 +
 +    # Public API
 +
-+    def _get_action_controller(self):
-+        """ Get single action controller for ticket actions. """
-+        controllers = list(self.action_controllers)
-+        if len(controllers) != 1:
-+            controller_name = self.env.config.get('ticket', 'controller', 'trac.ticket.api.defaultticketactioncontroller').lower()
-+            for controller in controllers:
-+                if controller_name.lower() in ('.'.join([controller.__module__, controller.__class__.__name__]).lower(), controller.__class__.__name__.lower()):
-+                    self.env.log.debug("Using ITicketActionController %s" % controller_name)
-+                    return controller
-+            raise TracError("More than one ITicketActionController is active, set the controller option in the ticket section of trac.ini to the name of the controller to use.")
++    def _get_workflow(self):
++        """ Get single workflow object for ticket actions. """
++        workflows = list(self.ticket_workflow)
++        workflow_name = self.env.config.get('ticket', 'workflow',
++                          'trac.ticket.api.defaultticketworkflow').lower()
++        if len(workflows) != 1:
++            for workflow in workflows:
++                if workflow_name.lower() == '.'.join([workflow.__module__,
++                        workflow.__class__.__name__]).lower():
++                    self.env.log.debug("Using ITicketWorkflow %s" %
++                                       workflow_name)
++                    return workflow
++            raise TracError('Could not load workflow plugin %s. Set the ' \
++                            'workflow option in the ticket section of' \
++                            'trca.ini to the name of the workflow to use.' \
++                            % workflow_name)
 +
-+        return controllers[0]
-+    action_controller = property(_get_action_controller)
++        found = '.'.join([workflows[0].__module__,
++                workflows[0].__class__.__name__]).lower()
++        if found != workflow_name:
++            raise TracError('Configured workflow plugin is not enabled,' \
++                            'looking for %s, got %s.' % (workflow_name, found)) 
++        return workflows[0]
++    workflow = property(_get_workflow)
 +
      def get_ticket_fields(self):
          """Returns the list of fields available for tickets."""
          from trac.ticket import model
-@@ -179,4 +266,4 @@
+@@ -109,7 +202,8 @@
+                 'type': self.config.get('ticket-custom', name),
+                 'order': int(self.config.get('ticket-custom', name + '.order', '0')),
+                 'label': self.config.get('ticket-custom', name + '.label', ''),
+-                'value': self.config.get('ticket-custom', name + '.value', '')
++                'value': self.config.get('ticket-custom', name + '.value', ''),
++                'skip':  int(self.config.get('ticket-custom', name + '.skip', '0')),
+             }
+             if field['type'] == 'select' or field['type'] == 'radio':
+                 options = self.config.get('ticket-custom', name + '.options')
+@@ -122,6 +216,17 @@
+         fields.sort(lambda x, y: cmp(x['order'], y['order']))
+         return fields
+ 
++    def add_custom_field(self, field):
++        """ Add a custom field from a trac.ticket.field.Field object. """
++        name = field['name']
++        for k, v in field.iteritems():
++            if k not in ('name', 'type') and v != '':
++                if k == 'options':
++                    v = '|'.join(v)
++                self.config.set('ticket-custom', '%s.%s' % (name, k), v)
++        self.config.set('ticket-custom', name, field['type'])
++        self.config.save()
++
+     # IPermissionRequestor methods
+ 
+     def get_permission_actions(self):
+@@ -179,4 +284,4 @@
                     '#%d: %s' % (tid, util.shorten_line(summary)),
                     date, author,
                     shorten_result(desc, query.split()))
@@ -267,13 +303,13 @@
 +
 === trac/ticket/web_ui.py
 ==================================================================
---- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2535)
+--- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2557)
 +++ trac/ticket/web_ui.py	(/trac/workflow)	(local)
 @@ -28,8 +28,8 @@
  from trac.web import IRequestHandler
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
  from trac.wiki import wiki_to_html, wiki_to_oneliner
-+from trac.web import form
++from trac.ticket.field import *
  
 -
  class NewticketModule(Component):
@@ -284,8 +320,8 @@
          # Do any action on the ticket?
          action = req.args.get('action')
 -        actions = TicketSystem(self.env).get_available_actions(ticket, req.perm)
-+        action_controller = TicketSystem(self.env).action_controller
-+        actions = action_controller.get_ticket_actions(req, ticket)
++        workflow = TicketSystem(self.env).workflow
++        actions = workflow.get_ticket_actions(req, ticket)
          if action not in actions:
              raise TracError('Invalid action')
  
@@ -302,7 +338,7 @@
 -        elif action == 'reopen':
 -            ticket['status'] = 'reopened'
 -            ticket['resolution'] = ''
-+        action_controller.apply_ticket_action(req, ticket, action)
++        workflow.apply_ticket_action(req, ticket, action)
  
          now = int(time.time())
          ticket.save_changes(req.args.get('author', req.authname),
@@ -314,24 +350,24 @@
 -        for action in actions:
 -            req.hdf['ticket.actions.' + action] = '1'
 +        import types
-+        action_controller = TicketSystem(self.env).action_controller
-+        actions = action_controller.get_ticket_actions(req, ticket)
++        workflow = TicketSystem(self.env).workflow
++        actions = workflow.get_ticket_actions(req, ticket)
 +        if actions != ['leave']:
 +            ticket_actions = []
 +            for action in actions:
-+                controls = action_controller.get_ticket_action_controls(req, ticket, action)
-+                if isinstance(controls, form.Control):
++                controls = workflow.get_ticket_action_controls(req, ticket, action)
++                if isinstance(controls, Field):
 +                    controls = {'controls': [controls]}
 +                elif type(controls) is list:
 +                    controls = {'controls': controls}
 +                controls['action'] = action
 +                ticket_actions.append(controls)
 +            req.hdf['ticket.actions'] = ticket_actions
-=== trac/web/form.py
+=== trac/ticket/field.py
 ==================================================================
---- trac/web/form.py	(/mirror/trac)	(revision 2535)
-+++ trac/web/form.py	(/trac/workflow)	(local)
-@@ -0,0 +1,65 @@
+--- trac/ticket/field.py	(/mirror/trac)	(revision 2557)
++++ trac/ticket/field.py	(/trac/workflow)	(local)
+@@ -0,0 +1,62 @@
 +# -*- coding: iso-8859-1 -*-
 +#
 +# Copyright (C) 2005 Edgewall Software
@@ -349,54 +385,51 @@
 +# Author: Alec Thomas <alec@swapoff.org>
 +
 +"""
-+Form control wrappers. Pass these as HDF elements to the ClearSilver
++Ticket field wrappers. Pass these as HDF elements to the ClearSilver
 +form_control() macro to get generic form controls.
 +
-+    eg. hdf['form.name'] = form.Text('name', label = 'Username:')
++    eg. hdf['form.control.name'] = form.Text('name', label = 'Username:')
 +
 +Then in your template:
 +
 +    <?cs include:"macros.cs" ?>
-+    <?cs call:form_control(form.name) ?>
++    <?cs call:form_control(form.control.name) ?>
++
++The 'syntax' of the elements is compatible with TracTicketsCustomFields.
 +"""
 +
-+__all__ = [ 'Control', 'Text', 'CheckBox', 'CheckBoxSet', 'RadioSet',
-+            'RadioButton', 'TextArea', 'Select' ]
++__all__ = [ 'Field', 'Text', 'CheckBox', 'Radio', 'TextArea', 'Select' ]
 +
-+class Control(dict):
-+    """ Represents a form control. type is one of text, select, textarea,
-+        checkbox, radio"""
-+    def __init__(self, name, type, value = '', **kwargs):
-+        self.update({'name': name, 'type': type, 'value': value})
++class Field(dict):
++    """ Represents a ticket field control. """
++    def __init__(self, name, value='', order=0, skip=0, label='', type = None, **kwargs):
++        if type is None:
++            type = self.__class__.__name__.lower()
++        self.update({
++            'name': name,
++            'type': type,
++            'value': value,
++            'order': int(order),
++            'label': label,
++            'skip': int(skip),
++        })
 +        self.update(kwargs)
 +
-+class Text(Control):
-+    def __init__(self, name, **kwargs):
-+        Control.__init__(self, name, 'text', **kwargs)
++class Text(Field): pass
 +
-+class TextArea(Control):
-+    def __init__(self, name, **kwargs):
-+        Control.__init__(self, name, 'textarea', **kwargs)
++class CheckBox(Field): pass
 +
-+class CheckBox(Control):
-+    def __init__(self, value, name = '', **kwargs):
-+        Control.__init__(self, name, value = value, type = 'checkbox', **kwargs)
++class TextArea(Field):
++    def __init__(self, name, value='', order=0, skip=0, label='', width='', height=''):
++        Field.__init__(self, name, value, order, skip, width=width, height=height)
 +
-+class CheckBoxSet(Control):
-+    def __init__(self, name, options, **kwargs):
-+        Control.__init__(self, name, type = 'checkbox', options = options, **kwargs)
++class Radio(Field):
++    def __init__(self, name, options, value='', order=0, skip=0, label=''):
++        Field.__init__(self, name, value, order, skip, options=options)
 +
-+class RadioButton(Control):
-+    def __init__(self, name, **kwargs):
-+        Control.__init__(self, name, type = 'radio', **kwargs)
-+
-+class RadioSet(Control):
-+    def __init__(self, name, options, **kwargs):
-+        Control.__init__(self, name, type = 'radio', options = options, **kwargs)
-+
-+class Select(Control):
-+    def __init__(self, name, options, **kwargs):
-+        Control.__init__(self, name, 'select', options = options, **kwargs)
++class Select(Field):
++    def __init__(self, name, options, value='', order=0, skip=0, label=''):
++        Field.__init__(self, name, value, order, skip, options=options)
 
 Property changes on: 
 ___________________________________________________________________
