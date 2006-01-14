@@ -33,5 +33,5 @@ class TracChangeLogPlugin(Component):
         out = StringIO()
         for npath, nrev, nlog in node.get_history(limit):
             change = repo.get_changeset(nrev)
-            out.write(wiki_to_html("'''%s by %s'''\n\n%s" % (format_datetime(change.date), change.author, change.message), self.env, req));
+            out.write(wiki_to_html("'''[%i] by %s on %s'''\n\n%s" % (nrev, change.author, format_datetime(change.date), change.message), self.env, req));
         return out.getvalue()
