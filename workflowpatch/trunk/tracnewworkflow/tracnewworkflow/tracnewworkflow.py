@@ -60,20 +60,13 @@ class NewWorkflowPlugin(Component):
                    'closed':   ('leave',                                  'reopen', 'retest',                  )}
 
         # Permissions required to perform actions.
-        perms = {'resolve':  {'allof': ('TICKET_MODIFY',),
-                              'anyof': ('ROLE_DEVELOPER',)},
-                 'reassign': {'allof': ('TICKET_CHGPROP',),
-                              'anyof': ('ROLE_DEVELOPER', 'ROLE_QA',
-                                        'ROLE_RELEASE')},
-                 'accept':   {'allof': ('TICKET_CHGPROP',),
-                              'anyof': ('ROLE_DEVELOPER',)},
-                 'reopen':   {'allof': ('TICKET_CREATE',),
-                              'anyof': ('ROLE_QA',)},
-                 'verify':   {'allof': ('TICKET_CHGPROP',),
-                              'anyof': ('ROLE_QA',)},
-                 'retest':   {'allof': ('ROLE_RELEASE',)},
-                 'close':    {'allof': ('TICKET_CHGPROP',),
-                              'anyof': ('ROLE_QA', 'ROLE_RELEASE')}}
+        perms = {'resolve':  {'anyof': ('ROLE_DEVELOPER',)},
+                 'reassign': {'anyof': ('ROLE_DEVELOPER', 'ROLE_RELEASE')},
+                 'accept':   {'anyof': ('ROLE_DEVELOPER',)},
+                 'reopen':   {'anyof': ('ROLE_QA',)},
+                 'verify':   {'anyof': ('ROLE_QA',)},
+                 'retest':   {'anyof': ('ROLE_RELEASE',)},
+                 'close':    {'anyof': ('ROLE_QA', 'ROLE_RELEASE')}}
 
         # Filter available actions for ticket status, based on user permissions
         filtered = []
@@ -132,3 +125,9 @@ class NewWorkflowPlugin(Component):
         # XXX Example of using custom ticket fields
 #        elif action == 'verify':
 #            ticket['verify'] = req.args.get('verify_reason')
+
+#    def filter_ticket_fields(self, req, ticket, fields):
+#        return fields
+#
+#    def update_ticket_fields(self, req, ticket):
+#        ticket.populate(req.args)
