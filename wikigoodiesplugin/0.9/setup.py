@@ -6,13 +6,16 @@ setup(name='TracWikiGoodies',
       description='Plugin for Trac which extends the Wiki with some goodies',
       keywords='trac wiki plugin smileys entities symbols',
       url='http://trac-hacks.swapoff.org/wiki/WikiGoodiesPlugin',
-      version='0.2',
+      version='0.3',
       license='BSD',
       author='Christian Boos',
       author_email='cboos@neuf.fr',
       long_description="""
-      This Trac 0.9+ plugin extends the Trac Wiki by providing support
+      This Trac 0.9.3/0.10 plugin extends the Trac Wiki by providing support
       for smileys, HTML entities and other frequently used symbols.
+
+      Single words surrounded by "*", "/" or "_" characters are tranformed
+      to bold, italic and underline text, respectively.
 
       It also comes with a set of 3 macros that can be used
       to provide a visual index of the markup:
