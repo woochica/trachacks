@@ -1,7 +1,7 @@
 === templates/macros.cs
 ==================================================================
---- templates/macros.cs	(/mirror/trac)	(revision 2557)
-+++ templates/macros.cs	(/trac/workflow)	(local)
+--- templates/macros.cs	(/mirror/trac)	(revision 2597)
++++ templates/macros.cs	(/trac/workflow-only)	(local)
 @@ -179,4 +179,26 @@
      var:href ?>&amp;order=<?cs var:class ?><?cs
      if:order == class && !desc ?>&amp;desc=1<?cs /if ?>"><?cs var:title ?></a>
@@ -31,8 +31,39 @@
  /def ?>
 === templates/ticket.cs
 ==================================================================
---- templates/ticket.cs	(/mirror/trac)	(revision 2557)
-+++ templates/ticket.cs	(/trac/workflow)	(local)
+--- templates/ticket.cs	(/mirror/trac)	(revision 2597)
++++ templates/ticket.cs	(/trac/workflow-only)	(local)
+@@ -54,13 +54,13 @@
+      if:ticket.status == 'assigned' ?> (accepted)<?cs /if ?></td>
+   </tr><tr><?cs
+   each:field = ticket.fields ?><?cs
+-   if:!field.skip ?><?cs
++   if:!field.hidden ?><?cs
+     set:num_fields = num_fields + 1 ?><?cs
+    /if ?><?cs
+   /each ?><?cs
+   set:idx = 0 ?><?cs
+   each:field = ticket.fields ?><?cs
+-   if:!field.skip ?><?cs set:fullrow = field.type == 'textarea' ?><?cs
++   if:!field.hidden ?><?cs set:fullrow = field.type == 'textarea' ?><?cs
+     if:fullrow && idx % 2 ?><th></th><td></td></tr><tr><?cs /if ?>
+     <th id="h_<?cs var:name(field) ?>"><?cs var:field.label ?>:</th>
+     <td<?cs if:fullrow ?> colspan="3"<?cs /if ?> headers="h_<?cs
+@@ -175,12 +175,12 @@
+    /if ?>
+   <tr><?cs set:num_fields = 0 ?><?cs
+   each:field = ticket.fields ?><?cs
+-   if:!field.skip ?><?cs
++   if:!field.hidden ?><?cs
+     set:num_fields = num_fields + 1 ?><?cs
+    /if ?><?cs
+   /each ?><?cs set:idx = 0 ?><?cs
+    each:field = ticket.fields ?><?cs
+-    if:!field.skip ?><?cs set:fullrow = field.type == 'textarea' ?><?cs
++    if:!field.hidden ?><?cs set:fullrow = field.type == 'textarea' ?><?cs
+      if:fullrow && idx % 2 ?><?cs set:idx = idx + 1 ?><th class="col2"></th><td></td></tr><tr><?cs /if ?>
+      <th class="col<?cs var:idx % 2 + 1 ?>"><?cs
+        if:field.type != 'radio' ?><label for="<?cs var:name(field) ?>"><?cs
 @@ -227,8 +227,7 @@
    </table>
   </fieldset><?cs /if ?>
@@ -139,39 +170,41 @@
    <input type="hidden" name="action" value="leave" /><?cs
 === trac/ticket/api.py
 ==================================================================
---- trac/ticket/api.py	(/mirror/trac)	(revision 2557)
-+++ trac/ticket/api.py	(/trac/workflow)	(local)
-@@ -19,15 +19,36 @@
+--- trac/ticket/api.py	(/mirror/trac)	(revision 2597)
++++ trac/ticket/api.py	(/trac/workflow-only)	(local)
+@@ -19,15 +19,38 @@
  from trac.perm import IPermissionRequestor
  from trac.wiki import IWikiSyntaxProvider
  from trac.Search import ISearchSource, query_to_sql, shorten_result
 +from trac.ticket.field import *
  
 +class ITicketWorkflow(Interface):
-+    """ This interface controls what actions can be performed on a ticket. """
++    """ This interface controls what actions can be performed on a ticket and
++        also a list of the available ticket fields. """
+ 
+-class TicketSystem(Component):
+-    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
++    # Control ticket actions
 +    def get_ticket_actions(req, ticket):
 +        """ Return the actions that are available given the current state of
 +            ticket and the request object provided. """
  
--class TicketSystem(Component):
--    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
-+    def get_ticket_action_controls(req, ticket, action):
-+        """ Return HTML control for performing action on ticket. """
- 
 -    # Public API
-+    def apply_ticket_action(req, ticket, action):
-+        """ Perform action on ticket. """
++    def get_ticket_action(req, ticket, action):
++        """ Return a trac.ticket.field.Field object for ticket action. """
  
 -    def get_available_actions(self, ticket, perm_):
 -        """Returns the actions that can be performed on the ticket."""
-+#    def get_ticket_fields(req, ticket):
-+#        """ Return a list of fields available for a ticket. """
-+#
-+#    def get_ticket_field_controls(req, ticket, field):
-+#        """ Return the HTML control for managing a ticket field. """
++    def apply_ticket_action(req, ticket, action):
++        """ Perform action on ticket. """
++
++    # Control ticket fields
++#    def filter_ticket_fields(req, ticket, fields):
++#        """ Given a list of ticket.Field objects and a ticket, return the
++#            filtered list of fields. """
 +#
 +#    def change_ticket_field(req, ticket, field):
-+#        """ Change a ticket field. """
++#        """ Change the value of a ticket field. """
 +
 +class DefaultTicketWorkflow(Component):
 +    """ Default Trac implementation of ticket actions. """
@@ -183,14 +216,16 @@
          actions = {
              'new':      ['leave', 'resolve', 'reassign', 'accept'],
              'assigned': ['leave', 'resolve', 'reassign'          ],
-@@ -36,9 +57,81 @@
+@@ -36,9 +59,88 @@
          }
          perms = {'resolve': 'TICKET_MODIFY', 'reassign': 'TICKET_CHGPROP',
                   'accept': 'TICKET_CHGPROP', 'reopen': 'TICKET_CREATE'}
 -        return [action for action in actions.get(ticket['status'], ['leave'])
 -                if action not in perms or perm_.has_permission(perms[action])]
-+        return [action for action in actions.get(ticket['status'], ['leave', 'reopen'])
-+                if action not in perms or req.perm.has_permission(perms[action])]
++        return [action for action in actions.get(
++                ticket['status'], ['leave', 'reopen'])
++                if action not in perms
++                or req.perm.has_permission(perms[action])]
  
 +    def get_ticket_action_controls(self, req, ticket, action):
 +        from trac.ticket import model
@@ -231,6 +266,11 @@
 +        elif action != 'leave':
 +            raise TracError('Invalid ticket action %s' % action)
 +
++    def filter_ticket_fields(self, req, ticket, fields):
++        """ Filter ticket fields. """
++
++    def change_ticket_field(self, req, ticket, field):
++        """ Change a ticket field. """
 +
 +class TicketSystem(Component):
 +    implements(IPermissionRequestor, IWikiSyntaxProvider, ISearchSource)
@@ -267,17 +307,77 @@
      def get_ticket_fields(self):
          """Returns the list of fields available for tickets."""
          from trac.ticket import model
-@@ -109,7 +202,8 @@
-                 'type': self.config.get('ticket-custom', name),
-                 'order': int(self.config.get('ticket-custom', name + '.order', '0')),
-                 'label': self.config.get('ticket-custom', name + '.label', ''),
+@@ -48,11 +150,10 @@
+ 
+         # Basic text fields
+         for name in ('summary', 'reporter'):
+-            field = {'name': name, 'type': 'text', 'label': name.title()}
+-            fields.append(field)
++            fields.append(Text(name, label=name.title()))
+ 
+         # Owner field, can be text or drop-down depending on configuration
+-        field = {'name': 'owner', 'label': 'Owner'}
++        field = Field('owner', label='Owner')
+         if self.config.getbool('ticket', 'restrict_owner'):
+             field['type'] = 'select'
+             users = []
+@@ -65,8 +166,7 @@
+         fields.append(field)
+ 
+         # Description
+-        fields.append({'name': 'description', 'type': 'textarea',
+-                       'label': 'Description'})
++        fields.append(TextArea('description', label='Description'))
+ 
+         # Default select and radio fields
+         selects = [('type', model.Type), ('status', model.Status),
+@@ -79,9 +179,9 @@
+                 # Fields without possible values are treated as if they didn't
+                 # exist
+                 continue
+-            field = {'name': name, 'type': 'select', 'label': name.title(),
+-                     'value': self.config.get('ticket', 'default_' + name),
+-                     'options': options}
++            field = Select(name, label=name.title(), 
++                     value=self.config.get('ticket', 'default_' + name),
++                     options=options)
+             if name in ('status', 'resolution'):
+                 field['type'] = 'radio'
+             elif name in ('milestone', 'version'):
+@@ -90,8 +190,7 @@
+ 
+         # Advanced text fields
+         for name in ('keywords', 'cc', ):
+-            field = {'name': name, 'type': 'text', 'label': name.title()}
+-            fields.append(field)
++            fields.append(Text(name, label=name.title()))
+ 
+         custom_fields = self.get_custom_fields()
+         for field in custom_fields:
+@@ -104,13 +203,15 @@
+         for name in [option for option, value
+                      in self.config.options('ticket-custom')
+                      if '.' not in option]:
+-            field = {
+-                'name': name,
+-                'type': self.config.get('ticket-custom', name),
+-                'order': int(self.config.get('ticket-custom', name + '.order', '0')),
+-                'label': self.config.get('ticket-custom', name + '.label', ''),
 -                'value': self.config.get('ticket-custom', name + '.value', '')
-+                'value': self.config.get('ticket-custom', name + '.value', ''),
-+                'skip':  int(self.config.get('ticket-custom', name + '.skip', '0')),
-             }
+-            }
++            field = Field(name,
++                type=self.config.get('ticket-custom', name),
++                order=int(self.config.get('ticket-custom', name + '.order', '0')),
++                label=self.config.get('ticket-custom', name + '.label', ''),
++                value=self.config.get('ticket-custom', name + '.value', ''),
++                hidden= int(self.config.get('ticket-custom', name + '.hidden', '0')),
++                disabled=int(self.config.get('ticket-custom', name + '.disabled', '0')),
++                fullrow=int(self.config.get('ticket-custom', name + '.fullrow', '0')),
++            )
              if field['type'] == 'select' or field['type'] == 'radio':
                  options = self.config.get('ticket-custom', name + '.options')
-@@ -122,6 +216,17 @@
+                 field['options'] = [value.strip() for value in options.split('|')]
+@@ -122,6 +223,17 @@
          fields.sort(lambda x, y: cmp(x['order'], y['order']))
          return fields
  
@@ -295,7 +395,7 @@
      # IPermissionRequestor methods
  
      def get_permission_actions(self):
-@@ -179,4 +284,4 @@
+@@ -179,4 +291,4 @@
                     '#%d: %s' % (tid, util.shorten_line(summary)),
                     date, author,
                     shorten_result(desc, query.split()))
@@ -303,8 +403,8 @@
 +
 === trac/ticket/web_ui.py
 ==================================================================
---- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2557)
-+++ trac/ticket/web_ui.py	(/trac/workflow)	(local)
+--- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2597)
++++ trac/ticket/web_ui.py	(/trac/workflow-only)	(local)
 @@ -28,8 +28,8 @@
  from trac.web import IRequestHandler
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -315,6 +415,15 @@
  class NewticketModule(Component):
  
      implements(IEnvironmentSetupParticipant, INavigationContributor,
+@@ -110,7 +110,7 @@
+             del field['name']
+             if name in ('summary', 'reporter', 'description', 'type', 'status',
+                         'resolution'):
+-                field['skip'] = True
++                field['hidden'] = True
+             elif name == 'owner':
+                 field['label'] = 'Assign to'
+             elif name == 'milestone':
 @@ -348,23 +348,12 @@
  
          # Do any action on the ticket?
@@ -342,6 +451,15 @@
  
          now = int(time.time())
          ticket.save_changes(req.args.get('author', req.authname),
+@@ -399,7 +388,7 @@
+             del field['name']
+             if name in ('summary', 'reporter', 'description', 'type', 'status',
+                         'resolution', 'owner'):
+-                field['skip'] = True
++                field['hidden'] = True
+             req.hdf['ticket.fields.' + name] = field
+ 
+         req.hdf['ticket.reporter_id'] = reporter_id
 @@ -445,6 +434,17 @@
                                                                       ticket.id)
  
@@ -365,9 +483,9 @@
 +            req.hdf['ticket.actions'] = ticket_actions
 === trac/ticket/field.py
 ==================================================================
---- trac/ticket/field.py	(/mirror/trac)	(revision 2557)
-+++ trac/ticket/field.py	(/trac/workflow)	(local)
-@@ -0,0 +1,62 @@
+--- trac/ticket/field.py	(/mirror/trac)	(revision 2597)
++++ trac/ticket/field.py	(/trac/workflow-only)	(local)
+@@ -0,0 +1,79 @@
 +# -*- coding: iso-8859-1 -*-
 +#
 +# Copyright (C) 2005 Edgewall Software
@@ -401,35 +519,58 @@
 +__all__ = [ 'Field', 'Text', 'CheckBox', 'Radio', 'TextArea', 'Select' ]
 +
 +class Field(dict):
-+    """ Represents a ticket field control. """
-+    def __init__(self, name, value='', order=0, skip=0, label='', type = None, **kwargs):
++    """ Represents a ticket field control.
++
++            order	    Order in which fields appear.
++            hidden	    Do not display the field at all.
++            disabled	Disable modification of field.
++            fullrow	    If applicable, span two columns of the ticket
++                        properties.
++    """
++    def __init__(self, name, value='', order=0, hidden=0, label='', disabled=0,
++                 fullrow=0, type=None):
++        dict.__init__(self)
 +        if type is None:
 +            type = self.__class__.__name__.lower()
 +        self.update({
 +            'name': name,
-+            'type': type,
 +            'value': value,
 +            'order': int(order),
++            'hidden': int(hidden),
 +            'label': label,
-+            'skip': int(skip),
++            'disabled': int(disabled),
++            'fullrow': int(fullrow),
++            'type': type,
 +        })
-+        self.update(kwargs)
 +
 +class Text(Field): pass
 +
 +class CheckBox(Field): pass
 +
 +class TextArea(Field):
-+    def __init__(self, name, value='', order=0, skip=0, label='', width='', height=''):
-+        Field.__init__(self, name, value, order, skip, width=width, height=height)
++    def __init__(self, name, width=None, height=None, **kwargs):
++        Field.__init__(self, name, **kwargs)
++        if width is not None:
++            self['width'] = int(width)
++        if height is not None:
++            self['height'] = int(height)
 +
 +class Radio(Field):
-+    def __init__(self, name, options, value='', order=0, skip=0, label=''):
-+        Field.__init__(self, name, value, order, skip, options=options)
++    def __init__(self, name, options=[], **kwargs):
++        Field.__init__(self, name, **kwargs)
++        self['options'] = options
 +
 +class Select(Field):
-+    def __init__(self, name, options, value='', order=0, skip=0, label=''):
-+        Field.__init__(self, name, value, order, skip, options=options)
++    def __init__(self, name, options=[], optional=0, **kwargs):
++        Field.__init__(self, name, **kwargs)
++        self['options'] = options
++        self['optional'] = int(optional)
+
+Property changes on: trac/ticket/field.py
+___________________________________________________________________
+Name: svk:merge
+ +5349d9f9-240a-0410-8526-bdcfa9bb3cf4:/trac/workflow/trac/ticket/field.py:2575
+
 
 Property changes on: 
 ___________________________________________________________________
@@ -437,6 +578,6 @@ Name: svk:merge
   8537732e-d8ef-0310-9407-9991635669ee:/trac-local/trunk:3673
   8537732e-d8ef-0310-9407-9991635669ee:/trac-local/trunk-fastcgi:1014
   89e4328e-11e8-0310-811a-b3a06f405a76:/trac:6844
- +af82e41b-90c4-0310-8c96-b1721e28e2e2:/trunk:2766
+ +af82e41b-90c4-0310-8c96-b1721e28e2e2:/trunk:2771
   ecde85df-87dc-0310-ab16-a9b1c1177255:/local/trac/trunk:796
 
