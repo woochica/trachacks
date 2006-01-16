@@ -1,6 +1,6 @@
 === templates/macros.cs
 ==================================================================
---- templates/macros.cs	(/mirror/trac)	(revision 2597)
+--- templates/macros.cs	(/mirror/trac)	(revision 2600)
 +++ templates/macros.cs	(/trac/workflow-only)	(local)
 @@ -179,4 +179,26 @@
      var:href ?>&amp;order=<?cs var:class ?><?cs
@@ -31,7 +31,7 @@
  /def ?>
 === templates/ticket.cs
 ==================================================================
---- templates/ticket.cs	(/mirror/trac)	(revision 2597)
+--- templates/ticket.cs	(/mirror/trac)	(revision 2600)
 +++ templates/ticket.cs	(/trac/workflow-only)	(local)
 @@ -54,13 +54,13 @@
       if:ticket.status == 'assigned' ?> (accepted)<?cs /if ?></td>
@@ -64,7 +64,7 @@
       if:fullrow && idx % 2 ?><?cs set:idx = idx + 1 ?><th class="col2"></th><td></td></tr><tr><?cs /if ?>
       <th class="col<?cs var:idx % 2 + 1 ?>"><?cs
         if:field.type != 'radio' ?><label for="<?cs var:name(field) ?>"><?cs
-@@ -227,8 +227,7 @@
+@@ -227,63 +227,60 @@
    </table>
   </fieldset><?cs /if ?>
  
@@ -74,7 +74,11 @@
   <fieldset id="action">
    <legend>Action</legend><?cs
    if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
-@@ -238,52 +237,47 @@
+   /if ?><?cs
+-  def:action_radio(id) ?>
+-   <input type="radio" id="<?cs var:id ?>" name="action" value="<?cs
++  def:action_radio(id)
++  ?><input type="radio" id="<?cs var:id ?>" name="action" value="<?cs
       var:id ?>"<?cs if:ticket.action == id ?> checked="checked"<?cs
       /if ?> /><?cs
    /def ?>
@@ -125,25 +129,28 @@
 -   </script><?cs
 -  /if ?>
 +
-+  <script type="text/javascript">var action_controls = new Array();</script>
-+
-+  <?cs each:action = ticket.actions ?>
-+   <script type="text/javascript">
++  <script type="text/javascript">var action_controls = new Array();</script><?cs
++  
++  each:action = ticket.actions ?>
++  <script type="text/javascript">
 +   action_controls['<?cs var:action.action ?>'] = new Array();
-+   </script>
-+			<?cs call:action_radio(action.action) ?>
-+			<label for="<?cs var:action.action ?>"><?cs alt:action.label ?><?cs var:action.action ?><?cs /alt ?></label>
-+   <?cs if:action.controls.0.name ?>
-+    <span id="<?cs var:action.action ?>_controls">
-+     <?cs each:control = action.controls ?>
-+       <script type="text/javascript">action_controls['<?cs var:action.action ?>'].push('<?cs var:control.name ?>');</script>
-+       <?cs call:form_control(control) ?>
-+     <?cs /each ?>
-+    </span>
-+   <?cs /if ?>
-+			<br />
-+  <?cs /each ?>
-+
++  </script>
++  <label for="<?cs var:action.action ?>">
++  <?cs call:action_radio(action.action) ?>
++  <?cs alt:action.label ?><?cs var:action.action ?><?cs /alt ?>
++  </label><?cs
++  if:action.controls.0.name ?>
++  <span id="<?cs var:action.action ?>_controls"><?cs
++  each:control = action.controls ?>
++  <script type="text/javascript">
++   action_controls['<?cs var:action.action ?>'].push('<?cs var:control.name ?>');
++  </script><?cs
++  call:form_control(control) ?><?cs
++  /each ?>
++  </span>
++  <?cs /if ?>
++  <br /><?cs
++  /each ?>
 +  <script type="text/javascript">
 +   var action_control_elements = new Array();
 +   for (var action in action_controls) {
@@ -170,7 +177,7 @@
    <input type="hidden" name="action" value="leave" /><?cs
 === trac/ticket/api.py
 ==================================================================
---- trac/ticket/api.py	(/mirror/trac)	(revision 2597)
+--- trac/ticket/api.py	(/mirror/trac)	(revision 2600)
 +++ trac/ticket/api.py	(/trac/workflow-only)	(local)
 @@ -19,15 +19,38 @@
  from trac.perm import IPermissionRequestor
@@ -403,7 +410,7 @@
 +
 === trac/ticket/web_ui.py
 ==================================================================
---- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2597)
+--- trac/ticket/web_ui.py	(/mirror/trac)	(revision 2600)
 +++ trac/ticket/web_ui.py	(/trac/workflow-only)	(local)
 @@ -28,8 +28,8 @@
  from trac.web import IRequestHandler
@@ -483,7 +490,7 @@
 +            req.hdf['ticket.actions'] = ticket_actions
 === trac/ticket/field.py
 ==================================================================
---- trac/ticket/field.py	(/mirror/trac)	(revision 2597)
+--- trac/ticket/field.py	(/mirror/trac)	(revision 2600)
 +++ trac/ticket/field.py	(/trac/workflow-only)	(local)
 @@ -0,0 +1,79 @@
 +# -*- coding: iso-8859-1 -*-
