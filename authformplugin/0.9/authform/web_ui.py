@@ -12,7 +12,7 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
-# Author: Jonas Borgström <jonas@edgewall.com 
+# Author: Jonas Borgström <jonas@edgewall.com>
 # Author: Andrew Deason <adeason@tjhsst.edu>
 
 from __future__ import generators
