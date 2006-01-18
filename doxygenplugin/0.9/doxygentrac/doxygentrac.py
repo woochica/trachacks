@@ -14,6 +14,7 @@ from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.Search import ISearchSource
+from trac.util import Markup
 
 def compare_rank(x, y):
     if x['rank'] == y['rank']:
@@ -31,7 +32,7 @@ class DoxygenPlugin(Component):
     def get_active_navigation_item(self, req):
         return 'doxygen'
     def get_navigation_items(self, req):
-        yield 'mainnav', 'doxygen', '<a href="%s">Doxygen</a>' % (self.env.href.doxygen())
+        yield ('mainnav', 'doxygen', Markup('<a href="%s">Doxygen</a>', self.env.href.doxygen()))
 
     # IRequestHandler methods
 
