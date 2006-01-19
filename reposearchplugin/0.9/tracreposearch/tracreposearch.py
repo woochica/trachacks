@@ -1,18 +1,28 @@
 from trac.core import *
 from trac.Search import ISearchSource, shorten_result
 from trac.versioncontrol.api import Node
+from trac.perm import IPermissionRequestor
 from trac.util import Markup
 import re
 import posixpath
 
 class TracRepoSearchPlugin(Component):
     """ Search the source repository. """
-    implements(ISearchSource)
+    implements(ISearchSource, IPermissionRequestor)
 
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        yield 'REPO_SEARCH'
+
+    # ISearchSource methods
     def get_search_filters(self, req):
-        yield ('repo', 'Source Repository')
+        if req.perm.has_permission('REPO_SEARCH'):
+            yield ('repo', 'Source Repository', 0)
 
     def get_search_results(self, req, query, filters):
+        if not req.perm.has_permission('REPO_SEARCH'):
+            return
+
         repo = self.env.get_repository(req.authname)
 
         query = query.split()
