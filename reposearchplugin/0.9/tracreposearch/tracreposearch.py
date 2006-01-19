@@ -30,9 +30,6 @@ class TracRepoSearchPlugin(Component):
         excludes = [glob for glob in self.env.config.get('repo-search',
                    'exclude', '').split(os.path.pathsep) if glob]
 
-        if includes and not excludes:
-            excludes = ['*']
-
         repo = self.env.get_repository(req.authname)
 
         query = query.split()
@@ -43,19 +40,16 @@ class TracRepoSearchPlugin(Component):
 
         def searchable(path):
             # Exclude paths
-            searchable = 1
             for exclude in excludes:
                 if fnmatch(path, exclude):
-                    searchable = 0
-                    break
+                    return 0
 
             # Include paths
             for include in includes:
                 if fnmatch(path, include):
-                    searchable = 1
-                    break
+                    return 1
 
-            return searchable
+            return 1
 
         def match_name(name):
             for term in query:
