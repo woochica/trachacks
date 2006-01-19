@@ -12,10 +12,6 @@ class TracRepoSearchPlugin(Component):
     """ Search the source repository. """
     implements(ISearchSource, IPermissionRequestor)
 
-    def __init__(self):
-        from tracreposearch.indexer import Indexer
-        self.indexer = Indexer(self.env)
-
     def _get_filters(self):
         includes = [glob for glob in self.env.config.get('repo-search',
                    'include', '').split(os.path.pathsep) if glob]
@@ -72,6 +68,8 @@ class TracRepoSearchPlugin(Component):
 
         # Use indexer if possible, otherwise fall back on brute force search.
         try:
+            from tracreposearch.indexer import Indexer
+            self.indexer = Indexer(self.env)
             self.indexer.reindex(repo)
             walker = lambda repo, query: [repo.get_node(filename) for filename in self.indexer.find_words(query)]
         except TracError:
