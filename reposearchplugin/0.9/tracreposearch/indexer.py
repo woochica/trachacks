@@ -9,6 +9,7 @@ described at:
 
 from trac.core import TracError
 from tracreposearch.search import TracRepoSearchPlugin
+from tracreposearch.lock import lock, unlock, LOCK_EX
 from trac.versioncontrol.api import Node
 import anydbm
 import re
@@ -44,7 +45,34 @@ class dbdict(object):
 
     def sync(self):
         self.dbm.sync()
-        
+
+index_lock = None
+lock_count = 0
+
+def acquire_lock():
+    global index_lock, lock_count
+    lock_count += 1
+    if lock_count == 1:
+        index_lock = open('/tmp/repo-search.lock', 'w+')
+        lock(index_lock, LOCK_EX)
+
+def release_lock():
+    global index_lock, lock_count
+    lock_count -= 1
+    if lock_count == 0:
+        index_lock.close()
+        index_lock = None
+
+def synchronized(f):
+    """ Synchronization decorator. """
+
+    def wrap(*args, **kw):
+        acquire_lock()
+        try:
+            return f(*args, **kw)
+        finally:
+            release_lock()
+    return wrap
 
 class Indexer:
     _strip = re.compile(r'\w+')
@@ -62,18 +90,20 @@ class Indexer:
 
         self.index_dir = self.env.config.get('repo-search', 'index')
         self.minimum_word_length = int(self.env.config.get('repo-search', 'minimum-word-length', 3))
+
+        if not os.path.isdir(self.index_dir):
+            os.mkdir(self.index_dir)
+
         try:
             self._open_storage('r')
         except:
             self.reindex()
 
     def _open_storage(self, mode):
-        if not os.path.isdir(self.index_dir):
-            os.mkdir(self.index_dir)
-
         self.meta = anydbm.open(os.path.join(self.index_dir, 'meta.db'), mode)
         self.words = dbdict(os.path.join(self.index_dir, 'words.db'), mode)
         self.bigrams = dbdict(os.path.join(self.index_dir, 'bigrams.db'), mode)
+    _open_storage = synchronized(_open_storage)
 
     def _bigram_word(self, word):
         for start in range(0, len(word) - 1):
@@ -86,14 +116,17 @@ class Indexer:
         self.meta.sync()
         self.words.sync()
         self.bigrams.sync()
+    sync = synchronized(sync)
 
     def need_reindex(self, repo):
-        return not hasattr(self, 'meta') or \
+        result = not hasattr(self, 'meta') or \
             repo.youngest_rev != int(self.meta.get('last-repo-rev', -1)) \
             or self.env.config.get('repo-search', 'include', '1') \
                != self.meta.get('index-include', '') \
             or self.env.config.get('repo-search', 'exclude', '') \
-               != self.meta.get('index-exclude', '1') \
+               != self.meta.get('index-exclude', '1')
+        return result
+    need_reindex = synchronized(need_reindex)
 
     def _bigram_search(self, bigrams):
         """ Find all words matching bigrams. """
@@ -109,6 +142,7 @@ class Indexer:
             else:
                 return ()
         return words
+    _bigram_search = synchronized(_bigram_search)
 
     def reindex_node(self, node):
         def node_tokens():
@@ -136,6 +170,7 @@ class Indexer:
                     self.words[word] = files
                 else:
                     self.words[word] = [node.path]
+    reindex_node = synchronized(reindex_node)
 
     def reindex(self, repo = None):
         repo = repo or self.env.get_repository()
@@ -150,6 +185,7 @@ class Indexer:
             self.sync(repo)
             self._open_storage('r')
             self.env.log.debug('Index finished')
+    reindex = synchronized(reindex)
 
     def find_words(self, words):
         # First, find all possible words that each search word matches
@@ -176,3 +212,4 @@ class Indexer:
             else:
                 all_files.intersection_update(word_files)
         return all_files
+    find_words = synchronized(find_words)
