@@ -1,2 +1,1 @@
-# tracreposearch module
-from tracreposearch import *
+from search import *
