@@ -5,6 +5,8 @@ from trac.perm import IPermissionRequestor
 from trac.util import Markup
 import re
 import posixpath
+import os
+from fnmatch import fnmatch
 
 class TracRepoSearchPlugin(Component):
     """ Search the source repository. """
@@ -23,35 +25,70 @@ class TracRepoSearchPlugin(Component):
         if not req.perm.has_permission('REPO_SEARCH'):
             return
 
+        includes = [glob for glob in self.env.config.get('repo-search',
+                   'include', '').split(os.path.pathsep) if glob]
+        excludes = [glob for glob in self.env.config.get('repo-search',
+                   'exclude', '').split(os.path.pathsep) if glob]
+
+        if includes and not excludes:
+            excludes = ['*']
+
         repo = self.env.get_repository(req.authname)
 
         query = query.split()
         db = self.env.get_db_cnx()
 
+        self.env.log.debug(str(includes))
+        self.env.log.debug(str(excludes))
+
+        def searchable(path):
+            # Exclude paths
+            searchable = 1
+            for exclude in excludes:
+                if fnmatch(path, exclude):
+                    searchable = 0
+                    break
+
+            # Include paths
+            for include in includes:
+                if fnmatch(path, include):
+                    searchable = 1
+                    break
+
+            return searchable
+
+        def match_name(name):
+            for term in query:
+                if term not in name:
+                    return 0
+            return 1
+
         def walk_repo(path):
             node = repo.get_node(path)
+            basename = posixpath.basename(path)
+
             if node.kind == Node.DIRECTORY:
+                if match_name(basename):
+                    change = repo.get_changeset(node.rev)
+                    yield (self.env.href.browser(path),
+                           path, change.date, change.author,
+                           'Directory')
+
                 for subnode in node.get_entries():
                     for result in walk_repo(subnode.path):
                         yield result
             else:
-                # Search name
-                basename = posixpath.basename(path)
-                match_name = 1
-                match_content = 1
-                excerpt = None
-                for term in query:
-                    if term not in basename:
-                        match_name = 0
-                        break
+                if not searchable(path):
+                    return
 
                 # Search content
+                match_content = 1
                 content = node.get_content().read()
                 for term in query:
                     if term not in content:
                         match_content = 0
                         break
-                if not (match_name or match_content):
+                if not (match_name(basename) or match_content):
                     return
                 change = repo.get_changeset(node.rev)
                 yield (self.env.href.browser(path),
