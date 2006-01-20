@@ -7,6 +7,8 @@ from trac.web.main import IRequestHandler
 from trac.util import escape, shorten_line
 from trac.wiki.api import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.Search import ISearchSource
+import inspect, os
+from pydoc import ispackage
 
 try:
     from trac.util import Markup
@@ -21,6 +23,7 @@ import time
 import sys
 import os
 import imp
+from fnmatch import fnmatch
 
 try:
     import threading
@@ -44,6 +47,52 @@ class TracDoc(pydoc.HTMLDoc):
     
     def __init__(self, env):
         self.env = env
+
+    def index(self, dir, shadowed=None, includes=[], excludes=[]):
+        """Generate an HTML index for a directory of modules."""
+        modpkgs = []
+        if shadowed is None: shadowed = {}
+        seen = {}
+        files = os.listdir(dir)
+
+        def found(name, ispackage, modpkgs=modpkgs, shadowed=shadowed,
+                  seen=seen):
+            if name not in seen:
+                modpkgs.append((name, '', ispackage, name in shadowed))
+                seen[name] = 1
+                shadowed[name] = 1
+
+        def matched(file):
+            for match in excludes:
+                if fnmatch(file, match):
+                    return 0
+            for match in includes:
+                if fnmatch(file, match):
+                    self.env.log.debug(file + ',' + match)
+                    return 1
+            return not includes and not excludes
+
+        # Package spam/__init__.py takes precedence over module spam.py.
+
+        # Do matching against include/exclude list
+        for file in files:
+            path = os.path.join(dir, file)
+            if ispackage(path) and matched(path):
+                found(file, 1)
+
+        for file in files:
+            path = os.path.join(dir, file)
+            if os.path.isfile(path):
+                modname = inspect.getmodulename(file)
+                if modname and matched(modname):
+                    found(modname, 0)
+
+        modpkgs.sort()
+        contents = self.multicolumn(modpkgs, self.modpkglink)
+        if modpkgs:
+            return self.bigsection(dir, '#ffffff', '#ee77aa', contents)
+        else:
+            return ''
 
     def modulelink(self, obj):
         return '<a href="%s">%s</a>' % \
@@ -104,6 +153,12 @@ class PyDoc(Component):
                             syspath.split(os.pathsep)]
         else:
             self.syspath = sys.path
+
+        self.includes = [p for p in self.config.get('pydoc',
+                         'include', '').split() if p]
+        self.excludes = [p for p in self.config.get('pydoc',
+                         'exclude', '').split() if p]
+
         show_private = self.config.get('pydoc', 'show_private', '')
         self.show_private = [p.rstrip('.*') for p in show_private.split()]
         self.makedoc_lock = threading.Lock()
@@ -161,7 +216,8 @@ class PyDoc(Component):
                     doc = '<h1>Python: Index of Modules</h1>'
                 for dir in self.syspath:
                     if os.path.isdir(dir):
-                        doc += self.doc.index(dir)
+                        doc += self.doc.index(dir, includes=self.includes,
+                                              excludes=self.excludes)
                 return doc
             else:
                 if inline:
