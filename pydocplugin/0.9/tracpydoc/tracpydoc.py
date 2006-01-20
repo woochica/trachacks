@@ -62,19 +62,9 @@ class TracDoc(pydoc.HTMLDoc):
                 seen[name] = 1
                 shadowed[name] = 1
 
-        def matched(file):
-            for match in excludes:
-                if fnmatch(file, match):
-                    return 0
-            for match in includes:
-                if fnmatch(file, match):
-                    self.env.log.debug(file + ',' + match)
-                    return 1
-            return not includes and not excludes
+        matched = PyDoc(self.env).filter_match
 
         # Package spam/__init__.py takes precedence over module spam.py.
-
-        # Do matching against include/exclude list
         for file in files:
             path = os.path.join(dir, file)
             if ispackage(path) and matched(path) or matched(file):
@@ -154,14 +144,28 @@ class PyDoc(Component):
         else:
             self.syspath = sys.path
 
-        self.includes = [p for p in self.config.get('pydoc',
-                         'include', '').split() if p]
-        self.excludes = [p for p in self.config.get('pydoc',
-                         'exclude', '').split() if p]
+        self.includes, self.excludes = self.get_filters()
 
         show_private = self.config.get('pydoc', 'show_private', '')
         self.show_private = [p.rstrip('.*') for p in show_private.split()]
         self.makedoc_lock = threading.Lock()
+
+    def filter_match(self, file):
+        includes, excludes = self.get_filters()
+        for match in excludes:
+            if fnmatch(file, match):
+                return 0
+        for match in includes:
+            if fnmatch(file, match):
+                return 1
+        return not includes
+
+
+    def get_filters(self):
+        return ([p for p in self.config.get('pydoc',
+                         'include', '').split() if p],
+                [p for p in self.config.get('pydoc',
+                         'exclude', '').split() if p])
 
     def load_object(self, fullobject):
         """ Load an arbitrary object from a full dotted path. """
@@ -365,14 +369,17 @@ class PyDocSearch(Component):
     # ISearchSource methods
 
     def get_search_filters(self, req):
-        yield ('pydoc', 'Python Documentation')
+        yield ('pydoc', 'Python Documentation', 0)
 
     def get_search_results(self, req, query, filters):
         query = query.split()
         results = []
+        matched = PyDoc(self.env).filter_match
         if 'pydoc' in filters:
             def callback(path, modname, desc):
                 for q in query:
+                    if (path and not matched(path)) and (modname and not matched(modname)):
+                        return
                     if q in modname or q.lower() in desc.lower():
                         results.append((self.env.href.pydoc(modname), modname,
                                         int(time.time()), 'pydoc', desc or ''))
