@@ -21,9 +21,8 @@ try:
 except:
     from sets import Set as set
 
-class dbdict(object):
-    """ Wrapper around anydbm to transparently allow lists to be stored as
-        values. """
+class psetdict(object):
+    """ Wrapper around anydbm to persistently store a dictionary of sets. """
 
     def __init__(self, file, mode):
         self.dbm = anydbm.open(file, mode)
@@ -32,7 +31,7 @@ class dbdict(object):
         return key in self.dbm
 
     def __getitem__(self, key):
-       return self.dbm[key].split(pathsep)
+       return set(self.dbm[key].split(pathsep))
 
     def __setitem__(self, key, value):
         self.dbm[key] = pathsep.join(value)
@@ -50,6 +49,7 @@ index_lock = None
 lock_count = 0
 
 def acquire_lock():
+    # This is not ideal...
     global index_lock, lock_count
     lock_count += 1
     if lock_count == 1:
@@ -100,9 +100,17 @@ class Indexer:
             self.reindex()
 
     def _open_storage(self, mode):
+        # Stores meta information; last repo version, include list, etc.
         self.meta = anydbm.open(os.path.join(self.index_dir, 'meta.db'), mode)
-        self.words = dbdict(os.path.join(self.index_dir, 'words.db'), mode)
-        self.bigrams = dbdict(os.path.join(self.index_dir, 'bigrams.db'), mode)
+        # word:file mapping
+        self.words = psetdict(os.path.join(self.index_dir, 'words.db'), mode)
+        # bigram:word mapping
+        self.bigrams = psetdict(os.path.join(self.index_dir, 'bigrams.db'), mode)
+        # file:rev mapping
+        self.revs = anydbm.open(os.path.join(self.index_dir, 'revs.db'), mode)
+        # file:words mapping
+        self.files = psetdict(os.path.join(self.index_dir, 'files.db'), mode)
+        # Probably need a word:bigram mapping table as well :\
     _open_storage = synchronized(_open_storage)
 
     def _bigram_word(self, word):
@@ -116,6 +124,8 @@ class Indexer:
         self.meta.sync()
         self.words.sync()
         self.bigrams.sync()
+        self.revs.sync()
+        self.files.sync()
     sync = synchronized(sync)
 
     def need_reindex(self, repo):
@@ -129,13 +139,13 @@ class Indexer:
     need_reindex = synchronized(need_reindex)
 
     def _bigram_search(self, bigrams):
-        """ Find all words matching bigrams. """
+        """ Find all words containing matching bigrams. """
         first_hit = 1
         words = set()
         for bigram in bigrams:
             if bigram in self.bigrams:
                 if first_hit:
-                    words = set(self.bigrams[bigram])
+                    words = self.bigrams[bigram]
                     first_hit = 0
                 else:
                     words.intersection_update(set(self.bigrams[bigram]))
@@ -151,6 +161,7 @@ class Indexer:
             for token in self._strip.finditer(node.path):
                 yield token.group().lower()
 
+        node_words = set()
         for word in node_tokens():
             if len(word) >= self.minimum_word_length:
                 # Split word into bigrams and add to the bigram LUT
@@ -170,17 +181,30 @@ class Indexer:
                     self.words[word] = files
                 else:
                     self.words[word] = [node.path]
+                node_words.add(word)
+        self.files[node.path] = node_words
+        self.revs[node.path] = str(node.rev)
     reindex_node = synchronized(reindex_node)
 
     def reindex(self, repo = None):
+        """ Reindex the repository if necessary. """
         repo = repo or self.env.get_repository()
 
         if self.need_reindex(repo):
             self.env.log.debug('Indexing repository (either repository or indexing criteria have changed)')
-            self._open_storage('n')
+            self._open_storage('c')
             for node in TracRepoSearchPlugin(self.env).walk_repo(repo):
                 if node.kind != Node.DIRECTORY:
-                    self.reindex_node(node)
+                    # Node has changed?
+                    if int(self.revs.get(node.path, -1)) != node.rev:
+                        self.env.log.debug("Reindexing %s" % node.path)
+                        # Invalidate old index
+                        if node.path in self.files:
+                            for word in self.files[node.path]:
+                                word_files = self.words[word]
+                                word_files.discard(node.path)
+                                self.words[word] = word_files
+                        self.reindex_node(node)
 
             self.sync(repo)
             self._open_storage('r')

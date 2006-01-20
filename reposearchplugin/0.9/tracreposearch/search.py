@@ -99,8 +99,8 @@ class TracRepoSearchPlugin(Component):
         for node in walker(repo, query):
             change = repo.get_changeset(node.rev)
             if node.kind == Node.DIRECTORY:
-                yield (self.env.href.browser(path),
-                       path, change.date, change.author,
+                yield (self.env.href.browser(node.path),
+                       node.path, change.date, change.author,
                        'Directory')
             else:
                 yield (self.env.href.browser(node.path),
