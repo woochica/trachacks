@@ -61,6 +61,8 @@ class TracRepoSearchPlugin(Component):
             yield ('repo', 'Source Repository', 0)
 
     def get_search_results(self, req, query, filters):
+        if 'repo' not in filters:
+            return
         repo = self.env.get_repository(req.authname)
         query = [term.lower() for term in query.split()]
         db = self.env.get_db_cnx()
