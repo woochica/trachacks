@@ -23,7 +23,7 @@ Index: web_ui.py
          pagename = req.args.get('page', 'WikiStart')
          version = req.args.get('version')
  
-+        self.authz.assert_authorization(req, req.authname, pagename, 'WIKI_VIEW')
++        self.authz.assert_authorization(req.perm, req.authname, pagename, 'WIKI_VIEW')
          db = self.env.get_db_cnx()
          page = WikiPage(self.env, pagename, version, db)
  
@@ -36,7 +36,7 @@ Index: web_ui.py
 +				permission = permission[0]
 +            self.log.debug("PERMISSION: %s", permission)
 +            req.hdf['trac.acl.' + permission] =\
-+                self.authz.has_authorization(req, req.authname, page.name, permission)
++                self.authz.has_authorization(req.perm, req.authname, page.name, permission)
          return 'wiki.cs', None
  
      # ITimelineEventProvider methods
@@ -55,7 +55,7 @@ Index: web_ui.py
 -                    comment = wiki_to_oneliner(comment, self.env, db,
 -                                               shorten=True)
 -                yield 'wiki', href, title, t, author, comment
-+                if self.authz.has_authorization(req, req.authname, name, 'WIKI_VIEW'):
++                if self.authz.has_authorization(req.perm, req.authname, name, 'WIKI_VIEW'):
 +                    title = '<em>%s</em> edited by %s' % (
 +                            escape(name), escape(author))
 +                    if format == 'rss':
@@ -78,7 +78,7 @@ Index: web_ui.py
              req.perm.assert_permission('WIKI_ADMIN')
          else:
              req.perm.assert_permission('WIKI_DELETE')
-+            self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_DELETE')
++            self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_DELETE')
  
          if req.args.has_key('cancel'):
              req.redirect(self.env.href.wiki(page.name))
@@ -86,10 +86,10 @@ Index: web_ui.py
              req.perm.assert_permission('WIKI_ADMIN')
          elif not page.exists:
              req.perm.assert_permission('WIKI_CREATE')
-+            self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_CREATE')
++            self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_CREATE')
          else:
              req.perm.assert_permission('WIKI_MODIFY')
-+            self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_MODIFY')
++            self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_MODIFY')
  
          page.text = req.args.get('text')
          if req.perm.has_permission('WIKI_ADMIN'):
@@ -97,7 +97,7 @@ Index: web_ui.py
              req.perm.assert_permission('WIKI_ADMIN')
          else:
              req.perm.assert_permission('WIKI_DELETE')
-+            self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_DELETE')
++            self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_DELETE')
  
          version = None
          if req.args.has_key('delete_version'):
@@ -105,7 +105,7 @@ Index: web_ui.py
  
      def _render_diff(self, req, db, page):
          req.perm.assert_permission('WIKI_VIEW')
-+        self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_VIEW')
++        self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_VIEW')
  
          if not page.exists:
              raise TracError, "Version %s of page %s does not exist" \
@@ -113,7 +113,7 @@ Index: web_ui.py
  
      def _render_editor(self, req, db, page, preview=False):
          req.perm.assert_permission('WIKI_MODIFY')
-+        self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_MODIFY')
++        self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_MODIFY')
  
          if req.args.has_key('text'):
              page.text = req.args.get('text')
@@ -121,7 +121,7 @@ Index: web_ui.py
          page.
          """
          req.perm.assert_permission('WIKI_VIEW')
-+        self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_VIEW')
++        self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_VIEW')
  
          if not page.exists:
              raise TracError, "Page %s does not exist" % page.name
@@ -129,7 +129,7 @@ Index: web_ui.py
  
      def _render_view(self, req, db, page):
          req.perm.assert_permission('WIKI_VIEW')
-+        self.authz.assert_authorization(req, req.authname, page.name, 'WIKI_VIEW')
++        self.authz.assert_authorization(req.perm, req.authname, page.name, 'WIKI_VIEW')
  
          if page.name == 'WikiStart':
              req.hdf['title'] = ''
@@ -139,7 +139,7 @@ Index: web_ui.py
          else:
 -            if not req.perm.has_permission('WIKI_CREATE'):
 +            if not req.perm.has_permission('WIKI_CREATE') and\
-+                self.authz.has_authorization(req, req.authname, page.name, 'WIKI_CREATE'):
++                self.authz.has_authorization(req.perm, req.authname, page.name, 'WIKI_CREATE'):
                  raise TracError('Page %s not found' % page.name)
              req.hdf['wiki.page_html'] = '<p>Describe "%s" here</p>' % page.name
  
@@ -149,7 +149,7 @@ Index: web_ui.py
          req.hdf['wiki.attachments'] = attachments
 -        if req.perm.has_permission('WIKI_MODIFY'):
 +        if req.perm.has_permission('WIKI_MODIFY') and\
-+            self.authz.has_authorization(req, req.authname, page.name, 'WIKI_MODIFY'):
++            self.authz.has_authorization(req.perm, req.authname, page.name, 'WIKI_MODIFY'):
              attach_href = self.env.href.attachment('wiki', page.name)
              req.hdf['wiki.attach_href'] = attach_href
  
@@ -161,7 +161,7 @@ Index: web_ui.py
 -                   '%s: %s' % (name, escape(shorten_line(text))),
 -                   date, author,
 -                   escape(shorten_result(text, query.split())))
-+            if self.authz.has_authorization(req, name, 'WIKI_VIEW'):
++            if self.authz.has_authorization(req.perm, name, 'WIKI_VIEW'):
 +                yield (self.env.href.wiki(name),
 +                    '%s: %s' % (name, escape(shorten_line(text))),
 +                    date, author,
@@ -169,7 +169,7 @@ Index: web_ui.py
 Index: rbac.py
 ===================================================================
 --- rbac.py	(revision 0)
-+++ rbac.py	(revision 85)
++++ rbac.py	(revision 88)
 @@ -0,0 +1,82 @@
 +from trac.core import *
 +from trac.perm import PermissionError
@@ -208,17 +208,17 @@ Index: rbac.py
 +		else:
 +			return True
 +
-+	def has_authorization(self, req, user, path, operation):
-+		if not req.perm.has_permission('WIKI_VIEW'):
++	def has_authorization(self, perm, user, path, operation):
++		if not perm.has_permission('WIKI_VIEW'):
 +			return False
 +
 +		authzed = True
 +		for provider in self.providers:
 +			authzed = self._accumulate(authzed, provider.has_authorization(user, path, operation))
-+		return authzed or req.perm.has_permission('TRAC_ADMIN')
++		return authzed or perm.has_permission('TRAC_ADMIN')
 +
-+	def assert_authorization(self, req, user, path, operation):
-+		if not self.has_authorization(req, user, path, operation):
++	def assert_authorization(self, perm, user, path, operation):
++		if not self.has_authorization(perm, user, path, operation):
 +			raise PermissionDenied,\
 +				'%s authorization on %s is necessary to perform this operation.' % (operation, 'wiki:' + path)
 +
