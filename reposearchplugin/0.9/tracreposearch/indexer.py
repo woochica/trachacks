@@ -90,7 +90,7 @@ class Indexer:
 
 
         self.index_dir = self.env.config.get('repo-search', 'index',
-                         os.path.join(os.getenv('PYTHON_EGG_CACHE'), '.idx'))
+                         os.path.join(os.getenv('PYTHON_EGG_CACHE', ''), '.idx'))
         self.env.log.debug('Repository search index: %s' % self.index_dir)
         self.minimum_word_length = int(self.env.config.get('repo-search',
                                        'minimum-word-length', 3))
@@ -121,8 +121,8 @@ class Indexer:
         for start in range(0, len(word) - 1):
             yield word[start:start + 2]
 
-    def sync(self, repo):
-        self.meta['last-repo-rev'] = str(repo.youngest_rev)
+    def sync(self):
+        self.meta['last-repo-rev'] = str(self.repo.youngest_rev)
         self.meta['index-include'] = self.env.config.get('repo-search', 'include', '')
         self.meta['index-exclude'] = self.env.config.get('repo-search', 'exclude', '')
         self.meta.sync()
@@ -132,9 +132,10 @@ class Indexer:
         self.files.sync()
     sync = synchronized(sync)
 
-    def need_reindex(self, repo):
+    def need_reindex(self):
         return not hasattr(self, 'meta') \
-            or repo.youngest_rev != int(self.meta.get('last-repo-rev', -1)) \
+            or self.repo.youngest_rev != \
+               int(self.meta.get('last-repo-rev', -1)) \
             or self.env.config.get('repo-search', 'include', '') \
                != self.meta.get('index-include', '') \
             or self.env.config.get('repo-search', 'exclude', '') \
@@ -196,15 +197,13 @@ class Indexer:
                 self.words[word] = word_files
             self.env.log.debug("Invalidated stale index entry %s" % file)
 
-    def reindex(self, repo = None):
+    def reindex(self):
         """ Reindex the repository if necessary. """
-        repo = repo or self.env.get_repository()
-
-        if self.need_reindex(repo):
+        if self.need_reindex():
             self.env.log.debug('Indexing repository (either repository or indexing criteria have changed)')
             self._open_storage('c')
             new_files = set()
-            for node in TracRepoSearchPlugin(self.env).walk_repo(repo):
+            for node in TracRepoSearchPlugin(self.env).walk_repo(self.repo):
                 if node.kind != Node.DIRECTORY:
                     # Node has changed?
                     if int(self.revs.get(node.path, -1)) != node.rev:
@@ -220,7 +219,7 @@ class Indexer:
             for invalid in invalidated_files:
                 self._invalidate_file(invalid)
 
-            self.sync(repo)
+            self.sync()
             self._open_storage('r')
             self.env.log.debug('Index finished')
     reindex = synchronized(reindex)

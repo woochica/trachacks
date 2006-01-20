@@ -72,7 +72,7 @@ class TracRepoSearchPlugin(Component):
         try:
             from tracreposearch.indexer import Indexer
             self.indexer = Indexer(self.env)
-            self.indexer.reindex(repo)
+            self.indexer.reindex()
             walker = lambda repo, query: [repo.get_node(filename) for filename
                                           in self.indexer.find_words(query)]
         except TracError:
