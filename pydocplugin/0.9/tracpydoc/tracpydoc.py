@@ -372,7 +372,7 @@ class PyDocSearch(Component):
         yield ('pydoc', 'Python Documentation', 0)
 
     def get_search_results(self, req, query, filters):
-        query = query.split()
+        query = [q.lower() for q in query.split()]
         results = []
         matched = PyDoc(self.env).filter_match
         if 'pydoc' in filters:
@@ -380,7 +380,7 @@ class PyDocSearch(Component):
                 for q in query:
                     if (path and not matched(path)) and (modname and not matched(modname)):
                         return
-                    if q in modname or q.lower() in desc.lower():
+                    if q in modname.lower() or q in desc.lower():
                         results.append((self.env.href.pydoc(modname), modname,
                                         int(time.time()), 'pydoc', desc or ''))
                         return
