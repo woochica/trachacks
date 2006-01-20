@@ -77,7 +77,7 @@ class TracDoc(pydoc.HTMLDoc):
         # Do matching against include/exclude list
         for file in files:
             path = os.path.join(dir, file)
-            if ispackage(path) and matched(path):
+            if ispackage(path) and matched(path) or matched(file):
                 found(file, 1)
 
         for file in files:
