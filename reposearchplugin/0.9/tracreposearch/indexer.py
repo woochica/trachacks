@@ -129,13 +129,12 @@ class Indexer:
     sync = synchronized(sync)
 
     def need_reindex(self, repo):
-        result = not hasattr(self, 'meta') or \
-            repo.youngest_rev != int(self.meta.get('last-repo-rev', -1)) \
-            or self.env.config.get('repo-search', 'include', '1') \
+        return not hasattr(self, 'meta') \
+            or repo.youngest_rev != int(self.meta.get('last-repo-rev', -1)) \
+            or self.env.config.get('repo-search', 'include', '') \
                != self.meta.get('index-include', '') \
             or self.env.config.get('repo-search', 'exclude', '') \
-               != self.meta.get('index-exclude', '1')
-        return result
+               != self.meta.get('index-exclude', '')
     need_reindex = synchronized(need_reindex)
 
     def _bigram_search(self, bigrams):
@@ -154,7 +153,7 @@ class Indexer:
         return words
     _bigram_search = synchronized(_bigram_search)
 
-    def reindex_node(self, node):
+    def _reindex_node(self, node):
         def node_tokens():
             for token in self._strip.finditer(node.get_content().read()):
                 yield token.group().lower()
@@ -184,7 +183,14 @@ class Indexer:
                 node_words.add(word)
         self.files[node.path] = node_words
         self.revs[node.path] = str(node.rev)
-    reindex_node = synchronized(reindex_node)
+
+    def _invalidate_file(self, file):
+        if file in self.files:
+            for word in self.files[file]:
+                word_files = self.words[word]
+                word_files.discard(file)
+                self.words[word] = word_files
+            self.env.log.debug("Invalidated stale index entry %s" % file)
 
     def reindex(self, repo = None):
         """ Reindex the repository if necessary. """
@@ -193,18 +199,22 @@ class Indexer:
         if self.need_reindex(repo):
             self.env.log.debug('Indexing repository (either repository or indexing criteria have changed)')
             self._open_storage('c')
+            new_files = set()
             for node in TracRepoSearchPlugin(self.env).walk_repo(repo):
                 if node.kind != Node.DIRECTORY:
                     # Node has changed?
                     if int(self.revs.get(node.path, -1)) != node.rev:
                         self.env.log.debug("Reindexing %s" % node.path)
-                        # Invalidate old index
-                        if node.path in self.files:
-                            for word in self.files[node.path]:
-                                word_files = self.words[word]
-                                word_files.discard(node.path)
-                                self.words[word] = word_files
-                        self.reindex_node(node)
+                        self._invalidate_file(node.path)
+                        self._reindex_node(node)
+                new_files.add(node.path)
+            
+            # All files that don't match the new filter criteria must be purged
+            # from the index
+            invalidated_files = set(self.files.keys())
+            invalidated_files.difference_update(new_files)
+            for invalid in invalidated_files:
+                self._invalidate_file(invalid)
 
             self.sync(repo)
             self._open_storage('r')

@@ -34,7 +34,7 @@ class TracRepoSearchPlugin(Component):
                 if fnmatch(path, include):
                     return 1
 
-            return not include and not exclude
+            return not includes
 
         def do_walk(path):
             node = repo.get_node(path)
@@ -71,7 +71,8 @@ class TracRepoSearchPlugin(Component):
             from tracreposearch.indexer import Indexer
             self.indexer = Indexer(self.env)
             self.indexer.reindex(repo)
-            walker = lambda repo, query: [repo.get_node(filename) for filename in self.indexer.find_words(query)]
+            walker = lambda repo, query: [repo.get_node(filename) for filename
+                                          in self.indexer.find_words(query)]
         except TracError:
             def full_walker(repo, query):
                 for node in self.walk_repo(repo):
