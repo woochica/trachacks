@@ -2,7 +2,7 @@
 
 # Usage:
 #   trac-wiki-notify <trac-url> <trac-path> <wiki-notification-page> \
-#     <time-delta> <from-address> [<smtp-server>]
+#     <time-delta> <from-address> [<smtp-server>] [</path/to/logfile/logfiel.log>]
 #
 # This script extracts a list of subscribers from a trac page and mails them a
 # list of changes over the last time-delta seconds.
@@ -13,48 +13,86 @@
 # Users are included in the notification page as a Trac Wiki formatted list of 
 # E-Mail addresses. ie. "<space><space>*<space><email>"
 
-import sqlite
+
+# changes by Viktor Errath
+# Date: 2006-01-13 13:51
+# email: v.errath(at)bcom.at
+# 
+# Changes:
+#    - Now this script (this version of the trac-wiki-notification) work with 
+#      plone 2.4 and pysqlite2
+#
+#    - Added one optional parameter 'LOGFILE'
+#
+#    - Re-Ordered the creation of the email-Body: Now the email has filled in
+#      a correct Reciever-Adress (instead of an empty field)
+
+
+
+from pysqlite2 import dbapi2 as sqlite
 import sys
 import smtplib
 import re
 from time import strftime, localtime, time
 
 if len(sys.argv) < 5:
-	raise StandardError("Not enough arguments")
+    raise StandardError("Not enough arguments")
 
 trac_url, trac_location, notify_page, time_delta, smtp_from = sys.argv[1:6]
 smtp_server = "localhost"
 if len(sys.argv) > 6: smtp_server = sys.argv[6]
+if len(sys.argv) > 7: logfile = sys.argv[7]
 
-db = sqlite.connect(trac_location + "/db/trac.db", mode=0555)
+db = sqlite.connect(trac_location + "/db/trac.db")
 q = db.cursor()
 
 # Get list of users
-q.execute("select text from wiki where name=%s order by time desc limit 1", notify_page)
+q.execute("select text from wiki where name='%s' order by time desc limit 1" % notify_page)
 row = q.fetchone()
 
+smtp_body=''
+
 if row:
-	smtp_to = [x[4:].strip() for x in row[0].split("\n") if x[0:4] == '  * ']
+    smtp_to = [x[4:].strip() for x in row[0].split("\n") if x[0:4] == '  * ']
 
-	# Get list of pages
-	q.execute("select name, time, author, comment, version from wiki where time > strftime('%%s','now') - %i order by time desc", int(time_delta))
-	changes = q.fetchall()
+    # Get list of pages
+    act_time = int(strftime('%s', localtime())) - int(time_delta)
+    q.execute("select name, time, author, comment, version from wiki where time > %s order by time desc" % str(act_time))
+    changes = q.fetchall()
 
-	if changes:
-		smtp_body = "From: %s\n" % smtp_from
-		smtp_body += "Reply-To: %s\n" % smtp_from
-		smtp_body += "Subject: Notification of %i changes to Trac Wiki %s\n\n" % (len(changes), trac_url)
-		smtp_body += "Changes since %s\n\n" % strftime("%Y/%d/%m %H:%M:%S", localtime(time() - float(time_delta)))
+    if changes:
 
-		for change in changes:
-			change_time = strftime("%Y/%d/%m %H:%M:%S", localtime(int(change[1])))
-			smtp_body += "  %s (version %s) modified %s by %s" % (change[0], change[4], change_time, change[2])
-			smtp_body += "\n    %swiki/%s?version=%s\n" % (trac_url, change[0], change[4])
-			if change[3]: smtp_body += "    \"%s\"\n" % change[3]
-			smtp_body += "\n"
+        # Create the email-body
+        email_body = "Changes since %s\n\n" % strftime("%Y/%d/%m %H:%M:%S", localtime(time() - float(time_delta)))
 
-		smtp_body += "You can remove yourself from notifications at this URL:\n  %swiki/%s\n" % (trac_url, notify_page)
-		# Send the mail
-		smtp = smtplib.SMTP(smtp_server)
-		smtp.sendmail(smtp_from, smtp_to, smtp_body)
-		smtp.quit()
+        for change in changes:
+            change_time = strftime("%Y/%d/%m %H:%M:%S", localtime(int(change[1])))
+            email_body += "  %s (version %s) modified %s by %s" % (change[0], change[4], change_time, change[2])
+            email_body += "\n    %swiki/%s?version=%s\n" % (trac_url, change[0], change[4])
+            if change[3]: email_body += "    \"%s\"\n" % change[3]
+            email_body += "\n"
+
+        email_body += "\nYou can remove yourself from notifications at this URL:\n  %swiki/%s\n" % (trac_url, notify_page)
+
+        smtp = smtplib.SMTP(smtp_server)
+        smtp = smtplib.SMTP(smtp_server)
+        # Finish the email
+        for email in smtp_to:
+            smtp_body = "From: %s\n" % smtp_from
+            smtp_body += "To: %s\n" % email
+            smtp_body += "Reply-To: %s\n" % smtp_from
+            smtp_body += "Subject: Notification of %i changes to Trac Wiki %s\n\n" % (len(changes), trac_url)
+            smtp_body += email_body
+            # Send the mail
+            smtp.sendmail(smtp_from, email, smtp_body)
+            
+        smtp.quit()
+
+        # Write logfile (or not)
+        if len(sys.argv) > 7:
+            fileobj = open(sys.argv[7], 'au')
+            fileobj.write('\n#######################################################\n')
+            fileobj.write('%s\n' % str(strftime('%Y-%m-%d %H:%M:%S', localtime())))
+            fileobj.write('Trac-Wiki-Notification-Email sent to: %s' % smtp_to)
+            fileobj.write('\n\n %s \n\n' % smtp_body)
+            fileobj.close()
