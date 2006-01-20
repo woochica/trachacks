@@ -81,15 +81,19 @@ class Indexer:
         self.env = env
         self.repo = self.env.get_repository()
 
-        if not self.env.config.get('repo-search', 'index'):
+        if not self.env.config.get('repo-search', 'index',
+                                   os.getenv('PYTHON_EGG_CACHE', None)):
             raise TracError("Repository search plugin indexer is not " \
                             "configured correctly. Set the 'index' option " \
                             "under the 'repo-search' section to the full " \
                             "(writable) path to the index.")
 
 
-        self.index_dir = self.env.config.get('repo-search', 'index')
-        self.minimum_word_length = int(self.env.config.get('repo-search', 'minimum-word-length', 3))
+        self.index_dir = self.env.config.get('repo-search', 'index',
+                         os.path.join(os.getenv('PYTHON_EGG_CACHE'), '.idx'))
+        self.env.log.debug('Repository search index: %s' % self.index_dir)
+        self.minimum_word_length = int(self.env.config.get('repo-search',
+                                       'minimum-word-length', 3))
 
         if not os.path.isdir(self.index_dir):
             os.mkdir(self.index_dir)
