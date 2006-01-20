@@ -60,7 +60,7 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
                 out.write('<a href="%s">%s</a> : %s</li>\n' % (env.href.wiki(page), page, formatted_header))
                 break
             else:
-                default_anchor = anchor = Formatter._anchor_re.sub("", header)
+                default_anchor = anchor = Formatter._anchor_re.sub("", header.decode('utf-8'))
                 anchor_n = 1
                 while anchor in seen_anchors:
                     anchor = default_anchor + str(anchor_n)
