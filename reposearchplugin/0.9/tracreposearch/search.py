@@ -2,7 +2,7 @@ from trac.core import *
 from trac.Search import ISearchSource, shorten_result
 from trac.versioncontrol.api import Node
 from trac.perm import IPermissionRequestor
-from trac.util import Markup
+from trac.util import Markup, escape
 import re
 import posixpath
 import os
@@ -106,6 +106,17 @@ class TracRepoSearchPlugin(Component):
                        node.path, change.date, change.author,
                        'Directory')
             else:
-                yield (self.env.href.browser(node.path),
+                found = 0
+                for n, line in enumerate(node.get_content().read().splitlines()):
+                    line = line.lower()
+                    for q in query:
+                        idx = line.find(q)
+                        if idx != -1:
+                            found = n + 1
+                            break
+                    if found:
+                        break
+
+                yield (self.env.href.browser(node.path) + (found and '#L%i' % found or ''),
                        node.path, change.date, change.author,
                        shorten_result(node.get_content().read(), query))
