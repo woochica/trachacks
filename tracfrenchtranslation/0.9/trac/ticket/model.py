@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003, 2004, 2005 Edgewall Software
-# Copyright (C) 2003, 2004, 2005 Jonas Borgström <jonas@edgewall.com>
+# Copyright (C) 2003-2006 Edgewall Software
+# Copyright (C) 2003-2006 Jonas Borgström <jonas@edgewall.com>
 # Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2006 Christian Boos <cboos@neuf.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -17,9 +18,11 @@
 #         Christopher Lenz <cmlenz@gmx.de>
 
 import time
+import sys
 
 from trac.core import TracError
 from trac.ticket import TicketSystem
+from trac.util import sorted, embedded_numbers
 
 __all__ = ['Ticket', 'Type', 'Status', 'Resolution', 'Priority', 'Severity',
            'Component', 'Milestone', 'Version']
@@ -615,16 +618,21 @@ class Milestone(object):
         sql = "SELECT name,due,completed,description FROM milestone "
         if not include_completed:
             sql += "WHERE COALESCE(completed,0)=0 "
-        sql += "ORDER BY COALESCE(due,0)=0,due,name"
         cursor = db.cursor()
         cursor.execute(sql)
+        milestones = []
         for name,due,completed,description in cursor:
             milestone = Milestone(env)
             milestone.name = milestone._old_name = name
             milestone.due = due and int(due) or 0
             milestone.completed = completed and int(completed) or 0
             milestone.description = description or ''
-            yield milestone
+            milestones.append(milestone)
+        def milestone_order(m):
+            return (m.completed or sys.maxint,
+                    m.due or sys.maxint,
+                    embedded_numbers(m.name))
+        return sorted(milestones, key=milestone_order)
     select = classmethod(select)
 
 
@@ -716,12 +724,15 @@ class Version(object):
         if not db:
             db = env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT name,time,description FROM version "
-                       "ORDER BY COALESCE(time,0),name")
+        cursor.execute("SELECT name,time,description FROM version")
+        versions = []
         for name, time, description in cursor:
-            component = cls(env)
-            component.name = name
-            component.time = time and int(time) or None
-            component.description = description or ''
-            yield component
+            version = cls(env)
+            version.name = name
+            version.time = time and int(time) or None
+            version.description = description or ''
+            versions.append(version)
+        def version_order(v):
+            return (v.time or sys.maxint, embedded_numbers(v.name))
+        return sorted(versions, key=version_order, reverse=True)
     select = classmethod(select)

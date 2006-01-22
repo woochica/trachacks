@@ -431,6 +431,8 @@ default_config = \
   ('notification', 'always_notify_reporter', 'false'),
   ('notification', 'smtp_from', 'trac@localhost'),
   ('notification', 'smtp_replyto', 'trac@localhost'),
+  ('notification', 'mime_encoding', 'qp'),
+  ('notification', 'allow_public_cc', 'false'),
   ('timeline', 'default_daysback', '30'),
   ('timeline', 'changeset_show_files', '0'),
   ('timeline', 'ticket_show_details', 'false'),
@@ -466,6 +468,8 @@ default_config = \
   ('translation', 'reporter', 'rapporteur'),
   ('translation', 'created', 'créé'),
   ('translation', 'modified', 'modifié'),
+  ('translation', 'change', 'modification'),
+  ('translation', 'changeset', 'version')
 )
 
 default_components = ('trac.About', 'trac.attachment',

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2004 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2004 Jonas Borgström <jonas@edgewall.com>
+# Copyright (C) 2006 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2005-2006 Christian Boos <cboos@neuf.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -13,6 +15,7 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
+#         Matthew Good <trac@matt-good.net>
 
 import cgi
 import md5
@@ -28,6 +31,27 @@ import tempfile
 
 CRLF = '\r\n'
 
+try:
+    reversed = reversed
+except NameError:
+    def reversed(x):
+        if hasattr(x, 'keys'):
+            raise ValueError('un dictionnaire ne supporte pas l\'itération inversée')
+        i = len(x)
+        while i > 0:
+            i -= 1
+            yield x[i]
+
+try:
+    sorted = sorted
+except NameError:
+    def sorted(iterable, cmp=None, key=None, reverse=False):
+        """Partial implementation of the "sorted" function from Python 2.4"""
+        lst = [(key(i), i) for i in iterable]
+        lst.sort()
+        if reverse:
+            lst = reversed(lst)
+        return [i for __, i in lst]
 
 class Markup(str):
     """Marks a string as being safe for inclusion in XML output without needing
@@ -222,6 +246,18 @@ def unescape(text):
         return text
     return text.unescape()
 
+ENTITIES = re.compile(r"&(\w+);")
+def rss_title(text):
+    if isinstance(text, Markup):
+        def replace_entity(match):
+            return match.group(1) in ('amp', 'lt', 'gt', 'apos', 'quot') \
+                   and match.group(0) or ''
+        return Markup(re.sub(ENTITIES, replace_entity,
+                             text.striptags().replace('\n', ' ')))
+    return text
+
+
+
 def to_utf8(text, charset='iso-8859-15'):
     """Convert a string to UTF-8, assuming the encoding is either UTF-8, ISO
     Latin-1, or as specified by the optional `charset` parameter."""
@@ -260,6 +296,14 @@ def shorten_line(text, maxlen = 75):
             shortline = text[:i]+' ...'
     return shortline
 
+DIGITS = re.compile(r'(\d+)')
+def embedded_numbers(s):
+    """Comparison function for natural order sorting based on
+    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/214202."""
+    pieces = DIGITS.split(s)
+    pieces[1::2] = map(int, pieces[1::2])
+    return pieces
+
 def hex_entropy(bytes=32):
     import md5
     import random
@@ -275,7 +319,7 @@ def pretty_size(size):
 
     units = ['kB', 'MB', 'GB', 'TB']
     i = 0
-    while size > jump and i < len(units):
+    while size >= jump and i < len(units):
         i += 1
         size /= 1024.
 

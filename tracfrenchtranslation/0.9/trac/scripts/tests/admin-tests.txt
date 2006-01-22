@@ -1,5 +1,5 @@
 ===== test_help_ok =====
-trac-admin - The Trac Administration Console 1.0dev
+trac-admin - The Trac Administration Console 0.10dev
 
 Usage: trac-admin </path/to/projenv> [command [subcommand] [option ...]]
 
@@ -433,15 +433,15 @@ Command failed: severity bad_severity does not exist.
 
 Name  Time
 ----------
-1.0       
 2.0       
+1.0       
 
 ===== test_version_add_ok =====
 
 Name  Time                    
 ----------------
-1.0                           
 2.0                           
+1.0                           
 9.9   2004-01-11
 
 ===== test_version_add_error_already_exists =====
@@ -450,8 +450,8 @@ Command failed: column name is not unique
 
 Name  Time
 ----------
-2.0       
 9.9       
+2.0       
 
 ===== test_version_rename_error_bad_version =====
 Command failed: Version bad_version does not exist.
@@ -519,8 +519,8 @@ Command failed: Milestone bad_milestone does not exist.
 
 Name        Due  Completed
 ------------------------------------
-milestone1
 milestone2       2004-01-11 00:00:00
+milestone1
 milestone3
 milestone4
 

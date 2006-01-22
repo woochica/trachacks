@@ -22,8 +22,8 @@ from trac import util
 from trac.attachment import attachment_to_hdf, Attachment
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
-from trac.Notify import TicketNotifyEmail
 from trac.ticket import Milestone, Ticket, TicketSystem
+from trac.ticket.notification import TicketNotifyEmail
 from trac.Timeline import ITimelineEventProvider
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -242,7 +242,7 @@ class TicketModule(Component):
                 yield ('ticket_details', 'Ticket details', False)
 
     def get_timeline_events(self, req, start, stop, filters):
-        rss = req.args.get('format') == 'rss' # Kludge
+        format = req.args.get('format')
 
         status_map = {'new': ('newticket', 'created'),
                       'reopened': ('newticket', 'reopened'),
@@ -272,15 +272,15 @@ class TicketModule(Component):
                                 summary, id, util.translate(self.env, type), \
                                 util.translate(self.env, verb), author)
 
-            href = rss and self.env.abs_href.ticket(id) \
-                   or self.env.href.ticket(id)
+            href = format == 'rss' and self.env.abs_href.ticket(id) or \
+                   self.env.href.ticket(id)
 
             if status == 'new':
-                message = util.escape(summary)
+                message = summary
             else:
                 message = util.Markup(info)
                 if comment:
-                    if rss:
+                    if format == 'rss':
                         message += wiki_to_html(comment, self.env, req, db,
                                                 absurls=True)
                     else:

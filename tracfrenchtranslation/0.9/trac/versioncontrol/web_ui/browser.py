@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
+# Copyright (C) 2005-2006 Christian Boos <cboos@neuf.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -18,6 +19,7 @@ import re
 import urllib
 
 from trac import util
+from trac.util import sorted
 from trac.core import *
 from trac.mimeview import Mimeview, is_binary, get_mimetype
 from trac.perm import IPermissionRequestor
@@ -30,22 +32,6 @@ from trac.versioncontrol.web_ui.util import *
 IMG_RE = re.compile(r"\.(gif|jpg|jpeg|png)(\?.*)?$", re.IGNORECASE)
 
 CHUNK_SIZE = 4096
-
-DIGITS = re.compile(r'[0-9]+')
-def _natural_order(x, y):
-    """Comparison function for natural order sorting based on
-    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/214202."""
-    nx = ny = 0
-    while True:
-        a = DIGITS.search(x, nx)
-        b = DIGITS.search(y, ny)
-        if None in (a, b):
-            return cmp(x[nx:], y[ny:])
-        r = (cmp(x[nx:a.start()], y[ny:b.start()]) or
-             cmp(int(x[a.start():a.end()]), int(y[b.start():b.end()])))
-        if r:
-            return r
-        nx, ny = a.end(), b.end()
 
 
 class BrowserModule(Component):
@@ -90,20 +76,24 @@ class BrowserModule(Component):
 
         repos = self.env.get_repository(req.authname)
         node = get_existing_node(self.env, repos, path, rev)
+        rev = repos.normalize_rev(rev)
 
         hidden_properties = [p.strip() for p
                              in self.config.get('browser', 'hide_properties',
                                                 'svk:merge').split(',')]
+
         req.hdf['title'] = path
         req.hdf['browser'] = {
             'path': path,
-            'revision': rev or repos.youngest_rev,
+            'revision': rev,
             'props': dict([(name, value)
                            for name, value in node.get_properties().items()
                            if not name in hidden_properties]),
             'href': self.env.href.browser(path, rev=rev or
                                           repos.youngest_rev),
-            'log_href': self.env.href.log(path, rev=rev or None)
+            'log_href': self.env.href.log(path, rev=rev or None),
+            'restr_changeset_href': self.env.href.changeset(node.rev, path),
+            'anydiff_href': self.env.href.anydiff(),
         }
 
         path_links = get_path_links(self.env.href, path, rev)
@@ -146,24 +136,33 @@ class BrowserModule(Component):
             })
         changes = get_changes(self.env, repos, [i['rev'] for i in info])
 
-        def cmp_func(a, b):
-            dir_cmp = (a['is_dir'] and -1 or 0) + (b['is_dir'] and 1 or 0)
-            if dir_cmp:
-                return dir_cmp
-            neg = desc and -1 or 1
-            if order == 'date':
-                return neg * cmp(changes[b['rev']]['date_seconds'],
-                                 changes[a['rev']]['date_seconds'])
-            elif order == 'size':
-                return neg * cmp(a['content_length'], b['content_length'])
-            else:
-                return neg * _natural_order(a['name'].lower(),
-                                            b['name'].lower())
-        info.sort(cmp_func)
+        if order == 'date':
+            def file_order(a):
+                return changes[a['rev']]['date_seconds']
+        elif order == 'size':
+            def file_order(a):
+                return (a['content_length'],
+                        util.embedded_numbers(a['name'].lower()))
+        else:
+            def file_order(a):
+                return util.embedded_numbers(a['name'].lower())
+
+        dir_order = desc and 1 or -1
+
+        def browse_order(a):
+            return a['is_dir'] and dir_order or 0, file_order(a)
+        info = sorted(info, key=browse_order, reverse=desc)
 
         req.hdf['browser.items'] = info
         req.hdf['browser.changes'] = changes
-
+        if node.path != '':
+            zip_href = self.env.href.changeset(rev, node.path, old=rev,
+                                               old_path='/', # special case #238
+                                               format='zip')
+            add_link(req, 'alternate', zip_href, 'Zip Archive',
+                     'application/zip', 'zip')
+        
+        
     def _render_file(self, req, repos, node, rev=None):
         req.perm.assert_permission('FILE_VIEW')
 
