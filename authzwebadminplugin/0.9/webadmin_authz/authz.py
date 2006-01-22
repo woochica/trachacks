@@ -1,6 +1,7 @@
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
 from webadmin.web_ui import IAdminPageProvider
+
 class AuthzManager(Component):
 	implements(IAdminPageProvider, ITemplateProvider)
 
@@ -39,3 +40,6 @@ class AuthzManager(Component):
 	def get_templates_dirs(self):
 		from pkg_resources import resource_filename
 		return [resource_filename(__name__, 'templates')]
+
+	def get_htdocs_dirs(self):
+		return []
