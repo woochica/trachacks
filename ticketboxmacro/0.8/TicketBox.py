@@ -36,7 +36,7 @@ import string
 ## default style values
 styles = { "float": "right",
            "background": "#f7f7f0",
-           "width": "",
+           "width": "25%",
            }
 
 args_pat = [r"#?(?P<tktnum>\d+)",
