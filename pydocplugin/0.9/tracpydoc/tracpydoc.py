@@ -67,7 +67,7 @@ class TracDoc(pydoc.HTMLDoc):
         # Package spam/__init__.py takes precedence over module spam.py.
         for file in files:
             path = os.path.join(dir, file)
-            if ispackage(path) and matched(path) or matched(file):
+            if ispackage(path) and matched(path):
                 found(file, 1)
 
         for file in files:
@@ -76,6 +76,9 @@ class TracDoc(pydoc.HTMLDoc):
                 modname = inspect.getmodulename(file)
                 if modname and matched(modname):
                     found(modname, 0)
+            elif os.path.isdir(path):
+                if matched(file):
+                    found(file, 1)
 
         modpkgs.sort()
         contents = self.multicolumn(modpkgs, self.modpkglink)
