@@ -30,8 +30,15 @@ row = cursor.fetchone()
 if not row:
     print 'Page not found'
     sys.exit(1)
+    
+# Funny windows hack
+remote_user = ''
+if os.name == 'nt':
+    remote_user = os.environ['USERNAME']
+else:
+    remote_user = os.getlogin()
 
-new_wiki_page = (newname,row[0]+1,int(time.time()),os.getlogin(),'127.0.0.1',row[1],'Name changed from %s to %s'%(oldname,newname),0)
+new_wiki_page = (newname,row[0]+1,int(time.time()),remote_user,'127.0.0.1',row[1],'Name changed from %s to %s'%(oldname,newname),0)
 
 # Create a new page with the needed comment
 cursor.execute('INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)', new_wiki_page)
@@ -41,6 +48,10 @@ cursor.execute('UPDATE wiki SET name=%s WHERE name=%s', (newname,oldname))
 
 # Move any attachments that are on the page
 cursor.execute('UPDATE attachment SET id=%s WHERE type="wiki" AND id=%s', (newname,oldname))
+
+# Change the directory where the attachments are stored
+os.rename(os.path.join(tracenv, 'attachments/wiki', oldname),
+    os.path.join(tracenv, 'attachments/wiki', newname))
 
 # Get a list of all wiki pages containing links to the old page
 sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + 'AND w1.text like \'%%[wiki:%s %%\'' % oldname
