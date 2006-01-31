@@ -1,4 +1,31 @@
 # vim: expandtab tabstop=4
+
+"""Generate a table of contents for the current page or a set of pages.
+If no arguments are given, a table of contents is generated for the
+current page, with the top-level title stripped: 
+{{{
+   [[TOC]]
+}}}
+To generate a table of contents for a set of pages, simply pass them
+as comma separated arguments to the TOC macro, e.g. as in
+{{{
+   [[TOC(TracGuide, TracInstall, TracUpgrade, TracIni, TracAdmin, TracBackup, TracLogging,
+         TracPermissions, TracWiki, WikiFormatting, TracBrowser, TracRoadmap, TracChangeset,
+         TracTickets, TracReports, TracQuery, TracTimeline, TracRss, TracNotification)]]
+}}}
+The following ''control'' arguments change the default behaviour of
+the TOC macro: 
+|| '''Argument'''    || '''Meaning''' ||
+|| {{{heading=<x>}}} || Override the default heading of "Table of Contents" ||
+|| {{{noheading}}}   || Suppress display of the heading. ||
+|| {{{depth=<n>}}}   || Display headings of ''subsequent'' pages to a maximum depth of '''<n>'''. ||
+|| {{{inline}}}      || Display TOC inline rather than as a side-bar. ||
+|| {{{titleindex}}}  || Only display the page name and title of each page, similar to TitleIndex. ||
+Note that the current page must also be specified if individual wiki
+pages are given in the argument list.
+
+"""
+
 from StringIO import StringIO
 import re
 import string
