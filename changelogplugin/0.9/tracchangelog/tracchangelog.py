@@ -7,10 +7,16 @@ from trac.wiki.formatter import wiki_to_html
 from trac.util import format_datetime
 from StringIO import StringIO
 
+import pydoc
+
 class TracChangeLogPlugin(Component):
-    """ Provides the [[ChangLog(path[, limit[, rev]])]] macro, which dumps the change log
-        for path of revision rev, back limit revisions. "rev" can be 0 for the latest
-        revision. """
+    """ Provides the macro
+    {{{
+       [[ChangeLog(path[,limit[,rev]])]]
+    }}}
+    which dumps the change log for path of revision rev, back
+    limit revisions. "rev" can be 0 for the latest revision.
+    """
 
     implements(IWikiMacroProvider)
 
