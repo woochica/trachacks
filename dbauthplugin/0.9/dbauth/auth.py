@@ -27,16 +27,8 @@ from trac.util import escape, hex_entropy, TracError, Markup
 
 
 class DbAuthLoginModule(Component):
-    """Implements user authentication based on HTTP authentication provided by
-    the web-server, combined with cookies for communicating the login
-    information across the whole site.
-
-    This mechanism expects that the web-server is setup so that a request to the
-    path '/login' requires authentication (such as Basic or Digest). The login
-    name is then stored in the database and associated with a unique key that
-    gets passed back to the user agent using the 'trac_auth' cookie. This cookie
-    is used to identify the user in subsequent requests to non-protected
-    resources.
+    """Implements user authentication based on database tables and an HTML form,
+    combined with cookies for communicating the login information across the whole site.
     """
 
     implements(IAuthenticator, INavigationContributor, ITemplateProvider, IRequestHandler)

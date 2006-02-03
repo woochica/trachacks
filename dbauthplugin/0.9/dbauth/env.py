@@ -14,7 +14,11 @@
 #
 # Author: Brad Anderson <brad@dsource.org>
 
-from trac.db.sqlite_backend import *
+# for 0.10 and higher
+#from trac.db.sqlite_backend import *
+
+# for 0.9.x branch
+from trac.db import *
 
 def get_db(env):
     """Return a database connection"""
@@ -27,3 +31,5 @@ def get_envname(env):
         envroot += "/"
     envname = env.path.replace(envroot, "")
     return envname
+
+    
