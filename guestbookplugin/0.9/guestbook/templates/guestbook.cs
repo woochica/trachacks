@@ -21,7 +21,7 @@
             <?cs var:message.title?>
           </th>
           <th class="right">
-            <a href="/guestbook?action=delete;id=<?cs var:message.id ?>">
+            <a href="<?cs var:trac.href.guestbook ?>?action=delete;id=<?cs var:message.id ?>">
               Delete
             </a>
           </th>
