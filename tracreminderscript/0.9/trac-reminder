@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# trac-reminder - sends pretty HTML email with a list of open Trac tickets
+# Copyright (C) 2006 Bearstech - http://bearstech.com
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+trac="$1"
+conf="$trac/conf/trac.ini"
+db="$trac/db/trac.db"
+
+# CLI sanity check
+if [[ $# -lt 2 || ! -e "$conf" || ! -e "$db" ]]; then
+	echo "Sends pretty HTML emails with a list of open Trac tickets."
+  echo "Usage: $0 <trac-path> <email>..."
+	exit 1
+fi
+
+# Figure out URL base, quote for reuse in regex subst
+url=`sed -e 's:\::\\\\\::g' -ne 's:^ *url *= *::p' $conf`
+
+# Fetch open tickets
+tickets=`sqlite "$db" "select id,owner,status,summary from ticket where status='new' order by id desc"`
+[ x"$tickets" == x ] && exit 0
+
+# One ticket = one table row
+IFS=$'\n'
+for t in $tickets; do
+  row=`echo "$t" | sed -e 's:^\([0-9]\+\):<a href="'$url'/track/ticket/\1">#\1</a>:' -e 's:|:</td>\n    <td>:g'`
+	html="$html  <tr>
+    <td>$row</td>
+  </tr>
+"
+done
+
+# Send news
+shift
+sendmail $* <<EOD
+MIME-Version: 1.0
+Content-Type: text/html
+Subject: Trac reminder: list of new ticket(s)
+
+<table>
+  <tr>
+    <th>Ticket</th>
+    <th>Owner</th>
+    <th>Status</th>
+    <th>Description</th>
+	</tr>
+$html
+</table>
+EOD
