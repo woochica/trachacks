@@ -39,7 +39,7 @@ tickets=`sqlite "$db" "select id,owner,status,summary from ticket where status='
 # One ticket = one table row
 IFS=$'\n'
 for t in $tickets; do
-  row=`echo "$t" | sed -e 's:^\([0-9]\+\):<a href="'$url'/track/ticket/\1">#\1</a>:' -e 's:|:</td>\n    <td>:g'`
+  row=`echo "$t" | sed -e 's:^\([0-9]\+\):<a href="'$url'/trac/ticket/\1">#\1</a>:' -e 's:|:</td>\n    <td>:g'`
 	html="$html  <tr>
     <td>$row</td>
   </tr>
