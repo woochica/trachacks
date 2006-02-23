@@ -1,0 +1,11 @@
+2006-02-23 16:06  Vincent Caron <vcaron@bearstech.com>
+
+	* fixed double slashes in ticket URL (would trigger a 500 inernal error)
+
+2006-02-22 08:01  Vincent Caron <vcaron@bearstech.com>
+
+	* fixed ticket URL bug (s/track/trac/)
+
+2006-02-20 02:10  Vincent Caron <vcaron@bearstech.com>
+
+	* initial release

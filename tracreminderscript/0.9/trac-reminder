@@ -29,8 +29,8 @@ if [[ $# -lt 2 || ! -e "$conf" || ! -e "$db" ]]; then
 	exit 1
 fi
 
-# Figure out URL base, quote for reuse in regex subst
-url=`sed -e 's:\::\\\\\::g' -ne 's:^ *url *= *::p' $conf`
+# Figure out URL base. Quote ':' for reuse in regex subst later. Strip trailing slash(es).
+url=`sed -e 's:\::\\\\\::g'  -e 's:/*$::' -ne 's:^ *url *= *::p' $conf`
 
 # Fetch open tickets
 tickets=`sqlite "$db" "select id,owner,status,summary from ticket where status='new' order by id desc"`
