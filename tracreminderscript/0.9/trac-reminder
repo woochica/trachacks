@@ -39,19 +39,22 @@ tickets=`sqlite "$db" "select id,owner,status,summary from ticket where status='
 # One ticket = one table row
 IFS=$'\n'
 for t in $tickets; do
-  row=`echo "$t" | sed -e 's:^\([0-9]\+\):<a href="'$url'/trac/ticket/\1">#\1</a>:' -e 's:|:</td>\n    <td>:g'`
+  row=`echo -n "$t" | sed -e 's:^\([0-9]\+\):<a href="'$url'/trac/ticket/\1">#\1</a>:' -e 's:|:</td>\n    <td>:g'`
 	html="$html  <tr>
     <td>$row</td>
   </tr>
 "
 done
 
-# Send news
+# Send news. Properly fill in RFC 822 fields (especially To and Cc).
 shift
-sendmail $* <<EOD
+all="$@"
+to=`echo -n "$all" | sed -e 's: :\nCc\: :'`
+sendmail $all <<EOD
+To: $to
+Subject: Trac reminder: list of new ticket(s)
 MIME-Version: 1.0
 Content-Type: text/html
-Subject: Trac reminder: list of new ticket(s)
 
 <table>
   <tr>

@@ -1,3 +1,7 @@
+2006-02-24 17:53  Vincent Caron <vcaron@bearstech.com>
+
+	* now properly fill in To and Cc fields (Mailman rightly complained)
+
 2006-02-23 16:06  Vincent Caron <vcaron@bearstech.com>
 
 	* fixed double slashes in ticket URL (would trigger a 500 inernal error)
