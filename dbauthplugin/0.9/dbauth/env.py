@@ -18,7 +18,7 @@
 #from trac.db.sqlite_backend import *
 
 # for 0.9.x branch
-from trac.db import *
+from trac.db import SQLiteConnection
 
 def get_db(env):
     """Return a database connection"""

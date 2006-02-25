@@ -115,7 +115,7 @@ class DbAuthLoginModule(Component):
         sql = """SELECT username
                  FROM trac_users
                  WHERE username= %s and password = %s
-                   AND envname = %s"""
+                   AND (envname = %s or envname='all')"""
         cursor.execute(sql, (uid, pwd, self.envname))
         row = cursor.fetchone()        
         if not row:
