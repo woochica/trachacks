@@ -1,0 +1,23 @@
+@import url(../css/trac.css);
+/*@import url(wiki.css);*/
+
+pre, pre.wiki {
+ background: #f7f7f7;
+ border: 1px dotted #b00;
+ margin: 1em 1.75em;
+ padding: .25em;
+ overflow: auto;
+ font-size: normal;
+}
+
+
+span.tmtrac {
+	border: 1px dotted #b00;
+}
+
+span.tmtrac_cancel {
+	border: 1px dotted #777777;
+}
+
+
+/* this file read */
