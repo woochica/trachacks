@@ -1,0 +1,2 @@
+from wikirandom import *
+

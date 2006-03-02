@@ -1,0 +1,223 @@
+Index: branches/wikiflowpatch/0.9/trac/wiki/api.py
+===================================================================
+--- branches/wikiflowpatch/0.9/trac/wiki/api.py	(revision 32)
++++ branches/wikiflowpatch/0.9/trac/wiki/api.py	(working copy)
+@@ -65,16 +65,30 @@
+  
+     def get_link_resolvers():
+         """Return an iterable over (namespace, formatter) tuples."""
++
+  
++class IWikiWorkflowController(Interface):
++ 
++    def get_default_version(name):
++        """Return default version integer for named page, or None if
++        plugin doesn't know."""
+ 
++    def would_collide(req, name, version):
++        """Return true if saving this edit would cause a collision,
++        false if not, None if plugin doesn't know.  Name is page name,
++        version is the version of text the edit was based on.
++        """
++ 
+ class WikiSystem(Component):
+     """Represents the wiki system."""
+ 
+-    implements(IWikiChangeListener, IWikiSyntaxProvider)
++    implements(IWikiChangeListener, IWikiSyntaxProvider,
++            IWikiWorkflowController)
+ 
+     change_listeners = ExtensionPoint(IWikiChangeListener)
+     macro_providers = ExtensionPoint(IWikiMacroProvider)
+     syntax_providers = ExtensionPoint(IWikiSyntaxProvider)
++    workflow_controllers = ExtensionPoint(IWikiWorkflowController)
+ 
+     INDEX_UPDATE_INTERVAL = 5 # seconds
+ 
+@@ -213,3 +227,11 @@
+         else:
+             return '<a class="wiki" href="%s">%s</a>' \
+                    % (formatter.href.wiki(page) + anchor, label)
++
++    # IWikiWorkflowController default methods
++ 
++    def get_default_version(self, name):
++        return None
++
++    def would_collide(self, req, name, version):
++        return None
+Index: branches/wikiflowpatch/0.9/trac/wiki/web_ui.py
+===================================================================
+--- branches/wikiflowpatch/0.9/trac/wiki/web_ui.py	(revision 32)
++++ branches/wikiflowpatch/0.9/trac/wiki/web_ui.py	(working copy)
+@@ -30,6 +30,7 @@
+ from trac.versioncontrol.diff import get_diff_options, hdf_diff
+ from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
+ from trac.web import IRequestHandler
++from trac.wiki.api import WikiSystem
+ from trac.wiki.model import WikiPage
+ from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
+ 
+@@ -81,10 +82,16 @@
+ 
+         if req.method == 'POST':
+             if action == 'edit':
+-                latest_version = WikiPage(self.env, pagename, None, db).version
++                default_page = WikiPage(self.env, pagename, None, db)
++                would_collide = page.would_collide(req) 
++                if would_collide is None:
++                    # workflow plugin doesn't have a collision rule,
++                    # so use default
++                    if int(version) != default_page.version:
++                        would_collide = 1
+                 if req.args.has_key('cancel'):
+                     req.redirect(self.env.href.wiki(page.name))
+-                elif int(version) != latest_version:
++                elif would_collide:
+                     action = 'collision'
+                     self._render_editor(req, db, page)
+                 elif req.args.has_key('preview'):
+@@ -105,7 +112,12 @@
+         elif action == 'diff':
+             self._render_diff(req, db, page)
+         elif action == 'history':
+-            self._render_history(req, db, page)
++            # if workflow is in use, then the default version might
++            # not be the latest; to handle this case, we need to
++            # explicitly state that we want the entire history if req
++            # doesn't specify a version number
++            all_versions = not version
++            self._render_history(req, db, page, all_versions=all_versions)
+         else:
+             if req.args.get('format') == 'txt':
+                 req.send_response(200)
+@@ -312,7 +324,7 @@
+             info['readonly'] = int(req.args.has_key('readonly'))
+         req.hdf['wiki'] = info
+ 
+-    def _render_history(self, req, db, page):
++    def _render_history(self, req, db, page, all_versions=0):
+         """Extract the complete history for a given page and stores it in the
+         HDF.
+ 
+@@ -327,7 +339,8 @@
+         req.hdf['title'] = page.name + ' (history)'
+ 
+         history = []
+-        for version, t, author, comment, ipnr in page.get_history():
++        for version, t, author, comment, ipnr in page.get_history(
++                all_versions=all_versions):
+             history.append({
+                 'url': self.env.href.wiki(page.name, version=version),
+                 'diff_url': self.env.href.wiki(page.name,
+Index: branches/wikiflowpatch/0.9/trac/wiki/model.py
+===================================================================
+--- branches/wikiflowpatch/0.9/trac/wiki/model.py	(revision 32)
++++ branches/wikiflowpatch/0.9/trac/wiki/model.py	(working copy)
+@@ -22,15 +22,15 @@
+ from trac.core import *
+ from trac.wiki.api import WikiSystem
+ 
+-
++ 
+ class WikiPage(object):
+     """Represents a wiki page (new or existing)."""
+ 
+-    def __init__(self, env, name=None, version=None, db=None):
++    def __init__(self, env, name=None, version=None, db=None, latest=None):
+         self.env = env
+         self.name = name
+         if name:
+-            self._fetch(name, version, db)
++            self._fetch(name, version, db, latest)
+         else:
+             self.version = 0
+             self.text = ''
+@@ -38,11 +38,19 @@
+         self.old_text = self.text
+         self.old_readonly = self.readonly
+ 
+-    def _fetch(self, name, version=None, db=None):
++    def _fetch(self, name, version=None, db=None, latest=0):
+         if not db:
+             db = self.env.get_db_cnx()
+         cursor = db.cursor()
++        if version is None and not latest:
++            for controller in WikiSystem(self.env).workflow_controllers:
++                version = controller.get_default_version(name)
++                if version is not None:
++                    # the first controller that returns a non-None value wins
++                    break
+         if version:
++            import sys
++            print >>sys.stderr, "version", repr(version)
+             cursor.execute("SELECT version,text,readonly FROM wiki "
+                            "WHERE name=%s AND version=%s",
+                            (name, int(version)))
+@@ -61,6 +69,10 @@
+             self.text = ''
+             self.readonly = 0
+ 
++    def _next_version(self, db):
++        page = WikiPage(self.env, self.name, db=db, latest=1)
++        return page.version + 1
++
+     exists = property(fget=lambda self: self.version > 0)
+ 
+     def delete(self, version=None, db=None):
+@@ -110,13 +122,14 @@
+         if t is None:
+             t = time.time()
+ 
++        next_version = self._next_version(db)
+         if self.text != self.old_text:
+             cursor = db.cursor()
+             cursor.execute("INSERT INTO WIKI (name,version,time,author,ipnr,"
+                            "text,comment,readonly) VALUES (%s,%s,%s,%s,%s,%s,"
+-                           "%s,%s)", (self.name, self.version + 1, t, author,
++                           "%s,%s)", (self.name, next_version, t, author,
+                            remote_addr, self.text, comment, self.readonly))
+-            self.version += 1
++            self.version = next_version
+         elif self.readonly != self.old_readonly:
+             cursor = db.cursor()
+             cursor.execute("UPDATE wiki SET readonly=%s WHERE name=%s",
+@@ -137,12 +150,34 @@
+         self.old_readonly = self.readonly
+         self.old_text = self.text
+ 
+-    def get_history(self, db=None):
++    def get_history(self, db=None, all_versions=0):
+         if not db:
+             db = self.env.get_db_cnx()
+         cursor = db.cursor()
+-        cursor.execute("SELECT version,time,author,comment,ipnr FROM wiki "
+-                       "WHERE name=%s AND version<=%s "
+-                       "ORDER BY version DESC", (self.name, self.version))
++        if all_versions:
++            # show all page versions in history 
++            cursor.execute("SELECT version,time,author,comment,ipnr FROM wiki "
++                           "WHERE name=%s"
++                           "ORDER BY version DESC", (self.name))
++        else:
++            cursor.execute("SELECT version,time,author,comment,ipnr FROM wiki "
++                           "WHERE name=%s AND version<=%s "
++                           "ORDER BY version DESC", (self.name, self.version))
+         for version,time,author,comment,ipnr in cursor:
+             yield version,time,author,comment,ipnr
++
++    def would_collide(self, req):
++        """Return true if any workflow controllers detect collisions, 
++        false if none do, and None if no controllers implement any 
++        collision rules at all.
++        """ 
++        would = None
++        for controller in WikiSystem(self.env).workflow_controllers:
++            w = controller.would_collide(req, self.name, self.version)
++            # this does the right thing for None, True, or False, with
++            # True taking precedence over False, and both taking
++            # precedence over None -- python is great
++            would = would or w  
++        return would
++
++
