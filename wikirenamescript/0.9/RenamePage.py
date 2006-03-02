@@ -50,7 +50,7 @@ cursor.execute('UPDATE wiki SET name=%s WHERE name=%s', (newname,oldname))
 cursor.execute('UPDATE attachment SET id=%s WHERE type="wiki" AND id=%s', (newname,oldname))
 
 # Change the directory where the attachments are stored
-os.rename(os.path.join(tracenv, 'attachments/wiki', oldname),
+os.renames(os.path.join(tracenv, 'attachments/wiki', oldname),
     os.path.join(tracenv, 'attachments/wiki', newname))
 
 # Get a list of all wiki pages containing links to the old page
