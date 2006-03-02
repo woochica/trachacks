@@ -48,7 +48,7 @@ class UserbaseModule(Component):
         
         In this method, you can do all sorts of checks to determine if
         you want to allow this version of this page to be used as the
-        base version for the edit that the user is submitting, you can
+        base version for the edit that the user is submitting.  You can
         check if there has been a new version checked in since the
         user started editing, and so on.  Return true if you want the
         user to get a collision error message, false if not.  If you
