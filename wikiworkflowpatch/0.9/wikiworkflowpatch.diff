@@ -1,7 +1,7 @@
-Index: branches/wikiflowpatch/0.9/trac/wiki/api.py
+Index: trac/wiki/api.py
 ===================================================================
---- branches/wikiflowpatch/0.9/trac/wiki/api.py	(revision 32)
-+++ branches/wikiflowpatch/0.9/trac/wiki/api.py	(working copy)
+--- trac/wiki/api.py	(revision 32)
++++ trac/wiki/api.py	(working copy)
 @@ -65,16 +65,30 @@
   
      def get_link_resolvers():
@@ -46,10 +46,10 @@ Index: branches/wikiflowpatch/0.9/trac/wiki/api.py
 +
 +    def would_collide(self, req, name, version):
 +        return None
-Index: branches/wikiflowpatch/0.9/trac/wiki/web_ui.py
+Index: trac/wiki/web_ui.py
 ===================================================================
---- branches/wikiflowpatch/0.9/trac/wiki/web_ui.py	(revision 32)
-+++ branches/wikiflowpatch/0.9/trac/wiki/web_ui.py	(working copy)
+--- trac/wiki/web_ui.py	(revision 32)
++++ trac/wiki/web_ui.py	(working copy)
 @@ -30,6 +30,7 @@
  from trac.versioncontrol.diff import get_diff_options, hdf_diff
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -110,10 +110,10 @@ Index: branches/wikiflowpatch/0.9/trac/wiki/web_ui.py
              history.append({
                  'url': self.env.href.wiki(page.name, version=version),
                  'diff_url': self.env.href.wiki(page.name,
-Index: branches/wikiflowpatch/0.9/trac/wiki/model.py
+Index: trac/wiki/model.py
 ===================================================================
---- branches/wikiflowpatch/0.9/trac/wiki/model.py	(revision 32)
-+++ branches/wikiflowpatch/0.9/trac/wiki/model.py	(working copy)
+--- trac/wiki/model.py	(revision 32)
++++ trac/wiki/model.py	(working copy)
 @@ -22,15 +22,15 @@
  from trac.core import *
  from trac.wiki.api import WikiSystem
