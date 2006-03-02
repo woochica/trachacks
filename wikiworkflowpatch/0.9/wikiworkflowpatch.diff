@@ -58,26 +58,39 @@ Index: trac/wiki/web_ui.py
  from trac.wiki.model import WikiPage
  from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
  
-@@ -81,10 +82,16 @@
+@@ -79,12 +80,16 @@
  
+         add_stylesheet(req, 'common/css/wiki.css')
+ 
++        if action == 'edit':
++            default_page = WikiPage(self.env, pagename, None, db)
++            would_collide = page.would_collide(req) 
++
          if req.method == 'POST':
              if action == 'edit':
 -                latest_version = WikiPage(self.env, pagename, None, db).version
-+                default_page = WikiPage(self.env, pagename, None, db)
-+                would_collide = page.would_collide(req) 
-+                if would_collide is None:
-+                    # workflow plugin doesn't have a collision rule,
-+                    # so use default
-+                    if int(version) != default_page.version:
-+                        would_collide = 1
                  if req.args.has_key('cancel'):
-                     req.redirect(self.env.href.wiki(page.name))
+-                    req.redirect(self.env.href.wiki(page.name))
 -                elif int(version) != latest_version:
-+                elif would_collide:
++                    req.redirect(self.env.href.wiki(page.name, version=version))
++                elif would_collide or (would_collide is None and 
++                        int(version) != default_page.version):
                      action = 'collision'
                      self._render_editor(req, db, page)
                  elif req.args.has_key('preview'):
-@@ -105,7 +112,12 @@
+@@ -101,11 +106,24 @@
+         elif action == 'delete':
+             self._render_confirm(req, db, page)
+         elif action == 'edit':
++            if version:
++                if would_collide is None:
++                    # there is no workflow plugin, so we quietly
++                    # revert to trac's old behavior of editing the
++                    # default version of the page
++                    page = default_page
++                elif would_collide:
++                    action = 'collision'
+             self._render_editor(req, db, page)
          elif action == 'diff':
              self._render_diff(req, db, page)
          elif action == 'history':
@@ -91,7 +104,25 @@ Index: trac/wiki/web_ui.py
          else:
              if req.args.get('format') == 'txt':
                  req.send_response(200)
-@@ -312,7 +324,7 @@
+@@ -155,7 +173,7 @@
+             req.perm.assert_permission('WIKI_DELETE')
+ 
+         if req.args.has_key('cancel'):
+-            req.redirect(self.env.href.wiki(page.name))
++            req.redirect(self.env.href.wiki(page.name, version=page.version))
+ 
+         version = None
+         if req.args.has_key('version'):
+@@ -185,7 +203,7 @@
+ 
+         page.save(req.args.get('author'), req.args.get('comment'),
+                   req.remote_addr)
+-        req.redirect(self.env.href.wiki(page.name))
++        req.redirect(self.env.href.wiki(page.name, version=page.version))
+ 
+     def _render_confirm(self, req, db, page):
+         if page.readonly:
+@@ -312,7 +330,7 @@
              info['readonly'] = int(req.args.has_key('readonly'))
          req.hdf['wiki'] = info
  
@@ -100,7 +131,7 @@ Index: trac/wiki/web_ui.py
          """Extract the complete history for a given page and stores it in the
          HDF.
  
-@@ -327,7 +339,8 @@
+@@ -327,7 +345,8 @@
          req.hdf['title'] = page.name + ' (history)'
  
          history = []
@@ -133,7 +164,7 @@ Index: trac/wiki/model.py
          else:
              self.version = 0
              self.text = ''
-@@ -38,11 +38,19 @@
+@@ -38,10 +38,16 @@
          self.old_text = self.text
          self.old_readonly = self.readonly
  
@@ -149,12 +180,9 @@ Index: trac/wiki/model.py
 +                    # the first controller that returns a non-None value wins
 +                    break
          if version:
-+            import sys
-+            print >>sys.stderr, "version", repr(version)
              cursor.execute("SELECT version,text,readonly FROM wiki "
                             "WHERE name=%s AND version=%s",
-                            (name, int(version)))
-@@ -61,6 +69,10 @@
+@@ -61,6 +67,10 @@
              self.text = ''
              self.readonly = 0
  
@@ -165,7 +193,7 @@ Index: trac/wiki/model.py
      exists = property(fget=lambda self: self.version > 0)
  
      def delete(self, version=None, db=None):
-@@ -110,13 +122,14 @@
+@@ -110,13 +120,14 @@
          if t is None:
              t = time.time()
  
@@ -182,7 +210,7 @@ Index: trac/wiki/model.py
          elif self.readonly != self.old_readonly:
              cursor = db.cursor()
              cursor.execute("UPDATE wiki SET readonly=%s WHERE name=%s",
-@@ -137,12 +150,34 @@
+@@ -137,12 +148,34 @@
          self.old_readonly = self.readonly
          self.old_text = self.text
  
@@ -221,3 +249,17 @@ Index: trac/wiki/model.py
 +        return would
 +
 +
+Index: templates/wiki.cs
+===================================================================
+--- templates/wiki.cs	(revision 32)
++++ templates/wiki.cs	(working copy)
+@@ -289,6 +289,9 @@
+     if:trac.acl.WIKI_MODIFY ?>
+      <form method="get" action="<?cs var:wiki.current_href ?>"><div>
+       <input type="hidden" name="action" value="edit" />
++      <?cs if:?args.version ?>
++       <input type="hidden" name="version" value="<?cs var:args.version ?>" />
++      <?cs /if ?>
+       <input type="submit" value="<?cs if:wiki.exists ?>Edit<?cs
+         else ?>Create<?cs /if ?> this page" accesskey="e" />
+      </div></form><?cs
