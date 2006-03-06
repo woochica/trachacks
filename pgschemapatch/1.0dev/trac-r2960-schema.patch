@@ -1,7 +1,16 @@
-diff -urN trac-r2771/trac/db/postgres_backend.py aw-trac-r2771/trac/db/postgres_backend.py
---- trac-r2771/trac/db/postgres_backend.py	2005-12-29 02:34:53.463747000 -0800
-+++ aw-trac-r2771/trac/db/postgres_backend.py	2006-01-13 17:13:41.510828632 -0800
-@@ -38,6 +38,11 @@
+Files trac-trunk/trac/__init__.pyc and aw-trac-trunk/trac/__init__.pyc differ
+diff -urN trac-trunk/trac/db/postgres_backend.py aw-trac-trunk/trac/db/postgres_backend.py
+--- trac-trunk/trac/db/postgres_backend.py	2005-12-29 02:34:53.463747000 -0800
++++ aw-trac-trunk/trac/db/postgres_backend.py	2006-03-06 13:12:54.281984147 -0800
+@@ -20,6 +20,7 @@
+ 
+ psycopg = None
+ PgSQL = None
++PGSchemaError = None
+ 
+ 
+ class PostgreSQLConnector(Component):
+@@ -38,6 +39,11 @@
                  params={}):
          cnx = self.get_connection(path, user, password, host, port, params)
          cursor = cnx.cursor()
@@ -13,19 +22,27 @@ diff -urN trac-r2771/trac/db/postgres_backend.py aw-trac-r2771/trac/db/postgres_
          from trac.db_default import schema
          for table in schema:
              for stmt in self.to_sql(table):
-@@ -82,8 +87,11 @@
+@@ -76,14 +82,19 @@
+         # We support both psycopg and PgSQL but prefer psycopg
+         global psycopg
+         global PgSQL
++        global PGSchemaError
+         if not psycopg and not PgSQL:
+             try:
+                 try:
++                    from psycopg2 import ProgrammingError as PGSchemaError
                      import psycopg2 as psycopg
                  except ImportError:
                      import psycopg
-+                self.PGSchemaError = psycopg.ProgrammingError    
++                    from psycopg import ProgrammingError as PGSchemaError
              except ImportError:
                  from pyPgSQL import PgSQL
 +                from pyPgSQL.libpq import OperationalError as PGSchemaError
-+                self.PGSchemaError = PGSchemaError
++        self.PGSchemaError = PGSchemaError
          if psycopg:
              dsn = []
              if path:
-@@ -99,6 +107,13 @@
+@@ -99,6 +110,13 @@
              cnx = psycopg.connect(' '.join(dsn))
          else:
              cnx = PgSQL.connect('', user, password, host, path, port)
@@ -39,10 +56,10 @@ diff -urN trac-r2771/trac/db/postgres_backend.py aw-trac-r2771/trac/db/postgres_
          ConnectionWrapper.__init__(self, cnx)
  
      def cast(self, column, type):
-diff -urN trac-r2771/trac/db/util.py aw-trac-r2771/trac/db/util.py
---- trac-r2771/trac/db/util.py	2005-11-24 13:45:40.501162000 -0800
-+++ aw-trac-r2771/trac/db/util.py	2006-01-13 17:14:00.714909168 -0800
-@@ -53,4 +53,13 @@
+diff -urN trac-trunk/trac/db/util.py aw-trac-trunk/trac/db/util.py
+--- trac-trunk/trac/db/util.py	2006-02-25 19:26:54.876117000 -0800
++++ aw-trac-trunk/trac/db/util.py	2006-03-06 13:06:12.925330449 -0800
+@@ -70,4 +70,13 @@
          return object.__getattr__(self, name)
  
      def cursor(self):
