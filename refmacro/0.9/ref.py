@@ -1,3 +1,12 @@
+"""
+Reference section headers in the current page. To refer to the section
+[[ref(Using Macros)]], use
+
+{{{
+[[ref(Using Macros)]]
+}}}
+
+"""
 import re
 from trac.wiki.formatter import Formatter
 
