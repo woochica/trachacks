@@ -25,7 +25,7 @@ def username():
         return os.getlogin()
 
 
-def rename_page(oldname, newname, envpath, debug):
+def rename_page(oldname, newname, envpath, debug=False):
     """Rename a wiki page from oldname to newname, using env as the environment."""
     env = Environment(envpath)
     db = env.get_db_cnx()
