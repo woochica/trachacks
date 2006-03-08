@@ -1,7 +1,7 @@
-Files trac-trunk/trac/__init__.pyc and aw-trac-trunk/trac/__init__.pyc differ
-diff -urN trac-trunk/trac/db/postgres_backend.py aw-trac-trunk/trac/db/postgres_backend.py
+Files trac-trunk/trac/__init__.pyc and aw-trac/trac/__init__.pyc differ
+diff -urN trac-trunk/trac/db/postgres_backend.py aw-trac/trac/db/postgres_backend.py
 --- trac-trunk/trac/db/postgres_backend.py	2005-12-29 02:34:53.463747000 -0800
-+++ aw-trac-trunk/trac/db/postgres_backend.py	2006-03-06 13:12:54.281984147 -0800
++++ aw-trac/trac/db/postgres_backend.py	2006-03-08 15:31:15.837578067 -0800
 @@ -20,6 +20,7 @@
  
  psycopg = None
@@ -56,21 +56,20 @@ diff -urN trac-trunk/trac/db/postgres_backend.py aw-trac-trunk/trac/db/postgres_
          ConnectionWrapper.__init__(self, cnx)
  
      def cast(self, column, type):
-diff -urN trac-trunk/trac/db/util.py aw-trac-trunk/trac/db/util.py
---- trac-trunk/trac/db/util.py	2006-02-25 19:26:54.876117000 -0800
-+++ aw-trac-trunk/trac/db/util.py	2006-03-06 13:06:12.925330449 -0800
-@@ -70,4 +70,13 @@
-         return object.__getattr__(self, name)
- 
-     def cursor(self):
--        return IterableCursor(self.cnx.cursor())
-+        cur = self.cnx.cursor() 
+@@ -113,3 +131,16 @@
+     def get_last_id(self, cursor, table, column='id'):
+         cursor.execute("SELECT CURRVAL('%s_%s_seq')" % (table, column))
+         return cursor.fetchone()[0]
++
++    def cursor(self):
++        cursor = self.cnx.cursor()
 +        try:
-+            try: 
-+                cur.execute("SET search_path TO %s, public", (self.schema,)) 
-+                self.cnx.commit() 
-+            except self.PGSchemaError: 
-+                self.cnx.rollback() 
-+        except AttributeError: 
++            try:
++                cursor.execute("SET search_path TO %s, public", (self.schema,))
++                self.cnx.commit()
++            except self.PGSchemaError:
++                self.cnx.rollback()
++        except AttributeError:
 +            pass
-+        return IterableCursor(cur) 
++        return cursor
++
