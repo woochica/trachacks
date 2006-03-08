@@ -375,10 +375,12 @@ class PyDocSearch(Component):
         yield ('pydoc', 'Python Documentation', 0)
 
     def get_search_results(self, req, query, filters):
-        query = [q.lower() for q in query.split()]
         results = []
-        matched = PyDoc(self.env).filter_match
         if 'pydoc' in filters:
+            if not isinstance(query, list):
+                query = query.split()
+            query = [q.lower() for q in query]
+            matched = PyDoc(self.env).filter_match
             def callback(path, modname, desc):
                 for q in query:
                     if (path and not matched(path)) and (modname and not matched(modname)):
