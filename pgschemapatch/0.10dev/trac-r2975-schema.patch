@@ -1,7 +1,7 @@
 Files trac-trunk/trac/__init__.pyc and aw-trac/trac/__init__.pyc differ
 diff -urN trac-trunk/trac/db/postgres_backend.py aw-trac/trac/db/postgres_backend.py
 --- trac-trunk/trac/db/postgres_backend.py	2005-12-29 02:34:53.463747000 -0800
-+++ aw-trac/trac/db/postgres_backend.py	2006-03-08 15:31:15.837578067 -0800
++++ aw-trac/trac/db/postgres_backend.py	2006-03-08 15:55:51.088360187 -0800
 @@ -20,6 +20,7 @@
  
  psycopg = None
@@ -38,38 +38,38 @@ diff -urN trac-trunk/trac/db/postgres_backend.py aw-trac/trac/db/postgres_backen
              except ImportError:
                  from pyPgSQL import PgSQL
 +                from pyPgSQL.libpq import OperationalError as PGSchemaError
-+        self.PGSchemaError = PGSchemaError
++#        self.PGSchemaError = PGSchemaError
          if psycopg:
              dsn = []
              if path:
-@@ -99,6 +110,13 @@
+@@ -99,6 +110,14 @@
              cnx = psycopg.connect(' '.join(dsn))
          else:
              cnx = PgSQL.connect('', user, password, host, path, port)
 +        try: 
-+            self.schema = params['schema'] 
++            self.schema = None
++            if 'schema' in params:
++                self.schema = params['schema'] 
 +            cnx.cursor().execute('SET search_path TO %s, public', (self.schema,)) 
-+        except self.PGSchemaError: 
++#        except self.PGSchemaError: 
++        except PGSchemaError: 
 +            cnx.rollback() 
-+        except (KeyError, AttributeError): 
-+            pass 
          ConnectionWrapper.__init__(self, cnx)
  
      def cast(self, column, type):
-@@ -113,3 +131,16 @@
+@@ -113,3 +132,15 @@
      def get_last_id(self, cursor, table, column='id'):
          cursor.execute("SELECT CURRVAL('%s_%s_seq')" % (table, column))
          return cursor.fetchone()[0]
 +
 +    def cursor(self):
 +        cursor = self.cnx.cursor()
-+        try:
++        if self.schema:
 +            try:
 +                cursor.execute("SET search_path TO %s, public", (self.schema,))
 +                self.cnx.commit()
-+            except self.PGSchemaError:
++#            except self.PGSchemaError:
++            except PGSchemaError:
 +                self.cnx.rollback()
-+        except AttributeError:
-+            pass
 +        return cursor
 +
