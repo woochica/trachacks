@@ -1,4 +1,3 @@
-Files trac-trunk/trac/__init__.pyc and aw-trac/trac/__init__.pyc differ
 diff -urN trac-trunk/trac/db/postgres_backend.py aw-trac/trac/db/postgres_backend.py
 --- trac-trunk/trac/db/postgres_backend.py	2005-12-29 02:34:53.463747000 -0800
 +++ aw-trac/trac/db/postgres_backend.py	2006-03-08 16:14:58.079572641 -0800
