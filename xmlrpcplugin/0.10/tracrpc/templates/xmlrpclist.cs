@@ -8,7 +8,7 @@
 <dl>
 <?cs each:namespace = xmlrpc.functions ?>
 
-<dt><h3><?cs var:namespace.namespace ?> - <?cs var:namespace.description ?></h3></dt>
+<dt><h3 id=<?cs var:namespace.namespace ?>><?cs var:namespace.namespace ?> - <?cs var:namespace.description ?></h3></dt>
 <dd>
 <table class="listing tickets">
 <thead>
