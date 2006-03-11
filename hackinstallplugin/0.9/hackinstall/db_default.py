@@ -6,6 +6,4 @@ default_table = Table('hacks', key='id')[
                     Column('id', auto_increment=True),
                     Column('name'),
                     Column('type'),
-                    Column('current'),
-                    Column('installed'),
-                    Column('readme')]
+                    Column('current')]

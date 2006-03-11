@@ -9,8 +9,9 @@
 <tr><td>Name</td><td>Current</td></tr>
 <?cs each:plugin = hackinstall.plugins ?>
 <tr>
-    <td><?cs var:plugin.name ?></td>
+    <td><?cs name:plugin ?></td>
     <td><?cs var:plugin.current ?></td>
+    <td><input type="submit" name="download_<?cs name:plugin ?>" value="Download" /></td>
     <td><input type="submit" name="install_<?cs name:plugin ?>" value="Install" /></td>
 </tr>
 <?cs /each ?>
