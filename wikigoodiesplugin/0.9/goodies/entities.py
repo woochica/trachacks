@@ -75,11 +75,10 @@ class Entities(Component):
     def get_macros(self):
         yield 'ShowEntities'
 
-    def get_macro_description(name):
-        return """Renders in a table the list of HTML entities.
-
-        Optional argument is the number of columns in the table (defaults 3).
-        """
+    def get_macro_description(self, name):
+        return ("Renders in a table the list of HTML entities. "
+                " Optional argument is the number of columns in the table "
+                "(defaults 3).")
 
     def render_macro(self, req, name, content):
         return render_table(["&%s;" % e for e in ENTITIES], content,

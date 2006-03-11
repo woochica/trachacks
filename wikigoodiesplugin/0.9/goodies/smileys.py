@@ -86,11 +86,10 @@ class Smileys(Component):
     def get_macros(self):
         yield 'ShowSmileys'
 
-    def get_macro_description(name):
-        return """Renders in a table the list of available smileys.
-
-        Optional argument is the number of columns in the table (defaults 3).
-        """
+    def get_macro_description(self, name):
+        return ("Renders in a table the list of available smileys. "
+                "Optional argument is the number of columns in the table "
+                "(defaults 3).")
 
     def render_macro(self, req, name, content):
         return render_table(SMILEYS.keys(), content, self._format_smiley)

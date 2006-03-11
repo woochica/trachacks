@@ -60,11 +60,10 @@ class Symbols(Component):
     def get_macros(self):
         yield 'ShowSymbols'
 
-    def get_macro_description(name):
-        return """Renders in a table the list of known symbols.
-
-        Optional argument is the number of columns in the table (defaults 3).
-        """
+    def get_macro_description(self, name):
+        return ("Renders in a table the list of known symbols. "
+                "Optional argument is the number of columns in the table "
+                "(defaults 3).")
 
     def render_macro(self, req, name, content):
         return render_table(SYMBOLS.keys(), content, self._format_symbol)
