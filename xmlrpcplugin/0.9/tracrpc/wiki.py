@@ -34,7 +34,7 @@ class WikiRPC(Component):
         yield ('WIKI_VIEW', ((list,),), self.getAllPages)
         yield ('WIKI_VIEW', ((dict, str), (dict, str, int)), self.getPageInfo)
         yield ('WIKI_VIEW', ((dict, str, int),), self.getPageInfo, 'getPageInfoVersion')
-        yield ('WIKI_VIEW', ((bool, str, str, dict),), self.putPage)
+        yield ('WIKI_CREATE', ((bool, str, str, dict),), self.putPage)
         yield ('WIKI_VIEW', ((list, str),), self.listAttachments)
         yield ('WIKI_VIEW', ((xmlrpclib.Binary, str),), self.getAttachment)
         yield ('WIKI_MODIFY', ((bool, str, str, xmlrpclib.Binary),), self.putAttachment)
