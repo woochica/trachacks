@@ -1,7 +1,6 @@
 from trac.core import *
 from tracrpc.api import IXMLRPCHandler
 from trac.Search import ISearchSource
-from trac.web.api import absolute_url
 
 try:
     a = set()
@@ -34,15 +33,21 @@ class SearchRPC(Component):
         """ Perform a search using the given filters. Defaults to all if not
             provided. Results are returned as a list of tuples in the form
            (href, title, date, author, excerpt)."""
+        from trac.Search import search_terms
+        query = search_terms(query)
         chosen_filters = set(filters)
         available_filters = []
         for source in self.search_sources:
             available_filters += source.get_search_filters(req)
 
-        filters = [f[0] for f in available_filters if f in chosen_filters]
+        filters = [f[0] for f in available_filters if f[0] in chosen_filters]
         if not filters:
             filters = [f[0] for f in available_filters]
+        self.env.log.debug("Searching with %s" % filters)
 
-        return [['/'.join(req.base_url.split('/')[0:3]) + result[0]] + list(result[1:]) \
-            for result in source.get_search_results(req, query, filters) \
-                for source in self.search_sources]
+        results = []
+        for source in self.search_sources:
+            for result in source.get_search_results(req, query, filters):
+                results.append(['/'.join(req.base_url.split('/')[0:3])
+                                + result[0]] + list(result[1:]))
+        return results
