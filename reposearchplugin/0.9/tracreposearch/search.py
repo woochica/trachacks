@@ -64,7 +64,9 @@ class TracRepoSearchPlugin(Component):
         if 'repo' not in filters:
             return
         repo = self.env.get_repository(req.authname)
-        query = [term.lower() for term in query.split()]
+        if not isinstance(query, list):
+            query = query.split()
+        query = [q.lower() for q in query]
         db = self.env.get_db_cnx()
         include, excludes = self._get_filters()
 
