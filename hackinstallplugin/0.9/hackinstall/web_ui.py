@@ -29,33 +29,49 @@ class HackInstallPlugin(Component):
                 self.version = md.group(1)
             else:
                 raise TracError, 'HackInstall is unable to determine what version of Trac you are using, please manually configure it.'
+
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        self.plugins = {}        
+        cursor.execute('SELECT id, name, current, installed FROM hacks WHERE type = %s', ('plugin',))
+        for row in cursor:
+            self.plugins[row[0]]= {'name': row[1], 'current': row[2], 'installed': row[3]}
+
+        self.macros = {}
+        cursor.execute('SELECT id, name, current, installed FROM hacks WHERE type = %s', ('macro',))
+        for row in cursor:
+            self.macros[row[0]] = {'name': row[1], 'current': row[2], 'installed': row[3]}
+        
+
  
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
-        if req.perm.has_permission('TRAC_ADMIN'):
+        if req.perm.has_permission('TRAC_ADMIN') or True:
             yield ('hacks', 'Trac-Hacks', 'general', 'General')
-            yield ('hacks', 'Trac-Hacks', 'plugin', 'Plugins')
-            yield ('hacks', 'Trac-Hacks', 'macro', 'Macros')
+            yield ('hacks', 'Trac-Hacks', 'plugins', 'Plugins')
+            yield ('hacks', 'Trac-Hacks', 'macros', 'Macros')
             
     def process_admin_request(self, req, cat, page, path_info):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
-        plugins = []
-        macros = []
+        def _find_id():
+            for id in self.plugins.iterkeys():
+                if 'install_%s'%id in req.args:
+                    return id
         
-        cursor.execute('SELECT id, name, current, installed FROM hacks WHERE type = %s', ('plugin',))
-        for row in cursor:
-            plugins.append({'id': row[0], 'name': row[1], 'current': row[2], 'installed': row[3]})
-        cursor.execute('SELECT id, name, current, installed FROM hacks WHERE type = %s', ('macro',))
-        for row in cursor:
-            macros.append({'id': row[0], 'name': row[1], 'current': row[2], 'installed': row[3]})
-        
+        if req.method == 'POST':
+            install_id = _find_id()
+            req.hdf['hackinstall.message'] = "Installing plugin number %s (%s)" % (install_id, self.plugins[install_id]['name'])
+
         req.hdf['hackinstall'] = { 'version': self.version, 'url': self.url }
-        req.hdf['hackinstall.plugins'] = plugins
-        req.hdf['hackinstall.macros'] = macros
+        req.hdf['hackinstall.plugins'] = self.plugins
+        req.hdf['hackinstall.macros'] = self.macros
+        for x in ['general', 'plugins', 'macros']:
+            req.hdf['hackinstall.hdf.%s'%x] = self.env.href.admin('hacks',x)
         
-        template = { 'general': 'hackinstall_admin.cs', 'plugin': 'hackinstall_admin_plugin.cs', 'macro': 'hackinstall_admin_macro.cs' }[page]
+        template = { 'general': 'hackinstall_admin.cs', 'plugins': 'hackinstall_admin_plugin.cs', 'macros': 'hackinstall_admin_macro.cs' }[page]
         return template, None
 
     # IEnvironmentSetupParticipant methods
