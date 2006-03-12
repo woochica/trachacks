@@ -24,3 +24,19 @@ ul.tagit:before {
 .tagit li {
 	display: inline;
 }
+
+ul.tagcloud {
+	list-style: none;
+}
+
+.tagcloud li {
+	display: inline;
+}
+
+.tagcloud li:after {
+	content: ", ";
+}
+
+.tagcloud li.last:after {
+	content: "";
+}

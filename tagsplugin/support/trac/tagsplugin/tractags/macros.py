@@ -90,16 +90,23 @@ class TagMacros(Component):
         scale = 1.0
         if tlen:
             scale = rlen / tlen
-        out = []
+        out = StringIO()
+        out.write('<ul class="tagcloud">\n')
+        last = names[-1]
         for name in names:
-            out.append('<a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> (%i)' % (
+            if name == last:
+                cls = ' class="last"'
+            else:
+                cls = ''
+            out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> <span class="tagcount">(%i)</span></li>\n' % (
+                       cls,
                        taginfo[name],
                        range[0] + int((cloud[name] - min) * scale),
                        self.env.href.wiki(name),
                        name,
-                       cloud[name]
-                       ))
-        return ', '.join(out)
+                       cloud[name]))
+        out.write('</ul>\n')
+        return out.getvalue()
 
     def render_listtagged(self, req, *tags, **kwargs):
         """ List tagged objects. Takes a list of tags to match against.
