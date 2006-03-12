@@ -1,0 +1,26 @@
+.listtagged lh {
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+.listtags .listtagged lh {
+	font-weight: normal;
+}
+
+.listtags .listtagged ul {
+	margin: 0px;
+	padding: 0px;
+}
+
+ul.tagit {
+	float: right;
+	list-style: none;
+}
+
+ul.tagit:before {
+	content: "Tags: ";
+}
+
+.tagit li {
+	display: inline;
+}

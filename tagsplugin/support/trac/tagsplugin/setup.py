@@ -1,7 +1,11 @@
 from setuptools import setup
 
-PACKAGE = 'TracTags'
-VERSION = '0.1'
-
-setup(name=PACKAGE, version=VERSION, packages=['tractags'],
-	package_data={'tractags' : ['templates/*.cs' ]})
+setup(
+    name='TracTags',
+    version='0.1',
+    packages=['tractags'],
+	package_data={'tractags' : ['templates/*.cs', 'htdocs/js/*.js', 'htdocs/css/*.css']},
+    author='Muness Alrubaie',
+    url='http://dev.muness.textdriven.com/trac.cgi/wiki/tags',
+    description='Tag plugin for Trac',
+    )

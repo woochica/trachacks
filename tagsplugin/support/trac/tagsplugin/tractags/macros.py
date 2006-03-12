@@ -1,330 +1,89 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
+from trac.wiki import model 
 from trac.util import Markup
-from trac.wiki import wiki_to_html
+from trac.wiki import wiki_to_html, wiki_to_oneliner
 from StringIO import StringIO
 from tractags.api import TagEngine, ITagSpaceUser
 import inspect
 import re
 import string
+try:
+    set()
+except:
+    from sets import Set as set
 
-class TagsMacro:
-    def getInfo(self,db,tag,opts):
-        cs = db.cursor()
-        desc = tag
-        linktext = tag
-        # Get the latest revision only.
-        cs.execute('SELECT text from wiki where name = \'%s\' order by version desc limit 1' % tag)
-        csrow = cs.fetchone()
-        prefix = ''
+class TagMacros(Component):
+    """ Versions of the old Wiki-only macros using the new tag API. """
 
-        if csrow != None:
-            text = csrow[0]
-            ret = re.search('=\s+([^=]*)=',text)
-            if ret == None :
-                    title = ''
-            else :
-                    title = ret.group(1)
-            ret = re.search('==\s+([^=]*)==',text)
-            if ret == None :
-                    subtitle = ''
-            else :
-                    subtitle = ret.group(1)
-            infos = {'pagename': tag, 'none': '', 'subtitle': subtitle, 'title': title}
-            desc = infos[opts['desc']]
-            linktext =  infos[opts['link']]
-        else:
-            prefix = "Create "
-
-        title = StringIO()
-        title.write("%s%s"%(prefix, desc))
-        if prefix != '' or desc == tag:
-           desc = ''
-
-        return (linktext,title.getvalue(),desc)
-    
-class ListTags(TagsMacro):
-    def render(self,component, req, content):
-        self.env = component.env
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cs = db.cursor()
-
-        tags = [ ]
-        opts = {'link': 'pagename', 'desc': 'title', 'showpages': 'false'}
-        if content :
-            optre = re.compile("([^=]+)=(.+)")
-            for tag in content.split(',') :
-                opt = optre.search(tag.strip())
-                if opt != None :
-                   opts[opt.group(1)] = opt.group(2)
-                else :
-                    tags.append(tag.strip())
-
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        msg = StringIO()
-
-        if tags:
-            return self.wParameters(req.hdf,tags,opts,db,cursor)
-        
-        else:
-            buf = StringIO()
-            buf.write('SELECT tag, COUNT(*) FROM tags WHERE tags.tagspace = \'wiki\'')
-
-            cursor.execute(buf.getvalue() + ' GROUP BY tag ORDER BY tag')
-
-            msg.write('<ul>')
-            while 1:
-              row = cursor.fetchone()
-              if row == None:
-                 break
-
-              tag = row[0]
-              refcount = int(row[1])
-
-              (linktext,title,desc) = self.getInfo(db,tag,opts)
-
-              link = self.env.href.wiki(tag)
-
-              msg.write('<li><a title="%s" href="%s">' % (title,link))
-              msg.write(linktext)
-              msg.write('</a> %s (%s)</li>\n' % (desc,refcount))
-
-              if opts['showpages'] == 'true' :
-                    t = [ tag ]
-                    msg.write(self.wParameters(req.hdf,t,opts,db,db.cursor()))
-
-        msg.write('</ul>')
-
-        return msg.getvalue()
-
-    def wParameters(self,hdf,tags,opts,db,cursor):
-        buf = StringIO()
-        criteria = StringIO()
-
-        me = hdf.getValue('wiki.page_name', '')
-
-        heirarchy = me.split('/')
-        prog = re.compile('^\.([-]\d+)$')
-
-        for current in tags:
-            if current == "." :
-                current = me
-            else :
-                m = prog.search(current)
-                if m :
-                    current = heirarchy[int(m.group(1))]
-            buf.write('SELECT DISTINCT name FROM tags WHERE')
-            buf.write(' tagspace = \'wiki\' AND tag LIKE \'%s\' INTERSECT ' % current)
-
-        cursor.execute(buf.getvalue()[0:-11] + ' ORDER BY name')
-
-        msg = StringIO()
-
-        msg.write('<ul>')
-        while 1:
-            row = cursor.fetchone()
-            if row == None:
-                break
-            tag = row[0]
-            (linktext,title,desc) = self.getInfo(db,tag,opts)
-
-            link = self.env.href.wiki(tag)
-
-            msg.write('<li><a title="%s" href="%s">' % (title,link))
-            msg.write(linktext)
-            msg.write('</a> %s</li>\n' % desc)
-
-        msg.write('</ul>')
-
-        return msg.getvalue()
-
-#class TagCloud(TagsMacro):
-#    def render(self,component, req, content):
-#        self.env = component.env
-#        db = self.env.get_db_cnx()
-#        cursor = db.cursor()
-#        cs = db.cursor()
-#
-#        opts = { 'smallest' : 10, 'biggest' : 22}
-#        
-#        if content :
-#            optre = re.compile("([^=]+)=(.+)")
-#            for tag in content.split(',') :
-#                opt = optre.search(tag.strip())
-#                if opt != None :
-#                   opts[opt.group(1)] = opt.group(2)
-#
-#        db = self.env.get_db_cnx()
-#        cursor = db.cursor()
-#        msg = StringIO()
-#
-#        buf = StringIO()
-#        buf.write('SELECT tag, COUNT(*) FROM tags WHERE tagspace = \'wiki\'')
-#
-#        cursor.execute(buf.getvalue() + ' GROUP BY tag ORDER BY tag')
-#
-#        minimum = 10000
-#        maximum = 0
-#        tags = { }
-#
-#        while 1:
-#              row = cursor.fetchone()
-#              if row == None:
-#                 break
-#
-#              tag = row[0]
-#              refcount = int(row[1])
-#
-#              tags[tag] = refcount
-#
-#              if refcount < minimum :
-#                 minimum = refcount
-#              if refcount > maximum :
-#                 maximum = refcount
-#
-#        r = maximum - minimum + 1
-#
-#        smallest = float(opts['smallest'])
-#        biggest = float(opts['biggest'])
-#
-#        slots = (biggest - smallest) + 1
-#
-#        mult = float(slots)/float(r)
-#
-#        keys = tags.keys()
-#        keys.sort(lambda x, y: cmp(x, y))
-#        first = True
-#        for tag in keys :
-#            count = tags[tag]
-#            size = smallest + ((count - minimum)* mult)
-#
-#            if first is False :
-#                msg.write(", ")
-#            else :
-#                first = False
-#            msg.write("<span style=\"font-size:%spx\">" % (size))
-#            (linktext,title,link) = (tag,tags[tag],self.env.href.wiki(tag))
-#            msg.write('<a rel=\"tag\" href="%s">' % (link))
-#            msg.write(linktext)
-#            msg.write('</a> </span> (%s)' % (count))
-#        return msg.getvalue()
-
-class TagIt(TagsMacro):
-    def render(self,component, req, content):
-        self.env = component.env
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-
-        tags = [ ]
-
-        opts = {'link': 'pagename', 'desc': 'title', 'showpages': 'false'}
-        if content :
-            optre = re.compile("([^=]+)=(.+)")
-            for tag in content.split(',') :
-                opt = optre.search(tag.strip())
-                if opt != None :
-                   opts[opt.group(1)] = opt.group(2)
-                else :
-                    tags.append(tag.strip())
-
-        current = req.hdf.getValue('wiki.page_name', '')
-
-        sql = 'DELETE FROM tags where name = \'%s\' AND tagspace = \'wiki\' ' % current
-        cursor.execute(sql)
-
-        buf = StringIO()
-
-        for tag in tags:
-            if (tag != ""):
-               sql = 'INSERT INTO tags(tagspace,name,tag) values(\'wiki\', \'%s\',\'%s\')' % (current,tag)
-               cursor.execute(sql)
-
-        db.commit()
-
-        buf.write('SELECT tag FROM tags WHERE tagspace=\'wiki\' AND name=\'%s\' ORDER by tag' % current)
-
-        cursor.execute(buf.getvalue())
-
-        msg = StringIO()
-        msg.write("Tags:")
-
-        count = 0;
-
-        while 1:
-            row = cursor.fetchone()
-            if row == None:
-                break
-
-            tag = row[0]
-            (linktext,title,desc) = self.getInfo(db,tag,opts)
-
-            link = self.env.href.wiki(tag)
-
-            count = count + 1
-            msg.write('<a title="%s" href="%s" rel="tag">' % (title, link))
-            msg.write(linktext)
-            msg.write('</a> \n')
-
-        if (count > 0):
-            return (msg.getvalue()[0:-2] + ('.'))
-        else:
-            return ""
-
-class WikiTagsMacro(Component):
     implements(IWikiMacroProvider)
 
-    __tag_macros = {
-        'ListTags' : ListTags,
-        #'TagCloud' : TagCloud,
-        'TagIt' : TagIt,
-    }
+    def _page_titles(self, pages):
+        """ Extract page titles, if possible. """
+        titles = {}
+        for pagename in pages:
+            href, link, title = TagEngine(self.env).wiki.name_link(pagename)
+            titles[pagename] = title
+        return titles
 
-    def get_macros(self):
-        return self.__tag_macros.keys()
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(self.__tag_macros[name])
-
-    def render_macro(self, req, name, content):
-        macro = self.__tag_macros[name]()
-        return macro.render(self, req, content)
-
-class TagCloudMacro(Component):
-    """ Display a summary of all tags, with the font size reflecting the number
-        of pages the tag applies to. Font size ranges from 10 to 22 pixels, but
-        this can be overridden by the smallest=n and biggest=n macro parameters.
-    """
-
-    implements(IWikiMacroProvider, ITagSpaceUser)
-
-    # ITagSpaceUser methods
-    def tagspaces_used(self):
-        yield 'wiki'
+    def _current_page(self, req):
+        return req.hdf.getValue('wiki.page_name', '')
 
     # IWikiMacroProvider methods
     def get_macros(self):
         yield 'TagCloud'
+        yield 'ListTagged'
+        yield 'TagIt'
+        yield 'ListTags'
 
     def get_macro_description(self, name):
-        return pydoc.getdoc(self)
+        import pydoc
+        return pydoc.getdoc(getattr(self, 'render_' + name))
 
     def render_macro(self, req, name, content):
-        range = (10, 22)
-        if content:
-            args = dict([(k.strip(), v.strip()) for k, v in [x.split('=') for x in content.split(',')]])
-            range = (int(args.get('smallest', range[0])), int(args.get('biggest', range[1])))
+        from trac.web.chrome import add_stylesheet
+        add_stylesheet(req, 'tagsupport/css/tractags.css')
+        # Translate macro args into python args
+        args = []
+        kwargs = {}
+        if content is not None:
+            try:
+                from parseargs import parseargs
+                args, kwargs = parseargs(content)
+            except Exception, e:
+                raise TracError("Invalid arguments '%s' (%s %s)" % (content, e.__class__.__name__, e))
+        return getattr(self, 'render_' + name.lower(), content)(req, *args, **kwargs)
+
+    # Macro implementations
+    def render_tagcloud(self, req, smallest=10, biggest=20, tagspace=None, tagspaces=[]):
+        """ Display a summary of all tags, with the font size reflecting the
+            number of pages the tag applies to. Font size ranges from 10 to 22
+            pixels, but this can be overridden by the smallest=n and biggest=n
+            macro parameters. By default, all tagspaces are displayed, but this
+            can be overridden with tagspaces=(wiki, ticket) or tagspace=wiki."""
+        range = (int(smallest), int(biggest))
         # Get wiki tagspace
-        tags = TagEngine(self.env).wiki
+        if tagspace:
+            tagspaces = [tagspace]
+        else:
+            tagspaces = tagspaces or TagEngine(self.env).tagspaces
+        tags = set()
         cloud = {}
         min, max = 9999, 0
-        for tag in tags.get_tags():
-            count = tags.count_tagged_names(tag)
-            cloud[tag] = count
-            if count < min: min = count
-            if count > max: max = count
+
+        for tagspace in tagspaces:
+            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
+            for tag in tagsystem.get_tags():
+                count = tagsystem.count_tagged_names(tag)
+                self.env.log.debug((tagspace, tag, count))
+                if tag in cloud:
+                    count += cloud[tag]
+                cloud[tag] = count
+                if count < min: min = count
+                if count > max: max = count
+
         names = cloud.keys()
+        taginfo = self._page_titles(names)
         names.sort()
         rlen = float(range[1] - range[0])
         tlen = float(max - min)
@@ -333,10 +92,131 @@ class TagCloudMacro(Component):
             scale = rlen / tlen
         out = []
         for name in names:
-            out.append('<a rel="tag" style="font-size: %ipx" href="%s">%s</a> (%i)' % (
+            out.append('<a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> (%i)' % (
+                       taginfo[name],
                        range[0] + int((cloud[name] - min) * scale),
                        self.env.href.wiki(name),
                        name,
                        cloud[name]
                        ))
         return ', '.join(out)
+
+    def render_listtagged(self, req, *tags, **kwargs):
+        """ List tagged objects. Takes a list of tags to match against.
+            The special tag '.' inserts the current Wiki page name.
+
+            Optional keyword arguments are tagspace=wiki,
+            tagspaces=(wiki, title, ...) and noheadings=true."""
+
+        if 'tagspace' in kwargs:
+            tagspaces = [kwargs.get('tagspace', None)]
+        else:
+            tagspaces = kwargs.get('tagspaces', '') or \
+                        list(TagEngine(self.env).tagspaces)
+        noheadings = kwargs.get('noheadings', 'false')
+        alltags = set()
+        tags = set(tags)
+        if '.' in tags:
+            page = self._current_page(req)
+            if page:
+                tags.add(page)
+            tags.remove('.')
+
+        names = {}
+
+        for tagspace in tagspaces:
+            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
+            for name in tagsystem.get_tagged_names(*tags):
+                ntags = list(tagsystem.get_tags(name))
+                alltags.update(ntags)
+                names.setdefault((tagspace, name), {
+                    'tags': ntags,
+                    'tagsystem': tagsystem,
+                })
+
+        # Get tag page titles, if any
+        taginfo = self._page_titles(alltags)
+
+        # List names and tags
+        keys = names.keys()
+        keys.sort()
+        current_ns = None
+        out = StringIO()
+        out.write('<ul class="listtagged">')
+        for tagspace, name in keys:
+            if noheadings == 'false' and tagspace != current_ns and len(tagspaces) > 1:
+                out.write('<lh>%s tags</lh>' % tagspace)
+                current_ns = tagspace
+            details = names[(tagspace, name)]
+            tagsystem = details['tagsystem']
+            href, link, title = tagsystem.name_link(name)
+            link = wiki_to_oneliner(link, self.env)
+            title = wiki_to_oneliner(title, self.env)
+            out.write('<li>%s %s (%s)</li>\n' % (link, title,
+                ', '.join(['<a href="%s" title="%s">%s</a>'
+                          % (self.env.href.wiki(tag), taginfo[tag], tag)
+                          for tag in details['tags']])))
+        out.write('</ul>')
+
+        return out.getvalue()
+
+    def render_tagit(self, req, *tags):
+        """ Tag the current page and display the current tags. """
+        page = self._current_page(req)
+        if not page: return
+
+        wiki = TagEngine(self.env).wiki
+        wiki.replace_tags(req, page, *tags)
+
+        out = StringIO()
+        taginfo = self._page_titles(tags)
+        out.write('<ul class="tagit">\n')
+        for tag in tags:
+            href, link, title = TagEngine(self.env).wiki.name_link(tag)
+            out.write('<li><a href="%s" title="%s">%s</a></li>\n' % (href, title or '', link))
+        out.write('</ul>\n')
+        return out.getvalue()
+
+    def render_listtags(self, req, *tags, **kwargs):
+        """ List tags. For backwards compatibility, can accept a list of tags.
+            This will simply call ListTagged. Optional keyword arguments are
+            tagspace=wiki, tagspaces=(wiki, ticket, ...) and shownames=true. """
+        if tags:
+            # Backwards compatibility
+            return self.render_listtagged(req, *tags, **kwargs)
+
+        page = self._current_page(req)
+        wiki = TagEngine(self.env).wiki
+        taginfo = self._page_titles(tags)
+
+        showpages = kwargs.get('showpages', None) or kwargs.get('shownames', 'false')
+
+        if 'tagspace' in kwargs:
+            tagspaces = [kwargs['tagspace']]
+        else:
+            tagspaces = kwargs.get('tagspaces', []) or \
+                        list(TagEngine(self.env).tagspaces)
+
+        tags = {}
+        for tagspace in tagspaces:
+            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
+            for tag in tagsystem.get_tags():
+                count = tags.get(tag, 0) + tagsystem.count_tagged_names(tag)
+                tags[tag] = count
+            
+        out = StringIO()
+        out.write('<ul class="listtags">\n')
+        keys = tags.keys()
+        keys.sort()
+        for tag in keys:
+            href, link, title = TagEngine(self.env).wiki.name_link(tag)
+            link = wiki_to_oneliner(link, self.env)
+            title = wiki_to_oneliner(title, self.env)
+            out.write('<li><a href="%s" title="%s">%s</a> %s (%i)' % (href, title or '', link, title, tags[tag]))
+            if showpages == 'true':
+                out.write('\n')
+                out.write(self.render_listtagged(req, tag, tagspaces=tagspaces, noheadings='true'))
+                out.write('</li>\n')
+        out.write('</ul>\n')
+
+        return out.getvalue()
