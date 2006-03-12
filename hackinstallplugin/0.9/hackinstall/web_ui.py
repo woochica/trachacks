@@ -8,7 +8,7 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from webadmin.web_ui import IAdminPageProvider
 from db_default import default_table
-import os, re, xmlrpclib, urlparse, urllib2, zipfile, pkg_resources, zipimport
+import os, re, xmlrpclib, urlparse, urllib2, zipfile, pkg_resources, zipimport, tempfile
 
 __all__ = ['HackInstallPlugin']
 
@@ -19,7 +19,7 @@ class HackInstallPlugin(Component):
     
     def __init__(self):
         """Perform basic initializations."""
-        self.url = self.config.get('hackinstall','url',default='https://trac-hacks.org')
+        self.url = self.config.get('hackinstall','url',default='http://trac-hacks.org')
         self.builddir = self.config.get('hackinstall','builddir',default=os.environ['PYTHON_EGG_CACHE'])
         self.version = self.config.get('hackinstall','version')
         if not self.version:
@@ -124,36 +124,32 @@ class HackInstallPlugin(Component):
     # Internal methods
     def _install_hack(self, name):
         """Install a given hack."""
-        self._download_hack(name)
         if name.lower().endswith('plugin'):
-            self._build_plugin(name)
             self._install_plugin(name)
-        self._clean_hack(name)
+        elif name.lower().endswith('macro'):
+            self._download_hack(name)
+            self._install_macro(name)
+            self._clean_hack(name)
     
-    def _build_plugin(self, name):
-        """Create the egg files for a plugin."""
-        oldcwd = os.getcwd()
-        os.chdir(os.path.join(self.builddir,name.lower(),self.version))
-        os.system('python setup.py bdist_egg')
-        os.chdir(oldcwd)
-        
     def _install_plugin(self, name):
         """Install a plugin into the envrionment's plugin directory."""
-        fromdir = os.path.join(self.builddir,name.lower(),self.version,'dist')
-        todir = os.path.join(self.env.path,'plugins')
-        for d in os.listdir(fromdir):
-            fromegg = os.path.join(fromdir,d)
-            toegg = os.path.join(todir,d)
-            if d.endswith('.egg'):
-                os.rename(fromegg,toegg)
-                dist = pkg_resources.Distribution.from_filename(toegg,pkg_resources.EggMetadata(zipimport.zipimporter(toegg)))
-                if dist.has_metadata('trac_plugin.txt'):
-                    self.log.debug('trac_plugin.txt file detected')
-                    for line in dist.get_metadata_lines('trac_plugin.txt'):
-                        self.config.set('components',line.strip()+'.*','disabled')
-                else:
-                    self.log.debug('Entry point plugin detected, but not supported quite yet')
-                self.config.save()
+        recordf = tempfile.NamedTemporaryFile(suffix='.txt',prefix='hackinstall-record',dir=self.builddir,mode='w')
+        command = "easy_install --install-dir=%s --record=%s %s/svn/%s/%s" % (self.env.path+'/plugins',recordf.name,self.url,name.lower(),self.version)
+        self.log.info('Running os.system(%s)'%command)
+        os.system(command)
+        installed = recordf.readlines()
+        recordf.close()
+        for f in installed:
+            f = f.strip()
+            self.log.debug("Processing file '%s'" % f)
+            dist = pkg_resources.Distribution.from_filename(f,pkg_resources.EggMetadata(zipimport.zipimporter(f)))
+            if dist.has_metadata('trac_plugin.txt'):
+                self.log.debug('trac_plugin.txt file detected')
+                for line in dist.get_metadata_lines('trac_plugin.txt'):
+                    self.config.set('components',line.strip()+'.*','disabled')
+            else:
+                self.log.debug('Entry point plugin detected, but not supported quite yet')
+            self.config.save()
 
     def _download_hack(self, name):
         """Download and unzip a hack."""
