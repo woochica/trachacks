@@ -75,7 +75,6 @@ class TagMacros(Component):
             tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
             for tag in tagsystem.get_tags():
                 count = tagsystem.count_tagged_names(tag)
-                self.env.log.debug((tagspace, tag, count))
                 if tag in cloud:
                     count += cloud[tag]
                 cloud[tag] = count
@@ -113,16 +112,16 @@ class TagMacros(Component):
             The special tag '.' inserts the current Wiki page name.
 
             Optional keyword arguments are tagspace=wiki,
-            tagspaces=(wiki, title, ...) and noheadings=true."""
+            tagspaces=(wiki, title, ...) and showheadings=true."""
 
         if 'tagspace' in kwargs:
             tagspaces = [kwargs.get('tagspace', None)]
         else:
             tagspaces = kwargs.get('tagspaces', '') or \
                         list(TagEngine(self.env).tagspaces)
-        noheadings = kwargs.get('noheadings', 'false')
+        showheadings = kwargs.get('showheadings', 'false')
         alltags = set()
-        tags = set(tags)
+        tags = set([str(x) for x in tags])
         if '.' in tags:
             page = self._current_page(req)
             if page:
@@ -151,15 +150,14 @@ class TagMacros(Component):
         out = StringIO()
         out.write('<ul class="listtagged">')
         for tagspace, name in keys:
-            if noheadings == 'false' and tagspace != current_ns and len(tagspaces) > 1:
+            if showheadings == 'true' and tagspace != current_ns:
                 out.write('<lh>%s tags</lh>' % tagspace)
                 current_ns = tagspace
             details = names[(tagspace, name)]
             tagsystem = details['tagsystem']
             href, link, title = tagsystem.name_link(name)
-            link = wiki_to_oneliner(link, self.env)
-            title = wiki_to_oneliner(title, self.env)
-            out.write('<li>%s %s (%s)</li>\n' % (link, title,
+            htitle = wiki_to_oneliner(title, self.env)
+            out.write('<li><a href="%s" title="%s">%s</a> %s (%s)</li>\n' % (href, title, link, htitle,
                 ', '.join(['<a href="%s" title="%s">%s</a>'
                           % (self.env.href.wiki(tag), taginfo[tag], tag)
                           for tag in details['tags']])))
@@ -218,11 +216,11 @@ class TagMacros(Component):
         for tag in keys:
             href, link, title = TagEngine(self.env).wiki.name_link(tag)
             link = wiki_to_oneliner(link, self.env)
-            title = wiki_to_oneliner(title, self.env)
-            out.write('<li><a href="%s" title="%s">%s</a> %s (%i)' % (href, title or '', link, title, tags[tag]))
+            htitle = wiki_to_oneliner(title, self.env)
+            out.write('<li><a href="%s" title="%s">%s</a> %s (%i)' % (href, title, link, htitle, tags[tag]))
             if showpages == 'true':
                 out.write('\n')
-                out.write(self.render_listtagged(req, tag, tagspaces=tagspaces, noheadings='true'))
+                out.write(self.render_listtagged(req, tag, tagspaces=tagspaces))
                 out.write('</li>\n')
         out.write('</ul>\n')
 

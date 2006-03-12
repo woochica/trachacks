@@ -190,10 +190,23 @@ class TaggingSystemAccessor(object):
         self.tagsystem = tagsystem
 
     def __getattr__(self, name):
-        return lambda *args, **kwargs: getattr(self.tagsystem, name)(self.tagspace, *args, **kwargs)
+        def accessor(*args, **kwds):
+            return getattr(self.tagsystem, name)(self.tagspace, *args, **kwds)
+        return accessor
 
     def __repr__(self):
         return repr(self.tagsystem)
+
+class WikiTags(Component):
+    """ Implement tags in the Wiki system. """
+
+    implements(ITaggingSystemProvider)
+
+    def get_tagspaces_provided(self):
+        yield 'wiki'
+
+    def get_tagging_system(self, tagspace):
+        return WikiTaggingSystem(self.env)
 
 class TagEngine(Component):
     """ The core of the Trac tag API. This interface can be used to register
@@ -219,7 +232,6 @@ class TagEngine(Component):
 
     def __init__(self):
         self.tagging_system = DefaultTaggingSystem(self.env)
-        self.wiki_tagging_system = WikiTaggingSystem(self.env)
 
     def _get_tagspaces(self):
         """ Get iterable of available tagspaces. """
@@ -243,14 +255,11 @@ class TagEngine(Component):
 
     # ITaggingSystemProvider methods
     def get_tagspaces_provided(self):
-        yield 'wiki'
         for user in self.tag_users:
             for tagspace in user.tagspaces_used():
                 yield tagspace
 
     def get_tagging_system(self, tagspace):
-        if tagspace == 'wiki':
-            return self.wiki_tagging_system
         for taguser in self.tag_users:
             if tagspace in taguser.tagspaces_used():
                 return self.tagging_system

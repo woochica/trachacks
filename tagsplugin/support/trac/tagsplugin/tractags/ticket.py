@@ -10,23 +10,24 @@ except:
     from sets import Set as set
 
 class TicketTaggingSystem(TaggingSystem):
+    _keyword_split = re.compile(r'''[\w.-]+''')
+
     def __init__(self, env):
         self.env = env
 
     def _ticket_tags(self, ticket):
-        return ticket['keywords'].split()
+        return self._keyword_split.findall(ticket['keywords'])
 
     def _get_tags(self, *names):
         tags = set()
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        sql = 'SELECT keywords FROM ticket'
         if names:
-            for name in names:
-                ticket = model.Ticket(self.env, name)
-                tags.update(self._ticket_tags(ticket))
-        else:
-            query = Query(self.env)
-            for ticket in query.execute():
-                ticket = model.Ticket(self.env, ticket['id'])
-                tags.update(self._ticket_tags(ticket))
+            sql += ' WHERE id IN (%s)' % ', '.join([int(n) for n in names])
+        cursor.execute(sql)
+        for row in cursor:
+            tags.update(self._keyword_split.findall(row[0]))
         return tags
         
     def _get_tagged(self, *tags):
@@ -54,19 +55,25 @@ class TicketTaggingSystem(TaggingSystem):
         tags = self._ticket_tags(ticket)
         if tag not in tags:
             ticket['keywords'] = '%s %s' % (ticket['keywords'], tag)
-            ticket.save_changes(req.authname, 'added tag %s' % tag)
+            ticket.save_changes(req.authname, None)
+
+    def replace_tags(self, tagspace, req, name, *tags):
+        assert req.perm.assert_permission('TICKET_CHGPROP')
+        ticket = model.Ticket(self.env, name)
+        ticket['keywords'] = ' '.join(tags)
+        ticket.save_changes(req.authname, None)
 
     def remove_tag(self, tagspace, req, name, tag):
         assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
         ticket['keywords'] = re.sub(r'\b%s\b' % tag, '', ticket['keywords'])
-        ticket.save_changes(req.authname, 'removed tag %s' % tag)
+        ticket.save_changes(req.authname, None)
 
     def remove_all_tags(self, tagspace, req, name):
         assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
         del ticket['keywords']
-        ticket.save_changes(req.authname, 'all tags removed')
+        ticket.save_changes(req.authname, None)
 
     def name_link(self, tagspace, name):
         ticket = model.Ticket(self.env, name)
