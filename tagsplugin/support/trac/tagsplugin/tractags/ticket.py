@@ -24,7 +24,8 @@ class TicketTaggingSystem(TaggingSystem):
         cursor = db.cursor()
         sql = 'SELECT keywords FROM ticket'
         if names:
-            sql += ' WHERE id IN (%s)' % ', '.join([int(n) for n in names])
+            names = [int(n) for n in names]
+            sql += ' WHERE id IN (%s)' % ', '.join([str(n) for n in names])
         cursor.execute(sql)
         for row in cursor:
             tags.update(self._keyword_split.findall(row[0]))
