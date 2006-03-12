@@ -8,7 +8,7 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from webadmin.web_ui import IAdminPageProvider
 from db_default import default_table
-import os, re, xmlrpclib, urlparse, urllib2, zipfile
+import os, re, xmlrpclib, urlparse, urllib2, zipfile, pkg_resources, zipimport
 
 __all__ = ['HackInstallPlugin']
 
@@ -29,15 +29,15 @@ class HackInstallPlugin(Component):
                 self.version = md.group(1)
             else:
                 raise TracError, 'HackInstall is unable to determine what version of Trac you are using, please manually configure it.'
-        self.username = self.config.get('hackinstall','username',default='').strip()
+        self.username = self.config.get('hackinstall','username',default='TracHacks').strip()
         self.password = self.config.get('hackinstall','password',default='').strip()
         
         # Figure out the XML-RPC URL
-        if self.username == None:
+        if self.username == '':
             self.rpc_url = self.url + '/xmlrpc'
         else:
             urlparts = list(urlparse.urlsplit(self.url))
-            urlparts[1] = '%s:%s@%s' % (self.username, self.password, urlparts[1])
+            urlparts[1] = '%s%s@%s' % (self.username, ['',':'+self.password][self.password==''], urlparts[1])
             self.rpc_url = urlparse.urlunsplit(urlparts) + '/login/xmlrpc'
 
     # IAdminPageProvider methods
@@ -142,10 +142,18 @@ class HackInstallPlugin(Component):
         fromdir = os.path.join(self.builddir,name.lower(),self.version,'dist')
         todir = os.path.join(self.env.path,'plugins')
         for d in os.listdir(fromdir):
+            fromegg = os.path.join(fromdir,d)
+            toegg = os.path.join(todir,d)
             if d.endswith('.egg'):
-                os.rename(os.path.join(fromdir,d),os.path.join(todir,d))
-        self.config.set('components',name.lower()+'.*','disabled')
-        self.config.save()
+                os.rename(fromegg,toegg)
+                dist = pkg_resources.Distribution.from_filename(toegg,pkg_resources.EggMetadata(zipimport.zipimporter(toegg)))
+                if dist.has_metadata('trac_plugin.txt'):
+                    self.log.debug('trac_plugin.txt file detected')
+                    for line in dist.get_metadata_lines('trac_plugin.txt'):
+                        self.config.set('components',line.strip()+'.*','disabled')
+                else:
+                    self.log.debug('Entry point plugin detected, but not supported quite yet')
+                self.config.save()
 
     def _download_hack(self, name):
         """Download and unzip a hack."""
@@ -172,6 +180,7 @@ class HackInstallPlugin(Component):
 
     def _clean_hack(self, name):
         """Remove all intermediary files used during installation."""
+        os.remove(os.path.join(self.builddir,name.lower()+'.zip'))
 
     def _get_hacks(self, type):
         db = self.env.get_db_cnx()
