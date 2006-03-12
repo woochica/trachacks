@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005 Edgewall Software
 # Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
@@ -197,53 +197,55 @@ class PageOutlineMacro(Component):
 
 class ImageMacro(Component):
     """
-    Embed an image in wiki-formatted text.
+    Intègre une image dans du texte wiki.
+
+    Le premier argument spécifie le fichier image. Le fichier image peut 
+    référencer des pièces jointes ou des fichier de trois façons différentes:
+     * `module:id:file`, où le module peut être soit '''wiki''' soit '''ticket''',
+       pour référencer la pièce jointe nommée ''file'' à la page wiki ou au 
+       ticket spécifié.
+     * `id:file`: même utilisation le premier point, mais 'id' est soit une 
+       référence ticket soit le nom d'une page Wiki.
+     * `file` référence une pièce jointe nommée 'file'. Cette syntaxe ne 
+       fonctionne que depuis une page Wiki ou un ticket.
+
+    De plus, la spécification du fichier peut se référer à des fichiers du 
+    dépôt, en utilisant la syntaxe `source:file` (`source:file@rev` fonctionne
+    également).
+
+    Les arguments restants sont optionnels and permette de configurer les
+    attributs et le style de l'élément image (<img>):
+     * les nombres et unités sont interprétés comme la taille (ex. 120, 25%)
+       de l'image
+     * `right`, `left`, `top` or `bottom` sont interprétés comme le 
+       positionnement de l'image, respectivement droite, gauche, haut et bas.
+     * `nolink` désactive le lien vers l'image source
+     * le style `key=value` est interprété comme des attributs HTML de l'image
+     * le style `key:value` est interprété comme des indicateurs CSS de l'image
     
-    The first argument is the file specification. The file specification may
-    reference attachments or files in three ways:
-     * `module:id:file`, where module can be either '''wiki''' or '''ticket''',
-       to refer to the attachment named ''file'' of the specified wiki page or
-       ticket.
-     * `id:file`: same as above, but id is either a ticket shorthand or a Wiki
-       page name.
-     * `file` to refer to a local attachment named 'file'. This only works from
-       within that wiki page or a ticket.
-    
-    Also, the file specification may refer to repository files, using the
-    `source:file` syntax.
-    
-    The remaining arguments are optional and allow configuring the attributes
-    and style of the rendered `<img>` element:
-     * digits and unit are interpreted as the size (ex. 120, 25%)
-       for the image
-     * `right`, `left`, `top` or `bottom` are interpreted as the alignment for
-       the image
-     * `nolink` means without link to image source.
-     * `key=value` style are interpreted as HTML attributes for the image
-     * `key:value` style are interpreted as CSS style indications for the image
-    
-    Examples:
+    Exemples:
     {{{
-        [[Image(photo.jpg)]]                           # simplest
-        [[Image(photo.jpg, 120px)]]                    # with size
-        [[Image(photo.jpg, right)]]                    # aligned by keyword
-        [[Image(photo.jpg, nolink)]]                   # without link to source
-        [[Image(photo.jpg, align=right)]]              # aligned by attribute
-        [[Image(photo.jpg, float:right)]]              # aligned by style
-        [[Image(photo.jpg, float:right, border:solid 5px green)]] # 2 style specs
+        [[Image(photo.jpg)]]                           # le plus simple
+        [[Image(photo.jpg, 120px)]]                    # avec la taille
+        [[Image(photo.jpg, right)]]                    # aligné par mot clef
+        [[Image(photo.jpg, nolink)]]                   # sans lien vers la source
+        [[Image(photo.jpg, align=right)]]              # aligné par un style HTML
+        [[Image(photo.jpg, float:right)]]              # aligne par un style CSS
+        [[Image(photo.jpg, float:right, border:solid 5px green)]] # 2 styles
     }}}
     
-    You can use image from other page, other ticket or other module.
+    Vous pouvez utiliser une image jointe à une autre page, un autre ticket ou
+    un autre module.
     {{{
-        [[Image(OtherPage:foo.bmp)]]    # if current module is wiki
-        [[Image(base/sub:bar.bmp)]]     # from hierarchical wiki page
-        [[Image(#3:baz.bmp)]]           # if in a ticket, point to #3
+        [[Image(OtherPage:foo.bmp)]]    # depuis une page wiki
+        [[Image(base/sub:bar.bmp)]]     # depuis une page sous-page wiki
+        [[Image(#3:baz.bmp)]]           # depuis un ticket, #3 ticket
         [[Image(ticket:36:boo.jpg)]]
-        [[Image(source:/images/bee.jpg)]] # straight from the repository!
-        [[Image(htdocs:foo/bar.png)]]   # image file in project htdocs dir.
+        [[Image(source:/images/bee.jpg)]] # référence le dépôt
+        [[Image(htdocs:foo/bar.png)]]   # fichier image depuis le rép. statique.
     }}}
     
-    ''Adapted from the Image.py macro created by Shun-ichi Goto
+    ''Basé sur une adaptation de la macro Image.py créée par Shun-ichi Goto
     <gotoh@taiyo.co.jp>''
     """
     implements(IWikiMacroProvider)
@@ -304,7 +306,8 @@ class ImageMacro(Component):
             if parts[0] in ['wiki', 'ticket']:
                 module, id, file = parts
             else:
-                raise Exception("%s module ne peut posséder de fichiers joints" % parts[0])
+                raise Exception("%s module ne peut posséder de fichiers "
+                                "joints" % parts[0])
         elif len(parts) == 2:
             from trac.versioncontrol.web_ui import BrowserModule
             try:
@@ -314,8 +317,11 @@ class ImageMacro(Component):
                 browser_links = []
             if parts[0] in browser_links:   # source:path
                 module, file = parts
-                url = self.env.href.browser(file)
-                raw_url = self.env.href.browser(file, format='raw')
+                rev = None
+                if '@' in file:
+                    file, rev = file.split('@')
+                url = self.env.href.browser(file, rev=rev)
+                raw_url = self.env.href.browser(file, rev=rev, format='raw')
                 desc = filespec
             else: # #ticket:attachment or WikiPage:attachment
                 # FIXME: do something generic about shorthand forms...

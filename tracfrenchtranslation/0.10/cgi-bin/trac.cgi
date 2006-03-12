@@ -1,4 +1,4 @@
-﻿#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2003-2004 Edgewall Software
@@ -18,16 +18,19 @@
 try:
     from trac.web import cgi_frontend
     cgi_frontend.run()
+
 except Exception, e:
+    import sys
+    import traceback
+
+    print>>sys.stderr, e
+    traceback.print_exc(file=sys.stderr)
+
+    print 'Status: 500 Internal Server Error'
     print 'Content-Type: text/plain;charset=utf-8\r\n\r\n',
+    print
     print 'Aïe...'
     print
-    print 'Trac a détecté une erreur interne:'
+    print 'Trac a détecté une erreur interne:', e
     print
-    print e
-    print
-    import traceback
-    import StringIO
-    tb = StringIO.StringIO()
-    traceback.print_exc(file=tb)
-    print tb.getvalue()
+    traceback.print_exc(file=sys.stdout)

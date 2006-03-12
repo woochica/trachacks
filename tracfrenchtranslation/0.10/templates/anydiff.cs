@@ -42,6 +42,11 @@
    </div>
   </form>
  </div>
+ <div id="help">
+  <strong>Note:</strong> Voir <a href="<?cs var:trac.href.wiki
+  ?>/TracChangeset#ExaminingArbitraryDifferences">TracChangeset</a> pour de 
+  l'aide sur l'utilisation de la fonction de différence spécialisée.
+ </div>
 </div>
 
 <?cs include "footer.cs"?>

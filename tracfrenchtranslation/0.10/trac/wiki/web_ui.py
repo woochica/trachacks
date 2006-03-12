@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
@@ -22,13 +22,13 @@ import StringIO
 from trac.attachment import attachment_to_hdf, Attachment
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.Search import ISearchSource, query_to_sql, shorten_result
+from trac.Search import ISearchSource, search_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
 from trac.util import format_datetime, get_reporter_id, pretty_timedelta, \
                       shorten_line, Markup
 from trac.versioncontrol.diff import get_diff_options, hdf_diff
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
-from trac.web import IRequestHandler
+from trac.web import HTTPNotFound, IRequestHandler
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
 
@@ -368,8 +368,8 @@ class WikiModule(Component):
             req.hdf['wiki.history_href'] = history_href
         else:
             if not req.perm.has_permission('WIKI_CREATE'):
-                raise TracError('La page %s est introuvable' % page.name)
-            req.hdf['wiki.page_html'] = Markup('<p>Editez la page "%s" ici</p>',
+                raise HTTPNotFound('La page %s est introuvable', page.name)
+            req.hdf['wiki.page_html'] = Markup('<p>Créer la page "%s" ici</p>',
                                                page.name)
 
         # Show attachments
@@ -381,17 +381,17 @@ class WikiModule(Component):
             attach_href = self.env.href.attachment('wiki', page.name)
             req.hdf['wiki.attach_href'] = attach_href
 
-    # ISearchProvider methods
+    # ISearchSource methods
 
     def get_search_filters(self, req):
         if req.perm.has_permission('WIKI_VIEW'):
             yield ('wiki', 'Wiki')
 
-    def get_search_results(self, req, query, filters):
+    def get_search_results(self, req, terms, filters):
         if not 'wiki' in filters:
             return
         db = self.env.get_db_cnx()
-        sql_query, args = query_to_sql(db, query, 'w1.name||w1.author||w1.text')
+        sql_query, args = search_to_sql(db, ['w1.name', 'w1.author', 'w1.text'], terms)
         cursor = db.cursor()
         cursor.execute("SELECT w1.name,w1.time,w1.author,w1.text "
                        "FROM wiki w1,"
@@ -404,4 +404,4 @@ class WikiModule(Component):
             yield (self.env.href.wiki(name),
                    '%s: %s' % (name, shorten_line(text)),
                    date, author,
-                   shorten_result(text, query.split()))
+                   shorten_result(text, terms))

@@ -47,6 +47,16 @@ class MarkupTestCase(unittest.TestCase):
         assert isinstance(markup, Markup)
         self.assertEquals('foo<br />&lt;bar /&gt;<br /><baz />', markup)
 
+    def test_stripentities_all(self):
+        markup = Markup('&amp; &#106;').stripentities()
+        assert isinstance(markup, Markup)
+        self.assertEquals('& j', markup)
+
+    def test_stripentities_keepxml(self):
+        markup = Markup('<a href="#">fo<br />o</a>').striptags()
+        assert isinstance(markup, Markup)
+        self.assertEquals('foo', markup)
+
     def test_striptags_empty(self):
         markup = Markup('<br />').striptags()
         assert isinstance(markup, Markup)
@@ -78,6 +88,10 @@ class MarkupTestCase(unittest.TestCase):
     def test_sanitize_close_empty_tag(self):
         markup = Markup('<a href="#">fo<br>o</a>')
         self.assertEquals('<a href="#">fo<br />o</a>', markup.sanitize())
+
+    def test_sanitize_invalid_entity(self):
+        markup = Markup('&junk;')
+        self.assertEquals('&amp;junk;', markup.sanitize())
 
     def test_sanitize_remove_script_elem(self):
         markup = Markup('<script>alert("Foo")</script>')
@@ -148,4 +162,4 @@ def suite():
     return suite
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(defaultTest='suite')

@@ -5,10 +5,11 @@
  * Christian Boos                 cboos@bct-technology.com
  * Rocky Burt                     rocky.burt@myrealbox.com
  * Toni Brkic                     toni.brkic@switchcore.com
- * Wesley Crucius                 wcrucius@sandc.com
- * Daragh Fitzpatrick             Daragh@i2i-Tech.com
- * dju'                           
  * Felix Colins                   felix@keyghost.com
+ * Wesley Crucius                 wcrucius@sandc.com
+ * dju'                           
+ * Daragh Fitzpatrick             Daragh@i2i-Tech.com
+ * Markus Fuchs                   
  * Eric Gillespie                 epg@netbsd.org
  * Matthew Good                   trac@matt-good.net
  * Shun-ichi Goto                 gotoh@taiyo.co.jp
@@ -37,6 +38,7 @@
  * Mark Rowe                      mark.rowe@bdash.net.nz
  * Olliver Rutherfurd             ollie
  * pkou                           pkou@ua.fm
+ * Andres Salomon                 dilinger@athenacr.com
  * Michael Scherer                misc@mandrake.org
  * Andreas Schrattenecker         vittorio
  * Emmeran Seehuber               rototor@rototor.de
@@ -47,6 +49,7 @@
  * Jani Tiainen                   redetin@luukku.com
  * Zilvinas Valinskas             zilvinas@gemtek.lt
  * Jason Vasquez                  jason@mugfu.com
+ * Jeff Weiss                     trac@jeffweiss.org
  * Dmitry Yusupov                 dmitry_yus@yahoo.com
 
 The ever so elusive Anonymous.

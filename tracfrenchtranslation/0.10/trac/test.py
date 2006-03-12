@@ -145,6 +145,8 @@ class EnvironmentStub(ComponentManager):
                                       ','.join(['%s' for c in cols])),
                                    vals)
             self.db.commit()
+            
+        self.known_users = []
 
     def component_activated(self, component):
         component.env = self
@@ -163,14 +165,16 @@ class EnvironmentStub(ComponentManager):
         return None
 
     def get_known_users(self, db):
-        return []
+        return self.known_users
 
 
 def suite():
     import trac.tests
     import trac.db.tests
+    import trac.mimeview.tests
     import trac.scripts.tests
     import trac.ticket.tests
+    import trac.util.tests
     import trac.versioncontrol.tests
     import trac.web.tests
     import trac.wiki.tests
@@ -178,8 +182,10 @@ def suite():
     suite = unittest.TestSuite()
     suite.addTest(trac.tests.suite())
     suite.addTest(trac.db.tests.suite())
+    suite.addTest(trac.mimeview.tests.suite())
     suite.addTest(trac.scripts.tests.suite())
     suite.addTest(trac.ticket.tests.suite())
+    suite.addTest(trac.util.tests.suite())
     suite.addTest(trac.versioncontrol.tests.suite())
     suite.addTest(trac.web.tests.suite())
     suite.addTest(trac.wiki.tests.suite())

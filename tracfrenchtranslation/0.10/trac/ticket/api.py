@@ -14,11 +14,13 @@
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
+import re
+
 from trac import util
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.wiki import IWikiSyntaxProvider
-from trac.Search import ISearchSource, query_to_sql, shorten_result
+from trac.wiki import IWikiSyntaxProvider, Formatter
+from trac.Search import ISearchSource, search_to_sql, shorten_result
 
 
 class TicketSystem(Component):
@@ -95,11 +97,19 @@ class TicketSystem(Component):
                      'label': util.translate(self.env, name, True)}
             fields.append(field)
 
-        custom_fields = self.get_custom_fields()
-        for field in custom_fields:
+        for field in self.get_custom_fields():
+            if field['name'] in [f['name'] for f in fields]:
+                self.log.warning('Duplicate field name "%s" (ignoring)',
+                                 field['name'])
+                continue
+            if not re.match('^[a-zA-Z][a-zA-Z0-9_]+$', field['name']):
+                self.log.warning('Invalid name for custom field: "%s" '
+                                 '(ignoring)', field['name'])
+                continue
             field['custom'] = True
+            fields.append(field)
 
-        return fields + custom_fields
+        return fields
 
     def get_custom_fields(self):
         fields = []
@@ -110,7 +120,8 @@ class TicketSystem(Component):
                 'name': name,
                 'type': self.config.get('ticket-custom', name),
                 'order': int(self.config.get('ticket-custom', name + '.order', '0')),
-                'label': self.config.get('ticket-custom', name + '.label', ''),
+                'label': self.config.get('ticket-custom', name + '.label') \
+                         or name.capitalize(),
                 'value': self.config.get('ticket-custom', name + '.value', '')
             }
             if field['type'] == 'select' or field['type'] == 'radio':
@@ -140,10 +151,18 @@ class TicketSystem(Component):
                 ('ticket', self._format_link)]
 
     def get_wiki_syntax(self):
-        yield (r"!?(?<!&)#\d+", # #123 but not &#123; (HTML entity)
-               lambda x, y, z: self._format_link(x, 'ticket', y[1:], y))
+        yield (
+            # matches #... but not &#... (HTML entity)
+            r"!?(?<!&)#"
+            # optional intertrac shorthand #T... + digits
+            r"(?P<it_ticket>%s)\d+" % Formatter.INTERTRAC_SCHEME,
+            lambda x, y, z: self._format_link(x, 'ticket', y[1:], y, z))
 
-    def _format_link(self, formatter, ns, target, label):
+    def _format_link(self, formatter, ns, target, label, fullmatch=None):
+        intertrac = formatter.shorthand_intertrac_helper(ns, target, label,
+                                                         fullmatch)
+        if intertrac:
+            return intertrac
         cursor = formatter.db.cursor()
         cursor.execute("SELECT summary,status FROM ticket WHERE id=%s",
                        (target,))
@@ -158,27 +177,32 @@ class TicketSystem(Component):
                    % (formatter.href.ticket(target), label)
 
     
-    # ISearchProvider methods
+    # ISearchSource methods
 
     def get_search_filters(self, req):
         if req.perm.has_permission('TICKET_VIEW'):
             yield ('ticket', 'Tickets')
 
-    def get_search_results(self, req, query, filters):
+    def get_search_results(self, req, terms, filters):
         if not 'ticket' in filters:
             return
         db = self.env.get_db_cnx()
-        sql, args = query_to_sql(db, query, 'b.newvalue')
-        sql2, args2 = query_to_sql(db, query, 'summary||keywords||description||reporter||cc')
+        sql, args = search_to_sql(db, ['b.newvalue'], terms)
+        sql2, args2 = search_to_sql(db, ['summary', 'keywords', 'description',
+                                         'reporter', 'cc'], terms)
         cursor = db.cursor()
         cursor.execute("SELECT DISTINCT a.summary,a.description,a.reporter, "
-                       "a.keywords,a.id,a.time FROM ticket a "
+                       "a.keywords,a.id,a.time,a.status FROM ticket a "
                        "LEFT JOIN ticket_change b ON a.id = b.ticket "
                        "WHERE (b.field='comment' AND %s ) OR %s" % (sql, sql2),
                        args + args2)
-        for summary,desc,author,keywords,tid,date in cursor:
+        for summary,desc,author,keywords,tid,date,status in cursor:
+            ticket = '#%d: ' % tid
+            if status == 'closed':
+                ticket = util.Markup('<span style="text-decoration: '
+                                     'line-through">#%s</span>: ', tid)
             yield (self.env.href.ticket(tid),
-                   '#%d: %s' % (tid, util.shorten_line(summary)),
+                   ticket + util.shorten_line(summary),
                    date, author,
-                   shorten_result(desc, query.split()))
+                   shorten_result(desc, terms))
             

@@ -11,6 +11,7 @@
 </div>
 
 
+<div id="searchable">
 <div id="content" class="browser">
  <h1><?cs call:browser_path_links(browser.path, browser) ?></h1>
 
@@ -93,8 +94,8 @@
    if:len(browser.props) ?><tr>
     <td colspan="2"><ul class="props"><?cs
      each:prop = browser.props ?>
-      <li>Propriété <strong><?cs var:name(prop) ?></strong> définie à <em><code><?cs
-      var:prop ?></code></em></li><?cs
+      <li>Propriété <strong><?cs var:prop.name ?></strong> définie à <em><code><?cs
+      var:prop.value ?></code></em></li><?cs
      /each ?>
     </ul></td><?cs
    /if ?></tr>
@@ -133,5 +134,6 @@
    </form>
   </div>
 
+</div>
 </div>
 <?cs include:"footer.cs"?>

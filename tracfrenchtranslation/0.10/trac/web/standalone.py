@@ -3,6 +3,7 @@
 # Copyright (C) 2003-2005 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -15,37 +16,27 @@
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Matthew Good <trac@matt-good.net>
-#
-# Todo:
-# - External auth using mod_proxy / squid.
-
-from trac import util, __version__
-from trac.env import open_environment
-from trac.web.api import Request
-from trac.web.cgi_frontend import TracFieldStorage
-from trac.web.main import dispatch_request, get_environment, \
-                          send_pretty_error, send_project_index
-from trac.util import md5crypt
-
-import os
-import re
-import sys
-import md5
-import time
-import socket, errno
-import urllib
-import urllib2
-import locale
-from SocketServer import ThreadingMixIn
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+#         Christopher Lenz <cmlenz@gmx.de>
 
 try:
     from base64 import b64decode
 except ImportError:
     from base64 import decodestring as b64decode
+import md5
+import os
+import sys
+import urllib2
+import locale
+from SocketServer import ThreadingMixIn
+
+from trac import util, __version__
+from trac.util import md5crypt
+from trac.web.main import dispatch_request
+from trac.web.wsgi import WSGIServer, WSGIRequestHandler
 
 
-class BasicAuth:
+class BasicAuth(object):
+
     def __init__(self, htpasswd, realm):
         self.hash = {}
         self.realm = realm
@@ -106,7 +97,7 @@ class BasicAuth:
         return user
 
 
-class DigestAuth:
+class DigestAuth(object):
     """A simple HTTP DigestAuth implementation (rfc2617)"""
 
     MAX_NONCES = 100
@@ -118,9 +109,8 @@ class DigestAuth:
         self.load_htdigest(htdigest, realm)
 
     def load_htdigest(self, filename, realm):
-        """
-        Load account information from apache style htdigest files,
-        only users from the specified realm are used
+        """Load account information from apache style htdigest files, only
+        users from the specified realm are used
         """
         fd = open(filename, 'r')
         for line in fd.readlines():
@@ -141,8 +131,7 @@ class DigestAuth:
         return values
 
     def send_auth_request(self, req, stale='false'):
-        """
-        Send a digest challange to the browser. Record used nonces
+        """Send a digest challange to the browser. Record used nonces
         to avoid replay attacks.
         """
         nonce = util.hex_entropy()
@@ -190,188 +179,135 @@ class DigestAuth:
         return auth['username']
 
 
-class TracHTTPServer(ThreadingMixIn, HTTPServer):
-
-    projects = None
+class TracHTTPServer(ThreadingMixIn, WSGIServer):
 
     def __init__(self, server_address, env_parent_dir, env_paths, auths):
-        HTTPServer.__init__(self, server_address, TracHTTPRequestHandler)
-
-        if os.name == 'posix':
-            locale.setlocale(locale.LC_ALL, 'fr_FR')
-        elif os.name == 'nt':
-            locale.setlocale(locale.LC_ALL, 'French_France')
+        WSGIServer.__init__(self, server_address, dispatch_request,
+                            request_handler=TracHTTPRequestHandler)
+        self.environ['trac.env_path'] = None
+        if env_parent_dir:
+            self.environ['trac.env_parent_dir'] = env_parent_dir
         else:
-            locale.setlocale(locale.LC_ALL, '')
-
-        if self.server_port == 80:
-            self.http_host = self.server_name
-        else:
-            self.http_host = '%s:%d' % (self.server_name, self.server_port)
-
-        self.env_parent_dir = env_parent_dir and {'TRAC_ENV_PARENT_DIR':
-                                                  env_parent_dir}
+            self.environ['trac.env_paths'] = env_paths
         self.auths = auths
 
-        self.projects = {}
-        for env_path in env_paths:
-            # Remove trailing slashes
-            while env_path and not os.path.split(env_path)[1]:
-                env_path = os.path.split(env_path)[0]
-            project = os.path.split(env_path)[1]
-            if self.projects.has_key(project):
-                print >>sys.stderr, 'Warning: Ignoring project "%s" since ' \
-                                    'it conflicts with project "%s"' \
-                                    % (env_path, self.projects[project])
-            else:
-                self.projects[project] = env_path
 
-    def get_env_opts(self, project=None):
-        if self.env_parent_dir:
-            opts = self.env_parent_dir.items()
-        else:
-            opts = [('TRAC_ENV', self.projects[project])]
-        return dict(opts + os.environ.items())
-
-    def send_project_index(self, req):
-        if self.env_parent_dir:
-            return send_project_index(req, self.get_env_opts())
-        else:
-            return send_project_index(req, os.environ, self.projects.values())
-
-
-class TracHTTPRequestHandler(BaseHTTPRequestHandler):
+class TracHTTPRequestHandler(WSGIRequestHandler):
 
     server_version = 'tracd/' + __version__
-    url_re = re.compile('/(?P<project>[^/\?]+)'
-                        '(?P<path_info>/?[^\?]*)?'
-                        '(?:\?(?P<query_string>.*))?')
 
-    env = None
-    log = None
-    project_name = None
+    def handle_one_request(self):
+        environ = self.setup_environ()
+        path_info = environ.get('PATH_INFO', '')
+        path_parts = filter(None, path_info.split('/'))
+        if len(path_parts) > 1 and path_parts[1] == 'login':
+            env_name = path_parts[0]
+            if env_name:
+                auth = self.server.auths.get(env_name,
+                                             self.server.auths.get('*'))
+                if not auth:
+                    self.send_error(500, 'L\'authentication n\'est pas active '
+                                         'pour %s. Merci d\'utiliser l\'option '
+                                         '--auth de tracd.'
+                                         % env_name)
+                    return
+                remote_user = auth.do_auth(self)
+                if not remote_user:
+                    return
+                environ['REMOTE_USER'] = remote_user
 
-    def finish(self):
-        """We need to help the garbage collector a little."""
-        BaseHTTPRequestHandler.finish(self)
-        self.wfile = None
-        self.rfile = None
-
-    def do_POST(self):
-        self._do_trac_req()
-
-    def do_HEAD(self):
-        self.do_GET()
-
-    def do_GET(self):
-        self._do_trac_req()
-
-    def _do_trac_req(self):
-        if self.path == '/':
-            path_info = '/'
-            req = TracHTTPRequest(self, '', '')
-            self.server.send_project_index(req)
-            return
-
-        m = self.url_re.findall(self.path)
-        if not m:
-            self.send_error(400, 'Mauvaise requête')
-            return
-
-        project_name, path_info, query_string = m[0]
-        project_name = urllib.unquote(project_name)
-        path_info = urllib.unquote(path_info)
-        req = TracHTTPRequest(self, project_name, query_string)
-
-        try:
-            opts = self.server.get_env_opts(project_name)
-        except KeyError:
-            # unrecognized project
-            self.server.send_project_index(req)
-            return
-
-        env = get_environment(req, opts)
-        if not env:
-            self.server.send_project_index(req)
-            return
-
-        req.remote_user = None
-        if path_info == '/login':
-            auth = self.server.auths.get(project_name) or \
-                   self.server.auths.get('*')
-            if not auth:
-                raise util.TracError('L\'authentication n\'est pas activée. '
-                                     'Merci d\'utiliser l\'option --auth de tracd, ou '
-                                     'de vérifier le nom du projet\n')
-            req.remote_user = auth.do_auth(self)
-            if not req.remote_user:
-                return
-
-        try:
-            start = time.time()
-            dispatch_request(path_info, req, env)
-            env.log.debug('Total request time: %f s', time.time() - start)
-        except socket.error, (code, msg):
-            if code == errno.EPIPE or code == 10053: # Windows
-                env.log.info('Lost connection to client: %s'
-                             % self.address_string())
-            else:
-                raise
-        except Exception, e:
-            try:
-                send_pretty_error(e, env, req)
-            except socket.error, (code, msg):
-                if code == errno.EPIPE or code == 10053: # Windows
-                    env.log.info('Lost connection to client: %s'
-                                 % self.address_string())
-                else:
-                    raise
+        gateway = self.server.gateway(self, environ)
+        gateway.run(self.server.application)
 
 
-class TracHTTPRequest(Request):
+def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+    """Fork a daemon process (taken from the Python Cookbook)."""
+    # perform first fork
+    pid = os.fork()
+    if pid > 0:
+        sys.exit(0) # edit first parent
 
-    def __init__(self, handler, project_name, query_string):
-        Request.__init__(self)
-        self.__handler = handler
-        self.__status_sent = False
+    # decouple from parent environment
+    os.chdir('/')
+    os.umask(0)
+    os.setsid()
 
-        self.scheme = 'http'
-        self.method = self.__handler.command
-        self.remote_addr = str(self.__handler.client_address[0])
-        self.server_name = self.__handler.server.server_name
-        self.server_port = self.__handler.server.server_port
-        if self.__handler.headers.has_key('Cookie'):
-            self.incookie.load(self.__handler.headers['Cookie'])
+    # perform second fork
+    pid = os.fork()
+    if pid > 0:
+        sys.exit(0) # edit first parent
 
-        self.cgi_location = '/' + project_name
-        self.idx_location = '/'
+    # the projess is now daemonized, redirect standard file descriptors
+    for fileobj in sys.stdout, sys.stderr:
+        fileobj.flush()
+    stdin = file(stdin, 'r')
+    stdout = file(stdout, 'a+')
+    stderr = file(stderr, 'a+', 0)
+    os.dup2(stdin.fileno(), sys.stdin.fileno())
+    os.dup2(stdout.fileno(), sys.stdout.fileno())
+    os.dup2(stderr.fileno(), sys.stderr.fileno())
 
-        environ = {'REQUEST_METHOD': self.method,
-                   'QUERY_STRING': query_string}
-        headers = self.__handler.headers
-        if self.method in ('GET', 'HEAD'):
-            headers = None
-        self.args = TracFieldStorage(self.__handler.rfile, environ=environ,
-                                     headers=headers, keep_blank_values=1)
+def main():
+    from optparse import OptionParser, OptionValueError
+    parser = OptionParser(usage='usage: %prog [options] [projenv] ...',
+                          version='%%prog %s' % __version__)
 
-    def read(self, size=None):
-        return self.__handler.rfile.read(size)
+    auths = {}
+    def _auth_callback(option, opt_str, value, parser, auths, cls):
+        info = value.split(',', 3)
+        if len(info) != 3:
+            raise OptionValueError("Nombre de parametres incorrects pour %s"
+                                   % option)
 
-    def write(self, data):
-        self.__handler.wfile.write(data)
-
-    def get_header(self, name):
-        return self.__handler.headers.get(name)
-
-    def send_response(self, code):
-        self.__handler.send_response(code)
-        self.__status_sent = True
-
-    def send_header(self, name, value):
-        if not self.__status_sent:
-            self._headers.append((name, value))
+        env_name, filename, realm = info
+        if env_name in auths:
+            print >>sys.stderr, 'Ignoring duplicate authentication option for ' \
+                                'project: %s' % env_name
         else:
-            self.__handler.send_header(name, value)
+            auths[env_name] = cls(filename, realm)
 
-    def end_headers(self):
-        self.__handler.end_headers()
+    parser.add_option('-a', '--auth', action='callback', type='string',
+                      metavar='DIGESTAUTH',
+                      callback=_auth_callback, callback_args=(auths, DigestAuth),
+                      help='[project],[htdigest_file],[realm]')
+    parser.add_option('--basic-auth', action='callback', type='string',
+                      metavar='BASICAUTH',
+                      callback=_auth_callback, callback_args=(auths, BasicAuth),
+                      help='[project],[htpasswd_file],[realm]')
+
+    parser.add_option('-p', '--port', action='store', type='int', dest='port',
+                      help='the port number to bind to')
+    parser.add_option('-b', '--hostname', action='store', dest='hostname',
+                      help='the host name or IP address to bind to')
+    parser.add_option('-e', '--env-parent-dir', action='store',
+                      dest='env_parent_dir', metavar='PARENTDIR',
+                      help='parent directory of the project environments')
+
+    if os.name == 'posix':
+        parser.add_option('-d', '--daemonize', action='store_true',
+                          dest='daemonize',
+                          help='run in the background as a daemon')
+
+    parser.set_defaults(port=80, hostname='', daemonize=False)
+    options, args = parser.parse_args()
+
+    if not args and not options.env_parent_dir:
+        parser.error('either the --env_parent_dir option or at least one '
+                     'environment must be specified')
+
+    server_address = (options.hostname, options.port)
+    httpd = TracHTTPServer(server_address, options.env_parent_dir, args, auths)
+
+    try:
+        if options.daemonize:
+            daemonize()
+
+        httpd.serve_forever()
+
+    except OSError:
+        sys.exit(1)
+    except KeyboardInterrupt:
+        pass
+
+if __name__ == '__main__':
+    main()

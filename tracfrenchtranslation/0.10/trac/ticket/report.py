@@ -3,6 +3,7 @@
 # Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2004 Jonas Borgström <jonas@edgewall.com>
 # Copyright (C) 2006 Christian Boos <cboos@neuf.fr>
+# Copyright (C) 2006 Matthew Good <trac@matt-good.net>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -21,42 +22,15 @@ import urllib
 from trac import util
 from trac.core import *
 from trac.perm import IPermissionRequestor
+from trac.util import sorted
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
-from trac.wiki import wiki_to_html, IWikiSyntaxProvider
+from trac.wiki import wiki_to_html, IWikiSyntaxProvider, Formatter
 
-
-dynvars_re = re.compile('\$([A-Z]+)')
-dynvars_disallowed_var_chars_re = re.compile('[^A-Z0-9_]')
-dynvars_disallowed_value_chars_re = re.compile(r'[^a-zA-Z0-9-_@.,\\]')
-
-
-class ColumnSorter:
-
-    def __init__(self, columnIndex, asc=1):
-        self.columnIndex = columnIndex
-        self.asc = asc
-
-    def sort(self, x, y):
-        const = -1
-        if not self.asc:
-            const = 1
-
-        # make sure to ignore case in comparisons
-        realX = x[self.columnIndex]
-        if isinstance(realX, (str, unicode)):
-            realX = realX.lower()
-        realY = y[self.columnIndex]
-        if isinstance(realY, (str, unicode)):
-            realY = realY.lower()
-
-        result = 0
-        if realX < realY:
-            result = const * 1
-        elif realX > realY:
-            result = const * -1
-
-        return result
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 
 class ReportModule(Component):
@@ -309,12 +283,16 @@ class ReportModule(Component):
                 k = 'report.headers.%d.asc' % (colIndex - hiddenCols)
                 asc = req.args.get('asc', None)
                 if asc:
-                    sorter = ColumnSorter(colIndex, int(asc))
-                    req.hdf[k] = asc
+                    asc = int(asc) # string '0' or '1' to int/boolean
                 else:
-                    sorter = ColumnSorter(colIndex)
-                    req.hdf[k] = 1
-                rows.sort(sorter.sort)
+                    asc = 1
+                req.hdf[k] = asc
+                def sortkey(row):
+                    val = row[colIndex]
+                    if isinstance(val, basestring):
+                        val = val.lower()
+                    return val
+                rows = sorted(rows, key=sortkey, reverse=(not asc))
 
         # Convert the rows and cells to HDF-format
         row_idx = 0
@@ -339,9 +317,9 @@ class ReportModule(Component):
                 elif column[0] == '_':
                     value['hidehtml'] = 1
                     column = column[1:]
-                if column in ['id', 'ticket', '#', 'summary']:
+                if column in ('ticket', 'id', '_id', '#', 'summary'):
                     id_cols = [idx for idx, col in enumerate(cols)
-                               if col[0] in ('ticket', 'id')]
+                               if col[0] in ('ticket', 'id', '_id')]
                     if id_cols:
                         id_val = row[id_cols[0]]
                         value['ticket_href'] = self.env.href.ticket(id_val)
@@ -353,7 +331,7 @@ class ReportModule(Component):
                     value['rss'] = cell
                 elif column == 'report':
                     value['report_href'] = self.env.href.report(cell)
-                elif column in ['time', 'date','changetime', 'created', 'modified']:
+                elif column in ('time', 'date','changetime', 'created', 'modified'):
                     value['date'] = util.format_date(cell)
                     value['time'] = util.format_time(cell)
                     value['datetime'] = util.format_datetime(cell)
@@ -398,14 +376,16 @@ class ReportModule(Component):
                      'text/plain')
 
     def execute_report(self, req, db, id, sql, args):
-        sql = self.sql_sub_vars(req, sql, args)
+        sql, args = self.sql_sub_vars(req, sql, args)
         if not sql:
             raise util.TracError('Report %s has no SQL query.' % id)
         if sql.find('__group__') == -1:
             req.hdf['report.sorting.enabled'] = 1
 
+        self.log.debug('Executing report with SQL "%s" (%s)', sql, args)
+
         cursor = db.cursor()
-        cursor.execute(sql)
+        cursor.execute(sql, args)
 
         # FIXME: fetchall should probably not be used.
         info = cursor.fetchall() or []
@@ -441,16 +421,7 @@ class ReportModule(Component):
         for arg in req.args.keys():
             if not arg == arg.upper():
                 continue
-            m = re.search(dynvars_disallowed_var_chars_re, arg)
-            if m:
-                raise ValueError("Le caractère '%s' n'est pas autorisé "
-                                 " dans les noms de variables." % m.group())
-            val = req.args.get(arg)
-            m = re.search(dynvars_disallowed_value_chars_re, val)
-            if m:
-                raise ValueError("Le caractère '%s' n'est pas autorisé "
-                                 " dans les données." % m.group())
-            report_args[arg] = val
+            report_args[arg] = req.args.get(arg)
 
         # Set some default dynamic variables
         if not report_args.has_key('USER'):
@@ -459,16 +430,36 @@ class ReportModule(Component):
         return report_args
 
     def sql_sub_vars(self, req, sql, args):
-        def repl(match):
-            aname = match.group()[1:]
+        values = []
+        def add_value(aname):
             try:
                 arg = args[aname]
             except KeyError:
                 raise util.TracError("La variable dynamique '$%s' n'est pas définie." % aname)
             req.hdf['report.var.' + aname] = arg
-            return arg
+            values.append(arg)
 
-        return dynvars_re.sub(repl, sql)
+        # simple parameter substitution outside literal
+        def repl(match):
+            add_value(match.group(1))
+            return '%s'
+
+        # inside a literal break it and concatenate with the parameter
+        def repl_literal(match):
+            add_value(match.group(1))
+            return "' || %s || '"
+
+        var_re = re.compile("[$]([A-Z]+)")
+        sql_io = StringIO()
+
+        # break SQL into literals and non-literals to handle replacing
+        # variables within them with query parameters
+        for expr in re.split("('(?:[^']|(?:''))*')", sql):
+            if expr.startswith("'"):
+                sql_io.write(var_re.sub(repl_literal, expr))
+            else:
+                sql_io.write(var_re.sub(repl, expr))
+        return sql_io.getvalue(), values
 
     def _render_csv(self, req, cols, rows, sep=','):
         req.send_response(200)
@@ -499,9 +490,14 @@ class ReportModule(Component):
         yield ('report', self._format_link)
 
     def get_wiki_syntax(self):
-        yield (r"!?\{\d+\}", lambda x, y, z: self._format_link(x, 'report', y[1:-1], y))
+        yield (r"!?\{(?P<it_report>%s\s*)\d+\}" % Formatter.INTERTRAC_SCHEME,
+               lambda x, y, z: self._format_link(x, 'report', y[1:-1], y, z))
 
-    def _format_link(self, formatter, ns, target, label):
+    def _format_link(self, formatter, ns, target, label, fullmatch=None):
+        intertrac = formatter.shorthand_intertrac_helper(ns, target, label,
+                                                         fullmatch)
+        if intertrac:
+            return intertrac
         report, args = target, ''
         if '?' in target:
             report, args = target.split('?')

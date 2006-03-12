@@ -117,20 +117,24 @@
    </p><?cs
    with:stats = milestone.stats ?><?cs
     if:#stats.total_tickets > #0 ?>
-     <div class="progress">
-      <a class="closed" href="<?cs
-        var:milestone.queries.closed_tickets ?>" style="width: <?cs
-        var:#stats.percent_closed ?>%" title="<?cs
+     <table class="progress">
+      <tr>
+      <td class="closed" style="width: <?cs
+        var:#stats.percent_closed ?>%">
+        <a href="<?cs
+        var:milestone.queries.closed_tickets ?>" title="<?cs
         var:#stats.closed_tickets ?> sur <?cs
         var:#stats.total_tickets ?> tickets<?cs
-        if:#stats.total_tickets != #1 ?>s<?cs /if ?> fermés"></a>
-      <a class="open" href="<?cs
-        var:milestone.queries.active_tickets ?>" style="width: <?cs
-        var:#stats.percent_active - 1 ?>%" title="<?cs
+        if:#stats.total_tickets != #1 ?>s<?cs /if ?> fermés"></a></td>
+      <td class="open" style="width: <?cs
+        var:#stats.percent_active ?>%">
+        <a href="<?cs
+        var:milestone.queries.active_tickets ?>" title="<?cs
         var:#stats.active_tickets ?> sur <?cs
         var:#stats.total_tickets ?> tickets<?cs
         if:#stats.total_tickets != #1 ?>s<?cs /if ?> actifs"></a>
-     </div>
+      </tr>
+     </table>
      <p class="percent"><?cs var:#stats.percent_closed ?>%</p>
      <dl>
       <dt>Tickets fermés:</dt>
@@ -162,21 +166,25 @@
        <th scope="row"><a href="<?cs
          var:group.queries.all_tickets ?>"><?cs var:group.name ?></a></th>
        <td style="white-space: nowrap"><?cs if:#group.total_tickets ?>
-        <div class="progress" style="width: <?cs
+        <table class="progress" style="width: <?cs
           var:#group.percent_total * #80 / #milestone.stats.max_percent_total ?>%">
-         <a class="closed" href="<?cs
-           var:group.queries.closed_tickets ?>" style="width: <?cs
-           var:#group.percent_closed ?>%" title="<?cs
-          var:group.closed_tickets ?> sur <?cs
-          var:group.total_tickets ?> ticket<?cs
-          if:group.total_tickets != #1 ?>s<?cs /if ?> fermés"></a>
-         <a class="open" href="<?cs
-           var:group.queries.active_tickets ?>" style="width: <?cs
-           var:#group.percent_active - 1 ?>%" title="<?cs
-          var:group.active_tickets ?> sur <?cs
-          var:group.total_tickets ?> ticket<?cs
-          if:group.total_tickets != 1 ?>s<?cs /if ?> actifs"></a>
-        </div>
+         <tr>
+          <td class="closed" style="width: <?cs
+            var:#group.percent_closed ?>%"><a href="<?cs
+            var:group.queries.closed_tickets ?>" title="<?cs
+           var:group.closed_tickets ?> sur <?cs
+           var:group.total_tickets ?> tickets<?cs
+           if:group.total_tickets != #1 ?>s<?cs /if ?> fermés"></a>
+          </td>
+          <td class="open" style="width: <?cs
+            var:#group.percent_active ?>%"><a href="<?cs
+            var:group.queries.active_tickets ?>" title="<?cs
+           var:group.active_tickets ?> sur <?cs
+           var:group.total_tickets ?> tickets<?cs
+           if:group.total_tickets != 1 ?>s<?cs /if ?> actifs"></a>
+          </td>
+         </tr>
+        </table>
         <p class="percent"><?cs var:group.closed_tickets ?>/<?cs
          var:group.total_tickets ?></p>
        <?cs /if ?></td>
@@ -212,7 +220,8 @@
 
  <div id="help">
   <strong>Note:</strong> Voir <a href="<?cs
-    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> pour de l'aide sur l'utilisation des Jalons.
+    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> pour de l'aide sur 
+    l'utilisation des Jalons.
  </div>
 
 </div>

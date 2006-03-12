@@ -78,7 +78,8 @@ class PermissionSystem(Component):
     implements(IPermissionRequestor)
 
     requestors = ExtensionPoint(IPermissionRequestor)
-    stores = ExtensionPoint(IPermissionStore)
+    store = SingletonExtensionPoint(IPermissionStore,
+                                    'trac', 'permission_store')
 
     # Public API
 
@@ -160,30 +161,16 @@ class PermissionSystem(Component):
                     actions.append(action)
         return [('TRAC_ADMIN', actions)]
 
-    # Internal methods
-
-    def _get_store(self):
-        """Return the `IPermissionStore` implementation selected in the
-        configuration."""
-        selected_store = self.config.get('trac', 'permission_store')
-        for store in self.stores:
-            if store.__class__.__name__ == selected_store:
-                return store
-        raise TracError, 'Gestionnaire de permission invalide: "%s"' % selected_store
-    store = property(fget=lambda self: self._get_store())
-
 
 class IPermissionGroupProvider(Interface):
     """
     Extension point interface for components that provide information about user
     groups.
     """
-    
     def get_permission_groups(username):
         """Return a list of names of the groups that the user with the specified
         name is a member of."""
-    
-    
+
 class DefaultPermissionStore(Component):
     """Default implementation of permission storage and simple group management.
     

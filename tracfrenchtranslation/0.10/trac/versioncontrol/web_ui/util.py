@@ -20,7 +20,7 @@ import re
 import urllib
 
 from trac.util import escape, format_datetime, pretty_timedelta, shorten_line, \
-                      TracError, Markup, rss_title
+                      TracError, Markup
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 
 __all__ = ['get_changes', 'get_path_links', 'get_path_rev_line',
@@ -33,19 +33,16 @@ def get_changes(env, repos, revs, full=None, req=None, format=None):
         changeset = repos.get_changeset(rev)
         message = changeset.message or '--'
         shortlog = wiki_to_oneliner(message, env, db, shorten=True)
-        if format == 'changelog':
-            files = [change[0] for change in changeset.get_changes()]
+        if full:
+            message = wiki_to_html(message, env, req, db,
+                                   absurls=(format == 'rss'),
+                                   escape_newlines=True)
         else:
-            files = None
-            if full:
-                message = wiki_to_html(message, env, req, db,
-                                       absurls=(format == 'rss'),
-                                       escape_newlines=True)
-            else:
-                message = shortlog
-            if format == 'rss':
-                shortlog = rss_title(shortlog)
-                message = str(message)
+            message = shortlog
+        if format == 'rss':
+            if isinstance(shortlog, Markup):
+                shortlog = shortlog.plaintext(keeplinebreaks=False)
+            message = str(message)
         changes[rev] = {
             'date_seconds': changeset.date,
             'date': format_datetime(changeset.date),
@@ -53,7 +50,6 @@ def get_changes(env, repos, revs, full=None, req=None, format=None):
             'author': changeset.author or 'anonymous',
             'message': message,
             'shortlog': shortlog,
-            'files': files
         }
     return changes
 

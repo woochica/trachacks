@@ -291,7 +291,7 @@ class Mimeview(Component):
         return buf.getvalue()
 
     def max_preview_size(self):
-        return int(self.config.get('mimeviewer', 'max_preview_size', '262144'))
+        return int(self.config.get('mimeviewer', 'max_preview_size'))
 
     def get_charset(self, content='', mimetype=None):
         """Infer the character encoding from the `content` or the `mimetype`.
@@ -331,7 +331,7 @@ class Mimeview(Component):
 def _html_splitlines(lines):
     """Tracks open and close tags in lines of HTML text and yields lines that
     have no tags spanning more than one line."""
-    open_tag_re = re.compile(r'<(\w+)(\s.*)?[^/]?>')
+    open_tag_re = re.compile(r'<(\w+)(\s.*?)?[^/]?>')
     close_tag_re = re.compile(r'</(\w+)>')
     open_tags = []
     for line in lines:

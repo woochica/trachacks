@@ -81,7 +81,7 @@
  <div><?cs 
   if:!changeset.chgset ?>
    <input type="hidden" name="old_path" value="<?cs var:changeset.old_path ?>" />
-   <input type="hidden" name="path" value="<?cs var:changeset.new_path ?>" />
+   <input type="hidden" name="new_path" value="<?cs var:changeset.new_path ?>" />
    <input type="hidden" name="old" value="<?cs var:changeset.old_rev ?>" />
    <input type="hidden" name="new" value="<?cs var:changeset.new_rev ?>" /><?cs
   /if ?>
@@ -140,7 +140,9 @@
     var:item.browser_href.old ?>" title="Montrer le fichier original (rév. <?cs
     var:item.rev.old ?>)"><?cs var:item.path.old ?></a>)</em></small><?cs
   /if ?><?cs
-  if:$ndiffs + $nprops > #0 ?>
+  if:item.diff_href ?>
+    (<a href="<?cs var:item.diff_href ?>" title="Voir les différences">voir diffs</a>)<?cs
+  elif:$ndiffs + $nprops > #0 ?>
     (<a href="#file<?cs var:name(item) ?>" title="Voir les différences"><?cs
       if:$ndiffs > #0 ?><?cs var:ndiffs ?>&nbsp;diff<?cs if:$ndiffs > #1 ?>s<?cs /if ?><?cs 
       /if ?><?cs
@@ -155,16 +157,20 @@
 
 <dl id="overview"><?cs
  if:changeset.chgset ?>
- <dt class="time">Date:</dt>
+ <dt class="property time">Date:</dt>
  <dd class="time"><?cs var:changeset.time ?> 
   (<?cs alt:changeset.age ?>moins d'une heure<?cs /alt ?> auparavant)</dd>
- <dt class="author">Auteur:</dt>
+ <dt class="property author">Auteur:</dt>
  <dd class="author"><?cs var:changeset.author ?></dd>
- <dt class="message">Message:</dt>
+ <?cs each:prop = changeset.properties ?>
+ <dt class="property <?cs var:prop.htmlclass ?>"><?cs var:prop.name ?>:</dt>
+ <dd class="<?cs var:prop.htmlclass ?>"><?cs var:prop.value ?></dd>
+ <?cs /each ?>
+ <dt class="property message">Message:</dt>
  <dd class="message" id="searchable"><?cs
   alt:changeset.message ?>&nbsp;<?cs /alt ?></dd><?cs
  /if ?>
- <dt class="files"><?cs 
+ <dt class="property files"><?cs 
   if:len(changeset.changes) > #0 ?>
    Fichiers:<?cs
   else ?>
@@ -211,7 +217,7 @@
    var:item.path.new ?></a></h2><?cs
    if:len(item.props) ?><ul class="props"><?cs
     each:prop = item.props ?><li>Propriété <strong><?cs
-     var:name(prop) ?></strong> <?cs
+     var:prop.name ?></strong> <?cs
      if:prop.old && prop.new ?>modifiée de <?cs
      elif:!prop.old ?>définie<?cs
      else ?>supprimée<?cs
@@ -247,10 +253,10 @@
      <thead><tr>
       <th title="Révision <?cs var:item.rev.old ?>"><a href="<?cs
        var:item.browser_href.old ?>" title="Voir l'ancienne révision de <?cs
-       var:item.path.old ?>">r<?cs var:item.rev.old ?></a></th>
+       var:item.path.old ?>">r<?cs var:item.shortrev.old ?></a></th>
       <th title="Révision <?cs var:item.rev.new ?>"><a href="<?cs
        var:item.browser_href.new ?>" title="Voir la nouvelle révision de <?cs
-       var:item.path.new ?>">r<?cs var:item.rev.new ?></a></th>
+       var:item.path.new ?>">r<?cs var:item.shortrev.new ?></a></th>
       <th>&nbsp;</th></tr>
      </thead><?cs
      each:change = item.diff ?><?cs

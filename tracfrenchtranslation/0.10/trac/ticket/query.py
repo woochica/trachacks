@@ -161,14 +161,16 @@ class Query(object):
         cursor.close()
         return results
 
-    def get_href(self, format=None):
-        return self.env.href.query(order=self.order,
-                                   desc=self.desc and 1 or None,
+    def get_href(self, order=None, desc=None, format=None):
+        if desc is None:
+            desc = self.desc
+        if order is None:
+            order = self.order
+        return self.env.href.query(order=order, desc=desc and 1 or None,
                                    group=self.group or None,
                                    groupdesc=self.groupdesc and 1 or None,
                                    verbose=self.verbose and 1 or None,
-                                   format=format,
-                                   **self.constraints)
+                                   format=format, **self.constraints)
 
     def get_sql(self):
         """Return a (sql, params) tuple for the query."""
@@ -378,12 +380,12 @@ class QueryModule(Component):
                     del req.session[var]
             req.redirect(query.get_href())
 
-        add_link(req, 'alternate', query.get_href('rss'), 'RSS Feed',
+        add_link(req, 'alternate', query.get_href(format='rss'), 'RSS Feed',
                  'application/rss+xml', 'rss')
-        add_link(req, 'alternate', query.get_href('csv'),
+        add_link(req, 'alternate', query.get_href(format='csv'),
                  'Texte délimité par des virgules', 'text/plain')
-        add_link(req, 'alternate', query.get_href('tab'), 'Texte délimité par des tabulations',
-                 'text/plain')
+        add_link(req, 'alternate', query.get_href(format='tab'),
+                 'Texte délimité par des tabulations', 'text/plain')
 
         constraints = {}
         for k, v in query.constraints.items():
@@ -435,7 +437,6 @@ class QueryModule(Component):
             vals = req.args[field]
             if not isinstance(vals, (list, tuple)):
                 vals = [vals]
-            vals = map(lambda x: x.value, vals)
             if vals:
                 mode = req.args.get(field + '_mode')
                 if mode:
@@ -494,9 +495,13 @@ class QueryModule(Component):
                 req.hdf['query.constraints.%s.values.%d' % (field, idx)] = ''
 
         cols = query.get_columns()
-        for i in range(len(cols)):
-            header = {'name': cols[i]}
-            req.hdf['query.headers.%d' % i] = header
+        labels = dict([(f['name'], f['label']) for f in query.fields])
+        for idx, col in enumerate(cols):
+            req.hdf['query.headers.%d' % idx] = {
+                'name': col, 'label': labels.get(col, 'Ticket'),
+                'href': query.get_href(order=col, desc=(col == query.order and
+                                                        not query.desc))
+            }
 
         href = self.env.href.query(group=query.group,
                                    groupdesc=query.groupdesc and 1 or None,
@@ -536,11 +541,15 @@ class QueryModule(Component):
             for tid in [t['id'] for t in tickets if t['id'] in rest_list]:
                 rest_list.remove(tid)
             for rest_id in rest_list:
-                ticket = Ticket(self.env, int(rest_id), db=db)
-                data = {'id': ticket.id, 'time': ticket.time_created,
-                        'changetime': ticket.time_changed, 'removed': True,
-                        'href': self.env.href.ticket(ticket.id)}
-                data.update(ticket.values)
+                try:
+                    ticket = Ticket(self.env, int(rest_id), db=db)
+                    data = {'id': ticket.id, 'time': ticket.time_created,
+                            'changetime': ticket.time_changed, 'removed': True,
+                            'href': self.env.href.ticket(ticket.id)}
+                    data.update(ticket.values)
+                except TracError, e:
+                    data = {'id': rest_id, 'time': 0, 'changetime': 0,
+                            'summary': Markup("<em>%s</em>", str(e))}
                 tickets.insert(orig_list.index(rest_id), data)
 
         for ticket in tickets:
@@ -675,16 +684,17 @@ class QueryWikiMacro(Component):
                 for ticket in tickets:
                     href = self.env.href.ticket(int(ticket['id']))
                     summary = escape(shorten_line(ticket['summary']))
-                    links.append('<a class="%s ticket" href="%s" '
-                                 'title="%s">#%s</a>' % (ticket['status'], href,
-                                 summary, ticket['id']))
+                    a = '<a class="%s ticket" href="%s" title="%s">#%s</a>' % \
+                        (ticket['status'], href, summary, ticket['id'])
+                    links.append(a)
                 buf.write(', '.join(links))
             else:
                 buf.write('<dl class="wiki compact">')
                 for ticket in tickets:
                     href = self.env.href.ticket(int(ticket['id']))
-                    buf.write('<dt><a href="%s">#%s</a></dt>' % (href,
-                                                                 ticket['id']))
+                    dt = '<dt><a class="%s ticket" href="%s">#%s</a></dt>' % \
+                         (ticket['status'], href, ticket['id'])
+                    buf.write(dt)
                     buf.write('<dd>%s</dd>' % (escape(ticket['summary'])))
                 buf.write('</dl>')
 

@@ -17,17 +17,16 @@
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Matthew Good <trac@matt-good.net>
 
-import cgi
 import md5
 import os
 import re
-try:
-    frozenset
-except NameError:
-    from sets import ImmutableSet as frozenset
 import sys
 import time
 import tempfile
+
+# Imports for backward compatibility
+from trac.core import TracError
+from trac.util.html import escape, unescape, Markup, translate, Deuglifier
 
 CRLF = '\r\n'
 
@@ -36,7 +35,8 @@ try:
 except NameError:
     def reversed(x):
         if hasattr(x, 'keys'):
-            raise ValueError('un dictionnaire ne supporte pas l\'itération inversée')
+            raise ValueError('les dictionnaires ne supportent pas '
+                             'l\'itération inversée')
         i = len(x)
         while i > 0:
             i -= 1
@@ -52,211 +52,6 @@ except NameError:
         if reverse:
             lst = reversed(lst)
         return [i for __, i in lst]
-
-class Markup(str):
-    """Marks a string as being safe for inclusion in XML output without needing
-    to be escaped.
-    
-    Strings are normally automatically escaped when added to the HDF.
-    `Markup`-strings are however an exception. Use with care.
-    
-    (since Trac 0.9.3)
-    """
-    def __new__(self, text='', *args):
-        if args:
-            text %= tuple([escape(arg) for arg in args])
-        return str.__new__(self, text)
-
-    def __add__(self, other):
-        return Markup(str(self) + Markup.escape(other))
-
-    def __mul__(self, num):
-        return Markup(str(self) * num)
-
-    def join(self, seq):
-        return Markup(str(self).join([Markup.escape(item) for item in seq]))
-
-    def striptags(self):
-        """Return a copy of the text with all XML/HTML tags removed."""
-        return Markup(re.sub(r'<[^>]*?>', '', self))
-
-    def escape(cls, text, quotes=True):
-        """Create a Markup instance from a string and escape special characters
-        it may contain (<, >, & and ").
-        
-        If the `quotes` parameter is set to `False`, the " character is left as
-        is. Escaping quotes is generally only required for strings that are to
-        be used in attribute values.
-        """
-        if isinstance(text, cls):
-            return text
-        if not text:
-            return cls()
-        text = str(text).replace('&', '&amp;') \
-                        .replace('<', '&lt;') \
-                        .replace('>', '&gt;')
-        if quotes:
-            text = text.replace('"', '&#34;')
-        return cls(text)
-    escape = classmethod(escape)
-
-    def unescape(self):
-        """Reverse-escapes &, <, > and " and returns a `str`."""
-        if not self:
-            return ''
-        return str(self).replace('&#34;', '"') \
-                        .replace('&gt;', '>') \
-                        .replace('&lt;', '<') \
-                        .replace('&amp;', '&')
-
-    def sanitize(self):
-        """Parse the text as HTML and return a cleaned up XHTML representation.
-        
-        This will remove any javascript code or other potentially dangerous
-        elements.
-        
-        If the HTML cannot be parsed, an `HTMLParseError` will be raised by the
-        underlying `HTMLParser` module, which should be handled by the caller of
-        this function.
-        """
-        import htmlentitydefs
-        from HTMLParser import HTMLParser, HTMLParseError
-        from StringIO import StringIO
-
-        buf = StringIO()
-
-        class HTMLSanitizer(HTMLParser):
-            # FIXME: move this out into a top-level class
-            safe_tags = frozenset(['a', 'abbr', 'acronym', 'address', 'area',
-                'b', 'big', 'blockquote', 'br', 'button', 'caption', 'center',
-                'cite', 'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir',
-                'div', 'dl', 'dt', 'em', 'fieldset', 'font', 'form', 'h1', 'h2',
-                'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'input', 'ins', 'kbd',
-                'label', 'legend', 'li', 'map', 'menu', 'ol', 'optgroup',
-                'option', 'p', 'pre', 'q', 's', 'samp', 'select', 'small',
-                'span', 'strike', 'strong', 'sub', 'sup', 'table', 'tbody',
-                'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u', 'ul',
-                'var'])
-            safe_attrs = frozenset(['abbr', 'accept', 'accept-charset',
-                'accesskey', 'action', 'align', 'alt', 'axis', 'border',
-                'cellpadding', 'cellspacing', 'char', 'charoff', 'charset',
-                'checked', 'cite', 'class', 'clear', 'cols', 'colspan', 'color',
-                'compact', 'coords', 'datetime', 'dir', 'disabled', 'enctype',
-                'for', 'frame', 'headers', 'height', 'href', 'hreflang',
-                'hspace', 'id', 'ismap', 'label', 'lang', 'longdesc',
-                'maxlength', 'media', 'method', 'multiple', 'name', 'nohref',
-                'noshade', 'nowrap', 'prompt', 'readonly', 'rel', 'rev', 'rows',
-                'rowspan', 'rules', 'scope', 'selected', 'shape', 'size',
-                'span', 'src', 'start', 'style', 'summary', 'tabindex',
-                'target', 'title', 'type', 'usemap', 'valign', 'value',
-                'vspace', 'width'])
-            uri_attrs = frozenset(['action', 'background', 'dynsrc', 'href',
-                                  'lowsrc', 'src'])
-            safe_schemes = frozenset(['file', 'ftp', 'http', 'https', 'mailto',
-                                      None])
-            empty_tags = frozenset(['br', 'hr', 'img', 'input'])
-            waiting_for = None
-
-            def handle_starttag(self, tag, attrs):
-                if self.waiting_for:
-                    return
-                if tag not in self.safe_tags:
-                    self.waiting_for = tag
-                    return
-                buf.write('<' + tag)
-
-                def _get_scheme(text):
-                    if ':' not in text:
-                        return None
-                    chars = [char for char in text.split(':', 1)[0]
-                             if char.isalnum()]
-                    return ''.join(chars).lower()
-
-                for attrname, attrval in attrs:
-                    if attrname not in self.safe_attrs:
-                        continue
-                    elif attrname in self.uri_attrs:
-                        # Don't allow URI schemes such as "javascript:"
-                        if _get_scheme(attrval) not in self.safe_schemes:
-                            continue
-                    elif attrname == 'style':
-                        # Remove dangerous CSS declarations from inline styles
-                        decls = []
-                        for decl in filter(None, attrval.split(';')):
-                            is_evil = False
-                            if 'expression' in decl:
-                                is_evil = True
-                            for m in re.finditer(r'url\s*\(([^)]+)', decl):
-                                if _get_scheme(m.group(1)) not in self.safe_schemes:
-                                    is_evil = True
-                                    break
-                            if not is_evil:
-                                decls.append(decl.strip())
-                        if not decls:
-                            continue
-                        attrval = '; '.join(decls)
-                    buf.write(' ' + attrname + '="' + escape(attrval) + '"')
-
-                if tag in self.empty_tags:
-                    buf.write(' />')
-                else:
-                    buf.write('>')
-
-            def handle_entityref(self, name):
-                if not self.waiting_for:
-                    if name not in ('amp', 'lt', 'gt', 'quot'):
-                        codepoint = htmlentitydefs.name2codepoint[name]
-                        buf.write(unichr(codepoint).encode('utf-8'))
-                    else:
-                        buf.write('&%s;' % name)
-
-            def handle_data(self, data):
-                if not self.waiting_for:
-                    buf.write(escape(data, quotes=False))
-
-            def handle_endtag(self, tag):
-                if self.waiting_for:
-                    if self.waiting_for == tag:
-                        self.waiting_for = None
-                    return
-                if tag not in self.empty_tags:
-                    buf.write('</' + tag + '>')
-
-        # Translate any character or entity references to the corresponding
-        # UTF-8 characters
-        def _ref2utf8(match):
-            ref = match.group(1)
-            if ref.startswith('x'):
-                ref = int(ref[1:], 16)
-            else:
-                ref = int(ref, 10)
-            return unichr(int(ref)).encode('utf-8')
-        text = re.sub(r'&#((?:\d+)|(?:[xX][0-9a-fA-F]+));?', _ref2utf8, self)
-
-        sanitizer = HTMLSanitizer()
-        sanitizer.feed(text)
-        return Markup(buf.getvalue())
-
-
-escape = Markup.escape
-
-def unescape(text):
-    """Reverse-escapes &, <, > and \"."""
-    if not isinstance(text, Markup):
-        return text
-    return text.unescape()
-
-ENTITIES = re.compile(r"&(\w+);")
-def rss_title(text):
-    if isinstance(text, Markup):
-        def replace_entity(match):
-            return match.group(1) in ('amp', 'lt', 'gt', 'apos', 'quot') \
-                   and match.group(0) or ''
-        return Markup(re.sub(ENTITIES, replace_entity,
-                             text.striptags().replace('\n', ' ')))
-    return text
-
-
 
 def to_utf8(text, charset='iso-8859-15'):
     """Convert a string to UTF-8, assuming the encoding is either UTF-8, ISO
@@ -275,25 +70,11 @@ def to_utf8(text, charset='iso-8859-15'):
         return u.encode('utf-8')
 
 def shorten_line(text, maxlen = 75):
-    if not text:
-        return ''
-    elif len(text) < maxlen:
-        shortline = text
-    else:
-        last_cut = i = j = -1
-        cut = 0
-        while cut < maxlen and cut > last_cut:
-            last_cut = cut
-            i = text.find('[[BR]]', i+1)
-            j = text.find('\n', j+1)
-            cut = max(i,j)
-        if last_cut > 0:
-            shortline = text[:last_cut]+' ...'
-        else:
-            i = text[:maxlen].rfind(' ')
-            if i == -1:
-                i = maxlen
-            shortline = text[:i]+' ...'
+    if len(text or '') < maxlen:
+        return text
+    shortline = text[:maxlen]
+    cut = shortline.rfind(' ') + 1 or shortline.rfind('\n') + 1 or maxlen
+    shortline = text[:cut]+' ...'
     return shortline
 
 DIGITS = re.compile(r'(\d+)')
@@ -317,7 +98,7 @@ def pretty_size(size):
     if size < jump:
         return '%d octets' % size
 
-    units = ['kB', 'MB', 'GB', 'TB']
+    units = ['kO', 'MO', 'GO', 'TO']
     i = 0
     while size >= jump and i < len(units):
         i += 1
@@ -364,7 +145,8 @@ def create_unique_file(path):
             idx += 1
             # A sanity check
             if idx > 100:
-                raise Exception('Impossible de créer le nom de fichier unique: ' + path)
+                raise Exception('Impossible de créer le nom de fichier '
+                                'unique: ' + path)
             path = '%s.%d%s' % (parts[0], idx, parts[1])
 
 def get_reporter_id(req):
@@ -425,7 +207,7 @@ def http_date(t=None):
     weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
               'Oct', 'Nov', 'Dec']
-    return '%s, %d %s %04d %02d:%02d:%02d GMT' % (
+    return '%s, %02d %s %04d %02d:%02d:%02d GMT' % (
            weekdays[t.tm_wday], t.tm_mday, months[t.tm_mon - 1], t.tm_year,
            t.tm_hour, t.tm_min, t.tm_sec)
 
@@ -443,14 +225,6 @@ def parse_date(text):
     if seconds == None:
         raise ValueError, "%s n'est pas un format de date connu." % text
     return seconds
-
-
-class TracError(Exception):
-    def __init__(self, message, title=None, show_traceback=0):
-        Exception.__init__(self, message)
-        self.message = message
-        self.title = title
-        self.show_traceback = show_traceback
 
 
 class NaivePopen:
@@ -509,7 +283,6 @@ def wrap(t, cols=75, initial_indent='', subsequent_indent='',
     except ImportError:
         return t
 
-
 def safe__import__(module_name):
     """
     Safe imports: rollback after a failed import.
@@ -528,32 +301,6 @@ def safe__import__(module_name):
                 del(sys.modules[modname])
         raise e
 
-def translate(env, name, capitalize=False):
-    if capitalize:
-        return env.translations.get(name.lower().capitalize(), name.capitalize())
-    else:
-        return env.translations.get(name.lower(), name)
-
-class Deuglifier(object):
-    def __new__(cls):
-        self = object.__new__(cls)
-        if not hasattr(cls, '_compiled_rules'):
-            cls._compiled_rules = re.compile('(?:' + '|'.join(cls.rules()) + ')')
-        self._compiled_rules = cls._compiled_rules
-        return self
-    
-    def format(self, indata):
-        return re.sub(self._compiled_rules, self.replace, indata)
-
-    def replace(self, fullmatch):
-        for mtype, match in fullmatch.groupdict().items():
-            if match:
-                if mtype == 'font':
-                    return '<span>'
-                elif mtype == 'endfont':
-                    return '</span>'
-                return '<span class="code-%s">' % mtype
-
 # Original license for md5crypt:
 # Based on FreeBSD src/lib/libcrypt/crypt.c 1.2
 #
@@ -561,7 +308,6 @@ class Deuglifier(object):
 # <phk@login.dknet.dk> wrote this file.  As long as you retain this notice you
 # can do whatever you want with this stuff. If we meet some day, and you think
 # this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
-
 def md5crypt(password, salt, magic='$1$'):
     # /* The password first, since that is what is most unknown */
     # /* Then our magic string */

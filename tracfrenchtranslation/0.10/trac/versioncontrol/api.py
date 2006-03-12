@@ -98,12 +98,14 @@ class Repository(object):
                     yield chgset
             rev = self.previous_rev(rev)
 
-    def has_node(self, path, rev):
+    def has_node(self, path, rev=None):
         """
         Tell if there's a node at the specified (path,rev) combination.
+
+        When `rev` is `None`, the latest revision is implied.
         """
         try:
-            self.get_node()
+            self.get_node(path, rev)
             return True
         except TracError:
             return False        
@@ -295,6 +297,18 @@ class Changeset(object):
         self.author = author
         self.date = date
 
+    def get_properties(self):
+        """Generator that provide additional metadata for this changeset.
+
+        Each additional property is a 4 element tuple:
+         * `name` is the name of the property,
+         * `text` its value
+         * `wikiflag` indicates whether the `text` should be interpreted as
+            wiki text or not
+         * `htmlclass` enables to attach special formatting to the displayed
+            property, e.g. `'author'`, `'time'`, `'message'` or `'changeset'`.
+        """
+        
     def get_changes(self):
         """
         Generator that produces a (path, kind, change, base_rev, base_path)

@@ -27,14 +27,15 @@ from trac import util
 from trac.core import *
 from trac.mimeview import Mimeview, is_binary
 from trac.perm import IPermissionRequestor
-from trac.Search import ISearchSource, query_to_sql, shorten_result
+from trac.Search import ISearchSource, search_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
 from trac.versioncontrol import Changeset, Node
 from trac.versioncontrol.diff import get_diff_options, hdf_diff, unified_diff
 from trac.versioncontrol.svn_authz import SubversionAuthorizer
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, add_link, add_stylesheet
-from trac.wiki import wiki_to_html, wiki_to_oneliner, IWikiSyntaxProvider
+from trac.wiki import wiki_to_html, wiki_to_oneliner, IWikiSyntaxProvider, \
+                      Formatter
 
 
 class DiffArgs(dict):
@@ -252,9 +253,10 @@ class ChangesetModule(Component):
             def get_changes():
                 old_node = new_node = None
                 for npath, kind, change, opath, orev in chgset.get_changes():
-                    if restricted and \
-                           not (npath.startswith(path)      # npath is below
-                                or path.startswith(npath)): # npath is above
+                    if (restricted and 
+                        not (npath == path or                # same path
+                             npath.startswith(path + '/') or # npath is below
+                             path.startswith(npath + '/'))): # npath is above
                         continue
                     if change != Changeset.ADD:
                         old_node = repos.get_node(opath, orev)
@@ -269,13 +271,21 @@ class ChangesetModule(Component):
                     return 'Version %s' % rev
 
             title = _changeset_title(rev)
+            properties = []
+            for name, value, wikiflag, htmlclass in chgset.get_properties():
+                if wikiflag:
+                    value = wiki_to_html(value or '', self.env, req)
+                properties.append({'name': name, 'value': value,
+                                   'htmlclass': htmlclass})
+
             req.hdf['changeset'] = {
                 'revision': chgset.rev,
                 'time': util.format_datetime(chgset.date),
                 'age': util.pretty_timedelta(chgset.date, None, 3600),
                 'author': chgset.author or 'anonymous',
                 'message': wiki_to_html(chgset.message or '--', self.env, req,
-                                        escape_newlines=True)
+                                        escape_newlines=True),
+                'properties': properties
                 }
             oldest_rev = repos.oldest_rev
             if chgset.rev != oldest_rev:
@@ -332,6 +342,7 @@ class ChangesetModule(Component):
             if old_node:
                 info['path.old'] = old_node.path
                 info['rev.old'] = old_node.rev
+                info['shortrev.old'] = repos.short_rev(old_node.rev)
                 old_href = self.env.href.browser(old_node.created_path,
                                                  rev=old_node.created_rev)
                 # Reminder: old_node.path may not exist at old_node.rev
@@ -342,6 +353,7 @@ class ChangesetModule(Component):
             if new_node:
                 info['path.new'] = new_node.path
                 info['rev.new'] = new_node.rev # created rev.
+                info['shortrev.new'] = repos.short_rev(new_node.rev)
                 new_href = self.env.href.browser(new_node.created_path,
                                                  rev=new_node.created_rev)
                 # (same remark as above)
@@ -349,8 +361,7 @@ class ChangesetModule(Component):
             return info
 
         hidden_properties = [p.strip() for p
-                             in self.config.get('browser', 'hide_properties',
-                                                'svk:merge').split(',')]
+                             in self.config.get('browser', 'hide_properties').split(',')]
 
         def _prop_changes(old_node, new_node):
             old_props = old_node.get_properties()
@@ -368,7 +379,16 @@ class ChangesetModule(Component):
                 for k in hidden_properties:
                     if k in changed_props:
                         del changed_props[k]
-            return changed_props
+            changed_properties = []
+            for name, props in changed_props.iteritems():
+                props.update(name=name)
+                changed_properties.append(props)
+            return changed_properties
+
+        def _estimate_changes(old_node, new_node):
+            old_size = old_node.get_content_length()
+            new_size = new_node.get_content_length()
+            return old_size + new_size
 
         mimeview = Mimeview(self.env)
 
@@ -409,6 +429,18 @@ class ChangesetModule(Component):
             else:
                 return []
 
+        max_diff_bytes = int(self.config.get('changeset', 'max_diff_bytes'))
+        max_diff_files = int(self.config.get('changeset', 'max_diff_files'))
+        diff_bytes = diff_files = 0
+        if max_diff_bytes or max_diff_files:
+            for old_node, new_node, kind, change in get_changes():
+                if change == Changeset.EDIT and kind == Node.FILE:
+                    diff_files += 1
+                    diff_bytes += _estimate_changes(old_node, new_node)
+        show_diffs = (not max_diff_files or diff_files <= max_diff_files) and \
+                     (not max_diff_bytes or diff_bytes <= max_diff_bytes or \
+                      diff_files == 1)                      
+                
         idx = 0
         for old_node, new_node, kind, change in get_changes():
             if change != Changeset.EDIT:
@@ -420,15 +452,25 @@ class ChangesetModule(Component):
                 if props:
                     req.hdf['changeset.changes.%d.props' % idx] = props
                     show_entry = True
-                if kind == Node.FILE:
+                if kind == Node.FILE and show_diffs:
                     diffs = _content_changes(old_node, new_node)
                     if diffs != []:
                         if diffs:
                             req.hdf['changeset.changes.%d.diff' % idx] = diffs
                         # elif None (means: manually compare to (previous))
                         show_entry = True
-            if show_entry:
+            if show_entry or not show_diffs:
                 info = _change_info(old_node, new_node, change)
+                if change == Changeset.EDIT and not show_diffs:
+                    if chgset:
+                        diff_href = self.env.href.changeset(new_node.rev,
+                                                            new_node.path)
+                    else:
+                        diff_href = self.env.href.changeset(
+                            new_node.created_rev, new_node.created_path,
+                            old=old_node.created_rev,
+                            old_path=old_node.created_path)
+                    info['diff_href'] = diff_href                        
                 req.hdf['changeset.changes.%d' % idx] = info
             idx += 1 # the sequence should be immutable
 
@@ -579,12 +621,20 @@ class ChangesetModule(Component):
 
     # IWikiSyntaxProvider methods
 
+    CHANGESET_ID = r"[a-fA-F\d]+"
+    
     def get_wiki_syntax(self):
-        yield (r"!?\[\d+(?:/[^\]]*)?\]|(?:\b|!)r\d+\b(?!:\d)",
-               lambda x, y, z:
-               self._format_changeset_link(x, 'changeset',
-                                           y[0] == 'r' and y[1:] or y[1:-1],
-                                           y, z))
+        yield (
+            # [...] form: start with optional intertrac: [T... or [trac ... 
+            r"!?\[(?P<it_changeset>%s\s*)" % Formatter.INTERTRAC_SCHEME +
+            # hex digits + optional /path for the restricted changeset
+            r"%s(?:/[^\]]*)?\]|" % self.CHANGESET_ID +
+            # r... form: allow r1 but not r1:2 (handled by the log syntax)
+            r"(?:\b|!)r\d+\b(?!:\d+)", # no r[hexa] because of rfc:...
+            lambda x, y, z:
+            self._format_changeset_link(x, 'changeset',
+                                        y[0] == 'r' and y[1:] or y[1:-1],
+                                        y, z))
 
     def get_link_resolvers(self):
         yield ('changeset', self._format_changeset_link)
@@ -592,22 +642,25 @@ class ChangesetModule(Component):
 
     def _format_changeset_link(self, formatter, ns, chgset, label,
                                fullmatch=None):
+        intertrac = formatter.shorthand_intertrac_helper(ns, chgset, label,
+                                                         fullmatch)
+        if intertrac:
+            return intertrac
         sep = chgset.find('/')
         if sep > 0:
             rev, path = chgset[:sep], chgset[sep:]
         else:
             rev, path = chgset, None
-        cursor = formatter.db.cursor()
-        cursor.execute('SELECT message FROM revision WHERE rev=%s', (rev,))
-        row = cursor.fetchone()
-        if row:
+        repos = self.env.get_repository()
+        try:
+            chgset = repos.get_changeset(rev)
             return '<a class="changeset" title="%s" href="%s">%s</a>' \
-                   % (util.escape(util.shorten_line(row[0])),
+                   % (util.escape(util.shorten_line(chgset.message)),
                       formatter.href.changeset(rev, path), label)
-        else:
-            return '<a class="missing changeset" href="%s"' \
+        except TracError, e:
+            return '<a class="missing changeset" title="%s" href="%s"' \
                    ' rel="nofollow">%s</a>' \
-                   % (formatter.href.changeset(rev, path), label)
+                   % (str(e), formatter.href.changeset(rev, path), label)
 
     def _format_diff_link(self, formatter, ns, params, label):
         def pathrev(path):
@@ -635,18 +688,18 @@ class ChangesetModule(Component):
         return '<a class="changeset" title="%s" href="%s">%s</a>' \
                % (title, href, label)
     
-    # ISearchProvider methods
+    # ISearchSource methods
 
     def get_search_filters(self, req):
         if req.perm.has_permission('CHANGESET_VIEW'):
             yield ('changeset', 'Versions')
 
-    def get_search_results(self, req, query, filters):
+    def get_search_results(self, req, terms, filters):
         if not 'changeset' in filters:
             return
         authzperm = SubversionAuthorizer(self.env, req.authname)
         db = self.env.get_db_cnx()
-        sql, args = query_to_sql(db, query, 'message||author')
+        sql, args = search_to_sql(db, ['message', 'author'], terms)
         cursor = db.cursor()
         cursor.execute("SELECT rev,time,author,message "
                        "FROM revision WHERE " + sql, args)
@@ -655,7 +708,7 @@ class ChangesetModule(Component):
                 continue
             yield (self.env.href.changeset(rev),
                    '[%s]: %s' % (rev, util.shorten_line(log)),
-                   date, author, shorten_result(log, query.split()))
+                   date, author, shorten_result(log, terms))
 
 
 class AnyDiffModule(Component):

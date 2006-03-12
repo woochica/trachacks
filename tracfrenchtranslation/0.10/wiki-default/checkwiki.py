@@ -15,6 +15,9 @@ import getopt
 # Pages to include in distribution
 wiki_pages = [
  "CamelCase",
+ "InterMapTxt",
+ "InterTrac",
+ "InterWiki",
  "RecentChanges",
  "TitleIndex",
  "TracAccessibility",
@@ -38,6 +41,7 @@ wiki_pages = [
  "TracPlugins",
  "TracQuery",
  "TracReports",
+ "TracRevisionLog",
  "TracRoadmap",
  "TracRss",
  "TracSearch",

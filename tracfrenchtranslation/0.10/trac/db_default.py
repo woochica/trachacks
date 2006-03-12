@@ -18,7 +18,7 @@ from trac.config import default_dir
 from trac.db import Table, Column, Index
 
 # Database version identifier. Used for automatic upgrades.
-db_version = 16
+db_version = 17
 
 def __mkreports(reports):
     """Utility function used to create report data in same syntax as the
@@ -83,11 +83,11 @@ schema = [
         Column('author'),
         Column('message'),
         Index(['time'])],
-    Table('node_change', key=('rev', 'path', 'change'))[
+    Table('node_change', key=('rev', 'path', 'change_type'))[
         Column('rev'),
         Column('path'),
-        Column('kind', size=1),
-        Column('change', size=1),
+        Column('node_type', size=1),
+        Column('change_type', size=1),
         Column('base_path'),
         Column('base_rev'),
         Index(['rev'])],
@@ -433,9 +433,12 @@ default_config = \
   ('notification', 'smtp_replyto', 'trac@localhost'),
   ('notification', 'mime_encoding', 'qp'),
   ('notification', 'allow_public_cc', 'false'),
+  ('notification', 'maxheaderlen', '78'),
   ('timeline', 'default_daysback', '30'),
   ('timeline', 'changeset_show_files', '0'),
   ('timeline', 'ticket_show_details', 'false'),
+  ('changeset', 'max_diff_files', '1000'),
+  ('changeset', 'max_diff_bytes', '10000000'),
   ('browser', 'hide_properties', 'svk:merge'),
   ('wiki', 'ignore_missing_pages', 'false'),
   ('translation', 'fixed', 'corrigé'),

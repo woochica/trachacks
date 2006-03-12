@@ -75,8 +75,10 @@ class NotifyEmail(Notify):
     server = None
     email_map = None
     template_name = None
-    shortaddr_re = re.compile(r"([\w\d_\.\-])+\@(([\w\d\-])+\.)+([\w\d]{2,4})+")
-    longaddr_re = re.compile(r"^\s*(.*)\s+<([\w\d_\-\.]+\@(([\w\d\-])+\.)+([\w\d]{2,4})+)>\s*$");
+    addrfmt = r"[\w\d_\.\-]+\@(([\w\d\-])+\.)+([\w\d]{2,4})+"
+    shortaddr_re = re.compile(addrfmt)
+    longaddr_re = re.compile(r"^\s*(.*)\s+<(" + addrfmt + ")>\s*$");
+    nodomaddr_re = re.compile(r"[\w\d_\.\-]+")
 
     def __init__(self, env):
         Notify.__init__(self, env)
@@ -93,8 +95,7 @@ class NotifyEmail(Notify):
         self._charset = Charset()
         self._charset.input_charset = 'utf-8'
         self._charset.input_codec = 'utf-8'
-        pref = self.env.config.get('notification','mime_encoding',
-                                   'base64').lower()
+        pref = self.env.config.get('notification', 'mime_encoding').lower()
         if pref == 'base64':
             self._charset.header_encoding = BASE64
             self._charset.body_encoding = BASE64
@@ -123,6 +124,7 @@ class NotifyEmail(Notify):
             return
         self.smtp_server = self.config.get('notification', 'smtp_server')
         self.smtp_port = int(self.config.get('notification', 'smtp_port'))
+        self.maxheaderlen = int(self.config.get('notification', 'maxheaderlen'))
         self.from_email = self.config.get('notification', 'smtp_from')
         self.replyto_email = self.config.get('notification', 'smtp_replyto')
         self.from_email = self.from_email or self.replyto_email
@@ -139,17 +141,13 @@ class NotifyEmail(Notify):
 
         Notify.notify(self, resid)
 
-    def get_email_addresses(self, txt):
-        import email.Utils
-        emails = [x[1] for x in  email.Utils.getaddresses([str(txt)])]
-        return filter(lambda x: x.find('@') > -1, emails)
-
     def format_header(self, name, email=None):
         from email.Header import Header
         try:
-            name = unicode(name, 'ascii')
+            tmp = unicode(name, 'ascii')
+            name = Header(tmp, 'ascii', maxlinelen=self.maxheaderlen)
         except UnicodeDecodeError:
-            name = Header(name, self._charset)
+            name = Header(name, self._charset, maxlinelen=self.maxheaderlen)
         if not email:
             return name
         else:
@@ -159,13 +157,31 @@ class NotifyEmail(Notify):
         for h in headers:
             msg[h] = self.encode_header(headers[h])
 
-    def get_smtp_address(self, fulladdr):
-        mo = NotifyEmail.shortaddr_re.search(fulladdr)
+    def get_smtp_address(self, address):
+        if not address:
+            return None
+        if address.find('@') == -1:
+            if address == 'anonymous':
+                return None
+            if self.email_map.has_key(address):
+                address = self.email_map[address]
+            elif NotifyEmail.nodomaddr_re.match(address):
+                if self.config.getbool('notification', 'allow_short_addr'):
+                    return address
+                domain = self.config.get('notification', 'smtp_default_domain')
+                if domain:
+                    address = "%s@%s" % (address, domain)
+                else:
+                    self.env.log.info("Email address w/o domain: %s" % address)
+                    return None
+        mo = NotifyEmail.shortaddr_re.search(address)
         if mo:
             return mo.group(0)
-        if start >= 0:
-            return fulladdr[start+1:-1]
-        return fulladdr
+        mo = NotifyEmail.longaddr_re.search(address)
+        if mo:
+            return mo.group(2)
+        self.env.log.info("Invalid email address: %s" % address)
+        return None
 
     def encode_header(self, value):
         if isinstance(value, tuple):
@@ -189,20 +205,36 @@ class NotifyEmail(Notify):
         from email.MIMEText import MIMEText
         from email.Utils import formatdate, formataddr
         body = self.hdf.render(self.template_name)
-        projname = self.config.get('project','name')
+        projname = self.config.get('project', 'name')
         public_cc = self.config.getbool('notification', 'allow_public_cc')
         headers = {}
         headers['X-Mailer'] = 'Trac %s, by Edgewall Software' % __version__
         headers['X-Trac-Version'] =  __version__
         headers['X-Trac-Project'] =  projname
-        headers['X-URL'] = self.config.get('project','url')
+        headers['X-URL'] = self.config.get('project', 'url')
         headers['Subject'] = self.subject
         headers['From'] = (projname, self.from_email)
         headers['Sender'] = self.from_email
         headers['Reply-To'] = self.replyto_email
-        headers['To'] = torcpts
+        # Format and remove invalid addresses
+        toaddrs = filter(lambda x: x, \
+                         [self.get_smtp_address(addr) for addr in torcpts])
+        ccaddrs = filter(lambda x: x, \
+                         [self.get_smtp_address(addr) for addr in ccrcpts])
+        # Remove duplicates
+        totmp = []
+        cctmp = []
+        for addr in toaddrs:
+            if addr not in totmp:
+                totmp.append(addr)
+        for addr in [c for c in ccaddrs if c not in totmp]:
+            if addr not in cctmp:
+                cctmp.append(addr)
+        (toaddrs, ccaddrs) = (totmp, cctmp)
+        if toaddrs:
+            headers['To'] = ', '.join(toaddrs)
         if public_cc:
-            headers['Cc'] = ccrcpts
+            headers['Cc'] = ', '.join(ccaddrs)
         headers['Date'] = formatdate()
         charset = 'utf-8'
         if not self._pref_encoding:
@@ -221,9 +253,7 @@ class NotifyEmail(Notify):
         msg.set_charset(self._charset)
         self.add_headers(msg, headers);
         self.add_headers(msg, mime_headers);
-        recipients = []
-        for r in torcpts + ccrcpts:
-            recipients.append(self.get_smtp_address(r))
+        recipients = toaddrs + ccaddrs
         self.env.log.debug("Sending SMTP notification to %s on port %d to %s"
                            % (self.smtp_server, self.smtp_port, recipients))
         msgtext = msg.as_string()

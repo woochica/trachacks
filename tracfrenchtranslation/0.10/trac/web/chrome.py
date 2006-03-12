@@ -20,7 +20,7 @@ import re
 from trac import mimeview, util
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
-from trac.web.api import IRequestHandler
+from trac.web.api import IRequestHandler, HTTPNotFound
 from trac.web.href import Href
 from trac.wiki import IWikiSyntaxProvider
 
@@ -48,7 +48,7 @@ def add_stylesheet(req, filename, mimetype='text/css'):
         href = Href(req.hdf['htdocs_location'])
         filename = filename[7:]
     else:
-        href = Href(req.cgi_location).chrome
+        href = Href(req.base_path).chrome
     add_link(req, 'stylesheet', href(filename), mimetype=mimetype)
 
 
@@ -159,8 +159,8 @@ class Chrome(Component):
             return True
 
     def process_request(self, req):
-        prefix = req.args.get('prefix')
-        filename = req.args.get('filename')
+        prefix = req.args['prefix']
+        filename = req.args['filename']
 
         dirs = []
         for provider in self.template_providers:
@@ -172,9 +172,8 @@ class Chrome(Component):
                 if os.path.isfile(path):
                     req.send_file(path)
 
-        # FIXME: Should return a 404 error
         self.log.warning('File %s not found in any of %s', filename, dirs)
-        raise TracError, 'Fichier non trouvé'
+        raise HTTPNotFound('Fichier %s non trouvé', filename)
 
     # ITemplateProvider methods
 
@@ -214,7 +213,7 @@ class Chrome(Component):
         # Provided for template customization
         req.hdf['HTTP.PathInfo'] = req.path_info
 
-        href = Href(req.cgi_location)
+        href = Href(req.base_path)
         req.hdf['chrome.href'] = href.chrome()
         htdocs_location = self.config.get('trac', 'htdocs_location') or \
                           href.chrome('common')
@@ -248,8 +247,7 @@ class Chrome(Component):
                 else:
                     logo_src = href.chrome('common', logo_src)
             req.hdf['chrome.logo'] = {
-                'link': logo_link, 'src': logo_src,
-                'src_abs': logo_src_abs,
+                'link': logo_link, 'src': logo_src, 'src_abs': logo_src_abs,
                 'alt': self.config.get('header_logo', 'alt'),
                 'width': self.config.get('header_logo', 'width', ''),
                 'height': self.config.get('header_logo', 'height', '')
