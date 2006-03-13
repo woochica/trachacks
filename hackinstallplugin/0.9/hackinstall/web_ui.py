@@ -148,7 +148,12 @@ class HackInstallPlugin(Component):
                 for line in dist.get_metadata_lines('trac_plugin.txt'):
                     self.config.set('components',line.strip()+'.*','disabled')
             else:
-                self.log.debug('Entry point plugin detected, but not supported quite yet')
+                self.log.debug('Entry point plugin detected')
+                for entry_name in dist.get_entry_map('trac.plugins'):
+                    self.log.debug("Processing entry name '%s'"%entry_name)
+                    entry_point = dist.get_entry_info('trac.plugins', entry_name)
+                    self.log.debug("Module name is '%s'"%entry_point.module_name)
+                    self.config.set('components',entry_point.module_name+'.*','disabled')
             self.config.save()
 
     def _download_hack(self, name):
