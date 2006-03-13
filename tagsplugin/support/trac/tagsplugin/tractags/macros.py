@@ -139,6 +139,8 @@ class TagMacros(Component):
         for tagspace in tagspaces:
             tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
             for name in tagsystem.get_tagged_names(*tags):
+                if tagspace == 'wiki' and name.startswith('tags/'):
+                    continue
                 ntags = list(tagsystem.get_tags(name))
                 alltags.update(ntags)
                 names.setdefault((tagspace, name), {

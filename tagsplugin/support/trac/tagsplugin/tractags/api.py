@@ -160,28 +160,6 @@ class DefaultTaggingSystem(TaggingSystem):
     def name_link(self, tagspace, name):
         return (getattr(self.env.href, tagspace)(name), '%s:%s' % (tagspace, name), None)
 
-class WikiTaggingSystem(DefaultTaggingSystem):
-    """ Subclass of DefaultTaggingSystem that knows how to retrieve wiki page
-        titles. """
-    def page_info(self, page):
-        from trac.wiki import model
-        """ Return tuple of (model.WikiPage, title) """
-        page = model.WikiPage(self.env, page)
-
-        title = ''
-
-        if page.exists:
-            text = page.text
-            ret = re.search('=\s+([^=]*)=',text)
-            title = ret and ret.group(1) or ''
-
-        return (page, title)
-
-    def name_link(self, tagspace, name):
-        """ Return a tuple of (href, wikilink, title). eg. ("/ticket/1", "#1", "Broken links") """
-        page, title = self.page_info(name)
-        return (self.env.href.wiki(name), '[wiki:%s %s]' % (name, name), title)
-
 # Simple class to proxy calls to TaggingSystem objects, automatically passing
 # the tagspace argument to method calls.
 class TaggingSystemAccessor(object):
@@ -196,17 +174,6 @@ class TaggingSystemAccessor(object):
 
     def __repr__(self):
         return repr(self.tagsystem)
-
-class WikiTags(Component):
-    """ Implement tags in the Wiki system. """
-
-    implements(ITaggingSystemProvider)
-
-    def get_tagspaces_provided(self):
-        yield 'wiki'
-
-    def get_tagging_system(self, tagspace):
-        return WikiTaggingSystem(self.env)
 
 class TagEngine(Component):
     """ The core of the Trac tag API. This interface can be used to register
@@ -256,6 +223,7 @@ class TagEngine(Component):
     def get_tag_link(self, tag):
         """ Return (href, title) to information about tag. This first checks for
             a Wiki page named <tag>, then uses /tags/<tag>. """
+        from tractags.wiki import WikiTaggingSystem
         page, title = WikiTaggingSystem(self.env).page_info(tag)
         if page.exists:
             return (self.env.href.wiki(tag), title)
