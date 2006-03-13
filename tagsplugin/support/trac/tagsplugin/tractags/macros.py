@@ -88,6 +88,10 @@ class TagMacros(Component):
                 if count > max: max = count
 
         tags = cloud.keys()
+
+        # No tags?
+        if not tags: return ''
+
         taginfo = self._tag_details(tags)
         tags.sort()
         rlen = float(range[1] - range[0])
