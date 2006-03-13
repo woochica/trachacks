@@ -4,6 +4,7 @@ from trac.wiki.api import IWikiMacroProvider
 from acct_mgr.htfile import HtPasswdStore
 from acct_mgr.api import IPasswordStore
 from tracrpc.api import IXMLRPCHandler
+from tractags.api import TagEngine
 import sys, inspect
 
 class TracHacksMacros(Component):
@@ -21,7 +22,6 @@ class TracHacksMacros(Component):
         from StringIO import StringIO
         from trac.wiki import wiki_to_html
         from trac.wiki.model import WikiPage
-        from tractags.api import TagEngine
         from trac.util import Markup
         import re
 
@@ -78,7 +78,6 @@ class TracHacksAccountManager(HtPasswdStore):
             if page.exists:
                 raise TracError('wiki page "%s" already exists' % user)
             else:
-                from tractags.api import TagEngine
                 tagengine = TagEngine(self.env)
 
                 tagengine.wiki.add_tag(None, user, 'user')
@@ -105,35 +104,20 @@ class TracHacksRPC(Component):
     # Other methods
     def getReleases(self):
         """ Return a list of Trac releases TracHacks is aware of. """
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("SELECT name FROM wiki_namespace WHERE namespace='release'")
-        return [x[0] for x in cursor.fetchall()]
+        return TagEngine(self.env).wiki.get_tagged_names('release')
 
     def getTypes(self):
         """ Return a list of known Hack types. """
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("SELECT name FROM wiki_namespace WHERE namespace='type'")
-        return [x[0] for x in cursor.fetchall()]
+        return TagEngine(self.env).wiki.get_tagged_names('type')
 
     def getHacks(self, req, release, type):
         """ Fetch a list of hacks for Trac release, of type. """
         from trac.versioncontrol.api import Node
-
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
         repo = self.env.get_repository(req.authname)
         repo_rev = repo.get_youngest_rev()
-
-        # Get releases and types
-        releases = self.getReleases()
-        types = self.getTypes()
-
-        cursor.execute("SELECT name FROM wiki_namespace WHERE namespace=%s " \
-                       "INTERSECT SELECT NAME FROM wiki_namespace WHERE " \
-                       "namespace=%s", (release, type));
-        for (plugin,) in cursor.fetchall():
+        releases = set(TagEngine(self.env).wiki.get_tagged_names(release))
+        types = set(TagEngine(self.env).wiki.get_tagged_names(type))
+        for plugin in releases.intersection(types):
             if plugin.startswith('tags/'): continue
             path = '%s/%s' % (plugin.lower(), release)
             rev = 0
