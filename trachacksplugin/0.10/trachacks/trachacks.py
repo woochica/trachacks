@@ -20,18 +20,19 @@ class TracHacksMacros(Component):
     def render_macro(self, req, name, content):
         from StringIO import StringIO
         from trac.wiki import wiki_to_html
+        from trac.wiki.model import WikiPage
+        from tractags.api import TagEngine
+        from trac.util import Markup
         import re
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute('SELECT name FROM wiki_namespace WHERE namespace=\'type\' ORDER BY name')
+
+        tagengine = TagEngine(self.env)
+
         out = StringIO()
-        pages = [x[0] for x in cursor.fetchall()]
-        for i in range(0, len(pages)):
-            page = pages[i]
-            pcursor = db.cursor()
-            pcursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version DESC LIMIT 1" % page)
-            body = pcursor.fetchone()
-            if body:
+        pages = list(tagengine.wiki.get_tagged_names('type'))
+
+        for i, pagename in enumerate(pages):
+            page = WikiPage(self.env, pagename)
+            if page.text:
                 if i > 0:
                     topmargin = '0em'
                 else:
@@ -42,15 +43,15 @@ class TracHacksMacros(Component):
                     bottommargin = '2em'
                     
                 out.write('<fieldset style="padding: 1em; margin: %s 5em %s 5em; border: 1px solid #999;">\n' % (topmargin, bottommargin))
-                body = body[0]
+                body = page.text
                 title = re.search('=+\s([^=]*)=+', body)
                 if title:
                     title = title.group(1).strip()
                     body = re.sub('=+\s([^=]*)=+', '', body, 1)
                 else:
-                    title = page
+                    title = pagename
                 body = re.sub('\\[\\[TagIt.*', '', body)
-                out.write('<legend style="color: #999;"><a href="%s">%s</a></legend>\n' % (self.env.href.wiki(page), title))
+                out.write('<legend style="color: #999;"><a href="%s">%s</a></legend>\n' % (self.env.href.wiki(pagename), title))
                 out.write('%s\n' % wiki_to_html(body, self.env, req))
                 out.write('</fieldset>\n')
         return out.getvalue()
@@ -64,24 +65,26 @@ class TracHacksAccountManager(HtPasswdStore):
         return 'trachacks-htpasswd'
 
     def set_password(self, user, password):
-        self.env.log.debug(len(user))
+        import re
         if len(user) < 3:
             raise TracError('user name must be at least 3 characters long')
         if not re.match(r'^\w+$', user):
             raise TracError('user name must consist only of alpha-numeric characters')
-        self.env.log.debug("New user %s registered" % user)
         if user not in self.get_users():
             from trac.wiki.model import WikiPage
             db = self.env.get_db_cnx()
-            page = WikiPage(self.env, user, db = db)
+            page = WikiPage(self.env, user, db=db)
             # User creation with existing page
             if page.exists:
                 raise TracError('wiki page "%s" already exists' % user)
             else:
+                from tractags.api import TagEngine
+                tagengine = TagEngine(self.env)
+
+                tagengine.wiki.add_tag(None, user, 'user')
                 page.text = '''= %(user)s =\n\n[[ListTags(%(user)s)]]\n\n[[TagIt(user)]]''' % {'user' : user}
                 page.save(user, 'New user %s registered' % user, None)
-                cursor = db.cursor()
-                cursor.execute('INSERT INTO wiki_namespace VALUES (%s, %s)', (user, 'user'))
+                self.env.log.debug("New user %s registered" % user)
         HtPasswdStore.set_password(self, user, password)
 
     def delete_user(self, user):
