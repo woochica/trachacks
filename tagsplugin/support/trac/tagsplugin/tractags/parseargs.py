@@ -2,19 +2,24 @@
     Basic parsing of arguments into a non-keyword list and keyword dictionary.
 """
 
+import re
+
 class UnexpectedEndOfInput(Exception): pass
 class InvalidToken(Exception): pass
 class UnexpectedToken(Exception): pass
 
 class Lexer(object):
     """ Convenience wrapper around tokenize.generate_tokens """
+    _lexer = re.compile(r'''([][(),=]|"[^"]*"|'[^']*'|[^][(),=\s]+)''')
+
     def __init__(self, string):
-        from StringIO import StringIO
-        import tokenize
-        stream = StringIO(string)
+        tokens = self._lexer.findall(string)
         self.tokens = []
-        for token in tokenize.generate_tokens(stream.readline):
-            self.tokens.append(token[0:2])
+        for token in tokens:
+            type = 1
+            if token[0] in '\'"':
+                type = 3
+            self.tokens.append((type, token))
 
     def __iter__(self):
         return self
@@ -22,8 +27,7 @@ class Lexer(object):
     def next(self):
         if self.tokens:
             token = self.tokens.pop(0)
-            if token[0] != 0:
-                return token
+            return token
         raise StopIteration
 
     def push_token(self, token):

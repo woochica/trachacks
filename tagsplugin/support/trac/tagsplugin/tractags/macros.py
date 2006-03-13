@@ -26,6 +26,13 @@ class TagMacros(Component):
             titles[pagename] = title
         return titles
 
+    def _tag_details(self, tags):
+        """ Extract dictionary of tag:(href, title) for all tags. """
+        links = {}
+        for tag in tags:
+            links[tag] = TagEngine(self.env).get_tag_link(tag)
+        return links
+
     def _current_page(self, req):
         return req.hdf.getValue('wiki.page_name', '')
 
@@ -42,7 +49,7 @@ class TagMacros(Component):
 
     def render_macro(self, req, name, content):
         from trac.web.chrome import add_stylesheet
-        add_stylesheet(req, 'tagsupport/css/tractags.css')
+        add_stylesheet(req, 'tags/css/tractags.css')
         # Translate macro args into python args
         args = []
         kwargs = {}
@@ -67,7 +74,6 @@ class TagMacros(Component):
             tagspaces = [tagspace]
         else:
             tagspaces = tagspaces or TagEngine(self.env).tagspaces
-        tags = set()
         cloud = {}
         min, max = 9999, 0
 
@@ -81,9 +87,9 @@ class TagMacros(Component):
                 if count < min: min = count
                 if count > max: max = count
 
-        names = cloud.keys()
-        taginfo = self._page_titles(names)
-        names.sort()
+        tags = cloud.keys()
+        taginfo = self._tag_details(tags)
+        tags.sort()
         rlen = float(range[1] - range[0])
         tlen = float(max - min)
         scale = 1.0
@@ -91,19 +97,19 @@ class TagMacros(Component):
             scale = rlen / tlen
         out = StringIO()
         out.write('<ul class="tagcloud">\n')
-        last = names[-1]
-        for name in names:
-            if name == last:
+        last = tags[-1]
+        for tag in tags:
+            if tag == last:
                 cls = ' class="last"'
             else:
                 cls = ''
             out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> <span class="tagcount">(%i)</span></li>\n' % (
                        cls,
-                       taginfo[name],
-                       range[0] + int((cloud[name] - min) * scale),
-                       self.env.href.wiki(name),
-                       name,
-                       cloud[name]))
+                       taginfo[tag][1],
+                       range[0] + int((cloud[tag] - min) * scale),
+                       taginfo[tag][0],
+                       tag,
+                       cloud[tag]))
         out.write('</ul>\n')
         return out.getvalue()
 
@@ -141,7 +147,7 @@ class TagMacros(Component):
                 })
 
         # Get tag page titles, if any
-        taginfo = self._page_titles(alltags)
+        taginfo = self._tag_details(alltags)
 
         # List names and tags
         keys = names.keys()
@@ -156,11 +162,17 @@ class TagMacros(Component):
             details = names[(tagspace, name)]
             tagsystem = details['tagsystem']
             href, link, title = tagsystem.name_link(name)
+            hlink = wiki_to_oneliner(link, self.env)
             htitle = wiki_to_oneliner(title, self.env)
-            out.write('<li><a href="%s" title="%s">%s</a> %s (%s)</li>\n' % (href, title, link, htitle,
-                ', '.join(['<a href="%s" title="%s">%s</a>'
-                          % (self.env.href.wiki(tag), taginfo[tag], tag)
-                          for tag in details['tags']])))
+            name_tags = ['<a href="%s" title="%s">%s</a>'
+                          % (taginfo[tag][0], taginfo[tag][1], tag)
+                          for tag in details['tags'] if tag not in tags]
+            if not name_tags:
+                name_tags = ''
+            else:
+                name_tags = ' (' + ', '.join(name_tags) + ')'
+            out.write('<li><a href="%s" title="%s">%s</a> %s%s</li>\n' %
+                      (href, title, hlink, htitle, name_tags))
         out.write('</ul>')
 
         return out.getvalue()
@@ -174,11 +186,10 @@ class TagMacros(Component):
         wiki.replace_tags(req, page, *tags)
 
         out = StringIO()
-        taginfo = self._page_titles(tags)
+        taginfo = self._tag_details(tags)
         out.write('<ul class="tagit">\n')
         for tag in tags:
-            href, link, title = TagEngine(self.env).wiki.name_link(tag)
-            out.write('<li><a href="%s" title="%s">%s</a></li>\n' % (href, title or '', link))
+            out.write('<li><a href="%s" title="%s">%s</a></li>\n' % (taginfo[tag][0], taginfo[tag][1], tag))
         out.write('</ul>\n')
         return out.getvalue()
 
@@ -192,7 +203,6 @@ class TagMacros(Component):
 
         page = self._current_page(req)
         wiki = TagEngine(self.env).wiki
-        taginfo = self._page_titles(tags)
 
         showpages = kwargs.get('showpages', None) or kwargs.get('shownames', 'false')
 
@@ -212,12 +222,12 @@ class TagMacros(Component):
         out = StringIO()
         out.write('<ul class="listtags">\n')
         keys = tags.keys()
+        taginfo = self._tag_details(keys)
         keys.sort()
         for tag in keys:
-            href, link, title = TagEngine(self.env).wiki.name_link(tag)
-            link = wiki_to_oneliner(link, self.env)
+            href, title = taginfo[tag]
             htitle = wiki_to_oneliner(title, self.env)
-            out.write('<li><a href="%s" title="%s">%s</a> %s (%i)' % (href, title, link, htitle, tags[tag]))
+            out.write('<li><a href="%s" title="%s">%s</a> %s (%i)' % (href, title, tag, htitle, tags[tag]))
             if showpages == 'true':
                 out.write('\n')
                 out.write(self.render_listtagged(req, tag, tagspaces=tagspaces))

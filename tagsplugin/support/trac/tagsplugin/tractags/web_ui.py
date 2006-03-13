@@ -1,44 +1,11 @@
 from trac.core import *
 from trac.web.main import IRequestHandler
-from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import ITemplateProvider, INavigationContributor
+from trac.util import Markup
 from StringIO import StringIO
 
-class TagsLi(Component):
-    implements(IRequestHandler,ITemplateProvider)
-    
-    # IRequestHandler methods
-    def match_request(self, req):
-        return req.path_info == '/tagli'
-                
-    def process_request(self, req):
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cs = db.cursor()
-        tag = req.args.get('tag')
-        req.send_response(200)
-        req.send_header('Content-Type', 'text/plain')
-        req.end_headers()
-        buf = StringIO()
-        if tag:
-            buf.write('WHERE tag LIKE \'%s%s\'' % (tag,'%'))
-            
-        cursor.execute('SELECT DISTINCT tag FROM tags %s ORDER BY tag' % (buf.getvalue()))
-
-        msg = StringIO()
-
-        msg.write('<ul>')
-        while 1:
-            row = cursor.fetchone()
-            if row == None:
-                 break
-
-            t = row[0]
-            msg.write('<li>')
-            msg.write(t)
-            msg.write('</li>')
-
-        msg.write('</ul>')
-        req.write(msg.getvalue())
+class TagsTemplateProvider(Component):
+    implements(ITemplateProvider)
 
     def get_templates_dirs(self):
         """
@@ -53,5 +20,75 @@ class TagsLi(Component):
         static resources (such as images, style sheets, etc).
         """
         from pkg_resources import resource_filename
-        return [('tagsupport', resource_filename(__name__, 'htdocs'))]
+        return [('tags', resource_filename(__name__, 'htdocs'))]
     
+
+class TagViewer(Component):
+    """ Serve a /tags namespace. Top-level displays tag cloud, sub-levels
+        display output of ListTagged(tag). """
+    implements(IRequestHandler, INavigationContributor)
+
+    # INavigationContributor methods
+    def get_active_navigation_item(self, req):
+        return 'tags'
+
+    def get_navigation_items(self, req):
+        yield ('metanav', 'tags',
+               Markup('<a href="%s" accesskey="T">Tag Index</a>',
+                      self.env.href.tags()))
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info.startswith('/tags')
+
+    def process_request(self, req):
+        from tractags.macros import TagMacros
+        from trac.web.chrome import add_stylesheet
+        add_stylesheet(req, 'tags/css/tractags.css')
+
+        req.hdf['trac.href.tags'] = self.env.href.tags()
+        if req.path_info == '/tags':
+            req.hdf['tag.body'] = Markup(TagMacros(self.env).render_tagcloud(req))
+        else:
+            tag = req.path_info[6:]
+            req.hdf['tag.name'] = tag
+            req.hdf['tag.body'] = Markup(TagMacros(self.env).render_listtagged(req, tag))
+        return 'tags.cs', None
+
+# XXX I think this is planned for some AJAX goodness, commenting out for now. (Alec) XXX
+#class TagsLi(Component):
+#    implements(IRequestHandler)
+#    
+#    # IRequestHandler methods
+#    def match_request(self, req):
+#        return req.path_info == '/tagli'
+#                
+#    def process_request(self, req):
+#        db = self.env.get_db_cnx()
+#        cursor = db.cursor()
+#        cs = db.cursor()
+#        tag = req.args.get('tag')
+#        req.send_response(200)
+#        req.send_header('Content-Type', 'text/plain')
+#        req.end_headers()
+#        buf = StringIO()
+#        if tag:
+#            buf.write('WHERE tag LIKE \'%s%s\'' % (tag,'%'))
+#            
+#        cursor.execute('SELECT DISTINCT tag FROM tags %s ORDER BY tag' % (buf.getvalue()))
+#
+#        msg = StringIO()
+#
+#        msg.write('<ul>')
+#        while 1:
+#            row = cursor.fetchone()
+#            if row == None:
+#                 break
+#
+#            t = row[0]
+#            msg.write('<li>')
+#            msg.write(t)
+#            msg.write('</li>')
+#
+#        msg.write('</ul>')
+#        req.write(msg.getvalue())

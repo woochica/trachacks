@@ -158,7 +158,7 @@ class DefaultTaggingSystem(TaggingSystem):
         db.commit()
 
     def name_link(self, tagspace, name):
-        return (getattr(self.env.href, tagspace)(name), '[%s:%s]' % (tagspace, name), None)
+        return (getattr(self.env.href, tagspace)(name), '%s:%s' % (tagspace, name), None)
 
 class WikiTaggingSystem(DefaultTaggingSystem):
     """ Subclass of DefaultTaggingSystem that knows how to retrieve wiki page
@@ -180,7 +180,7 @@ class WikiTaggingSystem(DefaultTaggingSystem):
     def name_link(self, tagspace, name):
         """ Return a tuple of (href, wikilink, title). eg. ("/ticket/1", "#1", "Broken links") """
         page, title = self.page_info(name)
-        return (self.env.href.wiki(name), name, title)
+        return (self.env.href.wiki(name), '[wiki:%s %s]' % (name, name), title)
 
 # Simple class to proxy calls to TaggingSystem objects, automatically passing
 # the tagspace argument to method calls.
@@ -252,6 +252,15 @@ class TagEngine(Component):
             if tagspace in tagsystem.get_tagspaces_provided():
                 return TaggingSystemAccessor(tagspace, tagsystem.get_tagging_system(tagspace))
         raise TracError("No such tagspace '%s'" % tagspace)
+
+    def get_tag_link(self, tag):
+        """ Return (href, title) to information about tag. This first checks for
+            a Wiki page named <tag>, then uses /tags/<tag>. """
+        page, title = WikiTaggingSystem(self.env).page_info(tag)
+        if page.exists:
+            return (self.env.href.wiki(tag), title)
+        else:
+            return (self.env.href.tags(tag), "Objects tagged ''%s''" % tag)
 
     # ITaggingSystemProvider methods
     def get_tagspaces_provided(self):
