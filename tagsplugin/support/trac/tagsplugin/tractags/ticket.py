@@ -28,24 +28,23 @@ class TicketTaggingSystem(TaggingSystem):
             sql += ' WHERE id IN (%s)' % ', '.join([str(n) for n in names])
         cursor.execute(sql)
         for row in cursor:
-            tags.update(self._keyword_split.findall(row[0]))
+            if row[0] is not None:
+                tags.update(self._keyword_split.findall(row[0]))
         return tags
         
     def _get_tagged(self, *tags):
         tags = set(tags)
-        if tags:
-            query = Query.from_string(self.env, "keywords=~%s" % '|'.join(tags))
-        else:
-            query = Query.from_string(self.env, "keywords!=")
-
-        for ticket in query.execute():
-            ticket = model.Ticket(self.env, ticket['id'])
-            ttags = set(self._ticket_tags(ticket))
-            if not tags and ttags or tags.intersection(ttags):
-                yield ticket
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('SELECT id, keywords FROM ticket ORDER BY id')
+        for ticket in cursor:
+            if ticket[1] is not None:
+                ttags = set(self._keyword_split.findall(ticket[1]))
+                if not tags and ttags or tags.intersection(ttags):
+                    yield ticket[0]
 
     def get_tagged_names(self, tagspace, *tags):
-        return [ticket.id for ticket in self._get_tagged(*tags)]
+        return [id for id in self._get_tagged(*tags)]
 
     def get_tags(self, tagspace, *names):
         return self._get_tags(*names)
