@@ -22,7 +22,7 @@ class TagMacros(Component):
         """ Extract page titles, if possible. """
         titles = {}
         for pagename in pages:
-            href, link, title = TagEngine(self.env).wiki.name_link(pagename)
+            href, link, title = TagEngine(self.env).wiki.name_details(pagename)
             titles[pagename] = title
         return titles
 
@@ -167,8 +167,7 @@ class TagMacros(Component):
                 current_ns = tagspace
             details = names[(tagspace, name)]
             tagsystem = details['tagsystem']
-            href, link, title = tagsystem.name_link(name)
-            hlink = wiki_to_oneliner(link, self.env)
+            href, link, title = tagsystem.name_details(name)
             htitle = wiki_to_oneliner(title, self.env)
             name_tags = ['<a href="%s" title="%s">%s</a>'
                           % (taginfo[tag][0], taginfo[tag][1], tag)
@@ -177,8 +176,8 @@ class TagMacros(Component):
                 name_tags = ''
             else:
                 name_tags = ' (' + ', '.join(name_tags) + ')'
-            out.write('<li><a href="%s" title="%s">%s</a> %s%s</li>\n' %
-                      (href, title, hlink, htitle, name_tags))
+            out.write('<li>%s %s%s</li>\n' %
+                      (link, htitle, name_tags))
         out.write('</ul>')
 
         return out.getvalue()
@@ -233,7 +232,7 @@ class TagMacros(Component):
         for tag in keys:
             href, title = taginfo[tag]
             htitle = wiki_to_oneliner(title, self.env)
-            out.write('<li><a href="%s" title="%s">%s</a> %s (%i)' % (href, title, tag, htitle, tags[tag]))
+            out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, title, tag, htitle, tags[tag]))
             if showpages == 'true':
                 out.write('\n')
                 out.write(self.render_listtagged(req, tag, tagspaces=tagspaces))

@@ -23,9 +23,19 @@ class TagsTemplateProvider(Component):
         return [('tags', resource_filename(__name__, 'htdocs'))]
     
 
-class TagViewer(Component):
+class TagsViewer(Component):
     """ Serve a /tags namespace. Top-level displays tag cloud, sub-levels
-        display output of ListTagged(tag). """
+        display output of ListTagged(tag).
+
+        The following configuration options are supported:
+
+        [tags]
+        # Use a tag list or cloud for the main index
+        index = cloud|list
+        # Show tagspace headings in the index
+        index.showheadings = true
+        
+    """
     implements(IRequestHandler, INavigationContributor)
 
     # INavigationContributor methods
@@ -47,12 +57,25 @@ class TagViewer(Component):
         add_stylesheet(req, 'tags/css/tractags.css')
 
         req.hdf['trac.href.tags'] = self.env.href.tags()
+        showheadings = self.config.getbool('tags', 'showheadings',
+                                           'false') and 'true' or 'false'
         if req.path_info == '/tags':
-            req.hdf['tag.body'] = Markup(TagMacros(self.env).render_tagcloud(req))
+            index = self.env.config.get('tags', 'index', 'cloud')
+            if index == 'cloud':
+                req.hdf['tag.body'] = Markup(
+                    TagMacros(self.env).render_tagcloud(req))
+            elif index == 'list':
+                req.hdf['tag.body'] = Markup(
+                    TagMacros(self.env).render_listtagged(req,
+                        showheadings=showheadings))
+            else:
+                raise TracError("Invalid index style '%s'" % index)
         else:
             tag = req.path_info[6:]
             req.hdf['tag.name'] = tag
-            req.hdf['tag.body'] = Markup(TagMacros(self.env).render_listtagged(req, tag))
+            req.hdf['tag.body'] = Markup(
+                TagMacros(self.env).render_listtagged(
+                    req, tag, showheadings=showheadings))
         return 'tags.cs', None
 
 # XXX I think this is planned for some AJAX goodness, commenting out for now. (Alec) XXX

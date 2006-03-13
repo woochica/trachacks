@@ -100,8 +100,9 @@ class TaggingSystem(object):
         for tag in self.get_tags(tagspace, name):
             self.remove_tag(tagspace, req, name, tag)
 
-    def name_link(self, tagspace, name):
-        """ Return a tuple of (href, wikilink, title). eg. ("/ticket/1", "#1", "Broken links") """
+    def name_details(self, tagspace, name):
+        """ Return a tuple of (href, htmllink, title). eg. 
+            ("/ticket/1", "<a href="/ticket/1">#1</a>", "Broken links") """
         raise NotImplementedError
 
 class DefaultTaggingSystem(TaggingSystem):
@@ -157,8 +158,11 @@ class DefaultTaggingSystem(TaggingSystem):
         cursor.execute("DELETE FROM tags WHERE tagspace = %s AND name = %s", (tagspace, name))
         db.commit()
 
-    def name_link(self, tagspace, name):
-        return (getattr(self.env.href, tagspace)(name), '%s:%s' % (tagspace, name), None)
+    def name_details(self, tagspace, name):
+        from trac.wiki.formatter import wiki_to_oneliner
+        return (getattr(self.env.href, tagspace),
+                wiki_to_oneliner('[%s:%s %s]' % (tagspace, name, name),
+                                  self.env), '')
 
 # Simple class to proxy calls to TaggingSystem objects, automatically passing
 # the tagspace argument to method calls.

@@ -19,10 +19,12 @@ class WikiTaggingSystem(DefaultTaggingSystem):
 
         return (page, title)
 
-    def name_link(self, tagspace, name):
+    def name_details(self, tagspace, name):
         """ Return a tuple of (href, wikilink, title). eg. ("/ticket/1", "#1", "Broken links") """
         page, title = self.page_info(name)
-        return (self.env.href.wiki(name), '[wiki:%s %s]' % (name, name), title)
+        href = self.env.href.wiki(name)
+        defaults = DefaultTaggingSystem.name_details(self, tagspace, name)
+        return defaults[0:2] + (title,)
 
 class WikiTags(Component):
     """ Implement tags in the Wiki system. """

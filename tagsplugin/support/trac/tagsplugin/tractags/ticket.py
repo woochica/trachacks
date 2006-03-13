@@ -75,9 +75,12 @@ class TicketTaggingSystem(TaggingSystem):
         del ticket['keywords']
         ticket.save_changes(req.authname, None)
 
-    def name_link(self, tagspace, name):
+    def name_details(self, tagspace, name):
         ticket = model.Ticket(self.env, name)
-        return (self.env.href.ticket(name), '#%s' % name, ticket.exists and ticket['summary'])
+        href = self.env.href.ticket(name)
+        from trac.wiki.formatter import wiki_to_oneliner
+        return (href, wiki_to_oneliner('#%s' % name, self.env),
+                ticket.exists and ticket['summary'] or '')
 
 class TicketTags(Component):
     """ Export a ticket tag interface, using the "keywords" field of tickets. """
