@@ -44,7 +44,7 @@ class TicketTaggingSystem(TaggingSystem):
                     yield ticket[0]
 
     def get_tagged_names(self, tagspace, *tags):
-        return [id for id in self._get_tagged(*tags)]
+        return set([id for id in self._get_tagged(*tags)])
 
     def get_tags(self, tagspace, *names):
         return self._get_tags(*names)

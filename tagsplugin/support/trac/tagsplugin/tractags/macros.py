@@ -122,7 +122,12 @@ class TagMacros(Component):
             The special tag '.' inserts the current Wiki page name.
 
             Optional keyword arguments are tagspace=wiki,
-            tagspaces=(wiki, title, ...) and showheadings=true."""
+            tagspaces=(wiki, title, ...) and showheadings=true.
+
+            By default displays the union of objects matching each tag. By
+            passing operation=intersection this can be modified to display
+            the intersection of objects matching each tag.
+        """
 
         if 'tagspace' in kwargs:
             tagspaces = [kwargs.get('tagspace', None)]
@@ -130,6 +135,8 @@ class TagMacros(Component):
             tagspaces = kwargs.get('tagspaces', '') or \
                         list(TagEngine(self.env).tagspaces)
         showheadings = kwargs.get('showheadings', 'false')
+        operation = kwargs.get('operation', 'union')
+
         alltags = set()
         tags = set([str(x) for x in tags])
         if '.' in tags:
@@ -138,19 +145,37 @@ class TagMacros(Component):
                 tags.add(page)
             tags.remove('.')
 
-        names = {}
+        tag_sets = {}
 
         for tagspace in tagspaces:
             tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
-            for name in tagsystem.get_tagged_names(*tags):
-                if tagspace == 'wiki' and name.startswith('tags/'):
-                    continue
-                ntags = list(tagsystem.get_tags(name))
-                alltags.update(ntags)
-                names.setdefault((tagspace, name), {
-                    'tags': ntags,
-                    'tagsystem': tagsystem,
-                })
+            for tag in tags:
+                for name in tagsystem.get_tagged_names(tag):
+                    if tagspace == 'wiki' and name.startswith('tags/'):
+                        continue
+                    tag_sets.setdefault(tag, set()).add(name)
+
+        tagged_names = set()
+        if operation == 'union':
+            for tag, names in tag_sets.iteritems():
+                tagged_names.update(names)
+        elif operation == 'intersection':
+            iter = tag_sets.iteritems()
+            tag, names = iter.next()
+            tagged_names = set(names)
+            for tag, names in iter:
+                tagged_names.intersection_update(names)
+        else:
+            raise TracError("Invalid tag set operation '%s'" % operation)
+
+        names = {}
+        for name in tagged_names:
+            ntags = list(tagsystem.get_tags(name))
+            alltags.update(ntags)
+            names.setdefault((tagspace, name), {
+                'tags': ntags,
+                'tagsystem': tagsystem,
+            })
 
         # Get tag page titles, if any
         taginfo = self._tag_details(alltags)

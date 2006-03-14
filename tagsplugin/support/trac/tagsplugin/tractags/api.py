@@ -68,8 +68,8 @@ class TaggingSystem(object):
         return len(self.get_tagged_names(tagspace, *tags))
 
     def get_tagged_names(self, tagspace, *tags):
-        """ Return an iterable over tagged names in the given tagspace,
-            optionally only those tagged with tag. """
+        """ Return a set() of tagged names in the given tagspace, optionally
+            only those any of tags are applied to. """
         raise NotImplementedError
 
     def count_tags(self, tagspace, *names):
@@ -77,8 +77,8 @@ class TaggingSystem(object):
         return len(self.get_tags(tagspace, *names))
 
     def get_tags(self, tagspace, *names):
-        """ Return an iterable over tags in tagspace, optionally only those
-            tagging names.  """
+        """ Return a set() of tags in tagspace, optionally the union of all
+            tags on names. """
         raise NotImplementedError
 
     def add_tag(self, tagspace, req, name, tag):
@@ -127,8 +127,7 @@ class DefaultTaggingSystem(TaggingSystem):
 
     def get_tags(self, tagspace, *names):
         cursor = self._tags_cursor("tag", tagspace, 'name', names)
-        for row in cursor:
-            yield row[0]
+        return set([row[0] for row in cursor])
 
     def count_tagged_names(self, tagspace, *tags):
         cursor = self._tags_cursor("COUNT(*)", tagspace, 'tag', tags)
@@ -136,8 +135,7 @@ class DefaultTaggingSystem(TaggingSystem):
 
     def get_tagged_names(self, tagspace, *tags):
         cursor = self._tags_cursor("name", tagspace, 'tag', tags)
-        for row in cursor:
-            yield row[0]
+        return set([row[0] for row in cursor])
         
     def add_tag(self, tagspace, req, name, tag):
         db = self.env.get_db_cnx()
