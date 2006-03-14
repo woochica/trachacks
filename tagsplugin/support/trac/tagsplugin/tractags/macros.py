@@ -148,31 +148,40 @@ class TagMacros(Component):
                 tags.add(page)
             tags.remove('.')
 
-        tag_sets = {}
+        tagged_names = set()
 
-        for tagspace in tagspaces:
-            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
-            for tag in tags:
-                for name in tagsystem.get_tagged_names(tag):
+        if tags:
+            tag_sets = {}
+            for tagspace in tagspaces:
+                tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
+                for tag in tags:
+                    for name in tagsystem.get_tagged_names(tag):
+                        if tagspace == 'wiki' and name.startswith('tags/'):
+                            continue
+                        tag_sets.setdefault(tag, set()).add((tagspace, name))
+
+            if operation == 'union':
+                for tag, names in tag_sets.iteritems():
+                    tagged_names.update(names)
+            elif operation == 'intersection':
+                iter = tag_sets.iteritems()
+                tag, names = iter.next()
+                tagged_names = set(names)
+                for tag, names in iter:
+                    tagged_names.intersection_update(names)
+            else:
+                raise TracError("Invalid tag set operation '%s'" % operation)
+        else:
+            # Special-case optimisation for all tags
+            for tagspace in tagspaces:
+                tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
+                for name in tagsystem.get_tagged_names():
                     if tagspace == 'wiki' and name.startswith('tags/'):
                         continue
-                    tag_sets.setdefault(tag, set()).add(name)
-
-        tagged_names = set()
-        if operation == 'union':
-            for tag, names in tag_sets.iteritems():
-                tagged_names.update(names)
-        elif operation == 'intersection':
-            iter = tag_sets.iteritems()
-            tag, names = iter.next()
-            tagged_names = set(names)
-            for tag, names in iter:
-                tagged_names.intersection_update(names)
-        else:
-            raise TracError("Invalid tag set operation '%s'" % operation)
-
+                    tagged_names.add((tagspace, name))
         names = {}
-        for name in tagged_names:
+        for tagspace, name in tagged_names:
+            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
             ntags = list(tagsystem.get_tags(name))
             alltags.update(ntags)
             names.setdefault((tagspace, name), {
