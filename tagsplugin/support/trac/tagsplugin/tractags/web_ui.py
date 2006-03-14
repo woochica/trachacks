@@ -33,7 +33,11 @@ class TagsViewer(Component):
         # Use a tag list or cloud for the main index
         index = cloud|list
         # Show tagspace headings in the index
-        index.showheadings = true
+        index.showheadings = false|true
+        # Minium font size for tag cloud index
+        index.cloud.smallest = 10
+        # Maximum font size for tag cloud index
+        index.cloud.biggest = 30
         
     """
     implements(IRequestHandler, INavigationContributor)
@@ -57,13 +61,16 @@ class TagsViewer(Component):
         add_stylesheet(req, 'tags/css/tractags.css')
 
         req.hdf['trac.href.tags'] = self.env.href.tags()
-        showheadings = self.config.getbool('tags', 'showheadings',
+        showheadings = self.config.getbool('tags', 'index.showheadings',
                                            'false') and 'true' or 'false'
+        smallest = int(self.config.get('tags', 'index.cloud.smallest', 10))
+        biggest = int(self.config.get('tags', 'index.cloud.biggest', 30))
+
         if req.path_info == '/tags':
             index = self.env.config.get('tags', 'index', 'cloud')
             if index == 'cloud':
                 req.hdf['tag.body'] = Markup(
-                    TagMacros(self.env).render_tagcloud(req))
+                    TagMacros(self.env).render_tagcloud(req, smallest=smallest, biggest=biggest))
             elif index == 'list':
                 req.hdf['tag.body'] = Markup(
                     TagMacros(self.env).render_listtagged(req,

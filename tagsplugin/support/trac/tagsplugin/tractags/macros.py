@@ -68,14 +68,14 @@ class TagMacros(Component):
             pixels, but this can be overridden by the smallest=n and biggest=n
             macro parameters. By default, all tagspaces are displayed, but this
             can be overridden with tagspaces=(wiki, ticket) or tagspace=wiki."""
-        range = (int(smallest), int(biggest))
+        smallest = int(smallest)
+        biggest = int(biggest)
         # Get wiki tagspace
         if tagspace:
             tagspaces = [tagspace]
         else:
             tagspaces = tagspaces or TagEngine(self.env).tagspaces
         cloud = {}
-        min, max = 9999, 0
 
         for tagspace in tagspaces:
             tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
@@ -84,18 +84,21 @@ class TagMacros(Component):
                 if tag in cloud:
                     count += cloud[tag]
                 cloud[tag] = count
-                if count < min: min = count
-                if count > max: max = count
 
         tags = cloud.keys()
+
+        # by_count maps tag counts to an index in the set of counts
+        by_count = list(set(cloud.values()))
+        by_count.sort()
+        by_count = dict([(c, float(i)) for i, c in enumerate(by_count)])
 
         # No tags?
         if not tags: return ''
 
         taginfo = self._tag_details(tags)
         tags.sort()
-        rlen = float(range[1] - range[0])
-        tlen = float(max - min)
+        rlen = float(biggest - smallest)
+        tlen = float(len(by_count))
         scale = 1.0
         if tlen:
             scale = rlen / tlen
@@ -110,7 +113,7 @@ class TagMacros(Component):
             out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> <span class="tagcount">(%i)</span></li>\n' % (
                        cls,
                        taginfo[tag][1],
-                       range[0] + int((cloud[tag] - min) * scale),
+                       smallest + int(by_count[cloud[tag]] * scale),
                        taginfo[tag][0],
                        tag,
                        cloud[tag]))
