@@ -53,9 +53,9 @@ class LdapPermissionGroupProvider(Component):
         # user entry local cache
         self._cache = {}
         # max time to live for a cache entry
-        self._cache_ttl = self.env.config.get('ldap', 'cache_ttl', 15*60)
+        self._cache_ttl = int(self.env.config.get('ldap', 'cache_ttl', str(15*60)))
         # max cache entries
-        self._cache_size = min(25, self.env.config.get('ldap', 'cache_size', 100))
+        self._cache_size = min(25, int(self.env.config.get('ldap', 'cache_size', '100')))
 
     # IPermissionProvider interface
 
@@ -148,9 +148,9 @@ class LdapPermissionStore(Component):
         # user entry local cache
         self._cache = {}
         # max time to live for a cache entry
-        self._cache_ttl = self.env.config.get('ldap', 'cache_ttl', 15*60)
+        self._cache_ttl = int(self.env.config.get('ldap', 'cache_ttl', str(15*60)))
         # max cache entries
-        self._cache_size = min(25, self.env.config.get('ldap', 'cache_size', 100))
+        self._cache_size = min(25, int(self.env.config.get('ldap', 'cache_size', '100')))
         # environment name
         envpath = self.env.path.replace('\\','/')
         self.env_name = envpath[1+envpath.rfind('/'):]
