@@ -224,7 +224,6 @@ class TagMacros(Component):
         page = self._current_page(req)
         if not page: return ''
 
-        self.env.log.debug(tags)
         out = StringIO()
         taginfo = self._tag_details(tags)
         out.write('<ul class="tagit">\n')

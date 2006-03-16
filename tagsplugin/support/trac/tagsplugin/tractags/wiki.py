@@ -60,8 +60,10 @@ class WikiTags(Component):
     # Internal methods
     def _update_tags(self, page):
         tags = self.tags_re.findall(page.text)
-        if not tags: return
+        wiki_tags = TagEngine(self.env).wiki
+        if not tags:
+            wiki_tags.remove_all_tags(None, page.name)
+            return
         tags = [t.strip() for t in tags[-1].split(',') if t.strip()]
         self.env.log.debug("Setting page tags for 'wiki:%s' to %s" % (page.name, tags))
-        wiki_tags = TagEngine(self.env).wiki
         wiki_tags.replace_tags(None, page.name, *tags)
