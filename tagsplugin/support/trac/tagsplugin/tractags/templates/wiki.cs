@@ -241,7 +241,7 @@
         var:wiki.author ?>" /></label>
      </div>
      <div class="field">
-     	<label for="tags">Tag under: (<a href="<?cs var:$trac.href.wiki ?>/tags/index">view all tags</a>)</label><BR/>
+     	<label for="tags">Tag under: (<a href="<?cs var:base_url ?>/tags">view all tags</a>)</label><BR/>
 	<input type="text" id='tags' name="tags" size="30">
      	<script type="text/javascript">
        	addEvent(window, "load", function() {
@@ -275,7 +275,8 @@
 	       	var text = document.getElementById("text");
 			var tags = document.getElementById("tags");
 
-			tags.value = tags.value.replace(/\s/g, ",");
+			tags.value = tags.value.replace(/\s+/g, ",");
+			tags.value = tags.value.replace(/,+/g, ",");
 
 			var tagsre = /[^{]\s\[\[TagIt\(([0-9a-zA-Z,\/\. +-]*)\)\]\]/;
 
@@ -283,7 +284,7 @@
 			if (m == null) {
 				text.value += "\n\n[[TagIt(" + tags.value + ")]]\n";
 			} else {
-				text.value = text.value.replace(tagsre, "\n\n[[TagIt(" + tags.value + ")]]\n");
+				text.value = text.value.replace(tagsre, "\n\n[[TagIt(" + tags.value + ")]]");
 			}
 		}
 	     </script>

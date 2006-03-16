@@ -220,13 +220,11 @@ class TagMacros(Component):
         return out.getvalue()
 
     def render_tagit(self, req, *tags):
-        """ Tag the current page and display the current tags. """
+        """ Tag the current page and display them. """
         page = self._current_page(req)
-        if not page: return
+        if not page: return ''
 
-        wiki = TagEngine(self.env).wiki
-        wiki.replace_tags(req, page, *tags)
-
+        self.env.log.debug(tags)
         out = StringIO()
         taginfo = self._tag_details(tags)
         out.write('<ul class="tagit">\n')
