@@ -29,6 +29,7 @@ class TracHacksMacros(Component):
 
         out = StringIO()
         pages = list(tagengine.wiki.get_tagged_names('type'))
+        pages.sort()
 
         for i, pagename in enumerate(pages):
             page = WikiPage(self.env, pagename)
