@@ -11,6 +11,7 @@ import fcntl
 SVN_URL = 'http://trac-hacks.org/svn/'
 SVN_LOCAL_PATH = 'file:///srv/trac-hacks/svn/'
 SVN_PERMISSIONS = '/srv/trac-hacks/permissions'
+BASE_URL = "/"
 
 tag_cache = {}
 
@@ -18,7 +19,7 @@ def fetch_page(cursor, page):
     cursor.execute("SELECT text FROM wiki WHERE name=%s ORDER BY version DESC LIMIT 1", (page,))
     text = cursor.fetchone()
     if not text:
-        raise TracError("No such template page <a class='missing' href='/wiki/%s'>%s</a>" % (page, page))
+        raise TracError("No such template page <a class='missing' href='%s/wiki/%s'>%s</a>" % (page, BASE_URL, page))
     return text[0]
 
 def expand_vars(text, vars):
@@ -48,7 +49,7 @@ def generate_vars(hdf):
     vars['LCNAME'] = vars['WIKINAME'].lower()
     vars['TYPE'] = hdf.getValue('args.type', '')
     if not hdf.getValue('args.previewhack', ''):
-        vars['TAGIT'] = '[[TagIt(%s,%s,%s)]]' % (vars['TYPE'], vars['OWNER'], ','.join(get_branch_values(hdf, 'args.tags') + get_branch_values(hdf, 'args.releases')))
+        vars['TAGIT'] = '[[TagIt(%s,%s,%s)]]' % (vars['TYPE'], vars['OWNER'], ','.join(get_branch_values(hdf, 'args.tags') + get_branch_values(hdf, 'args.releases') + get_branch_values(hdf, 'args.dependencies')))
     else:
         vars['TAGIT'] = "''(Tags not expanded during preview)''"
     vars['SOURCEURL'] = SVN_URL + vars['LCNAME']
@@ -87,11 +88,12 @@ def execute(hdf, template, env):
     page_releases = get_branch_values(hdf, 'args.releases')
     page_preview = hdf.getValue('args.previewhack', '')
     page_create = hdf.getValue('args.createhack', '')
+    page_dependencies = get_branch_values(hdf, 'args.dependencies')
 
     def write_tags(out, tags, checked = (), name = "tags", type="checkbox"):
         count = 0
         for tag in sorted(tags):
-            if tag[0].isupper():
+            if tag.startswith('tags/'):
                 continue
             (linktext,title,desc) = getInfo(db,tag)
             link = env.href.wiki(tag)
@@ -176,7 +178,7 @@ def execute(hdf, template, env):
                 raise TracError(e)
 
     out.write("""
-<form name="newhack" id="edit" method="get" action="/wiki/NewHack#preview" name="newhackform">
+<form name="newhack" id="edit" method="get" action="%(base_url)s/wiki/NewHack#preview" name="newhackform">
 <!-- <fieldset id="changeinfo">
 <legend>Register a new Trac Hack</legend> -->
 
@@ -212,6 +214,7 @@ def execute(hdf, template, env):
         'name' : hdf.getValue('args.name', ''),
         'title' : page_title,
         'description' : page_description,
+        'base_url' : BASE_URL,
     })
 
     if not write_tags(out, TYPES, [page_type], "type", "radio"):
@@ -245,6 +248,17 @@ def execute(hdf, template, env):
 
     out.write("""
 </div>
+<div class="field">
+    <label for="dependencies"><strong>Dependencies</strong></label>
+    <br/>
+    Hacks that your hack depends on to function.
+    <br/>
+""")
+    pages = wikitags.get_tagged_names(*TYPES)
+    if not write_tags(out, pages, page_dependencies, 'dependencies'):
+        out.write("<i>No additional tags available.</i>")
+    out.write("""
+</div>
 </fieldset>
 <br/>
 <fieldset>
@@ -261,7 +275,6 @@ def execute(hdf, template, env):
  <input type="submit" name="previewhack" value="Preview" onSubmit="alert('foo')"/>
  <input type="submit" name="cancel" value="Cancel" />
 </div>
-<!--<script type="text/javascript" src="/trac/js/wikitoolbar.js"></script> -->
 </form>
     """ % {
         'example' : page_example
