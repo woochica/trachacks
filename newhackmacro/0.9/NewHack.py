@@ -8,7 +8,7 @@ import trac.perm
 import re, string, svn, os, time
 import fcntl
 
-SVN_URL = 'http://trac-hacks.swapoff.org/svn/'
+SVN_URL = 'http://trac-hacks.org/svn/'
 SVN_LOCAL_PATH = 'file:///srv/trac-hacks/svn/'
 SVN_PERMISSIONS = '/srv/trac-hacks/permissions'
 
@@ -68,16 +68,13 @@ def execute(hdf, template, env):
     cursor = db.cursor()
 
     # Fetch meta-data from tags
-    META_TAGS = []
-    cursor.execute("SELECT name FROM wiki_namespace WHERE namespace=%s", ('metatag',))
-    for tag in cursor.fetchall() or []:
-        tag = tag[0]
-        cursor.execute("SELECT name FROM wiki_namespace WHERE namespace=%s", (tag,))
-        META_TAGS += [x[0] for x in cursor.fetchall() or []]
-    cursor.execute("SELECT name FROM wiki_namespace WHERE namespace=%s", ('type',))
-    TYPES = [x[0] for x in cursor.fetchall() or []]
-    cursor.execute("SELECT name FROM wiki_namespace WHERE namespace=%s", ('release',))
-    RELEASES = [x[0] for x in cursor.fetchall() or []]
+    META_TAGS = set()
+    from tractags.api import TagEngine
+    wikitags = TagEngine(env).wiki
+    for tag in wikitags.get_tagged_names('metatag'):
+        META_TAGS.update(wikitags.get_tagged_names(tag))
+    TYPES = wikitags.get_tagged_names('type')
+    RELEASES = wikitags.get_tagged_names('release')
 
     page_name = hdf.getValue('args.name', '')
     if not page_name.lower().endswith(hdf.getValue('args.type', '')):
@@ -242,8 +239,8 @@ def execute(hdf, template, env):
   <br />
 """)
 
-    cursor.execute('SELECT DISTINCT namespace FROM wiki_namespace')
-    if not write_tags(out, [x[0] for x in cursor.fetchall() or [] if x[0] not in META_TAGS ], page_tags):
+    cursor.execute("SELECT DISTINCT tag FROM tags WHERE tagspace='wiki'")
+    if not write_tags(out, [x[0] for x in cursor.fetchall() or [] if x[0] not in META_TAGS], page_tags):
         out.write("<i>No additional tags available.</i>")
 
     out.write("""
