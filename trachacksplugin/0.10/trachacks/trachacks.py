@@ -101,6 +101,7 @@ class TracHacksRPC(Component):
         yield ('XML_RPC', ((list, str, str),), self.getHacks)
         yield ('XML_RPC', ((list,),), self.getReleases)
         yield ('XML_RPC', ((list,),), self.getTypes)
+        yield ('XML_RPC', ((list,str),), self.getDependencies)
 
     # Other methods
     def getReleases(self):
@@ -115,9 +116,10 @@ class TracHacksRPC(Component):
         """ Fetch a list of hacks for Trac release, of type. """
         from trac.versioncontrol.api import Node
         repo = self.env.get_repository(req.authname)
+        wikitags = TagEngine(self.env).wiki
         repo_rev = repo.get_youngest_rev()
-        releases = set(TagEngine(self.env).wiki.get_tagged_names(release))
-        types = set(TagEngine(self.env).wiki.get_tagged_names(type))
+        releases = wiki.get_tagged_names(release)
+        types = wiki.get_tagged_names(type)
         for plugin in releases.intersection(types):
             if plugin.startswith('tags/'): continue
             path = '%s/%s' % (plugin.lower(), release)
@@ -126,3 +128,11 @@ class TracHacksRPC(Component):
                 node = repo.get_node(path)
                 rev = node.rev
             yield (plugin, rev)
+
+    def getDependencies(self, req, hack):
+        """ Fetch hack dependencies. """
+        wikitags = TagEngine(self.env).wiki
+        tags = wikitags.get_tags(hack)
+        types = self.getTypes()
+        hacks = wikitags.get_tagged_names(*types)
+        return list(hacks.intersection(tags))
