@@ -219,7 +219,8 @@ class TagEngine(Component):
             tagspace. """
         for tagsystem in self.tagging_systems:
             if tagspace in tagsystem.get_tagspaces_provided():
-                return TaggingSystemAccessor(tagspace, tagsystem.get_tagging_system(tagspace))
+                return TaggingSystemAccessor(tagspace,
+                       tagsystem.get_tagging_system(tagspace))
         raise TracError("No such tagspace '%s'" % tagspace)
 
     def get_tag_link(self, tag):
@@ -244,13 +245,13 @@ class TagEngine(Component):
         return len(self.get_tags(*names))
 
     def get_tagged_names(self, *tags):
-        """ Get all tagged names from all namespaces. Returns a list in the
-            form (tagspace, name). """
-        names = []
+        """ Get all tagged names from all namespaces. Returns a dictionary with
+            the tagspace as the key and the value a list of names in that
+            tagspace. """
+        names = {}
         for tagsystem in self.tagging_systems:
             for tagspace in tagsystem.get_tagspaces_provided():
-                names.extend([(tagspace, name)
-                    for name in tagsystem.get_tagged_names(tagspace, *tags)])
+                names[tagspace] = tagsystem.get_tagged_names(tagspace, *tags)
         return names
 
     def count_tagged_names(self, *tags):
