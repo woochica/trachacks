@@ -232,6 +232,30 @@ class TagEngine(Component):
         else:
             return (self.env.href.tags(tag), "Objects tagged ''%s''" % tag)
 
+    def get_tags(self, *names):
+        """ Get all tags from all namespaces. """
+        tags = set()
+        for tagsystem in self.tagging_systems:
+            for tagspace in tagsystem.get_tagspaces_provided():
+                tags.update(tagsystem.get_tags(tagspace, *names))
+        return tags
+
+    def count_tags(self, *names):
+        return len(self.get_tags(*names))
+
+    def get_tagged_names(self, *tags):
+        """ Get all tagged names from all namespaces. Returns a list in the
+            form (tagspace, name). """
+        names = []
+        for tagsystem in self.tagging_systems:
+            for tagspace in tagsystem.get_tagspaces_provided():
+                names.extend([(tagspace, name)
+                    for name in tagsystem.get_tagged_names(tagspace, *tags)])
+        return names
+
+    def count_tagged_names(self, *tags):
+        return len(get_tagged_names(*tags))
+
     # ITaggingSystemProvider methods
     def get_tagspaces_provided(self):
         for user in self.tag_users:
