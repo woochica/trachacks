@@ -255,7 +255,8 @@ class TagEngine(Component):
         return names
 
     def count_tagged_names(self, *tags):
-        return len(get_tagged_names(*tags))
+        all_names = get_tagged_names(*tags)
+        return sum([len(names) for names in all_names.itervalues()])
 
     # ITaggingSystemProvider methods
     def get_tagspaces_provided(self):
