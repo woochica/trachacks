@@ -4,26 +4,7 @@ from trac.web.chrome import ITemplateProvider, INavigationContributor
 from trac.util import Markup
 from StringIO import StringIO
 
-class TagsTemplateProvider(Component):
-    implements(ITemplateProvider)
-
-    def get_templates_dirs(self):
-        """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
-
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        from pkg_resources import resource_filename
-        return [('tags', resource_filename(__name__, 'htdocs'))]
-    
-
-class TagsViewer(Component):
+class TagsInterface(Component):
     """ Serve a /tags namespace. Top-level displays tag cloud, sub-levels
         display output of ListTagged(tag).
 
@@ -40,13 +21,35 @@ class TagsViewer(Component):
         index.cloud.biggest = 30
         
     """
-    implements(IRequestHandler, INavigationContributor)
+    implements(IRequestHandler, INavigationContributor, ITemplateProvider)
 
+    # ITemplateProvider methods
+    def get_templates_dirs(self):
+        """
+        Return the absolute path of the directory containing the provided
+        ClearSilver templates.
+        """
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+    def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
+        from pkg_resources import resource_filename
+        return [('tags', resource_filename(__name__, 'htdocs'))]
+    
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         return 'tags'
 
     def get_navigation_items(self, req):
+        from trac.web.chrome import Chrome
+        chrome = Chrome(self.env)
+        # Rewrite HDF loadpaths so that our wiki.cs overrides the default
+        req.hdf['hdf.loadpaths'] = \
+            self.get_templates_dirs() + \
+            chrome.get_all_templates_dirs()
         yield ('metanav', 'tags',
                Markup('<a href="%s" accesskey="T">Tag Index</a>',
                       self.env.href.tags()))
