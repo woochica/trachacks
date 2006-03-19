@@ -3,17 +3,22 @@
 .listtags .listtagged lh { font-weight: normal; } 
 .listtags .listtagged ul { margin: 0px; padding: 0px; }
 
-.wiki ul.tags { float: right; list-style: none; }
+.wiki ul.tags {
+	float: right;
+	list-style: none;
+	text-align: center;
+	max-width: 20em;
+}
 .wiki .tags li { display: inline; text-align: center; }
 /* The TagIt macro is hidden now, as the TagsWikiModule replaces its
    functionality. It's left for backwards compatibility. */
-.wiki ul.tags.tagit { display: none; }
+.wiki ul.tags.tagit { display: none; text-align: center; }
 
 .wiki .tags lh {
 	font-weight: bold;
 	font-size: large;
 	text-align: center;
-	color: #ddd;
+	color: #ccc;
 	text-transform: lowercase;
 	letter-spacing: 0.5em;
 	display: block;
