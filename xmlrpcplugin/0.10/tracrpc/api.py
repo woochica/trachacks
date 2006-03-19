@@ -3,6 +3,10 @@ from trac.perm import IPermissionRequestor
 import inspect
 import types
 import xmlrpclib
+try:
+    set = set
+except:
+    from sets import Set as set
 
 RPC_TYPES = {int: 'int', bool: 'boolean', str: 'string', float: 'double',
              xmlrpclib.DateTime: 'dateTime.iso8601', xmlrpclib.Binary: 'base64',
@@ -81,6 +85,8 @@ class Method(object):
             result = 0
         # We'll fully traverse the generator results and return it as a tuple
         elif type(result) is types.GeneratorType:
+            result = tuple(result)
+        elif type(result) is set:
             result = tuple(result)
         return (result,)
 
