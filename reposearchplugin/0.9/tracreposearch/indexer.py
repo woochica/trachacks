@@ -28,16 +28,16 @@ class psetdict(object):
         self.dbm = anydbm.open(file, mode)
 
     def __contains__(self, key):
-        return key in self.dbm
+        return str(key) in self.dbm
 
     def __getitem__(self, key):
-       return set(self.dbm[key].split(pathsep))
+       return set(self.dbm[str(key)].split(pathsep))
 
     def __setitem__(self, key, value):
-        self.dbm[key] = pathsep.join(value)
+        self.dbm[str(key)] = pathsep.join(value)
 
     def __delitem__(self, key):
-        del self.dbm[key]
+        del self.dbm[str(key)]
 
     def keys(self):
         return self.dbm.keys()
@@ -186,8 +186,8 @@ class Indexer:
                 else:
                     self.words[word] = [node.path]
                 node_words.add(word)
-        self.files[node.path] = node_words
-        self.revs[node.path] = str(node.rev)
+        self.files[str(node.path)] = node_words
+        self.revs[str(node.path)] = str(node.rev)
 
     def _invalidate_file(self, file):
         if file in self.files:
@@ -206,7 +206,7 @@ class Indexer:
             for node in TracRepoSearchPlugin(self.env).walk_repo(self.repo):
                 if node.kind != Node.DIRECTORY:
                     # Node has changed?
-                    if int(self.revs.get(node.path, -1)) != node.rev:
+                    if int(self.revs.get(str(node.path), -1)) != node.rev:
                         self.env.log.debug("Reindexing %s" % node.path)
                         self._invalidate_file(node.path)
                         self._reindex_node(node)
