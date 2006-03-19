@@ -242,52 +242,7 @@
      </div>
      <div class="field">
      	<label for="tags">Tag under: (<a href="<?cs var:base_url ?>/tags">view all tags</a>)</label><BR/>
-	<input type="text" id='tags' name="tags" size="30">
-     	<script type="text/javascript">
-       	addEvent(window, "load", function() {
-			updateTagsField();
-			var text = document.getElementById("text");
-			var tags = document.getElementById("tags");
-			addEvent(tags, "blur", setTags);
-			addEvent(text, "blur", updateTagsField);
-       	});
-
-		function updateTagsField() {
-			var text = document.getElementById("text");
-			var tags = document.getElementById("tags");
-
-			tags.value = getTags(text);
-		}
-
-
-		function getTags(text) {
-			var tagsre = /[^{]\s\[\[TagIt\(([0-9a-zA-Z,\/\. +-]*)\)\]\]/;
-
-			var m = tagsre.exec(text.value);
-			if (m != null) {
-				return(m[1]);
-			} else {
-				return ("");
-			}
-		}
-
-		function setTags() {
-	       	var text = document.getElementById("text");
-			var tags = document.getElementById("tags");
-
-			tags.value = tags.value.replace(/\s+/g, ",");
-			tags.value = tags.value.replace(/,+/g, ",");
-
-			var tagsre = /[^{]\s\[\[TagIt\(([0-9a-zA-Z,\/\. +-]*)\)\]\]/;
-
-			var m = tagsre.exec(text.value);
-			if (m == null) {
-				text.value += "\n\n[[TagIt(" + tags.value + ")]]\n";
-			} else {
-				text.value = text.value.replace(tagsre, "\n\n[[TagIt(" + tags.value + ")]]");
-			}
-		}
-	     </script>
+      <input title="Comma separated list of tags" type="text" id='tags' name="tags" size="30" value="<?cs var:tags ?>">
      </div>
      <div class="field">
       <label>Comment about this change (optional):<br />
@@ -333,7 +288,15 @@
     </ul>
   <?cs /if ?>
   <?cs if wiki.action == "view" && (trac.acl.WIKI_MODIFY || trac.acl.WIKI_DELETE)
-      && (wiki.readonly == "0" || trac.acl.WIKI_ADMIN) ?>
+      && (wiki.readonly == "0" || trac.acl.WIKI_ADMIN) ?><?cs
+    if:tags.0.name ?>
+    <ul class="tags">
+     <lh>Tags</lh>
+     <?cs each:tag = tags ?>
+      <li><a href="<?cs var:tag.href ?>" title="<?cs var:tag.title ?>"><?cs var:tag.name ?></a></li>
+     <?cs /each ?>
+    </ul><?cs
+    /if ?>
    <div class="buttons"><?cs
     if:trac.acl.WIKI_MODIFY ?>
      <form method="get" action="<?cs var:wiki.current_href ?>"><div>

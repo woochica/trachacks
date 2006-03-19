@@ -59,6 +59,9 @@ class TagMacros(Component):
                 args, kwargs = parseargs(content)
             except Exception, e:
                 raise TracError("Invalid arguments '%s' (%s %s)" % (content, e.__class__.__name__, e))
+        self.env.log.debug(content)
+        self.env.log.debug(args)
+        self.env.log.debug(kwargs)
         return getattr(self, 'render_' + name.lower(), content)(req, *args, **kwargs)
 
     # Macro implementations
@@ -226,7 +229,7 @@ class TagMacros(Component):
 
         out = StringIO()
         taginfo = self._tag_details(tags)
-        out.write('<ul class="tagit">\n')
+        out.write('<ul class="tags tagit">\n<lh>Tags</lh>\n')
         for tag in tags:
             out.write('<li><a href="%s" title="%s">%s</a></li>\n' % (taginfo[tag][0], taginfo[tag][1], tag))
         out.write('</ul>\n')

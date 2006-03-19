@@ -32,8 +32,6 @@ class WikiTags(Component):
 
     implements(ITaggingSystemProvider, IWikiChangeListener)
 
-    tags_re = re.compile(r'''[^{]\s\[\[TagIt\(([0-9a-zA-Z,\/\. +-]*)\)\]\]''')
-
     # ITaggingSystemProvider methods
     def get_tagspaces_provided(self):
         yield 'wiki'
@@ -43,27 +41,15 @@ class WikiTags(Component):
 
     # IWikiChangeListener methods
     def wiki_page_added(self, page):
-        self._update_tags(page)
+        pass
 
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
-        self._update_tags(page)
+        pass
 
     def wiki_page_deleted(self, page):
+        # No point having tags on a non-existent page.
         self.env.log.debug("Removing all tags from 'wiki:%s'" % page.name)
-        wiki_tags = TagEngine(self.env).wiki
-        wiki_tags.remove_all_tags(None, page.name)
+        TagEngine(self.env).wiki.remove_all_tags(None, page.name)
 
     def wiki_page_version_deleted(self, page):
-        self.env.log.debug("Wiki page version deleted, updating tags")
-        self._update_tags(page)
-
-    # Internal methods
-    def _update_tags(self, page):
-        tags = self.tags_re.findall(page.text)
-        wiki_tags = TagEngine(self.env).wiki
-        if not tags:
-            wiki_tags.remove_all_tags(None, page.name)
-            return
-        tags = [t.strip() for t in tags[-1].split(',') if t.strip()]
-        self.env.log.debug("Setting page tags for 'wiki:%s' to %s" % (page.name, tags))
-        wiki_tags.replace_tags(None, page.name, *tags)
+        pass

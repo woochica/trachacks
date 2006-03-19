@@ -3,8 +3,63 @@ from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, INavigationContributor
 from trac.util import Markup
 from StringIO import StringIO
+from trac.wiki.web_ui import WikiModule
+try:
+    set = set
+except:
+    from sets import Set as set
 
-class TagsInterface(Component):
+class TagsWikiModule(WikiModule):
+    """ Replacement for the default Wiki module. Tag editing is much more
+        intuitive now, as it no longer requires the TagIt macro and JavaScript
+        magic. """
+
+    def _do_save(self, req, db, page):
+        # This method is overridden so the user doesn't get "Page not modified"
+        # exceptions when updating tags but not wiki content.
+        from tractags.api import TagEngine
+        if 'tags' in req.args:
+            newtags = set([t.strip() for t in
+                          req.args['tags'].split(',') if t.strip()])
+            wikitags = TagEngine(self.env).wiki
+            oldtags = wikitags.get_tags(page.name)
+
+            if oldtags != newtags:
+                wikitags.replace_tags(req, page.name, *newtags)
+                # No changes, just redirect
+                if req.args.get('text') == page.text:
+                    req.redirect(self.env.href.wiki(page.name))
+                return
+        return WikiModule._do_save(self, req, db, page)
+
+    def process_request(self, req):
+        from tractags.api import TagEngine
+        from trac.web.chrome import add_stylesheet
+
+        add_stylesheet(req, 'tags/css/tractags.css')
+
+        pagename = req.args.get('page', 'WikiStart')
+        action = req.args.get('action', 'view')
+
+        engine = TagEngine(self.env)
+        wikitags = engine.wiki
+        tags = list(wikitags.get_tags(pagename))
+        tags.sort()
+
+        if action == 'edit':
+            req.hdf['tags'] = req.args.setdefault('tags', ', '.join(tags))
+        elif action == 'view':
+            hdf_tags = []
+            for tag in tags:
+                href, title = engine.get_tag_link(tag)
+                hdf_tags.append({'name': tag,
+                                 'href': href,
+                                 'title': title})
+            req.hdf['tags'] = hdf_tags
+        WikiModule.process_request(self, req)
+        return 'tagswiki.cs', None
+
+class TagsModule(Component):
     """ Serve a /tags namespace. Top-level displays tag cloud, sub-levels
         display output of ListTagged(tag).
 
@@ -19,9 +74,28 @@ class TagsInterface(Component):
         index.cloud.smallest = 10
         # Maximum font size for tag cloud index
         index.cloud.biggest = 30
-        
     """
     implements(IRequestHandler, INavigationContributor, ITemplateProvider)
+
+    def _prepare_wiki(self, req):
+        from tractags.api import TagEngine
+        page = req.path_info[6:] or 'WikiStart'
+        engine = TagEngine(self.env)
+        wikitags = engine.wiki
+        tags = list(wikitags.get_tags(page))
+        tags.sort()
+
+        action = req.args.get('action', 'view')
+        if action == 'edit':
+            req.hdf['tags'] = req.args.setdefault('tags', ', '.join(tags))
+        elif action == 'view':
+            hdf_tags = []
+            for tag in tags:
+                href, title = engine.get_tag_link(tag)
+                hdf_tags.append({'name': tag,
+                                 'href': href,
+                                 'title': title})
+            req.hdf['tags'] = hdf_tags
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -45,11 +119,6 @@ class TagsInterface(Component):
 
     def get_navigation_items(self, req):
         from trac.web.chrome import Chrome
-        chrome = Chrome(self.env)
-        # Rewrite HDF loadpaths so that our wiki.cs overrides the default
-        req.hdf['hdf.loadpaths'] = \
-            self.get_templates_dirs() + \
-            chrome.get_all_templates_dirs()
         yield ('metanav', 'tags',
                Markup('<a href="%s" accesskey="T">Tag Index</a>',
                       self.env.href.tags()))
@@ -61,8 +130,8 @@ class TagsInterface(Component):
     def process_request(self, req):
         from tractags.macros import TagMacros
         from trac.web.chrome import add_stylesheet
-        add_stylesheet(req, 'tags/css/tractags.css')
 
+        add_stylesheet(req, 'tags/css/tractags.css')
         req.hdf['trac.href.tags'] = self.env.href.tags()
         showheadings = self.config.getbool('tags', 'index.showheadings',
                                            'false') and 'true' or 'false'

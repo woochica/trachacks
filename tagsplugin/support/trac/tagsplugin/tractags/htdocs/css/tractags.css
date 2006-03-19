@@ -1,42 +1,25 @@
-.listtagged lh {
+.listtagged lh { font-weight: bold; text-decoration: underline; }
+
+.listtags .listtagged lh { font-weight: normal; } 
+.listtags .listtagged ul { margin: 0px; padding: 0px; }
+
+.wiki ul.tags { float: right; list-style: none; }
+.wiki .tags li { display: inline; text-align: center; }
+/* The TagIt macro is hidden now, as the TagsWikiModule replaces its
+   functionality. It's left for backwards compatibility. */
+.wiki ul.tags.tagit { display: none; }
+
+.wiki .tags lh {
 	font-weight: bold;
-	text-decoration: underline;
+	font-size: large;
+	text-align: center;
+	color: #ddd;
+	text-transform: lowercase;
+	letter-spacing: 0.5em;
+	display: block;
 }
 
-.listtags .listtagged lh {
-	font-weight: normal;
-}
-
-.listtags .listtagged ul {
-	margin: 0px;
-	padding: 0px;
-}
-
-ul.tagit {
-	float: right;
-	list-style: none;
-}
-
-ul.tagit:before {
-	content: "Tags: ";
-}
-
-.tagit li {
-	display: inline;
-}
-
-ul.tagcloud {
-	list-style: none;
-}
-
-.tagcloud li {
-	display: inline;
-}
-
-.tagcloud li:after {
-	content: ", ";
-}
-
-.tagcloud li.last:after {
-	content: "";
-}
+ul.tagcloud { list-style: none; }
+.tagcloud li { display: inline; }
+.tagcloud li:after { content: ", "; }
+.tagcloud li.last:after { content: ""; }
