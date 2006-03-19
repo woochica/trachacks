@@ -66,18 +66,19 @@ class HackInstaller(object):
                         self.env.log.debug("Module name is '%s'"%entry_point.module_name)
                         self.env.config.set('components',entry_point.module_name+'.*','disabled')
                 self.env.config.save()
-                
+
+                basename = os.path.basename(f)                
                 # Rename a plugin from Foo-0.5-py2.4.egg to Foo-0.5-rREV-py2.4.egg
-                md = re.match('([^-]+-)([^-]+)(-py\d\.\d+\.egg)',f)
+                md = re.match('([^-]+-)([^-]+)(-py\d\.\d+\.egg)',basename)
                 if md:
-                    newname = f
+                    newname = basename
                     md2 = re.search('(r\d+)',md.group(2))
                     if md2:
                         newname = re.sub('(.*)(r\d+)(.*)','\1r%s\3'%rev,newname)
                     else:
                         newname = '%s%s_r%s%s' % (md.group(1),md.group(2),rev,md.group(3))
-                    self.env.log.debug('Renaming %s to %s' % (f, newname))
-                    os.rename(self.env.path+'/plugins/'+f,self.env.path+'/plugins/'+newname)
+                    self.env.log.debug('Renaming %s to %s' % (self.env.path+'/plugins/'+basename, self.env.path+'/plugins/'+newname))
+                    os.rename(self.env.path+'/plugins/'+basename,self.env.path+'/plugins/'+newname)
                     
                 # Remove all old versions
                 md = re.match('([^-]+)-',f)
