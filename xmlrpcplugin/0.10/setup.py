@@ -11,5 +11,9 @@ setup(
     description = 'XML-RPC interface to Trac',
     zip_safe=True,
     packages=['tracrpc'],
-    package_data={'tracrpc': ['templates/*.cs']}
+    package_data={'tracrpc': ['templates/*.cs']},
+    entry_points="""
+        [trac.plugins]
+        TracXMLRPC = tracrpc
+    """
     )
