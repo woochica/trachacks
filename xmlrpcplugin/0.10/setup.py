@@ -12,8 +12,5 @@ setup(
     zip_safe=True,
     packages=['tracrpc'],
     package_data={'tracrpc': ['templates/*.cs']},
-    entry_points="""
-        [trac.plugins]
-        TracXMLRPC = tracrpc
-    """
+    entry_points={'trac.plugins': 'TracXMLRPC = tracrpc'},
     )
