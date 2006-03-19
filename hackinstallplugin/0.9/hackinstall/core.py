@@ -77,6 +77,15 @@ class HackInstaller(object):
                     else:
                         newname = '%s%s_r%s%s' % (md.group(1),md.group(2),rev,md.group(3))
                     self.env.log.debug('Renaming %s to %s' % (f, newname))
+                    os.rename(self.env.path+'/plugins/'+f,self.env.path+'/plugins/'+newname)
+                    
+                # Remove all old versions
+                md = re.match('([^-]+)-',f)
+                if md:
+                    for f2 in os.listdir(self.env.path+'/plugins'):
+                        md2 = re.match('([^-]+)-',f2)
+                        if md2 and md.group(1) == md2.group(1):
+                            os.remove(self.env.path+'/plugins/'+f2)
 
     def download_hack(self, name, rev):
         """Download and unzip a hack."""

@@ -9,7 +9,7 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet
 from webadmin.web_ui import IAdminPageProvider
 from db_default import default_table
 from core import *
-import urlparse, xmlrpclib
+import urlparse, xmlrpclib, re, os
 
 __all__ = ['HackInstallPlugin']
 
@@ -114,12 +114,30 @@ class HackInstallPlugin(Component):
 
     # Internal methods
     def _get_hacks(self, type):
+        # Build hash of name -> installed-rev
+        installed = {}
+        if type == 'plugin':
+            for f in os.listdir(self.env.path+'/plugins'):
+                self.log.debug("Found egg '%s'"%f)
+                md = re.match('([^-]+)-([^-]+)-',f)
+                if md:
+                    plugin = md.group(1).lower()+'plugin'
+                    md2 = re.search('r(\d+)',md.group(2))
+                    if md2:
+                        installed[plugin] = int(md2.group(1))
+                    else:
+                        installed[plugin] = 0
+                    self.log.debug('Extracted version = %s'%installed[plugin])
+        elif type == 'macro':
+            pass # Haven't gotten here yet
+    
+        # Build the rest of the data structure from the DB
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         hacks = {}
         cursor.execute('SELECT id, name, current FROM hacks WHERE type = %s', (type,))
         for row in cursor:
-            hacks[row[1]] = {'id': row[0], 'current': row[2]}
+            hacks[row[1]] = {'id': row[0], 'current': row[2], 'installed': installed.get(row[1].lower(), -1)}
         return hacks
         
     def _check_version(self):
