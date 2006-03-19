@@ -136,7 +136,8 @@ class TracHacksRPC(Component):
             yield (plugin, rev)
 
     def getDetails(self, req, hack):
-        """ Fetch hack dependencies. """
+        """ Fetch hack details. Returns dict with name, dependencies and
+            description. """
         from tractags.api import TagEngine
         wikitags = TagEngine(self.env).wiki
         tags = wikitags.get_tags(hack)
