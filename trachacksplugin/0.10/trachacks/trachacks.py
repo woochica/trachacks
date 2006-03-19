@@ -124,13 +124,13 @@ class TracHacksRPC(Component):
         repo = self.env.get_repository(req.authname)
         wikitags = TagEngine(self.env).wiki
         repo_rev = repo.get_youngest_rev()
-        releases = wiki.get_tagged_names(release)
-        types = wiki.get_tagged_names(type)
+        releases = wikitags.get_tagged_names(release)
+        types = wikitags.get_tagged_names(type)
         for plugin in releases.intersection(types):
             if plugin.startswith('tags/'): continue
             path = '%s/%s' % (plugin.lower(), release)
             rev = 0
-            if repo.has_node(path, repo_rev):
+            if repo.has_node(str(path), repo_rev):
                 node = repo.get_node(path)
                 rev = node.rev
             yield (plugin, rev)
