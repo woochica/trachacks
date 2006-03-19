@@ -99,7 +99,7 @@ def parseargs(arguments):
                 args.append(arg)
                 break
             if token == '=':
-                kwargs[arg] = parse_node(lexer)
+                kwargs[str(arg)] = parse_node(lexer)
                 type, token = lexer.next()
                 if token != ',':
                     raise UnexpectedToken(token)
