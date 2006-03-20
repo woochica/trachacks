@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'HackInstall',
-    version = '0.1',
+    version = '0.5',
     packages = ['hackinstall'],
     package_data = { 'hackinstall': ['templates/*.cs','htdocs/*' ] },
 
