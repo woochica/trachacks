@@ -40,6 +40,8 @@ class CasLoginModule(LoginModule):
         
 
     def _do_logout(self, req):
-        super(CasLoginModule, self)._do_logout(req)
-        req.redirect(self.cas.logout_url(self.env.abs_href()))
-
+        if req.authname:
+            super(CasLoginModule, self)._do_logout(req)
+            req.redirect(self.cas.logout_url(self.env.abs_href()))
+        else:
+            req.redirect(self.env.abs_href())
