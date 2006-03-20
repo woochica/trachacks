@@ -17,7 +17,7 @@ class HackInstaller(object):
     def __init__(self, env, url, builddir=None, version=None, user=None, password=None):
         self.url = url        
         if not builddir:
-            builddir = os.environ['PYTHON_EGG_CACHE']
+            builddir = os.environ.get('PYTHON_EGG_CACHE')
         self.builddir = builddir
         if not version:
             md = re.match('(\d+\.\d+)',TRAC_VERSION)

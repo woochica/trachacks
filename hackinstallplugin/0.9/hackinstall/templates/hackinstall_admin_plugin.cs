@@ -6,12 +6,20 @@
 
 <form method="post">
 <table>
-<tr><td>Name</td><td>Current</td><td>Installed</td></tr>
+<tr>
+    <td>Name</td>
+    <td>Current</td>
+    <td>Installed</td>
+    <td>Description</td>
+    <td>Dependencies</td>
+</tr>
 <?cs each:plugin = hackinstall.plugins ?>
 <tr>
     <td><?cs name:plugin ?></td>
     <td><?cs var:plugin.current ?></td>
-    <td><?cs var:plugin.installed ?></td>
+    <td><?cs if:plugin.installed != -1 ?><?cs var:plugin.installed ?><?cs /if ?></td>
+    <td><?cs var:plugin.description ?></td>
+    <td><?cs var:plugin.deps ?></td>
     <td><input type="submit" name="install_<?cs name:plugin ?>" value="Install" /></td>
 </tr>
 <?cs /each ?>

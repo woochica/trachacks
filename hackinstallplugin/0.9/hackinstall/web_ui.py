@@ -1,7 +1,7 @@
 # The Trac-hacks autoinstaller
 
 # Table format
-# hacks (id, name, type, current, installed, readme, install)
+# hacks (id, name, current, decription, deps)
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
@@ -59,6 +59,7 @@ class HackInstallPlugin(Component):
                 if installs:
                     req.hdf['hackinstall.message'] = "Installing plugin %s" % (installs[0])
                     self.installer.install_hack(installs[0], self.plugins[installs[0]]['current'])
+                    self.plugins = self._get_hacks('plugin') # Reload plugin data
 
         req.hdf['hackinstall'] = { 'version': self.installer.version, 'url': self.installer.url }
         req.hdf['hackinstall.plugins'] = self.plugins
@@ -135,9 +136,9 @@ class HackInstallPlugin(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         hacks = {}
-        cursor.execute('SELECT id, name, current FROM hacks WHERE type = %s', (type,))
+        cursor.execute("SELECT id, name, current, description, deps FROM hacks WHERE name LIKE '%%%s'"%type.title())
         for row in cursor:
-            hacks[row[1]] = {'id': row[0], 'current': row[2], 'installed': installed.get(row[1].lower(), -1)}
+            hacks[row[1]] = {'id': row[0], 'current': row[2], 'installed': installed.get(row[1].lower(), -1), 'description': row[3], 'deps': row[4]}
         return hacks
         
     def _check_version(self):
@@ -151,19 +152,28 @@ class HackInstallPlugin(Component):
     def _update(self, type):
         """Update metadata from trac-hacks."""
         server = xmlrpclib.ServerProxy(self.rpc_url)
+
+        # Verify this is a valid type
         types = server.trachacks.getTypes()
         if type not in types:
             raise TracError, "Trac-Hacks doesn't know about '%s' hacks" % (type)
+        
+        # Update metadata
+        hacks = server.trachacks.getHacks(self.installer.version, type)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        
-        hacks = server.trachacks.getHacks(self.installer.version, type)
         for hack in hacks:
+            # Grad details for this hack
+            details = server.trachacks.getDetails(hack[0])
+            self.log.debug("Details for %s: '%s'" % (hack[0], repr(details)))
+            deps = ','.join(details['dependencies'])
+        
+            # Insert/update the DB entry
             cursor.execute("SELECT id FROM hacks WHERE name = %s", (hack[0],))
             row = cursor.fetchone()
             if row:        
-                cursor.execute("UPDATE hacks SET current = %s WHERE name = %s", (hack[1], hack[0]))
+                cursor.execute("UPDATE hacks SET current = %s, description = %s, deps = %s WHERE name = %s", (hack[1], details['description'], deps, hack[0]))
             else:
-                cursor.execute("INSERT INTO hacks (name, type, current) VALUES (%s, %s, %s)", (hack[0], type, hack[1]))
+                cursor.execute("INSERT INTO hacks (name, current, description, deps) VALUES (%s, %s, %s, %s)", (hack[0], hack[1], details['description'], deps))
         db.commit()                
             
