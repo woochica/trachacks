@@ -34,6 +34,7 @@ class HackInstallPlugin(Component):
         version = self.config.get('hackinstall','version')
         self.installer = HackInstaller(self.env, url, builddir, version)
         self.rpc_url = add_userpass_to_url(url+'/login/xmlrpc','TracHacks')
+        self.override_version = version != None
 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
@@ -61,7 +62,7 @@ class HackInstallPlugin(Component):
                     self.installer.install_hack(installs[0], self.plugins[installs[0]]['current'])
                     self.plugins = self._get_hacks('plugin') # Reload plugin data
 
-        req.hdf['hackinstall'] = { 'version': self.installer.version, 'url': self.installer.url }
+        req.hdf['hackinstall'] = { 'version': self.installer.version, 'override_version': self.override_version, 'url': self.installer.url }
         req.hdf['hackinstall.plugins'] = self.plugins
         req.hdf['hackinstall.macros'] = self.macros
         for x in ['general', 'plugins', 'macros']:
