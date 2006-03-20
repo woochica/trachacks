@@ -48,7 +48,8 @@ class HackInstallPlugin(Component):
         cursor = db.cursor()
         
         self.plugins = self._get_hacks('plugin')
-        self.macros = self._get_hacks('macro')        
+        self.macros = self._get_hacks('macro')
+        self.updates = self._pending_updates()
         
         if req.method == 'POST':
             if page == 'general':
@@ -87,6 +88,7 @@ class HackInstallPlugin(Component):
 
         req.hdf['hackinstall'] = { 'version': self.installer.version, 'override_version': self.override_version, 'url': self.installer.url }
         req.hdf['hackinstall.plugins'] = self.plugins
+        req.hdf['hackinstall.updates'] = self.updates
         req.hdf['hackinstall.macros'] = self.macros
         for x in ['general', 'plugins', 'macros']:
             req.hdf['hackinstall.hdf.'+x] = self.env.href.admin(cat,x)
@@ -162,7 +164,7 @@ class HackInstallPlugin(Component):
         hacks = {}
         cursor.execute("SELECT id, name, current, description, deps FROM hacks WHERE name LIKE '%%%s'"%type.title())
         for row in cursor:
-            hacks[row[1]] = {'id': row[0], 'current': row[2], 'installed': installed.get(row[1].lower(), -1), 'description': row[3], 'deps': row[4]}
+            hacks[row[1]] = {'id': row[0], 'current': int(row[2]), 'installed': installed.get(row[1].lower(), -1), 'description': row[3], 'deps': row[4]}
         return hacks
         
     def _check_version(self):
@@ -201,3 +203,13 @@ class HackInstallPlugin(Component):
                 cursor.execute("INSERT INTO hacks (name, current, description, deps) VALUES (%s, %s, %s, %s)", (hack[0], hack[1], details['description'], deps))
         db.commit()                
             
+    def _pending_updates(self):
+        """Find what hacks need updating."""
+        updates = {'plugins': {}}
+        
+        # Search for plugins that need updates
+        for hack, params in self.plugins.iteritems():
+            if params['current'] > 0 and params['installed'] >= 0 and params['current'] > params['installed']:
+                updates['plugins'][hack] = params
+                
+        return updates
