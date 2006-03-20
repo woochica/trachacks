@@ -34,7 +34,7 @@ class HackInstallPlugin(Component):
         version = self.config.get('hackinstall','version')
         self.installer = HackInstaller(self.env, url, builddir, version)
         self.rpc_url = add_userpass_to_url(url+'/login/xmlrpc','TracHacks')
-        self.override_version = version != None
+        self.override_version = int(version != '')
 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
@@ -53,19 +53,27 @@ class HackInstallPlugin(Component):
         if req.method == 'POST':
             if page == 'general':
                 if 'save_settings' in req.args:
+                    changes = False
                     # Process the URL field
-                    self.config.set('hackinstall','url', req.args.get('url'))
+                    if req.args.get('url') != self.installer.url:
+                        self.config.set('hackinstall','url', req.args.get('url'))
+                        changes = True
                         
                     # Process the version fields
                     if 'override_version' in req.args:
                         self.config.set('hackinstall','version', req.args.get('version'))
+                        changes = True
                     elif self.override_version:
                         self.config.remove('hackinstall','version')
+                        changes = True
                         
                     # Write back if there were changes
-                    self.config.save()
-                    req.redirect(self.env.href.admin(cat, page))
+                    if changes:
+                        self.config.save()
                     
+                        # Reload the new settings
+                        self.__init__._original(self)
+                                        
                 if 'update_metadata' in req.args:
                     # Update metadata cache
                     self._check_version()

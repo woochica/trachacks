@@ -10,8 +10,8 @@
         </div>
         <div class="field">
             <label>Version<br />
-                <input type="text" name="version" id="version_field" value="<?cs var:hackinstall.version ?>" <?cs if:hackinstall.override_version ?>disabled="true"<?cs /if ?>/><br />
-                Override autodetect: <input type="checkbox" name="override_version" id="override_version" <?cs if:!hackinstall.override_version ?>checked="true"<?cs /if ?>/>
+                <input type="text" name="version" id="version_field" value="<?cs var:hackinstall.version ?>" <?cs if:!hackinstall.override_version ?>disabled="true"<?cs /if ?>/><br />
+                Override autodetect: <input type="checkbox" name="override_version" id="override_version" <?cs if:hackinstall.override_version ?>checked="true"<?cs /if ?>/>
             </label>
         </div>
     </fieldset>
