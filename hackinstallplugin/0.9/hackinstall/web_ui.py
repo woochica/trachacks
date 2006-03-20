@@ -93,8 +93,9 @@ class HackInstallPlugin(Component):
             elif page == 'plugins':
                 installs = [k[8:] for k in req.args.keys() if k.startswith('install_')]
                 if installs:
-                    req.hdf['hackinstall.message'] = "Installing plugin %s" % (installs[0])
-                    self.installer.install_hack(installs[0], self.plugins[installs[0]]['current'], True)
+                    hack = installs[0]
+                    req.hdf['hackinstall.message'] = "Installing plugin %s" % (hack)
+                    self.installer.install_hack(hack, self.plugins[hack]['current'], self.plugins[hack]==-1)
                     self.plugins = self._get_hacks('plugin') # Reload plugin data
 
         req.hdf['hackinstall'] = { 'version': self.installer.version, 'override_version': self.override_version, 'url': self.installer.url }
