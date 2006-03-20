@@ -52,7 +52,22 @@ class HackInstallPlugin(Component):
         
         if req.method == 'POST':
             if page == 'general':
-                if 'update' in req.args:
+                if 'save_settings' in req.args:
+                    # Process the URL field
+                    self.config.set('hackinstall','url', req.args.get('url'))
+                        
+                    # Process the version fields
+                    if 'override_version' in req.args:
+                        self.config.set('hackinstall','version', req.args.get('version'))
+                    elif self.override_version:
+                        self.config.remove('hackinstall','version')
+                        
+                    # Write back if there were changes
+                    self.config.save()
+                    req.redirect(self.env.href.admin(cat, page))
+                    
+                if 'update_metadata' in req.args:
+                    # Update metadata cache
                     self._check_version()
                     self._update('plugin')
             elif page == 'plugins':
@@ -66,7 +81,7 @@ class HackInstallPlugin(Component):
         req.hdf['hackinstall.plugins'] = self.plugins
         req.hdf['hackinstall.macros'] = self.macros
         for x in ['general', 'plugins', 'macros']:
-            req.hdf['hackinstall.hdf.%s'%x] = self.env.href.admin('hacks',x)
+            req.hdf['hackinstall.hdf.'+x] = self.env.href.admin(cat,x)
         
         template = { 'general': 'hackinstall_admin.cs', 'plugins': 'hackinstall_admin_plugin.cs', 'macros': 'hackinstall_admin_macro.cs' }[page]
         return template, None

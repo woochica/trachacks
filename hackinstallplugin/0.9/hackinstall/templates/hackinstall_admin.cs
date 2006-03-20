@@ -16,19 +16,19 @@
         </div>
     </fieldset>
     <div class="buttons">
-        <input type="submit" value="Apply changes">
-        <input type="submit" name="update" value="Update metadata" />
+        <input type="submit" name="update_metadata" value="Update metadata" />
+        <input type="submit" name="save_settings" value="Apply changes">
     </div>
 </form>
 
 <script type="text/javascript">
-<--
+<!--
     var override_version = document.getElementById("override_version");
     var change_override = function() {
         document.getElementById("version_field").disabled = ! override_version.checked;
-    }
+    };
     
     addEvent(override_version, "change", change_override);
-//--!>
+//-->
 </script>
 

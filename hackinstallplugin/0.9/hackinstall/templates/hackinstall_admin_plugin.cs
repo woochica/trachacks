@@ -14,6 +14,7 @@
     <td>Dependencies</td>
 </tr>
 <?cs each:plugin = hackinstall.plugins ?>
+<?cs if:plugin.current != 0 ?>
 <tr>
     <td><?cs name:plugin ?></td>
     <td><?cs var:plugin.current ?></td>
@@ -22,6 +23,7 @@
     <td><?cs var:plugin.deps ?></td>
     <td><input type="submit" name="install_<?cs name:plugin ?>" value="Install" /></td>
 </tr>
+<?cs /if ?>
 <?cs /each ?>
 </table>
 </form>
