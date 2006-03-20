@@ -75,15 +75,26 @@ class HackInstallPlugin(Component):
                         # Reload the new settings
                         self.__init__._original(self)
                                         
-                if 'update_metadata' in req.args:
+                elif 'update_metadata' in req.args:
                     # Update metadata cache
                     self._check_version()
                     self._update('plugin')
+                    
+                elif 'update_all' in req.args:
+                    # Perform all pending updates
+                    self._install_list(self.updates['plugins'].keys())
+                    
+                elif 'update_selected' in req.args:
+                    # Only update selected
+                    selected = [x[9:] for x in req.args.keys() if x.startswith('doupdate_')]
+                    if selected:
+                        self._install_list(selected)
+                        
             elif page == 'plugins':
                 installs = [k[8:] for k in req.args.keys() if k.startswith('install_')]
                 if installs:
                     req.hdf['hackinstall.message'] = "Installing plugin %s" % (installs[0])
-                    self.installer.install_hack(installs[0], self.plugins[installs[0]]['current'])
+                    self.installer.install_hack(installs[0], self.plugins[installs[0]]['current'], True)
                     self.plugins = self._get_hacks('plugin') # Reload plugin data
 
         req.hdf['hackinstall'] = { 'version': self.installer.version, 'override_version': self.override_version, 'url': self.installer.url }
@@ -213,3 +224,16 @@ class HackInstallPlugin(Component):
                 updates['plugins'][hack] = params
                 
         return updates
+
+    def _install_list(self, hacks):
+        """Install the most recent version of a list of hacks."""
+        for hack in hacks:
+            rev = 0
+            if hack.lower().endswith('plugin'):
+                rev = self.plugins[hack]['current']
+            self.installer.install_hack(hack, rev)
+
+        # Recompute all of this, so the next page view will be correct
+        self.plugins = self._get_hacks('plugin')
+        self.macros = self._get_hacks('macro')
+        self.updates = self._pending_updates()

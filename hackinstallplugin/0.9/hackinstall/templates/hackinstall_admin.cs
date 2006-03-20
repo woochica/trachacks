@@ -20,7 +20,7 @@
         </div>
     </fieldset>
     <fieldset>
-        <legend>Pending Updates</lengend>
+        <legend>Pending Updates</legend>
         <?cs if:len(hackinstall.updates)>0 ?>
             <fieldset>
                 <legend>Plugins</legend>
