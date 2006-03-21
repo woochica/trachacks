@@ -1,8 +1,8 @@
 from trac.db import Table, Column
 
-__all__ = ['default_table']
+__all__ = ['default_hacks_table']
 
-default_table = Table('hacks', key='id')[
+default_hacks_table = Table('hacks', key='id')[
                     Column('id', auto_increment=True),
                     Column('name'),
                     Column('current'),

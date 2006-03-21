@@ -7,7 +7,7 @@ from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from webadmin.web_ui import IAdminPageProvider
-from db_default import default_table
+from db_default import default_hacks_table
 from core import *
 import urlparse, xmlrpclib, re, os
 
@@ -121,11 +121,23 @@ class HackInstallPlugin(Component):
             return True
         
     def upgrade_environment(self, db):
+        # 0.10 compatibility hack (thanks Alec)
+        try:
+            from trac.db import DatabaseManager
+            db, _ = DatabaseManager(self.env)._get_connector()
+        except ImportError:
+            pass
+    
+        # Insert the default table
         cursor = db.cursor()
-        for sql in db.to_sql(default_table):
+        for sql in db.to_sql(default_hacks_table):
             self.log.debug(sql)
             cursor.execute(sql)
-        db.commit()   
+        db.commit()
+        
+        # Grab initial metadata
+        for type in self.installer.valid_types:
+            self._update(type)
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -176,8 +188,13 @@ class HackInstallPlugin(Component):
         hacks = {}
         cursor.execute("SELECT id, name, current, description, deps FROM hacks WHERE name LIKE '%%%s'"%type.title())
         for row in cursor:
-            hacks[row[1]] = {'id': row[0], 'current': int(row[2]), 'installed': installed.get(row[1].lower(), -1), 'description': row[3], 'deps': row[4]}
+            hacks[row[1]] = {'id': row[0], 'current': int(row[2]), 'installed': installed.get(row[1].lower(), -1), 'description': row[3], 'deps': row[4], 'lowername': row[1].lower()}
         return hacks
+        
+    def _get_types(self):
+        """Get all known hack types."""
+        server = xmlrpclib.ServerProxy(self.rpc_url)
+        return server.trachacks.getTypes()
         
     def _check_version(self):
         """Verify that we have a valid version of Trac."""

@@ -14,6 +14,9 @@ class HackInstallerError(TracError):
 class HackInstaller(object):
     """A class implementing hack installation logic."""
     
+    # Types of hacks I can handle
+    valid_types = ['plugin', 'macro']
+    
     def __init__(self, env, url, builddir=None, version=None, user=None, password=None):
         self.url = url        
         if not builddir:

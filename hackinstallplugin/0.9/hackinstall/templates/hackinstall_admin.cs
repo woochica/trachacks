@@ -27,7 +27,8 @@
                 <?cs each:plugin = hackinstall.updates.plugins ?>
                     <p>
                         <b><?cs name:plugin ?></b><br />
-                        Upgrade from revision <?cs var:plugin.installed ?> to revision <?cs var:plugin.current ?>
+                        Upgrade from revision <?cs var:plugin.installed ?> to revision <?cs var:plugin.current ?> 
+                        <a href="http://trac-hacks.org/log/<?cs var:plugin.lowername ?>?rev=<?cs var:plugin.current ?>&stop_rev=<?cs var:plugin.installed+1 ?>&verbose=on">(View changes)</a>
                         <input type="checkbox" name="doupdate_<?cs name:plugin ?>" />
                     </p>
                 <?cs /each ?>
