@@ -37,7 +37,7 @@ tags.add_tag(req, 'WikiStart', 'start')
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
-from trac.db import Table, Column, Index, DatabaseManager
+from trac.db import Table, Column, Index
 import sys
 import re
 
@@ -177,6 +177,15 @@ class TaggingSystemAccessor(object):
     def __repr__(self):
         return repr(self.tagsystem)
 
+class TaggingSystemDirector(object):
+    """ A convenience similar to env.href, proxying to the correct TagSystem by
+        attribute. """
+    def __init__(self, engine):
+        self.engine = engine
+
+    def __getattr__(self, tagspace):
+        return self.engine.get_tagsystem(tagspace)
+
 class TagEngine(Component):
     """ The core of the Trac tag API. This interface can be used to register
         tagspaces (ITagSpaceUser or register_tagspace()), add other tagging
@@ -201,6 +210,7 @@ class TagEngine(Component):
 
     def __init__(self):
         self.tagging_system = DefaultTaggingSystem(self.env)
+        self.tagspace = TaggingSystemDirector(self)
 
     def _get_tagspaces(self):
         """ Get iterable of available tagspaces. """
@@ -208,11 +218,6 @@ class TagEngine(Component):
             for tagspace in tagsystem.get_tagspaces_provided():
                 yield tagspace
     tagspaces = property(_get_tagspaces)
-
-    def __getattr__(self, tagspace):
-        """ Convenience method for accessing TaggingSystems. eg. to access the
-            'wiki' tagspace, use TagEngine(env).wiki """
-        return self.get_tagsystem(tagspace)
 
     def get_tagsystem(self, tagspace):
         """ Returns a TaggingSystem proxy object with tagspace as the default
@@ -300,7 +305,11 @@ class TagEngine(Component):
 
     def _upgrade_db(self, db):
         try:
-            db_backend, _ = DatabaseManager(self.env)._get_connector()
+            try:
+                from trac.db import DatabaseManager
+                db_backend, _ = DatabaseManager(self.env)._get_connector()
+            except ImportError:
+                db_backend = self.env.get_db_cnx()
 
             cursor = db.cursor()
             for table in self.SCHEMA:

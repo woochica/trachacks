@@ -21,8 +21,9 @@ class TagMacros(Component):
     def _page_titles(self, pages):
         """ Extract page titles, if possible. """
         titles = {}
+        tagspace = TagEngine(self.env).tagspace.wiki
         for pagename in pages:
-            href, link, title = TagEngine(self.env).wiki.name_details(pagename)
+            href, link, title = tagspace.name_details(pagename)
             titles[pagename] = title
         return titles
 
@@ -241,7 +242,7 @@ class TagMacros(Component):
             return self.render_listtagged(req, *tags, **kwargs)
 
         page = self._current_page(req)
-        wiki = TagEngine(self.env).wiki
+        wiki = TagEngine(self.env).tagspace.wiki
 
         showpages = kwargs.get('showpages', None) or kwargs.get('shownames', 'false')
 

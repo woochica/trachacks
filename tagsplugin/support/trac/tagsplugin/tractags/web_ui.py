@@ -4,10 +4,13 @@ from trac.web.chrome import ITemplateProvider, INavigationContributor
 from trac.util import Markup
 from StringIO import StringIO
 from trac.wiki.web_ui import WikiModule
+import re
 try:
     set = set
 except:
     from sets import Set as set
+
+_tag_split = re.compile('[,\s]+')
 
 class TagsWikiModule(WikiModule):
     """ Replacement for the default Wiki module. Tag editing is much more
@@ -20,8 +23,8 @@ class TagsWikiModule(WikiModule):
         from tractags.api import TagEngine
         if 'tags' in req.args:
             newtags = set([t.strip() for t in
-                          req.args['tags'].split(',') if t.strip()])
-            wikitags = TagEngine(self.env).wiki
+                          _tag_split.split(req.args.get('tags')) if t.strip()])
+            wikitags = TagEngine(self.env).tagspace.wiki
             oldtags = wikitags.get_tags(page.name)
 
             if oldtags != newtags:
@@ -29,7 +32,7 @@ class TagsWikiModule(WikiModule):
                 # No changes, just redirect
                 if req.args.get('text') == page.text:
                     req.redirect(self.env.href.wiki(page.name))
-                return
+                    return
         return WikiModule._do_save(self, req, db, page)
 
     def process_request(self, req):
@@ -42,12 +45,12 @@ class TagsWikiModule(WikiModule):
         action = req.args.get('action', 'view')
 
         engine = TagEngine(self.env)
-        wikitags = engine.wiki
+        wikitags = engine.tagspace.wiki
         tags = list(wikitags.get_tags(pagename))
         tags.sort()
 
         if action == 'edit':
-            req.hdf['tags'] = req.args.setdefault('tags', ', '.join(tags))
+            req.hdf['tags'] = req.args.get('tags', ', '.join(tags))
         elif action == 'view':
             hdf_tags = []
             for tag in tags:
@@ -81,13 +84,13 @@ class TagsModule(Component):
         from tractags.api import TagEngine
         page = req.path_info[6:] or 'WikiStart'
         engine = TagEngine(self.env)
-        wikitags = engine.wiki
+        wikitags = engine.tagspace.wiki
         tags = list(wikitags.get_tags(page))
         tags.sort()
 
         action = req.args.get('action', 'view')
         if action == 'edit':
-            req.hdf['tags'] = req.args.setdefault('tags', ', '.join(tags))
+            req.hdf['tags'] = req.args.get('tags', ', '.join(tags))
         elif action == 'view':
             hdf_tags = []
             for tag in tags:

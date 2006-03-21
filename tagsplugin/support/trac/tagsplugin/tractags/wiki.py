@@ -49,7 +49,7 @@ class WikiTags(Component):
     def wiki_page_deleted(self, page):
         # No point having tags on a non-existent page.
         self.env.log.debug("Removing all tags from 'wiki:%s'" % page.name)
-        TagEngine(self.env).wiki.remove_all_tags(None, page.name)
+        TagEngine(self.env).tagspace.wiki.remove_all_tags(None, page.name)
 
     def wiki_page_version_deleted(self, page):
         pass
