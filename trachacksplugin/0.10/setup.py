@@ -1,6 +1,8 @@
 from setuptools import setup
 
-PACKAGE = 'TracHacks'
-VERSION = '0.1'
-
-setup(name=PACKAGE, version=VERSION, packages=['trachacks'])
+setup(name='TracHacks',
+      version='0.1',
+      packages=['trachacks'],
+      entry_points={'trac.plugins': 'TracHacks = trachacks'},
+      #install_requires=['TracXMLRPC', 'TracAccountManager'],
+      )
