@@ -5,6 +5,7 @@ __all__ = ['default_hacks_table']
 default_hacks_table = Table('hacks', key='id')[
                     Column('id', auto_increment=True),
                     Column('name'),
+                    Column('distname'),
                     Column('current'),
                     Column('description'),
                     Column('deps')]

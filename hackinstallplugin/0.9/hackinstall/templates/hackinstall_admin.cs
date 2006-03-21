@@ -15,7 +15,7 @@
             </label>
         </div>
         <div class="buttons">
-            <input type="submit" name="update_metadata" value="Update metadata" />
+            <input type="submit" name="update_metadata" value="Check for updates" />
             <input type="submit" name="save_settings" value="Apply changes">
         </div>
     </fieldset>

@@ -82,21 +82,20 @@ class HackInstallPlugin(Component):
                     
                 elif 'update_all' in req.args:
                     # Perform all pending updates
-                    self._install_list(self.updates['plugins'].keys())
+                    self._install_plugins(*self.updates['plugins'].keys())
                     
                 elif 'update_selected' in req.args:
                     # Only update selected
                     selected = [x[9:] for x in req.args.keys() if x.startswith('doupdate_')]
                     if selected:
-                        self._install_list(selected)
+                        self._install_plugins(*selected)
                         
             elif page == 'plugins':
                 installs = [k[8:] for k in req.args.keys() if k.startswith('install_')]
                 if installs:
                     hack = installs[0]
                     req.hdf['hackinstall.message'] = "Installing plugin %s" % (hack)
-                    self.installer.install_hack(hack, self.plugins[hack]['current'], self.plugins[hack]==-1)
-                    self.plugins = self._get_hacks('plugin') # Reload plugin data
+                    self._install_plugins(hack)
 
         req.hdf['hackinstall'] = { 'version': self.installer.version, 'override_version': self.override_version, 'url': self.installer.url }
         req.hdf['hackinstall.plugins'] = self.plugins
@@ -243,15 +242,19 @@ class HackInstallPlugin(Component):
                 
         return updates
 
-    def _install_list(self, hacks):
+    def _install_plugins(self, *plugins):
         """Install the most recent version of a list of hacks."""
-        for hack in hacks:
-            rev = 0
-            if hack.lower().endswith('plugin'):
-                rev = self.plugins[hack]['current']
-            self.installer.install_hack(hack, rev)
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        for plugin in plugins:
+            install_ok, ret = self.installer.install_plugin(plugin, self.plugins[plugin]['current'], self.plugins[plugin]['installed']==-1)
+            if install_ok:
+                distname = ret[0]
+                cursor.execute('UPDATE hacks SET distname = %s WHERE name = %s',(distname,plugin))
+            else:
+                pass # This should probably do something ...
+        db.commit()
 
         # Recompute all of this, so the next page view will be correct
         self.plugins = self._get_hacks('plugin')
-        self.macros = self._get_hacks('macro')
         self.updates = self._pending_updates()

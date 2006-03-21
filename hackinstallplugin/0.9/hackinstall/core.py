@@ -33,8 +33,9 @@ class HackInstaller(object):
         
     def install_hack(self, name, rev, new=False):
         """Install a given hack."""
+        self.env.log.info('Installing %s hack.'%name)
         if name.lower().endswith('plugin'):
-            self.install_plugin(name, rev, new)
+            return self.install_plugin(name, rev, new)
         elif name.lower().endswith('macro'):
             self.download_hack(name, rev)
             self.install_macro(name, rev)
@@ -44,20 +45,27 @@ class HackInstaller(object):
             
     def install_plugin(self, name, rev, new=False):
         """Install a plugin into the envrionment's plugin directory."""
-        recordf = tempfile.NamedTemporaryFile(suffix='.txt',prefix='hackinstall-record',dir=self.builddir,mode='w')
-        command = "easy_install -m --install-dir=%s --record=%s %s/svn/%s/%s" % (self.env.path+'/plugins',recordf.name,self.url,name.lower(),self.version)
+        plugins_dir = os.path.join(self.env.path,'plugins')
+        installed_dists = []
+        
+        # Use easy_install to build the egg
+        temp_file = tempfile.NamedTemporaryFile(suffix='.txt',prefix='hackinstall-record',dir=self.builddir,mode='r')
+        command = "easy_install -m --install-dir=%s --record=%s %s/svn/%s/%s" % (plugins_dir, temp_file.name, self.url, name.lower(), self.version)
         self.env.log.info('Running os.system(%s)'%command)
         os.system(command)
-        installed = recordf.readlines()
-        recordf.close()
-        self.env.log.debug("installed = '%s'" % installed)
-        for f in installed:
-            f = f.strip()
-            self.env.log.debug("Processing file '%s'" % f)
-            if f.endswith('.egg'):
-                # Extract plugin entry points
+        
+        # Retrieve the installed files
+        installed = temp_file.readlines()
+        temp_file.close()
+
+        # Process each installed file
+        for old_file in installed:
+            old_file = old_file.strip() # Remove newlines
+            self.env.log.debug("Processing file '%s'" % old_file)
+            if old_file.endswith('.egg'):
+                dist = pkg_resources.Distribution.from_filename(old_file,pkg_resources.EggMetadata(zipimport.zipimporter(old_file)))
+                # Find and disable entry points (only on new installs)
                 if new:
-                    dist = pkg_resources.Distribution.from_filename(f,pkg_resources.EggMetadata(zipimport.zipimporter(f)))
                     if dist.has_metadata('trac_plugin.txt'):
                         self.env.log.debug('trac_plugin.txt file detected')
                         for line in dist.get_metadata_lines('trac_plugin.txt'):
@@ -71,29 +79,33 @@ class HackInstaller(object):
                             self.env.config.set('components',entry_point.module_name+'.*','disabled')
                     self.env.config.save()
 
-                basename = os.path.basename(f)                
+                old_name = os.path.basename(old_file)
+                new_name = None
                 # Rename a plugin from Foo-0.5-py2.4.egg to Foo-0.5-rREV-py2.4.egg
-                md = re.match('([^-]+-)([^-]+)(-py\d\.\d+\.egg)',basename)
+                md = re.match('([^-]+-)([^-]+)(-py\d\.\d+\.egg)',old_name)
                 if md:
-                    newname = basename
                     md2 = re.search('(r\d+)',md.group(2))
                     if md2:
-                        newname = re.sub('(.*)(r\d+)(.*)','\1r%s\3'%rev,newname)
+                        new_name = re.sub('(.*)(r\d+)(.*)','\1r%s\3'%rev,old_name)
                     else:
-                        newname = '%s%s_r%s%s' % (md.group(1),md.group(2),rev,md.group(3))
-                    self.env.log.debug('Renaming %s to %s' % (self.env.path+'/plugins/'+basename, self.env.path+'/plugins/'+newname))
-                    os.rename(self.env.path+'/plugins/'+basename,self.env.path+'/plugins/'+newname)
-                    basename = newname
+                        new_name = '%s%s_r%s%s' % (md.group(1),md.group(2),rev,md.group(3))
+                    new_file = os.path.join(plugins_dir, new_name)
+                    self.env.log.debug('Renaming %s to %s' % (old_file, new_file))
+                    os.rename(old_file, new_file)
                     
                 # Remove all old versions
-                md = re.match('([^-]+)-',basename)
+                md = re.match('([^-]+)-',new_name)
                 if md:
-                    for f2 in os.listdir(self.env.path+'/plugins'):
-                        md2 = re.match('([^-]+)-',f2)
-                        self.env.log.debug("Removal scan: basename='%s' f2='%s'" % (basename,f2))
-                        if md2 and basename != f2 and md.group(1) == md2.group(1):
-                            self.env.log.debug('Removing '+self.env.path+'/plugins/'+f2)
-                            os.remove(self.env.path+'/plugins/'+f2)
+                    for plugin_name in os.listdir(plugins_dir):
+                        md2 = re.match('([^-]+)-',plugin_name)
+                        self.env.log.debug("Removal scan: new_name='%s' plugin_name='%s'" % (new_name,plugin_name))
+                        if md2 and new_name != plugin_name and md.group(1) == md2.group(1):
+                            plugin_file = os.path.join(plugins_dir,plugin_name)
+                            self.env.log.debug('Removing '+plugin_file)
+                            os.remove(plugin_file)
+                            
+            installed_dists.append(dist.project_name)
+        return (True, installed_dists)
 
     def download_hack(self, name, rev):
         """Download and unzip a hack."""
