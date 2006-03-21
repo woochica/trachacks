@@ -165,13 +165,18 @@ class HackInstallPlugin(Component):
     # Internal methods
     def _get_hacks(self, type):
         # Build hash of name -> installed-rev
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('SELECT distname, name FROM hacks WHERE distname NOTNULL')
+        distnamemap = dict(cursor)
+        
         installed = {}
         if type == 'plugin':
             for f in os.listdir(self.env.path+'/plugins'):
                 self.log.debug("Found egg '%s'"%f)
                 md = re.match('([^-]+)-([^-]+)-',f)
                 if md:
-                    plugin = md.group(1).lower()+'plugin'
+                    plugin = distnamemap.get(md.group(1),md.group(1)+'plugin').lower()
                     md2 = re.search('r(\d+)',md.group(2))
                     if md2:
                         installed[plugin] = int(md2.group(1))
@@ -182,8 +187,6 @@ class HackInstallPlugin(Component):
             pass # Haven't gotten here yet
     
         # Build the rest of the data structure from the DB
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
         hacks = {}
         cursor.execute("SELECT id, name, current, description, deps FROM hacks WHERE name LIKE '%%%s'"%type.title())
         for row in cursor:
