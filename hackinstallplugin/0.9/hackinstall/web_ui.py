@@ -113,13 +113,6 @@ class HackInstallPlugin(Component):
         self.upgrade_environment(self.env.get_db_cnx())
         
     def environment_needs_upgrade(self, db):
-        # 0.10 compatibility hack (thanks Alec)
-        try:
-            from trac.db import DatabaseManager
-            db, _ = DatabaseManager(self.env)._get_connector()
-        except ImportError:
-            pass
-
         cursor = db.cursor()
         try:
             cursor.execute("SELECT * FROM hacks")
@@ -131,13 +124,13 @@ class HackInstallPlugin(Component):
         # 0.10 compatibility hack (thanks Alec)
         try:
             from trac.db import DatabaseManager
-            db, _ = DatabaseManager(self.env)._get_connector()
+            db_manager, _ = DatabaseManager(self.env)._get_connector()
         except ImportError:
-            pass
+            db_manager = db
     
         # Insert the default table
         cursor = db.cursor()
-        for sql in db.to_sql(default_hacks_table):
+        for sql in db_manager.to_sql(default_hacks_table):
             self.log.debug(sql)
             cursor.execute(sql)
         db.commit()
