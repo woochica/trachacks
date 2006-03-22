@@ -255,7 +255,8 @@ class HackInstallPlugin(Component):
                 distname = ret[0]
                 cursor.execute('UPDATE hacks SET distname = %s WHERE name = %s',(distname,plugin))
             else:
-                pass # This should probably do something ...
+                self.log.warning("Encountered an unknown error when installing %s. Please see your webserver's logs for more information."%plugin)
+                raise TracError, "Error during installation, please see the log for more information."
         db.commit()
 
         # Recompute all of this, so the next page view will be correct

@@ -104,8 +104,8 @@ class HackInstaller(object):
                             self.env.log.debug('Removing '+plugin_file)
                             os.remove(plugin_file)
                             
-            installed_dists.append(dist.project_name)
-        return (True, installed_dists)
+                installed_dists.append(dist.project_name)
+        return (len(installed_dists)>0, installed_dists)
 
     def download_hack(self, name, rev):
         """Download and unzip a hack."""
