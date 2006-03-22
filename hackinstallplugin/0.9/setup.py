@@ -16,4 +16,9 @@ setup(
     keywords = "trac plugin manager hacks",
     url = "http://trac-hacks.org/",
 
+    entry_points = {
+        'trac.plugins': [
+            'hackinstall.web_ui = hackinstall.web_ui'
+        ]
+    }
 )
