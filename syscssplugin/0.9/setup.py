@@ -14,4 +14,10 @@ setup(
     license = "BSD",
     keywords = "trac system css",
     url = "http://trac-hacks.org",
+    
+    entry_points = {
+        'trac.plugins': [
+            'syscss.syscss = syscss.syscss'
+        ]
+    }
 )
