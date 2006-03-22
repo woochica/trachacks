@@ -52,7 +52,10 @@ class HackInstaller(object):
         temp_file = tempfile.NamedTemporaryFile(suffix='.txt',prefix='hackinstall-record',dir=self.builddir,mode='r')
         command = "easy_install -m --install-dir=%s --record=%s %s/svn/%s/%s" % (plugins_dir, temp_file.name, self.url, name.lower(), self.version)
         self.env.log.info('Running os.system(%s)'%command)
-        os.system(command)
+        rv = os.system(command)
+        if rv != 0:
+            self.env.log.warning("easy_install failed with a return code of %s. Please look in your webserver's error log for the output")
+            return (False, None)
         
         # Retrieve the installed files
         installed = temp_file.readlines()
