@@ -15,4 +15,9 @@ setup(
     keywords = "trac cas authentication plugin",
     url = "http://trac-hacks.org/wiki/TracCASPlugin",
 
+    entry_points = {
+        'trac.plugins': [
+            'traccas.traccas = traccas.traccas'
+        ]
+    }
 )
