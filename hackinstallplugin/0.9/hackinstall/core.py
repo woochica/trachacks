@@ -54,7 +54,7 @@ class HackInstaller(object):
         self.env.log.info('Running os.system(%s)'%command)
         rv = os.system(command)
         if rv != 0:
-            self.env.log.warning("easy_install failed with a return code of %s. Please look in your webserver's error log for the output")
+            self.env.log.warning("easy_install failed with a return code of %s. Please look in your webserver's error log for the output"%rv)
             return (False, None)
         
         # Retrieve the installed files
