@@ -4,8 +4,11 @@ from trac import __version__ as TRAC_VERSION
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web.chrome import ITemplateProvider
+import pkg_resources
+pkg_resources.require('TracWebAdmin')
 from webadmin.web_ui import IAdminPageProvider
-import re
+import re, traceback
+from time import strftime, localtime
 
 __all__ = ['TicketDeletePlugin']
 
@@ -18,25 +21,52 @@ class TicketDeletePlugin(Component):
     def get_admin_pages(self, req):
         if req.perm.has_permission('TICKET_ADMIN'):
             yield ('ticket', 'Ticket System', 'delete', 'Delete')
+            yield ('ticket', 'Ticket System', 'comments', 'Delete Changes')
             
     def process_admin_request(self, req, cat, page, path_info):
         assert req.perm.has_permission('TICKET_ADMIN')
         
+        req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page)
+        req.hdf['ticketdelete.page'] = page
+
         if req.method == 'POST':
-            if 'ticketid' in req.args and 'ticketid2' in req.args:
-                if req.args.get('ticketid') == req.args.get('ticketid2'):
-                    try:
-                        id = int(req.args.get('ticketid'))
-                        t = Ticket(self.env, id)
-                        self._delete_ticket(id)
-                        req.hdf['ticketdelete.message'] = "Ticket #%s has been deleted." % id
-                    except TracError:
-                        req.hdf['ticketdelete.message'] = "Ticket #%s not found. Please try again." % id
-                    except ValueError:
-                        req.hdf['ticketdelete.message'] = "Ticket ID '%s' is not valid. Please try again." % req.args.get('ticketid')
-                else:
-                    req.hdf['ticketdelete.message'] = "The two IDs did not match. Please try again."
-        req.hdf['ticketdelete.href'] = self.env.href('admin','ticket','delete')
+            if page == 'delete':
+                if 'ticketid' in req.args and 'ticketid2' in req.args:
+                    if req.args.get('ticketid') == req.args.get('ticketid2'):
+                        t = self._validate(req, req.args.get('ticketid'))
+                        if t:
+                            self._delete_ticket(t.id)
+                            req.hdf['ticketdelete.message'] = "Ticket #%s has been deleted." % id
+                            
+                    else:
+                        req.hdf['ticketdelete.message'] = "The two IDs did not match. Please try again."
+            elif page == 'comments':
+                if 'ticketid' in req.args:
+                    req.redirect(self.env.href.admin(cat, page, req.args.get('ticketid')))
+                if 'ts' in req.args:
+                    t = self._validate(req, path_info)
+                    if t:
+                        req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page, path_info)
+                        try:
+                            ts = int(req.args.get('ts'))
+                            self._delete_change(t.id, ts, 'delete_only' in req.args)
+                            req.hdf['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
+                        except ValueError:
+                            req.hdf['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')
+                            self.log.debug(traceback.format_exc())
+                    
+                    
+                
+        if page == 'comments':
+            if path_info:
+                t = self._validate(req, path_info)
+                if t:
+                    for time, author, field, oldvalue, newvalue in t.get_changelog():
+                        req.hdf['ticketdelete.changes.%s.fields.%s'%(time,field)] = {'old': oldvalue, 'new': newvalue}
+                        req.hdf['ticketdelete.changes.%s.author'%time] = author
+                        req.hdf['ticketdelete.changes.%s.prettytime'%time] = strftime('%a, %d %b %Y %H:%M:%S',localtime(time))
+                    
+                
         return 'ticketdelete_admin.cs', None
 
     # ITemplateProvider methods
@@ -65,9 +95,30 @@ class TicketDeletePlugin(Component):
 
 
     # Internal methods
-    def _delete_ticket(self, id):
+    def _get_trac_version(self):
         md = re.match('(\d+)\.(\d+)',TRAC_VERSION)
-        if md and (int(md.group(2)) >= 10 or int(md.group(1)) > 0):
+        if md:
+            return (int(md.group(1)),int(md.group(2)))
+        else:
+            return (0,0)
+
+    def _validate(self, req, arg):
+        """Validate that arg is a string containing a valid ticket ID."""
+        try:
+            id = int(arg)
+            t = Ticket(self.env, id)
+            return t
+        except TracError:
+            req.hdf['ticketdelete.message'] = "Ticket #%s not found. Please try again." % id
+        except ValueError:
+            req.hdf['ticketdelete.message'] = "Ticket ID '%s' is not valid. Please try again." % arg
+        return False
+                                                                                                                
+    
+    def _delete_ticket(self, id):
+        """Delete the given ticket ID."""
+        major, minor = self._get_trac_version()
+        if major > 0 or minor >= 10:
             ticket = Ticket(self.env,id)
             ticket.delete()
         else:
@@ -78,3 +129,13 @@ class TicketDeletePlugin(Component):
             cursor.execute("DELETE FROM attachment WHERE type='ticket' and id=%s", (id,))
             cursor.execute("DELETE FROM ticket_custom WHERE ticket=%s", (id,))
             db.commit()
+            
+    def _delete_change(self, ticket, ts, just_comment=False):
+        """Delete the change on the given ticket at the given timestamp."""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        if just_comment:
+            cursor.execute("DELETE FROM ticket_change WHERE ticket = %s AND time = %s AND field = 'comment'", (ticket, ts))
+        else:
+            cursor.execute('DELETE FROM ticket_change WHERE ticket = %s AND time = %s', (ticket, ts))
+        db.commit()
