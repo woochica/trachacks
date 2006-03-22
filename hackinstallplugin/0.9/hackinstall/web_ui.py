@@ -6,6 +6,7 @@
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.perm import IPermissionRequestor
 from webadmin.web_ui import IAdminPageProvider
 from db_default import default_hacks_table
 from core import *
@@ -25,7 +26,7 @@ def add_userpass_to_url(url, user=None, password=None):
 class HackInstallPlugin(Component):
     """A component managing plugin installation."""
     
-    implements(IEnvironmentSetupParticipant, ITemplateProvider, IAdminPageProvider)
+    implements(IEnvironmentSetupParticipant, ITemplateProvider, IAdminPageProvider, IPermissionRequestor)
     
     def __init__(self):
         """Perform basic initializations."""
@@ -38,7 +39,7 @@ class HackInstallPlugin(Component):
 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
-        if req.perm.has_permission('TRAC_ADMIN') or True:
+        if req.perm.has_permission('HACK_ADMIN'):
             yield ('hacks', 'Trac-Hacks', 'general', 'General')
             yield ('hacks', 'Trac-Hacks', 'plugins', 'Plugins')
             #yield ('hacks', 'Trac-Hacks', 'macros', 'Macros')
@@ -161,6 +162,10 @@ class HackInstallPlugin(Component):
         """
         from pkg_resources import resource_filename
         return [('hackinstall', resource_filename(__name__, 'htdocs'))]
+        
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['HACK_ADMIN']
 
     # Internal methods
     def _get_hacks(self, type):
