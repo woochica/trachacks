@@ -2,7 +2,7 @@
 $Id$
 $HeadURL$
 
-Copyright (c) 2005 Peter Kropf. All rights reserved.
+Copyright (c) 2005, 2006 Peter Kropf. All rights reserved.
 
 Module documentation goes here.
 """
@@ -23,6 +23,7 @@ import sha
 import os
 import sys
 import re
+import inspect
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
@@ -88,10 +89,15 @@ class GraphvizMacro(Component):
         """
 
         self.log.debug('dir(req): %s' % str(dir(req)))
-        self.log.debug('req.args: %s' % str(req.args))
-        self.log.debug('req.base_url: %s' % str(req.base_url))
+        if hasattr(req, 'args'):
+            self.log.debug('req.args: %s' % str(req.args))
+        else:
+            self.log.debug('req.args attribute does not exist')
+        if hasattr(req, 'base_url'):
+            self.log.debug('req.base_url: %s' % str(req.base_url))
+        else:
+            self.log.debug('req.base_url attribute does not exist')
 
-        self.base_url = req.base_url
         # check and load the configuration
         trouble, msg = self.load_config()
         if trouble:

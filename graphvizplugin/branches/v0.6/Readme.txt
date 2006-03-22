@@ -232,5 +232,8 @@ I'd like to extend my thanks to following people:
  * Alec Thomas for creating Trac Hacks (http://trac-hacks.swapoff.org)
    and providing hosting for the Graphviz module.
 
+ * Emmanuel Blot for the swift kick in the butt to get the 0.9 - 0.10
+   releated bug fixes resolved ;-)
+
 
 $Id$

@@ -16,8 +16,8 @@ Subversion Repository Structure
 The Graphviz subversion repository is organized as:
 
  * 0.9 - Current release for the Graphviz wiki processor for Trac
-   0.9. The current release version can be found in the 0.9/setup.py
-   file as the version= parameter to the setup call.
+   0.9. The current Graphviz plugin release version can be found in
+   the 0.9/setup.py file as the version= parameter to the setup call.
 
  * branches - New development work is done within the various trees
    under branches. Typically, the development for the next release

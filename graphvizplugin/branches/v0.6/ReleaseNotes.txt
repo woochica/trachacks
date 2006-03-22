@@ -1,6 +1,6 @@
 Trac Graphviz Plugin v0.6 Release Notes
 =======================================
-Dec 16, 2005
+Mar 22, 2006
 
 Graphviz plugin v0.6 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
@@ -12,7 +12,21 @@ the resulting image.
 Changes for release v0.6
 ------------------------
 
- * 
+ * In render_macro, corrected the self.log.debug statements that were
+   printing out the req.args and req.base_url. They are not always
+   available. Removed the reference to req.base_url since it was not
+   being used and may not always be an attribute to req.  Resolves
+   issue http://trac-hacks.org/ticket/193.
+
+ * Added import for the inspect module. Resolves issue
+   http://trac-hacks.org/ticket/236.
+
+
+Changes for release v0.5.1
+------------------------
+
+ * Corrected typo in graphviz.py where the wrong internal variable was
+   being used to display an error message.
 
 
 Changes for release v0.5
