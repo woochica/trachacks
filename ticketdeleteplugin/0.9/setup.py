@@ -16,4 +16,9 @@ setup(
     keywords = "trac ticket delete",
     url = "http://trac-hacks.org/",
 
+    entry_points = {
+        'trac.plugins': [
+            'ticketdelete.web_ui = ticketdelete.web_ui'
+        ]
+    }
 )
