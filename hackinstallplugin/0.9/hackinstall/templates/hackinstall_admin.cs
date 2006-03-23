@@ -1,15 +1,17 @@
 <h2>General Settings</h2>
 
+<?cs def:help_link(text) ?><a href="javascript:alert('<?cs var:text ?>')"><font size="-3"><i>(?)</i></font></a><?cs /def ?>
+
 <form class="mod" id="modhackinstallgeneral" method="post">
     <fieldset>
         <legend>Setting</legend>
         <div class="field">
-            <label>URL:<br />
-                <input type="text" name="url" value="<?cs var:hackinstall.url ?>" />
+            <label>URL: <?cs call:help_link("This is the URL to the Trac-Hacks server, you should not need to change it.") ?><br />
+                <input type="text" name="url" value="<?cs var:hackinstall.url ?>" /> 
             </label>
         </div>
         <div class="field">
-            <label>Version<br />
+            <label>Version: <?cs call:help_link("This is version used when installing plugins. You should only need to change it if HackInstall detects your version incorrectly") ?><br />
                 <input type="text" name="version" id="version_field" value="<?cs var:hackinstall.version ?>" <?cs if:!hackinstall.override_version ?>disabled="true"<?cs /if ?>/><br />
                 Override autodetect: <input type="checkbox" name="override_version" id="override_version" <?cs if:hackinstall.override_version ?>checked="true"<?cs /if ?>/>
             </label>
