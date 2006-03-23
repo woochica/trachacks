@@ -14,4 +14,4 @@ setup(
   keywords='trac guestbook',
   packages=['guestbook'],
   package_data={'guestbook': ['templates/*.cs', 'htdocs/css/*.css']},
-  entry_points={'trac.plugins': 'tracguestbook = guestbook.core'})
+  entry_points={'trac.plugins': 'TracGuestbook = guestbook.core'})
