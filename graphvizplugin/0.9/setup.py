@@ -8,17 +8,18 @@ Python egg setup file for the graphviz trac wiki processor.
 """
 
 
-__version__   = '$LastChangedRevision$'
+__revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
 
 
 from setuptools import setup, find_packages
+import graphviz
 
 setup (
     name = 'graphviz',
-    version = "0.5.1",
+    version = graphviz.graphviz.__version__,
     packages = find_packages(),
     package_data = { 'graphviz' : ['examples/*',],
     },

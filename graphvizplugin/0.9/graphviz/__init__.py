@@ -8,7 +8,7 @@ Module file for the graphviz trac wiki processor.
 """
 
 
-__version__   = '$LastChangedRevision$'
+__revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
