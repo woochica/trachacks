@@ -15,10 +15,11 @@ __docformat__ = 'restructuredtext'
 
 
 from setuptools import setup, find_packages
+import graphviz
 
 setup (
     name = 'graphviz',
-    version = "0.6",
+    version = graphviz.graphviz.__version__,
     packages = find_packages(),
     package_data = { 'graphviz' : ['examples/*',],
     },

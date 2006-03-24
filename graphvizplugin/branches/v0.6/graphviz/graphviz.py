@@ -9,10 +9,11 @@ Module documentation goes here.
 
 
 
-__version__   = '$LastChangedRevision$'
+__revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
+__version__   = '0.6.1'
 
 
 try:
@@ -45,9 +46,9 @@ class GraphvizMacro(Component):
     formats = bitmap_formats + vector_formats 
 
     def __init__(self):
-        self.log.info('id: %s' % str(__id__))
-        self.log.info('processors: %s' % str(GraphvizMacro.processors))
-        self.log.info('formats: %s' % str(GraphvizMacro.formats))
+        self.log.info('version: %s - id: %s' % (__version__, str(__id__)))
+        #self.log.info('processors: %s' % str(GraphvizMacro.processors))
+        #self.log.info('formats: %s' % str(GraphvizMacro.formats))
 
 
     def get_macros(self):
@@ -88,15 +89,15 @@ class GraphvizMacro(Component):
         content - The text the user entered for the macro to process.
         """
 
-        self.log.debug('dir(req): %s' % str(dir(req)))
-        if hasattr(req, 'args'):
-            self.log.debug('req.args: %s' % str(req.args))
-        else:
-            self.log.debug('req.args attribute does not exist')
-        if hasattr(req, 'base_url'):
-            self.log.debug('req.base_url: %s' % str(req.base_url))
-        else:
-            self.log.debug('req.base_url attribute does not exist')
+        #self.log.debug('dir(req): %s' % str(dir(req)))
+        #if hasattr(req, 'args'):
+        #    self.log.debug('req.args: %s' % str(req.args))
+        #else:
+        #    self.log.debug('req.args attribute does not exist')
+        #if hasattr(req, 'base_url'):
+        #    self.log.debug('req.base_url: %s' % str(req.base_url))
+        #else:
+        #    self.log.debug('req.base_url attribute does not exist')
 
         # check and load the configuration
         trouble, msg = self.load_config()
@@ -155,22 +156,23 @@ class GraphvizMacro(Component):
         if not os.path.exists(img_path):
             self.clean_cache()
 
-            self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
+            #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
-                content = re.sub(r'URL="(.*)"', self.expand_wiki_links, content)
+                content = re.sub(r'URL="(.*?)"', self.expand_wiki_links, content)
+
 
             # Antialias PNGs with rsvg, if requested
             if self.out_format == 'png' and self.png_anti_alias == True:
                 # 1. SVG output
                 cmd = '"%s" %s -Tsvg -o%s.svg' % (proc_cmd, self.processor_options, img_path)
-                self.log.debug('render_macro: running command %s' % cmd)
+                #self.log.debug('render_macro: running command %s' % cmd)
                 out, err = self.launch(cmd, content)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
                 # 2. SVG to PNG rasterization
                 cmd = '"%s" --dpi-x=%d --dpi-y=%d %s.svg %s' % (self.rsvg_path, self.dpi, self.dpi, img_path, img_path)
-                self.log.debug('render_macro: running command %s' % cmd)
+                #self.log.debug('render_macro: running command %s' % cmd)
                 out, err = self.launch(cmd, None)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
@@ -178,7 +180,7 @@ class GraphvizMacro(Component):
             
             else: # Render other image formats
                 cmd = '"%s" %s -T%s -o%s' % (proc_cmd, self.processor_options, self.out_format, img_path)
-                self.log.debug('render_macro: running command %s' % cmd)
+                #self.log.debug('render_macro: running command %s' % cmd)
                 out, err = self.launch(cmd, content)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
@@ -190,7 +192,7 @@ class GraphvizMacro(Component):
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
                     cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
-                    self.log.debug('render_macro: running command %s' % cmd)
+                    #self.log.debug('render_macro: running command %s' % cmd)
                     out, err = self.launch(cmd, content)
                     if len(out) or len(err):
                         msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
@@ -235,14 +237,14 @@ class GraphvizMacro(Component):
 
 
     def expand_wiki_links(self, match):
-        self.log.debug('expand_wiki_links.match.groups: %s' % str(match.groups()))
+        #self.log.debug('expand_wiki_links.match.groups: %s' % str(match.groups()))
         
         wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
         html_url = wiki_to_oneliner(wiki_url, self.env)  # <a href="http://someurl">...</a>
         href     = re.search('href="(.*?)"', html_url)   # http://someurl
         
         url      = 'URL="%s"' % href.groups()[0]
-        self.log.debug('expand_wiki_links.url: %(url)s' % locals())
+        #self.log.debug('expand_wiki_links.url: %(url)s' % locals())
 
         return url
 
@@ -271,7 +273,7 @@ class GraphvizMacro(Component):
                     msg = 'The <b>cache_dir</b> is set to <b>%s</b> but that path does not exist.' % self.cache_dir
                     buf = self.show_err(msg)
                     trouble = True
-                self.log.debug('self.cache_dir: %s' % self.cache_dir)
+                #self.log.debug('self.cache_dir: %s' % self.cache_dir)
 
             # check for the cmd_path entry
             if not self.config.parser.has_option('graphviz', 'cmd_path'):
@@ -291,7 +293,7 @@ class GraphvizMacro(Component):
                         buf = self.show_err(msg)
                         trouble = True
 
-                self.log.debug('self.cmd_path: %s' % self.cmd_path)
+                #self.log.debug('self.cmd_path: %s' % self.cmd_path)
 
             # check for the prefix_url entry
             if not self.config.parser.has_option('graphviz', 'prefix_url'):
@@ -300,7 +302,7 @@ class GraphvizMacro(Component):
                 trouble = True
             else:
                 self.prefix_url = self.config.get('graphviz', 'prefix_url')
-                self.log.debug('self.prefix_url: %s' % self.prefix_url)
+                #self.log.debug('self.prefix_url: %s' % self.prefix_url)
 
 
             #Get optional configuration parameters from trac.ini.
@@ -310,21 +312,21 @@ class GraphvizMacro(Component):
                 self.out_format = self.config.get('graphviz', 'out_format')
             else:
                 self.out_format = GraphvizMacro.formats[0]
-            self.log.debug('self.out_format: %s' % self.out_format)
+            #self.log.debug('self.out_format: %s' % self.out_format)
 
             # check for the default processor - processor
             if self.config.parser.has_option('graphviz', 'processor'):
                 self.processor = self.config.get('graphviz', 'processor')
             else:
                 self.processor = GraphvizMacro.processors[0]
-            self.log.debug('self.processor: %s' % self.processor)
+            #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
             if self.config.parser.has_option('graphviz', 'png_antialias'):
                 self.png_anti_alias = True
             else:
                 self.png_anti_alias = False
-            self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
+            #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
             self.rsvg_path = '/usr/bin/rsvg'
             if self.png_anti_alias == True:
@@ -335,7 +337,7 @@ class GraphvizMacro(Component):
                     err = 'The rsvg program is set to <b>%s</b> but that path does not exist.' % self.rsvg_path
                     buf = self.show_err(err)
                     trouble = True
-            self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
+            #self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
 
             # get default graph/node/edge attributes
             self.processor_options = ''
@@ -356,15 +358,30 @@ class GraphvizMacro(Component):
             if self.config.parser.has_option('graphviz', 'cache_manager'):
                 self.cache_manager = True
 
-                self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size'))
-                self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size'))
-                self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count'))
-                self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count'))
+                if self.config.parser.has_option('graphviz', 'cache_max_size'):
+                    self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size'))
+                else:
+                    self.cache_max_size = 10000000
 
-                self.log.debug('self.cache_max_count: %d' % self.cache_max_count)
-                self.log.debug('self.cache_min_count: %d' % self.cache_min_count)
-                self.log.debug('self.cache_max_size: %d'  % self.cache_max_size)
-                self.log.debug('self.cache_min_size: %d'  % self.cache_min_size)
+                if self.config.parser.has_option('graphviz', 'cache_min_size'):
+                    self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size'))
+                else:
+                    self.cache_min_size = 5000000
+
+                if self.config.parser.has_option('graphviz', 'cache_max_count'):
+                    self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count'))
+                else:
+                    self.cache_max_count = 2000
+
+                if self.config.parser.has_option('graphviz', 'cache_min_count'):
+                    self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count'))
+                else:
+                    self.cache_min_count = 1500
+
+                #self.log.debug('self.cache_max_count: %d' % self.cache_max_count)
+                #self.log.debug('self.cache_min_count: %d' % self.cache_min_count)
+                #self.log.debug('self.cache_max_size: %d'  % self.cache_max_size)
+                #self.log.debug('self.cache_min_size: %d'  % self.cache_min_size)
 
             else:
                 self.cache_manager = False
@@ -428,7 +445,7 @@ class GraphvizMacro(Component):
             size = 0
 
             for name in os.listdir(self.cache_dir):
-                self.log.debug('clean_cache.entry: %s' % name)
+                #self.log.debug('clean_cache.entry: %s' % name)
                 entry_list[name] = os.stat(os.path.join(self.cache_dir, name))
 
                 atime_list.setdefault(entry_list[name][7], []).append(name)
@@ -440,9 +457,9 @@ class GraphvizMacro(Component):
             atime_keys = atime_list.keys()
             atime_keys.sort()
 
-            self.log.debug('clean_cache.atime_keys: %s' % atime_keys)
-            self.log.debug('clean_cache.count: %d' % count)
-            self.log.debug('clean_cache.size: %d' % size)
+            #self.log.debug('clean_cache.atime_keys: %s' % atime_keys)
+            #self.log.debug('clean_cache.count: %d' % count)
+            #self.log.debug('clean_cache.size: %d' % size)
         
             # In the spirit of keeping the code fairly simple, the
             # clearing out of files from the cache directory may
@@ -453,9 +470,10 @@ class GraphvizMacro(Component):
                 while len(atime_keys) and (self.cache_min_count < count or self.cache_min_size < size):
                     key = atime_keys.pop(0)
                     for file in atime_list[key]:
-                        self.log.debug('clean_cache.unlink: %s' % file)
+                        #self.log.debug('clean_cache.unlink: %s' % file)
                         os.unlink(os.path.join(self.cache_dir, file))
                         count = count - 1
                         size = size - entry_list[file][6]
         else:
-            self.log.debug('clean_cache: cache_manager not set')
+            #self.log.debug('clean_cache: cache_manager not set')
+            pass
