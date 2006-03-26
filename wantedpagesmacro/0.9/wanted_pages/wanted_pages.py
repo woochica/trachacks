@@ -1,16 +1,19 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html
+from time import clock
 import re
 
-REGEX = r" !?(?<![/?])\b[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" + \
-         "(?:#[A-Za-z0-9]+)?(?=\Z|\s|[.,;:!?\)}\]])[ !\.?:)]"
+CAMEL     = r"!?(?<!/)\b[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" + \
+             "(?:#[A-Za-z0-9]+)?(?=\Z|\s|[.,;:!?\)}\]])"
+FANCY     = r"(\[wiki:([^\] ]+) *.*\])"
+EXCLUDE   = r"(?s)(`[^`]*`)|(\[.*?\])|({{{.*?}}})"
+
 
 class WantedPagesMacro(Component):
     implements(IWikiMacroProvider)
 
     index = {}
-    wantedIndex = {}
 
     def get_macros(self):
         return ['wantedPages']
@@ -43,31 +46,75 @@ class WantedPagesMacro(Component):
         for (text,) in cursor:
             texts.append(text)
 
-        regex = re.compile(REGEX)
-        excludedRegex = re.compile(r"`[^`]*`|\[.*?\]|=.*?=")
-        excludedMultiline = re.compile(r"{{{.*?}}}", re.S)
-        for text in texts:
-            excludes = excludedRegex.findall(text)
-            for s in excludes:
-                if not s.startswith('[wiki:'):
-                    text = text.replace(s, '')
-            excludes = excludedMultiline.findall(text)
-            for s in excludes:                
-                text = text.replace(s, '')
-                    
-            matches = regex.findall(text)
-            for match in matches:
-                page = match[:len(match) - 1].strip() #strip trailing char            
-                if page.find('#') != -1:
-                    page = page[:page.find('#')]                
-
-                if not self.index.has_key(page) and page[0] is not '!':
-                    self.wantedIndex[page] = page
+        pages = self.findBrokenLinks(texts, req).values()
 
         wikiList = ''
-        pages = self.wantedIndex.values()
         pages.sort()
         for page in pages:
             wikiList += ('  * %s\n' % page)
 
         return wiki_to_html(wikiList, self.env, req)
+
+    def findBrokenLinks(self, texts, req):
+        camel = re.compile(CAMEL)
+        fancy = re.compile(FANCY)
+        exclude = re.compile(EXCLUDE)
+        wantedIndex = {}
+
+        for text in texts:
+            text = self.removeBlocks(text) # regex does not work well for nested blocks
+            matches = exclude.findall(text)
+            for pre, bracket, block in matches:
+                text = text.replace(pre, '')
+                print 'Excluding %s' % pre
+                text = text.replace(block, '')
+                print 'Excluding %s' % block
+                if not bracket.startswith('[wiki:'):
+                    print 'Excluding %s' % bracket
+                    text = text.replace(bracket, '')
+
+            matches = fancy.findall(text)
+            for fullLink, page in matches:
+                print 'MATCHED %s' % page
+                if page.find('#') != -1:
+                    page = page[:page.find('#')]
+
+                if not self.index.has_key(page) and page[0] is not '!':
+                    wantedIndex[page] = fullLink
+                text = text.replace(fullLink, '') # remove so no CamelCase detected below
+
+            matches = camel.findall(text)
+            for page in matches:
+                print 'MATCHED %s' % page
+                if page.find('#') != -1:
+                    page = page[:page.find('#')]
+
+                if not self.index.has_key(page) and page[0] is not '!':
+                    wantedIndex[page] = page
+
+        return wantedIndex
+
+    def removeBlocks(self, text):
+        cleaned = ''
+        rem = text
+        while (rem.find('{{{') >= 0):
+            s, rem = rem.split('{{{', 1)
+            cleaned += s
+            rem = self._extractBlock(rem)
+        
+        return cleaned
+
+    def _extractBlock(self, s):
+        cleaned = ''
+        if s.find('{{{') >= 0 and s.find('{{{') < s.find('}}}'):
+            first, second = s.split('{{{', 1)
+            print 'RECURSING with %s' % second
+            s = self._extractBlock(second)
+
+        if s.find('}}}') >= 0:
+            inside, outside = s.split('}}}', 1)
+            print 'STRIPPED %s' % inside
+            cleaned = outside
+        else:
+            cleaned = s # no closing braces             
+        return cleaned
