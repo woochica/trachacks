@@ -29,6 +29,9 @@ class TracChangeLogPlugin(Component):
     def render_macro(self, req, name, content):
         path, limit, rev = ([x.strip() for x in (content or '').split(',')] + [0, 9999])[0:3]
 
+        if not hasattr(req, 'authname'):
+            return Markup('<i>Changelog not available</i>')
+
         repo = self.env.get_repository(req.authname)
 
         rev = repo.normalize_rev(int(rev) or repo.get_youngest_rev())
