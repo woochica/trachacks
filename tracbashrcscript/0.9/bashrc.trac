@@ -1,0 +1,98 @@
+DEFAULT_TRAC="/var/www/coderanger/tracs/tracdev"
+
+TRAC="$DEFAULT_TRAC"
+
+# Select a new Trac
+function settrac {
+    if [ "$1" != "" ]
+    then
+        TRAC="$1"
+    else
+        TRAC="$DEFAULT_TRAC"
+    fi
+}
+
+# Reboot apache
+alias aprs="sudo /etc/init.d/apache2 restart"
+alias ahup="sudo killall -HUP apache2"
+
+# Apache log
+function alog {
+    tail $@ /var/log/apache2/error_log
+}
+
+# Trac log
+function tlog {
+    tail $@ $TRAC/log/trac.log
+}
+
+# Connect to trac db
+function tsql {
+    sudo sqlite3 $TRAC/db/trac.db
+}
+
+# Remove compiled python files (make ls more readable)
+function rpyc {
+    rm -f *.pyc *.pyo
+}
+
+# Trac-admin
+function tadm {
+    sudo trac-admin $TRAC $@
+}
+
+# Edit trac.ini
+function tini {
+    sudo $EDITOR $TRAC/conf/trac.ini
+}
+
+# Find the nearest enclosing plugin directory
+function find_setup {
+    local DEPTH=$1 RECCHECK=0
+    while [ ! -f setup.py -a "$RECCHECK" -le "$DEPTH" ]
+    do
+        RECCHECK=$(( $RECCHECK + 1 ))
+        cd ..
+    done
+    if [ ! -f setup.py ]
+    then
+        echo "Unable to find setup.py"
+        return 1
+    else
+        return 0
+    fi
+}
+
+# Install a new version of a plugin
+function insp {
+    ( # Use a subshell to prevent the change dir from affecting our shell
+        if find_setup 4
+        then
+            python setup.py bdist_egg && \
+            sudo cp dist/*.egg $TRAC/plugins/ && \
+            ahup
+        fi
+    )
+}
+
+# Setup a plugin using setup.py develop
+function devp {
+    (
+    if find_setup 4
+    then
+        sudo python setup.py develop --install-dir=$TRAC/plugins -m
+    fi
+    )
+}
+
+# Clean a plugin build directory
+function cleanp {
+    (
+    if find_setup 4
+    then
+        rm -rf build dist 
+        cd *.egg-info
+        rm -rf PKG-INFO  top_level.txt
+    fi
+    )
+}
