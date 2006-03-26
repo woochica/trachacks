@@ -4,7 +4,7 @@ from trac.wiki.formatter import wiki_to_html
 from time import clock
 import re
 
-CAMEL     = r"!?(?<!/)\b[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" + \
+CAMEL     = r"!?(?<!/|\?)\b[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" + \
              "(?:#[A-Za-z0-9]+)?(?=\Z|\s|[.,;:!?\)}\]])"
 FANCY     = r"(\[wiki:([^\] ]+) *.*?\])"
 EXCLUDE   = r"(?s)(`[^`]*`)|(\[.*?\])|({{{.*?}}})"
@@ -66,16 +66,12 @@ class WantedPagesMacro(Component):
             matches = exclude.findall(text)
             for pre, bracket, block in matches:
                 text = text.replace(pre, '')
-                print 'Excluding %s' % pre
                 text = text.replace(block, '')
-                print 'Excluding %s' % block
                 if not bracket.startswith('[wiki:'):
-                    print 'Excluding %s' % bracket
                     text = text.replace(bracket, '')
 
             matches = fancy.findall(text)
             for fullLink, page in matches:
-                print 'MATCHED %s' % page
                 if page.find('#') != -1:
                     page = page[:page.find('#')]
 
@@ -85,7 +81,6 @@ class WantedPagesMacro(Component):
 
             matches = camel.findall(text)
             for page in matches:
-                print 'MATCHED %s' % page
                 if page.find('#') != -1:
                     page = page[:page.find('#')]
 
@@ -95,26 +90,22 @@ class WantedPagesMacro(Component):
         return wantedIndex
 
     def removeBlocks(self, text):
-        cleaned = ''
-        rem = text
-        while (rem.find('{{{') >= 0):
-            s, rem = rem.split('{{{', 1)
-            cleaned += s
+        while text.find('{{{') >= 0:
+            clear, rem = text.split('{{{', 1)            
             rem = self._extractBlock(rem)
-        
-        return cleaned
+            text = clear + rem
+
+        return text
 
     def _extractBlock(self, s):
         cleaned = ''
         if s.find('{{{') >= 0 and s.find('{{{') < s.find('}}}'):
             first, second = s.split('{{{', 1)
-            print 'RECURSING with %s' % second
             s = self._extractBlock(second)
 
         if s.find('}}}') >= 0:
             inside, outside = s.split('}}}', 1)
-            print 'STRIPPED %s' % inside
             cleaned = outside
         else:
-            cleaned = s # no closing braces             
+            cleaned = s # no closing braces
         return cleaned

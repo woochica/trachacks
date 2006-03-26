@@ -29,6 +29,7 @@ class WantedPagesTestCase(unittest.TestCase):
         self.assertTrue('NoSpaces' in links, 'NoSpaces not found')
         self.assertTrue('TimLowe5' in links, '[wiki:TimLowe5] not found')
         self.assertTrue('TimLowe6' in links, '[wiki:TimLowe6 link] not found')        
+        self.assertTrue('EndOfFile' in links, 'EndOfFile not found')        
 
     def test_falseMatches(self):
         links = self.macro.findBrokenLinks([self.readmeText], self.req)
@@ -45,6 +46,7 @@ class WantedPagesTestCase(unittest.TestCase):
         self.assertFalse('PythonPath' in links, '{{{...PythonPath "sys.path + [\'/path/to/trac\']"...}}} found')
         self.assertFalse('IfModule' in links, '{{{...IfModule...}}} found')
         self.assertFalse('NestedBlocks' in links, '{{{...{{{ }}} NestedBlocks...}}} found')
+        self.assertFalse('WikiHistory' in links, 'http://c2.com/cgi/wiki?WikiHistory found')
 
 def suite():
     return unittest.makeSuite(WantedPagesTestCase, 'test')

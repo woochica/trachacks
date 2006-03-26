@@ -58,17 +58,19 @@ http://ExternalTrac/wiki/TomFool
 }}}
 NestedBlocks
 }}}
-
+http://c2.com/cgi/wiki?WikiHistory
 
 == TODO ==
 
-The macro currently incorrectly identifies the following as a !MyPage link:
-!attachment:wiki:MyPage:the_file.txt creates a link to the attachment the_file.txt of the !MyPage wiki page
+* The macro currently incorrectly identifies the following as a !MyPage link:
+  !attachment:wiki:MyPage:the_file.txt creates a link to the attachment the_file.txt of the !MyPage wiki page
 
 
 == 0.2 Changelog ==
 
- * Improved link detection, fixing many bugs not even reported
+ * Improved link detection, fixing many bugs not even reported 
  * Fixed [wiki:link] not being picked up
  * No longer need spaces around a wiki link for it to show up
  * Fixed {{{ CodeSegments }}} being picked up
+ 
+EndOfFile
