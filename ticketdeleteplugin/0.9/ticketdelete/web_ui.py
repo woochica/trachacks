@@ -91,7 +91,8 @@ class TicketDeletePlugin(Component):
         resources on the local file system.
         """
         from pkg_resources import resource_filename
-        return [('ticketdelete', resource_filename(__name__, 'htdocs'))]
+        #return [('ticketdelete', resource_filename(__name__, 'htdocs'))]
+        return []
 
 
     # Internal methods
