@@ -113,7 +113,7 @@ class TagMacros(Component):
                 cls = ''
             out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> <span class="tagcount">(%i)</span></li>\n' % (
                        cls,
-                       taginfo[tag][1],
+                       wiki_to_oneliner(taginfo[tag][1], self.env).plaintext(),
                        smallest + int(by_count[cloud[tag]] * scale),
                        taginfo[tag][0],
                        tag,
@@ -208,7 +208,7 @@ class TagMacros(Component):
             href, link, title = tagsystem.name_details(name)
             htitle = wiki_to_oneliner(title, self.env)
             name_tags = ['<a href="%s" title="%s">%s</a>'
-                          % (taginfo[tag][0], taginfo[tag][1], tag)
+                          % (taginfo[tag][0], htitle.plaintext(), tag)
                           for tag in details['tags'] if tag not in tags]
             if not name_tags:
                 name_tags = ''
@@ -221,17 +221,8 @@ class TagMacros(Component):
         return out.getvalue()
 
     def render_tagit(self, req, *tags):
-        """ Tag the current page and display them. """
-        page = self._current_page(req)
-        if not page: return ''
-
-        out = StringIO()
-        taginfo = self._tag_details(tags)
-        out.write('<ul class="tags tagit">\n<lh>Tags</lh>\n')
-        for tag in tags:
-            out.write('<li><a href="%s" title="%s">%s</a></li>\n' % (taginfo[tag][0], taginfo[tag][1], tag))
-        out.write('</ul>\n')
-        return out.getvalue()
+        """ Tag the current page and display them (deprecated). """
+        return ''
 
     def render_listtags(self, req, *tags, **kwargs):
         """ List tags. For backwards compatibility, can accept a list of tags.
@@ -267,7 +258,7 @@ class TagMacros(Component):
         for tag in keys:
             href, title = taginfo[tag]
             htitle = wiki_to_oneliner(title, self.env)
-            out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, title, tag, htitle, tags[tag]))
+            out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, htitle.plaintext(), tag, htitle, tags[tag]))
             if showpages == 'true':
                 out.write('\n')
                 out.write(self.render_listtagged(req, tag, tagspaces=tagspaces))

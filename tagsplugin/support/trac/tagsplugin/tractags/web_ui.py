@@ -4,6 +4,7 @@ from trac.web.chrome import ITemplateProvider, INavigationContributor
 from trac.util import Markup
 from StringIO import StringIO
 from trac.wiki.web_ui import WikiModule
+from trac.wiki.formatter import wiki_to_oneliner
 import re
 try:
     set = set
@@ -57,7 +58,7 @@ class TagsWikiModule(WikiModule):
                 href, title = engine.get_tag_link(tag)
                 hdf_tags.append({'name': tag,
                                  'href': href,
-                                 'title': title})
+                                 'title': wiki_to_oneliner(title, self.env).plaintext()})
             req.hdf['tags'] = hdf_tags
         WikiModule.process_request(self, req)
         return 'tagswiki.cs', None
