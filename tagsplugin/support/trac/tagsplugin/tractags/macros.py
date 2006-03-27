@@ -208,7 +208,7 @@ class TagMacros(Component):
             href, link, title = tagsystem.name_details(name)
             htitle = wiki_to_oneliner(title, self.env)
             name_tags = ['<a href="%s" title="%s">%s</a>'
-                          % (taginfo[tag][0], htitle.plaintext(), tag)
+                          % (taginfo[tag][0], wiki_to_oneliner(taginfo[tag][1], self.env).plaintext(), tag)
                           for tag in details['tags'] if tag not in tags]
             if not name_tags:
                 name_tags = ''
