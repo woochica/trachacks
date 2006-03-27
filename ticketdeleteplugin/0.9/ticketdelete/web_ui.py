@@ -4,8 +4,6 @@ from trac import __version__ as TRAC_VERSION
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web.chrome import ITemplateProvider
-import pkg_resources
-pkg_resources.require('TracWebAdmin')
 from webadmin.web_ui import IAdminPageProvider
 import re, traceback
 from time import strftime, localtime
