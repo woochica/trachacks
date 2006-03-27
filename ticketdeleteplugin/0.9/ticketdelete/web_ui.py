@@ -26,6 +26,7 @@ class TicketDeletePlugin(Component):
         
         req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page)
         req.hdf['ticketdelete.page'] = page
+        req.hdf['ticketdelete.redir'] = 1
 
         if req.method == 'POST':
             if page == 'delete':
@@ -49,6 +50,7 @@ class TicketDeletePlugin(Component):
                             ts = int(req.args.get('ts'))
                             self._delete_change(t.id, ts, 'delete_only' in req.args)
                             req.hdf['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
+                            req.hdf['ticketdelete.redir'] = 0
                         except ValueError:
                             req.hdf['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')
                             self.log.debug(traceback.format_exc())

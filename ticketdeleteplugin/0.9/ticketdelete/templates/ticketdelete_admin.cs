@@ -1,6 +1,6 @@
 <h2>Delete Ticket<?cs if:ticketdelete.page=='comments' ?> Changes<?cs /if ?></h2>
 
-<?cs if:ticketdelete.message ?>
+<?cs if:ticketdelete.message && ticketdelete.redir ?>
     <b><?cs var:ticketdelete.message ?></b><br />
     <a href="<?cs var:ticketdelete.href ?>">Back</a>
 <?cs elif:ticketdelete.page == 'delete' ?>
@@ -16,6 +16,7 @@
     </form>
 <?cs elif:ticketdelete.page == 'comments' ?>
     <?cs if:len(ticketdelete.changes) ?>
+        <?cs if:ticketdelete.message ?><p><b><?cs var:ticketdelete.message ?></b></p><?cs /if ?>
         <p>Please selet a change to delete</p>
         <?cs each:change = ticketdelete.changes ?>
             <div>
