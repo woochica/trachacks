@@ -60,8 +60,12 @@ class TagsWikiModule(WikiModule):
                                  'href': href,
                                  'title': title})
             req.hdf['tags'] = hdf_tags
-        WikiModule.process_request(self, req)
-        return 'tagswiki.cs', None
+        result = WikiModule.process_request(self, req)
+        if result is None:
+            return None
+        if result[0] == 'wiki.cs':
+            return 'tagswiki.cs', None
+        return result
 
 class TagsModule(Component):
     """ Serve a /tags namespace. Top-level displays tag cloud, sub-levels
