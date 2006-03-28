@@ -113,7 +113,7 @@ class TagMacros(Component):
                 cls = ''
             out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> <span class="tagcount">(%i)</span></li>\n' % (
                        cls,
-                       wiki_to_oneliner(taginfo[tag][1], self.env).plaintext(),
+                       taginfo[tag][1],
                        smallest + int(by_count[cloud[tag]] * scale),
                        taginfo[tag][0],
                        tag,
@@ -208,7 +208,7 @@ class TagMacros(Component):
             href, link, title = tagsystem.name_details(name)
             htitle = wiki_to_oneliner(title, self.env)
             name_tags = ['<a href="%s" title="%s">%s</a>'
-                          % (taginfo[tag][0], wiki_to_oneliner(taginfo[tag][1], self.env).plaintext(), tag)
+                          % (taginfo[tag][0], taginfo[tag][1], tag)
                           for tag in details['tags'] if tag not in tags]
             if not name_tags:
                 name_tags = ''
@@ -258,7 +258,7 @@ class TagMacros(Component):
         for tag in keys:
             href, title = taginfo[tag]
             htitle = wiki_to_oneliner(title, self.env)
-            out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, htitle.plaintext(), tag, htitle, tags[tag]))
+            out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, title, tag, htitle, tags[tag]))
             if showpages == 'true':
                 out.write('\n')
                 out.write(self.render_listtagged(req, tag, tagspaces=tagspaces))

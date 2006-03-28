@@ -58,7 +58,7 @@ class TagsWikiModule(WikiModule):
                 href, title = engine.get_tag_link(tag)
                 hdf_tags.append({'name': tag,
                                  'href': href,
-                                 'title': wiki_to_oneliner(title, self.env).plaintext()})
+                                 'title': title})
             req.hdf['tags'] = hdf_tags
         WikiModule.process_request(self, req)
         return 'tagswiki.cs', None
