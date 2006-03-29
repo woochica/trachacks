@@ -86,6 +86,8 @@ def parse_toc(env, out, page, body, max_depth=999, min_depth=1, title_index=Fals
                 break
             else:
                 default_anchor = Formatter._anchor_re.sub("", escape(header))
+                if not default_anchor:
+                    continue
                 if default_anchor[0].isdigit():
                     default_anchor = 'a' + default_anchor
                 anchor = default_anchor
@@ -106,6 +108,7 @@ def execute(hdf, args, env):
     db = env.get_db_cnx()
     if not args:
         args = ''
+    if not hdf.has_key('wiki.page_name'): return ''
     pre_pages = re.split('\s*,\s*', args)
     # Options
     inline = False
