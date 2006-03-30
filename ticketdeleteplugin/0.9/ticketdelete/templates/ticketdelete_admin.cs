@@ -18,6 +18,30 @@
     <?cs if:len(ticketdelete.changes) ?>
         <?cs if:ticketdelete.message ?><p><b><?cs var:ticketdelete.message ?></b></p><?cs /if ?>
         <p>Please selet a change to delete</p>
+        
+        <p><form method="post"><table class="listing">
+            <thead><tr><th class="sel">&nbsp;</th><th>Field</th><th>Old Value</th><th>New Value</th><th>&nbsp;</th></tr></thead>
+            <tbody>
+                <?cs each:change = ticketdelete.changes ?>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td colspan="3"><b>Change at <?cs var:change.prettytime ?> by <?cs var:change.author ?></b></td>
+                        <td><input type="submit" name="delete_<?cs name:change ?>" value="Delete change" /></td>
+                    <tr>
+                    <?cs each:field = change.fields ?>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td><?cs name:field ?></td>
+                        <td><?cs var:field.old ?></td>
+                        <td><?cs var:field.new ?></td>
+                        <td><input type="submit" name="delete<?cs name:field ?>_<?cs name:change ?>" value="Delete field" /></td>
+                    </tr>
+                    <?cs /each ?>
+                <?cs /each ?>
+            </tbody>
+        </table></form></p>
+        
+        <!--
         <?cs each:change = ticketdelete.changes ?>
             <div>
                 <b><?cs var:change.prettytime ?></b><br />
@@ -35,7 +59,7 @@
                     <input type="submit" name="delete_only" value="Delete Comment Only" />
                 </form>
             </div><br />
-        <?cs /each ?>
+        <?cs /each ?> -->
         <br />
         <a href="<?cs var:ticketdelete.href ?>">Back</a>
     <?cs else ?>

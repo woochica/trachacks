@@ -42,15 +42,20 @@ class TicketDeletePlugin(Component):
             elif page == 'comments':
                 if 'ticketid' in req.args:
                     req.redirect(self.env.href.admin(cat, page, req.args.get('ticketid')))
-                if 'ts' in req.args:
+                else:
                     t = self._validate(req, path_info)
                     if t:
                         req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page, path_info)
                         try:
-                            ts = int(req.args.get('ts'))
-                            self._delete_change(t.id, ts, 'delete_only' in req.args)
-                            req.hdf['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
-                            req.hdf['ticketdelete.redir'] = 0
+                            buttons = [x[6:] for x in req.args.keys() if x.startswith('delete')]
+                            self.log.debug('TicketDelete: Buttons %s' % repr(buttons))
+                            if buttons:
+                                field, ts = buttons[0].split('_')
+                                ts = int(ts)
+                                self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
+                                self._delete_change(t.id, ts, field)
+                                req.hdf['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
+                                req.hdf['ticketdelete.redir'] = 0
                         except ValueError:
                             req.hdf['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')
                             self.log.debug(traceback.format_exc())
@@ -131,12 +136,12 @@ class TicketDeletePlugin(Component):
             cursor.execute("DELETE FROM ticket_custom WHERE ticket=%s", (id,))
             db.commit()
             
-    def _delete_change(self, ticket, ts, just_comment=False):
+    def _delete_change(self, ticket, ts, field=None):
         """Delete the change on the given ticket at the given timestamp."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        if just_comment:
-            cursor.execute("DELETE FROM ticket_change WHERE ticket = %s AND time = %s AND field = 'comment'", (ticket, ts))
+        if field:
+            cursor.execute("DELETE FROM ticket_change WHERE ticket = %s AND time = %s AND field = %s", (ticket, ts, field))
         else:
             cursor.execute('DELETE FROM ticket_change WHERE ticket = %s AND time = %s', (ticket, ts))
         db.commit()
