@@ -288,6 +288,7 @@ class TagEngine(Component):
             cursor.fetchone()
             return False
         except:
+            db.rollback()
             return True
 
     def upgrade_environment(self, db):
@@ -301,6 +302,7 @@ class TagEngine(Component):
             self.env.log.debug("tractags needs to migrate old data")
             return True
         except:
+            db.rollback()
             return False
 
     def _upgrade_db(self, db):

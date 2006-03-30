@@ -8,4 +8,5 @@ setup(
     author='Muness Alrubaie',
     url='http://dev.muness.textdriven.com/trac.cgi/wiki/tags',
     description='Tag plugin for Trac',
+    entry_points = {'trac.plugins': ['tractags = tractags']}
     )
