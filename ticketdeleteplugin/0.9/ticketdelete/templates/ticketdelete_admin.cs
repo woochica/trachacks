@@ -24,42 +24,58 @@
             <tbody>
                 <?cs each:change = ticketdelete.changes ?>
                     <tr>
-                        <td>&nbsp;</td>
+                        <td><input type="checkbox" name="dontcare" value="dontcare" id="checkbox_<?cs name:change ?>" /></td>
                         <td colspan="3"><b>Change at <?cs var:change.prettytime ?> by <?cs var:change.author ?></b></td>
                         <td><input type="submit" name="delete_<?cs name:change ?>" value="Delete change" /></td>
                     <tr>
                     <?cs each:field = change.fields ?>
                     <tr>
-                        <td>&nbsp;</td>
+                        <td><input type="checkbox" id="checkbox<?cs name:field ?>_<?cs name:change ?>" name="delete" value="<?cs name:field ?>_<?cs name:change ?>" /></td>
                         <td><?cs name:field ?></td>
-                        <td><?cs var:field.old ?></td>
-                        <td><?cs var:field.new ?></td>
+                        <?cs if:name(field) == 'comment' ?>
+                            <td colspan="2"><?cs var:field.new ?></td>
+                        <?cs else ?>
+                            <td><?cs var:field.old ?></td>
+                            <td><?cs var:field.new ?></td>
+                        <?cs /if ?>
                         <td><input type="submit" name="delete<?cs name:field ?>_<?cs name:change ?>" value="Delete field" /></td>
                     </tr>
                     <?cs /each ?>
                 <?cs /each ?>
             </tbody>
-        </table></form></p>
+        </table><br /><input type="submit" name="multidelete" value="Delete Checked" /></form></p>
         
+        <script type="text/javascript">
         <!--
-        <?cs each:change = ticketdelete.changes ?>
-            <div>
-                <b><?cs var:change.prettytime ?></b><br />
-                Change by <?cs var:change.author ?><br />
-                <?cs each:field = change.fields ?>
-                    <?cs if:name(field)=='comment' ?>
-                        Comment: <?cs var:field.new ?><br />
-                    <?cs else ?>
-                        <?cs name:field ?>: From '<?cs var:field.old ?>' to '<?cs var:field.new ?>'<br />
-                    <?cs /if ?>
-                <?cs /each ?>
-                <form method="post">
-                    <input type="hidden" name="ts" value="<?cs name:change ?>" />
-                    <input type="submit" name="delete_all" value="Delete Entire Change" />
-                    <input type="submit" name="delete_only" value="Delete Comment Only" />
-                </form>
-            </div><br />
-        <?cs /each ?> -->
+            function toggleboxen(me, boxen) 
+            {
+                status = document.getElementById("checkbox_" + me).checked;
+                boxen.pop() // Remove the last (blank) entry.
+                for (box in boxen) {
+                    //alert("Changing checkbox"+boxen[box]+"_"+me);
+                    document.getElementById("checkbox"+boxen[box]+"_"+me).checked = status;
+                }
+            }
+            
+            <?cs each:change = ticketdelete.changes ?>
+            addEvent(document.getElementById("checkbox_<?cs name:change ?>"), "change", function() {
+                var boxen = Array(<?cs each:field = change.fields ?>"<?cs name:field ?>",<?cs /each ?>"");
+                toggleboxen("<?cs name:change ?>", boxen); //Array(<?cs each:field = change.fields ?>"<?cs name:field ?>",<?cs /each ?>));
+            });
+            <?cs each:field = change.fields ?>
+            addEvent(document.getElementById("checkbox<?cs name:field ?>_<?cs name:change ?>"),"change", function() {
+                if(!document.getElementById("checkbox<?cs name:field ?>_<?cs name:change ?>").checked) {
+                    document.getElementById("checkbox_<?cs name:change ?>").checked = 0;
+                }
+            });
+            <?cs /each ?>
+            <?cs /each ?>
+
+
+        //-->
+        </script>
+
+
         <br />
         <a href="<?cs var:ticketdelete.href ?>">Back</a>
     <?cs else ?>

@@ -47,15 +47,19 @@ class TicketDeletePlugin(Component):
                     if t:
                         req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page, path_info)
                         try:
-                            buttons = [x[6:] for x in req.args.keys() if x.startswith('delete')]
-                            self.log.debug('TicketDelete: Buttons %s' % repr(buttons))
+                            buttons = None
+                            if "multidelete" in req.args:
+                                buttons = req.args.getlist('delete')
+                            else:
+                                buttons = [x[6:] for x in req.args.keys() if x.startswith('delete')]
                             if buttons:
-                                field, ts = buttons[0].split('_')
-                                ts = int(ts)
-                                self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
-                                self._delete_change(t.id, ts, field)
-                                req.hdf['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
-                                req.hdf['ticketdelete.redir'] = 0
+                                for button in buttons:
+                                    field, ts = button.split('_')
+                                    ts = int(ts)
+                                    self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
+                                    self._delete_change(t.id, ts, field)
+                                    req.hdf['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
+                                    req.hdf['ticketdelete.redir'] = 0
                         except ValueError:
                             req.hdf['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')
                             self.log.debug(traceback.format_exc())
