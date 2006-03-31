@@ -45,11 +45,18 @@ class StatusPage(Component):
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
         parms = [x.strip() for x in content.split(',')]
-        kwargs = [x for x in parms if x.find('=') < 0]
-        tags = [x for x in parms if x not in kwargs]
+        kargs = [x for x in parms if x.find('=') >= 0]
+        tags = [x for x in parms if x not in kargs]
+        kwargs = {}
+        for x in kargs:
+            key, value = x.split('=')
+            if isinstance(key, unicode):
+                key = key.encode('ascii')
+                value = value.encode('ascii')
+            kwargs[key.strip()] = value.strip()
         if not tags:
             tags = ['blog']
-        self._generate_blog(req, *tags)
+        self._generate_blog(req, *tags, **kwargs)
         req.hdf['blog.macro'] = True
         return req.hdf.render('blog.cs')
 
@@ -66,11 +73,25 @@ class StatusPage(Component):
             **kwargs are any aditional keyword arguments that are needed
         """
         tags = TagEngine(self.env).tagspace.wiki
-
+        try:
+            union = kwargs['union']
+        except KeyError:
+            union = False
         # Formatting
         read_post = "[wiki:%s Read Post]"
         entries = {}
-        for blog_entry in tags.get_tagged_names(*args):
+        if (not union) and (len(args) > 1):
+            tag_group = {}
+            for tag in args:
+                tag_group[tag] = tags.get_tagged_names(tag)
+            tag_set = tag_group[args[0]]
+            for tag in args[1:]:
+                tag_set = tag_set.intersection(tag_group[tag])
+            blog = tag_set
+        else:
+            blog = tags.get_tagged_names(*args) 
+        
+        for blog_entry in blog:
             page = WikiPage(self.env, name=blog_entry)
             version, time, author, comment, ipnr = page.get_history().next()
             timeStr = format_datetime(time) 
