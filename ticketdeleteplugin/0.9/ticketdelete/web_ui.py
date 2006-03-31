@@ -47,14 +47,16 @@ class TicketDeletePlugin(Component):
                     if t:
                         req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page, path_info)
                         try:
-                            buttons = None
+                            deletions = None
                             if "multidelete" in req.args:
-                                buttons = req.args.getlist('delete')
+                                deletions = [x.split('_') for x in req.args.getlist('delete')]
+                                deletions.sort(key=lambda x: x[1], reverse=True)
                             else:
                                 buttons = [x[6:] for x in req.args.keys() if x.startswith('delete')]
-                            if buttons:
-                                for button in buttons:
-                                    field, ts = button.split('_')
+                                deletions = [buttons[0].split('_')]
+                            if deletions:
+                                for field, ts in deletions:
+                                    #field, ts = button.split('_')
                                     ts = int(ts)
                                     self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
                                     self._delete_change(t.id, ts, field)
