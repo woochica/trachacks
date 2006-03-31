@@ -2,7 +2,7 @@ from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome 
 from trac.web.chrome import INavigationContributor 
-from trac.util import escape, Markup
+from trac.util import escape, Markup, format_date, format_datetime
 #from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
 from trac.wiki.model import WikiPage
@@ -28,7 +28,6 @@ class StatusPage(Component):
     def get_navigation_items(self, req):
         yield 'mainnav', 'blog', Markup('<a href="%s">blog</a>',
                                          req.href.blog())
-#                                         self.env.href.blog())
 
     def match_request(self, req):
         self.log.info(str(req.args))
@@ -38,45 +37,23 @@ class StatusPage(Component):
 #        add_stylesheet(req, 'pyrus/css/pyrus.css')
         add_stylesheet(req, 'common/css/wiki.css')
         tags = TagEngine(self.env).tagspace.wiki
-        # Have to use SQL because WikiPage doesn't expose some needed fields
-#        sql = """
-#                SELECT name, version, time, author, text, comment 
-#                  FROM wiki
-#                 WHERE name = %s
-#                 ORDER BY version, time DESC LIMIT 1"""[1:]
-#        cnx = self.env.get_db_cnx()
-#        cur = cnx.cursor()
 
         # Formatting
         read_post = "[wiki:%s Read Post]"
         entries = []
         for blog_entry in tags.get_tagged_names('blog'):
             page = WikiPage(self.env, name=blog_entry)
-#            cur.execute(sql, (blog_entry,))
-#            row = cur.fetchone()
             version, time, author, comment, ipnr = page.get_history().next()
-#            data = {
-#                    'wiki_link' : wiki_to_oneliner(read_post % row[0], 
-#                                                   self.env),
-#                    'time'    : row[2],
-#                    'author'  : row[3],
-#                    'wiki_text' : wiki_to_html(row[4], self.env, req),
-#                    'comment' : wiki_to_oneliner(row[5], self.env),
-#                    }
+            timeStr = format_datetime(time) 
             data = {
                     'wiki_link' : wiki_to_oneliner(read_post % blog_entry,
                                                    self.env),
-                    'time'      : time,
+                    'time'      : timeStr,
                     'author'    : author,
                     'wiki_text' : wiki_to_html(page.text, self.env, req),
                     'comment'   : wiki_to_oneliner(comment, self.env),
                    }
             entries.append(data)
-
-#        cnx.close()
-        
-        # Display all names and the tags associated with each name
-#        req.hdf['blog.entries'] = [{'pname': x} for x in tags.get_tagged_names('blog')]
         req.hdf['blog.entries'] = entries
 
         return 'blog.cs', None
