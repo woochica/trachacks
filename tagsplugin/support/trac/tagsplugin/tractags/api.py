@@ -41,6 +41,11 @@ from trac.db import Table, Column, Index
 import sys
 import re
 
+try:
+    set = set
+except:
+    from sets import Set as set
+
 class ITagSpaceUser(Interface):
     """ Register that this component uses a set of tagspaces. If a tagspace is
         not registered, it can not be used. """
@@ -116,7 +121,6 @@ class DefaultTaggingSystem(TaggingSystem):
         sql = "SELECT DISTINCT " + action + " FROM tags WHERE tagspace=%s"
         if constraint:
             sql += " AND " + name + " IN ('%s')" % "', '".join(constraint)
-        sql += " ORDER BY %s" % order 
         cursor = db.cursor()
         cursor.execute(sql, opts)
         return cursor

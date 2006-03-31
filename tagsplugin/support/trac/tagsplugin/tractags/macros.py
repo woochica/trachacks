@@ -9,7 +9,7 @@ import inspect
 import re
 import string
 try:
-    set()
+    set = set
 except:
     from sets import Set as set
 
