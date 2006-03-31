@@ -6,6 +6,7 @@ from trac.util import escape, Markup, format_date, format_datetime
 #from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
 from trac.wiki.model import WikiPage
+from trac.wiki.api import IWikiMacroProvider
 from tractags.api import TagEngine
 
 import os
@@ -19,7 +20,8 @@ class StatusPage(Component):
         Provides functions related to registration
     """
 
-    implements(IRequestHandler, ITemplateProvider, INavigationContributor)
+    implements(IRequestHandler, ITemplateProvider, INavigationContributor,
+               IWikiMacroProvider)
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -29,19 +31,46 @@ class StatusPage(Component):
         yield 'mainnav', 'blog', Markup('<a href="%s">blog</a>',
                                          req.href.blog())
 
+    # IWikiMacroProvider
+    def get_macros(self):
+        yield "TracBlog"
+
+    def get_macro_description(self, name):
+        desc =  "Embeds a Blog into a Wiki page\n\n" \
+                "[[TracBlog()]] - embed the default blog\n"\
+                "[[TracBlog(tag1,tag2)]] - embed a blog that corresponds to\n"\
+                "                          the specified tags"
+        return desc
+
+    def render_macro(self, req, name, content):
+        """ Display the blog in the wiki page """
+        parms = [x.strip() for x in content.split(',')]
+        kwargs = [x for x in parms if x.find('=') < 0]
+        tags = [x for x in parms if x not in kwargs]
+        if not tags:
+            tags = ['blog']
+        self._generate_blog(req, *tags)
+        req.hdf['blog.macro'] = True
+        return req.hdf.render('blog.cs')
+
     def match_request(self, req):
         self.log.info(str(req.args))
         return req.path_info == '/blog'
 
-    def process_request(self, req):
-#        add_stylesheet(req, 'pyrus/css/pyrus.css')
-        add_stylesheet(req, 'common/css/wiki.css')
+
+    def _generate_blog(self, req, *args, **kwargs):
+        """
+            Generate the blog and fill the hdf.
+
+            *args is a list of tags to use to limit the blog scope
+            **kwargs are any aditional keyword arguments that are needed
+        """
         tags = TagEngine(self.env).tagspace.wiki
 
         # Formatting
         read_post = "[wiki:%s Read Post]"
-        entries = []
-        for blog_entry in tags.get_tagged_names('blog'):
+        entries = {}
+        for blog_entry in tags.get_tagged_names(*args):
             page = WikiPage(self.env, name=blog_entry)
             version, time, author, comment, ipnr = page.get_history().next()
             timeStr = format_datetime(time) 
@@ -53,9 +82,18 @@ class StatusPage(Component):
                     'wiki_text' : wiki_to_html(page.text, self.env, req),
                     'comment'   : wiki_to_oneliner(comment, self.env),
                    }
-            entries.append(data)
-        req.hdf['blog.entries'] = entries
+            entries[time] = data
+            continue
+        tlist = entries.keys()
+        tlist.sort(reverse=True)
+        req.hdf['blog.entries'] = [entries[x] for x in tlist]
+        pass
 
+
+    def process_request(self, req):
+#        add_stylesheet(req, 'pyrus/css/pyrus.css')
+        add_stylesheet(req, 'common/css/wiki.css')
+        self._generate_blog(req, 'blog')
         return 'blog.cs', None
 
     def get_templates_dirs(self):
