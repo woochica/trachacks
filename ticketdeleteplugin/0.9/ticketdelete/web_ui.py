@@ -35,7 +35,7 @@ class TicketDeletePlugin(Component):
                         t = self._validate(req, req.args.get('ticketid'))
                         if t:
                             self._delete_ticket(t.id)
-                            req.hdf['ticketdelete.message'] = "Ticket #%s has been deleted." % id
+                            req.hdf['ticketdelete.message'] = "Ticket #%s has been deleted." % t.id
                             
                     else:
                         req.hdf['ticketdelete.message'] = "The two IDs did not match. Please try again."
@@ -140,12 +140,22 @@ class TicketDeletePlugin(Component):
             cursor.execute("DELETE FROM ticket_custom WHERE ticket=%s", (id,))
             db.commit()
             
-    def _delete_change(self, ticket, ts, field=None):
+    def _delete_change(self, id, ts, field=None):
         """Delete the change on the given ticket at the given timestamp."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+        ticket = Ticket(self.env,id)
         if field:
-            cursor.execute("DELETE FROM ticket_change WHERE ticket = %s AND time = %s AND field = %s", (ticket, ts, field))
+            custom_fields = [f['name'] for f in ticket.fields if f.get('custom')]
+            if field != "comment" and not [1 for time, author, field2, oldval, newval in ticket.get_changelog() if time > ts and field == field2]:
+                oldval = [old for _, _, field2, old, _ in ticket.get_changelog(ts) if field2 == field][0]
+                if field in custom_fields:
+                    cursor.execute("UPDATE ticket_custom SET value=%s WHERE ticket=%s AND name=%s", (oldval, id, field))
+                else:
+                    cursor.execute("UPDATE ticket SET %s=%%s WHERE id=%%s" % field, (oldval, id))
+            cursor.execute("DELETE FROM ticket_change WHERE ticket = %s AND time = %s AND field = %s", (id, ts, field))
         else:
-            cursor.execute('DELETE FROM ticket_change WHERE ticket = %s AND time = %s', (ticket, ts))
+            for _, _, field, _, _ in ticket.get_changelog(ts):
+                self._delete_change(id, ts, field)
+            
         db.commit()
