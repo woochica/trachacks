@@ -1,6 +1,20 @@
 <?cs if ! blog.macro ?>
     <?cs include "header.cs" ?>
     <?cs include "macros.cs" ?>
+
+<div id="ctxtnav" class="nav">
+    <h2>Wiki Navigation</h2>
+    <ul>
+        <li><a href="<?cs var:trac.href.blog ?>/new">New Blog Entry</a></li>
+        <li><a href="<?cs var:trac.href.wiki ?>">Start Page</a></li>
+        <li><a href="<?cs var:trac.href.wiki ?>/TitleIndex">Title Index</a></li>
+        <li><a 
+            href="<?cs var:trac.href.wiki ?>/RecentChanges">Recent Changes</a>
+        </li>
+    </ul>
+    <hr />
+</div>
+
 <div id="content" class="wiki">
    <div class="wikipage">
     <div id="searchable">
