@@ -50,7 +50,7 @@ class TicketDeletePlugin(Component):
                             deletions = None
                             if "multidelete" in req.args:
                                 deletions = [x.split('_') for x in req.args.getlist('delete')]
-                                deletions.sort(lambda a,b: cmp(b[1],a
+                                deletions.sort(lambda a,b: cmp(b[1],a[1]))
                             else:
                                 buttons = [x[6:] for x in req.args.keys() if x.startswith('delete')]
                                 deletions = [buttons[0].split('_')]
