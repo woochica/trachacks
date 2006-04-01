@@ -34,9 +34,14 @@ class BlogAdminPlugin(Component):
                 if 'date_format' in req.args:
                     date_format = req.args.get('date_format')
                     self.env.config.set('blog', 'date_format', date_format)
-                    self.env.config.save()
+                if 'page_format' in req.args:
+                    page_format = req.args.get('page_format')
+                    self.env.config.set('blog', 'page_format', page_format)
+                self.env.config.save()
         date_format = self.env.config.get('blog', 'date_format')
+        page_format = self.env.config.get('blog', 'page_format')
         req.hdf['blogadmin.date_format'] = date_format
+        req.hdf['blogadmin.page_format'] = page_format
         return 'blog_admin.cs', None
 
     # INavigationContributor

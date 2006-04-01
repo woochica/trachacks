@@ -101,42 +101,54 @@ class TracBlogPlugin(Component):
             Generate a new blog post
         """
         action = req.args.get('action', 'edit')
+        pg_name_fmt = self.env.config.get('blog', 'page_format', '%Y/%m/%d')
+        self.log.debug("page format: %s" % pg_name_fmt)
+        pagename = req.args.get('pagename', time.strftime(pg_name_fmt))
+        self.log.debug("page name: %s" % pagename)
         if req.method == 'POST':
             if action == 'edit':
                 if req.args.has_key('cancel'):
                     req.redirect(self.env.href.blog())
-                pagename = req.args.get('pagename', str(time.time()))
                 page = WikiPage(self.env, pagename, None)
+                tags = TagEngine(self.env).tagspace.wiki
                 if req.args.has_key('preview'):
                     req.hdf['blog.action'] = 'preview'
                     self._render_editor(req, page, self.env.get_db_cnx(),
                                         preview=True) 
                 else:
                     title = req.args.get('blogtitle')
+                    titleline = ' '.join(["=", title, "=\n"])
                     if title:
-                        page.text = '= ' + title + ' =\n' + req.args.get('text')
+                        page.text = ''.join([titleline, req.args.get('text')])
                     else:
                         page.text = req.args.get('text')
                     page.readonly = int(req.args.has_key('readonly'))
                     page.save(req.authname, req.args.get('comment'), 
                               req.remote_addr)
+                    taglist = [x.strip() for x in req.args.get('tags').split(',') if x]
+                    for t in taglist:
+                        tags.add(req, pagename, t)
                     req.redirect(self.env.href.blog())
         else:
+            req.hdf['blog.pagename'] = pagename
+            req.hdf['blog.edit_rows'] = 20
+            tlist = req.args.getlist('tag')
+            req.hdf['tags'] = ', '.join(tlist)
             pass
 
     def _render_editor(self, req, page, db, preview=False):
+        title = req.args.get('blogtitle')
+        titleline = ' '.join(["=", title, "=\n"])
         if req.args.has_key('text'):
-            title = req.args.get('blogtitle')
-            if title:
-                page.text = '= ' + title + ' =\n' + req.args.get('text')
-            else:
-                page.text = req.args.get('text')
+            page.text = req.args.get('text')
         if preview:
             page.readonly = req.args.has_key('readonly')
 
         author = req.authname
         comment = req.args.get('comment', '')
         editrows = req.args.get('editrows')
+        tags = req.args.get('tags')
+        req.hdf['tags'] = tags
         if editrows:
             pref = req.session.get('wiki_editrows', '20')
             if editrows != pref:
@@ -155,7 +167,12 @@ class TracBlogPlugin(Component):
             'scroll_bar_pos': req.args.get('scroll_bar_pos', '')
         }
         if preview:
-            info['page_html'] = wiki_to_html(page.text, self.env, req, db)
+            if title:
+                info['page_htm'] = wiki_to_html(''.join([titleline, 
+                                                req.args.get('text')]),
+                                                self.env, req, db)
+            else:
+                info['page_html'] = wiki_to_html(page.text, self.env, req, db)
             info['readonly'] = int(req.args.has_key('readonly'))
         req.hdf['blog'] = info
 

@@ -14,8 +14,14 @@
                 <tr>
                     <td>Date Format String</td>
                     <td><input type="text" name="date_format" 
-                        value="<?cs var:blogadmin.date_format ?>" max="50"
-                        length="20" /></td>
+                        value="<?cs var:blogadmin.date_format ?>"
+                        length="60" /></td>
+                </tr>
+                <tr>
+                    <td>Page Name Format String</td>
+                    <td><input type="text" name="page_format" 
+                        value="<?cs var:blogadmin.page_format ?>"
+                        length="60" /></td>
                 </tr>
             </tbody>
         </table>        

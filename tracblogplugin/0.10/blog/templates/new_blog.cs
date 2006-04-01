@@ -49,8 +49,7 @@
             </div>
             <p>
                 <textarea id="text" class="wikitext" name="text" cols="80" 
-                rows="<?cs var:blog.edit_rows ?>"> <?cs var:blog.page_source ?>
-                </textarea>
+                rows="<?cs var:blog.edit_rows ?>"><?cs var:blog.page_source ?></textarea>
             </p>
             <script type="text/javascript">
                 var scrollBarPos = document.getElementById("scroll_bar_pos");
