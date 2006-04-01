@@ -20,17 +20,21 @@
     <div id="searchable">
 <?cs /if ?>
 
+<div class="blog">
     <?cs each:bentry = blog.entries ?>
+    <div class="post">
         <p><?cs var:bentry.wiki_text ?></p>
-        <div class="nav">
+        <div class="postmeta">
             <ul>
                 <li><?cs var:bentry.wiki_link ?></li>
                 <li><?cs var:bentry.author ?></li>
-                <li><?cs var:bentry.time ?></li>
+                <li class="last"><?cs var:bentry.time ?></li>
             </ul>
         </div>
         <hr width="75%" />
+    </div>
     <?cs /each ?>
+</div>
 
 <?cs if ! blog.macro ?>
     </div>

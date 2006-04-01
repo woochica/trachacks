@@ -36,7 +36,7 @@ class TracBlogPlugin(Component):
                 
     def get_navigation_items(self, req):
         req.hdf['trac.href.blog'] = req.href.blog()
-        yield 'mainnav', 'Blog', Markup('<a href="%s">blog</a>',
+        yield 'mainnav', 'blog', Markup('<a href="%s">Blog</a>',
                                          req.href.blog())
 
     # IWikiMacroProvider
@@ -52,19 +52,21 @@ class TracBlogPlugin(Component):
 
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
+        add_stylesheet(req, 'blog/css/blog.css')
         m = getattr(self, ''.join(['_render_', name]))
         return m(req, name, content)
 
     def _render_TracBlogPost(self, req, name, content):
         new_link = [
                     '<a href="',
-                    req.href.blog(),
-                    '/new">New Blog Post</a>',
+                    req.href.blog('new'),
+                    '">New Blog Post</a>',
                    ]
         return ''.join(new_link)
 
     def _render_TracBlog(self, req, name, content):
-        parms = [x.strip() for x in content.split(',')]
+        content = content or ''
+        parms = [x.strip() for x in content.split(',') if x]
         kargs = [x for x in parms if x.find('=') >= 0]
         tags = [x for x in parms if x not in kargs]
         kwargs = {}
@@ -85,7 +87,7 @@ class TracBlogPlugin(Component):
         return req.path_info == '/blog' or req.path_info == '/blog/new'
 
     def process_request(self, req):
-#        add_stylesheet(req, 'pyrus/css/pyrus.css')
+        add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
         if req.path_info == '/blog':
             self._generate_blog(req, 'blog')
@@ -180,13 +182,15 @@ class TracBlogPlugin(Component):
             for tag in args[1:]:
                 tag_set = tag_set.intersection(tag_group[tag])
             blog = tag_set
+        elif not len(args):
+            blog = tags.get_tagged_names('blog') 
         else:
             blog = tags.get_tagged_names(*args) 
         
         for blog_entry in blog:
             page = WikiPage(self.env, name=blog_entry)
             version, wtime, author, comment, ipnr = page.get_history().next()
-            time_format = self.env.config.get('blog', 'date_format') or None
+            time_format = self.env.config.get('blog', 'date_format') or '%x %X'
             timeStr = format_datetime(wtime, format=time_format) 
             data = {
                     'wiki_link' : wiki_to_oneliner(read_post % blog_entry,
@@ -222,6 +226,6 @@ class TracBlogPlugin(Component):
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-        return [('pyrus', resource_filename(__name__, 'htdocs'))]
+        return [('blog', resource_filename(__name__, 'htdocs'))]
 
 
