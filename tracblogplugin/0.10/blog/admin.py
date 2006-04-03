@@ -3,11 +3,7 @@ from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider
 from trac.perm import IPermissionRequestor
 from trac.util import escape, Markup, format_date, format_datetime
-try:
-    from webadmin.web_ui import IAdminPageProvider
-except ImportError:
-    import sys
-    sys.exit(1)
+from webadmin.web_ui import IAdminPageProvider
 
 import os
 import os.path
@@ -34,29 +30,31 @@ class BlogAdminPlugin(Component):
     def process_admin_request(self, req, cat, page, path_info):
         assert req.perm.has_permission('BLOG_ADMIN')
 
-#        req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page)
         req.hdf['blogadmin.page'] = page
-#        req.hdf['ticketdelete.redir'] = 1
 
+        admin_fields = ['date_format', 'page_format', 'default_tag', 
+                        'post_size', 'history_days', ]
         if req.method == 'POST':
             if page == 'defaults':
-                if 'date_format' in req.args:
-                    date_format = req.args.get('date_format')
-                    self.env.config.set('blog', 'date_format', date_format)
-                if 'page_format' in req.args:
-                    page_format = req.args.get('page_format')
-                    self.env.config.set('blog', 'page_format', page_format)
-                if 'default_tag' in req.args:
-                    default_tag = req.args.get('default_tag')
-                    self.env.config.set('blog', 'default_tag', default_tag)
+                for field in admin_fields:
+                    self._set_field_value(req, field)
                 self.env.config.save()
-        date_format = self.env.config.get('blog', 'date_format')
-        page_format = self.env.config.get('blog', 'page_format')
-        default_tag = self.env.config.get('blog', 'default_tag')
-        req.hdf['blogadmin.date_format'] = date_format
-        req.hdf['blogadmin.page_format'] = page_format
-        req.hdf['blogadmin.default_tag'] = default_tag
+        for field in admin_fields:
+            self._get_field_value(req, field)
         return 'blog_admin.cs', None
+
+    def _set_field_value(self, req, field_name):
+        """Set the trac.ini field value for the specified name. """
+        if field_name in req.args:
+            field = req.args.get(field_name)
+            self.env.config.set('blog', field_name, field)
+        pass
+
+    def _get_field_value(self, req, field_name):
+        """Get the field from trac.ini and set the hdf appropriately. """
+        field = self.env.config.get('blog', field_name)
+        req.hdf['blogadmin.' + field_name] = field
+        pass
 
     # INavigationContributor
     def get_templates_dirs(self):

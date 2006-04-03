@@ -1,3 +1,6 @@
 from web_ui import *
-from admin import *
+try:
+    from admin import *
+except ImportError:
+    pass
 from new_blog import *

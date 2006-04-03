@@ -23,47 +23,21 @@
                     value="<?cs var:blogadmin.default_tag ?>" />
                 </label>
             </div>
+            <div class="field">
+                <label>Post Max Size:<br/>
+                    <input type="text" name="post_size" 
+                    value="<?cs var:blogadmin.post_size ?>" />
+                </label>
+            </div>
+            <div class="field">
+                <label>Days of History:<br/>
+                    <input type="text" name="history_days" 
+                    value="<?cs var:blogadmin.history_days ?>" />
+                </label>
+            </div>
         </fieldset>
         <div class="buttons">
             <input type="submit" value="Apply Changes" />
         </div>
     </form>
-<?cs /if ?>
-<?cs if ! 1 ?>
-<?cs if blogadmin.page == 'defaults' ?>
-    <p>
-    <form method="post">
-        <table class="listing">
-            <thead>
-                <tr>
-                    <th>Field</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Date Format String</td>
-                    <td><input type="text" name="date_format" 
-                        value="<?cs var:blogadmin.date_format ?>"
-                        length="60" /></td>
-                </tr>
-                <tr>
-                    <td>Page Name Format String</td>
-                    <td><input type="text" name="page_format" 
-                        value="<?cs var:blogadmin.page_format ?>"
-                        length="60" width="100%" /></td>
-                </tr>
-                <tr>
-                    <td>Default Tag (<a href="<?cs var:base_url ?>/tags"
-                        >view all tags</a>)</td>
-                    <td><input type="text" name="default_tag" 
-                        value="<?cs var:blogadmin.default_tag ?>"
-                        length="60" width="100%" /></td>
-                </tr>
-            </tbody>
-        </table>        
-        <input type="submit" value="Set Defaults" />
-    </form>
-    </p>
-<?cs /if ?>
 <?cs /if ?>

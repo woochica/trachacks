@@ -15,6 +15,7 @@
 # Author: John Hampton <pacopablo@asylumware.com>
 
 import time
+import datetime
 import inspect
 from pkg_resources import resource_filename
 from trac.core import *
@@ -148,23 +149,30 @@ class TracBlogPlugin(Component):
         else:
             blog = tags.get_tagged_names(tlist, operation='intersection')
         self.log.debug("blog: %s" % str(blog)) 
+        history_days = int(self.env.config.get('blog', 'history_days', 30))
+        now = datetime.datetime.now()
+        history_diff = datetime.timedelta(days=history_days)
+        cutoff = time.mktime((now - history_diff).timetuple())
         for tagspace in blog.keys():
             for blog_entry in blog[tagspace]:
                 page = WikiPage(self.env, name=blog_entry)
                 version, wtime, author, comment, ipnr = page.get_history(
                                                         ).next()
-                time_format = self.env.config.get('blog', 'date_format') or \
-                              '%x %X'
-                timeStr = format_datetime(wtime, format=time_format) 
-                data = {
-                        'wiki_link' : wiki_to_oneliner(read_post % blog_entry,
-                                                       self.env),
-                        'time'      : timeStr,
-                        'author'    : author,
-                        'wiki_text' : wiki_to_html(page.text, self.env, req),
-                        'comment'   : wiki_to_oneliner(comment, self.env),
-                       }
-                entries[wtime] = data
+                if wtime >= cutoff:       
+                    time_format = self.env.config.get('blog', 'date_format') \
+                                  or '%x %X'
+                    timeStr = format_datetime(wtime, format=time_format) 
+                    text = self._trim_page(page.text, blog_entry)
+                    data = {
+                            'wiki_link' : wiki_to_oneliner(read_post % 
+                                                           blog_entry,
+                                                           self.env),
+                            'time'      : timeStr,
+                            'author'    : author,
+                            'wiki_text' : wiki_to_html(text, self.env, req),
+                            'comment'   : wiki_to_oneliner(comment, self.env),
+                           }
+                    entries[wtime] = data
                 continue
         tlist = entries.keys()
         # Python 2.4ism
@@ -174,17 +182,50 @@ class TracBlogPlugin(Component):
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         pass
 
+    def _trim_page(self, text, page_name):
+        """Trim the page text to the {{{post_size}} in trac.ini
+
+        The timming isn't exact.  It trims to the first line that causes the
+        page to exceed the value storing in {{{post_size}}}.  If the line is
+        in the middle of a code block, it will close the block.
+
+        """
+        post_size = int(self.env.config.get('blog', 'post_size', 1024))
+        self.log.debug('Post size: %s' % str(post_size))
+        tlines = []
+        entry_size = 0
+        line_count = 0
+        in_code_block = False
+        lines = text.split('\n')
+        for line in lines:
+            line_count += 1
+            entry_size += len(line)
+            tlines.append(line)
+            if not in_code_block:
+                in_code_block = line.strip() == '{{{'
+            else:
+                in_code_block = in_code_block and line.strip() != '}}}'
+            if entry_size > post_size:
+                self.log.debug("Entry Size: %s" % str(entry_size))
+                if in_code_block:
+                    tlines.append('}}}')
+                break
+            continue
+        if line_count < len(lines):
+            tlines.append("''[wiki:%s (...)]''" % page_name)
+            
+        return '\n'.join(tlines)
+
     # ITemplateProvider
     def get_templates_dirs(self):
-        """
-            Return the absolute path of the directory containing the provided
+        """ Return the absolute path of the directory containing the provided
             templates
+
         """
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        """
-        Return a list of directories with static resources (such as style
+        """ Return a list of directories with static resources (such as style
         sheets, images, etc.)
 
         Each item in the list must be a `(prefix, abspath)` tuple. The
@@ -193,6 +234,7 @@ class TracBlogPlugin(Component):
         
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
+
         """
         return [('blog', resource_filename(__name__, 'htdocs'))]
 
