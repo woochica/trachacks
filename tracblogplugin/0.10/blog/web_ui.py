@@ -41,7 +41,7 @@ class TracBlogPlugin(Component):
 
     # IWikiMacroProvider
     def get_macros(self):
-        return ["TracBlog", "TracBlogPost"]
+        return ["BlogShow", "BlogPost"]
 
     def get_macro_description(self, name):
         desc =  "Embeds a Blog into a Wiki page\n\n" \
@@ -56,26 +56,43 @@ class TracBlogPlugin(Component):
         m = getattr(self, ''.join(['_render_', name]))
         return m(req, name, content)
 
-    def _render_TracBlogPost(self, req, name, content):
-        new_link = [
-                    '<a href="',
-                    req.href.blog('new'),
-                    '">New Blog Post</a>',
-                   ]
-        return ''.join(new_link)
+    def _split_macro_args(self, argv):
+        """Return a list of arguments and a dictionary of keyword arguements
 
-    def _render_TracBlog(self, req, name, content):
-        content = content or ''
-        parms = [x.strip() for x in content.split(',') if x]
+        """
+        argv = argv or ''
+        parms = [x.strip() for x in argv.split(',') if x]
+        self.log.debug("parms: %s" % str(parms))
         kargs = [x for x in parms if x.find('=') >= 0]
-        tags = [x for x in parms if x not in kargs]
+        self.log.debug("kargs: %s" % str(kargs))
+        args = [x for x in parms if x not in kargs]
+        self.log.debug("args: %s" % str(args))
         kwargs = {}
         for x in kargs:
             key, value = x.split('=')
+            key = key.strip()
+            value = value.strip()
             if isinstance(key, unicode):
                 key = key.encode('ascii')
                 value = value.encode('ascii')
-            kwargs[key.strip()] = value.strip()
+            if kwargs.has_key(key):
+                if isinstance(key, list):
+                    kwargs[key].append(value)
+                else:
+                    kwargs[key] = [kwargs[key], value]
+            else:
+                kwargs[key] = value
+        self.log.debug("kwargs: %s" % str(kwargs))
+        return args, kwargs
+
+    def _render_BlogPost(self, req, name, content):
+        args, kwargs = self._split_macro_args(content)
+        self.log.debug("link: %s" % req.href.blog('new', **kwargs))
+        return Markup('<a href="%s">New Blog Post</a>', 
+                      req.href.blog('new',**kwargs))
+
+    def _render_BlogShow(self, req, name, content):
+        tags, kwargs = self._split_macro_args(content)
         if not tags:
             tags = ['blog']
         self._generate_blog(req, *tags, **kwargs)
@@ -97,11 +114,12 @@ class TracBlogPlugin(Component):
             return 'new_blog.cs', None
 
     def _new_blog_post(self, req):
-        """
-            Generate a new blog post
+        """ Generate a new blog post
+
         """
         action = req.args.get('action', 'edit')
-        pg_name_fmt = self.env.config.get('blog', 'page_format', '%Y/%m/%d')
+        pg_name_fmt = self.env.config.get('blog', 'page_format', 
+                                          '%Y/%m/%d/%H.%M')
         self.log.debug("page format: %s" % pg_name_fmt)
         pagename = req.args.get('pagename', time.strftime(pg_name_fmt))
         self.log.debug("page name: %s" % pagename)
