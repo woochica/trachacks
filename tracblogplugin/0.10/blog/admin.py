@@ -1,8 +1,13 @@
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider
+from trac.perm import IPermissionRequestor
 from trac.util import escape, Markup, format_date, format_datetime
-from webadmin.web_ui import IAdminPageProvider
+try:
+    from webadmin.web_ui import IAdminPageProvider
+except ImportError:
+    import sys
+    sys.exit(1)
 
 import os
 import os.path
@@ -15,12 +20,16 @@ class BlogAdminPlugin(Component):
         Provides functions related to registration
     """
 
-    implements(ITemplateProvider, IAdminPageProvider)
+    implements(ITemplateProvider, IAdminPageProvider, IPermissionRequestor)
+
+    # IPermissionRequestor
+    def get_permission_actions(self):
+        return ['BLOG_ADMIN']
 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
         if req.perm.has_permission('BLOG_ADMIN'):
-            yield ('blog', 'Blog System', 'formats', 'Formats')
+            yield ('blog', 'Blog System', 'defaults', 'Defaults')
 
     def process_admin_request(self, req, cat, page, path_info):
         assert req.perm.has_permission('BLOG_ADMIN')
@@ -30,18 +39,23 @@ class BlogAdminPlugin(Component):
 #        req.hdf['ticketdelete.redir'] = 1
 
         if req.method == 'POST':
-            if page == 'formats':
+            if page == 'defaults':
                 if 'date_format' in req.args:
                     date_format = req.args.get('date_format')
                     self.env.config.set('blog', 'date_format', date_format)
                 if 'page_format' in req.args:
                     page_format = req.args.get('page_format')
                     self.env.config.set('blog', 'page_format', page_format)
+                if 'default_tag' in req.args:
+                    default_tag = req.args.get('default_tag')
+                    self.env.config.set('blog', 'default_tag', default_tag)
                 self.env.config.save()
         date_format = self.env.config.get('blog', 'date_format')
         page_format = self.env.config.get('blog', 'page_format')
+        default_tag = self.env.config.get('blog', 'default_tag')
         req.hdf['blogadmin.date_format'] = date_format
         req.hdf['blogadmin.page_format'] = page_format
+        req.hdf['blogadmin.default_tag'] = default_tag
         return 'blog_admin.cs', None
 
     # INavigationContributor

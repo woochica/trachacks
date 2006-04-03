@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'tBlog'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(  name=PACKAGE, version=VERSION,
         package_dir = { 'tBlog' : 'blog' },
@@ -11,6 +11,6 @@ setup(  name=PACKAGE, version=VERSION,
         package_data = { 'tBlog' : ['htdocs/css/*.css', 'htdocs/img/*',
                                     'templates/*.cs', ]},
         entry_points = {'trac.plugins': ['tBlog = tBlog']},
-        install_requires = ['TracTags', 'TracWebAdmin']
+        install_requires = ['TracTags>=0.3', 'TracWebAdmin']
         
 )

@@ -1,60 +1,83 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 John Hampton <pacopablo@asylumware.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution. The terms
+# are also available at http://trac.edgewall.com/license.html.
+#
+# This software consists of voluntary contributions made by many
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at:
+# http://trac-hacks.org/wiki/TracBlogPlugin
+#
+# Author: John Hampton <pacopablo@asylumware.com>
+
+import time
+import inspect
+from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
-from trac.perm import IPermissionRequestor
-from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome 
+from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.web.chrome import INavigationContributor 
-from trac.util import escape, Markup, format_date, format_datetime
-#from trac.wiki.api import IWikiMacroProvider
+from trac.util import Markup, format_date, format_datetime
 from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
 from tractags.api import TagEngine
-from webadmin.web_ui import IAdminPageProvider
-
-import os
-import os.path
-import time
-from pkg_resources import resource_filename
 
 __all__ = ['TracBlogPlugin']
 
 class TracBlogPlugin(Component):
-    """
-        Provides functions related to registration
+    """Displays a blog based on tags
+    
+    The list of tags to be shown can be specified as arguments to the macro.
+    An options keyword argument of union can be secified.  If specified, then
+    the resulting blog will be a {{{union}}} of pages with the specified tags.
+    If the {{{union}}} parameter is omitted, then an intersection of the
+    specified tags is returned.
+
+    If no tags are specified as parameters, then the default 'blog' tag is
+    used.
+
+    === Examples ===
+    {{{
+    [[BlogShow()]]
+    [[BlogShow(blog,pacopablo)]]
+    [[BlogShow(blog,pacopablo,union=True)]]
+    }}}
     """
 
     implements(IRequestHandler, ITemplateProvider, INavigationContributor,
-               IWikiMacroProvider, IPermissionRequestor)
-
-    # IPermissionRequestor
-    def get_permission_actions(self):
-        return ['BLOG_ADMIN']
+               IWikiMacroProvider)
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         return 'blog'
                 
     def get_navigation_items(self, req):
-        req.hdf['trac.href.blog'] = req.href.blog()
+        req.hdf['trac.href.blog'] = self.env.href.blog()
         yield 'mainnav', 'blog', Markup('<a href="%s">Blog</a>',
-                                         req.href.blog())
+                                         self.env.href.blog())
 
     # IWikiMacroProvider
     def get_macros(self):
-        return ["BlogShow", "BlogPost"]
+        yield "BlogShow"
 
     def get_macro_description(self, name):
-        desc =  "Embeds a Blog into a Wiki page\n\n" \
-                "[[TracBlog()]] - embed the default blog\n"\
-                "[[TracBlog(tag1,tag2)]] - embed a blog that corresponds to\n"\
-                "                          the specified tags"
-        return desc
+        """Return the subclass's docstring."""
+        return inspect.getdoc(self.__class__)
 
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
         add_stylesheet(req, 'blog/css/blog.css')
-        m = getattr(self, ''.join(['_render_', name]))
-        return m(req, name, content)
+        tags, kwargs = self._split_macro_args(content)
+        if not tags:
+            tags = [self.env.config.get('blog', 'default_tag', 'blog')]
+        self._generate_blog(req, *tags, **kwargs)
+        req.hdf['blog.macro'] = True
+        return req.hdf.render('blog.cs')
 
     def _split_macro_args(self, argv):
         """Return a list of arguments and a dictionary of keyword arguements
@@ -85,122 +108,28 @@ class TracBlogPlugin(Component):
         self.log.debug("kwargs: %s" % str(kwargs))
         return args, kwargs
 
-    def _render_BlogPost(self, req, name, content):
-        args, kwargs = self._split_macro_args(content)
-        self.log.debug("link: %s" % req.href.blog('new', **kwargs))
-        return Markup('<a href="%s">New Blog Post</a>', 
-                      req.href.blog('new',**kwargs))
-
-    def _render_BlogShow(self, req, name, content):
-        tags, kwargs = self._split_macro_args(content)
-        if not tags:
-            tags = ['blog']
-        self._generate_blog(req, *tags, **kwargs)
-        req.hdf['blog.macro'] = True
-        return req.hdf.render('blog.cs')
-
     def match_request(self, req):
-        self.log.info(str(req.args))
-        return req.path_info == '/blog' or req.path_info == '/blog/new'
+        return req.path_info == '/blog'
 
     def process_request(self, req):
         add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
-        if req.path_info == '/blog':
-            self._generate_blog(req, 'blog')
-            return 'blog.cs', None
-        else:
-            self._new_blog_post(req)
-            return 'new_blog.cs', None
-
-    def _new_blog_post(self, req):
-        """ Generate a new blog post
-
-        """
-        action = req.args.get('action', 'edit')
-        pg_name_fmt = self.env.config.get('blog', 'page_format', 
-                                          '%Y/%m/%d/%H.%M')
-        self.log.debug("page format: %s" % pg_name_fmt)
-        pagename = req.args.get('pagename', time.strftime(pg_name_fmt))
-        self.log.debug("page name: %s" % pagename)
-        if req.method == 'POST':
-            if action == 'edit':
-                if req.args.has_key('cancel'):
-                    req.redirect(self.env.href.blog())
-                page = WikiPage(self.env, pagename, None)
-                tags = TagEngine(self.env).tagspace.wiki
-                if req.args.has_key('preview'):
-                    req.hdf['blog.action'] = 'preview'
-                    self._render_editor(req, page, self.env.get_db_cnx(),
-                                        preview=True) 
-                else:
-                    title = req.args.get('blogtitle')
-                    titleline = ' '.join(["=", title, "=\n"])
-                    if title:
-                        page.text = ''.join([titleline, req.args.get('text')])
-                    else:
-                        page.text = req.args.get('text')
-                    page.readonly = int(req.args.has_key('readonly'))
-                    page.save(req.authname, req.args.get('comment'), 
-                              req.remote_addr)
-                    taglist = [x.strip() for x in req.args.get('tags').split(',') if x]
-                    for t in taglist:
-                        tags.add_tag(req, pagename, t)
-                    req.redirect(self.env.href.blog())
-        else:
-            req.hdf['blog.pagename'] = pagename
-            req.hdf['blog.edit_rows'] = 20
-            tlist = req.args.getlist('tag')
-            req.hdf['tags'] = ', '.join(tlist)
-            pass
-
-    def _render_editor(self, req, page, db, preview=False):
-        title = req.args.get('blogtitle')
-        titleline = ' '.join(["=", title, "=\n"])
-        if req.args.has_key('text'):
-            page.text = req.args.get('text')
-        if preview:
-            page.readonly = req.args.has_key('readonly')
-
-        author = req.authname
-        comment = req.args.get('comment', '')
-        editrows = req.args.get('editrows')
-        tags = req.args.get('tags')
-        req.hdf['tags'] = tags
-        if editrows:
-            pref = req.session.get('wiki_editrows', '20')
-            if editrows != pref:
-                req.session['wiki_editrows'] = editrows
-        else:
-            editrows = req.session.get('wiki_editrows', '20')
-
-        req.hdf['title'] = page.name + ' (edit)'
-        info = {
-            'title' : title,
-            'pagename': page.name,
-            'page_source': page.text,
-            'author': author,
-            'comment': comment,
-            'readonly': page.readonly,
-            'edit_rows': editrows,
-            'scroll_bar_pos': req.args.get('scroll_bar_pos', '')
-        }
-        if preview:
-            if title:
-                info['page_html'] = wiki_to_html(''.join([titleline, 
-                                                req.args.get('text')]),
-                                                self.env, req, db)
-            else:
-                info['page_html'] = wiki_to_html(page.text, self.env, req, db)
-            info['readonly'] = int(req.args.has_key('readonly'))
-        req.hdf['blog'] = info
+        tags = req.args.getlist('tag')
+        kwargs = {}
+        for key,value in req.args.items():
+            if key != 'tag':
+                kwargs[key] = value
+            continue
+        if not tags:
+            tags = [self.env.config.get('blog', 'default_tag', 'blog')]
+        self._generate_blog(req, *tags, **kwargs)
+        return 'blog.cs', None
 
     def _generate_blog(self, req, *args, **kwargs):
-        """
-            Generate the blog and fill the hdf.
+        """Extract the blog pages and fill the HDF.
 
-            *args is a list of tags to use to limit the blog scope
-            **kwargs are any aditional keyword arguments that are needed
+        *args is a list of tags to use to limit the blog scope
+        **kwargs are any aditional keyword arguments that are needed
         """
         tags = TagEngine(self.env).tagspace.wiki
         try:
@@ -210,34 +139,33 @@ class TracBlogPlugin(Component):
         # Formatting
         read_post = "[wiki:%s Read Post]"
         entries = {}
-        if (not union) and (len(args) > 1):
-            tag_group = {}
-            for tag in args:
-                tag_group[tag] = tags.get_tagged_names(tag)
-            tag_set = tag_group[args[0]]
-            for tag in args[1:]:
-                tag_set = tag_set.intersection(tag_group[tag])
-            blog = tag_set
-        elif not len(args):
-            blog = tags.get_tagged_names('blog') 
+        if not len(args):
+            tlist = [self.env.config.get('blog', 'default_tag', 'blog')]
         else:
-            blog = tags.get_tagged_names(*args) 
-        
-        for blog_entry in blog:
-            page = WikiPage(self.env, name=blog_entry)
-            version, wtime, author, comment, ipnr = page.get_history().next()
-            time_format = self.env.config.get('blog', 'date_format') or '%x %X'
-            timeStr = format_datetime(wtime, format=time_format) 
-            data = {
-                    'wiki_link' : wiki_to_oneliner(read_post % blog_entry,
-                                                   self.env),
-                    'time'      : timeStr,
-                    'author'    : author,
-                    'wiki_text' : wiki_to_html(page.text, self.env, req),
-                    'comment'   : wiki_to_oneliner(comment, self.env),
-                   }
-            entries[wtime] = data
-            continue
+            tlist = args
+        if union:
+            blog = tags.get_tagged_names(tlist, operation='union')
+        else:
+            blog = tags.get_tagged_names(tlist, operation='intersection')
+        self.log.debug("blog: %s" % str(blog)) 
+        for tagspace in blog.keys():
+            for blog_entry in blog[tagspace]:
+                page = WikiPage(self.env, name=blog_entry)
+                version, wtime, author, comment, ipnr = page.get_history(
+                                                        ).next()
+                time_format = self.env.config.get('blog', 'date_format') or \
+                              '%x %X'
+                timeStr = format_datetime(wtime, format=time_format) 
+                data = {
+                        'wiki_link' : wiki_to_oneliner(read_post % blog_entry,
+                                                       self.env),
+                        'time'      : timeStr,
+                        'author'    : author,
+                        'wiki_text' : wiki_to_html(page.text, self.env, req),
+                        'comment'   : wiki_to_oneliner(comment, self.env),
+                       }
+                entries[wtime] = data
+                continue
         tlist = entries.keys()
         # Python 2.4ism
         # tlist.sort(reverse=True)
@@ -246,6 +174,7 @@ class TracBlogPlugin(Component):
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         pass
 
+    # ITemplateProvider
     def get_templates_dirs(self):
         """
             Return the absolute path of the directory containing the provided

@@ -24,10 +24,8 @@
     <form id="edit" method="post">
         <fieldset class="iefix">
             <input type="hidden" name="action" value="edit" />
-<!--
             <input type="hidden" id="scroll_bar_pos" name="scroll_bar_pos" 
             value="<?cs var:wiki.scroll_bar_pos ?>" />
--->
             <div class="field">
                 <label>Entry Title<br />
                     <input id="comment" type="text" name="blogtitle" size="60" 
