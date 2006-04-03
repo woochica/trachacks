@@ -145,7 +145,7 @@ class TracBlogPlugin(Component):
                               req.remote_addr)
                     taglist = [x.strip() for x in req.args.get('tags').split(',') if x]
                     for t in taglist:
-                        tags.add(req, pagename, t)
+                        tags.add_tag(req, pagename, t)
                     req.redirect(self.env.href.blog())
         else:
             req.hdf['blog.pagename'] = pagename
@@ -176,6 +176,7 @@ class TracBlogPlugin(Component):
 
         req.hdf['title'] = page.name + ' (edit)'
         info = {
+            'title' : title,
             'pagename': page.name,
             'page_source': page.text,
             'author': author,
@@ -186,7 +187,7 @@ class TracBlogPlugin(Component):
         }
         if preview:
             if title:
-                info['page_htm'] = wiki_to_html(''.join([titleline, 
+                info['page_html'] = wiki_to_html(''.join([titleline, 
                                                 req.args.get('text')]),
                                                 self.env, req, db)
             else:
@@ -238,7 +239,10 @@ class TracBlogPlugin(Component):
             entries[wtime] = data
             continue
         tlist = entries.keys()
-        tlist.sort(reverse=True)
+        # Python 2.4ism
+        # tlist.sort(reverse=True)
+        tlist.sort()
+        tlist.reverse()
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         pass
 
