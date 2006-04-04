@@ -188,11 +188,19 @@ class TracBlogPlugin(Component):
         Parameters can be passed in via the req object or via **kwargs.  
         **kwargs always overrides the req object.  In practice, this shouldn't
         matter much as the macro will use **kwargs and the nav item will use
-        req.  Just documenting behavior
+        req.  Just documenting behavior.
 
-        The range of days can be specified in multiple ways. To specify an
-        arbitraty date range, simply set the startdate and enddate request
-        arguments or pass them in via **kwargs.
+        The range of days can be specified in multiple ways.
+        * Specify date range with startdate and enddate.  Value should be 
+          seconds since epoch
+        * Specify startdate and delta. delta should be a number of seconds.
+        * Specify any combination of year, month, day.  If any one of the
+          values is specified, then it will use this method in place of 
+          startdate, enddate and delta.  If a value is missing that is required
+          such as a year if month is specified, then it deafults to the current
+          value.  Otherwise it generates a range according to the values passed
+          in.  For example, year=2006 and month=12 will return all posts for 
+          December 2006.
 
         """
 

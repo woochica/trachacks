@@ -1,9 +1,20 @@
 <h2>Blog Admin<?cs if blogadmin.page == 'defaults' ?> -- Defaults<?cs /if ?></h2>
 
 <?cs if blogadmin.page == 'defaults' ?>
+<div class="blogoptions">
     <form class="mod" id="modbasic" method="post">
         <fieldset>
             <legend>Defaults</legend>
+            <div id="content" class="wiki">
+                <div class="wikipage">
+                    <div class="blogdocs">
+                        <fieldset>
+                            <legend>Docs</legend>
+                            <?cs var:blogadmin.docs ?>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
             <div class="field">
                 <label>Date Format String:<br />
                     <input type="text" name="date_format" 
@@ -35,9 +46,10 @@
                     value="<?cs var:blogadmin.history_days ?>" />
                 </label>
             </div>
-        </fieldset>
         <div class="buttons">
             <input type="submit" value="Apply Changes" />
         </div>
+        </fieldset>
     </form>
+</div>
 <?cs /if ?>
