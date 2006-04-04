@@ -35,11 +35,11 @@ class BlogPost(Component):
     Accepts keyword arguments that specify default parameters. 
 
     '''tag''' - Tag that populates the "Tag under" field.  This key may be 
-    specified multiple times.
-    '''blogtitle''' - Default blog entry title.
-    '''text''' - Default entry body text.
-    '''pagename''' - Default wiki page name.
-    '''readonly''' - Default readonly page status.
+    specified multiple times.[[br]]
+    '''blogtitle''' - Default blog entry title.[[br]]
+    '''text''' - Default entry body text.[[br]]
+    '''pagename''' - Default wiki page name.[[br]]
+    '''readonly''' - Default readonly page status.[[br]]
 
     === Examples ===
     {{{
@@ -140,8 +140,9 @@ class BlogPost(Component):
                     page.readonly = readonly
                     page.save(req.authname, comment, req.remote_addr)
                     taglist = [x.strip() for x in req_tags.split(',') if x]
-                    for t in taglist:
-                        tags.add_tag(req, pagename, t)
+#                    for t in taglist:
+#                        tags.add_tags(req, pagename, t)
+                    tags.add_tags(req, pagename, taglist)
                     req.redirect(self.env.href.blog())
         else:
             info = {
@@ -163,7 +164,7 @@ class BlogPost(Component):
 
     def _render_editor(self, req, page, db, preview=False):
         blogtitle = req.args.get('blogtitle')
-        titleline = ' '.join(["=", title, "=\n"])
+        titleline = ' '.join(["=", blogtitle, "=\n"])
         if req.args.has_key('text'):
             page.text = req.args.get('text')
         if preview:
@@ -183,7 +184,7 @@ class BlogPost(Component):
 
         req.hdf['title'] = page.name + ' (edit)'
         info = {
-            'title' : title,
+            'title' : blogtitle,
             'pagename': page.name,
             'page_source': page.text,
             'author': author,
@@ -193,7 +194,7 @@ class BlogPost(Component):
             'scroll_bar_pos': req.args.get('scroll_bar_pos', '')
         }
         if preview:
-            if title:
+            if blogtitle:
                 info['page_html'] = wiki_to_html(''.join([titleline, 
                                                 req.args.get('text')]),
                                                 self.env, req, db)

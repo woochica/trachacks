@@ -20,6 +20,15 @@
     <div id="searchable">
 <?cs /if ?>
 
+<?cs if ! 1 ?>
+<div class="blognav">
+    This is some navigation things
+    <ul>Posts Per Month:
+        <li>March (7)</li>
+    </ul>
+</div>
+<?cs /if ?>
+
 <div class="blog">
     <?cs each:bentry = blog.entries ?>
     <div class="post">

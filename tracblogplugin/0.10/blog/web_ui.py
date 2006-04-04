@@ -182,6 +182,20 @@ class TracBlogPlugin(Component):
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         pass
 
+    def _get_time_range(self, req, **kwargs):
+        """Return a start and end date range
+
+        Parameters can be passed in via the req object or via **kwargs.  
+        **kwargs always overrides the req object.  In practice, this shouldn't
+        matter much as the macro will use **kwargs and the nav item will use
+        req.  Just documenting behavior
+
+        The range of days can be specified in multiple ways. To specify an
+        arbitraty date range, simply set the startdate and enddate request
+        arguments or pass them in via **kwargs.
+
+        """
+
     def _trim_page(self, text, page_name):
         """Trim the page text to the {{{post_size}} in trac.ini
 
