@@ -3,7 +3,8 @@
 from trac.core import *
 from trac.util import escape
 from trac.wiki.formatter import Formatter, wiki_to_oneliner
-from trac.wiki.api import IWikiMacroProvider
+from trac.wiki.api import IWikiMacroProvider, WikiSystem
+from trac.wiki.model import WikiPage
 from StringIO import StringIO
 import os, re, string, inspect
 
@@ -117,44 +118,52 @@ class TracTocMacro(Component):
 
     def render_macro(self, req, name, args):
         db = self.env.get_db_cnx()
-        if not args:
-            args = ''
-        if not req.hdf.has_key('wiki.page_name'): return ''
-        pre_pages = re.split('\s*,\s*', args)
+        
+        # If this is a page preview, try to figure out where its from
+        if not req.hdf.has_key('wiki.page_name'):
+            md = re.match(self.env.href.wiki()+'/(.*)',req.path_info)
+            if md:
+                req.args.hdf['wiki.page_name'] = md.group(1)
+            else:
+                return ''
+                
+        # Split the args
+        if not args: args = ''
+        args = [x.strip() for x in args.split(',')]
         # Options
         inline = False
         heading_def = 'Table of Contents'
         heading = ''
-        pages = []
+        pagenames = []
         root = ''
         params = { }
         title_index = False
         # Global options
-        for page in pre_pages:
-            if page == 'inline':
+        for arg in args:
+            if arg == 'inline':
                 inline = True
-            elif page == 'noheading':
+            elif arg == 'noheading':
                 heading = None
-            elif page == 'notitle':
+            elif arg == 'notitle':
                 params['min_depth'] = 2     # Skip page title
-            elif page == 'titleindex':
+            elif arg == 'titleindex':
                 params['title_index'] = True
                 heading_def = None
                 title_index = True
-            elif page[:8] == 'heading=':
-                heading = page[8:]
-            elif page == '':
+            elif arg.startswith('heading='):
+                heading = arg[8:]
+            elif arg == '':
                 continue
-            elif page[:6] == 'depth=':
-                params['max_depth'] = int(page[6:])
-            elif page[:5] == 'root=':
-                root = page[5:]
+            elif arg.startswith('depth='):
+                params['max_depth'] = int(arg[6:])
+            elif arg.startswith('root='):
+                root = arg[5:]
             else:
-                pages.append(page)
-
+                pagenames.append(arg)
+        
         # Has the user supplied a list of pages?
-        if not pages:
-            pages.append(req.hdf.getValue('wiki.page_name', 'WikiStart'))
+        if not pagenames:
+            pagenames.append(req.hdf.getValue('wiki.page_name', 'WikiStart'))
             root = ''
             params['min_depth'] = 2     # Skip page title
 
@@ -166,44 +175,24 @@ class TracTocMacro(Component):
         if heading:
             out.write("<h4>%s</h4>\n" % heading)
         out.write("<ol>\n")
-        for page in pages:
+        for pagename in pagenames:
             if title_index:
-                cursor = db.cursor()
-                prefix = (page.split('/'))[0]
+                prefix = (pagename.split('/'))[0]
                 prefix = prefix.replace('\'', '\'\'')
-                sql = 'SELECT DISTINCT name FROM wiki '
-                if prefix:
-                    sql += 'WHERE name LIKE \'%s/%%\' ' % prefix
-                sql += 'ORDER BY name'
-                cursor.execute(sql)
                 i = 0
-                while 1:
-                    page_row = cursor.fetchone()
-                    if page_row == None:
-                        if i == 0:
-                            out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % prefix)
-                        break
+                for page in WikiSystem(self.env).get_pages(prefix):
                     i += 1
-                    cursor2 = db.cursor()
-                    cursor2.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page_row[0])
-                    text_row = cursor2.fetchone()
-                    self.parse_toc(out, page_row[0], text_row[0], **params)
-
+                    page_text = WikiPage(self.env,page).text
+                    self.parse_toc(out, page, page_text, **params)
+                if i == 0:
+                    out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % prefix)
             else:
-                # Override arguments
-                if page[:6] == 'depth=':
-                    params['max_depth'] = int(page[6:])
-                elif page[:5] == 'root=':
-                    root = page[5:]
+                pagename = root + pagename
+                page = WikiPage(self.env,pagename)
+                if page.exists:
+                    self.parse_toc(out, pagename, page.text, **params)
                 else:
-                    page = root + page
-                    cursor = db.cursor()
-                    cursor.execute("SELECT text FROM wiki WHERE name='%s' ORDER BY version desc LIMIT 1" % page)
-                    row = cursor.fetchone()
-                    if row:
-                        self.parse_toc(out, page, row[0], **params)
-                    else:
-                        out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % page)
+                    out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % pagename)
         out.write("</ol>\n")
         if not inline:
             out.write("</div>\n")
