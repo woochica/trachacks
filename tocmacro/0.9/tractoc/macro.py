@@ -120,39 +120,45 @@ class TracTocMacro(Component):
         db = self.env.get_db_cnx()
         
         # If this is a page preview, try to figure out where its from
+        current_page = req.hdf.getValue('wiki.page_name','WikiStart')
+        in_preview = False
         if not req.hdf.has_key('wiki.page_name'):
             if req.path_info.startswith('/wiki/'):
-                req.hdf['wiki.page_name'] = req.path_info[6:]
+                current_page = req.path_info[6:]
+                in_preview = True
             else:
                 return ''
+         
+        def get_page_text(pagename):
+            """Return a tuple of (text, exists) for a page, taking into account previews."""
+            if in_preview and pagename == current_page:
+                return (req.args.get('text',''), True)
+            else:
+                page = WikiPage(self.env,pagename)
+                return (page.text, page.exists)            
                 
         # Split the args
         if not args: args = ''
         args = [x.strip() for x in args.split(',')]
         # Options
         inline = False
-        heading_def = 'Table of Contents'
-        heading = ''
+        heading = 'Table of Contents'
         pagenames = []
         root = ''
-        params = { }
-        title_index = False
+        params = { 'title_index': False}
         # Global options
         for arg in args:
             if arg == 'inline':
                 inline = True
             elif arg == 'noheading':
-                heading = None
+                heading = ''
             elif arg == 'notitle':
                 params['min_depth'] = 2     # Skip page title
             elif arg == 'titleindex':
                 params['title_index'] = True
-                heading_def = None
-                title_index = True
+                heading = ''
             elif arg.startswith('heading='):
                 heading = arg[8:]
-            elif arg == '':
-                continue
             elif arg.startswith('depth='):
                 params['max_depth'] = int(arg[6:])
             elif arg.startswith('root='):
@@ -162,34 +168,32 @@ class TracTocMacro(Component):
         
         # Has the user supplied a list of pages?
         if not pagenames:
-            pagenames.append(req.hdf.getValue('wiki.page_name', 'WikiStart'))
+            pagenames.append(current_page)
             root = ''
             params['min_depth'] = 2     # Skip page title
 
         out = StringIO()
         if not inline:
             out.write("<div class='wiki-toc'>\n")
-        if heading == '':
-            heading = heading_def
         if heading:
             out.write("<h4>%s</h4>\n" % heading)
         out.write("<ol>\n")
         for pagename in pagenames:
-            if title_index:
+            if params['title_index']:
                 prefix = (pagename.split('/'))[0]
                 prefix = prefix.replace('\'', '\'\'')
                 i = 0
                 for page in WikiSystem(self.env).get_pages(prefix):
                     i += 1
-                    page_text = WikiPage(self.env,page).text
+                    page_text, _ = get_page_text(page)
                     self.parse_toc(out, page, page_text, **params)
                 if i == 0:
                     out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % prefix)
             else:
-                pagename = root + pagename
-                page = WikiPage(self.env,pagename)
-                if page.exists:
-                    self.parse_toc(out, pagename, page.text, **params)
+                page = root + pagename
+                page_text, page_exists = get_page_text(page)
+                if page_exists:
+                    self.parse_toc(out, page, page_text, **params)
                 else:
                     out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % pagename)
         out.write("</ol>\n")
