@@ -121,9 +121,8 @@ class TracTocMacro(Component):
         
         # If this is a page preview, try to figure out where its from
         if not req.hdf.has_key('wiki.page_name'):
-            md = re.match(self.env.href.wiki()+'/(.*)',req.path_info)
-            if md:
-                req.args.hdf['wiki.page_name'] = md.group(1)
+            if req.path_info.startswith('/wiki/'):
+                req.hdf['wiki.page_name'] = req.path_info[6:]
             else:
                 return ''
                 
