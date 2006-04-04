@@ -21,6 +21,7 @@ from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.perm import IPermissionRequestor
 from trac.util import Markup, doctrim
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html
@@ -50,7 +51,19 @@ class BlogPost(Component):
     }}}
     """
 
-    implements(IRequestHandler, ITemplateProvider, IWikiMacroProvider)
+    implements(IRequestHandler, ITemplateProvider, IWikiMacroProvider, 
+               IPermissionRequestor)
+
+    # IPermissionRequestor
+    def get_permission_actions(self):
+        return ['BLOG_POSTER']
+
+    # IAdminPageProvider methods
+    def get_admin_pages(self, req):
+        if req.perm.has_permission('BLOG_ADMIN'):
+            yield ('blog', 'Blog System', 'defaults', 'Defaults')
+
+
 
     # IWikiMacroProvider
     def get_macros(self):
@@ -62,12 +75,18 @@ class BlogPost(Component):
 
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
-        add_stylesheet(req, 'blog/css/blog.css')
-        args, kwargs = self._split_macro_args(content)
-        blog_link = self.env.config.get('blog', 'new_blog_link', 
-                                        'New Blog Post')
-        return Markup('<a href="%s">%s</a>', self.env.href.blog('new',**kwargs),
-                      blog_link)
+        if req.perm.has_permission('BLOG_POSTER'):
+            add_stylesheet(req, 'blog/css/blog.css')
+            args, kwargs = self._split_macro_args(content)
+            try:
+                blog_link = kwargs['link']
+            except KeyError:
+                blog_link = self.env.config.get('blog', 'new_blog_link', 
+                                                'New Blog Post')
+            return Markup('<a href="%s">%s</a>', 
+                          self.env.href.blog('new',**kwargs),
+                          blog_link)
+        return ''
 
     def _split_macro_args(self, argv):
         """Return a list of arguments and a dictionary of keyword arguments
