@@ -50,3 +50,10 @@
     margin: 0.5em;
 */
 }
+
+.updated p {
+    font-size: 90%;
+    font-style: italic;
+    font-weight: bold;
+}
+

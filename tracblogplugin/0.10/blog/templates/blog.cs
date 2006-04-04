@@ -35,6 +35,11 @@
     <?cs each:bentry = blog.entries ?>
     <div class="post">
         <p><?cs var:bentry.wiki_text ?></p>
+        <?cs if bentry.modified ?>
+            <div class="updated">
+                <p>Updated on <?cs var:bentry.mod_time ?></p>
+            </div>
+        <?cs /if ?>
         <div class="postmeta">
             <ul>
                 <li><?cs var:bentry.wiki_link ?></li>

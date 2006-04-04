@@ -141,13 +141,16 @@ class TracBlogPlugin(Component):
         cutoff = time.mktime((now - history_diff).timetuple())
         for tagspace in blog.keys():
             for blog_entry in blog[tagspace]:
+                page = WikiPage(self.env, version=1, name=blog_entry)
+                version, post_time, author, comment, ipnr = page.get_history(
+                                                            ).next()
                 page = WikiPage(self.env, name=blog_entry)
-                version, wtime, author, comment, ipnr = page.get_history(
-                                                        ).next()
-                if wtime >= cutoff:       
+                version, modified, author, comment, ipnr = page.get_history(
+                                                           ).next()
+                if post_time >= cutoff:       
                     time_format = self.env.config.get('blog', 'date_format') \
                                   or '%x %X'
-                    timeStr = format_datetime(wtime, format=time_format) 
+                    timeStr = format_datetime(post_time, format=time_format) 
                     text = self._trim_page(page.text, blog_entry)
                     data = {
                             'wiki_link' : wiki_to_oneliner(read_post % 
@@ -158,7 +161,11 @@ class TracBlogPlugin(Component):
                             'wiki_text' : wiki_to_html(text, self.env, req),
                             'comment'   : wiki_to_oneliner(comment, self.env),
                            }
-                    entries[wtime] = data
+                    if modified != post_time:
+                        data['modified'] = 1
+                        mod_str = format_datetime(post_time, format=time_format)
+                        data['mod_time'] = mod_str
+                    entries[post_time] = data
                 continue
         tlist = entries.keys()
         # Python 2.4ism
