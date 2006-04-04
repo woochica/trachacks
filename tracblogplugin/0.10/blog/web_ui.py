@@ -76,7 +76,8 @@ class TracBlogPlugin(Component):
         add_stylesheet(req, 'blog/css/blog.css')
         tags, kwargs = self._split_macro_args(content)
         if not tags:
-            tags = [self.env.config.get('blog', 'default_tag', 'blog')]
+            tstr = self.env.config.get('blog', 'default_tag', 'blog')
+            tags = [t.strip() for t in tstr.split(',') if t]
         self._generate_blog(req, *tags, **kwargs)
         req.hdf['blog.macro'] = True
         return req.hdf.render('blog.cs')
@@ -85,30 +86,10 @@ class TracBlogPlugin(Component):
         """Return a list of arguments and a dictionary of keyword arguements
 
         """
-#        argv = argv or ''
-#        parms = [x.strip() for x in argv.split(',') if x]
-#        self.log.debug("parms: %s" % str(parms))
-#        kargs = [x for x in parms if x.find('=') >= 0]
-#        self.log.debug("kargs: %s" % str(kargs))
-#        args = [x for x in parms if x not in kargs]
-#        self.log.debug("args: %s" % str(args))
-#        kwargs = {}
-#        for x in kargs:
-#            key, value = x.split('=')
-#            key = key.strip()
-#            value = value.strip()
-#            if isinstance(key, unicode):
-#                key = key.encode('ascii')
-#                value = value.encode('ascii')
-#            if kwargs.has_key(key):
-#                if isinstance(key, list):
-#                    kwargs[key].append(value)
-#                else:
-#                    kwargs[key] = [kwargs[key], value]
-#            else:
-#                kwargs[key] = value
-#        self.log.debug("kwargs: %s" % str(kwargs))
-        args, kwargs = parseargs(argv)
+        args = []
+        kwargs = {}
+        if argv:
+            args, kwargs = parseargs(argv)
         return args, kwargs
 
     def match_request(self, req):
@@ -119,12 +100,15 @@ class TracBlogPlugin(Component):
         add_stylesheet(req, 'common/css/wiki.css')
         tags = req.args.getlist('tag')
         kwargs = {}
-        for key,value in req.args.items():
+        #for key,value in req.args.items():
+        for key in req.args.keys():
             if key != 'tag':
-                kwargs[key] = value
+                #kwargs[key] = value
+                kwargs[key] = req.args[key]
             continue
         if not tags:
-            tags = [self.env.config.get('blog', 'default_tag', 'blog')]
+            tstr = self.env.config.get('blog', 'default_tag', 'blog')
+            tags = [t.strip() for t in tstr.split(',') if t]
         self._generate_blog(req, *tags, **kwargs)
         return 'blog.cs', None
 
