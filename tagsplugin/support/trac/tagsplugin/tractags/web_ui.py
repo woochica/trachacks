@@ -26,10 +26,10 @@ class TagsWikiModule(WikiModule):
             newtags = set([t.strip() for t in
                           _tag_split.split(req.args.get('tags')) if t.strip()])
             wikitags = TagEngine(self.env).tagspace.wiki
-            oldtags = wikitags.get_tags(page.name)
+            oldtags = wikitags.get_tags([page.name])
 
             if oldtags != newtags:
-                wikitags.replace_tags(req, page.name, *newtags)
+                wikitags.replace_tags(req, page.name, newtags)
                 # No changes, just redirect
                 if req.args.get('text') == page.text:
                     req.redirect(self.env.href.wiki(page.name))
@@ -47,7 +47,7 @@ class TagsWikiModule(WikiModule):
 
         engine = TagEngine(self.env)
         wikitags = engine.tagspace.wiki
-        tags = list(wikitags.get_tags(pagename))
+        tags = list(wikitags.get_tags([pagename]))
         tags.sort()
 
         if action == 'edit':

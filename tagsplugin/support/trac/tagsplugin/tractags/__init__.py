@@ -2,8 +2,8 @@
 See tractags.api for detailed information.
 """
 
-from api import *
-from macros import *
-from web_ui import *
-from ticket import *
-from wiki import *
+import api
+import macros
+import web_ui
+import ticket
+import wiki

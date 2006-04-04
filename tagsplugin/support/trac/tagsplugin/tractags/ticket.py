@@ -2,6 +2,7 @@ from trac.core import *
 from tractags.api import ITaggingSystemProvider, TaggingSystem
 from trac.ticket.query import Query
 from trac.ticket import model
+from trac.util import sorted
 import re
 
 try:
@@ -16,66 +17,65 @@ class TicketTaggingSystem(TaggingSystem):
         self.env = env
 
     def _ticket_tags(self, ticket):
-        return self._keyword_split.findall(ticket['keywords'])
+        return set(self._keyword_split.findall(ticket['keywords']))
 
-    def _get_tags(self, *names):
-        tags = set()
+    def walk_tagged_names(self, names, tags, predicate):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT keywords FROM ticket'
-        if names:
-            names = [int(n) for n in names]
-            sql += ' WHERE id IN (%s)' % ', '.join([str(n) for n in names])
-        cursor.execute(sql)
-        for row in cursor:
-            if row[0] is not None:
-                tags.update(self._keyword_split.findall(row[0]))
-        return tags
-        
-    def _get_tagged(self, *tags):
         tags = set(tags)
+        names = set(names)
+        args = []
+        sql = "SELECT id, keywords FROM ticket WHERE keywords IS NOT NULL AND keywords != ''"
+        if names:
+            sql += " AND id IN (" + ', '.join(['%s' for n in names]) + ")"
+            args += [str(n) for n in names]
+        if tags:
+            sql += " AND (" + ' OR '.join("keywords LIKE %s" for t in tags) + ")"
+            args += ['%' + t + '%' for t in tags]
+        sql += " ORDER BY id"
+        cursor.execute(sql, args)
+        for id, ttags in cursor:
+            ticket_tags = set(self._keyword_split.findall(ttags))
+            if not tags or ticket_tags.intersection(tags):
+                if predicate(id, ticket_tags):
+                    yield (id, ticket_tags)
+                
+    def get_tags(self, name):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT id, keywords FROM ticket ORDER BY id')
-        for ticket in cursor:
-            if ticket[1] is not None:
-                ttags = set(self._keyword_split.findall(ticket[1]))
-                if not tags and ttags or tags.intersection(ttags):
-                    yield ticket[0]
+        cursor.execute("SELECT keywords FROM ticket WHERE id=%s AND keywords IS NOT NULL AND keywords != ''", (name,))
+        for row in cursor:
+            return set(self._keyword_split.findall(row[0]))
 
-    def get_tagged_names(self, tagspace, *tags):
-        return set([id for id in self._get_tagged(*tags)])
-
-    def get_tags(self, tagspace, *names):
-        return self._get_tags(*names)
-
-    def add_tag(self, tagspace, req, name, tag):
+    def add_tags(self, req, name, tags):
         assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
-        tags = self._ticket_tags(ticket)
-        if tag not in tags:
-            ticket['keywords'] = '%s %s' % (ticket['keywords'], tag)
-            ticket.save_changes(req.authname, None)
-
-    def replace_tags(self, tagspace, req, name, *tags):
-        assert req.perm.assert_permission('TICKET_CHGPROP')
-        ticket = model.Ticket(self.env, name)
-        ticket['keywords'] = ' '.join(tags)
+        ticket_tags = self._ticket_tags(ticket)
+        ticket_tags.update(tags)
+        ticket['keywords'] = ' '.join(sorted(ticket_tags))
         ticket.save_changes(req.authname, None)
 
-    def remove_tag(self, tagspace, req, name, tag):
+    def replace_tags(self, req, name, tags):
         assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
-        ticket['keywords'] = re.sub(r'\b%s\b' % tag, '', ticket['keywords'])
+        ticket['keywords'] = ' '.join(sorted(tags))
         ticket.save_changes(req.authname, None)
 
-    def remove_all_tags(self, tagspace, req, name):
+    def remove_tags(self, req, name, tags):
         assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
-        del ticket['keywords']
+        ticket_tags = self._ticket_tags(ticket)
+        ticket_tags.symmetric_difference_update(tags)
+        ticket['keywords'] = ' '.join(sorted(ticket_tags))
         ticket.save_changes(req.authname, None)
 
-    def name_details(self, tagspace, name):
+    def remove_all_tags(self, req, name):
+        assert req.perm.assert_permission('TICKET_CHGPROP')
+        ticket = model.Ticket(self.env, name)
+        ticket['keywords'] = ''
+        ticket.save_changes(req.authname, None)
+
+    def name_details(self, name):
         ticket = model.Ticket(self.env, name)
         href = self.env.href.ticket(name)
         from trac.wiki.formatter import wiki_to_oneliner

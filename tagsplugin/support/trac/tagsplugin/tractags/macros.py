@@ -1,7 +1,7 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import model 
-from trac.util import Markup
+from trac.util import Markup, sorted
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from StringIO import StringIO
 from tractags.api import TagEngine, ITagSpaceUser
@@ -27,11 +27,11 @@ class TagMacros(Component):
             titles[pagename] = title
         return titles
 
-    def _tag_details(self, tags):
+    def _tag_details(self, links, tags):
         """ Extract dictionary of tag:(href, title) for all tags. """
-        links = {}
         for tag in tags:
-            links[tag] = TagEngine(self.env).get_tag_link(tag)
+            if tag not in links:
+                links[tag] = TagEngine(self.env).get_tag_link(tag)
         return links
 
     def _current_page(self, req):
@@ -71,32 +71,28 @@ class TagMacros(Component):
             can be overridden with tagspaces=(wiki, ticket) or tagspace=wiki."""
         smallest = int(smallest)
         biggest = int(biggest)
+        engine = TagEngine(self.env)
         # Get wiki tagspace
         if tagspace:
             tagspaces = [tagspace]
         else:
-            tagspaces = tagspaces or TagEngine(self.env).tagspaces
+            tagspaces = tagspaces or engine.tagspaces
         cloud = {}
 
-        for tagspace in tagspaces:
-            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
-            for tag in tagsystem.get_tags():
-                count = tagsystem.count_tagged_names(tag)
-                if tag in cloud:
-                    count += cloud[tag]
-                cloud[tag] = count
+        for tag, names in engine.get_tags(tagspaces=tagspaces, detailed=True).iteritems():
+            cloud[tag] = len(names)
 
         tags = cloud.keys()
+
+        # No tags?
+        if not tags: return ''
 
         # by_count maps tag counts to an index in the set of counts
         by_count = list(set(cloud.values()))
         by_count.sort()
         by_count = dict([(c, float(i)) for i, c in enumerate(by_count)])
 
-        # No tags?
-        if not tags: return ''
-
-        taginfo = self._tag_details(tags)
+        taginfo = self._tag_details({}, tags)
         tags.sort()
         rlen = float(biggest - smallest)
         tlen = float(len(by_count))
@@ -128,9 +124,9 @@ class TagMacros(Component):
             Optional keyword arguments are tagspace=wiki,
             tagspaces=(wiki, title, ...) and showheadings=true.
 
-            By default displays the union of objects matching each tag. By
-            passing operation=intersection this can be modified to display
-            the intersection of objects matching each tag.
+            By default displays the intersection of objects matching each tag.
+            By passing operation=union this can be modified to display
+            the union of objects matching each tag.
         """
 
         if 'tagspace' in kwargs:
@@ -140,82 +136,35 @@ class TagMacros(Component):
                         list(TagEngine(self.env).tagspaces)
         showheadings = kwargs.get('showheadings', 'false')
         operation = kwargs.get('operation', 'union')
+        if operation not in ('union', 'intersection'):
+            raise TracError("Invalid tag set operation '%s'" % operation)
 
-        alltags = set()
-        tags = set([str(x) for x in tags])
-        if '.' in tags:
-            page = self._current_page(req)
-            if page:
-                tags.add(page)
-            tags.remove('.')
+        engine = TagEngine(self.env)
+        page_name = req.hdf.get('wiki.page_name')
+        if page_name:
+            tags = [tag == '.' and page_name or tag for tag in tags]
 
-        tagged_names = set()
-
-        if tags:
-            tag_sets = {}
-            for tagspace in tagspaces:
-                tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
-                for tag in tags:
-                    for name in tagsystem.get_tagged_names(tag):
-                        if tagspace == 'wiki' and name.startswith('tags/'):
-                            continue
-                        tag_sets.setdefault(tag, set()).add((tagspace, name))
-
-            if operation == 'union':
-                for tag, names in tag_sets.iteritems():
-                    tagged_names.update(names)
-            elif operation == 'intersection':
-                iter = tag_sets.iteritems()
-                tag, names = iter.next()
-                tagged_names = set(names)
-                for tag, names in iter:
-                    tagged_names.intersection_update(names)
-            else:
-                raise TracError("Invalid tag set operation '%s'" % operation)
-        else:
-            # Special-case optimisation for all tags
-            for tagspace in tagspaces:
-                tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
-                for name in tagsystem.get_tagged_names():
-                    if tagspace == 'wiki' and name.startswith('tags/'):
-                        continue
-                    tagged_names.add((tagspace, name))
-        names = {}
-        for tagspace, name in tagged_names:
-            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
-            ntags = list(tagsystem.get_tags(name))
-            alltags.update(ntags)
-            names.setdefault((tagspace, name), {
-                'tags': ntags,
-                'tagsystem': tagsystem,
-            })
-
-        # Get tag page titles, if any
-        taginfo = self._tag_details(alltags)
-
-        # List names and tags
-        keys = names.keys()
-        keys.sort()
-        current_ns = None
+        taginfo = {}
         out = StringIO()
         out.write('<ul class="listtagged">')
-        for tagspace, name in keys:
-            if showheadings == 'true' and tagspace != current_ns:
+        for tagspace, tagspace_names in sorted(engine.get_tagged_names(tags=tags, tagspaces=tagspaces, operation=operation, detailed=True).iteritems()):
+            if showheadings == 'true':
                 out.write('<lh>%s tags</lh>' % tagspace)
-                current_ns = tagspace
-            details = names[(tagspace, name)]
-            tagsystem = details['tagsystem']
-            href, link, title = tagsystem.name_details(name)
-            htitle = wiki_to_oneliner(title, self.env)
-            name_tags = ['<a href="%s" title="%s">%s</a>'
-                          % (taginfo[tag][0], taginfo[tag][1], tag)
-                          for tag in details['tags'] if tag not in tags]
-            if not name_tags:
-                name_tags = ''
-            else:
-                name_tags = ' (' + ', '.join(name_tags) + ')'
-            out.write('<li>%s %s%s</li>\n' %
-                      (link, htitle, name_tags))
+            for name, tags in sorted(tagspace_names.iteritems()):
+                if tagspace == 'wiki' and unicode(name).startswith('tags/'): continue
+                tags = sorted(tags)
+                taginfo = self._tag_details(taginfo, tags)
+                href, link, title = engine.name_details(tagspace, name)
+                htitle = wiki_to_oneliner(title, self.env)
+                name_tags = ['<a href="%s" title="%s">%s</a>'
+                              % (taginfo[tag][0], taginfo[tag][1], tag)
+                              for tag in tags]
+                if not name_tags:
+                    name_tags = ''
+                else:
+                    name_tags = ' (' + ', '.join(sorted(name_tags)) + ')'
+                out.write('<li>%s %s%s</li>\n' %
+                          (link, htitle, name_tags))
         out.write('</ul>')
 
         return out.getvalue()
@@ -233,7 +182,7 @@ class TagMacros(Component):
             return self.render_listtagged(req, *tags, **kwargs)
 
         page = self._current_page(req)
-        wiki = TagEngine(self.env).tagspace.wiki
+        engine = TagEngine(self.env)
 
         showpages = kwargs.get('showpages', None) or kwargs.get('shownames', 'false')
 
@@ -243,26 +192,18 @@ class TagMacros(Component):
             tagspaces = kwargs.get('tagspaces', []) or \
                         list(TagEngine(self.env).tagspaces)
 
-        tags = {}
-        for tagspace in tagspaces:
-            tagsystem = TagEngine(self.env).get_tagsystem(tagspace)
-            for tag in tagsystem.get_tags():
-                count = tags.get(tag, 0) + tagsystem.count_tagged_names(tag)
-                tags[tag] = count
-            
         out = StringIO()
         out.write('<ul class="listtags">\n')
-        keys = tags.keys()
-        taginfo = self._tag_details(keys)
-        keys.sort()
-        for tag in keys:
-            href, title = taginfo[tag]
+        tag_details = {}
+        for tag, names in sorted(engine.get_tags(tagspaces=tagspaces, detailed=True).iteritems()):
+            href, title = engine.get_tag_link(tag)
             htitle = wiki_to_oneliner(title, self.env)
-            out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, title, tag, htitle, tags[tag]))
+            out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, title, tag, htitle, len(names)))
             if showpages == 'true':
                 out.write('\n')
                 out.write(self.render_listtagged(req, tag, tagspaces=tagspaces))
                 out.write('</li>\n')
+
         out.write('</ul>\n')
 
         return out.getvalue()

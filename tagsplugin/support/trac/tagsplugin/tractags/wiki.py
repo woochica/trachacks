@@ -6,6 +6,9 @@ import re
 class WikiTaggingSystem(DefaultTaggingSystem):
     """ Subclass of DefaultTaggingSystem that knows how to retrieve wiki page
         titles. """
+    def __init__(self, env):
+        DefaultTaggingSystem.__init__(self, env, 'wiki')
+
     def page_info(self, page):
         from trac.wiki import model
         """ Return tuple of (model.WikiPage, title) """
@@ -20,11 +23,11 @@ class WikiTaggingSystem(DefaultTaggingSystem):
 
         return (page, title)
 
-    def name_details(self, tagspace, name):
+    def name_details(self, name):
         """ Return a tuple of (href, wikilink, title). eg. ("/ticket/1", "#1", "Broken links") """
         page, title = self.page_info(name)
         href = self.env.href.wiki(name)
-        defaults = DefaultTaggingSystem.name_details(self, tagspace, name)
+        defaults = DefaultTaggingSystem.name_details(self, name)
         return defaults[0:2] + (title,)
 
 class WikiTags(Component):
@@ -52,4 +55,5 @@ class WikiTags(Component):
         TagEngine(self.env).tagspace.wiki.remove_all_tags(None, page.name)
 
     def wiki_page_version_deleted(self, page):
+        # Wiki tags are not versioned. If they were, we'd delete them here.
         pass
