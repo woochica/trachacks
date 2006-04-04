@@ -27,6 +27,7 @@ from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
 from tractags.api import TagEngine
+from tractags.parseargs import parseargs
 
 __all__ = ['TracBlogPlugin']
 
@@ -84,29 +85,30 @@ class TracBlogPlugin(Component):
         """Return a list of arguments and a dictionary of keyword arguements
 
         """
-        argv = argv or ''
-        parms = [x.strip() for x in argv.split(',') if x]
-        self.log.debug("parms: %s" % str(parms))
-        kargs = [x for x in parms if x.find('=') >= 0]
-        self.log.debug("kargs: %s" % str(kargs))
-        args = [x for x in parms if x not in kargs]
-        self.log.debug("args: %s" % str(args))
-        kwargs = {}
-        for x in kargs:
-            key, value = x.split('=')
-            key = key.strip()
-            value = value.strip()
-            if isinstance(key, unicode):
-                key = key.encode('ascii')
-                value = value.encode('ascii')
-            if kwargs.has_key(key):
-                if isinstance(key, list):
-                    kwargs[key].append(value)
-                else:
-                    kwargs[key] = [kwargs[key], value]
-            else:
-                kwargs[key] = value
-        self.log.debug("kwargs: %s" % str(kwargs))
+#        argv = argv or ''
+#        parms = [x.strip() for x in argv.split(',') if x]
+#        self.log.debug("parms: %s" % str(parms))
+#        kargs = [x for x in parms if x.find('=') >= 0]
+#        self.log.debug("kargs: %s" % str(kargs))
+#        args = [x for x in parms if x not in kargs]
+#        self.log.debug("args: %s" % str(args))
+#        kwargs = {}
+#        for x in kargs:
+#            key, value = x.split('=')
+#            key = key.strip()
+#            value = value.strip()
+#            if isinstance(key, unicode):
+#                key = key.encode('ascii')
+#                value = value.encode('ascii')
+#            if kwargs.has_key(key):
+#                if isinstance(key, list):
+#                    kwargs[key].append(value)
+#                else:
+#                    kwargs[key] = [kwargs[key], value]
+#            else:
+#                kwargs[key] = value
+#        self.log.debug("kwargs: %s" % str(kwargs))
+        args, kwargs = parseargs(argv)
         return args, kwargs
 
     def match_request(self, req):

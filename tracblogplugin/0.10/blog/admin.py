@@ -1,3 +1,19 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 John Hampton <pacopablo@asylumware.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution. The terms
+# are also available at http://trac.edgewall.com/license.html.
+#
+# This software consists of voluntary contributions made by many
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at:
+# http://trac-hacks.org/wiki/TracBlogPlugin
+#
+# Author: John Hampton <pacopablo@asylumware.com>
+
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet

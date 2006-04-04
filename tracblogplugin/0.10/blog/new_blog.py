@@ -27,27 +27,31 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html
 from trac.wiki.model import WikiPage
 from tractags.api import TagEngine
+from tractags.parseargs import parseargs
 
 __all__ = ['BlogPost']
 
 class BlogPost(Component):
     """Inserts a link to create a new blog post
 
-    Accepts keyword arguments that specify default parameters. 
+    Accepts keyword arguments that specify default parameters.  The macro will
+    be hidden unless the user has {{{BLOG_POSTER}}} permissions.
 
     '''tag''' - Tag that populates the "Tag under" field.  This key may be 
-    specified multiple times.[[br]]
+    specified as a tuple or list to pass multiple values.[[br]]
     '''blogtitle''' - Default blog entry title.[[br]]
     '''text''' - Default entry body text.[[br]]
     '''pagename''' - Default wiki page name.[[br]]
     '''readonly''' - Default readonly page status.[[br]]
+    '''link''' - Text to display as the link.[[br]]
 
     === Examples ===
     {{{
     [[BlogPost()]]
-    [[BlogPost(tag=blog,tag=pacopablo)]]
-    [[BlogPost(tag=blog,blogtitle=A Simple Title,text=Body Text)]]
+    [[BlogPost(tag=(blog,pacopablo))]]
+    [[BlogPost(tag=blog,blogtitle="A Simple Title",text="Body Text")]]
     [[BlogPost(tag=blog,pagename=blog/newpage,readonly=1)]]
+    [[BlogPost(tag=(blog,pacopablo),link="A New Blog Post")]]
     }}}
     """
 
@@ -57,13 +61,6 @@ class BlogPost(Component):
     # IPermissionRequestor
     def get_permission_actions(self):
         return ['BLOG_POSTER']
-
-    # IAdminPageProvider methods
-    def get_admin_pages(self, req):
-        if req.perm.has_permission('BLOG_ADMIN'):
-            yield ('blog', 'Blog System', 'defaults', 'Defaults')
-
-
 
     # IWikiMacroProvider
     def get_macros(self):
@@ -80,6 +77,7 @@ class BlogPost(Component):
             args, kwargs = self._split_macro_args(content)
             try:
                 blog_link = kwargs['link']
+                del kwargs['link']
             except KeyError:
                 blog_link = self.env.config.get('blog', 'new_blog_link', 
                                                 'New Blog Post')
@@ -92,29 +90,30 @@ class BlogPost(Component):
         """Return a list of arguments and a dictionary of keyword arguments
 
         """
-        argv = argv or ''
-        parms = [x.strip() for x in argv.split(',') if x]
-        self.log.debug("parms: %s" % str(parms))
-        kargs = [x for x in parms if x.find('=') >= 0]
-        self.log.debug("kargs: %s" % str(kargs))
-        args = [x for x in parms if x not in kargs]
-        self.log.debug("args: %s" % str(args))
-        kwargs = {}
-        for x in kargs:
-            key, value = x.split('=')
-            key = key.strip()
-            value = value.strip()
-            if isinstance(key, unicode):
-                key = key.encode('ascii')
-                value = value.encode('ascii')
-            if kwargs.has_key(key):
-                if isinstance(key, list):
-                    kwargs[key].append(value)
-                else:
-                    kwargs[key] = [kwargs[key], value]
-            else:
-                kwargs[key] = value
-        self.log.debug("kwargs: %s" % str(kwargs))
+#        argv = argv or ''
+#        parms = [x.strip() for x in argv.split(',') if x]
+#        self.log.debug("parms: %s" % str(parms))
+#        kargs = [x for x in parms if x.find('=') >= 0]
+#        self.log.debug("kargs: %s" % str(kargs))
+#        args = [x for x in parms if x not in kargs]
+#        self.log.debug("args: %s" % str(args))
+#        kwargs = {}
+#        for x in kargs:
+#            key, value = x.split('=')
+#            key = key.strip()
+#            value = value.strip()
+#            if isinstance(key, unicode):
+#                key = key.encode('ascii')
+#                value = value.encode('ascii')
+#            if kwargs.has_key(key):
+#                if isinstance(key, list):
+#                    kwargs[key].append(value)
+#                else:
+#                    kwargs[key] = [kwargs[key], value]
+#            else:
+#                kwargs[key] = value
+#        self.log.debug("kwargs: %s" % str(kwargs))
+        args, kwargs = parseargs(argv)
         return args, kwargs
 
     def match_request(self, req):
