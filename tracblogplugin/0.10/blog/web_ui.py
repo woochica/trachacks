@@ -149,7 +149,7 @@ class TracBlogPlugin(Component):
         else:
             blog = tags.get_tagged_names(tlist, operation='intersection')
         self.log.debug("blog: %s" % str(blog)) 
-        history_days = int(self.env.config.get('blog', 'history_days', 30))
+        history_days = int(self.env.config.get('blog', 'history_days') or 30)
         now = datetime.datetime.now()
         history_diff = datetime.timedelta(days=history_days)
         cutoff = time.mktime((now - history_diff).timetuple())
