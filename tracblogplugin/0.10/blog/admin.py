@@ -42,6 +42,7 @@ class BlogAdminPlugin(Component):
                         'default_tag'  : 'blog', 
                         'post_size'    : 1024,
                         'history_days' : 30,
+                        'new_blog_link' : 'New Blog Post',
                        }
         if req.method == 'POST':
             if page == 'defaults':
@@ -68,6 +69,8 @@ class BlogAdminPlugin(Component):
    number of bytes to show before truncating the post and providing a ''(...)'' link.  Posts are truncated at line breaks, and wiki formatting is included in the byte count, so truncation will not be exact.
  '''Days of History'''::
    number of days for which to show blog posts
+ '''New Blog Link'''::
+   text to show for the new blog link
 
  '''strftime formatting'''::
 ||%a||Locale's abbreviated weekday name.||

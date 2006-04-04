@@ -5,7 +5,7 @@
 <div id="ctxtnav" class="nav">
     <h2>Wiki Navigation</h2>
     <ul>
-        <li><a href="<?cs var:trac.href.blog ?>/new">New Blog Entry</a></li>
+        <li><a href="<?cs var:trac.href.blog ?>/new"><?cs var:blog.newblog ?></a></li>
         <li><a href="<?cs var:trac.href.wiki ?>">Start Page</a></li>
         <li><a href="<?cs var:trac.href.wiki ?>/TitleIndex">Title Index</a></li>
         <li><a 

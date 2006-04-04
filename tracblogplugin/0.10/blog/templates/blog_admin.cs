@@ -46,6 +46,12 @@
                     value="<?cs var:blogadmin.history_days ?>" />
                 </label>
             </div>
+            <div class="field">
+                <label>New Blog Link:<br/>
+                    <input type="text" name="new_blog_link" 
+                    value="<?cs var:blogadmin.new_blog_link ?>" />
+                </label>
+            </div>
         <div class="buttons">
             <input type="submit" value="Apply Changes" />
         </div>

@@ -64,9 +64,10 @@ class BlogPost(Component):
         """ Display the blog in the wiki page """
         add_stylesheet(req, 'blog/css/blog.css')
         args, kwargs = self._split_macro_args(content)
-        self.log.debug("link: %s" % self.env.href.blog('new', **kwargs))
-        return Markup('<a href="%s">New Blog Post</a>', 
-                      self.env.href.blog('new',**kwargs))
+        blog_link = self.env.config.get('blog', 'new_blog_link', 
+                                        'New Blog Post')
+        return Markup('<a href="%s">%s</a>', self.env.href.blog('new',**kwargs),
+                      blog_link)
 
     def _split_macro_args(self, argv):
         """Return a list of arguments and a dictionary of keyword arguments

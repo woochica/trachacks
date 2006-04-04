@@ -180,6 +180,8 @@ class TracBlogPlugin(Component):
         tlist.sort()
         tlist.reverse()
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
+        bloglink = self.env.config.get('blog', 'new_blog_link', 'New Blog Post')
+        req.hdf['blog.newblog'] = bloglink
         pass
 
     def _get_time_range(self, req, **kwargs):
