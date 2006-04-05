@@ -22,7 +22,7 @@
     <div id="searchable">
 <?cs /if ?>
 
-<!-- Quicklogs summary calendar -->
+<!-- Calendar gratefully donate from coderanger -->
 <?cs def:cal_link(year, month, day) ?><?cs var:blog.path_info ?>?year=<?cs var:year ?>&month=<?cs var:month ?>&day=<?cs var:day ?><?cs /def ?>
 <div class="blog-calendar">
     <table>
