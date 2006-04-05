@@ -46,7 +46,7 @@ class TagMacros(Component):
 
     def get_macro_description(self, name):
         import pydoc
-        return pydoc.getdoc(getattr(self, 'render_' + name))
+        return pydoc.getdoc(getattr(self, 'render_' + name.lower()))
 
     def render_macro(self, req, name, content):
         from trac.web.chrome import add_stylesheet
@@ -135,7 +135,7 @@ class TagMacros(Component):
             tagspaces = kwargs.get('tagspaces', '') or \
                         list(TagEngine(self.env).tagspaces)
         showheadings = kwargs.get('showheadings', 'false')
-        operation = kwargs.get('operation', 'union')
+        operation = kwargs.get('operation', 'intersection')
         if operation not in ('union', 'intersection'):
             raise TracError("Invalid tag set operation '%s'" % operation)
 
