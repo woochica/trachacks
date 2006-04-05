@@ -30,7 +30,7 @@ class TicketTaggingSystem(TaggingSystem):
             sql += " AND id IN (" + ', '.join(['%s' for n in names]) + ")"
             args += [unicode(n) for n in names]
         if tags:
-            sql += " AND (" + ' OR '.join("keywords LIKE %s" for t in tags) + ")"
+            sql += " AND (" + ' OR '.join(["keywords LIKE %s" for t in tags]) + ")"
             args += ['%' + t + '%' for t in tags]
         sql += " ORDER BY id"
         cursor.execute(sql, args)
