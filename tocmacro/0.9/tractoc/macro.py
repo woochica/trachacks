@@ -2,13 +2,16 @@
 
 from trac.core import *
 from trac.util import escape
-from trac.wiki.formatter import Formatter, wiki_to_oneliner
+from trac.wiki.formatter import Formatter, OutlineFormatter, wiki_to_oneliner, wiki_to_outline
 from trac.wiki.api import IWikiMacroProvider, WikiSystem
 from trac.wiki.model import WikiPage
 from StringIO import StringIO
 import os, re, string, inspect
 
 __all__ = ['TracTocMacro']
+
+class NullOut(object):
+   def write(self, *args): pass
 
 class TracTocMacro(Component):
     """
@@ -38,7 +41,6 @@ class TracTocMacro(Component):
     """
     
     implements(IWikiMacroProvider)
-    rules_re = re.compile(r"""(?P<heading>^\s*(?P<hdepth>=+)\s(?P<header>.*)\s(?P=hdepth)\s*$)""")
     
     def get_macros(self):
         yield 'TOC'
@@ -46,78 +48,9 @@ class TracTocMacro(Component):
     def get_macro_description(self, name):
         return inspect.getdoc(self.__class__)
 
-    def parse_toc(self, out, page, body, max_depth=999, min_depth=1, title_index=False):
-        current_depth = min_depth
-        in_pre = False
-        first_li = True
-        seen_anchors = []
-
-        if title_index:
-            min_depth = 1
-            max_depth = 1
-
-        for line in body.splitlines():
-
-            # Skip over wiki-escaped code, e.g. code examples (Steven N.
-            # Severinghaus <sns@severinghaus.org>)
-            if in_pre:
-                if line == '}}}':
-                    in_pre = False
-                else:
-                    continue
-            if line == '{{{':
-                in_pre = True
-                continue
-
-            match = self.rules_re.match(line)
-            if match:
-                header = match.group('header')
-                formatted_header = wiki_to_oneliner(header, self.env)
-                new_depth = len(match.group('hdepth'))
-                if new_depth < min_depth:
-                    continue
-                elif new_depth < current_depth:
-                    while new_depth < current_depth:
-                        current_depth -= 1
-                        if current_depth < max_depth:
-                            out.write("</ol>")
-                    out.write("<li>")
-                elif new_depth >= current_depth:
-                    i = current_depth
-                    while new_depth > i :
-                        i += 1
-                        if i <= max_depth:
-                            out.write("<ol>")
-                    if i <= max_depth:
-                        out.write("<li>")
-                    if first_li:
-                        first_li = False
-                    current_depth = new_depth
-                if title_index:
-                    out.write('<a href="%s">%s</a> : %s</li>\n' % (self.env.href.wiki(page), page, formatted_header))
-                    break
-                else:
-                    default_anchor = Formatter._anchor_re.sub("", escape(header))
-                    if not default_anchor:
-                        continue
-                    if default_anchor[0].isdigit():
-                        default_anchor = 'a' + default_anchor
-                    anchor = default_anchor
-                    anchor_n = 1
-                    while anchor in seen_anchors:
-                        anchor = default_anchor + str(anchor_n)
-                        anchor_n += 1
-                    seen_anchors.append(anchor)
-                    link = page
-                    if current_depth <= max_depth:
-                        out.write('<a href="%s#%s">%s</a></li>\n' % (self.env.href.wiki(link), anchor, formatted_header))
-        while current_depth > min_depth:
-            if current_depth <= max_depth:
-                out.write("</ol>\n")
-            current_depth -= 1
-
     def render_macro(self, req, name, args):
         db = self.env.get_db_cnx()
+        formatter = OutlineFormatter(self.env)
         
         # If this is a page preview, try to figure out where its from
         current_page = req.hdf.getValue('wiki.page_name','WikiStart')
@@ -145,7 +78,7 @@ class TracTocMacro(Component):
         heading = 'Table of Contents'
         pagenames = []
         root = ''
-        params = { 'title_index': False}
+        params = { 'title_index': False, 'min_depth': 1, 'max_depth': 6 }
         # Global options
         for arg in args:
             if arg == 'inline':
@@ -177,26 +110,36 @@ class TracTocMacro(Component):
             out.write("<div class='wiki-toc'>\n")
         if heading:
             out.write("<h4>%s</h4>\n" % heading)
-        out.write("<ol>\n")
         for pagename in pagenames:
             if params['title_index']:
                 prefix = (pagename.split('/'))[0]
                 prefix = prefix.replace('\'', '\'\'')
-                i = 0
-                for page in WikiSystem(self.env).get_pages(prefix):
-                    i += 1
-                    page_text, _ = get_page_text(page)
-                    self.parse_toc(out, page, page_text, **params)
-                if i == 0:
+                all_pages = list(WikiSystem(self.env).get_pages(prefix))
+                if all_pages:
+                    all_pages.sort()
+                    out.write('<ol>')
+                    for page in all_pages:
+                        page_text, _ = get_page_text(page)
+    
+                        formatter.format(page_text, NullOut(), 1, 1)
+                        self.log.debug(page + ' --> ' + repr(formatter.outline))
+                        header = ''
+                        if formatter.outline:
+                            title = formatter.outline[0][1]
+                            title = re.sub('<[^>]*>','', title) # Strip all tags
+                            header = ': ' + wiki_to_oneliner(title, self.env)
+                        out.write('<li> <a href="%s">%s</a> %s</li>\n' % (self.env.href.wiki(page), page, header))
+                    out.write('</ol>')        
+                else :
                     out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % prefix)
             else:
                 page = root + pagename
                 page_text, page_exists = get_page_text(page)
                 if page_exists:
-                    self.parse_toc(out, page, page_text, **params)
+                    formatter.format(page_text, out, params['min_depth'], params['max_depth'])
                 else:
                     out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % pagename)
-        out.write("</ol>\n")
         if not inline:
             out.write("</div>\n")
         return out.getvalue()
+
