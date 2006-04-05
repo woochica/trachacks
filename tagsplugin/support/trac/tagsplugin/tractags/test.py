@@ -123,6 +123,87 @@ class TagApiTestCase(unittest.TestCase):
         self.assertEqual(self.tag_engine.get_tags(names=('WikiStart', 3), operation='intersection'),
                          set(['bar', 'foo']))
 
+    def test_tagspace_get_tagged_union(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tagged_names(tags=('foo', 'bar'), operation='union'),
+                         set([u'WikiStart', u'SandBox']))
+
+    def test_tagspace_get_tagged_intersection(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tagged_names(tags=('bar',), operation='intersection'),
+                         set([u'WikiStart', u'SandBox']))
+
+    def test_tagspace_get_tags_union(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tags(names=('WikiStart', 'SandBox'), operation='union'),
+                         set(['bar', 'war', 'foo']))
+
+    def test_tagspace_get_tags_intersection(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tags(names=('WikiStart', 'SandBox'), operation='intersection'),
+                         set(['bar']))
+
+    # Detailed
+    def test_detailed_get_tagged_union(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.get_tagged_names(tags=('foo', 'bar'), operation='union', detailed=True),
+                         {'wiki': {'WikiStart': set(('foo', 'bar')),
+                                   'SandBox': set(('bar', 'war'))},
+                          'ticket': {3: set(('foo', 'bar', 'destruction'))}})
+
+    def test_detailed_get_tagged_intersection(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.get_tagged_names(tags=('foo', 'bar'), operation='intersection', detailed=True),
+                         {'wiki': {'WikiStart': set(('foo', 'bar'))},
+                          'ticket': {3: set(('foo', 'bar', 'destruction'))}})
+
+    def test_detailed_get_tags_union(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.get_tags(names=('WikiStart', 1), operation='union', detailed=True),
+                         {'death': set([('ticket', 1)]),
+                          'bar': set([('wiki', 'WikiStart')]),
+                          'war': set([('ticket', 1)]),
+                          'foo': set([('wiki', 'WikiStart')])})
+
+    def test_detailed_get_tags_intersection(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.get_tags(names=('WikiStart', 3, 'SandBox'), operation='intersection', detailed=True),
+                         {'bar': set([('wiki', 'SandBox'), ('wiki', 'WikiStart'), ('ticket', 3)])})
+
+    def test_detailed_tagspace_get_tagged_union(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tagged_names(tags=('foo', 'bar'), operation='union', detailed=True),
+                         {'WikiStart': set(['foo', 'bar']),
+                          'SandBox': set(['bar', 'war'])})
+
+    def test_detailed_tagspace_get_tagged_intersection(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tagged_names(tags=('bar',), operation='intersection', detailed=True),
+                         {'WikiStart': set(['foo', 'bar']), 'SandBox': set(['bar', 'war'])})
+
+    def test_detailed_tagspace_get_tags_union(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tags(names=('WikiStart', 'SandBox'), operation='union', detailed=True),
+                         {'foo': set(['WikiStart']),
+                          'bar': set(['WikiStart', 'SandBox']),
+                          'war': set(['SandBox'])})
+
+    def test_detailed_tagspace_get_tags_intersection(self):
+        ts = self.tag_engine.tagspace
+        for tagspace, target, tags in self._populate_tags(ts): pass
+        self.assertEqual(self.tag_engine.tagspace.wiki.get_tags(names=('WikiStart', 'SandBox'), operation='intersection', detailed=True),
+                         {'bar': set(['WikiStart', 'SandBox'])})
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TagApiTestCase, 'test'))

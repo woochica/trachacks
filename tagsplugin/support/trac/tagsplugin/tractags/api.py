@@ -175,16 +175,27 @@ class DefaultTaggingSystem(TaggingSystem):
                                   self.env), '')
 
 class TagspaceProxy:
+    """ A convenience for performing operations on a specific tagspace,
+        including get_tags() and get_tagged_names(). Both of these functions
+        will only search that tagspace, and will return values stripped of
+        tagspace information. """
     def __init__(self, engine, tagspace):
         self.engine = engine
         self.tagspace = tagspace
         self.tagsystem = engine._get_tagsystem(tagspace)
 
     def get_tags(self, *args, **kwargs):
-        return self.engine.get_tags(tagspaces=[self.tagspace], *args, **kwargs)
+        result = self.engine.get_tags(tagspaces=[self.tagspace], *args, **kwargs)
+        if isinstance(result, set):
+            return result
+        else:
+            out = {}
+            for tag, names in result.iteritems():
+                out[tag] = set([name for _, name in names])
+            return out
 
     def get_tagged_names(self, *args, **kwargs):
-        return self.engine.get_tagged_names(tagspaces=[self.tagspace], *args, **kwargs)
+        return self.engine.get_tagged_names(tagspaces=[self.tagspace], *args, **kwargs)[self.tagspace]
 
     def __getattr__(self, attr):
         return getattr(self.tagsystem, attr)
@@ -287,9 +298,9 @@ class TagEngine(Component):
             out_tags = {}
             for tag in all_tags:
                 out_tags[tag] = tagged_names[tag]
-            return tagged_names
+            return out_tags
         else:
-            return set(all_tags)
+            return all_tags
 
     def get_tagged_names(self, tags=[], tagspaces=[], operation='intersection', detailed=False):
         """ Get names with the given tags from tagspaces. 'operation' is the set
@@ -302,14 +313,17 @@ class TagEngine(Component):
         assert type(tags) in (list, tuple, set)
         tagspaces = tagspaces or self.tagspaces
         tags = set(tags)
-        output = {}
+        if detailed:
+            output = dict([(ts, {}) for ts in tagspaces])
+        else:
+            output = dict([(ts, set()) for ts in tagspaces])
         for tagspace, name, name_tags in self.walk_tagged_names(tags=tags, tagspaces=tagspaces):
             if operation == 'intersection' and tags.intersection(name_tags) != tags:
                 continue
             if detailed:
-                output.setdefault(tagspace, {})[name] = name_tags
+                output[tagspace][name] = name_tags
             else:
-                output.setdefault(tagspace, set()).add(name)
+                output[tagspace].add(name)
         return output
 
     def get_tag_link(self, tag):
