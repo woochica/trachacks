@@ -7,7 +7,7 @@ setup(
     name = 'EasterMacro',
     version = '0.1',
     packages = ['easter'],
-    #package_data = { 'easter': ['templates/*.cs' ] },
+    package_data = { 'easter': ['htdocs/img/*.gif' ] },
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
