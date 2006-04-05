@@ -57,3 +57,30 @@
     font-weight: bold;
 }
 
+
+/* Calendar display stuff */
+div.blog-calendar {
+ padding: .5em 1em;
+ margin: 5px 0 2em 1em;
+ float: right;
+ border: 1px outset #ddc;
+ background: #ffd;
+ font-size: 85%;
+ position: relative;
+}
+
+div.blog-calendar table {
+ border-collapse: collapse;
+}
+
+div.blog-calendar td {
+ padding: 1px;
+}
+
+tr.blog-calendar-current {
+ background: #ffff75;
+}
+
+td.blog-calendar-current a {
+ color: #000000;
+}

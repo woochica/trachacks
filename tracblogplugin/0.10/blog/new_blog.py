@@ -73,7 +73,6 @@ class BlogPost(Component):
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
         if req.perm.has_permission('BLOG_POSTER'):
-            add_stylesheet(req, 'blog/css/blog.css')
             args, kwargs = self._split_macro_args(content)
             try:
                 blog_link = kwargs['link']
