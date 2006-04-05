@@ -28,7 +28,7 @@ class TicketTaggingSystem(TaggingSystem):
         sql = "SELECT id, keywords FROM ticket WHERE keywords IS NOT NULL AND keywords != ''"
         if names:
             sql += " AND id IN (" + ', '.join(['%s' for n in names]) + ")"
-            args += [str(n) for n in names]
+            args += [unicode(n) for n in names]
         if tags:
             sql += " AND (" + ' OR '.join("keywords LIKE %s" for t in tags) + ")"
             args += ['%' + t + '%' for t in tags]
@@ -40,7 +40,7 @@ class TicketTaggingSystem(TaggingSystem):
                 if predicate(id, ticket_tags):
                     yield (id, ticket_tags)
                 
-    def get_tags(self, name):
+    def get_name_tags(self, name):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("SELECT keywords FROM ticket WHERE id=%s AND keywords IS NOT NULL AND keywords != ''", (name,))
@@ -48,7 +48,6 @@ class TicketTaggingSystem(TaggingSystem):
             return set(self._keyword_split.findall(row[0]))
 
     def add_tags(self, req, name, tags):
-        assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
         ticket_tags = self._ticket_tags(ticket)
         ticket_tags.update(tags)
@@ -56,13 +55,11 @@ class TicketTaggingSystem(TaggingSystem):
         ticket.save_changes(req.authname, None)
 
     def replace_tags(self, req, name, tags):
-        assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
         ticket['keywords'] = ' '.join(sorted(tags))
         ticket.save_changes(req.authname, None)
 
     def remove_tags(self, req, name, tags):
-        assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
         ticket_tags = self._ticket_tags(ticket)
         ticket_tags.symmetric_difference_update(tags)
@@ -70,7 +67,6 @@ class TicketTaggingSystem(TaggingSystem):
         ticket.save_changes(req.authname, None)
 
     def remove_all_tags(self, req, name):
-        assert req.perm.assert_permission('TICKET_CHGPROP')
         ticket = model.Ticket(self.env, name)
         ticket['keywords'] = ''
         ticket.save_changes(req.authname, None)

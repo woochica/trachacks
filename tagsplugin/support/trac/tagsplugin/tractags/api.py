@@ -25,7 +25,7 @@ from tractags.api import TagEngine
 tags = TagEngine(env).tagspace.wiki
 # Display all names and the tags associated with each name
 for name in tags.get_tagged_names():
-    print name, list(tags.get_tags(name))
+    print name, list(tags.get_name_tags(name))
 # Display all tags and the names associated with each tag
 for tag in tags.get_tags():
     print tag, list(tags.get_tagged_names(tag))
@@ -81,7 +81,7 @@ class TaggingSystem(object):
             opportunity for the underlying TaggingSystem)
             """
 
-    def get_tags(self, name):
+    def get_name_tags(self, name):
         """ Get tags for a name. """
         raise NotImplementedError
 
@@ -100,7 +100,7 @@ class TaggingSystem(object):
 
     def remove_all_tags(self, req, name):
         """ Remove all tags from a name in a tagspace. """
-        self.remove_tags(req, name, self.get_tags(name))
+        self.remove_tags(req, name, self.get_name_tags(name))
 
     def name_details(self, name):
         """ Return a tuple of (href, htmllink, title). eg. 
@@ -141,7 +141,7 @@ class DefaultTaggingSystem(TaggingSystem):
         if current_name is not None and predicate(current_name, name_tags):
             yield (current_name, name_tags)
 
-    def get_tags(self, name):
+    def get_name_tags(self, name):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT tag FROM tags WHERE tagspace=%s AND name=%s', (self.tagspace, name))
@@ -276,19 +276,20 @@ class TagEngine(Component):
             if operation == 'intersection':
                 if seed_set:
                     seed_set = False
-                    all_tags.update([(tagspace, tag) for tag in tags])
+                    all_tags.update(tags)
                 else:
-                    all_tags.intersection_update([(tagspace, tag) for tag in tags])
-                    if not all_tags: return {}
+                    all_tags.intersection_update(tags)
+                    if not all_tags:
+                        return detailed and {} or set()
             else:
-                all_tags.update([(tagspace, tag) for tag in tags])
+                all_tags.update(tags)
         if detailed:
             out_tags = {}
-            for tagspace, tag in all_tags:
+            for tag in all_tags:
                 out_tags[tag] = tagged_names[tag]
             return tagged_names
         else:
-            return set([tag for tagspace, tag in all_tags])
+            return set(all_tags)
 
     def get_tagged_names(self, tags=[], tagspaces=[], operation='intersection', detailed=False):
         """ Get names with the given tags from tagspaces. 'operation' is the set
