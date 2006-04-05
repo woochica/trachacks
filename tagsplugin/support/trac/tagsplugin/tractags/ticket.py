@@ -2,8 +2,17 @@ from trac.core import *
 from tractags.api import ITaggingSystemProvider, TaggingSystem
 from trac.ticket.query import Query
 from trac.ticket import model
-from trac.util import sorted
 import re
+
+try:
+    sorted = sorted
+except NameError:
+    def sorted(iterable, cmp=None, key=str, reverse=False):
+        lst = [(key(i), i) for i in iterable]
+        lst.sort()
+        if reverse:
+            lst = reversed(lst)
+        return [i for __, i in lst]
 
 try:
     set = set

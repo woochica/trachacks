@@ -1,13 +1,24 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import model 
-from trac.util import Markup, sorted
+from trac.util import Markup
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from StringIO import StringIO
 from tractags.api import TagEngine, ITagSpaceUser
 import inspect
 import re
 import string
+
+try:
+    sorted = sorted
+except NameError:
+    def sorted(iterable, cmp=None, key=str, reverse=False):
+        lst = [(key(i), i) for i in iterable]
+        lst.sort()
+        if reverse:
+            lst = reversed(lst)
+        return [i for __, i in lst]
+
 try:
     set = set
 except:
