@@ -1,23 +1,8 @@
 from trac.core import *
-from tractags.api import ITaggingSystemProvider, TaggingSystem
+from tractags.api import ITaggingSystemProvider, TaggingSystem, sorted, set
 from trac.ticket.query import Query
 from trac.ticket import model
 import re
-
-try:
-    sorted = sorted
-except NameError:
-    def sorted(iterable, cmp=None, key=None, reverse=False):
-        lst = key and [(key(i), i) for i in iterable] or list(iterable)
-        lst.sort()
-        if reverse:
-            lst = reversed(lst)
-        return [i for __, i in lst]
-
-try:
-    set = set
-except:
-    from sets import Set as set
 
 class TicketTaggingSystem(TaggingSystem):
     _keyword_split = re.compile(r'''[\w.-]+''')

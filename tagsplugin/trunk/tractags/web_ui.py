@@ -76,12 +76,12 @@ class TagsModule(Component):
         [tags]
         # Use a tag list or cloud for the main index
         index = cloud|list
-        # Show tagspace headings in the index
-        index.showheadings = false|true
-        # Minium font size for tag cloud index
-        index.cloud.smallest = 10
-        # Maximum font size for tag cloud index
-        index.cloud.biggest = 30
+        # The keyword arguments to pass to the TagCloud or ListTags macros that
+        # is being used for the index.
+        index.args = ...
+        # Keyword arguments to pass to the listing for each tag under the
+        # /tags/ URL space.
+        listing.args = ...
     """
     implements(IRequestHandler, INavigationContributor, ITemplateProvider)
 
@@ -137,32 +137,34 @@ class TagsModule(Component):
 
     def process_request(self, req):
         from tractags.macros import TagMacros
+        from tractags.parseargs import parseargs
         from trac.web.chrome import add_stylesheet
 
         add_stylesheet(req, 'tags/css/tractags.css')
         req.hdf['trac.href.tags'] = self.env.href.tags()
-        showheadings = self.config.getbool('tags', 'index.showheadings',
-                                           'false') and 'true' or 'false'
-        smallest = int(self.config.get('tags', 'index.cloud.smallest', 10))
-        biggest = int(self.config.get('tags', 'index.cloud.biggest', 30))
 
         if req.path_info == '/tags':
             index = self.env.config.get('tags', 'index', 'cloud')
+            index_kwargs = {'smallest': 10, 'biggest': 30}
+            _, config_kwargs = parseargs(self.env.config.get('tags', 'index.args', ''))
+            index_kwargs.update(config_kwargs)
+            index_kwargs.update(req.args)
+
             if index == 'cloud':
                 req.hdf['tag.body'] = Markup(
-                    TagMacros(self.env).render_tagcloud(req, smallest=smallest, biggest=biggest))
+                    TagMacros(self.env).render_tagcloud(req, **index_kwargs))
             elif index == 'list':
                 req.hdf['tag.body'] = Markup(
-                    TagMacros(self.env).render_listtagged(req,
-                        showheadings=showheadings))
+                    TagMacros(self.env).render_listtagged(req, **index_kwargs))
             else:
                 raise TracError("Invalid index style '%s'" % index)
         else:
+            _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
+            args.update(req.args)
             tag = req.path_info[6:]
             req.hdf['tag.name'] = tag
             req.hdf['tag.body'] = Markup(
-                TagMacros(self.env).render_listtagged(
-                    req, tag, showheadings=showheadings))
+                TagMacros(self.env).render_listtagged(req, tag, **args))
         return 'tags.cs', None
 
 # XXX I think this is planned for some AJAX goodness, commenting out for now. (Alec) XXX

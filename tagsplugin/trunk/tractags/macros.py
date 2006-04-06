@@ -4,25 +4,10 @@ from trac.wiki import model
 from trac.util import Markup
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from StringIO import StringIO
-from tractags.api import TagEngine, ITagSpaceUser
+from tractags.api import TagEngine, ITagSpaceUser, sorted, set
 import inspect
 import re
 import string
-
-try:
-    sorted = sorted
-except NameError:
-    def sorted(iterable, cmp=None, key=None, reverse=False):
-        lst = key and [(key(i), i) for i in iterable] or list(iterable)
-        lst.sort()
-        if reverse:
-            lst = reversed(lst)
-        return [i for __, i in lst]
-
-try:
-    set = set
-except:
-    from sets import Set as set
 
 class TagMacros(Component):
     """ Versions of the old Wiki-only macros using the new tag API. """
@@ -61,27 +46,40 @@ class TagMacros(Component):
 
     def render_macro(self, req, name, content):
         from trac.web.chrome import add_stylesheet
+        from parseargs import parseargs
         add_stylesheet(req, 'tags/css/tractags.css')
         # Translate macro args into python args
         args = []
         kwargs = {}
         if content is not None:
             try:
-                from parseargs import parseargs
-                args, kwargs = parseargs(content)
+                # Set default args from config
+                _, kwargs = parseargs(self.env.config.get('tags', '%s.args' % name.lower(), ''))
+                args, macro_args = parseargs(content)
+                kwargs.update(macro_args)
             except Exception, e:
                 raise TracError("Invalid arguments '%s' (%s %s)" % (content, e.__class__.__name__, e))
+
         return getattr(self, 'render_' + name.lower(), content)(req, *args, **kwargs)
 
     # Macro implementations
-    def render_tagcloud(self, req, smallest=10, biggest=20, tagspace=None, tagspaces=[]):
-        """ Display a summary of all tags, with the font size reflecting the
-            number of pages the tag applies to. Font size ranges from 10 to 22
-            pixels, but this can be overridden by the smallest=n and biggest=n
-            macro parameters. By default, all tagspaces are displayed, but this
-            can be overridden with tagspaces=(wiki, ticket) or tagspace=wiki."""
+    def render_tagcloud(self, req, smallest=10, biggest=20, showcount=True, tagspace=None, mincount=1, tagspaces=[]):
+        """ This macro displays a [http://en.wikipedia.org/wiki/Tag_cloud tag cloud] (weighted list)
+            of all tags.
+
+            ||'''Argument'''||'''Description'''||
+            ||`tagspace=<tagspace>`||Specify the tagspace the macro should operate on.||
+            ||`tagspaces=(<tagspace>,...)`||Specify a set of tagspaces the macro should operate on.||
+            ||`smallest=<n>`||The lower bound of the font size for the tag cloud.||
+            ||`biggest=<n>`||The upper bound of the font size for the tag cloud.||
+            ||`showcount=true|false`||Show the count of objects for each tag?||
+            ||`mincount=<n>`||Hide tags with a count less than `<n>`.||
+            """
+
         smallest = int(smallest)
         biggest = int(biggest)
+        mincount = int(mincount)
+
         engine = TagEngine(self.env)
         # Get wiki tagspace
         if tagspace:
@@ -91,7 +89,9 @@ class TagMacros(Component):
         cloud = {}
 
         for tag, names in engine.get_tags(tagspaces=tagspaces, detailed=True).iteritems():
-            cloud[tag] = len(names)
+            count = len(names)
+            if count >= mincount:
+                cloud[tag] = len(names)
 
         tags = cloud.keys()
 
@@ -118,26 +118,31 @@ class TagMacros(Component):
                 cls = ' class="last"'
             else:
                 cls = ''
-            out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a> <span class="tagcount">(%i)</span></li>\n' % (
+            if showcount != 'false':
+                count = ' <span class="tagcount">(%i)</span>' % cloud[tag]
+            else:
+                count = ''
+            out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a>%s</li>\n' % (
                        cls,
                        taginfo[tag][1],
                        smallest + int(by_count[cloud[tag]] * scale),
                        taginfo[tag][0],
                        tag,
-                       cloud[tag]))
+                       count))
         out.write('</ul>\n')
         return out.getvalue()
 
     def render_listtagged(self, req, *tags, **kwargs):
-        """ List tagged objects. Takes a list of tags to match against.
-            The special tag '.' inserts the current Wiki page name.
+        """ List tagged objects. Optionally accepts a list of tags to match
+            against.  The special tag '''. (dot)''' inserts the current Wiki page name.
 
-            Optional keyword arguments are tagspace=wiki,
-            tagspaces=(wiki, title, ...) and showheadings=true.
+            `[[ListTagged(<tag>, ...)]]`
 
-            By default displays the intersection of objects matching each tag.
-            By passing operation=union this can be modified to display
-            the union of objects matching each tag.
+            ||'''Argument'''||'''Description'''||
+            ||`tagspace=<tagspace>`||Specify the tagspace the macro should operate on.||
+            ||`tagspaces=(<tagspace>,...)`||Specify a set of tagspaces the macro should operate on.||
+            ||`operation=intersection|union`||The set operation to perform on the discovered objects.||
+            ||`showheadings=true|false`||List objects under the tagspace they occur in.||
         """
 
         if 'tagspace' in kwargs:
@@ -158,7 +163,12 @@ class TagMacros(Component):
         taginfo = {}
         out = StringIO()
         out.write('<ul class="listtagged">')
-        for tagspace, tagspace_names in sorted(engine.get_tagged_names(tags=tags, tagspaces=tagspaces, operation=operation, detailed=True).iteritems()):
+        # Cull empty names
+        tagged_names = [(tagspace, names) for tagspace, names in
+                        engine.get_tagged_names(tags=tags, tagspaces=tagspaces,
+                            operation=operation, detailed=True).iteritems()
+                        if names]
+        for tagspace, tagspace_names in sorted(tagged_names):
             if showheadings == 'true':
                 out.write('<lh>%s tags</lh>' % tagspace)
             for name, tags in sorted(tagspace_names.iteritems()):
@@ -181,13 +191,18 @@ class TagMacros(Component):
         return out.getvalue()
 
     def render_tagit(self, req, *tags):
-        """ Tag the current page and display them (deprecated). """
+        """ '''''Deprecated. Does nothing.''''' """
         return ''
 
     def render_listtags(self, req, *tags, **kwargs):
-        """ List tags. For backwards compatibility, can accept a list of tags.
-            This will simply call ListTagged. Optional keyword arguments are
-            tagspace=wiki, tagspaces=(wiki, ticket, ...) and shownames=true. """
+        """ List all tags.
+
+            ||'''Argument'''||'''Description'''||
+            ||`tagspace=<tagspace>`||Specify the tagspace the macro should operate on.||
+            ||`tagspaces=(<tagspace>,...)`||Specify a set of tagspaces the macro should operate on.||
+            ||`shownames=true|false`||Whether to show the objects that tags appear on ''(long)''.||
+            """
+
         if tags:
             # Backwards compatibility
             return self.render_listtagged(req, *tags, **kwargs)
