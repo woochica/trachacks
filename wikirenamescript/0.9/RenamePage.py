@@ -68,12 +68,12 @@ def rename_page(oldname, newname, envpath, debug=False):
 
     # Get a list of all wiki pages containing links to the old page
     if debug: print "Trying to fix links"
-    sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + 'AND w1.text like \'%%[wiki:%s %%\'' % oldname
+    sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + "AND w1.text like '%%[wiki:%s%%'" % oldname
     cursor.execute(sql)
 
     # Rewrite all links to the old page, such as to point to the new page
     for row in cursor:
-        newtext = sre.sub('\[wiki:%s '%oldname,'[wiki:%s '%newname,row[2])
+        newtext = sre.sub('\[wiki:%s'%oldname,'[wiki:%s'%newname,row[2])
         cursor.execute('UPDATE wiki SET text=%s WHERE name=%s AND version=%s', (newtext,row[1],row[0]))
 
     db.commit()
