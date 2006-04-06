@@ -12,8 +12,8 @@ import string
 try:
     sorted = sorted
 except NameError:
-    def sorted(iterable, cmp=None, key=str, reverse=False):
-        lst = [(key(i), i) for i in iterable]
+    def sorted(iterable, cmp=None, key=None, reverse=False):
+        lst = key and [(key(i), i) for i in iterable] or list(iterable)
         lst.sort()
         if reverse:
             lst = reversed(lst)
