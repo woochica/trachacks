@@ -73,6 +73,7 @@ def rename_page(oldname, newname, envpath, debug=False):
 
     # Rewrite all links to the old page, such as to point to the new page
     for row in cursor:
+        if debug: print "Found a page with a link in it: %s (v%s)" % (row[1],row[0])
         newtext = sre.sub('\[wiki:%s'%oldname,'[wiki:%s'%newname,row[2])
         cursor.execute('UPDATE wiki SET text=%s WHERE name=%s AND version=%s', (newtext,row[1],row[0]))
 
