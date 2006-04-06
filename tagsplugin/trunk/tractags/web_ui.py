@@ -143,12 +143,16 @@ class TagsModule(Component):
         add_stylesheet(req, 'tags/css/tractags.css')
         req.hdf['trac.href.tags'] = self.env.href.tags()
 
+        def update_from_req(args):
+            for k in req.args.keys():
+                args[str(k)] = str(req.args.get(k))
+
         if req.path_info == '/tags':
             index = self.env.config.get('tags', 'index', 'cloud')
             index_kwargs = {'smallest': 10, 'biggest': 30}
             _, config_kwargs = parseargs(self.env.config.get('tags', 'index.args', ''))
             index_kwargs.update(config_kwargs)
-            index_kwargs.update(req.args)
+            update_from_req(index_kwargs)
 
             if index == 'cloud':
                 req.hdf['tag.body'] = Markup(
@@ -160,7 +164,7 @@ class TagsModule(Component):
                 raise TracError("Invalid index style '%s'" % index)
         else:
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
-            args.update(req.args)
+            update_from_req(args)
             tag = req.path_info[6:]
             tags = tag.split(',')
             req.hdf['tag.name'] = tag
