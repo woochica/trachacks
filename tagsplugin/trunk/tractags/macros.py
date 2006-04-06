@@ -51,14 +51,15 @@ class TagMacros(Component):
         # Translate macro args into python args
         args = []
         kwargs = {}
-        if content is not None:
-            try:
-                # Set default args from config
-                _, kwargs = parseargs(self.env.config.get('tags', '%s.args' % name.lower(), ''))
+        try:
+            # Set default args from config
+            _, config_args = parseargs(self.env.config.get('tags', '%s.args' % name.lower(), ''))
+            kwargs.update(config_args)
+            if content is not None:
                 args, macro_args = parseargs(content)
                 kwargs.update(macro_args)
-            except Exception, e:
-                raise TracError("Invalid arguments '%s' (%s %s)" % (content, e.__class__.__name__, e))
+        except Exception, e:
+            raise TracError("Invalid arguments '%s' (%s %s)" % (content, e.__class__.__name__, e))
 
         return getattr(self, 'render_' + name.lower(), content)(req, *args, **kwargs)
 
