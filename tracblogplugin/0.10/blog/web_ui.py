@@ -174,7 +174,10 @@ class TracBlogPlugin(Component):
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         bloglink = self.env.config.get('blog', 'new_blog_link', 'New Blog Post')
         req.hdf['blog.newblog'] = bloglink
-        self._generate_calendar(req)
+        hidecal = self._choose_value('hidecal', req, kwargs)
+        if not hidecal:
+            self._generate_calendar(req)
+        req.hdf['blog.hidecal'] = hidecal
         pass
 
     def _generate_calendar(self, req):
