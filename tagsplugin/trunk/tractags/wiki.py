@@ -1,7 +1,7 @@
 from trac.core import *
 from tractags.api import DefaultTaggingSystem, ITaggingSystemProvider, TagEngine
 from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider
-from trac.util import Markup, escape
+from trac.util import Markup
 import re
 
 class WikiTaggingSystem(DefaultTaggingSystem):
@@ -39,7 +39,6 @@ class WikiTags(Component):
 
     # ITaggingSystemProvider methods
     def get_tagspaces_provided(self):
-        self.env.log.debug("fuckety")
         yield 'wiki'
 
     def get_tagging_system(self, tagspace):
