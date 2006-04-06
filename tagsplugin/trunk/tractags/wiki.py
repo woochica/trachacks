@@ -1,6 +1,7 @@
 from trac.core import *
 from tractags.api import DefaultTaggingSystem, ITaggingSystemProvider, TagEngine
-from trac.wiki.api import IWikiChangeListener
+from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider
+from trac.util import Markup, escape
 import re
 
 class WikiTaggingSystem(DefaultTaggingSystem):
@@ -31,12 +32,14 @@ class WikiTaggingSystem(DefaultTaggingSystem):
         return defaults[0:2] + (title,)
 
 class WikiTags(Component):
-    """ Implement tags in the Wiki system. """
+    """ Implement tags in the Wiki system, a tag:<tag> link resolver and
+        correctly deletes tags from Wiki pages that are removed. """
 
-    implements(ITaggingSystemProvider, IWikiChangeListener)
+    implements(ITaggingSystemProvider, IWikiChangeListener, IWikiSyntaxProvider)
 
     # ITaggingSystemProvider methods
     def get_tagspaces_provided(self):
+        self.env.log.debug("fuckety")
         yield 'wiki'
 
     def get_tagging_system(self, tagspace):
@@ -57,3 +60,15 @@ class WikiTags(Component):
     def wiki_page_version_deleted(self, page):
         # Wiki tags are not versioned. If they were, we'd delete them here.
         pass
+
+    # IWikiSyntaxProvider methods
+    def get_wiki_syntax(self):
+        return []
+
+    def get_link_resolvers(self):
+        yield ('tag', self._tag_formatter)
+
+    def _tag_formatter(self, formatter, ns, target, label):
+        href, title = TagEngine(self.env).get_tag_link(target)
+        return Markup('<a href="%s" title="%s">%s</a>' % (href, title, label))
+
