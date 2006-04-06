@@ -189,9 +189,13 @@ class TracBlogPlugin(Component):
         day = self._choose_value('day', req, None, convert=int) or \
               now.day 
         baseday = datetime.datetime(year, month, day)
+        week_day = self.env.config.get('blog', 'first_week_day', 'SUNDAY')
+        first_day = getattr(calendar, week_day.upper())
+        calendar.setfirstweekday(first_day)
         cal = calendar.monthcalendar(year, month)
         week = [week for week in xrange(0,len(cal)-1) if day in cal[week]][0]
-        monthname = format_datetime(time.mktime(now.timetuple()), format="%b") 
+        monthname = format_datetime(time.mktime(baseday.timetuple()), 
+                                    format="%b") 
         lastyear = abs(year - 1)
         nextyear = year + 1
         # for the prev/next navigation links
@@ -227,7 +231,7 @@ class TracBlogPlugin(Component):
                   }
         req.hdf['blog.date'] = hdfdate
         req.hdf['blog.cal'] = cal
-        req.hdf['blog.path_info'] = req.href(req.path_info)
+        req.hdf['blog.path_info'] = self.env.href(req.path_info)
         pass
 
     def _add_to_tallies(self, tallies,  post_time, page_name):

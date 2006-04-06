@@ -52,6 +52,12 @@
                     value="<?cs var:blogadmin.new_blog_link ?>" />
                 </label>
             </div>
+            <div class="field">
+                <label>Calendar Week Start Day:<br/>
+                    <input type="text" name="first_week_day" 
+                    value="<?cs var:blogadmin.first_week_day ?>" />
+                </label>
+            </div>
         <div class="buttons">
             <input type="submit" value="Apply Changes" />
         </div>

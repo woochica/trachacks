@@ -59,6 +59,7 @@ class BlogAdminPlugin(Component):
                         'post_size'    : 1024,
                         'history_days' : 30,
                         'new_blog_link' : 'New Blog Post',
+                        'first_week_day' : 'SUNDAY',
                        }
         if req.method == 'POST':
             if page == 'defaults':
@@ -87,6 +88,8 @@ class BlogAdminPlugin(Component):
    number of days for which to show blog posts
  '''New Blog Link'''::
    text to show for the new blog link
+ '''Calendar Week Start Day'''::
+   name of day that acts as the first day of the week.  Must be full day name.
 
  '''strftime formatting'''::
 ||%a||Locale's abbreviated weekday name.||
