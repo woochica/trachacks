@@ -162,9 +162,10 @@ class TagsModule(Component):
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
             args.update(req.args)
             tag = req.path_info[6:]
+            tags = tag.split(',')
             req.hdf['tag.name'] = tag
             req.hdf['tag.body'] = Markup(
-                TagMacros(self.env).render_listtagged(req, tag, **args))
+                TagMacros(self.env).render_listtagged(req, *tags, **args))
         return 'tags.cs', None
 
 # XXX I think this is planned for some AJAX goodness, commenting out for now. (Alec) XXX
