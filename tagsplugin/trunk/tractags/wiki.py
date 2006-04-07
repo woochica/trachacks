@@ -68,6 +68,11 @@ class WikiTags(Component):
         yield ('tag', self._tag_formatter)
 
     def _tag_formatter(self, formatter, ns, target, label):
+        if '?' in target:
+            target, args = target.split('?')[0:2]
+            args = '?' + args
+        else:
+            args = ''
         href, title = TagEngine(self.env).get_tag_link(target)
-        return Markup('<a href="%s" title="%s">%s</a>' % (href, title, label))
+        return Markup('<a href="%s%s" title="%s">%s</a>' % (href, args, title, label))
 

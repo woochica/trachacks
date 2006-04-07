@@ -147,19 +147,12 @@ class TagsModule(Component):
             for k in req.args.keys():
                 args[str(k)] = str(req.args.get(k))
 
-        if '?' in req.path_info:
-            path_info, req_escaped_args = req.path_info.split('?')
-            _, req_escaped_args = parseargs(req_escaped_args)
-        else:
-            path_info, req_escaped_args = req.path_info, {}
-
-        if path_info == '/tags':
+        if req.path_info == '/tags':
             index = self.env.config.get('tags', 'index', 'cloud')
             index_kwargs = {'smallest': 10, 'biggest': 30}
             _, config_kwargs = parseargs(self.env.config.get('tags', 'index.args', ''))
             index_kwargs.update(config_kwargs)
             update_from_req(index_kwargs)
-            index_kwargs.update(req_escaped_args)
 
             if index == 'cloud':
                 req.hdf['tag.body'] = Markup(
@@ -172,8 +165,7 @@ class TagsModule(Component):
         else:
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
             update_from_req(args)
-            args.update(req_escaped_args)
-            tag = path_info[6:]
+            tag = req.path_info[6:]
             tags = tag.split(',')
             req.hdf['tag.name'] = tag
             req.hdf['tag.body'] = Markup(
