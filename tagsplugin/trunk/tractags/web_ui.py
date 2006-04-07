@@ -166,7 +166,7 @@ class TagsModule(Component):
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
             update_from_req(args)
             tag = req.path_info[6:]
-            tags = tag.split(',')
+            tags = re.split('[,+]', tag)
             req.hdf['tag.name'] = tag
             req.hdf['tag.body'] = Markup(
                 TagMacros(self.env).render_listtagged(req, *tags, **args))

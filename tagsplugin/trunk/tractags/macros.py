@@ -125,7 +125,7 @@ class TagMacros(Component):
                 count = ''
             out.write('<li%s><a rel="tag" title="%s" style="font-size: %ipx" href="%s">%s</a>%s</li>\n' % (
                        cls,
-                       taginfo[tag][1],
+                       taginfo[tag][1] + ' (%i)' % cloud[tag],
                        smallest + int(by_count[cloud[tag]] * scale),
                        taginfo[tag][0],
                        tag,
