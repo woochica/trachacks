@@ -64,11 +64,13 @@ div.blog-calendar {
 }
 
 div.blog-calendar table {
+/*
  border-collapse: collapse;
+*/
 }
 
 div.blog-calendar td {
- padding: 1px;
+ padding: .25em;
 }
 
 tr.blog-calendar-current {
@@ -77,4 +79,14 @@ tr.blog-calendar-current {
 
 td.blog-calendar-current a {
  color: #000000;
+ font-weight: bold;
+}
+
+a.blog-calendar-title {
+ font-size: 130%;
+ color: black;
+}
+
+caption.blog-calendar-caption {
+ padding-bottom: 4px;
 }

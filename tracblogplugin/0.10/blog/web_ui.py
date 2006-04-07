@@ -176,11 +176,11 @@ class TracBlogPlugin(Component):
         req.hdf['blog.newblog'] = bloglink
         hidecal = self._choose_value('hidecal', req, kwargs)
         if not hidecal:
-            self._generate_calendar(req)
+            self._generate_calendar(req, tallies)
         req.hdf['blog.hidecal'] = hidecal
         pass
 
-    def _generate_calendar(self, req):
+    def _generate_calendar(self, req, tallies):
         """Generate data necessary for the calendar
 
         """
@@ -196,6 +196,20 @@ class TracBlogPlugin(Component):
         first_day = getattr(calendar, week_day.upper())
         calendar.setfirstweekday(first_day)
         cal = calendar.monthcalendar(year, month)
+        statcal = {}
+        for week_num, week in enumerate(cal):
+            statcal[week_num] = {
+                                'num' : week_num,
+                                'days' : []
+                               }
+            for day_num in week:
+                d = { 'num' : day_num,
+                      'count' : 0, }
+                if day_num:
+                    d['count'] = self._get_tally(tallies, year, month, day_num)
+                statcal[week_num]['days'].append(d)
+                continue
+            continue
         week = [week for week in xrange(0,len(cal)-1) if day in cal[week]][0]
         monthname = format_datetime(time.mktime(baseday.timetuple()), 
                                     format="%b") 
@@ -216,7 +230,9 @@ class TracBlogPlugin(Component):
 
         hdfdate = {
                     'year' : year,
+                    'yearcount' : self._get_tally(tallies, year),
                     'month' : month, 
+                    'monthcount' : self._get_tally(tallies, year, month),
                     'day' : day,
                     'lastyear' : lastyear,
                     'nextyear' : nextyear,
@@ -228,19 +244,54 @@ class TracBlogPlugin(Component):
                                     'year' : nextmonth_year,
                                     'month' : nextmonth,
                                   },
-                    'daynames' : calendar.weekheader(1).split(),
+                    'daynames' : calendar.weekheader(2).split(),
                     'week' : week,
                     'monthname' : monthname,
                   }
         req.hdf['blog.date'] = hdfdate
-        req.hdf['blog.cal'] = cal
+        req.hdf['blog.cal'] = statcal
         req.hdf['blog.path_info'] = self.env.href(req.path_info)
         pass
+
+    def _get_tally(self, tallies, year, month=None, day=None):
+        """Return the tally for the given date
+
+        Returns 0 if no tally is present
+
+        """
+        if day and month:
+            try:    
+                tally = tallies[year][month][day]['total']
+            except KeyError:
+                tally = 0
+        elif month:
+            try:    
+                tally = tallies[year][month]['total']
+            except KeyError:
+                tally = 0
+        else:
+            try:    
+                tally = tallies[year]['total']
+            except KeyError:
+                tally = 0
+        return tally
 
     def _add_to_tallies(self, tallies,  post_time, page_name):
         """Create a running tally of blog page data
 
         """
+        def _gen_blank_year_total(year):
+            blank_year = {}
+            for month in xrange(1, 13):
+                mrange = calendar.monthrange(year, month)[1] 
+                blank_year[month] = { 'pages' : [],
+                                      'total' : 0, }
+                for day in xrange(1, mrange + 1):
+                    blank_year[month][day] = { 'total' : 0,
+                                               'pages' : [], }
+                    continue
+                continue
+            return blank_year
         d = datetime.datetime.fromtimestamp(post_time)
         try:
             tallies['total'] += 1
@@ -250,20 +301,13 @@ class TracBlogPlugin(Component):
             tallies[d.year]['total'] += 1
             tallies[d.year]['pages'].append(page_name)
         except (KeyError, AttributeError):
-            tallies[d.year] = {'total' : 1,
-                               'pages' : [page_name]}
-        try:
-            tallies[d.year][d.month]['total'] += 1
-            tallies[d.year][d.month]['pages'].append(page_name)
-        except (KeyError, AttributeError):
-            tallies[d.year][d.month] = {'total' : 1,
-                                        'pages' : [page_name]}
-        try:
-            tallies[d.year][d.month][d.day]['total'] += 1
-            tallies[d.year][d.month][d.day]['pages'].append(page_name)
-        except (KeyError, AttributeError):
-            tallies[d.year][d.month][d.day] = {'total' : 1,
-                                               'pages' : [page_name]}
+            tallies[d.year] = _gen_blank_year_total(d.year)
+            tallies[d.year]['total'] = 1
+            tallies[d.year]['pages'] = [page_name]
+        tallies[d.year][d.month]['total'] += 1
+        tallies[d.year][d.month]['pages'].append(page_name)
+        tallies[d.year][d.month][d.day]['total'] += 1
+        tallies[d.year][d.month][d.day]['pages'].append(page_name)
         pass
 
     def _get_time_range(self, req, **kwargs):
