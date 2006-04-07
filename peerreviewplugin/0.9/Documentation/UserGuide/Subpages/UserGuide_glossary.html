@@ -1,0 +1,73 @@
+<html>
+<head>
+<title>TRAC Peer Review Plugin User Guide: Glossary</title>
+<link rel="stylesheet" type="text/css" href="../trac.css" />
+<style type="text/css">
+</style>
+</head>
+<p>
+<a href="../UserGuide_index.html">Back to index</a></p>
+<h1>
+Glossary</h1>
+<h2>
+Some terms that are exclusive to the peer review plug-in (as opposed to being in 
+TRAC or Subversion) are defined here.</h2>
+<p>
+<b>Author</b> - The user that created a code review.&nbsp; Has special 
+privileges, which are overridden if the user is also a manager.</p>
+<p>
+<b>Code review</b> - A collection of reviewers and a collection of files to be 
+reviewed.&nbsp; </p>
+<p>
+<b>Developer</b> - A normal user.&nbsp; Can 
+<a href="UserGuide_newCodeReview.html">create code reviews</a> and be assigned 
+as a reviewer to them.&nbsp; Can <a href="UserGuide_peerReviewSearch.html">search for code reviews</a>, see reviews they 
+created, and see reviews they are assigned to.</p>
+<p>
+<b>Manager</b> - User with highest privileges.&nbsp; Can do everything that a 
+developer can do.&nbsp; Can also change the status of a review at any time.&nbsp; 
+When reviews have &quot;Ready for inclusion&quot; status, these appear on the manager's 
+main page in a table.&nbsp; Can also view the <a href="UserGuide_options.html">Manager Options page</a>.</p>
+<p>
+<b>Resubmit</b> - Resubmitting for review takes an existing code review and 
+creates a new code review based on it.&nbsp; The fields of the new review are 
+filled in as they were when the original code review was created, and then the 
+author can edit the review details.&nbsp; After creating this new review, the 
+old one is closed.&nbsp;</p>
+<p>
+<b>Reviewer</b> - A developer or manager that is assigned to review a code 
+review, make comments, and vote on the review.</p>
+<p>
+<b>Status</b> - The current state of the code review.&nbsp; The status dictates 
+whether or not certain actions are possible.&nbsp; A manager can change the 
+state at any time, and the author can close the review when it is open or 
+reviewed.&nbsp; States include:</p>
+<ul>
+	<li><i>Open for review</i> - Initial state of the review, where reviewers 
+	can vote on the review and add comments.</li>
+	<li><i>Reviewed</i> - Enough people have voted yes to push the review over 
+	the threshold limit.&nbsp; At this point the review can be submitted for 
+	inclusion by the author.</li>
+	<li><i>Ready for inclusion</i> - The author feels, and his/her reviewers 
+	agree, that the review is ready for inclusion into the main trunk.&nbsp; At 
+	this point it is the manager's responsibility to verify the review, merge 
+	the changes with the main trunk, and close the review when finished.&nbsp; No 
+	voting is possible during this stage.</li>
+	<li><i>Closed </i>- The review can be viewed, but no more voting is 
+	possible.&nbsp; The review is not visible from anyone's main page, but can 
+	be accessed by directly typing the review id into the URL of the 
+	<a href="UserGuide_viewCodeReview.html">peerReviewView page</a> or successfully searching for the file.</li>
+</ul>
+<p>
+<b>Threshold</b> - This setting defines the number of positive votes versus 
+total votes necessary for an author to submit a code review for a manager's 
+approval.</p>
+<p>
+<b>Vote</b> - &quot;Approve&quot; or &quot;Not Approve&quot;, which signal that the reviewer either 
+accepts the changes made by the review author, or feels that they should not be 
+inserted into the main trunk unless some important changes are made.<br>
+&nbsp;</p>
+<p><a href="../UserGuide_index.html">Back to index</a></p>
+<p>Copyright 2005-2006 <a href="mailto:tracteam5@users.sourceforge.net">Team5</a></p>
+
+</html>
