@@ -179,8 +179,7 @@ class DefaultTaggingSystem(TaggingSystem):
     def name_details(self, name):
         from trac.wiki.formatter import wiki_to_oneliner
         return (getattr(self.env.href, self.tagspace),
-                wiki_to_oneliner('[%s:%s %s]' % (self.tagspace, name, name),
-                                  self.env), '')
+                wiki_to_oneliner('[%s:"%s" %s]' % (self.tagspace, name, name), self.env), '')
 
 class TagspaceProxy:
     """ A convenience for performing operations on a specific tagspace,
