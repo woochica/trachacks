@@ -409,14 +409,15 @@ class TagEngine(Component):
                 for stmt in db_backend.to_sql(table):
                     self.env.log.debug(stmt)
                     cursor.execute(stmt)
+            db.commit()
 
             # Migrate old data
             if self._need_migration(db):
+                cursor = db.cursor()
                 cursor.execute("INSERT INTO tags (tagspace, name, tag) SELECT 'wiki', name, namespace FROM wiki_namespace")
                 cursor.execute("DROP TABLE wiki_namespace")
+                db.commit()
         except Exception, e:
             db.rollback()
+            self.env.log.error(e, exc_info=1)
             raise TracError(str(e))
-
-        db.commit()
-
