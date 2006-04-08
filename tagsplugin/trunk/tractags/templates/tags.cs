@@ -3,9 +3,9 @@
 
 <div id="content" class="wiki">
 
-<?cs if:tag.name
+<?cs if:tag.title
 ?><p>
-<h1>Objects tagged <i><?cs var:tag.name ?></i></h1>
+<h1><?cs var:tag.title ?></h1>
 <?cs /if ?><?cs var:tag.body ?>
 </p>
 </div>

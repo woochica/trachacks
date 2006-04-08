@@ -147,7 +147,7 @@ class TagsModule(Component):
             for k in req.args.keys():
                 args[str(k)] = str(req.args.get(k))
 
-        if req.path_info == '/tags':
+        if re.match('^/tags/?$', req.path_info):
             index = self.env.config.get('tags', 'index', 'cloud')
             index_kwargs = {'smallest': 10, 'biggest': 30}
             _, config_kwargs = parseargs(self.env.config.get('tags', 'index.args', ''))
@@ -163,11 +163,16 @@ class TagsModule(Component):
             else:
                 raise TracError("Invalid index style '%s'" % index)
         else:
+            expression_space = self.env.config.getbool('tags', 'expression_space', 'false')
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
+            if expression_space:
+                req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % req.path_info[6:])
+                args['expression'] = req.path_info[6:]
+                tags = []
+            else:
+                req.hdf['tag.title'] = Markup('Objects tagged <i>%s</i>' % req.path_info[6:])
+                tags = re.split('[,+]', tag)
             update_from_req(args)
-            tag = req.path_info[6:]
-            tags = re.split('[,+]', tag)
-            req.hdf['tag.name'] = tag
             req.hdf['tag.body'] = Markup(
                 TagMacros(self.env).render_listtagged(req, *tags, **args))
         return 'tags.cs', None

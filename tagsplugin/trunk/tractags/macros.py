@@ -144,6 +144,19 @@ class TagMacros(Component):
             ||`tagspaces=(<tagspace>,...)`||Specify a set of tagspaces the macro should operate on.||
             ||`operation=intersection|union`||The set operation to perform on the discovered objects.||
             ||`showheadings=true|false`||List objects under the tagspace they occur in.||
+            ||`expression=<expr>`||Match object tags against the given expression.||
+
+            The supported expression operators are: unary - (not); binary +, -
+            and | (and, and not, or). All values in the expression are treated
+            as tags. Any tag not in the same form as a Python variable must be
+            quoted.
+            
+            eg. Match all objects tagged with ticket and workflow, and not
+            tagged with wiki or closed.
+            
+                (ticket+workflow)-(wiki|closed)
+
+            If an expression is provided operation is ignored.
         """
 
         if 'tagspace' in kwargs:
@@ -151,6 +164,7 @@ class TagMacros(Component):
         else:
             tagspaces = kwargs.get('tagspaces', '') or \
                         list(TagEngine(self.env).tagspaces)
+        expression = kwargs.get('expression', None)
         showheadings = kwargs.get('showheadings', 'false')
         operation = kwargs.get('operation', 'intersection')
         if operation not in ('union', 'intersection'):
@@ -161,14 +175,34 @@ class TagMacros(Component):
         if page_name:
             tags = [tag == '.' and page_name or tag for tag in tags]
 
+        tags = set(tags)
         taginfo = {}
         out = StringIO()
         out.write('<ul class="listtagged">')
-        # Cull empty names
-        tagged_names = [(tagspace, names) for tagspace, names in
-                        engine.get_tagged_names(tags=tags, tagspaces=tagspaces,
-                            operation=operation, detailed=True).iteritems()
-                        if names]
+        # If expression was passed as an argument, do a full walk, using the
+        # expression as the predicate. Silently assumes that failed expressions
+        # are normal tags.
+        if expression:
+            from tractags.expr import Expression
+            try:
+                expr = Expression(expression)
+            except Exception, e:
+                tags.add(expression)
+                expression = None
+            else:
+                tagged_names = {}
+                tags.update(expr.get_tags())
+                for tagspace, name, name_tags in engine.walk_tagged_names(tags=tags,
+                        tagspaces=tagspaces, predicate=lambda ts, n, t: expr(t)):
+                    tagged_names.setdefault(tagspace, {})[name] = name_tags
+                tagged_names = [(tagspace, names) for tagspace, names in tagged_names.iteritems()]
+
+        if not expression:
+            tagged_names = [(tagspace, names) for tagspace, names in
+                            engine.get_tagged_names(tags=tags, tagspaces=tagspaces,
+                                operation=operation, detailed=True).iteritems()
+                            if names]
+
         for tagspace, tagspace_names in sorted(tagged_names):
             if showheadings == 'true':
                 out.write('<lh>%s tags</lh>' % tagspace)

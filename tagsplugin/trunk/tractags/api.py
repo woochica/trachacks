@@ -85,6 +85,8 @@ class TaggingSystem(object):
             in this tagspace that meets the predicate and is in the set
             of names and has any of the given tags.
 
+            predicate is called with (name, tags)
+
             (The names and tags arguments are purely an optimisation
             opportunity for the underlying TaggingSystem)
             """
