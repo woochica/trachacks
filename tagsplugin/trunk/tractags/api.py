@@ -244,6 +244,7 @@ class TagEngine(Component):
     def __init__(self):
         self.tagspace = TagspaceDirector(self)
         self._tagsystem_cache = {}
+        self._tag_link_cache = {}
 
     def _get_tagspaces(self):
         """ Get iterable of available tagspaces. """
@@ -336,12 +337,17 @@ class TagEngine(Component):
     def get_tag_link(self, tag):
         """ Return (href, title) to information about tag. This first checks for
             a Wiki page named <tag>, then uses /tags/<tag>. """
+        if tag in self._tag_link_cache:
+            return self._tag_link_cache[tag]
         from tractags.wiki import WikiTaggingSystem
         page, title = WikiTaggingSystem(self.env).page_info(tag)
         if page.exists:
-            return (self.env.href.wiki(tag), title)
+            result = (self.env.href.wiki(tag), title)
         else:
-            return (self.env.href.tags(tag), "Objects tagged ''%s''" % tag)
+            result = (self.env.href.tags(tag), "Objects tagged ''%s''" % tag)
+        self._tag_link_cache[tag] = result
+        return result
+    
 
     def name_details(self, tagspace, name):
         """ Return a tuple of (href, htmllink, title). eg. 
