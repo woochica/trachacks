@@ -171,7 +171,7 @@ class TagsModule(Component):
                 tags = []
             else:
                 req.hdf['tag.title'] = Markup('Objects tagged <i>%s</i>' % req.path_info[6:])
-                tags = re.split('[,+]', tag)
+                tags = re.split('[,+]', req.path_info[6:])
             update_from_req(args)
             req.hdf['tag.body'] = Markup(
                 TagMacros(self.env).render_listtagged(req, *tags, **args))
