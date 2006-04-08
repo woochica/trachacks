@@ -33,7 +33,7 @@
                 <?cs if:day.num ?>
                 <a <?cs if:day.count <= 0 ?>class="missing"<?cs /if ?>
                 title="<?cs var:day.count ?> Post(s)"
-                href="<?cs call:day_link(blog.date.year, blog.date.month, day) ?>"><?cs var:day.num ?></a>
+                href="<?cs call:day_link(blog.date.year, blog.date.month, day.num) ?>"><?cs var:day.num ?></a>
                 <?cs else ?>&nbsp;<?cs /if ?>
                 </td>
                 <?cs /each ?>
