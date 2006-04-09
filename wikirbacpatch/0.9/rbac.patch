@@ -1,14 +1,12 @@
-Index: web_ui.py
-===================================================================
---- web_ui.py	(revision 40)
-+++ web_ui.py	(working copy)
+--- trac/wiki/web_ui.py.orig	2006-02-13 15:32:40.000000000 -0800
++++ trac/wiki/web_ui.py	2006-02-13 15:32:09.000000000 -0800
 @@ -32,13 +32,15 @@
  from trac.web import IRequestHandler
  from trac.wiki.model import WikiPage
  from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
+-
 +from trac.wiki.rbac import WikiAuthorizer
  
--
  class WikiModule(Component):
  
      implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
@@ -19,7 +17,7 @@ Index: web_ui.py
      # INavigationContributor methods
  
      def get_active_navigation_item(self, req):
-@@ -72,6 +74,7 @@
+@@ -74,6 +76,7 @@
          pagename = req.args.get('page', 'WikiStart')
          version = req.args.get('version')
  
@@ -27,25 +25,25 @@ Index: web_ui.py
          db = self.env.get_db_cnx()
          page = WikiPage(self.env, pagename, version, db)
  
-@@ -116,6 +119,12 @@
+@@ -118,6 +121,13 @@
          req.hdf['wiki.action'] = action
-         req.hdf['wiki.page_name'] = escape(page.name)
-         req.hdf['wiki.current_href'] = escape(self.env.href.wiki(page.name))
+         req.hdf['wiki.page_name'] = page.name
+         req.hdf['wiki.current_href'] = self.env.href.wiki(page.name)
 +        for permission in self.get_permission_actions():
 +            if isinstance(permission, (list, tuple)):
-+				permission = permission[0]
++                               permission = permission[0]
 +            self.log.debug("PERMISSION: %s", permission)
 +            req.hdf['trac.acl.' + permission] =\
 +                self.authz.has_authorization(req.perm, req.authname, page.name, permission)
++
          return 'wiki.cs', None
  
      # ITimelineEventProvider methods
-@@ -133,25 +142,30 @@
+@@ -135,24 +145,29 @@
                             "FROM wiki WHERE time>=%s AND time<=%s",
                             (start, stop))
              for t,name,comment,author in cursor:
--                title = '<em>%s</em> edited by %s' % (
--                        escape(name), escape(author))
+-                title = Markup('<em>%s</em> edited by %s', name, author)
 -                if format == 'rss':
 -                    href = self.env.abs_href.wiki(name)
 -                    comment = wiki_to_html(comment or '--', self.env, req, db,
@@ -56,8 +54,7 @@ Index: web_ui.py
 -                                               shorten=True)
 -                yield 'wiki', href, title, t, author, comment
 +                if self.authz.has_authorization(req.perm, req.authname, name, 'WIKI_VIEW'):
-+                    title = '<em>%s</em> edited by %s' % (
-+                            escape(name), escape(author))
++                    title = Markup('<em>%s</em> edited by %s', name, author)
 +                    if format == 'rss':
 +                        href = self.env.abs_href.wiki(name)
 +                        comment = wiki_to_html(comment or '--', self.env, req, db,
@@ -82,7 +79,7 @@ Index: web_ui.py
  
          if req.args.has_key('cancel'):
              req.redirect(self.env.href.wiki(page.name))
-@@ -173,8 +187,10 @@
+@@ -174,8 +189,10 @@
              req.perm.assert_permission('WIKI_ADMIN')
          elif not page.exists:
              req.perm.assert_permission('WIKI_CREATE')
@@ -93,7 +90,7 @@ Index: web_ui.py
  
          page.text = req.args.get('text')
          if req.perm.has_permission('WIKI_ADMIN'):
-@@ -191,6 +207,7 @@
+@@ -192,6 +209,7 @@
              req.perm.assert_permission('WIKI_ADMIN')
          else:
              req.perm.assert_permission('WIKI_DELETE')
@@ -101,7 +98,7 @@ Index: web_ui.py
  
          version = None
          if req.args.has_key('delete_version'):
-@@ -209,6 +226,7 @@
+@@ -210,6 +228,7 @@
  
      def _render_diff(self, req, db, page):
          req.perm.assert_permission('WIKI_VIEW')
@@ -109,7 +106,7 @@ Index: web_ui.py
  
          if not page.exists:
              raise TracError, "Version %s of page %s does not exist" \
-@@ -277,6 +295,7 @@
+@@ -277,6 +296,7 @@
  
      def _render_editor(self, req, db, page, preview=False):
          req.perm.assert_permission('WIKI_MODIFY')
@@ -117,7 +114,7 @@ Index: web_ui.py
  
          if req.args.has_key('text'):
              page.text = req.args.get('text')
-@@ -320,6 +339,7 @@
+@@ -320,6 +340,7 @@
          page.
          """
          req.perm.assert_permission('WIKI_VIEW')
@@ -125,7 +122,7 @@ Index: web_ui.py
  
          if not page.exists:
              raise TracError, "Page %s does not exist" % page.name
-@@ -344,6 +364,7 @@
+@@ -344,6 +365,7 @@
  
      def _render_view(self, req, db, page):
          req.perm.assert_permission('WIKI_VIEW')
@@ -133,17 +130,17 @@ Index: web_ui.py
  
          if page.name == 'WikiStart':
              req.hdf['title'] = ''
-@@ -365,7 +386,8 @@
+@@ -365,7 +387,8 @@
              history_href = self.env.href.wiki(page.name, action='history')
-             req.hdf['wiki.history_href'] = escape(history_href)
+             req.hdf['wiki.history_href'] = history_href
          else:
 -            if not req.perm.has_permission('WIKI_CREATE'):
 +            if not req.perm.has_permission('WIKI_CREATE') and\
 +                self.authz.has_authorization(req.perm, req.authname, page.name, 'WIKI_CREATE'):
                  raise TracError('Page %s not found' % page.name)
-             req.hdf['wiki.page_html'] = '<p>Describe "%s" here</p>' % page.name
- 
-@@ -374,7 +396,8 @@
+             req.hdf['wiki.page_html'] = Markup('<p>Describe "%s" here</p>',
+                                                page.name)
+@@ -375,7 +398,8 @@
          for attachment in Attachment.select(self.env, 'wiki', page.name, db):
              attachments.append(attachment_to_hdf(self.env, db, req, attachment))
          req.hdf['wiki.attachments'] = attachments
@@ -153,23 +150,21 @@ Index: web_ui.py
              attach_href = self.env.href.attachment('wiki', page.name)
              req.hdf['wiki.attach_href'] = attach_href
  
-@@ -398,7 +421,8 @@
+@@ -399,7 +423,8 @@
                         "AND " + sql_query, args)
  
          for name, date, author, text in cursor:
 -            yield (self.env.href.wiki(name),
--                   '%s: %s' % (name, escape(shorten_line(text))),
+-                   '%s: %s' % (name, shorten_line(text)),
 -                   date, author,
--                   escape(shorten_result(text, query.split())))
-+            if self.authz.has_authorization(req.perm, name, 'WIKI_VIEW'):
+-                   shorten_result(text, query.split()))
++            if self.authz.has_authorization(req.perm, req.authname, name, 'WIKI_VIEW'):
 +                yield (self.env.href.wiki(name),
-+                    '%s: %s' % (name, escape(shorten_line(text))),
++                    '%s: %s' % (name, shorten_line(text)),
 +                    date, author,
-+                    escape(shorten_result(text, query.split())))
-Index: rbac.py
-===================================================================
---- rbac.py	(revision 0)
-+++ rbac.py	(revision 88)
++                    shorten_result(text, query.split()))
+--- trac/wiki/rbac.py.orig	2006-02-13 15:32:45.000000000 -0800
++++ trac/wiki/rbac.py	2006-02-13 15:29:34.000000000 -0800
 @@ -0,0 +1,82 @@
 +from trac.core import *
 +from trac.perm import PermissionError
