@@ -49,10 +49,10 @@ except:
 try:
     sorted = sorted
 except NameError:
-    def sorted(iterable, key=None):
-        lst = key and [(key(i), i) for i in iterable] or list(iterable)
+    def sorted(iterable):
+        lst = list(iterable)
         lst.sort()
-        return [i for __, i in lst]
+        return lst
 
 class ITagSpaceUser(Interface):
     """ Register that this component uses a set of tagspaces. If a tagspace is
