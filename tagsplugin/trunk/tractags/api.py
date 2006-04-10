@@ -270,6 +270,13 @@ class TagEngine(Component):
         raise TracError("No such tagspace '%s'" % tagspace)
 
     # Public methods
+    def flush_link_cache(self, tag=None):
+        """ Flush the link cache entirely, or for a single tag. """
+        if not tag:
+            self._tag_link_cache = {}
+        elif tag in self._tag_link_cache:
+            del self._tag_link_cache[tag]
+
     def walk_tagged_names(self, names=[], tags=[], tagspaces=[], predicate=lambda tagspace, name, tags: True):
         """ Generator returning (tagspace, name, tags) for all names in the
             given tagspaces. Objects must have at least one of tags, be in

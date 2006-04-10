@@ -46,19 +46,21 @@ class WikiTags(Component):
 
     # IWikiChangeListener methods
     def wiki_page_added(self, page):
-        pass
+        TagEngine(self.env).flush_link_cache(page)
 
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
-        pass
+        TagEngine(self.env).flush_link_cache(page)
 
     def wiki_page_deleted(self, page):
         # No point having tags on a non-existent page.
         self.env.log.debug("Removing all tags from 'wiki:%s'" % page.name)
-        TagEngine(self.env).tagspace.wiki.remove_all_tags(None, page.name)
+        engine = TagEngine(self.env)
+        engine.tagspace.wiki.remove_all_tags(None, page.name)
+        engine.flush_link_cache(page)
 
     def wiki_page_version_deleted(self, page):
         # Wiki tags are not versioned. If they were, we'd delete them here.
-        pass
+        engine.flush_link_cache(page)
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
