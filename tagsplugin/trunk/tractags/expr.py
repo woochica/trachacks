@@ -1,5 +1,6 @@
 import compiler
 import operator
+import re
 from trac.core import TracError
 
 class Expression:
@@ -18,7 +19,14 @@ class Expression:
     __visitors = {}
 
     def __init__(self, expression):
-        self.expression = expression
+        tokenizer = re.compile(r'''[-|+()\[\]]|[^-|+()\[\]\s,]+''')
+        expr = []
+        for token in tokenizer.findall(expression):
+            if token not in '-|+()[]' and token[0] not in '"\'':
+                expr.append('"%s"' % token)
+            else:
+                expr.append(token)
+        self.expression = ' '.join(expr)
         self.ast = compiler.parse(self.expression, 'eval')
 
     def get_tags(self):
