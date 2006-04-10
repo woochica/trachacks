@@ -5,6 +5,7 @@ import time
 from StringIO import StringIO
 from trac.wiki.formatter import wiki_to_html
 from trac.wiki.model import WikiPage
+from trac.util import Markup
 from trac.util import TracError
 from trac.web.chrome import add_link
 import re
@@ -34,7 +35,8 @@ def execute(hdf, args, env):
 
     disabled = ''
 
-    comment = hdf.getValue("args.addcomment", "")
+    comment = Markup(hdf.getValue("args.addcomment", "")).unescape()
+    env.log.debug(comment)
     preview = hdf.getValue("args.previewaddcomment", "")
     cancel = hdf.getValue("args.canceladdcomment", "")
     submit = hdf.getValue("args.submitaddcomment", "")
