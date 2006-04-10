@@ -36,7 +36,6 @@ def execute(hdf, args, env):
     disabled = ''
 
     comment = Markup(hdf.getValue("args.addcomment", "")).unescape()
-    env.log.debug(comment)
     preview = hdf.getValue("args.previewaddcomment", "")
     cancel = hdf.getValue("args.canceladdcomment", "")
     submit = hdf.getValue("args.submitaddcomment", "")
