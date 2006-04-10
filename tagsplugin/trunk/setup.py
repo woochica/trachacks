@@ -6,7 +6,7 @@ setup(
     packages=['tractags'],
 	package_data={'tractags' : ['templates/*.cs', 'htdocs/js/*.js', 'htdocs/css/*.css']},
     author='Muness Alrubaie',
-    url='http://dev.muness.textdriven.com/trac.cgi/wiki/tags',
+    url='http://muness.textdriven.com/trac/wiki/tags',
     description='Tag plugin for Trac',
     entry_points = {'trac.plugins': ['tractags = tractags']}
     )
