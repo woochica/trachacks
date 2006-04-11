@@ -29,7 +29,7 @@ class TicketTaggingSystem(TaggingSystem):
         tags = set(tags)
         names = set(names)
         args = []
-        sql = "SELECT id, %s, %s AS allfields FROM ticket" % (','.join(self.fields),
+        sql = "SELECT * FROM (SELECT id, %s, %s AS allfields FROM ticket) s" % (','.join(self.fields),
             '||'.join(["COALESCE(%s, '')" % f for f in self.fields]))
         constraints = []
         if names:

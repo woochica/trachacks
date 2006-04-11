@@ -76,10 +76,6 @@ class TaggingSystem(object):
         self.env = env
         self.tagspace = tagspace
 
-    def _apply_tagged_names_operation(self, names, tags, operation):
-        """ Given a dictionary of tag:names, return the appropriate set of
-            names with the operation applied. """
-
     def walk_tagged_names(self, names, tags, predicate):
         """ Generator returning a tuple of (name, tags) for each tagged name
             in this tagspace that meets the predicate and is in the set
