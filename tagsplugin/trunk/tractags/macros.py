@@ -187,9 +187,12 @@ class TagMacros(Component):
             try:
                 expr = Expression(expression)
             except Exception, e:
-                tags.add(expression)
+                self.env.log.error("Invalid expression '%s'" % expression, exc_info=True)
+                tags.update([x.strip() for x in re.split('[+,]', expression) if x.strip()])
                 expression = None
             else:
+                self.env.log.debug(expr.ast)
+                self.env.log.debug(expr(['closed', 'normal']))
                 tagged_names = {}
                 tags.update(expr.get_tags())
                 for tagspace, name, name_tags in engine.walk_tagged_names(tags=tags,

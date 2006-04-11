@@ -19,11 +19,11 @@ class Expression:
     __visitors = {}
 
     def __init__(self, expression):
-        tokenizer = re.compile(r'''"[^"]*"|'[^']*'|[-|+()\[\]]|[^-|+()\[\]\s,]+''')
+        tokenizer = re.compile(r'''"[^"]*"|'[^']*'|[-|,+()\[\]]|[^-,|+()\[\]\s]+''')
         expr = []
+        print tokenizer.findall(expression)
         for token in tokenizer.findall(expression):
-            print token
-            if token not in '-|+()[]' and token[0] not in '"\'':
+            if token not in '-|+()[],' and token[0] not in '"\'':
                 expr.append('"%s"' % token)
             else:
                 expr.append(token)

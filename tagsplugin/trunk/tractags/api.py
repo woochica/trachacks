@@ -339,9 +339,10 @@ class TagEngine(Component):
                 output[tagspace].add(name)
         return output
 
-    def get_tag_link(self, tag):
+    def get_tag_link(self, tag, is_expression=False):
         """ Return (href, title) to information about tag. This first checks for
-            a Wiki page named <tag>, then uses /tags/<tag>. """
+            a Wiki page named <tag>, then uses /tags/<tag>. If is_expression=True, treat
+            the tag as an expression rather than a simple tag. """
         if tag in self._tag_link_cache:
             return self._tag_link_cache[tag]
         from tractags.wiki import WikiTaggingSystem
@@ -349,7 +350,8 @@ class TagEngine(Component):
         if page.exists:
             result = (self.env.href.wiki(tag), title)
         else:
-            result = (self.env.href.tags(tag), "Objects tagged ''%s''" % tag)
+            tag_link = is_expression and tag or "'%s'" % tag
+            result = (self.env.href.tags(tag_link), "Objects tagged ''%s''" % tag)
         self._tag_link_cache[tag] = result
         return result
     

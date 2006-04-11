@@ -75,6 +75,9 @@ class WikiTags(Component):
             args = '?' + args
         else:
             args = ''
-        href, title = TagEngine(self.env).get_tag_link(target)
-        return Markup('<a href="%s%s" title="%s">%s</a>' % (href, args, title, label))
+        expression_space = self.config.getbool('tags', 'expression_space')
+        href, title = TagEngine(self.env).get_tag_link(target,
+                                          is_expression=expression_space)
+        return Markup('<a href="%s%s" title="%s">%s</a>' % (href, args,
+                                                            title, label))
 
