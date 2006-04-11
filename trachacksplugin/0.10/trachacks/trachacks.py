@@ -28,8 +28,9 @@ class TracHacksMacros(Component):
         tagspace = TagEngine(self.env).tagspace.wiki
 
         out = StringIO()
-        pages = list(tagspace.get_tagged_names('type'))
-        pages.sort()
+        pages = tagspace.get_tagged_names(tags=['type'])
+        pages = sorted(pages)
+        self.env.log.debug(pages)
 
         for i, pagename in enumerate(pages):
             page = WikiPage(self.env, pagename)
@@ -108,12 +109,12 @@ class TracHacksRPC(Component):
     def getReleases(self):
         """ Return a list of Trac releases TracHacks is aware of. """
         from tractags.api import TagEngine
-        return TagEngine(self.env).tagspace.wiki.get_tagged_names('release')
+        return TagEngine(self.env).tagspace.wiki.get_tagged_names(['release'])
 
     def getTypes(self):
         """ Return a list of known Hack types. """
         from tractags.api import TagEngine
-        return TagEngine(self.env).tagspace.wiki.get_tagged_names('type')
+        return TagEngine(self.env).tagspace.wiki.get_tagged_names(['type'])
 
     def getHacks(self, req, release, type):
         """ Fetch a list of hacks for Trac release, of type. """
@@ -122,8 +123,8 @@ class TracHacksRPC(Component):
         repo = self.env.get_repository(req.authname)
         wikitags = TagEngine(self.env).tagspace.wiki
         repo_rev = repo.get_youngest_rev()
-        releases = wikitags.get_tagged_names(release)
-        types = wikitags.get_tagged_names(type)
+        releases = wikitags.get_tagged_names([release])
+        types = wikitags.get_tagged_names([type])
         for plugin in releases.intersection(types):
             if plugin.startswith('tags/'): continue
             path = '%s/%s' % (plugin.lower(), release)
@@ -140,7 +141,7 @@ class TracHacksRPC(Component):
         wikitags = TagEngine(self.env).tagspace.wiki
         tags = wikitags.get_tags(hack)
         types = self.getTypes()
-        hacks = wikitags.get_tagged_names(*types)
+        hacks = wikitags.get_tagged_names(types)
 
         dependencies = hacks.intersection(tags)
         href, htmllink, description = wikitags.name_details(hack)
