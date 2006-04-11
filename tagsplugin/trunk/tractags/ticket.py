@@ -89,7 +89,7 @@ class TicketTaggingSystem(TaggingSystem):
                 ticket.exists and summary)
 
 class TicketTags(Component):
-    """ Export a ticket tag interface, using the "keywords" field of tickets. """
+    """ Export a ticket tag interface. """
     implements(ITaggingSystemProvider)
 
     def get_tagspaces_provided(self):
