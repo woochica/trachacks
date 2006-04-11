@@ -9,9 +9,16 @@ import re, string, svn, os, time
 import fcntl
 
 SVN_URL = 'http://trac-hacks.org/svn/'
+
+# Production configuration
 SVN_LOCAL_PATH = 'file:///srv/trac-hacks/svn/'
 SVN_PERMISSIONS = '/srv/trac-hacks/permissions'
 BASE_URL = "/"
+
+# Test configuration
+#SVN_LOCAL_PATH = 'file:///home/athomas/projects/trac/env/svn/'
+#SVN_PERMISSIONS = '/home/athomas/projects/trac/env/permissions'
+#BASE_URL = "/trachacks/"
 
 tag_cache = {}
 
@@ -48,10 +55,6 @@ def generate_vars(hdf):
     vars['TITLE'] = hdf.getValue('args.title', ' '.join(re.findall('[A-Z][a-z]+', vars['WIKINAME'])))
     vars['LCNAME'] = vars['WIKINAME'].lower()
     vars['TYPE'] = hdf.getValue('args.type', '')
-#    if not hdf.getValue('args.previewhack', ''):
-#        vars['TAGIT'] = '[[TagIt(%s,%s,%s)]]' % (vars['TYPE'], vars['OWNER'], ','.join(get_branch_values(hdf, 'args.tags') + get_branch_values(hdf, 'args.releases') + get_branch_values(hdf, 'args.dependencies')))
-#    else:
-#        vars['TAGIT'] = "''(Tags not expanded during preview)''"
     vars['SOURCEURL'] = SVN_URL + vars['LCNAME']
     vars['DESCRIPTION'] = hdf.getValue('args.description', 'No description available')
     vars['EXAMPLE'] = hdf.getValue('args.example', 'No example available')
@@ -72,10 +75,10 @@ def execute(hdf, template, env):
     META_TAGS = set()
     from tractags.api import TagEngine
     wikitags = TagEngine(env).tagspace.wiki
-    for tag in wikitags.get_tagged_names('metatag'):
-        META_TAGS.update(wikitags.get_tagged_names(tag))
-    TYPES = wikitags.get_tagged_names('type')
-    RELEASES = wikitags.get_tagged_names('release')
+    for tag in wikitags.get_tagged_names(['metatag']):
+        META_TAGS.update(wikitags.get_tagged_names([tag]))
+    TYPES = wikitags.get_tagged_names(['type'])
+    RELEASES = wikitags.get_tagged_names(['release'])
 
     page_name = hdf.getValue('args.name', '')
     if not page_name.lower().endswith(hdf.getValue('args.type', '')):
@@ -88,7 +91,6 @@ def execute(hdf, template, env):
     page_releases = get_branch_values(hdf, 'args.releases')
     page_preview = hdf.getValue('args.previewhack', '')
     page_create = hdf.getValue('args.createhack', '')
-    page_dependencies = get_branch_values(hdf, 'args.dependencies')
 
     def write_tags(out, tags, checked = (), name = "tags", type="checkbox"):
         count = 0
@@ -156,7 +158,7 @@ def execute(hdf, template, env):
                     paths.append("%s%s/%s" % (SVN_LOCAL_PATH, page_name.lower(), release))
                 output = os.popen('/usr/bin/op create-hack %s "New hack %s, created by %s" %s 2>&1' % (authname, page_name, authname, ' '.join(paths))).readlines()
                 if output:
-                    raise Exception("Failed to create Subversion paths:\n<blockquote>%s</blockquote>" % ''.join(output))
+                    raise Exception("Failed to create Subversion paths:\n%s" % ''.join(output))
                 out.write("Created SVN layout.<br>\n")
                 # Add SVN permissions
                 perms = open(SVN_PERMISSIONS, "a")
@@ -170,7 +172,10 @@ def execute(hdf, template, env):
                 page.save(authname, 'New hack %s, created by %s' % (page_name, authname), None)
                 db.commit()
                 # Add tags
-                wikitags.replace_tags(None, page_name, vars['TYPE'], vars['OWNER'], *(get_branch_values(hdf, 'args.tags') + get_branch_values(hdf, 'args.releases') + get_branch_values(hdf, 'args.dependencies')))
+                env.log.debug(vars)
+                tags = [page_type, authname] + page_tags + page_releases
+                env.log.debug(tags)
+                wikitags.replace_tags(None, page_name, tags)
                 # Finish up
                 rv = fcntl.flock(lockfile, fcntl.LOCK_UN)
                 return out.getvalue()
@@ -178,7 +183,8 @@ def execute(hdf, template, env):
                 # TODO Roll back changes to SVN_PERMISSIONS file
                 db.rollback()
                 rv = fcntl.flock(lockfile, fcntl.LOCK_UN)
-                raise TracError(e)
+                env.log.error(e, exc_info=True)
+                raise TracError(str(e))
 
     out.write("""
 <form name="newhack" id="edit" method="get" action="%(base_url)swiki/NewHack#preview" name="newhackform">
@@ -249,17 +255,6 @@ def execute(hdf, template, env):
     if not write_tags(out, [x[0] for x in cursor.fetchall() or [] if x[0] not in META_TAGS and x[0].lower() == x[0]], page_tags):
         out.write("<i>No additional tags available.</i>")
 
-    out.write("""
-</div>
-<div class="field">
-    <label for="dependencies"><strong>Dependencies</strong></label>
-    <br/>
-    Hacks that your hack depends on to function.
-    <br/>
-""")
-    pages = wikitags.get_tagged_names('plugin', 'patch', 'script')
-    if not write_tags(out, pages, page_dependencies, 'dependencies'):
-        out.write("<i>No additional tags available.</i>")
     out.write("""
 </div>
 </fieldset>
