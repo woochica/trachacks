@@ -60,7 +60,7 @@ class WikiTags(Component):
 
     def wiki_page_version_deleted(self, page):
         # Wiki tags are not versioned. If they were, we'd delete them here.
-        engine.flush_link_cache(page)
+        TagEngine(self.env).flush_link_cache(page)
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
