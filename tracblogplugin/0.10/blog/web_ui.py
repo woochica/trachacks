@@ -14,6 +14,7 @@
 #
 # Author: John Hampton <pacopablo@asylumware.com>
 
+import sys
 import time
 import datetime
 import inspect
@@ -30,25 +31,61 @@ from trac.wiki.api import IWikiMacroProvider
 from tractags.api import TagEngine
 from tractags.parseargs import parseargs
 
+BOOLS_TRUE = ['true', 'yes', 'ok', 'on', 'enabled', '1']
+
 __all__ = ['TracBlogPlugin']
+
+def bool_val(val):
+    """Returns whether or not a values represents a boolen value
+
+    """
+    
+    return val.strip().lower() in BOOLS_TRUE
+
 
 class TracBlogPlugin(Component):
     """Displays a blog based on tags
     
     The list of tags to be shown can be specified as arguments to the macro.
-    An options keyword argument of union can be secified.  If specified, then
-    the resulting blog will be a {{{union}}} of pages with the specified tags.
-    If the {{{union}}} parameter is omitted, then an intersection of the
-    specified tags is returned.
-
     If no tags are specified as parameters, then the default 'blog' tag is
     used.
+
+    The following options can be specified:
+
+    '''union''' - Specify whether the join for the tags listed should be a
+    union or intersection(default).[[br]]
+    '''num_posts''' - Number of posts to display.[[br]]
+    '''year''' - Year for which to show posts.[[br]]
+    '''month''' - Month for which to show posts.[[br]]
+    '''day''' - Day of the month for which to show posts.[[br]]
+    '''delta''' - How many days of posts should be shown.[[br]]
+    '''mark_update''' - Specify whether to show "Updated on" for posts that
+    have been updated.[[br]]
+
+    If specifying dates with {{{year}}}, {{{month}}}, and/or {{{day}}}, the
+    current value is specified if missing.  For example, if {{{day}}} is 
+    specified but {{{year}}} and {{{month}}} are not, then {{{year}}} will be
+    filled in with the current year and {{{month}}} will be filled with the 
+    current month.  If only {{{year}}} and {{{month}}} are specified, then that
+    indicates the whole month is desired.
+
+    The {{{num_posts}}} options is bounded by the date options if combined. For
+    example, if {{{num_posts=5}}} and {{{month=4}}} is specified, it will show 
+    up to 5 posts from the month of April.  If only 3 posts exist, then only 3 
+    are shown.  If a date option is not specified, then it will show the last 
+    {{{num_posts}}} posts.
 
     === Examples ===
     {{{
     [[BlogShow()]]
     [[BlogShow(blog,pacopablo)]]
     [[BlogShow(blog,pacopablo,union=True)]]
+    [[BlogShow(blog,pacopablo,num_posts=5)]]
+    [[BlogShow(blog,pacopablo,month=4,num_posts=5)]]
+    [[BlogShow(blog,pacopablo,year=2006,month=4)]]
+    [[BlogShow(blog,pacopablo,year=2006,month=4,day=12)]]
+    [[BlogShow(blog,pacopablo,delta=5)]]
+    [[BlogShow(blog,pacopablo,delta=5,mark_updated=False)]]
     }}}
     """
 
@@ -101,10 +138,8 @@ class TracBlogPlugin(Component):
         add_stylesheet(req, 'common/css/wiki.css')
         tags = req.args.getlist('tag')
         kwargs = {}
-        #for key,value in req.args.items():
         for key in req.args.keys():
             if key != 'tag':
-                #kwargs[key] = value
                 kwargs[key] = req.args[key]
             continue
         if not tags:
@@ -137,7 +172,18 @@ class TracBlogPlugin(Component):
         else:
             blog = tags.get_tagged_names(tlist, operation='intersection')
 
-        poststart, postend = self._get_time_range(req, **kwargs)
+        poststart, postend, default_times = self._get_time_range(req, **kwargs)
+        mark_updated = self._choose_value('mark_updated', req, kwargs, 
+                                          convert=bool_val)
+        if not mark_updated and (not isinstance(mark_updated, bool)):
+            mark_updated = bool_val(self.env.config.get('blog', 'mark_updated',
+                                                         True))
+                       
+        num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
+        self.log.debug('num_posts: %s' % str(num_posts))
+        if num_posts and default_times:
+            poststart = sys.maxint
+            postend = 0
         for blog_entry in blog:
             page = WikiPage(self.env, version=1, name=blog_entry)
             version, post_time, author, comment, ipnr = page.get_history(
@@ -160,17 +206,20 @@ class TracBlogPlugin(Component):
                         'wiki_text' : wiki_to_html(text, self.env, req),
                         'comment'   : wiki_to_oneliner(comment, self.env),
                        }
-                if modified != post_time:
+                if (modified != post_time) and mark_updated:
                     data['modified'] = 1
-                    mod_str = format_datetime(post_time, format=time_format)
+                    mod_str = format_datetime(modified, format=time_format)
                     data['mod_time'] = mod_str
                 entries[post_time] = data
             continue
         tlist = entries.keys()
-        # Python 2.4ism
-        # tlist.sort(reverse=True)
         tlist.sort()
         tlist.reverse()
+        if num_posts and (num_posts <= len(tlist)):
+            tlist = tlist[:num_posts]
+        self.log.debug("tlist: %s" % str(tlist))
+        self.log.debug("last index: %s" % str(tlist[-1]))
+        entries[tlist[-1]]['last'] = 1
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         bloglink = self.env.config.get('blog', 'new_blog_link', 'New Blog Post')
         req.hdf['blog.newblog'] = bloglink
@@ -341,6 +390,7 @@ class TracBlogPlugin(Component):
         year = self._choose_value('year', req, kwargs, convert=int)
         month = self._choose_value('month', req, kwargs, convert=int)
         day = self._choose_value('day', req, kwargs, convert=int)
+        defaults = not (startdate or enddate or delta or year or month or day)
         now = datetime.datetime.now()
         oneday = datetime.timedelta(days=1)
         if year or month or day:
@@ -364,7 +414,7 @@ class TracBlogPlugin(Component):
                 end = start - delta
             else:
                 end = start - HISTORY
-        return start, end
+        return start, end, defaults
 
     def _choose_value(self, key, req, kwargs, convert=None):
         """Return the value for the specified key from either req or kwargs

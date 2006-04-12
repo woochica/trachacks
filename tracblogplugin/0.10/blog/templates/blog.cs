@@ -49,7 +49,9 @@
                 <li class="last"><?cs var:bentry.time ?></li>
             </ul>
         </div>
-        <hr width="75%" />
+        <?cs if !  bentry.last ?>
+            <hr width="75%" />
+        <?cs /if ?>
     </div>
     <?cs /each ?>
 </div>

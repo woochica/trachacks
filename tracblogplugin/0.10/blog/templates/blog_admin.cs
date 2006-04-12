@@ -48,6 +48,12 @@
                     value="<?cs var:blogadmin.first_week_day ?>" />
                 </label>
             </div>
+            <div class="field">
+                <label>Mark Updated Posts:<br/>
+                    <input type="text" name="mark_updated" 
+                    value="<?cs var:blogadmin.mark_updated ?>" />
+                </label>
+            </div>
         <div class="buttons">
             <input type="submit" value="Apply Changes" />
         </div>

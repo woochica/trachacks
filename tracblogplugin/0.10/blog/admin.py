@@ -60,6 +60,7 @@ class BlogAdminPlugin(Component):
                         'history_days' : 30,
                         'new_blog_link' : 'New Blog Post',
                         'first_week_day' : 'SUNDAY',
+                        'mark_updated' : 'true',
                        }
         if req.method == 'POST':
             if page == 'defaults':
@@ -90,6 +91,8 @@ class BlogAdminPlugin(Component):
    text to show for the new blog link
  '''Calendar Week Start Day'''::
    name of day that acts as the first day of the week.  Must be full day name.
+ '''Mark Updated Posts'''::
+   whether or not to mark posts that have been updated with an "Updated on" message.
 
  '''strftime formatting'''::
 ||%a||Locale's abbreviated weekday name.||
