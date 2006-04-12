@@ -39,8 +39,11 @@ def bool_val(val):
     """Returns whether or not a values represents a boolen value
 
     """
-    
-    return val.strip().lower() in BOOLS_TRUE
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, (str, unicode)):
+        return val.strip().lower() in BOOLS_TRUE
+    return None
 
 
 class TracBlogPlugin(Component):
@@ -180,7 +183,6 @@ class TracBlogPlugin(Component):
                                                          True))
                        
         num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
-        self.log.debug('num_posts: %s' % str(num_posts))
         if num_posts and default_times:
             poststart = sys.maxint
             postend = 0
@@ -217,8 +219,6 @@ class TracBlogPlugin(Component):
         tlist.reverse()
         if num_posts and (num_posts <= len(tlist)):
             tlist = tlist[:num_posts]
-        self.log.debug("tlist: %s" % str(tlist))
-        self.log.debug("last index: %s" % str(tlist[-1]))
         entries[tlist[-1]]['last'] = 1
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         bloglink = self.env.config.get('blog', 'new_blog_link', 'New Blog Post')
