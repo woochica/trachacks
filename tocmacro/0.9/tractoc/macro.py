@@ -13,6 +13,22 @@ __all__ = ['TracTocMacro']
 class NullOut(object):
    def write(self, *args): pass
 
+
+class MyOutlineFormatter(OutlineFormatter):
+
+    def format(self, page, *args, **kwords):
+        self.__page = page
+        super(MyOutlineFormatter,self).format(*args, **kwords)
+
+    def _heading_formatter(self, match, fullmatch):
+        Formatter._heading_formatter(self, match, fullmatch)
+        depth = min(len(fullmatch.group('hdepth')), 5)
+        heading = match[depth + 1:len(match) - depth - 1]
+        anchor = self._anchors[-1]
+        text = wiki_to_oneliner(heading, self.env, self.db, self._absurls)
+        text = re.sub(r'</?a(?: .*?)?>', '', text) # Strip out link tags
+        self.outline.append((depth, '<a href="%s#%s">%s</a>' % (self.__page, anchor, text)))
+
 class TracTocMacro(Component):
     """
     Generate a table of contents for the current page or a set of pages.
@@ -50,7 +66,7 @@ class TracTocMacro(Component):
 
     def render_macro(self, req, name, args):
         db = self.env.get_db_cnx()
-        formatter = OutlineFormatter(self.env)
+        formatter = MyOutlineFormatter(self.env)
         
         # If this is a page preview, try to figure out where its from
         current_page = req.hdf.getValue('wiki.page_name','WikiStart')
@@ -121,8 +137,7 @@ class TracTocMacro(Component):
                     for page in all_pages:
                         page_text, _ = get_page_text(page)
     
-                        formatter.format(page_text, NullOut(), 1, 1)
-                        self.log.debug(page + ' --> ' + repr(formatter.outline))
+                        formatter.format(page, page_text, NullOut(), 1, 1)
                         header = ''
                         if formatter.outline:
                             title = formatter.outline[0][1]
@@ -136,7 +151,7 @@ class TracTocMacro(Component):
                 page = root + pagename
                 page_text, page_exists = get_page_text(page)
                 if page_exists:
-                    formatter.format(page_text, out, params['min_depth'], params['max_depth'])
+                    formatter.format(page, page_text, out, params['min_depth'], params['max_depth'])
                 else:
                     out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % pagename)
         if not inline:
