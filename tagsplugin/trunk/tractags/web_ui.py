@@ -127,8 +127,8 @@ class TagsModule(Component):
 
     def get_navigation_items(self, req):
         from trac.web.chrome import Chrome
-        yield ('metanav', 'tags',
-               Markup('<a href="%s" accesskey="T">Tag Index</a>',
+        yield ('mainnav', 'tags',
+               Markup('<a href="%s" accesskey="T">Tags</a>',
                       self.env.href.tags()))
 
     # IRequestHandler methods
