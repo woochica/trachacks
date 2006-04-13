@@ -121,6 +121,7 @@ class TracBlogPlugin(Component):
             tags = [t.strip() for t in tstr.split(',') if t]
         self._generate_blog(req, *tags, **kwargs)
         req.hdf['blog.macro'] = True
+        self.log.debug('render_macro(): rendering blog.cs')
         return req.hdf.render('blog.cs')
 
     def _split_macro_args(self, argv):
@@ -219,7 +220,8 @@ class TracBlogPlugin(Component):
         tlist.reverse()
         if num_posts and (num_posts <= len(tlist)):
             tlist = tlist[:num_posts]
-        entries[tlist[-1]]['last'] = 1
+        if not tlist:
+            entries[tlist[-1]]['last'] = 1
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         bloglink = self.env.config.get('blog', 'new_blog_link', 'New Blog Post')
         req.hdf['blog.newblog'] = bloglink
