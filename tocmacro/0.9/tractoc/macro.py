@@ -112,7 +112,7 @@ class TracTocMacro(Component):
                 params['max_depth'] = int(arg[6:])
             elif arg.startswith('root='):
                 root = arg[5:]
-            else:
+            elif arg != '':
                 pagenames.append(arg)
         
         # Has the user supplied a list of pages?
