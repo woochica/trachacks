@@ -27,7 +27,8 @@ class MyOutlineFormatter(OutlineFormatter):
         anchor = self._anchors[-1]
         text = wiki_to_oneliner(heading, self.env, self.db, self._absurls)
         text = re.sub(r'</?a(?: .*?)?>', '', text) # Strip out link tags
-        self.outline.append((depth, '<a href="%s#%s">%s</a>' % (self.__page, anchor, text)))
+        self.outline.append((depth, '<a href="%s#%s">%s</a>' %
+                            (self.env.href.wiki(self.__page), anchor, text)))
 
 class TracTocMacro(Component):
     """
