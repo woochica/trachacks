@@ -220,7 +220,7 @@ class TracBlogPlugin(Component):
         tlist.reverse()
         if num_posts and (num_posts <= len(tlist)):
             tlist = tlist[:num_posts]
-        if not tlist:
+        if tlist:
             entries[tlist[-1]]['last'] = 1
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
         bloglink = self.env.config.get('blog', 'new_blog_link', 'New Blog Post')
