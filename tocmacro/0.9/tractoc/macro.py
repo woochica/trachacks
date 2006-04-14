@@ -69,6 +69,10 @@ class TracTocMacro(Component):
         db = self.env.get_db_cnx()
         formatter = MyOutlineFormatter(self.env)
         
+        # Bail out if we are in a no-float zone
+        if 'macro_no_float' in req.hdf:
+            return ''
+        
         # If this is a page preview, try to figure out where its from
         current_page = req.hdf.getValue('wiki.page_name','WikiStart')
         in_preview = False
