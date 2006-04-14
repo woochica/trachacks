@@ -192,7 +192,6 @@ class TagMacros(Component):
                 expression = None
             else:
                 self.env.log.debug(expr.ast)
-                self.env.log.debug(expr(['closed', 'normal']))
                 tagged_names = {}
                 tags.update(expr.get_tags())
                 for tagspace, name, name_tags in engine.walk_tagged_names(tags=tags,

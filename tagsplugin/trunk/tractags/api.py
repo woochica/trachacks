@@ -350,8 +350,7 @@ class TagEngine(Component):
         if page.exists:
             result = (self.env.href.wiki(tag), title)
         else:
-            expression_space = self.env.config.getbool('expression_space', 'false')
-            tag_link = (not expression_space or is_expression) and tag or "'%s'" % tag
+            tag_link = is_expression and tag or "'%s'" % tag
             result = (self.env.href.tags(tag_link), "Objects tagged ''%s''" % tag)
         self._tag_link_cache[tag] = result
         return result

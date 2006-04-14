@@ -163,15 +163,10 @@ class TagsModule(Component):
             else:
                 raise TracError("Invalid index style '%s'" % index)
         else:
-            expression_space = self.env.config.getbool('tags', 'expression_space', 'false')
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
-            if expression_space:
-                req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % req.path_info[6:])
-                args['expression'] = req.path_info[6:]
-                tags = []
-            else:
-                req.hdf['tag.title'] = Markup('Objects tagged <i>%s</i>' % req.path_info[6:])
-                tags = re.split('[,+]', req.path_info[6:])
+            req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % req.path_info[6:])
+            args['expression'] = req.path_info[6:]
+            tags = []
             update_from_req(args)
             req.hdf['tag.body'] = Markup(
                 TagMacros(self.env).render_listtagged(req, *tags, **args))

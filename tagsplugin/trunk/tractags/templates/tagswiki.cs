@@ -286,9 +286,7 @@
       var:attachment.time ?>.</li><?cs
      /each ?>
     </ul>
-  <?cs /if ?>
-  <?cs if wiki.action == "view" && (trac.acl.WIKI_MODIFY || trac.acl.WIKI_DELETE)
-      && (wiki.readonly == "0" || trac.acl.WIKI_ADMIN) ?><?cs
+  <?cs /if ?><?cs
     if:tags.0.name ?>
     <ul class="tags">
      <lh>Tags</lh>
@@ -297,6 +295,8 @@
      <?cs /each ?>
     </ul><?cs
     /if ?>
+  <?cs if wiki.action == "view" && (trac.acl.WIKI_MODIFY || trac.acl.WIKI_DELETE)
+      && (wiki.readonly == "0" || trac.acl.WIKI_ADMIN) ?>
    <div class="buttons"><?cs
     if:trac.acl.WIKI_MODIFY ?>
      <form method="get" action="<?cs var:wiki.current_href ?>"><div>

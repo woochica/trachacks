@@ -1,6 +1,7 @@
 from trac.core import *
 from tractags.api import DefaultTaggingSystem, ITaggingSystemProvider, TagEngine
 from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider
+from tractags.expr import Expression
 from trac.util import Markup
 import re
 
@@ -64,20 +65,22 @@ class WikiTags(Component):
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
-        return []
+        yield (r'''(?P<ns>tag|tagged):(?P<expr>(?:'[^']*'|"[^"]"|\S)+)''',
+               lambda f, n, m: self._format_tagged(m.group('expr'),
+                               m.group('ns') + ':' + m.group('expr')))
 
     def get_link_resolvers(self):
-        yield ('tag', self._tag_formatter)
+        # TODO tag: will be deprecated soon
+        yield ('tag', lambda f, n, t, l: self._format_tagged(t, l))
+        yield ('tagged', lambda f, n, t, l: self._format_tagged(t, l))
 
-    def _tag_formatter(self, formatter, ns, target, label):
+    def _format_tagged(self, target, label):
         if '?' in target:
             target, args = target.split('?')[0:2]
             args = '?' + args
         else:
             args = ''
-        expression_space = self.config.getbool('tags', 'expression_space')
-        href, title = TagEngine(self.env).get_tag_link(target,
-                                          is_expression=expression_space)
+        href, title = TagEngine(self.env).get_tag_link(target, is_expression=True)
         return Markup('<a href="%s%s" title="%s">%s</a>' % (href, args,
                                                             title, label))
 
