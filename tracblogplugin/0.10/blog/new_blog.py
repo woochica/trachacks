@@ -17,6 +17,7 @@ import os
 import os.path
 import time
 import inspect
+import re
 from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
@@ -111,9 +112,14 @@ class BlogPost(Component):
         action = req.args.get('action', 'edit')
         pg_name_fmt = self.env.config.get('blog', 'page_format', 
                                           '%Y/%m/%d/%H.%M')
-        pagename = req.args.get('pagename', time.strftime(pg_name_fmt))
         wikitext = req.args.get('text', '')
         blogtitle = req.args.get('blogtitle', '')
+        urltitle = re.sub(r'[^\w]+', '-', blogtitle).lower() 
+        while '-' in urltitle and len(urltitle) > 32: 
+            urltitle = '-'.join(urltitle.split('-')[:-1]) 
+        pagename = req.args.get('pagename', time.strftime(pg_name_fmt)) 
+        if '%@' in pagename and urltitle: 
+            pagename = pagename.replace('%@', urltitle) 
         comment = req.args.get('comment', '')
         readonly = int(req.args.has_key('readonly'))
         edit_rows = int(req.args.get('edite_rows', 20))

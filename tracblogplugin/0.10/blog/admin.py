@@ -117,6 +117,7 @@ class BlogAdminPlugin(Component):
 ||%Y||Year with century as a decimal number.||
 ||%Z||Time zone name (no characters if no time zone exists).||
 ||%%||A literal "%" character.||
+||%@||An URL friendly version of the Blog Entry Title||
 
 """
         return doc

@@ -19,13 +19,14 @@ import time
 import datetime
 import inspect
 import calendar
+from StringIO import StringIO
 from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.web.chrome import INavigationContributor 
 from trac.util import Markup, format_date, format_datetime
-from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
+from trac.wiki.formatter import Formatter, wiki_to_oneliner
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
 from tractags.api import TagEngine
@@ -45,6 +46,26 @@ def bool_val(val):
         return val.strip().lower() in BOOLS_TRUE
     return None
 
+
+class NoFloatFormatter(Formatter):
+    """A modified formatter that inserts macro_no_float=1 into the HDF."""
+    
+    def __init__(self, *args, **kwords):
+        if 'req' in kwords:
+            kwords['req'].hdf['macro_no_float'] = 1
+        else:
+            for arg in args:
+                if hasattr(arg, 'hdf'):
+                    arg.hdf['macro_no_float'] = 1
+                    break
+            else:
+                raise TracError, "Unable to isolate req"
+        super(NoFloatFormatter,self).__init__(*args, **kwords)
+        
+def wiki_to_nofloat_html(wikitext, env, req, db=None, absurls=0, escape_newlines=False):
+    out = StringIO()
+    NoFloatFormatter(env, req, absurls, db).format(wikitext, out, escape_newlines)
+    return Markup(out.getvalue())
 
 class TracBlogPlugin(Component):
     """Displays a blog based on tags
@@ -121,8 +142,8 @@ class TracBlogPlugin(Component):
             tags = [t.strip() for t in tstr.split(',') if t]
         self._generate_blog(req, *tags, **kwargs)
         req.hdf['blog.macro'] = True
-        self.log.debug('render_macro(): rendering blog.cs')
-        return req.hdf.render('blog.cs')
+        data = req.hdf.render('blog.cs')
+        return unicode(req.hdf.render('blog.cs'), 'utf-8')
 
     def _split_macro_args(self, argv):
         """Return a list of arguments and a dictionary of keyword arguements
@@ -206,7 +227,7 @@ class TracBlogPlugin(Component):
                                                        self.env),
                         'time'      : timeStr,
                         'author'    : author,
-                        'wiki_text' : wiki_to_html(text, self.env, req),
+                        'wiki_text' : wiki_to_nofloat_html(text, self.env, req),
                         'comment'   : wiki_to_oneliner(comment, self.env),
                        }
                 if (modified != post_time) and mark_updated:
