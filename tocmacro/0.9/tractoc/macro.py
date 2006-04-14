@@ -107,6 +107,8 @@ class TracTocMacro(Component):
             elif arg == 'titleindex':
                 params['title_index'] = True
                 heading = ''
+            elif arg == 'nofloat':
+                return ''
             elif arg.startswith('heading='):
                 heading = arg[8:]
             elif arg.startswith('depth='):
