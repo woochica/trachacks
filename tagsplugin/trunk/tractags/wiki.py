@@ -65,13 +65,12 @@ class WikiTags(Component):
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
-        yield (r'''(?P<ns>tag|tagged):(?P<expr>(?:'[^']*'|"[^"]"|\S)+)''',
+        yield (r'''tagged:(?P<expr>(?:'[^']*'|"[^"]"|\S)+)''',
                lambda f, n, m: self._format_tagged(m.group('expr'),
-                               m.group('ns') + ':' + m.group('expr')))
+                               'tagged:' + m.group('expr')))
 
     def get_link_resolvers(self):
         # TODO tag: will be deprecated soon
-        yield ('tag', lambda f, n, t, l: self._format_tagged(t, l))
         yield ('tagged', lambda f, n, t, l: self._format_tagged(t, l))
 
     def _format_tagged(self, target, label):
