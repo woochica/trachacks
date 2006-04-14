@@ -1,11 +1,6 @@
 # Author: Steven N. Severinghaus <sns@severinghaus.org>
-# Last Modified: 2006-02-15
-#
-# Changelog:
-#   2006-02-15: Patch from Nathan Kidd <nathan-svn@spicycrypto.ca> to fix
-#               some bad pluralization behavior.
-#
-# Copyright (C) 2006 Steven N. Severinghaus <sns@severinghaus.org>
+# Last Modified: 2006-04-14
+# Home: http://trac-hacks.org/wiki/LastModifiedMacro
 #
 # The LastModified macro is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published
@@ -28,7 +23,7 @@
 #
 # This is a CSS style to apply that will make it about 3.14% slicker:
 #   span.last-modified { border-bottom: 1px dotted gray; cursor: help; }
-# 
+#
 
 import time
 import datetime
@@ -56,8 +51,8 @@ def execute(hdf, txt, env):
 
     db=env.get_db_cnx()
     cursor=db.cursor()
-    cursor.execute("SELECT author, time FROM wiki WHERE name = %s "
-            "ORDER BY version DESC LIMIT 1", page_name)
+    cursor.execute("SELECT author, time FROM wiki WHERE name = '%s' "
+            "ORDER BY version DESC LIMIT 1" % page_name)
     row=cursor.fetchone()
     author=row[0]
     time_int=row[1]
@@ -93,8 +88,8 @@ def execute(hdf, txt, env):
             count=elapsed.days
             unit='day'
         output=""+repr(count)+" "+unit
-        if (count != 1 and count != -1): output+="s"    # Thanks, NK!
-    else: 
+        if (count != 1 and count != -1): output+="s"
+    else:
         output=time.strftime("%Y-%m-%d", timestamp)
 
     wrapped_output='<span class="last-modified" title="'+\
