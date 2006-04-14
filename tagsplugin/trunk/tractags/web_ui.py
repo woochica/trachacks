@@ -5,6 +5,7 @@ from trac.util import Markup
 from StringIO import StringIO
 from trac.wiki.web_ui import WikiModule
 from trac.wiki.formatter import wiki_to_oneliner
+from tractags.expr import Expression
 import re
 try:
     set = set
@@ -147,7 +148,7 @@ class TagsModule(Component):
             for k in req.args.keys():
                 args[str(k)] = str(req.args.get(k))
 
-        if re.match('^/tags/?$', req.path_info):
+        if not req.args.has_key('e') and re.match('^/tags/?$', req.path_info):
             index = self.env.config.get('tags', 'index', 'cloud')
             index_kwargs = {'smallest': 10, 'biggest': 30}
             _, config_kwargs = parseargs(self.env.config.get('tags', 'index.args', ''))
@@ -164,8 +165,14 @@ class TagsModule(Component):
                 raise TracError("Invalid index style '%s'" % index)
         else:
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
-            req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % req.path_info[6:])
-            args['expression'] = req.path_info[6:]
+            expr = req.args.has_key('e') and req.args['e'] or req.path_info[6:]
+            req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % expr)
+            req.hdf['tag.expression'] = expr
+            try:
+                Expression(expr)
+            except Exception, e:
+                req.hdf['tag.expression.error'] = str(e).replace(' (line 1)', '')
+            args['expression'] = expr
             tags = []
             update_from_req(args)
             req.hdf['tag.body'] = Markup(
