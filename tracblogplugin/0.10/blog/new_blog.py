@@ -114,12 +114,14 @@ class BlogPost(Component):
                                           '%Y/%m/%d/%H.%M')
         wikitext = req.args.get('text', '')
         blogtitle = req.args.get('blogtitle', '')
-        urltitle = re.sub(r'[^\w]+', '-', blogtitle).lower() 
-        while '-' in urltitle and len(urltitle) > 32: 
-            urltitle = '-'.join(urltitle.split('-')[:-1]) 
-        pagename = req.args.get('pagename', time.strftime(pg_name_fmt)) 
-        if '%@' in pagename and urltitle: 
+        pagename = req.args.get('pagename', pg_name_fmt) 
+        pagename = time.strftime(pagename)
+        if '%@' in pagename and blogtitle: 
+            urltitle = re.sub(r'[^\w]+', '-', blogtitle).lower() 
             pagename = pagename.replace('%@', urltitle) 
+            while '-' in pagename and len(pagename) > 60: 
+                pagename = '-'.join(pagename.split('-')[:-1]) 
+            pagename = pagename.strip('-')
         comment = req.args.get('comment', '')
         readonly = int(req.args.has_key('readonly'))
         edit_rows = int(req.args.get('edite_rows', 20))
