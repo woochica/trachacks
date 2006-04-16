@@ -12,18 +12,27 @@ class NavMover(Component):
         return ''
                 
     def get_navigation_items(self, req):
-        # Hide meta nav items
-        add_stylesheet(req, 'navmover/css/navmover.css')
-        move_items = self.env.config.get('navmover', 'meta_to_main', ''). \
+        move_to = self.env.config.get('navmover', 'move_to') or 'metanav'
+        move_items = self.env.config.get('navmover', 'move_items', ''). \
                      replace(',', ' ').split()
+        self.env.log.debug(move_items)
+        # Ensure sanity
+        if move_to not in ('mainnav', 'metanav'):
+            move_to = 'mainnav'
+        if move_to == 'mainnav':
+            move_from = 'metanav'
+        else:
+            move_from = 'mainnav'
+        # Hide the appropriate nav block
+        add_stylesheet(req, 'navmover/css/hide_%s.css' % move_from)
         # Find meta nav items
         meta_items = []
         for contributor in self.nav_contributors:
             if contributor == self: continue
             for item in contributor.get_navigation_items(req):
-                if (not move_items or item[1] in move_items) and item[0] == 'metanav' \
+                if (not move_items or item[1] in move_items) and item[0] == move_from \
                         and not unicode(item[2]).startswith('logged in as'):
-                    meta_items.append(('mainnav', item[1], item[2]))
+                    meta_items.append((move_to, item[1], item[2]))
 
         return meta_items
 
