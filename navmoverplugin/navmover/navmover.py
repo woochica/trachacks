@@ -15,7 +15,6 @@ class NavMover(Component):
         move_to = self.env.config.get('navmover', 'move_to') or 'metanav'
         move_items = self.env.config.get('navmover', 'move_items', ''). \
                      replace(',', ' ').split()
-        self.env.log.debug(move_items)
         # Ensure sanity
         if move_to not in ('mainnav', 'metanav'):
             move_to = 'mainnav'
