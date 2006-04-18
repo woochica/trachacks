@@ -65,13 +65,17 @@ class WikiTags(Component):
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
-        yield (r'''tagged:(?P<expr>(?:'[^']*'|"[^"]"|\S)+)''',
-               lambda f, n, m: self._format_tagged(m.group('expr'),
-                               'tagged:' + m.group('expr')))
+        yield (r'''\[tagged:(?P<tlpexpr>(?:'.*?'|".*?"|\S)+)\s+(?P<tlptitle>.*?]*)\]''',
+               lambda f, n, m: self._format_tagged(
+                                    m.group('tlpexpr'),
+                                    m.group('tlptitle')))
+        yield (r'''tagged:(?P<texpr>(?:'.*?'|".*?"|\S)+)''',
+               lambda f, n, m: self._format_tagged(
+                                    m.group('texpr'),
+                                    'tagged:' + m.group('texpr')))
 
     def get_link_resolvers(self):
-        # TODO tag: will be deprecated soon
-        yield ('tagged', lambda f, n, t, l: self._format_tagged(t, l))
+        return []
 
     def _format_tagged(self, target, label):
         if '?' in target:
