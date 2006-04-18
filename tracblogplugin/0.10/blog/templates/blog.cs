@@ -8,11 +8,6 @@
         <?cs if trac.acl.BLOG_POSTER ?>
         <li><a href="<?cs var:trac.href.blog ?>/new"><?cs var:blog.newblog ?></a></li>
         <?cs /if ?>
-        <li><a href="<?cs var:trac.href.wiki ?>">Start Page</a></li>
-        <li><a href="<?cs var:trac.href.wiki ?>/TitleIndex">Title Index</a></li>
-        <li><a 
-            href="<?cs var:trac.href.wiki ?>/RecentChanges">Recent Changes</a>
-        </li>
     </ul>
     <hr />
 </div>
@@ -44,6 +39,9 @@
         <?cs /if ?>
         <div class="postmeta">
             <ul>
+                <?cs if bentry.tags.present != 0 ?>
+                <li>Posted in: <?cs each:tag=bentry.tags.tags ?><a href="/tags/<?cs var:tag.link ?>"><?cs var:tag.name ?></a><?cs if ! tag.last ?>,<?cs /if ?> <?cs /each ?> <?cs if bentry.tags.more ?>...<?cs /if ?>
+                <?cs /if ?>
                 <li><?cs var:bentry.wiki_link ?></li>
                 <li><?cs var:bentry.author ?></li>
                 <li class="last"><?cs var:bentry.time ?></li>

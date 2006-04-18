@@ -221,6 +221,15 @@ class TracBlogPlugin(Component):
                               or '%x %X'
                 timeStr = format_datetime(post_time, format=time_format) 
                 text = self._trim_page(page.text, blog_entry)
+                pagetags = [x for x in tags.get_name_tags(blog_entry) if x not in tlist]
+                tagtags = []
+                for i, t in enumerate(pagetags[:3]):
+                    d = { 'link' : t,
+                          'name' : t,
+                          'last' : i == 2,
+                        }
+                    tagtags.append(d)
+                    continue
                 data = {
                         'wiki_link' : wiki_to_oneliner(read_post % 
                                                        blog_entry,
@@ -229,6 +238,11 @@ class TracBlogPlugin(Component):
                         'author'    : author,
                         'wiki_text' : wiki_to_nofloat_html(text, self.env, req),
                         'comment'   : wiki_to_oneliner(comment, self.env),
+                        'tags'      : {
+                                        'present' : len(pagetags),
+                                        'tags'    : tagtags,
+                                        'more'    : len(pagetags) > 3 or 0,
+                                      },
                        }
                 if (modified != post_time) and mark_updated:
                     data['modified'] = 1
