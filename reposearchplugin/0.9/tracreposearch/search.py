@@ -3,6 +3,7 @@ from trac.Search import ISearchSource, shorten_result
 from trac.versioncontrol.api import Node
 from trac.perm import IPermissionRequestor
 from trac.util import Markup, escape
+from trac.mimeview.api import Mimeview
 import re
 import posixpath
 import os
@@ -70,6 +71,8 @@ class TracRepoSearchPlugin(Component):
         db = self.env.get_db_cnx()
         include, excludes = self._get_filters()
 
+        to_unicode = Mimeview(self.env).to_unicode
+
         # Use indexer if possible, otherwise fall back on brute force search.
         try:
             from tracreposearch.indexer import Indexer
@@ -77,12 +80,17 @@ class TracRepoSearchPlugin(Component):
             self.indexer.reindex()
             walker = lambda repo, query: [repo.get_node(filename) for filename
                                           in self.indexer.find_words(query)]
-        except TracError:
+        except TracError, e:
+            self.env.log.warning(e)
+            self.env.log.warning('Falling back on full repository walk')
             def full_walker(repo, query):
                 for node in self.walk_repo(repo):
                     # Search content
                     matched = 1
-                    content = node.get_content().read().lower()
+                    content = node.get_content()
+                    if not content:
+                        continue
+                    content = to_unicode(content.read().lower(), node.get_content_type())
                     for term in query:
                         if term not in content:
                             matched = 0
@@ -109,7 +117,8 @@ class TracRepoSearchPlugin(Component):
                        'Directory')
             else:
                 found = 0
-                for n, line in enumerate(node.get_content().read().splitlines()):
+                content = to_unicode(node.get_content().read(), node.get_content_type())
+                for n, line in enumerate(content.splitlines()):
                     line = line.lower()
                     for q in query:
                         idx = line.find(q)
@@ -121,4 +130,4 @@ class TracRepoSearchPlugin(Component):
 
                 yield (self.env.href.browser(node.path) + (found and '#L%i' % found or ''),
                        node.path, change.date, change.author,
-                       shorten_result(node.get_content().read(), query))
+                       shorten_result(content, query))

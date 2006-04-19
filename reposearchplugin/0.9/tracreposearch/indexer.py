@@ -11,6 +11,8 @@ from trac.core import TracError
 from tracreposearch.search import TracRepoSearchPlugin
 from tracreposearch.lock import lock, unlock, LOCK_EX
 from trac.versioncontrol.api import Node
+from trac.mimeview.api import Mimeview
+import time
 import anydbm
 import re
 from os.path import pathsep
@@ -25,25 +27,42 @@ class psetdict(object):
     """ Wrapper around anydbm to persistently store a dictionary of sets. """
 
     def __init__(self, file, mode):
+        self._cache = {}
         self.dbm = anydbm.open(file, mode)
 
     def __contains__(self, key):
-        return str(key) in self.dbm
+        key = key.encode('utf-8')
+        return key in self._cache or key in self.dbm
 
     def __getitem__(self, key):
-       return set(self.dbm[str(key)].split(pathsep))
+        key = key.encode('utf-8')
+        if key in self._cache:
+            return self._cache[key]
+        return self._cache.setdefault(key, set(self.dbm[key].split(pathsep)))
 
     def __setitem__(self, key, value):
-        self.dbm[str(key)] = pathsep.join(value)
+        key = key.encode('utf-8')
+        value = pathsep.join(value)
+        self._cache[key] = value
 
     def __delitem__(self, key):
-        del self.dbm[str(key)]
+        key = key.encode('utf-8')
+        try:
+            del self._cache[key]
+        except KeyError:
+            pass
+        del self.dbm[key]
 
     def keys(self):
-        return self.dbm.keys()
+        return [k.decode('utf-8') for k in self.dbm.keys()]
 
     def sync(self):
+        for key, value in self._cache.iteritems():
+            self.dbm[key] = value
         self.dbm.sync()
+
+    def __del__(self):
+        self.sync()
 
 index_lock = None
 lock_count = 0
@@ -65,7 +84,6 @@ def release_lock():
 
 def synchronized(f):
     """ Synchronization decorator. """
-
     def wrap(*args, **kw):
         acquire_lock()
         try:
@@ -122,7 +140,7 @@ class Indexer:
             yield word[start:start + 2]
 
     def sync(self):
-        self.meta['last-repo-rev'] = str(self.repo.youngest_rev)
+        self.meta['last-repo-rev'] = unicode(self.repo.youngest_rev)
         self.meta['index-include'] = self.env.config.get('repo-search', 'include', '')
         self.meta['index-exclude'] = self.env.config.get('repo-search', 'exclude', '')
         self.meta.sync()
@@ -159,8 +177,11 @@ class Indexer:
     _bigram_search = synchronized(_bigram_search)
 
     def _reindex_node(self, node):
+        to_unicode = Mimeview(self.env).to_unicode
+
         def node_tokens():
-            for token in self._strip.finditer(node.get_content().read()):
+            content = to_unicode(node.get_content().read(), node.get_content_type())
+            for token in self._strip.finditer(content):
                 yield token.group().lower()
             for token in self._strip.finditer(node.path):
                 yield token.group().lower()
@@ -186,8 +207,9 @@ class Indexer:
                 else:
                     self.words[word] = [node.path]
                 node_words.add(word)
-        self.files[str(node.path)] = node_words
-        self.revs[str(node.path)] = str(node.rev)
+        self.files[node.path] = node_words
+        self.revs[node.path.encode('utf-8')] = unicode(node.rev)
+    _reindex_node = _reindex_node
 
     def _invalidate_file(self, file):
         if file in self.files:
@@ -199,29 +221,31 @@ class Indexer:
 
     def reindex(self):
         """ Reindex the repository if necessary. """
-        if self.need_reindex():
-            self.env.log.debug('Indexing repository (either repository or indexing criteria have changed)')
-            self._open_storage('c')
-            new_files = set()
-            for node in TracRepoSearchPlugin(self.env).walk_repo(self.repo):
-                if node.kind != Node.DIRECTORY:
-                    # Node has changed?
-                    if int(self.revs.get(str(node.path), -1)) != node.rev:
-                        self.env.log.debug("Reindexing %s" % node.path)
-                        self._invalidate_file(node.path)
-                        self._reindex_node(node)
-                new_files.add(node.path)
-            
-            # All files that don't match the new filter criteria must be purged
-            # from the index
-            invalidated_files = set(self.files.keys())
-            invalidated_files.difference_update(new_files)
-            for invalid in invalidated_files:
-                self._invalidate_file(invalid)
+        if not self.need_reindex():
+            return
+        start = time.time()
+        self.env.log.debug('Indexing repository (either repository or indexing criteria have changed)')
+        self._open_storage('c')
+        new_files = set()
+        for node in TracRepoSearchPlugin(self.env).walk_repo(self.repo):
+            if node.kind != Node.DIRECTORY:
+                # Node has changed?
+                if int(self.revs.get(node.path.encode('utf-8'), -1)) != node.rev:
+                    self.env.log.debug("Reindexing %s" % node.path)
+                    self._invalidate_file(node.path)
+                    self._reindex_node(node)
+            new_files.add(node.path)
+        
+        # All files that don't match the new filter criteria must be purged
+        # from the index
+        invalidated_files = set(self.files.keys())
+        invalidated_files.difference_update(new_files)
+        for invalid in invalidated_files:
+            self._invalidate_file(invalid)
 
-            self.sync()
-            self._open_storage('r')
-            self.env.log.debug('Index finished')
+        self.sync()
+        self._open_storage('r')
+        self.env.log.debug('Index finished in %.2f seconds' % (time.time() - start))
     reindex = synchronized(reindex)
 
     def find_words(self, words):
