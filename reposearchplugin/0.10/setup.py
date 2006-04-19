@@ -9,4 +9,5 @@ setup(name='tracreposearch',
       author='Alec Thomas',
       url="http://trac-hacks.org/wiki/TracRepoSearch",
       license='BSD',
-      scripts=['update-index'])
+      scripts=['update-index'],
+      entry_points = {'trac.plugins': ['tracreposearch = tracreposearch']})
