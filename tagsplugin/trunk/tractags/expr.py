@@ -3,6 +3,11 @@ import operator
 import re
 from trac.core import TracError
 
+try:
+    set = set
+except:
+    from sets import Set as set
+
 class Expression:
     """ Pass a set of tags through a basic expression filter.
     
