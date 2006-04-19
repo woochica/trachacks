@@ -165,7 +165,10 @@ class TagsModule(Component):
                 raise TracError("Invalid index style '%s'" % index)
         else:
             _, args = parseargs(self.env.config.get('tags', 'listing.args', ''))
-            expr = req.args.has_key('e') and req.args['e'] or req.path_info[6:]
+            if req.args.has_key('e'):
+                expr = req.args.get('e')
+            else:
+                expr = req.path_info[6:]
             req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % expr)
             req.hdf['tag.expression'] = expr
             try:
