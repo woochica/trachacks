@@ -28,6 +28,7 @@ class psetdict(object):
 
     def __init__(self, file, mode):
         self._cache = {}
+        self._flush = {}
         self.dbm = anydbm.open(file, mode)
 
     def __contains__(self, key):
@@ -38,27 +39,33 @@ class psetdict(object):
         key = key.encode('utf-8')
         if key in self._cache:
             return self._cache[key]
-        return self._cache.setdefault(key, set(self.dbm[key].split(pathsep)))
+        return self._cache.setdefault(key, set(self.dbm[key].decode('utf-8').split(pathsep)))
 
     def __setitem__(self, key, value):
         key = key.encode('utf-8')
-        value = pathsep.join(value)
-        self._cache[key] = value
+        self._cache[key] = self._flush[key] = value
 
     def __delitem__(self, key):
+        found = 0
         key = key.encode('utf-8')
-        try:
+        if key in self._cache:
             del self._cache[key]
-        except KeyError:
-            pass
-        del self.dbm[key]
+            found += 1
+        if key in self._flush:
+            del self._flush[key]
+            found += 1
+        if key in self.dbm:
+            del self.dbm[key]
+            found += 1
+        if not found:
+            raise KeyError(key)
 
     def keys(self):
         return [k.decode('utf-8') for k in self.dbm.keys()]
 
     def sync(self):
-        for key, value in self._cache.iteritems():
-            self.dbm[key] = value
+        for key, value in self._flush.iteritems():
+            self.dbm[key] = pathsep.join(value).encode('utf-8')
         self.dbm.sync()
 
     def __del__(self):
@@ -106,15 +113,20 @@ class Indexer:
                             "under the 'repo-search' section to the full " \
                             "(writable) path to the index.")
 
-
+        # TODO Should this use the repo location as well?
+        env_id = '%08x' % abs(hash(self.env.path))
         self.index_dir = self.env.config.get('repo-search', 'index',
-                         os.path.join(os.getenv('PYTHON_EGG_CACHE', ''), '.idx'))
+                         os.path.join(os.getenv('PYTHON_EGG_CACHE', ''),
+                                      env_id + '.reposearch.idx'))
         self.env.log.debug('Repository search index: %s' % self.index_dir)
         self.minimum_word_length = int(self.env.config.get('repo-search',
                                        'minimum-word-length', 3))
 
         if not os.path.isdir(self.index_dir):
-            os.mkdir(self.index_dir)
+            os.makedirs(self.index_dir)
+            open(os.path.join(self.index_dir, 'README.txt'), 'w').write(
+                "This is the Trac RepoSearch plugin's index, for the "
+                "Trac environment located at %s\n" % self.env.path)
 
         try:
             self._open_storage('r')
