@@ -156,7 +156,8 @@ class PollMacro(WikiMacroBase):
             raise TracError('No votes provided')
 
         poll = Poll(self.base_dir, title, all_votes)
-        poll.populate(req)
+        if req.perm.has_permission('POLL_VOTE'):
+            poll.populate(req)
         return poll.render(self.env, req)
 
     # IPermissionRequestor methods
