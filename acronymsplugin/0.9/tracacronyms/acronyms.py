@@ -45,16 +45,20 @@ class Acronyms(Component):
         title, href, shref = self.acronyms[acronym]
         # Perform basic variable subsitution
         title = title.replace('$1', selector).strip()
+        suffix = ''
         if selector:
             if shref:
                 href = shref.replace('$1', selector)
-            acronym += ' ' + match.group('acronymselector')
+                acronym += ' ' + match.group('acronymselector')
+            else:
+                suffix = match.group('acronymselector')
+                
 
         if href:
-            return Markup('<a class="acronym" href="%s"><acronym title="%s">%s</acronym></a>' 
-                          % (href, title, acronym))
+            return Markup('<a class="acronym" href="%s"><acronym title="%s">%s</acronym></a>%s'
+                          % (href, title, acronym, suffix))
         else:
-            return Markup('<acronym title="%s">%s</acronym>' % (title, acronym))
+            return Markup('<acronym title="%s">%s</acronym>%s' % (title, acronym, suffix))
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
