@@ -6,47 +6,7 @@ from trac.util import Markup, escape
 
 class Acronyms(Component):
     """ Automatically generates HTML acronyms from definitions in tables in a
-    Wiki page (AcronymDefinitions by default).
-    
-    Acronyms are in the form `<acronym>[<id>]` and are defined in a table with
-    four columns:
-    
-        `Acronym, Description [, URL [, ID URL]]`
-
-    Only the first two columns are required.
-    
-    If an `<id>` is provided, the ID URL is used and any occurrences of the symbol
-    `$1` in the description and the ID URL are substituted with the `<id>`.
-
-    Rows starting with `||'` are ignored.
-
-    eg. The following acronym definition table:
-
-    {{{
-    ||'''Acronym'''||'''Description'''||'''URL'''||'''ID URL'''||
-    ||RFC||Request For Comment $1||http://www.ietf.org/rfc.html||http://www.ietf.org/rfc/rfc$1.txt||
-    }}}
-
-    Has the following effect:
-    
-    `RFC` becomes
-    {{{
-        <a href="http://www.ietf.org/rfc.html">
-         <acronym title="Request For Comment">
-          RFC
-         </acronym>
-        </a>
-    }}}
-
-    `RFC2315` becomes
-    {{{
-        <a href="http://www.ietf.org/rfc/rfc2315.txt">
-         <acronym title="Request For Comment 2315">
-          RFC 2315
-         </acronym>
-        </a>
-    }}}
-    """
+    Wiki page (AcronymDefinitions by default).  """
 
     implements(IWikiSyntaxProvider, IWikiChangeListener)
 
@@ -69,7 +29,7 @@ class Acronyms(Component):
                 try:
                     a, d, u, s = ([i.strip() for i in line.strip('||').split('||')] + ['', ''])[0:4]
                     assert self.valid_acronym.match(a), "Invalid acronym %s" % a
-                    self.acronyms[a] = (d, u, s)
+                    self.acronyms[a] = (escape(d), escape(u), escape(s))
                 except Exception, e:
                     self.env.log.warning("Invalid acronym line: %s (%s)", line, e)
         keys = self.acronyms.keys()
@@ -90,7 +50,6 @@ class Acronyms(Component):
                 href = shref.replace('$1', selector)
             acronym += ' ' + match.group('acronymselector')
 
-        href, title, acronym = escape(href), escape(title), escape(acronym)
         if href:
             return Markup('<a class="acronym" href="%s"><acronym title="%s">%s</acronym></a>' 
                           % (href, title, acronym))
