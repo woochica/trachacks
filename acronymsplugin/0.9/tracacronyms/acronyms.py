@@ -20,6 +20,7 @@ class Acronyms(Component):
 
     def _update_acronyms(self):
         page = WikiPage(self.env, self.acronym_page)
+        self.env.log.debug(page.text)
         self.env.log.debug('Updating acronym database')
         self.acronyms = {}
         if not page.exists:
@@ -36,6 +37,10 @@ class Acronyms(Component):
         keys.sort(cmp=lambda a, b: -cmp(len(a), len(b)))
         self.compiled_acronyms = \
             r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys)
+
+        # XXX Very ugly, but only "reliable" way?
+        from trac.wiki.api import WikiSystem
+        WikiSystem(self.env)._compiled_rules = None
 
     def _acronym_formatter(self, f, n, match):
         acronym = match.group('acronym')
@@ -62,6 +67,7 @@ class Acronyms(Component):
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
+        self.env.log.debug("get_wiki_syntax()")
         if self.compiled_acronyms:
             yield (self.compiled_acronyms, self._acronym_formatter)
 
