@@ -9,6 +9,9 @@ Changes:
         * make default image format be 'png'
         * replaced every Tab by spaces
         * make tmp dir creation recursive 
+    2005-10-21:  Ken McIvor <mcivor@iit.edu>:
+        * Updated to support trac 0.9b2.
+        * Improved the error messages for missing configuration elements.
     2005-10-03:
         * make image format selectable via 'image_format' configuration option
           (defaults to 'jpg')
@@ -111,12 +114,13 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
     # gets paths from configuration
     tmpdir = env.config.get('latex', 'temp_dir')
 
-    fleqnIndent = env.config.get('latex', 'fleqn_indent')
-    latexPath = env.config.get('latex', 'latex_path')
-    dvipsPath = env.config.get('latex', 'dvips_path')
-    convertPath = env.config.get('latex', 'convert_path')
-    texMag = env.config.get('latex', 'text_mag')
-    imageFormat = env.config.get('latex', 'image_format')
+    cfg = env.config
+    fleqnIndent = cfg.get('latex', 'fleqn_indent', '5%')
+    latexPath = cfg.get('latex', 'latex_path', 'latex')
+    dvipsPath = cfg.get('latex', 'dvips_path', 'dvips')
+    convertPath = cfg.get('latex', 'convert_path', 'convert')
+    texMag = cfg.get('latex', 'text_mag', 1000)
+    imageFormat = cfg.get('latex', 'image_format', 'png')
 
     imagePath = os.path.normpath(os.path.join(env.get_htdocs_dir(), "formulas"))
     if not os.path.exists(imagePath):
@@ -125,22 +129,21 @@ def render(hdf, env, texData, density, fleqnMode, mathMode):
         except:
             return "<b>Error: unable to create image directory</b><br>"        
 
-    if not tmpdir:
-        return "<b>Error: missing configuration 'tmpdir' setting in 'latex' macro</b><br>"
+    def make_cfg_error(element):
+	msg = """\
+<div class="system-message">
+    <strong>Error: the <code>formula</code> macro requires the
+	setting <code>%s</code> in the configuration section
+	<code>latex</code>
+    </strong>
+</div>
+"""
+	return msg % element
 
-    # set defaults
-    if not fleqnIndent:
-        fleqnIndent = '5%'
-    if not latexPath:
-        latexPath = 'latex'
-    if not dvipsPath:
-        dvipsPath = 'dvips'
-    if not convertPath:
-        convertPath = 'convert'
-    if not texMag:
-        texMag = 1000 # I'm told this is latex's default value
-    if not imageFormat:
-        imageFormat = 'png'
+    if not tmpdir:
+	return make_cfg_error('temp_dir')
+    if not imagePath:
+	return make_cfg_error('image_path')
 
     path = tmpdir
     # create temporary directory if necessary
@@ -235,15 +238,16 @@ def makeTexFile(texFile, texData, mathMode, texMag):
 
 # arguments start with "#" on the beginning of a line
 def execute(hdf, text, env):
-    # TODO: unescape all html escape codes
+    cfg = env.config
 
+    # TODO: unescape all html escape codes
     text = text.replace("&amp;", "&")
         
     # defaults
     density = 100
     mathMode = 1    # default to using display-math mode for LaTeX processing
     displayMode = 0 # default to generating inline formula
-    fleqnMode   = env.config.get('latex', 'fleqn')
+    fleqnMode   = cfg.get('latex', 'fleqn')
     centerImage = 0
     indentImage = 0
     indentClass = ""
