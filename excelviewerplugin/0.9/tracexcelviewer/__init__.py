@@ -25,10 +25,12 @@ class ExcelRenderer(Component):
 
     implements(IHTMLPreviewRenderer)
 
+    MIME_TYPES = ('application/vnd.ms-excel', 'application/excel')
+
     # IHTMLPreviewRenderer methods
 
     def get_quality_ratio(self, mimetype):
-        if have_xrld and mimetype == 'application/vnd.ms-excel':
+        if have_xrld and mimetype in self.MIME_TYPES:
             return 2
         return 0
 
