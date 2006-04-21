@@ -41,6 +41,8 @@ class ExcelRenderer(Component):
         buf = []
         for sheet_name in book.sheet_names():
             sheet = book.sheet_by_name(sheet_name)
+            if not sheet.nrows:
+                continue # skip empty sheets
             buf.append(u'<table class="listing"><caption>%s</caption>\n' %
                        escape(sheet.name))
             buf.append(u'<tbody>')
