@@ -20,7 +20,6 @@ class Acronyms(Component):
 
     def _update_acronyms(self):
         page = WikiPage(self.env, self.acronym_page)
-        self.env.log.debug(page.text)
         self.env.log.debug('Updating acronym database')
         self.acronyms = {}
         if not page.exists:
@@ -67,7 +66,6 @@ class Acronyms(Component):
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
-        self.env.log.debug("get_wiki_syntax()")
         if self.compiled_acronyms:
             yield (self.compiled_acronyms, self._acronym_formatter)
 
