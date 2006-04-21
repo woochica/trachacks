@@ -82,7 +82,10 @@ class TracRepoSearchPlugin(Component):
                 for node in self.walk_repo(repo):
                     # Search content
                     matched = 1
-                    content = node.get_content().read().lower()
+                    content = node.get_content()
+                    if not content:
+                        continue
+                    content = content.read().lower()
                     for term in query:
                         if term not in content:
                             matched = 0
