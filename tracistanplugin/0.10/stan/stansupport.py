@@ -52,8 +52,6 @@ class DataVars(object):
                 setattr(self, k, v)
 
     def __getattr__(self, key):
-        if hasattr(self, key):
-            return object.__getattr__(self, key)
         return None
 
 class IStanRequestHandler(Interface):
@@ -90,15 +88,20 @@ class StanEngine(Component):
     renderers = ExtensionPoint(IStanRenderer)
 
     def _inherits_tag (self, template, locals, globals):
+        self.log.debug("called _inherits_tag")
         filename = self.find_template(template)
         self.__superTemplate = eval(file(filename, 'rU' ).read(), 
                                     locals, globals)
         return T.invisible
 
     def _replace_tag (self, slot):
+        self.log.debug("called _replace_tag")
+        self.log.debug("slot: %s" % str(slot))
+        
         return T.invisible(slot=slot)
 
     def _include_tag (self, template, locals, globals):
+        self.log.debug("called _include_tag")
         try:
             filename = self.find_template(template)
             return eval(file(filename, 'rU').read(),
@@ -117,11 +120,6 @@ class StanEngine(Component):
         except KeyError:
             template_dirs = []
 
-        from pprint import PrettyPrinter
-        ppstream = StringIO() 
-        pp = PrettyPrinter(stream=ppstream)
-        pp.pprint(template_dirs)
-        print "template_dirs: %s" % ppstream.getvalue()
         for dir in template_dirs:
             absolute_path = os.path.join(dir, filename)
             if os.path.exists(absolute_path):
@@ -183,8 +181,19 @@ class StanEngine(Component):
         if self.__superTemplate:
             parts = dict([ (c.attributes['slot'], flatten(c.children))
                            for c in self.__template.children])
+            
+            from pprint import PrettyPrinter
+            ppstream = StringIO() 
+            pp = PrettyPrinter(stream=ppstream)
+            pp.pprint(parts)
+            self.log.debug("parts: %s" % ppstream.getvalue())
             for slot, fragment in parts.items():
                 self.__superTemplate.fillSlots(slot, fragment)
+            from pprint import PrettyPrinter
+            ppstream = StringIO() 
+            pp = PrettyPrinter(stream=ppstream)
+            pp.pprint(self.__superTemplate)
+            self.log.debug("__superTemplate: %s" % ppstream.getvalue())
             output = flatten(self.__superTemplate)
         else:
             output = flatten(self.__template)
@@ -205,6 +214,7 @@ class TracStanRenderers(Component):
 
     def get_renderers(self):
         """Map methods to method names"""
+        self.log.debug("called get_renderers")
         return {'tracPageTitle' : self._pageTitle,
                 'tracNoRobots' : self._robots,
                 'tracLinks' : self._links,
@@ -214,6 +224,8 @@ class TracStanRenderers(Component):
                }
 
     def _pageTitle(self, context, data):
+        self.log.debug("called _pageTitle")
+        self.log.debug("data: %s" % str(type(data)))
         if data.project.name_encoded:
             t = [data.title or '',
                  ' - ',
@@ -225,19 +237,24 @@ class TracStanRenderers(Component):
         return context.tag[''.join(t)]
 
     def _robots(self, context, data):
+        self.log.debug("called _robots")
         if data.html.norobots:
             return context.tag(name="ROBOTS", content="NOINDEX, NOFOLLOW")
 
     def _links(self, context, data):
+        self.log.debug("called _links")
         return ''
 
     def _scripts(self, context, data):
+        self.log.debug("called _scripts")
         return ''
 
     def _include_cs(self, context, data):
+        self.log.debug("called _include_cs")
         return '<!-- THis is cs stuff -->'
 
     def _project_logo(self, context, data):
+        self.log.debug("called _project_logo")
         href = data.chrome.logo.link
         logosrc = data.chrome.logo.src
         logowidth = data.chrome.logo.width
@@ -247,11 +264,12 @@ class TracStanRenderers(Component):
             image = T.img(src=logosrc, width=logowidth, height=logoheight, 
                           alt=logoalt)
             print 'logosrc present: %s' % str(image)
-            return [T.a(id="logo", href=href)[image], T.hr]
+            return context.tag [T.a(id="logo", href=href)[image], T.hr]
         else:
             image = data.project.name_encoded
             if image:
-                return T.h1 [ T.a(id="logo", href=href)[image] ]
+                return context.tag[T.h1 [ T.a(id="logo", href=href)[image] ]]
+        return ""
         
 class TracIStan(Component):
     """Interface for using the Stan templating language

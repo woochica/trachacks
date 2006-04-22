@@ -1,5 +1,4 @@
 inherits (template='tracmain.stan') [
-
     override (slot='pagebody') [
         div (id="container") [ 
             a (id="top"),
@@ -136,6 +135,6 @@ inherits (template='tracmain.stan') [
                                     a (href="http://andreasviklund.com") [ 'Andreas Viklund' ],
                 ]
             ]
-        ],
+        ]
     ]
 ]

@@ -1,5 +1,5 @@
 [
-invisible (render=includeCS, data="site_header.cs"), 
+div (render=includeCS, data="site_header.cs"), 
 div (id="banner") [
     div (render=tracProjectLogo, id="header")
 ]
