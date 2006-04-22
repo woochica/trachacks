@@ -4,8 +4,8 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome
 
 import os
 import os.path
-from turbostan.stansupport import TurboStan
 from pkg_resources import resource_filename
+from tracistan import IStanRequestHandler
 
 __all__ = ['StatusPage']
 
@@ -14,7 +14,7 @@ class StatusPage(Component):
         Provides functions related to registration
     """
 
-    implements(IRequestHandler, ITemplateProvider)
+    implements(IStanRequestHandler, ITemplateProvider)
 
     def match_request(self, req):
         self.log.info(str(req.args))
@@ -22,16 +22,11 @@ class StatusPage(Component):
 
     def process_request(self, req):
         add_stylesheet(req, 'aftracistan/css/aftracistan.css')
-        data = { 'name': 'Pacopablo',
+        req.standata = { 'name': 'Pacopablo',
                  'message' : 'Hello vatos!',
                  'title' : 'Pyrus',
                }
-        resp = {'template': 'index',
-                'engine'  : 'stan',
-                'content_type': 'text/html',
-                'info': data}
-        print str(self.get_templates_dirs())
-        return resp
+        return ('index.stan', None)
 
     def get_templates_dirs(self):
         """

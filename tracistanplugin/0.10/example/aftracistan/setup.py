@@ -11,12 +11,12 @@ setup(  name=PACKAGE, version=VERSION,
         url = 'http://trac-hacks.org/wiki/TraciStanPlugin',
         description = """
 Example plugin showing the use of the IStanRequestHandler
-"""
+""",
         license='BSD',
 
         packages = ['aftracistan'],
         package_data = { 'aftracistan' : ['htdocs/css/*.css', 'htdocs/img/*',
                                     'templates/*.stan', ]},
-        entry_points = {'trac.plugins': ['aftracistan = aftracistan']}
+        entry_points = {'trac.plugins': ['aftracistan = aftracistan']},
         install_requires = ['TracIStan']
 )
