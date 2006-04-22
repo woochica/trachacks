@@ -1,0 +1,30 @@
+Trac Buildbot Plugin v0.1.0 Release Notes
+=========================================
+Apr 21, 2006
+
+Buildbot plugin v0.1.0 for Trac is now available. The buildbot pluging
+allows for access to buildbot master and slave status information from
+within a Trac environment.
+
+
+Changes for release v0.1.0
+--------------------------
+
+* 
+
+
+More Information
+----------------
+
+The buildbot plugin macro home page can be found at:
+http://trac-hacks.org/wiki/BuildbotPlugin.
+
+The plugin has been tested on a Linux x86 system running python 2.4
+and the latest version of trac from subversion. Testing on other
+platforms would be appreciated.
+
+Bugs and enhancement requests can be submitted at:
+http://trac-hacks.org/newticket?component=BuildbotPlugin&owner=pkropf
+
+
+$Id$
