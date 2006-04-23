@@ -1,0 +1,21 @@
+table.ini {
+	width: 100%;
+	margin-bottom: 1em;
+}
+
+table.ini td {
+	width: 30%;
+	vertical-align: top;
+	padding-right: 0.25em;
+}
+
+.ini input[type="text"] {
+	width: 90%;
+}
+
+.ini div.help {
+	margin-left: 1em;
+	font-size: small;
+}
+
+.ini div.help p { margin: 0.5em; }
