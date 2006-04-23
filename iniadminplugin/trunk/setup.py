@@ -8,4 +8,5 @@ setup(name='IniAdmin',
       url='http://trac-hacks.org/wiki/IniAdminPlugin',
       license='BSD',
       entry_points={'trac.plugins': ['iniadmin = iniadmin']},
+      package_data={'iniadmin' : ['htdocs/css/*.css', 'templates/*.cs', ]},
       install_requires=['TracWebAdmin'])
