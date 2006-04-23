@@ -32,6 +32,10 @@ from nevow.flat import flatten, ten
 from nevow import rend
 from nevow import tags as T
 
+from nevow import accessors, inevow
+#from zope.interface import implements, Interface
+from twisted.python.components import registerAdapter
+
 try:
     import tidy
 except ImportError:
@@ -52,7 +56,9 @@ class DataVars(object):
                 setattr(self, k, v)
 
     def __getattr__(self, key):
+        print "__getattr__: %s returns None" % key
         return None
+registerAdapter(accessors.ObjectContainer, DataVars, inevow.IContainer)
 
 class IStanRequestHandler(Interface):
     """Extension point interface for Stan request handlers."""
@@ -294,8 +300,8 @@ class TracIStan(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        self.log.debug('IStanRequestHandlers:\n')
-        [self.log.debug('  Stan Request Handler   : %s\n' % type(x).__name__)
+        self.log.debug('IStanRequestHandlers:')
+        [self.log.debug('  Stan Request Handler   : %s' % type(x).__name__)
              for x in self.stanreqhandlers]
         for handler in self.stanreqhandlers:
             if handler.match_request(req):

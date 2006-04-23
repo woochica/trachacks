@@ -22,10 +22,10 @@ class StatusPage(Component):
 
     def process_request(self, req):
         add_stylesheet(req, 'aftracistan/css/aftracistan.css')
-        req.standata = { 'name': 'Pacopablo',
+        req.standata.update({ 'name': 'Pacopablo',
                  'message' : 'Hello vatos!',
                  'title' : 'Pyrus',
-               }
+               })
         return ('index.stan', None)
 
     def get_templates_dirs(self):
