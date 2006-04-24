@@ -91,6 +91,11 @@ class IStanRenderer(Interface):
     
 
 class StanEngine(Component):
+    """Handle the meshing of trac and stan.
+
+    Tag classes and render methods are all mashed into a single namespace.
+
+    """
     renderers = ExtensionPoint(IStanRenderer)
 
     def _inherits_tag (self, template, locals, globals):
@@ -201,6 +206,14 @@ class StanEngine(Component):
         return output
 
 class TracStanRenderers(Component):
+    """Provides the 'includeCS' render function
+
+    The 'includeCS' renderer expecs a dictionary containing two keys:
+     * hdf      -- trac.web.clearsilver.HDFWrapper instance
+     * template -- name of a ClearSilver template.  May optionally be an already
+                   parsed ClearSilver template object.
+
+    """
     implements(IStanRenderer)
 
     def get_renderers(self):
@@ -216,18 +229,8 @@ class TracStanRenderers(Component):
 
         
 class TracIStan(Component):
-    """Interface for using the Stan templating language
+    """Handle the registered IStanRequestHandler(s)
 
-    To use Stan for templates instead of ClearSilver, simply subclass this
-    class.  It implements the IRequestHandler and ITemplateProvider interfaces.
-    
-    Instead of returning a template name and content_type, the return line
-    should look like:
-
-    return self._return(req, 'templatename.stan', 'content_type')
-
-    As usual, if content_type is ommitted, then text/html is assumed.
-    
     """
     implements(IRequestHandler, ITemplateProvider)
     stanreqhandlers = ExtensionPoint(IStanRequestHandler)
