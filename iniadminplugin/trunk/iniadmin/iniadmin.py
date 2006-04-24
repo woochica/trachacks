@@ -49,9 +49,9 @@ class IniAdminPlugin(Component):
 
         hdf_options = []
         for option in options:
-            # Strip surrounding <p> tags
             doc = wiki_to_html(inspect.getdoc(option), self.env, req)
             value = self.env.config.get(page, option.name)
+            # We assume the classes all end in "Option"
             type = option.__class__.__name__.lower()[:-6] or 'text'
             hdf_option  = {'name': option.name, 'default': option.default,
                            'doc': Markup(doc), 'value': value, 'type': type}
