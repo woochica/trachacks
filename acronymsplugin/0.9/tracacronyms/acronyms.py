@@ -2,7 +2,7 @@ import re
 from trac.core import *
 from trac.wiki.api import IWikiSyntaxProvider, IWikiChangeListener
 from trac.wiki.model import WikiPage
-from trac.util import Markup, escape
+from trac.util import Markup, escape, sorted, reversed
 
 class Acronyms(Component):
     """ Automatically generates HTML acronyms from definitions in tables in a
@@ -32,8 +32,7 @@ class Acronyms(Component):
                     self.acronyms[a] = (escape(d), escape(u), escape(s))
                 except Exception, e:
                     self.env.log.warning("Invalid acronym line: %s (%s)", line, e)
-        keys = self.acronyms.keys()
-        keys.sort(cmp=lambda a, b: -cmp(len(a), len(b)))
+        keys = reversed(sorted(acronyms.keys(), key=lambda a: len(a)))
         self.compiled_acronyms = \
             r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys)
 
