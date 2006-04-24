@@ -1,5 +1,6 @@
 inherits (template='tracmain.stan') [
     override (slot='pagebody') [
+    div (id="divbody" ) [
         div (id="container") [ 
             a (id="top"),
             p (_class="hide") [ 
@@ -16,22 +17,8 @@ inherits (template='tracmain.stan') [
                 a (id="menu")
             ],
             div (id="nav") [
-                ul [
-                    li (id="current") [
-                        a (href="index.html") [ 'Front page' ]
-                    ],
-                    li [
-                        a (href="alternative.html") [ 'Alternative layout' ]
-                    ],
-                    li [
-                        a (href="photo.html") [ 'Photo layout' ]
-                    ],
-                    li [
-                        a (href="styles.html") [ 'Styles' ]
-                    ],
-                    li [
-                        a (href="empty.html") [ 'Empty' ]
-                    ],
+                ul (render=render.sequence, data=vars.nav) [
+                    li (pattern='item', render=render_nav_row)
                 ],
                 p (_class="hide") [
                     a (href="#top") ['Back to top']
@@ -102,7 +89,7 @@ inherits (template='tracmain.stan') [
                     a (id="main"),
                     div (id="content") [
                         h1 [ 'Welcome to "falling leaves"...' ],
-                        img (src="chrome/pyrus/img/gravatar-leaf.jpg", height="80",
+                        img (src="chrome/aftracistan/img/gravatar-leaf.jpg", height="80",
                              width="80", alt="Gravatar example"),
                         p (_class="intro") [ '...also known as "andreas06", yet another open source '
                                             'template by Andreas. This one has a lot of useful features, '
@@ -136,5 +123,6 @@ inherits (template='tracmain.stan') [
                 ]
             ]
         ]
+    ]
     ]
 ]

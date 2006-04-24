@@ -94,20 +94,15 @@ class StanEngine(Component):
     renderers = ExtensionPoint(IStanRenderer)
 
     def _inherits_tag (self, template, locals, globals):
-        self.log.debug("called _inherits_tag")
         filename = self.find_template(template)
-        self.__superTemplate = eval(file(filename, 'rU' ).read(), 
+        self.__superTemplate = eval(file(filename, 'rU').read(), 
                                     locals, globals)
         return T.invisible
 
     def _replace_tag (self, slot):
-        self.log.debug("called _replace_tag")
-        self.log.debug("slot: %s" % str(slot))
-        
         return T.invisible(slot=slot)
 
     def _include_tag (self, template, locals, globals):
-        self.log.debug("called _include_tag")
         try:
             filename = self.find_template(template)
             return eval(file(filename, 'rU').read(),
@@ -145,12 +140,12 @@ class StanEngine(Component):
 
         filename = self.find_template(template)
 
+        pretty = False
+        if info.has_key('tidy'):
+            pretty = info['tidy']
+
         ns = {}
 
-        if format.startswith('tidy.'):
-            pretty, format = format.split('.')
-        else:
-            pretty = False
         if format == 'html':
             ns.update(__import__('nevow.tags', ns, ns, ['__all__']).__dict__)
             ns.update(__import__('nevow.entities', ns, ns, 
@@ -188,18 +183,8 @@ class StanEngine(Component):
             parts = dict([ (c.attributes['slot'], flatten(c.children))
                            for c in self.__template.children])
             
-            from pprint import PrettyPrinter
-            ppstream = StringIO() 
-            pp = PrettyPrinter(stream=ppstream)
-            pp.pprint(parts)
-            self.log.debug("parts: %s" % ppstream.getvalue())
             for slot, fragment in parts.items():
                 self.__superTemplate.fillSlots(slot, fragment)
-            from pprint import PrettyPrinter
-            ppstream = StringIO() 
-            pp = PrettyPrinter(stream=ppstream)
-            pp.pprint(self.__superTemplate)
-            self.log.debug("__superTemplate: %s" % ppstream.getvalue())
             output = flatten(self.__superTemplate)
         else:
             output = flatten(self.__template)
@@ -220,62 +205,15 @@ class TracStanRenderers(Component):
 
     def get_renderers(self):
         """Map methods to method names"""
-        self.log.debug("called get_renderers")
-        return {'tracPageTitle' : self._pageTitle,
-                'tracNoRobots' : self._robots,
-                'tracLinks' : self._links,
-                'tracScript' : self._scripts,
-                'tracProjectLogo' : self._project_logo,
+        return {
                 'includeCS' : self._include_cs,
                }
 
-    def _pageTitle(self, context, data):
-        self.log.debug("called _pageTitle")
-        self.log.debug("data: %s" % str(type(data)))
-        if data.project.name_encoded:
-            t = [data.title or '',
-                 ' - ',
-                 data.project.name_encoded,
-                 ' - Trac',]
-        else:
-            t = ['Trac: ',
-                 data.project.name_encoded,]
-        return context.tag[''.join(t)]
-
-    def _robots(self, context, data):
-        self.log.debug("called _robots")
-        if data.html.norobots:
-            return context.tag(name="ROBOTS", content="NOINDEX, NOFOLLOW")
-
-    def _links(self, context, data):
-        self.log.debug("called _links")
-        return ''
-
-    def _scripts(self, context, data):
-        self.log.debug("called _scripts")
-        return ''
-
     def _include_cs(self, context, data):
-        self.log.debug("called _include_cs")
-        return '<!-- THis is cs stuff -->'
+        hdf = data['hdf']
+        template = data['template']
+        return T.xml(hdf.render(template))
 
-    def _project_logo(self, context, data):
-        self.log.debug("called _project_logo")
-        href = data.chrome.logo.link
-        logosrc = data.chrome.logo.src
-        logowidth = data.chrome.logo.width
-        logoheight = data.chrome.logo.height
-        logoalt = data.chome.logo.alt
-        if logosrc:
-            image = T.img(src=logosrc, width=logowidth, height=logoheight, 
-                          alt=logoalt)
-            print 'logosrc present: %s' % str(image)
-            return context.tag [T.a(id="logo", href=href)[image], T.hr]
-        else:
-            image = data.project.name_encoded
-            if image:
-                return context.tag[T.h1 [ T.a(id="logo", href=href)[image] ]]
-        return ""
         
 class TracIStan(Component):
     """Interface for using the Stan templating language
@@ -291,7 +229,6 @@ class TracIStan(Component):
     As usual, if content_type is ommitted, then text/html is assumed.
     
     """
-#    abstract = True
     implements(IRequestHandler, ITemplateProvider)
     stanreqhandlers = ExtensionPoint(IStanRequestHandler)
 
@@ -300,9 +237,6 @@ class TracIStan(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        self.log.debug('IStanRequestHandlers:')
-        [self.log.debug('  Stan Request Handler   : %s' % type(x).__name__)
-             for x in self.stanreqhandlers]
         for handler in self.stanreqhandlers:
             if handler.match_request(req):
                 return True
@@ -318,7 +252,7 @@ class TracIStan(Component):
         req.standata = {}
         hdf = getattr(req, 'hdf', None)
         if hdf:
-            req.standata.update(self._convert_hdf_to_data(hdf))
+            req.standata['hdf'] = hdf
         template, content_type = chosen_handler.process_request(req)
         content_type = content_type or 'text/html'
         self._return(req, template, content_type)
@@ -339,6 +273,7 @@ class TracIStan(Component):
             data = outstream.getvalue()
             outstream.close()
         else:
+            ct = content_type.split('/')[0]
             data = self._render(req.standata, template)
          
         req.send_response(200)
@@ -356,40 +291,6 @@ class TracIStan(Component):
         c = Chrome(self.env)
         self.stantheman.template_dirs = c.get_all_templates_dirs()
         return self.stantheman.render(data, template=template)
-
-    def _convert_hdf_to_data(self, hdf):
-        """Converts an HDFWrapper to a dictionary
-
-        """
-        def reformat_data(data):
-            """Check to see if the keys are sequential numbers and reformats 
-               into a list
-
-            """
-            try:
-                keys = [int(k) for k in data.keys()]
-                keys.sort()
-                datalist = [data[str(k)] for k in keys]
-                return datalist
-            except ValueError:
-                return data
-
-        def hdf_tree_walk(node):
-            d = {}
-            while node:
-                name = node.name() or ''
-                value = node.value()
-                if (value or not node.child()) and name:
-                    d[name] = value.strip()
-                if node.child() and name:
-                    data = hdf_tree_walk(node.child())
-                    data = reformat_data(data)
-                    if data:
-                        d[name] = data
-                node = node.next()
-            return d
-
-        return hdf_tree_walk(hdf.hdf.child())
 
     # ITemplateProvider
     def get_templates_dirs(self):
@@ -411,7 +312,6 @@ class TracIStan(Component):
         resources on the local file system.
 
         """
-#        return [('blog', resource_filename(__name__, 'htdocs'))]
         return []
 
 

@@ -1,8 +1,5 @@
-html [
-    include(template='tracheader.stan'),
-    body [
-        include(template='tracnav.stan'),
-#        slot('pagebody'),
-        include(template='tracfooter.stan'),
-    ]
+invisible [
+    invisible(render=includeCS, data={'hdf':vars.hdf, 'template':"header.cs"}),
+    slot('pagebody'),
+    invisible(render=includeCS, data={'hdf':vars.hdf, 'template':"footer.cs"}),
 ]
