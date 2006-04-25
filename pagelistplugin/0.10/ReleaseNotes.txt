@@ -1,0 +1,32 @@
+Trac PageList Plugin v0.1.0 Release Notes
+=========================================
+Apr 22, 2006
+
+The PageList plugin for Trac creates dynamic wiki link pages that
+contain wiki names that match a suffix. This allows for the creation
+of wiki pages with a common suffix (NameOneHowTo, NameTwoHowTo,
+NameThreeHowTo, etc.) to be listed in an index like page via a
+PageList wiki command - pagelist:HowTo.
+
+
+Changes for release v0.1.0
+--------------------------
+
+* 
+
+
+More Information
+----------------
+
+The PageList plugin macro home page can be found at:
+http://trac-hacks.org/wiki/PageListPlugin.
+
+The plugin has been tested on a Linux x86 system running python 2.4
+and the latest version of trac from subversion. Testing on other
+platforms would be appreciated.
+
+Bugs and enhancement requests can be submitted at:
+http://trac-hacks.org/newticket?component=PageListPlugin&owner=pkropf
+
+
+$Id: ReleaseNotes.txt 692 2006-04-22 00:39:23Z pkropf $
