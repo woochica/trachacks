@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.2'
+__version__   = '0.6.3'
 
 
 try:
@@ -315,7 +315,7 @@ class GraphvizMacro(Component):
             #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
-            self.png_anti_alias = self.config.getbool('graphviz', 'png_antialias', False)
+            self.png_anti_alias = bool(self.config.get('graphviz', 'png_antialias', False))
             #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
             if self.png_anti_alias == True:
@@ -343,12 +343,12 @@ class GraphvizMacro(Component):
 
 
             # check if we should run the cache manager
-            self.cache_manager = self.config.getbool('graphviz', 'cache_manager', False)
+            self.cache_manager = bool(self.config.get('graphviz', 'cache_manager', False))
             if self.cache_manager:
-                self.cache_max_size  = self.config.getint('graphviz', 'cache_max_size',  10000000)
-                self.cache_min_size  = self.config.getint('graphviz', 'cache_min_size',  5000000)
-                self.cache_max_count = self.config.getint('graphviz', 'cache_max_count', 2000)
-                self.cache_min_count = self.config.getint('graphviz', 'cache_min_count', 1500)
+                self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size',  10000000))
+                self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size',  5000000))
+                self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count', 2000))
+                self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count', 1500))
 
                 #self.log.debug('self.cache_max_count: %d' % self.cache_max_count)
                 #self.log.debug('self.cache_min_count: %d' % self.cache_min_count)
@@ -356,7 +356,7 @@ class GraphvizMacro(Component):
                 #self.log.debug('self.cache_min_size: %d'  % self.cache_min_size)
 
             # is there a graphviz default DPI setting?
-            self.dpi = self.config.getint('graphviz', 'default_graph_dpi', 96)
+            self.dpi = int(self.config.get('graphviz', 'default_graph_dpi', 96))
 
         return trouble, buf
 
