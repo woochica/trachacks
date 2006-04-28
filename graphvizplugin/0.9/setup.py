@@ -2,7 +2,7 @@
 $Id$
 $HeadURL$
 
-Copyright (c) 2005 Peter Kropf. All rights reserved.
+Copyright (c) 2005, 2006 Peter Kropf. All rights reserved.
 
 Python egg setup file for the graphviz trac wiki processor.
 """
@@ -12,17 +12,17 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-
+__version__   = '0.6.2'
 
 from setuptools import setup, find_packages
-import graphviz
 
 setup (
     name = 'graphviz',
-    version = graphviz.graphviz.__version__,
+    version = __version__,
     packages = find_packages(),
     package_data = { 'graphviz' : ['examples/*',],
     },
+    entry_points={'trac.plugins': 'graphviz = graphviz'},
     author = "Peter Kropf",
     author_email = "pkropf@gmail.com",
     keywords = "trac graphviz",

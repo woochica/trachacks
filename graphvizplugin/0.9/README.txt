@@ -57,11 +57,20 @@ Optional requirements
 
 To allow antialiasing of PNG images produced by graphviz, you need to
 have rsvg, the librsvg rasterizer, installed on your system. It can be
-downloaded from <http://librsvg.sourceforge.net/>
+downloaded from <http://librsvg.sourceforge.net/>. Note that rsvg is
+not available for Windows.
 
 
 Installation via Source
 =======================
+
+The installation of the graphviz plugin from source is done by
+creating a Python egg distribution file and copying the .egg file to
+the Trac plugins directory. Detailed information on Python eggs can be
+found at: http://peak.telecommunity.com/DevCenter/PythonEggs. In
+addition, the Easy Install package is required to create Python
+eggs. See http://peak.telecommunity.com/DevCenter/EasyInstall for more
+information on using and installing Easy Install.
 
 Download the source code for the graphviz plugin from
 http://trac-hacks.swapoff.org/download/graphvizplugin.zip or checkout
@@ -206,6 +215,24 @@ When the size of all the files in the cache directory exceeds
 10,000,000 bytes or the number of files in the cache directory exceeds
 2,000, then files are deleted until the size is less than 5,000,000
 bytes and the number of files is less than 1,500.
+
+
+Here's the same example but for Windows systems:
+
+[graphviz]
+cache_dir = C:\projects\plugins\env\trac\htdocs\graphviz
+prefix_url = http://localhost:8080/trac/chrome/site/graphviz
+cmd_path = c:\Program Files\ATT\Graphviz\bin
+out_format = png
+cache_manager = yes
+cache_max_size = 10000000
+cache_min_size = 5000000
+cache_max_count = 2000
+cache_min_count = 1500
+
+Notice that the png_antialias, rsvg_path, default_graph_fontname and
+default_graph_fontsize are not defined. This is because rsvg is not
+available on Windows and these options are not used.
 
 
 Contributors

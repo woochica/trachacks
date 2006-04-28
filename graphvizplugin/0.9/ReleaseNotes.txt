@@ -1,12 +1,36 @@
-Trac Graphviz Plugin v0.6 Release Notes
-=======================================
-Mar 23, 2006
+Trac Graphviz Plugin v0.6.2 Release Notes
+=========================================
+Apr 25, 2006
 
-Graphviz plugin v0.6.1 for Trac is now available. The Graphviz wiki
+Graphviz plugin v0.6.2 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
 of diagrams by the various graphviz programs. The text of a wiki page
 can contain the source text for graphviz and the web browser will show
 the resulting image.
+
+
+Changes for release v0.6.2
+--------------------------
+
+* Simplify the code to read the configuration files. Instead of having
+  lots of if structures, default values are passed as a parameter to
+  the self.config.get call.
+
+* Renamed Readme.txt to README.txt.
+
+* Added a additional comment to README.txt about rsvg not being
+  available on Windows.
+
+* Changed plugin structure to use entry_points in setup.py instead of
+  graphviz.egg-info/trac_plugin.txt.
+
+* Removed graphviz.egg-info from svn repository. It is generated via
+  "python setup.py bdist_egg" and shouldn't be in the repository.
+
+* Added Windows trac.ini [graphviz] example.
+
+* Fixed access to global vs local config variables. Resolves issue
+  http://trac-hacks.org/ticket/242.
 
 
 Changes for release v0.6.1
