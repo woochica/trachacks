@@ -57,7 +57,8 @@ Optional requirements
 
 To allow antialiasing of PNG images produced by graphviz, you need to
 have rsvg, the librsvg rasterizer, installed on your system. It can be
-downloaded from <http://librsvg.sourceforge.net/>
+downloaded from <http://librsvg.sourceforge.net/>. Note that rsvg is
+not available for Windows.
 
 
 Installation via Source

@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.1'
+__version__   = '0.6.2'
 
 
 try:
@@ -308,17 +308,11 @@ class GraphvizMacro(Component):
             #Get optional configuration parameters from trac.ini.
 
             # check for the default output format - out_format
-            if self.config.parser.has_option('graphviz', 'out_format'):
-                self.out_format = self.config.get('graphviz', 'out_format')
-            else:
-                self.out_format = GraphvizMacro.formats[0]
+            self.out_format = self.config.get('graphviz', 'out_format', GraphvizMacro.formats[0])
             #self.log.debug('self.out_format: %s' % self.out_format)
 
             # check for the default processor - processor
-            if self.config.parser.has_option('graphviz', 'processor'):
-                self.processor = self.config.get('graphviz', 'processor')
-            else:
-                self.processor = GraphvizMacro.processors[0]
+            self.processor = self.config.get('graphviz', 'processor', GraphvizMacro.processors[0])
             #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
@@ -328,10 +322,8 @@ class GraphvizMacro(Component):
                 self.png_anti_alias = False
             #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
-            self.rsvg_path = '/usr/bin/rsvg'
             if self.png_anti_alias == True:
-                if self.config.parser.has_option('graphviz', 'rsvg_path'):
-                    self.rsvg_path = self.config.get('graphviz', 'rsvg_path')
+                self.rsvg_path = self.config.get('graphviz', 'rsvg_path', '/usr/bin/rsvg')
 
                 if not os.path.exists(self.rsvg_path):
                     err = 'The rsvg program is set to <b>%s</b> but that path does not exist.' % self.rsvg_path
@@ -358,25 +350,10 @@ class GraphvizMacro(Component):
             if self.config.parser.has_option('graphviz', 'cache_manager'):
                 self.cache_manager = True
 
-                if self.config.parser.has_option('graphviz', 'cache_max_size'):
-                    self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size'))
-                else:
-                    self.cache_max_size = 10000000
-
-                if self.config.parser.has_option('graphviz', 'cache_min_size'):
-                    self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size'))
-                else:
-                    self.cache_min_size = 5000000
-
-                if self.config.parser.has_option('graphviz', 'cache_max_count'):
-                    self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count'))
-                else:
-                    self.cache_max_count = 2000
-
-                if self.config.parser.has_option('graphviz', 'cache_min_count'):
-                    self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count'))
-                else:
-                    self.cache_min_count = 1500
+                self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size',  10000000))
+                self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size',  5000000))
+                self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count', 2000))
+                self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count', 1500))
 
                 #self.log.debug('self.cache_max_count: %d' % self.cache_max_count)
                 #self.log.debug('self.cache_min_count: %d' % self.cache_min_count)
@@ -387,10 +364,7 @@ class GraphvizMacro(Component):
                 self.cache_manager = False
 
             # is there a graphviz default DPI setting?
-            if self.config.parser.has_option('graphviz', 'default_graph_dpi'):
-                self.dpi = int(self.config.get('graphviz', 'default_graph_dpi'))
-            else:
-                self.dpi = 96 # graphviz default
+            self.dpi = int(self.config.get('graphviz', 'default_graph_dpi', 96))
 
         return trouble, buf
 
