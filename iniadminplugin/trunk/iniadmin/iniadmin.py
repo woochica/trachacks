@@ -45,7 +45,7 @@ class IniAdminPlugin(Component):
 
         options = [option for (section, _), option in
                    Option.registry.iteritems() if section == page]
-        options.sort(cmp=lambda a, b: cmp(a.name, b.name))
+        options.sort(key=lambda a: a.name)
 
         hdf_options = []
         for option in options:
