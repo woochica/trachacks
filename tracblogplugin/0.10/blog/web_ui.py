@@ -231,6 +231,7 @@ class TracBlogPlugin(Component):
                     tagtags.append(d)
                     continue
                 data = {
+                        'name'      : blog_entry,
                         'wiki_link' : wiki_to_oneliner(read_post % 
                                                        blog_entry,
                                                        self.env),
@@ -296,7 +297,7 @@ class TracBlogPlugin(Component):
                 statcal[week_num]['days'].append(d)
                 continue
             continue
-        week = [week for week in xrange(0,len(cal)-1) if day in cal[week]][0]
+        week = [week for week in xrange(len(cal)) if day in cal[week]][0]
         monthname = format_datetime(time.mktime(baseday.timetuple()), 
                                     format="%b") 
         lastyear = abs(year - 1)

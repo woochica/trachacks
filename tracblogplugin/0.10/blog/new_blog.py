@@ -100,6 +100,7 @@ class BlogPost(Component):
         return req.path_info == '/blog/new'
 
     def process_request(self, req):
+        req.perm.assert_permission('BLOG_POSTER')
         add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
         self._new_blog_post(req)

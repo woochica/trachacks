@@ -40,7 +40,7 @@
         <div class="postmeta">
             <ul>
                 <?cs if bentry.tags.present != 0 ?>
-                <li>Posted in: <?cs each:tag=bentry.tags.tags ?><a href="/tags/<?cs var:tag.link ?>"><?cs var:tag.name ?></a><?cs if ! tag.last ?>,<?cs /if ?> <?cs /each ?> <?cs if bentry.tags.more ?>...<?cs /if ?>
+                <li>Posted in: <?cs each:tag=bentry.tags.tags ?><a href="/tags/<?cs var:tag.link ?>"><?cs var:tag.name ?></a><?cs if ! tag.last ?>,<?cs /if ?> <?cs /each ?> <?cs if bentry.tags.more ?><a href="/wiki/<?cs var:bentry.name ?>">...</a><?cs /if ?>
                 <?cs /if ?>
                 <li><?cs var:bentry.wiki_link ?></li>
                 <li><?cs var:bentry.author ?></li>
