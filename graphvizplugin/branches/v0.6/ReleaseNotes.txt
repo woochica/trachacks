@@ -27,6 +27,11 @@ Changes for release v0.6.2
 * Removed graphviz.egg-info from svn repository. It is generated via
   "python setup.py bdist_egg" and shouldn't be in the repository.
 
+* Added Windows trac.ini [graphviz] example.
+
+* Fixed access to global vs local config variables. Resolves issue
+  http://trac-hacks.org/ticket/242.
+
 
 Changes for release v0.6.1
 --------------------------

@@ -217,6 +217,24 @@ When the size of all the files in the cache directory exceeds
 bytes and the number of files is less than 1,500.
 
 
+Here's the same example but for Windows systems:
+
+[graphviz]
+cache_dir = C:\projects\plugins\env\trac\htdocs\graphviz
+prefix_url = http://localhost:8080/trac/chrome/site/graphviz
+cmd_path = c:\Program Files\ATT\Graphviz\bin
+out_format = png
+cache_manager = yes
+cache_max_size = 10000000
+cache_min_size = 5000000
+cache_max_count = 2000
+cache_min_count = 1500
+
+Notice that the png_antialias, rsvg_path, default_graph_fontname and
+default_graph_fontsize are not defined. This is because rsvg is not
+available on Windows and these options are not used.
+
+
 Contributors
 ============
 

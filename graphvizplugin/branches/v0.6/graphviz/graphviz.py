@@ -263,12 +263,12 @@ class GraphvizMacro(Component):
             trouble = True
         else:
             # check for the cache_dir entry
-            if not self.config.parser.has_option('graphviz', 'cache_dir'):
+            self.cache_dir = self.config.get('graphviz', 'cache_dir')
+            if not self.cache_dir:
                 msg = 'The <b>graphviz</b> section is missing the <b>cache_dir</b> field.'
                 buf = self.show_err(msg)
                 trouble = True
             else:
-                self.cache_dir = self.config.get('graphviz', 'cache_dir')
                 if not os.path.exists(self.cache_dir):
                     msg = 'The <b>cache_dir</b> is set to <b>%s</b> but that path does not exist.' % self.cache_dir
                     buf = self.show_err(msg)
@@ -276,33 +276,32 @@ class GraphvizMacro(Component):
                 #self.log.debug('self.cache_dir: %s' % self.cache_dir)
 
             # check for the cmd_path entry
-            if not self.config.parser.has_option('graphviz', 'cmd_path'):
+            self.cmd_path = self.config.get('graphviz', 'cmd_path')
+            if not self.cmd_path:
                 msg = 'The <b>graphviz</b> section is missing the <b>cmd_path</b> field.'
                 buf = self.show_err(msg)
                 trouble = True
-            else:
-                self.cmd_path = self.config.get('graphviz', 'cmd_path')
-                if not os.path.exists(self.cmd_path):
-                    msg = 'The <b>cmd_path</b> is set to <b>%s</b> but that path does not exist.' % self.cmd_path
-                    buf = self.show_err(msg)
-                    trouble = True
+            elif not os.path.exists(self.cmd_path):
+                msg = 'The <b>cmd_path</b> is set to <b>%s</b> but that path does not exist.' % self.cmd_path
+                buf = self.show_err(msg)
+                trouble = True
 
                 for name in GraphvizMacro.processors:
-                    if not os.path.exists(os.path.join(self.cmd_path, name) + self.exe_suffix):
-                        msg = 'The <b>%s</b> program was not found in the <b>%s</b> directory.' % (name, self.cmd_path)
+                    pname = os.path.join(self.cmd_path, name) + self.exe_suffix
+                    if not os.path.exists(pname):
+                        msg = 'The <b>%s</b> program was not found.' % pname
                         buf = self.show_err(msg)
                         trouble = True
 
                 #self.log.debug('self.cmd_path: %s' % self.cmd_path)
 
             # check for the prefix_url entry
-            if not self.config.parser.has_option('graphviz', 'prefix_url'):
+            self.prefix_url = self.config.get('graphviz', 'prefix_url')
+            #self.log.debug('self.prefix_url: %s' % self.prefix_url)
+            if not self.prefix_url:
                 msg = 'The <b>graphviz</b> section is missing the <b>prefix_url</b> field.'
                 buf = self.show_err(msg)
                 trouble = True
-            else:
-                self.prefix_url = self.config.get('graphviz', 'prefix_url')
-                #self.log.debug('self.prefix_url: %s' % self.prefix_url)
 
 
             #Get optional configuration parameters from trac.ini.
@@ -316,10 +315,7 @@ class GraphvizMacro(Component):
             #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
-            if self.config.parser.has_option('graphviz', 'png_antialias'):
-                self.png_anti_alias = True
-            else:
-                self.png_anti_alias = False
+            self.png_anti_alias = self.config.getbool('graphviz', 'png_antialias', False)
             #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
             if self.png_anti_alias == True:
@@ -347,24 +343,20 @@ class GraphvizMacro(Component):
 
 
             # check if we should run the cache manager
-            if self.config.parser.has_option('graphviz', 'cache_manager'):
-                self.cache_manager = True
-
-                self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size',  10000000))
-                self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size',  5000000))
-                self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count', 2000))
-                self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count', 1500))
+            self.cache_manager = self.config.getbool('graphviz', 'cache_manager', False)
+            if self.cache_manager:
+                self.cache_max_size  = self.config.getint('graphviz', 'cache_max_size',  10000000)
+                self.cache_min_size  = self.config.getint('graphviz', 'cache_min_size',  5000000)
+                self.cache_max_count = self.config.getint('graphviz', 'cache_max_count', 2000)
+                self.cache_min_count = self.config.getint('graphviz', 'cache_min_count', 1500)
 
                 #self.log.debug('self.cache_max_count: %d' % self.cache_max_count)
                 #self.log.debug('self.cache_min_count: %d' % self.cache_min_count)
                 #self.log.debug('self.cache_max_size: %d'  % self.cache_max_size)
                 #self.log.debug('self.cache_min_size: %d'  % self.cache_min_size)
 
-            else:
-                self.cache_manager = False
-
             # is there a graphviz default DPI setting?
-            self.dpi = int(self.config.get('graphviz', 'default_graph_dpi', 96))
+            self.dpi = self.config.getint('graphviz', 'default_graph_dpi', 96)
 
         return trouble, buf
 
