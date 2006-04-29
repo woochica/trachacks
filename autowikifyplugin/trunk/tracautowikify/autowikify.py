@@ -44,7 +44,7 @@ class AutoWikify(Component):
 
     # Internal methods
     def _update(self):
-        pattern = r'\b(?P<autowiki>' + '|'.join(self.pages) + r')\b'
+        pattern = r'\b(?P<autowiki>' + '|'.join([p for p in self.pages if len(p) >= 3]) + r')\b'
         self.pages_re = pattern
         WikiSystem(self.env)._compiled_rules = None
 
