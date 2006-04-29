@@ -43,9 +43,9 @@ class IniAdminPlugin(Component):
             
         add_stylesheet(req, 'iniadmin/css/iniadmin.css')
 
-        options = [option for (section, _), option in
-                   Option.registry.iteritems() if section == page]
-        options.sort(key=lambda a: a.name)
+        options = sorted([option for (section, _), option in
+                          Option.registry.iteritems() if section == page],
+                         key=lambda a: a.name)
 
         hdf_options = []
         for option in options:
