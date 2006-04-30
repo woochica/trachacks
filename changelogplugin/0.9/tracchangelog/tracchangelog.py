@@ -27,16 +27,23 @@ class TracChangeLogPlugin(Component):
         return pydoc.getdoc(self)
 
     def render_macro(self, req, name, content):
-        path, limit, rev = ([x.strip() for x in (content or '').split(',')] + [5, 0])[0:3]
+        path, limit, rev = ([x.strip() for x in (content or '').split(',')] + [None, None])[0:3]
 
         if not hasattr(req, 'authname'):
             return Markup('<i>Changelog not available</i>')
 
         repo = self.env.get_repository(req.authname)
 
-        rev = repo.normalize_rev(int(rev) or repo.get_youngest_rev())
+        if rev is None:
+            rev = repo.get_youngest_rev()
+        else:
+            rev = int(rev)
+        rev = repo.normalize_rev(rev)
         path = repo.normalize_path(path)
-        limit = int(limit)
+        if limit is None:
+            limit = 5
+        else:
+            limit = int(limit)
         
         node = repo.get_node(path, rev)
         out = StringIO()
