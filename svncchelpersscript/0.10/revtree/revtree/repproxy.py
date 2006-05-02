@@ -72,6 +72,13 @@ class RepositoryProxy(object):
                 return (srcrev, srcpath)
         return None
 
+    def get_txn_changed_paths(self):
+        if not self.txn:
+            return None
+        root = fs.svn_fs_txn_root(self.txn, self.pool)
+        chgpaths = fs.svn_fs_paths_changed(root, self.pool)
+        return chgpaths
+
     def get_revision_copy_source(self, revision):
         root = fs.svn_fs_revision_root(self.fs, revision, self.pool)
         chgpaths = fs.svn_fs_paths_changed(root, self.pool)

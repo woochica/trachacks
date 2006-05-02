@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Subversion pre property change script
+# Properties should be adapted to the actual environment, and should reflect
+# the 'domain' value defined in the 'revtree' section 
+
+REPOS="$1"
+REV="$2"
+USER="$3"
+PROPNAME="$4"
+
+if [ "$PROPNAME" = "svn:log" ]; then exit 0; fi
+if [ "$PROPNAME" = "custom:import" ]; then exit 0; fi
+if [ "$PROPNAME" = "custom:export" ]; then exit 0; fi
+if [ "$PROPNAME" = "custom:base" ]; then exit 0; fi
+if [ "$PROPNAME" = "custom:deliver" ]; then exit 0; fi
+if [ "$PROPNAME" = "custom:bring" ]; then exit 0; fi
+
+echo "Changing revision properties other than svn:log or custom:* is prohibited" >&2
+exit 1
+

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Subversion pre-commit script
+# Paths should be adapted to the actual environment
+
+REPOS="$1"
+TXN="$2"
+TRAC_ENV="/local/db/trac/project/"
+export PYTHONPATH=/local/engine/trac
+/usr/bin/python trac-pre-commit-hook "$REPOS" "$TXN" "$TRAC_ENV" 
+RC=$?
+[ $RC == 0 ] || exit 1
+

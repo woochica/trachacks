@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Subversion post-commit script
+# Paths should be adapted to the actual environment
+
+REPOS="$1"
+REV="$2"
+TRAC_ENV='/local/db/trac/project/'
+TRAC_URL='http://server/trac/project'
+ERR_FILE="/var/log/project.err"
+export PYTHONPATH=/local/engine/trac
+date >> "$ERR_FILE"
+echo "Revision: $REV" >> "$ERR_FILE"
+/usr/bin/python trac-post-commit-hook \
+ -p "$TRAC_ENV" -r "$REV" -s "$TRAC_URL" -d "$REPOS" 2>> "$ERR_FILE"
+if [ $? -ne 0 ]; then
+    # signals the administrator that the commit failed at some point
+    tail -5 "$ERR_FILE" | \
+      mail eblot -s "Unable to post-commit revision $REV"
+fi
+
