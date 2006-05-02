@@ -17,7 +17,7 @@ class AutoWikify(Component):
     pages_re = None
 
     def __init__(self):
-        self.pages = set(WikiSystem(self.env).get_pages())
+        self._all_pages()
         self._update()
 
     # IWikiChangeListener methods
@@ -29,7 +29,10 @@ class AutoWikify(Component):
         pass
 
     def wiki_page_deleted(self, page):
-        self.pages.remove(page.name)
+        if page.name in self.pages:
+            self.pages.remove(page.name)
+        else:
+            self._all_pages()
         self._update()
 
     def wiki_page_version_deleted(self, page):
@@ -43,6 +46,9 @@ class AutoWikify(Component):
         return []
 
     # Internal methods
+    def _all_pages(self):
+        self.pages = set(WikiSystem(self.env).get_pages())
+        
     def _update(self):
         pattern = r'\b(?P<autowiki>' + '|'.join([p for p in self.pages if len(p) >= 3]) + r')\b'
         self.pages_re = pattern
