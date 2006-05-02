@@ -142,7 +142,7 @@ class RevisionTreeModule(Component):
     def process_request(self, req):
         req.perm.assert_permission('REVTREE_VIEW')
         repos = Repository(self.proxy)
-        repos.build(self.topdir, self.propdomain)
+        repos.build(self.topdir, self.propdomain, self.eldest)
 
         revtree = RevisionTree(self.env, req.authname, self.eldest, self.youngest)
         revtree.load(req.session)

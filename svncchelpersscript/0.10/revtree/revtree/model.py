@@ -17,7 +17,6 @@ import sys
 import time
 from revtree.repproxy import RepositoryProxy
 
-LOWEST_REV = 160
 
 class Changeset(object):
     """ Represents a changeset, i.e. a Subversion revision with additionnal
@@ -188,7 +187,10 @@ class Repository(object):
 
     def changeset(self, revision):
         """ Returns a tracked changeset from the revision number """
-        return self._changesets[revision]
+        if self._changesets.has_key(revision):
+            return self._changesets[revision]
+        else:
+            return None
 
     def branch(self, branchname):
         """ Returns a tracked branch from its name (path) """
@@ -235,9 +237,9 @@ class Repository(object):
             return (revisions[0], revisions[-1])
         return (revisions[0], revisions[0])
 
-    def build(self, topdir, propdomain): 
+    def build(self, topdir, propdomain, revmin): 
         head = self._proxy.get_youngest_revision()
-        for revision in range(head, LOWEST_REV, -1):
+        for revision in range(head, revmin, -1):
             chgset = Changeset()
             chgset.load(self._proxy, revision, topdir, propdomain)
             self._changesets[chgset.revision] = chgset
