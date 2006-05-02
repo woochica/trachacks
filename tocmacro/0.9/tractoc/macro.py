@@ -16,9 +16,35 @@ class NullOut(object):
 
 class MyOutlineFormatter(OutlineFormatter):
 
-    def format(self, page, *args, **kwords):
+    def format(self, active_page, page, text, out, min_depth, max_depth):
         self.__page = page
-        super(MyOutlineFormatter,self).format(*args, **kwords)
+        # XXX Code copied straight out of OutlineFormatter
+        self.outline = []
+        class NullOut(object):
+            def write(self, data): pass
+        Formatter.format(self, text, NullOut())
+
+        if min_depth > max_depth:
+            min_depth, max_depth = max_depth, min_depth
+        max_depth = min(6, max_depth)
+        min_depth = max(1, min_depth)
+
+        curr_depth = min_depth - 1
+        for depth, link in self.outline:
+            active = ''
+            if '/%s' % active_page in link:
+                active = ' class="active"'
+            if depth < min_depth or depth > max_depth:
+                continue
+            if depth < curr_depth:
+                out.write('</li></ol><li%s>' % active * (curr_depth - depth))
+            elif depth > curr_depth:
+                out.write('<ol><li%s>' % active * (depth - curr_depth))
+            else:
+                out.write("</li><li%s>\n" % active)
+            curr_depth = depth
+            out.write(link)
+        out.write('</li></ol>' * curr_depth)
 
     def _heading_formatter(self, match, fullmatch):
         Formatter._heading_formatter(self, match, fullmatch)
@@ -135,6 +161,7 @@ class TracTocMacro(Component):
             out.write("<h4>%s</h4>\n" % heading)
         for pagename in pagenames:
             if params['title_index']:
+                li_class = pagename.startswith(current_page) and ' class="active"' or ''
                 prefix = (pagename.split('/'))[0]
                 prefix = prefix.replace('\'', '\'\'')
                 all_pages = list(WikiSystem(self.env).get_pages(prefix))
@@ -144,13 +171,13 @@ class TracTocMacro(Component):
                     for page in all_pages:
                         page_text, _ = get_page_text(page)
     
-                        formatter.format(page, page_text, NullOut(), 1, 1)
+                        formatter.format(current_page, page, page_text, NullOut(), 1, 1)
                         header = ''
                         if formatter.outline:
                             title = formatter.outline[0][1]
                             title = re.sub('<[^>]*>','', title) # Strip all tags
                             header = ': ' + wiki_to_oneliner(title, self.env)
-                        out.write('<li> <a href="%s">%s</a> %s</li>\n' % (self.env.href.wiki(page), page, header))
+                        out.write('<li%s> <a href="%s">%s</a> %s</li>\n' % (li_class, self.env.href.wiki(page), page, header))
                     out.write('</ol>')        
                 else :
                     out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % prefix)
@@ -158,7 +185,7 @@ class TracTocMacro(Component):
                 page = root + pagename
                 page_text, page_exists = get_page_text(page)
                 if page_exists:
-                    formatter.format(page, page_text, out, params['min_depth'], params['max_depth'])
+                    formatter.format(current_page, page, page_text, out, params['min_depth'], params['max_depth'])
                 else:
                     out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % pagename)
         if not inline:
