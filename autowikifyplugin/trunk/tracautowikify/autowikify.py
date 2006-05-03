@@ -1,6 +1,6 @@
 import re
 from trac.core import *
-from trac.util import escape, Markup
+from trac.util import escape, Markup, sorted
 from trac.wiki.api import WikiSystem, IWikiSyntaxProvider, IWikiChangeListener
 try:
     set = set
@@ -50,7 +50,11 @@ class AutoWikify(Component):
         self.pages = set(WikiSystem(self.env).get_pages())
         
     def _update(self):
-        pattern = r'\b(?P<autowiki>' + '|'.join([p for p in self.pages if len(p) >= 3]) + r')\b'
+        minimum_length = int(self.env.config.get('autowikify', 'minimum_length') or 3)
+        explicitly_wikified = set([p.strip() for p in (self.env.config.get('autowikify', 'explicitly_wikify') or '').split(',') if p.strip()])
+        pages = [p for p in self.pages if len(p) >= minimum_length]
+        pages = [p for p in sorted(explicitly_wikified.union(pages), key=lambda p: -len(p))]
+        pattern = r'\b(?P<autowiki>' + '|'.join(pages) + r')\b'
         self.pages_re = pattern
         WikiSystem(self.env)._compiled_rules = None
 
