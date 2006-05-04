@@ -37,7 +37,7 @@ class BlogAdminPlugin(Component):
 
     # IPermissionRequestor
     def get_permission_actions(self):
-        return ['BLOG_ADMIN']
+        return [('BLOG_ADMIN', ['BLOG_POSTER', 'BLOG_VIEW'])]
 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
@@ -61,6 +61,8 @@ class BlogAdminPlugin(Component):
                         'new_blog_link' : 'New Blog Post',
                         'first_week_day' : 'SUNDAY',
                         'mark_updated' : 'true',
+                        'nav_bar' : 'true',
+                        'macro_blacklist': '',
                        }
         if req.method == 'POST':
             if page == 'defaults':
@@ -93,6 +95,10 @@ class BlogAdminPlugin(Component):
    name of day that acts as the first day of the week.  Must be full day name.
  '''Mark Updated Posts'''::
    whether or not to mark posts that have been updated with an "Updated on" message.
+ '''Show Link in Nav Bar'''::
+   whether or not a '''Blog''' link should be shown in the navigation menu bar.
+ '''Macro Blacklist'''::
+   list of macros to strip from blog output.
 
  '''strftime formatting'''::
 ||%a||Locale's abbreviated weekday name.||

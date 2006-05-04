@@ -29,6 +29,8 @@ from trac.util import Markup, format_date, format_datetime
 from trac.wiki.formatter import Formatter, wiki_to_oneliner
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
+from trac.perm import IPermissionRequestor
+
 from tractags.api import TagEngine
 from tractags.parseargs import parseargs
 
@@ -51,6 +53,11 @@ class NoFloatFormatter(Formatter):
     """A modified formatter that inserts macro_no_float=1 into the HDF."""
     
     def __init__(self, *args, **kwords):
+        if 'macro_blacklist' in kwords:
+            self.macro_blacklist = kwords['macro_blacklist']
+            print "macro balcklist: %s" % str(self.macro_blacklist)
+            del kwords['macro_blacklist']
+            print str(kwords)
         if 'req' in kwords:
             kwords['req'].hdf['macro_no_float'] = 1
         else:
@@ -61,10 +68,24 @@ class NoFloatFormatter(Formatter):
             else:
                 raise TracError, "Unable to isolate req"
         super(NoFloatFormatter,self).__init__(*args, **kwords)
+
+    def _macro_formatter(self, match, fullmatch):
+        name = fullmatch.group('macroname')
+        name2 = fullmatch.group('macroname')
+        print "name: %s" % name
+        print "name2: %s" % name2
+        if name in self.macro_blacklist:
+            print "Blacklisted macro: %s" % name
+            return ''
+        print "Valid macro: %s" % name
+        Formatter._macro_formatter(self, match, fullmatch)
+#        super(NoFloatFormatter, self)._macro_formatter(match, fullmatch)
         
-def wiki_to_nofloat_html(wikitext, env, req, db=None, absurls=0, escape_newlines=False):
+def wiki_to_nofloat_html(wikitext, env, req, db=None, absurls=0, 
+                         escape_newlines=False, macro_blacklist=[]):
     out = StringIO()
-    NoFloatFormatter(env, req, absurls, db).format(wikitext, out, escape_newlines)
+    NoFloatFormatter(env, req, absurls, db, macro_blacklist=macro_blacklist
+                    ).format(wikitext, out, escape_newlines)
     return Markup(out.getvalue())
 
 class TracBlogPlugin(Component):
@@ -114,16 +135,23 @@ class TracBlogPlugin(Component):
     """
 
     implements(IRequestHandler, ITemplateProvider, INavigationContributor,
-               IWikiMacroProvider)
+               IWikiMacroProvider, IPermissionRequestor)
+
+    # IPermissionRequestor
+    def get_permission_actions(self):
+        return ['BLOG_VIEW']
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        return 'blog'
+        if req.perm.has_permission('BLOG_VIEW'):
+            return 'blog'
                 
     def get_navigation_items(self, req):
-        req.hdf['trac.href.blog'] = self.env.href.blog()
-        yield 'mainnav', 'blog', Markup('<a href="%s">Blog</a>',
-                                         self.env.href.blog())
+        nav_bar = bool_val(self.env.config.get('blog', 'nav_bar', True))
+        if req.perm.has_permission('BLOG_VIEW') and nav_bar:
+            req.hdf['trac.href.blog'] = self.env.href.blog()
+            yield 'mainnav', 'blog', Markup('<a href="%s">Blog</a>',
+                                             self.env.href.blog())
 
     # IWikiMacroProvider
     def get_macros(self):
@@ -159,6 +187,7 @@ class TracBlogPlugin(Component):
         return req.path_info == '/blog'
 
     def process_request(self, req):
+        req.perm.assert_permission('BLOG_VIEW')
         add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
         tags = req.args.getlist('tag')
@@ -203,6 +232,8 @@ class TracBlogPlugin(Component):
         if not mark_updated and (not isinstance(mark_updated, bool)):
             mark_updated = bool_val(self.env.config.get('blog', 'mark_updated',
                                                          True))
+        macro_bl = self.env.config.get('blog', 'macro_blacklist', '').split(',')
+        macro_bl = [name.strip() for name in macro_bl if name.strip()]
                        
         num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
         if num_posts and default_times:
@@ -237,7 +268,8 @@ class TracBlogPlugin(Component):
                                                        self.env),
                         'time'      : timeStr,
                         'author'    : author,
-                        'wiki_text' : wiki_to_nofloat_html(text, self.env, req),
+                        'wiki_text' : wiki_to_nofloat_html(text, self.env, req,
+                                                   macro_blacklist=macro_bl),
                         'comment'   : wiki_to_oneliner(comment, self.env),
                         'tags'      : {
                                         'present' : len(pagetags),

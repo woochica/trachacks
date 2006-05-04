@@ -54,6 +54,18 @@
                     value="<?cs var:blogadmin.mark_updated ?>" />
                 </label>
             </div>
+            <div class="field">
+                <label>Show Link in Nav Bar:<br/>
+                    <input type="text" name="nav_bar" 
+                    value="<?cs var:blogadmin.nav_bar ?>" />
+                </label>
+            </div>
+            <div class="field">
+                <label>Macro Blacklist:<br/>
+                    <input type="text" name="macro_blacklist" 
+                    value="<?cs var:blogadmin.macro_blacklist ?>" />
+                </label>
+            </div>
         <div class="buttons">
             <input type="submit" value="Apply Changes" />
         </div>
