@@ -98,7 +98,7 @@ class BlogAdminPlugin(Component):
  '''Show Link in Nav Bar'''::
    whether or not a '''Blog''' link should be shown in the navigation menu bar.
  '''Macro Blacklist'''::
-   list of macros to strip from blog output.
+   comma separated list of macros to strip from blog output.
 
  '''strftime formatting'''::
 ||%a||Locale's abbreviated weekday name.||

@@ -55,9 +55,7 @@ class NoFloatFormatter(Formatter):
     def __init__(self, *args, **kwords):
         if 'macro_blacklist' in kwords:
             self.macro_blacklist = kwords['macro_blacklist']
-            print "macro balcklist: %s" % str(self.macro_blacklist)
             del kwords['macro_blacklist']
-            print str(kwords)
         if 'req' in kwords:
             kwords['req'].hdf['macro_no_float'] = 1
         else:
@@ -71,15 +69,9 @@ class NoFloatFormatter(Formatter):
 
     def _macro_formatter(self, match, fullmatch):
         name = fullmatch.group('macroname')
-        name2 = fullmatch.group('macroname')
-        print "name: %s" % name
-        print "name2: %s" % name2
         if name in self.macro_blacklist:
-            print "Blacklisted macro: %s" % name
             return ''
-        print "Valid macro: %s" % name
-        Formatter._macro_formatter(self, match, fullmatch)
-#        super(NoFloatFormatter, self)._macro_formatter(match, fullmatch)
+        return super(NoFloatFormatter, self)._macro_formatter(match, fullmatch)
         
 def wiki_to_nofloat_html(wikitext, env, req, db=None, absurls=0, 
                          escape_newlines=False, macro_blacklist=[]):
