@@ -194,6 +194,28 @@ class TracBlogPlugin(Component):
         self._generate_blog(req, *tags, **kwargs)
         return 'blog.cs', None
 
+    def _get_display_params(self, req, kwargs):
+        """ Extract the optional display parameters
+
+        Return a dictionary with the values and stuff
+
+        """
+        vals = {}
+
+        mu = self._choose_value('mark_updated', req, kwargs, convert=bool_val)
+        if not mu and (not isinstance(mu, bool)):
+            mu = bool_val(self.env.config.get('blog', 'mark_updated', True))
+        macro_bl = self.env.config.get('blog', 'macro_blacklist', '').split(',')
+        macro_bl = [name.strip() for name in macro_bl if name.strip()]
+        num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
+        time_format = self.env.config.get('blog', 'date_format') or '%x %X'
+
+        vals['mark_updated'] = mu
+        vals['macro_blacklist'] = macro_bl
+        vals['num_posts'] = num_posts
+        vals['time_format'] = time_format
+        return vals
+
     def _generate_blog(self, req, *args, **kwargs):
         """Extract the blog pages and fill the HDF.
 
@@ -201,34 +223,15 @@ class TracBlogPlugin(Component):
         **kwargs are any aditional keyword arguments that are needed
         """
         tallies = {}
-        tags = TagEngine(self.env).tagspace.wiki
-        try:
-            union = kwargs['union']
-        except KeyError:
-            union = False
+        blog, tlist, tags = self._initialize_tags(req, *args, **kwargs)
+        poststart, postend, default_times = self._get_time_range(req, **kwargs)
+        parms = self._get_display_params(req, kwargs)
+
         # Formatting
         read_post = "[wiki:%s Read Post]"
         entries = {}
-        if not len(args):
-            tlist = [self.env.config.get('blog', 'default_tag', 'blog')]
-        else:
-            tlist = args
-        if union:
-            blog = tags.get_tagged_names(tlist, operation='union')
-        else:
-            blog = tags.get_tagged_names(tlist, operation='intersection')
-
-        poststart, postend, default_times = self._get_time_range(req, **kwargs)
-        mark_updated = self._choose_value('mark_updated', req, kwargs, 
-                                          convert=bool_val)
-        if not mark_updated and (not isinstance(mark_updated, bool)):
-            mark_updated = bool_val(self.env.config.get('blog', 'mark_updated',
-                                                         True))
-        macro_bl = self.env.config.get('blog', 'macro_blacklist', '').split(',')
-        macro_bl = [name.strip() for name in macro_bl if name.strip()]
                        
-        num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
-        if num_posts and default_times:
+        if parms['num_posts'] and default_times:
             poststart = sys.maxint
             postend = 0
         for blog_entry in blog:
@@ -240,11 +243,11 @@ class TracBlogPlugin(Component):
             version, modified, author, comment, ipnr = page.get_history(
                                                        ).next()
             if poststart >= post_time >= postend:       
-                time_format = self.env.config.get('blog', 'date_format') \
-                              or '%x %X'
-                timeStr = format_datetime(post_time, format=time_format) 
+                timeStr = format_datetime(post_time, 
+                                          format=parms['time_format']) 
                 text = self._trim_page(page.text, blog_entry)
-                pagetags = [x for x in tags.get_name_tags(blog_entry) if x not in tlist]
+                pagetags = [x for x in tags.get_name_tags(blog_entry) 
+                            if x not in tlist]
                 tagtags = []
                 for i, t in enumerate(pagetags[:3]):
                     d = { 'link' : t,
@@ -261,7 +264,7 @@ class TracBlogPlugin(Component):
                         'time'      : timeStr,
                         'author'    : author,
                         'wiki_text' : wiki_to_nofloat_html(text, self.env, req,
-                                                   macro_blacklist=macro_bl),
+                                      macro_blacklist=parms['macro_blacklist']),
                         'comment'   : wiki_to_oneliner(comment, self.env),
                         'tags'      : {
                                         'present' : len(pagetags),
@@ -269,17 +272,18 @@ class TracBlogPlugin(Component):
                                         'more'    : len(pagetags) > 3 or 0,
                                       },
                        }
-                if (modified != post_time) and mark_updated:
+                if (modified != post_time) and parms['mark_updated']:
                     data['modified'] = 1
-                    mod_str = format_datetime(modified, format=time_format)
+                    mod_str = format_datetime(modified, 
+                                              format=parms['time_format'])
                     data['mod_time'] = mod_str
                 entries[post_time] = data
             continue
         tlist = entries.keys()
         tlist.sort()
         tlist.reverse()
-        if num_posts and (num_posts <= len(tlist)):
-            tlist = tlist[:num_posts]
+        if parms['num_posts'] and (parms['num_posts'] <= len(tlist)):
+            tlist = tlist[:parms['num_posts']]
         if tlist:
             entries[tlist[-1]]['last'] = 1
         req.hdf['blog.entries'] = [entries[x] for x in tlist]
@@ -290,6 +294,30 @@ class TracBlogPlugin(Component):
             self._generate_calendar(req, tallies)
         req.hdf['blog.hidecal'] = hidecal
         pass
+
+    def _initialize_tags(self, req, *args, **kwargs):
+        """ Instantiate a TagEngine and get the tagged names
+
+        Returns a list of all the pages tagged with the tags specified in
+        *args.  Also return a reference to the TagEngine instance
+
+        """
+        tags = TagEngine(self.env).tagspace.wiki
+        union = False
+        if kwargs.has_key('union'):
+            union = kwargs['union']
+
+        tlist = args
+        if not len(tlist):
+            tlist = [self.env.config.get('blog', 'default_tag', 'blog')]
+            self.log.debug('tlist: %s' % str(tlist))
+
+        if union:
+            blog = tags.get_tagged_names(tlist, operation='union')
+        else:
+            blog = tags.get_tagged_names(tlist, operation='intersection')
+        return (blog, tlist, tags)
+    
 
     def _generate_calendar(self, req, tallies):
         """Generate data necessary for the calendar
