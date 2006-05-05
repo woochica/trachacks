@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title></title>
+<script type="text/javascript" src="../browser/freemindembeddingtutorial/0.9/flashobject.js?format=raw"></script>
+<style type="text/css">
+	/* hide from ie on mac \*/
+	html {
+		height: 100%;
+		overflow: hidden;
+	}
+	
+	#flashcontent {
+		height: 100%;
+	}
+	/* end hide */
+
+	body {
+		height: 100%;
+		margin: 0;
+		padding: 0;
+	}
+</style>
+</head>
+<body>
+	<div id="flashcontent">
+		 Flash plugin or Javascript are turned off.
+		 Activate both  and reload to view the mindmap
+	</div>
+	
+	<script type="text/javascript">
+		// <![CDATA[
+		var fo = new FlashObject("../browser/freemindembeddingtutorial/0.9/visorFreemind.swf?format=raw", "visorFreeMind", "100%", "600px", 6, "#ffffff");
+		fo.addParam("quality", "high");
+		fo.addParam("bgcolor", "#ffffff");
+		fo.addVariable("openUrl", "_blank");
+		fo.addVariable("initLoadFile", "../browser/freemindembeddingtutorial/0.9/tut.mm?format=raw");
+		fo.addVariable("startCollapsedToLevel","5");
+		fo.write("flashcontent");
+		// ]]>
+	</script>
+</body>
+</html>
