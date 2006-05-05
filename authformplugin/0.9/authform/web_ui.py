@@ -164,7 +164,7 @@ class LoginFormModule(Component):
 	        req.authname = remote_user
 	        req.outcookie['trac_auth'] = cookie
 	        req.outcookie['trac_auth']['path'] = self.env.href()
-        	req.redirect(req.args.get('ref'))
+        	req.redirect(req.args.get('ref') or self.env.abs_href())
 	else:
 		# No authentication information passed, display a form
 		req.hdf['title'] = 'Login'
