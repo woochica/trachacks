@@ -1,8 +1,8 @@
 Index: trac/wiki/api.py
 ===================================================================
---- trac/wiki/api.py	(revision 32)
-+++ trac/wiki/api.py	(working copy)
-@@ -65,16 +65,30 @@
+--- trac/wiki/api.py	(.../vendor/trac-0.9.4)	(revision 25)
++++ trac/wiki/api.py	(.../branches/wikiflowpatch/0.9)	(working copy)
+@@ -65,16 +65,35 @@
   
      def get_link_resolvers():
          """Return an iterable over (namespace, formatter) tuples."""
@@ -19,6 +19,11 @@ Index: trac/wiki/api.py
 +        false if not, None if plugin doesn't know.  Name is page name,
 +        version is the version of text the edit was based on.
 +        """
++
++class IWikiModel(Interface):
++
++    def get_page(name=None, version=None, db=None, latest=None):
++        """Get a WikiPage object."""
 + 
  class WikiSystem(Component):
      """Represents the wiki system."""
@@ -34,7 +39,7 @@ Index: trac/wiki/api.py
  
      INDEX_UPDATE_INTERVAL = 5 # seconds
  
-@@ -213,3 +227,11 @@
+@@ -213,3 +232,11 @@
          else:
              return '<a class="wiki" href="%s">%s</a>' \
                     % (formatter.href.wiki(page) + anchor, label)
@@ -48,8 +53,8 @@ Index: trac/wiki/api.py
 +        return None
 Index: trac/wiki/web_ui.py
 ===================================================================
---- trac/wiki/web_ui.py	(revision 32)
-+++ trac/wiki/web_ui.py	(working copy)
+--- trac/wiki/web_ui.py	(.../vendor/trac-0.9.4)	(revision 25)
++++ trac/wiki/web_ui.py	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -30,6 +30,7 @@
  from trac.versioncontrol.diff import get_diff_options, hdf_diff
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -58,7 +63,17 @@ Index: trac/wiki/web_ui.py
  from trac.wiki.model import WikiPage
  from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
  
-@@ -79,12 +80,16 @@
+@@ -63,7 +64,8 @@
+     # IRequestHandler methods
+ 
+     def match_request(self, req):
+-        match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
++        # match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
++        match = re.match(r'^/wiki(?:/(.*)|\W+)?$', req.path_info)
+         if match:
+             if match.group(1):
+                 req.args['page'] = match.group(1)
+@@ -79,12 +81,16 @@
  
          add_stylesheet(req, 'common/css/wiki.css')
  
@@ -78,7 +93,7 @@ Index: trac/wiki/web_ui.py
                      action = 'collision'
                      self._render_editor(req, db, page)
                  elif req.args.has_key('preview'):
-@@ -101,11 +106,24 @@
+@@ -101,11 +107,24 @@
          elif action == 'delete':
              self._render_confirm(req, db, page)
          elif action == 'edit':
@@ -104,7 +119,7 @@ Index: trac/wiki/web_ui.py
          else:
              if req.args.get('format') == 'txt':
                  req.send_response(200)
-@@ -155,7 +173,7 @@
+@@ -155,13 +174,14 @@
              req.perm.assert_permission('WIKI_DELETE')
  
          if req.args.has_key('cancel'):
@@ -113,16 +128,28 @@ Index: trac/wiki/web_ui.py
  
          version = None
          if req.args.has_key('version'):
-@@ -185,7 +203,7 @@
+             version = int(req.args.get('version', 0))
  
+         page.delete(version, db)
++        # XXX why is there a commit here, but none after save()
+         db.commit()
+ 
+         if not page.exists:
+@@ -183,9 +203,11 @@
+             # WIKI_ADMIN
+             page.readonly = int(req.args.has_key('readonly'))
+ 
++        # definitely need to pass db in here, so that change listeners
++        # can cause rollback 
          page.save(req.args.get('author'), req.args.get('comment'),
-                   req.remote_addr)
+-                  req.remote_addr)
 -        req.redirect(self.env.href.wiki(page.name))
++                  req.remote_addr, db=db)
 +        req.redirect(self.env.href.wiki(page.name, version=page.version))
  
      def _render_confirm(self, req, db, page):
          if page.readonly:
-@@ -312,7 +330,7 @@
+@@ -312,7 +334,7 @@
              info['readonly'] = int(req.args.has_key('readonly'))
          req.hdf['wiki'] = info
  
@@ -131,7 +158,7 @@ Index: trac/wiki/web_ui.py
          """Extract the complete history for a given page and stores it in the
          HDF.
  
-@@ -327,7 +345,8 @@
+@@ -327,7 +349,8 @@
          req.hdf['title'] = page.name + ' (history)'
  
          history = []
@@ -143,11 +170,14 @@ Index: trac/wiki/web_ui.py
                  'diff_url': self.env.href.wiki(page.name,
 Index: trac/wiki/model.py
 ===================================================================
---- trac/wiki/model.py	(revision 32)
-+++ trac/wiki/model.py	(working copy)
-@@ -22,15 +22,15 @@
+--- trac/wiki/model.py	(.../vendor/trac-0.9.4)	(revision 25)
++++ trac/wiki/model.py	(.../branches/wikiflowpatch/0.9)	(working copy)
+@@ -20,17 +20,17 @@
+ import time
+ 
  from trac.core import *
- from trac.wiki.api import WikiSystem
+-from trac.wiki.api import WikiSystem
++from trac.wiki.api import WikiSystem, IWikiModel
  
 -
 + 
@@ -210,7 +240,7 @@ Index: trac/wiki/model.py
          elif self.readonly != self.old_readonly:
              cursor = db.cursor()
              cursor.execute("UPDATE wiki SET readonly=%s WHERE name=%s",
-@@ -137,12 +148,34 @@
+@@ -137,12 +148,53 @@
          self.old_readonly = self.readonly
          self.old_text = self.text
  
@@ -242,17 +272,36 @@ Index: trac/wiki/model.py
 +        would = None
 +        for controller in WikiSystem(self.env).workflow_controllers:
 +            w = controller.would_collide(req, self.name, self.version)
-+            # this does the right thing for None, True, or False, with
++            # This does the right thing for None, True, or False, with
 +            # True taking precedence over False, and both taking
-+            # precedence over None -- python is great
++            # precedence over None -- python is soooo nice.
 +            would = would or w  
 +        return would
 +
++class WikiModel(Component):
++    implements(IWikiModel)
++
++    def get_page(self, name=None, version=None, db=None, latest=None):
++        """Get a WikiPage object."""
++        return WikiPage(env=self.env, name=name, version=version,
++                db=db, latest=latest)
++ 
++    def page_count(self, db=None):
++        if not db:
++            db = self.env.get_db_cnx()
++        cursor = db.cursor()
++        cursor.execute("SELECT count(name) FROM wiki")
++        row = cursor.fetchone()
++        if row:
++            count = row[0]
++        else:
++            count = 0
++        return count
 +
 Index: templates/wiki.cs
 ===================================================================
---- templates/wiki.cs	(revision 32)
-+++ templates/wiki.cs	(working copy)
+--- templates/wiki.cs	(.../vendor/trac-0.9.4)	(revision 25)
++++ templates/wiki.cs	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -289,6 +289,9 @@
      if:trac.acl.WIKI_MODIFY ?>
       <form method="get" action="<?cs var:wiki.current_href ?>"><div>
