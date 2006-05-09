@@ -1,0 +1,92 @@
+/* Navigation */
+.postmeta h2, .postmeta hr { display: none }
+.postmeta ul { font-size: 10px; list-style: none; margin: 0; text-align: right }
+.postmeta li {
+ border-right: 1px solid #d7d7d7;
+ display: inline;
+ padding: 0 .75em;
+ white-space: nowrap;
+}
+.postmeta li.last { border-right: none }
+
+.blognav {
+    float: right;
+    border: solid 1px;
+    margin: 0.5em;
+    padding: 0.1em 1em 0.1em 0.1em;
+/*
+    width: 400px;
+    background: #dfd;
+*/
+}
+
+#blognav h3 {
+    padding: 0.1em;
+    margin: 0.4em;
+}
+
+#blognav ul {
+    margin: 0.1em;
+}
+
+#blognav li {
+    font-size: 0.8em;
+    padding: 0.1em;
+}
+
+.blogdocs {
+    float: right;
+    width: 60%;
+    margin: 0.5em;
+    padding: 0.1em 1em 0.1em 0.1em;
+}
+
+.blogoptions {
+    float: left;
+}
+
+.updated p {
+    font-size: 90%;
+    font-style: italic;
+    font-weight: bold;
+}
+
+
+/* Calendar display stuff */
+div.blog-calendar {
+ padding: .5em 1em;
+ margin: 5px 0 2em 1em;
+ float: right;
+ border: 1px outset #ddc;
+ background: #ffd;
+ font-size: 85%;
+ position: relative;
+}
+
+div.blog-calendar table {
+/*
+ border-collapse: collapse;
+*/
+}
+
+div.blog-calendar td {
+ padding: .25em;
+}
+
+tr.blog-calendar-current {
+ background: #ffff75;
+}
+
+td.blog-calendar-current a {
+ color: #000000;
+ font-weight: bold;
+}
+
+a.blog-calendar-title {
+ font-size: 130%;
+ color: black;
+}
+
+caption.blog-calendar-caption {
+ padding-bottom: 4px;
+}
