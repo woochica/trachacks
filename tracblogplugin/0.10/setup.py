@@ -17,5 +17,6 @@ setup(  name=PACKAGE, version=VERSION,
         package_data = { 'tBlog' : ['htdocs/css/*.css', 'htdocs/img/*',
                                     'templates/*.cs', ]},
         entry_points = {'trac.plugins': ['tBlog = tBlog']},
+#        entry_points = {'trac.plugins': ['tBlog = blog']},
         install_requires = ['TracTags>=0.3,<0.5', 'TracWebAdmin']
 )

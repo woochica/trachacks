@@ -32,6 +32,8 @@ from tractags.parseargs import parseargs
 
 __all__ = ['BlogPost']
 
+_tag_split = re.compile('[,\s]+')
+
 class BlogPost(Component):
     """Inserts a link to create a new blog post
 
@@ -127,7 +129,7 @@ class BlogPost(Component):
         readonly = int(req.args.has_key('readonly'))
         edit_rows = int(req.args.get('edite_rows', 20))
         req_tags = req.args.get('tags', [])
-
+        
         if req.method == 'POST':
             if action == 'edit':
                 if req.args.has_key('cancel'):
@@ -146,9 +148,10 @@ class BlogPost(Component):
                         page.text = wikitext
                     page.readonly = readonly
                     page.save(req.authname, comment, req.remote_addr)
-                    taglist = [x.strip() for x in req_tags.split(',') if x]
-#                    for t in taglist:
-#                        tags.add_tags(req, pagename, t)
+#                    taglist = [x.strip() for x in req_tags.split(',') if x]
+                    taglist = [t.strip() for t in 
+                               _tag_split.split(req.args.get('tags')) 
+                               if t.strip()]
                     tags.add_tags(req, pagename, taglist)
                     req.redirect(self.env.href.blog())
         else:
