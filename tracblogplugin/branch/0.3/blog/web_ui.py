@@ -131,7 +131,7 @@ class TracBlogPlugin(Component):
 
     # IPermissionRequestor
     def get_permission_actions(self):
-        return ['BLOG_VIEW']
+        yield 'BLOG_VIEW'
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -147,7 +147,7 @@ class TracBlogPlugin(Component):
 
     # IWikiMacroProvider
     def get_macros(self):
-        yield "BlogShow"
+        yield 'BlogShow'
 
     def get_macro_description(self, name):
         """Return the subclass's docstring."""
@@ -156,10 +156,12 @@ class TracBlogPlugin(Component):
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
         add_stylesheet(req, 'blog/css/blog.css')
+# Want to factor out the processing of arguments etc.
         tags, kwargs = self._split_macro_args(content)
         if not tags:
             tstr = self.env.config.get('blog', 'default_tag', 'blog')
             tags = [t.strip() for t in tstr.split(',') if t]
+###
 #        rss_href = ['?format=rss']
 #        add_link(req, 'alternate', t
         self._generate_blog(req, *tags, **kwargs)
@@ -177,6 +179,7 @@ class TracBlogPlugin(Component):
             args, kwargs = parseargs(argv)
         return args, kwargs
 
+    # IRequestHandler
     def match_request(self, req):
         return req.path_info == '/blog'
 
@@ -184,6 +187,7 @@ class TracBlogPlugin(Component):
         req.perm.assert_permission('BLOG_VIEW')
         add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
+# Again, want to factor out the processing of arguments, etc.
         tags = req.args.getlist('tag')
         kwargs = {}
         for key in req.args.keys():
@@ -193,6 +197,7 @@ class TracBlogPlugin(Component):
         if not tags:
             tstr = self.env.config.get('blog', 'default_tag', 'blog')
             tags = [t.strip() for t in tstr.split(',') if t]
+###
         self._generate_blog(req, *tags, **kwargs)
         return 'blog.cs', None
 
