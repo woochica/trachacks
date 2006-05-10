@@ -19,6 +19,7 @@ import time
 import datetime
 import inspect
 import calendar
+import re
 from StringIO import StringIO
 from pkg_resources import resource_filename
 from trac.core import *
@@ -37,6 +38,8 @@ from tractags.parseargs import parseargs
 BOOLS_TRUE = ['true', 'yes', 'ok', 'on', 'enabled', '1']
 
 __all__ = ['TracBlogPlugin']
+
+_tag_split = re.compile('[,\s]+')
 
 def bool_val(val):
     """Returns whether or not a values represents a boolen value
@@ -159,7 +162,7 @@ class TracBlogPlugin(Component):
         tags, kwargs = self._split_macro_args(content)
         if not tags:
             tstr = self.env.config.get('blog', 'default_tag', 'blog')
-            tags = [t.strip() for t in tstr.split(',') if t]
+            tags = [t.strip() for t in _tag_split.split(tstr) if t.strip()]
         self._generate_blog(req, *tags, **kwargs)
         req.hdf['blog.macro'] = True
         data = req.hdf.render('blog.cs')
@@ -190,7 +193,7 @@ class TracBlogPlugin(Component):
             continue
         if not tags:
             tstr = self.env.config.get('blog', 'default_tag', 'blog')
-            tags = [t.strip() for t in tstr.split(',') if t]
+            tags = [t.strip() for t in _tag_split.split(tstr) if t.strip()]
         self._generate_blog(req, *tags, **kwargs)
         return 'blog.cs', None
 
