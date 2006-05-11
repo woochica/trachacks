@@ -125,6 +125,8 @@ class BlogPost(Component):
             while '-' in pagename and len(pagename) > 60: 
                 pagename = '-'.join(pagename.split('-')[:-1]) 
             pagename = pagename.strip('-')
+        if '$U' in pagename:
+            pagename = pagename.replace('$U', req.authname)
         comment = req.args.get('comment', '')
         readonly = int(req.args.has_key('readonly'))
         edit_rows = int(req.args.get('edite_rows', 20))

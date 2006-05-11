@@ -124,6 +124,7 @@ class BlogAdminPlugin(Component):
 ||%Z||Time zone name (no characters if no time zone exists).||
 ||%%||A literal "%" character.||
 ||%@||An URL friendly version of the Blog Entry Title||
+||$U||Name of the current user||
 
 """
         return doc
