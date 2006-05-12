@@ -54,6 +54,18 @@ blog_params = {
         'read_post'       : {'req'     : None,
                              'kwargs'  : None,
                              'default' : '[wiki:%s Read Post]', },
+        'startdate'       : {'config'  : None,
+                             'convert' : int, },
+        'enddate'         : {'config'  : None,
+                             'convert' : int, },
+        'delta'           : {'config'  : None,
+                             'convert' : int, },
+        'year'            : {'config'  : None,
+                             'convert' : int, },
+        'month'           : {'config'  : None,
+                             'convert' : int, },
+        'day'             : {'config'  : None,
+                             'convert' : int, },
        }
 
 def get_env_val(key, req=None, kwargs=None, config=None, section=None, 
@@ -200,9 +212,12 @@ class TracBlogPlugin(Component):
         """ Display the blog in the wiki page """
         add_stylesheet(req, 'blog/css/blog.css')
         tags, kwargs = self._get_params(content=content)
-        rss_href = self.env.href.blog(format='rss', tag=tags, **kwargs)
-        add_link(req, 'alternate', rss_href, 'Blog RSS Feed', 
-                'application/rss+xml', 'rss')
+        rssfeed = get_env_val('rss', kwargs=kwargs, config=self.env.config,
+                              section='blog', default=True, convert=bool_val)
+        if rssfeed:
+            rss_href = self.env.href.blog(format='rss', tag=tags, **kwargs)
+            add_link(req, 'alternate', rss_href, 'Blog Feed', 
+                    'application/rss+xml', 'rss')
         self._generate_blog(req, tags, kwargs)
         req.hdf['blog.macro'] = True
         data = req.hdf.render('blog.cs')
@@ -218,7 +233,7 @@ class TracBlogPlugin(Component):
         add_stylesheet(req, 'common/css/wiki.css')
         tags, kwargs = self._get_params(req=req)
         rss_href = self.env.href.blog(format='rss', tag=tags, **kwargs)
-        add_link(req, 'alternate', rss_href, 'Blog RSS Feed', 
+        add_link(req, 'alternate', rss_href, 'Blog Feed', 
                 'application/rss+xml', 'rss')
         self._generate_blog(req, tags, kwargs)
         return 'blog.cs', None
@@ -271,9 +286,10 @@ class TracBlogPlugin(Component):
         **kwargs are any aditional keyword arguments that are needed
         """
         tallies = {}
-        blog, tlist, tags = self._initialize_tags(req, *args, **kwargs)
-        poststart, postend, default_times = self._get_time_range(req, **kwargs)
         parms = self._get_display_params(req, kwargs)
+        blog, tlist = self._initialize_tags(args, kwargs)
+        poststart, postend, default_times = self._get_time_range(parms, req, 
+                                                                 kwargs)
 
         # Formatting
         entries = {}
@@ -293,7 +309,7 @@ class TracBlogPlugin(Component):
                 timeStr = format_datetime(post_time, 
                                           format=parms['date_format']) 
                 text = self._trim_page(page.text, blog_entry)
-                pagetags = [x for x in tags.get_name_tags(blog_entry) 
+                pagetags = [x for x in self.tags.get_name_tags(blog_entry) 
                             if x not in tlist]
                 tagtags = []
                 for i, t in enumerate(pagetags[:3]):
@@ -342,28 +358,28 @@ class TracBlogPlugin(Component):
         req.hdf['blog.hidecal'] = hidecal
         pass
 
-    def _initialize_tags(self, req, *args, **kwargs):
+    def _initialize_tags(self, args, kwargs):
         """ Instantiate a TagEngine and get the tagged names
 
         Returns a list of all the pages tagged with the tags specified in
-        *args.  Also return a reference to the TagEngine instance
+        args.  Also return a reference to the TagEngine instance
 
         """
-        tags = TagEngine(self.env).tagspace.wiki
-        union = False
-        if kwargs.has_key('union'):
-            union = kwargs['union']
-
+        self.tags = TagEngine(self.env).tagspace.wiki
         tlist = args
-        if not len(tlist):
-            tlist = [self.env.config.get('blog', 'default_tag', 'blog')]
-            self.log.debug('tlist: %s' % str(tlist))
+        if not tlist:
+            tlist = get_env_val('default_tag', config=self.env.config,
+                                section='blog', convert=list_val, 
+                                default='blog')
+        self.log.debug('tlist: %s' % str(tlist))
 
+        union = get_env_val('union', kwargs=kwargs, default=False, 
+                            convert=bool_val)
         if union:
-            blog = tags.get_tagged_names(tlist, operation='union')
+            blog = self.tags.get_tagged_names(tlist, operation='union')
         else:
-            blog = tags.get_tagged_names(tlist, operation='intersection')
-        return (blog, tlist, tags)
+            blog = self.tags.get_tagged_names(tlist, operation='intersection')
+        return (blog, tlist)
     
 
     def _generate_calendar(self, req, tallies):
@@ -496,7 +512,7 @@ class TracBlogPlugin(Component):
         tallies[d.year][d.month][d.day]['pages'].append(page_name)
         pass
 
-    def _get_time_range(self, req, **kwargs):
+    def _get_time_range(self, parms, req, kwargs):
         """Return a start and end date range
 
         Parameters can be passed in via the req object or via **kwargs.  
@@ -519,17 +535,20 @@ class TracBlogPlugin(Component):
 
         """
         DAY = 86400
-        HISTORY = int(self.env.config.get('blog', 'history_days') or 30) * DAY
-
-        startdate = self._choose_value('startdate', req, kwargs, convert=int)
-        enddate = self._choose_value('enddate', req, kwargs, convert=int)
-        delta = self._choose_value('delta', req, kwargs, convert=int)
-        year = self._choose_value('year', req, kwargs, convert=int)
-        month = self._choose_value('month', req, kwargs, convert=int)
-        day = self._choose_value('day', req, kwargs, convert=int)
-        defaults = not (startdate or enddate or delta or year or month or day)
+        HISTORY = get_env_val('history_days', config=self.env.config,
+                              section='blog', convert=int, default=30) * DAY
         now = datetime.datetime.now()
         oneday = datetime.timedelta(days=1)
+
+        startdate = parms['startdate']
+        enddate = parms['enddate']
+        delta = parms['delta']
+        year = parms['year']
+        month = parms['month']
+        day = parms['day']
+
+        defaults = not (startdate or enddate or delta or year or month or day)
+
         if year or month or day:
             if day:
                 year = year or now.year
@@ -537,8 +556,7 @@ class TracBlogPlugin(Component):
             if month:
                 year = year or now.year
             days_in_month = calendar.monthrange(year, month or 12)[1]
-            start = datetime.datetime(year, month or 12, 
-                                      day or days_in_month)
+            start = datetime.datetime(year, month or 12, day or days_in_month)
             start += oneday
             end = datetime.datetime(year, month or 1, day or 1)
             start = time.mktime(start.timetuple())

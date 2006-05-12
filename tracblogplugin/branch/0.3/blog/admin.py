@@ -64,6 +64,7 @@ class BlogAdminPlugin(Component):
                         'nav_link'       : 'Blog',
                         'nav_bar'        : 'true',
                         'macro_blacklist': '',
+                        'rss'            : 'true',
                        }
         if req.method == 'POST':
             if page == 'defaults':
@@ -102,6 +103,8 @@ class BlogAdminPlugin(Component):
    whether or not a link should be shown in the navigation menu bar.
  '''Macro Blacklist'''::
    comma separated list of macros to strip from blog output.
+ '''RSS Feed'''::
+   whether or not to enable RSS feeds when using {{{[[BlogShow]]}}}
 
  '''strftime formatting'''::
 ||%a||Locale's abbreviated weekday name.||

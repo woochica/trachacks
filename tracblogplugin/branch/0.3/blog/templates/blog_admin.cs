@@ -72,6 +72,12 @@
                     value="<?cs var:blogadmin.macro_blacklist ?>" />
                 </label>
             </div>
+            <div class="field">
+                <label>RSS Feed:<br/>
+                    <input type="text" name="rss" 
+                    value="<?cs var:blogadmin.rss ?>" />
+                </label>
+            </div>
         <div class="buttons">
             <input type="submit" value="Apply Changes" />
         </div>
