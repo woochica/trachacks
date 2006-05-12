@@ -53,15 +53,16 @@ class BlogAdminPlugin(Component):
         req.hdf['blogadmin.page'] = page
 
         admin_fields = {
-                        'date_format'  : '%x %X',
-                        'page_format'  : '%Y/%m/%d/%H.%M',
-                        'default_tag'  : 'blog', 
-                        'post_size'    : 1024,
-                        'history_days' : 30,
-                        'new_blog_link' : 'New Blog Post',
+                        'date_format'    : '%x %X',
+                        'page_format'    : '%Y/%m/%d/%H.%M',
+                        'default_tag'    : 'blog', 
+                        'post_size'      : 1024,
+                        'history_days'   : 30,
+                        'new_blog_link'  : 'New Blog Post',
                         'first_week_day' : 'SUNDAY',
-                        'mark_updated' : 'true',
-                        'nav_bar' : 'true',
+                        'mark_updated'   : 'true',
+                        'nav_link'       : 'Blog',
+                        'nav_bar'        : 'true',
                         'macro_blacklist': '',
                        }
         if req.method == 'POST':
@@ -95,8 +96,10 @@ class BlogAdminPlugin(Component):
    name of day that acts as the first day of the week.  Must be full day name.
  '''Mark Updated Posts'''::
    whether or not to mark posts that have been updated with an "Updated on" message.
+ '''Nav Bar Link Name'''::
+   name of the link to show in the nav bar. 
  '''Show Link in Nav Bar'''::
-   whether or not a '''Blog''' link should be shown in the navigation menu bar.
+   whether or not a link should be shown in the navigation menu bar.
  '''Macro Blacklist'''::
    comma separated list of macros to strip from blog output.
 
@@ -124,6 +127,7 @@ class BlogAdminPlugin(Component):
 ||%Z||Time zone name (no characters if no time zone exists).||
 ||%%||A literal "%" character.||
 ||%@||An URL friendly version of the Blog Entry Title||
+||$U||Name of the current user||
 
 """
         return doc

@@ -55,6 +55,12 @@
                 </label>
             </div>
             <div class="field">
+                <label>Nav Bar Link Name:<br/>
+                    <input type="text" name="nav_link" 
+                    value="<?cs var:blogadmin.nav_link ?>" />
+                </label>
+            </div>
+            <div class="field">
                 <label>Show Link in Nav Bar:<br/>
                     <input type="text" name="nav_bar" 
                     value="<?cs var:blogadmin.nav_bar ?>" />

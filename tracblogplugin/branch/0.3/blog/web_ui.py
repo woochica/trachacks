@@ -19,13 +19,14 @@ import time
 import datetime
 import inspect
 import calendar
+import re
 from StringIO import StringIO
 from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_link
 from trac.web.chrome import INavigationContributor 
-from trac.util import Markup, format_date, format_datetime
+from trac.util import Markup, format_date, format_datetime, unicode_urlencode
 from trac.wiki.formatter import Formatter, wiki_to_oneliner
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
@@ -34,20 +35,60 @@ from trac.perm import IPermissionRequestor
 from tractags.api import TagEngine
 from tractags.parseargs import parseargs
 
-BOOLS_TRUE = ['true', 'yes', 'ok', 'on', 'enabled', '1']
+from tBlog.util import bool_val, list_val
 
 __all__ = ['TracBlogPlugin']
 
-def bool_val(val):
-    """Returns whether or not a values represents a boolen value
+blog_params = {
+        'macro_blacklist' : {'req'     : None,
+                             'kwargs'  : None,
+                             'default' : [],
+                             'convert' : list_val, }, 
+        'mark_updated'    : {'default' : True,
+                             'convert' : bool_val, }, 
+        'num_posts'       : {'config'  : None,
+                             'convert' : int, }, 
+        'date_format'     : {'req'     : None,
+                             'kwargs'  : None,
+                             'default' : '%x %X', }, 
+        'read_post'       : {'req'     : None,
+                             'kwargs'  : None,
+                             'default' : '[wiki:%s Read Post]', },
+       }
+
+def get_env_val(key, req=None, kwargs=None, config=None, section=None, 
+                default=None, convert=None):
+    """Return the value for the specified key from the complete environment
+
+    Value retrieval follows the following pattern:
+     * Check the request object and return value if present
+     * Check the kwargs object and return value if present
+     * Check the config file and return value if present
+     * If a default value is specified, return that, else return None
+
+    A conversion function can be specified.  If present, the value will be
+    passed to the conversion function before returning.  If the conversion
+    function raises an error, None will be returned.
 
     """
-    if isinstance(val, bool):
-        return val
-    if isinstance(val, (str, unicode)):
-        return val.strip().lower() in BOOLS_TRUE
-    return None
-
+    val = None
+    if req:
+        val = req.args.getlist(key)
+        if len(val) == 1:
+            val = val[0]
+    if (not val and not isinstance(val, bool)) and kwargs:
+        if kwargs.has_key(key):
+           val = kwargs[key]
+    if (not val and not isinstance(val, bool)) and config and section:
+        val = config.get(section, key)
+    if not val and not isinstance(val, bool):
+        val = default
+    if val and convert:
+        try:
+            val = convert(val)
+        except:
+            val = None
+    return val
 
 class NoFloatFormatter(Formatter):
     """A modified formatter that inserts macro_no_float=1 into the HDF."""
@@ -142,8 +183,10 @@ class TracBlogPlugin(Component):
         nav_bar = bool_val(self.env.config.get('blog', 'nav_bar', True))
         if req.perm.has_permission('BLOG_VIEW') and nav_bar:
             req.hdf['trac.href.blog'] = self.env.href.blog()
-            yield 'mainnav', 'blog', Markup('<a href="%s">Blog</a>',
-                                             self.env.href.blog())
+            lname = get_env_val('nav_link', config=self.env.config,
+                                section='blog', default='Blog')
+            yield 'mainnav', 'blog', Markup('<a href="%s">%s</a>',
+                                             self.env.href.blog(), lname)
 
     # IWikiMacroProvider
     def get_macros(self):
@@ -156,28 +199,14 @@ class TracBlogPlugin(Component):
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
         add_stylesheet(req, 'blog/css/blog.css')
-# Want to factor out the processing of arguments etc.
-        tags, kwargs = self._split_macro_args(content)
-        if not tags:
-            tstr = self.env.config.get('blog', 'default_tag', 'blog')
-            tags = [t.strip() for t in tstr.split(',') if t]
-###
-#        rss_href = ['?format=rss']
-#        add_link(req, 'alternate', t
-        self._generate_blog(req, *tags, **kwargs)
+        tags, kwargs = self._get_params(content=content)
+        rss_href = self.env.href.blog(format='rss', tag=tags, **kwargs)
+        add_link(req, 'alternate', rss_href, 'Blog RSS Feed', 
+                'application/rss+xml', 'rss')
+        self._generate_blog(req, tags, kwargs)
         req.hdf['blog.macro'] = True
         data = req.hdf.render('blog.cs')
         return unicode(req.hdf.render('blog.cs'), 'utf-8')
-
-    def _split_macro_args(self, argv):
-        """Return a list of arguments and a dictionary of keyword arguements
-
-        """
-        args = []
-        kwargs = {}
-        if argv:
-            args, kwargs = parseargs(argv)
-        return args, kwargs
 
     # IRequestHandler
     def match_request(self, req):
@@ -187,19 +216,29 @@ class TracBlogPlugin(Component):
         req.perm.assert_permission('BLOG_VIEW')
         add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
-# Again, want to factor out the processing of arguments, etc.
-        tags = req.args.getlist('tag')
-        kwargs = {}
-        for key in req.args.keys():
-            if key != 'tag':
-                kwargs[key] = req.args[key]
-            continue
-        if not tags:
-            tstr = self.env.config.get('blog', 'default_tag', 'blog')
-            tags = [t.strip() for t in tstr.split(',') if t]
-###
-        self._generate_blog(req, *tags, **kwargs)
+        tags, kwargs = self._get_params(req=req)
+        rss_href = self.env.href.blog(format='rss', tag=tags, **kwargs)
+        add_link(req, 'alternate', rss_href, 'Blog RSS Feed', 
+                'application/rss+xml', 'rss')
+        self._generate_blog(req, tags, kwargs)
         return 'blog.cs', None
+
+    def _get_params(self, req=None, content=None):
+        tags = []
+        kwargs = {}
+        if content:
+            tags, kwargs = parseargs(content)
+        elif req:
+            tags = get_env_val('tag', req)
+            kwargs = {}
+            for key in req.args.keys():
+                if key != 'tag':
+                    kwargs[key] = req.args[key]
+                continue
+        if not tags:
+            tags = get_env_val('default_tag', config=self.env.config,
+                                section='blog', default='blog', convert=list_val)
+        return tags, kwargs
 
     def _get_display_params(self, req, kwargs):
         """ Extract the optional display parameters
@@ -207,24 +246,25 @@ class TracBlogPlugin(Component):
         Return a dictionary with the values and stuff
 
         """
+        global blog_params
+        parms = { 'req'     : req,
+                  'kwargs'  : kwargs,
+                  'config'  : self.env.config,
+                  'section' : 'blog',
+                  'default' : None,
+                  'convert' : None,
+                }
         vals = {}
-
-        mu = self._choose_value('mark_updated', req, kwargs, convert=bool_val)
-        if not mu and (not isinstance(mu, bool)):
-            mu = bool_val(self.env.config.get('blog', 'mark_updated', True))
-        macro_bl = self.env.config.get('blog', 'macro_blacklist', '').split(',')
-        macro_bl = [name.strip() for name in macro_bl if name.strip()]
-        num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
-        time_format = self.env.config.get('blog', 'date_format') or '%x %X'
-
-        vals['read_post'] = "[wiki:%s Read Post]"
-        vals['mark_updated'] = mu
-        vals['macro_blacklist'] = macro_bl
-        vals['num_posts'] = num_posts
-        vals['time_format'] = time_format
+        for k, v in blog_params.items():
+            p = {}
+            p.update(parms)
+            for pk, pv in v.items():
+                p[pk] = pv    
+            vals[k] = get_env_val(k, **p)
+            continue
         return vals
 
-    def _generate_blog(self, req, *args, **kwargs):
+    def _generate_blog(self, req, args, kwargs):
         """Extract the blog pages and fill the HDF.
 
         *args is a list of tags to use to limit the blog scope
@@ -237,7 +277,6 @@ class TracBlogPlugin(Component):
 
         # Formatting
         entries = {}
-                       
         if parms['num_posts'] and default_times:
             poststart = sys.maxint
             postend = 0
@@ -252,7 +291,7 @@ class TracBlogPlugin(Component):
                                                        ).next()
             if poststart >= post_time >= postend:       
                 timeStr = format_datetime(post_time, 
-                                          format=parms['time_format']) 
+                                          format=parms['date_format']) 
                 text = self._trim_page(page.text, blog_entry)
                 pagetags = [x for x in tags.get_name_tags(blog_entry) 
                             if x not in tlist]
@@ -283,7 +322,7 @@ class TracBlogPlugin(Component):
                 if (modified != post_time) and parms['mark_updated']:
                     data['modified'] = 1
                     mod_str = format_datetime(modified, 
-                                              format=parms['time_format'])
+                                              format=parms['date_format'])
                     data['mod_time'] = mod_str
                 entries[post_time] = data
             continue
@@ -523,6 +562,13 @@ class TracBlogPlugin(Component):
         An optional conversion function can be passed.  If present, the value
         will be passed to the conversion function before returning.  If the
         conversion function raises an error, None will be returned
+
+        I need a little more from this.
+
+         * Check req
+         * Check kwargs
+         * Check trac.ini
+         * Use default or return None
 
         """
         val = req.args.get(key, None)

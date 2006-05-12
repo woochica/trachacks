@@ -1,6 +1,4 @@
+from util import *
 from web_ui import *
-try:
-    from admin import *
-except ImportError:
-    pass
+from admin import *
 from new_blog import *
