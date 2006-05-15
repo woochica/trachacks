@@ -39,6 +39,8 @@ You can use stylesheets and docs from other pages, other tickets or other module
 """
 
 import os
+import inspect
+
 from trac.core import Component, implements
 from trac.web.api import RequestDone
 from trac.web.main import IRequestHandler
@@ -237,10 +239,10 @@ class XsltProcessor(Component):
     # IWikiMacroProvider interface
 
     def get_macros(self):
-       yield 'Xslt'
+        yield 'Xslt'
 
     def get_macro_description(self, name):
-        return inspect.getdoc(Xslt)
+        return inspect.getdoc(inspect.getmodule(self))
 
     def render_macro(self, req, name, content):
         return execute(req.hdf, content, self.env)
