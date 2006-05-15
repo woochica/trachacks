@@ -166,7 +166,13 @@ class TracBlogPlugin(Component):
         self._generate_blog(req, *tags, **kwargs)
         req.hdf['blog.macro'] = True
         data = req.hdf.render('blog.cs')
-        return unicode(req.hdf.render('blog.cs'), 'utf-8')
+        return req.hdf.render('blog.cs')
+# Originally this was put in for ticket #306.  [3141] fixed the issue in trac
+# proper, however, I left this in due to a suggestion from cboos
+# http://lists.edgewall.com/archive/trac-dev/2006-April/000397.html
+# However, it looks like 0.9.x can't handle it.  So, we'll see what other 
+# wonderful unicode errors we'll get now :)
+#        return unicode(req.hdf.render('blog.cs'), 'utf-8')
 
     def _split_macro_args(self, argv):
         """Return a list of arguments and a dictionary of keyword arguements
