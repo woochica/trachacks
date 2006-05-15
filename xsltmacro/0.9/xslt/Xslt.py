@@ -39,9 +39,11 @@ You can use stylesheets and docs from other pages, other tickets or other module
 """
 
 import os
-from random import randint
 from trac.core import Component, implements
-from trac.web  import IRequestHandler
+from trac.web.api import RequestDone
+from trac.web.main import IRequestHandler
+from trac.wiki.api import IWikiMacroProvider
+from trac.util import http_date
 
 MY_URL = '/extras/xslt'
 
@@ -60,24 +62,22 @@ def execute(hdf, args, env):
         url = env.href(MY_URL, ss_mod=stylespec[0], ss_id=stylespec[1], ss_fil=stylespec[2],
                        doc_mod=docspec[0], doc_id=docspec[1], doc_fil=docspec[2])
 
-        attrs = { 'style': 'width: 100%; margin: 0pt', 'frameborder': '0', 'scrolling': 'no' }
+        attrs = { 'style': 'width: 100%; margin: 0pt', 'frameborder': '0', 'scrolling': 'auto' }
         attrs.update(dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('if_')]))
-
-        id = "xslt-iframe-" + str(randint(100, 1<<31))
 
         return """
           <script type="text/javascript">
-          function maximizeIframe(obj, id) {
-            iframe = document.getElementById(id)
+          function maximizeIframe(iframe) {
+            iframe.style.scrolling = 'no'
             if (iframe.contentDocument)         // Netscape/Mozilla/Firefox
-                docHeight = iframe.contentDocument.body.scrollHeight + 20
+                docHeight = iframe.contentDocument.body.scrollHeight
             else                                // Exploder
                 docHeight = iframe.document.body.scrollHeight
-            obj.style.height = docHeight + 'px'
+            iframe.style.height    = docHeight + 'px'
           }
           </script>
-          <iframe src="%(src)s" id="%(id)s" onload="maximizeIframe(this, '%(id)s')" %(attrs)s></iframe>
-          """ % { 'id': id, 'src': url, 'attrs': ' '.join([ k + '="' + str(v) + '"' for k,v in attrs.iteritems() ]) }
+          <iframe src="%(src)s" onload="maximizeIframe(this)" %(attrs)s></iframe>
+          """ % { 'src': url, 'attrs': ' '.join([ k + '="' + str(v) + '"' for k,v in attrs.iteritems() ]) }
 
     else:
         page, ct = _transform(_get_path(env, hdf, *stylespec), _get_path(env, hdf, *docspec))
@@ -232,11 +232,23 @@ def _parse_xml(obj):
     raise Exception("unsupported object type '%s'" % type(obj))
 
 class XsltProcessor(Component):
-    implements(IRequestHandler)
+    implements(IWikiMacroProvider, IRequestHandler)
+
+    # IWikiMacroProvider interface
+
+    def get_macros(self):
+       yield 'Xslt'
+
+    def get_macro_description(self, name):
+        return inspect.getdoc(Xslt)
+
+    def render_macro(self, req, name, content):
+        return execute(req.hdf, content, self.env)
+
+    # IRequestHandler interface
 
     def match_request(self, req):
-        match = re.match('^' + MY_URL +'$', req.path_info)
-        if match: return 1
+        return req.path_info == MY_URL
 
     def process_request(self, req):
         stylespec = (req.args.get('ss_mod'), req.args.get('ss_id'), req.args.get('ss_fil'))
@@ -255,12 +267,20 @@ class XsltProcessor(Component):
             lastmod = stat.st_mtime
 
         req.check_modified(lastmod)
+        if not req.get_header('If-None-Match'):
+            if http_date(lastmod) == req.get_header('If-Modified-Since'):
+                req.send_response(304)
+                req.end_headers()
+                raise RequestDone
+        req._headers.append(('Last-Modified', http_date(lastmod)))
 
         page, content_type = _transform(stylepath, docpath)
 
         req.send_response(200)
         req.send_header('Content-Type', content_type + ';charset=utf-8')
         req.send_header('Content-Length', len(page))
+        for name, value in req._headers:
+            req.send_header(name, value)
         req._send_cookie_headers()
         req.end_headers()
 
