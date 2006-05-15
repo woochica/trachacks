@@ -1,7 +1,7 @@
 Index: trac/wiki/api.py
 ===================================================================
 --- trac/wiki/api.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/wiki/api.py	(.../branches/wikiflowpatch/0.9)	(working copy)
++++ trac/wiki/api.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
 @@ -65,16 +65,35 @@
   
      def get_link_resolvers():
@@ -54,7 +54,7 @@ Index: trac/wiki/api.py
 Index: trac/wiki/web_ui.py
 ===================================================================
 --- trac/wiki/web_ui.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/wiki/web_ui.py	(.../branches/wikiflowpatch/0.9)	(working copy)
++++ trac/wiki/web_ui.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
 @@ -30,6 +30,7 @@
  from trac.versioncontrol.diff import get_diff_options, hdf_diff
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -171,7 +171,7 @@ Index: trac/wiki/web_ui.py
 Index: trac/wiki/model.py
 ===================================================================
 --- trac/wiki/model.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/wiki/model.py	(.../branches/wikiflowpatch/0.9)	(working copy)
++++ trac/wiki/model.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
 @@ -20,17 +20,17 @@
  import time
  
@@ -298,10 +298,63 @@ Index: trac/wiki/model.py
 +            count = 0
 +        return count
 +
+Index: trac/web/api.py
+===================================================================
+--- trac/web/api.py	(.../vendor/trac-0.9.4)	(revision 25)
++++ trac/web/api.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
+@@ -240,7 +240,16 @@
+         simply send the response itself and not return anything.
+         """
+ 
++class IRequestPostProcessor(Interface):
++    """Extension point interface for request post-processors.
++    Provides a clean way to override rendering behavior of existing
++    components."""
+ 
++    def process(req, template, content_type):
++        """Do any post-processing the request might need; typically
++        adding values to req.hdf, or changing template or mime type.
++        Always returns template and content type, even if unchanged."""
++
+ def absolute_url(req, path=None):
+     """Reconstruct the absolute URL of the given request.
+     
+Index: trac/web/main.py
+===================================================================
+--- trac/web/main.py	(.../vendor/trac-0.9.4)	(revision 25)
++++ trac/web/main.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
+@@ -23,7 +23,7 @@
+ from trac.perm import PermissionCache, PermissionError
+ from trac.util import escape, enum, format_datetime, http_date, to_utf8, Markup
+ from trac.web.api import absolute_url, Request, RequestDone, IAuthenticator, \
+-                         IRequestHandler
++                         IRequestHandler, IRequestPostProcessor
+ from trac.web.chrome import Chrome
+ from trac.web.clearsilver import HDFWrapper
+ from trac.web.href import Href
+@@ -60,6 +60,7 @@
+ 
+     authenticators = ExtensionPoint(IAuthenticator)
+     handlers = ExtensionPoint(IRequestHandler)
++    post_processors = ExtensionPoint(IRequestPostProcessor)
+ 
+     def authenticate(self, req):
+         for authenticator in self.authenticators:
+@@ -110,6 +111,10 @@
+                 if not content_type:
+                     content_type = 'text/html'
+ 
++                for processor in self.post_processors:
++                    template, content_type = processor.process(
++                            req, template, content_type)
++
+                 req.display(template, content_type or 'text/html')
+         finally:
+             # Give the session a chance to persist changes
 Index: templates/wiki.cs
 ===================================================================
 --- templates/wiki.cs	(.../vendor/trac-0.9.4)	(revision 25)
-+++ templates/wiki.cs	(.../branches/wikiflowpatch/0.9)	(working copy)
++++ templates/wiki.cs	(.../branches/wikiflowpatch/0.9.4)	(working copy)
 @@ -289,6 +289,9 @@
      if:trac.acl.WIKI_MODIFY ?>
       <form method="get" action="<?cs var:wiki.current_href ?>"><div>
