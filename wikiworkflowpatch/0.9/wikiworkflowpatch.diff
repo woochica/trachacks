@@ -1,7 +1,7 @@
 Index: trac/wiki/api.py
 ===================================================================
 --- trac/wiki/api.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/wiki/api.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
++++ trac/wiki/api.py	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -65,16 +65,35 @@
   
      def get_link_resolvers():
@@ -54,7 +54,7 @@ Index: trac/wiki/api.py
 Index: trac/wiki/web_ui.py
 ===================================================================
 --- trac/wiki/web_ui.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/wiki/web_ui.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
++++ trac/wiki/web_ui.py	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -30,6 +30,7 @@
  from trac.versioncontrol.diff import get_diff_options, hdf_diff
  from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -135,21 +135,21 @@ Index: trac/wiki/web_ui.py
          db.commit()
  
          if not page.exists:
-@@ -183,9 +203,11 @@
+@@ -183,9 +203,12 @@
              # WIKI_ADMIN
              page.readonly = int(req.args.has_key('readonly'))
  
-+        # definitely need to pass db in here, so that change listeners
-+        # can cause rollback 
++        # XXX definitely should pass db in here, so that change listeners
++        # can cause rollback in case they blow up; can't do that unless 
++        # we later do a db.commit() somewhere though
          page.save(req.args.get('author'), req.args.get('comment'),
--                  req.remote_addr)
+                   req.remote_addr)
 -        req.redirect(self.env.href.wiki(page.name))
-+                  req.remote_addr, db=db)
 +        req.redirect(self.env.href.wiki(page.name, version=page.version))
  
      def _render_confirm(self, req, db, page):
          if page.readonly:
-@@ -312,7 +334,7 @@
+@@ -312,7 +335,7 @@
              info['readonly'] = int(req.args.has_key('readonly'))
          req.hdf['wiki'] = info
  
@@ -158,7 +158,7 @@ Index: trac/wiki/web_ui.py
          """Extract the complete history for a given page and stores it in the
          HDF.
  
-@@ -327,7 +349,8 @@
+@@ -327,7 +350,8 @@
          req.hdf['title'] = page.name + ' (history)'
  
          history = []
@@ -171,7 +171,7 @@ Index: trac/wiki/web_ui.py
 Index: trac/wiki/model.py
 ===================================================================
 --- trac/wiki/model.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/wiki/model.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
++++ trac/wiki/model.py	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -20,17 +20,17 @@
  import time
  
@@ -301,7 +301,7 @@ Index: trac/wiki/model.py
 Index: trac/web/api.py
 ===================================================================
 --- trac/web/api.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/web/api.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
++++ trac/web/api.py	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -240,7 +240,16 @@
          simply send the response itself and not return anything.
          """
@@ -322,7 +322,7 @@ Index: trac/web/api.py
 Index: trac/web/main.py
 ===================================================================
 --- trac/web/main.py	(.../vendor/trac-0.9.4)	(revision 25)
-+++ trac/web/main.py	(.../branches/wikiflowpatch/0.9.4)	(working copy)
++++ trac/web/main.py	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -23,7 +23,7 @@
  from trac.perm import PermissionCache, PermissionError
  from trac.util import escape, enum, format_datetime, http_date, to_utf8, Markup
@@ -354,7 +354,7 @@ Index: trac/web/main.py
 Index: templates/wiki.cs
 ===================================================================
 --- templates/wiki.cs	(.../vendor/trac-0.9.4)	(revision 25)
-+++ templates/wiki.cs	(.../branches/wikiflowpatch/0.9.4)	(working copy)
++++ templates/wiki.cs	(.../branches/wikiflowpatch/0.9)	(working copy)
 @@ -289,6 +289,9 @@
      if:trac.acl.WIKI_MODIFY ?>
       <form method="get" action="<?cs var:wiki.current_href ?>"><div>
