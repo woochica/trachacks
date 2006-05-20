@@ -1,1 +1,1 @@
-from discussion import init, core, wiki, console
+from tracdiscussion import *

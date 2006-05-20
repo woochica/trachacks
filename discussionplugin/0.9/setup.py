@@ -1,20 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf8 -*-
+
 from setuptools import setup
 
 setup(
-    name = 'TracDiscussion',
-    version = '0.1',
-    packages = [ 'tracdiscussion' ],
-    package_data = {
-        'tracdiscussion' : [
-            'templates/*.cs',
-            'htdocs/css/*.css'
-        ]
-    },
-    author = 'Alec Thomas',
-    author_email = 'trac-hacks@swapoff.org',
-    url = 'http://trac-hacks.swapoff.org/wiki/DiscussionPlugin',
-    description = 'Discussion forum plugin for Trac',
-    license = '''
+  name = 'TracDiscussion',
+  version = '0.2',
+  packages = ['tracdiscussion'],
+  package_data = {'tracdiscussion' : ['templates/*.cs', 'htdocs/css/*.css']},
+  entry_points = {'trac.plugins': ['TracDiscussion.core = tracdiscussion.core',
+    'TracDiscussion.init = tracdiscussion.init',
+    'TracDiscussion.wiki = tracdiscussion.wiki']},
+  keywords = 'trac discussion',
+  author = 'Alec Thomas, Radek Bartoň',
+  author_email = 'trac-hacks@swapoff.org',
+  url = 'http://trac-hacks.swapoff.org/wiki/DiscussionPlugin',
+  description = 'Discussion forum plugin for Trac',
+  license = '''
 Copyright (c) 2005, Alec Thomas
 All rights reserved.
 

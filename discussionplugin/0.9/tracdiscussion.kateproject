@@ -1,0 +1,19 @@
+[Dir tracdiscussion]
+Dirs=htdocs/templates
+Files=core.py/db.py/init.py/__init__.py/wiki.py
+
+[Dir tracdiscussion/htdocs]
+Dirs=css
+Files=
+
+[Dir tracdiscussion/htdocs/css]
+Dirs=
+Files=discussion.css
+
+[Dir tracdiscussion/templates]
+Dirs=
+Files=discussion-footer.cs/discussion-header.cs/forum-list.cs/message-list.cs/topic-list.cs/forum-add.cs/topic-add.cs
+
+[Project Dir]
+Dirs=tracdiscussion
+Files=setup.py

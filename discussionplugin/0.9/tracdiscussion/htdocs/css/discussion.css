@@ -138,5 +138,10 @@ div.topic-list .description {
 .message-list .topic .replies div.body {
 	margin: 0;
 	padding: 1em;
-	background: rgb(246, 246, 246);
+	background-color: #ddd;
+}
+
+.message-list .topic .replies .preview div.body
+{
+	border: 1px dashed #b00;
 }
