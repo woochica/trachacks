@@ -13,7 +13,6 @@
 #
 
 import re
-import sys
 import time
 from revtree.repproxy import RepositoryProxy
 
@@ -104,7 +103,7 @@ class Changeset(object):
         elif action in ['brings', 'delivers', 'renames']:
             pass
         else:
-            raise ValueError, "unsupported message: %s" % self.log
+            pass
         self.branchname = proxy.find_revision_branch(revision, topdir)
         self.time = proxy.convert_date(self.date)
 

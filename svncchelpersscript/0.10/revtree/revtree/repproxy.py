@@ -12,10 +12,9 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 
-import sys
-
 from libsvn import fs, repos, core
 from libsvn._core import SubversionException
+
 
 class RepositoryProxy(object):
     """ Proxy for the Subversion repository """
@@ -84,7 +83,8 @@ class RepositoryProxy(object):
         chgpaths = fs.svn_fs_paths_changed(root, self.pool)
         for chgpath in chgpaths:
             (srcrev, srcpath) = fs.svn_fs_copied_from(root, chgpath, self.pool)
-            print >>sys.stderr, "chgpath: %s -> %s @ %d" % (chgpath, srcpath, srcrev)
+            # print >>sys.stderr, "chgpath: %s -> %s @ %d" % \
+            # (chgpath, srcpath, srcrev)
             if srcrev > 0 and srcpath is not None:
                 return (srcrev, srcpath)
         return None

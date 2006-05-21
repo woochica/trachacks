@@ -28,7 +28,8 @@ from revtree.model import Repository
 from revtree.view  import RepositoryWidget
 from revtree.repproxy import RepositoryProxy
 
-class RevisionTree(object):
+
+class RevTreeStore(object):
     """ """
     def __init__(self, env, user, eldest, youngest):
         """ Initialize the instance with default values """
@@ -51,7 +52,7 @@ class RevisionTree(object):
     def get_fields(self):
         """ Returns the sequence of supported fields """
         return [ 'revmin', 'revmax', 'period', 'branch', 'author',
-                 'limits', 'btup', 'nocache' ]
+                 'limits', 'btup' ]
         
     def load(self, session):
         for field in self.fields:
@@ -144,7 +145,8 @@ class RevisionTreeModule(Component):
         repos = Repository(self.proxy)
         repos.build(self.topdir, self.propdomain, self.eldest)
 
-        revtree = RevisionTree(self.env, req.authname, self.eldest, self.youngest)
+        revtree = RevTreeStore(self.env, req.authname, self.eldest, 
+                               self.youngest)
         revtree.load(req.session)
         revtree.populate(req.args)
         revtree.compute_range(repos)
@@ -158,7 +160,8 @@ class RevisionTreeModule(Component):
         for field in revtree.fields:
             req.hdf['revtree.' + field] = revtree[field]
 
-        (content, properties) = self._render_graph(req, repos, revtree)
+        (content, properties) = self._render_graph(req, repos, revtree, \
+                                                   req.args.has_key('nocache'))
         # queries the repository for branches and authors if it has 
         # a newer revision than the one in the revtree
         if properties['revisions'][0] < self.youngest:
@@ -261,13 +264,13 @@ class RevisionTreeModule(Component):
             revisions.append(str(revmin))
         return revisions
 
-    def _render_graph(self, req, repos, revtree):
+    def _render_graph(self, req, repos, revtree, rebuild):
         """ Renders revtree graph (tests cache status and generates if not found)"""
         cache_file = self._get_cache_name(revtree)
         create = True
         headers = ['revisions', 'branches', 'authors', 'image' ]
         props = {}
-        if not revtree['nocache'] and os.path.exists(cache_file):
+        if not rebuild and os.path.exists(cache_file):
             try:
                 cache = open(cache_file, 'r')
                 if not cache:
@@ -374,12 +377,13 @@ class RevisionTreeModule(Component):
         gviz = repwdgt.render(revtree['btup'] != '0')
         macro = 'graphviz.%s' % self.image_engine
         wiki = WikiSystem(self.env)
+        content = None
         for macro_provider in wiki.macro_providers:
             if macro in list(macro_provider.get_macros()):
                 content = macro_provider.render_macro(req, macro, gviz)
                 break
         if not content:
-            raise TracError, "GraphViz processor not found"
+            raise TracError, "GraphViz (%s) processor not found" % macro
         revrange = repos.revision_range()
         return (content, revrange, brnames, authors)
 

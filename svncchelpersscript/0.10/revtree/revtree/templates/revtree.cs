@@ -80,7 +80,7 @@
    </div>
   </fieldset>
   <div class="buttons">
-   <input type="submit" name="update" value="Update"/>
+   <input type="submit" value="Update"/>
    <input type="submit" name="nocache" value="Rebuild"/>
   </div>
  </div>
