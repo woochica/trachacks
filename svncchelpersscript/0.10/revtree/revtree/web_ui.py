@@ -330,7 +330,7 @@ class RevisionTreeModule(Component):
 
     def _generate_graph(self, req, repos, revtree): 
         """ Generates the revtree image """
-        static_branches = ('/trunk', )
+        trunks = self.env.config.get('revtree', 'trunks', '/trunk').split(' ')
         revs = [c for c in repos.changesets()]
         revs.reverse()
         revisions = []
@@ -344,7 +344,7 @@ class RevisionTreeModule(Component):
             revisions.append(rev)
         if revisions[-1] != str(revtree.revspan[0]):
             revisions.append(str(revtree.revspan[0]))
-        brnames = [bn for bn in repos.branches().keys() if bn not in static_branches ]
+        brnames = [bn for bn in repos.branches().keys() if bn not in trunks]
         brnames.sort()
         branches = []
         authors = repos.authors()
@@ -369,7 +369,7 @@ class RevisionTreeModule(Component):
                 continue
             branches.append(b)
         if brfilter or authfilter:
-            gvizbranches = list(static_branches)
+            gvizbranches = trunks
             gvizbranches.extend(branches)
         self.env.log.debug("gvizbranches: %s" % gvizbranches)
         repwdgt = RepositoryWidget(self.env, repos, req.base_url)

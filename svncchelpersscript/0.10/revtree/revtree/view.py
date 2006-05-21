@@ -35,7 +35,10 @@ class ChangesetWidget(object):
             self._opwidget = OperationWidget(self.env, tuple(refs), changeset)
         # kludge as there's no copy info in text file (to be removed in final v.)
         elif changeset.operation == Changeset.CREATE:
-            changesets = self._grapher.repository().branch('/trunk').changesets()
+            changesets = []
+            for trunk in grapher.trunks:
+                chgs = self._grapher.repository().branch(trunk).changesets()
+                changesets.extend(chgs)
             revs = [chg.revision for chg in changesets]
             revs.sort()
             revs.reverse()
@@ -133,9 +136,9 @@ class BranchWidget(object):
         self.transcolor = self.env.config.get('revtree', 'transcolor', \
                                               '#7f7f7f')
         # Background color
-        if branch.name() == '/trunk':
+        if branch.name() in grapher.trunks:
             self._backcolor = self.env.config.get('revtree', 'trunkcolor', \
-                                              '#cfcfcf')
+                                                  '#cfcfcf')
         else:
             self._backcolor = self._randcolor()
 
@@ -308,6 +311,9 @@ class RepositoryWidget(object):
         self._changeset_widgets = {}
         # Revisions range
         self._revrange = None
+        # Trunk branches
+        trunks = self.env.config.get('revtree', 'trunks', '/trunk')
+        self.trunks = trunks.split(' ')
         # Init color generator with a predefined value
         seed(0)
 
