@@ -3,10 +3,10 @@
 <?cs def:display_preview() ?>
   <li class="preview">
     <div class="body">
-      <?cs var:args.body ?>
+      <?cs var:discussion.body ?>
     </div>
     <div class="author">
-      <?cs var:args.author ?>
+      <?cs var:discussion.author ?>
     </div>
   </li>
 <?cs /def ?>

@@ -4,7 +4,7 @@ from trac.web.main import IRequestHandler
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.Timeline import ITimelineEventProvider
 from trac.perm import IPermissionRequestor
-from trac.util import Markup
+from trac.util import Markup, format_datetime
 import re, os, time
 
 class DiscussionCore(Component):
@@ -164,6 +164,10 @@ class DiscussionCore(Component):
               req)
         elif mode == 'topic-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
+            req.hdf['discussion.author'] = wiki_to_oneliner(req.args.get(
+              'body'), self.env)
+            req.hdf['discussion.body'] = wiki_to_html(req.args.get('body'),
+              self.env, req)
         elif mode == 'topic-post-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
@@ -191,9 +195,13 @@ class DiscussionCore(Component):
                     self.add_message(cursor, forum['id'], topic['id'], reply,
                       author, body)
 
-                    req.args['preview'] = None
             # Display messages
-            req.hdf['discussion.messages'] = self.get_messages(cursor, topic['id'], req)
+            req.hdf['discussion.body'] = wiki_to_html(req.args.get('body'),
+              self.env, req)
+            req.hdf['discussion.author'] = wiki_to_oneliner(req.args.get(
+              'author'), self.env)
+            req.hdf['discussion.messages'] = self.get_messages(cursor,
+              topic['id'], req)
 
         req.hdf['discussion.forum'] = forum
         req.hdf['discussion.topic'] = topic
@@ -209,6 +217,7 @@ class DiscussionCore(Component):
           'FROM message WHERE id=%s', [id])
         for row in cursor:
             row = dict(zip(columns, row))
+            row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, req)
             return row
         return None
@@ -219,6 +228,7 @@ class DiscussionCore(Component):
           ' topic WHERE id=%s', [id])
         for row in cursor:
             row = dict(zip(columns, row))
+            row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, req)
             return row
         return None
@@ -230,7 +240,7 @@ class DiscussionCore(Component):
         for row in cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
-            row['description'] = wiki_to_html(row['description'], self.env, req)
+            row['description'] = wiki_to_oneliner(row['description'], self.env)
             return row
         return None
 
@@ -244,8 +254,9 @@ class DiscussionCore(Component):
         forums = []
         for row in cursor:
             row = dict(zip(columns, row))
-            row['moderators'] = row['moderators'].split(' ')
-            row['description'] = wiki_to_html(row['description'], self.env, req)
+            row['moderators'] = wiki_to_oneliner(row['moderators'], self.env)
+            row['description'] = wiki_to_oneliner(row['description'], self.env)
+            row['time'] = format_datetime(row['time'])
             forums.append(row)
         return forums
 
@@ -257,7 +268,9 @@ class DiscussionCore(Component):
         topics = []
         for row in cursor:
             row = dict(zip(columns, row))
+            row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, req)
+            row['time'] = format_datetime(row['time'])
             topics.append(row)
         return topics
 
@@ -269,13 +282,14 @@ class DiscussionCore(Component):
         messagemap = {}
         messages = []
 
-        for message in cursor:
-            message = dict(zip(columns, message))
-            message['body'] = wiki_to_html(message['body'], self.env, req)
-            messagemap[message['id']] = message
+        for row in cursor:
+            row = dict(zip(columns, row))
+            row['author'] = wiki_to_oneliner(row['author'], self.env)
+            row['body'] = wiki_to_html(row['body'], self.env, req)
+            messagemap[row['id']] = row
             # Add top-level messages to the main list, in order of time
-            if message['replyto'] == -1:
-                messages.append(message)
+            if row['replyto'] == -1:
+                messages.append(row)
 
         # Second pass, add replies
         for message in messagemap.values():
@@ -306,5 +320,5 @@ class DiscussionCore(Component):
 
     def add_message(self, cursor, forum, topic, replyto, author, body):
          cursor.execute('INSERT INTO message (forum, topic, replyto, time,'
-          ' author, body) VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' % (forum, topic,
-          replyto, str(int(time.time())), author, body))
+          ' author, body) VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' % (
+            forum, topic, replyto, str(int(time.time())), author, body))

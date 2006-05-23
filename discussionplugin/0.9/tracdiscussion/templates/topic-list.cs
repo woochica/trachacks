@@ -6,31 +6,49 @@
 <div class="forum-description">
   <?cs var:discussion.forum.description ?>
 </div>
-  <table>
-    <tr>
-      <th class="subject">Subject</th>
-      <th class="author">Author</th>
-      <th class="messages">Replies</th>
-    </tr>
-    <?cs each:topic = discussion.topics ?>
+  <table class="listing">
+    <thead>
       <tr>
-        <td class="subject">
-          <a class="subject" href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:topic.id ?>">
-            <?cs var:topic.subject ?>
-          </a>
-        </td>
-        <td class="author">
-          <a class="author" href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:topic.id ?>">
-            <?cs var:topic.author ?>
-          </a>
-        </td>
-        <td class="messages">
-          <a class="messages" href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:topic.id ?>">
-            <?cs var:topic.replies ?>
-          </a>
-        </td>
+        <th class="subject">Subject</th>
+        <th class="author">Author</th>
+        <th class="founded">Founded</th>
+        <th class="replies">Replies</th>
       </tr>
-    <?cs /each ?>
+    </thead>
+    </tbody>
+      <?cs each:topic = discussion.topics ?>
+        <tr class="<?cs if:name(topic) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
+          <td class="subject">
+            <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:topic.id ?>">
+              <div class="subject">
+                <?cs var:topic.subject ?>
+              </div>
+            </a>
+          </td>
+          <td class="author">
+            <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:topic.id ?>">
+              <div class="author" >
+                <?cs var:topic.author ?>
+              </div>
+            </a>
+          </td>
+          <td class="founded">
+            <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:topic.id ?>">
+              <div class="founded" >
+                <?cs var:topic.time ?>
+              </div>
+            </a>
+          </td>
+          <td class="replies">
+            <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:topic.id ?>">
+              <div class="replies" >
+                <?cs var:topic.replies ?>
+              </div>
+            </a>
+          </td>
+        </tr>
+      <?cs /each ?>
+    </tbody>
   </table>
 
   <form method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>">

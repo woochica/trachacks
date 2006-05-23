@@ -1,147 +1,119 @@
-.discussion table {
-	margin: 1em 2em 1em 2em;
-	width: 80%;
-	text-align: left;
-	border: solid 1px #aaa;
+/* Discussion list */
+.discussion table
+{
+  text-align: left;
 }
 
-.discussion tr {
-	border: solid 1px #ddd;
+.discussion tr, .discussion td, .discussion td > a > div
+{
+  padding: 0em !important;
+  margin: 0em !important;
 }
 
-.discussion th {
-	font-weight: bold;
-	background-color: #ddd;
-	padding: 0.2em;
+.discussion a.cell
+{
+  display: block;
+  margin: 0em !important;
+  padding: 0.5em;
+  border: none;
 }
 
-.discussion th.topics, th.messages, th.author, th.time { width: 5%; }
-.discussion td.topics, td.messages { text-align: right; }
-
-.discussion td div.subject {
-	font-weight: bold;
-}
-
-div.discussion div.topic-list a:hover {
-	background-color: #ccc;
-	color: black;
-}
-
-.discussion tr:hover {
-	background-color: #ccc;
-	color: black;
-}
-
-/* Forum list */
-div.forum-list {
-}
-
-.discussion .forum-list table a div.subject, div.description, div.author, div.messages, div.topics {
-	display: block;
-	padding: 0.25em;
-	color: black;
-	background-color: transparent;
-	border: none;
-}
-
-div.discussion div.forum-list div.description {
-	margin: 0 0 0 4em;
-	padding: 0em;
-	width: 80%;
-}
-
-div.discussion div.forum-list div.description p {
-	margin: 0.5em 0 0.5em 0;
-}
-
-/* Topic list */
-.discussion .topic-list table a.subject, a.description, a.author, a.messages, a.topics {
-	display: block;
-	padding: 0.25em;
-	color: black;
-	background-color: transparent;
-	border: none;
-}
-
-div.topic-list .description {
-	margin: 1em 1em 1em 4em;
-	width: 80%;
+.discussion td.moderators, .discussion td.lastreply, .discussion td.founded,
+.discussion td.topics, .discussion td.replies, .discussion td.author
+{
+  height: 100%;
+  text-align: center;
+  vertical-align: middle;
 }
 
 /* Message list */
-
-.message-list div.topic {
-	margin: 2em;
+.message-list div.topic
+{
+  margin: 2em;
 }
 
-.message-list .topic div.header {
-	border: 1px solid #ccc;
+.message-list .topic div.header
+{
+  border: 1px solid #d7d7d7;
 }
 
-.message-list .topic div.subject {
-	font-weight: bold;
-	margin: 0;
-	padding: 0.25em 1em 0.25em 1em;
-	background-color: #ddd;
+.message-list .topic div.subject
+{
+  font-weight: bold;
+  margin: 0em;
+  padding: 0.25em 1em 0.25em 1em;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #d7d7d7;
 }
 
-.message-list .topic .header div.author {
-	font-weight: bold;
-	margin: 1em;
+.message-list .topic .header div.author
+{
+  font-weight: bold;
+  margin: 1em;
 }
 
-.message-list .header div.body {
-	margin: 1em;
+.message-list .header div.body
+{
+  margin: 1em;
 }
 
 /* Message list reply tree */
-.message-list .replies div.body {
-	margin: 0.2em;
+.message-list .replies div.body
+{
+  margin: 0.2em;
 }
 
-.message-list div.replies {
-	display: block;
-	margin: 0px;
-	padding: 0.25em;
-	border-right: 1px solid #ccc;
-	border-left: 1px solid #ccc;
-	border-bottom: 1px solid #ccc;
+.message-list div.replies
+{
+  display: block;
+  margin: 0px;
+  padding: 0.25em;
+  border-right: 1px solid #d7d7d7;
+  border-left: 1px solid #d7d7d7;
+  border-bottom: 1px solid #d7d7d7;
 }
 
-.message-list .replies ul {
-	list-style: none;
-	padding: 0em 0em 0em 2em;
+.message-list .replies ul
+{
+  list-style: none;
+  padding: 0em 0em 0em 2em;
 }
 
-.message-list .replies li {
-	margin: 0.25em;
-	padding: 0.25em;
+.message-list .replies li
+{
+  margin: 0.25em;
+  padding: 0.25em;
 }
 
-.message-list .replies li.reply {
-	margin: 1em;
-	background-color: transparent;
+.message-list .replies li.reply
+{
+  margin: 1em;
+  background-color: transparent;
 }
 
-.message-list div.controls {
-	float: right;
-	margin: 0em;
-	padding: 0em 1em 0em 1em;
+.message-list div.controls
+{
+  float: right;
+  margin: 0em;
+  padding: 0em 1em 0em 1em;
 }
 
-.message-list div.author {
-	font-weight: bold;
-	margin: 0;
-	padding: 0em 1em 0em 1em;
+.message-list div.author
+{
+  font-weight: bold;
+  margin: 0em;
+  padding: 0em 1em 0em 1em;
 }
 
-.message-list .topic .replies div.body {
-	margin: 0;
-	padding: 1em;
-	background-color: #ddd;
+.message-list .topic .replies div.body
+{
+  margin: 0em;
+  padding: 0em 1em;
+  border: 1px solid #d7d7d7;
+  background-color: #f7f7f7;
 }
 
 .message-list .topic .replies .preview div.body
 {
-	border: 1px dashed #b00;
+  border: 1px dashed #b00;
 }
