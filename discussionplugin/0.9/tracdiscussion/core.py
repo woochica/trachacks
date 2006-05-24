@@ -164,10 +164,15 @@ class DiscussionCore(Component):
               req)
         elif mode == 'topic-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
-            req.hdf['discussion.author'] = wiki_to_oneliner(req.args.get(
-              'body'), self.env)
-            req.hdf['discussion.body'] = wiki_to_html(req.args.get('body'),
-              self.env, req)
+
+            # Get from values
+            author = req.args.get('author')
+            body = req.args.get('body')
+
+            if author:
+                req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
+            if body:
+                req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
         elif mode == 'topic-post-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
@@ -185,21 +190,22 @@ class DiscussionCore(Component):
         # Message related stuff
         elif mode == 'message-list':
             req.perm.assert_permission('DISCUSSION_VIEW')
+
+            # Get form values
+            author = req.args.get('author')
+            body = req.args.get('body')
+
             if action == 'post-add':
                 # Submit change?
                 if submit:
-                    # Get form values
-                    author = req.args.get('author')
-                    body = req.args.get('body')
-
                     self.add_message(cursor, forum['id'], topic['id'], reply,
                       author, body)
 
             # Display messages
-            req.hdf['discussion.body'] = wiki_to_html(req.args.get('body'),
-              self.env, req)
-            req.hdf['discussion.author'] = wiki_to_oneliner(req.args.get(
-              'author'), self.env)
+            if author:
+                req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
+            if body:
+                req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
             req.hdf['discussion.messages'] = self.get_messages(cursor,
               topic['id'], req)
 
