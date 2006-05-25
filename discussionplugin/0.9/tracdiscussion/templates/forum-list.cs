@@ -15,48 +15,44 @@
   <tbody>
     <?cs each:forum = discussion.forums ?>
       <tr class="<?cs if:name(forum) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
-        <td class="subject">
-          <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
-            <div class="subject">
-              <?cs var:forum.subject ?>
-            </div>
-            <div class="description">
-              <?cs var:forum.description ?>
-            </div>
+        <td class="title">
+          <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
+            <div class="subject"><?cs var:forum.subject ?></div>
+            <div class="description"><?cs var:forum.description ?></div>
           </a>
         </td>
         <td class="moderators">
-          <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
-            <div class="moderators">
-              <?cs var:forum.moderators ?>
+          <a class="table" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
+            <div class="row">
+              <div class="cell"><?cs var:forum.moderators ?></div>
             </div>
           </a>
         </td>
         <td class="lastreply">
-          <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
-            <div class="lastreply">
-              Not implemented
+          <a class="table" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
+            <div class="row">
+              <div class="cell">Not implemented</div>
             </div>
           </a>
         </td>
         <td class="founded">
-          <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
-            <div class="founded">
-              <?cs var:forum.time ?>
+          <a class="table" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
+            <div class="row">
+              <div class="cell"><?cs var:forum.time ?></div>
             </div>
           </a>
         </td>
         <td class="topics">
-          <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
-            <div class="topics">
-              <?cs var:forum.topics ?>
+          <a class="table" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
+            <div class="row">
+              <div class="cell"><?cs var:forum.topics ?></div>
             </div>
           </a>
         </td>
         <td class="replies">
-          <a class="cell" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
-            <div class="replies">
-              <?cs var:forum.replies ?>
+          <a class="table" href="<?cs var:trac.href.discussion ?>/<?cs var:forum.name ?>">
+            <div class="row">
+              <div class="cell"><?cs var:forum.replies ?></div>
             </div>
           </a>
         </td>

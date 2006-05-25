@@ -45,13 +45,16 @@
         <?cs var:message.body ?>
       </div>
       <div class="controls">
-        <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:discussion.topic.id ?>?reply=<?cs var:message.id ?>">Reply</a>
+        <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:discussion.topic.id ?>?action=add;reply=<?cs var:message.id ?>">Reply</a>
+        <?cs if:trac.acl.DISCUSSION_MODERATE ?>
+          <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:discussion.topic.id ?>?action=delete;reply=<?cs var:message.id ?>">Delete</a>
+        <?cs /if ?>
       </div>
       <div class="author">
         <?cs var:message.author ?>
       </div>
     </li>
-    <?cs if:discussion.messages.0.body || args.reply ?>
+    <?cs if:discussion.messages.0.body || (args.action == "add") ?>
       <ul>
         <?cs call:display_topic(message.replies) ?>
         <?cs if:args.preview && args.reply == message.id ?>
@@ -77,13 +80,13 @@
       <?cs var:discussion.topic.body ?>
     </div>
     <div class="controls">
-      <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:discussion.topic.id ?>?reply=-1">Reply</a>
+      <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:discussion.topic.id ?>?action=add;reply=-1">Reply</a>
     </div>
     <div class="author">
       <?cs var:discussion.topic.author ?>
     </div>
   </div>
-  <?cs if:discussion.messages.0.body || args.reply ?>
+  <?cs if:discussion.messages.0.body || (args.action == "add") ?>
     <div class="replies">
       <ul>
         <?cs call:display_topic(discussion.messages) ?>
@@ -97,5 +100,15 @@
     </div>
   <?cs /if ?>
 </div>
+
+<?cs if:trac.acl.DISCUSSION_MODERATE ?>
+  <form method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:discussion.topic.id ?>">
+    <div class="buttons">
+      <input type="submit" name="deletetopic" value="Delete Topic"/>
+    </div>
+    <input type="hidden" name="action" value="delete"/>
+    <input type="hidden" name="reply" value="-1">
+  </form>
+<?cs /if ?>
 
 <?cs include "discussion-footer.cs" ?>

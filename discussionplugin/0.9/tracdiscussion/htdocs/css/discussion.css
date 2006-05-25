@@ -1,29 +1,57 @@
-/* Discussion list */
+/* General styles */
 .discussion table
 {
   text-align: left;
 }
 
-.discussion tr, .discussion td, .discussion td > a > div
+/* Forum list */
+.forum-list td
 {
-  padding: 0em !important;
   margin: 0em !important;
+  padding: 0em !important;
+  height: 100%;
 }
 
-.discussion a.cell
+.forum-list .subject, .forum-list .description
 {
-  display: block;
-  margin: 0em !important;
-  padding: 0.5em;
+  margin: 0.5em;
+}
+
+.forum-list .table
+{
+  display: table;
+  height: 100%;
+  width: 100%;
   border: none;
 }
 
-.discussion td.moderators, .discussion td.lastreply, .discussion td.founded,
-.discussion td.topics, .discussion td.replies, .discussion td.author
+.forum-list .row
 {
+  display: table-row;
   height: 100%;
-  text-align: center;
+}
+
+.forum-list .cell
+{
+  display: table-cell;
   vertical-align: middle;
+}
+
+.forum-list .moderators, .forum-list .lastreply, .forum-list .founded,
+.forum-list .topics, .forum-list .replies
+{
+  text-align: center;
+}
+
+.forum-list .subject
+{
+  font-weight: bold;
+}
+
+/* Topic list */
+.topic-list .author, .topic-list .founded, .topic-list .replies
+{
+  text-align: center;
 }
 
 /* Message list */

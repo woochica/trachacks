@@ -106,7 +106,17 @@ class DiscussionCore(Component):
         # Determine mode
         if topic:
             # Display list of messages
-            mode = 'message-list'
+            if action == 'add':
+                mode = 'message-list'
+            if action == 'post-add':
+                if submit:
+                    mode = 'message-post-add'
+                else:
+                    mode = 'message-list'
+            elif action == 'delete':
+                mode = 'message-delete'
+            else:
+                mode = 'message-list'
         elif forum:
             if action == 'add':
                 # Display add topic form?
@@ -195,11 +205,23 @@ class DiscussionCore(Component):
             author = req.args.get('author')
             body = req.args.get('body')
 
-            if action == 'post-add':
-                # Submit change?
-                if submit:
-                    self.add_message(cursor, forum['id'], topic['id'], reply,
-                      author, body)
+            # Display messages
+            if author:
+                req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
+            if body:
+                req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
+            req.hdf['discussion.messages'] = self.get_messages(cursor,
+              topic['id'], req)
+        elif mode == 'message-post-add':
+            req.perm.assert_permission('DISCUSSION_VIEW')
+
+            # Get form values
+            author = req.args.get('author')
+            body = req.args.get('body')
+
+            # Add new message
+            self.add_message(cursor, forum['id'], topic['id'], reply, author,
+              body)
 
             # Display messages
             if author:
@@ -208,6 +230,26 @@ class DiscussionCore(Component):
                 req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
             req.hdf['discussion.messages'] = self.get_messages(cursor,
               topic['id'], req)
+            mode = 'message-list'
+
+        elif mode == 'message-delete':
+            req.perm.assert_permission('DISCUSSION_MODERATE')
+
+            # Get request value
+            reply = req.args.get('reply')
+
+            # Delete message
+            self.delete_message(cursor, forum['id'], topic['id'], reply)
+
+            # Display topics or messages
+            if reply == '-1':
+                req.hdf['discussion.topics'] = self.get_topics(cursor, forum['id'],
+                  req)
+                mode = 'topic-list'
+            else:
+                req.hdf['discussion.messages'] = self.get_messages(cursor,
+                  topic['id'], req)
+                mode = 'message-list'
 
         req.hdf['discussion.forum'] = forum
         req.hdf['discussion.topic'] = topic
@@ -325,6 +367,29 @@ class DiscussionCore(Component):
           str(int(time.time())), author, subject, body))
 
     def add_message(self, cursor, forum, topic, replyto, author, body):
-         cursor.execute('INSERT INTO message (forum, topic, replyto, time,'
-          ' author, body) VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' % (
-            forum, topic, replyto, str(int(time.time())), author, body))
+        cursor.execute('INSERT INTO message (forum, topic, replyto, time,'
+          ' author, body) VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' %
+          (forum, topic, replyto, str(int(time.time())), author, body))
+
+    def delete_message(self, cursor, forum, topic, message):
+        # Delete whole topic?
+        self.log.debug(message)
+        self.log.debug(topic)
+        if message == '-1':
+            cursor.execute('DELETE FROM message WHERE forum = "%s" AND topic = "%s"'
+              % (forum, topic))
+            cursor.execute('DELETE FROM topic WHERE id = "%s"' % (topic))
+        else:
+            # Get message replies
+            cursor.execute('SELECT id FROM message WHERE replyto = "%s"'
+              % (message))
+            replies = []
+            for row in cursor:
+                replies.append(row[0])
+
+            # Delete all replies
+            for reply in replies:
+                self.delete_message(cursor, forum, topic, reply)
+
+            # Delete message itself
+            cursor.execute('DELETE FROM message WHERE id = "%s"' % (message))
