@@ -4,25 +4,25 @@
 <div id="ctxtnav" class="nav">
   <h2>Wiki Navigation</h2>
   <ul>
-    <?cs if:discussion.forum.name ?>
+    <?cs if:discussion.forum.id ?>
       <?cs if:discussion.topic.id ?>
         <li>
           <a href="<?cs var:trac.href.discussion ?>">Forum Index</a>
         </li>
         <?cs if:discussion.message.id ?>
           <li>
-            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>">
+            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>">
               <?cs var:discussion.forum.subject ?>
             </a>
           </li>
           <li class="last">
-            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>/<?cs var:discussion.topic.id ?>">
+            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
               <?cs var:discussion.topic.subject ?>
             </a>
           </li>
         <?cs else ?>
           <li class="last">
-            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>">
+            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>">
               <?cs var:discussion.forum.subject ?>
             </a>
           </li>

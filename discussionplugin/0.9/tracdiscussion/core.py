@@ -4,7 +4,7 @@ from trac.web.main import IRequestHandler
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.Timeline import ITimelineEventProvider
 from trac.perm import IPermissionRequestor
-from trac.util import Markup, format_datetime
+from trac.util import Markup, format_datetime, pretty_timedelta
 import re, os, time
 
 class DiscussionCore(Component):
@@ -14,16 +14,6 @@ class DiscussionCore(Component):
     """
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
       IPermissionRequestor)
-
-    # ITimelineEventProvider methods
-#    def get_timeline_events(self, req, start, stop, filters):
-#        if 'discussion' in filters:
-#            # TODO Complete timeline magic
-#            pass
-#
-#    def get_timeline_filters(self, req):
-#        if req.perm.has_permission('DISCUSSION_VIEW'):
-#            yield ('discussion', 'Discussion changes')
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -51,7 +41,7 @@ class DiscussionCore(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        match = re.match(r'''/discussion(?:/?$|/([a-zA-Z]+[-a-zA-Z]+)(?:/?$|/(\d+))(?:/?$|/(\d+)))$''',
+        match = re.match(r'''/discussion(?:/?$|/(\d+)(?:/?$|/(\d+))(?:/?$|/(\d+)))$''',
           req.path_info)
         if match:
             forum = match.group(1)
@@ -114,7 +104,10 @@ class DiscussionCore(Component):
                 else:
                     mode = 'message-list'
             elif action == 'delete':
-                mode = 'message-delete'
+                if reply == '-1':
+                    mode = 'topic-delete'
+                else:
+                    mode = 'message-delete'
             else:
                 mode = 'message-list'
         elif forum:
@@ -129,6 +122,8 @@ class DiscussionCore(Component):
                     mode = 'topic-list'
                 else:
                     mode = 'topic-post-add'
+            elif action == 'delete':
+                mode = 'forum-delete'
             else:
                 # Display list of topics
                 mode = 'topic-list'
@@ -162,8 +157,19 @@ class DiscussionCore(Component):
             description = req.args.get('description')
             moderators = req.args.get('moderators').split(' ')
 
-            # Add new forum and display forum list
+            # Add new forum
             self.add_forum(cursor, name, subject, description, moderators)
+
+            # Display forum list
+            req.hdf['discussion.forums'] = self.get_forums(cursor, req)
+            mode = 'forum-list'
+        elif mode == 'forum-delete':
+            req.perm.assert_permission('DISCUSSION_MODIFY')
+
+            # Delete current forum
+            self.delete_forum(cursor, forum['id'])
+
+            # Display forum list
             req.hdf['discussion.forums'] = self.get_forums(cursor, req)
             mode = 'forum-list'
 
@@ -193,6 +199,16 @@ class DiscussionCore(Component):
 
             # Add new topic and display topic list
             self.add_topic(cursor, forum['id'], subject, author, body)
+            req.hdf['discussion.topics'] = self.get_topics(cursor, forum['id'],
+              req)
+            mode = 'topic-list'
+        elif mode == 'topic-delete':
+            req.perm.assert_permission('DISCUSSION_MODERATE')
+
+            # Delete message
+            self.delete_topic(cursor, forum['id'], topic['id'])
+
+            # Display topics
             req.hdf['discussion.topics'] = self.get_topics(cursor, forum['id'],
               req)
             mode = 'topic-list'
@@ -231,25 +247,16 @@ class DiscussionCore(Component):
             req.hdf['discussion.messages'] = self.get_messages(cursor,
               topic['id'], req)
             mode = 'message-list'
-
         elif mode == 'message-delete':
             req.perm.assert_permission('DISCUSSION_MODERATE')
-
-            # Get request value
-            reply = req.args.get('reply')
 
             # Delete message
             self.delete_message(cursor, forum['id'], topic['id'], reply)
 
-            # Display topics or messages
-            if reply == '-1':
-                req.hdf['discussion.topics'] = self.get_topics(cursor, forum['id'],
-                  req)
-                mode = 'topic-list'
-            else:
-                req.hdf['discussion.messages'] = self.get_messages(cursor,
-                  topic['id'], req)
-                mode = 'message-list'
+            # Display or messages
+            req.hdf['discussion.messages'] = self.get_messages(cursor,
+              topic['id'], req)
+            mode = 'message-list'
 
         req.hdf['discussion.forum'] = forum
         req.hdf['discussion.topic'] = topic
@@ -284,7 +291,7 @@ class DiscussionCore(Component):
     def get_forum(self, cursor, id, req):
         columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
         cursor.execute('SELECT name, moderators, id, time, subject, description'
-          ' FROM forum WHERE name=%s', [id])
+          ' FROM forum WHERE id = %s', [id])
         for row in cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
@@ -294,30 +301,41 @@ class DiscussionCore(Component):
 
     def get_forums(self, cursor, req):
         columns = ('moderators', 'id', 'time', 'subject', 'name',
-          'description', 'topics', 'replies')
+          'description', 'topics', 'replies', 'lastreply')
         cursor.execute('SELECT moderators, id, time, subject, name,'
           ' description, (SELECT COUNT(id) FROM topic t WHERE'
           ' t.forum = forum.id), (SELECT COUNT(id) FROM message m WHERE m.forum'
-          ' = forum.id) FROM forum ORDER BY subject')
+          ' = forum.id), (SELECT MAX(time) FROM message m WHERE m.forum ='
+          ' forum.id) FROM forum ORDER BY subject')
         forums = []
         for row in cursor:
             row = dict(zip(columns, row))
             row['moderators'] = wiki_to_oneliner(row['moderators'], self.env)
             row['description'] = wiki_to_oneliner(row['description'], self.env)
+            if row['lastreply']:
+                row['lastreply'] = pretty_timedelta(row['lastreply'])
+            else:
+                row['lastreply'] = 'No replies'
             row['time'] = format_datetime(row['time'])
             forums.append(row)
         return forums
 
     def get_topics(self, cursor, forum, req):
-        columns = ('id', 'forum', 'time', 'subject', 'body', 'author', 'replies')
+        columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
+          'replies', 'lastreply')
         cursor.execute('SELECT id, forum, time, subject, body, author, (SELECT'
-          ' COUNT(id) FROM message m WHERE m.topic = topic.id) FROM topic'
+          ' COUNT(id) FROM message m WHERE m.topic = topic.id), (SELECT'
+          ' MAX(time) FROM message m WHERE m.topic = topic.id) FROM topic'
           ' WHERE forum = %s ORDER BY time', [forum])
         topics = []
         for row in cursor:
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, req)
+            if row['lastreply']:
+                row['lastreply'] = pretty_timedelta(row['lastreply'])
+            else:
+                row['lastreply'] = 'No replies'
             row['time'] = format_datetime(row['time'])
             topics.append(row)
         return topics
@@ -371,25 +389,27 @@ class DiscussionCore(Component):
           ' author, body) VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' %
           (forum, topic, replyto, str(int(time.time())), author, body))
 
+    def delete_forum(self, cursor, forum):
+        cursor.execute('DELETE FROM message WHERE forum = "%s"' % (forum))
+        cursor.execute('DELETE FROM topic WHERE forum = "%s"' % (forum))
+        cursor.execute('DELETE FROM forum WHERE id = "%s"' % (forum))
+
+    def delete_topic(self, cursor, forum, topic):
+        cursor.execute('DELETE FROM message WHERE forum = "%s" AND topic = "%s"'
+          % (forum, topic))
+        cursor.execute('DELETE FROM topic WHERE id = "%s"' % (topic))
+
     def delete_message(self, cursor, forum, topic, message):
-        # Delete whole topic?
-        self.log.debug(message)
-        self.log.debug(topic)
-        if message == '-1':
-            cursor.execute('DELETE FROM message WHERE forum = "%s" AND topic = "%s"'
-              % (forum, topic))
-            cursor.execute('DELETE FROM topic WHERE id = "%s"' % (topic))
-        else:
-            # Get message replies
-            cursor.execute('SELECT id FROM message WHERE replyto = "%s"'
-              % (message))
-            replies = []
-            for row in cursor:
-                replies.append(row[0])
+        # Get message replies
+        cursor.execute('SELECT id FROM message WHERE replyto = "%s"'
+          % (message))
+        replies = []
+        for row in cursor:
+            replies.append(row[0])
 
-            # Delete all replies
-            for reply in replies:
-                self.delete_message(cursor, forum, topic, reply)
+        # Delete all replies
+        for reply in replies:
+            self.delete_message(cursor, forum, topic, reply)
 
-            # Delete message itself
-            cursor.execute('DELETE FROM message WHERE id = "%s"' % (message))
+        # Delete message itself
+        cursor.execute('DELETE FROM message WHERE id = "%s"' % (message))

@@ -33,8 +33,8 @@
     <div class="buttons">
       <input type="submit" name="submit" value="Submit"/>
       <input type="submit" name="cancel" value="Cancel"/>
+      <input type="hidden" name="action" value="post-add"/>
     </div>
-    <input type="hidden" name="action" value="post-add"/>
   </fieldset>
 </form>
 

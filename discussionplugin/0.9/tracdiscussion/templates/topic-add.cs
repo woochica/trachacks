@@ -20,7 +20,7 @@
   </div>
 <?cs /if ?>
 
-<form class="add_form" method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.name ?>">
+<form class="add_form" method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>">
   <fieldset>
     <legend>
        Add Topic:
@@ -41,8 +41,8 @@
       <input type="submit" name="preview" value="Preview"/>
       <input type="submit" name="submit" value="Submit"/>
       <input type="submit" name="cancel" value="Cancel"/>
+      <input type="hidden" name="action" value="post-add"/>
     </div>
-    <input type="hidden" name="action" value="post-add"/>
   </fieldset>
 </form>
 
