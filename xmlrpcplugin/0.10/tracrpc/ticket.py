@@ -52,7 +52,7 @@ class TicketRPC(Component):
         for k, v in attributes.iteritems():
             t[k] = v
         t.save_changes(req.authname, comment)
-        return self.getTicket(t.id)
+        return self.get(t.id)
 
     def delete(self, id):
         """ Delete ticket with the given id. """
