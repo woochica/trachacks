@@ -1,0 +1,79 @@
+Index: trac/db.py
+===================================================================
+--- trac/db.py	(revision 3347)
++++ trac/db.py	(working copy)
+@@ -351,11 +351,12 @@
+ 
+ psycopg = None
+ PgSQL = None
++PGSchemaError = None
+ 
+ class PostgreSQLConnection(ConnectionWrapper):
+     """Connection wrapper for PostgreSQL."""
+ 
+-    __slots__ = ['cnx']
++    __slots__ = ['cnx', 'schema']
+ 
+     poolable = True
+ 
+@@ -366,14 +367,18 @@
+         # We support both psycopg and PgSQL but prefer psycopg
+         global psycopg
+         global PgSQL
++        global PGSchemaError
+         if not psycopg and not PgSQL:
+             try:
+                 try:
+                     import psycopg2 as psycopg
++                    from psycopg2 import ProgrammingError as PGSchemaError
+                 except ImportError:
+                     import psycopg
++                    from psycopg import ProgrammingError as PGSchemaError
+             except ImportError:
+                 from pyPgSQL import PgSQL
++                from pyPgSQL.libpq import OperationalError as PGSchemaError
+         if psycopg:
+             dsn = []
+             if path:
+@@ -389,6 +394,14 @@
+             cnx = psycopg.connect(' '.join(dsn))
+         else:
+             cnx = PgSQL.connect('', user, password, host, path, port)
++        try: 
++            self.schema = None 
++            if 'schema' in params: 
++                self.schema = params['schema'] 
++                cnx.cursor().execute('SET search_path TO %s, public',  
++                                    (self.schema,)) 
++        except PGSchemaError: 
++            cnx.rollback() 
+         ConnectionWrapper.__init__(self, cnx)
+ 
+     def cast(self, column, type):
+@@ -407,6 +420,9 @@
+     def init_db(cls, **args):
+         self = cls(**args)
+         cursor = self.cursor()
++        if self.schema: 
++            cursor.execute('CREATE SCHEMA %s' % self.schema) 
++            cursor.execute('SET search_path TO %s, public', (self.schema,)) 
+         from trac.db_default import schema
+         for table in schema:
+             for stmt in cls.to_sql(table):
+@@ -434,7 +450,16 @@
+                    '_'.join(index.columns), table.name, ','.join(index.columns))
+     to_sql = classmethod(to_sql)
+ 
++    def rollback(self): 
++        self.cnx.rollback() 
++        if self.schema: 
++            try: 
++                self.cnx.cursor().execute("SET search_path TO %s, public",  
++                                            (self.schema,)) 
++            except PGSchemaError: 
++                self.cnx.rollback() 
+ 
++
+ _cnx_map = {'postgres': PostgreSQLConnection, 'sqlite': SQLiteConnection}
+ 
+ def init_db(env_path, db_str):
