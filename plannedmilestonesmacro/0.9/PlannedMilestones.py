@@ -1,33 +1,17 @@
 from StringIO import StringIO
-import re
-from time import localtime, strftime, time
-import os
+from trac.util import Markup, format_date
+from trac.ticket import Milestone
 
 def execute(hdf, txt, env):
     out = StringIO()
-    db = env.get_db_cnx()
-
-    query = "SELECT name, due, description FROM milestone " \
-            "WHERE name != '' " \
-            "AND (due IS NULL OR due = 0 OR due > %d) " \
-            "ORDER BY (IFNULL(due, 0) = 0) ASC, due ASC, name" % time()
-
-    cursor = db.cursor()
-    cursor.execute(query)
     out.write('<ul>\n')
-    while True:
-        row = cursor.fetchone()
-        if not row:
-            break
-        name = row['name']
-        if row['due'] > 0:
-            date = strftime('%x', localtime(row['due']))
+    for milestone in Milestone.select(env, include_completed=False):
+        if milestone.due > 0:
+            date = format_date(milestone.due)
         else:
-            date = "<i>(later)</i>"
-        if name == "":
-            continue
-        out.write('<li> %s - <a href="http://%s%s">%s</a>\n' %
-                  (date, os.getenv('HTTP_HOST'),
-                   env.href.milestone(name), name))
+            date = Markup('<i>(later)</i>')
+        out.write(Markup('<li>%s - <a href="%s">%s</a></li>\n',
+                         date, env.href.milestone(milestone.name),
+                         milestone.name))
     out.write('</ul>\n')
     return out.getvalue()
