@@ -16,7 +16,7 @@ setup(
     keywords = "trac ticket delete",
     url = "http://trac-hacks.org/",
     
-    install_requires = ['TracWebAdmin']
+    install_requires = ['TracWebAdmin'],
 
     entry_points = {
         'trac.plugins': [
