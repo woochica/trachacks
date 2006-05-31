@@ -64,7 +64,6 @@ class TicketDeletePlugin(Component):
                                     req.hdf['ticketdelete.redir'] = 0
                         except ValueError:
                             req.hdf['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')
-                            self.log.debug(traceback.format_exc())
                     
                     
                 

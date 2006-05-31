@@ -15,6 +15,8 @@ setup(
     license = "BSD",
     keywords = "trac ticket delete",
     url = "http://trac-hacks.org/",
+    
+    install_requires = ['TracWebAdmin']
 
     entry_points = {
         'trac.plugins': [
