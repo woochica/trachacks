@@ -2,6 +2,7 @@
 
 <?cs def:display_preview() ?>
   <li class="preview">
+    <a name="preview"></a>
     <div class="body">
       <?cs var:discussion.body ?>
     </div>
@@ -11,16 +12,21 @@
   </li>
 <?cs /def ?>
 
-<?cs def:display_form()?>
+<?cs def:display_form() ?>
   <li class="reply">
     <fieldset>
+      <a name="reply"></a>
       <legend>
          Reply:
       </legend>
-      <form method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
+      <form method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>#preview">
         <div class="field">
           <label for="author">Author:</label><br/>
-          <input type="text" name="author" value="<?cs var:args.author ?>"/>
+          <?cs if:args.author ?>
+            <input type="text" name="author" value="<?cs var:args.author ?>"/><br/>
+          <?cs else ?>
+            <input type="text" name="author" value="<?cs var:discussion.authname ?>"/><br/>
+          <?cs /if ?>
         </div>
         <div class="field">
           <label for="body">Body:</label><br/>
@@ -41,12 +47,13 @@
 <?cs def:display_topic(messages) ?>
   <?cs each:message = messages ?>
     <li>
+      <a name="<?cs var:message.id ?>"></a>
       <div class="body">
         <?cs var:message.body ?>
       </div>
       <div class="controls">
-        <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=add;reply=<?cs var:message.id ?>">Reply</a>
-        <?cs if:trac.acl.DISCUSSION_MODERATE ?>
+        <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>#reply?action=add;reply=<?cs var:message.id ?>">Reply</a>
+        <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
           <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=delete;reply=<?cs var:message.id ?>">Delete</a>
         <?cs /if ?>
       </div>
@@ -68,9 +75,8 @@
   <?cs /each ?>
 <?cs /def ?>
 
-<h1 class="forum-subject">
-  <?cs var:discussion.forum.subject ?>
-</h1>
+<h1 class="forum-subject"><?cs var:discussion.forum.subject ?> - Message List</h1>
+<a name="-1"></a>
 <div class="topic">
   <div class="header">
     <div class="subject">
@@ -80,7 +86,7 @@
       <?cs var:discussion.topic.body ?>
     </div>
     <div class="controls">
-      <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=add;reply=-1">Reply</a>
+      <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>#reply?action=add;reply=-1">Reply</a>
     </div>
     <div class="author">
       <?cs var:discussion.topic.author ?>
@@ -101,7 +107,7 @@
   <?cs /if ?>
 </div>
 
-<?cs if:trac.acl.DISCUSSION_MODERATE ?>
+<?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
   <div class="buttons">
     <form method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
       <input type="submit" name="deletetopic" value="Delete Topic" onClick="return confirm('Do you realy want to delete this topic?')"/>

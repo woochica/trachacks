@@ -1,11 +1,7 @@
 <?cs include "discussion-header.cs" ?>
 
-<h1>
-  <?cs var:discussion.forum.subject ?>
-</h1>
-<div class="forum-description">
-  <?cs var:discussion.forum.description ?>
-</div>
+<h1><?cs var:discussion.forum.subject ?> - Topic List</h1>
+<div class="forum-description"><?cs var:discussion.forum.description ?></div>
   <table class="listing">
     <thead>
       <tr>

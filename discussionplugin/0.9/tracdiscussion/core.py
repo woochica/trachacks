@@ -2,14 +2,13 @@ from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
 from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.Timeline import ITimelineEventProvider
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, PermissionError
 from trac.util import Markup, format_datetime, pretty_timedelta
 import re, os, time
 
 class DiscussionCore(Component):
     """
-        The discussion module implements a message board, including wiki links to
+        The core module implements a message board, including wiki links to
         discussions, topics and messages.
     """
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
@@ -63,8 +62,8 @@ class DiscussionCore(Component):
         add_stylesheet(req, 'discussion/css/discussion.css')
         req.hdf['trac.href.discussion'] = self.env.href.discussion()
 
-        forum, topic, message, mode, action, reply = None, None, None, None, \
-          None, None
+        forum, topic, message, mode, action, reply, is_moderator = None, None, \
+          None, None, None, None, False
 
         # Get action
         if req.args.has_key('action'):
@@ -80,6 +79,10 @@ class DiscussionCore(Component):
             forum = self.get_forum(cursor, req.args.get('forum'), req)
             if not forum:
                 raise TracError('No such forum %s' % req.args.get('forum'))
+
+            # Determine moderator rights.
+            is_moderator = (req.authname in forum['moderators']) or \
+              req.perm.has_permission('DISCUSSION_MODIFY')
 
         # Populate active topic
         if req.args.has_key('topic'):
@@ -181,7 +184,10 @@ class DiscussionCore(Component):
         elif mode == 'topic-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
-            # Get from values
+            if req.authname:
+                req.hdf['discussion.authname'] = req.authname
+
+            # Get form values
             author = req.args.get('author')
             body = req.args.get('body')
 
@@ -205,6 +211,10 @@ class DiscussionCore(Component):
         elif mode == 'topic-delete':
             req.perm.assert_permission('DISCUSSION_MODERATE')
 
+            # Check if user can moderate
+            if not is_moderator:
+                raise PermissionError('Forum moderate')
+
             # Delete message
             self.delete_topic(cursor, forum['id'], topic['id'])
 
@@ -216,6 +226,9 @@ class DiscussionCore(Component):
         # Message related stuff
         elif mode == 'message-list':
             req.perm.assert_permission('DISCUSSION_VIEW')
+
+            if req.authname:
+                req.hdf['discussion.authname'] = req.authname
 
             # Get form values
             author = req.args.get('author')
@@ -250,6 +263,10 @@ class DiscussionCore(Component):
         elif mode == 'message-delete':
             req.perm.assert_permission('DISCUSSION_MODERATE')
 
+            # Check if user can moderate
+            if not is_moderator:
+                raise PermissionError('Forum moderate')
+
             # Delete message
             self.delete_message(cursor, forum['id'], topic['id'], reply)
 
@@ -262,14 +279,15 @@ class DiscussionCore(Component):
         req.hdf['discussion.topic'] = topic
         req.hdf['discussion.message'] = message
         req.hdf['discussion.mode'] = mode
+        req.hdf['discussion.is_moderator'] = is_moderator
         db.commit()
         return mode + '.cs', None
 
     # Non-extension methods
     def get_message(self, cursor, id, req):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
-        cursor.execute('SELECT id, forum, topic, replyto, time, author, body,'
-          'FROM message WHERE id=%s', [id])
+        cursor.execute('SELECT id, forum, topic, replyto, time, author, body '
+          'FROM message WHERE id = %s' % (id))
         for row in cursor:
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
@@ -280,7 +298,7 @@ class DiscussionCore(Component):
     def get_topic(self, cursor, id, req):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
         cursor.execute('SELECT id, forum, time, subject, body, author FROM'
-          ' topic WHERE id=%s', [id])
+          ' topic WHERE id = %s' % (id))
         for row in cursor:
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
@@ -291,7 +309,7 @@ class DiscussionCore(Component):
     def get_forum(self, cursor, id, req):
         columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
         cursor.execute('SELECT name, moderators, id, time, subject, description'
-          ' FROM forum WHERE id = %s', [id])
+          ' FROM forum WHERE id = %s' % (id))
         for row in cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
@@ -301,12 +319,13 @@ class DiscussionCore(Component):
 
     def get_forums(self, cursor, req):
         columns = ('moderators', 'id', 'time', 'subject', 'name',
-          'description', 'topics', 'replies', 'lastreply')
+          'description', 'topics', 'replies', 'lastreply', 'lasttopic')
         cursor.execute('SELECT moderators, id, time, subject, name,'
           ' description, (SELECT COUNT(id) FROM topic t WHERE'
           ' t.forum = forum.id), (SELECT COUNT(id) FROM message m WHERE m.forum'
           ' = forum.id), (SELECT MAX(time) FROM message m WHERE m.forum ='
-          ' forum.id) FROM forum ORDER BY subject')
+          ' forum.id), (SELECT MAX(time) FROM topic t WHERE t.forum = forum.id)'
+          ' FROM forum ORDER BY subject')
         forums = []
         for row in cursor:
             row = dict(zip(columns, row))
@@ -316,6 +335,10 @@ class DiscussionCore(Component):
                 row['lastreply'] = pretty_timedelta(row['lastreply'])
             else:
                 row['lastreply'] = 'No replies'
+            if row['lasttopic']:
+                row['lasttopic'] = pretty_timedelta(row['lasttopic'])
+            else:
+                row['lasttopic'] = 'No topics'
             row['time'] = format_datetime(row['time'])
             forums.append(row)
         return forums
@@ -326,7 +349,7 @@ class DiscussionCore(Component):
         cursor.execute('SELECT id, forum, time, subject, body, author, (SELECT'
           ' COUNT(id) FROM message m WHERE m.topic = topic.id), (SELECT'
           ' MAX(time) FROM message m WHERE m.topic = topic.id) FROM topic'
-          ' WHERE forum = %s ORDER BY time', [forum])
+          ' WHERE forum = %s ORDER BY time' % (forum))
         topics = []
         for row in cursor:
             row = dict(zip(columns, row))

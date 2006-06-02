@@ -27,7 +27,11 @@
     </legend>
     <div class="field">
       <label for="author">Author:</label><br/>
-      <input type="text" name="author" value="<?cs var:args.author ?>"/><br/>
+      <?cs if:args.author ?>
+        <input type="text" name="author" value="<?cs var:args.author ?>"/><br/>
+      <?cs else ?>
+        <input type="text" name="author" value="<?cs var:discussion.authname ?>"/><br/>
+      <?cs /if ?>
     </div>
     <div class="field">
       <label for="subject">Subject:</label><br/>

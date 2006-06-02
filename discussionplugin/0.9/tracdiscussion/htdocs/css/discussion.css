@@ -5,40 +5,24 @@
 }
 
 /* Forum list */
-.forum-list td
+.forum-list tr > td
 {
   margin: 0em !important;
   padding: 0em !important;
   height: 100%;
 }
 
-.forum-list .subject, .forum-list .description
+.forum-list tr > td > a
 {
-  margin: 0.5em;
-}
-
-.forum-list .table
-{
-  display: table;
+  display: block;
   height: 100%;
-  width: 100%;
+  padding: 0.5em;
+  margin: 0em;
   border: none;
 }
 
-.forum-list .row
-{
-  display: table-row;
-  height: 100%;
-}
-
-.forum-list .cell
-{
-  display: table-cell;
-  vertical-align: middle;
-}
-
-.forum-list td.moderators, .forum-list td.lastreply, .forum-list td.founded,
-.forum-list td.topics, .forum-list td.replies
+.forum-list td.moderators, .forum-list td.lasttopic, .forum-list td.lastreply,
+.forum-list td.founded, .forum-list td.topics, .forum-list td.replies
 {
   text-align: center;
 }
