@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.3'
+__version__   = '0.6.4'
 
 
 try:
@@ -31,6 +31,8 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
 
+
+_TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
 
 
 class GraphvizMacro(Component):
@@ -315,7 +317,7 @@ class GraphvizMacro(Component):
             #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
-            self.png_anti_alias = bool(self.config.get('graphviz', 'png_antialias', False))
+            self.png_anti_alias = self.boolean(self.config.get('graphviz', 'png_antialias', False))
             #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
             if self.png_anti_alias == True:
@@ -343,7 +345,7 @@ class GraphvizMacro(Component):
 
 
             # check if we should run the cache manager
-            self.cache_manager = bool(self.config.get('graphviz', 'cache_manager', False))
+            self.cache_manager = self.boolean(self.config.get('graphviz', 'cache_manager', False))
             if self.cache_manager:
                 self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size',  10000000))
                 self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size',  5000000))
@@ -443,3 +445,11 @@ class GraphvizMacro(Component):
         else:
             #self.log.debug('clean_cache: cache_manager not set')
             pass
+
+
+    # Extra helper functions
+    def boolean(self, value):
+        # This code is almost directly from trac.config in the 0.10 line...
+        if isinstance(value, basestring):
+            value = value.lower() in _TRUE_VALUES
+        return bool(value)
