@@ -1,6 +1,6 @@
 from trac.core import *
 from trac.web.main import IRequestHandler
-from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import ITemplateProvider, add_stylesheet
 from tracrpc.api import IXMLRPCHandler, XMLRPCSystem
 from trac.wiki.formatter import wiki_to_oneliner
 import xmlrpclib
@@ -41,7 +41,12 @@ class XMLRPCWeb(Component):
                 try:
                     namespaces[namespace]['methods'].append((method.signature, wiki_to_oneliner(method.description, self.env), method.permission))
                 except Exception, e:
-                    raise Exception('%s: %s' % (method.name, str(e)))
+                    from StringIO import StringIO
+                    import traceback
+                    out = StringIO()
+                    traceback.print_exc(file=out)
+                    raise Exception('%s: %s\n%s' % (method.name, str(e), out.getvalue()))
+            add_stylesheet(req, 'common/css/wiki.css')
             req.hdf['xmlrpc.functions'] = namespaces
             return 'xmlrpclist.cs', None
 

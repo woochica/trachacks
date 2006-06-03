@@ -1,7 +1,9 @@
+from trac.attachment import Attachment
 from trac.core import *
 from tracrpc.api import IXMLRPCHandler, expose_rpc
 import trac.ticket.model as model
 import trac.ticket.query as query
+
 import pydoc
 import xmlrpclib
 
@@ -21,9 +23,12 @@ class TicketRPC(Component):
         yield ('TICKET_APPEND', ((list, int, str), (list, int, str, dict)), self.update)
         yield ('TICKET_ADMIN', ((None, int),), self.delete)
         yield ('TICKET_VIEW', ((dict, int), (dict, int, int)), self.changeLog)
+        yield ('TICKET_VIEW', ((list, int),), self.listAttachments)
+        yield ('TICKET_VIEW', ((xmlrpclib.Binary, int, str),), self.getAttachment)
+        yield ('TICKET_APPEND', ((bool, int, str, xmlrpclib.Binary),), self.putAttachment)
 
     # Exported methods
-    def query(self, qstr = 'status!=closed'):
+    def query(self, req, qstr = 'status!=closed'):
         """ Perform a ticket query, returning a list of ticket ID's. """
         q = query.Query.from_string(self.env, qstr)
         out = []
@@ -31,14 +36,15 @@ class TicketRPC(Component):
             out.append(t['id'])
         return out
 
-    def get(self, id):
+    def get(self, req, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
         t = model.Ticket(self.env, id)
         return (t.id, t.time_created, t.time_changed, t.values)
 
-    def create(self, summary, description, attributes = {}):
+    def create(self, req, summary, description, attributes = {}):
         """ Create a new ticket, returning the ticket ID. """
         t = model.Ticket(self.env)
+        t['status'] = 'new'
         t['summary'] = summary
         t['description'] = description
         for k, v in attributes.iteritems():
@@ -54,17 +60,33 @@ class TicketRPC(Component):
         t.save_changes(req.authname, comment)
         return self.get(t.id)
 
-    def delete(self, id):
+    def delete(self, req, id):
         """ Delete ticket with the given id. """
         t = model.Ticket(self.env, id)
         t.delete()
 
-    def changeLog(self, id, when = 0):
+    def changeLog(self, req, id, when = 0):
         t = model.Ticket(self.env, id)
         return t.get_changelog()
-
     # Use existing documentation from Ticket model
     changeLog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
+
+    def listAttachments(self, req, ticket):
+        """ Lists attachments for a given ticket. """
+        return [a.filename for a in Attachment.select(self.env, 'ticket', ticket)]
+
+    def getAttachment(self, req, ticket, filename):
+        """ returns the content of an attachment. """
+        attachment = Attachment(self.env, 'ticket', ticket, filename)
+        return xmlrpclib.Binary(attachment.open().read())
+
+    def putAttachment(self, req, ticket, filename, data):
+        """ (over)writes an attachment. """
+        if not Ticket(self.env, ticket).exists:
+            raise TracError, 'Ticket "%s" does not exist' % ticket
+        attachment = Attachment(self.env, 'ticket', ticket)
+        attachment.insert(filename, StringIO(data.data), len(data.data))
+        return True
 
 
 def ticketModelFactory(cls, cls_attributes):
@@ -82,12 +104,12 @@ def ticketModelFactory(cls, cls_attributes):
             yield ('TICKET_ADMIN', ((None, str, dict),), self.create)
             yield ('TICKET_ADMIN', ((None, str, dict),), self.update)
 
-        def getAll(self):
+        def getAll(self, req):
             for i in cls.select(self.env):
                 yield i.name
         getAll.__doc__ = """ Get a list of all ticket %s names. """ % cls.__name__.lower()
 
-        def get(self, name):
+        def get(self, req, name):
             i = cls(self.env, name)
             attributes= {}
             for k in cls_attributes:
@@ -95,15 +117,15 @@ def ticketModelFactory(cls, cls_attributes):
             return attr
         get.__doc__ = """ Get a ticket %s. """ % cls.__name__.lower()
 
-        def delete(self, name):
+        def delete(self, req, name):
             cls(self.env, name).delete()
         delete.__doc__ = """ Delete a ticket %s """ % cls.__name__.lower()
 
-        def create(self, name, attributes):
+        def create(self, req, name, attributes):
             self._updateHelper(name, attributes).insert()
         create.__doc__ = """ Create a new ticket %s with the given attributes. """ % cls.__name__.lower()
 
-        def update(self, name, attributes):
+        def update(self, req, name, attributes):
             self._updateHelper(name, attributes).update()
         update.__doc__ = """ Update ticket %s with the given attributes. """ % cls.__name__.lower()
 
@@ -132,29 +154,29 @@ def ticketEnumFactory(cls):
             yield ('TICKET_ADMIN', ((None, str, str),), self.create)
             yield ('TICKET_ADMIN', ((None, str, str),), self.update)
 
-        def getAll(self):
+        def getAll(self, req):
             for i in cls.select(self.env):
                 yield i.name
         getAll.__doc__ = """ Get a list of all ticket %s names. """ % cls.__name__.lower()
 
-        def get(self, name):
+        def get(self, req, name):
             i = cls(self.env, name)
             return i.value
         get.__doc__ = """ Get a ticket %s. """ % cls.__name__.lower()
 
-        def delete(self, name):
+        def delete(self, req, name):
             cls(self.env, name).delete()
         delete.__doc__ = """ Delete a ticket %s """ % cls.__name__.lower()
 
-        def create(self, name, value):
+        def create(self, req, name, value):
             self._updateHelper(name, value).insert()
         create.__doc__ = """ Create a new ticket %s with the given value. """ % cls.__name__.lower()
 
-        def update(self, name, value):
+        def update(self, req, name, value):
             self._updateHelper(name, value).update()
         update.__doc__ = """ Update ticket %s with the given value. """ % cls.__name__.lower()
 
-        def _updateHelper(self, name, value):
+        def _updateHelper(self, req, name, value):
             i = cls(self.env)
             i.name = name
             i.value = value

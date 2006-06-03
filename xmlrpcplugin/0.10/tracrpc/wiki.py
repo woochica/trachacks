@@ -48,7 +48,7 @@ class WikiRPC(Component):
         return dict(name=name, lastModified=xmlrpclib.DateTime(int(time)),
                     author=author, version=int(version))
 
-    def getRecentChanges(self, since):
+    def getRecentChanges(self, req, since):
         """ Get list of changed pages since timestamp """
         since = self._to_timestamp(since)
         db = self.env.get_db_cnx()
@@ -60,11 +60,11 @@ class WikiRPC(Component):
             result.append(self._page_info(name, time, author, version))
         return result
 
-    def getRPCVersionSupported(self):
+    def getRPCVersionSupported(self, req):
         """ Returns 2 with this version of the Trac API. """
         return 2
 
-    def getPage(self, pagename, version=None):
+    def getPage(self, req, pagename, version=None):
         """ Get the raw Wiki text of page, latest version. """
         page = WikiPage(self.env, pagename, version)
         if page.exists:
@@ -81,11 +81,11 @@ class WikiRPC(Component):
         html = wiki_to_html(text, self.env, req, absurls=1)
         return '<html><body>%s</body></html>' % html
 
-    def getAllPages(self):
+    def getAllPages(self, req):
         """ Returns a list of all pages. The result is an array of utf8 pagenames. """
         return list(self.wiki.get_pages())
 
-    def getPageInfo(self, pagename, version=None):
+    def getPageInfo(self, req, pagename, version=None):
         """ Returns information about the given page. """
         page = WikiPage(self.env, pagename, version)
         if page.exists:
@@ -112,17 +112,17 @@ class WikiRPC(Component):
                   req.remote_addr)
         return True
 
-    def listAttachments(self, pagename):
+    def listAttachments(self, req, pagename):
         """ Lists attachments on a given page. """
         return [pagename + '/' + a.filename for a in Attachment.select(self.env, 'wiki', pagename)]
 
-    def getAttachment(self, path):
+    def getAttachment(self, req, path):
         """ returns the content of an attachment. """
         pagename, filename = posixpath.split(path)
         attachment = Attachment(self.env, 'wiki', pagename, filename)
         return xmlrpclib.Binary(attachment.open().read())
 
-    def putAttachment(self, path, data):
+    def putAttachment(self, req, path, data):
         """ (over)writes an attachment. """
         pagename, filename = posixpath.split(path)
         if not WikiPage(self.env, pagename).exists:
@@ -131,6 +131,6 @@ class WikiRPC(Component):
         attachment.insert(filename, StringIO(data.data), len(data.data))
         return True
 
-    def listLinks(self, pagename):
+    def listLinks(self, req, pagename):
         """ ''Not implemented'' """
         return []

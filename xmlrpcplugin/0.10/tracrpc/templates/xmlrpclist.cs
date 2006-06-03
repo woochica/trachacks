@@ -1,14 +1,17 @@
 <?cs include "header.cs"?>
 <?cs include "macros.cs"?>
 
-<div id="content" class="report">
+<div id="ctxtnav" class="nav"></div>
+
+<div id="content" class="wiki">
 
 <h2>XML-RPC exported functions</h2>
 
+<div id="searchable">
 <dl>
 <?cs each:namespace = xmlrpc.functions ?>
 
-<dt><h3 id=<?cs var:namespace.namespace ?>><?cs var:namespace.namespace ?> - <?cs var:namespace.description ?></h3></dt>
+<dt><h3 id=xmlrpc.<?cs var:namespace.namespace ?>><?cs var:namespace.namespace ?> - <?cs var:namespace.description ?></h3></dt>
 <dd>
 <table class="listing tickets">
 <thead>
@@ -32,6 +35,11 @@
 </dd>
 <?cs /each ?>
 </dl>
+</div>
+
+<script type="text/javascript">
+addHeadingLinks(document.getElementById("searchable"));
+</script
 
 </div>
 

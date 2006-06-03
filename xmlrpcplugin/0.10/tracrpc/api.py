@@ -12,6 +12,19 @@ RPC_TYPES = {int: 'int', bool: 'boolean', str: 'string', float: 'double',
              xmlrpclib.DateTime: 'dateTime.iso8601', xmlrpclib.Binary: 'base64',
              list: 'array', dict: 'struct', None : 'int'}
 
+
+def expose_rpc(permission, return_type, *arg_types):
+    """ Decorator for exposing a method as an RPC call with the given
+    signature. """
+    def decorator(func):
+        if not hasattr(func, '_xmlrpc_signatures'):
+            func._xmlrpc_signatures = []
+            func._xml_rpc_permission = permission
+        func._xmlrpc_signatures.append((return_type,) + tuple(arg_types))
+        return func
+    return decorator
+
+
 class IXMLRPCHandler(Interface):
     def xmlrpc_namespace():
         """ Provide the namespace in which a set of methods lives.
@@ -20,15 +33,19 @@ class IXMLRPCHandler(Interface):
 
     def xmlrpc_methods():
         """ Return an iterator of (permission, signatures, callable[, name]),
-            where callable is exposed via XML-RPC if the authenticated user has
-            the appropriate permission.
+        where callable is exposed via XML-RPC if the authenticated user has the
+        appropriate permission.
             
-            The callable itself can be a method or a normal method. The
-            XMLRPCSystem performs some extra magic to remove the "self"
-            argument when listing the available methods.
+        The callable itself can be a method or a normal method. The first
+        argument passed will always be a request object. The XMLRPCSystem
+        performs some extra magic to remove the "self" and "req" arguments when
+        listing the available methods.
 
-            Signatures is a list of XML-RPC introspection signatures for this method.
-            """
+        Signatures is a list of XML-RPC introspection signatures for this
+        method. Each signature is a tuple consisting of the return type
+        followed by argument types.
+        """
+
 
 class AbstractRPCHandler(Component):
     implements(IXMLRPCHandler)
@@ -46,15 +63,6 @@ class AbstractRPCHandler(Component):
             self._init_methods()
         return self._rpc_methods
 
-def expose_rpc(permission, return_type, *arg_types):
-    """ Expose a method as an RPC call with the given signature. """
-    def decorator(func):
-        if not hasattr(func, '_xmlrpc_signatures'):
-            func._xmlrpc_signatures = []
-            func._xml_rpc_permission = permission
-        func._xmlrpc_signatures.append((return_type,) + tuple(arg_types))
-        return func
-    return decorator
 
 class Method(object):
     """ Represents an XML-RPC exposed method. """
@@ -74,20 +82,16 @@ class Method(object):
 
     def __call__(self, req, args):
         req.perm.assert_permission(self.permission)
-        # Pass optional "req" arg if required
-        argspec = inspect.getargspec(self.callable)[0]
-        if (argspec and argspec[0] == 'req') or (len(argspec) > 1 and argspec[0:2] == ['self', 'req']):
-            result = self.callable(req, *args)
-        else:
-            result = self.callable(*args)
+        result = self.callable(req, *args)
         # If result is null, return a zero
         if result is None:
             result = 0
-        # We'll fully traverse the generator results and return it as a tuple
-        elif type(result) is types.GeneratorType:
-            result = tuple(result)
-        elif type(result) is set:
-            result = tuple(result)
+        elif not isinstance(result, basestring):
+            # Try and convert result to a list
+            try:
+                result = [i for i in result]
+            except TypeError:
+                pass
         return (result,)
 
     def _get_signature(self):
@@ -96,6 +100,8 @@ class Method(object):
             return self._signature
         fullargspec = inspect.getargspec(self.callable)
         argspec = fullargspec[0]
+        assert argspec[0:2] == ['self', 'req'] or argspec[0] == 'req', \
+            'Invalid argspec %s for %s' % (argspec, self.name)
         while argspec and (argspec[0] in ('self', 'req')):
             argspec.pop(0)
         argspec.reverse()
@@ -128,6 +134,7 @@ class Method(object):
     def xmlrpc_signatures(self):
         """ Signature as an XML-RPC 'signature'. """
         return self.rpc_signatures
+
 
 class XMLRPCSystem(Component):
     """ Core of the XML-RPC system. """
@@ -170,9 +177,9 @@ class XMLRPCSystem(Component):
 
     def multicall(self, req, signatures):
         """ Takes an array of XML-RPC calls encoded as structs of the form (in
-            a Pythonish notation here):
+        a Pythonish notation here):
 
-            {'methodName': string, 'params': array}
+        {'methodName': string, 'params': array}
         """
         for signature in signatures:
             try:
@@ -199,11 +206,11 @@ class XMLRPCSystem(Component):
 
     def methodSignature(self, req, method):
         """ This method takes one parameter, the name of a method implemented
-            by the XML-RPC server.
+        by the XML-RPC server.
 
-            It returns an array of possible signatures for this method. A
-            signature is an array of types. The first of these types is the
-            return type of the method, the rest are parameters. """
+        It returns an array of possible signatures for this method. A signature
+        is an array of types. The first of these types is the return type of
+        the method, the rest are parameters. """
         p = self.get_method(method)
         req.perm.assert_permission(p.permission)
         return [','.join([RPC_TYPES[x] for x in sig]) for sig in p.xmlrpc_signatures()]
