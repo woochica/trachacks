@@ -38,17 +38,17 @@ class CtxtnavAddModule(Component):
         return req.path_info.startswith('/ctxtnavadd')
         
     def process_request(self, req):
-        links = []
+        adds = []
         path_info = req.path_info[11:]
-        self.log.debug('CtxnavAdd: adders = %s'%repr(self.ctxtnav_adders))
         for adder in self.ctxtnav_adders:
-            self.log.debug('CtxtnavAdd: Trying %s'%adder.__class__.__name__)
             if adder.match_ctxtnav_add(req, path_info):
-                self.log.debug('CtxnavAdd: Matched')
-                resp = list(adder.get_ctxtnav_adds(req))
-                links += resp
-        req.hdf['ctxtnavadd.links'] = links
-        self.log.debug('CtxtnavAdd: links = %s'%repr(links))
+                for add in adder.get_ctxtnav_adds(req):
+                    if isinstance(add, Markup):
+                        adds.append(Markup(add.replace("'","\\'")))
+                    else:
+                        href, text = add
+                        adds.append(Markup('<a href="%s">%s</a>'%(href,Markup.escape(text,False))))
+        req.hdf['ctxtnavadd.adds'] = adds
         return 'ctxtnavadd.cs', 'text/javascript'
     
     # ITemplateProvider methods    
