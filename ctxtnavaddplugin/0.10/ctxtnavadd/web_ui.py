@@ -26,7 +26,7 @@ class CtxtnavAddModule(Component):
         
     def get_navigation_items(self, req):
         evil_js = req.href('ctxtnavadd','js','ctxtnavadd.js')
-        if have_aj and False:
+        if have_aj:
             add_javascript(req, evil_js)
         else:
             self._add_javascript_footer(req, req.href.chrome(evil_js))
