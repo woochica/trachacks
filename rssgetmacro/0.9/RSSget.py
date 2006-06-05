@@ -211,7 +211,6 @@ def rss_get_url(url):
 	# 4. if remote fails, return stale object, or error
 	# not implemented
 	
-print rss_get_url('http://sxip.org/blog/?feed=rss2')
 
 def execute(hdf, txt, env):
     News = rss_get_url(txt)
