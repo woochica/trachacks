@@ -1,5 +1,4 @@
 from trac.core import *
-from trac.web.main import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.util import Markup
 
@@ -16,7 +15,7 @@ inc_script = """<script type="text/javascript" src="%s"></script>"""
 class CtxtnavAddModule(Component):
     """An evil module that adds buttons to the ctxtnav bar of other plugins."""
  
-    implements(INavigationContributor, ITemplateProvider, IRequestHandler)
+    implements(INavigationContributor, ITemplateProvider)
     
     ctxtnav_adders = ExtensionPoint(ICtxtnavAdder)
     
@@ -29,28 +28,11 @@ class CtxtnavAddModule(Component):
         if have_aj:
             add_javascript(req, evil_js)
         else:
-            self._add_javascript_footer(req, req.href.chrome(evil_js))
-        self._add_javascript_footer(req,req.href.ctxtnavadd(req.path_info))
-        return []
+            self._add_js_inc(req, req.href.chrome(evil_js))
+        self._add_js(req,self._make_js(req))
         
-    # IRequestHandler methods
-    def match_request(self, req):
-        return req.path_info.startswith('/ctxtnavadd')
+        return [] # This returns no buttons
         
-    def process_request(self, req):
-        adds = []
-        path_info = req.path_info[11:]
-        for adder in self.ctxtnav_adders:
-            if adder.match_ctxtnav_add(req, path_info):
-                for add in adder.get_ctxtnav_adds(req):
-                    if isinstance(add, Markup):
-                        adds.append(Markup(add.replace("'","\\'")))
-                    else:
-                        href, text = add
-                        adds.append(Markup('<a href="%s">%s</a>'%(href,Markup.escape(text,False))))
-        req.hdf['ctxtnavadd.adds'] = adds
-        return 'ctxtnavadd.cs', 'text/javascript'
-    
     # ITemplateProvider methods    
     def get_templates_dirs(self):
         """
@@ -58,7 +40,8 @@ class CtxtnavAddModule(Component):
         ClearSilver templates.
         """
         from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
+        #return [resource_filename(__name__, 'templates')]
+        return []
 
     def get_htdocs_dirs(self):
         """
@@ -76,8 +59,29 @@ class CtxtnavAddModule(Component):
         return [('ctxtnavadd', resource_filename(__name__, 'htdocs'))]
 
     # Internal methods
-    def _add_javascript_footer(self, req, file):
-        """Add a javascript include via hdf['project.footer']"""
+    def _add_js(self, req, data):
+        """Add javascript to a page via hdf['project.footer']"""
         footer = req.hdf['project.footer']
-        footer += inc_script % file
+        footer += data
         req.hdf['project.footer'] = Markup(footer)
+    
+    def _add_js_inc(self, req, file):
+        """Add a javascript include via hdf['project.footer']"""
+        self._add_js_footer(req, inc_script%file)
+
+    def _make_js(self, req):
+        """Generate the needed Javascript."""
+        adds = []
+        for adder in self.ctxtnav_adders:
+            if adder.match_ctxtnav_add(req):
+                for add in adder.get_ctxtnav_adds(req):
+                    if isinstance(add, Markup):
+                        adds.append(Markup(add.replace("'","\\'")))
+                    else:
+                        href, text = add
+                        adds.append(Markup('<a href="%s">%s</a>'%(href,Markup.escape(text,False))))
+        js = ""
+        for add in adds:
+            js += "add_ctxtnav('%s');\n"%add
+        return """<script type="text/javascript">%s</script>"""%js
+    
