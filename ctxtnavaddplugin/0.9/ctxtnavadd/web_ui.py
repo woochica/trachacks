@@ -24,11 +24,11 @@ class CtxtnavAddModule(Component):
         return '' # This is never called
         
     def get_navigation_items(self, req):
-        evil_js = req.href('ctxtnavadd','js','ctxtnavadd.js')
+        evil_js = self.env.href('ctxtnavadd','js','ctxtnavadd.js')
         if have_aj:
             add_javascript(req, evil_js)
         else:
-            self._add_js_inc(req, req.href.chrome(evil_js))
+            self._add_js_inc(req, self.env.href.chrome(evil_js))
         self._add_js(req,self._make_js(req))
         
         return [] # This returns no buttons
