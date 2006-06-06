@@ -86,6 +86,8 @@ class Method(object):
         # If result is null, return a zero
         if result is None:
             result = 0
+        elif isinstance(result, dict):
+            pass
         elif not isinstance(result, basestring):
             # Try and convert result to a list
             try:

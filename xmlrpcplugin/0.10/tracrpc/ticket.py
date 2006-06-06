@@ -6,6 +6,7 @@ import trac.ticket.query as query
 
 import pydoc
 import xmlrpclib
+from StringIO import StringIO
 
 class TicketRPC(Component):
     """ An interface to Trac's ticketing system. """
@@ -25,7 +26,11 @@ class TicketRPC(Component):
         yield ('TICKET_VIEW', ((dict, int), (dict, int, int)), self.changeLog)
         yield ('TICKET_VIEW', ((list, int),), self.listAttachments)
         yield ('TICKET_VIEW', ((xmlrpclib.Binary, int, str),), self.getAttachment)
-        yield ('TICKET_APPEND', ((bool, int, str, xmlrpclib.Binary),), self.putAttachment)
+        yield ('TICKET_APPEND',
+               ((str, int, str, xmlrpclib.Binary, bool),
+                (str, int, str, xmlrpclib.Binary)),
+               self.putAttachment)
+        yield ('TICKET_ADMIN', ((bool, int, str),), self.deleteAttachment)
 
     # Exported methods
     def query(self, req, qstr = 'status!=closed'):
@@ -58,15 +63,15 @@ class TicketRPC(Component):
         for k, v in attributes.iteritems():
             t[k] = v
         t.save_changes(req.authname, comment)
-        return self.get(t.id)
+        return self.get(req, t.id)
 
     def delete(self, req, id):
         """ Delete ticket with the given id. """
         t = model.Ticket(self.env, id)
         t.delete()
 
-    def changeLog(self, req, id, when = 0):
-        t = model.Ticket(self.env, id)
+    def changeLog(self, req, id, when=0):
+        t = model.Ticket(self.env, id, when)
         return t.get_changelog()
     # Use existing documentation from Ticket model
     changeLog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
@@ -80,12 +85,28 @@ class TicketRPC(Component):
         attachment = Attachment(self.env, 'ticket', ticket, filename)
         return xmlrpclib.Binary(attachment.open().read())
 
-    def putAttachment(self, req, ticket, filename, data):
-        """ (over)writes an attachment. """
-        if not Ticket(self.env, ticket).exists:
+    def putAttachment(self, req, ticket, filename, data, replace=True):
+        """ Add an attachment, optionally (and defaulting to) overwriting an
+        existing one. Returns filename."""
+        if not model.Ticket(self.env, ticket).exists:
             raise TracError, 'Ticket "%s" does not exist' % ticket
+        if replace:
+            try:
+                attachment = Attachment(self.env, 'ticket', ticket, filename)
+                attachment.delete()
+            except TracError:
+                pass
         attachment = Attachment(self.env, 'ticket', ticket)
+        attachment.author = req.authname or 'anonymous'
         attachment.insert(filename, StringIO(data.data), len(data.data))
+        return attachment.filename
+
+    def deleteAttachment(self, req, ticket, filename):
+        """ Delete an attachment. """
+        if not model.Ticket(self.env, ticket).exists:
+            raise TracError('Ticket "%s" does not exists' % ticket)
+        attachment = Attachment(self.env, 'ticket', ticket, filename)
+        attachment.delete()
         return True
 
 
@@ -114,7 +135,7 @@ def ticketModelFactory(cls, cls_attributes):
             attributes= {}
             for k in cls_attributes:
                 attributes[k] = getattr(i, k)
-            return attr
+            return attributes
         get.__doc__ = """ Get a ticket %s. """ % cls.__name__.lower()
 
         def delete(self, req, name):
@@ -169,7 +190,9 @@ def ticketEnumFactory(cls):
         delete.__doc__ = """ Delete a ticket %s """ % cls.__name__.lower()
 
         def create(self, req, name, value):
-            self._updateHelper(name, value).insert()
+            i = cls(self.env)
+            i.value = value
+            i.insert()
         create.__doc__ = """ Create a new ticket %s with the given value. """ % cls.__name__.lower()
 
         def update(self, req, name, value):
@@ -177,8 +200,7 @@ def ticketEnumFactory(cls):
         update.__doc__ = """ Update ticket %s with the given value. """ % cls.__name__.lower()
 
         def _updateHelper(self, req, name, value):
-            i = cls(self.env)
-            i.name = name
+            i = cls(self.env, name)
             i.value = value
             return i
 

@@ -37,7 +37,9 @@ class WikiRPC(Component):
         yield ('WIKI_CREATE', ((bool, str, str, dict),), self.putPage)
         yield ('WIKI_VIEW', ((list, str),), self.listAttachments)
         yield ('WIKI_VIEW', ((xmlrpclib.Binary, str),), self.getAttachment)
-        yield ('WIKI_MODIFY', ((bool, str, str, xmlrpclib.Binary),), self.putAttachment)
+        yield ('WIKI_MODIFY', ((bool, str, str, xmlrpclib.Binary),
+                               (str, str, str, xmlrpclib.Binary, bool)), self.putAttachment)
+        yield ('WIKI_DELETE', ((bool, str),), self.deleteAttachment)
         yield ('WIKI_VIEW', ((list, str),), self.listLinks)
 
     def _to_timestamp(self, datetime):
@@ -122,13 +124,34 @@ class WikiRPC(Component):
         attachment = Attachment(self.env, 'wiki', pagename, filename)
         return xmlrpclib.Binary(attachment.open().read())
 
-    def putAttachment(self, req, path, data):
-        """ (over)writes an attachment. """
+    def putAttachment(self, req, path, data, replace=True):
+        """ (over)writes an attachment. For compatibility with WikiRPC, if
+        replace=True then the return type is a boolean, otherwise it is the
+        attachment filename. """
         pagename, filename = posixpath.split(path)
         if not WikiPage(self.env, pagename).exists:
             raise TracError, 'Wiki page "%s" does not exist' % pagename
+        if replace:
+            try:
+                attachment = Attachment(self.env, 'wiki', pagename, filename)
+                attachment.delete()
+            except TracError:
+                pass
         attachment = Attachment(self.env, 'wiki', pagename)
+        attachment.author = req.authname or 'anonymous'
         attachment.insert(filename, StringIO(data.data), len(data.data))
+        if replace:
+            return True
+        else:
+            return attachment.filename
+
+    def deleteAttachment(self, req, path):
+        """ Delete an attachment. """
+        pagename, filename = posixpath.split(path)
+        if not WikiPage(self.env, pagename).exists:
+            raise TracError, 'Wiki page "%s" does not exist' % pagename
+        attachment = Attachment(self.env, 'wiki', pagename, filename)
+        attachment.delete()
         return True
 
     def listLinks(self, req, pagename):
