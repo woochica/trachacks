@@ -143,7 +143,11 @@ def ticketModelFactory(cls, cls_attributes):
         delete.__doc__ = """ Delete a ticket %s """ % cls.__name__.lower()
 
         def create(self, req, name, attributes):
-            self._updateHelper(name, attributes).insert()
+            i = cls(self.env)
+            i.name = name
+            for k, v in attributes.iteritems():
+                setattr(i, k, v)
+            i.insert();
         create.__doc__ = """ Create a new ticket %s with the given attributes. """ % cls.__name__.lower()
 
         def update(self, req, name, attributes):
@@ -151,8 +155,7 @@ def ticketModelFactory(cls, cls_attributes):
         update.__doc__ = """ Update ticket %s with the given attributes. """ % cls.__name__.lower()
 
         def _updateHelper(self, name, attributes):
-            i = cls(self.env)
-            i.name = name
+            i = cls(self.env, name)
             for k, v in attributes.iteritems():
                 setattr(i, k, v)
             return i
@@ -191,6 +194,7 @@ def ticketEnumFactory(cls):
 
         def create(self, req, name, value):
             i = cls(self.env)
+            i.name = name
             i.value = value
             i.insert()
         create.__doc__ = """ Create a new ticket %s with the given value. """ % cls.__name__.lower()
@@ -199,7 +203,7 @@ def ticketEnumFactory(cls):
             self._updateHelper(name, value).update()
         update.__doc__ = """ Update ticket %s with the given value. """ % cls.__name__.lower()
 
-        def _updateHelper(self, req, name, value):
+        def _updateHelper(self, name, value):
             i = cls(self.env, name)
             i.value = value
             return i
