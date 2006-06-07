@@ -52,6 +52,7 @@ class TicketRPC(Component):
         t['status'] = 'new'
         t['summary'] = summary
         t['description'] = description
+        t['reporter'] = req.authname or 'anonymous'
         for k, v in attributes.iteritems():
             t[k] = v
         t.insert()
@@ -62,7 +63,7 @@ class TicketRPC(Component):
         t = model.Ticket(self.env, id)
         for k, v in attributes.iteritems():
             t[k] = v
-        t.save_changes(req.authname, comment)
+        t.save_changes(req.authname or 'anonymous', comment)
         return self.get(req, t.id)
 
     def delete(self, req, id):
