@@ -1,4 +1,21 @@
-"""Example macro."""
+"""
+A Simple RSS News Retriever: Returns the content of an rss2 feed, parsed and pretty.
+
+Usage: [[RSSget(http://www.example.com/feed.xml)]]
+
+This edition:
+    * caches fetched feeds to /tmp/tracrss
+    * returns the feed as a <dl> 
+
+Customisation:
+    * RESULTS_FULL = 1; < number of results for which descriptions are displayed
+    * RESULTS_TOTAL = 5; < total number of results, titles of posts are displayed
+    * CACHE_INTERVAL = 1500 < time till feed is rechecked. 
+
+Known Issues: Doesn't parse atom or rss or rdf. This is a one trick pony
+
+"""
+
 import urllib
 import time
 import string
@@ -8,10 +25,6 @@ import urllib2
 import StringIO
 from xml.dom import minidom
 from trac.util import escape
-
-## Usage: [[RSSget(http://www.example.com/feed.xml)]]
-##
-
 
 CACHE_DIR = "/tmp";
 CACHE_ID = "tracrss"
