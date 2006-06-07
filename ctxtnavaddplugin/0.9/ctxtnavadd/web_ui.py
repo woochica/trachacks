@@ -67,7 +67,7 @@ class CtxtnavAddModule(Component):
     
     def _add_js_inc(self, req, file):
         """Add a javascript include via hdf['project.footer']"""
-        self._add_js_footer(req, inc_script%file)
+        self._add_js(req, inc_script%file)
 
     def _make_js(self, req):
         """Generate the needed Javascript."""
