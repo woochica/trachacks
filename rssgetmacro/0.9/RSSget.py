@@ -70,7 +70,7 @@ def create_filename(url):
 ## burn the old one
 def remove_old_cache(url):
 	filename = cache_lookup(url)
-	print filename
+#	print filename
 	os.remove(CACHE_DIR + "/" + CACHE_ID + "/" + filename)
 
 ## hell, burn all of 'em
@@ -184,26 +184,26 @@ def parse_file(feeddata):
 def rss_get_url(url):
 	# 1. check cache
 	cache_file = cache_lookup(url)
-	print cache_file
+#	print cache_file
 	if cache_file:
-		print "checking freshness"
+#		print "checking freshness"
 		cache_freshtest = freshness_check(cache_file, CACHE_INTERVAL)
-		print cache_freshtest
+#		print cache_freshtest
 	# 2. if there is a hit, make sure its fresh
 		if cache_freshtest:
-			print "file is fresh"
+#			print "file is fresh"
 			cache_contents = local_file_read(cache_file)
 			parsed_rss = parse_file(cache_contents)
-			print parsed_rss
+			#print parsed_rss
 			return parsed_rss
 	# 3. if cached obj fails freshness check, fetch remote
 		else:
-			print "file is stale, getting remote"
+#			print "file is stale, getting remote"
 			remote_rss = remote_url_get(url)
 			parsed_rss = parse_file(remote_rss)
 			return parsed_rss
 	else:
-		print "there is no cache file, getting remote"
+#		print "there is no cache file, getting remote"
 		remote_rss = remote_url_get(url)
 		parsed_rss = parse_file(remote_rss)
 		return parsed_rss
@@ -211,13 +211,10 @@ def rss_get_url(url):
 	# 4. if remote fails, return stale object, or error
 	# not implemented
 	
+#print rss_get_url('http://sxip.org/blog/?feed=rss')
 
 def execute(hdf, txt, env):
     News = rss_get_url(txt)
-	# Currently hdf is set only when the macro is called
-    # From a wiki page
-    if hdf:
-        hdf['wiki.macro.greeting'] = 'Hello World'
         
     # args will be null if the macro is called without parenthesis.
     args = txt or 'No arguments'
