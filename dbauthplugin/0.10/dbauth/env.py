@@ -19,13 +19,15 @@ from trac.db.sqlite_backend import *
 
 def get_db(env):
     """Return a database connection"""
-    path = env.config.get('central', 'database')
+    path = env.config.get('dbauth', 'database')
     return SQLiteConnection(path)
 
 def get_envname(env):
-    envroot = env.config.get('central', 'envroot')
-    if envroot[-1] != "/":
+    envroot = env.config.get('dbauth', 'envroot')
+    if envroot and envroot[-1] != "/":
         envroot += "/"
+    else:
+        raise TracError("No 'envroot' set in global trac.ini")
     envname = env.path.replace(envroot, "")
     return envname
 
