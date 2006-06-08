@@ -27,6 +27,13 @@ class DbAuthPermissionGroupProvider(Component):
 
     implements(IPermissionGroupProvider)
 
+    def __init__(self):
+        self.perms = {                         # should we have defaults here?
+           "table":self.env.config.get('dbauth', 'perms_table'),
+           "envname": self.env.config.get('dbauth','perms_envname_field'),
+           "username": self.env.config.get('dbauth','perms_username_field'),
+           "groupname": self.env.config.get('dbauth','perms_groupname_field')}
+
     def get_permission_groups(self, username):
         groups = ['anonymous']
         if username == 'Anonymous':
@@ -36,12 +43,17 @@ class DbAuthPermissionGroupProvider(Component):
         db = get_db(self.env)
         cursor = db.cursor()
         
-        cursor.execute("SELECT groupname "
-                       "FROM trac_permissions "
-                       "WHERE (envname=%s or envname='all') "
-                       "  AND username=%s "
-                       "GROUP BY groupname "
-                       "ORDER BY groupname", (envname,username))
+        sql = "SELECT %s " \
+              "FROM %s " \
+              "WHERE (%s=%%s or %s='all') " \
+              "  AND %s=%%s " \
+              "GROUP BY %s " \
+              "ORDER BY %s" % \
+              (self.perms['groupname'], self.perms['table'],
+               self.perms['envname']. self.perms['envname']. 
+               self.perms['username']. self.perms['groupname']. 
+               self.perms['groupname'] )
+        cursor.execute(sql, (envname,username))
                        
         # groupnames = cursor.fetchall()
         for groupname in cursor: #groupnames:

@@ -31,11 +31,26 @@ class DbAuthLoginModule(Component):
     combined with cookies for communicating the login information across the whole site.
     """
 
-    implements(IAuthenticator, INavigationContributor, ITemplateProvider, IRequestHandler)
+    implements(IAuthenticator, INavigationContributor, ITemplateProvider, 
+               IRequestHandler)
 
     def __init__(self):
         self.envname = get_envname(self.env)
-        
+        self.users = {                         # should we have defaults here?
+           "table":self.env.config.get('dbauth', 'users_table'),
+           "envname": self.env.config.get('dbauth','users_envname_field'),
+           "username": self.env.config.get('dbauth','users_username_field'),
+           "password": self.env.config.get('dbauth','users_password_field'),
+           "email": self.env.config.get('dbauth','users_email_field')}
+        self.cookies = {                         # should we have defaults here?
+           "table":self.env.config.get('dbauth', 'cookies_table'),
+           "envname": self.env.config.get('dbauth','cookies_envname_field'),
+           "cookie": self.env.config.get('dbauth','cookies_cookie_field'),
+           "username": self.env.config.get('dbauth','cookies_username_field'),
+           "ipnr": self.env.config.get('dbauth','cookies_ipnr_field'),
+           "unixtime": self.env.config.get('dbauth','cookies_unixtime_field')}
+
+
     # IAuthenticator methods
 
     def authenticate(self, req):
@@ -112,10 +127,11 @@ class DbAuthLoginModule(Component):
     def _check_login(self, uid, pwd):
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = """SELECT username
-                 FROM trac_users
-                 WHERE username= %s and password = %s
-                   AND (envname = %s or envname='all')"""
+        sql = "SELECT %s " \
+               "FROM %s " \
+               "WHERE username= %%s and password = %%s " \
+               "  AND (envname = %%s or envname='all')" % \
+               (self.users['username'], self.users['table'])
         cursor.execute(sql, (uid, pwd, self.envname))
         row = cursor.fetchone()        
         if not row:
@@ -134,10 +150,14 @@ class DbAuthLoginModule(Component):
         cookie = hex_entropy()
         db = get_db(self.env)
         cursor = db.cursor()
-        cursor.execute("INSERT INTO trac_cookies "
-                       "(envname, cookie, username, ipnr, unixtime) "
-                       "VALUES (%s, %s, %s, %s, %s)", (self.envname, cookie, remote_user,
-                       req.remote_addr, int(time.time())))
+        sql = "INSERT INTO %s " \
+              "(%s, %s, %s, %s, %s) " \
+              "VALUES (%%s, %%s, %%s, %%s, %%s)" % \
+              (self.cookies['table'], self.cookies['envname'], 
+               self.cookies['cookie'], self.cookies['username'], 
+               self.cookies['ipnr'], self.cookies['unixtime'])
+        cursor.execute(sql, (self.envname, cookie, remote_user, 
+                        req.remote_addr, int(time.time())))
         db.commit()
 
         req.authname = remote_user
@@ -156,10 +176,12 @@ class DbAuthLoginModule(Component):
 
         db = get_db(self.env)
         cursor = db.cursor()
-        cursor.execute("DELETE FROM trac_cookies "
-                       "WHERE username=%s "
-                       "  AND envname=%s",
-                       (req.authname, self.envname))
+        sql = "DELETE FROM %s " \
+              "WHERE %s=%%s " \
+              "  AND %s=%%s" % \
+              (self.cookies['table'], self.cookies['username'],
+               self.cookies['envname'])
+        cursor.execute(sql, (req.authname, self.envname))
         db.commit()
         self._expire_cookie(req)
 
@@ -174,9 +196,13 @@ class DbAuthLoginModule(Component):
     def _get_name_for_cookie(self, req, cookie):
         db = get_db(self.env)
         cursor = db.cursor()
-        cursor.execute("SELECT username FROM trac_cookies "
-                       "WHERE cookie=%s AND envname=%s",
-                           (cookie.value,self.envname))
+        sql = "SELECT %s " \
+               "FROM %s " \
+               "WHERE %s=%%s " \
+               "  AND %s=%%s" % \
+               (self.cookies['username'], self.cookies['table'],
+                self.cookies['cookie'], self.cookies['envname'])
+        cursor.execute(sql, (cookie.value,self.envname)) 
         row = cursor.fetchone()
         if not row:
             # The cookie is invalid (or has been purged from the database), so

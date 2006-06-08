@@ -24,29 +24,40 @@ class DbAuthUserDirectory(Component):
     
     def __init__(self):
         self.envname = get_envname(self.env)
+        self.perms = {                         # should we have defaults here?
+           "table":self.env.config.get('dbauth', 'perms_table'),
+           "envname": self.env.config.get('dbauth','perms_envname_field'),
+           "username": self.env.config.get('dbauth','perms_username_field'),
+           "groupname": self.env.config.get('dbauth','perms_groupname_field')}
         
     # IUserDirectory methods
     
     def get_known_user_info(self, limit=None):
         cnx = get_db(self.env)
         cursor = cnx.cursor()
-        cursor.execute("SELECT username "
-                       "FROM trac_permissions " 
-                       "WHERE (envname=%s or envname='all') "
-                       "ORDER BY username", (self.envname,))
-        
+        sql = "SELECT %s " \
+              "FROM %s " \
+              "WHERE (%s=%%s or %s='all') " \
+              "ORDER BY %s" % \
+              (self.perms['username'], self.perms['table'],
+               self.perms['envname'], self.perms['envname'], 
+               self.perms['username'], )
+        cursor.execute(sql, (self.envname,))
         for username in cursor:
-            yield username,'',''
+            yield username,'',''  # FIXME: don't we have email addresses in tables now?
         cnx.close()
 
     def get_known_users(self, cnx=None, limit=None):
         db = get_db(self.env)
         cursor = db.cursor()
-        cursor.execute("SELECT username "
-                       "FROM trac_permissions "
-                       "WHERE (envname=%s or envname='all') "
-                       "ORDER BY username", (self.envname,))
-        
+        sql = "SELECT %s " \
+              "FROM %s " \
+              "WHERE (%s=%%s or %s='all') " \
+              "ORDER BY %s" % \
+              (self.perms['username'], self.perms['table'],
+               self.perms['envname'], self.perms['envname'], 
+               self.perms['username'], )
+        cursor.execute(sql, (self.envname,))
         for username in cursor:
             yield username[0]
 

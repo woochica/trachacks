@@ -15,20 +15,26 @@
 # Author: Brad Anderson <brad@dsource.org>
 
 
-from trac.db.sqlite_backend import *
+from trac.db import *
 
 def get_db(env):
     """Return a database connection"""
-    path = env.config.get('dbauth', 'database')
-    return SQLiteConnection(path)
+    return CentralDatabaseManager(env).get_connection()
 
 def get_envname(env):
     envroot = env.config.get('dbauth', 'envroot')
-    if envroot and envroot[-1] != "/":
-        envroot += "/"
-    else:
+    try:
+        if envroot[-1] != "/":
+            envroot += "/"
+    except:
         raise TracError("No 'envroot' set in global trac.ini")
     envname = env.path.replace(envroot, "")
     return envname
 
+    
+class CentralDatabaseManager(DatabaseManager):
+    connection_uri = Option('dbauth', 'database', 'sqlite:db/trac.db',
+        """Database connection
+        [wiki:TracEnvironment#DatabaseConnectionStrings string] for this
+        project""")
     
