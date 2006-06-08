@@ -11,7 +11,7 @@ class DiscussionTimeline(Component):
     """
     implements(ITimelineEventProvider)
 
-    # ITimelineEventProvider methods
+    # ITimelineEventProvider
     def get_timeline_events(self, req, start, stop, filters):
         if 'discussion' in filters:
             # Create database context
@@ -76,19 +76,22 @@ class DiscussionTimeline(Component):
            yield ('discussion', 'Discussion changes')
 
     def _get_changed_forums(self, cursor, start, stop):
-        columns = ('id', 'name', 'subject', 'description', 'time')
-        cursor.execute('SELECT id, name, subject, description, time'
-          ' FROM forum WHERE time BETWEEN %s AND %s' % (start, stop))
+        columns = ('id', 'name', 'author', 'subject', 'description', 'time')
+        sql = 'SELECT id, name, author, subject, description, time FROM forum' \
+          ' WHERE time BETWEEN %s AND %s' % (start, stop)
+        self.log.debug(sql)
+        cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
-            row['author'] = 'nobody'
             yield row
 
     def _get_changed_topics(self, cursor, start, stop):
         columns = ('id', 'subject', 'author', 'time', 'forum', 'forum_name')
-        cursor.execute('SELECT id, subject, author, time, forum, (SELECT name'
-          ' FROM forum f WHERE f.id = topic.forum) FROM topic WHERE time'
-          ' BETWEEN %s AND %s' % (start, stop))
+        sql = 'SELECT id, subject, author, time, forum, (SELECT name FROM forum' \
+          ' f WHERE f.id = topic.forum) FROM topic WHERE time BETWEEN %s AND %s' \
+          % (start, stop)
+        self.log.debug(sql)
+        cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
             yield row
@@ -96,10 +99,12 @@ class DiscussionTimeline(Component):
     def _get_changed_messages(self, cursor, start, stop):
         columns = ('id', 'author', 'time', 'forum', 'topic', 'forum_name',
           'topic_subject')
-        cursor.execute('SELECT id, author, time, forum, topic, (SELECT name'
-          ' FROM forum f WHERE f.id = message.forum), (SELECT subject FROM'
-          ' topic t WHERE t.id = message.topic) FROM message WHERE time'
-          ' BETWEEN %s AND %s' % (start, stop))
+        sql = 'SELECT id, author, time, forum, topic, (SELECT name FROM forum f' \
+          ' WHERE f.id = message.forum), (SELECT subject FROM topic t WHERE' \
+          ' t.id = message.topic) FROM message WHERE time BETWEEN %s AND %s' \
+          % (start, stop)
+        self.log.debug(sql)
+        cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
             yield row

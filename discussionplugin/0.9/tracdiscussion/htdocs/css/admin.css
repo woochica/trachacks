@@ -1,0 +1,21 @@
+/* Forum group list.  */
+.group-list
+{
+  overflow: auto;
+}
+
+.group-list td.forums
+{
+  text-align: center;
+}
+
+/* Forum list */
+.forum-list
+{
+  overflow: auto;
+}
+
+.forum-list td.moderators
+{
+  text-align: center;
+}

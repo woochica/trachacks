@@ -25,7 +25,9 @@ class DiscussionWiki(Component):
         cursor = db.cursor()
         if ns == 'forum':
             columns = ('subject',)
-            cursor.execute('SELECT subject FROM forum WHERE id = %s', id)
+            sql = 'SELECT subject FROM forum WHERE id = %s' % (id)
+            self.log.debug(sql)
+            cursor.execute(sql)
             for row in cursor:
                 row = dict(zip(columns, row))
                 return '<a href="%s/%s" title="%s">%s</a>' % (
@@ -34,8 +36,10 @@ class DiscussionWiki(Component):
               self.env.href.discussion(), id, label)
         elif ns == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
-            cursor.execute('SELECT forum, (SELECT subject FROM forum WHERE id ='
-              ' topic.forum), subject FROM topic WHERE id = %s', id)
+            sql = 'SELECT forum, (SELECT subject FROM forum WHERE id =' \
+              ' topic.forum), subject FROM topic WHERE id = %s' % (id)
+            self.log.debug(sql)
+            cursor.execute(sql)
             for row in cursor:
                 row = dict(zip(columns, row))
                 forum, forum_subject, subject = row
@@ -46,9 +50,11 @@ class DiscussionWiki(Component):
               self.env.href.discussion(), id, label)
         elif ns == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
-            cursor.execute('SELECT forum, topic, (SELECT subject FROM forum'
-              ' WHERE id = message.forum), (SELECT subject FROM topic WHERE'
-              ' id = message.topic) FROM message WHERE id = %s' % (id))
+            sql = 'SELECT forum, topic, (SELECT subject FROM forum WHERE id =' \
+              ' message.forum), (SELECT subject FROM topic WHERE id =' \
+              ' message.topic) FROM message WHERE id = %s' % (id)
+            self.log.debug(sql)
+            cursor.execute(sql)
             for row in cursor:
                 row = dict(zip(columns, row))
                 return '<a href="%s/%s/%s/%s#%s" title="%s: %s">%s</a>' % (

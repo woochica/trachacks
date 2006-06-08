@@ -52,9 +52,9 @@
         <?cs var:message.body ?>
       </div>
       <div class="controls">
-        <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>#reply?action=add;reply=<?cs var:message.id ?>">Reply</a>
-        <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
-          <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=delete;reply=<?cs var:message.id ?>">Delete</a>
+        <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=add;reply=<?cs var:message.id ?>#reply">Reply</a>
+        <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
+          <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=delete;reply=<?cs var:message.id ?>" onClick="return confirm('Do you realy want to delete this reply and all its descendants?')"/>Delete</a>
         <?cs /if ?>
       </div>
       <div class="author">
@@ -86,7 +86,7 @@
       <?cs var:discussion.topic.body ?>
     </div>
     <div class="controls">
-      <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>#reply?action=add;reply=-1">Reply</a>
+      <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=add;reply=-1#reply">Reply</a>
     </div>
     <div class="author">
       <?cs var:discussion.topic.author ?>

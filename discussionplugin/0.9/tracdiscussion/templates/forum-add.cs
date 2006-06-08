@@ -20,7 +20,7 @@
     </div>
     <div class="field">
       <label for="moderators">Moderators:</label><br/>
-      <?cs if:discussion.users ?>
+      <?cs if:discussion.users.0 ?>
         <select name="moderators" multiple="on">
           <?cs each:user = discussion.users ?>
             <option value="<?cs var:user ?>"><?cs var:user ?></option>

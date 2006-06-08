@@ -6,12 +6,13 @@ from setuptools import setup
 setup(
   name = 'TracDiscussion',
   version = '0.2',
-  packages = ['tracdiscussion'],
+  packages = ['tracdiscussion', 'tracdiscussion.db'],
   package_data = {'tracdiscussion' : ['templates/*.cs', 'htdocs/css/*.css']},
   entry_points = {'trac.plugins': ['TracDiscussion.core = tracdiscussion.core',
     'TracDiscussion.init = tracdiscussion.init',
     'TracDiscussion.wiki = tracdiscussion.wiki',
-    'TracDiscussion.timeline = tracdiscussion.timeline']},
+    'TracDiscussion.timeline = tracdiscussion.timeline',
+    'TracDiscussion.admin = tracdiscussion.admin']},
   keywords = 'trac discussion',
   author = 'Alec Thomas, Radek Bartoň',
   author_email = 'trac-hacks@swapoff.org',
@@ -21,7 +22,8 @@ setup(
 Copyright (c) 2005, Alec Thomas
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.

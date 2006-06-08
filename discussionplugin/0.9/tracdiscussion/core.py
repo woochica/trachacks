@@ -55,9 +55,11 @@ class DiscussionCore(Component):
         return match
 
     def process_request(self, req):
+        # Get access to database
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
+        # CSS styles
         add_stylesheet(req, 'common/css/wiki.css')
         add_stylesheet(req, 'discussion/css/discussion.css')
         req.hdf['trac.href.discussion'] = self.env.href.discussion()
@@ -156,12 +158,18 @@ class DiscussionCore(Component):
 
             # Get form values
             name = req.args.get('name')
+            author = req.authname
             subject = req.args.get('subject')
             description = req.args.get('description')
-            moderators = req.args.get('moderators').split(' ')
+            moderators = req.args.get('moderators')
+            if moderators:
+                moderators = moderators.split(' ')
+            else:
+                moderators = ''
 
             # Add new forum
-            self.add_forum(cursor, name, subject, description, moderators)
+            self.add_forum(cursor, name, author, subject, description,
+              moderators)
 
             # Display forum list
             req.hdf['discussion.forums'] = self.get_forums(cursor, req)
@@ -286,8 +294,10 @@ class DiscussionCore(Component):
     # Non-extension methods
     def get_message(self, cursor, id, req):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
-        cursor.execute('SELECT id, forum, topic, replyto, time, author, body '
-          'FROM message WHERE id = %s' % (id))
+        sql = 'SELECT id, forum, topic, replyto, time, author, body FROM' \
+          ' message WHERE id = %s' % (id)
+        self.log.debug(sql)
+        cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
@@ -297,8 +307,10 @@ class DiscussionCore(Component):
 
     def get_topic(self, cursor, id, req):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
-        cursor.execute('SELECT id, forum, time, subject, body, author FROM'
-          ' topic WHERE id = %s' % (id))
+        sql = 'SELECT id, forum, time, subject, body, author FROM topic WHERE' \
+          ' id = %s' % (id)
+        self.log.debug(sql)
+        cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
@@ -308,8 +320,10 @@ class DiscussionCore(Component):
 
     def get_forum(self, cursor, id, req):
         columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
-        cursor.execute('SELECT name, moderators, id, time, subject, description'
-          ' FROM forum WHERE id = %s' % (id))
+        sql = 'SELECT name, moderators, id, time, subject, description FROM' \
+          ' forum WHERE id = %s' % (id)
+        self.log.debug(sql)
+        cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
@@ -318,14 +332,17 @@ class DiscussionCore(Component):
         return None
 
     def get_forums(self, cursor, req):
-        columns = ('moderators', 'id', 'time', 'subject', 'name',
-          'description', 'topics', 'replies', 'lastreply', 'lasttopic')
-        cursor.execute('SELECT moderators, id, time, subject, name,'
-          ' description, (SELECT COUNT(id) FROM topic t WHERE'
-          ' t.forum = forum.id), (SELECT COUNT(id) FROM message m WHERE m.forum'
-          ' = forum.id), (SELECT MAX(time) FROM message m WHERE m.forum ='
-          ' forum.id), (SELECT MAX(time) FROM topic t WHERE t.forum = forum.id)'
-          ' FROM forum ORDER BY subject')
+        columns = ('id', 'name', 'author', 'time', 'moderators', 'group',
+          'subject', 'description', 'topics', 'replies', 'lastreply',
+          'lasttopic')
+        sql = 'SELECT id, name, author, time, moderators, forum_group,' \
+          ' subject, description, (SELECT COUNT(id) FROM topic t WHERE' \
+          ' t.forum = forum.id), (SELECT COUNT(id) FROM message m WHERE' \
+          ' m.forum = forum.id), (SELECT MAX(time) FROM message m WHERE' \
+          ' m.forum = forum.id), (SELECT MAX(time) FROM topic t WHERE' \
+          ' t.forum = forum.id) FROM forum ORDER BY subject'
+        self.log.debug(sql)
+        cursor.execute(sql)
         forums = []
         for row in cursor:
             row = dict(zip(columns, row))
@@ -346,10 +363,12 @@ class DiscussionCore(Component):
     def get_topics(self, cursor, forum, req):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
           'replies', 'lastreply')
-        cursor.execute('SELECT id, forum, time, subject, body, author, (SELECT'
-          ' COUNT(id) FROM message m WHERE m.topic = topic.id), (SELECT'
-          ' MAX(time) FROM message m WHERE m.topic = topic.id) FROM topic'
-          ' WHERE forum = %s ORDER BY time' % (forum))
+        sql = 'SELECT id, forum, time, subject, body, author, (SELECT' \
+          ' COUNT(id) FROM message m WHERE m.topic = topic.id), (SELECT' \
+          ' MAX(time) FROM message m WHERE m.topic = topic.id) FROM topic' \
+          ' WHERE forum = %s ORDER BY time' % (forum)
+        self.log.debug(sql)
+        cursor.execute(sql)
         topics = []
         for row in cursor:
             row = dict(zip(columns, row))
@@ -365,8 +384,10 @@ class DiscussionCore(Component):
 
     def get_messages(self, cursor, topic, req):
         columns = ('id', 'replyto', 'time', 'author', 'body')
-        cursor.execute('SELECT id, replyto, time, author, body FROM message'
-          ' WHERE topic = "%s" ORDER BY time' % (topic))
+        sql = 'SELECT id, replyto, time, author, body FROM message WHERE' \
+          ' topic = %s ORDER BY time' % (topic)
+        self.log.debug(sql)
+        cursor.execute(sql)
 
         messagemap = {}
         messages = []
@@ -393,39 +414,56 @@ class DiscussionCore(Component):
     def get_users(self):
         users = []
         for user in self.env.get_known_users():
-            users.append(user)
+            users.append(user[0])
         return users
 
-    def add_forum(self, cursor, name, subject, description, moderators):
+    def add_forum(self, cursor, name, author, subject, description, moderators):
         moderators = ' '.join(moderators)
-        cursor.execute('INSERT INTO forum (name, time, moderators, subject,'
-          ' description) VALUES ("%s", "%s", "%s", "%s", "%s")' % (name,
-          str(int(time.time())), moderators, subject, description))
+        sql = 'INSERT INTO forum (name, author, time, moderators, subject,' \
+          ' description) VALUES ("%s", "%s", %s, "%s", "%s", "%s")' % (name,
+          author, str(int(time.time())), moderators, subject, description)
+        self.log.debug(sql)
+        cursor.execute(sql)
 
     def add_topic(self, cursor, forum, subject, author, body):
-        cursor.execute('INSERT INTO topic (forum, time, author, subject,'
-          ' body) VALUES ("%s", "%s", "%s", "%s", "%s")' % (forum,
-          str(int(time.time())), author, subject, body))
+        sql = 'INSERT INTO topic (forum, time, author, subject, body) VALUES' \
+          ' (%s, %s, "%s", "%s", "%s")' % (forum, str(int(time.time())), author,
+          subject, body)
+        self.log.debug(sql)
+        cursor.execute(sql)
 
     def add_message(self, cursor, forum, topic, replyto, author, body):
-        cursor.execute('INSERT INTO message (forum, topic, replyto, time,'
-          ' author, body) VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' %
-          (forum, topic, replyto, str(int(time.time())), author, body))
+        sql = 'INSERT INTO message (forum, topic, replyto, time, author, body)' \
+          ' VALUES (%s, %s, %s, %s, "%s", "%s")' % (forum, topic, replyto,
+          str(int(time.time())), author, body)
+        self.log.debug(sql)
+        cursor.execute(sql)
 
     def delete_forum(self, cursor, forum):
-        cursor.execute('DELETE FROM message WHERE forum = "%s"' % (forum))
-        cursor.execute('DELETE FROM topic WHERE forum = "%s"' % (forum))
-        cursor.execute('DELETE FROM forum WHERE id = "%s"' % (forum))
+        sql = 'DELETE FROM message WHERE forum = %s' % (forum)
+        self.log.debug(sql)
+        cursor.execute(sql)
+        sql = 'DELETE FROM topic WHERE forum = %s' % (forum)
+        self.log.debug(sql)
+        cursor.execute(sql)
+        sql = 'DELETE FROM forum WHERE id = %s' % (forum)
+        self.log.debug(sql)
+        cursor.execute(sql)
 
     def delete_topic(self, cursor, forum, topic):
-        cursor.execute('DELETE FROM message WHERE forum = "%s" AND topic = "%s"'
-          % (forum, topic))
-        cursor.execute('DELETE FROM topic WHERE id = "%s"' % (topic))
+        sql = 'DELETE FROM message WHERE forum = %s AND topic = %s' % (forum,
+          topic)
+        self.log.debug(sql)
+        cursor.execute(sql)
+        sql = 'DELETE FROM topic WHERE id = %s' % (topic)
+        self.log.debug(sql)
+        cursor.execute(sql)
 
     def delete_message(self, cursor, forum, topic, message):
         # Get message replies
-        cursor.execute('SELECT id FROM message WHERE replyto = "%s"'
-          % (message))
+        sql = 'SELECT id FROM message WHERE replyto = %s' % (message)
+        self.log.debug(sql)
+        cursor.execute(sql)
         replies = []
         for row in cursor:
             replies.append(row[0])
@@ -435,4 +473,6 @@ class DiscussionCore(Component):
             self.delete_message(cursor, forum, topic, reply)
 
         # Delete message itself
-        cursor.execute('DELETE FROM message WHERE id = "%s"' % (message))
+        sql = 'DELETE FROM message WHERE id = %s' % (message)
+        self.log.debug(sql)
+        cursor.execute(sql)
