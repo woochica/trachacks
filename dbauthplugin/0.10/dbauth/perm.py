@@ -43,16 +43,16 @@ class DbAuthPermissionGroupProvider(Component):
         db = get_db(self.env)
         cursor = db.cursor()
         
-        sql = "SELECT %s " \
-              "FROM %s " \
-              "WHERE (%s=%%s or %s='all') " \
-              "  AND %s=%%s " \
-              "GROUP BY %s " \
-              "ORDER BY %s" % \
-              (self.perms['groupname'], self.perms['table'],
-               self.perms['envname']. self.perms['envname']. 
-               self.perms['username']. self.perms['groupname']. 
-               self.perms['groupname'] )
+        sql = "SELECT %(group)s " \
+              "FROM %(table)s " \
+              "WHERE (%(env)s=%%s or %(env)s='all') " \
+              "  AND %(user)s=%%s " \
+              "GROUP BY %(group)s " \
+              "ORDER BY %(group)s" % \
+              {'group' : self.perms['groupname'], 
+               'table' : self.perms['table'],
+               'env'   : self.perms['envname'], 
+               'user'  : self.perms['username']}
         cursor.execute(sql, (envname,username))
                        
         # groupnames = cursor.fetchall()
