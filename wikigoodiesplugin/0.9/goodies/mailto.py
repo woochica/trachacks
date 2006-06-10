@@ -26,14 +26,16 @@ class MailToLink(Component):
 
     # IWikiSyntaxProvider methods
 
+    _email_regexp = r"<[^@]+@[^>]+>"
+    
     if trac_0_9:
         def get_wiki_syntax(self):
-            yield (r"<[^@]+@[^>]+>", lambda x, y, z:
-                   '<a href="%s">%s</a>' % ("mailto:%s" % y[1:-1], escape(y)))
+            yield (self._email_regexp, (lambda x, y, z: '<a href="%s">%s</a>' %
+                                        ("mailto:" + y[1:-1], escape(y))))
     else:
         def get_wiki_syntax(self):
-            yield (r"<[^@]+@[^>]+>", 
-                   lambda x, y, z: html.A(y, href="mailto:%s" % y[1:-1]))
+            yield (self._email_regexp, (lambda x, y, z:
+                                        html.A(y, href="mailto:"+y[1:-1])))
 
     def get_link_resolvers(self):
         return []
