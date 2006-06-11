@@ -32,6 +32,7 @@
     </div>
     <?cs if:discussion.groups.0.id ?>
       <div class="group">
+        <label for="group">Forum Group:</label><br/>
         <select name="group">
           <option value="">None</option>
           <?cs each:group = discussion.groups ?>

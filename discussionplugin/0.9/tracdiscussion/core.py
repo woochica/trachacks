@@ -435,6 +435,8 @@ class DiscussionCore(Component):
     def add_forum(self, cursor, name, author, subject, description, moderators,
       group):
         moderators = ' '.join(moderators)
+        if not group:
+            group = 'NULL'
         sql = 'INSERT INTO forum (name, author, time, moderators, subject,' \
           ' description, forum_group) VALUES ("%s", "%s", %s, "%s", "%s",' \
           ' "%s", %s)' % (name, author, str(int(time.time())), moderators,
