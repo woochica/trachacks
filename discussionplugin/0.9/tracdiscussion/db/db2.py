@@ -9,5 +9,4 @@ sql = ['''CREATE TABLE forum_group (
 
 def do_upgrade(cursor):
     for statement in sql:
-        self.log.debug(statement)
         cursor.execute(statement)

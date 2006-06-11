@@ -27,5 +27,4 @@ sql = ['''CREATE TABLE forum (
 
 def do_upgrade(cursor):
     for statement in sql:
-        self.log.debug(statement)
         cursor.execute(statement)

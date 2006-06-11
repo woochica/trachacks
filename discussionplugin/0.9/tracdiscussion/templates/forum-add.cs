@@ -30,6 +30,18 @@
         <input type="text" name="moderators" value=""/><br/>
       <?cs /if ?>
     </div>
+    <?cs if:discussion.groups.0.id ?>
+      <div class="group">
+        <select name="group">
+          <option value="">None</option>
+          <?cs each:group = discussion.groups ?>
+            <option value="<?cs var:group.id ?>"><?cs var:group.name ?></option>
+          <?cs /each ?>
+        </select><br/>
+      </div>
+    <?cs else ?>
+      <input type="hidden" name="group" value=""/>
+    <?cs /if ?>
     <div class="buttons">
       <input type="submit" name="submit" value="Submit"/>
       <input type="submit" name="cancel" value="Cancel"/>

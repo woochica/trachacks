@@ -78,7 +78,7 @@ class DiscussionCore(Component):
 
         # Populate active forum
         if req.args.has_key('forum'):
-            forum = self.get_forum(cursor, req.args.get('forum'), req)
+            forum = self.get_forum(cursor, req, req.args.get('forum'))
             if not forum:
                 raise TracError('No such forum %s' % req.args.get('forum'))
 
@@ -88,13 +88,13 @@ class DiscussionCore(Component):
 
         # Populate active topic
         if req.args.has_key('topic'):
-            topic = self.get_topic(cursor, req.args.get('topic'), req)
+            topic = self.get_topic(cursor, req, req.args.get('topic'))
             if not topic:
                 raise TracError('No such topic %s' % req.args.get('topic'))
 
         # Populate active topic
         if req.args.has_key('message'):
-            message = self.get_message(cursor, req.args.get('message'), req)
+            message = self.get_message(cursor, req, req.args.get('message'))
             if not message:
                 raise TracError('No such message %s' % req.args.get('message'))
 
@@ -162,6 +162,7 @@ class DiscussionCore(Component):
             subject = req.args.get('subject')
             description = req.args.get('description')
             moderators = req.args.get('moderators')
+            group = req.args.get('group')
             if moderators:
                 moderators = moderators.split(' ')
             else:
@@ -169,7 +170,7 @@ class DiscussionCore(Component):
 
             # Add new forum
             self.add_forum(cursor, name, author, subject, description,
-              moderators)
+              moderators, group)
 
             # Display forum list
             req.hdf['discussion.forums'] = self.get_forums(cursor, req)
@@ -187,8 +188,8 @@ class DiscussionCore(Component):
         # Forum topics related stuff
         elif mode == 'topic-list':
             req.perm.assert_permission('DISCUSSION_VIEW')
-            req.hdf['discussion.topics'] = self.get_topics(cursor, forum['id'],
-              req)
+            req.hdf['discussion.topics'] = self.get_topics(cursor, req,
+              forum['id'])
         elif mode == 'topic-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
@@ -213,8 +214,8 @@ class DiscussionCore(Component):
 
             # Add new topic and display topic list
             self.add_topic(cursor, forum['id'], subject, author, body)
-            req.hdf['discussion.topics'] = self.get_topics(cursor, forum['id'],
-              req)
+            req.hdf['discussion.topics'] = self.get_topics(cursor, req,
+              forum['id'])
             mode = 'topic-list'
         elif mode == 'topic-delete':
             req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -227,8 +228,8 @@ class DiscussionCore(Component):
             self.delete_topic(cursor, forum['id'], topic['id'])
 
             # Display topics
-            req.hdf['discussion.topics'] = self.get_topics(cursor, forum['id'],
-              req)
+            req.hdf['discussion.topics'] = self.get_topics(cursor, req,
+              forum['id'])
             mode = 'topic-list'
 
         # Message related stuff
@@ -247,8 +248,8 @@ class DiscussionCore(Component):
                 req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
             if body:
                 req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
-            req.hdf['discussion.messages'] = self.get_messages(cursor,
-              topic['id'], req)
+            req.hdf['discussion.messages'] = self.get_messages(cursor, req,
+              topic['id'])
         elif mode == 'message-post-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
@@ -265,8 +266,8 @@ class DiscussionCore(Component):
                 req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
             if body:
                 req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
-            req.hdf['discussion.messages'] = self.get_messages(cursor,
-              topic['id'], req)
+            req.hdf['discussion.messages'] = self.get_messages(cursor, req,
+              topic['id'])
             mode = 'message-list'
         elif mode == 'message-delete':
             req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -279,10 +280,11 @@ class DiscussionCore(Component):
             self.delete_message(cursor, forum['id'], topic['id'], reply)
 
             # Display or messages
-            req.hdf['discussion.messages'] = self.get_messages(cursor,
-              topic['id'], req)
+            req.hdf['discussion.messages'] = self.get_messages(cursor, req,
+              topic['id'])
             mode = 'message-list'
 
+        req.hdf['discussion.groups'] = self.get_groups(cursor, req);
         req.hdf['discussion.forum'] = forum
         req.hdf['discussion.topic'] = topic
         req.hdf['discussion.message'] = message
@@ -292,7 +294,7 @@ class DiscussionCore(Component):
         return mode + '.cs', None
 
     # Non-extension methods
-    def get_message(self, cursor, id, req):
+    def get_message(self, cursor, req, id):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
         sql = 'SELECT id, forum, topic, replyto, time, author, body FROM' \
           ' message WHERE id = %s' % (id)
@@ -305,7 +307,7 @@ class DiscussionCore(Component):
             return row
         return None
 
-    def get_topic(self, cursor, id, req):
+    def get_topic(self, cursor, req, id):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
         sql = 'SELECT id, forum, time, subject, body, author FROM topic WHERE' \
           ' id = %s' % (id)
@@ -318,7 +320,7 @@ class DiscussionCore(Component):
             return row
         return None
 
-    def get_forum(self, cursor, id, req):
+    def get_forum(self, cursor, req, id):
         columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
         sql = 'SELECT name, moderators, id, time, subject, description FROM' \
           ' forum WHERE id = %s' % (id)
@@ -330,6 +332,19 @@ class DiscussionCore(Component):
             row['description'] = wiki_to_oneliner(row['description'], self.env)
             return row
         return None
+
+    def get_groups(self, cursor, req):
+        columns = ('id', 'name', 'description')
+        sql = 'SELECT id, name, description FROM forum_group'
+        self.log.debug(sql)
+        cursor.execute(sql)
+        groups = []
+        for row in cursor:
+            row = dict(zip(columns, row))
+            row['name'] = wiki_to_oneliner(row['name'], self.env)
+            row['description'] = wiki_to_oneliner(row['description'], self.env)
+            groups.append(row)
+        return groups
 
     def get_forums(self, cursor, req):
         columns = ('id', 'name', 'author', 'time', 'moderators', 'group',
@@ -360,7 +375,7 @@ class DiscussionCore(Component):
             forums.append(row)
         return forums
 
-    def get_topics(self, cursor, forum, req):
+    def get_topics(self, cursor, req, forum):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
           'replies', 'lastreply')
         sql = 'SELECT id, forum, time, subject, body, author, (SELECT' \
@@ -382,7 +397,7 @@ class DiscussionCore(Component):
             topics.append(row)
         return topics
 
-    def get_messages(self, cursor, topic, req):
+    def get_messages(self, cursor, req, topic):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = 'SELECT id, replyto, time, author, body FROM message WHERE' \
           ' topic = %s ORDER BY time' % (topic)
@@ -417,11 +432,13 @@ class DiscussionCore(Component):
             users.append(user[0])
         return users
 
-    def add_forum(self, cursor, name, author, subject, description, moderators):
+    def add_forum(self, cursor, name, author, subject, description, moderators,
+      group):
         moderators = ' '.join(moderators)
         sql = 'INSERT INTO forum (name, author, time, moderators, subject,' \
-          ' description) VALUES ("%s", "%s", %s, "%s", "%s", "%s")' % (name,
-          author, str(int(time.time())), moderators, subject, description)
+          ' description, forum_group) VALUES ("%s", "%s", %s, "%s", "%s",' \
+          ' "%s", %s)' % (name, author, str(int(time.time())), moderators,
+          subject, description, group)
         self.log.debug(sql)
         cursor.execute(sql)
 

@@ -28,12 +28,12 @@ class DiscussionInit(Component):
         # Perform incremental upgrades
         for I in range(db_version + 1, last_db_version + 1):
             script_name  = 'db%i' % (I)
-            try:
-                module = __import__('tracdiscussion.db.%s' % (script_name),
-                globals(), locals(), ['do_upgrade'])
-                module.do_upgrade(cursor)
-            except:
-                raise TracError('Error upgrading database to version %i' % I)
+            #try:
+            module = __import__('tracdiscussion.db.%s' % (script_name),
+            globals(), locals(), ['do_upgrade'])
+            module.do_upgrade(cursor)
+            #except:
+            #    raise TracError('Error upgrading database to version %i' % I)
 
     def _get_db_version(self, cursor):
         try:

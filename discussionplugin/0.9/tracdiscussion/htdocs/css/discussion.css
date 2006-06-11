@@ -32,6 +32,19 @@
   font-weight: bold;
 }
 
+.forum-list th.group
+{
+  padding: 1em;
+  background-color: #eed;
+  border: 2px solid #d7d7d7;
+}
+
+.forum-list th.group div.description
+{
+  font-weight: normal;
+}
+
+
 /* Topic list */
 .topic-list td.author, .topic-list td.lastreply, .topic-list td.founded,
 .topic-list td.replies
