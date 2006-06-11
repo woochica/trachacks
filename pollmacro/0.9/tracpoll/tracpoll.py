@@ -4,7 +4,6 @@ import pickle
 from StringIO import StringIO
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.wiki.macros import WikiMacroBase
 from trac.util import sorted, escape
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.web.chrome import ITemplateProvider, add_stylesheet
@@ -85,6 +84,29 @@ class Poll(object):
         can_vote and out.write('</form>\n')
         return out.getvalue()
 
+try:
+    from trac.wiki.macros import WikiMacroBase
+except ImportError:
+    # TODO Remove this when ported to 0.10
+    class WikiMacroBase(Component):
+        """Abstract base class for wiki macros."""
+
+        implements(IWikiMacroProvider)
+        abstract = True
+
+        def get_macros(self):
+            """Yield the name of the macro based on the class name."""
+            name = self.__class__.__name__
+            if name.endswith('Macro'):
+                name = name[:-5]
+            yield name
+
+        def get_macro_description(self, name):
+            """Return the subclass's docstring."""
+            return inspect.getdoc(self.__class__)
+
+        def render_macro(self, req, name, content):
+            raise NotImplementedError
 
 class PollMacro(WikiMacroBase):
     """ Add a poll. Each argument must be separated by a semi-colon (;) or 
@@ -147,8 +169,9 @@ class PollMacro(WikiMacroBase):
                 priority = Priority(self.env, ticket['priority']).value
                 summary = wiki_to_oneliner(summary, self.env)
 
-                all_votes.append((str(id), "ticket prio%s%s" %
-                                  (priority, ticket_count % 2 and ' even' or ''),
+                all_votes.append((str(id), "ticket prio%s%s%s" %
+                                  (priority, ticket_count % 2 and ' even' or '',
+                                  ticket['status'] == 'closed' and ' closed' or ''),
                                   summary))
                 ticket_count += 1
 
