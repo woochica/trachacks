@@ -88,6 +88,8 @@ try:
     from trac.wiki.macros import WikiMacroBase
 except ImportError:
     # TODO Remove this when ported to 0.10
+    from trac.wiki.api import IWikiMacroProvider
+
     class WikiMacroBase(Component):
         """Abstract base class for wiki macros."""
 
