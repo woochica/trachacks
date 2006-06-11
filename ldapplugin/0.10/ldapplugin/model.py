@@ -94,7 +94,8 @@ class LdapPermissionGroupProvider(Component):
                 if self.env.config.getbool('ldap', 'group_bind'): 
                     u = self.env.config.get('ldap', 'group_user')
                     p = self.env.config.get('ldap', 'group_passwd')
-                    self._ldap.set_credentials(u, p)
+                    self._ldap.set_credentials(u.encode('ascii'), 
+                                               p.encode('ascii'))
 
             # retrieves the user groups from LDAP
             ldapgroups = self._ldap.get_user_groups(username)
@@ -143,6 +144,7 @@ class LdapPermissionStore(Component):
         # LDAP connection
         self._ldap = None
         self._permattr = self.env.config.get('ldap', 'permattr', 'tracperm')
+        self._permattr = self._permattr.encode('ascii')
         # regular expression
         self._re = re.compile('^(.+?)=(.+?),(.+)$')
         # user entry local cache
@@ -208,20 +210,24 @@ class LdapPermissionStore(Component):
         if not self._ldap:
             self._openldap()
         perms = []
-        dns = self._ldap.get_dn(self.env.config.get('ldap', 'permfilter',
-                                                    'objectclass=*'))
-        basedn = self.env.config.get('ldap','basedn','')
+        filter = self.env.config.get('ldap', 'permfilter', 'objectclass=*')
+        basedn = self.env.config.get('ldap','basedn','').encode('ascii')
+        grpattr = self.env.config.get('ldap', 'groupattr', 'cn').encode('ascii')
+        uidattr = self.env.config.get('ldap', 'uidattr', 'uid').encode('ascii')
+        dns = self._ldap.get_dn(filter.encode('ascii'))
         for dn in dns:
             m = self._re.search(dn)
             user = None
             if m:
-                if m.group(3).lower() == basedn.lower():
-                    if m.group(1).lower() == \
-                      self.env.config.get('ldap', 'groupattr', 'cn'):
+                subtree = m.group(3).lower()
+                if subtree == self._ldap.group_basedn.lower():
+                    if m.group(1).lower() == grpattr:
                         user = "@%s" % m.group(2)
                         dn = "%s=%s" % (m.group(1),m.group(2))
-                    elif m.group(1).lower() == \
-                      self.env.config.get('ldap', 'uidattr', 'uid'):
+                    else:
+                        continue
+                if subtree == self._ldap.user_basedn.lower():
+                    if m.group(1).lower() == uidattr:
                         user = m.group(2)
                         dn = "%s=%s" % (m.group(1),m.group(2))
                     else:
@@ -244,7 +250,7 @@ class LdapPermissionStore(Component):
         try:
             permlist = self._get_permissions(uid)
             if action not in permlist:
-                xaction = self._build_action(action)        
+                xaction = self._build_action(action)
                 self._ldap.add_attribute(uid, self._permattr, xaction)
         except ldap.LDAPError, e:
             raise TracError, "Unable to grant permission %s to %s: %s" \
@@ -280,16 +286,17 @@ class LdapPermissionStore(Component):
         if self.config.getbool('ldap', 'store_bind'):
             u = self.env.config.get('ldap', 'store_user')
             p = self.env.config.get('ldap', 'store_passwd')
-            self._ldap.set_credentials(u, p)
+            self._ldap.set_credentials(u.encode('ascii'), 
+                                       p.encode('ascii'))
 
     def _create_uid(self, username):
         prefix = None
         if username.startswith('@'):
             prefix = self.env.config.get('ldap', 'groupattr', 'cn')
-            return '%s=%s' % (prefix, username[1:])
+            return '%s=%s' % (prefix.encode('ascii'), username[1:])
         else:
             prefix = self.env.config.get('ldap', 'uidattr', 'uid')
-            return '%s=%s' % (prefix, username)
+            return '%s=%s' % (prefix.encode('ascii'), username)
 
     def _get_permissions(self, uid):
         if not self._ldap:
