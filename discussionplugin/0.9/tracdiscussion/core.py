@@ -317,6 +317,7 @@ class DiscussionCore(Component):
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, req)
+            row['time'] = format_datetime(row['time'])
             return row
         return None
 
@@ -411,6 +412,7 @@ class DiscussionCore(Component):
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, req)
+            row['time'] = format_datetime(row['time'])
             messagemap[row['id']] = row
             # Add top-level messages to the main list, in order of time
             if row['replyto'] == -1:

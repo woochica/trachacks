@@ -3,14 +3,14 @@
 <?cs def:display_group(group, forums) ?>
   <table class="listing">
     <thead>
-      <tr>
-        <?cs if:group.id ?>
+      <?cs if:group.id ?>
+        <tr>
           <th class="group" colspan="7">
             <div class="name"><?cs var:group.name ?></div>
             <div class="description"><?cs var:group.description ?></div>
           </th>
-        <?cs /if ?>
-      <tr>
+        <tr>
+      <?cs /if ?>
       <tr>
         <th class="subject">Forum</th>
         <th class="moderators">Moderators</th>

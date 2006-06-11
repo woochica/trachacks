@@ -57,8 +57,13 @@
           <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=delete;reply=<?cs var:message.id ?>" onClick="return confirm('Do you realy want to delete this reply and all its descendants?')"/>Delete</a>
         <?cs /if ?>
       </div>
-      <div class="author">
-        <?cs var:message.author ?>
+      <div class="footer">
+        <div class="author">
+          <?cs var:message.author ?>
+        </div>
+        <div class="time">
+          <?cs var:message.time ?>
+        </div>
       </div>
     </li>
     <?cs if:discussion.messages.0.body || (args.action == "add") || (args.action == "post-add") ?>
@@ -88,8 +93,13 @@
     <div class="controls">
       <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?action=add;reply=-1#reply">Reply</a>
     </div>
-    <div class="author">
-      <?cs var:discussion.topic.author ?>
+    <div class="footer">
+      <div class="author">
+        <?cs var:discussion.topic.author ?>
+      </div>
+      <div class="time">
+        <?cs var:discussion.topic.time ?>
+      </div>
     </div>
   </div>
   <?cs if:discussion.messages.0.body || (args.action == "add") || (args.action == "post-add") ?>

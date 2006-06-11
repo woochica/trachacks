@@ -72,11 +72,11 @@
   border-bottom: 1px solid #d7d7d7;
 }
 
-.message-list .topic .header div.author
+/*.message-list .topic .header div.author
 {
   font-weight: bold;
   margin: 1em;
-}
+}*/
 
 .message-list .header div.body
 {
@@ -111,12 +111,6 @@
   padding: 0.25em;
 }
 
-.message-list .replies li.reply
-{
-  margin: 1em;
-  background-color: transparent;
-}
-
 .message-list div.controls
 {
   float: right;
@@ -124,11 +118,17 @@
   padding: 0em 1em 0em 1em;
 }
 
-.message-list div.author
+.message-list div.footer
 {
   font-weight: bold;
   margin: 0em;
-  padding: 0em 1em 0em 1em;
+  padding: 0.5em;
+}
+
+.message-list div.author, .message-list div.time
+{
+  display: inline;
+  padding: 0em 0.5em;
 }
 
 .message-list .topic .replies div.body
