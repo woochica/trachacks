@@ -56,6 +56,7 @@ class XMLRPCWeb(Component):
             result = XMLRPCSystem(self.env).get_method(method)(req, args)
             self._send_response(req, xmlrpclib.dumps(result, methodresponse=True))
         except xmlrpclib.Fault, e:
+            self.log.error(e)
             self._send_response(req, xmlrpclib.dumps(e))
         except Exception, e:
             self.log.error(e)

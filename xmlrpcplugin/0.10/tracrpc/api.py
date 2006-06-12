@@ -185,7 +185,7 @@ class XMLRPCSystem(Component):
         """
         for signature in signatures:
             try:
-                yield self.get_method(signature['methodName'])(req, signature['params'])[0]
+                yield self.get_method(signature['methodName'])(req, signature['params'])
             except xmlrpclib.Fault, e:
                 yield e
             except Exception, e:
