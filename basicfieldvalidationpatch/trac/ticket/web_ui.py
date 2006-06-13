@@ -135,6 +135,10 @@ class NewticketModule(Component):
         ticket = Ticket(self.env, db=db)
         ticket.values.setdefault('reporter', util.get_reporter_id(req))
         ticket.populate(req.args)
+        
+        #Check for required fields
+        ticket.validate_required_fields(req.args)
+        
         ticket.insert(db=db)
         db.commit()
 
@@ -315,6 +319,9 @@ class TicketModule(Component):
             ticket.populate(req.args)
         else:
             req.perm.assert_permission('TICKET_APPEND')
+            
+        #Check for required fields
+        ticket.validate_required_fields(req.args)
 
         # Mid air collision?
         if int(req.args.get('ts')) != ticket.time_changed:

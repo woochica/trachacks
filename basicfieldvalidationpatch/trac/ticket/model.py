@@ -275,6 +275,12 @@ class Ticket(object):
             log.append((int(t), author, field, oldvalue or '', newvalue or ''))
         return log
 
+    def validate_required_fields(self, args):
+        #Check for required fields
+        for field in self.fields:
+            if field['required'] and not args.get(field['name']):
+                raise TracError(field['name'] + ' is a required field.')
+
 
 class AbstractEnum(object):
     type = None

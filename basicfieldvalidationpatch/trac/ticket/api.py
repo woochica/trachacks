@@ -96,6 +96,10 @@ class TicketSystem(Component):
             field = {'name': name, 'type': 'text', 'label': name.title()}
             fields.append(field)
 
+        # required fields
+        for field in fields:
+            field['required'] = self.config.getbool('ticket', field['name'] + '.required', False)
+
         for field in self.get_custom_fields():
             if field['name'] in [f['name'] for f in fields]:
                 self.log.warning('Duplicate field name "%s" (ignoring)',
@@ -121,7 +125,8 @@ class TicketSystem(Component):
                 'order': int(self.config.get('ticket-custom', name + '.order', '0')),
                 'label': self.config.get('ticket-custom', name + '.label') \
                          or name.capitalize(),
-                'value': self.config.get('ticket-custom', name + '.value', '')
+                'value': self.config.get('ticket-custom', name + '.value', ''),
+                'required':self.config.getbool('ticket-custom', name + '.required', False)
             }
             if field['type'] == 'select' or field['type'] == 'radio':
                 options = self.config.get('ticket-custom', name + '.options')
