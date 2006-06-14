@@ -1,11 +1,11 @@
 from setuptools import setup
 
-PACKAGE = 'TracPDF'
+PACKAGE = 'TracPageToPDF'
 VERSION = '0.2'
 
-setup(name='TracPDF',
+setup(name='TracPageToPDF',
       version='0.2',
-      packages=['tracpdf'],
+      packages=['pagetopdf'],
       author='Alec Thomas',
       author_email='alec@swapoff.org',
       description='A plugin for exporting Wiki pages as PDFs',
