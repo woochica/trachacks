@@ -1,5 +1,3 @@
-# Tracpdf plugin
-
 from trac.core import *
 from trac.util import escape
 from trac.mimeview.api import IContentConverter
@@ -7,8 +5,8 @@ from trac.wiki.formatter import wiki_to_html
 from tempfile import mkstemp
 import os
 
-class TracPDFPlugin(Component):
-    """ Convert Wiki pages to PDF using HTMLDOC (http://www.htmldoc.org/). """
+class PageToPDFPlugin(Component):
+    """Convert Wiki pages to PDF using HTMLDOC (http://www.htmldoc.org/)."""
     implements(IContentConverter)
 
     # IContentConverter methods
