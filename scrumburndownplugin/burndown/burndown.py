@@ -1,4 +1,12 @@
 # Burndown plugin
+# Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
+# All rights reserved.
+#
+# This software may at some point consist of voluntary contributions made by
+# many individuals. For the exact contribution history, see the revision
+# history and logs, available at http://projects.edgewall.com/trac/.
+#
+# Author: Sam Bloomquist <spooninator@hotmail.com>
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
@@ -38,14 +46,31 @@ class BurndownComponent(Component):
         cursor = db.cursor()
         
         sqlTableCreate =     "CREATE TABLE burndown (" \
-                                    "    id integer PRIMARY KEY,"\
+                                    "    id integer PRIMARY KEY NOT NULL,"\
                                     "    component_name text NOT NULL,"\
                                     "    milestone_name text NOT NULL," \
-                                    "    date integer NOT NULL,"\
+                                    "    date text NOT NULL,"\
                                     "    hours_remaining integer NOT NULL"\
                                     ")"
                                     
         cursor.execute(sqlTableCreate)
+        
+        sqlMilestone = [
+        #-- Separate between due and completed time for milestones.
+        """CREATE TEMP TABLE milestone_old AS SELECT * FROM milestone;""",
+        """DROP TABLE milestone;""",
+        """CREATE TABLE milestone (
+                 name            text PRIMARY KEY,
+                 due             integer, -- Due date/time
+                 completed       integer, -- Completed date/time
+                 started        integer, -- Started date/time
+                 description     text
+        );""",
+        """INSERT INTO milestone(name,due,completed,started,description)
+        SELECT name,due,completed,0,description FROM milestone_old;"""
+        ]
+        for s in sqlMilestone:
+            cursor.execute(s)
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
