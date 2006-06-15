@@ -30,7 +30,8 @@ def main():
     cursor = db.cursor()
     
     # make sure that there isn't already an entry for today in the burndown table
-    cursor.execute("SELECT date FROM burndown WHERE date = %s" % today)
+    print today
+    cursor.execute("SELECT id FROM burndown WHERE date = '%s'" % today)
     row = cursor.fetchone()
     if row:
         print >> sys.stderr, 'burndown_job.py has already been run today'

@@ -17,20 +17,23 @@ from trac.util import escape, Markup
 class BurndownComponent(Component):
     implements(IEnvironmentSetupParticipant, INavigationContributor, IRequestHandler, ITemplateProvider)
     
+    #---------------------------------------------------------------------------
     # IEnvironmentSetupParticipant methods
+    #---------------------------------------------------------------------------
     def environment_created(self):
         pass
 
     def environment_needs_upgrade(self, db):
         result = False
         
+        #get a database connection if we don't already have one
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
         else:
             handle_ta = False
             
-        # See if the burndown table exists, if not, return True
+        # See if the burndown table exists, if not, return True because we need to upgrade the database
         cursor = db.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='burndown'")
         row = cursor.fetchone()
@@ -45,6 +48,7 @@ class BurndownComponent(Component):
     def upgrade_environment(self, db):
         cursor = db.cursor()
         
+        # Create the burndown table in the database
         sqlTableCreate =     "CREATE TABLE burndown (" \
                                     "    id integer PRIMARY KEY NOT NULL,"\
                                     "    component_name text NOT NULL,"\
@@ -56,7 +60,7 @@ class BurndownComponent(Component):
         cursor.execute(sqlTableCreate)
         
         sqlMilestone = [
-        #-- Separate between due and completed time for milestones.
+        #-- Add the 'started' column to the milestone table
         """CREATE TEMP TABLE milestone_old AS SELECT * FROM milestone;""",
         """DROP TABLE milestone;""",
         """CREATE TABLE milestone (
@@ -72,22 +76,37 @@ class BurndownComponent(Component):
         for s in sqlMilestone:
             cursor.execute(s)
 
+    #---------------------------------------------------------------------------
     # INavigationContributor methods
+    #---------------------------------------------------------------------------
     def get_active_navigation_item(self, req):
         return 'burndown'
                 
     def get_navigation_items(self, req):
         yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>', self.env.href.burndown())
 
+    #---------------------------------------------------------------------------
     # IRequestHandler methods
+    #---------------------------------------------------------------------------
     def match_request(self, req):
         return req.path_info == '/burndown'
     
     def process_request(self, req):
+#        draw = req.args.get('draw', None)
+#        milestone = req.args.get('selected_milestone', None)
+#        
+#        if draw and milestone:
+#            req.hdf['selected_milestone'] = milestone
+#            req.hdf['burndown_entries'] = getBurndownForMilestone(milestone)
+#            
+#        else:
+        
         add_stylesheet(req, 'hw/css/burndown.css')
         return 'burndown.cs', None
         
+    #---------------------------------------------------------------------------
     # ITemplateProvider methods
+    #---------------------------------------------------------------------------
     def get_templates_dirs(self):
         """
         Return the absolute path of the directory containing the provided
