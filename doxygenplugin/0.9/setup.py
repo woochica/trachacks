@@ -6,7 +6,7 @@ setup(
     name='TracDoxygen',
     description='Doxygen plugin for Trac',
     keywords='trac doxygen',
-    version='0.1',
+    version='0.2',
     url='http://trac-hacks.swapoff.org/wiki/DoxygenPlugin',
     license = """Copyright (C) 2005 Jason Parks <jparks@jparks.net>
 All rights reserved.
@@ -36,11 +36,11 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.""",
-    author='Jason Parks',
+    author='Jason Parks, Radek Bartoň',
     author_email='jparks@jparks.net',
     long_description="""
     """,
     zip_safe=True,
     packages=['doxygentrac'],
-    package_data={'doxygentrac': ['templates/*.cs']},
+    package_data={'doxygentrac': ['templates/*.cs', 'htdocs/css/*.css']},
     entry_points={'trac.plugins': 'doxygentrac = doxygentrac.doxygentrac'})
