@@ -1,0 +1,7 @@
+setup.py
+TracHierWiki.egg-info/PKG-INFO
+TracHierWiki.egg-info/SOURCES.txt
+TracHierWiki.egg-info/entry_points.txt
+TracHierWiki.egg-info/top_level.txt
+hierwiki/__init__.py
+hierwiki/macros.py

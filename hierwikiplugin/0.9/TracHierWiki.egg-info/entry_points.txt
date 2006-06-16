@@ -1,0 +1,3 @@
+[trac.plugins]
+hierwiki.macros = hierwiki.macros
+

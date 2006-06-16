@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: TracHierWiki
+Version: 0.1
+Summary: Hierarchical wiki macros.
+Home-page: http://trac-hacks.org/wiki/HierWikiPlugin
+Author: Noah Kantrowitz
+Author-email: coderanger@yahoo.com
+License: BSD
+Description: Various things related to using the wiki in hierarchical way.
+Keywords: trac plugin macros wiki hierarchy
+Platform: UNKNOWN
