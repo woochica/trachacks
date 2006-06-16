@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCtxtnavAdd',
-    version = '1.0',
+    version = '1.1',
     packages = ['ctxtnavadd'],
     package_data={ 'ctxtnavadd' : [ 'templates/*.cs' , 'htdocs/js/*.js' ] },
     author = "Noah Kantrowitz",
@@ -22,5 +22,5 @@ setup(
         ],
     },
 
-    install_requires = [ 'trac==dev' ],
+    install_requires = [  ],
 )
