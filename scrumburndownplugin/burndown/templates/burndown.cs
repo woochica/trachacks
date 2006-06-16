@@ -8,7 +8,7 @@
 <form action="<?cs var:burndown.href ?>" method="post">
     <label for="milestone">Select milestone:</label>
     <select id="milestone" name="milestone">
-        <option></option>
+        <option> </option>
     </select>
     <label for="component">Select component:</label>
     <select id="component" name="component">
@@ -19,7 +19,7 @@
         <input type="submit" id="start_button" value="Start Milestone" />
         <input type="submit" id="complete_button" value="Milestone Complete" />
         <input type="submit" id="show_burndown" value="Show Burndown Chart" />
-   </div>
+    </div>
 </form>
 
 <br />

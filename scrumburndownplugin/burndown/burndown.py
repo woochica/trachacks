@@ -92,14 +92,24 @@ class BurndownComponent(Component):
         return req.path_info == '/burndown'
     
     def process_request(self, req):
-#        draw = req.args.get('draw', None)
-#        milestone = req.args.get('selected_milestone', None)
-#        
-#        if draw and milestone:
-#            req.hdf['selected_milestone'] = milestone
-#            req.hdf['burndown_entries'] = getBurndownForMilestone(milestone)
-#            
-#        else:
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        cursor.execute("SELECT name FROM milestone")
+        milestones = cursor.fetchall()
+        for mile in milestones:
+            self.env.log.debug(mile[0])
+        cursor.execute("SELECT name FROM component")
+        components = cursor.fetchall()
+        #for comp in components:
+        #    print comp
+        
+        draw = req.args.get('draw', None)
+        milestone = req.args.get('selected_milestone')
+        
+        if draw and milestone:
+            req.hdf['selected_milestone'] = milestone
+            req.hdf['burndown_entries'] = getBurndownForMilestone(milestone)
         
         add_stylesheet(req, 'hw/css/burndown.css')
         return 'burndown.cs', None
