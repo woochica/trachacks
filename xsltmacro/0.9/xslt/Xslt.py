@@ -205,8 +205,17 @@ def _transform(stylepath, docpath):
     doc      = _parse_xml(docpath)
 
     style  = libxslt.parseStylesheetDoc(styledoc)
+    if not style:
+        styledoc.freeDoc()
+        doc.freeDoc()
+        raise Exception("%s is not a valid stylesheet" % \
+                        (isinstance(style_obj, str) and style_obj or \
+                         isinstance(style_obj, unicode) and style_obj or \
+                         isinstance(style_obj, Node) and style_obj.path or \
+                         str(style_obj)))
+
     result = style.applyStylesheet(doc, None)
-    str = style.saveResultToString(result)
+    output = style.saveResultToString(result)
 
     if result.get_type() == 'document_xml':
         ct = 'text/xml'
@@ -221,7 +230,7 @@ def _transform(stylepath, docpath):
     doc.freeDoc()
     result.freeDoc()
 
-    return str, ct
+    return output, ct
 
 def _parse_xml(obj):
     import libxml2
