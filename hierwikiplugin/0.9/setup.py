@@ -5,8 +5,8 @@ from setuptools import setup
 
 setup(
     name = 'TracHierWiki',
-    version = '0.1',
-    packages = ['hierwiki'],
+    version = '0.1-r1',
+    packages = ['hierwiki', 'hierwiki/macros' ],
     package_data={ 'hierwiki' : [ ] },
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
