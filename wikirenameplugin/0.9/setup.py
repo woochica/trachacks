@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWikiRename',
-    version = '0.1',
+    version = '0.1-r1',
     packages = ['wikirename'],
     package_data={ 'wikirename' : [ 'templates/*.cs' ] },
 
@@ -27,5 +27,5 @@ setup(
         ],
     },
     
-    install_requires = [ 'TracWebAdmin', 'TracCtxtnavAdd' ],
+    #install_requires = [ 'TracWebAdmin', 'TracCtxtnavAdd' ],
 )
