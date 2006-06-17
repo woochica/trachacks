@@ -4,17 +4,18 @@
 from setuptools import setup
 
 setup(
-    name = 'UnixGroups',
+    name = 'TracUnixGroups',
     version = '0.1',
     packages = ['unixgroups'],
     package_data = {  },
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
-    description = "Allows permissions to be assigned based on local system groups",
+    description = "Use UNIX groups in Trac",
+    long_description = "Allows permissions to be assigned based on local system groups",
     license = "BSD",
-    keywords = "trac unix groups permissions",
-    url = "http://trac-hacks.org/",
+    keywords = "trac plugin unix groups permissions",
+    url = "http://trac-hacks.org/wiki/UnixGroupsPlugin",
 
     entry_points = {
         'trac.plugins': [
