@@ -113,24 +113,45 @@ class BurndownComponent(Component):
         # expose display data to the clearsilver templates
         req.hdf['milestones'] = milestones
         req.hdf['components'] = components
-        req.hdf['burndown_data'] = self.getBurndownData(db, selected_milestone, selected_component) # this will be a list of (id, hours_remaining) tuples
+        req.hdf['burndown_data'] = self.getBurndownData(db, selected_milestone, components, selected_component) # this will be a list of (id, hours_remaining) tuples
+        req.hdf['selected_milestone'] = selected_milestone
+        req.hdf['selected_component'] = selected_component
+        
+        self.env.log.debug(selected_component)
+        self.env.log.debug(self.getBurndownData(db, selected_milestone, components, selected_component))
         
         add_stylesheet(req, 'hw/css/burndown.css')
         return 'burndown.cs', None
         
-    def getBurndownData(self, db, milestone, component):
+    def getBurndownData(self, db, selected_milestone, components, selected_component):
         cursor = db.cursor()
-        componentClause = ""
         
-        if component != 'All Components':
-            componentClause = " AND component_name = '" + component + "' "
-        sqlBurndown = "SELECT id, hours_remaining "\
-                            "FROM burndown "\
-                            "WHERE milestone_name = '" + milestone + "'" + componentClause + \
-                            "ORDER BY id"
-        cursor.execute(sqlBurndown)
-        
-        return cursor.fetchall()
+        component_data = {} # this will be a dictionary of lists of tuples -- e.g. component_data = {'componentName':[(id, hours_remaining), (id, hours_remaining), (id, hours_remaining)]}
+        for comp in components:
+            if selected_component == 'All Components' or comp == selected_component:
+                sqlBurndown = "SELECT id, hours_remaining "\
+                                    "FROM burndown "\
+                                    "WHERE milestone_name = '" + selected_milestone + "' AND component_name = '" + comp + "' "\
+                                    "ORDER BY id"
+                
+                cursor.execute(sqlBurndown)
+                component_data[comp] = cursor.fetchall()
+            
+        burndown_length = len(component_data[component_data.keys()[0] ])
+        burndown_data = []
+        if selected_component == 'All Components':
+            for day in range (0, burndown_length):
+                sumHours = 0
+                for comp in components:
+                    sumHours += component_data[comp][day][1]
+                
+                burndown_data.append((day+1, sumHours))
+                
+        else:
+            for day in range (0, len(component_data[selected_component])):
+                burndown_data.append((day+1, component_data[selected_component][day][1]))
+            
+        return burndown_data
         
     #---------------------------------------------------------------------------
     # ITemplateProvider methods
