@@ -24,7 +24,7 @@ class CtxtnavAddModule(Component):
         return '' # This is never called
         
     def get_navigation_items(self, req):
-        evil_js = req.href('ctxtnavadd','js','ctxtnavadd.js')
+        evil_js = '/'.join('ctxtnavadd','js','ctxtnavadd.js')
         if have_aj:
             add_javascript(req, evil_js)
         else:
