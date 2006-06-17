@@ -10,12 +10,14 @@
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
+from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup
 
 class BurndownComponent(Component):
-    implements(IEnvironmentSetupParticipant, INavigationContributor, IRequestHandler, ITemplateProvider)
+    implements(IEnvironmentSetupParticipant, INavigationContributor,
+                    IRequestHandler, ITemplateProvider, IPermissionRequestor)
     
     #---------------------------------------------------------------------------
     # IEnvironmentSetupParticipant methods
@@ -84,6 +86,12 @@ class BurndownComponent(Component):
                 
     def get_navigation_items(self, req):
         yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>', self.env.href.burndown())
+        
+    #---------------------------------------------------------------------------
+    # IPermissionRequestor methods
+    #---------------------------------------------------------------------------
+    def get_permission_actions(self):
+        return ["BURNDOWN_VIEW", "BURNDOWN_ADMIN"]
 
     #---------------------------------------------------------------------------
     # IRequestHandler methods
@@ -92,6 +100,8 @@ class BurndownComponent(Component):
         return req.path_info == '/burndown'
     
     def process_request(self, req):
+        req.perm.assert_permission('BURNDOWN_VIEW')
+        
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
@@ -109,16 +119,25 @@ class BurndownComponent(Component):
         
         selected_milestone = req.args.get('selected_milestone', milestones[0])
         selected_component = req.args.get('selected_component', 'All Components')
-
+        
         # expose display data to the clearsilver templates
         req.hdf['milestones'] = milestones
         req.hdf['components'] = components
-        req.hdf['burndown_data'] = self.getBurndownData(db, selected_milestone, components, selected_component) # this will be a list of (id, hours_remaining) tuples
         req.hdf['selected_milestone'] = selected_milestone
         req.hdf['selected_component'] = selected_component
+        req.hdf['draw_graph'] = False
+        req.hdf['start_complete'] = False
         
-        self.env.log.debug(selected_component)
-        self.env.log.debug(self.getBurndownData(db, selected_milestone, components, selected_component))
+        if req.perm.has_permission("BURNDOWN_ADMIN"):
+            req.hdf['start_complete'] = True # show the start and complete milestone buttons to admins
+        
+        if req.args.has_key('start'):
+            self.startMilestone(db, selected_milestone)
+        elif req.args.has_key('complete'):
+            self.completeMilestone(db, selected_milestone)
+        else:
+            req.hdf['draw_graph'] = True
+            req.hdf['burndown_data'] = self.getBurndownData(db, selected_milestone, components, selected_component) # this will be a list of (id, hours_remaining) tuples
         
         add_stylesheet(req, 'hw/css/burndown.css')
         return 'burndown.cs', None
@@ -152,6 +171,12 @@ class BurndownComponent(Component):
                 burndown_data.append((day+1, component_data[selected_component][day][1]))
             
         return burndown_data
+        
+    def startMilestone(self, db, milestone):
+        cursor = db.cursor()
+        
+    def completeMilestone(self, db, milestone):
+        cursor = db.cursor()
         
     #---------------------------------------------------------------------------
     # ITemplateProvider methods

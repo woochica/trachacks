@@ -25,15 +25,18 @@
     </select>
 
     <div class="buttons">
-        <input type="submit" id="start_button" value="Start Milestone" />
-        <input type="submit" id="complete_button" value="Milestone Complete" />
-        <input type="submit" id="show_burndown" value="Show Burndown Chart" />
+        <?cs if:start_complete ?>
+            <input type="submit" name="start" value="Start Milestone" />
+            <input type="submit" name="complete" value="Milestone Complete" />
+        <?cs /if ?>
+        <input type="submit" value="Show Burndown Chart" />
     </div>
 </form>
 
 <br />
 <br />
 
+<?cs if:draw_graph ?>
 <!-- graph code begins here-->
 <script src="/cgi-bin/trac.cgi/chrome/hw/js/line.js" type="text/javascript"></script>
 <script src="/cgi-bin/trac.cgi/chrome/hw/js/wz_jsgraphics.js" type="text/javascript"></script>
@@ -85,5 +88,6 @@
 
 </script>
 <!-- graph code ends here-->
+<?cs /if ?>
 
 <?cs include "footer.cs" ?>
