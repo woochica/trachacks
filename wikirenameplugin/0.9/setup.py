@@ -27,5 +27,5 @@ setup(
         ],
     },
     
-    install_requires = [ 'trac>=0.9.3', 'TracWebAdmin', 'CtxtnavAdd' ],
+    install_requires = [ 'TracWebAdmin', 'TracCtxtnavAdd' ],
 )
