@@ -7,12 +7,18 @@
 
 <form action="<?cs var:burndown.href ?>" method="post">
     <label for="milestone">Select milestone:</label>
-    <select id="milestone" name="milestone">
+    <select id="selected_milestone" name="selected_milestone">
         <option> </option>
+        <?cs each:mile = milestones ?>
+            <option value="<?cs var:mile ?>" ><?cs var:mile ?></option>
+        <?cs /each ?>
     </select>
     <label for="component">Select component:</label>
     <select id="component" name="component">
         <option>All Components</option>
+        <?cs each:comp = components ?>
+            <option value="<?cs var:comp ?>" ><?cs var:comp ?></option>
+        <?cs /each ?>
     </select>
 
     <div class="buttons">

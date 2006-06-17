@@ -49,7 +49,7 @@ class BurndownComponent(Component):
         cursor = db.cursor()
         
         # Create the burndown table in the database
-        sqlTableCreate =     "CREATE TABLE burndown (" \
+        sqlBurndownCreate =     "CREATE TABLE burndown (" \
                                     "    id integer PRIMARY KEY NOT NULL,"\
                                     "    component_name text NOT NULL,"\
                                     "    milestone_name text NOT NULL," \
@@ -57,7 +57,7 @@ class BurndownComponent(Component):
                                     "    hours_remaining integer NOT NULL"\
                                     ")"
                                     
-        cursor.execute(sqlTableCreate)
+        cursor.execute(sqlBurndownCreate)
         
         sqlMilestone = [
         #-- Add the 'started' column to the milestone table
@@ -96,23 +96,41 @@ class BurndownComponent(Component):
         cursor = db.cursor()
         
         cursor.execute("SELECT name FROM milestone")
-        milestones = cursor.fetchall()
-        for mile in milestones:
-            self.env.log.debug(mile[0])
+        milestone_lists = cursor.fetchall()
+        milestones = []
+        for mile in milestone_lists:
+            milestones.append(mile[0])
+            
         cursor.execute("SELECT name FROM component")
-        components = cursor.fetchall()
-        #for comp in components:
-        #    print comp
+        component_lists = cursor.fetchall()
+        components = []
+        for comp in component_lists:
+            components.append(comp[0])
         
-        draw = req.args.get('draw', None)
-        milestone = req.args.get('selected_milestone')
-        
-        if draw and milestone:
-            req.hdf['selected_milestone'] = milestone
-            req.hdf['burndown_entries'] = getBurndownForMilestone(milestone)
+        selected_milestone = req.args.get('selected_milestone', milestones[0])
+        selected_component = req.args.get('selected_component', 'All Components')
+
+        # expose display data to the clearsilver templates
+        req.hdf['milestones'] = milestones
+        req.hdf['components'] = components
+        req.hdf['burndown_data'] = self.getBurndownData(db, selected_milestone, selected_component) # this will be a list of (id, hours_remaining) tuples
         
         add_stylesheet(req, 'hw/css/burndown.css')
         return 'burndown.cs', None
+        
+    def getBurndownData(self, db, milestone, component):
+        cursor = db.cursor()
+        componentClause = ""
+        
+        if component != 'All Components':
+            componentClause = " AND component_name = '" + component + "' "
+        sqlBurndown = "SELECT id, hours_remaining "\
+                            "FROM burndown "\
+                            "WHERE milestone_name = '" + milestone + "'" + componentClause + \
+                            "ORDER BY id"
+        cursor.execute(sqlBurndown)
+        
+        return cursor.fetchall()
         
     #---------------------------------------------------------------------------
     # ITemplateProvider methods
