@@ -22,5 +22,5 @@ setup(
         ],
     },
 
-    install_requires = [ 'trac>=0.9.3' ],
+    install_requires = [ ],
 )
