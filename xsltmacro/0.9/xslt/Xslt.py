@@ -3,18 +3,24 @@
 Embed the result of an xslt-transform in wiki-formatted text.
 
 The first argument is the stylesheet specification; the second argument is
-the xml-document specification. The specifications may reference
-attachments or files in three ways:
- * `module:id:file`, where module can be either '''wiki''' or '''ticket''',
-   to refer to the attachment named ''file'' of the specified wiki page or
-   ticket.
- * `id:file`: same as above, but id is either a ticket shorthand or a Wiki
-   page name.
- * `file` to refer to a local attachment named 'file'. This only works from
-   within that wiki page or a ticket.
+the xml-document specification; additional arguments are optional (see below).
 
-Also, the file specification may refer to repository files, using the
-`source:file` syntax.
+The stylesheet and document specifications may reference attachments, files, or
+url's; the full syntax is `<module>:<id>:<file>`, where module can be either
+'''wiki''', '''ticket''', '''browser''', '''file''', or '''url''':
+ * `wiki:<page>:<attachment>`
+ * `ticket:<ticket-number>:<attachment>`
+ * `browser:source:<file>`        ''(file from repository)''
+ * `file:htdocs:<file>`        ''(file from project htdocs directory)''
+ * `url::<url>`        ''(note the double ::)''
+
+However, the full form is almost never necessary. There are three short forms:
+ * `<id>:<file>`, where id may be either a ticket shorthand (`#<num>`),
+   '''source''', '''htdocs''', '''http''' or '''https''', or the name of a wiki
+   page.
+ * `<file>` to refer to a local attachment named 'file'. This only works from
+   within that wiki page or a ticket.
+ * `<url>` to refer to a url; must be an `http://...` or `https://...` url.
 
 The remaining arguments are optional:
  * `use_iframe` means generate an <iframe> tag instead of directly rendering
@@ -25,14 +31,17 @@ Examples:
 {{{
     [[Xslt(style.xsl, data.xml)]]
 }}}
+(both style.xsl and data.xml are attachments on the current page).
 
-You can use stylesheets and docs from other pages, other tickets or other modules:
+You can use stylesheets and docs from other pages, other tickets, or other modules:
 {{{
-    [[Xslt(OtherPage:foo.xsl, BarPage:bar.xml)]]        # if current module is wiki
-    [[Xslt(base/sub:bar.xsl, foo.xml)]]                 # from hierarchical wiki page
-    [[Xslt(view.xsl, #3:baz.xml)]]                      # if in a ticket, point to #3
-    [[Xslt(view.xsl, ticket:36:boo.xml)]]
+    [[Xslt(OtherPage:foo.xsl, BarPage:bar.xml)]]        # attachments on other wiki pages
+    [[Xslt(base/sub:bar.xsl, foo.xml)]]                 # hierarchical wiki page
+    [[Xslt(view.xsl, #3:baz.xml)]]                      # attachment on ticket #3 is data
+    [[Xslt(view.xsl, ticket:36:boo.xml)]]               # attachment on ticket #36 is data
+    [[Xslt(view.xsl, source:/trunk/docs/foo.xml)]]      # doc from repository
     [[Xslt(htdocs:foo/bar.xsl, data.xml)]]              # stylesheet in project htdocs dir.
+    [[Xslt(view.xsl, http://test.foo.bar/bar.xml)]]     # xml in external url (only http(s) urls allowed)
 }}}
 
 ''Adapted from the Image macro that's part of trac''
@@ -46,6 +55,7 @@ from trac.web.api import RequestDone
 from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiMacroProvider
 from trac.util import http_date
+from trac.versioncontrol import Node
 
 MY_URL = '/extras/xslt'
 
@@ -82,7 +92,15 @@ def execute(hdf, args, env):
           """ % { 'src': url, 'attrs': ' '.join([ k + '="' + str(v) + '"' for k,v in attrs.iteritems() ]) }
 
     else:
-        page, ct = _transform(_get_path(env, hdf, *stylespec), _get_path(env, hdf, *docspec))
+	style_obj = _get_obj(env, hdf, *stylespec)
+	doc_obj   = _get_obj(env, hdf, *docspec)
+
+        try:
+            page, ct  = _transform(style_obj, doc_obj)
+        finally:
+            _close_obj(style_obj)
+            _close_obj(doc_obj)
+
         return page
 
 def _parse_opts(args):
@@ -119,12 +137,16 @@ def _has_prefix(name, pfx_list):
 
 def _parse_filespec(filespec, hdf, env):
     # parse filespec argument to get module and id if contained.
-    parts = filespec.split(':')
+    if filespec[:5] == 'http:' or filespec[:6] == 'https:':
+        parts = [ 'url', '', filespec ]
+    else:
+        parts = filespec.split(':', 2)
+
     if len(parts) == 3:                 # module:id:attachment
-        if parts[0] in ['wiki', 'ticket']:
+        if parts[0] in ['wiki', 'ticket', 'browser', 'file', 'url']:
             module, id, file = parts
         else:
-            raise Exception("%s module can't have attachments" % parts[0])
+            raise Exception("unknown module %s" % parts[0])
 
     elif len(parts) == 2:
         from trac.versioncontrol.web_ui import BrowserModule
@@ -141,7 +163,7 @@ def _parse_filespec(filespec, hdf, env):
             module = 'ticket'
             id = id[1:]
         elif id == 'htdocs':            # htdocs:path
-            module = 'htdocs'
+            module = 'file'
         else:                           # WikiPage:attachment
             module = 'wiki'
 
@@ -164,55 +186,91 @@ def _parse_filespec(filespec, hdf, env):
 
     return module, id, file
 
-def _get_path(env, hdf, module, id, file):
+def _get_obj(env, hdf, module, id, file):
+    """Returns a filename (str or unicode), a trac browser Node, or a urllib 
+       addinfourl.
+    """
+
     # check permissions first
     if module == 'wiki'    and not hdf.has_key('trac.acl.WIKI_VIEW')   or \
        module == 'ticket'  and not hdf.has_key('trac.acl.TICKET_VIEW') or \
-       module == 'htdocs'  and not hdf.has_key('trac.acl.FILE_VIEW')   or \
+       module == 'file'    and not hdf.has_key('trac.acl.FILE_VIEW')   or \
        module == 'browser' and not hdf.has_key('trac.acl.BROWSER_VIEW'):
         raise Exception('Permission denied: %s' % module)
 
-    path = None
+    obj = None
+
     if module == 'browser':
         from trac.versioncontrol.web_ui import get_existing_node
         repos = env.get_repository(hdf.get('trac.authname'))
-        node  = get_existing_node(env, repos, file, None)
-        path  = node.get_content()
+        obj   = get_existing_node(env, repos, file, None)
 
-    elif module == 'htdocs':
+    elif module == 'file':
         import re
         file = re.sub('[^a-zA-Z0-9._/-]', '', file)     # remove forbidden chars
         file = re.sub('^/+', '', file)                  # make sure it's relative
         file = os.path.normpath(file)                   # resolve ..'s
         if file.startswith('..'):                       # don't allow above doc-root
             raise Exception("illegal path '%s'" % file)
-        path = os.path.join(env.get_htdocs_dir(), file)
+
+        if id != 'htdocs':
+            raise Exception("unsupported file id '%s'" % id)
+
+        obj = os.path.join(env.get_htdocs_dir(), file)
 
     elif module == 'wiki' or module == 'ticket':
         from trac.attachment import Attachment
         attachment = Attachment(env, module, id, file)
-        path = attachment.path
+        obj = attachment.path
+
+    elif module == 'url':
+        import urllib
+
+        if id:
+            raise Exception("unsupported url id '%s'" % id)
+
+        try:
+           obj = urllib.urlopen(file)
+        except Exception, e:
+            raise Exception('Could not read from url "%s": %s' % (file, e))
 
     else:
         raise Exception("unsupported module '%s'" % module)
 
-    return path
+    return obj
 
-def _transform(stylepath, docpath):
+def _close_obj(obj):
+    if hasattr(obj, 'close') and callable(obj.close):
+        obj.close()
+
+def _obj_tostr(obj):
+    if isinstance(obj, str) or isinstance(obj, unicode):
+        return obj
+    if isinstance(obj, Node):
+        return obj.path
+    if hasattr(obj, 'url'):
+        return obj.url
+    return str(obj)
+
+def _transform(style_obj, doc_obj):
     import libxslt
 
-    styledoc = _parse_xml(stylepath)
-    doc      = _parse_xml(docpath)
+    try:
+        styledoc = _parse_xml(style_obj)
+    except Exception, e:
+        raise Exception("Error parsing %s: %s" % (_obj_tostr(style_obj), e))
 
-    style  = libxslt.parseStylesheetDoc(styledoc)
+    try:
+        doc = _parse_xml(doc_obj)
+    except Exception, e:
+        styledoc.freeDoc()
+        raise Exception("Error parsing %s: %s" % (_obj_tostr(doc_obj), e))
+
+    style = libxslt.parseStylesheetDoc(styledoc)
     if not style:
         styledoc.freeDoc()
         doc.freeDoc()
-        raise Exception("%s is not a valid stylesheet" % \
-                        (isinstance(style_obj, str) and style_obj or \
-                         isinstance(style_obj, unicode) and style_obj or \
-                         isinstance(style_obj, Node) and style_obj.path or \
-                         str(style_obj)))
+        raise Exception("%s is not a valid stylesheet" % _obj_tostr(style_obj))
 
     result = style.applyStylesheet(doc, None)
     output = style.saveResultToString(result)
@@ -237,6 +295,8 @@ def _parse_xml(obj):
 
     if isinstance(obj, str) or isinstance(obj, unicode):
         return libxml2.parseFile(obj)
+    if isinstance(obj, Node):
+        return libxml2.parseDoc(obj.get_content().read())
     if hasattr(obj, 'read') and callable(obj.read):
         return libxml2.parseDoc(obj.read())
 
@@ -268,24 +328,27 @@ class XsltProcessor(Component):
            not docspec[0] or not docspec[1] or not docspec[2]:
             raise TracError('Bad request')
 
-        stylepath = _get_path(self.env, req.hdf, *stylespec)
-        docpath   = _get_path(self.env, req.hdf, *docspec)
+        style_obj = _get_obj(self.env, req.hdf, *stylespec)
+        doc_obj   = _get_obj(self.env, req.hdf, *docspec)
 
-        stat = os.stat(stylepath)
-        lastmod = stat.st_mtime
-        stat = os.stat(docpath)
-        if lastmod < stat.st_mtime:
-            lastmod = stat.st_mtime
+        lastmod = max(_get_last_modified(style_obj),
+                      _get_last_modified(doc_obj))
 
         req.check_modified(lastmod)
         if not req.get_header('If-None-Match'):
             if http_date(lastmod) == req.get_header('If-Modified-Since'):
                 req.send_response(304)
                 req.end_headers()
+                _close_obj(style_obj)
+                _close_obj(doc_obj)
                 raise RequestDone
         req._headers.append(('Last-Modified', http_date(lastmod)))
 
-        page, content_type = _transform(stylepath, docpath)
+        try:
+            page, content_type = _transform(style_obj, doc_obj)
+        finally:
+            _close_obj(style_obj)
+            _close_obj(doc_obj)
 
         req.send_response(200)
         req.send_header('Content-Type', content_type + ';charset=utf-8')
@@ -299,4 +362,17 @@ class XsltProcessor(Component):
             req.write(page)
 
         raise RequestDone
+
+    def _get_last_modified(obj):
+        import time
+
+        if isinstance(obj, str) or isinstance(obj, unicode):
+            return os.stat(obj).st_mtime
+        if isinstance(obj, Node):
+            return obj.get_last_modified()
+        if hasattr(obj, 'info') and callable(obj.info):
+            lm = obj.info().getdate('Last-modified')
+            if lm:
+                return time.mktime(lm)
+        return time.time()
 
