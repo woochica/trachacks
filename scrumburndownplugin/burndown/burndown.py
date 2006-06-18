@@ -8,12 +8,14 @@
 #
 # Author: Sam Bloomquist <spooninator@hotmail.com>
 
+import time
+
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
-from trac.util import escape, Markup
+from trac.util import escape, Markup, format_date
 
 class BurndownComponent(Component):
     implements(IEnvironmentSetupParticipant, INavigationContributor,
@@ -174,9 +176,25 @@ class BurndownComponent(Component):
         
     def startMilestone(self, db, milestone):
         cursor = db.cursor()
+        cursor.execute("SELECT started FROM milestone WHERE name = '%s'" % milestone)
+        row = cursor.fetchone()
+        if row and row[0] > 0:
+            raise TracError("Milestone '%s' was already started on %s" % (milestone, format_date(int(row[0]))))
+            
+        cursor.execute("UPDATE milestone SET started = %i WHERE name = '%s'" % (int(time.time()), milestone))
+        
+        db.commit()
         
     def completeMilestone(self, db, milestone):
         cursor = db.cursor()
+        cursor.execute("SELECT completed FROM milestone WHERE name = '%s'" % milestone)
+        row = cursor.fetchone()
+        if row and row[0] > 0:
+            raise TracError("Milestone '%s' was already completed on %s" % (milestone, format_date(int(row[0]))))
+            
+        cursor.execute("UPDATE milestone SET completed = %i WHERE name = '%s'" % (int(time.time()), milestone))
+        
+        db.commit()
         
     #---------------------------------------------------------------------------
     # ITemplateProvider methods
