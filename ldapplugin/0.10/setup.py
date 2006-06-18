@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'LdapPlugin'
-VERSION = '0.3.0'
+VERSION = '0.4.0'
 
 setup (
     name = PACKAGE,
@@ -12,7 +12,7 @@ setup (
     package_data = { },
     author = "Emmanuel Blot",
     author_email = "manu.blot@gmail.com",
-    description = "LDAP extensions for Trac 0.9.3",
+    description = "LDAP extensions for Trac 0.10",
     keywords = "trac ldap permission group acl",
     url = "http://trac-hacks.swapoff.org/wiki/LdapPlugin",
 )
