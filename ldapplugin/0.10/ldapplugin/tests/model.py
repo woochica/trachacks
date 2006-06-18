@@ -2,8 +2,8 @@
 #
 # LDAP permission extension tests for Trac
 # 
-# Copyright (C) 2003-2005 Edgewall Software
-# Copyright (C) 2005 Emmanuel Blot <manu.blot@gmail.com>
+# Copyright (C) 2003-2006 Edgewall Software
+# Copyright (C) 2005-2006 Emmanuel Blot <manu.blot@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -43,8 +43,8 @@ class LdapPermissionStoreTestCase(unittest.TestCase):
         self.env.config.set('ldap', 'basedn', 'dc=example,dc=org')
         self.env.config.set('ldap', 'host', 'xebian')
         self.env.config.set('ldap', 'store_bind', 'true')
-        self.env.config.set('ldap', 'store_user', 'trac')
-        self.env.config.set('ldap', 'store_passwd', 'Trac')
+        self.env.config.set('ldap', 'bind_user', 'trac')
+        self.env.config.set('ldap', 'bind_passwd', 'Trac')
         self.env.config.set('ldap', 'permfilter', 'objectclass=groupofnames')
         self.action1 = 'FILE_VIEW'
         self.action2 = 'TICKET_CREATE'

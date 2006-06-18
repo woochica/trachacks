@@ -2,8 +2,8 @@
 #
 # LDAP permission extensions for Trac
 # 
-# Copyright (C) 2003-2005 Edgewall Software
-# Copyright (C) 2005 Emmanuel Blot <manu.blot@gmail.com>
+# Copyright (C) 2003-2006 Edgewall Software
+# Copyright (C) 2005-2006 Emmanuel Blot <manu.blot@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -27,7 +27,8 @@ import ldap
 from trac.core import *
 from trac.perm import IPermissionGroupProvider, IPermissionStore
 
-LDAP_MODULE_CONFIG = [ 'enable', 'permfilter', 'global_perms',
+LDAP_MODULE_CONFIG = [ 'enable', 'permfilter', 
+                       'global_perms', 'manage_groups'
                        'cache_ttl', 'cache_size',
                        'group_bind', 'store_bind',
                        'user_rdn', 'group_rdn' ]
@@ -48,14 +49,14 @@ class LdapPermissionGroupProvider(Component):
     """
     implements(IPermissionGroupProvider)
 
-    def __init__(self):
+    def __init__(self, ldap=None):
         # looks for groups only if LDAP support is enabled
         self.enabled = self.config.getbool('ldap', 'enable')
         if not self.enabled:
             return
         self.util = LdapUtil(self.env.config)
         # LDAP connection
-        self._ldap = None
+        self._ldap = ldap
         # LDAP connection config
         self._ldapcfg = {}
         for name,value in self.env.config.options('ldap'):
@@ -74,10 +75,8 @@ class LdapPermissionGroupProvider(Component):
         """Return a list of names of the groups that the user with the specified
         name is a member of."""
 
-        groups = ['anonymous']
-        if username and username != 'anonymous':
-            groups.append('authenticated')
-
+        # anonymous and authenticated groups are set with the default provider
+        groups = []
         if not self.enabled:
             return groups
                         
@@ -142,9 +141,10 @@ class LdapPermissionGroupProvider(Component):
         for group in ldap_groups:
             if self._ldap.is_in_group(self.util.user_attrdn(username), group):
                 m = DN_RE.search(group)
-                if not m:
-                    continue
-                groups.append(GROUP_PREFIX + m.group('rdn'))
+                if m:
+                    groupname = GROUP_PREFIX + m.group('rdn')
+                    if groupname not in groups:
+                        groups.append(groupname)
         return groups
 
 class LdapPermissionStore(Component):
@@ -155,14 +155,14 @@ class LdapPermissionStore(Component):
 
     group_providers = ExtensionPoint(IPermissionGroupProvider)
 
-    def __init__(self):
+    def __init__(self, ldap=None):
         # looks for groups only if LDAP support is enabled
         self.enabled = self.config.getbool('ldap', 'enable')
         if not self.enabled:
             return
         self.util = LdapUtil(self.config)
         # LDAP connection
-        self._ldap = None
+        self._ldap = ldap
         # LDAP connection config
         self._ldapcfg = {}
         for name,value in self.env.config.options('ldap'):
@@ -180,8 +180,7 @@ class LdapPermissionStore(Component):
         self.env_name = envpath[1+envpath.rfind('/'):]
         # use directory-wide permissions
         self.global_perms = self.config.getbool('ldap', 'global_perms')
-        self.user_rdn = self.config.get('ldap', 'user_rdn', '').lower()
-        self.group_rdn = self.config.get('ldap', 'group_rdn', '').lower()
+        self.manage_groups = self.config.getbool('ldap', 'manage_groups')
 
     # IPermissionStore interface
 
@@ -213,31 +212,37 @@ class LdapPermissionStore(Component):
         # tasks, not for runtime
         if not self.enabled:
             raise TracError("LdapPermissionStore is disabled")
-        if not self._ldap:
-            self._openldap()
         perms = []
         filterstr = self.env.config.get('ldap', 'permfilter', 'objectclass=*')
         basedn = self.env.config.get('ldap','basedn','').encode('ascii')
+        self._openldap()
         dns = self._ldap.get_dn(basedn, filterstr.encode('ascii'))
+        permusers = []
         for dn in dns:
             user = self.util.extract_user_from_dn(dn)
-            if not user:
-                continue
-            self.log.debug("permission user %s dn %s" % (user, dn))
+            if not user or user in permusers: continue
+            permusers.append(user)
+            self.log.debug("permission for %s (%s)" % (user, dn))
             actions = self._ldap.get_attribute(dn, self._ldap.permattr)
             for action in actions:
                 xaction = self._extract_action(action)
                 if not xaction:
                     continue
                 perms.append((user, xaction))
+            if self.manage_groups:
+                for provider in self.group_providers:
+                    if isinstance(provider, LdapPermissionGroupProvider):
+                        for group in provider.get_permission_groups(user):
+                            perms.append((user, group))
         return perms
 
     def grant_permission(self, username, action):
-        """Store in the LDAP directory the new permission for the user"""
+        """Store the new permission for the user in the LDAP directory"""
         if not self.enabled:
             raise TracError("LdapPermissionStore is disabled")
-        if not self._ldap:
-            self._openldap()
+        if self.manage_groups and self.util.is_group(action):
+            self._add_user_to_group(username.encode('ascii'), action)
+            return
         uid = self.util.create_dn(username.encode('ascii'))
         try:
             permlist = self._get_permissions(uid)
@@ -255,11 +260,12 @@ class LdapPermissionStore(Component):
                              % (action, username, e[0]['desc'])
 
     def revoke_permission(self, username, action):
-        """Remove from the LDAP directory the permission for the user"""
+        """Remove the permission for the user from the LDAP directory"""
         if not self.enabled:
             raise TracError("LdapPermissionStore is disabled")
-        if not self._ldap:
-            self._openldap()
+        if self.manage_groups and self.util.is_group(action):
+            self._remove_user_from_group(username.encode('ascii'), action)
+            return
         uid = self.util.create_dn(username.encode('ascii'))
         try:
             permlist = self._get_permissions(uid)
@@ -281,13 +287,13 @@ class LdapPermissionStore(Component):
 
     def _openldap(self):
         """Open a new connection to the LDAP directory"""
-        bind = self.config.getbool('ldap', 'store_bind')
-        self._ldap = LdapConnection(self.env.log, bind, **self._ldapcfg)
+        if self._ldap is None: 
+            bind = self.config.getbool('ldap', 'store_bind')
+            self._ldap = LdapConnection(self.env.log, bind, **self._ldapcfg)
 
     def _get_permissions(self, uid):
         """Retrieves the permissions from the LDAP directory"""
-        if not self._ldap:
-            self._openldap()
+        self._openldap()
         actions = self._ldap.get_attribute(uid, self._ldap.permattr) 
         perms = []
         for action in actions:
@@ -315,7 +321,34 @@ class LdapPermissionStore(Component):
             return action
         return "%s:%s" % (self.env_name, action)
 
-
+    def _add_user_to_group(self, user, group):
+        groupdn = self.util.create_dn(group)
+        userdn = self.util.create_dn(user)
+        self._openldap()
+        try:
+            self._ldap.add_attribute(groupdn, self._ldap.groupmember, 
+                                     userdn)
+            self._flush_cache()
+        except ldap.TYPE_OR_VALUE_EXISTS, e:
+            # already in group, can safely ignore
+            return
+        except ldap.LDAPError, e:
+            raise TracError, e[0]['desc']
+        
+    def _remove_user_from_group(self, user, group):
+        groupdn = self.util.create_dn(group)
+        userdn = self.util.create_dn(user)
+        self._openldap()
+        try:
+            self._ldap.delete_attribute(groupdn, self._ldap.groupmember, 
+                                        userdn)
+            self._flush_cache()
+        except ldap.OBJECT_CLASS_VIOLATION, e:
+            # probable cause is an empty group
+            raise TracError, "Ldap error (group would be emptied?)"
+        except ldap.LDAPError, e:
+            raise TracError, e[0]['desc']
+        
     def _get_cache_actions(self, username):
         """Retrieves the user permissions from the cache, if any"""
         if username in self._cache:
