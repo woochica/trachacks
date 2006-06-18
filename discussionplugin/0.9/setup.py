@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
   name = 'TracDiscussion',
-  version = '0.2',
+  version = '0.3',
   packages = ['tracdiscussion', 'tracdiscussion.db'],
   package_data = {'tracdiscussion' : ['templates/*.cs', 'htdocs/css/*.css']},
   entry_points = {'trac.plugins': ['TracDiscussion.core = tracdiscussion.core',

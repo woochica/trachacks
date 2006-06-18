@@ -3,7 +3,7 @@
   {
     var forum_list_form = document.getElementById('forum-list-form');
     var group_select = document.getElementById('group-select-' + forum);
-    forum_list_form.action.value = 'change-group';
+    forum_list_form.discussion_action.value = 'change-group';
     forum_list_form.group.value = group_select.value;
     forum_list_form.forum.value = forum;
     forum_list_form.submit();
@@ -43,7 +43,7 @@
     </div>
     <div class="buttons">
       <input type="submit" name="submit" value="Add"/>
-      <input type="hidden" name="action" value="post-add"/>
+      <input type="hidden" name="discussion_action" value="post-add"/>
     </div>
   </fieldset>
 </form>
@@ -103,7 +103,7 @@
     </table>
     <div class="buttons">
       <input type="submit" name="remove" value="Remove selected items" />
-      <input type="hidden" name="action" value="delete"/>
+      <input type="hidden" name="discussion_action" value="delete"/>
       <input type="hidden" name="group" value=""/>
       <input type="hidden" name="forum" value=""/>
     </div>

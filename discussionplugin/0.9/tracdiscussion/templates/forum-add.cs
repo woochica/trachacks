@@ -1,7 +1,7 @@
 <?cs include "discussion-header.cs" ?>
 
 <h1>Add Forum</h1>
-<form class="add_form" method="post" action="<?cs var:trac.href.discussion ?>">
+<form class="add_form" method="post" action="<?cs var:discussion.href ?>">
   <fieldset>
     <legend>
        Add Forum:
@@ -46,7 +46,7 @@
     <div class="buttons">
       <input type="submit" name="submit" value="Submit"/>
       <input type="submit" name="cancel" value="Cancel"/>
-      <input type="hidden" name="action" value="post-add"/>
+      <input type="hidden" name="discussion_action" value="post-add"/>
     </div>
   </fieldset>
 </form>

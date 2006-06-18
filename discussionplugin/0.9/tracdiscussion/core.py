@@ -1,9 +1,9 @@
+from tracdiscussion.api import *
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
-from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.perm import IPermissionRequestor, PermissionError
-from trac.util import Markup, format_datetime, pretty_timedelta
+from trac.util import Markup, format_datetime
 import re, os, time
 
 class DiscussionCore(Component):
@@ -32,11 +32,10 @@ class DiscussionCore(Component):
         return 'discussion'
 
     def get_navigation_items(self, req):
-        if not req.perm.has_permission('DISCUSSION_VIEW'):
-            return
-        yield 'mainnav', 'discussion', Markup('<a href="%s">%s</a>' % \
-          (self.env.href.discussion(), self.env.config.get('discussion',
-          'title', 'Discussion')))
+        if req.perm.has_permission('DISCUSSION_VIEW'):
+            yield 'mainnav', 'discussion', Markup('<a href="%s">%s</a>' % \
+              (self.env.href.discussion(), self.env.config.get('discussion',
+              'title', 'Discussion')))
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -62,23 +61,20 @@ class DiscussionCore(Component):
         # CSS styles
         add_stylesheet(req, 'common/css/wiki.css')
         add_stylesheet(req, 'discussion/css/discussion.css')
-        req.hdf['trac.href.discussion'] = self.env.href.discussion()
 
-        forum, topic, message, mode, action, reply, is_moderator = None, None, \
-          None, None, None, None, False
+        forum, topic, message, mode, is_moderator = None, None, None, None, False
 
         # Get action
-        if req.args.has_key('action'):
-            action = req.args.get('action')
-        if req.args.has_key('reply'):
-            reply = req.args.get('reply')
+        action = req.args.get('discussion_action')
+        reply = req.args.get('reply')
         preview = req.args.has_key('preview');
         submit = req.args.has_key('submit');
         cancel = req.args.has_key('cancel');
 
         # Populate active forum
         if req.args.has_key('forum'):
-            forum = self.get_forum(cursor, req, req.args.get('forum'))
+            forum = get_forum(cursor, self.env, req, self.log,
+              req.args.get('forum'))
             if not forum:
                 raise TracError('No such forum %s' % req.args.get('forum'))
 
@@ -88,13 +84,15 @@ class DiscussionCore(Component):
 
         # Populate active topic
         if req.args.has_key('topic'):
-            topic = self.get_topic(cursor, req, req.args.get('topic'))
+            topic = get_topic(cursor, self.env, req, self.log,
+              req.args.get('topic'))
             if not topic:
                 raise TracError('No such topic %s' % req.args.get('topic'))
 
         # Populate active topic
         if req.args.has_key('message'):
-            message = self.get_message(cursor, req, req.args.get('message'))
+            message = get_message(cursor, self.env, req, self.log,
+              req.args.get('message'))
             if not message:
                 raise TracError('No such message %s' % req.args.get('message'))
 
@@ -149,10 +147,17 @@ class DiscussionCore(Component):
         # Forum related stuff
         if mode == 'forum-list':
             req.perm.assert_permission('DISCUSSION_VIEW')
-            req.hdf['discussion.forums'] = self.get_forums(cursor, req)
+            req.hdf['discussion.href'] = self.env.href.discussion()
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
         elif mode == 'forum-add':
             req.perm.assert_permission('DISCUSSION_MODIFY')
-            req.hdf['discussion.users'] = self.get_users()
+            req.hdf['discussion.href'] = self.env.href.discussion()
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.users'] = get_users(self.env)
         elif mode == 'forum-post-add':
             req.perm.assert_permission('DISCUSSION_MODIFY')
 
@@ -169,27 +174,36 @@ class DiscussionCore(Component):
                 moderators = ''
 
             # Add new forum
-            self.add_forum(cursor, name, author, subject, description,
+            add_forum(cursor, self.log, name, author, subject, description,
               moderators, group)
 
             # Display forum list
-            req.hdf['discussion.forums'] = self.get_forums(cursor, req)
+            req.hdf['discussion.href'] = self.env.href.discussion()
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
             mode = 'forum-list'
         elif mode == 'forum-delete':
             req.perm.assert_permission('DISCUSSION_MODIFY')
 
             # Delete current forum
-            self.delete_forum(cursor, forum['id'])
+            delete_forum(cursor, self.log, forum['id'])
 
             # Display forum list
-            req.hdf['discussion.forums'] = self.get_forums(cursor, req)
+            req.hdf['discussion.href'] = self.env.href.discussion()
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
             mode = 'forum-list'
 
         # Forum topics related stuff
         elif mode == 'topic-list':
             req.perm.assert_permission('DISCUSSION_VIEW')
-            req.hdf['discussion.topics'] = self.get_topics(cursor, req,
-              forum['id'])
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'])
+            req.hdf['discussion.topics'] = get_topics(cursor, self.env, req,
+              self.log, forum['id'])
         elif mode == 'topic-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
@@ -200,10 +214,12 @@ class DiscussionCore(Component):
             author = req.args.get('author')
             body = req.args.get('body')
 
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'])
             if author:
                 req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
             if body:
                 req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
+            req.hdf['discussion.time'] = format_datetime(time.time())
         elif mode == 'topic-post-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
@@ -213,9 +229,10 @@ class DiscussionCore(Component):
             body = req.args.get('body')
 
             # Add new topic and display topic list
-            self.add_topic(cursor, forum['id'], subject, author, body)
-            req.hdf['discussion.topics'] = self.get_topics(cursor, req,
-              forum['id'])
+            add_topic(cursor, self.log, forum['id'], subject, author, body)
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'])
+            req.hdf['discussion.topics'] = get_topics(cursor, self.env, req,
+              self.log, forum['id'])
             mode = 'topic-list'
         elif mode == 'topic-delete':
             req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -224,12 +241,13 @@ class DiscussionCore(Component):
             if not is_moderator:
                 raise PermissionError('Forum moderate')
 
-            # Delete message
-            self.delete_topic(cursor, forum['id'], topic['id'])
+            # Delete topic
+            delete_topic(cursor, self.log, topic['id'])
 
             # Display topics
-            req.hdf['discussion.topics'] = self.get_topics(cursor, req,
-              forum['id'])
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'])
+            req.hdf['discussion.topics'] = get_topics(cursor, self.env, req,
+              self.log, forum['id'])
             mode = 'topic-list'
 
         # Message related stuff
@@ -244,12 +262,15 @@ class DiscussionCore(Component):
             body = req.args.get('body')
 
             # Display messages
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'],
+              topic['id'])
             if author:
                 req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
             if body:
                 req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
-            req.hdf['discussion.messages'] = self.get_messages(cursor, req,
-              topic['id'])
+            req.hdf['discussion.time'] = format_datetime(time.time())
+            req.hdf['discussion.messages'] = get_messages(cursor, self.env, req,
+              self.log, topic['id'])
         elif mode == 'message-post-add':
             req.perm.assert_permission('DISCUSSION_VIEW')
 
@@ -258,16 +279,18 @@ class DiscussionCore(Component):
             body = req.args.get('body')
 
             # Add new message
-            self.add_message(cursor, forum['id'], topic['id'], reply, author,
-              body)
+            add_message(cursor, self.log, forum['id'], topic['id'], reply,
+              author, body)
 
             # Display messages
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'],
+              topic['id'])
             if author:
                 req.hdf['discussion.author'] = wiki_to_oneliner(author, self.env)
             if body:
                 req.hdf['discussion.body'] = wiki_to_html(body, self.env, req)
-            req.hdf['discussion.messages'] = self.get_messages(cursor, req,
-              topic['id'])
+            req.hdf['discussion.messages'] = get_messages(cursor, self.env, req,
+              self.log, topic['id'])
             mode = 'message-list'
         elif mode == 'message-delete':
             req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -277,14 +300,16 @@ class DiscussionCore(Component):
                 raise PermissionError('Forum moderate')
 
             # Delete message
-            self.delete_message(cursor, forum['id'], topic['id'], reply)
+            delete_message(cursor, self.log, reply)
 
             # Display or messages
-            req.hdf['discussion.messages'] = self.get_messages(cursor, req,
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'],
               topic['id'])
+            req.hdf['discussion.messages'] = get_messages(cursor, self.env, req,
+              self.log, topic['id'])
             mode = 'message-list'
 
-        req.hdf['discussion.groups'] = self.get_groups(cursor, req);
+        req.hdf['trac.href.discussion'] = self.env.href.discussion()
         req.hdf['discussion.forum'] = forum
         req.hdf['discussion.topic'] = topic
         req.hdf['discussion.message'] = message
@@ -292,208 +317,3 @@ class DiscussionCore(Component):
         req.hdf['discussion.is_moderator'] = is_moderator
         db.commit()
         return mode + '.cs', None
-
-    # Non-extension methods
-    def get_message(self, cursor, req, id):
-        columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
-        sql = 'SELECT id, forum, topic, replyto, time, author, body FROM' \
-          ' message WHERE id = %s' % (id)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, req)
-            return row
-        return None
-
-    def get_topic(self, cursor, req, id):
-        columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
-        sql = 'SELECT id, forum, time, subject, body, author FROM topic WHERE' \
-          ' id = %s' % (id)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, req)
-            row['time'] = format_datetime(row['time'])
-            return row
-        return None
-
-    def get_forum(self, cursor, req, id):
-        columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
-        sql = 'SELECT name, moderators, id, time, subject, description FROM' \
-          ' forum WHERE id = %s' % (id)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['moderators'] = row['moderators'].split(' ')
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
-            return row
-        return None
-
-    def get_groups(self, cursor, req):
-        columns = ('id', 'name', 'description')
-        sql = 'SELECT id, name, description FROM forum_group'
-        self.log.debug(sql)
-        cursor.execute(sql)
-        groups = []
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['name'] = wiki_to_oneliner(row['name'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
-            groups.append(row)
-        return groups
-
-    def get_forums(self, cursor, req):
-        columns = ('id', 'name', 'author', 'time', 'moderators', 'group',
-          'subject', 'description', 'topics', 'replies', 'lastreply',
-          'lasttopic')
-        sql = 'SELECT id, name, author, time, moderators, forum_group,' \
-          ' subject, description, (SELECT COUNT(id) FROM topic t WHERE' \
-          ' t.forum = forum.id), (SELECT COUNT(id) FROM message m WHERE' \
-          ' m.forum = forum.id), (SELECT MAX(time) FROM message m WHERE' \
-          ' m.forum = forum.id), (SELECT MAX(time) FROM topic t WHERE' \
-          ' t.forum = forum.id) FROM forum ORDER BY subject'
-        self.log.debug(sql)
-        cursor.execute(sql)
-        forums = []
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['moderators'] = wiki_to_oneliner(row['moderators'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
-            if row['lastreply']:
-                row['lastreply'] = pretty_timedelta(row['lastreply'])
-            else:
-                row['lastreply'] = 'No replies'
-            if row['lasttopic']:
-                row['lasttopic'] = pretty_timedelta(row['lasttopic'])
-            else:
-                row['lasttopic'] = 'No topics'
-            row['time'] = format_datetime(row['time'])
-            forums.append(row)
-        return forums
-
-    def get_topics(self, cursor, req, forum):
-        columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
-          'replies', 'lastreply')
-        sql = 'SELECT id, forum, time, subject, body, author, (SELECT' \
-          ' COUNT(id) FROM message m WHERE m.topic = topic.id), (SELECT' \
-          ' MAX(time) FROM message m WHERE m.topic = topic.id) FROM topic' \
-          ' WHERE forum = %s ORDER BY time' % (forum)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        topics = []
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, req)
-            if row['lastreply']:
-                row['lastreply'] = pretty_timedelta(row['lastreply'])
-            else:
-                row['lastreply'] = 'No replies'
-            row['time'] = format_datetime(row['time'])
-            topics.append(row)
-        return topics
-
-    def get_messages(self, cursor, req, topic):
-        columns = ('id', 'replyto', 'time', 'author', 'body')
-        sql = 'SELECT id, replyto, time, author, body FROM message WHERE' \
-          ' topic = %s ORDER BY time' % (topic)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-        messagemap = {}
-        messages = []
-
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, req)
-            row['time'] = format_datetime(row['time'])
-            messagemap[row['id']] = row
-            # Add top-level messages to the main list, in order of time
-            if row['replyto'] == -1:
-                messages.append(row)
-
-        # Second pass, add replies
-        for message in messagemap.values():
-            if message['replyto'] != -1:
-                parent = messagemap[message['replyto']]
-                if 'replies' in parent:
-                    parent['replies'].append(message)
-                else:
-                    parent['replies'] = [message]
-        return messages;
-
-    def get_users(self):
-        users = []
-        for user in self.env.get_known_users():
-            users.append(user[0])
-        return users
-
-    def add_forum(self, cursor, name, author, subject, description, moderators,
-      group):
-        moderators = ' '.join(moderators)
-        if not group:
-            group = 'NULL'
-        sql = 'INSERT INTO forum (name, author, time, moderators, subject,' \
-          ' description, forum_group) VALUES ("%s", "%s", %s, "%s", "%s",' \
-          ' "%s", %s)' % (name, author, str(int(time.time())), moderators,
-          subject, description, group)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-    def add_topic(self, cursor, forum, subject, author, body):
-        sql = 'INSERT INTO topic (forum, time, author, subject, body) VALUES' \
-          ' (%s, %s, "%s", "%s", "%s")' % (forum, str(int(time.time())), author,
-          subject, body)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-    def add_message(self, cursor, forum, topic, replyto, author, body):
-        sql = 'INSERT INTO message (forum, topic, replyto, time, author, body)' \
-          ' VALUES (%s, %s, %s, %s, "%s", "%s")' % (forum, topic, replyto,
-          str(int(time.time())), author, body)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-    def delete_forum(self, cursor, forum):
-        sql = 'DELETE FROM message WHERE forum = %s' % (forum)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        sql = 'DELETE FROM topic WHERE forum = %s' % (forum)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        sql = 'DELETE FROM forum WHERE id = %s' % (forum)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-    def delete_topic(self, cursor, forum, topic):
-        sql = 'DELETE FROM message WHERE forum = %s AND topic = %s' % (forum,
-          topic)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        sql = 'DELETE FROM topic WHERE id = %s' % (topic)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-    def delete_message(self, cursor, forum, topic, message):
-        # Get message replies
-        sql = 'SELECT id FROM message WHERE replyto = %s' % (message)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        replies = []
-        for row in cursor:
-            replies.append(row[0])
-
-        # Delete all replies
-        for reply in replies:
-            self.delete_message(cursor, forum, topic, reply)
-
-        # Delete message itself
-        sql = 'DELETE FROM message WHERE id = %s' % (message)
-        self.log.debug(sql)
-        cursor.execute(sql)

@@ -12,15 +12,20 @@
         <div class="body">
           <?cs var:discussion.body ?>
         </div>
-        <div class="author">
-          <?cs var:discussion.author ?>
+        <div class="footer">
+          <div class="author">
+            <?cs var:discussion.author ?>
+          </div>
+          <div class="time">
+            <?cs var:discussion.time ?>
+          </div>
         </div>
       </div>
     </div>
   </div>
 <?cs /if ?>
 
-<form class="add_form" method="post" action="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>">
+<form class="add_form" method="post" action="<?cs var:discussion.href ?>">
   <fieldset>
     <legend>
        Add Topic:
@@ -45,7 +50,7 @@
       <input type="submit" name="preview" value="Preview"/>
       <input type="submit" name="submit" value="Submit"/>
       <input type="submit" name="cancel" value="Cancel"/>
-      <input type="hidden" name="action" value="post-add"/>
+      <input type="hidden" name="discussion_action" value="post-add"/>
     </div>
   </fieldset>
 </form>

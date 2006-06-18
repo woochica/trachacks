@@ -26,38 +26,38 @@
         <?cs if forum.group == group.id ?>
          <tr class="<?cs if:name(forum) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
             <td class="title">
-              <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.id ?>">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                 <div class="subject"><?cs var:forum.subject ?></div>
                 <div class="description"><?cs var:forum.description ?></div>
               </a>
             </td>
             <td class="moderators">
-              <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.id ?>">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                 <div class="moderators"><?cs var:forum.moderators ?></div>
               </a>
             </td>
             <td class="lasttopic">
-              <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.id ?>">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                 <div class="lasttopic"><?cs var:forum.lasttopic ?></div>
               </a>
             </td>
             <td class="lastreply">
-              <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.id ?>">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                 <div class="lastreply"><?cs var:forum.lastreply ?></div>
               </a>
             </td>
             <td class="founded">
-              <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.id ?>">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                <div class="founded"><?cs var:forum.time ?></div>
               </a>
             </td>
             <td class="topics">
-              <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.id ?>">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                 <div class="topics"><?cs var:forum.topics ?></div>
               </a>
             </td>
             <td class="replies">
-              <a href="<?cs var:trac.href.discussion ?>/<?cs var:forum.id ?>">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                 <div class="replies"><?cs var:forum.replies ?></div>
               </a>
             </td>
@@ -77,9 +77,9 @@
 
 <?cs if:trac.acl.DISCUSSION_MODIFY ?>
   <div class="buttons">
-    <form method="post" action="<?cs var:trac.href.discussion ?>">
+    <form method="post" action="<?cs var:discussion.href ?>">
       <input type="submit" name="newforum" value="New Forum"/>
-      <input type="hidden" name="action" value="add"/>
+      <input type="hidden" name="discussion_action" value="add"/>
     </form>
   </div>
 <?cs /if ?>

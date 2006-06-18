@@ -30,13 +30,8 @@ class DiscussionWebAdmin(Component):
         add_stylesheet(req, 'common/css/wiki.css')
         add_stylesheet(req, 'discussion/css/admin.css')
 
-        action = None
-
         # Get action
-        if req.args.has_key('action'):
-            action = req.args.get('action')
-            if 'delete' in action:
-                action = 'delete'
+        action = req.args.get('discussion_action')
 
         # Determine mode
         if page == 'group':

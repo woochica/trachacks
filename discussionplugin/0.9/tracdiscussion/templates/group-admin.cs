@@ -15,7 +15,7 @@
     </div>
     <div class="buttons">
       <input type="submit" name="submit" value="Add"/>
-      <input type="hidden" name="action" value="post-add"/>
+      <input type="hidden" name="discussion_action" value="post-add"/>
     </div>
   </fieldset>
 </form>
@@ -48,7 +48,7 @@
     </table>
     <div class="buttons">
       <input type="submit" name="remove" value="Remove selected items" />
-      <input type="hidden" name="action" value="delete"/>
+      <input type="hidden" name="discussion_action" value="delete"/>
     </div>
   </form>
 <?cs else ?>
