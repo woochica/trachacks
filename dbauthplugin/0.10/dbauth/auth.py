@@ -93,7 +93,7 @@ class DbAuthLoginModule(Component):
                 uid, pwd = req.args.get('uid'), req.args.get('pwd')
                 if self._check_login(uid, pwd):
                     self._do_login(req)
-                    req.redirect(self.env.href.wiki())
+                    req.redirect(req.href())
                 else:
                     req.hdf["auth.message"] = "Login Incorrect"
                             
