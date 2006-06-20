@@ -30,7 +30,6 @@ def main():
     cursor = db.cursor()
     
     # make sure that there isn't already an entry for today in the burndown table
-    print today
     cursor.execute("SELECT id FROM burndown WHERE date = '%s'" % today)
     row = cursor.fetchone()
     if row:
@@ -40,7 +39,7 @@ def main():
     # get arrays of the various components and milestones in the trac environment
     cursor.execute("SELECT name AS comp FROM component")
     components = cursor.fetchall()
-    cursor.execute("SELECT name AS mile, started, completed FROM milestone")
+    cursor.execute("SELECT name, started, completed FROM milestone")
     milestones = cursor.fetchall()
     
     for mile in milestones:
@@ -57,8 +56,12 @@ def main():
                 rows = cursor.fetchall()
                 hours = 0
                 for estimate, spent in rows:
-                    if estimate and spent:
-                        hours += int(estimate) - int(spent)
+                    if not estimate:
+                        estimate = 0
+                    if not spent:
+                        spent = 0
+                    
+                    hours += int(estimate) - int(spent)
                 
                 print 'burndown: %i, %s, %s, %s, %i' % (db.get_last_id(cursor, 'burndown'), comp[0], mile[0], today, hours)
                 cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
