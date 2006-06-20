@@ -13,5 +13,21 @@ class Forge(object):
         """In this case, env should always be 
         the environment of the current Trac."""
         self.env = env
-        self.config = env.config # Needed for trac.config descriptors
         self.master_env = open_env(self.master_env_path)
+
+    config = property(lambda self: self.env.config) # Needed for trac.config descriptors
+
+
+class Project(object):
+    """A class representing a single project in a forge."""
+
+    
+    
+    def __init__(self, env):
+        """The env should be the env name for the desired project."""
+        self.env = open_env(env)
+
+    config = property(lambda self: self.env.config) # Needed for trac.config descriptors
+        
+    def subscribers(self, type):
+        """
