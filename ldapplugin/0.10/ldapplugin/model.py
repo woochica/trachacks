@@ -93,7 +93,8 @@ class LdapPermissionGroupProvider(Component):
                 # sources the cache
                 # cache lut is not updated to ensure
                 # it is refreshed on a regular basis
-                self.env.log.debug('cached: ' + ','.join(groups))
+                self.env.log.debug('cached (%s): %s' % \
+                                   (username, ','.join(groups)))
                 return groups
         
         # cache miss (either not found or too old)
@@ -128,10 +129,18 @@ class LdapPermissionGroupProvider(Component):
         
         # returns the user groups
         groups.extend(ldapgroups)
-        self.env.log.debug('groups: ' + ','.join(groups))
+        if groups:
+            self.env.log.debug('groups: ' + ','.join(groups))
 
         return groups
 
+    def flush_cache(self, username=None):
+        """Invalidate the entire cache or a named entry"""
+        if username is None:
+            self._cache = {}
+        elif self._cache.has_key(username):
+            del self._cache[username]
+        
     # Private API
     
     def _get_user_groups(self, username):
@@ -213,8 +222,8 @@ class LdapPermissionStore(Component):
         if not self.enabled:
             raise TracError("LdapPermissionStore is disabled")
         perms = []
-        filterstr = self.env.config.get('ldap', 'permfilter', 'objectclass=*')
-        basedn = self.env.config.get('ldap','basedn','').encode('ascii')
+        filterstr = self.config.get('ldap', 'permfilter', 'objectclass=*')
+        basedn = self.config.get('ldap','basedn','').encode('ascii')
         self._openldap()
         dns = self._ldap.get_dn(basedn, filterstr.encode('ascii'))
         permusers = []
@@ -241,6 +250,7 @@ class LdapPermissionStore(Component):
         if not self.enabled:
             raise TracError("LdapPermissionStore is disabled")
         if self.manage_groups and self.util.is_group(action):
+            self._flush_group_cache(username)
             self._add_user_to_group(username.encode('ascii'), action)
             return
         uid = self.util.create_dn(username.encode('ascii'))
@@ -252,8 +262,9 @@ class LdapPermissionStore(Component):
                 self._ldap.add_attribute(uid, self._ldap.permattr, xaction)
             if self.util.is_group(username):
                 # flush the cache as group dependencies are not known 
-                self._flush_cache()
+                self.flush_cache()
             else:
+                self.flush_cache(username)
                 self._add_cache_actions(username, [action])
         except ldap.LDAPError, e:
             raise TracError, "Unable to grant permission %s to %s: %s" \
@@ -264,6 +275,7 @@ class LdapPermissionStore(Component):
         if not self.enabled:
             raise TracError("LdapPermissionStore is disabled")
         if self.manage_groups and self.util.is_group(action):
+            self._flush_group_cache(username)
             self._remove_user_from_group(username.encode('ascii'), action)
             return
         uid = self.util.create_dn(username.encode('ascii'))
@@ -275,8 +287,9 @@ class LdapPermissionStore(Component):
                 self._ldap.delete_attribute(uid, self._ldap.permattr, xaction)
                 if self.util.is_group(username):
                     # flush the cache as group dependencies are not known 
-                    self._flush_cache()
+                    self.flush_cache()
                 else:
+                    self.flush_cache(username)
                     self._del_cache_actions(username, [action])
         except ldap.LDAPError, e:
             kind = self.global_perms and 'global' or 'project'
@@ -326,11 +339,11 @@ class LdapPermissionStore(Component):
         userdn = self.util.create_dn(user)
         self._openldap()
         try:
-            self._ldap.add_attribute(groupdn, self._ldap.groupmember, 
-                                     userdn)
-            self._flush_cache()
+            self._ldap.add_attribute(groupdn, self._ldap.groupmember, userdn)
+            self.log.info("user %s added to group %s" % (user, group))
         except ldap.TYPE_OR_VALUE_EXISTS, e:
             # already in group, can safely ignore
+            self.log.debug("user %s already member of %s" % (user, group))
             return
         except ldap.LDAPError, e:
             raise TracError, e[0]['desc']
@@ -342,10 +355,10 @@ class LdapPermissionStore(Component):
         try:
             self._ldap.delete_attribute(groupdn, self._ldap.groupmember, 
                                         userdn)
-            self._flush_cache()
+            self.log.info("user %s removed from group %s" % (user, group))
         except ldap.OBJECT_CLASS_VIOLATION, e:
             # probable cause is an empty group
-            raise TracError, "Ldap error (group would be emptied?)"
+            raise TracError, "Ldap error (group %s would be emptied?)" % group
         except ldap.LDAPError, e:
             raise TracError, e[0]['desc']
         
@@ -354,7 +367,8 @@ class LdapPermissionStore(Component):
         if username in self._cache:
             lut, actions = self._cache[username]
             if time.time() < lut+self._cache_ttl:
-                self.env.log.debug('cached: ' + ','.join(actions))
+                self.env.log.debug('cached (%s): %s' % \
+                                   (username, ','.join(actions)))
                 return actions
         return []
     
@@ -407,10 +421,21 @@ class LdapPermissionStore(Component):
             for k in old_keys:
                 del self._cache[k]
                 
-    def _flush_cache(self):
+    def flush_cache(self, username=None):
         """Delete all entries in the cache"""
-        self.log.debug("flushing cache")
-        self._cache = {}
+        if username is None:
+            self._cache = {}
+        elif self._cache.has_key(username):
+            del self._cache[username]
+        # we also need to flush the LDAP permission group provider
+        self._flush_group_cache(username)
+            
+    def _flush_group_cache(self, username=None):
+        """Flush the group cache (if in use)"""
+        if self.manage_groups:
+            for provider in self.group_providers:
+                if isinstance(provider, LdapPermissionGroupProvider):
+                    provider.flush_cache(username)
 
 class LdapUtil(object):
     """Utilities for LDAP data management"""
