@@ -89,7 +89,7 @@ class TOCMacro(WikiMacroBase):
         # If this is a page preview, try to figure out where its from
         # Note for 0.11: formatter.context could be the main `object`
         # to which the text being formatted belongs to...
-        current_page = req.hdf['wiki.page_name']
+        current_page = req.hdf['wiki.page_name'] or 'WikiStart'
         in_preview = req.args.has_key('preview')
          
         def get_page_text(pagename):
