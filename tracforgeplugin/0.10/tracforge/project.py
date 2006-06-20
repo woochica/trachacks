@@ -1,14 +1,22 @@
 from trac.core import *
+from trac.config import *
+from trac.config import OrderedExtensionsOption
 
+from tracforge.api import *
 from tracforge.util import *
+from tracforge.config import *
+
+import os
 
 class SubscriptionManagerModule(Component):
     """A class that manages data subscriptions."""
 
-    subscribtion_filters = OrderedExtensionOption('tracforge-client','filters',
+    subscribers = ListDictOption('tracforge-subscribers', sep=os.pathsep, 
+                               doc="""A list of env paths that want to recieve updates from this project.""")
+    subscribtion_filters = OrderedExtensionsOption('tracforge-client','filters',ISubscriptionFilter,
                                include_missing=False, doc="""Filters for recieved data.""")
 
-    subscribables = extension_point(ISubscribable)
+    subscribables = ExtensionPoint(ISubscribable)
     
     def __init__(self):
         pass
@@ -21,8 +29,5 @@ class SubscriptionManagerModule(Component):
     def _add_subscription(self, dest, type):
         dest_env = open_env(dest)
         dest_path = dest_env.path
-        subscribers = self.config.get('tracforge-client',type,default='')
-        subscribers = os.pathsep.split(subscribers)
-        subscribers.append(dest)
-        self.config.set('tracforge-client',type,os.pathsep.join(subscribers))
+        self.config.set('tracforge-subscribers',type,os.pathsep.join(self.subscribers+dest_path))
         self.config.save()
