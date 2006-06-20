@@ -2,13 +2,14 @@
 
 from trac.core import *
 from trac.util import escape
-from trac.wiki.formatter import Formatter, OutlineFormatter, wiki_to_oneliner, wiki_to_outline
-from trac.wiki.api import IWikiMacroProvider, WikiSystem
+from trac.wiki.formatter import Formatter, OutlineFormatter, wiki_to_oneliner, wiki_to_outline, system_message
+from trac.wiki.api import WikiSystem
+from trac.wiki.macros import WikiMacroBase 
 from trac.wiki.model import WikiPage
 from StringIO import StringIO
-import os, re, string, inspect
+import os, re
 
-__all__ = ['TracTocMacro']
+__all__ = ['TOCMacro']
 
 class NullOut(object):
    def write(self, *args): pass
@@ -17,12 +18,13 @@ class NullOut(object):
 class MyOutlineFormatter(OutlineFormatter):
 
     def format(self, active_page, page, text, out, min_depth, max_depth):
-        self.__page = page
         # XXX Code copied straight out of OutlineFormatter
         self.outline = []
-        class NullOut(object):
-            def write(self, data): pass
-        Formatter.format(self, text, NullOut())
+        Formatter.format(self, text)
+
+        active = ''
+        if page == active_page:
+            active = ' class="active"'
 
         if min_depth > max_depth:
             min_depth, max_depth = max_depth, min_depth
@@ -30,10 +32,7 @@ class MyOutlineFormatter(OutlineFormatter):
         min_depth = max(1, min_depth)
 
         curr_depth = min_depth - 1
-        for depth, link in self.outline:
-            active = ''
-            if '/%s' % active_page in link:
-                active = ' class="active"'
+        for depth, anchor, heading in self.outline:
             if depth < min_depth or depth > max_depth:
                 continue
             if depth < curr_depth:
@@ -43,20 +42,12 @@ class MyOutlineFormatter(OutlineFormatter):
             else:
                 out.write("</li><li%s>\n" % active)
             curr_depth = depth
-            out.write(link)
+            out.write('<a href="%s#%s">%s</a>' %
+                      (self.href.wiki(page), anchor, heading))
         out.write('</li></ol>' * curr_depth)
 
-    def _heading_formatter(self, match, fullmatch):
-        Formatter._heading_formatter(self, match, fullmatch)
-        depth = min(len(fullmatch.group('hdepth')), 5)
-        heading = match[depth + 1:len(match) - depth - 1]
-        anchor = self._anchors[-1]
-        text = wiki_to_oneliner(heading, self.env, self.db, self._absurls)
-        text = re.sub(r'</?a(?: .*?)?>', '', text) # Strip out link tags
-        self.outline.append((depth, '<a href="%s#%s">%s</a>' %
-                            (self.env.href.wiki(self.__page), anchor, text)))
 
-class TracTocMacro(Component):
+class TOCMacro(WikiMacroBase):
     """
     Generate a table of contents for the current page or a set of pages.
     If no arguments are given, a table of contents is generated for the
@@ -83,23 +74,21 @@ class TracTocMacro(Component):
     pages are given in the argument list.
     """
     
-    implements(IWikiMacroProvider)
-    
-    def get_macros(self):
-        yield 'TOC'
-        
-    def get_macro_description(self, name):
-        return inspect.getdoc(self.__class__)
-
     def render_macro(self, req, name, args):
+        # Note for 0.11: `req` will be replaced by `formatter`
+        #  req = formatter.req
+        #  db = formatter.db
         db = self.env.get_db_cnx()
-        formatter = MyOutlineFormatter(self.env)
+        formatter = MyOutlineFormatter(self.env) # FIXME 0.11: give 'req'
         
         # Bail out if we are in a no-float zone
+        # Note for 0.11: if 'macro_no_float' in formatter.properties
         if 'macro_no_float' in req.hdf:
             return ''
         
         # If this is a page preview, try to figure out where its from
+        # Note for 0.11: formatter.context could be the main `object`
+        # to which the text being formatted belongs to...
         current_page = req.hdf.getValue('wiki.page_name','WikiStart')
         in_preview = False
         if not req.hdf.has_key('wiki.page_name'):
@@ -110,7 +99,12 @@ class TracTocMacro(Component):
                 return ''
          
         def get_page_text(pagename):
-            """Return a tuple of (text, exists) for a page, taking into account previews."""
+            """Return a tuple of (text, exists) for a page,
+            taking into account previews.
+
+            Note for 0.11: `formatter` should have the original text,
+            so there would be no need for the `in_preview` stuff.
+            """
             if in_preview and pagename == current_page:
                 return (req.args.get('text',''), True)
             else:
@@ -177,17 +171,17 @@ class TracTocMacro(Component):
                             title = formatter.outline[0][1]
                             title = re.sub('<[^>]*>','', title) # Strip all tags
                             header = ': ' + wiki_to_oneliner(title, self.env)
-                        out.write('<li%s> <a href="%s">%s</a> %s</li>\n' % (li_class, self.env.href.wiki(page), page, header))
+                        out.write('<li%s> <a href="%s">%s</a> %s</li>\n' % (li_class, req.href.wiki(page), page, header))
                     out.write('</ol>')        
-                else :
-                    out.write('<div class="system-message"><strong>Error: No page matching %s found</strong></div>' % prefix)
+                else:
+                    out.write(system_message('Error: No page matching %s found' % prefix, None))
             else:
                 page = root + pagename
                 page_text, page_exists = get_page_text(page)
                 if page_exists:
                     formatter.format(current_page, page, page_text, out, params['min_depth'], params['max_depth'])
                 else:
-                    out.write('<div class="system-message"><strong>Error: Page %s does not exist</strong></div>' % pagename)
+                    out.write(system_message('Error: Page %s does not exist' % pagename, None))
         if not inline:
             out.write("</div>\n")
         return out.getvalue()
