@@ -89,14 +89,8 @@ class TOCMacro(WikiMacroBase):
         # If this is a page preview, try to figure out where its from
         # Note for 0.11: formatter.context could be the main `object`
         # to which the text being formatted belongs to...
-        current_page = req.hdf.getValue('wiki.page_name','WikiStart')
-        in_preview = False
-        if not req.hdf.has_key('wiki.page_name'):
-            if req.path_info.startswith('/wiki/'):
-                current_page = req.path_info[6:]
-                in_preview = True
-            else:
-                return ''
+        current_page = req.hdf['wiki.page_name']
+        in_preview = req.args.has_key('preview')
          
         def get_page_text(pagename):
             """Return a tuple of (text, exists) for a page,
@@ -174,14 +168,14 @@ class TOCMacro(WikiMacroBase):
                         out.write('<li%s> <a href="%s">%s</a> %s</li>\n' % (li_class, req.href.wiki(page), page, header))
                     out.write('</ol>')        
                 else:
-                    out.write(system_message('Error: No page matching %s found' % prefix, None))
+                    out.write(system_message('Error: No page matching %s found' % prefix))
             else:
                 page = root + pagename
                 page_text, page_exists = get_page_text(page)
                 if page_exists:
                     formatter.format(current_page, page, page_text, out, params['min_depth'], params['max_depth'])
                 else:
-                    out.write(system_message('Error: Page %s does not exist' % pagename, None))
+                    out.write(system_message('Error: Page %s does not exist' % pagename))
         if not inline:
             out.write("</div>\n")
         return out.getvalue()
