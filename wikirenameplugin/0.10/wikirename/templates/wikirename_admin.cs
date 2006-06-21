@@ -15,7 +15,7 @@
         </div>
     </fieldset>
     <div class="buttons">
-        <input type="hidden" name="redir" value="<?cs var:wikirename.redir ?>" />
+        <input type="hidden" name="redirect" value="<?cs var:wikirename.redir ?>" />
         <input type="submit" name="submit" value="Apply" />
     </div>
 </form> 

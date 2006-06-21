@@ -1,7 +1,6 @@
 from trac.core import *
 from trac.util import Markup
 from trac.perm import IPermissionRequestor
-from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider
 from webadmin.web_ui import IAdminPageProvider
 
@@ -26,28 +25,13 @@ class WikiRenameModule(Component):
         return req.path_info.startswith('/wiki') and perm
         
     def get_ctxtnav_adds(self, req):
-        #yield Markup("""<a href="" onclick="alert('Test'); return false">Markup test</a>""")
         page = req.path_info[6:] or 'WikiStart'
-        yield (req.href.admin('general','wikirename')+'?src_page='+page,'Rename page')
+        yield (req.href.admin('general','wikirename')+'?redirect=1&src_page='+page,'Rename page')
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
         return ['WIKI_RENAME']
 
-    # IRequestHandler methods
-    def match_request(self, req):
-        return req.path_info.startswith('/renamewiki') # This can't be '/wikirename' as that is captured by the Wiki module
-        
-    def process_request(self, req):
-        src = req.args.get('src_page','')
-        dest = req.args.get('dest_page')
-        if not dest:
-            req.hdf['wikirename.src'] = src
-            return 'wikirename.cs', 'text/html'
-        else:
-            rename_page(self.env, src, dest, req.authname, req.remote_addr)
-            req.redirect(req.href.wiki(dest))
-    
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
         if req.perm.has_permission('WIKI_RENAME') or req.perm.has_permission('WIKI_ADMIN'):
@@ -56,7 +40,7 @@ class WikiRenameModule(Component):
     def process_admin_request(self, req, cat, page, path_info):
         src = req.args.get('src_page','')
         dest = req.args.get('dest_page','')
-        redir = req.args.get('redirect')
+        redir = req.args.get('redirect','') == '1'
         
         if 'submit' in req.args.keys():
             if not src or not dest:

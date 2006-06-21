@@ -14,8 +14,8 @@ def rename_page(env, oldname, newname, user, ip, debug=False, db=None):
     cursor = db.cursor()
 
     sqlbase = ' FROM wiki w1, ' + \
-        '(SELECT name, MAX(version) AS VERSION FROM WIKI GROUP BY NAME) w2 ' + \
-        'WHERE w1.version = w2.version AND w1.name = w2.name '
+        '(SELECT name, MAX(version) AS max_version FROM wiki GROUP BY name) w2 ' + \
+        'WHERE w1.version = w2.max_version AND w1.name = w2.name '
 
     sql = 'SELECT w1.version,w1.text' + sqlbase + 'AND w1.name = \'%s\'' % oldname
     if debug: print "Running query '%s'" % sql
@@ -38,7 +38,7 @@ def rename_page(env, oldname, newname, user, ip, debug=False, db=None):
 
     # Move any attachments that are on the page
     if debug: print "Moving all attachments in database"
-    cursor.execute('UPDATE attachment SET id=%s WHERE type="wiki" AND id=%s', (newname,oldname))
+    cursor.execute('UPDATE attachment SET id=%s WHERE type=%s AND id=%s', (newname,'wiki',oldname))
 
     if debug: print "Found %s attachments on that page" % cursor.rowcount
     if cursor.rowcount > 0:

@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWikiRename',
-    version = '1.1-r1',
+    version = '1.1-r2',
     packages = ['wikirename'],
     package_data={ 'wikirename' : [ 'templates/*.cs' ] },
 
