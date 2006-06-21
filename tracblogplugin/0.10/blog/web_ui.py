@@ -90,6 +90,10 @@ class TracBlogPlugin(Component):
     If no tags are specified as parameters, then the default 'blog' tag is
     used.
 
+    Because any wiki page can be a blog entry,it is suggested that one uses a
+    unique tag for any page that should appear in the blog, such as the tag:
+    'blog' (the default).
+
     The following options can be specified:
 
     '''union''' - Specify whether the join for the tags listed should be a
@@ -226,6 +230,7 @@ class TracBlogPlugin(Component):
             blog = tags.get_tagged_names(tlist, operation='union')
         else:
             blog = tags.get_tagged_names(tlist, operation='intersection')
+        macropage = req.args.get('page', None)
 
         poststart, postend, default_times = self._get_time_range(req, **kwargs)
         mark_updated = self._choose_value('mark_updated', req, kwargs, 
@@ -235,12 +240,15 @@ class TracBlogPlugin(Component):
                                                          True))
         macro_bl = self.env.config.get('blog', 'macro_blacklist', '').split(',')
         macro_bl = [name.strip() for name in macro_bl if name.strip()]
+        macro_bl.append('BlogShow')
                        
         num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
         if num_posts and default_times:
             poststart = sys.maxint
             postend = 0
         for blog_entry in blog:
+            if blog_entry == macropage:
+                continue
             page = WikiPage(self.env, version=1, name=blog_entry)
             version, post_time, author, comment, ipnr = page.get_history(
                                                         ).next()
@@ -252,7 +260,11 @@ class TracBlogPlugin(Component):
                 time_format = self.env.config.get('blog', 'date_format') \
                               or '%x %X'
                 timeStr = format_datetime(post_time, format=time_format) 
-                text = self._trim_page(page.text, blog_entry)
+                post_size = self._choose_value('post_size', req, kwargs, int)
+                if not post_size:
+                    post_size = int(self.env.config.get('blog', 'post_size', 
+                                    1024))
+                text = self._trim_page(page.text, blog_entry, post_size)
                 pagetags = [x for x in tags.get_name_tags(blog_entry) if x not in tlist]
                 tagtags = []
                 for i, t in enumerate(pagetags[:3]):
@@ -511,7 +523,7 @@ class TracBlogPlugin(Component):
                 val = None
         return val
 
-    def _trim_page(self, text, page_name):
+    def _trim_page(self, text, page_name, post_size):
         """Trim the page text to the {{{post_size}} in trac.ini
 
         The timming isn't exact.  It trims to the first line that causes the
@@ -519,7 +531,6 @@ class TracBlogPlugin(Component):
         in the middle of a code block, it will close the block.
 
         """
-        post_size = int(self.env.config.get('blog', 'post_size', 1024))
         tlines = []
         entry_size = 0
         line_count = 0
