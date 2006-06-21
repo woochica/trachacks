@@ -26,7 +26,7 @@ from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_link
 from trac.web.chrome import INavigationContributor 
-from trac.util import Markup, format_date, format_datetime, unicode_urlencode
+from trac.util import Markup, format_date, format_datetime
 from trac.wiki.formatter import Formatter, wiki_to_oneliner
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
