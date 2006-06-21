@@ -261,7 +261,7 @@ class TracBlogPlugin(Component):
                               or '%x %X'
                 timeStr = format_datetime(post_time, format=time_format) 
                 post_size = self._choose_value('post_size', req, kwargs, int)
-                if not post_size:
+                if not post_size and (not isinstance(post_size, int)):
                     post_size = int(self.env.config.get('blog', 'post_size', 
                                     1024))
                 text = self._trim_page(page.text, blog_entry, post_size)
@@ -536,20 +536,24 @@ class TracBlogPlugin(Component):
         line_count = 0
         in_code_block = False
         lines = text.split('\n')
-        for line in lines:
-            line_count += 1
-            entry_size += len(line)
-            tlines.append(line)
-            if not in_code_block:
-                in_code_block = line.strip() == '{{{'
-            else:
-                in_code_block = in_code_block and line.strip() != '}}}'
-            if entry_size > post_size:
-                if in_code_block:
-                    tlines.append('}}}')
-                break
-            continue
-        if line_count < len(lines):
+        if not post_size:
+            ret = re.search('^\s*=\s+.*=', text, re.M)
+            tlines.append(ret and ret.group(0) or '')
+        else:
+            for line in lines:
+                line_count += 1
+                entry_size += len(line)
+                tlines.append(line)
+                if not in_code_block:
+                    in_code_block = line.strip() == '{{{'
+                else:
+                    in_code_block = in_code_block and line.strip() != '}}}'
+                if entry_size > post_size:
+                    if in_code_block:
+                        tlines.append('}}}')
+                    break
+                continue
+        if (line_count < len(lines)) and post_size:
             tlines.append("''[wiki:%s (...)]''" % page_name)
             
         return '\n'.join(tlines)
