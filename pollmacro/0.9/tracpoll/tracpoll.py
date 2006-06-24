@@ -159,7 +159,7 @@ class PollMacro(WikiMacroBase):
             elif vote.startswith('query:'):
                 query = vote[6:]
                 tickets = [q['id'] for q in
-                           Query.from_string(self.env, query).execute()]
+                           Query.from_string(self.env, query).execute(req)]
             else:
                 all_votes.append(('%08x' % abs(hash(vote)), None,
                                  wiki_to_oneliner(vote, self.env)))
