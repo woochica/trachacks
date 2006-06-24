@@ -1,10 +1,10 @@
 # TracForge model abstractions
 
-from tracforge.util import *
+from util import *
 
 class Forge(object):
     """A class representing an entire 
-    forge (a group of linked projects."""
+    forge (a group of linked projects)."""
     
     master_env_path = Option('tracforge','master_env',
                         doc="Name or path to the forge controller")

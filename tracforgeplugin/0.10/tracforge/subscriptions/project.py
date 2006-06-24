@@ -2,9 +2,9 @@ from trac.core import *
 from trac.config import *
 from trac.config import OrderedExtensionsOption
 
-from tracforge.api import *
-from tracforge.util import *
-from tracforge.config import *
+from api import *
+from util import *
+from config import *
 
 import os
 
@@ -24,10 +24,24 @@ class SubscriptionManagerModule(Component):
     def subscibe_to(self, source, type):
         source_env = open_env(sorce)
         source_mgr = SubscriptionManagerModule(source_env)
-        source_mgr._add_subscription(self.env, type)
+        source_mgr._change_subscription('add', self.env, type)
         
-    def _add_subscription(self, dest, type):
+    def unsubscribe_from(self, source, type):
+        source_env = open_env(sorce)
+        source_mgr = SubscriptionManagerModule(source_env)
+        source_mgr._change_subscription('delete', self.env, type)
+
+    def _change_subscription(self, action, dest, type):
         dest_env = open_env(dest)
         dest_path = dest_env.path
-        self.config.set('tracforge-subscribers',type,os.pathsep.join(self.subscribers+dest_path))
+        if action == 'add':
+            self.config.set('tracforge-subscribers',type,os.pathsep.join(self.subscribers[type]+dest_path))
+        elif action == 'delete':
+            paths = self.subscriptions[type]
+            if dest_path in paths:
+                paths.remove(dest_path)
+                self.config.set('tracforge-subscribers',type,os.pathsep.join(paths))
+        else:
+            raise TracError, 'Unknown subscription operation'
         self.config.save()
+
