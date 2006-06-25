@@ -11,11 +11,13 @@ addEvent(window, 'load', function() { document.getElementById('summary').focus()
 <?cs include:"site_newticket.cs" ?>
 <form id="newticket" method="post" action="<?cs
   var:trac.href.newticket ?>#preview">
- <div class="field">
-  <label for="reporter">Compte utilisateur ou courriel:</label><br />
-  <input type="text" id="reporter" name="reporter" size="40" value="<?cs
-    var:newticket.reporter ?>" /><br />
- </div>
+ <?cs if:trac.authname == "anonymous" ?>
+  <div class="field">
+   <label for="reporter">Your email or username:</label><br />
+   <input type="text" id="reporter" name="reporter" size="40" value="<?cs
+     var:newticket.reporter ?>" /><br />
+  </div>
+ <?cs /if ?>
  <div class="field">
   <label for="summary">Intitulé:</label><br />
   <input id="summary" type="text" name="summary" size="80" value="<?cs
@@ -100,13 +102,12 @@ addEvent(window, 'load', function() { document.getElementById('summary').focus()
  <script type="text/javascript" src="<?cs
    var:htdocs_location ?>js/wikitoolbar.js"></script>
 
- <?cs if newticket.can_attach
- ?><div>
+ <?cs if newticket.can_attach ?><p>
   <label><input type="checkbox" name="attachment"<?cs
     if:newticket.attachment ?> checked="checked"<?cs /if ?> />
-    I have files to attach
+    Joindre des fichiers à ce ticket
   </label>
- </div><?cs
+ </p><?cs
  /if ?>
 
  <div class="buttons">

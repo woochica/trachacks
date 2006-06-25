@@ -17,18 +17,44 @@
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Matthew Good <trac@matt-good.net>
 
+import locale
 import md5
 import os
 import re
 import sys
 import time
 import tempfile
+from urllib import quote, unquote, urlencode
 
 # Imports for backward compatibility
 from trac.core import TracError
-from trac.util.html import escape, unescape, Markup, translate, Deuglifier
+from trac.util.markup import escape, unescape, Markup, Deuglifier
+from trac.util.text import CRLF, to_utf8, to_unicode, shorten_line, \
+                           wrap, pretty_size, translate
+from trac.util.datefmt import pretty_timedelta, format_datetime, \
+                              format_date, format_time, \
+                              get_date_format_hint, \
+                              get_datetime_format_hint, http_date, \
+                              parse_date
 
-CRLF = '\r\n'
+
+# -- req/session utils
+
+def get_reporter_id(req, arg_name=None):
+    if req.authname != 'anonymous':
+        return req.authname
+    if arg_name:
+        r = req.args.get(arg_name)
+        if r:
+            return r
+    name = req.session.get('name', None)
+    email = req.session.get('email', None)
+    if name and email:
+        return '%s <%s>' % (name, email)
+    return name or email or req.authname # == 'anonymous'
+
+
+# -- algorithmic utilities
 
 try:
     reversed = reversed
@@ -47,35 +73,18 @@ try:
 except NameError:
     def sorted(iterable, cmp=None, key=None, reverse=False):
         """Partial implementation of the "sorted" function from Python 2.4"""
-        lst = [(key(i), i) for i in iterable]
+        if key is None:
+            lst = list(iterable)
+        else:
+            lst = [(key(val), idx, val) for idx, val in enumerate(iterable)]
         lst.sort()
+        if key is None:
+            if reverse:
+                return lst[::-1]
+            return lst
         if reverse:
             lst = reversed(lst)
-        return [i for __, i in lst]
-
-def to_utf8(text, charset='iso-8859-15'):
-    """Convert a string to UTF-8, assuming the encoding is either UTF-8, ISO
-    Latin-1, or as specified by the optional `charset` parameter."""
-    try:
-        # Do nothing if it's already utf-8
-        u = unicode(text, 'utf-8')
-        return text
-    except UnicodeError:
-        try:
-            # Use the user supplied charset if possible
-            u = unicode(text, charset)
-        except UnicodeError:
-            # This should always work
-            u = unicode(text, 'iso-8859-15')
-        return u.encode('utf-8')
-
-def shorten_line(text, maxlen = 75):
-    if len(text or '') < maxlen:
-        return text
-    shortline = text[:maxlen]
-    cut = shortline.rfind(' ') + 1 or shortline.rfind('\n') + 1 or maxlen
-    shortline = text[:cut]+' ...'
-    return shortline
+        return [i[-1] for i in lst]
 
 DIGITS = re.compile(r'(\d+)')
 def embedded_numbers(s):
@@ -85,51 +94,8 @@ def embedded_numbers(s):
     pieces[1::2] = map(int, pieces[1::2])
     return pieces
 
-def hex_entropy(bytes=32):
-    import md5
-    import random
-    return md5.md5(str(random.random() + time.time())).hexdigest()[:bytes]
 
-def pretty_size(size):
-    if size is None:
-        return ''
-
-    jump = 512
-    if size < jump:
-        return '%d octets' % size
-
-    units = ['kO', 'MO', 'GO', 'TO']
-    i = 0
-    while size >= jump and i < len(units):
-        i += 1
-        size /= 1024.
-
-    return '%.1f %s' % (size, units[i - 1])
-
-def pretty_timedelta(time1, time2=None, resolution=None):
-    """Calculate time delta (inaccurately, only for decorative purposes ;-) for
-    prettyprinting. If time1 is None, the current time is used."""
-    if not time1: time1 = time.time()
-    if not time2: time2 = time.time()
-    if time1 > time2:
-        time2, time1 = time1, time2
-    units = ((3600 * 24 * 365, 'an',      'ans'),
-             (3600 * 24 * 30,  'mois',    'mois'),
-             (3600 * 24 * 7,   'semaine', 'semaines'),
-             (3600 * 24,       'jour',    'jours'),
-             (3600,            'heure',   'heures'),
-             (60,              'minute',  'minutes'))
-    age_s = int(time2 - time1)
-    if resolution and age_s < resolution:
-        return ''
-    if age_s < 60:
-        return '%i seconde%s' % (age_s, age_s != 1 and 's' or '')
-    for u, unit, unit_plural in units:
-        r = float(age_s) / float(u)
-        if r >= 0.9:
-            r = int(round(r))
-            return '%d %s' % (r, r == 1 and unit or unit_plural)
-    return ''
+# -- os utilities
 
 def create_unique_file(path):
     """Create a new file. An index is added if the path exists"""
@@ -149,89 +115,15 @@ def create_unique_file(path):
                                 'unique: ' + path)
             path = '%s.%d%s' % (parts[0], idx, parts[1])
 
-def get_reporter_id(req):
-    name = req.session.get('name', None)
-    email = req.session.get('email', None)
-    
-    if req.authname != 'anonymous':
-        return req.authname
-    elif name and email:
-        return '%s <%s>' % (name, email)
-    elif not name and email:
-        return email
-    else:
-        return req.authname
-
-# Date/time utilities
-
-def format_datetime(t=None, format='%x %X', gmt=False):
-    if t is None:
-        t = time.time()
-    if not isinstance(t, (list, tuple, time.struct_time)):
-        if gmt:
-            t = time.gmtime(int(t))
-        else:
-            t = time.localtime(int(t))
-
-    text = time.strftime(format, t)
-    return to_utf8(text)
-
-def format_date(t=None, format='%x', gmt=False):
-    return format_datetime(t, format, gmt)
-
-def format_time(t=None, format='%X', gmt=False):
-    return format_datetime(t, format, gmt)
-
-def get_date_format_hint():
-    t = time.localtime(0)
-    t = (1999, 10, 29, t[3], t[4], t[5], t[6], t[7], t[8])
-    tmpl = time.strftime('%x', t)
-    return tmpl.replace('1999', 'YYYY', 1).replace('99', 'YY', 1) \
-               .replace('10', 'MM', 1).replace('29', 'DD', 1)
-
-def get_datetime_format_hint():
-    t = time.localtime(0)
-    t = (1999, 10, 29, 23, 59, 58, t[6], t[7], t[8])
-    tmpl = time.strftime('%x %X', t)
-    return tmpl.replace('1999', 'YYYY', 1).replace('99', 'YY', 1) \
-               .replace('10', 'MM', 1).replace('29', 'DD', 1) \
-               .replace('23', 'hh', 1).replace('59', 'mm', 1) \
-               .replace('58', 'ss', 1)
-
-def http_date(t=None):
-    """Format t as a rfc822 timestamp"""
-    if t is None:
-        t = time.time()
-    if not isinstance(t, (list, tuple, time.struct_time)):
-        t = time.gmtime(int(t))
-    weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-              'Oct', 'Nov', 'Dec']
-    return '%s, %02d %s %04d %02d:%02d:%02d GMT' % (
-           weekdays[t.tm_wday], t.tm_mday, months[t.tm_mon - 1], t.tm_year,
-           t.tm_hour, t.tm_min, t.tm_sec)
-
-def parse_date(text):
-    seconds = None
-    text = text.strip()
-    for format in ['%x %X', '%x, %X', '%X %x', '%X, %x', '%x', '%c',
-                   '%b %d, %Y']:
-        try:
-            date = time.strptime(text, format)
-            seconds = time.mktime(date)
-            break
-        except ValueError:
-            continue
-    if seconds == None:
-        raise ValueError, "%s n'est pas un format de date connu." % text
-    return seconds
-
 
 class NaivePopen:
     """This is a deadlock-safe version of popen that returns an object with
     errorlevel, out (a string) and err (a string).
+
+    The optional `input`, which must be a `str` object, is first written
+    to a temporary file from which the process will read.
     
-    (capturestderr may not work under Windows 9x.)
+    (`capturestderr` may not work under Windows 9x.)
 
     Example: print Popen3('grep spam','\n\nhere spam\n\n').out
     """
@@ -265,23 +157,14 @@ class NaivePopen:
             if capturestderr and os.path.isfile(errfile):
                 os.remove(errfile)
 
+# -- sys utils
 
-def wrap(t, cols=75, initial_indent='', subsequent_indent='',
-         linesep=os.linesep):
-    try:
-        import textwrap
-        t = t.strip().replace('\r\n', '\n').replace('\r', '\n')
-        wrapper = textwrap.TextWrapper(cols, replace_whitespace = 0,
-                                       break_long_words = 0,
-                                       initial_indent = initial_indent,
-                                       subsequent_indent = subsequent_indent)
-        wrappedLines = []
-        for line in t.split('\n'):
-            wrappedLines += wrapper.wrap(line.rstrip()) or ['']
-        return linesep.join(wrappedLines)
-
-    except ImportError:
-        return t
+def get_last_traceback():
+    import traceback
+    from StringIO import StringIO
+    tb = StringIO()
+    traceback.print_exc(file=tb)
+    return tb.getvalue()
 
 def safe__import__(module_name):
     """
@@ -300,6 +183,15 @@ def safe__import__(module_name):
             if not already_imported.has_key(modname):
                 del(sys.modules[modname])
         raise e
+
+
+# -- crypto utils
+
+def hex_entropy(bytes=32):
+    import md5
+    import random
+    return md5.md5(str(random.random())).hexdigest()[:bytes]
+
 
 # Original license for md5crypt:
 # Based on FreeBSD src/lib/libcrypt/crypt.c 1.2

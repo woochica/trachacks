@@ -17,8 +17,10 @@
 #         Christopher Lenz <cmlenz@gmx.de>
 
 from trac.core import *
-from trac.mimeview.api import IHTMLPreviewRenderer
-from trac.util import Deuglifier, NaivePopen
+from trac.config import Option
+from trac.mimeview.api import IHTMLPreviewRenderer, content_to_unicode
+from trac.util import NaivePopen
+from trac.util.markup import Deuglifier
 
 __all__ = ['PHPRenderer']
 
@@ -46,6 +48,11 @@ class PHPRenderer(Component):
 
     implements(IHTMLPreviewRenderer)
 
+    path = Option('mimeviewer', 'php_path', 'php',
+        """Path to the PHP executable (''since 0.9'').""")
+
+    # IHTMLPreviewRenderer methods
+
     def get_quality_ratio(self, mimetype):
         if mimetype in php_types:
             return 4
@@ -56,7 +63,9 @@ class PHPRenderer(Component):
         # -n to ignore php.ini so we're using default colors
         cmdline += ' -sn'
         self.env.log.debug("PHP command line: %s" % cmdline)
-
+        
+        content = content_to_unicode(self.env, content, mimetype)
+        content = content.encode('utf-8')
         np = NaivePopen(cmdline, content, capturestderr=1)
         if np.errorlevel or np.err:
             err = "L'exécution de la commande (%s) a echoué: %s, %s." % \
@@ -68,7 +77,7 @@ class PHPRenderer(Component):
                              'Trac a besoin de la version CLI pour réaliser la ' \
                              'coloration syntaxique.'
 
-        html = PhpDeuglifier().format(odata)
+        html = PhpDeuglifier().format(odata.decode('utf-8'))
         for line in html.split('<br />'):
             # PHP generates _way_ too many non-breaking spaces...
             # We don't need them anyway, so replace them by normal spaces

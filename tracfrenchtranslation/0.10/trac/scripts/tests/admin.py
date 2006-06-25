@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # 
-# Copyright (C) 2004-2005 Edgewall Software
+# Copyright (C) 2004-2006 Edgewall Software
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -13,26 +13,21 @@
 #
 # Author: Tim Moloney <t.moloney@verizon.net>
 
+import ConfigParser
+import os
+import re
+import shlex
+import sys
+import time
+import unittest
+from StringIO import StringIO
 
-from trac.db_default import data as default_data, default_config
+from trac.db_default import data as default_data
 from trac.config import Configuration
 from trac.env import Environment
 from trac.scripts import admin
 from trac.test import InMemoryDatabase
-from trac.util import get_date_format_hint, NaivePopen
-
-import os
-import re
-import sys
-import time
-import unittest
-import shlex
-import ConfigParser
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+from trac.util.datefmt import get_date_format_hint
 
 STRIP_TRAILING_SPACE = re.compile(r'( +)$', re.MULTILINE)
 
@@ -48,7 +43,7 @@ def load_expected_results(file, pattern):
     compiled_pattern = re.compile(pattern)
     f = open(file, 'r')
     for line in f:
-        line = line.rstrip()
+        line = line.rstrip().decode('utf-8')
         match = compiled_pattern.search(line)
         if match:
             test = match.groups()[0]
@@ -59,10 +54,10 @@ def load_expected_results(file, pattern):
     return expected
 
 
-"""
-A subclass of Environment that keeps its' DB in memory.
-"""
 class InMemoryEnvironment(Environment):
+    """
+    A subclass of Environment that keeps its' DB in memory.
+    """
 
     def get_db_cnx(self):
         if not hasattr(self, '_db'):
@@ -70,7 +65,7 @@ class InMemoryEnvironment(Environment):
         return self._db
 
     def create(self, db_str=None):
-        self.load_config()
+        pass
 
     def verify(self):
         return True
@@ -83,10 +78,8 @@ class InMemoryEnvironment(Environment):
         return cls.__module__.startswith('trac.') and \
                cls.__module__.find('.tests.') == -1
 
-    def load_config(self):
+    def setup_config(self, load_defaults=None):
         self.config = Configuration(None)
-        for section, name, value in default_config:
-            self.config.setdefault(section, name, value)
             
     def save_config(self):
         pass
@@ -125,15 +118,19 @@ class TracadminTestCase(unittest.TestCase):
             _err = sys.stderr
             _out = sys.stdout
             sys.stderr = sys.stdout = out = StringIO()
+            setattr(out, 'encoding', _out.encoding) # fake output encoding
             retval = None
             try:
                 retval = self._admin.onecmd(cmd)
             except SystemExit, e:
                 pass
+            value = out.getvalue()
+            if isinstance(value, str): # reverse what print_listing did
+                value = value.decode(_out.encoding)
             if strip_trailing_space:
-                return retval, STRIP_TRAILING_SPACE.sub('', out.getvalue())
+                return retval, STRIP_TRAILING_SPACE.sub('', value)
             else:
-                return retval, out.getvalue()
+                return retval, value
         finally:
             sys.stderr = _err
             sys.stdout = _out
@@ -846,6 +843,18 @@ Trac Admin Console %s
         """
         test_name = sys._getframe().f_code.co_name
         self._execute('milestone add new_milestone "%s"' % self._test_date)
+        rv, output = self._execute('milestone list')
+        self.assertEqual(0, rv)
+        self.assertEqual(self.expected_results[test_name], output)
+
+    def test_milestone_add_utf8_ok(self):
+        """
+        Tests the 'milestone add' command in trac-admin.  This particular
+        test passes valid arguments and checks for success.
+        """
+        test_name = sys._getframe().f_code.co_name
+        self._execute(u'milestone add \xe9tat_final "%s"'  #\xc3\xa9
+                              % self._test_date)
         rv, output = self._execute('milestone list')
         self.assertEqual(0, rv)
         self.assertEqual(self.expected_results[test_name], output)

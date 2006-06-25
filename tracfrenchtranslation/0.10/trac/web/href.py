@@ -17,6 +17,7 @@
 #         Christopher Lenz <cmlenz@gmx.de>
 
 from urllib import quote, urlencode
+from trac.util.text import unicode_quote, unicode_urlencode
 
 
 class Href(object):
@@ -38,11 +39,11 @@ class Href(object):
 
     If a positional parameter evaluates to None, it will be skipped:
 
-    >>> href('ticket', 540, 'attachment')
+    >>> href('ticket', 540, 'attachment', None)
     '/trac/ticket/540/attachment'
 
     The first path segment can also be specified by calling an attribute
-    of the function, as follows:
+    of the instance, as follows:
 
     >>> href.ticket(540)
     '/trac/ticket/540'
@@ -99,8 +100,8 @@ class Href(object):
     >>> href('ticket', 540)
     'https://projects.edgewall.com/trac/ticket/540'
 
-    Finally, the first path segment of the URL to generate can be specified in
-    the following way, mainly to improve readability:
+    In common usage, it may improve readability to use the function-calling
+    ability for the first component of the URL as mentioned earlier:
 
     >>> href = Href('/trac')
     >>> href.ticket(540)
@@ -138,7 +139,7 @@ class Href(object):
                 args = args[:-1]
 
         # build the path
-        path = '/'.join([quote(str(arg).strip('/')) for arg in args
+        path = '/'.join([unicode_quote(unicode(arg).strip('/')) for arg in args
                          if arg != None])
         if path:
             href += '/' + path
@@ -148,7 +149,7 @@ class Href(object):
             add_param(k, v)
 
         if params:
-            href += '?' + urlencode(params)
+            href += '?' + unicode_urlencode(params)
 
         return href
 

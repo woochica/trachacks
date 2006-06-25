@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2003-2005 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
@@ -19,7 +19,8 @@
 
 import unittest
 
-from trac.core import ComponentManager
+from trac.core import Component, ComponentManager, ExtensionPoint
+from trac.env import Environment
 from trac.db.sqlite_backend import SQLiteConnection
 
 
@@ -116,11 +117,12 @@ class InMemoryDatabase(SQLiteConnection):
         self.cnx.commit()
 
 
-class EnvironmentStub(ComponentManager):
+class EnvironmentStub(Environment):
     """A stub of the trac.env.Environment object for testing."""
 
     def __init__(self, default_data=False, enable=None):
         ComponentManager.__init__(self)
+        Component.__init__(self)
         self.enabled_components = enable
         self.db = InMemoryDatabase()
 
@@ -135,8 +137,6 @@ class EnvironmentStub(ComponentManager):
         self.abs_href = Href('http://example.org/trac.cgi')
 
         from trac import db_default
-        for section, name, value in db_default.default_config:
-            self.config.set(section, name, value)
         if default_data:
             cursor = self.db.cursor()
             for table, cols, vals in db_default.data:
@@ -147,11 +147,6 @@ class EnvironmentStub(ComponentManager):
             self.db.commit()
             
         self.known_users = []
-
-    def component_activated(self, component):
-        component.env = self
-        component.config = self.config
-        component.log = self.log
 
     def is_component_enabled(self, cls):
         if self.enabled_components is None:
@@ -176,6 +171,7 @@ def suite():
     import trac.ticket.tests
     import trac.util.tests
     import trac.versioncontrol.tests
+    import trac.versioncontrol.web_ui.tests
     import trac.web.tests
     import trac.wiki.tests
 
@@ -187,6 +183,7 @@ def suite():
     suite.addTest(trac.ticket.tests.suite())
     suite.addTest(trac.util.tests.suite())
     suite.addTest(trac.versioncontrol.tests.suite())
+    suite.addTest(trac.versioncontrol.web_ui.tests.suite())
     suite.addTest(trac.web.tests.suite())
     suite.addTest(trac.wiki.tests.suite())
 

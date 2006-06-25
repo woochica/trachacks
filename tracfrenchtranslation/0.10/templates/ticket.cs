@@ -30,9 +30,12 @@
 
 <div id="content" class="ticket">
 
- <h1>Ticket #<?cs var:ticket.id ?> <?cs
- if:ticket.type ?>(<?cs alt:translation[ticket.type] ?><?cs var:ticket.type ?><?cs 
-   /alt?>)<?cs /if ?></h1>
+ <h1>Ticket #<?cs var:ticket.id ?> <span class="status">(<?cs 
+  var:ticket.status ?><?cs 
+  if:ticket.type ?> <?cs var:ticket.type ?><?cs 
+  /if ?><?cs 
+  if:ticket.resolution ?>: <?cs var:ticket.resolution ?><?cs 
+  /if ?>)</span></h1>
 
  <div id="searchable">
 <div id="ticket">
@@ -43,12 +46,6 @@
   <?cs /if ?>
  </div>
  <h2 class="summary"><?cs var:ticket.summary ?></h2>
- <h3 class="status">Status: <strong><?cs 
-     alt:translation[ticket.status] ?><?cs var:ticket.status ?><?cs 
-     /alt ?><?cs
-  if:ticket.resolution ?> (<?cs alt:translation[ticket.resolution] ?><?cs 
-                                var:ticket.resolution ?><?cs /alt ?>)<?cs
-  /if ?></strong></h3>
  <table class="properties">
   <tr>
    <th id="h_reporter">Rapporté par:</th>
@@ -76,37 +73,52 @@
    /if ?><?cs
   /each ?></tr>
  </table>
- <?cs if:ticket.description ?><div class="description">
+ <?cs if:ticket.description ?><div id="comment:description" class="description">
   <?cs var:ticket.description.formatted ?>
+  <form method="get" action="<?cs var:ticket.href ?>#comment"><div class="inlinebuttons">
+   <input type="hidden" name="replyto" value="description" />
+   <input type="submit" value="Reply" title="Reply, quoting this description" /></div>
+  </form>
  </div><?cs /if ?>
 </div>
 
 <?cs if:ticket.attach_href || len(ticket.attachments) ?>
-<h2>Pièces jointes</h2><?cs
- if:len(ticket.attachments) ?><div id="attachments">
-  <dl class="attachments"><?cs each:attachment = ticket.attachments ?>
-   <dt><a href="<?cs var:attachment.href ?>" title="Voir la pièce jointe"><?cs
-   var:attachment.filename ?></a> (<?cs var:attachment.size ?>) - ajouté par <em><?cs
-   var:attachment.author ?></em> le <?cs
-   var:attachment.time ?>.</dt><?cs
-   if:attachment.description ?>
-    <dd><?cs var:attachment.description ?></dd><?cs
-   /if ?><?cs
-  /each ?></dl><?cs
- /if ?><?cs
- if:ticket.attach_href ?>
-  <form method="get" action="<?cs var:ticket.attach_href ?>"><div>
-   <input type="hidden" name="action" value="new" />
-   <input type="submit" value="Joindre un fichier" />
-  </div></form><?cs
- /if ?><?cs if:len(ticket.attachments) ?></div><?cs /if ?>
+<?cs call:list_of_attachments(ticket.attachments, ticket.attach_href) ?>
 <?cs /if ?>
+
+<?cs def:commentref(prefix, cnum) ?>
+<a href="#comment:<?cs var:cnum ?>"><small><?cs var:prefix ?><?cs var:cnum ?></small></a>
+<?cs /def ?>
 
 <?cs if:len(ticket.changes) ?><h2>Historique des modifications</h2>
 <div id="changelog"><?cs
  each:change = ticket.changes ?>
-  <h3 id="change_<?cs var:name(change) ?>" class="change"><?cs
-   var:change.date ?>: Modifié par <?cs var:change.author ?></h3><?cs
+ <div class="change">
+  <h3 <?cs if:change.cnum ?>id="comment:<?cs var:change.cnum ?>"<?cs /if ?>><?cs
+   if:change.cnum ?>
+    <span class="threading"><?cs
+     set:nreplies = len(ticket.replies[change.cnum]) ?><?cs
+     if:nreplies || change.replyto ?>(<?cs
+      if:change.replyto ?>en réponse à: <?cs 
+       call:commentref('&uarr;&nbsp;', change.replyto) ?><?cs if nreplies ?>; <?cs /if ?><?cs
+      /if ?><?cs
+      if nreplies ?><?cs
+       call:plural('suivi', nreplies) ?>: <?cs 
+       each:reply = ticket.replies[change.cnum] ?><?cs 
+        call:commentref('&darr;&nbsp;', reply) ?><?cs 
+       /each ?><?cs 
+      /if ?>)<?cs
+    /if ?><form method="get" action="<?cs var:ticket.href ?>#comment"><span class="inlinebuttons">
+    <input type="hidden" name="replyto" value="<?cs var:change.cnum ?>" />
+    <input type="submit" value="Répondre" title="Répondre au commentaire <?cs var:change.cnum ?>" /></span>
+   </form>
+    </span><?cs
+   /if ?><?cs
+   var:change.date ?> modifié par <?cs var:change.author ?><?cs
+   if:change.cnum ?>&nbsp;<a href="#comment:<?cs var:change.cnum ?>" class="anchor"
+      title="Permalien vers ce commentaire:<?cs var:change.cnum ?>">&para;</a><?cs
+   /if ?>
+  </h3><?cs
   if:len(change.fields) ?>
    <ul class="changes"><?cs
    each:field = change.fields ?>
@@ -124,8 +136,10 @@
    /each ?>
    </ul><?cs
   /if ?>
-  <div class="comment"><?cs var:change.comment ?></div><?cs
- /each ?></div><?cs
+  <div class="comment"><?cs var:change.comment ?></div>
+ </div><?cs
+ /each ?>
+</div><?cs
 /if ?>
 
 <?cs if:trac.acl.TICKET_CHGPROP || trac.acl.TICKET_APPEND ?>
@@ -133,11 +147,13 @@
  <hr />
  <h3><a name="edit" onfocus="document.getElementById('comment').focus()">Ajouter/Changer #<?cs
    var:ticket.id ?> (<?cs var:ticket.summary ?>)</a></h3>
- <div class="field">
-  <label for="author">Compte utilisateur ou courriel:</label><br />
-  <input type="text" id="author" name="author" size="40"
-    value="<?cs var:ticket.reporter_id ?>" /><br />
- </div>
+ <?cs if:trac.authname == "anonymous" ?>
+  <div class="field">
+   <label for="author">Your email or username:</label><br />
+   <input type="text" id="author" name="author" size="40"
+     value="<?cs var:ticket.reporter_id ?>" /><br />
+  </div>
+ <?cs /if ?>
  <div class="field">
   <fieldset class="iefix">
    <label for="comment">Commentaire (il est possible d'utiliser la syntaxe <a tabindex="42" href="<?cs
@@ -303,6 +319,8 @@
 
  <div class="buttons">
   <input type="hidden" name="ts" value="<?cs var:ticket.ts ?>" />
+  <input type="hidden" name="replyto" value="<?cs var:ticket.replyto ?>" />
+  <input type="hidden" name="cnum" value="<?cs var:ticket.cnum ?>" />
   <input type="submit" name="preview" value="Aperçu" accesskey="r" />&nbsp;
   <input type="submit" value="Enregistrer les modifications" />
  </div>

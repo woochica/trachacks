@@ -171,12 +171,27 @@ def:ticket_custom_props(ticket) ?><?cs
  /each ?><?cs
 /def ?><?cs 
 
-def:sortable_th(order, desc, class, title, href) ?>
- <th class="<?cs var:class ?><?cs if:order == class ?> <?cs
-   if:desc ?>desc<?cs else ?>asc<?cs /if ?><?cs /if ?>">
-  <a title="Trier par <?cs var:class ?><?cs
-    if:order == class && !desc ?> (décroissant)<?cs /if ?>" href="<?cs
-    var:href ?>&amp;order=<?cs var:class ?><?cs
-    if:order == class && !desc ?>&amp;desc=1<?cs /if ?>"><?cs var:title ?></a>
- </th><?cs
+def:list_of_attachments(attachments, attach_href) ?>
+<h2>Piéces jointes</h2><?cs
+ if:len(attachments) ?><div id="attachments">
+  <dl class="attachments"><?cs each:attachment = attachments ?>
+   <dt><a href="<?cs var:attachment.href ?>" title="Voir la pièce jointe"><?cs
+   var:attachment.filename ?></a> (<?cs var:attachment.size ?>) - ajouté par <em><?cs
+   var:attachment.author ?></em> le <?cs
+   var:attachment.time ?>.</dt><?cs
+   if:attachment.description ?>
+    <dd><?cs var:attachment.description ?></dd><?cs
+   /if ?><?cs
+  /each ?></dl><?cs
+ /if ?><?cs
+ if:attach_href ?>
+  <form method="get" action="<?cs var:attach_href ?>"><div>
+   <input type="hidden" name="action" value="new" />
+   <input type="submit" value="Joindre le fichier" />
+  </div></form><?cs
+ /if ?><?cs if:len(attachments) ?></div><?cs /if ?><?cs
+/def ?><?cs
+
+def:plural(base, count) ?><?cs
+ var:base ?><?cs if:count != 1 ?>s<?cs /if ?><?cs
 /def ?>

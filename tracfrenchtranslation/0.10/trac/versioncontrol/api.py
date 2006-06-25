@@ -16,6 +16,7 @@
 
 from heapq import heappop, heappush
 
+from trac.config import Option
 from trac.core import *
 from trac.perm import PermissionError
 
@@ -43,23 +44,41 @@ class RepositoryManager(Component):
 
     connectors = ExtensionPoint(IRepositoryConnector)
 
+    repository_type = Option('trac', 'repository_type', 'svn',
+        """Repository connector type. (''since 0.10'')""")
+    repository_dir = Option('trac', 'repository_dir', '',
+        """Path to local repository""")
+
     def __init__(self):
         self._connector = None
 
-    def get_repository(self, repos_type, repos_dir, authname):
+    # Public API methods
+
+    def get_repository(self, authname):
         if not self._connector:
             candidates = []
             for connector in self.connectors:
                 for repos_type_, prio in connector.get_supported_types():
-                    if repos_type_ != repos_type:
+                    if self.repository_type != repos_type_:
                         continue
                     heappush(candidates, (-prio, connector))
             if not candidates:
                 raise TracError, 'Système de contrôle de version non supporté "%s"' \
-                                 % repos_type
+                                 % self.repository_type
             self._connector = heappop(candidates)[1]
-        return self._connector.get_repository(repos_type, repos_dir, authname)
+        return self._connector.get_repository(self.repository_type,
+                                              self.repository_dir, authname)
 
+
+class NoSuchChangeset(TracError):
+    def __init__(self, rev):
+        TracError.__init__(self, "Aucune version %s n'est repertoriée dans le dépôt" \
+                                 % rev)
+
+class NoSuchNode(TracError):
+    def __init__(self, path, rev, msg=None):
+        TracError.__init__(self, "%sLe chemin %s n'existe pas en révision %s" \
+                           % (msg and '%s: ' % msg or '', path, rev))
 
 class Repository(object):
     """
@@ -211,7 +230,7 @@ class Node(object):
 
     def __init__(self, path, rev, kind):
         assert kind in (Node.DIRECTORY, Node.FILE), "Type du noeud inconnu %s" % kind
-        self.path = str(path)
+        self.path = unicode(path)
         self.rev = rev
         self.kind = kind
 
@@ -311,7 +330,7 @@ class Changeset(object):
         
     def get_changes(self):
         """
-        Generator that produces a (path, kind, change, base_rev, base_path)
+        Generator that produces a (path, kind, change, base_path, base_rev)
         tuple for every change in the changeset, where change can be one of
         Changeset.ADD, Changeset.COPY, Changeset.DELETE, Changeset.EDIT or
         Changeset.MOVE, and kind is one of Node.FILE or Node.DIRECTORY.

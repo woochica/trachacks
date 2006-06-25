@@ -30,7 +30,7 @@
        <strong><?cs var:milestone.due_delta ?> en retard</strong><?cs
       else ?>
        Prévu pour <?cs var:milestone.due_delta ?><?cs
-      /if ?><?cs
+      /if ?> (<?cs var:milestone.due_date ?>)<?cs
      else ?>>
       Pas de date définie<?cs
      /if ?>

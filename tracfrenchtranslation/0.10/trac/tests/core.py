@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005 Edgewall Software
 # Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
@@ -265,6 +265,21 @@ class ComponentTestCase(unittest.TestCase):
         tests = iter(mgr.tests)
         self.assertEquals('x', tests.next().test())
         self.assertRaises(StopIteration, tests.next)
+
+    def test_instantiation_doesnt_enable(self):
+        """
+        Make sure that a component disabled by the ComponentManager is not
+        implicitly enabled by instantiating it directly.
+        """
+        from trac.core import ComponentManager
+        class DisablingComponentManager(ComponentManager):
+            def is_component_enabled(self, cls):
+                return False
+        class ComponentA(Component):
+            pass
+        mgr = DisablingComponentManager()
+        instance = ComponentA(mgr)
+        self.assertEqual(None, mgr[ComponentA])
 
 
 def suite():

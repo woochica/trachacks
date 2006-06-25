@@ -1,320 +1,651 @@
-= Heading 1 =
-Paragraph
- * Item 1
-   * Item 2
-Another paragraph
-------------------------------
-<h1 id="Heading1">Heading 1</h1>
-<p>
-Paragraph
-</p>
-<ul><li>Item 1
-<ul><li>Item 2
-</li></ul></li></ul><p>
-Another paragraph
-</p>
-------------------------------
-= Heading 1 =
-Paragraph
- * Item 1
-   * Item 2
-Another paragraph
-==============================
-Paragraph
-----
- 1. Item 1
-   2. Item 2
-||Table||cell||
-||Foo||Bar||Baz||
-http://www.edgewall.com/
-------------------------------
-<p>
-Paragraph
-</p>
-<hr />
-<ol><li>Item 1
-<ol><li>Item 2
-</li></ol></li></ol><table class="wiki">
-<tr><td>Table</td><td>cell
-</td></tr><tr><td>Foo</td><td>Bar</td><td>Baz
-</td></tr></table>
-<p>
-<a class="ext-link" href="http://www.edgewall.com/"><span class="icon"></span>http://www.edgewall.com/</a>
-</p>
-------------------------------
-Paragraph
-----
- 1. Item 1
-   2. Item 2
-||Table||cell||
-||Foo||Bar||Baz||
-<a class="ext-link" href="http://www.edgewall.com/"><span class="icon"></span>http://www.edgewall.com/</a>
-==============================
-#1, {1}, #2
-[1], r1
-[1/README.txt]
-#12, [12], r12, {12}
-------------------------------
-<p>
-<a class="missing ticket" href="/ticket/1" rel="nofollow">#1</a>, <a class="report" href="/report/1">{1}</a>, <a class="missing ticket" href="/ticket/2" rel="nofollow">#2</a>
-<a class="missing changeset" title="No changeset" href="/changeset/1" rel="nofollow">[1]</a>, <a class="missing changeset" title="No changeset" href="/changeset/1" rel="nofollow">r1</a>
-<a class="missing changeset" title="No changeset" href="/changeset/1/README.txt" rel="nofollow">[1/README.txt]</a>
-<a class="missing ticket" href="/ticket/12" rel="nofollow">#12</a>, <a class="missing changeset" title="No changeset" href="/changeset/12" rel="nofollow">[12]</a>, <a class="missing changeset" title="No changeset" href="/changeset/12" rel="nofollow">r12</a>, <a class="report" href="/report/12">{12}</a>
-</p>
-------------------------------
-==============================
-!#1, ![1], !r1, !{1}
-------------------------------
-<p>
-#1, [1], r1, {1}
-</p>
-------------------------------
-#1, [1], r1, {1}
-==============================
-&#1; &#23;
-------------------------------
-<p>
-&amp;#1; &amp;#23;
-</p>
-------------------------------
-&amp;#1; &amp;#23;
-==============================
-[1:2], r1:2, [12:23], r12:23
-------------------------------
-<p>
-<a class="source" href="/log/?rev=2&stop_rev=1">[1:2]</a>, <a class="source" href="/log/?rev=2&stop_rev=1">r1:2</a>, <a class="source" href="/log/?rev=23&stop_rev=12">[12:23]</a>, <a class="source" href="/log/?rev=23&stop_rev=12">r12:23</a>
-</p>
-------------------------------
-==============================
-![1:2], !r1:2, ![12:23], !r12:23
-------------------------------
-<p>
-[1:2], r1:2, [12:23], r12:23
-</p>
-------------------------------
-[1:2], r1:2, [12:23], r12:23
-==============================
-ticket:1, report:1, source:foo/bar
-changeset:1, changeset:1/README.txt
+============================================================
 
-Issue [ticket:1], CS[changeset:1], Listing [report:1], File [source:foo/bar]
+        Font styles
+
+============================== Bold + italic markup
+This should be '''''bold and italic'''''
 ------------------------------
 <p>
-<a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a>, <a class="report" href="/report/1">report:1</a>, <a class="source" href="/browser/foo/bar">source:foo/bar</a>
-<a class="missing changeset" title="No changeset" href="/changeset/1" rel="nofollow">changeset:1</a>, <a class="missing changeset" title="No changeset" href="/changeset/1/README.txt" rel="nofollow">changeset:1/README.txt</a>
-</p>
-<p>
-Issue <a class="missing ticket" href="/ticket/1" rel="nofollow">1</a>, CS<a class="missing changeset" title="No changeset" href="/changeset/1" rel="nofollow">1</a>, Listing <a class="report" href="/report/1">1</a>, File <a class="source" href="/browser/foo/bar">foo/bar</a>
+This should be <strong><i>bold and italic</i></strong>
 </p>
 ------------------------------
-==============================
-!ticket:1, !changeset:1, !report:1, !source:foo/bar
-Issue ![ticket:1 number 1], CS![changeset:1], ![foo:bar]
+============================== Consecutive bold + italic markup
+'''''one''''', '''''two''''', '''''three''''', '''''four'''''
 ------------------------------
 <p>
-ticket:1, changeset:1, report:1, source:foo/bar
-Issue [ticket:1 number 1], CS[changeset:1], [foo:bar]
+<strong><i>one</i></strong>, <strong><i>two</i></strong>, <strong><i>three</i></strong>, <strong><i>four</i></strong>
 </p>
 ------------------------------
-==============================
-[ticket:1 ticket 1], [changeset:1 changeset 1], [report:1 report 1], 
-[source:foo/bar source foo/bar], [http://www.edgewall.com/ edgewall]
+============================== Underline + overstrike markup
+__~~underlineoversrike~~__
 ------------------------------
 <p>
-<a class="missing ticket" href="/ticket/1" rel="nofollow">ticket 1</a>, <a class="missing changeset" title="No changeset" href="/changeset/1" rel="nofollow">changeset 1</a>, <a class="report" href="/report/1">report 1</a>, 
-<a class="source" href="/browser/foo/bar">source foo/bar</a>, <a class="ext-link" href="http://www.edgewall.com/"><span class="icon"></span>edgewall</a>
+<span class="underline"><del>underlineoversrike</del></span>
 </p>
 ------------------------------
-==============================
-diff:trunk//branch
-diff:trunk@12//branch@23
-diff:trunk@12:23
-diff:@12:23
+============================== Problematic markup: overlapping tags
+__~~overlapping__tags~~
 ------------------------------
 <p>
-<a class="changeset" title="Diff from trunk@latest to branch@latest" href="/changeset?new_path=branch&old_path=trunk">diff:trunk//branch</a>
-<a class="changeset" title="Diff from trunk@12 to branch@23" href="/changeset?new=23&new_path=branch&old=12&old_path=trunk">diff:trunk@12//branch@23</a>
-<a class="changeset" title="Diff r12:23 for trunk" href="/changeset?new=23&new_path=trunk&old=12&old_path=trunk">diff:trunk@12:23</a>
-<a class="changeset" title="Diff r12:23 for /" href="/changeset?new=23&old=12">diff:@12:23</a>
+<span class="underline"><del>overlapping</del></span><del>tags</del>
 </p>
 ------------------------------
-==============================
-Add-on to changeset:123:
+============================== Problematic markup: out of order close tags
+__~~outoforderclosetags__~~
+------------------------------
+<p>
+<span class="underline"><del>outoforderclosetags</del></span><del></del>
+</p>
+------------------------------
+============================== Problematic markup: bold + missing close italic
+'''''bolditalic''' # Open italic should be closed before paragraph end
+------------------------------
+<p>
+<strong><i>bolditalic</i></strong><i> # Open italic should be closed before paragraph end
+</i></p>
+------------------------------
+============================== Italic immediately followed by bold markup
+''italic'''''bold'''
+------------------------------
+<p>
+<i>italic</i><strong>bold</strong>
+</p>
+------------------------------
+============================== Bold immediately followed by italic markup
+'''bold'''''italic''
+------------------------------
+<p>
+<strong>bold</strong><i>italic</i>
+</p>
+------------------------------
+============================== Multiline bold italic markup
+'''''bold
+italic
+multiline'''''
+------------------------------
+<p>
+<strong><i>bold
+italic
+multiline</i></strong>
+</p>
+------------------------------
+============================== Problematic multiline bold italic markup
+'''''bold
+italic
+multiline
+without endtags
+------------------------------
+<p>
+<strong><i>bold
+italic
+multiline
+without endtags
+</i></strong></p>
+------------------------------
+============================== Super and subscript markup
+^superscript^, ,,subscript,,, normal.
+------------------------------
+<p>
+<sup>superscript</sup>, <sub>subscript</sub>, normal.
+</p>
+------------------------------
+<sup>superscript</sup>, <sub>subscript</sub>, normal.
+============================== Escaping markup
+!__foo!__
+!~~bar!~~
+!,,boo!,,
+!^baz!^
+------------------------------
+<p>
+__foo__
+~~bar~~
+,,boo,,
+^baz^
+</p>
+------------------------------
+============================== Complex mixed verbatim markup
+{{{verbatim}}}
+{{{
+{{{in `block`
+}}}
+`{{{this is verbatim}}}` and {{{`that` should also `be` verbatim}}}
+------------------------------
+<p>
+<tt>verbatim</tt>
+</p>
+<pre class="wiki">{{{in `block`
+</pre><p>
+<tt>{{{this is verbatim}}}</tt> and <tt>`that` should also `be` verbatim</tt>
+</p>
+------------------------------
+<tt>verbatim</tt>
+ [&hellip;]
+<tt>{{{this is verbatim}}}</tt> and <tt>`that` should also `be` verbatim</tt>
+============================================================
+
+        Link Resolvers
+
+============================== Link resolvers, short form
+link:1
+
+Thing [link:1] Thing[link:2]
+------------------------------
+<p>
+<a class="odd resolver" href="/thing/1">link:1</a>
+</p>
+<p>
+Thing <a class="odd resolver" href="/thing/1">1</a> Thing<a class="even resolver" href="/thing/2">2</a>
+</p>
+------------------------------
+============================== Escaping links resolvers, short form
+!link:1
+Thing ![link:1 number 1], CS![link:1], ![link:bar]
+------------------------------
+<p>
+link:1
+Thing [link:1 number 1], CS[link:1], [link:bar]
+</p>
+------------------------------
+============================== Link resolvers, long form with label
+[link:1 thing one], [http://www.edgewall.com/ edgewall]
+------------------------------
+<p>
+<a class="odd resolver" href="/thing/1">thing one</a>, <a class="ext-link" href="http://www.edgewall.com/"><span class="icon">edgewall</span></a>
+</p>
+------------------------------
+============================== Link resolver SHREF_TARGET_LAST
+Add-on to link:123:
 Some change.
-ticket:1
+link:1
 This ticket is the first one
-changeset:123>
-changeset:123&
+link:123>
+link:123&
 ------------------------------
 <p>
-Add-on to <a class="missing changeset" title="No changeset" href="/changeset/123" rel="nofollow">changeset:123</a>:
+Add-on to <a class="odd resolver" href="/thing/123">link:123</a>:
 Some change.
-<a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a>
+<a class="odd resolver" href="/thing/1">link:1</a>
 This ticket is the first one
-<a class="missing changeset" title="No changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&gt;
-<a class="missing changeset" title="No changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&amp;
+<a class="odd resolver" href="/thing/123">link:123</a>&gt;
+<a class="odd resolver" href="/thing/123">link:123</a>&amp;
 </p>
 ------------------------------
-Add-on to <a class="missing changeset" title="No changeset" href="/changeset/123" rel="nofollow">changeset:123</a>:
+Add-on to <a class="odd resolver" href="/thing/123">link:123</a>:
 Some change.
-<a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a>
+<a class="odd resolver" href="/thing/1">link:1</a>
 This ticket is the first one
-<a class="missing changeset" title="No changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&gt;
-<a class="missing changeset" title="No changeset" href="/changeset/123" rel="nofollow">changeset:123</a>&amp;
-==============================
-CamelCase AlabamA ABc AlaBamA FooBar
-------------------------------
-<p>
-<a class="missing wiki" href="/wiki/CamelCase" rel="nofollow">CamelCase?</a> AlabamA ABc AlaBamA <a class="missing wiki" href="/wiki/FooBar" rel="nofollow">FooBar?</a>
-</p>
-------------------------------
-==============================
-CamelCase,CamelCase.CamelCase: CamelCase
-------------------------------
-<p>
-<a class="missing wiki" href="/wiki/CamelCase" rel="nofollow">CamelCase?</a>,<a class="missing wiki" href="/wiki/CamelCase" rel="nofollow">CamelCase?</a>.<a class="missing wiki" href="/wiki/CamelCase" rel="nofollow">CamelCase?</a>: <a class="missing wiki" href="/wiki/CamelCase" rel="nofollow">CamelCase?</a>
-</p>
-------------------------------
-==============================
-!CamelCase
-------------------------------
-<p>
-CamelCase
-</p>
-------------------------------
-==============================
+<a class="odd resolver" href="/thing/123">link:123</a>&gt;
+<a class="odd resolver" href="/thing/123">link:123</a>&amp;
+============================== Link resolver SHREF_TARGET_FIRST
 <bug>http://localhost/bugzilla/show_bug.cgi?id=1284</bug> 804
 ------------------------------
 <p>
-&lt;bug&gt;<a class="ext-link" href="http://localhost/bugzilla/show_bug.cgi?id=1284"><span class="icon"></span>http://localhost/bugzilla/show_bug.cgi?id=1284</a>&lt;/bug&gt; 804
+&lt;bug&gt;<a class="ext-link" href="http://localhost/bugzilla/show_bug.cgi?id=1284"><span class="icon">http://localhost/bugzilla/show_bug.cgi?id=1284</span></a>&lt;/bug&gt; 804
 </p>
 ------------------------------
-==============================
+============================== Link resolver SHREF_TARGET_MIDDLE
 ||http://example.com/img.png||text||
 ------------------------------
 <table class="wiki">
-<tr><td><img src="http://example.com/img.png" alt="http://example.com/img.png" /></td><td>text
+<tr><td><a class="ext-link" href="http://example.com/img.png"><span class="icon">http://example.com/img.png</span></a></td><td>text
 </td></tr></table>
 ------------------------------
-||<a class="ext-link" href="http://example.com/img.png"><span class="icon"></span>http://example.com/img.png</a>||text||
-==============================
+||<a class="ext-link" href="http://example.com/img.png"><span class="icon">http://example.com/img.png</span></a>||text||
+============================== Link resolver, long form with quoting
+[link:WikiStart Foo] [http://www.edgewall.com/ Edgewall]
+
+link:"Foo Bar" link:"Foo Bar#baz"
+
+[link:"Foo Bar" Foo Bar] [link:"Foo Bar#baz" Foo Bar]
+
+[link:Argv "*argv[] versus **argv"]
+
+[link:test "test.txt", line 123]
+
+[link:pl/de %de]
+------------------------------
+<p>
+<a class="text resolver" href="/stuff/WikiStart">Foo</a> <a class="ext-link" href="http://www.edgewall.com/"><span class="icon">Edgewall</span></a>
+</p>
+<p>
+<a class="text resolver" href="/stuff/Foo%20Bar">link:"Foo Bar"</a> <a class="text resolver" href="/stuff/Foo%20Bar%23baz">link:"Foo Bar#baz"</a>
+</p>
+<p>
+<a class="text resolver" href="/stuff/Foo%20Bar">Foo Bar</a> <a class="text resolver" href="/stuff/Foo%20Bar%23baz">Foo Bar</a>
+</p>
+<p>
+<a class="text resolver" href="/stuff/Argv">*argv[] versus **argv</a>
+</p>
+<p>
+<a class="text resolver" href="/stuff/test">"test.txt", line 123</a>
+</p>
+<p>
+<a class="text resolver" href="/stuff/pl/de">%de</a>
+</p>
+------------------------------
+============================== Link resolver in markup
+'''link:1''', ''link:1'', ~~link:1~~, __link:1__
+------------------------------
+<p>
+<strong><a class="odd resolver" href="/thing/1">link:1</a></strong>, <i><a class="odd resolver" href="/thing/1">link:1</a></i>, <del><a class="odd resolver" href="/thing/1">link:1</a></del>, <span class="underline"><a class="odd resolver" href="/thing/1">link:1</a></span>
+</p>
+------------------------------
+============================== Link resolver, quoting of target
+link:1
+link:12
+link:123
+link:'1'
+link:'12'
+link:'123'
+link:"1"
+link:"12"
+link:"123"
+------------------------------
+<p>
+<a class="odd resolver" href="/thing/1">link:1</a>
+<a class="even resolver" href="/thing/12">link:12</a>
+<a class="odd resolver" href="/thing/123">link:123</a>
+<a class="odd resolver" href="/thing/1">link:'1'</a>
+<a class="even resolver" href="/thing/12">link:'12'</a>
+<a class="odd resolver" href="/thing/123">link:'123'</a>
+<a class="odd resolver" href="/thing/1">link:"1"</a>
+<a class="even resolver" href="/thing/12">link:"12"</a>
+<a class="odd resolver" href="/thing/123">link:"123"</a>
+</p>
+------------------------------
+============================================================
+
+        Other Links
+
+============================== Relative links
+Relative links are supported:
+[../parent See above]
+[/docs See documentation]
+[/images/logo.png Our logo]
+[/]
+------------------------------
+<p>
+Relative links are supported:
+<a href="../parent">See above</a>
+<a href="/docs">See documentation</a>
+<a href="/images/logo.png">Our logo</a>
+<a href="/">/</a>
+</p>
+------------------------------
+==============================  Image links are now regular external links
 http://example.com/img.png?foo=bar
 ------------------------------
 <p>
-<img src="http://example.com/img.png?foo=bar" alt="http://example.com/img.png?foo=bar" />
+<a class="ext-link" href="http://example.com/img.png?foo=bar"><span class="icon">http://example.com/img.png?foo=bar</span></a>
 </p>
 ------------------------------
-<a class="ext-link" href="http://example.com/img.png?foo=bar"><span class="icon"></span>http://example.com/img.png?foo=bar</a>
-==============================
-in:
-|| RPC# || parameter len || ..... parameter ..... ||
-out:
-|| RPC# || parameter len || ..... parameter ..... ||
-----
-------------------------------
-<p>
-in:
-</p>
-<table class="wiki">
-<tr><td> RPC# </td><td> parameter len </td><td> ..... parameter ..... 
-</td></tr></table>
-<p>
-out:
-</p>
-<table class="wiki">
-<tr><td> RPC# </td><td> parameter len </td><td> ..... parameter ..... 
-</td></tr></table>
-<hr />
-------------------------------
-in:
-|| RPC# || parameter len || ..... parameter ..... ||
-out:
-|| RPC# || parameter len || ..... parameter ..... ||
-----
-==============================
+<a class="ext-link" href="http://example.com/img.png?foo=bar"><span class="icon">http://example.com/img.png?foo=bar</span></a>
+============================== Arbitrary protocol Link
 ''RFCs von ftp://ftp.rfc-editor.org/in-notes/rfcXXXX.txt''
 ------------------------------
 <p>
-<i>RFCs von <a class="ext-link" href="ftp://ftp.rfc-editor.org/in-notes/rfcXXXX.txt"><span class="icon"></span>ftp://ftp.rfc-editor.org/in-notes/rfcXXXX.txt</a></i>
+<i>RFCs von <a class="ext-link" href="ftp://ftp.rfc-editor.org/in-notes/rfcXXXX.txt"><span class="icon">ftp://ftp.rfc-editor.org/in-notes/rfcXXXX.txt</span></a></i>
 </p>
 ------------------------------
+============================== Another arbitrary protocol Link
+svn+ssh://secureserver.org
+[svn+ssh://secureserver.org SVN link]
+rfc-2396.compatible://link
+[rfc-2396.compatible://link RFC 2396]
+------------------------------
+<p>
+<a class="ext-link" href="svn+ssh://secureserver.org"><span class="icon">svn+ssh://secureserver.org</span></a>
+<a class="ext-link" href="svn+ssh://secureserver.org"><span class="icon">SVN link</span></a>
+<a class="ext-link" href="rfc-2396.compatible://link"><span class="icon">rfc-2396.compatible://link</span></a>
+<a class="ext-link" href="rfc-2396.compatible://link"><span class="icon">RFC 2396</span></a>
+</p>
+------------------------------
+============================== Link resolver counter examples
+Test:[[BR]] There should be a line break
+
+Other test:'''bold text''' should be bold
+------------------------------
+<p>
+Test:<br /> There should be a line break
+</p>
+<p>
+Other test:<strong>bold text</strong> should be bold
+</p>
+------------------------------
+Test:  There should be a line break
+
+Other test:<strong>bold text</strong> should be bold
+============================== Link resolver counter example
+'''Note:'''
+------------------------------
+<p>
+<strong>Note:</strong>
+</p>
+------------------------------
+<strong>Note:</strong>
 ==============================
-[wiki:WikiStart Foo] [http://www.edgewall.com/ Edgewall]
+============================================================
+
+        Processor blocks
 
-wiki:Foo%20Bar wiki:Foo%20Bar#baz
-
-[wiki:Foo%20Bar Foo Bar] [wiki:Foo%20Bar#baz Foo Bar]
-
-[wiki:Argv "*argv[] versus **argv"]
-
-[wiki:test "test.txt", line 123]
+============================== Code Block 1
+{{{
+Preformatted text.
+}}}
+Paragraph
 ------------------------------
-<p>
-<a class="missing wiki" href="/wiki/WikiStart" rel="nofollow">Foo?</a> <a class="ext-link" href="http://www.edgewall.com/"><span class="icon"></span>Edgewall</a>
-</p>
-<p>
-<a class="missing wiki" href="/wiki/Foo%20Bar" rel="nofollow">wiki:Foo Bar?</a> <a class="missing wiki" href="/wiki/Foo%20Bar#baz" rel="nofollow">wiki:Foo Bar#baz?</a>
-</p>
-<p>
-<a class="missing wiki" href="/wiki/Foo%20Bar" rel="nofollow">Foo Bar?</a> <a class="missing wiki" href="/wiki/Foo%20Bar#baz" rel="nofollow">Foo Bar?</a>
-</p>
-<p>
-<a class="missing wiki" href="/wiki/Argv" rel="nofollow">*argv[] versus **argv?</a>
-</p>
-<p>
-<a class="missing wiki" href="/wiki/test" rel="nofollow">"test.txt", line 123?</a>
+<pre class="wiki">Preformatted text.
+</pre><p>
+Paragraph
 </p>
 ------------------------------
-==============================
-htdocs:release-1.0.tar.gz
+ [&hellip;]
+Paragraph
+============================== Code Block 2
+{{{
+<b>Preformatted text</b>.
+}}}
+Paragraph
+------------------------------
+<pre class="wiki">&lt;b&gt;Preformatted text&lt;/b&gt;.
+</pre><p>
+Paragraph
+</p>
+------------------------------
+ [&hellip;]
+Paragraph
+============================== Embedded code blocks
+{{{
+Outer block.
+{{{
+Inner block.
+}}}
+}}}
+Paragraph
+------------------------------
+<pre class="wiki">Outer block.
+{{{
+Inner block.
+}}}
+</pre><p>
+Paragraph
+</p>
+------------------------------
+ [&hellip;]
+Paragraph
+============================== Consecutive code blocks
+Block 
+{{{
+number one
+}}}
+and block
+{{{
+number two
+}}}
+.
+------------------------------
+<p>
+Block 
+</p>
+<pre class="wiki">number one
+</pre><p>
+and block
+</p>
+<pre class="wiki">number two
+</pre><p>
+.
+</p>
+------------------------------
+Block 
+ [&hellip;]
+and block
+ [&hellip;]
+.
+============================== Unfinished code blocks
+Block 
+{{{
+number one
 
-[htdocs:release-1.0.tar.gz Release 1.0]
+and block
+{{{
+number two
+ }}
 ------------------------------
 <p>
-<a href="/chrome/site/release-1.0.tar.gz">htdocs:release-1.0.tar.gz</a>
+Block 
 </p>
-<p>
-<a href="/chrome/site/release-1.0.tar.gz">Release 1.0</a>
-</p>
-------------------------------
-==============================
-foo (FooBar)
+<pre class="wiki">number one
 
-foo (FooBar )
+and block
+{{{
+number two
+ }}
+}}}
+</pre>------------------------------
+Block [&hellip;]
+============================== Wiki processor
+{{{
+#!default
+Preformatted text.
+}}}
+Paragraph
+------------------------------
+<pre class="wiki">Preformatted text.
+</pre><p>
+Paragraph
+</p>
+------------------------------
+ [&hellip;]
+Paragraph
+============================== Wiki processor counter example
+{{{
+#!/bin/sh
+echo "foo"
+}}}
+Paragraph
+------------------------------
+<pre class="wiki">#!/bin/sh
+echo "foo"
+</pre><p>
+Paragraph
+</p>
+------------------------------
+ [&hellip;]
+Paragraph
+============================== HTML wiki processor
+{{{
+#!html
+<p>Hello World</p>
+}}}
+------------------------------
+<p>Hello World</p>
+------------------------------
+ [&hellip;]
+============================== HTML wiki processor, XSS check 1
+{{{
+#!html
+<script>alert("");</script>
+}}}
+------------------------------
+
+------------------------------
+ [&hellip;]
+============================== HTML wiki processor, XSS check 2
+{{{
+#!html
+<div onclick="alert('')">Click me</div>
+}}}
+------------------------------
+<div>Click me</div>
+------------------------------
+ [&hellip;]
+============================================================
+
+        Wiki Macros
+
+============================== Macro with arguments (leading)
+[[HelloWorld(hej hopp)]]
 ------------------------------
 <p>
-foo (<a class="missing wiki" href="/wiki/FooBar" rel="nofollow">FooBar?</a>)
-</p>
-<p>
-foo (<a class="missing wiki" href="/wiki/FooBar" rel="nofollow">FooBar?</a> )
+Hello World, args = hej hopp
 </p>
 ------------------------------
-==============================
+[[HelloWorld(...)]]
+============================== Macro with arguments (in flow)
+Hello, [[HelloWorld(hej hopp)]]
+------------------------------
+<p>
+Hello, Hello World, args = hej hopp
+</p>
+------------------------------
+Hello, [[HelloWorld(...)]]
+============================== Bad macro call
+[[HelloWorld(hej hopp) ]] # This shouldnt executed as macro since it contain whitespace between ) and ]
+------------------------------
+<p>
+<a class="missing wiki" href="/wiki/%5BHelloWorld%28hej" rel="nofollow">hopp) ?</a>] # This shouldnt executed as macro since it contain whitespace between ) and ]
+</p>
+------------------------------
+<a class="missing wiki" href="/wiki/%5BHelloWorld%28hej" rel="nofollow">hopp) ?</a>] # This shouldnt executed as macro since it contain whitespace between ) and ]
+============================== Another bad macro call
+[[HelloWorld(hej hopp))]] # Extra right brace and still executed
+------------------------------
+<p>
+Hello World, args = hej hopp) # Extra right brace and still executed
+</p>
+------------------------------
+[[HelloWorld(...)]] # Extra right brace and still executed
+============================== Two consecutive macros on a line
+[[HelloWorld(hej hopp)]] [[HelloWorld(hej hopp2)]] # Test non greedy match
+------------------------------
+<p>
+Hello World, args = hej hopp Hello World, args = hej hopp2 # Test non greedy match
+</p>
+------------------------------
+[[HelloWorld(...)]] [[HelloWorld(...)]] # Test non greedy match
+============================== Macro returning a <div>
+[[DivHelloWorld(hej hopp)]]
+------------------------------
+<p>
+</p><div>Hello World, args = hej hopp</div><p>
+</p>
+------------------------------
+[[DivHelloWorld(...)]]
+============================== Macro returning a <div class="...code...">
+[[DivCode(hej hopp)]]
+------------------------------
+<p>
+<span class="code-block">Hello World, args = hej hopp</span>
+</p>
+------------------------------
+[[DivCode(...)]]
+============================== Macro returning an html.DIV(class="...code...">)
+[[DivCodeElement(hej hopp)]]
+------------------------------
+<p>
+<span class="code-block">Hello World, args = hej hopp</span>
+</p>
+------------------------------
+[[DivCodeElement(...)]]
+============================== Inlined HTML wiki processor
+Inline [[html(<B> Test </B>)]] text
+------------------------------
+<p>
+Inline <b> Test </b> text
+</p>
+------------------------------
+Inline [[html(...)]] text
+============================== BR macro
+Line break [[BR]] another line[[br]]last line
+------------------------------
+<p>
+Line break <br /> another line<br />last line
+</p>
+------------------------------
+Line break   another line last line
+============================== Comment wiki processor
+Test comment blocks
+{{{
+#!comment
+This is simply removed from the output
+}}}
+------------------------------
+<p>
+Test comment blocks
+</p>
+------------------------------
+Test comment blocks
+============================== Comment wiki processor called as a macro
+Inline [[comment(This should not be seen)]] comment
+------------------------------
+<p>
+Inline  comment
+</p>
+------------------------------
+Inline  comment
+============================================================
+
+           Headings
+
+============================== I18N heading
+= ça marche! =
+------------------------------
+<h1 id="çamarche">ça marche!</h1>
+------------------------------
+= ça marche! =
+============================== Quoted heading
+= "Test" =
+------------------------------
+<h1 id="Test">"Test"</h1>
+------------------------------
+= "Test" =
+============================== Heading with < and >
+= Foo <Bar> Baz =
+------------------------------
+<h1 id="FooBarBaz">Foo &lt;Bar&gt; Baz</h1>
+------------------------------
+= Foo &lt;Bar&gt; Baz =
+============================== Heading with .
+= Version 0.10 =
+------------------------------
+<h1 id="Version0.10">Version 0.10</h1>
+------------------------------
+= Version 0.10 =
+============================== Normal heading
 == Heading with trailing white-space == 
 ------------------------------
-<h2 id="Headingwithtrailingwhitespace">Heading with trailing white-space</h2>
+<h2 id="Headingwithtrailingwhite-space">Heading with trailing white-space</h2>
 ------------------------------
 == Heading with trailing white-space ==
-==============================
+============================== Formatted heading
 == ''Formatted'' ~~Heading~~ ==
 ------------------------------
 <h2 id="FormattedHeading"><i>Formatted</i> <del>Heading</del></h2>
 ------------------------------
 == ''Formatted'' ~~Heading~~ ==
-==============================
+============================== Heading with link
 == [wiki:SandBox Linked Heading] ==
 ------------------------------
 <h2 id="LinkedHeading"><a class="missing wiki" href="/wiki/SandBox" rel="nofollow">Linked Heading?</a></h2>
 ------------------------------
 == [wiki:SandBox Linked Heading] ==
-==============================
-A0B1, ST62T53C6, IR32V1H000
+============================== Normal heading, fixed id
+== Heading with fixed id == #heading-fixed-id
 ------------------------------
-<p>
-A0B1, ST62T53C6, IR32V1H000
-</p>
+<h2 id="heading-fixed-id">Heading with fixed id</h2>
 ------------------------------
-==============================
+== Heading with fixed id == #heading-fixed-id
+============================== Normal heading, auto-corrected id
+== 10 tips ==
+------------------------------
+<h2 id="a10tips">10 tips</h2>
+------------------------------
+== 10 tips ==
+============================================================
+
+             Lists
+
+============================== Bulleted lists
 Paragraph
  * foo bar
    boo baz
@@ -345,406 +676,205 @@ Paragraph
  * item 2
    item 2 line 2
 Paragraph
-==============================
-'''ticket:1''', ''ticket:1'', ~~ticket:1~~, __ticket:1__
-------------------------------
-<p>
-<strong><a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a></strong>, <i><a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a></i>, <del><a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a></del>, <span class="underline"><a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a></span>
-</p>
-------------------------------
-==============================
-SandBox SandBox, SandBox; SandBox: SandBox. SandBox? SandBox! (SandBox) {SandBox} [SandBox]
-------------------------------
-<p>
-<a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a> <a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>, <a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>; <a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>: <a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>. <a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>? <a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>! (<a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>) {<a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>} [<a class="missing wiki" href="/wiki/SandBox" rel="nofollow">SandBox?</a>]
-</p>
-------------------------------
-==============================
-source:/foo/bar
-source:/foo/bar#42
-source:/foo/bar#head
-source:/foo/bar@42
-source:/foo/bar@head
-source:/foo%20bar/baz%2Bquux
-source:/foo%2520bar/baz%252Bquux#42
-source:#42
-source:@42
-source:/foo/bar@42#L20
-source:/foo/bar@head#L20
-------------------------------
-<p>
-<a class="source" href="/browser/foo/bar">source:/foo/bar</a>
-<a class="source" href="/browser/foo/bar?rev=42">source:/foo/bar#42</a>
-<a class="source" href="/browser/foo/bar?rev=head">source:/foo/bar#head</a>
-<a class="source" href="/browser/foo/bar?rev=42">source:/foo/bar@42</a>
-<a class="source" href="/browser/foo/bar?rev=head">source:/foo/bar@head</a>
-<a class="source" href="/browser/foo%20bar/baz%2Bquux">source:/foo bar/baz+quux</a>
-<a class="source" href="/browser/foo%2520bar/baz%252Bquux?rev=42">source:/foo%20bar/baz%2Bquux#42</a>
-<a class="source" href="/browser/?rev=42">source:#42</a>
-<a class="source" href="/browser/?rev=42">source:@42</a>
-<a class="source" href="/browser/foo/bar?rev=42#L20">source:/foo/bar@42#L20</a>
-<a class="source" href="/browser/foo/bar?rev=head#L20">source:/foo/bar@head#L20</a>
-</p>
-------------------------------
-==============================
-query:?order=priority
+============================== Changelog sample
+2003-09-18 23:26  Joe Bar <joeb@gloogle.gom>
 
-query:?order=priority&owner=me
+	* src/code.py: Fix problem with obsolete use of
+	backslash in symbols.
+        * src/test.py: Added unit tests.
+          - test + symbol
+          - test - symbol
+Paragraph
+------------------------------
+<p>
+2003-09-18 23:26  Joe Bar &lt;joeb@gloogle.gom&gt;
+</p>
+<ul><li>src/code.py: Fix problem with obsolete use of
+backslash in symbols.
+</li><li>src/test.py: Added unit tests.
+<ul><li>test + symbol
+</li><li>test - symbol
+</li></ul></li></ul><p>
+Paragraph
+</p>
+------------------------------
+============================== Complex bulleted list
+    * foo bar
+      boo baz
+           * Subitem 1
+             - nested item 1
+             - nested item 2
+             nested item 2 continued
+           Subitem 1 continued
+        * Subitem 2
+         Subitem 2 continued
+        * Subitem 3
+          continued
+    * item 2
+     item 2 line 2
+Paragraph
+------------------------------
+<ul><li>foo bar
+boo baz
+<ul><li>Subitem 1
+<ul><li>nested item 1
+</li><li>nested item 2
+nested item 2 continued
+</li></ul></li><li>Subitem 1 continued
+</li></ul></li><li>Subitem 2
+Subitem 2 continued
+</li><li>Subitem 3
+continued
+</li></ul><ul><li>item 2
+item 2 line 2
+</li></ul><p>
+Paragraph
+</p>
+------------------------------
+============================== Numbered lists
+ 1. item 1
+   a. item 1.a
+   a. item 1.b
 
-query:status=new|reopened
+Some paragraph
 
-query:milestone!=
+ 2. continue with item 2
+    i. roman 1
+    ii. roman 2
+Paragraph
+------------------------------
+<ol><li>item 1
+<ol class="loweralpha"><li>item 1.a
+</li><li>item 1.b
+</li></ol></li></ol><p>
+Some paragraph
+</p>
+<ol start="2"><li>continue with item 2
+<ol class="lowerroman"><li>roman 1
+</li><li>roman 2
+</li></ol></li></ol><p>
+Paragraph
+</p>
+------------------------------
+1. item 1
+   a. item 1.a
+   a. item 1.b
 
-query:milestone=1.0|2.0&owner=me
-------------------------------
-<p>
-<a class="query" href="/query?order=priority">query:?order=priority</a>
-</p>
-<p>
-<a class="query" href="/query?order=priority&amp;owner=me">query:?order=priority&amp;owner=me</a>
-</p>
-<p>
-<a class="query" href="/query?status=new&amp;status=reopened&amp;order=priority">query:status=new|reopened</a>
-</p>
-<p>
-<a class="query" href="/query?milestone=%21&amp;order=priority">query:milestone!=</a>
-</p>
-<p>
-<a class="query" href="/query?milestone=1.0&amp;milestone=2.0&amp;owner=me&amp;order=priority">query:milestone=1.0|2.0&amp;owner=me</a>
-</p>
-------------------------------
-==============================
-Test:[[BR]] There should be a line break
+Some paragraph
 
-Change:[10] There should be a link to changeset [10]
-
-Other test:'''bold text''' is not bold
+ 2. continue with item 2
+    i. roman 1
+    ii. roman 2
+Paragraph
+============================== Numbered lists multi-line items
+ 1. This is a very long line at
+    the first level, which works correctly.
+    1. But this line at the second level, which
+       is also continued on the next line, does not.
+Paragraph
 ------------------------------
-<p>
-Test:<br /> There should be a line break
-</p>
-<p>
-Change:<a class="missing changeset" title="No changeset" href="/changeset/10" rel="nofollow">[10]</a> There should be a link to changeset <a class="missing changeset" title="No changeset" href="/changeset/10" rel="nofollow">[10]</a>
-</p>
-<p>
-Other test:<strong>bold text</strong> is not bold
-</p>
-------------------------------
-Test:  There should be a line break
-
-Change:<a class="missing changeset" title="No changeset" href="/changeset/10" rel="nofollow">[10]</a> There should be a link to changeset <a class="missing changeset" title="No changeset" href="/changeset/10" rel="nofollow">[10]</a>
-
-Other test:<strong>bold text</strong> is not bold
-==============================
-{{{
-Preformatted text.
-}}}
-------------------------------
-<pre class="wiki">Preformatted text.
-</pre>
-------------------------------
- [&hellip;]
-==============================
-{{{
-<b>Preformatted text</b>.
-}}}
-------------------------------
-<pre class="wiki">&lt;b&gt;Preformatted text&lt;/b&gt;.
-</pre>
-------------------------------
- [&hellip;]
-==============================
-{{{
-Outer block.
-{{{
-Inner block.
-}}}
-}}}
-------------------------------
-<pre class="wiki">Outer block.
-{{{
-Inner block.
-}}}
-</pre>
-------------------------------
- [&hellip;]
-==============================
-Block 
-{{{
-number one
-}}}
-and block
-{{{
-number two
-}}}
-------------------------------
-<p>
-Block 
-</p>
-<pre class="wiki">number one
-</pre>
-<p>
-and block
-</p>
-<pre class="wiki">number two
-</pre>
-------------------------------
-Block 
- [&hellip;]
-and block
- [&hellip;]
-==============================
-{{{
-#!default
-Preformatted text.
-}}}
-------------------------------
-<pre class="wiki">Preformatted text.
-</pre>
-------------------------------
- [&hellip;]
-==============================
-{{{
-#!/bin/sh
-echo "foo"
-}}}
-------------------------------
-<pre class="wiki">#!/bin/sh
-echo &#34;foo&#34;
-</pre>
-------------------------------
- [&hellip;]
-==============================
-{{{
-#!html
-<p>Hello World</p>
-}}}
-------------------------------
-<p>Hello World</p>
-------------------------------
- [&hellip;]
-==============================
-{{{
-#!html
-<script>alert("");</script>
-}}}
-------------------------------
-
-------------------------------
- [&hellip;]
-==============================
-{{{
-#!html
-<div onclick="alert('')">Click me</div>
-}}}
-------------------------------
-<div>Click me</div>
-------------------------------
- [&hellip;]
-==============================
-^superscript^, ,,subscript,,, normal.
-------------------------------
-<p>
-<sup>superscript</sup>, <sub>subscript</sub>, normal.
+<ol><li>This is a very long line at
+the first level, which works correctly.
+<ol><li>But this line at the second level, which
+is also continued on the next line, does not.
+</li></ol></li></ol><p>
+Paragraph
 </p>
 ------------------------------
-<sup>superscript</sup>, <sub>subscript</sub>, normal.
-==============================
-[[HelloWorld(hej hopp)]]
+1. This is a very long line at
+    the first level, which works correctly.
+    1. But this line at the second level, which
+       is also continued on the next line, does not.
+Paragraph
+============================== Numbered lists counter-examples
+ This will not start a new numbered
+ list. There's more than one character
+ before the "."
+ OTOH, the following is a roman numbered list:
+ iii. start
+ xxvii. maximal number in sequence
+Paragraph
 ------------------------------
+<blockquote>
 <p>
-Hello World, args = hej hopp
+This will not start a new numbered
+list. There's more than one character
+before the "."
+OTOH, the following is a roman numbered list:
+</p>
+</blockquote>
+<ol class="lowerroman"><li>start
+</li><li>maximal number in sequence
+</li></ol><p>
+Paragraph
 </p>
 ------------------------------
-[[HelloWorld(...)]]
-==============================
-[[HelloWorld(hej hopp) ]] # This shouldnt executed as macro since it contain whitespace between ) and ]
+============================== Mixed lists multi-line items
+ 1. multi-line
+    numbered list
+    i. multi-line
+      item i.
+      * sub item
+    ii. multi-line
+      item ii.
+      * sub item
+        multiline
+        a. subsub
+          multiline
+        b. subsub
+    iii. multi-line
+      item iii.
+      * sub item
+Paragraph
 ------------------------------
-<p>
-[[HelloWorld(hej hopp) ]] # This shouldnt executed as macro since it contain whitespace between ) and ]
-</p>
-------------------------------
-[[HelloWorld(hej hopp) ]] # This shouldnt executed as macro since it contain whitespace between ) and ]
-==============================
-[[HelloWorld(hej hopp))]] # Extra right brace and still executed
-------------------------------
-<p>
-Hello World, args = hej hopp) # Extra right brace and still executed
-</p>
-------------------------------
-[[HelloWorld(...)]] # Extra right brace and still executed
-==============================
-[[HelloWorld(hej hopp)]] [[HelloWorld(hej hopp2)]] # Test non greedy match
-------------------------------
-<p>
-Hello World, args = hej hopp Hello World, args = hej hopp2 # Test non greedy match
-</p>
-------------------------------
-[[HelloWorld(...)]] [[HelloWorld(...)]] # Test non greedy match
-==============================
-Inline [[html(<B> Test </B>)]] text
-------------------------------
-<p>
-Inline <b> Test </b> text
-</p>
-------------------------------
-Inline [[html(...)]] text
-==============================
-Line break [[BR]] another line[[br]]last line
-------------------------------
-<p>
-Line break <br /> another line<br />last line
-</p>
-------------------------------
-Line break   another line last line
-==============================
-Test comment blocks
-{{{
-#!comment
-This is simply removed from the output
-}}}
-------------------------------
-<p>
-Test comment blocks
-</p>
-------------------------------
-Test comment blocks
-==============================
-Inline [[comment(This should not be seen)]] comment
-------------------------------
-<p>
-Inline  comment
-</p>
-------------------------------
-Inline  comment
-==============================
-This should be '''''bold and italic'''''
-------------------------------
-<p>
-This should be <strong><i>bold and italic</i></strong>
-</p>
-------------------------------
-==============================
-'''''one''''', '''''two''''', '''''three''''', '''''four'''''
-------------------------------
-<p>
-<strong><i>one</i></strong>, <strong><i>two</i></strong>, <strong><i>three</i></strong>, <strong><i>four</i></strong>
-</p>
-------------------------------
-==============================
-__~~underlineoversrike~~__
-------------------------------
-<p>
-<span class="underline"><del>underlineoversrike</del></span>
-</p>
-------------------------------
-==============================
-__~~overlapping__tags~~
-------------------------------
-<p>
-<span class="underline"><del>overlapping</del></span><del>tags</del>
-</p>
-------------------------------
-==============================
-__~~outoforderclosetags__~~
-------------------------------
-<p>
-<span class="underline"><del>outoforderclosetags</del></span><del></del>
-</p>
-------------------------------
-==============================
-'''''bolditalic''' # Open italic should be closed before paragraph end
-------------------------------
-<p>
-<strong><i>bolditalic</i></strong><i> # Open italic should be closed before paragraph end
-</i></p>
-------------------------------
-==============================
-''italic'''''bold'''
-------------------------------
-<p>
-<i>italic</i><strong>bold</strong>
-</p>
-------------------------------
-==============================
-'''bold'''''italic''
-------------------------------
-<p>
-<strong>bold</strong><i>italic</i>
-</p>
-------------------------------
-==============================
-'''''bold
-italic
-multiline'''''
-------------------------------
-<p>
-<strong><i>bold
-italic
-multiline</i></strong>
-</p>
-------------------------------
-==============================
-'''''bold
-italic
+<ol><li>multi-line
+numbered list
+<ol class="lowerroman"><li>multi-line
+item i.
+<ul><li>sub item
+</li></ul></li><li>multi-line
+item ii.
+<ul><li>sub item
 multiline
-without endtags
-------------------------------
-<p>
-<strong><i>bold
-italic
+<ol class="loweralpha"><li>subsub
 multiline
-without endtags
-</i></strong></p>
-------------------------------
-==============================
-{{{verbatim}}}
-{{{
-{{{in `block`
-}}}
-`{{{this is verbatim}}}` and {{{`that` should also `be` verbatim}}}
-------------------------------
-<p>
-<tt>verbatim</tt>
-</p>
-<pre class="wiki">{{{in `block`
-</pre>
-<p>
-<tt>{{{this is verbatim}}}</tt> and <tt>`that` should also `be` verbatim</tt>
+</li><li>subsub
+</li></ol></li></ul></li><li>multi-line
+item iii.
+<ul><li>sub item
+</li></ul></li></ol></li></ol><p>
+Paragraph
 </p>
 ------------------------------
-<tt>verbatim</tt>
- [&hellip;]
-<tt>{{{this is verbatim}}}</tt> and <tt>`that` should also `be` verbatim</tt>
-==============================
+============================== Simple definition list
  term:: definition
 ------------------------------
 <dl><dt>term</dt><dd>definition
 </dd></dl>
 ------------------------------
 term:: definition
-==============================
+============================== Tricky definition list
  term:: definition:: text
 ------------------------------
 <dl><dt>term</dt><dd>definition:: text
 </dd></dl>
 ------------------------------
 term:: definition:: text
-==============================
+============================== Verbatim term in definition list
  `term`:: definition
 ------------------------------
 <dl><dt><tt>term</tt></dt><dd>definition
 </dd></dl>
 ------------------------------
 <tt>term</tt>:: definition
-==============================
+============================== Another verbatim term in definition list
  {{{term}}}:: definition
 ------------------------------
 <dl><dt><tt>term</tt></dt><dd>definition
 </dd></dl>
 ------------------------------
 <tt>term</tt>:: definition
-==============================
+============================== Complex definition list
  complex topic:: multiline
                  ''formatted''
                  definition
@@ -757,7 +887,7 @@ definition
 complex topic:: multiline
                  <i>formatted</i>
                  definition
-==============================
+============================== Definition list counter example
  term::definition
 ------------------------------
 <blockquote>
@@ -767,7 +897,7 @@ term::definition
 </blockquote>
 ------------------------------
 term::definition
-==============================
+============================== Definition list + escaped definition list
  complex topic:: multiline
                  `not:: a dl`
 ------------------------------
@@ -777,7 +907,7 @@ term::definition
 ------------------------------
 complex topic:: multiline
                  <tt>not:: a dl</tt>
-==============================
+============================== Definition list + another escaped definition list
  complex topic:: multiline
                  {{{not:: a dl}}}
 ------------------------------
@@ -787,165 +917,11 @@ complex topic:: multiline
 ------------------------------
 complex topic:: multiline
                  <tt>not:: a dl</tt>
-==============================
-milestone:foo
-[milestone:boo Milestone Boo]
-------------------------------
-<p>
-<a class="milestone" href="/milestone/foo">milestone:foo</a>
-<a class="milestone" href="/milestone/boo">Milestone Boo</a>
-</p>
-------------------------------
-==============================
-search:foo
-search:"foo bar"
-[search:bar Bar]
-[search:bar]
-[search:]
-------------------------------
-<p>
-<a class="search" href="/search?q=foo">search:foo</a>
-<a class="search" href="/search?q=foo+bar">search:"foo bar"</a>
-<a class="search" href="/search?q=bar">Bar</a>
-<a class="search" href="/search?q=bar">bar</a>
-<a class="search" href="/search?q=">search</a>
-</p>
-------------------------------
-==============================
-search:?q=foo&wiki=on
-search:"?q=foo bar&wiki=on"
-[search:?q=bar&ticket=on Bar in Tickets]
-------------------------------
-<p>
-<a class="search" href="/search?q=foo&amp;wiki=on">search:?q=foo&amp;wiki=on</a>
-<a class="search" href="/search?q=foo+bar&amp;wiki=on">search:"?q=foo bar&amp;wiki=on"</a>
-<a class="search" href="/search?q=bar&amp;ticket=on">Bar in Tickets</a>
-</p>
-------------------------------
-==============================
-'''Note:'''
-------------------------------
-<p>
-<strong>Note:</strong>
-</p>
-------------------------------
-<strong>Note:</strong>
-==============================
-ticket:1
-ticket:12
-ticket:123
-ticket:'1'
-ticket:'12'
-ticket:'123'
-ticket:"1"
-ticket:"12"
-ticket:"123"
-------------------------------
-<p>
-<a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:1</a>
-<a class="missing ticket" href="/ticket/12" rel="nofollow">ticket:12</a>
-<a class="missing ticket" href="/ticket/123" rel="nofollow">ticket:123</a>
-<a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:'1'</a>
-<a class="missing ticket" href="/ticket/12" rel="nofollow">ticket:'12'</a>
-<a class="missing ticket" href="/ticket/123" rel="nofollow">ticket:'123'</a>
-<a class="missing ticket" href="/ticket/1" rel="nofollow">ticket:"1"</a>
-<a class="missing ticket" href="/ticket/12" rel="nofollow">ticket:"12"</a>
-<a class="missing ticket" href="/ticket/123" rel="nofollow">ticket:"123"</a>
-</p>
-------------------------------
-==============================
-Relative links are supported:
-[../parent See above]
-[/docs See documentation]
-[/images/logo.png Our logo]
-[/]
-------------------------------
-<p>
-Relative links are supported:
-<a href="../parent">See above</a>
-<a href="/docs">See documentation</a>
-<img src="/images/logo.png" alt="Our logo" />
-<a href="/">/</a>
-</p>
-------------------------------
-==============================
-source:'even with whitespaces'
-source:"even with whitespaces"
-[source:'even with whitespaces' Path with spaces]
-[source:"even with whitespaces" Path with spaces]
-------------------------------
-<p>
-<a class="source" href="/browser/even%20with%20whitespaces">source:'even with whitespaces'</a>
-<a class="source" href="/browser/even%20with%20whitespaces">source:"even with whitespaces"</a>
-<a class="source" href="/browser/even%20with%20whitespaces">Path with spaces</a>
-<a class="source" href="/browser/even%20with%20whitespaces">Path with spaces</a>
-</p>
-------------------------------
-==============================
-svn+ssh://secureserver.org
-[svn+ssh://secureserver.org SVN link]
-rfc-2396.compatible://link
-[rfc-2396.compatible://link RFC 2396]
-------------------------------
-<p>
-<a class="ext-link" href="svn+ssh://secureserver.org"><span class="icon"></span>svn+ssh://secureserver.org</a>
-<a class="ext-link" href="svn+ssh://secureserver.org"><span class="icon"></span>SVN link</a>
-<a class="ext-link" href="rfc-2396.compatible://link"><span class="icon"></span>rfc-2396.compatible://link</a>
-<a class="ext-link" href="rfc-2396.compatible://link"><span class="icon"></span>RFC 2396</a>
-</p>
-------------------------------
-==============================
-= ça marche! =
-------------------------------
-<h1 id="çamarche">ça marche!</h1>
-------------------------------
-= ça marche! =
-==============================
-= "Test" =
-------------------------------
-<h1 id="Test">"Test"</h1>
-------------------------------
-= "Test" =
-==============================
-= Foo <Bar> Baz =
-------------------------------
-<h1 id="FooltBargtBaz">Foo &lt;Bar&gt; Baz</h1>
-------------------------------
-= Foo &lt;Bar&gt; Baz =
-==============================
-!__foo!__
-!~~bar!~~
-!,,boo!,,
-!^baz!^
-------------------------------
-<p>
-__foo__
-~~bar~~
-,,boo,,
-^baz^
-</p>
-------------------------------
-==============================
-/absolute/path/is/NotWiki and relative/path/is/NotWiki
-/ThisIsNotWikiEither and /ThisIs/NotWikiEither but ThisIs/SubWiki
-------------------------------
-<p>
-/absolute/path/is/NotWiki and relative/path/is/NotWiki
-/ThisIsNotWikiEither and /ThisIs/NotWikiEither but <a class="missing wiki" href="/wiki/ThisIs/SubWiki" rel="nofollow">ThisIs/SubWiki?</a>
-</p>
-------------------------------
-==============================
-8FjBpOmy
-anotherWikiPageName
-------------------------------
-<p>
-8FjBpOmy
-anotherWikiPageName
-</p>
-------------------------------
-8FjBpOmy
-anotherWikiPageName
-==============================
+============================================================
+
+            Tables
+
+============================== Simple Table, one column
 || a || 
 || b ||
 ------------------------------
@@ -956,76 +932,228 @@ anotherWikiPageName
 ------------------------------
 || a || 
 || b ||
-==============================
-t:wiki:InterTrac
-trac:wiki:InterTrac
-[t:wiki:InterTrac intertrac]
-[trac:wiki:InterTrac intertrac]
+============================== Simple Table, multiple columns
+in:
+|| RPC# || parameter len || ..... parameter ..... ||
+out:
+|| RPC# || parameter len || ..... parameter ..... ||
+----
 ------------------------------
 <p>
-<a class="ext-link" href="http://projects.edgewall.com/trac/wiki/InterTrac" title="wiki:InterTrac in Trac's Trac"><span class="icon"></span>t:wiki:InterTrac</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/wiki/InterTrac" title="wiki:InterTrac in Trac's Trac"><span class="icon"></span>trac:wiki:InterTrac</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/wiki/InterTrac" title="wiki:InterTrac in Trac's Trac"><span class="icon"></span>intertrac</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/wiki/InterTrac" title="wiki:InterTrac in Trac's Trac"><span class="icon"></span>intertrac</a>
+in:
+</p>
+<table class="wiki">
+<tr><td> RPC# </td><td> parameter len </td><td> ..... parameter ..... 
+</td></tr></table>
+<p>
+out:
+</p>
+<table class="wiki">
+<tr><td> RPC# </td><td> parameter len </td><td> ..... parameter ..... 
+</td></tr></table>
+<hr />
+------------------------------
+in:
+|| RPC# || parameter len || ..... parameter ..... ||
+out:
+|| RPC# || parameter len || ..... parameter ..... ||
+----
+============================== Indented tables, multiple columns
+|| a || b ||
+
+  || a || b ||
+  || a || b ||
+
+|| a || b ||
+------------------------------
+<table class="wiki">
+<tr><td> a </td><td> b 
+</td></tr></table>
+<blockquote>
+<table class="wiki">
+<tr><td> a </td><td> b 
+</td></tr><tr><td> a </td><td> b 
+</td></tr></table>
+</blockquote>
+<table class="wiki">
+<tr><td> a </td><td> b 
+</td></tr></table>
+------------------------------
+|| a || b ||
+
+  || a || b ||
+  || a || b ||
+
+|| a || b ||
+============================================================
+
+         Mixed examples
+
+============================== Mix of headings and lists
+= Heading 1 =
+Paragraph
+ * Item 1
+   * Item 2
+Another paragraph
+------------------------------
+<h1 id="Heading1">Heading 1</h1>
+<p>
+Paragraph
+</p>
+<ul><li>Item 1
+<ul><li>Item 2
+</li></ul></li></ul><p>
+Another paragraph
 </p>
 ------------------------------
-==============================
-trac:ticket:2041
-[trac:ticket:2041 Trac #2041]
-#T2041
-#trac2041
+= Heading 1 =
+Paragraph
+ * Item 1
+   * Item 2
+Another paragraph
+============================== Heading, lists and table
+Paragraph
+----
+ 1. Item 1
+   2. Item 2
+||Table||cell||
+||Foo||Bar||Baz||
+http://www.edgewall.com/
 ------------------------------
 <p>
-<a class="ext-link" href="http://projects.edgewall.com/trac/ticket/2041" title="ticket:2041 in Trac's Trac"><span class="icon"></span>trac:ticket:2041</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/ticket/2041" title="ticket:2041 in Trac's Trac"><span class="icon"></span>Trac #2041</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/ticket/2041" title="ticket:2041 in Trac's Trac"><span class="icon"></span>#T2041</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/ticket/2041" title="ticket:2041 in Trac's Trac"><span class="icon"></span>#trac2041</a>
+Paragraph
 </p>
-------------------------------
-==============================
-trac:changeset:2081
-[trac:changeset:2081 Trac r2081]
-[T2081]
-[trac 2081]
-------------------------------
+<hr />
+<ol><li>Item 1
+<ol start="2"><li>Item 2
+</li></ol></li></ol><table class="wiki">
+<tr><td>Table</td><td>cell
+</td></tr><tr><td>Foo</td><td>Bar</td><td>Baz
+</td></tr></table>
 <p>
-<a class="ext-link" href="http://projects.edgewall.com/trac/changeset/2081" title="changeset:2081 in Trac's Trac"><span class="icon"></span>trac:changeset:2081</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/changeset/2081" title="changeset:2081 in Trac's Trac"><span class="icon"></span>Trac r2081</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/changeset/2081" title="changeset:2081 in Trac's Trac"><span class="icon"></span>[T2081]</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/changeset/2081" title="changeset:2081 in Trac's Trac"><span class="icon"></span>[trac 2081]</a>
+<a class="ext-link" href="http://www.edgewall.com/"><span class="icon">http://www.edgewall.com/</span></a>
 </p>
 ------------------------------
-==============================
-trac:report:1
-[trac:report:1 Trac r1]
-{T1}
-{trac1}
-{trac 1}
+Paragraph
+----
+ 1. Item 1
+   2. Item 2
+||Table||cell||
+||Foo||Bar||Baz||
+<a class="ext-link" href="http://www.edgewall.com/"><span class="icon">http://www.edgewall.com/</span></a>
+============================== Lists, indents and table
+
+  * Bar
+    * Foo
+
+    || Foo || Bar ||
+
+  || Foo || Bar ||
 ------------------------------
+<ul><li>Bar
+<ul><li>Foo
+</li></ul></li></ul><blockquote>
+<blockquote>
+<table class="wiki">
+<tr><td> Foo </td><td> Bar 
+</td></tr></table>
+</blockquote>
+</blockquote>
+<blockquote>
+<table class="wiki">
+<tr><td> Foo </td><td> Bar 
+</td></tr></table>
+</blockquote>
+------------------------------
+* Bar
+    * Foo
+
+    || Foo || Bar ||
+
+  || Foo || Bar ||
+============================== "Tabstops" set by lists and quotes
+        This is one level deep
+
+  * Bar
+        * Foo
+
+        Now this should be 2 levels deep as well
+
+               This is now level 3.
+
+        Continue on level 2.
+
+          - but a list always restart at level 1.
+Paragraph.
+------------------------------
+<blockquote>
 <p>
-<a class="ext-link" href="http://projects.edgewall.com/trac/report/1" title="report:1 in Trac's Trac"><span class="icon"></span>trac:report:1</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/report/1" title="report:1 in Trac's Trac"><span class="icon"></span>Trac r1</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/report/1" title="report:1 in Trac's Trac"><span class="icon"></span>{T1}</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/report/1" title="report:1 in Trac's Trac"><span class="icon"></span>{trac1}</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/report/1" title="report:1 in Trac's Trac"><span class="icon"></span>{trac 1}</a>
+This is one level deep
 </p>
-------------------------------
-==============================
-t:InterTrac
-trac:InterTrac
-[t:InterTrac intertrac]
-[trac:InterTrac intertrac]
-T:r2081
-T:#2041
-trac:#2041
-------------------------------
+</blockquote>
+<ul><li>Bar
+<ul><li>Foo
+</li></ul></li></ul><blockquote>
+<blockquote>
 <p>
-<a class="ext-link" href="http://projects.edgewall.com/trac/search?q=InterTrac" title="InterTrac in Trac's Trac"><span class="icon"></span>t:InterTrac</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/search?q=InterTrac" title="InterTrac in Trac's Trac"><span class="icon"></span>trac:InterTrac</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/search?q=InterTrac" title="InterTrac in Trac's Trac"><span class="icon"></span>intertrac</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/search?q=InterTrac" title="InterTrac in Trac's Trac"><span class="icon"></span>intertrac</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/search?q=r2081" title="r2081 in Trac's Trac"><span class="icon"></span>T:r2081</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/search?q=%232041" title="#2041 in Trac's Trac"><span class="icon"></span>T:#2041</a>
-<a class="ext-link" href="http://projects.edgewall.com/trac/search?q=%232041" title="#2041 in Trac's Trac"><span class="icon"></span>trac:#2041</a>
+Now this should be 2 levels deep as well
+</p>
+</blockquote>
+</blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>
+This is now level 3.
+</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<blockquote>
+<blockquote>
+<p>
+Continue on level 2.
+</p>
+</blockquote>
+</blockquote>
+<ul><li>but a list always restart at level 1.
+</li></ul><p>
+Paragraph.
 </p>
 ------------------------------
+============================== Citations
+> This is the quoted text
+>> a nested quote
+A comment on the above
+>> start 2nd level
+> first level
+------------------------------
+<blockquote class="citation">
+<p>
+ This is the quoted text
+</p>
+<blockquote class="citation">
+<p>
+ a nested quote
+</p>
+</blockquote>
+</blockquote>
+<p>
+A comment on the above
+</p>
+<blockquote class="citation">
+<blockquote class="citation">
+<p>
+ start 2nd level
+</p>
+</blockquote>
+<p>
+ first level
+</p>
+</blockquote>
+------------------------------
+&gt; This is the quoted text
+&gt;&gt; a nested quote
+A comment on the above
+&gt;&gt; start 2nd level
+&gt; first level

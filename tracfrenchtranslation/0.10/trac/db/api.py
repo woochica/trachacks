@@ -17,8 +17,15 @@
 import os
 import urllib
 
+from trac.config import Option
 from trac.core import *
 from trac.db.pool import ConnectionPool
+
+
+def get_column_names(cursor):
+    return cursor.description and \
+           [(isinstance(d[0], str) and [unicode(d[0], 'utf-8')] or [d[0]])[0]
+            for d in cursor.description] or []
 
 
 class IDatabaseConnector(Interface):
@@ -45,6 +52,11 @@ class DatabaseManager(Component):
 
     connectors = ExtensionPoint(IDatabaseConnector)
 
+    connection_uri = Option('trac', 'database', 'sqlite:db/trac.db',
+        """Database connection
+        [wiki:TracEnvironment#DatabaseConnectionStrings string] for this
+        project""")
+
     def __init__(self):
         self._cnx_pool = None
 
@@ -64,7 +76,7 @@ class DatabaseManager(Component):
             self._cnx_pool = None
 
     def _get_connector(self): ### FIXME: Make it public?
-        scheme, args = _parse_db_str(self.env.config.get('trac', 'database'))
+        scheme, args = _parse_db_str(self.connection_uri)
         candidates = {}
         for connector in self.connectors:
             for scheme_, priority in connector.get_supported_schemes():

@@ -14,11 +14,13 @@
   </div>
   <fieldset>
    <legend>Info sur le fichier</legend>
-   <div class="field">
-    <label>Compte utilisateur ou courriel:<br />
-    <input type="text" name="author" size="30" value="<?cs
-      var:attachment.author?>" /></label>
-   </div>
+   <?cs if:trac.authname == "anonymous" ?>
+    <div class="field">
+     <label>Your email or username:<br />
+     <input type="text" name="author" size="30" value="<?cs
+       var:attachment.author?>" /></label>
+    </div>
+   <?cs /if ?>
    <div class="field">
     <label>Description (optionnelle) du fichier:<br />
     <input type="text" name="description" size="60" /></label>
@@ -49,7 +51,12 @@
    <input type="submit" name="cancel" value="Annuler" />
    <input type="submit" value="Supprimer le fichier" />
   </div></form>
- </div><?cs else ?>
+ </div>
+<?cs elif:attachment.mode == 'list' ?>
+ <h1><a href="<?cs var:attachment.parent.href ?>"><?cs
+   var:attachment.parent.name ?></a></h1><?cs
+  call:list_of_attachments(attachment.list, attachment.attach_href) ?>
+<?cs else ?>
  <h1><a href="<?cs var:attachment.parent.href ?>"><?cs
    var:attachment.parent.name ?></a>: <?cs var:attachment.filename ?></h1>
  <div id="preview"><?cs

@@ -14,18 +14,78 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 
-from trac import __version__
-from trac.core import TracError
-from trac.util import CRLF, wrap
-from trac.web.clearsilver import HDFWrapper
-from trac.web.main import populate_hdf
-
 import time
 import smtplib
 import re
 
+from trac import __version__
+from trac.config import BoolOption, IntOption, Option
+from trac.core import *
+from trac.util.text import CRLF, wrap
+from trac.web.clearsilver import HDFWrapper
+from trac.web.main import populate_hdf
 
-class Notify:
+MAXHEADERLEN = 76
+
+class NotificationSystem(Component):
+
+    smtp_enabled = BoolOption('notification', 'smtp_enabled', 'false',
+        """Enable SMTP (email) notification.""")
+
+    smtp_server = Option('notification', 'smtp_server', 'localhost',
+        """SMTP server hostname to use for email notifications.""")
+
+    smtp_port = IntOption('notification', 'smtp_port', 25,
+        """SMTP server port to use for email notification.""")
+
+    smtp_user = Option('notification', 'smtp_user', '',
+        """Username for SMTP server. (''since 0.9'').""")
+
+    smtp_password = Option('notification', 'smtp_password', '',
+        """Password for SMTP server. (''since 0.9'').""")
+
+    smtp_from = Option('notification', 'smtp_from', 'trac@localhost',
+        """Sender address to use in notification emails.""")
+
+    smtp_replyto = Option('notification', 'smtp_replyto', 'trac@localhost',
+        """Reply-To address to use in notification emails.""")
+
+    smtp_always_cc = Option('notification', 'smtp_always_cc', '',
+        """Email address(es) to always send notifications to,
+           addresses can be see by all recipients (Cc:).""")
+
+    smtp_always_bcc = Option('notification', 'smtp_always_bcc', '',
+        """Email address(es) to always send notifications to,
+           addresses do not appear publicly (Bcc:). (''since 0.10'').""")
+           
+    smtp_default_domain = Option('notification', 'smtp_default_domain', '',
+        """Default host/domain to append to address that do not specify one""")
+           
+    mime_encoding = Option('notification', 'mime_encoding', 'base64',
+        """Specifies the MIME encoding scheme for emails.
+        
+        Valid options are 'base64' for Base64 encoding, 'qp' for
+        Quoted-Printable, and 'none' for no encoding. Note that the no encoding
+        means that non-ASCII characters in text are going to cause problems
+        with notifications (''since 0.10'').""")
+
+    use_public_cc = BoolOption('notification', 'use_public_cc', 'false',
+        """Recipients can see email addresses of other CC'ed recipients.
+        
+        If this option is disabled (the default), recipients are put on BCC
+        (''since 0.10'').""")
+
+    use_short_addr = BoolOption('notification', 'use_short_addr', 'false',
+        """Permit email address without a host/domain (i.e. username only)
+        
+        The SMTP server should accept those addresses, and either append
+        a FQDN or use local delivery (''since 0.10'').""")
+        
+    use_tls = BoolOption('notification', 'use_tls', 'false',
+        """Use SSL/TLS to send notifications (''since 0.10'').""")
+
+
+class Notify(object):
     """Generic notification class for Trac. Subclass this to implement
     different methods."""
 
@@ -75,14 +135,16 @@ class NotifyEmail(Notify):
     server = None
     email_map = None
     template_name = None
-    addrfmt = r"[\w\d_\.\-]+\@(([\w\d\-])+\.)+([\w\d]{2,4})+"
+    addrfmt = r"[\w\d_\.\-\+=]+\@(([\w\d\-])+\.)+([\w\d]{2,4})+"
     shortaddr_re = re.compile(addrfmt)
     longaddr_re = re.compile(r"^\s*(.*)\s+<(" + addrfmt + ")>\s*$");
     nodomaddr_re = re.compile(r"[\w\d_\.\-]+")
+    addrsep_re = re.compile(r"[;\s,]+")
 
     def __init__(self, env):
         Notify.__init__(self, env)
 
+        self._use_tls = self.env.config.getbool('notification', 'use_tls')
         self._init_pref_encoding()
         # Get the email addresses of all known users
         self.email_map = {}
@@ -94,26 +156,24 @@ class NotifyEmail(Notify):
         from email.Charset import Charset, QP, BASE64
         self._charset = Charset()
         self._charset.input_charset = 'utf-8'
-        self._charset.input_codec = 'utf-8'
         pref = self.env.config.get('notification', 'mime_encoding').lower()
         if pref == 'base64':
             self._charset.header_encoding = BASE64
             self._charset.body_encoding = BASE64
             self._charset.output_charset = 'utf-8'
-            self._charset.output_codec = 'utf-8'    
-            self._pref_encoding = 'base64'
+            self._charset.input_codec = 'utf-8'
+            self._charset.output_codec = 'utf-8'
         elif pref in ['qp', 'quoted-printable']:
             self._charset.header_encoding = QP
             self._charset.body_encoding = QP
             self._charset.output_charset = 'utf-8'
-            self._charset.output_codec = 'utf-8'    
-            self._pref_encoding = 'quoted-printable'
+            self._charset.input_codec = 'utf-8'
+            self._charset.output_codec = 'utf-8'
         elif pref == 'none':
             self._charset.header_encoding = None
             self._charset.body_encoding = None
+            self._charset.input_codec = None
             self._charset.output_charset = 'ascii'
-            self._charset.output_codec = 'ascii'    
-            self._pref_encoding = None
         else:
             raise TracError, 'Configuration encodage courriel invalide: %s' % pref
 
@@ -122,40 +182,43 @@ class NotifyEmail(Notify):
 
         if not self.config.getbool('notification', 'smtp_enabled'):
             return
-        self.smtp_server = self.config.get('notification', 'smtp_server')
-        self.smtp_port = int(self.config.get('notification', 'smtp_port'))
-        self.maxheaderlen = int(self.config.get('notification', 'maxheaderlen'))
-        self.from_email = self.config.get('notification', 'smtp_from')
-        self.replyto_email = self.config.get('notification', 'smtp_replyto')
+        self.smtp_server = self.config['notification'].get('smtp_server')
+        self.smtp_port = self.config['notification'].getint('smtp_port')
+        self.from_email = self.config['notification'].get('smtp_from')
+        self.replyto_email = self.config['notification'].get('smtp_replyto')
         self.from_email = self.from_email or self.replyto_email
         if not self.from_email and not self.replyto_email:
-            raise TracError('Impossible d\'envoyer un courriel.<br />'
-                            'Ni <b>notification.smtp_from</b> ni'
-                            ' <b>notification.smtp_reply_to</b> ne sont définis'
-                            ' dans la configuration.',
+            raise TracError(Markup(u'Impossible d\'envoyer un courriel.<br />'
+                                   u'Ni <b>notification.from</b> ni'
+                                   u' <b>notification.reply_to</b> ne sont'
+                                   u' définis dans la configuration.'),
                             'Erreur de notification SMTP')
 
         # Authentication info (optional)
-        self.user_name = self.config.get('notification', 'smtp_user')
-        self.password = self.config.get('notification', 'smtp_password')
+        self.user_name = self.config['notification'].get('smtp_user')
+        self.password = self.config['notification'].get('smtp_password')
 
         Notify.notify(self, resid)
 
-    def format_header(self, name, email=None):
+    def format_header(self, key, name, email=None):
         from email.Header import Header
+        maxlength = MAXHEADERLEN-(len(key)+2)
+        # Do not sent ridiculous short headers
+        if maxlength < 10:
+            raise TracError, "Erreur interne: En-tete trop court"
         try:
-            tmp = unicode(name, 'ascii')
-            name = Header(tmp, 'ascii', maxlinelen=self.maxheaderlen)
-        except UnicodeDecodeError:
-            name = Header(name, self._charset, maxlinelen=self.maxheaderlen)
+            tmp = name.encode('ascii')
+            header = Header(tmp, 'ascii', maxlinelen=maxlength)
+        except UnicodeEncodeError:
+            header = Header(name, self._charset, maxlinelen=maxlength)
         if not email:
-            return name
+            return header
         else:
-            return "%s <%s>" % (name, email)
+            return "\"%s\" <%s>" % (header, email)
 
     def add_headers(self, msg, headers):
         for h in headers:
-            msg[h] = self.encode_header(headers[h])
+            msg[h] = self.encode_header(h, headers[h])
 
     def get_smtp_address(self, address):
         if not address:
@@ -166,7 +229,7 @@ class NotifyEmail(Notify):
             if self.email_map.has_key(address):
                 address = self.email_map[address]
             elif NotifyEmail.nodomaddr_re.match(address):
-                if self.config.getbool('notification', 'allow_short_addr'):
+                if self.config.getbool('notification', 'use_short_addr'):
                     return address
                 domain = self.config.get('notification', 'smtp_default_domain')
                 if domain:
@@ -183,9 +246,9 @@ class NotifyEmail(Notify):
         self.env.log.info("Invalid email address: %s" % address)
         return None
 
-    def encode_header(self, value):
+    def encode_header(self, key, value):
         if isinstance(value, tuple):
-            return self.format_header(value[0], value[1])
+            return self.format_header(key, value[0], value[1])
         if isinstance(value, list):
             items = []
             for v in value:
@@ -193,11 +256,18 @@ class NotifyEmail(Notify):
             return ',\n\t'.join(items)
         mo = NotifyEmail.longaddr_re.match(value)
         if mo:
-            return self.format_header(mo.group(1), mo.group(2))
-        return self.format_header(value)
+            return self.format_header(key, mo.group(1), mo.group(2))
+        return self.format_header(key, value)
 
     def begin_send(self):
         self.server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+        # self.server.set_debuglevel(True)
+        if self._use_tls:
+            self.server.ehlo()
+            if not self.server.esmtp_features.has_key('starttls'):
+                raise TracError, "TLS enabled but server does not support TLS"
+            self.server.starttls()
+            self.server.ehlo()
         if self.user_name:
             self.server.login(self.user_name, self.password)
 
@@ -206,7 +276,7 @@ class NotifyEmail(Notify):
         from email.Utils import formatdate, formataddr
         body = self.hdf.render(self.template_name)
         projname = self.config.get('project', 'name')
-        public_cc = self.config.getbool('notification', 'allow_public_cc')
+        public_cc = self.config.getbool('notification', 'use_public_cc')
         headers = {}
         headers['X-Mailer'] = 'Trac %s, by Edgewall Software' % __version__
         headers['X-Trac-Version'] =  __version__
@@ -216,48 +286,79 @@ class NotifyEmail(Notify):
         headers['From'] = (projname, self.from_email)
         headers['Sender'] = self.from_email
         headers['Reply-To'] = self.replyto_email
-        # Format and remove invalid addresses
-        toaddrs = filter(lambda x: x, \
-                         [self.get_smtp_address(addr) for addr in torcpts])
-        ccaddrs = filter(lambda x: x, \
-                         [self.get_smtp_address(addr) for addr in ccrcpts])
-        # Remove duplicates
-        totmp = []
-        cctmp = []
-        for addr in toaddrs:
-            if addr not in totmp:
-                totmp.append(addr)
-        for addr in [c for c in ccaddrs if c not in totmp]:
-            if addr not in cctmp:
-                cctmp.append(addr)
-        (toaddrs, ccaddrs) = (totmp, cctmp)
-        if toaddrs:
-            headers['To'] = ', '.join(toaddrs)
+
+        def build_addresses(rcpts):
+            """Format and remove invalid addresses"""
+            return filter(lambda x: x, \
+                          [self.get_smtp_address(addr) for addr in rcpts])
+
+        def remove_dup(rcpts, all):
+            """Remove duplicates"""
+            tmp = []
+            for rcpt in rcpts:
+                if not rcpt in all:
+                    tmp.append(rcpt)
+                    all.append(rcpt)
+            return (tmp, all)
+
+        toaddrs = build_addresses(torcpts)
+        ccaddrs = build_addresses(ccrcpts)
+        accparam = self.config.get('notification', 'smtp_always_cc')
+        accaddrs = accparam and \
+                   build_addresses(accparam.replace(',', ' ').split()) or []
+        bccparam = self.config.get('notification', 'smtp_always_bcc')
+        bccaddrs = bccparam and \
+                   build_addresses(bccparam.replace(',', ' ').split()) or []
+
+        recipients = []
+        (toaddrs, recipients) = remove_dup(toaddrs, recipients)
+        (ccaddrs, recipients) = remove_dup(ccaddrs, recipients)
+        (accaddrs, recipients) = remove_dup(accaddrs, recipients)
+        (bccaddrs, recipients) = remove_dup(bccaddrs, recipients)
+        
+        # if there is not valid recipient, leave immediately
+        if len(recipients) < 1:
+            return
+
+        pcc = accaddrs
         if public_cc:
-            headers['Cc'] = ', '.join(ccaddrs)
+            pcc += ccaddrs
+            if toaddrs:
+                headers['To'] = ', '.join(toaddrs)
+        if pcc:
+            headers['Cc'] = ', '.join(pcc)
         headers['Date'] = formatdate()
-        charset = 'utf-8'
-        if not self._pref_encoding:
+        # sanity check
+        if not self._charset.body_encoding:
             try:
-                dummy = unicode(body, 'ascii')
+                dummy = body.encode('ascii')
             except UnicodeDecodeError:
                 raise TracError, "Le ticket contient des caractères non Ascii" \
                                  "Veuillez changer les paramètres d'encodage"
-            charset = 'ascii'
-        else:
-            charset = 'utf-8'
-        msg = MIMEText(body, 'plain', charset)
+        msg = MIMEText(body, 'plain')
+        # Message class computes the wrong type from MIMEText constructor,
+        # which does not take a Charset object as initializer. Reset the
+        # encoding type to force a new, valid evaluation
         del msg['Content-Transfer-Encoding']
-        if self._pref_encoding:
-            msg['Content-Transfer-Encoding'] = self._pref_encoding
         msg.set_charset(self._charset)
         self.add_headers(msg, headers);
         self.add_headers(msg, mime_headers);
-        recipients = toaddrs + ccaddrs
         self.env.log.debug("Sending SMTP notification to %s on port %d to %s"
                            % (self.smtp_server, self.smtp_port, recipients))
         msgtext = msg.as_string()
+        # Ensure the message complies with RFC2822: use CRLF line endings
+        recrlf = re.compile("\r?\n")
+        msgtext = "\r\n".join(recrlf.split(msgtext))
         self.server.sendmail(msg['From'], recipients, msgtext)
 
     def finish_send(self):
-        self.server.quit()
+        if self._use_tls:
+            # avoid false failure detection when the server closes
+            # the SMTP connection with TLS enabled
+            import socket
+            try:
+                self.server.quit()
+            except socket.sslerror:
+                pass
+        else:
+            self.server.quit()

@@ -77,7 +77,7 @@
   </div>
  </div>
 
- <form action="<?cs var:log.changeset_href ?>" method="get">
+ <form  class="printableform" action="<?cs var:log.changeset_href ?>" method="get">
   <div class="buttons"><input type="submit" value="Voir les modifications" 
        title="Différences entre ancienne et nouvelle révision (sélectionnez-les en dessous)" />
  </div>
@@ -86,7 +86,7 @@
    <tr>
     <th class="diff"></th>
     <th class="change"></th>
-    <th class="data">Date</th>
+    <th class="date">Date</th>
     <th class="rev">Rév.</th>
     <th class="chgset">Version</th>
     <th class="author">Auteur</th>

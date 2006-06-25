@@ -53,16 +53,7 @@ h1 .sep { color: #666; padding: 0 .1em }
 #dirlist td.rev { text-align: right }
 #dirlist td.change { font-size: 85%; vertical-align: middle; white-space: nowrap }
 
-/* Log */
-tr.diff input { 
- padding: 0 1em 0 1em;
- margin: 0; 
-}
-
-div.buttons {
- clear: left;
-}
-
+/* Style for the ''View Changes'' button */
 #anydiff {
  margin: 0 0 1em;
  float: left;
@@ -74,8 +65,23 @@ div.buttons {
  vertical-align: baseline;
  margin: 0 -0.5em 0 1em;
 }
+@media print {
+ #anydiff form { display:  none }
+}
 
 
+/* Log */
+tr.diff input { 
+ padding: 0 1em 0 1em;
+ margin: 0; 
+}
+
+div.buttons {
+ clear: left;
+}
+@media print { 
+  th.diff, td.diff { display: none }
+}
 /* Styles for the revision log table
    (extends the styles for "table.listing") */
 #chglist { margin-top: 0 }
@@ -102,20 +108,7 @@ div.buttons {
 
 #paging { margin: 1em 0 }
 
-/* Styles for the revision info in the file view */
-#info {
- background: #f7f7f0;
- border: 1px solid #d7d7d7;
- border-collapse: collapse;
- border-spacing: 0;
- clear: both;
- width: 100%;
-}
-#info th, #info td { font-size: 85%; padding: 2px .5em; vertical-align: top }
-#info th { font-weight: bold; text-align: left; white-space: nowrap }
-#info td.message { width: 100% }
-#info .message ul { padding: 0; margin: 0 2em }
-#info .message p { margin: 0; padding: 0 }
+/* Styles for the revision info in the file view (see also trac.css) */
 #info .props {
  color: #666;
  list-style: square;

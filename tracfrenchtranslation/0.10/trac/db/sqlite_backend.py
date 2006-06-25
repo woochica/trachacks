@@ -15,15 +15,20 @@
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
 import os
+import re
 import weakref
 
 from trac.core import *
 from trac.db.api import IDatabaseConnector
 from trac.db.util import ConnectionWrapper
 
+_like_escape_re = re.compile(r'([/_%])')
+
 try:
     import pysqlite2.dbapi2 as sqlite
     have_pysqlite = 2
+    _ver = sqlite.sqlite_version_info
+    sqlite_version = _ver[0] * 10000 + _ver[1] * 100 + int(_ver[2])
 
     class PyFormatCursor(sqlite.Cursor):
         def _rollback_on_error(self, function, *args, **kwargs):
@@ -42,25 +47,29 @@ try:
                 sql = sql % (('?',) * len(args[0]))
             return self._rollback_on_error(sqlite.Cursor.executemany, sql,
                                            args or [])
-        def _convert_row(self, row):
-            return tuple([(isinstance(v, unicode) and [v.encode('utf-8')] or [v])[0]
-                          for v in row])
-        def fetchone(self):
-            row = sqlite.Cursor.fetchone(self)
-            return row and self._convert_row(row) or None
-        def fetchmany(self, num):
-            rows = sqlite.Cursor.fetchmany(self, num)
-            return rows != None and [self._convert_row(row)
-                                     for row in rows] or None
-        def fetchall(self):
-            rows = sqlite.Cursor.fetchall(self)
-            return rows != None and [self._convert_row(row)
-                                     for row in rows] or None
 
 except ImportError:
     try:
         import sqlite
         have_pysqlite = 1
+        _ver = sqlite._sqlite.sqlite_version_info()
+        sqlite_version = _ver[0] * 10000 + _ver[1] * 100 + _ver[2]
+
+        class SQLiteUnicodeCursor(sqlite.Cursor):
+            def _convert_row(self, row):
+                return tuple([(isinstance(v, str) and [v.decode('utf-8')] or [v])[0]
+                              for v in row])
+            def fetchone(self):
+                row = sqlite.Cursor.fetchone(self)
+                return row and self._convert_row(row) or None
+            def fetchmany(self, num):
+                rows = sqlite.Cursor.fetchmany(self, num)
+                return rows != None and [self._convert_row(row)
+                                         for row in rows] or []
+            def fetchall(self):
+                rows = sqlite.Cursor.fetchall(self)
+                return rows != None and [self._convert_row(row)
+                                         for row in rows] or []
     except ImportError:
         have_pysqlite = 0
 
@@ -83,6 +92,8 @@ def _to_sql(table):
     for index in table.indices:
         yield "CREATE INDEX %s_%s_idx ON %s (%s);" % (table.name,
               '_'.join(index.columns), table.name, ','.join(index.columns))
+
+
 
 
 class SQLiteConnector(Component):
@@ -139,16 +150,12 @@ class SQLiteConnection(ConnectionWrapper):
         if have_pysqlite == 2:
             self._active_cursors = weakref.WeakKeyDictionary()
             timeout = int(params.get('timeout', 10.0))
-            # Convert unicode to UTF-8 bytestrings. This is case-sensitive, so
-            # we need two converters
-            sqlite.register_converter('text', str)
-            sqlite.register_converter('TEXT', str)
-
             cnx = sqlite.connect(path, detect_types=sqlite.PARSE_DECLTYPES,
                                  timeout=timeout)
         else:
             timeout = int(params.get('timeout', 10000))
-            cnx = sqlite.connect(path, timeout=timeout)
+            cnx = sqlite.connect(path, timeout=timeout, encoding='utf-8')
+            
         ConnectionWrapper.__init__(self, cnx)
 
     if have_pysqlite == 2:
@@ -165,13 +172,23 @@ class SQLiteConnection(ConnectionWrapper):
 
     else:
         def cursor(self):
-            return self.cnx.cursor()
+            self.cnx._checkNotClosed("cursor")
+            return SQLiteUnicodeCursor(self.cnx, self.cnx.rowclass)
 
     def cast(self, column, type):
         return column
 
     def like(self):
-        return 'LIKE'
+        if sqlite_version >= 30100:
+            return "LIKE %s ESCAPE '/'"
+        else:
+            return 'LIKE %s'
+
+    def like_escape(self, text):
+        if sqlite_version >= 30100:
+            return _like_escape_re.sub(r'/\1', text)
+        else:
+            return text
 
     if have_pysqlite == 2:
         def get_last_id(self, cursor, table, column='id'):

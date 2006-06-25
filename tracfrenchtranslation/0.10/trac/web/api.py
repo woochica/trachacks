@@ -24,11 +24,13 @@ import sys
 import urlparse
 
 from trac.core import Interface
-from trac.util import http_date
+from trac.util import get_last_traceback
+from trac.util.datefmt import http_date
 from trac.web.href import Href
 
 HTTP_STATUS = dict([(code, reason.title()) for code, (reason, description)
                     in BaseHTTPRequestHandler.responses.items()])
+
 
 class HTTPException(Exception):
     """Exception representing a HTTP status code."""
@@ -123,6 +125,7 @@ class Request(object):
         if 'CONTENT_TYPE' in environ:
             self._inheaders.append(('content-type', environ['CONTENT_TYPE']))
         self._outheaders = []
+        self._outcharset = None
 
         self.incookie = Cookie()
         cookie = self.get_header('Cookie')
@@ -160,7 +163,7 @@ class Request(object):
                     values = [values]
                 for value in values:
                     if not value.filename:
-                        value = value.value
+                        value = unicode(value.value, 'utf-8')
                     if name in args:
                         if isinstance(args[name], list):
                             args[name].append(value)
@@ -174,8 +177,6 @@ class Request(object):
     def _reconstruct_url(self):
         """Reconstruct the absolute base URL of the application."""
         host = self.get_header('Host')
-        if self.get_header('X-Forwarded-Host'):
-            host = self.get_header('X-Forwarded-Host')
         if not host:
             # Missing host header, so reconstruct the host from the
             # server name and port
@@ -189,7 +190,7 @@ class Request(object):
 
     method = property(fget=lambda self: self.environ['REQUEST_METHOD'],
                       doc='The HTTP method of the request')
-    path_info = property(fget=lambda self: self.environ.get('PATH_INFO', ''),
+    path_info = property(fget=lambda self: self.environ.get('PATH_INFO', '').decode('utf-8'),
                          doc='Path inside the application')
     remote_addr = property(fget=lambda self: self.environ.get('REMOTE_ADDR'),
                            doc='IP address of the remote user')
@@ -220,8 +221,16 @@ class Request(object):
         self._status = '%s %s' % (code, HTTP_STATUS.get(code, 'Unknown'))
 
     def send_header(self, name, value):
-        """Send the response header with the specified name and value."""
-        self._outheaders.append((name, str(value)))
+        """Send the response header with the specified name and value.
+
+        `value` must either be an `unicode` string or can be converted to one
+        (e.g. numbers, ...)
+        """
+        if name.lower() == 'content-type':
+            ctpos = value.find('charset=')
+            if ctpos >= 0:
+                self._outcharset = value[ctpos + 8:].strip()
+        self._outheaders.append((name, unicode(value).encode('utf-8')))
 
     def _send_cookie_headers(self):
         for name in self.outcookie.keys():
@@ -244,22 +253,25 @@ class Request(object):
         self._write = self._start_response(self._status, self._outheaders)
 
     def check_modified(self, timesecs, extra=''):
-        """Check the request "If-None-Match" header against an entity tag
-        generated from the specified last modified time in seconds (`timesecs`),
-        optionally appending an `extra` string to indicate variants of the
-        requested resource. That `extra` parameter can also be a list,
-        in which case the MD5 sum of the list content will be used.
+        """Check the request "If-None-Match" header against an entity tag.
+
+        The entity tag is generated from the specified last modified time
+        in seconds (`timesecs`), optionally appending an `extra` string to
+        indicate variants of the requested resource.
+
+        That `extra` parameter can also be a list, in which case the MD5 sum
+        of the list content will be used.
 
         If the generated tag matches the "If-None-Match" header of the request,
         this method sends a "304 Not Modified" response to the client.
-        Otherwise, it adds the entity tag as as "ETag" header to the response so
-        that consequetive requests can be cached.
+        Otherwise, it adds the entity tag as an "ETag" header to the response
+        so that consecutive requests can be cached.
         """
         if isinstance(extra, list):
             import md5
             m = md5.new()
             for elt in extra:
-                m.update(str(elt))
+                m.update(repr(elt))
             extra = m.hexdigest()
         etag = 'W"%s/%d/%s"' % (self.authname, timesecs, extra)
         inm = self.get_header('If-None-Match')
@@ -338,7 +350,8 @@ class Request(object):
             else:
                 data = self.hdf.render(template)
         else:
-            data = str(exc_info[1])
+            content_type = 'text/plain'
+            data = get_last_traceback()
 
         self.send_response(status)
         self._outheaders = []
@@ -375,7 +388,8 @@ class Request(object):
             raise RequestDone
 
         if not mimetype:
-            mimetype = mimetypes.guess_type(path)[0]
+            mimetype = mimetypes.guess_type(path)[0] or \
+                       'application/octet-stream'
 
         self.send_response(200)
         self.send_header('Content-Type', mimetype)
@@ -399,9 +413,17 @@ class Request(object):
         return data
 
     def write(self, data):
-        """Write the given data to the response body."""
+        """Write the given data to the response body.
+
+        `data` can be either a `str` or an `unicode` string.
+        If it's the latter, the unicode string will be encoded
+        using the charset specified in the ''Content-Type'' header
+        or 'utf-8' otherwise.
+        """
         if not self._write:
             self.end_headers()
+        if isinstance(data, unicode):
+            data = data.encode(self._outcharset or 'utf-8')
         self._write(data)
 
 
@@ -417,6 +439,14 @@ class IAuthenticator(Interface):
 class IRequestHandler(Interface):
     """Extension point interface for request handlers."""
 
+    # implementing classes should set this property to `True` if they
+    # don't need session and authentication related information
+    anonymous_request = False
+    
+    # implementing classes should set this property to `False` if they
+    # don't need the HDF data and don't produce content using a template
+    use_template = True
+    
     def match_request(req):
         """Return whether the handler wants to process the given request."""
 
@@ -429,4 +459,24 @@ class IRequestHandler(Interface):
 
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
+        """
+
+
+class IRequestFilter(Interface):
+    """Extension point interface for components that want to filter HTTP
+    requests, before and/or after they are processed by the main handler."""
+
+    def pre_process_request(req, handler):
+        """Do any pre-processing the request might need; typically adding
+        values to req.hdf, or redirecting.
+        
+        Always returns the request handler, even if unchanged.
+        """
+
+    def post_process_request(req, template, content_type):
+        """Do any post-processing the request might need; typically adding
+        values to req.hdf, or changing template or mime type.
+        
+        Always returns a tuple of (template, content_type), even if
+        unchanged.
         """

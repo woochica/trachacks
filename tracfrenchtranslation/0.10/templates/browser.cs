@@ -25,14 +25,23 @@
   </form>
  </div>
 
+ <?cs def:sortable_th(order, desc, class, title, href) ?>
+ <th class="<?cs var:class ?><?cs if:order == class ?> <?cs
+   if:desc ?>desc<?cs else ?>asc<?cs /if ?><?cs /if ?>">
+  <a title="Trier par <?cs var:class ?><?cs
+    if:order == class && !desc ?> (descending)<?cs /if ?>" 
+     href="<?cs var:href[class] ?>"><?cs var:title ?></a>
+ </th>
+ <?cs /def ?>
+
  <?cs if:browser.is_dir ?>
   <table class="listing" id="dirlist">
    <thead>
     <tr><?cs 
-     call:sortable_th(browser.order, browser.desc, 'name', 'Nom', browser.href) ?><?cs 
-     call:sortable_th(browser.order, browser.desc, 'size', 'Taille', browser.href) ?>
-     <th class="rev">Rév.</th><?cs 
-     call:sortable_th(browser.order, browser.desc, 'date', 'Age', browser.href) ?>
+     call:sortable_th(browser.order, browser.desc, 'name', 'Nom', browser.order_href) ?><?cs 
+     call:sortable_th(browser.order, browser.desc, 'size', 'Taille', browser.order_href) ?>
+     <th class="rev">Rév</th><?cs 
+     call:sortable_th(browser.order, browser.desc, 'date', 'Age', browser.order_href) ?>
      <th class="change">Dernière modification</th>
     </tr>
    </thead>
@@ -87,7 +96,7 @@
    if:!browser.is_dir ?><tr>
     <th scope="col">
      Révision <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>
-     (déposée par <?cs var:file.author ?>, <?cs var:file.age ?> ago)
+     (déposée par <?cs var:file.author ?>, <?cs var:file.age ?> auparavant)
     </th></tr><tr>
     <td class="message"><?cs var:file.message ?></td>
    </tr><?cs /if ?><?cs

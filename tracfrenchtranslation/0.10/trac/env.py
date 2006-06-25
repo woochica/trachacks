@@ -17,7 +17,7 @@
 import os
 
 from trac import db_default, util
-from trac.config import Configuration
+from trac.config import *
 from trac.core import Component, ComponentManager, implements, Interface, \
                       ExtensionPoint, TracError
 from trac.db import DatabaseManager
@@ -62,6 +62,78 @@ class Environment(Component, ComponentManager):
     """
     setup_participants = ExtensionPoint(IEnvironmentSetupParticipant)
 
+    base_url = Option('trac', 'base_url', '',
+        """Base URL of the Trac deployment.
+        
+        In most configurations, Trac will automatically reconstruct the URL
+        that is used to access it automatically. However, in more complex
+        setups, usually involving running Trac behind a HTTP proxy, you may
+        need to use this option to force Trac to use the correct URL.""")
+
+    project_name = Option('project', 'name', 'My Project',
+        """Name of the project.""")
+
+    project_description = Option('project', 'descr', 'My example project',
+        """Short description of the project.""")
+
+    project_url = Option('project', 'url', 'http://example.org/',
+        """URL of the main project web site.""")
+
+    project_footer = Option('project', 'footer',
+                            'Visit the Trac open source project at<br />'
+                            '<a href="http://trac.edgewall.com/">'
+                            'http://trac.edgewall.com/</a>',
+        """Page footer text (right-aligned).""")
+
+    project_icon = Option('project', 'icon', 'common/trac.ico',
+        """URL of the icon of the project.""")
+
+    log_type = Option('logging', 'log_type', 'none',
+        """Logging facility to use.
+        
+        Should be one of (`none`, `file`, `stderr`, `syslog`, `winlog`).""")
+
+    log_file = Option('logging', 'log_file', 'trac.log',
+        """If `log_type` is `file`, this should be a path to the log-file.""")
+
+    log_level = Option('logging', 'log_level', 'DEBUG',
+        """Level of verbosity in log.
+        
+        Should be one of (`CRITICAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`).""")
+
+    tr_fixed = Option('translation', 'fixed', u'corrigé', '')
+    tr_invalid = Option('translation', 'invalid', u'invalide', '')
+    tr_wontfix = Option('translation', 'wontfix', u'noncorrigible', '')
+    tr_duplicate = Option('translation', 'duplicate', u'doublon', '')
+    tr_worksforme = Option('translation', 'worksforme', u'nonreproductible', '')
+    tr_new = Option('translation', 'new', u'nouveau', '')
+    tr_closed = Option('translation', 'closed', u'fermé', '')
+    tr_assigned = Option('translation', 'assigned', u'assigné', '')
+    tr_reopened = Option('translation', 'reopened', u'réouvert', '')
+    tr_reassign = Option('translation', 'reassign', u'réassigné', '')
+    tr_blocker = Option('translation', 'blocker', u'bloquante', '')
+    tr_critical = Option('translation', 'critical', u'critique', '')
+    tr_major = Option('translation', 'major', u'majeure', '')
+    tr_minor = Option('translation', 'minor', u'mineure', '')
+    tr_trivial = Option('translation', 'trivial', u'triviale', '')
+    tr_defect = Option('translation', 'defect', u'défaut', '')
+    tr_enhancement = Option('translation', 'enhancement', u'amélioration', '')
+    tr_task = Option('translation', 'task', u'tâche', '')
+    tr_component = Option('translation', 'component', u'composant', '')
+    tr_keywords = Option('translation', 'keywords', u'mots clefs', '')
+    tr_priority = Option('translation', 'priority', u'priorité', '')
+    tr_milestone = Option('translation', 'milestone', u'jalon', '')
+    tr_summary = Option('translation', 'summary', u'intitulé', '')
+    tr_resolution = Option('translation', 'resolution', u'résolution', '')
+    tr_report = Option('translation', 'report', u'rapport', '')
+    tr_title = Option('translation', 'title', u'titre', '')
+    tr_owner = Option('translation', 'owner', u'propriétaire', '')
+    tr_reporter = Option('translation', 'reporter', u'rapporteur', '')
+    tr_created = Option('translation', 'created', u'créé', '')
+    tr_modified = Option('translation', 'modified', u'modifié', '')
+    tr_change = Option('translation', 'change', u'modification', '')
+    tr_changeset = Option('translation', 'changeset', u'version', '')
+
     def __init__(self, path, create=False, options=[]):
         """Initialize the Trac environment.
         
@@ -75,8 +147,8 @@ class Environment(Component, ComponentManager):
         ComponentManager.__init__(self)
 
         self.path = path
-        self.load_config()
-        self.setup_log() 
+        self.setup_config(load_defaults=create)
+        self.setup_log()
 
         from trac.loader import load_components
         load_components(self)
@@ -108,7 +180,7 @@ class Environment(Component, ComponentManager):
         This is called by the `ComponentManager` base class when a component is
         about to be activated. If this method returns false, the component does
         not get activated."""
-        if not isinstance(cls, (str, unicode)):
+        if not isinstance(cls, basestring):
             component_name = (cls.__module__ + '.' + cls.__name__).lower()
         else:
             component_name = cls.lower()
@@ -123,6 +195,7 @@ class Environment(Component, ComponentManager):
                 return enabled
 
         # versioncontrol components are enabled if the repository is configured
+        # FIXME: this shouldn't be hardcoded like this
         if component_name.startswith('trac.versioncontrol.'):
             return self.config.get('trac', 'repository_dir') != ''
 
@@ -133,8 +206,10 @@ class Environment(Component, ComponentManager):
         """Verify that the provided path points to a valid Trac environment
         directory."""
         fd = open(os.path.join(self.path, 'VERSION'), 'r')
-        assert fd.read(26) == 'Trac Environment Version 1'
-        fd.close()
+        try:
+            assert fd.read(26) == 'Trac Environment Version 1'
+        finally:
+            fd.close()
 
     def get_db_cnx(self):
         """Return a database connection from the connection pool."""
@@ -150,12 +225,7 @@ class Environment(Component, ComponentManager):
         
         @param authname: user name for authorization
         """
-        repos_type = self.config.get('trac', 'repository_type')
-        repos_dir = self.config.get('trac', 'repository_dir')
-        if not repos_dir:
-            raise TracError, "Le chemin du dépôt n'est pas configuré"
-        return RepositoryManager(self).get_repository(repos_type, repos_dir,
-                                                      authname)
+        return RepositoryManager(self).get_repository(authname)
 
     def create(self, options=[]):
         """Create the basic directory structure of the environment, initialize
@@ -166,7 +236,8 @@ class Environment(Component, ComponentManager):
             fd.close()
 
         # Create the directory structure
-        os.mkdir(self.path)
+        if not os.path.exists(self.path):
+            os.mkdir(self.path)
         os.mkdir(self.get_log_dir())
         os.mkdir(self.get_htdocs_dir())
         os.mkdir(os.path.join(self.path, 'plugins'))
@@ -182,9 +253,7 @@ class Environment(Component, ComponentManager):
         # Setup the default configuration
         os.mkdir(os.path.join(self.path, 'conf'))
         _create_file(os.path.join(self.path, 'conf', 'trac.ini'))
-        self.load_config()
-        for section, name, value in db_default.default_config:
-            self.config.set(section, name, value)
+        self.setup_config(load_defaults=True)
         for section, name, value in options:
             self.config.set(section, name, value)
         self.config.save()
@@ -201,18 +270,20 @@ class Environment(Component, ComponentManager):
         row = cursor.fetchone()
         return row and int(row[0])
 
-    def load_config(self):
+    def setup_config(self, load_defaults=False):
         """Load the configuration file."""
         self.config = Configuration(os.path.join(self.path, 'conf', 'trac.ini'))
-        for section, name, value in db_default.default_config:
-            self.config.setdefault(section, name, value)
+        if load_defaults:
+            for section, default_options in self.config.defaults().iteritems():
+                for name, value in default_options.iteritems():
+                    self.config.set(section, name, value)
 
     def init_translations(self):
         self.translations = {}
         for (k,v) in self.config.options('translation'):
             self.translations[k] = v
-            ck = k.decode('utf-8').capitalize().encode('utf-8')
-            cv = v.decode('utf-8').capitalize().encode('utf-8')
+            ck = k.capitalize()
+            cv = v.capitalize()
             self.translations[ck] = cv
 
     def get_templates_dir(self):
@@ -230,13 +301,11 @@ class Environment(Component, ComponentManager):
     def setup_log(self):
         """Initialize the logging sub-system."""
         from trac.log import logger_factory
-        logtype = self.config.get('logging', 'log_type')
-        loglevel = self.config.get('logging', 'log_level')
-        logfile = self.config.get('logging', 'log_file')
-        if not os.path.isabs(logfile):
+        logtype = self.log_type
+        logfile = self.log_file
+        if logtype == 'file' and not os.path.isabs(logfile):
             logfile = os.path.join(self.get_log_dir(), logfile)
-        logid = self.path # Env-path provides process-unique ID
-        self.log = logger_factory(logtype, logfile, loglevel, logid)
+        self.log = logger_factory(logtype, logfile, self.log_level, self.path)
 
     def get_known_users(self, cnx=None):
         """Generator that yields information about all known users, i.e. users
@@ -252,12 +321,12 @@ class Environment(Component, ComponentManager):
         if not cnx:
             cnx = self.get_db_cnx()
         cursor = cnx.cursor()
-        cursor.execute("SELECT DISTINCT s.sid, n.var_value, e.var_value "
+        cursor.execute("SELECT DISTINCT s.sid, n.value, e.value "
                        "FROM session AS s "
-                       " LEFT JOIN session AS n ON (n.sid=s.sid "
-                       "  AND n.authenticated=1 AND n.var_name = 'name') "
-                       " LEFT JOIN session AS e ON (e.sid=s.sid "
-                       "  AND e.authenticated=1 AND e.var_name = 'email') "
+                       " LEFT JOIN session_attribute AS n ON (n.sid=s.sid "
+                       "  and n.authenticated=1 AND n.name = 'name') "
+                       " LEFT JOIN session_attribute AS e ON (e.sid=s.sid "
+                       "  AND e.authenticated=1 AND e.name = 'email') "
                        "WHERE s.authenticated=1 ORDER BY s.sid")
         for username,name,email in cursor:
             yield username, name, email
@@ -334,6 +403,7 @@ class EnvironmentSetup(Component):
                                ','.join(cols), ','.join(['%s' for c in cols])),
                                vals)
         db.commit()
+        self._update_sample_config()
 
     def environment_needs_upgrade(self, db):
         dbver = self.env.get_version(db)
@@ -359,6 +429,33 @@ class EnvironmentSetup(Component):
                        "name='database_version'", (db_default.db_version,))
         self.log.info('Upgraded database version from %d to %d',
                       dbver, db_default.db_version)
+        self._update_sample_config()
+
+    # Internal methods
+
+    def _update_sample_config(self):
+        from ConfigParser import ConfigParser
+        config = ConfigParser()
+        for section, options in self.config.defaults().items():
+            config.add_section(section)
+            for name, value in options.items():
+                if isinstance(value, unicode):
+                    value = value.encode('utf8')
+                config.set(section, name, value)
+        filename = os.path.join(self.env.path, 'conf', 'trac.ini.sample')
+        try:
+            fileobj = file(filename, 'w')
+            try:
+                config.write(fileobj)
+                fileobj.close()
+            finally:
+                fileobj.close()
+            self.log.info('Wrote sample configuration file with the new '
+                          'settings and their default values: %s',
+                          filename)
+        except IOError, e:
+            self.log.warn('Couldn\'t write sample configuration file (%s)', e,
+                          exc_info=True)
 
 
 def open_environment(env_path=None):

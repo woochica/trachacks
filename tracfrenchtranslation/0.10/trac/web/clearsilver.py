@@ -15,7 +15,8 @@
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
 from trac.core import TracError
-from trac import util
+from trac.util.markup import Markup, Fragment, escape
+from trac.util.text import to_unicode
 
 
 class HDFWrapper:
@@ -62,10 +63,10 @@ class HDFWrapper:
     >>> hdf = HDFWrapper()
     >>> hdf['time'] = 42
     >>> hdf['time']
-    '42'
+    u'42'
     >>> hdf['name'] = 'Foo'
     >>> hdf['name']
-    'Foo'
+    u'Foo'
 
     An attempt to retrieve a value that hasn't been set will raise a KeyError,
     just like a standard dictionary:
@@ -79,13 +80,13 @@ class HDFWrapper:
     It will return 'None' when the specified key is not present:
 
     >>> hdf.get('time')
-    '42'
+    u'42'
     >>> hdf.get('undef')
 
     A second argument may be passed to specify the default return value:
 
     >>> hdf.get('time', 'Undefined Key')
-    '42'
+    u'42'
     >>> hdf.get('undef', 'Undefined Key')
     'Undefined Key'
 
@@ -146,7 +147,7 @@ class HDFWrapper:
         value = self.hdf.getValue(str(name), '<<NONE>>')
         if value == '<<NONE>>':
             return default
-        return value
+        return value.decode('utf-8')
 
     def __getitem__(self, name):
         value = self.get(name, None)
@@ -168,20 +169,20 @@ class HDFWrapper:
 
         >>> hdf['test.num'] = 42
         >>> hdf['test.num']
-        '42'
+        u'42'
         >>> hdf['test.str'] = 'foo'
         >>> hdf['test.str']
-        'foo'
+        u'foo'
 
         The boolean literals `True` and `False` are converted to there integer
         representation before being added:
 
         >>> hdf['test.true'] = True
         >>> hdf['test.true']
-        '1'
+        u'1'
         >>> hdf['test.false'] = False
         >>> hdf['test.false']
-        '0'
+        u'0'
 
         If value is `None`, nothing is added to the HDF:
 
@@ -202,22 +203,33 @@ class HDFWrapper:
         """
         self.set_value(name, value, False)
         
-    def set_value(self, name, value, escape=True):
+    def set_value(self, name, value, do_escape=True):
         """
         Add data to the HDF dataset.
         """
+        def set_unicode(prefix, value):
+            self.hdf.setValue(prefix.encode('utf-8'), value.encode('utf-8'))
+        def set_str(prefix, value):
+            self.hdf.setValue(prefix.encode('utf-8'), str(value))
+            
         def add_value(prefix, value):
             if value is None:
                 return
-            elif value in (True, False):
-                self.hdf.setValue(prefix, str(int(value)))
-            elif isinstance(value, util.Markup):
-                self.hdf.setValue(prefix, value)
-            elif isinstance(value, (str, unicode)):
-                if escape:
-                    self.hdf.setValue(prefix, util.escape(value))
+            if value in (True, False):
+                set_str(prefix, int(value))
+            elif isinstance(value, (Markup, Fragment)):
+                set_unicode(prefix, unicode(value))
+            elif isinstance(value, str):
+                if do_escape:
+                    # Assume UTF-8 here, for backward compatibility reasons
+                    set_unicode(prefix, escape(to_unicode(value)))
                 else:
-                    self.hdf.setValue(prefix, value)
+                    set_str(prefix, value)
+            elif isinstance(value, unicode):
+                if do_escape:
+                    set_unicode(prefix, escape(value))
+                else:
+                    set_unicode(prefix, value)
             elif isinstance(value, dict):
                 for k in value.keys():
                     add_value('%s.%s' % (prefix, k), value[k])
@@ -227,7 +239,7 @@ class HDFWrapper:
                     for idx, item in enumerate(value):
                         add_value('%s.%d' % (prefix, idx), item)
                 else:
-                    self.hdf.setValue(prefix, str(value))
+                    set_str(prefix, value)
         add_value(name, value)
 
     def __str__(self):
@@ -269,7 +281,7 @@ class HDFWrapper:
         object, or a string. In the latter case it is interpreted as name of the
         template file.
         """
-        if isinstance(template, (str, unicode)):
+        if isinstance(template, basestring):
             filename = template
             import neo_cs
             template = neo_cs.CS(self.hdf)

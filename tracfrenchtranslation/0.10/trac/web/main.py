@@ -20,11 +20,16 @@ import locale
 import os
 import sys
 import dircache
+import urllib
 
+from trac.config import ExtensionOption, OrderedExtensionsOption
 from trac.core import *
 from trac.env import open_environment
-from trac.perm import PermissionCache, PermissionError
-from trac.util import format_datetime, http_date, Markup
+from trac.perm import PermissionCache, NoPermissionCache, PermissionError
+from trac.util import reversed, get_last_traceback
+from trac.util.datefmt import format_datetime, http_date
+from trac.util.text import to_unicode
+from trac.util.markup import Markup
 from trac.web.api import *
 from trac.web.chrome import Chrome
 from trac.web.clearsilver import HDFWrapper
@@ -63,6 +68,7 @@ def _open_environment(env_path, run_once=False):
 def populate_hdf(hdf, env, req=None):
     """Populate the HDF data set with various information, such as common URLs,
     project information and request-related information.
+    FIXME: do we really have req==None at times?
     """
     from trac import __version__
     hdf['trac'] = {
@@ -70,40 +76,41 @@ def populate_hdf(hdf, env, req=None):
         'time': format_datetime(),
         'time.gmt': http_date()
     }
-    hdf['trac.href'] = {
-        'wiki': env.href.wiki(),
-        'browser': env.href.browser('/'),
-        'timeline': env.href.timeline(),
-        'roadmap': env.href.roadmap(),
-        'milestone': env.href.milestone(None),
-        'report': env.href.report(),
-        'query': env.href.query(),
-        'newticket': env.href.newticket(),
-        'search': env.href.search(),
-        'about': env.href.about(),
-        'about_config': env.href.about('config'),
-        'login': env.href.login(),
-        'logout': env.href.logout(),
-        'settings': env.href.settings(),
-        'homepage': 'http://trac.edgewall.com/'
-    }
-
     hdf['project'] = {
-        'name': env.config.get('project', 'name'),
-        'name_encoded': env.config.get('project', 'name'),
-        'descr': env.config.get('project', 'descr'),
-        'footer': Markup(env.config.get('project', 'footer')),
-        'url': env.config.get('project', 'url')
+        'name': env.project_name,
+        'name_encoded': env.project_name,
+        'descr': env.project_description,
+        'footer': Markup(env.project_footer),
+        'url': env.project_url
     }
 
     if req:
+        hdf['trac.href'] = {
+            'wiki': req.href.wiki(),
+            'browser': req.href.browser('/'),
+            'timeline': req.href.timeline(),
+            'roadmap': req.href.roadmap(),
+            'milestone': req.href.milestone(None),
+            'report': req.href.report(),
+            'query': req.href.query(),
+            'newticket': req.href.newticket(),
+            'search': req.href.search(),
+            'about': req.href.about(),
+            'about_config': req.href.about('config'),
+            'login': req.href.login(),
+            'logout': req.href.logout(),
+            'settings': req.href.settings(),
+            'homepage': 'http://trac.edgewall.com/'
+        }
+
         hdf['base_url'] = req.base_url
         hdf['base_host'] = req.base_url[:req.base_url.rfind(req.base_path)]
         hdf['cgi_location'] = req.base_path
         hdf['trac.authname'] = req.authname
 
-        for action in req.perm.permissions():
-            req.hdf['trac.acl.' + action] = True
+        if req.perm:
+            for action in req.perm.permissions():
+                req.hdf['trac.acl.' + action] = True
 
         for arg in [k for k in req.args.keys() if k]:
             if isinstance(req.args[arg], (list, tuple)):
@@ -118,8 +125,19 @@ class RequestDispatcher(Component):
 
     authenticators = ExtensionPoint(IAuthenticator)
     handlers = ExtensionPoint(IRequestHandler)
-    default_handler = SingletonExtensionPoint(IRequestHandler,
-                                              'trac', 'default_handler')
+
+    filters = OrderedExtensionsOption('trac', 'request_filters', IRequestFilter,
+        doc="""Ordered list of filters to apply to all requests
+            (''since 0.10'').""")
+
+    default_handler = ExtensionOption('trac', 'default_handler',
+                                      IRequestHandler, 'WikiModule',
+        """Name of the component that handles requests to the base URL.
+        
+        Options include `TimeLineModule`, `RoadmapModule`, `BrowserModule`,
+        `QueryModule`, `ReportModule` and `NewticketModule` (''since 0.9'').""")
+
+    # Public API
 
     def authenticate(self, req):
         for authenticator in self.authenticators:
@@ -136,18 +154,9 @@ class RequestDispatcher(Component):
         In addition, this method initializes the HDF data set and adds the web
         site chrome.
         """
-        # For backwards compatibility, should be removed in the future
+        # FIXME: For backwards compatibility, should be removed in 0.11
         self.env.href = req.href
         self.env.abs_href = req.abs_href
-
-        req.authname = self.authenticate(req)
-        req.perm = PermissionCache(self.env, req.authname)
-
-        chrome = Chrome(self.env)
-        req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
-        populate_hdf(req.hdf, self.env, req)
-
-        req.session = Session(self.env, req)
 
         # Select the component that should handle the request
         chosen_handler = None
@@ -159,28 +168,51 @@ class RequestDispatcher(Component):
                     chosen_handler = handler
                     break
 
-        chrome.populate_hdf(req, chosen_handler)
+        for filter_ in self.filters:
+            chosen_handler = filter_.pre_process_request(req, chosen_handler)
 
         if not chosen_handler:
             raise HTTPNotFound('Aucun composant ne peut gérer la requête %s',
                                req.path_info)
 
+        # Attach user information to the request
+        anonymous_request = getattr(chosen_handler, 'anonymous_request', False)
+        if anonymous_request:
+            req.authname = 'anonymous'
+            req.perm = NoPermissionCache()
+        else:
+            req.authname = self.authenticate(req)
+            req.perm = PermissionCache(self.env, req.authname)
+            req.session = Session(self.env, req)
+
+        # Prepare HDF for the clearsilver template
+        use_template = getattr(chosen_handler, 'use_template', True)
+        if use_template:
+            chrome = Chrome(self.env)
+            req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
+            populate_hdf(req.hdf, self.env, req)
+            chrome.populate_hdf(req, chosen_handler)
+
+        # Process the request and render the template
         try:
             try:
                 resp = chosen_handler.process_request(req)
                 if resp:
+                    for filter_ in reversed(self.filters):
+                        resp = filter_.post_process_request(req, *resp)
                     template, content_type = resp
-                    if not content_type:
-                        content_type = 'text/html'
-
                     req.display(template, content_type or 'text/html')
+                else:
+                    for filter_ in reversed(self.filters):
+                        filter_.post_process_request(req, None, None)
             except PermissionError, e:
-                raise HTTPForbidden(str(e))
+                raise HTTPForbidden(to_unicode(e))
             except TracError, e:
                 raise HTTPInternalError(e.message)
         finally:
             # Give the session a chance to persist changes
-            req.session.save()
+            if req.session:
+                req.session.save()
 
 
 def dispatch_request(environ, start_response):
@@ -209,7 +241,7 @@ def dispatch_request(environ, start_response):
                 raise ValueError('TracUriRoot défini pour %s mais la requête '
                                  'pointe sur %s' % (root_uri, request_uri))
             environ['SCRIPT_NAME'] = root_uri
-            environ['PATH_INFO'] = request_uri[len(root_uri):]
+            environ['PATH_INFO'] = urllib.unquote(request_uri[len(root_uri):])
 
     else:
         environ.setdefault('trac.env_path', os.getenv('TRAC_ENV'))
@@ -279,9 +311,8 @@ def dispatch_request(environ, start_response):
                                'Trac.')
     env = _open_environment(env_path, run_once=environ['wsgi.run_once'])
 
-    base_url = env.config.get('trac', 'base_url')
-    if base_url:
-        environ['trac.base_url'] = base_url
+    if env.base_url:
+        environ['trac.base_url'] = env.base_url
 
     req = Request(environ, start_response)
     try:
@@ -313,17 +344,12 @@ def dispatch_request(environ, start_response):
     except Exception, e:
         env.log.exception(e)
 
-        import traceback
-        from StringIO import StringIO
-        tb = StringIO()
-        traceback.print_exc(file=tb)
-
         if req.hdf:
-            req.hdf['title'] = str(e) or 'Erreur'
+            req.hdf['title'] = to_unicode(e) or 'Erreur'
             req.hdf['error'] = {
-                'title': str(e) or 'Erreur',
+                'title': to_unicode(e) or 'Erreur',
                 'type': 'internal',
-                'traceback': tb.getvalue()
+                'traceback': get_last_traceback()
             }
         try:
             req.send_error(sys.exc_info(), status=500)
@@ -333,7 +359,6 @@ def dispatch_request(environ, start_response):
 def send_project_index(environ, start_response, parent_dir=None,
                        env_paths=None):
     from trac.config import default_dir
-    from trac.web.clearsilver import HDFWrapper
 
     req = Request(environ, start_response)
 
@@ -363,12 +388,12 @@ def send_project_index(environ, start_response, parent_dir=None,
                 env = _open_environment(env_path,
                                         run_once=environ['wsgi.run_once'])
                 proj = {
-                    'name': env.config.get('project', 'name'),
-                    'description': env.config.get('project', 'descr'),
+                    'name': env.project_name,
+                    'description': env.project_description,
                     'href': href(env_name)
                 }
             except Exception, e:
-                proj = {'name': env_name, 'description': str(e)}
+                proj = {'name': env_name, 'description': to_unicode(e)}
             projects.append(proj)
         projects.sort(lambda x, y: cmp(x['name'].lower(), y['name'].lower()))
 

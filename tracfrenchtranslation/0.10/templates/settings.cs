@@ -9,9 +9,9 @@
 
  <h2>Paramètres utilisateur</h2>
  <p>
- Cette page vous permet de personnaliser les réglages de Trac.<br />
+ Cette page vous permet de personnaliser les réglages de Trac.
  La configuration de la session est memorisée sur le serveur, et identifiée 
- grâce à une 'clef de session' contenue dans un cookie.<br />
+ grâce à une 'clef de session' contenue dans un cookie.
  Ce cookie permet à Trac de récupérer et d'utiliser vos réglages.
  </p>
  <form method="post" action="">

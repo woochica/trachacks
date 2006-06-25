@@ -19,15 +19,16 @@
 import re
 import urllib
 
-from trac import util
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.web import IRequestHandler
-from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
-from trac.wiki import IWikiSyntaxProvider
+from trac.util.datefmt import http_date
+from trac.util.markup import html
 from trac.versioncontrol import Changeset
 from trac.versioncontrol.web_ui.changeset import ChangesetModule
 from trac.versioncontrol.web_ui.util import *
+from trac.web import IRequestHandler
+from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
+from trac.wiki import IWikiSyntaxProvider, Formatter
 
 LOG_LIMIT = 100
 
@@ -56,7 +57,7 @@ class LogModule(Component):
         match = re.match(r'/log(?:(/.*)|$)', req.path_info)
         if match:
             req.args['path'] = match.group(1) or '/'
-            return 1
+            return True
 
     def process_request(self, req):
         req.perm.assert_permission('LOG_VIEW')
@@ -71,9 +72,9 @@ class LogModule(Component):
 
         repos = self.env.get_repository(req.authname)
         normpath = repos.normalize_path(path)
-        rev = str(repos.normalize_rev(rev))
+        rev = unicode(repos.normalize_rev(rev))
         if stop_rev:
-            stop_rev = str(repos.normalize_rev(stop_rev))
+            stop_rev = unicode(repos.normalize_rev(stop_rev))
             if repos.rev_older_than(rev, stop_rev):
                 rev, stop_rev = stop_rev, rev
             
@@ -84,15 +85,15 @@ class LogModule(Component):
             'rev': rev,
             'verbose': verbose,
             'stop_rev': stop_rev,
-            'browser_href': self.env.href.browser(path),
-            'changeset_href': self.env.href.changeset(),
-            'log_href': self.env.href.log(path, rev=rev)
+            'browser_href': req.href.browser(path),
+            'changeset_href': req.href.changeset(),
+            'log_href': req.href.log(path, rev=rev)
         }
 
-        path_links = get_path_links(self.env.href, path, rev)
+        path_links = get_path_links(req.href, path, rev)
         req.hdf['log.path'] = path_links
         if path_links:
-            add_link(req, 'up', path_links[-1]['href'], 'Répertoire parent')
+            add_link(req, 'up', path_links[-1]['href'], u'Répertoire parent')
 
         # The `history()` method depends on the mode:
         #  * for ''stop on copy'' and ''follow copies'', it's `Node.history()` 
@@ -102,7 +103,7 @@ class LogModule(Component):
                 for h in repos.get_path_history(path, rev, limit):
                     yield h
         else:
-            history = get_existing_node(self.env, repos, path, rev).get_history
+            history = get_existing_node(req, repos, path, rev).get_history
 
         # -- retrieve history, asking for limit+1 results
         info = []
@@ -113,12 +114,11 @@ class LogModule(Component):
             old_path = repos.normalize_path(old_path)
             item = {
                 'rev': str(old_rev),
-                'path': str(old_path),
-                'log_href': self.env.href.log(old_path, rev=old_rev),
-                'browser_href': self.env.href.browser(old_path, rev=old_rev),
-                'changeset_href': self.env.href.changeset(old_rev),
-                'restricted_href': self.env.href.changeset(old_rev,
-                                                           new_path=old_path),
+                'path': old_path,
+                'log_href': req.href.log(old_path, rev=old_rev),
+                'browser_href': req.href.browser(old_path, rev=old_rev),
+                'changeset_href': req.href.changeset(old_rev),
+                'restricted_href': req.href.changeset(old_rev, new_path=old_path),
                 'change': old_chg
             }
             if not (mode == 'path_history' and old_chg == Changeset.EDIT):
@@ -133,8 +133,8 @@ class LogModule(Component):
             previous_path = old_path
         if info == []:
             # FIXME: we should send a 404 error here
-            raise TracError("Le fichier ou le répertoire '%s' n'existe pas "
-                            "en révision %s ou pour toute révision précédente."
+            raise TracError(u"Le fichier ou le répertoire '%s' n'existe pas "
+                            u"en révision %s ou pour toute révision précédente."
                             % (path, rev), 'Chemin inexistant')
 
         def make_log_href(path, **args):
@@ -145,13 +145,13 @@ class LogModule(Component):
             params.update(args)
             if verbose:
                 params['verbose'] = verbose
-            return self.env.href.log(path, **params)
+            return req.href.log(path, **params)
 
         if len(info) == limit+1: # limit+1 reached, there _might_ be some more
             next_rev = info[-1]['rev']
             next_path = info[-1]['path']
             add_link(req, 'next', make_log_href(next_path, rev=next_rev),
-                     'Journal des révisions (repartant de %s, rév. %s)'
+                     u'Journal des révisions (repartant de %s, rév. %s)'
                      % (next_path, next_rev))
             # now, only show 'limit' results
             del info[-1]
@@ -175,7 +175,7 @@ class LogModule(Component):
                 elif email_map.has_key(author):
                     author_email = email_map[author]
                 cs['author'] = author_email
-                cs['date'] = util.http_date(cs['date_seconds'])
+                cs['date'] = http_date(cs['date_seconds'])
         elif format == 'changelog':
             for rev in revs:
                 changeset = repos.get_changeset(rev)
@@ -209,22 +209,41 @@ class LogModule(Component):
         return 'log.cs', None
 
     # IWikiSyntaxProvider methods
+
+    REV_RANGE = "%s[-:]%s" % ((ChangesetModule.CHANGESET_ID,)*2)
     
     def get_wiki_syntax(self):
-        yield (r"!?\[%s:%s\]|(?:\b|!)r%s:%s\b"
-               % ((ChangesetModule.CHANGESET_ID,) * 4),
-               lambda x, y, z: self._format_link(x, 'log',
-                                                 '#'+(y[0] == 'r' and y[1:]
-                                                      or y[1:-1]), y))
+        yield (
+            # [...] form, starts with optional intertrac: [T... or [trac ...
+            r"!?\[(?P<it_log>%s\s*)" % Formatter.INTERTRAC_SCHEME +
+            # <from>:<to> + optional path restriction
+            r"(?P<log_rev>%s)(?P<log_path>/[^\]]*)?\]" % self.REV_RANGE,
+            lambda x, y, z: self._format_link(x, 'log1', y[1:-1], y, z))
+        yield (
+            # r<from>:<to> form (no intertrac and no path restriction)
+            r"(?:\b|!)r%s\b" % self.REV_RANGE,
+            lambda x, y, z: self._format_link(x, 'log2', '@' + y[1:], y))
 
     def get_link_resolvers(self):
         yield ('log', self._format_link)
 
-    def _format_link(self, formatter, ns, path, label):
-        path, rev, line = get_path_rev_line(path)
+    def _format_link(self, formatter, ns, match, label, fullmatch=None):
+        if ns == 'log1':
+            it_log = fullmatch.group('it_log')
+            rev = fullmatch.group('log_rev')
+            path = fullmatch.group('log_path')
+        else: # ns == 'log2'
+            path, rev, line = get_path_rev_line(match)
         stop_rev = None
-        if rev and ':' in rev:
-            stop_rev, rev = rev.split(':', 1)
-        label = urllib.unquote(label)
-        return '<a class="source" href="%s">%s</a>' \
-               % (formatter.href.log(path, rev=rev, stop_rev=stop_rev), label)
+        for sep in ':-':
+            if not stop_rev and rev and sep in rev:
+                stop_rev, rev = rev.split(sep, 1)
+        href = formatter.href.log(path or '/', rev=rev, stop_rev=stop_rev)
+        if ns == 'log1':
+            target = it_log + href[len(formatter.href.log('/')):]
+            # prepending it_log is needed, as the helper expects it there
+            intertrac = formatter.shorthand_intertrac_helper('log', target,
+                                                             label, fullmatch)
+            if intertrac:
+                return intertrac
+        return html.A(label, href=href, class_='source')

@@ -1,7 +1,7 @@
 from trac.db import Table, Column, Index, DatabaseManager
 
 def do_upgrade(env, ver, cursor):
-    cursor.execute("CREATE TEMP TABLE session_old AS SELECT * FROM session")
+    cursor.execute("CREATE TEMPORARY TABLE session_old AS SELECT * FROM session")
     cursor.execute("DROP TABLE session")
 
     db = env.get_db_cnx()
@@ -17,3 +17,4 @@ def do_upgrade(env, ver, cursor):
     cursor.execute("INSERT INTO session (sid,authenticated,var_name,var_value) "
                    "SELECT sid,authenticated,var_name,var_value "
                    "FROM session_old")
+    cursor.execute("DROP TABLE session_old")

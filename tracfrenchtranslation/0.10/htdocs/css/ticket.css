@@ -12,8 +12,8 @@
  padding: .5em 1em;
  position: relative;
 }
-#ticket h2.summary { margin: 0 }
-#ticket h3.status { color: #996; font-size: 90%; font-weight: normal; margin-top: .5em; }
+h1 .status { color: #444; text-transform: lowercase; }
+#ticket h2.summary { margin: 0 0 .8em 0 }
 #ticket .date { color: #996; float: right; font-size: 85%; position: relative }
 #ticket .date p { margin: 0 }
 
@@ -39,10 +39,11 @@
 #ticket table.properties td { width: 30% }
 #ticket table.properties .description { border-top: 1px solid #dd9 }
 
-#attachments { border: 1px outset #996; padding: 1em }
-#attachments .attachments { margin-left: 2em; padding: 0 }
-#attachments dt { display: list-item; list-style: square; }
-#attachments dd { font-style: italic; margin-left: 0; padding-left: 0; }
+#ticket .description form { 
+ float: right;
+ position: relative;
+ bottom: 1.8em;
+}
 
 #changelog { border: 1px outset #996; padding: 1em }
 #changelog h3 {
@@ -51,6 +52,15 @@
  font-size: 100%;
  font-weight: normal;
 }
+#changelog .threading {
+ float: right;
+ position: relative;
+ bottom: 0.3em;
+}
+#changelog h3 .threading form { 
+ display: inline
+}
+
 #changelog .changes { list-style: square; margin-left: 2em; padding: 0 }
 #changelog .comment { margin-left: 2em }
 
@@ -58,27 +68,6 @@ form .field { margin-top: .75em; width: 100% }
 form #comment { width: 100% }
 
 #properties { white-space: nowrap; line-height: 160%; padding: .5em }
-/*#properties .main { margin-bottom: 1em }
-#properties .col1 {
- border-right: 1px dotted #d7d7d7;
- float: left;
- margin-bottom: 1em;
- width: 45%;
-}
-#properties .col2 { margin-left: 40% }
-#properties .main label, #properties .col1 label, #properties .col2 label {
- float:left;
- width: 7em;
- text-align: right;
- margin-right: .5em;
-}
-#properties .custom {
- clear: left;
- border-top: 1px dotted #d7d7d7;
- padding-top: 1em
-}
-#properties .custom .field { margin: .25em 0 }*/
-
 #properties table { border-spacing: 0; width: 100%; }
 #properties table th {
  padding: .4em;

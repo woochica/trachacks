@@ -14,8 +14,9 @@
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
-from trac.util import TracError
-from trac.versioncontrol import Changeset, Node, Repository, Authorizer
+from trac.core import TracError
+from trac.versioncontrol import Changeset, Node, Repository, Authorizer, \
+                                NoSuchChangeset
 
 
 _kindmap = {'D': Node.DIRECTORY, 'F': Node.FILE}
@@ -41,6 +42,18 @@ class CachedRepository(Repository):
             self.synced = 1
         return CachedChangeset(self.repos.normalize_rev(rev), self.db,
                                self.authz)
+
+    def get_changesets(self, start, stop):
+        if not self.synced:
+            self.sync()
+            self.synced = 1
+        cursor = self.db.cursor()
+        cursor.execute("SELECT rev FROM revision "
+                       "WHERE time >= %s AND time < %s "
+                       "ORDER BY time", (start, stop))
+        for rev, in cursor:
+            if self.authz.has_permission_for_changeset(rev):
+                yield self.get_changeset(rev)
 
     def sync(self):
         self.log.debug("Checking whether sync with repository is needed")
@@ -144,7 +157,7 @@ class CachedChangeset(Changeset):
             date, author, message = row
             Changeset.__init__(self, rev, message, author, int(date))
         else:
-            raise TracError, "Aucune version %s n'est repertoriée dans le dépôt" % rev
+            raise NoSuchChangeset(rev)
 
     def get_changes(self):
         cursor = self.db.cursor()

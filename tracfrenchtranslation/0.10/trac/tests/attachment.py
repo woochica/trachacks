@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 from trac.attachment import Attachment, AttachmentModule
 from trac.config import Configuration
 from trac.log import logger_factory
@@ -24,7 +25,7 @@ class AttachmentTestCase(unittest.TestCase):
         self.env.path = os.path.join(tempfile.gettempdir(), 'trac-tempenv')
         os.mkdir(self.env.path)
         self.attachments_dir = os.path.join(self.env.path, 'attachments')
-        self.env.config.setdefault('attachment', 'max_size', 512)
+        self.env.config.set('attachment', 'max_size', 512)
 
         self.perm = Mock(assert_permission=lambda x: None,
                          has_permission=lambda x: True)
@@ -50,10 +51,10 @@ class AttachmentTestCase(unittest.TestCase):
         self.assertEqual(os.path.join(self.attachments_dir, 'ticket', '42',
                                       'Teh%20foo.txt'),
                          attachment.path)
-        attachment = Attachment(self.env, 'wiki', '\xdcberSicht')
+        attachment = Attachment(self.env, 'wiki', u'ÜberSicht')
         attachment.filename = 'Teh bar.jpg'
         self.assertEqual(os.path.join(self.attachments_dir, 'wiki',
-                                      '%DCberSicht', 'Teh%20bar.jpg'),
+                                      '%C3%9CberSicht', 'Teh%20bar.jpg'),
                          attachment.path)
 
     def test_select_empty(self):

@@ -17,12 +17,14 @@
 import re
 import time
 
+from trac.config import IntOption
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.util import TracError, escape, format_datetime, Markup
+from trac.util.datefmt import format_datetime
+from trac.util.markup import escape, html, Element
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
-from trac.wiki import IWikiSyntaxProvider
+from trac.wiki import IWikiSyntaxProvider, wiki_to_link
 
 
 class ISearchSource(Interface):
@@ -72,16 +74,14 @@ def search_to_sql(db, columns, terms):
     parameters. The result is returned as a (string, params) tuple.
     """
     if len(columns) < 1 or len(terms) < 1:
-        raise TracError('Tentative de recherche vide, ceci ne devrait pas arriver')
+        raise TracError(u'Erreur interne: Tentative de recherche vide')
 
-    likes = [r"%s %s %%s ESCAPE '/'" % (i, db.like()) for i in columns]
+    likes = ['%s %s' % (i, db.like()) for i in columns]
     c = ' OR '.join(likes)
     sql = '(' + ') AND ('.join([c] * len(terms)) + ')'
     args = []
-    escape_re = re.compile(r'([/_%])')
     for t in terms:
-        t = escape_re.sub(r'/\1', t) # escape LIKE syntax
-        args.extend(['%'+t+'%'] * len(columns)) 
+        args.extend(['%'+db.like_escape(t)+'%'] * len(columns))
     return sql, tuple(args)
 
 def shorten_result(text='', keywords=[], maxlen=240, fuzz=60):
@@ -120,6 +120,9 @@ class SearchModule(Component):
     
     RESULTS_PER_PAGE = 10
 
+    min_query_length = IntOption('search', 'min_query_length', 3,
+        """Minimum length of query string allowed when performing a search.""")
+
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
@@ -129,8 +132,7 @@ class SearchModule(Component):
         if not req.perm.has_permission('SEARCH_VIEW'):
             return
         yield ('mainnav', 'search',
-               Markup('<a href="%s" accesskey="4">Rechercher</a>',
-                      self.env.href.search()))
+               html.A(u'Rechercher', href=req.href.search(), accesskey=4))
 
     # IPermissionRequestor methods
 
@@ -165,16 +167,26 @@ class SearchModule(Component):
         query = req.args.get('q')
         if query:
             page = int(req.args.get('page', '1'))
-            redir = self.quickjump(query)
-            if redir:
-                req.redirect(redir)
+            noquickjump = int(req.args.get('noquickjump', '0'))
+            link_elt = self.quickjump(req, query)
+            if link_elt is not None:
+                quickjump_href = link_elt.attr['href']
+                if noquickjump:
+                    req.hdf['search.quickjump'] = {
+                        'href': quickjump_href,
+                        'name': html.EM(link_elt.children),
+                        'description': link_elt.attr.get('title', '')
+                        }
+                else:
+                    req.redirect(quickjump_href)
             elif query.startswith('!'):
                 query = query[1:]
             terms = search_terms(query)
             # Refuse queries that obviously would result in a huge result set
-            if len(terms) == 1 and len(terms[0]) < 3:
-                raise TracError('La requête de recherche est trop courte. '
-                                'La requête doit contenir au moins 3 caractères.',
+            if len(terms) == 1 and len(terms[0]) < self.min_query_length:
+                raise TracError(u'La requête de recherche est trop courte. '
+                                u'La requête doit contenir au moins %d '
+                                u'caractères.' % self.min_query_length, 
                                 'Erreur de recherche')
             results = []
             for source in self.search_sources:
@@ -192,20 +204,15 @@ class SearchModule(Component):
             req.hdf['search.n_pages'] = n_pages
             req.hdf['search.page_size'] = page_size
             if page < n_pages:
-                next_href = self.env.href.search(zip(filters,
-                                                     ['on'] * len(filters)),
-                                                 q=req.args.get('q'),
-                                                 page=page + 1)
+                next_href = req.href.search(zip(filters, ['on'] * len(filters)),
+                                            q=req.args.get('q'), page=page + 1)
                 add_link(req, 'next', next_href, 'Page suivante')
             if page > 1:
-                prev_href = self.env.href.search(zip(filters,
-                                                     ['on'] * len(filters)),
-                                                 q=req.args.get('q'),
-                                                 page=page - 1)
+                prev_href = req.href.search(zip(filters, ['on'] * len(filters)),
+                                            q=req.args.get('q'), page=page - 1)
                 add_link(req, 'prev', prev_href, 'Page précédente')
-            req.hdf['search.page_href'] = self.env.href.search(zip(filters,
-                                                                   ['on'] * len(filters)),
-                                                               q=req.args.get('q'))
+            req.hdf['search.page_href'] = req.href.search(zip(filters, ['on'] * len(filters)),
+                                                          q=req.args.get('q'))
             req.hdf['search.result'] = [
                 { 'href': result[0],
                   'title': result[1],
@@ -217,43 +224,13 @@ class SearchModule(Component):
         add_stylesheet(req, 'common/css/search.css')
         return 'search.cs', None
 
-    def quickjump(self, kwd):
-        if len(kwd.split()) != 1:
-            return None
-        # Ticket quickjump
-        if kwd[0] == '#' and kwd[1:].isdigit():
-            return self.env.href.ticket(kwd[1:])
-        elif kwd[0:len('ticket:')] == 'ticket:' and kwd[len('ticket:'):].isdigit():
-            return self.env.href.ticket(kwd[len('ticket:'):])
-        elif kwd[0:len('bug:')] == 'bug:' and kwd[len('bug:'):].isdigit():
-            return self.env.href.ticket(kwd[len('bug:'):])
-        # Changeset quickjump
-        elif kwd[0] == '[' and kwd[-1] == ']' and kwd[1:-1].isalnum():
-            return self.env.href.changeset(kwd[1:-1])
-        elif kwd[0:len('changeset:')] == 'changeset:' and kwd[len('changeset:'):].isdigit():
-            return self.env.href.changeset(kwd[len('changeset:'):])
-        # Report quickjump
-        elif kwd[0] == '{' and kwd[-1] == '}' and kwd[1:-1].isdigit():
-            return self.env.href.report(kwd[1:-1])
-        elif kwd[0:len('report:')] == 'report:' and kwd[len('report:'):].isdigit():
-            return self.env.href.report(kwd[len('report:'):])
-        # Milestone quickjump
-        elif kwd[0:len('milestone:')] == 'milestone:':
-            return self.env.href.milestone(kwd[len('milestone:'):])
+    def quickjump(self, req, kwd):
         # Source quickjump
-        elif kwd[0] == '/':
-            return self.env.href.browser(kwd)
-        elif kwd[0:len('source:')] == 'source:':
-            return self.env.href.browser(kwd[len('source:'):])
-        # Wiki quickjump
-        elif kwd[0:len('wiki:')] == 'wiki:':
-            r = "((^|(?<=[^A-Za-z]))[!]?[A-Z][a-z/]+(?:[A-Z][a-z/]+)+)"
-            if re.match (r, kwd[len('wiki:'):]):
-                return self.env.href.wiki(kwd[len('wiki:'):])
-        elif len(kwd) > 1 and kwd[0].isupper() and kwd[1].islower():
-            r = "((^|(?<=[^A-Za-z]))[!]?[A-Z][a-z/]+(?:[A-Z][a-z/]+)+)"
-            if re.match (r, kwd):
-                return self.env.href.wiki(kwd)
+        if kwd[0] == '/':
+            return req.href.browser(kwd)
+        link = wiki_to_link(kwd, self.env, req)
+        if isinstance(link, Element):
+            return link
 
     # IWikiSyntaxProvider methods
     
@@ -263,10 +240,10 @@ class SearchModule(Component):
     def get_link_resolvers(self):
         yield ('search', self._format_link)
 
-    def _format_link(self, formatter, ns, query, label):
-        if query and query[0] == '?':
+    def _format_link(self, formatter, ns, target, label):
+        path, query, fragment = formatter.split_link(target)
+        if query:
             href = formatter.href.search() + query.replace(' ', '+')
         else:
-            href = formatter.href.search(q=query)
-        return '<a class="search" href="%s">%s</a>' % (escape(href), label)
-
+            href = formatter.href.search(q=path)
+        return html.A(label, class_='search', href=href)

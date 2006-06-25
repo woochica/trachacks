@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Daniel Lundin <daniel@edgewall.com>
+# Copyright (C) 2006 Christian Boos <cboos@neuf.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -33,16 +34,19 @@ def logger_factory(logtype='syslog', logfile=None, level='WARNING',
     elif logtype in ['stderr']:
         hdlr = logging.StreamHandler(sys.stderr)
     else:
-        hdlr = logging.handlers.MemoryHandler(1024)
+        hdlr = logging.handlers.BufferingHandler(0)
+        # Note: this _really_ throws away log events, as a `MemoryHandler`
+        # would keep _all_ records in case there's no target handler (a bug?)
 
     format = 'Trac[%(module)s] %(levelname)s: %(message)s'
-    if logtype == 'file':
+    if logtype in ['file', 'stderr']:
         format = '%(asctime)s ' + format 
     datefmt = ''
+    if logtype == 'stderr':
+        datefmt = '%X'        
     level = level.upper()
     if level in ['DEBUG', 'ALL']:
         logger.setLevel(logging.DEBUG)
-        datefmt = '%X'
     elif level == 'INFO':
         logger.setLevel(logging.INFO)
     elif level == 'ERROR':

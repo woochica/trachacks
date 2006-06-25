@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
-# Copyright (C) 2005 Matthew Good <trac@matt-good.net>
-# Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2005-2006 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2005-2006 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -18,242 +18,89 @@
 #         Matthew Good <trac@matt-good.net>
 #         Christopher Lenz <cmlenz@gmx.de>
 
-try:
-    from base64 import b64decode
-except ImportError:
-    from base64 import decodestring as b64decode
-import md5
+import errno
 import os
 import sys
-import urllib2
 import locale
 from SocketServer import ThreadingMixIn
 
-from trac import util, __version__
-from trac.util import md5crypt
+from trac import __version__ as VERSION
+from trac.util import autoreload, daemon
+from trac.web.auth import BasicAuthentication, DigestAuthentication
 from trac.web.main import dispatch_request
 from trac.web.wsgi import WSGIServer, WSGIRequestHandler
 
 
-class BasicAuth(object):
+class AuthenticationMiddleware(object):
 
-    def __init__(self, htpasswd, realm):
-        self.hash = {}
-        self.realm = realm
-        try:
-            import crypt
-            self.crypt = crypt.crypt
-        except ImportError:
-            self.crypt = None
-        self.load(htpasswd)
-
-    def load(self, filename):
-        fd = open(filename, 'r')
-        for line in fd:
-            u, h = line.strip().split(':')
-            if '$' in h or self.crypt:
-                self.hash[u] = h
-            else:
-                print >>sys.stderr, 'Warning: cannot parse password for ' \
-                                    'user "%s" without the "crypt" module' % u
-
-        if self.hash == {}:
-            print >> sys.stderr, "Warning: found no users in file:", filename
-
-    def test(self, user, password):
-        the_hash = self.hash.get(user)
-        if the_hash is None:
-            return False
-
-        if not '$' in the_hash:
-            return self.crypt(password, the_hash[:2]) == the_hash
-
-        magic, salt = the_hash[1:].split('$')[:2]
-        magic = '$' + magic + '$'
-        return md5crypt(password, salt, magic) == the_hash
-
-    def send_auth_request(self, req):
-        req.send_response(401)
-        req.send_header('WWW-Authenticate', 'Basic realm="%s"' % self.realm)
-        req.end_headers()
-
-    def do_auth(self, req):
-        if not 'Authorization' in req.headers or \
-               not req.headers['Authorization'].startswith('Basic'):
-            self.send_auth_request(req)
-            return None
-
-        auth = req.headers['Authorization'][len('Basic')+1:]
-        auth = b64decode(auth).split(':')
-        if len(auth) != 2:
-            self.send_auth_request(req)
-            return None
-
-        user, password = auth
-        if not self.test(user, password):
-            self.send_auth_request(req)
-            return None
-
-        return user
-
-
-class DigestAuth(object):
-    """A simple HTTP DigestAuth implementation (rfc2617)"""
-
-    MAX_NONCES = 100
-
-    def __init__(self, htdigest, realm):
-        self.active_nonces = []
-        self.hash = {}
-        self.realm = realm
-        self.load_htdigest(htdigest, realm)
-
-    def load_htdigest(self, filename, realm):
-        """Load account information from apache style htdigest files, only
-        users from the specified realm are used
-        """
-        fd = open(filename, 'r')
-        for line in fd.readlines():
-            u, r, a1 = line.strip().split(':')
-            if r == realm:
-                self.hash[u] = a1
-        if self.hash == {}:
-            print >> sys.stderr, "Warning: found no users in realm:", realm
-        
-    def parse_auth_header(self, authorization):
-        values = {}
-        for value in urllib2.parse_http_list(authorization):
-            n, v = value.split('=', 1)
-            if v[0] == '"' and v[-1] == '"':
-                values[n] = v[1:-1]
-            else:
-                values[n] = v
-        return values
-
-    def send_auth_request(self, req, stale='false'):
-        """Send a digest challange to the browser. Record used nonces
-        to avoid replay attacks.
-        """
-        nonce = util.hex_entropy()
-        self.active_nonces.append(nonce)
-        if len(self.active_nonces) > DigestAuth.MAX_NONCES:
-            self.active_nonces = self.active_nonces[-DigestAuth.MAX_NONCES:]
-        req.send_response(401)
-        req.send_header('WWW-Authenticate',
-                        'Digest realm="%s", nonce="%s", qop="auth", stale="%s"'
-                        % (self.realm, nonce, stale))
-        req.end_headers()
-
-    def do_auth(self, req):
-        if not 'Authorization' in req.headers or \
-               not req.headers['Authorization'].startswith('Digest'):
-            self.send_auth_request(req)
-            return None
-        auth = self.parse_auth_header(req.headers['Authorization'][7:])
-        required_keys = ['username', 'realm', 'nonce', 'uri', 'response',
-                           'nc', 'cnonce']
-        # Invalid response?
-        for key in required_keys:
-            if not auth.has_key(key):
-                self.send_auth_request(req)
-                return None
-        # Unknown user?
-        if not self.hash.has_key(auth['username']):
-            self.send_auth_request(req)
-            return None
-
-        kd = lambda x: md5.md5(':'.join(x)).hexdigest()
-        a1 = self.hash[auth['username']]
-        a2 = kd([req.command, auth['uri']])
-        # Is the response correct?
-        correct = kd([a1, auth['nonce'], auth['nc'],
-                      auth['cnonce'], auth['qop'], a2])
-        if auth['response'] != correct:
-            self.send_auth_request(req)
-            return None
-        # Is the nonce active, if not ask the client to use a new one
-        if not auth['nonce'] in self.active_nonces:
-            self.send_auth_request(req, stale='true')
-            return None
-        self.active_nonces.remove(auth['nonce'])
-        return auth['username']
-
-
-class TracHTTPServer(ThreadingMixIn, WSGIServer):
-
-    def __init__(self, server_address, env_parent_dir, env_paths, auths):
-        WSGIServer.__init__(self, server_address, dispatch_request,
-                            request_handler=TracHTTPRequestHandler)
-        self.environ['trac.env_path'] = None
-        if env_parent_dir:
-            self.environ['trac.env_parent_dir'] = env_parent_dir
-        else:
-            self.environ['trac.env_paths'] = env_paths
+    def __init__(self, application, auths):
+        self.application = application
         self.auths = auths
 
-
-class TracHTTPRequestHandler(WSGIRequestHandler):
-
-    server_version = 'tracd/' + __version__
-
-    def handle_one_request(self):
-        environ = self.setup_environ()
+    def __call__(self, environ, start_response):
         path_info = environ.get('PATH_INFO', '')
         path_parts = filter(None, path_info.split('/'))
         if len(path_parts) > 1 and path_parts[1] == 'login':
             env_name = path_parts[0]
             if env_name:
-                auth = self.server.auths.get(env_name,
-                                             self.server.auths.get('*'))
-                if not auth:
-                    self.send_error(500, 'L\'authentication n\'est pas active '
-                                         'pour %s. Merci d\'utiliser l\'option '
-                                         '--auth de tracd.'
-                                         % env_name)
-                    return
-                remote_user = auth.do_auth(self)
-                if not remote_user:
-                    return
-                environ['REMOTE_USER'] = remote_user
-
-        gateway = self.server.gateway(self, environ)
-        gateway.run(self.server.application)
+                auth = self.auths.get(env_name, self.auths.get('*'))
+                if auth:
+                    remote_user = auth.do_auth(environ, start_response)
+                    if not remote_user:
+                        return []
+                    environ['REMOTE_USER'] = remote_user
+        return self.application(environ, start_response)
 
 
-def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
-    """Fork a daemon process (taken from the Python Cookbook)."""
-    # perform first fork
-    pid = os.fork()
-    if pid > 0:
-        sys.exit(0) # edit first parent
+class BasePathMiddleware(object):
 
-    # decouple from parent environment
-    os.chdir('/')
-    os.umask(0)
-    os.setsid()
+    def __init__(self, application, base_path):
+        self.base_path = '/' + base_path.strip('/')
+        self.application = application
 
-    # perform second fork
-    pid = os.fork()
-    if pid > 0:
-        sys.exit(0) # edit first parent
+    def __call__(self, environ, start_response):
+        path = environ['SCRIPT_NAME'] + environ.get('PATH_INFO', '')
+        environ['PATH_INFO'] = path[len(self.base_path):]
+        environ['SCRIPT_NAME'] = self.base_path
+        return self.application(environ, start_response)
 
-    # the projess is now daemonized, redirect standard file descriptors
-    for fileobj in sys.stdout, sys.stderr:
-        fileobj.flush()
-    stdin = file(stdin, 'r')
-    stdout = file(stdout, 'a+')
-    stderr = file(stderr, 'a+', 0)
-    os.dup2(stdin.fileno(), sys.stdin.fileno())
-    os.dup2(stdout.fileno(), sys.stdout.fileno())
-    os.dup2(stderr.fileno(), sys.stderr.fileno())
+
+class TracEnvironMiddleware(object):
+
+    def __init__(self, application, env_parent_dir, env_paths):
+        self.application = application
+        self.environ = {}
+        self.environ['trac.env_path'] = None
+        if env_parent_dir:
+            self.environ['trac.env_parent_dir'] = env_parent_dir
+        else:
+            self.environ['trac.env_paths'] = env_paths
+
+    def __call__(self, environ, start_response):
+        for k,v in self.environ.iteritems():
+            environ.setdefault(k, v)
+        return self.application(environ, start_response)
+
+
+class TracHTTPServer(ThreadingMixIn, WSGIServer):
+
+    def __init__(self, server_address, application, env_parent_dir, env_paths):
+        WSGIServer.__init__(self, server_address, application,
+                            request_handler=TracHTTPRequestHandler)
+
+
+class TracHTTPRequestHandler(WSGIRequestHandler):
+
+    server_version = 'tracd/' + VERSION
+
 
 def main():
     from optparse import OptionParser, OptionValueError
     parser = OptionParser(usage='usage: %prog [options] [projenv] ...',
-                          version='%%prog %s' % __version__)
+                          version='%%prog %s' % VERSION)
 
     auths = {}
-    def _auth_callback(option, opt_str, value, parser, auths, cls):
+    def _auth_callback(option, opt_str, value, parser, cls):
         info = value.split(',', 3)
         if len(info) != 3:
             raise OptionValueError("Nombre de parametres incorrects pour %s"
@@ -266,43 +113,126 @@ def main():
         else:
             auths[env_name] = cls(filename, realm)
 
+    def _validate_callback(option, opt_str, value, parser, valid_values):
+        if value not in valid_values:
+            raise OptionValueError('%s must be one of: %s, not %s'
+                                   % (opt_str, '|'.join(valid_values), value))
+        setattr(parser.values, option.dest, value)
+
     parser.add_option('-a', '--auth', action='callback', type='string',
-                      metavar='DIGESTAUTH',
-                      callback=_auth_callback, callback_args=(auths, DigestAuth),
-                      help='[project],[htdigest_file],[realm]')
+                      metavar='DIGESTAUTH', callback=_auth_callback,
+                      callback_args=(DigestAuthentication,),
+                      help='[projectdir],[htdigest_file],[realm]')
     parser.add_option('--basic-auth', action='callback', type='string',
-                      metavar='BASICAUTH',
-                      callback=_auth_callback, callback_args=(auths, BasicAuth),
-                      help='[project],[htpasswd_file],[realm]')
+                      metavar='BASICAUTH', callback=_auth_callback,
+                      callback_args=(BasicAuthentication,),
+                      help='[projectdir],[htpasswd_file],[realm]')
 
     parser.add_option('-p', '--port', action='store', type='int', dest='port',
                       help='the port number to bind to')
     parser.add_option('-b', '--hostname', action='store', dest='hostname',
                       help='the host name or IP address to bind to')
+    parser.add_option('--protocol', action='callback', type="string",
+                      dest='protocol', callback=_validate_callback,
+                      callback_args=(('http', 'scgi', 'ajp'),),
+                      help='http|scgi|ajp')
     parser.add_option('-e', '--env-parent-dir', action='store',
                       dest='env_parent_dir', metavar='PARENTDIR',
                       help='parent directory of the project environments')
+    parser.add_option('--base-path', action='store', type='string', # XXX call this url_base_path?
+                      dest='base_path',
+                      help='base path')
+
+    parser.add_option('-r', '--auto-reload', action='store_true',
+                      dest='autoreload',
+                      help='restart automatically when sources are modified')
 
     if os.name == 'posix':
         parser.add_option('-d', '--daemonize', action='store_true',
                           dest='daemonize',
                           help='run in the background as a daemon')
+        parser.add_option('--pidfile', action='store',
+                          dest='pidfile',
+                          help='When daemonizing, file to which to write pid')
 
-    parser.set_defaults(port=80, hostname='', daemonize=False)
+    parser.set_defaults(port=None, hostname='', base_path='', daemonize=False,
+                        protocol='http')
     options, args = parser.parse_args()
 
     if not args and not options.env_parent_dir:
-        parser.error('either the --env_parent_dir option or at least one '
+        parser.error('either the --env-parent-dir option or at least one '
                      'environment must be specified')
 
+    if options.port is None:
+        options.port = {
+            'http': 80,
+            'scgi': 4000,
+            'ajp': 8009,
+        }[options.protocol]
     server_address = (options.hostname, options.port)
-    httpd = TracHTTPServer(server_address, options.env_parent_dir, args, auths)
+
+    wsgi_app = TracEnvironMiddleware(dispatch_request,
+                                     options.env_parent_dir, args)
+    if auths:
+        wsgi_app = AuthenticationMiddleware(wsgi_app, auths)
+    base_path = options.base_path.strip('/')
+    if base_path:
+        wsgi_app = BasePathMiddleware(wsgi_app, base_path)
+
+    if options.protocol == 'http':
+        def serve():
+            httpd = TracHTTPServer(server_address, wsgi_app,
+                                   options.env_parent_dir, args)
+            httpd.serve_forever()
+    elif options.protocol in ('scgi', 'ajp'):
+        def serve():
+            server_cls = __import__('flup.server.%s' % options.protocol,
+                                    None, None, ['']).WSGIServer
+            ret = server_cls(wsgi_app, bindAddress=server_address).run()
+            sys.exit(ret and 42 or 0) # if SIGHUP exit with status 42
 
     try:
-        if options.daemonize:
-            daemonize()
+        if os.name == 'posix':
+            if options.pidfile:
+                options.pidfile = os.path.abspath(options.pidfile)
+                if os.path.exists(options.pidfile):
+                    pidfile = open(options.pidfile)
+                    try:
+                        pid = int(pidfile.read())
+                    finally:
+                        pidfile.close()
 
-        httpd.serve_forever()
+                    try:
+                        # signal the process to see if it is still running
+                        os.kill(pid, 0)
+                    except OSError, e:
+                        if e.errno != errno.ESRCH:
+                            raise
+                    else:
+                        sys.exit("tracd is already running with pid %s" % pid)
+                realserve = serve
+                def serve():
+                    try:
+                        pidfile = open(options.pidfile, 'w')
+                        try:
+                            pidfile.write(str(os.getpid()))
+                        finally:
+                            pidfile.close()
+                        realserve()
+                    finally:
+                       if os.path.exists(options.pidfile):
+                           os.remove(options.pidfile)
+
+            if options.daemonize:
+                daemon.daemonize()
+
+        if options.autoreload:
+            def modification_callback(file):
+                print>>sys.stderr, 'Detected modification of %s, restarting.' \
+                                   % file
+            autoreload.main(serve, modification_callback)
+        else:
+            serve()
 
     except OSError:
         sys.exit(1)

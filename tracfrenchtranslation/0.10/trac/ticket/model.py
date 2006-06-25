@@ -19,6 +19,7 @@
 
 import time
 import sys
+import re
 
 from trac.core import TracError
 from trac.ticket import TicketSystem
@@ -84,7 +85,7 @@ class Ticket(object):
                        % ','.join(std_fields), (tkt_id,))
         row = cursor.fetchone()
         if not row:
-            raise TracError('Le ticket %d n\'existe pas.' % tkt_id,
+            raise TracError(u'Le ticket %d n\'existe pas.' % tkt_id,
                             'Numéro de ticket invalide')
 
         self.id = tkt_id
@@ -172,11 +173,16 @@ class Ticket(object):
 
         if handle_ta:
             db.commit()
+
         self.id = tkt_id
         self._old = {}
+
+        for listener in TicketSystem(self.env).change_listeners:
+            listener.ticket_created(self)
+
         return self.id
 
-    def save_changes(self, author, comment, when=0, db=None):
+    def save_changes(self, author, comment, when=0, db=None, cnum=''):
         """
         Store ticket changes in the database. The ticket must already exist in
         the database.
@@ -208,6 +214,14 @@ class Ticket(object):
                     # just leave the owner as is.
                     pass
 
+        # Fix up cc list separators and remove duplicates
+        if self.values.has_key('cc'):
+            cclist = []
+            for cc in re.split(r'[;,\s]+', self.values['cc']):
+                if cc not in cclist:
+                    cclist.append(cc)
+            self.values['cc'] = ', '.join(cclist)
+
         custom_fields = [f['name'] for f in self.fields if f.get('custom')]
         for name in self._old.keys():
             if name in custom_fields:
@@ -229,18 +243,22 @@ class Ticket(object):
                            "VALUES (%s, %s, %s, %s, %s, %s)",
                            (self.id, when, author, name, self._old[name],
                             self[name]))
-        if comment:
-            cursor.execute("INSERT INTO ticket_change "
-                           "(ticket,time,author,field,oldvalue,newvalue) "
-                           "VALUES (%s,%s,%s,'comment','',%s)",
-                           (self.id, when, author, comment))
+        # always save comment, even if empty (numbering support for timeline)
+        cursor.execute("INSERT INTO ticket_change "
+                       "(ticket,time,author,field,oldvalue,newvalue) "
+                       "VALUES (%s,%s,%s,'comment',%s,%s)",
+                       (self.id, when, author, cnum, comment))
 
         cursor.execute("UPDATE ticket SET changetime=%s WHERE id=%s",
                        (when, self.id))
+
         if handle_ta:
             db.commit()
         self._old = {}
         self.time_changed = when
+
+        for listener in TicketSystem(self.env).change_listeners:
+            listener.ticket_changed(self, comment, self._old)
 
     def get_changelog(self, when=0, db=None):
         """Return the changelog as a list of tuples of the form
@@ -249,29 +267,30 @@ class Ticket(object):
         db = self._get_db(db)
         cursor = db.cursor()
         if when:
-            cursor.execute("SELECT time,author,field,oldvalue,newvalue "
+            cursor.execute("SELECT time,author,field,oldvalue,newvalue,1 "
                            "FROM ticket_change WHERE ticket=%s AND time=%s "
                            "UNION "
-                           "SELECT time,author,'attachment',null,filename "
+                           "SELECT time,author,'attachment',null,filename,0 "
                            "FROM attachment WHERE id=%s AND time=%s "
                            "UNION "
-                           "SELECT time,author,'comment',null,description "
+                           "SELECT time,author,'comment',null,description,0 "
                            "FROM attachment WHERE id=%s AND time=%s "
                            "ORDER BY time",
                            (self.id, when, str(self.id), when, self.id, when))
         else:
-            cursor.execute("SELECT time,author,field,oldvalue,newvalue "
+            cursor.execute("SELECT time,author,field,oldvalue,newvalue,1 "
                            "FROM ticket_change WHERE ticket=%s "
                            "UNION "
-                           "SELECT time,author,'attachment',null,filename "
+                           "SELECT time,author,'attachment',null,filename,0 "
                            "FROM attachment WHERE id=%s "
                            "UNION "
-                           "SELECT time,author,'comment',null,description "
+                           "SELECT time,author,'comment',null,description,0 "
                            "FROM attachment WHERE id=%s "
                            "ORDER BY time", (self.id,  str(self.id), self.id))
         log = []
-        for t, author, field, oldvalue, newvalue in cursor:
-            log.append((int(t), author, field, oldvalue or '', newvalue or ''))
+        for t, author, field, oldvalue, newvalue, permanent in cursor:
+            log.append((int(t), author, field, oldvalue or '', newvalue or '',
+                        permanent))
         return log
 
     def delete(self, db=None):
@@ -282,8 +301,12 @@ class Ticket(object):
         cursor.execute("DELETE FROM attachment "
                        " WHERE type='ticket' and id=%s", (self.id,))
         cursor.execute("DELETE FROM ticket_custom WHERE ticket=%s", (self.id,))
+
         if handle_ta:
             db.commit()
+
+        for listener in TicketSystem(self.env).change_listeners:
+            listener.ticket_deleted(self)
 
 
 class AbstractEnum(object):
@@ -534,7 +557,7 @@ class Milestone(object):
                        "FROM milestone WHERE name=%s", (name,))
         row = cursor.fetchone()
         if not row:
-            raise TracError("Le jalon %s n'existe pas." % name,
+            raise TracError(u"Le jalon %s n'existe pas." % name,
                             'Nom de jalon invalide')
         self.name = row[0]
         self.due = row[1] and int(row[1]) or 0
@@ -564,7 +587,7 @@ class Milestone(object):
         for tkt_id in tkt_ids:
             ticket = Ticket(self.env, tkt_id, db)
             ticket['milestone'] = retarget_to
-            ticket.save_changes(author, 'Jalon %s supprimé' % self.name,
+            ticket.save_changes(author, u'Jalon %s supprimé' % self.name,
                                 now, db=db)
 
         if handle_ta:

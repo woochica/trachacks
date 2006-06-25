@@ -1,5 +1,5 @@
 sql = [
-"""CREATE TEMP TABLE node_change_old AS SELECT * FROM node_change;""",
+"""CREATE TEMPORARY TABLE node_change_old AS SELECT * FROM node_change;""",
 """DROP TABLE node_change;""",
 """CREATE TABLE node_change (
     rev             text,
@@ -11,7 +11,8 @@ sql = [
     UNIQUE(rev, path, change)
 );""",
 """INSERT INTO node_change (rev,path,kind,change,base_path,base_rev)
-    SELECT rev,path,kind,change,base_path,base_rev FROM node_change_old;"""
+    SELECT rev,path,kind,change,base_path,base_rev FROM node_change_old;""",
+"""DROP TABLE node_change_old;"""
 ]
 
 def do_upgrade(env, ver, cursor):

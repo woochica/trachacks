@@ -18,6 +18,7 @@
 
 """Management of permissions."""
 
+from trac.config import ExtensionOption
 from trac.core import *
     
 
@@ -72,100 +73,9 @@ class IPermissionStore(Interface):
         """Revokes the permission of the given user to perform an action."""
 
 
-class PermissionSystem(Component):
-    """Sub-system that manages user permissions."""
-
-    implements(IPermissionRequestor)
-
-    requestors = ExtensionPoint(IPermissionRequestor)
-    store = SingletonExtensionPoint(IPermissionStore,
-                                    'trac', 'permission_store')
-
-    # Public API
-
-    def grant_permission(self, username, action):
-        """Grant the user with the given name permission to perform to specified
-        action."""
-        if action.isupper() and action not in self.get_actions():
-            raise TracError, '%s n\'est pas une action valide.' % action
-
-        self.store.grant_permission(username, action)
-
-    def revoke_permission(self, username, action):
-        """Revokes the permission of the specified user to perform an action."""
-        # TODO: Validate that this permission does in fact exist
-        if action.isupper() and action not in self.get_actions():
-            raise TracError, '%s n\'est pas une action valide.' % action
-
-        self.store.revoke_permission(username, action)
-
-    def get_actions(self):
-        actions = []
-        for requestor in self.requestors:
-            for action in requestor.get_permission_actions():
-                if isinstance(action, tuple):
-                    actions.append(action[0])
-                else:
-                    actions.append(action)
-        return actions
-
-    def get_user_permissions(self, username=None):
-        """Return the permissions of the specified user.
-        
-        The return value is a dictionary containing all the actions as keys, and
-        a boolean value. `True` means that the permission is granted, `False`
-        means the permission is denied."""
-        actions = []
-        for requestor in self.requestors:
-            actions += list(requestor.get_permission_actions())
-        permissions = {}
-        if username:
-            # Return all permissions that the given user has
-            meta = {}
-            for action in actions:
-                if isinstance(action, tuple):
-                    name, value = action
-                    meta[name] = value
-            def _expand_meta(action):
-                permissions[action] = True
-                if meta.has_key(action):
-                    [_expand_meta(perm) for perm in meta[action]]
-            for perm in self.store.get_user_permissions(username):
-                _expand_meta(perm)
-        else:
-            # Return all permissions available in the system
-            for action in actions:
-                if isinstance(action, tuple):
-                    permissions[action[0]] = True
-                else:
-                    permissions[action] = True
-        return permissions
-
-    def get_all_permissions(self):
-        """Return all permissions for all users.
-
-        The permissions are returned as a list of (subject, action)
-        formatted tuples."""
-        return self.store.get_all_permissions()
-
-    # IPermissionRequestor methods
-
-    def get_permission_actions(self):
-        """Implement the global `TRAC_ADMIN` meta permission."""
-        actions = []
-        for requestor in [r for r in self.requestors if r is not self]:
-            for action in requestor.get_permission_actions():
-                if isinstance(action, tuple):
-                    actions.append(action[0])
-                else:
-                    actions.append(action)
-        return [('TRAC_ADMIN', actions)]
-
-
 class IPermissionGroupProvider(Interface):
-    """
-    Extension point interface for components that provide information about user
-    groups.
+    """Extension point interface for components that provide information about
+    user groups.
     """
     def get_permission_groups(username):
         """Return a list of names of the groups that the user with the specified
@@ -256,7 +166,100 @@ class DefaultPermissionGroupProvider(Component):
         return groups
 
 
-class PermissionCache:
+class PermissionSystem(Component):
+    """Sub-system that manages user permissions."""
+
+    implements(IPermissionRequestor)
+
+    requestors = ExtensionPoint(IPermissionRequestor)
+
+    store = ExtensionOption('trac', 'permission_store', IPermissionStore,
+                            'DefaultPermissionStore',
+        """Name of the component implementing `IPermissionStore`, which is used
+        for managing user and group permissions.""")
+
+    # Public API
+
+    def grant_permission(self, username, action):
+        """Grant the user with the given name permission to perform to specified
+        action."""
+        if action.isupper() and action not in self.get_actions():
+            raise TracError, '%s is not a valid action.' % action
+
+        self.store.grant_permission(username, action)
+
+    def revoke_permission(self, username, action):
+        """Revokes the permission of the specified user to perform an action."""
+        # TODO: Validate that this permission does in fact exist
+        if action.isupper() and action not in self.get_actions():
+            raise TracError, '%s is not a valid action.' % action
+
+        self.store.revoke_permission(username, action)
+
+    def get_actions(self):
+        actions = []
+        for requestor in self.requestors:
+            for action in requestor.get_permission_actions():
+                if isinstance(action, tuple):
+                    actions.append(action[0])
+                else:
+                    actions.append(action)
+        return actions
+
+    def get_user_permissions(self, username=None):
+        """Return the permissions of the specified user.
+        
+        The return value is a dictionary containing all the actions as keys, and
+        a boolean value. `True` means that the permission is granted, `False`
+        means the permission is denied."""
+        actions = []
+        for requestor in self.requestors:
+            actions += list(requestor.get_permission_actions())
+        permissions = {}
+        if username:
+            # Return all permissions that the given user has
+            meta = {}
+            for action in actions:
+                if isinstance(action, tuple):
+                    name, value = action
+                    meta[name] = value
+            def _expand_meta(action):
+                permissions[action] = True
+                if meta.has_key(action):
+                    [_expand_meta(perm) for perm in meta[action]]
+            for perm in self.store.get_user_permissions(username):
+                _expand_meta(perm)
+        else:
+            # Return all permissions available in the system
+            for action in actions:
+                if isinstance(action, tuple):
+                    permissions[action[0]] = True
+                else:
+                    permissions[action] = True
+        return permissions
+
+    def get_all_permissions(self):
+        """Return all permissions for all users.
+
+        The permissions are returned as a list of (subject, action)
+        formatted tuples."""
+        return self.store.get_all_permissions()
+
+    # IPermissionRequestor methods
+
+    def get_permission_actions(self):
+        """Implement the global `TRAC_ADMIN` meta permission."""
+        actions = []
+        for requestor in [r for r in self.requestors if r is not self]:
+            for action in requestor.get_permission_actions():
+                if isinstance(action, tuple):
+                    actions.append(action[0])
+                else:
+                    actions.append(action)
+        return [('TRAC_ADMIN', actions)]
+
+
+class PermissionCache(object):
     """Cache that maintains the permissions of a single user."""
 
     def __init__(self, env, username):
@@ -271,3 +274,16 @@ class PermissionCache:
 
     def permissions(self):
         return self.perms.keys()
+
+
+class NoPermissionCache(object):
+    """Permission cache for ''anonymous requests''."""
+
+    def has_permission(self, action):
+        return False
+
+    def assert_permission(self, action):
+        raise PermissionError(action)
+
+    def permissions(self):
+        return []

@@ -7,9 +7,9 @@
   <ul><?cs
    if:changeset.chgset ?><?cs
     if:changeset.restricted ?><?cs
-     set:change = "Change" ?><?cs
+     set:change = "Modification" ?><?cs
     else ?><?cs 
-     set:change = "Changeset" ?><?cs
+     set:change = "Version" ?><?cs
     /if ?>
     <li class="first"><?cs
      if:len(links.prev) ?> &larr; 
@@ -32,7 +32,7 @@
      /if ?>
     </li><?cs
    else ?>
-    <li class="first"><a href="<?cs var:changeset.reverse_href ?>">Diff inverse</a></li><?cs
+    <li class="last"><a href="<?cs var:changeset.reverse_href ?>">Diff inversé</a></li><?cs
    /if ?>
   </ul><?cs
  /with ?>
@@ -132,7 +132,7 @@
      var:item.browser_href.old ?>"><?cs var:item.path.old ?></a><?cs
   else ?>
    <a title="Montrer l'élément dans le navigateur" href="<?cs
-     var:item.browser_href.new ?>"><?cs var:item.path.new ?></a><?cs
+     var:item.browser_href.new ?>"><?cs alt:item.path.new ?>(root)<?cs /alt?></a><?cs
   /if ?>
   <span class="comment">(<?cs var:kind ?>)</span><?cs
   if:item.path.old && item.change == 'copy' || item.change == 'move' ?>
@@ -174,7 +174,7 @@
   if:len(changeset.changes) > #0 ?>
    Fichiers:<?cs
   else ?>
-   (Pas de fichier)<?cs
+   (Pas&nbsp;de&nbsp;fichier)<?cs
   /if ?>
  </dt>
  <dd class="files">

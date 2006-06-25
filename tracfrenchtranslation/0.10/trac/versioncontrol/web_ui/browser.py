@@ -17,19 +17,24 @@
 
 import re
 import urllib
+import os.path
+from fnmatch import fnmatchcase
 
 from trac import util
-from trac.util import sorted
+from trac.config import ListOption, Option
 from trac.core import *
 from trac.mimeview import Mimeview, is_binary, get_mimetype
 from trac.perm import IPermissionRequestor
+from trac.util import sorted, embedded_numbers
+from trac.util.datefmt import http_date, format_datetime, pretty_timedelta
+from trac.util.markup import escape, html, Markup
+from trac.util.text import pretty_size
 from trac.web import IRequestHandler, RequestDone
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
-from trac.wiki import wiki_to_html, wiki_to_oneliner, IWikiSyntaxProvider
+from trac.wiki import wiki_to_html, IWikiSyntaxProvider
+from trac.versioncontrol.api import NoSuchChangeset
 from trac.versioncontrol.web_ui.util import *
 
-
-IMG_RE = re.compile(r"\.(gif|jpg|jpeg|png)(\?.*)?$", re.IGNORECASE)
 
 CHUNK_SIZE = 4096
 
@@ -38,6 +43,19 @@ class BrowserModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                IWikiSyntaxProvider)
+
+    hidden_properties = Option('browser', 'hide_properties', 'svk:merge',
+        """List of subversion properties to hide from the repository browser
+        (''since 0.9'')""")
+
+    downloadable_paths = ListOption('browser', 'downloadable_paths',
+                                    '/trunk, /branches/*, /tags/*', doc=
+        """List of repository paths that can be downloaded.
+        
+        Leave the option empty if you want to disable all downloads, otherwise
+        set it to a comma-separated list of authorized paths (those paths are
+        glob patterns, i.e. "*" can be used as a wild card)
+        (''since 0.10'')""")
 
     # INavigationContributor methods
 
@@ -48,8 +66,7 @@ class BrowserModule(Component):
         if not req.perm.has_permission('BROWSER_VIEW'):
             return
         yield ('mainnav', 'browser',
-               util.Markup('<a href="%s">Explorateur</a>',
-                           self.env.href.browser()))
+               html.A(u'Explorateur', href=req.href.browser()))
 
     # IPermissionRequestor methods
 
@@ -64,40 +81,49 @@ class BrowserModule(Component):
         if match:
             req.args['path'] = match.group(2) or '/'
             if match.group(1) == 'file':
-                # FIXME: This should be a permanent redirect
-                req.redirect(self.env.href.browser(req.args.get('path'),
-                                                   rev=req.args.get('rev'),
-                                                   format=req.args.get('format')))
+                req.redirect(req.href.browser(req.args.get('path'),
+                                              rev=req.args.get('rev'),
+                                              format=req.args.get('format')),
+                             permanent=True)
             return True
 
     def process_request(self, req):
         path = req.args.get('path', '/')
-        rev = req.args.get('rev')
+        rev = req.args.get('rev') or None
 
+        # Find node for the requested path/rev
         repos = self.env.get_repository(req.authname)
-        node = get_existing_node(self.env, repos, path, rev)
-        rev = repos.normalize_rev(rev)
+        if rev:
+            rev = repos.normalize_rev(rev)
+        # If `rev` is `None`, we'll try to reuse `None` consistently,
+        # as a special shortcut to the latest revision.
+        rev_or_latest = rev or repos.youngest_rev
+        node = get_existing_node(req, repos, path, rev_or_latest)
 
-        hidden_properties = [p.strip() for p
-                             in self.config.get('browser', 'hide_properties').split(',')]
+        # Rendered list of node properties
+        hidden_properties = self.hidden_properties
+        properties = []
+        for name, value in node.get_properties().items():
+            if not name in hidden_properties:
+                properties.append({
+                    'name': name,
+                    'value': render_node_property(self.env, name, value)})
 
         req.hdf['title'] = path
         req.hdf['browser'] = {
             'path': path,
             'revision': rev,
-            'props': [{'name': name, 'value': value}
-                      for name, value in node.get_properties().items()
-                      if not name in hidden_properties],
-            'href': self.env.href.browser(path, rev=rev or
-                                          repos.youngest_rev),
-            'log_href': self.env.href.log(path, rev=rev or None),
-            'restr_changeset_href': self.env.href.changeset(node.rev, path),
-            'anydiff_href': self.env.href.anydiff(),
+            'props': properties,
+            'href': req.href.browser(path, rev=rev),
+            'log_href': req.href.log(path, rev=rev),
+            'restr_changeset_href': req.href.changeset(node.rev,
+                                                       node.created_path),
+            'anydiff_href': req.href.anydiff(),
         }
 
-        path_links = get_path_links(self.env.href, path, rev)
+        path_links = get_path_links(req.href, path, rev)
         if len(path_links) > 1:
-            add_link(req, 'up', path_links[-2]['href'], 'Répertoire parent')
+            add_link(req, 'up', path_links[-2]['href'], u'Répertoire parent')
         req.hdf['browser.path'] = path_links
 
         if node.isdir:
@@ -114,26 +140,25 @@ class BrowserModule(Component):
     def _render_directory(self, req, repos, node, rev=None):
         req.perm.assert_permission('BROWSER_VIEW')
 
-        order = req.args.get('order', 'name').lower()
-        req.hdf['browser.order'] = order
-        desc = req.args.has_key('desc')
-        req.hdf['browser.desc'] = desc and 1 or 0
-
+        # Entries metadata
         info = []
         for entry in node.get_entries():
             info.append({
                 'name': entry.name,
                 'fullpath': entry.path,
-                'is_dir': int(entry.isdir),
+                'is_dir': entry.isdir,
                 'content_length': entry.content_length,
-                'size': util.pretty_size(entry.content_length),
+                'size': pretty_size(entry.content_length),
                 'rev': entry.rev,
                 'permission': 1, # FIXME
-                'log_href': self.env.href.log(entry.path, rev=rev),
-                'browser_href': self.env.href.browser(entry.path,
-                                                      rev=rev)
+                'log_href': req.href.log(entry.path, rev=rev),
+                'browser_href': req.href.browser(entry.path, rev=rev)
             })
         changes = get_changes(self.env, repos, [i['rev'] for i in info])
+
+        # Ordering of entries
+        order = req.args.get('order', 'name').lower()
+        desc = req.args.has_key('desc')
 
         if order == 'date':
             def file_order(a):
@@ -141,10 +166,10 @@ class BrowserModule(Component):
         elif order == 'size':
             def file_order(a):
                 return (a['content_length'],
-                        util.embedded_numbers(a['name'].lower()))
+                        embedded_numbers(a['name'].lower()))
         else:
             def file_order(a):
-                return util.embedded_numbers(a['name'].lower())
+                return embedded_numbers(a['name'].lower())
 
         dir_order = desc and 1 or -1
 
@@ -152,50 +177,46 @@ class BrowserModule(Component):
             return a['is_dir'] and dir_order or 0, file_order(a)
         info = sorted(info, key=browse_order, reverse=desc)
 
-        req.hdf['browser.items'] = info
-        req.hdf['browser.changes'] = changes
-        if node.path != '':
-            zip_href = self.env.href.changeset(rev, node.path, old=rev,
-                                               old_path='/', # special case #238
-                                               format='zip')
+        switch_ordering_hrefs = {}
+        for col in ('name', 'size', 'date'):
+            switch_ordering_hrefs[col] = req.href.browser(
+                node.path, rev=rev, order=col,
+                desc=(col == order and not desc and 1 or None))
+
+        # ''Zip Archive'' alternate link
+        patterns = self.downloadable_paths
+        if node.path and patterns and \
+               filter(None, [fnmatchcase(node.path, p) for p in patterns]):
+            zip_href = req.href.changeset(rev or repos.youngest_rev, node.path,
+                                          old=rev, old_path='/', format='zip')
             add_link(req, 'alternate', zip_href, 'Zip Archive',
                      'application/zip', 'zip')
-        
-        
+
+        req.hdf['browser'] = {'order': order, 'desc': desc and 1 or 0,
+                              'items': info, 'changes': changes,
+                              'order_href': switch_ordering_hrefs}
+
     def _render_file(self, req, repos, node, rev=None):
         req.perm.assert_permission('FILE_VIEW')
 
-        changeset = repos.get_changeset(node.rev)  
-        req.hdf['file'] = {  
-            'rev': node.rev,  
-            'changeset_href': self.env.href.changeset(node.rev),
-            'date': util.format_datetime(changeset.date),
-            'age': util.pretty_timedelta(changeset.date),
-            'author': changeset.author or 'anonymous',
-            'message': wiki_to_html(changeset.message or '--', self.env, req,
-                                    escape_newlines=True)
-        }
-
         mimeview = Mimeview(self.env)
-        
-        def get_mime_type(content=None):
-            mime_type = node.content_type
-            if not mime_type or mime_type == 'application/octet-stream':
-                mime_type = get_mimetype(node.name, content) or \
-                            mime_type or 'text/plain'
-            return mime_type
 
+        # MIME type detection
+        content = node.get_content()
+        chunk = content.read(CHUNK_SIZE)
+        mime_type = node.content_type
+        if not mime_type or mime_type == 'application/octet-stream':
+            mime_type = mimeview.get_mimetype(node.name, chunk) or \
+                        mime_type or 'text/plain'
+
+        # Eventually send the file directly
         format = req.args.get('format')
         if format in ['raw', 'txt']:
-            content = node.get_content()
-            chunk = content.read(CHUNK_SIZE)
-            mime_type = get_mime_type(chunk)
-
             req.send_response(200)
             req.send_header('Content-Type',
                             format == 'txt' and 'text/plain' or mime_type)
             req.send_header('Content-Length', node.content_length)
-            req.send_header('Last-Modified', util.http_date(node.last_modified))
+            req.send_header('Last-Modified', http_date(node.last_modified))
             req.end_headers()
 
             while 1:
@@ -204,34 +225,49 @@ class BrowserModule(Component):
                 req.write(chunk)
                 chunk = content.read(CHUNK_SIZE)
         else:
-            # Generate HTML preview
-            content = node.get_content().read(mimeview.max_preview_size())
-            mime_type = get_mime_type(content)
-            use_rev = rev and node.rev
-            
-            if not is_binary(content):
-                if mime_type != 'text/plain':
-                    plain_href = self.env.href.browser(node.path, rev=use_rev,
-                                                       format='txt')
-                    add_link(req, 'alternate', plain_href, 'Texte standard',
-                             'text/plain')
-                    
-            self.log.debug("Rendering preview of file %s with mime-type %s"
-                           % (node.name, mime_type))
+            # The changeset corresponding to the last change on `node` 
+            # is more interesting than the `rev` changeset.
+            changeset = repos.get_changeset(node.rev)
 
-            req.hdf['file'] = mimeview.preview_to_hdf(req, content, mime_type,
-                                                      node.name, node.rev,
-                                                      annotations=['lineno'])
+            message = changeset.message or '--'
+            if self.config['changeset'].getbool('wiki_format_messages'):
+                message = wiki_to_html(message, self.env, req,
+                                       escape_newlines=True)
+            else:
+                message = html.PRE(message)
 
-            raw_href = self.env.href.browser(node.path, rev=use_rev,
-                                             format='raw')
+            req.hdf['file'] = {
+                'rev': node.rev,
+                'changeset_href': req.href.changeset(node.rev),
+                'date': format_datetime(changeset.date),
+                'age': pretty_timedelta(changeset.date),
+                'author': changeset.author or 'anonymous',
+                'message': message
+            } 
+
+            # add ''Plain Text'' alternate link if needed
+            if not is_binary(chunk) and mime_type != 'text/plain':
+                plain_href = req.href.browser(node.path, rev=rev, format='txt')
+                add_link(req, 'alternate', plain_href, 'Plain Text',
+                         'text/plain')
+
+            # add ''Original Format'' alternate link (always)
+            raw_href = req.href.browser(node.path, rev=rev, format='raw')
             add_link(req, 'alternate', raw_href, 'Format original', mime_type)
-            req.hdf['file.raw_href'] = raw_href
+
+            self.log.debug("Rendering preview of node %s@%s with mime-type %s"
+                           % (node.name, str(rev), mime_type))
+
+            del content # the remainder of that content is not needed
+
+            req.hdf['file'] = mimeview.preview_to_hdf(
+                req, node.get_content(), node.get_content_length(), mime_type,
+                node.created_path, raw_href, annotations=['lineno'])
 
             add_stylesheet(req, 'common/css/code.css')
 
     # IWikiSyntaxProvider methods
-    
+
     def get_wiki_syntax(self):
         return []
 
@@ -241,16 +277,9 @@ class BrowserModule(Component):
                 ('browser', self._format_link)]
 
     def _format_link(self, formatter, ns, path, label):
-        match = IMG_RE.search(path)
-        if formatter.flavor != 'oneliner' and match:
-            return '<img src="%s" alt="%s" />' % \
-                   (formatter.href.file(path, format='raw'), label)
         path, rev, line = get_path_rev_line(path)
+        fragment = ''
         if line is not None:
-            anchor = '#L%d' % line
-        else:
-            anchor = ''
-        label = urllib.unquote(label)
-        return '<a class="source" href="%s%s">%s</a>' \
-               % (util.escape(formatter.href.browser(path, rev=rev)), anchor,
-                  label)
+            fragment = '#L%d' % line
+        return html.A(label, class_='source',
+                      href=formatter.href.browser(path, rev=rev) + fragment)

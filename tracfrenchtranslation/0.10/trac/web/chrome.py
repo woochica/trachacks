@@ -17,9 +17,11 @@
 import os
 import re
 
-from trac import mimeview, util
+from trac import mimeview
+from trac.config import *
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
+from trac.util.markup import html
 from trac.web.api import IRequestHandler, HTTPNotFound
 from trac.web.href import Href
 from trac.wiki import IWikiSyntaxProvider
@@ -50,6 +52,22 @@ def add_stylesheet(req, filename, mimetype='text/css'):
     else:
         href = Href(req.base_path).chrome
     add_link(req, 'stylesheet', href(filename), mimetype=mimetype)
+
+def add_javascript(req, filename):
+    """ Include Javascript in the current template. """
+    if filename.startswith('common/') and 'htdocs_location' in req.hdf:
+        href = Href(req.hdf['htdocs_location'])
+        filename = filename[7:]
+    else:
+        href = Href(req.base_path).chrome
+    href = href(filename)
+    idx = 0
+    while True:
+        js = req.hdf.get('chrome.js.%i' % idx)
+        if not js: break
+        if js == href: return
+        idx += 1
+    req.hdf['chrome.js.%i' % idx] = href
 
 
 class INavigationContributor(Interface):
@@ -104,6 +122,36 @@ class Chrome(Component):
     navigation_contributors = ExtensionPoint(INavigationContributor)
     template_providers = ExtensionPoint(ITemplateProvider)
 
+    templates_dir = Option('trac', 'templates_dir', default_dir('templates'),
+        """Path to the !ClearSilver templates.""")
+
+    htdocs_location = Option('trac', 'htdocs_location', '',
+        """Base URL of the core static resources.""")
+
+    metanav_order = ListOption('trac', 'metanav',
+                               'login,logout,settings,help,about', doc=
+        """List of items IDs to display in the navigation bar `metanav`.""")
+
+    mainnav_order = ListOption('trac', 'mainnav',
+                               'wiki,timeline,roadmap,browser,tickets,'
+                               'newticket,search', doc=
+        """List of item IDs to display in the navigation bar `mainnav`.""")
+
+    logo_link = Option('header_logo', 'link', 'http://example.org/',
+        """URL to link to from header logo.""")
+
+    logo_src = Option('header_logo', 'src', 'common/trac_banner.png',
+        """URL of the image to use as header logo.""")
+
+    logo_alt = Option('header_logo', 'alt', '',
+        """Alternative text for the header logo.""")
+
+    logo_width = IntOption('header_logo', 'width', -1,
+        """Width of the header logo image in pixels.""")
+
+    logo_height = IntOption('header_logo', 'height', -1,
+        """Height of the header logo image in pixels.""")
+
     # IEnvironmentSetupParticipant methods
 
     def environment_created(self):
@@ -148,7 +196,11 @@ class Chrome(Component):
     def upgrade_environment(self, db):
         pass
 
+
     # IRequestHandler methods
+
+    anonymous_request = True
+    use_template = False
 
     def match_request(self, req):
         match = re.match(r'/chrome/(?P<prefix>[^/]+)/(?P<filename>[/\w\-\.]+)',
@@ -183,8 +235,7 @@ class Chrome(Component):
                 ('site', self.env.get_htdocs_dir())]
 
     def get_templates_dirs(self):
-        return [self.env.get_templates_dir(),
-                self.config.get('trac', 'templates_dir')]
+        return [self.env.get_templates_dir(), self.templates_dir]
 
     # IWikiSyntaxProvider methods
     
@@ -195,8 +246,7 @@ class Chrome(Component):
         yield ('htdocs', self._format_link)
 
     def _format_link(self, formatter, ns, file, label):
-        href = self.env.href.chrome('site', file)
-        return '<a href="%s">%s</a>' % (util.escape(href), label)
+        return html.A(label, href=formatter.href.chrome('site', file))
 
     # Public API methods
 
@@ -215,16 +265,16 @@ class Chrome(Component):
 
         href = Href(req.base_path)
         req.hdf['chrome.href'] = href.chrome()
-        htdocs_location = self.config.get('trac', 'htdocs_location') or \
-                          href.chrome('common')
+        htdocs_location = self.htdocs_location or href.chrome('common')
         req.hdf['htdocs_location'] = htdocs_location.rstrip('/') + '/'
 
         # HTML <head> links
-        add_link(req, 'start', self.env.href.wiki())
-        add_link(req, 'search', self.env.href.search())
-        add_link(req, 'help', self.env.href.wiki('TracGuide'))
+        add_link(req, 'start', req.href.wiki())
+        add_link(req, 'search', req.href.search())
+        add_link(req, 'help', req.href.wiki('TracGuide'))
         add_stylesheet(req, 'common/css/trac.css')
-        icon = self.config.get('project', 'icon')
+        add_javascript(req, 'common/js/trac.js')
+        icon = self.env.project_icon
         if icon:
             if not icon.startswith('/') and icon.find('://') == -1:
                 if '/' in icon:
@@ -236,8 +286,7 @@ class Chrome(Component):
             add_link(req, 'shortcut icon', icon, mimetype=mimetype)
 
         # Logo image
-        logo_link = self.config.get('header_logo', 'link')
-        logo_src = self.config.get('header_logo', 'src')
+        logo_src = self.logo_src
         if logo_src:
             logo_src_abs = logo_src.startswith('http://') or \
                            logo_src.startswith('https://')
@@ -246,14 +295,15 @@ class Chrome(Component):
                     logo_src = href.chrome(logo_src)
                 else:
                     logo_src = href.chrome('common', logo_src)
+            width = self.logo_width > -1 and self.logo_width
+            height = self.logo_height > -1 and self.logo_height
             req.hdf['chrome.logo'] = {
-                'link': logo_link, 'src': logo_src, 'src_abs': logo_src_abs,
-                'alt': self.config.get('header_logo', 'alt'),
-                'width': self.config.get('header_logo', 'width', ''),
-                'height': self.config.get('header_logo', 'height', '')
+                'link': self.logo_link, 'src': logo_src,
+                'src_abs': logo_src_abs, 'alt': self.logo_alt,
+                'width': width, 'height': height
             }
         else:
-            req.hdf['chrome.logo.link'] = logo_link
+            req.hdf['chrome.logo.link'] = self.logo_link
 
         # Navigation links
         navigation = {}
@@ -265,8 +315,7 @@ class Chrome(Component):
                 active = contributor.get_active_navigation_item(req)
 
         for category, items in [(k, v.items()) for k, v in navigation.items()]:
-            order = [x.strip() for x
-                     in self.config.get('trac', category).split(',')]
+            order = getattr(self, category + '_order')
             def navcmp(x, y):
                 if x[0] not in order:
                     return int(y[0] in order)

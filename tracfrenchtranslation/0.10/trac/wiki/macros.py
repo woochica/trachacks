@@ -1,7 +1,7 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005 Edgewall Software
-# Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2005-2006 Edgewall Software
+# Copyright (C) 2005-2006 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -18,56 +18,62 @@ import imp
 import inspect
 import os
 import re
-
 try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+    set
+except NameError:
+    from sets import Set as set
+from StringIO import StringIO
 
 from trac.config import default_dir
 from trac.core import *
-from trac.util import escape, format_date
+from trac.util import sorted
+from trac.util.datefmt import format_date
+from trac.util.markup import escape, html, Markup
 from trac.wiki.api import IWikiMacroProvider, WikiSystem
 from trac.wiki.model import WikiPage
+from trac.web.chrome import add_stylesheet
 
 
-class TitleIndexMacro(Component):
-    """
-    Insère une liste alphabetique de toutes les pages Wiki
+class WikiMacroBase(Component):
+    u"""Classe abstraite de base pour toutes les macros Wiki."""
+    implements(IWikiMacroProvider)
+    abstract = True
 
+    def get_macros(self):
+        """Yield the name of the macro based on the class name."""
+        name = self.__class__.__name__
+        if name.endswith('Macro'):
+            name = name[:-5]
+        yield name
+
+    def get_macro_description(self, name):
+        """Return the subclass's docstring."""
+        return inspect.getdoc(self.__class__)
+
+    def render_macro(self, req, name, content):
+        raise NotImplementedError
+
+
+class TitleIndexMacro(WikiMacroBase):
+    u"""Insère une liste alphabetique de toutes les pages Wiki
+    
     Accèpte un paramètre précisant le préfixe: s'il est fourni, seules les
     pages commencant par ce prefix seront incluses dans la liste résultante.
     S'il n'est pas fournit, toutes les pages seront listées.
     """
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'TitleIndex'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(TitleIndexMacro)
 
     def render_macro(self, req, name, content):
         prefix = content or None
 
         wiki = WikiSystem(self.env)
-        pages = list(wiki.get_pages(prefix))
-        pages.sort()
 
-        buf = StringIO()
-        buf.write('<ul>')
-        for page in pages:
-            buf.write('<li><a href="%s">' % escape(self.env.href.wiki(page)))
-            buf.write(escape(page))
-            buf.write('</a></li>\n')
-        buf.write('</ul>')
-
-        return buf.getvalue()
+        return html.UL([html.LI(html.A(wiki.format_page_name(page),
+                                       href=req.href.wiki(page)))
+                        for page in sorted(wiki.get_pages(prefix))])
 
 
-class RecentChangesMacro(Component):
-    """
-    Liste toutes les pages qui ont été modifiées récemment, en les regroupant
+class RecentChangesMacro(WikiMacroBase):
+    u"""Liste toutes les pages qui ont été modifiées récemment, en les regroupant
     par le jour de leur dernière modification.
 
     La macro accèpte deux paramètres. Le premier est un prefix: s'il est 
@@ -79,13 +85,6 @@ class RecentChangesMacro(Component):
     Par exemple, en spécifiant une limite de 5, seules les dernières 5 pages 
     récemment changées seront incluses dans la liste.
     """
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'RecentChanges'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(RecentChangesMacro)
 
     def render_macro(self, req, name, content):
         prefix = limit = None
@@ -99,39 +98,38 @@ class RecentChangesMacro(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        sql = 'SELECT name, max(time) FROM wiki'
+        sql = 'SELECT name, max(time) AS max_time FROM wiki'
         args = []
         if prefix:
             sql += ' WHERE name LIKE %s'
             args.append(prefix + '%')
-        sql += ' GROUP BY name ORDER BY max(time) DESC'
+        sql += ' GROUP BY name ORDER BY max_time DESC'
         if limit:
             sql += ' LIMIT %s'
             args.append(limit)
         cursor.execute(sql, args)
 
-        buf = StringIO()
+        entries_per_date = []
         prevdate = None
-
         for name, time in cursor:
             date = format_date(time)
             if date != prevdate:
-                if prevdate:
-                    buf.write('</ul>')
-                buf.write('<h3>%s</h3><ul>' % date)
                 prevdate = date
-            buf.write('<li><a href="%s">%s</a></li>\n'
-                      % (escape(self.env.href.wiki(name)), escape(name)))
-        if prevdate:
-            buf.write('</ul>')
+                entries_per_date.append((date, []))
+            entries_per_date[-1][1].append(name)
 
-        return buf.getvalue()
+        wiki = WikiSystem(self.env)
+        return html.DIV([html.H3(date) +
+                         html.UL([html.LI(html.A(wiki.format_page_name(name),
+                                                 href=req.href.wiki(name)))
+                                    for name in entries])
+                         for date, entries in entries_per_date])
 
 
-class PageOutlineMacro(Component):
-    """
+class PageOutlineMacro(WikiMacroBase):
+    u"""
     Affiche la structure de la page Wiki courante, chaque élement de la 
-    structure intégrant un lien vers la section correspondante
+    structure intégrant un lien vers la section correspondante.
 
     Cette macro accèpte trois paramètes optionnels: 
 
@@ -152,13 +150,6 @@ class PageOutlineMacro(Component):
        structure dans un cadre qui est accollé sur la droite du reste du 
        contenu de la page.
     """
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'PageOutline'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(PageOutlineMacro)
 
     def render_macro(self, req, name, content):
         from trac.wiki.formatter import wiki_to_outline
@@ -195,8 +186,8 @@ class PageOutlineMacro(Component):
         return buf.getvalue()
 
 
-class ImageMacro(Component):
-    """
+class ImageMacro(WikiMacroBase):
+    u"""
     Intègre une image dans du texte wiki.
 
     Le premier argument spécifie le fichier image. Le fichier image peut 
@@ -223,15 +214,13 @@ class ImageMacro(Component):
      * le style `key=value` est interprété comme des attributs HTML de l'image
      * le style `key:value` est interprété comme des indicateurs CSS de l'image
     
-    Exemples:
+     Exemples:
     {{{
         [[Image(photo.jpg)]]                           # le plus simple
         [[Image(photo.jpg, 120px)]]                    # avec la taille
         [[Image(photo.jpg, right)]]                    # aligné par mot clef
         [[Image(photo.jpg, nolink)]]                   # sans lien vers la source
         [[Image(photo.jpg, align=right)]]              # aligné par un style HTML
-        [[Image(photo.jpg, float:right)]]              # aligne par un style CSS
-        [[Image(photo.jpg, float:right, border:solid 5px green)]] # 2 styles
     }}}
     
     Vous pouvez utiliser une image jointe à une autre page, un autre ticket ou
@@ -248,13 +237,6 @@ class ImageMacro(Component):
     ''Basé sur une adaptation de la macro Image.py créée par Shun-ichi Goto
     <gotoh@taiyo.co.jp>''
     """
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'Image'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(ImageMacro)
 
     def render_macro(self, req, name, content):
         # args will be null if the macro is called without parenthesis.
@@ -266,38 +248,34 @@ class ImageMacro(Component):
         if len(args) == 0:
             raise Exception("Aucun argument")
         filespec = args[0]
-        size_re = re.compile('^[0-9]+%?$')
-        align_re = re.compile('^(?:left|right|top|bottom)$')
-        keyval_re = re.compile('^([-a-z0-9]+)([=:])(.*)')
-        quoted_re = re.compile("^(?:[\"'])(.*)(?:[\"'])$")
+        size_re = re.compile('[0-9]+%?$')
+        attr_re = re.compile('(align|border|width|height|alt'
+                             '|title|longdesc|class|id|usemap)=(.+)')
+        quoted_re = re.compile("(?:[\"'])(.*)(?:[\"'])$")
         attr = {}
         style = {}
         nolink = False
         for arg in args[1:]:
             arg = arg.strip()
-            if size_re.search(arg):
+            if size_re.match(arg):
                 # 'width' keyword
                 attr['width'] = arg
-                continue
-            if align_re.search(arg):
-                # 'align' keyword
-                attr['align'] = arg
                 continue
             if arg == 'nolink':
                 nolink = True
                 continue
-            match = keyval_re.search(arg)
+            match = attr_re.match(arg)
             if match:
-                key = match.group(1)
-                sep = match.group(2)
-                val = match.group(3)
+                key, val = match.groups()
                 m = quoted_re.search(val) # unquote "..." and '...'
                 if m:
                     val = m.group(1)
-                if sep == '=':
-                    attr[key] = val;
-                elif sep == ':':
-                    style[key] = val
+                if key == 'align':
+                    style['float'] = val
+                elif key == 'border':
+                    style['border'] = ' %dpx solid' % int(val);
+                else:
+                    attr[str(key)] = val # will be used as a __call__ keyword
 
         # parse filespec argument to get module and id if contained.
         parts = filespec.split(':')
@@ -320,8 +298,8 @@ class ImageMacro(Component):
                 rev = None
                 if '@' in file:
                     file, rev = file.split('@')
-                url = self.env.href.browser(file, rev=rev)
-                raw_url = self.env.href.browser(file, rev=rev, format='raw')
+                url = req.href.browser(file, rev=rev)
+                raw_url = req.href.browser(file, rev=rev, format='raw')
                 desc = filespec
             else: # #ticket:attachment or WikiPage:attachment
                 # FIXME: do something generic about shorthand forms...
@@ -330,7 +308,7 @@ class ImageMacro(Component):
                     module = 'ticket'
                     id = id[1:]
                 elif id == 'htdocs':
-                    raw_url = url = self.env.href.chrome('site', file)
+                    raw_url = url = req.href.chrome('site', file)
                     desc = os.path.basename(file)
                 else:
                     module = 'wiki'
@@ -346,31 +324,30 @@ class ImageMacro(Component):
             if len(path_info) > 2:
                 id = path_info[2]
             if module not in ['wiki', 'ticket']:
-                raise Exception('Impossible de référencer un fichier joint '
-                                'depuis cet endroit') 
-            else:
-                raise Exception('Pas de définition de fichier reçue')
+                raise Exception(u'Impossible de référencer un fichier joint '
+                                 'depuis cet endroit') 
+        else:
+            raise Exception(u'Pas de définition de fichier reçue')
         if not url: # this is an attachment
             from trac.attachment import Attachment
             attachment = Attachment(self.env, module, id, file)
-            url = attachment.href()
-            raw_url = attachment.href(format='raw')
+            url = attachment.href(req)
+            raw_url = attachment.href(req, format='raw')
             desc = attachment.description
         for key in ['title', 'alt']:
             if desc and not attr.has_key(key):
                 attr[key] = desc
-        a_style = 'padding:0; border:none' # style of anchor
-        img_attr = ' '.join(['%s="%s"' % x for x in attr.iteritems()])
-        img_style = '; '.join(['%s:%s' % x for x in style.iteritems()])
-        result = '<img src="%s" %s style="%s" />' \
-                 % (raw_url, img_attr, img_style)
+        if style:
+            attr['style'] = '; '.join(['%s:%s' % (k, escape(v))
+                                       for k, v in style.iteritems()])
+        result = Markup(html.IMG(src=raw_url, **attr)).sanitize()
         if not nolink:
-            result = '<a href="%s" style="%s">%s</a>' % (url, a_style, result)
+            result = html.A(result, href=url, style='padding:0; border:none')
         return result
 
 
-class MacroListMacro(Component):
-    """Affiche une liste de toutes les macros Wiki installées, en incluant leur
+class MacroListMacro(WikiMacroBase):
+    u"""Affiche une liste de toutes les macros Wiki installées, en incluant leur
     éventuelle documentation.
     
     Il est également possible d'indiquer le nom d'une macro particulière comme 
@@ -380,37 +357,93 @@ class MacroListMacro(Component):
     ne sera pas capable d'afficher quelque documentation que ce soit sur les 
     autres macros. 
     """
-    implements(IWikiMacroProvider)
-
-    def get_macros(self):
-        yield 'MacroList'
-
-    def get_macro_description(self, name):
-        return inspect.getdoc(MacroListMacro)
 
     def render_macro(self, req, name, content):
-        from trac.wiki.formatter import wiki_to_html
+        from trac.wiki.formatter import wiki_to_html, system_message
         from trac.wiki import WikiSystem
-        buf = StringIO()
-        buf.write("<dl>")
-
         wiki = WikiSystem(self.env)
-        for macro_provider in wiki.macro_providers:
-            for macro_name in macro_provider.get_macros():
-                if content and macro_name != content:
-                    continue
-                buf.write("<dt><code>[[%s]]</code></dt>" % escape(macro_name))
-                description = macro_provider.get_macro_description(macro_name)
-                if description:
-                    buf.write("<dd>%s</dd>" % wiki_to_html(description,
-                                                           self.env, req))
 
-        buf.write("</dl>")
-        return buf.getvalue()
+        def get_macro_descr():
+            for macro_provider in wiki.macro_providers:
+                for macro_name in macro_provider.get_macros():
+                    if content and macro_name != content:
+                        continue
+                    try:
+                        descr = macro_provider.get_macro_description(macro_name)
+                        descr = wiki_to_html(descr or '', self.env, req)
+                    except Exception, e:
+                        descr = Markup(system_message(
+                            "Error: Can't get description for macro %s" \
+                            % macro_name, e))
+                    yield (macro_name, descr)
+
+        return html.DL([(html.DT(html.CODE('[[',macro_name,']]')),
+                         html.DD(description))
+                        for macro_name, description in get_macro_descr()])
+
+
+class InterTracMacro(WikiMacroBase):
+    u"""Genère la liste de tous les prefixes InterTrac connus."""
+
+    def render_macro(self, req, name, content):
+        intertracs = {}
+        for key, value in self.config.options('intertrac'):
+            if '.' in key:
+                prefix, attribute = key.split('.', 1)
+                intertrac = intertracs.setdefault(prefix, {})
+                intertrac[attribute] = value
+            else:
+                intertracs[key] = value # alias
+
+        def generate_prefix(prefix):
+            intertrac = intertracs[prefix]
+            if isinstance(intertrac, basestring):
+                yield html.TR(html.TD(html.B(prefix)),
+                              html.TD('Alias for ', html.B(intertrac)))
+            else:
+                url = intertrac.get('url', '')
+                if url:
+                    title = intertrac.get('title', url)
+                    yield html.TR(html.TD(html.A(html.B(prefix),
+                                                 href=url + '/timeline')),
+                                  html.TD(html.A(title, href=url)))
+
+        return html.TABLE(class_="wiki intertrac")(
+            html.TR(html.TH(html.EM('Prefix')), html.TH(html.EM('Trac Site'))),
+            [generate_prefix(p) for p in sorted(intertracs.keys())])
+
+
+class TracIniMacro(WikiMacroBase):
+    u"""Génère la documentation pour le fichier de configuration de Trac.
+
+    Cette macro est typiquement utilisée dans la page TracIni.
+    Les arguments optionnels permettre de filtrer une section particulière
+    de configuration et le nom d'une option de cette section.
+    Seules les options dont la section et le nom commencent par les filtres
+    indiqués sont documentés. 
+    """
+
+    def render_macro(self, req, name, filter):
+        from trac.config import Option
+        from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
+        filter = filter or ''
+
+        sections = set([section for section, option in Option.registry.keys()
+                        if section.startswith(filter)])
+
+        return html.DIV(class_='tracini')(
+            [(html.H2('[%s]' % section, id='%s-section' % section),
+              html.TABLE(class_='wiki')(
+                  html.TBODY([html.TR(html.TD(html.TT(option.name)),
+                                      html.TD(wiki_to_oneliner(option.__doc__,
+                                                               self.env)))
+                              for option in Option.registry.values()
+                              if option.section == section])))
+             for section in sorted(sections)])
 
 
 class UserMacroProvider(Component):
-    """Ajoute les macros fournies sous forme de fichiers source Python à partir
+    u"""Ajoute les macros fournies sous forme de fichiers source Python à partir
     du répertoire `wiki-macros` de l'environnement Trac, ou du répertoire 
     global des macros
     """

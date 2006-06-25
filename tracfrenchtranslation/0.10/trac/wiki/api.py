@@ -24,8 +24,9 @@ import time
 import urllib
 import re
 
+from trac.config import BoolOption
 from trac.core import *
-from trac.util import to_utf8
+from trac.util.markup import html
 
 
 class IWikiChangeListener(Interface):
@@ -41,6 +42,29 @@ class IWikiChangeListener(Interface):
 
     def wiki_page_deleted(page):
         """Called when a page has been deleted."""
+
+    def wiki_page_version_deleted(page):
+        """Called when a version of a page has been deleted."""
+
+
+class IWikiPageManipulator(Interface):
+    """Extension point interface for components that need to to specific
+    pre and post processing of wiki page changes.
+    
+    Unlike change listeners, a manipulator can reject changes being committed
+    to the database.
+    """
+
+    def prepare_wiki_page(req, page, fields):
+        """Not currently called, but should be provided for future
+        compatibility."""
+
+    def validate_wiki_page(req, page):
+        """Validate a wiki page after it's been populated from user input.
+        
+        Must return a list of `(field, message)` tuples, one for each problem
+        detected. `field` can be `None` to indicate an overall problem with the
+        page. Therefore, a return value of `[]` means everything is OK."""
 
 
 class IWikiMacroProvider(Interface):
@@ -89,6 +113,14 @@ class WikiSystem(Component):
 
     INDEX_UPDATE_INTERVAL = 5 # seconds
 
+    ignore_missing_pages = BoolOption('wiki', 'ignore_missing_pages', 'false',
+        """Enable/disable highlighting CamelCase links to missing pages
+        (''since 0.9'').""")
+
+    split_page_names = BoolOption('wiki', 'split_page_names', 'false',
+        """Enable/disable splitting the WikiPageNames with space characters
+        (''since 0.10'').""")
+
     def __init__(self):
         self._index = None
         self._last_index_update = 0
@@ -130,7 +162,7 @@ class WikiSystem(Component):
     def has_page(self, pagename):
         """Whether a page with the specified name exists."""
         self._update_index()
-        return self._index.has_key(pagename)
+        return self._index.has_key(pagename.rstrip('/'))
 
     def _get_rules(self):
         self._prepare_rules()
@@ -146,7 +178,7 @@ class WikiSystem(Component):
         self._prepare_rules()
         return self._external_handlers
     external_handlers = property(_get_external_handlers)
-    
+
     def _prepare_rules(self):
         from trac.wiki.formatter import Formatter
         if not self._compiled_rules:
@@ -156,7 +188,7 @@ class WikiSystem(Component):
             i = 0
             for resolver in self.syntax_providers:
                 for regexp, handler in resolver.get_wiki_syntax():
-                    handlers['i'+str(i)] = handler
+                    handlers['i' + str(i)] = handler
                     syntax.append('(?P<i%d>%s)' % (i, regexp))
                     i += 1
             syntax += Formatter._post_rules[:]
@@ -193,34 +225,40 @@ class WikiSystem(Component):
             self.log.debug('Removing page %s from index' % page.name)
             del self._index[page.name]
 
+    def wiki_page_version_deleted(self, page):
+        pass
+
     # IWikiSyntaxProvider methods
+
+    def format_page_name(self, page):
+        if self.split_page_names:
+            return re.sub(r"([a-z])([A-Z][a-z])", r"\1 \2", page)
+        return page
     
     def get_wiki_syntax(self):
-        ignore_missing = self.config.getbool('wiki', 'ignore_missing_pages')
-        yield (r"!?(?<!/)\b[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+"
-                "(?:#[A-Za-z0-9]+)?(?=:?\Z|:?\s|[.,;!?\)}\]])",
-               lambda x, y, z: self._format_link(x, 'wiki', y, y,
-                                                 ignore_missing))
+        def wikipagenames_link(formatter, match, fullmatch):
+            return self._format_link(formatter, 'wiki', match,
+                                     self.format_page_name(match),
+                                     self.ignore_missing_pages)
+        
+        yield (r"!?(?<!/)\b" # start at a word boundary but not after '/'
+               r"[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" # wiki words
+               r"(?:#[A-Za-z0-9]+)?" # optional fragment identifier
+               r"(?=:?\Z|:?\s|[.,;!?\)}\]])", # what should follow it
+               wikipagenames_link)
 
     def get_link_resolvers(self):
-        yield ('wiki', self._format_fancy_link)
-
-    def _format_fancy_link(self, f, n, p, l):
-        return self._format_link(f, n, p, l, False)
+        def link_resolver(formatter, ns, target, label):
+            return self._format_link(formatter, ns, target, label, False)
+        yield ('wiki', link_resolver)
 
     def _format_link(self, formatter, ns, page, label, ignore_missing):
-        anchor = ''
-        if page.find('#') != -1:
-            anchor = page[page.find('#'):]
-            page = page[:page.find('#')]
-        page = urllib.unquote(page)
-        label = urllib.unquote(label)
-
+        page, query, fragment = formatter.split_link(page)
+        href = formatter.href.wiki(page) + fragment
         if not self.has_page(page):
             if ignore_missing:
                 return label
-            return '<a class="missing wiki" href="%s" rel="nofollow">%s?</a>' \
-                   % (formatter.href.wiki(page) + anchor, label)
+            return html.A(label+'?', href=href, class_='missing wiki',
+                          rel='nofollow')
         else:
-            return '<a class="wiki" href="%s">%s</a>' \
-                   % (formatter.href.wiki(page) + anchor, label)
+            return html.A(label, href=href, class_='wiki')

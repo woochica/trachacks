@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Daniel Lundin <daniel@edgewall.com>
 # All rights reserved.
 #
@@ -14,11 +14,10 @@
 #
 # Author: Daniel Lundin <daniel@edgewall.com>
 
-from trac.config import default_dir
 from trac.db import Table, Column, Index
 
 # Database version identifier. Used for automatic upgrades.
-db_version = 17
+db_version = 19
 
 def __mkreports(reports):
     """Utility function used to create report data in same syntax as the
@@ -47,11 +46,17 @@ schema = [
         Column('name'),
         Column('ipnr'),
         Column('time', type='int')],
-    Table('session', key=('sid', 'authenticated', 'var_name'))[
+    Table('session', key=('sid', 'authenticated'))[
         Column('sid'),
         Column('authenticated', type='int'),
-        Column('var_name'),
-        Column('var_value')],
+        Column('last_visit', type='int'),
+        Index(['last_visit']),
+        Index(['authenticated'])],
+    Table('session_attribute', key=('sid', 'authenticated', 'name'))[
+        Column('sid'),
+        Column('authenticated', type='int'),
+        Column('name'),
+        Column('value')],
 
     # Attachments
     Table('attachment', key=('type', 'id', 'filename'))[
@@ -120,7 +125,8 @@ schema = [
         Column('field'),
         Column('oldvalue'),
         Column('newvalue'),
-        Index(['ticket', 'time'])],
+        Index(['ticket']),
+        Index(['time'])],
     Table('ticket_custom', key=('ticket', 'name'))[
         Column('ticket', type='int'),
         Column('name'),
@@ -148,7 +154,7 @@ schema = [
         Column('id', auto_increment=True),
         Column('author'),
         Column('title'),
-        Column('sql'),
+        Column('query'),
         Column('description')],
 ]
 
@@ -280,7 +286,7 @@ SELECT p.value AS __color__,
 ('My Tickets',
 """
 This report demonstrates the use of the automatically set 
-$USER dynamic variable, replaced with the username of the
+USER dynamic variable, replaced with the username of the
 logged in user when executed.
 """,
 """
@@ -379,107 +385,16 @@ data = (('component',
              ('name', 'value'),
                (('database_version', str(db_version)),)),
            ('report',
-             ('author', 'title', 'sql', 'description'),
+             ('author', 'title', 'query', 'description'),
                __mkreports(reports)))
 
-default_config = \
- (('trac', 'repository_type', 'svn'),
-  ('trac', 'repository_dir', ''),
-  ('trac', 'templates_dir', default_dir('templates')),
-  ('trac', 'database', 'sqlite:db/trac.db'),
-  ('trac', 'default_charset', 'iso-8859-15'),
-  ('trac', 'default_handler', 'WikiModule'),
-  ('trac', 'check_auth_ip', 'true'),
-  ('trac', 'ignore_auth_case', 'false'),
-  ('trac', 'metanav', 'login,logout,settings,help,about'),
-  ('trac', 'mainnav', 'wiki,timeline,roadmap,browser,tickets,newticket,search'),
-  ('trac', 'permission_store', 'DefaultPermissionStore'),
-  ('logging', 'log_type', 'none'),
-  ('logging', 'log_file', 'trac.log'),
-  ('logging', 'log_level', 'DEBUG'),
-  ('project', 'name', 'My Project'),
-  ('project', 'descr', 'My example project'),
-  ('project', 'url', 'http://example.com/'),
-  ('project', 'icon', 'common/trac.ico'),
-  ('project', 'footer',
-   ' Découvrez Trac (project open source) sur <br />'
-   '<a href="http://trac.edgewall.com/">http://trac.edgewall.com/</a>'),
-  ('ticket', 'default_version', ''),
-  ('ticket', 'default_type', 'defect'),
-  ('ticket', 'default_priority', 'major'),
-  ('ticket', 'default_milestone', ''),
-  ('ticket', 'default_component', 'component1'),
-  ('ticket', 'restrict_owner', 'false'),
-  ('header_logo', 'link', 'http://trac.edgewall.com/'),
-  ('header_logo', 'src', 'common/trac_banner.png'),
-  ('header_logo', 'alt', 'Trac'),
-  ('header_logo', 'width', '236'),
-  ('header_logo', 'height', '73'),
-  ('attachment', 'max_size', '262144'),
-  ('attachment', 'render_unsafe_content', 'false'),
-  ('mimeviewer', 'enscript_path', 'enscript'),
-  ('mimeviewer', 'php_path', 'php'),
-  ('mimeviewer', 'tab_width', '8'),
-  ('mimeviewer', 'max_preview_size', '262144'),
-  ('notification', 'smtp_enabled', 'false'),
-  ('notification', 'smtp_server', 'localhost'),
-  ('notification', 'smtp_port', '25'),
-  ('notification', 'smtp_user', ''),
-  ('notification', 'smtp_password', ''),
-  ('notification', 'smtp_always_cc', ''),
-  ('notification', 'always_notify_owner', 'false'),
-  ('notification', 'always_notify_reporter', 'false'),
-  ('notification', 'smtp_from', 'trac@localhost'),
-  ('notification', 'smtp_replyto', 'trac@localhost'),
-  ('notification', 'mime_encoding', 'qp'),
-  ('notification', 'allow_public_cc', 'false'),
-  ('notification', 'maxheaderlen', '78'),
-  ('timeline', 'default_daysback', '30'),
-  ('timeline', 'changeset_show_files', '0'),
-  ('timeline', 'ticket_show_details', 'false'),
-  ('changeset', 'max_diff_files', '1000'),
-  ('changeset', 'max_diff_bytes', '10000000'),
-  ('browser', 'hide_properties', 'svk:merge'),
-  ('wiki', 'ignore_missing_pages', 'false'),
-  ('translation', 'fixed', 'corrigé'),
-  ('translation', 'invalid', 'invalide'),
-  ('translation', 'wontfix', 'noncorrigible'),
-  ('translation', 'duplicate', 'doublon'),
-  ('translation', 'worksforme', 'nonreproductible'),
-  ('translation', 'new', 'nouveau'),
-  ('translation', 'closed', 'fermé'),
-  ('translation', 'assigned', 'assigné'),
-  ('translation', 'reopened', 'réouvert'),
-  ('translation', 'reassign', 'réassigné'),
-  ('translation', 'blocker', 'bloquante'),
-  ('translation', 'critical', 'critique'),
-  ('translation', 'major', 'majeure'),
-  ('translation', 'minor', 'mineure'),
-  ('translation', 'trivial', 'triviale'),
-  ('translation', 'defect', 'défaut'),
-  ('translation', 'enhancement', 'amélioration'),
-  ('translation', 'task', 'tâche'),
-  ('translation', 'component', 'composant '),
-  ('translation', 'keywords', 'mots clefs'),
-  ('translation', 'priority', 'priorité'),
-  ('translation', 'milestone', 'jalon'),
-  ('translation', 'summary', 'intitulé'),
-  ('translation', 'resolution', 'résolution'),
-  ('translation', 'report', 'rapport'),
-  ('translation', 'title', 'titre'),
-  ('translation', 'owner', 'propriétaire'),
-  ('translation', 'reporter', 'rapporteur'),
-  ('translation', 'created', 'créé'),
-  ('translation', 'modified', 'modifié'),
-  ('translation', 'change', 'modification'),
-  ('translation', 'changeset', 'version')
-)
-
 default_components = ('trac.About', 'trac.attachment',
-                      'trac.db.postgres_backend', 'trac.db.sqlite_backend',
+                      'trac.db.mysql_backend', 'trac.db.postgres_backend',
+                      'trac.db.sqlite_backend',
                       'trac.mimeview.enscript', 'trac.mimeview.patch',
                       'trac.mimeview.php', 'trac.mimeview.rst',
                       'trac.mimeview.silvercity', 'trac.mimeview.txtl',
+                      'trac.scripts.admin',
                       'trac.Search', 'trac.Settings',
                       'trac.ticket.query', 'trac.ticket.report',
                       'trac.ticket.roadmap', 'trac.ticket.web_ui',
