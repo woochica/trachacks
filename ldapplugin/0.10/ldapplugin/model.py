@@ -474,7 +474,7 @@ class LdapUtil(object):
             return "%s=%s,%s,%s" % \
                    (self.uidattr, user, self.user_rdn, self.basedn)
         else:
-            return "%s,%s" % (self.uidattr, user, self.basedn)
+            return "%s=%s,%s" % (self.uidattr, user, self.basedn)
             
     def extract_user_from_dn(self, dn):
         m = DN_RE.search(dn)
@@ -597,7 +597,8 @@ class LdapConnection(object):
             if self.bind:
                 if not self.bind_user:
                     raise TracError("Bind enabled but credentials not defined")
-                if ( self.bind_user.find('=') == -1 ):
+                head = self.bind_user[:self.bind_user.find(',')]
+                if ( head.find('=') == -1 ):
                     self.bind_user = '%s=%s' % (self.uidattr, self.bind_user)
                 self._ds.simple_bind_s(self.bind_user, self.bind_passwd)
             else:
