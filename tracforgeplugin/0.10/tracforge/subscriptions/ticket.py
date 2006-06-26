@@ -12,6 +12,22 @@ from manager import SubscriptionManager
 
 import pickle
 
+class TicketOldValues(object):
+
+    history = [None]
+       
+    def __get__(self, instance, owner):
+        if instance == None:
+            return self
+        return self.history[-1]
+        
+    def __set__(self, instance, value):
+        self.history.append(value)
+        return self.history[-1]
+        
+    def __del__(self, instance):
+        self.history.append(None)
+
 class TicketSubscribable(Component):
     """A class implementing ticket subscription."""
     
@@ -39,6 +55,9 @@ class TicketSubscribable(Component):
             
         if config_changed:
             self.config.save()
+            
+        # Evil things
+        Ticket._old = TicketOldValues()
     
     # ISubscribable methods
     def subscribable_types(self):
@@ -75,6 +94,8 @@ class TicketSubscribable(Component):
         author = locals['author']
         when = locals['when']
         cnum = locals['cnum']
+        
+        self.log.debug(repr(Ticket._old.history))
     
         if ticket['tracforge_linkmap']:
             linkmap = unserialize_map(ticket['tracforge_linkmap'])
