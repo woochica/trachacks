@@ -22,7 +22,7 @@ setup(
 
     entry_points = {
         'trac.plugins': [
-            #'tracforge.web_ui = tracforge.web_ui',
+            'tracforge.subscriptions = tracforge.subscriptions',
         ],
     },
 

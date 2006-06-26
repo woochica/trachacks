@@ -8,7 +8,7 @@ from config import *
 
 import os
 
-class SubscriptionManagerModule(Component):
+class SubscriptionManager(Component):
     """A class that manages data subscriptions."""
 
     subscribers = ListDictOption('tracforge-subscribers', sep=os.pathsep, 
@@ -21,14 +21,18 @@ class SubscriptionManagerModule(Component):
     def __init__(self):
         pass
         
+    def get_subscribers(self, type):
+        # TODO: This should be storing data in the database
+        return self.subscribers[type]
+        
     def subscibe_to(self, source, type):
         source_env = open_env(sorce)
-        source_mgr = SubscriptionManagerModule(source_env)
+        source_mgr = SubscriptionManager(source_env)
         source_mgr._change_subscription('add', self.env, type)
         
     def unsubscribe_from(self, source, type):
         source_env = open_env(sorce)
-        source_mgr = SubscriptionManagerModule(source_env)
+        source_mgr = SubscriptionManager(source_env)
         source_mgr._change_subscription('delete', self.env, type)
 
     def _change_subscription(self, action, dest, type):

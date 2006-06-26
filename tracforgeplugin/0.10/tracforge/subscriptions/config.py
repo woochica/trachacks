@@ -7,6 +7,8 @@ __all__ = ['DictOption','ListDictOption']
 class DictOption(Option):
     """A new config type where a whole section is shown as a dict."""
     
+    default = {}
+    
     def __init__(self, section, doc=''):
         """Note: Unlike with the other options, the default is always {}."""
         self.section = section
