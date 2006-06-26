@@ -14,25 +14,28 @@ import pickle
 
 class TicketOldValues(object):
 
-    history = {}
+    _history = {}
+    
+    def history(self, instance):
+        key = (instance.env.path, instance,id)
+        if key not in self._history:
+            self._history[key] = [None]
+        return self._history[key]
+        
+    def real_old_values(self, instance):
+        return self.history(instance)[-2]
        
     def __get__(self, instance, owner):
         if instance == None:
             return self
-        if instance.id not in self.history:
-            self.history[instance.id] = [None]
-        return self.history[instance.id][-1]
+        return self.history(instance)[-1]
         
     def __set__(self, instance, value):
-        if instance.id not in self.history:
-            self.history[instance.id] = [None]
-        self.history[instance.id].append(value)
-        return self.history[instance.id][-1]
+        self.history(instance).append(value)
+        return self.history(instance)[-1]
         
     def __del__(self, instance):
-        if instance.id not in self.history:
-            self.history[instance.id] = [None]
-        self.history[instance.id].append(None)
+        self.history(instance).append(None)
 
 class TicketSubscribable(Component):
     """A class implementing ticket subscription."""
@@ -93,6 +96,7 @@ class TicketSubscribable(Component):
         db.commit()
         
     def ticket_changed(self, ticket, comment, old_values):
+        # Start evil things (if you aren't me, just skip over this part)
         import sys
         frame = sys._getframe(1)
         locals = frame.f_locals
@@ -101,8 +105,9 @@ class TicketSubscribable(Component):
         when = locals['when']
         cnum = locals['cnum']
         
-        self.log.debug(repr(Ticket._old.history))
-    
+        old_values = Ticket._old.real_old_values(ticket)
+        # End evil things
+        
         if ticket['tracforge_linkmap']:
             linkmap = unserialize_map(ticket['tracforge_linkmap'])
             for source, id in linkmap.items():
@@ -164,9 +169,9 @@ class TicketSubscribable(Component):
 
     def _ticket_changed(self, ticket, author, comment, cnum, when, old_values, local_id):
         my_ticket = Ticket(self.env, local_id)
-        for f in ticket.fields:
-            if not f['name'].startswith('tracforge'):
-                my_ticket[f['name']] = ticket[f['name']]
+        for f in old_values:
+            if not f.startswith('tracforge'):
+                my_ticket[f] = ticket[f]
             
         db = self.env.get_db_cnx()
         cursor = db.cursor()
