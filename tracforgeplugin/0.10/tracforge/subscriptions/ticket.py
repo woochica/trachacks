@@ -19,11 +19,19 @@ class TicketSubscribable(Component):
         # Ensure that our custom field exists
         config = self.config['ticket-custom']
         config_changed = False
+
         if 'tracforge_source' not in config:
-            self.log.info('TicketSubscribable: Creating custom ticket field')
+            self.log.info('TicketSubscribable: Creating custom tracforge_source ticket field')
             config.set('tracforge_source','text')
             #config.set('tracforge_source.skip','True') # This doesn't work, see RequestFilter methods
             config_changed = True
+
+        if 'tracforge_sourceid' not in config:
+            self.log.info('TicketSubscribable: Creating custom tracforge_sourceid ticket field')
+            config.set('tracforge_sourceid','text')
+            #config.set('tracforge_sourceid.skip','True') # This doesn't work, see RequestFilter methods
+            config_changed = True
+
         current_filters = self.config.get('trac','request_filters','').split(',')
         if 'TicketSubscribable' not in current_filters:
             self.log.info('TicketSubscribable: Adding TicketSubscribable to request_filters')
@@ -50,7 +58,14 @@ class TicketSubscribable(Component):
             ts = TicketSubscribable(env)._ticket_created(ticket_copy)
         
     def ticket_changed(self, ticket, comment, old_values):
-        pass
+        if ticket['tracforge_source'] and ticket['tracforge_source'] != self.env.path:
+            # This ticket came from somewhere else, push back to source
+            source = ticket['tracforge_source']
+            source_env = open_env(source)
+            TicketSubscribable(source_env)._ticket_changed(ticket, comment, old_values)
+        else:
+            # This ticket is from here, push to all subscribers
+            pass
        
     def ticket_deleted(self, ticket):
         pass
@@ -66,7 +81,12 @@ class TicketSubscribable(Component):
         elif req.path_info.startswith('/newticket'):
             prefix= 'newticket'
         if prefix:
-            req.hdf['%s.fields.tracforge_source.skip'%prefix] = True
+            hdf = req.hdf.getObj(prefix+'.fields')
+            node = hdf.child()
+            while node:
+                if node.name().startswith('tracforge'):
+                    req.hdf['%s.fields.%s.skip'%(prefix,node.name())] = True
+                node = node.next()
         
         return (template, content_type)
         
@@ -98,3 +118,7 @@ class TicketSubscribable(Component):
                                "VALUES (%s,%s,%s)", [(tkt_id, name, ticket[name])
                                                      for name in custom_fields])
         db.commit()
+
+    def _ticket_changed(self, ticket, comment, old_values):
+        #my_ticket = Ticket(self.env, t
+        pass
