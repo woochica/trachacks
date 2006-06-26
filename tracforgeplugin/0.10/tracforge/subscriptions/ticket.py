@@ -14,19 +14,25 @@ import pickle
 
 class TicketOldValues(object):
 
-    history = [None]
+    history = {}
        
     def __get__(self, instance, owner):
         if instance == None:
             return self
-        return self.history[-1]
+        if instance.id not in self.history:
+            self.history[instance.id] = [None]
+        return self.history[instance.id][-1]
         
     def __set__(self, instance, value):
-        self.history.append(value)
-        return self.history[-1]
+        if instance.id not in self.history:
+            self.history[instance.id] = [None]
+        self.history[instance.id].append(value)
+        return self.history[instance.id][-1]
         
     def __del__(self, instance):
-        self.history.append(None)
+        if instance.id not in self.history:
+            self.history[instance.id] = [None]
+        self.history[instance.id].append(None)
 
 class TicketSubscribable(Component):
     """A class implementing ticket subscription."""
