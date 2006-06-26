@@ -3,6 +3,8 @@
 from trac.core import *
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.model import Ticket
+from trac.web.api import IRequestFilter
+from trac.web.main import RequestDispatcher
 
 from api import *
 from util import *
@@ -11,15 +13,25 @@ from manager import SubscriptionManager
 class TicketSubscribable(Component):
     """A class implementing ticket subscription."""
     
-    implements(ISubscribable, ITicketChangeListener)
+    implements(ISubscribable, ITicketChangeListener, IRequestFilter)
     
     def __init__(self):
         # Ensure that our custom field exists
         config = self.config['ticket-custom']
+        config_changed = False
         if 'tracforge_source' not in config:
             self.log.info('TicketSubscribable: Creating custom ticket field')
             config.set('tracforge_source','text')
-            #config.set('tracforge_source.skip','True') # This doesn't work
+            #config.set('tracforge_source.skip','True') # This doesn't work, see RequestFilter methods
+            config_changed = True
+        current_filters = self.config.get('trac','request_filters','').split(',')
+        if 'TicketSubscribable' not in current_filters:
+            self.log.info('TicketSubscribable: Adding TicketSubscribable to request_filters')
+            current_filters.append(self.__class__.__name__)
+            self.config.set('trac','request_filters',','.join(current_filters))
+            config_changed = True
+            
+        if config_changed:
             self.config.save()
     
     # ISubscribable methods
@@ -42,7 +54,22 @@ class TicketSubscribable(Component):
        
     def ticket_deleted(self, ticket):
         pass
-
+        
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler # Pass-through
+        
+    def post_process_request(self, req, template, content_type):
+        prefix = None
+        if req.path_info.startswith('/ticket'):
+            prefix = 'ticket'
+        elif req.path_info.startswith('/newticket'):
+            prefix= 'newticket'
+        if prefix:
+            req.hdf['%s.fields.tracforge_source.skip'%prefix] = True
+        
+        return (template, content_type)
+        
     # Internal methods
     def _ticket_created(self, ticket):
         """Recieve a ticket from another env. It should have the {{{tracforge_source}}} field set."""
