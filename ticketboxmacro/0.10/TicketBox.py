@@ -86,13 +86,13 @@ def execute(hdf, txt, env):
             db = env.get_db_cnx()
             curs = db.cursor()
             try:
-                curs.execute('SELECT sql FROM report WHERE id=%s' % num)
-                (sql,) = curs.fetchone()
+                curs.execute('SELECT query FROM report WHERE id=%s' % num)
+                (query,) = curs.fetchone()
                 # replace dynamic variables
                 for k, v in dv.iteritems():
-                    sql = re.sub(r'\$%s\b' % k, v, sql)
-                #env.log.debug('sql = %s' % sql)
-                curs.execute(sql)
+                    query = re.sub(r'\$%s\b' % k, v, query)
+                #env.log.debug('query = %s' % query)
+                curs.execute(query)
                 rows = curs.fetchall()
                 if rows:
                     descriptions = [desc[0] for desc in curs.description]
