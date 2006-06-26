@@ -10,6 +10,8 @@ from api import *
 from util import *
 from manager import SubscriptionManager
 
+import pickle
+
 class TicketSubscribable(Component):
     """A class implementing ticket subscription."""
     
@@ -19,18 +21,14 @@ class TicketSubscribable(Component):
         # Ensure that our custom field exists
         config = self.config['ticket-custom']
         config_changed = False
-
-        if 'tracforge_source' not in config:
-            self.log.info('TicketSubscribable: Creating custom tracforge_source ticket field')
-            config.set('tracforge_source','text')
-            #config.set('tracforge_source.skip','True') # This doesn't work, see RequestFilter methods
-            config_changed = True
-
-        if 'tracforge_sourceid' not in config:
-            self.log.info('TicketSubscribable: Creating custom tracforge_sourceid ticket field')
-            config.set('tracforge_sourceid','text')
-            #config.set('tracforge_sourceid.skip','True') # This doesn't work, see RequestFilter methods
-            config_changed = True
+        
+        def add_field(name):
+            if name not in config:
+                self.log.info('TicketSubscribable: Creating custom %s ticket field'%name)
+                config.set(name,'text')
+                #config.set(name+'.skip','True') # This doesn't work, see RequestFilter methods
+                config_changed = True
+        add_field('tracforge_linkmap')
 
         current_filters = self.config.get('trac','request_filters','').split(',')
         if 'TicketSubscribable' not in current_filters:
@@ -45,27 +43,44 @@ class TicketSubscribable(Component):
     # ISubscribable methods
     def subscribable_types(self):
         yield 'ticket'
-
+        
     # ITicketChangeListener methods
     def ticket_created(self, ticket):
+        linkmap = {}
+    
         ticket_copy = Ticket(self.env, ticket.id)
-        ticket_copy['tracforge_source'] = self.env.path
+        ticket_copy['tracforge_linkmap'] = serialize_map({self.env.path: ticket.id})
 
         subscribers = SubscriptionManager(self.env).get_subscribers('ticket')
         for subscriber in subscribers:
             env = open_env(subscriber)
             self.log.debug('Pushing ticket number %s to %s'%(ticket_copy.id,env.path))
-            ts = TicketSubscribable(env)._ticket_created(ticket_copy)
+            id = TicketSubscribable(env)._ticket_created(ticket_copy)
+            linkmap[env.path] = id
+            
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        self.log.debug('value = %s' % serialize_map(linkmap))
+        cursor.execute("UPDATE ticket_custom SET value=%s "
+                       "WHERE ticket = %s AND name = %s" , (serialize_map(linkmap), ticket.id, 'tracforge_linkmap'))
+                       
+        db.commit()
         
     def ticket_changed(self, ticket, comment, old_values):
-        if ticket['tracforge_source'] and ticket['tracforge_source'] != self.env.path:
-            # This ticket came from somewhere else, push back to source
-            source = ticket['tracforge_source']
-            source_env = open_env(source)
-            TicketSubscribable(source_env)._ticket_changed(ticket, comment, old_values)
-        else:
-            # This ticket is from here, push to all subscribers
-            pass
+        import sys
+        frame = sys._getframe(1)
+        locals = frame.f_locals
+        
+        author = locals['author']
+        when = locals['when']
+        cnum = locals['cnum']
+    
+        if ticket['tracforge_linkmap']:
+            linkmap = unserialize_map(ticket['tracforge_linkmap'])
+            for source, id in linkmap.items():
+                env = open_env(source)
+                TicketSubscribable(env)._ticket_changed(ticket, author, comment, cnum, when, old_values, id)
        
     def ticket_deleted(self, ticket):
         pass
@@ -85,14 +100,14 @@ class TicketSubscribable(Component):
             node = hdf.child()
             while node:
                 if node.name().startswith('tracforge'):
-                    req.hdf['%s.fields.%s.skip'%(prefix,node.name())] = True
+                    req.hdf['%s.fields.%s.skip'%(prefix,node.name())] = False
                 node = node.next()
         
         return (template, content_type)
         
     # Internal methods
     def _ticket_created(self, ticket):
-        """Recieve a ticket from another env. It should have the {{{tracforge_source}}} field set."""
+        """Recieve a ticket from another env. It should have the {{{tracforge_linkmap}}} field set."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
@@ -118,7 +133,46 @@ class TicketSubscribable(Component):
                                "VALUES (%s,%s,%s)", [(tkt_id, name, ticket[name])
                                                      for name in custom_fields])
         db.commit()
+        return tkt_id
 
-    def _ticket_changed(self, ticket, comment, old_values):
-        #my_ticket = Ticket(self.env, t
-        pass
+    def _ticket_changed(self, ticket, author, comment, cnum, when, old_values, local_id):
+        my_ticket = Ticket(self.env, local_id)
+        for f in ticket.fields:
+            if not f['name'].startswith('tracforge'):
+                my_ticket[f['name']] = ticket[f['name']]
+            
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        # Code from trac.ticket.model:225
+        custom_fields = [f['name'] for f in my_ticket.fields if f.get('custom')]
+        for name in my_ticket._old.keys():
+            if name in custom_fields:
+                cursor.execute("SELECT * FROM ticket_custom " 
+                               "WHERE ticket=%s and name=%s", (my_ticket.id, name))
+                if cursor.fetchone():
+                    cursor.execute("UPDATE ticket_custom SET value=%s "
+                                   "WHERE ticket=%s AND name=%s",
+                                   (my_ticket[name], my_ticket.id, name))
+                else:
+                    cursor.execute("INSERT INTO ticket_custom (ticket,name,"
+                                   "value) VALUES(%s,%s,%s)",
+                                   (my_ticket.id, name, my_ticket[name]))
+            else:
+                cursor.execute("UPDATE ticket SET %s=%%s WHERE id=%%s" % name,
+                               (my_ticket[name], my_ticket.id))
+            cursor.execute("INSERT INTO ticket_change "
+                           "(ticket,time,author,field,oldvalue,newvalue) "
+                           "VALUES (%s, %s, %s, %s, %s, %s)",
+                           (my_ticket.id, when, author, name, my_ticket._old[name],
+                            my_ticket[name]))
+        # always save comment, even if empty (numbering support for timeline)
+        cursor.execute("INSERT INTO ticket_change "
+                       "(ticket,time,author,field,oldvalue,newvalue) "
+                       "VALUES (%s,%s,%s,'comment',%s,%s)",
+                       (my_ticket.id, when, author, cnum, comment))
+
+        cursor.execute("UPDATE ticket SET changetime=%s WHERE id=%s",
+                       (when, my_ticket.id))        
+        
+        db.commit()
