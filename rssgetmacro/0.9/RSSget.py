@@ -22,6 +22,7 @@ import string
 import os
 import httplib
 import urllib2
+import cgi
 import StringIO
 from xml.dom import minidom
 from trac.util import escape
@@ -132,7 +133,7 @@ def write_to_cache(url, contents):
 	#generate the filename
 	filename = create_filename(url)
 	#make sure the directory's there
-	_mkdir(CACHE_DIR + CACHE_ID)
+	_mkdir(CACHE_DIR + "/" + CACHE_ID)
 	#open the right file
 	cachefile = open(CACHE_DIR + "/" + CACHE_ID + "/" + filename, 'w')
 	#cram in the contents
@@ -171,13 +172,13 @@ def parse_file(feeddata):
 	
 	for Item in Itemlist:
 		for node2 in Item.getElementsByTagName("title"):
-			title = node2.firstChild.data
+			title = cgi.escape(node2.firstChild.data)
 			titles.append(title)
 		for node2 in Item.getElementsByTagName("link"):
-			link = node2.firstChild.data
+			link = cgi.escape(node2.firstChild.data)
 			links.append(link)
 		for node2 in Item.getElementsByTagName("description"):
-			description = node2.firstChild.data
+			description = cgi.escape(node2.firstChild.data)
 			words.append(description)
 	 
 	rss_snippets += "<dl>\n"
