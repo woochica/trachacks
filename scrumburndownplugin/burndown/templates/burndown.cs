@@ -34,9 +34,13 @@
 </form>
 
 <br />
-<br />
 
 <?cs if:draw_graph ?>
+    
+    <b>Current effort remaining: <?cs var:burndown_data[len(burndown_data) - 1][1] ?> hours</b>
+    <br/>
+    <br/>
+    
 <!-- graph code begins here-->
 <script src="/cgi-bin/trac.cgi/chrome/hw/js/line.js" type="text/javascript"></script>
 <script src="/cgi-bin/trac.cgi/chrome/hw/js/wz_jsgraphics.js" type="text/javascript"></script>
