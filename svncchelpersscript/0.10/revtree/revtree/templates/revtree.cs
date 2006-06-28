@@ -88,14 +88,19 @@
 
 <?cs if revtree.legend ?>
 <div id="legend">
- <?cs var revtree.legend ?>
+ <?cs var:revtree.legend ?>
 </div>
 <?cs /if ?>
 
+<?cs if revtree.errormsg ?>
+<div id="errormsg" class="error">
+  <p class="message"><?cs var:revtree.errormsg ?></p>
+</div>
+<?cs else ?>
 <p>
 <?cs var:revtree.img ?>
 </p>
-
+<?cs /if ?>
 </div>
 
 <?cs include "footer.cs"?>

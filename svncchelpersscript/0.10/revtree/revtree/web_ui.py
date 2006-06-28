@@ -151,36 +151,42 @@ class RevisionTreeModule(Component):
         revtree.populate(req.args)
         revtree.compute_range(repos)
 
-        if not revtree.can_be_rendered():
-            raise TracError, "Selected filters cannot render a revision tree"
-
-        # save the user parameters only if the tree can be rendered
-        revtree.save(req.session)
-
-        for field in revtree.fields:
-            req.hdf['revtree.' + field] = revtree[field]
-
-        (content, properties) = self._render_graph(req, repos, revtree, \
+        if revtree.can_be_rendered():
+            # save the user parameters only if the tree can be rendered
+            revtree.save(req.session)
+            (content, properties) = self._render_graph(req, repos, revtree, \
                                                    req.args.has_key('nocache'))
-        # queries the repository for branches and authors if it has 
-        # a newer revision than the one in the revtree
-        if properties['revisions'][0] < self.youngest:
+            # queries the repository for branches and authors if it has 
+            # a newer revision than the one in the revtree
+            if properties['revisions'][0] < self.youngest:
+                branches = repos.branches().keys()
+                authors = repos.authors()
+            else:
+                branches = properties['branches']
+                authors = properties['authors']
+        else:
             branches = repos.branches().keys()
             authors = repos.authors()
-        else:
-            branches = properties['branches']
-            authors = properties['authors']
+
         branches.sort()
         authors.sort()
-        branches.insert(0,revtree.anybranch)
-        authors.insert(0,revtree.anyauthor)
+        branches.insert(0, revtree.anybranch)
+        authors.insert(0, revtree.anyauthor)
+        
+        for field in revtree.fields:
+            req.hdf['revtree.' + field] = revtree[field]
         req.hdf['title'] = 'Revision Tree'
         req.hdf['revtree.revisions'] = self._get_ui_revisions(revtree.revspan)
         req.hdf['revtree.branches'] = branches
         req.hdf['revtree.authors'] = authors
         req.hdf['revtree.periods'] = self._get_periods()
-        #req.hdf['revtree.legend'] = 'toto'
-        req.hdf.set_unescaped('revtree.img', content)
+        
+        if revtree.can_be_rendered():
+            req.hdf.set_unescaped('revtree.img', content)
+        else:
+            req.hdf['revtree.errormsg'] = "Selected filters cannot render" \
+                                          " a revision tree"
+                                          
         add_stylesheet(req, 'revtree/css/revtree.css')
         return 'revtree.cs', None
 
@@ -317,7 +323,9 @@ class RevisionTreeModule(Component):
                 if not cache:
                     raise IOError
                 for header in headers:
-                    cache.write("%s: %s\n" % (header, ','.join(props[header])))
+                    if props.has_key(header) and props[header]:
+                        prop = ','.join(filter(None, props[header]))
+                        cache.write("%s: %s\n" % (header, prop))
                 cache.write("\n%s\n" % content)
                 cache.close() 
             except (ValueError, IOError):

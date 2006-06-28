@@ -21,3 +21,7 @@ div.revtree div#legend {
  align: right; 
 }
 
+div.revtree div#errormsg {
+ border: solid red 2px;
+ background-color: #fcc;
+}

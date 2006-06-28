@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevisionTree'
-VERSION = '0.2.5'
+VERSION = '0.2.6'
 
 setup(
     name=PACKAGE, version=VERSION,

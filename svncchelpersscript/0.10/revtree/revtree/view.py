@@ -70,7 +70,8 @@ class ChangesetWidget(object):
         colormap[Changeset.FIX] = ('fixcolor', '#3faf00')
         colormap[Changeset.REF] = ('refcolor', None)
         colormap[Changeset.KILL] = ('killcolor', '#ff0000')
-        (colorname, defcolor) = colormap[self._changeset.operation]
+        (colorname, defcolor) = colormap[self._changeset.operation or \
+                                         Changeset.NONE]
         color = self.env.config.get('revtree', colorname, defcolor)
         if not color:
             return self._grapher.branch_widget(rev=self.id()).forecolor()
@@ -176,9 +177,12 @@ class BranchWidget(object):
                 representation += "  %s\n" % transitions
         
         if len(inrngchgs) > 1 or inrngchgs[0].operation != Changeset.KILL:
-            url = "%s/browser%s%s" % (self._grapher.urlbase(), \
-                                       self._branch.name(), \
-                                       inrngchgs[-1].topdir)
+            url = "%s/browser%s%s" % (self._grapher.urlbase(), 
+                                      self._branch.name(), 
+                                      inrngchgs[-1].topdir)
+            if inrngchgs[-1].operation == Changeset.KILL and \
+               len(inrngchgs) > 1:
+                url += "?rev=%d" % int(inrngchgs[-2].revision)
             tooltip = "View %s source code" % self._branch.name()
             link = 'URL="%s",tooltip="%s"' % (url, tooltip)
         else:
