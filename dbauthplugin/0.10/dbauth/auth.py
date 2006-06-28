@@ -17,6 +17,7 @@
 
 import re
 import time
+import sha
 
 from dbauth.env import *
 
@@ -75,17 +76,20 @@ class DbAuthLoginModule(Component):
 
     def get_navigation_items(self, req):
         if req.authname and req.authname != 'anonymous':
-            yield 'metanav', 'login', 'logged in as %s' % req.authname
-            yield 'metanav', 'logout', Markup( '<a href="%s">Logout</a>' \
-                  % escape(self.env.href.logout()) )
+            yield 'metanav', 'login', Markup('logged in as <b>%s</b>' \
+                    % req.authname)
+            yield 'metanav', 'password', Markup('<a href="%s">Password</a>' \
+                  % escape(self.env.href.password()))
+            yield 'metanav', 'logout', Markup('<a href="%s">Logout</a>' \
+                  % escape(self.env.href.logout()))
         else:
-            yield 'metanav', 'login', Markup( '<a href="%s">Login</a>' \
-                  % escape(self.env.href.login()) )
+            yield 'metanav', 'login', Markup('<a href="%s">Login</a>' \
+                  % escape(self.env.href.login()))
 
     # IRequestHandler methods
 
     def match_request(self, req):
-        return re.match('/(login|logout)/?', req.path_info)
+        return re.match('/(login|password|logout)/?', req.path_info)
 
     def process_request(self, req):
         if req.method == 'POST':
@@ -96,11 +100,23 @@ class DbAuthLoginModule(Component):
                     req.redirect(req.href())
                 else:
                     req.hdf["auth.message"] = "Login Incorrect"
-                            
+            elif req.args.get('password'):
+                old, new, repeat = req.args.get('opwd'), req.args.get('npwd'), req.args.get('rpwd')
+                if not new or len(new) < 5:
+                    req.hdf['auth.message'] = 'New password too short'
+                elif new != repeat:
+                    req.hdf['auth.message'] = 'Repeated password does not match'
+                elif not self._check_login(req.authname, old):
+                    req.hdf['auth.message'] = 'Wrong Password'
+                else:
+                    req.hdf['auth.message'] = 'Password Changed'
+                    self._change_password(req, new)
 
         if req.path_info.startswith('/login'):
             # self._do_login(req)
             template = "login.cs"
+        elif req.path_info.startswith('/password'):
+            template = 'password.cs'
         elif req.path_info.startswith('/logout'):
             self._do_logout(req)
             req.redirect(self.env.href.login())
@@ -129,22 +145,25 @@ class DbAuthLoginModule(Component):
         cursor = db.cursor()
         sql = "SELECT %s " \
                "FROM %s " \
-               "WHERE username= %%s and password = %%s " \
-               "  AND (envname = %%s or envname='all')" % \
-               (self.users['username'], self.users['table'])
-        cursor.execute(sql, (uid, pwd, self.envname))
-        row = cursor.fetchone()        
-        if not row:
-            ret = False
-        else:
-            ret = True
-            
-        return ret
+               "WHERE %s = %%s" \
+               "  AND (%s = %%s OR %s = 'all')" % \
+               (self.users['password'], self.users['table'],
+                self.users['username'], self.users['envname'],
+                self.users['envname'])
+        cursor.execute(sql, (uid, self.envname))
+        hash = 'SHA-1:' + sha.new(pwd).hexdigest()
+        if pwd.startswith('SHA-1:'):
+            pwd = hash
+        for row in cursor:
+            if row[0] == pwd or row[0] == hash:
+                return True
+
+        return False
 
     def _do_login(self, req):
         """Log the remote user in."""
-        
-        remote_user, pwd = req.args.get('uid'), req.args.get('pwd')
+
+        remote_user = req.args.get('uid')
         remote_user = remote_user.lower()
 
         cookie = hex_entropy()
@@ -198,11 +217,11 @@ class DbAuthLoginModule(Component):
         cursor = db.cursor()
         sql = "SELECT %s " \
                "FROM %s " \
-               "WHERE %s=%%s " \
-               "  AND %s=%%s" % \
+               "WHERE %s = %%s " \
+               "  AND %s = %%s" % \
                (self.cookies['username'], self.cookies['table'],
                 self.cookies['cookie'], self.cookies['envname'])
-        cursor.execute(sql, (cookie.value,self.envname)) 
+        cursor.execute(sql, (cookie.value,self.envname))
         row = cursor.fetchone()
         if not row:
             # The cookie is invalid (or has been purged from the database), so
@@ -212,6 +231,38 @@ class DbAuthLoginModule(Component):
 
         return row[0]
 
+    def _change_password(self, req, newpwd):
+        if req.authname == 'anonymous':
+            # Not logged in
+            return
+
+        # check which environment to use
+        db = get_db(self.env)
+        cursor = db.cursor()
+        envname = 'all'
+        sql = "SELECT %s " \
+               "FROM %s " \
+               "WHERE %s = %%s" \
+               "  AND %s = %%s" % \
+               (self.users['username'], self.users['table'],
+                self.users['username'], self.users['envname'])
+        cursor.execute(sql, (req.authname, self.envname))
+        if cursor.fetchone():
+            envname = self.envname
+
+        # change the password
+        newpwd = 'SHA-1:' + sha.new(newpwd).hexdigest()
+        sql = "UPDATE %s " \
+               "SET %s = %%s " \
+               "WHERE %s = %%s " \
+               "  AND %s = %%s" % \
+               (self.users['table'], self.users['password'],
+                self.users['username'], self.users['envname'])
+        print(sql)
+        print(sql % (newpwd, req.authname, envname))
+        cursor.execute(sql, (newpwd, req.authname, envname))
+        db.commit()
+
     def _redirect_back(self, req):
         """Redirect the user back to the URL she came from."""
         referer = req.get_header('Referer')
@@ -220,7 +271,3 @@ class DbAuthLoginModule(Component):
             # instance
             referer = None
         req.redirect(referer or self.env.abs_href())
-
-
-
-    
