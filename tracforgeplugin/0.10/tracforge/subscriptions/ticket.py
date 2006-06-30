@@ -176,9 +176,7 @@ class TicketSubscribable(Component):
             if not f.startswith('tracforge'):
                 my_ticket[f] = ticket[f]
             
-        db = self.env.get_db_cnx()
-        my_ticket.save_changes(author, comment, when, db, cnum)
-        db.commit()
+        my_ticket.save_changes(author, comment, when, cnum=cnum)
 
     def _check_ticket(self, ticket):
         # Check for loops
