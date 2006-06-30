@@ -10,14 +10,18 @@ from api import *
 from util import *
 from manager import SubscriptionManager
 
-import pickle
+# Python 2.3 compat
+try:
+    set = set
+except NameError:
+    from sets import Set as set
 
 class TicketOldValues(object):
 
     _history = {}
     
     def history(self, instance):
-        key = (instance.env.path, instance,id)
+        key = id(instance)
         if key not in self._history:
             self._history[key] = [None]
         return self._history[key]
@@ -74,10 +78,14 @@ class TicketSubscribable(Component):
         
     # ITicketChangeListener methods
     def ticket_created(self, ticket):
+        # Check for loops
+        if self._check_ticket(ticket): return
+        
         linkmap = {}
     
         ticket_copy = Ticket(self.env, ticket.id)
         ticket_copy['tracforge_linkmap'] = serialize_map({self.env.path: ticket.id})
+        ticket_copy.tracforge_seen = ticket.tracforge_seen
 
         subscribers = SubscriptionManager(self.env).get_subscribers('ticket')
         for subscriber in subscribers:
@@ -96,6 +104,13 @@ class TicketSubscribable(Component):
         db.commit()
         
     def ticket_changed(self, ticket, comment, old_values):
+        self.log.debug("TicketSubscribable: In ticket_changed(%s) for '%s'"%(ticket.id,self.env.path))
+        # Check for loops
+        if self._check_ticket(ticket):
+            self.log.debug('TicketSubscribable: Duplicate, bailing!')
+            return
+        self.log.debug("TicketSubscribable: seen = %s"%ticket.tracforge_seen)
+        
         # Start evil things (if you aren't me, just skip over this part)
         import sys
         frame = sys._getframe(1)
@@ -112,6 +127,9 @@ class TicketSubscribable(Component):
             linkmap = unserialize_map(ticket['tracforge_linkmap'])
             for source, id in linkmap.items():
                 env = open_env(source)
+                if env.path in ticket.tracforge_seen:
+                    continue # Been there, done that
+                self.log.debug('TicketSubscribable: Propagating change to %s'%env.path)
                 TicketSubscribable(env)._ticket_changed(ticket, author, comment, cnum, when, old_values, id)
        
     def ticket_deleted(self, ticket):
@@ -140,71 +158,35 @@ class TicketSubscribable(Component):
     # Internal methods
     def _ticket_created(self, ticket):
         """Recieve a ticket from another env. It should have the {{{tracforge_linkmap}}} field set."""
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
 
         # TODO: SubscriptionFilters check should go here
 
-        # Ticket insertion code from trac.ticket.model:134 r3464
-        # TODO: This should somehow use Ticket.insert() directly, though beware of subscription loops
-        # Insert ticket record
-        std_fields = [f['name'] for f in ticket.fields if not f.get('custom')
-                      and ticket.values.has_key(f['name'])]
-        cursor.execute("INSERT INTO ticket (%s,time,changetime) VALUES (%s)"
-                       % (','.join(std_fields),
-                          ','.join(['%s'] * (len(std_fields) + 2))),
-                       [ticket[name] for name in std_fields] +
-                       [ticket.time_created, ticket.time_changed])
-        tkt_id = db.get_last_id(cursor, 'ticket')
-
-        # Insert custom fields
-        custom_fields = [f['name'] for f in ticket.fields if f.get('custom')
-                         and ticket.values.has_key(f['name'])]
-        if custom_fields:
-            cursor.executemany("INSERT INTO ticket_custom (ticket,name,value) "
-                               "VALUES (%s,%s,%s)", [(tkt_id, name, ticket[name])
-                                                     for name in custom_fields])
+        ticket.id = None # Clear out the ID
+        db = self.env.get_db_cnx()
+        ticket.insert(ticket.time_created, db)
         db.commit()
-        return tkt_id
-
+        return ticket.id
+        
     def _ticket_changed(self, ticket, author, comment, cnum, when, old_values, local_id):
+        self.log.debug('TicketSubscribable: In _ticket_changed(%s,local=%s) for %s'%(ticket.id, local_id, self.env.path))
+        self.log.debug("TicketSubscribable: seen = %s"%ticket.tracforge_seen)
         my_ticket = Ticket(self.env, local_id)
+        my_ticket.tracforge_seen = ticket.tracforge_seen
         for f in old_values:
             if not f.startswith('tracforge'):
                 my_ticket[f] = ticket[f]
             
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        
-        # Code from trac.ticket.model:225
-        custom_fields = [f['name'] for f in my_ticket.fields if f.get('custom')]
-        for name in my_ticket._old.keys():
-            if name in custom_fields:
-                cursor.execute("SELECT * FROM ticket_custom " 
-                               "WHERE ticket=%s and name=%s", (my_ticket.id, name))
-                if cursor.fetchone():
-                    cursor.execute("UPDATE ticket_custom SET value=%s "
-                                   "WHERE ticket=%s AND name=%s",
-                                   (my_ticket[name], my_ticket.id, name))
-                else:
-                    cursor.execute("INSERT INTO ticket_custom (ticket,name,"
-                                   "value) VALUES(%s,%s,%s)",
-                                   (my_ticket.id, name, my_ticket[name]))
-            else:
-                cursor.execute("UPDATE ticket SET %s=%%s WHERE id=%%s" % name,
-                               (my_ticket[name], my_ticket.id))
-            cursor.execute("INSERT INTO ticket_change "
-                           "(ticket,time,author,field,oldvalue,newvalue) "
-                           "VALUES (%s, %s, %s, %s, %s, %s)",
-                           (my_ticket.id, when, author, name, my_ticket._old[name],
-                            my_ticket[name]))
-        # always save comment, even if empty (numbering support for timeline)
-        cursor.execute("INSERT INTO ticket_change "
-                       "(ticket,time,author,field,oldvalue,newvalue) "
-                       "VALUES (%s,%s,%s,'comment',%s,%s)",
-                       (my_ticket.id, when, author, cnum, comment))
-
-        cursor.execute("UPDATE ticket SET changetime=%s WHERE id=%s",
-                       (when, my_ticket.id))        
-        
+        my_ticket.save_changes(author, comment, when, db, cnum)
         db.commit()
+
+    def _check_ticket(self, ticket):
+        # Check for loops
+        if not hasattr(ticket, 'tracforge_seen'):
+            ticket.tracforge_seen = set()
+           
+        if self.env.path in ticket.tracforge_seen:
+            return True # We have already seen this ticket
+        else:
+            ticket.tracforge_seen.add(self.env.path)
+            return False
