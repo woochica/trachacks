@@ -23,7 +23,7 @@ sql = ['''CREATE TABLE forum (
   author text,
   body text
 );''',
-'''INSERT INTO system VALUES ("discussion_version", 1);''']
+'''INSERT INTO system (name, value) VALUES ("discussion_version", 1);''']
 
 def do_upgrade(cursor):
     for statement in sql:
