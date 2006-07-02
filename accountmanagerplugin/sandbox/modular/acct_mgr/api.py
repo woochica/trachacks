@@ -14,6 +14,9 @@ from trac.config import *
 
 class AccountError(TracError):
     """ A generic account error. """
+    
+class AccountActionError(AccountError):
+    """ An account action error. Generally raised on an invalid or unknown action. """
 
 class UnknownUserError(AccountError):
     """ Raise this on an action against an unknown user name. """
@@ -30,11 +33,10 @@ class IAccountStore(Interface):
         """
         
     def add_user(self, user):
-        """Create a new user.
-        """
+        """Create a new user. Optional function."""
 
     def delete_user(self, user):
-        """Deletes the user account."""
+        """Deletes the user account. Optional function"""
 
 class IPasswordStore(Interface):
     """An interface for Components that provide a storage method for passwords."""
@@ -118,15 +120,31 @@ class AccountManager(Component):
         return actions
 
     def get_users(self):
+        """Enumerate all users in all account stores."""
         for store in self.account_stores:
             for user in store.get_users():
                 yield user
 
     def has_user(self, user):
-        for store in self.account_stores:
-            if store.has_user(user):
-                return True
-        return False
+        """Check if the username is found in any store."""
+        return any(self.account_stores, lambda s: s.has_user(user))
+        
+    # Account store functions
+    def can_change_password(self):
+        """Check if any password stores are writable."""
+        return any(self.password_stores, lambda s: hasattr(s, 'set_password'))
+        
+    def can_change_account(self):
+        """Check if any account stores are writable."""
+        return any(self.account_stores, lambda s: hasattr(s, 'add_account'))
+        
+    def get_mutable_stores(self):
+        """Find mutable stores.
+        Returns a tuple of (account_store, password_store), where None means no mutable stores found"""
+        acct   = find(self.account_stores , lambda s: hasattr(s, 'add_account'))
+        passwd = find(self.password_stores, lambda s: hasattr(s, 'set_password'))
+        return (acct,passwd)
+    mutable_stores = property(get_mutable_stores)
         
     # IAccountChangeListener methods
 

@@ -27,6 +27,9 @@ class Account(object):
                     break
             else:
                 raise AccountError, "Non-new account that doesn't exist in any store"
+        else:
+            assert not AccountSystem(self.env).has_user(self.username)
+            self.store, _ = AccountSystem(self.env).mutable_stores
 
     def save(self, db = None):
         db, handle_commit = self._get_db(db)
@@ -36,11 +39,28 @@ class Account(object):
         cursor.execute('SELECT status FROM account_status WHERE user = %s', (self.username,))
         old_status = cursor.fetchone()
         if not old_status:
-            cursor.execute('INSERT INTO account_status (user, status) VALUES (%s, %s)',(self.username, self.status))
+            cursor.execute('INSERT INTO account_status (user, status) VALUES (%s, %s)', (self.username, self.status))
         elif old_status == self.status:
             return
         else:
-            cursor.execute('
+            cursor.execute('UPDATE account_status SET status=%s WHERE user=%s', (self.status, self.username))
+            
+        if handle_commit:
+            db.commit()
+           
+    def create(self, password=None):
+        """Create this account."""
+        assert self.status == 'new', 'Cannot create an existing account'
+        if self.store:
+            self.store.add_account(self.username)
+        else:
+            raise AccountActionError, 'No mutable stores available'
+            
+        self.status = 'created'
+        self.save()
+            
+        if password:
+            self.set_password(password)
 
     def _get_db(db)
         if db:
