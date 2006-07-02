@@ -10,17 +10,16 @@
 # Author: Matthew Good <trac@matt-good.net>
 
 from trac.core import *
+from trac.config import *
 
-class IPasswordStore(Interface):
-    """An interface for Components that provide a storage method for users and
-    passwords.
-    """
+class AccountError(TracError):
+    """ A generic account error. """
 
-    def config_key(self):
-        """Returns a string used to identify this implementation in the config.
-        This password storage implementation will be used if the value of
-        the config property "account-manager.password_format" matches.
-        """
+class UnknownUserError(AccountError):
+    """ Raise this on an action against an unknown user name. """
+
+class IAccountStore(Interface):
+    """An interface for Components that provide a storage method for accounts."""
 
     def get_users(self):
         """Returns an iterable of the known usernames
@@ -29,32 +28,35 @@ class IPasswordStore(Interface):
     def has_user(self, user):
         """Returns whether the user account exists.
         """
+        
+    def add_user(self, user):
+        """Create a new user.
+        """
+
+    def delete_user(self, user):
+        """Deletes the user account."""
+
+class IPasswordStore(Interface):
+    """An interface for Components that provide a storage method for passwords."""
 
     def set_password(self, user, password):
-        """Sets the password for the user.  This should create the user account
-        if it doesn't already exist.
-        Returns True if a new account was created, False if an existing account
-        was updated.
+        """Sets the password for the user. If you do not define this 
+        method, it is assumed you cannot change passwords in this store.
         """
 
     def check_password(self, user, password):
         """Checks if the password is valid for the user.
         """
 
-    def delete_user(self, user):
-        """Deletes the user account.
-        Returns True if the account existed and was deleted, False otherwise.
-        """
-
 class IAccountChangeListener(Interface):
     """An interface for receiving account change events.
     """
 
-    def user_created(self, user, password):
+    def user_created(self, user):
         """New user
         """
 
-    def user_password_changed(self, user, password):
+    def user_password_changed(self, user):
         """Password changed
         """
 
@@ -62,9 +64,25 @@ class IAccountChangeListener(Interface):
         """User deleted
         """
 
+class IAccountActionController(Interface):
+    """An interface for providing and manipluation account actions.
+    """
+    
+    def get_account_actions(req, account):
+        """ Return an interable of (action, label).
+        """
+        
+    def apply_account_action(req, account, action):
+        """ Perform the given action on an account.
+        """
+        
+    def intercept_account_action(req, account, action):
+        """ Intercept, and possibly alter, an account action.
+        """
+
 class AccountManager(Component):
     """The AccountManager component handles all user account management methods
-    provided by the IPasswordStore interface.
+    provided by the IAccountStore and IPasswordStore interfaces.
 
     The methods will be handled by the underlying password storage
     implementation set in trac.ini with the "account-manager.password_format"
@@ -73,50 +91,49 @@ class AccountManager(Component):
 
     implements(IAccountChangeListener)
 
-    stores = ExtensionPoint(IPasswordStore)
+    account_store  = OrderedExtensionsOption('account-manager','account_store',IAccountStore,
+                                             include_missing=False,
+                                             doc="Which account storage backends to use.")
+                                             
+    password_store = OrderedExtensionsOption('account-manager','password_store',IPasswordStore,
+                                             include_missing=False,
+                                             doc="Which password storage backends to use.")
+    
     change_listeners = ExtensionPoint(IAccountChangeListener)
+    action_controllers = ExtensionPoint(IAccountActionController)
+    
+    store_key = Option('account-manager','password_format',
+                       doc='Short-code for the desired password store')
 
     # Public API
+    
+    def account_actions(self, req, user):
+        """Return a dictionary of the form {action:(label, controller)}."""
+        actions = {}
+        for controller in self.action_controllers:
+            for action, label in controller.get_account_actions(req, user)
+                assert action not in actions, "Action %s already registered by %s" % \
+                                       (action, actions[action][1].__class__.__name__)
+                actions[action] = (label, controller)
+        return actions
 
     def get_users(self):
-        return self.password_store.get_users()
+        for store in self.account_stores:
+            for user in store.get_users():
+                yield user
 
     def has_user(self, user):
-        return self.password_store.has_user(user)
-
-    def set_password(self, user, password):
-        if self.password_store.set_password(user, password):
-            self._notify('created', user, password)
-        else:
-            self._notify('password_changed', user, password)
-
-    def check_password(self, user, password):
-        return self.password_store.check_password(user, password)
-
-    def delete_user(self, user):
-        if self.password_store.delete_user(user):
-            self._notify('deleted', user)
-
-    def password_store(self):
-        fmt = self.config.get('account-manager', 'password_format')
-        for store in self.stores:
-            if store.config_key() == fmt:
-                return store
-        raise TracError('No password store found.  Please configure '
-                        '"account-manager.password_format" in trac.ini.')
-    password_store = property(password_store)
-
-    def _notify(self, func, *args):
-        func = 'user_' + func
-        for l in self.change_listeners:
-            getattr(l, func)(*args)
-
+        for store in self.account_stores:
+            if store.has_user(user):
+                return True
+        return False
+        
     # IAccountChangeListener methods
 
     def user_created(self, user, password):
         self.log.info('Created new user: %s' % user)
 
-    def user_password_changed(self, user, password):
+    def user_password_changed(self, user):
         self.log.info('Updated password for user: %s' % user)
 
     def user_deleted(self, user):
