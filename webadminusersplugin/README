@@ -1,0 +1,12 @@
+This Trac plugin adds a page to the Web Admin section, allowing administrators
+to create and remove user accounts.  It also lets admins reset user passwords.
+All of this via TEH INTARWEB.
+
+Author: jml@mumak.net
+License: MIT
+
+Dependencies: 
+- Trac 0.9.5 (untested on other versions of Trac)
+- TracAccountManager 0.1.2 (from trac-hacks.org)
+- WebAdmin r2765 (from http://projects.edgewall.com/trac/wiki/WebAdmin)
+
