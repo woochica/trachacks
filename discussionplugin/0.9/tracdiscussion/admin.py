@@ -135,7 +135,7 @@ class DiscussionWebAdmin(Component):
 
     def _get_groups(self, cursor):
         columns = ('id', 'name', 'description')
-        sql = 'SELECT id, name, description FROM forum_group'
+        sql = "SELECT id, name, description FROM forum_group"
         self.log.debug(sql)
         cursor.execute(sql)
         groups = []
@@ -149,8 +149,8 @@ class DiscussionWebAdmin(Component):
     def _get_forums(self, cursor):
         columns = ('id', 'name', 'author', 'moderators', 'group', 'subject',
           'description')
-        sql = 'SELECT id, name, author, moderators, forum_group, subject,' \
-          ' description FROM forum'
+        sql = "SELECT id, name, author, moderators, forum_group, subject," \
+          " description FROM forum"
         self.log.debug(sql)
         cursor.execute(sql)
         forums = []
@@ -170,15 +170,15 @@ class DiscussionWebAdmin(Component):
         return users
 
     def _add_group(self, cursor, name, description):
-        sql = 'INSERT INTO forum_group (name, description) VALUES ("%s", "%s")' \
+        sql = "INSERT INTO forum_group (name, description) VALUES ('%s', '%s')" \
           % (name, description)
         self.log.debug(sql)
         cursor.execute(sql)
 
     def _add_forum(self, cursor, name, author, subject, description, moderators):
         moderators = ' '.join(moderators)
-        sql = 'INSERT INTO forum (name, author, time, moderators, subject,' \
-          ' description) VALUES ("%s", "%s", "%s", "%s", "%s", "%s")' % (name,
+        sql = "INSERT INTO forum (name, author, time, moderators, subject," \
+          " description) VALUES ('%s', '%s', %s, '%s', '%s', '%s')" % (name,
           author, str(int(time.time())), moderators, subject, description)
         self.log.debug(sql)
         cursor.execute(sql)
@@ -186,29 +186,29 @@ class DiscussionWebAdmin(Component):
     def _delete_groups(self, cursor, groups):
         if groups:
             groups = ', '.join(groups)
-            sql = 'DELETE FROM forum_group WHERE id IN (%s)' % (groups)
+            sql = "DELETE FROM forum_group WHERE id IN (%s)" % (groups)
             self.log.debug(sql)
             cursor.execute(sql)
-            sql = 'UPDATE forum SET forum_group = NULL WHERE forum_group IN' \
-              ' (%s)' % (groups)
+            sql = "UPDATE forum SET forum_group = NULL WHERE forum_group IN" \
+              " (%s)" % (groups)
             cursor.execute(sql)
 
     def _delete_forums(self, cursor, forums):
         if forums:
             forums = ', '.join(forums)
-            sql = 'DELETE FROM message WHERE forum IN (%s)' % (forums)
+            sql = "DELETE FROM message WHERE forum IN (%s)" % (forums)
             self.log.debug(sql)
             cursor.execute(sql)
-            sql = 'DELETE FROM topic WHERE forum IN (%s)' % (forums)
+            sql = "DELETE FROM topic WHERE forum IN (%s)" % (forums)
             self.log.debug(sql)
             cursor.execute(sql)
-            sql = 'DELETE FROM forum WHERE id IN (%s)' % (forums)
+            sql = "DELETE FROM forum WHERE id IN (%s)" % (forums)
             self.log.debug(sql)
             cursor.execute(sql)
 
     def _set_group(self, cursor, forum, group):
         if not group:
             group = 'NULL'
-        sql = 'UPDATE forum SET forum_group = %s WHERE id = %s' % (group, forum)
+        sql = "UPDATE forum SET forum_group = %s WHERE id = %s" % (group, forum)
         self.log.debug(sql)
         cursor.execute(sql)
