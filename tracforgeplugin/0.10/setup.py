@@ -22,6 +22,7 @@ setup(
 
     entry_points = {
         'trac.plugins': [
+            'tracforge.perms = tracforge.perms',
             'tracforge.subscriptions = tracforge.subscriptions',
         ],
     },
