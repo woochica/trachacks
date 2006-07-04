@@ -12,10 +12,9 @@ import os
 class SubscriptionManager(Component):
     """A class that manages data subscriptions."""
 
+    subscribables = ExtensionPoint(ISubscribable)
     subscribtion_filters = OrderedExtensionsOption('tracforge-client','filters',ISubscriptionFilter,
                                include_missing=False, doc="""Filters for recieved data.""")
-
-    subscribables = ExtensionPoint(ISubscribable)
 
     implements(IEnvironmentSetupParticipant)
 

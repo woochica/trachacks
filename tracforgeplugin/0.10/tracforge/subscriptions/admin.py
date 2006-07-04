@@ -18,11 +18,14 @@ class SubscriptionAdmin(Component):
     def process_admin_request(self, req, cat, page, path_info):
     
         mgr = SubscriptionManager(self.env)
-        subscribables = {}
-        for type in mgr.get_subscribables():
-            subscribables[type] = mgr.get_subscriptions(type)
         
-        req.hdf['tracforge.subscriptions'] = subscribables
+        types = list(mgr.get_subscribables())
+        subscriptions = {}
+        for type in types:
+            subscriptions[type] = list(mgr.get_subscriptions(type))
+        
+        req.hdf['tracforge.types'] = types
+        req.hdf['tracforge.subscriptions'] = subscriptions
         return 'tracforge_subscriptions_admin.cs', 'text/html'
 
     # ITemplateProvider methods
