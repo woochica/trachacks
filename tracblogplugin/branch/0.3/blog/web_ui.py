@@ -252,7 +252,8 @@ class TracBlogPlugin(Component):
                 continue
         if not tags:
             tags = get_env_val('default_tag', config=self.env.config,
-                                section='blog', default='blog', convert=list_val)
+                                section='blog', default='blog', 
+                                convert=list_val)
         return tags, kwargs
 
     def _get_display_params(self, req, kwargs):
@@ -287,28 +288,113 @@ class TracBlogPlugin(Component):
         """
         tallies = {}
         parms = self._get_display_params(req, kwargs)
-        blog, tlist = self._initialize_tags(args, kwargs)
+        tagged_pages, tlist = self._initialize_tags(args, kwargs)
         poststart, postend, default_times = self._get_time_range(parms, req, 
                                                                  kwargs)
 
+        # The blog can be displayed in various formats depending on the values
+        # of the parameters.  The two main methods/displays are:
+        #  * Fixed number of posts, ie. always show the last 5 posts.
+        #  * All posts in a given date range, ie. all posts for a given month.
+        # Issues with the first method is that all posts have to be read, and
+        # then sorted by date before the selection can be made, as we are not
+        # guaranteed any specific order from the tag retrieval.
+        #
+        # Issues with the second are likewise.  However, with the second, while
+        # we still need to read in all of the posts, we can drop those that are
+        # out of range in the process, so no extra sorting need be done. 
+        #
+        # An option for parsing would be:
+        # for each tagged post:
+        #   load post
+        #   save post_time and page name in list
+        # sort the list
         # Formatting
-        entries = {}
-        if parms['num_posts'] and default_times:
-            poststart = sys.maxint
-            postend = 0
-
-        for blog_entry in blog:
-            page = WikiPage(self.env, version=1, name=blog_entry)
+        # 
+        # Create a dictionary of page names keyed by the post date.  Create a
+        # sorted (decending) list of post date timestamps.
+        for p in tagged_pages:
+            page = WikiPage(self.env, version=1, name=p)
             version, post_time, author, comment, ipnr = page.get_history(
                                                         ).next()
-            self._add_to_tallies(tallies, post_time, blog_entry)
-            page = WikiPage(self.env, name=blog_entry)
-            version, modified, author, comment, ipnr = page.get_history(
-                                                       ).next()
-            if poststart >= post_time >= postend:       
-                timeStr = format_datetime(post_time, 
-                                          format=parms['date_format']) 
-                text = self._trim_page(page.text, blog_entry)
+            posts[post_time] = p
+            # We also take time to update our tallies
+            self._tally(tallies, post_time, p)
+            continue
+        post_times = posts.keys()
+        post_times.sort()
+        post_times.reverse()
+        # Slice the list of post times down to those posts that fall in the
+        # selected time frame and/or number of posts.
+        if default_times and parms['num_posts']:
+            post_times = post_times[:parms['num_posts']]
+        else:
+            i = 0 
+            maxindex = len(post_times)
+            while (i < maxindex) and (post_times[i] < poststart):
+                i += 1
+            start_index = i
+            while (i < maxindex) and (post_times[i] <= postend):
+                i += 1
+            stop_index = i 
+            post_times = post_times[start_index:stop_index]
+            if parms['num_posts'] and (parms['num_posts'] <= len(post_times)):
+                post_times = post_times[:parms['num_posts']]
+        # Now that we have the list of pages that we are going to use, what now?
+
+        # We need the following information:
+        #- * formatted post time
+        #- * truncated(?) version of page to display
+        #  * list of tags to display in "tagged under"
+        #    * link name (tag)
+        #    * tag name (tag)
+        #    * last tag indicator
+        #- * page name
+        #- * link to wiki page (read_post)
+        #- * author
+        #- * comment (?)
+        #  * whether or not tags are present
+        #  * whether or not more tags are available
+        #- * whether or not the post has been updated
+        #-   * update time 
+        entries = {}
+        for post in post_times:
+            page = WikiPage(self.env, name=posts[post])
+            version, modified, author, comment, ipnr = page.get_history().next()
+            # Truncate the post text if necessary and format for display
+            post_text = wiki_to_nofloat_html(self._trin_page(page.text), 
+                                    self.env, req,
+                                    macro_blacklist=parms['macro_blacklist'])
+            # Format the page time for display
+            post_time = format_datetime(post_time, format=parms['date_format']) 
+            # Create the link to the full post text
+            read_post_link = wiki_to_oneliner(parms['read_post'] % posts[post],
+                                              self.env),
+            # Set whether or not the page has been modified
+            post_modified = ((modified != post) and parms['mark_updated'])
+            # Create post modified string.  If {{{post_modified}}} is false,
+            # this string is simply ignored.
+            modified_notice = format_datetime(modified, 
+                                              format=parms['date_format'])
+            data = {
+                    'name'      : posts[post],
+                    'wiki_text' : post_text,
+                    'time'      : post_time,
+                    'author'    : author, # need to make sure this is the orig.
+                    'comment'   : comment,
+                    'modified'  : post_modified,
+                    'mod_time'  : modified_notice,
+                    'wiki_link' : read_post_link,
+                    'tags'      : {
+                                    'present' : tags_present,
+                                    'tags'    : page_tags,
+                                    'more'    : more_tags,
+                                  },
+                   }
+            entries[post_time] = data
+            
+            
+        for blog_entry in blog:
                 pagetags = [x for x in self.tags.get_name_tags(blog_entry) 
                             if x not in tlist]
                 tagtags = []
@@ -320,38 +406,22 @@ class TracBlogPlugin(Component):
                     tagtags.append(d)
                     continue
                 data = {
-                        'name'      : blog_entry,
-                        'wiki_link' : wiki_to_oneliner(parms['read_post'] % 
-                                                       blog_entry,
-                                                       self.env),
-                        'time'      : timeStr,
-                        'author'    : author,
-                        'wiki_text' : wiki_to_nofloat_html(text, self.env, req,
-                                      macro_blacklist=parms['macro_blacklist']),
-                        'comment'   : wiki_to_oneliner(comment, self.env),
                         'tags'      : {
                                         'present' : len(pagetags),
                                         'tags'    : tagtags,
                                         'more'    : len(pagetags) > 3 or 0,
                                       },
                        }
-                if (modified != post_time) and parms['mark_updated']:
-                    data['modified'] = 1
-                    mod_str = format_datetime(modified, 
-                                              format=parms['date_format'])
-                    data['mod_time'] = mod_str
-                entries[post_time] = data
             continue
-        tlist = entries.keys()
-        tlist.sort()
-        tlist.reverse()
-        if parms['num_posts'] and (parms['num_posts'] <= len(tlist)):
-            tlist = tlist[:parms['num_posts']]
-        if tlist:
-            entries[tlist[-1]]['last'] = 1
-        req.hdf['blog.entries'] = [entries[x] for x in tlist]
+        # mark the last post so that we don't display a line after the last post
+        if post_times:
+            entries[post_times[-1]]['last'] = 1
+        # fill the HDF with the blog entries
+        req.hdf['blog.entries'] = [entries[x] for x in post_times]
+        # set link name for blog posts
         bloglink = self.env.config.get('blog', 'new_blog_link', 'New Blog Post')
         req.hdf['blog.newblog'] = bloglink
+        # generate calendar
         hidecal = self._choose_value('hidecal', req, kwargs)
         if not hidecal:
             self._generate_calendar(req, tallies)
@@ -478,7 +548,7 @@ class TracBlogPlugin(Component):
                 tally = 0
         return tally
 
-    def _add_to_tallies(self, tallies,  post_time, page_name):
+    def _tally(self, tallies,  post_time, page_name):
         """Create a running tally of blog page data
 
         """
@@ -605,7 +675,7 @@ class TracBlogPlugin(Component):
     def _trim_page(self, text, page_name):
         """Trim the page text to the {{{post_size}} in trac.ini
 
-        The timming isn't exact.  It trims to the first line that causes the
+        The trimming isn't exact.  It trims to the first line that causes the
         page to exceed the value storing in {{{post_size}}}.  If the line is
         in the middle of a code block, it will close the block.
 
