@@ -21,17 +21,17 @@ class SubscriptionManager(Component):
     # Subscription accessors    
     def get_subscribers(self, type, db=None):
         """Get all envs that are subscribed to this env."""
-        return self._get_rows(type, 0, db)
+        return self._get_rows(type, 1, db)
         
     def get_subscriptions(self, type, db=None):
         """Get all envs this env is subscribed to."""
-        return self._get_rows(type, 1, db)
+        return self._get_rows(type, 0, db)
         
     def _get_rows(self, type, direction, db=None):
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         
-        cursor.execute('SELECT env FROM tracforge_subscriptions WHERE type = %s AND direction = %s',(type,direction))
+        cursor.execute('SELECT env FROM tracforge_subscriptions WHERE type = %s AND direction = %s',(type,str(direction)))
         for row in cursor:
             yield row[0]
             
@@ -41,15 +41,15 @@ class SubscriptionManager(Component):
                 yield x
         
     # Subscription mutators
-    def subscibe_to(self, source, type):
-        source_env = open_env(sorce)
+    def subscribe_to(self, source, type):
+        source_env = open_env(source)
         source_mgr = SubscriptionManager(source_env)
 
         self._change_subscription('add', source_env.path, type, 0)    
         source_mgr._change_subscription('add', self.env.path, type, 1)
         
     def unsubscribe_from(self, source, type):
-        source_env = open_env(sorce)
+        source_env = open_env(source)
         source_mgr = SubscriptionManager(source_env)
         
         self._change_subscription('delete', source_env.path, type, 0)

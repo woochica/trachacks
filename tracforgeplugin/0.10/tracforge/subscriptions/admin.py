@@ -4,6 +4,7 @@ from trac.web.chrome import ITemplateProvider
 from webadmin.web_ui import IAdminPageProvider
 
 from manager import SubscriptionManager
+from util import open_env
 
 class SubscriptionAdmin(Component):
     """Admin GUI for subscriptions."""
@@ -23,6 +24,23 @@ class SubscriptionAdmin(Component):
         subscriptions = {}
         for type in types:
             subscriptions[type] = list(mgr.get_subscriptions(type))
+                    
+        if req.method == 'POST':
+            if req.args.get('add'):
+                env = req.args.get('env')
+                type = req.args.get('type')
+                
+                assert type in types
+                
+                # Verify that this looks like an env
+                try:
+                    open_env(env)
+                except IOError:
+                    raise TracError, "'%s' is not a valid Trac environment"%env
+                
+                if env not in subscriptions[type]:
+                    mgr.subscribe_to(env, type)
+                req.redirect(req.href.admin(cat,page))
         
         req.hdf['tracforge.types'] = types
         req.hdf['tracforge.subscriptions'] = subscriptions
