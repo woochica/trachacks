@@ -8,6 +8,20 @@ from trac.util import Markup
 
 from trac.ticket.web_ui import NewticketModule
 
+class PseudoRequest(object):
+    def __init__(self, env, req):
+        self.env = env
+        self.req = req
+        
+    def __getattr__(self, name):
+        return getattr(self.req,name)
+        
+    def redirect(self, dest):
+        if dest.startswith(self.env.href.ticket()):
+            if not self.perm.has_permission('TICKET_VIEW'):
+                self.req.redirect(self.env.href.simpleticket())
+        self.req.redirect(dest)
+
 class SimpleTicketModule(Component):
     """Restricted ticket entry form."""
     
@@ -36,12 +50,18 @@ class SimpleTicketModule(Component):
         # Find which fields to not show
         hide_fields = [x.strip() for x in self.config.get('simpleticket','hide', default='').split(',') if x.strip()]
 
+        # Intercept redirects
+        new_req = PseudoRequest(self.env, req)
+
         # Process the request via the original newticket module
-        template, content_type = NewticketModule(self.env).process_request(req)
+        template, content_type = NewticketModule(self.env).process_request(new_req)
         
         # Hide the fields
         for f in hide_fields:
             req.hdf['newticket.fields.%s.skip'%f] = True
+            
+        # Redirect the POST
+        req.hdf['trac.href.newticket'] = self.env.href.simpleticket()
         
         # Restore TICKET_CREATE
         if not really_has_perm:
