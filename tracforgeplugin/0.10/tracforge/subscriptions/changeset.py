@@ -6,6 +6,7 @@ from trac.core import *
 from trac.Timeline import ITimelineEventProvider
 from trac.versioncontrol.web_ui.changeset import ChangesetModule
 from trac.web.href import Href
+from trac.util import Markup
 
 from api import ISubscribable
 from util import open_env
@@ -67,7 +68,9 @@ class ChangesetSubscribable(Component):
                 cset = ChangesetModule(env)
                 try:
                     for ret in cset.get_timeline_events(new_req, start, stop, ['changeset']):
-                        yield ret
+                        kind, href, title, date, author, message = ret
+                        title += Markup(' from %s',env.path)
+                        yield (kind, href, title, date, author, message)
                 except Exception, e:
                     self.log.debug('ChangesetSubscribable: %s'%traceback.format_exc())
                     raise e
