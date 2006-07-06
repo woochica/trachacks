@@ -41,6 +41,18 @@
         <input type="text" name="moderators" value=""/><br/>
       <?cs /if ?>
     </div>
+    <?cs if:discussion.groups.1.id ?>
+      <div class="group">
+        <label for="group">Forum Group:</label><br/>
+        <select name="group">
+          <?cs each:group = discussion.groups ?>
+            <option value="<?cs var:group.id ?>"><?cs var:group.name ?></option>
+          <?cs /each ?>
+        </select><br/>
+      </div>
+    <?cs else ?>
+      <input type="hidden" name="group" value=""/>
+    <?cs /if ?>
     <div class="buttons">
       <input type="submit" name="submit" value="Add"/>
       <input type="hidden" name="discussion_action" value="post-add"/>
@@ -58,7 +70,7 @@
           <th class="subject">Subject</th>
           <th class="description">Description</th>
           <th class="moderators">Moderators</th>
-          <?cs if:discussion.groups.0.id ?>
+          <?cs if:discussion.groups.1.id ?>
             <th class="group">Group</th>
           <?cs /if ?>
         </tr>
@@ -81,11 +93,10 @@
             <td class="moderators">
               <div class="moderators"><?cs var:forum.moderators ?></div>
             </td>
-            <?cs if:discussion.groups.0.id ?>
+            <?cs if:discussion.groups.1.id ?>
               <td class="group">
                 <div class="group">
                   <select id="group-select-<?cs var:forum.id ?>" name="group-<?cs var:forum.id ?>" onChange="submit_group_change(<?cs var:forum.id ?>)">
-                    <option value="">None</option>
                     <?cs each:group = discussion.groups ?>
                       <?cs if:group.id == forum.group ?>
                         <option value="<?cs var:group.id ?>" selected="selected"><?cs var:group.name ?></option>

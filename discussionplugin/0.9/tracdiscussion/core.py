@@ -152,12 +152,13 @@ class DiscussionCore(Component):
               self.log)
             req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
               self.log)
+            self.log.debug(req.hdf.get('discussion.forums'))
         elif mode == 'forum-add':
             req.perm.assert_permission('DISCUSSION_MODIFY')
             req.hdf['discussion.href'] = self.env.href.discussion()
             req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
               self.log)
-            req.hdf['discussion.users'] = get_users(self.env)
+            req.hdf['discussion.users'] = get_users(self.env, self.log)
         elif mode == 'forum-post-add':
             req.perm.assert_permission('DISCUSSION_MODIFY')
 
@@ -168,10 +169,10 @@ class DiscussionCore(Component):
             description = req.args.get('description')
             moderators = req.args.get('moderators')
             group = req.args.get('group')
-            if moderators:
-                moderators = moderators.split(' ')
-            else:
-                moderators = ''
+            if not moderators:
+                moderators = []
+            if not isinstance(moderators, list):
+                moderators = [moderators]
 
             # Add new forum
             add_forum(cursor, self.log, name, author, subject, description,

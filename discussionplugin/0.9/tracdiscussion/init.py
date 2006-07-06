@@ -31,7 +31,7 @@ class DiscussionInit(Component):
             #try:
             module = __import__('tracdiscussion.db.%s' % (script_name),
             globals(), locals(), ['do_upgrade'])
-            module.do_upgrade(cursor)
+            module.do_upgrade(self.env, cursor)
             #except:
             #    raise TracError('Error upgrading database to version %i' % I)
 

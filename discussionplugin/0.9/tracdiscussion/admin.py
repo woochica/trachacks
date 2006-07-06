@@ -1,3 +1,4 @@
+from tracdiscussion.api import *
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import add_stylesheet
@@ -54,17 +55,19 @@ class DiscussionWebAdmin(Component):
         # Perform mode action
         if mode == 'group-admin':
             # Display group list
-            req.hdf['discussion.groups'] = self._get_groups(cursor)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
         elif mode == 'group-post-add':
             # Get form values
             name = req.args.get('name')
             description = req.args.get('description')
 
             # Add new group
-            self._add_group(cursor, name, description)
+            add_group(cursor, self.log, name, description)
 
             # Display group list
-            req.hdf['discussion.groups'] = self._get_groups(cursor)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
             mode = 'group-admin'
         elif mode == 'group-delete':
             # Get form values
@@ -73,15 +76,20 @@ class DiscussionWebAdmin(Component):
                 selection = [selection]
 
             # Delete selected groups
-            self._delete_groups(cursor, selection)
+            if selection:
+                for group in selection:
+                    delete_group(cursor, self.log, group)
 
             # Display group list
-            req.hdf['discussion.groups'] = self._get_groups(cursor)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
             mode = 'group-admin'
         elif mode == 'forum-admin':
             # Display forum list
-            req.hdf['discussion.forums'] = self._get_forums(cursor)
-            req.hdf['discussion.groups'] = self._get_groups(cursor)
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
         elif mode == 'forum-post-add':
             # Get form values
             name = req.args.get('name')
@@ -89,17 +97,22 @@ class DiscussionWebAdmin(Component):
             subject = req.args.get('subject')
             description = req.args.get('description')
             moderators = req.args.get('moderators')
-            if moderators:
-                moderators = moderators.split(' ')
-            else:
-                moderators = ''
+            group = req.args.get('group')
+
+            if not moderators:
+                moderators = []
+            if not isinstance(moderators, list):
+                moderators = [moderators]
 
             # Add new forum
-            self._add_forum(cursor, name, author, subject, description, moderators)
+            add_forum(cursor, self.log, name, author, subject, description,
+              moderators, group)
 
             # Display forum list
-            req.hdf['discussion.forums'] = self._get_forums(cursor)
-            req.hdf['discussion.groups'] = self._get_groups(cursor)
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
             mode = 'forum-admin'
         elif mode == 'forum-delete':
             # Get form values
@@ -108,11 +121,15 @@ class DiscussionWebAdmin(Component):
                 selection = [selection]
 
             # Delete selected forums
-            self._delete_forums(cursor, selection)
+            if selection:
+                for forum in selection:
+                    delete_forum(cursor, self.log, forum)
 
             # Display forum list
-            req.hdf['discussion.forums'] = self._get_forums(cursor)
-            req.hdf['discussion.groups'] = self._get_groups(cursor)
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
             mode = 'forum-admin'
         elif mode == 'forum-change-group':
             # Get form values
@@ -120,95 +137,17 @@ class DiscussionWebAdmin(Component):
             group = req.args.get('group')
 
             # Set new group
-            self._set_group(cursor, forum, group)
+            set_group(cursor, self.env, self.log, forum, group)
 
             # Display forum list
-            req.hdf['discussion.forums'] = self._get_forums(cursor)
-            req.hdf['discussion.groups'] = self._get_groups(cursor)
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
             mode = 'forum-admin'
 
         # Fill template values and return mode template
         req.hdf['discussion.href'] = self.env.href.admin(category, page)
-        req.hdf['discussion.users'] = self._get_users()
+        req.hdf['discussion.users'] = get_users(self.env, self.log)
         db.commit()
         return mode + '.cs', None
-
-    def _get_groups(self, cursor):
-        columns = ('id', 'name', 'description')
-        sql = "SELECT id, name, description FROM forum_group"
-        self.log.debug(sql)
-        cursor.execute(sql)
-        groups = []
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['name'] = wiki_to_oneliner(row['name'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
-            groups.append(row)
-        return groups
-
-    def _get_forums(self, cursor):
-        columns = ('id', 'name', 'author', 'moderators', 'group', 'subject',
-          'description')
-        sql = "SELECT id, name, author, moderators, forum_group, subject," \
-          " description FROM forum"
-        self.log.debug(sql)
-        cursor.execute(sql)
-        forums = []
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['name'] = wiki_to_oneliner(row['name'], self.env)
-            row['subject'] = wiki_to_oneliner(row['subject'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
-            row['moderators'] = wiki_to_oneliner(row['moderators'], self.env)
-            forums.append(row)
-        return forums
-
-    def _get_users(self):
-        users = []
-        for user in self.env.get_known_users():
-            users.append(user[0])
-        return users
-
-    def _add_group(self, cursor, name, description):
-        sql = "INSERT INTO forum_group (name, description) VALUES ('%s', '%s')" \
-          % (name, description)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-    def _add_forum(self, cursor, name, author, subject, description, moderators):
-        moderators = ' '.join(moderators)
-        sql = "INSERT INTO forum (name, author, time, moderators, subject," \
-          " description) VALUES ('%s', '%s', %s, '%s', '%s', '%s')" % (name,
-          author, str(int(time.time())), moderators, subject, description)
-        self.log.debug(sql)
-        cursor.execute(sql)
-
-    def _delete_groups(self, cursor, groups):
-        if groups:
-            groups = ', '.join(groups)
-            sql = "DELETE FROM forum_group WHERE id IN (%s)" % (groups)
-            self.log.debug(sql)
-            cursor.execute(sql)
-            sql = "UPDATE forum SET forum_group = NULL WHERE forum_group IN" \
-              " (%s)" % (groups)
-            cursor.execute(sql)
-
-    def _delete_forums(self, cursor, forums):
-        if forums:
-            forums = ', '.join(forums)
-            sql = "DELETE FROM message WHERE forum IN (%s)" % (forums)
-            self.log.debug(sql)
-            cursor.execute(sql)
-            sql = "DELETE FROM topic WHERE forum IN (%s)" % (forums)
-            self.log.debug(sql)
-            cursor.execute(sql)
-            sql = "DELETE FROM forum WHERE id IN (%s)" % (forums)
-            self.log.debug(sql)
-            cursor.execute(sql)
-
-    def _set_group(self, cursor, forum, group):
-        if not group:
-            group = 'NULL'
-        sql = "UPDATE forum SET forum_group = %s WHERE id = %s" % (group, forum)
-        self.log.debug(sql)
-        cursor.execute(sql)

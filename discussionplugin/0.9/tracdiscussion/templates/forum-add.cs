@@ -30,11 +30,10 @@
         <input type="text" name="moderators" value=""/><br/>
       <?cs /if ?>
     </div>
-    <?cs if:discussion.groups.0.id ?>
+    <?cs if:discussion.groups.1.id ?>
       <div class="group">
         <label for="group">Forum Group:</label><br/>
         <select name="group">
-          <option value="">None</option>
           <?cs each:group = discussion.groups ?>
             <option value="<?cs var:group.id ?>"><?cs var:group.name ?></option>
           <?cs /each ?>

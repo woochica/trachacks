@@ -20,7 +20,7 @@
   </fieldset>
 </form>
 
-<?cs if:discussion.groups.0.name ?>
+<?cs if:discussion.groups.1.id ?>
   <form class="forum-list" method="post">
     <table class="listing">
       <thead>
@@ -32,17 +32,19 @@
       </thead>
       </tbody>
         <?cs each:group = discussion.groups ?>
-          <tr class="<?cs if:name(group) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
-            <td class="selection">
-              <input type="checkbox" name="selection" value="<?cs var:group.id ?>"/>
-            </td>
-            <td class="name">
-              <div class="name"><?cs var:group.name ?></div>
-            </td>
-            <td class="description">
-              <div class="description" ><?cs var:group.description ?></div>
-            </td>
-          </tr>
+          <?cs if:group.id ?>
+            <tr class="<?cs if:name(group) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
+              <td class="selection">
+                <input type="checkbox" name="selection" value="<?cs var:group.id ?>"/>
+              </td>
+              <td class="name">
+                <div class="name"><?cs var:group.name ?></div>
+              </td>
+              <td class="description">
+                <div class="description" ><?cs var:group.description ?></div>
+              </td>
+            </tr>
+          <?cs /if ?>
         <?cs /each ?>
       </tbody>
     </table>

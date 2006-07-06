@@ -1,6 +1,6 @@
 from trac.core import *
 from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import format_datetime, pretty_timedelta
+from trac.util import format_datetime, pretty_timedelta, escape, unescape
 import time
 
 # Get one item functions
@@ -8,9 +8,9 @@ import time
 def get_message(cursor, env, req, log, id):
     columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
     sql = "SELECT id, forum, topic, replyto, time, author, body FROM message" \
-      " WHERE id = %s" % (id)
+      " WHERE id = %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (id,))
     for row in cursor:
         row = dict(zip(columns, row))
         row['author'] = wiki_to_oneliner(row['author'], env)
@@ -21,9 +21,9 @@ def get_message(cursor, env, req, log, id):
 def get_topic(cursor, env, req, log, id):
     columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
     sql = "SELECT id, forum, time, subject, body, author FROM topic WHERE id =" \
-      " %s" % (id)
+      " %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (id,))
     for row in cursor:
         row = dict(zip(columns, row))
         row['author'] = wiki_to_oneliner(row['author'], env)
@@ -35,9 +35,9 @@ def get_topic(cursor, env, req, log, id):
 def get_topic_by_subject(cursor, env, req, log, subject):
     columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
     sql = "SELECT id, forum, time, subject, body, author FROM topic WHERE subject =" \
-      " '%s'" % (subject)
+      " %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (subject,))
     for row in cursor:
         row = dict(zip(columns, row))
         row['author'] = wiki_to_oneliner(row['author'], env)
@@ -49,9 +49,9 @@ def get_topic_by_subject(cursor, env, req, log, subject):
 def get_forum(cursor, env, req, log, id):
     columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
     sql = "SELECT name, moderators, id, time, subject, description FROM" \
-      " forum WHERE id = %s" % (id)
+      " forum WHERE id = %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (id,))
     for row in cursor:
         row = dict(zip(columns, row))
         row['moderators'] = row['moderators'].split(' ')
@@ -59,18 +59,40 @@ def get_forum(cursor, env, req, log, id):
         return row
     return None
 
+# Set item functions
+
+def set_group(cursor, env, log, forum, group):
+    if not group:
+        group = '0'
+    sql = "UPDATE forum SET forum_group = %s WHERE id = %s"
+    log.debug(sql)
+    cursor.execute(sql, (group, forum))
+
 # Get list of items functions
+
 def get_groups(cursor, env, req, log):
-    columns = ('id', 'name', 'description')
-    sql = "SELECT id, name, description FROM forum_group"
+    # Get count of forums without group
+    sql = "SELECT COUNT(id) FROM forum WHERE forum_group = 0"
     log.debug(sql)
     cursor.execute(sql)
-    groups = []
+    no_group_forums = 0
+    for row in cursor:
+       no_group_forums = row[0]
+    groups = [{'id' : 0, 'name' : 'None', 'description' : 'No Group',
+      'forums' : no_group_forums}]
+
+    # Get forum groups
+    columns = ('id', 'name', 'description', 'forums')
+    sql = "SELECT id, name, description, (SELECT COUNT(id) FROM forum f WHERE" \
+      " f.forum_group = forum_group.id) FROM forum_group"
+    log.debug(sql)
+    cursor.execute(sql)
     for row in cursor:
         row = dict(zip(columns, row))
         row['name'] = wiki_to_oneliner(row['name'], env)
         row['description'] = wiki_to_oneliner(row['description'], env)
         groups.append(row)
+    log.debug(groups)
     return groups
 
 def get_forums(cursor, env, req, log):
@@ -86,6 +108,8 @@ def get_forums(cursor, env, req, log):
     forums = []
     for row in cursor:
         row = dict(zip(columns, row))
+        #row['name'] = wiki_to_oneliner(row['name'], env)
+        #row['subject'] = wiki_to_oneliner(row['subject'], env)
         row['moderators'] = wiki_to_oneliner(row['moderators'], env)
         row['description'] = wiki_to_oneliner(row['description'], env)
         if row['lastreply']:
@@ -106,9 +130,9 @@ def get_topics(cursor, env, req, log, forum):
     sql = "SELECT id, forum, time, subject, body, author, (SELECT COUNT(id)" \
       " FROM message m WHERE m.topic = topic.id), (SELECT MAX(time) FROM" \
       " message m WHERE m.topic = topic.id) FROM topic WHERE forum = %s ORDER" \
-      " BY time" % (forum)
+      " BY time"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (forum,))
     topics = []
     for row in cursor:
         row = dict(zip(columns, row))
@@ -125,9 +149,9 @@ def get_topics(cursor, env, req, log, forum):
 def get_messages(cursor, env, req, log, topic):
     columns = ('id', 'replyto', 'time', 'author', 'body')
     sql = "SELECT id, replyto, time, author, body FROM message WHERE topic =" \
-      " %s ORDER BY time" % (topic)
+      " %s ORDER BY time"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (topic,))
 
     messagemap = {}
     messages = []
@@ -153,66 +177,79 @@ def get_messages(cursor, env, req, log, topic):
                 parent['replies'] = [message]
     return messages;
 
-def get_users(env):
+def get_users(env, log):
     users = []
     for user in env.get_known_users():
+        log.debug(user)
         users.append(user[0])
     return users
 
 # Add items functions
 
+def add_group(cursor, log, name, description):
+    sql = "INSERT INTO forum_group (name, description) VALUES (%s, %s)"
+    log.debug(sql)
+    cursor.execute(sql, (name, description))
+
+
 def add_forum(cursor, log, name, author, subject, description, moderators,
   group):
     moderators = ' '.join(moderators)
     if not group:
-        group = 'NULL'
+        group = '0'
     sql = "INSERT INTO forum (name, author, time, moderators, subject," \
-      " description, forum_group) VALUES ('%s', '%s', %s, '%s', '%s', '%s'," \
-      " %s)" % (name, author, str(int(time.time())), moderators, subject,
-      description, group)
+      " description, forum_group) VALUES (%s, %s, %s, %s, %s, %s, %s)"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (name, author, str(int(time.time())), moderators,
+      subject, description, group))
 
 def add_topic(cursor, log, forum, subject, author, body):
     sql = "INSERT INTO topic (forum, time, author, subject, body) VALUES" \
-      " (%s, %s, '%s', '%s', '%s')" % (forum, str(int(time.time())), author,
-      subject, body)
+      " (%s, %s, %s, %s, %s)"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (forum, str(int(time.time())), author, subject, body))
 
 def add_message(cursor, log, forum, topic, replyto, author, body):
     sql = "INSERT INTO message (forum, topic, replyto, time, author, body)" \
-      " VALUES (%s, %s, %s, %s, '%s', '%s')" % (forum, topic, replyto,
-      str(int(time.time())), author, body)
+      " VALUES (%s, %s, %s, %s, %s, %s)"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (forum, topic, replyto, str(int(time.time())),
+      escape(author), escape(body)))
 
 # Delete items functions
 
+def delete_group(cursor, log, group):
+    sql = "DELETE FROM forum_group WHERE id = %s"
+    log.debug(sql)
+    cursor.execute(sql, (group,))
+    sql = "UPDATE forum SET forum_group = 0 WHERE forum_group = %s"
+    log.debug(sql)
+    cursor.execute(sql, (group,))
+
 def delete_forum(cursor, log, forum):
-    sql = "DELETE FROM message WHERE forum = %s" % (forum)
+    sql = "DELETE FROM message WHERE forum = %s"
     log.debug(sql)
-    cursor.execute(sql)
-    sql = "DELETE FROM topic WHERE forum = %s" % (forum)
+    cursor.execute(sql, (forum,))
+    sql = "DELETE FROM topic WHERE forum = %s"
     log.debug(sql)
-    cursor.execute(sql)
-    sql = "DELETE FROM forum WHERE id = %s" % (forum)
+    cursor.execute(sql, (forum,))
+    sql = "DELETE FROM forum WHERE id = %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (forum,))
 
 def delete_topic(cursor, log, topic):
-    sql = "DELETE FROM message WHERE topic = %s" % (topic)
+    sql = "DELETE FROM message WHERE topic = %s"
     log.debug(sql)
-    cursor.execute(sql)
-    sql = "DELETE FROM topic WHERE id = %s" % (topic)
+    cursor.execute(sql, (topic,))
+    sql = "DELETE FROM topic WHERE id = %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (topic,))
 
 def delete_message(cursor, log, message):
     # Get message replies
-    sql = "SELECT id FROM message WHERE replyto = %s" % (message)
+    sql = "SELECT id FROM message WHERE replyto = %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (message,))
     replies = []
     for row in cursor:
         replies.append(row[0])
@@ -222,6 +259,6 @@ def delete_message(cursor, log, message):
         delete_message(cursor, log, reply)
 
     # Delete message itself
-    sql = "DELETE FROM message WHERE id = %s" % (message)
+    sql = "DELETE FROM message WHERE id = %s"
     log.debug(sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (message,))

@@ -70,9 +70,10 @@
 
 <h1>Forum List</h1>
 
-<?cs call:display_group(nogroup, discussion.forums) ?>
 <?cs each:group = discussion.groups ?>
-  <?cs call:display_group(group, discussion.forums) ?>
+  <?cs if:group.forums ?>
+    <?cs call:display_group(group, discussion.forums) ?>
+  <?cs /if ?>
 <?cs /each ?>
 
 <?cs if:trac.acl.DISCUSSION_MODIFY ?>

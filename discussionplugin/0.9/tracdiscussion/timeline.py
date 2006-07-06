@@ -78,9 +78,9 @@ class DiscussionTimeline(Component):
     def _get_changed_forums(self, cursor, start, stop):
         columns = ('id', 'name', 'author', 'subject', 'description', 'time')
         sql = "SELECT id, name, author, subject, description, time FROM forum" \
-          " WHERE time BETWEEN %s AND %s" % (start, stop)
+          " WHERE time BETWEEN %s AND %s"
         self.log.debug(sql)
-        cursor.execute(sql)
+        cursor.execute(sql, (start, stop))
         for row in cursor:
             row = dict(zip(columns, row))
             yield row
@@ -88,10 +88,9 @@ class DiscussionTimeline(Component):
     def _get_changed_topics(self, cursor, start, stop):
         columns = ('id', 'subject', 'author', 'time', 'forum', 'forum_name')
         sql = "SELECT id, subject, author, time, forum, (SELECT name FROM forum" \
-          " f WHERE f.id = topic.forum) FROM topic WHERE time BETWEEN %s AND %s" \
-          % (start, stop)
+          " f WHERE f.id = topic.forum) FROM topic WHERE time BETWEEN %s AND %s"
         self.log.debug(sql)
-        cursor.execute(sql)
+        cursor.execute(sql, (start, stop))
         for row in cursor:
             row = dict(zip(columns, row))
             yield row
@@ -101,10 +100,9 @@ class DiscussionTimeline(Component):
           'topic_subject')
         sql = "SELECT id, author, time, forum, topic, (SELECT name FROM forum f" \
           " WHERE f.id = message.forum), (SELECT subject FROM topic t WHERE" \
-          " t.id = message.topic) FROM message WHERE time BETWEEN %s AND %s" \
-          % (start, stop)
+          " t.id = message.topic) FROM message WHERE time BETWEEN %s AND %s"
         self.log.debug(sql)
-        cursor.execute(sql)
+        cursor.execute(sql, (start, stop))
         for row in cursor:
             row = dict(zip(columns, row))
             yield row
