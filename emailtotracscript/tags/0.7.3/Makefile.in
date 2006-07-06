@@ -1,0 +1,46 @@
+# Authors: Bas van der Vlies & Michel Jouvin
+# Date   : 13 Jan 2005
+# Desc.  : Simple Makefile
+#
+# SVN INFO:
+#      $Id$
+#
+#
+prefix=@prefix@
+EXEC_PREFIX=@exec_prefix@/bin
+PYTHON_BIN=@PYTHON@
+CONFIG=@sysconfdir@
+
+# User names 
+#
+TRAC_USER=@trac_user@
+MTA_USER=@mta_user@
+
+TRAC_SCRIPT_NAME=email2trac
+
+CC=@CC@
+DEBUG=0
+CFLAGS=-DMTA_USER=\"$(MTA_USER)\" -DTRAC_USER=\"$(TRAC_USER)\" -DTRAC_SCRIPT_NAME=\"$(TRAC_SCRIPT_NAME)\" -DTRAC_SCRIPT_PATH=\"$(EXEC_PREFIX)\" -DDEBUG=$(DEBUG)
+
+PYTHON_FILES=delete_spam.py email2trac.py
+WRAPPER_SRC=run_email2trac.c run_email2trac.h
+
+all: run_email2trac
+
+run_email2trac: $(WRAPPER_SRC) Makefile
+	$(CC) $(CFLAGS) -o $@ run_email2trac.c
+
+install: all
+	install -d $(DESTDIR)$(EXEC_PREFIX)
+	install -m 4111 -o root run_email2trac $(DESTDIR)$(EXEC_PREFIX)
+	for script in $(PYTHON_FILES) ; \
+	do \
+          name=`basename $$script '.py'` ;\
+	  install -m 755 -o root $$script  $(DESTDIR)$(EXEC_PREFIX)/$$name ;\
+	done
+
+clean:
+	rm run_email2trac
+
+distclean:
+	rm run_email2trac email2trac.py delete_spam.py config.log config.status Makefile
