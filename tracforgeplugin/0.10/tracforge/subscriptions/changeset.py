@@ -69,7 +69,7 @@ class ChangesetSubscribable(Component):
                 try:
                     for ret in cset.get_timeline_events(new_req, start, stop, ['changeset']):
                         kind, href, title, date, author, message = ret
-                        title += Markup(' from %s',env.path)
+                        title += Markup(' from %s',env.config.get('project','name',env.path))
                         yield (kind, href, title, date, author, message)
                 except Exception, e:
                     self.log.debug('ChangesetSubscribable: %s'%traceback.format_exc())
