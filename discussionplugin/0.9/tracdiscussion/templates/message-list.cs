@@ -139,6 +139,10 @@
       <input type="hidden" name="discussion_action" value="delete"/>
       <input type="hidden" name="reply" value="-1">
     </form>
+    <form method="get" action="<?cs var:discussion.href ?>">
+      <input type="submit" name="movetopic" value="Move Topic"/>
+      <input type="hidden" name="discussion_action" value="move"/>
+    </form>
   </div>
 <?cs /if ?>
 

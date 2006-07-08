@@ -137,7 +137,7 @@ class DiscussionWebAdmin(Component):
             group = req.args.get('group')
 
             # Set new group
-            set_group(cursor, self.env, self.log, forum, group)
+            set_group(cursor, self.log, forum, group)
 
             # Display forum list
             req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,

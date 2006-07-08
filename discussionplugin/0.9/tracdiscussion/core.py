@@ -111,6 +111,13 @@ class DiscussionCore(Component):
                     mode = 'topic-delete'
                 else:
                     mode = 'message-delete'
+            elif action == 'move':
+                mode = 'topic-move'
+            elif action == 'post-move':
+                if submit:
+                    mode = 'topic-post-move'
+                else:
+                    mode = 'message-list'
             else:
                 mode = 'message-list'
         elif forum:
@@ -231,6 +238,35 @@ class DiscussionCore(Component):
 
             # Add new topic and display topic list
             add_topic(cursor, self.log, forum['id'], subject, author, body)
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'])
+            req.hdf['discussion.topics'] = get_topics(cursor, self.env, req,
+              self.log, forum['id'])
+            mode = 'topic-list'
+        elif mode == 'topic-move':
+            req.perm.assert_permission('DISCUSSION_MODERATE')
+
+            # Check if user can moderate
+            if not is_moderator:
+                raise PermissionError('Forum moderate')
+
+            # Display change forum form
+            req.hdf['discussion.href'] = self.env.href.discussion(forum['id'], topic['id'])
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req, self.log)
+        elif mode == 'topic-post-move':
+            req.perm.assert_permission('DISCUSSION_MODERATE')
+
+            # Check if user can moderate
+            if not is_moderator:
+                raise PermissionError('Forum moderate')
+
+            # Get form values
+            new_forum = req.args.get('new_forum')
+            self.log.debug(new_forum)
+
+            # Set new forum
+            set_forum(cursor, self.log, topic['id'], new_forum)
+
+            # Display topics
             req.hdf['discussion.href'] = self.env.href.discussion(forum['id'])
             req.hdf['discussion.topics'] = get_topics(cursor, self.env, req,
               self.log, forum['id'])

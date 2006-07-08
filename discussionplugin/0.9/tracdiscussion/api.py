@@ -61,14 +61,20 @@ def get_forum(cursor, env, req, log, id):
 
 # Set item functions
 
-def set_group(cursor, env, log, forum, group):
+def set_group(cursor, log, forum, group):
     if not group:
         group = '0'
     sql = "UPDATE forum SET forum_group = %s WHERE id = %s"
     log.debug(sql)
     cursor.execute(sql, (group, forum))
 
-# Get list of items functions
+def set_forum(cursor, log, topic, forum):
+    sql = "UPDATE topic SET forum = %s WHERE id = %s"
+    log.debug(sql)
+    cursor.execute(sql, (forum, topic))
+    sql = "UPDATE message SET forum = %s WHERE topic = %s"
+    log.debug(sql)
+    cursor.execute(sql, (forum, topic))
 
 def get_groups(cursor, env, req, log):
     # Get count of forums without group
