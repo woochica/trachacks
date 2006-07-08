@@ -16,6 +16,8 @@ from trac.web import IRequestHandler
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.Search import ISearchSource
+from trac.wiki import IWikiSyntaxProvider, wiki_to_html
+from trac.wiki.formatter import system_message
 from trac.util import Markup
 
 def compare_rank(x, y):
@@ -27,7 +29,7 @@ def compare_rank(x, y):
 
 class DoxygenPlugin(Component):
     implements(IPermissionRequestor, INavigationContributor, IRequestHandler,
-      ITemplateProvider, ISearchSource)
+      ITemplateProvider, ISearchSource, IWikiSyntaxProvider)
 
     # IPermissionRequestor methods
 
@@ -42,11 +44,10 @@ class DoxygenPlugin(Component):
         if req.perm.has_permission('DOXYGEN_VIEW'):
             # Get config variables
             title = self.env.config.get('doxygen', 'title', 'Doxygen')
-            index = self.env.config.get('doxygen', 'index', 'main.html')
 
             # Return mainnav buttons
             yield 'mainnav', 'doxygen', Markup('<a href="%s">%s</a>' % \
-              (self.env.href.doxygen(index), title))
+              (self.env.href.doxygen() + '/', title))
 
     # IRequestHandler methods
 
@@ -55,6 +56,12 @@ class DoxygenPlugin(Component):
         base_path = self.config.get('doxygen', 'path', '/var/lib/trac/doxygen')
         ext = self.config.get('doxygen', 'ext', 'htm html png')
         ext = '|'.join(ext.split(' '))
+
+        # Match index
+        if re.match('^/doxygen/$', req.path_info):
+            req.args['path'] = base_path
+            req.args['type'] = 'index'
+            return True
 
         # Match searching request
         if re.match('^/doxygen/search.php$', req.path_info):
@@ -75,13 +82,37 @@ class DoxygenPlugin(Component):
         path = req.args.get('path')
         type = req.args.get('type')
 
+        # Get config variables
+        index =  self.config.get('doxygen', 'index', 'main.html')
+        wiki_index = self.config.get('doxygen', 'wiki_index', None)
+
         # Retrun apropriate content to type or search request
         if req.args.has_key('query'):
             req.redirect('%s?q=%s&doxygen=on' % (self.env.href.search(),
               req.args.get('query')))
             return None, None
+        elif type == 'index':
+            if wiki_index:
+                # Get access to database
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
+
+                # Get wiki index
+                sql = "SELECT text FROM wiki WHERE name = %s"
+                cursor.execute(sql, (wiki_index,))
+                text = Markup(system_message('Error', 'Wiki page %s does not exists' % (wiki_index)))
+                for row in cursor:
+                    text = wiki_to_html(row[0], self.env, req)
+
+                # Display wiki index page
+                req.hdf['doxygen.text'] = text
+                return 'doxygen.cs', 'text/html'
+            else:
+                add_stylesheet(req, 'doxygen/css/doxygen.css')
+                req.hdf['doxygen.path'] = path + '/' + index
+                return 'doxygen.cs', 'text/html'
         elif type == 'text/html':
-            #add_stylesheet(req, 'doxygen/css/doxygen.css')
+            add_stylesheet(req, 'doxygen/css/doxygen.css')
             req.hdf['doxygen.path'] = path
             return 'doxygen.cs', type
         else:
@@ -132,6 +163,14 @@ class DoxygenPlugin(Component):
 
             for result in results:
                 yield 'doxygen/' + result['url'], result['name'], creation, 'doxygen', None
+
+    # IWikiSyntaxProvider
+    def get_link_resolvers(self):
+        yield ('doxygen', self._doxygen_link)
+
+    def get_wiki_syntax(self):
+        return []
+
 
     # internal methods
 
@@ -227,3 +266,11 @@ class DoxygenPlugin(Component):
             result = ''.join([result, byte])
 
         return result
+
+    def _doxygen_link(self, formatter, ns, params, label):
+        if ns == 'doxygen':
+            return '<a href="%s" title="%s">%s</a>' % \
+              (self.env.href.doxygen(params), params, label)
+        else:
+            return '<a href="%s" class="missing">%s?</a>' % \
+              (self.env.href.doxygen(), label)
