@@ -27,7 +27,7 @@ sql = ["""CREATE TABLE forum (
 """INSERT INTO system (name, value) VALUES ('discussion_version', 1);""" ]
 
 # PostgreSQL statements
-postrge_sql = ["""CREATE TABLE forum (
+postgre_sql = ["""CREATE TABLE forum (
   id serial PRIMARY KEY,
   name text,
   time integer,
