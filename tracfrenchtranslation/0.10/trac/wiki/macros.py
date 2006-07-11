@@ -490,4 +490,4 @@ class UserMacroProvider(Component):
             macro_file = os.path.join(path, name + '.py')
             if os.path.isfile(macro_file):
                 return imp.load_source(name, macro_file)
-        raise TracError, 'Macro %s non trouvée' % name
+        raise TracError, u'Macro %s non trouvée' % name

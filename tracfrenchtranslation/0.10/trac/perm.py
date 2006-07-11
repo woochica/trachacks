@@ -184,7 +184,7 @@ class PermissionSystem(Component):
         """Grant the user with the given name permission to perform to specified
         action."""
         if action.isupper() and action not in self.get_actions():
-            raise TracError, '%s is not a valid action.' % action
+            raise TracError, u"%s n'est pas une action valide" % action
 
         self.store.grant_permission(username, action)
 
@@ -192,7 +192,7 @@ class PermissionSystem(Component):
         """Revokes the permission of the specified user to perform an action."""
         # TODO: Validate that this permission does in fact exist
         if action.isupper() and action not in self.get_actions():
-            raise TracError, '%s is not a valid action.' % action
+            raise TracError, u"%s n'est pas une action valide" % action
 
         self.store.revoke_permission(username, action)
 

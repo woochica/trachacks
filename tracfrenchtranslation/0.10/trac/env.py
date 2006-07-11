@@ -410,7 +410,8 @@ class EnvironmentSetup(Component):
         if dbver == db_default.db_version:
             return False
         elif dbver > db_default.db_version:
-            raise TracError, 'Database newer than Trac version'
+            raise TracError, u'Base de données plus récentes que la version ' \
+                             u'de Trac'
         return True
 
     def upgrade_environment(self, db):
@@ -422,7 +423,8 @@ class EnvironmentSetup(Component):
                 upgrades = __import__('upgrades', globals(), locals(), [name])
                 script = getattr(upgrades, name)
             except AttributeError:
-                err = 'Pas de module de mise à jour pour la version %i (%s.py)' % (i, name)
+                err = u'Pas de module de mise à jour pour la version %i ' \
+                      u'(%s.py)' % (i, name)
                 raise TracError, err
             script.do_upgrade(self.env, i, cursor)
         cursor.execute("UPDATE system SET value=%s WHERE "
@@ -475,6 +477,6 @@ def open_environment(env_path=None):
 
     env = Environment(env_path)
     if env.needs_upgrade():
-        raise TracError, "L'environment Trac doit être mis à jour. Utilisez " \
-                         "trac-admin %s upgrade" % env_path
+        raise TracError, u"L'environment Trac doit être mis à jour. Utilisez " \
+                         u"trac-admin %s upgrade" % env_path
     return env

@@ -87,8 +87,8 @@ class DatabaseManager(Component):
                     candidates[scheme] = (connector, priority)
             connector = candidates.get(scheme, [None])[0]
         if not connector:
-            raise TracError, 'Base de données de type "%s" non ' \
-                             'supportée' % scheme
+            raise TracError, u'Base de données de type "%s" non ' \
+                             u'supportée' % scheme
 
         if scheme == 'sqlite':
             # Special case for SQLite to support a path relative to the
@@ -110,8 +110,8 @@ def _parse_db_str(db_str):
             host = None
             path = rest
         else:
-            raise TracError, 'La chaine de connexion à la base de donnée %s ' \
-                             'doit débuter par scheme:/' % db_str
+            raise TracError, u'La chaine de connexion à la base de donnée %s ' \
+                             u'doit débuter par scheme:/' % db_str
     else:
         if rest.startswith('/') and not rest.startswith('//'):
             host = None

@@ -205,7 +205,7 @@ class NotifyEmail(Notify):
         maxlength = MAXHEADERLEN-(len(key)+2)
         # Do not sent ridiculous short headers
         if maxlength < 10:
-            raise TracError, "Erreur interne: En-tete trop court"
+            raise TracError, u"Erreur interne: En-tête trop court"
         try:
             tmp = name.encode('ascii')
             header = Header(tmp, 'ascii', maxlinelen=maxlength)
@@ -265,7 +265,8 @@ class NotifyEmail(Notify):
         if self._use_tls:
             self.server.ehlo()
             if not self.server.esmtp_features.has_key('starttls'):
-                raise TracError, "TLS enabled but server does not support TLS"
+                raise TracError, u"TLS activé mais le server ne supporte " \
+                                 u"pas les communications sécurisées TLS"
             self.server.starttls()
             self.server.ehlo()
         if self.user_name:
@@ -333,8 +334,8 @@ class NotifyEmail(Notify):
             try:
                 dummy = body.encode('ascii')
             except UnicodeDecodeError:
-                raise TracError, "Le ticket contient des caractères non Ascii" \
-                                 "Veuillez changer les paramètres d'encodage"
+                raise TracError, u"Le ticket contient des caractères non Ascii" \
+                                 u"Veuillez changer les paramètres d'encodage"
         msg = MIMEText(body, 'plain')
         # Message class computes the wrong type from MIMEText constructor,
         # which does not take a Charset object as initializer. Reset the

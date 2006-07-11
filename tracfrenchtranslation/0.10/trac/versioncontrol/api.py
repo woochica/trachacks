@@ -63,7 +63,7 @@ class RepositoryManager(Component):
                         continue
                     heappush(candidates, (-prio, connector))
             if not candidates:
-                raise TracError, 'Système de contrôle de version non supporté "%s"' \
+                raise TracError, u'Système de contrôle de version non supporté "%s"' \
                                  % self.repository_type
             self._connector = heappop(candidates)[1]
         return self._connector.get_repository(self.repository_type,
@@ -72,12 +72,12 @@ class RepositoryManager(Component):
 
 class NoSuchChangeset(TracError):
     def __init__(self, rev):
-        TracError.__init__(self, "Aucune version %s n'est repertoriée dans le dépôt" \
+        TracError.__init__(self, u"Aucune version %s n'est repertoriée dans le dépôt" \
                                  % rev)
 
 class NoSuchNode(TracError):
     def __init__(self, path, rev, msg=None):
-        TracError.__init__(self, "%sLe chemin %s n'existe pas en révision %s" \
+        TracError.__init__(self, u"%sLe chemin %s n'existe pas en révision %s" \
                            % (msg and '%s: ' % msg or '', path, rev))
 
 class Repository(object):

@@ -69,7 +69,7 @@ class PatchRenderer(Component):
         d = self._diff_to_hdf(content.splitlines(),
                               Mimeview(self.env).tab_width)
         if not d:
-            raise TracError, 'Contenu diff unifié invalide'
+            raise TracError, u'Contenu diff unifié invalide'
         hdf = HDFWrapper(loadpaths=[self.env.get_templates_dir(),
                                     self.config.get('trac', 'templates_dir')])
         hdf['diff.files'] = d

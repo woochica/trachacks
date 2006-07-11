@@ -387,7 +387,7 @@ class ReportModule(Component):
     def execute_report(self, req, db, id, sql, args):
         sql, args = self.sql_sub_vars(req, sql, args)
         if not sql:
-            raise TracError("Le rapport %s ne contient pas de requête SQL." % \
+            raise TracError(u"Le rapport %s ne contient pas de requête SQL." % \
                             id)
         if sql.find('__group__') == -1:
             req.hdf['report.sorting.enabled'] = 1
@@ -445,7 +445,7 @@ class ReportModule(Component):
             try:
                 arg = args[aname]
             except KeyError:
-                raise TracError(u"La variable dynamique '$%s' n'est pas "
+                raise TracError(u"La variable dynamique '$%s' n'est pas " \
                                 u"définie." % aname)
             req.hdf['report.var.' + aname] = arg
             values.append(arg)

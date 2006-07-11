@@ -77,7 +77,7 @@ T:r2081
 """ #'
 
 def _get_changeset(self, x):
-    raise TracError("Aucune révision")
+    raise TracError(u"Aucune révision")
 
 def _get_repository(self):
     return Mock(get_changeset=_get_changeset)

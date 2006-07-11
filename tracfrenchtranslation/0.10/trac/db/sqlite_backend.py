@@ -110,7 +110,7 @@ class SQLiteConnector(Component):
         if path != ':memory:':
             # make the directory to hold the database
             if os.path.exists(path):
-                raise TracError, 'Une base de donnée existe déjà sur %s' % path
+                raise TracError, u'Une base de donnée existe déjà sur %s' % path
             os.makedirs(os.path.split(path)[0])
         cnx = sqlite.connect(path, timeout=int(params.get('timeout', 10000)))
         cursor = cnx.cursor()
@@ -135,16 +135,16 @@ class SQLiteConnection(ConnectionWrapper):
         self.cnx = None
         if path != ':memory:':
             if not os.access(path, os.F_OK):
-                raise TracError, 'Base de données "%s" non trouvée.' % path
+                raise TracError, u'Base de données "%s" non trouvée.' % path
 
             dbdir = os.path.dirname(path)
             if not os.access(path, os.R_OK + os.W_OK) or \
                    not os.access(dbdir, os.R_OK + os.W_OK):
                 from getpass import getuser
-                raise TracError, "L'utilisateur %s a besoin des permissions " \
-                                 "en lecture _et_ en écriture sur la base de " \
-                                 "données %s ainsi que sur le répertoire " \
-                                 "dans lequel elle est située." \
+                raise TracError, u"L'utilisateur %s a besoin des permissions " \
+                                 u"en lecture _et_ en écriture sur la base de " \
+                                 u"données %s ainsi que sur le répertoire " \
+                                 u"dans lequel elle est située." \
                                  % (getuser(), path)
 
         if have_pysqlite == 2:

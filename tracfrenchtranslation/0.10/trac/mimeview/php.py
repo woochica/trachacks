@@ -73,9 +73,9 @@ class PHPRenderer(Component):
             raise Exception, err
         odata = ''.join(np.out.splitlines()[1:-1])
         if odata.startswith('X-Powered-By'):
-            raise TracError, 'Apparemment, vous utilisez la version CGI de PHP.  ' \
-                             'Trac a besoin de la version CLI pour réaliser la ' \
-                             'coloration syntaxique.'
+            raise TracError, u'Apparemment, vous utilisez la version CGI de PHP.  ' \
+                             u'Trac a besoin de la version CLI pour réaliser la ' \
+                             u'coloration syntaxique.'
 
         html = PhpDeuglifier().format(odata.decode('utf-8'))
         for line in html.split('<br />'):

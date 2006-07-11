@@ -392,7 +392,7 @@ class WikiModule(Component):
         req.perm.assert_permission('WIKI_VIEW')
 
         if not page.exists:
-            raise TracError, "La page %s n'existe pas" % page.name
+            raise TracError, u"La page %s n'existe pas" % page.name
 
         self._set_title(req, page, 'history')
 

@@ -68,8 +68,8 @@ class CachedRepository(Repository):
             previous_repository_dir = self.name
 
         if self.name != previous_repository_dir:
-            raise TracError, ("Le 'repository_dir' a changé, "
-                              "une operation 'trac-admin resync' est requise.")
+            raise TracError, u"Le chemin du dépôt a changé, " \
+                             u"une operation 'trac-admin resync' est requise."
 
         youngest_stored = self.repos.get_youngest_rev_in_cache(self.db)
 

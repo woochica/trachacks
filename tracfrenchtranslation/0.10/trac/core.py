@@ -181,7 +181,7 @@ class ComponentManager(object):
         component = self.components.get(cls)
         if not component:
             if cls not in ComponentMeta._components:
-                raise TracError, 'Composant "%s" non enregistré' % cls.__name__
+                raise TracError, u'Composant "%s" non enregistré' % cls.__name__
             try:
                 component = cls(self)
             except TypeError, e:
