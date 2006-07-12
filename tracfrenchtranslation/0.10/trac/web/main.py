@@ -251,7 +251,8 @@ def dispatch_request(environ, start_response):
                            os.getenv('TRAC_ENV_INDEX_TEMPLATE'))
         environ.setdefault('trac.template_vars',
                            os.getenv('TRAC_TEMPLATE_VARS'))
-        environ.setdefault('trac.locale', '')
+        environ.setdefault('trac.locale', 
+                           os.getenv('TRAC_LOCALE'))
 
     if environ['trac.locale']:
         locale.setlocale(locale.LC_ALL, environ['trac.locale'])
