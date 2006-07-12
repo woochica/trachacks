@@ -27,28 +27,28 @@
          <tr class="<?cs if:name(forum) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
             <td class="title">
               <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="subject"><?cs var:forum.subject ?></div>
-                <div class="description"><?cs var:forum.description ?></div>
+                <div class="subject"><?cs alt:forum.subject ?>&nbsp;<?cs /alt ?></div>
+                <div class="description"><?cs alt:forum.description ?>&nbsp;<?cs /alt ?></div>
               </a>
             </td>
             <td class="moderators">
               <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="moderators"><?cs var:forum.moderators ?></div>
+                <div class="moderators"><?cs alt:forum.moderators ?>&nbsp;<?cs /alt ?></div>
               </a>
             </td>
             <td class="lasttopic">
               <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="lasttopic"><?cs var:forum.lasttopic ?></div>
+                <div class="lasttopic"><?cs alt:forum.lasttopic ?>&nbsp;<?cs /alt ?></div>
               </a>
             </td>
             <td class="lastreply">
               <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="lastreply"><?cs var:forum.lastreply ?></div>
+                <div class="lastreply"><?cs alt:forum.lastreply ?>&nbsp;<?cs /alt ?></div>
               </a>
             </td>
             <td class="founded">
               <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-               <div class="founded"><?cs var:forum.time ?></div>
+               <div class="founded"><?cs alt:forum.time ?>&nbsp;<?cs /alt ?></div>
               </a>
             </td>
             <td class="topics">

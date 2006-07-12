@@ -1,21 +1,26 @@
-/* Forum group list.  */
-.group-list
+/*  General styles */
+.listing
 {
-  overflow: auto;
+  text-align: left;
 }
 
-.group-list td.forums
+.listing tr > td
 {
-  text-align: center;
+  margin: 0em !important;
+  padding: 0em !important;
+  height: 100%;
 }
 
-/* Forum list */
-.forum-list
+.listing tr > td > a
 {
-  overflow: auto;
+  display: block;
+  height: 100%;
+  padding: 0.2em;
+  margin: 0em !important;
+  border: none;
 }
 
-.forum-list td.moderators
+.listing td.moderators, .listing td.group
 {
   text-align: center;
 }

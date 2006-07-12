@@ -40,7 +40,7 @@
         </select><br/>
       </div>
     <?cs else ?>
-      <input type="hidden" name="group" value=""/>
+      <input type="hidden" name="group" value="0"/>
     <?cs /if ?>
     <div class="buttons">
       <input type="submit" name="submit" value="Submit"/>

@@ -33,11 +33,18 @@ class DiscussionWebAdmin(Component):
 
         # Get action
         action = req.args.get('discussion_action')
+        submit = req.args.has_key('submit');
+        cancel = req.args.has_key('cancel');
 
         # Determine mode
         if page == 'group':
             if action == 'post-add':
                 mode = 'group-post-add'
+            elif action == 'post-edit':
+                if submit:
+                    mode = 'group-post-edit'
+                else:
+                    mode = 'group-admin'
             elif action == 'delete':
                 mode = 'group-delete'
             else:
@@ -45,15 +52,23 @@ class DiscussionWebAdmin(Component):
         elif page == 'forum':
             if action == 'post-add':
                 mode = 'forum-post-add'
+            elif action == 'post-edit':
+                if submit:
+                    mode = 'forum-post-edit'
+                else:
+                    mode = 'forum-admin'
             elif action == 'delete':
                 mode = 'forum-delete'
-            elif action == 'change-group':
-                mode = 'forum-change-group'
             else:
                 mode = 'forum-admin'
 
         # Perform mode action
         if mode == 'group-admin':
+            # Get selected group
+            if path_info:
+                req.hdf['discussion.group'] = get_group(cursor, self.env, req,
+                  self.log, path_info)
+
             # Display group list
             req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
               self.log)
@@ -64,6 +79,19 @@ class DiscussionWebAdmin(Component):
 
             # Add new group
             add_group(cursor, self.log, name, description)
+
+            # Display group list
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
+            mode = 'group-admin'
+        elif mode == 'group-post-edit':
+            # Get form values
+            group = req.args.get('group')
+            name = req.args.get('name')
+            description = req.args.get('description')
+
+            # Add new group
+            edit_group(cursor, self.log, group, name, description)
 
             # Display group list
             req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
@@ -85,6 +113,11 @@ class DiscussionWebAdmin(Component):
               self.log)
             mode = 'group-admin'
         elif mode == 'forum-admin':
+            # Get selected group
+            if path_info:
+                req.hdf['discussion.forum'] = get_forum(cursor, self.env, req,
+                  self.log, path_info)
+
             # Display forum list
             req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
               self.log)
@@ -114,6 +147,29 @@ class DiscussionWebAdmin(Component):
             req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
               self.log)
             mode = 'forum-admin'
+        elif mode == 'forum-post-edit':
+            # Get form values
+            forum = req.args.get('forum')
+            name = req.args.get('name')
+            subject = req.args.get('subject')
+            description = req.args.get('description')
+            moderators = req.args.get('moderators')
+            group = req.args.get('group')
+
+            if not moderators:
+                moderators = []
+            if not isinstance(moderators, list):
+                moderators = [moderators]
+
+            # Add new forum
+            edit_forum(cursor, self.log, forum, name, subject, description, moderators, group)
+
+            # Display forum list
+            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
+              self.log)
+            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
+              self.log)
+            mode = 'forum-admin'
         elif mode == 'forum-delete':
             # Get form values
             selection = req.args.get('selection')
@@ -124,20 +180,6 @@ class DiscussionWebAdmin(Component):
             if selection:
                 for forum in selection:
                     delete_forum(cursor, self.log, forum)
-
-            # Display forum list
-            req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
-              self.log)
-            req.hdf['discussion.groups'] = get_groups(cursor, self.env, req,
-              self.log)
-            mode = 'forum-admin'
-        elif mode == 'forum-change-group':
-            # Get form values
-            forum = req.args.get('forum')
-            group = req.args.get('group')
-
-            # Set new group
-            set_group(cursor, self.log, forum, group)
 
             # Display forum list
             req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,

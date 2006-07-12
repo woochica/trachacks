@@ -17,22 +17,22 @@
         <tr class="<?cs if:name(topic) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
           <td class="subject">
             <a href="<?cs var:discussion.href ?>/<?cs var:topic.id ?>">
-              <div class="subject"><?cs var:topic.subject ?></div>
+              <div class="subject"><?cs alt:topic.subject ?>&nbsp;<?cs /alt ?></div>
             </a>
           </td>
           <td class="author">
             <a href="<?cs var:discussion.href ?>/<?cs var:topic.id ?>">
-              <div class="author" ><?cs var:topic.author ?></div>
+              <div class="author" ><?cs alt:topic.author ?>&nbsp;<?cs /alt ?></div>
             </a>
           </td>
           <td class="lastreply">
             <a href="<?cs var:discussion.href ?>/<?cs var:topic.id ?>">
-              <div class="lastreply"><?cs var:topic.lastreply ?></div>
+              <div class="lastreply"><?cs alt:topic.lastreply ?>&nbsp;<?cs /alt ?></div>
             </a>
           </td>
           <td class="founded">
             <a href="<?cs var:discussion.href ?>/<?cs var:topic.id ?>">
-              <div class="founded" ><?cs var:topic.time ?></div>
+              <div class="founded" ><?cs alt:topic.time ?>&nbsp;<?cs /alt ?></div>
             </a>
           </td>
           <td class="replies">

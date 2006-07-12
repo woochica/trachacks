@@ -159,7 +159,6 @@ class DiscussionCore(Component):
               self.log)
             req.hdf['discussion.forums'] = get_forums(cursor, self.env, req,
               self.log)
-            self.log.debug(req.hdf.get('discussion.forums'))
         elif mode == 'forum-add':
             req.perm.assert_permission('DISCUSSION_MODIFY')
             req.hdf['discussion.href'] = self.env.href.discussion()
@@ -261,7 +260,6 @@ class DiscussionCore(Component):
 
             # Get form values
             new_forum = req.args.get('new_forum')
-            self.log.debug(new_forum)
 
             # Set new forum
             set_forum(cursor, self.log, topic['id'], new_forum)

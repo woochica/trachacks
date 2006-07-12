@@ -17,7 +17,7 @@
   display: block;
   height: 100%;
   padding: 0.5em;
-  margin: 0em;
+  margin: 0em !important;
   border: none;
 }
 

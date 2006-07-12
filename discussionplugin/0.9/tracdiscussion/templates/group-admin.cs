@@ -1,47 +1,75 @@
 <h2>Forum Groups</h2>
 
-<form class="addnew" method="post">
-  <fieldset>
-    <legend>
-       Add Forum Group:
-    </legend>
-    <div class="field">
-      <label for="name">Name:</label><br/>
-      <input type="text" name="name" value=""/><br/>
-    </div>
-    <div class="field">
-      <label for="description">Description:</label><br/>
-      <input type="text" name="description" value=""/><br/>
-    </div>
-    <div class="buttons">
-      <input type="submit" name="submit" value="Add"/>
-      <input type="hidden" name="discussion_action" value="post-add"/>
-    </div>
-  </fieldset>
-</form>
+<?cs if:discussion.group.id ?>
+  <form id="edit-group-form" class="addnew" method="post" action="<?cs var:discussion.href ?>">
+    <fieldset>
+      <legend>
+        Edit Forum Group:
+      </legend>
+      <div class="field">
+        <label for="name">Name:</label><br/>
+        <input type="text" name="name" value="<?cs var:discussion.group.name ?>"/><br/>
+      </div>
+      <div class="field">
+        <label for="description">Description:</label><br/>
+        <input type="text" name="description" value="<?cs var:discussion.group.description ?>"/><br/>
+      </div>
+      <div class="buttons">
+        <input type="submit" name="submit" value="Edit"/>
+        <input type="submit" name="cancel" value="Cancel"/>
+        <input type="hidden" name="group" value="<?cs var:discussion.group.id ?>"/>
+        <input type="hidden" name="discussion_action" value="post-edit"/>
+      </div>
+    </fieldset>
+  </form>
+<?cs else?>
+  <form id="new-group-form" class="addnew" method="post" action="<?cs var:discussion.href ?>">
+    <fieldset>
+      <legend>
+         Add Forum Group:
+      </legend>
+      <div class="field">
+        <label for="name">Name:</label><br/>
+        <input type="text" name="name" value=""/><br/>
+      </div>
+      <div class="field">
+        <label for="description">Description:</label><br/>
+        <input type="text" name="description" value=""/><br/>
+      </div>
+      <div class="buttons">
+        <input type="submit" name="submit" value="Add"/>
+        <input type="hidden" name="discussion_action" value="post-add"/>
+      </div>
+    </fieldset>
+  </form>
+<?cs /if ?>
 
 <?cs if:discussion.groups.1.id ?>
-  <form class="forum-list" method="post">
-    <table class="listing">
+  <form method="post" action="<?cs var:discussion.href ?>">
+    <table id="group-list" class="listing">
       <thead>
         <tr>
-          <th class="selection">&nbsp;</th>
+          <th class="sel">&nbsp;</th>
           <th class="name">Name</th>
           <th class="description">Description</th>
         </tr>
       </thead>
-      </tbody>
+      <tbody>
         <?cs each:group = discussion.groups ?>
           <?cs if:group.id ?>
             <tr class="<?cs if:name(group) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
-              <td class="selection">
+              <td class="sel">
                 <input type="checkbox" name="selection" value="<?cs var:group.id ?>"/>
               </td>
               <td class="name">
-                <div class="name"><?cs var:group.name ?></div>
+                <a href="<?cs var:discussion.href ?>/<?cs var:group.id ?>">
+                  <div class="name"><?cs alt:group.name ?>&nbsp;<?cs /alt ?></div>
+                </a>
               </td>
               <td class="description">
-                <div class="description" ><?cs var:group.description ?></div>
+                <a href="<?cs var:discussion.href ?>/<?cs var:group.id ?>">
+                  <div class="description" ><?cs alt:group.description ?>&nbsp;<?cs /alt ?></div>
+                </a>
               </td>
             </tr>
           <?cs /if ?>

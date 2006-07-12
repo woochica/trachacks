@@ -47,14 +47,27 @@ def get_topic_by_subject(cursor, env, req, log, subject):
     return None
 
 def get_forum(cursor, env, req, log, id):
-    columns = ('name', 'moderators', 'id', 'time', 'subject', 'description')
-    sql = "SELECT name, moderators, id, time, subject, description FROM" \
-      " forum WHERE id = %s"
+    columns = ('name', 'moderators', 'id', 'time', 'subject', 'description',
+      'group')
+    sql = "SELECT name, moderators, id, time, subject, description, forum_group" \
+      " FROM forum WHERE id = %s"
     log.debug(sql)
     cursor.execute(sql, (id,))
     for row in cursor:
         row = dict(zip(columns, row))
         row['moderators'] = row['moderators'].split(' ')
+        row['description'] = wiki_to_oneliner(row['description'], env)
+        return row
+    return None
+
+def get_group(cursor, env, req, log, id):
+    columns = ('id', 'name', 'description')
+    sql = "SELECT id, name, description FROM forum_group WHERE id = %s"
+    log.debug(sql)
+    cursor.execute(sql, (id,))
+    for row in cursor:
+        row = dict(zip(columns, row))
+        row['name'] = wiki_to_oneliner(row['name'], env)
         row['description'] = wiki_to_oneliner(row['description'], env)
         return row
     return None
@@ -75,6 +88,23 @@ def set_forum(cursor, log, topic, forum):
     sql = "UPDATE message SET forum = %s WHERE topic = %s"
     log.debug(sql)
     cursor.execute(sql, (forum, topic))
+
+# Edit all functons
+def edit_group(cursor, log, group, name, description):
+    sql = "UPDATE forum_group SET name = %s, description = %s WHERE id = %s"
+    log.debug(sql)
+    cursor.execute(sql, (name, description, group))
+
+def edit_forum(cursor, log, forum, name, subject, description, moderators, group):
+    moderators = ' '.join(moderators)
+    if not group:
+        group = '0'
+    sql = "UPDATE forum SET name = %s, subject = %s, description = %s," \
+      " moderators = %s, forum_group = %s WHERE id = %s"
+    log.debug(sql)
+    cursor.execute(sql, (name, subject, description, moderators, group, forum))
+
+# Get list functions
 
 def get_groups(cursor, env, req, log):
     # Get count of forums without group
@@ -98,7 +128,6 @@ def get_groups(cursor, env, req, log):
         row['name'] = wiki_to_oneliner(row['name'], env)
         row['description'] = wiki_to_oneliner(row['description'], env)
         groups.append(row)
-    log.debug(groups)
     return groups
 
 def get_forums(cursor, env, req, log):
@@ -186,7 +215,6 @@ def get_messages(cursor, env, req, log, topic):
 def get_users(env, log):
     users = []
     for user in env.get_known_users():
-        log.debug(user)
         users.append(user[0])
     return users
 
