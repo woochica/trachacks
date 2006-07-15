@@ -100,7 +100,7 @@ class tractab(Component):
         static resources (such as images, style sheets, etc).
         """
         from pkg_resources import resource_filename
-        return [('tractab', resource_filename(__name__, 'htdocs'))]
+        return [('tractab', resource_filename(__name__, 'templates'))]
 
     def get_templates_dirs(self):
         """Return the absolute path of the directory containing the provided
@@ -108,3 +108,4 @@ class tractab(Component):
         """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
+    
