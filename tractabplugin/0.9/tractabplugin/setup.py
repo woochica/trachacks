@@ -6,6 +6,6 @@ VERSION = '0.1'
 setup(name=PACKAGE,
       version=VERSION,
       packages=[PACKAGE],
-      package_data={PACKAGE : ['templates/*.cs']},
+      package_data={PACKAGE : ['templates/*.cs', 'htdocs/*']},
       entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)},
 )

@@ -90,6 +90,7 @@ class tractab(Component):
                     req.hdf['tractab.url'] = ""
             else:
                 req.hdf['tractab.url'] = ""
+                
         return 'tractab.cs', 'text/html'
         
     # ITemplateProvider
