@@ -169,11 +169,11 @@ class DiscussionCore(Component):
             req.perm.assert_permission('DISCUSSION_MODIFY')
 
             # Get form values
-            name = req.args.get('name')
+            name = Markup(req.args.get('name'))
             author = req.authname
-            subject = req.args.get('subject')
-            description = req.args.get('description')
-            moderators = req.args.get('moderators')
+            subject = Markup(req.args.get('subject'))
+            description = Markup(req.args.get('description'))
+            moderators = Markup(req.args.get('moderators'))
             group = req.args.get('group')
             if not moderators:
                 moderators = []
@@ -218,8 +218,8 @@ class DiscussionCore(Component):
                 req.hdf['discussion.authname'] = req.authname
 
             # Get form values
-            author = req.args.get('author')
-            body = req.args.get('body')
+            author = Markup(req.args.get('author'))
+            body = Markup(req.args.get('body'))
 
             req.hdf['discussion.href'] = self.env.href.discussion(forum['id'])
             if author:
@@ -231,9 +231,9 @@ class DiscussionCore(Component):
             req.perm.assert_permission('DISCUSSION_VIEW')
 
             # Get from values
-            subject = req.args.get('subject')
-            author = req.args.get('author')
-            body = req.args.get('body')
+            subject = Markup(req.args.get('subject'))
+            author = Markup(req.args.get('author'))
+            body = Markup(req.args.get('body'))
 
             # Add new topic and display topic list
             add_topic(cursor, self.log, forum['id'], subject, author, body)
@@ -293,8 +293,8 @@ class DiscussionCore(Component):
                 req.hdf['discussion.authname'] = req.authname
 
             # Get form values
-            author = req.args.get('author')
-            body = req.args.get('body')
+            author = Markup(req.args.get('author'))
+            body = Markup(req.args.get('body'))
 
             # Display messages
             req.hdf['discussion.href'] = self.env.href.discussion(forum['id'],
@@ -310,8 +310,8 @@ class DiscussionCore(Component):
             req.perm.assert_permission('DISCUSSION_VIEW')
 
             # Get form values
-            author = req.args.get('author')
-            body = req.args.get('body')
+            author = Markup(req.args.get('author'))
+            body = Markup(req.args.get('body'))
 
             # Add new message
             add_message(cursor, self.log, forum['id'], topic['id'], reply,

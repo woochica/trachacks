@@ -74,8 +74,8 @@ class DiscussionWebAdmin(Component):
               self.log)
         elif mode == 'group-post-add':
             # Get form values
-            name = req.args.get('name')
-            description = req.args.get('description')
+            name = Markup(req.args.get('name'))
+            description = Markup(req.args.get('description'))
 
             # Add new group
             add_group(cursor, self.log, name, description)
@@ -87,8 +87,8 @@ class DiscussionWebAdmin(Component):
         elif mode == 'group-post-edit':
             # Get form values
             group = req.args.get('group')
-            name = req.args.get('name')
-            description = req.args.get('description')
+            name = Markup(req.args.get('name'))
+            description = Markup(req.args.get('description'))
 
             # Add new group
             edit_group(cursor, self.log, group, name, description)
@@ -125,11 +125,11 @@ class DiscussionWebAdmin(Component):
               self.log)
         elif mode == 'forum-post-add':
             # Get form values
-            name = req.args.get('name')
+            name = Markup(req.args.get('name'))
             author = req.authname
-            subject = req.args.get('subject')
-            description = req.args.get('description')
-            moderators = req.args.get('moderators')
+            subject = Markup(req.args.get('subject'))
+            description = Markup(req.args.get('description'))
+            moderators = Markup(req.args.get('moderators'))
             group = req.args.get('group')
 
             if not moderators:
@@ -150,10 +150,10 @@ class DiscussionWebAdmin(Component):
         elif mode == 'forum-post-edit':
             # Get form values
             forum = req.args.get('forum')
-            name = req.args.get('name')
-            subject = req.args.get('subject')
-            description = req.args.get('description')
-            moderators = req.args.get('moderators')
+            name = Markup(req.args.get('name'))
+            subject = Markup(req.args.get('subject'))
+            description = Markup(req.args.get('description'))
+            moderators = Markup(req.args.get('moderators'))
             group = req.args.get('group')
 
             if not moderators:

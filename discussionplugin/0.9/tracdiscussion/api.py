@@ -1,6 +1,6 @@
 from trac.core import *
 from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import format_datetime, pretty_timedelta, escape, unescape
+from trac.util import format_datetime, pretty_timedelta, escape, unescape, Markup
 import time
 
 # Get one item functions
@@ -223,7 +223,7 @@ def get_users(env, log):
 def add_group(cursor, log, name, description):
     sql = "INSERT INTO forum_group (name, description) VALUES (%s, %s)"
     log.debug(sql)
-    cursor.execute(sql, (name, description))
+    cursor.execute(sql, (escape(name), escape(description)))
 
 
 def add_forum(cursor, log, name, author, subject, description, moderators,
@@ -234,21 +234,23 @@ def add_forum(cursor, log, name, author, subject, description, moderators,
     sql = "INSERT INTO forum (name, author, time, moderators, subject," \
       " description, forum_group) VALUES (%s, %s, %s, %s, %s, %s, %s)"
     log.debug(sql)
-    cursor.execute(sql, (name, author, str(int(time.time())), moderators,
-      subject, description, group))
+    cursor.execute(sql, (escape(name), escape(author), str(int(time.time())),
+      escape(moderators), escape(subject), escape(description), group))
 
 def add_topic(cursor, log, forum, subject, author, body):
     sql = "INSERT INTO topic (forum, time, author, subject, body) VALUES" \
       " (%s, %s, %s, %s, %s)"
     log.debug(sql)
-    cursor.execute(sql, (forum, str(int(time.time())), author, subject, body))
+    cursor.execute(sql, (forum, int(time.time()), escape(author),
+      escape(subject), escape(body)))
 
 def add_message(cursor, log, forum, topic, replyto, author, body):
     sql = "INSERT INTO message (forum, topic, replyto, time, author, body)" \
       " VALUES (%s, %s, %s, %s, %s, %s)"
     log.debug(sql)
-    cursor.execute(sql, (forum, topic, replyto, str(int(time.time())),
-      escape(author), escape(body)))
+    log.debug(body)
+    cursor.execute(sql, (forum, topic, replyto, int(time.time()),
+      escape(author), escape(Markup(body))))
 
 # Delete items functions
 
