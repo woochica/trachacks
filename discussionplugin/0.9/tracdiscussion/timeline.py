@@ -13,14 +13,17 @@ class DiscussionTimeline(Component):
 
     # ITimelineEventProvider
     def get_timeline_events(self, req, start, stop, filters):
+        self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop, filters))
         if 'discussion' in filters:
             # Create database context
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             format = req.args.get('format')
+            self.log.debug("format: %s" % (format))
 
             # Get forum events
             for forum in self._get_changed_forums(cursor, start, stop):
+                self.log.debug("forum: %s" % (forum))
                 kind = 'changeset'
                 title = Markup('New forum <em>%s</em> created by %s' %
                   (forum['name'], forum['author']))
@@ -38,6 +41,7 @@ class DiscussionTimeline(Component):
 
             # Get topic events
             for topic in self._get_changed_topics(cursor, start, stop):
+                self.log.debug("topic: %s" % (topic))
                 kind = 'newticket'
                 title = Markup('New topic on <em>%s</em> created by %s' %
                   (topic['forum_name'], topic['author']))
@@ -54,6 +58,7 @@ class DiscussionTimeline(Component):
 
             # Get message events
             for message in self._get_changed_messages(cursor, start, stop):
+                self.log.debug("message: %s" % (message))
                 kind = 'editedticket'
                 title = Markup('New reply on <em>%s</em> created by %s' %
                   (message['forum_name'], message['author']))
