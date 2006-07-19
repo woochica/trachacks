@@ -13,13 +13,12 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
-# Author: Brad Anderson <brad@dsource.org>
+# Authors: Brad Anderson <brad@dsource.org>
+#          Waldemar Kornewald <wkornew@gmx.net>
 
 import re
 import time
 import sha
-
-from dbauth.env import *
 
 from trac.core import *
 from trac.web.api import IAuthenticator, IRequestHandler
@@ -27,39 +26,45 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.util import escape, hex_entropy, TracError, Markup
 
 
+def get_db(env):
+    """Return a database connection"""
+    return CentralDatabaseManager(env).get_connection()
+
+class CentralDatabaseManager(DatabaseManager):
+    connection_uri = Option('dbauth', 'database', 'sqlite:db/trac.db',
+        """Database connection
+        [wiki:TracEnvironment#DatabaseConnectionStrings string] for this
+        project""")
+
+
 class DbAuthLoginModule(Component):
-    """Implements user authentication based on database tables and an HTML form,
-    combined with cookies for communicating the login information across the whole site.
-    """
+    """Implements user authentication based on database tables and an
+    HTML form, combined with cookies for communicating the login information
+    across the whole site."""
 
     implements(IAuthenticator, INavigationContributor, ITemplateProvider, 
                IRequestHandler)
 
     def __init__(self):
-        self.envname = get_envname(self.env)
-        self.users = {                         # should we have defaults here?
-           "table":self.env.config.get('dbauth', 'users_table'),
-           "envname": self.env.config.get('dbauth','users_envname_field'),
-           "username": self.env.config.get('dbauth','users_username_field'),
-           "password": self.env.config.get('dbauth','users_password_field'),
-           "email": self.env.config.get('dbauth','users_email_field')}
-        self.cookies = {                         # should we have defaults here?
-           "table":self.env.config.get('dbauth', 'cookies_table'),
-           "envname": self.env.config.get('dbauth','cookies_envname_field'),
-           "cookie": self.env.config.get('dbauth','cookies_cookie_field'),
-           "username": self.env.config.get('dbauth','cookies_username_field'),
-           "ipnr": self.env.config.get('dbauth','cookies_ipnr_field'),
-           "unixtime": self.env.config.get('dbauth','cookies_unixtime_field')}
+        self.users = {
+           'table': self.env.config.get('dbauth', 'users_table', 'trac_users'),
+           'username': self.env.config.get('dbauth','username_field', 'username'),
+           'password': self.env.config.get('dbauth','password_field', 'password'),
+           'email': self.env.config.get('dbauth','email_field', 'email')}
+        self.cookies = {
+           'table': self.env.config.get('dbauth', 'cookies_table', 'trac_cookies'),
+           'cookie': self.env.config.get('dbauth','cookie_field', 'cookie'),
+           'username': self.env.config.get('dbauth','username_field', 'username'),
+           'ipnr': self.env.config.get('dbauth','ipnr_field', 'ipnr'),
+           'unixtime': self.env.config.get('dbauth','unixtime_field', 'unixtime')}
 
 
     # IAuthenticator methods
 
     def authenticate(self, req):
         authname = None
-        if req.remote_user:
-            authname = req.remote_user
-        elif req.incookie.has_key('trac_db_auth'):
-            authname = self._get_name_for_cookie(req, req.incookie['trac_db_auth'])
+        if req.incookie.has_key('db_auth'):
+            authname = self._get_name_for_cookie(req, req.incookie['db_auth'])
 
         if not authname:
             return None
@@ -80,10 +85,10 @@ class DbAuthLoginModule(Component):
                     % req.authname)
             yield 'metanav', 'password', Markup('<a href="%s">Password</a>' \
                   % escape(self.env.href.password()))
-            yield 'metanav', 'logout', Markup('<a href="%s">Logout</a>' \
+            yield 'metanav', 'logout', Markup('<b><a href="%s">Logout</a></b>' \
                   % escape(self.env.href.logout()))
         else:
-            yield 'metanav', 'login', Markup('<a href="%s">Login</a>' \
+            yield 'metanav', 'login', Markup('<b><a href="%s">Login</a></b>' \
                   % escape(self.env.href.login()))
 
     # IRequestHandler methods
@@ -99,7 +104,7 @@ class DbAuthLoginModule(Component):
                     self._do_login(req)
                     req.redirect(req.href())
                 else:
-                    req.hdf["auth.message"] = "Login Incorrect"
+                    req.hdf['auth.message'] = 'Login Incorrect'
             elif req.args.get('password'):
                 old, new, repeat = req.args.get('opwd'), req.args.get('npwd'), req.args.get('rpwd')
                 if not new or len(new) < 5:
@@ -123,7 +128,7 @@ class DbAuthLoginModule(Component):
         return template, None
 
     # ITemplateProvider methods
-    
+
     def get_htdocs_dirs(self):
         """Return the absolute path of a directory containing additional
         static resources (such as images, style sheets, etc).
@@ -143,14 +148,10 @@ class DbAuthLoginModule(Component):
     def _check_login(self, uid, pwd):
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = "SELECT %s " \
-               "FROM %s " \
-               "WHERE %s = %%s" \
-               "  AND (%s = %%s OR %s = 'all')" % \
-               (self.users['password'], self.users['table'],
-                self.users['username'], self.users['envname'],
-                self.users['envname'])
-        cursor.execute(sql, (uid, self.envname))
+        sql = 'SELECT %s FROM %s WHERE %s = %%s' % \
+              (self.users['password'], self.users['table'],
+               self.users['username'])
+        cursor.execute(sql, (uid,))
         hash = 'SHA-1:' + sha.new(pwd).hexdigest()
         if pwd.startswith('SHA-1:'):
             pwd = hash
@@ -164,25 +165,23 @@ class DbAuthLoginModule(Component):
         """Log the remote user in."""
 
         remote_user = req.args.get('uid')
-        remote_user = remote_user.lower()
 
         cookie = hex_entropy()
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = "INSERT INTO %s " \
-              "(%s, %s, %s, %s, %s) " \
-              "VALUES (%%s, %%s, %%s, %%s, %%s)" % \
-              (self.cookies['table'], self.cookies['envname'], 
-               self.cookies['cookie'], self.cookies['username'], 
-               self.cookies['ipnr'], self.cookies['unixtime'])
-        cursor.execute(sql, (self.envname, cookie, remote_user, 
-                        req.remote_addr, int(time.time())))
+        sql = 'INSERT INTO %s ' \
+              '(%s, %s, %s, %s) ' \
+              'VALUES (%%s, %%s, %%s, %%s)' % \
+              (self.cookies['table'], self.cookies['cookie'],
+               self.cookies['username'], self.cookies['ipnr'],
+               self.cookies['unixtime'])
+        cursor.execute(sql, (cookie, remote_user, req.remote_addr,
+            int(time.time())))
         db.commit()
 
-        req.authname = remote_user
-        req.outcookie['trac_db_auth'] = cookie
-        req.outcookie['trac_db_auth']['expires'] = 100000000
-        req.outcookie['trac_db_auth']['path'] = self.env.href()
+        req.outcookie['db_auth'] = cookie
+        req.outcookie['db_auth']['path'] = self.env.href()
+        req.outcookie['db_auth']['expires'] = 100000000
 
     def _do_logout(self, req):
         """Log the user out.
@@ -195,33 +194,26 @@ class DbAuthLoginModule(Component):
 
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = "DELETE FROM %s " \
-              "WHERE %s=%%s " \
-              "  AND %s=%%s" % \
-              (self.cookies['table'], self.cookies['username'],
-               self.cookies['envname'])
-        cursor.execute(sql, (req.authname, self.envname))
+        sql = 'DELETE FROM %s WHERE %s = %%s' % \
+              (self.cookies['table'], self.cookies['username'])
+        cursor.execute(sql, (req.authname,))
         db.commit()
         self._expire_cookie(req)
 
     def _expire_cookie(self, req):
         """Instruct the user agent to drop the auth cookie by setting the
-        "expires" property to a date in the past.
-        """
-        req.outcookie['trac_db_auth'] = ''
-        req.outcookie['trac_db_auth']['path'] = self.env.href()
-        req.outcookie['trac_db_auth']['expires'] = -10000
+        "expires" property to a date in the past."""
+        req.outcookie['db_auth'] = ''
+        req.outcookie['db_auth']['path'] = self.env.href()
+        req.outcookie['db_auth']['expires'] = -10000
 
     def _get_name_for_cookie(self, req, cookie):
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = "SELECT %s " \
-               "FROM %s " \
-               "WHERE %s = %%s " \
-               "  AND %s = %%s" % \
+        sql = 'SELECT %s FROM %s WHERE %s = %%s' % \
                (self.cookies['username'], self.cookies['table'],
-                self.cookies['cookie'], self.cookies['envname'])
-        cursor.execute(sql, (cookie.value,self.envname))
+                self.cookies['cookie'])
+        cursor.execute(sql, (cookie.value,))
         row = cursor.fetchone()
         if not row:
             # The cookie is invalid (or has been purged from the database), so
@@ -236,38 +228,10 @@ class DbAuthLoginModule(Component):
             # Not logged in
             return
 
-        # check which environment to use
-        db = get_db(self.env)
-        cursor = db.cursor()
-        envname = 'all'
-        sql = "SELECT %s " \
-               "FROM %s " \
-               "WHERE %s = %%s" \
-               "  AND %s = %%s" % \
-               (self.users['username'], self.users['table'],
-                self.users['username'], self.users['envname'])
-        cursor.execute(sql, (req.authname, self.envname))
-        if cursor.fetchone():
-            envname = self.envname
-
         # change the password
         newpwd = 'SHA-1:' + sha.new(newpwd).hexdigest()
-        sql = "UPDATE %s " \
-               "SET %s = %%s " \
-               "WHERE %s = %%s " \
-               "  AND %s = %%s" % \
+        sql = 'UPDATE %s SET %s = %%s WHERE %s = %%s' % \
                (self.users['table'], self.users['password'],
-                self.users['username'], self.users['envname'])
-        print(sql)
-        print(sql % (newpwd, req.authname, envname))
-        cursor.execute(sql, (newpwd, req.authname, envname))
+                self.users['username'])
+        cursor.execute(sql, (newpwd, req.authname))
         db.commit()
-
-    def _redirect_back(self, req):
-        """Redirect the user back to the URL she came from."""
-        referer = req.get_header('Referer')
-        if referer and not referer.startswith(req.base_url):
-            # only redirect to referer if the latter is from the same
-            # instance
-            referer = None
-        req.redirect(referer or self.env.abs_href())

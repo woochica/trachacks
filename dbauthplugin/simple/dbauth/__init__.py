@@ -1,2 +1,2 @@
 # This is a python package
-from dbauth.env import *
+from dbauth.auth import *

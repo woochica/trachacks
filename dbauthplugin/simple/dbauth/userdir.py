@@ -14,14 +14,14 @@
 #
 # Author: Brad Anderson <brad@dsource.org>
 
-from dbauth.env import *
+from dbauth.auth import *
 
 from trac.userdir import *
 
 
 class DbAuthUserDirectory(Component):
     implements (IUserDirectory)
-    
+
     def __init__(self):
         self.envname = get_envname(self.env)
         self.perms = {                         # should we have defaults here?
@@ -29,9 +29,9 @@ class DbAuthUserDirectory(Component):
            "envname": self.env.config.get('dbauth','perms_envname_field'),
            "username": self.env.config.get('dbauth','perms_username_field'),
            "groupname": self.env.config.get('dbauth','perms_groupname_field')}
-        
+
     # IUserDirectory methods
-    
+
     def get_known_user_info(self, limit=None):
         cnx = get_db(self.env)
         cursor = cnx.cursor()
