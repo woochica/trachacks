@@ -1,0 +1,86 @@
+div.header
+{
+  text-align: center;
+  margin: 1em;
+}
+
+div.images
+{
+  overflow: hidden;
+  display: table;
+  _display: block;
+  border: 1px solid #d7d7d7;
+  background-color: #f7f7f7;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+div.images > div > a
+{
+  display: table-cell;
+  _display: inline;
+  border-bottom: none;
+  text-decoration: none;
+  padding: 0.5em;
+}
+
+div.images > div > a:hover
+{
+  background: #f7f7f7;
+}
+
+div.images img
+{
+  display: table-cell;
+  _display: inline;
+  border: 2px solid #b00;
+}
+
+a.noimage
+{
+  border: 2px solid #f7f7f7;
+  width: 120px;
+}
+
+div.count, div.name, div.description
+{
+  text-align: center;
+  margin: 0.5em;
+  width: 400px;
+}
+
+div.previous, div.current, div.next
+{
+  display: table-cell;
+  _display: inline;
+  vertical-align: middle;
+}
+
+div.empty
+{
+  text-align: center;
+  overflow: hidden;
+  font-size: 16px;
+  border: 2px solid #b00;
+  width: 400px;
+  height: 300px;
+  margin: 0.5em;
+  line-height: 300px;
+}
+
+/* Controls form styles. */
+div.controls
+{
+  text-align: left;
+}
+
+div.controls form
+{
+  padding: 1em;
+}
+
+div.controls div.field
+{
+  display: inline;
+}
