@@ -1,0 +1,77 @@
+= Pluginy Traca =
+[[TracGuideToc]]
+
+Od wersji 0.9, Trac obsługuje pluginy, które rozszerzają wbudowaną funkcjonalność. Funkcjonalność pluginów bazuje na [http://projects.edgewall.com/trac/wiki/TracDev/ComponentArchitecture architekturze komponentów].
+
+== Wymagania ==
+
+Żeby używać pluginów Traca, musisz mieć zainstalowane [http://peak.telecommunity.com/DevCenter/setuptools setuptools] (wersja 0.6).
+
+Żeby zainstalować `setuptools`, pobierz moduł bootstrap [http://peak.telecommunity.com/dist/ez_setup.py ez_setup.py] i uruchom go, jak poniżej:
+{{{
+$ python ez_setup.py
+}}}
+
+Jeśli skrypt `ez_setup.py` nie zainstaluje narzędzi setuptools, to można je pobrać z [http://www.python.org/pypi/setuptools PyPI] i zainstalować ręcznie.
+
+== Instalowanie Plugina dla Traca ==
+
+=== Dla pojedynczego projektu ===
+
+Pluginy są spakowane jako [http://peak.telecommunity.com/DevCenter/PythonEggs Python eggs]. To oznacza że są archiwami ZIP, z rozszerzeniem `.egg`. Jeśli pobrałes źródła plugina, wystarczy że uruchomisz:
+{{{
+$ python setup.py bdist_egg
+}}}
+żeby zbudować plik `.egg`.
+
+Jeśli już masz archiwum plugina, musisz skopiować je do katalogu `plugins` w [wiki:TracEnvironment środowisku projektu]. Ponadto, upewnij się że serwer web ma wystarczające pozwolenia do czytania pluginów egg.
+
+=== Dla wszystkich projektów ===
+
+Pluginy które mają być dostępne we wszystkich projektach (takie jak [http://projects.edgewall.com/trac/wiki/WebAdmin WebAdmin]) mogą być zainstalowane globalnie poprzez wywołanie:
+{{{
+$ python setup.py install
+}}}
+
+Alternatywnie, wystarczy tylko umieścić flik `.egg` do katalogu Pythona `site-packages`.
+
+W przeciwieństwie do pluginów dla osobnych środowisk, będziesz musiał uruchomić zainstalowane pluginy poprzez [wiki:TracIni trac.ini]. Należy tego dokonać w sekcji `[components]`, na przykład:
+{{{
+[components]
+webadmin.* = enabled
+}}}
+
+Nazwą opcji jest nazwa pakiety Pythona lub plugin. Powinno być to opisane w dokumentacji do pluginy, lecz może być też łatwe do wyszukania w źrodle (poszukaj w najwyższym katalogu który zawiera plik o nazwie `__init__.py`.)
+
+== Włączanie Plugin Cache ==
+
+Niektóre pluginy muszą być rozpakowane poprzez runtime'a dla Python eggs (`pkg_resources`), więc ich zawartość staje sie rzeczywistymi plikami w systemie plików. Domyślnie są rozpakowywane do katalogu aktualnego użytkownika co może, lecz nie musi być problemem. Możesz jednak ominąć domyślną lokację poprzez użycie zmiennej środowiskowej `PYTHON_EGG_CACHE`.
+
+Żeby zrobić to z konfiguracji Apacha, użyj polecenia `SetEnv` jak poniżej:
+{{{
+SetEnv PYTHON_EGG_CACHE /path/to/dir
+}}}
+
+Działa to zarówno przy użyciu [wiki:TracCgi CGI] jak i [wiki:TracModPython mod_python] jako front-end. Umieść to plecenie zaraz obok miejsca gdzie ustawiłeś ścieżkę do [wiki:TracEnvironment środowiska Traca], np. w tym samym bloku `<Lokacji>`.
+
+Na przykład (dla CGI):
+{{{
+ <Location /trac>
+   SetEnv TRAC_ENV /path/to/projenv
+   SetEnv PYTHON_EGG_CACHE /path/to/dir
+ </Location>
+}}}
+
+lub (for mod_python):
+{{{
+ <Location /trac>
+   SetHandler mod_python
+   ...
+   SetEnv PYTHON_EGG_CACHE /path/to/dir
+ </Location>
+}}}
+
+Dla [wiki:TracFastCgi FastCGI], będziesz musiał ustawić opcję `-initial-env`, lub cokolwiek innego dostarczonego przez twój serwer web dla ustawiana zmiennych środowiskowych.
+
+----
+Zobacz również TracGuide, [http://projects.edgewall.com/trac/wiki/PluginList lista pluginów], [http://projects.edgewall.com/trac/wiki/TracDev/ComponentArchitecture architektura komponentów]

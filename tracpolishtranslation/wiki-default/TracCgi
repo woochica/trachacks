@@ -1,0 +1,88 @@
+= Instalowanie Trac'a jako CGI =
+
+Żeby zainstalować Trac'a jako skrypt CGI będziesz musiał ustawić `trac.cgi` wykonywalnym jako CGI w twoim serwerze web. Jeśli używasz [http://httpd.apache.org/ Apache HTTPD], jest kilka sposobów aby tego dokonać:
+
+ 1. Użycie `ScriptAlias(aliasów skryptów)` żeby zmapować URL do skryptu `trac.cgi`.
+ 2. Skopiowanie pliku `trac.cgi` do katalogu gdzie twój serwer web będzie wykonywał skrypty CGI (zwykle nazywany `cgi-bin`). Możesz również stworzyć symboliczne dowiązanie, ale wtedy upewnij się że obcja `FollowSymLinks` jest włączona na rzecz twojego katalogu `cgi-bin`.
+
+Zalecana jest pierwsza opcja gdyż pozwala mapowanie CGI do przyjaźnie wyglądającego URL.
+
+Teraz, zedytuj plik konfiguracyjny Apache o dodaj snippet, nazwy plików oraz położenie, zgodne z twoją instalacją:
+{{{
+ScriptAlias /trac /usr/share/trac/cgi-bin/trac.cgi
+
+# Trac musi wiedzieć gdzie znajduje się twoja baza
+<Location "/trac">
+  SetEnv TRAC_ENV "/path/to/projectenv"
+</Location>
+}}}
+
+To spowoduje że Trac będzie dostępny pod adresem: `http://yourhost.example.org/trac`.
+
+ ''Uwaga: Upewnij się że moduły takie jak mod_alias oraz mod_env są dostępne i są włączone w konfiguracja Apacha.''
+
+ ''Note: Jeśli używasz opcji [http://httpd.apache.org/docs/suexec.html Apache suEXEC], zobacz [http://projects.edgewall.com/trac/wiki/ApacheSuexec ApacheSuexec] (na stronie głównej Trac'a).''
+
+== Mapowanie Zasobów Statycznych ==
+
+Trac sam z siebie może serwować zasoby statyczne takie jak arkusze stylów bądź rysunki. Użycie CGI jest w tym momencie wysoce bezsensowne ponieważ powoduje każdorazowe wywołanie skryptu CGI dla dokumentów które mogły by być znacznie efektywniej serwowane przez serwer web.
+
+Serwery web takie jak [http://httpd.apache.org/ Apache HTTPD] pozwalają tworzyć â€śaliasyâ€ť do zasobów, poprzez tworzenie wirtualnych URLi które niekoniecznie są w jakiś sposób identyczne dla warstwy systemu plików serwera web. Używaliśmy tej możliwości już wcześniej, definiując `ScriptAlias` do skryptu CGI i użyjemy go teraz żeby mapować zapytania skryptu CGI.
+
+Przeedytuj plik konfiguracyjny Apache ponownie i dodaj następujący snippet '''przed''' `ScriptAliasem` dla skryptu CGI, nazwy plików oraz lokacje odpowienio zmienione dla twojej instalacji:
+{{{
+Alias /trac/chrome/common /usr/share/trac/htdocs
+<Directory "/usr/share/trac/htdocs">
+  Order allow,deny
+  Allow from all
+</Directory>
+}}}
+
+Zauważ że bez znaczenia jest dokąd mapowałeś skrypt, bo ścieżka `/chrome/common` jest ścieżką którą trzeba dodać do lokacji aby złapać na czas zapytania do zasobów statycznych.
+
+Na przykład jeśli Trac jest mapowany do `/cgi-bin/trac.cgi` na twoim serwerze, to Alias do URL powinien brzmieć `/cgi-bin/trac.cgi/chrome/common`.
+
+Alternatywnie możesz ustawić opcję `htdocs_location` w [wiki:TracIni trac.ini]:
+{{{
+[trac]
+htdocs_location = /trac-htdocs
+}}}
+
+Trac użyje wtedy tego adresu URL w trakcie osadzania zasobów statycznych na stronie HTML. Oczywiście wciąż musisz uczynić katalog `htdocs` dostępnym dla Trac'a poprzez serwer web pod specyficznym adresem URL. Na przykład poprzezkopiowanie (lub linkowanie) katalogu do katalogu głównego serwera web.
+
+== Dodawanie Autoryzacji ==
+
+Najprostszym sposobem włączeina autoryzacji w Apache jest stworzenie pliku z hasłem. Użyj programy `htpasswd` aby stworzyć nowy plik z hasłem:
+{{{
+$ htpasswd -c /somewhere/trac.htpasswd admin
+New password: <nowe hasło>
+Re-type new password: <podaj hasło ponownie>
+Adding password for user admin
+}}}
+
+Po dodaniu pierwszego użytkownika, nie potrzeba już przełącznika "-c":
+{{{
+$ htpasswd /somewhere/trac.htpasswd john
+New password: <nowe hasło>
+Re-type new password: <podaj hasło ponownie>
+Adding password for user john
+}}}
+
+  ''Uwaga: Po więcej informacji, zobacz stronę manuala dla hasła `htpasswd`.''
+
+Jeśli już utworzyłeś użytkowników, możesz w prosty sposób nadać im uprawnienia, wykorzystując TracPermissions.
+
+Teraz będziesz musiał włączyć autoryzację przeciwko plikowi haseł w konfiguracji Apacha:
+{{{
+<Location "/cgi-bin/trac.cgi/login">
+  AuthType Basic
+  AuthName "Trac"
+  AuthUserFile /somewhere/trac.htpasswd
+  Require valid-user
+</Location>
+}}}
+
+Dla lepszej ochrony, rekomendowane jest wlączenie SSL albo przynajmniej użycie schematu autoryzacji â€śDigestâ€ť zamiast â€śBasicâ€ť. Po więcej informacji, przeczytaj [http://httpd.apache.org/docs/2.0/ dokumentację Apache HTTPD].
+
+----
+Zobacz również:  TracGuide, TracInstall, TracFastCgi, TracModPython

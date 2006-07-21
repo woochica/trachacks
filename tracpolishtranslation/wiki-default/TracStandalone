@@ -1,0 +1,74 @@
+= Tracd = 
+
+Tracd jest lekkim, samodzielnym serwerem www dla Traca. W większości przypadków, łatwiej go uruchomić i działa szybciej niż [wiki:TracCgi skrypt CGI].
+
+== Plusy ==
+
+ * Mniej zależności: Nie musisz instalować Apacha lub jakiegokolwiek innego serwera web.
+ * Szybkość: Powinien być równie szybki jak wersja [wiki:TracModPython mod_python] (i dużo szybszy niż [wiki:TracCgi CGI]).
+
+== Minusy ==
+
+ * Mniej własności: Tracd implementuje bardzo prosty serwer web i nie jest tak konfigurowalny jak Apache.
+ * Brak natywnej obsługi HTTPS: W zamian tego można użyć [http://www.rickk.com/sslwrap/ sslwrap] lub [http://lists.edgewall.com/archive/trac/2005-August/004381.html STUNNEL].
+
+== Przykłady Użycia ==
+
+Prosty projekt na porcie 8080. (http://localhost:8080/)
+{{{
+ $ tracd -p 8080 /path/to/project
+}}}
+Dla więcej niż jednego projektu. (http://localhost:8080/project1/ oraz http://localhost:8080/project2/)
+{{{
+ $ tracd -p 8080 /path/to/project1 /path/to/project2
+}}}
+
+Nie możesz mieć ostatniej części ścieżki takiej samej dla różnych projektów. Wynika to ze sposobu w jaki Trac trzyma adresy URL dla różnych projektów. Jeśli więc używasz /project1/path/to oraz /project2/path/to, to będziesz widział jedynie ostatni projekt.
+
+== Używanie Autoryzacji ==
+
+Tracd zapewnia obsługę zarówno dla autoryzacji typu Basic jak i Digest. Domyślnie używany jest Digest; żeby używać autentyfikacji Basic, zamień `--auth` na `--basic-auth` w przykładach poniżej.
+
+Jeśli plik `/path/to/users.htdigest` zawiera konta użytkowników do projektu1 z domeną "mycompany.com", będziesz musiał podać następującą linię żeby wystartować tracd:
+{{{
+ $ tracd -p 8080 --auth project1,/path/to/users.htdigest,mycompany.com /path/to/project1
+}}}
+''Zwróć uwagę na to, że projekt “name” przeszedł z opcją `--auth` jest w zasadzie nazwą katalogu środowiska projektu.""
+
+Oczwiście, plik digest może być współdzielony tak że będzie mógł być użyty dla więcej niż jednego projektu:
+{{{
+ $ tracd -p 8080 \
+   --auth project1,/path/to/users.htdigest,mycompany.com \
+   --auth project2,/path/to/users.htdigest,mycompany.com \
+   /path/to/project1 /path/to/project2
+}}}
+
+== Generowanie Haseł Bez Apacha ==
+
+Jeśli nie masz dostępu do Apacha, możesz użyć prostego skryptu do wygenerowania haseł:
+
+{{{
+from optparse import OptionParser
+import md5
+
+# zbuduj opcje
+usage = "usage: %prog [options]"
+parser = OptionParser(usage=usage)
+parser.add_option("-u", "--username",action="store", dest="username", type = "string",
+                  help="the username for whom to generate a password")
+parser.add_option("-p", "--password",action="store", dest="password", type = "string",
+                  help="the password to use")
+(options, args) = parser.parse_args()
+
+# sprawdź opcje
+if (options.username is None) or (options.password is None):
+   parser.error("You must supply both the username and password")
+   
+# wygeneruj string do wprowadzenia do pliku htdigest
+realm = 'trac'
+kd = lambda x: md5.md5(':'.join(x)).hexdigest()
+print ':'.join((options.username, realm, kd([options.username, realm, options.password])))
+}}}
+
+----
+Zobacz również: TracInstall, TracCgi, TracModPython, TracGuide

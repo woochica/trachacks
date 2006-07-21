@@ -1,0 +1,56 @@
+= Trac z FastCGI =
+
+Od wersji 0.9, Trac może być uruchamiany poprzez interfejs [http://www.fastcgi.com/ FastCGI]. Podobnie jak [wiki:TracModPython mod_python], Trac zajmuje jeden proces, ponadto jest to rozwiązanie szybsze niż zewnętrzne interfejsy CGI które muszę odpalać nowy proces dla każdego zapytania. Aczkolwiek, w przeciwieństwie do mod_pythona, jest w stanie obsługiwać [http://httpd.apache.org/docs/suexec.html SuEXEC]. Ponadto jest obsługiwany przez więcej różnych serwerów www.
+
+== Podstawowa konfiguracja Apache'a ==
+{{{
+# Włączyć fastcgi dla plików .fcgi
+# (Jeśli używasz pakiety z dystrybucji, dla mod_fcgi, coś takiego
+# zapewne już istnieje)
+<IfModule mod_fastcgi.c>
+   AddHandler fastcgi-script .fcgi
+   FastCgiIpcDir /var/lib/apache2/fastcgi 
+</IfModule>
+LoadModule fastcgi_module /usr/lib/apache2/modules/mod_fastcgi.so
+}}}
+
+Może także ustawić `TRAC_ENV` żeby nadpisać domyślną wartość:
+{{{
+FastCgiConfig -initial-env TRAC_ENV=/path/to/env/trac
+}}}
+
+Możesz obsługiwać wiele projektów Traca w katalogu jak poniżej:
+{{{
+FastCgiConfig -initial-env TRAC_ENV_PARENT_DIR=/parent/dir/of/projects
+}}}
+
+Skonfiguruj `ScriptAlias` lub podobną opcję jak opisano w TracCgi, lecz wywołując `trac.fcgi` zamiast `trac.cgi`.
+
+== Prosta konfiguracja Lighttpd ==
+
+FastCGI front-end został pierwotnie opracowany do wykorzystania z różnymi serwerami web, takimi jak na przykład [http://www.lighttpd.net/ lighttpd].
+
+lighttpd jest bezpiecznym, szybkim, skutecznym oraz bardzo elastycznym sererem www który został zoptymalizowany pod względem wysokiej wydajności. WYmaga bardzo mało pamięci operacyjnej, w porównaniu do innych serwerów www oraz troszczy się o obciążenie CPU.
+
+Do wykorzystania `trac.fcgi` z lighttpd, dodaj następujący tekst do pliku lighttpd.conf:
+{{{
+fastcgi.server = ("/trac" =>
+                   ("trac" =>
+                     ("socket" => "/tmp/trac-fastcgi.sock",
+                      "bin-path" => "/path/to/cgi-bin/trac.fcgi",
+                      "check-local" => "disable",
+                      "bin-environment" =>
+                        ("TRAC_ENV" => "/path/to/projenv")
+                     )
+                   )
+                 )
+}}}
+
+Zauważ że będziesz musiał dodać nowy wpis do `fastcgi.server` dla każdej osobnej uruchomionej instancji Traca. Ewentualnie możesz użyć zmiennej `TRAC_ENV_PARENT_DIR` zamiast `TRAC_ENV` jak to opisano powyżej.
+
+Inne ważne informacje, tajkie jak [http://trac.lighttpd.net/trac/wiki/TracInstall ta, poprawiona strona instalacji Trac'a], [wiki:TracCgi#MapowanieZasobówStatycznych  i to] są pomocne przy używaniu specyficznych aspektów instalacji nie-factcgi.
+
+Przeładuj lighttpd, i przejdź do `http://yourhost.example.org/trac` by uzyskać dostęp do Traca.
+
+----
+Zobacz również: TracCgi, TracModPython, TracInstall, TracGuide

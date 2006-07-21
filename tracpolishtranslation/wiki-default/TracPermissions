@@ -1,0 +1,98 @@
+= Prawa dostępu w Tracu =
+[[TracGuideToc]]
+
+Trac używa prostego lecz elastycznego systemu praw dostępu do kontroli którzy użytkownicy mają oraz którzy nie mają dostępu.
+
+Przywileje praw dostępu mogą być zarządzane poprzez narzędzie [wiki:TracAdmin trac-admin].
+
+Regularni obserwatorzy, nieautoryzowani użytkownicy działający w systemie, są przyporządkowani automatycznie do domyślnej roli (''user'') nazwanej {{{anonymous}}}. 
+Przypisz parametry {{{anonimowego}}} użytkownika żeby ustalić prawa dostępu dla użytkowników nieautoryzowanych oraz gości.
+
+W dodatku dla tych przywilei, użytkownicy mogą mieć nadane dodatkowe, indywidualne prawa, których efekt widoczny jest po identyfikacji i zalogowaniu do systemu.
+
+== Dostępne Przywileje ==
+
+Żeby włączyć wszystkie przywileje dla użytkownika, użyj praw dostępu `TRAC_ADMIN`. Posiadanie praw `TRAC_ADMIN` jest jak bycie `rootem` w systemach *NIX. Pozwoli ci to na zrobienie czego tylko będziesz chciał.
+
+W innym przypadku, indywidualne przywileje mogą być nadane użytkownikom dla różnych obszarów funkcyjnych Traca:
+
+=== Przeglądarka Repozytorium ===
+
+|| `BROWSER_VIEW` || Oglądanie listy katalogów w [wiki:TracBrowser przeglądarce repozytorium] ||
+|| `LOG_VIEW` || Przeglądanie logów rewizji [wiki:TracBrowser przeglądarce repozytorium] ||
+|| `FILE_VIEW` || Przeglądanie plików w [wiki:TracBrowser przeglądarce repozytorium] ||
+|| `CHANGESET_VIEW` || przeglądanie [wiki:TracChangeset check-inów repozytorium] ||
+
+=== System Ticketów ===
+
+|| `TICKET_VIEW` || Przeglądanie instniejących [wiki:TracTickets ticketów] oraz wykonywanie [wiki:TracQuery zapytań ticketów] ||
+|| `TICKET_CREATE` || Tworzenie nowych [wiki:TracTickets ticketów] ||
+|| `TICKET_APPEND` || Dodawanie komentarzy lub załączników do [wiki:TracTickets ticketów] ||
+|| `TICKET_CHGPROP` || Modyfikowanie [wiki:TracTickets ticket] własności ||
+|| `TICKET_MODIFY` || Włączanie zarówno `TICKET_APPEND` jak i `TICKET_CHGPROP`, oraz pozwala na rozwiązywanie [wiki:TracTickets ticketów] ||
+|| `TICKET_ADMIN` || Wszystkie prawa `TICKET_*`, plus usuwanie załączników do ticketów. ||
+
+=== Roadmap ===
+
+|| `MILESTONE_VIEW` || Przeglądanie kamieni milowych||
+|| `MILESTONE_CREATE` || Tworzenie nowych kamieni milowych||
+|| `MILESTONE_MODIFY` || Modyfikowanie istniejących kamieni milowych ||
+|| `MILESTONE_DELETE` || Usuwanie kamieni milowych ||
+|| `MILESTONE_ADMIN` || Wszystkie prawa `MILESTONE_*` ||
+|| `ROADMAP_VIEW` || Przeglądanie strony [wiki:TracRoadmap roadmap] ||
+|| `ROADMAP_ADMIN` || Alias dla `MILESTONE_ADMIN` (deprecated) ||
+
+=== Raporty ===
+
+|| `REPORT_VIEW` || Przeglądanie [wiki:TracReports raportów] ||
+|| `REPORT_SQL_VIEW` || Przeglądanie [wiki:TracReports raportów] zapytań SQL ||
+|| `REPORT_CREATE` || Tworzenie nowych [wiki:TracReports raportów] ||
+|| `REPORT_MODIFY` || Modyfikowanie istniejących [wiki:TracReports raportów] ||
+|| `REPORT_DELETE` || Usuwanie [wiki:TracReports raportów] ||
+|| `REPORT_ADMIN` || Wszystkie prawa `REPORT_*` ||
+
+=== Wiki System ===
+
+|| `WIKI_VIEW` || Przeglądanie istniejących stron [wiki:TracWiki wiki] ||
+|| `WIKI_CREATE` || Tworzenie nowych stron [wiki:TracWiki wiki] ||
+|| `WIKI_MODIFY` || Zmienianie stron [wiki:TracWiki wiki] ||
+|| `WIKI_DELETE` || Usuwanie stron [wiki:TracWiki wiki] oraz załączników ||
+|| `WIKI_ADMIN` || Wszystkie prawa `WIKI_*`, plus zarządzanie stronami ''readonly''. ||
+
+=== Pozostałe ===
+
+|| `TIMELINE_VIEW` || Przeglądanie stron [wiki:TracTimeline timeline'ów] ||
+|| `SEARCH_VIEW` || Przeglądanie i wykonywanie zapytań [wiki:TracSearch wyszukiwania] ||
+|| `CONFIG_VIEW` || Włącza dodatkowe strony w ''About Trac'' pokazujące aktualną konfigurację oraz listę zainstalowanych pluginów ||
+
+== Nadawanie Pozwoleń ==
+
+Aktualnie jedyną drogą nadawania pozwoleń użytkownikom jest użycie skryptu `trac-admin`. Aktualny zestaw pozwoleń może być wyświetlony poleceniem:
+{{{
+  $ trac-admin /path/to/projenv permission list
+}}}
+
+To polecenie pozwoli użytkownikowi ''bob'' usuwać raporty:
+{{{
+  $ trac-admin /path/to/projenv permission add bob REPORT_DELETE
+}}}
+
+== Pozwolenia Grup ==
+
+Pozwolenia mogą być grupowane razem żeby stworzyć role takie, jak ''developer'', ''admin'', etc.
+{{{
+  $ trac-admin /path/to/projenv permission add developer WIKI_ADMIN
+  $ trac-admin /path/to/projenv permission add developer REPORT_ADMIN
+  $ trac-admin /path/to/projenv permission add developer TICKET_MODIFY
+  $ trac-admin /path/to/projenv permission add bob developer
+  $ trac-admin /path/to/projenv permission add john developer
+}}}
+
+== Domyślne Pozwolenia ==
+
+Nadawanie przywilejów dla specjalnych użytkowników ''anonymous'' może być użyte do kontrolowania co anonimowy użytkownik może zrobić zanim się zaloguje.
+
+W ten sam sposób przywileje nadane użytkownikowi ''authenticated'', nadane zostaną każdemu autentyfikowanemu (zalogowanemu) użytkownikowi.
+
+----
+Zobacz również: TracAdmin, TracGuide

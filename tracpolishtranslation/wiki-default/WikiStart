@@ -1,0 +1,39 @@
+= Welcome to Trac =
+
+Trac jest '''podstawowym''' sposobem zarządzania '''projektami''' przez '''sieć www'''. 
+Jego głównym celem jest uproszczenie nadzorowania i zarządzania rozwojem projektu, 
+więc także wykrytmi w nim błędami.
+
+Trac został zaprojektowany w jednym celu, aby  
+'''pomagać programistom pisać doskonały software''' bez konieczności '''wchodzenia sobie w drogę'''.
+
+Tak jak każdą ze stron wiki, tą również można edytować - oznacza to, że możesz
+łatwo modyfikować zawartość tej strony wykorzystując jedynie swoją przeglądarkę www. Po prostu kilknij przycisk na dole strony "Edytuj tę stronę" 
+WikiFormatting da Tobie dokładny opis dostępnych komend formatujących tekst.
+
+"[wiki:TracAdmin trac-admin] ''yourenvdir'' initenv" zostało stworzone
+nowe środowisko Trac-a, zawiera podstawowy zestaw stron wiki i przykładowe dane.
+Oprócz tego środowisko zawiera również
+[wiki:TracGuide dokumentację], aby ułatwić Tobie pracę nowym projektem.
+
+Możesz użyć [wiki:TracAdmin trac-admin], aby lepiej dostosować [http://trac.edgewall.com/ Trac] do Twojego projektu, w szczególności będzie to dotyczyło ''components'', ''versions'' and ''milestones''. 
+
+
+TracGuide jest dobrym miejscem, aby rozpocząć
+
+Miłej zabawy! [[BR]]
+''The Trac Team''
+
+== Tutaj rozpocznij ==
+
+ * TracGuide --  Wbudowana dokumentacja
+ * [http://projects.edgewall.com/trac/ The Trac project] -- Trac Open Source Project
+ * [http://projects.edgewall.com/trac/wiki/TracFaq Trac FAQ] - Najczęściej zadawane pytania (język angielski)
+ * TracSupport --  Trac Support
+
+Aby zobaczyć wszystkie dostępne strony wiki, skorzystaj z TitleIndex.
+
+Trac istnieje dzięki [http://www.edgewall.com/ Edgewall Software],
+dostarczającym profesjonalne rozwiązania z zakresu systemu Linux oraz programowania dla klientów z całego świata. Odwiedź http://www.edgewall.com/, aby uzyskać dodatkowe informacje.
+
+Wersja '''polska''' została przygotowana przez zespół [http://www.asi.pwr.wroc.pl/ ASI] (Akademickie Stowarzyszenie Informatyczne, działające przy [http://www.pwr.wroc.pl/ Politechnice Wrocławskiej]).

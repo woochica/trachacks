@@ -1,0 +1,77 @@
+= Importowanie danych z ticketów =
+
+== Bugzilla ==
+
+Dane z ticketów mogą być importowane z Bugzilli używając skryptu [http://projects.edgewall.com/trac/browser/trunk/contrib/bugzilla2trac.py bugzilla2trac.py], dostępnego w katalogu contrib/ w dystrybucji Traca.
+
+{{{
+$ bugzilla2trac.py
+bugzilla2trac - Importuje bazę bugów z Bugzilli do Traca.
+
+Używanie: bugzilla2trac.py [opcje]
+
+Dostepne opcje:
+  --db <MySQL dbname>              - baza Bugzilli
+  --tracenv /path/to/trac/env      - pełna ścieżka do środowiska Traca
+  -h | --host <MySQL hostname>     - nazwa hosta DNS Bugzilli
+  -u | --user <MySQL username>     - użytkownik bazy Bugzilla's
+  -p | --passwd <MySQL password>   - hasło użytkownika Bugzilli  
+  -c | --clean                     - usuń istniejące tickety Traca przed importowaniem
+  --help | help                    - wyświetl tą pomoc
+
+Dodatkowe opcji konfiguracji mogą być zdefiniowane bezpośrednio w skrypcie.
+}}}
+
+Aktualnie, z Bugzilli pobierane są następujące informacje:
+
+  * bugi
+  * aktywność bugów (pola zmian)
+  * załączniki do bugów
+  * hasła i nazwy użytkowników (wkładana to pliku htaccess)
+
+Skrypt zapewnia wiele opcji w celu uproszczenia konwersji:
+
+  * PRODUCT_KEYWORDS:  Trac nie wie jak obsługiwać produkty, więc zamiast tego skrypt zapewnia możliwość dodawania słów kluczowych ticketów.
+
+  * IGNORE_COMMENTS:  Nie importuje komentarzy Bugzilla które pasują do danego wyrażenia regularnego.
+
+  * STATUS_KEYWORDS:  Dodaj słowa kluczowe ticketów do statusów Bugzilli, niedostępnych dla Traca. Domyślnie, statusy Bugzilli 'VERIFIED' oraz 'RELEASED' są tłumaczone na słowa kluczowe Traca.
+
+Po więcej szczegółów dotyczących dostępnych opcji, sprawdź sekcję konfiguracji na początku skryptu.
+
+== Sourceforge ==
+
+Dane ticketów mogą być importowane z Sourceforge'a używając skryptu [http://projects.edgewall.com/trac/browser/trunk/contrib/sourceforge2trac.py sourceforge2trac.py] dostępnego w katalogu contrib/ dystrybucji Traca.
+
+== Mantis ==
+
+Bugi Mantisa mogą być importowane używająć załączonego skryptu.
+
+Aktualnie importowane są z Mantisa następujące dane:
+  * bugi
+  * komentarze bugów
+  * aktywność bugów (pola zmian)
+
+Załączniki NIE są importowane. Jeśli używasz skryptu, przeczytaj koniecznie sekcję NOTES (na początku pliku) i upewnij się dostosowałeś parametry stosownie do twojego środowiska.
+
+mantis2trac.py ma takie same parametry jak skrypt bugzilla2trac.py:
+{{{
+mantis2trac - Importuje bazę bugów z Mantisa do Traca.
+
+Użytkowanie: mantis2trac.py [opcje] 
+
+Dostępne opcje:
+  --db <MySQL dbname>              - baza Mantisa
+  --tracenv /path/to/trac/env      - Pełna ścieżka do środowiska Traca
+  -h | --host <MySQL hostname>     - nazwa hosta DNS Mantisa
+  -u | --user <MySQL username>     - nazwa użytkownika bazy Mantisa
+  -p | --passwd <MySQL password>   - hasło użytkownika bazy Mantisa
+  -c | --clean                     - usuń istniejące tickety Traca przed importowaniem
+  --help | help                    - wyświetl tą pomoc
+
+Dodatkowe opcje konfiguracyjne mogę byćdefiniowane bezpośrednio w skrypcie.
+}}} 
+
+== Pozostałe ==
+
+Odkąd Trac używa bazy SQL do przechowywania bazy, można importować z innych systemów poprzez studiowanie tabeli baz danych. Wystarczy wejść do narzędzia [http://www.sqlite.org/sqlite.html sqlite] i sprawdzić tabele oraz importować je z twojej aplikacji.

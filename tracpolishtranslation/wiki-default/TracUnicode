@@ -1,0 +1,74 @@
+= Obsługa Unicode w Trac =
+Trac przechowuje wszystkie teksty kodowaniem UTF-8, włączając tekst w ticketach oraz strony wiki.
+
+Obsługuje więc wiekszość (wszystkie?) powszechnie używane kodowania znaków.
+
+
+== Przykłady ==
+Please keep sorted order when you add an entry.
+
+=== Arabski ===
+ŘŞŘ±Ř§Ů? ŮŠŮ‚Ů?Ů… Ř¨Ř­Ů?Ř¸ Ů?Ů„ Ř§Ů„Ů?Ů„Ů…Ř§ŘŞ Ř¨Ř§ŘłŘŞŘ®ŘŻŘ§Ů… ŘµŮŠŘşŘ© UTF-8ŘŚ Ř¨Ů…Ř§ Ů?ŮŠ Ř°Ů„Ů? Ř§Ů„Ů?Ů„Ů…Ř§ŘŞ Ř§Ů„Ů…ŘłŘŞŘ®ŘŻŮ…Ř© Ů?ŮŠ ŘµŮ?Ř­Ř§ŘŞ  Ř§Ů„ŘŞŮŠŮ?ŘŞ Ů?Ř§Ů„Ů?ŮŠŮ?ŮŠ.
+
+=== Bułgarski ===
+Đ‘ŃŠĐ»ĐłĐ°Ń€Ń?ĐşĐ¸ŃŹŃ‚ ĐµĐ·Đ¸Đş Ń€Đ°Đ±ĐľŃ‚Đ¸ Đ»Đ¸?
+
+=== Czeski ===
+ÄŚeĹˇtina v kĂłdovĂˇnĂ­ UTF-8, ĹľĂˇdnĂ˝ problĂ©m.
+
+=== Chiński ===
+Traditional: ''çą?é«”ä¸­ć–‡, č¨±ĺŠźč“‹ćś?č‚˛''; Simplified: ''ç®€ä˝“ä¸­ć–‡ďĽŚč®¸ĺŠźç›–äĽšč‚˛''
+
+=== Angielski ===
+Yes indeed, Trac supports English. Fully.
+
+=== Francuski ===
+''Il est possible d'Ă©crire en FranĂ§ais : Ă , Ă§, Ă», ...''
+
+=== Niemiecki ===
+Trac-Wiki muĂź auch deutsche Umlaute richtig anzeigen: Ă¶, Ă¤, ĂĽ, ...
+
+=== Grecki ===
+Î¤Î± Î•Î»Î»Î·Î˝ÎąÎşÎ¬ Ď…Ď€ÎżĎ?Ď„Î·Ď?ÎŻÎ¶ÎżÎ˝Ď„Î±Îą ÎµĎ€Î±Ď?ÎşĎŽĎ‚ ÎµĎ€ÎŻĎ?Î·Ď‚.
+
+=== Hebrajski ===
+×?× ×™ ×™×›×•×ś ×ś×?×›×•×ś ×–×›×•×›×™×Ş ×•×–×” ×ś×? ×ž×–×™×§ ×ś×™
+
+=== Islandzki ===
+''Ă†var sagĂ°i viĂ° Ă¶mmu sĂ­na: SjĂˇĂ°u hvaĂ° Ă©g er stĂłr!''
+
+=== Japoński ===
+''ćĽ˘ĺ­— ă?˛ă‚‰ă?Śă?Ş ă‚«ă‚żă‚«ă?Š ďľŠďľťď˝¶ď˝¸ď˝¶ďľ…''
+
+=== Koreański ===
+''ěť´ë˛?ě—?ëŠ” í•śę¸€ëˇś ěŤ¨ëł´ę˛ ěŠµë‹?ë‹¤. ěž? ëł´ěť´ë‚?ěš”?''
+
+=== Perski(Farsi) ===
+Ř§ŰŚŮ† ŰŚÚ© Ů…ŘŞŮ† Ů?Ř§Ř±ŘłŰŚ Ř§ŘłŘŞ Ů?Ů„ŰŚ Ř§Ř˛ Ú†Ůľ Ř¨Ů‡ Ř±Ř§ŘłŘŞ
+
+=== Polski ===
+Pchnąć w tę łódź jeża lub ośm skrzyń fig
+
+=== Portugalski ===
+Ă‰ possĂ­vel guardar caracteres especias da lĂ­ngua portuguesa, incluindo o sĂ­mbolo da moeda europĂ©ia 'â‚¬', trema 'ĂĽ', crase 'Ă ', agudos 'ĂˇĂ©Ă­ĂłĂş', circunflexos 'Ă˘ĂŞĂ´', til 'ĂŁĂµ', cedilha 'Ă§', ordinais 'ÂŞÂş', grau 'Â°ÂąÂ˛Âł'.
+
+=== Rosyjski ===
+ĐźŃ€ĐľĐ˛ĐµŃ€ĐşĐ° Ń€Ń?Ń?Ń?ĐşĐľĐłĐľ ŃŹĐ·Ń‹ĐşĐ°: ĐşĐ°Đ¶ĐµŃ‚Ń?ŃŹ Ń€Đ°Đ±ĐľŃ‚Đ°ĐµŃ‚...
+
+=== Serbski ===
+PodrĹľan, uprkos ÄŤinjenici da se za njegovo pisanje koriste Ń‡Đ°Đş Đ´Đ˛Đ° Đ°Đ»Ń„Đ°Đ±ĐµŃ‚Đ°.
+
+=== Słowacki ===
+Ta suhi Ĺˇkafec puĹˇÄŤa vodo Ĺľe od nekdaj!
+
+=== Hiszpański ===
+Esto es un pequeĂ±o texto en EspaĂ±ol, ahora una con acentĂł
+
+=== Szwecki ===
+''RĂ¤ven raskar Ă¶ver isen med luva pĂĄ.''
+
+=== Thai ===
+Trac ŕą?ŕ¸Şŕ¸”ŕ¸‡ŕ¸ ŕ¸˛ŕ¸©ŕ¸˛ŕą„ŕ¸—ŕ¸˘ŕą„ŕ¸”ŕą‰ŕ¸­ŕ¸˘ŕą?ŕ¸˛ŕ¸‡ŕ¸–ŕ¸ąŕ¸?ŕ¸•ŕą‰ŕ¸­ŕ¸‡!
+
+=== Ukraiński ===
+ĐźĐµŃ€ĐµĐ˛Ń–Ń€ĐşĐ° Ń?ĐşŃ€Đ°Ń—Đ˝Ń?ŃŚĐşĐľŃ— ĐĽĐľĐ˛Đ¸...

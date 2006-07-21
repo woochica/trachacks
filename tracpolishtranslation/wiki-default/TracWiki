@@ -1,0 +1,25 @@
+= Silnik Wiki w Tracu = 
+[[TracGuideToc]]
+
+Trac posiada wbudowany silnik wiki, używany do tekstu i dokumentacji w systemie. Formatowanie wiki jest używane na [wiki:TitleIndex stronach wiki], [wiki:TracTickets ticketach] oraz [wiki:TracChangeset logach wiadomości check-in'ów].  Pozwala to na formatowanie treści oraz hyperlinki pomiędzy wszystkimi modułami Traca.
+
+Edytowanie tekstu wiki jest bardzo łatwe, bo odbywa się poprzez jakąkolwiek przelgądarkę oraz prosty system formatowania (zobacz WikiFormatting), niż skomplikowany język markupów jak HTML. Powodem dla którego powstał ten system jest to że HTML ze swoją potężnym zbiorem podstawowych tagów jest zbyt skomplikowany żeby pozwolić na bardzo szybkie edytowanie oraz oddzielenie od prawdziwej treści na stronie. Zauważ że Trac obsługuje również [wiki:WikiHtml HTML] oraz [wiki:WikiRestructuredText reStructuredText] jako alternatywne metody formatowania.
+
+Głównym celem wiki jest uczynienie edycji treści prostszą oraz ''zachęcenie'' ludzi do współpracy i opiniowania zawartości treści w projekcie.
+
+Wiki samo w sobie nie wymusza jakiejkolwiek struktury, raczej przeobraża stos pustych stron papieru, na których można zorganizować treść jak nam pasuje i później przeorganizować w razie potrzeby.
+
+Po więcej pomocy przy edytowaniu treści wiki, zobacz:
+ * WikiFormatting
+ * WikiPageNames
+ * WikiNewPage
+ * TracLinks
+ * WikiMacros
+ * WikiProcessors
+
+Jeśli chcesz popraktykować edycję, odwiedź SandBox (piaskownicę).
+
+Więcej informacji na temat wiki w internecie:
+ * http://wikipedia.org/wiki/Wiki
+ * http://c2.com/cgi/wiki?WikiHistory
+ * http://www.usemod.com/cgi-bin/mb.pl?WhyWikiWorks

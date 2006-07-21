@@ -1,0 +1,21 @@
+= Timeline w Tracu =
+[[TracGuideToc]]
+
+Timeline zapewnia historyczny pogląd na cały projekt w jednym raporcie.
+
+Listuje wszystkie wydarzenia w Tracu, w porządku chronologicznym, opis wydarzenia oraz osobę odpowiedzialną za zmianę.
+
+Timeline następujące typy wydarzeń:
+ * '''Wiki page events''' –- Tworzenie i zmiany
+ * '''Ticket events''' –- Tworzenie i rozwiązanie/zamknięcie (oraz ewentualnie inne zmiany)
+ * '''Source code changes ''' -- Check-iny w repozytorium
+ * '''Milestone ''' -- Ukończone kamienie milowe
+
+Każde pole zdarzenia zapewnia link do danego zdarzenia, oraz opis aktualnych komentarzy oraz tekstu, jeśli dostępny.
+
+== Obsługa Kanałów RSS ==
+
+Moduł Timeline obsługuje subskrypcję poprzez kanały RSS 2.0. Żeby subskrybować wydarzenia projektu, kliknij pomarańczową ikonę '''XML''' znajdującą się na dole strony. Zobacz TracRss po więcej informacji na temat obsługi kanałów RSS w Tracu.
+
+----
+Zobacz rówież: TracGuide, TracWiki, WikiFormatting, TracRss, TracNotification

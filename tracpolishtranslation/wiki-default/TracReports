@@ -1,0 +1,200 @@
+= Raporty Traca =
+[[TracGuideToc]]
+
+Moduł Traca do generowania raportów zapewnia proste, lecz potężne narzędzie raportujące, do prezentowania informacji o ticketach w bazie Traca.
+
+Trac nie ma własnego formatu definicji raportów, lecz polega na typowym zapytaniu SQL `SELECT` dla definiowania własnych raportów.
+
+  '''Uwaga:''' ''Aktualna forma modułu raportującego jest stopniowo wycofywana ponieważ znacznie uniemożliwia zespołowi Traca modyfikowanie schematu bazy, znajdującego się pod systemem raportowania. Wierzymy że [wiki:TracQuery moduł zapytań] jest dobrym zamiennikiem który zapewnia więcej elastyczności i lepszą używalność. Ponieważ z pewnością istnieją raporty które nie mogą być teraz obsłużone przez moduł zapytań, planujemy rozszerzyć go na tyle aby można było całkowicie usunąć moduł raportów. Oznacza to także że już nigdy nie będzie znaczących rozszerzeń w module raportów.''
+
+  ''Możesz już całkowicie zastąpić moduł raportowania przez moduł zapytań poprzez wyłączenie tego pierwszego w [wiki:TracIni trac.ini]:''
+  {{{
+  [components]
+  trac.ticket.report.* = disabled
+  }}}
+  ''Spowoduje to uczynienie modułu zapytań, domyślnym uchwytem dla elementu nawigacji “View Tickets”. Chcielibyśmy żebyś wypróbował tą konfigurację i wysłał nam raport na temat tego, czego jeszcze brakuje lub co powinniśmy zmienić.''
+
+Raport składa się z następujących podstawowych części:
+ * '''ID''' –- Unikalny identyfikator (sekwencyjny) 
+ * '''Title'''  -- Tytuł opisujący
+ * '''Description'''  -- Opis raportu, sformatowany zgodnie z formatowaniem Wiki.
+ * '''Report Body''' -– Lista wyników z zapytania, sformatowana zgodnie z zaleceniami poniżej.
+ * '''Footer''' –- Linki do alternatywnych formatów do pobrania dla tego raportu.
+
+== Zmiana Porządku Sortowania ==
+Proste raporty – a dokładniej niepogrupowane raporty – mogą być zmienione na posortowane według którejkolwiek kolumny poprzez kliknięcie na nagłówek.
+
+Jeśli nagłówek kolumny jest hyperlinkiem (czerwony), kliknij na kolumnę według której chcesz żeby odbyło się sortowanie. Kliknięcie na ten sam nagłówek ponownie, odwróci porządek sortowania.
+
+== Alternatywne Formaty Pobierania ==
+Oprócz domyślnego wyglądu HTML, raporty mogą zostać eksportowane do wielu różnych formatów.
+W dolnej części strony raportu, można znaleźć listę dostępnych formatów. Kliknij na oczekiwany link żeby pobrać alternatywny format raportu.
+
+=== Wartości oddzielone przecinkami - CSV (Comma Separated Values) ===
+Po wyeksportowaniu raportu do zwykłego tekstu każdy wiersz jest osobnym wierszem, a kolejne kolumny są oddzielone przecinkami.
+'''Uwaga:''' Powrót karetki, dodatkowe spacje oraz przecinki są usuwane z kolumn w celu zachowania kształtu struktury CSV.
+
+=== Wartości oddzielone tabulatorami ===
+Podobnie jak wyżej, lecz wykorzystuje tabulatory (\t) zamiast przecinków.
+
+=== RSS – Syndykacja Zawartości Poprzez XML ===
+Na każdej stronie z raportem można znaleźć małą pomarańczową ikonę '''XML''', zazwyczaj umieszczoną w dolnej części strony. Kliknięcie ikony umożliwi dostęp do danego źródła RSS. Zobacz TracRss po więcej informacji na temat obsługi kanałów RSS w Tracu.
+
+----
+
+== Tworzenie Własnych Raportów ==
+
+''Tworzenie własnych raportów wymaga dosyć znacznej wiedzy z zakresu SQL.''
+
+Raport jest jednym zapytaniem SQL, wykonywanym i prezentowanym przez Traca. Raporty mogą być oglądane i tworzone poprzez własne zapytania SQL pochodzące wprost z interfejsu webowego.
+
+Zazwyczaj raport składa się z wyrażenia SELECT na rzecz tabeli 'ticketów', po uwzględnieniu dostępnych kolumn oraz sposobu sortowania który nam odpowiada.
+
+== Kolumny ticketów ==
+Tabela ''ticketów'' zawiera następujące kolumny:
+ * id 
+ * time (czas)
+ * changetime (czas zmiany)
+ * component (komponent)
+ * severity  
+ * priority (priorytet)
+ * owner (właściciel)
+ * reporter (twórca)
+ * cc (adresy mailowe do powiadamiania)
+ * version (wersja)
+ * milestone (kamień milowy)
+ * status (status)
+ * resolution (rozwiązanie)
+ * summary (podsumowanie)
+ * description (opis)
+
+Zobacz TracTickets po bardziej szczegółowy opis kolumn.
+
+'''wszystkie aktywne tickety, posortowane według priorytetu oraz czasu'''
+
+'''Przykład:''' ''Wszystkie aktywne tickety, posortowane według priorytetu oraz czasu''
+{{{
+SELECT id AS ticket, status, severity, priority, owner, 
+       time as created, summary FROM ticket 
+  WHERE status IN ('new', 'assigned', 'reopened')
+  ORDER BY priority, time
+}}}
+
+
+----
+
+
+== Zaawansowane Raporty: Dynamiczne Zmienne ==
+Dla bardziej elastycznych raportów, Trac obsługuje ''dynamiczne zmienne'' do raportowania wyrażeń SQL. W skrócie, dynamiczne zmienne są ''specjalnymi'' stringami, które są zamieniane przez własne dane podczas wykonywania zapytania.
+
+=== Używanie Zmiennych w Zapytaniach ===
+Składnia dla dynamicznych zmiennych jest prosta, każde słowo napisane DUŻYMI_LITERAMI i rozpoczynające się symbolem dolara '$' jest interpretowane jako zmienna.
+
+Przykład:
+{{{
+SELECT id AS ticket,summary FROM ticket WHERE priority='$PRIORITY'
+}}}
+
+Aby przypisać wartość do $PRIORITY podczas przeglądania raportu, musisz zdefiniować ją jako argument podczas raportowania URLa, wyrzucając poprzedzający znak '$'.
+
+Przykład:
+{{{
+ http://projects.edgewall.com/trac/reports/14?PRIORITY=high
+}}}
+
+Żeby użyć wielu zmiennych, należy je oddzielić znakiem ampersand '&'.
+
+Przykład:
+{{{
+ http://projects.edgewall.com/trac/reports/14?PRIORITY=high&SEVERITY=critical
+}}}
+
+
+=== Specjalne Zmienne, Stałe ===
+Istnieje jedna ''magiczna'' zmienna, pozwalająca praktyczne raporty, a jej wartość jest automatycznie ustawiana, bez zmian w adresie URL.
+
+ * $USER –- Nazwa zalogowanego użytkownika.
+
+Przykład(''Wyświetl wszystkie przyporządkowane tickety''):
+{{{
+SELECT id AS ticket,summary FROM ticket WHERE owner='$USER'
+}}}
+
+
+----
+
+
+== Zaawansowane Raporty: Ręczne Formatowanie ==
+Trac jest w stanie generować nawet bardziej zaawansowane raporty, włączając własne layouty, grupowanie rezultatow oraz ręcznie zdefiniowane style CSS. Żeby stworzyć taki raport, skorzystamy ze specjalizowanych wyrażeń SQL do kontrolowania wyjścia silnika raportującego.
+
+== Specjalne Kolumny ==
+Do formatowania raportów, TracReports szuka 'magicznych' nazw kolumn w odpowiedzi zapytania. Te 'magiczne' nazwy są przetwarzane i wpływają na layout i styl końcowego raportu.
+
+=== Automatycznie formatowane kolumny ===
+ * '''ticket''' –- Numer ID ticketa. Staje się hyperlinkiem do tego ticketa.
+ * '''created, modified, date, time''' –- Formatuje komórkę jako data i/lub czas.
+
+ * '''description''' -– Pole opisu ticketa, parsowane poprzez silnik wiki.
+
+'''Przykład:'''
+{{{
+SELECT id as ticket, created, status, summary FROM ticket 
+}}}
+
+=== Własne formatowanie kolumn ===
+Kolumny których nazwy rozpoczynają się i kończą dwoma podkreśleniami (Przykład: '''_''''''_color_''''''_''') są interpretowane jako ''wskazówki formatowania'', wpływające na wygląd wiersza.
+ 
+ * '''_''''''_group_''''''_''' -- Grupuje wyniki na podstawie wartości w tej kolumnie. Każda grupa Ma swój własny nagłówek i tabelę.
+ * '''_''''''_color_''''''_''' -- Powinna mieć numer od 1 do 5 żeby wybrać predefiniowany kolor wiersza. Zazwyczak używane do kolorowania pod względem priorytetu.
+ * '''_''''''_style_''''''_''' -- Własne wyrażenie stylu CSS dla aktualnego wiersza.
+
+'''Przykład:''' ''Wyświetl aktywne tickety, zgrupowane według kamieni milowych, kolorowane według priorytetów''
+{{{
+SELECT p.value AS __color__,
+     t.milestone AS __group__,
+     (CASE owner WHEN 'daniel' THEN 'font-weight: bold; background: red;' ELSE '' END) AS __style__,
+       t.id AS ticket, summary
+  FROM ticket t,enum p
+  WHERE t.status IN ('new', 'assigned', 'reopened') 
+    AND p.name=t.priority AND p.type='priority'
+  ORDER BY t.milestone, p.value, t.severity, t.time
+}}}
+
+'''Uwaga:''' łączenie tabeli jest użyte żeby dopasować priorytet ''ticketa'' z jego numeryczną reprezentacją z tabeli ''enum''.'''
+
+=== Zmienianie layoutu wierszy raportu ===
+Domyślnie, wszystkie kolumny w każdym wierszy są wyświetlane jako pojedyńczy wiersz w raporcie HTML, możliwie sformatowany jak opisano powyżej. Jakkolwiek możliwe jest także stworzenie elementów wielo-wierszowych.
+
+ * '''column_''' -- ''Przełam wiersz zaraz za tym''. Poprzez dodanie podkreślenia ('_') do nazwy kolumny, pozostałe kolumny będą dodane jako kolejna linia.
+
+ * '''_column_''' -- ''Pełny wiersz''. Poprzez dodanie podkreślenia('_') na początku i na końcu nazwy kolumny, dane będę wyświetlone w osobnym wierszu.
+
+ * '''_column'''  --  ''Schowaj dane''. Poprzedzenie nazwy pliku znakiem podkreślenia ('_') instruuje Traca do schowania zawartości wyjścia HTML. Jest to przydatne do bycia widocznym tylko przy zmianie formatu (jak CSV lub RSS/XML).
+
+'''Przykład:''' ''Lista aktywnych ticketów, zgrupowanych według kamieni milowych, pokolorowana według priorytetów, z opisami oraz wieloliniowym layoutem''
+
+{{{
+SELECT p.value AS __color__,
+       t.milestone AS __group__,
+       (CASE owner 
+          WHEN 'daniel' THEN 'font-weight: bold; background: red;' 
+          ELSE '' END) AS __style__,
+       t.id AS ticket, summary AS summary_,             -- ## Przełam linię w tym miejscu
+       component,version, severity, milestone, status, owner,
+       time AS created, changetime AS modified,         -- ## Daty są formatowane
+       description AS _description_,                    -- ## Używa pełnej linii
+       changetime AS _changetime, reporter AS _reporter -- ## Schowany HTML
+  FROM ticket t,enum p
+  WHERE t.status IN ('new', 'assigned', 'reopened') 
+    AND p.name=t.priority AND p.type='priority'
+  ORDER BY t.milestone, p.value, t.severity, t.time
+}}}
+
+=== Raportowanie na własnych polach ===
+
+Jeśli dodałeś własne pola do ticketów (własność eksperymentalna od wersji 0.8, zobacz TracTicketsCustomFields), możesz napisać zapytanie SQL żeby je obsłużyć. Będziesz musiał zrobić joina na tabeli ticket_custom, lecz nie jest zbyt proste.
+
+Jeśli masz tickety w bazie ''zanim'' zadeklarowałeś dodatkowe pola w trac.ini, to nie będzie żadnych danych przywiązanych do tabeli ticket_custom. Aby to obejść, użyj wyrażenia SQL "LEFT OUTER JOIN". Zobacz TracIniReportCustomFieldSample po przykłady.
+
+----
+Zobacz również: TracTickets, TracQuery, TracGuide

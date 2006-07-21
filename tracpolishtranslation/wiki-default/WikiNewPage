@@ -1,0 +1,10 @@
+= Dodawanie nowej strony Wiki =
+
+ 1. Wybierz nazwę dla nowej strony. Zobacz WikiPageNames o konwencjach nazw.
+ 1. Edytuj istniejącą stronę i dodaj link do swojej strony. Zapisz zmiany.
+ 1. Użyj linku, który stworzyłeś, aby dotrzeć do swojej strony. Trac wyświetli wiadomość "opisz !PageName stronę tutaj".
+ 1. Kliknij przycisk "Edit this page" na dole strony, zmień zawartość. Zapisz zmiany.
+ 1. Wszystko gotowe. Twoja nowa strona jest już widoczna.
+
+
+Zobacz także: TracWiki, WikiFormatting, TracLinks, WikiDeletePage 

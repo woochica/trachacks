@@ -1,0 +1,22 @@
+= Nazewnictwo stron Wiki =
+
+Nazwy stron Wiki pisane są używając CamelCase. Poza tekstami wiki, dowolne słowo zapisane jako CamelCase automatycznie staje się linkiem do strony wiki o tej samej nazwie.
+
+Nazywając stronę należy przestrzegać reguł:
+
+ 1. Nazwa musi się składać '''tylko ze znaków alfabetu'''. Cyfry, spacje, punktowanie, podkreślenia nie są dozwolone.
+ 1. Nazwa musi zawierać przynajmniej dwie duże litery.
+ 1. Pierwszy znak musi być pisany dużą literą.
+ 1. Za każdą dużą literą musi znajdować się mała. 
+ 1. Użycie slaszu ( / ) jest dowzwolone, aby stworzyć hierarchię wewnątrz wiki.  (Zobacz !SubWiki oraz !ParentWiki makra   [http://projects.edgewall.com/trac/wiki/MacroBazaar MacroBazaar], który pozwala na wyśiwtlenie hierarchicznej listy wszystkich stron.)
+
+Jeśli chcesz stworzyć stronę wiki, która nie używa reguł CamelCase, możesz wykorzystać następującą składnię:
+{{{
+[wiki:Wiki_page]
+}}}
+
+Rezultat będzie:
+ [wiki:Wiki_page]
+
+----
+Zobacz także: WikiNewPage, WikiFormatting, TracWiki

@@ -1,0 +1,13 @@
+= Support Traca =
+
+Jak większość [http://www.opensource.org/ projektów open source], "wolny" support Traca jest dostępny poprzez społeczność zgromadzoną wokół niego, głównie przez [http://projects.edgewall.com/trac/wiki/MailingList listę mailową] oraz wiki projektu.
+
+Dostępny jest także [http://projects.edgewall.com/trac/wiki/IrcChannel kanał IRC], gdzie ludzie spotykają się żeby sobie nawzajem pomóc. Większość 'żywych' dyskusji na temat rozwoju toczy się właśnie tam.
+
+Zanim rozpoczniesz nowe zapytanie o pomoc, upewnij się że dokonałeś odpowiednich poszukiwań:
+ * w [http://projects.edgewall.com/trac/wiki/TracFaq FAQ] projektu.
+ * w archiwalnych wiadomościach [http://blog.gmane.org/gmane.comp.version-control.subversion.trac.general?set_user_css=http%3A%2F%2Fwww.edgewall.com%2Fcss%2Fgmane.css&do_set_user_css=t Listy Mailowej] Traca
+ * w systemie ticketów, poprzez [http://projects.edgewall.com/trac/search?q=&ticket=on&wiki=on Pełne Wyszukiwanie] lub [http://projects.edgewall.com/trac/query?summary=~&keywords=~" zapytań ticketów].
+
+----
+Zobacz również: [http://projects.edgewall.com/trac/wiki/MailingList Lista Mailowa]

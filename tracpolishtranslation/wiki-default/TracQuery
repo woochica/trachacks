@@ -1,0 +1,89 @@
+= Zapytania Ticketów =
+[[TracGuideToc]]
+
+Jako dodatek do [wiki:TracReports raportów], Trac zapewnia obsługę ''własnych zapytań ticketów'', używaną do wyświetlania list ticketów według ustalonych kryteriów.
+
+Żeby skonfigurować i uruchomić własne zapytanie, przełącz moduł na pasku zarządzania na ''View Tickets'' i wybierz ''Custom Query''.
+
+== Filtry ==
+
+Gdy wchodzisz pierwszy raz na stronę zapytań, domyśle filtry wyświetlą wszystkie otwarte tickety, lub jeśli jesteś zalogowany, wyświetli tickety przypisane do ciebie. Aktualne filtry mogą być usunięte przez kliknięcie na przycisk z minusem. Nowe filtry są dodawane z rozwijanej listy w prawym dolnym rogu. Filtry z listy mogą być dodawane wielokrotnie  poprzez wykonanie operacji ''lub'' na wybranych kryteriach.
+
+Możesz użyć pól poniżej listy filtrów żeby zgrupować wyniki opierające się na polu, lub wyświetlić pełny opis każdego ticketa.
+
+Jeśli już wyedytowałeś twoje filtry, kliknij przycisk ''Update'' żeby odświeżyć rezultaty.
+
+== Nawigowanie Ticketami ==
+
+Kliknięcie ja którymś z rezultatów zapytania, przeniesie cię do odpowiedniego cricketa. Możesz nawigować poprzez rezultaty klikając ''Next Ticket'' oraz ''Previous Ticket'' zaraz pod paskiem menu lub kliknąć ''Back to Query'' żeby powrócić do strony zapytań.
+
+Możesz bezpiecznie edytować którykolwiek z ticketów i kontynuować nawigowanie poprzez rezultaty przy użyciu linków ''Next/Previous/Back to Query'' po zapisaniu twoich rezultatów. Gdy powracasz do zapytań, każdy ticket który edytowałeś, będzie wyświetlony pochyłą czcionką. Jeśli któryś z ticketów został prze edytowany do tego stopnia że nie mieści się już w kryteriach zapytania, tekst zostanie pokolorowany na szaro. Wyniki zapytania mogą być odświeżone i wyczyszczone z tych wskaźników statusu poprzez ponowne kliknięcie ''Update''.
+
+== Zapisywanie Zapytań ==
+
+Mimo że Trac jeszcze nie pozwala na zapisywanie nazwanych zapytań i tworzenie ich dostępnymi w liście nawigacyjnej, można jednak zapisywać referecje do zapytań jako elementy Wiki, jak opisane poniżej.
+
+=== Używanie TracLinks ===
+
+Możesz chcieć zapisać niektóre zapytania, by wrócić do nich później. Można to zrobić poprzez stworzenie linka do zapytania na dowolnej stronie Wiki.
+
+{{{
+[query:status=new|assigned|reopened&version=0.8 Aktywne tickety w wersji 0.8]
+}}}
+
+Które jest wyświetlane jako:
+ [query:status=new|assigned|reopened&version=0.8 Aktywne tickety w wersji 0.8]
+
+Używany jest bardzo prosty język zapytań w celu specyfikowania kryteriów (zobacz [wiki:TracQuery#QueryLanguage Język Zapytań]).
+
+Alternatywnie , możesz skopiować ciąg zapytania i wkleić do linka Wiki, włączając poprzedzający znak `?`:
+
+{{{
+[query:?status=new&status=assigned&status=reopened&group=owner Przydziel tickety według właściciela]
+}}}
+
+Które wyświetlane jest jako:
+ [query:?status=new&status=assigned&status=reopened&group=owner Przydziel tickety według właściciela]
+
+Zaletą tego rozwiązania jest możliwość grupowania oraz porządkowania która nie jest możliwa przy użyciu pierwszej składni.
+
+=== Używanie makra `[[TicketQuery]]` ===
+
+Makro `[[TicketQuery]]` pozwala na wyświetlanie listy ticketów odpowiadającej odpowiednim kryteriom gdziekolwiek tylko można użyć formatowania Wiki.
+
+Przykład:
+{{{
+[[TicketQuery(version=0.9b1|0.9b2&resolution=duplicate)]]
+}}}
+
+Wyświetlane jest jako:
+ [[TicketQuery(version=0.9b1|0.9b2&resolution=duplicate)]]
+
+Podobnie jak [wiki:TracQuery#UsingTracLinks zapytanie: linki wiki], parametrem tego makra jest zapytanie sformatowane według zasad prostego [wiki:TracQuery#QueryLanguage języka zapytań ticketów].
+
+Dostępna jest także prostsza wersja, bez podsumowań ticketów:
+{{{
+[[TicketQuery(version=0.9b1|0.9b2&resolution=duplicate, compact)]]
+}}}
+
+Wyświetlane jest jako:
+ [[TicketQuery(version=0.9b1|0.9b2&resolution=duplicate, compact)]]
+
+=== Quert Language === (Język Zapytań)
+
+`Zapytanie:` TracLinks oraz makro `[[TicketQuery]]` używają mini języka zapytań dla specyfikowania filtrów zapytań. Filtry są po prostu oddzielone znakami ampersand (`&`). W ten sposób każdy filtr składa się z pola nazwy ticketa, operatora oraz jednej dodatkowej wartości. Kolejne wartości są oddzielane znakiem (`|`), co oznacza że filtr dotyczy którejkolwiek z nich (suma logiczna).
+
+Dostępne są następujące operatory:
+|| '''=''' || Zawartość pola dokładnie zgadza się z jedną z wartości ||
+|| '''~=''' || Zawartość pola zawiera jedną lub więcej wartości ||
+|| '''!^=''' || Zawartość pola zaczyna się jedną z wartości ||
+|| '''$=''' || Zawartość pola kończy się z jedną z wartości ||
+
+Każdy z tych operatorów może być również zanegowany:
+|| '''!=''' || Zawartość pola dokładnie ma być różna niż każda z wartości ||
+|| '''!~=''' || Zawartość pola nie może zawierać którejkolwiek z wartości ||
+|| '''!!^=''' || Zawartość pola nie może się zaczynać żadną z wartości ||
+|| '''!$=''' || Zawartość pola nie może się kończyć żadną z wartości ||
+
+----
+

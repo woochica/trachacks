@@ -1,0 +1,10 @@
+= Usuwanie Strony Wiki= 
+
+Istniejące strony wiki mogą być kompletnie usunięte przy użyciu przycisku ''Usuń Stronę'' lub ''Usuń tę Wersję'' na dole strony wiki. Przyciski te są widoczne tylko dla użytkowników z pozwoleniem `WIKI_DELETE`.
+
+'''Uwaga:''' Jest to całkowicie nieodwracalna operacja.
+
+Generalnie, zalecane jest tworzenie przekierowań całkowicie usuniętych stron, żeby nie frustrować użytkownika nie działającymi linkami jeśli trafi na daną stronę poprzez wyszukiwarkę. Strona przekierowania to malutka strona zawierająca link w stylu “Zobacz !JakaśInnaStrona”. Jakkolwiek, usunięcie specyficznych wersji lub nawet całych stron ma sens podczas usuwania spamu lub innych śmieci.
+
+----
+Zobacz również: TracWiki, TracPermissions

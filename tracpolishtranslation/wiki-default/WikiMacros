@@ -1,0 +1,58 @@
+=  Macra Wiki =
+Makra Traca to pluginy roszerzające silnik Traca o własne 'funkcje' napisane w Pythonie. Makro osadza dynamiczny HTML w każdym kontekście obsługującym FormatowanieWiki.
+
+Innym typem makr są WikiProcessors. Zazwyczaj radzą sobie ze znacznikami alternatywnych formatów oraz reprezentacją bloków informacji (jak podświetlanie składnie).
+
+== Używanie Makr ==
+Wywołania makra są zamknięte w dwa ''nawiasy kwadratowe''. Podobnie jak w funkcjach pythona, makra również mogą mieć argumenty oddzielone przecinkiem.
+
+=== Przykłady ===
+
+{{{
+ [[Timestamp]]
+}}}
+Wyświetli:
+ [[Timestamp]]
+
+{{{
+ [[HelloWorld(Testing)]]
+}}}
+Wyświetli:
+ [[HelloWorld(Testing)]]
+
+== Dostępne Makra ==
+
+''Zauważ że następujące lista będzie zawierała jedynie dokumentację makr jeśli nie włączyłeś optymalizacji `-OO` lub nie ustawiłeś opcji `PythonOptimize` dla for [wiki:TracModPython mod_python].''
+
+[[MacroList]]
+
+== Makra z Całego Świata ==
+Na stronie The [http://projects.edgewall.com/trac/ Projektu Trac] znajduje się sekcja dedykowana makrom napisanym przez ludzi, [http://projects.edgewall.com/trac/wiki/MacroBazaar MacroBazaar]. Jeśli szukasz nowych makr, lub napisałeś jakieś i chcesz się podzielić nim z całym światem, śmiało dodaj je na stronę [http://projects.edgewall.com/trac/wiki/MacroBazaar MacroBazaar wiki].
+
+----
+
+== Rozwój Własnych Makr ==
+Makra, podobnie jak sam Trac, są pisane w [http://www.python.org/ języku programowania Python]. Są bardzo prostymi modułami, identyfikowanymi poprzez nazwę pliku i powinny zawierać pojedynczą funkcję ''wejściową''. Trac wyświetli zwrócone dane, wprowadzone do HTMLa w miejscu gdzie makro zostało wywołane.
+
+Najprościej nauczyć się na przykładach:
+{{{
+#!python
+# MyMacro.py -- Najprostsze na świecie makro
+
+def execute(hdf, args, env):
+    return "Hello World called with args: %s" % args
+}}}
+
+Możesz również użyć obiektu środowiska (`env`), na przykład żeby uzyskać dostęp do danych konfiguracji oraz do bazy, na przykład:
+{{{
+#!python
+def execute(hdf, txt, env):
+    return env.get_config('trac', 'repository_dir')
+}}}
+
+Zauważ ze od wersji 0.9, makra wiki mogą być również napisane jako pluginy Traca (TracPlugins). Daje to im dodatkowe możliwości, których zwykłe makra nie mają, jak na przykład bezpośredni dostęp do zapytań HTTP.
+
+Po więcej informacji na temat rozwoju makr, zobacz [http://projects.edgewall.com/trac/wiki/TracDev źródła rozwojowe] na głównej stronie projektu.
+
+----
+Zobacz również:  WikiProcessors, WikiFormatting, TracGuide

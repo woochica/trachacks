@@ -1,0 +1,114 @@
+= Plik konfiguracyjny Trac'a =
+[[TracGuideToc]]
+
+Konfiguracja Trac'a odbywa się poprzez edycję pliku '''`trac.ini`''', umieszczonego w katalogu `<projectenv>/conf/trac.ini`.
+
+== Konfiguracja Globalna ==
+
+Począwszy od wersji 0.9, Trac może również czytać konfigurację z globalnego pliku `trac.ini`. Te globalne ustawienia zostaną połączone z opcjami specyficznymi dla danego środowiska, lecz lokalne ustawienia nadpiszą te globalne.
+
+Konfiguracja globalna domyślnie jest umieszczona w `$prefix/share/trac/conf/trac.ini`. Może być ona przeniesiona do innej lokalizacji (na przykład `/etc/trac.ini`), lecz wymaga to zmian w pliku `trac/siteconfig.py` który powstaje podczas instalacji Trac'a.
+
+== Referencje ==
+
+Poniżej znajduje się skrócony opis dostępnych opcji konfiguracjynych.
+
+== [trac] ==
+|| `database`        || [wiki:TracEnvironment#DatabaseConnectionStrings String do łączenia z basą] dla tego projektu ||
+|| `default_charset` || Kodowanie znaków w plikach tekstowych w repozytorium subversion (domyślnie jest to `iso-8859-15`) ||
+|| `default_handler` || Nazwa komponentu obsługującego zapytania do bazowego URL (domyślnie jest to `WikiHandler`) (''od 0.9'') ||
+|| `repository_dir`  || Ścieżka to lokalnego repozytorium Subversion ||
+|| `authz_file`      || Ścieżka do Subversion [http://svnbook.red-bean.com/en/1.1/ch06s04.html#svn-ch-6-sect-4.4.2 plik konfiguracyjny (authz)]. ||
+|| `authz_module_name` || Prefiks modułu wykorzystywany w pliku `authz_file` (Zobacz FineGrainedPermissions)||
+|| `check_auth_ip` || Ustawia czy adres IP użytkownika powinien być sprawdzany w celu autoryzacji (true, false) (''od 0.9'') ||
+|| `ignore_auth_case` || ustawia czy mają znaczenie duże/małe litery w autoryzacji (true, false) (''od 0.9'') ||
+|| `templates_dir`   || Ścieżka do templatów !ClearSilver'a ||
+
+== [project] ==
+|| `name`   || Nazwa projektu ||
+|| `descr`  || Krótki ops projektu ||
+|| `url`    || URL do strony głównej projektu ||
+|| `icon`   || URL do pliku z ikoną do użycia jako favicona ||
+|| `footer` || Treść stopki strony (umieszczony po prawej stronie) ||
+
+== [header_logo] ==
+|| `src`    || URL do obrazka używanego jako logo w nagłówku ||
+|| `link`   || URL do którego ma prowadzić logo w nagłówku ||
+|| `alt`    || tekst ''zamienny'' dla logo w nagłówku (alt) ||
+|| `width`  || Szerokość logo nagłówka w pixelach ||
+|| `height` || Wysokość logo nagłówka w pixelach ||
+Zobacz również: TracInterfaceCustomization.
+
+== [logging] ==
+|| `log_type`  || Sposób generowania logów. (none, file, stderr, syslog, winlog) ||
+|| `log_file`  || Jeśli ''log_type'' jest ustawiony na ''file'', to powinna być tu ścieżka do pliku z logiem ||
+|| `log_level` || Poziom intensywności generowania logów (CRITICAL, ERROR, WARN, INFO, DEBUG) ||
+Zobacz rónież: TracLogging
+
+== [attachment] ==
+|| `max_size` || Maksymalny dozwolony rozmiar pliku dla ticketów oraz załączników do wiki ||
+
+== [notification] ==
+|| `smtp_enabled`   || Włącz powiadamianie poprzez SMTP (email) (true, false) ||
+|| `smtp_server`    || Serwer SMTP do używania jako powiadamianie emailem ||
+|| `smtp_user`      || Nazwa użytkownika dla serwera SMTP (''od 0.9'') ||
+|| `smtp_password`  || Hasło dla serwera SMTP (''od 0.9'') ||
+|| `smtp_from`      || Pole ''from'' przy powiadamianiu emailem ||
+|| `smtp_replyto`   || Adres w polu ''Reply-To'' przy powiadamianiu emailem ||
+|| `smtp_always_cc` || Adres(y) emailowe do których zawsze wysyłane jest powiadamianie ||
+|| `always_notify_reporter` || Zawsze wyślij powiadomienie do każdego adresu w polu ''reporter'' ||
+|| `always_notify_owner` || Zawsze wyślij powiadomienie do właściciela ticketa (''od 0.9'') ||
+Zobacz również: TracNotification
+
+== [mimeviewer] ==
+|| `enscript_path` || Ścieżka do programu Enscript ||
+|| `php_path` || Ścieżka do programu PHP ||
+|| `max_preview_size` || Największy rozmiar pliku do podglądu HTML (''od 0.9'') ||
+|| `tab_width` || Szerokość zakładki w podglądzie pliku (''od 0.9'') ||
+
+== [ticket] ==
+|| `default_version`   || Domyślna wersja dla nowo utworzonych ticketów ||
+|| `default_severity`  || Domyślny stopień trudności dla nowo utworzonych ticketów ||
+|| `default_priority`  || Domyślny priorytet dla nowo utworzonych ticketów ||
+|| `default_milestone` || Domyślne kroki milowe dla nowo utworzonych ticketów ||
+|| `default_component` || Domyślne komponenty dla nowo utworzonych ticketów ||
+|| `restrict_owner`    || Stwórz pole właściciela ticketa w postaci rozwijanego menu (''od 0.9'') ||
+
+== [ticket-custom] ==
+Tworzy [wiki:TracTicketsCustomFields zdefiniowane przez użytkownika pola ticketów].
+
+== [timeline] ==
+|| `default_daysback` || Domyślna "głębokość" Timeline'a, liczona w dniach (''od 0.9'') ||
+|| `changeset_show_files` || Ilość pokazywanych plików (-1 nieskończona, 0 wyłączone) ||
+|| `ticket_show_details` || Włącz wyświetlanie wszystkich zmian w w ticketach na timeline ||
+
+== [browser] ==
+|| `hide_properties` || Lista opcji subversion które nie będą wyświetlany przy przeglądaniu repozytorium (''od 0.9'') ||
+
+== [wiki] ==
+|| `ignore_missing_pages` || włącz/wyłącz podświetlanie linków w notacji CamelCase to nieistniejących stron (''od 0.9'') ||
+
+== [components] ==
+(''od 0.9'')
+
+Ta sekcja jest używana do włączania lub wyłączania komponentów dostarczanych przez pluginy, jak i przez Trac'a. Komponent do włączenia/wyłączenia jest opisywany przez nazwą opcji. TO czy jest włączona jest wyznaczona poprzez wartość opcji; ustawienie na `enabled` lub `on`, włączy komponent, natomiast każda inna opcja (generalnie `disabled` lub `off`) zablokuje komponent.
+
+Nazwa opcji jest w pełni legalną nazwą komponentu lub prefixu modułu/pakietu komponentu. Sufix włącza/wyłącza odpowiedni komponent, podczas gdy końcówka włącza/wyłącza każdy dowolny komponent w danym pakiecie/module.
+
+Rozważ następujące ustawienia konfiguracji:
+{{{
+[components]
+trac.ticket.report.ReportModule = disabled
+webadmin.* = enabled
+}}}
+
+Pierwsza opcja mówi Tracowi na zablkowanie [wiki:TracReports modułu raportowania]. Druga opcja instruuje Trac'a żeby włączył wszystki komponenty w pakiecie `webadmin`. Zauważ że wprowadzanie wildcardów jest wymagane żeby dopasować moduły/pakiety.
+
+Zobacz również ''Pluginy'' na stronie ''O Trac'u'' żeby dostać listę aktywnych komponentów (wymaga `CONFIG_VIEW` [wiki:TracPermissions praw dostępu].)
+
+Zobacz również: TracPlugins
+
+  ''Zauważ że w odniesieniu do Trac'a r2335 (dotyczy to 0.9b1 oraz 0.9b2), należałoby użyć sekcji `[disabled_components]`. Zobacz [http://projects.edgewall.com/trac/wiki/TracIni?version=42 poprzednią wersję] po więcej szczegółów.''
+
+----
+Zobacz również: TracGuide, TracAdmin, TracEnvironment

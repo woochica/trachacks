@@ -1,0 +1,17 @@
+= Przeglądarka Trac'a =
+[[TracGuideToc]]
+
+Przeglądarka Trac'a może być użytka do przeglądania katalogów, zmiany logów oraz specyficznych rewizji plików przechowywanych w repozytorium subversion.
+
+Wejścia do katalogów są wyświetlane w liście, z możliwością sortowania według kolumn. Lista może być sortowana według ''nazwy'', ''rozmiaru'' lub ''wieku'' poprzez kliknięcie na nagłówek kolumny. Porządek sortowania może zostać odwrócony poprzez kolejne kliknięcie na nagłówek.
+
+Przeglądarka zostać użyta do nawigacji poprzez strukturę kataloku poprzez klikanie na nazwy katalogów. Kliknięcie na nazwę pliku spowoduje wyświetlenie zawartości pliku. Kliknięcie na numerze rewizji danego pliku lub katalogu przekieruje do historii rewizji danego elementu.
+
+Możliwe jest również przeglądanie katalogów oraz plików w kolejności historycznej podczas danej rewizji repozytorium. Domyślnym zachowaniem jest wyświetlanie ostatniej rewizji, lecz w łatwy sposób można wybrać inny numer rewizji poprzez wypełnienie pola ''View revision'' na górze strony.
+
+== Obsługa RSS ==
+
+Moduł RSS zapewnia monitorowanie zmian w pliku lub katalogu. Aby subskrybować kanał RSS dla pliku lub katalogu, otwórz log rewizji w przeglądarce i kliknij pomarańczową ikonę 'XML' na dole strony. Po więcej informacji na temat obsługi kanałów RSS w Trac'u zobacz TracRss
+
+----
+Zobacz również: TracGuide, TracChangeset, FineGrainedPermissions

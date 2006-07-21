@@ -1,0 +1,68 @@
+= Dostosowanie Interfejsu Trac'a =
+[[TracGuideToc]]
+
+== Wprowadzenie ==
+Ta strona jest po to, aby dać użytkownikom sugestie, jak dostosować wygląd Trac'a. Tematy na tej stronie przesłaniają edytowanie templetów HTML oraz plików CSS, lecz nie sam kod programu. Zamierzeniem tematów jest pokazanie użytkownikowom, w jaki sposób mogą podyfikmwać wygląd Trac'a ażeby spełniał ich wysublimowane potrzeby. Sugestie do zmian w interfejsie Trac'a powinny być załączane w postaci ticketów, a nie listowane na tej stronie.
+
+== Logo i Ikona Projektu ==
+Najprostszymi elementami do zmodyfikowania w Trac'u yo logo oraz ikona strony. Obie mogą być skonfigurowane z ustawieniami w [wiki:TracIni trac.ini].
+
+Logo i ikona powinny być umieszczone w katalogu "htdocs" w katalogu środowiska projektu. (''Zauważ: w projektach tworzonych przy użyciu Traca starszego niż 0.9, będziesz musiał stworzyć ten katalog ręcznie'')
+
+Następnie skonfiguruj odpowienią sekcję twojego [wiki:TracIni trac.ini]:
+
+=== Logo ===
+Zmień opcję `src` na `site/` połączonym z nazwą pliku twojego obrazka. `Szerokość` i `wysokość` powinny być zmodyfikowane, żeby zgadzały się z wymiarami obrazka.
+
+{{{
+[header_logo]
+src = site/my_logo.gif
+alt = My Project
+width = 300
+height = 100
+}}}
+
+=== IKona ===
+Ikony powinny być w rozmiarze 16x16, w formacie `.gif` albo `.ico`. Zmień opcję `icon` na  Change the `icon` setting to `site/` a następnie nazwę pliku z ikoną. Ikony będą domyślnie wyświetlane przez twoją przeglądarkę zaraz obok adresu URL.
+
+{{{
+[project]
+icon = site/my_icon.ico
+}}}
+
+Zauważ że ikona będzie ignorowana przez przeglądarkę Internet Explorer, która akceptuje tylko pliki nazwane ``favicon.ico`` w katalogu głównym projektu. Żeby ikona działała zarówno w MSIE jak i w innym przeglądarkach, należy ją przechowywać w katalogu głównym oraz dowiązać ją z ``trac.ini`` jak poniżej:
+
+{{{
+[project]
+icon = /favicon.ico
+}}}
+
+== Nagłówek & Stopka ==
+W katalogu środowiska, dla każdego projektu Trac'a powinien być katalog nazwany {{{templates}}}. Katalog ten zawiera pliki {{{site_header.cs}}} oraz {{{site_footer.cs}}}. Użytkownicy mogą modyfikować swoją stronę Trac'a poprzez dodawanie wymaganych modyfikacji HTML do tych plików. Zawartość obu plików będzie umieszczona natychmiast po otwarciu tagu {{{<body>}}} i zaraz po niej będzie tag {{{</body>}}}.
+
+Pliki te mogą zawierać statyczny HTML, więc jeśli użytkownik chce mieć dynamicznie generowaną zawartość, może wykożystać template'y języka [http://www.clearsilver.net/ ClearSilver] jak i z samych jego stron. Jeśli chcesz się dowiedzieć, które zmienne są dostępne dla templatów, dodaj do adresu URL strony `?hdfdump=1`. Wygeneruje to widok na strukturę danych template'a.
+
+== CSS ==
+Podstawowym sposobem na dostosowanie wyglądu na stronie Trac'a jest dodanie reguł [http://www.w3.org/TR/REC-CSS2/ CSS], które nadpiszą istniejące już reguły. Najlepiej zrobić to poprzez edycję pliku `site_css.cs` w katalogu `templates` twojego środowiska. Zawartość template'a wędruje do `<style type="text/css></style>` na każdej stronie HTML, wygenerowanej przez Trac'a.
+
+Mimo że można dodawać własne reguły CSS do pliku `site_css.cs`, zalecane jest żeby dołączyć zewnętrzny plik CSS, co pozwoli przeglądarce cache'ować plik CSS, zamiast przesyłania go przy każdej odpowiedzi.
+
+Następujący przykład zaimportuje CSS umieszczony w katalogu głównym `style`:
+{{{
+@import url(/style/mytrac.css);
+}}}
+
+Możesz użyć zmiennych !ClearSilver aby odnieść się do CSS'a przechowywanego w katalogu `htdocs` środowiska:
+{{{
+@import url(<?cs var:chrome.href ?>/site/style.css);
+}}}
+
+== Główne Template'y ==
+
+Możliwe jest również używanie zmodyfikowanych wersji templatów [http://www.clearsilver.net/ ClearSilver'a]. Zauważ że ta technika nie jest zalecana, ponieważ powoduje upgrade Trac'a dość problemowym: niestety istnieje kilka zależności pomiędzy template'ami, a kodem aplikacji takich jak nazwy pól i struktura danych template'a które lubią się zmieniać w kolejnych wersjach Trac'a.
+
+Jeśli koniecznie musisz używać zmodyfikowanych template'ów, skopiuj pliki template'ów do domyślnego katalogu template'ów (zazwyczaj w `$prefix/share/trac/templates`) w katalogu `templates` twojego środowiska. Następnie zmodyfikuj te kopie żeby otrzymać wymagane rezultaty.
+
+
+----
+Zobacz również TracGuide, TracIni

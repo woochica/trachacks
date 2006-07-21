@@ -1,0 +1,334 @@
+= FormatowanieWiki = 
+[[TracGuideToc]]
+
+Formatowanie Wiki jest rdzenną cechą Traca, ściśle integrującą w każdej części Traca w elastyczną i potężną zarazem całość.
+
+Trac ma wbudowany mały i potężny silnik renderowania wiki. Silnik wiki implementuje wciąż rozwijający się podzbiór poleceń z innych popularnych wiki, szczególnie z [http://moinmoin.wikiwikiweb.de/ MoinMoin]. 
+
+
+Ta strona demonstruje składnię formatowania, dostępną wszędzie gdzie tylko FormatowanieWiki jest dostępne.
+
+
+== Style Fontów ==
+
+Wiki Traca obsługuje następujące style fontów:
+{{{
+ * '''pogrubione'''
+ * ''pochyłe''
+ * '''''pogrubione i pochyłe'''''
+ * __podkreślone__
+ * {{{stała szerokość}}} or `stała szerokość`
+ * ~~przekreślone~~
+ * ^indeks górny^ 
+ * ,,indeks dolny,,
+}}}
+
+Wyświetli:
+ * '''pogrubione'''
+ * ''pochyłe''
+ * '''''pogrubione i pochyłe'''''
+ * __podkreślone__
+ * {{{stała szerokość}}} or `stała szerokość`
+ * ~~przekreślone~~
+ * ^indeks górny^ 
+ * ,,indeks dolny,,
+
+Zauważ że polecenia `{{{...}}}` oraz {{{`...`}}} nie tylko wyświetlają czcionką o stałej szerokości, lecz również traktują swoją zawartość jak czysty tekst, co oznacza że na tym tekście nie odbywa się jakikolwiek formatowanie wiki.
+
+== Nagłówki ==
+
+Możesz stworzyć nagłówek poprzez rozpoczęcie linii od jednego do pięciu znaków ''równości'' ("=") kończących się znakiem spacji oraz tekstem nagłówka. Linia powinna kończyć się spacją a następnie taką samą ilością znaków ''=''.
+
+Przykład:
+{{{
+= Nagłówek =
+== Nagłówek niższego rzędy ==
+=== O ''tym'' ===
+}}}
+
+Wyświetli:
+= Nagłówek =
+== Nagłówek niższego rzędy ==
+=== O ''tym'' ===
+
+
+== Akapity ==
+
+Nowy Akapit jest tworzony zawsze gdy dwa bloki tekstu są oddzielone przez jedną lub więcej pustych linii.
+
+Wymuszone przełamanie linii może być również umieszczone poprzez:
+{{{
+Linia 1[[BR]]Linia 2
+}}}
+Wyświetli:
+
+Linia 1[[BR]]Linia 2
+
+
+== Listy ==
+
+Wiki obsługuje zarówno porządkowane/numerowane oraz nieporządkowane listy.
+
+Przykład:
+{{{
+ * Element 1
+   * Element 1.1
+ * Element 2
+
+ 1. Element 1
+   1. Element 1.1
+ 1. Element 2
+}}}
+
+Wyświetli:
+ * Element 1
+   * Element 1.1
+ * Element 2
+
+ 1. Element 1
+   1. Element 1.1
+ 1. Element 2
+
+Zauważ że elementy listy muszą być poprzedzone przynajmniej jedną spacją. Inaczej lista zostanie potraktowana jak normalny akapit.
+
+
+== Listy Definicji ==
+
+Wiki obsługuje również listy definicji.
+
+Przykład:
+{{{
+ llama::
+   gatynem ssaka, owłosiony
+ ppython::
+   gatunek gada, bez owłosienia
+}}}
+
+Wyświetli:
+ llama::
+   gatynem ssaka, owłosiony
+ ppython::
+   gatunek gada, bez owłosienia
+
+Zauważ że należy umieścić spację przed każdą definicją.
+
+
+== Tekst Preformatowany ==
+
+Blok zawierający preformatowany tekst jest odpowiedni do snippetów w kodzie źródłowym, notatek oraz przykładów. Użyj trzech ''nawiasów klamrowych'' owijających tekst aby stworzyć czarne cytowanie. Nawiasy klamrowe powinny być w osobnych liniach.
+  
+Przykład:
+{{{
+ {{{
+  def HelloWorld():
+      print "Hello World"
+ }}}
+}}}
+
+Wyświetli:
+{{{
+ def HelloWorld():
+     print "Hello World"
+}}}
+
+
+== Czarne Cytaty ==
+
+Żeby oznaczyć akapit jako czarny cytat, odsuń tekst od krawędzi dwoma spacjami.
+
+Przykład:
+{{{
+  Ten tekst jest przykładem cytatu.
+}}}
+
+Wyświetli:
+  Ten tekst jest przykładem cytatu.
+
+== Tabele ==
+
+Proste tabele mogą być tworzone w taki sposób:
+{{{
+||Komórka 1||Komórka 2||Komórka 3||
+||Komórka 4||Komórka 5||Komórka 6||
+}}}
+
+Wyświetli:
+||Komórka 1||Komórka 2||Komórka 3||
+||Komórka 4||Komórka 5||Komórka 6||
+
+Zauważ że bardziej złożone tabele mogą być stworzone przy użyciu [wiki:WikiRestructuredText#BiggerReSTExample reStructuredTextu].
+
+
+== Linki ==
+
+Hyperlinki są automatycznie generowane dla WikiPageNames (nazw stron wiki) oraz adresów URL. !WikiPageLinks mogą być zablokowane poprzez poprzedzający znak "!", tak jak na przykład {{{!WikiPageLink}}}.
+
+Przykład:
+{{{
+ TitleIndex, http://www.edgewall.com/, !NieLink
+}}}
+
+Wyświetli:
+ TitleIndex, http://www.edgewall.com/, !NieLink
+
+Linki mogą mieć nadany bardziej opisujący tytuł poprzez napisanie spacji po linku i kolejnej własnej nazwy. Całość powinna być ujęta w nawiasy kwadratowe. Jeśli tytuł opisujący został opuszczony, dokładny prefix jest bez pokrycia, do póki nie jest to link zewnętrzny. Może być to użyteczne dla stron wiki które nie przystają do konwencji nazwenictwa WikiPageNames.
+
+Przykład:
+{{{
+ * [http://www.edgewall.com/ Edgewall Software]
+ * [wiki:TitleIndex Title Index]
+ * [wiki:ISO9000]
+}}}
+
+Wyświetli:
+ * [http://www.edgewall.com/ Edgewall Software]
+ * [wiki:TitleIndex Title Index]
+ * [wiki:ISO9000]
+
+
+=== Linki Traca ===
+
+Strony Wiki mogą wskazywać bezpośrednio na inne części systemu Traca. Strony mogą odnościć się do ticketów, raportów, zestawów zmian, kamieni milowych, pliów źródłowych i innych stron wiki przy użyciu następującej notacji:
+{{{
+ * Tickety: #1 or ticket:1
+ * Raporty: {1} or report:1
+ * Zestawy zmian: r1, [1] or changeset:1
+ * Logi rewizji: r1:3, [1:3] or log:branches/0.8-stable#1:3
+ * Strony wiki: CamelCase or wiki:CamelCase
+ * Kamienie milowe: milestone:1.0 or milestone:"End-of-days Release"
+ * Pliki: source:trunk/COPYING
+ * Załączniki: attachment:"file name.doc"
+ * Specyficzna rawizja pliku: source:/trunk/COPYING#200
+ * Nazwa pliku z osadzoną spacją: source:"/trunk/README FIRST"
+}}}
+
+Wyświetli:
+ * Tickety: #1 or ticket:1
+ * Raporty: {1} or report:1
+ * Zestawy zmian: r1, [1] or changeset:1
+ * Logi rewizji: r1:3, [1:3] or log:branches/0.8-stable#1:3
+ * Strony wiki: CamelCase or wiki:CamelCase
+ * Kamienie milowe: milestone:1.0 or milestone:"End-of-days Release"
+ * Pliki: source:trunk/COPYING
+ * Załączniki: attachment:"file name.doc"
+ * Specyficzna rawizja pliku: source:/trunk/COPYING#200
+ * Nazwa pliku z osadzoną spacją: source:"/trunk/README FIRST"
+
+Zobacz TracLinks po więcej informacji.
+
+
+== Linki Wychodzące oraz WikiPageNames ==
+
+Możesz unikać tworzenia hyperlinków przez TracLinks poprzez poprzedzenie wyrażenia znakiem wykrzynika "!".
+
+Przykład:
+{{{
+ !BezHyperLinka
+ !#42 to nie jest link
+}}}
+
+Wyświetli:
+ !BezHyperLinka
+ !#42 to nie jest link
+
+
+== Rysunki ==
+
+Urle kończące się na `.png`, `.gif` lub `.jpg` są automatycznie interpretowane jako linki do obrazkówi konwertowane to tagów `<img>`.
+
+Przykład:
+{{{
+http://www.edgewall.com/gfx/trac_example_image.png
+}}}
+
+Wyświetli:
+
+http://www.edgewall.com/gfx/trac_example_image.png
+
+Jakkolwiek nie daje to kontroli nad sposobem wyświetlania. Sposób wprowadznia rysunków jest przedawniony na rzecz bardziej potężnego makra `Image` (zobacz WikiMacros).
+
+
+== Macra ==
+
+Macra są ''ręcznymi fynkcjami'' do osadzania dynamicznych elementów na stronie.
+
+Przykład:
+{{{
+ [[Timestamp]]
+}}}
+
+Wyświetli:
+ [[Timestamp]]
+
+See WikiMacros for more information, and a list of installed macros.
+
+
+== Procesory ==
+
+Trac obsługuje alternatywne znaczniki formatowania przy użyciu WikiProcessors. Na przykład, procesory są używane do pisania stron w [wiki:WikiRestructuredText reStructuredText] lub [wiki:WikiHtml HTMLu]. 
+
+Przykład 1:
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="text-align: right; color: blue"&gt;HTML Test&lt;/h1&gt;
+}}}</pre>
+}}}
+
+Wyświetli:
+{{{
+#!html
+<h1 style="text-align: right; color: blue">HTML Test</h1>
+}}}
+
+Przykład:
+{{{
+#!html
+<pre class="wiki">{{{
+#!python
+class Test:
+    def __init__(self):
+        print "Hello World"
+if __name__ == '__main__':
+   Test()
+}}}</pre>
+}}}
+
+Wyświetli:
+{{{
+#!python
+class Test:
+    def __init__(self):
+        print "Hello World"
+if __name__ == '__main__':
+   Test()
+}}}
+
+Perl:
+{{{
+#!perl
+my ($test) = 0;
+if ($test > 0) {
+echo "hello";
+}
+}}}
+
+Zobacz WikiProcessors po więcej informacji.
+
+
+== Różne ==
+
+Cztery lub więcej myślników będzie zamienione na poziomą linię (<HR>)
+
+Przykład:
+{{{
+ ----
+}}}
+
+Wyświetli:
+----
+
+
+----
+Zobacz również: TracLinks, TracGuide, WikiHtml, WikiMacros, WikiProcessors, TracSyntaxColoring.

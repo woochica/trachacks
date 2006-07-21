@@ -1,0 +1,12 @@
+= CamelCase (notacjaCamelowa) =
+Nowe słowa tworzone poprzez złączanie razem słów rozpoczynających się dużą literą.
+
+Notacja Camelowa (CamelCase) jest oryginalną konwencją storzoną dla potrzeb wiki, do tworzenia hyperlinków. Przy czym notacja camelowa w wiki ma pewne zastrzeżenie, tzn. pierwszy podstring całego ciągu znaków musi się zaczynać od małej litery. Tak więc "AlaMaKota" oraz "MaciekJaTylkoŻartowałem" nie będą linkami.
+
+== Więcej informacji na temat !CamelCase (notacjiCamelowej) ==
+
+ * http://c2.com/cgi/wiki?WikiCase
+ * http://en.wikipedia.org/wiki/CamelCase
+
+----
+Zobacz również: WikiPageNames, WikiNewPage, WikiFormatting, TracWiki

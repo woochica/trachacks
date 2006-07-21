@@ -1,0 +1,119 @@
+= TracLinks in reStructuredText =
+
+Ten dokument powstał, aby przetestować dyrektywy ``..trac::``. Strona jest napisana w ten sposób
+
+{{{
+{{{
+#!rst 
+
+Przykład
+...
+...
+
+}}}
+}}}
+
+
+Jest to lista przykładów wykorzystująca dyrektywy ''trac'', umożliwiające dostęp do TracLinks w WikiRestructuredText.
+
+{{{
+#!rst
+
+Przykład
+--------
+
+trac role
+=========
+Składnia \`link\`\:trac: lub :trac:\`link\`, może być użyta w dowolnym miejscu tekstu. 'link' has the same format as explain for the ``.. trac::`` directive below.[hmm]
+
+``In the middle of my text `WikiFormatting`:trac: see!!!!`` 
+   In the middle of my text `WikiFormatting`:trac: see!!!!
+
+or
+
+``In the middle of my text :trac:`WikiFormatting` see!!!!`` 
+   In the middle of my text :trac:`WikiFormatting` see!!!!
+
+
+wiki
+====
+``.. trac:: WikiFormatting``
+	.. trac:: WikiFormatting
+
+``.. trac:: wiki:WikiFormatting``
+       .. trac:: wiki:WikiFormatting
+
+``.. trac:: wiki:WikiFormatting WikiFormatting``
+	.. trac:: wiki:WikiFormatting WikiFormatting
+
+``.. trac:: wiki:WikiFormatting LinkText``
+	.. trac:: wiki:WikiFormatting LinkText
+
+metki
+=======
+
+``.. trac:: #1``
+	.. trac:: #1
+``.. trac:: #1 ticket one``
+	.. trac:: #1 ticket one
+``.. trac:: ticket:1``
+	.. trac:: ticket:1
+``.. trac:: ticket:1 ticket one``
+	.. trac:: ticket:1 ticket one
+
+raporty
+=======
+
+``.. trac:: {1}``
+	.. trac:: {1}
+``.. trac:: {1} report one``
+        .. trac:: {1} report one
+``.. trac:: report:1``
+	.. trac:: report:1
+``.. trac:: report:1 report one``
+	.. trac:: report:1 report one
+
+changesets
+==========
+
+``.. trac:: [42]``
+	.. trac:: [42]
+``.. trac:: [42] changeset 42``
+	.. trac:: [42] changeset 42
+``.. trac:: changeset:42``
+	.. trac:: changeset:42
+``.. trac:: changeset:42 changeset 42``
+	.. trac:: changeset:42 changeset 42
+``.. trac:: foo``
+	.. trac:: foo
+
+pliki
+=====
+
+``.. trac:: browser:/trunk/trac``
+	.. trac:: browser:/trunk/trac
+
+Poprzedzające ``/`` można ominąć...
+
+``.. trac:: repos:trunk/trac trunk/trac``
+	.. trac:: repos:trunk/trac trunk/trac
+``.. trac:: source:trunk/trac Trac source code``
+	.. trac:: source:trunk/trac Trac source code
+
+``.. trac:: browser:trunk/README``
+	.. trac:: browser:trunk/README
+``.. trac:: repos:trunk/README trunk/README``
+	.. trac:: repos:trunk/README trunk/README
+``.. trac:: source:trunk/README README in trunk``
+	.. trac:: source:trunk/README README in trunk
+
+Zauważ, że jeśli ``hoo`` jest plikiem, link wskaże na jego revision log. W celu przejrzenia zawartości pliku musisz wskazać jego numer revision, tak jak tutaj:
+
+``.. trac:: browser:/trunk/README#latest latest of trunk/README``
+	.. trac:: browser:/trunk/README#latest latest of trunk/README
+``.. trac:: repos:trunk/README#42 trunk/README in rev 42``
+	.. trac:: repos:trunk/README#42 trunk/README in rev 42
+}}}
+
+----
+Zobacz także: WikiRestructuredTextLinks, TracLinks

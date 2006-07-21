@@ -1,0 +1,125 @@
+= Wiki Processors =
+Processors to WikiMacros zaprojektowane, aby umożliwić stworzenie alternatywnych znaczników dla silnika Trac Wiki. Processors mogą zostać określone jako ''funkcje makr wspomagające edytowanie tekstu''. 
+
+Silnik wiki używa procesorów, aby pozwolić na [wiki:WikiRestructuredText Restructured Tekst] i [wiki:WikiHtml surowy HTML] w dowolnym tekście wiki, a więc także i w Trac-u.
+
+== Użycie Processors ==
+Aby użył procesor na bloku tekstu, skorzystaj z wiki blockquote, wybierając procesor przez nazwę: ''shebang notation'' (#!), znajomą wszystkim użytkownikom skryptów systemu UNIX.
+
+'''Przykład 1''' (''wprowadzenia surowego HTML w tekscie wiki''):
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="color: orange"&gt;Oto czysty HTML&lt;/h1&gt;
+}}}</pre>
+}}}
+
+'''Rezultat:'''
+{{{
+#!html
+<h1 style="color: orange">Oto czysty HTML</h1>
+}}}
+
+----
+
+'''Przykład 2''' (''wprowadzenia surowego HTML w tekscie wiki''):
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!rst
+Nagłówek
+--------
+To jest jakiś **text** ze stopką [*]_.
+
+.. [*] To jest stopka.
+}}}</pre>
+}}}
+
+'''Wynik:'''
+{{{
+#!rst
+Nagłówek
+--------
+To jest jakiś **text** ze stopką [*]_.
+
+.. [*] To jest stopka.
+}}}
+----
+'''Przykład 3''' (''wprowadzania bloku kodu źródłowego C do tekstu wiki''):
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!c
+int main(int argc, char *argv[])
+{
+  printf("Hello World\n");
+  return 0;
+}
+}}}</pre>
+}}}
+
+'''Wynik:'''
+{{{
+#!c
+int main(int argc, char *argv[])
+{
+  printf("Hello World\n");
+  return 0;
+}
+}}}
+
+----
+
+== Dostępne procesory ==
+Następujące processory są dołączone w dystrybucjach Trac-a:
+ * '''html''' -- pozwala na wprowadzania kodu HTML. Zobacz WikiHtml.
+ * '''rst''' -- pozwala użyć Restructured Text. Zobacz WikiRestructuredText.
+ * '''textile''' -- Wspomagany jeśli [http://dealmeida.net/projects/textile/ Textile] jest zainstalowany.
+
+=== Podświetlanie składni ===
+Trac zawiera procesory [wiki:TracSyntaxColoring podświetlające składnię] dla następujących języków:
+ * '''c''' -- C
+ * '''cpp''' -- C++
+ * '''python''' -- Python
+ * '''perl''' -- Perl
+ * '''ruby''' -- Ruby
+ * '''php''' -- PHP
+ * '''asp''' --- ASP
+ * '''sql''' -- SQL
+ * '''xml''' -- XML
+'''Uwaga:''' ''Trac do kolorowania tekstu używa zewnętrznych aplikacji. Zobacz TracSyntaxColoring aby dowiedzieć się więcej.''
+
+Korzystając z typów plików MIME, jest możliwe podświetlanie składni w tym samym języku w którym plik został napisany. Na przykład, możesz napisać:
+{{{
+{{{
+#!text/html
+<h1>tekst</h1>
+}}}
+}}}
+
+Wynikiem będzie kod HTML z podświetlaną składnią. Tak samo jest w każdym innym obsługiwanym typie plików (mime).
+
+
+Aby dowiedzieć się więcej o procesorach tesktu i makrach, odwiedź: 
+ * [http://projects.edgewall.com/trac/wiki/ProcessorBazaar ProcessorBazaar]
+ * [http://projects.edgewall.com/trac/wiki/MacroBazaar MacroBazaar]
+
+
+== Zaawansowany temat: Programowanie makra procesora ==
+Programowanie procesora nie jest trudniejsze niż korzystanie z WikiMacros. Tak naprawdę pracują one w ten sam sposób, tylko użycie składni jest inne. Zobacz WikiMacros, aby dowiedzieć się więcej.
+
+'''Przykład:''' (''Procesor Restructured Text''):
+{{{
+from docutils.core import publish_string
+
+def execute(hdf, text, env):
+    html = publish_string(text, writer_name = 'html')
+    return html[html.find('<body>')+6:html.find('</body>')].strip()
+}}}
+
+----
+Zobacz także: WikiMacros, WikiHtml, WikiRestructuredText, TracSyntaxColoring, WikiFormatting, TracGuide

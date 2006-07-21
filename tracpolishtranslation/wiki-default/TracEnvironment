@@ -1,0 +1,61 @@
+= Przechowalnia Traca - środowisko =
+
+Trac używa struktury katalogów i bazy do przechowywania danych projektów.
+
+== Tworzenie Środowiska ==
+
+Nowe środowisko Traca tworzone jest poprzez [wiki:TracAdmin trac-admin]:
+{{{
+$ trac-admin /path/to/projectenv initenv
+}}}
+
+[wiki:TracAdmin trac-admin] zapyta się o nazwę projektu, string do łącznia z bazą (wyjaśnione poniżej), oraz gdzie jest umieszczone repozytorium Subversion.
+
+  ''Uwaga: Użytkownik serwera web będzie potrzebował praw zapisu do katalogu środowiska i wszystkich plików wewnątrz. Pamiętaj żeby ustawić właściwe 
+
+uprawnienia. To samo dotyczy repozytorium subversion ponieważ Trac będzie potrzebował tylko dostępu tak długo jak nie będziesz używał systemu plików BDB.''
+
+== Database Connection Strings == (Stringi do łączenia z bazą SQL)
+
+Począwszy od wersji 0.9, Trac obsługuje zarówno [http://sqlite.org/ SQLite] jak i
+[http://www.postgresql.org/ PostgreSQL] jako backend bazy. Domyślnie używane jest SQLite, które jest najprawdopodobniej najbardziej odpowiednie dla 
+
+większości projektów. Plik bazy jest przechowywany w katalogu środowiska i może być z łatwością [wiki:TracBackup przywrócony] wraz z resztą środowiska.
+
+String do łączenia z osadzoną bazą SQLite to:
+{{{
+sqlite:db/trac.db
+}}}
+
+Jeśli wolisz użyć PostgreSQL, będzie potrzebny inny string do łącznia z bazą. Na przykład, żeby połączyć do bazy na tej samej maszynie, nazwanej powiedzmy `trac`, która pozwala na dostęp użytkownikowi `johndoe` z hasłem `letmein`, użyj:
+{{{
+postgres://johndoe:letmein@localhost/trac
+}}}
+
+Jeśli PostgreSQL działa na nietypowym porcie (na przykład 9342), użyj:
+{{{
+postgres://johndoe:letmein@localhost:9342/trac
+}}}
+
+Zauważ, że z PostgreSQL, będziesz musiał stworzyć bazę przed uruchomieniem `trac-admin initenv`.
+
+== Struktura katalogów ==
+
+Katalog środowiska zazwyczaj zawiera następujące pliki i katalogi:
+
+ * `README` - Ogólny opis środowiska.
+ * `VERSION` - Zawiera identyfikator wersji środowiska.
+ * `attachments` - Przechowywane są tutaj załączniki do stron wiki oraz tickety.
+ * `conf`
+   * `trac.ini` - Główny plik konfiguracyjny. Zobacz TracIni.
+ * `db`
+   * `trac.db` - Baza SQLite (jeśli używasz SQLite).
+ * `plugins` - [wiki:TracPlugins Pluginy] specyficzne dla środowiska (Python eggs)
+ * `templates` - Własne templaty specyficzne dla środowiska.
+   * `site_css.cs` - Własne reguły CSS.
+   * `site_footer.cs` - Własna stopka strony.
+   * `site_header.cs` - Własny nagłówek strony.
+ * `wiki-macros` - [wiki:WikiMacros Wiki Makra] specyficzne dla środowiska.
+
+----
+Zobacz również: TracAdmin, TracBackup, TracIni, TracGuide

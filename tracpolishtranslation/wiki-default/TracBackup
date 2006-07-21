@@ -1,0 +1,28 @@
+= Kopia Trac'a =
+[[TracGuideToc]]
+
+Odkąd Trac używa backendu w postaci relacyjnej bazy danych, wymagany jest pewien poziom dodatkowych zabezpieczeń, aby bezpiecznie tworzyć kopię [wiki:TracEnvironment project environment]. Na szczęście, [wiki:TracAdmin trac-admin] ma polecenie do wykonywania backupu w sposób prostszy: `hotcopy`.
+
+  ''Uwaga: Trac używa składni 'hotcopy' w celu zachowania zgodności z [http://subversion.tigris.org/ Subversion], aby uczynić prostszym do zapamiętania sposób zarządzania zarówno Trac'em, jak i Subversion.''
+
+== Tworzenie kopii ==
+
+Żeby zrobić kopię "żywego" TracEnvironment, po prostu uruchom:
+{{{
+  $ trac-admin /path/to/projenv hotcopy /path/to/backupdir
+}}}
+
+[wiki:TracAdmin trac-admin] założy mutex na bazę na czas kopiowania.''
+
+Otrzymany w rezultacie katalog jest bardzo prosty w obsłudze przy użyciu standardowych narzędzi do zarządzania backupami, jak np. 'tar' lub 'dump'/'restore'.
+
+=== Przywracanie z kopii ===
+
+Kopie są po prostu skopiowanym zrzutem całego [wiki:TracEnvironment project environment] katalogu, włączając bazę SQLite.
+
+W celu przywrócenia środowiska z kopii, zatrzymaj proces Trac'a (np. twój serwer www, lub [wiki:TracStandalone tracd]), przywróć strukturę katalogu a następnie uruchom ponownie usługę.
+
+  ''Uwaga: Automatyczna kopia środowiska, która nie używa SQLite jako backendu bazy, nie jest na chwilę obecną obsługiwana. Jako obejście, proponujemy zarzymanie serwera, skopiowanie katalogu środowiska, a następnie wykonanie kopii bazy używając jakiegokolwiek mechanizmu dostarczanego przez samą bazę (sqldump).
+
+----
+Zobacz również: TracAdmin, TracEnvironment, TracGuide

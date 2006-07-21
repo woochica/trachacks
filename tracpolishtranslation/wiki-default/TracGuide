@@ -1,0 +1,34 @@
+= Podręcznik Użytkownika i Administratora Traca =
+[[TracGuideToc]]
+
+Podręcznik ten został stworzony, aby zapewnić punkt wyjścia dla wszystkich dokumentacji dotyczących obsługi i developmentu Tracaa. Podręcznik ów jest otwartym dokumentem, wspólnym wysiłkiem i zarazem częścią [http://projects.edgewall.com/trac/ Trac Project].
+
+== Spis treści ==
+Aktualnie dostępna dokumentacja:
+ * TracGuide (This page)  -- Początek dokumentacji.
+   * TracInstall -- Jak zainstalować i uruchomić Traca.
+   * TracUpgrade -- Jak upgrade'ować istniejącą instalację.
+   * TracAdmin -- Administrowanie projektem w Tracu.
+   * TracImport -- Importowanie ticketów z innych baz bugów.
+   * TracIni -- Opis pliku ustawień Traca. 
+   * TracPermissions -- Prawa dostępu i kontrola dostępu.
+   * TracInterfaceCustomization -- Personalizacja wyglądu Traca.
+   * TracPlugins -- Instalacja i zarządzanie rozszerzeniami Traca.
+   * TracWiki -- Jak używać wbudowanego Wiki?.
+   * TracBrowser -- Przeglądanie kodu w Tracu.
+   * TracChangeset -- Przeglądanie zmian w kodzie.
+   * TracTickets -- Przeglądanie trackera problemów.
+   * TracReports -- Pisanie u używanie raportów.
+   * TracQuery -- Wykonywanie nietypowych kolejek ticketów.
+   * TracRoadmap -- Roadmap pomaga śledzić postęp projektu.
+   * TracTimeline -- Timeline zapewnia perspektywiczny pogląd na historię projektu.
+   * TracLogging -- Siedziba logów Traca.
+   * TracRss -- współdzielenie zawartości RSS w Tracu.
+   * TracNotification -- Powiadamianie emailem.
+
+ * [http://projects.edgewall.com/trac/wiki/TracFaq Trac FAQ] - kolekcja FAQ - na stronie głównej projektu Trac.
+
+== Pomoc i inne źródła informacji ==
+Jeśli szukasz dobrego miejsca żeby zadać pytanie dotyczące Traca, nie szukaj dalej niż na [http://projects.edgewall.com/trac/wiki/MailingList MailingList]. Zapownia ona przyjazne środowisko do otwartej dyskusji przez użytkowników i developerów.
+
+Po więcej źródeł informacji udaj się również stronę TracSupport.

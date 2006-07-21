@@ -1,0 +1,26 @@
+= Wyszukiwanie =
+
+Trac posiada wbudowany silnik wyszukiwania pozwalający na odnajdywanie wystąpień danych wyrażeń na stronach wiki, w ticketach oraz opisach zestawów zmian.
+
+Używanie wyszukiwania w Tracu jest intuicyjne a jego interfejs powinien być znajomy dla większości użytkowników www.
+
+Oprócz modułu wyszukiwania, znajdziesz również małe pole wyszukiwania powyżej paska nawigacji, Zapewnia ono stosowny dostęp do modułu wyszukiwania ze wszystkich stron.
+
+== Quickjumps ==
+Dla średnich i zaawansowanych użytkowników, Trac ma szybki sposób do nawigowania do danego źródła, nazywany '''quickjumps'''.
+
+Jeśli wprowadzisz [wiki:TracLinks TracLink] do pola wyszykiwania powyżej paska nawigacji, Trac automatycznie rozpozna i założy, że wiesz co robisz.
+
+Na przykład:
+
+ * ![42] –- Otwiera zestaw zmian nr 42
+ * !#42 –- Otwiera ticket nr 42
+ * !{1} –- Otwiera raport nr 1
+
+'''Uwaga:''' ''Jest to dość przydatna cecha pozwalająca bardzo szybko przenieść się do danego problemu w tickecie, lub zestawie zmian.''
+
+=== Zaawansowane: Wyłączanie Quickjumps ===
+Żeby zablokować narzędzie quickjump do poszukiwania słów kluczowych – na przykład podczas poszukiwania wystąpień literałów – rozpocznij zapytanie od znaku wykrzyknika (!).
+
+----
+Zobacz również: TracGuide, TracLinks, TracQuery

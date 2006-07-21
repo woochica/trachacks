@@ -1,0 +1,30 @@
+= Roadmap w Tracu =
+[[TracGuideToc]]
+ 
+Roadmap zapewnia podgląd na [wiki:TracTickets system ticketów] który pomaga w planowaniu i zarządzaniu nad przyszłością rozwoju projektu.
+
+== Widok Roadmapa ==
+
+Podstawowo, roadmap jest prostą lista przyszłych kamieni milowych. Możesz dodawać opisy do kroków milowych (używając FormatowaniaWiki) mówiace na przykład o głównych celach. W dodatku, tickety przypisane do kroku milowego są agregowane, a stosunek aktywnych ticketów do rozwiązanych ticketów jest wyświetlany jako pasek postępu kroku milowego.
+
+== Widok Milestonów == (kamieni milowych)
+
+Możliwe jest dotarcie do tej podstawowej statystyki poprzez przeglądanie indywidualnych stron kamieni milowych. Domyślnie, stosunek aktywnych/rozwiązanych będzie grupowany i wyświetlany jako komponent. Można również przegrupować status poprzez inne kryteria, takie jak właściciel ticketu. Numery ticketów są zlinkowane do list [wiki:TracQuery zapytań] odnoszących się do ticketów.
+
+== Administracja Roadmapa ==
+
+Możliwe jest dodawanie, modyfikowanie oraz usuwanie kamieni milowych używając TracAdmina, bądź interfejsu webowego.
+
+'''Uwaga:''' Opisy kamieni milowych mogą być aktualnie edytowane wyłącznie poprzez interfejs webowy. Posiadając stosowne uprawnienia, zobaczysz przyciski do zarządzania krokami milowymi.
+
+== Support dla iCalendar ==
+
+Roadmap obsługuje format [http://www.ietf.org/rfc/rfc2445.txt iCalendar] do przechowywania zaplanowanych kamieni milowych i odpowiednich ticketów z twojego ulubionego programu PIM. iCalendar jest standardem w aplikacjach takich jak [http://www.apple.com/ical/ Apple iCal] dla Mac OS X, [http://www.mozilla.org/projects/calendar/ Mozilla Calendar], [http://kdepim.kde.org/components/korganizer.php Korganiser] oraz [http://www.novell.com/de-de/products/desktop/features/evolution.html Evolution].
+
+Żeby subskrybować roadmapa, skopiuj link do iCalendara z twojeog roadmapa (znajduje się na dole strony) i wybierz „Zapisz się do zdalnego kalendarza (lub podobnie) z twojego PIMa. Następnie wklej URL który przed chwilą skopiowałeś.
+
+'''Uwaga:''' Dla ticketów które znajdują się w zadaniach kalendarza, będziesz musiał być zalogowany w trakcie kopiowania linka. Będziesz widział tylko tickety utożsamiane z tobą oraz z danym kamieniem milowym.
+
+Więcej informacji na temat iCalendar można znaleźć na [http://en.wikipedia.org/wiki/ICalendar Wikipedia].
+----
+Zobacz również: TracTickets, TracReports, TracQuery, TracGuide

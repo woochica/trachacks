@@ -1,0 +1,29 @@
+= Logi w Trac'u =
+[[TracGuideToc]]
+
+Trac obsługuje logowanie wiadomości systemowych przy wykorzystaniu standardowych [http://docs.python.org/lib/module-logging.html modułów logujących] Pythona.
+
+Logowanie jest konfigurowane w sekcji {{{[logging]}}} pliku [wiki:TracIni trac.ini].
+
+== Obsługa Sposobów Generowania Logów ==
+
+Sposób generowania logu jest ustawiana przy użyciu opcji `log_type`, która przyjmuje jedną z następujących wartości:
+ '''none'':: Zabija wszystkie wiadomości.
+ '''file''':: Zapisuje wiadomości do pliku, ustawiane w opcji `log_file` w [wiki:TracIni trac.ini]. 
+ '''stderr''':: Wysyła wszystkie wiadomości na konsolę (tylko [wiki:TracStandalone tracd]).
+ '''syslog''':: (UNIX) Wysyła wiadomości do lokalnego demona syslogd poprzez potok `/dev/log`.
+ '''eventlog''':: (Windows) Używa systemu NT eventlog dla logów Trac'a.
+
+== Poziom Intensywności Logów ==
+
+Poziom intensywności opisów wiadomości logów może być ustawiony przy użyciu ''log_level'' dyrektywą [wiki:TracIni trac.ini]. Poziom logów opisuje definiuje minimalny poziom wymaganych informacji w wiadomości do loga.
+
+Poziomy są następujące:
+ '''CRITICAL''':: Loguj tylko najabrdziej krytyczne błędy (zazwyczaj fatal errors).
+ '''ERROR''':: Loguj niepowodzenia, bugi oraz błędy.
+ '''WARN''':: Loguj ostrzeżenia, oraz zdarzenia nie przerywające.
+ '''INFO''':: Informacje diagnostyczne, oraz informacje na temat wszystkich procesów.
+ '''DEBUG''':: Wiadomości ślędzenia oraz profilowania, etc.
+
+----
+Zobacz również: TracIni, TracGuide, TracEnvironment

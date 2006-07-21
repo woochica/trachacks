@@ -1,0 +1,68 @@
+= Powiadamianie Emailem oraz Zmiany w Ticketach =
+[[TracGuideToc]]
+
+Trac obsługuje podstawowe powiadamianie o zmianach w ticketach przy wykorzystaniu emaili.
+
+Powiadamianie emailem jest przydatne przy utrzymywania użytkowników na czasie w kwestii ticketów oraz zapewnia dogodny sposób powiadamiania o zmianach dla dedykowanych list mailingowych. '''Uwaga:''' Jako przykład, pokazane jest jak działa lista mailowa: [http://lists.edgewall.com/archive/trac-tickets/ Trac-tickets].
+
+Powiadamianie jest domyślnie wyłączone. Może zostać włączone i skonfigurowane w [wiki:TracIni trac.ini].
+
+== Otrzymywanie Powiadomień ==
+Podczas zgłaszania nowego ticketa, lub dodawania komentarza, wprowadź właściwy adres emailowy w polu ''reporter'', ''editor'' lub ''cc''. Trac automatycznie wyśle tobie emaila jeśli pojawi się jakaś zmiana w tickecie.
+
+Jest to przydatne w utrzymywaniu na czasie w kwestii problemów oraz zapytań o ulepszenia które ciebie interesują.
+
+== Konfiguracja Powiadamiania przez SMTP ==
+
+=== Opcje Konfiguracji ===
+W pliku trac.ini dostępne są następujące opcje powiadamiania (''[notification]'').
+ * '''smtp_enabled''': Włącz powiadamianie emailem.
+ * '''smtp_server''': Serwer SMTP wykorzystywany do powiadamiania.
+ * '''smtp_user''': (''wymaga [milestone:0.9 0.9]'') nazwa użytkownika dla konta przy identyfikacji SMTP.
+ * '''smtp_password''': ('' wymaga  [milestone:0.9 0.9]'') hasło dla konta przy identyfikacji SMTP.
+ * '''smtp_from''': Adres email wykorzystywany w polu ''Sender''.
+ * '''smtp_replyto''': Adres email w polu ''Reply-To''.
+ * '''smtp_always_cc''': Lista maili do których zawsze zostanie wysłane powiadomienie. ''Zazwyczaj wykorzystywane do wysyłania zmian do dedykowanych list mailowych.''
+ * '''always_notify_reporter''':  Zawsze wysyła powiadomienie do dowolnych adresów w polu reporter.
+ * '''always_notify_owner''': ('' wymaga  [milestone:0.9 0.9]'') Zawsze wysyła powiadomienia pod adres w polu właściciela.
+
+Zarówno '''smtp_from''' jak i '''smtp_replyto''' (lub oba) ''muszą'' być ustawione, w przeciwnym wypadku Trac odpowi wysyłania maili powiadamiających.
+
+=== Przykładowa Konfiguracja ===
+
+{{{
+[notification]
+smtp_enabled = true
+smtp_server = mail.example.com
+smtp_from = notifier@example.com
+smtp_replyto = myproj@projects.example.com
+smtp_always_cc = ticketmaster@example.com, theboss+myproj@example.com
+}}}
+
+== Przykładowy Email ==
+{{{
+#42: testing
+---------------------------+------------------------------------------------
+       Id:  42             |      Status:  assigned                
+Component:  report system  |    Modified:  Fri Apr  9 00:04:31 2004
+ Severity:  major          |   Milestone:  0.9                     
+ Priority:  lowest         |     Version:  0.6                     
+    Owner:  anonymous      |    Reporter:  jonas@example.com               
+---------------------------+------------------------------------------------
+Changes:
+  * component:  changset view => search system
+  * priority:  low => highest
+  * owner:  jonas => anonymous
+  * cc:  daniel@example.com =>
+         daniel@example.com, jonas@example.com
+  * status:  new => assigned
+
+Comment:
+I'm interested too!
+
+--
+Ticket URL: <http://example.com/trac/ticket/42>
+My Project <http://myproj.example.com/>
+}}}
+----
+Zobacz również: TracTickets, TracIni, TracGuide

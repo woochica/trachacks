@@ -1,0 +1,31 @@
+= Używanie HTMLa w treści wiki =
+
+Trac obsługuje osadzanie tagów HTML w każdym kontekście wiki poprzez [wiki:WikiProcessors WikiProcessor] HTMLa.
+
+Support HTMLa nie wymaga instalowania dodatkowych pakietów.
+
+== Jak Używać HTMLa ==
+Żeby poinformować silnik wiki że blok tekstu powiniem być traktorany jako HTML, użyj procesora ''html''.
+
+Ten przykład powinien wszystko wyjaścić:
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="text-align: right; color: blue"&gt;HTML Test&lt;/h1&gt;
+}}}</pre>
+}}}
+
+Daje wynik:
+{{{
+#!html
+<h1 style="text-align: right; color: blue">HTML Test</h1>
+}}}
+
+== Więcej Informacji ==
+
+ * http://www.w3.org/ -- Konsorcjum World Wide Web 
+ * http://www.w3.org/MarkUp/ -- Język HTML
+
+----
+Zobacz również:  WikiProcessors, WikiFormatting, WikiRestructuredText

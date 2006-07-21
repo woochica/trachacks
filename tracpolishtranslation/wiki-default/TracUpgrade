@@ -1,0 +1,96 @@
+= Instrukcje Upgrade'owania = 
+[[TracGuideToc]]
+
+Środowisko Traca czasami musi zostać upgradowane zanim będzie mogło być użyte z nową wersją Traca. Dokument ten opisuje kroki konieczne do upgradowania środowiska.
+
+ '''Uwaga''': ''Upgrady środowiska nie są konieczne dla releasów głównych wersji, o ile nie jest powiedziane ineczej. Na przykład, nie ma potrzeby upgradowania środowiska stworzonego (lub upgradowanego) 0.8.0 podczas instalowania 0.8.4 (lub innej wersji 0.8.x).''
+
+== Instrukcje Ogólne ==
+
+Typowo, upgradowanie składa sie z czterech główych kroków:
+
+=== Updatowanie Kodu Traca ===
+
+Pobierz najnowszą wersją Traca albo poprzez pobranie oficjalnego wydania lub poprzez pobranie z [http://projects.edgewall.com/trac/wiki/SubversionRepository Repozytorium Subversion].
+
+Jeśli masz dystrybucję w źródłach, będziesz musiał uruchomić
+{{{
+python setup.py install
+}}}
+
+żeby zainstlować nową wersję. Jeśli pobrałeś instalator dla Windows, uruchom go i już.
+
+W każdym wypadku, jeśli robisz upgrade do nowej wersji głównej (na przykład z 0.8 do 0.9), należy ''koniecznie'' najpierw usunąć istniejący kod Traca. Żeby to zrobić, usuń katalog `trac`ze ścieżki Pythona `lib/site-packages`. Możesz rówież chcieć usunąć katalogi `cgi-bin`, `htdocs` oraz `templates` które można zwykle znaleźć w katalogu nazwanym `share/trac` (dokładna lokacja zależy od twojej platformy).
+
+=== Upgradowanie Środowiska Traca ===
+
+Jeśli nie napisano inaczej, upgradowanie pomiędzy głównymi wersjami (takimi jak 0.8 oraz 0.9) wprowadza zmieny w schemazie bazy danych oraz możliwe zmiany w wyglądzie [wiki:TracEnvironment katalogu środowiska]. Na szczęście Trac zapewnia automatyczne skrypty upgradowania które minimalizują problematyczność upgradu. Skrypty są uruchamiane poprzez [wiki:TracAdmin trac-admin]:
+{{{
+trac-admin /path/to/projenv upgrade
+}}}
+
+Jeśli środowisko jest najnowsze, to skrypt ten nie wprowadzi żadnych.
+
+Zauważ że jeśli używasz bazy PostgreSQL, polecenie to zakończy się komunikatem błędu że środowisko może być backupowane tylko przy użyciu bazy SQLite. To oznacza że będziesz musiał zrobić backup repozytorium oraz bazy ręcznie. Żeby wykonać aktualny upgrade, wykonaj:
+{{{
+trac-admin /path/to/projenv upgrade --no-backup
+}}}
+
+=== Updatowanie Dokumentacji Traca ===
+
+Każde [wiki:TracEnvironment Środowisko Traca] zawiera kopię dokumentacji Traca zainstalowanej wersji. Jeśli najprawdopodobniej chcesz trzymać załączoną dokumentację zsynchronizowaną z zainstalowaną wersją Traca, [wiki:TracAdmin trac-admin] zapewnia polecenie do upgradowania dokumentacji:
+{{{
+trac-admin /path/to/projenv wiki upgrade
+}}}
+
+Zauważ że procedura spowoduje wyjście z interakcji na stronie `WikiStart`.
+
+=== Zrestartowanie Serwera Web ===
+
+Żeby przeładować kod Traca, będziesz musiał zrestartować serwer web (zauważ że nie jest to koniecznie przy [wiki:TracCgi CGI]).
+
+== Specyficzne Wersje ==
+
+Następujące sekcja omawia różne dodatkowe sekcje które być może będą musiały być upgradowane do specyficznych wersji Traca.
+
+== Od 0.9-beta do 0.9 ==
+
+Jeśli załączanie źródeł statycznych nie działa (arkusze styli, javascript, rysunki), sprawdź wartość `htdocs_location` w trac.ini. Dla [wiki:TracModPython mod_pythona], [wiki:TracStandalone Tracd] oraz [wiki:TracFastCgi FastCGI], możesz po prostu usunąć tą opcję. Dla [wiki:TracCgi CGI], powinieneś poprawić wartość, aby wskazywała na URL mapujący katalog Traca `htdocs` (albo możesz go usunąć i [wiki:TracCgi#MappingStaticResources zmapować źródła statyczne]).Jeśli nadal masz problemy po usunięciu opcji, sprawdź ścieżki w pliku `trac/siteconfig.py` i popraw je, jeśli są nieprawdziwe.
+
+Jeśli używałeś pluginów z wersją beta Traca 0.9, lub jeśli zablokowałeś niektóre z wbudowanych komponentów, być może będziesz musiał upgradować zasady włączania/wyłączania komponentów w [wiki:TracIni trac.ini]. W szczególności, pluginy zainstalowane globalnie muszą zostać teraz włączone z dokładnością. Zobacz TracPlugins oraz TracIni po więcej informacji.
+
+Jeśli chcesz włączyć wyświetlanie wszystkich zmian w ticketach w timelinie (opcja “Ticket Details”), musisz dokładnie włączyć ją też w [wiki:TracIni trac.ini]:
+
+{{{
+[timeline]
+ticket_show_details = true
+}}}
+
+== Od 0.8.x do 0.9 ==
+
+Użytkownicy [wiki:TracModPython mod_pythona] muszą również zmienić nazwę uchwytu mod_pythona w konfiguracji Apacha:
+{{{
+   from: PythonHandler trac.ModPythonHandler
+   to:   PythonHandler trac.web.modpython_frontend
+}}}
+
+Jeśli masz zainstalowane [http://initd.org/tracker/pysqlite PySQLite] 2.x, Trac będzie próbował otworzyć bazę SQLite przy użyciu formatu pliku SQLite 3.x. Formaty baz używane przez SQLite 2.8.x oraz SQLite 3.x są całkowicie niekompatybilne. Jeśli po instalacji dostajesz błąd typu ''“flik jest zakodowany lub nie jest bazą”'', musisz przekonwertować plik bazy.
+
+Żeby to zrobić, musisz mieć zainstalowane zarówno SQLite 2.8.x jak i SQLite 3.x (mają one inne nazwy plików więc mogą one koegzystować w tym samym systemie). Następnie użyj polecenia:
+{{{
+ $ mv trac.db trac2.db
+ $ sqlite trac2.db .dump | sqlite3 trac.db
+}}}
+
+Po przetestowaniu czy konwersja zadziałała, plik `trac2.db` może zostać usunięty. Po więcej informacji dotyczących upgradowania SQLite, zobacz http://www.sqlite.org/version3.html.
+
+== Od 0.7.x do 0.8 ==
+
+0.8 dodaje nowego roadmapa który wymaga dodatkowych pozwoleń. Podczas gdy świeża instalacja automatycznie zapewni pozwolenia ROADMAP_VIEW oraz MILESTONE_VIEW dla użytkownika anonimowego, pozwolenia te muszą zostać nadane ręcznie, podczas upgradowania:
+{{{
+ $ trac-admin /path/to/projectenv permission add anonymous MILESTONE_VIEW
+ $ trac-admin /path/to/projectenv permission add anonymous ROADMAP_VIEW
+}}}
+
+-----
+Zobacz również: TracGuide, TracInstall

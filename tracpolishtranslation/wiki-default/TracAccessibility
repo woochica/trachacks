@@ -1,0 +1,21 @@
+== Zapewnienie dostępności w Trac ==
+
+Nie każdy użytkownik ma środowisko graficzne wraz z myszką bądź innym urządzeniem wskazującym. Niektórzy polegają wyłącznie na klawiaturze, zmodyfikowanych klawiaturach bądź używają głosu do nawigowania w systemie. W Trac'u pracujemy aby zapewnić użytkownikom interakcję z urządzeniami innymi niż urządzenia wskazujące.
+
+Trac zapewnia obsługę klawiszową do większości powszechnych operacji. Na platformach Windows bądź Linuks należy używać dowolnych klawiszy wymienionych poniżej w kombinacji z klawiszem '<Alt>'; na Mac'u należy natomiast użyć '<ctrl>'.
+
+''Zauważ że używając Internet Explorer na Windows, należy wcisnąć enter po wprowadzeniu kombinacji klawiszy.''
+
+== Globalne klawisze dostępu ==
+
+ * `1` - WikiStart
+ * `2` - [wiki:TracTimeline Timeline]
+ * `3` - [wiki:TracRoadmap Roadmap]
+ * `4` - [wiki:TracSearch Wyszukiwanie]
+ * `6` - [wiki:TracGuide Podręcznik Trac'a / Dokumentacja]
+ * `7` - [wiki:TracTickets Nowy Ticket]
+ * `9` - [../about O Trac'u]
+ * `0` - Ta strona
+
+----
+Zobacz również: TracGuide

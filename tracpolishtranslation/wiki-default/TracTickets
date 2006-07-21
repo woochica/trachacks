@@ -1,0 +1,104 @@
+= System Ticketów Traca = 
+[[TracGuideToc]]
+
+Baza problemów w Tracu zapewnia prosty lecz efektywny sposób śledzenia problemów i błędów w projekcie.
+
+W centrum zarządzania elementami, tickety są używane do '''zadań projektów''', '''zapytań o dodatkowe własności''', '''raportowanie bugów''' oraz '''problemy z oprogramowaniem'''. 
+
+Podobnie jak TracWiki, system ten został zaprojektowany żeby uczynić uczestniczenie użytkownika w projekcie tak prostym jak to tylko możliwe. Powinno być łatwo raportować bugi, zadawać pytania i podpowiadać ulepszenia.
+
+Problem jest przypisywane do osoby która musi go rozwiązać albo przypisać ticket do kogoś innego.
+Wszystkie tickety mogą być edytowane, przypisywane, prioretyzowane, można dodawać do nich adnotacje oraz dyskutować nad nimi kiedy tylko jest taka potrzeba.
+
+'''uwaga:''' Żeby zapewnić pełny użytek z systemu ticketów, go jako centralne ''wiadereczko'' dla pomysłów i zadań w twoim projekcie, zamiast zwykłego raportowania bugów/błędów.
+
+== Pola Ticketów ==
+
+Ticket zawiera następujące atrybuty informacji:
+ 
+ * '''Reporter''' – Autor ticketa.
+ * '''Type''' – Typ, natura ticketa (na przykład błąd, lub zapytanie o rozszerzenie funkcjonalności)
+
+ * '''Component''' – Moduł projektu lub podsystem którego ten ticket dotyczy.
+ * '''Version''' – Wersja projektu do którego ten ticket się odnosi.
+ * '''Keywords''' – Słowa kluczowe którymi ticket jest opisany. Przydatne do wyszukiwania i generowania raportów.
+
+ * '''Priority''' – Ważność tego tematu, w przedziale od ''trywialny'' do ''blokujący''.
+ * '''Milestone''' – Kiedy ten problem powinien być rozwiązany.
+ * '''Assigned to/Owner''' – Osoba odpowiedzialna za obsługę tego tematu.
+ * '''Cc''' – Lista pozostałych osób powiązanych z tematem. ''Zauważ że to nie implikuje jakiejkolwiek odpowiedzialności ani planów.''
+ 
+ * '''Resolution''' – Powód dla którego ticket został zamknięty. Jeden z {{{fixed}}} (poprawiony), {{{invalid}}} (nieprawidłowy), {{{wontfix}}} (nie da się naprawić), {{{duplicate}}} (duplikat), {{{worksforme}}} (w trakcie).
+ * '''Status''' - What is the current status? One of {{{new}}}, {{{assigned}}}, {{{closed}}}, {{{reopened}}}.
+ * '''Summary''' – Opis podsumowujący problem lub temat.
+ * '''Description''' – Ciało ticketa. Dobry opis powinien być specyficzny, dobrze rozwinięty i skupiający się na konkretnym celu.
+
+'''Uwaga:''' Wersje Traca do 0.9 nie miały pola ''type'', lecz zapewniały pole ''severity'' i inne wartości w polu ''priority''. Zmiana ta, została wprowadzona w celu uproszczenia modelu ticketa poprzez usunięcie pewnej niejasnej różnicy pomiędzy polami ''priority'' oraz ''severity''. Jakkolwiek, stary model jest wciąż dostępny jeśli go wolisz: po prostu dodaj/zmień domyślne wartości pól ''priority'' oraz ''severity'', i opcjonalnie schowaj pole ''type'' poprzez usunięcie wszystkich możliwych wartości przez [wiki:TracAdmin trac-admina].
+
+
+== Zmienianie i Komentowanie Ticketów ==
+
+Jeśli ticket został już wprowadzony do Traca, możesz w każdej chwili zmienić informację o nim poprzez '''adnotowanie''' buga. To oznacza że zmiany i komentarze do ticketa są logowane jako część samego ticketa.
+
+Podczas oglądania ticketa, historia zmian pojawi się poniżej głównego pola ticketa.
+
+''W projekcie Traca, używamy komentarzy ticketów do dyskusji problemów i zadań. Czyni to bardziej zrozumiałym i motywującym przy wyborach implementacyjnych bądź projektowych podczas wracania do danych kwestii w przyszłości.''
+
+'''Uwaga:''' Ważną cechą jest możliwość użycia LinkówTraca i FormatowaniaWiki w opisach ticketów oraz w komentarzach. Użyj LinkówTraca do odnoszenia się do innym problemów, zmian lub plików, ażeby uczynić twój ticket bardziej specyficznym i prostszym w zrozumieniu.
+
+'''Uwaga:''' Zobacz TracNotification żeby skonfigurować powiadamianie emailem przy zmianach w ticketach.
+
+=== Diagram Stanów ===
+http://projects.edgewall.com/trac/attachment/wiki/TracTickets/Trac%20Ticket%20State%20Chart%2020040607DF.png?format=raw
+
+
+== Domyślne Wartości dla Rozwijanych List ==
+
+Domyślnie wybrana opcja dla różnych rozwijanych pól, może być ustawiona w [wiki:TracIni trac.ini], w sekcji`[ticket]`:
+
+ * `default_type`: Domyślny typ ticketa
+ * `default_component`: Nazwa domyślnego komponentu
+ * `default_version`: Nazwa domyślnej wersji
+ * `default_milestone`: Nazwa domyślnego kamienia milowego
+ * `default_priority`: Domyślna wartość priorytetu
+ * `default_severity`: Domyślna wartość severity
+
+Jeśli któryś z tych parametrów został opuszczony, domyślna wartość będzie albo pierwsza na liście, albo będzie pusta, w zależności od tego czy pole jest wymagane.
+
+
+== Chowanie Pól oraz Dodawanie Własnych Pól ==
+
+Wiele z domyślnych ticketów może zostać schowana w interfejsie webowym poprzez usunięcie wszysytkich możliwych wartości poprzez [wiki:TracAdmin trac-admina]. Dotyczy to oczywiście tylko rozwijanych pól takich jak ''type'', ''priority'', ''severity'', ''component'', ''version'' oraz ''milestone''.
+
+Trac pozwala też na dodawanie własnych pól ticketów. Zobacz TracTicketsCustomFields po więcej informacji.
+
+
+== Przypisz do - jako Lista Rozwijana ==
+
+Jeśli lista możliwych właścicieli ticketa jest skończona, możesz zmienić pole ''assign-to'' z tekstowego na listę rozwijaną. Można to zrobić, ustawiając opcję `restrict_owner` w sekcji `[ticket]` w [wiki:TracIni trac.ini] na “true”. W takim przypadku, Trac użyje listę wszystkich użytkowników którzy zostali zalogowani i ustawi ich adresy mailowe do zbudowania pola listy rozwijanej.
+
+''Zauważ że ta cecha jest '''nadal w fazie eksperymentalnej w wersji 0.9'''. Nie ma możliwości wyświetlenia podzbioru wszystkich znanych użytkowników jako możliwych właścicieli ticketów. Podobnie nie ma stosownego sposobu na usuwanie emerytowanych użytkowników inaczej niż poprzez bezpośrednią modyfikację w bazie.''
+
+
+== Domyślne Wartości w Nowym Tickecie ==
+
+Żeby zrobić link do formularza nowego ticketa z wypełnionymi domyślnymi wartościami, będziesz musiał wywołać URLa `/newticket?` ze zmienna=true oddzielonymi znakiem '&'. 
+
+Możliwe wartości to:
+
+ * '''reporter''' – Nazwa lub email osoby raportujacej
+ * '''summary''' – Linia podsumowująca ticket
+ * '''description''' – Długi opis ticketa
+ * '''component''' – Lista komponentów
+ * '''version''' – Lista wersji
+ * '''severity''' – Lista severity
+ * '''keywords''' – Słowa kluczowe
+ * '''priority''' – Lista priorytetów
+ * '''milestone''' – Lista kamieni milowych
+ * '''owner''' – Osoba odpowiedzialna za ticket
+ * '''cc''' – Lista emaili do powiadomienia o zmianie w tickecie
+
+'''przykład:''' ''/trac/newticket?summary=Compile%20Error&version=1.0&component=gui''
+
+
+Zobacz również:  TracGuide, TracWiki, TracTicketsCustomFields, TracNotification

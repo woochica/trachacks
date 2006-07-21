@@ -1,0 +1,92 @@
+= Linki Trac'a =
+Jak za pewne odgadłeś, TracLinks stanowi fundamentalną własność Trac'a.
+
+Pozwalają one linkowanie pomiędzy elementami w Trac'u (tickety, raporty, zestawy zmian, strony wiki, kroki milowe oraz kody źródłowe) z każdego miejsca, gdzie użyte jest formatowaie wiki.
+
+TracLinks są generalnie w postaci '''type:id''' (gdzie ''id'' reprezentuje liczbę, nazwę lub ścieżkę do elementu) więc najczęściej używane elementy mają skróty w notacji.
+
+Kilka przykładów:
+ * Tickety: '''!#1''' or '''!ticket:1'''
+ * Raporty: '''!{1}''' or '''!report:1'''
+ * Zestawy zmian: '''!r1''', '''![1]''' or '''!changeset:1'''
+ * Logi rewizji: '''!r1:3''', '''![1:3]''' or '''!log:#1:3'''
+ * Strony wiki: '''CamelCase''' or '''!wiki:CamelCase'''
+ * Kamienie milowe: '''!milestone:1.0'''
+ * Załączniki: '''!attachment:ticket:944:attachment.1073.diff'''
+ * Pliki: '''!source:trunk/COPYING'''
+ * Specyficzne rewizje plików: '''!source:/trunk/COPYING#200'''
+Ekran:
+ * Tickety: #1 or ticket:1
+ * Raportys: {1} or report:1
+ * Zestawy zmian: r1, [1] or changeset:1
+ * Różnica: r1:3, [1:3] or log:#1:3
+ * Strony wiki: CamelCase or wiki:CamelCase
+ * Kamienie milowe: milestone:1.0
+ * Pliki: source:trunk/COPYING
+ * Załączniki: attachment:ticket:944:attachment.1073.diff
+ * Specyficzne rewizje plikow==: source:/trunk/COPYING#200
+
+'''Uwaga:''' Forma wiki:CamelCase jest bardzo rzadko używana, ale jest odpowiednia do onoszenia się do stron, gdzie nazwy nie są tworzone według zasad WikiPageNames, na przykład pojedyńcze słowa, znaki spoza alfabetu, etc.
+
+Linki Trac'a przy użyciu pełnej (nie-skóconej) notacji mogą mieć nadany własny tytuł linka:
+
+{{{
+[ticket:1 To jest link to ticketa numer jeden].
+}}}
+
+Display: [ticket:1 To jest link do ticketa numer jeden].
+
+Jeśli tytuł jest pominięty, tylko id (część po dwukropku) jest wyświetlana:
+
+{{{
+[ticket:1]
+}}}
+
+Display: [ticket:1]
+
+Wygląda to na dość łatwą koncepcję jednak aktualnie pozwala na dośćkompleksową sieć informacji. W praktyce jest to bardzo intuicyjny i prosty w użyciu system. Ponadto odkryliśmy że "linkowanie" jest znaczną pomocą w lepszym zrozumieniu co się dzieje w projekcie lub jakie elementarne zmiany miały miejsce.
+
+== załączniki: linki ==
+
+Składnia linków do załączników jest następująca:
+ * !attachment:the_file.txt tworzy link do załącznika the_file.txt w aktualnym obiekcie
+ * !attachment:wiki:MyPage:the_file.txt tworzy link do załącznika the_file.txt na stronie !MyPage
+ * !attachment:ticket:753:the_file.txt tworzy link do załącznika the_file.txt w tickecie 753 !attachment:wiki:MyPage:the_file.txt
+
+== źródła: links ==
+
+Domyślnym zachowaniem dla źródła source:/some/path jest otwarcie przeglądarki plików jeśli ścieżka prowadzi do katalogu. W przeciwnym wypadku otworzy widok logów. Możliwe jest również linkowanie bezpośrednio do specyficznej rewizji pliku jak tu: source:/some/file@123 lub jak tutaj, żeby zlinkować do najnowszej wersji pliku: source:/some/file@latest. 
+Jeśli rewizja jest wyspecyfikowana, możliwe jest nawet linkowanie do konkretnego numeru wiersza: !source:/some/file@123#L10 
+[[comment(TODO: usuń ! jeśli Edgewall Trac jest upgrade'owany z obsługą składni linii)]]
+
+== Cytowanie w TracLinks ==
+
+Pospolitym sposobem cytowania jest:
+
+ * !attachment:'the file.txt' lub
+ * !attachment:"the file.txt" 
+
+== Gdzie używać TracLinks ==
+TracLinks można używać w TracLinks:
+
+ * Wiadomość zatwierdzająca kod (Subversion)
+ * strony wiki
+ * Pełne opisy ticketów, raporty oraz kamienie milowe
+
+oraz inne pola tekstowe oznaczone jako obsługujące formatowanie wiki
+
+== Pomijanie linków ==
+
+Żeby zapobiec parsowaniu linków, można pomijać jest poprzez poprzedzenie ich znakiem '!'.
+{{{
+ !TutajNieChceLinka.
+ ![42] również nie jest linkiem.
+}}}
+
+Wyświetli:
+ !TutajNieChceLinka.
+ ![42] również nie jest linkiem.
+
+----
+Zobacz również: WikiFormatting, TracWiki
+ 

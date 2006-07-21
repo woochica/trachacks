@@ -1,0 +1,42 @@
+= Moduł zmian Trac'a =
+[[TracGuideToc]]
+
+Trac ma wbudowaną obsługę wizualizowania â€śróżnicâ€ť - zmian w plikach
+
+Podczas przeglądania repozytorium, na przykład podążając za zmianami [wiki:TracLinks link] lub wydarzeniami w serii zmian w [wiki:TracTimeline timeline], Trac wyświetli dokładne zmiany wykonane przez daną osobę.
+
+Widok zmian zawiera dwie części: ''header(nagłówek)'' oraz ''diff views(widoki różnic)''.
+
+== Nagłówek zmian ==
+
+Nagłówek pokazuje pogląd na cały zbiór zmian.
+Można tutaj znaleźć informacje takie jak np:
+
+ * Timestamp -- Kiedy seria zmian została wysłana
+ * Author(autor) -- Kto wysłał serię zmian
+ * Message(wiadomość) -- Opis od autora (miadomość z logu zatwierdzenia)
+ * Files(pliki) -- Lista plików dotkniętych przez serię zmian.
+
+Na początku każdego wyświetlonego pliku można znaleść kolorowy prostokąt. Kolor wskazuje na to w jaki sposób plik został zmieniony przez serię zmian.
+ 
+ * Zielony: Dodany
+ * Czerwony: Usunięty
+ * Żółty: Zmodyfikowany
+ * Niebieski: Skopiowany
+ * Szary: Przeniesiony
+
+Legenda kolorów jest umieszczona poniżej nagłówka (jako przypomnienie).
+
+== Widok różnic ==
+
+Poniżej nagłówka znajduje się główna część serii zmian - widok zmian. Każdy plik jest wyświetlany jako osobna sekcja, w której są wyświetlane tylko obszary pliku które zostały zmienone poprzez serię zmian. Są tylko dwa różne style wyświetlania różnic: ''inline'' oraz ''side-by-side'' (można przełączać pomiędzy tymi dwoma stylami w formularzu ustawień):
+
+ * Styl ''inline'' pokazuje zmienione obszary pod każdym następnym. Obszar usunięty z pliku będzie zaznaczony na czerwono, dodany będzie natomiast zielony. Jeśli obszar był zmieniony, to stara wersja jest wyświetlana ponad nową wersja. Numery linii po lewej stronie wskazują na dokładną pozycję linii zmiany w obu wersjach pliku (starej i nowej).
+ * Styl ''side-by-side'' pokazuje starą wersję po lewej stronie, a nową po prawej (oczywistym jest że tryb ten będzie wymagał szerszego monitora niż tryb ''inline''). Dodane oraz usunięte obszary będą kolorowane odpowienio tak samo jak w trybie ''inline'' (zielony i czerwony), lecz zmodyfikowane obszary będą miały żółte tło.
+
+Ponadto, dostępne są różne zaawansowane opcje i ustawienia formularzy w celu dopasowania wyświetlania różnic:
+ * Można ustawić ile linii jest wyświetlanych przed i po każdej zmianie.
+ * Można przełączyć pomiędzy włączonym i wyłączonym wyświetlaniem pustych linii oraz białych znaków, co umożliwi szybsze znalezienie zmian funkcyjnych.
+
+----
+Zobacz również: TracGuide, TracBrowser

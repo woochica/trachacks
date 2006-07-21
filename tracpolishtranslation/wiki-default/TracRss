@@ -1,0 +1,27 @@
+= Używanie RSS w Tracu =
+[[TracGuideToc]]
+
+Kilka modułów Traca obsługuje syndykację zawartości poprzez wykorzystanie kanałów RSS (Really Simple Syndication) w formacie XML.
+Używając subskrycji RSS w Tracu, możesz łatwo monitorować postęp projektu, zestaw zagadnień bądź nawet zmiany w jednym pliku!.
+
+Trac obsługuje RSS w następujących obszarach:
+
+ * TracTimeline -– Wykorzystuje RSS do '''subskrybowania zdarzeń w projektach'''.[[br]]Monitoruje cały postęp prac nad projektem w twoim ulubionym czytniki RSS.
+ * TracReports and TracQuery –- Pozwala na syndykację raportów oraz rezultatów zapytań ticketów.[[br]]Bądź poinformowany o ważnych i znaczących szczegółach w ticketach.
+ * TracBrowser –- Syndykacja zmian w plikach.[[br]]Bądź na czasie ze zmianami w danym pliku lub katalogu.
+
+== Jak uzyskań dostęp do danych RSS ==
+Wszędzie w Tracu, gdzie RSS jest dostępny, można znaleźć małą pomarańczową ikonę '''XML''', zazwyczaj umieszczoną w dolnej części strony. Kliknięcie ikony umożliwi dostęp do danego źródła RSS.
+
+'''Uwaga:''' Różne moduły dostarczają różnego rodzaju danych w swoich kanałach RSS. Zazwyczaj, dostarczana informacja odności się do danego widoku. Na przykład kliknięcie linka RSS na stronie z raportem spozowuje dostarczenie RSSa zbudowanego na bazie właśnie tego raportu. Można to zrozumieć, myśląc o kanale RSS jako ''alternatywnym wyglądzie aktualnie wyświetlanych danych''.
+
+== Linki ==
+ * http://blogs.law.harvard.edu/tech/rss –- Specyfikacja RSS 2.0 
+ * http://www.mozilla.org/products/firefox/ -- Mozilla Firefox obsługuje [http://www.mozilla.org/products/firefox/live-bookmarks.html dynamiczne zakładki] przy użyciu kanałów RSS
+ * http://sage.mozdev.org -- Sage RSS oraz agregator Atom od Mizilla Firefox
+ * http://www.rssreader.com/ -- Darmowy i potężny czytnik RSS dla Windows
+ * http://liferea.sourceforge.net/ -- Otwarty czytnik RSS na GTK2 dla Linux
+ * http://akregator.sourceforge.net/ -- Otwarty czytnik RSS pod KDE dla Linux
+ * http://www.sharpreader.net/ -- Darmowy czytnik RSS, napisany w .NET dla Windows
+----
+Zobacz również: TracGuide, TracTimeline, TracReports, TracBrowser

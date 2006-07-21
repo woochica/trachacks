@@ -1,0 +1,36 @@
+= TracAdmin =
+[[TracGuideToc]]
+
+Trac jest wydawany wraz z potężnym narzędziemy wywoływanym z wiersza poleceń. Może ono być wykorzystywane do konfigurowania oraz modyfikacji instalacji Trac'a żeby lepiej go dopasować to twoich potrzeb.
+
+== Używanie ==
+
+Kompletną listę wszystkich dostępnych opcji, poleceń i podpoleceń można wyświetlićza poprzez wywołanie `trac-admin` z poleceniem `help`:
+{{{
+trac-admin help
+}}}
+
+Dopóki wywoływane są komendy subversion takie jak `help`, `about` lub `version`, potrzebne będzie podanie ścieżki to środowiska Trac'a(TracEnvironment) kórym chcesz zarządzać, jako pierwszy argument, np.: 
+{{{
+trac-admin /path/to/projenv wiki list
+}}}
+
+== Tryb interaktywny ==
+
+Przy podaniu ścieżki środowiska jako jedynego argumenty, `trac-admin` włączy się w trybie interaktywnym.
+Polecenia mogą być wykonywane w wybranym środowisku przy wykorzystaniu zapytania, które oferuje uzupenianie składni za pomocą tabulatora(na środowiskach innych niż Windows, niezbędny jest tutaj moduł Pythona `readline`) oraz automatyczne powtarzanie ostatniego polecenia.
+
+Jeśli już jesteś w trybie interaktywnym, możesz otrzymać pomoc dotyczącą specyficznych poleceń oraz zestawów poleceń:
+
+Na przykład, aby uzyskać wyjaśnienie polecenia `resync` wykonaj:
+{{{
+> help resync
+}}}
+
+Aby uzyskać pomoc na temat wszystkich poleceń związanych z Wiki, wykonaj:
+{{{
+> help wiki
+}}}
+
+----
+Zobacz również: TracGuide, TracBackup, TracPermissions, TracEnvironment, TracIni

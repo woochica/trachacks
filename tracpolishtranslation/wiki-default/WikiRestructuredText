@@ -1,0 +1,73 @@
+= reStructuredText Support in Trac = Trac pozwala na korzystanie z
+''reStructuredText'' (RST) jako alternatywy dla formatowań wiki w
+dowolnym miejscu. Na stronie reStucturedText możemy przeczytać:
+&quot;''reStructuredText jest czytelnym, what-you-see-is-what-you-get
+tekstowym systemem znacznik&oacute;w i ich analizatorem. Przydatny w
+dokumentacji program&oacute;w in-line (takiej jak Python docstrings),
+aby szybko tworzyć proste strony www, a także samodzielne dokumenty.
+reStructuredText został zaprojektowany dla specyficznego rodzaju
+program&oacute;w. ''&quot; === Requirements === Aby aktywować obsługę
+RST przez Trac-a, pakiet python docutils musi być zainstalowany.
+Jeśli go nie posiadasz, możesz go pobrać ze strony
+[http://docutils.sourceforge.net/rst.html RST]. === Więcej informacji
+na temat (w języku angielskim) RST === * reStructuredText Website --
+http://docutils.sourceforge.net/rst.html * RST Quick Reference --
+http://docutils.sourceforge.net/docs/rst/quickref.html ---- == Użycie
+RST w Trac == Aby wybrać blok tekstu, kt&oacute;ry powinien zostać
+analizowany przez RST, użyj składni ''rst''. === TracLinks w
+reStructuredText === * Trac pozwala na użycie dyrektywy RST 'trac',
+aby użyć TracLinks w tekscie RST. Przykład: {{{ {{{ #!rst To jest
+odwołanie do |metki| .. |metki| trac:: #42 }}} }}} Dla wszystkich przykładów
+użycie dyrektywy ''trac'', proszę przejść do WikiRestructuredTextLinks. 
+* Trac umożliwia na jeszcze łatwiejsze użycie TracLinks w RST, 
+wykorzystanie nawy linku według schematu '':trac:''. 
+Przykład: {{{ {{{ #!rst To jest odwołanie do metki
+`#12`:trac: Aby nauczyć się jak korzystać z Trac-a, zobacz `TracGuide`:trac: }}} }}}
+=== Podświetlanie składni w reStructuredText === Jest dyrektywa odpowiedzialna
+za TracSyntaxColoring w ReST. Dyrektywa nazywa się
+code-block Przykład {{{ {{{ #!rst .. code-block:: python class Test:
+def TestFunction(self): pass }}} }}} Powinno zwrócić rezultat ponizej. {{{
+#!rst .. code-block:: python class Test: def TestFunction(self): pass
+}}} === WikiMacros w reStructuredText === WikiMacros w
+ReST używamy korzystając z tej samej dyrektywy co dl podświetlania składni na przykład
+code-block. Wersja Trac-a musi zawierać #801. 
+=== WikiMacro - przykład === {{{ {{{ #!rst .. code-block::
+HelloWorld Coś co chcę przekazać}}} }}} Powinno zwrócić rezultat poniżej. 
+[[HelloWorld(Coś co chcę przekazać)]] === Większy przykład ReST === 
+Poniższy przykład chyba nie wymaga wyjaśniania: {{{
+#!html 
+</P>
+<PRE>{{{
+#!rst
+FooBar Header
+=============
+reStructuredText is **nice**. It has its own webpage_.
+
+A table:
+
+=====  =====  ======
+   Inputs     Output
+------------  ------
+  A      B    A or B
+=====  =====  ======
+False  False  False
+True   False  True
+False  True   True
+True   True   True
+=====  =====  ======
+
+RST TracLinks
+-------------
+
+Zaobacz także: `#42`:trac:.
+
+.. _webpage: http://docutils.sourceforge.net/rst.html
+}}}</PRE><P>
+}}} Results in: {{{ #!rst FooBar Header =============
+reStructuredText is **nice**. It has its own webpage_. A table: =====
+===== ====== Inputs Output ------------ ------ A B A or B ===== =====
+====== False False False True False True False True True True True
+True ===== ===== ====== RST TracLinks ------------- See also ticket
+`#42`:trac:. .. _webpage: http://docutils.sourceforge.net/rst.html
+}}} ---- See also: WikiRestructuredTextLinks, WikiProcessors,
+WikiFormatting

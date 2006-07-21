@@ -1,0 +1,98 @@
+= Własne Pola Ticketów =
+Trac obsługuje dodawanie własnych, definiowanych przez użytkownika pól do modułu ticketów. Używając własnych pól, możesz dodawać specyficzne dla strony parametry do ticketów.
+
+== Konfiguracja ==
+Konfigurowanie własnych pól ticketów odbywa się przez plik [wiki:TracIni trac.ini]. Wszystkie definicje pól powinny być w sekcji `[ticket-custom]`.
+
+Składnia definicji każdego pola:
+{{{
+ FIELD_NAME = TYPE
+ (FIELD_NAME.OPTION = VALUE)
+ ...
+}}}
+Przykład poniżej powinien ułatwić zrozumienie składni.
+
+=== Dostępny Typy Pól oraz Opcje ===
+ * '''text''': Proste (jednoliniowe) pole tekstowe.
+   * label: Etykiety opisująca.
+   * value: Domyślna wartość.
+   * order: Porządek sortowania. (Oznacza względne rozmieszczenie w formularzu)
+ * '''checkbox''': Check-box – działa jak zmienna boolean.
+   * label: Etykiety opisująca
+   * value: Domyślna wartość(0 or 1).
+   * order: Porządek sortowania.
+ * '''select''': Rozwijany select box. Używa listy wartości.
+   * options: Lista wartości oddzielonych znakiem '''|''' (pionowa kreska).
+   * value: Domyślna wartość(Element #, zaczynający się na 0).
+   * order: Porządek sortowania.
+ * '''radio''': Radio buttons. Podobne jak '''select'''.
+   * label: Etykiety opisująca.
+   * options: Lista wartości oddzielonych znakiem '''|''' (pionowa kreska).
+   * value: Domyślna wartość (Element #, zaczynający się na 0).
+   * order: Porządek sortowania.
+ * '''textarea''': Pole tekstowe wieloliniowe.
+   * label: Etykiety opisująca.
+   * value: Domyślny tekst.
+   * cols: Szerokość w kolumnach.
+   * rows: Wysokość w wierszach.
+   * order: Porządek sortowania.
+
+=== Przykładowa Konfiguracja ===
+{{{
+[ticket-custom]
+
+test_one = text
+test_one.label = Just a text box
+
+test_two = text
+test_two.label = Another text-box
+test_two.value = Just a default value
+
+test_three = checkbox
+test_three.label = Some checkbox
+test_three.value = 1
+
+test_four = select
+test_four.label = My selectbox
+test_four.options = one|two|third option|four
+test_four.value = 2
+
+test_five = radio
+test_five.label = Radio buttons are fun
+test_five.options = uno|dos|tres|cuatro|cinco
+test_five.value = 1
+
+test_six = textarea
+test_six.label = This is a large textarea
+test_six.value = Default text
+test_six.cols = 60
+test_six.rows = 30
+}}}
+
+''uwaga: Żeby zostawić możliwość opcjonalnego wprowadzenia wartości dla pola typu `select`, zostaw na końcu opcji `fieldname.options` znak `|`.''
+
+=== Raporty Zawierające Własne Pola ===
+
+Zaprowadzenie porządku w SQLach wymaganych przez TracReports do załączania ticketów z własnymi ticketami jest dość trudne. Musisz zrobić `JOIN` z polem `ticket_custom` dla każdego własnego pola.
+
+Następujący przykład załącza własne pole ticketa `progress` w raporcie:
+{{{
+#!sql
+SELECT p.value AS __color__,
+   id AS ticket, summary, component, version, milestone, severity,
+   (CASE status WHEN 'assigned' THEN owner||' *' ELSE owner END) AS owner,
+   time AS created,
+   changetime AS _changetime, description AS _description,
+   reporter AS _reporter,
+  (CASE WHEN c.value = '0' THEN 'None' ELSE c.value END) AS progress
+  FROM ticket t
+     LEFT OUTER JOIN ticket_custom c ON (t.id = c.ticket AND c.name = 'progress')
+     JOIN enum p ON p.name = t.priority AND p.type='priority'
+  WHERE status IN ('new', 'assigned', 'reopened')
+  ORDER BY p.value, milestone, severity, time
+}}}
+
+Zauważ pojawienie się wyrażenia `LEFT OUTER JOIN`.
+
+----
+Zobacz również: TracTickets, TracIni
