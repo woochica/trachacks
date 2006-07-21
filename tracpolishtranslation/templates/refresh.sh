@@ -1,0 +1,25 @@
+#!/bin/bash
+iconv -f iso=8859-2 -t utf8 <attachment.cs >../attachment.cs
+iconv -f iso=8859-2 -t utf8 <browser.cs >../browser.cs
+iconv -f iso=8859-2 -t utf8 <changeset.cs >../changeset.cs
+iconv -f iso=8859-2 -t utf8 <error.cs >../error.cs
+iconv -f iso=8859-2 -t utf8 <footer.cs >../footer.cs
+iconv -f iso=8859-2 -t utf8 <header.cs >../header.cs
+iconv -f iso=8859-2 -t utf8 <log_changelog.cs >../log_changelog.cs
+iconv -f iso=8859-2 -t utf8 <log.cs >../log.cs
+iconv -f iso=8859-2 -t utf8 <log_rss.cs >../log_rss.cs
+iconv -f iso=8859-2 -t utf8 <macros.cs >../macros.cs
+iconv -f iso=8859-2 -t utf8 <milestone.cs >../milestone.cs
+iconv -f iso=8859-2 -t utf8 <newticket.cs >../newticket.cs
+iconv -f iso=8859-2 -t utf8 <query.cs >../query.cs
+iconv -f iso=8859-2 -t utf8 <query_rss.cs >../query_rss.cs
+iconv -f iso=8859-2 -t utf8 <report.cs >../report.cs
+iconv -f iso=8859-2 -t utf8 <report_rss.cs >../report_rss.cs
+iconv -f iso=8859-2 -t utf8 <roadmap.cs >../roadmap.cs
+iconv -f iso=8859-2 -t utf8 <search.cs >../search.cs
+iconv -f iso=8859-2 -t utf8 <settings.cs >../settings.cs
+iconv -f iso=8859-2 -t utf8 <ticket.cs >../ticket.cs
+iconv -f iso=8859-2 -t utf8 <ticket_notify_email.cs >../ticket_notify_email.cs
+iconv -f iso=8859-2 -t utf8 <timeline.cs >../timeline.cs
+iconv -f iso=8859-2 -t utf8 <timeline_rss.cs >../timeline_rss.cs
+iconv -f iso=8859-2 -t utf8 <wiki.cs >../wiki.cs
