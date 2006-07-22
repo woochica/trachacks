@@ -17,7 +17,7 @@ from revtree.model import Changeset, Branch, Repository
 
 
 class ChangesetWidget(object):
-    """ Graphviz generator for changesets """
+    """Graphviz generator for changesets"""
 
     def __init__(self, grapher, changeset):
         # Environment
@@ -50,17 +50,17 @@ class ChangesetWidget(object):
                     break
 
     def id(self):
-        """ Returns the unique identifier of the changeset, based on the
-            revision number """
+        """Returns the unique identifier of the changeset, based on the
+           revision number"""
         return self._changeset.revision
 
     def operation_widget(self):
-        """ Provides the operation widget, i.e. the widget representation
-            of the operation (command) that created the revision """
+        """Provides the operation widget, i.e. the widget representation
+           of the operation (command) that created the revision"""
         return self._opwidget
 
     def forecolor(self):
-        """ Provides the forecolor of the widget """
+        """Provides the forecolor of the widget"""
         colormap = ['']*8
         colormap[Changeset.NONE] = ('defaultcolor', None)
         colormap[Changeset.IMPORT] = ('importcolor', None)
@@ -78,11 +78,11 @@ class ChangesetWidget(object):
         return color
 
     def backcolor(self):
-        """ Provides the background color of the widget """
+        """Provides the background color of the widget"""
         return self._grapher.branch_widget(rev=self.id()).backcolor()
 
     def shape(self):
-        """ Provides the shape of the widget """
+        """Provides the shape of the widget"""
         if self._changeset.operation in [ Changeset.CREATE, Changeset.KILL ]:
             return "doublecircle"
         if self._changeset.export:
@@ -92,13 +92,13 @@ class ChangesetWidget(object):
         return "circle"
 
     def style(self):
-        """ Provides the style of the widget """
+        """Provides the style of the widget"""
         if self._changeset.operation in [ Changeset.FIX ]:
             return "bold"
         return "none"
 
     def render(self):
-        """ Returns a Graphviz representation of the widget """
+        """Returns a Graphviz representation of the widget"""
         url = "%s/changeset/%d" % (self._grapher.urlbase(), \
                                    self._changeset.revision)
         log = self._changeset.log.replace('[[BR]]',' ').replace('\n',' ')
@@ -122,7 +122,7 @@ class ChangesetWidget(object):
 
 
 class BranchWidget(object):
-    """ Graphviz generator for branches """
+    """Graphviz generator for branches"""
 
     def __init__(self, grapher, branch):
         # Environment
@@ -144,24 +144,24 @@ class BranchWidget(object):
             self._backcolor = self._randcolor()
 
     def forecolor(self):
-        """ Returns the foreground color of the widget """
+        """Returns the foreground color of the widget"""
         return self.env.config.get('revtree', 'outlinecolor', 'black')
 
     def backcolor(self):
-        """ Returns the background color of the widget """
+        """Returns the background color of the widget"""
         return self._backcolor
 
     def id(self):
-        """ Returns the unique identifier of the branch, derived from the
-            path """
+        """Returns the unique identifier of the branch, derived from the
+           path """
         return self._id
 
     def branch(self):
-        """ Returns the branch object """
+        """Returns the branch object"""
         return self._branch
 
     def render(self, revrange=None, reverse=False):
-        """ Returns a Graphviz representation of the widget """
+        """Returns a Graphviz representation of the widget"""
         changesets = self._branch.changesets()
         inrngchgs = [c for c in changesets if self._inrange(c.revision, revrange)]
         items = ["%s" % self._grapher.changeset_widget(c.revision).render() \
@@ -217,18 +217,20 @@ class BranchWidget(object):
         return representation
 
     def is_visible(self, revrange):
+        """Tells whether the revision range contains at least one revision
+           that can be rendered in the selected revtree"""
         items = [c for c in self._branch.changesets() \
                  if self._inrange(c.revision, revrange)]
         return items and True or False
 
     def _randcolor(self):
-        """ Generates a random pastel color and returns it as a string """
+        """Generates a random pastel color and returns it as a string"""
         rand = "%03d" % randrange(1000)
         return "#%02x%02x%02x" % \
           (128+14*int(rand[0]), 128+14*int(rand[1]), 128+14*int(rand[2]))
 
     def _inrange(self, rev, revrange):
-        """ Reports whether a revision is in a range """
+        """Reports whether a revision is in a range"""
         if not revrange:
             return True
         if rev < revrange[0] or rev > revrange[1]:
@@ -237,7 +239,7 @@ class BranchWidget(object):
 
 
 class OperationWidget(object):
-    """ Graphviz generator for operations """
+    """Graphviz generator for operations"""
 
     def __init__(self, env, src, dst):
         if not isinstance(src, tuple):
@@ -259,15 +261,15 @@ class OperationWidget(object):
                                                '#00ff00')
 
     def sources(self):
-        """ Returns the source changesets of the operation (as a tuple)"""
+        """Returns the source changesets of the operation (as a tuple)"""
         return self._src
 
     def destination(self):
-        """ Returns the destination changeset of the operation """
+        """Returns the destination changeset of the operation"""
         return self._dst
 
     def render(self, revrange=None, reverse=False):
-        """ Returns a Graphviz representation of the widget """
+        """Returns a Graphviz representation of the widget"""
         if revrange:
             src = [chg for chg in self._src if \
                        chg.revision >= revrange[0] and
@@ -300,7 +302,7 @@ class OperationWidget(object):
 
 
 class RepositoryWidget(object):
-    """ Graphviz generator of a Subversion repository """
+    """Graphviz generator of a Subversion repository"""
 
     def __init__(self, env, repos, urlbase):
         # Environment
@@ -320,23 +322,23 @@ class RepositoryWidget(object):
         self.trunks = trunks.split(' ')
         # Init color generator with a predefined value
         seed(0)
-
+        
     def repository(self):
-        """ Returns the repository instance """
+        """Returns the repository instance"""
         return self._repos
 
     def urlbase(self):
-        """ Returns the repository URL """
+        """Returns the repository URL"""
         return self._urlbase
 
     def changeset_widget(self, rev):
-        """ Return the repository instance """
+        """Return the repository instance"""
         c = self._repos.changeset(rev)
         return self._changeset_widgets[c]
 
     def branch_widget(self, rev=None, branchname=None):
-        """ Returns a branch widget, based on the revision number or the 
-            branch id """
+        """Returns a branch widget, based on the revision number or the 
+           branch id"""
         branch = None
         if rev:
             chg = self._repos.changeset(rev)
@@ -348,7 +350,7 @@ class RepositoryWidget(object):
         return self._branch_widgets[branch]
 
     def build(self, revisions=None, branches=None, authors=None):
-        """ Builds the graph """
+        """Builds the graph"""
         self._revrange = revisions
         for b in self._repos.branches().values():
             if branches and b.name() not in branches:
@@ -367,11 +369,11 @@ class RepositoryWidget(object):
             self._branch_widgets[b] = branchwdgt
 
     def render(self, reverse=False):
-        """ Returns the graphviz data """
+        """Returns the graphviz data"""
         gviz = 'digraph versiontree {\n'
-        gviz += '  graph [fontsize=9,rankdir="%s"]\n' % \
+        gviz += '  graph [fontsize=7,rankdir="%s"]\n' % \
                 (reverse and "BT" or "TB")
-        gviz += '  node [fontsize=9,style=filled,' \
+        gviz += '  node [fontsize=7,style=filled,' \
                 'margin="0.05,0.05"]\n'
         branchnames = []
         for bwdgt in self._branch_widgets.values():

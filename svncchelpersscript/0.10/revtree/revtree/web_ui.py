@@ -30,9 +30,9 @@ from revtree.repproxy import RepositoryProxy
 
 
 class RevTreeStore(object):
-    """ """
+    """User revtree properties"""
     def __init__(self, env, user, eldest, youngest):
-        """ Initialize the instance with default values """
+        """Initialize the instance with default values"""
         self.env = env
         self.fields = self.get_fields()
         self.values = {}
@@ -50,17 +50,19 @@ class RevTreeStore(object):
         self['nocache'] = ''
 
     def get_fields(self):
-        """ Returns the sequence of supported fields """
+        """Returns the sequence of supported fields"""
         return [ 'revmin', 'revmax', 'period', 'branch', 'author',
                  'limits', 'btup' ]
         
     def load(self, session):
+        """Load user parameters from a previous session"""
         for field in self.fields:
             key = 'revtree.%s' % field
             if session.has_key(key):
                 self[field] = session.get(key, '')
 
     def save(self, session):
+        """Store user parameters"""
         for field in self.fields:
             key = 'revtree.%s' % field
             if self[field]:
@@ -70,7 +72,7 @@ class RevTreeStore(object):
                     del session[key]
 
     def populate(self, values):
-        """Populate the revtree from the request """
+        """Populate the revtree from the request"""
         for name in [name for name in values.keys() if name in self.fields]:
             genkey = 'any%s' % name
             if self.__dict__.has_key(genkey):
@@ -84,7 +86,7 @@ class RevTreeStore(object):
                 self[name[9:]] = '0'
 
     def compute_range(self, repos):
-        """ Computes the range of revisions to show """
+        """Computes the range of revisions to show"""
         if self['limits'] == 'limrev':
             self.revrange = (int(self['revmin']), int(self['revmax']))
         elif self['limits'] == 'limperiod':
@@ -96,8 +98,8 @@ class RevTreeStore(object):
                            (self.revrange[0], self.revrange[1]))
 
     def can_be_rendered(self):
-        """ Reports whether the revtree has enough items to produce a valid 
-            representation, based on the revision range """
+        """Reports whether the revtree has enough items to produce a valid 
+           representation, based on the revision range"""
         if not self.revrange:
             return False
         if self.revrange[0] == self.revrange[1]:
@@ -105,16 +107,16 @@ class RevTreeStore(object):
         return True
 
     def __getitem__(self, name):
-        """ getter (dictionary)"""
+        """getter (dictionary)"""
         return self.values[name]
 
     def __setitem__(self, name, value):
-        """ setter (dictionnary) """
+        """setter (dictionnary)"""
         self.values[name] = value
 
 
 class RevisionTreeModule(Component):
-    """ Implements the revision tree feature """
+    """Implements the revision tree feature"""
     
     implements(IPermissionRequestor, INavigationContributor, \
                IRequestHandler, ITemplateProvider)
@@ -142,23 +144,27 @@ class RevisionTreeModule(Component):
 
     def process_request(self, req):
         req.perm.assert_permission('REVTREE_VIEW')
-        repos = Repository(self.proxy)
+        proxy = RepositoryProxy(self.repos_path)
+        youngest = proxy.get_youngest_revision()
+        repos = Repository(proxy)
         repos.build(self.topdir, self.propdomain, self.eldest)
 
         revtree = RevTreeStore(self.env, req.authname, self.eldest, 
-                               self.youngest)
+                               youngest)
         revtree.load(req.session)
         revtree.populate(req.args)
         revtree.compute_range(repos)
+        img_kind = self._get_image_kind(req)
 
         if revtree.can_be_rendered():
             # save the user parameters only if the tree can be rendered
             revtree.save(req.session)
-            (content, properties) = self._render_graph(req, repos, revtree, \
-                                                   req.args.has_key('nocache'))
+            (content, properties) = \
+                self._render_graph(req, repos, revtree, youngest, img_kind, \
+                                   req.args.has_key('nocache'))
             # queries the repository for branches and authors if it has 
             # a newer revision than the one in the revtree
-            if properties['revisions'][0] < self.youngest:
+            if properties['revisions'][0] < youngest:
                 branches = repos.branches().keys()
                 authors = repos.authors()
             else:
@@ -188,6 +194,7 @@ class RevisionTreeModule(Component):
                                           " a revision tree"
                                           
         add_stylesheet(req, 'revtree/css/revtree.css')
+        proxy.cleanup()
         return 'revtree.cs', None
 
     # ITemplateProvider
@@ -216,20 +223,58 @@ class RevisionTreeModule(Component):
         # Repository proxy
         if self.config.get('trac', 'repository_type') != 'svn':
             raise TracError, "revtree only supports Subversion repositories"
-        path = self.config.get('trac', 'repository_dir')
-        self.proxy = RepositoryProxy(path)
+        self.repos_path = self.config.get('trac', 'repository_dir')
         self.topdir = self.env.config.get('revtree', 'topdir', '/')
         self.propdomain = self.env.config.get('revtree', 'domain', 'custom')
-        self.youngest = self.proxy.get_youngest_revision()
         self.eldest = int(self.env.config.get('revtree', 'revbase', '1'))
+        self.format = self.env.config.get('revtree', 'format', 'auto').lower()
         self.image_engine = 'dot'
-        self.image_extension = 'png'
         self.periods = { 1 : 'day', 2 : '2 days', 3 : '3 days', 7: 'week',
                          14 : 'fortnight', 31 : 'month', 61 : '2 months', 
                          91 : '3 months', 366 : 'year', 0 : 'all' }
 
+    def _get_image_kind(self, req):
+        """Reports whether to produce PNG or SVG output
+           There is no way to know whether the user agent supports SVG
+           so use a hardcoded recognition scheme"""
+           
+        def get_browser_version(agent):
+            try:
+                (name, version) = agent.split('/')
+                if version:
+                    v = version.split('.')
+                    if len(v) > 1:
+                        vlist = map(int, v) + [0] * 3
+                        version = 0
+                        for v in vlist[0:3]:
+                            version *= 100
+                            version += v
+                        return (name.lower(), version)
+            except ValueError:
+                pass
+            return (None, None)
+            
+        if self.format in ['png', 'svg']:
+            return self.format
+        if self.format == 'auto':
+            agentstr = req.get_header('user-agent')
+            if agentstr:
+                info = agentstr.split()
+                (name, version) = get_browser_version(info[0])
+                if name:
+                    if name == 'opera' and version >= 90000:
+                        return 'svg'
+                    if name == 'mozilla' and version >= 50000:
+                        (name, version) = get_browser_version(info[-1])
+                        if name == 'firefox' and version >= 10500:
+                            return 'svg'
+                        if name in ['camino'] and version >= 10002:
+                            return 'svg'
+        # always fall back to PNG
+        return 'png'
+        
     def _get_periods(self):
-        """ Generates a list of periods """
+        """Generates a list of periods"""
         values = self.periods
         periods = []
         days = values.keys()
@@ -239,7 +284,7 @@ class RevisionTreeModule(Component):
         return periods
 
     def _get_cache_name(self, revtree):
-        """ Generates a unique filename for the current revtree """
+        """Generates a unique filename for the current revtree"""
         id = "%d-%d-%s-%s-%d" % (revtree.revrange[0], \
                                  revtree.revrange[1], \
                                  revtree['branch'] or ' ', \
@@ -251,7 +296,7 @@ class RevisionTreeModule(Component):
         return img_path
 
     def _get_ui_revisions(self, revspan):
-        """ Generates the list of displayable revisions """
+        """Generates the list of displayable revisions"""
         (revmin, revmax) = revspan
         allrevisions = range(revmin, revmax+1)
         allrevisions.sort()
@@ -270,12 +315,14 @@ class RevisionTreeModule(Component):
             revisions.append(str(revmin))
         return revisions
 
-    def _render_graph(self, req, repos, revtree, rebuild):
-        """ Renders revtree graph (tests cache status and generates if not found)"""
+    def _render_graph(self, req, repos, revtree, youngest, img_kind, rebuild):
+        """Renders revtree graph (tests cache status and generates a new image
+           if not found)"""
         cache_file = self._get_cache_name(revtree)
         create = True
         headers = ['revisions', 'branches', 'authors', 'image' ]
         props = {}
+        
         if not rebuild and os.path.exists(cache_file):
             try:
                 cache = open(cache_file, 'r')
@@ -290,23 +337,25 @@ class RevisionTreeModule(Component):
                 content = '\n'.join(cache.readlines())
                 cache.close()
                 image = os.path.join(self.cache_dir, "%s.%s.%s" % \
-                                      (props['image'][0], 
-                                       self.image_engine,
-                                       self.image_extension))
+                                      (props['image'][0], self.image_engine,
+                                       img_kind))
                 if os.path.exists(image):
                     create = False
                 else:
                     self.env.log.debug("Image %s is missing" % image)
             except ValueError:
-                self.log.warn('Unable to load graph from cache file %s', cache_file)
+                self.log.warn('Unable to load graph from cache file %s', \
+                              cache_file)
                 if cache:
                     cache.close()
-                self.log.warn('Unable to load graph from cache file %s', cache_file)
+                self.log.warn('Unable to load graph from cache file %s', \
+                              cache_file)
                 os.unlink(cache_file)
+
         if create:
             (content, revisions, branches, authors) = \
-                self._generate_graph(req, repos, revtree)
-            props['revisions'] = (str(self.youngest), \
+                self._generate_graph(req, repos, revtree, img_kind)
+            props['revisions'] = (str(youngest), \
                                   str(revisions[0]), str(revisions[1]))
             props['branches'] = branches
             props['authors'] = authors
@@ -336,8 +385,8 @@ class RevisionTreeModule(Component):
                       "Error rendering the rev tree (type: %s)" % header
         return (content, props)
 
-    def _generate_graph(self, req, repos, revtree): 
-        """ Generates the revtree image """
+    def _generate_graph(self, req, repos, revtree, img_kind): 
+        """Generates the revtree image"""
         trunks = self.env.config.get('revtree', 'trunks', '/trunk').split(' ')
         revs = [c for c in repos.changesets()]
         revs.reverse()
@@ -381,9 +430,9 @@ class RevisionTreeModule(Component):
             gvizbranches.extend(branches)
         self.env.log.debug("gvizbranches: %s" % gvizbranches)
         repwdgt = RepositoryWidget(self.env, repos, req.base_url)
-        repwdgt.build(revtree.revrange, gvizbranches, authors)
+        repwdgt.build(revtree.revrange, gvizbranches, authors)        
         gviz = repwdgt.render(revtree['btup'] != '0')
-        macro = 'graphviz.%s' % self.image_engine
+        macro = 'graphviz.%s/%s' % (self.image_engine, img_kind)
         wiki = WikiSystem(self.env)
         content = None
         for macro_provider in wiki.macro_providers:

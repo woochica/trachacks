@@ -44,7 +44,11 @@ class RepositoryProxy(object):
     def cleanup(self):
         if self.txn:
             fs.svn_fs_close_txn(self.txn)
-
+        self.pool = None
+        self.repos = None
+        self.fs = None
+        self.path = None
+        
     def get_txn_property(self, property):
         propval = fs.svn_fs_txn_prop(self.txn, property, self.pool)
         return propval

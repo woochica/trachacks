@@ -18,8 +18,8 @@ from revtree.repproxy import RepositoryProxy
 
 
 class Changeset(object):
-    """ Represents a changeset, i.e. a Subversion revision with additionnal
-        properties """
+    """Represents a changeset, i.e. a Subversion revision with additionnal
+       properties"""
 
     # creation reasons of a revision
     NONE, IMPORT, CREATE, BRING, DELIVER, FIX, REF, KILL = range(8)
@@ -51,14 +51,14 @@ class Changeset(object):
         self.topdir = ''
 
     def time(self):
-        """ Provides the age of the revision as a count of second 
-            since the Epoch """
+        """Provides the age of the revision as a count of second 
+           since the Epoch"""
         if not self.date:
             return None
         core.svn_time_from_cstring(date, self.pool()) / 1000000
             
     def load(self, proxy, revision, topdir, propdomain):
-        """ Loads a changeset from a SVN repository """
+        """Loads a changeset from a SVN repository"""
         self.topdir = topdir
         self.revision = revision
         props = proxy.get_revision_properties(revision)
@@ -108,13 +108,13 @@ class Changeset(object):
         self.time = proxy.convert_date(self.date)
 
     def __cmp__(self, other):
-        """ Compares to another changeset, based on the revision number """
+        """Compares to another changeset, based on the revision number"""
         return cmp(self.revision, other.revision)
 
 
 class Branch(object):
-    """ Represents a branch in Subversion, tracking the associated 
-        changesets """
+    """Represents a branch in Subversion, tracking the associated 
+       changesets"""
 
     def __init__(self, name):
         # Name (path)
@@ -123,31 +123,31 @@ class Branch(object):
         self._changesets = []
 
     def add_changeset(self, changeset):
-        """ Adds a new changeset to the branch """
+        """Adds a new changeset to the branch"""
         self._changesets.append(changeset)
         self._changesets.sort()
 
     def __len__(self):
-        """ Counts the number of tracked changesets """
+        """Counts the number of tracked changesets"""
         return len(self._changesets)
 
     def changesets(self):
-        """ Returns the tracked changeset as a sequence """
+        """Returns the tracked changeset as a sequence"""
         return self._changesets
 
     def name(self):
-        """ Returns the name (path) of the branch """
+        """Returns the name (path) of the branch"""
         return self._name
 
     def revision_range(self):
-        """ Returns a tuple representing the extent of tracked revisions 
-            (first, last) """
+        """Returns a tuple representing the extent of tracked revisions 
+           (first, last)"""
         if not self._changesets:
             return (0, 0)
         return (self._changesets[0].revision, self._changesets[-1].revision)
 
     def authors(self):
-        """ Returns a list of authors that have committed to the branch """
+        """Returns a list of authors that have committed to the branch"""
         authors = []
         for chg in self._changesets:
             if chg.author not in authors:
@@ -156,8 +156,8 @@ class Branch(object):
 
 
 class Repository(object):
-    """ Represents a Subversion repositories as a set of branches and a set
-        of changesets """
+    """Represents a Subversion repositories as a set of branches and a set
+       of changesets"""
 
     def __init__(self, proxy):
         # Repository proxy
@@ -172,7 +172,7 @@ class Repository(object):
         self._rev_max = self._proxy.get_youngest_revision()
 
     def _build_branches(self):
-        """ Constructs the branch dictionnary from the changeset dictionnary """ 
+        """Constructs the branch dictionnary from the changeset dictionnary""" 
         for chg in self._changesets.keys():
             rev = int(chg)
             if self._rev_min > rev or not self._rev_min:
@@ -185,31 +185,31 @@ class Repository(object):
             self._branches[br].add_changeset(self._changesets[chg])
 
     def changeset(self, revision):
-        """ Returns a tracked changeset from the revision number """
+        """Returns a tracked changeset from the revision number"""
         if self._changesets.has_key(revision):
             return self._changesets[revision]
         else:
             return None
 
     def branch(self, branchname):
-        """ Returns a tracked branch from its name (path) """
+        """Returns a tracked branch from its name (path)"""
         return self._branches[branchname]
 
     def changesets(self):
-        """ Returns the dictionnary of changesets (keys are rev. numbers) """
+        """Returns the dictionnary of changesets (keys are rev. numbers)"""
         return self._changesets
 
     def branches(self):
-        """ Returns the dictionnary of branches (keys are branch names) """
+        """Returns the dictionnary of branches (keys are branch names)"""
         return self._branches
 
     def revision_range(self):
-        """ Returns a tuple representing the extent of tracked revisions 
-            (first, last) """
+        """Returns a tuple representing the extent of tracked revisions 
+           (first, last)"""
         return (self._rev_min, self._rev_max)
 
     def authors(self):
-        """ Returns a list of authors that have committed to the repository """
+        """Returns a list of authors that have committed to the repository"""
         authors = []
         for chg in self._changesets.values():
             if chg.author not in authors:
@@ -217,8 +217,8 @@ class Repository(object):
         return authors
         
     def get_revisions_by_date(self, dayrange):
-        """ Returns a tuple of (min, max) revisions from 
-            a date range (oldest, newest) """
+        """Returns a tuple of (min, max) revisions from 
+           a date range (oldest, newest)"""
         current = time.time()
         mintime = current - (dayrange[0]*86400)
         maxtime = current - (dayrange[1]*86400)
@@ -236,7 +236,9 @@ class Repository(object):
             return (revisions[0], revisions[-1])
         return (revisions[0], revisions[0])
 
-    def build(self, topdir, propdomain, revmin): 
+    def build(self, topdir, propdomain, revmin):
+        """Builds an internal representation of the repository, which 
+           is used to generate a graphical view of it"""
         head = self._proxy.get_youngest_revision()
         for revision in range(head, revmin, -1):
             chgset = Changeset()
@@ -245,7 +247,7 @@ class Repository(object):
         self._build_branches()
 
     def __str__(self):
-        """ Returns a string representation of the repository """
+        """Returns a string representation of the repository"""
         msg = "Revision counter: %d\n" % len(self._changesets)
         for br in self._branches.keys():
             msg += "Branch %s, %d revisions\n" % \
