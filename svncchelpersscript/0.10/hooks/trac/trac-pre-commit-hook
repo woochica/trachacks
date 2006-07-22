@@ -1,0 +1,252 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# trac-pre-commit-hook
+# ----------------------------------------------------------------------------
+# Copyright (c) 2004 Jonas Borgström <jonas@edgewall.com>
+# Copyright (c) 2005-2006 Emmanuel Blot <emmanuel.blot@free.fr>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+#   The above copyright notice and this permission notice shall be included in
+#   all copies or substantial portions of the Software. 
+# ----------------------------------------------------------------------------
+
+import os
+import re
+import sys
+
+from trac.env import open_environment
+from repproxy import RepositoryProxy
+
+OK = 0
+ERROR = 1
+
+
+class PreCommitHook:
+    """ """
+    
+    def __init__(self):                
+        proxy = RepositoryProxy(sys.argv[1], sys.argv[2])
+        env = open_environment(sys.argv[3])
+        topdir = env.config.get('revtree', 'topdir', '/')
+        domain = env.config.get('revtree', 'domain', 'domain')
+        basever = env.config.get('revtree', 'basever', 'basever')
+        trunkdir = '/trunk'
+        branchdir = '/branches'
+        basever_p = '%s:%s' % (domain, basever)
+        export_p = '%s:export' % domain
+        import_p = '%s:import' % domain
+        
+        # Gives a chance to create the initial repository structure
+        youngest = proxy.get_youngest_revision()
+        if youngest == 0:
+            sys.exit(OK)
+        
+        logmsg = proxy.get_txn_log_message()
+        
+        merge = re.compile(r'^(?P<action>delivers|brings|creates|renames)' \
+                           r'(?P<force>.?)\s+' \
+                           r'(\[(?P<first>\d+)\](:\[(?P<second>\d+)\])?)?', \
+                           re.IGNORECASE)
+        mo = merge.search(logmsg)
+        if mo:
+        
+            # Creates a new developer branch from the trunk
+            if mo.group('action').lower() in ['creates', 'renames']:
+                src = proxy.get_txn_copy_source()
+                if not src:
+                    print >> sys.stderr, 'Cannot locate source revision ' \
+                                         '(not a copy ?)'
+                    sys.exit(ERROR)
+                (srcrev, srcpath) = src
+                value = proxy.lookup_property(srcrev, srcpath, basever_p)
+                if not value:
+                    print >> sys.stderr, 'Cannot find base version info ' \
+                                         'from rev %d' % rev
+                    sys.exit(ERROR)
+                dstbranch = proxy.find_txn_branch(topdir)
+                if dstbranch[:len(branchdir)] != branchdir:
+                    print >> sys.stderr, 'Cannot create a new branch outside %s' \
+                                          % branchdir
+                    sys.exit(ERROR)
+                sys.exit(OK)
+        
+            # Brings a revision from the trunk to a developer branch
+            if mo.group('action').lower() == 'brings':
+                norev = mo.group('second')
+                if norev: 
+                    print >> sys.stderr, 'This operation does not accept a '\
+                                         'revision range'
+                    sys.exit(ERROR)
+                rev = mo.group('first')
+                if rev:
+                    # a revision is specified
+                    rev = int(rev)
+                    path = proxy.find_revision_branch(rev, topdir)
+                else:
+                    # assumes we bring files from the trunk
+                    for history in proxy.get_history(youngest, trunkdir):
+                        if not history:
+                            print >> sys.stderr, 'Source revision unknown'
+                            sys.exit(ERROR)
+                        (rev, path) = history
+                        break
+                # checks up that the source revision contains a BaseVer tag
+                value = proxy.lookup_property(rev, path, basever_p)
+                if not value:
+                    print >> sys.stderr, 'Source revision does not have ' \
+                                         'base version info'
+                    sys.exit(ERROR)
+                dstbranch = proxy.find_txn_branch(topdir)
+                if dstbranch[:len(branchdir)] != branchdir:
+                    print >> sys.stderr, 'Cannot brings to a non-branch dir (%s)' \
+                                          % branchdir
+                    sys.exit(ERROR)
+                sys.exit(OK)
+        
+            # Delivers one or more revisons to the trunk
+            if mo.group('action').lower() == 'delivers':
+                rev1 = mo.group('first')
+                if not rev1:
+                    print >> sys.stderr, 'Source revision not specified'
+                    sys.exit(ERROR)
+                rev1 = int(rev1)
+                branch1 = proxy.find_revision_branch(rev1, topdir)
+                if not branch1:
+                    print >> sys.stderr, 'Revision %d does not exist' % rev1
+                    sys.exit(ERROR)
+                rev2 = mo.group('second')
+                dstbranch = proxy.find_txn_branch(topdir)
+                if not dstbranch:
+                    print >> sys.stderr, 'Unable to locate delivery destination'
+                    sys.exit(ERROR)
+                if dstbranch == branch1:
+                    print >> sys.stderr, 'Cannot deliver to self (%s->%s)' % \
+                                          (branch1, dstbranch)
+                    sys.exit(ERROR)
+                if dstbranch == trunkdir:
+                    # Checks whether the trunk has been exported to ClearCase,
+                    # tagged (validated) and imported back in Subversion.
+                    # If this cycle has started but not completed (export not 
+                    # followed by import), no other delivery should be made to
+                    # the trunk
+                    for rev, path in proxy.get_history(youngest, trunkdir):
+                        importval = proxy.get_revision_property(rev, import_p)
+                        if importval:
+                            # import property encountered (CC->SVN),
+                            # trunk can be modified
+                            break
+                        exportval = proxy.get_revision_property(rev, export_p)
+                        if exportval:
+                            # export property encountered (SVN->CC) w/o import
+                            # trunk should not be modified
+                            print >> sys.stderr, 'Cannot deliver to the ' \
+                            'trunk as the latest CC export (rev %d on %s) ' \
+                            'has not been tagged and imported back into SVN' \
+                            % (rev, exportval)
+                            if mo.group('force') != '!':
+                                # Aborts if no force mode is specified
+                                sys.exit(ERROR)
+                if not rev2:
+                    sys.exit(OK)
+                rev2 = int(rev2)
+                if rev1 > rev2:
+                    print >> sys.stderr, 'Revision range is invalid %d:%d' \
+                                          % (rev1, rev2)
+                    sys.exit(ERROR)
+                if rev1 == rev2:
+                    sys.exit(OK)
+                branch2 = proxy.find_revision_branch(rev2, topdir)
+                if not branch2:
+                    print >> sys.stderr, 'Revision %d does not exist' % rev2
+                    sys.exit(ERROR)
+                if branch1 != branch2:
+                    print >> sys.stderr, 'Revisions (%d,%d) mismatch: %s,%s' \
+                                         % (rev1, rev2, branch1, branch2)
+                    sys.exit(ERROR)
+                sys.exit(OK)
+        
+        importre = env.config.get('revtree', 'importre')
+        importattion = re.compile(r'^(?P<action>imports).?%s' % importre, \
+                                 re.IGNORECASE)
+        mo = importation.search(logmsg)
+        if mo:
+            if not mo.group('label') or not mo.group('basever'):
+                print >> sys.stderr, 'No valid ClearCase or base version ' \
+                                     'label specified'
+                sys.exit(ERROR)
+            sys.exit(OK)
+        
+        termination = re.compile(r'^(?P<action>terminates)\s', re.IGNORECASE)
+        mo = termination.search(logmsg)
+        if mo:
+            chgdict = proxy.get_txn_changed_paths()
+            if not chgdict:
+                print >> sys.stderr, 'No deleted path in the revision'
+                sys.exit(ERROR)
+            if isinstance(chgdict, list):
+                if len(chgdict) > 1:
+                    print >> sys.stderr, 'Cannot terminate more than one ' \
+                                         'branch at a time'
+                    sys.exit(ERROR)
+                sys.exit(OK)        
+            chgpaths = chgdict.keys()
+            if len(chgpaths) > 1:
+                print >> sys.stderr, "Cannot terminate more than one branch at a time"
+                sys.exit(ERROR)
+            if chgdict[chgpaths[0]].change_kind != RepositoryProxy.SVN_FS_PATH_CHANGE_DELETE:
+                print >> sys.stderr, "The branch %s is not being deleted" % chgpaths[0]
+                sys.exit(ERROR)
+            dstbranch = proxy.find_txn_branch(topdir)
+            if dstbranch[:len(branchdir)] != branchdir:
+                print >> sys.stderr, 'Cannot terminate a non-branch dir (%s)' \
+                                      % branchdir
+                sys.exit(ERROR)
+            sys.exit(OK)
+        
+        tickets = []
+        exp = re.compile('^(closes|fixes|addresses|refs)'
+                         '.?(#[0-9]+(?:(?:[, &]+| *and *)#[0-9]+)*)', \
+                         re.IGNORECASE)
+        for action, tmp in exp.findall(logmsg):
+            tickets += re.findall('#([0-9]+)', tmp)
+        
+        # At least one ticket has to be mentioned in the log message
+        if tickets == []:
+            print >> sys.stderr, 'At least one open ticket must be ' \
+                                 'mentioned in the log message.'
+            sys.exit(ERROR)
+        
+        db = env.get_db_cnx()
+        
+        cursor = db.cursor()
+        cursor.execute("SELECT COUNT(id) FROM ticket WHERE "
+                       "status <> 'closed' AND id IN (%s)" % ','.join(tickets))
+        row = cursor.fetchone()
+        # At least one of the tickets mentioned in the log messages has to
+        # be open
+        if not row or row[0] < 1:
+            print >> sys.stderr, 'At least one ticket mentionned in the ' \
+                                 'log message must be open.'
+            sys.exit(ERROR)
+        dstbranch = proxy.find_txn_branch(topdir)
+        if dstbranch[:len(branchdir)] != branchdir:
+            print >> sys.stderr, 'Cannot apply changes to a non-branch dir ' \
+                                 '(%s)' % branchdir
+            sys.exit(ERROR)
+        sys.exit(OK)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print >> sys.stderr, \
+            'Usage: %s <repository> <txn> <trac_project>' \
+            % sys.argv[0]
+        sys.exit(ERROR)
+    else:
+        PreCommitHook()

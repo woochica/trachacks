@@ -1,0 +1,280 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# trac-post-commit-hook
+# ----------------------------------------------------------------------------
+# Copyright (c) 2004 Stephen Hansen 
+# Copyright (c) 2005-2006 Emmanuel Blot <emmanuel.blot@free.fr>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+#   The above copyright notice and this permission notice shall be included in
+#   all copies or substantial portions of the Software. 
+# ----------------------------------------------------------------------------
+
+# This Subversion post-commit hook script is meant to interface to the
+# Trac (http://www.edgewall.com/products/trac/) issue tracking/wiki/etc 
+# system.
+# 
+# It should be called from the 'post-commit' script in Subversion, such as
+# via:
+#
+# REPOS="$1"
+# REV="$2"
+# TRAC_ENV='/somewhere/trac/project/'
+# TRAC_URL='http://trac.mysite.com/project/'
+#
+# /usr/bin/python /usr/local/src/trac/contrib/trac-post-commit-hook \
+#  -d "$REPOS" \
+#  -p "$TRAC_ENV"  \
+#  -r "$REV"       \
+#  -s "$TRAC_URL"
+#
+
+import re
+import os
+import sys
+import time 
+
+from trac.env import open_environment
+from trac.ticket.notification import TicketNotifyEmail
+from trac.ticket import Ticket
+from trac.web.href import Href
+
+from repproxy import RepositoryProxy
+
+OK = 0
+ERROR = 1
+
+try:
+    from optparse import OptionParser
+except ImportError:
+    try:
+        from optik import OptionParser
+    except ImportError:
+        raise ImportError, 'Requires Python 2.3 or the Optik option parsing library.'
+
+parser = OptionParser()
+parser.add_option('-e', '--require-envelope', dest='env', default='',
+                  help='Require commands to be enclosed in an envelope. If -e[], '
+                       'then commands must be in the form of [closes #4]. Must '
+                       'be two characters.')
+parser.add_option('-p', '--project', dest='project',
+                  help='Path to the Trac project.')
+parser.add_option('-r', '--revision', dest='rev',
+                  help='Repository revision number.')
+parser.add_option('-s', '--siteurl', dest='url',
+                  help='The base URL to the project\'s trac website (to which '
+                       '/ticket/## is appended).  If this is not specified, '
+                       'the project URL from trac.ini will be used.')
+parser.add_option('-d', '--repos', dest='rep',
+                  help='The path to the Subversion repository.')
+
+(options, args) = parser.parse_args(sys.argv[1:])
+
+if options.env:
+    leftEnv = '\\' + options.env[0]
+    rghtEnv = '\\' + options.env[1]
+else:
+    leftEnv = ''
+    rghtEnv = ''
+
+commandPattern = re.compile(leftEnv + r'^(?P<action>[A-Za-z]*).?(?P<ticket>#[0-9]+(?:(?:[, &]*|[ ]?and[ ]?)#[0-9]+)*)' + rghtEnv)
+ticketPattern = re.compile(r'#([0-9]*)')
+mergePattern = re.compile(r'^(?P<action>delivers|brings).?\s+((\[(?P<first>\d+)\])(:\[(?P<second>\d+)\])?)?', re.IGNORECASE)
+createPattern = re.compile(r'^(creates|renames)', re.IGNORECASE)
+
+class PostCommitHook:
+    _supported_tkcmds = {'closes':     '_cmdClose',
+                         'fixes':      '_cmdClose',
+                         'addresses':  '_cmdRefs',
+                         'refs':       '_cmdRefs'}
+
+    _supported_rvcmds = {'delivers':   '_cmdDelivers',
+                         'brings':     '_cmdBrings'}
+
+    def __init__(self, project=options.project, rev=options.rev, 
+                       url=options.url, rep=options.rep):
+        # Initial repository creation
+        if int(rev) < 2:
+            self.finalize(OK)
+        
+        self.proxy = RepositoryProxy(rep)
+        self.rev = int(rev)
+        self.log = self.proxy.get_revision_log_message(self.rev)
+        self.author = self.proxy.get_revision_author(self.rev)
+        self.msg = "(In [%d]) %s" % (self.rev, self.log)
+        self.now = int(time.time()) 
+        self.rep = rep
+        self.project = project
+        self.env = open_environment(project)
+        if url is None:
+            url = self.env.config.get('project', 'url')
+        self.env.href = Href(url)
+        self.env.abs_href = Href(url)
+        domain = self.env.config.get('revtree', 'domain', 'domain')
+        basever = self.env.config.get('revtree', 'basever', 'basever')
+        self.import_p = '%s:import' % domain
+        self.basever_p = '%s:%s' % (domain, basever)
+        self.deliver_p = '%s:deliver' % domain
+        self.bring_p = '%s:bring' % domain
+        self.topdir = self.env.config.get('revtree', 'topdir', '/')
+        self.trunkdir = '/trunk'
+
+        importre = env.config.get('revtree', 'importre')
+        importpattern = re.compile(r'^(?P<action>imports).?%s' % importre, \
+                                   re.IGNORECASE)
+        importation = importpattern.search(self.log)
+        if importation:
+            label = importation.group('label')
+            version = importation.group('basever')
+            self._cmdImports(label, version)
+            self.finalize(OK)
+
+        if self.log[:10].lower() == 'terminates':
+            self.finalize(OK)
+
+        creation = createPattern.search(self.log)
+        if creation:
+            rc = self._cmdCreates()
+            self.finalize(rc)
+
+        merge = mergePattern.search(self.log)
+        if merge:
+            cmd = merge.group('action').lower()
+            if CommitHook._supported_rvcmds.has_key(cmd):
+                func = getattr(self, CommitHook._supported_rvcmds[cmd])
+                rc = func(merge.group('first'), merge.group('second'))
+                self.finalize(rc)
+            else:
+                print >> sys.stderr, 'Invalid merge action'
+                self.finalize(ERROR)
+
+        cmdGroups = commandPattern.findall(self.log) 
+        if not cmdGroups:
+            print>>sys.stderr, 'No action specified in log message !'
+            self.finalize(ERROR)  
+        for cmd, tkts in cmdGroups:
+            if CommitHook._supported_tkcmds.has_key(cmd.lower()):
+                func = getattr(self, CommitHook._supported_tkcmds[cmd.lower()])
+                func([int(tkt_id) for tkt_id in ticketPattern.findall(tkts)])
+            else:
+                print>>sys.stderr, 'No supported action in log message !'
+                self.finalize(ERROR)
+        self.finalize(OK)
+
+    def finalize(self, result):
+        if result == OK:
+            eventfile = "%s/events/%d.tag" % (self.project, self.rev)
+            fp = open(eventfile, "w")
+            fp.write('please backup this revision\n')
+            fp.close
+        sys.exit(result) 
+
+    def _cmdClose(self, tickets):
+        for tkt_id in tickets:
+            try:
+                ticket = Ticket(self.env, tkt_id)
+                ticket['status'] = 'closed'
+                ticket['resolution'] = 'fixed'
+                ticket.save_changes(self.author, self.msg, self.now)
+                tn = TicketNotifyEmail(self.env)
+                tn.notify(ticket, newticket=0, modtime=self.now)
+            except Exception, e:
+                print>>sys.stderr, 'Unexpected error while processing ' \
+                                   'ticket #%s: %s' % (tkt_id, e)
+
+    def _cmdRefs(self, tickets):
+        for tkt_id in tickets: 
+            try:
+                ticket = Ticket(self.env, tkt_id)
+                ticket.save_changes(self.author, self.msg, self.now)
+                tn = TicketNotifyEmail(self.env)
+                tn.notify(ticket, newticket=0, modtime=self.now)
+            except Exception, e:
+                print>>sys.stderr, 'Unexpected error while processing ' \
+                                   'ticket #%s: %s' % (tkt_id, e)
+
+    def _cmdImports(self, label, version):
+        self.proxy.set_revision_property(self.rev, self.import_p, label)
+        self.proxy.set_revision_property(self.rev, self.basever_p, version)
+        return OK
+
+    def _cmdDelivers(self, rev1, rev2):
+        if not rev2 or rev1 == rev2:
+            self.proxy.set_revision_property(self.rev, self.deliver_p, rev1)
+            return OK
+        rev1 = int(rev1)
+        rev2 = int(rev2)
+        branch1 = self.proxy.find_revision_branch(rev1, self.topdir)
+        revisions = []
+        for rev in range(rev1,rev2+1):
+            revbranch = self.proxy.find_revision_branch(rev, self.topdir, \
+                                                        True)
+            if not revbranch:
+                continue
+            if revbranch != branch1:
+                continue
+            bring = self.proxy.get_revision_property(self.rev, self.bring_p)
+            if bring and len(bring) > 0:
+                continue
+            revisions.append('%d' % rev)
+        value = ','.join(revisions)
+        self.proxy.set_revision_property(self.rev, self.deliver_p, value)
+        return OK
+
+    def _cmdBrings(self, rev1, rev2):
+        if rev1:
+           # a revision is specified
+           rev = int(rev1)
+           path = self.proxy.find_revision_branch(rev, self.topdir)
+        else:
+           # assumes files brought from the trunk
+           yr = self.proxy.get_youngest_revision()
+           for history in self.proxy.get_history(yr, self.trunkdir):
+               (rev, path) = history
+               break
+        basecode = self.proxy.lookup_property(rev, path, self.basecode_p)
+        imp = self.proxy.lookup_property(rev, path, self.import_p)
+        self.proxy.set_revision_property(self.rev, self.basecode_p, basecode)
+        if imp and imp != '':                                                          
+            self.proxy.set_revision_property(self.rev, self.import_p, imp)
+        self.proxy.set_revision_property(self.rev, self.bring_p, '%d' % rev)
+        return OK
+
+    def _cmdCreates(self):
+        # tests whether the source revision contains a BaseCode tag
+        imp = self.proxy.get_revision_property(self.rev, self.import_p)
+        basecode = self.proxy.get_revision_property(self.rev, self.basecode_p)
+        if not basecode:
+            # complex case: looks up in the branch history for the tag
+            src = self.proxy.get_revision_copy_source(self.rev)
+            if not src:
+                print >> sys.stderr, 'Incoherent copy source'
+                return ERROR
+            (srcrev, srcpath) = src
+            for rev, path in self.proxy.get_history(srcrev, srcpath):
+                imp = self.proxy.get_revision_property(rev, self.import_p)
+                basecode = self.proxy.get_revision_property(rev, \
+                                                            self.basecode_p)
+                if basecode:
+                    break
+        if not basecode:
+             print >> sys.stderr, 'Cannot find basecode info from rev %d' % \
+                                  self.rev
+             return ERROR
+        self.proxy.set_revision_property(self.rev, self.basecode_p, basecode)
+        if imp and imp != '':
+            self.proxy.set_revision_property(self.rev, self.import_p, imp)
+        return OK
+
+if __name__ == "__main__":
+    if len(sys.argv) < 4:
+        print "For usage: %s --help" % (sys.argv[0])
+    else:
+        PostCommitHook()
