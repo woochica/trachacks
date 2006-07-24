@@ -21,6 +21,7 @@ import time
 import sha
 
 from trac.core import *
+from trac.db import *
 from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.util import escape, hex_entropy, TracError, Markup
@@ -51,12 +52,6 @@ class DbAuthLoginModule(Component):
            'username': self.env.config.get('dbauth','username_field', 'username'),
            'password': self.env.config.get('dbauth','password_field', 'password'),
            'email': self.env.config.get('dbauth','email_field', 'email')}
-        self.cookies = {
-           'table': self.env.config.get('dbauth', 'cookies_table', 'trac_cookies'),
-           'cookie': self.env.config.get('dbauth','cookie_field', 'cookie'),
-           'username': self.env.config.get('dbauth','username_field', 'username'),
-           'ipnr': self.env.config.get('dbauth','ipnr_field', 'ipnr'),
-           'unixtime': self.env.config.get('dbauth','unixtime_field', 'unixtime')}
 
 
     # IAuthenticator methods
@@ -167,16 +162,13 @@ class DbAuthLoginModule(Component):
         remote_user = req.args.get('uid')
 
         cookie = hex_entropy()
-        db = get_db(self.env)
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'INSERT INTO %s ' \
-              '(%s, %s, %s, %s) ' \
-              'VALUES (%%s, %%s, %%s, %%s)' % \
-              (self.cookies['table'], self.cookies['cookie'],
-               self.cookies['username'], self.cookies['ipnr'],
-               self.cookies['unixtime'])
-        cursor.execute(sql, (cookie, remote_user, req.remote_addr,
-            int(time.time())))
+        cursor.execute('INSERT INTO auth_cookie ' \
+                       '(cookie ,name ,ipnr ,time) ' \
+                       'VALUES (%s, %s, %s, %s)',
+                       (cookie, remote_user, req.remote_addr,
+                        int(time.time())))
         db.commit()
 
         req.outcookie['db_auth'] = cookie
@@ -192,11 +184,11 @@ class DbAuthLoginModule(Component):
             # Not logged in
             return
 
-        db = get_db(self.env)
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'DELETE FROM %s WHERE %s = %%s' % \
-              (self.cookies['table'], self.cookies['username'])
-        cursor.execute(sql, (req.authname,))
+        cursor.execute('DELETE FROM auth_cookie ' \
+                       'WHERE name=%s OR time < %s',
+                       (req.authname, int(time.time()) - 60 * 60 * 24))
         db.commit()
         self._expire_cookie(req)
 
@@ -208,16 +200,14 @@ class DbAuthLoginModule(Component):
         req.outcookie['db_auth']['expires'] = -10000
 
     def _get_name_for_cookie(self, req, cookie):
-        db = get_db(self.env)
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT %s FROM %s WHERE %s = %%s' % \
-               (self.cookies['username'], self.cookies['table'],
-                self.cookies['cookie'])
-        cursor.execute(sql, (cookie.value,))
+        cursor.execute('SELECT name FROM auth_cookie ' \
+                       'WHERE cookie=%s AND ipnr=%s',
+                       (cookie.value, req.remote_addr))
         row = cursor.fetchone()
         if not row:
-            # The cookie is invalid (or has been purged from the database), so
-            # tell the user agent to drop it as it is invalid
+            # the cookie has become invalid
             self._expire_cookie(req)
             return None
 
@@ -231,7 +221,7 @@ class DbAuthLoginModule(Component):
         # change the password
         newpwd = 'SHA-1:' + sha.new(newpwd).hexdigest()
         sql = 'UPDATE %s SET %s = %%s WHERE %s = %%s' % \
-               (self.users['table'], self.users['password'],
-                self.users['username'])
+              (self.users['table'], self.users['password'],
+               self.users['username'])
         cursor.execute(sql, (newpwd, req.authname))
         db.commit()
