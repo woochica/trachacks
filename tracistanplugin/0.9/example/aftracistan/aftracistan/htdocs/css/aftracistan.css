@@ -1,0 +1,348 @@
+/* andreas06 - an open source xhtml/css website layout by Andreas Viklund - http://andreasviklund.com . Free to use for any purpose as long as the proper credits are given for the original design work.
+
+Version: 1.1, November 28, 2005 */
+
+#divbody {
+background:#e0e0e0 url(../img/bodybg.gif) repeat-x;
+margin:0;
+padding:0;
+text-align:center;
+}
+
+#divbody p{
+line-height:1.5em;
+margin:0 0 15px;
+color:#505050 ! important;
+font:76% Georgia,Verdana,Tahoma,Arial,sans-serif ! important;
+}
+
+#divbody a{
+color:#fa9035;
+font-weight:700;
+text-decoration:none;
+}
+
+#divbody a:hover{
+color:#d04a10;
+}
+
+#divbody hr{
+height:1px;
+margin:10px 0;
+width:98%;
+}
+
+#divbody dt{
+font-weight:700;
+}
+
+#divbody dd{
+margin:1px 0 12px 15px;
+}
+
+#divbody #container{
+background:#c0c0c0 url(../img/bodybg.gif) repeat-x;
+margin:0 auto;
+text-align:left;
+width:752px;
+}
+
+#divbody #sitename{
+background:url(../img/leaves.jpg) top center no-repeat;
+color:#ffffff;
+font-weight:400;
+height:80px;
+margin:0 20px 10px 0;
+text-align:center;
+}
+
+#divbody #sitename h1{
+font-size:2.2em;
+margin:0;
+padding-top:20px;
+}
+
+#divbody #sitename span{
+font-size:1.6em;
+letter-spacing:-1px;
+margin:0;
+}
+
+#divbody #nav{
+background:url(../img/greypx.gif) bottom left repeat-x;
+float:left;
+width:752px;
+}
+
+#divbody #nav ul{
+list-style:none;
+margin:0;
+padding:0;
+}
+
+#divbody #nav a{
+background:url(../img/tabs.gif) no-repeat 100% 0;
+color:#808080;
+display:block;
+font-size:1.2em;
+letter-spacing:-1px;
+padding:7px 20px 4px 11px;
+text-decoration:none;
+}
+
+#divbody #nav a:hover{
+color:#505050;
+}
+
+#divbody #nav li{
+background:url(../img/tabs.gif) no-repeat 0 0;
+float:left;
+margin:0 4px 0 0;
+padding:0 0 0 9px;
+}
+
+#divbody #nav #current{
+background:url(../img/tabs.gif) no-repeat 0 -41px;
+}
+
+#divbody #nav #current a{
+background:url(../img/tabs.gif) no-repeat 100% -41px;
+color:#303030;
+padding:7px 20px 5px 11px;
+}
+
+#divbody #wrap1{
+background:#ffffff url(../img/innerbg.gif) repeat-y;
+border-bottom:1px solid #808080;
+border-left:1px solid #808080;
+border-right:1px solid #808080;
+clear:both;
+padding:0;
+width:750px;
+}
+
+#divbody #wrap2{
+background:url(../img/header.jpg) top left no-repeat;
+padding:10px;
+width:730px;
+}
+
+#divbody #header{
+height:30px;
+position:relative;
+width:730px;
+}
+
+#divbody #header h1{
+float:left;
+font-size:1.4em;
+margin:0;
+width:180px;
+}
+
+#divbody #topbox{
+color:#808080;
+margin:0 0 4px;
+text-align:right;
+}
+
+#divbody #topbox a{
+color:#d04a10;
+}
+
+#divbody #topbox a:hover{
+text-decoration:underline;
+}
+
+#divbody #leftside{
+float:left;
+margin:-15px 0 0;
+width:145px;
+}
+
+#divbody #leftside h1{
+font-size:1.4em;
+font-weight:400;
+}
+
+#divbody #rightside{
+float:right;
+margin:40px 15px 20px 0;
+width:130px;
+}
+
+#divbody #rightside h1{
+font-size:1.4em;
+font-weight:400;
+margin:0 0 12px;
+}
+
+#divbody #rightside p{
+font-size:0.9em;
+margin:2px 0 12px 10px;
+}
+
+#divbody #rightside img{
+border:1px solid #fa9035;
+margin:10px 0 5px 5px;
+padding:2px;
+}
+
+#divbody #content{
+margin:45px 160px 0 180px;
+}
+
+#divbody #contentalt{
+margin:45px 15px 0 180px;
+}
+
+#content p,#contentalt p{
+margin:8px 0 0 10px;
+color:#505050 ! important;
+font:76% Georgia,Verdana,Tahoma,Arial,sans-serif ! important;
+}
+
+#content h1,#contentalt h1{
+color:#505050;
+font-size:2em;
+font-weight:400;
+margin:15px 0 10px;
+padding:0;
+color:#505050 ! important;
+font: Georgia,Verdana,Tahoma,Arial,sans-serif ! important;
+}
+
+#content h2,#contentalt h2{
+color:#505050;
+font-size:1.5em;
+font-weight:400;
+margin:20px 0 10px;
+padding:0;
+color:#505050 ! important;
+font: Georgia,Verdana,Tahoma,Arial,sans-serif ! important;
+}
+
+#divbody #content img,#divbody #contentalt img{
+border:1px solid #fa9035;
+float:left;
+margin:5px 15px 6px;
+}
+
+#divbody #footer{
+clear:both;
+color:#a0a0a0;
+font-size:0.9em;
+height:26px;
+margin-top:20px;
+padding:1px;
+text-align:right;
+width:730px;
+}
+
+#divbody #footer a{
+color:#a0a0a0;
+font-weight:400;
+}
+
+#divbody #footer a:hover{
+color:#a0a0a0;
+text-decoration:underline;
+}
+
+#divbody .menublock{
+margin-bottom:10px;
+}
+
+#divbody .nav{
+color:#d04a10;
+display:block;
+font-size:1.1em;
+font-weight:700;
+margin-bottom:1px;
+padding:2px 2px 2px 10px;
+position:relative;
+text-decoration:none;
+width:125px;
+}
+
+#divbody .nav:hover{
+border:1px solid #fa9035;
+color:#505050;
+padding:1px 1px 1px 9px;
+}
+
+#divbody .sub{
+font-size:0.9em;
+margin-left:20px;
+padding:1px 1px 1px 6px;
+width:105px;
+}
+
+#divbody .sub:hover{
+border:1px solid #fa9035;
+color:#505050;
+padding:0 0 0 5px;
+}
+
+#divbody .intro{
+font-weight:700;
+}
+
+#divbody .active{
+border:1px solid #fa9035;
+padding:1px 1px 1px 9px;
+}
+
+#divbody .box{
+background:#f8f8f8 url(../img/boxbg.gif) top left repeat-y;
+border:1px solid #d0d4d4;
+color:#505050;
+margin:15px auto;
+padding:10px 10px 10px 20px;
+width:75%;
+}
+
+#divbody .photo{
+margin:5px auto 15px;
+padding:5px;
+}
+
+#divbody .smallcaps{
+font-variant:small-caps;
+}
+
+#divbody .mini{
+color:#a0a0a0;
+font-size:0.75em;
+font-weight:400;
+line-height:1.2em;
+margin:20px 0 10px 8px;
+}
+
+#divbody .small{
+font-size:0.85em;
+}
+
+#divbody .large{
+font-size:1.4em;
+}
+
+#divbody .soft{
+color:#808080;
+}
+
+#divbody .normal{
+font-weight:400;
+}
+
+#divbody .sharp{
+color:#101010;
+}
+
+#divbody .center{
+text-align:center;
+}
+
+#divbody .hide{
+display:none;
+}
