@@ -7,29 +7,29 @@
     <?cs if:discussion.forum.id ?>
       <?cs if:discussion.topic.id ?>
         <li>
-          <a href="<?cs var:trac.href.discussion ?>">Forum Index</a>
+          <a href="<?cs var:discussion.href ?>">Forum Index</a>
         </li>
         <?cs if:discussion.message.id ?>
           <li>
-            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>">
+            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>">
               <?cs var:discussion.forum.subject ?>
             </a>
           </li>
           <li class="last">
-            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
+            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
               <?cs var:discussion.topic.subject ?>
             </a>
           </li>
         <?cs else ?>
           <li class="last">
-            <a href="<?cs var:trac.href.discussion ?>/<?cs var:discussion.forum.id ?>">
+            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>">
               <?cs var:discussion.forum.subject ?>
             </a>
           </li>
         <?cs /if ?>
       <?cs else ?>
         <li class="last">
-          <a href="<?cs var:trac.href.discussion ?>">Forum Index</a>
+          <a href="<?cs var:discussion.href ?>">Forum Index</a>
         </li>
       <?cs /if ?>
     <?cs /if ?>

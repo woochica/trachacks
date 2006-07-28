@@ -72,12 +72,6 @@
   border-bottom: 1px solid #d7d7d7;
 }
 
-/*.message-list .topic .header div.author
-{
-  font-weight: bold;
-  margin: 1em;
-}*/
-
 .message-list .header div.body
 {
   margin: 1em;
@@ -116,6 +110,11 @@
   float: right;
   margin: 0em;
   padding: 0em 1em 0em 1em;
+}
+
+.message-list div.controls a
+{
+  margin: 0.3em;
 }
 
 .message-list div.footer

@@ -2,7 +2,7 @@
 
 <h1>Move Topic</h1>
 
-<form class="move_form" method="post" action="<?cs var:discussion.href ?>">
+<form class="move_form" method="post" action="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
   <fieldset>
     <legend>
        Move Topic:

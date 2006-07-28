@@ -1,5 +1,3 @@
-<?cs include "discussion-header.cs" ?>
-
 <?cs def:display_group(group, forums) ?>
   <table class="listing">
     <thead>
@@ -68,15 +66,20 @@
   </table>
 <?cs /def ?>
 
+<?cs linclude "discussion-header.cs" ?>
 <h1>Forum List</h1>
 
-<?cs each:group = discussion.groups ?>
-  <?cs if:group.forums ?>
-    <?cs call:display_group(group, discussion.forums) ?>
-  <?cs /if ?>
-<?cs /each ?>
+<?cs if:discussion.forums.0.id ?>
+  <?cs each:group = discussion.groups ?>
+    <?cs if:group.forums ?>
+      <?cs call:display_group(group, discussion.forums) ?>
+    <?cs /if ?>
+  <?cs /each ?>
+<?cs else ?>
+  <p class="help">There are no forums created.</p>
+<?cs /if ?>
 
-<?cs if:trac.acl.DISCUSSION_MODIFY ?>
+<?cs if:trac.acl.DISCUSSION_ADMIN ?>
   <div class="buttons">
     <form method="post" action="<?cs var:discussion.href ?>">
       <input type="submit" name="newforum" value="New Forum"/>
@@ -85,4 +88,4 @@
   </div>
 <?cs /if ?>
 
-<?cs include "discussion-footer.cs" ?>
+<?cs linclude "discussion-footer.cs" ?>

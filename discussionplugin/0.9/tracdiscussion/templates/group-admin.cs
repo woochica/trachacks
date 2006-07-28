@@ -1,7 +1,7 @@
 <h2>Forum Groups</h2>
 
-<?cs if:discussion.group.id ?>
-  <form id="edit-group-form" class="addnew" method="post" action="<?cs var:discussion.href ?>">
+<?cs if:discussion.group.id && !args.submit ?>
+  <form id="edit-group-form" class="addnew" method="post" action="<?cs var:discussion.href ?>/group">
     <fieldset>
       <legend>
         Edit Forum Group:
@@ -16,14 +16,14 @@
       </div>
       <div class="buttons">
         <input type="submit" name="submit" value="Edit"/>
-        <input type="submit" name="cancel" value="Cancel"/>
+        <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href ?>/group'"/>
         <input type="hidden" name="group" value="<?cs var:discussion.group.id ?>"/>
         <input type="hidden" name="discussion_action" value="post-edit"/>
       </div>
     </fieldset>
   </form>
 <?cs else?>
-  <form id="new-group-form" class="addnew" method="post" action="<?cs var:discussion.href ?>">
+  <form id="new-group-form" class="addnew" method="post" action="<?cs var:discussion.href ?>/group">
     <fieldset>
       <legend>
          Add Forum Group:
@@ -45,7 +45,7 @@
 <?cs /if ?>
 
 <?cs if:discussion.groups.1.id ?>
-  <form method="post" action="<?cs var:discussion.href ?>">
+  <form method="post" action="<?cs var:discussion.href ?>/group"">
     <table id="group-list" class="listing">
       <thead>
         <tr>
@@ -62,12 +62,12 @@
                 <input type="checkbox" name="selection" value="<?cs var:group.id ?>"/>
               </td>
               <td class="name">
-                <a href="<?cs var:discussion.href ?>/<?cs var:group.id ?>">
+                <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
                   <div class="name"><?cs alt:group.name ?>&nbsp;<?cs /alt ?></div>
                 </a>
               </td>
               <td class="description">
-                <a href="<?cs var:discussion.href ?>/<?cs var:group.id ?>">
+                <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
                   <div class="description" ><?cs alt:group.description ?>&nbsp;<?cs /alt ?></div>
                 </a>
               </td>

@@ -78,13 +78,13 @@ class DiscussionTimeline(Component):
 
     def get_timeline_filters(self, req):
         if req.perm.has_permission('DISCUSSION_VIEW'):
-           yield ('discussion', 'Discussion changes')
+            yield ('discussion', 'Discussion changes')
 
     def _get_changed_forums(self, cursor, start, stop):
         columns = ('id', 'name', 'author', 'subject', 'description', 'time')
         sql = "SELECT id, name, author, subject, description, time FROM forum" \
           " WHERE time BETWEEN %s AND %s"
-        self.log.debug(sql)
+        self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
             row = dict(zip(columns, row))
@@ -94,7 +94,7 @@ class DiscussionTimeline(Component):
         columns = ('id', 'subject', 'author', 'time', 'forum', 'forum_name')
         sql = "SELECT id, subject, author, time, forum, (SELECT name FROM forum" \
           " f WHERE f.id = topic.forum) FROM topic WHERE time BETWEEN %s AND %s"
-        self.log.debug(sql)
+        self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
             row = dict(zip(columns, row))
@@ -106,7 +106,7 @@ class DiscussionTimeline(Component):
         sql = "SELECT id, author, time, forum, topic, (SELECT name FROM forum f" \
           " WHERE f.id = message.forum), (SELECT subject FROM topic t WHERE" \
           " t.id = message.topic) FROM message WHERE time BETWEEN %s AND %s"
-        self.log.debug(sql)
+        self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
             row = dict(zip(columns, row))
