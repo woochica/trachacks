@@ -7,7 +7,7 @@
     <div class="topic">
       <div class="header">
         <div class="subject">
-          <?cs var:args.subject ?>
+          <?cs var:discussion.subject ?>
         </div>
         <div class="body">
           <?cs var:discussion.body ?>

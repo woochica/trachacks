@@ -8,11 +8,11 @@
       </legend>
       <div class="field">
         <label for="name">Name:</label><br/>
-        <input type="text" name="name" value="<?cs var:discussion.group.name ?>"/><br/>
+        <input type="text" name="name" value="<?cs var:discussion.name ?>"/><br/>
       </div>
       <div class="field">
         <label for="description">Description:</label><br/>
-        <input type="text" name="description" value="<?cs var:discussion.group.description ?>"/><br/>
+        <input type="text" name="description" value="<?cs var:discussion.description ?>"/><br/>
       </div>
       <div class="buttons">
         <input type="submit" name="submit" value="Edit"/>
@@ -50,6 +50,7 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
+          <th class="id">ID</th>
           <th class="name">Name</th>
           <th class="description">Description</th>
         </tr>
@@ -60,6 +61,11 @@
             <tr class="<?cs if:name(group) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
               <td class="sel">
                 <input type="checkbox" name="selection" value="<?cs var:group.id ?>"/>
+              </td>
+              <td class="id">
+                <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
+                  <div class="id"><?cs var:group.id ?></div>
+                </a>
               </td>
               <td class="name">
                 <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">

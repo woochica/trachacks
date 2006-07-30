@@ -20,6 +20,7 @@ class DiscussionApi(object):
         # Get request mode
         group, forum, topic, message = self._get_items()
         modes = self._get_modes(group, forum, topic, message)
+        self.log.debug('modes: %s' % modes)
 
         # Determine moderator rights.
         if forum:
@@ -37,14 +38,31 @@ class DiscussionApi(object):
         add_stylesheet(self.req, 'discussion/css/admin.css')
 
         # Fill up HDF structure and return template
-        self.log.debug('modes: %s' % modes)
         self.req.hdf['discussion.authname'] = self.req.authname
         self.req.hdf['discussion.is_moderator'] = is_moderator
-        self.req.hdf['discussion.group'] = group
-        self.req.hdf['discussion.forum'] = forum
-        self.req.hdf['discussion.topic'] = topic
-        self.req.hdf['discussion.message'] = message
+        if group:
+            group['name'] = wiki_to_oneliner(group['name'], self.env)
+            group['description'] = wiki_to_oneliner(group['description'], self.env)
+            self.req.hdf['discussion.group'] = group
+        if forum:
+            forum['name'] = wiki_to_oneliner(forum['name'], self.env)
+            forum['description'] = wiki_to_oneliner(forum['description'], self.env)
+            forum['subject'] = wiki_to_oneliner(forum['subject'], self.env)
+            forum['time'] = format_datetime(forum['time'])
+            self.req.hdf['discussion.forum'] = forum
+        if topic:
+            topic['subject'] = wiki_to_oneliner(topic['subject'], self.env)
+            topic['author'] = wiki_to_oneliner(topic['author'], self.env)
+            topic['body'] = wiki_to_html(topic['body'], self.env, self.req)
+            topic['time'] = format_datetime(topic['time'])
+            self.req.hdf['discussion.topic'] = topic
+        if message:
+            message['author'] = wiki_to_oneliner(message['author'], self.env)
+            message['body'] = wiki_to_html(message['body'], self.env, self.req)
+            message['time'] = format_datetime(message['time'])
+            self.req.hdf['discussion.message'] = message
         self.req.hdf['discussion.mode'] = modes[-1]
+        self.req.hdf['discussion.time'] = format_datetime(time.time())
         self.db.commit()
         return modes[-1] + '.cs', None
 
@@ -133,7 +151,7 @@ class DiscussionApi(object):
                 if action == 'add':
                     return ['message-list']
                 elif action == 'quote':
-                    return ['message-quote', 'message-list']
+                    return ['topic-quote', 'message-list']
                 elif action == 'post-add':
                     if preview:
                         return ['message-list']
@@ -148,7 +166,7 @@ class DiscussionApi(object):
                 if action == 'add':
                     return ['message-list']
                 elif action == 'quote':
-                    return ['message-quote', 'message-list']
+                    return ['topic-quote', 'message-list']
                 elif action == 'post-add':
                     if preview:
                         return ['message-list']
@@ -222,11 +240,16 @@ class DiscussionApi(object):
 
     def _do_action(self, modes, group, forum, topic, message, is_moderator):
         for mode in modes:
+            self.log.debug('doing %s mode action' % (mode,))
+            self.log.debug(forum)
             if mode == 'group-list':
                 self.req.perm.assert_permission('DISCUSSION_VIEW')
                 self.req.hdf['discussion.groups'] = self.get_groups()
             elif mode == 'admin-group-list':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+                if group:
+                    self.req.hdf['discussion.name'] = group['name']
+                    self.req.hdf['discussion.description'] = group['description']
                 self.req.hdf['discussion.groups'] = self.get_groups()
             elif mode == 'group-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -257,6 +280,12 @@ class DiscussionApi(object):
                 self.req.hdf['discussion.forums'] = self.get_forums()
             elif mode == 'admin-forum-list':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+                if forum:
+                    self.req.hdf['discussion.name'] = forum['name']
+                    self.req.hdf['discussion.subject'] = forum['subject']
+                    self.req.hdf['discussion.description'] = forum['description']
+                    self.req.hdf['discussion.moderators'] = forum['moderators']
+                    self.req.hdf['discussion.group'] = forum['group']
                 self.req.hdf['discussion.users'] = self.get_users()
                 self.req.hdf['discussion.groups'] = self.get_groups()
                 self.req.hdf['discussion.forums'] = self.get_forums()
@@ -266,32 +295,36 @@ class DiscussionApi(object):
                 self.req.hdf['discussion.groups'] = self.get_groups()
             elif mode == 'forum-post-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
-                name = Markup(self.req.args.get('name'))
-                author = self.req.authname
-                subject = Markup(self.req.args.get('subject'))
-                description = Markup(self.req.args.get('description'))
-                moderators = self.req.args.get('moderators')
-                group = self.req.args.get('group')
-                if not moderators:
-                    moderators = []
-                if not isinstance(moderators, list):
-                     moderators = [moderators]
-                self.add_forum(name, author, subject, description, moderators,
-                  group)
+                # Get form values
+                new_name = Markup(self.req.args.get('name'))
+                new_author = self.req.authname
+                new_subject = Markup(self.req.args.get('subject'))
+                new_description = Markup(self.req.args.get('description'))
+                new_moderators = self.req.args.get('moderators')
+                new_group = self.req.args.get('group')
+                if not new_moderators:
+                    new_moderators = []
+                if not isinstance(new_moderators, list):
+                     new_moderators = [new_moderators]
+                # Perform new forum add.
+                self.add_forum(new_name, new_author, new_subject,
+                   new_description, new_moderators, new_group)
             elif mode == 'forum-post-edit':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
-                forum = self.req.args.get('forum')
-                name = Markup(self.req.args.get('name'))
-                subject = Markup(self.req.args.get('subject'))
-                description = Markup(self.req.args.get('description'))
-                moderators = self.req.args.get('moderators')
-                group = self.req.args.get('group')
-                if not moderators:
-                    moderators = []
-                if not isinstance(moderators, list):
-                    moderators = [moderators]
-                self.edit_forum(forum, name, subject, description, moderators,
-                  group)
+                # Get form values.
+                new_forum = self.req.args.get('forum')
+                new_name = Markup(self.req.args.get('name'))
+                new_subject = Markup(self.req.args.get('subject'))
+                new_description = Markup(self.req.args.get('description'))
+                new_moderators = self.req.args.get('moderators')
+                new_group = self.req.args.get('group')
+                if not new_moderators:
+                    new_moderators = []
+                if not isinstance(new_moderators, list):
+                    new_moderators = [new_moderators]
+                # Perform forum edit.
+                self.edit_forum(new_forum, new_name, new_subject,
+                  new_description, new_moderators, new_group)
             elif mode == 'forum-delete':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
                 self.delete_forum(forum['id'])
@@ -308,15 +341,24 @@ class DiscussionApi(object):
                 self.req.hdf['discussion.topics'] = self.get_topics(forum['id'])
             elif mode == 'topic-add':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
+                subject = Markup(self.req.args.get('subject'))
                 author = Markup(self.req.args.get('author'))
                 body = Markup(self.req.args.get('body'))
+                if subject:
+                    self.req.hdf['discussion.subject'] = wiki_to_oneliner(
+                      subject, self.env)
                 if author:
                     self.req.hdf['discussion.author'] = wiki_to_oneliner(author,
                       self.env)
                 if body:
                     self.req.hdf['discussion.body'] = wiki_to_html(body,
                       self.env, self.req)
-                self.req.hdf['discussion.time'] = format_datetime(time.time())
+            elif mode == 'topic-quote':
+                self.req.perm.assert_permission('DISCUSSION_APPEND')
+                lines = topic['body'].splitlines()
+                for I in xrange(len(lines)):
+                    lines[I] = '> %s' % (lines[I])
+                self.req.hdf['args.body'] = '\n'.join(lines)
             elif mode == 'topic-post-add':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
                 subject = Markup(self.req.args.get('subject'))
@@ -349,7 +391,6 @@ class DiscussionApi(object):
                 if body:
                     self.req.hdf['discussion.body'] = wiki_to_html(body,
                       self.env, self.req)
-                self.req.hdf['discussion.time'] = format_datetime(time.time())
                 self.req.hdf['discussion.messages'] = self.get_messages(topic['id'])
             elif mode == 'message-quote':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -393,9 +434,6 @@ class DiscussionApi(object):
         self.cursor.execute(sql, (id,))
         for row in self.cursor:
             row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, self.req)
-            row['time'] = format_datetime(row['time'])
             return row
         return None
 
@@ -407,9 +445,6 @@ class DiscussionApi(object):
         self.cursor.execute(sql)
         for row in self.cursor:
             row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, self.req)
-            row['time'] = format_datetime(row['time'])
             return row
         return None
 
@@ -423,7 +458,6 @@ class DiscussionApi(object):
         for row in self.cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
             return row
         return None
 
@@ -434,8 +468,6 @@ class DiscussionApi(object):
         self.cursor.execute(sql, (id,))
         for row in self.cursor:
             row = dict(zip(columns, row))
-            row['name'] = wiki_to_oneliner(row['name'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
             return row
         return {'id' : 0, 'name': 'None', 'description': 'No Group'}
 

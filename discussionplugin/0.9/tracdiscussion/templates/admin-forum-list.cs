@@ -8,15 +8,15 @@
       </legend>
       <div class="field">
         <label for="name">Name:</label><br/>
-        <input type="text" id="name" name="name" value="<?cs var:discussion.forum.name ?>"/><br/>
+        <input type="text" id="name" name="name" value="<?cs var:discussion.name ?>"/><br/>
       </div>
       <div class="field">
         <label for="subject">Subject:</label><br/>
-        <input type="text" id="subject" name="subject" value="<?cs var:discussion.forum.subject ?>"/><br/>
+        <input type="text" id="subject" name="subject" value="<?cs var:discussion.subject ?>"/><br/>
       </div>
       <div class="field">
         <label for="description">Description:</label><br/>
-        <input type="text" id="description" name="description" value="<?cs var:discussion.forum.description ?>"/><br/>
+        <input type="text" id="description" name="description" value="<?cs var:discussion.description ?>"/><br/>
       </div>
       <div class="field">
         <label for="moderators">Moderators:</label><br/>
@@ -24,7 +24,7 @@
           <select id="moderators" name="moderators" multiple="on">
             <?cs each:user = discussion.users ?>
               <?cs set:selected = 0 ?>
-              <?cs each:moderator = discussion.forum.moderators ?>
+              <?cs each:moderator = discussion.moderators ?>
                 <?cs if:moderator == user ?>
                   <?cs set:selected = 1 ?>
                 <?cs /if ?>
@@ -37,7 +37,7 @@
             <?cs /each ?>
           </select><br/>
         <?cs else ?>
-          <input type="text" id="moderators" name="moderators" value="<?cs var:discussion.forum.moderators ?>"/><br/>
+          <input type="text" id="moderators" name="moderators" value="<?cs var:discussion.moderators ?>"/><br/>
         <?cs /if ?>
       </div>
       <?cs if:discussion.groups.1.id ?>
@@ -45,7 +45,7 @@
           <label for="group">Forum Group:</label><br/>
           <select id="group" name="group">
             <?cs each:group = discussion.groups ?>
-              <?cs if:group.id == discussion.forum.group ?>
+              <?cs if:group.id == discussion.group ?>
                 <option value="<?cs var:group.id ?>" selected="selected"><?cs var:group.name ?></option>
               <?cs else ?>
                 <option value="<?cs var:group.id ?>"><?cs var:group.name ?></option>
@@ -120,6 +120,7 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
+          <th class="id">ID</th>
           <th class="name">Name</th>
           <th class="subject">Subject</th>
           <th class="description">Description</th>
@@ -134,6 +135,11 @@
           <tr class="<?cs if:name(forum) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
             <td class="sel">
               <input type="checkbox" name="selection" value="<?cs var:forum.id ?>"/>
+            </td>
+            <td class="id">
+              <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
+                <div class="id"><?cs var:forum.id ?></div>
+              </a>
             </td>
             <td class="name">
               <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">

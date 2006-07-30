@@ -22,11 +22,7 @@
       <legend>
          Reply:
       </legend>
-      <?cs if:discussion.component == 'wiki' ?>
-        <form method="get" action="<?cs var:discussion.href ?>#preview">
-      <?cs else ?>
-        <form method="get" action="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>#preview">
-      <?cs /if ?>
+      <form method="get" action="<?cs var:discussion.href ?>#preview">
         <div class="field">
           <label for="author">Author:</label><br/>
           <?cs if:args.author ?>
@@ -42,11 +38,7 @@
         <div class="buttons">
           <input type="submit" name="preview" value="Preview"/>
           <input type="submit" name="submit" value="Reply"/>
-          <?cs if:discussion.component == 'wiki' ?>
-            <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href ?>#<?cs var:args.message ?>'"/>
-          <?cs else ?>
-            <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>#<?cs var:args.message ?>'"/>
-          <?cs /if ?>
+          <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href ?>#<?cs var:args.message ?>'"/>
         </div>
         <?cs if:args.message ?>
           <input type="hidden" name="message" value="<?cs var:args.message ?>"/>
@@ -69,20 +61,11 @@
       </div>
       <div class="controls">
         <?cs if:trac.acl.DISCUSSION_APPEND ?>
-          <?cs if:discussion.component == 'wiki' ?>
-            <a href="<?cs var:discussion.href ?>?discussion_action=add;message=<?cs var:message.id ?>#reply">Reply</a>
-            <a href="<?cs var:discussion.href ?>?discussion_action=quote;message=<?cs var:message.id ?>#reply">Quote</a>
-          <?cs else ?>
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?discussion_action=add;message=<?cs var:message.id ?>#reply">Reply</a>
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?discussion_action=quote;message=<?cs var:message.id ?>#reply">Quote</a>
-          <?cs /if ?>
+          <a href="<?cs var:discussion.href ?>?discussion_action=add;message=<?cs var:message.id ?>#reply">Reply</a>
+          <a href="<?cs var:discussion.href ?>?discussion_action=quote;message=<?cs var:message.id ?>#reply">Quote</a>
         <?cs /if ?>
         <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
-          <?cs if:discussion.component == 'wiki' ?>
-            <a href="<?cs var:discussion.href ?>?discussion_action=delete;message=<?cs var:message.id ?>" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')"/>Delete</a>
-          <?cs else ?>
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?discussion_action=delete;message=<?cs var:message.id ?>" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')"/>Delete</a>
-          <?cs /if ?>
+          <a href="<?cs var:discussion.href ?>?discussion_action=delete;message=<?cs var:message.id ?>" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')"/>Delete</a>
         <?cs /if ?>
       </div>
       <div class="footer">
@@ -108,6 +91,9 @@
   <?cs /each ?>
 <?cs /def ?>
 
+<?cs if:discussion.component != 'wiki' ?>
+  <?cs set:discussion.href = discussion.href + '/' + discussion.forum.id + '/' + discussion.forum.id ?>
+<?cs /if ?>
 
 <?cs if:discussion.no_navigation ?>
   <div id="message-list" class="message-list">
@@ -130,13 +116,8 @@
         </div>
         <div class="controls">
           <?cs if:trac.acl.DISCUSSION_APPEND ?>
-            <?cs if:discussion.component == 'wiki' ?>
-              <a href="<?cs var:discussion.href ?>?discussion_action=add;#reply">Reply</a>
-              <a href="<?cs var:discussion.href ?>?discussion_action=quote;#reply">Quote</a>
-            <?cs else ?>
-              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?discussion_action=add;#reply">Reply</a>
-              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>?discussion_action=quote;#reply">Quote</a>
-            <?cs /if ?>
+            <a href="<?cs var:discussion.href ?>?discussion_action=add;#reply">Reply</a>
+            <a href="<?cs var:discussion.href ?>?discussion_action=quote;#reply">Quote</a>
           <?cs /if ?>
         </div>
         <div class="footer">
@@ -171,11 +152,7 @@
 
 <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
   <div class="buttons">
-    <?cs if:discussion.component == 'wiki' ?>
-      <form method="get" action="<?cs var:discussion.href ?>">
-    <?cs else ?>
-      <form method="get" action="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
-    <?cs /if ?>
+    <form method="get" action="<?cs var:discussion.href ?>">
       <input type="submit" name="deletetopic" value="Delete Topic" onclick="return confirm('Do you realy want to delete this topic?')"/>
       <input type="hidden" name="discussion_action" value="delete"/>
     </form>

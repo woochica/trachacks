@@ -20,7 +20,12 @@
   border: none;
 }
 
-.listing td.moderators, .listing td.group
+.listing td.id, .listing td.moderators, .listing td.group
 {
   text-align: center;
+}
+
+.listing td.id
+{
+  width: 1%;
 }
