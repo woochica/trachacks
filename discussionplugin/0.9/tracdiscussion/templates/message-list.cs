@@ -91,10 +91,6 @@
   <?cs /each ?>
 <?cs /def ?>
 
-<?cs if:discussion.component != 'wiki' ?>
-  <?cs set:discussion.href = discussion.href + '/' + discussion.forum.id + '/' + discussion.forum.id ?>
-<?cs /if ?>
-
 <?cs if:discussion.no_navigation ?>
   <div id="message-list" class="message-list">
   <h2>Discussion</h2>
@@ -102,6 +98,10 @@
   <?cs linclude "discussion-header.cs" ?>
   <h1>Forum #<?cs var:discussion.forum.id ?> - Topic #<?cs var:discussion.topic.id ?> - Message List</h1>
 <?cs /if?>
+
+<?cs if:discussion.component != 'wiki' ?>
+  <?cs set:discussion.href = discussion.href + '/' + discussion.forum.id + '/' + discussion.topic.id ?>
+<?cs /if ?>
 
 <?cs if:trac.acl.DISCUSSION_VIEW ?>
   <a name="-1"></a>
