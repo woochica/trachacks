@@ -33,11 +33,11 @@ class TicketRPC(Component):
         yield ('TICKET_ADMIN', ((bool, int, str),), self.deleteAttachment)
 
     # Exported methods
-    def query(self, req, qstr = 'status!=closed'):
+    def query(self, req, qstr='status!=closed'):
         """ Perform a ticket query, returning a list of ticket ID's. """
         q = query.Query.from_string(self.env, qstr)
         out = []
-        for t in q.execute():
+        for t in q.execute(req):
             out.append(t['id'])
         return out
 
@@ -134,8 +134,11 @@ def ticketModelFactory(cls, cls_attributes):
         def get(self, req, name):
             i = cls(self.env, name)
             attributes= {}
-            for k in cls_attributes:
-                attributes[k] = getattr(i, k)
+            for k, default in cls_attributes.iteritems():
+                v = getattr(i, k)
+                if v is None:
+                    v = default
+                attributes[k] = v
             return attributes
         get.__doc__ = """ Get a ticket %s. """ % cls.__name__.lower()
 
@@ -213,9 +216,9 @@ def ticketEnumFactory(cls):
     AbstractEnumImpl.__name__ = '%sRPC' % cls.__name__
     return AbstractEnumImpl
 
-ticketModelFactory(model.Component, ('name', 'owner', 'description'))
-ticketModelFactory(model.Version, ('name', 'time', 'description'))
-ticketModelFactory(model.Milestone, ('name', 'due', 'completed', 'description'))
+ticketModelFactory(model.Component, {'name': '', 'owner': '', 'description': ''})
+ticketModelFactory(model.Version, {'name': '', 'time': 0, 'description': ''})
+ticketModelFactory(model.Milestone, {'name': '', 'due': 0, 'completed': 0, 'description': ''})
 
 ticketEnumFactory(model.Type)
 ticketEnumFactory(model.Status)

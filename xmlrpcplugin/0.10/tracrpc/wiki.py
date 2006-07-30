@@ -79,7 +79,7 @@ class WikiRPC(Component):
 
     def getPageHTML(self, req, pagename, version=None):
         """ Return page in rendered HTML, latest version. """
-        text = self.getPage(pagename, version)
+        text = self.getPage(req, pagename, version)
         html = wiki_to_html(text, self.env, req, absurls=1)
         return '<html><body>%s</body></html>' % html
 

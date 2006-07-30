@@ -28,7 +28,8 @@ class XMLRPCWeb(Component):
         req.perm.assert_permission('XML_RPC')
 
         # Dump RPC functions
-        if req.get_header('Content-Type') != 'text/xml':
+        content_type = req.get_header('Content-Type')
+        if content_type is not None and 'text/xml' not in content_type:
             namespaces = {}
             for method in XMLRPCSystem(self.env).all_methods(req):
                 namespace = method.namespace.replace('.', '_')
