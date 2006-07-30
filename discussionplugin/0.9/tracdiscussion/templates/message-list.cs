@@ -61,6 +61,9 @@
   <?cs each:message = messages ?>
     <li>
       <a name="<?cs var:message.id ?>"></a>
+      <div class="id">
+        Message #<?cs var:message.id ?>
+      </div>
       <div class="body">
         <?cs var:message.body ?>
       </div>
@@ -111,7 +114,7 @@
   <h2>Discussion</h2>
 <?cs else ?>
   <?cs linclude "discussion-header.cs" ?>
-  <h1 class="forum-subject"><?cs var:discussion.forum.subject ?> - Message List</h1>
+  <h1>Forum #<?cs var:discussion.forum.id ?> - Topic #<?cs var:discussion.topic.id ?> - Message List</h1>
 <?cs /if?>
 
 <?cs if:trac.acl.DISCUSSION_VIEW ?>

@@ -3,13 +3,14 @@
     <thead>
       <?cs if:group.id ?>
         <tr>
-          <th class="group" colspan="7">
+          <th class="group" colspan="8">
             <div class="name"><?cs var:group.name ?></div>
             <div class="description"><?cs var:group.description ?></div>
           </th>
         <tr>
       <?cs /if ?>
       <tr>
+        <th class="id">ID</th>
         <th class="subject">Forum</th>
         <th class="moderators">Moderators</th>
         <th class="lasttopic">Last Topic</th>
@@ -22,7 +23,12 @@
     <tbody>
       <?cs each:forum = forums ?>
         <?cs if forum.group == group.id ?>
-         <tr class="<?cs if:name(forum) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
+          <tr class="<?cs if:name(forum) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
+            <td class="id">
+              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                <div class="id"><?cs var:forum.id ?></div>
+              </a>
+            </td>
             <td class="title">
               <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
                 <div class="subject"><?cs alt:forum.subject ?>&nbsp;<?cs /alt ?></div>

@@ -45,13 +45,6 @@ class DiscussionApi(object):
         self.req.hdf['discussion.topic'] = topic
         self.req.hdf['discussion.message'] = message
         self.req.hdf['discussion.mode'] = modes[-1]
-
-        # Will be removed after template rename
-        if modes[-1] == 'admin-forum-list':
-            modes[-1] = 'forum-admin'
-        if modes[-1] == 'admin-group-list':
-            modes[-1] = 'group-admin'
-
         self.db.commit()
         return modes[-1] + '.cs', None
 
