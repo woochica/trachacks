@@ -27,13 +27,13 @@ from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, Chrome
 from trac.web.api import RequestDone
+from trac.config import ExtensionOption
 
 from nevow.flat import flatten, ten
 from nevow import rend
 from nevow import tags as T
 
 from nevow import accessors, inevow
-#from zope.interface import implements, Interface
 from twisted.python.components import registerAdapter
 
 try:
@@ -107,13 +107,15 @@ class StanEngine(Component):
     def _replace_tag (self, slot):
         return T.invisible(slot=slot)
 
-    def _include_tag (self, template, locals, globals):
+
+    def _include_tag ( self, template, globals, locals = None):
+        if locals is None:
+            locals = {}
         try:
             filename = self.find_template(template)
-            return eval(file(filename, 'rU').read(),
-                        locals, globals)
+            return eval(file(filename, 'rU').read(), globals, locals)
         except:
-            print "ERROR IN INCLUDE", template
+            self.log.warning("ERROR IN INCLUDE: %s" % template)
             raise
 
     def find_template (self, template):
@@ -162,12 +164,11 @@ class StanEngine(Component):
         protected = ['vars', 'render', 'inherits', 'replace', 'include',
                      'formerror', ]
         ns['vars'] = DataVars(info)
-#        if self.get_extra_vars:
-#            ns['std'] = self.get_extra_vars (  ) [ 'std' ]
         ns['render'] = rend
         ns['inherits'] = lambda template: self._inherits_tag(template, ns, ns)
         ns['replace'] = ns ['override'] = self._replace_tag
-        ns['include'] = lambda template: self._include_tag(template, ns, ns)
+        ns['include'] = lambda template, locals=None: \
+                        self._include_tag (template, ns, locals)
         ns['formerror'] = T.Proto('form:error')
         for renderer in self.renderers:
             funcs = renderer.get_renderers()
@@ -235,6 +236,10 @@ class TracIStan(Component):
     implements(IRequestHandler, ITemplateProvider)
     stanreqhandlers = ExtensionPoint(IStanRequestHandler)
 
+    default_handler = ExtensionOption('tracistan', 'default_handler',
+                                      IStanRequestHandler, '',
+        """Name of the TracIStan component that handles requests to the base URL.""")
+
     def __init__(self):
         self.stantheman = StanEngine(self.env)
 
@@ -247,11 +252,14 @@ class TracIStan(Component):
         return False
 
     def process_request(self, req):
-        for handler in self.stanreqhandlers:
-            if handler.match_request(req):
-                chosen_handler = handler
-                break
-            continue
+        if not req.path_info or req.path_info == '/':
+            chosen_handler = self.default_handler
+        else:
+            for handler in self.stanreqhandlers:
+                if handler.match_request(req):
+                    chosen_handler = handler
+                    break
+                continue
         req.standata = {}
         hdf = getattr(req, 'hdf', None)
         if hdf:
