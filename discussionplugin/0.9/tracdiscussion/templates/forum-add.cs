@@ -8,39 +8,39 @@
     </legend>
     <div class="field">
       <label for="name">Name:</label><br/>
-      <input type="text" name="name" value=""/><br/>
+      <input type="text" id="name" name="name" value=""/><br/>
     </div>
     <div class="field">
       <label for="subject">Subject:</label><br/>
-      <input type="text" name="subject" value=""/><br/>
+      <input type="text" id="subject" name="subject" value=""/><br/>
     </div>
     <div class="field">
       <label for="description">Description:</label><br/>
-      <input type="text" name="description" value=""/><br/>
+      <input type="text" id="description" name="description" value=""/><br/>
     </div>
     <div class="field">
       <label for="moderators">Moderators:</label><br/>
       <?cs if:discussion.users.0 ?>
-        <select name="moderators" multiple="on">
+        <select id="moderators" name="moderators" multiple="on">
           <?cs each:user = discussion.users ?>
             <option value="<?cs var:user ?>"><?cs var:user ?></option>
           <?cs /each ?>
         </select><br/>
       <?cs else ?>
-        <input type="text" name="moderators" value=""/><br/>
+        <input type="text" id="moderators" name="moderators" value=""/><br/>
       <?cs /if ?>
     </div>
     <?cs if:discussion.groups.1.id ?>
       <div class="group">
         <label for="group">Forum Group:</label><br/>
-        <select name="group">
+        <select id="group" name="group">
           <?cs each:group = discussion.groups ?>
             <option value="<?cs var:group.id ?>"><?cs var:group.name ?></option>
           <?cs /each ?>
         </select><br/>
       </div>
     <?cs else ?>
-      <input type="hidden" name="group" value="0"/>
+      <input type="hidden" id="group" name="group" value="0"/>
     <?cs /if ?>
     <div class="buttons">
       <input type="submit" name="submit" value="Submit"/>

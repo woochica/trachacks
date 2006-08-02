@@ -1,9 +1,9 @@
 from trac.core import *
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
+from trac.perm import PermissionError
 from trac.util import format_datetime, pretty_timedelta, escape, unescape, \
   Markup
-from trac.util import Markup, format_datetime
 import time
 
 class DiscussionApi(object):
@@ -126,6 +126,13 @@ class DiscussionApi(object):
                         return ['message-list']
                     else:
                         return ['message-post-add', 'message-list']
+                elif action == 'edit':
+                    return ['message-edit', 'message-list']
+                elif action == 'post-edit':
+                    if preview:
+                        return ['message-list']
+                    else:
+                        return ['message-post-edit', 'message-list']
                 elif action == 'delete':
                     return ['message-delete', 'message-list']
                 else:
@@ -140,6 +147,13 @@ class DiscussionApi(object):
                         return ['message-list']
                     else:
                         return ['message-post-add', 'message-list']
+                elif action == 'edit':
+                    return ['message-edit', 'message-list']
+                elif action == 'post-edit':
+                    if preview:
+                        return ['message-list']
+                    else:
+                        return ['message-post-edit', 'message-list']
                 elif action == 'delete':
                     return ['message-delete', 'message-list']
                 else:
@@ -157,6 +171,13 @@ class DiscussionApi(object):
                         return ['message-list']
                     else:
                         return ['message-post-add', 'message-list']
+                elif action == 'edit':
+                    return ['topic-edit', 'message-list']
+                elif action == 'post-edit':
+                    if preview:
+                        return ['message-list']
+                    else:
+                        return ['topic-post-edit', 'message-list']
                 elif action == 'delete':
                     self.req.hdf['discussion.no_display'] = True
                     return ['topic-delete', 'message-list']
@@ -172,6 +193,13 @@ class DiscussionApi(object):
                         return ['message-list']
                     else:
                         return ['message-post-add', 'message-list']
+                elif action == 'edit':
+                    return ['topic-edit', 'message-list']
+                elif action == 'post-edit':
+                    if preview:
+                        return ['message-list']
+                    else:
+                        return ['topic-post-edit', 'message-list']
                 elif action == 'delete':
                     return ['topic-delete', 'topic-list']
                 elif action == 'move':
@@ -241,45 +269,72 @@ class DiscussionApi(object):
     def _do_action(self, modes, group, forum, topic, message, is_moderator):
         for mode in modes:
             self.log.debug('doing %s mode action' % (mode,))
-            self.log.debug(forum)
             if mode == 'group-list':
                 self.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Display groups.
                 self.req.hdf['discussion.groups'] = self.get_groups()
+
             elif mode == 'admin-group-list':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
+                # Display groups.
                 if group:
                     self.req.hdf['discussion.name'] = group['name']
                     self.req.hdf['discussion.description'] = group['description']
                 self.req.hdf['discussion.groups'] = self.get_groups()
+
             elif mode == 'group-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
             elif mode == 'group-post-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
-                name = Markup(self.req.args.get('name'))
-                description = Markup(self.req.args.get('description'))
-                self.add_group(name, description)
+
+                # Get form values.
+                new_name = Markup(self.req.args.get('name'))
+                new_description = Markup(self.req.args.get('description'))
+
+                # Add new group.
+                self.add_group(new_name, new_description)
+
             elif mode == 'group-post-edit':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
-                group = self.req.args.get('group')
-                name = Markup(self.req.args.get('name'))
-                description = Markup(self.req.args.get('description'))
-                self.edit_group(group, name, description)
+
+                # Get form values.
+                new_group = self.req.args.get('group')
+                new_name = Markup(self.req.args.get('name'))
+                new_description = Markup(self.req.args.get('description'))
+
+                # Edit group.
+                self.edit_group(new_group, new_name, new_description)
+
             elif mode == 'group-delete':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
             elif mode == 'groups-delete':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
+                # Get selected groups.
                 selection = self.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
+
+                # Delete selected groups.
                 if selection:
                     for group in selection:
                         self.delete_group(group)
+
             elif mode == 'forum-list':
                 self.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Display forums.
                 self.req.hdf['discussion.groups'] = self.get_groups()
                 self.req.hdf['discussion.forums'] = self.get_forums()
+
             elif mode == 'admin-forum-list':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
+                # Display forums.
                 if forum:
                     self.req.hdf['discussion.name'] = forum['name']
                     self.req.hdf['discussion.subject'] = forum['subject']
@@ -289,12 +344,17 @@ class DiscussionApi(object):
                 self.req.hdf['discussion.users'] = self.get_users()
                 self.req.hdf['discussion.groups'] = self.get_groups()
                 self.req.hdf['discussion.forums'] = self.get_forums()
+
             elif mode == 'forum-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
+                # Display Add Forum form.
                 self.req.hdf['discussion.users'] = self.get_users()
                 self.req.hdf['discussion.groups'] = self.get_groups()
+
             elif mode == 'forum-post-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
                 # Get form values
                 new_name = Markup(self.req.args.get('name'))
                 new_author = self.req.authname
@@ -306,11 +366,14 @@ class DiscussionApi(object):
                     new_moderators = []
                 if not isinstance(new_moderators, list):
                      new_moderators = [new_moderators]
+
                 # Perform new forum add.
                 self.add_forum(new_name, new_author, new_subject,
                    new_description, new_moderators, new_group)
+
             elif mode == 'forum-post-edit':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
                 # Get form values.
                 new_forum = self.req.args.get('forum')
                 new_name = Markup(self.req.args.get('name'))
@@ -322,95 +385,195 @@ class DiscussionApi(object):
                     new_moderators = []
                 if not isinstance(new_moderators, list):
                     new_moderators = [new_moderators]
+
                 # Perform forum edit.
                 self.edit_forum(new_forum, new_name, new_subject,
                   new_description, new_moderators, new_group)
+
             elif mode == 'forum-delete':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
+                # Delete forum
                 self.delete_forum(forum['id'])
+
             elif mode == 'forums-delete':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
+
+                # Get selected forums.
                 selection = self.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
+
+                # Delete selected forums.
                 if selection:
                     for forum in selection:
                         self.delete_forum(forum)
+
             elif mode == 'topic-list':
                 self.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Display topics.
                 self.req.hdf['discussion.topics'] = self.get_topics(forum['id'])
+
             elif mode == 'topic-add':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
-                subject = Markup(self.req.args.get('subject'))
-                author = Markup(self.req.args.get('author'))
-                body = Markup(self.req.args.get('body'))
-                if subject:
+
+                # Get form values.
+                new_subject = Markup(self.req.args.get('subject'))
+                new_author = Markup(self.req.args.get('author'))
+                new_body = Markup(self.req.args.get('body'))
+
+                # Display Add Topic form.
+                if new_subject:
                     self.req.hdf['discussion.subject'] = wiki_to_oneliner(
-                      subject, self.env)
-                if author:
-                    self.req.hdf['discussion.author'] = wiki_to_oneliner(author,
-                      self.env)
-                if body:
-                    self.req.hdf['discussion.body'] = wiki_to_html(body,
+                      new_subject, self.env)
+                if new_author:
+                    self.req.hdf['discussion.author'] = wiki_to_oneliner(
+                     new_author, self.env)
+                if new_body:
+                    self.req.hdf['discussion.body'] = wiki_to_html(new_body,
                       self.env, self.req)
+
             elif mode == 'topic-quote':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
+
+                # Prepare old content.
                 lines = topic['body'].splitlines()
                 for I in xrange(len(lines)):
                     lines[I] = '> %s' % (lines[I])
                 self.req.hdf['args.body'] = '\n'.join(lines)
+
             elif mode == 'topic-post-add':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
-                subject = Markup(self.req.args.get('subject'))
-                author = Markup(self.req.args.get('author'))
-                body = Markup(self.req.args.get('body'))
-                self.add_topic(forum['id'], subject, author, body)
+
+                # Get form values.
+                new_subject = Markup(self.req.args.get('subject'))
+                new_author = Markup(self.req.args.get('author'))
+                new_body = Markup(self.req.args.get('body'))
+
+                # Add topic.
+                self.add_topic(forum['id'], new_subject, new_author, new_body)
+
+            elif mode == 'topic-edit':
+                 self.req.perm.assert_permission('DISCUSSION_APPEND')
+                 if not is_moderator and (topic['author'] != self.req.authname):
+                    raise PermissionError('Topic edit')
+
+                 # Prepare form values.
+                 self.req.hdf['args.body'] = topic['body']
+                 self.req.hdf['args.subject'] = topic['subject']
+            elif mode == 'topic-post-edit':
+                 self.req.perm.assert_permission('DISCUSSION_APPEND')
+                 if not is_moderator and (topic['author'] != self.req.authname):
+                    raise PermissionError('Topic edit')
+
+                 # Get form values.
+                 new_subject = Markup(self.req.args.get('subject'))
+                 new_body = Markup(self.req.args.get('body'))
+
+                 # Edit topic.
+                 topic['subject'] = new_subject
+                 topic['body'] = new_body
+                 self.edit_topic(topic['id'], topic['forum'], new_subject,
+                   new_body)
+
             elif mode == 'topic-move':
                 self.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
+
+                # Display Move Topic form
                 self.req.hdf['discussion.forums'] = self.get_forums()
+
             elif mode == 'topic-post-move':
                 self.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
+
+                # Get form values
                 new_forum = self.req.args.get('new_forum')
+
+                # Move topic.
                 self.set_forum(topic['id'], new_forum)
+
             elif mode == 'topic-delete':
                 self.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
+
+                # Delete topic.
                 self.delete_topic(topic['id'])
+
             elif mode == 'message-list':
                 self.req.perm.assert_permission('DISCUSSION_VIEW')
-                author = Markup(self.req.args.get('author'))
-                body = Markup(self.req.args.get('body'))
-                if author:
-                    self.req.hdf['discussion.author'] = wiki_to_oneliner(author,
-                      self.env)
-                if body:
-                    self.req.hdf['discussion.body'] = wiki_to_html(body,
+
+                # Get form values.
+                new_author = Markup(self.req.args.get('author'))
+                new_subject = Markup(self.req.args.get('subject'))
+                new_body = Markup(self.req.args.get('body'))
+
+                # Display message list.
+                if new_author:
+                    self.req.hdf['discussion.author'] = wiki_to_oneliner(
+                      new_author, self.env)
+                if new_subject:
+                    self.req.hdf['discussion.subject'] = wiki_to_oneliner(
+                      new_subject, self.env)
+                if new_body:
+                    self.req.hdf['discussion.body'] = wiki_to_html(new_body,
                       self.env, self.req)
                 self.req.hdf['discussion.messages'] = self.get_messages(topic['id'])
+
             elif mode == 'message-quote':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
+
+                # Prepare old content.
                 lines = message['body'].splitlines()
                 for I in xrange(len(lines)):
                     lines[I] = '> %s' % (lines[I])
                 self.req.hdf['args.body'] = '\n'.join(lines)
+
             elif mode == 'message-post-add':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
-                author = Markup(self.req.args.get('author'))
-                body = Markup(self.req.args.get('body'))
+
+                # Get form values.
+                new_author = Markup(self.req.args.get('author'))
+                new_body = Markup(self.req.args.get('body'))
+
+                # Add message.
                 if message:
                     self.add_message(forum['id'], topic['id'], message['id'],
-                      author, body)
+                      new_author, new_body)
                 else:
-                    self.add_message(forum['id'], topic['id'], '-1', author, body)
+                    self.add_message(forum['id'], topic['id'], '-1', new_author, new_body)
+
+            elif mode == 'message-edit':
+                self.req.perm.assert_permission('DISCUSSION_APPEND')
+                if not is_moderator and (message['author'] != self.req.authname):
+                    raise PermissionError('Message edit')
+
+                # Prepare form values.
+                self.req.hdf['args.body'] = message['body']
+
+            elif mode == 'message-post-edit':
+                self.req.perm.assert_permission('DISCUSSION_APPEND')
+                if not is_moderator and (message['author'] != self.req.authname):
+                    raise PermissionError('Message edit')
+
+                # Get form values.
+                new_body = Markup(self.req.args.get('body'))
+
+                # Edit message.
+                message['body'] = new_body
+                self.edit_message(message['id'], message['forum'],
+                  message['topic'], message['replyto'], new_body)
+
             elif mode == 'message-delete':
                 self.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
+
+                # Delete message.
                 self.delete_message(message['id'])
 
     # Get one item functions
@@ -493,7 +656,7 @@ class DiscussionApi(object):
     def edit_group(self, group, name, description):
         sql = "UPDATE forum_group SET name = %s, description = %s WHERE id = %s"
         self.log.debug(sql % (name, description, group))
-        self.cursor.execute(sql, (name, description, group))
+        self.cursor.execute(sql, (escape(name), escape(description), group))
 
     def edit_forum(self, forum, name, subject, description, moderators, group):
         moderators = ' '.join(moderators)
@@ -503,8 +666,22 @@ class DiscussionApi(object):
           " moderators = %s, forum_group = %s WHERE id = %s"
         self.log.debug(sql % (name, subject, description, moderators,
           group, forum))
-        self.cursor.execute(sql, (name, subject, description, moderators,
-          group, forum))
+        self.cursor.execute(sql, (escape(name), escape(subject),
+          escape(description), escape(moderators), group, forum))
+
+    def edit_topic(self, topic, forum, subject, body):
+        sql = "UPDATE topic SET forum = %s, subject = %s, body = %s WHERE id" \
+          " = %s"
+        self.log.debug(sql % (forum, subject, body, topic))
+        self.cursor.execute(sql, (forum, escape(subject), escape(body),
+          topic))
+
+    def edit_message(self, message, forum, topic, replyto, body):
+        sql = "UPDATE message SET forum = %s, topic = %s, replyto = %s, body" \
+          " = %s WHERE id = %s"
+        self.log.debug(sql % (forum, topic, replyto, body, message))
+        self.cursor.execute(sql, (forum, topic, replyto, escape(body),
+          message))
 
     # Get list functions
 
@@ -547,8 +724,6 @@ class DiscussionApi(object):
         forums = []
         for row in self.cursor:
             row = dict(zip(columns, row))
-            #row['name'] = wiki_to_oneliner(row['name'], self.env)
-            #row['subject'] = wiki_to_oneliner(row['subject'], self.env)
             row['moderators'] = wiki_to_oneliner(row['moderators'], self.env)
             row['description'] = wiki_to_oneliner(row['description'], self.env)
             if row['lastreply']:
@@ -629,7 +804,6 @@ class DiscussionApi(object):
         self.log.debug(sql % (name, description))
         self.cursor.execute(sql, (escape(name), escape(description)))
 
-
     def add_forum(self, name, author, subject, description, moderators, group):
         moderators = ' '.join(moderators)
         if not group:
@@ -655,7 +829,7 @@ class DiscussionApi(object):
         self.log.debug(sql % (forum, topic, replyto, int(time.time()),
           author, body))
         self.cursor.execute(sql, (forum, topic, replyto, int(time.time()),
-          escape(author), escape(Markup(body))))
+          escape(author), escape(body)))
 
     # Delete items functions
 

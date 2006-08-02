@@ -50,7 +50,6 @@
   font-weight: normal;
 }
 
-
 /* Topic list */
 .topic-list td.id, .topic-list td.author, .topic-list td.lastreply,
 .topic-list td.founded, .topic-list td.replies
@@ -67,14 +66,11 @@
 .message-list div.topic
 {
   margin: 2em;
-}
-
-.message-list .topic div.header
-{
+  margin-bottom: 0em;
   border: 1px solid #d7d7d7;
 }
 
-.message-list .topic div.subject
+.message-list div.topic div.subject
 {
   font-weight: bold;
   margin: 0em;
@@ -83,13 +79,18 @@
   border-bottom: 1px solid #d7d7d7;
 }
 
-.message-list .header div.body
+.message-list div.topic > fieldset
+{
+  margin: 1em;
+}
+
+.message-list div.topic div.body
 {
   margin: 1em;
 }
 
 /* Message list reply tree */
-.message-list .replies div.body
+.message-list div.replies div.body
 {
   margin: 0.2em;
 }
@@ -97,7 +98,8 @@
 .message-list div.replies
 {
   display: block;
-  margin: 0px;
+  margin: 2em;
+  margin-top: 0em;
   padding: 0.25em;
   border-right: 1px solid #d7d7d7;
   border-left: 1px solid #d7d7d7;
@@ -147,7 +149,7 @@
   text-align: right;
 }
 
-.message-list .topic .replies div.body
+.message-list div.replies div.body
 {
   margin: 0em;
   padding: 0em 1em;
@@ -155,7 +157,7 @@
   background-color: #f7f7f7;
 }
 
-.message-list .topic .replies .preview div.body
+.message-list div.replies li.preview div.body
 {
   border: 1px dashed #b00;
 }

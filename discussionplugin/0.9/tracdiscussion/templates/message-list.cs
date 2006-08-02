@@ -1,6 +1,9 @@
 <?cs def:display_preview() ?>
   <li class="preview">
     <a name="preview"></a>
+    <div class="id">
+        Message #??
+    </div>
     <div class="body">
       <?cs var:discussion.body ?>
     </div>
@@ -15,7 +18,7 @@
   </li>
 <?cs /def ?>
 
-<?cs def:display_form() ?>
+<?cs def:display_reply_form() ?>
   <li class="reply">
     <fieldset>
       <a name="reply"></a>
@@ -26,14 +29,14 @@
         <div class="field">
           <label for="author">Author:</label><br/>
           <?cs if:args.author ?>
-            <input type="text" name="author" value="<?cs var:args.author ?>"/><br/>
+            <input type="text" id="author" name="author" value="<?cs var:args.author ?>"/><br/>
           <?cs else ?>
-            <input type="text" name="author" value="<?cs var:discussion.authname ?>"/><br/>
+            <input type="text" id="author" name="author" value="<?cs var:discussion.authname ?>"/><br/>
           <?cs /if ?>
         </div>
         <div class="field">
           <label for="body">Body:</label><br/>
-          <textarea name="body" class="wikitext" rows="10" cols="78"><?cs alt:args.body ?>Enter your message here...<?cs /alt ?></textarea>
+          <textarea id="body" name="body" class="wikitext" rows="10" cols="78"><?cs alt:args.body ?>Enter your message here...<?cs /alt ?></textarea>
         </div>
         <div class="buttons">
           <input type="submit" name="preview" value="Preview"/>
@@ -49,6 +52,36 @@
   </li>
 <?cs /def ?>
 
+<?cs def:display_edit_form() ?>
+  <fieldset>
+    <a name="reply"></a>
+    <legend>
+      Edit:
+    </legend>
+    <form method="get" action="<?cs var:discussion.href ?>#preview">
+      <?cs if:!args.message ?>
+        <div class="field">
+          <label for="subject">Subject:</label><br/>
+          <input type="text" id="subject" name="subject" value="<?cs var:args.subject ?>"/><br/>
+        </div>
+      <?cs /if ?>
+      <div class="field">
+        <label for="body">Body:</label><br/>
+        <textarea id="body" name="body" class="wikitext" rows="10" cols="78"><?cs var:args.body ?></textarea>
+      </div>
+      <div class="buttons">
+        <input type="submit" name="preview" value="Preview"/>
+        <input type="submit" name="submit" value="Edit"/>
+        <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href ?>#<?cs var:args.message ?>'"/>
+      </div>
+      <?cs if:args.message ?>
+        <input type="hidden" name="message" value="<?cs var:args.message ?>"/>
+      <?cs /if ?>
+      <input type="hidden" name="discussion_action" value="post-edit"/>
+    </form>
+  </fieldset>
+<?cs /def ?>
+
 <?cs def:display_topic(messages) ?>
   <?cs each:message = messages ?>
     <li>
@@ -57,12 +90,19 @@
         Message #<?cs var:message.id ?>
       </div>
       <div class="body">
-        <?cs var:message.body ?>
+        <?cs if:(args.message == message.id) && args.preview ?>
+          <?cs var:discussion.body ?>
+        <?cs else?>
+          <?cs var:message.body ?>
+        <?cs /if ?>
       </div>
       <div class="controls">
         <?cs if:trac.acl.DISCUSSION_APPEND ?>
           <a href="<?cs var:discussion.href ?>?discussion_action=add;message=<?cs var:message.id ?>#reply">Reply</a>
           <a href="<?cs var:discussion.href ?>?discussion_action=quote;message=<?cs var:message.id ?>#reply">Quote</a>
+          <?cs if:discussion.is_moderator || (message.author == discussion.authname) ?>
+            <a href="<?cs var:discussion.href ?>?discussion_action=edit;message=<?cs var:message.id ?>#reply">Edit</a>
+          <?cs /if ?>
         <?cs /if ?>
         <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
           <a href="<?cs var:discussion.href ?>?discussion_action=delete;message=<?cs var:message.id ?>" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')"/>Delete</a>
@@ -76,15 +116,20 @@
           <?cs var:message.time ?>
         </div>
       </div>
+      <?cs if:(args.message == message.id) && !args.submit && ((args.discussion_action == 'edit') || (args.discussion_action == 'post-edit')) ?>
+        <?cs call:display_edit_form() ?>
+      <?cs /if ?>
     </li>
-    <?cs if:discussion.messages.0.id || args.discussion_action && !args.submit && (args.discussion_action != "delete") ?>
+    <?cs if:message.replies.0.id || args.discussion_action && (args.discussion_action != 'delete') && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
       <ul>
-        <?cs call:display_topic(message.replies) ?>
-        <?cs if:args.discussion_action && args.preview && args.message == message.id ?>
-           <?cs call:display_preview() ?>
+        <?cs if:message.replies.0.id ?>
+          <?cs call:display_topic(message.replies) ?>
         <?cs /if ?>
-        <?cs if:args.discussion_action && !args.submit && args.message == message.id ?>
-          <?cs call:display_form() ?>
+        <?cs if:(args.message == message.id) && !args.submit && args.discussion_action && (args.discussion_action != "delete") && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
+          <?cs if:args.preview ?>
+            <?cs call:display_preview() ?>
+          <?cs /if ?>
+          <?cs call:display_reply_form() ?>
         <?cs /if ?>
       </ul>
     <?cs /if ?>
@@ -109,43 +154,59 @@
     <div class="topic">
       <div class="header">
         <div class="subject">
-          <?cs var:discussion.topic.subject ?>
-        </div>
-        <div class="body">
-          <?cs var:discussion.topic.body ?>
-        </div>
-        <div class="controls">
-          <?cs if:trac.acl.DISCUSSION_APPEND ?>
-            <a href="<?cs var:discussion.href ?>?discussion_action=add;#reply">Reply</a>
-            <a href="<?cs var:discussion.href ?>?discussion_action=quote;#reply">Quote</a>
+          <?cs if:!args.message && args.preview ?>
+            <?cs var:discussion.subject ?>
+          <?cs else?>
+            <?cs var:discussion.topic.subject ?>
           <?cs /if ?>
         </div>
-        <div class="footer">
-          <div class="author">
-            <?cs var:discussion.topic.author ?>
-          </div>
-          <div class="time">
-            <?cs var:discussion.topic.time ?>
-          </div>
+      </div>
+      <div class="body">
+        <?cs if:!args.message && args.preview ?>
+          <?cs var:discussion.body ?>
+        <?cs else?>
+          <?cs var:discussion.topic.body ?>
+        <?cs /if ?>
+      </div>
+      <div class="controls">
+        <?cs if:trac.acl.DISCUSSION_APPEND ?>
+          <a href="<?cs var:discussion.href ?>?discussion_action=add;#reply">Reply</a>
+          <a href="<?cs var:discussion.href ?>?discussion_action=quote;#reply">Quote</a>
+          <?cs if:discussion.is_moderator || (discussion.topic.author == discussion.authname) ?>
+            <a href="<?cs var:discussion.href ?>?discussion_action=edit;#reply">Edit</a>
+          <?cs /if ?>
+        <?cs /if ?>
+      </div>
+      <div class="footer">
+        <div class="author">
+          <?cs var:discussion.topic.author ?>
+        </div>
+        <div class="time">
+          <?cs var:discussion.topic.time ?>
         </div>
       </div>
-      <?cs if:discussion.messages.0.id || args.discussion_action && !args.submit && (args.discussion_action != "delete") ?>
-        <div class="replies">
-          <ul>
-            <?cs call:display_topic(discussion.messages) ?>
-            <?cs if:args.discussion_action && args.preview && !args.message ?>
-              <?cs call:display_preview() ?>
-            <?cs /if ?>
-            <?cs if:args.discussion_action && !args.submit && !args.message ?>
-              <?cs call:display_form() ?>
-            <?cs /if ?>
-          </ul>
-        </div>
+      <?cs if:!args.message && !args.submit && ((args.discussion_action == 'edit') || (args.discussion_action == 'post-edit')) ?>
+        <?cs call:display_edit_form() ?>
       <?cs /if ?>
     </div>
-   <?cs else?>
-     <span>No discussion for this page created.</span>
-   <?cs /if ?>
+    <?cs if:discussion.messages.0.id || args.discussion_action && (args.discussion_action != "delete") && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
+      <div class="replies">
+        <ul>
+          <?cs if:discussion.messages.0.id ?>
+            <?cs call:display_topic(discussion.messages) ?>
+          <?cs /if ?>
+          <?cs if:!args.message && !args.submit && args.discussion_action && (args.discussion_action != "delete") && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
+            <?cs if:args.preview ?>
+              <?cs call:display_preview() ?>
+            <?cs /if ?>
+            <?cs call:display_reply_form() ?>
+          <?cs /if ?>
+        </ul>
+      </div>
+    <?cs /if ?>
+  <?cs else?>
+    <span>No discussion for this page created.</span>
+  <?cs /if ?>
 <?cs else ?>
   <span>You have no rights to see this discussion.</span>
 <?cs /if ?>
@@ -157,7 +218,7 @@
       <input type="hidden" name="discussion_action" value="delete"/>
     </form>
     <?cs if:!discussion.no_navigation ?>
-      <form method="get" action="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:discussion.topic.id ?>">
+      <form method="get" action="<?cs var:discussion.href ?>">
         <input type="submit" name="movetopic" value="Move Topic"/>
         <input type="hidden" name="discussion_action" value="move"/>
       </form>

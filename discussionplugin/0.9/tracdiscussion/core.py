@@ -2,7 +2,7 @@ from tracdiscussion.api import *
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
-from trac.perm import IPermissionRequestor, PermissionError
+from trac.perm import IPermissionRequestor
 import re
 
 class DiscussionCore(Component):
