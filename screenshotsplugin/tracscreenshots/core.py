@@ -57,6 +57,7 @@ class ScreenshotsCore(Component):
         title = self.env.config.get('screenshots', 'title', 'Screenshots')
         path = self.env.config.get('screenshots', 'path',
           '/var/lib/trac/screenshots')
+        self.log.debug('path %s' % (path,))
 
         # Get action
         action = req.args.get('action')
@@ -82,7 +83,9 @@ class ScreenshotsCore(Component):
             req.perm.assert_permission('SCREENSHOTS_VIEW')
             file = re.sub('^/screenshots', '', req.path_info)
             path = path + file
-            mimetypes.guess_type(path)[0]
+            self.log.debug('file %s' % (file,))
+            self.log.debug('path %s' % (path,))
+            type = mimetypes.guess_type(path)[0]
             req.send_file(path, type)
             return None, None
 
@@ -100,7 +103,7 @@ class ScreenshotsCore(Component):
                 os.chdir(path)
                 files = ' '.join((screenshot['large_file'],
                   screenshot['medium_file'], screenshot['small_file']))
-                self.log.debug(files)
+                self.log.debug('files %s' % (files,))
                 os.system('rm %s' % files)
                 delete_screenshot(cursor, self.log, screenshot['id'])
 
