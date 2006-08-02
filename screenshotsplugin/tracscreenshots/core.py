@@ -49,14 +49,15 @@ class ScreenshotsCore(Component):
         return False
 
     def process_request(self, req):
-        # Get access to database
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        # Create API object
+        api = ScreenshotsApi(self, req)
 
         # Get config variables
         title = self.env.config.get('screenshots', 'title', 'Screenshots')
         path = self.env.config.get('screenshots', 'path',
           '/var/lib/trac/screenshots')
+        component_name = self.env.config.get('screenshots', 'component')
+        version_name = self.env.config.get('screenshots', 'version')
         self.log.debug('path %s' % (path,))
 
         # Get action
@@ -66,12 +67,21 @@ class ScreenshotsCore(Component):
         screenshot_id = int(req.args.get('id') or 0)
 
         # Get versions, components
-        components = get_components(cursor, self.env, req, self.log)
-        component_id = int(req.args.get('component') or components[0]['id'])
-        component = self._get_component(components, component_id)
-        versions = get_versions(cursor, self.env, req, self.log)
-        version_id = int(req.args.get('version') or versions[0]['id'])
-        version = self._get_version(versions, version_id)
+        components = api.get_components()
+        component_id = int(req.args.get('component') or 0)
+        if component_id:
+            component = self._get_component(components, component_id)
+        else:
+            component = self._get_component_by_name(components,
+              component_name) or components[0]
+        versions = api.get_versions()
+        version_id = int(req.args.get('version') or 0)
+        if version_id:
+           version = self._get_version(versions, version_id)
+        else:
+           version = self._get_version_by_name(versions, version_name) \
+             or versions[0]
+
         req.hdf['screenshots.component'] = component
         req.hdf['screenshots.components'] = components
         req.hdf['screenshots.versions'] = versions
@@ -98,14 +108,13 @@ class ScreenshotsCore(Component):
                 action = 'add'
             elif delete:
                 # Delete screenshot
-                screenshot = get_screenshot(cursor, self.env, req, self.log,
-                  screenshot_id)
+                screenshot = api.get_screenshot(screenshot_id)
                 os.chdir(path)
                 files = ' '.join((screenshot['large_file'],
                   screenshot['medium_file'], screenshot['small_file']))
                 self.log.debug('files %s' % (files,))
                 os.system('rm %s' % files)
-                delete_screenshot(cursor, self.log, screenshot['id'])
+                api.delete_screenshot(screenshot['id'])
 
                 # Change action
                 action = 'delete'
@@ -153,9 +162,9 @@ class ScreenshotsCore(Component):
               small_filename))
 
             # Add new screenshot
-            add_screenshot(cursor, self.log, name, description, author,
-              large_filename, medium_filename, small_filename,
-              component['name'], version['name'])
+            api.add_screenshot(name, description, author, large_filename,
+              medium_filename, small_filename, component['name'],
+              version['name'])
         # List screenshots action
         else:
             req.perm.assert_permission('SCREENSHOTS_VIEW')
@@ -165,8 +174,7 @@ class ScreenshotsCore(Component):
 
         if action != 'add':
             # Get screenshots of selected version and component
-            screenshots = get_screenshots(cursor, self.env, req, self.log,
-              component['name'], version['name'])
+            screenshots = api.get_screenshots(component['name'], version['name'])
             if screenshot_id:
                 index = self._get_screenshot_index(screenshots, screenshot_id) or 0
             else:
@@ -204,7 +212,7 @@ class ScreenshotsCore(Component):
         # Fill up HDF structure and return plugin's content
         req.hdf['screenshots.href'] = self.env.href.screenshots()
         req.hdf['screenshots.title'] = title
-        db.commit()
+        del api
         if action == 'add':
             return 'screenshot-add.cs', None
         else:
@@ -224,9 +232,19 @@ class ScreenshotsCore(Component):
             if component['id'] == id:
                 return component
 
+    def _get_component_by_name(self, components, name):
+        for component in components:
+            if component['name'] == name:
+                return component
+
     def _get_version(self, versions, id):
         for version in versions:
             if version['id'] == id:
+                return version
+
+    def _get_version_by_name(self, versions, name):
+        for version in versions:
+            if version['name'] == name:
                 return version
 
     def _get_file_from_req(self, req):
