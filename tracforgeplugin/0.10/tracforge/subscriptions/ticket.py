@@ -150,7 +150,7 @@ class TicketSubscribable(Component):
             node = hdf.child()
             while node:
                 if node.name().startswith('tracforge'):
-                    req.hdf['%s.fields.%s.skip'%(prefix,node.name())] = False
+                    req.hdf['%s.fields.%s.skip'%(prefix,node.name())] = True
                 node = node.next()
         
         return (template, content_type)
