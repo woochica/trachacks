@@ -54,6 +54,10 @@ class ChangesetWidget(object):
            revision number"""
         return self._changeset.revision
 
+    def branchname(self):
+        """Returns the name of the branch the changset belongs to"""
+        return self._changeset.branchname
+
     def operation_widget(self):
         """Provides the operation widget, i.e. the widget representation
            of the operation (command) that created the revision"""
@@ -97,10 +101,12 @@ class ChangesetWidget(object):
             return "bold"
         return "none"
 
-    def render(self):
-        """Returns a Graphviz representation of the widget"""
+    def render(self, linkparent=False):
+        """Returns a Graphviz representation of the changeset widget"""
         url = "%s/changeset/%d" % (self._grapher.urlbase(), \
                                    self._changeset.revision)
+        if linkparent:
+            url = "javascript:window.parent.location.href='%s'" % url
         log = self._changeset.log.replace('[[BR]]',' ').replace('\n',' ')
         log = log.replace('"',"'").replace('  ',' ')
         words = log.split(' ')
@@ -160,11 +166,24 @@ class BranchWidget(object):
         """Returns the branch object"""
         return self._branch
 
-    def render(self, revrange=None, reverse=False):
-        """Returns a Graphviz representation of the widget"""
+    def is_active(self, revrange):
+        """Tells whether the branch still exist in the upper revision"""
         changesets = self._branch.changesets()
         inrngchgs = [c for c in changesets if self._inrange(c.revision, revrange)]
-        items = ["%s" % self._grapher.changeset_widget(c.revision).render() \
+        if not inrngchgs:
+            return False
+        if inrngchgs[0].operation == Changeset.KILL:
+            return False
+        if inrngchgs[-1].operation == Changeset.KILL:
+            return False
+        return True
+        #return len(inrngchgs) > 1
+
+    def render(self, revrange=None, reverse=False, linkparent=False):
+        """Returns a Graphviz representation of the branch widget"""
+        changesets = self._branch.changesets()
+        inrngchgs = [c for c in changesets if self._inrange(c.revision, revrange)]
+        items = ["%s" % self._grapher.changeset_widget(c.revision).render(linkparent) \
                   for c in inrngchgs]
         if not items:
             return ''
@@ -176,10 +195,12 @@ class BranchWidget(object):
                 transitions = '%s [color="%s"];' % (chgstr, self.transcolor)
                 representation += "  %s\n" % transitions
         
-        if len(inrngchgs) > 1 or inrngchgs[0].operation != Changeset.KILL:
+        if self.is_active(revrange):
             url = "%s/browser%s%s" % (self._grapher.urlbase(), 
                                       self._branch.name(), 
                                       inrngchgs[-1].topdir)
+            if linkparent:
+                url = "javascript:window.parent.location.href='%s'" % url
             if inrngchgs[-1].operation == Changeset.KILL and \
                len(inrngchgs) > 1:
                 url += "?rev=%d" % int(inrngchgs[-2].revision)
@@ -246,8 +267,9 @@ class OperationWidget(object):
             raise TypeError, "source changeset should be a tuple"
         # Environment
         self.env = env
-        # Source changeset (initial end point of the changeset)
-        self._src = src
+        # Source changesets (initial end points of the changeset),
+        # discards out-of-range source end points
+        self._src = filter(None, src)
         # Destination changeset (final end point of the changeset)
         self._dst = dst
         # 'Bring' color
@@ -269,7 +291,7 @@ class OperationWidget(object):
         return self._dst
 
     def render(self, revrange=None, reverse=False):
-        """Returns a Graphviz representation of the widget"""
+        """Returns a Graphviz representation of the operation widget"""
         if revrange:
             src = [chg for chg in self._src if \
                        chg.revision >= revrange[0] and
@@ -368,7 +390,7 @@ class RepositoryWidget(object):
                 self._changeset_widgets[c] = chgwdgt
             self._branch_widgets[b] = branchwdgt
 
-    def render(self, reverse=False):
+    def render(self, reverse=False, hidetermbranch=False, linkparent=False):
         """Returns the graphviz data"""
         gviz = 'digraph versiontree {\n'
         gviz += '  graph [fontsize=7,rankdir="%s"]\n' % \
@@ -376,12 +398,17 @@ class RepositoryWidget(object):
         gviz += '  node [fontsize=7,style=filled,' \
                 'margin="0.05,0.05"]\n'
         branchnames = []
-        for bwdgt in self._branch_widgets.values():
-            gviz += '  %s\n' % bwdgt.render(self._revrange, reverse)
+        if hidetermbranch:
+            branchwidgets = filter(lambda x: x.is_active(self._revrange), 
+                                   self._branch_widgets.values())
+        else:
+            branchwidgets = self._branch_widgets.values()
+        for bwdgt in branchwidgets:
+            gviz += '  %s\n' % bwdgt.render(self._revrange, reverse, linkparent)
             brname = bwdgt.branch().name()
             if brname not in branchnames:
                 branchnames.append(brname)
-        rankbranches = [brwdgt.id() for brwdgt in self._branch_widgets.values() \
+        rankbranches = [brwdgt.id() for brwdgt in branchwidgets \
                         if brwdgt.is_visible(self._revrange)]
         gviz += '{ rank = same; %s }' % '; '.join(rankbranches)
         for cwdgt in self._changeset_widgets.values():
@@ -390,9 +417,22 @@ class RepositoryWidget(object):
                 revision = cwdgt.id()
                 if revision < rmin or revision > rmax:
                     continue
+            if hidetermbranch:
+                # check whether the branch of the destination widget
+                # is still active
+                branch = self.repository().branch(cwdgt.branchname())
+                if branch:
+                    chgsets = branch.changesets()
+                    if chgsets:
+                        if chgsets[-1].operation == Changeset.KILL:
+                            continue
             opwdgt = cwdgt.operation_widget()
             if opwdgt:
-                srcnames = [src.branchname for src in opwdgt.sources()]
+                try:
+                   srcnames = [src.branchname for src in opwdgt.sources()]
+                except AttributeError, e:
+                   self.env.log.warn("Attribute error at changeset %s" % cwdgt.id())
+                   raise AttributeError, e 
                 if [name for name in branchnames \
                     for srcname in srcnames if name == srcname]:
                         op = opwdgt.render(self._revrange, reverse)

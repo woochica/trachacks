@@ -78,6 +78,13 @@
       ?>checked="checked"<?cs /if ?> value="1"/><label for="btup">Younger
       revisions on top</label>
    </div>
+   <div class="field">
+    <input type="hidden" name="checkbox_hideterm">
+    <input type="checkbox" id="hideterm"
+      name="hideterm" <?cs if:revtree.hideterm
+      ?>checked="checked"<?cs /if ?> value="1"/><label for="hideterm">Hide 
+      terminated branches</label>
+   </div>
   </fieldset>
   <div class="buttons">
    <input type="submit" value="Update"/>

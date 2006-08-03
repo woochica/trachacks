@@ -47,12 +47,13 @@ class RevTreeStore(object):
         self['branch'] = self.anybranch
         self['author'] = user or self.anyauthor
         self['btup'] = '1'
+        self['hideterm'] = '1'
         self['nocache'] = ''
 
     def get_fields(self):
         """Returns the sequence of supported fields"""
         return [ 'revmin', 'revmax', 'period', 'branch', 'author',
-                 'limits', 'btup' ]
+                 'limits', 'btup', 'hideterm' ]
         
     def load(self, session):
         """Load user parameters from a previous session"""
@@ -90,12 +91,13 @@ class RevTreeStore(object):
         if self['limits'] == 'limrev':
             self.revrange = (int(self['revmin']), int(self['revmax']))
         elif self['limits'] == 'limperiod':
-            self.revrange = repos.get_revisions_by_date((int(self['period']),\
-                                                        0))
+            period = int(self['period'])
+            if period:
+                self.revrange = repos.get_revisions_by_date((period, 0))
+            else:
+                self.revrange = self.revspan
         else:
             self.revrange = self.revspan
-        self.env.log.debug("REVRANGE %d:%d" %
-                           (self.revrange[0], self.revrange[1]))
 
     def can_be_rendered(self):
         """Reports whether the revtree has enough items to produce a valid 
@@ -285,11 +287,12 @@ class RevisionTreeModule(Component):
 
     def _get_cache_name(self, revtree):
         """Generates a unique filename for the current revtree"""
-        id = "%d-%d-%s-%s-%d" % (revtree.revrange[0], \
-                                 revtree.revrange[1], \
-                                 revtree['branch'] or ' ', \
-                                 revtree['author'] or ' ', \
-                                 revtree['btup'] != '0' and 1 or 0)
+        id = "%d-%d-%s-%s-%d-%d" % (revtree.revrange[0], \
+                                    revtree.revrange[1], \
+                                    revtree['branch'] or ' ', \
+                                    revtree['author'] or ' ', \
+                                    revtree['btup'] != '0' and 1 or 0, \
+                                    revtree['hideterm'] != '0' and 1 or 0)
         sha_key  = sha.new(id).hexdigest()
         img_name = '%s.revtree' % (sha_key)
         img_path = os.path.join(self.cache_dir, img_name)
@@ -359,7 +362,7 @@ class RevisionTreeModule(Component):
                                   str(revisions[0]), str(revisions[1]))
             props['branches'] = branches
             props['authors'] = authors
-            image_re = re.compile('<img\sid="(.*?)"')
+            image_re = re.compile('<object data="(.*?)"')
             mo = image_re.search(content)
             if mo:
                 props['image'] = (mo.group(1), )
@@ -412,13 +415,6 @@ class RevisionTreeModule(Component):
         authfilter = None
         if revtree['author'] != revtree.anyauthor:
             authfilter = revtree['author']
-        self.env.log.debug("brnames: %s" % brnames)
-        self.env.log.debug("authors: %s" % authors)
-        self.env.log.debug("revtree branch: %s (%s)" % (revtree['branch'], revtree.anybranch))
-        self.env.log.debug("revtree author: %s (%s)" % (revtree['author'], revtree.anyauthor))
-        self.env.log.debug("brfilter: %s" % brfilter)
-        self.env.log.debug("authfilter: %s" % authfilter)
-        self.env.log.debug("btup: %s" % revtree['btup'])
         for b in brnames:
             if brfilter and brfilter != b:
                 continue
@@ -428,10 +424,11 @@ class RevisionTreeModule(Component):
         if brfilter or authfilter:
             gvizbranches = trunks
             gvizbranches.extend(branches)
-        self.env.log.debug("gvizbranches: %s" % gvizbranches)
         repwdgt = RepositoryWidget(self.env, repos, req.base_url)
         repwdgt.build(revtree.revrange, gvizbranches, authors)        
-        gviz = repwdgt.render(revtree['btup'] != '0')
+        gviz = repwdgt.render(revtree['btup'] != '0', 
+                              revtree['hideterm'] != '0', 
+                              img_kind == 'svg')
         macro = 'graphviz.%s/%s' % (self.image_engine, img_kind)
         wiki = WikiSystem(self.env)
         content = None
