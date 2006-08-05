@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
   name = 'TracScreenshotsPlugin',
-  version = '0.1',
+  version = '0.2',
   packages = ['tracscreenshots', 'tracscreenshots.db'],
   package_data = {'tracscreenshots' : ['templates/*.cs', 'htdocs/css/*.css']},
   entry_points = {'trac.plugins': ['TracScreenshotsPlugin.core = tracscreenshots.core',

@@ -17,7 +17,7 @@
       <?cs each screenshot = screenshots.previous ?>
         <?cs if:screenshot.id ?>
           <a href="<?cs var:screenshots.href?>?version=<?cs var:screenshots.version.id ?>;component=<?cs var:screenshots.component.id ?>;id=<?cs var:screenshot.id ?>">
-            <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.small_file ?>"/>
+            <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/small"/>
           </a>
         <?cs else ?>
           <a class="noimage" href="#"></a>
@@ -33,8 +33,8 @@
           <div class="name">
             <?cs alt:screenshot.name ?>noname<?cs /alt ?> by <?cs alt:screenshot.author ?>anonymous<?cs /alt ?>
           </div>
-          <a href="<?cs var:screenshots.href?>/<?cs var:screenshot.large_file ?>">
-            <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.medium_file ?>"/>
+          <a href="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/large">
+            <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/medium"/>
           </a>
           <div class="description">
             <?cs alt:screenshot.description ?>without description<?cs /alt ?>
@@ -49,8 +49,8 @@
     <div class="next">
       <?cs each screenshot = screenshots.next ?>
         <?cs if:screenshot.id ?>
-          <a href="<?cs var:screenshots.href?>?version=<?cs var:screenshots.version.id ?>;component=<?cs var:screenshots.component.id ?>;id=<?cs var:screenshot.id ?>">
-            <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.small_file ?>"/>
+        <a href="<?cs var:screenshots.href?>?component=<?cs var:screenshots.component.id ?>;version=<?cs var:screenshots.version.id ?>;id=<?cs var:screenshot.id ?>">
+          <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/small"/>
           </a>
         <?cs else ?>
           <a class="noimage" href="#"></a>
@@ -60,7 +60,7 @@
   </div>
 
   <div class="controls">
-    <form id="controls-form" method="post" action="<?cs var:screenshots.href ?>">
+    <form method="post" action="<?cs var:screenshots.href ?>">
       <fieldset>
         <legend>
           Controls:
@@ -89,18 +89,43 @@
             <?cs /each ?>
           </select>
         </div>
-        <?cs if:trac.acl.SCREENSHOTS_ADMIN ?>
-          <div class="buttons">
-            <input type="submit" name="add" value="Add Screenshot"/>
-            <?cs if:screenshots.current.0.id ?>
-              <input type="submit" name="delete" value="Delete Screenshot"/>
-            <?cs /if ?>
-            <input type="hidden" name="action" value="change"/>
-            <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
-          </div>
-        <?cs /if ?>
+        <div>
+          <input type="hidden" name="action" value="display"/>
+        </div>
       </fieldset>
     </form>
+    <?cs if:trac.acl.SCREENSHOTS_ADMIN ?>
+      <div class="buttons">
+        <form method="post" action="<?cs var:screenshots.href ?>">
+          <div>
+            <input type="submit" name="add" value="Add Screenshot"/>
+            <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
+            <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
+            <input type="hidden" name="action" value="add"/>
+          </div>
+        </form>
+        <?cs if:screenshots.current.0.id ?>
+          <form method="post" action="<?cs var:screenshots.href ?>">
+            <div>
+              <input type="submit" name="edit" value="Edit Screenshot"/>
+              <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
+              <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
+              <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
+              <input type="hidden" name="action" value="edit"/>
+            </div>
+          </form>
+          <form method="post" action="<?cs var:screenshots.href ?>"/>
+            <div>
+              <input type="submit" name="delete" value="Delete Screenshot"/>
+              <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
+              <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
+              <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
+              <input type="hidden" name="action" value="delete"/>
+            </div>
+          </form>
+        <?cs /if ?>
+      </div>
+    <?cs /if ?>
   </div>
 </div>
 

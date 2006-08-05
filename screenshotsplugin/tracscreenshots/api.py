@@ -55,7 +55,7 @@ class ScreenshotsApi(object):
         sql = "SELECT id, name, description, time, author, large_file," \
           " medium_file, small_file FROM screenshot WHERE component = %s AND" \
           " version = %s"
-        self.log.debug(sql)
+        self.log.debug(sql % (component, version))
         self.cursor.execute(sql, (component, version))
         screenshots = []
         for row in self.cursor:
@@ -72,32 +72,52 @@ class ScreenshotsApi(object):
         columns = ('id', 'name', 'description', 'time', 'author', 'large_file',
           'medium_file', 'small_file', 'component', 'version')
         sql = "SELECT id, name, description, time, author, large_file," \
-          " medium_file, small_file, component, version FROM screenshot WHERE" \
-          " id = %s"
-        self.log.debug(sql)
+          " medium_file, small_file, component, version FROM screenshot" \
+          " WHERE id = %s"
+        self.log.debug(sql % (id,))
         self.cursor.execute(sql, (id,))
         for row in self.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'], self.env,
-              self.req)
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
+            return row
+
+    def get_screenshot_by_time(self, time):
+        columns = ('id', 'name', 'description', 'time', 'author', 'large_file',
+          'medium_file', 'small_file', 'component', 'version')
+        sql = "SELECT id, name, description, time, author, large_file," \
+          " medium_file, small_file, component, version FROM screenshot" \
+          " WHERE time = %s"
+        self.log.debug(sql % (time,))
+        self.cursor.execute(sql, (time,))
+        for row in self.cursor:
+            row = dict(zip(columns, row))
             return row
 
     # Add item functions
 
-    def add_screenshot(self, name, description, author, large_file, medium_file,
-      small_file, component, version):
+    def add_screenshot(self, name, description, time, author, large_file,
+      medium_file, small_file, component, version):
         sql = "INSERT INTO screenshot (name, description, time, author," \
-          " large_file, medium_file, small_file, component, version) VALUES" \
-          " (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        self.log.debug(sql)
-        self.cursor.execute(sql, (escape(name), escape(description),
-          int(time.time()), escape(author), large_file, medium_file, small_file,
-          component, version))
+          " large_file, medium_file, small_file, component, version)" \
+          " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        self.log.debug(sql % (name, description, time, author, large_file,
+          medium_file, small_file, component, version))
+        self.cursor.execute(sql, (escape(name), escape(description), time,
+          escape(author), large_file, medium_file, small_file, component,
+          version))
+
+    # Edit item functions
+
+    def edit_screenshot(self, screenshot, name, description, component,
+      version):
+        sql = "UPDATE screenshot SET name = %s, description = %s, component" \
+          " = %s, version = %s WHERE id = %s"
+        self.log.debug(sql % (name, description, component, version, screenshot))
+        self.cursor.execute(sql, (escape(name), escape(description), component,
+          version, screenshot))
 
     # Delete item functions
 
     def delete_screenshot(self, id):
         sql = "DELETE FROM screenshot WHERE id = %s"
-        self.log.debug(sql)
+        self.log.debug(sql % (id,))
         self.cursor.execute(sql, (id,))

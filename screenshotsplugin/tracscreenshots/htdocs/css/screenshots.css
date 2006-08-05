@@ -75,9 +75,10 @@ div.controls
   text-align: left;
 }
 
-div.controls form
+div.controls fieldset
 {
-  padding: 1em;
+  margin: 1em;
+  padding: 0.5em;
 }
 
 div.controls div.field
