@@ -135,6 +135,8 @@ class DiscussionApi(object):
                         return ['message-post-edit', 'message-list']
                 elif action == 'delete':
                     return ['message-delete', 'message-list']
+                elif action == 'set-display':
+                    return ['message-set-display', 'message-list']
                 else:
                     return ['message-list']
             else:
@@ -156,6 +158,8 @@ class DiscussionApi(object):
                         return ['message-post-edit', 'message-list']
                 elif action == 'delete':
                     return ['message-delete', 'message-list']
+                elif action == 'set-display':
+                    return ['message-set-display', 'message-list']
                 else:
                     return ['message-list']
         if topic:
@@ -181,6 +185,8 @@ class DiscussionApi(object):
                 elif action == 'delete':
                     self.req.hdf['discussion.no_display'] = True
                     return ['topic-delete', 'message-list']
+                elif action == 'set-display':
+                    return ['message-set-display', 'message-list']
                 else:
                     return ['message-list']
             else:
@@ -206,6 +212,8 @@ class DiscussionApi(object):
                     return ['topic-move']
                 elif action == 'post-move':
                     return ['topic-post-move', 'topic-list']
+                elif action == 'set-display':
+                    return ['message-set-display', 'message-list']
                 else:
                     return ['message-list']
         elif forum:
@@ -278,11 +286,24 @@ class DiscussionApi(object):
             elif mode == 'admin-group-list':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
 
+                # Get form values
+                order = self.req.args.get('order') or 'id'
+                desc = self.req.args.get('desc')
+
+                # Prepare ORDER BY statement
+                order_by = 'ORDER BY ' + order
+                if desc:
+                    order_by = order_by + ' DESC'
+                else:
+                    order_by = order_by + ' ASC'
+
                 # Display groups.
+                self.req.hdf['discussion.order'] = order
+                self.req.hdf['discussion.desc'] = desc
                 if group:
                     self.req.hdf['discussion.name'] = group['name']
                     self.req.hdf['discussion.description'] = group['description']
-                self.req.hdf['discussion.groups'] = self.get_groups()
+                self.req.hdf['discussion.groups'] = self.get_groups(order_by)
 
             elif mode == 'group-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -321,20 +342,47 @@ class DiscussionApi(object):
 
                 # Delete selected groups.
                 if selection:
-                    for group in selection:
-                        self.delete_group(group)
+                    for group_id in selection:
+                        self.delete_group(group_id)
 
             elif mode == 'forum-list':
                 self.req.perm.assert_permission('DISCUSSION_VIEW')
 
+                # Get form values
+                order = self.req.args.get('order') or 'id'
+                desc = self.req.args.get('desc')
+
+                # Prepare ORDER BY statement
+                order_by = 'ORDER BY ' + order
+                if desc:
+                    order_by = order_by + ' DESC'
+                else:
+                    order_by = order_by + ' ASC'
+
                 # Display forums.
+                self.req.hdf['discussion.order'] = order
+                self.req.hdf['discussion.desc'] = desc
                 self.req.hdf['discussion.groups'] = self.get_groups()
-                self.req.hdf['discussion.forums'] = self.get_forums()
+                self.req.hdf['discussion.forums'] = self.get_forums(order_by)
 
             elif mode == 'admin-forum-list':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
 
+                # Get form values
+                order = self.req.args.get('order') or 'id'
+                desc = self.req.args.get('desc')
+
+                # Prepare ORDER BY statement
+                order_by = 'ORDER BY ' + order
+                if desc:
+                    order_by = order_by + ' DESC'
+                else:
+                    order_by = order_by + ' ASC'
+
                 # Display forums.
+                self.req.hdf['discussion.order'] = order
+                self.req.hdf['discussion.desc'] = desc
+                self.log.debug(forum)
                 if forum:
                     self.req.hdf['discussion.name'] = forum['name']
                     self.req.hdf['discussion.subject'] = forum['subject']
@@ -343,7 +391,7 @@ class DiscussionApi(object):
                     self.req.hdf['discussion.group'] = forum['group']
                 self.req.hdf['discussion.users'] = self.get_users()
                 self.req.hdf['discussion.groups'] = self.get_groups()
-                self.req.hdf['discussion.forums'] = self.get_forums()
+                self.req.hdf['discussion.forums'] = self.get_forums(order_by)
 
             elif mode == 'forum-add':
                 self.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -406,14 +454,28 @@ class DiscussionApi(object):
 
                 # Delete selected forums.
                 if selection:
-                    for forum in selection:
-                        self.delete_forum(forum)
+                    for forum_id in selection:
+                        self.delete_forum(forum_id)
 
             elif mode == 'topic-list':
                 self.req.perm.assert_permission('DISCUSSION_VIEW')
 
+                # Get form values
+                order = self.req.args.get('order') or 'id'
+                desc = self.req.args.get('desc')
+
+                # Prepare ORDER BY statement
+                order_by = 'ORDER BY ' + order
+                if desc:
+                    order_by = order_by + ' DESC'
+                else:
+                    order_by = order_by + ' ASC'
+
                 # Display topics.
-                self.req.hdf['discussion.topics'] = self.get_topics(forum['id'])
+                self.req.hdf['discussion.order'] = order
+                self.req.hdf['discussion.desc'] = desc
+                self.req.hdf['discussion.topics'] = self.get_topics(forum['id'],
+                  order_by)
 
             elif mode == 'topic-add':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -512,7 +574,23 @@ class DiscussionApi(object):
                 new_subject = Markup(self.req.args.get('subject'))
                 new_body = Markup(self.req.args.get('body'))
 
-                # Display message list.
+                # Get time when topic was visited from session.
+                visited = eval(self.req.session.get('visited-topics') or '{}')
+                self.log.debug(visited)
+                if visited.has_key(topic['id']):
+                    visit_time = int(visited[topic['id']])
+                else:
+                    visit_time = 0
+
+                # Update this topic visit time and save to session.
+                visited[topic['id']] = int(time.time())
+                self.req.session['visited-topics'] = str(visited)
+
+                # Mark new topic.
+                if int(topic['time']) > visit_time:
+                    topic['new'] = True
+
+                # Prepare display of topic
                 if new_author:
                     self.req.hdf['discussion.author'] = wiki_to_oneliner(
                       new_author, self.env)
@@ -522,7 +600,19 @@ class DiscussionApi(object):
                 if new_body:
                     self.req.hdf['discussion.body'] = wiki_to_html(new_body,
                       self.env, self.req)
-                self.req.hdf['discussion.messages'] = self.get_messages(topic['id'])
+
+                # Prepare display of messages
+                display = self.req.session.get('message-list-display')
+                self.req.hdf['discussion.display'] = display
+                if display == 'flat-asc':
+                    self.req.hdf['discussion.messages'] = self.get_flat_messages(
+                      topic['id'], visit_time)
+                elif display == 'flat-desc':
+                    self.req.hdf['discussion.messages'] = self.get_flat_messages(
+                      topic['id'], visit_time, 'ORDER BY time DESC')
+                else:
+                    self.req.hdf['discussion.messages'] = self.get_messages(
+                      topic['id'], visit_time)
 
             elif mode == 'message-quote':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -545,7 +635,8 @@ class DiscussionApi(object):
                     self.add_message(forum['id'], topic['id'], message['id'],
                       new_author, new_body)
                 else:
-                    self.add_message(forum['id'], topic['id'], '-1', new_author, new_body)
+                    self.add_message(forum['id'], topic['id'], '-1', new_author,
+                      new_body)
 
             elif mode == 'message-edit':
                 self.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -575,6 +666,15 @@ class DiscussionApi(object):
 
                 # Delete message.
                 self.delete_message(message['id'])
+
+            elif mode == 'message-set-display':
+                self.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Get form values
+                display = self.req.args.get('display')
+
+                # Set message list display mode to session
+                self.req.session['message-list-display'] = display
 
     # Get one item functions
 
@@ -685,7 +785,7 @@ class DiscussionApi(object):
 
     # Get list functions
 
-    def get_groups(self):
+    def get_groups(self, order_by = 'ORDER BY id ASC'):
         # Get count of forums without group
         sql = "SELECT COUNT(id) FROM forum WHERE forum_group = 0"
         self.log.debug(sql)
@@ -699,7 +799,7 @@ class DiscussionApi(object):
         # Get forum groups
         columns = ('id', 'name', 'description', 'forums')
         sql = "SELECT id, name, description, (SELECT COUNT(id) FROM forum f" \
-          " WHERE f.forum_group = forum_group.id) FROM forum_group"
+          " WHERE f.forum_group = forum_group.id) FROM forum_group " + order_by
         self.log.debug(sql)
         self.cursor.execute(sql)
         for row in self.cursor:
@@ -709,16 +809,17 @@ class DiscussionApi(object):
             groups.append(row)
         return groups
 
-    def get_forums(self):
+    def get_forums(self, order_by = 'ORDER BY subject ASC'):
         columns = ('id', 'name', 'author', 'time', 'moderators', 'group',
           'subject', 'description', 'topics', 'replies', 'lastreply',
           'lasttopic')
         sql = "SELECT id, name, author, time, moderators, forum_group," \
           " subject, description, (SELECT COUNT(id) FROM topic t WHERE" \
-          " t.forum = forum.id), (SELECT COUNT(id) FROM message m WHERE" \
-          " m.forum = forum.id), (SELECT MAX(time) FROM message m WHERE" \
-          " m.forum = forum.id), (SELECT MAX(time) FROM topic t WHERE" \
-          " t.forum = forum.id) FROM forum ORDER BY subject"
+          " t.forum = forum.id) AS topics, (SELECT COUNT(id) FROM message m" \
+          " WHERE m.forum = forum.id) AS replies, (SELECT MAX(time) FROM" \
+          " message m WHERE m.forum = forum.id) AS lasttopic, (SELECT" \
+          " MAX(time) FROM topic t WHERE t.forum = forum.id) AS lastreply" \
+          " FROM forum " + order_by
         self.log.debug(sql)
         self.cursor.execute(sql)
         forums = []
@@ -738,13 +839,13 @@ class DiscussionApi(object):
             forums.append(row)
         return forums
 
-    def get_topics(self, forum):
+    def get_topics(self, forum, order_by = 'ORDER BY time ASC'):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
           'replies', 'lastreply')
         sql = "SELECT id, forum, time, subject, body, author, (SELECT" \
-          " COUNT(id) FROM message m WHERE m.topic = topic.id), (SELECT" \
-          " MAX(time) FROM message m WHERE m.topic = topic.id) FROM topic" \
-          " WHERE forum = %s ORDER BY time"
+          " COUNT(id) FROM message m WHERE m.topic = topic.id) AS replies," \
+          " (SELECT MAX(time) FROM message m WHERE m.topic = topic.id) AS" \
+          " lastreply FROM topic WHERE forum = %s " + order_by
         self.log.debug(sql % (forum,))
         self.cursor.execute(sql, (forum,))
         topics = []
@@ -760,20 +861,20 @@ class DiscussionApi(object):
             topics.append(row)
         return topics
 
-    def get_messages(self, topic):
+    def get_messages(self, topic, time, order_by = 'ORDER BY time ASC'):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT id, replyto, time, author, body FROM message WHERE" \
-          " topic = %s ORDER BY time"
+          " topic = %s " + order_by
         self.log.debug(sql % (topic,))
         self.cursor.execute(sql, (topic,))
-
         messagemap = {}
         messages = []
-
         for row in self.cursor:
             row = dict(zip(columns, row))
             row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, self.req)
+            if int(row['time']) > time:
+                row['new'] = True
             row['time'] = format_datetime(row['time'])
             messagemap[row['id']] = row
 
@@ -790,6 +891,23 @@ class DiscussionApi(object):
                 else:
                     parent['replies'] = [message]
         return messages;
+
+    def get_flat_messages(self, topic, time, order_by = 'ORDER BY time ASC'):
+        columns = ('id', 'replyto', 'time', 'author', 'body')
+        sql = "SELECT id, replyto, time, author, body FROM message WHERE" \
+          " topic = %s " + order_by
+        self.log.debug(sql % (topic,))
+        self.cursor.execute(sql, (topic,))
+        messages = []
+        for row in self.cursor:
+            row = dict(zip(columns, row))
+            row['author'] = wiki_to_oneliner(row['author'], self.env)
+            row['body'] = wiki_to_html(row['body'], self.env, self.req)
+            if int(row['time']) > time:
+                row['new'] = True
+            row['time'] = format_datetime(row['time'])
+            messages.append(row)
+        return messages
 
     def get_users(self):
         users = []

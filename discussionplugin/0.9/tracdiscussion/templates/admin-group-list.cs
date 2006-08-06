@@ -50,9 +50,9 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
-          <th class="id">ID</th>
-          <th class="name">Name</th>
-          <th class="description">Description</th>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/group' + '?') ?>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/group' + '?') ?>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/group' + '?') ?>
         </tr>
       </thead>
       <tbody>

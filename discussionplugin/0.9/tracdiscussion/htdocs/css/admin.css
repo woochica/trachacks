@@ -20,7 +20,7 @@
   border: none;
 }
 
-.listing td.id, .listing td.moderators, .listing td.group
+.listing td.id, .listing td.moderators, .listing td.forum_group
 {
   text-align: center;
 }

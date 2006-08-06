@@ -1,3 +1,4 @@
+<?cs include "macros.cs" ?>
 <?cs include "discussion-header.cs" ?>
 
 <h1>Forum #<?cs var:discussion.forum.id ?> - Topic List</h1>
@@ -11,12 +12,12 @@
   <table class="listing">
     <thead>
       <tr>
-        <th class="id">ID</th>
-        <th class="subject">Subject</th>
-        <th class="author">Author</th>
-        <th class="lastreply">Last Reply</th>
-        <th class="founded">Founded</th>
-        <th class="replies">Replies</th>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'author', 'Author', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '/' + discussion.forum.id + '?') ?>
       </tr>
     </thead>
     </tbody>

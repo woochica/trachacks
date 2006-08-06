@@ -1,3 +1,5 @@
+<?cs include "macros.cs" ?>
+
 <?cs def:display_group(group, forums) ?>
   <table class="listing">
     <thead>
@@ -10,14 +12,14 @@
         <tr>
       <?cs /if ?>
       <tr>
-        <th class="id">ID</th>
-        <th class="subject">Forum</th>
-        <th class="moderators">Moderators</th>
-        <th class="lasttopic">Last Topic</th>
-        <th class="lastreply">Last Reply</th>
-        <th class="founded">Founded</th>
-        <th class="topics">Topics</th>
-        <th class="replies">Replies</th>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'subject', 'Forum', discussion.href + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', discussion.href + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'lasttopic', 'Last Topic', discussion.href + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'topics', 'Topics', discussion.href + '?') ?>
+        <?cs call:sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '?') ?>
       </tr>
     </thead>
     <tbody>

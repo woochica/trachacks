@@ -82,9 +82,17 @@
   </fieldset>
 <?cs /def ?>
 
+<?cs def:display_set_display() ?>
+  <div class="set-display">
+    <a href="<?cs var:discussion.href ?>?discussion_action=set-display;display=tree">Tree View</a>
+    <a href="<?cs var:discussion.href ?>?discussion_action=set-display;display=flat-desc">Flat View (newer first)</a>
+    <a href="<?cs var:discussion.href ?>?discussion_action=set-display;display=flat-asc">Flat View (older first)</a>
+  </div>
+<?cs /def ?>
+
 <?cs def:display_topic(messages) ?>
   <?cs each:message = messages ?>
-    <li>
+    <li <?cs if:message.new ?>class="new"<?cs /if ?>>
       <a name="<?cs var:message.id ?>"></a>
       <div class="id">
         Message #<?cs var:message.id ?>
@@ -120,12 +128,12 @@
         <?cs call:display_edit_form() ?>
       <?cs /if ?>
     </li>
-    <?cs if:message.replies.0.id || args.discussion_action && (args.discussion_action != 'delete') && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
+    <?cs if:message.replies.0.id || args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
       <ul>
         <?cs if:message.replies.0.id ?>
           <?cs call:display_topic(message.replies) ?>
         <?cs /if ?>
-        <?cs if:(args.message == message.id) && !args.submit && args.discussion_action && (args.discussion_action != "delete") && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
+        <?cs if:(args.message == message.id) && !args.submit && (args.discussion_action && (args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
           <?cs if:args.preview ?>
             <?cs call:display_preview() ?>
           <?cs /if ?>
@@ -149,9 +157,10 @@
 <?cs /if ?>
 
 <?cs if:trac.acl.DISCUSSION_VIEW ?>
-  <a name="-1"></a>
   <?cs if:!discussion.no_display && discussion.topic.id ?>
-    <div class="topic">
+    <?cs call:display_set_display() ?>
+    <a name="-1"></a>
+    <div class="topic <?cs if:discussion.topic.new ?>new<?cs /if ?>">
       <div class="header">
         <div class="subject">
           <?cs if:!args.message && args.preview ?>
@@ -189,13 +198,13 @@
         <?cs call:display_edit_form() ?>
       <?cs /if ?>
     </div>
-    <?cs if:discussion.messages.0.id || args.discussion_action && (args.discussion_action != "delete") && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
-      <div class="replies">
+    <?cs if:discussion.messages.0.id || args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
+      <div class="replies <?cs if:discussion.topic.new ?>new<?cs /if ?>">
         <ul>
           <?cs if:discussion.messages.0.id ?>
             <?cs call:display_topic(discussion.messages) ?>
           <?cs /if ?>
-          <?cs if:!args.message && !args.submit && args.discussion_action && (args.discussion_action != "delete") && (args.discussion_action != 'edit') && (args.discussion_action != 'post-edit') ?>
+          <?cs if:!args.message && !args.submit && args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
             <?cs if:args.preview ?>
               <?cs call:display_preview() ?>
             <?cs /if ?>
@@ -204,6 +213,7 @@
         </ul>
       </div>
     <?cs /if ?>
+    <?cs call:display_set_display() ?>
   <?cs else?>
     <span>No discussion for this page created.</span>
   <?cs /if ?>

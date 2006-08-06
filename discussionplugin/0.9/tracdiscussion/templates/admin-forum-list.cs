@@ -120,13 +120,13 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
-          <th class="id">ID</th>
-          <th class="name">Name</th>
-          <th class="subject">Subject</th>
-          <th class="description">Description</th>
-          <th class="moderators">Moderators</th>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/forum' + '?') ?>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/forum' + '?') ?>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', discussion.href + '/forum' + '?') ?>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/forum' + '?') ?>
+          <?cs call:sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', discussion.href + '/forum' + '?') ?>
           <?cs if:discussion.groups.1.id ?>
-            <th class="group">Group</th>
+            <?cs call:sortable_th(discussion.order, discussion.desc, 'forum_group', 'Group', discussion.href + '/forum' + '?') ?>
           <?cs /if ?>
         </tr>
       </thead>

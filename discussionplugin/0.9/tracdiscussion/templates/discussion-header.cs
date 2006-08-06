@@ -1,5 +1,4 @@
 <?cs include "header.cs" ?>
-<?cs include "macros.cs" ?>
 
 <div id="ctxtnav" class="nav">
   <h2>Wiki Navigation</h2>
