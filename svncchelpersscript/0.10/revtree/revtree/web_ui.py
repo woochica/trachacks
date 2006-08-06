@@ -220,8 +220,11 @@ class RevisionTreeModule(Component):
     def __init__(self):
         # Cache directory (reuses graphviz dir)
         self.cache_dir = self.config.get('graphviz', 'cache_dir')
+        self.prefix_url = self.config.get('graphviz', 'prefix_url')
         if not self.cache_dir or not os.path.exists(self.cache_dir):
             raise TracError, "cache directory is not valid"
+        if not self.prefix_url:
+            raise TracError, "prefix URL not defined"
         # Repository proxy
         if self.config.get('trac', 'repository_type') != 'svn':
             raise TracError, "revtree only supports Subversion repositories"
@@ -285,14 +288,15 @@ class RevisionTreeModule(Component):
             periods.append( { 'value' : d, 'label' : values[d] } )
         return periods
 
-    def _get_cache_name(self, revtree):
+    def _get_cache_name(self, revtree, img_kind):
         """Generates a unique filename for the current revtree"""
-        id = "%d-%d-%s-%s-%d-%d" % (revtree.revrange[0], \
-                                    revtree.revrange[1], \
-                                    revtree['branch'] or ' ', \
-                                    revtree['author'] or ' ', \
-                                    revtree['btup'] != '0' and 1 or 0, \
-                                    revtree['hideterm'] != '0' and 1 or 0)
+        id = "%s-%d-%d-%s-%s-%d-%d" % (img_kind,
+                                       revtree.revrange[0], \
+                                       revtree.revrange[1], \
+                                       revtree['branch'] or ' ', \
+                                       revtree['author'] or ' ', \
+                                       revtree['btup'] != '0' and 1 or 0, \
+                                       revtree['hideterm'] != '0' and 1 or 0)
         sha_key  = sha.new(id).hexdigest()
         img_name = '%s.revtree' % (sha_key)
         img_path = os.path.join(self.cache_dir, img_name)
@@ -321,7 +325,7 @@ class RevisionTreeModule(Component):
     def _render_graph(self, req, repos, revtree, youngest, img_kind, rebuild):
         """Renders revtree graph (tests cache status and generates a new image
            if not found)"""
-        cache_file = self._get_cache_name(revtree)
+        cache_file = self._get_cache_name(revtree, img_kind)
         create = True
         headers = ['revisions', 'branches', 'authors', 'image' ]
         props = {}
@@ -339,9 +343,7 @@ class RevisionTreeModule(Component):
                 cache.readline()
                 content = '\n'.join(cache.readlines())
                 cache.close()
-                image = os.path.join(self.cache_dir, "%s.%s.%s" % \
-                                      (props['image'][0], self.image_engine,
-                                       img_kind))
+                image = os.path.join(self.cache_dir, props['image'][0])
                 if os.path.exists(image):
                     create = False
                 else:
@@ -362,14 +364,29 @@ class RevisionTreeModule(Component):
                                   str(revisions[0]), str(revisions[1]))
             props['branches'] = branches
             props['authors'] = authors
-            image_re = re.compile('<object data="(.*?)"')
-            mo = image_re.search(content)
-            if mo:
-                props['image'] = (mo.group(1), )
+            if img_kind == 'svg':
+                image_re = re.compile(r'<object data="(.*?)\.'+ 
+                                      self.image_engine + r'\.svg"')
+                mo = image_re.search(content)
+                if mo:
+                    props['image'] = ("%s.%s.svg" % \
+                                      (mo.group(1)[len(self.prefix_url)+1:], \
+                                       self.image_engine), )
+                else:
+                    self.env.log.warn('Unable to find image uid in graphviz ' \
+                                      'content: %s...' % content[0:160])
+                    props['image'] = None
             else:
-                self.env.log.warn('Unable to find image uid in graphviz ' \
-                                  'content: %s' % content)
-                props['image'] = None
+                image_re = re.compile(r'<img\sid="(.*?)"')
+                image_suffix = 'png'
+                mo = image_re.search(content)
+                if mo:
+                    props['image'] = ("%s.%s.png" % \
+                                      (mo.group(1), self.image_engine), )
+                else:
+                    self.env.log.warn('Unable to find image uid in graphviz ' \
+                                      'content: %s...' % content[0:160])
+                    props['image'] = None
             try:
                 cache = open(cache_file, 'w')
                 if not cache:
@@ -386,6 +403,8 @@ class RevisionTreeModule(Component):
             except TypeError:
                 raise TracError, \
                       "Error rendering the rev tree (type: %s)" % header
+        else:
+            self.env.log.debug("Using cached file %s" % props['image'][0])
         return (content, props)
 
     def _generate_graph(self, req, repos, revtree, img_kind): 
