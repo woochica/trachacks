@@ -11,13 +11,13 @@ class VisitCounterMacro(Component):
     """
 Macro displays how many times was wiki page displayed.
 
-This macro accepts from one to tree parameters. First parameter is wiki page
-name which visit count you want to display. Other parameters are optional.
-Second parameter determines if displaying of macro should update specified page
-visit count. Accepted values of this parameter are: True, False, true, false,
-1, 0. Default value is true. Third parameter specifies number of digits for
-visit count display. If its value is 0 then visit count is displayed as simple
-text. Default value is 4.
+This macro accepts up to tree parameters. First parameter is wiki page
+name which visit count you want to display. If no parameters specified
+current page visit count is displayed. Second parameter determines if
+displaying of macro should update specified page visit count. Accepted values
+of this parameter are: True, False, true, false, 1, 0. Default value is true.
+Third parameter specifies number of digits for visit count display. If its
+value is 0 then visit count is displayed as simple text. Default value is 4.
 
 Examples:
 
@@ -74,8 +74,6 @@ Examples:
     def render_macro(self, req, name, content):
         if name == 'VisitCounter':
             # Get config values or its default values.
-            count_file = self.config.get('visitcounter', 'file') or \
-              '/var/lib/trac/visits/visits.log'
             expires = int(self.config.get('visitcounter', 'expires') or 0)
 
             # Get access to database
@@ -86,19 +84,23 @@ Examples:
             add_stylesheet(req, 'visitcounter/css/visitcounter.css')
 
             # Get macro arguments.
-            args = content.split(',')
+	    if content:
+                args = content.split(',')
+	    else:
+	        args = []
             argc = len(args)
             for I in xrange(argc):
                 args[I] = args[I].strip()
 
             # Check right arguments count.
-            if argc < 1:
-                raise TracError('VisitCounter macro take minimaly 1 argument')
             if argc > 3:
                 raise TracError('VisitCounter macro take at most 3 arguments')
 
             # Get argument values
-            page = args[0]
+            if argc >=1:
+                page = args[0]
+            else:
+                page = req.path_info[6:] or 'WikiStart'
             if argc >= 2:
                 update = args[1] in ('True', 'true', '1')
             else:
@@ -114,8 +116,8 @@ Examples:
             # Check if should update visit count.
             if update:
                 # Getting list of visited page
-                if req.session.has_key('visited'):
-                    visited = req.session.get('visited').split('|')
+                if req.session.has_key('visited-pages'):
+                    visited = req.session.get('visited-pages').split('|')
                 else:
                     visited = []
 
@@ -126,8 +128,8 @@ Examples:
 
                     # Update cookie.
                     visited.append(page)
-                    req.session['visited'] = '|'.join(visited)
-
+                    req.session['visited-pages'] = '|'.join(visited)
+		    req.session['visited-pages']['expires'] = expires
             # Set template values and return rendered macro
             db.commit()
             req.hdf['visitcounter.count'] = count
