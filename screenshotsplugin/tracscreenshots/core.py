@@ -6,6 +6,13 @@ from trac.perm import IPermissionRequestor
 from trac.util import Markup, format_datetime, TracError
 import re, os, os.path, time, mimetypes
 
+# Try import TracTagsPlugin.
+try:
+    from tractags.api import TagEngine
+    is_tags = True
+except:
+    is_tags = False
+
 no_screenshot = {'id' : 0}
 
 class ScreenshotsCore(Component):
@@ -179,6 +186,13 @@ class ScreenshotsCore(Component):
                 screenshot = self.api.get_screenshot_by_time(screenshot_time)
                 self.id = screenshot['id']
 
+                # Create screenshot tags.
+                if is_tags:
+                    tags = TagEngine(self.env).tagspace.screenshots
+                    tags.add_tags(self.req, screenshot['id'],
+                      [screenshot['name'], screenshot['author'],
+                      screenshot['component'], screenshot['version']])
+
                 # Prepare file paths
                 path = os.path.join(self.path, str(self.id))
                 large_filepath = os.path.join(path, large_filename)
@@ -212,8 +226,18 @@ class ScreenshotsCore(Component):
                 name = Markup(self.req.args.get('name'))
                 description = Markup(self.req.args.get('description'))
 
+                # Get old screenshot
+                screenshot = self.api.get_screenshot(self.id)
+
+                # Update screenshot tags.
+                if is_tags:
+                    tags = TagEngine(self.env).tagspace.screenshots
+                    tags.replace_tags(self.req, screenshot['id'],
+                      [name, screenshot['author'], component['name'],
+                      version['name']])
+
                 # Edit screenshot.
-                self.api.edit_screenshot(self.id, name, description,
+                self.api.edit_screenshot(screenshot['id'], name, description,
                   component['name'], version['name'])
 
             elif mode == 'delete':
@@ -235,6 +259,13 @@ class ScreenshotsCore(Component):
                     os.rmdir(path)
                 except:
                     pass
+
+                # Delete screenshot tags.
+                if is_tags:
+                    tags = TagEngine(self.env).tagspace.screenshots
+                    tags.remove_tags(self.req, screenshot['id'],
+                      [screenshot['name'], screenshot['author'],
+                      component['name'], version['name']])
 
                 # Set new screenshot id.
                 if index > 1:
