@@ -6,7 +6,7 @@ from trac.ticket.query import Query
 from webadmin.web_ui import IAdminPageProvider
 
 from api import DatamoverSystem
-from ticket_util import copy_ticket
+from util import copy_ticket
 
 class DatamoverTicketModule(Component):
     """The ticket moving component of the datamover plugin."""
