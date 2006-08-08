@@ -11,14 +11,20 @@
 <fieldset>
     <legend>Source</legend>
     <div class="field">
-        <label><input type="radio" name="source" value="component" id="bycomponent_radio" checked="checked" />
+        <label><input type="radio" name="source" value="component" id="source_component_radio" checked="checked" />
             Component
-        </label>&nbsp;
-        <label><input type="radio" name="source" value="ticket" id="byticket_radio" />
+        </label>
+        <label><input type="radio" name="source" value="ticket" id="source_ticket_radio" />
             Ticket
         </label>
+        <label><input type="radio" name="source" value="all" id="source_all_radio" />
+            All
+        </label>
+        <label><input type="radio" name="source" value="query" id="source_query_radio" />
+            Query
+        </label>       
     </div>
-    <div class="field" id="bycomponent_div">
+    <div class="field" id="source_component_div">
         <label>Component:
             <select name="component">
                 <?cs each:comp = datamover.components ?>
@@ -27,9 +33,17 @@
             </select>
         </label>
     </div>
-    <div class="field" id="byticket_div" style="display: none">
+    <div class="field" id="source_ticket_div" style="display: none">
         <label>Ticket ID:
             <input type="text" name="ticket" />
+        </label>
+    </div>
+    <div class="field" id="source_all_div" style="display: none">
+        &nbsp;
+    </div>
+    <div class="field" id="source_query_div" style="display: none">
+        <label>Query String:
+            <input type="text" name="query" />
         </label>
     </div>
 </fieldset>
@@ -57,7 +71,7 @@
     
 <script type="text/javascript">
 <!--
-    var current_div = 'bycomponent_div';
+    var current_div = 'source_component_div';
     
     function show_div(d) {
         document.getElementById(current_div).style.display = 'none';
@@ -69,8 +83,10 @@
         addEvent(document.getElementById(d+'_radio'), 'change', function() { show_div(d+'_div'); });
     }
     
-    do_addEvent('bycomponent');
-    do_addEvent('byticket');
+    do_addEvent('source_component');
+    do_addEvent('source_ticket');
+    do_addEvent('source_all');
+    do_addEvent('source_query');    
 //-->
 </script>
 

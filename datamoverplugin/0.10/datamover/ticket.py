@@ -37,31 +37,26 @@ class DatamoverTicketModule(Component):
                 raise TracError, 'Action not specified or invalid'
                 
             action_verb = {'copy':'Copied', 'move':'Moved'}[action]
+            
+            query_string = {
+                'ticket': 'id=%s'%int(source),
+                'component': 'component=%s'%source,
+                'all': 'id!=0',
+                'query': source,
+            }
                 
             try:
-                if source_type == 'ticket':
-                    try:
-                        source = int(source)
-                        t = Ticket(self.env, source)
-                        copy_ticket(self.env, dest, source)
-                        if action == 'move':
-                            t.delete() # Delete source version on moves
-                        req.hdf['datamover.message'] = '%s ticket %s'%(action_verb, source)
-                    except ValueError:
-                        req.hdf['datamover.message'] = 'Invalid entry for ticket ID'
-                        self.log.debug(req.hdf['datamover.message'], exc_info=True)
-                elif source_type == 'component':
-                    ids = [x['id'] for x in Query.from_string(self.env, 'component='+source).execute(req)]
-                    dest_db = Environment(dest).get_db_cnx()
-                    for id in ids:
-                        copy_ticket(self.env, dest, id, dest_db)
-                    dest_db.commit()
-                        
-                    if action == 'move':
-                        for id in ids:
-                            Ticket(self.env, id).delete()
+                ids = [x['id'] for x in Query.from_string(self.env, query_string).execute(req)]
+                dest_db = Environment(dest).get_db_cnx()
+                for id in ids:
+                    copy_ticket(self.env, dest, id, dest_db)
+                dest_db.commit()
                     
-                    req.hdf['datamover.message'] = '%s tickets %s'%(action_verb, ', '.join([str(n) for n in ids]))
+                if action == 'move':
+                    for id in ids:
+                        Ticket(self.env, id).delete()
+                    
+                req.hdf['datamover.message'] = '%s tickets %s'%(action_verb, ', '.join([str(n) for n in ids]))
             except TracError, e:
                 req.hdf['datamover.message'] = "An error has occured: \n"+str(e)
                 self.log.warn(req.hdf['datamover.message'], exc_info=True)
