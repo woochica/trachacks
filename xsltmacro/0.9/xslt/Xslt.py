@@ -331,8 +331,8 @@ class XsltProcessor(Component):
         style_obj = _get_obj(self.env, req.hdf, *stylespec)
         doc_obj   = _get_obj(self.env, req.hdf, *docspec)
 
-        lastmod = max(_get_last_modified(style_obj),
-                      _get_last_modified(doc_obj))
+        lastmod = max(self._get_last_modified(style_obj),
+                      self._get_last_modified(doc_obj))
 
         req.check_modified(lastmod)
         if not req.get_header('If-None-Match'):
@@ -363,7 +363,7 @@ class XsltProcessor(Component):
 
         raise RequestDone
 
-    def _get_last_modified(obj):
+    def _get_last_modified(self, obj):
         import time
 
         if isinstance(obj, str) or isinstance(obj, unicode):
