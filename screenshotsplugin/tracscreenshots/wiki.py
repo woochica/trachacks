@@ -20,7 +20,7 @@ class ScreenshotsWiki(Component):
     def _screenshot_link(self, formatter, ns, params, label):
         if ns == 'screenshot':
             # Get referenced screenshot.
-            api = ScreenshotsApi(self, None)
+            api = ScreenshotsApi(self)
             screenshot = api.get_screenshot(params)
 
             # Return macro content

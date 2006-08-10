@@ -13,7 +13,7 @@ class ScreenshotsTaggingSystem(DefaultTaggingSystem):
 
     def name_details(self, name):
         # Get tagged screenshots.
-        api = ScreenshotsApi(self.component, self.req)
+        api = ScreenshotsApi(self.component)
         screenshot = api.get_screenshot(name)
 
         # Return a tuple of (href, wikilink, title)

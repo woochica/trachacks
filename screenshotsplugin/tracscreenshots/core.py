@@ -48,6 +48,7 @@ class ScreenshotsCore(Component):
 
     # IRequestHandler methods.
     def match_request(self, req):
+        self.log.debug(repr([(k,req.args.get(k)) for k in req.args.keys()]))
         if re.match(r'''^/screenshots($|/$)''', req.path_info):
             return True
         if re.match(r'''^/screenshots/(\d+)/(small|medium|large)$''',
@@ -57,6 +58,8 @@ class ScreenshotsCore(Component):
         return False
 
     def process_request(self, req):
+        self.log.debug(repr([(k,req.args.get(k)) for k in req.args.keys()]))
+
         # Create API object.
         self.api = ScreenshotsApi(self)
 
