@@ -26,6 +26,8 @@ The remaining arguments are optional:
  * `use_iframe` means generate an <iframe> tag instead of directly rendering
     the result (this script needs to be installed as a plugin for this to work)
  * `if_*` are all passed as attributes to the iframe with the `if_` prefix stripped
+ * `xp_*` are all passed as parameters to the xsl transformer with the `xp_` prefix
+    stripped
 
 Examples:
 {{{
@@ -42,6 +44,11 @@ You can use stylesheets and docs from other pages, other tickets, or other modul
     [[Xslt(view.xsl, source:/trunk/docs/foo.xml)]]      # doc from repository
     [[Xslt(htdocs:foo/bar.xsl, data.xml)]]              # stylesheet in project htdocs dir.
     [[Xslt(view.xsl, http://test.foo.bar/bar.xml)]]     # xml in external url (only http(s) urls allowed)
+}}}
+
+Passing parameters to the transform:
+{{{
+    [[Xslt(style.xsl, data.xml, xp_foo="hello")]]       # pass foo="hello" to the transform
 }}}
 
 ''Adapted from the Image macro that's part of trac''
@@ -72,7 +79,8 @@ def execute(hdf, args, env):
 
     if 'use_iframe' in opts:
         url = env.href(MY_URL, ss_mod=stylespec[0], ss_id=stylespec[1], ss_fil=stylespec[2],
-                       doc_mod=docspec[0], doc_id=docspec[1], doc_fil=docspec[2])
+                       doc_mod=docspec[0], doc_id=docspec[1], doc_fil=docspec[2],
+                       **dict([(k, v) for k, v in opts.iteritems() if k.startswith('xp_')]))
 
         attrs = { 'style': 'width: 100%; margin: 0pt', 'frameborder': '0', 'scrolling': 'auto' }
         attrs.update(dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('if_')]))
@@ -92,11 +100,12 @@ def execute(hdf, args, env):
           """ % { 'src': url, 'attrs': ' '.join([ k + '="' + str(v) + '"' for k,v in attrs.iteritems() ]) }
 
     else:
-	style_obj = _get_obj(env, hdf, *stylespec)
-	doc_obj   = _get_obj(env, hdf, *docspec)
+        style_obj = _get_obj(env, hdf, *stylespec)
+        doc_obj   = _get_obj(env, hdf, *docspec)
+        params    = dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('xp_')])
 
         try:
-            page, ct  = _transform(style_obj, doc_obj)
+            page, ct  = _transform(style_obj, doc_obj, params)
         finally:
             _close_obj(style_obj)
             _close_obj(doc_obj)
@@ -106,7 +115,7 @@ def execute(hdf, args, env):
 def _parse_opts(args):
     s_opts = ['use_iframe']     # simple opts (no value)
     v_opts = []                 # valued opts
-    p_opts = ['if_']            # prefixed opts
+    p_opts = ['if_', 'xp_']     # prefixed opts
 
     opts = {}
     for arg in args:
@@ -252,7 +261,7 @@ def _obj_tostr(obj):
         return obj.url
     return str(obj)
 
-def _transform(style_obj, doc_obj):
+def _transform(style_obj, doc_obj, params):
     import libxslt
 
     try:
@@ -272,7 +281,7 @@ def _transform(style_obj, doc_obj):
         doc.freeDoc()
         raise Exception("%s is not a valid stylesheet" % _obj_tostr(style_obj))
 
-    result = style.applyStylesheet(doc, None)
+    result = style.applyStylesheet(doc, params)
     output = style.saveResultToString(result)
 
     if result.get_type() == 'document_xml':
@@ -330,6 +339,7 @@ class XsltProcessor(Component):
 
         style_obj = _get_obj(self.env, req.hdf, *stylespec)
         doc_obj   = _get_obj(self.env, req.hdf, *docspec)
+        params    = dict([(k[3:], req.args.get(k)) for k in req.args.keys() if k.startswith('xp_')])
 
         lastmod = max(self._get_last_modified(style_obj),
                       self._get_last_modified(doc_obj))
@@ -345,7 +355,7 @@ class XsltProcessor(Component):
         req._headers.append(('Last-Modified', http_date(lastmod)))
 
         try:
-            page, content_type = _transform(style_obj, doc_obj)
+            page, content_type = _transform(style_obj, doc_obj, params)
         finally:
             _close_obj(style_obj)
             _close_obj(doc_obj)
