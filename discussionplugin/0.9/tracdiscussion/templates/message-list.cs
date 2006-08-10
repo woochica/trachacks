@@ -129,7 +129,7 @@
       <?cs /if ?>
     </li>
     <?cs if:message.replies.0.id || args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
-      <ul>
+      <ul class="reply">
         <?cs if:message.replies.0.id ?>
           <?cs call:display_topic(message.replies) ?>
         <?cs /if ?>
@@ -200,7 +200,7 @@
     </div>
     <?cs if:discussion.messages.0.id || args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
       <div class="replies <?cs if:discussion.topic.new ?>new<?cs /if ?>">
-        <ul>
+        <ul class="reply">
           <?cs if:discussion.messages.0.id ?>
             <?cs call:display_topic(discussion.messages) ?>
           <?cs /if ?>

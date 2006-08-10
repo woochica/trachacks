@@ -123,13 +123,13 @@
   border-bottom: 2px solid #b00;
 }
 
-.message-list .replies ul
+.message-list div.replies ul.reply
 {
   list-style: none;
   padding: 0em 0em 0em 2em;
 }
 
-.message-list .replies li
+.message-list div.replies ul.reply > li
 {
   margin: 0.25em;
   padding: 0.25em;
