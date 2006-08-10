@@ -5,10 +5,9 @@ import time
 
 class ScreenshotsApi(object):
 
-    def __init__(self, component, req):
+    def __init__(self, component):
         self.env = component.env
         self.log = component.log
-        self.req = req
         self.db = self.env.get_db_cnx()
         self.cursor = self.db.cursor()
 
@@ -27,7 +26,7 @@ class ScreenshotsApi(object):
         for row in self.cursor:
             row = dict(zip(columns, row))
             row['description'] = wiki_to_oneliner(row['description'],
-              self.env, self.req)
+              self.env)
             id = id + 1
             row['id'] = id
             versions.append(row)
@@ -43,7 +42,7 @@ class ScreenshotsApi(object):
         for row in self.cursor:
             row = dict(zip(columns, row))
             row['description'] = wiki_to_oneliner(row['description'],
-              self.env, self.req)
+              self.env)
             id = id + 1
             row['id'] = id
             components.append(row)
@@ -60,8 +59,8 @@ class ScreenshotsApi(object):
         screenshots = []
         for row in self.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'], self.env,
-              self.req)
+            row['name'] = wiki_to_oneliner(row['name'], self.env)
+            row['description'] = wiki_to_oneliner(row['description'], self.env)
             row['author'] = wiki_to_oneliner(row['author'], self.env)
             screenshots.append(row)
         return screenshots

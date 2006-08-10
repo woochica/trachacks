@@ -58,8 +58,7 @@ class ScreenshotsCore(Component):
 
     def process_request(self, req):
         # Create API object.
-        self.req = req
-        self.api = ScreenshotsApi(self, self.req)
+        self.api = ScreenshotsApi(self)
 
         # Get config variables.
         self.title = self.env.config.get('screenshots', 'title', 'Screenshots')
@@ -70,18 +69,18 @@ class ScreenshotsCore(Component):
         self.log.debug('path: %s' % (self.path,))
 
         # Get current screenshot id
-        self.id = int(self.req.args.get('id') or 0)
+        self.id = int(req.args.get('id') or 0)
 
         # Get components and versions.
         components = self.api.get_components()
-        component_id = int(self.req.args.get('component') or 0)
+        component_id = int(req.args.get('component') or 0)
         if component_id:
             component = self._get_component(components, component_id)
         else:
             component = self._get_component_by_name(components,
               self.component) or components[0]
         versions = self.api.get_versions()
-        version_id = int(self.req.args.get('version') or 0)
+        version_id = int(req.args.get('version') or 0)
         if version_id:
             version = self._get_version(versions, version_id)
         else:
@@ -94,27 +93,27 @@ class ScreenshotsCore(Component):
         self.log.debug('version: %s' % (version,))
 
         # CSS styles
-        add_stylesheet(self.req, 'screenshots/css/screenshots.css')
+        add_stylesheet(req, 'screenshots/css/screenshots.css')
 
         # Prepare HDF structure.
-        self.req.hdf['screenshots.component'] = component
-        self.req.hdf['screenshots.components'] = components
-        self.req.hdf['screenshots.versions'] = versions
-        self.req.hdf['screenshots.version'] = version
-        self.req.hdf['screenshots.href'] = self.env.href.screenshots()
-        self.req.hdf['screenshots.title'] = self.title
+        req.hdf['screenshots.component'] = component
+        req.hdf['screenshots.components'] = components
+        req.hdf['screenshots.versions'] = versions
+        req.hdf['screenshots.version'] = version
+        req.hdf['screenshots.href'] = self.env.href.screenshots()
+        req.hdf['screenshots.title'] = self.title
 
         # Do actions and return content.
-        modes = self._get_modes()
+        modes = self._get_modes(req)
         self.log.debug('modes: %s' % (modes,))
-        content = self._do_actions(modes, component, version)
+        content = self._do_actions(req, modes, component, version)
         del self.api
         return content
 
     # Private functions.
 
-    def _get_modes(self):
-        action = self.req.args.get('action')
+    def _get_modes(self, req):
+        action = req.args.get('action')
         self.log.debug('action: %s' % (action,))
         if action == 'get_file':
             return ['get-file']
@@ -131,14 +130,14 @@ class ScreenshotsCore(Component):
         else:
             return ['display']
 
-    def _do_actions(self, modes, component, version):
+    def _do_actions(self, req, modes, component, version):
         for mode in modes:
             if mode == 'get-file':
-                self.req.perm.assert_permission('SCREENSHOTS_VIEW')
+                req.perm.assert_permission('SCREENSHOTS_VIEW')
 
                 # Get screenshot
                 match = re.match(r'''^/screenshots/(\d+)/(small|medium|large)$''',
-                  self.req.path_info)
+                  req.path_info)
                 if match:
                     id = match.group(1)
                     size = match.group(2)
@@ -150,19 +149,19 @@ class ScreenshotsCore(Component):
                 self.log.debug('file: %s' % (file,))
                 self.log.debug('path: %s' % (path,))
                 type = mimetypes.guess_type(path)[0]
-                self.req.send_file(path, type)
+                req.send_file(path, type)
 
             elif mode == 'add':
-                self.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
             elif mode == 'post-add':
-                self.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get form values.
-                name = Markup(self.req.args.get('name'))
-                description = Markup(self.req.args.get('description'))
-                author = self.req.authname
-                file, filename = self._get_file_from_req(self.req)
+                name = Markup(req.args.get('name'))
+                description = Markup(req.args.get('description'))
+                author = req.authname
+                file, filename = self._get_file_from_req(req)
                 content = file.read()
 
                 # Check correct file type.
@@ -189,9 +188,9 @@ class ScreenshotsCore(Component):
                 # Create screenshot tags.
                 if is_tags:
                     tags = TagEngine(self.env).tagspace.screenshots
-                    tags.add_tags(self.req, screenshot['id'],
-                      [screenshot['name'], screenshot['author'],
-                      screenshot['component'], screenshot['version']])
+                    tags.add_tags(req, screenshot['id'], [screenshot['name'],
+                      screenshot['author'], screenshot['component'],
+                      screenshot['version']])
 
                 # Prepare file paths
                 path = os.path.join(self.path, str(self.id))
@@ -217,14 +216,14 @@ class ScreenshotsCore(Component):
                     raise TracError('Error storing file')
 
             elif mode == 'edit':
-                self.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
             elif mode == 'post-edit':
-                self.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get form values.
-                name = Markup(self.req.args.get('name'))
-                description = Markup(self.req.args.get('description'))
+                name = Markup(req.args.get('name'))
+                description = Markup(req.args.get('description'))
 
                 # Get old screenshot
                 screenshot = self.api.get_screenshot(self.id)
@@ -232,16 +231,15 @@ class ScreenshotsCore(Component):
                 # Update screenshot tags.
                 if is_tags:
                     tags = TagEngine(self.env).tagspace.screenshots
-                    tags.replace_tags(self.req, screenshot['id'],
-                      [name, screenshot['author'], component['name'],
-                      version['name']])
+                    tags.replace_tags(req, screenshot['id'], [name,
+                      screenshot['author'], component['name'], version['name']])
 
                 # Edit screenshot.
                 self.api.edit_screenshot(screenshot['id'], name, description,
                   component['name'], version['name'])
 
             elif mode == 'delete':
-                self.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get screenshots
                 screenshots = self.api.get_screenshots(component['name'],
@@ -263,7 +261,7 @@ class ScreenshotsCore(Component):
                 # Delete screenshot tags.
                 if is_tags:
                     tags = TagEngine(self.env).tagspace.screenshots
-                    tags.remove_tags(self.req, screenshot['id'],
+                    tags.remove_tags(req, screenshot['id'],
                       [screenshot['name'], screenshot['author'],
                       component['name'], version['name']])
 
@@ -274,7 +272,7 @@ class ScreenshotsCore(Component):
                     self.id = screenshots[0]['id']
 
             elif mode == 'display':
-                self.req.perm.assert_permission('SCREENSHOTS_VIEW')
+                req.perm.assert_permission('SCREENSHOTS_VIEW')
 
                 # Get screenshots of selected version and component.
                 screenshots = self.api.get_screenshots(component['name'],
@@ -306,22 +304,22 @@ class ScreenshotsCore(Component):
                     previous.append(no_screenshot)
 
                 # Fill HDF structure
-                self.req.hdf['screenshots.index'] = index + 1
-                self.req.hdf['screenshots.count'] = len(screenshots)
-                self.req.hdf['screenshots.previous'] = previous
-                self.req.hdf['screenshots.current'] = current
-                self.req.hdf['screenshots.next'] = next
+                req.hdf['screenshots.index'] = index + 1
+                req.hdf['screenshots.count'] = len(screenshots)
+                req.hdf['screenshots.previous'] = previous
+                req.hdf['screenshots.current'] = current
+                req.hdf['screenshots.next'] = next
 
                 return 'screenshots.cs', None
 
             elif mode == 'add-display':
-                self.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get screenshot
                 screenshot = self.api.get_screenshot(self.id)
 
                 # Fill HDF structure
-                self.req.hdf['screenshots.current'] = [screenshot]
+                req.hdf['screenshots.current'] = [screenshot]
 
                 return 'screenshot-add.cs', None
 

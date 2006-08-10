@@ -17,7 +17,7 @@
       <?cs each screenshot = screenshots.previous ?>
         <?cs if:screenshot.id ?>
           <a href="<?cs var:screenshots.href?>?version=<?cs var:screenshots.version.id ?>;component=<?cs var:screenshots.component.id ?>;id=<?cs var:screenshot.id ?>">
-            <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/small"/>
+            <img alt="Preview" src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/small"/>
           </a>
         <?cs else ?>
           <a class="noimage" href="#"></a>
@@ -34,7 +34,7 @@
             <?cs alt:screenshot.name ?>noname<?cs /alt ?> by <?cs alt:screenshot.author ?>anonymous<?cs /alt ?>
           </div>
           <a href="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/large">
-            <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/medium"/>
+            <img alt="<?cs var:screenshot.name ?>" src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/medium"/>
           </a>
           <div class="description">
             <?cs alt:screenshot.description ?>without description<?cs /alt ?>
@@ -50,7 +50,7 @@
       <?cs each screenshot = screenshots.next ?>
         <?cs if:screenshot.id ?>
         <a href="<?cs var:screenshots.href?>?component=<?cs var:screenshots.component.id ?>;version=<?cs var:screenshots.version.id ?>;id=<?cs var:screenshot.id ?>">
-          <img src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/small"/>
+          <img alt="Preview" src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/small"/>
           </a>
         <?cs else ?>
           <a class="noimage" href="#"></a>
@@ -114,9 +114,9 @@
               <input type="hidden" name="action" value="edit"/>
             </div>
           </form>
-          <form method="post" action="<?cs var:screenshots.href ?>"/>
+          <form method="post" action="<?cs var:screenshots.href ?>">
             <div>
-              <input type="submit" name="delete" value="Delete Screenshot"/>
+              <input type="submit" name="edit" value="Delete Screenshot"/>
               <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
               <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
               <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
