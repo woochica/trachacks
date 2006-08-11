@@ -34,7 +34,7 @@
             <?cs alt:screenshot.name ?>noname<?cs /alt ?> by <?cs alt:screenshot.author ?>anonymous<?cs /alt ?>
           </div>
           <a href="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/large">
-            <img alt="<?cs var:screenshot.name ?>" src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/medium"/>
+            <img alt="Screenshot #<?cs var:screenshot.id ?>" src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/medium"/>
           </a>
           <div class="description">
             <?cs alt:screenshot.description ?>without description<?cs /alt ?>
@@ -60,7 +60,7 @@
   </div>
 
   <div class="controls">
-    <form method="post" action="<?cs var:screenshots.href ?>">
+    <form method="post" action="<?cs var:screenshots.href ?>/">
       <fieldset>
         <legend>
           Controls:
@@ -96,7 +96,7 @@
     </form>
     <?cs if:trac.acl.SCREENSHOTS_ADMIN ?>
       <div class="buttons">
-        <form method="post" action="<?cs var:screenshots.href ?>">
+        <form method="post" action="<?cs var:screenshots.href ?>/">
           <div>
             <input type="submit" name="add" value="Add Screenshot"/>
             <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
@@ -105,7 +105,7 @@
           </div>
         </form>
         <?cs if:screenshots.current.0.id ?>
-          <form method="post" action="<?cs var:screenshots.href ?>">
+          <form method="post" action="<?cs var:screenshots.href ?>/">
             <div>
               <input type="submit" name="edit" value="Edit Screenshot"/>
               <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
@@ -114,7 +114,7 @@
               <input type="hidden" name="action" value="edit"/>
             </div>
           </form>
-          <form method="post" action="<?cs var:screenshots.href ?>">
+          <form method="post" action="<?cs var:screenshots.href ?>/">
             <div>
               <input type="submit" name="edit" value="Delete Screenshot"/>
               <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>

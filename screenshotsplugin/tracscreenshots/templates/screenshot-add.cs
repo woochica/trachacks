@@ -8,7 +8,7 @@
     <h1><?cs var:screenshots.title ?></h1>
   </div>
 
-  <form class="add_form" method="post" enctype="multipart/form-data" action="<?cs var:screenshots.href ?>?component=<?cs var:screenshots.component.id ?>;version=<?cs var:screenshots.version.id ?>">
+  <form class="add_form" method="post" enctype="multipart/form-data" action="<?cs var:screenshots.href ?>/?component=<?cs var:screenshots.component.id ?>;version=<?cs var:screenshots.version.id ?>">
     <fieldset>
       <legend>
         <?cs if:args.action == 'add' ?>
