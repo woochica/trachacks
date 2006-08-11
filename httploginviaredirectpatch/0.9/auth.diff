@@ -1,0 +1,42 @@
+--- /trac/web/auth.py.orig	2006-01-03 21:40:13.000000000 +0100
++++ /trac/web/auth.py	2006-08-10 19:40:00.000000000 +0200
+@@ -22,6 +22,7 @@
+ from trac.web.api import IAuthenticator, IRequestHandler
+ from trac.web.chrome import INavigationContributor
+ from trac.util import escape, hex_entropy, Markup
++from urllib import urlencode
+ 
+ 
+ class LoginModule(Component):
+@@ -82,7 +83,10 @@
+             self._do_login(req)
+         elif req.path_info.startswith('/logout'):
+             self._do_logout(req)
+-        self._redirect_back(req)
++	if req.path_info.startswith('/login/'):
++            self._redirect(req)
++	else:
++            self._redirect_back(req)
+ 
+     # Internal methods
+ 
+@@ -174,3 +178,19 @@
+             # instance
+             referer = None
+         req.redirect(referer or self.env.abs_href())
++
++    def _redirect(self, req):
++	"""Redirects the user to the path mentioned after '/login'.
++	Example: "/login/timeline" redirects to "/timeline". """
++	
++	# (re)build query_string from req.args to get an urlencodable dictionary 
++        query_string = {}
++	for key in req.args.keys():
++	    query_string[key] = req.args.get(key)
++	
++	# (re)build target path (with query_string, if applicable)
++	if len(query_string)==0:
++            req.redirect(self.env.abs_href() + req.path_info.replace('/login',''))
++	else:
++	    req.redirect(self.env.abs_href() + req.path_info.replace('/login','') + '?' + urlencode(query_string))
++

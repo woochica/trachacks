@@ -1,0 +1,11 @@
+--- /trac/web/standalone.py.orig	2006-01-03 21:40:13.000000000 +0100
++++ /trac/web/standalone.py	2006-08-10 19:39:59.000000000 +0200
+@@ -288,7 +288,7 @@
+             return
+ 
+         req.remote_user = None
+-        if path_info == '/login':
++        if path_info.startswith('/login'):
+             auth = self.server.auths.get(project_name) or \
+                    self.server.auths.get('*')
+             if not auth:
