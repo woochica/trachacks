@@ -10,4 +10,5 @@ class WikiSubscribable(Component):
     
     implements(ISubscribable)
     
-    
+    def subscribable_types(self):
+        yield 'wiki'

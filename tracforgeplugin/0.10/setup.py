@@ -24,6 +24,7 @@ setup(
         'trac.plugins': [
             'tracforge.perms = tracforge.perms',
             'tracforge.subscriptions = tracforge.subscriptions',
+            'tracforge.linker = tracforge.linker',
         ],
     },
 
