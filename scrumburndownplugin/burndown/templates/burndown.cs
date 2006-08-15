@@ -42,9 +42,8 @@
     <br/>
     
 <!-- graph code begins here-->
-<script src="/cgi-bin/trac.cgi/chrome/hw/js/line.js" type="text/javascript"></script>
-<script src="/cgi-bin/trac.cgi/chrome/hw/js/wz_jsgraphics.js" type="text/javascript"></script>
-
+<script type="text/javascript" src="<?cs var:chrome.href ?>/hw/js/line.js"></script>
+<script type="text/javascript" src="<?cs var:chrome.href ?>/hw/js/wz_jsgraphics.js"></script>
 <div id="myCanvas" style="overflow: auto; position:relative;height:400px;width:800px;"></div>
 
 <script>
