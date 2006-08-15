@@ -1,7 +1,7 @@
 # Burndown plugin
 # Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
 # All rights reserved.
-#
+# vi: et ts=4 sw=4
 # This software may at some point consist of voluntary contributions made by
 # many individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
@@ -158,7 +158,10 @@ class BurndownComponent(Component):
                 cursor.execute(sqlBurndown)
                 component_data[comp] = cursor.fetchall()
             
-        burndown_length = len(component_data[component_data.keys()[0] ])
+        if component_data[component_data.keys()[0]]:
+            burndown_length = len(component_data[component_data.keys()[0]])
+        else:
+            burndown_length = 0
         burndown_data = []
         if selected_component == 'All Components':
             for day in range (0, burndown_length):

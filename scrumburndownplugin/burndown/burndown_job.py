@@ -1,6 +1,6 @@
 # Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
 # All rights reserved.
-#
+# vi: et ts=4 sw=4
 # This software may at some point consist of voluntary contributions made by
 # many individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
@@ -50,20 +50,27 @@ def main():
                                     "    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'current_estimate') "\
                                     "    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'time_spent') "\
                                     "WHERE t.component = '%s' AND t.milestone = '%s' "
-                                
+                #print sqlSelect % (comp[0], mile[0])
                 cursor.execute(sqlSelect % (comp[0], mile[0]))
             
                 rows = cursor.fetchall()
                 hours = 0
-                for estimate, spent in rows:
-                    if not estimate:
-                        estimate = 0
-                    if not spent:
-                        spent = 0
+                estimate = 0
+                spent = 0
+                if rows:
+                    for estimate, spent in rows:
+                        if not estimate:
+                            estimate = 0
+                        if not spent:
+                            spent = 0
                     
-                    hours += int(estimate) - int(spent)
-                
-                print 'burndown: %i, %s, %s, %s, %i' % (db.get_last_id(cursor, 'burndown'), comp[0], mile[0], today, hours)
+                        hours += int(estimate) - int(spent)
+                        
+                else:
+                    print "no results for %s component in %s milestone" % (comp[0], mile[0])
+                # print "last id was %s" % (db.get_last_id(cursor, 'burndown'))
+                # Sometimes db.get_last_id(cursor, 'burndown') returns "None".. 
+                print 'burndown: %s, %s, %s, %s, %i' % (db.get_last_id(cursor, 'burndown'), comp[0], mile[0], today, hours)
                 cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
                                      "    VALUES(NULL,'%s','%s','%s',%i)" % (comp[0], mile[0], today, hours))
                                      
