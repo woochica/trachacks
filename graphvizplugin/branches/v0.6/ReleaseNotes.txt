@@ -1,12 +1,22 @@
-Trac Graphviz Plugin v0.6.4 Release Notes
+Trac Graphviz Plugin v0.6.5 Release Notes
 =========================================
-June 1, 2006
+August 17, 2006
 
-Graphviz plugin v0.6.4 for Trac is now available. The Graphviz wiki
+Graphviz plugin v0.6.5 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
 of diagrams by the various graphviz programs. The text of a wiki page
 can contain the source text for graphviz and the web browser will show
 the resulting image.
+
+
+Changes for release v0.6.5
+--------------------------
+
+* GraphvizMacro is now also an IHTMLPreviewRenderer. Resolves issue
+  http://trac-hacks.org/attachment/ticket/576.
+
+* Escaped the error message before displaying it. Resolves issue
+  http://trac-hacks.org/ticket/574.
 
 
 Changes for release v0.6.4

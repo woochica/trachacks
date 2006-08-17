@@ -28,6 +28,7 @@ import inspect
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
+from trac.mimeview.api import IHTMLPreviewRenderer
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
 
@@ -40,7 +41,7 @@ class GraphvizMacro(Component):
     GraphvizMacro provides a plugin for Trac to render graphviz
     (http://www.graphviz.org/) drawings within a Trac wiki page.
     """
-    implements(IWikiMacroProvider)
+    implements(IWikiMacroProvider, IHTMLPreviewRenderer)
 
     # Available formats and processors, default first (dot/png)
     processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
@@ -454,3 +455,18 @@ class GraphvizMacro(Component):
         if isinstance(value, basestring):
             value = value.lower() in _TRUE_VALUES
         return bool(value)
+
+
+    MIME_TYPES = ('application/graphviz')
+
+    # IHTMLPreviewRenderer methods
+
+    def get_quality_ratio(self, mimetype):
+        self.log.error(mimetype)
+        if mimetype in self.MIME_TYPES:
+            return 2
+        return 0
+
+    def render(self, req, mimetype, content, filename=None, url=None):
+        name = mimetype[len('application/'):]
+        return self.render_macro(req, name, content)
