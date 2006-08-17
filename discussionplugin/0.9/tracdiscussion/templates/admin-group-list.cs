@@ -1,3 +1,5 @@
+<?cs include "my_macros.cs" ?>
+
 <h2>Forum Groups</h2>
 
 <?cs if:discussion.group.id && !args.submit ?>
@@ -50,9 +52,9 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
-          <?cs call:sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/group' + '?') ?>
-          <?cs call:sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/group' + '?') ?>
-          <?cs call:sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/group' + '?') ?>
+          <?cs call:my_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/group' + '?') ?>
+          <?cs call:my_sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/group' + '?') ?>
+          <?cs call:my_sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/group' + '?') ?>
         </tr>
       </thead>
       <tbody>
