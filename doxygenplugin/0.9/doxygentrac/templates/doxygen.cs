@@ -9,7 +9,7 @@
       </div>
    </div>
 <?cs else ?>
-  <?cs include: doxygen.path ?>
+  <?cs include doxygen.path ?>
 <?cs /if ?>
 
 <?cs include "footer.cs"?>
