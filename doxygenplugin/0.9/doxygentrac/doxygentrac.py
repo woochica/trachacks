@@ -54,7 +54,7 @@ class DoxygenPlugin(Component):
     def match_request(self, req):
         # Get config variables.
         base_path = self.config.get('doxygen', 'path', '/var/lib/trac/doxygen')
-        default_project = self.config.get('doxygen', 'default_project', '')
+        default_doc = self.config.get('doxygen', 'default_documentation', '')
         ext = self.config.get('doxygen', 'ext', 'htm html png')
         ext = '|'.join(ext.split(' '))
         source_ext = self.config.get('doxygen', 'source_ext', 'idl odl java' \
@@ -71,18 +71,18 @@ class DoxygenPlugin(Component):
 
             if not match.group(1) and not match.group(2):
                 # Request for documentation index.
-                req.args['path'] = os.path.join(base_path, default_project)
+                req.args['path'] = os.path.join(base_path, default_doc)
                 req.args['action'] = 'index'
             else:
-                # Get project and file from request.
+                # Get doc and file from request.
                 if not match.group(2):
-                    project = default_project
+                    doc = default_doc
                     file = match.group(1)
                 else:
-                    project = match.group(1)
+                    doc = match.group(1)
                     file = match.group(2)
 
-                self.log.debug('project: %s' % (project,))
+                self.log.debug('documentation: %s' % (doc,))
                 self.log.debug('file: %s' % (file,))
 
                 if re.match(r'''^search.php$''', file):
@@ -91,7 +91,7 @@ class DoxygenPlugin(Component):
 
                 elif re.match(r'''^(.*)[.](%s)''' % (ext,), file):
                     # Request for documentation file.
-                    path = os.path.join(base_path, project, file)
+                    path = os.path.join(base_path, doc, file)
                     self.log.debug('path: %s' % (path,))
                     if os.path.exists(path):
                         req.args['path'] = path
@@ -104,7 +104,7 @@ class DoxygenPlugin(Component):
                     match = re.match(r'''^(.*)[.](%s)''' % (source_ext,), file)
                     if match:
                         # Request for source file documentation.
-                        path = os.path.join(base_path, project, '%s_8%s.html'
+                        path = os.path.join(base_path, doc, '%s_8%s.html'
                           % (match.group(1), match.group(2)))
                         self.log.debug('path: %s' % (path,))
                         if os.path.exists(path):
@@ -115,25 +115,25 @@ class DoxygenPlugin(Component):
                             req.args['query'] = file
 
                     else:
-                        path = os.path.join(base_path, project, 'class%s.html'
+                        path = os.path.join(base_path, doc, 'class%s.html'
                           % (file,))
                         if os.path.exists(path):
                             req.args['path'] = path
                             req.args['action'] = 'file'
                         else:
-                            path = os.path.join(base_path, project,
+                            path = os.path.join(base_path, doc,
                               'struct%s.html' % (file,))
                             if os.path.exists(path):
                                 req.args['path'] = path
                                 req.args['action'] = 'file'
                             else:
-                                results = self._search_in_project(project,
+                                results = self._search_in_documentation(doc,
                                   [file])
                                 for result in results:
                                     self.log.debug(result)
                                     if result['name'] == file:
-                                        req.redirect(self.env.href.doxygen(
-                                          project) + '/' + result['url'])
+                                        req.redirect(self.env.href.doxygen(doc)
+                                          + '/' + result['url'])
                                 req.args['action'] = 'search'
                                 req.args['query'] = file
 
@@ -222,15 +222,15 @@ class DoxygenPlugin(Component):
 
         base_path = self.config.get('doxygen', 'path')
 
-        for project in os.listdir(base_path):
-            # Search in project documentation directories
-            path = os.path.join(base_path, project)
+        for doc in os.listdir(base_path):
+            # Search in documentation directories
+            path = os.path.join(base_path, doc)
             if os.path.isdir(path):
                 index = os.path.join(path, 'search.idx')
                 if os.path.exists(index):
                     creation = os.path.getctime(index)
-                    for result in  self._search_in_project(project, keywords):
-                        result['url'] =  self.env.href.doxygen(project) + '/' \
+                    for result in  self._search_in_documentation(doc, keywords):
+                        result['url'] =  self.env.href.doxygen(doc) + '/' \
                           + result['url']
                         yield result['url'], result['name'], creation, \
                           'doxygen', None
@@ -239,7 +239,7 @@ class DoxygenPlugin(Component):
             index = os.path.join(base_path, 'search.idx')
             if os.path.exists(index):
                 creation = os.path.getctime(index)
-                for result in self._search_in_project('', keywords):
+                for result in self._search_in_documentation('', keywords):
                     result['url'] =  self.env.href.doxygen() + '/' + \
                       result['url']
                     yield result['url'], result['name'], creation, 'doxygen', \
@@ -253,10 +253,10 @@ class DoxygenPlugin(Component):
         return []
 
     # internal methods
-    def _search_in_project(self, project, keywords):
-        # Open index file for project documentation
+    def _search_in_documentation(self, doc, keywords):
+        # Open index file for documentation
         base_path = self.config.get('doxygen', 'path')
-        index = os.path.join(base_path, project, 'search.idx')
+        index = os.path.join(base_path, doc, 'search.idx')
         if os.path.exists(index):
             fd = open(index)
 
