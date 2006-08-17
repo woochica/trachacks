@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.4'
+__version__   = '0.6.5'
 
 
 try:
@@ -37,7 +37,8 @@ _TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
 
 class GraphvizMacro(Component):
     """
-    Blah, blah, blah.
+    GraphvizMacro provides a plugin for Trac to render graphviz
+    (http://www.graphviz.org/) drawings within a Trac wiki page.
     """
     implements(IWikiMacroProvider)
 
@@ -380,7 +381,7 @@ class GraphvizMacro(Component):
         buf.write('<div id="content" class="error"><div class="message"> \n\
                    <strong>Graphviz macro processor has detected an error. Please fix the problem before continuing.</strong> \n\
                    <pre>%s</pre> \n\
-                   </div></div>' % msg)
+                   </div></div>' % escape(msg))
         self.log.error(msg)
         return buf
 
