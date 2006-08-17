@@ -42,56 +42,126 @@ class DoxygenPlugin(Component):
         return 'doxygen'
     def get_navigation_items(self, req):
         if req.perm.has_permission('DOXYGEN_VIEW'):
-            # Get config variables
+            # Get config variables.
             title = self.env.config.get('doxygen', 'title', 'Doxygen')
 
-            # Return mainnav buttons
+            # Return mainnav buttons.
             yield 'mainnav', 'doxygen', Markup('<a href="%s">%s</a>' % \
               (self.env.href.doxygen() + '/', title))
 
     # IRequestHandler methods
 
     def match_request(self, req):
-        # Get config variables
+        # Get config variables.
         base_path = self.config.get('doxygen', 'path', '/var/lib/trac/doxygen')
+        default_project = self.config.get('doxygen', 'default_project', '')
         ext = self.config.get('doxygen', 'ext', 'htm html png')
         ext = '|'.join(ext.split(' '))
+        source_ext = self.config.get('doxygen', 'source_ext', 'idl odl java' \
+          ' cs py php php4 inc phtml m cpp cxx c hpp hxx h')
+        source_ext = '|'.join(source_ext.split(' '))
 
-        # Match index
-        if re.match('^/doxygen/$', req.path_info):
-            req.args['path'] = base_path
-            req.args['type'] = 'index'
+        # Match documentation request.
+        self.log.debug(req.path_info)
+        match = re.match('^/doxygen(?:/?$|/([^/]*)(?:/?$|/(.*)$))',
+          req.path_info)
+        if match:
+            self.log.debug('matched group 1: %s' % (match.group(1),))
+            self.log.debug('matched group 2: %s' % (match.group(2),))
+
+            if not match.group(1) and not match.group(2):
+                # Request for documentation index.
+                req.args['path'] = os.path.join(base_path, default_project)
+                req.args['action'] = 'index'
+            else:
+                # Get project and file from request.
+                if not match.group(2):
+                    project = default_project
+                    file = match.group(1)
+                else:
+                    project = match.group(1)
+                    file = match.group(2)
+
+                self.log.debug('project: %s' % (project,))
+                self.log.debug('file: %s' % (file,))
+
+                if re.match(r'''^search.php$''', file):
+                    # Request for searching.
+                    req.args['action'] = 'search'
+
+                elif re.match(r'''^(.*)[.](%s)''' % (ext,), file):
+                    # Request for documentation file.
+                    path = os.path.join(base_path, project, file)
+                    self.log.debug('path: %s' % (path,))
+                    if os.path.exists(path):
+                        req.args['path'] = path
+                        req.args['action'] = 'file'
+                    else:
+                        req.args['action'] = 'search'
+                        req.args['query'] = file
+
+                else:
+                    match = re.match(r'''^(.*)[.](%s)''' % (source_ext,), file)
+                    if match:
+                        # Request for source file documentation.
+                        path = os.path.join(base_path, project, '%s_8%s.html'
+                          % (match.group(1), match.group(2)))
+                        self.log.debug('path: %s' % (path,))
+                        if os.path.exists(path):
+                            req.args['path'] = path
+                            req.args['action'] = 'file'
+                        else:
+                            req.args['action'] = 'search'
+                            req.args['query'] = file
+
+                    else:
+                        path = os.path.join(base_path, project, 'class%s.html'
+                          % (file,))
+                        if os.path.exists(path):
+                            req.args['path'] = path
+                            req.args['action'] = 'file'
+                        else:
+                            path = os.path.join(base_path, project,
+                              'struct%s.html' % (file,))
+                            if os.path.exists(path):
+                                req.args['path'] = path
+                                req.args['action'] = 'file'
+                            else:
+                                results = self._search_in_project(project,
+                                  [file])
+                                for result in results:
+                                    self.log.debug(result)
+                                    if result['name'] == file:
+                                        req.redirect(self.env.href.doxygen(
+                                          project) + '/' + result['url'])
+                                req.args['action'] = 'search'
+                                req.args['query'] = file
+
+            # Request matched.
             return True
 
-        # Match searching request
-        if re.match('^/doxygen/search.php$', req.path_info):
-            return True
-
-        # Match request if requested file exists
-        elif re.match(r'''^/doxygen/.*[.](%s)$''' % (ext), req.path_info):
-            file = re.sub('^/doxygen', '', req.path_info)
-            path = base_path + file
-            req.args['path'] = path
-            req.args['type'] = mimetypes.guess_type(path)[0]
-            return os.path.exists(path)
         else:
+            # Request not matched.
             return False
 
     def process_request(self, req):
+        req.perm.assert_permission('DOXYGEN_VIEW')
+
         # Get request arguments
         path = req.args.get('path')
-        type = req.args.get('type')
+        action = req.args.get('action')
 
         # Get config variables
         index =  self.config.get('doxygen', 'index', 'main.html')
         wiki_index = self.config.get('doxygen', 'wiki_index', None)
 
-        # Retrun apropriate content to type or search request
-        if req.args.has_key('query'):
+        # Redirect search requests.
+        if action == 'search':
             req.redirect('%s?q=%s&doxygen=on' % (self.env.href.search(),
               req.args.get('query')))
-            return None, None
-        elif type == 'index':
+
+        # Retrun apropriate content to type or search request
+        elif action == 'index':
             if wiki_index:
                 # Get access to database
                 db = self.env.get_db_cnx()
@@ -100,7 +170,8 @@ class DoxygenPlugin(Component):
                 # Get wiki index
                 sql = "SELECT text FROM wiki WHERE name = %s"
                 cursor.execute(sql, (wiki_index,))
-                text = Markup(system_message('Error', 'Wiki page %s does not exists' % (wiki_index)))
+                text = Markup(system_message('Error', 'Wiki page %s does not' \
+                  ' exists' % (wiki_index)))
                 for row in cursor:
                     text = wiki_to_html(row[0], self.env, req)
 
@@ -111,13 +182,16 @@ class DoxygenPlugin(Component):
                 add_stylesheet(req, 'doxygen/css/doxygen.css')
                 req.hdf['doxygen.path'] = path + '/' + index
                 return 'doxygen.cs', 'text/html'
-        elif type == 'text/html':
-            add_stylesheet(req, 'doxygen/css/doxygen.css')
-            req.hdf['doxygen.path'] = path
-            return 'doxygen.cs', type
-        else:
-            req.send_file(path, type)
-            return None, None
+
+        elif action == 'file':
+            type = mimetypes.guess_type(path)[0]
+
+            if type == 'text/html':
+                add_stylesheet(req, 'doxygen/css/doxygen.css')
+                req.hdf['doxygen.path'] = path
+                return 'doxygen.cs', 'text/html'
+            else:
+                req.send_file(path, type)
 
     # ITemplateProvider methods
 
@@ -146,23 +220,30 @@ class DoxygenPlugin(Component):
         else:
             keywords = query.split(' ')
 
-        path = self.config.get('doxygen', 'path')
-        path = os.path.join(path, 'search.idx')
+        base_path = self.config.get('doxygen', 'path')
 
-        if os.path.exists(path):
-            fd = open(path)
+        for project in os.listdir(base_path):
+            # Search in project documentation directories
+            path = os.path.join(base_path, project)
+            if os.path.isdir(path):
+                index = os.path.join(path, 'search.idx')
+                if os.path.exists(index):
+                    creation = os.path.getctime(index)
+                    for result in  self._search_in_project(project, keywords):
+                        result['url'] =  self.env.href.doxygen(project) + '/' \
+                          + result['url']
+                        yield result['url'], result['name'], creation, \
+                          'doxygen', None
 
-            results = []
-            for keyword in keywords:
-                results += self._search(fd, keyword)
-
-            results.sort(compare_rank)
-
-            # use the creation time for the search.idx file for all results
-            creation = os.path.getctime(path)
-
-            for result in results:
-                yield 'doxygen/' + result['url'], result['name'], creation, 'doxygen', None
+            # Search in common documentation directory
+            index = os.path.join(base_path, 'search.idx')
+            if os.path.exists(index):
+                creation = os.path.getctime(index)
+                for result in self._search_in_project('', keywords):
+                    result['url'] =  self.env.href.doxygen() + '/' + \
+                      result['url']
+                    yield result['url'], result['name'], creation, 'doxygen', \
+                      None
 
     # IWikiSyntaxProvider
     def get_link_resolvers(self):
@@ -171,8 +252,21 @@ class DoxygenPlugin(Component):
     def get_wiki_syntax(self):
         return []
 
-
     # internal methods
+    def _search_in_project(self, project, keywords):
+        # Open index file for project documentation
+        base_path = self.config.get('doxygen', 'path')
+        index = os.path.join(base_path, project, 'search.idx')
+        if os.path.exists(index):
+            fd = open(index)
+
+            # Search for keywords in index
+            results = []
+            for keyword in keywords:
+                results += self._search(fd, keyword)
+                results.sort(compare_rank)
+                for result in results:
+                    yield result
 
     def _search(self, fd, word):
         results = []
@@ -257,14 +351,11 @@ class DoxygenPlugin(Component):
         return (ord(b1) << 24) | (ord(b2) << 16) | (ord(b3) << 8) | ord(b4)
 
     def _readString(self, fd):
+        result = ''
         byte = fd.read(1)
-        if byte == '\0':
-            return ''
-        result = byte
         while byte != '\0':
-            byte = fd.read(1)
             result = ''.join([result, byte])
-
+            byte = fd.read(1)
         return result
 
     def _doxygen_link(self, formatter, ns, params, label):
