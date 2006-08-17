@@ -12,6 +12,9 @@ the resulting image.
 Changes for release v0.6.5
 --------------------------
 
+* Fixed expand_wiki_links to allow for javascript URL
+  references. Resolves issue http://trac-hacks.org/ticket/559.
+
 * GraphvizMacro is now also an IHTMLPreviewRenderer. Resolves issue
   http://trac-hacks.org/attachment/ticket/576.
 

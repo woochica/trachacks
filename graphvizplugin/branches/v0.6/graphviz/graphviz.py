@@ -241,16 +241,11 @@ class GraphvizMacro(Component):
 
 
     def expand_wiki_links(self, match):
-        #self.log.debug('expand_wiki_links.match.groups: %s' % str(match.groups()))
-        
         wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
         html_url = wiki_to_oneliner(wiki_url, self.env)  # <a href="http://someurl">...</a>
         href     = re.search('href="(.*?)"', html_url)   # http://someurl
-        
-        url      = 'URL="%s"' % href.groups()[0]
-        #self.log.debug('expand_wiki_links.url: %(url)s' % locals())
-
-        return url
+        url      = href and href.groups()[0] or html_url
+        return 'URL="%s"' % url
 
 
     def load_config(self):
