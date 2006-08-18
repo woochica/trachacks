@@ -1,0 +1,9 @@
+README
+setup.py
+TracGlossary.egg-info/PKG-INFO
+TracGlossary.egg-info/SOURCES.txt
+TracGlossary.egg-info/dependency_links.txt
+TracGlossary.egg-info/entry_points.txt
+TracGlossary.egg-info/top_level.txt
+glossary/__init__.py
+glossary/glossary.py

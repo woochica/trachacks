@@ -1,0 +1,48 @@
+This trac plug-in provides for a way to build a glossary with
+automatic index creation/ update. Whenever a term is added to the
+glossary (by default, any page under 'Glossary/'), a link
+to it is also added to the index (by default, Glossary/Index).
+
+Page deletions are also tracked and handled, with links being
+removed from the index.
+
+Each of the various items defining the glossary (root name,
+index page name, etc) are customisable through the trac
+config file in the [glossary] section.
+
+Examples:
+
+1. A new site with no glossary entries. As entries are created
+under 'Glossary/' (for example, 'Glossary/Wiki'), a link
+is added to the Glossary/Index page. A link to the index
+itself is also added to the Glossary/Wiki page.
+
+2. An existing site with glossary entries under 'Terms/'.
+Edit the trac conf file to define:
+
+prefix = Terms
+
+Edit any of the Terms/* pages. 'Terms/Index' will be
+created, but empty. Click the 'rebuild' link on the
+Index page and it will be populated with all pages under
+'Terms/'
+
+
+Configuration, defaults shown:
+
+# The prefix used as the top-level path element for glossary pages.
+prefix = Glossary
+
+# The name of the index page itself, without prefix
+index = Index
+
+# The name used when saving automatic pages
+# If set to 'author', the name of the editing user will be used.
+author = automatic
+
+# The URL used to rebuild the glossary index.
+rebuild_url = rebuild_glossary_index
+
+# Where automatic links to the index are placed on each glossary page.
+# May be 'top', 'bottom', or 'None', in any mix of case.
+index_link_placement = None
