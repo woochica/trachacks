@@ -147,7 +147,7 @@ class GraphvizMacro(Component):
             buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        sha_key  = sha.new(self.processor + content).hexdigest()
+        sha_key  = sha.new(self.processor + self.processor_options + content).hexdigest()
         img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
         map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
