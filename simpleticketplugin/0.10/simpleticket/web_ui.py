@@ -5,6 +5,7 @@ from trac.web.chrome import INavigationContributor
 from trac.web import IRequestHandler
 from trac.perm import IPermissionRequestor
 from trac.util import Markup
+from trac.config import ListOption
 
 from trac.ticket.web_ui import NewticketModule
 
@@ -25,6 +26,9 @@ class PseudoRequest(object):
 class SimpleTicketModule(Component):
     """Restricted ticket entry form."""
     
+    hide_fields = ListOption('simpleticket', 'hide', default='',
+                             doc='What fields to hide for the simple ticket entry form.')
+                             
     implements(IRequestHandler, INavigationContributor, IPermissionRequestor)
     
     # INavigationContributer methods
@@ -47,9 +51,6 @@ class SimpleTicketModule(Component):
         really_has_perm = req.perm.has_permission('TICKET_CREATE')
         req.perm.perms['TICKET_CREATE'] = True
         
-        # Find which fields to not show
-        hide_fields = [x.strip() for x in self.config.get('simpleticket','hide', default='').split(',') if x.strip()]
-
         # Intercept redirects
         new_req = PseudoRequest(self.env, req)
 
@@ -57,7 +58,7 @@ class SimpleTicketModule(Component):
         template, content_type = NewticketModule(self.env).process_request(new_req)
         
         # Hide the fields
-        for f in hide_fields:
+        for f in self.hide_fields:
             req.hdf['newticket.fields.%s.skip'%f] = True
             
         # Redirect the POST
