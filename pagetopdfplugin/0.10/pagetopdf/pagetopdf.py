@@ -15,11 +15,14 @@ class PageToPDFPlugin(Component):
 
     def convert_content(self, req, input_type, source, output_type):
         hfile, hfilename = mkstemp('tracpdf')
-        os.write(hfile, '<html><body>' + wiki_to_html(source, self.env, req).encode('utf-8') + '</body></html>')
+	codepage = self.env.config.get('trac', 'default_charset', 0)
+	page = wiki_to_html(source, self.env, req).encode(codepage)
+	page = page.replace(r'<img src="', '<img src="%s://%s/' % (req.scheme, req.server_name))
+        os.write(hfile, '<html><body>' + page + '</body></html>')
         os.close(hfile)
         pfile, pfilename = mkstemp('tracpdf')
         os.close(pfile)
-        os.system('export HTMLDOC_NOCGI="yes"; htmldoc --webpage --format pdf14 %s -f %s' % (hfilename, pfilename))
+        os.system('export HTMLDOC_NOCGI="yes"; htmldoc --charset %s --webpage --format pdf14 --left 1.5cm --right 1.5cm --top 1.5cm --bottom 1.5cm %s -f %s' % (codepage.replace('iso-', ''), hfilename, pfilename))
         out = open(pfilename).read()
         os.unlink(pfilename)
         os.unlink(hfilename)
