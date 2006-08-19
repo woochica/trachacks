@@ -26,8 +26,8 @@ class Poll(object):
                    'Stored poll is not the same as this one.'
             self.votes = dict([(k, v) for k, v in poll['votes'].iteritems()
                                if k in [d[0] for d in self.vote_defs]])
-        self.votes.update([(k[0], []) for k in self.vote_defs
-                           if k[0] not in self.votes])
+        self.votes.update(dict([(k[0], []) for k in self.vote_defs
+                                if k[0] not in self.votes]))
 
     def save(self):
         data = {'title': self.title,
