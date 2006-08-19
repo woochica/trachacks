@@ -41,6 +41,7 @@ class WikiRPC(Component):
                                (str, str, str, xmlrpclib.Binary, bool)), self.putAttachment)
         yield ('WIKI_DELETE', ((bool, str),), self.deleteAttachment)
         yield ('WIKI_VIEW', ((list, str),), self.listLinks)
+        yield ('WIKI_VIEW', ((str, str),), self.wikiToHtml)
 
     def _to_timestamp(self, datetime):
         import time
@@ -157,3 +158,7 @@ class WikiRPC(Component):
     def listLinks(self, req, pagename):
         """ ''Not implemented'' """
         return []
+
+    def wikiToHtml(self, req, text):
+        """ Render arbitrary Wiki text as HTML. """
+        return wiki_to_html(text, self.env, req, absurls=1)
