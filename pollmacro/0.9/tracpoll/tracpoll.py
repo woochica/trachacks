@@ -166,7 +166,10 @@ class PollMacro(WikiMacroBase):
 
             # Make tickets look pretty
             for idx, id in enumerate(tickets):
-                ticket = Ticket(self.env, id)
+                try:
+                    ticket = Ticket(self.env, id)
+                except Exception:
+                    continue
                 summary = ticket['summary'] + ' (#%i)' % id
                 priority = Priority(self.env, ticket['priority']).value
                 summary = wiki_to_oneliner(summary, self.env)
