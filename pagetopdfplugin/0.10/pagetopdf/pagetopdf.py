@@ -22,7 +22,8 @@ class PageToPDFPlugin(Component):
         os.close(hfile)
         pfile, pfilename = mkstemp('tracpdf')
         os.close(pfile)
-        os.system('export HTMLDOC_NOCGI="yes"; htmldoc --charset %s --webpage --format pdf14 --left 1.5cm --right 1.5cm --top 1.5cm --bottom 1.5cm %s -f %s' % (codepage.replace('iso-', ''), hfilename, pfilename))
+        os.environ["HTMLDOC_NOCGI"] = 'yes'
+        os.system('htmldoc --charset %s --webpage --format pdf14 --left 1.5cm --right 1.5cm --top 1.5cm --bottom 1.5cm %s -f %s' % (codepage.replace('iso-', ''), hfilename, pfilename))
         out = open(pfilename).read()
         os.unlink(pfilename)
         os.unlink(hfilename)
