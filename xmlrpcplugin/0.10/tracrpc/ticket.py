@@ -27,8 +27,8 @@ class TicketRPC(Component):
         yield ('TICKET_VIEW', ((list, int),), self.listAttachments)
         yield ('TICKET_VIEW', ((xmlrpclib.Binary, int, str),), self.getAttachment)
         yield ('TICKET_APPEND',
-               ((str, int, str, xmlrpclib.Binary, bool),
-                (str, int, str, xmlrpclib.Binary)),
+               ((str, int, str, str, xmlrpclib.Binary, bool),
+                (str, int, str, str, xmlrpclib.Binary)),
                self.putAttachment)
         yield ('TICKET_ADMIN', ((bool, int, str),), self.deleteAttachment)
 
@@ -78,15 +78,17 @@ class TicketRPC(Component):
     changeLog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
 
     def listAttachments(self, req, ticket):
-        """ Lists attachments for a given ticket. """
-        return [a.filename for a in Attachment.select(self.env, 'ticket', ticket)]
+        """ Lists attachments for a given ticket. Returns (filename,
+        description, size, time, author) for each attachment."""
+        for t in Attachment.select(self.env, 'ticket', ticket):
+            yield (t.filename, t.description or '', t.size, t.time, t.author)
 
     def getAttachment(self, req, ticket, filename):
         """ returns the content of an attachment. """
         attachment = Attachment(self.env, 'ticket', ticket, filename)
         return xmlrpclib.Binary(attachment.open().read())
 
-    def putAttachment(self, req, ticket, filename, data, replace=True):
+    def putAttachment(self, req, ticket, filename, description, data, replace=True):
         """ Add an attachment, optionally (and defaulting to) overwriting an
         existing one. Returns filename."""
         if not model.Ticket(self.env, ticket).exists:
@@ -99,6 +101,7 @@ class TicketRPC(Component):
                 pass
         attachment = Attachment(self.env, 'ticket', ticket)
         attachment.author = req.authname or 'anonymous'
+        attachment.description = description
         attachment.insert(filename, StringIO(data.data), len(data.data))
         return attachment.filename
 
