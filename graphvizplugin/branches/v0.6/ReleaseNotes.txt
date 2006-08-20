@@ -1,6 +1,6 @@
 Trac Graphviz Plugin v0.6.5 Release Notes
 =========================================
-August 18, 2006
+August 19, 2006
 
 Graphviz plugin v0.6.5 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
@@ -11,6 +11,11 @@ the resulting image.
 
 Changes for release v0.6.5
 --------------------------
+
+* Links within images that are rendered as SVG are now automatically
+  prefixed with javascript:window.parent.location.href= to force the
+  link to be displayed in the parent window instead of the SVG object
+  window. Resolves issue http://trac-hacks.org/ticket/560.
 
 * Included the processor options when calculating the sha key used for
   the image file name. This should help in testing various graphviz
