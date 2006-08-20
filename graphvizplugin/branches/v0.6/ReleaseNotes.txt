@@ -12,6 +12,13 @@ the resulting image.
 Changes for release v0.6.5
 --------------------------
 
+* Implemented the IRequestHandler interface to return graphviz
+  generated images. This means that graphviz images can be referenced
+  via http://URL_TO_TRAC_SERVER/graphviz/HASH_KEY. As a result of this
+  change, the prefix_url configuration parameter is no longer needed
+  in the trac.ini file. Resolves issue
+  http://trac-hacks.org/ticket/86.
+
 * Links within images that are rendered as SVG are now automatically
   prefixed with javascript:window.parent.location.href= to force the
   link to be displayed in the parent window instead of the SVG object

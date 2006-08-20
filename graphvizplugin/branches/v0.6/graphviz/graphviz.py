@@ -29,6 +29,7 @@ import inspect
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.mimeview.api import IHTMLPreviewRenderer
+from trac.web.main import IRequestHandler
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
 
@@ -41,7 +42,7 @@ class GraphvizMacro(Component):
     GraphvizMacro provides a plugin for Trac to render graphviz
     (http://www.graphviz.org/) drawings within a Trac wiki page.
     """
-    implements(IWikiMacroProvider, IHTMLPreviewRenderer)
+    implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler)
 
     # Available formats and processors, default first (dot/png)
     processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
@@ -222,8 +223,8 @@ class GraphvizMacro(Component):
             except:
                 dimensions = 'width="100%" height="100%"'
             # insert SVG, IE compatibility
-            buf.write('<!--[if IE]><embed src="%s/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (self.prefix_url, img_name, dimensions))
-            buf.write('<![if !IE]><object data="%s/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (self.prefix_url, img_name, dimensions))
+            buf.write('<!--[if IE]><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (req.base_url, img_name, dimensions))
+            buf.write('<![if !IE]><object data="%s/graphviz/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (req.base_url, img_name, dimensions))
 
         # for binary formats, add map
         elif URL_in_graph:
@@ -232,10 +233,10 @@ class GraphvizMacro(Component):
             f.close()
             map = "".join(map).replace('\n', '')
             buf.write('<map id="%s" name="%s">%s</map>' % (sha_key, sha_key, map))
-            buf.write('<img id="%s" src="%s/%s" usemap="#%s" alt="GraphViz image"/>' % (sha_key, self.prefix_url, img_name, sha_key))
+            buf.write('<img id="%s" src="%s/graphviz/%s" usemap="#%s" alt="GraphViz image"/>' % (sha_key, req.base_url, img_name, sha_key))
 
         else:
-            buf.write('<img src="%s/%s"/>' % (self.prefix_url, img_name))
+            buf.write('<img src="%s/graphviz/%s"/>' % (req.base_url, img_name))
 
         return buf.getvalue()
 
@@ -297,15 +298,6 @@ class GraphvizMacro(Component):
                         trouble = True
 
                 #self.log.debug('self.cmd_path: %s' % self.cmd_path)
-
-            # check for the prefix_url entry
-            self.prefix_url = self.config.get('graphviz', 'prefix_url')
-            #self.log.debug('self.prefix_url: %s' % self.prefix_url)
-            if not self.prefix_url:
-                msg = 'The <b>graphviz</b> section is missing the <b>prefix_url</b> field.'
-                buf = self.show_err(msg)
-                trouble = True
-
 
             #Get optional configuration parameters from trac.ini.
 
@@ -469,3 +461,26 @@ class GraphvizMacro(Component):
     def render(self, req, mimetype, content, filename=None, url=None):
         name = mimetype[len('application/'):]
         return self.render_macro(req, name, content)
+
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info.startswith('/graphviz')
+    
+
+    def process_request(self, req):
+        # check and load the configuration
+        trouble, msg = self.load_config()
+        if trouble:
+            return msg.getvalue()
+
+        pieces = [item for item in req.path_info.split('/graphviz') if len(item)]
+
+        if len(pieces):
+            pieces = [item for item in pieces[0].split('/') if len(item)]
+
+            if len(pieces):
+                name = pieces[0]
+                img_path = os.path.join(self.cache_dir, name)
+                return req.send_file(img_path)
+        return

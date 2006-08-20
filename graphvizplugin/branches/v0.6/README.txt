@@ -104,10 +104,6 @@ file with these fields:
     cache_dir       - The directory that will be used to cache the 
                       generated images.
 
-    prefix_url      - The url to be used to find the cached images. This
-                      must point to the trac server's view of the
-                      cache_dir location.
-
     cmd_path        - Full path to the directory where the graphviz
                       programs are located.
 
@@ -154,12 +150,6 @@ file with these fields:
                       contain. This is the high watermark for the
                       directory entry count.
 
-The cache_dir and prefix_url entries are related to each other. The
-cache_dir entry points to a location on the file system and the
-prefix_url points to the same location but from the trac server's
-point of view. This allows the graphviz programs to generate the
-images and the user's web browser to view them.
-
 The cache_dir directory must exist and the trac server must have read
 and write access.
 
@@ -181,7 +171,6 @@ Here is a sample graphviz section:
 
 [graphviz]
 cache_dir = /tmp/trac/htdocs/graphviz
-prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 cmd_path = /usr/bin
 out_format = png
 png_antialias = true
@@ -194,7 +183,6 @@ Here is a sample graphviz section that activates the cache manager:
 
 [graphviz]
 cache_dir = /tmp/trac/htdocs/graphviz
-prefix_url = http://localhost:8000/trac/chrome/site/graphviz
 cmd_path = /usr/bin
 out_format = png
 png_antialias = true
@@ -221,7 +209,6 @@ Here's the same example but for Windows systems:
 
 [graphviz]
 cache_dir = C:\projects\plugins\env\trac\htdocs\graphviz
-prefix_url = http://localhost:8080/trac/chrome/site/graphviz
 cmd_path = c:\Program Files\ATT\Graphviz\bin
 out_format = png
 cache_manager = yes
