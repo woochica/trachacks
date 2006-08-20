@@ -12,6 +12,17 @@ the resulting image.
 Changes for release v0.6.5
 --------------------------
 
+* The default graphviz processor is now the only processor that must
+  be found on the system. GraphvizMacro will not work without it. If
+  any of the other processors are missing, a warning message will be
+  sent to the trac log, the processor will be removed from the list of
+  known GraphvizMacro processors and GraphvizMacro will continue.
+  Resolves issue http://trac-hacks.org/ticket/159.
+
+* The cmd_path configuration parameter in trac.ini is now
+  optional. Reasonable default values have been set for Linux, Win32
+  and FreeBSD6.
+
 * Altered the way the GraphvizMacro description is returned in
   get_macro_description. Instead of returning a description for each
   variant (graphviz, graphviz/png, graphviz/svg, etc.) only return a

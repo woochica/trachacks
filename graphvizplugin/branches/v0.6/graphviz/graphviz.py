@@ -50,6 +50,10 @@ class GraphvizMacro(Component):
     bitmap_formats = ['png', 'jpg', 'gif']
     vector_formats = ['svg', 'svgz']
     formats = bitmap_formats + vector_formats 
+    cmd_paths = {'linux2':   '/usr/bin',
+                 'win32':    'c:\\Program Files\\ATT\\Graphviz\\bin',
+                 'freebsd6': '/usr/local/bin',
+                 }
 
     def __init__(self):
         self.log.info('version: %s - id: %s' % (__version__, str(__id__)))
@@ -59,6 +63,7 @@ class GraphvizMacro(Component):
 
     def get_macros(self):
         """Return an iterable that provides the names of the provided macros."""
+        self.load_config()
         for p in ['.' + p for p in GraphvizMacro.processors] + ['']: 
             for f in ['/' + f for f in GraphvizMacro.formats] + ['']:
                 yield 'graphviz%s%s' % (p, f)
@@ -289,10 +294,19 @@ class GraphvizMacro(Component):
                     trouble = True
                 #self.log.debug('self.cache_dir: %s' % self.cache_dir)
 
+
+            #Get optional configuration parameters from trac.ini.
+
+            # check for the default processor - processor
+            self.processor = self.config.get('graphviz', 'processor', GraphvizMacro.processors[0])
+            #self.log.debug('self.processor: %s' % self.processor)
+
             # check for the cmd_path entry
-            self.cmd_path = self.config.get('graphviz', 'cmd_path')
+            if sys.platform in GraphvizMacro.cmd_paths:
+                self.cmd_path = GraphvizMacro.cmd_paths[sys.platform]
+            self.cmd_path = self.config.get('graphviz', 'cmd_path', self.cmd_path)
             if not self.cmd_path:
-                msg = 'The <b>graphviz</b> section is missing the <b>cmd_path</b> field.'
+                msg = 'The <b>graphviz</b> section is missing the <b>cmd_path</b> field and there is no default for %s.' % sys.platform
                 buf = self.show_err(msg)
                 trouble = True
             elif not os.path.exists(self.cmd_path):
@@ -300,31 +314,31 @@ class GraphvizMacro(Component):
                 buf = self.show_err(msg)
                 trouble = True
 
+                #self.log.debug('self.cmd_path: %s' % self.cmd_path)
+
+            else:
+                pname = os.path.join(self.cmd_path, self.processor) + self.exe_suffix
+                if not os.path.exists(pname):
+                    msg = 'The default processor, <b>%s</b>, was not found.' % pname
+                    buf = self.show_err(msg)
+                    trouble = True
+
                 for name in GraphvizMacro.processors:
                     pname = os.path.join(self.cmd_path, name) + self.exe_suffix
                     if not os.path.exists(pname):
-                        msg = 'The <b>%s</b> program was not found.' % pname
-                        buf = self.show_err(msg)
-                        trouble = True
-
-                #self.log.debug('self.cmd_path: %s' % self.cmd_path)
-
-            #Get optional configuration parameters from trac.ini.
+                        self.log.warn('The %s program was not found. The graphviz/%s macro will be disabled.' % (pname, name))
+                        GraphvizMacro.processors.remove(name)
 
             # check for the default output format - out_format
             self.out_format = self.config.get('graphviz', 'out_format', GraphvizMacro.formats[0])
             #self.log.debug('self.out_format: %s' % self.out_format)
-
-            # check for the default processor - processor
-            self.processor = self.config.get('graphviz', 'processor', GraphvizMacro.processors[0])
-            #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
             self.png_anti_alias = self.boolean(self.config.get('graphviz', 'png_antialias', False))
             #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
             if self.png_anti_alias == True:
-                self.rsvg_path = self.config.get('graphviz', 'rsvg_path', '/usr/bin/rsvg')
+                self.rsvg_path = self.config.get('graphviz', 'rsvg_path', os.path.join(self.cmd_path, 'rsvg'))
 
                 if not os.path.exists(self.rsvg_path):
                     err = 'The rsvg program is set to <b>%s</b> but that path does not exist.' % self.rsvg_path
