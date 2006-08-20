@@ -39,8 +39,9 @@ _TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
 
 class GraphvizMacro(Component):
     """
-    GraphvizMacro provides a plugin for Trac to render graphviz
-    (http://www.graphviz.org/) drawings within a Trac wiki page.
+    GraphvizMacro (http://trac-hacks.org/wiki/GraphvizPlugin) provides
+    a plugin for Trac to render graphviz (http://www.graphviz.org/)
+    drawings within a Trac wiki page.
     """
     implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler)
 
@@ -64,8 +65,17 @@ class GraphvizMacro(Component):
 
 
     def get_macro_description(self, name):
-        """Return a plain text description of the macro with the specified name."""
-        return inspect.getdoc(GraphvizMacro)
+        """
+        Return a plain text description of the macro with the
+        specified name. Only return a description for the base
+        graphviz macro. All the other variants (graphviz/png,
+        graphviz/svg, etc.) will have no description. This will
+        cleanup the WikiMacros page a bit.
+        """
+        if name == 'graphviz':
+            return inspect.getdoc(GraphvizMacro)
+        else:
+            return None
 
 
     def render_macro(self, req, name, content):

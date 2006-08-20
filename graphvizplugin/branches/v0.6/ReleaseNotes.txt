@@ -12,6 +12,15 @@ the resulting image.
 Changes for release v0.6.5
 --------------------------
 
+* Altered the way the GraphvizMacro description is returned in
+  get_macro_description. Instead of returning a description for each
+  variant (graphviz, graphviz/png, graphviz/svg, etc.) only return a
+  description for graphviz. This will cleanup the WikiMacros page a
+  bit to hopefully make it easier to navigate. It isn't a perfect
+  solution since all the graphviz macro names are still displayed but
+  it no longer repeats the same description for each
+  permutation. Resolves issue http://trac-hacks.org/ticket/284.
+
 * Implemented the IRequestHandler interface to return graphviz
   generated images. This means that graphviz images can be referenced
   via http://URL_TO_TRAC_SERVER/graphviz/HASH_KEY. As a result of this
