@@ -46,12 +46,15 @@ class DbAuthLoginModule(Component):
     implements(IAuthenticator, INavigationContributor, ITemplateProvider, 
                IRequestHandler)
 
+    password_changeable = BoolOption('dbauth', 'password_changeable', 'false',
+        """Allow user to change his password.""")
+
     def __init__(self):
         self.users = {
            'table': self.env.config.get('dbauth', 'users_table', 'trac_users'),
            'username': self.env.config.get('dbauth','username_field', 'username'),
            'password': self.env.config.get('dbauth','password_field', 'password'),
-           'email': self.env.config.get('dbauth','email_field', 'email')}
+           'email': self.env.config.get('dbauth','email_field', None)}
 
 
     # IAuthenticator methods
@@ -78,8 +81,10 @@ class DbAuthLoginModule(Component):
         if req.authname and req.authname != 'anonymous':
             yield 'metanav', 'login', Markup('logged in as <b>%s</b>' \
                     % req.authname)
-            yield 'metanav', 'password', Markup('<a href="%s">Password</a>' \
-                  % escape(self.env.href.password()))
+            if self.password_changeable:
+                yield 'metanav', 'password',
+                    Markup('<a href="%s">Password</a>' \
+                            % escape(self.env.href.password()))
             yield 'metanav', 'logout', Markup('<b><a href="%s">Logout</a></b>' \
                   % escape(self.env.href.logout()))
         else:
@@ -89,7 +94,12 @@ class DbAuthLoginModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        return re.match('/(login|password|logout)/?', req.path_info)
+        if req.authname and req.authname != 'anonymous':
+            return (self.password_changeable \
+                    and req.path_info == '/password') \
+                    or req.path_info == '/logout'
+        else:
+            return req.path_info == '/login'
 
     def process_request(self, req):
         if req.method == 'POST':
@@ -147,11 +157,9 @@ class DbAuthLoginModule(Component):
               (self.users['password'], self.users['table'],
                self.users['username'])
         cursor.execute(sql, (uid,))
-        hash = 'SHA-1:' + sha.new(pwd).hexdigest()
-        if pwd.startswith('SHA-1:'):
-            pwd = hash
+        hash = sha.new(pwd).hexdigest()
         for row in cursor:
-            if row[0] == pwd or row[0] == hash:
+            if row[0] == hash:
                 return True
 
         return False
@@ -174,6 +182,8 @@ class DbAuthLoginModule(Component):
         req.outcookie['db_auth'] = cookie
         req.outcookie['db_auth']['path'] = self.env.href()
         req.outcookie['db_auth']['expires'] = 100000000
+
+        self._update_email(req, remote_user)
 
     def _do_logout(self, req):
         """Log the user out.
@@ -213,13 +223,30 @@ class DbAuthLoginModule(Component):
 
         return row[0]
 
+    def _update_email(self, req, user):
+        email_field = self.users['email']
+        if not email_field or len(email_field) == 0:
+            return
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        sql = 'SELECT %s FROM %s WHERE %s = %%s' % \
+              (email_field, self.users['table'],
+               self.users['username'])
+        cursor.execute(sql, (user,))
+        row = cursor.fetchone()
+        if not row or not row[0]:
+            return
+        req.session['email'] = row[0]
+
     def _change_password(self, req, newpwd):
         if req.authname == 'anonymous':
             # Not logged in
             return
 
         # change the password
-        newpwd = 'SHA-1:' + sha.new(newpwd).hexdigest()
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        newpwd = sha.new(newpwd).hexdigest()
         sql = 'UPDATE %s SET %s = %%s WHERE %s = %%s' % \
               (self.users['table'], self.users['password'],
                self.users['username'])
