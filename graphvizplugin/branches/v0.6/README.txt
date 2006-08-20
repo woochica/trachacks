@@ -131,7 +131,7 @@ file with these fields:
                       then PNG outputs will be antialiased.
 
     rsvg_path       - Full path to where the rsvg binary can be found.
-                      The default is /usr/bin/rsvg.
+                      The default is cmd_path + rsvg.
 
     default_*       - These settings define the default graph, node and
                       edge attributes. They must be written as :
