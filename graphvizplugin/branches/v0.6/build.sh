@@ -1,11 +1,20 @@
 #! /bin/sh
 
-if [ "x$1" == "x" ]; then
-    echo "build.sh env0.9|env0.10"
+case "$1" in
+  9)
+    ENV=/home/peter/projects/env0.9
+    PORT=9009
+    ;;
+  10)
+    ENV=/home/peter/projects/env0.10
+    PORT=9010
+    ;;
+  *)
+    echo "build.sh 9|10"
     exit 1
-fi
+esac
 
-ENV=/home/peter/projects/$1
+
 export PATH=$ENV/bin:$PATHRESET
 
 echo "cleaning out old build"
@@ -16,6 +25,7 @@ echo "cleaning out old installation"
 rm -f $ENV/trac/plugins/graphviz-*.egg
 rm -f $ENV/trac/htdocs/graphviz/*
 
-echo "running tracd"
+echo "running tracd on port $PORT"
 cp dist/graphviz-*.egg $ENV/trac/plugins/
-LD_LIBRARY_PATH=$ENV/lib tracd --port 9009 $ENV/trac
+#LD_LIBRARY_PATH=$ENV/lib tracd --port $PORT -b 172.16.6.1 $ENV/trac
+LD_LIBRARY_PATH=$ENV/lib tracd --port $PORT $ENV/trac
