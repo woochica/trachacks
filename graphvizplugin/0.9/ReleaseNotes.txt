@@ -1,12 +1,67 @@
-Trac Graphviz Plugin v0.6.4 Release Notes
+Trac Graphviz Plugin v0.6.5 Release Notes
 =========================================
-June 1, 2006
+August 19, 2006
 
-Graphviz plugin v0.6.4 for Trac is now available. The Graphviz wiki
+Graphviz plugin v0.6.5 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
 of diagrams by the various graphviz programs. The text of a wiki page
 can contain the source text for graphviz and the web browser will show
 the resulting image.
+
+
+Changes for release v0.6.5
+--------------------------
+
+* The default graphviz processor is now the only processor that must
+  be found on the system. GraphvizMacro will not work without it. If
+  any of the other processors are missing, a warning message will be
+  sent to the trac log, the processor will be removed from the list of
+  known GraphvizMacro processors and GraphvizMacro will continue.
+  Resolves issue http://trac-hacks.org/ticket/159.
+
+* The cmd_path configuration parameter in trac.ini is now
+  optional. Reasonable default values have been set for Linux, Win32
+  and FreeBSD6.
+
+* Altered the way the GraphvizMacro description is returned in
+  get_macro_description. Instead of returning a description for each
+  variant (graphviz, graphviz/png, graphviz/svg, etc.) only return a
+  description for graphviz. This will cleanup the WikiMacros page a
+  bit to hopefully make it easier to navigate. It isn't a perfect
+  solution since all the graphviz macro names are still displayed but
+  it no longer repeats the same description for each
+  permutation. Resolves issue http://trac-hacks.org/ticket/284.
+
+* Implemented the IRequestHandler interface to return graphviz
+  generated images. This means that graphviz images can be referenced
+  via http://URL_TO_TRAC_SERVER/graphviz/HASH_KEY. As a result of this
+  change, the prefix_url configuration parameter is no longer needed
+  in the trac.ini file. Resolves issue
+  http://trac-hacks.org/ticket/86.
+
+* Links within images that are rendered as SVG are now automatically
+  prefixed with javascript:window.parent.location.href= to force the
+  link to be displayed in the parent window instead of the SVG object
+  window. Resolves issue http://trac-hacks.org/ticket/560.
+
+* Included the processor options when calculating the sha key used for
+  the image file name. This should help in testing various graphviz
+  settings in trac.ini. Resolves issue
+  http://trac-hacks.org/ticket/575.
+
+* Fixed expand_wiki_links to allow for javascript URL
+  references. Resolves issue http://trac-hacks.org/ticket/559.
+
+* GraphvizMacro is now also an IHTMLPreviewRenderer. This was done by
+  adding application/graphviz as the mimetype for files with the
+  extension of .graphviz, .dot, .neato, .twopi, .circo and .fdp. When
+  browsing the source code in the respoitory, any files with those
+  extensions will be treated as graphviz programs and will be rendered
+  via the GraphvizMacro. Resolves issue
+  http://trac-hacks.org/attachment/ticket/576.
+
+* Escaped the error message before displaying it. Resolves issue
+  http://trac-hacks.org/ticket/574.
 
 
 Changes for release v0.6.4
