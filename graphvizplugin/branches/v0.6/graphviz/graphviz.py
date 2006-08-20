@@ -28,7 +28,7 @@ import inspect
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
-from trac.mimeview.api import IHTMLPreviewRenderer
+from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
 from trac.web.main import IRequestHandler
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
@@ -377,6 +377,13 @@ class GraphvizMacro(Component):
             # is there a graphviz default DPI setting?
             self.dpi = int(self.config.get('graphviz', 'default_graph_dpi', 96))
 
+        # setup mimetypes to support the IHTMLPreviewRenderer interface
+        if 'graphviz' not in MIME_MAP:
+            MIME_MAP['graphviz'] = 'application/graphviz'
+        for processor in GraphvizMacro.processors:
+            if processor not in MIME_MAP:
+                MIME_MAP[processor] = 'application/graphviz'
+
         return trouble, buf
 
 
@@ -483,14 +490,18 @@ class GraphvizMacro(Component):
         return 0
 
     def render(self, req, mimetype, content, filename=None, url=None):
-        name = mimetype[len('application/'):]
-        return self.render_macro(req, name, content)
+        ext = filename.split('.')[1]
+        if ext == 'graphviz':
+            name = 'graphviz'
+        else:
+            name = 'graphviz.%s' % filename.split('.')[1]
+        return self.render_macro(req, name, content.read())
 
 
     # IRequestHandler methods
     def match_request(self, req):
         return req.path_info.startswith('/graphviz')
-    
+
 
     def process_request(self, req):
         # check and load the configuration

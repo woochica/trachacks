@@ -52,7 +52,12 @@ Changes for release v0.6.5
 * Fixed expand_wiki_links to allow for javascript URL
   references. Resolves issue http://trac-hacks.org/ticket/559.
 
-* GraphvizMacro is now also an IHTMLPreviewRenderer. Resolves issue
+* GraphvizMacro is now also an IHTMLPreviewRenderer. This was done by
+  adding application/graphviz as the mimetype for files with the
+  extension of .graphviz, .dot, .neato, .twopi, .circo and .fdp. When
+  browsing the source code in the respoitory, any files with those
+  extensions will be treated as graphviz programs and will be rendered
+  via the GraphvizMacro. Resolves issue
   http://trac-hacks.org/attachment/ticket/576.
 
 * Escaped the error message before displaying it. Resolves issue
