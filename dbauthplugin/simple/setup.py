@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracDbAuth'
-VERSION = '0.2'
+VERSION = '0.3'
 
 setup(
     name=PACKAGE, version=VERSION,

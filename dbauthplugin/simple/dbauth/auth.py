@@ -197,7 +197,7 @@ class DbAuthLoginModule(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('DELETE FROM auth_cookie ' \
-                       'WHERE name=%s OR time < %s',
+                       'WHERE name = %s OR time < %s',
                        (req.authname, int(time.time()) - 60 * 60 * 24))
         db.commit()
         self._expire_cookie(req)
@@ -213,8 +213,9 @@ class DbAuthLoginModule(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT name FROM auth_cookie ' \
-                       'WHERE cookie=%s AND ipnr=%s',
-                       (cookie.value, req.remote_addr))
+                       'WHERE cookie = %s AND ipnr = %s AND time > %s',
+                       (cookie.value, req.remote_addr,
+                        int(time.time()) - 60 * 60 * 24))
         row = cursor.fetchone()
         if not row:
             # the cookie has become invalid
