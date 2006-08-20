@@ -245,7 +245,11 @@ class GraphvizMacro(Component):
         html_url = wiki_to_oneliner(wiki_url, self.env)  # <a href="http://someurl">...</a>
         href     = re.search('href="(.*?)"', html_url)   # http://someurl
         url      = href and href.groups()[0] or html_url
-        return 'URL="%s"' % url
+        if self.out_format == 'svg':
+            format = 'URL="javascript:window.parent.location.href=\'%s\'"'
+        else:
+            format = 'URL="%s"'
+        return format % url
 
 
     def load_config(self):
@@ -362,7 +366,7 @@ class GraphvizMacro(Component):
 
     def launch(self, cmd, input):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
-	p_in, p_out, p_err = os.popen3(cmd)
+        p_in, p_out, p_err = os.popen3(cmd)
         if input:
             p_in.writelines(input)
         p_in.close()
