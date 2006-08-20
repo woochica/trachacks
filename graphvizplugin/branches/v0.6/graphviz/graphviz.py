@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.5'
+__version__   = '0.6.6'
 
 
 try:
@@ -491,11 +491,9 @@ class GraphvizMacro(Component):
 
     def render(self, req, mimetype, content, filename=None, url=None):
         ext = filename.split('.')[1]
-        if ext == 'graphviz':
-            name = 'graphviz'
-        else:
-            name = 'graphviz.%s' % filename.split('.')[1]
-        return self.render_macro(req, name, content.read())
+        name = ext == 'graphviz' and 'graphviz' or 'graphviz.%s' % ext
+        text = hasattr(content, 'read') and content.read() or content
+        return self.render_macro(req, name, text)
 
 
     # IRequestHandler methods
