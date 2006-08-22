@@ -8,7 +8,7 @@ billing_reports = [
         {
     "title":"Ticket Work Summary",
     "reportnumber":None,
-    "version":2,
+    "version":3,
     "sql":"""
 SELECT ticket as __group__,__style__, ticket, 
 newvalue as [Hours-added], time as _time, strtime as [Time-Entered],
@@ -30,10 +30,10 @@ WHERE field = 'hours' and
 
 UNION 
 
-SELECT 'background-color:#DFE;' as __style__, '' as author, t.id as ticket, sum(newvalue), strftime('%s', 'now') as time,
+SELECT 'background-color:#DFE;' as __style__, '' as author, t.id as ticket, sum(newvalue) as newvalue, strftime('%s', 'now') as time,
  'Ticket Work Summary for '||
  strftime('%m/%d/%Y %H:%M:%S', $STARTDATE, 'unixepoch', 'localtime' )||' - '||
- strftime('%m/%d/%Y %H:%M:%S', $ENDDATE, 'unixepoch', 'localtime'),
+ strftime('%m/%d/%Y %H:%M:%S', $ENDDATE, 'unixepoch', 'localtime') as strtime ,
  1 as _ord
 FROM ticket_change
 JOIN ticket t on t.id = ticket_change.ticket
@@ -53,10 +53,16 @@ ORDER BY ticket, _time,  _ord
         {
     "title":"Milestone Work Summary",
     "reportnumber":None,
-    "version":2,
+    "version":3,
     "sql":"""
-SELECT milestone as __group__,__style__, ticket, summary,
-newvalue as [Hours-added], time as _time, strtime as [Last-Updated],
+SELECT 
+  milestone as __group__, 
+  __style__, 
+  ticket,
+  summary,
+  newvalue as [Hours-added],
+  time as _time,
+  strtime as [Last-Updated],
  _ord
 FROM(
 SELECT '' as __style__, t.id as ticket, SUM(newvalue) as newvalue,t.summary as summary,
@@ -78,13 +84,13 @@ GROUP BY t.milestone, t.id
 UNION 
 
 SELECT 'background-color:#DFE;' as __style__,
- '' as ticket, sum(newvalue), 
+ '' as ticket, sum(newvalue)  as newvalue, 
 '' as summary,
 strftime('%s', 'now') as time,
  'Ticket Work Summary for '||
  strftime('%m/%d/%Y %H:%M:%S', $STARTDATE, 'unixepoch', 'localtime')||' - '||
- strftime('%m/%d/%Y %H:%M:%S', $ENDDATE, 'unixepoch', 'localtime'),
- t.milestone,
+ strftime('%m/%d/%Y %H:%M:%S', $ENDDATE, 'unixepoch', 'localtime')  as strtime ,
+ t.milestone as milestone,
  1 as _ord
 FROM ticket_change
 JOIN ticket t on t.id = ticket_change.ticket
@@ -100,13 +106,14 @@ GROUP By t.milestone
 ORDER BY milestone, ticket, _time,  _ord
 
 
+
     """
     },#END Milestone work summary
         
     {
     "title":"Developer Work Summary",
     "reportnumber":None,
-    "version":2,
+    "version":3,
     "sql":"""
 SELECT author as __group__,__style__, ticket, 
 newvalue as [Hours-added], time as _time, strtime as [Time-Entered],
@@ -127,10 +134,10 @@ WHERE field = 'hours' and
     AND ticket_change.time < $ENDDATE
 UNION 
 
-SELECT 'background-color:#DFE;' as __style__, author, '' as ticket, sum(newvalue), strftime('%s', 'now') as time,
+SELECT 'background-color:#DFE;' as __style__, author, '' as ticket, sum(newvalue) as newvalue, strftime('%s', 'now') as time,
  'Developer Work Summary for '||
  strftime('%m/%d/%Y %H:%M:%S', $STARTDATE, 'unixepoch', 'localtime')||' - '||
- strftime('%m/%d/%Y %H:%M:%S', $ENDDATE, 'unixepoch', 'localtime'),
+ strftime('%m/%d/%Y %H:%M:%S', $ENDDATE, 'unixepoch', 'localtime') as strtime ,
  1 as _ord
 FROM ticket_change
 JOIN ticket t on t.id = ticket_change.ticket
@@ -144,6 +151,7 @@ WHERE field = 'hours' and
 GROUP By author
 )
 ORDER BY author, _time,  _ord
+    
     """
     },#END Hours Per Developer
 ]
