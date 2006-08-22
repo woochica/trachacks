@@ -29,7 +29,7 @@ class XMLRPCWeb(Component):
 
         # Dump RPC functions
         content_type = req.get_header('Content-Type')
-        if content_type is not None or 'text/xml' not in content_type:
+        if content_type is None or 'text/xml' not in content_type:
             namespaces = {}
             for method in XMLRPCSystem(self.env).all_methods(req):
                 namespace = method.namespace.replace('.', '_')
