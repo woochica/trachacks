@@ -27,7 +27,7 @@ class SysCssModule(Component):
         if self.path_type == 'file':
             add_stylesheet(req, 'syscss/'+os.path.basename(self.css_path))
         elif self.path_type == 'url':
-            add_link(req, 'stylesheet', req.href(self.css_path), mimetype='text/css')
+            add_link(req, 'stylesheet', self.css_path, mimetype='text/css')
         return (template, content_type)
     
     # ITemplateProvider methods
