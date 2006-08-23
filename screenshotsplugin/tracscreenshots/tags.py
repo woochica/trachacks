@@ -12,14 +12,22 @@ class ScreenshotsTaggingSystem(DefaultTaggingSystem):
         DefaultTaggingSystem.__init__(self, env, 'screenshots')
 
     def name_details(self, name):
+        # Get cursor.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
         # Get tagged screenshots.
         api = ScreenshotsApi(self.component)
-        screenshot = api.get_screenshot(name)
+        screenshot = api.get_screenshot(cursor, name)
 
         # Return a tuple of (href, wikilink, title)
         defaults = DefaultTaggingSystem.name_details(self, name)
-        return (None, wiki_to_oneliner('[screenshot:%s %s]' % (screenshot['id'],
-          screenshot['name']), self.env), screenshot['description'])
+        if screenshot:
+            return (defaults[0], wiki_to_oneliner('[screenshot:%s %s]' %
+              (screenshot['id'], screenshot['name']), self.env),
+              screenshot['description'])
+        else:
+            return defaults
 
 class ScreenshotsTags(Component):
     """

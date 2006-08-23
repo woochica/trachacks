@@ -3,7 +3,7 @@ from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 
 # Last screenshots database shcema version
-last_db_version = 1
+last_db_version = 2
 
 class ScreenshotsInit(Component):
     """

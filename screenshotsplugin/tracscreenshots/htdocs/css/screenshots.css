@@ -69,6 +69,12 @@ div.empty
   line-height: 300px;
 }
 
+/* Buttons forms styles. */
+div.screenshot_buttons
+{
+  text-align: center;
+}
+
 /* Controls form styles. */
 div.controls
 {

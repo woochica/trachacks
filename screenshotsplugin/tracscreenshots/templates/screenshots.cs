@@ -7,11 +7,9 @@
   <div class="title">
     <h1><?cs var:screenshots.title ?></h1>
   </div>
-
   <div class="header">
-    <b>Component:</b> <?cs var:screenshots.component.name ?> <?cs if:screenshots.component.description ?>(<?cs var:screenshots.component.description ?>)<?cs /if?> <b>Version:</b> <?cs var:screenshots.version.name ?> <?cs if:screenshots.version.description ?>(<?cs var:screenshots.version.description ?>)<?cs /if ?>
+    <b>Component:</b> <?cs var:screenshots.component.name ?> <?cs if:screenshots.component.description ?>(<?cs var:screenshots.component.description ?>)<?cs /if?>&nbsp;<b>Version:</b> <?cs var:screenshots.version.name ?> <?cs if:screenshots.version.description ?>(<?cs var:screenshots.version.description ?>)<?cs /if ?>
   </div>
-
   <div class="images">
     <div class="previous">
       <?cs each screenshot = screenshots.previous ?>
@@ -28,11 +26,23 @@
       <div class="current">
         <?cs each screenshot = screenshots.current ?>
           <div class="count">
-            <?cs var:screenshots.index ?>&nbsp;/&nbsp;<?cs var:screenshots.count ?>
+            <?cs if:screenshots.previous.1.id ?>
+              <a href="<?cs var:screenshots.href?>?component=<?cs var:screenshots.component.id ?>;version=<?cs var:screenshots.version.id ?>;id=<?cs var:screenshots.previous.1.id ?>">&larr;</a>
+            <?cs else ?>
+              &rarr;
+            <?cs /if ?>
+            &nbsp;<?cs var:screenshots.index ?>&nbsp;/&nbsp;<?cs var:screenshots.count ?>&nbsp;
+            <?cs if:screenshots.next.0.id ?>
+              <a href="<?cs var:screenshots.href?>?component=<?cs var:screenshots.component.id ?>;version=<?cs var:screenshots.version.id ?>;id=<?cs var:screenshots.next.0.id ?>">&rarr;</a>
+            <?cs else ?>
+              &larr;
+            <?cs /if ?>
           </div>
-          <div class="name">
-            <?cs alt:screenshot.name ?>noname<?cs /alt ?> by <?cs alt:screenshot.author ?>anonymous<?cs /alt ?>
-          </div>
+          <?cs if:screenshots.show_name ?>
+            <div class="name">
+              <?cs alt:screenshot.name ?>noname<?cs /alt ?> by <?cs alt:screenshot.author ?>anonymous<?cs /alt ?>
+            </div>
+          <?cs /if ?>
           <a href="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/large">
             <img alt="Screenshot #<?cs var:screenshot.id ?>" src="<?cs var:screenshots.href?>/<?cs var:screenshot.id ?>/medium"/>
           </a>
@@ -59,11 +69,44 @@
     </div>
   </div>
 
+  <?cs if:trac.acl.SCREENSHOTS_ADMIN ?>
+    <div class="buttons screenshot_buttons">
+      <form method="post" action="<?cs var:screenshots.href ?>/">
+        <div>
+          <input type="submit" name="add" value="Add Screenshot"/>
+          <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
+          <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
+          <input type="hidden" name="action" value="add"/>
+        </div>
+      </form>
+      <?cs if:screenshots.current.0.id ?>
+        <form method="post" action="<?cs var:screenshots.href ?>/">
+          <div>
+            <input type="submit" name="edit" value="Edit Screenshot"/>
+            <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
+            <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
+            <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
+            <input type="hidden" name="action" value="edit"/>
+          </div>
+        </form>
+        <form method="post" action="<?cs var:screenshots.href ?>/">
+          <div>
+            <input type="submit" name="edit" value="Delete Screenshot"/>
+            <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
+            <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
+            <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
+            <input type="hidden" name="action" value="delete"/>
+          </div>
+        </form>
+      <?cs /if ?>
+    </div>
+  <?cs /if ?>
+
   <div class="controls">
     <form method="post" action="<?cs var:screenshots.href ?>/">
       <fieldset>
         <legend>
-          Controls:
+          Component and version:
         </legend>
         <div class="field">
           <label for="component">Component:</label>
@@ -94,38 +137,6 @@
         </div>
       </fieldset>
     </form>
-    <?cs if:trac.acl.SCREENSHOTS_ADMIN ?>
-      <div class="buttons">
-        <form method="post" action="<?cs var:screenshots.href ?>/">
-          <div>
-            <input type="submit" name="add" value="Add Screenshot"/>
-            <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
-            <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
-            <input type="hidden" name="action" value="add"/>
-          </div>
-        </form>
-        <?cs if:screenshots.current.0.id ?>
-          <form method="post" action="<?cs var:screenshots.href ?>/">
-            <div>
-              <input type="submit" name="edit" value="Edit Screenshot"/>
-              <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
-              <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
-              <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
-              <input type="hidden" name="action" value="edit"/>
-            </div>
-          </form>
-          <form method="post" action="<?cs var:screenshots.href ?>/">
-            <div>
-              <input type="submit" name="edit" value="Delete Screenshot"/>
-              <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
-              <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
-              <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
-              <input type="hidden" name="action" value="delete"/>
-            </div>
-          </form>
-        <?cs /if ?>
-      </div>
-    <?cs /if ?>
   </div>
 </div>
 

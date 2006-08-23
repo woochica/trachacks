@@ -19,18 +19,22 @@ class ScreenshotsWiki(Component):
 
     def _screenshot_link(self, formatter, ns, params, label):
         if ns == 'screenshot':
+            # Get cursor.
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+
             # Get referenced screenshot.
             api = ScreenshotsApi(self)
-            screenshot = api.get_screenshot(params)
+            screenshot = api.get_screenshot(cursor, params)
 
             # Return macro content
             if screenshot:
-                components = api.get_components()
+                components = api.get_components(cursor)
                 component = self._get_component_by_name(components,
-                  screenshot['component'])
-                versions =  api.get_versions()
+                  screenshot['components'][0])
+                versions =  api.get_versions(cursor)
                 version = self._get_version_by_name(versions,
-                  screenshot['version'])
+                  screenshot['versions'][0])
                 return '<a href="%s?component=%s;version=%s;id=%s" title="%s">' \
                   '%s</a>' % (self.env.href.screenshots(), component['id'],
                   version['id'], screenshot['id'], screenshot['name'], label)

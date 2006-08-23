@@ -40,25 +40,53 @@
         </div>
       <?cs /if ?>
       <div class="field">
-        <label for="component">Component:</label><br/>
-        <select id="component" name="component">
+        <label for="tags">Additional tags:</label><br/>
+        <?cs if:args.action == 'add' ?>
+          <input type="text" id="tags" name="tags" value=""/><br/>
+        <?cs else ?>
+          <input type="text" id="tags" name="tags" value="<?cs var:screenshots.current.0.tags ?>"/><br/>
+        <?cs /if ?>
+      </div>
+      <div class="field">
+        <label for="components">Components:</label><br/>
+        <select id="components" name="components" multiple="on">
           <?cs each:component = screenshots.components ?>
-            <?cs if:component.id == screenshots.component.id ?>
-              <option value="<?cs var:component.id ?>" selected="selected"><?cs var:component.name ?></option>
-            <?cs else?>
-              <option value="<?cs var:component.id ?>"><?cs var:component.name ?></option>
+            <?cs set:selected = 0 ?>
+            <?cs if:screenshots.current.0.components.0 ?>
+              <?cs each:component_name = screenshots.current.0.components ?>
+                <?cs if:(component.name == component_name) || (component.name == screenshots.component.name) ?>
+                  <?cs set:selected = 1 ?>
+                <?cs /if ?>
+              <?cs /each ?>
+            <?cs else ?>
+              <?cs set:selected = (component.name == screenshots.component.name) ?>
+            <?cs /if ?>
+            <?cs if:selected ?>
+              <option value="<?cs var:component.name ?>" selected="selected"><?cs var:component.name ?></option>
+            <?cs else ?>
+              <option value="<?cs var:component.name ?>"><?cs var:component.name ?></option>
             <?cs /if ?>
           <?cs /each ?>
         </select><br/>
       </div>
       <div class="field">
-        <label for="version">Version:</label><br/>
-        <select id="version" name="version">
+        <label for="versions">Versions:</label><br/>
+        <select id="versions" name="versions" multiple="on">
           <?cs each:version = screenshots.versions ?>
-            <?cs if:version.id == screenshots.version.id ?>
-              <option value="<?cs var:version.id ?>" selected="selected"><?cs var:version.name ?></option>
+            <?cs set:selected = 0 ?>
+            <?cs if:screenshots.current.0.versions.0 ?>
+              <?cs each:version_name = screenshots.current.0.versions ?>
+                <?cs if:version.name == version_name ?>
+                  <?cs set:selected = 1 ?>
+                <?cs /if ?>
+              <?cs /each ?>
             <?cs else ?>
-              <option value="<?cs var:version.id ?>"><?cs var:version.name ?></option>
+              <?cs set:selected = (version.name == screenshots.version.name) ?>
+            <?cs /if ?>
+            <?cs if:selected ?>
+              <option value="<?cs var:version.name ?>" selected="selected"><?cs var:version.name ?></option>
+            <?cs else ?>
+              <option value="<?cs var:version.name ?>"><?cs var:version.name ?></option>
             <?cs /if ?>
           <?cs /each ?>
         </select><br/>

@@ -4,18 +4,19 @@
 from setuptools import setup
 
 setup(
-  name = 'TracScreenshotsPlugin',
-  version = '0.3',
+  name = 'TracScreenshots',
+  version = '0.4',
   packages = ['tracscreenshots', 'tracscreenshots.db'],
   package_data = {'tracscreenshots' : ['templates/*.cs', 'htdocs/css/*.css']},
-  entry_points = {'trac.plugins': ['TracScreenshotsPlugin.core = tracscreenshots.core',
-    'TracScreenshotsPlugin.init = tracscreenshots.init',
-    'TracScreenshotsPlugin.tags = tracscreenshots.tags',
-    'TracScreenshotsPlugin.wiki = tracscreenshots.wiki']},
+  entry_points = {'trac.plugins': ['TracScreenshots.core = tracscreenshots.core',
+    'TracScreenshots.init = tracscreenshots.init',
+    'TracScreenshots.tags = tracscreenshots.tags',
+    'TracScreenshots.wiki = tracscreenshots.wiki']},
+  install_requires = ['TracTags'],
   keywords = 'trac screenshots',
   author = 'Radek Bartoň',
-  author_email = 'trac-hacks@swapoff.org',
-  url = 'http://trac-hacks.swapoff.org/wiki/ScreenshotsPlugin',
+  author_email = 'blackhex@post.cz',
+  url = 'http://trac-hacks.org/wiki/ScreenshotsPlugin',
   description = 'Project screenshots plugin for Trac',
   license = '''GPL'''
 )
