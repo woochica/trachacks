@@ -82,7 +82,7 @@ class DbAuthLoginModule(Component):
             yield 'metanav', 'login', Markup('logged in as <b>%s</b>' \
                     % req.authname)
             if self.password_changeable:
-                yield 'metanav', 'password',
+                yield 'metanav', 'password', \
                     Markup('<a href="%s">Password</a>' \
                             % escape(self.env.href.password()))
             yield 'metanav', 'logout', Markup('<b><a href="%s">Logout</a></b>' \
