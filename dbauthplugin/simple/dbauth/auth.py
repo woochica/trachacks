@@ -18,9 +18,11 @@
 
 import re
 import time
+import md5
 import sha
 
 from trac.core import *
+from trac.config import *
 from trac.db import *
 from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
@@ -48,6 +50,9 @@ class DbAuthLoginModule(Component):
 
     password_changeable = BoolOption('dbauth', 'password_changeable', 'false',
         """Allow user to change his password.""")
+    algorithm = Option('dbauth', 'algorithm', 'md5',
+        """Choose which hash algorithm to use. Possible options:
+        md5, sha""")
 
     def __init__(self):
         self.users = {
@@ -55,6 +60,10 @@ class DbAuthLoginModule(Component):
            'username': self.env.config.get('dbauth','username_field', 'username'),
            'password': self.env.config.get('dbauth','password_field', 'password'),
            'email': self.env.config.get('dbauth','email_field', None)}
+        if self.algorithm == 'sha':
+            self.crypt = sha
+        else:
+            self.crypt = md5
 
 
     # IAuthenticator methods
@@ -94,12 +103,10 @@ class DbAuthLoginModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        if req.authname and req.authname != 'anonymous':
-            return (self.password_changeable \
-                    and req.path_info == '/password') \
-                    or req.path_info == '/logout'
-        else:
-            return req.path_info == '/login'
+        return (self.password_changeable \
+                and req.path_info == '/password') \
+                or req.path_info == '/logout' \
+                or req.path_info == '/login'
 
     def process_request(self, req):
         if req.method == 'POST':
@@ -123,7 +130,6 @@ class DbAuthLoginModule(Component):
                     self._change_password(req, new)
 
         if req.path_info.startswith('/login'):
-            # self._do_login(req)
             template = "login.cs"
         elif req.path_info.startswith('/password'):
             template = 'password.cs'
@@ -157,7 +163,7 @@ class DbAuthLoginModule(Component):
               (self.users['password'], self.users['table'],
                self.users['username'])
         cursor.execute(sql, (uid,))
-        hash = sha.new(pwd).hexdigest()
+        hash = self.crypt.new(pwd).hexdigest()
         for row in cursor:
             if row[0] == hash:
                 return True
@@ -228,7 +234,7 @@ class DbAuthLoginModule(Component):
         email_field = self.users['email']
         if not email_field or len(email_field) == 0:
             return
-        db = self.env.get_db_cnx()
+        db = get_db(self.env)
         cursor = db.cursor()
         sql = 'SELECT %s FROM %s WHERE %s = %%s' % \
               (email_field, self.users['table'],
@@ -247,7 +253,7 @@ class DbAuthLoginModule(Component):
         # change the password
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        newpwd = sha.new(newpwd).hexdigest()
+        newpwd = self.crypt.new(newpwd).hexdigest()
         sql = 'UPDATE %s SET %s = %%s WHERE %s = %%s' % \
               (self.users['table'], self.users['password'],
                self.users['username'])
