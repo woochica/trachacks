@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCAS',
-    version = '0.1',
+    version = '1.0',
     packages = ['traccas'],
 
     author = "Noah Kantrowitz",

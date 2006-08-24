@@ -1,6 +1,7 @@
 # CASified login module for Trac
 
 from trac.core import *
+from trac.config import Option
 from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor
 from trac.util import escape, hex_entropy, Markup
@@ -10,23 +11,29 @@ from pycas import PyCAS
 class CasLoginModule(LoginModule):
     """A CAS-based login module."""
     
+    server = Option('cas', 'server', doc='Base URL for the CAS server')
+    login_path = Option('cas', 'login_path', default='/login', 
+                        doc='Path component for the login system')
+    logout_path = Option('cas', 'logout_path', default='/logout', 
+                        doc='Path component for the logout system')
+    validate_path = Option('cas', 'validate_path', default='/validate', 
+                        doc='Path component for the validation system')
+    
     def __init__(self):
-        url = self.config.get('cas','server').strip()
         paths = {
-            'login_path': self.config.get('cas','login_path','/login').strip(),
-            'logout_path': self.config.get('cas','logout_path','/logout').strip(),
-            'validate_path': self.config.get('cas','validate_path','/validate').strip(),
+            'login_path': self.login_path,
+            'logout_path': self.logout_path,
+            'validate_path': self.validate_path,
         }
-        self.cas = PyCAS(url, **paths)
-        self.service = self.env.abs_href.login()
+        self.cas = PyCAS(self.server, **paths)
         
     # IAuthenticatorMethods
     def authenticate(self, req):
         ticket = req.args.get('ticket')
         if ticket:
-            valid, user = self.cas.validate_ticket(self.service, ticket)
+            valid, user = self.cas.validate_ticket(req.abs_href.login(), ticket)
             if valid:
-                req.remote_user = user
+                req.environ['REMOTE_USER'] = user
                 
         return super(CasLoginModule, self).authenticate(req)
         
@@ -34,14 +41,14 @@ class CasLoginModule(LoginModule):
     def get_navigation_items(self, req):        
         if req.authname and req.authname != 'anonymous':
             yield ('metanav', 'login', 'logged in as %s' % req.authname)
-            yield ('metanav', 'logout', Markup('<a href="%s">Logout</a>' % escape(self.env.href.logout())))
+            yield ('metanav', 'logout', Markup('<a href="%s">Logout</a>' % escape(req.href.logout())))
         else:
-            yield ('metanav', 'login', Markup('<a href="%s">Login</a>' % escape(self.cas.login_url(self.service))))
+            yield ('metanav', 'login', Markup('<a href="%s">Login</a>' % escape(self.cas.login_url(req.abs_href.login()))))
         
 
     def _do_logout(self, req):
         if req.authname:
             super(CasLoginModule, self)._do_logout(req)
-            req.redirect(self.cas.logout_url(self.env.abs_href()))
+            req.redirect(self.cas.logout_url(req.abs_href()))
         else:
-            req.redirect(self.env.abs_href())
+            req.redirect(req.abs_href())
