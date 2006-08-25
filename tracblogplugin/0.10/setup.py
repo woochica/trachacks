@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'tBlog'
-VERSION = '0.2'
+VERSION = '0.2.1'
 
 setup(  name=PACKAGE, version=VERSION,
         author = 'John Hampton',

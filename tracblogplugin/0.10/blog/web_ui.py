@@ -24,16 +24,20 @@ from StringIO import StringIO
 from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
-from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_link
 from trac.web.chrome import INavigationContributor 
-from trac.util import Markup, format_date, format_datetime
-from trac.wiki.formatter import Formatter, wiki_to_oneliner
+from trac.util import Markup, format_date, format_datetime, http_date
+from trac.util.text import to_unicode
+from trac.wiki.formatter import Formatter, wiki_to_oneliner, wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
 from trac.perm import IPermissionRequestor
 
 from tractags.api import TagEngine
 from tractags.parseargs import parseargs
+
+_title_split_match = re.compile(r'^=+\s+([^\n\r=]+?)\s+=+\s+(.+)$',
+                                re.DOTALL).match
 
 BOOLS_TRUE = ['true', 'yes', 'ok', 'on', 'enabled', '1']
 
@@ -105,6 +109,7 @@ class TracBlogPlugin(Component):
     '''delta''' - How many days of posts should be shown.[[br]]
     '''mark_update''' - Specify whether to show "Updated on" for posts that
     have been updated.[[br]]
+    '''format''' - Show as RSS feed ('rss') or HTML (else).[[br]]
 
     If specifying dates with {{{year}}}, {{{month}}}, and/or {{{day}}}, the
     current value is specified if missing.  For example, if {{{day}}} is 
@@ -196,6 +201,7 @@ class TracBlogPlugin(Component):
         add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
         tags = req.args.getlist('tag')
+        format = req.args.get('format')
         kwargs = {}
         for key in req.args.keys():
             if key != 'tag':
@@ -205,7 +211,12 @@ class TracBlogPlugin(Component):
             tstr = self.env.config.get('blog', 'default_tag', 'blog')
             tags = [t.strip() for t in _tag_split.split(tstr) if t.strip()]
         self._generate_blog(req, *tags, **kwargs)
-        return 'blog.cs', None
+        if format == 'rss':
+            return 'blog_rss.cs', 'application/rss+xml'
+        else:
+            add_link(req, 'alternate', self.env.href.blog(format='rss'),
+                        'RSS Feed', 'application/rss+xml', 'rss')
+            return 'blog.cs', None
 
     def _generate_blog(self, req, *args, **kwargs):
         """Extract the blog pages and fill the HDF.
@@ -260,11 +271,20 @@ class TracBlogPlugin(Component):
                 time_format = self.env.config.get('blog', 'date_format') \
                               or '%x %X'
                 timeStr = format_datetime(post_time, format=time_format) 
+                fulltext = page.text
+                # remove comments in blog view:
+                del_comments = re.compile('==== Comment.*\Z', re.DOTALL)
+                fulltext = del_comments.sub('', fulltext)
+                # remove the [[AddComment...]] tag, otherwise it would appeare
+                # more than one and crew up the blog view:
+                del_addcomment  = re.compile('\[\[AddComment.*\Z', re.DOTALL)
+                fulltext = del_addcomment.sub('', fulltext)
+                # limit length of preview:
                 post_size = self._choose_value('post_size', req, kwargs, int)
                 if not post_size and (not isinstance(post_size, int)):
                     post_size = int(self.env.config.get('blog', 'post_size', 
                                     1024))
-                text = self._trim_page(page.text, blog_entry, post_size)
+                text = self._trim_page(fulltext, blog_entry, post_size)
                 pagetags = [x for x in tags.get_name_tags(blog_entry) if x not in tlist]
                 tagtags = []
                 for i, t in enumerate(pagetags[:3]):
@@ -274,15 +294,28 @@ class TracBlogPlugin(Component):
                         }
                     tagtags.append(d)
                     continue
+                # extract title from text:
+                match = _title_split_match(fulltext)
+                if match:
+                    title = match.group(1)
+                    fulltext = match.group(2)
+                else: 
+                    title = blog_entry
+                html_text = wiki_to_html(fulltext, self.env, req)
+                rss_text = Markup.escape(to_unicode(html_text))
                 data = {
                         'name'      : blog_entry,
+                        'title'     : title,
+                        'href'      : self.env.href.wiki(blog_entry),
                         'wiki_link' : wiki_to_oneliner(read_post % 
                                                        blog_entry,
                                                        self.env),
                         'time'      : timeStr,
+                        'date'      : http_date(page.time),
                         'author'    : author,
                         'wiki_text' : wiki_to_nofloat_html(text, self.env, req,
                                                    macro_blacklist=macro_bl),
+                        'rss_text'  : rss_text,
                         'comment'   : wiki_to_oneliner(comment, self.env),
                         'tags'      : {
                                         'present' : len(pagetags),
@@ -290,6 +323,13 @@ class TracBlogPlugin(Component):
                                         'more'    : len(pagetags) > 3 or 0,
                                       },
                        }
+                if author:
+                    # For RSS, author must be an email address
+                    if author.find('@') != -1:
+                        data['author.email'] = author
+                    elif self._user2email(author) is not None:
+                        data['author.email'] = self._user2email(author)
+                
                 if (modified != post_time) and mark_updated:
                     data['modified'] = 1
                     mod_str = format_datetime(modified, format=time_format)
@@ -311,6 +351,12 @@ class TracBlogPlugin(Component):
             self._generate_calendar(req, tallies)
         req.hdf['blog.hidecal'] = hidecal
         pass
+
+    def _user2email(self, user):
+        for username, name, email in self.env.get_known_users():
+            if email:
+                return email
+        return None
 
     def _generate_calendar(self, req, tallies):
         """Generate data necessary for the calendar
