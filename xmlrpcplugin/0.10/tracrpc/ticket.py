@@ -1,8 +1,10 @@
 from trac.attachment import Attachment
 from trac.core import *
 from tracrpc.api import IXMLRPCHandler, expose_rpc
+from tracrpc.util import to_timestamp
 import trac.ticket.model as model
 import trac.ticket.query as query
+from trac.ticket.api import TicketSystem
 
 import pydoc
 import xmlrpclib
@@ -19,6 +21,8 @@ class TicketRPC(Component):
 
     def xmlrpc_methods(self):
         yield ('TICKET_VIEW', ((list,), (list, str)), self.query)
+        yield ('TICKET_VIEW', ((list, xmlrpclib.DateTime),), self.getRecentChanges)
+        yield ('TICKET_VIEW', ((list, int),), self.getAvailableActions)
         yield ('TICKET_VIEW', ((list, int),), self.get)
         yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict)), self.create)
         yield ('TICKET_APPEND', ((list, int, str), (list, int, str, dict)), self.update)
@@ -40,6 +44,24 @@ class TicketRPC(Component):
         for t in q.execute(req):
             out.append(t['id'])
         return out
+
+    def getRecentChanges(self, req, since):
+        """Returns a list of IDs of tickets that have changed since timestamp."""
+        since = to_timestamp(since)
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('SELECT id FROM ticket'
+                       ' WHERE changetime >= %s', (since,))
+        result = []
+        for row in cursor:
+            result.append(int(row[0]))
+        return result
+
+    def getAvailableActions(self, req, id):
+        """Returns the actions that can be performed on the ticket."""
+        ticketSystem = TicketSystem(self.env)
+        t = model.Ticket(self.env, id)
+        return ticketSystem.get_available_actions(t, req.perm)
 
     def get(self, req, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """

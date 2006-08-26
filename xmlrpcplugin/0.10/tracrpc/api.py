@@ -162,6 +162,7 @@ class XMLRPCSystem(Component):
         """ Get an RPC signature by full name. """ 
         for provider in self.method_handlers:
             for candidate in provider.xmlrpc_methods():
+                self.env.log.debug(candidate)
                 p = Method(provider, *candidate)
                 if p.name == method:
                     return p

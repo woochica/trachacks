@@ -12,6 +12,7 @@ from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
 from trac.attachment import Attachment
 from tracrpc.api import IXMLRPCHandler, expose_rpc
+from tracrpc.util import to_timestamp
 
 class WikiRPC(Component):
     """ Implementation of the [http://www.jspwiki.org/Wiki.jsp?page=WikiRPCInterface2 WikiRPC API]. """
@@ -37,15 +38,13 @@ class WikiRPC(Component):
         yield ('WIKI_CREATE', ((bool, str, str, dict),), self.putPage)
         yield ('WIKI_VIEW', ((list, str),), self.listAttachments)
         yield ('WIKI_VIEW', ((xmlrpclib.Binary, str),), self.getAttachment)
-        yield ('WIKI_MODIFY', ((bool, str, str, xmlrpclib.Binary),
-                               (str, str, str, xmlrpclib.Binary, bool)), self.putAttachment)
+        yield ('WIKI_MODIFY', ((bool, str, xmlrpclib.Binary),), self.putAttachment)
+        yield ('WIKI_MODIFY', ((bool, str, str, str, xmlrpclib.Binary),
+                               (bool, str, str, str, xmlrpclib.Binary, bool)),
+                               self.putAttachmentEx)
         yield ('WIKI_DELETE', ((bool, str),), self.deleteAttachment)
         yield ('WIKI_VIEW', ((list, str),), self.listLinks)
         yield ('WIKI_VIEW', ((str, str),), self.wikiToHtml)
-
-    def _to_timestamp(self, datetime):
-        import time
-        return time.mktime(time.strptime(datetime.value, '%Y%m%dT%H:%M:%S'))
 
     def _page_info(self, name, time, author, version):
         return dict(name=name, lastModified=xmlrpclib.DateTime(int(time)),
@@ -53,7 +52,7 @@ class WikiRPC(Component):
 
     def getRecentChanges(self, req, since):
         """ Get list of changed pages since timestamp """
-        since = self._to_timestamp(since)
+        since = to_timestamp(since)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT name, max(time), author, version FROM wiki'
@@ -125,11 +124,20 @@ class WikiRPC(Component):
         attachment = Attachment(self.env, 'wiki', pagename, filename)
         return xmlrpclib.Binary(attachment.open().read())
 
-    def putAttachment(self, req, path, data, replace=True):
-        """ (over)writes an attachment. For compatibility with WikiRPC, if
-        replace=True then the return type is a boolean, otherwise it is the
-        attachment filename. """
+    def putAttachment(self, req, path, data):
+        """ (over)writes an attachment. Returns True if successful.
+        
+        This method is compatible with WikiRPC.  `putAttachmentEx` has a more
+        extensive set of (Trac-specific) features. """
         pagename, filename = posixpath.split(path)
+        self.putAttachmentEx(req, pagename, filename, None, data)
+        return True
+
+    def putAttachmentEx(self, req, pagename, filename, description, data, replace=True):
+        """ Attach a file to a Wiki page. Returns the (possibly transformed)
+        filename of the attachment.
+        
+        Use this method if you don't care about WikiRPC compatibility. """
         if not WikiPage(self.env, pagename).exists:
             raise TracError, 'Wiki page "%s" does not exist' % pagename
         if replace:
@@ -140,11 +148,9 @@ class WikiRPC(Component):
                 pass
         attachment = Attachment(self.env, 'wiki', pagename)
         attachment.author = req.authname or 'anonymous'
+        attachment.description = description
         attachment.insert(filename, StringIO(data.data), len(data.data))
-        if replace:
-            return True
-        else:
-            return attachment.filename
+        return attachment.filename
 
     def deleteAttachment(self, req, path):
         """ Delete an attachment. """
