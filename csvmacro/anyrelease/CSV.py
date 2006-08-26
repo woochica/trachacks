@@ -4,7 +4,8 @@ import csv
 
 def execute(hdf, txt, env):
     sniffer = csv.Sniffer()
-    reader = csv.reader(StringIO(txt.encode('ascii', 'replace')))
+    txt = txt.encode('ascii', 'replace')
+    reader = csv.reader(StringIO(txt), sniffer.sniff(txt))
     out = StringIO()
     out.write('<table class="wiki">\n')
     for row in reader:
