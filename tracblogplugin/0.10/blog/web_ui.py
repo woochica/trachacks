@@ -27,7 +27,10 @@ from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_link
 from trac.web.chrome import INavigationContributor 
 from trac.util import Markup, format_date, format_datetime, http_date
-from trac.util.text import to_unicode
+try:
+    from trac.util.text import to_unicode
+except ImportError:
+    to_unicode = lambda x: x
 from trac.wiki.formatter import Formatter, wiki_to_oneliner, wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.wiki.api import IWikiMacroProvider
