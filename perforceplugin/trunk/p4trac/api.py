@@ -50,8 +50,8 @@ class PerforceConnector(Component):
         try:
             import perforce
             hasPerforce = True
-        except ImportError:
-            pass
+        except ImportError, e:
+            self.log.warning('Failed to import PyPerforce: ' + str(e))
 
         if hasPerforce:
             yield ('perforce', 4)
