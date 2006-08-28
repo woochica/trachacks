@@ -1024,9 +1024,9 @@ class Repository(object):
         """
         return Node(nodePath, self)
 
-    def precacheFileHistoryForChanges(self, changes):
-        """Pre-caches history and change information for file revisions
-        affected by the specified list of changes.
+    def precacheFileInformationForChanges(self, changes):
+        """Pre-caches integration and change information for the file
+        revisions affected by the specified list of changes.
 
         Information that has already been retrieved is not requeried.
         """
@@ -1080,13 +1080,24 @@ class Repository(object):
         for batch in batchesOfFilesWithoutCachedHistory(1000):
             
             output = _P4FileLogOutputConsumer(self)
-            self._connection.run('filelog', '-l', '-i',
+            self._connection.run('filelog', '-m', '1',
                                  output=output,
                                  *[self.fromUnicode(np.fullPath)
                                    for np in batch])
 
             if output.errors:
                 raise PerforceError(output.errors)
+
+    def clearFileInformationCache(self):
+        """Clear any cached file information.
+
+        You can call this method to clear cached data about file information
+        to save memory if you know that you aren't going to need the cached
+        file information again.
+        """
+        self._changes = {}
+        self._dirs = {}
+        self._files = {}
 
     def _getChangeInfo(self, change, create=False):
         """Get the changelist info structure for the specified change number.

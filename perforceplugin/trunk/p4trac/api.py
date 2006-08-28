@@ -1,7 +1,7 @@
 from trac.core import Component, implements, TracError
 from trac.versioncontrol.api import IRepositoryConnector, Repository, Node, \
      Changeset, Authorizer, NoSuchChangeset, NoSuchNode, PermissionDenied
-from trac.versioncontrol.cache import CachedRepository
+from trac.versioncontrol.cache import CachedRepository, _kindmap, _actionmap
 
 def normalisePath(path):
     """Normalise a Perforce path and return it as a Trac-compatible path.
@@ -126,23 +126,69 @@ class PerforceConnector(Component):
 
 class PerforceCachedRepository(CachedRepository):
 
-    # Override sync to precache data to make it run faster
-    def sync(self):
-        youngest_stored = self.repos.get_youngest_rev_in_cache(self.db)
-        if youngest_stored != str(self.repos.youngest_rev):
-            # Need to cache all information for changes since the last
-            # sync operation.
+    def checkRepositoryDir(self):
+        """Check that the underlying repository_dir hasn't changed."""
+        cursor = self.db.cursor()
+        cursor.execute("SELECT value "
+                       "FROM system "
+                       "WHERE name='repository_dir'")
+        row = cursor.fetchone()
+        if row and row[0] != self.name:
+            raise TracError("The 'repository_dir' has changed "
+                            "a 'trac-admin resync' operation is needed")
 
-            if youngest_stored is None:
-                youngest_stored = '0'
+    def storeChangesInDB(self, changes):
+        """Store the specified changes in the Trac database.
 
-            # Obtain a list of changes since the last cache sync
+        @param changes: List of integers that specifies the changes to store
+        in the Trac database.
+        """
+        kindmap = dict(zip(_kindmap.values(), _kindmap.keys()))
+        actionmap = dict(zip(_actionmap.values(), _actionmap.keys()))
+        
+        cursor = self.db.cursor()
+        for change in changes:
+            cs = self.repos.get_changeset(change)
+            cursor.execute("INSERT INTO revision (rev,time,author,message) "
+                           "VALUES (%s,%s,%s,%s)", (str(change),
+                                                    cs.date,
+                                                    cs.author,
+                                                    cs.message))
+            for path, kind, action, base_path, base_rev in cs.get_changes():
+                kind = kindmap[kind]
+                action = actionmap[action]
+                cursor.execute("INSERT INTO node_change (rev,path, node_type, "
+                               "change_type, base_path, base_rev) "
+                               "VALUES (%s,%s,%s,%s,%s,%s)",
+                               (str(change),
+                                path, kind, action, base_path, base_rev))
+        self.db.commit()
+
+    def updateCache(self, fromChange):
+
+        # Update the database in batches of 1000 changes so that we don't
+        # overload the virtual memory system by trying to store information
+        # about every change in the repository at once during the initial
+        # cache population.
+
+        batchSize = 1000
+        lowerBound = fromChange
+        upperBound = self.repos.youngest_rev + 1
+
+        self.log.debug("Updating cache with changes [%i,%i]" % (lowerBound,
+                                                                upperBound))
+        
+        while lowerBound < upperBound:
+            batchUpperBound = min(lowerBound + batchSize, upperBound)
+
+            # Get the next batch of changes to cache
             from p4trac.repos import _P4ChangesOutputConsumer
             output = _P4ChangesOutputConsumer(self.repos._repos)
             self.repos._connection.run('changes', '-l', '-s', 'submitted',
-                                       '@>%s' % youngest_stored,
+                                       '@>=%i,@<%i' % (lowerBound,
+                                                       batchUpperBound),
                                        output=output)
-
+            
             if output.errors:
                 from p4trac.repos import PerforceError
                 raise PerforceError(output.errors)
@@ -150,13 +196,37 @@ class PerforceCachedRepository(CachedRepository):
             changes = output.changes
             changes.reverse()
 
-            # Perform the precaching of the file history for files in these
-            # changes.
-            self.repos._repos.precacheFileHistoryForChanges(changes)
+            # Pre-cache all information about these changes in memory
+            # before caching in the database. Clear the in-memory cache
+            # afterwards to save on memory usage.
+            self.repos._repos.precacheFileInformationForChanges(changes)
+            self.storeChangesInDB(changes)
+            self.repos._repos.clearFileInformationCache()
 
-        # Call on to the default implementation now that we've cached
-        # enough information to make it run a bit faster.
-        CachedRepository.sync(self)
+            lowerBound += batchSize
+        
+    def sync(self):
+
+        self.log.debug("Checking whether sync with repository is needed")
+
+        self.checkRepositoryDir()
+        
+        youngestStored = self.repos.get_youngest_rev_in_cache(self.db)
+        if youngestStored is None:
+            youngestStored = 0
+        else:
+            youngestStored = int(youngestStored)
+            
+        if youngestStored != self.repos.youngest_rev:
+            # Cache is out of date.
+            
+            # Remove permissions checking while populating the cache
+            authz = self.repos.authz
+            self.repos.authz = Authorizer()
+            try:
+                self.updateCache(fromChange=youngestStored+1)
+            finally:
+                self.repos.authz = authz
 
     def get_changesets(self, start, stop):
         if not self.synced:
@@ -925,7 +995,7 @@ class PerforceChangeset(object):
         self._log.debug("PerforceChangeset(%i).get_changes()" %
                         self._change)
 
-        self._repos.precacheFileHistoryForChanges([self._change])
+        self._repos.precacheFileInformationForChanges([self._change])
 
         for node in self._changelist.nodes:
 
