@@ -45,7 +45,7 @@
           <select id="startbilling" name="startbilling" >
             <option value="" ></option>
               <?cs each:item = billing_info.billdates ?>
-                <option value="<?cs var:item.value ?>" ><?cs var:item.text ?></div>
+                <option value="<?cs var:item.value ?>" ><?cs var:item.text ?></option>
               <?cs /each ?>
           </select>
       </td>
@@ -58,7 +58,7 @@
           <select id="endbilling" name="endbilling" >
             <option value="" ></option>
               <?cs each:item = billing_info.billdates ?>
-                <option value="<?cs var:item.value ?>" ><?cs var:item.text ?></div>
+                <option value="<?cs var:item.value ?>" ><?cs var:item.text ?></option>
               <?cs /each ?>
           </select>
       </td>

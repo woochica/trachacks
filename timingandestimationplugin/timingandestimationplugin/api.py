@@ -238,7 +238,6 @@ class TimeTrackingSetupParticipant(Component):
         self.config.save();
 
     def needs_user_man(self):
-        print "checking for user manual update"
         maxversion = dbhelper.get_scalar(self.env.get_db_cnx(),
                                          "SELECT MAX(version) FROM wiki WHERE name like %s", 0,
                                          user_manual_wiki_title)
@@ -264,14 +263,10 @@ class TimeTrackingSetupParticipant(Component):
         performed, `False` otherwise.
 
         """
-        def p(s):
-            print s
-            return True
-        print "Timing and Estimation checking for upgrade"
-        return (p("Checking Database") and self.db_needs_upgrade()) or \
-               (p("Checking fields") and self.ticket_fields_need_upgrade()) or \
-               (p("Checking reports") and self.reports_need_upgrade()) or \
-               (p("Checking user manual") and self.needs_user_man()) 
+        return (self.db_needs_upgrade()) or \
+               (self.ticket_fields_need_upgrade()) or \
+               (self.reports_need_upgrade()) or \
+               (self.needs_user_man()) 
             
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade.
