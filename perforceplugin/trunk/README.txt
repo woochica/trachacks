@@ -68,7 +68,10 @@ Installation:
    Note: Loading a page that uses the plugin for the first time can take
    a long time while the plugin populates the initial changeset cache,
    depending on the size of the Perforce repository.
-   (Caching 100K changes can take over an hour).
+
+   Alternatively you could run the following command to force an offline
+   sync of the repository:
+   $ trac-admin /path/to/trac/env resync
 
 Future work:
 
@@ -89,8 +92,6 @@ Future work:
 
  * Better support for detecting modified change descriptions and updating
    changeset cache.
-
- * Improve performance of initial cache population for large repositories
 
  * Reduce configuration requirements to a single string such as
    'p4://user:password@host:port'.

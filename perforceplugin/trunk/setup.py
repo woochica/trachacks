@@ -5,8 +5,10 @@ setup(
     description='Perforce version control plugin for Trac',
     author='Lewis Baker',
     author_email='lewisbaker@users.sourceforge.net',
+    
     keywords='trac scm plugin perforce p4',
-    version='0.4.1',
+    url='http://trac-hacks.org/wiki/PerforcePlugin',
+    version='0.4.2',
     license="""
     Copyright 2006, Maptek Pty Ltd
 
