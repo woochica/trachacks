@@ -24,7 +24,7 @@ class DatamoverTicketModule(Component):
         
         if req.method == 'POST':
             source_type = req.args.get('source')
-            if not source_type or source_type not in ('component', 'ticket'):
+            if not source_type or source_type not in ('component', 'ticket', 'all', 'query'):
                 raise TracError, "Source type not specified or invalid"
             source = req.args.get(source_type)
             dest = req.args.get('destination')
@@ -43,7 +43,7 @@ class DatamoverTicketModule(Component):
                 'component': 'component=%s'%source,
                 'all': 'id!=0',
                 'query': source,
-            }
+            }[source_type]
                 
             try:
                 ids = [x['id'] for x in Query.from_string(self.env, query_string).execute(req)]
