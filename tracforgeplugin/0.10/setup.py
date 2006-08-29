@@ -11,7 +11,7 @@ setup(
                 'tracforge/admin',
                 'tracforge/linker',
                ],
-    package_data={ 'tracforge/subscriptions' : [ 'templates/*.cs' ] },
+    package_data={ 'tracforge' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
     description = "Experimental multi-project support.",
@@ -23,7 +23,9 @@ setup(
     entry_points = {
         'trac.plugins': [
             'tracforge.perms = tracforge.perms',
+            'tracforge.resources = tracforge.resources',
             'tracforge.subscriptions = tracforge.subscriptions',
+            'tracforge.admin = tracforge.admin',
             'tracforge.linker = tracforge.linker',
         ],
     },
