@@ -23,9 +23,7 @@ setup(
     },
     entry_points = {
         'trac.plugins': [
-            'dbauth.auth = dbauth.auth',
-            'dbauth.perm = dbauth.perm',
-            'dbauth.userdir = dbauth.userdir'
+            'dbauth.auth = dbauth.auth'
         ]
     }
 )
