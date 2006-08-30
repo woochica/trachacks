@@ -11,14 +11,16 @@ import posixpath
 import re
 import mimetypes
 
+from trac.config import Option
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.perm import IPermissionRequestor
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
+from trac.web.chrome import INavigationContributor, ITemplateProvider, \
+  add_stylesheet
 from trac.Search import ISearchSource
 from trac.wiki import IWikiSyntaxProvider, wiki_to_html
 from trac.wiki.formatter import system_message
-from trac.util import Markup
+from trac.util.html import html
 
 def compare_rank(x, y):
     if x['rank'] == y['rank']:
@@ -31,6 +33,33 @@ class DoxygenPlugin(Component):
     implements(IPermissionRequestor, INavigationContributor, IRequestHandler,
       ITemplateProvider, ISearchSource, IWikiSyntaxProvider)
 
+    base_path = Option('doxygen', 'path', '/var/lib/trac/doxygen',
+      """Directory containing doxygen generated files.""")
+
+    default_doc = Option('doxygen', 'default_documentation', '',
+      """Default path relative to `base_path` in which to look for
+      documentation files.""")
+
+    title = Option('doxygen', 'title', 'Doxygen',
+      """Title to use for the main navigation tab.""")
+
+    ext = Option('doxygen', 'ext', 'htm html png',
+      """Space separated list of extensions for doxygen managed files.""")
+
+    source_ext = Option('doxygen', 'source_ext',
+      'idl odl java cs py php php4 inc phtml m '
+      'cpp cxx c hpp hxx h',
+      """Space separated list of source files extensions""")
+
+    index = Option('doxygen', 'index', 'main.html',
+      """Default index page to pick in the generated documentation.""")
+
+    wiki_index = Option('doxygen', 'wiki_index', None,
+      """Wiki page to use as the default page for the Doxygen main page.""")
+
+    encoding = Option('doxygen', 'encoding', 'iso-8859-1',
+      """Default encoding used by the generated documentation files.""")
+
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
@@ -40,26 +69,18 @@ class DoxygenPlugin(Component):
 
     def get_active_navigation_item(self, req):
         return 'doxygen'
+
     def get_navigation_items(self, req):
         if req.perm.has_permission('DOXYGEN_VIEW'):
-            # Get config variables.
-            title = self.env.config.get('doxygen', 'title', 'Doxygen')
-
             # Return mainnav buttons.
-            yield 'mainnav', 'doxygen', Markup('<a href="%s">%s</a>' % \
-              (self.env.href.doxygen() + '/', title))
+            yield 'mainnav', 'doxygen', html.a(self.title,
+              href = req.href.doxygen())
 
     # IRequestHandler methods
 
     def match_request(self, req):
-        # Get config variables.
-        base_path = self.config.get('doxygen', 'path', '/var/lib/trac/doxygen')
-        default_doc = self.config.get('doxygen', 'default_documentation', '')
-        ext = self.config.get('doxygen', 'ext', 'htm html png')
-        ext = '|'.join(ext.split(' '))
-        source_ext = self.config.get('doxygen', 'source_ext', 'idl odl java' \
-          ' cs py php php4 inc phtml m cpp cxx c hpp hxx h')
-        source_ext = '|'.join(source_ext.split(' '))
+        ext = '|'.join(self.ext.split(' '))
+        source_ext = '|'.join(self.source_ext.split(' '))
 
         # Match documentation request.
         self.log.debug(req.path_info)
@@ -71,12 +92,13 @@ class DoxygenPlugin(Component):
 
             if not match.group(1) and not match.group(2):
                 # Request for documentation index.
-                req.args['path'] = os.path.join(base_path, default_doc)
+                req.args['path'] = os.path.join(self.base_path,
+                  self.default_doc)
                 req.args['action'] = 'index'
             else:
                 # Get doc and file from request.
                 if not match.group(2):
-                    doc = default_doc
+                    doc = self.default_doc
                     file = match.group(1)
                 else:
                     doc = match.group(1)
@@ -91,7 +113,7 @@ class DoxygenPlugin(Component):
 
                 elif re.match(r'''^(.*)[.](%s)''' % (ext,), file):
                     # Request for documentation file.
-                    path = os.path.join(base_path, doc, file)
+                    path = os.path.join(self.base_path, doc, file)
                     self.log.debug('path: %s' % (path,))
                     if os.path.exists(path):
                         req.args['path'] = path
@@ -104,7 +126,7 @@ class DoxygenPlugin(Component):
                     match = re.match(r'''^(.*)[.](%s)''' % (source_ext,), file)
                     if match:
                         # Request for source file documentation.
-                        path = os.path.join(base_path, doc, '%s_8%s.html'
+                        path = os.path.join(self.base_path, doc, '%s_8%s.html'
                           % (match.group(1), match.group(2)))
                         self.log.debug('path: %s' % (path,))
                         if os.path.exists(path):
@@ -115,13 +137,13 @@ class DoxygenPlugin(Component):
                             req.args['query'] = file
 
                     else:
-                        path = os.path.join(base_path, doc, 'class%s.html'
+                        path = os.path.join(self.base_path, doc, 'class%s.html'
                           % (file,))
                         if os.path.exists(path):
                             req.args['path'] = path
                             req.args['action'] = 'file'
                         else:
-                            path = os.path.join(base_path, doc,
+                            path = os.path.join(self.base_path, doc,
                               'struct%s.html' % (file,))
                             if os.path.exists(path):
                                 req.args['path'] = path
@@ -132,11 +154,10 @@ class DoxygenPlugin(Component):
                                 for result in results:
                                     self.log.debug(result)
                                     if result['name'] == file:
-                                        req.redirect(self.env.href.doxygen(doc)
+                                        req.redirect(req.href.doxygen(doc)
                                           + '/' + result['url'])
                                 req.args['action'] = 'search'
                                 req.args['query'] = file
-
             # Request matched.
             return True
 
@@ -151,27 +172,26 @@ class DoxygenPlugin(Component):
         path = req.args.get('path')
         action = req.args.get('action')
 
-        # Get config variables
-        index =  self.config.get('doxygen', 'index', 'main.html')
-        wiki_index = self.config.get('doxygen', 'wiki_index', None)
+        self.log.debug('path: %s' % (path,))
+        self.log.debug('action: %s' % (action,))
 
         # Redirect search requests.
         if action == 'search':
-            req.redirect('%s?q=%s&doxygen=on' % (self.env.href.search(),
-              req.args.get('query')))
+            req.redirect(req.href.search(q = req.args.get('query'),
+              doxygen = 'on'))
 
         # Retrun apropriate content to type or search request
         elif action == 'index':
-            if wiki_index:
+            if self.wiki_index:
                 # Get access to database
                 db = self.env.get_db_cnx()
                 cursor = db.cursor()
 
-                # Get wiki index
+                # Get wiki index  # FIXME: use WikiPage() instead
                 sql = "SELECT text FROM wiki WHERE name = %s"
-                cursor.execute(sql, (wiki_index,))
-                text = Markup(system_message('Error', 'Wiki page %s does not' \
-                  ' exists' % (wiki_index)))
+                cursor.execute(sql, (self.wiki_index,))
+                text = system_message('Error', 'Wiki page %s does not exists' %
+                  self.wiki_index)
                 for row in cursor:
                     text = wiki_to_html(row[0], self.env, req)
 
@@ -180,7 +200,7 @@ class DoxygenPlugin(Component):
                 return 'doxygen.cs', 'text/html'
             else:
                 add_stylesheet(req, 'doxygen/css/doxygen.css')
-                req.hdf['doxygen.path'] = path + '/' + index
+                req.hdf['doxygen.path'] = path + '/' + self.index
                 return 'doxygen.cs', 'text/html'
 
         elif action == 'file':
@@ -207,40 +227,34 @@ class DoxygenPlugin(Component):
 
     def get_search_filters(self, req):
         if req.perm.has_permission('DOXYGEN_VIEW'):
-            # Get config variables
-            title = self.env.config.get('doxygen', 'title', 'Doxygen')
+            yield('doxygen', self.title)
 
-            yield('doxygen', title)
-
-    def get_search_results(self, req, query, filters):
+    def get_search_results(self, req, keywords, filters):
         if not 'doxygen' in filters:
             return
-        if query[0] == query[-1] == "'" or query[0] == query[-1] == '"':
-            keywords = [query[1:-1]]
-        else:
-            keywords = query.split(' ')
 
-        base_path = self.config.get('doxygen', 'path')
+        # We have to search for the raw bytes...
+        keywords = [k.encode(self.encoding) for k in keywords]
 
-        for doc in os.listdir(base_path):
+        for doc in os.listdir(self.base_path):
             # Search in documentation directories
-            path = os.path.join(base_path, doc)
+            path = os.path.join(self.base_path, doc)
             if os.path.isdir(path):
                 index = os.path.join(path, 'search.idx')
                 if os.path.exists(index):
                     creation = os.path.getctime(index)
                     for result in  self._search_in_documentation(doc, keywords):
-                        result['url'] =  self.env.href.doxygen(doc) + '/' \
+                        result['url'] =  req.href.doxygen(doc) + '/' \
                           + result['url']
                         yield result['url'], result['name'], creation, \
                           'doxygen', None
 
             # Search in common documentation directory
-            index = os.path.join(base_path, 'search.idx')
+            index = os.path.join(self.base_path, 'search.idx')
             if os.path.exists(index):
                 creation = os.path.getctime(index)
                 for result in self._search_in_documentation('', keywords):
-                    result['url'] =  self.env.href.doxygen() + '/' + \
+                    result['url'] =  req.href.doxygen() + '/' + \
                       result['url']
                     yield result['url'], result['name'], creation, 'doxygen', \
                       None
@@ -255,8 +269,7 @@ class DoxygenPlugin(Component):
     # internal methods
     def _search_in_documentation(self, doc, keywords):
         # Open index file for documentation
-        base_path = self.config.get('doxygen', 'path')
-        index = os.path.join(base_path, doc, 'search.idx')
+        index = os.path.join(self.base_path, doc, 'search.idx')
         if os.path.exists(index):
             fd = open(index)
 
@@ -283,7 +296,8 @@ class DoxygenPlugin(Component):
                     statIdx = self._readInt(fd)
                     low = word.lower()
                     if w.find(low) != -1:
-                        matches.append({'word' : word, 'match' : w, 'index' : statIdx, 'full' : len(low) == len(w)})
+                        matches.append({'word': word, 'match': w,
+                         'index': statIdx, 'full': len(low) == len(w)})
                     w = self._readString(fd)
 
                 count = 0
@@ -302,7 +316,8 @@ class DoxygenPlugin(Component):
                     for i in range(numDocs):
                         idx = self._readInt(fd)
                         freq = self._readInt(fd)
-                        results.append({'idx' : idx, 'freq' : freq >> 1, 'hi' : freq & 1, 'multi' : multiplier})
+                        results.append({'idx': idx, 'freq': freq >> 1,
+                          'hi': freq & 1, 'multi': multiplier})
                         if freq & 1:
                             totalHi += 1
                             totalFreqHi += freq * multiplier
@@ -322,9 +337,11 @@ class DoxygenPlugin(Component):
                     freq = results[i]['freq']
                     multi = results[i]['multi']
                     if results[i]['hi']:
-                        results[i]['rank'] = float((freq * multi + totalFreqLo)) / float(totalFreq)
+                        results[i]['rank'] = float(freq*multi + totalFreqLo) \
+                          / float(totalFreq)
                     else:
-                        results[i]['rank'] = float((freq * multi)) / float(totalFreq)
+                        results[i]['rank'] = float(freq*multi) \
+                          / float(totalFreq)
 
         return results
 
@@ -360,8 +377,8 @@ class DoxygenPlugin(Component):
 
     def _doxygen_link(self, formatter, ns, params, label):
         if ns == 'doxygen':
-            return '<a href="%s" title="%s">%s</a>' % \
-              (self.env.href.doxygen(params), params, label)
+            return html.a(label, href = formatter.href.doxygen(params),
+              title = params)
         else:
-            return '<a href="%s" class="missing">%s?</a>' % \
-              (self.env.href.doxygen(), label)
+            return html.a(label, href = formatter.href.doxygen(),
+              title = params, class_ = 'missing')
