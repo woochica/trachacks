@@ -10,7 +10,7 @@
             <label>Full Name: <input type="text" name="fullname" class="textwidget" /></label>
         </div>
         <div class="field">
-            <label>Environment: <input type="text" name="env" class="textwidget" /></label>
+            <label>Environment: <input type="text" name="env_path" class="textwidget" /></label>
         </div>
         <p class="help">Create a new project</p>
         <div class="buttons">
@@ -22,10 +22,16 @@
 <form method="post">
     <table class="listing" id="projectlist">
         <thead>
-            <tr><th class="sel">&nbsp;</th><th>Short Name</th><th>Full Name</th></tr>
+            <tr><th class="sel">&nbsp;</th><th>Short Name</th><th>Full Name</th><th>Env Path</th></tr>
         </thead>
         <tbody>
-            
+            <?cs each:proj = tracforge.projects ?>
+            <tr>
+                <td>&nbsp</td><td><?cs name:proj ?></td>
+                <td><?cs var:proj.fullname ?></td>
+                <td><?cs var:proj.env_path ?></td>
+            </tr>
+            <?cs /each ?>
         </tbody>
     </table>
     <div class="buttons">
