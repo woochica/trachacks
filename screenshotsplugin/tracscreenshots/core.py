@@ -83,15 +83,23 @@ class ScreenshotsCore(Component):
         if component_id:
             component = self._get_component(components, component_id)
         else:
-            component = self._get_component_by_name(components,
-              self.component) or components[0]
+            component = self._get_component_by_name(components, self.component)
+            if not component and components:
+                component = components[0]
+            else:
+                raise TracError('Screenshots plugin can\'t work when there is'
+                  ' no components.')
         versions = self.api.get_versions(cursor)
         version_id = int(req.args.get('version') or 0)
         if version_id:
             version = self._get_version(versions, version_id)
         else:
-            version = self._get_version_by_name(versions, self.version) \
-              or versions[0]
+            version = self._get_version_by_name(versions, self.version)
+            if not version and versions:
+               version = versions[0]
+            else:
+               raise TracError('Screenshots plugin can\'t work when there is'
+                  ' no versions.')
 
         self.log.debug('component_id: %s' % (component_id,))
         self.log.debug('component: %s' % (component,))
@@ -218,7 +226,8 @@ class ScreenshotsCore(Component):
                     tag_names = new_components
                     tag_names.extend(new_versions)
                     tag_names.extend([screenshot['name'], screenshot['author']])
-                    tag_names.extend(screenshot['tags'].split(' '))
+                    if screenshot['tags']:
+                        tag_names.extend(screenshot['tags'].split(' '))
                     tags.add_tags(req, screenshot['id'], tag_names)
 
                 # Prepare file paths
@@ -275,7 +284,8 @@ class ScreenshotsCore(Component):
                     tag_names = new_components
                     tag_names.extend(new_versions)
                     tag_names.extend([new_name, screenshot['author']])
-                    tag_names.extend(new_tags.split(' '))
+                    if new_tags:
+                        tag_names.extend(new_tags.split(' '))
                     tags.replace_tags(req, screenshot['id'], tag_names)
 
                 # Edit screenshot.
@@ -308,7 +318,8 @@ class ScreenshotsCore(Component):
                     tag_names = screenshot['components']
                     tag_names.extend(screenshot['versions'])
                     tag_names.extend([screenshot['name'], screenshot['author']])
-                    tag_names.extend(screenshot['tags'].split(' '))
+                    if screenshot['tags']:
+                        tag_names.extend(screenshot['tags'].split(' '))
                     tags.remove_tags(req, screenshot['id'], tag_names)
 
                 # Set new screenshot id.
