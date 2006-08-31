@@ -18,7 +18,7 @@ class IProjectChangeListener(Interface):
     """An extension-point interface for performing actions on project changes."""
     pass # TODO: Implement this
     
-class TracforgeAdminSystem(Component):
+class TracForgeAdminSystem(Component):
     """Central stuff for tracforge.admin."""
     
     implements(IEnvironmentSetupParticipant)

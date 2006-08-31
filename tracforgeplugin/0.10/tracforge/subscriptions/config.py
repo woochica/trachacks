@@ -12,6 +12,7 @@ class DictOption(Option):
     def __init__(self, section, doc=''):
         """Note: Unlike with the other options, the default is always {}."""
         self.section = section
+        self.name = '*'
         self.__doc__ = doc
         self.registry[(self.section, '*')] = self
         

@@ -137,9 +137,25 @@ class Project(object):
 
     @classmethod
     def select(cls, env, db=None):
+        """Find all known project shortnames."""
         db = db or env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT name FROM tracforge_projects')
         for row in cursor:
             yield row[0]
+            
+
+    @classmethod
+    def by_env_path(cls, env, env_path, db=None):
+        """Find a Project based on its env_path."""
+        db = db or env.get_db_cnx()
+        cursor = db.cursor()
+        
+        cursor.execute('SELECT name FROM tracforge_projects WHERE env_path=%s',(env_path,))
+        row = cursor.fetchone()
+        
+        name = ''
+        if row:
+            name = row[0]
+        return Project(env, name, db)
             
