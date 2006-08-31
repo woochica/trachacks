@@ -41,6 +41,7 @@ a.noimage
 {
   border: 2px solid #f7f7f7;
   width: 120px;
+  height: 80px;
 }
 
 div.count, div.name, div.description

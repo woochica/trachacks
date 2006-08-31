@@ -12,7 +12,7 @@ setup(
     'TracScreenshots.init = tracscreenshots.init',
     'TracScreenshots.tags = tracscreenshots.tags',
     'TracScreenshots.wiki = tracscreenshots.wiki']},
-  install_requires = ['TracTags'],
+  #install_requires = ['TracTags'],
   keywords = 'trac screenshots',
   author = 'Radek Bartoň',
   author_email = 'blackhex@post.cz',
