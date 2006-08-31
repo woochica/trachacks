@@ -166,6 +166,8 @@ class PerforceCachedRepository(CachedRepository):
 
     def updateCache(self, fromChange):
 
+        from perforce import ConnectionDropped
+
         # Update the database in batches of 1000 changes so that we don't
         # overload the virtual memory system by trying to store information
         # about every change in the repository at once during the initial
@@ -178,32 +180,38 @@ class PerforceCachedRepository(CachedRepository):
         self.log.debug("Updating cache with changes [%i,%i]" % (lowerBound,
                                                                 upperBound))
         
-        while lowerBound < upperBound:
-            batchUpperBound = min(lowerBound + batchSize, upperBound)
+        try:
+            while lowerBound < upperBound:
+                batchUpperBound = min(lowerBound + batchSize, upperBound)
 
-            # Get the next batch of changes to cache
-            from p4trac.repos import _P4ChangesOutputConsumer
-            output = _P4ChangesOutputConsumer(self.repos._repos)
-            self.repos._connection.run('changes', '-l', '-s', 'submitted',
-                                       '@>=%i,@<%i' % (lowerBound,
-                                                       batchUpperBound),
-                                       output=output)
+                # Get the next batch of changes to cache
+                from p4trac.repos import _P4ChangesOutputConsumer
+                output = _P4ChangesOutputConsumer(self.repos._repos)
+                self.repos._connection.run('changes', '-l', '-s', 'submitted',
+                                           '@>=%i,@<%i' % (lowerBound,
+                                                           batchUpperBound),
+                                           output=output)
             
-            if output.errors:
-                from p4trac.repos import PerforceError
-                raise PerforceError(output.errors)
+                if output.errors:
+                    from p4trac.repos import PerforceError
+                    raise PerforceError(output.errors)
 
-            changes = output.changes
-            changes.reverse()
+                changes = output.changes
+                changes.reverse()
 
-            # Pre-cache all information about these changes in memory
-            # before caching in the database. Clear the in-memory cache
-            # afterwards to save on memory usage.
-            self.repos._repos.precacheFileInformationForChanges(changes)
-            self.storeChangesInDB(changes)
-            self.repos._repos.clearFileInformationCache()
+                # Pre-cache all information about these changes in memory
+                # before caching in the database. Clear the in-memory cache
+                # afterwards to save on memory usage.
+                self.repos._repos.precacheFileInformationForChanges(changes)
+                self.storeChangesInDB(changes)
+                self.repos._repos.clearFileInformationCache()
 
-            lowerBound += batchSize
+                lowerBound += batchSize
+                
+        except ConnectionDropped, e:
+            self.log.debug('Rolling back uncommitted cache updates')
+            self.db.rollback()
+            raise TracError('Connection to Perforce server lost')
         
     def sync(self):
 
