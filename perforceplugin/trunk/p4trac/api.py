@@ -765,8 +765,9 @@ class PerforceNode(object):
 
                         if currentNode.fileRevision > 1:
                             # Get the previous revision
-                            nodePath = NodePath(currentNode.nodePath.path,
-                                                '#%i' % (currentNode.rev - 1))
+                            nodePath = NodePath(
+                                currentNode.nodePath.path,
+                                '#%i' % (currentNode.fileRevision - 1))
                             currentNode = self._repos.getNode(nodePath)
                         else:
                             currentNode = None
