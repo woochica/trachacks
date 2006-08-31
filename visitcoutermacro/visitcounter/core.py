@@ -129,7 +129,7 @@ Examples:
                     # Update cookie.
                     visited.append(page)
                     req.session['visited-pages'] = '|'.join(visited)
-		    req.session['visited-pages']['expires'] = expires
+                    req.session.bake_cookie(expires)
             # Set template values and return rendered macro
             db.commit()
             req.hdf['visitcounter.count'] = count
