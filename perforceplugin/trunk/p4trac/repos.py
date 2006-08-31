@@ -108,7 +108,7 @@ class NoSuchDirectory(NoSuchNode):
 # Some regular expressions used by NodePath
 _slashDotSlashRE = re.compile(ur'/(\./)+')
 _dirSlashDotDotRE = re.compile(ur'[^/]+/..(/|$)')
-_trailingSlashRE = re.compile(ur'(?<=[^/])/*$')
+_trailingSlashesRE = re.compile(ur'(?<=[^/])/*$')
 
 class NodePath(object):
     """A path to a node in the Perforce repository.
