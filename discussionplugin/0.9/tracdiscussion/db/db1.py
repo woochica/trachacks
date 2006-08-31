@@ -6,7 +6,7 @@ sql = ["""CREATE TABLE forum (
   moderators text,
   subject text,
   description text
-);""",
+)""",
 """CREATE TABLE topic (
   id integer PRIMARY KEY,
   forum integer,
@@ -14,7 +14,7 @@ sql = ["""CREATE TABLE forum (
   author text,
   subject text,
   body text
-);""",
+)""",
 """CREATE TABLE message (
   id integer PRIMARY KEY,
   forum integer,
@@ -23,8 +23,8 @@ sql = ["""CREATE TABLE forum (
   time integer,
   author text,
   body text
-);""",
-"""INSERT INTO system (name, value) VALUES ('discussion_version', 1);""" ]
+)""",
+"""INSERT INTO system (name, value) VALUES ('discussion_version', '1')""" ]
 
 # PostgreSQL statements
 postgre_sql = ["""CREATE TABLE forum (
@@ -34,7 +34,7 @@ postgre_sql = ["""CREATE TABLE forum (
   moderators text,
   subject text,
   description text
-);""",
+)""",
 """CREATE TABLE topic (
   id serial PRIMARY KEY,
   forum integer,
@@ -42,7 +42,7 @@ postgre_sql = ["""CREATE TABLE forum (
   author text,
   subject text,
   body text
-);""",
+)""",
 """CREATE TABLE message (
   id serial PRIMARY KEY,
   forum integer,
@@ -51,9 +51,8 @@ postgre_sql = ["""CREATE TABLE forum (
   time integer,
   author text,
   body text
-);""",
-"""INSERT INTO system (name, value) VALUES ('discussion_version', 1);""" ]
-
+)""",
+"""INSERT INTO system (name, value) VALUES ('discussion_version', '1')""" ]
 
 def do_upgrade(env, cursor):
     if env.config.get('trac', 'database').startswith('postgres'):
