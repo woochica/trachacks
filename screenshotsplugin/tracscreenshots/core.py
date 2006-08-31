@@ -84,22 +84,24 @@ class ScreenshotsCore(Component):
             component = self._get_component(components, component_id)
         else:
             component = self._get_component_by_name(components, self.component)
-            if not component and components:
-                component = components[0]
-            else:
-                raise TracError('Screenshots plugin can\'t work when there is'
-                  ' no components.')
+            if not component:
+              if components:
+                  component = components[0]
+              else:
+                  raise TracError('Screenshots plugin can\'t work when there'
+                    ' are no components.')
         versions = self.api.get_versions(cursor)
         version_id = int(req.args.get('version') or 0)
         if version_id:
             version = self._get_version(versions, version_id)
         else:
             version = self._get_version_by_name(versions, self.version)
-            if not version and versions:
-               version = versions[0]
-            else:
-               raise TracError('Screenshots plugin can\'t work when there is'
-                  ' no versions.')
+            if not version:
+                if versions:
+                    version = versions[0]
+                else:
+                    raise TracError('Screenshots plugin can\'t work when there'
+                      ' is no versions.')
 
         self.log.debug('component_id: %s' % (component_id,))
         self.log.debug('component: %s' % (component,))
@@ -228,7 +230,7 @@ class ScreenshotsCore(Component):
                     tag_names.extend([screenshot['name'], screenshot['author']])
                     if screenshot['tags']:
                         tag_names.extend(screenshot['tags'].split(' '))
-                    tags.add_tags(req, screenshot['id'], tag_names)
+                    tags.replace_tags(req, screenshot['id'], tag_names)
 
                 # Prepare file paths
                 path = os.path.join(self.path, str(self.id))

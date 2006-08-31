@@ -12,6 +12,8 @@ setup(
     'TracScreenshots.init = tracscreenshots.init',
     'TracScreenshots.tags = tracscreenshots.tags',
     'TracScreenshots.wiki = tracscreenshots.wiki']},
+  # If next line is not commented environment upgrade won't work on Trac 0.9.
+  # If it is commented TracTags won't work.
   #install_requires = ['TracTags'],
   keywords = 'trac screenshots',
   author = 'Radek Bartoň',
