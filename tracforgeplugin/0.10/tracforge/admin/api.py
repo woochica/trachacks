@@ -56,7 +56,7 @@ class TracForgeAdminSystem(Component):
             cursor.execute("UPDATE system SET value = %s WHERE name = 'tracforge.admin'",(db_default.version,))
             for tbl in db_default.tables:
                 try:
-                    cursor.execute('DROP TABLE %s',(tbl.name,))
+                    cursor.execute('DROP TABLE %s'%tbl.name,)
                 except:
                     pass
             
