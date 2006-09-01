@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.6'
+__version__   = '0.6.7'
 
 
 try:
