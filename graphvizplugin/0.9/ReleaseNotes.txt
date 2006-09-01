@@ -1,12 +1,22 @@
-Trac Graphviz Plugin v0.6.6 Release Notes
+Trac Graphviz Plugin v0.6.7 Release Notes
 =========================================
-August 20, 2006
+September 1, 2006
 
-Graphviz plugin v0.6.6 for Trac is now available. The Graphviz wiki
+Graphviz plugin v0.6.7 for Trac is now available. The Graphviz wiki
 processor is a plugin for Trac that allows the the dynamic generation
 of diagrams by the various graphviz programs. The text of a wiki page
 can contain the source text for graphviz and the web browser will show
 the resulting image.
+
+
+Changes for release v0.6.7
+--------------------------
+
+* The GraphvizMacro v0.6.5 release introduced a bug with the now
+  optional cmd_path. If run on a platform whose sys.platform name is
+  not in the GraphvizMacro.cmd_paths dictionary, the self.cmd_path
+  variable isn't initialized. This caused a wee problem and stack
+  trace in Trac.
 
 
 Changes for release v0.6.6
