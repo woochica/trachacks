@@ -47,13 +47,14 @@ class DiscussionWiki(Component):
             # Get topic by subject
             api = DiscussionApi(self, req)
             topic = api.get_topic_by_subject(subject)
+            self.log.debug('topic: %s' % (topic,))
 
             # Retrun macro content
             if topic:
                 req.hdf['discussion.no_navigation'] = True
                 req.args['component'] = 'wiki'
-                req.args['forum'] = topic['forum']
-                req.args['topic'] = topic['id']
+                req.args['forum'] = str(topic['forum'])
+                req.args['topic'] = str(topic['id'])
                 template, type = api.render_discussion()
                 return req.hdf.render(template)
             else:
