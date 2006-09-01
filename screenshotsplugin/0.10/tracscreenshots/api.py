@@ -50,7 +50,7 @@ class ScreenshotsApi(object):
           " s.large_file, s.medium_file, s.small_file FROM screenshot s," \
           " screenshot_component c, screenshot_version v WHERE c.component" \
           " = %s AND v.version = %s AND s.id = c.screenshot AND s.id =" \
-          " v.screenshot;"
+          " v.screenshot ORDER BY s.id"
         self.log.debug(sql % (component, version))
         cursor.execute(sql, (component, version))
         screenshots = []

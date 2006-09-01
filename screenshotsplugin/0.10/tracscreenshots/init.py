@@ -28,15 +28,13 @@ class ScreenshotsInit(Component):
         # Get current database schema version
         db_version = self._get_db_version(cursor)
 
+
         # Perform incremental upgrades
         for I in range(db_version + 1, last_db_version + 1):
             script_name  = 'db%i' % (I)
-            try:
-                module = __import__('tracscreenshots.db.%s' % (script_name),
-                globals(), locals(), ['do_upgrade'])
-                module.do_upgrade(self.env, cursor)
-            except:
-                raise TracError('Error upgrading database to version %i' % I)
+            module = __import__('tracscreenshots.db.%s' % (script_name),
+            globals(), locals(), ['do_upgrade'])
+            module.do_upgrade(self.env, cursor)
 
     def _get_db_version(self, cursor):
         try:

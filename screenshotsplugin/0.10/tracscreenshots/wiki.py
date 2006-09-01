@@ -1,6 +1,7 @@
 from tracscreenshots.api import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider
+from trac.util.html import html
 
 class ScreenshotsWiki(Component):
     """
@@ -35,12 +36,12 @@ class ScreenshotsWiki(Component):
                 versions =  api.get_versions(cursor)
                 version = self._get_version_by_name(versions,
                   screenshot['versions'][0])
-                return '<a href="%s?component=%s;version=%s;id=%s" title="%s">' \
-                  '%s</a>' % (self.env.href.screenshots(), component['id'],
-                  version['id'], screenshot['id'], screenshot['name'], label)
+                return html.a(label, href = formatter.href.screenshots()
+                  + '?component=%s;version=%s;id=%s' % (component['id'],
+                  version['id'], screenshot['id']), title = screenshot['name'])
             else:
-                return '<a href="%s" class="missing">%s?</a>' % (
-                  self.env.href.screenshots(), label)
+                return html.a(label, href = formatter.href.screenshots(),
+                  title = params, class_ = 'missing')
 
     def _get_component_by_name(self, components, name):
         for component in components:

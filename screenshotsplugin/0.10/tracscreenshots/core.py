@@ -1,9 +1,12 @@
 from tracscreenshots.api import *
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
+from trac.web.chrome import INavigationContributor, ITemplateProvider, \
+  add_stylesheet
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
+from trac.config import Option
 from trac.util import Markup, format_datetime, TracError
+from trac.util.html import html
 import re, os, os.path, time, mimetypes
 
 # Try import TracTagsPlugin.
@@ -22,6 +25,20 @@ class ScreenshotsCore(Component):
     """
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
       IPermissionRequestor)
+
+    title = Option('screenshots', 'title', 'Screenshots',
+      'Main navigation bar button title.')
+    path = Option('screenshots', 'path', '/var/lib/trac/screenshots',
+      'Path where to store uploaded screenshots.')
+    ext = Option('screenshots', 'ext', 'jpg png',
+      'List of screenshot file extensions that can be uploaded. Must be'
+      ' supported by ImageMagick.')
+    component = Option('screenshots', 'component', '',
+      'Name of default component.')
+    version = Option('screenshots', 'version', '',
+      'Name of default version.')
+    show_name = Option('screenshots', 'show_name', True,
+      'Option to disable display of screenshot name and author.')
 
     # IPermissionRequestor methods.
     def get_permission_actions(self):
@@ -42,9 +59,8 @@ class ScreenshotsCore(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('SCREENSHOTS_VIEW'):
-            yield 'mainnav', 'screenshots', Markup('<a href="%s">%s</a>' % \
-              (self.env.href.screenshots(), self.env.config.get('screenshots',
-              'title', 'Screenshots')))
+            yield 'mainnav', 'screenshots', html.a(self.title,
+              href = req.href.screenshots())
 
     # IRequestHandler methods.
     def match_request(self, req):
@@ -64,14 +80,6 @@ class ScreenshotsCore(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        # Get config variables.
-        self.title = self.env.config.get('screenshots', 'title', 'Screenshots')
-        self.path = self.env.config.get('screenshots', 'path',
-          '/var/lib/trac/screenshots')
-        self.component = self.env.config.get('screenshots', 'component')
-        self.version = self.env.config.get('screenshots', 'version')
-        self.show_name = self.env.config.get('screenshots', 'show_name',
-          'true') in ('true', 'True', '1')
         self.log.debug('path: %s' % (self.path,))
 
         # Get current screenshot id
@@ -116,7 +124,7 @@ class ScreenshotsCore(Component):
         req.hdf['screenshots.components'] = components
         req.hdf['screenshots.versions'] = versions
         req.hdf['screenshots.version'] = version
-        req.hdf['screenshots.href'] = self.env.href.screenshots()
+        req.hdf['screenshots.href'] = req.href.screenshots()
         req.hdf['screenshots.title'] = self.title
         req.hdf['screenshots.show_name'] = self.show_name
 
@@ -196,7 +204,10 @@ class ScreenshotsCore(Component):
                 # Check correct file type.
                 reg = re.compile(r'^(.*)[.](.*)$')
                 result = reg.match(filename)
-                if not result.group(2) in ('png', 'jpg'):
+                if result:
+                    if not result.group(2).lower() in self.ext.split(' '):
+                        raise TracError('Unsupported uploaded file type.')
+                else:
                     raise TracError('Unsupported uploaded file type.')
 
                 # Prepare images filenames.

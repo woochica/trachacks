@@ -1,37 +1,28 @@
-# Commont SQL statements
-sql = ["""CREATE TABLE screenshot (
-  id integer PRIMARY KEY,
-  name text,
-  description text,
-  time integer,
-  author text,
-  large_file text,
-  medium_file text,
-  small_file text,
-  component text,
-  version text
-);""",
-"""INSERT INTO system (name, value) VALUES ('screenshots_version', '1')"""]
+from trac.db import Table, Column, Index, DatabaseManager
 
-# PostgreSQL statements
-postgre_sql = ["""CREATE TABLE screenshot (
-  id serial PRIMARY KEY,
-  name text,
-  description text,
-  time integer,
-  author text,
-  large_file text,
-  medium_file text,
-  small_file text,
-  component text,
-  version text
-);""",
-"""INSERT INTO system (name, value) VALUES ('screenshots_version', '1')"""]
+tables = [
+  Table('screenshot', key = 'id')[
+    Column('id', type = 'integer', auto_increment = True),
+    Column('name'),
+    Column('description'),
+    Column('time', type = 'integer'),
+    Column('author'),
+    Column('large_file'),
+    Column('medium_file'),
+    Column('small_file'),
+    Column('component'),
+    Column('version')
+  ]
+]
 
 def do_upgrade(env, cursor):
-    if env.config.get('trac', 'database').startswith('postgres'):
-        for statement in postgre_sql:
+    db_connector, _ = DatabaseManager(env)._get_connector()
+
+    # Create tables
+    for table in tables:
+        for statement in db_connector.to_sql(table):
             cursor.execute(statement)
-    else:
-        for statement in sql:
-            cursor.execute(statement)
+
+    # Set database schema version.
+    cursor.execute("INSERT INTO system (name, value) VALUES"
+      " ('screenshots_version', '1')")
