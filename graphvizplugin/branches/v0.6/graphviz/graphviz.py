@@ -53,6 +53,7 @@ class GraphvizMacro(Component):
     cmd_paths = {'linux2':   '/usr/bin',
                  'win32':    'c:\\Program Files\\ATT\\Graphviz\\bin',
                  'freebsd6': '/usr/local/bin',
+                 'freebsd5': '/usr/local/bin',
                  }
 
     def __init__(self):
@@ -302,6 +303,7 @@ class GraphvizMacro(Component):
             #self.log.debug('self.processor: %s' % self.processor)
 
             # check for the cmd_path entry
+            self.cmd_path = None
             if sys.platform in GraphvizMacro.cmd_paths:
                 self.cmd_path = GraphvizMacro.cmd_paths[sys.platform]
             self.cmd_path = self.config.get('graphviz', 'cmd_path', self.cmd_path)
