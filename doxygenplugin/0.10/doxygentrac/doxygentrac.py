@@ -18,8 +18,9 @@ from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
   add_stylesheet
 from trac.Search import ISearchSource
-from trac.wiki import IWikiSyntaxProvider, wiki_to_html
-from trac.wiki.formatter import system_message
+from trac.wiki import WikiSystem, IWikiSyntaxProvider
+from trac.wiki.model import WikiPage
+from trac.wiki.formatter import wiki_to_html, system_message
 from trac.util.html import html
 
 def compare_rank(x, y):
@@ -60,6 +61,11 @@ class DoxygenPlugin(Component):
     encoding = Option('doxygen', 'encoding', 'iso-8859-1',
       """Default encoding used by the generated documentation files.""")
 
+    SUMMARY_PAGES = """
+    annotated classes dirs files functions globals hierarchy
+    index inherits main namespaces namespacemembers
+    """.split()
+
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
@@ -73,98 +79,25 @@ class DoxygenPlugin(Component):
     def get_navigation_items(self, req):
         if req.perm.has_permission('DOXYGEN_VIEW'):
             # Return mainnav buttons.
-            yield 'mainnav', 'doxygen', html.a(self.title,
-              href = req.href.doxygen())
+            yield 'mainnav', 'doxygen', \
+                  html.a(self.title, href = req.href.doxygen())
 
     # IRequestHandler methods
 
     def match_request(self, req):
-        ext = '|'.join(self.ext.split(' '))
-        source_ext = '|'.join(self.source_ext.split(' '))
-
         # Match documentation request.
-        self.log.debug(req.path_info)
-        match = re.match('^/doxygen(?:/?$|/([^/]*)(?:/?$|/(.*)$))',
-          req.path_info)
-        if match:
-            self.log.debug('matched group 1: %s' % (match.group(1),))
-            self.log.debug('matched group 2: %s' % (match.group(2),))
-
-            if not match.group(1) and not match.group(2):
-                # Request for documentation index.
-                req.args['path'] = os.path.join(self.base_path,
-                  self.default_doc)
-                req.args['action'] = 'index'
-            else:
-                # Get doc and file from request.
-                if not match.group(2):
-                    doc = self.default_doc
-                    file = match.group(1)
-                else:
-                    doc = match.group(1)
-                    file = match.group(2)
-
-                self.log.debug('documentation: %s' % (doc,))
-                self.log.debug('file: %s' % (file,))
-
-                if re.match(r'''^search.php$''', file):
-                    # Request for searching.
-                    req.args['action'] = 'search'
-
-                elif re.match(r'''^(.*)[.](%s)''' % (ext,), file):
-                    # Request for documentation file.
-                    path = os.path.join(self.base_path, doc, file)
-                    self.log.debug('path: %s' % (path,))
-                    if os.path.exists(path):
-                        req.args['path'] = path
-                        req.args['action'] = 'file'
-                    else:
-                        req.args['action'] = 'search'
-                        req.args['query'] = file
-
-                else:
-                    match = re.match(r'''^(.*)[.](%s)''' % (source_ext,), file)
-                    if match:
-                        # Request for source file documentation.
-                        path = os.path.join(self.base_path, doc, '%s_8%s.html'
-                          % (match.group(1), match.group(2)))
-                        self.log.debug('path: %s' % (path,))
-                        if os.path.exists(path):
-                            req.args['path'] = path
-                            req.args['action'] = 'file'
-                        else:
-                            req.args['action'] = 'search'
-                            req.args['query'] = file
-
-                    else:
-                        path = os.path.join(self.base_path, doc, 'class%s.html'
-                          % (file,))
-                        if os.path.exists(path):
-                            req.args['path'] = path
-                            req.args['action'] = 'file'
-                        else:
-                            path = os.path.join(self.base_path, doc,
-                              'struct%s.html' % (file,))
-                            if os.path.exists(path):
-                                req.args['path'] = path
-                                req.args['action'] = 'file'
-                            else:
-                                results = self._search_in_documentation(doc,
-                                  [file])
-                                for result in results:
-                                    self.log.debug(result)
-                                    if result['name'] == file:
-                                        req.redirect(req.href.doxygen(doc)
-                                          + '/' + result['url'])
-                                req.args['action'] = 'search'
-                                req.args['query'] = file
-            # Request matched.
+        if re.match(r'^/doxygen(?:$|/)', req.path_info):
+            if 'path' not in req.args:
+                segments = filter(None, req.path_info.split('/'))
+                segments = segments[1:] # ditch 'doxygen'
+                action, path, link = self._doxygen_lookup(segments)
+                if action:
+                    req.args['action'] = action
+                    if action == 'search' and path:
+                        req.args['query'] = path
+                    req.args['path'] = path
             return True
-
-        else:
-            # Request not matched.
-            return False
-
+            
     def process_request(self, req):
         req.perm.assert_permission('DOXYGEN_VIEW')
 
@@ -172,46 +105,33 @@ class DoxygenPlugin(Component):
         path = req.args.get('path')
         action = req.args.get('action')
 
-        self.log.debug('path: %s' % (path,))
-        self.log.debug('action: %s' % (action,))
+        self.log.debug('Performing %s on "%s"' % (action or 'default', path))
 
         # Redirect search requests.
         if action == 'search':
-            req.redirect(req.href.search(q = req.args.get('query'),
-              doxygen = 'on'))
+            req.redirect(req.href.search(q=req.args.get('query'),
+                                         doxygen='on'))
 
-        # Retrun apropriate content to type or search request
-        elif action == 'index':
+        # Handle /doxygen request
+        if action == 'index':
             if self.wiki_index:
-                # Get access to database
-                db = self.env.get_db_cnx()
-                cursor = db.cursor()
-
-                # Get wiki index  # FIXME: use WikiPage() instead
-                sql = "SELECT text FROM wiki WHERE name = %s"
-                cursor.execute(sql, (self.wiki_index,))
-                text = system_message('Error', 'Wiki page %s does not exists' %
-                  self.wiki_index)
-                for row in cursor:
-                    text = wiki_to_html(row[0], self.env, req)
-
-                # Display wiki index page
-                req.hdf['doxygen.text'] = text
+                if WikiSystem(self.env).has_page(self.wiki_index):
+                    req.redirect(req.href.wiki(self.wiki_index))
+                # Display missing wiki
+                text = wiki_to_html('Doxygen index page [wiki:%s] does not '
+                                    'exists' % self.wiki_index, self.env, req)
+                req.hdf['doxygen.text'] = system_message('Error', text)
                 return 'doxygen.cs', 'text/html'
-            else:
-                add_stylesheet(req, 'doxygen/css/doxygen.css')
-                req.hdf['doxygen.path'] = path + '/' + self.index
-                return 'doxygen.cs', 'text/html'
+            path = os.path.join(self.base_path, self.default_doc, self.index)
 
-        elif action == 'file':
-            type = mimetypes.guess_type(path)[0]
-
-            if type == 'text/html':
-                add_stylesheet(req, 'doxygen/css/doxygen.css')
-                req.hdf['doxygen.path'] = path
-                return 'doxygen.cs', 'text/html'
-            else:
-                req.send_file(path, type)
+        # view or redirect
+        mimetype = mimetypes.guess_type(path)[0]
+        if mimetype == 'text/html':
+            add_stylesheet(req, 'doxygen/css/doxygen.css')
+            req.hdf['doxygen.path'] = path
+            return 'doxygen.cs', 'text/html'
+        else:
+            req.send_file(path, mimetype)            
 
     # ITemplateProvider methods
 
@@ -260,13 +180,100 @@ class DoxygenPlugin(Component):
                       None
 
     # IWikiSyntaxProvider
+    
     def get_link_resolvers(self):
-        yield ('doxygen', self._doxygen_link)
+        def doxygen_link(formatter, ns, params, label):
+            action, path, link = self._doxygen_lookup(params.split('/'))
+            if action in ('view', 'index', 'redirect'):
+                return html.a(label, title=params,
+                              href=formatter.href.doxygen(link, path=path))
+            else:
+                return html.a(label, title=params, class_='missing',
+                              href=formatter.href.doxygen())
+        yield ('doxygen', doxygen_link)
 
     def get_wiki_syntax(self):
         return []
 
     # internal methods
+
+    def _doxygen_lookup(self, segments):
+        """Try to interpret path components as a request for doxygen targets
+
+        Return an `(action,path,link)` pair, where:
+         - `action` describes what should be done (one of 'view',
+           'search' or 'index'),
+         - `path` is the location on disk of the resource.
+         - `link` is the link to the resource, relative to the
+           req.href.doxygen base,
+        """
+        doc, file = segments[:-1], segments and segments[-1]
+        doc = doc and os.path.join(*doc) or self.default_doc
+        def lookup(file, category='undefined'):
+            path = os.path.join(self.base_path, doc, file)
+            self.log.debug('%s file "%s" (at %s)' % (category, file, path))
+            return os.path.exists(path) and path, doc + '/' + file
+
+        if not file:
+            path, link = lookup('index.html', 'index')
+            return 'index', path, link
+
+        self.log.debug('looking up "%s" in documentation "%s"' % (file, doc))
+
+        # Direct request for searching
+        if file == 'search.php':
+            return 'search', None, None
+
+        # Request for a documentation file.
+        doc_ext_re = '|'.join(self.ext.split(' '))
+        if re.match(r'''^(.*)[.](%s)''' % doc_ext_re, file):
+            path, link = lookup(file, 'documentation')
+            if path:
+                return 'view', path, link
+            else:
+                return 'search', file, None
+
+        # Request for source file documentation.
+        source_ext_re = '|'.join(self.source_ext.split(' '))
+        match = re.match(r'''^(.*)[.](%s)''' % source_ext_re, file)
+        if match:
+            basename, suffix = match.groups()
+            basename = basename.replace('_', '__')
+            path, link = lookup('%s_8%s.html' % (basename, suffix), 'source')
+            if path:
+                return 'view', path, link
+            else:
+                return 'search', file, None
+
+        # Request for summary pages
+        if file in self.SUMMARY_PAGES:
+            path, link = lookup(file + '.html', 'summary')
+            if path:
+                return 'view', path, link
+
+        # Request for a named object
+        # TODO:
+        #  - do something about dirs
+        #  - expand with enum, defs, etc.
+        #  - this doesn't work well with the CREATE_SUBDIRS Doxygen option
+        path, link = lookup('class%s.html' % file, 'class')
+        if not path:
+            path, link = lookup('struct%s.html' % file, 'struct')
+        if path:
+            return 'view', path, link
+
+        # Revert to search...
+        results = self._search_in_documentation(doc, [file])
+        class_ref = file+' Class Reference'
+        for result in results:
+            self.log.debug('Reverted to search, found: ' + repr(result))
+            name = result['name']
+            if name == file or name == class_ref:
+                path, link = lookup(result['url'])
+                return 'redirect', path, link
+        self.log.debug('%s not found in %s' % (file, doc))
+        return 'search', file, None
+
     def _search_in_documentation(self, doc, keywords):
         # Open index file for documentation
         index = os.path.join(self.base_path, doc, 'search.idx')
@@ -342,7 +349,6 @@ class DoxygenPlugin(Component):
                     else:
                         results[i]['rank'] = float(freq*multi) \
                           / float(totalFreq)
-
         return results
 
     def _computeIndex(self, word):
@@ -375,10 +381,3 @@ class DoxygenPlugin(Component):
             byte = fd.read(1)
         return result
 
-    def _doxygen_link(self, formatter, ns, params, label):
-        if ns == 'doxygen':
-            return html.a(label, href = formatter.href.doxygen(params),
-              title = params)
-        else:
-            return html.a(label, href = formatter.href.doxygen(),
-              title = params, class_ = 'missing')
