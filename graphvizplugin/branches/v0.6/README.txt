@@ -52,6 +52,16 @@ as shown below:
 #!graphviz.circo/gif
 
 
+Platform Specific Requirements
+==============================
+
+FreeBSD
++++++++
+
+On FreeBSD systems, installing the x11-fonts/urwfonts package will
+provide the fonts needed for graphviz to correctly generate images.
+
+
 Optional requirements
 =====================
 
