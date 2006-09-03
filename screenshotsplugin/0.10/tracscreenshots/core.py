@@ -109,7 +109,7 @@ class ScreenshotsCore(Component):
                     version = versions[0]
                 else:
                     raise TracError('Screenshots plugin can\'t work when there'
-                      ' is no versions.')
+                      ' are no versions.')
 
         self.log.debug('component_id: %s' % (component_id,))
         self.log.debug('component: %s' % (component,))
