@@ -2,6 +2,14 @@
 <?cs include "macros.cs"?>
 
 <?cs if:doxygen.text ?>
+  <?cs if:doxygen.wiki_page ?>
+   <div id="ctxtnav" class="nav">
+    <h2>Doxygen Navigation</h2>
+    <ul><li class="first last"><a href="<?cs var:doxygen.wiki_href ?>">
+       View <?cs var:doxygen.wiki_page ?></a></li>
+    </ul>
+   </div>
+  <?cs /if ?>
   <div id="content" class="wiki">
     <div class="wikipage">
       <div id="searchable">

@@ -20,7 +20,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, \
 from trac.Search import ISearchSource
 from trac.wiki import WikiSystem, IWikiSyntaxProvider
 from trac.wiki.model import WikiPage
-from trac.wiki.formatter import wiki_to_html, system_message
+from trac.wiki.formatter import wiki_to_html
 from trac.util.html import html
 
 def compare_rank(x, y):
@@ -134,15 +134,21 @@ class DoxygenPlugin(Component):
 
         # Handle /doxygen request
         if action == 'index':
-            if self.wiki_index:
-                if WikiSystem(self.env).has_page(self.wiki_index):
-                    req.redirect(req.href.wiki(self.wiki_index))
-                # Display missing wiki
-                text = wiki_to_html('Doxygen index page [wiki:%s] does not '
-                                    'exists' % self.wiki_index, self.env, req)
-                req.hdf['doxygen.text'] = system_message('Error', text)
+            wiki = self.wiki_index
+            if wiki:
+                if WikiSystem(self.env).has_page(wiki):
+                    text = WikiPage(self.env, wiki).text
+                else:
+                    text = 'Doxygen index page [wiki:%s] does not exist.' % \
+                           wiki
+                text = wiki_to_html(text, self.env, req)
+                req.hdf['doxygen.text'] = text
+                req.hdf['doxygen.wiki_href'] = req.href.wiki(wiki)
+                req.hdf['doxygen.wiki_page'] = wiki
                 return 'doxygen.cs', 'text/html'
-            path = os.path.join(self.base_path, self.default_doc, self.index)
+            # use configured Doxygen index
+            path = os.path.join(self.base_path, self.default_doc,
+                                self.html_output, self.index)
 
         # view 
         mimetype = mimetypes.guess_type(path)[0]
