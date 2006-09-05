@@ -2,6 +2,7 @@ from trac.core import *
 from trac.Timeline import ITimelineEventProvider
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.util import Markup
+from trac.util.html import html
 import time
 
 class DiscussionTimeline(Component):
@@ -13,7 +14,8 @@ class DiscussionTimeline(Component):
 
     # ITimelineEventProvider
     def get_timeline_events(self, req, start, stop, filters):
-        self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop, filters))
+        self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
+          filters))
         if 'discussion' in filters:
             # Create database context
             db = self.env.get_db_cnx()
@@ -25,8 +27,8 @@ class DiscussionTimeline(Component):
             for forum in self._get_changed_forums(cursor, start, stop):
                 self.log.debug("forum: %s" % (forum))
                 kind = 'changeset'
-                title = Markup('New forum <em>%s</em> created by %s' %
-                  (forum['name'], forum['author']))
+                title = Markup('New forum %s created by %s' %
+                  (html.em(forum['name']), forum['author']))
                 time = forum['time']
                 author = forum['author']
                 if format == 'rss':
@@ -43,8 +45,8 @@ class DiscussionTimeline(Component):
             for topic in self._get_changed_topics(cursor, start, stop):
                 self.log.debug("topic: %s" % (topic))
                 kind = 'newticket'
-                title = Markup('New topic on <em>%s</em> created by %s' %
-                  (topic['forum_name'], topic['author']))
+                title = Markup('New topic on %s created by %s' % \
+                  (html.em(topic['forum_name']), topic['author']))
                 time = topic['time']
                 author = topic['author']
                 if format == 'rss':
@@ -60,8 +62,8 @@ class DiscussionTimeline(Component):
             for message in self._get_changed_messages(cursor, start, stop):
                 self.log.debug("message: %s" % (message))
                 kind = 'editedticket'
-                title = Markup('New reply on <em>%s</em> created by %s' %
-                  (message['forum_name'], message['author']))
+                title = Markup('New reply on %s created by %s' % \
+                  (html.em(message['forum_name']), message['author']))
                 time = message['time']
                 author = message['author']
                 if format == 'rss':

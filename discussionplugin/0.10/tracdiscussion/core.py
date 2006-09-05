@@ -2,7 +2,9 @@ from tracdiscussion.api import *
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
+from trac.config import Option
 from trac.perm import IPermissionRequestor
+from trac.util.html import html
 import re
 
 class DiscussionCore(Component):
@@ -12,6 +14,9 @@ class DiscussionCore(Component):
     """
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
       IPermissionRequestor)
+
+    title = Option('discussion', 'title', 'Discussion',
+      'Main navigation bar button title.')
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -33,9 +38,8 @@ class DiscussionCore(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('DISCUSSION_VIEW'):
-            yield 'mainnav', 'discussion', Markup('<a href="%s">%s</a>' % \
-              (self.env.href.discussion(), self.env.config.get('discussion',
-              'title', 'Discussion')))
+            yield 'mainnav', 'discussion', html.a(self.title,
+              href = req.href.discussion())
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -57,6 +61,12 @@ class DiscussionCore(Component):
         # Prepare request object
         req.args['component'] = 'core'
 
+        # Get database access
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
         # Return page content
         api = DiscussionApi(self, req)
-        return api.render_discussion()
+        content = api.render_discussion(req, cursor)
+        db.commit()
+        return content

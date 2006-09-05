@@ -14,6 +14,7 @@ setup(
     'TracDiscussion.timeline = tracdiscussion.timeline',
     'TracDiscussion.admin = tracdiscussion.admin',
     'TracDiscussion.search = tracdiscussion.search']},
+  install_requires = ['TracWebAdmin'],
   keywords = 'trac discussion',
   author = 'Alec Thomas, Radek Bartoň',
   author_email = 'trac-hacks@swapoff.org',

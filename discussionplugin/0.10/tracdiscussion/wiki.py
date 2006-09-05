@@ -4,6 +4,7 @@ from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.web.chrome import add_stylesheet
 from trac.util import format_datetime
+from trac.util.html import html
 import time
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
@@ -44,9 +45,13 @@ class DiscussionWiki(Component):
             else:
                 subject = req.path_info[6:] or 'WikiStart'
 
+            # Get database access
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+
             # Get topic by subject
             api = DiscussionApi(self, req)
-            topic = api.get_topic_by_subject(subject)
+            topic = api.get_topic_by_subject(cursor, subject)
             self.log.debug('topic: %s' % (topic,))
 
             # Retrun macro content
@@ -55,7 +60,8 @@ class DiscussionWiki(Component):
                 req.args['component'] = 'wiki'
                 req.args['forum'] = str(topic['forum'])
                 req.args['topic'] = str(topic['id'])
-                template, type = api.render_discussion()
+                template, type = api.render_discussion(req, cursor)
+                db.commit()
                 return req.hdf.render(template)
             else:
                 req.hdf['discussion.no_navigation'] = True
@@ -76,10 +82,10 @@ class DiscussionWiki(Component):
             cursor.execute(sql, (id,))
             for row in cursor:
                 row = dict(zip(columns, row))
-                return '<a href="%s/%s" title="%s">%s</a>' % (
-                  self.env.href.discussion(), id, row['subject'], label)
-            return '<a href="%s/%s" class="missing">%s?</a>' % (
-              self.env.href.discussion(), id, label)
+                return html.a(label, href = formatter.href.discussion(id),
+                  title = row['subject'])
+            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
+              id), title = label, class_ = 'missing')
         elif ns == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
             sql = "SELECT forum, (SELECT subject FROM forum WHERE id =" \
@@ -88,12 +94,11 @@ class DiscussionWiki(Component):
             cursor.execute(sql, (id,))
             for row in cursor:
                 row = dict(zip(columns, row))
-                forum, forum_subject, subject = row
-                return '<a href="%s/%s/%s#-1" title="%s: %s">%s</a>' % (
-                  self.env.href.discussion(), row['forum'], id,
-                  row['forum_subject'], row['subject'], label)
-            return '<a href="%s/%s" class="missing">%s?</a>' % (
-              self.env.href.discussion(), id, label)
+                return html.a(label, href = '%s#-1' % \
+                  (formatter.href.discussion(row['forum'], id),), title =
+                  '%s: %s' % (row['forum_subject'], row['subject']))
+            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
+              id), title = label, class_ = 'missing')
         elif ns == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
             sql = "SELECT forum, topic, (SELECT subject FROM forum WHERE id =" \
@@ -103,11 +108,12 @@ class DiscussionWiki(Component):
             cursor.execute(sql, (id,))
             for row in cursor:
                 row = dict(zip(columns, row))
-                return '<a href="%s/%s/%s/%s#%s" title="%s: %s">%s</a>' % (
-                  self.env.href.discussion(), row['forum'], row['topic'], id,
-                    id, row['forum_subject'], row['subject'], label)
-            return '<a href="%s/%s" class="missing">%s?</a>' % (
-              self.env.href.discussion(), id, label)
+                return html.a(label, href = '%s#%s' % \
+                  (formatter.href.discussion(row['forum'], row['topic'], id),
+                  id), title = '%s: %s' % (row['forum_subject'],
+                  row['subject']))
+            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
+              id), title = label, class_ = 'missing')
         else:
-          return '<a href="%s" class="missing">%s?</a>' % (
-            self.env.href.discussion(), label)
+            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
+              id), title = label, class_ = 'missing')
