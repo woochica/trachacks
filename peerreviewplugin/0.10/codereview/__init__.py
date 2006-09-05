@@ -9,12 +9,12 @@
 #
 
 # CodeReview module
-from peerReviewMain import *
-from peerReviewNew import *
-from peerReviewPerform import *
-from peerReviewSearch import *
-from peerReviewBrowser import *
-from peerReviewView import *
-from peerReviewCommentCallback import *
-from peerReviewOptions import *
-from peerReviewInit import * 
+import peerReviewMain
+import peerReviewNew
+import peerReviewPerform
+import peerReviewSearch
+import peerReviewBrowser
+import peerReviewView
+import peerReviewCommentCallback
+import peerReviewOptions
+import peerReviewInit
