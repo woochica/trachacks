@@ -38,8 +38,10 @@ class DoxygenPlugin(Component):
       """Directory containing doxygen generated files.""")
 
     default_doc = Option('doxygen', 'default_documentation', '',
-      """Default path relative to `base_path` in which to look for
-      documentation files.""")
+      """Default documentation project, relative to `[doxygen] path`.
+      When no explicit path is given in a documentation request,
+      this path will be prepended to the request before looking
+      for documentation files.""")
 
     title = Option('doxygen', 'title', 'Doxygen',
       """Title to use for the main navigation tab.""")
@@ -56,7 +58,8 @@ class DoxygenPlugin(Component):
       """Default index page to pick in the generated documentation.""")
 
     wiki_index = Option('doxygen', 'wiki_index', None,
-      """Wiki page to use as the default page for the Doxygen main page.""")
+      """Wiki page to use as the default page for the Doxygen main page.
+      If set, supersedes the `[doxygen] index` option.""")
 
     encoding = Option('doxygen', 'encoding', 'iso-8859-1',
       """Default encoding used by the generated documentation files.""")
@@ -411,4 +414,3 @@ class DoxygenPlugin(Component):
             result = ''.join([result, byte])
             byte = fd.read(1)
         return result
-
