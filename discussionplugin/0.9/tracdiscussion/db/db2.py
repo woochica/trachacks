@@ -1,64 +1,41 @@
-# Common statements
-pre_sql = ["""ALTER TABLE forum RENAME TO tmp_forum""",
-"""CREATE TABLE forum (
-  id integer PRIMARY KEY,
-  name text,
-  time integer,
-  author text,
-  moderators text,
-  subject text,
-  description text,
-  forum_group integer
-)""",
-"""CREATE TABLE forum_group (
-  id integer PRIMARY KEY,
-  name text,
-  description text
-)"""]
+from trac.db import Table, Column, Index, DatabaseManager
 
-post_sql = ["""DROP TABLE tmp_forum""",
-"""UPDATE system SET value = '2' WHERE name='discussion_version'"""]
-
-# PostgreSQL statements
-pre_postgre_sql = ["""ALTER TABLE forum RENAME TO tmp_forum""",
-"""CREATE TABLE forum (
-  id serial PRIMARY KEY,
-  name text,
-  time integer,
-  author text,
-  moderators text,
-  subject text,
-  description text,
-  forum_group integer
-)""",
-"""CREATE TABLE forum_group (
-  id serial PRIMARY KEY,
-  name text,
-  description text
-)"""]
+tables = [
+  Table('forum', key = 'id')[
+    Column('id', type = 'integer', auto_increment = True),
+    Column('name'),
+    Column('time', type = 'integer'),
+    Column('forum_group', type = 'integer'),
+    Column('author'),
+    Column('moderators'),
+    Column('subject'),
+    Column('description')
+  ],
+  Table('forum_group', key = 'id')[
+    Column('id', type = 'integer', auto_increment = True),
+    Column('name'),
+    Column('description')
+  ]
+]
 
 def do_upgrade(env, cursor):
-    if env.config.get('trac', 'database').startswith('postgres'):
-        for statement in pre_postgre_sql:
+    db_connector, _ = DatabaseManager(env)._get_connector()
+
+    # Backup old screenshot table.
+    cursor.execute("CREATE TEMPORARY TABLE forum_old AS SELECT * FROM forum")
+    cursor.execute("DROP TABLE forum")
+
+    # Create tables
+    for table in tables:
+        for statement in db_connector.to_sql(table):
             cursor.execute(statement)
-    else:
-        for statement in pre_sql:
-            cursor.execute(statement)
 
-    columns = ('id', 'name', 'time', 'moderators', 'subject', 'description')
-    sql = "SELECT id, name, time, moderators, subject, description FROM" \
-      " tmp_forum"
-    cursor.execute(sql)
-    forums = []
-    for row in cursor:
-        row = dict(zip(columns, row))
-        forums.append(row)
+    # Copy old forums
+    cursor.execute("INSERT INTO forum (id, name, time, moderators, subject," \
+      " description) SELECT id, name, time, moderators, subject, description" \
+      " FROM forum_old")
 
-    for forum in forums:
-        sql = "INSERT INTO forum (id, name, time, moderators, subject," \
-          " description) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (forum['id'], forum['name'], forum['time'],
-          forum['moderators'], forum['subject'], forum['description']))
-
-    for statement in post_sql:
-        cursor.execute(statement)
+    # Set database schema version.
+    cursor.execute("DROP TABLE forum_old")
+    cursor.execute("UPDATE system SET value = '2' WHERE" \
+      " name = 'discussion_version'")

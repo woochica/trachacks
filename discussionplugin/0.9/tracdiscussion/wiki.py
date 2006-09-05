@@ -4,6 +4,7 @@ from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.web.chrome import add_stylesheet
 from trac.util import format_datetime
+from trac.util.html import html
 import time
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
@@ -44,9 +45,13 @@ class DiscussionWiki(Component):
             else:
                 subject = req.path_info[6:] or 'WikiStart'
 
+            # Get database access
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+
             # Get topic by subject
             api = DiscussionApi(self, req)
-            topic = api.get_topic_by_subject(subject)
+            topic = api.get_topic_by_subject(cursor, subject)
             self.log.debug('topic: %s' % (topic,))
 
             # Retrun macro content
@@ -55,7 +60,8 @@ class DiscussionWiki(Component):
                 req.args['component'] = 'wiki'
                 req.args['forum'] = str(topic['forum'])
                 req.args['topic'] = str(topic['id'])
-                template, type = api.render_discussion()
+                template, type = api.render_discussion(req, cursor)
+                db.commit()
                 return req.hdf.render(template)
             else:
                 req.hdf['discussion.no_navigation'] = True

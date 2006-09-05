@@ -31,6 +31,12 @@ class DiscussionWebAdmin(Component):
                 req.args['group'] = path_info
         req.args['component'] = 'admin'
 
+        # Get database access
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
         # Retrun page content
         api = DiscussionApi(self, req)
-        return api.render_discussion()
+        content = api.render_discussion(req, cursor)
+        db.commit()
+        return content

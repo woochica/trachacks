@@ -13,7 +13,8 @@ class DiscussionTimeline(Component):
 
     # ITimelineEventProvider
     def get_timeline_events(self, req, start, stop, filters):
-        self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop, filters))
+        self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
+          filters))
         if 'discussion' in filters:
             # Create database context
             db = self.env.get_db_cnx()

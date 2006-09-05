@@ -57,6 +57,12 @@ class DiscussionCore(Component):
         # Prepare request object
         req.args['component'] = 'core'
 
+        # Get database access
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
         # Return page content
         api = DiscussionApi(self, req)
-        return api.render_discussion()
+        content = api.render_discussion(req, cursor)
+        db.commit()
+        return content
