@@ -79,23 +79,22 @@ class DoxygenPlugin(Component):
     def get_navigation_items(self, req):
         if req.perm.has_permission('DOXYGEN_VIEW'):
             # Return mainnav buttons.
-            yield 'mainnav', 'doxygen', \
-                  html.a(self.title, href = req.href.doxygen())
+            yield 'mainnav', 'doxygen', html.a(self.title,
+                                               href=req.href.doxygen())
 
     # IRequestHandler methods
 
     def match_request(self, req):
-        # Match documentation request.
         if re.match(r'^/doxygen(?:$|/)', req.path_info):
-            if 'path' not in req.args:
-                segments = filter(None, req.path_info.split('/'))
-                segments = segments[1:] # ditch 'doxygen'
-                action, path, link = self._doxygen_lookup(segments)
-                if action:
-                    req.args['action'] = action
-                    if action == 'search' and path:
-                        req.args['query'] = path
-                    req.args['path'] = path
+            segments = filter(None, req.path_info.split('/'))
+            segments = segments[1:] # ditch 'doxygen'
+            action, path, link = self._doxygen_lookup(segments)
+            req.args['action'] = action
+            if action == 'search' and link:
+                req.args['query'] = link
+            elif action == 'redirect':
+                req.args['link'] = link
+            req.args['path'] = path
             return True
             
     def process_request(self, req):
@@ -104,13 +103,23 @@ class DoxygenPlugin(Component):
         # Get request arguments
         path = req.args.get('path')
         action = req.args.get('action')
+        link = req.args.get('link')
 
-        self.log.debug('Performing %s on "%s"' % (action or 'default', path))
+        self.log.debug('Performing %s(%s,%s)"' % (action or 'default',
+                                                  path, link))
 
         # Redirect search requests.
         if action == 'search':
             req.redirect(req.href.search(q=req.args.get('query'),
                                          doxygen='on'))
+        if action == 'redirect':
+            if link: # we need to really redirect if there is a link
+                if path:
+                    req.redirect(req.href.doxygen(path=path)+link)
+                else:
+                    req.redirect(req.href.doxygen(link))
+            else:
+                self.log.warn("redirect without link")
 
         # Handle /doxygen request
         if action == 'index':
@@ -124,7 +133,7 @@ class DoxygenPlugin(Component):
                 return 'doxygen.cs', 'text/html'
             path = os.path.join(self.base_path, self.default_doc, self.index)
 
-        # view or redirect
+        # view 
         mimetype = mimetypes.guess_type(path)[0]
         if mimetype == 'text/html':
             add_stylesheet(req, 'doxygen/css/doxygen.css')
@@ -184,7 +193,16 @@ class DoxygenPlugin(Component):
     def get_link_resolvers(self):
         def doxygen_link(formatter, ns, params, label):
             action, path, link = self._doxygen_lookup(params.split('/'))
-            if action in ('view', 'index', 'redirect'):
+            if action == 'index':
+                return html.a(label, title=self.title,
+                              href=formatter.href.doxygen())
+            if action == 'redirect':
+                if path:
+                    return html.a(label, title="Search result for "+params,
+                                  href=formatter.href.doxygen(path=path)+link)
+                else:
+                    action = 'view'
+            if action in ('view', 'index'):
                 return html.a(label, title=params,
                               href=formatter.href.doxygen(link, path=path))
             else:
@@ -205,24 +223,32 @@ class DoxygenPlugin(Component):
            'search' or 'index'),
          - `path` is the location on disk of the resource.
          - `link` is the link to the resource, relative to the
-           req.href.doxygen base,
+           req.href.doxygen base or a target in case of 'redirect'
         """
         doc, file = segments[:-1], segments and segments[-1]
-        doc = doc and os.path.join(*doc) or self.default_doc
+
+        if not doc and not file:
+            return ('index', None, None) 
+        if doc:
+            doc = os.path.join(*doc)
+        else:
+            if self.default_doc: # we can't stay at the 'doxygen/' level
+                return 'redirect', None, \
+                       self.default_doc + '/' + (file or self.index)
+            else:
+                doc = ''
+        
         def lookup(file, category='undefined'):
+            """Build (full path, relative link) and check if path exists."""
             path = os.path.join(self.base_path, doc, file)
             self.log.debug('%s file "%s" (at %s)' % (category, file, path))
             return os.path.exists(path) and path, doc + '/' + file
-
-        if not file:
-            path, link = lookup('index.html', 'index')
-            return 'index', path, link
 
         self.log.debug('looking up "%s" in documentation "%s"' % (file, doc))
 
         # Direct request for searching
         if file == 'search.php':
-            return 'search', None, None
+            return 'search', None, None # keep existing 'query' arg
 
         # Request for a documentation file.
         doc_ext_re = '|'.join(self.ext.split(' '))
@@ -231,7 +257,7 @@ class DoxygenPlugin(Component):
             if path:
                 return 'view', path, link
             else:
-                return 'search', file, None
+                return 'search', None, file
 
         # Request for source file documentation.
         source_ext_re = '|'.join(self.source_ext.split(' '))
@@ -243,7 +269,7 @@ class DoxygenPlugin(Component):
             if path:
                 return 'view', path, link
             else:
-                return 'search', file, None
+                return 'search', None, file
 
         # Request for summary pages
         if file in self.SUMMARY_PAGES:
@@ -269,10 +295,15 @@ class DoxygenPlugin(Component):
             self.log.debug('Reverted to search, found: ' + repr(result))
             name = result['name']
             if name == file or name == class_ref:
-                path, link = lookup(result['url'])
-                return 'redirect', path, link
+                url = result['url']
+                target = ''
+                if '#' in url:
+                    url, target = url.split('#', 2)
+                path, link = lookup(url)
+                if path:
+                    return 'redirect', path, target
         self.log.debug('%s not found in %s' % (file, doc))
-        return 'search', file, None
+        return 'search', None, file
 
     def _search_in_documentation(self, doc, keywords):
         # Open index file for documentation
