@@ -3,14 +3,14 @@ Index: trac/perm.py
 --- trac/perm.py	(Revision 3579)
 +++ trac/perm.py	(Arbeitskopie)
 @@ -18,7 +18,9 @@
- 
+
  """Management of permissions."""
- 
+
 +import os
  from trac.core import *
 +from trac import rbl
- 
- 
+
+
  __all__ = ['IPermissionRequestor', 'IPermissionStore',
 @@ -225,6 +227,9 @@
                          subjects.append(action)
@@ -20,13 +20,13 @@ Index: trac/perm.py
 +            for suffix in ['CREATE', 'DELETE', 'MODIFY', 'CHGPROP', 'ADMIN']:
 +	        actions = filter((lambda x: not x.endswith(suffix)), actions)
          return [action for action in actions if not action.islower()]
- 
+
      def get_all_permissions(self):
 Index: trac/rbl.py
 ===================================================================
 --- trac/rbl.py	(Revision 0)
 +++ trac/rbl.py	(Revision 0)
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,28 @@
 +import socket
 +
 +def check_rbl(reverted_ip, rbl):
@@ -44,6 +44,8 @@ Index: trac/rbl.py
 +    """
 +    @param	config_get	Is typically env.config.get
 +    """
++    if remote_ip in [rbl.strip() for rbl in config_get("trac", "rbl_whitelist").split(",") if not rbl.strip() == ""]:
++	return False
 +    rbls = [rbl.strip() for rbl in config_get("trac", "rbl").split(",") if not rbl.strip() == ""]
 +    if len(rbls) > 0:
 +	addr_parts = remote_ip.split(".")
@@ -62,6 +64,6 @@ Index: trac/web/modpython_frontend.py
      if req.subprocess_env.has_key('PYTHON_EGG_CACHE'):
          os.environ['PYTHON_EGG_CACHE'] = req.subprocess_env['PYTHON_EGG_CACHE']
 +    os.environ['REMOTE_IP'] = req.connection.remote_ip
- 
+
      mpr = ModPythonRequest(req, options)
      project_opts = dict_translate(options,
