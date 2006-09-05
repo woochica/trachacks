@@ -216,7 +216,7 @@ class peerReviewBrowser(Component):
         else:
             # Generate HTML preview
             mimeview = Mimeview(self.env)
-            content = node.get_content().read(mimeview.max_preview_size())
+            content = node.get_content().read(mimeview.max_preview_size)
             if not is_binary(content):
                 if mime_type != 'text/plain':
                     plain_href = self.env.href.peerReviewBrowser(node.path,

@@ -1,4 +1,14 @@
 <?cs include "macros.cs" ?>
+
+<?cs def:sortable_th(order, desc, class, title, href) ?>
+ <th class="<?cs var:class ?><?cs if:order == class ?> <?cs
+   if:desc ?>desc<?cs else ?>asc<?cs /if ?><?cs /if ?>">
+  <a title="Sort by <?cs var:class ?><?cs
+    if:order == class && !desc ?> (descending)<?cs /if ?>" 
+     href="<?cs var:href[class] ?>"><?cs var:title ?></a>
+ </th>
+ <?cs /def ?>
+
 <div id="content" class="browser">
  <h2><?cs call:browser_path_links(browser.path, browser) ?></h2>
 
