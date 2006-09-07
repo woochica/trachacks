@@ -3,7 +3,7 @@
 from trac.core import *
 from trac.perm import IPermissionRequestor
 
-class TracforgePermissions(Component):
+class TracForgePermissions(Component):
     """Implements permissions for TracForge."""
     
     implements(IPermissionRequestor)

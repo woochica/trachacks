@@ -4,12 +4,13 @@ from trac.perm import IPermissionGroupProvider, PermissionSystem, DefaultPermiss
 from trac.env import Environment
 
 from model import Project
+from config import EnvironmentOption
 
 class TracForgePermissionModule(DefaultPermissionStore):
     """Enhanced permission module to allow for central management."""
 
-    master_path = Option('tracforge', 'master_path',
-                         doc='Path to master Trac')
+    master_env = EnvironmentOption('tracforge', 'master_path',
+                                   doc='Path to master Trac')
                          
     def get_user_permissions(self, username):
         subjects = [username]
@@ -21,7 +22,7 @@ class TracForgePermissionModule(DefaultPermissionStore):
         cursor = db.cursor()
         cursor.execute("SELECT username,action FROM permission")
         rows = cursor.fetchall()
-        master_cursor = Environment(self.master_path).get_db_cnx().cursor()
+        master_cursor = self.master_env.get_db_cnx().cursor()
         master_cursor.execute("SELECT username,action FROM tracforge_permission")
         rows += master_cursor.fetchall()
         while True:
@@ -49,7 +50,7 @@ class TracForgePermissionModule(DefaultPermissionStore):
         cursor.execute("SELECT username,action FROM permission")
         rows = cursor.fetchall()
         if not self._extract_req().path_info.startswith('/admin/general/perm'):
-            master_cursor = Environment(self.master_path).get_db_cnx().cursor()
+            master_cursor = self.master_env.get_db_cnx().cursor()
             master_cursor.execute("SELECT username,action FROM tracforge_permission")
             rows += master_cursor.fetchall()
         return [(row[0], row[1]) for row in rows]
@@ -66,15 +67,14 @@ class TracForgePermissionModule(DefaultPermissionStore):
 class TracForgeGroupsModule(Component):
     """A component to provide virtual groups based on the membership system."""
     
-    master_path = Option('tracforge', 'master_path',
-                         doc='Path to master Trac')
+    master_env = EnvironmentOption('tracforge', 'master_path',
+                                   doc='Path to master Trac')
 
     implements(IPermissionGroupProvider)
 
     # IPermissionGroupProvider methods
     def get_permission_groups(self, username):
-        master_env = Environment(self.master_path)
-        group_extn_point = PermissionSystem(master_env).store.group_providers
+        group_extn_point = PermissionSystem(self.master_env).store.group_providers
         group_providers = [x for x in group_extn_point if x.__class__ != self.__class__] # Filter out this one (recursion block)
         
         master_groups = []
@@ -83,7 +83,7 @@ class TracForgeGroupsModule(Component):
 
         self.log.debug('TracForgeGroupModule: Detected master groups (%s) for %s'%(', '.join([str(x) for x in master_groups]), username))
 
-        proj = Project.by_env_path(master_env, self.env.path)
+        proj = Project.by_env_path(self.master_env, self.env.path)
         access = {}
         subjects = [username] + master_groups
         for subj in subjects:
