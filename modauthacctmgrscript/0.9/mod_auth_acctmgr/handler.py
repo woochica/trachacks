@@ -2,13 +2,12 @@
 # Copyright 2006 Noah Kantrowitz
 
 from mod_python import apache
-from trac.env import Environment
+from trac.web.main import _open_environment
 
-envs = {}
 acct_mgr = None
 
 def authenhandler(req):
-    global envs, acct_mgr
+    global acct_mgr
     pw = req.get_basic_auth_pw()
     user = req.user
     
@@ -20,12 +19,7 @@ def authenhandler(req):
     env_path = options['TracEnv']
 
     # Try loading the env from the global cache, addit it if needed
-    env = None
-    if env_path not in envs:
-        env = Environment(env_path)
-        envs[env_path] = env
-    else:
-        env = envs[env_path]
+    env = _open_environment(env_path)
     
     if acct_mgr is None:
         from acct_mgr.api import AccountManager
