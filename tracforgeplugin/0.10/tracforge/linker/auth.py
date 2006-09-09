@@ -8,7 +8,7 @@ from trac.web.main import _open_environment
 from trac.env import Environment
 from trac.web.href import Href
 from trac.util.html import escape, html
-from trac.web.api import IRequestFilter
+from trac.web.api import IRequestFilter, Request
 
 class TracForgeLoginModule(LoginModule):
     """Replacement for LoginModule to slave to another environment."""
@@ -47,13 +47,15 @@ class TracForgeCookieMunger(Component):
         self.log.debug('TracForgeCookieMunger: Running')
         if req.path_info.startswith('/login'):
             self.log.debug('TracForgeCookieMunger: Path match')
-            def my_redirect(path):
+            def my_redirect(*args, **kwords):
                 self.log.debug('TracForgeCookieMunger: Captured redirect!')
+                self.log.debug('TracForgeCookieMunger: Pre munging\n%s'%req.outcookie)
                 if 'trac_auth' in req.outcookie:
                     req.outcookie['trac_auth']['path'] = self.uri_root
-                req.real_redirect(path)
+                self.log.debug('TracForgeCookieMunger: Post munging\n%s'%req.outcookie)
+                Request.redirect(req, *args, **kwords)
             
-            req.real_redirect = req.redirect
+            assert repr(req.redirect).startswith('<bound method')
             req.redirect = my_redirect
             
         return handler
