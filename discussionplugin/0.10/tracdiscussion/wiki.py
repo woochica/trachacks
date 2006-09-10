@@ -2,10 +2,11 @@ from tracdiscussion.api import *
 from tracdiscussion.core import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
+from trac.web.main import IRequestHandler, IRequestFilter
 from trac.web.chrome import add_stylesheet
 from trac.util import format_datetime
 from trac.util.html import html
-import time
+import time, re
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
 tries to find topic with same name as name of current wiki page. If topic name
@@ -16,9 +17,9 @@ class DiscussionWiki(Component):
         The wiki module implements macros for forums, topics and messages
         referencing.
     """
-    implements(IWikiSyntaxProvider, IWikiMacroProvider)
+    implements(IWikiSyntaxProvider, IWikiMacroProvider, IRequestFilter)
 
-    # IWikiSyntaxProvider
+    # IWikiSyntaxProvider methods
     def get_link_resolvers(self):
         yield ('forum', self._discussion_link)
         yield ('topic', self._discussion_link)
@@ -27,7 +28,7 @@ class DiscussionWiki(Component):
     def get_wiki_syntax(self):
         return []
 
-    # IWikiMacroProvider
+    # IWikiMacroProvider methods
     def get_macros(self):
         yield 'ViewTopic'
 
@@ -54,7 +55,7 @@ class DiscussionWiki(Component):
             topic = api.get_topic_by_subject(cursor, subject)
             self.log.debug('topic: %s' % (topic,))
 
-            # Retrun macro content
+            # Return macro content
             if topic:
                 req.hdf['discussion.no_navigation'] = True
                 req.args['component'] = 'wiki'
@@ -69,7 +70,52 @@ class DiscussionWiki(Component):
         else:
             raise TracError('Not implemented macro %s' % (name))
 
-    # Core code
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
+        action = req.args.get('discussion_action')
+        redirect = req.args.get('redirect', '0')
+        if match and action in ('post-add', 'post-edit', 'delete') \
+          and redirect == '1':
+            return self
+        else:
+            return handler
+
+    def post_process_request(self, req, template, content_type):
+        return (template, content_type)
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
+        return match
+
+    def process_request(self, req):
+        # Determine topic subject
+        subject = req.path_info[6:] or 'WikiStart'
+
+        # Get database access
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        # Get topic by subject
+        api = DiscussionApi(self, req)
+        topic = api.get_topic_by_subject(cursor, subject)
+        self.log.debug('topic: %s' % (topic,))
+
+        # Return macro content
+        if topic:
+            req.hdf['discussion.no_navigation'] = True
+            req.args['component'] = 'wiki'
+            req.args['forum'] = str(topic['forum'])
+            req.args['topic'] = str(topic['id'])
+            template, type = api.render_discussion(req, cursor)
+            db.commit()
+
+        # Redirect to wiki page
+        req.args['redirect'] = '0'
+        req.redirect(req.href.wiki(**dict(req.args.items())))
+
+    # Core code methods
     def _discussion_link(self, formatter, ns, params, label):
         id = params
 

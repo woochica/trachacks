@@ -100,11 +100,6 @@
 }
 
 /* Message list reply tree */
-.message-list div.replies div.body
-{
-  margin: 0.2em;
-}
-
 .message-list div.replies
 {
   display: block;
@@ -138,8 +133,8 @@
 .message-list div.controls
 {
   float: right;
-  margin: 0em;
-  padding: 0em 1em 0em 1em;
+  padding: 0.5em;
+  padding-right: 2.5em;
 }
 
 .message-list div.controls a
@@ -162,13 +157,15 @@
 
 .message-list div.id
 {
-  padding: 0.2em 0.0em;
+  padding: 0.5em;
+  padding-right: 2.5em;
   text-align: right;
 }
 
 .message-list div.replies div.body
 {
   margin: 0em;
+  margin-right: 2em;
   padding: 0em 1em;
   border: 1px solid #d7d7d7;
   background-color: #f7f7f7;

@@ -25,7 +25,7 @@
       <legend>
          Reply:
       </legend>
-      <form method="get" action="<?cs var:discussion.href ?>#preview">
+      <form method="post" action="<?cs var:discussion.href ?>#preview">
         <div class="field">
           <label for="author">Author:</label><br/>
           <?cs if:args.author ?>
@@ -46,6 +46,7 @@
         <?cs if:args.message ?>
           <input type="hidden" name="message" value="<?cs var:args.message ?>"/>
         <?cs /if ?>
+        <input type="hidden" name="redirect" value="1"/>
         <input type="hidden" name="discussion_action" value="post-add"/>
       </form>
     </fieldset>
@@ -58,7 +59,7 @@
     <legend>
       Edit:
     </legend>
-    <form method="get" action="<?cs var:discussion.href ?>#preview">
+    <form method="post" action="<?cs var:discussion.href ?>#preview">
       <?cs if:!args.message ?>
         <div class="field">
           <label for="subject">Subject:</label><br/>
@@ -77,6 +78,7 @@
       <?cs if:args.message ?>
         <input type="hidden" name="message" value="<?cs var:args.message ?>"/>
       <?cs /if ?>
+      <input type="hidden" name="redirect" value="1"/>
       <input type="hidden" name="discussion_action" value="post-edit"/>
     </form>
   </fieldset>
@@ -223,12 +225,12 @@
 
 <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>
   <div class="buttons">
-    <form method="get" action="<?cs var:discussion.href ?>">
+    <form method="post" action="<?cs var:discussion.href ?>">
       <input type="submit" name="deletetopic" value="Delete Topic" onclick="return confirm('Do you realy want to delete this topic?')"/>
       <input type="hidden" name="discussion_action" value="delete"/>
     </form>
     <?cs if:!discussion.no_navigation ?>
-      <form method="get" action="<?cs var:discussion.href ?>">
+      <form method="post" action="<?cs var:discussion.href ?>">
         <input type="submit" name="movetopic" value="Move Topic"/>
         <input type="hidden" name="discussion_action" value="move"/>
       </form>
