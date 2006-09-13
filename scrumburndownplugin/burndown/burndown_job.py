@@ -1,6 +1,6 @@
 # Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
 # All rights reserved.
-# vi: et ts=4 sw=4
+#
 # This software may at some point consist of voluntary contributions made by
 # many individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
@@ -32,9 +32,12 @@ def main():
     # make sure that there isn't already an entry for today in the burndown table
     cursor.execute("SELECT id FROM burndown WHERE date = '%s'" % today)
     row = cursor.fetchone()
+    needs_update = False
     if row:
-        print >> sys.stderr, 'burndown_job.py has already been run today'
-        sys.exit(1)
+        print >> sys.stderr, 'burndown_job.py has already been run today - update needed'
+        needs_update = True
+    else:
+        print >> sys.stderr, 'first run of burndown_job.py today - insert needed'
     
     # get arrays of the various components and milestones in the trac environment
     cursor.execute("SELECT name AS comp FROM component")
@@ -64,13 +67,13 @@ def main():
                             spent = 0
                     
                         hours += float(estimate) - float(spent)
-                        
+                
+                if needs_update:
+                    cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE date = '%s' AND milestone_name = '%s'"\
+                                        "AND component_name = '%s'" % (hours, today, mile[0], comp[0]))
                 else:
-                    print "no results for %s component in %s milestone" % (comp[0], mile[0])
-                # Sometimes db.get_last_id(cursor, 'burndown') returns "None".. 
-                print 'burndown: %s, %s, %s, %s, %i' % (db.get_last_id(cursor, 'burndown'), comp[0], mile[0], today, hours)
-                cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
-                                     "    VALUES(NULL,'%s','%s','%s',%i)" % (comp[0], mile[0], today, hours))
+                    cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
+                                        "    VALUES(NULL,'%s','%s','%s',%f)" % (comp[0], mile[0], today, hours))
                                      
     db.commit()
 
