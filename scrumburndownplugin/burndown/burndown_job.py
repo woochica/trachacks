@@ -47,10 +47,9 @@ def main():
             for comp in components:
                 sqlSelect =     "SELECT est.value AS estimate, ts.value AS spent "\
                                     "FROM ticket t "\
-                                    "    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'current_estimate') "\
-                                    "    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'time_spent') "\
+                                    "    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'estimatedhours') "\
+                                    "    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'totalhours') "\
                                     "WHERE t.component = '%s' AND t.milestone = '%s' "
-                #print sqlSelect % (comp[0], mile[0])
                 cursor.execute(sqlSelect % (comp[0], mile[0]))
             
                 rows = cursor.fetchall()
@@ -64,11 +63,10 @@ def main():
                         if not spent:
                             spent = 0
                     
-                        hours += int(estimate) - int(spent)
+                        hours += float(estimate) - float(spent)
                         
                 else:
                     print "no results for %s component in %s milestone" % (comp[0], mile[0])
-                # print "last id was %s" % (db.get_last_id(cursor, 'burndown'))
                 # Sometimes db.get_last_id(cursor, 'burndown') returns "None".. 
                 print 'burndown: %s, %s, %s, %s, %i' % (db.get_last_id(cursor, 'burndown'), comp[0], mile[0], today, hours)
                 cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
