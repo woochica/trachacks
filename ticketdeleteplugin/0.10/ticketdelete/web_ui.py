@@ -3,7 +3,8 @@
 from trac import __version__ as TRAC_VERSION
 from trac.core import *
 from trac.ticket.model import Ticket
-from trac.web.chrome import ITemplateProvider
+from trac.web.api import IRequestFilter
+from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from webadmin.web_ui import IAdminPageProvider
 import re, traceback, pprint
 from time import strftime, localtime
@@ -13,8 +14,19 @@ __all__ = ['TicketDeletePlugin']
 class TicketDeletePlugin(Component):
     """A small ticket deletion plugin."""
     
-    implements(ITemplateProvider, IAdminPageProvider)
-    
+    implements(ITemplateProvider, IAdminPageProvider, IRequestFilter)
+
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, content_type):
+        if template == 'ticket.cs' and req.perm.has_permission('TICKET_ADMIN'):
+            add_script(req, 'ticketdelete/jquery.js')
+            add_script(req, 'ticketdelete/ticketdelete.js')
+            add_stylesheet(req, 'ticketdelete/ticketdelete.css')
+        return template, content_type
+ 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
         if req.perm.has_permission('TICKET_ADMIN'):
@@ -68,16 +80,28 @@ class TicketDeletePlugin(Component):
                             req.hdf['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')                    
                     
                 
-        if page == 'comments':
-            if path_info:
-                t = self._validate(req, path_info)
-                if t:
+        if path_info:
+            t = self._validate(req, path_info)
+            if t:
+                if page == 'comments':
+                    try:
+                        selected = int(req.args.get('cnum'))
+                    except (TypeError, ValueError):
+                        selected = None
+                    cnum = 0
+                    cur = None
                     for time, author, field, oldvalue, newvalue, _ in t.get_changelog():
+                        if time != cur:
+                            cnum += 1
+                            cur = time
+                            req.hdf['ticketdelete.changes.%s.checked'%time] = cnum == selected
                         req.hdf['ticketdelete.changes.%s.fields.%s'%(time,field)] = {'old': oldvalue, 'new': newvalue}
                         req.hdf['ticketdelete.changes.%s.author'%time] = author
                         req.hdf['ticketdelete.changes.%s.prettytime'%time] = strftime('%a, %d %b %Y %H:%M:%S',localtime(time))
-                    
-                
+                        print cnum, selected
+                elif page == 'delete':
+                    req.hdf['ticketdelete.id'] = t.id
+ 
         return 'ticketdelete_admin.cs', None
 
     # ITemplateProvider methods
@@ -102,9 +126,7 @@ class TicketDeletePlugin(Component):
         resources on the local file system.
         """
         from pkg_resources import resource_filename
-        #return [('ticketdelete', resource_filename(__name__, 'htdocs'))]
-        return []
-
+        return [('ticketdelete', resource_filename(__name__, 'htdocs'))]
 
     # Internal methods
     def _get_trac_version(self):

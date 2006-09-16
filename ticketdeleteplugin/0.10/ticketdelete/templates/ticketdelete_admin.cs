@@ -10,8 +10,8 @@
     </p>
 
     <form method="post" onsubmit="return confirm('Are you sure you want to do this?')">
-        Ticket ID: <input type="text" name="ticketid" /><br />
-        Again: <input type="text" name="ticketid2" /><br />
+        Ticket ID: <input type="text" name="ticketid" value="<?cs var:ticketdelete.id ?>"/><br />
+        Again: <input type="text" name="ticketid2" value="<?cs var:ticketdelete.id ?>"/><br />
         <input type="submit" value="Delete" />
     </form>
 <?cs elif:ticketdelete.page == 'comments' ?>
@@ -24,13 +24,13 @@
             <tbody>
                 <?cs each:change = ticketdelete.changes ?>
                     <tr>
-                        <td><input type="checkbox" name="dontcare" value="dontcare" id="checkbox_<?cs name:change ?>" /></td>
+                        <td><input type="checkbox" name="dontcare" value="dontcare" id="checkbox_<?cs name:change ?>" <?cs if:change.checked ?>checked="checked"<?cs /if ?>/></td>
                         <td colspan="3"><b>Change at <?cs var:change.prettytime ?> by <?cs var:change.author ?></b></td>
                         <td><input type="submit" name="delete_<?cs name:change ?>" value="Delete change" /></td>
                     <tr>
                     <?cs each:field = change.fields ?>
                     <tr>
-                        <td><input type="checkbox" id="checkbox<?cs name:field ?>_<?cs name:change ?>" name="delete" value="<?cs name:field ?>_<?cs name:change ?>" /></td>
+                        <td><input type="checkbox" id="checkbox<?cs name:field ?>_<?cs name:change ?>" name="delete" value="<?cs name:field ?>_<?cs name:change ?>" <?cs if:change.checked ?>checked="checked"<?cs /if ?>/></td>
                         <td><?cs name:field ?></td>
                         <?cs if:name(field) == 'comment' ?>
                             <td colspan="2"><?cs var:field.new ?></td>
