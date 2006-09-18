@@ -1,41 +1,27 @@
-from trac.db import Table, Column, Index, DatabaseManager
+# Common statements
+sql = ["""CREATE TABLE forum_group (
+  id integer PRIMARY KEY,
+  name text,
+  description text
+);""",
+"""ALTER TABLE forum ADD COLUMN forum_group integer;""",
+"""ALTER TABLE forum ADD COLUMN author text;""",
+"""UPDATE system SET value = 2 WHERE name='discussion_version';"""]
 
-tables = [
-  Table('forum', key = 'id')[
-    Column('id', type = 'integer', auto_increment = True),
-    Column('name'),
-    Column('time', type = 'integer'),
-    Column('forum_group', type = 'integer'),
-    Column('author'),
-    Column('moderators'),
-    Column('subject'),
-    Column('description')
-  ],
-  Table('forum_group', key = 'id')[
-    Column('id', type = 'integer', auto_increment = True),
-    Column('name'),
-    Column('description')
-  ]
-]
+# PostgreSQL statements
+postgre_sql = ["""CREATE TABLE forum_group (
+  id serial PRIMARY KEY,
+  name text,
+  description text
+);""",
+"""ALTER TABLE forum ADD COLUMN forum_group integer;""",
+"""ALTER TABLE forum ADD COLUMN author text;""",
+"""UPDATE system SET value = 2 WHERE name='discussion_version';"""]
 
 def do_upgrade(env, cursor):
-    db_connector, _ = DatabaseManager(env)._get_connector()
-
-    # Backup old screenshot table.
-    cursor.execute("CREATE TEMPORARY TABLE forum_old AS SELECT * FROM forum")
-    cursor.execute("DROP TABLE forum")
-
-    # Create tables
-    for table in tables:
-        for statement in db_connector.to_sql(table):
+    if env.config.get('trac', 'database').startswith('postgres'):
+        for statement in postgre_sql:
             cursor.execute(statement)
-
-    # Copy old forums
-    cursor.execute("INSERT INTO forum (id, name, time, moderators, subject," \
-      " description) SELECT id, name, time, moderators, subject, description" \
-      " FROM forum_old")
-
-    # Set database schema version.
-    cursor.execute("DROP TABLE forum_old")
-    cursor.execute("UPDATE system SET value = '2' WHERE" \
-      " name = 'discussion_version'")
+    else:
+        for statement in sql:
+            cursor.execute(statement)
