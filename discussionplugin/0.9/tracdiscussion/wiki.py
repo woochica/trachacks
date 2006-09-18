@@ -4,7 +4,6 @@ from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.web.chrome import add_stylesheet
 from trac.util import format_datetime
-from trac.util.html import html
 import time
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
