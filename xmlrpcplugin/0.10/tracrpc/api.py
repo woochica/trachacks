@@ -157,12 +157,13 @@ class XMLRPCSystem(Component):
         yield ('XML_RPC', ((list,),), self.listMethods)
         yield ('XML_RPC', ((str, str),), self.methodHelp)
         yield ('XML_RPC', ((list, str),), self.methodSignature)
+        yield ('XML_RPC', ((list,),), self.getAPIVersion)
 
     def get_method(self, method):
         """ Get an RPC signature by full name. """ 
         for provider in self.method_handlers:
             for candidate in provider.xmlrpc_methods():
-                self.env.log.debug(candidate)
+                #self.env.log.debug(candidate)
                 p = Method(provider, *candidate)
                 if p.name == method:
                     return p
@@ -217,3 +218,10 @@ class XMLRPCSystem(Component):
         p = self.get_method(method)
         req.perm.assert_permission(p.permission)
         return [','.join([RPC_TYPES[x] for x in sig]) for sig in p.xmlrpc_signatures()]
+
+    def getAPIVersion(self, req):
+        """ Returns a list with two elements. First element is the major
+        version number, second is the minor. Changes to the major version
+        indicate API breaking changes, while minor version changes are simple
+        additions, bug fixes, etc. """
+        return [0, 1]

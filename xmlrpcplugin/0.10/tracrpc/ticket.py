@@ -35,6 +35,7 @@ class TicketRPC(Component):
                 (str, int, str, str, xmlrpclib.Binary)),
                self.putAttachment)
         yield ('TICKET_ADMIN', ((bool, int, str),), self.deleteAttachment)
+        yield ('TICKET_VIEW', ((list,),), self.getTicketFields)
 
     # Exported methods
     def query(self, req, qstr='status!=closed'):
@@ -134,6 +135,10 @@ class TicketRPC(Component):
         attachment = Attachment(self.env, 'ticket', ticket, filename)
         attachment.delete()
         return True
+
+    def getTicketFields(self, req):
+        """ Return a list of all ticket fields fields. """
+        return TicketSystem(self.env).get_ticket_fields()
 
 
 def ticketModelFactory(cls, cls_attributes):
