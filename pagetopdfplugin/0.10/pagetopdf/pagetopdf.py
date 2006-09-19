@@ -24,7 +24,7 @@ class PageToPDFPlugin(Component):
         os.close(pfile)
         os.environ["HTMLDOC_NOCGI"] = 'yes'
         os.system('htmldoc --charset %s --webpage --format pdf14 --left 1.5cm --right 1.5cm --top 1.5cm --bottom 1.5cm %s -f %s' % (codepage.replace('iso-', ''), hfilename, pfilename))
-        out = open(pfilename).read()
+        out = open(pfilename, 'rb').read()
         os.unlink(pfilename)
         os.unlink(hfilename)
         return (out, 'application/pdf')
