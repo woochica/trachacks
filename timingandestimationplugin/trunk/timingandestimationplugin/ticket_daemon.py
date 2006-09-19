@@ -77,7 +77,7 @@ class TimeTrackingTicketObserver(Component):
         self.watch_hours(ticket)
                                
 
-    def ticket_changed(self, ticket, comment, old_values):
+    def ticket_changed(self, ticket, comment, author, old_values):
         """Called when a ticket is modified.
         
         `old_values` is a dictionary containing the previous values of the
