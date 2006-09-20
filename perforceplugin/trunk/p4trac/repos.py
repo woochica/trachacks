@@ -710,10 +710,6 @@ class Node(object):
         @raise NoSuchFile: If this node is not a file node.
         """
 
-        if self.isDirectory:
-            raise NoSuchFile(self._nodePath.path,
-                             self._nodePath.rev)
-
         if self.isFile:
             fileInfo = self._repo._getFileInfo(self._nodePath)
             assert fileInfo is not None
