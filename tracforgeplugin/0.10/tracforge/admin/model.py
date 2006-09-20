@@ -1,5 +1,6 @@
 from trac.env import Environment
 from UserDict import DictMixin
+from trac.web.main import _open_environment
 
 class BadEnv(object):
     def __init__(self, env_path, exc):
@@ -90,7 +91,7 @@ class Project(object):
         if not self._env:
             assert self.exists, "Can't use a non-existant project"
             try:
-                self._env = Environment(self.env_path)
+                self._env = _open_environment(self.env_path)
                 self._valid = True
             except Exception, e:
                 self._env = BadEnv(self.env_path, e)
@@ -135,7 +136,6 @@ class Project(object):
         """Allow the nice syntax of `if 'user' in project:`"""
         return self.members.__contains__(key)    
 
-    @classmethod
     def select(cls, env, db=None):
         """Find all known project shortnames."""
         db = db or env.get_db_cnx()
@@ -143,9 +143,8 @@ class Project(object):
         cursor.execute('SELECT name FROM tracforge_projects')
         for row in cursor:
             yield row[0]
-            
+    select = classmethod(select)            
 
-    @classmethod
     def by_env_path(cls, env, env_path, db=None):
         """Find a Project based on its env_path."""
         db = db or env.get_db_cnx()
@@ -158,4 +157,4 @@ class Project(object):
         if row:
             name = row[0]
         return Project(env, name, db)
-            
+    by_env_path = classmethod(by_env_path)            
