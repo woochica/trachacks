@@ -167,7 +167,7 @@ class SearchModule(Component):
         query = req.args.get('q')
         if query:
             page = int(req.args.get('page', '1'))
-            self.check_quickjump(req, query)
+            noquickjump = self.check_quickjump(req, query)
             if query.startswith('!'):
                 query = query[1:]
             terms = search_terms(query)
@@ -236,6 +236,7 @@ class SearchModule(Component):
                     }
             else:
                 req.redirect(quickjump_href)
+        return noquickjump
 
     # IWikiSyntaxProvider methods
     
