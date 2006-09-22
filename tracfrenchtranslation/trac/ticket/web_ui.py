@@ -316,14 +316,14 @@ class TicketModule(TicketModuleBase):
             if str(id) in tickets:
                 idx = tickets.index(str(ticket.id))
                 if idx > 0:
-                    add_link(req, u'premier', req.href.ticket(tickets[0]),
+                    add_link(req, 'first', req.href.ticket(tickets[0]),
                              u'Ticket #%s' % tickets[0])
-                    add_link(req, u'précédent', req.href.ticket(tickets[idx - 1]),
+                    add_link(req, 'prev', req.href.ticket(tickets[idx - 1]),
                              u'Ticket #%s' % tickets[idx - 1])
                 if idx < len(tickets) - 1:
-                    add_link(req, u'suivant', req.href.ticket(tickets[idx + 1]),
+                    add_link(req, 'next', req.href.ticket(tickets[idx + 1]),
                              u'Ticket #%s' % tickets[idx + 1])
-                    add_link(req, u'dernier', req.href.ticket(tickets[-1]),
+                    add_link(req, 'last', req.href.ticket(tickets[-1]),
                              u'Ticket #%s' % tickets[-1])
                 add_link(req, 'up', req.session['query_href'])
 
