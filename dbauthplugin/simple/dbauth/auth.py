@@ -113,7 +113,7 @@ class DbAuthLoginModule(Component):
             if req.args.get('login'):
                 uid, pwd = req.args.get('uid').lower(), req.args.get('pwd')
                 if self._check_login(uid, pwd):
-                    self._do_login(req)
+                    self._do_login(req, uid)
                     req.redirect(req.href())
                 else:
                     req.hdf['auth.message'] = 'Login Incorrect'
@@ -170,10 +170,8 @@ class DbAuthLoginModule(Component):
 
         return False
 
-    def _do_login(self, req):
+    def _do_login(self, req, remote_user):
         """Log the remote user in."""
-
-        remote_user = req.args.get('uid')
 
         cookie = hex_entropy()
         db = self.env.get_db_cnx()
