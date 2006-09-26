@@ -111,7 +111,7 @@ class DbAuthLoginModule(Component):
     def process_request(self, req):
         if req.method == 'POST':
             if req.args.get('login'):
-                uid, pwd = req.args.get('uid'), req.args.get('pwd')
+                uid, pwd = req.args.get('uid').lower(), req.args.get('pwd')
                 if self._check_login(uid, pwd):
                     self._do_login(req)
                     req.redirect(req.href())
