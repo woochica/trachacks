@@ -48,12 +48,12 @@ class SiteuploadAdminPage(Component):
     def process_admin_request(self, req, cat, page, path_info):
         assert req.perm.has_permission('SITEUPLOAD_ADMIN')
         target_path = os.path.join(self.env.path, 'htdocs')
-        if not (os.path.exists(target_path) and os.path.isdir(target_path))
+        if not (os.path.exists(target_path) and os.path.isdir(target_path)):
             req.hdf['siteupload.readonly'] = True
         else:
             req.hdf['siteupload.readonly'] = False
         if req.method == 'POST':
-            elif req.args.has_key('delete'):
+            if req.args.has_key('delete'):
                 self._do_delete(req)
             elif req.args.has_key('upload'):
                 self._do_upload(req)
@@ -75,7 +75,8 @@ class SiteuploadAdminPage(Component):
                 filelist.append({'name' : f,
                                  'size' : pretty_size(fsize),})
                 continue
-         return
+        req.hdf['siteupload.files'] = filelist
+        return
 
     def _do_delete(self, req):
         """Delete a file from htdocs"""
@@ -145,5 +146,5 @@ class SiteuploadAdminPage(Component):
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-        return [('blog', resource_filename(__name__, 'htdocs'))]
+        return []
 
