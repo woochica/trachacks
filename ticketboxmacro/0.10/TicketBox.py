@@ -90,6 +90,7 @@ def execute(hdf, txt, env):
                 (query,) = curs.fetchone()
                 # replace dynamic variables
                 for k, v in dv.iteritems():
+                    v = v.replace( "'","''" )
                     query = re.sub(r'\$%s\b' % k, v, query)
                 #env.log.debug('query = %s' % query)
                 curs.execute(query)
