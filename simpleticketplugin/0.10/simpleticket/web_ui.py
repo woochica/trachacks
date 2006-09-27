@@ -3,11 +3,16 @@
 from trac.core import *
 from trac.web.chrome import INavigationContributor
 from trac.web import IRequestHandler
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, PermissionCache
 from trac.util import Markup
 from trac.config import ListOption
 
 from trac.ticket.web_ui import NewticketModule
+
+class PseudoPermCache(PermissionCache):
+    
+    def __init__(self):
+        self.perms = {'TICKET_CREATE': True}
 
 class PseudoRequest(object):
     def __init__(self, env, req):
@@ -22,6 +27,12 @@ class PseudoRequest(object):
             if not self.perm.has_permission('TICKET_VIEW'):
                 self.req.redirect(self.env.href.simpleticket())
         self.req.redirect(dest)
+        
+    def _perm(self):
+        if self.req.authname == 'anonymous':
+            return PseudoPermCache()
+        return self.req.perm
+    perm = property(_perm)
 
 class SimpleTicketModule(Component):
     """Restricted ticket entry form."""
