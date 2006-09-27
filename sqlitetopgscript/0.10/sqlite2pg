@@ -100,6 +100,28 @@ class TableMigration(object):
                   (str(row_exists), str(rows), table)
         self.pgdb.commit()
         return row_exists > 0
+
+    def migrate_TICKET(self):
+        """ Migrate the ticket table and adjust the sequences properly """
+        self.default_copy('ticket')
+        select_maxticket = "SELECT max(id) FROM ticket"
+        pgcur = self.pgdb.cursor()
+        pgcur.execute(select_maxticket)
+        r = pgcur.fetchone()
+        if r:
+            pgcur.execute("SELECT setval('ticket_id_seq', %s)", r)
+        self.pgdb.commit()
+        
+    def migrate_REPORT(self):
+        """ Migrate the report table and adjust the sequences properly """
+        self.default_copy('report')
+        select_maxreport = "SELECT max(id) FROM report"
+        pgcur = self.pgdb.cursor()
+        pgcur.execute(select_maxreport)
+        r = pgcur.fetchone()
+        if r:
+            pgcur.execute("SELECT setval('report_id_seq', %s)", r)
+        self.pgdb.commit()
     
     def migrate_PERMISSION(self):
         """
@@ -306,6 +328,6 @@ def doArgs():
 
 if __name__ == '__main__':
     opts = doArgs()
-    rc = Main(opts)
-    sys.exit(rc)
+    Main(opts)
+    sys.exit(0)
     
