@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+from setuptools import setup, find_packages
+
+PACKAGE = 'siteupload'
+VERSION = '0.1'
+
+setup(  name=PACKAGE, version=VERSION,
+        author = 'John Hampton',
+        author_email = 'pacopablo@asylumware.com',
+        url = 'http://trac-hacks.org/wiki/SiteUploadPlugin',
+        description = 'Upload files to trac environment htdocs dir',
+        license='BSD',
+#        package_dir = { 'siteupload' : 'siteupload' },
+        packages = ['siteupload'],
+        package_data = { 'siteupload' : ['htdocs/css/*.css', 'htdocs/img/*',
+                                        'templates/*.cs', ]},
+        entry_points = {'trac.plugins': ['siteupload = siteupload']},
+        install_requires = ['TracWebAdmin']
+)
