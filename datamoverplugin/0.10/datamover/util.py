@@ -1,4 +1,5 @@
 from trac.env import Environment
+from trac.web.main import _open_environment
 from trac.wiki.model import WikiPage
 
 __all__ = ['copy_ticket', 'copy_wiki_page']
@@ -17,9 +18,9 @@ def copy_ticket(source_env, dest_env, source_id, dest_db=None):
     
     # In case a string gets passed in
     if not isinstance(source_env, Environment):
-        source_env = Environment(source_env)
+        source_env = _open_environment(source_env)
     if not isinstance(dest_env, Environment):
-        dest_env = Environment(dest_env)
+        dest_env = _open_environment(dest_env)
         
     # Open databases
     source_db = source_env.get_db_cnx()
@@ -62,9 +63,13 @@ def copy_ticket(source_env, dest_env, source_id, dest_db=None):
 def copy_wiki_page(source_env, dest_env, name, dest_db=None):
     # In case a string gets passed in
     if not isinstance(source_env, Environment):
-        source_env = Environment(source_env)
+        source_env = _open_environment(source_env)
     if not isinstance(dest_env, Environment):
-        dest_env = Environment(dest_env)
+        dest_env = _open_environment(dest_env)
+        
+    # Log message
+    source_env.log.info('DatamoverPlugin: Moving page %s to the environment at %s', name, dest_env.path)
+    dest_env.log.info('DatamoverPlugin: Moving page %s from the environment at %s', name, source_env.path)
         
     # Open databases
     source_db = source_env.get_db_cnx()

@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.env import Environment
+from trac.web.main import _open_environment
 from trac.ticket.model import Component as TicketComponent, Ticket
 from trac.ticket.query import Query
 
@@ -47,7 +47,7 @@ class DatamoverTicketModule(Component):
                 
             try:
                 ids = [x['id'] for x in Query.from_string(self.env, query_string).execute(req)]
-                dest_db = Environment(dest).get_db_cnx()
+                dest_db = _open_environment(dest).get_db_cnx()
                 for id in ids:
                     copy_ticket(self.env, dest, id, dest_db)
                 dest_db.commit()

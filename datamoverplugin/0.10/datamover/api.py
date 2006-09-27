@@ -1,6 +1,6 @@
 # Datamover API classes
 from trac.core import *
-from trac.env import Environment
+from trac.web.main import _open_environment
 
 class IEnvironmentProvider(Interface):
     """An extension point interface for enumerating local environments."""
@@ -24,7 +24,7 @@ class DatamoverSystem(Component):
         for provider in self.env_providers:
             for env in provider.get_environments():
                 envs[env] = {
-                    'name': Environment(env).project_name,
+                    'name': _open_environment(env).project_name,
                     'mutable': provider.mutable_environments() and envs.get(env, {'mutable': 1}).get('mutable'),
                     'provider': envs.get(env, {'provider': []}).get('provider') + [provider],
                 }

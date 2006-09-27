@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.env import Environment
+from trac.web.main import _open_environment
 from trac.wiki.api import WikiSystem
 from trac.wiki.model import WikiPage
 
@@ -52,7 +52,7 @@ class DatamoverWikiModule(Component):
                             
             try:
                 pages = [p for p in WikiSystem(self.env).get_pages() if page_filter(p)]
-                dest_db = Environment(dest).get_db_cnx()
+                dest_db = _open_environment(dest).get_db_cnx()
                 for page in pages:
                     copy_wiki_page(self.env, dest, page, dest_db)
                 dest_db.commit()
