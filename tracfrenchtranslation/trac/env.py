@@ -343,8 +343,7 @@ class Environment(Component, ComponentManager):
 
         db_str = self.config.get('trac', 'database')
         if not db_str.startswith('sqlite:'):
-            raise EnvironmentError, u'Seules les bases de données sqlite ' \
-                                    u'peuvent être sauvegardées'
+            raise EnvironmentError, u'Seules les bases de données sqlite peuvent être sauvegardées'
         db_name = os.path.join(self.path, db_str[7:])
         if not dest:
             dest = '%s.%i.bak' % (db_name, self.get_version())

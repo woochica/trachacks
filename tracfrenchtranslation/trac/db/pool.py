@@ -19,6 +19,7 @@ try:
 except ImportError:
     import dummy_threading as threading
     threading._get_ident = lambda: 0
+import sys
 import time
 
 from trac.db.util import ConnectionWrapper
@@ -34,14 +35,13 @@ class PooledConnection(ConnectionWrapper):
     to the pool.
     """
 
-    def __init__(self, pool, cnx, tid):
+    def __init__(self, pool, cnx):
         ConnectionWrapper.__init__(self, cnx)
         self._pool = pool
-        self._tid = tid
 
     def close(self):
         if self.cnx:
-            self._pool._return_cnx(self.cnx, self._tid)
+            self._pool._return_cnx(self.cnx)
             self.cnx = None
 
     def __del__(self):
@@ -66,11 +66,8 @@ class ConnectionPool(object):
         try:
             tid = threading._get_ident()
             if tid in self._active:
-                num, cnx = self._active.get(tid)
-                if num == 0:
-                    cnx.rollback()
-                self._active[tid][0] = num + 1
-                return PooledConnection(self, cnx, tid)
+                self._active[tid][0] += 1
+                return PooledConnection(self, self._active[tid][1])
             while True:
                 if self._dormant:
                     cnx = self._dormant.pop()
@@ -91,15 +88,17 @@ class ConnectionPool(object):
                                                 u' la base de données sous %d ' \
                                                 u'secondes' % timeout
                     else:
+                        print>>sys.stderr, '[%d] wait for connection...' % tid
                         self._available.wait()
             self._active[tid] = [1, cnx]
-            return PooledConnection(self, cnx, tid)
+            return PooledConnection(self, cnx)
         finally:
             self._available.release()
 
-    def _return_cnx(self, cnx, tid):
+    def _return_cnx(self, cnx):
         self._available.acquire()
         try:
+            tid = threading._get_ident()
             if tid in self._active:
                 num, cnx_ = self._active.get(tid)
                 assert cnx is cnx_
@@ -114,16 +113,13 @@ class ConnectionPool(object):
         # Note: self._available *must* be acquired
         if tid in self._active:
             cnx = self._active.pop(tid)[1]
-            if cnx not in self._dormant: # hm, how could that happen?
-                if cnx.poolable: # i.e. we can manipulate it from other threads
-                    cnx.rollback()
+            if cnx not in self._dormant:
+                cnx.rollback()
+                if cnx.poolable:
                     self._dormant.append(cnx)
-                elif tid == threading._get_ident():
-                    cnx.rollback() # non-poolable but same thread: close
+                else:
                     cnx.close()
                     self._cursize -= 1
-                else: # non-poolable, different thread: do nothing
-                    self._active[tid][0] = 0
                 self._available.notify()
 
     def shutdown(self, tid=None):

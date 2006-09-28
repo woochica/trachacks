@@ -672,21 +672,21 @@ class QueryModule(Component):
 
 
 class TicketQueryMacro(WikiMacroBase):
-    """Macro listant les tickets répondant à certains critères.
+    u"""Macro listant les tickets répondant à certains critères.
     
-    Cette macro accèpte deux paramètres, le second étant optionnel.
+    Cette macro accepte deux paramètres, le second étant optionnel.
     
-    Le premier paramètre est la requête elle-même, et utilise la même syntaxe que 
+    Le premier paramètre est la requête elle-même, et utilise la même syntaxe que
     celle des `query:` liens wiki (cependant la syntaxe alternative commençant par
-    "?" n'est pas gérée).
-
-    Le second paramètre sélectionne comment la 
-    liste des tickets est presentée: la présentation par défaut est de lister 
+    "?" '''n'est pas''' gérée).
+    
+    Le second paramètre sélectionne comment la liste des tickets est presentée:
+    la présentation par défaut est de lister
     l'identifiant du ticket juste à coté de son intitulé, chaque ticket étant
     affiché sur une ligne distincte.
     Si le second paramètre est spécifié, il doit alors correspondre à :
-     - '''compact''' -- les tickets sont présentés comme une liste 
-     d'identifiants des tickets, séparés par des virgules.
+     - '''compact''' -- les tickets sont présentés comme une liste
+       d'identifiants des tickets, séparés par des virgules.
      - '''count''' -- seul le nombre de tickets correspondants est affiché.
     """
 

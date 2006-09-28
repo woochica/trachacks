@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-This macro shows a quick and dirty way to make a table-of-contents for a set
-of wiki pages.
+u"""
+Cette macro affiche d'une façon simple et efficace la table des matières d'un ensemble de pages Wiki.
 """
 
 TOC = [('TracGuide',                    'Index'),

@@ -56,7 +56,7 @@ class InterTracDispatcher(Component):
         yield 'InterTrac'
 
     def get_macro_description(self, name): 
-        return "Provide a list of known InterTrac prefixes."
+        return u"Fournit une liste de préfixes InterTrac interprétées."
 
     def render_macro(self, req, name, content):
         intertracs = {}
