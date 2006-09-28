@@ -17,12 +17,13 @@
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
 from trac.perm import IPermissionRequestor
-from trac.util import pretty_size
+from trac.util import Markup, pretty_size
 from webadmin.web_ui import IAdminPageProvider
 
 import os
 import os.path
 import stat
+import shutil
 from pkg_resources import resource_filename
 
 __all__ = ['SiteuploadAdminPage']
@@ -48,7 +49,7 @@ class SiteuploadAdminPage(Component):
     def process_admin_request(self, req, cat, page, path_info):
         assert req.perm.has_permission('SITEUPLOAD_ADMIN')
         target_path = os.path.join(self.env.path, 'htdocs')
-        if not (os.path.exists(target_path) and os.path.isdir(target_path)):
+        if not (os.path.exists(target_path) and os.path.isdir(target_path) and os.access(target_path, os.F_OK + os.W_OK)):
             req.hdf['siteupload.readonly'] = True
         else:
             req.hdf['siteupload.readonly'] = False
@@ -73,6 +74,8 @@ class SiteuploadAdminPage(Component):
             for f in dlist:
                 fsize = os.stat(os.path.join(target_path, f))[stat.ST_SIZE]
                 filelist.append({'name' : f,
+                                 'link' : Markup('<a href="%s">%s</a>',
+                                          self.env.href.chrome('site', f), f), 
                                  'size' : pretty_size(fsize),})
                 continue
         req.hdf['siteupload.files'] = filelist
@@ -80,6 +83,7 @@ class SiteuploadAdminPage(Component):
 
     def _do_delete(self, req):
         """Delete a file from htdocs"""
+        target_path = os.path.join(self.env.path, 'htdocs')
         err_list = []
         sel = req.args.get('sel')
         sel = isinstance(sel, list) and sel or [sel]

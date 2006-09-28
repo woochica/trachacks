@@ -4,7 +4,7 @@
  <fieldset>
   <legend>Upload File:</legend>
   <div class="field">
-   <label>File: <input type="file" name="site_file"
+   <label>File: <input type="file" name="site_file" <?cs
      if:siteupload.readonly ?> disabled="disabled"<?cs /if ?> /></label>
   </div>
   <p class="help">
@@ -31,7 +31,7 @@
             <?cs each:file = siteupload.files ?>
             <tr>
                 <td><input type="checkbox" name="sel" value="<?cs var:file.name ?>" /></td>
-                <td><?cs var:file.name ?></td>
+                <td><?cs var:file.link ?></td>
                 <td><?cs var:file.size ?></td>
             </tr>
             <?cs /each ?>
