@@ -1,3 +1,9 @@
+trac-french (0.10-1) universe; urgency=low
+
+  * Synchronize with Trac 0.10, revision 3806
+
+ -- Nicolas Ternisien <nicolas.ternisien@gmail.com>  Tue, 29 Sep 2006 11:08:23 +0000
+
 trac-french (0.10rc1-1) universe; urgency=low
 
   * Synchronize with Trac RC1, revision 3798
