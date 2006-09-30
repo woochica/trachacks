@@ -56,12 +56,33 @@ class PerforceConnector(Component):
         if hasPerforce:
             yield ('perforce', 4)
 
+    def _update_option(self, options, key, value):
+        """Update options dictionary with (key, value)"""
+
+        if value == None:
+            if key in options: del options[key]
+        else:
+            options[key] = value
+        
     def get_repository(self, repos_type, repos_dir, authname):
 
         assert repos_type == 'perforce'
 
+        import urllib
+        urltype, url = urllib.splittype(repos_dir)
+        assert urltype == 'p4' or url == 'p4'
+
         options = dict(self.config.options('perforce'))
-        
+        if urltype != None:
+            machine, path = urllib.splithost(url)
+            user_passwd, host_port = urllib.splituser(machine)
+            user, password = urllib.splitpasswd(user_passwd)
+            host, port = urllib.splitport(host_port)
+            self._update_option(options, 'port', port)
+            self._update_option(options, 'password', password)
+            self._update_option(options, 'user', user)
+            self._update_option(options, 'host', host)
+
         if 'port' not in options:
             raise TracError(
                 message="Missing 'port' value in [perforce] config section.",
@@ -274,7 +295,7 @@ class PerforceRepository(object):
         self._repos = Repository(connection)
 
     def get_name(self):
-        return 'p4://%s' % self._connection.port
+        return 'p4://%s:%s@%s:%s' % (self._connection.user, self._connection.password, self._connection.host, self._connection.port)
     name = property(get_name)
 
     def close(self):
