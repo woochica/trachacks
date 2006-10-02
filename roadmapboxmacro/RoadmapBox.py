@@ -44,7 +44,7 @@ def execute(hdf, txt, env):
 				cn="closed ticket"
 			else:
 				cn="new ticket"
-			ul.append('<li>%s - <a class="%s" href="/cgi-bin/trac.cgi/ticket/%s" title="%s">%s</a></li>' % (row[1], cn, row[0], row[1], row[0]))
+			ul.append('<li>%s - <a class="%s" href="%s" title="%s">%s</a></li>' % (row[1], cn, env.href.ticket(row[0]), row[1], row[0]))
 	except Exception, e:
 		return 'error: %s %s' % (Exception, e)
 	return '''
