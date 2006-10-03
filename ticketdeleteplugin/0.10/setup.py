@@ -11,8 +11,8 @@ setup(
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
-    description = "A small plugin to remove tickets and ticket changes from Trac.",
-    long_description = "Provides a web interface to removing whole tickets, and ticket changes.",
+    description = "Remove tickets and ticket changes from Trac.",
+    long_description = "Provides a web interface to removing whole tickets and ticket changes in Trac.",
     license = "BSD",
     keywords = "trac plugin ticket delete",
     url = "http://trac-hacks.org/wiki/TicketDeletePlugin",
