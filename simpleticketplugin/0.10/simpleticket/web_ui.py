@@ -11,8 +11,11 @@ from trac.ticket.web_ui import NewticketModule
 
 class PseudoPermCache(PermissionCache):
     
-    def __init__(self):
+    def __init__(self, perm):
         self.perms = {'TICKET_CREATE': True}
+        if perm.has_permission('TICKET_APPEND'):
+            self.perms['TICKET_APPEND'] = True
+        
 
 class PseudoRequest(object):
     def __init__(self, env, req):
@@ -30,7 +33,7 @@ class PseudoRequest(object):
         
     def _perm(self):
         if self.req.authname == 'anonymous':
-            return PseudoPermCache()
+            return PseudoPermCache(self.req.perm)
         return self.req.perm
     perm = property(_perm)
 
