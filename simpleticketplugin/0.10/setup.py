@@ -5,12 +5,13 @@ from setuptools import setup
 
 setup(
     name = 'TracSimpleTicket',
-    version = '1.1.1',
+    version = '1.1.2',
     packages = ['simpleticket'],
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
-    description = "Restricted ticket entry form",
+    description = "Restricted ticket entry form for Trac",
+    long_description = "A Trac plugin that provides a configurable ticket entry form, with selected fields hidden from the user.",
     license = "BSD",
     keywords = "trac plugin restricted ticket",
     url = "http://trac-hacks.org/wiki/SimpleTicketPlugin",
