@@ -77,11 +77,9 @@ class PerforceConnector(Component):
             machine, path = urllib.splithost(url)
             user_passwd, host_port = urllib.splituser(machine)
             user, password = urllib.splitpasswd(user_passwd)
-            host, port = urllib.splitport(host_port)
-            self._update_option(options, 'port', port)
+            self._update_option(options, 'port', host_port)
             self._update_option(options, 'password', password)
             self._update_option(options, 'user', user)
-            self._update_option(options, 'host', host)
 
         if 'port' not in options:
             raise TracError(
