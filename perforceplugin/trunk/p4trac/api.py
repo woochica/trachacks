@@ -58,12 +58,19 @@ class PerforceConnector(Component):
 
     def _update_option(self, options, key, value):
         """Update options dictionary with (key, value)"""
-
         if value == None:
             if key in options: del options[key]
         else:
             options[key] = value
         
+    def _splitattributes(self, url):
+        """_splitattr('attr1=value1&attr2=value2&...') ->
+            ['attr1=value1', 'attr2=value2', ...]."""
+        if url == None:
+            return []
+        words = url.split('&')
+        return words
+
     def get_repository(self, repos_type, repos_dir, authname):
 
         assert repos_type == 'perforce'
@@ -74,12 +81,20 @@ class PerforceConnector(Component):
 
         options = dict(self.config.options('perforce'))
         if urltype != None:
-            machine, path = urllib.splithost(url)
+            machine, path_query = urllib.splithost(url)
             user_passwd, host_port = urllib.splituser(machine)
             user, password = urllib.splitpasswd(user_passwd)
             self._update_option(options, 'port', host_port)
             self._update_option(options, 'password', password)
             self._update_option(options, 'user', user)
+
+            path, query = urllib.splitquery(path_query)
+            if path and path != '':
+                for attr in self._splitattributes(query):
+                    key, val = urllib.splitvalue(attr)
+                    self._update_option(options, key, val)
+            self._update_option(options, 'path', path)
+            self.log.debug("get_repository options : %s" % (options))
 
         if 'port' not in options:
             raise TracError(
@@ -293,7 +308,7 @@ class PerforceRepository(object):
         self._repos = Repository(connection)
 
     def get_name(self):
-        return 'p4://%s:%s@%s:%s' % (self._connection.user, self._connection.password, self._connection.host, self._connection.port)
+        return 'p4://%s:%s@%s' % (self._connection.user, self._connection.password, self._connection.port)
     name = property(get_name)
 
     def close(self):
