@@ -1,4 +1,35 @@
 """
+$Id$
+
+I've added my own comments here. The original text is attached below my comments.
+
+use_vars: 
+ Do we replace $USER with username?
+ use_vars accepts an argument to change the case of the username which is one of:
+ 	upper
+ 	lower
+ 	ucfirst
+ example:
+ 	use_vars=upper
+ 	 
+ (note: ucfirst is "uppercase first letter only")
+ 
+
+no_anon:
+ Do not include this page for anonymous users. 
+ NOTE: this is NOT a security feature, as anyone can still read your source code. 
+ Good feature to not include unneseseary information for anon users. 
+
+
+no_dotall:
+ Disable the use of DOTALL option for regular expression. pr. default DOTALL is enabled
+ and this make the dot (".") also include linebreaks.
+ 
+
+
+
+
+-------ORIGINAL---------------
 We take an argument which is a file to go get.	The second argument is going to be None, or wiki at this point.
 
 do we include it, and then parse it thru the wiki formatter or not?
@@ -20,6 +51,8 @@ Theoretically you can modify this to handle more formatters, but I haven't the n
 
 If you include Arguments, you MUST include both.  Sorry I'm lazy.
 
+
+
 """
 
 from trac import util
@@ -39,6 +72,7 @@ def execute(hdf, args, env):
 	formatter = None
 	url = None
 	regex = None
+	argstring = ''
 	db = env.get_db_cnx()
 	cursor = db.cursor()
 	cs = db.cursor()
@@ -47,12 +81,19 @@ def execute(hdf, args, env):
 	currentpage =  hdf.getValue('wiki.page_name', '') + '/'
 	if args:
 		# Get regex's - last argument
-		regex = re.search('^(?:.+?,)+?(\'.*)',args).group(1)
-		args = args.replace('\'', '\'\'')
+		try:
+		   regex = re.search('^(?:.+?,)+?(\'.*)',args).group(1)
+		except:
+		   regex =''
+
+		argstring = argstring.join([',',args,',']) #Add trailing and tailing comma for easy matching
+		args = args.replace('\'', '\'\'') 
 
 	#Split args
+	
 	args = args.split(',')
-	regex = regex.split('\';\'')
+        if regex != '':	
+		regex = regex.split('\',\'')
 
 	#Get URL
 	if args[0] != 'None':
@@ -64,28 +105,69 @@ def execute(hdf, args, env):
 		# we need to get the file from the svn repo.
 		#http://financial.trac.yumaed.org/trac.cgi/file/trunk/needs_document/Employee/employee_file.txt?format=raw
 		url = 'http://' + os.getenv('HTTP_HOST') + env.href.base + '/file/' +  url + '?format=raw'
-	if url[:7] != 'http://':
+	if (url[:7] != 'http://') and (url[:5] != 'wiki:'):
 		#We are getting local file
 		url = '/tmp/trac_include/' + url.replace('/','_');
 		#url = 'http://' + os.getenv('HTTP_HOST') + env.href.base + '/file/' +  url + '?format=raw'
+
+        authname = hdf.getValue("trac.authname", "anonymous")
+	# control options
+        #------------------------
+	#If arg no_dotall is set, disable DOTALL usage
 	try:
-            f = urllib.urlopen(url)
-        except:
-            #raise util.TracError('The "%s" argument doesnt seem to be a valid link' % (args))
-            raise util.TracError('The "%s" argument doesnt seem to be a valid link' % (url))
-			#buf.write('<P>bad url: ')
-			#buf.write(url)
-	txt = f.read()
+	   argstring.index(',no_dotall,')
+	except:
+	   re.DOTALL
 	
-	#Regex replace
-	re.DOTALL
+	#Should we only include pages for authenticated users?
+	try:
+	   argstring.index(',no_anon,')
+	   if authname == "anonymous":
+	   		return buf.getvalue()
+	except:
+	  1 #Sorry.. Dont know python at all, and this was the only way i could solve that except: requires at least 1 line
+
+	#Should we replace $USER with logged-in username, in URL?
+        if re.search(',use_vars(?:=\w+)?,',argstring):
+              sub_arg = re.search(',use_vars(?:=(\w+))?,',argstring).group(1)
+              if sub_arg == 'lower':
+			authname = authname.lower()
+              if sub_arg == 'upper':
+			authname = authname.upper()
+              if sub_arg == 'ucfirst': 
+			authname = authname.capitalize()
+              		
+  	      url = url.replace('$USER',authname)
+	#-----------------------------
+
+
+        #Fetch the included page
+        if url[:5] == 'wiki:': #Wiki url
+		url = url[5:]
+
+                sql = "SELECT text from wiki where name = '%s' order by version desc limit 1" % url
+        	cs = db.cursor()
+        	cs.execute(sql)
+
+        	row = cs.fetchone()
+        	if row == None:
+                	return ''
+        	txt = row[0]
+        else: # Normal URL
+		try:
+			f = urllib.urlopen(url)
+		except:
+			raise util.TracError('The "%s" argument doesnt seem to be a valid link' % (url))
+		txt = f.read()
+	
+	#Do the regex replacements
 	for ex in regex:
 	        ex = ex.strip("'")
-		ex = ex.split('\',\'')
+		ex = ex.split('\'/\'')
 		txt = re.sub(ex[0],ex[1],txt)
 			
 	if formatter == 'wiki':
 		txt = wiki_to_html(txt,env,hdf,db,0)
 	buf.write(txt)
-	#buf.write(regex) #DEBUG
+#	buf.write(env) #DEBUG
 	return buf.getvalue()
