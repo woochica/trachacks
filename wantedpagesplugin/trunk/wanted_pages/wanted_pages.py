@@ -16,7 +16,7 @@ class WantedPagesMacro(Component):
     index = {}
 
     def get_macros(self):
-        return ['wantedPages']
+        return ['wantedPages', 'WantedPages']
 
     def get_macro_description(self, name):
         return 'Lists all wiki pages that are linked to but not created in '+ \
