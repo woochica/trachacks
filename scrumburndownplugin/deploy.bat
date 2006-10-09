@@ -1,1 +1,1 @@
-copy c:\burndown-plugin\dist\TracBurndown-01.00.10-py2.3.egg C:\Python23\Lib\site-packages
+copy c:\burndown-plugin\dist\TracBurndown-01.01.10-py2.3.egg C:\Python23\Lib\site-packages
