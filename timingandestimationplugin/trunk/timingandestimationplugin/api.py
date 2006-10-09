@@ -41,6 +41,7 @@ class TimeTrackingSetupParticipant(Component):
     additional database tables."""
     def __init__(self):
         sql = "SELECT id, title FROM report ORDER BY ID"
+        dbhelper.mylog = self.log
         self.reportmap = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]
         
     def environment_created(self):
@@ -49,19 +50,13 @@ class TimeTrackingSetupParticipant(Component):
             self.upgrade_environment(None)
             
     def db_needs_upgrade(self):
-        tables = dbhelper.get_database_table_names(self.env.get_db_cnx())
-        bill_date = [table for table in tables if table == 'bill_date']
-        report_version = [table for table in tables if table == 'report_version']
-        if bill_date and report_version:
-            return False;
-        return True;
+        val =  dbhelper.db_needs_upgrade(self.env.get_db_cnx())
+        return val
         
     def db_do_upgrade(self):
         print "Beginning DB Upgrade"
-        tables = dbhelper.get_database_table_names(self.env.get_db_cnx())
-        bill_date = [table for table in tables if table == 'bill_date']
-        report_version = [table for table in tables if table == 'report_version']
-
+        bill_date = dbhelper.db_table_exists(self.env.get_db_cnx(), 'bill_date');
+        report_version = dbhelper.db_table_exists(self.env.get_db_cnx(), 'report_version');
         if not bill_date:
             print "Creating bill_date table"
             sql = """
@@ -72,6 +67,7 @@ class TimeTrackingSetupParticipant(Component):
             );
             """
             dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
+            
         if not report_version:
             print "Creating report_version table"
             sql = """
@@ -82,11 +78,11 @@ class TimeTrackingSetupParticipant(Component):
             );
             """
             dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
+        dbhelper.set_plugin_db_version(self.env.get_db_cnx);
     
     def reports_need_upgrade(self):
         bit = False
-        tables = dbhelper.get_database_table_names(self.env.get_db_cnx())
-        report_version = [table for table in tables if table == 'report_version']
+        report_version = dbhelper.db_table_exists(self.env.get_db_cnx(), 'report_version');
         if not report_version:
             return True
         

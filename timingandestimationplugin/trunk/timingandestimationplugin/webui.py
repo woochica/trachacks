@@ -41,53 +41,8 @@ class TimingEstimationAndBillingPage(Component):
             new_reports.extend([new_group])
         return new_reports
             
-#     def init_reports(self):
-#         # here we want to set each reports number so that we can get hrefs
-#         sql = "SELECT id, title FROM report ORDER BY ID"
-#         self.reportmap = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]        
-#         for report_group in all_reports:
-#             reports_list = report_group["reports"] 
-#             for report in reports_list:
-#                 title = report["title"]
-#                 reportid = [self.reportmap[i][0]
-#                             for i in range(0, len(self.reportmap))
-#                             if self.reportmap[i][1] == title][0]
-#                 report["reportnumber"] = reportid
-#                 report["href"] = "%s/%s" % \
-#                     (self.env.href.report(), reportid)
-    
     def __init__(self):
         pass
-
-#    def mark_all_tickets_as_paid(self, username="Timing and Estimation Plugin",  when=0):
-#         if not when:
-#             when = time.time()
-#         when = int(when)
-#        
-#         ticket_id_sql = "SELECT id FROM ticket"
-#         db = self.env.get_db_cnx()
-#         ticket_ids = dbhelper.get_column_as_list(db, ticket_id_sql)
-#
-#         get_lastbillingdate = "SELECT ticket, value FROM ticket_custom WHERE ticket=%s and name='lastbilldate'"
-#         cursor = db.cursor()
-#         for ticket in ticket_ids:
-#             data = dbhelper.get_all(db, get_lastbillingdate % ticket)[1]
-#             last = ''
-#             row = len(data) >= 1 and data[0] or None
-#             if row:
-#                 last = row[1]
-#             if row:
-#                 update = "UPDATE ticket_custom SET value=strftime('%m/%d/%Y %H:%M:%S',%s, 'unixepoch', 'localtime') WHERE ticket=%s and name='lastbilldate'"
-#                 cursor.execute(update, [when, ticket])
-#             else:
-#                 insert = "INSERT INTO ticket_custom (ticket, name, value) VALUES ( %s, 'lastbilldate',strftime('%m/%d/%Y %H:%M:%S',%s, 'unixepoch', 'localtime'))"
-#                 cursor.execute(insert, [ticket, when])
-#             billing_date_change_sql = """
-#             INSERT INTO ticket_change ( ticket, time, author, field, oldvalue, newvalue)
-#             VALUES (%s, %s, %s, 'lastbilldate', %s, strftime('%m/%d/%Y %H:%M:%S',%s, 'unixepoch', 'localtime'))
-#             """
-#             cursor.execute(billing_date_change_sql,[ticket, when, username,last,when])
-#
 
     def set_bill_date(self, username="Timing and Estimation Plugin",  when=0):
         now = time.time()
@@ -95,11 +50,14 @@ class TimingEstimationAndBillingPage(Component):
             when = now
         when = int(when)
         now = int(now)
+        dtwhen = datetime.datetime.fromtimestamp(when);
+        strwhen = "%s/%s/%s %#02d:%#02d:%#02d" % \
+                (dtwhen.month, dtwhen.day,dtwhen.year, dtwhen.hour,dtwhen.minute, dtwhen.second)
         sql = """
         INSERT INTO bill_date (time, set_when, str_value)
-        VALUES (%s, %s, strftime('%m/%d/%Y %H:%M:%S',%s, 'unixepoch', 'localtime'))
+        VALUES (%s, %s, %s)
         """
-        dbhelper.execute_non_query(self.env.get_db_cnx(), sql, when, now, when)
+        dbhelper.execute_non_query(self.env.get_db_cnx(), sql, when, now, strwhen)
          
         
         
@@ -130,18 +88,6 @@ class TimingEstimationAndBillingPage(Component):
             billing_dates.extend([billing_info])
         self.log.debug("bill-dates: %s"%billing_dates)
         req.hdf['billing_info.billdates'] = billing_dates
-
-#     def set_components(self, req):
-#         db = self.env.get_db_cnx()
-#         cursor = db.cursor();
-#         billing_dates = []
-#         billing_time_sql = """
-#         SELECT DISTINCT time as value, strftime('%m/%d/%Y %H:%M:%S', time, 'unixepoch') as [text]
-#         FROM ticket_change
-#         WHERE field = 'lastbilldate'
-#         """        
-#     def set_milestones(self, req):
-#         pass
 
     def match_request(self, req):
         if re.search('/Billing', req.path_info):

@@ -1,3 +1,6 @@
+db_version_key = 'TimingAndEstimationPlugin_Db_Version';
+db_version = "1"
+mylog = None;
 
 
 def get_all(db, sql, *params):
@@ -23,19 +26,55 @@ def execute_non_query(con, sql, *params):
         cur.close()
         con.close()
 
-def get_database_table_names(db):
-    sql =" SELECT tbl_name FROM SQLITE_MASTER WHERE type='table' "
-    return get_column_as_list(db, sql);
 
 def get_scalar(db, sql, col=0, *params):
     cur = db.cursor()
     try:
         cur.execute(sql, params)
-        data = cur.fetchone()
-    finally:
+        data = cur.fetchone();
+        cur.close();
+        db.close();
+    except Exception, e:
+        mylog.error('There was a problem executing sql:%s \n \
+with parameters:%s\nException:%s'%(sql, params, e));
+        cur.close();
+        db.close();
+    if data:
+        return data[col]
+    else:
+        return None;
+
+def get_plugin_db_version(db):
+    sql = "SELECT value FROM system where name = '%s';" % db_version_key
+    val = get_scalar(db, sql)
+    return val;
+
+def set_plugin_db_version(db_fn):
+    if get_plugin_db_version(db_fn()):
+        sql = "UPDATE system SET value='%s' WHERE name = '%s'" % (db_version, db_version_key)
+    else:
+        sql = "INSERT INTO system (name, value) VALUES( '%s', '%s') " % ( db_version_key, db_version )
+    execute_non_query(db_fn(), sql);
+
+def db_needs_upgrade(db):
+    ver = get_plugin_db_version(db);
+    if not ver or int(ver) < int(db_version):
+        return True
+    return False
+    
+def db_table_exists(db, table):
+    sql = "SELECT * FROM %s LIMIT 1" % table;
+    cur = db.cursor()
+    has_table = True;
+    try:
+        cur.execute(sql)
         cur.close()
         db.close()
-    return data[col]
+    except Exception, e:
+        has_table = False
+        cur.close()
+        db.close()
+    return has_table
 
 def get_column_as_list(db, sql, col=0, *params):
     return [valueList[col] for valueList in get_all(db, sql, *params)[1]]
