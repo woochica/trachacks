@@ -75,8 +75,9 @@ class WantedPagesMacro(Component):
                 if page.find('#') != -1:
                     page = page[:page.find('#')]
 
-                if not self.index.has_key(page) and page[0] is not '!':
+                if not self.index.has_key(page) and page[0] != '!':
                     wantedIndex[page] = fullLink
+
                 text = text.replace(fullLink, '') # remove so no CamelCase detected below
 
             matches = camel.findall(text)
@@ -84,7 +85,7 @@ class WantedPagesMacro(Component):
                 if page.find('#') != -1:
                     page = page[:page.find('#')]
 
-                if not self.index.has_key(page) and page[0] is not '!':
+                if not self.index.has_key(page) and page[0] != '!':
                     wantedIndex[page] = page
 
         return wantedIndex
