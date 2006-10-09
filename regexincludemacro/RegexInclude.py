@@ -1,7 +1,7 @@
 """
-$Id$
 
 I've added my own comments here. The original text is attached below my comments.
+Also, please forgive any stupid errors i might have made. My i started on python 1 week ago.
 
 use_vars: 
  Do we replace $USER with username?
@@ -73,6 +73,8 @@ def execute(hdf, args, env):
 	url = None
 	regex = None
 	argstring = ''
+	match_seperator = ' '
+	dotall = ''
 	db = env.get_db_cnx()
 	cursor = db.cursor()
 	cs = db.cursor()
@@ -94,6 +96,7 @@ def execute(hdf, args, env):
 	args = args.split(',')
         if regex != '':	
 		regex = regex.split('\',\'')
+
 
 	#Get URL
 	if args[0] != 'None':
@@ -117,7 +120,9 @@ def execute(hdf, args, env):
 	try:
 	   argstring.index(',no_dotall,')
 	except:
-	   re.DOTALL
+	   re.DOTALL #Aparantly this doesnt always work..
+	   dotall = '(?s)' # So we use this regex equivilant
+	   #buf.write('DOTALL')
 	
 	#Should we only include pages for authenticated users?
 	try:
@@ -126,7 +131,17 @@ def execute(hdf, args, env):
 	   		return buf.getvalue()
 	except:
 	  1 #Sorry.. Dont know python at all, and this was the only way i could solve that except: requires at least 1 line
+	#Should we only include pages for authenticated users?
 
+        if re.search(',match_seperator(?:=[^,]+)?,',argstring):
+              match_seperator = re.search(',match_seperator(?:=([^,]+))?,',argstring).group(1)
+
+        #Or allow the match seperator to be in quotes
+        if re.search(',match_seperator="[^"]+?"?,',argstring):
+              match_seperator = re.search(',match_seperator="([^"]+?)"?,',argstring).group(1)
+              
+              
+              
 	#Should we replace $USER with logged-in username, in URL?
         if re.search(',use_vars(?:=\w+)?,',argstring):
               sub_arg = re.search(',use_vars(?:=(\w+))?,',argstring).group(1)
@@ -162,9 +177,19 @@ def execute(hdf, args, env):
 	
 	#Do the regex replacements
 	for ex in regex:
-	        ex = ex.strip("'")
-		ex = ex.split('\'/\'')
-		txt = re.sub(ex[0],ex[1],txt)
+		#Detect replace or search
+		ex = ex.strip("'")
+		
+		try: 
+		        ex.index("'/'") #Check If this is a replacement
+	        	ex = ex.split('\'/\'')
+        		txt = re.sub(dotall+ex[0],ex[1],txt)
+		except: #If this is a search
+			tmp = ''
+			for m in re.finditer(dotall+ex, txt):
+				tmp = "".join([tmp,match_seperator,m.group(1)])
+			txt = tmp[1:]
+		
 			
 	if formatter == 'wiki':
 		txt = wiki_to_html(txt,env,hdf,db,0)
