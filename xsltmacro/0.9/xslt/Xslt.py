@@ -102,7 +102,7 @@ def execute(hdf, args, env):
     else:
         style_obj = _get_obj(env, hdf, *stylespec)
         doc_obj   = _get_obj(env, hdf, *docspec)
-        params    = dict([(str(k[3:]), str(v)) for k, v in opts.iteritems() if k.startswith('xp_')])
+        params    = dict([(_to_str(k[3:]), _to_str(v)) for k, v in opts.iteritems() if k.startswith('xp_')])
 
         try:
             page, ct  = _transform(style_obj, doc_obj, params)
@@ -143,6 +143,15 @@ def _has_prefix(name, pfx_list):
         if name.startswith(pfx): return True
 
     return False
+
+def _to_str(obj):
+    if isinstance(obj, str):
+        return obj
+
+    if isinstance(obj, unicode):
+        return obj.encode('utf-8')
+
+    return str(obj)
 
 def _parse_filespec(filespec, hdf, env):
     # parse filespec argument to get module and id if contained.
