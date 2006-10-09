@@ -10,9 +10,9 @@ url's; the full syntax is `<module>:<id>:<file>`, where module can be either
 '''wiki''', '''ticket''', '''browser''', '''file''', or '''url''':
  * `wiki:<page>:<attachment>`
  * `ticket:<ticket-number>:<attachment>`
- * `browser:source:<file>`        ''(file from repository)''
- * `file:htdocs:<file>`        ''(file from project htdocs directory)''
- * `url::<url>`        ''(note the double ::)''
+ * `browser:source:<file>``		`''(file from repository)''
+ * `file:htdocs:<file>``		`''(file from project htdocs directory)''
+ * `url::<url>``			`''(note the double ::)''
 
 However, the full form is almost never necessary. There are three short forms:
  * `<id>:<file>`, where id may be either a ticket shorthand (`#<num>`),
@@ -24,10 +24,10 @@ However, the full form is almost never necessary. There are three short forms:
 
 The remaining arguments are optional:
  * `use_iframe` means generate an <iframe> tag instead of directly rendering
-    the result (this script needs to be installed as a plugin for this to work)
+   the result (this script needs to be installed as a plugin for this to work)
  * `if_*` are all passed as attributes to the iframe with the `if_` prefix stripped
  * `xp_*` are all passed as parameters to the xsl transformer with the `xp_` prefix
-    stripped
+   stripped
 
 Examples:
 {{{
@@ -102,7 +102,7 @@ def execute(hdf, args, env):
     else:
         style_obj = _get_obj(env, hdf, *stylespec)
         doc_obj   = _get_obj(env, hdf, *docspec)
-        params    = dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('xp_')])
+        params    = dict([(str(k[3:]), str(v)) for k, v in opts.iteritems() if k.startswith('xp_')])
 
         try:
             page, ct  = _transform(style_obj, doc_obj, params)
@@ -282,7 +282,13 @@ def _transform(style_obj, doc_obj, params):
         raise Exception("%s is not a valid stylesheet" % _obj_tostr(style_obj))
 
     result = style.applyStylesheet(doc, params)
-    output = style.saveResultToString(result)
+    try:
+        output = style.saveResultToString(result)
+    except Exception, e:
+        # detect empty result doc
+        if str(e) != 'error return without exception set':
+            raise e
+        output = ''
 
     if result.get_type() == 'document_xml':
         ct = 'text/xml'
