@@ -8,10 +8,10 @@ billing_reports = [
         {
     "title":"Ticket Work Summary",
     "reportnumber":None,
-    "version":3,
+    "version":4,
     "sql":"""
 SELECT ticket as __group__,__style__, ticket, 
-newvalue as [Hours-added], time as _time, strtime as [Time-Entered],
+newvalue as Hours_added, time as _time, strtime as Time_Entered,
  _ord
 FROM(
 SELECT '' as __style__, author, t.id as ticket, newvalue,
@@ -53,16 +53,16 @@ ORDER BY ticket, _time,  _ord
         {
     "title":"Milestone Work Summary",
     "reportnumber":None,
-    "version":3,
+    "version":4,
     "sql":"""
 SELECT 
   milestone as __group__, 
   __style__, 
   ticket,
   summary,
-  newvalue as [Hours-added],
+  newvalue as Hours_added,
   time as _time,
-  strtime as [Last-Updated],
+  strtime as Last_Updated,
  _ord
 FROM(
 SELECT '' as __style__, t.id as ticket, SUM(newvalue) as newvalue,t.summary as summary,
@@ -113,10 +113,10 @@ ORDER BY milestone, ticket, _time,  _ord
     {
     "title":"Developer Work Summary",
     "reportnumber":None,
-    "version":3,
+    "version":4,
     "sql":"""
 SELECT author as __group__,__style__, ticket, 
-newvalue as [Hours-added], time as _time, strtime as [Time-Entered],
+newvalue as Hours_added, time as _time, strtime as Time_Entered,
  _ord
 FROM(
 SELECT '' as __style__, author, t.id as ticket, newvalue,
@@ -159,10 +159,10 @@ ticket_hours_reports = [
 {
     "title": "Ticket Hours",
     "reportnumber": None,
-    "version":2,
+    "version":3,
     "sql": """
 SELECT __color__,  __style__,  ticket, summary_, component ,version, severity,
- milestone, status, owner, [Estimated-hours], [total-hours], billable
+ milestone, status, owner, Estimated_hours, total_hours, billable
 --,created,  modified,         -- ## Dates are formatted
 -- _description_,                    -- ## Uses a full row
 -- _changetime,
@@ -174,8 +174,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as [Estimated-hours],
-       totalhours.value as [total-hours], 
+       EstimatedHours.value as Estimated_hours,
+       totalhours.value as total_hours, 
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -205,8 +205,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        '' as ticket, 'Time Summary' AS summary_,             
        '' as component,'' as version, '' as severity, '' as  milestone, '' as status, '' as owner,
-       SUM(EstimatedHours.value) as [Estimated-hours],
-       SUM(totalhours.value) as [total-hours],
+       SUM(EstimatedHours.value) as Estimated_hours,
+       SUM(totalhours.value) as total_hours,
        '' as billable,
        '' as created, '' as modified,         -- ## Dates are formatted
 
@@ -236,10 +236,10 @@ ORDER BY ticket, _ord
 {
     "title": "Ticket Hours with Description",
     "reportnumber": None,
-    "version":2,
+    "version":3,
     "sql": """
 SELECT __color__,  __style__,  ticket, summary_, component ,version, severity,
- milestone, status, owner, [Estimated-hours], [total-hours], billable
+ milestone, status, owner, Estimated_hours, total_hours, billable
 --,created,  modified,         -- ## Dates are formatted
 ,_description_
 -- _changetime,
@@ -251,8 +251,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as [Estimated-hours],
-       totalhours.value as [total-hours], 
+       EstimatedHours.value as Estimated_hours,
+       totalhours.value as total_hours, 
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -282,8 +282,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        '' as ticket, 'Time Summary' AS summary_,             
        '' as component,'' as version, '' as severity, '' as  milestone, '' as status, '' as owner,
-       SUM(EstimatedHours.value) as [Estimated-hours],
-       SUM(totalhours.value) as [total-hours],
+       SUM(EstimatedHours.value) as Estimated_hours,
+       SUM(totalhours.value) as total_hours,
        '' as billable,
        '' as created, '' as modified,         -- ## Dates are formatted
 
@@ -314,10 +314,10 @@ ORDER BY ticket, _ord
     {
     "title":"Ticket Hours Grouped By Component",
     "reportnumber":None,
-    "version":2,
+    "version":3,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
- milestone, status, owner, [Estimated-hours], [total-hours], billable
+ milestone, status, owner, Estimated_hours, total_hours, billable
 --,created,  modified,         -- ## Dates are formatted
 -- _description_,                    -- ## Uses a full row
 -- _changetime,
@@ -330,8 +330,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as [Estimated-hours],
-       totalhours.value as [total-hours], 
+       EstimatedHours.value as Estimated_hours,
+       totalhours.value as total_hours, 
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -362,8 +362,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        '' as ticket, 'Time Summary' AS summary_,             
        t.component as component,'' as version, '' as severity, '' as  milestone, '' as status, '' as owner,
-       SUM(EstimatedHours.value) as [Estimated-hours],
-       SUM(totalhours.value) as [total-hours],
+       SUM(EstimatedHours.value) as Estimated_hours,
+       SUM(totalhours.value) as total_hours,
        '' as billable,
        '' as created, '' as modified,         -- ## Dates are formatted
 
@@ -395,10 +395,10 @@ ORDER BY component,ticket, _ord
     {
     "title":"Ticket Hours Grouped By Component with Description",
     "reportnumber":None,
-    "version":2,
+    "version":3,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
- milestone, status, owner, [Estimated-hours], [total-hours], billable
+ milestone, status, owner, Estimated_hours, total_hours, billable
 --,created,  modified         -- ## Dates are formatted
 ,_description_                    -- ## Uses a full row
 -- _changetime,
@@ -411,8 +411,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as [Estimated-hours],
-       totalhours.value as [total-hours], 
+       EstimatedHours.value as Estimated_hours,
+       totalhours.value as total_hours, 
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -443,8 +443,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        '' as ticket, 'Time Summary' AS summary_,             
        t.component as component,'' as version, '' as severity, '' as  milestone, '' as status, '' as owner,
-       SUM(EstimatedHours.value) as [Estimated-hours],
-       SUM(totalhours.value) as [total-hours],
+       SUM(EstimatedHours.value) as Estimated_hours,
+       SUM(totalhours.value) as total_hours,
        '' as billable,
        '' as created, '' as modified,         -- ## Dates are formatted
 
@@ -475,10 +475,10 @@ ORDER BY component,ticket, _ord
     {
     "title":"Ticket Hours Grouped By Milestone",
     "reportnumber":None,
-    "version":2,
+    "version":3,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
- milestone, status, owner, [Estimated-hours], [total-hours], billable
+ milestone, status, owner, Estimated_hours, total_hours, billable
 --,created,  modified,         -- ## Dates are formatted
 --,_description_                    -- ## Uses a full row
 -- _changetime,
@@ -491,8 +491,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as [Estimated-hours],
-       totalhours.value as [total-hours], 
+       EstimatedHours.value as Estimated_hours,
+       totalhours.value as total_hours, 
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -523,8 +523,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        '' as ticket, 'Time Summary' AS summary_,             
        '' as component,'' as version, '' as severity, t.milestone as  milestone, '' as status, '' as owner,
-       SUM(EstimatedHours.value) as [Estimated-hours],
-       SUM(totalhours.value) as [total-hours],
+       SUM(EstimatedHours.value) as Estimated_hours,
+       SUM(totalhours.value) as total_hours,
        '' as billable,
        '' as created, '' as modified,         -- ## Dates are formatted
 
@@ -555,10 +555,10 @@ ORDER BY milestone,ticket, _ord
         {
     "title":"Ticket Hours Grouped By MileStone with Description",
     "reportnumber":None,
-    "version":2,
+    "version":3,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
- milestone, status, owner, [Estimated-hours], [total-hours], billable
+ milestone, status, owner, Estimated_hours, total_hours, billable
 --,created,  modified,         -- ## Dates are formatted
 ,_description_                    -- ## Uses a full row
 -- _changetime,
@@ -571,8 +571,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as [Estimated-hours],
-       totalhours.value as [total-hours], 
+       EstimatedHours.value as Estimated_hours,
+       totalhours.value as total_hours, 
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -603,8 +603,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        '' as ticket, 'Time Summary' AS summary_,             
        '' as component,'' as version, '' as severity, t.milestone as  milestone, '' as status, '' as owner,
-       SUM(EstimatedHours.value) as [Estimated-hours],
-       SUM(totalhours.value) as [total-hours],
+       SUM(EstimatedHours.value) as Estimated_hours,
+       SUM(totalhours.value) as total_hours,
        '' as billable,
        '' as created, '' as modified,         -- ## Dates are formatted
 

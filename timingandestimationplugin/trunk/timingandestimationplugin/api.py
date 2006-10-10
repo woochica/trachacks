@@ -1,5 +1,6 @@
 import re
 import dbhelper
+import time
 from ticket_daemon import *
 from usermanual import *
 from reports import all_reports
@@ -242,13 +243,15 @@ class TimeTrackingSetupParticipant(Component):
         return False
 
     def do_user_man_update(self):
+        when = int(time.time())
         sql = """
         INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly)
-        VALUES ( %s, %s, strftime('%%s', 'now', 'unixepoch', 'localtime'), 'Timing and Estimation Plugin', '127.0.0.1', %s,'',0)
+        VALUES ( %s, %s, %s, 'Timing and Estimation Plugin', '127.0.0.1', %s,'',0)
         """
         dbhelper.execute_non_query(self.env.get_db_cnx(),sql,
                                    user_manual_wiki_title,
                                    user_manual_version,
+                                   when,
                                    user_manual_content)
             
         

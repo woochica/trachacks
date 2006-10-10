@@ -79,14 +79,14 @@ class TimingEstimationAndBillingPage(Component):
     def set_request_billing_dates(self, req):
         billing_dates = []
         billing_time_sql = """
-        SELECT DISTINCT time as value, str_value as [text]
+        SELECT DISTINCT time as value, str_value as text
         FROM bill_date
         """
         rs = dbhelper.get_result_set(self.env.get_db_cnx(), billing_time_sql)
         for (value, text) in rs.rows:
             billing_info = {'text':text , 'value':value}
             billing_dates.extend([billing_info])
-        self.log.debug("bill-dates: %s"%billing_dates)
+        #self.log.debug("bill-dates: %s"%billing_dates)
         req.hdf['billing_info.billdates'] = billing_dates
 
     def match_request(self, req):
