@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracTicketDelete',
-    version = '1.1',
+    version = '1.1.1',
     packages = ['ticketdelete'],
     package_data = { 'ticketdelete': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
@@ -16,6 +16,9 @@ setup(
     license = "BSD",
     keywords = "trac plugin ticket delete",
     url = "http://trac-hacks.org/wiki/TicketDeletePlugin",
+    classifiers = [
+        'Framework :: Trac',
+    ],
     
     install_requires = ['TracWebAdmin'],
 
