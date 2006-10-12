@@ -1,0 +1,111 @@
+About
+-----
+
+This plugin provides the ability to display a neat rendering of any
+hierarchical data structure such as a set of files within a file system,
+hosts on a network, or similar.
+
+Syntax
+------
+
+The plugin adds the following syntactic elements to the wiki processor:
+
++-
+--
+
++- is the token to begin a new tree or continue one in progress. Add entries
+with 
+
++-*name
+
+* is some separator character (e.g. / for directories, . for parts of
+a domain name, or any other character except for whitespace)
+name is some unique identifier within the current tree, possibly containing
+further separators and names (nodes).
+
+A tree's entries are ended with --. If -- is seen but the processor is not in
+'capture tree nodes' mode, -- will be rendered as-is.
+
+
+Features
+--------
+
+ * Attempts will be made by the plugin to disambiguate nodes following
+   deterministic rules, so only the information necessary to uniquely identify a
+   parent node need be provided when adding further nodes.
+
+ * Nodes may be designated as 'terminal' or 'container'. Container nodes
+   obviously contain further nodes, but otherwise-terminal nodes may be
+   marked as containers for display purposes.
+
+ * When a tree is displayed in a wiki page, entire sub-trees may be
+   collapsed/ expanded as desired. The whole tree is considered a subtree,
+   so the collapse/ expand rule applies just as well to it as to any other.
+   (requires javascript)
+
+ * Intermediate nodes are created on demand. There is no need to separately
+   specify each and every child node in a long branch.
+
+ * Comments may be added to terminal nodes (or empty container nodes).
+
+
+Examples
+--------
+
+Probably best illustrated with some examples.
+
+  Simple Tree, showing several features.
+  --------------------------------------
+
++-.A.B.C  # Node 'B' is auto-vivified
++-C.D     # 'C' is unique in the prior subtree
++-.A.E    # E will be added as a child of A
++-.F      # F will be added as a new top-level node
+--
+
+This will be displayed as something like:
+
+.
++--- A
+|    +--- B
+|    |    +--- C
+|    |         +--- D
+|    +--- E
++--- F
+
+
+  The 'trac' directories
+  --------------------
+
++-/usr/share/trac/
++-/usr/share/trac/templates
++-/usr/share/trac/cgi-bin
++-/usr/share/trac/wiki-default
++-/usr/share/trac/htdocs
++-/usr/share/trac/htdocs/css
++-/usr/share/trac/htdocs/js
++-/usr/share/trac/wiki-macros
+--
+
+which is displayed as something like:
+
+[V] usr
+    +--- [V] share
+             +--- [V] trac
+                      +--- templates
+                      +--- cgi-bin
+                      +--- wiki-default
+                      +--- [V] htdocs
+                      |        +--- css
+                      |        +--- js
+                      +--- wiki-macros
+
+Note the 'collapse subtree' buttons, marked as [V].
+
+Limitations
+-----------
+
+ * Whitespace cannot be used as a node delimiter.
+ * Duplicate children of a parent node are not supported.
+ * Cyclical hierarchies are not supported.
+
