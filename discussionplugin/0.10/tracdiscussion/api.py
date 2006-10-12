@@ -765,7 +765,7 @@ class DiscussionApi(object):
 
     def get_groups(self, req, cursor, order_by = 'id', desc = False):
         # Get count of forums without group
-        sql = "SELECT COUNT(id) FROM forum WHERE forum_group = 0"
+        sql = "SELECT COUNT(f.id) FROM forum f WHERE f.forum_group = 0"
         self.log.debug(sql)
         cursor.execute(sql)
         no_group_forums = 0
