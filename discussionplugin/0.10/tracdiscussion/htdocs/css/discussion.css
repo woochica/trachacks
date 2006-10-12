@@ -5,7 +5,7 @@
 }
 
 /* Forum list */
-.forum-list tr > td
+.forum-list tr >td
 {
   margin: 0em !important;
   padding: 0em !important;
@@ -184,7 +184,7 @@
 .message-list div.set-display
 {
   text-align: center;
-  margin-top: 2em;
+  margin: 1em;
 }
 
 .message-list div.set-display a

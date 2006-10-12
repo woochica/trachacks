@@ -290,13 +290,6 @@ class DiscussionApi(object):
                 order = req.args.get('order') or 'id'
                 desc = req.args.get('desc')
 
-                # Prepare ORDER BY statement
-                order_by = 'ORDER BY ' + order
-                if desc:
-                    order_by = order_by + ' DESC'
-                else:
-                    order_by = order_by + ' ASC'
-
                 # Display groups.
                 req.hdf['discussion.order'] = order
                 req.hdf['discussion.desc'] = desc
@@ -304,7 +297,7 @@ class DiscussionApi(object):
                     req.hdf['discussion.name'] = group['name']
                     req.hdf['discussion.description'] = \
                       group['description']
-                req.hdf['discussion.groups'] = self.get_groups(req, cursor, order_by)
+                req.hdf['discussion.groups'] = self.get_groups(req, cursor, order, desc)
 
             elif mode == 'group-add':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -353,19 +346,12 @@ class DiscussionApi(object):
                 order = req.args.get('order') or 'id'
                 desc = req.args.get('desc')
 
-                # Prepare ORDER BY statement
-                order_by = 'ORDER BY ' + order
-                if desc:
-                    order_by = order_by + ' DESC'
-                else:
-                    order_by = order_by + ' ASC'
-
                 # Display forums.
                 req.hdf['discussion.order'] = order
                 req.hdf['discussion.desc'] = desc
                 req.hdf['discussion.groups'] = self.get_groups(req, cursor)
                 req.hdf['discussion.forums'] = self.get_forums(req, cursor,
-                  order_by)
+                  order, desc)
 
             elif mode == 'admin-forum-list':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -373,13 +359,6 @@ class DiscussionApi(object):
                 # Get form values
                 order = req.args.get('order') or 'id'
                 desc = req.args.get('desc')
-
-                # Prepare ORDER BY statement
-                order_by = 'ORDER BY ' + order
-                if desc:
-                    order_by = order_by + ' DESC'
-                else:
-                    order_by = order_by + ' ASC'
 
                 # Display forums.
                 req.hdf['discussion.order'] = order
@@ -394,7 +373,8 @@ class DiscussionApi(object):
                     req.hdf['discussion.group'] = forum['group']
                 req.hdf['discussion.users'] = self.get_users()
                 req.hdf['discussion.groups'] = self.get_groups(req, cursor)
-                req.hdf['discussion.forums'] = self.get_forums(req, cursor, order_by)
+                req.hdf['discussion.forums'] = self.get_forums(req, cursor,
+                  order, desc)
 
             elif mode == 'forum-add':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -467,18 +447,11 @@ class DiscussionApi(object):
                 order = req.args.get('order') or 'id'
                 desc = req.args.get('desc')
 
-                # Prepare ORDER BY statement
-                order_by = 'ORDER BY ' + order
-                if desc:
-                    order_by = order_by + ' DESC'
-                else:
-                    order_by = order_by + ' ASC'
-
                 # Display topics.
                 req.hdf['discussion.order'] = order
                 req.hdf['discussion.desc'] = desc
                 req.hdf['discussion.topics'] = self.get_topics(req, cursor,
-                  forum['id'], order_by)
+                  forum['id'], order, desc)
 
             elif mode == 'topic-add':
                 req.perm.assert_permission('DISCUSSION_APPEND')
@@ -516,7 +489,7 @@ class DiscussionApi(object):
                 new_author = Markup(req.args.get('author'))
                 new_body = Markup(req.args.get('body'))
 
-                # Add topic.
+                #Add topic.
                 self.add_topic(cursor, forum['id'], new_subject, new_author,
                   new_body)
 
@@ -634,7 +607,7 @@ class DiscussionApi(object):
                 new_author = Markup(req.args.get('author'))
                 new_body = Markup(req.args.get('body'))
 
-                # Add message.
+                #Add message.
                 if message:
                     self.add_message(cursor, forum['id'], topic['id'],
                       message['id'], new_author, new_body)
@@ -790,7 +763,7 @@ class DiscussionApi(object):
 
     # Get list functions
 
-    def get_groups(self, req, cursor, order_by = 'ORDER BY id ASC'):
+    def get_groups(self, req, cursor, order_by = 'id', desc = False):
         # Get count of forums without group
         sql = "SELECT COUNT(id) FROM forum WHERE forum_group = 0"
         self.log.debug(sql)
@@ -802,9 +775,12 @@ class DiscussionApi(object):
           'forums' : no_group_forums}]
 
         # Get forum groups
+        if order_by != 'forum':
+            order_by = 'g.' + order_by
         columns = ('id', 'name', 'description', 'forums')
-        sql = "SELECT id, name, description, (SELECT COUNT(id) FROM forum f" \
-          " WHERE f.forum_group = forum_group.id) FROM forum_group " + order_by
+        sql = "SELECT g.id, g.name, g.description, (SELECT COUNT(f.id) AS" \
+          " forums FROM forum f WHERE f.forum_group = g.id) FROM forum_group" \
+          " g ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
         cursor.execute(sql)
         for row in cursor:
@@ -814,17 +790,19 @@ class DiscussionApi(object):
             groups.append(row)
         return groups
 
-    def get_forums(self, req, cursor, order_by = 'ORDER BY subject ASC'):
+    def get_forums(self, req, cursor, order_by = 'subject', desc = False):
+        if not order_by in ('topics', 'replies', 'lastreply', 'lasttopic'):
+            order_by = 'f.' + order_by
         columns = ('id', 'name', 'author', 'time', 'moderators', 'group',
           'subject', 'description', 'topics', 'replies', 'lastreply',
           'lasttopic')
-        sql = "SELECT id, name, author, time, moderators, forum_group," \
-          " subject, description, (SELECT COUNT(id) FROM topic t WHERE" \
-          " t.forum = forum.id) AS topics, (SELECT COUNT(id) FROM message m" \
-          " WHERE m.forum = forum.id) AS replies, (SELECT MAX(time) FROM" \
-          " message m WHERE m.forum = forum.id) AS lasttopic, (SELECT" \
-          " MAX(time) FROM topic t WHERE t.forum = forum.id) AS lastreply" \
-          " FROM forum " + order_by
+        sql = "SELECT f.id, f.name, f.author, f.time, f.moderators," \
+          " f.forum_group, f.subject, f.description, (SELECT COUNT(t.id)" \
+          " FROM topic t WHERE t.forum = f.id) AS topics, (SELECT COUNT(m.id)" \
+          " FROM message m WHERE m.forum = f.id) AS replies, (SELECT" \
+          " MAX(time) FROM message m WHERE m.forum = f.id) AS lasttopic," \
+          " (SELECT MAX(time) FROM topic t WHERE t.forum = f.id) AS lastreply" \
+          " FROM forum f ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
         cursor.execute(sql)
         forums = []
@@ -844,13 +822,16 @@ class DiscussionApi(object):
             forums.append(row)
         return forums
 
-    def get_topics(self, req, cursor, forum, order_by = 'ORDER BY time ASC'):
+    def get_topics(self, req, cursor, forum, order_by = 'time', desc = False):
+        if not order_by in ('replies', 'lastreply',):
+            order_by = 't.' + order_by
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
           'replies', 'lastreply')
-        sql = "SELECT id, forum, time, subject, body, author, (SELECT" \
-          " COUNT(id) FROM message m WHERE m.topic = topic.id) AS replies," \
-          " (SELECT MAX(time) FROM message m WHERE m.topic = topic.id) AS" \
-          " lastreply FROM topic WHERE forum = %s " + order_by
+        sql = "SELECT t.id, t.forum, t.time, t.subject, t.body, t.author," \
+          " (SELECT COUNT(m.id) FROM message m WHERE m.topic = t.id) AS" \
+          " replies, (SELECT MAX(m.time) FROM message m WHERE m.topic = t.id)" \
+          " AS lastreply FROM topic t WHERE t.forum = %s ORDER BY " + order_by \
+          + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql % (forum,))
         cursor.execute(sql, (forum,))
         topics = []
@@ -866,10 +847,11 @@ class DiscussionApi(object):
             topics.append(row)
         return topics
 
-    def get_messages(self, req, cursor, topic, time, order_by = 'ORDER BY time ASC'):
+    def get_messages(self, req, cursor, topic, time, order_by = 'time', desc = False):
+        order_by = 'm.' + order_by
         columns = ('id', 'replyto', 'time', 'author', 'body')
-        sql = "SELECT id, replyto, time, author, body FROM message WHERE" \
-          " topic = %s " + order_by
+        sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m WHERE" \
+          " m.topic = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql % (topic,))
         cursor.execute(sql, (topic,))
         messagemap = {}

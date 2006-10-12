@@ -72,7 +72,7 @@
       </div>
       <div class="buttons">
         <input type="submit" name="preview" value="Preview"/>
-        <input type="submit" name="submit" value="Edit"/>
+        <input type="submit" name="submit" value="Submit changes"/>
         <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href ?>#<?cs var:args.message ?>'"/>
       </div>
       <?cs if:args.message ?>
@@ -160,7 +160,6 @@
 
 <?cs if:trac.acl.DISCUSSION_VIEW ?>
   <?cs if:!discussion.no_display && discussion.topic.id ?>
-    <?cs call:display_set_display() ?>
     <a name="-1"></a>
     <div class="topic <?cs if:discussion.topic.new ?>new<?cs /if ?>">
       <div class="header">
@@ -202,6 +201,7 @@
     </div>
     <?cs if:discussion.messages.0.id || args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
       <div class="replies <?cs if:discussion.topic.new ?>new<?cs /if ?>">
+        <?cs call:display_set_display() ?>
         <ul class="reply">
           <?cs if:discussion.messages.0.id ?>
             <?cs call:display_topic(discussion.messages) ?>
@@ -213,9 +213,9 @@
             <?cs call:display_reply_form() ?>
           <?cs /if ?>
         </ul>
+        <?cs call:display_set_display() ?>
       </div>
     <?cs /if ?>
-    <?cs call:display_set_display() ?>
   <?cs else?>
     <span>No discussion for this page created.</span>
   <?cs /if ?>
