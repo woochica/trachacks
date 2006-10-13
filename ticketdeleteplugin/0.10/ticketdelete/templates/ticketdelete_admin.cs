@@ -30,7 +30,7 @@
                     <tr>
                     <?cs each:field = change.fields ?>
                     <tr>
-                        <td><input type="checkbox" id="checkbox<?cs name:field ?>_<?cs name:change ?>" name="delete" value="<?cs name:field ?>_<?cs name:change ?>" <?cs if:change.checked ?>checked="checked"<?cs /if ?>/></td>
+                        <td><input type="checkbox" id="checkbox<?cs name:field ?>_<?cs name:change ?>" name="mdelete" value="<?cs name:field ?>_<?cs name:change ?>" <?cs if:change.checked ?>checked="checked"<?cs /if ?>/></td>
                         <td><?cs name:field ?></td>
                         <?cs if:name(field) == 'comment' ?>
                             <td colspan="2"><?cs var:field.new ?></td>
