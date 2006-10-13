@@ -85,20 +85,27 @@ class TicketDeletePlugin(Component):
             if t:
                 if page == 'comments':
                     try:
-                        selected = int(req.args.get('cnum'))
+                        selected = int(req.args.get('cnum')) - 1
                     except (TypeError, ValueError):
                         selected = None
-                    cnum = 0
-                    cur = None
-                    for time, author, field, oldvalue, newvalue, _ in t.get_changelog():
-                        if time != cur:
-                            cnum += 1
-                            cur = time
-                            req.hdf['ticketdelete.changes.%s.checked'%time] = cnum == selected
-                        req.hdf['ticketdelete.changes.%s.fields.%s'%(time,field)] = {'old': oldvalue, 'new': newvalue}
-                        req.hdf['ticketdelete.changes.%s.author'%time] = author
-                        req.hdf['ticketdelete.changes.%s.prettytime'%time] = strftime('%a, %d %b %Y %H:%M:%S',localtime(time))
-                        print cnum, selected
+
+                    ticket_data = {}
+                    for time, author, field, oldvalue, newvalue, perm in t.get_changelog():
+                        data = ticket_data.setdefault(str(time), {})
+                        data.setdefault('fields', {})[field] = {'old': oldvalue, 'new': newvalue}
+                        data['author'] = author
+                        data['prettytime'] = strftime('%a, %d %b %Y %H:%M:%S',localtime(time))
+                    
+                    # Remove all attachment changes                    
+                    for k, v in ticket_data.items():
+                        if 'attachment' in v.get('fields', {}):
+                            del ticket_data[k]
+                            
+                    # Check the boxes next to change number `selected`
+                    time_list = list(sorted(ticket_data.iterkeys()))
+                    if selected is not None and selected < len(time_list):
+                        ticket_data[time_list[selected]]['checked'] = True
+                    req.hdf['ticketdelete.changes'] = ticket_data
                 elif page == 'delete':
                     req.hdf['ticketdelete.id'] = t.id
  
