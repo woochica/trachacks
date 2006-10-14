@@ -22,7 +22,8 @@ class TracForgePermissionModule(DefaultPermissionStore):
         cursor = db.cursor()
         cursor.execute("SELECT username,action FROM permission")
         rows = cursor.fetchall()
-        master_cursor = self.master_env.get_db_cnx().cursor()
+        master_db = self.master_env.get_db_cnx()
+        master_cursor = master_db.cursor()
         master_cursor.execute("SELECT username,action FROM tracforge_permission")
         rows += master_cursor.fetchall()
         while True:
@@ -50,7 +51,8 @@ class TracForgePermissionModule(DefaultPermissionStore):
         cursor.execute("SELECT username,action FROM permission")
         rows = cursor.fetchall()
         if not self._extract_req().path_info.startswith('/admin/general/perm'):
-            master_cursor = self.master_env.get_db_cnx().cursor()
+            master_db = self.master_env.get_db_cnx()
+            master_cursor = master_db.cursor()
             master_cursor.execute("SELECT username,action FROM tracforge_permission")
             rows += master_cursor.fetchall()
         return [(row[0], row[1]) for row in rows]
@@ -75,7 +77,7 @@ class TracForgeGroupsModule(Component):
     # IPermissionGroupProvider methods
     def get_permission_groups(self, username):
         group_extn_point = PermissionSystem(self.master_env).store.group_providers
-        group_providers = [x for x in group_extn_point if x.__class__ != self.__class__] # Filter out this one (recursion block)
+        group_providers = [x for x in group_extn_point if x.__class__.__name__ != self.__class__.__name__] # Filter out this one (recursion block)
         
         master_groups = []
         for prov in group_providers:

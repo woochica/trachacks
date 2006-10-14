@@ -1,6 +1,7 @@
 from trac.env import Environment
 from UserDict import DictMixin
 from trac.web.main import _open_environment
+from trac.config import Configuration, Section
 
 class BadEnv(object):
     def __init__(self, env_path, exc):
@@ -68,7 +69,7 @@ class Project(object):
     """Model object for TracForge projects."""
     
     def __init__(self, env, name, db=None):
-        """Create a new Project. `env` should be the master environment,
+        """Create a new Project object. `env` should be the master environment,
         and `name` is shortname for the project."""
         
         self.master_env = env
@@ -158,3 +159,60 @@ class Project(object):
             name = row[0]
         return Project(env, name, db)
     by_env_path = classmethod(by_env_path)            
+
+class ConfigSet(Configuration):
+    """A model object for configuration sets used when creating new projects."""
+    
+    def __init__(self, env, tag, with_star=True, db=None):
+        """Initialize a new ConfigSet. `env` is the master environment."""
+        self.env = env
+        self.tag = tag
+        self.with_star = with_star
+        
+        self._data = {}
+        self._sections = {}
+        
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        sql = 'SELECT section, name, value FROM tracforge_configs WHERE tag=%s'
+        args = [self.tag]
+        if with_star:
+            sql += ' OR tag=%s'
+            args.append('*')
+        
+        cursor.execute(sql, args))
+        for section, name, value in cursor:
+            self._data.get(section, {})[name] = value
+            
+    def __contains__(self, key):
+        return key in self._data
+        
+    def __getitem__(self, name):
+        if name not in self._sections:
+            self._sections[name] = ConfigSetSection(self, name)
+        return self._sections[name]
+        
+    def remove(self, section, name):
+        if section in self._data and name in self._data[section]:
+            del self._data[section][name] 
+    
+    def sections(self):
+        return sorted(self_data.iterkeys())
+        
+    def save(self):
+        assert not self.with_star, "Not sure how to handle this yet."
+
+class ConfigSetSection(Section):
+    """A model for a section in a ConfigSet."""
+    
+    _data = propery(lambda self: self.config._data.get(self.name, {}))
+    
+    def __contains__(self, name):
+        return name in self._data
+        
+    def __iter__(self):
+        return self._data.iterkeys()
+        
+    def get(self, name, default=None):
+        pass
