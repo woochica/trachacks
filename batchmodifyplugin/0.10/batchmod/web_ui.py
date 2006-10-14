@@ -9,19 +9,23 @@ from trac.ticket.query import QueryModule
 from trac.util.html import html
 from trac.ticket import TicketSystem
 from trac.ticket import Ticket
+from trac.mimeview.api import IContentConverter
+from trac.wiki import IWikiSyntaxProvider
+from trac.wiki.macros import WikiMacroBase
+from trac.ticket.query import TicketQueryMacro as Macro
 
-__all__ = ['BatchModifyModule']
+__all__ = ['BatchModifyModule','TicketQueryMacro']
 
 class BatchModifyModule(Component):
     '''Allows batch modification of tickets'''
 
     implements(INavigationContributor, IRequestHandler, ITemplateProvider, \
-                IPermissionRequestor)
+            IPermissionRequestor, IContentConverter, IWikiSyntaxProvider)
     
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
-        return "query"
+        return QueryModule(self.env).get_active_navigation_item(req)
 
     def get_navigation_items(self, req):
         from trac.ticket.report import ReportModule
@@ -61,6 +65,23 @@ class BatchModifyModule(Component):
         yield 'TICKET_BATCH_MODIFY'
 
 
+    # IContentConverter methods
+    def get_supported_conversions(self):
+        return QueryModule(self.env).get_supported_conversions()    
+
+    def convert_content(self, req, mimetype, query, key):
+        return QueryModule(self.env).convert_content(req, mimetype, query, key)
+
+
+    # IWikiSyntaxProvider methods
+
+    def get_wiki_syntax(self):
+        return QueryModule(self.env).get_wiki_syntax() 
+
+    def get_link_resolvers(self):
+        return QueryModule(self.env).get_link_resolvers()
+
+
     # Internal methods 
     def _batch_modify(self, req):
         tickets = req.session['query_tickets'].split(' ')
@@ -92,3 +113,8 @@ class BatchModifyModule(Component):
             req.hdf['ticket.fields.' + name] = field
 
 
+class TicketQueryMacro(WikiMacroBase):
+    __doc__ = Macro.__doc__
+
+    def render_macro(self, req, name, content):
+        return Macro(self.env).render_macro(req, name, content)
