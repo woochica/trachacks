@@ -21,19 +21,20 @@ class FilenameSearchModule(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         repo = self.env.get_repository(req.authname)
-        youngest_rev = repo.get_youngest_rev()        
+        #youngest_rev = repo.get_youngest_rev()        
 
-        cursor.execute("""SELECT changes.rev, changes.path FROM node_change as changes, 
-                            (SELECT max(rev) as rev, path FROM node_change GROUP BY path) as maxes 
-                        WHERE changes.node_type=%s AND changes.rev=maxes.rev AND 
-                              changes.path=maxes.path AND changes.change_type!=%s""", ('F','D'))
-                                                                
-        all_files = [(r,p) for r,p in cursor if repo.has_node(p, youngest_rev)]
+        cursor.execute("""SELECT max("""+db.cast('rev','int')+"""), path FROM node_change
+                          WHERE node_type = %s AND change_type != 'D'
+                          GROUP BY path""", ('F',))
+
+        all_files = [(r,p) for r,p in cursor]# if repo.has_node(p, youngest_rev)]
+        cset_cache = {}
         
         for term in terms:
-            for _, path in all_files:
+            for rev, path in all_files:
                 if fnmatchcase(path, term):
-                    yield ('', path, '1', 'Me', '')
+                    cset = cset_cache.setdefault(rev, repo.get_changeset(rev))
+                    yield (req.href.browser(path, rev=rev), path, cset.date, cset.author, '')
         
     # IPermissionRequestor methods
     def get_permission_actions(self):
