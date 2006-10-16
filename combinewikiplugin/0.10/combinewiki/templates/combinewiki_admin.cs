@@ -32,8 +32,16 @@
 
 <form method="post" onsubmit="compile_pages(this);">
 <fieldset>
+    <legend>Title</legend>
+    <input type="text" name="title" size="40"/>
+</fieldset>
+<fieldset>
     <legend>Select pages</legend>
     <table border="0">
+        <tr>
+            <td colspan="2" align="left">All Pages</td>
+            <td colspan="2" align="right">Exported Pages</td>
+        </tr>
         <tr>
             <td rowspan="4">
                 <select id="leftpages_select" name="leftpages" size="10">

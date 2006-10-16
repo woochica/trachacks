@@ -5,15 +5,19 @@ from setuptools import setup
 
 setup(
     name = 'TracCombineWiki',
-    version = '1.0',
+    version = '1.1',
     packages = ['combinewiki'],
     package_data={ 'combinewiki' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
-    description = "Export a subset of the wiki as a single file..",
+    description = "Export a subset of a Trac wiki as a single file.",
+    long_description = "Export multiple wiki pages to a single file. Automatically generates a title page and table of contents.",
     license = "BSD",
     keywords = "trac plugin combine wiki pdf",
     url = "http://trac-hacks.org/wiki/CombineWikiPlugin",
+    classifiers = [
+        'Framework :: Trac',
+    ],
 
     entry_points = {
         'trac.plugins': [
@@ -22,4 +26,5 @@ setup(
     },
 
     install_requires = [ 'TracWebAdmin' ],
+    
 )
