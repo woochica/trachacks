@@ -52,7 +52,8 @@ def main():
                                     "FROM ticket t "\
                                     "    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'estimatedhours') "\
                                     "    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'totalhours') "\
-                                    "WHERE t.component = '%s' AND t.milestone = '%s' "
+                                    "WHERE t.component = '%s' AND t.milestone = '%s'"\
+                                    "    AND status IN ('new', 'assigned', 'reopened') "
                 cursor.execute(sqlSelect % (comp[0], mile[0]))
             
                 rows = cursor.fetchall()
