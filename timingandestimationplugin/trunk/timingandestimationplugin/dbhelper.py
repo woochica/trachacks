@@ -8,7 +8,7 @@ def get_all(db, sql, *params):
     cur = db.cursor()
     try:
         cur.execute(sql, params)
-        data = cur.fetchall()
+        data = list(cur.fetchall())
         desc = cur.description
 
     finally:
