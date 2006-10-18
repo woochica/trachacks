@@ -61,7 +61,7 @@ ORDER BY ticket,  _ord , time
         {
     "title":"Milestone Work Summary",
     "reportnumber":None,
-    "version":5,
+    "version":6,
     "sql":"""
 
 SELECT 
@@ -70,7 +70,7 @@ SELECT
   ticket,
   summary,
   newvalue as Hours_added,
-  time as time as LastU_pdated,
+  time as Last_Updated,
 --  strtime as Last_Updated,
  _ord
 FROM(
