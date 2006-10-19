@@ -47,17 +47,17 @@
 </thead>
 <?cs each:tag = tracforge.tags ?>
     <tr class="header">
-        <th colspan="0"><?cs name:tag ?></th>
+        <th colspan="0"><?cs var:tag ?></th>
     </tr>
-    <?cs each:config = tag ?>
+    <?cs each:section = tracforge.configs[tag] ?><?cs each:key = section ?>
     <tr>
-        <td><input type="checkbox" name="rows" value="<?cs name:tag ?>/<?cs var:config.section ?>/<?cs var:config.key ?>" /></td>
-        <td><?cs var:config.section ?></td>
-        <td><?cs var:config.key ?></td>
-        <td><?cs var:config.value ?></td>
-        <td><?cs var:config.action ?></td>
+        <td><input type="checkbox" name="rows" value="<?cs var:tag ?>/<?cs name:section ?>/<?cs name:key ?>" /></td>
+        <td><?cs name:section ?></td>
+        <td><?cs name:key ?></td>
+        <td><?cs var:key.0 ?></td>
+        <td><?cs var:key.1 ?></td>
     </tr>
-    <?cs /each ?>
+    <?cs /each ?><?cs /each ?>
 <?cs /each ?>
 </table>
 </form>

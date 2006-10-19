@@ -1,5 +1,6 @@
 # TracForge Config Set admin panel
 from trac.core import *
+from trac.web.chrome import add_stylesheet
 
 from webadmin.web_ui import IAdminPageProvider
 
@@ -31,12 +32,32 @@ class TracForgeConfigSetAdminModule(Component):
         configs = {}
         for t in tags:
             config = ConfigSet(self.env, tag=t, with_star=False)
-            configs[t] = dict([(s,config.get(s)) for s in config.sections()])
+            configs[t] = dict([(s,config.get(s, with_action=True)) for s in config.sections()])
 
         if req.method == 'POST':
-            req.redirect(req.href.admin(cat, page, path_info))
+            # Grab inputs
+            tag = req.args.get('tag')
+            section = req.args.get('section')
+            key = req.args.get('key')
+            value = req.args.get('value')
+            action = req.args.get('action')
             
-        for t in tags: # Force ordering so * is first
-            req.hdf['tracforge.tags.'+t] = configs[t]
+            # Input validation
+            if not (tag and section and key and action):
+                raise TracError('Not all values given')
+            if action not in ('add', 'del'):
+                raise TracError('Invalid action %s'%action)
+            
+            config = ConfigSet(self.env, tag=tag, with_star=False)
+            config.set(section, key, value, action)
+            config.save()            
+            
+            req.redirect(req.href.admin(cat, page, path_info))
 
+        req.hdf['tracforge.tags'] = tags            
+        #for t in tags: # Force ordering so * is first
+        #    req.hdf['tracforge.tags.'+t] = configs[t]
+        req.hdf['tracforge.configs'] = configs
+
+        add_stylesheet(req, 'tracforge/css/admin.css')
         return 'admin_tracforge_configset.cs', None       

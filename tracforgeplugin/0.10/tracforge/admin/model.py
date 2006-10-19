@@ -194,11 +194,16 @@ class ConfigSet(object):
     def sections(self):
         return sorted(self._data.iterkeys())
         
-    def get(self, section, action=None):
-        fn = lambda x: True
+    def get(self, section, action=None, with_action=False):
+        cond_fn = lambda x: True
         if action is not None:
-            fn = lambda x: x == action
-        return dict([(k, v[0]) for k,v in self._data[section].iteritems() if fn(v[1])])
+            cond_fn = lambda x: x == action
+            
+        format_fn = lambda x: x[0]
+        if with_action:
+            format_fn = lambda x: x
+            
+        return dict([(k, format_fn(v)) for k,v in self._data[section].iteritems() if cond_fn(v[1])])
     
     def set(self, section, key, value, action='add'):
         self._data.setdefault(section, {})[key] = (value, action)
@@ -214,7 +219,7 @@ class ConfigSet(object):
         
         for section, x in self._data.iteritems():
             for key, (value, action) in x.iteritems():
-                cursor.execute('UPDATE tracforge_configs SET value=%s, action=%s WHERE tag=%s, section=%s, key=%s',
+                cursor.execute('UPDATE tracforge_configs SET value=%s, action=%s WHERE tag=%s AND section=%s AND key=%s',
                                (value, action, self.tag, section, key))
                 if not cursor.rowcount:
                     cursor.execute('INSERT INTO tracforge_configs (tag, section, key, value, action) VALUES (%s, %s, %s, %s, %s)',
