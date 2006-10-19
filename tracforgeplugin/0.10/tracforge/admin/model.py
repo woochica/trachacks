@@ -160,7 +160,7 @@ class Project(object):
         return Project(env, name, db)
     by_env_path = classmethod(by_env_path)            
 
-class ConfigSet(Configuration):
+class ConfigSet(object):
     """A model object for configuration sets used when creating new projects."""
     
     def __init__(self, env, tag, with_star=True, db=None):
@@ -170,49 +170,65 @@ class ConfigSet(Configuration):
         self.with_star = with_star
         
         self._data = {}
-        self._sections = {}
         
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         
-        sql = 'SELECT section, name, value FROM tracforge_configs WHERE tag=%s'
+        sql = 'SELECT section, key, value, action FROM tracforge_configs WHERE tag=%s'
         args = [self.tag]
         if with_star:
             sql += ' OR tag=%s'
             args.append('*')
         
-        cursor.execute(sql, args))
-        for section, name, value in cursor:
-            self._data.get(section, {})[name] = value
+        cursor.execute(sql, args)
+        for section, name, value, action in cursor:
+            self._data.setdefault(section, {})[name] = (value, action)
             
     def __contains__(self, key):
         return key in self._data
-        
-    def __getitem__(self, name):
-        if name not in self._sections:
-            self._sections[name] = ConfigSetSection(self, name)
-        return self._sections[name]
         
     def remove(self, section, name):
         if section in self._data and name in self._data[section]:
             del self._data[section][name] 
     
     def sections(self):
-        return sorted(self_data.iterkeys())
+        return sorted(self._data.iterkeys())
         
-    def save(self):
+    def get(self, section, action=None):
+        fn = lambda x: True
+        if action is not None:
+            fn = lambda x: x == action
+        return dict([(k, v[0]) for k,v in self._data[section].iteritems() if fn(v[1])])
+    
+    def set(self, section, key, value, action='add'):
+        self._data.setdefault(section, {})[key] = (value, action)
+    
+    def save(self, db=None):
         assert not self.with_star, "Not sure how to handle this yet."
 
-class ConfigSetSection(Section):
-    """A model for a section in a ConfigSet."""
-    
-    _data = propery(lambda self: self.config._data.get(self.name, {}))
-    
-    def __contains__(self, name):
-        return name in self._data
+        handle_commit = False
+        if db is None:
+            db = self.env.get_db_cnx()
+            handle_commit = True
+        cursor = db.cursor()
         
-    def __iter__(self):
-        return self._data.iterkeys()
-        
-    def get(self, name, default=None):
-        pass
+        for section, x in self._data.iteritems():
+            for key, (value, action) in x.iteritems():
+                cursor.execute('UPDATE tracforge_configs SET value=%s, action=%s WHERE tag=%s, section=%s, key=%s',
+                               (value, action, self.tag, section, key))
+                if not cursor.rowcount:
+                    cursor.execute('INSERT INTO tracforge_configs (tag, section, key, value, action) VALUES (%s, %s, %s, %s, %s)',
+                                   (self.tag, section, key, value, action))
+                                   
+        if handle_commit:
+            db.commit()
+
+    def select(cls, env, db=None):
+        """Return all tags in the database."""
+        db = db or env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('SELECT DISTINCT tag FROM tracforge_configs')
+        for tag, in cursor:
+            if tag != '*':
+                yield tag
+    select = classmethod(select)

@@ -6,6 +6,8 @@ from trac.env import Environment
 from model import Project
 from config import EnvironmentOption
 
+import inspect
+
 class TracForgePermissionModule(DefaultPermissionStore):
     """Enhanced permission module to allow for central management."""
 
@@ -59,7 +61,6 @@ class TracForgePermissionModule(DefaultPermissionStore):
 
     def _extract_req(self):
         """Truly evil magic to scan for a variable called req in the stack."""
-        import inspect
         for record in inspect.stack():
             locals = record[0].f_locals
             if 'req' in locals:

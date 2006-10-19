@@ -15,4 +15,16 @@ tables = [
         Column('username'),
         Column('action'),
     ],
+    Table('tracforge_prototypes', key='step')[
+        Column('step', auto_increment=True),
+        Column('action'),
+        Column('args'),
+    ],
+    Table('tracforge_configs', key=('tag', 'section', 'key'))[
+        Column('tag'),
+        Column('section'),
+        Column('key'),
+        Column('value'),
+        Column('action'),
+    ],
 ]
