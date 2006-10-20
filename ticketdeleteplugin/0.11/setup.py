@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracTicketDelete',
-    version = '1.1.3',
+    version = '2.0',
     packages = ['ticketdelete'],
     package_data = { 'ticketdelete': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
