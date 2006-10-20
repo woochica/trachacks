@@ -6,23 +6,30 @@
               as the first entry and export the buildfile again. -->
 <project basedir="." default="build" name="wikioutputstreamplugin">
     <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="../../../apps/eclipse"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.5"/>
     <property name="source" value="1.5"/>
     <path id="wikioutputstreamplugin.classpath">
+        <pathelement location="target/classes"/>
         <pathelement location="target/test-classes"/>
         <pathelement location="lib/com.jcraft/jars/jsch-0.1.29.jar"/>
     </path>
     <target name="init">
+        <mkdir dir="target/classes"/>
         <mkdir dir="target/test-classes"/>
-        <copy includeemptydirs="false" todir="target/test-classes">
+        <copy includeemptydirs="false" todir="target/classes">
             <fileset dir="src/main/java" excludes="**/*.launch, **/*.java"/>
         </copy>
         <copy includeemptydirs="false" todir="target/test-classes">
             <fileset dir="src/main/test" excludes="**/*.launch, **/*.java"/>
         </copy>
+        <copy includeemptydirs="false" todir="target/classes">
+            <fileset dir="src/main/conf" excludes="**/*.launch, **/*.java"/>
+        </copy>
     </target>
     <target name="clean">
+        <delete dir="target/classes"/>
         <delete dir="target/test-classes"/>
     </target>
     <target depends="clean" name="cleanall"/>
@@ -30,7 +37,7 @@
     <target name="build-subprojects"/>
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="target/test-classes" source="${source}" target="${target}">
+        <javac debug="true" debuglevel="${debuglevel}" destdir="target/classes" source="${source}" target="${target}">
             <src path="src/main/java"/>
             <classpath refid="wikioutputstreamplugin.classpath"/>
         </javac>
@@ -38,6 +45,23 @@
             <src path="src/main/test"/>
             <classpath refid="wikioutputstreamplugin.classpath"/>
         </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="target/classes" source="${source}" target="${target}">
+            <src path="src/main/conf"/>
+            <classpath refid="wikioutputstreamplugin.classpath"/>
+        </javac>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
+        <copy todir="${ant.library.dir}">
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </copy>
+        <unzip dest="${ant.library.dir}">
+            <patternset includes="jdtCompilerAdapter.jar"/>
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </unzip>
+    </target>
+    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
 </project>
