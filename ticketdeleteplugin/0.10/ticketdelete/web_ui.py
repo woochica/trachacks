@@ -105,7 +105,8 @@ class TicketDeletePlugin(Component):
                     time_list = list(sorted(ticket_data.iterkeys()))
                     if selected is not None and selected < len(time_list):
                         ticket_data[time_list[selected]]['checked'] = True
-                    req.hdf['ticketdelete.changes'] = ticket_data
+                    for time in time_list:
+                        req.hdf['ticketdelete.changes.'+time] = ticket_data[time]
                 elif page == 'delete':
                     req.hdf['ticketdelete.id'] = t.id
  
