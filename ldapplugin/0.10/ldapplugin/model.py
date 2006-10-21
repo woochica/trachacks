@@ -26,6 +26,7 @@ import ldap
 
 from trac.core import *
 from trac.perm import IPermissionGroupProvider, IPermissionStore
+from trac.config import _TRUE_VALUES
 
 LDAP_MODULE_CONFIG = [ 'enable', 'permfilter', 
                        'global_perms', 'manage_groups'
@@ -35,7 +36,7 @@ LDAP_MODULE_CONFIG = [ 'enable', 'permfilter',
 
 LDAP_DIRECTORY_PARAMS = [ 'host', 'port', 'basedn',
                           'bind_user', 'bind_passwd',
-                          'groupname', 'groupmember',
+                          'groupname', 'groupmember', 'groupmemberisdn',
                           'groupattr', 'uidattr', 'permattr']
                           
 GROUP_PREFIX = '@'
@@ -54,20 +55,20 @@ class LdapPermissionGroupProvider(Component):
         self.enabled = self.config.getbool('ldap', 'enable')
         if not self.enabled:
             return
-        self.util = LdapUtil(self.env.config)
+        self.util = LdapUtil(self.config)
         # LDAP connection
         self._ldap = ldap
         # LDAP connection config
         self._ldapcfg = {}
-        for name,value in self.env.config.options('ldap'):
+        for name,value in self.config.options('ldap'):
             if name in LDAP_DIRECTORY_PARAMS:
                 self._ldapcfg[name] = value
         # user entry local cache
         self._cache = {}
         # max time to live for a cache entry
-        self._cache_ttl = int(self.env.config.get('ldap', 'cache_ttl', str(15*60)))
+        self._cache_ttl = int(self.config.get('ldap', 'cache_ttl', str(15*60)))
         # max cache entries
-        self._cache_size = min(25, int(self.env.config.get('ldap', 'cache_size', '100')))
+        self._cache_size = min(25, int(self.config.get('ldap', 'cache_size', '100')))
 
     # IPermissionProvider interface
 
@@ -100,7 +101,7 @@ class LdapPermissionGroupProvider(Component):
         # cache miss (either not found or too old)
         if not self._ldap:
             # new LDAP connection
-            bind = self.env.config.getbool('ldap', 'group_bind')
+            bind = self.config.getbool('ldap', 'group_bind')
             self._ldap = LdapConnection(self.env.log, bind, **self._ldapcfg)
         
         # retrieves the user groups from LDAP
@@ -174,15 +175,15 @@ class LdapPermissionStore(Component):
         self._ldap = ldap
         # LDAP connection config
         self._ldapcfg = {}
-        for name,value in self.env.config.options('ldap'):
+        for name,value in self.config.options('ldap'):
             if name in LDAP_DIRECTORY_PARAMS:
                 self._ldapcfg[name] = value
         # user entry local cache
         self._cache = {}
         # max time to live for a cache entry
-        self._cache_ttl = int(self.env.config.get('ldap', 'cache_ttl', str(15*60)))
+        self._cache_ttl = int(self.config.get('ldap', 'cache_ttl', str(15*60)))
         # max cache entries
-        cache_size = self.env.config.get('ldap', 'cache_size', '100')
+        cache_size = self.config.get('ldap', 'cache_size', '100')
         self._cache_size = min(25, int(cache_size))
         # environment name
         envpath = self.env.path.replace('\\','/')
@@ -196,7 +197,7 @@ class LdapPermissionStore(Component):
     def get_user_permissions(self, username):
         """Retrieves the user permissions from the LDAP directory"""
         if not self.enabled:
-            raise TracError("LdapPermissionStore is disabled")
+            raise TracError("LdapPermissionStore is not enabled")
         actions = self._get_cache_actions(username)
         if not actions:
             users = [username]
@@ -220,7 +221,7 @@ class LdapPermissionStore(Component):
         # do not use the cache as this method is only used for administration
         # tasks, not for runtime
         if not self.enabled:
-            raise TracError("LdapPermissionStore is disabled")
+            raise TracError("LdapPermissionStore is not enabled")
         perms = []
         filterstr = self.config.get('ldap', 'permfilter', 'objectclass=*')
         basedn = self.config.get('ldap','basedn','').encode('ascii')
@@ -248,7 +249,7 @@ class LdapPermissionStore(Component):
     def grant_permission(self, username, action):
         """Store the new permission for the user in the LDAP directory"""
         if not self.enabled:
-            raise TracError("LdapPermissionStore is disabled")
+            raise TracError("LdapPermissionStore is not enabled")
         if self.manage_groups and self.util.is_group(action):
             self._flush_group_cache(username)
             self._add_user_to_group(username.encode('ascii'), action)
@@ -273,7 +274,7 @@ class LdapPermissionStore(Component):
     def revoke_permission(self, username, action):
         """Remove the permission for the user from the LDAP directory"""
         if not self.enabled:
-            raise TracError("LdapPermissionStore is disabled")
+            raise TracError("LdapPermissionStore is not enabled")
         if self.manage_groups and self.util.is_group(action):
             self._flush_group_cache(username)
             self._remove_user_from_group(username.encode('ascii'), action)
@@ -447,7 +448,7 @@ class LdapUtil(object):
                            ('user_rdn', None),
                            ('group_rdn', None)]:
             v = config.get('ldap', k, default)
-            if v: v = v.encode('ascii').lower() 
+            if v: v = v.encode('ascii').lower()
             self.__setattr__(k, v)
             
     def is_group(self, username):
@@ -511,10 +512,16 @@ class LdapConnection(object):
         self.bind_user = None
         self.bind_passwd = None
         self.basedn = None
+        self.groupmemberisdn = False
         for k, v in ldap.items():
-            self.__setattr__(k, v.encode('ascii'))
+            if isinstance(v, unicode):
+                v = v.encode('ascii')
+            self.__setattr__(k, v)
         if not isinstance(self.port, int):
             self.port = int(self.port)
+        if not isinstance(self.groupmemberisdn, bool):
+            self.groupmemberisdn = \
+                self.groupmemberisdn.lower() in _TRUE_VALUES
         if self.basedn is None:
             raise TracError, "No basedn is defined"
 
@@ -530,8 +537,16 @@ class LdapConnection(object):
     
     def is_in_group(self, userdn, groupdn):
         """Tell whether the uid is member of the group"""
+        if self.groupmemberisdn:
+            udn = userdn 
+        else:
+            m = re.match('[^=]+=([^,]+)', userdn)
+            if m is None:
+                self.log.warn('Malformed userdn: %s' % userdn)
+                return False
+            udn = m.group(1) 
         for attempt in range(2):
-            cr = self._compare(groupdn, self.groupmember, userdn)
+            cr = self._compare(groupdn, self.groupmember, udn)
             if self._ds:
                 return cr
         return False
