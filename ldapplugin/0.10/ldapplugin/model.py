@@ -512,7 +512,7 @@ class LdapConnection(object):
         self.bind_user = None
         self.bind_passwd = None
         self.basedn = None
-        self.groupmemberisdn = False
+        self.groupmemberisdn = True
         for k, v in ldap.items():
             if isinstance(v, unicode):
                 v = v.encode('ascii')
