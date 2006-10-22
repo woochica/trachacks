@@ -1,3 +1,9 @@
+trac-french (0.10b1-2) universe; urgency=low
+
+  * Synchronize with revision 3759.
+
+ -- Nicolas Ternisien <nicolas.ternisien@gmail.com>  Tue, 21 Sep 2006 15:42:17 +0000
+
 trac-french (0.10b1-1) universe; urgency=low
 
   * First package upload.

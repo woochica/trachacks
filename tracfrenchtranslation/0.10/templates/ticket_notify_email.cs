@@ -20,4 +20,5 @@ Commentaire<?cs
 -- 
 Ticket URL: <<?cs var:ticket.link ?>>
 <?cs var:project.name ?> <<?cs var:project.url ?>>
-<?cs var:project.descr ?
+<?cs var:project.descr ?>
+
