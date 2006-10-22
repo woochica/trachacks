@@ -7,7 +7,7 @@ setup(
     name = 'TracTicketDelete',
     version = '2.0',
     packages = ['ticketdelete'],
-    package_data = { 'ticketdelete': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
+    package_data = { 'ticketdelete': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
