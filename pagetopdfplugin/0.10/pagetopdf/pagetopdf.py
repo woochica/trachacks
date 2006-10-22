@@ -24,7 +24,14 @@ class PageToPDFPlugin(Component):
         pfile, pfilename = mkstemp('tracpdf')
         os.close(pfile)
         os.environ["HTMLDOC_NOCGI"] = 'yes'
-        os.system('htmldoc --charset %s --webpage --format pdf14 --left 1.5cm --right 1.5cm --top 1.5cm --bottom 1.5cm %s -f %s' % (codepage.replace('iso-', ''), hfilename, pfilename))
+        htmldoc_args = { 'webpage': None, 'format': 'pdf14', 'left': '1.5cm',
+                         'right': '1.5cm', 'top': '1.5cm', 'bottom': '1.5cm',
+                         'charset': codepage.replace('iso-', '')}
+        htmldoc_args.update(dict(self.env.config.options('tracpdf')))
+        args_string = ' '.join(['--%s %s' % (arg, value or '') for arg, value
+                                in htmldoc_args.iteritems()])
+        self.env.log.debug(args_string)
+        os.system('htmldoc %s %s -f %s' % (args_string, hfilename, pfilename))
         out = open(pfilename, 'rb').read()
         os.unlink(pfilename)
         os.unlink(hfilename)
