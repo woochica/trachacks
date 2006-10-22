@@ -1,8 +1,8 @@
 # Ticket deleting plugins
 
 from trac import __version__ as TRAC_VERSION
+from trac import ticket
 from trac.core import *
-from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from webadmin.web_ui import IAdminPageProvider
@@ -34,11 +34,13 @@ class TicketDeletePlugin(Component):
             yield ('ticket', 'Ticket System', 'comments', 'Delete Changes')
             
     def process_admin_request(self, req, cat, page, path_info):
-        assert req.perm.has_permission('TICKET_ADMIN')
+        req.perm.assert_permission('TICKET_ADMIN')
         
-        req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page)
-        req.hdf['ticketdelete.page'] = page
-        req.hdf['ticketdelete.redir'] = 1
+        data = {}
+
+        data['ticketdelete.href'] = self.env.href('admin', cat, page)
+        data['ticketdelete.page'] = page
+        data['ticketdelete.redir'] = 1
 
         if req.method == 'POST':
             if page == 'delete':
@@ -47,17 +49,17 @@ class TicketDeletePlugin(Component):
                         t = self._validate(req, req.args.get('ticketid'))
                         if t:
                             self._delete_ticket(t.id)
-                            req.hdf['ticketdelete.message'] = "Ticket #%s has been deleted." % t.id
+                            data['ticketdelete.message'] = "Ticket #%s has been deleted." % t.id
                             
                     else:
-                        req.hdf['ticketdelete.message'] = "The two IDs did not match. Please try again."
+                        data['ticketdelete.message'] = "The two IDs did not match. Please try again."
             elif page == 'comments':
                 if 'ticketid' in req.args:
-                    req.redirect(self.env.href.admin(cat, page, req.args.get('ticketid')))
+                    req.redirect(req.href.admin(cat, page, req.args.get('ticketid')))
                 else:
                     t = self._validate(req, path_info)
                     if t:
-                        req.hdf['ticketdelete.href'] = self.env.href('admin', cat, page, path_info)
+                        data['ticketdelete.href'] = self.env.href('admin', cat, page, path_info)
                         try:
                             deletions = None
                             if "multidelete" in req.args:
@@ -72,12 +74,12 @@ class TicketDeletePlugin(Component):
                                     ts = int(ts)
                                     self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
                                     self._delete_change(t.id, ts, field)
-                                    req.hdf['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
-                                    req.hdf['ticketdelete.redir'] = 0
+                                    data['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
+                                    data['ticketdelete.redir'] = 0
                         except ValueError, e:
                             self.log.debug("TicketDelete: Error is %s"%e)
                             self.log.debug("TicketDelete: args = '%s'"%req.args.items())
-                            req.hdf['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')                    
+                            data['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')                    
                     
                 
         if path_info:
@@ -105,11 +107,11 @@ class TicketDeletePlugin(Component):
                     time_list = list(sorted(ticket_data.iterkeys()))
                     if selected is not None and selected < len(time_list):
                         ticket_data[time_list[selected]]['checked'] = True
-                    req.hdf['ticketdelete.changes'] = ticket_data
+                    data['ticketdelete.changes'] = ticket_data
                 elif page == 'delete':
-                    req.hdf['ticketdelete.id'] = t.id
+                    data['ticketdelete.id'] = t.id
  
-        return 'ticketdelete_admin.cs', None
+        return 'ticketdelete_admin.html', None
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -150,9 +152,9 @@ class TicketDeletePlugin(Component):
             t = Ticket(self.env, id)
             return t
         except TracError:
-            req.hdf['ticketdelete.message'] = "Ticket #%s not found. Please try again." % id
+            data['ticketdelete.message'] = "Ticket #%s not found. Please try again." % id
         except ValueError:
-            req.hdf['ticketdelete.message'] = "Ticket ID '%s' is not valid. Please try again." % arg
+            data['ticketdelete.message'] = "Ticket ID '%s' is not valid. Please try again." % arg
         return False
                                                                                                                 
     
