@@ -195,16 +195,16 @@ class SearchModule(Component):
             if page < n_pages:
                 next_href = req.href.search(zip(filters, ['on'] * len(filters)),
                                             q=req.args.get('q'), page=page + 1,
-                                            noquickjump=noquickjump)
+                                            noquickjump=1)
                 add_link(req, 'next', next_href, u'Page suivante')
             if page > 1:
                 prev_href = req.href.search(zip(filters, ['on'] * len(filters)),
                                             q=req.args.get('q'), page=page - 1,
-                                            noquickjump=noquickjump)
+                                            noquickjump=1)
                 add_link(req, 'prev', prev_href, u'Page précédente')
             req.hdf['search.page_href'] = req.href.search(
                 zip(filters, ['on'] * len(filters)), q=req.args.get('q'),
-                noquickjump=noquickjump)
+                noquickjump=1)
             req.hdf['search.result'] = [
                 { 'href': result[0],
                   'title': result[1],
