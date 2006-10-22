@@ -34,7 +34,7 @@ LDAP_MODULE_CONFIG = [ 'enable', 'permfilter',
                        'group_bind', 'store_bind',
                        'user_rdn', 'group_rdn' ]
 
-LDAP_DIRECTORY_PARAMS = [ 'host', 'port', 'basedn',
+LDAP_DIRECTORY_PARAMS = [ 'host', 'port', 'use_tls', 'basedn',
                           'bind_user', 'bind_passwd',
                           'groupname', 'groupmember', 'groupmemberisdn',
                           'groupattr', 'uidattr', 'permattr']
@@ -498,12 +498,15 @@ class LdapConnection(object):
     Wrapper class for the LDAP directory
     Use only synchronous LDAP calls
     """
+    
+    _BOOL_VAL = ['groupmemberisdn', 'use_tls']
+    _INT_VAL  = ['port']  
         
     def __init__(self, log, bind=False, **ldap):
         self.log = log
         self.bind = bind
         self.host = 'localhost'
-        self.port = 389
+        self.port = None
         self.groupname = 'groupofnames'
         self.groupmember = 'member'
         self.groupattr = 'cn'
@@ -513,18 +516,21 @@ class LdapConnection(object):
         self.bind_passwd = None
         self.basedn = None
         self.groupmemberisdn = True
+        self.use_tls = False
         for k, v in ldap.items():
-            if isinstance(v, unicode):
-                v = v.encode('ascii')
-            self.__setattr__(k, v)
-        if not isinstance(self.port, int):
-            self.port = int(self.port)
-        if not isinstance(self.groupmemberisdn, bool):
-            self.groupmemberisdn = \
-                self.groupmemberisdn.lower() in _TRUE_VALUES
+            if k in LdapConnection._BOOL_VAL:
+                self.__setattr__(k, v.lower() in _TRUE_VALUES)
+            elif k in LdapConnection._INT_VAL:
+                self.__setattr__(k, int(v))
+            else:
+                if isinstance(v, unicode):
+                    v = v.encode('ascii')
+                self.__setattr__(k, v)
         if self.basedn is None:
             raise TracError, "No basedn is defined"
-
+        if self.port is None:
+            self.port = self.use_tls and 636 or 389
+            
     def close(self):
         """Close the connection with the LDAP directory"""
         self._ds.unbind_s()
@@ -607,7 +613,15 @@ class LdapConnection(object):
     def _open(self):
         """Open and optionnally bind a new connection to the LDAP directory"""
         try:
-            self._ds = ldap.initialize('ldap://%s:%d/' % (self.host, self.port))
+            if self.use_tls:
+                ldap.set_option(ldap.OPT_REFERRALS, 0)
+                ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, \
+                                ldap.OPT_X_TLS_NEVER)
+                protocol = 'ldaps'
+            else:
+                protocol = 'ldap'
+            self._ds = ldap.initialize('%s://%s:%d/' % \
+                                       (protocol, self.host, self.port))
             self._ds.protocol_version = ldap.VERSION3
             if self.bind:
                 if not self.bind_user:
