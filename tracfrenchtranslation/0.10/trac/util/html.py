@@ -5,11 +5,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 
 import htmlentitydefs
 from HTMLParser import HTMLParser, HTMLParseError
@@ -20,6 +20,8 @@ except NameError:
     from sets import ImmutableSet as frozenset
 from StringIO import StringIO
 import sys
+
+from trac.util.text import to_unicode
 
 __all__ = ['escape', 'unescape', 'html']
 
@@ -104,7 +106,7 @@ class Markup(unicode):
         """
         if isinstance(text, (cls, Element)):
             return text
-        text = unicode(text)
+        text = to_unicode(text)
         if not text:
             return cls()
         text = text.replace('&', '&amp;') \
@@ -309,8 +311,11 @@ class Fragment(object):
             else:
                 yield escape(child, quotes=False)
 
+    def __unicode__(self):
+        return u''.join(self.serialize())
+
     def __str__(self):
-        return Markup(''.join(self.serialize()))
+        return ''.join(self.serialize())
 
     def __add__(self, other):
         return Fragment()(self, other)
