@@ -27,7 +27,7 @@ class PageToPDFPlugin(Component):
         htmldoc_args = { 'webpage': None, 'format': 'pdf14', 'left': '1.5cm',
                          'right': '1.5cm', 'top': '1.5cm', 'bottom': '1.5cm',
                          'charset': codepage.replace('iso-', '')}
-        htmldoc_args.update(dict(self.env.config.options('tracpdf')))
+        htmldoc_args.update(dict(self.env.config.options('pagetopdf')))
         args_string = ' '.join(['--%s %s' % (arg, value or '') for arg, value
                                 in htmldoc_args.iteritems()])
         self.env.log.debug(args_string)
