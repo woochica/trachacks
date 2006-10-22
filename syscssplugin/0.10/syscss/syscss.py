@@ -7,7 +7,7 @@ import os
 class SysCssModule(Component):
     """A system-wide CSS provider."""
     
-    css_path = Option('syscss', 'path', default='/usr/shart/trac/sys_css.css',
+    css_path = Option('syscss', 'path', default='/usr/share/trac/sys_css.css',
                       doc='Path to the CSS file')
     path_type = Option('syscss', 'type', default='file',
                        doc='Type of path given. Choices are file and url.')
