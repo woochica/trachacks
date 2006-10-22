@@ -153,6 +153,8 @@ else:
         return False
 
     class TracHtmlFormatter(HtmlFormatter):
+        # more specific should come before their parents in order to
+        # resolve them in the right order
         token_classes = [
             (Comment, 'code-comment'),
             (Name.Function, 'code-func'),
@@ -161,7 +163,6 @@ else:
             (String, 'code-string'),
             (Keyword.Type, 'code-type'),
             (Keyword, 'code-keyword'),
-            (Token, None),
         ]
 
         def _get_css_class(self, ttype):
