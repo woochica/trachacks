@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
@@ -81,8 +81,8 @@ class Environment(Component, ComponentManager):
 
     project_footer = Option('project', 'footer',
                             'Visit the Trac open source project at<br />'
-                            '<a href="http://trac.edgewall.com/">'
-                            'http://trac.edgewall.com/</a>',
+                            '<a href="http://trac.edgewall.org/">'
+                            'http://trac.edgewall.org/</a>',
         """Page footer text (right-aligned).""")
 
     project_icon = Option('project', 'icon', 'common/trac.ico',
@@ -247,8 +247,8 @@ class Environment(Component, ComponentManager):
         _create_file(os.path.join(self.path, 'VERSION'),
                      'Trac Environment Version 1\n')
         _create_file(os.path.join(self.path, 'README'),
-                     'This directory contains a Trac environment.\n'
-                    'Visit http://trac.edgewall.com/ for more information.\n')
+                     u'Ce dossier contient un environnement Trac.\n'
+                     u'Veuillez visiter http://trac.edgewall.org/ pour plus d\'informations.\n')
 
         # Setup the default configuration
         os.mkdir(os.path.join(self.path, 'conf'))
@@ -276,6 +276,8 @@ class Environment(Component, ComponentManager):
         if load_defaults:
             for section, default_options in self.config.defaults().iteritems():
                 for name, value in default_options.iteritems():
+                    if self.config.has_site_option(section, name):
+                        value = None
                     self.config.set(section, name, value)
 
     def init_translations(self):
@@ -341,8 +343,8 @@ class Environment(Component, ComponentManager):
 
         db_str = self.config.get('trac', 'database')
         if not db_str.startswith('sqlite:'):
-            raise EnvironmentError, 'Seules les bases de données sqlite ' \
-                                    'peuvent être sauvegardées'
+            raise EnvironmentError, u'Seules les bases de données sqlite ' \
+                                    u'peuvent être sauvegardées'
         db_name = os.path.join(self.path, db_str[7:])
         if not dest:
             dest = '%s.%i.bak' % (db_name, self.get_version())
@@ -353,7 +355,7 @@ class Environment(Component, ComponentManager):
         db = self.get_db_cnx()
         for participant in self.setup_participants:
             if participant.environment_needs_upgrade(db):
-                self.log.warning('Component %s requires environment upgrade',
+                self.log.warning(u'Le composant %s nécessite une mise à jour de l\'environnement',
                                  participant)
                 return True
         return False
@@ -471,7 +473,7 @@ def open_environment(env_path=None):
     if not env_path:
         env_path = os.getenv('TRAC_ENV')
     if not env_path:
-        raise EnvironmentError, \
+        raise TracError, \
               'La variable d\'environment "TRAC_ENV" n\'est pas définie. Trac a ' \
               'besoin que cette variable pointe sur un environnement Trac valide.'
 

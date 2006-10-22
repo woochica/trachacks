@@ -11,15 +11,15 @@
  <?cs elif error.type == "internal" ?>
   <h1>Aïe&hellip;</h1>
   <div class="message">
-   <strong>Trac a detecté une erreur interne:</strong>
+   <strong>Trac a detecté une erreur interne :</strong>
    <pre><?cs var:error.message ?></pre>
   </div>
   <p>Si vous pensez que cette action aurait du fonctionner et si vous pouvez 
-   reproduire le probleme, vous devriez envisager de reporter ce problème 
+   reproduire le problème, vous devriez envisager de le rapporter à 
    l'équipe de Trac.</p>
   <p>Rendez vous sur <a href="<?cs var:trac.href.homepage ?>"><?cs
    var:trac.href.homepage ?></a> et créez un nouveau ticket où vous décrirez le 
-   problème, et comment le reproduire. N'oubliez pas d'include la pile d'appel 
+   problème, et comment le reproduire. N'oubliez pas d'inclure la pile d'appel 
    Python affichée ci-dessous.
   </p>
  <?cs /if ?>

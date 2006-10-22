@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2004 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2004 Jonas Borgström <jonas@edgewall.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
@@ -21,7 +21,7 @@ from trac.config import IntOption
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util.datefmt import format_datetime
-from trac.util.markup import escape, html, Element
+from trac.util.html import escape, html, Element
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
 from trac.wiki import IWikiSyntaxProvider, wiki_to_link
@@ -74,7 +74,7 @@ def search_to_sql(db, columns, terms):
     parameters. The result is returned as a (string, params) tuple.
     """
     if len(columns) < 1 or len(terms) < 1:
-        raise TracError(u'Erreur interne: Tentative de recherche vide')
+        raise TracError(u'Tentative de recherche vide: ceci ne devrait pas arriver.')
 
     likes = ['%s %s' % (i, db.like()) for i in columns]
     c = ' OR '.join(likes)
@@ -162,24 +162,13 @@ class SearchModule(Component):
               'active': filter[0] in filters
             } for filter in available_filters]
                 
-        req.hdf['title'] = 'Recherche'
+        req.hdf['title'] = u'Recherche'
 
         query = req.args.get('q')
         if query:
             page = int(req.args.get('page', '1'))
-            noquickjump = int(req.args.get('noquickjump', '0'))
-            link_elt = self.quickjump(req, query)
-            if link_elt is not None:
-                quickjump_href = link_elt.attr['href']
-                if noquickjump:
-                    req.hdf['search.quickjump'] = {
-                        'href': quickjump_href,
-                        'name': html.EM(link_elt.children),
-                        'description': link_elt.attr.get('title', '')
-                        }
-                else:
-                    req.redirect(quickjump_href)
-            elif query.startswith('!'):
+            self.check_quickjump(req, query)
+            if query.startswith('!'):
                 query = query[1:]
             terms = search_terms(query)
             # Refuse queries that obviously would result in a huge result set
@@ -187,7 +176,7 @@ class SearchModule(Component):
                 raise TracError(u'La requête de recherche est trop courte. '
                                 u'La requête doit contenir au moins %d '
                                 u'caractères.' % self.min_query_length, 
-                                'Erreur de recherche')
+                                u'Erreur de recherche')
             results = []
             for source in self.search_sources:
                 results += list(source.get_search_results(req, terms, filters))
@@ -197,7 +186,7 @@ class SearchModule(Component):
             n_pages = (n-1) / page_size + 1
             results = results[(page-1) * page_size: page * page_size]
 
-            req.hdf['title'] = 'Résultats de la recherche'
+            req.hdf['title'] = u'Résultats de la recherche'
             req.hdf['search.q'] = req.args.get('q')
             req.hdf['search.page'] = page
             req.hdf['search.n_hits'] = n
@@ -206,11 +195,11 @@ class SearchModule(Component):
             if page < n_pages:
                 next_href = req.href.search(zip(filters, ['on'] * len(filters)),
                                             q=req.args.get('q'), page=page + 1)
-                add_link(req, 'next', next_href, 'Page suivante')
+                add_link(req, 'next', next_href, u'Page suivante')
             if page > 1:
                 prev_href = req.href.search(zip(filters, ['on'] * len(filters)),
                                             q=req.args.get('q'), page=page - 1)
-                add_link(req, 'prev', prev_href, 'Page précédente')
+                add_link(req, 'prev', prev_href, u'Page précédente')
             req.hdf['search.page_href'] = req.href.search(zip(filters, ['on'] * len(filters)),
                                                           q=req.args.get('q'))
             req.hdf['search.result'] = [
@@ -224,13 +213,29 @@ class SearchModule(Component):
         add_stylesheet(req, 'common/css/search.css')
         return 'search.cs', None
 
-    def quickjump(self, req, kwd):
+    def check_quickjump(self, req, kwd):
+        noquickjump = int(req.args.get('noquickjump', '0'))
         # Source quickjump
+        quickjump_href = None
         if kwd[0] == '/':
-            return req.href.browser(kwd)
-        link = wiki_to_link(kwd, self.env, req)
-        if isinstance(link, Element):
-            return link
+            quickjump_href = req.href.browser(kwd)
+            name = kwd
+            description = u'Naviguer dans le chemin du dépôt ' + kwd
+        else:
+            link = wiki_to_link(kwd, self.env, req)
+            if isinstance(link, Element):
+                quickjump_href = link.attr['href']
+                name = link.children
+                description = link.attr.get('title', '')
+        if quickjump_href:
+            if noquickjump:
+                req.hdf['search.quickjump'] = {
+                    'href': quickjump_href,
+                    'name': html.EM(name),
+                    'description': description
+                    }
+            else:
+                req.redirect(quickjump_href)
 
     # IWikiSyntaxProvider methods
     

@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2004-2005 Edgewall Software
+# Copyright (C) 2004-2006 Edgewall Software
 # Copyright (C) 2004 Daniel Lundin <daniel@edgewall.com>
-# Copyright (C) 2004-2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2004-2006 Christopher Lenz <cmlenz@gmx.de>
 # Copyright (C) 2006 Jonas Borgström <jonas@edgewall.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Daniel Lundin <daniel@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -21,7 +21,7 @@ import time
 
 from trac.core import TracError
 from trac.util import hex_entropy
-from trac.util.markup import Markup
+from trac.util.html import Markup
 
 UPDATE_INTERVAL = 3600*24 # Update session last_visit time stamp after 1 day
 PURGE_AGE = 3600*24*90 # Purge session after 90 days idle
@@ -53,7 +53,7 @@ class Session(dict):
             self.get_session(req.authname, authenticated=True)
 
     def bake_cookie(self, expires=PURGE_AGE):
-        assert self.sid, 'ID de session non défini'
+        assert self.sid, u'ID de session non défini'
         self.req.outcookie[COOKIE_KEY] = self.sid
         self.req.outcookie[COOKIE_KEY]['path'] = self.req.base_path
         self.req.outcookie[COOKIE_KEY]['expires'] = expires
@@ -91,8 +91,8 @@ class Session(dict):
 
     def change_sid(self, new_sid):
         assert self.req.authname == 'anonymous', \
-               'Impossible de changer l\'identifiant d\'une session authentifiée'
-        assert new_sid, 'L\'identifiant de session ne peut être vide'
+               u'Impossible de changer l\'identifiant d\'une session authentifiée'
+        assert new_sid, u'L\'identifiant de session ne peut être vide'
         if new_sid == self.sid:
             return
         db = self.env.get_db_cnx()
@@ -100,9 +100,8 @@ class Session(dict):
         cursor.execute("SELECT sid FROM session WHERE sid=%s", (new_sid,))
         if cursor.fetchone():
             raise TracError(Markup(u"La session '%s' existe déjà.<br />"
-                                   u"Merci de choisir un identifiant de session "
-                                   u" différent." % new_sid), \
-                                   'Erreur de renommage de session')
+                                   u"Merci de choisir un identifiant de session différent." % new_sid), \
+                                   u'Erreur de renommage de session')
         self.env.log.debug('Changing session ID %s to %s' % (self.sid, new_sid))
         cursor.execute("UPDATE session SET sid=%s WHERE sid=%s "
                        "AND authenticated=0", (new_sid, self.sid))
@@ -118,7 +117,7 @@ class Session(dict):
         is no preexisting session data for that user name.
         """
         assert self.req.authname != 'anonymous', \
-               'La promotion d\'une session d\'un utilisateur anonyme impossible'
+               u'La promotion d\'une session d\'un utilisateur anonyme impossible'
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -172,7 +171,7 @@ class Session(dict):
             cursor.execute("INSERT INTO session (sid,last_visit,authenticated)"
                            " VALUES(%s,%s,%s)",
                            (self.sid, self.last_visit, authenticated))
-        if self._old.items() != self.items():
+        if self._old != self:
             attrs = [(self.sid, authenticated, k, v) for k, v in self.items()]
             cursor.execute("DELETE FROM session_attribute WHERE sid=%s",
                            (self.sid,))
@@ -199,7 +198,7 @@ class Session(dict):
             # Purge expired sessions. We do this only when the session was
             # changed as to minimize the purging.
             mintime = now - PURGE_AGE
-            self.env.log.debug('Purge des sessions arrivées à expiration.')
+            self.env.log.debug(u'Purge des sessions arrivées à expiration.')
             cursor.execute("DELETE FROM session_attribute "
                            "WHERE authenticated=0 AND sid "
                            "IN (SELECT sid FROM session WHERE "

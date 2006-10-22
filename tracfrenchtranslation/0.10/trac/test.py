@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
 # Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
 
 import unittest
 
+from trac.config import Configuration
 from trac.core import Component, ComponentManager, ExtensionPoint
 from trac.env import Environment
 from trac.db.sqlite_backend import SQLiteConnection
@@ -117,6 +118,14 @@ class InMemoryDatabase(SQLiteConnection):
         self.cnx.commit()
 
 
+class TestConfiguration(Configuration):
+    def __init__(self, filename):
+        Configuration.__init__(self, filename)
+        # insulate us from "real" global trac.ini (ref. #3700)
+        from ConfigParser import ConfigParser
+        self.site_parser = ConfigParser()
+
+
 class EnvironmentStub(Environment):
     """A stub of the trac.env.Environment object for testing."""
 
@@ -125,9 +134,9 @@ class EnvironmentStub(Environment):
         Component.__init__(self)
         self.enabled_components = enable
         self.db = InMemoryDatabase()
+        self.path = ''
 
-        from trac.config import Configuration
-        self.config = Configuration(None)
+        self.config = TestConfiguration(None)
 
         from trac.log import logger_factory
         self.log = logger_factory('test')
@@ -161,6 +170,21 @@ class EnvironmentStub(Environment):
 
     def get_known_users(self, db):
         return self.known_users
+
+
+def locate(fn):
+    """Locates a binary on the path.
+
+    Returns the fully-qualified path, or None.
+    """
+    import os
+    exec_suffix = os.name == 'nt' and '.exe' or ''
+    
+    for p in ["."] + os.environ['PATH'].split(os.pathsep):
+        f = os.path.join(p, fn + exec_suffix)
+        if os.path.exists(f):
+            return f
+    return None
 
 
 def suite():

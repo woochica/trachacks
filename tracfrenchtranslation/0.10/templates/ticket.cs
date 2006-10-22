@@ -72,14 +72,25 @@
     /if ?><?cs set:idx = idx + #fullrow + 1 ?><?cs
    /if ?><?cs
   /each ?></tr>
- </table>
- <?cs if:ticket.description ?><div id="comment:description" class="description">
-  <?cs var:ticket.description.formatted ?>
-  <form method="get" action="<?cs var:ticket.href ?>#comment"><div class="inlinebuttons">
-   <input type="hidden" name="replyto" value="description" />
-   <input type="submit" value="Reply" title="Reply, quoting this description" /></div>
-  </form>
- </div><?cs /if ?>
+ </table><?cs 
+ if:ticket.description ?>
+  <form method="get" action="<?cs var:ticket.href ?>#comment" class="printableform">
+   <div class="description">
+    <h3 id="comment:description"><?cs
+     if:trac.acl.TICKET_APPEND ?>
+     <span class="inlinebuttons">
+      <input type="hidden" name="replyto" value="description" />
+      <input type="submit" value="Reply" title="Reply, quoting this description" />
+     </span><?cs
+     /if ?>
+     Description <?cs
+     if:ticket.description.lastmod ?><span class="lastmod" title="<?cs var:ticket.description.lastmod ?>">(Last modified by <?cs var:ticket.description.author ?>)</span><?cs
+     /if ?>
+    </h3>
+    <?cs var:ticket.description.formatted ?>
+   </div>
+  </form><?cs 
+ /if ?>
 </div>
 
 <?cs if:ticket.attach_href || len(ticket.attachments) ?>
@@ -93,13 +104,20 @@
 <?cs if:len(ticket.changes) ?><h2>Historique des modifications</h2>
 <div id="changelog"><?cs
  each:change = ticket.changes ?>
+ <form method="get" action="<?cs var:ticket.href ?>#comment" class="printableform">
  <div class="change">
   <h3 <?cs if:change.cnum ?>id="comment:<?cs var:change.cnum ?>"<?cs /if ?>><?cs
-   if:change.cnum ?>
+   if:change.cnum ?><?cs
+    if:trac.acl.TICKET_APPEND ?>
+    <span class="inlinebuttons">
+     <input type="hidden" name="replyto" value="<?cs var:change.cnum ?>" />
+     <input type="submit" value="Répondre" title="Répondre au commentaire <?cs var:change.cnum ?>" />
+    </span><?cs
+    /if ?>
     <span class="threading"><?cs
      set:nreplies = len(ticket.replies[change.cnum]) ?><?cs
      if:nreplies || change.replyto ?>(<?cs
-      if:change.replyto ?>en réponse à: <?cs 
+      if:change.replyto ?>en réponse à : <?cs 
        call:commentref('&uarr;&nbsp;', change.replyto) ?><?cs if nreplies ?>; <?cs /if ?><?cs
       /if ?><?cs
       if nreplies ?><?cs
@@ -108,27 +126,19 @@
         call:commentref('&darr;&nbsp;', reply) ?><?cs 
        /each ?><?cs 
       /if ?>)<?cs
-    /if ?><form method="get" action="<?cs var:ticket.href ?>#comment"><span class="inlinebuttons">
-    <input type="hidden" name="replyto" value="<?cs var:change.cnum ?>" />
-    <input type="submit" value="Répondre" title="Répondre au commentaire <?cs var:change.cnum ?>" /></span>
-   </form>
+    /if ?>
     </span><?cs
    /if ?><?cs
-   var:change.date ?> modifié par <?cs var:change.author ?><?cs
-   if:change.cnum ?>&nbsp;<a href="#comment:<?cs var:change.cnum ?>" class="anchor"
-      title="Permalien vers ce commentaire:<?cs var:change.cnum ?>">&para;</a><?cs
-   /if ?>
+   var:change.date ?> modifié par <?cs var:change.author ?>
   </h3><?cs
   if:len(change.fields) ?>
    <ul class="changes"><?cs
    each:field = change.fields ?>
-    <li><strong><?cs var:field.label ?></strong> <?cs
-    if:name(field) == 'attachment' ?><em><?cs var:field.new ?></em> ajouté <?cs
-    elif:field.old && field.new ?>modifié de <em><?cs alt:translation[field.old] ?><?cs
-     var:field.old ?><?cs /alt ?></em> à <em><?cs alt:translation[field.new] ?><?cs 
-     var:field.new ?><?cs /alt ?></em><?cs
-    elif:!field.old && field.new ?>défini à <em><?cs alt:translation[field.new] ?><?cs 
-     var:field.new ?><?cs /alt ?></em><?cs
+    <li><strong><?cs var:name(field) ?></strong> <?cs
+    if:name(field) == 'attachment' ?><em><?cs var:field.new ?></em> ajouté<?cs
+    elif:field.old && field.new ?>modifié de <em><?cs
+     var:field.old ?></em> à <em><?cs var:field.new ?></em><?cs
+    elif:!field.old && field.new ?>défini à <em><?cs var:field.new ?></em><?cs
     elif:field.old && !field.new ?>effacé<?cs
     else ?>modifié<?cs
     /if ?>.</li>
@@ -137,7 +147,8 @@
    </ul><?cs
   /if ?>
   <div class="comment"><?cs var:change.comment ?></div>
- </div><?cs
+ </div>
+ </form><?cs
  /each ?>
 </div><?cs
 /if ?>
@@ -149,17 +160,17 @@
    var:ticket.id ?> (<?cs var:ticket.summary ?>)</a></h3>
  <?cs if:trac.authname == "anonymous" ?>
   <div class="field">
-   <label for="author">Your email or username:</label><br />
+   <label for="author">Votre adresse email ou nom d'utilisateur:</label><br />
    <input type="text" id="author" name="author" size="40"
      value="<?cs var:ticket.reporter_id ?>" /><br />
   </div>
  <?cs /if ?>
  <div class="field">
   <fieldset class="iefix">
-   <label for="comment">Commentaire (il est possible d'utiliser la syntaxe <a tabindex="42" href="<?cs
-     var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> ici):</label><br />
-   <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78"><?cs
-     var:ticket.comment ?></textarea></p>
+   <label for="comment">Commentaire (vous pouvez utiliser ici la syntaxe <a tabindex="42" href="<?cs
+     var:trac.href.wiki ?>/WikiFormatting">Wiki</a>) :</label><br />
+   <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78">
+<?cs var:ticket.comment ?></textarea></p>
   </fieldset><?cs
   if ticket.comment_preview ?>
    <fieldset id="preview">
@@ -170,28 +181,28 @@
  </div>
 
  <?cs if:trac.acl.TICKET_CHGPROP ?><fieldset id="properties">
-  <legend>Changer les propriétés</legend>
+  <legend>Modifier les propriétés</legend>
   <table><tr>
-   <th><label for="summary">Intitulé:</label></th>
+   <th><label for="summary">Intitulé :</label></th>
    <td class="fullrow" colspan="3"><input type="text" id="summary" name="summary" value="<?cs
      var:ticket.summary ?>" size="70" /></td>
    </tr><?cs
    if:len(ticket.fields.type.options) ?>
    <tr>
-    <th><label for="type">Type:</label></th>
+    <th><label for="type">Type :</label></th>
     <td><?cs 
      call:hdf_select(ticket.fields.type.options, 'type', ticket.type, 0) ?>
     </td>
    </tr><?cs
    /if ?><?cs
    if:trac.acl.TICKET_ADMIN ?><tr>
-    <th><label for="description">Description:</label></th>
+    <th><label for="description">Description :</label></th>
     <td class="fullrow" colspan="3">
-     <textarea id="description" name="description" class="wikitext" rows="10" cols="68"><?cs
-        var:ticket.description ?></textarea>
+     <textarea id="description" name="description" class="wikitext" rows="10" cols="68">
+<?cs var:ticket.description ?></textarea>
     </td>
    </tr><tr>
-    <th><label for="reporter">Rapporteur:</label></th>
+    <th><label for="reporter">Rapporteur :</label></th>
     <td class="fullrow" colspan="3"><input type="text" value="<?cs 
       var:ticket.reporter ?>" id="reporter" name="reporter" size="70" /></td>
    </tr><?cs
@@ -230,8 +241,8 @@
         var:name(field) ?>" name="<?cs
         var:name(field) ?>"<?cs
         if:field.height ?> rows="<?cs var:field.height ?>"<?cs /if ?><?cs
-        if:field.width ?> cols="<?cs var:field.width ?>"<?cs /if ?>><?cs
-        var:ticket[name(field)] ?></textarea><?cs
+        if:field.width ?> cols="<?cs var:field.width ?>"<?cs /if ?>>
+<?cs var:ticket[name(field)] ?></textarea><?cs
       elif:field.type == 'radio' ?><?cs set:optidx = 0 ?><?cs
        each:option = field.options ?><label><input type="radio" id="<?cs
          var:name(field) ?>" name="<?cs
@@ -328,5 +339,8 @@
 <?cs /if ?>
 
  </div>
+ <script type="text/javascript">
+  addHeadingLinks(document.getElementById("searchable"), "Permalink to $id");
+ </script>
 </div>
 <?cs include "footer.cs"?>

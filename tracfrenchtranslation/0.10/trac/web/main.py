@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 #         Matthew Good <trac@matt-good.net>
@@ -28,8 +28,8 @@ from trac.env import open_environment
 from trac.perm import PermissionCache, NoPermissionCache, PermissionError
 from trac.util import reversed, get_last_traceback
 from trac.util.datefmt import format_datetime, http_date
+from trac.util.html import Markup
 from trac.util.text import to_unicode
-from trac.util.markup import Markup
 from trac.web.api import *
 from trac.web.chrome import Chrome
 from trac.web.clearsilver import HDFWrapper
@@ -77,6 +77,7 @@ def populate_hdf(hdf, env, req=None):
         'time.gmt': http_date()
     }
     hdf['project'] = {
+        'shortname': os.path.basename(env.path),
         'name': env.project_name,
         'name_encoded': env.project_name,
         'descr': env.project_description,
@@ -100,7 +101,7 @@ def populate_hdf(hdf, env, req=None):
             'login': req.href.login(),
             'logout': req.href.logout(),
             'settings': req.href.settings(),
-            'homepage': 'http://trac.edgewall.com/'
+            'homepage': 'http://trac.edgewall.org/'
         }
 
         hdf['base_url'] = req.base_url
@@ -156,55 +157,84 @@ class RequestDispatcher(Component):
         """
         # FIXME: For backwards compatibility, should be removed in 0.11
         self.env.href = req.href
+        # FIXME in 0.11: self.env.abs_href = Href(self.env.base_url)
         self.env.abs_href = req.abs_href
 
         # Select the component that should handle the request
         chosen_handler = None
-        if not req.path_info or req.path_info == '/':
-            chosen_handler = self.default_handler
-        else:
-            for handler in self.handlers:
-                if handler.match_request(req):
-                    chosen_handler = handler
-                    break
+        early_error = None
+        try:
+            if not req.path_info or req.path_info == '/':
+                chosen_handler = self.default_handler
+            else:
+                for handler in self.handlers:
+                    if handler.match_request(req):
+                        chosen_handler = handler
+                        break
 
-        for filter_ in self.filters:
-            chosen_handler = filter_.pre_process_request(req, chosen_handler)
-
-        if not chosen_handler:
-            raise HTTPNotFound('Aucun composant ne peut gérer la requête %s',
-                               req.path_info)
+            chosen_handler = self._pre_process_request(req, chosen_handler)
+        except:
+            early_error = sys.exc_info()
+            
+        if not chosen_handler and not early_error:
+            early_error = (HTTPNotFound(u'Aucun composant ne peut gérer la requête %s',
+                                        req.path_info),
+                           None, None)
 
         # Attach user information to the request
-        anonymous_request = getattr(chosen_handler, 'anonymous_request', False)
+        anonymous_request = getattr(chosen_handler, 'anonymous_request',
+                                    False)
+        if not anonymous_request:
+            try:
+                req.authname = self.authenticate(req)
+                req.perm = PermissionCache(self.env, req.authname)
+                req.session = Session(self.env, req)
+            except:
+                anonymous_request = True
+                early_error = sys.exc_info()
         if anonymous_request:
             req.authname = 'anonymous'
             req.perm = NoPermissionCache()
-        else:
-            req.authname = self.authenticate(req)
-            req.perm = PermissionCache(self.env, req.authname)
-            req.session = Session(self.env, req)
 
         # Prepare HDF for the clearsilver template
-        use_template = getattr(chosen_handler, 'use_template', True)
-        if use_template:
-            chrome = Chrome(self.env)
-            req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
-            populate_hdf(req.hdf, self.env, req)
-            chrome.populate_hdf(req, chosen_handler)
+        try:
+            use_template = getattr(chosen_handler, 'use_template', True)
+            req.hdf = None
+            if use_template:
+                chrome = Chrome(self.env)
+                req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
+                populate_hdf(req.hdf, self.env, req)
+                chrome.populate_hdf(req, chosen_handler)
+        except:
+            req.hdf = None # revert to sending plaintext error
+            if not early_error:
+                raise
+
+        if early_error:
+            try:
+                self._post_process_request(req)
+            except Exception, e:
+                self.log.exception(e)
+            raise early_error[0], early_error[1], early_error[2]
 
         # Process the request and render the template
         try:
             try:
-                resp = chosen_handler.process_request(req)
-                if resp:
-                    for filter_ in reversed(self.filters):
-                        resp = filter_.post_process_request(req, *resp)
-                    template, content_type = resp
-                    req.display(template, content_type or 'text/html')
-                else:
-                    for filter_ in reversed(self.filters):
-                        filter_.post_process_request(req, None, None)
+                try:
+                    resp = chosen_handler.process_request(req)
+                    if resp:
+                        template, content_type = \
+                                  self._post_process_request(req, *resp)
+                        req.display(template, content_type or 'text/html')
+                    else:
+                        self._post_process_request(req)
+                except:
+                    err = sys.exc_info()
+                    try:
+                        self._post_process_request(req)
+                    except Exception, e:
+                        self.log.exception(e)
+                    raise err[0], err[1], err[2]
             except PermissionError, e:
                 raise HTTPForbidden(to_unicode(e))
             except TracError, e:
@@ -213,6 +243,17 @@ class RequestDispatcher(Component):
             # Give the session a chance to persist changes
             if req.session:
                 req.session.save()
+
+    def _pre_process_request(self, req, chosen_handler):
+        for f in self.filters:
+            chosen_handler = f.pre_process_request(req, chosen_handler)
+        return chosen_handler
+                
+    def _post_process_request(self, req, template=None, content_type=None):
+        for f in reversed(self.filters):
+            template, content_type = f.post_process_request(req, template,
+                                                            content_type)
+        return template, content_type
 
 
 def dispatch_request(environ, start_response):
@@ -238,8 +279,8 @@ def dispatch_request(environ, start_response):
             root_uri = options['TracUriRoot'].rstrip('/')
             request_uri = environ['REQUEST_URI'].split('?', 1)[0]
             if not request_uri.startswith(root_uri):
-                raise ValueError('TracUriRoot défini pour %s mais la requête '
-                                 'pointe sur %s' % (root_uri, request_uri))
+                raise ValueError(u'TracUriRoot défini pour %s mais la requête '
+                                 u'pointe sur %s' % (root_uri, request_uri))
             environ['SCRIPT_NAME'] = root_uri
             environ['PATH_INFO'] = urllib.unquote(request_uri[len(root_uri):])
 
@@ -300,16 +341,16 @@ def dispatch_request(environ, start_response):
                 env_path = get_environments(environ).get(env_name)
 
             if not env_path or not os.path.isdir(env_path):
-                start_response('404 Non trouvé', [])
-                return ['Environment non trouvé']
+                start_response(u'404 Non trouvé', [])
+                return [u'Environment non trouvé']
 
     if not env_path:
-        raise EnvironmentError('Les options d\'environment "TRAC_ENV" ou '
-                               '"TRAC_ENV_PARENT_DIR", ou bien les options '
-                               'mod_python "TracEnv" ou "TracEnvParentDir" ne '
-                               'sont pas définies. Trac a besoin d\'une de ces '
-                               'options pour localiser le ou les environnments '
-                               'Trac.')
+        raise EnvironmentError(u'Les options d\'environment "TRAC_ENV" ou '
+                               u'"TRAC_ENV_PARENT_DIR", ou bien les options '
+                               u'mod_python "TracEnv" ou "TracEnvParentDir" ne '
+                               u'sont pas définies. Trac a besoin d\'une de ces '
+                               u'options pour localiser le ou les environnments '
+                               u'Trac.')
     env = _open_environment(env_path, run_once=environ['wsgi.run_once'])
 
     if env.base_url:
@@ -331,9 +372,9 @@ def dispatch_request(environ, start_response):
     except HTTPException, e:
         env.log.warn(e)
         if req.hdf:
-            req.hdf['title'] = e.reason or 'Erreur'
+            req.hdf['title'] = e.reason or u'Erreur'
             req.hdf['error'] = {
-                'title': e.reason or 'Erreur',
+                'title': e.reason or u'Erreur',
                 'type': 'TracError',
                 'message': e.message
             }
@@ -346,9 +387,9 @@ def dispatch_request(environ, start_response):
         env.log.exception(e)
 
         if req.hdf:
-            req.hdf['title'] = to_unicode(e) or 'Erreur'
+            req.hdf['title'] = to_unicode(e) or u'Erreur'
             req.hdf['error'] = {
-                'title': to_unicode(e) or 'Erreur',
+                'title': to_unicode(e) or u'Erreur',
                 'type': 'internal',
                 'traceback': get_last_traceback()
             }
@@ -369,7 +410,7 @@ def send_project_index(environ, start_response, parent_dir=None,
         loadpaths.insert(0, tmpl_path)
     else:
         template = 'index.cs'
-    req.hdf = HDFWrapper(loadpaths=[default_dir('templates')])
+    req.hdf = HDFWrapper(loadpaths)
 
     tmpl_vars = {}
     if req.environ.get('trac.template_vars'):

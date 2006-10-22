@@ -54,7 +54,7 @@ function addWikiFormattingToolbar(textarea) {
   addButton("em", "Texte italique: ''Exemple''", function() {
     encloseSelection("''", "''");
   });
-  addButton("heading", "En-tête: == Exemple ==", function() {
+  addButton("heading", "En-tÃªte: == Exemple ==", function() {
     encloseSelection("\n== ", " ==\n", "Heading");
   });
   addButton("link", "Lien: [http://www.exemple.com/ Exemple]", function() {
@@ -63,13 +63,13 @@ function addWikiFormattingToolbar(textarea) {
   addButton("code", "Bloc de code: {{{ exemple }}}", function() {
     encloseSelection("\n{{{\n", "\n}}}\n");
   });
-  addButton("hr", "Séparateur horizontal: ----", function() {
+  addButton("hr", "SÃ©parateur horizontal: ----", function() {
     encloseSelection("\n----\n", "");
   });
-  addButton("np", "New paragraph", function() {
+  addButton("np", "Nouveau paragraphe", function() {
     encloseSelection("\n\n", "");
   });
-  addButton("br", "Line break: [[BR]]", function() {
+  addButton("br", "Retour Ã  la ligne: [[BR]]", function() {
     encloseSelection("[[BR]]\n", "");
   });
 

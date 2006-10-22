@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
@@ -28,9 +28,8 @@ from trac.ticket.notification import TicketNotifyEmail
 from trac.Timeline import ITimelineEventProvider
 from trac.util import get_reporter_id
 from trac.util.datefmt import format_datetime, pretty_timedelta, http_date
-from trac.util.text import CRLF
-from trac.util.markup import html, Markup
-from trac.util.text import translate
+from trac.util.html import html, Markup
+from trac.util.text import CRLF, translate
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
 from trac.wiki import wiki_to_html, wiki_to_oneliner
@@ -49,6 +48,20 @@ class TicketModuleBase(Component):
     ticket_manipulators = ExtensionPoint(ITicketManipulator)
 
     def _validate_ticket(self, req, ticket):
+        # Always validate for known values
+        for field in ticket.fields:
+            if 'options' not in field:
+                continue
+            name = field['name']
+            if name in ticket.values and name in ticket._old:
+                value = ticket[name]
+                if value:
+                    if value not in field['options']:
+                        raise InvalidTicket('"%s" is not a valid value for '
+                                            'the %s field.' % (value, name))
+                elif not field.get('optional', False):
+                    raise InvalidTicket('field %s must be set' % name)
+        # Custom validation rules
         for manipulator in self.ticket_manipulators:
             for field, message in manipulator.validate_ticket(req, ticket):
                 if field:
@@ -106,6 +119,10 @@ class NewticketModule(TicketModuleBase):
 
         db = self.env.get_db_cnx()
 
+        if req.method == 'POST' and 'owner' in req.args and \
+               not req.perm.has_permission('TICKET_MODIFY'):
+            del req.args['owner']
+
         if req.method == 'POST' and not req.args.has_key('preview'):
             self._do_create(req, db)
 
@@ -117,7 +134,7 @@ class NewticketModule(TicketModuleBase):
             description = wiki_to_html(ticket['description'], self.env, req, db)
             req.hdf['newticket.description_preview'] = description
 
-        req.hdf['title'] = 'Nouveau ticket'
+        req.hdf['title'] = u'Nouveau ticket'
         req.hdf['newticket'] = ticket.values
 
         field_names = [field['name'] for field in ticket.fields
@@ -139,7 +156,9 @@ class NewticketModule(TicketModuleBase):
                         'resolution'):
                 field['skip'] = True
             elif name == 'owner':
-                field['label'] = 'Assigner à'
+                field['label'] = u'Assigner à'
+                if not req.perm.has_permission('TICKET_MODIFY'):
+                    field['skip'] = True
             elif name == 'milestone':
                 # Don't make completed milestones available for selection
                 options = field['options'][:]
@@ -176,10 +195,10 @@ class NewticketModule(TicketModuleBase):
         # Notify
         try:
             tn = TicketNotifyEmail(self.env)
-            tn.notify(ticket, req, newticket=True)
+            tn.notify(ticket, newticket=True)
         except Exception, e:
-            self.log.exception("Failure sending notification on creation of "
-                               "ticket #%s: %s" % (ticket.id, e))
+            self.log.exception(u"Impossible d'envoyer une notification sur la création du "
+                               u"ticket #%s: %s" % (ticket.id, e))
 
         # Redirect the user to the newly created ticket
         if req.args.get('attachment'):
@@ -297,14 +316,14 @@ class TicketModule(TicketModuleBase):
             if str(id) in tickets:
                 idx = tickets.index(str(ticket.id))
                 if idx > 0:
-                    add_link(req, 'premier', req.href.ticket(tickets[0]),
+                    add_link(req, u'premier', req.href.ticket(tickets[0]),
                              'Ticket #%s' % tickets[0])
-                    add_link(req, 'précédent', req.href.ticket(tickets[idx - 1]),
+                    add_link(req, u'précédent', req.href.ticket(tickets[idx - 1]),
                              'Ticket #%s' % tickets[idx - 1])
                 if idx < len(tickets) - 1:
-                    add_link(req, 'suivant', req.href.ticket(tickets[idx + 1]),
+                    add_link(req, u'suivant', req.href.ticket(tickets[idx + 1]),
                              'Ticket #%s' % tickets[idx + 1])
-                    add_link(req, 'dernier', req.href.ticket(tickets[-1]),
+                    add_link(req, u'dernier', req.href.ticket(tickets[-1]),
                              'Ticket #%s' % tickets[-1])
                 add_link(req, 'up', req.session['query_href'])
 
@@ -322,9 +341,9 @@ class TicketModule(TicketModuleBase):
 
     def get_timeline_filters(self, req):
         if req.perm.has_permission('TICKET_VIEW'):
-            yield ('ticket', 'Modification du ticket')
+            yield ('ticket', u'Modification du ticket')
             if self.timeline_details:
-                yield ('ticket_details', 'Ticket details', False)
+                yield ('ticket_details', u'Détails du ticket', False)
 
     def get_timeline_events(self, req, start, stop, filters):
         format = req.args.get('format')
@@ -494,9 +513,7 @@ class TicketModule(TicketModuleBase):
         if int(req.args.get('ts')) != ticket.time_changed:
             raise TracError(u"Désolé, impossible d'enregistrer vos modifications. "
                             u"Ce ticket a été modifié par quelqu'un d'autre "
-                            u"depuis que vous avez commencé", 'Collision en plein vol')
-
-        self._validate_ticket(req, ticket)
+                            u"depuis que vous avez commencé", u'Collision en plein vol')
 
         # Do any action on the ticket?
         action = req.args.get('action')
@@ -518,6 +535,8 @@ class TicketModule(TicketModuleBase):
             ticket['status'] = 'reopened'
             ticket['resolution'] = ''
 
+        self._validate_ticket(req, ticket)
+
         now = int(time.time())
         cnum = req.args.get('cnum')        
         replyto = req.args.get('replyto')
@@ -531,11 +550,10 @@ class TicketModule(TicketModuleBase):
 
         try:
             tn = TicketNotifyEmail(self.env)
-            tn.notify(ticket, req, newticket=False, modtime=now)
+            tn.notify(ticket, newticket=False, modtime=now)
         except Exception, e:
-            self.log.exception("Echec d'envoi de la notification de " \
-                               "modification du ticket #%s: %s" \
-                               % (ticket.id, e))
+            self.log.exception(u"Échec d'envoi de la notification de " \
+                               u"modification du ticket #%s: %s" % (ticket.id, e))
 
         fragment = cnum and '#comment:'+cnum or ''
         req.redirect(req.href.ticket(ticket.id) + fragment)
@@ -586,8 +604,8 @@ class TicketModule(TicketModuleBase):
         def quote_original(author, original, link):
             if not 'comment' in req.args: # i.e. the comment was not yet edited
                 req.hdf['ticket.comment'] = '\n'.join(
-                    ['En réponse à [%s %s]:' % (link, author)] +
-                    ['> %s' % line for line in original.splitlines()] + [''])
+                    [u'En réponse à [%s %s]:' % (link, author)] +
+                    [u'> %s' % line for line in original.splitlines()] + [''])
 
         if replyto == 'description':
             quote_original(ticket['reporter'], ticket['description'],
@@ -595,6 +613,7 @@ class TicketModule(TicketModuleBase):
         replies = {}
         changes = []
         cnum = 0
+        description_lastmod = description_author = None
         for change in self.grouped_changelog_entries(ticket, db):
             changes.append(change)
             # wikify comment
@@ -611,11 +630,19 @@ class TicketModule(TicketModuleBase):
                 if replyto == str(cnum):
                     quote_original(change['author'], comment,
                                    'comment:%s' % replyto)
+            if 'description' in change['fields']:
+                change['fields']['description'] = ''
+                description_lastmod = change['date']
+                description_author = change['author']
+                
         req.hdf['ticket'] = {
             'changes': changes,
             'replies': replies,
             'cnum': cnum + 1
            }
+        if description_lastmod:
+            req.hdf['ticket.description'] = {'lastmod': description_lastmod,
+                                             'author': description_author}
 
         # -- Ticket Attachments
 
@@ -663,8 +690,6 @@ class TicketModule(TicketModuleBase):
                     else:
                         this_num = old
                     current['cnum'] = int(this_num)
-            elif field == 'description':
-                current['fields'][field] = ''
             else:
                 current['fields'][field] = {'old': old, 'new': new}
         if current:

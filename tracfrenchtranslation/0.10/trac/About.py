@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -22,7 +22,7 @@ import re
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.web import IRequestHandler
-from trac.util.markup import html
+from trac.util.html import html
 from trac.web.chrome import add_stylesheet, INavigationContributor
 
 
@@ -38,7 +38,7 @@ class AboutModule(Component):
 
     def get_navigation_items(self, req):
         yield ('metanav', 'about',
-               html.a('A propos de Trac', href=req.href.about()))
+               html.a(u'À propos de Trac', href=req.href.about()))
 
     # IPermissionRequestor methods
 
@@ -56,7 +56,7 @@ class AboutModule(Component):
 
     def process_request(self, req):
         page = req.args.get('page', 'default')
-        req.hdf['title'] = 'A propos de Trac'
+        req.hdf['title'] = u'À propos de Trac'
         if req.perm.has_permission('CONFIG_VIEW'):
             req.hdf['about.config_href'] = req.href.about('config')
             req.hdf['about.plugins_href'] = req.href.about('plugins')

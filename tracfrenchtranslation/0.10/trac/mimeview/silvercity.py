@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Daniel Lundin <daniel@edgewall.com>
 
@@ -33,6 +33,7 @@ types = {
     'text/html':                ('HyperText', 3, {'asp.default.language':1}),
     'application/xml':          ('XML', 3),
     'application/xhtml+xml':    ('HyperText', 3, {'asp.default.language':1}),
+    'application/rss+xml':      ('HyperText', 3, {'asp.default.language':1}),
     'application/x-javascript': ('CPP', 3), # Kludgy.
     'text/x-asp':               ('HyperText', 3, {'asp.default.language':2}),
     'text/x-c++hdr':            ('CPP', 3),
@@ -44,6 +45,7 @@ types = {
     'application/x-httpd-php':  ('HyperText', 3, {'asp.default.language':4}),
     'application/x-httpd-php4': ('HyperText', 3, {'asp.default.language':4}),
     'application/x-httpd-php3': ('HyperText', 3, {'asp.default.language':4}),
+    'text/x-javascript':        ('CPP', 3), # Kludgy.
     'text/x-psp':               ('HyperText', 3, {'asp.default.language':3}),
     'text/x-python':            ('Python', 3),
     'text/x-ruby':              ('Ruby', 3),

@@ -5,14 +5,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
-#
-
-__copyright__ = 'Copyright (c) 2003-2006 Edgewall Software'
+# history and logs, available at http://trac.edgewall.org/log/.
 
 import cmd
 import getpass
@@ -33,7 +30,7 @@ from trac.core import TracError
 from trac.env import Environment
 from trac.perm import PermissionSystem
 from trac.ticket.model import *
-from trac.util.markup import html
+from trac.util.html import html
 from trac.util.text import to_unicode, wrap
 from trac.wiki import WikiPage
 from trac.wiki.macros import WikiMacroBase
@@ -95,12 +92,11 @@ class TracAdmin(cmd.Cmd):
         try:
             if isinstance(line, str):
                 line = to_unicode(line, sys.stdin.encoding)
+            line = line.replace('\\', '\\\\')
             rv = cmd.Cmd.onecmd(self, line) or 0
         except SystemExit:
             raise
         except Exception, e:
-            #import traceback
-            #traceback.print_exc()
             print>>sys.stderr, 'Command failed: %s' % e
             rv = 2
         if not self.interactive:
@@ -110,9 +106,9 @@ class TracAdmin(cmd.Cmd):
         self.interactive = True
         print 'Welcome to trac-admin %(ver)s\n'                \
               'Interactive Trac administration console.\n'       \
-              '%(copy)s\n\n'                                    \
+              'Copyright (c) 2003-2006 Edgewall Software\n\n'                                    \
               "Type:  '?' or 'help' for help on commands.\n" %  \
-              {'ver':trac.__version__,'copy':__copyright__}
+              {'ver':trac.__version__}
         self.cmdloop()
 
     ##
@@ -664,7 +660,7 @@ deploying Trac to a real web server).
 The latest documentation can also always be found on the project
 website:
 
-  http://projects.edgewall.com/trac/
+  http://trac.edgewall.org/
 
 Congratulations!
 """ % dict(project_name=project_name, project_path=self.envname,
@@ -753,7 +749,8 @@ Congratulations!
         rows = self.db_query("SELECT name, max(version), max(time) "
                              "FROM wiki GROUP BY name ORDER BY name")
         self.print_listing(['Title', 'Edits', 'Modified'],
-                           [(r[0], r[1], self._format_datetime(r[2])) for r in rows])
+                           [(r[0], int(r[1]), self._format_datetime(r[2]))
+                            for r in rows])
 
     def _do_wiki_remove(self, name):
         page = WikiPage(self.env_open(), name)
@@ -1157,8 +1154,8 @@ class TracAdminHelpMacro(WikiMacroBase):
 
     Exemples:
     {{{
-    [[TracAdminHelp]]               # toutes les commands
-    [[TracAdminHelp(wiki)]]         # toutes les commands wiki
+    [[TracAdminHelp]]               # toutes les commandes
+    [[TracAdminHelp(wiki)]]         # toutes les commandes wiki
     [[TracAdminHelp(wiki export)]]  # la commande "wiki export"
     [[TracAdminHelp(upgrade)]]      # la commande de mise à jour
     }}}
@@ -1202,3 +1199,7 @@ def run(args):
                     admin.run()
     else:
         return admin.onecmd("help")
+
+
+if __name__ == '__main__':
+    run(sys.argv[1:])

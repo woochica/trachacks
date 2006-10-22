@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 #         Christian Boos <cboos@neuf.fr>
@@ -466,13 +466,13 @@ class SubversionRepository(Repository):
         if self.has_node(old_path, old_rev):
             old_node = self.get_node(old_path, old_rev)
         else:
-            raise NoSuchNode(old_path, old_rev, 'La base pour le calcul des '
-                                                'différences est invalide')
+            raise NoSuchNode(old_path, old_rev, u'La base pour le calcul des '
+                                                u'différences est invalide')
         if self.has_node(new_path, new_rev):
             new_node = self.get_node(new_path, new_rev)
         else:
-            raise NoSuchNode(new_path, new_rev, 'La cible pour le calcul des '
-                                                'différences est invalide')
+            raise NoSuchNode(new_path, new_rev, u'La cible pour le calcul des '
+                                                u'différences est invalide')
         if new_node.kind != old_node.kind:
             raise TracError(u'Erreur de calcul des différences: La base est un'
                             u'%s (%s en révision %s) '

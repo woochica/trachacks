@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -70,7 +70,11 @@ class ConnectionPool(object):
             while True:
                 if self._dormant:
                     cnx = self._dormant.pop()
-                    break
+                    try:
+                        cnx.cursor() # check whether the connection is stale
+                        break
+                    except Exception:
+                        cnx.close()
                 elif self._maxsize and self._cursize < self._maxsize:
                     cnx = self._connector.get_connection(**self._kwargs)
                     self._cursize += 1
@@ -79,9 +83,9 @@ class ConnectionPool(object):
                     if timeout:
                         self._available.wait(timeout)
                         if (time.time() - start) >= timeout:
-                            raise TimeoutError, 'Impossible de se connecter à' \
-                                                ' la base de données sous %d ' \
-                                                'secondes' % timeout
+                            raise TimeoutError, u'Impossible de se connecter à' \
+                                                u' la base de données sous %d ' \
+                                                u'secondes' % timeout
                     else:
                         self._available.wait()
             self._active[tid] = [1, cnx]

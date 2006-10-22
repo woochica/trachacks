@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -24,10 +24,11 @@ from trac.db import get_column_names
 from trac.perm import IPermissionRequestor
 from trac.ticket import Ticket, TicketSystem
 from trac.util.datefmt import format_datetime, http_date
+from trac.util.html import escape, html, unescape
 from trac.util.text import shorten_line, CRLF
-from trac.util.markup import escape, html, unescape
 from trac.web import IRequestHandler
-from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
+from trac.web.chrome import add_link, add_script, add_stylesheet, \
+                            INavigationContributor
 from trac.wiki import wiki_to_html, wiki_to_oneliner, IWikiSyntaxProvider
 from trac.wiki.macros import WikiMacroBase
 from trac.mimeview.api import Mimeview, IContentConverter
@@ -66,11 +67,11 @@ class Query(object):
         for filter in filters:
             filter = filter.split('=')
             if len(filter) != 2:
-                raise QuerySyntaxError, 'Le filtre de requête impose que les champs et les ' \
-                                        'contraintes soient séparés par un "="'
+                raise QuerySyntaxError, u'Le filtre de requête impose que les champs et les ' \
+                                        u'contraintes soient séparés par un "="'
             field,values = filter
             if not field:
-                raise QuerySyntaxError, 'Le filtre de requête a besoin d\'un nom de champ'
+                raise QuerySyntaxError, u'Le filtre de requête a besoin d\'un nom de champ'
             values = values.split('|')
             mode, neg = '', ''
             if field[-1] in ('~', '^', '$'):
@@ -163,7 +164,7 @@ class Query(object):
             for i in range(1, len(columns)):
                 name, val = columns[i], row[i]
                 if name == self.group:
-                    val = val or 'None'
+                    val = val or 'Aucun'
                 elif name == 'reporter':
                     val = val or 'anonymous'
                 elif name in ['changetime', 'time']:
@@ -484,22 +485,23 @@ class QueryModule(Component):
     def _get_constraint_modes(self):
         modes = {}
         modes['text'] = [
-            {'name': "contient", 'value': "~"},
-            {'name': "ne contient pas", 'value': "!~"},
-            {'name': "débute par", 'value': "^"},
-            {'name': "fini par", 'value': "$"},
-            {'name': "est", 'value': ""},
-            {'name': "n'est pas", 'value': "!"}
+            {'name': u"contient", 'value': "~"},
+            {'name': u"ne contient pas", 'value': "!~"},
+            {'name': u"débute par", 'value': "^"},
+            {'name': u"fini par", 'value': "$"},
+            {'name': u"est", 'value': ""},
+            {'name': u"n'est pas", 'value': "!"}
         ]
         modes['select'] = [
-            {'name': "est", 'value': ""},
-            {'name': "n'est pas", 'value': "!"}
+            {'name': u"est", 'value': ""},
+            {'name': u"n'est pas", 'value': "!"}
         ]
         return modes
 
     def display_html(self, req, query):
-        req.hdf['title'] = 'Requête personnalisée'
+        req.hdf['title'] = u'Requête personnalisée'
         add_stylesheet(req, 'common/css/report.css')
+        add_script(req, 'common/js/query.js')
 
         db = self.env.get_db_cnx()
 
@@ -657,11 +659,10 @@ class QueryModule(Component):
         yield ('query', self._format_link)
 
     def _format_link(self, formatter, ns, query, label):
-        if query[0] == '?':
+        if query.startswith('?'):
             return html.A(label, class_='query',
                           href=formatter.href.query() + query.replace(' ', '+'))
         else:
-            from trac.ticket.query import Query, QuerySyntaxError
             try:
                 query = Query.from_string(formatter.env, query)
                 return html.A(label, href=query.get_href(formatter), # Hack
@@ -671,52 +672,55 @@ class QueryModule(Component):
 
 
 class TicketQueryMacro(WikiMacroBase):
-    u"""Macro listant les tickets répondant à certains critères.
+    """Macro listant les tickets répondant à certains critères.
     
     Cette macro accèpte deux paramètres, le second étant optionnel.
     
     Le premier paramètre est la requête elle-même, et utilise la même syntaxe que 
-    celle des {{{query:}}} liens wiki. Le second paramètre sélectionne comment la 
+    celle des `query:` liens wiki (cependant la syntaxe alternative commençant par
+    "?" n'est pas gérée).
+
+    Le second paramètre sélectionne comment la 
     liste des tickets est presentée: la présentation par défaut est de lister 
     l'identifiant du ticket juste à coté de son intitulé, chaque ticket étant
-    affiché sur une ligne distincte. Si un second paramètre est spécifié comme
-    '''compact''' alors les tickets sont présentés comme une simple liste 
-    d'identifiants des tickets, séparés par des virgules.
+    affiché sur une ligne distincte.
+    Si le second paramètre est spécifié, il doit alors correspondre à :
+     - '''compact''' -- les tickets sont présentés comme une liste 
+     d'identifiants des tickets, séparés par des virgules.
+     - '''count''' -- seul le nombre de tickets correspondants est affiché.
     """
 
     def render_macro(self, req, name, content):
         query_string = ''
-        compact = 0
+        compact = False
+        count = False
         argv = content.split(',')
         if len(argv) > 0:
             query_string = argv[0]
             if len(argv) > 1:
-                if argv[1].strip().lower() == 'compact':
-                    compact = 1
-
-        buf = StringIO()
+                format = argv[1].strip().lower()
+                if format == 'compact':
+                    compact = True
+                elif format == 'count':
+                    count = True
 
         query = Query.from_string(self.env, query_string)
         query.order = 'id'
         tickets = query.execute(req)
         if tickets:
+            def ticket_anchor(ticket):
+                return html.A('#%s' % ticket['id'],
+                              class_=ticket['status'],
+                              href=req.href.ticket(int(ticket['id'])),
+                              title=shorten_line(ticket['summary']))
             if compact:
-                links = []
-                for ticket in tickets:
-                    href = req.href.ticket(int(ticket['id']))
-                    summary = escape(shorten_line(ticket['summary']))
-                    a = '<a class="%s ticket" href="%s" title="%s">#%s</a>' % \
-                        (ticket['status'], href, summary, ticket['id'])
-                    links.append(a)
-                buf.write(', '.join(links))
+                alist = [ticket_anchor(ticket) for ticket in tickets]
+                return html.SPAN(alist[0], *[(', ', a) for a in alist[1:]])
+            elif count:
+                cnt = len(tickets)
+                return html.SPAN(cnt, title='%d tickets for which %s' % 
+                                 (cnt, query_string))
             else:
-                buf.write('<dl class="wiki compact">')
-                for ticket in tickets:
-                    href = req.href.ticket(int(ticket['id']))
-                    dt = '<dt><a class="%s ticket" href="%s">#%s</a></dt>' % \
-                         (ticket['status'], href, ticket['id'])
-                    buf.write(dt)
-                    buf.write('<dd>%s</dd>' % (escape(ticket['summary'])))
-                buf.write('</dl>')
-
-        return buf.getvalue()
+                return html.DL([(html.DT(ticket_anchor(ticket)),
+                                 html.DD(ticket['summary']))
+                                for ticket in tickets], class_='wiki compact')

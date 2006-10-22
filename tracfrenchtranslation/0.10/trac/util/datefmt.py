@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Matthew Good <trac@matt-good.net>
@@ -30,17 +30,17 @@ def pretty_timedelta(time1, time2=None, resolution=None):
     if not time2: time2 = time.time()
     if time1 > time2:
         time2, time1 = time1, time2
-    units = ((3600 * 24 * 365, 'an',      'ans'),
-             (3600 * 24 * 30,  'mois',    'mois'),
-             (3600 * 24 * 7,   'semaine', 'semaines'),
-             (3600 * 24,       'jour',    'jours'),
-             (3600,            'heure',   'heures'),
-             (60,              'minute',  'minutes'))
+    units = ((3600 * 24 * 365, u'an',      u'ans'),
+             (3600 * 24 * 30,  u'mois',    u'mois'),
+             (3600 * 24 * 7,   u'semaine', u'semaines'),
+             (3600 * 24,       u'jour',    u'jours'),
+             (3600,            u'heure',   u'heures'),
+             (60,              u'minute',  u'minutes'))
     age_s = int(time2 - time1)
     if resolution and age_s < resolution:
         return ''
     if age_s < 60:
-        return '%i seconde%s' % (age_s, age_s != 1 and 's' or '')
+        return u'%i seconde%s' % (age_s, age_s != 1 and 's' or '')
     for u, unit, unit_plural in units:
         r = float(age_s) / float(u)
         if r >= 0.9:
@@ -53,9 +53,9 @@ def format_datetime(t=None, format='%x %X', gmt=False):
         t = time.time()
     if not isinstance(t, (list, tuple, time.struct_time)):
         if gmt:
-            t = time.gmtime(int(t))
+            t = time.gmtime(float(t))
         else:
-            t = time.localtime(int(t))
+            t = time.localtime(float(t))
 
     text = time.strftime(format, t)
     encoding = locale.getpreferredencoding()
@@ -83,15 +83,15 @@ def get_datetime_format_hint():
     tmpl = format_datetime(t)
     return tmpl.replace('1999', 'YYYY', 1).replace('99', 'YY', 1) \
                .replace('10', 'MM', 1).replace('29', 'DD', 1) \
-               .replace('23', 'hh', 1).replace('59', 'mm', 1) \
-               .replace('58', 'ss', 1)
+               .replace('23', 'hh', 1).replace('11', 'hh', 1) \
+               .replace('59', 'mm', 1).replace('58', 'ss', 1)
 
 def http_date(t=None):
     """Format t as a rfc822 timestamp"""
     if t is None:
         t = time.time()
     if not isinstance(t, (list, tuple, time.struct_time)):
-        t = time.gmtime(int(t))
+        t = time.gmtime(float(t))
     weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
               'Oct', 'Nov', 'Dec']

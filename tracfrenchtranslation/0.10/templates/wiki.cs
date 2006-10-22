@@ -23,12 +23,12 @@
      /if ?>
    </li><?cs
   elif:wiki.action == "history" ?>
-   <li><a href="<?cs var:wiki.current_href ?>">Version courante</a></li><?cs
+   <li class="last"><a href="<?cs var:wiki.current_href ?>">Version actuelle</a></li><?cs
   else ?>
    <li><a href="<?cs var:trac.href.wiki ?>">Page d'accueil</a></li>
    <li><a href="<?cs var:trac.href.wiki ?>/TitleIndex">Sommaire</a></li>
    <li><a href="<?cs var:trac.href.wiki ?>/RecentChanges">Modif. récentes</a></li>
-   <li class="last"><a href="<?cs var:wiki.last_change_href ?>">Version précédente</a></li><?cs 
+   <li class="last"><a href="<?cs var:wiki.last_change_href ?>">Dernière modif.</a></li><?cs 
   /if ?>
  </ul>
  <hr />
@@ -75,7 +75,7 @@
  <?cs elif:wiki.action == "diff" ?>
   <h1>Modifications <?cs
     if:wiki.old_version ?>entre 
-     <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.old_version?>"> la version <?cs var:wiki.old_version?></a> et <?cs
+     <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.old_version?>">la version <?cs var:wiki.old_version?></a> et <?cs
     else ?>de <?cs
     /if ?>
     <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.version?>">la version <?cs var:wiki.version?></a> de 
@@ -84,7 +84,8 @@
    <div>
     <input type="hidden" name="action" value="diff" />
     <input type="hidden" name="version" value="<?cs var:wiki.version ?>" />
-    <label>Voir les différences <select name="style">
+    <input type="hidden" name="old_version" value="<?cs var:wiki.old_version ?>" />
+    <label>Afficher les différences <select name="style">
      <option value="inline"<?cs
        if:diff.style == 'inline' ?> selected="selected"<?cs
        /if ?>>au fil</option>
@@ -93,12 +94,12 @@
        /if ?>>côte à côte</option>
     </select></label>
     <div class="field">
-     Voir <input type="text" name="contextlines" id="contextlines" size="2"
+     Afficher <input type="text" name="contextlines" id="contextlines" size="2"
        maxlength="3" value="<?cs var:diff.options.contextlines ?>" />
      <label for="contextlines">lignes entourant chaque modification</label>
     </div>
     <fieldset id="ignore">
-     <legend>Ignorer:</legend>
+     <legend>Ignorer :</legend>
      <div class="field">
       <input type="checkbox" id="blanklines" name="ignoreblanklines"<?cs
         if:diff.options.ignoreblanklines ?> checked="checked"<?cs /if ?> />
@@ -121,26 +122,26 @@
    </div>
   </form>
   <dl id="overview">
-   <dt class="property author">Auteur:</dt>
+   <dt class="property author">Auteur :</dt>
    <dd class="author"><?cs
     if:wiki.num_changes > 1 ?><em class="multi">(modifications multiples)</em><?cs
     else ?><?cs var:wiki.author ?> <span class="ipnr">(IP: <?cs
      var:wiki.ipnr ?>)</span><?cs
     /if ?></dd>
-   <dt class="property time">Date:</dt>
+   <dt class="property time">Date :</dt>
    <dd class="time"><?cs
     if:wiki.num_changes > 1 ?><em class="multi">(modifications multiples)</em><?cs
-    elif:wiki.time ?><?cs var:wiki.time ?> (<?cs var:wiki.time_delta ?> auparavant)<?cs
+    elif:wiki.time ?><?cs var:wiki.time ?> (<?cs var:wiki.time_delta ?> ago)<?cs
     else ?>--<?cs
     /if ?></dd>
-   <dt class="property comment">Commentaire:</dt>
-   <dd class="comment"><?cs
+   <dt class="property message">Commentaire :</dt>
+   <dd class="message"><?cs
     if:wiki.num_changes > 1 ?><em class="multi">(modifications multiples)</em><?cs
     else ?><?cs var:wiki.comment ?><?cs /if ?></dd>
   </dl>
   <div class="diff">
    <div id="legend">
-    <h3>Légende:</h3>
+    <h3>Légende :</h3>
     <dl>
      <dt class="unmod"></dt><dd>Non modifié</dd>
      <dt class="add"></dt><dd>Ajouté</dd>
@@ -275,7 +276,8 @@
       </select>
      </div>
      <p><textarea id="text" class="wikitext" name="text" cols="80" rows="<?cs
-       var:wiki.edit_rows ?>"><?cs var:wiki.page_source ?></textarea></p>
+       var:wiki.edit_rows ?>">
+<?cs var:wiki.page_source ?></textarea></p>
      <script type="text/javascript">
        var scrollBarPos = document.getElementById("scroll_bar_pos");
        var text = document.getElementById("text");
@@ -380,7 +382,7 @@
    </div>
   <?cs /if ?>
   <script type="text/javascript">
-   addHeadingLinks(document.getElementById("searchable"));
+   addHeadingLinks(document.getElementById("searchable"), "Link to this section");
   </script>
  <?cs /if ?>
  <?cs /if ?>

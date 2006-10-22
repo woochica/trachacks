@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -23,8 +23,8 @@ from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util.datefmt import format_date, format_datetime, parse_date, \
                                pretty_timedelta
+from trac.util.html import html, unescape, Markup
 from trac.util.text import shorten_line, CRLF, to_unicode
-from trac.util.markup import html, unescape, Markup
 from trac.ticket import Milestone, Ticket, TicketSystem
 from trac.Timeline import ITimelineEventProvider
 from trac.web import IRequestHandler
@@ -132,7 +132,7 @@ class RoadmapModule(Component):
         if not req.perm.has_permission('ROADMAP_VIEW'):
             return
         yield ('mainnav', 'roadmap',
-               html.a('Feuille de route', href=req.href.roadmap(), accesskey=3))
+               html.a(u'Feuille de route', href=req.href.roadmap(), accesskey=3))
 
     # IPermissionRequestor methods
 
@@ -146,7 +146,7 @@ class RoadmapModule(Component):
 
     def process_request(self, req):
         req.perm.assert_permission('ROADMAP_VIEW')
-        req.hdf['title'] = 'Feuille de route'
+        req.hdf['title'] = u'Feuille de route'
 
         showall = req.args.get('show') == 'all'
         req.hdf['roadmap.showall'] = showall
@@ -286,7 +286,7 @@ class MilestoneModule(Component):
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
-        return 'jalon'
+        return u'jalon'
 
     def get_navigation_items(self, req):
         return []
@@ -303,7 +303,7 @@ class MilestoneModule(Component):
 
     def get_timeline_filters(self, req):
         if req.perm.has_permission('MILESTONE_VIEW'):
-            yield ('milestone', 'Jalons')
+            yield ('milestone', u'Jalons')
 
     def get_timeline_events(self, req, start, stop, filters):
         if 'milestone' in filters:
@@ -385,35 +385,36 @@ class MilestoneModule(Component):
 
         if not req.args.has_key('name'):
             raise TracError(u'Vous devez indiquer un nom pour le jalon.',
-                            'Champ requis manquant')
-        milestone.name = req.args.get('name')
+                            u'Champ requis manquant')
 
         due = req.args.get('duedate', '')
         try:
             milestone.due = due and parse_date(due) or 0
         except ValueError, e:
-            raise TracError(to_unicode(e), 'Format de date invalide')
+            raise TracError(to_unicode(e), 'Format de date non valable')
         if req.args.has_key('completed'):
             completed = req.args.get('completeddate', '')
             try:
                 milestone.completed = completed and parse_date(completed) or 0
             except ValueError, e:
-                raise TracError(to_unicode(e), 'Format de date invalide')
+                raise TracError(to_unicode(e), 'Format de date non valable')
             if milestone.completed > time():
-                raise TracError(u'La date de livraison ne peut être dans le futur',
-                                'Date de livraison invalide')
+                raise TracError(u'La date de livraison ne peut pas être dans le futur',
+                                u'Date de livraison non valable')
             retarget_to = req.args.get('target')
             if req.args.has_key('retarget'):
                 cursor = db.cursor()
                 cursor.execute("UPDATE ticket SET milestone=%s WHERE "
                                "milestone=%s and status != 'closed'",
                                 (retarget_to, milestone.name))
-                self.env.log.info('Tickets associated with milestone %s '
-                                  'retargeted to %s' % 
+                self.env.log.info(u'Les tickets associés au jalon %s '
+                                  u'sont déplacés vers %s' % 
                                   (milestone.name, retarget_to))
         else:
             milestone.completed = 0
 
+        # don't update the milestone name until after retargetting open tickets
+        milestone.name = req.args.get('name')
         milestone.description = req.args.get('description', '')
 
         if milestone.exists:
@@ -440,14 +441,14 @@ class MilestoneModule(Component):
     def _render_editor(self, req, db, milestone):
         if milestone.exists:
             req.perm.assert_permission('MILESTONE_MODIFY')
-            req.hdf['title'] = 'Jalon %s' % milestone.name
+            req.hdf['title'] = u'Jalon %s' % milestone.name
             req.hdf['milestone.mode'] = 'edit'
             req.hdf['milestones'] = [m.name for m in
                                      Milestone.select(self.env)
                                      if m.name != milestone.name]
         else:
             req.perm.assert_permission('MILESTONE_CREATE')
-            req.hdf['title'] = 'Nouveau jalon'
+            req.hdf['title'] = u'Nouveau jalon'
             req.hdf['milestone.mode'] = 'new'
 
         from trac.util.datefmt import get_date_format_hint, \
@@ -458,7 +459,7 @@ class MilestoneModule(Component):
         req.hdf['milestone.datetime_now'] = format_datetime()
 
     def _render_view(self, req, db, milestone):
-        req.hdf['title'] = 'Jalon %s' % milestone.name
+        req.hdf['title'] = u'Jalon %s' % milestone.name
         req.hdf['milestone.mode'] = 'view'
 
         req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)

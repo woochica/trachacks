@@ -1,6 +1,6 @@
 <?cs include "header.cs"?>
 <div id="ctxtnav" class="nav">
- <h2>A propos de la navigation</h2>
+ <h2>À propos de la navigation</h2>
  <ul>
   <li class="first<?cs if:!about.config_href ?> last<?cs /if ?>"><a href="<?cs
     var:trac.href.about ?>">Résumé</a></li><?cs
@@ -71,30 +71,27 @@
   </dl>
 
  <?cs else ?>
-  <a href="http://trac.edgewall.com" style="border: none; float: right; margin-left: 2em">
+  <a href="http://trac.edgewall.org/" style="border: none; float: right; margin-left: 2em">
    <img style="display: block" src="<?cs var:chrome.href ?>/common/trac_banner.png"
      alt="Trac: Integrated SCM &amp; Project Management"/>
   </a>
-<h1>A propos de Trac <?cs var:trac.version ?></h1>
-<p>
-Trac est un système de gestion de projet logiciel et de suivi de défauts via le
-Web, qui met l'accent sur la facilité d'utilisation et évite les chichis.<br />
-Il propose une interface pour le système de contrôle de source Subversion, un 
-Wiki intégré, et la création facile de rapports.
-</p>
-  <p>Trac est distribué sous une licence BSD modifiée.<br />
-  Le texte complet de la licence peut être trouvé dans le fichier COPYING,
-  inclus dans la distribution.</p>
-  <p>Merci de consulter le projet open source Trac: 
-  <a href="http://projects.edgewall.com/trac/">http://projects.edgewall.com/trac/</a></p>
-  <p>Trac est un produit de <a href="http://www.edgewall.com/">Edgewall 
-     Software</a>, fournisseur de solutions professionnelles et de services de 
-     développement logiciel sous Linux.</p>
-  <p>Copyright &copy; 2003-2006 <a href="http://www.edgewall.com/">Edgewall 
-     Software</a></p>
-  <a href="http://www.edgewall.com/">
-   <img style="display: block; margin: 30px" src="<?cs var:chrome.href ?>/common/edgewall.png"
-     alt="Edgewall Software"/></a>
+  <h1>À propos de Trac <?cs var:trac.version ?></h1>
+  <p>Trac est un système de gestion de projet logiciel et de suivi de défauts/bogues via le
+  Web, qui met l'accent sur la facilité d'utilisation et évite les chichis.
+  Il propose une interface pour le système de contrôle de source Subversion, un 
+  Wiki intégré, et un nombre intéressant d'option permettant de rester au courant des évènements et
+  changements d'un projet.</p>
+  <p>Trac est distribué sous une licence BSD modifiée. Le texte entier de la licence peut être consulté
+  <a href="http://trac.edgewall.org/wiki/TracLicense">en ligne</a> aussi bien que dans le fichier
+  <tt>COPYING</tt> file inclus dans cette distribution.</p>
+  <a href="http://www.python.org/" style="border: none; float: right">
+   <img style="display: block" src="<?cs var:htdocs_location ?>python.png"
+     alt="python powered" width="140" height="56" />
+  </a>
+  <p>Merci de consulter le projet open source Trac 
+  <a href="http://trac.edgewall.org/">http://trac.edgewall.org/</a>.</p>
+  <p>Copyright &copy; 2003-2006 <a href="http://www.edgewall.org/">Edgewall
+  Software</a></p>
  <?cs /if ?>
 </div>
 <?cs include "footer.cs"?>

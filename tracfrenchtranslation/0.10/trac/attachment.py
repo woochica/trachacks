@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -28,8 +28,8 @@ from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.mimeview import *
 from trac.util import get_reporter_id, create_unique_file
-from trac.util.datefmt import format_datetime
-from trac.util.markup import Markup, html
+from trac.util.datefmt import format_datetime, pretty_timedelta
+from trac.util.html import Markup, html
 from trac.util.text import unicode_quote, unicode_unquote, pretty_size
 from trac.web import HTTPBadRequest, IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -101,7 +101,7 @@ class Attachment(object):
         if not row:
             self.filename = filename
             raise TracError(u'La pièce jointe %s n\'existe pas.' % (self.title),
-                            'Pièce jointe invalide')
+                            u'Pièce jointe invalide')
         self.filename = row[0]
         self.description = row[1]
         self.size = row[2] and int(row[2]) or 0
@@ -130,7 +130,7 @@ class Attachment(object):
     title = property(_get_title)
 
     def delete(self, db=None):
-        assert self.filename, 'Impossible de supprimer une pièce jointe inexistante'
+        assert self.filename, u'Impossible de supprimer une pièce jointe inexistante'
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
@@ -149,7 +149,7 @@ class Attachment(object):
                                    self.path, exc_info=True)
                 if handle_ta:
                     db.rollback()
-                raise TracError, 'Impossible de supprimer la pièce jointe'
+                raise TracError, u'Impossible de supprimer la pièce jointe'
 
         self.env.log.info('Attachment removed: %s' % self.title)
         if handle_ta:
@@ -166,8 +166,8 @@ class Attachment(object):
         else:
             handle_ta = False
 
-        self.size = size
-        self.time = t or time.time()
+        self.size = size and int(size) or 0
+        self.time = int(t or time.time())
 
         # Make sure the path to the attachment is inside the environment
         # attachments directory
@@ -219,13 +219,31 @@ class Attachment(object):
             attachment = Attachment(env, parent_type, parent_id)
             attachment.filename = filename
             attachment.description = description
-            attachment.size = size
-            attachment.time = time
+            attachment.size = size and int(size) or 0
+            attachment.time = time and int(time) or 0
             attachment.author = author
             attachment.ipnr = ipnr
             yield attachment
 
+    def delete_all(cls, env, parent_type, parent_id, db):
+        """Delete all attachments of a given resource.
+
+        As this is usually done while deleting the parent resource,
+        the `db` argument is ''not'' optional here.
+        """
+        attachment_dir = None
+        for attachment in list(cls.select(env, parent_type, parent_id, db)):
+            attachment_dir = os.path.dirname(attachment.path)
+            attachment.delete(db)
+        if attachment_dir:
+            try:
+                os.rmdir(attachment_dir)
+            except OSError:
+                env.log.error("Can't delete attachment directory %s",
+                              attachment_dir, exc_info=True)
+            
     select = classmethod(select)
+    delete_all = classmethod(delete_all)
 
     def open(self):
         self.env.log.debug('Trying to open attachment at %s', self.path)
@@ -252,6 +270,7 @@ def attachment_to_hdf(env, req, db, attachment):
         'ipnr': attachment.ipnr,
         'size': pretty_size(attachment.size),
         'time': format_datetime(attachment.time),
+        'age': pretty_timedelta(attachment.time),
         'href': attachment.href(req)
     }
     return hdf
@@ -317,9 +336,9 @@ class AttachmentModule(Component):
         parent_type = req.args.get('type')
         path = req.args.get('path')
         if not parent_type or not path:
-            raise HTTPBadRequest('Mauvaise requête')
+            raise HTTPBadRequest(u'Mauvaise requête')
         if not parent_type in ['ticket', 'wiki']:
-            raise HTTPBadRequest('Pièce jointe de type inconnu')
+            raise HTTPBadRequest(u'Pièce jointe de type inconnu')
 
         action = req.args.get('action', 'view')
         if action == 'new':
@@ -332,7 +351,7 @@ class AttachmentModule(Component):
                 self._render_list(req, parent_type, last_segment)
                 return 'attachment.cs', None
             if not last_segment:
-                raise HTTPBadRequest('Mauvaise requête')
+                raise HTTPBadRequest(u'Mauvaise requête')
             attachment = Attachment(self.env, parent_type, parent_id,
                                     last_segment)
         parent_link, parent_text = self._parent_to_hdf(
@@ -357,7 +376,7 @@ class AttachmentModule(Component):
         # Populate attachment.parent:
         parent_link = req.href(parent_type, parent_id)
         if parent_type == 'ticket':
-            parent_text = 'Ticket #' + parent_id
+            parent_text = u'Ticket #' + parent_id
         else: # 'wiki'
             parent_text = parent_id
         req.hdf['attachment.parent'] = {
@@ -407,7 +426,7 @@ class AttachmentModule(Component):
                 href = req.abs_href
             else:
                 descr = wiki_to_oneliner(descr, self.env, db, shorten=True)
-                title += Markup(' par %s', author)
+                title += Markup(u' par %s', author)
                 href = req.href
             yield('attachment', href.attachment(type, id, filename), title,
                   time, author, descr)
@@ -429,13 +448,13 @@ class AttachmentModule(Component):
         else:
             size = upload.file.len
         if size == 0:
-            raise TracError('Fichier vide')
+            raise TracError(u'Fichier vide')
 
         # Maximum attachment size (in bytes)
         max_size = self.max_size
         if max_size >= 0 and size > max_size:
             raise TracError(u'Taille maximum des pièces attachés: %d octets' % \
-                            max_size, 'Echec du chargement')
+                            max_size, u'Échec du chargement')
 
         # We try to normalize the filename to unicode NFC if we can.
         # Files uploaded from OS X might be in NFD.
@@ -454,10 +473,10 @@ class AttachmentModule(Component):
         for manipulator in self.manipulators:
             for field, message in manipulator.validate_attachment(req, attachment):
                 if field:
-                    raise InvalidAttachment('Attachment field %s is invalid: %s'
+                    raise InvalidAttachment(u'Le champ attaché %s n\'est pas valable: %s'
                                             % (field, message))
                 else:
-                    raise InvalidAttachment('Invalid attachment: %s' % message)
+                    raise InvalidAttachment(u'Pièce jointe non valable : %s' % message)
 
         if req.args.get('replace'):
             try:
@@ -492,7 +511,7 @@ class AttachmentModule(Component):
         perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
         req.perm.assert_permission(perm_map[attachment.parent_type])
 
-        req.hdf['title'] = '%s (suppression)' % attachment.title
+        req.hdf['title'] = u'%s (suppression)' % attachment.title
         req.hdf['attachment'] = {'filename': attachment.filename,
                                  'mode': 'delete'}
 
@@ -513,7 +532,10 @@ class AttachmentModule(Component):
         req.hdf['title'] = attachment.title
         req.hdf['attachment'] = attachment_to_hdf(self.env, req, None,
                                                   attachment)
-        
+        # Override the 'oneliner'
+        req.hdf['attachment.description'] = wiki_to_html(attachment.description,
+                                                         self.env, req)
+
         perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
         if req.perm.has_permission(perm_map[attachment.parent_type]):
             req.hdf['attachment.can_delete'] = 1
@@ -548,12 +570,12 @@ class AttachmentModule(Component):
             if self.render_unsafe_content and not binary and \
                mime_type and not mime_type.startswith('text/plain'):
                 plaintext_href = attachment.href(req, format='txt')
-                add_link(req, 'alternate', plaintext_href, 'Text Standard',
+                add_link(req, 'alternate', plaintext_href, u'Text Standard',
                          mime_type)
 
             # add ''Original Format'' alternate link (always)
             raw_href = attachment.href(req, format='raw')
-            add_link(req, 'alternate', raw_href, 'Format original', mime_type)
+            add_link(req, 'alternate', raw_href, u'Format original', mime_type)
 
             self.log.debug("Rendering preview of file %s with mime-type %s"
                            % (attachment.filename, mime_type))
@@ -594,7 +616,7 @@ class AttachmentModule(Component):
             if formatter.req:
                 href = attachment.href(formatter.req) + params
             return html.A(label, class_='attachment', href=href,
-                          title='Pièce jointe %s' % attachment.title)
+                          title=u'Pièce jointe %s' % attachment.title)
         except TracError:
             return html.A(label, class_='missing attachment', rel='nofollow',
                           href=formatter.href())

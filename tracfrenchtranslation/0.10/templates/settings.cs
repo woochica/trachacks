@@ -34,8 +34,8 @@
     <label for="newsid">Clef de session:</label>
     <input type="text" id="newsid" name="newsid" class="textwidget" size="30"
            value="<?cs var:settings.session_id ?>" />
-    <p>La clef de session est utilisée pour identifier les réglagles personnels
-   et les données de session sur le serveur. Par défault, elle est générée 
+    <p>La clef de session est utilisée pour identifier les réglages personnels
+   et les données de session sur le serveur. Par défaut, elle est générée 
    automatiquement, mais vous pouvez la modifier quand vous le souhaitez, si vous 
    voulez la rendre plus facilement mémorisable, de manière à l'utiliser sur un 
    autre navigateur</p>

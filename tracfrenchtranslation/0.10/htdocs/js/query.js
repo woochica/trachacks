@@ -106,7 +106,7 @@ function initializeFilters() {
     if (select.options[select.selectedIndex].disabled) {
       // Neither IE nor Safari supported disabled options at the time this was
       // written, so alert the user
-      alert("Un filtre existe dÈj‡ pour cette propriÈtÈ");
+      alert("Un filtre existe d√©j√† pour cette propri√©t√©);
       return;
     }
 

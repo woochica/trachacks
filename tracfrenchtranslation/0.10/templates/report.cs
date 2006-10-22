@@ -212,21 +212,21 @@
     <div>
      <input type="hidden" name="action" value="<?cs var:report.action ?>" />
      <div class="field">
-      <label for="title">Titre du rapport:</label><br />
+      <label for="title">Titre du rapport :</label><br />
       <input type="text" id="title" name="title"
              value="<?cs var:report.title ?>" size="50" /><br />
      </div>
      <div class="field">
       <label for="description">
-       Description:</label> (Vous pouvez utiliser la syntaxe <a tabindex="42" href="<?cs
-         var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> ici)
+       Description :</label> (Vous pouvez utiliser ici la syntaxe <a tabindex="42" href="<?cs
+         var:$trac.href.wiki ?>/WikiFormatting">Wiki</a>)
       </label><br />
-      <textarea id="description" name="description" class="wikitext" rows="10" cols="78"><?cs
-        var:report.description ?></textarea>
+      <textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+<?cs var:report.description ?></textarea>
      </div>
      <div class="field">
       <label for="query">
-       Requête SQL du rapport:</label><br />
+       Requête SQL du rapport :</label><br />
       <textarea id="query" name="query" cols="85" rows="20"><?cs
         var:report.sql ?></textarea>
      </div>
@@ -241,7 +241,7 @@
  <?cs /if?>
  
  <div id="help">
-  <strong>Note:</strong> Voir <a href="<?cs
+  <strong>Remarque :</strong> Consulter la page <a href="<?cs
     var:trac.href.wiki ?>/TracReports">TracReports</a> pour de l'aide sur 
   l'utilisation et la création des rapports.
  </div>

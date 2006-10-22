@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
@@ -27,7 +27,7 @@ from trac.mimeview import Mimeview, is_binary, get_mimetype
 from trac.perm import IPermissionRequestor
 from trac.util import sorted, embedded_numbers
 from trac.util.datefmt import http_date, format_datetime, pretty_timedelta
-from trac.util.markup import escape, html, Markup
+from trac.util.html import escape, html, Markup
 from trac.util.text import pretty_size
 from trac.web import IRequestHandler, RequestDone
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
@@ -150,7 +150,6 @@ class BrowserModule(Component):
                 'content_length': entry.content_length,
                 'size': pretty_size(entry.content_length),
                 'rev': entry.rev,
-                'permission': 1, # FIXME
                 'log_href': req.href.log(entry.path, rev=rev),
                 'browser_href': req.href.browser(entry.path, rev=rev)
             })
@@ -241,6 +240,7 @@ class BrowserModule(Component):
                 'changeset_href': req.href.changeset(node.rev),
                 'date': format_datetime(changeset.date),
                 'age': pretty_timedelta(changeset.date),
+                'size': pretty_size(node.content_length),
                 'author': changeset.author or 'anonymous',
                 'message': message
             } 
@@ -253,7 +253,7 @@ class BrowserModule(Component):
 
             # add ''Original Format'' alternate link (always)
             raw_href = req.href.browser(node.path, rev=rev, format='raw')
-            add_link(req, 'alternate', raw_href, 'Format original', mime_type)
+            add_link(req, 'alternate', raw_href, u'Format original', mime_type)
 
             self.log.debug("Rendering preview of node %s@%s with mime-type %s"
                            % (node.name, str(rev), mime_type))

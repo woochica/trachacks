@@ -1,5 +1,5 @@
 ===== test_help_ok =====
-trac-admin - The Trac Administration Console 0.10dev
+trac-admin - The Trac Administration Console 0.10b1
 
 Usage: trac-admin </path/to/projenv> [command [subcommand] [option ...]]
 
@@ -430,6 +430,27 @@ minor
 trivial    
 new_priority   
 
+===== test_priority_add_many_ok =====
+
+Possible Values
+---------------
+blocker        
+critical       
+major          
+minor          
+trivial    
+p0            
+p1            
+p2            
+p3            
+p4            
+p5            
+p6            
+p7            
+p8            
+p9            
+p10           
+
 ===== test_priority_add_error_already_exists =====
 Command failed: columns type, name are not unique
 ===== test_priority_change_ok =====
@@ -642,3 +663,11 @@ milestone4
 
 ===== test_milestone_remove_error_bad_milestone =====
 Command failed: Milestone bad_milestone does not exist.
+===== test_backslash_use_ok =====
+
+Name  Time
+----------
+\
+2.0       
+1.0       
+

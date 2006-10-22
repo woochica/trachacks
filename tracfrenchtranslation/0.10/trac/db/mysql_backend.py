@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 
 import re
 
@@ -146,6 +146,8 @@ class MySQLConnection(ConnectionWrapper):
         ConnectionWrapper.__init__(self, cnx)
 
     def cast(self, column, type):
+        if type == 'int':
+            type = 'signed'
         return 'CAST(%s AS %s)' % (column, type)
 
     def like(self):

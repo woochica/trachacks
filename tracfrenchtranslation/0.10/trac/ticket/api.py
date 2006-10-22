@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
@@ -20,8 +20,8 @@ from trac.config import *
 from trac.core import *
 from trac.perm import IPermissionRequestor, PermissionSystem
 from trac.Search import ISearchSource, search_to_sql, shorten_result
+from trac.util.html import html, Markup
 from trac.util.text import shorten_line, translate
-from trac.util.markup import html, Markup
 from trac.wiki import IWikiSyntaxProvider, Formatter
 
 
@@ -32,7 +32,7 @@ class ITicketChangeListener(Interface):
     def ticket_created(ticket):
         """Called when a ticket is created."""
 
-    def ticket_changed(ticket, comment, old_values):
+    def ticket_changed(ticket, comment, author, old_values):
         """Called when a ticket is modified.
         
         `old_values` is a dictionary containing the previous values of the
@@ -131,6 +131,7 @@ class TicketSystem(Component):
                      'options': options}
             if name in ('status', 'resolution'):
                 field['type'] = 'radio'
+                field['optional'] = True
             elif name in ('milestone', 'version'):
                 field['optional'] = True
             fields.append(field)

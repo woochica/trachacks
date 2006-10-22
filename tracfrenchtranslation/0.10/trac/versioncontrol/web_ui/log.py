@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christian Boos <cboos@neuf.fr>
@@ -22,7 +22,8 @@ import urllib
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util.datefmt import http_date
-from trac.util.markup import html
+from trac.util.html import html
+from trac.util.text import wrap
 from trac.versioncontrol import Changeset
 from trac.versioncontrol.web_ui.changeset import ChangesetModule
 from trac.versioncontrol.web_ui.util import *
@@ -135,7 +136,7 @@ class LogModule(Component):
             # FIXME: we should send a 404 error here
             raise TracError(u"Le fichier ou le répertoire '%s' n'existe pas "
                             u"en révision %s ou pour toute révision précédente."
-                            % (path, rev), 'Chemin inexistant')
+                            % (path, rev), u'Chemin inexistant')
 
         def make_log_href(path, **args):
             link_rev = rev
@@ -180,8 +181,9 @@ class LogModule(Component):
             for rev in revs:
                 changeset = repos.get_changeset(rev)
                 cs = changes[rev]
-                cs['message'] = '\n'.join(['\t' + m for m in
-                                           changeset.message.split('\n')])
+                cs['message'] = wrap(changeset.message, 70,
+                                     initial_indent='\t',
+                                     subsequent_indent='\t')
                 files = []
                 actions = []
                 for path, kind, chg, bpath, brev in changeset.get_changes():
@@ -231,7 +233,13 @@ class LogModule(Component):
         if ns == 'log1':
             it_log = fullmatch.group('it_log')
             rev = fullmatch.group('log_rev')
-            path = fullmatch.group('log_path')
+            path = fullmatch.group('log_path') or '/'
+            target = '%s%s@%s' % (it_log, path, rev)
+            # prepending it_log is needed, as the helper expects it there
+            intertrac = formatter.shorthand_intertrac_helper(
+                'log', target, label, fullmatch)
+            if intertrac:
+                return intertrac
         else: # ns == 'log2'
             path, rev, line = get_path_rev_line(match)
         stop_rev = None
@@ -239,11 +247,4 @@ class LogModule(Component):
             if not stop_rev and rev and sep in rev:
                 stop_rev, rev = rev.split(sep, 1)
         href = formatter.href.log(path or '/', rev=rev, stop_rev=stop_rev)
-        if ns == 'log1':
-            target = it_log + href[len(formatter.href.log('/')):]
-            # prepending it_log is needed, as the helper expects it there
-            intertrac = formatter.shorthand_intertrac_helper('log', target,
-                                                             label, fullmatch)
-            if intertrac:
-                return intertrac
         return html.A(label, href=href, class_='source')

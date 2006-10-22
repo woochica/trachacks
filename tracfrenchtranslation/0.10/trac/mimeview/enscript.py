@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2004-2005 Edgewall Software
+# Copyright (C) 2004-2006 Edgewall Software
 # Copyright (C) 2004 Daniel Lundin <daniel@edgewall.com>
 # Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Daniel Lundin <daniel@edgewall.com>
 
@@ -19,7 +19,7 @@ from trac.config import Option, ListOption
 from trac.core import *
 from trac.mimeview.api import IHTMLPreviewRenderer, Mimeview
 from trac.util import NaivePopen
-from trac.util.markup import escape, Deuglifier
+from trac.util.html import escape, Deuglifier
 
 __all__ = ['EnscriptRenderer']
 
@@ -27,6 +27,7 @@ types = {
     'application/xhtml+xml':    ('html', 2),
     'application/postscript':   ('postscript', 2),
     'application/x-csh':        ('csh', 2),
+    'application/x-javascript': ('javascript', 2),
     'application/x-troff':      ('nroff', 2),
     'text/html':                ('html', 2),
     'text/x-ada':               ('ada', 2),
@@ -132,11 +133,11 @@ class EnscriptRenderer(Component):
         mimetype = mimetype.split(';', 1)[0] # strip off charset
         mode = self._types[mimetype][0]
         cmdline += ' --color -h -q --language=html -p - -E%s' % mode
-        self.env.log.debug("Enscript command line: %s" % cmdline)
+        self.env.log.debug(u"Ligne de commande Enscript : %s" % cmdline)
 
         np = NaivePopen(cmdline, content.encode('utf-8'), capturestderr=1)
         if np.errorlevel or np.err:
-            err = "L'execution de la commande (%s) a echoué: %s, %s." % \
+            err = u"L'exécution de la commande (%s) a echoué: %s, %s." % \
                   (cmdline, np.errorlevel, np.err)
             raise Exception, err
         odata = np.out

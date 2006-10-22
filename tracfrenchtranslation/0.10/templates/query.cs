@@ -164,8 +164,6 @@
  </div>
  <hr />
 </form>
-<script type="text/javascript" src="<?cs
-  var:htdocs_location ?>js/query.js"></script>
 <script type="text/javascript"><?cs set:idx = 0 ?>
  var properties={<?cs each:field = query.fields ?><?cs
   var:name(field) ?>:{type:"<?cs var:field.type ?>",label:"<?cs
@@ -242,8 +240,8 @@
 /if ?>
 
 <div id="help">
- <strong>Note:</strong> Voir <a href="<?cs var:$trac.href.wiki ?>/TracQuery">TracQuery</a> 
- pour obtenir de l'aide sur l'utilisation des requêtes.
+ <strong>Remarque :</strong> Veuillez consulter la page <a href="<?cs var:trac.href.wiki ?>/TracQuery">TracQuery</a> 
+ pour plus d'informations sur l'utilisation des requêtes.
 </div>
 
 </div>

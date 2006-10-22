@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005 Edgewall Software
+# Copyright (C) 2005-2006 Edgewall Software
 # Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 #         Ludvig Strigeus
 
 from trac.core import *
 from trac.mimeview.api import content_to_unicode, IHTMLPreviewRenderer, Mimeview
-from trac.util.markup import escape, Markup
+from trac.util.html import escape, Markup
 from trac.web.chrome import add_stylesheet
 
 __all__ = ['PatchRenderer']
@@ -95,11 +95,13 @@ class PatchRenderer(Component):
             for i in xrange(len(fromlines)):
                 fr, to = fromlines[i], tolines[i]
                 (start, end) = _get_change_extent(fr, to)
-                if start != 0 and end != 0:
-                    fromlines[i] = fr[:start] + '\0' + fr[start:end+len(fr)] + \
-                                   '\1' + fr[end:]
-                    tolines[i] = to[:start] + '\0' + to[start:end+len(to)] + \
-                                 '\1' + to[end:]
+                if start != 0 or end != 0:
+                    last = end+len(fr)
+                    fromlines[i] = fr[:start] + '\0' + fr[start:last] + \
+                                   '\1' + fr[last:]
+                    last = end+len(to)
+                    tolines[i] = to[:start] + '\0' + to[start:last] + \
+                                 '\1' + to[last:]
 
         import re
         space_re = re.compile(' ( +)|^ ')
@@ -152,7 +154,9 @@ class PatchRenderer(Component):
                         line = lines.next()
 
                         # First character is the command
-                        command, line = line[0], line[1:]
+                        command = ' '
+                        if line:
+                            command, line = line[0], line[1:]
                         # Make a new block?
                         if (command == ' ') != last_type:
                             last_type = command == ' '

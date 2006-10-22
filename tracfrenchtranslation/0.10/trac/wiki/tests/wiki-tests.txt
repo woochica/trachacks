@@ -91,16 +91,22 @@ without endtags
 ------------------------------
 <sup>superscript</sup>, <sub>subscript</sub>, normal.
 ============================== Escaping markup
-!__foo!__
-!~~bar!~~
-!,,boo!,,
-!^baz!^
+!'''''foobar!''''' x
+!''foo!'' x
+!'''bar!''' x
+!__foo!__ x
+!~~bar!~~ x
+!,,boo!,, x
+!^baz!^ x
 ------------------------------
 <p>
-__foo__
-~~bar~~
-,,boo,,
-^baz^
+'''''foobar''''' x
+''foo'' x
+'''bar''' x
+__foo__ x
+~~bar~~ x
+,,boo,, x
+^baz^ x
 </p>
 ------------------------------
 ============================== Complex mixed verbatim markup
@@ -263,6 +269,8 @@ Relative links are supported:
 [/docs See documentation]
 [/images/logo.png Our logo]
 [/]
+[#title]
+[#title see Title]
 ------------------------------
 <p>
 Relative links are supported:
@@ -270,6 +278,8 @@ Relative links are supported:
 <a href="/docs">See documentation</a>
 <a href="/images/logo.png">Our logo</a>
 <a href="/">/</a>
+<a href="#title">#title</a>
+<a href="#title">see Title</a>
 </p>
 ------------------------------
 ==============================  Image links are now regular external links
@@ -503,10 +513,10 @@ Hello, [[HelloWorld(...)]]
 [[HelloWorld(hej hopp) ]] # This shouldnt executed as macro since it contain whitespace between ) and ]
 ------------------------------
 <p>
-<a class="missing wiki" href="/wiki/%5BHelloWorld%28hej" rel="nofollow">hopp) ?</a>] # This shouldnt executed as macro since it contain whitespace between ) and ]
+[[HelloWorld(hej hopp) ]] # This shouldnt executed as macro since it contain whitespace between ) and ]
 </p>
 ------------------------------
-<a class="missing wiki" href="/wiki/%5BHelloWorld%28hej" rel="nofollow">hopp) ?</a>] # This shouldnt executed as macro since it contain whitespace between ) and ]
+[[HelloWorld(hej hopp) ]] # This shouldnt executed as macro since it contain whitespace between ) and ]
 ============================== Another bad macro call
 [[HelloWorld(hej hopp))]] # Extra right brace and still executed
 ------------------------------
@@ -547,6 +557,14 @@ Hello World, args = hej hopp Hello World, args = hej hopp2 # Test non greedy mat
 </p>
 ------------------------------
 [[DivCodeElement(...)]]
+============================== Macro returning None
+[[None(hej hopp)]] nada
+------------------------------
+<p>
+ nada
+</p>
+------------------------------
+[[None(...)]] nada
 ============================== Inlined HTML wiki processor
 Inline [[html(<B> Test </B>)]] text
 ------------------------------

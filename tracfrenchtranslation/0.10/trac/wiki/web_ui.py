@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -27,8 +27,8 @@ from trac.Search import ISearchSource, search_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
 from trac.util import get_reporter_id
 from trac.util.datefmt import format_datetime, pretty_timedelta
+from trac.util.html import html, Markup
 from trac.util.text import shorten_line
-from trac.util.markup import html, Markup
 from trac.versioncontrol.diff import get_diff_options, hdf_diff
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
 from trac.web import HTTPNotFound, IRequestHandler
@@ -51,7 +51,7 @@ class WikiModule(Component):
 
     # IContentConverter methods
     def get_supported_conversions(self):
-        yield ('txt', 'Plain Text', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
+        yield ('txt', 'Texte plain', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
 
     def convert_content(self, req, mimetype, content, key):
         return (content, 'text/plain;charset=utf-8')
@@ -115,8 +115,9 @@ class WikiModule(Component):
                 self._do_delete(req, db, page)
             elif action == 'diff':
                 get_diff_options(req)
-                req.redirect(req.href.wiki(page.name, version=page.version,
-                                           action='diff'))
+                req.redirect(req.href.wiki(
+                    page.name, version=page.version,
+                    old_version=req.args.get('old_version'), action='diff'))
         elif action == 'delete':
             self._render_confirm(req, db, page)
         elif action == 'edit':
@@ -140,7 +141,7 @@ class WikiModule(Component):
 
     def get_timeline_filters(self, req):
         if req.perm.has_permission('WIKI_VIEW'):
-            yield ('wiki', 'Modifications Wiki')
+            yield ('wiki', u'Modifications Wiki')
 
     def get_timeline_events(self, req, start, stop, filters):
         if 'wiki' in filters:
@@ -149,18 +150,22 @@ class WikiModule(Component):
             href = format == 'rss' and req.abs_href or req.href
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            cursor.execute("SELECT time,name,comment,author "
+            cursor.execute("SELECT time,name,comment,author,version "
                            "FROM wiki WHERE time>=%s AND time<=%s",
                            (start, stop))
-            for t,name,comment,author in cursor:
-                title = Markup(u'<em>%s</em> edité par %s',
+            for t,name,comment,author,version in cursor:
+                title = Markup(u'<em>%s</em> édité par %s',
                                wiki.format_page_name(name), author)
+                diff_link = html.A('diff', href=href.wiki(name, action='diff',
+                                                          version=version))
                 if format == 'rss':
                     comment = wiki_to_html(comment or '--', self.env, req, db,
                                            absurls=True)
                 else:
                     comment = wiki_to_oneliner(comment, self.env, db,
                                                shorten=True)
+                if version > 1:
+                    comment = Markup('%s (%s)', comment, diff_link)
                 yield 'wiki', href.wiki(name), title, t, author, comment
 
             # Attachments
@@ -226,10 +231,10 @@ class WikiModule(Component):
         for manipulator in self.page_manipulators:
             for field, message in manipulator.validate_wiki_page(req, page):
                 if field:
-                    raise InvalidWikiPage("The Wiki page field %s is invalid: %s"
+                    raise InvalidWikiPage("Le champ %s de la page Wiki n'est pas valable : %s"
                                           % (field, message))
                 else:
-                    raise InvalidWikiPage("Invalid Wiki page: %s" % message)
+                    raise InvalidWikiPage("Page Wiki non valable : %s" % message)
 
         page.save(get_reporter_id(req, 'author'), req.args.get('comment'),
                   req.remote_addr)
@@ -244,7 +249,7 @@ class WikiModule(Component):
         version = None
         if req.args.has_key('delete_version'):
             version = int(req.args.get('version', 0))
-        old_version = int(req.args.get('old_version', 0)) or version
+        old_version = int(req.args.get('old_version') or 0) or version
 
         self._set_title(req, page, 'delete')
         req.hdf['wiki'] = {'mode': 'delete'}
@@ -297,7 +302,8 @@ class WikiModule(Component):
                     info['time'] = format_datetime(t)
                     info['time_delta'] = pretty_timedelta(t)
                 info['author'] = author or 'anonymous'
-                info['comment'] = comment or '--'
+                info['comment'] = wiki_to_html(comment or '--',
+                                               self.env, req, db)
                 info['ipnr'] = ipnr or ''
             else:
                 if version < new_version:
@@ -378,7 +384,7 @@ class WikiModule(Component):
                                                      version=page.version)
         if preview:
             info['page_html'] = wiki_to_html(page.text, self.env, req, db)
-            info['comment_html'] = wiki_to_oneliner(comment, self.env, req, db)
+            info['comment_html'] = wiki_to_oneliner(comment, self.env, db)
             info['readonly'] = int(req.args.has_key('readonly'))
         req.hdf['wiki'] = info
 
@@ -452,7 +458,7 @@ class WikiModule(Component):
                     }
         else:
             if not req.perm.has_permission('WIKI_CREATE'):
-                raise HTTPNotFound('La page %s n\'existe pas', page.name)
+                raise HTTPNotFound(u'La page %s n\'existe pas', page.name)
             req.hdf['wiki.page_html'] = html.P(u'Créer la page "%s" ici' % page_name)
 
         # Show attachments

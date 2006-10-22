@@ -49,16 +49,16 @@
          var:milestone.datetime_now ?><?cs
         /alt ?>" title="Format: <?cs
         var:milestone.datetime_hint ?>" />
-      <em>Format: <?cs var:milestone.datetime_hint ?></em>
+      <em>Format : <?cs var:milestone.datetime_hint ?></em>
      </label><?cs
      if:len(milestones) ?>
      <br/>
      <input type="checkbox" id="retarget" name="retarget" checked="checked"
             onclick="enableControl('target', this.checked)"/>
      <label>
-      Retarget associated open tickets to milestone
+      Réassocier les tickets ouverts au jalon
       <select id="target" name="target">
-       <option value="">None</option><?cs
+       <option value="">Aucun</option><?cs
        each:name = milestones ?>
        <option><?cs var:name ?></option><?cs
        /each ?>
@@ -80,10 +80,10 @@
    </fieldset>
    <div class="field">
     <fieldset class="iefix">
-     <label for="description">Description (vous pouvez utiliser la syntaxe <a tabindex="42" href="<?cs
-       var:trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> ici):</label>
-     <p><textarea id="description" name="description" class="wikitext" rows="10" cols="78"><?cs
-       var:milestone.description_source ?></textarea></p>
+     <label for="description">Description (vous pouvez utiliser ici la syntaxe <a tabindex="42" href="<?cs
+       var:trac.href.wiki ?>/WikiFormatting">Wiki</a>):</label>
+     <p><textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+<?cs var:milestone.description_source ?></textarea></p>
     </fieldset>
    </div>
    <div class="buttons">
@@ -101,12 +101,12 @@
   <form action="<?cs var:milestone.href ?>" method="post">
    <input type="hidden" name="id" value="<?cs var:milestone.name ?>" />
    <input type="hidden" name="action" value="delete" />
-   <p><strong>Etes-vous sûr de vouloir détruire ce jalon ?</strong></p>
+   <p><strong>Voulez-vous vraiment détruire ce jalon ?</strong></p>
    <input type="checkbox" id="retarget" name="retarget" checked="checked"
        onclick="enableControl('target', this.checked)"/>
    <label for="target">Réassigner les tickets associés sur ce jalon</label>
    <select name="target" id="target">
-    <option value="">None</option><?cs
+    <option value="">Aucun</option><?cs
      each:other = milestones ?><?cs if:other != milestone.name ?>
       <option><?cs var:other ?></option><?cs 
      /if ?><?cs /each ?>

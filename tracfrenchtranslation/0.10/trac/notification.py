@@ -7,12 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
-#
+# history and logs, available at http://trac.edgewall.org/log/.
 
 import time
 import smtplib
@@ -21,11 +20,13 @@ import re
 from trac import __version__
 from trac.config import BoolOption, IntOption, Option
 from trac.core import *
-from trac.util.text import CRLF, wrap
+from trac.util.text import CRLF
+from trac.web.chrome import Chrome
 from trac.web.clearsilver import HDFWrapper
 from trac.web.main import populate_hdf
 
 MAXHEADERLEN = 76
+
 
 class NotificationSystem(Component):
 
@@ -86,18 +87,18 @@ class NotificationSystem(Component):
 
 
 class Notify(object):
-    """Generic notification class for Trac. Subclass this to implement
-    different methods."""
-
-    db = None
-    hdf = None
+    """Generic notification class for Trac.
+    
+    Subclass this to implement different methods.
+    """
 
     def __init__(self, env):
         self.env = env
         self.config = env.config
         self.db = env.get_db_cnx()
-        self.hdf = HDFWrapper(loadpaths=[env.get_templates_dir(),
-                                         self.config.get('trac', 'templates_dir')])
+
+        loadpaths = Chrome(self.env).get_all_templates_dirs()
+        self.hdf = HDFWrapper(loadpaths)
         populate_hdf(self.hdf, env)
 
     def notify(self, resid):
@@ -108,21 +109,27 @@ class Notify(object):
 
     def get_recipients(self, resid):
         """Return a pair of list of subscribers to the resource 'resid'.
-           First list represents the direct recipients (To:),
-           second list represents the recipients in carbon copy (Cc:)"""
+        
+        First list represents the direct recipients (To:), second list
+        represents the recipients in carbon copy (Cc:).
+        """
         raise NotImplementedError
 
     def begin_send(self):
-        """Prepare to send messages. Called before sending begins."""
-        pass
+        """Prepare to send messages.
+        
+        Called before sending begins.
+        """
 
     def send(self, torcpts, ccrcpts):
         """Send message to recipients."""
         raise NotImplementedError
 
     def finish_send(self):
-        """Clean up after sending all messages. Called after sending all messages."""
-        pass
+        """Clean up after sending all messages.
+        
+        Called after sending all messages.
+        """
 
 
 class NotifyEmail(Notify):
@@ -175,7 +182,7 @@ class NotifyEmail(Notify):
             self._charset.input_codec = None
             self._charset.output_charset = 'ascii'
         else:
-            raise TracError, 'Configuration encodage courriel invalide: %s' % pref
+            raise TracError, u'Configuration encodage courriel invalide: %s' % pref
 
     def notify(self, resid, subject):
         self.subject = subject
@@ -192,7 +199,7 @@ class NotifyEmail(Notify):
                                    u'Ni <b>notification.from</b> ni'
                                    u' <b>notification.reply_to</b> ne sont'
                                    u' définis dans la configuration.'),
-                            'Erreur de notification SMTP')
+                            u'Erreur de notification SMTP')
 
         # Authentication info (optional)
         self.user_name = self.config['notification'].get('smtp_user')

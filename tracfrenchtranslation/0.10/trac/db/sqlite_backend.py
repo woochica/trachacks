@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -176,7 +176,13 @@ class SQLiteConnection(ConnectionWrapper):
             return SQLiteUnicodeCursor(self.cnx, self.cnx.rowclass)
 
     def cast(self, column, type):
-        return column
+        if sqlite_version >= 30203:
+            return 'CAST(%s AS %s)' % (column, type)
+        elif type == 'int':
+            # hack to force older SQLite versions to convert column to an int
+            return '1*' + column
+        else:
+            return column
 
     def like(self):
         if sqlite_version >= 30100:

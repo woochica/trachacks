@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -68,7 +68,7 @@ class WikiPage(object):
     exists = property(fget=lambda self: self.version > 0)
 
     def delete(self, version=None, db=None):
-        assert self.exists, 'Impossible de supprimer une page inexistante'
+        assert self.exists, u'Impossible de supprimer une page inexistante'
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
@@ -94,8 +94,7 @@ class WikiPage(object):
         if not self.exists:
             from trac.attachment import Attachment
             # Delete orphaned attachments
-            for attachment in Attachment.select(self.env, 'wiki', self.name, db):
-                attachment.delete(db)
+            Attachment.delete_all(self.env, 'wiki', self.name, db)
 
         if handle_ta:
             db.commit()

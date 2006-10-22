@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
@@ -25,10 +25,10 @@ from trac.core import *
 from trac.db import get_column_names
 from trac.perm import IPermissionRequestor
 from trac.util import sorted
+from trac.util.text import translate
 from trac.util.datefmt import format_date, format_time, format_datetime, \
                                http_date
-from trac.util.markup import html
-from trac.util.text import translate
+from trac.util.html import html
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
 from trac.wiki import wiki_to_html, IWikiSyntaxProvider, Formatter
@@ -95,7 +95,7 @@ class ReportModule(Component):
                return resp
 
         if id != -1 or action == 'new':
-            add_link(req, 'up', req.href.report(), 'Rapports disponibles')
+            add_link(req, 'up', req.href.report(), u'Rapports disponibles')
 
             # Kludge: Reset session vars created by query module so that the
             # query navigation links on the ticket page don't confuse the user
@@ -166,8 +166,8 @@ class ReportModule(Component):
         row = cursor.fetchone()
         if not row:
             raise TracError(u"Le rapport %s n'existe pas." % id,
-                            'Numéro de rapport invalide')
-        req.hdf['title'] = 'Supprimer le rapport {%s} %s' % (id, row[0])
+                            u'Numéro de rapport invalide')
+        req.hdf['title'] = u'Supprimer le rapport {%s} %s' % (id, row[0])
         req.hdf['report'] = {
             'id': id,
             'mode': 'delete',
@@ -187,7 +187,7 @@ class ReportModule(Component):
             row = cursor.fetchone()
             if not row:
                 raise TracError(u"Le rapport %s n'existe pas." % id,
-                                'Numéro de rapport invalide')
+                                u'Numéro de rapport invalide')
             title = row[0] or ''
             description = row[1] or ''
             query = row[2] or ''
@@ -196,11 +196,11 @@ class ReportModule(Component):
             title += ' (copy)'
 
         if copy or id == -1:
-            req.hdf['title'] = 'Créer un nouveau rapport'
+            req.hdf['title'] = u'Créer un nouveau rapport'
             req.hdf['report.href'] = req.href.report()
             req.hdf['report.action'] = 'new'
         else:
-            req.hdf['title'] = 'Editer le rapport {%d} %s' % (id, title)
+            req.hdf['title'] = u'Éditer le rapport {%d} %s' % (id, title)
             req.hdf['report.href'] = req.href.report(id)
             req.hdf['report.action'] = 'edit'
 
@@ -225,7 +225,7 @@ class ReportModule(Component):
         try:
             args = self.get_var_args(req)
         except ValueError,e:
-            raise TracError, 'Echec du rapport: %s' % e
+            raise TracError, u'Échec du rapport: %s' % e
 
         title, description, sql = self.get_info(db, id, args)
 
@@ -247,7 +247,7 @@ class ReportModule(Component):
         try:
             cols, rows = self.execute_report(req, db, id, sql, args)
         except Exception, e:
-            req.hdf['report.message'] = 'Echec de l\'exécution du rapport: %s' % e
+            req.hdf['report.message'] = u'Échec de l\'exécution du rapport: %s' % e
             return 'report.cs', None
 
         # Convert the header info to HDF-format
@@ -255,7 +255,7 @@ class ReportModule(Component):
         for col in cols:
             title=col.capitalize()
             prefix = 'report.headers.%d' % idx
-            req.hdf['%s.real' % prefix] = col[0]
+            req.hdf['%s.real' % prefix] = col
             if title.startswith('__') and title.endswith('__'):
                 continue
             elif title[0] == '_' and title[-1] == '_':
@@ -341,10 +341,14 @@ class ReportModule(Component):
                 elif column == 'report':
                     value['report_href'] = req.href.report(cell)
                 elif column in ('time', 'date','changetime', 'created', 'modified'):
-                    value['date'] = format_date(cell)
-                    value['time'] = format_time(cell)
-                    value['datetime'] = format_datetime(cell)
-                    value['gmt'] = http_date(cell)
+                    if cell == 'None':
+                        value['date'] = value['time'] = cell
+                        value['datetime'] = value['gmt'] = cell
+                    else:
+                        value['date'] = format_date(cell)
+                        value['time'] = format_time(cell)
+                        value['datetime'] = format_datetime(cell)
+                        value['gmt'] = http_date(cell)
                 prefix = 'report.items.%d.%s' % (row_idx, unicode(column))
                 req.hdf[prefix] = unicode(cell)
                 for key in value.keys():
@@ -409,9 +413,9 @@ class ReportModule(Component):
         if id == -1:
             # If no particular report was requested, display
             # a list of available reports instead
-            title = 'Rapports disponibles'
+            title = u'Rapports disponibles'
             sql = 'SELECT id AS report, title FROM report ORDER BY report'
-            description = 'Liste des rapports disponibles'
+            description = u'Liste des rapports disponibles'
         else:
             cursor = db.cursor()
             cursor.execute("SELECT title,query,description from report "
@@ -419,7 +423,7 @@ class ReportModule(Component):
             row = cursor.fetchone()
             if not row:
                 raise TracError(u"Le rapport %s n'existe pas." % id,
-                                'Numéro de rapport invalide')
+                                u'Numéro de rapport invalide')
             title = row[0] or ''
             sql = row[1]
             description = row[2] or ''
@@ -445,8 +449,7 @@ class ReportModule(Component):
             try:
                 arg = args[aname]
             except KeyError:
-                raise TracError(u"La variable dynamique '$%s' n'est pas " \
-                                u"définie." % aname)
+                raise TracError(u"La variable dynamique '$%s' n'est pas définie." % aname)
             req.hdf['report.var.' + aname] = arg
             values.append(arg)
 

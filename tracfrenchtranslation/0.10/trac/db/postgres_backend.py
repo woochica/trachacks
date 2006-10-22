@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -44,8 +44,8 @@ class PostgreSQLConnector(Component):
         cnx = self.get_connection(path, user, password, host, port, params)
         cursor = cnx.cursor()
         if cnx.schema:
-            cursor.execute('CREATE SCHEMA %s' % cnx.schema)
-            cursor.execute('SET search_path TO %s, public', (cnx.schema,))
+            cursor.execute('CREATE SCHEMA "%s"' % cnx.schema)
+            cursor.execute('SET search_path TO %s', (cnx.schema,))
         from trac.db_default import schema
         for table in schema:
             for stmt in self.to_sql(table):
@@ -116,8 +116,7 @@ class PostgreSQLConnection(ConnectionWrapper):
             self.schema = None
             if 'schema' in params:
                 self.schema = params['schema']
-            cnx.cursor().execute('SET search_path TO %s, public', 
-                                (self.schema,))
+                cnx.cursor().execute('SET search_path TO %s', (self.schema,))
         except PGSchemaError:
             cnx.rollback()
         ConnectionWrapper.__init__(self, cnx)
@@ -142,7 +141,6 @@ class PostgreSQLConnection(ConnectionWrapper):
         self.cnx.rollback()
         if self.schema:
             try:
-                self.cnx.cursor().execute("SET search_path TO %s, public", 
-                                         (self.schema,))
+                self.cnx.cursor().execute("SET search_path TO %s", (self.schema,))
             except PGSchemaError:
                 self.cnx.rollback()

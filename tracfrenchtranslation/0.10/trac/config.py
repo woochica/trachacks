@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -142,21 +142,32 @@ class Configuration(object):
             return
 
         # Only save options that differ from the defaults
-        config = ConfigParser()
+        sections = []
         for section in self.sections():
+            options = []
             for option in self[section]:
                 default = self.site_parser.has_option(section, option) and \
                           self.site_parser.get(section, option)
                 current = self.parser.has_option(section, option) and \
                           self.parser.get(section, option)
                 if current is not False and current != default:
-                    if not config.has_section(section):
-                        config.add_section(section)
-                    config.set(section, option, current or '')
+                    options.append((option, current))
+            if options:
+                sections.append((section, sorted(options)))
 
         fileobj = file(self.filename, 'w')
         try:
-            config.write(fileobj)
+            print>>fileobj, '# -*- coding: utf-8 -*-'
+            print>>fileobj
+            for section, options in sections:
+                print>>fileobj, '[%s]' % section
+                for key, val in options:
+                    if key in self[section].overriden:
+                        print>>fileobj, '# %s = <set in global trac.ini>' % key
+                    else:
+                        print>>fileobj, '%s = %s' % \
+                                        (key, to_unicode(val).encode('utf-8'))
+                print>>fileobj
         finally:
             fileobj.close()
 
@@ -175,17 +186,21 @@ class Configuration(object):
             self.parser.read(self.filename)
             self._lastmtime = modtime
 
+    def has_site_option(self, section, name):
+        return self.site_parser.has_option(section, name)
+
 
 class Section(object):
     """Proxy for a specific configuration section.
     
     Objects of this class should not be instantiated directly.
     """
-    __slots__ = ['config', 'name']
+    __slots__ = ['config', 'name', 'overriden']
 
     def __init__(self, config, name):
         self.config = config
         self.name = name
+        self.overriden = {}
 
     def __contains__(self, name):
         return self.config.parser.has_option(self.name, name) or \
@@ -239,6 +254,8 @@ class Section(object):
         `ConfigurationError` exception is raised.
         """
         value = self.get(name, default)
+        if value == '':
+            return default
         try:
             return int(value)
         except ValueError:
@@ -273,8 +290,12 @@ class Section(object):
         """
         if not self.config.parser.has_section(self.name):
             self.config.parser.add_section(self.name)
-        return self.config.parser.set(self.name, name,
-                                      to_unicode(value).encode('utf-8'))
+        if value is None:
+            self.overriden[name] = True
+            value = ''
+        else:
+            value = to_unicode(value).encode('utf-8')
+        return self.config.parser.set(self.name, name, value)
 
 
 class Option(object):

@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -24,8 +24,8 @@ from trac.config import IntOption
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util.datefmt import format_date, format_time, http_date
+from trac.util.html import html, Markup
 from trac.util.text import to_unicode
-from trac.util.markup import html, Markup
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
 
@@ -151,7 +151,7 @@ class TimelineModule(Component):
         if maxrows and len(events) > maxrows:
             del events[maxrows:]
 
-        req.hdf['title'] = 'Historique'
+        req.hdf['title'] = u'Historique'
 
         # Get the email addresses of all known users
         email_map = {}
@@ -215,7 +215,7 @@ class TimelineModule(Component):
                                                'daysback')]
         href = req.href.timeline(args+[(f, 'on') for f in other_filters])
         raise TracError(Markup(
-            u'Le fournisseur d\'évènements %s (<tt>%s</tt>) a echoué:'
+            u'Le gestionnaire d\'évènements %s (<tt>%s</tt>) a echoué:'
             u'<br /><br /> %s: %s'
             u'<p>Vous voulez probablement consulter les '
             u'autres types d\'évènements de l\''

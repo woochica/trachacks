@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -27,8 +27,8 @@ from StringIO import StringIO
 from trac.core import *
 from trac.mimeview import *
 from trac.wiki.api import WikiSystem
+from trac.util.html import escape, Markup, Element, html
 from trac.util.text import shorten_line, to_unicode
-from trac.util.markup import escape, Markup, Element, html
 
 __all__ = ['wiki_to_html', 'wiki_to_oneliner', 'wiki_to_outline',
            'wiki_to_link', 'Formatter' ]
@@ -72,7 +72,7 @@ class WikiProcessor(object):
                 self.processor = self._mimeview_processor
             else:
                 self.processor = self._default_processor
-                self.error = "Aucune macro nommée '%s' ne peut être trouvée" % name
+                self.error = u"Aucune macro nommée '%s' ne peut être trouvée" % name
 
     # builtin processors
 
@@ -88,7 +88,7 @@ class WikiProcessor(object):
             return Markup(text).sanitize()
         except HTMLParseError, e:
             self.env.log.warn(e)
-            return system_message('Erreur d\'analyse HTML: %s' % escape(e.msg),
+            return system_message(u'Erreur d\'analyse HTML: %s' % escape(e.msg),
                                   text.splitlines()[e.lineno - 1].strip())
 
     # generic processors
@@ -105,12 +105,14 @@ class WikiProcessor(object):
 
     def process(self, req, text, in_paragraph=False):
         if self.error:
-            text = system_message(Markup('Error: Echec de chargement du' 
-                                         'transformateur <code>%s</code>', 
+            text = system_message(Markup(u'Erreur : Échec de chargement du' 
+                                         u'transformateur <code>%s</code>', 
                                          self.name),
                                   self.error)
         else:
             text = self.processor(req, text)
+        if not text:
+            return ''
         if in_paragraph:
             content_for_span = None
             interrupt_paragraph = False
@@ -167,7 +169,9 @@ class Formatter(object):
     SHREF_TARGET_MIDDLE = r"(?:\|(?=[^|\s])|[^|<>\s])"
     SHREF_TARGET_LAST = r"[a-zA-Z0-9/=]" # we don't want "_"
 
-    LHREF_RELATIVE_TARGET = r"[/.][^\s[\]]*"
+    LHREF_RELATIVE_TARGET = r"[/.#][^\s[\]]*"
+
+    XML_NAME = r"[\w:](?<!\d)[\w:.-]*?" # See http://www.w3.org/TR/REC-xml/#id 
 
     # Sequence of regexps used by the engine
 
@@ -196,18 +200,18 @@ class Formatter(object):
         r"(?P<shref>!?((?P<sns>%s):(?P<stgt>%s|%s(?:%s*%s)?)))" \
         % (LINK_SCHEME, QUOTED_STRING,
            SHREF_TARGET_FIRST, SHREF_TARGET_MIDDLE, SHREF_TARGET_LAST),
+        # [wiki:TracLinks with optional label] or [/relative label]
+        (r"(?P<lhref>!?\[(?:"
+         r"(?P<rel>%s)|" % LHREF_RELATIVE_TARGET + # ./... or /...
+         r"(?P<lns>%s):(?P<ltgt>%s|[^\]\s]*))" % \
+         (LINK_SCHEME, QUOTED_STRING) + # wiki:TracLinks or wiki:"trac links"
+         r"(?:\s+(?P<label>%s|[^\]]+))?\])" % QUOTED_STRING), # optional label
         # [[macro]] call
         (r"(?P<macro>!?\[\[(?P<macroname>[\w/+-]+)"
          r"(\]\]|\((?P<macroargs>.*?)\)\]\]))"),
-        # [wiki:TracLinks with label]
-        (r"(?P<lhref>!?\[(?:"
-         r"(?P<rel>%s)|" % LHREF_RELATIVE_TARGET + # ./... or /...
-         r"(?:(?P<lns>%s):)?(?P<ltgt>%s|[^\]\s]*))" % \
-         (LINK_SCHEME, QUOTED_STRING) + # wiki:TracLinks or wiki:"trac links"
-         r"(?:\s+(?P<label>%s|[^\]]+))?\])" % QUOTED_STRING), # label
         # == heading == #hanchor
         r"(?P<heading>^\s*(?P<hdepth>=+)\s.*\s(?P=hdepth)\s*"
-        r"(?P<hanchor>#[\w:](?<!\d)[\w:.-]*)?$)",
+        r"(?P<hanchor>#%s)?$)" % XML_NAME,
         #  * list
         r"(?P<list>^(?P<ldepth>\s+)(?:[-*]|\d+\.|[a-zA-Z]\.|[ivxIVX]{1,5}\.) )",
         # definition:: 
@@ -274,8 +278,6 @@ class Formatter(object):
 
     def simple_tag_handler(self, match, open_tag, close_tag):
         """Generic handler for simple binary style tags"""
-        if match[0] == '!':
-            return match[1:]
         if self.tag_open_p((open_tag, close_tag)):
             return self.close_tag(close_tag)
         else:
@@ -283,8 +285,6 @@ class Formatter(object):
         return open_tag
 
     def _bolditalic_formatter(self, match, fullmatch):
-        if match[0] == '!':
-            return match[1:]
         italic = ('<i>', '</i>')
         italic_open = self.tag_open_p(italic)
         tmp = ''
@@ -344,7 +344,7 @@ class Formatter(object):
 
     def _lhref_formatter(self, match, fullmatch):
         rel = fullmatch.group('rel')
-        ns = fullmatch.group('lns') or (not rel and 'wiki')
+        ns = fullmatch.group('lns')
         target = self._unquote(fullmatch.group('ltgt'))
         label = fullmatch.group('label')
         if not label: # e.g. `[http://target]` or `[wiki:target]`
@@ -376,15 +376,21 @@ class Formatter(object):
                    match
 
     def _make_intertrac_link(self, ns, target, label):
-        url = self.env.config.get('intertrac', ns + '.url')
+        intertrac_config = self.env.config['intertrac']
+        url = intertrac_config.get(ns+'.url')
         if url:
-            name = self.env.config.get('intertrac', ns + '.title',
-                                       'Trac project %s' % ns)
-            sep = target.find(':')
-            if sep != -1:
-                url = '%s/%s/%s' % (url, target[:sep], target[sep + 1:])
-            else: 
-                url = '%s/search?q=%s' % (url, urllib.quote_plus(target))
+            name = intertrac_config.get(ns+'.title', 'Trac project %s' % ns)
+            compat = intertrac_config.getbool(ns+'.compat', 'true')
+            # TODO: set `compat` default to False once 0.10 gets widely used
+            # and remove compatibility code altogether once 0.[89] disappear...
+            if compat:
+                sep = target.find(':')
+                if sep != -1:
+                    url = '%s/%s/%s' % (url, target[:sep], target[sep + 1:])
+                else: 
+                    url = '%s/search?q=%s' % (url, urllib.quote_plus(target))
+            else:
+                url = '%s/intertrac/%s' % (url, urllib.quote(target))
             return self._make_ext_link(url, label, '%s in %s' % (target, name))
         else:
             return None
@@ -435,7 +441,7 @@ class Formatter(object):
         except Exception, e:
             self.env.log.error('Macro %s(%s) failed' % (name, args),
                                exc_info=True)
-            return system_message('Erreur: Echec de la macro %s(%s)' % (name, args),
+            return system_message(u'Erreur : Échec de la macro %s(%s)' % (name, args),
                                   e)
 
     # Headings
@@ -445,8 +451,8 @@ class Formatter(object):
 
         depth = min(len(fullmatch.group('hdepth')), 5)
         anchor = fullmatch.group('hanchor') or ''
-        heading = match[depth+1:-depth-1-len(anchor)]
-        heading = wiki_to_oneliner(heading, self.env, self.db, shorten,
+        heading_text = match[depth+1:-depth-1-len(anchor)]
+        heading = wiki_to_oneliner(heading_text, self.env, self.db, False,
                                    self._absurls)
         if anchor:
             anchor = anchor[1:]
@@ -462,6 +468,9 @@ class Formatter(object):
             anchor = anchor_base + str(i)
             i += 1
         self._anchors[anchor] = True
+        if shorten:
+            heading = wiki_to_oneliner(heading_text, self.env, self.db, True,
+                                       self._absurls)
         return (depth, heading, anchor)
 
     def _heading_formatter(self, match, fullmatch):
@@ -965,11 +974,14 @@ class OutlineFormatter(Formatter):
 
 class LinkFormatter(OutlineFormatter):
     """Special formatter that focuses on TracLinks."""
-    flavor = 'outline'
+    flavor = 'link'
     
     def __init__(self, env, absurls=False, db=None):
         OutlineFormatter.__init__(self, env, absurls, db)
         
+    def _heading_formatter(self, match, fullmatch):
+         return ''
+    
     def match(self, wikitext):
         """Return the Wiki match found at the beginning of the `wikitext`"""
         self.reset()        
@@ -1008,4 +1020,3 @@ def wiki_to_link(wikitext, env, req):
     if not wikitext:
         return ''
     return LinkFormatter(env, False, None).match(wikitext)
-

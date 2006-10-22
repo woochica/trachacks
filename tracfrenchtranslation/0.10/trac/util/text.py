@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Matthew Good <trac@matt-good.net>
@@ -28,22 +28,22 @@ CRLF = '\r\n'
 
 # -- Unicode
 
-def to_unicode(text, charset=None, lossy=True):
+def to_unicode(text, charset=None):
     """Convert a `str` object to an `unicode` object.
 
-    If `charset` is not specified, we'll make some guesses,
-    first trying the UTF-8 encoding then trying the locale
-    preferred encoding (this differs from the `unicode` function
-    which only tries with the locale preferred encoding, in 'strict'
-    mode).
+    If `charset` is given, we simply assume that encoding for the text,
+    but we'll use the "replace" mode so that the decoding will always
+    succeed.
+    If `charset` is ''not'' specified, we'll make some guesses, first
+    trying the UTF-8 encoding, then trying the locale preferred encoding,
+    in "replace" mode. This differs from the `unicode` builtin, which
+    by default uses the locale preferred encoding, in 'strict' mode,
+    and is therefore prompt to raise `UnicodeDecodeError`s.
 
-    If the `lossy` argument is `True`, which is the default, then
-    we use the 'replace' mode:
-
-    If the `lossy` argument is `False`, we fallback to the 'iso-8859-15'
-    charset in case of an error (encoding a `str` using 'iso-8859-15'
-    will always work, as there's one Unicode character for each byte of
-    the input).
+    Because of the "replace" mode, the original content might be altered.
+    If this is not what is wanted, one could map the original byte content
+    by using an encoding which maps each byte of the input to an unicode
+    character, e.g. by doing `unicode(text, 'iso-8859-1')`.
     """
     if not isinstance(text, str):
         if isinstance(text, Exception):
@@ -55,17 +55,13 @@ def to_unicode(text, charset=None, lossy=True):
                 # unicode arguments given to the exception (e.g. parse_date)
                 return ' '.join([to_unicode(arg) for arg in text.args])
         return unicode(text)
-    errors = lossy and 'replace' or 'strict'
-    try:
-        if charset:
-            return unicode(text, charset, errors)
-        else:
-            try:
-                return unicode(text, 'utf-8')
-            except UnicodeError:
-                return unicode(text, locale.getpreferredencoding(), errors)
-    except UnicodeError:
-        return unicode(text, 'iso-8859-15')
+    if charset:
+        return unicode(text, charset, 'replace')
+    else:
+        try:
+            return unicode(text, 'utf-8')
+        except UnicodeError:
+            return unicode(text, locale.getpreferredencoding(), 'replace')
 
 def unicode_quote(value):
     """A unicode aware version of urllib.quote"""
@@ -107,7 +103,7 @@ def to_utf8(text, charset='iso-8859-15'):
 
 # -- Plain text formatting
 
-def shorten_line(text, maxlen = 75):
+def shorten_line(text, maxlen=75):
     if len(text or '') < maxlen:
         return text
     shortline = text[:maxlen]
@@ -120,10 +116,10 @@ def wrap(t, cols=75, initial_indent='', subsequent_indent='',
     try:
         import textwrap
         t = t.strip().replace('\r\n', '\n').replace('\r', '\n')
-        wrapper = textwrap.TextWrapper(cols, replace_whitespace = 0,
-                                       break_long_words = 0,
-                                       initial_indent = initial_indent,
-                                       subsequent_indent = subsequent_indent)
+        wrapper = textwrap.TextWrapper(cols, replace_whitespace=0,
+                                       break_long_words=0,
+                                       initial_indent=initial_indent,
+                                       subsequent_indent=subsequent_indent)
         wrappedLines = []
         for line in t.split('\n'):
             wrappedLines += wrapper.wrap(line.rstrip()) or ['']
@@ -141,7 +137,7 @@ def pretty_size(size):
 
     jump = 512
     if size < jump:
-        return '%d octets' % size
+        return u'%d octets' % size
 
     units = ['ko', 'Mo', 'Go', 'To']
     i = 0

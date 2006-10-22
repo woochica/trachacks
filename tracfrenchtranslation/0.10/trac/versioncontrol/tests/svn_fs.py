@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -192,6 +192,20 @@ class SubversionRepositoryTestCase(unittest.TestCase):
         props = f.get_properties()
         self.assertEqual('native', props['svn:eol-style'])
         self.assertEqual('text/plain', props['svn:mime-type'])
+
+    def test_created_path_rev(self):
+        node = self.repos.get_node('/trunk/README3.txt', 15)
+        self.assertEqual(14, node.rev)
+        self.assertEqual('/trunk/README3.txt', node.path)
+        self.assertEqual(14, node.created_rev)
+        self.assertEqual('trunk/README3.txt', node.created_path)
+
+    def test_created_path_rev_parent_copy(self):
+        node = self.repos.get_node('/tags/v1/README.txt', 15)
+        self.assertEqual(3, node.rev)
+        self.assertEqual('/tags/v1/README.txt', node.path)
+        self.assertEqual(3, node.created_rev)
+        self.assertEqual('trunk/README.txt', node.created_path)
 
     # Revision Log / node history 
 

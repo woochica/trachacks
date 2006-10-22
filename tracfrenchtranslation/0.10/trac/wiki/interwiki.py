@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christian Boos <cboos@neuf.fr>
 
@@ -19,6 +19,7 @@ import re
 from trac.core import *
 from trac.wiki.formatter import Formatter
 from trac.wiki.api import IWikiChangeListener, IWikiMacroProvider
+
 
 class InterWikiMap(Component):
     """Implements support for InterWiki maps."""
@@ -74,7 +75,12 @@ class InterWikiMap(Component):
         Expand the colon-separated `target` arguments.
         """
         ns, url, title = self[ns]
-        args = target.split(':')
+        maxargnum = max([0]+[int(a[1:]) for a in
+                             re.findall(InterWikiMap._argspec_re, url)])
+        if maxargnum > 0:
+            args = target.split(':', (maxargnum - 1))
+        else:
+            args = [target]
         expanded_url = self._expand_or_append(url, args)
         expanded_title = self._expand(title, args)
         if expanded_title == title:
@@ -84,12 +90,11 @@ class InterWikiMap(Component):
     # IWikiChangeListener methods
 
     def wiki_page_added(self, page):
-        if page.name == InterWikiMap._page_name:
-            self._update()
+        pass
 
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
         if page.name == InterWikiMap._page_name:
-            self._update()
+            self._interwiki_map = None
 
     def wiki_page_deleted(self, page):
         if page.name == InterWikiMap._page_name:
@@ -97,7 +102,7 @@ class InterWikiMap(Component):
 
     def wiki_page_version_deleted(self, page):
         if page.name == InterWikiMap._page_name:
-            self._update()
+            self._interwiki_map = None
 
     def _update(self):
         from trac.wiki.model import WikiPage
@@ -126,12 +131,12 @@ class InterWikiMap(Component):
         yield 'InterWiki'
 
     def get_macro_description(self, name): 
-        return 'Fournit une liste descriptive des differents préfixes ' \
-               'InterWiki connus.'
+        return u'Fournit une liste descriptive des differents préfixes ' \
+               u'InterWiki connus.'
 
     def render_macro(self, req, name, content):
         from trac.util import sorted
-        from trac.util.markup import html as _
+        from trac.util.html import html as _
         interwikis = []
         for k in sorted(self.keys()):
             prefix, url, title = self[k]

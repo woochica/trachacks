@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005 Edgewall Software
-# Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2005-2006 Edgewall Software
+# Copyright (C) 2005-2006 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -21,7 +21,7 @@ from trac import mimeview
 from trac.config import *
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
-from trac.util.markup import html
+from trac.util.html import html
 from trac.web.api import IRequestHandler, HTTPNotFound
 from trac.web.href import Href
 from trac.wiki import IWikiSyntaxProvider
@@ -53,8 +53,8 @@ def add_stylesheet(req, filename, mimetype='text/css'):
         href = Href(req.base_path).chrome
     add_link(req, 'stylesheet', href(filename), mimetype=mimetype)
 
-def add_javascript(req, filename):
-    """ Include Javascript in the current template. """
+def add_script(req, filename, mimetype='text/javascript'):
+    """Add a reference to an external javascript file to the template."""
     if filename.startswith('common/') and 'htdocs_location' in req.hdf:
         href = Href(req.hdf['htdocs_location'])
         filename = filename[7:]
@@ -63,11 +63,17 @@ def add_javascript(req, filename):
     href = href(filename)
     idx = 0
     while True:
-        js = req.hdf.get('chrome.js.%i' % idx)
-        if not js: break
-        if js == href: return
+        js = req.hdf.get('chrome.scripts.%i.href' % idx)
+        if not js:
+            break
+        if js == href: # already added
+            return
         idx += 1
-    req.hdf['chrome.js.%i' % idx] = href
+    req.hdf['chrome.scripts.%i' % idx] = {'href': href, 'type': mimetype}
+
+def add_javascript(req, filename):
+    """Deprecated: use `add_script()` instead."""
+    add_script(req, filename, mimetype='text/javascript')
 
 
 class INavigationContributor(Interface):
@@ -222,10 +228,10 @@ class Chrome(Component):
                 path = os.path.normpath(os.path.join(dir, filename))
                 assert os.path.commonprefix([dir, path]) == dir
                 if os.path.isfile(path):
-                    req.send_file(path)
+                    req.send_file(path, mimeview.get_mimetype(path))
 
         self.log.warning('File %s not found in any of %s', filename, dirs)
-        raise HTTPNotFound('Fichier %s non trouvé', filename)
+        raise HTTPNotFound(u'Fichier %s non trouvé', filename)
 
     # ITemplateProvider methods
 
@@ -273,7 +279,8 @@ class Chrome(Component):
         add_link(req, 'search', req.href.search())
         add_link(req, 'help', req.href.wiki('TracGuide'))
         add_stylesheet(req, 'common/css/trac.css')
-        add_javascript(req, 'common/js/trac.js')
+        add_script(req, 'common/js/trac.js')
+
         icon = self.env.project_icon
         if icon:
             if not icon.startswith('/') and icon.find('://') == -1:
@@ -315,14 +322,16 @@ class Chrome(Component):
                 active = contributor.get_active_navigation_item(req)
 
         for category, items in [(k, v.items()) for k, v in navigation.items()]:
-            order = getattr(self, category + '_order')
-            def navcmp(x, y):
-                if x[0] not in order:
-                    return int(y[0] in order)
-                if y[0] not in order:
-                    return -int(x[0] in order)
-                return cmp(order.index(x[0]), order.index(y[0]))
-            items.sort(navcmp)
+            category_order = category + '_order'
+            if hasattr(self, category_order):
+                order = getattr(self, category_order)
+                def navcmp(x, y):
+                    if x[0] not in order:
+                        return int(y[0] in order)
+                    if y[0] not in order:
+                        return -int(x[0] in order)
+                    return cmp(order.index(x[0]), order.index(y[0]))
+                items.sort(navcmp)
 
             for name, text in items:
                 req.hdf['chrome.nav.%s.%s' % (category, name)] = text

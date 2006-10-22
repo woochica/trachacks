@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Daniel Lundin <daniel@edgewall.com>
 #
@@ -56,7 +56,7 @@ class TicketNotifyEmail(NotifyEmail):
         NotifyEmail.__init__(self, env)
         self.prev_cc = []
 
-    def notify(self, ticket, req, newticket=True, modtime=0):
+    def notify(self, ticket, newticket=True, modtime=0):
         self.ticket = ticket
         self.modtime = modtime
         self.newticket = newticket
@@ -67,7 +67,7 @@ class TicketNotifyEmail(NotifyEmail):
         self.hdf.set_unescaped('email.ticket_body_hdr', self.format_hdr())
         self.hdf['ticket.new'] = self.newticket
         subject = self.format_subj()
-        link = req.abs_href.ticket(ticket.id)
+        link = self.env.abs_href.ticket(ticket.id)
         if not self.newticket:
             subject = 'Re: ' + subject
         self.hdf.set_unescaped('email.subject', subject)
@@ -81,16 +81,15 @@ class TicketNotifyEmail(NotifyEmail):
                 self.hdf.set_unescaped('ticket.change.author', 
                                        change['author'])
                 self.hdf.set_unescaped('ticket.change.comment',
-                                       change['comment'])
-                link += '#comment:%d' % change['cnum']
+                                       wrap(change['comment'], self.COLS,
+                                            ' ', ' ', CRLF))
+                link += '#comment:%s' % str(change.get('cnum', ''))
                 for field, values in change['fields'].iteritems():
                     old = values['old']
                     new = values['new']
                     pfx = 'ticket.change.%s' % field
                     newv = ''
-                    if field == 'comment':
-                        newv = wrap(new, self.COLS, ' ', ' ', CRLF)
-                    elif field == 'description':
+                    if field == 'description':
                         new_descr = wrap(new, self.COLS, ' ', ' ', CRLF)
                         old_descr = wrap(old, self.COLS, '> ', '> ', CRLF)
                         old_descr = old_descr.replace(2*CRLF, CRLF + '>' + CRLF)
@@ -231,7 +230,8 @@ class TicketNotifyEmail(NotifyEmail):
     def get_message_id(self, rcpt, modtime=0):
         """Generate a predictable, but sufficiently unique message ID."""
         s = '%s.%08d.%d.%s' % (self.config.get('project', 'url'),
-                               int(self.ticket.id), modtime, rcpt)
+                               int(self.ticket.id), modtime, 
+                               rcpt.encode('ascii', 'ignore'))
         dig = md5.new(s).hexdigest()
         host = self.from_email[self.from_email.find('@') + 1:]
         msgid = '<%03d.%s@%s>' % (len(s), dig, host)

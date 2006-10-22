@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -31,7 +31,7 @@ from trac.perm import IPermissionRequestor
 from trac.Search import ISearchSource, search_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
 from trac.util.datefmt import format_datetime, pretty_timedelta
-from trac.util.markup import html, escape, unescape, Markup
+from trac.util.html import html, escape, unescape, Markup
 from trac.util.text import unicode_urlencode, shorten_line, CRLF
 from trac.versioncontrol import Changeset, Node
 from trac.versioncontrol.diff import get_diff_options, hdf_diff, unified_diff
@@ -260,9 +260,9 @@ class ChangesetModule(Component):
                                              'new': new,
                                              'old_path': old_path,
                                              'old': old})
-        add_link(req, 'alternate', '?format=diff&'+diff_params, 'Diff unifié',
+        add_link(req, 'alternate', '?format=diff&'+diff_params, u'Diff unifié',
                  'text/plain', 'diff')
-        add_link(req, 'alternate', '?format=zip&'+diff_params, 'Archive Zip',
+        add_link(req, 'alternate', '?format=zip&'+diff_params, u'Archive Zip',
                  'application/zip', 'zip')
         add_stylesheet(req, 'common/css/changeset.css')
         add_stylesheet(req, 'common/css/diff.css')
@@ -305,9 +305,9 @@ class ChangesetModule(Component):
 
             def _changeset_title(rev):
                 if restricted:
-                    return 'Version %s pour %s' % (rev, path)
+                    return u'Version %s pour %s' % (rev, path)
                 else:
-                    return 'Version %s' % rev
+                    return u'Version %s' % rev
 
             title = _changeset_title(rev)
             properties = []
@@ -336,7 +336,7 @@ class ChangesetModule(Component):
                         prev_path = prev_rev = None
                 else:
                     add_link(req, 'first', req.href.changeset(oldest_rev),
-                             'Version %s' % oldest_rev)
+                             u'Version %s' % oldest_rev)
                     prev_path = diff.old_path
                     prev_rev = repos.previous_rev(chgset.rev)
                     if prev_rev:
@@ -351,7 +351,7 @@ class ChangesetModule(Component):
                         next_href = req.href.changeset(next_rev, path)
                 else:
                     add_link(req, 'last', req.href.changeset(youngest_rev),
-                             'Version %s' % youngest_rev)
+                             u'Version %s' % youngest_rev)
                     next_rev = repos.next_rev(chgset.rev)
                     if next_rev:
                         next_href = req.href.changeset(next_rev)
@@ -612,11 +612,11 @@ class ChangesetModule(Component):
 
     def title_for_diff(self, diff):
         if diff.new_path == diff.old_path: # ''diff between 2 revisions'' mode
-            return 'Diff r%s:%s pour %s' \
+            return u'Diff r%s:%s pour %s' \
                    % (diff.old_rev or 'latest', diff.new_rev or 'latest',
                       diff.new_path or '/')
         else:                              # ''arbitrary diff'' mode
-            return 'Diff de %s@%s à %s@%s' \
+            return u'Diff de %s@%s à %s@%s' \
                    % (diff.old_path or '/', diff.old_rev or 'latest',
                       diff.new_path or '/', diff.new_rev or 'latest')
 
@@ -642,7 +642,7 @@ class ChangesetModule(Component):
                     shortlog = shorten_line(message)
 
                 if format == 'rss':
-                    title = Markup('Version [%s]: %s', chgset.rev, shortlog)
+                    title = Markup(u'Version [%s]: %s', chgset.rev, shortlog)
                     href = req.abs_href.changeset(chgset.rev)
                     if wiki_format:
                         message = wiki_to_html(message, self.env, req, db,
@@ -650,7 +650,7 @@ class ChangesetModule(Component):
                     else:
                         message = html.PRE(message)
                 else:
-                    title = Markup('Version <em>[%s]</em> par %s', chgset.rev,
+                    title = Markup(u'Version <em>[%s]</em> par %s', chgset.rev,
                                    chgset.author)
                     href = req.href.changeset(chgset.rev)
 
@@ -750,7 +750,7 @@ class ChangesetModule(Component):
 
     def get_search_filters(self, req):
         if req.perm.has_permission('CHANGESET_VIEW'):
-            yield ('changeset', 'Versions')
+            yield ('changeset', u'Versions')
 
     def get_search_results(self, req, terms, filters):
         if not 'changeset' in filters:

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
+# Copyright (C) 2003-2006 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 
@@ -29,7 +29,7 @@ from trac.core import *
 from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor
 from trac.util import hex_entropy, md5crypt
-from trac.util.markup import escape, html
+from trac.util.html import escape, html
 
 
 class LoginModule(Component):
@@ -88,7 +88,7 @@ class LoginModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        return re.match('/(login|logout)/?', req.path_info)
+        return re.match('/(login|logout)/?$', req.path_info)
 
     def process_request(self, req):
         if req.path_info.startswith('/login'):

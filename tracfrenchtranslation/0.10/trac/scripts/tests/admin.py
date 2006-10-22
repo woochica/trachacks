@@ -5,11 +5,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Tim Moloney <t.moloney@verizon.net>
 
@@ -23,10 +23,9 @@ import unittest
 from StringIO import StringIO
 
 from trac.db_default import data as default_data
-from trac.config import Configuration
 from trac.env import Environment
 from trac.scripts import admin
-from trac.test import InMemoryDatabase
+from trac.test import InMemoryDatabase, TestConfiguration
 from trac.util.datefmt import get_date_format_hint
 
 STRIP_TRAILING_SPACE = re.compile(r'( +)$', re.MULTILINE)
@@ -79,7 +78,7 @@ class InMemoryEnvironment(Environment):
                cls.__module__.find('.tests.') == -1
 
     def setup_config(self, load_defaults=None):
-        self.config = Configuration(None)
+        self.config = TestConfiguration(None)
             
     def save_config(self):
         pass
@@ -118,7 +117,7 @@ class TracadminTestCase(unittest.TestCase):
             _err = sys.stderr
             _out = sys.stdout
             sys.stderr = sys.stdout = out = StringIO()
-            setattr(out, 'encoding', _out.encoding) # fake output encoding
+            setattr(out, 'encoding', 'utf-8') # fake output encoding
             retval = None
             try:
                 retval = self._admin.onecmd(cmd)
@@ -126,7 +125,7 @@ class TracadminTestCase(unittest.TestCase):
                 pass
             value = out.getvalue()
             if isinstance(value, str): # reverse what print_listing did
-                value = value.decode(_out.encoding)
+                value = value.decode('utf-8')
             if strip_trailing_space:
                 return retval, STRIP_TRAILING_SPACE.sub('', value)
             else:
@@ -498,6 +497,18 @@ Trac Admin Console %s
         """
         test_name = sys._getframe().f_code.co_name
         self._execute('priority add new_priority')
+        rv, output = self._execute('priority list')
+        self.assertEqual(0, rv)
+        self.assertEqual(self.expected_results[test_name], output)
+
+    def test_priority_add_many_ok(self):
+        """
+        Tests adding more than 10 priority values.  This makes sure that
+        ordering is preserved when adding more than 10 values.
+        """
+        test_name = sys._getframe().f_code.co_name
+        for i in xrange(11):
+            self._execute('priority add p%s' % i)
         rv, output = self._execute('priority list')
         self.assertEqual(0, rv)
         self.assertEqual(self.expected_results[test_name], output)
@@ -957,6 +968,13 @@ Trac Admin Console %s
         test_name = sys._getframe().f_code.co_name
         rv, output = self._execute('milestone remove bad_milestone')
         self.assertEqual(2, rv)
+        self.assertEqual(self.expected_results[test_name], output)
+
+    def test_backslash_use_ok(self):
+        test_name = sys._getframe().f_code.co_name
+        self._execute('version add \\')
+        rv, output = self._execute('version list')
+        self.assertEqual(0, rv)
         self.assertEqual(self.expected_results[test_name], output)
 
 

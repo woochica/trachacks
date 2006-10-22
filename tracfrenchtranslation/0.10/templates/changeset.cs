@@ -54,7 +54,7 @@
     if:changeset.restricted ?>
     <h1>Modifications dans <a title="Afficher l'élément dans le navigateur" href="<?cs var:changeset.href.new_path ?>">
       <?cs var:changeset.new_path ?></a>
-      <a title="Afficher le journal des révisions" href="<?cs var:changeset.href.log ?>">
+      <a title="Afficher l'historique des révisions" href="<?cs var:changeset.href.log ?>">
       [<?cs var:changeset.old_rev ?>:<?cs var:changeset.new_rev ?>]</a>
     </h1><?cs
    else ?>

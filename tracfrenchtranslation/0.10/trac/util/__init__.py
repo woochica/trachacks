@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Matthew Good <trac@matt-good.net>
@@ -28,7 +28,7 @@ from urllib import quote, unquote, urlencode
 
 # Imports for backward compatibility
 from trac.core import TracError
-from trac.util.markup import escape, unescape, Markup, Deuglifier
+from trac.util.html import escape, unescape, Markup, Deuglifier
 from trac.util.text import CRLF, to_utf8, to_unicode, shorten_line, \
                            wrap, pretty_size, translate
 from trac.util.datefmt import pretty_timedelta, format_datetime, \
@@ -61,8 +61,7 @@ try:
 except NameError:
     def reversed(x):
         if hasattr(x, 'keys'):
-            raise ValueError('les dictionnaires ne supportent pas '
-                             'l\'itération inversée')
+            raise ValueError(u'les dictionnaires ne supportent pas l\'itération inversée')
         i = len(x)
         while i > 0:
             i -= 1
@@ -111,8 +110,7 @@ def create_unique_file(path):
             idx += 1
             # A sanity check
             if idx > 100:
-                raise Exception('Impossible de créer le nom de fichier '
-                                'unique: ' + path)
+                raise Exception(u'Impossible de créer le nom de fichier unique : ' + path)
             path = '%s.%d%s' % (parts[0], idx, parts[1])
 
 

@@ -13,7 +13,7 @@ addEvent(window, 'load', function() { document.getElementById('summary').focus()
   var:trac.href.newticket ?>#preview">
  <?cs if:trac.authname == "anonymous" ?>
   <div class="field">
-   <label for="reporter">Your email or username:</label><br />
+   <label for="reporter">Votre adresse email ou votre nom d'utilisateur :</label><br />
    <input type="text" id="reporter" name="reporter" size="40" value="<?cs
      var:newticket.reporter ?>" /><br />
   </div>
@@ -30,10 +30,10 @@ addEvent(window, 'load', function() { document.getElementById('summary').focus()
   </div><?cs
  /if ?>
  <div class="field">
-  <label for="description">Description complète (il est possible d'utiliser la syntaxe <a tabindex="42" href="<?cs
-    var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> ici):</label><br />
-  <textarea id="description" name="description" class="wikitext" rows="10" cols="78"><?cs
-    var:newticket.description ?></textarea><?cs
+  <label for="description">Description complète (vous pouvez utiliser ici la syntaxe <a tabindex="42" href="<?cs
+    var:$trac.href.wiki ?>/WikiFormatting">Wiki</a>) :</label><br />
+  <textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+<?cs var:newticket.description ?></textarea><?cs
   if:newticket.description_preview ?>
    <fieldset id="preview">
     <legend>Aperçu de la description</legend>
@@ -117,8 +117,8 @@ addEvent(window, 'load', function() { document.getElementById('summary').focus()
 </form>
 
  <div id="help">
-  <strong>Note:</strong> Voir <a href="<?cs var:$trac.href.wiki
-  ?>/TracTickets">TracTickets</a> pour de l'aide sur l'utilisation des tickets.
+  <strong>Remarque :</strong> Consulter la page <a href="<?cs var:$trac.href.wiki
+  ?>/TracTickets">TracTickets</a> pour plus d'informations sur l'utilisation des tickets.
  </div>
 </div>
 

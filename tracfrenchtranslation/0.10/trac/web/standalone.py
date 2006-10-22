@@ -8,11 +8,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Matthew Good <trac@matt-good.net>
@@ -21,7 +21,6 @@
 import errno
 import os
 import sys
-import locale
 from SocketServer import ThreadingMixIn
 
 from trac import __version__ as VERSION
@@ -33,15 +32,20 @@ from trac.web.wsgi import WSGIServer, WSGIRequestHandler
 
 class AuthenticationMiddleware(object):
 
-    def __init__(self, application, auths):
+    def __init__(self, application, auths, single_env_name=None):
         self.application = application
         self.auths = auths
+        self.single_env_name = single_env_name
+        if single_env_name:
+            self.part = 0
+        else:
+            self.part = 1
 
     def __call__(self, environ, start_response):
         path_info = environ.get('PATH_INFO', '')
         path_parts = filter(None, path_info.split('/'))
-        if len(path_parts) > 1 and path_parts[1] == 'login':
-            env_name = path_parts[0]
+        if len(path_parts) > self.part and path_parts[self.part] == 'login':
+            env_name = self.single_env_name or path_parts[0]
             if env_name:
                 auth = self.auths.get(env_name, self.auths.get('*'))
                 if auth:
@@ -67,12 +71,14 @@ class BasePathMiddleware(object):
 
 class TracEnvironMiddleware(object):
 
-    def __init__(self, application, env_parent_dir, env_paths):
+    def __init__(self, application, env_parent_dir, env_paths, single_env):
         self.application = application
         self.environ = {}
         self.environ['trac.env_path'] = None
         if env_parent_dir:
             self.environ['trac.env_parent_dir'] = env_parent_dir
+        elif single_env:
+            self.environ['trac.env_path'] = env_paths[0]
         else:
             self.environ['trac.env_paths'] = env_paths
 
@@ -103,7 +109,7 @@ def main():
     def _auth_callback(option, opt_str, value, parser, cls):
         info = value.split(',', 3)
         if len(info) != 3:
-            raise OptionValueError("Nombre de parametres incorrects pour %s"
+            raise OptionValueError(u"Nombre de parametres incorrects pour %s"
                                    % option)
 
         env_name, filename, realm = info
@@ -147,6 +153,10 @@ def main():
                       dest='autoreload',
                       help='restart automatically when sources are modified')
 
+    parser.add_option('-s', '--single-env', action='store_true',
+                      dest='single_env', help='only serve a single '
+                      'project without the project list', default=False)
+
     if os.name == 'posix':
         parser.add_option('-d', '--daemonize', action='store_true',
                           dest='daemonize',
@@ -162,6 +172,9 @@ def main():
     if not args and not options.env_parent_dir:
         parser.error('either the --env-parent-dir option or at least one '
                      'environment must be specified')
+    if options.single_env and len(args) > 1:
+        parser.error('the --single-env option cannot be used with more '
+                     'than one enviroment')
 
     if options.port is None:
         options.port = {
@@ -172,9 +185,14 @@ def main():
     server_address = (options.hostname, options.port)
 
     wsgi_app = TracEnvironMiddleware(dispatch_request,
-                                     options.env_parent_dir, args)
+                                     options.env_parent_dir, args,
+                                     options.single_env)
     if auths:
-        wsgi_app = AuthenticationMiddleware(wsgi_app, auths)
+        if options.single_env:
+            project_name = os.path.basename(os.path.normpath(args[0]))
+            wsgi_app = AuthenticationMiddleware(wsgi_app, auths, project_name)
+        else:
+            wsgi_app = AuthenticationMiddleware(wsgi_app, auths)
     base_path = options.base_path.strip('/')
     if base_path:
         wsgi_app = BasePathMiddleware(wsgi_app, base_path)

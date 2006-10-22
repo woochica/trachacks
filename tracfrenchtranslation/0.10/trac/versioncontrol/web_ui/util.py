@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christian Boos <cboos@neuf.fr>
@@ -21,8 +21,8 @@ import urllib
 
 from trac.core import TracError
 from trac.util.datefmt import format_datetime, pretty_timedelta
+from trac.util.html import escape, html, Markup
 from trac.util.text import shorten_line
-from trac.util.markup import escape, html, Markup
 from trac.versioncontrol.api import NoSuchNode, NoSuchChangeset
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 
@@ -41,16 +41,17 @@ def get_changes(env, repos, revs, full=None, req=None, format=None):
 
         wiki_format = env.config['changeset'].getbool('wiki_format_messages')
         message = changeset.message or '--'
+        absurls = (format == 'rss')
         if wiki_format:
-            shortlog = wiki_to_oneliner(message, env, db, shorten=True)
+            shortlog = wiki_to_oneliner(message, env, db,
+                                        shorten=True, absurls=absurls)
         else:
             shortlog = Markup.escape(shorten_line(message))
 
         if full:
             if wiki_format:
                 message = wiki_to_html(message, env, req, db,
-                                       absurls=(format == 'rss'),
-                                       escape_newlines=True)
+                                       absurls=absurls, escape_newlines=True)
             else:
                 message = html.PRE(message)
         else:
@@ -70,21 +71,15 @@ def get_changes(env, repos, revs, full=None, req=None, format=None):
         }
     return changes
 
-def get_path_links(href, path, rev):
-    links = []
-    parts = path.split('/')
-    if not parts[-1]:
-        parts.pop()
-    path = '/'
-    for part in parts:
-        path = path + part + '/'
-        links.append({
-            'name': part or 'root',
-            'href': href.browser(path, rev=rev)
-        })
+def get_path_links(href, fullpath, rev):
+    links = [{'name': 'root', 'href': href.browser(rev=rev)}]
+    path = ''
+    for part in [p for p in fullpath.split('/') if p]:
+        path += part + '/'
+        links.append({'name': part, 'href': href.browser(path, rev=rev)})
     return links
 
-rev_re = re.compile(r"([^@#:]*)[@#:]([^#]+)(?:#L(\d+))?")
+rev_re = re.compile(r"([^@#:]*)[@#:]([^#]+)?(?:#L(\d+))?")
 
 def get_path_rev_line(path):
     rev = None

@@ -8,8 +8,8 @@ from trac.wiki.api import IWikiSyntaxProvider
 from trac.wiki.formatter import Formatter, OneLinerFormatter
 from trac.wiki.macros import WikiMacroBase
 from trac.test import Mock, EnvironmentStub
+from trac.util.html import html
 from trac.util.text import to_unicode
-from trac.util.markup import html
 
 # We need to supply our own macro because the real macros
 # can not be loaded using our 'fake' environment.
@@ -37,6 +37,12 @@ class DivCodeElementMacro(WikiMacroBase):
 
     def render_macro(self, req, name, content):
         return html.DIV('Hello World, args = ', content, class_="code")
+
+class NoneMacro(WikiMacroBase):
+    """A dummy macro returning `None`, used by the unit test."""
+
+    def render_macro(self, req, name, content):
+        return None
 
 class SampleResolver(Component):
     """A dummy macro returning a div block, used by the unit test."""
@@ -77,7 +83,7 @@ class WikiTestCase(unittest.TestCase):
         # -- intertrac support
         self.env.config.set('intertrac', 'trac.title', "Trac's Trac")
         self.env.config.set('intertrac', 'trac.url',
-                            "http://projects.edgewall.com/trac")
+                            "http://trac.edgewall.org")
         self.env.config.set('intertrac', 't', 'trac')
 
         from trac.web.href import Href

@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -47,13 +47,14 @@ def load_components(env):
             try:
                 plugin_name = os.path.basename(plugin_file[:-3])
                 if plugin_name not in loaded_components:
-                    env.log.debug('Loading file plugin %s from %s' % (plugin_name,
-                                                                 plugin_file))
+                    env.log.debug('Loading file plugin %s from %s' % \
+                                  (plugin_name, plugin_file))
                     module = imp.load_source(plugin_name, plugin_file)
                     loaded_components.append(plugin_name)
                     if auto_enable and plugin_name + '.*' \
                             not in env.config['components']:
-                        env.config['components'].set(plugin_name + '.*', 'enabled')
+                        env.config['components'].set(plugin_name + '.*',
+                                                     'enabled')
             except Exception, e:
                 env.log.error('Failed to load plugin from %s', plugin_file,
                               exc_info=True)
@@ -110,8 +111,7 @@ def load_components(env):
             else:
                 # Support for pre-entry-point plugins
                 if egg.has_metadata('trac_plugin.txt'):
-                    env.log.debug('Loading plugin %s from %s', name,
-                                  egg.location)
+                    env.log.debug('Loading plugin %s', egg.location)
                     egg.activate()
                     for modname in egg.get_metadata_lines('trac_plugin.txt'):
                         module = None

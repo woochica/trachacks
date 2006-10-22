@@ -8,19 +8,20 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
 
-import time
-import sys
 import re
+import sys
+import time
 
+from trac.attachment import Attachment
 from trac.core import TracError
 from trac.ticket import TicketSystem
 from trac.util import sorted, embedded_numbers
@@ -86,7 +87,7 @@ class Ticket(object):
         row = cursor.fetchone()
         if not row:
             raise TracError(u'Le ticket %d n\'existe pas.' % tkt_id,
-                            'Numéro de ticket invalide')
+                            u'Numéro de ticket invalide')
 
         self.id = tkt_id
         for i in range(len(std_fields)):
@@ -133,12 +134,13 @@ class Ticket(object):
 
     def insert(self, when=0, db=None):
         """Add ticket to database"""
-        assert not self.exists, 'Impossible d\'insérer un ticket existant'
+        assert not self.exists, u'Impossible d\'insérer un ticket existant'
         db, handle_ta = self._get_db_for_write(db)
 
         # Add a timestamp
         if not when:
-            when = int(time.time())
+            when = time.time()
+        when = int(when)
         self.time_created = self.time_changed = when
 
         cursor = db.cursor()
@@ -187,7 +189,7 @@ class Ticket(object):
         Store ticket changes in the database. The ticket must already exist in
         the database.
         """
-        assert self.exists, 'Impossible de mettre à jour un nouveau ticket'
+        assert self.exists, u'Impossible de mettre à jour un nouveau ticket'
 
         if not self._old and not comment:
             return # Not modified
@@ -254,16 +256,22 @@ class Ticket(object):
 
         if handle_ta:
             db.commit()
+        old_values = self._old
         self._old = {}
         self.time_changed = when
 
         for listener in TicketSystem(self.env).change_listeners:
-            listener.ticket_changed(self, comment, self._old)
+            listener.ticket_changed(self, comment, author, old_values)
 
     def get_changelog(self, when=0, db=None):
         """Return the changelog as a list of tuples of the form
-        (time, author, field, oldvalue, newvalue).
+        (time, author, field, oldvalue, newvalue, permanent).
+
+        While the other tuple elements are quite self-explanatory,
+        the `permanent` flag is used to distinguish collateral changes
+        that are not yet immutable (like attachments, currently).
         """
+        when = int(when)
         db = self._get_db(db)
         cursor = db.cursor()
         if when:
@@ -295,11 +303,10 @@ class Ticket(object):
 
     def delete(self, db=None):
         db, handle_ta = self._get_db_for_write(db)
+        Attachment.delete_all(self.env, 'ticket', self.id, db)
         cursor = db.cursor()
         cursor.execute("DELETE FROM ticket WHERE id=%s", (self.id,))
         cursor.execute("DELETE FROM ticket_change WHERE ticket=%s", (self.id,))
-        cursor.execute("DELETE FROM attachment "
-                       " WHERE type='ticket' and id=%s", (self.id,))
         cursor.execute("DELETE FROM ticket_custom WHERE ticket=%s", (self.id,))
 
         if handle_ta:
@@ -353,8 +360,8 @@ class AbstractEnum(object):
         self.name = self._old_name = None
 
     def insert(self, db=None):
-        assert not self.exists, "Impossible d'ajouter %s (existe déja)" % self.type
-        assert self.name, "Impossible de créer %s (anonyme)" % self.type
+        assert not self.exists, u"Impossible d'ajouter %s (existe déja)" % self.type
+        assert self.name, u"Impossible de créer %s (anonyme)" % self.type
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()
@@ -378,8 +385,8 @@ class AbstractEnum(object):
         self._old_value = self.value
 
     def update(self, db=None):
-        assert self.exists, 'Impossible de mettre à jour %s (inexistant)' % self.type
-        assert self.name, 'Impossible de mettre à jour %s (anonyme)' % self.type
+        assert self.exists, u'Impossible de mettre à jour %s (inexistant)' % self.type
+        assert self.name, u'Impossible de mettre à jour %s (anonyme)' % self.type
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()
@@ -408,7 +415,8 @@ class AbstractEnum(object):
             db = env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("SELECT name,value FROM enum WHERE type=%s "
-                       "ORDER BY value", (cls.type,))
+                       "ORDER BY " + db.cast('value', 'int'),
+                       (cls.type,))
         for name, value in cursor:
             obj = cls(env)
             obj.name = obj._old_name = name
@@ -450,7 +458,7 @@ class Component(object):
                            "WHERE name=%s", (name,))
             row = cursor.fetchone()
             if not row:
-                raise TracError, 'Le composant %s n\'existe pas' % name
+                raise TracError, u'Le composant %s n\'existe pas' % name
             self.name = self._old_name = name
             self.owner = row[0] or None
             self.description = row[1] or ''
@@ -462,7 +470,7 @@ class Component(object):
     exists = property(fget=lambda self: self._old_name is not None)
 
     def delete(self, db=None):
-        assert self.exists, 'Impossible de supprimer un composant inexistant'
+        assert self.exists, u'Impossible de supprimer un composant inexistant'
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
@@ -479,8 +487,8 @@ class Component(object):
             db.commit()
 
     def insert(self, db=None):
-        assert not self.exists, "Impossible d'ajouter un composant déjà existant"
-        assert self.name, 'Impossible de créer un composant sans nom'
+        assert not self.exists, u"Impossible d'ajouter un composant déjà existant"
+        assert self.name, u'Impossible de créer un composant sans nom'
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()
@@ -498,8 +506,8 @@ class Component(object):
             db.commit()
 
     def update(self, db=None):
-        assert self.exists, 'Impossible de mettre à jour un composant inexistant'
-        assert self.name, 'Impossible de mettre à jour un composant anonyme'
+        assert self.exists, u'Impossible de mettre à jour un composant inexistant'
+        assert self.name, u'Impossible de mettre à jour un composant anonyme'
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()
@@ -558,7 +566,7 @@ class Milestone(object):
         row = cursor.fetchone()
         if not row:
             raise TracError(u"Le jalon %s n'existe pas." % name,
-                            'Nom de jalon invalide')
+                            u'Nom de jalon invalide')
         self.name = row[0]
         self.due = row[1] and int(row[1]) or 0
         self.completed = row[2] and int(row[2]) or 0
@@ -594,7 +602,7 @@ class Milestone(object):
             db.commit()
 
     def insert(self, db=None):
-        assert self.name, 'Impossible de créer un jalon sans nom'
+        assert self.name, u'Impossible de créer un jalon sans nom'
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()
@@ -612,7 +620,7 @@ class Milestone(object):
             db.commit()
 
     def update(self, db=None):
-        assert self.name, 'Impossible de mettre à jour un jalon sans nom'
+        assert self.name, u'Impossible de mettre à jour un jalon sans nom'
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()
@@ -671,7 +679,7 @@ class Version(object):
                            "WHERE name=%s", (name,))
             row = cursor.fetchone()
             if not row:
-                raise TracError, "La version %s n'existe pas." % name
+                raise TracError, u"La version %s n'existe pas." % name
             self.name = self._old_name = name
             self.time = row[0] and int(row[0]) or None
             self.description = row[1] or ''
@@ -683,7 +691,7 @@ class Version(object):
     exists = property(fget=lambda self: self._old_name is not None)
 
     def delete(self, db=None):
-        assert self.exists, 'Impossible de supprimer une version inexistante'
+        assert self.exists, u'Impossible de supprimer une version inexistante'
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
@@ -700,8 +708,8 @@ class Version(object):
             db.commit()
 
     def insert(self, db=None):
-        assert not self.exists, "Impossible d'ajouter une version déjà existante"
-        assert self.name, 'Impossible de créer une version anonyme'
+        assert not self.exists, u"Impossible d'ajouter une version déjà existante"
+        assert self.name, u'Impossible de créer une version anonyme'
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()
@@ -719,8 +727,8 @@ class Version(object):
             db.commit()
 
     def update(self, db=None):
-        assert self.exists, 'Impossible de mettre à jour une version inexistante'
-        assert self.name, 'Impossible de mettre à jour une version anonyme'
+        assert self.exists, u'Impossible de mettre à jour une version inexistante'
+        assert self.name, u'Impossible de mettre à jour une version anonyme'
         self.name = self.name.strip()
         if not db:
             db = self.env.get_db_cnx()

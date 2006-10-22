@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005 Edgewall Software
-# Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
+# Copyright (C) 2005-2006 Edgewall Software
+# Copyright (C) 2005-2006 Christopher Lenz <cmlenz@gmx.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
 from BaseHTTPServer import BaseHTTPRequestHandler
-from Cookie import SimpleCookie as Cookie
+from Cookie import CookieError, BaseCookie, SimpleCookie
 import cgi
 import mimetypes
 import os
@@ -93,6 +93,27 @@ class RequestDone(Exception):
     """
 
 
+class Cookie(SimpleCookie):
+    def load(self, rawdata, ignore_parse_errors=False):
+        if ignore_parse_errors:
+            self.bad_cookies = []
+            self._BaseCookie__set = self._loose_set
+        SimpleCookie.load(self, rawdata)
+        if ignore_parse_errors:
+            self._BaseCookie__set = self._strict_set
+            for key in self.bad_cookies:
+                del self[key]
+
+    _strict_set = BaseCookie._BaseCookie__set
+
+    def _loose_set(self, key, real_value, coded_value):
+        try:
+            self._strict_set(key, real_value, coded_value)
+        except CookieError:
+            self.bad_cookies.append(key)
+            dict.__setitem__(self, key, None)
+
+
 class Request(object):
     """Represents a HTTP request/response pair.
     
@@ -130,7 +151,7 @@ class Request(object):
         self.incookie = Cookie()
         cookie = self.get_header('Cookie')
         if cookie:
-            self.incookie.load(cookie)
+            self.incookie.load(cookie, ignore_parse_errors=True)
         self.outcookie = Cookie()
 
         self.base_url = self.environ.get('trac.base_url')
@@ -311,7 +332,7 @@ class Request(object):
         self.end_headers()
 
         if self.method != 'HEAD':
-            self.write('Redirection...')
+            self.write(u'Redirection...')
         raise RequestDone
 
     def display(self, template, content_type='text/html', status=200):
@@ -319,7 +340,7 @@ class Request(object):
         `template` parameter, which can be either the name of the template file,
         or an already parsed `neo_cs.CS` object.
         """
-        assert self.hdf, 'Données HDF non disponibles'
+        assert self.hdf, u'Données HDF non disponibles'
         if self.args.has_key('hdfdump'):
             # FIXME: the administrator should probably be able to disable HDF
             #        dumps
@@ -378,7 +399,7 @@ class Request(object):
         "304 Not Modified" response if it matches.
         """
         if not os.path.isfile(path):
-            raise HTTPNotFound("Fichier %s non trouvé" % path)
+            raise HTTPNotFound(u"Fichier %s non trouvé" % path)
 
         stat = os.stat(path)
         last_modified = http_date(stat.st_mtime)
@@ -408,7 +429,11 @@ class Request(object):
         """Read the specified number of bytes from the request body."""
         fileobj = self.environ['wsgi.input']
         if size is None:
-            size = int(self.get_header('Content-Length', -1))
+            size = self.get_header('Content-Length')
+            if size is None:
+                size = -1
+            else:
+                size = int(size)
         data = fileobj.read(size)
         return data
 
@@ -467,8 +492,8 @@ class IRequestFilter(Interface):
     requests, before and/or after they are processed by the main handler."""
 
     def pre_process_request(req, handler):
-        """Do any pre-processing the request might need; typically adding
-        values to req.hdf, or redirecting.
+        """Called after initial handler selection, and can be used to change
+        the selected handler or redirect request.
         
         Always returns the request handler, even if unchanged.
         """

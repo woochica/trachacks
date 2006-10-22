@@ -6,11 +6,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
@@ -28,7 +28,7 @@ from trac.config import default_dir
 from trac.core import *
 from trac.util import sorted
 from trac.util.datefmt import format_date
-from trac.util.markup import escape, html, Markup
+from trac.util.html import escape, html, Markup
 from trac.wiki.api import IWikiMacroProvider, WikiSystem
 from trac.wiki.model import WikiPage
 from trac.web.chrome import add_stylesheet
@@ -57,7 +57,7 @@ class WikiMacroBase(Component):
 class TitleIndexMacro(WikiMacroBase):
     u"""Insère une liste alphabetique de toutes les pages Wiki
     
-    Accèpte un paramètre précisant le préfixe: s'il est fourni, seules les
+    Accepte un paramètre précisant le préfixe: s'il est fourni, seules les
     pages commencant par ce prefix seront incluses dans la liste résultante.
     S'il n'est pas fournit, toutes les pages seront listées.
     """
@@ -76,9 +76,9 @@ class RecentChangesMacro(WikiMacroBase):
     u"""Liste toutes les pages qui ont été modifiées récemment, en les regroupant
     par le jour de leur dernière modification.
 
-    La macro accèpte deux paramètres. Le premier est un prefix: s'il est 
-    fourni, seules les pages dont le nom débute par ce préfix seront incluses
-    dans la liste résultante. Si ce pamarètre est omis, toutes les pages sont
+    La macro accepte deux paramètres. Le premier est un préfixe: s'il est 
+    fourni, seules les pages dont le nom débute par ce préfixe seront incluses
+    dans la liste résultante. Si ce paramètre est omis, toutes les pages sont
     listées.
 
     Le second paramètre est une valeur limitant le nombre de pages retournées.
@@ -98,7 +98,10 @@ class RecentChangesMacro(WikiMacroBase):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        sql = 'SELECT name, max(time) AS max_time FROM wiki'
+        sql = 'SELECT name, ' \
+              '  max(version) AS max_version, ' \
+              '  max(time) AS max_time ' \
+              'FROM wiki'
         args = []
         if prefix:
             sql += ' WHERE name LIKE %s'
@@ -111,19 +114,23 @@ class RecentChangesMacro(WikiMacroBase):
 
         entries_per_date = []
         prevdate = None
-        for name, time in cursor:
+        for name, version, time in cursor:
             date = format_date(time)
             if date != prevdate:
                 prevdate = date
                 entries_per_date.append((date, []))
-            entries_per_date[-1][1].append(name)
+            entries_per_date[-1][1].append((name, int(version)))
 
         wiki = WikiSystem(self.env)
-        return html.DIV([html.H3(date) +
-                         html.UL([html.LI(html.A(wiki.format_page_name(name),
-                                                 href=req.href.wiki(name)))
-                                    for name in entries])
-                         for date, entries in entries_per_date])
+        return html.DIV(
+            [html.H3(date) +
+             html.UL([html.LI(
+            html.A(wiki.format_page_name(name), href=req.href.wiki(name)), ' ',
+            html.SMALL('(', html.A('diff',
+                                   href=req.href.wiki(name, action='diff',
+                                                      version=version)), ')'))
+                      for name, version in entries])
+             for date, entries in entries_per_date])
 
 
 class PageOutlineMacro(WikiMacroBase):
@@ -131,7 +138,7 @@ class PageOutlineMacro(WikiMacroBase):
     Affiche la structure de la page Wiki courante, chaque élement de la 
     structure intégrant un lien vers la section correspondante.
 
-    Cette macro accèpte trois paramètes optionnels: 
+    Cette macro accepte trois paramètes optionnels: 
 
      * Le premier est un nombre ou un intervalle qui permet de configurer 
        les niveaux minimal et maximal des sous-sections qui doivent etre   
@@ -246,7 +253,7 @@ class ImageMacro(WikiMacroBase):
         # we expect the 1st argument to be a filename (filespec)
         args = content.split(',')
         if len(args) == 0:
-            raise Exception("Aucun argument")
+            raise Exception(u"Aucun argument")
         filespec = args[0]
         size_re = re.compile('[0-9]+%?$')
         attr_re = re.compile('(align|border|width|height|alt'
@@ -284,7 +291,7 @@ class ImageMacro(WikiMacroBase):
             if parts[0] in ['wiki', 'ticket']:
                 module, id, file = parts
             else:
-                raise Exception("%s module ne peut posséder de fichiers "
+                raise Exception(u"Le module %s ne peut pas posséder de fichiers "
                                 "joints" % parts[0])
         elif len(parts) == 2:
             from trac.versioncontrol.web_ui import BrowserModule
@@ -310,6 +317,8 @@ class ImageMacro(WikiMacroBase):
                 elif id == 'htdocs':
                     raw_url = url = req.href.chrome('site', file)
                     desc = os.path.basename(file)
+                elif id in ('http', 'https', 'ftp'): # external URLs
+                    raw_url = url = desc = id+':'+file
                 else:
                     module = 'wiki'
         elif len(parts) == 1:               # attachment
@@ -325,7 +334,7 @@ class ImageMacro(WikiMacroBase):
                 id = path_info[2]
             if module not in ['wiki', 'ticket']:
                 raise Exception(u'Impossible de référencer un fichier joint '
-                                 'depuis cet endroit') 
+                                 u'depuis cet endroit') 
         else:
             raise Exception(u'Pas de définition de fichier reçue')
         if not url: # this is an attachment
@@ -360,7 +369,6 @@ class MacroListMacro(WikiMacroBase):
 
     def render_macro(self, req, name, content):
         from trac.wiki.formatter import wiki_to_html, system_message
-        from trac.wiki import WikiSystem
         wiki = WikiSystem(self.env)
 
         def get_macro_descr():
@@ -377,40 +385,10 @@ class MacroListMacro(WikiMacroBase):
                             % macro_name, e))
                     yield (macro_name, descr)
 
-        return html.DL([(html.DT(html.CODE('[[',macro_name,']]')),
+        return html.DL([(html.DT(html.CODE('[[',macro_name,']]'),
+                                 id='%s-macro' % macro_name),
                          html.DD(description))
                         for macro_name, description in get_macro_descr()])
-
-
-class InterTracMacro(WikiMacroBase):
-    u"""Genère la liste de tous les prefixes InterTrac connus."""
-
-    def render_macro(self, req, name, content):
-        intertracs = {}
-        for key, value in self.config.options('intertrac'):
-            if '.' in key:
-                prefix, attribute = key.split('.', 1)
-                intertrac = intertracs.setdefault(prefix, {})
-                intertrac[attribute] = value
-            else:
-                intertracs[key] = value # alias
-
-        def generate_prefix(prefix):
-            intertrac = intertracs[prefix]
-            if isinstance(intertrac, basestring):
-                yield html.TR(html.TD(html.B(prefix)),
-                              html.TD('Alias for ', html.B(intertrac)))
-            else:
-                url = intertrac.get('url', '')
-                if url:
-                    title = intertrac.get('title', url)
-                    yield html.TR(html.TD(html.A(html.B(prefix),
-                                                 href=url + '/timeline')),
-                                  html.TD(html.A(title, href=url)))
-
-        return html.TABLE(class_="wiki intertrac")(
-            html.TR(html.TH(html.EM('Prefix')), html.TH(html.EM('Trac Site'))),
-            [generate_prefix(p) for p in sorted(intertracs.keys())])
 
 
 class TracIniMacro(WikiMacroBase):
@@ -471,7 +449,7 @@ class UserMacroProvider(Component):
                     found.append(name)
                     yield name
                 except Exception, e:
-                    self.log.error('Failed to load wiki macro %s (%s)',
+                    self.log.error(u'Impossible de charger la macro Wiki %s (%s)',
                                    filename, e, exc_info=True)
 
     def get_macro_description(self, name):
@@ -482,7 +460,7 @@ class UserMacroProvider(Component):
         try:
             return module.execute(req and req.hdf, content, self.env)
         except Exception, e:
-            self.log.error('Wiki macro %s failed (%s)', name, e, exc_info=True)
+            self.log.error(u'Échec de la macro Wiki %s (%s)', name, e, exc_info=True)
             raise
 
     def _load_macro(self, name):

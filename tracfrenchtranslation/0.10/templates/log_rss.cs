@@ -17,10 +17,10 @@
      if:change.author ?><author><?cs var:change.author ?></author><?cs
      /if ?>
      <pubDate><?cs var:change.date ?></pubDate>
-     <title>Révision <?cs var:item.rev ?>: <?cs var:change.shortlog ?></title>
+     <title>RÃ©vision <?cs var:item.rev ?>: <?cs var:change.shortlog ?></title>
      <link><?cs var:base_host ?><?cs var:item.restricted_href ?></link>
      <description><?cs var:change.message ?></description>
-     <category>Journal</category>
+     <category>Historique</category>
     </item><?cs 
    /with ?><?cs 
   /each ?>

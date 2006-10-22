@@ -17,13 +17,13 @@ if:len(chrome.links.alternate) ?>
 
 <div id="footer">
  <hr />
- <a id="tracpowered" href="http://trac.edgewall.com/"><img src="<?cs
+ <a id="tracpowered" href="http://trac.edgewall.org/"><img src="<?cs
    var:htdocs_location ?>trac_logo_mini.png" height="30" width="107"
    alt="Trac Powered"/></a>
  <p class="left">
-  Animé par <a href="<?cs var:trac.href.about ?>"><strong>Trac <?cs
+  Propulsé par <a href="<?cs var:trac.href.about ?>"><strong>Trac <?cs
   var:trac.version ?></strong></a><br />
-  d'<a href="http://www.edgewall.com/">Edgewall Software</a>.
+  d'<a href="http://www.edgewall.org/">Edgewall Software</a>.
  </p>
  <p class="right">
   <?cs var:project.footer ?>

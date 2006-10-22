@@ -19,6 +19,7 @@ h3 { font-size: 14px }
 hr { border: none;  border-top: 1px solid #ccb; margin: 2em 0 }
 address { font-style: normal }
 img { border: none }
+tt { white-space: pre }
 
 .underline { text-decoration: underline }
 ol.loweralpha { list-style-type: lower-alpha }
@@ -280,6 +281,7 @@ label.disabled { color: #d7d7d7 }
 
 /* Version information (browser, wiki, attachments) */
 #info {
+ margin: 1em 0 0 0;
  background: #f7f7f0;
  border: 1px solid #d7d7d7;
  border-collapse: collapse;
@@ -444,6 +446,6 @@ div.system-message p.system-message-title { font-weight: bold; }
 
 @media print {
  #header, #altlinks, #footer, #help { display: none }
- .nav, form, .buttons form, form .buttons { display: none }
+ .nav, form, .buttons form, form .buttons, form .inlinebuttons { display: none }
  form.printableform { display: block }
 }

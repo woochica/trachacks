@@ -6,7 +6,7 @@
   <li class="first"><a href="<?cs var:browser.restr_changeset_href ?>">
    Dernières modifications</a></li>
   <li class="last"><a href="<?cs var:browser.log_href ?>">
-   Journal des révisions</a></li>
+   Historique des révisions</a></li>
  </ul>
 </div>
 
@@ -58,26 +58,16 @@
      <?cs set:change = browser.changes[item.rev] ?>
      <tr class="<?cs if:name(item) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
       <td class="name"><?cs
-       if:item.is_dir ?><?cs
-        if:item.permission ?>
-         <a class="dir" title="Parcourir le répertoire" href="<?cs
-           var:item.browser_href ?>"><?cs var:item.name ?></a><?cs
-        else ?>
-         <span class="dir" title="Accès refusé" href=""><?cs
-           var:item.name ?></span><?cs
-        /if ?><?cs
-       else ?><?cs
-        if:item.permission != '' ?>
-         <a class="file" title="Voir le fichier" href="<?cs
-           var:item.browser_href ?>"><?cs var:item.name ?></a><?cs
-        else ?>
-         <span class="file" title="Accès refusé" href=""><?cs
-           var:item.name ?></span><?cs
-        /if ?><?cs
+       if:item.is_dir ?>
+        <a class="dir" title="Parcourir le dossier" href="<?cs
+          var:item.browser_href ?>"><?cs var:item.name ?></a><?cs
+       else ?>
+        <a class="file" title="Afficher le fichier" href="<?cs
+          var:item.browser_href ?>"><?cs var:item.name ?></a><?cs
        /if ?>
       </td>
       <td class="size"><?cs var:item.size ?></td>
-      <td class="rev"><?cs if:item.permission != '' ?><a title="Voir le journal des révisions" href="<?cs
+      <td class="rev"><?cs if:item.permission != '' ?><a title="Afficher l'historique des révisions" href="<?cs
         var:item.log_href ?>"><?cs var:item.rev ?></a><?cs else ?><?cs var:item.rev ?><?cs /if ?></td>
       <td class="age"><span title="<?cs var:browser.changes[item.rev].date ?>"><?cs
         var:browser.changes[item.rev].age ?></span></td>
@@ -92,11 +82,11 @@
  /if ?><?cs
 
  if:len(browser.props) || !browser.is_dir ?>
-  <table id="info" summary="Info révisions"><?cs
+  <table id="info" summary="Infos sur la révision"><?cs
    if:!browser.is_dir ?><tr>
     <th scope="col">
-     Révision <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>
-     (déposée par <?cs var:file.author ?>, <?cs var:file.age ?> auparavant)
+     Révision <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>, <?cs var:file.size ?>
+     (déposé par <?cs var:file.author ?>, <?cs var:file.age ?> auparavant)
     </th></tr><tr>
     <td class="message"><?cs var:file.message ?></td>
    </tr><?cs /if ?><?cs
@@ -106,8 +96,8 @@
       <li>Propriété <strong><?cs var:prop.name ?></strong> définie à <em><code><?cs
       var:prop.value ?></code></em></li><?cs
      /each ?>
-    </ul></td><?cs
-   /if ?></tr>
+    </ul></td></tr><?cs
+   /if ?>
   </table><?cs
  /if ?><?cs
  
@@ -126,19 +116,18 @@
  /if ?>
 
  <div id="help">
-  <strong>Note:</strong> Voir <a href="<?cs var:trac.href.wiki
-  ?>/TracBrowser">TracBrowser</a> pour de l'aide sur l'utilisation du Navigateur.
+  <strong>Remarque :</strong> Consulter la page <a href="<?cs var:trac.href.wiki
+  ?>/TracBrowser">TracBrowser</a> pour plus d'informations sur l'utilisation du Navigateur.
  </div>
 
   <div id="anydiff">
    <form action="<?cs var:browser.anydiff_href ?>" method="get">
-    <input type="hidden" name="new_path" value="<?cs var:browser.path ?>" />
-    <input type="hidden" name="old_path" value="<?cs var:browser.path ?>" />
-    <input type="hidden" name="new_rev" value="<?cs var:browser.revision ?>" />
-    <input type="hidden" name="old_rev" value="<?cs var:browser.revision ?>" />
     <div class="buttons">
-     <input type="submit" value="Voir les modifications" 
-         title="Préparer un fichier de différences" />
+     <input type="hidden" name="new_path" value="<?cs var:browser.path ?>" />
+     <input type="hidden" name="old_path" value="<?cs var:browser.path ?>" />
+     <input type="hidden" name="new_rev" value="<?cs var:browser.revision ?>" />
+     <input type="hidden" name="old_rev" value="<?cs var:browser.revision ?>" />
+     <input type="submit" value="Afficher les modifications..." title="Préparer un fichier de différences" />
     </div>
    </form>
   </div>

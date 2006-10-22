@@ -6,16 +6,16 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
-# individuals. For exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Daniel Lundin <daniel@edgewall.com>
 
 from trac.core import *
-from trac.util.markup import html
+from trac.util.html import html
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor
 
@@ -49,7 +49,7 @@ class SettingsModule(Component):
             elif action == 'load':
                 self._do_load(req)
 
-        req.hdf['title'] = 'Paramètrage'
+        req.hdf['title'] = u'Paramétrage'
         req.hdf['settings'] = req.session
         if req.authname == 'anonymous':
             req.hdf['settings.session_id'] = req.session.sid

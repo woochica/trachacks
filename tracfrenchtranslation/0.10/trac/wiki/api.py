@@ -7,11 +7,11 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
+# history and logs, available at http://trac.edgewall.org/log/.
 #
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
@@ -26,7 +26,7 @@ import re
 
 from trac.config import BoolOption
 from trac.core import *
-from trac.util.markup import html
+from trac.util.html import html
 
 
 class IWikiChangeListener(Interface):
@@ -230,22 +230,44 @@ class WikiSystem(Component):
 
     # IWikiSyntaxProvider methods
 
+    XML_NAME = r"[\w:](?<!\d)(?:[\w:.-]*?[\w:-])*"
+    # See http://www.w3.org/TR/REC-xml/#id, here adapted to exclude terminal "."
+
     def format_page_name(self, page):
         if self.split_page_names:
             return re.sub(r"([a-z])([A-Z][a-z])", r"\1 \2", page)
         return page
     
     def get_wiki_syntax(self):
-        def wikipagenames_link(formatter, match, fullmatch):
+        from trac.wiki.formatter import Formatter
+        wiki_page_name = (
+            r"[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" # wiki words
+            r"(?:#%s)?" % self.XML_NAME + # optional fragment id
+            r"(?=:?\Z|:?\s|[.,;!?\)}\'\"\]])" # what should follow it
+            )
+        
+        # Regular WikiPageNames
+        def wikipagename_link(formatter, match, fullmatch):
             return self._format_link(formatter, 'wiki', match,
                                      self.format_page_name(match),
                                      self.ignore_missing_pages)
         
-        yield (r"!?(?<!/)\b" # start at a word boundary but not after '/'
-               r"[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" # wiki words
-               r"(?:#[A-Za-z0-9]+)?" # optional fragment identifier
-               r"(?=:?\Z|:?\s|[.,;!?\)}\]])", # what should follow it
-               wikipagenames_link)
+        yield (r"!?(?<!/)\b" + # start at a word boundary but not after '/'
+               wiki_page_name, wikipagename_link)
+
+        # [WikiPageNames with label]
+        def wikipagename_with_label_link(formatter, match, fullmatch):
+            page, label = match[1:-1].split(' ', 1)
+            return self._format_link(formatter, 'wiki', page, label.strip(),
+                                     self.ignore_missing_pages)
+        yield (r"!?\[%s\s+(?:%s|[^\]]+)\]" % (wiki_page_name,
+                                              Formatter.QUOTED_STRING),
+               wikipagename_with_label_link)
+
+        # MoinMoin's ["internal free link"] 
+        def internal_free_link(fmt, m, fullmatch): 
+            return self._format_link(fmt, 'wiki', m[2:-2], m[2:-2], False) 
+        yield (r"!?\[(?:%s)\]" % Formatter.QUOTED_STRING, internal_free_link) 
 
     def get_link_resolvers(self):
         def link_resolver(formatter, ns, target, label):
