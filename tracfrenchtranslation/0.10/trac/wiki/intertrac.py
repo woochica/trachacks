@@ -41,13 +41,13 @@ class InterTracDispatcher(Component):
     def process_request(self, req):
         link = req.args.get('link', '')
         if not link:
-            raise TracError('No TracLinks given')
+            raise TracError('Aucun lien TracLinks fourni')
         link_elt = wiki_to_link(link, self.env, req)
         if isinstance(link_elt, Element):
             href = link_elt.attr['href']
             if href:
                 req.redirect(href)
-        raise TracError('"%s" is not a TracLinks' % link)
+        raise TracError('"%s" n\'est pas un lien TracLinks' % link)
 
 
     # IWikiMacroProvider methods
@@ -56,7 +56,7 @@ class InterTracDispatcher(Component):
         yield 'InterTrac'
 
     def get_macro_description(self, name): 
-        return "Provide a list of known InterTrac prefixes."
+        return u"Fournit une liste des préfixes InterTrac connus."
 
     def render_macro(self, req, name, content):
         intertracs = {}
@@ -72,7 +72,7 @@ class InterTracDispatcher(Component):
             intertrac = intertracs[prefix]
             if isinstance(intertrac, basestring):
                 yield html.TR(html.TD(html.B(prefix)),
-                              html.TD('Alias for ', html.B(intertrac)))
+                              html.TD('Alias pour ', html.B(intertrac)))
             else:
                 url = intertrac.get('url', '')
                 if url:
@@ -82,5 +82,6 @@ class InterTracDispatcher(Component):
                                   html.TD(html.A(title, href=url)))
 
         return html.TABLE(class_="wiki intertrac")(
-            html.TR(html.TH(html.EM('Prefix')), html.TH(html.EM('Trac Site'))),
+            html.TR(html.TH(html.EM('Prefixe')), \
+            html.TH(html.EM('Site Trac'))),
             [generate_prefix(p) for p in sorted(intertracs.keys())])

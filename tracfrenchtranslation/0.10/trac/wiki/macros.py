@@ -271,6 +271,9 @@ class ImageMacro(WikiMacroBase):
             if arg == 'nolink':
                 nolink = True
                 continue
+            if arg in ('left', 'right', 'top', 'bottom'):
+                style['float'] = arg
+                continue
             match = attr_re.match(arg)
             if match:
                 key, val = match.groups()
@@ -362,7 +365,7 @@ class MacroListMacro(WikiMacroBase):
     Il est également possible d'indiquer le nom d'une macro particulière comme 
     argument. Dans ce cas, seule la documentation de cette macro sera affichée.
     
-    Si l'option `PythonOptimize` est activée poour mod_python, cette macro 
+    Si l'option `PythonOptimize` est activée pour mod_python, cette macro 
     ne sera pas capable d'afficher quelque documentation que ce soit sur les 
     autres macros. 
     """

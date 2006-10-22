@@ -343,8 +343,8 @@ class Environment(Component, ComponentManager):
 
         db_str = self.config.get('trac', 'database')
         if not db_str.startswith('sqlite:'):
-            raise EnvironmentError, u'Seules les bases de données sqlite ' \
-                                    u'peuvent être sauvegardées'
+            raise EnvironmentError, \
+                u'Seules les bases de données sqlite peuvent être sauvegardées'
         db_name = os.path.join(self.path, db_str[7:])
         if not dest:
             dest = '%s.%i.bak' % (db_name, self.get_version())
@@ -355,7 +355,7 @@ class Environment(Component, ComponentManager):
         db = self.get_db_cnx()
         for participant in self.setup_participants:
             if participant.environment_needs_upgrade(db):
-                self.log.warning(u'Le composant %s nécessite une mise à jour de l\'environnement',
+                self.log.warning('Component %s requires environment upgrade',
                                  participant)
                 return True
         return False

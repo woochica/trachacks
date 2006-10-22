@@ -1,4 +1,5 @@
-"""Example macro."""
+# -*- coding: utf-8 -*-
+u"""Exemple de macro."""
 from trac.util import escape
 
 def execute(hdf, txt, env):

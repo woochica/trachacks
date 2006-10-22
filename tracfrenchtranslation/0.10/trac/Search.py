@@ -167,7 +167,7 @@ class SearchModule(Component):
         query = req.args.get('q')
         if query:
             page = int(req.args.get('page', '1'))
-            noquickjump = self.check_quickjump(req, query)
+            self.check_quickjump(req, query)
             if query.startswith('!'):
                 query = query[1:]
             terms = search_terms(query)
@@ -194,14 +194,17 @@ class SearchModule(Component):
             req.hdf['search.page_size'] = page_size
             if page < n_pages:
                 next_href = req.href.search(zip(filters, ['on'] * len(filters)),
-                                            q=req.args.get('q'), page=page + 1)
+                                            q=req.args.get('q'), page=page + 1,
+                                            noquickjump=noquickjump)
                 add_link(req, 'next', next_href, u'Page suivante')
             if page > 1:
                 prev_href = req.href.search(zip(filters, ['on'] * len(filters)),
-                                            q=req.args.get('q'), page=page - 1)
+                                            q=req.args.get('q'), page=page - 1,
+                                            noquickjump=noquickjump)
                 add_link(req, 'prev', prev_href, u'Page précédente')
-            req.hdf['search.page_href'] = req.href.search(zip(filters, ['on'] * len(filters)),
-                                                          q=req.args.get('q'))
+            req.hdf['search.page_href'] = req.href.search(
+                zip(filters, ['on'] * len(filters)), q=req.args.get('q'),
+                noquickjump=noquickjump)
             req.hdf['search.result'] = [
                 { 'href': result[0],
                   'title': result[1],
@@ -236,7 +239,6 @@ class SearchModule(Component):
                     }
             else:
                 req.redirect(quickjump_href)
-        return noquickjump
 
     # IWikiSyntaxProvider methods
     
