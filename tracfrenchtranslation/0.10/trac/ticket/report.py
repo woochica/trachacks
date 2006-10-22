@@ -225,7 +225,7 @@ class ReportModule(Component):
         try:
             args = self.get_var_args(req)
         except ValueError,e:
-            raise TracError, u'Échec du rapport: %s' % e
+            raise TracError, u'Échec du rapport: %s' % e.message
 
         title, description, sql = self.get_info(db, id, args)
 
@@ -247,7 +247,8 @@ class ReportModule(Component):
         try:
             cols, rows = self.execute_report(req, db, id, sql, args)
         except Exception, e:
-            req.hdf['report.message'] = u'Échec de l\'exécution du rapport: %s' % e
+            req.hdf['report.message'] = \
+                u"Échec de l'exécution du rapport: %s" % e.message
             return 'report.cs', None
 
         # Convert the header info to HDF-format

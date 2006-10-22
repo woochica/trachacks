@@ -130,7 +130,8 @@ class HDFWrapper:
             import neo_util
             self.hdf = neo_util.HDF()
         except ImportError, e:
-            raise TracError, u"ClearSilver n'est pas installé (%s)" % e
+            raise TracError, \
+                u"ClearSilver n'est pas installé (%s)" % e.message
         
         self['hdf.loadpaths'] = loadpaths
 
