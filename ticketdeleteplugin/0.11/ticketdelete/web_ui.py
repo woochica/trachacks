@@ -38,7 +38,7 @@ class TicketDeletePlugin(Component):
         
         data = {}
 
-        data['ticketdelete.href'] = self.env.href('admin', cat, page)
+        data['ticketdelete.href'] = req.href('admin', cat, page)
         data['ticketdelete.page'] = page
         data['ticketdelete.redir'] = 1
 
@@ -59,7 +59,7 @@ class TicketDeletePlugin(Component):
                 else:
                     t = self._validate(req, path_info)
                     if t:
-                        data['ticketdelete.href'] = self.env.href('admin', cat, page, path_info)
+                        data['ticketdelete.href'] = req.href('admin', cat, page, path_info)
                         try:
                             deletions = None
                             if "multidelete" in req.args:
@@ -111,7 +111,7 @@ class TicketDeletePlugin(Component):
                 elif page == 'delete':
                     data['ticketdelete.id'] = t.id
  
-        return 'ticketdelete_admin.html', None
+        return 'ticketdelete_admin.html', data, None
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
