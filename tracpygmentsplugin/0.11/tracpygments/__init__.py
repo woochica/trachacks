@@ -107,8 +107,7 @@ class PygmentsRenderer(Component):
 def _format(lang, content, annotate=False):
     import pygments
     lexer = pygments.get_lexer_by_name(lang)
-    formatter = pygments.get_formatter_by_name('html', noclasses=True,
-                    cssclass = not annotate and 'code' or '')
+    formatter = TracHtmlFormatter(cssclass = not annotate and 'code' or '')
     html = pygments.highlight(content, lexer, formatter).rstrip('\n')
     if annotate:
         return html[len('<div><pre>'):-len('</pre></div>')].splitlines()
@@ -137,3 +136,45 @@ class PygmentsProcessors(Component):
 
     def render_macro(self, req, name, content):
         return _format(name, content)
+
+try:
+    import pygments
+except ImportError:
+    pass
+else:
+    from pygments.formatters.html import HtmlFormatter
+    from pygments.token import *
+
+    def _issubtoken(token, base):
+        while token is not None:
+            if token == base:
+                return True
+            token = token.parent
+        return False
+
+    class TracHtmlFormatter(HtmlFormatter):
+        token_classes = [
+            (Comment, 'code-comment'),
+            (Name.Function, 'code-func'),
+            (Name.Variable, 'code-var'),
+            (Name, 'code-lang'),
+            (String, 'code-string'),
+            (Keyword.Type, 'code-type'),
+            (Keyword, 'code-keyword'),
+            (Token, None),
+        ]
+
+        def _get_css_class(self, ttype):
+            try:
+                return self._class_cache[ttype]
+            except KeyError:
+                pass
+            for token, css_class in self.token_classes:
+                if _issubtoken(ttype, token):
+                    break
+            else:
+                css_class = None
+            if css_class is not None:
+                css_class = self.classprefix + css_class
+            self._class_cache[ttype] = css_class
+            return css_class
