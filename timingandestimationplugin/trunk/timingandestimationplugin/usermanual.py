@@ -1,5 +1,5 @@
 user_manual_title = "Timing and Estimation Plugin User Manual"
-user_manual_version = 5
+user_manual_version = 6
 user_manual_wiki_title = "TimingAndEstimationPluginUserManual"
 user_manual_content = """
 
