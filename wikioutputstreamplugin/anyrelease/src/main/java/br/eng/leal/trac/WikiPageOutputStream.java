@@ -48,6 +48,12 @@ public class WikiPageOutputStream extends OutputStream {
 			"Keyfile is mandatory!");
 
 	/**
+	 * Or someone override the properties, thus disabling its use
+	 */
+	private static final RuntimeException DISABLED_EXCEPTION = new IllegalArgumentException(
+			"WikiPageOutputStream class is Disabled for Construction!");
+
+	/**
 	 * PROPERTY KEY CONSTANT FOR: Remote Trac User
 	 */
 	public static final String REMOTE_TRAC_USER = "remote.trac.user";
@@ -82,6 +88,12 @@ public class WikiPageOutputStream extends OutputStream {
 	 * PROPERTY KEY CONSTANT FOR: Path to Remote Host User [RD]SA Auth Key
 	 */
 	private static final String REMOTE_TRAC_USER_KEY = "remote.trac.user.key";
+
+	/**
+	 * PROPERTY KEY FOR: OVERRIDE WikiPageOutputStream, thus disabling
+	 * construction;
+	 */
+	private static final String WIKIOUTPUTSTREAM_DISABLED = "wiki.disabled";
 
 	/**
 	 * Underlying OutputStream de jure
@@ -142,7 +154,7 @@ public class WikiPageOutputStream extends OutputStream {
 	 * <li>And finally, setups an SSH Connection, invoking
 	 * 
 	 * <pre>
-	 *          cat &gt; tmpfilename &amp;&amp; trac-admin TRACDB wiki import page tmpFile &amp;&amp; rm -f tmpfilename
+	 *            cat &gt; tmpfilename &amp;&amp; trac-admin TRACDB wiki import page tmpFile &amp;&amp; rm -f tmpfilename
 	 * </pre>
 	 * 
 	 * </li>
@@ -204,6 +216,12 @@ public class WikiPageOutputStream extends OutputStream {
 		String tmpPrefix = getProperty(properties, REMOTE_TMP_PATH, "/tmp");
 		String keyFile = getProperty(properties, REMOTE_TRAC_USER_KEY,
 				KEYFILE_MISSING_ILLEGAL_ARGUMENT_EXCEPTION);
+		Boolean disabled = Boolean.parseBoolean(getProperty(properties,
+				WIKIOUTPUTSTREAM_DISABLED, "false"));
+
+		if (null != disabled)
+			if (disabled.booleanValue())
+				throw DISABLED_EXCEPTION;
 
 		init(page, remoteUser, remoteHost, remotePort, tracDb, tracAdmin,
 				tmpPrefix, new File(keyFile));
@@ -231,7 +249,7 @@ public class WikiPageOutputStream extends OutputStream {
 	 *            SSH KeyFile for
 	 * 
 	 * <pre>
-	 *      Remote User@Remote Host:Remote Port
+	 *        Remote User@Remote Host:Remote Port
 	 * </pre>
 	 * 
 	 * @throws IOException
@@ -270,7 +288,7 @@ public class WikiPageOutputStream extends OutputStream {
 	 *            SSH KeyFile for
 	 * 
 	 * <pre>
-	 *      Remote User@Remote Host:Remote Port
+	 *        Remote User@Remote Host:Remote Port
 	 * </pre>
 	 * 
 	 * @throws IOException
