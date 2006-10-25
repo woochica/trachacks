@@ -33,7 +33,7 @@ pre_postgre_sql = ["""ALTER TABLE screenshot RENAME TO tmp_screenshot""",
   description text,
   time integer,
   author text,
-  tags, text,
+  tags text,
   large_file text,
   medium_file text,
   small_file text

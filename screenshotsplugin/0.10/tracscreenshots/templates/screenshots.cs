@@ -91,7 +91,7 @@
         </form>
         <form method="post" action="<?cs var:screenshots.href ?>/">
           <div>
-            <input type="submit" name="edit" value="Delete"/>
+            <input type="submit" name="delete" value="Delete"/>
             <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
             <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
             <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>

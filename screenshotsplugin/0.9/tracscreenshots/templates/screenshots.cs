@@ -73,7 +73,7 @@
     <div class="buttons screenshot_buttons">
       <form method="post" action="<?cs var:screenshots.href ?>/">
         <div>
-          <input type="submit" name="add" value="Add Screenshot"/>
+          <input type="submit" name="add" value="Add"/>
           <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
           <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
           <input type="hidden" name="action" value="add"/>
@@ -82,7 +82,7 @@
       <?cs if:screenshots.current.0.id ?>
         <form method="post" action="<?cs var:screenshots.href ?>/">
           <div>
-            <input type="submit" name="edit" value="Edit Screenshot"/>
+            <input type="submit" name="edit" value="Edit"/>
             <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
             <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
             <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
@@ -91,7 +91,7 @@
         </form>
         <form method="post" action="<?cs var:screenshots.href ?>/">
           <div>
-            <input type="submit" name="edit" value="Delete Screenshot"/>
+            <input type="submit" name="delete" value="Delete"/>
             <input type="hidden" name="component" value="<?cs var:screenshots.component.id ?>"/>
             <input type="hidden" name="version" value="<?cs var:screenshots.version.id ?>"/>
             <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>

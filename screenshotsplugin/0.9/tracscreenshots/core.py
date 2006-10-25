@@ -68,6 +68,7 @@ class ScreenshotsCore(Component):
         self.title = self.env.config.get('screenshots', 'title', 'Screenshots')
         self.path = self.env.config.get('screenshots', 'path',
           '/var/lib/trac/screenshots')
+        self.ext = self.env.config.get('screenshots', 'ext', 'jpg png')
         self.component = self.env.config.get('screenshots', 'component')
         self.version = self.env.config.get('screenshots', 'version')
         self.show_name = self.env.config.get('screenshots', 'show_name',
@@ -101,7 +102,7 @@ class ScreenshotsCore(Component):
                     version = versions[0]
                 else:
                     raise TracError('Screenshots plugin can\'t work when there'
-                      ' is no versions.')
+                      ' are no versions.')
 
         self.log.debug('component_id: %s' % (component_id,))
         self.log.debug('component: %s' % (component,))
@@ -196,7 +197,10 @@ class ScreenshotsCore(Component):
                 # Check correct file type.
                 reg = re.compile(r'^(.*)[.](.*)$')
                 result = reg.match(filename)
-                if not result.group(2) in ('png', 'jpg'):
+                if result:
+                    if not result.group(2).lower() in self.ext.split(' '):
+                        raise TracError('Unsupported uploaded file type.')
+                else:
                     raise TracError('Unsupported uploaded file type.')
 
                 # Prepare images filenames.
