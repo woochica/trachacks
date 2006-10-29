@@ -1,0 +1,150 @@
+<h2>New Prototype</h2>
+
+<a href="<?cs var:tracforge.href.prototypes ?>">Back</a>
+
+<?cs def:teststep(num, name, text) ?>
+<div id="step_<?cs var:name ?>" class="step">
+    <div class="step-buttons">
+        <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/x.gif" alt="Remove" />
+        <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/down.gif" alt="Down" />
+        <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/up.gif" alt="Up" />
+    </div>
+    <?cs var:text ?>
+</div>
+<?cs /def ?>
+
+<?cs call:teststep(1, "one", "Foo") ?>
+<?cs call:teststep(2, "two", "Bar") ?>
+<?cs call:teststep(3, "three", "Baz") ?>
+
+<style type="text/css">
+.transferer {
+    border: 1px solid #000;
+    background-color: #ffc;
+}
+</style>    
+   
+
+<script type="text/javascript">
+    jQuery.fn.animatedSwap = function(next, duration) {
+        var me = this;
+        // Find positions and sizes
+        var my_pos = jQuery.extend(
+            jQuery.iUtil.getPosition(me.get(0)),
+            jQuery.iUtil.getSize(me.get(0))
+        );
+        var next_pos = jQuery.extend(
+            jQuery.iUtil.getPosition(next.get(0)),
+            jQuery.iUtil.getSize(next.get(0))
+        );
+        
+        var me_copy = $(me).clone().css('display', 'block')
+                                   .css('position', 'absolute') 
+                                   .css('width', my_pos.w + "px")
+                                   .css("height", my_pos.h + "px")
+                                   .css("left", my_pos.x + "px")
+                                   .css("top", my_pos.y - (my_pos.wb-my_pos.w) + "px")
+                                   .appendTo('body');
+
+        var next_copy = $(next).clone().css('display', 'block')
+                                       .css('position', 'absolute') 
+                                       .css('width', next_pos.w + "px")
+                                       .css("height", next_pos.h + "px")
+                                       .css("left", next_pos.x +"px")
+                                       .css("top", next_pos.y - (next_pos.wb-next_pos.w) + "px")
+                                       .appendTo('body');
+                                       
+            
+        me.css('visibility', 'hidden');
+        next.css('visibility', 'hidden');
+            
+        jQuery['swapper_store_'+next[0].id] = {
+            me: me,
+            next: next,
+            me_copy: me_copy,
+            next_copy: next_copy
+        };
+            
+        me_copy.animate({top:(1.0*next_copy.top().replace("px",""))}, duration);
+        next_copy.animate({top:(1.0*me_copy.top().replace("px",""))}, duration, function() {
+            var store = jQuery['swapper_store_'+this.id];
+            store.me.css('visibility', 'visible');
+            store.next.css('visibility', 'visible');
+            store.next.after(store.me);
+            store.me_copy.hide().remove();
+            store.next_copy.fadeOut(1, function() {
+               this.parentNode.removeChild(this);
+            });
+        });
+    };
+
+    $(function() {
+        $("img[@alt=Remove]").click(function() { 
+            $(this).parents(".step").animate({height:'hide',opacity:'hide'},'slow', function() {
+                $(this).remove()
+            });
+        });
+
+        $("img[@alt=Up]").click(function() {
+            var me = $(this).parents(".step");
+            var prev = $(me).prev(".step");
+            if(prev.length == 0) { return; } // Top item
+            prev.animatedSwap(me, 500);
+        });
+
+        $("img[@alt=Down]").click(function() {
+            var me = $(this).parents(".step");
+            var next = $(me).next(".step");
+            if(next.length == 0) { return; } // Bottom item
+            
+            // Find positions and sizes
+            var my_pos = jQuery.extend(
+                jQuery.iUtil.getPosition(me.get(0)),
+                jQuery.iUtil.getSize(me.get(0))
+            );
+            var next_pos = jQuery.extend(
+                jQuery.iUtil.getPosition(next.get(0)),
+                jQuery.iUtil.getSize(next.get(0))
+            );
+            
+            var me_copy = $(me).clone().css('display', 'block')
+                                       .css('position', 'absolute') 
+                                       .css('width', my_pos.w + "px")
+                                       .css("height", my_pos.h + "px")
+                                       .css("left", my_pos.x + "px")
+                                       .css("top", my_pos.y - (my_pos.wb-my_pos.w) + "px")
+                                       .appendTo('body');
+
+            var next_copy = $(next).clone().css('display', 'block')
+                                           .css('position', 'absolute') 
+                                           .css('width', next_pos.w + "px")
+                                           .css("height", next_pos.h + "px")
+                                           .css("left", next_pos.x +"px")
+                                           .css("top", next_pos.y - (next_pos.wb-next_pos.w) + "px")
+                                           .appendTo('body');
+                                       
+            
+            me.css('visibility', 'hidden');
+            next.css('visibility', 'hidden');
+            
+            jQuery['swapper_store_'+next[0].id] = {
+                me: me,
+                next: next,
+                me_copy: me_copy,
+                next_copy: next_copy
+            };
+            
+            me_copy.animate({top:(1.0*next_copy.top().replace("px",""))}, 500);
+            next_copy.animate({top:(1.0*me_copy.top().replace("px",""))}, 500, function() {
+                var store = jQuery['swapper_store_'+this.id];
+                store.me.css('visibility', 'visible');
+                store.next.css('visibility', 'visible');
+                store.next.after(store.me);
+                store.me_copy.hide().remove();
+                store.next_copy.fadeOut(1, function() {
+                    this.parentNode.removeChild(this);
+                });
+            });
+        });
+    });
+</script>

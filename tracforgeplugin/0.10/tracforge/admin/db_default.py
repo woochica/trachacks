@@ -15,7 +15,8 @@ tables = [
         Column('username'),
         Column('action'),
     ],
-    Table('tracforge_prototypes', key='step')[
+    Table('tracforge_prototypes', key=('tag', 'step'))[
+        Column('tag'),
         Column('step', auto_increment=True),
         Column('action'),
         Column('args'),

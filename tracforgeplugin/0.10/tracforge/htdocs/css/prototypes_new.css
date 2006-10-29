@@ -1,0 +1,22 @@
+#steps {
+    list-style: none;
+}
+
+.step {
+    background-color: #ffd;
+    border: 2px groove #000;
+    margin: 4px 0;
+    width: 400px;
+    height: 100px;
+}
+
+.step .step-buttons {
+    float: right;
+    margin: 3px 4px;
+}
+
+.sortable-helper {
+    background-color: #030;
+}
+
+

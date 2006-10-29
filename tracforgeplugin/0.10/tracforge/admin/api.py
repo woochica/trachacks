@@ -6,12 +6,13 @@ import db_default
 class IProjectSetupParticipant(Interface):
     """An extension-point interface for performing actions on project creation."""
     
-    def get_project_setup_actions(self):
-        """Return an iterable of (name, type), where type is one of 'create' 
-        or 'configure'. All configuration actions will always take place after 
-        all creation tasks."""
+    def get_setup_actions(self):
+        """Return an iterable of names."""
         
-    def perform_project_setup_action(self, req, env, action):
+    def get_setup_action_description(self, action):
+        """Return a string description of the given action."""
+        
+    def execute_setup_action(self, req, env_path, action, args):
         """Perform the given setup action on an environment."""
     
 class IProjectChangeListener(Interface):

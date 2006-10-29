@@ -47,7 +47,7 @@
 </thead>
 <?cs each:tag = tracforge.tags ?>
     <tr class="header">
-        <th colspan="0"><?cs var:tag ?></th>
+        <th colspan="5"><?cs var:tag ?></th>
     </tr>
     <?cs each:section = tracforge.configs[tag] ?><?cs each:key = section ?>
     <tr>
@@ -60,4 +60,7 @@
     <?cs /each ?><?cs /each ?>
 <?cs /each ?>
 </table>
+<div class="buttons">
+    <input type="submit" name="delete" value="Delete selected" />
+</div>
 </form>

@@ -160,6 +160,43 @@ class Project(object):
         return Project(env, name, db)
     by_env_path = classmethod(by_env_path)            
 
+class Prototype(list):
+    """A model object for a project prototype."""
+    
+    def __init__(self, env, tag, db=None):
+        """Initialize a new Prototype. `env in the master environment."""
+        self.env = env
+        self.tag = tag
+        
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        cursor.execute('SELECT action, args FROM tracforge_prototypes WHERE tag=%s ORDER BY step', (self.tag,))
+        list.__init__([{'action':action, 'args':args} for action,args in cursor.fetchall()])
+        
+    def save(self, db=None):
+        handle_commit = False
+        if not db:
+            db = self.db.get_db_cnx()
+            handle_commit = True
+        cursor = db.cursor()
+        
+        cursor.execute('DELETE FROM tracforge_prototypes WHERE tag=%s', (self.tag,))
+        for data in self:
+            action = args = None
+            if isinstance(data, dict):
+                action = data['action']
+                args = data['args']
+            elif isinstance(data, (tuple, list)):
+                action = data[0]
+                args = data[1]
+            else:
+                raise TypeError('Invalid type %s in prototype'%type(data))
+            cursor.execute('INSERT INTO tracforge_prototypes (tag, action, args) VALUES (%s, %s, %s)', (self.tag, action, args))
+            
+        if handle_commit:
+            db.commit()
+
 class ConfigSet(object):
     """A model object for configuration sets used when creating new projects."""
     
@@ -170,6 +207,7 @@ class ConfigSet(object):
         self.with_star = with_star
         
         self._data = {}
+        self._del = set()
         
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
@@ -190,6 +228,7 @@ class ConfigSet(object):
     def remove(self, section, name):
         if section in self._data and name in self._data[section]:
             del self._data[section][name] 
+        self._del.add((section, name))
     
     def sections(self):
         return sorted(self._data.iterkeys())
@@ -207,6 +246,7 @@ class ConfigSet(object):
     
     def set(self, section, key, value, action='add'):
         self._data.setdefault(section, {})[key] = (value, action)
+        self._del.discard((section, key))
     
     def save(self, db=None):
         assert not self.with_star, "Not sure how to handle this yet."
@@ -216,6 +256,10 @@ class ConfigSet(object):
             db = self.env.get_db_cnx()
             handle_commit = True
         cursor = db.cursor()
+        
+        for section, key in self._del:
+            cursor.execute('DELETE FROM tracforge_configs WHERE tag=%s AND section=%s AND key=%s', (self.tag, section, key))
+        self._del.clear()
         
         for section, x in self._data.iteritems():
             for key, (value, action) in x.iteritems():
