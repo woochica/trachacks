@@ -94,9 +94,8 @@ class TracForgePrototypesAdminModule(Component):
         """Handler for creating a new prototype."""
         add_stylesheet(req, 'tracforge/css/prototypes_new.css')
         add_script(req, 'tracforge/js/interface/iutil.js')
-        #add_script(req, 'tracforge/js/interface/idrag.js')
-        #add_script(req, 'tracforge/js/interface/idrop.js')
-        #add_script(req, 'tracforge/js/interface/isortables.js')
-        #add_script(req, 'tracforge/js/interface/ifxtransfer.js')
+        add_script(req, 'tracforge/js/jquery.animatedswap.js')
+
+        req.hdf['tracforge.prototypes.steps'] = sum([list(p.get_setup_actions()) for p in self.setup_participants], [])
         
         return 'admin_tracforge_prototypes_new.cs', None

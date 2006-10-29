@@ -2,7 +2,7 @@
 
 <a href="<?cs var:tracforge.href.prototypes ?>">Back</a>
 
-<?cs def:teststep(num, name, text) ?>
+<?cs def:teststep(name, text) ?>
 <div id="step_<?cs var:name ?>" class="step">
     <div class="step-buttons">
         <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/x.gif" alt="Remove" />
@@ -13,77 +13,79 @@
 </div>
 <?cs /def ?>
 
-<?cs call:teststep(1, "one", "Foo") ?>
-<?cs call:teststep(2, "two", "Bar") ?>
-<?cs call:teststep(3, "three", "Baz") ?>
-<?cs call:teststep(4, "four", "Blah") ?>
+<div id="steps">
+<?cs call:teststep("one", "Foo") ?>
+<?cs call:teststep("two", "Bar") ?>
+<?cs call:teststep("three", "Baz") ?>
+<?cs call:teststep("four", "Blah") ?>
+<div id="addstep" class="step">
+    <div class="step-buttons">
+        <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/plus.gif" alt="Add" />
+    </div>
+    <form id="addstep-form">
+        <select name="type">
+            <?cs each:step = tracforge.prototypes.steps ?>
+            <option value="<?cs var:step ?>"><?cs var:step ?></option>
+            <?cs /each ?>
+        </select>
+    </form>
+</div>
+</div>
 
 <script type="text/javascript">
-    jQuery.fn.animatedSwap = function(next, duration) {
-        var me = this;
-        // Find positions and sizes
-        var my_pos = jQuery.extend(
-            jQuery.iUtil.getPosition(me.get(0)),
-            jQuery.iUtil.getSize(me.get(0))
-        );
-        var next_pos = jQuery.extend(
-            jQuery.iUtil.getPosition(next.get(0)),
-            jQuery.iUtil.getSize(next.get(0))
-        );
-        
-        var me_copy = $(me).clone().css('display', 'block')
-                                   .css('position', 'absolute') 
-                                   .css('width', my_pos.w + "px")
-                                   .css("height", my_pos.h + "px")
-                                   .css("left", my_pos.x + "px")
-                                   .css("top", my_pos.y - (my_pos.wb-my_pos.w) + "px")
-                                   //.css("background-color", "pink")
-                                   .appendTo('body');
-
-        var next_copy = $(next).clone().css('display', 'block')
-                                       .css('position', 'absolute') 
-                                       .css('width', next_pos.w + "px")
-                                       .css("height", next_pos.h + "px")
-                                       .css("left", next_pos.x +"px")
-                                       .css("top", next_pos.y - (next_pos.wb-next_pos.w) + "px")
-                                       //.css("background-color", "pink")
-                                       .appendTo('body');
-                                       
-            
-        me.css('visibility', 'hidden');
-        next.css('visibility', 'hidden');
-            
-        me_copy.animate({top:(1.0*next_copy.top().replace("px",""))}, duration);
-        next_copy.animate({top:(1.0*me_copy.top().replace("px",""))}, duration, function() {
-            me.css('visibility', 'visible');
-            next.css('visibility', 'visible');
-            next.after(me);
-            me_copy.hide().remove();
-            next_copy.fadeOut(1, function() {
-               this.parentNode.removeChild(this);
-            });
-        });
-    };
-
-    $(function() {
-        $("img[@alt=Remove]").click(function() { 
-            $(this).parents(".step").animate({height:'hide',opacity:'hide'}, 400, function() {
-                $(this).remove()
-            });
-        });
-
-        $("img[@alt=Up]").click(function() {
-            var me = $(this).parents(".step");
-            var prev = $(me).prev(".step");
-            if(prev.length == 0) { return; } // Top item
-            prev.animatedSwap(me, 400);
-        });
-
-        $("img[@alt=Down]").click(function() {
-            var me = $(this).parents(".step");
-            var next = $(me).next(".step");
-            if(next.length == 0) { return; } // Bottom item
-            me.animatedSwap(next, 400);            
-        });
+function remove_step() {
+    var step = $(this).parents(".step");
+    step.animate({height:'hide',opacity:'hide'}, 400, function() {
+        $(this).remove()
     });
+    var step_type = step.id().substr(5);
+    $("#addstep-form select[@name=type]").append('<option value="'+step_type+'">'+step_type+'</option>');
+}
+    
+function up_step() {
+    var me = $(this).parents(".step");
+    var prev = $(me).prev(".step");
+    if(prev.length == 0) { return; } // Top item
+    prev.animatedSwap(me, 400);
+}
+    
+function down_step() {
+    var me = $(this).parents(".step");
+    var next = $(me).next(".step");
+    if(next.length == 0) { return; } // Bottom item
+    if(next.id() == "addstep") { return; }
+    me.animatedSwap(next, 400);
+}
+
+var STEP_HTML = Array(
+'<div id="step_((name))" class="step" style="display: none">',
+'   <div class="step-buttons">',
+'       <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/x.gif" alt="Remove" />',
+'       <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/down.gif" alt="Down" />',
+'       <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/up.gif" alt="Up" />',
+'   </div>',
+'   ((name))',
+'</div>'
+);
+
+function step_html(name) {
+    return (STEP_HTML.join("\n")+"\n").replace(/\(\(name\)\)/g, name);
+}
+
+$(function() {
+    $("img[@alt=Remove]").click(remove_step);
+    $("img[@alt=Up]").click(up_step);
+    $("img[@alt=Down]").click(down_step);
+        
+    $("#addstep img[@alt=Add]").click(function() {
+        var step_type = $("#addstep-form select[@name=type]").val();
+        $(this).parents(".step").before(step_html(step_type));
+        $(this).parents(".step").prev()
+            .animate({height: 'show'}, 400)
+            .find("img[@alt=Remove]").click(remove_step).end()
+            .find("img[@alt=Up]").click(up_step).end()
+            .find("img[@alt=Down]").click(down_step);
+        $("#addstep-form option[@value="+step_type+"]").remove();
+    });
+});
 </script>
