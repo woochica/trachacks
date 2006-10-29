@@ -37,6 +37,7 @@
                                    .css("height", my_pos.h + "px")
                                    .css("left", my_pos.x + "px")
                                    .css("top", my_pos.y - (my_pos.wb-my_pos.w) + "px")
+                                   //.css("background-color", "pink")
                                    .appendTo('body');
 
         var next_copy = $(next).clone().css('display', 'block')
@@ -45,27 +46,20 @@
                                        .css("height", next_pos.h + "px")
                                        .css("left", next_pos.x +"px")
                                        .css("top", next_pos.y - (next_pos.wb-next_pos.w) + "px")
+                                       //.css("background-color", "pink")
                                        .appendTo('body');
                                        
             
         me.css('visibility', 'hidden');
         next.css('visibility', 'hidden');
             
-        jQuery['swapper_store_'+next[0].id] = {
-            me: me,
-            next: next,
-            me_copy: me_copy,
-            next_copy: next_copy
-        };
-            
         me_copy.animate({top:(1.0*next_copy.top().replace("px",""))}, duration);
         next_copy.animate({top:(1.0*me_copy.top().replace("px",""))}, duration, function() {
-            var store = jQuery['swapper_store_'+this.id];
-            store.me.css('visibility', 'visible');
-            store.next.css('visibility', 'visible');
-            store.next.after(store.me);
-            store.me_copy.hide().remove();
-            store.next_copy.fadeOut(1, function() {
+            me.css('visibility', 'visible');
+            next.css('visibility', 'visible');
+            next.after(me);
+            me_copy.hide().remove();
+            next_copy.fadeOut(1, function() {
                this.parentNode.removeChild(this);
             });
         });
