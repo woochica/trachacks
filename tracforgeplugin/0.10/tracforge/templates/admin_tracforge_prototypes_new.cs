@@ -14,10 +14,6 @@
 <?cs /def ?>
 
 <div id="steps">
-<?cs call:teststep("one", "Foo") ?>
-<?cs call:teststep("two", "Bar") ?>
-<?cs call:teststep("three", "Baz") ?>
-<?cs call:teststep("four", "Blah") ?>
 <div id="addstep" class="step">
     <div class="step-buttons">
         <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/plus.gif" alt="Add" />
@@ -32,7 +28,12 @@
 </div>
 </div>
 
+<a href="#" id="collect">Collect</a>
+
 <script type="text/javascript">
+
+var DURATION = 400;
+
 function remove_step() {
     var step = $(this).parents(".step");
     step.animate({height:'hide',opacity:'hide'}, 400, function() {
@@ -72,20 +73,37 @@ function step_html(name) {
     return (STEP_HTML.join("\n")+"\n").replace(/\(\(name\)\)/g, name);
 }
 
+function collect_steps() {
+    var steps = Array();
+    $("#steps").children().each(function() {
+        steps.push(this.id.substr(5));
+    });
+    steps.pop(); // This will always be the addstep div
+    return steps;
+}
+
 $(function() {
-    $("img[@alt=Remove]").click(remove_step);
-    $("img[@alt=Up]").click(up_step);
-    $("img[@alt=Down]").click(down_step);
-        
     $("#addstep img[@alt=Add]").click(function() {
         var step_type = $("#addstep-form select[@name=type]").val();
+        if(step_type == "") { return; }
         $(this).parents(".step").before(step_html(step_type));
         $(this).parents(".step").prev()
-            .animate({height: 'show'}, 400)
+            .animate({height: 'show'}, DURATION)
             .find("img[@alt=Remove]").click(remove_step).end()
             .find("img[@alt=Up]").click(up_step).end()
             .find("img[@alt=Down]").click(down_step);
         $("#addstep-form option[@value="+step_type+"]").remove();
     });
+    
+    $("#collect").click(function() {
+        alert(collect_steps());
+    });
+    
+    // Start the list off with this entry
+    $("#addstep-form select[@name=type]").val("MakeTracEnvironment");
+    var temp = DURATION;
+    DURATION = 1;
+    $("#addstep img[@alt=Add]").click();
+    DURATION = temp;
 });
 </script>
