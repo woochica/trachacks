@@ -104,6 +104,10 @@ class TracForgePrototypesAdminModule(Component):
                     'description': p.get_setup_action_description(a),
                 }
                 
+        initial_steps = ['MakeTracEnvironment']
+                
         req.hdf['tracforge.prototypes.steps'] = steps
+        req.hdf['tracforge.prototypes.initialsteps'] = initial_steps
+        req.hdf['tracforge.prototypes.liststeps'] = [k for k in steps.iterkeys() if k not in initial_steps]
         
         return 'admin_tracforge_prototypes_new.cs', None
