@@ -15,7 +15,7 @@ jQuery.fn.animatedSwap = function(next, duration) {
                                .css('width', my_pos.w + "px")
                                .css("height", my_pos.h + "px")
                                .css("left", my_pos.x + "px")
-                               .css("top", my_pos.y - (my_pos.wb-my_pos.w) + "px")
+                               .css("top", my_pos.y - (my_pos.wb-my_pos.w) + 8 + "px")
                                //.css("background-color", "pink")
                                .appendTo('body');
 
@@ -23,8 +23,8 @@ jQuery.fn.animatedSwap = function(next, duration) {
                                    .css('position', 'absolute') 
                                    .css('width', next_pos.w + "px")
                                    .css("height", next_pos.h + "px")
-                                   .css("left", next_pos.x +"px")
-                                   .css("top", next_pos.y - (next_pos.wb-next_pos.w) + "px")
+                                   .css("left", next_pos.x + "px")
+                                   .css("top", next_pos.y - (next_pos.wb-next_pos.w) + 8 + "px")
                                    //.css("background-color", "pink")
                                    .appendTo('body');
                                        

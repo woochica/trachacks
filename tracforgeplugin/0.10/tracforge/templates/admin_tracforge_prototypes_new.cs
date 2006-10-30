@@ -2,17 +2,6 @@
 
 <a href="<?cs var:tracforge.href.prototypes ?>">Back</a>
 
-<?cs def:teststep(name, text) ?>
-<div id="step_<?cs var:name ?>" class="step">
-    <div class="step-buttons">
-        <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/x.gif" alt="Remove" />
-        <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/down.gif" alt="Down" />
-        <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/up.gif" alt="Up" />
-    </div>
-    <?cs var:text ?>
-</div>
-<?cs /def ?>
-
 <div id="steps">
 <div id="addstep" class="step">
     <div class="step-buttons">
@@ -21,7 +10,7 @@
     <form id="addstep-form">
         <select name="type">
             <?cs each:step = tracforge.prototypes.steps ?>
-            <option value="<?cs var:step ?>"><?cs var:step ?></option>
+            <option value="<?cs name:step ?>"><?cs name:step ?></option>
             <?cs /each ?>
         </select>
     </form>
@@ -65,12 +54,20 @@ var STEP_HTML = Array(
 '       <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/down.gif" alt="Down" />',
 '       <img src="<?cs var:tracforge.href.htdocs ?>/img/greyscale/up.gif" alt="Up" />',
 '   </div>',
-'   ((name))',
+'   <div class="step-name">((name))</div>',
+'   <div class="step-args"><label>Arguments:<input type="text" name="args" /></label></div>',
+'   <hr /><div class="step-text">((text))</div>',
 '</div>'
 );
 
+var DESCRIPTIONS = {
+<?cs each:step = tracforge.prototypes.steps ?>
+    <?cs name:step ?>: "<?cs var:step.description ?>",
+<?cs /each ?>
+};
+
 function step_html(name) {
-    return (STEP_HTML.join("\n")+"\n").replace(/\(\(name\)\)/g, name);
+    return (STEP_HTML.join("\n")+"\n").replace(/\(\(name\)\)/g, name).replace(/\(\(text\)\)/g, DESCRIPTIONS[name]);
 }
 
 function collect_steps() {

@@ -96,6 +96,14 @@ class TracForgePrototypesAdminModule(Component):
         add_script(req, 'tracforge/js/interface/iutil.js')
         add_script(req, 'tracforge/js/jquery.animatedswap.js')
 
-        req.hdf['tracforge.prototypes.steps'] = sum([list(p.get_setup_actions()) for p in self.setup_participants], [])
+        steps = {}
+        for p in self.setup_participants:
+            for a in p.get_setup_actions():
+                steps[a] = {
+                    'provider': p,
+                    'description': p.get_setup_action_description(a),
+                }
+                
+        req.hdf['tracforge.prototypes.steps'] = steps
         
         return 'admin_tracforge_prototypes_new.cs', None
