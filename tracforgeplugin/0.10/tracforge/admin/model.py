@@ -172,17 +172,19 @@ class Prototype(list):
         cursor = db.cursor()
         
         cursor.execute('SELECT action, args FROM tracforge_prototypes WHERE tag=%s ORDER BY step', (self.tag,))
-        list.__init__([{'action':action, 'args':args} for action,args in cursor.fetchall()])
+        list.__init__(self,[{'action':action, 'args':args} for action,args in cursor.fetchall()])
+
+    exists = property(lambda self: len(self)>0)
         
     def save(self, db=None):
         handle_commit = False
         if not db:
-            db = self.db.get_db_cnx()
+            db = self.env.get_db_cnx()
             handle_commit = True
         cursor = db.cursor()
         
         cursor.execute('DELETE FROM tracforge_prototypes WHERE tag=%s', (self.tag,))
-        for data in self:
+        for data, i in zip(self, xrange(len(self))):
             action = args = None
             if isinstance(data, dict):
                 action = data['action']
@@ -192,10 +194,56 @@ class Prototype(list):
                 args = data[1]
             else:
                 raise TypeError('Invalid type %s in prototype'%type(data))
-            cursor.execute('INSERT INTO tracforge_prototypes (tag, action, args) VALUES (%s, %s, %s)', (self.tag, action, args))
+            cursor.execute('INSERT INTO tracforge_prototypes (tag, step, action, args) VALUES (%s, %s, %s, %s)', (self.tag, i, action, args))
             
         if handle_commit:
             db.commit()
+            
+    def delete(self, db=None):
+        """Remove a prototype from the database."""
+        handle_commit = False
+        if not db:
+            db = self.env.get_db_cnx()
+            handle_commit = True
+        cursor = db.cursor()
+        
+        cursor.execute('DELETE FROM tracforge_prototypes WHERE tag=%s', (self.tag,))
+        
+        if handle_commit:
+            db.commit()        
+            
+    def __contains__(self, other):
+        fn_tuple = None
+        if isinstance(other, (str, unicode)):
+            fn = lambda a,b: a == b[0] # Check if the string is an action in this prototype
+        elif isinstance(other, (tuple, list)):
+            fn = lambda a,b: a[0] == b[0] and a[1] == b[1]
+        elif isinstance(other, dict):
+            fn = lambda a,b: a['action'] == b[0] and a['args'] == b[1]
+
+        for x in self:
+            if isinstance(x, dict):
+                x = (x['action'], x['args'])
+            if fn(other, x):
+                return True
+        return False        
+
+    def select(cls, env, db=None):
+        """Return an iterable of valid tags."""
+        db = db or env.get_db_cnx()
+        cursor = db.cursor()
+        
+        cursor.execute('SELECT DISTINCT tag FROM tracforge_prototypes')
+        for row in cursor:
+            yield row[0]
+    select = classmethod(select)
+    
+    def default(cls, env):
+        """Return a prototype for the defaults on the new prototype screen."""
+        proto = cls(env, '')
+        proto.append({'action':'MakeTracEnvironment', 'args':''})
+        return proto
+    default = classmethod(default)
 
 class ConfigSet(object):
     """A model object for configuration sets used when creating new projects."""

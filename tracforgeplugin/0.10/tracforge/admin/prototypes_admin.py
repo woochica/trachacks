@@ -22,7 +22,7 @@ class TracForgePrototypesAdminModule(Component):
         # Page locations
         req.hdf['tracforge.href'] = {
             'prototypes': req.href.admin(cat, page),
-            'configset': req.href.admin(cat, page, 'config'),
+            'configset': req.href.admin(cat, page, 'configset'),
             'new': req.href.admin(cat, page, 'new'),
             'htdocs': req.href.chrome('tracforge'),
         }
@@ -30,16 +30,20 @@ class TracForgePrototypesAdminModule(Component):
         # General stuff
         add_stylesheet(req, 'tracforge/css/admin.css')
         add_script(req, 'tracforge/js/jquery.js')
+        req.cat = cat
+        req.page = page
 
         # Subpage dispatchers
         if path_info:
-            if path_info.startswith('config'):
+            if path_info.startswith('configset'):
                 return self.process_configset_admin_request(req, cat, page, path_info)
             elif path_info.startswith('new'):
-                return self.process_new_admin_request(req, cat, page, path_info)
+                return self._show_prototype(req, path_info, action='new')
+            else:
+                return self._show_prototype(req, path_info, action='edit')
         
     
-        req.hdf['tracforge.prototypes.steps'] = sum([list(p.get_setup_actions()) for p in self.setup_participants], [])
+        req.hdf['tracforge.prototypes.tags'] = list(Prototype.select(self.env))
         
         return 'admin_tracforge_prototypes.cs', None
         
@@ -90,11 +94,35 @@ class TracForgePrototypesAdminModule(Component):
 
         return 'admin_tracforge_configset.cs', None       
 
-    def process_new_admin_request(self, req, cat, page, path_info):
+    def _show_prototype(self, req, path_info, action):
         """Handler for creating a new prototype."""
         add_stylesheet(req, 'tracforge/css/prototypes_new.css')
         add_script(req, 'tracforge/js/interface/iutil.js')
         add_script(req, 'tracforge/js/jquery.animatedswap.js')
+        
+        if req.method == 'POST':
+            if req.args.get('save'):
+                name = req.args.get('name')
+                if action == 'edit':
+                    name = path_info.strip('/')
+                if not name:
+                    raise TracError('You must specify a name for the prototype')
+            
+                data = req.args.get('data')
+                if not data:
+                    raise TracError("Warning: Peguins on fire. You might have JavaScript off, don't do that")
+                data = data[4:] # Strip off the 'data' literal at the start
+                if not data:
+                    raise TracError("You must have at least one step in a prototype")
+                
+                proto = Prototype(self.env, name)
+                if action == 'new' and proto.exists:
+                    raise TracError("Prototype %s already exists"%name)
+                del proto[:]
+                for x in data.split('|'):
+                    proto.append(x.split(',',1))
+                proto.save()
+            req.redirect(req.href.admin(req.cat, req.page))
 
         steps = {}
         for p in self.setup_participants:
@@ -103,9 +131,20 @@ class TracForgePrototypesAdminModule(Component):
                     'provider': p,
                     'description': p.get_setup_action_description(a),
                 }
-                
-        initial_steps = ['MakeTracEnvironment']
-                
+        
+        initial_steps = []        
+        if action == 'new':                
+            initial_steps = Prototype.default(self.env)
+        elif action == 'edit':
+            proto = Prototype(self.env, path_info.strip('/'))
+            if not proto.exists:
+                raise TracError('Unknown prototype %s'%proto.tag)
+            initial_steps = proto
+        else:
+            raise TracError('Invalid action %s'%action)
+
+        req.hdf['tracforge.prototypes.action'] = action                
+        req.hdf['tracforge.prototypes.name'] = path_info.strip('/')
         req.hdf['tracforge.prototypes.steps'] = steps
         req.hdf['tracforge.prototypes.initialsteps'] = initial_steps
         req.hdf['tracforge.prototypes.liststeps'] = [k for k in steps.iterkeys() if k not in initial_steps]

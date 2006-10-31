@@ -7,9 +7,19 @@
     <a href="<?cs var:tracforge.href.new ?>">New prototype</a>
 </p>
 
-<h4>Known Steps</h4>
-<ul>
-<?cs each:step = tracforge.prototypes.steps ?>
-    <li><?cs var:step ?></li>
+<table class="listing">
+<thead>
+    <tr>
+        <th>Name</th>
+        <th></th>
+    </tr>
+</thead>
+<?cs each:tag = tracforge.prototypes.tags ?>
+    <tr>
+        <td><?cs var:tag ?></td>
+        <td><form method="get" action="<?cs var:tracforge.href.prototypes ?>/<?cs var:tag ?>">
+                <input type="submit" name="edit" value="Edit" />
+        </form></td>
+    </tr>
 <?cs /each ?>
-</ul>
+</table>

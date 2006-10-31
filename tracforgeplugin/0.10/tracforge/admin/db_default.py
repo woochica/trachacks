@@ -1,6 +1,6 @@
 from trac.db import Table, Column
 
-version = 3
+version = 4
 tables = [
     Table('tracforge_projects', key='name')[
         Column('name'),
@@ -17,7 +17,7 @@ tables = [
     ],
     Table('tracforge_prototypes', key=('tag', 'step'))[
         Column('tag'),
-        Column('step', auto_increment=True),
+        Column('step', type='integer'),
         Column('action'),
         Column('args'),
     ],
