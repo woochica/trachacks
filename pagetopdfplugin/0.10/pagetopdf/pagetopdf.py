@@ -18,7 +18,7 @@ class PageToPDFPlugin(Component):
         hfile, hfilename = mkstemp('tracpdf')
         codepage = self.env.config.get('trac', 'default_charset', 0)
         page = wiki_to_html(source, self.env, req).encode(codepage)
-        page = re.sub('<img src="(?!\w+://)', '<img src="%s://%s' % (req.scheme, req.server_name), page)
+        page = re.sub('<img src="(?!\w+://)', '<img src="%s://%s:%d' % (req.scheme, req.server_name, req.server_port), page)
         os.write(hfile, '<html><body>' + page + '</body></html>')
         os.close(hfile)
         pfile, pfilename = mkstemp('tracpdf')
