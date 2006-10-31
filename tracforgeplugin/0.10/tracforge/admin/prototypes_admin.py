@@ -149,4 +149,4 @@ class TracForgePrototypesAdminModule(Component):
         req.hdf['tracforge.prototypes.initialsteps'] = initial_steps
         req.hdf['tracforge.prototypes.liststeps'] = [k for k in steps.iterkeys() if k not in initial_steps]
         
-        return 'admin_tracforge_prototypes_new.cs', None
+        return 'admin_tracforge_prototypes_show.cs', None
