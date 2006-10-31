@@ -40,13 +40,18 @@
 <form id="form" method="post">
 <div>
     <div id="buttons">
-        <input type="hidden" name="data" />
+        <?cs if:tracforge.prototypes.action != "new" ?>
+            <input type="submit" name="delete" value="Delete" />
+        <?cs /if ?>
         <input type="submit" name="cancel" value="Cancel" />
         <input type="submit" name="save" value="Save" />
     </div>
+    <?cs if:tracforge.prototypes.action == "new" ?>
     <label>Name: 
-        <input type="text" name="name" <?cs if:tracforge.prototypes.action != "new" ?>disabled="disabled" value="<?cs var:tracforge.prototypes.name ?>"<?cs /if?> />
+        <input type="text" name="name" />
     </label>
+    <?cs /if ?>
+    <input type="hidden" name="data" />
 </div>
 </form>
 </div>

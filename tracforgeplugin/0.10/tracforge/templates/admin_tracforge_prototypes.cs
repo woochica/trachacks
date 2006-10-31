@@ -1,7 +1,7 @@
 <h2>TracForge Prototypes</h2>
 
 <p>
-    <a href="<?cs var:tracforge.href.configset ?>">Config sets</a>
+    <!-- <a href="<?cs var:tracforge.href.configset ?>">Config sets</a> -->
 </p>
 <p>
     <a href="<?cs var:tracforge.href.new ?>">New prototype</a>
