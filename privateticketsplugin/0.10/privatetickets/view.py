@@ -19,12 +19,17 @@ class PrivateTicketsViewModule(Component):
         return ''
         
     def get_navigation_items(self, req):
+        # Don't allow this to be exposed
+        if 'DO_PRIVATETICKETS_FILTER' in req.args.keys():
+            del req.args['DO_PRIVATETICKETS_FILTER']
+        
+        # Various ways to allow access
         if not req.perm.has_permission('TICKET_VIEW'):
             if TicketModule(self.env).match_request(req):
                 if PrivateTicketsSystem(self.env).check_ticket_access(req, req.args['id']):
                     self._grant_view(req)
             elif QueryModule(self.env).match_request(req):
-                req.args['DO_PRIVATETICKETS_FILTER'] = 1
+                req.args['DO_PRIVATETICKETS_FILTER'] = 'query'
                 self._grant_view(req) # Further filtering in query.py
             elif SearchModule(self.env).match_request(req):
                 if 'ticket' in req.args.keys():
@@ -32,6 +37,8 @@ class PrivateTicketsViewModule(Component):
                     del req.args['ticket']
             elif ReportModule(self.env).match_request(req):
                 self._grant_view(req) # So they can see the query page link
+                if req.args.get('id'):
+                    req.args['DO_PRIVATETICKETS_FILTER'] = 'report'
         return []
 
     # Internal methods

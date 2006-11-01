@@ -16,7 +16,7 @@ class PrivateTicketsQueryFilter(Component):
         return handler
       
     def post_process_request(self, req, template, content_type):
-        if req.args.get('DO_PRIVATETICKETS_FILTER', False):
+        if req.args.get('DO_PRIVATETICKETS_FILTER') == 'query':
             # Extract the data
             results = []
             node = req.hdf.getObj('query.results')

@@ -27,6 +27,7 @@ setup(
             'privatetickets.api = privatetickets.api',
             'privatetickets.view = privatetickets.view',
             'privatetickets.query = privatetickets.query',
+            'privatetickets.report = privatetickets.report',
             'privatetickets.search = privatetickets.search',
         ]
     }
