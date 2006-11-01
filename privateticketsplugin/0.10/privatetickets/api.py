@@ -11,7 +11,7 @@ class PrivateTicketsSystem(Component):
     
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        actions = ['TICKET_VIEW_REPORTER', 'TICKET_VIEW_ASSIGNED', 'TICKET_VIEW_CC']
+        actions = ['TICKET_VIEW_REPORTER', 'TICKET_VIEW_OWNER', 'TICKET_VIEW_CC']
         return actions + [('TICKET_VIEW_SELF', actions)]
 
     # Public methods
@@ -25,6 +25,13 @@ class PrivateTicketsSystem(Component):
         if req.perm.has_permission('TICKET_VIEW_REPORTER') and \
            tkt['reporter'] == req.authname:
             return True
-            
+
+        if req.perm.has_permission('TICKET_VIEW_CC') and \
+           req.authname in [x.strip() for x in tkt['cc'].split(',')]:
+            return True
+
+        if req.perm.has_permission('TICKET_VIEW_OWNER') and \
+           req.authname == tkt['owner']:
+            return True            
             
         return False
