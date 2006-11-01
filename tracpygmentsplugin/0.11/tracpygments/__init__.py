@@ -156,11 +156,22 @@ else:
         # more specific should come before their parents in order to
         # resolve them in the right order
         token_classes = [
+            (Comment.Preproc, 'code-prep'),
             (Comment, 'code-comment'),
+            (Name.Attribute, 'h_attribute'),
+            (Name.Builtin, 'code-lang'),
+            (Name.Class, 'code-type'),
+            #(Name.Constant, 'code-type'),
+            #(Name.Decorator, 'code-type'),
+            (Name.Entity, 'h_entity'),
+            #(Name.Exception, 'code-type'),
             (Name.Function, 'code-func'),
+            #(Name.Label, 'code-type'),
+            #(Name.Namespace, 'code-type'),
+            (Name.Tag, 'h_tag'),
             (Name.Variable, 'code-var'),
-            (Name, 'code-lang'),
             (String, 'code-string'),
+            # TODO String subtokens
             (Keyword.Type, 'code-type'),
             (Keyword, 'code-keyword'),
         ]
