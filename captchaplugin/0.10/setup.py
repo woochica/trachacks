@@ -16,6 +16,6 @@ setup(name='TracCaptcha',
         traccaptcha = traccaptcha
         traccaptcha.expression = traccaptcha.expression
         traccaptcha.image = traccaptcha.image
-        traccaptcha.captchadotnet = traccaptcha.captchadotnet
+        traccaptcha.captchasdotnet = traccaptcha.captchasdotnet
       """,
       package_data={'traccaptcha' : ['templates/*.cs', 'fonts/*.ttf']})

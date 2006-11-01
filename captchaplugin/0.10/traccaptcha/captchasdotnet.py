@@ -15,9 +15,9 @@ class CaptchasDotNetCaptcha(Component):
     implements(ICaptchaGenerator)
 
     client = Option('captchas.net', 'client', doc=
-        """ Captchas.net registered client name. """)
+        """ [http://captchas.net] registered client name ('''required''') """)
     secret = Option('captchas.net', 'secret', doc=
-        """ Captchas.net registered client secret. """)
+        """ [http://captchas.net] registered client secret ('''required''') """)
     alphabet = Option('captchas.net', 'alphabet', 'abcdefghkmnopqrstuvwxyz',
         """ Alphabet to choose captcha challenge from. """)
     letters = IntOption('captchas.net', 'letters', 6,

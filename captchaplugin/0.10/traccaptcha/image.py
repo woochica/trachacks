@@ -44,8 +44,9 @@ class ImageCaptcha(Component):
     implements(IRequestHandler)
 
     fonts = ListOption('image-captcha', 'fonts', 'vera.ttf',
-        """ Set of fonts to choose from. """)
-    font_size = IntOption('image-captcha', 'font_size', 25)
+        doc=""" Set of fonts to choose from. """)
+    font_size = IntOption('image-captcha', 'font_size', 25,
+        "Font size")
     alphabet = Option('image-captcha', 'alphabet', 'abcdefghkmnopqrstuvwxyz',
         """ Alphabet to choose captcha challenge from. """)
     letters = IntOption('image-captcha', 'letters', 6,

@@ -42,7 +42,8 @@ class Intercept(object):
         return setattr(self._proxied, key, value)
 
     def process_request(self, req):
-        if req.method == 'POST' and not int(req.session.get('captcha_verified', 0)):
+        if not req.perm.has_permission('TRAC_ADMIN') and req.method == 'POST' \
+                and not int(req.session.get('captcha_verified', 0)):
             req.session['captcha_form_state'] = dumps(dict([(k, v) for k, v in req.args.items()])).decode('utf-8')
             req.session['captcha_path_info'] = req.path_info
             req.redirect(req.href('/captcha'))
@@ -53,13 +54,15 @@ class TracCaptchaPlugin(Component):
     implements(ITemplateProvider, IRequestHandler, IRequestFilter)
 
     request_handlers = ExtensionPoint(IRequestHandler)
-    restrict_to = ListOption('captcha', 'restrict_to', 'wiki, ticket',
-        """ Modules to restrict POST interception to. """)
+#    restrict_to = ListOption('captcha', 'restrict_to', 'wiki, ticket',
+#        doc=""" Modules to restrict POST interception to. """)
     captcha = ExtensionOption('captcha', 'captcha', ICaptchaGenerator,
-                              'ExpressionCaptcha', """ Captcha generator to use. """)
+                              'ExpressionCaptcha',
+        """ Captcha system to use. """)
     trust_authenticated = BoolOption('captcha', 'trust_authenticated', 'false',
         """Whether content submissions by authenticated users should be trusted
-        without checking for potential spam or other abuse.""")
+        without checking for potential spam or other abuse (note that
+        TRAC_ADMIN is always trusted).""")
 
 
     # IRequestHandler methods
