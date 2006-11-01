@@ -20,7 +20,11 @@ class PrivateTicketsReportFilter(Component):
             fn = PrivateTicketsSystem(self.env).check_ticket_access
             deleted = []
             left = []
-            node = req.hdf.getObj('report.items').child()
+            node = req.hdf.getObj('report.items')
+            if node is None:
+                return template, content_type
+            node = node.child()
+            
             while node:
                 i = node.name()
                 id = req.hdf['report.items.%s.ticket'%i]
