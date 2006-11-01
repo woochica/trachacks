@@ -57,7 +57,7 @@ class TracCaptchaPlugin(Component):
         """ Modules to restrict POST interception to. """)
     captcha = ExtensionOption('captcha', 'captcha', ICaptchaGenerator,
                               'ExpressionCaptcha', """ Captcha generator to use. """)
-    trust_authenticated = BoolOption('spam-filter', 'trust_authenticated', 'true',
+    trust_authenticated = BoolOption('captcha', 'trust_authenticated', 'false',
         """Whether content submissions by authenticated users should be trusted
         without checking for potential spam or other abuse.""")
 
