@@ -20,8 +20,6 @@ setup(
         'Framework :: Trac',
     ],
     
-    install_requires = ['TracWebAdmin'],
-
     entry_points = {
         'trac.plugins': [
             'ticketdelete.web_ui = ticketdelete.web_ui'
