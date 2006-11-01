@@ -21,7 +21,7 @@ setup(
     include_package_data=True,
     zip_safe=True,
     install_requires=[
-        'Pygments',
+        'Pygments >= 0.5',
     ],
     entry_points={
         'trac.plugins': [
