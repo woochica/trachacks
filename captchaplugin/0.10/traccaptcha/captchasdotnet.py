@@ -34,6 +34,8 @@ class CaptchasDotNetCaptcha(Component):
 
     # ICaptchaGenerator methods
     def generate_captcha(self, req):
+        if not self.client or not self.secret:
+            raise TracError('captchas.net plugin not configured (`[captchas.net] client = xxx secret = yyy)')
         captcha = CaptchasDotNet(self.client, self.secret, self.alphabet,
                                  self.letters, self.width, self.height,
                                  self.random_repository, self.cleanup_time)

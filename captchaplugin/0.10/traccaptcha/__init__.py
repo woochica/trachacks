@@ -1,3 +1,4 @@
+import time
 from pickle import loads, dumps
 from trac.core import *
 from trac.config import *
@@ -42,8 +43,11 @@ class Intercept(object):
         return setattr(self._proxied, key, value)
 
     def process_request(self, req):
-        if not req.perm.has_permission('TRAC_ADMIN') and req.method == 'POST' \
-                and not int(req.session.get('captcha_verified', 0)):
+        verified = int(req.session.get('captcha_verified', 0))
+        lifetime = TracCaptchaPlugin(self.env).lifetime * 3600
+        if (not verified or verified + lifetime < int(time.time())) \
+                and not req.perm.has_permission('TRAC_ADMIN') \
+                and req.method == 'POST':
             req.session['captcha_form_state'] = dumps(dict([(k, v) for k, v in req.args.items()])).decode('utf-8')
             req.session['captcha_path_info'] = req.path_info
             req.redirect(req.href('/captcha'))
@@ -59,6 +63,8 @@ class TracCaptchaPlugin(Component):
     captcha = ExtensionOption('captcha', 'captcha', ICaptchaGenerator,
                               'ExpressionCaptcha',
         """ Captcha system to use. """)
+    lifetime = IntOption('captcha', 'lifetime', 24,
+        """ Period captcha is valid for, in hours. """)
     trust_authenticated = BoolOption('captcha', 'trust_authenticated', 'false',
         """Whether content submissions by authenticated users should be trusted
         without checking for potential spam or other abuse (note that
@@ -74,7 +80,7 @@ class TracCaptchaPlugin(Component):
             self.env.log.debug('Captcha response: %s (expected %s)' % 
                 (req.args['captcha_response'], req.session['captcha_expected']))
             if req.args['captcha_response'] == req.session['captcha_expected']:
-                req.session['captcha_verified'] = 1
+                req.session['captcha_verified'] = int(time.time())
                 args = loads(req.session['captcha_form_state'].encode('utf-8'))
                 req = FakeRequest(req, req.session['captcha_path_info'])
                 for k, v in args.iteritems():
