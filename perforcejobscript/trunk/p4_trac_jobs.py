@@ -9,11 +9,14 @@
    * Create a config file:
           trac_project : /data/trac/test # REQUIRED path to Trac environment
           p4_to_trac   :                 # REQUIRED mapping from Perforce to Trac status
+            p4_status    : trac_status       # Subsequent lines are p4 to trac mapping
           trac_to_p4   :                 # REQUIRED mapping from Trac to Perforce status
+            trac_status  : p4_status         # Subsequent lines are trac to p4 mapping
           debug        : 0               # OPTIONAL (0:no message, 1:some, 2:all)
           p4port       : localhost:1666  # OPTIONAL (by default P4PORT variable)
           p4user       : MyName          # OPTIONAL (by default P4USER variable)
           p4passwd     : MyPassword      # OPTIONAL (by default P4PASSWD variable)
+          p4job_prefix : job             # OPTIONAL specify the prefix used to name job in Perforce
           check_delay  : 60              # OPTIONAL interval between checks (60 by default)
           first_check  : -1              # OPTIONAL specify how many history are  -1: all, 0:none
           dry_run      : 1               # OPTIONAL specify if updates are performed in Perfoce/Trac systems
@@ -46,16 +49,16 @@ def readConfig(file):
     empty lines and lines beggining with # are ignored
     """
 
-    OPTRE = re.compile(r'(?P<key>[^:\s][^:]*)'    # everything up to :
-                       r'\s*(?P<sep>[:])\s*'      # any # of space/tab,
-                                                  # followed by :
-                                                  # followed by any # space/tab
-                       r'(?P<value>.*)$')         # everything up to eol
-    SUBOPTRE = re.compile(r'(?P<key>[^:]*)'    # everything up to :
-                          r'\s*(?P<sep>[:])\s*'      # any # of space/tab,
-                                                     # followed by :
-                                                     # followed by any # space/tab
-                          r'(?P<value>.*)$')         # everything up to eol
+    OPTRE = re.compile(r'(?P<key>[^:\s][^:]*)' # everything up to :
+                       r'\s*[:]\s*'            # any # of space/tab,
+                                               # followed by :
+                                               # followed by any # space/tab
+                       r'(?P<value>.*)$')      # everything up to eol
+    SUBOPTRE = re.compile(r'(?P<key>[^:]*)'  # everything up to :
+                          r'\s*[:]\s*'       # any # of space/tab,
+                                             # followed by :
+                                             # followed by any # space/tab
+                          r'(?P<value>.*)$') # everything up to eol
 
     if not os.path.isfile(file):
         print 'File %s does not exist' %file
@@ -72,7 +75,7 @@ def readConfig(file):
 
         mo = OPTRE.match(line)
         if mo:
-            optname, vi, optval = mo.group('key', 'sep', 'value')
+            optname, optval = mo.group('key', 'value')
             optval = optval.strip()
             optname = optname.rstrip().lower()
             try:
@@ -86,7 +89,7 @@ def readConfig(file):
         else:
             mo = SUBOPTRE.match(line)
             if mo:
-                subname, vi, subval = mo.group('key', 'sep', 'value')
+                subname, subval = mo.group('key', 'value')
                 subval = subval.strip()
                 subname = subname.strip()
                 dict[optname][subname] = unicode(subval)
@@ -101,10 +104,11 @@ class PerforceJob(object):
     Built on top of the PyPerforce API.
     http://pyperforce.sourceforge.net/
     """
-
     def __init__(self, settings):
         """connect to the Perforce server using setting's parameters
         """
+        self.job_prefix = settings.get('p4job_prefix', 'job')
+        self.job_re = re.compile(r'%s(?P<id>[0-9]+)' %  self.job_prefix)
         self.p4 = perforce.Connection(port=settings['p4port'])
         try:
             self.p4.connect(prog='TracTickets')
@@ -125,10 +129,10 @@ class PerforceJob(object):
         """
         try:
             if nbsec == -1:
-                results = self.p4.run('jobs', '-e', 'job=job*')
+                results = self.p4.run('jobs', '-e', 'job='+self.job_prefix+'*')
             else:
                 olddate = time.strftime("%Y/%m/%d:%H:%M:%S", time.localtime(time.time() - nbsec))
-                results = self.p4.run('jobs', '-e', 'date>='+olddate+'&job=job*')
+                results = self.p4.run('jobs', '-e', 'date>='+olddate+'&job='+self.job_prefix+'*')
         except perforce.PerforceError, e:
             print str(e)
             raise e
@@ -136,21 +140,29 @@ class PerforceJob(object):
         tickets = {}
         for record in results.records:
             r = self._createRecord(record)
-            key = int(record['Job'][3:])
-            tickets[key] = r
+            mo = self.job_re.match(record['Job'])
+            if mo:
+                key = int(mo.group('id'))
+                tickets[key] = r
+            else:
+                print 'error when parsing %s' % record['Job']
 
         # small bug in pyperforce, the first job is in form result
         for record in results.forms:
             r = self._createRecord(record)
-            key = int(record['Job'][3:])
-            tickets[key] = r
+            mo = self.job_re.match(record['Job'])
+            if mo:
+                key = int(mo.group('id'))
+                tickets[key] = r
+            else:
+                print 'error when parsing %s' % record['Job']
         return tickets
 
     def searchFixes(self, key):
         """search fixes linked to a job
         """
         try:
-            jobname = 'job%06d' % (key)
+            jobname = '%s%06d' % (self.job_prefix, key)
             results = self.p4.run('fixes', '-j', str(jobname))
         except PerforceError, e:
             print str(e)
@@ -162,22 +174,19 @@ class PerforceJob(object):
         return fixes
 
     def updateTicket(self, id, ticket):
-        """update Perforce's job fields from a Trac ticket, the ticket can have
+        """update Perforce's job fields from a Trac ticket, the ticket must have
         three fields: Status, User and Description. The job created has a name
-        like jobXXXXXX.
+        like jobprefixXXXXXX.
         """
         try:
-            jobname = 'job%06d' % (id)
+            jobname = '%s%06d' % (self.job_prefix, id)
             job = perforce.Job(self.p4, jobname)
 
-            if 'Status' in ticket:
-                job['Status'] = settings['trac_to_p4'][ticket['Status']]
-            if 'Description' in ticket:
-                job['Description'] = ticket['Description'].encode('latin-1')
-            if 'User' in ticket:
-                job['User'] = ticket['User'].encode('latin-1')
-            chgdate = time.strftime("%Y/%m/%d %H:%M:%S", time.localtime(ticket['Date']))
-            job['Date'] = chgdate
+            job['Status'] = settings['trac_to_p4'][ticket['Status']]
+            job['Description'] = ticket['Description'].encode('latin-1')
+            job['User'] = ticket['User'].encode('latin-1')
+            job['Date'] = time.strftime("%Y/%m/%d %H:%M:%S",
+                                        time.localtime(ticket['Date']))
 
             if settings.get('debug', 0):
                 print "update Perforce %s  %s" % (jobname, ticket)
@@ -261,16 +270,13 @@ class TracTicket(object):
             print "Cannot create Trac ticket : %s" % (detail)
             return
 
-        if 'Status' in ticket:
-            tkt['status'] = settings['p4_to_trac'][ticket['Status']]
-            if tkt['status'] == u'closed':
-                tkt['resolution'] = u'fixed'
-            else:
-                tkt['resolution'] = u''
-        if 'User' in ticket:
-            tkt['owner'] = ticket['User']
-        if 'Description' in ticket:
-            tkt['summary'] = ticket['Description']
+        tkt['status'] = settings['p4_to_trac'][ticket['Status']]
+        if tkt['status'] == u'closed':
+            tkt['resolution'] = u'fixed'
+        else:
+            tkt['resolution'] = u''
+        tkt['owner'] = ticket['User']
+        tkt['summary'] = ticket['Description']
 
         comment = ''
         if 'Fixes' in ticket:
@@ -285,7 +291,7 @@ class TracTicket(object):
         if settings.get('debug', 0):
             print "update Trac %d  %s" % (id, ticket)
         if settings.get('dry_run', 0) == 0:
-            tkt.save_changes('Perforce', comment, when)
+            tkt.save_changes(ticket['User'], comment, when)
 
             try:
                 self.env.abs_href = Href(self.get_config('project', 'url'))
@@ -323,16 +329,10 @@ class TicketSynchronizer:
                 rp = perforce[key]
                 nbRemoved = 0
                 if rp['Status'] == settings['trac_to_p4'][rt['Status']]:
-                    del self.mergedTickets[key]['Status']
-                    del rp['Status']
                     nbRemoved += 1
                 if rp['Description'] == rt['Description']:
-                    del self.mergedTickets[key]['Description']
-                    del rp['Description']
                     nbRemoved += 1
                 if rp['User'] == rt['User']:
-                    del self.mergedTickets[key]['User']
-                    del rp['User']
                     nbRemoved += 1
 
                 if rp['Date'] > rt['Date']:
