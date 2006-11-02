@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from trac.core import *
 from trac.config import Option
 from trac.Search import ISearchSource, shorten_result
@@ -12,7 +14,7 @@ class DiscussionSearch(Component):
     title = Option('discussion', 'title', 'Discussion',
       'Main navigation bar button title.')
 
-    # ISearchSource
+    #ISearchSource
     def get_search_filters(self, req):
         if req.perm.has_permission('DISCUSSION_VIEW'):
             yield ("discussion", self.title)

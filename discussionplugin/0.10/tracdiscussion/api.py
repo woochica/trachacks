@@ -1,9 +1,10 @@
+# -*- coding: utf8 -*-
+
 from trac.core import *
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.perm import PermissionError
-from trac.util import format_datetime, pretty_timedelta, escape, unescape, \
-  Markup
+from trac.util import format_datetime, pretty_timedelta, Markup
 import time
 
 class DiscussionApi(object):
@@ -733,7 +734,7 @@ class DiscussionApi(object):
     def edit_group(self, cursor, group, name, description):
         sql = "UPDATE forum_group SET name = %s, description = %s WHERE id = %s"
         self.log.debug(sql % (name, description, group))
-        cursor.execute(sql, (escape(name), escape(description), group))
+        cursor.execute(sql, (name, description, group))
 
     def edit_forum(self, cursor, forum, name, subject, description, moderators,
       group):
@@ -744,22 +745,20 @@ class DiscussionApi(object):
           " moderators = %s, forum_group = %s WHERE id = %s"
         self.log.debug(sql % (name, subject, description, moderators,
           group, forum))
-        cursor.execute(sql, (escape(name), escape(subject),
-          escape(description), escape(moderators), group, forum))
+        cursor.execute(sql, (name, subject, description, moderators, group,
+          forum))
 
     def edit_topic(self, cursor, topic, forum, subject, body):
         sql = "UPDATE topic SET forum = %s, subject = %s, body = %s WHERE id" \
           " = %s"
         self.log.debug(sql % (forum, subject, body, topic))
-        cursor.execute(sql, (forum, escape(subject), escape(body),
-          topic))
+        cursor.execute(sql, (forum, subject, body, topic))
 
     def edit_message(self, cursor, message, forum, topic, replyto, body):
         sql = "UPDATE message SET forum = %s, topic = %s, replyto = %s, body" \
           " = %s WHERE id = %s"
         self.log.debug(sql % (forum, topic, replyto, body, message))
-        cursor.execute(sql, (forum, topic, replyto, escape(body),
-          message))
+        cursor.execute(sql, (forum, topic, replyto, body, message))
 
     # Get list functions
 
@@ -778,9 +777,10 @@ class DiscussionApi(object):
         if order_by != 'forum':
             order_by = 'g.' + order_by
         columns = ('id', 'name', 'description', 'forums')
-        sql = "SELECT g.id, g.name, g.description, (SELECT COUNT(f.id) AS" \
-          " forums FROM forum f WHERE f.forum_group = g.id) FROM forum_group" \
-          " g ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
+        sql = "SELECT g.id, g.name, g.description, (SELECT COUNT(f.id)" \
+          " FROM forum f, forum_group g WHERE f.forum_group = g.id) AS" \
+          " forums FROM forum_group g ORDER BY " + order_by + (" ASC",
+          " DESC")[bool(desc)]
         self.log.debug(sql)
         cursor.execute(sql)
         for row in cursor:
@@ -798,11 +798,12 @@ class DiscussionApi(object):
           'lasttopic')
         sql = "SELECT f.id, f.name, f.author, f.time, f.moderators," \
           " f.forum_group, f.subject, f.description, (SELECT COUNT(t.id)" \
-          " FROM topic t WHERE t.forum = f.id) AS topics, (SELECT COUNT(m.id)" \
-          " FROM message m WHERE m.forum = f.id) AS replies, (SELECT" \
-          " MAX(time) FROM message m WHERE m.forum = f.id) AS lasttopic," \
-          " (SELECT MAX(time) FROM topic t WHERE t.forum = f.id) AS lastreply" \
-          " FROM forum f ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
+          " FROM topic t, forum f WHERE t.forum = f.id) AS topics, (SELECT" \
+          " COUNT(m.id) FROM message m, forum f WHERE m.forum = f.id) AS" \
+          " replies, (SELECT MAX(m.time) FROM message m, forum f WHERE" \
+          " m.forum = f.id) AS lasttopic, (SELECT MAX(t.time) FROM topic t," \
+          " forum f WHERE t.forum = f.id) AS lastreply FROM forum f ORDER BY " \
+          + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
         cursor.execute(sql)
         forums = []
@@ -828,10 +829,10 @@ class DiscussionApi(object):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
           'replies', 'lastreply')
         sql = "SELECT t.id, t.forum, t.time, t.subject, t.body, t.author," \
-          " (SELECT COUNT(m.id) FROM message m WHERE m.topic = t.id) AS" \
-          " replies, (SELECT MAX(m.time) FROM message m WHERE m.topic = t.id)" \
-          " AS lastreply FROM topic t WHERE t.forum = %s ORDER BY " + order_by \
-          + (" ASC", " DESC")[bool(desc)]
+          " (SELECT COUNT(m.id) FROM message m, topic t WHERE m.topic = t.id)" \
+          " AS replies, (SELECT MAX(m.time) FROM message m, topic t WHERE" \
+          " m.topic = t.id) AS lastreply FROM topic t WHERE t.forum = %s" \
+          " ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql % (forum,))
         cursor.execute(sql, (forum,))
         topics = []
@@ -882,8 +883,8 @@ class DiscussionApi(object):
     def get_flat_messages(self, req, cursor, topic, time, order_by =
       'ORDER BY time ASC'):
         columns = ('id', 'replyto', 'time', 'author', 'body')
-        sql = "SELECT id, replyto, time, author, body FROM message WHERE" \
-          " topic = %s " + order_by
+        sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m" \
+          " WHERE m.topic = %s " + order_by
         self.log.debug(sql % (topic,))
         cursor.execute(sql, (topic,))
         messages = []
@@ -908,7 +909,7 @@ class DiscussionApi(object):
     def add_group(self, cursor, name, description):
         sql = "INSERT INTO forum_group (name, description) VALUES (%s, %s)"
         self.log.debug(sql % (name, description))
-        cursor.execute(sql, (escape(name), escape(description)))
+        cursor.execute(sql, (name, description))
 
     def add_forum(self, cursor, name, author, subject, description, moderators,
       group):
@@ -919,16 +920,14 @@ class DiscussionApi(object):
           " description, forum_group) VALUES (%s, %s, %s, %s, %s, %s, %s)"
         self.log.debug(sql % (name, author, str(int(time.time())), moderators,
           subject, description, group))
-        cursor.execute(sql, (escape(name), escape(author),
-          str(int(time.time())), escape(moderators), escape(subject),
-          escape(description), group))
+        cursor.execute(sql, (name, author, str(int(time.time())), moderators,
+          subject, description, group))
 
     def add_topic(self, cursor, forum, subject, author, body):
         sql = "INSERT INTO topic (forum, time, author, subject, body) VALUES" \
           " (%s, %s, %s, %s, %s)"
         self.log.debug(sql % (forum, int(time.time()), author, subject, body))
-        cursor.execute(sql, (forum, int(time.time()), escape(author),
-          escape(subject), escape(body)))
+        cursor.execute(sql, (forum, int(time.time()), author, subject, body))
 
     def add_message(self, cursor, forum, topic, replyto, author, body):
         sql = "INSERT INTO message (forum, topic, replyto, time, author," \
@@ -936,7 +935,7 @@ class DiscussionApi(object):
         self.log.debug(sql % (forum, topic, replyto, int(time.time()),
           author, body))
         cursor.execute(sql, (forum, topic, replyto, int(time.time()),
-          escape(author), escape(body)))
+          author, body))
 
     # Delete items functions
 
@@ -969,7 +968,7 @@ class DiscussionApi(object):
 
     def delete_message(self, cursor, message):
         # Get message replies
-        sql = "SELECT id FROM message WHERE replyto = %s"
+        sql = "SELECT m.id FROM message m WHERE m.replyto = %s"
         self.log.debug(sql % (message,))
         cursor.execute(sql, (message,))
         replies = []

@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from tracdiscussion.api import *
 from trac.core import *
 from trac.perm import IPermissionRequestor

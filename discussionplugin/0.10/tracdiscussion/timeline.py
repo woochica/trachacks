@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from trac.core import *
 from trac.Timeline import ITimelineEventProvider
 from trac.wiki import wiki_to_html, wiki_to_oneliner
@@ -28,7 +30,7 @@ class DiscussionTimeline(Component):
                 self.log.debug("forum: %s" % (forum))
                 kind = 'changeset'
                 title = Markup('New forum %s created by %s' %
-                  (html.em(forum['name']), forum['author']))
+                  (forum['name'], forum['author']))
                 time = forum['time']
                 author = forum['author']
                 if format == 'rss':
@@ -38,7 +40,7 @@ class DiscussionTimeline(Component):
                 else:
                     href = self.env.href.discussion(forum['id'])
                     message = wiki_to_oneliner('%s - %s' % (forum['subject'],
-                      forum['description']), self.env, db)
+                      forum['description']), self.env, db)  
                 yield kind, href, title, time, author, message
 
             # Get topic events
@@ -46,7 +48,7 @@ class DiscussionTimeline(Component):
                 self.log.debug("topic: %s" % (topic))
                 kind = 'newticket'
                 title = Markup('New topic on %s created by %s' % \
-                  (html.em(topic['forum_name']), topic['author']))
+                  (topic['forum_name'], topic['author']))
                 time = topic['time']
                 author = topic['author']
                 if format == 'rss':
@@ -63,7 +65,7 @@ class DiscussionTimeline(Component):
                 self.log.debug("message: %s" % (message))
                 kind = 'editedticket'
                 title = Markup('New reply on %s created by %s' % \
-                  (html.em(message['forum_name']), message['author']))
+                  (message['forum_name'], message['author']))
                 time = message['time']
                 author = message['author']
                 if format == 'rss':
@@ -84,8 +86,8 @@ class DiscussionTimeline(Component):
 
     def _get_changed_forums(self, cursor, start, stop):
         columns = ('id', 'name', 'author', 'subject', 'description', 'time')
-        sql = "SELECT id, name, author, subject, description, time FROM forum" \
-          " WHERE time BETWEEN %s AND %s"
+        sql = "SELECT f.id, f.name, f.author, f.subject, f.description," \
+          " f.time FROM forum f WHERE f.time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
@@ -94,8 +96,9 @@ class DiscussionTimeline(Component):
 
     def _get_changed_topics(self, cursor, start, stop):
         columns = ('id', 'subject', 'author', 'time', 'forum', 'forum_name')
-        sql = "SELECT id, subject, author, time, forum, (SELECT name FROM forum" \
-          " f WHERE f.id = topic.forum) FROM topic WHERE time BETWEEN %s AND %s"
+        sql = "SELECT t.id, t.subject, t.author, t.time, t.forum, (SELECT" \
+          " f.name FROM forum f, topic t WHERE f.id = t.forum) FROM topic t" \
+          " WHERE t.time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
@@ -105,9 +108,10 @@ class DiscussionTimeline(Component):
     def _get_changed_messages(self, cursor, start, stop):
         columns = ('id', 'author', 'time', 'forum', 'topic', 'forum_name',
           'topic_subject')
-        sql = "SELECT id, author, time, forum, topic, (SELECT name FROM forum f" \
-          " WHERE f.id = message.forum), (SELECT subject FROM topic t WHERE" \
-          " t.id = message.topic) FROM message WHERE time BETWEEN %s AND %s"
+        sql = "SELECT m.id, m.author, m.time, m.forum, m.topic, (SELECT" \
+          " f.name FROM forum f, message m WHERE f.id = m.forum), (SELECT" \
+          " t.subject FROM topic t, message m WHERE t.id = m.topic) FROM" \
+          " message m WHERE m.time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
