@@ -169,7 +169,7 @@ class BurndownComponent(Component):
                 for comp in components:
                     self.log.debug('component: %s', comp);
                     self.log.debug('day: %i', day);
-                    if (component_data[comp]):
+                    if (component_data[comp] and len(component_data[comp]) > day):
                         sumHours += component_data[comp][day][1]
                 
                 burndown_data.append((day+1, sumHours))
