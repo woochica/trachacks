@@ -5,9 +5,9 @@ from setuptools import setup
 
 setup(
     name = 'TracRobotsTxt',
-    version = '1.0',
+    version = '1.0.1',
     packages = ['robotstxt'],
-    #package_data = { 'robotstxt': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
+    package_data = { 'robotstxt': ['templates/*.cs' ] },
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
