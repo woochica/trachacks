@@ -3,6 +3,7 @@
 # Copyright (C) 2003-2005 Edgewall Software
 # Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
 # Copyright (C) 2006 Brad Anderson <brad@dsource.org>
+# Copyright (C) 2006 Waldemar Kornewald <wkornewald@gmx.net>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -14,7 +15,7 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 # Authors: Brad Anderson <brad@dsource.org>
-#          Waldemar Kornewald <wkornew@gmx.net>
+#          Waldemar Kornewald <wkornewald@gmx.net>
 
 import re
 import time
@@ -54,6 +55,8 @@ class DbAuthLoginModule(Component):
         """Choose which hash algorithm to use. Possible options:
         md5, sha""")
 
+    session_lifetime = 7 * 24 * 60 * 60
+
     def __init__(self):
         self.users = {
            'table': self.env.config.get('dbauth', 'users_table', 'trac_users'),
@@ -71,7 +74,8 @@ class DbAuthLoginModule(Component):
     def authenticate(self, req):
         authname = None
         if req.incookie.has_key('db_auth'):
-            authname = self._get_name_for_cookie(req, req.incookie['db_auth'])
+            authname = self._get_name_for_cookie(req,
+                                    req.incookie.get('db_auth').value)
 
         if not authname:
             return None
@@ -112,11 +116,15 @@ class DbAuthLoginModule(Component):
         if req.method == 'POST':
             if req.args.get('login'):
                 uid, pwd = req.args.get('uid').lower(), req.args.get('pwd')
+                referer = req.args.get('referer')
+                if not referer or len(referer) == 0:
+                    referer = selv.env.href()
                 if self._check_login(uid, pwd):
                     self._do_login(req, uid)
-                    req.redirect(req.href())
+                    req.redirect(referer)
                 else:
                     req.hdf['auth.message'] = 'Login Incorrect'
+                    req.hdf['referer'] = referer
             elif req.args.get('password'):
                 old, new, repeat = req.args.get('opwd'), req.args.get('npwd'), req.args.get('rpwd')
                 if not new or len(new) < 5:
@@ -129,13 +137,19 @@ class DbAuthLoginModule(Component):
                     req.hdf['auth.message'] = 'Password Changed'
                     self._change_password(req, new)
 
+        referer = req.args.get('referer') or req.get_header('Referer')
+        if not referer or referer.endswith('/login') or \
+                referer.endswith('/settings') or len(referer) == 0:
+            referer = self.env.href()
+
         if req.path_info.startswith('/login'):
+            req.hdf['referer'] = referer
             template = "login.cs"
         elif req.path_info.startswith('/password'):
             template = 'password.cs'
         elif req.path_info.startswith('/logout'):
             self._do_logout(req)
-            req.redirect(self.env.href.login())
+            req.redirect(referer)
         return template, None
 
     # ITemplateProvider methods
@@ -187,7 +201,7 @@ class DbAuthLoginModule(Component):
         req.outcookie['db_auth']['path'] = self.env.href()
         req.outcookie['db_auth']['expires'] = 100000000
 
-        self._update_email(req, remote_user)
+        self._update_email(remote_user)
 
     def _do_logout(self, req):
         """Log the user out.
@@ -202,7 +216,7 @@ class DbAuthLoginModule(Component):
         cursor = db.cursor()
         cursor.execute('DELETE FROM auth_cookie ' \
                        'WHERE name = %s OR time < %s',
-                       (req.authname, int(time.time()) - 60 * 60 * 24))
+                       (req.authname, int(time.time()) - self.session_lifetime))
         db.commit()
         self._expire_cookie(req)
 
@@ -214,21 +228,39 @@ class DbAuthLoginModule(Component):
         req.outcookie['db_auth']['expires'] = -10000
 
     def _get_name_for_cookie(self, req, cookie):
+        """Finds out the name of the user with the given cookie.
+        Also handles cookie expiration. The session is refreshed every hour,
+        so if you regularly use Trac you stay logged in forever."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT name FROM auth_cookie ' \
-                       'WHERE cookie = %s AND ipnr = %s AND time > %s',
-                       (cookie.value, req.remote_addr,
-                        int(time.time()) - 60 * 60 * 24))
+        cursor.execute('SELECT name, time FROM auth_cookie ' \
+                       'WHERE cookie = %s',
+                       (cookie,))
         row = cursor.fetchone()
-        if not row:
+        if not row or row[1] < int(time.time()) - self.session_lifetime:
             # the cookie has become invalid
+            cursor.execute('DELETE FROM auth_cookie ' \
+                           'WHERE time < %s',
+                           (int(time.time()) - self.session_lifetime,))
+            db.commit()
             self._expire_cookie(req)
             return None
+        elif row[1] < int(time.time()) - 60 * 60:
+            # refresh session
+            cursor.execute('UPDATE auth_cookie ' \
+                           'SET time = %s, ipnr = %s ' \
+                           'WHERE cookie = %s',
+                           (int(time.time()), req.remote_addr, cookie))
+            db.commit()
+            req.outcookie['db_auth'] = cookie
+            req.outcookie['db_auth']['path'] = self.env.href()
+            req.outcookie['db_auth']['expires'] = 100000000
+            # Don't forget to check whether we have a new email address.
+            self._update_email(row[0])
 
         return row[0]
 
-    def _update_email(self, req, user):
+    def _update_email(self, user):
         email_field = self.users['email']
         if not email_field or len(email_field) == 0:
             return
@@ -241,7 +273,16 @@ class DbAuthLoginModule(Component):
         row = cursor.fetchone()
         if not row or not row[0]:
             return
-        req.session['email'] = row[0]
+        email = row[0]
+        cursor.execute('UPDATE session_attribute SET value = %s ' \
+                       'WHERE name = "email" AND sid = %s AND authenticated = 1',
+                       (email, user))
+        if not cursor.rowcount:
+            cursor.execute('INSERT INTO session_attribute ' \
+                           '(sid, authenticated, name, value) ' \
+                           'VALUES (%s, 1, "email", %s)',
+                           (user, email))
+        db.commit()
 
     def _change_password(self, req, newpwd):
         if req.authname == 'anonymous':

@@ -5,13 +5,13 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracDbAuth'
-VERSION = '0.3'
+VERSION = '0.4'
 
 setup(
     name=PACKAGE, version=VERSION,
-    description='Trac plugin for authn/authz via database',
-    author="Brad Anderson", author_email="brad@dsource.org",
-    license='BSD', url='http://www.dsource.org',
+    description='Trac DB auth plugin',
+    author="Waldemar Kornewald", author_email="wkornewald@gmx.net",
+    license='BSD', url='http://haiku-os.org',
     packages=find_packages(exclude=['ez_setup', '*.tests*']),
     package_data={
         'dbauth': [

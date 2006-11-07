@@ -19,6 +19,7 @@
     <tr><td>Password:</td><td><input id="pwd" name="pwd" type="password"/></td></tr>
   </table>
   <div>
+    <input type="hidden" name="referer" value="<?cs var:referer ?>">
     <input type="submit" name="login" value="Login" />
     <input type="submit" name="cancel" value="Cancel" />
   </div>
