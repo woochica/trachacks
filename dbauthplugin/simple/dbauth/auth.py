@@ -276,14 +276,13 @@ class DbAuthLoginModule(Component):
         email = row[0]
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('UPDATE session_attribute SET value = %s ' \
-                       'WHERE name = "email" AND sid = %s AND authenticated = 1',
-                       (email, user))
-        if not cursor.rowcount:
-            cursor.execute('INSERT INTO session_attribute ' \
-                           '(sid, authenticated, name, value) ' \
-                           'VALUES (%s, 1, "email", %s)',
-                           (user, email))
+        cursor.execute('DELETE FROM session_attribute ' \
+                       'WHERE name="email" AND sid=%s AND authenticated=1',
+                       (user,))
+        cursor.execute('INSERT INTO session_attribute ' \
+                       '(sid, authenticated, name, value) ' \
+                       'VALUES (%s, 1, "email", %s)',
+                       (user, email))
         db.commit()
 
     def _change_password(self, req, newpwd):
