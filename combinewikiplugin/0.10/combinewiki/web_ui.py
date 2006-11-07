@@ -21,7 +21,7 @@ class CombineWikiModule(Component):
     implements(ITemplateProvider, IAdminPageProvider)
     
     EXCLUDE_RES = [
-        re.compile('\[\[PageOutline\]\]'),
+        re.compile('\[\[PageOutline([^]]*)\]\]'),
         re.compile('----(\r)?$\n^Back up: \[\[ParentWiki\]\]', re.M|re.I)
     ]
     
@@ -67,7 +67,19 @@ class CombineWikiModule(Component):
             # Render
             os.environ["HTMLDOC_NOCGI"] = 'yes'
             codepage = Mimeview(self.env).default_charset
-            os.system('htmldoc --charset %s --book --format pdf14 --title --titlefile %s --left 1.5cm --right 1.5cm --top 1.5cm --bottom 1.5cm %s -f %s' % (codepage.replace('iso-', ''), titlefile,' '.join(files), pfilename))     
+            htmldoc_args = { 'book': None, 'format': 'pdf14', 'left': '1.5cm',
+                             'right': '1.5cm', 'top': '1.5cm', 'bottom': '1.5cm',
+                             'charset': codepage.replace('iso-', ''), 'title': None,
+                             'titlefile': titlefile}
+            htmldoc_args.update(dict(self.env.config.options('pagetopdf')))
+            htmldoc_args.update(dict(self.env.config.options('combinewiki')))
+            args_string = ' '.join(['--%s %s' % (arg, value or '') for arg, value
+                                    in htmldoc_args.iteritems()])
+            cmd_string = 'htmldoc %s %s -f %s'%(args_string, ' '.join(files), pfilename)
+            self.log.debug('CombineWikiModule: Running %r', cmd_string)
+            os.system(cmd_string)
+            
+            #os.system('htmldoc --charset %s --book --format pdf14 --title --titlefile %s --header .t. --tocheader .t. --left 1.5cm --right 1.5cm --top 1.5cm --bottom 1.5cm %s -f %s' % (codepage.replace('iso-', ''), titlefile,' '.join(files), pfilename))     
             out = open(pfilename, 'rb').read()
             
             # Clean up
@@ -87,7 +99,9 @@ class CombineWikiModule(Component):
             req.redirect(req.href.admin(cat, page))
         
         req.hdf['combinewiki.allpages'] = allpages
-        req.hdf['combinewiki.leftpages'] = [x for x in allpages if x not in rightpages]
+        leftpages = [x for x in allpages if x not in rightpages]
+        leftpages.sort()
+        req.hdf['combinewiki.leftpages'] = leftpages
         req.hdf['combinewiki.rightpages'] = rightpages
 
         return 'combinewiki_admin.cs', None
@@ -106,7 +120,7 @@ class CombineWikiModule(Component):
                 text = r.sub('', text)
             page = wiki_to_html(text, self.env, req).encode(codepage)
 
-        page = re.sub('<img src="(?!\w+://)', '<img src="%s://%s' % (req.scheme, req.server_name), page)
+        page = re.sub('<img src="(?!\w+://)', '<img src="%s://%s:%d' % (req.scheme, req.server_name, req.server_port), page)
         os.write(hfile, u'<html><head><title>' + pagename + u'</title></head><body>' + page + u'</body></html>')
         os.close(hfile)
         return hfilename
