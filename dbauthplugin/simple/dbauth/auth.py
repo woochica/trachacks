@@ -274,6 +274,8 @@ class DbAuthLoginModule(Component):
         if not row or not row[0]:
             return
         email = row[0]
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
         cursor.execute('UPDATE session_attribute SET value = %s ' \
                        'WHERE name = "email" AND sid = %s AND authenticated = 1',
                        (email, user))
@@ -290,9 +292,9 @@ class DbAuthLoginModule(Component):
             return
 
         # change the password
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
         newpwd = self.crypt.new(newpwd).hexdigest()
+        db = get_db(self.env)
+        cursor = db.cursor()
         sql = 'UPDATE %s SET %s = %%s WHERE %s = %%s' % \
               (self.users['table'], self.users['password'],
                self.users['username'])
