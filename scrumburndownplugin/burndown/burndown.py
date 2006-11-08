@@ -28,7 +28,7 @@ class BurndownComponent(Component):
         pass
 
     def environment_needs_upgrade(self, db):
-        result = False
+        needsUpgrade = False
         
         #get a database connection if we don't already have one
         if not db:
@@ -39,15 +39,15 @@ class BurndownComponent(Component):
             
         # See if the burndown table exists, if not, return True because we need to upgrade the database
         cursor = db.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='burndown'")
-        row = cursor.fetchone()
-        if not row:
-            result = True
+        try:
+            cursor.execute('SELECT * FROM %s LIMIT 1', 'burndown')
+        except:
+            needsUpgrade = True
             
         if handle_ta:
             db.commit()
             
-        return result
+        return needsUpgrade
 
     def upgrade_environment(self, db):
         cursor = db.cursor()
