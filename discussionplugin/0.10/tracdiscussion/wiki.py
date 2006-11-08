@@ -136,8 +136,9 @@ class DiscussionWiki(Component):
               id), title = label, class_ = 'missing')
         elif ns == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
-            sql = "SELECT t.forum, (SELECT f.subject FROM forum f, topic t" \
-              " WHERE f.id = t.forum), t.subject FROM topic t WHERE t.id = %s"
+            sql = "SELECT t.forum, f.subject, t.subject FROM topic t LEFT" \
+              " JOIN (SELECT subject, id FROM forum GROUP BY id) f ON" \
+              " t.forum = f.id WHERE t.id = %s"
             self.log.debug(sql % (id,))
             cursor.execute(sql, (id,))
             for row in cursor:
@@ -149,10 +150,10 @@ class DiscussionWiki(Component):
               id), title = label, class_ = 'missing')
         elif ns == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
-            sql = "SELECT m.forum, m.topic, (SELECT f.subject FROM forum f," \
-              " message m WHERE f.id = m.forum), (SELECT t.subject FROM" \
-              " topic t, message m WHERE t.id = m.topic) FROM message m" \
-              " WHERE m.id = %s"
+            sql = "SELECT m.forum, m.topic, f.subject, t.subject FROM" \
+              " message m, (SELECT subject, id FROM forum GROUP BY id) f," \
+              " (SELECT subject, id FROM topic GROUP BY id) t WHERE" \
+              " m.forum = f.id AND m.topic = t.id AND m.id = %s"
             self.log.debug(sql % (id,))
             cursor.execute(sql, (id,))
             for row in cursor:

@@ -43,9 +43,10 @@ class DiscussionSearch(Component):
 
         # Search in messages
         columns = ('id', 'forum', 'topic', 'time', 'author', 'body', 'subject')
-        sql = "SELECT id, forum, topic, time, author, body, (SELECT" \
-          " subject FROM topic t WHERE t.id = message.topic) FROM message" \
-          " WHERE body LIKE '%%%s%%'" % (query)
+        sql = "SELECT m.id, m.forum, m.topic, m.time, m.author, m.body," \
+          " t.subject FROM message m LEFT JOIN (SELECT subject, id FROM" \
+          " topic GROUP BY id) t ON t.id = m.topic WHERE body LIKE '%%%s%%'" \
+          % (query)
         self.log.debug(sql)
         cursor.execute(sql)
         for row in cursor:

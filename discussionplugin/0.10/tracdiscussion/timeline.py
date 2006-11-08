@@ -96,9 +96,9 @@ class DiscussionTimeline(Component):
 
     def _get_changed_topics(self, cursor, start, stop):
         columns = ('id', 'subject', 'author', 'time', 'forum', 'forum_name')
-        sql = "SELECT t.id, t.subject, t.author, t.time, t.forum, (SELECT" \
-          " f.name FROM forum f, topic t WHERE f.id = t.forum) FROM topic t" \
-          " WHERE t.time BETWEEN %s AND %s"
+        sql = "SELECT t.id, t.subject, t.author, t.time, t.forum, f.name" \
+          " FROM topic t LEFT JOIN (SELECT name, id FROM forum GROUP BY id)" \
+          " f ON t.forum = f.id WHERE time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
@@ -108,10 +108,10 @@ class DiscussionTimeline(Component):
     def _get_changed_messages(self, cursor, start, stop):
         columns = ('id', 'author', 'time', 'forum', 'topic', 'forum_name',
           'topic_subject')
-        sql = "SELECT m.id, m.author, m.time, m.forum, m.topic, (SELECT" \
-          " f.name FROM forum f, message m WHERE f.id = m.forum), (SELECT" \
-          " t.subject FROM topic t, message m WHERE t.id = m.topic) FROM" \
-          " message m WHERE m.time BETWEEN %s AND %s"
+        sql = "SELECT m.id, m.author, m.time, m.forum, m.topic, f.name," \
+          " t.subject FROM message m, (SELECT name, id FROM forum GROUP BY" \
+          " id) f, (SELECT subject, id FROM topic GROUP BY id) t WHERE" \
+          " t.id = m.topic AND f.id = m.forum AND time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:

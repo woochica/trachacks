@@ -777,9 +777,10 @@ class DiscussionApi(object):
         if order_by != 'forum':
             order_by = 'g.' + order_by
         columns = ('id', 'name', 'description', 'forums')
-        sql = "SELECT g.id, g.name, g.description, (SELECT COUNT(f.id)" \
-          " FROM forum f, forum_group g WHERE f.forum_group = g.id) AS" \
-          " forums FROM forum_group g ORDER BY " + order_by + (" ASC",
+        sql = "SELECT g.id, g.name, g.description, f.forums FROM " \
+          " forum_group g LEFT JOIN (SELECT COUNT(id) AS forums, " \
+          " forum_group FROM forum GROUP BY forum_group) f ON g.id = " \
+          " f.forum_group ORDER BY " + order_by + (" ASC",
           " DESC")[bool(desc)]
         self.log.debug(sql)
         cursor.execute(sql)
@@ -797,12 +798,13 @@ class DiscussionApi(object):
           'subject', 'description', 'topics', 'replies', 'lastreply',
           'lasttopic')
         sql = "SELECT f.id, f.name, f.author, f.time, f.moderators," \
-          " f.forum_group, f.subject, f.description, (SELECT COUNT(t.id)" \
-          " FROM topic t, forum f WHERE t.forum = f.id) AS topics, (SELECT" \
-          " COUNT(m.id) FROM message m, forum f WHERE m.forum = f.id) AS" \
-          " replies, (SELECT MAX(m.time) FROM message m, forum f WHERE" \
-          " m.forum = f.id) AS lasttopic, (SELECT MAX(t.time) FROM topic t," \
-          " forum f WHERE t.forum = f.id) AS lastreply FROM forum f ORDER BY " \
+          " f.forum_group, f.subject, f.description, tm.topics, tm.replies," \
+          " tm.lastreply, tm.lasttopic FROM forum f LEFT JOIN ( SELECT" \
+          " tf.forum AS forum, topics, lasttopic, replies, lastreply FROM" \
+          " (SELECT COUNT(id) AS topics, MAX(time) AS lasttopic, forum" \
+          " FROM topic GROUP BY forum) tf, (SELECT COUNT(id) AS replies," \
+          " MAX(time) AS lastreply, forum FROM message GROUP BY forum) mf" \
+          " WHERE tf.forum = mf.forum) tm ON f.id = tm.forum ORDER BY " \
           + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
         cursor.execute(sql)
@@ -812,13 +814,18 @@ class DiscussionApi(object):
             row['moderators'] = wiki_to_oneliner(row['moderators'], self.env)
             row['description'] = wiki_to_oneliner(row['description'], self.env)
             if row['lastreply']:
-                row['lastreply'] = pretty_timedelta(row['lastreply'])
+                row['lastreply'] = pretty_timedelta(float(row['lastreply']))
             else:
                 row['lastreply'] = 'No replies'
             if row['lasttopic']:
-                row['lasttopic'] = pretty_timedelta(row['lasttopic'])
+                self.log.debug('lasttopic: %s' % row['lasttopic'])
+                row['lasttopic'] = pretty_timedelta(float(row['lasttopic']))
             else:
                 row['lasttopic'] = 'No topics'
+            if not row['topics']:
+                row['topics'] = 0
+	    if not row['replies']:
+                row['replies'] = 0
             row['time'] = format_datetime(row['time'])
             forums.append(row)
         return forums
@@ -829,10 +836,10 @@ class DiscussionApi(object):
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
           'replies', 'lastreply')
         sql = "SELECT t.id, t.forum, t.time, t.subject, t.body, t.author," \
-          " (SELECT COUNT(m.id) FROM message m, topic t WHERE m.topic = t.id)" \
-          " AS replies, (SELECT MAX(m.time) FROM message m, topic t WHERE" \
-          " m.topic = t.id) AS lastreply FROM topic t WHERE t.forum = %s" \
-          " ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
+          " m.replies, m.lastreply FROM topic t LEFT JOIN (SELECT COUNT(id)" \
+          " AS replies, MAX(time) as lastreply, topic FROM message GROUP BY" \
+          " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
+          + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql % (forum,))
         cursor.execute(sql, (forum,))
         topics = []
@@ -841,9 +848,11 @@ class DiscussionApi(object):
             row['author'] = wiki_to_oneliner(row['author'], self.env)
             row['body'] = wiki_to_html(row['body'], self.env, req)
             if row['lastreply']:
-                row['lastreply'] = pretty_timedelta(row['lastreply'])
+                row['lastreply'] = pretty_timedelta(float(row['lastreply']))
             else:
                 row['lastreply'] = 'No replies'
+            if not row['replies']:
+                row['replies'] = 0
             row['time'] = format_datetime(row['time'])
             topics.append(row)
         return topics
