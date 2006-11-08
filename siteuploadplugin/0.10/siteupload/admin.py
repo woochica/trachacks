@@ -39,7 +39,7 @@ class SiteuploadAdminPage(Component):
 
     # IPermissionRequestor
     def get_permission_actions(self):
-        return [('SITEUPLOAD_ADMIN', ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD'])]
+        return ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD', ('SITEUPLOAD_ADMIN', ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD'])]
 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
