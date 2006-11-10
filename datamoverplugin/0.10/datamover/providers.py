@@ -8,6 +8,8 @@ __all__ = ['SiblingProviderModule', 'DBProviderModule']
 
 class SiblingProviderModule(Component):
     """Provides all environments in the same base folder as this one."""
+
+    mutable = False
     
     implements(IEnvironmentProvider)
     
@@ -21,9 +23,17 @@ class SiblingProviderModule(Component):
                 self.log.debug('SiblingProviderModule: Path good')
                 yield test_path
         
-    def mutable_environments(self):
-        return False
-
 class DBProviderModule(Component):
     """Provide environments from a database table."""
     
+    implements(IEnvironmentProvider)
+
+    def get_environments(self):
+        return ['/var/www/gamedev/tracs/main']
+
+    def add_environment(self, path):
+        if path == '/fail': return False
+        return True
+
+    def delete_environment(self, path):
+        pass

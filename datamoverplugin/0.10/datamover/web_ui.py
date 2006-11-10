@@ -19,6 +19,18 @@ class DatamoverConfigurationModule(Component):
         system = DatamoverSystem(self.env)
         envs = system.all_environments()
         any_mutable = system.any_mutable()
+        
+        if req.method == 'POST':
+            if req.args.get('add'):
+                path = req.args.get('env_path')
+                if not path:
+                    raise TracError('You must give a path to add')
+                system.add_environment(path)
+            elif req.args.get('remove'):
+                envs = req.args.getlist('sel')
+                for env in envs:
+                    system.delete_environment(env)
+            req.redirect(req.href.admin(cat, page))
                 
         req.hdf['datamover.envs'] = envs
         req.hdf['datamover.any_mutable'] = any_mutable
