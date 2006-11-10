@@ -2,6 +2,7 @@
 from trac.core import *
 from trac.web.main import _open_environment
 from trac.config import OrderedExtensionsOption
+from trac.perm import IPermissionRequestor
 
 class IEnvironmentProvider(Interface):
     """An extension point interface for enumerating local environments."""
@@ -19,6 +20,9 @@ class DatamoverSystem(Component):
     
     env_providers = ExtensionPoint(IEnvironmentProvider)
     
+    implements(IPermissionRequestor)
+
+    # Public methods    
     def all_environments(self):
         """Returns a dictionary of the form {env_path: {'name', 'muable', 'providers'}}."""
         envs = {}
@@ -58,3 +62,7 @@ class DatamoverSystem(Component):
             raise TracError('Cannot remove environment at %s, it is contributed by an immutable provider'%path) 
         for provider in envs[path]['providers']:
             provider.delete_environment(path)
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['DATAMOVER_ADMIN']

@@ -12,7 +12,7 @@ class DatamoverConfigurationModule(Component):
     
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
-        if req.perm.has_permission('TRAC_ADMIN'):
+        if req.perm.has_permission('DATAMOVER_ADMIN'):
             yield ('mover', 'Data Mover', 'config', 'Configuration')
     
     def process_admin_request(self, req, cat, page, path_info):
