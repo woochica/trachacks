@@ -10,6 +10,7 @@ from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor, PermissionSystem
 from webui import * 
+from ticket_webui import *
 
 ## report columns
 ## id|author|title|query|description
