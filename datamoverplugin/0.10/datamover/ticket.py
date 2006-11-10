@@ -38,15 +38,32 @@ class DatamoverTicketModule(Component):
                 
             action_verb = {'copy':'Copied', 'move':'Moved'}[action]
             
+            # Double check the ticket number is actually a number
+            if source_type == 'id':
+                try:
+                    int(source)
+                except ValueError:
+                    raise TracError('Value %r is not numeric'%source)
+            
+            self.log.debug('DatamoverTicketModule: Source is %s (%s)', source, source_type)
+            
             query_string = {
-                'ticket': 'id=%s'%int(source),
+                'ticket': 'id=%s'%source,
                 'component': 'component=%s'%source,
                 'all': 'id!=0',
                 'query': source,
             }[source_type]
                 
             try:
-                ids = [x['id'] for x in Query.from_string(self.env, query_string).execute(req)]
+                # Find the ids we want
+                ids = None
+                if source_type == 'ticket': # Special case this pending #T4119
+                    ids = [int(source)]
+                else:
+                    self.log.debug('DatamoverTicketModule: Running query %r', query_string)
+                    ids = [x['id'] for x in Query.from_string(self.env, query_string).execute(req)]
+                    self.log.debug('DatamoverTicketModule: Results: %r', ids)
+                    
                 dest_db = _open_environment(dest).get_db_cnx()
                 for id in ids:
                     copy_ticket(self.env, dest, id, dest_db)
@@ -56,7 +73,10 @@ class DatamoverTicketModule(Component):
                     for id in ids:
                         Ticket(self.env, id).delete()
                     
-                req.hdf['datamover.message'] = '%s tickets %s'%(action_verb, ', '.join([str(n) for n in ids]))
+                if ids:
+                    req.hdf['datamover.message'] = '%s tickets %s'%(action_verb, ', '.join([str(n) for n in ids]))
+                else:
+                    req.hdf['datamover.message'] = 'No tickets %s'%(action_verb.lower())
             except TracError, e:
                 req.hdf['datamover.message'] = "An error has occured: \n"+str(e)
                 self.log.warn(req.hdf['datamover.message'], exc_info=True)

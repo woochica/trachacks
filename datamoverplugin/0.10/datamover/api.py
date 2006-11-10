@@ -25,9 +25,15 @@ class DatamoverSystem(Component):
             for env in provider.get_environments():
                 envs[env] = {
                     'name': _open_environment(env).project_name,
-                    'mutable': provider.mutable_environments() and envs.get(env, {'mutable': 1}).get('mutable'),
+                    'mutable': provider.mutable_environments() and envs.get(env, {'mutable': True}).get('mutable'),
                     'provider': envs.get(env, {'provider': []}).get('provider') + [provider],
                 }
 
         return envs
 
+    def any_mutable(self):
+        """Indicate if any of the active providers are mutable."""
+        for provider in self.env_providers:
+            if provider.mutable_environments():
+                return True
+        return False

@@ -4,6 +4,8 @@ import os
 
 from api import IEnvironmentProvider
 
+__all__ = ['SiblingProviderModule', 'DBProviderModule']
+
 class SiblingProviderModule(Component):
     """Provides all environments in the same base folder as this one."""
     
@@ -21,3 +23,7 @@ class SiblingProviderModule(Component):
         
     def mutable_environments(self):
         return False
+
+class DBProviderModule(Component):
+    """Provide environments from a database table."""
+    

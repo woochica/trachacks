@@ -5,13 +5,13 @@ from setuptools import setup
 
 setup(
     name = 'TracDatamoverPlugin',
-    version = '0.1',
+    version = '1.0',
     packages = ['datamover'],
     package_data={ 'datamover' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
     description = "Move data between Trac instances.",
-    long_description = "Move/copy tickets and wiki pages from one Trac instance to another o nthe same server.",
+    long_description = "Move/copy tickets and wiki pages from one Trac instance to another on the same server.",
     license = "BSD",
     keywords = "trac plugin data move copy",
     url = "http://trac-hacks.org/wiki/DatamoverPlugin",
@@ -26,4 +26,8 @@ setup(
     },
 
     install_requires = [ 'TracWebAdmin' ],
+    
+    classifiers = [
+        'Framework :: Trac',
+    ],
 )

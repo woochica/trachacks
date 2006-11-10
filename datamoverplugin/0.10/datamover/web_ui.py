@@ -16,9 +16,12 @@ class DatamoverConfigurationModule(Component):
             yield ('mover', 'Data Mover', 'config', 'Configuration')
     
     def process_admin_request(self, req, cat, page, path_info):
-        envs = DatamoverSystem(self.env).all_environments()
+        system = DatamoverSystem(self.env)
+        envs = system.all_environments()
+        any_mutable = system.any_mutable()
                 
         req.hdf['datamover.envs'] = envs
+        req.hdf['datamover.any_mutable'] = any_mutable
         return 'datamover_config.cs', None
                 
     # ITemplateProvider methods
