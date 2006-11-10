@@ -5,7 +5,7 @@ name = 'tracbl_database'
 version = 1
 tables = [
     # Table to hold the API keys as they are generated
-    Table('tracbl_apikeys', 'id')[
+    Table('tracbl_apikeys', 'email')[
         Column('id', auto_increment=True),
         Column('key'),
         Column('email'),

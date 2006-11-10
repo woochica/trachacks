@@ -4,6 +4,8 @@ from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.util.html import html
 
+from model import Key
+
 class TracBLModule(Component):
     """Main web interface for TracBL."""
     
@@ -28,6 +30,15 @@ class TracBLModule(Component):
     def _render_key(self, req):
         if req.method == 'POST':
             if req.args.get('new'):
+                addr = req.args.get('email')
+                if not addr:
+                    raise TracError('You must give an email address')
+               
+                key = Key(self.env, addr)
+                if not key.exists:
+                    key.save()
+                key.notify()
+                
                 req.hdf['tracbl.key.page'] = 'done'
         else:
             req.hdf['tracbl.key.page'] = 'new'

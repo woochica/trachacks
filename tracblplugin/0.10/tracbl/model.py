@@ -8,13 +8,13 @@ class Key(object):
     """A model object for an API key."""
     
     def __init__(self, env, email, db=None):
-        self.env = senf
+        self.env = env
         self.email = email
         
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         
-        cursor.execute('SELECT key FROM tracbl_keys WHERE email=%s', (self.email,))
+        cursor.execute('SELECT key FROM tracbl_apikeys WHERE email=%s', (self.email,))
         row = cursor.fetchone()
         if row:
             self.key = row[0]
@@ -27,7 +27,7 @@ class Key(object):
         """Check if the given key is valid."""
         db = db or env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT COUNT(*) FROM tracbl_keys WHERE key=%s', (key,))
+        cursor.execute('SELECT COUNT(*) FROM tracbl_apikeys WHERE key=%s', (key,))
         count = cursor.fetchone()[0]
         return count > 0
     valid = classmethod(valid)
@@ -43,13 +43,17 @@ class Key(object):
             self.key = hex_entropy(16)
             
         if self.exists:
-            cursor.execute('UPDATE tracbl_keys SET key=%s WHERE email=%s', (self.key, self.email)) # ???: Is this needed?
+            cursor.execute('UPDATE tracbl_apikeys SET key=%s WHERE email=%s', (self.key, self.email)) # ???: Is this needed?
         else:
-            cursor.execute('INSERT INTO tracbl_keys (email, key) VALUES (%s, %s)', (self.email, self.key))
+            cursor.execute('INSERT INTO tracbl_apikeys (email, key) VALUES (%s, %s)', (self.email, self.key))
             
         if handle_commit:
             db.commit()
 
+    def notify(self):
+        """Send an email about this key."""
+        eml = KeyEmail(self.env)
+        eml.notify(self.email, self.key)
 
 class KeyEmail(NotifyEmail):
     """An email containing an API key."""
@@ -70,4 +74,4 @@ class KeyEmail(NotifyEmail):
         NotifyEmail.notify(self, addr, subject)
 
     def get_recipients(self, to):
-        return to, []
+        return [to], []
