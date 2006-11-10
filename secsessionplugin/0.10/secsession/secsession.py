@@ -1,65 +1,72 @@
+# Code wonderfully provided by csabahenk
 from trac.core import *
-from trac.web.api import IRequestHandler, IRequestFilter
-from urlparse import urlparse, urlunparse
+from trac.web import IRequestFilter
 
-__all__ = ['SecureSession', 'SecureSessionFilter']
-
-class SecureSession(Component):
-    implements(IRequestHandler)
-
-    # IRequestHandler methods
-    def match_request(self, req):
-        # Never match anything by ourselves
-        return False
-
-    def process_request(self, req):
-        orig_uri = req._reconstruct_url()
-        self.log.debug('orig_uri: %s' % orig_uri)
-        uri_parsed = urlparse(orig_uri)
-        self.log.debug('uri_parsed: %s' % str(uri_parsed))
-        uri_port = uri_parsed[1].split(':')
-        self.log.debug('uri_port: %s' % str(uri_port))
-        if len(uri_port) > 1:
-            uri_port = uri_port[1]
-        else:
-            uri_port = None
-        host = uri_parsed[1].split(':')[0]
-        self.log.debug("host: %s" % str(host))
-        path = uri_parsed[2]
-        self.log.debug("path: %s" % str(path))
-        parameters = uri_parsed[3]
-        self.log.debug("parameters: %s" % str(parameters))
-        query = uri_parsed[4]
-        self.log.debug("query: %s" % str(query))
-        fragment = uri_parsed[5]
-        self.log.debug("fragment: %s" % str(fragment))
-        
-        secport = self.config.get('secsession', 'secport', 443)
-        if secport != 443:
-            host = '%s:%s' % (host, str(secport))
-        elif uri_port:
-            host = host.split(':')[0]
-       
-        uri = urlunparse(('https', host, path, parameters, query, fragment))
-        self.log.debug("Location: %s" % uri)
-        req.send_response(302)
-        req.send_header('Location', uri)
-        req.end_headers()
-
+__all__ = ['SecureSessionFilter']
 
 class SecureSessionFilter(Component):
-    """ Filter to lock authenticated requests to https:// """
-
     implements(IRequestFilter)
 
     def pre_process_request(self, req, handler):
-        # We want to handle all sessions that use http:// and have an 
-        # authenticated user
-        if req.scheme == 'http':
-            match = req.authname != 'anonymous'
-            handler = SecureSession(self.env)
-            pass
+        # self.log.info("setting up the match")  ### 'twas too much noize
+
+        # We provide a config hook for checking if the request is
+        # secure. Simply checking the scheme is not the appropriate
+        # choice in all case -- eg., if trac runs behind a proxy
+        # server, then it will get simple http requests from the
+        # proxy and we have to analyze headers to find out if
+        # the original request was secure or not.
+        #
+        # Currently we can directly match a request attribute
+        # as "@<attr> = <val>" or a http header line as "<hdlr> = <val>".
+        # This could be generalized by, eg., taking a list of such
+        # patterns, whatever.
+        key, val = [ x.strip() for x in self.config.get('secsession',
+                                                        'secpattern',
+                                                        '@scheme=https'
+                                                        ).split('=', 1) ]
+        if key[0] == '@':
+            myval = getattr(req, key[1:])
+        else:
+            myval = req.get_header(key)
+
+        if unicode(myval) != val:
+            # Auth info is not available at the time of invoking filters,
+            # so we can't yet make the decision about redirecting.
+            #
+            # Therefore we just wrap the handler into our redirection policy.
+            # When the handler will be invoked, auth info will be there;
+            # if auth is anon, our wrapper will call the original
+            # handler, else it will perform the redirect.
+            handler = SecureSessionWrapper(handler, self)
         return handler
 
     def post_process_request(self, req, template, content_type):
-        return (template, content_type)
+        return template, content_type
+
+
+class SecureSessionWrapper(object):
+
+    def __init__(self, in_handler, filter):
+        self.in_handler = in_handler
+        self.config = filter.config
+        self.log = in_handler.log
+
+    def process_request(self, req):
+
+        if not req.authname or req.authname == 'anonymous':
+            return self.in_handler.process_request(req)
+
+        self.log.info("redirect to secure site:")
+        secport = self.config.getint('secsession', 'secport', 443)
+        port = ''
+        if secport != 443:
+            port = ':%d' % secport
+
+        req.redirect(''.join(['https://',
+                              req.server_name,
+                              port,
+                              req.href(),
+                              req.path_info
+                              ]) )
+
