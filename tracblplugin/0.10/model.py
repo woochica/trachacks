@@ -1,6 +1,7 @@
 # Model objects for TracBL
 #  Overkill, probably ;-)
 
+from trac.notification import NotifyEmail
 from trac.util import hex_entropy
 
 class Key(object):
@@ -48,3 +49,25 @@ class Key(object):
             
         if handle_commit:
             db.commit()
+
+
+class KeyEmail(NotifyEmail):
+    """An email containing an API key."""
+    
+    template_name = 'tracbl_key_email.cs'
+    
+    def notify(self, to, key):
+        addr = self.get_smtp_address(to)
+        if addr is None:
+            raise TracError('Invalid email address %s'%to)
+        
+        
+        self.hdf['to'] = addr
+        self.hdf['key'] = key
+        
+        subject = 'TracBL API key for %s'%addr
+        
+        NotifyEmail.notify(self, addr, subject)
+
+    def get_recipients(self, to):
+        return to, []
