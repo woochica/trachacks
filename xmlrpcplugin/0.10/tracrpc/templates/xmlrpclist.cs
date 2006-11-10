@@ -39,7 +39,7 @@
 
 <script type="text/javascript">
 addHeadingLinks(document.getElementById("searchable"));
-</script
+</script>
 
 </div>
 
