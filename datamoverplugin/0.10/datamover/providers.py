@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.env import IEnvironmentSetupParticipant
+from trac.env import Environment, IEnvironmentSetupParticipant
 
 import os
 
@@ -32,14 +32,34 @@ class DBProviderModule(Component):
 
     # IEnvironmentProvider methods
     def get_environments(self):
-        return ['/var/www/gamedev/tracs/main']
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        cursor.execute('SELECT env FROM datamover_envs')
+        for row in cursor:
+            yield row[0]
 
     def add_environment(self, path):
-        if path == '/fail': return False
-        return True
+        if path.startswith('/'):
+            path = path.strip() # In case of extra spaces
+            
+            # Test if `path` is actually an env
+            try: 
+                Environment(path)
+            except Exception, e:
+                raise TracError('%s is not a valid environment: %s'%(path, e))
+        
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute('INSERT INTO datamover_envs (env) VALUES (%s)', (path,))
+            db.commit()
+            return True
 
     def delete_environment(self, path):
-        pass
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('DELETE FROM datamover_envs WHERE env=%s', (path,))
+        db.commit()
 
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
