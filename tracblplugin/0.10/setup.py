@@ -23,7 +23,8 @@ setup(
 
     entry_points = {
         'trac.plugins': [
-            'tracbl.api = tracbl.api'
+            'tracbl.api = tracbl.api',
+            'tracbl.web_ui = tracbl.web_ui',
         ]
     }
 )
