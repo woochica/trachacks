@@ -35,7 +35,7 @@ from trac.ticket import Ticket
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup
 
-class PublishModule(Component):
+class SVNPublishModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
@@ -56,7 +56,7 @@ class PublishModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/publish/([0-9]+)$', req.path_info)
+        match = re.match(r'/svnpublish/([0-9]+)$', req.path_info)
         if match:
             req.args['ticket_id'] = match.group(1)
             return 1
@@ -72,7 +72,7 @@ class PublishModule(Component):
 
         diff_options = get_diff_options(req)
         if req.args.has_key('update'):
-            req.redirect(self.env.href.publish(ticket_id))
+            req.redirect(self.env.href.svnpublish(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
 	setchangesets = ticket.setchangesets
