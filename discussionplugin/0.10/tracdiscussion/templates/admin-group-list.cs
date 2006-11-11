@@ -47,7 +47,7 @@
 <?cs /if ?>
 
 <?cs if:discussion.groups.1.id ?>
-  <form method="post" action="<?cs var:discussion.href ?>/group"">
+  <form method="post" action="<?cs var:discussion.href ?>/group">
     <table id="group-list" class="listing">
       <thead>
         <tr>
