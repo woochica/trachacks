@@ -94,12 +94,26 @@ class RegistrationModule(Component):
 
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
+    def __init__(self):
+        self._enable_check(log=True)
+
+    def _enable_check(self, log=False):
+        ignore_case = auth.LoginModule(self.env).ignore_case
+        if log and ignore_case:
+            self.log.warn('RegistrationModule is disabled because '
+                          'ignore_auth_case is enabled in trac.ini.  '
+                          'This setting needs disabled to support '
+                          'registration.')
+        return not ignore_case
+
     #INavigationContributor methods
 
     def get_active_navigation_item(self, req):
         return 'register'
 
     def get_navigation_items(self, req):
+        if not self._enable_check():
+            return
         if req.authname == 'anonymous':
             yield 'metanav', 'register', Markup('<a href="%s">Register</a>',
                                                 (self.env.href.register()))
@@ -107,7 +121,7 @@ class RegistrationModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        return req.path_info == '/register'
+        return req.path_info == '/register' and self._enable_check(log=True)
 
     def process_request(self, req):
         if req.authname != 'anonymous':
