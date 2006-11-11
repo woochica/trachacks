@@ -1,7 +1,14 @@
+README
 setup.py
 TracSetChangeset.egg-info/PKG-INFO
 TracSetChangeset.egg-info/SOURCES.txt
 TracSetChangeset.egg-info/entry_points.txt
 TracSetChangeset.egg-info/top_level.txt
+dist/TracSetChangeset-0.1-py2.4.egg
+hooks/post-commit
+hooks/trac-post-commit
+publish/__init__.py
+publish/publish.py
 setchangeset/__init__.py
 setchangeset/setchangeset.py
+setchangeset/templates/setchangeset.cs

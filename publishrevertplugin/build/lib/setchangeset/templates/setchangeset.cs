@@ -4,6 +4,10 @@
 <div id="content" class="changeset">
 <h1>Ticket <a href="../ticket/<?cs var:ticket_id ?>"><?cs var:ticket_id ?></a></h1>
 
+<a href="../publish/<?cs var:ticket_id ?>">PUBLISH TO PRODUCTION</a><br/>
+<a href="../revert/<?cs var:ticket_id ?>">REVERT PRODUCTION</a>
+
+
 <?cs def:node_change(item,cl,kind) ?><?cs 
   set:ndiffs = len(item.diff) ?><?cs
   set:nprops = len(item.props) ?>
