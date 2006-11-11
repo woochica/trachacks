@@ -1,11 +1,11 @@
 from setuptools import setup
 
-PACKAGE = 'TracSetChangeset'
+PACKAGE = 'TracPublishRevert'
 VERSION = '0.2'
 
 setup(name=PACKAGE,
       version=VERSION,
-      packages=['setchangeset','publish'],
-      package_data={'setchangeset' : ['templates/*.cs'], 'publish' : ['templates/*.cs']},
-      entry_points={'trac.plugins': '%s = setchangeset' % PACKAGE, 'trac.plugins': '%s = publish' % PACKAGE},
+      packages=['publishrevert'],
+      package_data={'publishrevert' : ['publishrevert/setchangeset/templates/*.cs','publishrevert/svnpublish/templates/*.cs']},
+      entry_points={'trac.plugins': '%s = publishrevert' % PACKAGE},
 )
