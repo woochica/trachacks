@@ -1,0 +1,7 @@
+setup.py
+TracSetChangeset.egg-info/PKG-INFO
+TracSetChangeset.egg-info/SOURCES.txt
+TracSetChangeset.egg-info/entry_points.txt
+TracSetChangeset.egg-info/top_level.txt
+setchangeset/__init__.py
+setchangeset/setchangeset.py
