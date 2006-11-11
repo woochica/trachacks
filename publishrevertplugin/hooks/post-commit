@@ -1,0 +1,19 @@
+#!/bin/bash
+
+export HOME=/tmp/svnupdate
+
+REPOS="$1"
+REV="$2"
+LOG=`/usr/bin/svnlook log -r $REV $REPOS`
+AUTHOR=`/usr/bin/svnlook author -r $REV $REPOS`
+TRAC_ENV='/var/www/localhost/htdocs/trac_project_env'
+TRAC_URL='https://dev.vacationrentalagent.com/trac/'
+
+/usr/bin/python /var/svn/repos/hooks/trac-post-commit \
+  -p "$TRAC_ENV"  \
+  -r "$REV"       \
+  -u "$AUTHOR"    \
+  -m "$LOG"       \
+  -s "$TRAC_URL"
+
+/usr/bin/svn update /var/www/localhost/htdocs/syncedsvn
