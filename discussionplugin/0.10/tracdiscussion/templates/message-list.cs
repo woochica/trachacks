@@ -110,7 +110,7 @@
         <?cs if:trac.acl.DISCUSSION_APPEND ?>
           <a href="<?cs var:discussion.href ?>?discussion_action=add;message=<?cs var:message.id ?>#reply">Reply</a>
           <a href="<?cs var:discussion.href ?>?discussion_action=quote;message=<?cs var:message.id ?>#reply">Quote</a>
-          <?cs if:discussion.is_moderator || (message.author == discussion.authname) ?>
+          <?cs if:discussion.is_moderator || ((message.author == discussion.authname) && (discussion.authname != 'anonymous')) ?>
             <a href="<?cs var:discussion.href ?>?discussion_action=edit;message=<?cs var:message.id ?>#reply">Edit</a>
           <?cs /if ?>
         <?cs /if ?>
@@ -182,7 +182,7 @@
         <?cs if:trac.acl.DISCUSSION_APPEND ?>
           <a href="<?cs var:discussion.href ?>?discussion_action=add;#reply">Reply</a>
           <a href="<?cs var:discussion.href ?>?discussion_action=quote;#reply">Quote</a>
-          <?cs if:discussion.is_moderator || (discussion.topic.author == discussion.authname) ?>
+          <?cs if:discussion.is_moderator || ((discussion.topic.author == discussion.authname) && (discussion.authname != 'anonymous'))?>
             <a href="<?cs var:discussion.href ?>?discussion_action=edit;#reply">Edit</a>
           <?cs /if ?>
         <?cs /if ?>
