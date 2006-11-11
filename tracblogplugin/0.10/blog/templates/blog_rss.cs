@@ -34,7 +34,7 @@
       if bentry.tags.present != 0 ?>
         &lt;p&gt;Posted in: <?cs
         each:tag=bentry.tags.tags ?>
-          &lt;a href="<?cs var:cgi_location ?>/tags/<?cs var:tag.link ?>"&gt;
+          &lt;a href="<?cs if cgi_location != "/" ?><?cs var:cgi_location ?><?cs /if ?>/tags/<?cs var:tag.link ?>"&gt;
             <?cs var:tag.name ?>&lt;/a&gt;<?cs
           if ! tag.last ?>,<?cs 
           /if ?><?cs
