@@ -6,6 +6,8 @@ from webadmin.web_ui import IAdminPageProvider
 
 from wikirename.util import rename_page
 
+import urllib
+
 _implements = [IPermissionRequestor, IAdminPageProvider, ITemplateProvider]
 
 try:
@@ -42,10 +44,14 @@ class WikiRenameModule(Component):
         dest = req.args.get('dest_page','')
         redir = req.args.get('redirect','') == '1'
         
+        # Handle escaped chars (#TH672)
+        src = urllib.unquote_plus(src)
+        dest = urllib.unquote_plus(dest)
+        
         if 'submit' in req.args.keys():
             if not src or not dest:
                 raise TracError, "Please provide both the old and new names"
-            rename_page(self.env, src, dest, req.authname, req.remote_addr)
+            rename_page(self.env, src, dest, req.authname, req.remote_addr, debug=self.log.debug)
             if redir:
                 req.redirect(req.href.wiki(dest))
             # Reset for the next display

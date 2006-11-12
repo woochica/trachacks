@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWikiRename',
-    version = '1.1-r2',
+    version = '1.2',
     packages = ['wikirename'],
     package_data={ 'wikirename' : [ 'templates/*.cs' ] },
 
@@ -17,7 +17,10 @@ setup(
     license = "BSD",
     keywords = "trac plugin wiki page rename",
     url = "http://trac-hacks.org/wiki/WikiRenamePlugin",
-
+    classifiers = [
+        'Framework :: Trac',
+    ],
+    
     entry_points = {
         'trac.plugins': [
             'wikirename.web_ui = wikirename.web_ui',
