@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracDatamoverPlugin',
-    version = '1.1',
+    version = '1.1.1',
     packages = ['datamover'],
     package_data={ 'datamover' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",

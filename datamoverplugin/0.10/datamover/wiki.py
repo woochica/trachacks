@@ -58,7 +58,7 @@ class DatamoverWikiModule(Component):
                 dest_db.commit()
                     
                 if action == 'move':
-                    for id in ids:
+                    for page in pages:
                         WikiPage(self.env, page).delete()
                     
                 req.hdf['datamover.message'] = '%s pages %s'%(action_verb, ', '.join(pages))
