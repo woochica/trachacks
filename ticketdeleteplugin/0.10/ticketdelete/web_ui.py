@@ -5,8 +5,12 @@ from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
+from trac.util import sorted 
+
 from webadmin.web_ui import IAdminPageProvider
-import re, traceback, pprint
+import re
+import traceback
+import pprint
 from time import strftime, localtime
 
 __all__ = ['TicketDeletePlugin']
