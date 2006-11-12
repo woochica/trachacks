@@ -12,6 +12,13 @@
         <div class="field">
             <label>Environment: <input type="text" name="env_path" class="textwidget" /></label>
         </div>
+        <div class="field">
+            <label>Prototype: <select name="prototype">
+                <?cs each:p = tracforge.prototypes ?>
+                    <option value="<?cs var:p ?>"><?cs var:p ?></option>
+                <?cs /each ?>
+            </select></label>
+        </div>
         <p class="help">Create a new project</p>
         <div class="buttons">
             <input type="submit" name="create" value="Create" />

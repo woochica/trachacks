@@ -3,6 +3,7 @@ from trac.core import *
 from api import IProjectSetupParticipant
 
 import inspect
+import sys
 
 class ProjectSetupParticipantBase(Component):
     """Base class for project setup participants."""
@@ -21,23 +22,41 @@ class ProjectSetupParticipantBase(Component):
     def get_setup_action_description(self, action):
         return inspect.getdoc(self.__class__)
         
-    def execute_setup_action(self, req, env_path, action, args):
-        raise NotImplementedError()
+    def execute_setup_action(self, req, proj, action, args):
+        raise NotImplementedError
 
 class MakeTracEnvironmentAction(ProjectSetupParticipantBase):
     """Make a new Trac environment using trac-admin initenv."""
     
-    def execute_setup_action(self, req, env_path, action, args):
-        pass
+    def execute_setup_action(self, req, proj, action, args):
+        repo_type = hasattr(proj, 'repo_type') and proj.repo_type or 'svn'
+        repo_path = hasattr(proj, 'repo_path') and proj.repo_path or ''
+    
+        from trac.config import default_dir
+        from trac.scripts.admin import run
+        return run([proj.env_path, 
+                    'initenv', 
+                    req.args.get('fullname','').strip(), 
+                    'sqlite:db/trac.db', 
+                    repo_type.strip(), 
+                    repo_path.strip(), 
+                    default_dir('templates'),
+                   ]) == 0
 
 class MakeSubversionRepositoryAction(ProjectSetupParticipantBase):
     """Make a new Subversion repository using `svnadmin create`."""
     
-    def execute_setup_action(self, req, env_path, action, args):
-        pass
+    def execute_setup_action(self, req, proj, action, args):
+        print 'Failed output'
+        print >>sys.stderr, 'Failed error 1\nFailed error 2\nFailed error 3'
+        return False
 
 class ApplyConfigSetAction(ProjectSetupParticipantBase):
     """Apply a ConfigSet to a Trac environment."""
     
-    def execute_setup_action(self, req, env_path, action, args):
-        pass
+    def execute_setup_action(self, req, proj, action, args):
+        print 'Output 1'
+        print 'Output 2\nOutput 3'
+        print >>sys.stderr,'Error 1'
+        print 'Output 4'
+        return True

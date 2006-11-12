@@ -5,12 +5,12 @@ from trac.web.chrome import add_stylesheet, add_script
 from webadmin.web_ui import IAdminPageProvider
 
 from model import Prototype, ConfigSet
-from api import IProjectSetupParticipant
+from api import IProjectSetupParticipant, TracForgeAdminSystem
 
 class TracForgePrototypesAdminModule(Component):
     """Configuration screen for TracForge new project settings."""
 
-    setup_participants = ExtensionPoint(IProjectSetupParticipant)
+    #setup_participants = ExtensionPoint(IProjectSetupParticipant)
 
     implements(IAdminPageProvider)
     
@@ -137,13 +137,14 @@ class TracForgePrototypesAdminModule(Component):
                 proto.delete()
             req.redirect(req.href.admin(req.cat, req.page))
 
-        steps = {}
-        for p in self.setup_participants:
-            for a in p.get_setup_actions():
-                steps[a] = {
-                    'provider': p,
-                    'description': p.get_setup_action_description(a),
-                }
+        #steps = {}
+        #for p in self.setup_participants:
+        #    for a in p.get_setup_actions():
+        #        steps[a] = {
+        #            'provider': p,
+        #            'description': p.get_setup_action_description(a),
+        #        }
+        steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
         
         initial_steps = []        
         if action == 'new': # For a new one, use the specified defaults 

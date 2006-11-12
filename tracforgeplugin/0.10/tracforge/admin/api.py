@@ -12,7 +12,7 @@ class IProjectSetupParticipant(Interface):
     def get_setup_action_description(self, action):
         """Return a string description of the given action."""
         
-    def execute_setup_action(self, req, env_path, action, args):
+    def execute_setup_action(self, req, proj, action, args):
         """Perform the given setup action on an environment."""
     
 class IProjectChangeListener(Interface):
@@ -21,8 +21,22 @@ class IProjectChangeListener(Interface):
     
 class TracForgeAdminSystem(Component):
     """Central stuff for tracforge.admin."""
+
+    setup_participants = ExtensionPoint(IProjectSetupParticipant)
     
     implements(IEnvironmentSetupParticipant)
+    
+    # Public methods
+    def get_project_setup_participants(self):
+        """Return a dict of `{action: {'provider': provider, 'description': description}}`."""
+        data = {}
+        for provider in self.setup_participants:
+            for action in provider.get_setup_actions():
+                data[action] = {
+                    'provider': provider,
+                    'description': provider.get_setup_action_description(action),
+                }
+        return data
 
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
