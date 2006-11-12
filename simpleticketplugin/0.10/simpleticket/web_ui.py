@@ -27,7 +27,7 @@ class PseudoRequest(object):
         
     def redirect(self, dest):
         if dest.startswith(self.env.href.ticket()):
-            if not self.perm.has_permission('TICKET_VIEW'):
+            if not self.req.perm.has_permission('TICKET_VIEW'):
                 self.req.redirect(self.env.href.simpleticket())
         self.req.redirect(dest)
         
