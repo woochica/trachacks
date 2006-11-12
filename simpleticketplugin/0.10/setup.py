@@ -15,6 +15,9 @@ setup(
     license = "BSD",
     keywords = "trac plugin restricted ticket",
     url = "http://trac-hacks.org/wiki/SimpleTicketPlugin",
+    classifiers = [
+        'Framework :: Trac',
+    ],
 
     entry_points = {
         'trac.plugins': [
