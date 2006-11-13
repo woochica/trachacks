@@ -1,5 +1,6 @@
 <h2>Manage User Accounts</h2>
 
+<?cs if:create_enabled ?>
 <form id="addaccount" class="addnew" method="post">
  <fieldset>
   <?cs if registration.error ?>
@@ -28,15 +29,27 @@
   </div>
  </fieldset>
 </form>
+<?cs /if ?>
 
+<?cs if:!listing_enabled ?>
+<div class="system-message">
+    <p>This password store does not support listing users</p>
+</div>
+<?cs else ?>
 <form method="post">
+ <?cs if:deletion_error ?><div class="system-message"><p><?cs var:deletion_error ?></p></div><?cs /if ?>
  <table class="listing" id="accountlist">
   <thead>
-   <tr><th class="sel">&nbsp;</th><th>Account</th><th>Name</th><th>Email</th><th>Last Login</th></tr>
+   <tr>
+    <?cs if:delete_enabled ?><th class="sel">&nbsp;</th><?cs /if ?>
+    <th>Account</th><th>Name</th><th>Email</th><th>Last Login</th>
+   </tr>
   </thead><tbody><?cs
   each:account = accounts ?>
    <tr>
-    <td><input type="checkbox" name="sel" value="<?cs var:account.username ?>" /></td>
+    <?cs if:delete_enabled ?>
+     <td><input type="checkbox" name="sel" value="<?cs var:account.username ?>" /></td>
+    <?cs /if ?>
     <td><?cs var:account.username ?></td>
 	<td><?cs var:account.name ?></td>
 	<td><?cs var:account.email ?></td>
@@ -44,9 +57,11 @@
    </tr><?cs
   /each ?></tbody>
  </table>
+ <?cs if:delete_enabled ?>
  <div class="buttons">
   <input type="submit" name="remove" value="Remove selected accounts" />
  </div>
+ <?cs /if ?>
 </form>
-
+<?cs /if ?>
 

@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'TracAccountManager',
-    version = '0.1.2',
+    version = '0.1.3',
     author = 'Matthew Good',
     author_email = 'trac@matt-good.net',
     url = 'http://trac-hacks.org/wiki/AccountManagerPlugin',
@@ -28,6 +28,7 @@ this stuff is worth it, you can buy me a beer in return.   Matthew Good''',
         'trac.plugins': [
             'acct_mgr.web_ui = acct_mgr.web_ui',
             'acct_mgr.htfile = acct_mgr.htfile',
+            'acct_mgr.http = acct_mgr.http',
             'acct_mgr.api = acct_mgr.api',
             'acct_mgr.admin = acct_mgr.admin',
         ]

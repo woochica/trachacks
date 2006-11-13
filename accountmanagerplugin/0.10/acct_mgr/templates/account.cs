@@ -37,11 +37,13 @@
   <input type="submit" value="Change password" />
  </form>
 
+ <?cs if:delete_enabled ?>
  <form method="post" action=""
        onsubmit="return confirm('Are you sure you want to delete your account?');">
   <input type="hidden" name="action" value="delete" />
   <input type="submit" value="Delete account" />
  </form>
+ <?cs /if ?>
 
 </div>
 
