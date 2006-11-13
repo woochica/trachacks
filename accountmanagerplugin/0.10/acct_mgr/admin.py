@@ -9,7 +9,10 @@
 #
 # Author: Matthew Good <trac@matt-good.net>
 
+import inspect
+
 from trac.core import *
+from trac.config import Option
 from trac.perm import PermissionSystem
 from trac.util import sorted
 from trac.util.datefmt import format_datetime
@@ -17,6 +20,12 @@ from webadmin.web_ui import IAdminPageProvider
 
 from acct_mgr.api import AccountManager
 from acct_mgr.web_ui import _create_user
+
+def _getoptions(cls):
+    if isinstance(cls, Component):
+        cls = cls.__class__
+    return [(name, value) for name, value in inspect.getmembers(cls)
+            if isinstance(value, Option)]
 
 class AccountManagerAdminPage(Component):
 
@@ -28,9 +37,47 @@ class AccountManagerAdminPage(Component):
     # IAdminPageProvider
     def get_admin_pages(self, req):
         if req.perm.has_permission('TRAC_ADMIN'):
-            yield ('general', 'General', 'accounts', 'Accounts')
+            yield ('accounts', 'Accounts', 'config', 'Configuration') 
+            yield ('accounts', 'Accounts', 'users', 'Users')
 
     def process_admin_request(self, req, cat, page, path_info):
+        if page == 'config': 
+            return self._do_config(req)
+        elif page == 'users': 
+            return self._do_users(req) 
+            
+    def _do_config(self, req):
+        if req.method == 'POST':
+            selected_class = req.args.get('selected')
+            self.config.set('account-manager', 'password_store', selected_class)
+            selected = self.account_manager.password_store
+            for attr, option in _getoptions(selected):
+                newvalue = req.args.get('%s.%s' % (selected_class, attr))
+                if newvalue is not None:
+                    self.config.set(option.section, option.name, newvalue)
+                    self.config.save()
+        try:
+            selected = self.account_manager.password_store
+        except AttributeError:
+            selected = None
+        sections = [
+            {'name': store.__class__.__name__,
+             'classname': store.__class__.__name__,
+             'selected': store is selected,
+             'options': [
+                {'label': attr,
+                 'name': '%s.%s' % (store.__class__.__name__, attr),
+                 'value': option.__get__(store, store),
+                }
+                for attr, option in _getoptions(store)
+             ],
+            } for store in self.account_manager.stores
+        ]
+        sections = sorted(sections, key=lambda i: i['name'])
+        req.hdf['sections'] = sections
+        return 'admin_accountsconfig.cs', None
+            
+    def _do_users(self, req):
         perm = PermissionSystem(self.env)
         if req.method == 'POST':
             if req.args.get('add'):
@@ -65,5 +112,5 @@ class AccountManagerAdminPage(Component):
         req.hdf['accounts'] = sorted(accounts.itervalues(),
                                      key=lambda acct: acct['username'])
 
-        return 'admin_accounts.cs', None
+        return 'admin_users.cs', None
 
