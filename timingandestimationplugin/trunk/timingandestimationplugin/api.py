@@ -205,33 +205,38 @@ class TimeTrackingSetupParticipant(Component):
                      (self.config.get( ticket_custom, "billable" ) == "checkbox") and \
                      self.config.get( ticket_custom, "hours" ) and \
                      (not self.config.get( ticket_custom, "lastbilldate" )) and \
+                     self.config.get( ticket_custom, "totalhours.order") and \
+                     self.config.get( ticket_custom, "hours.order") and \
+                     self.config.get( ticket_custom, "estimatedhours.order") and \
+                     self.config.get( ticket_custom, "billable.order") and \
                      self.config.get( ticket_custom, "estimatedhours"))
     
     def do_ticket_field_upgrade(self):
         ticket_custom = "ticket-custom"
         
         self.config.set(ticket_custom,"totalhours", "text")
+        if not self.config.get( ticket_custom, "totalhours.order") :
+            self.config.set(ticket_custom,"totalhours.order", "4")
         self.config.set(ticket_custom,"totalhours.value", "0")
         self.config.set(ticket_custom,"totalhours.label", "Total Hours")                
 
         self.config.set(ticket_custom,"billable", "checkbox")
         self.config.set(ticket_custom,"billable.value", "1")
+        if not self.config.get( ticket_custom, "billable.order") :
+            self.config.set(ticket_custom,"billable.order", "3")
         self.config.set(ticket_custom,"billable.label", "Billable?")
             
         self.config.set(ticket_custom,"hours", "text")
         self.config.set(ticket_custom,"hours.value", "0")
+        if not self.config.get( ticket_custom, "hours.order") :
+            self.config.set(ticket_custom,"hours.order", "2")
         self.config.set(ticket_custom,"hours.label", "Add Hours to Ticket")
             
         self.config.set(ticket_custom,"estimatedhours", "text")
         self.config.set(ticket_custom,"estimatedhours.value", "0")
+        if not self.config.get( ticket_custom, "estimatedhours.order") :
+            self.config.set(ticket_custom,"estimatedhours.order", "1")
         self.config.set(ticket_custom,"estimatedhours.label", "Estimated Number of Hours")
-
-        
-        #self.config.set(ticket_custom,"lastbilldate", "text")
-        #self.config.set(ticket_custom,"lastbilldate.label", "Date Last Billed")
-        self.config.remove(ticket_custom,"lastbilldate")
-        self.config.remove(ticket_custom,"lastbilldate.label")
-
 
         self.config.save();
 

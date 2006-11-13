@@ -11,7 +11,7 @@ class TicketWebUiAddon(Component):
     implements(INavigationContributor)
     
     def __init__(self):
-        
+        pass
      # INavigationContributor methods
     def get_active_navigation_item(self, req):
         if re.search('ticket', req.path_info):
