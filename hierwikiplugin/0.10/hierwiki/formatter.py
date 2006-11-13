@@ -25,6 +25,7 @@ class RelativeWikiFormatter(Component):
         self._all_pages()
         self.pagebase = None
         self.pages_re = ''
+        self._update('WikiStart')
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
