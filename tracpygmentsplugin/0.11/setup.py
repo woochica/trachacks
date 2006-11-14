@@ -1,21 +1,19 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-version = '0.1'
-
 setup(
     name='TracPygments',
-    version=version,
+    version='0.1',
     description="Trac syntax colorer using Pygments",
     long_description=""" """,
     classifiers=[
         'Framework :: Trac',
         'License :: OSI Approved :: BSD License', 
     ],
-    keywords='',
+    keywords='trac.mimeview',
     author='Matt Good',
     author_email='matt@matt-good.net',
-    url='http://matt-good.net',
+    url='http://trac-hacks.org/wiki/TracPygmentsPlugin',
     license='BSD',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     include_package_data=True,

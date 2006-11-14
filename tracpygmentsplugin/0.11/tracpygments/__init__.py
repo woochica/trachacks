@@ -7,10 +7,6 @@
 # you should have received as part of this distribution. The terms
 # are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
-# This software consists of voluntary contributions made by many
-# individuals. For the exact contribution history, see the revision
-# history and logs, available at http://trac.edgewall.org/log/.
-#
 # Author: Matthew Good <matt@matt-good.net>
 
 """Syntax highlighting module, based on the Pygments module.
@@ -148,6 +144,7 @@ if pygments is not None:
             #(Name.Namespace, 'code-type'),
             (Name.Tag, 'h_tag'),
             (Name.Variable, 'code-var'),
+            (Operator, 'code-lang'),
             (String, 'code-string'),
             # TODO String subtokens
             (Keyword.Type, 'code-type'),
