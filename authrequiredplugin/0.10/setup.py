@@ -4,7 +4,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracAuthRequired'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(
     name = PACKAGE,

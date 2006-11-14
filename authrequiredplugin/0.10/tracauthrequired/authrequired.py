@@ -30,51 +30,25 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from trac.core import *
-from trac.web.api import IRequestFilter
-from trac.web.auth import IAuthenticator
+from trac.web.chrome import INavigationContributor
 
 class AuthRequired(Component):
-    """Require anonymous users to authenticate"""
-    implements(IRequestFilter) #, IRequestHandler)
+    """AuthRequiredPlugin
+    Require anonymous users to authenticate using the form based login.
+    This has been greatly simplified from the original implementation
+    thanks to a hint from coderanger.
+       """
+    implements(INavigationContributor)
 
-    authenticators = ExtensionPoint(IAuthenticator)
+    # INavigationContributor methods
 
-    def authenticate(self, req):
+    def get_active_navigation_item(self, req):
+        return 'AuthRequired'
 
-        for authenticator in self.authenticators:
-            authname = authenticator.authenticate(req)
-        if authname:
-            return authname
-        else:
-            return 'anonymous'
-
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        # OK, we have a bit of a catch 22 here.  Auth info is not available at the
-        # point at which filters are invoked, but we need to catch the events for
-        # unauthenticated users....
-        # So, we need to get the info...
-        authname = self.authenticate(req)
-
-        if authname == 'anonymous':
-            handler = AuthReqHandler(handler, self)
-        return handler
-
-    def post_process_request(self, req, template, content_type):
-        return template, content_type
-
-class AuthReqHandler(object):
-
-    def __init__(self, in_handler, filter):
-        self.in_handler = in_handler
-        self.config = filter.config
-        self.log = in_handler.log
-
-    def process_request(self, req):
-
+    def get_navigation_items(self, req):
         if ((req.authname and req.authname is not 'anonymous') or \
             req.path_info.startswith('/login')):
-            return self.in_handler.process_request(req)
-
-        self.log.debug('Redirecting to /login:')
+            return []
+        self.log.debug('Redirecting anonymous request to /login')
         req.redirect(req.href.login())
+
