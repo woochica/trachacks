@@ -8,7 +8,7 @@ billing_reports = [
         {
     "title":"Ticket Work Summary",
     "reportnumber":None,
-    "version":7,
+    "version":9,
     "sql":"""
 SELECT ticket as __group__, __style__, ticket,
 newvalue as Hours_added, author, time,
@@ -35,7 +35,9 @@ WHERE field = 'hours' and
 
 UNION 
 
-SELECT 'background-color:#DFE;' as __style__, 'Ticket Work Summary for the selected time period ' as author, t.id as ticket, sum(newvalue) as newvalue, NULL as time,
+SELECT 'background-color:#DFE;' as __style__, 'Ticket Work Summary for the selected time period ' as author, t.id as ticket,
+sum( CAST(newvalue as real) ) as newvalue,
+NULL as time,
 
 -- 'Ticket Work Summary for the selected time period '
 -- ||
@@ -54,14 +56,14 @@ WHERE field = 'hours' and
     AND ticket_change.time < $ENDDATE
 GROUP By t.id
 )  as tbl
-ORDER BY ticket,  _ord , time
+ORDER BY ticket,  _ord ASC , time ASC
 
     """
     },#END Ticket work summary
         {
     "title":"Milestone Work Summary",
     "reportnumber":None,
-    "version":7,
+    "version":9,
     "sql":"""
 
 SELECT 
@@ -74,7 +76,7 @@ SELECT
 --  strtime as Last_Updated,
  _ord
 FROM(
-SELECT '' as __style__, t.id as ticket, SUM(newvalue) as newvalue,t.summary as summary,
+SELECT '' as __style__, t.id as ticket, SUM(CAST(newvalue as real)) as newvalue,t.summary as summary,
  MAX(ticket_change.time) as time,
 
 -- strftime('%m/%d/%Y %H:%M:%S', MAX(ticket_change.time), 'unixepoch', 'localtime') as strtime ,
@@ -95,7 +97,7 @@ GROUP BY t.milestone, t.id
 UNION 
 
 SELECT 'background-color:#DFE;' as __style__,
- NULL as ticket, sum(newvalue)  as newvalue, 
+ NULL as ticket, sum(CAST(newvalue as real))  as newvalue, 
 '' as summary,
 NULL as time,
 
@@ -116,7 +118,7 @@ WHERE field = 'hours' and
     AND ticket_change.time < $ENDDATE
 GROUP By t.milestone
 )  as tbl
-ORDER BY milestone, ticket, time,  _ord
+ORDER BY milestone,  _ord ASC, ticket, time
 
 
 
@@ -126,7 +128,7 @@ ORDER BY milestone, ticket, time,  _ord
     {
     "title":"Developer Work Summary",
     "reportnumber":None,
-    "version":6,
+    "version":9,
     "sql":"""
 SELECT author as __group__,__style__, ticket, 
 newvalue as Hours_added, time as time,
@@ -153,7 +155,7 @@ WHERE field = 'hours' and
 UNION 
 
 SELECT 'background-color:#DFE;' as __style__, author,
-NULL as ticket, sum(newvalue) as newvalue, NULL as time,
+NULL as ticket, sum(CAST(newvalue as real)) as newvalue, NULL as time,
 
 -- 'Developer Work Summary for '||
 -- strftime('%m/%d/%Y %H:%M:%S', STARTDATE, 'unixepoch', 'localtime')||' - '||
@@ -171,7 +173,7 @@ WHERE field = 'hours' and
     AND ticket_change.time < $ENDDATE
 GROUP By author
 )  as tbl
-ORDER BY author, time,  _ord
+ORDER BY author,  _ord ASC, time
     
     """
     },#END Hours Per Developer
@@ -180,7 +182,7 @@ ticket_hours_reports = [
 {
     "title": "Ticket Hours",
     "reportnumber": None,
-    "version":4,
+    "version":6,
     "sql": """
 SELECT __color__,  __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -226,8 +228,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        NULL as ticket, 'Time Summary' AS summary_,             
        NULL as component,NULL as version, NULL as severity, NULL as  milestone, NULL as status, NULL as owner,
-       SUM(EstimatedHours.value) as Estimated_hours,
-       SUM(totalhours.value) as total_hours,
+       SUM(CAST(EstimatedHours.value as real)) as Estimated_hours,
+       SUM(CAST(totalhours.value as real)) as total_hours,
        NULL as billable,
        NULL as created, NULL as modified,         -- ## Dates are formatted
 
@@ -250,14 +252,14 @@ LEFT JOIN ticket_custom as billable ON billable.name='billable'
   WHERE t.status IN ($NEW, $ASSIGNED, $REOPENED, $CLOSED) 
     AND billable.value in ($BILLABLE, $UNBILLABLE)
 )  as tbl
-ORDER BY ticket, _ord    
+ORDER BY  _ord ASC, ticket
     """
     },
 #END Ticket Hours 
 {
     "title": "Ticket Hours with Description",
     "reportnumber": None,
-    "version":4,
+    "version":7,
     "sql": """
 SELECT __color__,  __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -303,8 +305,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        NULL as ticket, 'Time Summary' AS summary_,             
        NULL as component,NULL as version, NULL as severity, NULL as  milestone, NULL as status, NULL as owner,
-       SUM(EstimatedHours.value) as Estimated_hours,
-       SUM(totalhours.value) as total_hours,
+       SUM(CAST(EstimatedHours.value as real)) as Estimated_hours,
+       SUM(CAST(totalhours.value as real)) as total_hours,
        NULL as billable,
        NULL as created, NULL as modified,         -- ## Dates are formatted
 
@@ -327,7 +329,7 @@ LEFT JOIN ticket_custom as billable ON billable.name='billable'
   WHERE t.status IN ($NEW, $ASSIGNED, $REOPENED, $CLOSED) 
     AND billable.value in ($BILLABLE, $UNBILLABLE)
 )  as tbl
-ORDER BY ticket, _ord    
+ORDER BY _ord ASC, ticket
     """
     },
 #END Ticket Hours 
@@ -335,7 +337,7 @@ ORDER BY ticket, _ord
     {
     "title":"Ticket Hours Grouped By Component",
     "reportnumber":None,
-    "version":4,
+    "version":6,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -384,8 +386,8 @@ SELECT 1 AS __color__,
        NULL as ticket, 'Time Summary' AS summary_,             
        t.component as component,NULL as version, NULL as severity, NULL as  milestone, NULL as status,
        NULL as owner,
-       SUM(EstimatedHours.value) as Estimated_hours,
-       SUM(totalhours.value) as total_hours,
+       SUM(CAST(EstimatedHours.value as real)) as Estimated_hours,
+       SUM(CAST(totalhours.value as real)) as total_hours,
        NULL as billable,
        NULL as created,
        NULL as modified,         -- ## Dates are formatted
@@ -410,7 +412,7 @@ LEFT JOIN ticket_custom as billable ON billable.name='billable'
     AND billable.value in ($BILLABLE, $UNBILLABLE)
   GROUP BY t.component
 )  as tbl
-ORDER BY component,ticket, _ord    
+ORDER BY component, _ord ASC,ticket
     """
     },
 # END Ticket Hours  GROUPED BY COMPONENT
@@ -418,7 +420,7 @@ ORDER BY component,ticket, _ord
     {
     "title":"Ticket Hours Grouped By Component with Description",
     "reportnumber":None,
-    "version":4,
+    "version":6,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -466,8 +468,8 @@ SELECT 1 AS __color__,
        'background-color:#DFE;' as __style__,
        NULL as ticket, 'Time Summary' AS summary_,             
        t.component as component,NULL as version, NULL as severity, NULL as  milestone, NULL as status, NULL as owner,
-       SUM(EstimatedHours.value) as Estimated_hours,
-       SUM(totalhours.value) as total_hours,
+       SUM(CAST(EstimatedHours.value as real)) as Estimated_hours,
+       SUM(CAST(totalhours.value as real)) as total_hours,
        NULL as billable,
        NULL as created, NULL as modified,         -- ## Dates are formatted
 
@@ -491,14 +493,14 @@ LEFT JOIN ticket_custom as billable ON billable.name='billable'
     AND billable.value in ($BILLABLE, $UNBILLABLE)
   GROUP BY t.component
 )  as tbl
-ORDER BY component,ticket, _ord    
+ORDER BY component,_ord ASC, ticket
     """
     },
 # END Ticket Hours Grouped BY Component with Description
     {
     "title":"Ticket Hours Grouped By Milestone",
     "reportnumber":None,
-    "version":4,
+    "version":6,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -547,8 +549,8 @@ SELECT 1 AS __color__,
        NULL as ticket, 'Time Summary' AS summary_,             
        NULL as component,NULL as version, NULL as severity, t.milestone as  milestone,
        NULL as status, NULL as owner,
-       SUM(EstimatedHours.value) as Estimated_hours,
-       SUM(totalhours.value) as total_hours,
+       SUM(CAST(EstimatedHours.value as real)) as Estimated_hours,
+       SUM(CAST(totalhours.value as real)) as total_hours,
        NULL as billable,
        NULL as created, NULL as modified,         -- ## Dates are formatted
 
@@ -572,14 +574,14 @@ LEFT JOIN ticket_custom as billable ON billable.name='billable'
     AND billable.value in ($BILLABLE, $UNBILLABLE)
   GROUP BY t.milestone
 )  as tbl
-ORDER BY milestone,ticket, _ord    
+ORDER BY milestone,_ord ASC, ticket
     """
     },
 #END Ticket Hours Grouped By MileStone
         {
     "title":"Ticket Hours Grouped By MileStone with Description",
     "reportnumber":None,
-    "version":4,
+    "version":6,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -628,8 +630,8 @@ SELECT 1 AS __color__,
        NULL as ticket, 'Time Summary' AS summary_,             
        NULL as component,NULL as version, NULL as severity, t.milestone as  milestone,
        NULL as status, NULL as owner,
-       SUM(EstimatedHours.value) as Estimated_hours,
-       SUM(totalhours.value) as total_hours,
+       SUM(CAST(EstimatedHours.value as real)) as Estimated_hours,
+       SUM(CAST(totalhours.value as real)) as total_hours,
        NULL as billable,
        NULL as created, NULL as modified,         -- ## Dates are formatted
 
@@ -653,7 +655,7 @@ LEFT JOIN ticket_custom as billable ON billable.name='billable'
     AND billable.value in ($BILLABLE, $UNBILLABLE)
   GROUP BY t.milestone
 )  as tbl
-ORDER BY milestone,ticket, _ord    
+ORDER BY milestone, _ord ASC, ticket
     """
     }
     #END Ticket Hours Grouped By MileStone with Description
