@@ -1,5 +1,14 @@
 <h2>Project Creation Results</h2>
 
+<?cs def:step-text(text) ?>
+    <div class="step-text">
+    <?cs each:line = text ?>
+        <div class="step-line"><?cs var:line ?></div>
+    <?cs /each ?>
+    </div>
+<?cs /def ?>
+    
+
 <style type="text/css">
 #output, #output tr, #output td {
     margin: 0;
@@ -40,14 +49,11 @@ div.line-err {
 <table id="output">
 <?cs each:step = tracforge.output ?>
 <tr><td>
-<div class="step step-<?cs if:step.2 ?>good<?cs else ?>bad<?cs /if ?>">
-    <span class="step-name"><?cs var:step.0 ?></span>
-    <span class="step-args">(<?cs var:step.1 ?>)</span><br />
-    <div class="step-text">
-        <?cs each:text = step.3 ?>
-            <div class="line-<?cs var:text.0 ?>"><?cs var:text.1 ?></div>
-        <?cs /each ?>
-    </div>
+<div class="step step-<?cs if:step.rv ?>good<?cs else ?>bad<?cs /if ?>">
+    <span class="step-name"><?cs var:step.action ?></span>
+    <span class="step-args">(<?cs var:step.args ?>)</span><br />
+    <?cs call:step-text(step.out) ?>
+    <?cs call:step-text(step.err) ?>
 </div>
 </td></tr>
 <?cs /each ?>

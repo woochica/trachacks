@@ -1,24 +1,20 @@
 from trac.db import Table, Column
 
 name = 'tracforge.admin'
-version = 6
+version = 7
 tables = [
     Table('tracforge_projects', key='name')[
         Column('name'),
         Column('env_path'),
     ],
-    Table('tracforge_project_log', key=('project', 'step'))[
-        Column('project'),
-        Column('step'),
-        Column('args'),
-        Column('return'),
-    ],
-    Table('tracforge_project_output', key='id')[
+    Table('tracforge_project_log', key=('project', 'action'))[
         Column('id', auto_increment=True),
         Column('project'),
-        Column('step'),
-        Column('line'),
-        Column('stream'),
+        Column('action'),
+        Column('args'),
+        Column('return'),
+        Column('stdout'),
+        Column('stderr'),
     ],
     Table('tracforge_members', key=('project', 'user'))[
         Column('project'),

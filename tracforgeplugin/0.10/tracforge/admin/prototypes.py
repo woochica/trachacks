@@ -4,6 +4,7 @@ from api import IProjectSetupParticipant
 
 import inspect
 import sys
+import os
 
 class ProjectSetupParticipantBase(Component):
     """Base class for project setup participants."""
@@ -59,4 +60,5 @@ class ApplyConfigSetAction(ProjectSetupParticipantBase):
         print 'Output 2\nOutput 3'
         print >>sys.stderr,'Error 1'
         print 'Output 4'
+        os.system('echo "Output 5"')
         return True

@@ -35,8 +35,22 @@ class TracForgeAdminModule(Component):
                 proj.save()
                 
                 # Apply the prototype
-                output = proto.apply(req, proj)
+                proto.apply(req, proj)
                 
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute('SELECT action, args, return, stdout, stderr FROM tracforge_project_log WHERE project=%s ORDER BY id',(proj.name,))
+                
+                output = []
+                for action, args, rv, out, err in cursor:
+                    output.append({
+                        'action': action,
+                        'args': args,
+                        'rv': rv,
+                        'out': out.splitlines(),
+                        'err': err.splitlines(),
+                    })
+                        
                 req.hdf['tracforge.output'] = output
                 req.hdf['tracforge.href.projects'] = req.href.admin(cat, page)
                 #req.args['hdfdump'] = 1

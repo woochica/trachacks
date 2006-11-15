@@ -2,9 +2,10 @@ from trac.env import Environment
 from trac.web.main import _open_environment
 from trac.config import Configuration, Section
 
-import sys
-import os
 from UserDict import DictMixin
+from tempfile import mkstemp, TemporaryFile
+import os
+import sys
 
 class BadEnv(object):
     def __init__(self, env_path, exc):
@@ -231,50 +232,6 @@ class Prototype(list):
                 return True
         return False        
 
-    class OutputWrapper(object):
-        """Capture the output from setup actions."""
-        
-        def __init__(self, env, stream, db=None):
-            self.env = env
-            self.db = db or self.env.get_db_cnx()
-            self.cursor = self.db.cursor()
-            
-            self.stream = stream
-            self.buf = []
-            
-            self.softspace = 0
-            self.closed = False
-                
-        def close(self):
-            self.flush(True)
-            self.closed = True
-            del self.cursor
-            self.db.commit()
-            del self.db
-                
-        def isatty(self):
-            return False # Not a tty
-                
-        def write(self, s):
-            if self.closed: raise ValueError('I/O operation on a closed handle')
-            if not isinstance(s, basestring):
-                s = str(s)
-                                        
-            for line in s.splitlines(True):
-                self.buf.append(line)
-                if '\n' in line:
-                    self.flush()
-                    
-                
-        def flush(self, final=False):
-            if self.closed: raise ValueError('I/O operation on a closed handle')
-            data = ''.join(self.buf)
-            if '\n' not in data and not final:
-                return # We only write full lines
-                
-            self.cursor.execute('INSERT INTO tracforge_project_output (project, step, stream, line) VALUES (%s, %s, %s, %s)',
-                                (self.project, self.step, self.stream, data.rstrip('\n')))
-                
     def apply(self, req, proj):
         """Run this prototype on a new project.
         NOTE: If you pass in a project that isn't new, this could explode. Don't do that.
@@ -282,14 +239,11 @@ class Prototype(list):
         from api import TracForgeAdminSystem
         steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
         
-        oldout = sys.stdout
-        olderr = sys.stderr
-        
-        sys.stdout = Prototype.OutputWrapper(self.env, 'out')
-        sys.stderr = Prototype.OutputWrapper(self.env, 'err')
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('DELETE FROM tracforge_project_log WHERE project=%s', (proj.name,))
+        db.commit()
 
-        data = []
-        
         for step in self:
             action = args = None
             if isinstance(step, dict):
@@ -297,16 +251,41 @@ class Prototype(list):
                 args = step['args']
             else:
                 action, args = step
-            rv = steps[action]['provider'].execute_setup_action(req, proj, action, args)
-            self.env.log.debug('TracForge: %s() => %r', action, rv)
-            data.append((action, args, rv, wrapper.buf[:]))
-            del wrapper.buf[:]
+                
+            pid = os.fork()
+            if not pid:
+                #o_fd, o_file = mkstemp('tracforge-step', text=True)
+                #e_fd, e_file = mkstemp('tracforge-step', text=True)
+                
+                o_file = TemporaryFile(prefix='tracforge-step', bufsize=0)
+                e_file = TemporaryFile(prefix='tracforge-step', bufsize=0)
+                
+                sys.stdout = o_file
+                sys.stderr = e_file
+                
+                os.dup2(o_file.fileno(), 1)
+                os.dup2(e_file.fileno(), 2)
             
-        sys.stdout = oldout
-        sys.stderr = olderr
+                rv = steps[action]['provider'].execute_setup_action(req, proj, action, args)
+                self.env.log.debug('TracForge: %s() => %r', action, rv)
+                
+                o_file.seek(0,0)
+                o_data = o_file.read()
+                o_file.close()
+                e_file.seek(0,0)
+                e_data = e_file.read()
+                e_file.close()
+                
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute('INSERT INTO tracforge_project_log (project, action, args, return, stdout, stderr) VALUES (%s, %s, %s, %s, %s, %s)',
+                               (proj.name, action, args, rv, o_data, e_data))
+                db.commit()
+                db.close()
+                
+                os._exit(0)
+        os.waitpid(pid, 0)
 
-        return data
-            
 
     def select(cls, env, db=None):
         """Return an iterable of valid tags."""

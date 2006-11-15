@@ -90,4 +90,8 @@ class TracForgeAdminSystem(Component):
                 sql = 'INSERT INTO %s (%s) VALUES (%s)' % \
                       (tbl.name, ','.join(data[0]), ','.join(['%s'] * len(data[0])))
                 for row in data[1]:
-                    cursor.execute(sql, row)
+                    try:
+                        cursor.execute(sql, row)
+                    except Exception, e:
+                        if 'OperationalError' not in e.__class__.__name__:
+                            raise e
