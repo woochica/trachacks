@@ -81,15 +81,15 @@ class tractab(Component):
         if match:
             name = match.group(1)
             req.hdf['tractab.title'] = name
-            idx = self.names.index(name)
-            if idx:
+            try:
+                idx = self.names.index(name)
                 if self.check_perms( req, idx ):
                     req.hdf['tractab.url'] = self.urlhash[name]
                 else:
                     req.hdf['tractab.url'] = ""
-            else:
+            except ValueException:
                 req.hdf['tractab.url'] = ""
-                
+                idx = None
         return 'tractab.cs', 'text/html'
         
     # ITemplateProvider
