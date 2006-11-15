@@ -81,9 +81,8 @@ class tractab(Component):
         if match:
             name = match.group(1)
             req.hdf['tractab.title'] = name
-            idx = [i for i in range(0, len(self.names)) if self.names[i] == name]
+            idx = self.names.index(name)
             if idx:
-                idx = idx[0]
                 if self.check_perms( req, idx ):
                     req.hdf['tractab.url'] = self.urlhash[name]
                 else:
