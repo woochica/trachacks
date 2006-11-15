@@ -62,19 +62,32 @@ class TracForgeAdminSystem(Component):
             db_manager, _ = DatabaseManager(self.env)._get_connector()
         except ImportError:
             db_manager = db
-    
+            
         # Insert the default table
+        old_data = {} # {table_name: (col_names, [row, ...]), ...}
         cursor = db.cursor()
         if not self.found_db_version:
             cursor.execute("INSERT INTO system (name, value) VALUES (%s, %s)",(db_default.name, db_default.version))
         else:
-            cursor.execute("UPDATE system SET value = %s WHERE name=%s",(db_default.name, db_default.version))
+            cursor.execute("UPDATE system SET value=%s WHERE name=%s",(db_default.version, db_default.name))
             for tbl in db_default.tables:
                 try:
-                    cursor.execute('DROP TABLE %s'%tbl.name,)
-                except:
-                    pass
+                    cursor.execute('SELECT * FROM %s'%tbl.name)
+                    old_data[tbl.name] = ([d[0] for d in cursor.description], cursor.fetchall())
+                    cursor.execute('DROP TABLE %s'%tbl.name)
+                except Exception, e:
+                    if 'OperationalError' not in e.__class__.__name__:
+                        raise e # If it is an OperationalError, just move on to the next table
+                        
             
         for tbl in db_default.tables:
             for sql in db_manager.to_sql(tbl):
                 cursor.execute(sql)
+                
+            # Try to reinsert any old data
+            if tbl.name in old_data:
+                data = old_data[tbl.name]
+                sql = 'INSERT INTO %s (%s) VALUES (%s)' % \
+                      (tbl.name, ','.join(data[0]), ','.join(['%s'] * len(data[0])))
+                for row in data[1]:
+                    cursor.execute(sql, row)
