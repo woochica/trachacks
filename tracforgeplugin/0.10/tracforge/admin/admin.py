@@ -15,8 +15,6 @@ class TracForgeAdminModule(Component):
             yield ('tracforge', 'TracForge', 'admin', 'Project Admin')
             
     def process_admin_request(self, req, cat, page, path_info):
-        projects = [Project(self.env, n) for n in Project.select(self.env)]
-
         if req.method == 'POST':
             if 'create' in req.args.keys(): # Project creation
                 name = req.args.get('shortname', '').strip()
@@ -46,13 +44,20 @@ class TracForgeAdminModule(Component):
                 req.redirect(req.href.admin(cat, page))
             elif 'delete' in req.args.keys(): # Project deleteion
                 raise TracError, 'Not implemented yet. Sorry.'
+
+        #self.log.debug('TracForge: Starting data grab')
+        projects = [Project(self.env, n) for n in Project.select(self.env)]
+        #self.log.debug('TracForge: Done with data grab')
     
+        #self.log.debug('TracForge: Starting data grab')
         project_data = {}
         for proj in projects:
+            #self.log.debug('TracForge: Getting data for %s', proj.name)
             project_data[proj.name] = {
                 'fullname': proj.valid and proj.env.project_name or '',
                 'env_path': proj.env_path,
             }
+        #self.log.debug('TracForge: Done with data grab')
             
         req.hdf['tracforge.projects'] = project_data
         req.hdf['tracforge.prototypes'] = Prototype.select(self.env)

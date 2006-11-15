@@ -3,6 +3,7 @@ from trac.web.main import _open_environment
 from trac.config import Configuration, Section
 
 import sys
+import os
 from UserDict import DictMixin
 
 class BadEnv(object):
@@ -233,44 +234,47 @@ class Prototype(list):
     class OutputWrapper(object):
         """Capture the output from setup actions."""
         
-        class Silly(object):
-            """The actual file-like object."""
+        def __init__(self, env, stream, db=None):
+            self.env = env
+            self.db = db or self.env.get_db_cnx()
+            self.cursor = self.db.cursor()
             
-            def __init__(self, env, buf, prefix):
-                self.env = env
-                self.buf = buf
-                self.prefix = prefix
-                self.softspace = 0
-                self.closed = False
+            self.stream = stream
+            self.buf = []
+            
+            self.softspace = 0
+            self.closed = False
                 
-            def close(self):
-                self.closed = True
-                del self.buf
+        def close(self):
+            self.flush(True)
+            self.closed = True
+            del self.cursor
+            self.db.commit()
+            del self.db
                 
-            def isatty(self):
-                return False # Not a tty
+        def isatty(self):
+            return False # Not a tty
                 
-            def write(self, s):
-                if self.closed: raise ValueError('I/O operation on a closed handle')
-                if not isinstance(s, basestring):
-                    s = str(s)
-                self.env.log.debug('TracForge: write(%r)', s)
-                
-                if s == '\n': return
-                                
-                for line in s.splitlines():
-                    self.env.log.debug('TracForge: Writting line %r', line)
-                    self.buf.append((self.prefix, line))
+        def write(self, s):
+            if self.closed: raise ValueError('I/O operation on a closed handle')
+            if not isinstance(s, basestring):
+                s = str(s)
+                                        
+            for line in s.splitlines(True):
+                self.buf.append(line)
+                if '\n' in line:
+                    self.flush()
                     
                 
-            def flush(self):
-                if self.closed: raise ValueError('I/O operation on a closed handle')
+        def flush(self, final=False):
+            if self.closed: raise ValueError('I/O operation on a closed handle')
+            data = ''.join(self.buf)
+            if '\n' not in data and not final:
+                return # We only write full lines
                 
-        def __init__(self, env):
-            self.buf = []
-            self.out = Prototype.OutputWrapper.Silly(env, self.buf, 'out')
-            self.err = Prototype.OutputWrapper.Silly(env, self.buf, 'err')
-
+            self.cursor.execute('INSERT INTO tracforge_project_output (project, step, stream, line) VALUES (%s, %s, %s, %s)',
+                                (self.project, self.step, self.stream, data.rstrip('\n')))
+                
     def apply(self, req, proj):
         """Run this prototype on a new project.
         NOTE: If you pass in a project that isn't new, this could explode. Don't do that.
@@ -281,9 +285,8 @@ class Prototype(list):
         oldout = sys.stdout
         olderr = sys.stderr
         
-        wrapper = Prototype.OutputWrapper(self.env)
-        sys.stdout = wrapper.out
-        sys.stderr = wrapper.err
+        sys.stdout = Prototype.OutputWrapper(self.env, 'out')
+        sys.stderr = Prototype.OutputWrapper(self.env, 'err')
 
         data = []
         
