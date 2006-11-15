@@ -63,7 +63,6 @@ class Smileys(Component):
 
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        print resource_filename(__name__, 'htdocs')
         return [('smileys', resource_filename(__name__, 'htdocs/modern'))]
                 
     def get_templates_dirs(self):
