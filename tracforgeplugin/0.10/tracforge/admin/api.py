@@ -45,7 +45,7 @@ class TracForgeAdminSystem(Component):
         
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
-        cursor.execute("SELECT value FROM system WHERE name = 'tracforge.admin'")
+        cursor.execute("SELECT value FROM system WHERE name=%s", (db_default.name,))
         value = cursor.fetchone()
         if not value:
             self.found_db_version = 0
@@ -66,9 +66,9 @@ class TracForgeAdminSystem(Component):
         # Insert the default table
         cursor = db.cursor()
         if not self.found_db_version:
-            cursor.execute("INSERT INTO system (name, value) VALUES ('tracforge.admin', %s)",(db_default.version,))
+            cursor.execute("INSERT INTO system (name, value) VALUES (%s, %s)",(db_default.name, db_default.version))
         else:
-            cursor.execute("UPDATE system SET value = %s WHERE name = 'tracforge.admin'",(db_default.version,))
+            cursor.execute("UPDATE system SET value = %s WHERE name=%s",(db_default.name, db_default.version))
             for tbl in db_default.tables:
                 try:
                     cursor.execute('DROP TABLE %s'%tbl.name,)

@@ -236,7 +236,8 @@ class Prototype(list):
         class Silly(object):
             """The actual file-like object."""
             
-            def __init__(self, buf, prefix):
+            def __init__(self, env, buf, prefix):
+                self.env = env
                 self.buf = buf
                 self.prefix = prefix
                 self.softspace = 0
@@ -253,27 +254,26 @@ class Prototype(list):
                 if self.closed: raise ValueError('I/O operation on a closed handle')
                 if not isinstance(s, basestring):
                     s = str(s)
-                log('TracForge: write(%r)', s)
+                self.env.log.debug('TracForge: write(%r)', s)
                 
                 if s == '\n': return
                                 
                 for line in s.splitlines():
-                    log('TracForge: Writting line %r', line)
+                    self.env.log.debug('TracForge: Writting line %r', line)
                     self.buf.append((self.prefix, line))
                     
                 
             def flush(self):
                 if self.closed: raise ValueError('I/O operation on a closed handle')
                 
-        def __init__(self):
+        def __init__(self, env):
             self.buf = []
-            self.out = Prototype.OutputWrapper.Silly(self.buf, 'out')
-            self.err = Prototype.OutputWrapper.Silly(self.buf, 'err')
+            self.out = Prototype.OutputWrapper.Silly(env, self.buf, 'out')
+            self.err = Prototype.OutputWrapper.Silly(env, self.buf, 'err')
 
     def apply(self, req, proj):
         """Run this prototype on a new project.
         NOTE: If you pass in a project that isn't new, this could explode. Don't do that.
-        Returns a list of (action, args, lines). Lines is an iterable of (text, stream), where stream is 'out' or 'err'.
         """
         from api import TracForgeAdminSystem
         steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
@@ -281,16 +281,13 @@ class Prototype(list):
         oldout = sys.stdout
         olderr = sys.stderr
         
+        wrapper = Prototype.OutputWrapper(self.env)
+        sys.stdout = wrapper.out
+        sys.stderr = wrapper.err
+
         data = []
         
-        global log
-        log = self.env.log.debug
-        
         for step in self:
-            wrapper = Prototype.OutputWrapper()
-            sys.stdout = wrapper.out
-            sys.stderr = wrapper.err
-        
             action = args = None
             if isinstance(step, dict):
                 action = step['action']
@@ -298,11 +295,13 @@ class Prototype(list):
             else:
                 action, args = step
             rv = steps[action]['provider'].execute_setup_action(req, proj, action, args)
-            log('TracForge: %s() => %r', action, rv)
-            data.append((action, args, rv, wrapper.buf))
+            self.env.log.debug('TracForge: %s() => %r', action, rv)
+            data.append((action, args, rv, wrapper.buf[:]))
+            del wrapper.buf[:]
             
-        del log
-            
+        sys.stdout = oldout
+        sys.stderr = olderr
+
         return data
             
 

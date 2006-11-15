@@ -1,5 +1,6 @@
 from trac.db import Table, Column
 
+name = 'tracforge.admin'
 version = 4
 tables = [
     Table('tracforge_projects', key='name')[
