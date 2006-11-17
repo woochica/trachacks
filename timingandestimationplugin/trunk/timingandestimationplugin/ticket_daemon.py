@@ -10,9 +10,9 @@ def save_custom_field_value( db, ticket_id, field, value ):
                        "WHERE ticket=%s AND name=%s",
                        (value, ticket_id, field))
     else:
-        cursor.execute("INSERT INTO ticket_custom (ticket,name,"
+        cursor.execute("INSERT INTO ticket_custom (ticket,name, "
                        "value) VALUES(%s,%s,%s)",
-                       (ticket_id, name, value))
+                       (ticket_id, field, value))
         
 def save_ticket_change( db, ticket_id, author, change_time, field, oldvalue, newvalue):
     cursor = db.cursor();
