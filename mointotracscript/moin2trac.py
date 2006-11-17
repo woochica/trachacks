@@ -1,0 +1,66 @@
+#!/usr/bin/python
+usage = '''Convert a moinmoin wiki to a trac wiki or multiple trac wikis
+usage:
+
+    moin2trac.py <moindir> <tracprojectdir> [<wikimapfile>]
+
+    <moindir> is the original moinmoin directory.
+    <tracprojectdir> is the target trac project directory
+    <wikimapfile>  A mapping of page name to trac wikis
+    
+   Optionally you may also include <wikimapfile> which
+   is useful if you would like to split your wiki into
+   a trac multi-project or if you would prefer to map
+   only some of you pages into your wiki.
+
+   The syntax is as follow 
+   MoinPageName   <tracprojectdir>
+
+   If a <wikimapfile> is specified then only
+   those pages in the map file will be transfered
+'''
+
+import sys,os
+import	trac.scripts.admin
+from trac.attachment import Attachment
+
+def convert(moindir, tracdir = None, mapfile = None):
+    pagemap = None
+    if mapfile:
+        pagemap = {}
+        for line in open(mapfile):
+            if line[0] == '#': continue
+            (page, wikidir) = line.split()
+            pagemap[page] = wikidir
+
+    pages = os.listdir(moindir)
+    for page in pages:
+        wikidir = tracdir
+        if pagemap:
+            if not pagemap.has_key(page): continue
+            wikidir = pagemap[page]
+            
+        admin  = trac.scripts.admin.TracAdmin()
+        admin.env_set (wikidir)
+        revdir = moindir + '/' + page + '/revisions'
+        revisions = os.listdir(revdir)
+        for rev in revisions:
+            cmd='wiki import %s %s' % ( page,  revdir +'/'+rev)
+            print cmd, "->", wikidir
+            admin.onecmd(cmd)
+        # Process attachments
+        attdir = moindir + '/' + page + '/attachments'
+        attachments = os.listdir(attdir)
+        for att in attachments:
+            attachment = Attachment(admin.env_open(), 'wiki', page)
+            size = os.stat(attdir + '/'+ att)[6]
+            print "attaching " + att + ' = ' + str(size)
+            attfile = open (attdir + '/'+ att)
+            attachment.insert (att, attfile, size)
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+    	print usage
+	sys.exit()
+    args = sys.argv[1:]
+    convert(*args)
