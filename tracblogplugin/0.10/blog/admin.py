@@ -63,6 +63,7 @@ class BlogAdminPlugin(Component):
                         'mark_updated' : 'true',
                         'nav_bar' : 'true',
                         'macro_blacklist': '',
+                        'footer': '',
                        }
         if req.method == 'POST':
             if page == 'defaults':
@@ -99,6 +100,8 @@ class BlogAdminPlugin(Component):
    whether or not a '''Blog''' link should be shown in the navigation menu bar.
  '''Macro Blacklist'''::
    comma separated list of macros to strip from blog output.
+ '''Footer'''::
+   Wiki Formatted data, that will be added to end of every document. You may use Macros. Also use $U for name of current user and $D for "blog post date" according to "Date Format String"
 
  '''strftime formatting'''::
 ||%a||Locale's abbreviated weekday name.||

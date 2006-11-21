@@ -106,6 +106,8 @@ class BlogPost(Component):
         add_stylesheet(req, 'blog/css/blog.css')
         add_stylesheet(req, 'common/css/wiki.css')
         self._new_blog_post(req)
+        referer = req.args.get('referer') or req.get_header('Referer') or self.env.href.blog()
+        req.hdf['blog.referer'] = referer
         return 'new_blog.cs', None
 
     def _new_blog_post(self, req):
@@ -135,7 +137,8 @@ class BlogPost(Component):
         if req.method == 'POST':
             if action == 'edit':
                 if req.args.has_key('cancel'):
-                    req.redirect(self.env.href.blog())
+                    referrer = req.args.get('referer') or req.get_header('Referer') or self.env.href.blog()
+                    req.redirect(referrer)
                 page = WikiPage(self.env, pagename, None)
                 tags = TagEngine(self.env).tagspace.wiki
                 if req.args.has_key('preview'):
@@ -148,6 +151,8 @@ class BlogPost(Component):
                         page.text = ''.join([titleline, wikitext])
                     else:
                         page.text = wikitext
+                    # Add footer 
+                    page.text = page.text.join(["\n\n",self.variable_substitution(req,self.env.config.get('blog', 'footer', ''))]) 
                     page.readonly = readonly
                     page.save(req.authname, comment, req.remote_addr)
 #                    taglist = [x.strip() for x in req_tags.split(',') if x]
@@ -155,7 +160,8 @@ class BlogPost(Component):
                                _tag_split.split(req.args.get('tags')) 
                                if t.strip()]
                     tags.add_tags(req, pagename, taglist)
-                    req.redirect(self.env.href.blog())
+                    referrer = req.args.get('referer') or req.get_header('Referer') or self.env.href.blog()
+                    req.redirect(referrer)
         else:
             info = {
                 'title' : blogtitle,
@@ -208,13 +214,22 @@ class BlogPost(Component):
         if preview:
             if blogtitle:
                 info['page_html'] = wiki_to_html(''.join([titleline, 
-                                                req.args.get('text')]),
+                                                 req.args.get('text'), 
+                                                 "\n\n",self.variable_substitution(req,self.env.config.get('blog', 'footer', ''))]), 
                                                 self.env, req, db)
             else:
-                info['page_html'] = wiki_to_html(page.text, self.env, req, db)
+                info['page_html'] = wiki_to_html(page.text.join(["\n\n",
+                    self.variable_substitution(req,self.env.config.get('blog', 'footer', ''))]), 
+                                                  self.env, 
+                                                  req, 
+                                                  db) 
             info['readonly'] = int(req.args.has_key('readonly'))
         req.hdf['blog'] = info
 
+    def variable_substitution(self,req,string): 
+        string = string.replace('$U',req.authname) 
+        string = string.replace('$D',time.strftime(self.env.config.get('blog', 'date_format', '%x %X'))) 
+        return string 
     
     # ITemplateProvider
     def get_templates_dirs(self):

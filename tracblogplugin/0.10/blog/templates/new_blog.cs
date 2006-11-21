@@ -22,6 +22,7 @@
         </fieldset>
     <?cs /if ?>
     <form id="edit" method="post">
+        <input type="hidden" name="referer" value="<?cs var:blog.referer ?>" />
         <fieldset class="iefix">
             <input type="hidden" name="action" value="edit" />
             <input type="hidden" id="scroll_bar_pos" name="scroll_bar_pos" 
@@ -119,9 +120,6 @@
             src="<?cs var:htdocs_location ?>js/wikitoolbar.js">
         </script>
     </form>
-  <script type="text/javascript">
-   addHeadingLinks(document.getElementById("searchable"));
-  </script>
 </div>
 
 <?cs include "footer.cs" ?>

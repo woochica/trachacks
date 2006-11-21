@@ -255,6 +255,12 @@ class TracBlogPlugin(Component):
         macro_bl = self.env.config.get('blog', 'macro_blacklist', '').split(',')
         macro_bl = [name.strip() for name in macro_bl if name.strip()]
         macro_bl.append('BlogShow')
+
+        # Get the email addresses of all known users
+        email_map = {}
+        for username, name, email in self.env.get_known_users():
+            if email:
+                email_map[username] = email
                        
         num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
         if num_posts and default_times:
@@ -331,8 +337,8 @@ class TracBlogPlugin(Component):
                     # For RSS, author must be an email address
                     if author.find('@') != -1:
                         data['author.email'] = author
-                    elif self._user2email(author) is not None:
-                        data['author.email'] = self._user2email(author)
+                    elif email_map.has_key(author):
+                        data['author.email'] = email_map[author]
                 
                 if (modified != post_time) and mark_updated:
                     data['modified'] = 1
@@ -355,12 +361,6 @@ class TracBlogPlugin(Component):
             self._generate_calendar(req, tallies)
         req.hdf['blog.hidecal'] = hidecal
         pass
-
-    def _user2email(self, user):
-        for username, name, email in self.env.get_known_users():
-            if email:
-                return email
-        return None
 
     def _generate_calendar(self, req, tallies):
         """Generate data necessary for the calendar
