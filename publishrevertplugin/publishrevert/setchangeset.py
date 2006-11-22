@@ -61,8 +61,14 @@ class SetChangesetModule(Component):
             req.args['ticket_id'] = match.group(1)
             return 1
 
-    def process_request(self, req):
+    def process_request(self, req, db=None):
         req.perm.assert_permission('CHANGESET_VIEW')
+
+        if not db:
+            db = self.env.get_db_cnx()
+
+        # Fetch the standard ticket fields
+        cursor = db.cursor()
 
         ticket_id = req.args.get('ticket_id')
 	req.hdf['ticket_id'] = ticket_id
@@ -75,6 +81,20 @@ class SetChangesetModule(Component):
             req.redirect(self.env.href.setchangeset(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
+
+	ticket.setchangesets = []
+	cursor.execute("SELECT rev FROM ticket_revision WHERE ticket_id=%s",
+			(ticket_id,))
+	for rev in cursor:
+	    ticket.setchangesets.append(rev[0])
+
+	ticket.values['setchangesets'] = ticket.setchangesets
+
+	ticket.values['changesets'] = ""
+	for changeset in ticket.setchangesets:
+	    ticket.values['changesets'] +=  str(changeset)
+
+	
 	setchangesets = ticket.setchangesets
 
 	# get the list of changesets for the ticket_id
@@ -343,3 +363,27 @@ class SetChangesetModule(Component):
         return [resource_filename(__name__, 'templates')]
 
 
+    def save_changesets(self, author, rev, when=0, db=None):
+        """
+        Store ticket setchangesets in the database. The ticket must already exist in
+        the database.
+        """
+	
+	# TODO: fetch ticket and assert it exists
+        assert self.exists, 'Cannot update a new ticket'
+
+        if not db:
+            db = self.env.get_db_cnx()
+            handle_ta = True
+        else:
+            handle_ta = False
+        cursor = db.cursor()
+        when = int(when or time.time())
+
+        cursor.execute("INSERT INTO ticket_revision (rev,ticket_id) VALUES(%s,%s)",
+                       (rev, self.id))
+        if handle_ta:
+            db.commit()
+
+        self._old = {}
+        self.time_changed = when

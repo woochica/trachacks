@@ -16,12 +16,16 @@
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
 
-from __future__ import generators
-import time
+# from __future__ import generators
+# import time
 import re
+import commands
 
 from trac import mimeview, util
 from trac.core import *
+
+# the following line should be added when upgrading to the newest version of trac
+# from trac.config import BoolOption, Option
 from trac.perm import IPermissionRequestor
 from trac.Search import ISearchSource, query_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
@@ -39,6 +43,17 @@ class SVNPublishModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
+
+# the folloing line will be used when we upgrade to the newest version of Trac
+#    default_svn_path = Option('publishrevert', 'default_svn_path', '',
+# 	        """/usr/bin""")
+
+# the following options will be deprecated in facor of the previous lines when we upgrade Trac
+    default_svn_path = "/usr/bin"
+    default_test_remote_host = "clone"
+    default_prod_remote_host = "vacationrentalagent.com"
+    default_ssh_path = "/usr/bin"
+    default_ssh_user = "trac"
 
     # INavigationContributor methods
 
@@ -83,21 +98,22 @@ class SVNPublishModule(Component):
 	for rev in setchangesets:
 	    authzperm.assert_permission_for_changeset(rev)
 	    changeset = repos.get_changeset(rev)
+
+	    # now loop through the files in changeset to get all the paths
+	    # and for each path, find the current test/prod revision number and save that info
+
             chgset.append(changeset)
+	
 	    req.check_modified(changeset.date,
                       diff_options[0] + ''.join(diff_options[1]))
 
         format = req.args.get('format')
 
-        self._render_html(req, ticket, repos, chgset, diff_options)
-        add_link(req, 'alternate', '?format=diff', 'Unified Diff',
-                 'text/plain', 'diff')
-        add_link(req, 'alternate', '?format=zip', 'Zip Archive',
-                 'application/zip', 'zip')
+	req.hdf['rev_output'] = ""
         add_stylesheet(req, 'common/css/changeset.css')
         add_stylesheet(req, 'common/css/diff.css')
         add_stylesheet(req, 'common/css/code.css')
-        return 'publish.cs', None
+        return 'svnpublish.cs', None
 
     # ITimelineEventProvider methods
 
@@ -176,6 +192,8 @@ class SVNPublishModule(Component):
                    info['rev.new'] = changeset.rev
                    info['browser_href.new'] = self.env.href.browser(path,
                                                                     rev=changeset.rev)
+		   info['prod_rev'] = self.svn_rev_num(path)
+
                if change in (Changeset.COPY, Changeset.EDIT, Changeset.MOVE):
                    edits.append((idx, path, kind, base_path, base_rev))
 
@@ -343,3 +361,14 @@ class SVNPublishModule(Component):
         return [resource_filename(__name__, 'templates')]
 
 
+    # this function just returns the current revision number of the specified filename
+    def svn_rev_num(self,filename):
+      # eventually use the remote svn path and the remote svn config directory specified in trac.ini
+
+      # this command will eventually be a remote ssh command to execute
+      cmd="%s/ssh %s@%s %s/svn --config-dir /home/bmcquay/.subversion/ info %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_svn_path, filename)
+      output = commands.getoutput(cmd)
+      output = output.replace("\n", " ")
+      parsed_output = re.search("Revision: \d+",output).group()
+      parsed_output = parsed_output.replace("Revision: ", "")
+      return parsed_output.strip()

@@ -1,3 +1,6 @@
+Installation:
 
+Step 1: Setup a user on your remote production server so that apache can ssh to the server (yes I know this is a huge security gap but I couldn't get ssh to allow me to specify alternative directories for .ssh so I had to give apache a home directory)
 
 CREATE TABLE file_revision (file text, rev text);
+

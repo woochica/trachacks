@@ -4,10 +4,6 @@ TracPublishRevert.egg-info/PKG-INFO
 TracPublishRevert.egg-info/SOURCES.txt
 TracPublishRevert.egg-info/entry_points.txt
 TracPublishRevert.egg-info/top_level.txt
-TracSetChangeset.egg-info/PKG-INFO
-TracSetChangeset.egg-info/SOURCES.txt
-TracSetChangeset.egg-info/entry_points.txt
-TracSetChangeset.egg-info/top_level.txt
 dist/TracSetChangeset-0.1-py2.4.egg
 hooks/post-commit
 hooks/trac-post-commit
@@ -15,4 +11,5 @@ publishrevert/__init__.py
 publishrevert/setchangeset.py
 publishrevert/svnpublish.py
 publishrevert/templates/setchangeset.cs
+publishrevert/templates/svnpublish.cs
 scripts/svn_rev_check.rb

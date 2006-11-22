@@ -7,6 +7,9 @@
 <a href="../publish/<?cs var:ticket_id ?>">PUBLISH TO PRODUCTION</a><br/>
 <a href="../revert/<?cs var:ticket_id ?>">REVERT PRODUCTION</a>
 
+<br/>
+<?cs var:rev_output ?>
+<br/>
 
 <?cs def:node_change(item,cl,kind) ?><?cs 
   set:ndiffs = len(item.diff) ?><?cs
@@ -47,7 +50,7 @@
  <dt class="files">Files:</dt>
  <dd class="files">
   <ul><?cs each:item = setchangeset.changes ?>
-   <li><?cs var:item.path.new ?> <?cs var:item.rev.new ?>
+   <li><?cs var:item.path.new ?> <?cs var:item.rev.new ?> Prod Rev= <?cs var:item.prod_rev ?>
    </li>
   <?cs /each ?></ul>
   <br/><br/>
