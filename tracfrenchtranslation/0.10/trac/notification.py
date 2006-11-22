@@ -198,7 +198,7 @@ class NotifyEmail(Notify):
             raise TracError(Markup(u'Impossible d\'envoyer un courriel.<br />'
                                    u'Ni <b>notification.from</b> ni'
                                    u' <b>notification.reply_to</b> ne sont'
-                                   u' définis dans la configuration.'),
+                                   u' dÃ©finis dans la configuration.'),
                             u'Erreur de notification SMTP')
 
         # Authentication info (optional)

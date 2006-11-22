@@ -51,7 +51,7 @@ class WikiModule(Component):
 
     # IContentConverter methods
     def get_supported_conversions(self):
-        yield ('txt', 'Texte standard', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
+        yield ('txt', 'Texte plain', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
 
     def convert_content(self, req, mimetype, content, key):
         return (content, 'text/plain;charset=utf-8')

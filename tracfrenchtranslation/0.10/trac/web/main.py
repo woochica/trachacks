@@ -177,8 +177,8 @@ class RequestDispatcher(Component):
             early_error = sys.exc_info()
             
         if not chosen_handler and not early_error:
-            early_error = (HTTPNotFound(u'Aucun composant ne peut g√©rer la requ√™te %s',
-                                        req.path_info),
+            early_error = (HTTPNotFound(u'Aucun composant ne peut g√©rer la '
+                                        u'requ√®te %s', req.path_info),
                            None, None)
 
         # Attach user information to the request
@@ -281,7 +281,7 @@ def dispatch_request(environ, start_response):
             root_uri = options['TracUriRoot'].rstrip('/')
             request_uri = environ['REQUEST_URI'].split('?', 1)[0]
             if not request_uri.startswith(root_uri):
-                raise ValueError(u'TracUriRoot dÈfini pour %s mais la requËte '
+                raise ValueError(u'TracUriRoot d√©fini pour %s mais la requ√®te '
                                  u'pointe sur %s' % (root_uri, request_uri))
             environ['SCRIPT_NAME'] = root_uri
             environ['PATH_INFO'] = urllib.unquote(request_uri[len(root_uri):])
@@ -343,14 +343,14 @@ def dispatch_request(environ, start_response):
                 env_path = get_environments(environ).get(env_name)
 
             if not env_path or not os.path.isdir(env_path):
-                start_response(u'404 Non trouvÈ', [])
-                return [u'Environment non trouvÈ']
+                start_response(u'404 Non trouv√©', [])
+                return [u'Environment non trouv√©']
 
     if not env_path:
         raise EnvironmentError(u'Les options d\'environment "TRAC_ENV" ou '
                                u'"TRAC_ENV_PARENT_DIR", ou bien les options '
                                u'mod_python "TracEnv" ou "TracEnvParentDir" ne '
-                               u'sont pas dÈfinies. Trac a besoin d\'une de ces '
+                               u'sont pas d√©finies. Trac a besoin d\'une de ces '
                                u'options pour localiser le ou les environnments '
                                u'Trac.')
     env = _open_environment(env_path, run_once=environ['wsgi.run_once'])
