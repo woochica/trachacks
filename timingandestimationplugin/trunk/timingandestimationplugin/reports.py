@@ -8,7 +8,7 @@ billing_reports = [
         {
     "title":"Ticket Work Summary",
     "reportnumber":None,
-    "version":9,
+    "version":11,
     "sql":"""
 SELECT ticket as __group__, __style__, ticket,
 newvalue as Hours_added, author, time,
@@ -17,7 +17,7 @@ newvalue as Hours_added, author, time,
 
  _ord
 FROM(
-SELECT '' as __style__, author, t.id as ticket, newvalue,
+SELECT '' as __style__, author, t.id as ticket, CAST(newvalue as REAL) as newvalue,
  ticket_change.time as time,
  
 -- strftime('%m/%d/%Y %H:%M:%S', ticket_change.time, 'unixepoch', 'localtime') as strtime ,
@@ -128,7 +128,7 @@ ORDER BY milestone,  _ord ASC, ticket, time
     {
     "title":"Developer Work Summary",
     "reportnumber":None,
-    "version":9,
+    "version":10,
     "sql":"""
 SELECT author as __group__,__style__, ticket, 
 newvalue as Hours_added, time as time,
@@ -137,7 +137,7 @@ newvalue as Hours_added, time as time,
 
  _ord
 FROM(
-SELECT '' as __style__, author, t.id as ticket, newvalue,
+SELECT '' as __style__, author, t.id as ticket, CAST(newvalue as REAL) as newvalue,
  ticket_change.time as time,
 
 -- strftime('%m/%d/%Y %H:%M:%S', ticket_change.time, 'unixepoch', 'localtime') as strtime ,
@@ -182,7 +182,7 @@ ticket_hours_reports = [
 {
     "title": "Ticket Hours",
     "reportnumber": None,
-    "version":6,
+    "version":7,
     "sql": """
 SELECT __color__,  __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -197,8 +197,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as Estimated_hours,
-       totalhours.value as total_hours, 
+       CAST(EstimatedHours.value as REAL) as Estimated_hours,
+       CAST(totalhours.value as REAL) as total_hours, 
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -259,7 +259,7 @@ ORDER BY  _ord ASC, ticket
 {
     "title": "Ticket Hours with Description",
     "reportnumber": None,
-    "version":7,
+    "version":8,
     "sql": """
 SELECT __color__,  __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -274,8 +274,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as Estimated_hours,
-       totalhours.value as total_hours, 
+       CAST(EstimatedHours.value as REAL) as Estimated_hours,
+       CAST(totalhours.value as REAL) as total_hours,
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -337,7 +337,7 @@ ORDER BY _ord ASC, ticket
     {
     "title":"Ticket Hours Grouped By Component",
     "reportnumber":None,
-    "version":6,
+    "version":7,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -353,8 +353,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as Estimated_hours,
-       totalhours.value as total_hours, 
+       CAST(EstimatedHours.value as REAL) as Estimated_hours,
+       CAST(totalhours.value as REAL) as total_hours,
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -436,8 +436,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as Estimated_hours,
-       totalhours.value as total_hours, 
+       CAST(EstimatedHours.value as REAL) as Estimated_hours,
+       CAST(totalhours.value as REAL) as total_hours,
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -500,7 +500,7 @@ ORDER BY component,_ord ASC, ticket
     {
     "title":"Ticket Hours Grouped By Milestone",
     "reportnumber":None,
-    "version":6,
+    "version":7,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -516,8 +516,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as Estimated_hours,
-       totalhours.value as total_hours, 
+       CAST(EstimatedHours.value as REAL) as Estimated_hours,
+       CAST(totalhours.value as REAL) as total_hours,
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
@@ -581,7 +581,7 @@ ORDER BY milestone,_ord ASC, ticket
         {
     "title":"Ticket Hours Grouped By MileStone with Description",
     "reportnumber":None,
-    "version":6,
+    "version":7,
     "sql": """
 SELECT __color__, __group__, __style__,  ticket, summary_, component ,version, severity,
  milestone, status, owner, Estimated_hours, total_hours, billable
@@ -597,8 +597,8 @@ SELECT p.value AS __color__,
        '' as __style__,
        t.id AS ticket, summary AS summary_,             -- ## Break line here
        component,version, severity, milestone, status, owner,
-       EstimatedHours.value as Estimated_hours,
-       totalhours.value as total_hours, 
+       CAST(EstimatedHours.value as REAL) as Estimated_hours,
+       CAST(totalhours.value as REAL) as total_hours,
        CASE WHEN billable.value = 1 THEN 'Y'
             else 'N'
        END as billable,
