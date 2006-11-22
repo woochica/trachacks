@@ -363,15 +363,16 @@ class SetChangesetModule(Component):
         return [resource_filename(__name__, 'templates')]
 
 
-    def save_changesets(self, author, rev, when=0, db=None):
+    def save_changesets(self, ticket_id, author, rev, when=0):
         """
         Store ticket setchangesets in the database. The ticket must already exist in
         the database.
         """
 	
 	# TODO: fetch ticket and assert it exists
-        assert self.exists, 'Cannot update a new ticket'
-
+	ticket = Ticket(self.env, ticket_id)
+        assert ticket.exists, 'Cannot update a new ticket'
+	db = None
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
@@ -381,9 +382,9 @@ class SetChangesetModule(Component):
         when = int(when or time.time())
 
         cursor.execute("INSERT INTO ticket_revision (rev,ticket_id) VALUES(%s,%s)",
-                       (rev, self.id))
+                       (rev, ticket_id))
         if handle_ta:
             db.commit()
 
-        self._old = {}
-        self.time_changed = when
+        ticket._old = {}
+        ticket.time_changed = when
