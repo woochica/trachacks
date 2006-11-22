@@ -36,7 +36,7 @@ class PygmentsRenderer(Component):
 
     implements(IHTMLPreviewRenderer)
 
-    enscript_modes = ListOption('mimeviewer', 'pygments_modes',
+    pygments_modes = ListOption('mimeviewer', 'pygments_modes',
         '', doc=
         """List of additional MIME types known by Pygments.
         For each, a tuple `mimetype:mode:quality` has to be
