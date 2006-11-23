@@ -194,7 +194,11 @@ class SVNPublishModule(Component):
                    info['rev.new'] = changeset.rev
                    info['browser_href.new'] = self.env.href.browser(path,
                                                                     rev=changeset.rev)
+
+		   # the following line probably belongs outside of this _render_html function and inside process_request instead
 		   info['prod_rev'] = self.svn_rev_num(path)
+		   # TODO: do the svn update 
+
 
                if change in (Changeset.COPY, Changeset.EDIT, Changeset.MOVE):
                    edits.append((idx, path, kind, base_path, base_rev))
