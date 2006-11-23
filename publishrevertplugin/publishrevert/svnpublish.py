@@ -54,6 +54,7 @@ class SVNPublishModule(Component):
     default_prod_remote_host = "vacationrentalagent.com"
     default_ssh_path = "/usr/bin"
     default_ssh_user = "trac"
+    default_htdoc_path = "/var/www/vra1"
 
     # INavigationContributor methods
 
@@ -90,7 +91,9 @@ class SVNPublishModule(Component):
             req.redirect(self.env.href.svnpublish(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
-	setchangesets = ticket.setchangesets
+	from publishrevert.setchangeset import SetChangesetModule
+	setchangeset = SetChangesetModule(self.env)
+        setchangesets = setchangeset.get_setchangesets(ticket_id)
 
 	# get the list of changesets for the ticket_id
 	# then loop through and get the actual changesets like the following line
@@ -101,15 +104,14 @@ class SVNPublishModule(Component):
 
 	    # now loop through the files in changeset to get all the paths
 	    # and for each path, find the current test/prod revision number and save that info
-
             chgset.append(changeset)
-	
 	    req.check_modified(changeset.date,
                       diff_options[0] + ''.join(diff_options[1]))
 
         format = req.args.get('format')
 
-	req.hdf['rev_output'] = ""
+        self._render_html(req, ticket, repos, chgset, diff_options)
+	req.hdf['setchangesets'] = setchangesets
         add_stylesheet(req, 'common/css/changeset.css')
         add_stylesheet(req, 'common/css/diff.css')
         add_stylesheet(req, 'common/css/code.css')
@@ -366,9 +368,13 @@ class SVNPublishModule(Component):
       # eventually use the remote svn path and the remote svn config directory specified in trac.ini
 
       # this command will eventually be a remote ssh command to execute
-      cmd="%s/ssh %s@%s %s/svn --config-dir /home/bmcquay/.subversion/ info %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_svn_path, filename)
+      cmd="%s/ssh %s@%s %s/svn --config-dir /home/bmcquay/.subversion/ info %s/%s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_svn_path, self.default_htdoc_path, filename)
       output = commands.getoutput(cmd)
       output = output.replace("\n", " ")
-      parsed_output = re.search("Revision: \d+",output).group()
-      parsed_output = parsed_output.replace("Revision: ", "")
+      # check if the file even exists
+      parsed_output = re.search("Revision: \d+",output)
+      if(parsed_output == None):
+        return "-1"
+
+      parsed_output = parsed_output.group().replace("Revision: ", "")
       return parsed_output.strip()

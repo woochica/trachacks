@@ -44,7 +44,7 @@
 <dl id="overview">
  <dt class="time">Changesets</dt>
  <dd class="time"><?cs
- each:changeset = ticket.setchangesets ?>
+ each:changeset = setchangesets ?>
   <a href="../changeset/<?cs var:changeset ?>"><?cs var:changeset ?></a><?cs
  /each ?></dd>
  <dt class="files">Files:</dt>

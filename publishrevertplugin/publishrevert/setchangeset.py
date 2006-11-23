@@ -82,11 +82,7 @@ class SetChangesetModule(Component):
 
 	ticket = Ticket(self.env, ticket_id)
 
-	ticket.setchangesets = []
-	cursor.execute("SELECT rev FROM ticket_revision WHERE ticket_id=%s",
-			(ticket_id,))
-	for rev in cursor:
-	    ticket.setchangesets.append(rev[0])
+	ticket.setchangesets = self.get_setchangesets(ticket_id,db)
 
 	ticket.values['setchangesets'] = ticket.setchangesets
 
@@ -120,6 +116,20 @@ class SetChangesetModule(Component):
         return 'setchangeset.cs', None
 
     # ITimelineEventProvider methods
+
+    def get_setchangesets(self, ticket_id, db=None):
+        if not db:
+            db = self.env.get_db_cnx()
+
+        # Fetch the standard ticket fields
+        cursor = db.cursor()
+
+	cursor.execute("SELECT rev FROM ticket_revision WHERE ticket_id=%s",
+			(ticket_id,))
+	setchangesets = []
+	for rev in cursor:
+	    setchangesets.append(rev[0])
+	return setchangesets
 
     def get_timeline_filters(self, req):
         if req.perm.has_permission('CHANGESET_VIEW'):
