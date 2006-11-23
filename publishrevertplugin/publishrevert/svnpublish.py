@@ -197,7 +197,9 @@ class SVNPublishModule(Component):
 
 		   # the following line probably belongs outside of this _render_html function and inside process_request instead
 		   info['prod_rev'] = self.svn_rev_num(path)
-		   # TODO: do the svn update 
+
+		   # TODO: 1. record the prod_rev and path in the database
+		   #       2. do the svn update if prod_rev < changeset.rev
 
 
                if change in (Changeset.COPY, Changeset.EDIT, Changeset.MOVE):
