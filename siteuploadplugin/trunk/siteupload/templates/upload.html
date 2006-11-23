@@ -1,0 +1,58 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:py="http://genshi.edgewall.org/">
+    <xi:include href="admin.html" />
+    <head>
+        <title>Accounts: Configuration</title>
+    </head>
+
+<body>
+<h2>Manage Site Files</h2>
+
+<form id="addfile" class="addnew" method="post" enctype="multipart/form-data">
+ <fieldset>
+  <legend>Upload File:</legend>
+  <div class="field">
+   <label>File: <input type="file" name="site_file" 
+       disabled="${siteupload.readonly and 'disabled' or None}" /></label>
+  </div>
+  <p class="help" py:choose="True">
+      <py:when test="siteupload.readonly">
+          The web server does not have sufficient permissions to
+          store files in the environment plugins directory.
+      </py:when>
+      <py:otherwise>
+          Upload a file to the htdocs directory of the trac environment.
+      </py:otherwise>
+  </p>
+  <div class="buttons">
+   <input type="submit" name="upload" value="Upload"
+     disabled="${siteupload.readonly and 'disabled' or None}" />
+  </div>
+ </fieldset>
+</form>
+
+<form method="post">
+    <table class="listing" id="sitelist">
+        <thead>
+            <tr><th class="sel">&nbsp;</th><th>Filename</th><th>Size</th></tr>
+        </thead>
+        <tbody>
+            <tr py:for="file in siteupload.files" >
+                <td><input type="checkbox" name="sel" value="${file.name}" /></td>
+                <td>${file.link}</td>
+                <td>${file.size}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="buttons">
+        <input type="submit" name="delete" value="Delete selected files"
+         disabled="${siteupload.readonly and 'disabled' or None}" />
+    </div>
+</form>
+
+</body>
+</html>

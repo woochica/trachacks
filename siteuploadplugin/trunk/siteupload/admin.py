@@ -18,7 +18,7 @@ from trac.core import *
 from trac.web.chrome import ITemplateProvider
 from trac.perm import IPermissionRequestor
 from trac.util import Markup, pretty_size
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin import IAdminPanelProvider
 
 import os
 import os.path
@@ -35,24 +35,23 @@ class SiteuploadAdminPage(Component):
 
     """
 
-    implements(ITemplateProvider, IAdminPageProvider, IPermissionRequestor)
+    implements(ITemplateProvider, IAdminPanelProvider, IPermissionRequestor)
 
     # IPermissionRequestor
     def get_permission_actions(self):
         return ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD', ('SITEUPLOAD_ADMIN', ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD'])]
 
-    # IAdminPageProvider methods
-    def get_admin_pages(self, req):
+    # IAdminPanelPageProvider methods
+    def get_admin_panels(self, req):
         if req.perm.has_permission('SITEUPLOAD_ADMIN'):
             yield ('siteupload', 'Site Files', 'files', 'Files')
 
-    def process_admin_request(self, req, cat, page, path_info):
+    def render_admin_panel(self, req, cat, page, path_info):
         assert req.perm.has_permission('SITEUPLOAD_ADMIN')
         target_path = os.path.join(self.env.path, 'htdocs')
+        readonly = False
         if not (os.path.exists(target_path) and os.path.isdir(target_path) and os.access(target_path, os.F_OK + os.W_OK)):
-            req.hdf['siteupload.readonly'] = True
-        else:
-            req.hdf['siteupload.readonly'] = False
+            readonly = True
         if req.method == 'POST':
             if req.args.has_key('delete'):
                 self._do_delete(req)
@@ -62,10 +61,11 @@ class SiteuploadAdminPage(Component):
                 self.log.warning('Unknown POST request: %s', req.args)                                                                               
             req.redirect(self.env.href.admin(cat, page))
 
-        self._render_view(req)
-        return 'upload.cs', None
+        data = {'siteupload' : {'readonly' : readonly}} 
+        self._render_view(req, data)
+        return 'upload.html', data
 
-    def _render_view(self, req):
+    def _render_view(self, req, data):
         """Display list of files in trac env htdocs dir"""
         target_path = os.path.join(self.env.path, 'htdocs')
         filelist = []
@@ -78,7 +78,7 @@ class SiteuploadAdminPage(Component):
                                           self.env.href.chrome('site', f), f), 
                                  'size' : pretty_size(fsize),})
                 continue
-        req.hdf['siteupload.files'] = filelist
+        data.update({'siteupload' : {'files' : filelist}})
         return
 
     def _do_delete(self, req):

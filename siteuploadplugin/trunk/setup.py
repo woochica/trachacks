@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'siteupload'
-VERSION = '0.11dev-r1'
+VERSION = '0.11'
 
 setup(  name=PACKAGE, version=VERSION,
         author = 'John Hampton',
