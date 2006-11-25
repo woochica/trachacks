@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.3'
+__version__   = '0.7.0'
 
 
 try:
@@ -30,6 +30,11 @@ from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
+from trac.web.main import IRequestHandler
+
+
+
+_TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
 
 
 
@@ -37,7 +42,7 @@ class GraphvizMacro(Component):
     """
     Blah, blah, blah.
     """
-    implements(IWikiMacroProvider)
+    implements(IWikiMacroProvider, IRequestHandler)
 
     # Available formats and processors, default first (dot/png)
     processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
@@ -315,7 +320,7 @@ class GraphvizMacro(Component):
             #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
-            self.png_anti_alias = bool(self.config.get('graphviz', 'png_antialias', False))
+            self.png_anti_alias = self.boolean(self.config.get('graphviz', 'png_antialias', False))
             #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
             if self.png_anti_alias == True:
@@ -343,7 +348,7 @@ class GraphvizMacro(Component):
 
 
             # check if we should run the cache manager
-            self.cache_manager = bool(self.config.get('graphviz', 'cache_manager', False))
+            self.cache_manager = self.boolean(self.config.get('graphviz', 'cache_manager', False))
             if self.cache_manager:
                 self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size',  10000000))
                 self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size',  5000000))
@@ -443,3 +448,33 @@ class GraphvizMacro(Component):
         else:
             #self.log.debug('clean_cache: cache_manager not set')
             pass
+
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info.startswith('/graphviz')
+    
+
+    def process_request(self, req):
+        pieces = [item for item in req.path_info.split('/graphviz') if len(item)]
+        self.log.debug('process_request:pieces %s' % str(pieces))
+
+        trouble, msg = self.load_config()
+        if trouble:
+            return msg.getvalue()
+
+        img_path = os.path.join(self.cache_dir, pieces[0])
+
+        if os.path.exists(img_path):
+            req.send_file(img_path)
+
+        self.log.warning('File %s not found', img_path)
+        raise HTTPNotFound('File %s not found', img_path)
+
+
+    # Extra helper functions
+    def boolean(self, value):
+        # This code is almost directly from trac.config in the 0.10 line...
+        if isinstance(value, basestring):
+            value = value.lower() in _TRUE_VALUES
+        return bool(value)
