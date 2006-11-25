@@ -111,7 +111,7 @@ class CombineWikiModule(Component):
         hfile, hfilename = mkstemp('tracpdf')
         codepage = Mimeview(self.env).default_charset
 
-        self.log.debug('CombineWikiModule: Writting %s to %s', pagename, hfilename)
+        self.log.debug('CombineWikiModule: Writting %s to %s using encoding %s', pagename, hfilename, codepage)
 
         page = text
         if text is None:
@@ -119,6 +119,7 @@ class CombineWikiModule(Component):
             for r in self.EXCLUDE_RES:
                 text = r.sub('', text)
             page = wiki_to_html(text, self.env, req).encode(codepage)
+        self.log.debug('CombineWikiModule: Page text is %r', page)
 
         page = re.sub('<img src="(?!\w+://)', '<img src="%s://%s:%d' % (req.scheme, req.server_name, req.server_port), page)
         os.write(hfile, u'<html><head><title>' + pagename + u'</title></head><body>' + page + u'</body></html>')
