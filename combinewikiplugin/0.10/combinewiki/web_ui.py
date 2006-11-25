@@ -122,6 +122,6 @@ class CombineWikiModule(Component):
         self.log.debug('CombineWikiModule: Page text is %r', page)
 
         page = re.sub('<img src="(?!\w+://)', '<img src="%s://%s:%d' % (req.scheme, req.server_name, req.server_port), page)
-        os.write(hfile, u'<html><head><title>' + pagename + u'</title></head><body>' + page + u'</body></html>')
+        os.write(hfile, '<html><head><title>' + pagename.encode(codepage) + '</title></head><body>' + page + '</body></html>')
         os.close(hfile)
         return hfilename
