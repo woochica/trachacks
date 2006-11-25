@@ -2,7 +2,7 @@
 $Id$
 $HeadURL$
 
-Copyright (c) 2005 Peter Kropf. All rights reserved.
+Copyright (c) 2005, 2006 Peter Kropf. All rights reserved.
 
 Module file for the graphviz trac wiki processor.
 """
