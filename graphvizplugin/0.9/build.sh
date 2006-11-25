@@ -2,11 +2,11 @@
 
 case "$1" in
   9)
-    ENV=/home/peter/projects/env0.9
+    ENV=/Users/peter/projects/env0.9
     PORT=9009
     ;;
   10)
-    ENV=/home/peter/projects/env0.10
+    ENV=/Users/peter/projects/env0.10
     PORT=9010
     ;;
   *)

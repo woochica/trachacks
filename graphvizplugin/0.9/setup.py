@@ -12,7 +12,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.7'
+__version__   = '0.6.8'
 
 from setuptools import setup, find_packages
 
@@ -32,7 +32,7 @@ setup (
 dynamic generation of diagrams by the various graphviz programs. The
 text of a wiki page can contain the source text for graphviz and the
 web browser will show the resulting image.""",
-    license = """Copyright (C) 2005 Peter Kropf
+    license = """Copyright (C) 2005, 2006 Peter Kropf
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

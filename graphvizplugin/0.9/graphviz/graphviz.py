@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.7'
+__version__   = '0.6.8'
 
 
 try:
@@ -164,7 +164,14 @@ class GraphvizMacro(Component):
             buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        sha_key  = sha.new(self.processor + self.processor_options + content).hexdigest()
+        encoding = 'utf-8'
+        if type(content) == type(u''):
+            content  = content.encode(encoding)
+            sha_text = self.processor.encode(encoding) + self.processor_options.encode(encoding) + content
+        else:
+            sha_text = self.processor + self.processor_options + content
+
+        sha_key  = sha.new(sha_text).hexdigest()
         img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
         map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
@@ -393,7 +400,7 @@ class GraphvizMacro(Component):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
         p_in, p_out, p_err = os.popen3(cmd)
         if input:
-            p_in.writelines(input)
+            p_in.write(input)
         p_in.close()
         out = p_out.read()
         err = p_err.read()
