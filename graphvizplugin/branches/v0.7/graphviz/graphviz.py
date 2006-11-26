@@ -28,27 +28,34 @@ import inspect
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
+from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
+from trac.web.main import IRequestHandler
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.web.main import IRequestHandler
 
 
-
 _TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
-
 
 
 class GraphvizMacro(Component):
     """
-    Blah, blah, blah.
+    GraphvizMacro (http://trac-hacks.org/wiki/GraphvizPlugin) provides
+    a plugin for Trac to render graphviz (http://www.graphviz.org/)
+    drawings within a Trac wiki page.
     """
-    implements(IWikiMacroProvider, IRequestHandler)
+    implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler)
 
     # Available formats and processors, default first (dot/png)
     processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
     bitmap_formats = ['png', 'jpg', 'gif']
     vector_formats = ['svg', 'svgz']
     formats = bitmap_formats + vector_formats 
+    cmd_paths = {'linux2':   '/usr/bin',
+                 'win32':    'c:\\Program Files\\ATT\\Graphviz\\bin',
+                 'freebsd6': '/usr/local/bin',
+                 'freebsd5': '/usr/local/bin',
+                 }
 
     def __init__(self):
         self.log.info('version: %s - id: %s' % (__version__, str(__id__)))
@@ -58,21 +65,31 @@ class GraphvizMacro(Component):
 
     def get_macros(self):
         """Return an iterable that provides the names of the provided macros."""
+        self.load_config()
         for p in ['.' + p for p in GraphvizMacro.processors] + ['']: 
             for f in ['/' + f for f in GraphvizMacro.formats] + ['']:
                 yield 'graphviz%s%s' % (p, f)
 
 
     def get_macro_description(self, name):
-        """Return a plain text description of the macro with the specified name."""
-        return inspect.getdoc(GraphvizMacro)
+        """
+        Return a plain text description of the macro with the
+        specified name. Only return a description for the base
+        graphviz macro. All the other variants (graphviz/png,
+        graphviz/svg, etc.) will have no description. This will
+        cleanup the WikiMacros page a bit.
+        """
+        if name == 'graphviz':
+            return inspect.getdoc(GraphvizMacro)
+        else:
+            return None
 
 
     def render_macro(self, req, name, content):
         """Return the HTML output of the macro.
 
         req - ?
-        
+
         name - Wiki macro command that resulted in this method being
                called. In this case, it should be 'graphviz', followed
                (or not) by the processor name, then by an output
@@ -148,7 +165,14 @@ class GraphvizMacro(Component):
             buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        sha_key  = sha.new(self.processor + content).hexdigest()
+        encoding = 'utf-8'
+        if type(content) == type(u''):
+            content  = content.encode(encoding)
+            sha_text = self.processor.encode(encoding) + self.processor_options.encode(encoding) + content
+        else:
+            sha_text = self.processor + self.processor_options + content
+
+        sha_key  = sha.new(sha_text).hexdigest()
         img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
         map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
@@ -223,8 +247,8 @@ class GraphvizMacro(Component):
             except:
                 dimensions = 'width="100%" height="100%"'
             # insert SVG, IE compatibility
-            buf.write('<!--[if IE]><embed src="%s/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (self.prefix_url, img_name, dimensions))
-            buf.write('<![if !IE]><object data="%s/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (self.prefix_url, img_name, dimensions))
+            buf.write('<!--[if IE]><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (req.base_url, img_name, dimensions))
+            buf.write('<![if !IE]><object data="%s/graphviz/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (req.base_url, img_name, dimensions))
 
         # for binary formats, add map
         elif URL_in_graph:
@@ -233,25 +257,24 @@ class GraphvizMacro(Component):
             f.close()
             map = "".join(map).replace('\n', '')
             buf.write('<map id="%s" name="%s">%s</map>' % (sha_key, sha_key, map))
-            buf.write('<img id="%s" src="%s/%s" usemap="#%s" alt="GraphViz image"/>' % (sha_key, self.prefix_url, img_name, sha_key))
+            buf.write('<img id="%s" src="%s/graphviz/%s" usemap="#%s" alt="GraphViz image"/>' % (sha_key, req.base_url, img_name, sha_key))
 
         else:
-            buf.write('<img src="%s/%s"/>' % (self.prefix_url, img_name))
+            buf.write('<img src="%s/graphviz/%s"/>' % (req.base_url, img_name))
 
         return buf.getvalue()
 
 
     def expand_wiki_links(self, match):
-        #self.log.debug('expand_wiki_links.match.groups: %s' % str(match.groups()))
-        
         wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
         html_url = wiki_to_oneliner(wiki_url, self.env)  # <a href="http://someurl">...</a>
         href     = re.search('href="(.*?)"', html_url)   # http://someurl
-        
-        url      = 'URL="%s"' % href.groups()[0]
-        #self.log.debug('expand_wiki_links.url: %(url)s' % locals())
-
-        return url
+        url      = href and href.groups()[0] or html_url
+        if self.out_format == 'svg':
+            format = 'URL="javascript:window.parent.location.href=\'%s\'"'
+        else:
+            format = 'URL="%s"'
+        return format % url
 
 
     def load_config(self):
@@ -280,10 +303,20 @@ class GraphvizMacro(Component):
                     trouble = True
                 #self.log.debug('self.cache_dir: %s' % self.cache_dir)
 
+
+            #Get optional configuration parameters from trac.ini.
+
+            # check for the default processor - processor
+            self.processor = self.config.get('graphviz', 'processor', GraphvizMacro.processors[0])
+            #self.log.debug('self.processor: %s' % self.processor)
+
             # check for the cmd_path entry
-            self.cmd_path = self.config.get('graphviz', 'cmd_path')
+            self.cmd_path = None
+            if sys.platform in GraphvizMacro.cmd_paths:
+                self.cmd_path = GraphvizMacro.cmd_paths[sys.platform]
+            self.cmd_path = self.config.get('graphviz', 'cmd_path', self.cmd_path)
             if not self.cmd_path:
-                msg = 'The <b>graphviz</b> section is missing the <b>cmd_path</b> field.'
+                msg = 'The <b>graphviz</b> section is missing the <b>cmd_path</b> field and there is no default for %s.' % sys.platform
                 buf = self.show_err(msg)
                 trouble = True
             elif not os.path.exists(self.cmd_path):
@@ -291,40 +324,31 @@ class GraphvizMacro(Component):
                 buf = self.show_err(msg)
                 trouble = True
 
+                #self.log.debug('self.cmd_path: %s' % self.cmd_path)
+
+            else:
+                pname = os.path.join(self.cmd_path, self.processor) + self.exe_suffix
+                if not os.path.exists(pname):
+                    msg = 'The default processor, <b>%s</b>, was not found.' % pname
+                    buf = self.show_err(msg)
+                    trouble = True
+
                 for name in GraphvizMacro.processors:
                     pname = os.path.join(self.cmd_path, name) + self.exe_suffix
                     if not os.path.exists(pname):
-                        msg = 'The <b>%s</b> program was not found.' % pname
-                        buf = self.show_err(msg)
-                        trouble = True
-
-                #self.log.debug('self.cmd_path: %s' % self.cmd_path)
-
-            # check for the prefix_url entry
-            self.prefix_url = self.config.get('graphviz', 'prefix_url')
-            #self.log.debug('self.prefix_url: %s' % self.prefix_url)
-            if not self.prefix_url:
-                msg = 'The <b>graphviz</b> section is missing the <b>prefix_url</b> field.'
-                buf = self.show_err(msg)
-                trouble = True
-
-
-            #Get optional configuration parameters from trac.ini.
+                        self.log.warn('The %s program was not found. The graphviz/%s macro will be disabled.' % (pname, name))
+                        GraphvizMacro.processors.remove(name)
 
             # check for the default output format - out_format
             self.out_format = self.config.get('graphviz', 'out_format', GraphvizMacro.formats[0])
             #self.log.debug('self.out_format: %s' % self.out_format)
-
-            # check for the default processor - processor
-            self.processor = self.config.get('graphviz', 'processor', GraphvizMacro.processors[0])
-            #self.log.debug('self.processor: %s' % self.processor)
 
             # check if png anti aliasing should be done - png_antialias
             self.png_anti_alias = self.boolean(self.config.get('graphviz', 'png_antialias', False))
             #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
 
             if self.png_anti_alias == True:
-                self.rsvg_path = self.config.get('graphviz', 'rsvg_path', '/usr/bin/rsvg')
+                self.rsvg_path = self.config.get('graphviz', 'rsvg_path', os.path.join(self.cmd_path, 'rsvg'))
 
                 if not os.path.exists(self.rsvg_path):
                     err = 'The rsvg program is set to <b>%s</b> but that path does not exist.' % self.rsvg_path
@@ -363,14 +387,21 @@ class GraphvizMacro(Component):
             # is there a graphviz default DPI setting?
             self.dpi = int(self.config.get('graphviz', 'default_graph_dpi', 96))
 
+        # setup mimetypes to support the IHTMLPreviewRenderer interface
+        if 'graphviz' not in MIME_MAP:
+            MIME_MAP['graphviz'] = 'application/graphviz'
+        for processor in GraphvizMacro.processors:
+            if processor not in MIME_MAP:
+                MIME_MAP[processor] = 'application/graphviz'
+
         return trouble, buf
 
 
     def launch(self, cmd, input):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
-	p_in, p_out, p_err = os.popen3(cmd)
+        p_in, p_out, p_err = os.popen3(cmd)
         if input:
-            p_in.writelines(input)
+            p_in.write(input)
         p_in.close()
         out = p_out.read()
         err = p_err.read()
@@ -383,7 +414,7 @@ class GraphvizMacro(Component):
         buf.write('<div id="content" class="error"><div class="message"> \n\
                    <strong>Graphviz macro processor has detected an error. Please fix the problem before continuing.</strong> \n\
                    <pre>%s</pre> \n\
-                   </div></div>' % msg)
+                   </div></div>' % escape(msg))
         self.log.error(msg)
         return buf
 
@@ -450,31 +481,49 @@ class GraphvizMacro(Component):
             pass
 
 
-    # IRequestHandler methods
-    def match_request(self, req):
-        return req.path_info.startswith('/graphviz')
-    
-
-    def process_request(self, req):
-        pieces = [item for item in req.path_info.split('/graphviz') if len(item)]
-        self.log.debug('process_request:pieces %s' % str(pieces))
-
-        trouble, msg = self.load_config()
-        if trouble:
-            return msg.getvalue()
-
-        img_path = os.path.join(self.cache_dir, pieces[0])
-
-        if os.path.exists(img_path):
-            req.send_file(img_path)
-
-        self.log.warning('File %s not found', img_path)
-        raise HTTPNotFound('File %s not found', img_path)
-
-
     # Extra helper functions
     def boolean(self, value):
         # This code is almost directly from trac.config in the 0.10 line...
         if isinstance(value, basestring):
             value = value.lower() in _TRUE_VALUES
         return bool(value)
+
+
+    MIME_TYPES = ('application/graphviz')
+
+    # IHTMLPreviewRenderer methods
+
+    def get_quality_ratio(self, mimetype):
+        self.log.error(mimetype)
+        if mimetype in self.MIME_TYPES:
+            return 2
+        return 0
+
+    def render(self, req, mimetype, content, filename=None, url=None):
+        ext = filename.split('.')[1]
+        name = ext == 'graphviz' and 'graphviz' or 'graphviz.%s' % ext
+        text = hasattr(content, 'read') and content.read() or content
+        return self.render_macro(req, name, text)
+
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info.startswith('/graphviz')
+
+
+    def process_request(self, req):
+        # check and load the configuration
+        trouble, msg = self.load_config()
+        if trouble:
+            return msg.getvalue()
+
+        pieces = [item for item in req.path_info.split('/graphviz') if len(item)]
+
+        if len(pieces):
+            pieces = [item for item in pieces[0].split('/') if len(item)]
+
+            if len(pieces):
+                name = pieces[0]
+                img_path = os.path.join(self.cache_dir, name)
+                return req.send_file(img_path)
+        return

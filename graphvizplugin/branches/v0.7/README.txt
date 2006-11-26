@@ -52,6 +52,16 @@ as shown below:
 #!graphviz.circo/gif
 
 
+Platform Specific Requirements
+==============================
+
+FreeBSD
++++++++
+
+On FreeBSD systems, installing the x11-fonts/urwfonts package will
+provide the fonts needed for graphviz to correctly generate images.
+
+
 Optional requirements
 =====================
 
@@ -104,28 +114,34 @@ file with these fields:
     cache_dir       - The directory that will be used to cache the 
                       generated images.
 
-    prefix_url      - The url to be used to find the cached images. This
-                      must point to the trac server's view of the
-                      cache_dir location.
-
     cmd_path        - Full path to the directory where the graphviz
-                      programs are located.
+                      programs are located. If not specified, the
+                      default is /usr/bin on Linux, c:\Program
+                      Files\ATT\Graphviz\bin on Windows and
+                      /usr/local/bin on FreeBSD 6.
 
     out_format      - Graph output format. Valid formats are: png, jpg,
                       svg, svgz, gif. If not specified, the default is
                       png. This setting can be overrided on a per-graph
                       basis.
 
-    processor       - Graphviz default processor. Valid processors are:
-                      dot, neato, twopi, fdp, circo. If not specified,
-                      the default is dot. This setting can be overrided
-                      on a per-graph basis.
+    processor       - Graphviz default processor. Valid processors
+                      are: dot, neato, twopi, fdp, circo. If not
+                      specified, the default is dot. This setting can
+                      be overrided on a per-graph basis.
+
+                      GraphvizMacro will verify that the default
+                      processor is installed and will not work if it
+                      is missing. All other processors are optional.
+                      If any of the other processors are missing, a
+                      warning message will be sent to the trac log and
+                      GraphvizMacro will continue to work.
 
     png_antialias   - If this entry exists in the configuration file,
-                      then PNG outputs will be antialiased and the
-                      rsvg_path must be defined.
+                      then PNG outputs will be antialiased.
 
     rsvg_path       - Full path to where the rsvg binary can be found.
+                      The default is cmd_path + rsvg.
 
     default_*       - These settings define the default graph, node and
                       edge attributes. They must be written as :
@@ -154,12 +170,6 @@ file with these fields:
                       contain. This is the high watermark for the
                       directory entry count.
 
-The cache_dir and prefix_url entries are related to each other. The
-cache_dir entry points to a location on the file system and the
-prefix_url points to the same location but from the trac server's
-point of view. This allows the graphviz programs to generate the
-images and the user's web browser to view them.
-
 The cache_dir directory must exist and the trac server must have read
 and write access.
 
@@ -181,11 +191,7 @@ Here is a sample graphviz section:
 
 [graphviz]
 cache_dir = /tmp/trac/htdocs/graphviz
-prefix_url = http://localhost:8000/trac/chrome/site/graphviz
-cmd_path = /usr/bin
-out_format = png
 png_antialias = true
-rsvg_path = /usr/bin/rsvg
 default_graph_fontname = "Andale Mono"
 default_graph_fontsize = 10
 
@@ -194,11 +200,7 @@ Here is a sample graphviz section that activates the cache manager:
 
 [graphviz]
 cache_dir = /tmp/trac/htdocs/graphviz
-prefix_url = http://localhost:8000/trac/chrome/site/graphviz
-cmd_path = /usr/bin
-out_format = png
 png_antialias = true
-rsvg_path = /usr/bin/rsvg
 default_graph_fontname = "Andale Mono"
 default_graph_fontsize = 10
 cache_manager = yes
@@ -221,9 +223,6 @@ Here's the same example but for Windows systems:
 
 [graphviz]
 cache_dir = C:\projects\plugins\env\trac\htdocs\graphviz
-prefix_url = http://localhost:8080/trac/chrome/site/graphviz
-cmd_path = c:\Program Files\ATT\Graphviz\bin
-out_format = png
 cache_manager = yes
 cache_max_size = 10000000
 cache_min_size = 5000000

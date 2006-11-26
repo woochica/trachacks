@@ -32,7 +32,7 @@ setup (
 dynamic generation of diagrams by the various graphviz programs. The
 text of a wiki page can contain the source text for graphviz and the
 web browser will show the resulting image.""",
-    license = """Copyright (C) 2005,2006 Peter Kropf
+    license = """Copyright (C) 2005, 2006 Peter Kropf
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
