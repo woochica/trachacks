@@ -30,13 +30,17 @@ class TimingEstimationAndBillingPage(Component):
             for report in reports_list:
                 title = report["title"]
                 #find the report id for the name
-                reportid = [self.reportmap[i][0]
-                            for i in range(0, len(self.reportmap))
-                            if self.reportmap[i][1] == title][0]
-                new_report = {"title" : title,
-                              "reportnumber" : reportid,
-                              "href" : "%s/%s" % (self.env.href.report(), reportid)}
-                new_reports_list.extend([ new_report ])
+                try:
+                    reportid = [r_id
+                                for (r_id, r_name) in self.reportmap
+                                if r_name == title][0]
+                
+                    new_report = {"title" : title,
+                                  "reportnumber" : reportid,
+                                  "href" : "%s/%s" % (self.env.href.report(), reportid)}
+                    new_reports_list.extend([ new_report ])
+                except:
+                    pass
             new_group["reports"] = new_reports_list
             new_reports.extend([new_group])
         return new_reports
