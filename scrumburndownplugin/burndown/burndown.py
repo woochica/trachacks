@@ -40,7 +40,7 @@ class BurndownComponent(Component):
         # See if the burndown table exists, if not, return True because we need to upgrade the database
         cursor = db.cursor()
         try:
-            cursor.execute('SELECT * FROM %s LIMIT 1', 'burndown')
+            cursor.execute('SELECT * FROM burndown LIMIT 1')
         except:
             needsUpgrade = True
             
