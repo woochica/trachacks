@@ -46,7 +46,6 @@ class TableMigration(object):
         self.sdb = self.sqlenv.get_db_cnx()
         self.pgdb = self.pgenv.get_db_cnx()
         self.pgdb_schema = self.pgdb.schema
-        self.pgdb.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         pass
 
     def lookupMethod(self, table):
@@ -209,7 +208,7 @@ def getPostgreSQLEnvironment(opts):
     try:
         cnx = env.get_db_cnx()
         cur = cnx.cursor()
-        cur.execute('select database_version from system');
+        cur.execute("select value from system where name = 'database_version'");
     except ProgrammingError:
         cnx.rollback()
         DatabaseManager(env).init_db()
@@ -232,6 +231,7 @@ def getAllTables(env):
                          FROM pg_catalog.pg_tables 
                         WHERE schemaname = %s"""
     cur.execute(select_tables, (schema,))
+    cnx.commit()
     return [table[0] for table in cur]
 
 def Main(opts):
