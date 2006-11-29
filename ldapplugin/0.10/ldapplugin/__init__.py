@@ -1,2 +1,2 @@
 # Ldap Plugin python package
-from ldapplugin.model import *
+from ldapplugin.api import *

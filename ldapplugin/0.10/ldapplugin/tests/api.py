@@ -1,9 +1,9 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 #
 # LDAP permission extension tests for Trac
 # 
 # Copyright (C) 2003-2006 Edgewall Software
-# Copyright (C) 2005-2006 Emmanuel Blot <manu.blot@gmail.com>
+# Copyright (C) 2005-2006 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -16,7 +16,7 @@
 #
 
 from trac.config import Configuration
-from ldapplugin.model import LdapPermissionGroupProvider,LdapPermissionStore
+from ldapplugin.api import LdapPermissionGroupProvider,LdapPermissionStore
 from trac.test import EnvironmentStub
 
 import unittest
