@@ -5,6 +5,7 @@ from api import IProjectSetupParticipant
 import inspect
 import sys
 import os
+import time
 
 class ProjectSetupParticipantBase(Component):
     """Base class for project setup participants."""
@@ -27,7 +28,7 @@ class ProjectSetupParticipantBase(Component):
         raise NotImplementedError
 
 class MakeTracEnvironmentAction(ProjectSetupParticipantBase):
-    """Make a new Trac environment using trac-admin initenv."""
+    """DO NOT USE. Make a new Trac environment using trac-admin initenv."""
     
     def execute_setup_action(self, req, proj, action, args):
         repo_type = hasattr(proj, 'repo_type') and proj.repo_type or 'svn'
@@ -45,15 +46,16 @@ class MakeTracEnvironmentAction(ProjectSetupParticipantBase):
                    ]) == 0
 
 class MakeSubversionRepositoryAction(ProjectSetupParticipantBase):
-    """Make a new Subversion repository using `svnadmin create`."""
+    """DO NOT USE. Make a new Subversion repository using `svnadmin create`."""
     
     def execute_setup_action(self, req, proj, action, args):
         print 'Failed output'
         print >>sys.stderr, 'Failed error 1\nFailed error 2\nFailed error 3'
+        time.sleep(60)
         return False
 
 class ApplyConfigSetAction(ProjectSetupParticipantBase):
-    """Apply a ConfigSet to a Trac environment."""
+    """DO NOT USE. Apply a ConfigSet to a Trac environment."""
     
     def execute_setup_action(self, req, proj, action, args):
         print 'Output 1'
@@ -61,4 +63,10 @@ class ApplyConfigSetAction(ProjectSetupParticipantBase):
         print >>sys.stderr,'Error 1'
         print 'Output 4'
         os.system('echo "Output 5"')
+        return True
+
+class DoNothingAction(ProjectSetupParticipantBase):
+    """Do nothing, just like it says.."""
+    
+    def execute_setup_action(self, req, proj, action, args):
         return True
