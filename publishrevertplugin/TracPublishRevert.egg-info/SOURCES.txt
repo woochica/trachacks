@@ -10,6 +10,7 @@ hooks/trac-post-commit
 publishrevert/__init__.py
 publishrevert/setchangeset.py
 publishrevert/svnpublish.py
+publishrevert/svnrevert.py
 publishrevert/templates/setchangeset.cs
 publishrevert/templates/svnpublish.cs
 scripts/svn_rev_check.rb

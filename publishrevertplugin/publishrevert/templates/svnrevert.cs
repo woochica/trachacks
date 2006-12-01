@@ -4,8 +4,11 @@
 <div id="content" class="changeset">
 <h1>Ticket <a href="../ticket/<?cs var:ticket_id ?>"><?cs var:ticket_id ?></a></h1>
 
-<a href="../svnpublish/<?cs var:ticket_id ?>">PUBLISH TO CLONE</a><br/>
-<a href="../svnrevert/<?cs var:ticket_id ?>">REVERT CLONE</a>
+<a href="../publish/<?cs var:ticket_id ?>">PUBLISH TO CLONE</a><br/>
+
+<br/>
+<?cs var:rev_output ?>
+<br/>
 
 <?cs def:node_change(item,cl,kind) ?><?cs 
   set:ndiffs = len(item.diff) ?><?cs
@@ -40,13 +43,13 @@
 <dl id="overview">
  <dt class="time">Changesets</dt>
  <dd class="time"><?cs
- each:changeset = ticket.setchangesets ?>
+ each:changeset = setchangesets ?>
   <a href="../changeset/<?cs var:changeset ?>"><?cs var:changeset ?></a><?cs
  /each ?></dd>
  <dt class="files">Files:</dt>
  <dd class="files">
   <ul><?cs each:item = setchangeset.changes ?>
-   <li><?cs var:item.path.new ?> <?cs var:item.rev.new ?>
+   <li><?cs var:item.path.new ?> <?cs var:item.rev.new ?> Prod Rev= <?cs var:item.prod_rev ?>
    </li>
   <?cs /each ?></ul>
   <br/><br/>

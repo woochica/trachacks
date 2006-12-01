@@ -39,7 +39,7 @@ from trac.ticket import Ticket
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup
 
-class SVNPublishModule(Component):
+class SVNRevertModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
@@ -72,7 +72,7 @@ class SVNPublishModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/svnpublish/([0-9]+)$', req.path_info)
+        match = re.match(r'/svnrevert/([0-9]+)$', req.path_info)
         if match:
             req.args['ticket_id'] = match.group(1)
             return 1
@@ -118,7 +118,7 @@ class SVNPublishModule(Component):
         add_stylesheet(req, 'common/css/changeset.css')
         add_stylesheet(req, 'common/css/diff.css')
         add_stylesheet(req, 'common/css/code.css')
-        return 'svnpublish.cs', None
+        return 'svnrevert.cs', None
 
     # ITimelineEventProvider methods
 
@@ -210,18 +210,9 @@ class SVNPublishModule(Component):
 
    # the following lines probably belong outside of this _render_html function and inside process_request instead
 	for info in filepaths:
-	    info['prod_rev'] = self.svn_rev_num(path)
-   	    revert_rev = info['prod_rev']
+	    revert_rev = self.db_rev_num(1,path)
 	    server = 1 # clone = 1, prod = 2
-	# TODO: 
-	    if(self.db_rev_num(server,info['path.new']) == "True"):
-	       self.update_rev_num(server,info['path.new'],revert_rev)
-	    else:
-               self.insert_rev_num(server,info['path.new'],revert_rev)
-	      
-	# now do the update
-            if(int(info['prod_rev']) < int(info['rev.new'])):
-	       self.svn_update(server,info['path.new'],info['rev.new'])
+            self.svn_update(server,info['path.new'],revert_rev)
             req.hdf['setchangeset.changes.%d' % idx] = info
 
 
@@ -324,12 +315,10 @@ class SVNPublishModule(Component):
         # Fetch the standard ticket fields
         cursor = db.cursor()
 	query = 'SELECT rev FROM file_revision WHERE server=%s AND file=%s'
-	cursor.execute(query,(server,filename))
+	cursor.execute(query, (server,filename))
+	db.commit()
         row = cursor.fetchone()
-	if(row == None):
-	  return "False"
-	else:
-	  return "True"
+	return row[0]
 
 
     def update_rev_num(self, server, filename, rev, db=None):
@@ -341,7 +330,7 @@ class SVNPublishModule(Component):
 
         cursor = db.cursor()
 
-	cursor.execute('UPDATE file_revision SET rev = %s WHERE server=%s AND file=%s',(rev, server, filename))
+	cursor.execute('UPDATE file_revision SET rev = %s WHERE server=%s AND file=%s', (rev, server, filename))
 	if(commit):
             db.commit()
 
