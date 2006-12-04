@@ -1,5 +1,5 @@
 db_version_key = 'TimingAndEstimationPlugin_Db_Version';
-db_version = "1"
+db_version = 3
 mylog = None;
 
 
@@ -10,7 +10,7 @@ def get_all(db, sql, *params):
         cur.execute(sql, params)
         data = list(cur.fetchall())
         desc = cur.description
-
+        db.commit();
     finally:
         cur.close()
         db.close()
@@ -23,7 +23,7 @@ def execute_non_query(con, sql, *params):
         cur.execute(sql, params)
         con.commit()
     finally:
-        cur.close()
+        cur.close() 
         con.close()
 
 
@@ -32,6 +32,7 @@ def get_scalar(db, sql, col=0, *params):
     try:
         cur.execute(sql, params)
         data = cur.fetchone();
+        db.commit();
         cur.close();
         db.close();
     except Exception, e:
@@ -53,7 +54,7 @@ def set_plugin_db_version(db_fn):
     if get_plugin_db_version(db_fn()):
         sql = "UPDATE system SET value='%s' WHERE name = '%s'" % (db_version, db_version_key)
     else:
-        sql = "INSERT INTO system (name, value) VALUES( '%s', '%s') " % ( db_version_key, db_version )
+        sql = "INSERT INTO system (name, value) VALUES( '%s', '%s') " % ( db_version_key, str(db_version) )
     execute_non_query(db_fn(), sql);
 
 def db_needs_upgrade(db):
@@ -61,17 +62,19 @@ def db_needs_upgrade(db):
     if not ver or int(ver) < int(db_version):
         return True
     return False
-    
+
 def db_table_exists(db, table):
     sql = "SELECT * FROM %s LIMIT 1" % table;
     cur = db.cursor()
     has_table = True;
     try:
         cur.execute(sql)
+        db.commit();
         cur.close()
         db.close()
     except Exception, e:
         has_table = False
+        
         cur.close()
         db.close()
     return has_table

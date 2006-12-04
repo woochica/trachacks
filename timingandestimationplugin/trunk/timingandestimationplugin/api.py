@@ -52,11 +52,12 @@ class TimeTrackingSetupParticipant(Component):
             self.upgrade_environment(None)
             
     def db_needs_upgrade(self):
+        bill_date = dbhelper.db_table_exists(self.env.get_db_cnx(), 'bill_date');
+        report_version = dbhelper.db_table_exists(self.env.get_db_cnx(), 'report_version');
         val =  dbhelper.db_needs_upgrade(self.env.get_db_cnx())
-        return val
+        return val or not bill_date or not report_version
         
     def db_do_upgrade(self):
-        print "Beginning DB Upgrade"
         bill_date = dbhelper.db_table_exists(self.env.get_db_cnx(), 'bill_date');
         report_version = dbhelper.db_table_exists(self.env.get_db_cnx(), 'report_version');
         if not bill_date:
@@ -69,6 +70,7 @@ class TimeTrackingSetupParticipant(Component):
             );
             """
             dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
+            
             
         if not report_version:
             print "Creating report_version table"
@@ -122,7 +124,7 @@ class TimeTrackingSetupParticipant(Component):
         return bit
                 
     def do_reports_upgrade(self):
-        print "Beginning Reports Upgrade"
+        self.log.debug( "Beginning Reports Upgrade");
         #make version hash
         _versions = dbhelper.get_result_set(self.env.get_db_cnx(),
                                            """
