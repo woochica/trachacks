@@ -242,12 +242,15 @@ class TracTicket(object):
 
         return tickets
 
-    def searchFixes(self, id, comment):
+    def searchFixes(self, id, jobs):
         """try to retrieve comment input string into ticket's changes stored
         in sqlite db.
         """
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+
+        begin_ticket_re = re.compile(r'see changelist')
+        ticket_re = re.compile(r'\d+')
 
         tickets = {}
         sql = 'SELECT newvalue FROM ticket_change where field="comment" and ticket=%d' % (id)
@@ -256,10 +259,14 @@ class TracTicket(object):
             row = cursor.fetchone()
             if row == None:
                 break
-            if row[0] == comment:
-                return ''
+            row = str(row)
+            if begin_ticket_re.search(row):
+                trac = set([])
+                for x in ticket_re.findall(row):
+                    trac.add(int(x))
+                jobs.difference_update(trac)
 
-        return comment
+        return jobs
 
     def updateTicket(self, id, ticket, notification):
         """
@@ -278,13 +285,18 @@ class TracTicket(object):
         tkt['owner'] = ticket['User']
         tkt['summary'] = ticket['Description']
 
+        jobs = set([])
         comment = ''
         if 'Fixes' in ticket:
             for f in ticket['Fixes']:
-                comment += '[%s] ' % (f)
-        if comment != '':
-            comment = 'see changelist : ' + comment
-        comment = self.searchFixes(id, comment)
+                jobs.add(int(f))
+            jobs = self.searchFixes(id, jobs)
+            if len(jobs) > 0:
+                comment = 'see changelist :'
+                for j in jobs:
+                    comment += ' [%d]' % j
+        if settings.get('debug', 0) > 1:
+            print "Trac ticket comment %s" % (comment)
 
         when = ticket['Date']
 
@@ -338,7 +350,7 @@ class TicketSynchronizer:
                 if rp['Date'] > rt['Date']:
                     fixes = self.tktperforce.searchFixes(key)
                     if len(fixes) != 0:
-                        self.mergedTickets[key]['Fixes'] = fixes
+                        rp['Fixes'] = fixes
                         nbRemoved = 0
                     self.mergedTickets[key] = rp
 
