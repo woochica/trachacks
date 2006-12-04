@@ -47,15 +47,15 @@ class TimeTrackingTicketObserver(Component):
 
         hours = readTicketValue("hours", float)
         totalHours = readTicketValue("totalhours", float)
-            
+
         if not hours == 0:
-            self.log.debug("Starting to munge the hours")
             db = self.env.get_db_cnx()
             ticket_id = ticket.id
             cl = ticket.get_changelog()
-
-            self.log.debug(dir(ticket))
-            self.log.debug(cl)
+            #self.log.debug("hours: "+str(hours ));
+            #self.log.debug("Dir_ticket:"+str(dir(ticket)))
+            #self.log.debug("ticket.values:"+str(ticket.values))
+            #self.log.debug("changelog:"+str(cl))
             
             if cl:
                 most_recent_change = cl[-1];
@@ -64,6 +64,7 @@ class TimeTrackingTicketObserver(Component):
             else:
                 change_time = ticket.time_created
                 author = ticket.values["reporter"]
+                save_ticket_change( db, ticket_id, author, change_time, "hours", 0.0, hours)
                 
             newtotal = str(totalHours+hours)
 
@@ -73,7 +74,6 @@ class TimeTrackingTicketObserver(Component):
 
     def ticket_created(self, ticket):
         """Called when a ticket is created."""
-        self.log.debug("About to act on the fact that a ticket was created")
         self.watch_hours(ticket)
                                
 
