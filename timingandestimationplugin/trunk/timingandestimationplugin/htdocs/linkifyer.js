@@ -76,7 +76,7 @@ var linkify =
    addBillingField("endbilling", "dateselect");
    
 
-   return function linkify( atag, basehref ){
+   return function ( atag, basehref ){
       var query = "";
       var haveAdded = false;
       function addToQuery(str){
