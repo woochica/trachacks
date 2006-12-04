@@ -1,0 +1,75 @@
+Index: trac/ticket/web_ui.py
+===================================================================
+--- trac/ticket/web_ui.py	(revision 4391)
++++ trac/ticket/web_ui.py	(working copy)
+@@ -214,6 +214,8 @@
+             # Store a timestamp in order to detect "mid air collisions"
+             data['timestamp'] = str(ticket.time_changed)
+ 
++        data['backrefs'] = self._get_backrefs(db, ticket)
++		
+         self._insert_ticket_data(req, db, ticket, data,
+                                  get_reporter_id(req, 'author'))
+ 
+@@ -716,6 +718,40 @@
+         fragment = cnum and '#comment:'+cnum or ''
+         req.redirect(req.href.ticket(ticket.id) + fragment)
+ 
++    def _get_backrefs(self, db, ticket):
++        id = ticket.id
++        cursor = db.cursor()
++        refs = ""
++
++        cursor.execute("SELECT 0, id, description "
++                       "FROM ticket WHERE description LIKE '%%#%s%%' "
++                       " OR description LIKE '%%ticket:%s%%' "
++                       "UNION "
++                       "SELECT 0, t.id, newvalue "
++                       "FROM ticket_change c JOIN ticket t on c.ticket = t.id "
++                       "WHERE newvalue LIKE '%%#%s%%' "
++                       " OR newvalue LIKE '%%ticket:%s%%' "
++                       "UNION "
++                       "SELECT 1, rev, message "
++                       "FROM revision WHERE message LIKE '%%#%s%%' "
++                       "UNION "
++                       "SELECT 2, name, text "
++                       "FROM wiki WHERE (text LIKE '%%#%s%%' "
++                       " OR text LIKE '%%ticket:%s%%') "
++                       "AND version = (SELECT max(version) FROM wiki w "
++                       " WHERE w.name = wiki.name) "
++                       "ORDER BY 1 desc, 2"
++                       % ((id,) * 7))
++
++        for idx, row in enumerate(cursor):
++            rtyp, rid, text = row
++            # check weather the link is an single word
++            if re.search(r"(\s|^)#%s(\s|$)" % id, text):
++                ref = ('#[ '[rtyp] + str(rid) + ' ] '[rtyp])
++                refs += ref.strip() + " - "
++        return refs[:-3]
++        
++		
+     def _insert_ticket_data(self, req, db, ticket, data, reporter_id):
+         """Insert ticket data into the hdf"""
+         replyto = req.args.get('replyto')
+Index: templates/ticket_view.html
+===================================================================
+--- templates/ticket_view.html	(revision 4391)
++++ templates/ticket_view.html	(working copy)
+@@ -93,6 +93,16 @@
+             </div>
+           </div>
+         </form>
++
++        <py:if test="backrefs">
++          <div class="description">
++            <h3 id="comment:backref">Referenced by</h3>
++            <div class="searchable">
++              ${wiki_to_html(backrefs)} 
++            </div>
++          </div>
++        </py:if>
++
+       </div>
+ 
+       <py:if test="not version and version != 0">
