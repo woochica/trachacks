@@ -21,6 +21,17 @@ EXCLUDE_RES = [
     re.compile(r'----(\r)?$\n^Back up: \[\[ParentWiki\]\]', re.M|re.I)
 ]
 
+class HTMLOutputFormatter(Component):
+    implements(ICombineWikiFormat)
+    
+    def combinewiki_formats(self, req):
+        yield 'html', 'HTML'
+        
+    def process_combinewiki(self, req, format, title, pages):    
+        req.hdf['combinewiki.title'] = title
+        req.hdf['combinewiki.content'] = [wiki_to_html(WikiPage(self.env, name).text, self.env, req) for name in pages]
+        req.display('combinewiki_html.cs', 'text/html')
+
 class PDFOutputFormat(Component):
     """Output combined wiki pages as a PDF using HTMLDOC."""
     
