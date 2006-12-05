@@ -252,23 +252,10 @@ class TiddlyWikiFormatter(Formatter):
         listid = match[ldepth]
         ldepth = ldepth//2 + 1
         self.in_list_item = True
-        class_ = start = None
         if listid in '-*':
-            type_ = 'ul'
             self.out.write('%s '%('*'*ldepth))
         else:
             self.out.write('%s '%('#'*ldepth))
-            type_ = 'ol'
-            idx = '01iI'.find(listid)
-            if idx >= 0:
-                class_ = ('arabiczero', None, 'lowerroman', 'upperroman')[idx]
-            elif listid.isdigit():
-                start = match[ldepth:match.find('.')]
-            elif listid.islower():
-                class_ = 'loweralpha'
-            elif listid.isupper():
-                class_ = 'upperalpha'
-        #self._set_list_depth(ldepth, type_, class_, start)
         return ''
         
     def handle_code_block(self, line):
@@ -327,8 +314,10 @@ class TiddlyWikiFormatter(Formatter):
 
     # Block quote formatting
     def _indent_formatter(self, match, fullmatch):
-        idepth = len(fullmatch.group('idepth'))//2
-        self.out.write('>'*idepth)
+        idepth = len(fullmatch.group('idepth'))
+        if not self.in_def_list:
+            #self.out.write('>'*(idepth//2))
+            return '>'*(idepth//2)
         return ''
         
     def _citation_formatter(self, match, fullmatch):
@@ -378,6 +367,21 @@ class TiddlyWikiFormatter(Formatter):
             self.close_table_row()
             self.out.write('')
             self.in_table = 0
+
+    # Definition Lists formatting
+    def _definition_formatter(self, match, fullmatch):
+        tmp = self.in_def_list and '</dd>' or '<html>%s<dl>'%os.linesep
+        definition = match[:match.find('::')]
+        out = StringIO()
+        TiddlyWikiFormatter(self.env, self.req).format(definition, out)
+        tmp += '<dt>%s</dt><dd>' % out.getvalue()
+        self.in_def_list = True
+        return tmp
+
+    def close_def_list(self):
+        if self.in_def_list:
+            self.out.write('</dd></dl>\n</html>\n')
+        self.in_def_list = False
                 
 class TiddlyWikiProcessor(WikiProcessor):
     
