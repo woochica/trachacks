@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCombineWiki',
-    version = '1.1',
+    version = '1.2',
     packages = ['combinewiki'],
     package_data={ 'combinewiki' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
@@ -21,6 +21,7 @@ setup(
 
     entry_points = {
         'trac.plugins': [
+            'combinewiki.formats = combinewiki.formats',
             'combinewiki.web_ui = combinewiki.web_ui',
         ],
     },

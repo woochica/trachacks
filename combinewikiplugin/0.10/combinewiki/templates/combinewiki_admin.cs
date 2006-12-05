@@ -86,7 +86,9 @@
 </fieldset>
 <fieldset>
     <legend>Output Format</legend>
-    <label><input type="radio" name="format" value="pdf" checked="checked" />PDF</label>
+    <?cs each:format = combinewiki.formats ?>
+    <label><input type="radio" name="format" value="<?cs name:format ?>" <?cs if:first(format) ?>checked="checked"<?cs /if ?> /><?cs var:format.name ?></label>
+    <?cs /each ?>
 </fieldset>
 <input type="hidden" name="rightpages_all" value="" />
 <div class="buttons">
