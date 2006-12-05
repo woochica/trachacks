@@ -324,7 +324,61 @@ class TiddlyWikiFormatter(Formatter):
             return '[[%s|%s]]'%(text, url)
         else:
             return url
-    
+
+    # Block quote formatting
+    def _indent_formatter(self, match, fullmatch):
+        idepth = len(fullmatch.group('idepth'))//2
+        self.out.write('>'*idepth)
+        return ''
+        
+    def _citation_formatter(self, match, fullmatch):
+        cdepth = len(fullmatch.group('cdepth').replace(' ', ''))
+        self.out.write('>'*cdepth)
+        return ''
+
+
+    # Table formatting    
+    def _last_table_cell_formatter(self, match, fullmatch):
+        return '|'
+
+    def _table_cell_formatter(self, match, fullmatch):
+        self.open_table()
+        self.open_table_row()
+        if self.in_table_cell:
+            return '|'
+        else:
+            self.in_table_cell = 1
+            return '|'
+
+    def open_table(self):
+        if not self.in_table:
+            self.close_paragraph()
+            self.close_list()
+            self.close_def_list()
+            self.in_table = 1
+            self.out.write('')
+
+    def open_table_row(self):
+        if not self.in_table_row:
+            self.open_table()
+            self.in_table_row = 1
+            self.out.write('')
+
+    def close_table_row(self):
+        if self.in_table_row:
+            self.in_table_row = 0
+            if self.in_table_cell:
+                self.in_table_cell = 0
+                self.out.write('')
+
+            self.out.write('')
+
+    def close_table(self):
+        if self.in_table:
+            self.close_table_row()
+            self.out.write('')
+            self.in_table = 0
+                
 class TiddlyWikiProcessor(WikiProcessor):
     
     def _default_processor(self, req, text):
