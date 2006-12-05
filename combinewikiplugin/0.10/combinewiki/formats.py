@@ -116,6 +116,7 @@ class TiddlyWikiOutputFormat(Component):
     
     STANDALONE_LINK_RE = re.compile(r'<a class="(?:missing )?wiki"[^>]*>([^>]+?)(?:\?)?</a>')
     HR_RE = re.compile(r'<hr />')
+    LINK_RE = re.compile(r'<a[^>]* href="([^"]*)"[^>]*>([^>]*)</a>')
     
     def combinewiki_formats(self, req):
         yield 'tiddlywiki', 'TiddlyWiki'
@@ -124,6 +125,16 @@ class TiddlyWikiOutputFormat(Component):
         tiddlers = []
         #formatter = Formatter(self.env, req)
         formatter = TiddlyWikiFormatter(self.env, req)
+
+        def make_link(md):
+            href, label = md.groups()
+            #if href.startswith(req.href.wiki()):
+            #    href = href[len(req.href.wiki())+1:]
+            #    if href == label:
+            #        return href
+            if href.startswith('/'):
+                href = req.abs_href(href)
+            return '[[%s|%s]]'%(label, href)
 
         for name in pages:
             tiddler = {}
@@ -143,6 +154,7 @@ class TiddlyWikiOutputFormat(Component):
             formatted = out.getvalue()
             formatted = self.STANDALONE_LINK_RE.sub('\\1', formatted)
             formatted = self.HR_RE.sub('----', formatted)
+            formatted = self.LINK_RE.sub(make_link, formatted)
             tiddler['content'] = formatted
 
             tiddlers.append(tiddler)
@@ -158,6 +170,8 @@ class TiddlyWikiOutputFormat(Component):
                 })
         default_page('MainMenu', '\n'.join(pages))
         default_page('SiteTitle', title)
+        default_page('SiteSubtitle', '')
+        default_page('DefaultTiddlers', pages[0])
             
         req.hdf['combinewiki.tiddlers'] = tiddlers
         req.display('combinewiki_tiddlywiki.cs', 'text/html')
