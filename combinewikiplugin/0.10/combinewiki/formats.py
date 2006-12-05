@@ -168,7 +168,7 @@ class TiddlyWikiOutputFormat(Component):
                     'ctime': self._convert_time(),
                     'content': c,
                 })
-        default_page('MainMenu', '\n'.join(pages))
+        default_page('MainMenu', '\n'.join(['[[%s|%s]]'%(p,p) for p in pages]))
         default_page('SiteTitle', title)
         default_page('SiteSubtitle', '')
         default_page('DefaultTiddlers', pages[0])
