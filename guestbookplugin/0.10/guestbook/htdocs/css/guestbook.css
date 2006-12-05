@@ -1,0 +1,54 @@
+div.guestbook
+{
+  margin: 1.5em 0em 4em 0em;
+  padding: 0em 0em 0em 0em;
+}
+
+.guestbook table.message
+{
+  margin: auto;
+  margin-top: 1em;
+  border: solid 1px #aaa;
+  width: 60%;
+}
+
+.guestbook tr
+{
+  border-collapse: collapse;
+}
+
+.guestbook th
+{
+  padding: 0.2em 0.5em 0.2em 0.5em;
+  font-weight: bold;
+}
+
+.guestbook td
+{
+  padding: 0.2em 0.5em 0.2em 0.5em;
+}
+
+.guestbook .header
+{
+  background-color: #ddd;
+}
+
+.guestbook .row
+{
+
+}
+
+.guestbook .left
+{
+  text-align: left;
+}
+
+.guestbook .right
+{
+  text-align: right;
+}
+
+.guestbook .textfield
+{
+  width: 60%;
+}
