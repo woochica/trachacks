@@ -115,6 +115,7 @@ class TiddlyWikiOutputFormat(Component):
     implements(ICombineWikiFormat)
     
     STANDALONE_LINK_RE = re.compile(r'<a class="(?:missing )?wiki"[^>]*>([^>]+?)(?:\?)?</a>')
+    HR_RE = re.compile(r'<hr />')
     
     def combinewiki_formats(self, req):
         yield 'tiddlywiki', 'TiddlyWiki'
@@ -141,6 +142,7 @@ class TiddlyWikiOutputFormat(Component):
             
             formatted = out.getvalue()
             formatted = self.STANDALONE_LINK_RE.sub('\\1', formatted)
+            formatted = self.HR_RE.sub('----', formatted)
             tiddler['content'] = formatted
 
             tiddlers.append(tiddler)
@@ -383,6 +385,22 @@ class TiddlyWikiFormatter(Formatter):
             self.out.write('</dd></dl>\n</html>\n')
         self.in_def_list = False
                 
+    # WikiMacros
+    def _macro_formatter(self, match, fullmatch):
+        name = fullmatch.group('macroname')
+        if name.lower() == 'br':
+            return '<br />'
+        args = fullmatch.group('macroargs')
+        try:
+            macro = WikiProcessor(self.env, name)
+            rv = macro.process(self.req, args, True)
+        except Exception, e:
+            self.env.log.error('Macro %s(%s) failed' % (name, args),
+                               exc_info=True)
+            rv = system_message('Error: Macro %s(%s) failed' % (name, args),
+                                e)
+        return '<html>\n%s\n</html>'%rv
+
 class TiddlyWikiProcessor(WikiProcessor):
     
     def _default_processor(self, req, text):
