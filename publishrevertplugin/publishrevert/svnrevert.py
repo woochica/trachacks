@@ -55,6 +55,7 @@ class SVNRevertModule(Component):
     default_ssh_path = "/usr/bin"
     default_ssh_user = "trac"
     default_htdoc_path = "/var/www/vra1"
+    default_lockfile = '/var/www/vra1/trunk/www/trac_publishrevert'
 
     # INavigationContributor methods
 
@@ -78,7 +79,7 @@ class SVNRevertModule(Component):
             return 1
 
     def process_request(self, req, db=None):
-        req.perm.assert_permission('CHANGESET_VIEW')
+        req.perm.assert_permission('TRAC_ADMIN')
 
         if not db:
             self.db = self.env.get_db_cnx()
@@ -94,31 +95,34 @@ class SVNRevertModule(Component):
             req.redirect(self.env.href.svnpublish(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
-	from publishrevert.setchangeset import SetChangesetModule
-	setchangeset = SetChangesetModule(self.env)
-        setchangesets = setchangeset.get_setchangesets(ticket_id)
+	if(ticket['ticketaction'] == "CloneTest"):
+  	    from publishrevert.setchangeset import SetChangesetModule
+	    setchangeset = SetChangesetModule(self.env)
+            setchangesets = setchangeset.get_setchangesets(ticket_id)
 
-	# get the list of changesets for the ticket_id
-	# then loop through and get the actual changesets like the following line
-	chgset = []
-	for rev in setchangesets:
-	    authzperm.assert_permission_for_changeset(rev)
-	    changeset = repos.get_changeset(rev)
+	    # get the list of changesets for the ticket_id
+	    # then loop through and get the actual changesets like the following line
+	    chgset = []
+	    for rev in setchangesets:
+	        authzperm.assert_permission_for_changeset(rev)
+	        changeset = repos.get_changeset(rev)
 
-	    # now loop through the files in changeset to get all the paths
-	    # and for each path, find the current test/prod revision number and save that info
-            chgset.append(changeset)
-	    req.check_modified(changeset.date,
-                      diff_options[0] + ''.join(diff_options[1]))
+	        # now loop through the files in changeset to get all the paths
+	        # and for each path, find the current test/prod revision number and save that info
+                chgset.append(changeset)
+	        req.check_modified(changeset.date,
+                          diff_options[0] + ''.join(diff_options[1]))
 
-        format = req.args.get('format')
-
-        self._render_html(req, ticket, repos, chgset, diff_options)
-	req.hdf['setchangesets'] = setchangesets
-        add_stylesheet(req, 'common/css/changeset.css')
-        add_stylesheet(req, 'common/css/diff.css')
-        add_stylesheet(req, 'common/css/code.css')
-        return 'svnrevert.cs', None
+            format = req.args.get('format')
+            self._render_html(req, ticket, repos, chgset, diff_options)
+	    req.hdf['setchangesets'] = setchangesets
+	    ticket['ticketaction'] = 'Doing'
+	    ticket.save_changes(req.authname, 'reverted clone', 0, db)
+	    req.hdf['message'] = 'Successfully Reverted All Files'
+ 	else:
+	    req.hdf['error'] = 'Error: not in correct state to publish'
+ 
+        return 'setchangeset.cs', None
 
     # ITimelineEventProvider methods
 
@@ -203,18 +207,19 @@ class SVNRevertModule(Component):
 
 	       if self.use_file(info, filepaths):
 		       filepaths.append(info)
-        	       idx += 1
 
 	       hidden_properties = [p.strip() for p
                              in self.config.get('browser', 'hide_properties').split(',')]
 
    # the following lines probably belong outside of this _render_html function and inside process_request instead
+	self.svn_init()
 	for info in filepaths:
 	    revert_rev = self.db_rev_num(1,path)
 	    server = 1 # clone = 1, prod = 2
             self.svn_update(server,info['path.new'],revert_rev)
             req.hdf['setchangeset.changes.%d' % idx] = info
-
+ 	    idx += 1
+	self.svn_close()
 
     def use_file(self, newchange, filepaths):
 	for path in filepaths:
@@ -347,3 +352,13 @@ class SVNRevertModule(Component):
 	cursor.execute(query, (rev,filename,server))
 	if(commit):
 	    db.commit()
+
+    def svn_init(self):
+	# touch the file
+	cmd="%s/ssh %s@%s touch %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
+	output = commands.getoutput(cmd)
+
+    def svn_close(self):
+	# delete the file
+	cmd="%s/ssh %s@%s rm -f %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
+	output = commands.getoutput(cmd)

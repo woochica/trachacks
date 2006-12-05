@@ -38,7 +38,9 @@ from trac.util import escape, Markup
 class SetChangesetModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
-               ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
+               ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider) 
+
+# need to add IRequestFilter when we upgrade
 
     # INavigationContributor methods
 
@@ -92,6 +94,7 @@ class SetChangesetModule(Component):
 
 	
 	setchangesets = ticket.setchangesets
+	req.hdf['ticket'] = ticket
 
 	# get the list of changesets for the ticket_id
 	# then loop through and get the actual changesets like the following line
@@ -106,13 +109,6 @@ class SetChangesetModule(Component):
         format = req.args.get('format')
 
         self._render_html(req, ticket, repos, chgset, diff_options)
-        add_link(req, 'alternate', '?format=diff', 'Unified Diff',
-                 'text/plain', 'diff')
-        add_link(req, 'alternate', '?format=zip', 'Zip Archive',
-                 'application/zip', 'zip')
-        add_stylesheet(req, 'common/css/changeset.css')
-        add_stylesheet(req, 'common/css/diff.css')
-        add_stylesheet(req, 'common/css/code.css')
         return 'setchangeset.cs', None
 
     # ITimelineEventProvider methods
@@ -194,7 +190,6 @@ class SetChangesetModule(Component):
 	for changeset in chgset[::-1]:
 
             for path, kind, change, base_path, base_rev in changeset.get_changes():
-
                info = {'change': change}
                if base_path:
                    info['path.old'] = base_path
@@ -216,7 +211,6 @@ class SetChangesetModule(Component):
 
 	       hidden_properties = [p.strip() for p
                              in self.config.get('browser', 'hide_properties').split(',')]
-
 
 
     def use_file(self, newchange, filepaths):
@@ -398,3 +392,8 @@ class SetChangesetModule(Component):
 
         ticket._old = {}
         ticket.time_changed = when
+
+    def post_process_request(self, req, template, content_type):
+        match = re.match(r'/ticket/([0-9]+)$', req.path_info)
+        if match:
+            req.hdf['ticket.setchangeset'] = Markup('<a href="...">...</a>')

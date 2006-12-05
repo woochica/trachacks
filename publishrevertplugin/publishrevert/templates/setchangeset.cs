@@ -2,10 +2,13 @@
 <?cs include "macros.cs"?>
 
 <div id="content" class="changeset">
-<h1>Ticket <a href="../ticket/<?cs var:ticket_id ?>"><?cs var:ticket_id ?></a></h1>
-
+<h1>Ticket <a href="../ticket/<?cs var:ticket_id ?>"><?cs var:ticket_id ?></a> <?cs var:ticket['ticketaction'] ?></h1>
+<?cs if:ticket['ticketaction'] == 'ClonePublish' ?>
 <a href="../svnpublish/<?cs var:ticket_id ?>">PUBLISH TO CLONE</a><br/>
+<?cs /if ?>
+<?cs if:ticket['ticketaction'] == 'CloneTest' ?>
 <a href="../svnrevert/<?cs var:ticket_id ?>">REVERT CLONE</a>
+<?cs /if ?>
 
 <?cs def:node_change(item,cl,kind) ?><?cs 
   set:ndiffs = len(item.diff) ?><?cs
@@ -38,7 +41,11 @@
 <?cs /def ?>
 
 <dl id="overview">
- <dt class="time">Changesets</dt>
+ <dt class="time">Errors:</dt><dd><?cs var:error ?>
+ </dd>
+ <dt class="time">Messages:</dt><dd><?cs var:message ?>
+ </dd>
+ <dt class="time">Changesets:</dt>
  <dd class="time"><?cs
  each:changeset = ticket.setchangesets ?>
   <a href="../changeset/<?cs var:changeset ?>"><?cs var:changeset ?></a><?cs
@@ -56,18 +63,4 @@
  </dd>
 </dl>
 
-<div class="diff">
- <div id="legend">
-  <h3>Legend:</h3>
-  <dl>
-   <dt class="unmod"></dt><dd>Unmodified</dd>
-   <dt class="add"></dt><dd>Added</dd>
-   <dt class="rem"></dt><dd>Removed</dd>
-   <dt class="mod"></dt><dd>Modified</dd>
-   <dt class="cp"></dt><dd>Copied</dd>
-   <dt class="mv"></dt><dd>Moved</dd>
-  </dl>
- </div>
-
-</div>
 <?cs include "footer.cs"?>

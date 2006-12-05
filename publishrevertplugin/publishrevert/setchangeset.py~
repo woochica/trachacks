@@ -16,16 +16,12 @@
 # Author: Jonas Borgström <jonas@edgewall.com>
 #         Christopher Lenz <cmlenz@gmx.de>
 
-# from __future__ import generators
-# import time
+from __future__ import generators
+import time
 import re
-import commands
 
 from trac import mimeview, util
 from trac.core import *
-
-# the following line should be added when upgrading to the newest version of trac
-# from trac.config import BoolOption, Option
 from trac.perm import IPermissionRequestor
 from trac.Search import ISearchSource, query_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
@@ -39,23 +35,10 @@ from trac.ticket import Ticket
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup
 
-class SVNPublishModule(Component):
+class SetChangesetModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
-
-# the folloing line will be used when we upgrade to the newest version of Trac
-#    default_svn_path = Option('publishrevert', 'default_svn_path', '',
-# 	        """/usr/bin""")
-
-# the following options will be deprecated in facor of the previous lines when we upgrade Trac
-    default_svn_path = "/usr/bin"
-    default_test_remote_host = "clone"
-#    default_prod_remote_host = "vacationrentalagent.com"
-    default_ssh_path = "/usr/bin"
-    default_ssh_user = "trac"
-    default_htdoc_path = "/var/www/vra1"
-    default_lockfile = '/var/www/vra1/trunk/www/trac_publishrevert'
 
     # INavigationContributor methods
 
@@ -73,16 +56,19 @@ class SVNPublishModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/svnpublish/([0-9]+)$', req.path_info)
+        match = re.match(r'/setchangeset/([0-9]+)$', req.path_info)
         if match:
             req.args['ticket_id'] = match.group(1)
             return 1
 
     def process_request(self, req, db=None):
-        req.perm.assert_permission('TRAC_ADMIN')
+        req.perm.assert_permission('CHANGESET_VIEW')
 
         if not db:
-            self.db = self.env.get_db_cnx()
+            db = self.env.get_db_cnx()
+
+        # Fetch the standard ticket fields
+        cursor = db.cursor()
 
         ticket_id = req.args.get('ticket_id')
 	req.hdf['ticket_id'] = ticket_id
@@ -92,40 +78,52 @@ class SVNPublishModule(Component):
 
         diff_options = get_diff_options(req)
         if req.args.has_key('update'):
-            req.redirect(self.env.href.svnpublish(ticket_id))
+            req.redirect(self.env.href.setchangeset(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
-        chgset = []
 
-	if(ticket['ticketaction'] == "ClonePublish"):
-            from publishrevert.setchangeset import SetChangesetModule
-  	    setchangeset = SetChangesetModule(self.env)
-            setchangesets = setchangeset.get_setchangesets(ticket_id)
+	ticket.setchangesets = self.get_setchangesets(ticket_id,db)
 
-	    # get the list of changesets for the ticket_id
-	    # then loop through and get the actual changesets like the following line
-	    for rev in setchangesets:
-	        authzperm.assert_permission_for_changeset(rev)
-	        changeset = repos.get_changeset(rev)
+	ticket.values['setchangesets'] = ticket.setchangesets
 
-	    # now loop through the files in changeset to get all the paths
-	    # and for each path, find the current test/prod revision number and save that info
-                chgset.append(changeset)
-	        req.check_modified(changeset.date,
-                          diff_options[0] + ''.join(diff_options[1]))
+	ticket.values['changesets'] = ""
+	for changeset in ticket.setchangesets:
+	    ticket.values['changesets'] +=  str(changeset)
 
-            format = req.args.get('format')
-            self._render_html(req, ticket, repos, chgset, diff_options)
-	    req.hdf['setchangesets'] = setchangesets
-	    ticket['ticketaction'] = 'CloneTest'
-	    ticket.save_changes(req.authname, 'published to clone', 0, db)
-	    req.hdf['message'] = 'Successfully Published All Files'
-	else:
-	    req.hdf['error'] = 'Error: not in correct state to publish'
+	
+	setchangesets = ticket.setchangesets
+	req.hdf['ticket'] = ticket
 
+	# get the list of changesets for the ticket_id
+	# then loop through and get the actual changesets like the following line
+	chgset = []
+	for rev in setchangesets:
+	    authzperm.assert_permission_for_changeset(rev)
+	    changeset = repos.get_changeset(rev)
+            chgset.append(changeset)
+	    req.check_modified(changeset.date,
+                      diff_options[0] + ''.join(diff_options[1]))
+
+        format = req.args.get('format')
+
+        self._render_html(req, ticket, repos, chgset, diff_options)
         return 'setchangeset.cs', None
 
     # ITimelineEventProvider methods
+
+    def get_setchangesets(self, ticket_id, db=None):
+        if not db:
+            db = self.env.get_db_cnx()
+
+        # Fetch the standard ticket fields
+        cursor = db.cursor()
+
+	cursor.execute("SELECT rev FROM ticket_revision WHERE ticket_id=%s",
+			(ticket_id,))
+	setchangesets = []
+	for rev in cursor:
+	    setchangesets.append(rev[0])
+	return setchangesets
 
     def get_timeline_filters(self, req):
         if req.perm.has_permission('CHANGESET_VIEW'):
@@ -190,7 +188,6 @@ class SVNPublishModule(Component):
 	for changeset in chgset[::-1]:
 
             for path, kind, change, base_path, base_rev in changeset.get_changes():
-
                info = {'change': change}
                if base_path:
                    info['path.old'] = base_path
@@ -202,40 +199,115 @@ class SVNPublishModule(Component):
                    info['rev.new'] = changeset.rev
                    info['browser_href.new'] = self.env.href.browser(path,
                                                                     rev=changeset.rev)
-
-#              if change in (Changeset.COPY, Changeset.EDIT, Changeset.MOVE):
-               edits.append((idx, path, kind, base_path, base_rev))
+               if change in (Changeset.COPY, Changeset.EDIT, Changeset.MOVE):
+                   edits.append((idx, path, kind, base_path, base_rev))
 
 	       if self.use_file(info, filepaths):
+	               req.hdf['setchangeset.changes.%d' % idx] = info
 		       filepaths.append(info)
+        	       idx += 1
 
 	       hidden_properties = [p.strip() for p
                              in self.config.get('browser', 'hide_properties').split(',')]
 
-   # the following lines probably belong outside of this _render_html function and inside process_request instead
-	self.svn_init()
-	for info in filepaths:
-	    info['prod_rev'] = self.svn_rev_num(path)
-   	    revert_rev = info['prod_rev']
-	    server = 1 # clone = 1, prod = 2
-	# TODO: 
-	    if(self.db_rev_num(server,info['path.new']) == "True"):
-	       self.update_rev_num(server,info['path.new'],revert_rev)
-	    else:
-               self.insert_rev_num(server,info['path.new'],revert_rev)
-	      
-	# now do the update
-            if(int(info['prod_rev']) < int(info['rev.new'])):
-	       self.svn_update(server,info['path.new'],info['rev.new'])
-            req.hdf['setchangeset.changes.%d' % idx] = info
-	    idx += 1
-	self.svn_close()
 
     def use_file(self, newchange, filepaths):
 	for path in filepaths:
             if path['path.new'] == newchange['path.new']:
                     return False
 	return True
+
+    def _render_diff(self, req, repos, chgset, diff_options):
+        """Raw Unified Diff version"""
+        req.send_response(200)
+        req.send_header('Content-Type', 'text/plain;charset=utf-8')
+        req.send_header('Content-Disposition', 'inline;'
+                        'filename=Changeset%s.diff' % chgset.rev)
+        req.end_headers()
+
+        for path, kind, change, base_path, base_rev in chgset.get_changes():
+            if change == Changeset.ADD:
+                old_node = None
+            else:
+                old_node = repos.get_node(base_path or path, base_rev)
+            if change == Changeset.DELETE:
+                new_node = None
+            else:
+                new_node = repos.get_node(path, chgset.rev)
+
+            # TODO: Property changes
+
+            # Content changes
+            if kind == 'dir':
+                continue
+
+            default_charset = self.config.get('trac', 'default_charset')
+            new_content = old_content = ''
+            new_node_info = old_node_info = ('','')
+
+            if old_node:
+                charset = mimeview.get_charset(old_node.content_type) or \
+                          default_charset
+                old_content = util.to_utf8(old_node.get_content().read(),
+                                           charset)
+                old_node_info = (old_node.path, old_node.rev)
+            if mimeview.is_binary(old_content):
+                continue
+
+            if new_node:
+                charset = mimeview.get_charset(new_node.content_type) or \
+                          default_charset
+                new_content = util.to_utf8(new_node.get_content().read(),
+                                           charset)
+                new_node_info = (new_node.path, new_node.rev)
+            if mimeview.is_binary(new_content):
+                continue
+
+            if old_content != new_content:
+                context = 3
+                for option in diff_options[1]:
+                    if option.startswith('-U'):
+                        context = int(option[2:])
+                        break
+                req.write('Index: ' + path + util.CRLF)
+                req.write('=' * 67 + util.CRLF)
+                req.write('--- %s (revision %s)' % old_node_info +
+                          util.CRLF)
+                req.write('+++ %s (revision %s)' % new_node_info +
+                          util.CRLF)
+                for line in unified_diff(old_content.splitlines(),
+                                         new_content.splitlines(), context,
+                                         ignore_blank_lines='-B' in diff_options[1],
+                                         ignore_case='-i' in diff_options[1],
+                                         ignore_space_changes='-b' in diff_options[1]):
+                    req.write(line + util.CRLF)
+
+    def _render_zip(self, req, repos, chgset):
+        """ZIP archive with all the added and/or modified files."""
+        req.send_response(200)
+        req.send_header('Content-Type', 'application/zip')
+        req.send_header('Content-Disposition', 'attachment;'
+                        'filename=Changeset%s.zip' % chgset.rev)
+        req.end_headers()
+
+        try:
+            from cStringIO import StringIO
+        except ImportError:
+            from StringIO import StringIO
+        from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+
+        buf = StringIO()
+        zipfile = ZipFile(buf, 'w', ZIP_DEFLATED)
+        for path, kind, change, base_path, base_rev in chgset.get_changes():
+            if kind == Node.FILE and change != Changeset.DELETE:
+                node = repos.get_node(path, chgset.rev)
+                zipinfo = ZipInfo()
+                zipinfo.filename = node.path
+                zipinfo.date_time = time.gmtime(node.last_modified)[:6]
+                zipinfo.compress_type = ZIP_DEFLATED
+                zipfile.writestr(zipinfo, node.get_content().read())
+        zipfile.close()
+        req.write(buf.getvalue())
 
     # IWikiSyntaxProvider methods
     
@@ -293,84 +365,28 @@ class SVNPublishModule(Component):
         return [resource_filename(__name__, 'templates')]
 
 
-    # this function just returns the current revision number of the specified filename
-    def svn_rev_num(self,filename):
-      # eventually use the remote svn path and the remote svn config directory specified in trac.ini
-
-      # this command will eventually be a remote ssh command to execute
-      cmd="%s/ssh %s@%s %s/svn --config-dir /home/bmcquay/.subversion/ info %s/%s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_svn_path, self.default_htdoc_path, filename)
-      output = commands.getoutput(cmd)
-      output = output.replace("\n", " ")
-      # check if the file even exists
-      parsed_output = re.search("Revision: \d+",output)
-      if(parsed_output == None):
-        return "-1"
-
-      parsed_output = parsed_output.group().replace("Revision: ", "")
-      return int(parsed_output.strip())
-
-
-    def svn_update(self,server,filename,rev):
-      # eventually use the remote svn path and the remote svn config directory specified in trac.ini
-      if(server == 1):
-         remote_host = self.default_test_remote_host
-      else:
-         remote_host = self.default_prod_remote_host
-
-      # this command will eventually be a remote ssh command to execute
-      cmd="%s/ssh %s@%s %s/svn --config-dir /home/%s/.subversion/ update -r %s %s/%s" % (self.default_ssh_path, self.default_ssh_user, remote_host, self.default_svn_path, self.default_ssh_user, rev, self.default_htdoc_path, filename)
-      output = commands.getoutput(cmd)
-      return output
-
-
-    def db_rev_num(self, server, filename, db=None):
+    def save_changesets(self, ticket_id, author, rev, when=0):
+        """
+        Store ticket setchangesets in the database. The ticket must already exist in
+        the database.
+        """
+	
+	# TODO: fetch ticket and assert it exists
+	ticket = Ticket(self.env, ticket_id)
+        assert ticket.exists, 'Cannot update a new ticket'
+	db = None
         if not db:
             db = self.env.get_db_cnx()
-
-        # Fetch the standard ticket fields
+            handle_ta = True
+        else:
+            handle_ta = False
         cursor = db.cursor()
-	query = 'SELECT rev FROM file_revision WHERE server=%s AND file=%s'
-	cursor.execute(query,(server,filename))
-        row = cursor.fetchone()
-	if(row == None):
-	  return "False"
-	else:
-	  return "True"
+        when = int(when or time.time())
 
-
-    def update_rev_num(self, server, filename, rev, db=None):
-        if not db:
-            db = self.env.get_db_cnx()
-	    commit = True
-	else:
-	    commit = False
-
-        cursor = db.cursor()
-
-	cursor.execute('UPDATE file_revision SET rev = %s WHERE server=%s AND file=%s',(rev, server, filename))
-	if(commit):
+        cursor.execute("INSERT INTO ticket_revision (rev,ticket_id) VALUES(%s,%s)",
+                       (rev, ticket_id))
+        if handle_ta:
             db.commit()
 
-
-    def insert_rev_num(self, server, filename, rev, db=None):
-        if not db:
-            db = self.env.get_db_cnx()
-	    commit = True
-	else:
-	    commit = False
-
-        cursor = db.cursor()
-	query = 'INSERT INTO file_revision (rev,file,server) VALUES (%s,%s,%s)'
-	cursor.execute(query, (rev,filename,server))
-	if(commit):
-	    db.commit()
-
-    def svn_init(self):
-	# touch the file
-	cmd="%s/ssh %s@%s touch %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
-	output = commands.getoutput(cmd)
-
-    def svn_close(self):
-	# delete the file
-	cmd="%s/ssh %s@%s rm -f %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
-	output = commands.getoutput(cmd)
+        ticket._old = {}
+        ticket.time_changed = when

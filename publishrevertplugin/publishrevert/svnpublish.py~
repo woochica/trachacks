@@ -55,7 +55,6 @@ class SVNPublishModule(Component):
     default_ssh_path = "/usr/bin"
     default_ssh_user = "trac"
     default_htdoc_path = "/var/www/vra1"
-    default_lockfile = '/var/www/vra1/trunk/www/trac_publishrevert'
 
     # INavigationContributor methods
 
@@ -114,11 +113,11 @@ class SVNPublishModule(Component):
 	        req.check_modified(changeset.date,
                           diff_options[0] + ''.join(diff_options[1]))
 
+	    ticket['ticketaction'] = 'CloneTest'
+	    ticket.save_changes(req.authname, 'published to clone', 0, db)
             format = req.args.get('format')
             self._render_html(req, ticket, repos, chgset, diff_options)
 	    req.hdf['setchangesets'] = setchangesets
-	    ticket['ticketaction'] = 'CloneTest'
-	    ticket.save_changes(req.authname, 'published to clone', 0, db)
 	    req.hdf['message'] = 'Successfully Published All Files'
 	else:
 	    req.hdf['error'] = 'Error: not in correct state to publish'
@@ -213,7 +212,6 @@ class SVNPublishModule(Component):
                              in self.config.get('browser', 'hide_properties').split(',')]
 
    # the following lines probably belong outside of this _render_html function and inside process_request instead
-	self.svn_init()
 	for info in filepaths:
 	    info['prod_rev'] = self.svn_rev_num(path)
    	    revert_rev = info['prod_rev']
@@ -229,7 +227,7 @@ class SVNPublishModule(Component):
 	       self.svn_update(server,info['path.new'],info['rev.new'])
             req.hdf['setchangeset.changes.%d' % idx] = info
 	    idx += 1
-	self.svn_close()
+
 
     def use_file(self, newchange, filepaths):
 	for path in filepaths:
@@ -364,13 +362,3 @@ class SVNPublishModule(Component):
 	cursor.execute(query, (rev,filename,server))
 	if(commit):
 	    db.commit()
-
-    def svn_init(self):
-	# touch the file
-	cmd="%s/ssh %s@%s touch %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
-	output = commands.getoutput(cmd)
-
-    def svn_close(self):
-	# delete the file
-	cmd="%s/ssh %s@%s rm -f %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
-	output = commands.getoutput(cmd)

@@ -39,7 +39,7 @@ from trac.ticket import Ticket
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup
 
-class SVNPublishModule(Component):
+class SVNRevertModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
@@ -55,7 +55,6 @@ class SVNPublishModule(Component):
     default_ssh_path = "/usr/bin"
     default_ssh_user = "trac"
     default_htdoc_path = "/var/www/vra1"
-    default_lockfile = '/var/www/vra1/trunk/www/trac_publishrevert'
 
     # INavigationContributor methods
 
@@ -73,7 +72,7 @@ class SVNPublishModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/svnpublish/([0-9]+)$', req.path_info)
+        match = re.match(r'/svnrevert/([0-9]+)$', req.path_info)
         if match:
             req.args['ticket_id'] = match.group(1)
             return 1
@@ -95,34 +94,33 @@ class SVNPublishModule(Component):
             req.redirect(self.env.href.svnpublish(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
-        chgset = []
-
-	if(ticket['ticketaction'] == "ClonePublish"):
-            from publishrevert.setchangeset import SetChangesetModule
-  	    setchangeset = SetChangesetModule(self.env)
+	if(ticket['ticketaction'] == "CloneTest"):
+  	    from publishrevert.setchangeset import SetChangesetModule
+	    setchangeset = SetChangesetModule(self.env)
             setchangesets = setchangeset.get_setchangesets(ticket_id)
 
 	    # get the list of changesets for the ticket_id
 	    # then loop through and get the actual changesets like the following line
+	    chgset = []
 	    for rev in setchangesets:
 	        authzperm.assert_permission_for_changeset(rev)
 	        changeset = repos.get_changeset(rev)
 
-	    # now loop through the files in changeset to get all the paths
-	    # and for each path, find the current test/prod revision number and save that info
+	        # now loop through the files in changeset to get all the paths
+	        # and for each path, find the current test/prod revision number and save that info
                 chgset.append(changeset)
 	        req.check_modified(changeset.date,
                           diff_options[0] + ''.join(diff_options[1]))
 
             format = req.args.get('format')
+	    ticket['ticketaction'] = 'Doing'
+	    ticket.save_changes(req.authname, 'reverted clone', 0, db)
             self._render_html(req, ticket, repos, chgset, diff_options)
 	    req.hdf['setchangesets'] = setchangesets
-	    ticket['ticketaction'] = 'CloneTest'
-	    ticket.save_changes(req.authname, 'published to clone', 0, db)
-	    req.hdf['message'] = 'Successfully Published All Files'
-	else:
+	    req.hdf['message'] = 'Successfully Reverted All Files'
+ 	else:
 	    req.hdf['error'] = 'Error: not in correct state to publish'
-
+ 
         return 'setchangeset.cs', None
 
     # ITimelineEventProvider methods
@@ -203,8 +201,8 @@ class SVNPublishModule(Component):
                    info['browser_href.new'] = self.env.href.browser(path,
                                                                     rev=changeset.rev)
 
-#              if change in (Changeset.COPY, Changeset.EDIT, Changeset.MOVE):
-               edits.append((idx, path, kind, base_path, base_rev))
+               if change in (Changeset.COPY, Changeset.EDIT, Changeset.MOVE):
+                   edits.append((idx, path, kind, base_path, base_rev))
 
 	       if self.use_file(info, filepaths):
 		       filepaths.append(info)
@@ -213,23 +211,13 @@ class SVNPublishModule(Component):
                              in self.config.get('browser', 'hide_properties').split(',')]
 
    # the following lines probably belong outside of this _render_html function and inside process_request instead
-	self.svn_init()
 	for info in filepaths:
-	    info['prod_rev'] = self.svn_rev_num(path)
-   	    revert_rev = info['prod_rev']
+	    revert_rev = self.db_rev_num(1,path)
 	    server = 1 # clone = 1, prod = 2
-	# TODO: 
-	    if(self.db_rev_num(server,info['path.new']) == "True"):
-	       self.update_rev_num(server,info['path.new'],revert_rev)
-	    else:
-               self.insert_rev_num(server,info['path.new'],revert_rev)
-	      
-	# now do the update
-            if(int(info['prod_rev']) < int(info['rev.new'])):
-	       self.svn_update(server,info['path.new'],info['rev.new'])
+            self.svn_update(server,info['path.new'],revert_rev)
             req.hdf['setchangeset.changes.%d' % idx] = info
-	    idx += 1
-	self.svn_close()
+ 	    idx += 1
+
 
     def use_file(self, newchange, filepaths):
 	for path in filepaths:
@@ -330,12 +318,10 @@ class SVNPublishModule(Component):
         # Fetch the standard ticket fields
         cursor = db.cursor()
 	query = 'SELECT rev FROM file_revision WHERE server=%s AND file=%s'
-	cursor.execute(query,(server,filename))
+	cursor.execute(query, (server,filename))
+	db.commit()
         row = cursor.fetchone()
-	if(row == None):
-	  return "False"
-	else:
-	  return "True"
+	return row[0]
 
 
     def update_rev_num(self, server, filename, rev, db=None):
@@ -347,7 +333,7 @@ class SVNPublishModule(Component):
 
         cursor = db.cursor()
 
-	cursor.execute('UPDATE file_revision SET rev = %s WHERE server=%s AND file=%s',(rev, server, filename))
+	cursor.execute('UPDATE file_revision SET rev = %s WHERE server=%s AND file=%s', (rev, server, filename))
 	if(commit):
             db.commit()
 
@@ -364,13 +350,3 @@ class SVNPublishModule(Component):
 	cursor.execute(query, (rev,filename,server))
 	if(commit):
 	    db.commit()
-
-    def svn_init(self):
-	# touch the file
-	cmd="%s/ssh %s@%s touch %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
-	output = commands.getoutput(cmd)
-
-    def svn_close(self):
-	# delete the file
-	cmd="%s/ssh %s@%s rm -f %s" % (self.default_ssh_path, self.default_ssh_user, self.default_test_remote_host, self.default_lockfile)
-	output = commands.getoutput(cmd)
