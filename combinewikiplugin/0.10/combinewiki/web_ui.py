@@ -65,6 +65,7 @@ class CombineWikiModule(Component):
         req.hdf['combinewiki.leftpages'] = leftpages
         req.hdf['combinewiki.rightpages'] = rightpages
         req.hdf['combinewiki.formats'] = formats
+        req.hdf['combinewiki.default_format'] = formats.iterkeys().next()
 
         return 'admin_combinewiki.cs', None
 
