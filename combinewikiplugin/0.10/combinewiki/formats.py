@@ -5,7 +5,7 @@ from trac.wiki.formatter import wiki_to_html, Formatter, WikiProcessor
 from trac.wiki.model import WikiPage
 from trac.mimeview.api import Mimeview
 from trac.util.text import shorten_line, to_unicode
-from trac.util.html import Markup
+from trac.util.html import Markup, escape
 
 from tempfile import mkstemp
 from StringIO import StringIO
@@ -101,6 +101,8 @@ class TiddlyWikiOutputFormat(Component):
     
     implements(ICombineWikiFormat)
     
+    STANDALONE_LINK_RE = re.compile(r'<a class="wiki" href="[^"]*">([^>]+)</a>')
+    
     def combinewiki_formats(self, req):
         yield 'tiddlywiki', 'TiddlyWiki'
         
@@ -123,7 +125,10 @@ class TiddlyWikiOutputFormat(Component):
             for r in EXCLUDE_RES:
                     text = r.sub('', text)
             formatter.format(text, out)
-            tiddler['content'] = out.getvalue()
+            
+            formatted = out.getvalue()
+            formatted = self.STANDALONE_LINK_RE.sub('\\1', formatted)
+            tiddler['content'] = formatted
 
             tiddlers.append(tiddler)
 
@@ -283,6 +288,30 @@ class TiddlyWikiFormatter(Formatter):
         else:
             self.code_text += line + os.linesep
 
+
+    # Link formatting
+    def _make_link(self, ns, target, match, label):
+        # first check for an alias defined in trac.ini
+        ns = self.env.config.get('intertrac', ns) or ns
+        if ns in self.wiki.link_resolvers:
+            if ns == 'wiki':
+                return '[[%s|%s]]'%(escape(label, False), target)
+            else:
+                return self.wiki.link_resolvers[ns](self, ns, target,
+                                                    escape(label, False))
+        elif target.startswith('//') or ns == "mailto":
+            return self._make_ext_link(ns+':'+target, label)
+        else:
+            return self._make_intertrac_link(ns, target, label) or \
+                   self._make_interwiki_link(ns, target, label) or \
+                   match
+    
+    def _make_ext_link(self, url, text, title=''):
+        if url != text:
+            return '[[%s|%s]]'%(text, url)
+        else:
+            return url
+    
 class TiddlyWikiProcessor(WikiProcessor):
     
     def _default_processor(self, req, text):
