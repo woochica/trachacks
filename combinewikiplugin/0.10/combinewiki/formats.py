@@ -32,8 +32,8 @@ class HTMLOutputFormatter(Component):
         req.hdf['combinewiki.content'] = [wiki_to_html(WikiPage(self.env, name).text, self.env, req) for name in pages]
         req.display('combinewiki_html.cs', 'text/html')
 
-class PDFOutputFormat(Component):
-    """Output combined wiki pages as a PDF using HTMLDOC."""
+class HTMLDOCOutputFormat(Component):
+    """Output combined wiki pages as a PDF/PS document using HTMLDOC."""
     
     implements(ICombineWikiFormat)
         
@@ -45,6 +45,7 @@ class PDFOutputFormat(Component):
 
     def combinewiki_formats(self, req):
         yield 'pdf', 'PDF'
+        yield 'ps', 'PS'
         
     def process_combinewiki(self, req, format, title, pages):
         # Dump all pages to HTML files
@@ -58,7 +59,8 @@ class PDFOutputFormat(Component):
         # Render
         os.environ["HTMLDOC_NOCGI"] = 'yes'
         codepage = Mimeview(self.env).default_charset
-        htmldoc_args = { 'book': None, 'format': 'pdf14', 'left': '1.5cm',
+        htmldoc_format = {'pdf': 'pdf14', 'ps':'ps3'}[format]
+        htmldoc_args = { 'book': None, 'format': htmldoc_format, 'left': '1.5cm',
                          'right': '1.5cm', 'top': '1.5cm', 'bottom': '1.5cm',
                          'charset': codepage.replace('iso-', ''), 'title': None,
                          'titlefile': titlefile}
@@ -80,7 +82,7 @@ class PDFOutputFormat(Component):
               
         # Send the output
         req.send_response(200)
-        req.send_header('Content-Type', 'application/pdf')
+        req.send_header('Content-Type', {'pdf':'application/pdf', 'ps':'application/postscript'}[format])
         req.send_header('Content-Length', len(out))
         req.end_headers()
         req.write(out)
@@ -112,7 +114,7 @@ class TiddlyWikiOutputFormat(Component):
     
     implements(ICombineWikiFormat)
     
-    STANDALONE_LINK_RE = re.compile(r'<a class="wiki" href="[^"]*">([^>]+)</a>')
+    STANDALONE_LINK_RE = re.compile(r'<a class="(?:missing )?wiki"[^>]*>([^>]+?)(?:\?)?</a>')
     
     def combinewiki_formats(self, req):
         yield 'tiddlywiki', 'TiddlyWiki'
