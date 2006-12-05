@@ -405,3 +405,11 @@ class TiddlyWikiProcessor(WikiProcessor):
     
     def _default_processor(self, req, text):
         return ''.join(['{{{\n', text, '}}}\n'])
+
+    def _html_processor(self, req, text):
+        rv = super(TiddlyWikiProcessor, self)._html_processor(req, text)
+        return '<html>\n%s\n</html>\n'%rv
+
+    def _mimeview_processor(self, req, text):
+        # Just do a normal <pre>, no syntax niceness
+        return ''.join(['{{{\n', text, '}}}\n'])
