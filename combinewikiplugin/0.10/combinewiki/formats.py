@@ -1,4 +1,5 @@
 from trac.core import *
+from trac.config import BoolOption
 from trac.web.api import RequestDone
 from trac.wiki.api import WikiSystem
 from trac.wiki.formatter import wiki_to_html, Formatter, WikiProcessor
@@ -12,6 +13,8 @@ from StringIO import StringIO
 import os
 import re
 import time
+import urllib2
+import base64
 
 from api import ICombineWikiFormat
 
@@ -114,9 +117,12 @@ class TiddlyWikiOutputFormat(Component):
     
     implements(ICombineWikiFormat)
     
+    inline_images = BoolOption('tiddlywiki', 'inline_images', default=True, doc='Try to inline images directly into the TiddlyWiki output')
+    
     STANDALONE_LINK_RE = re.compile(r'<a class="(?:missing )?wiki"[^>]*>([^>]+?)(?:\?)?</a>')
     HR_RE = re.compile(r'<hr />')
     LINK_RE = re.compile(r'<a[^>]* href="([^"]*)"[^>]*>([^>]*)</a>')
+    IMAGE_RE = re.compile(r'(<img[^>]* src=")([^"]*)("[^>]*/>)')
     
     def combinewiki_formats(self, req):
         yield 'tiddlywiki', 'TiddlyWiki'
@@ -135,6 +141,22 @@ class TiddlyWikiOutputFormat(Component):
             if href.startswith('/'):
                 href = req.abs_href(href)
             return '[[%s|%s]]'%(label, href)
+            
+        def inline_image(md):
+            pre, href, post = md.groups()
+            if href.startswith('/'):
+                href = '%s://%s:%s%s'%(req.scheme, req.server_name, req.server_port, href)
+            try:
+                f = urllib2.urlopen(href)
+            except urllib2.URLError, e:
+                # Fallback to doing nothing
+                self.log.debug('TiddlyWikiOutputFormat: Error while loading URL %s: %s', href, e)
+                return md.group(0) 
+                
+            encoded = base64.b64encode(f.read())
+            mime_type = f.info()['content-type']
+            new_href = 'data:%s;base64,%s'%(mime_type, encoded)
+            return ''.join([pre,new_href,post])
 
         for name in pages:
             tiddler = {}
@@ -155,6 +177,8 @@ class TiddlyWikiOutputFormat(Component):
             formatted = self.STANDALONE_LINK_RE.sub('\\1', formatted)
             formatted = self.HR_RE.sub('----', formatted)
             formatted = self.LINK_RE.sub(make_link, formatted)
+            if self.inline_images:
+                formatted = self.IMAGE_RE.sub(inline_image, formatted)
             tiddler['content'] = formatted
 
             tiddlers.append(tiddler)
