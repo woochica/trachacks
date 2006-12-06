@@ -22,8 +22,7 @@
 
 <form id="prefs" method="get" action="">
  <div>
-  <ul class="nav">
-	<li>
+  <div class="revprops">
     <fieldset id="properties">
      <legend>Filters</legend>
      <div class="field">
@@ -41,9 +40,9 @@
       /each ?></select>
      </div>
     </fieldset>
-   </li>
+   </div>
 
-   <li>
+   <div class="revprops">
     <fieldset id="limits">
      <legend>Revisions</legend>
      <div class="field">
@@ -73,22 +72,26 @@
         <?cs /each ?></select>
      </div>
     </fieldset>
-   </li>
+   </div>
 
-   <li>
-    <fieldset id="treestyle">
+   <div class="revprops" id="treestyle">
+    <fieldset>
      <legend>Style</legend>
       <div class="field">
-       <input type="radio" id="compact" name="treestyle" value="compact" <?cs 
+        <div>
+          <input type="radio" id="compact" name="treestyle" value="compact" <?cs 
          if:revtree.treestyle == "compact" ?> checked="checked"<?cs /if ?>/>
         <label for="compact">Compact</label>
+        </div>
+        <div>
         <input type="radio" id="timeline" name="treestyle" value="timeline" <?cs 
           if:revtree.treestyle == "timeline" ?> checked="checked"<?cs /if ?>/>
          <label for="compact">Timeline</label>
+        </div>
       </div>
-   </li>
+   </div>
 
-   <li>
+   <div class="revprops" id="options">
     <fieldset id="options">
      <legend>Options</legend>
      <div class="field">
@@ -99,14 +102,13 @@
         terminated branches</label>
      </div>
     </fieldset>
-   </li>
+   </div>
 
-   <li>
+   <div class="revprops" id="update">
     <div class="buttons">
      <input type="submit" value="Update"/>
     </div>
-   </li>
-  </ul>
+   </div>
  </div>
 </form>
 

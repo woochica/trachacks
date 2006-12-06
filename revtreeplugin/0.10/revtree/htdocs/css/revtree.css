@@ -1,7 +1,6 @@
 form#prefs {
  margin-top: 2em;   
 }
-
 div.revtree .tip {
  font: 10px/12px Arial,Helvetica,sans-serif; 
  border: solid 1px #666666; 
@@ -24,4 +23,30 @@ div.revtree div#legend {
 div.revtree div#errormsg {
  border: solid red 2px;
  background-color: #fcc;
+}
+
+div.revprops {
+ padding-left: 2ex;
+ padding-right: 2ex;
+ margin-left: 1ex;
+ white-space: nowrap;
+ position: relative;
+ float: left;
+ border-right: solid 1px #333;
+}
+
+div#treestyle div {
+   display: block;
+}
+div#options {
+   white-space: normal;
+   width: 12ex;
+}
+div#options label {
+   margin=top: 0;
+   padding-left: 3ex;
+}
+
+div#update {
+ border-right: none;
 }
