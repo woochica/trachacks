@@ -3,12 +3,12 @@ from setuptools import setup
 setup(
     name='TracPerforce',
     description='Perforce version control plugin for Trac',
-    author='Lewis Baker',
-    author_email='lewisbaker@users.sourceforge.net',
-    
+    author='Lewis Baker, Tressieres Thomas',
+    author_email='lewisbaker@users.sourceforge.net, thomas.tressieres@free.fr',
+
     keywords='trac scm plugin perforce p4',
     url='http://trac-hacks.org/wiki/PerforcePlugin',
-    version='0.4.2',
+    version='0.4.3',
     license="""
     Copyright 2006, Maptek Pty Ltd
 

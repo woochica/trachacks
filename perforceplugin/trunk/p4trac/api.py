@@ -147,10 +147,14 @@ class PerforceConnector(Component):
             p4.language = options['language']
         else:
             p4.language = ''
+            
+        jobPrefixLength = 3 # default value because by default prefix is 'job'
+        if 'job_prefix' in options:
+            jobPrefixLength = len(options['job_prefix'])
 
         p4.client = ''
 
-        repos = PerforceRepository(p4, self.log)
+        repos = PerforceRepository(p4, self.log, jobPrefixLength)
 
         from trac.versioncontrol.cache import CachedRepository
         return PerforceCachedRepository(self.env.get_db_cnx(),
@@ -293,16 +297,19 @@ class PerforceRepository(object):
     http://pyperforce.sourceforge.net/
     """
 
-    def __init__(self, connection, log):
+    def __init__(self, connection, log, jobPrefixLength):
 
         self.authz = None
+
+        # length of the job prefix used with PerforceJobScript
+        self._job_prefix_length = jobPrefixLength
 
         # Log object for logging output
         self._log = log
 
         # The connection to the Perforce server
         self._connection = connection
-        
+
         # The Repository object that we query for Perforce info
         from p4trac.repos import Repository
         self._repos = Repository(connection)
@@ -349,7 +356,7 @@ class PerforceRepository(object):
             except ValueError:
                 raise TracError(u"Invalid changeset number '%s'" % rev)
             
-        return PerforceChangeset(change, self._repos, self._log)
+        return PerforceChangeset(change, self._repos, self._log, self._job_prefix_length)
 
     def get_changesets(self, start, stop):
 
@@ -977,9 +984,10 @@ class PerforceNode(object):
 class PerforceChangeset(object):
     """A Perforce repository changelist"""
 
-    def __init__(self, change, repository, log):
+    def __init__(self, change, repository, log, job_prefix_length):
         log.debug('PerforceChangeset(%r) created' % change)
-        
+
+        self._job_prefix_length = job_prefix_length
         self._change = int(change)
         self._repos = repository
         self._log = log
@@ -1020,11 +1028,19 @@ class PerforceChangeset(object):
     def get_properties(self):
         import p4trac.repos
         try:
-            yield ('client',
-                   self._changelist.client,
-                   False,
-                   False
-                   )
+            results = self._repos._connection.run('fixes',
+                                                  '-c', str(self._change))
+            if results.errors:
+                raise PerforceError(results.errors)
+
+            fixes = ''
+            print results.records
+            for record in results.records:
+                tktid = int(record['Job'][self._job_prefix_length:])
+                fixes += '#%d ' % tktid
+
+            if fixes != '':
+                yield('Tickets', fixes, True, 'message')
         except p4trac.repos.NoSuchChangelist, e:
             raise NoSuchChangeset(e.change)
 
