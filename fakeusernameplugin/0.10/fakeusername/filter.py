@@ -48,7 +48,8 @@ class FakeUsernameFilter(Component):
                     break
         
         if req is None:
-            raise TracError('Penguins on fire: Unable to extract req')
+            #raise TracError('Penguins on fire: Unable to extract req')
+            return
 
         reporter = req.args.get('reporter')
         if self._change_req(req) and reporter:
