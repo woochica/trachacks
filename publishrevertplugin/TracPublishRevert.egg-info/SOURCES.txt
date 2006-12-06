@@ -8,8 +8,16 @@ dist/TracSetChangeset-0.1-py2.4.egg
 hooks/post-commit
 hooks/trac-post-commit
 publishrevert/__init__.py
+publishrevert/__init__.pyc
+publishrevert/__init__.py~
 publishrevert/setchangeset.py
+publishrevert/setchangeset.pyc
+publishrevert/setchangeset.py~
 publishrevert/svnpublish.py
+publishrevert/svnpublish.pyc
+publishrevert/svnpublish.py~
 publishrevert/svnrevert.py
+publishrevert/svnrevert.pyc
+publishrevert/svnrevert.py~
 publishrevert/templates/setchangeset.cs
 scripts/svn_rev_check.rb

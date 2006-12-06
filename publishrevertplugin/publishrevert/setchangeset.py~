@@ -38,7 +38,9 @@ from trac.util import escape, Markup
 class SetChangesetModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
-               ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
+               ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider) 
+
+# need to add IRequestFilter when we upgrade
 
     # INavigationContributor methods
 
@@ -81,6 +83,7 @@ class SetChangesetModule(Component):
             req.redirect(self.env.href.setchangeset(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
+	self.log.debug('PublishRevert: %r', ticket.fields)
 
 	ticket.setchangesets = self.get_setchangesets(ticket_id,db)
 
@@ -105,7 +108,6 @@ class SetChangesetModule(Component):
                       diff_options[0] + ''.join(diff_options[1]))
 
         format = req.args.get('format')
-
         self._render_html(req, ticket, repos, chgset, diff_options)
         return 'setchangeset.cs', None
 
@@ -390,3 +392,8 @@ class SetChangesetModule(Component):
 
         ticket._old = {}
         ticket.time_changed = when
+
+    def post_process_request(self, req, template, content_type):
+        match = re.match(r'/ticket/([0-9]+)$', req.path_info)
+        if match:
+            req.hdf['ticket.setchangeset'] = Markup('<a href="...">...</a>')

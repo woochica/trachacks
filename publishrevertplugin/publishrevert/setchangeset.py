@@ -91,7 +91,6 @@ class SetChangesetModule(Component):
 	ticket.values['changesets'] = ""
 	for changeset in ticket.setchangesets:
 	    ticket.values['changesets'] +=  str(changeset)
-
 	
 	setchangesets = ticket.setchangesets
 	req.hdf['ticket'] = ticket
@@ -99,12 +98,11 @@ class SetChangesetModule(Component):
 	# get the list of changesets for the ticket_id
 	# then loop through and get the actual changesets like the following line
 	chgset = []
+	self.log.debug('PublishRevert: %s', ticket['ticketaction'])
 	for rev in setchangesets:
 	    authzperm.assert_permission_for_changeset(rev)
 	    changeset = repos.get_changeset(rev)
             chgset.append(changeset)
-	    req.check_modified(changeset.date,
-                      diff_options[0] + ''.join(diff_options[1]))
 
         format = req.args.get('format')
 

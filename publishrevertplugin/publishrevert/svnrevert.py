@@ -110,8 +110,6 @@ class SVNRevertModule(Component):
 	        # now loop through the files in changeset to get all the paths
 	        # and for each path, find the current test/prod revision number and save that info
                 chgset.append(changeset)
-	        req.check_modified(changeset.date,
-                          diff_options[0] + ''.join(diff_options[1]))
 
             format = req.args.get('format')
             self._render_html(req, ticket, repos, chgset, diff_options)
