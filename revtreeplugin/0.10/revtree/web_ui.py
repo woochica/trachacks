@@ -30,7 +30,7 @@ from revtree.enhancer import Enhancer
 class RevtreeStore(object):
     """User revtree properties"""
     
-    def __init__(self, env, authname, revspan, timebase):
+    def __init__(self, env, authname, revspan, timebase, style):
         """Initialize the instance with default values"""
         self.env = env
         self.fields = self.get_fields()
@@ -46,6 +46,7 @@ class RevtreeStore(object):
         self['revmax'] = str(self.revspan[1])
         self['period'] = 14
         self['limits'] = 'limperiod'
+        self['treestyle'] = style
         self['branch'] = self.anybranch
         self['author'] = authname or self.anyauthor
         self['hideterm'] = '1'
@@ -53,7 +54,7 @@ class RevtreeStore(object):
     def get_fields(self):
         """Returns the sequence of supported fields"""
         return [ 'revmin', 'revmax', 'period', 'branch', 'author',
-                 'limits', 'hideterm' ]
+                 'limits', 'hideterm', 'treestyle' ]
         
     def load(self, session):
         """Load user parameters from a previous session"""
@@ -126,6 +127,9 @@ class RevtreeStore(object):
     def get_hidetermbranch(self):
         return int(self['hideterm']) == 1
         
+    def get_style(self):
+        return self['treestyle']
+        
     def __getitem__(self, name):
         """getter (dictionary)"""
         return self.values[name]
@@ -171,7 +175,8 @@ class RevtreeModule(Component):
             
         revstore = RevtreeStore(self.env, req.authname, \
                                 (self.oldest, self.youngest),
-                                self.timebase or int(time.time()))
+                                self.timebase or int(time.time()), 
+                                self.style)
         revstore.load(req.session)
         revstore.populate(req.args)
         revstore.compute_range()
@@ -196,15 +201,14 @@ class RevtreeModule(Component):
             svgrevtree = SvgRevtree(self.env, repos, self.urlbase)
             enhancer = Enhancer(repos, svgrevtree)
             svgrevtree.add_enhancer(enhancer)
-            # FIXME
-            mode = 'compact'
             #self.env.log.debug("REVISIONS %s" % [revstore.revrange])
             #self.env.log.debug("BRANCH %s" % revstore.get_branches())
             #self.env.log.debug("AUTHOR %s" % revstore.get_authors())
             #self.env.log.debug("HIDE %s" % revstore.get_hidetermbranch())
             svgrevtree.create(revstore.revrange, revstore.get_branches(), 
                               revstore.get_authors(), 
-                              revstore.get_hidetermbranch(), mode)
+                              revstore.get_hidetermbranch(), 
+                              revstore.get_style())
             svgrevtree.build()
             svgrevtree.render()
             svgrevtree.save(os.path.join(self.cache_dir, filename))
@@ -309,6 +313,9 @@ class RevtreeModule(Component):
             self.timebase = repos.get_changeset(self.youngest).date
         else:
             self.timebase = None
+        self.style = self.config.get('revtree', 'style', 'compact')
+        if self.style not in [ 'compact', 'timeline']:
+            raise TracError, "Unsupported style: %s" % self.style
 
     def _get_periods(self):
         """Generates a list of periods"""

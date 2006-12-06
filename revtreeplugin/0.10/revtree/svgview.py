@@ -39,6 +39,10 @@ def textwidth(text):
     length = text and len(text) or 0
     return (1+length)*(UNIT/2.5)
 
+def plink(url):
+    """Create a javascript link to replace the parent window content"""
+    return "javascript:window.parent.location.href='%s'" % url
+
             
 class SvgColor(object):
     
@@ -246,8 +250,8 @@ class SvgChangeset(SvgBaseChangeset):
                               self._position[1] + UNIT/6,
                               str(self._revision), FONT_SIZE, FONT_NAME)
         self._text.attributes['style'] = 'fill:%s' % self._textcolor.rgb()
-        self._link = SVG.link('%s/changeset/%d' % \
-                              (self._parent.urlbase(), self._revision), 
+        self._link = SVG.link(plink('%s/changeset/%d' % \
+                              (self._parent.urlbase(), self._revision)), 
                               elements=[self._widget, self._text])
         if self._revision:
             self._link.attributes['id'] = 'rev%d' % self._revision
@@ -297,8 +301,8 @@ class SvgBranchHeader(object):
         self._text = SVG.text(x+UNIT/6, 
                               self._position[1]+self._h/2+UNIT/6,
                               self._title, FONT_SIZE, FONT_NAME)
-        self._link = SVG.link('%s/browser/%s' % \
-                              (self._parent.urlbase(), self._title), 
+        self._link = SVG.link(plink('%s/browser/%s' % \
+                              (self._parent.urlbase(), self._title)), 
                               elements=[self._widget, self._text])
         
     def render(self):
@@ -307,7 +311,7 @@ class SvgBranchHeader(object):
 
 class SvgBranch(object):
     
-    def __init__(self, parent, branch, mode):
+    def __init__(self, parent, branch, style):
         self._parent = parent
         self._branch = branch
         self._svgheader = SvgBranchHeader(self, branch.name)
@@ -318,9 +322,9 @@ class SvgBranch(object):
         self._strokecolor = self._fillcolor.strongify()
         self._source = branch.source()
         try:
-            self.get_slot = self.__getattribute__('get_%s_slot' % mode)
+            self.get_slot = self.__getattribute__('get_%s_slot' % style)
         except AttributeError:
-            raise AssertionError, "Unsupported branch mode: %s" % mode
+            raise AssertionError, "Unsupported branch style: %s" % style
         pw = None
         transitions = []
         changesets = branch.changesets(parent.revrange);
@@ -736,7 +740,8 @@ class SvgRevtree(object):
         # Optional enhancers
         self._enhancers = []
         # Trunk branches
-        self.trunks = self.env.config.get('revtree', 'trunks', 'trunk').split(' ')
+        self.trunks = self.env.config.get('revtree', 'trunks', 
+                                          'trunk').split(' ')
         # Dictionnary of branch widgets (branches as keys)
         self._svgbranches = {}
         # Markers
@@ -799,7 +804,7 @@ class SvgRevtree(object):
         return 'url(#%s)' % self._arrows.create(color, head)
         
     def create(self, revisions=None, branches=None, authors=None, 
-                     hidetermbranch=False, mode='compact'):
+                     hidetermbranch=False, style='compact'):
         if revisions is not None:
             self.revrange = revisions
         else:
@@ -817,7 +822,7 @@ class SvgRevtree(object):
             if authors:
                 if not [a for a in authors for x in b.authors() if a == x]:
                     continue
-            svgbranch = SvgBranch(self, b, mode)
+            svgbranch = SvgBranch(self, b, style)
             self._svgbranches[b] = svgbranch
             revisions.extend([c.rev for c in b.changesets()])
         revisions.sort()

@@ -8,8 +8,8 @@
 <h1>Revision Tree</h1>
 
 <script type="text/javascript">
-  var limrev = document.getElementById("limrev");
-  var limperiod = document.getElementById("limperiod");
+  var limrev = document.getElementById('limrev');
+  var limperiod = document.getElementById('limperiod');
   var updateActionFields = function() {
     enableControl('period', limperiod.checked);
     enableControl('revmin', limrev.checked);
@@ -73,6 +73,19 @@
         <?cs /each ?></select>
      </div>
     </fieldset>
+   </li>
+
+   <li>
+    <fieldset id="treestyle">
+     <legend>Style</legend>
+      <div class="field">
+       <input type="radio" id="compact" name="treestyle" value="compact" <?cs 
+         if:revtree.treestyle == "compact" ?> checked="checked"<?cs /if ?>/>
+        <label for="compact">Compact</label>
+        <input type="radio" id="timeline" name="treestyle" value="timeline" <?cs 
+          if:revtree.treestyle == "timeline" ?> checked="checked"<?cs /if ?>/>
+         <label for="compact">Timeline</label>
+      </div>
    </li>
 
    <li>

@@ -53,6 +53,8 @@ class Enhancer(object):
 
         for branch in self._repos.branches().values():
             svgbranch = self._svgrevtree.svgbranch(branch=branch)
+            if not svgbranch:
+                continue
             for chgset in branch.changesets():
                 msg = chgset.changeset.message.lower()
                 if msg.startswith('delivers'):
@@ -93,8 +95,10 @@ class Enhancer(object):
     def build(self):
         for (srcchg, dstchg) in self._creations:
             svgsrcbr = self._svgrevtree.svgbranch(branchname=srcchg.branchname)
-            svgsrcchg = svgsrcbr.svgchangeset(srcchg)
             svgdstbr = self._svgrevtree.svgbranch(branchname=dstchg.branchname)
+            if not svgsrcbr or not svgdstbr:
+                continue
+            svgsrcchg = svgsrcbr.svgchangeset(srcchg)
             svgdstchg = svgdstbr.svgchangeset(dstchg)
             op = SvgOperation(self._svgrevtree, svgsrcchg, svgdstchg, '#5faf5f')
             self._widgets[2].append(op)

@@ -60,8 +60,12 @@ class Enhancer(object):
         """Build the enhanced widgets"""
         for (srcchg, dstchg) in self._creations:
             svgsrcbr = self._svgrevtree.svgbranch(branchname=srcchg.branchname)
+            if svgsrcbr is None:
+                continue
             svgsrcchg = svgsrcbr.svgchangeset(srcchg)
             svgdstbr = self._svgrevtree.svgbranch(branchname=dstchg.branchname)
+            if svgdstbr is None:
+                continue
             svgdstchg = svgdstbr.svgchangeset(dstchg)
             op = SvgOperation(self._svgrevtree, svgsrcchg, svgdstchg, '#5faf5f')
             self._widgets[2].append(op)
