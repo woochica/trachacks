@@ -64,13 +64,13 @@ class TimeTrackingTicketObserver(Component):
             else:
                 change_time = ticket.time_created
                 author = ticket.values["reporter"]
-                save_ticket_change( db, ticket_id, author, change_time, "hours", 0.0, hours)
+                save_ticket_change( db, ticket_id, author, change_time, "hours", str(0.0), str(hours))
                 
             newtotal = str(totalHours+hours)
 
-            save_ticket_change( db, ticket_id, author, change_time, "totalhours", str(totalHours), newtotal)
+            save_ticket_change( db, ticket_id, author, change_time, "totalhours", str(totalHours), str(newtotal))
             save_custom_field_value( db, ticket_id, "hours", '0')
-            save_custom_field_value( db, ticket_id, "totalhours", newtotal )            
+            save_custom_field_value( db, ticket_id, "totalhours", str(newtotal) )            
 
     def ticket_created(self, ticket):
         """Called when a ticket is created."""

@@ -7,7 +7,7 @@ PACKAGE = 'timingandestimationplugin'
 setup(name=PACKAGE,
       description='Plugin to make Trac support time estimation and tracking',
       keywords='trac plugin estimation timetracking',
-      version='0.3.1',
+      version='0.3.2',
       url='',
       license='http://www.opensource.org/licenses/mit-license.php',
       author='Russ Tyndall at Acceleration.net',
@@ -37,4 +37,6 @@ setup(name=PACKAGE,
 ## and started moving toward generic work 
 ## rather than hours
 
+## kkurzweil@lulu.com
+## helped postegresql db backend compatiblity
 
