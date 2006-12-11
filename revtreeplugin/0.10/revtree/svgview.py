@@ -250,11 +250,14 @@ class SvgChangeset(SvgBaseChangeset):
                               self._position[1] + UNIT/6,
                               str(self._revision), FONT_SIZE, FONT_NAME)
         self._text.attributes['style'] = 'fill:%s' % self._textcolor.rgb()
-        self._link = SVG.link(plink('%s/changeset/%d' % \
-                              (self._parent.urlbase(), self._revision)), 
-                              elements=[self._widget, self._text])
+        
+        link = "%s/revtree_log/?rev=%d&link=%s/changeset/%d" \
+            % (self._parent.urlbase(), self._revision, 
+               self._parent.urlbase(), self._revision)
+        self._link = SVG.link(link, elements=[self._widget, self._text])
         if self._revision:
             self._link.attributes['id'] = 'rev%d' % self._revision
+            self._link.attributes['title'] = 'Changeset %d' % self._revision
                     
     def visible(self):
         return True
@@ -755,21 +758,9 @@ class SvgRevtree(object):
         # Init color generator with a predefined value
         seed(0)
         
-    def __str__(self):
-        """Render the revision tree as a SVG string"""
-        d = SVG.drawing()
-        d.setSVG(self._svg)
-        return d.toXml()
-        
     def add_enhancer(self, enhancer):
         self._enhancers.append(enhancer)
         
-    def save(self, filename):
-        """Save the revision tree in a file"""
-        d = SVG.drawing()
-        d.setSVG(self._svg)
-        d.toXml(filename)
-
     def position(self):
         """Return the position of the revision tree widget"""
         return (UNIT,2*UNIT)
@@ -899,6 +890,19 @@ class SvgRevtree(object):
         
     def svg(self):
         return self._svg
+
+    def __str__(self):
+        """Render the revision tree as a SVG string"""
+        import cStringIO
+        xml=cStringIO.StringIO()
+        self._svg.toXml(0, xml)
+        return xml.getvalue()
+        
+    def save(self, filename):
+        """Save the revision tree in a file"""
+        d = SVG.drawing()
+        d.setSVG(self._svg)
+        d.toXml(filename)
         
     def render(self, linkparent=False):
         self._svg = SVG.svg((0,0,self._extent[0],self._extent[1]),

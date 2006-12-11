@@ -1,3 +1,5 @@
+div#settings {
+}
 form#prefs {
  margin-top: 2em;   
 }
@@ -19,12 +21,10 @@ div.revtree .tip {
 div.revtree div#legend {
  align: right; 
 }
-
 div.revtree div#errormsg {
  border: solid red 2px;
  background-color: #fcc;
 }
-
 div.revprops {
  padding-left: 2ex;
  padding-right: 2ex;
@@ -34,7 +34,6 @@ div.revprops {
  float: left;
  border-right: solid 1px #333;
 }
-
 div#treestyle div {
    display: block;
 }
@@ -46,7 +45,84 @@ div#options label {
    margin=top: 0;
    padding-left: 3ex;
 }
-
 div#update {
  border-right: none;
+}
+#prefs {
+ position: relative;
+ float: left;
+}
+div.svg {
+ position: relative;
+ float: left;
+}
+
+/* jTip */
+#JT_arrow_left{
+	background-image: url(../images/arrow_left.gif);
+	background-repeat: no-repeat;
+	background-position: left top;
+	position: absolute;
+	z-index:101;
+	left:-12px;
+	height:23px;
+	width:10px;
+    top:-3px;
+}
+#JT_arrow_right{
+	background-image: url(../images/arrow_right.gif);
+	background-repeat: no-repeat;
+	background-position: left top;
+	position: absolute;
+	z-index:101;
+	height:23px;
+	width:11px;
+   top:-2px;
+}
+#JT {
+	position: absolute;
+	z-index:100;
+	border: 2px solid #CCCCCC;
+	background-color: #fff;
+}
+#JT_copy{
+	padding:10px 10px 10px 10px;
+	color:#333333;
+}
+.JT_loader{
+	background-image: url(../images/loader.gif);
+	background-repeat: no-repeat;
+	background-position: center center;
+	width:100%;
+	height:12px;
+}
+#JT_close_left{
+	background-color: #CCCCCC;
+	text-align: left;
+	padding-left: 8px;
+	padding-bottom: 5px;
+	padding-top: 2px;
+	font-weight:bold;
+}
+#JT_close_right{
+	background-color: #CCCCCC;
+	text-align: left;
+	padding-left: 8px;
+	padding-bottom: 5px;
+	padding-top: 2px;
+	font-weight:bold;
+}
+#JT_copy p{
+margin:3px 0;
+}
+#JT_copy img{
+	padding: 1px;
+	border: 1px solid #CCCCCC;
+}
+.jTip{
+cursor:help;
+}
+.jTip a[title] {
+   /* hide default tooltips */
+   display: none;
 }

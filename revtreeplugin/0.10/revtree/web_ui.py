@@ -17,13 +17,14 @@ import os
 import time
 
 from trac.core import *
+from trac.perm import IPermissionRequestor
 from trac.util import Markup, TracError
 from trac.web import IRequestHandler
-from trac.web.chrome import add_stylesheet, INavigationContributor, \
-                            ITemplateProvider
+from trac.web.chrome import add_stylesheet, add_script, \
+                            INavigationContributor, ITemplateProvider
 from trac.web.href import Href
-from trac.wiki import WikiSystem
-from trac.perm import IPermissionRequestor
+from trac.wiki import wiki_to_oneliner, WikiSystem
+
 from revtree import Repository, SvgRevtree, ChangesetEmptyRange
 from revtree.enhancer import Enhancer
 
@@ -168,11 +169,38 @@ class RevtreeModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        return re.match(r'/revtree/?', req.path_info) is not None
+        match = re.match(r'/revtree(_log)?/?', req.path_info)
+        if match:
+            if match.group(1):
+                req.args['log'] = True
+            return True
 
     def process_request(self, req):
         req.perm.assert_permission('REVTREE_VIEW')
             
+        if req.args.has_key('log'):
+            return self._process_log(req)
+        else:
+            return self._process_revtree(req)
+            
+    def _process_log(self, req):
+        """Handle AJAX log requests"""
+        try:
+            rev = int(req.args['rev'])
+            repos = self.env.get_repository(req.authname)
+            chgset = repos.get_changeset(rev)
+            wikimsg = wiki_to_oneliner(chgset.message, self.env, None, 
+                                       shorten=False)
+            # FIXME: check if there is a better way to discard ellipsis
+            wikimsg = Markup(wikimsg.replace('...', ''));
+            req.hdf['revtree_log.rev'] = rev
+            req.hdf['revtree_log.message'] = wikimsg
+            return 'revtree_log.cs', 'application/xhtml+xml'
+        except:
+            raise TracError, "Invalid revision log request"
+        
+    def _process_revtree(self, req):
+        """Handle revtree generation requests"""
         revstore = RevtreeStore(self.env, req.authname, \
                                 (self.oldest, self.youngest),
                                 self.timebase or int(time.time()), 
@@ -186,6 +214,10 @@ class RevtreeModule(Component):
             req.hdf['revtree.' + field] = revstore[field]
         req.hdf['title'] = 'Revision Tree'
         req.hdf['revtree.periods'] = self._get_periods()
+
+        # add javascript for AJAX tooltips 
+        add_script(req, 'revtree/js/jquery.js')
+        add_script(req, 'revtree/js/svgtip.js')    
 
         try:
             if not revstore.can_be_rendered():
@@ -211,7 +243,6 @@ class RevtreeModule(Component):
                               revstore.get_style())
             svgrevtree.build()
             svgrevtree.render()
-            svgrevtree.save(os.path.join(self.cache_dir, filename))
             extent = svgrevtree.extent()
             extent = ((extent[0]*self.scale)/100,(extent[1]*self.scale)/100)
             # FIXME
@@ -221,7 +252,9 @@ class RevtreeModule(Component):
                 src = req.href.chrome("site/cache/%s" % filename)
             else:
                 src = "%s/%s" % (self.cache_url, filename)
-            req.hdf['revtree.svg.src'] = src
+            #svgrevtree.save(os.path.join(self.cache_dir, filename))
+            #req.hdf['revtree.svg.src'] = src
+            req.hdf.set_unescaped('revtree.svg.image', str(svgrevtree))
             (w,h) = extent
             #(w,h) = (900, (900*h)/w)
             req.hdf['revtree.svg.width'] = "%dpx" % w
@@ -262,7 +295,7 @@ class RevtreeModule(Component):
         req.hdf['revtree.authors'] = authors
                                                                                
         add_stylesheet(req, 'revtree/css/revtree.css')
-        return 'revtree.cs', None
+        return 'revtree.cs', 'application/xhtml+xml'
 
     # ITemplateProvider
 
@@ -287,7 +320,7 @@ class RevtreeModule(Component):
             raise TracError, "Revtree only supports Subversion repositories"
         bre = self.config.get('revtree', 'branch_re',
                   r'^(?P<branch>branches/[^/]+|trunk|data)'
-                  r'(/(?P<path>.*))?$')
+                  r'(?:/(?P<path>.*))?$')
         self.bcre = re.compile(bre)
         self.urlbase = self.config.get('trac', 'base_url')
         self.cache_dir = self.config.get('revtree', 'cache_dir', '%s/cache' \

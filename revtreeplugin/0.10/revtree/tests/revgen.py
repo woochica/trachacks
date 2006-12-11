@@ -32,7 +32,7 @@ if __name__ == '__main__':
     env.config.parse_if_needed()   
     repos = Repository(env, 'anonymous')
     bcre = re.compile(r'^(?P<branch>branches/[^/]+|trunk|data)'
-                      r'(/(?P<path>.*))?$')
+                      r'(?:/(?P<path>.*))?$')
     revrange = (1400,1520)
     repos.build(bcre, revrange, timerange=None)
     

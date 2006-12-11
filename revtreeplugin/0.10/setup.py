@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'RevtreePlugin'
-VERSION = '0.4.0'
+VERSION = '0.4.1'
 
 setup (
     name = PACKAGE,
@@ -30,6 +30,7 @@ setup (
     package_data={
         'revtree': [
             'htdocs/css/*.css',
+            'htdocs/js/*.js',
             'templates/*.cs'
         ]
     },
