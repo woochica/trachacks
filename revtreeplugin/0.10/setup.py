@@ -31,6 +31,7 @@ setup (
         'revtree': [
             'htdocs/css/*.css',
             'htdocs/js/*.js',
+            'htdocs/images/*.gif',
             'templates/*.cs'
         ]
     },

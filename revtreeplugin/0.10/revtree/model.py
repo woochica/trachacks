@@ -249,7 +249,10 @@ class Repository(object):
 
     def branch(self, branchname):
         """Returns a tracked branch from its name (path)"""
-        return self._branches[branchname]
+        if not self._branches.has_key(branchname):
+            return None
+        else:
+            return self._branches[branchname]
 
     def changesets(self):
         """Returns the dictionnary of changesets (keys are rev. numbers)"""
