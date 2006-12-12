@@ -1,8 +1,7 @@
 user_manual_title = "Timing and Estimation Plugin User Manual"
-user_manual_version = 6
+user_manual_version = 7
 user_manual_wiki_title = "TimingAndEstimationPluginUserManual"
 user_manual_content = """
-
 = Timing and Estimation Plugin User Manual =
 
 == Abstract Design Goal ==
@@ -13,16 +12,14 @@ In adhering to our design goal, rather than creating a new ticket interface, I c
 
 === Fields: ===
  * '''Hours to Add''' This field functions as a time tracker.  When you add hours to it , those hours get added to the total hours field.  The person  who made the change is there fore credited with the hours spent on it.
- * '''Total Hours''' This field is the total number of hours that have been added to the project. Unfortunately, while this field should probably not be editable, it is due to custom field restrictions.
-   * Reports might not agree with each other if this is manually edited.
-   * In the future perhaps the daemon will enforce non-editablity of this field.
+ * '''Total Hours''' This field is the total number of hours that have been added to the project. This has been made uneditable by including javascript which replaces the input box with a span containing its value
+   * Reports might not agree with each other if this is manually edited (which is possible if you disable javascript).
  * '''Is this billable?''' An extra flag on tickets so that they can be marked as billable / not billable.
- * '''Estimated Hours''' a field that contains the estimated number of hours.
-
+ * '''Estimated Hours''' a field that contains the estimated amount of work
 === Future Fields ===
  * '''Ticket Rate''' The ability to attach a cost per hour or total amount to an individual ticket
 
-== Billing and Estimation Page ==
+== Management Page ==
 This page provide a small interface for querying the tickets and adding a bill date at the current time.  
 This interface mostly just gives you links that match the interface to open any of the give reports,
 providing it the correct set of input parameters
@@ -50,7 +47,7 @@ We provide a few different reports for querying different types of data:
        * Ticket Hours Grouped By Milestone with Description
 
 == Future Improvements ==
- * See tickets at the project trac
+ * [http://trac-hacks.org/wiki/TimingAndEstimationPlugin See tickets] at the [http://trac-hacks.org/wiki/TimingAndEstimationPlugin project trac]
  * Would like to suggest a couple of interfaces to Trac project, and perhaps write an implementation for them.
    * ''' ICustomTicketFieldProvider ''' This should allow a plugin to provide a custom field with the ability to add html attributes and specify at least the tag name. (hopefully with a full template) This should hopefully also allow these provided custom controls to set permissions causing them to not render or to not editable.
    * ''' ICustomReportProvider ''' This allows custom reports to be provided in a way that permissions can be enforced on them. 

@@ -62,7 +62,6 @@ class TimingEstimationAndBillingPage(Component):
         VALUES (%s, %s, %s)
         """
         dbhelper.execute_non_query(self.env.get_db_cnx(), sql, when, now, strwhen)
-         
         
         
             
@@ -74,10 +73,11 @@ class TimingEstimationAndBillingPage(Component):
             return ""
 
     def get_navigation_items(self, req):
+        url = self.env.href.Billing()
         if req.perm.has_permission("REPORT_VIEW"):
             yield 'mainnav', "Billing", \
                   Markup('<a href="%s">%s</a>' % \
-                         (self.env.href.Billing() , "Billing and Estimation"))
+                         (url , "Management"))
 
     # IRequestHandler methods
     def set_request_billing_dates(self, req):
