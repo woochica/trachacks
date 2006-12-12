@@ -117,6 +117,7 @@ class SVNRevertModule(Component):
 	    ticket['ticketaction'] = 'Doing'
 	    ticket.save_changes(req.authname, 'reverted clone', 0, db)
 	    req.hdf['message'] = 'Successfully Reverted All Files'
+            req.hdf['ticket'] = ticket.values
  	else:
 	    req.hdf['error'] = 'Error: not in correct state to publish'
  
@@ -179,7 +180,6 @@ class SVNRevertModule(Component):
     def _render_html(self, req, ticket, repos, chgset, diff_options):
         """HTML version"""
         req.hdf['title'] = '#%s' % ticket.id
-        req.hdf['ticket'] = ticket.values
 	filepaths = []
         edits = []
         idx = 0
@@ -211,13 +211,16 @@ class SVNRevertModule(Component):
 
    # the following lines probably belong outside of this _render_html function and inside process_request instead
 	self.svn_init()
+	req.hdf['error'] = ''
+	req.hdf['svn_commands'] = ''
 	for info in filepaths:
 	    revert_rev = self.db_rev_num(1,path)
 	    server = 1 # clone = 1, prod = 2
-            self.svn_update(server,info['path.new'],revert_rev)
+            req.hdf['error'] += self.svn_update(req,server,info['path.new'],revert_rev)
             req.hdf['setchangeset.changes.%d' % idx] = info
  	    idx += 1
 	self.svn_close()
+	req.hdf['svn_commands'] = req.hdf['svn_commands'].split(',')
 
     def use_file(self, newchange, filepaths):
 	for path in filepaths:
@@ -298,7 +301,7 @@ class SVNRevertModule(Component):
       return int(parsed_output.strip())
 
 
-    def svn_update(self,server,filename,rev):
+    def svn_update(self,req,server,filename,rev):
       # eventually use the remote svn path and the remote svn config directory specified in trac.ini
       if(server == 1):
          remote_host = self.default_test_remote_host
@@ -307,6 +310,7 @@ class SVNRevertModule(Component):
 
       # this command will eventually be a remote ssh command to execute
       cmd="%s/ssh %s@%s %s/svn --config-dir /home/%s/.subversion/ update -r %s %s/%s" % (self.default_ssh_path, self.default_ssh_user, remote_host, self.default_svn_path, self.default_ssh_user, rev, self.default_htdoc_path, filename)
+      req.hdf['svn_commands'] += cmd + ','
       output = commands.getoutput(cmd)
       return output
 

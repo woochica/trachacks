@@ -56,10 +56,12 @@
    <li><?cs var:item.path.new ?> <?cs var:item.rev.new ?>
    </li>
   <?cs /each ?></ul>
-  <br/><br/>
-  <?cs each:item = setchangeset.changes ?>
-   <?cs var:item.path.new ?> 
-  <?cs /each ?>
+ </dd>
+ <dt>Subversion Commands:</dt>
+ <dd>
+  <ul><?cs each:item = svn_commands ?>
+   <li><?cs var:item ?></li>
+  <?cs /each ?></ul>
  </dd>
 </dl>
 
