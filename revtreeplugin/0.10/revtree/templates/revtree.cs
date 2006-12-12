@@ -127,10 +127,7 @@
 </div>
 <?cs else ?>
 <div class="svg">
-  <?cs if revtree.svg.src ?><object data="<?cs 
-  var:revtree.svg.src ?>" type="image/svg+xml" width="<?cs 
-  var:revtree.svg.width ?>" height="<?cs var:revtree.svg.height 
-  ?>"></object><?cs else ?><?cs var:revtree.svg.image ?><?cs /if ?>
+  <?cs var:revtree.svg.image ?>
 </div>
 <?cs /if ?>
 </div>

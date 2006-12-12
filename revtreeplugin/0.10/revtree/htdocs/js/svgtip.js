@@ -4,40 +4,54 @@
  * Under an Attribution, Share Alike License
  * JTip is built on top of the very light weight jquery library.
  *
- * Badly hacked to support XHTML/XML and SVG <emmanuel.blot@free.fr>
+ * Badly hacked & tweaked to support XHTML/XML and SVG <emmanuel.blot@free.fr>
  */
 
 $(document).ready(JT_init);
 
+// temporary storage for a:title attributes
+var titles = Array();
+
 function JT_init(){
     $('a[@id^=rev]')
-    .hover(function(){JT_show(this.getAttribute('xlink:href'),
-                              this.getAttribute('id'),
-                              this.getAttribute('title'))},function(){$('#JT').remove()})
+    .hover(function(){JT_show(this)},function(){JT_hide(this)})
       .click(function(){return false});     
 }
 
-function JT_show(url,linkId,title){
+function JT_hide(object) {
+   $('#JT').remove()
+   // restore the original title
+   object.setAttribute('title', titles[object]);   
+}
+
+function JT_show(object) {
+  var url = object.getAttribute('xlink:href');
+  var linkId = object.getAttribute('id');
+  var title = object.getAttribute('title');
+  // clear up the original title and back it up
+  // still looking for a better way to hide xlink:title (CSS ?)
+  titles[object] = title;
+  object.setAttribute('title', '');
   var box = getSvgPosition(linkId);
   if(title == false)title=' ';
   var de = document.documentElement;
   var w = self.innerWidth || (de&&de.clientWidth) || document.body.clientWidth;
   var hasArea = w - box.x;
-  var clickElementy = box.y;
+  var clickElementy = box.y+8;
   var queryString = url.replace(/^[^\?]+\??/,'');
   var params = parseQuery( queryString );
   if(params['width'] === undefined){params['width'] = 250};
   if(params['link'] !== undefined){
-  $('#' + linkId).bind('click',function(){window.location = params['link']});
-  $('#' + linkId).css('cursor','pointer');
+  $(object).bind('click',function(){window.location = params['link']});
+  //$(object).css('cursor','pointer');
   }
     
   if(hasArea>((params['width']*1)+75)){
      var arrowOffset = box.w + 11;
-     var clickElementx = box.x + arrowOffset;
+     var clickElementx = box.x + arrowOffset + 3;
      var side = 'left';
   } else {
-     var clickElementx = box.x - ((params['width']*1) + 15);
+     var clickElementx = box.x - ((params['width']*1) + 15) - 3;
      var side = 'right';
   }
 
@@ -65,7 +79,7 @@ function JT_show(url,linkId,title){
   d0.appendChild(d3);
 
   document.getElementsByTagName('body')[0].appendChild(d0);
-	
+
   $('#JT').show();
   $('#JT_copy').load(url);
 }

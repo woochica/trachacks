@@ -71,6 +71,9 @@ class SvgColor(object):
             else:
                 raise AssertionError, "unsupportedcolor: %s" % value
         else:
+            # FIXME: use some kind of checksum-based colorization
+            # i.e. branchname -> checksum -> color for permanent branch-color
+            # mapping (persistence over graph generation)
             self._color = SvgColor.random()
             
     def __str__(self):
@@ -258,6 +261,7 @@ class SvgChangeset(SvgBaseChangeset):
         if self._revision:
             self._link.attributes['id'] = 'rev%d' % self._revision
             self._link.attributes['title'] = 'Changeset %d' % self._revision
+            self._link.attributes['class'] = 'svgtip'
                     
     def visible(self):
         return True
@@ -904,9 +908,9 @@ class SvgRevtree(object):
         d.setSVG(self._svg)
         d.toXml(filename)
         
-    def render(self, linkparent=False):
+    def render(self, scale=1, width=None, height=None, linkparent=False):
         self._svg = SVG.svg((0,0,self._extent[0],self._extent[1]),
-                            '100%','100%')
+                            scale*self._extent[0], scale*self._extent[1])
         self._arrows.render()
         map(lambda e: e.render(1), self._enhancers)
         map(lambda b: b.render(), self._svgbranches.values())

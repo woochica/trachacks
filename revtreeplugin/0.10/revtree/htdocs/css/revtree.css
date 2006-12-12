@@ -56,6 +56,27 @@ div.svg {
  position: relative;
  float: left;
 }
+div#revtree {
+ overflow: hidden;  
+}
+#revtree dl { 
+ padding-top: 0;
+ margin-top: 0;
+ font-size: 90%;
+}
+#revtree dt { 
+ font-weight: bold;
+ margin-left: 0em;
+}
+#revtree dd { 
+ display: inline;
+ margin-left: 0.4em;
+}
+#revtree dd.message p {
+ margin-top: -1em;
+ margin-left: 0.4em;
+ margin-bottom: 0;
+}
 
 /* jTip */
 #JT_arrow_left{
@@ -118,11 +139,4 @@ margin:3px 0;
 #JT_copy img{
 	padding: 1px;
 	border: 1px solid #CCCCCC;
-}
-.jTip{
-cursor:help;
-}
-.jTip a[title] {
-   /* hide default tooltips */
-   display: none;
 }

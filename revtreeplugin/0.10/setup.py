@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'RevtreePlugin'
-VERSION = '0.4.1'
+VERSION = '0.4.2'
 
 setup (
     name = PACKAGE,

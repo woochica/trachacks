@@ -19,11 +19,12 @@ import time
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import Markup, TracError
+from trac.util.datefmt import format_datetime, pretty_timedelta
 from trac.web import IRequestHandler
 from trac.web.chrome import add_stylesheet, add_script, \
                             INavigationContributor, ITemplateProvider
 from trac.web.href import Href
-from trac.wiki import wiki_to_oneliner, WikiSystem
+from trac.wiki import wiki_to_html, WikiSystem
 
 from revtree import Repository, SvgRevtree, ChangesetEmptyRange
 from revtree.enhancer import Enhancer
@@ -189,15 +190,22 @@ class RevtreeModule(Component):
             rev = int(req.args['rev'])
             repos = self.env.get_repository(req.authname)
             chgset = repos.get_changeset(rev)
-            wikimsg = wiki_to_oneliner(chgset.message, self.env, None, 
-                                       shorten=False)
+            wikimsg = wiki_to_html(chgset.message, self.env, req, None, 
+                                   True, False)
             # FIXME: check if there is a better way to discard ellipsis
+            #        which are not valid in pure XML
             wikimsg = Markup(wikimsg.replace('...', ''));
-            req.hdf['revtree_log.rev'] = rev
-            req.hdf['revtree_log.message'] = wikimsg
+            req.hdf['changeset'] = {
+                'chgset': True,
+                'revision': rev,
+                'time': format_datetime(chgset.date),
+                'age': pretty_timedelta(chgset.date, None, 3600),
+                'author': chgset.author or 'anonymous',
+                'message': wikimsg, 
+            }
             return 'revtree_log.cs', 'application/xhtml+xml'
-        except:
-            raise TracError, "Invalid revision log request"
+        except Exception, e:
+            raise TracError, "Invalid revision log request: %s" % e
         
     def _process_revtree(self, req):
         """Handle revtree generation requests"""
@@ -233,32 +241,13 @@ class RevtreeModule(Component):
             svgrevtree = SvgRevtree(self.env, repos, self.urlbase)
             enhancer = Enhancer(repos, svgrevtree)
             svgrevtree.add_enhancer(enhancer)
-            #self.env.log.debug("REVISIONS %s" % [revstore.revrange])
-            #self.env.log.debug("BRANCH %s" % revstore.get_branches())
-            #self.env.log.debug("AUTHOR %s" % revstore.get_authors())
-            #self.env.log.debug("HIDE %s" % revstore.get_hidetermbranch())
             svgrevtree.create(revstore.revrange, revstore.get_branches(), 
                               revstore.get_authors(), 
                               revstore.get_hidetermbranch(), 
                               revstore.get_style())
             svgrevtree.build()
-            svgrevtree.render()
-            extent = svgrevtree.extent()
-            extent = ((extent[0]*self.scale)/100,(extent[1]*self.scale)/100)
-            # FIXME
-            #extent = (800,(extent[1]*600)/extent[0])
-                    
-            if not self.cache_url.startswith('/'):
-                src = req.href.chrome("site/cache/%s" % filename)
-            else:
-                src = "%s/%s" % (self.cache_url, filename)
-            #svgrevtree.save(os.path.join(self.cache_dir, filename))
-            #req.hdf['revtree.svg.src'] = src
+            svgrevtree.render(self.scale*0.6)
             req.hdf.set_unescaped('revtree.svg.image', str(svgrevtree))
-            (w,h) = extent
-            #(w,h) = (900, (900*h)/w)
-            req.hdf['revtree.svg.width'] = "%dpx" % w
-            req.hdf['revtree.svg.height'] = "%dpx" % h
             
             # create and order the drop-down list content, starting with the
             # global values 
@@ -266,6 +255,10 @@ class RevtreeModule(Component):
             authors = repos.authors()
             branches.sort()
             authors.sort()
+            # prepend the trunks to the selected branches
+            for b in self.trunks:
+                if b not in branches:
+                    branches.insert(0, b)
             branches.insert(0, revstore.anybranch)
             authors.insert(0, revstore.anyauthor)
             
@@ -323,19 +316,9 @@ class RevtreeModule(Component):
                   r'(?:/(?P<path>.*))?$')
         self.bcre = re.compile(bre)
         self.urlbase = self.config.get('trac', 'base_url')
-        self.cache_dir = self.config.get('revtree', 'cache_dir', '%s/cache' \
-                                            % self.env.get_htdocs_dir())
-        self.cache_url = self.config.get('revtree', 
-                                         'cache_url', '').encode('ascii')
         self.trunks = self.env.config.get('revtree', 'trunks', 
                                           'trunk').split(' ')
-        self.scale = self.env.config.get('revtree', 'scale', '50')
-        if (self.scale < 1) or (self.scale>500):
-            self.scale = 50 
-        
-        if not self.cache_dir or not os.path.exists(self.cache_dir):
-            raise TracError("Cache directory is not valid: %s" % \
-                            self.cache_dir)
+        self.scale = float(self.env.config.get('revtree', 'scale', '1'))
         if not self.urlbase:
             raise TracError, "Base URL not defined"
         repos = self.env.get_repository()
