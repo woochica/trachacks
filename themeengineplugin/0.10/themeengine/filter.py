@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.config import Option
+from trac.config import Option, BoolOption
 from trac.web.chrome import ITemplateProvider, add_link
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.util.html import Markup
@@ -21,6 +21,9 @@ class ThemeFilterModule(Component):
     
     theme_name = Option('theme', 'theme', default='',
                    doc='The theme to use to style this Trac.')
+                   
+    override_logo = BoolOption('theme', 'override_logo', default=True,
+                               doc='Allow themes to override your header_logo.')
                    
     def theme(self):
         if self.theme_name in self.info:
@@ -72,7 +75,7 @@ class ThemeFilterModule(Component):
             self._alter_loadpaths(req.hdf, resource_filename(__name__, 'templates/footer'))
         if 'css' in theme:
             add_link(req, 'stylesheet', req.href.themeengine('theme.css'), mimetype='text/css')
-        if 'header_logo' in theme:
+        if 'header_logo' in theme and self.override_logo:
             for k,v in theme['header_logo'].iteritems():
                 req.hdf['chrome.logo.'+k] = v
 
