@@ -23,6 +23,8 @@ class IThemeProvider(Interface):
            The folder containg the static content.
          screenshot::
            The name of the screenshot file.
+         header_logo::
+           A dict containing the same data as the [header_logo] section.
         """
         pass
 
@@ -34,7 +36,7 @@ class ThemeBase(Component):
     implements(IThemeProvider)
     
     # Defaults
-    header = footer = css = htdocs = screenshot = False
+    header = footer = css = htdocs = screenshot = header_logo = False
 
     # IThemeProviderMethods
     def get_theme_names(self):
@@ -52,6 +54,7 @@ class ThemeBase(Component):
         self._set_info(info, 'css', 'templates/css.cs')
         self._set_info(info, 'htdocs', 'htdocs')
         self._set_info(info, 'screenshot', 'htdocs/screenshot.png')
+        self._set_info(info, 'header_logo', {})
         
         return info
             

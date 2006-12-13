@@ -72,6 +72,9 @@ class ThemeFilterModule(Component):
             self._alter_loadpaths(req.hdf, resource_filename(__name__, 'templates/footer'))
         if 'css' in theme:
             add_link(req, 'stylesheet', req.href.themeengine('theme.css'), mimetype='text/css')
+        if 'header_logo' in theme:
+            for k,v in theme['header_logo'].iteritems():
+                req.hdf['chrome.logo.'+k] = v
 
         req.hdf['themeengine'] = theme
                         
