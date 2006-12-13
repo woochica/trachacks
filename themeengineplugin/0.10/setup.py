@@ -7,7 +7,7 @@ setup(
     name = 'TracThemeEngine',
     version = '1.0',
     packages = ['themeengine'],
-    package_data = { 'themeengine': [ 'templates/*.cs', 'htdocs/*.png' ] },
+    package_data = { 'themeengine': [ 'templates/*.cs', 'templates/header/*.cs', 'templates/footer/*.cs', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",

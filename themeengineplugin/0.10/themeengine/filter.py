@@ -1,11 +1,16 @@
 from trac.core import *
 from trac.config import Option
-from trac.web.chrome import ITemplateProvider
-from trac.web.api import IRequestFilter
+from trac.web.chrome import ITemplateProvider, add_link
+from trac.web.api import IRequestFilter, IRequestHandler
 from trac.util.html import Markup
 
 import os
 from pkg_resources import resource_filename
+try:
+    set = set
+except ImportError:
+    from sets import Set as set
+
 
 from api import IThemeProvider, NullTheme
 
@@ -28,16 +33,27 @@ class ThemeFilterModule(Component):
 
     providers = ExtensionPoint(IThemeProvider)
     
-    implements(IRequestFilter, ITemplateProvider)
+    implements(IRequestFilter, IRequestHandler, ITemplateProvider)
     
     def __init__(self):
         # This can safely go in here because the data can only change on a restart anyway
         self.info = {}
         for provider in self.providers:
             for name in provider.get_theme_names():
-                self.info[name] = provider.get_theme_info(name)
-                self.info[name]['provider'] = provider
-                self.info[name]['module'] = provider.__class__.__module__
+                theme = provider.get_theme_info(name)
+                theme['provider'] = provider
+                theme['module'] = provider.__class__.__module__
+                
+                folders = set()
+                for t in ('header', 'footer', 'css'):
+                    if t in theme:
+                        dir, file = os.path.split(resource_filename(theme['module'], theme[t]))
+                        folders.add(dir)
+                        theme[t] = file
+                self.log.debug('ThemeEngine: folders are %s', ', '.join(folders))
+                theme['folders'] = list(folders)
+                
+                self.info[name] = theme
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -48,10 +64,26 @@ class ThemeFilterModule(Component):
         if not theme:
             return template, content_type # No theme, early bail out
 
-        self._do_template(req, 'header')
-        self._do_template(req, 'footer')
-                    
+        self._alter_loadpaths(req.hdf, theme['folders'])
+        #self._alter_loadpaths(req.hdf, resource_filename(__name__, 'templates'))
+        if 'header' in theme and theme['header'] != 'header.cs':
+            self._alter_loadpaths(req.hdf, resource_filename(__name__, 'templates/header'))
+        if 'footer' in theme and theme['footer'] != 'footer.cs':
+            self._alter_loadpaths(req.hdf, resource_filename(__name__, 'templates/footer'))
+        if 'css' in theme:
+            add_link(req, 'stylesheet', req.href.themeengine('theme.css'), mimetype='text/css')
+
+        req.hdf['themeengine'] = theme
+                        
         return template, content_type
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info == '/themeengine/theme.css'
+        
+    def process_request(self, req):
+        self._alter_loadpaths(req.hdf, self.theme['folders'])
+        return self.theme['css'], 'text/css'
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -60,7 +92,6 @@ class ThemeFilterModule(Component):
         return []
         
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         yield ('themeengine', resource_filename(__name__, 'htdocs'))
         if self.theme and 'htdocs' in self.theme: 
             yield ('theme', resource_filename(self.theme['module'], self.theme['htdocs']))
@@ -76,7 +107,7 @@ class ThemeFilterModule(Component):
             old_paths.append(node.value())
             node = node.next()
         if prepend:
-            paths += old_paths
+            paths = paths + old_paths
         hdf.removeTree('hdf.loadpaths')
         hdf['hdf.loadpaths'] = paths
         return old_paths

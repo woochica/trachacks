@@ -1,1 +1,1 @@
-<?cs var:themeengine.footer ?>
+<?cs linclude:themeengine.footer ?>
