@@ -91,11 +91,10 @@
 
 <script type="text/javascript">
 
-var descriptions = { 
-<?cs each:theme = themeengine.info ?>
-    <?cs name:theme ?>: '<?cs var:theme.description ?>',
+var descriptions = {};
+<?cs each:theme = themeengine.info
+?>descriptions['<?cs name:theme ?>'] = '<?cs var:theme.description ?>';
 <?cs /each ?>
-};
 
 function change_handler(car, elm, ind, state) {
     var theme = $(elm).find('img').id();
