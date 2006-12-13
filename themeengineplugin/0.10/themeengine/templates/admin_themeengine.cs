@@ -11,6 +11,7 @@
     width: 640px;
     -moz-border-radius: 10px;
     background: #EEF7D4;
+    /*background: #FFFECC;*/
     padding: 20px 35px;
 }
 
@@ -40,7 +41,7 @@
 .jcarousel-next {
     display: none;
     position: absolute;
-    top: 105px;
+    top: 205px;
     right: 5px;
     cursor: pointer;
 }
@@ -55,7 +56,7 @@
 .jcarousel-prev {
     display: none;
     position: absolute;
-    top: 105px;
+    top: 205px;
     left: 5px;
     cursor: pointer;
 }
@@ -70,8 +71,8 @@
 </style>
 
 <div id="carousel">
- <img src="<?cs var:themeengine.href.htdocs ?>/jcarousel-data/img/horizontal-sweetie/prev.gif" border="0" class="jcarousel-prev" />
- <img src="<?cs var:themeengine.href.htdocs ?>/jcarousel-data/img/horizontal-sweetie/next.gif" border="0" class="jcarousel-next" />
+ <img src="<?cs var:themeengine.href.htdocs ?>/img/prev.gif" border="0" class="jcarousel-prev" />
+ <img src="<?cs var:themeengine.href.htdocs ?>/img/next.gif" border="0" class="jcarousel-next" />
  <ul>
   <?cs each:theme = themeengine.info ?>
   <li><img height="400" width="640" src="<?cs var:themeengine.href.screenshot ?>/<?cs name:theme ?>" id="<?cs name:theme ?>" /></li>
