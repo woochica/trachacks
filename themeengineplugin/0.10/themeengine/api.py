@@ -71,6 +71,3 @@ class ThemeBase(Component):
                 info[attr] = val
            
 
-class NullTheme(ThemeBase):
-    """A default theme that does nothing."""
-    pass

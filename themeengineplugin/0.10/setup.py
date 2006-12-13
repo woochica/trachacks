@@ -7,7 +7,8 @@ setup(
     name = 'TracThemeEngine',
     version = '1.0',
     packages = ['themeengine'],
-    package_data = { 'themeengine': [ 'templates/*.cs', 'templates/header/*.cs', 'templates/footer/*.cs', 'htdocs/*.css' ] },
+    package_data = { 'themeengine': [ 'templates/*.cs', 'templates/header/*.cs', 'templates/footer/*.cs', 
+                                      'htdocs/*.*', 'htdocs/img/*.*' ] },
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
@@ -23,8 +24,8 @@ setup(
 
     entry_points = {
         'trac.plugins': [
-            'themeengine.api = themeengine.api',
             'themeengine.filter = themeengine.filter',
+            'themeengine.admin = themeengine.admin',
         ]
     }
 )

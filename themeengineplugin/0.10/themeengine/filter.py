@@ -12,7 +12,7 @@ except ImportError:
     from sets import Set as set
 
 
-from api import IThemeProvider, NullTheme
+from api import IThemeProvider
 
 __all__ = ['ThemeFilterModule']
 
@@ -82,17 +82,26 @@ class ThemeFilterModule(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info == '/themeengine/theme.css'
+        return req.path_info.startswith('/themeengine')
         
     def process_request(self, req):
-        self._alter_loadpaths(req.hdf, self.theme['folders'])
-        return self.theme['css'], 'text/css'
+        path_info = req.path_info[12:]
+        
+        if path_info == '/theme.css':
+            self._alter_loadpaths(req.hdf, self.theme['folders'])
+            return self.theme['css'], 'text/css'
+        elif path_info.startswith('/screenshot'):
+            name = path_info[12:]
+            if name in self.info and 'screenshot' in self.info[name]:
+                req.send_file(resource_filename(self.info[name]['module'], self.info[name]['screenshot']))
+            else:
+                req.send_file(resource_filename(__name__, 'htdocs/default.png'))
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
         #from pkg_resources import resource_filename
-        #return [resource_filename(__name__, 'templates')]
-        return []
+        return [resource_filename(__name__, 'templates')]
+        #return []
         
     def get_htdocs_dirs(self):
         yield ('themeengine', resource_filename(__name__, 'htdocs'))
