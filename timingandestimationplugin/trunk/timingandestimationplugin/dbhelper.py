@@ -15,8 +15,11 @@ def get_all(db, sql, *params):
         mylog.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
-    cur.close()
-    db.close()
+    try:
+        db.close()
+    except:
+        pass
+    
     return (desc, data)
 
 def execute_non_query(db, sql, *params):
@@ -30,9 +33,10 @@ def execute_non_query(db, sql, *params):
 with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
         
-    cur.close() 
-    db.close()
-
+    try:
+        db.close()
+    except:
+        pass
 
 def get_scalar(db, sql, col=0, *params):
     cur = db.cursor()
@@ -41,14 +45,14 @@ def get_scalar(db, sql, col=0, *params):
         cur.execute(sql, params)
         data = cur.fetchone();
         db.commit();
-        cur.close();
-        db.close();
     except Exception, e:
         mylog.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback()
-    cur.close();
-    db.close();
+    try:
+        db.close()
+    except:
+        pass
     if data:
         return data[col]
     else:
@@ -83,8 +87,10 @@ def db_table_exists(db, table):
         has_table = False
         db.rollback()
         
-    cur.close()
-    db.close()
+    try:
+        db.close()
+    except:
+        pass
     return has_table
 
 def get_column_as_list(db, sql, col=0, *params):
