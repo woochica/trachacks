@@ -368,7 +368,8 @@ class RevtreeModule(Component):
         return revisions
 
     def _select_parameters(self, repos, req, revstore):
-        """ """
+        """Calculates the revisions/branches/authors to show as selectable
+           properties for the revtree generation"""
         revs = [c for c in repos.changesets()]
         revs.reverse()
         revisions = []

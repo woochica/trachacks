@@ -80,13 +80,13 @@ function JT_show(object) {
 
   document.getElementsByTagName('body')[0].appendChild(d0);
 
+  // netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
   $('#JT').show();
   $('#JT_copy').load(url);
 }
 
 function getSvgPosition(objectId) {
    var svg = document.getElementsByTagName('svg')[0];
-   //alert('position: ' + svg.parentNode.offsetTop);
    var anodes = svg.getElementsByTagName('a');
    var object;
 	for ( var e = 0; e < anodes.length; e++ ) {

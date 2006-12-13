@@ -1,25 +1,5 @@
-div#settings {
-}
-form#prefs {
- margin-top: 2em;   
-}
-div.revtree .tip {
- font: 10px/12px Arial,Helvetica,sans-serif; 
- border: solid 1px #666666; 
- width: 250px; 
- padding: 1px; 
- position: absolute; 
- z-index: 100; 
- visibility: hidden; 
- color: #333333;
- top: 20px; 
- left: 90px; 
- background-color: #ffffcc; 
- layer-background-color: #ffffcc;
-}
-
 div.revtree div#legend {
- align: right; 
+ text-align: right; 
 }
 div.revtree div#errormsg {
  border: solid red 2px;
@@ -30,31 +10,40 @@ div.revprops {
  padding-right: 2ex;
  margin-left: 1ex;
  white-space: nowrap;
- position: relative;
  float: left;
  border-right: solid 1px #333;
 }
-div#treestyle div {
+#treestyle div {
    display: block;
 }
-div#options {
+#treeoptions {
    white-space: normal;
    width: 12ex;
 }
-div#options label {
-   margin=top: 0;
+#treeoptions label {
+   margin-top: 0;
    padding-left: 3ex;
 }
-div#update {
+#treeupdate {
  border-right: none;
 }
+#settings {
+   /* FIXME */
+   width: 100%;
+   border-top: 4px solid red;
+   background-color: red;
+   margin-top: 0;
+   margin-left: 0;
+   margin-right: 0;
+   margin-bottom: 10em;
+}
 #prefs {
- position: relative;
+ margin-top: 2em;
  float: left;
 }
 div.svg {
- position: relative;
- float: left;
+ float: none;
+ margin-left: 4ex;
 }
 div#revtree {
  overflow: hidden;  
@@ -110,7 +99,7 @@ div#revtree {
 	padding:10px 10px 10px 10px;
 	color:#333333;
 }
-.JT_loader{
+#JT_loader{
 	background-image: url(../images/loader.gif);
 	background-repeat: no-repeat;
 	background-position: center center;

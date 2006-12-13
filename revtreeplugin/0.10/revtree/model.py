@@ -21,6 +21,7 @@ from trac.core import TracError
 from svn import fs
 
 class ChangesetEmptyRange(TracError):
+    """Defines a RevTree error (no changeset in the selected range)"""
     def __init__(self, msg=None):
         TracError.__init__(self, "%sNo changeset" \
                            % (msg and '%s: ' % msg or ''))
@@ -219,17 +220,10 @@ class Repository(object):
         self.log = env.log
         # Trac version control
         self._crepos = self.env.get_repository(authname)
-        #self._svnrepos = SubversionRepository(repository_path, None, self.log)
-        #self._reposcache = CachedRepository(env.get_db_cnx(), self._svnrepos, 
-        #                                    None, self.log)
         # Dictionnary of changesets
         self._changesets = {}
         # Dictionnary of branches
         self._branches = {}
-        # Lowset revision number
-        #self._rev_min = 1
-        # Highest revision number
-        #self._rev_max = self._proxy.get_youngest_revision()
 
     def _build_branches(self):
         """Constructs the branch dictionnary from the changeset dictionnary""" 
@@ -286,29 +280,10 @@ class Repository(object):
         node = self._crepos.get_node(path, rev)
         return (node.get_name(), node.rev)
 
-    #def get_revisions_by_date(self, dayrange):
-    #    """Returns a tuple of (min, max) revisions from 
-    #       a date range (oldest, newest)"""
-    #    current = time.time()
-    #    mintime = current - (dayrange[0]*86400)
-    #    maxtime = current - (dayrange[1]*86400)
-    #    revisions = []
-    #    for chg in self._changesets.values():
-    #        if chg.time < mintime:
-    #            continue
-    #        if chg.time > maxtime:
-    #            continue
-    #        revisions.append(chg.revision)
-    #    revisions.sort()
-    #    if not revisions:
-    #        return (0, 0)
-    #    if len(revisions) >= 2:
-    #        return (revisions[0], revisions[-1])
-    #    return (revisions[0], revisions[0])
-
     def build(self, bcre, revrange=None, timerange=None):
         """Builds an internal representation of the repository, which 
            is used to generate a graphical view of it"""
+        self._crepos.sync()
         start = 0
         stop = int(time.time())
         if timerange:
@@ -331,7 +306,6 @@ class Repository(object):
         if len(vcsort) < 1:
             raise ChangesetEmptyRange
         vcsort.sort()
-        self.log.debug("SORT %d" % len(vcsort))
         self._revrange = (vcsort[0][1].rev,vcsort[-1][1].rev)
         vcsort.reverse()
         for (rev, vc) in vcsort:

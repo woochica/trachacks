@@ -21,18 +21,22 @@ from random import randrange, seed
 from colorsys import rgb_to_hsv, hsv_to_rgb
 
 UNIT = 25
-FONT_NAME = 'Verdana'
-FONT_SIZE = '14pt'
 SQRT2=sqrt(2)
 SQRT3=sqrt(3)
 
-debugw = []
-def dbgPt(x,y,c='red',d=5):
-    debugw.append(SVG.circle(x,y,d, 'white', c, '2'))
-def dbgLn(x1,y1,x2,y2,c='red',w=3):
-    debugw.append(SVG.line(x1,y1,x2,y2,c,w))
-def dbgDump(svg):
-    map(svg.addElement, debugw)
+# FIXME: This should be set in Trac properties, or event better: 
+#        as CSS properties
+FONT_NAME = 'Verdana'
+FONT_SIZE = '14pt'
+
+# Debug functions to place debug circles on the SVG graph
+#debugw = []
+#def dbgPt(x,y,c='red',d=5):
+#    debugw.append(SVG.circle(x,y,d, 'white', c, '2'))
+#def dbgLn(x1,y1,x2,y2,c='red',w=3):
+#    debugw.append(SVG.line(x1,y1,x2,y2,c,w))
+#def dbgDump(svg):
+#    map(svg.addElement, debugw)
     
 def textwidth(text):
     # kludge, this should get the actual font parameters, etc...
@@ -45,6 +49,7 @@ def plink(url):
 
             
 class SvgColor(object):
+    """Helpers for color management (conversion, generation, ...)"""
     
     colormap = { 'black':       (0,0,0),
                  'darkred':     (0x7f,0,0),
@@ -132,6 +137,8 @@ class SvgColor(object):
 
 
 class SvgBaseChangeset(object):
+    """Base class for graphical changeset/revision nodes
+       This changeset cannot be rendered in the SVG graph"""
     
     def __init__(self, parent, revision, position=None):
         self._parent = parent
@@ -173,14 +180,11 @@ class SvgBaseChangeset(object):
         return (x,y)
 
     def render(self):
-        # debug only
-        #w = SVG.circle(self._position[0], self._position[1],
-        #               20, 'blue', 'blue', 3)
-        #self._parent.svg().addElement(w)
         pass
 
 
 class SvgChangeset(SvgBaseChangeset):
+    """Changeset/revision node"""
     
     def __init__(self, parent, changeset):
         SvgBaseChangeset.__init__(self, parent, changeset.rev)
@@ -271,6 +275,7 @@ class SvgChangeset(SvgBaseChangeset):
 
 
 class SvgBranchHeader(object):
+    """Branch title"""
     
     def __init__(self, parent, title):
         self._parent = parent
@@ -317,7 +322,9 @@ class SvgBranchHeader(object):
         
 
 class SvgBranch(object):
-    
+    """Branch (set of changesets which whose commits share a common base
+       directory)"""
+       
     def __init__(self, parent, branch, style):
         self._parent = parent
         self._branch = branch
@@ -459,7 +466,9 @@ class SvgBranch(object):
 
 
 class SvgAxis(object):
-
+    """Simple graphical line between a header and the youngest
+       revision of a branch"""
+       
     def __init__(self, parent, head, tail, color='#7f7f7f'):
         self._parent = parent
         self._head = head
@@ -482,7 +491,9 @@ class SvgAxis(object):
 
 
 class SvgTransition(object):
-
+    """Simple graphical line between two consecutive changesets 
+       on the same branch"""
+       
     def __init__(self, parent, srcChg, dstChg, color):
         self._parent = parent
         self._source = srcChg
@@ -506,6 +517,7 @@ class SvgTransition(object):
 
 
 class SvgChangeLink(object):
+    """Deprecated. Set of associated changeset on the same branch"""
     
     def __init__(self, parent, srcChg, dstChg, color='#000'):
         self._parent = parent
@@ -541,6 +553,7 @@ class SvgChangeLink(object):
 
 
 class SvgGroup(object):
+    """Graphical group of consecutive changesets within a same branch"""
     
     def __init__(self, parent, firstChg, lastChg, color='#fffbdb'):
         self._parent = parent
@@ -578,7 +591,9 @@ class SvgGroup(object):
         
         
 class SvgOperation(object):
-
+    """Graphical operation between two changesets of distinct branches 
+       (such as a switch/branch creation, a merge operation, ...)"""
+       
     def __init__(self, parent, srcChg, dstChg, color='black'):
         self._parent = parent
         self._source = srcChg
@@ -703,6 +718,7 @@ class SvgOperation(object):
         
 
 class SvgArrows(object):
+    """Arrow headers for graphical links and operations"""
     
     def __init__(self, parent):
         self._parent = parent
@@ -733,7 +749,8 @@ class SvgArrows(object):
 
     
 class SvgRevtree(object):
-    
+    """Main object that represents the revision tree as a SVG graph"""
+
     def __init__(self, env, repos, urlbase):
         """Construct a new SVG revision tree"""
         # Environment
@@ -876,8 +893,7 @@ class SvgRevtree(object):
         """Avoid two operation path to go through the same point
            Store every points of an operation path. If the point is already
            marked as used, find another point, looking around the original
-           point for a free slot
-        """
+           point for a free slot"""
         (x, y) = point
         kx = int(x)
         if self._oppoints.has_key(kx):
@@ -915,4 +931,4 @@ class SvgRevtree(object):
         map(lambda e: e.render(1), self._enhancers)
         map(lambda b: b.render(), self._svgbranches.values())
         map(lambda e: e.render(2), self._enhancers)
-        dbgDump(self._svg)
+        #dbgDump(self._svg)
