@@ -6,6 +6,8 @@ mylog = None;
 def get_all(db, sql, *params):
     """Executes the query and returns the (description, data)"""
     cur = db.cursor()
+    desc  = None
+    data = None
     try:
         cur.execute(sql, params)
         data = list(cur.fetchall())
