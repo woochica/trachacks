@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'RevtreePlugin'
-VERSION = '0.4.2'
+VERSION = '0.4.3'
 
 setup (
     name = PACKAGE,
@@ -38,6 +38,7 @@ setup (
     entry_points = {
         'trac.plugins': [
             'revtree.web_ui = revtree.web_ui',
+            'revtree.enhancer = revtree.enhancer'
         ]
     }
 )

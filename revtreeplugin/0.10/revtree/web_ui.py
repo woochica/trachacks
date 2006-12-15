@@ -16,6 +16,8 @@ import re
 import os
 import time
 
+from revtree.api import EmptyRangeError, RevtreeSystem
+from revtree.model import Repository
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import Markup, TracError
@@ -26,8 +28,6 @@ from trac.web.chrome import add_stylesheet, add_script, \
 from trac.web.href import Href
 from trac.wiki import wiki_to_html, WikiSystem
 
-from revtree import Repository, SvgRevtree, ChangesetEmptyRange
-from revtree.enhancer import Enhancer
 
 class RevtreeStore(object):
     """User revtree properties"""
@@ -133,11 +133,11 @@ class RevtreeStore(object):
         return self['treestyle']
         
     def __getitem__(self, name):
-        """getter (dictionary)"""
+        """Getter (dictionary)"""
         return self.values[name]
 
     def __setitem__(self, name, value):
-        """setter (dictionnary)"""
+        """Setter (dictionnary)"""
         self.values[name] = value
 
 
@@ -146,7 +146,7 @@ class RevtreeModule(Component):
     
     implements(IPermissionRequestor, INavigationContributor, \
                IRequestHandler, ITemplateProvider)
-    
+                   
     PERIODS = { 1 : 'day', 2 : '2 days', 3 : '3 days', 7: 'week',
                 14 : 'fortnight', 31 : 'month', 61 : '2 months', 
                 91 : '3 months', 366 : 'year', 0 : 'all' }
@@ -183,7 +183,48 @@ class RevtreeModule(Component):
             return self._process_log(req)
         else:
             return self._process_revtree(req)
+
+    # ITemplateProvider
+    
+    def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
+        from pkg_resources import resource_filename
+        return [('revtree', resource_filename(__name__, 'htdocs'))]
+    
+    def get_templates_dirs(self):
+        """Return the absolute path of the directory containing the provided
+        ClearSilver templates.
+        """
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+    
+    # end of interface implementation
             
+    def __init__(self):
+        """Reads the configuration and run sanity checks"""
+        if self.config.get('trac', 'repository_type') != 'svn':
+            raise TracError, "Revtree only supports Subversion repositories"
+        bre = self.config.get('revtree', 'branch_re',
+                  r'^(?P<branch>branches/[^/]+|trunk|data)'
+                  r'(?:/(?P<path>.*))?$')
+        self.bcre = re.compile(bre)
+        self.trunks = self.env.config.get('revtree', 'trunks', 
+                                          'trunk').split(' ')
+        self.scale = float(self.env.config.get('revtree', 'scale', '1'))
+        repos = self.env.get_repository()
+        self.oldest = int(self.env.config.get('revtree', 'revbase', 
+                                              repos.get_oldest_rev()))
+        self.youngest = repos.get_youngest_rev()
+        if self.config.getbool('revtree', 'reltime', True):
+            self.timebase = repos.get_changeset(self.youngest).date
+        else:
+            self.timebase = None
+        self.style = self.config.get('revtree', 'style', 'compact')
+        if self.style not in [ 'compact', 'timeline']:
+            raise TracError, "Unsupported style: %s" % self.style
+
     def _process_log(self, req):
         """Handle AJAX log requests"""
         try:
@@ -229,7 +270,7 @@ class RevtreeModule(Component):
 
         try:
             if not revstore.can_be_rendered():
-                raise ChangesetEmptyRange
+                raise EmptyRangeError
                 
             repos = Repository(self.env, req.authname)
             repos.build(self.bcre, revstore.revrange, revstore.timerange)
@@ -238,10 +279,12 @@ class RevtreeModule(Component):
                 self._select_parameters(repos, req, revstore)
             filename = self._get_filename()
                                         
-            svgrevtree = SvgRevtree(self.env, repos, self.urlbase)
-            enhancer = Enhancer(repos, svgrevtree)
-            svgrevtree.add_enhancer(enhancer)
-            svgrevtree.create(revstore.revrange, revstore.get_branches(), 
+            svgrevtree = RevtreeSystem(self.env).get_revtree(repos)
+            
+            #enhancer = Enhancer(repos, svgrevtree)
+            #svgrevtree.add_enhancer(enhancer)
+            
+            svgrevtree.create(req, revstore.revrange, revstore.get_branches(), 
                               revstore.get_authors(), 
                               revstore.get_hidetermbranch(), 
                               revstore.get_style())
@@ -265,7 +308,7 @@ class RevtreeModule(Component):
             # save the user parameters only if the tree can be rendered
             revstore.save(req.session)
             
-        except ChangesetEmptyRange:
+        except EmptyRangeError:
             req.hdf['revtree.errormsg'] = "Selected filters cannot render" \
                                           " a revision tree"
             # restore default parameters
@@ -289,49 +332,6 @@ class RevtreeModule(Component):
                                                                                
         add_stylesheet(req, 'revtree/css/revtree.css')
         return 'revtree.cs', 'application/xhtml+xml'
-
-    # ITemplateProvider
-
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        from pkg_resources import resource_filename
-        return [('revtree', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
-
-    # end of interface implementation
-
-    def __init__(self):
-        if self.config.get('trac', 'repository_type') != 'svn':
-            raise TracError, "Revtree only supports Subversion repositories"
-        bre = self.config.get('revtree', 'branch_re',
-                  r'^(?P<branch>branches/[^/]+|trunk|data)'
-                  r'(?:/(?P<path>.*))?$')
-        self.bcre = re.compile(bre)
-        self.urlbase = self.config.get('trac', 'base_url')
-        self.trunks = self.env.config.get('revtree', 'trunks', 
-                                          'trunk').split(' ')
-        self.scale = float(self.env.config.get('revtree', 'scale', '1'))
-        if not self.urlbase:
-            raise TracError, "Base URL not defined"
-        repos = self.env.get_repository()
-        self.oldest = int(self.env.config.get('revtree', 'revbase', 
-                                              repos.get_oldest_rev()))
-        self.youngest = repos.get_youngest_rev()
-        if self.config.getbool('revtree', 'reltime', True):
-            self.timebase = repos.get_changeset(self.youngest).date
-        else:
-            self.timebase = None
-        self.style = self.config.get('revtree', 'style', 'compact')
-        if self.style not in [ 'compact', 'timeline']:
-            raise TracError, "Unsupported style: %s" % self.style
 
     def _get_periods(self):
         """Generates a list of periods"""

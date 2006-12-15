@@ -12,28 +12,43 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 
+from revtree import IRevtreeEnhancer
 from revtree.svgview import SvgOperation, SvgGroup
+from trac.core import *
 
 
-class Enhancer(object):
-    """Enhance the appearance of the RevTree with site-specific properties
-    This file is a very basic skeleton that needs to customized, to provide
-    SvgOperation, SvgGroup and other widgets in the RevTree graphic"""
+class SimpleContainer(object):
+    """Simple container for enhancer parameters"""
     
-    def __init__(self, repos, svgrevtree):
-        self._repos = repos
-        self._creations = []
-        self._deliveries = []
-        self._groups = []
-        self._svgrevtree = svgrevtree
-        # z-depth indexed widgets: back=1, fore=2
-        self._widgets = ([], [], [])
+    def __init__(self):
+        pass
+        
 
-    def create(self):
+class SimpleEnhancer(Component):
+    """Enhance the appearance of the RevTree with site-specific properties.
+    
+    Create branch clone operation (on branch/tag operations)
+    
+    This class is a very basic skeleton that needs to customized, to provide
+    SvgOperation, SvgGroup and other widgets in the RevTree graphic
+    """
+    
+    implements(IRevtreeEnhancer)    
+    
+    def create(self, env, req, repos, svgrevtree):
         """Creates the internal data from the repository"""
-        self._sort()
-        for branch in self._repos.branches().values():
-            svgbranch = self._svgrevtree.svgbranch(branch=branch)
+        enhancer = SimpleContainer()
+        enhancer.repos = repos
+        enhancer.creations = []
+        enhancer.deliveries = []
+        enhancer.groups = []
+        enhancer.svgrevtree = svgrevtree
+        # z-depth indexed widgets: back=1, fore=2
+        enhancer.widgets = ([], [], [])
+        
+        #self._sort()
+        for branch in enhancer.repos.branches().values():
+            svgbranch = enhancer.svgrevtree.svgbranch(branch=branch)
             if not svgbranch:
                 # branch has probably been filtered out
                 continue
@@ -44,85 +59,42 @@ class Enhancer(object):
                 # tweak the color appearance of this changeset ..
                 svgbranch.svgchangeset(firstchgset).invert_color()
                 (rev, path) = branch.source()
-                srcchg = self._repos.changeset(rev)
+                srcchg = enhancer.repos.changeset(rev)
                 if srcchg is None:
                     continue
                 # .. and create an operation between both changesets
-                self._creations.append((srcchg, firstchgset))
+                enhancer.creations.append((srcchg, firstchgset))
             lastchgset = branch.youngest()
             if lastchgset:
                 # if the last changeset of the branch is the very last
                 if lastchgset.last:
                     # tweak the color of this changeset
                     svgbranch.svgchangeset(lastchgset).kill()
+        return enhancer
 
-    def build(self):
+    def build(self, enhancer):
         """Build the enhanced widgets"""
-        for (srcchg, dstchg) in self._creations:
-            svgsrcbr = self._svgrevtree.svgbranch(branchname=srcchg.branchname)
+        for (srcchg, dstchg) in enhancer.creations:
+            svgsrcbr = enhancer.svgrevtree.svgbranch(branchname=srcchg.branchname)
             if svgsrcbr is None:
                 continue
             svgsrcchg = svgsrcbr.svgchangeset(srcchg)
-            svgdstbr = self._svgrevtree.svgbranch(branchname=dstchg.branchname)
+            svgdstbr = enhancer.svgrevtree.svgbranch(branchname=dstchg.branchname)
             if svgdstbr is None:
                 continue
             svgdstchg = svgdstbr.svgchangeset(dstchg)
-            op = SvgOperation(self._svgrevtree, svgsrcchg, svgdstchg, '#5faf5f')
-            self._widgets[2].append(op)
+            op = SvgOperation(enhancer.svgrevtree, svgsrcchg, svgdstchg, \
+                              '#5faf5f')
+            enhancer.widgets[2].append(op)
                     
-        for wl in self._widgets:
+        for wl in enhancer.widgets:
             map(lambda w: w.build(), wl)
         
-    def render(self, level):
-        """Renders widgets, from background plane to foreground plane"""
-        if level < len(self._widgets):
-            map(lambda w: w.render(), self._widgets[level])
+    def render(self, enhancer, level):
+        """Renders the widgets, from background plane to foreground plane"""
+        if level < len(enhancer.widgets):
+            map(lambda w: w.render(), enhancer.widgets[level])
+            
+
+
         
-    def optimize(self, branches):
-        """Provides a list of branches, sorted from left-most to rigtht-most
-        position.
-        Optimal placement is required to reduce the number of operation links
-        that cross each other on the rendered graphic"""
-        return [b for b in self._obranches if b in branches]
-        
-    def _sort(self):
-        """Computes the optimal placement of branches.
-        This example is FAR from providing optimal placements ;-)"""
-        graph = {}
-        for v in self._repos.branches().values():
-            k = v.name
-            src = v.source()
-            if src:
-                (rev, path) = src
-                if graph.has_key(path):
-                    graph[path].append(k)
-                else:
-                    graph[path] = [k]
-        density = []
-        for (p, v) in graph.items():
-            density.append((p,len(v)))
-        density.sort(lambda a,b: cmp(a[1],b[1]))
-        density.reverse()
-        order = []
-        cur = 0
-        for (branch, weight) in density:
-            order.insert(cur, branch)
-            if cur:
-                cur = 0
-            else:
-                cur = len(order)
-        branches = []
-        for br in graph.values():
-            branches.extend(br)
-        branches.extend([br.name for br in self._repos.branches().values() \
-                         if br.name not in branches])
-        for branch in branches:
-            if branch in order:
-                continue
-            order.insert(cur, branch)
-            if cur:
-                cur = 0
-            else:
-                cur = len(order)
-        self._obranches = [self._repos.branch(name) for name in order]
- 

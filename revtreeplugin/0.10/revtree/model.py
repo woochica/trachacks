@@ -14,17 +14,67 @@
 
 import re
 import time
-from trac.versioncontrol import Node, Changeset
-from trac.core import TracError
 
+from revtree import IRevtreeOptimizer
+from trac.versioncontrol import Node, Changeset
+from trac.core import *
 # only for get_revision_properties
 from svn import fs
 
-class ChangesetEmptyRange(TracError):
-    """Defines a RevTree error (no changeset in the selected range)"""
-    def __init__(self, msg=None):
-        TracError.__init__(self, "%sNo changeset" \
-                           % (msg and '%s: ' % msg or ''))
+
+class DefaultRevtreeOptimizer(Component):
+    """Default optmizer"""
+    
+    implements(IRevtreeOptimizer)    
+        
+    def optimize(self, repos, branches):
+        """Computes the optimal placement of branches.
+        
+        Optimal placement is recommended to reduce the number of operation 
+        links that cross each other on the rendered graphic.
+        This rudimentary example is FAR from providing optimal placements...
+        """
+        # FIXME: really stupid algorithm
+        graph = {}
+        for v in repos.branches().values():
+            k = v.name
+            src = v.source()
+            if src:
+                (rev, path) = src
+                if graph.has_key(path):
+                    graph[path].append(k)
+                else:
+                    graph[path] = [k]
+        density = []
+        for (p, v) in graph.items():
+            density.append((p,len(v)))
+        density.sort(lambda a,b: cmp(a[1],b[1]))
+        density.reverse()
+        order = []
+        cur = 0
+        for (branch, weight) in density:
+            order.insert(cur, branch)
+            if cur:
+                cur = 0
+            else:
+                cur = len(order)
+        nbranches = []
+        for br in graph.values():
+            nbranches.extend(br)
+        nbranches.extend([br.name for br in repos.branches().values() \
+                          if br.name not in nbranches])
+        for branch in nbranches:
+            if branch in order:
+                continue
+            order.insert(cur, branch)
+            if cur:
+                cur = 0
+            else:
+                cur = len(order)
+        obranches = [repos.branch(name) for name in order]
+        # FIXME: use filter()
+        return [b for b in obranches if b in branches]
+
 
 class BranchChangeset(object):
     """Represents a Subversion revision with additionnal properties"""
@@ -283,7 +333,6 @@ class Repository(object):
     def build(self, bcre, revrange=None, timerange=None):
         """Builds an internal representation of the repository, which 
            is used to generate a graphical view of it"""
-        self._crepos.sync()
         start = 0
         stop = int(time.time())
         if timerange:
@@ -304,7 +353,7 @@ class Repository(object):
         else:
             vcsort = [(c.rev, c) for c in vcchangesets]
         if len(vcsort) < 1:
-            raise ChangesetEmptyRange
+            raise EmptyRangeError
         vcsort.sort()
         self._revrange = (vcsort[0][1].rev,vcsort[-1][1].rev)
         vcsort.reverse()
@@ -321,3 +370,4 @@ class Repository(object):
             msg += "Branch %s, %d revisions\n" % \
               (br, len(self._branches[br]))
         return msg
+

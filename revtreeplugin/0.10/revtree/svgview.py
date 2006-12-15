@@ -15,10 +15,11 @@
 import SVGdraw as SVG
 import os
 
-from revtree import ChangesetEmptyRange
+from colorsys import rgb_to_hsv, hsv_to_rgb
 from math import sqrt
 from random import randrange, seed
-from colorsys import rgb_to_hsv, hsv_to_rgb
+from revtree import EmptyRangeError, IRevtreeEnhancer, IRevtreeOptimizer
+from trac.core import *
 
 UNIT = 25
 SQRT2=sqrt(2)
@@ -47,7 +48,7 @@ def plink(url):
     """Create a javascript link to replace the parent window content"""
     return "javascript:window.parent.location.href='%s'" % url
 
-            
+
 class SvgColor(object):
     """Helpers for color management (conversion, generation, ...)"""
     
@@ -223,7 +224,7 @@ class SvgChangeset(SvgBaseChangeset):
                 lb = SVG.line(x-d,y+hr,x+d,y+hr, 
                               self._strokecolor,
                               self._parent.strokewidth())
-                g = SVG.group('rev%d' % self._revision,
+                g = SVG.group('grp%d' % self._revision,
                               elements=[self._widget, lt, lb])
                 self._widget = g
                               
@@ -751,7 +752,7 @@ class SvgArrows(object):
 class SvgRevtree(object):
     """Main object that represents the revision tree as a SVG graph"""
 
-    def __init__(self, env, repos, urlbase):
+    def __init__(self, env, repos, urlbase, enhancers, optimizer):
         """Construct a new SVG revision tree"""
         # Environment
         self.env = env
@@ -762,7 +763,9 @@ class SvgRevtree(object):
         # Range of revision to process
         self.revrange = None
         # Optional enhancers
-        self._enhancers = []
+        self.enhancers = enhancers
+        # Optimizer
+        self.optimizer = optimizer
         # Trunk branches
         self.trunks = self.env.config.get('revtree', 'trunks', 
                                           'trunk').split(' ')
@@ -776,12 +779,11 @@ class SvgRevtree(object):
         self._svggroups = []
         # Operation points
         self._oppoints = {}
+        # Add-on elements (from enhancers)
+        self._addons = {}
         # Init color generator with a predefined value
         seed(0)
-        
-    def add_enhancer(self, enhancer):
-        self._enhancers.append(enhancer)
-        
+                
     def position(self):
         """Return the position of the revision tree widget"""
         return (UNIT,2*UNIT)
@@ -815,7 +817,7 @@ class SvgRevtree(object):
     def svgarrow(self, color, head):
         return 'url(#%s)' % self._arrows.create(color, head)
         
-    def create(self, revisions=None, branches=None, authors=None, 
+    def create(self, req, revisions=None, branches=None, authors=None, 
                      hidetermbranch=False, style='compact'):
         if revisions is not None:
             self.revrange = revisions
@@ -844,24 +846,21 @@ class SvgRevtree(object):
         for r in revisions:
             self._vtimes[r] = vtime
             vtime += 1
-        map(lambda e: e.create(), self._enhancers)
+        for enhancer in self.enhancers:
+            self._addons[enhancer] = \
+                enhancer.create(self.env, req, self.repos, self)
                      
     def build(self):
         """Build the graph"""
-        branches = [svgbr.branch() for svgbr in self._svgbranches.values()]
-        for enhancer in self._enhancers:  
-            f_branches = enhancer.optimize(branches)
-            if f_branches:
-                # stop on the first enhancer
-                branches = f_branches
-                break
+        branches = self.optimizer.optimize(self.repos, \
+            [svgbr.branch() for svgbr in self._svgbranches.values()])
         branch_xpos = UNIT
         svgbranches = [self.svgbranch(branch=b) for b in branches]
         for svgbranch in svgbranches:
             svgbranch.build((branch_xpos, UNIT/6))
-            branch_xpos += svgbranch.header().extent()[0] + UNIT            
-        for enhancer in self._enhancers:
-            enhancer.build()
+            branch_xpos += svgbranch.header().extent()[0] + UNIT
+        map(lambda e: e.build(self._addons[e]), self.enhancers)
+        # FIXME: why not using svgbranches ?
         svgbranches = self._svgbranches.values()
         svgbranches.sort()
         maxheight = 0
@@ -870,7 +869,7 @@ class SvgRevtree(object):
             if h > maxheight:
                 maxheight = h
         if not svgbranches:
-            raise ChangesetEmptyRange
+            raise EmptyRangeError
         w = svgbranches[-1].position()[0] - svgbranches[0].position()[0] + \
             svgbranches[-1].extent()[0] + 2*UNIT
         maxheight += UNIT 
@@ -912,7 +911,7 @@ class SvgRevtree(object):
         return self._svg
 
     def __str__(self):
-        """Render the revision tree as a SVG string"""
+        """Dump the revision tree as a SVG string"""
         import cStringIO
         xml=cStringIO.StringIO()
         self._svg.toXml(0, xml)
@@ -925,10 +924,12 @@ class SvgRevtree(object):
         d.toXml(filename)
         
     def render(self, scale=1, width=None, height=None, linkparent=False):
+        """Render the revision tree"""
         self._svg = SVG.svg((0,0,self._extent[0],self._extent[1]),
                             scale*self._extent[0], scale*self._extent[1])
         self._arrows.render()
-        map(lambda e: e.render(1), self._enhancers)
+        # FIXME: only two levels for enhancers (background, foreground)
+        map(lambda e: e.render(self._addons[e], 1), self.enhancers)
         map(lambda b: b.render(), self._svgbranches.values())
-        map(lambda e: e.render(2), self._enhancers)
+        map(lambda e: e.render(self._addons[e], 2), self.enhancers)
         #dbgDump(self._svg)
