@@ -88,6 +88,18 @@ class OpenIDLoginModule(Component):
 
     # Internal methods
 
+    def _getTrustRoot(self, req):
+        href = req.href()
+        if href:
+            base_url = req.abs_href()[:-len(href)]
+        else:
+            base_url = req.abs_href()
+
+        return base_url
+
+    def _getReturnTo(self, req):
+        return self._getTrustRoot(req) + self.env.href.openid_return()
+ 
     def _start_login(self, req, url):
         """Initiates OpenID login phase."""
         oidconsumer = consumer.Consumer(self._get_session(req), self._get_store())
@@ -103,9 +115,7 @@ class OpenIDLoginModule(Component):
             # optionally, the user's full name would be nice, too
             authreq.addExtensionArg('sreg', 'optional', 'fullname')
 
-        req.redirect(authreq.redirectURL(req.abs_href()[:-len(req.href())],
-            req.abs_href()[:-len(req.href())] + self.env.href.openid_return()))
-
+        req.redirect(authreq.redirectURL(self._getTrustRoot(req), self._getReturnTo(req)))
         return True
 
     def _handle_return(self, req):
@@ -115,9 +125,7 @@ class OpenIDLoginModule(Component):
         oidconsumer = consumer.Consumer(self._get_session(req), self._get_store())
         response = oidconsumer.complete(req.args)
         if response.status == consumer.SUCCESS:
-            if response.getReturnTo().split('?')[0] \
-                    == req.abs_href()[:-len(req.href())] \
-                        + self.env.href.openid_return():
+            if response.getReturnTo().split('?')[0] == self._getReturnTo(req):
                 self._login(req, response)
                 req.redirect(self.env.href())
                 return True
