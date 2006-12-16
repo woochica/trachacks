@@ -47,7 +47,7 @@ function JT_show(object) {
   //$(object).css('cursor','pointer');
   }
     
-  if(hasArea>((params['width']*1)+75)){
+  if(hasArea>((params['width']*1)+box.w)){
      var arrowOffset = box.w + 11;
      var clickElementx = box.x + arrowOffset + 3;
      var side = 'left';

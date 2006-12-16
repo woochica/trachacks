@@ -14,6 +14,7 @@
 
 import SVGdraw as SVG
 import os
+import md5
 
 from colorsys import rgb_to_hsv, hsv_to_rgb
 from math import sqrt
@@ -63,7 +64,7 @@ class SvgColor(object):
                  'gray':        (0x7f,0x7f,0x7f),
                  'orange':      (0xff,0x9f,0) }
     
-    def __init__(self, value=None):
+    def __init__(self, value=None, name=None):
         if value is not None:
             if isinstance(value, SvgColor):
                 self._color = value._color
@@ -77,10 +78,9 @@ class SvgColor(object):
                 self._color = value
             else:
                 raise AssertionError, "unsupportedcolor: %s" % value
+        elif name is not None:
+            self._color = SvgColor.from_name(name)
         else:
-            # FIXME: use some kind of checksum-based colorization
-            # i.e. branchname -> checksum -> color for permanent branch-color
-            # mapping (persistence over graph generation)
             self._color = SvgColor.random()
             
     def __str__(self):
@@ -120,6 +120,14 @@ class SvgColor(object):
                 128+14*int(rand[1]), 
                 128+14*int(rand[2]))
     random = staticmethod(random)
+    
+    def from_name(name):
+        dig = md5.new(name).digest()
+        vr = 14*(int(ord(dig[0]))%10)
+        vg = 14*(int(ord(dig[1]))%10)
+        vb = 14*(int(ord(dig[2]))%10)
+        return (128+vr, 128+vg, 128+vb)
+    from_name = staticmethod(from_name)
     
     def invert(self):
         self._color = (0xff-self._color[0],
@@ -390,14 +398,14 @@ class SvgBranch(object):
             self._maxchgextent[1] = extent[1]
             
     def _get_color(self, name, trunks):
-        """Generates a random pastel color and returns it as a string,
-           or returns a predefined color if the branch is a trunk"""
+        """Creates a random pastel color based on the branch name 
+        or returns a predefined color if the branch is a trunk"""
         if name in trunks:
             return SvgColor(self._parent.env.config.get('revtree', 
                                                         'trunkcolor', 
                                                         '#cfcfcf'))
         else:
-            return SvgColor()
+            return SvgColor(name=name)
                       
     def build(self, position):
         self._position = position
