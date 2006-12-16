@@ -14,31 +14,24 @@
 
 from setuptools import setup, find_packages
 
-PACKAGE = 'TracRevtreePlugin'
-VERSION = '0.4.4'
+PACKAGE = 'TracRevtreeEnhancers'
+VERSION = '0.1.0'
 
 setup (
     name = PACKAGE,
     version = VERSION,
-    description = 'Revision Graph for the Version Control Browser',
+    description = 'Enhancer for the RevtreePlugin, based on log messages',
     author = 'Emmanuel Blot',
     author_email = 'emmanuel.blot@free.fr',
     license='BSD', 
-    url='http://trac-hacks.org/wiki/RevtreePlugin',
-    keywords = "trac revision svg graphical tree browser",
-    packages = find_packages(exclude=['ez_setup', '*.tests*', '*.enhancers.*']),
-    package_data={
-        'revtree': [
-            'htdocs/css/*.css',
-            'htdocs/js/*.js',
-            'htdocs/images/*.gif',
-            'templates/*.cs'
-        ]
-    },
+    url='http://trac-hacks.org/wiki/RevtreePlugin/LogEnhancer',
+    keywords = "trac revision svg graphical tree browser log",
+    install_requires = [ 'TracRevtreePlugin > 0.4.3', 
+                         'TracRevtreePlugin < 0.5 '],
+    packages = find_packages(exclude=['ez_setup', '*.tests*']),
     entry_points = {
         'trac.plugins': [
-            'revtree.web_ui = revtree.web_ui',
-            'revtree.enhancer = revtree.enhancer'
+            'revtree.logenhancer = logenhancer'
         ]
     }
 )

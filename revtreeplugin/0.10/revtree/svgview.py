@@ -53,6 +53,7 @@ class SvgColor(object):
     """Helpers for color management (conversion, generation, ...)"""
     
     colormap = { 'black':       (0,0,0),
+                 'white':       (0xff,0xff,0xff),
                  'darkred':     (0x7f,0,0),
                  'darkgreen':   (0,0x7f,0),
                  'darkblue':    (0,0,0x7f),
@@ -194,48 +195,61 @@ class SvgChangeset(SvgBaseChangeset):
         self._fillcolor = self._parent.fillcolor()
         self._strokecolor = self._parent.strokecolor()
         self._textcolor = SvgColor('black')
+        self._classes = ['svgchangeset']
         
     def set_shape(self, shape):
+        """Define the shape of the svg changeset [circle,square,hexa].
+           If the first letter is uppercase, the shape is augmented with
+           fancy lines.
+        """
         self._shape = shape.lower()
         self._enhance = shape[0] != self._shape[0]
         
-    def invert_color(self):
+    def mark_first(self):
+        """Marks the changeset as the first of the branch.
+           Inverts the background and the foreground color"""
         (self._fillcolor, self._strokecolor) = \
             (self._strokecolor, self._fillcolor)
         self._textcolor.invert()
+        self._classes.append('firstchangeset')
         
-    def kill(self):
-        self._strokecolor = SvgColor('red')
+    def mark_last(self):
+        """Mark the changeset as the latest of the branch"""
+        self._fillcolor = SvgColor('black')
+        self._textcolor = SvgColor('white')
+        self._classes.append('lastchangeset')
 
     def build(self):
         SvgBaseChangeset.build(self)
+        widgets = []
         if self._shape == 'circle':
-            self._widget = SVG.circle(self._position[0], self._position[1],
+            widgets.append(SVG.circle(self._position[0], self._position[1],
                                       self._radius, 
                                       self._fillcolor,
                                       self._strokecolor,
-                                      self._parent.strokewidth())
+                                      self._parent.strokewidth()))
             if self._enhance:
                 (x,y) = self._position
                 (d,hr) = (self._radius*SQRT3/2, self._radius/2)
-                lt = SVG.line(x-d,y-hr,x+d,y-hr, 
-                              self._strokecolor,
-                              self._parent.strokewidth())
-                lb = SVG.line(x-d,y+hr,x+d,y+hr, 
-                              self._strokecolor,
-                              self._parent.strokewidth())
-                g = SVG.group('grp%d' % self._revision,
-                              elements=[self._widget, lt, lb])
-                self._widget = g
+                widgets.append(SVG.line(x-d,y-hr,x+d,y-hr, 
+                                        self._strokecolor,
+                                        self._parent.strokewidth()))
+                widgets.append(SVG.line(x-d,y+hr,x+d,y+hr, 
+                                        self._strokecolor,
+                                        self._parent.strokewidth()))
                               
         elif self._shape == 'square':
-            size = self._radius-UNIT/6
-            self._widget = SVG.rect(self._position[0]-size, 
+            r = UNIT/6
+            size = self._radius-r
+            widgets.append(SVG.rect(self._position[0]-size, 
                                     self._position[1]-size,
                                     2*size, 2*size, 
                                     self._fillcolor,
                                     self._strokecolor,
-                                    self._parent.strokewidth())
+                                    self._parent.strokewidth()))
+            outline.attributes['rx'] = r
+            outline.attributes['ry'] = r        
+            
         elif self._shape == 'hexa':
             (x,y) = self._position
             (r,hr) = (self._radius, self._radius/2)
@@ -247,26 +261,29 @@ class SvgChangeset(SvgBaseChangeset):
             pd.line(x-r,y+hr)
             pd.line(x-r,y-hr)
             pd.line(x,y-r)
-            self._widget = SVG.path(pd, self._parent.fillcolor(), 
-                                        self._parent.strokecolor(), 
-                                        self._parent.strokewidth())
+            widgets.append(SVG.path(pd, self._parent.fillcolor(), 
+                                    self._parent.strokecolor(), 
+                                    self._parent.strokewidth()))
         else:
             raise AssertionError, \
                   "unsupported changeset shape (%d)" % self._revision
                   
-        self._text = SVG.text(self._position[0] - self._htw, 
-                              self._position[1] + UNIT/6,
-                              str(self._revision), FONT_SIZE, FONT_NAME)
-        self._text.attributes['style'] = 'fill:%s' % self._textcolor.rgb()
+        title = SVG.text(self._position[0] - self._htw, 
+                         self._position[1] + UNIT/6,
+                         str(self._revision), FONT_SIZE, FONT_NAME)
+        title.attributes['style'] = 'fill:%s' % self._textcolor.rgb()
+        widgets.append(title)
+
+        g = SVG.group('grp%d' % self._revision, elements=widgets)
         
         link = "%s/revtree_log/?rev=%d&link=%s/changeset/%d" \
             % (self._parent.urlbase(), self._revision, 
                self._parent.urlbase(), self._revision)
-        self._link = SVG.link(link, elements=[self._widget, self._text])
+        self._link = SVG.link(link, elements=[g])
         if self._revision:
             self._link.attributes['id'] = 'rev%d' % self._revision
             self._link.attributes['title'] = 'Changeset %d' % self._revision
-            self._link.attributes['class'] = 'svgtip'
+            self._link.attributes['class'] = ' '.join(self._classes)
                     
     def visible(self):
         return True
@@ -595,11 +612,12 @@ class SvgOperation(object):
     """Graphical operation between two changesets of distinct branches 
        (such as a switch/branch creation, a merge operation, ...)"""
        
-    def __init__(self, parent, srcChg, dstChg, color='black'):
+    def __init__(self, parent, srcChg, dstChg, color='black', classes=[]):
         self._parent = parent
         self._source = srcChg
         self._dest = dstChg
         self._color = SvgColor(color)
+        self._classes = classes
 
     def build(self):
         if self._source.branch() == self._dest.branch():
@@ -709,6 +727,8 @@ class SvgOperation(object):
                                 self._parent.strokewidth())
         self._widget.attributes['marker-%s' % (head and 'start' or 'end') ] = \
             self._parent.svgarrow(self._color, head)
+        if self._classes:
+            self._widget.attributes['class'] = ' '.join(self._classes)
 
     def extent(self):
         return self._extent

@@ -56,8 +56,8 @@ class SimpleEnhancer(Component):
             # if the first changeset of a branch is a copy of another
             # changeset(from another branch)
             if firstchgset and firstchgset.clone:
-                # tweak the color appearance of this changeset ..
-                svgbranch.svgchangeset(firstchgset).invert_color()
+                # tweak the appearance of this changeset ..
+                svgbranch.svgchangeset(firstchgset).mark_first()
                 (rev, path) = branch.source()
                 srcchg = enhancer.repos.changeset(rev)
                 if srcchg is None:
@@ -69,7 +69,7 @@ class SimpleEnhancer(Component):
                 # if the last changeset of the branch is the very last
                 if lastchgset.last:
                     # tweak the color of this changeset
-                    svgbranch.svgchangeset(lastchgset).kill()
+                    svgbranch.svgchangeset(lastchgset).mark_last()
         return enhancer
 
     def build(self, enhancer):

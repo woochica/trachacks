@@ -4,7 +4,8 @@
  * Under an Attribution, Share Alike License
  * JTip is built on top of the very light weight jquery library.
  *
- * Badly hacked & tweaked to support XHTML/XML and SVG <emmanuel.blot@free.fr>
+ * Badly hacked & tweaked to support XHTML/XML and SVG for the RevtreePlugin
+ *   <emmanuel.blot@free.fr>
  */
 
 $(document).ready(JT_init);
@@ -41,7 +42,7 @@ function JT_show(object) {
   var queryString = url.replace(/^[^\?]+\??/,'');
   var params = parseQuery( queryString );
   if(params['width'] === undefined){params['width'] = 250};
-  if(params['link'] !== undefined){
+  if(params['link'] !== undefined){     
   $(object).bind('click',function(){window.location = params['link']});
   //$(object).css('cursor','pointer');
   }
@@ -98,12 +99,8 @@ function getSvgPosition(objectId) {
    var cnodes = object.childNodes
    var elem;
 	for ( var n = 0; n < cnodes.length; n++ ) {
-      if ( cnodes[n].tagName == "circle" ) {
+      if ( cnodes[n].tagName == "g" ) {
          elem = cnodes[n]
-         break;
-      } 
-      if ( cnodes[n].tagName == "rect" ) {
-         box = cnodes[n];
          break;
       } 
    }
