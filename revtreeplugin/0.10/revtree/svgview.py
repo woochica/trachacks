@@ -290,7 +290,6 @@ class SvgChangeset(SvgBaseChangeset):
         self._link = SVG.link(link, elements=[g])
         if self._revision:
             self._link.attributes['id'] = 'rev%d' % self._revision
-            self._link.attributes['title'] = 'Changeset %d' % self._revision
             self._link.attributes['class'] = ' '.join(self._classes)
                     
     def visible(self):

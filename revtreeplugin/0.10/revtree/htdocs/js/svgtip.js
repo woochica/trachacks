@@ -10,9 +10,6 @@
 
 $(document).ready(JT_init);
 
-// temporary storage for a:title attributes
-var titles = Array();
-
 function JT_init(){
     $('a[@id^=rev]')
     .hover(function(){JT_show(this)},function(){JT_hide(this)})
@@ -21,19 +18,15 @@ function JT_init(){
 
 function JT_hide(object) {
    $('#JT').remove()
-   // restore the original title
-   object.setAttribute('title', titles[object]);   
 }
 
 function JT_show(object) {
-  var url = object.getAttribute('xlink:href');
-  var linkId = object.getAttribute('id');
-  var title = object.getAttribute('title');
-  // clear up the original title and back it up
-  // still looking for a better way to hide xlink:title (CSS ?)
-  titles[object] = title;
-  object.setAttribute('title', '');
-  var box = getSvgPosition(linkId);
+  var href = 'href';
+  if (! jQuery.browser.opera) { href = 'xlink:' + href; }
+  var url = object.getAttribute(href);
+  var id = object.getAttribute('id');
+  var title = id.replace(/^rev/, 'Changeset ');
+  var box = getSvgPosition(id);
   if(title == false)title=' ';
   var de = document.documentElement;
   var w = self.innerWidth || (de&&de.clientWidth) || document.body.clientWidth;
