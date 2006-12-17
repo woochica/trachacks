@@ -52,5 +52,5 @@ class SubWikiMacro(WikiMacroBase):
             if md:
                 title = md.group(1)
             good_pages.append((p, title))
-        return html.UL([html.LI(html.A(t, title=t, href=req.href.wiki(p))) for p,t in good_pages])
+        return html.UL([html.LI(html.A(p, title=t, href=req.href.wiki(p)), ' ', t) for p,t in good_pages])
         
