@@ -97,22 +97,51 @@ function getSvgPosition(objectId) {
          break;
       } 
    }
-   var box = elem.getBBox();
-   var matrix = svg.getScreenCTM();
-   var p1 = svg.createSVGPoint();
-   var p2 = svg.createSVGPoint();
-   p1.x = box.x;
-   p1.y = box.y;
-   p2.x = p1.x + box.width;
-   p2.y = p1.y + box.height;
-   p1 = p1.matrixTransform(matrix);
-   p2 = p2.matrixTransform(matrix);
+   
    var r = Object();
-   r.x = Math.floor(p1.x)+posLeft();
-   r.y = Math.floor(p1.y)+posTop();
-   r.w = Math.floor(p2.x-p1.x);
-   r.h = Math.floor(p2.y-p1.y);
-   return r;
+   var mx = svg.getScreenCTM();
+   var box = elem.getBBox();
+   var svgpos = findPos(svg);
+   
+   // Not sure who's right or wrong here: Opera, Gecko ?
+   // Anyway the following hack seems to work. Javascript, oh my...
+   if ( jQuery.browser.opera || jQuery.browser.safari )
+   {
+      r.x = Math.floor(box.x*mx.a)+svgpos[0];
+      r.y = Math.floor(box.y*mx.d)+svgpos[1];
+      r.w = Math.floor(box.width*mx.a);
+      r.h = Math.floor(box.height*mx.d);
+      return r;
+   }
+   else
+   {
+      var p1 = svg.createSVGPoint();
+      var p2 = svg.createSVGPoint();
+      p1.x = box.x;
+      p1.y = box.y;
+      p2.x = p1.x + box.width;
+      p2.y = p1.y + box.height;
+      p1 = p1.matrixTransform(mx);
+      p2 = p2.matrixTransform(mx);
+      r.x = Math.floor(p1.x)+posLeft();
+      r.y = Math.floor(p1.y)+posTop();
+      r.w = Math.floor(p2.x-p1.x);
+      r.h = Math.floor(p2.y-p1.y);
+      return r;
+   }
+}
+
+function findPos(obj) {
+	var curleft = curtop = 0;
+	if (obj.offsetParent) {
+		curleft = obj.offsetLeft
+		curtop = obj.offsetTop
+		while (obj = obj.offsetParent) {
+			curleft += obj.offsetLeft
+			curtop += obj.offsetTop
+		}
+	}
+	return [curleft,curtop];
 }
 
 function posLeft() {
