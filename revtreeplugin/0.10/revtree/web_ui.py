@@ -91,6 +91,7 @@ class RevtreeStore(object):
 
     def compute_range(self):
         """Computes the range of revisions to show"""
+        self.revrange = self.revspan
         if self['limits'] == 'limrev':
             self.revrange = (int(self['revmin']), int(self['revmax']))
         elif self['limits'] == 'limperiod':
@@ -99,7 +100,6 @@ class RevtreeStore(object):
                 now = self.timebase
                 self.timerange = (now-period*86400, now)
                 return
-        self.revrange = self.revspan
 
     def can_be_rendered(self):
         """Reports whether the revtree has enough items to produce a valid 
@@ -216,7 +216,7 @@ class RevtreeModule(Component):
         repos = self.env.get_repository()
         self.oldest = int(self.env.config.get('revtree', 'revbase', 
                                               repos.get_oldest_rev()))
-        self.youngest = repos.get_youngest_rev()
+        self.youngest = int(repos.get_youngest_rev())
         if self.config.getbool('revtree', 'reltime', True):
             self.timebase = repos.get_changeset(self.youngest).date
         else:
@@ -275,15 +275,10 @@ class RevtreeModule(Component):
             repos = Repository(self.env, req.authname)
             repos.build(self.bcre, revstore.revrange, revstore.timerange)
 
-            (revisions, branches, authors) = \
+            (branches, authors) = \
                 self._select_parameters(repos, req, revstore)
-            filename = self._get_filename()
                                         
             svgrevtree = RevtreeSystem(self.env).get_revtree(repos)
-            
-            #enhancer = Enhancer(repos, svgrevtree)
-            #svgrevtree.add_enhancer(enhancer)
-            
             svgrevtree.create(req, revstore.revrange, revstore.get_branches(), 
                               revstore.get_authors(), 
                               revstore.get_hidetermbranch(), 
@@ -321,7 +316,8 @@ class RevtreeModule(Component):
             authors.sort()
             
         revrange = repos.revision_range()
-        revisions = self._get_ui_revisions(revrange)
+        revisions = self._get_ui_revisions((self.oldest, self.youngest),
+                                           revrange)
 
         # fill in the HDF 
         req.hdf['revtree.revmin'] = revrange[0]
@@ -343,11 +339,7 @@ class RevtreeModule(Component):
             periods.append( { 'value' : d, 'label' : values[d] } )
         return periods
 
-    def _get_filename(self):
-        """Generates a unique filename"""
-        return '%d.svg' % int(time.time())
-
-    def _get_ui_revisions(self, revspan):
+    def _get_ui_revisions(self, revspan, revrange):
         """Generates the list of displayable revisions"""
         (revmin, revmax) = revspan
         allrevisions = range(revmin, revmax+1)
@@ -357,10 +349,10 @@ class RevtreeModule(Component):
         revisions = []
         for rev in revs:
             if len(revisions) > 40:
-                if int(rev)%20:
+                if int(rev)%20 and (rev not in revrange):
                     continue
             elif len(revisions) > 10:
-                if int(rev)%10:
+                if int(rev)%10 and (rev not in revrange):
                     continue
             revisions.append(str(rev))
         if revisions[-1] != str(revmin):
@@ -372,17 +364,6 @@ class RevtreeModule(Component):
            properties for the revtree generation"""
         revs = [c for c in repos.changesets()]
         revs.reverse()
-        revisions = []
-        for rev in revs:
-            if len(revisions) > 40:
-                if int(rev)%20:
-                    continue
-            elif len(revisions) > 10:
-                if int(rev)%10:
-                    continue
-            revisions.append(rev)
-        if revisions[-1] != str(revstore.revspan[0]):
-            revisions.append(str(revstore.revspan[0]))
         brnames = [bn for bn in repos.branches().keys() \
                       if bn not in self.trunks]
         brnames.sort()
@@ -404,4 +385,4 @@ class RevtreeModule(Component):
         if brfilter or authfilter:
             vbranches = self.trunks
             vbranches.extend(branches)
-        return ((revisions[0], revisions[-1]), vbranches, authors)
+        return (vbranches, authors)

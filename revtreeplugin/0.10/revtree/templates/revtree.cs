@@ -11,7 +11,7 @@
  <form id="prefs" method="get" action="">
   <div class="revprops">
     <fieldset id="properties">
-     <legend>Filters</legend>
+     <legend><span class="legend">Filters</span></legend>
      <div class="field">
       <label for="branch">Branch</label>
       <select id="branch" name="branch"><?cs each:br = revtree.branches ?>
@@ -31,7 +31,7 @@
  
    <div class="revprops">
     <fieldset id="limits">
-     <legend>Revisions</legend>
+     <legend><span class="legend">Revisions</span></legend>
      <div class="field">
       <input type="radio" id="limperiod" name="limits" value="limperiod" <?cs 
        if:revtree.limits == "limperiod" ?> checked="checked"<?cs /if ?>/>
@@ -61,9 +61,22 @@
     </fieldset>
    </div>
  
+   <div class="revprops" id="treeoptions">
+    <fieldset>
+     <legend><span class="legend">Options</span></legend>
+     <div class="field">
+      <input type="hidden" name="checkbox_hideterm"/>
+      <input type="checkbox" id="hideterm"
+        name="hideterm" <?cs if:revtree.hideterm
+        ?>checked="checked"<?cs /if ?> value="1"/><label for="hideterm">Hide 
+        terminated branches</label>
+     </div>
+    </fieldset>
+   </div>
+ 
    <div class="revprops" id="treestyle">
     <fieldset>
-     <legend>Style</legend>
+     <legend><span class="legend">Style</span></legend>
       <div class="field">
         <div>
           <input type="radio" id="compact" name="treestyle" value="compact" <?cs 
@@ -76,27 +89,12 @@
          <label for="compact">Timeline</label>
         </div>
       </div>
+      <div class="buttons">
+       <input type="submit" value="Update"/>
+      </div>
     </fieldset>
    </div>
  
-   <div class="revprops" id="treeoptions">
-    <fieldset>
-     <legend>Options</legend>
-     <div class="field">
-      <input type="hidden" name="checkbox_hideterm"/>
-      <input type="checkbox" id="hideterm"
-        name="hideterm" <?cs if:revtree.hideterm
-        ?>checked="checked"<?cs /if ?> value="1"/><label for="hideterm">Hide 
-        terminated branches</label>
-     </div>
-    </fieldset>
-   </div>
- 
-   <div class="revprops" id="treeupdate">
-    <div class="buttons">
-     <input type="submit" value="Update"/>
-    </div>
-   </div>
  </form>
 </div>
 

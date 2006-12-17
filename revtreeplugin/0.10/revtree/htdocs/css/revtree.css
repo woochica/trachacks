@@ -13,19 +13,25 @@ div.revprops {
  float: left;
  border-right: solid 1px #333;
 }
-#treestyle div {
-   display: block;
+div.revprops span.legend {
+   /*Seemms that legend tag cannot be selected, use span instead*/
+	font-weight:bold;
 }
 #treeoptions {
    white-space: normal;
-   width: 12ex;
+   width: 13ex;
+   display: inline;
 }
 #treeoptions label {
    margin-top: 0;
    padding-left: 3ex;
+   text-align: right;
 }
-#treeupdate {
- border-right: none;
+#treestyle {
+   border-right: none;
+}
+#treestyle div {
+   display: block;
 }
 #settings {
    /* FIXME */
@@ -33,7 +39,7 @@ div.revprops {
    margin-top: 0;
    margin-left: 0;
    margin-right: 0;
-   margin-bottom: 10em;
+   margin-bottom: 11em;
 }
 #prefs {
  margin-top: 2em;

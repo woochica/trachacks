@@ -26,11 +26,6 @@ UNIT = 25
 SQRT2=sqrt(2)
 SQRT3=sqrt(3)
 
-# FIXME: This should be set in Trac properties, or event better: 
-#        as CSS properties
-FONT_NAME = 'Verdana'
-FONT_SIZE = '14pt'
-
 # Debug functions to place debug circles on the SVG graph
 #debugw = []
 #def dbgPt(x,y,c='red',d=5):
@@ -275,11 +270,12 @@ class SvgChangeset(SvgBaseChangeset):
         else:
             raise AssertionError, \
                   "unsupported changeset shape (%d)" % self._revision
-                  
-        title = SVG.text(self._position[0] - self._htw, 
+        title = SVG.text(self._position[0], 
                          self._position[1] + UNIT/6,
-                         str(self._revision), FONT_SIZE, FONT_NAME)
-        title.attributes['style'] = 'fill:%s' % self._textcolor.rgb()
+                         str(self._revision), 
+                         self._parent.fontsize(), self._parent.fontname())
+        title.attributes['style'] = 'fill:%s; text-anchor: middle' % \
+                                    self._textcolor.rgb()
         widgets.append(title)
 
         g = SVG.group('grp%d' % self._revision, elements=widgets)
@@ -304,7 +300,7 @@ class SvgBranchHeader(object):
     
     def __init__(self, parent, title):
         self._parent = parent
-        self._title = "/%s" % (title or '')
+        self._title = title or ''
         self._tw = textwidth(self._title)+UNIT/2
         self._w = max(self._tw, 6*UNIT)
         self._h = 2*UNIT
@@ -329,18 +325,22 @@ class SvgBranchHeader(object):
         x = self._position[0]+(self._w-self._tw)/2
         y = self._position[1]
         r = UNIT/2
-        self._widget = SVG.rect(x,y,self._tw,self._h,
-                                self._parent.fillcolor(), 
-                                self._parent.strokecolor(), 
-                                self._parent.strokewidth())
-        self._widget.attributes['rx'] = r
-        self._widget.attributes['ry'] = r        
-        self._text = SVG.text(x+UNIT/6, 
-                              self._position[1]+self._h/2+UNIT/6,
-                              self._title, FONT_SIZE, FONT_NAME)
+        rect = SVG.rect(x,y,self._tw,self._h,
+                        self._parent.fillcolor(), 
+                        self._parent.strokecolor(), 
+                        self._parent.strokewidth())
+        rect.attributes['rx'] = r
+        rect.attributes['ry'] = r        
+        text = SVG.text(self._position[0]++self._w/2, 
+                        self._position[1]+self._h/2+UNIT/6,
+                        "/%s" % self._title, 
+                        self._parent.fontsize(), self._parent.fontname())
+        text.attributes['style'] = 'text-anchor: middle'
+        name = self._title.encode('ascii', 'ignore').replace('/','')
+        g = SVG.group('grp%s' % name, elements=[rect, text])
         self._link = SVG.link(plink('%s/browser/%s' % \
                               (self._parent.urlbase(), self._title)), 
-                              elements=[self._widget, self._text])
+                              elements=[g])
         
     def render(self):
         self._parent.svg().addElement(self._link)
@@ -467,6 +467,12 @@ class SvgBranch(object):
     def fillcolor(self):
         return self._fillcolor
         
+    def fontsize(self):
+        return self._parent.fontsize
+        
+    def fontname(self):
+        return self._parent.fontname
+
     def urlbase(self):
         return self._parent.urlbase
         
@@ -796,6 +802,11 @@ class SvgRevtree(object):
         # Trunk branches
         self.trunks = self.env.config.get('revtree', 'trunks', 
                                           'trunk').split(' ')
+        # FIXME: Use CSS properties instead - when browsers support them...
+        # Font name
+        self.fontname = self.env.config.get('revtree', 'fontname', 'arial')
+        # Font size
+        self.fontsize = self.env.config.get('revtree', 'fontsize', '14pt')
         # Dictionnary of branch widgets (branches as keys)
         self._svgbranches = {}
         # Markers
