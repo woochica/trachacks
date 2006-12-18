@@ -201,21 +201,39 @@ class AccountModule(Component):
 
     def _do_change_password(self, req):
         user = req.authname
+        mgr = AccountManager(self.env)
+        old_password = req.args.get('old_password')
+        if not old_password:
+            req.hdf['account.save_error'] = 'Old Password cannot be empty.'
+            return
+        if not mgr.check_password(user, old_password):
+            req.hdf['account.save_error'] = 'Old Password is incorrect.'
+            return
+
         password = req.args.get('password')
         if not password:
-            req.hdf['account.error'] = 'Password cannot be empty.'
+            req.hdf['account.save_error'] = 'Password cannot be empty.'
             return
 
         if password != req.args.get('password_confirm'):
-            req.hdf['account.error'] = 'The passwords must match.'
+            req.hdf['account.save_error'] = 'The passwords must match.'
             return
 
-        AccountManager(self.env).set_password(user, password)
+        mgr.set_password(user, password)
         req.hdf['account.message'] = 'Password successfully updated.'
 
     def _do_delete(self, req):
         user = req.authname
-        AccountManager(self.env).delete_user(user)
+        mgr = AccountManager(self.env)
+        password = req.args.get('password')
+        if not password:
+            req.hdf['account.delete_error'] = 'Password cannot be empty.'
+            return
+        if not mgr.check_password(user, password):
+            req.hdf['account.delete_error'] = 'Password is incorrect.'
+            return
+
+        mgr.delete_user(user)
         req.redirect(self.env.href.logout())
 
     # ITemplateProvider
