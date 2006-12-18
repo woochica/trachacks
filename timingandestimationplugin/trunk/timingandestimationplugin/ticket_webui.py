@@ -33,10 +33,11 @@ class TicketWebUiAddon(Component):
                   };
                   InitBilling = function(){
                     var x = document.getElementById('totalhours');
+                    x = x || document.getElementById('field-totalhours');
                     if(x){
                       var p = x.parentNode;
                       var n = document.createElement('span')
-                      n.id = 'totalhours';
+                      n.id = x.id;
                       n.innerHTML = x.value
                       p.removeChild(x);
                       p.appendChild(n);

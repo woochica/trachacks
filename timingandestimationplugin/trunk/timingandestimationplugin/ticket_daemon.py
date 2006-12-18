@@ -1,5 +1,12 @@
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
+import datetime
+import trac.util.datefmt
+
+def identity(x):
+    return x;
+
+to_timestamp = trac.util.datefmt or identity;
 
 def save_custom_field_value( db, ticket_id, field, value ):
     cursor = db.cursor();
@@ -14,18 +21,21 @@ def save_custom_field_value( db, ticket_id, field, value ):
                        "value) VALUES(%s,%s,%s)",
                        (ticket_id, field, value))
         
-def save_ticket_change( db, ticket_id, author, change_time, field, oldvalue, newvalue):
+def save_ticket_change( db, ticket_id, author, change_time, field, oldvalue, newvalue, log):
+    if type(change_time) == datetime.datetime:
+        change_time = to_timestamp(change_time)
     cursor = db.cursor();
-    cursor.execute("""SELECT * FROM ticket_change  
-                   WHERE ticket=%s and author='%s' and time=%s and field='%s'"""%
-                   (ticket_id, author, change_time, field))
+    sql = """SELECT * FROM ticket_change  
+             WHERE ticket=%s and author=%s and time=%s and field=%s""" 
+                   
+    cursor.execute(sql, (ticket_id, author, change_time, field))
     if cursor.fetchone():
-        cursor.execute("""UPDATE ticket_change  SET oldvalue='%s', newvalue='%s' 
-                       WHERE ticket=%s and author='%s' and time=%s and field='%s'"""%
+        cursor.execute("""UPDATE ticket_change  SET oldvalue=%s, newvalue=%s 
+                       WHERE ticket=%s and author=%s and time=%s and field=%s""",
                        (oldvalue, newvalue, ticket_id, author, change_time, field))
     else:
         cursor.execute("""INSERT INTO ticket_change  (ticket,time,author,field, oldvalue, newvalue) 
-                        VALUES(%s, %s, '%s', '%s', '%s', '%s')"""%
+                        VALUES(%s, %s, %s, %s, %s, %s)""",
                        (ticket_id, change_time, author, field, oldvalue, newvalue))
 
 class TimeTrackingTicketObserver(Component):
@@ -64,11 +74,11 @@ class TimeTrackingTicketObserver(Component):
             else:
                 change_time = ticket.time_created
                 author = ticket.values["reporter"]
-                save_ticket_change( db, ticket_id, author, change_time, "hours", str(0.0), str(hours))
+                save_ticket_change( db, ticket_id, author, change_time, "hours", str(0.0), str(hours), self.log)
                 
             newtotal = str(totalHours+hours)
 
-            save_ticket_change( db, ticket_id, author, change_time, "totalhours", str(totalHours), str(newtotal))
+            save_ticket_change( db, ticket_id, author, change_time, "totalhours", str(totalHours), str(newtotal), self.log)
             save_custom_field_value( db, ticket_id, "hours", '0')
             save_custom_field_value( db, ticket_id, "totalhours", str(newtotal) )            
 
