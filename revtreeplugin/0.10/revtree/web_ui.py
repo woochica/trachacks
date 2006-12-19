@@ -89,7 +89,7 @@ class RevtreeStore(object):
             if not values.has_key(name[9:]):
                 self[name[9:]] = '0'
 
-    def compute_range(self):
+    def compute_range(self, timebase):
         """Computes the range of revisions to show"""
         self.revrange = self.revspan
         if self['limits'] == 'limrev':
@@ -97,7 +97,7 @@ class RevtreeStore(object):
         elif self['limits'] == 'limperiod':
             period = int(self['period'])
             if period:
-                now = self.timebase
+                now = timebase
                 self.timerange = (now-period*86400, now)
                 return
 
@@ -213,14 +213,11 @@ class RevtreeModule(Component):
         self.trunks = self.env.config.get('revtree', 'trunks', 
                                           'trunk').split(' ')
         self.scale = float(self.env.config.get('revtree', 'scale', '1'))
-        repos = self.env.get_repository()
+        tracrepos = self.env.get_repository()
         self.oldest = int(self.env.config.get('revtree', 'revbase', 
-                                              repos.get_oldest_rev()))
-        self.youngest = int(repos.get_youngest_rev())
-        if self.config.getbool('revtree', 'reltime', True):
-            self.timebase = repos.get_changeset(self.youngest).date
-        else:
-            self.timebase = None
+                                              tracrepos.get_oldest_rev()))
+        youngest = int(tracrepos.get_youngest_rev())
+        self.abstime = self.config.getbool('revtree', 'reltime', True)
         self.style = self.config.get('revtree', 'style', 'compact')
         if self.style not in [ 'compact', 'timeline']:
             raise TracError, "Unsupported style: %s" % self.style
@@ -250,13 +247,18 @@ class RevtreeModule(Component):
         
     def _process_revtree(self, req):
         """Handle revtree generation requests"""
+        tracrepos = self.env.get_repository()
+        youngest = int(tracrepos.get_youngest_rev())
+        if self.abstime:
+            timebase = int(time.time())
+        else:
+            timebase = int(tracrepos.get_changeset(youngest).date)
         revstore = RevtreeStore(self.env, req.authname, \
-                                (self.oldest, self.youngest),
-                                self.timebase or int(time.time()), 
-                                self.style)
+                                (self.oldest, youngest), 
+                                timebase, self.style)
         revstore.load(req.session)
         revstore.populate(req.args)
-        revstore.compute_range()
+        revstore.compute_range(timebase)
 
         # fill in the HDF 
         for field in revstore.fields:
@@ -308,7 +310,7 @@ class RevtreeModule(Component):
                                           " a revision tree"
             # restore default parameters
             repos = Repository(self.env, req.authname)
-            repos.build(self.bcre, revrange=(self.oldest,self.youngest))
+            repos.build(self.bcre, revrange=(self.oldest, youngest))
             branches = repos.branches().keys()
             branches.sort()
             branches.reverse()
@@ -316,8 +318,7 @@ class RevtreeModule(Component):
             authors.sort()
             
         revrange = repos.revision_range()
-        revisions = self._get_ui_revisions((self.oldest, self.youngest),
-                                           revrange)
+        revisions = self._get_ui_revisions((self.oldest, youngest), revrange)
 
         # fill in the HDF 
         req.hdf['revtree.revmin'] = revrange[0]
