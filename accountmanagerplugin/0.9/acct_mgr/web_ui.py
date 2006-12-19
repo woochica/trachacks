@@ -98,7 +98,7 @@ class RegistrationModule(Component):
         self._enable_check(log=True)
 
     def _enable_check(self, log=False):
-        ignore_case = auth.LoginModule(self.env).ignore_case
+        ignore_case = self.config.getbool('trac', 'ignore_auth_case')
         if log and ignore_case:
             self.log.warn('RegistrationModule is disabled because '
                           'ignore_auth_case is enabled in trac.ini.  '
