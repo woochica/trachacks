@@ -86,6 +86,7 @@ class SVNPublishModule(Component):
 
         ticket_id = req.args.get('ticket_id')
 	req.hdf['ticket_id'] = ticket_id
+	req.hdf['message'] = ''
 
         repos = self.env.get_repository(req.authname)
         authzperm = SubversionAuthorizer(self.env, req.authname)
@@ -117,7 +118,7 @@ class SVNPublishModule(Component):
 	    req.hdf['setchangesets'] = setchangesets
 	    ticket['ticketaction'] = 'CloneTest'
 	    ticket.save_changes(req.authname, 'published to clone', 0, db)
-	    req.hdf['message'] = 'Successfully Published All Files'
+	    req.hdf['message'] += 'Successfully Published All Files'
             req.hdf['ticket'] = ticket.values
 	else:
 	    req.hdf['error'] = 'Error: not in correct state to publish'
@@ -212,21 +213,21 @@ class SVNPublishModule(Component):
 
    # the following lines probably belong outside of this _render_html function and inside process_request instead
 	self.svn_init()
-	req.hdf['error'] = ''
 	req.hdf['svn_commands'] = ''
 	for info in filepaths:
-	    info['prod_rev'] = self.svn_rev_num(path)
+	    info['prod_rev'] = self.svn_rev_num(info['path.new'])
    	    revert_rev = info['prod_rev']
 	    server = 1 # clone = 1, prod = 2
-	# TODO: 
+
 	    if(self.db_rev_num(server,info['path.new']) == "True"):
 	       self.update_rev_num(server,info['path.new'],revert_rev,ticket.id)
 	    else:
                self.insert_rev_num(server,info['path.new'],revert_rev,ticket.id)
-	      
-	# now do the update
+
+   	    # now do the update
             if(int(info['prod_rev']) < int(info['rev.new'])):
-	       req.hdf['error'] += self.svn_update(req,server,info['path.new'],info['rev.new'])
+	       req.hdf['message'] += self.svn_update(req,server,info['path.new'],info['rev.new'])
+
             req.hdf['setchangeset.changes.%d' % idx] = info
 	    idx += 1
 	self.svn_close()
@@ -325,8 +326,8 @@ class SVNPublishModule(Component):
 	    commit = False
 
         cursor = db.cursor()
-
-	cursor.execute('UPDATE file_revision SET rev = %s , ticket_id = %s WHERE server=%s AND file=%s',(rev, server, filename, ticket_id))
+	query = 'UPDATE file_revision SET rev = %s , ticket_id = %s WHERE server=%s AND file=%s'
+	cursor.execute(query,(rev, ticket_id, server, filename))
 	if(commit):
             db.commit()
 

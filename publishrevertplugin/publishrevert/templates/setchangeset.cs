@@ -6,7 +6,7 @@
 <?cs if:ticket['ticketaction'] == 'ClonePublish' ?>
 <a href="../svnpublish/<?cs var:ticket_id ?>">PUBLISH TO CLONE</a><br/>
 <?cs /if ?>
-<?cs if:ticket['ticketaction'] == 'CloneTest' ?>
+<?cs if:ticket['ticketaction'] == 'TestFailed' ?>
 <a href="../svnrevert/<?cs var:ticket_id ?>">REVERT CLONE</a>
 <?cs /if ?>
 

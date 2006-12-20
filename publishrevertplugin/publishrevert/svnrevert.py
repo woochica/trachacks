@@ -95,7 +95,7 @@ class SVNRevertModule(Component):
             req.redirect(self.env.href.svnpublish(ticket_id))
 
 	ticket = Ticket(self.env, ticket_id)
-	if(ticket['ticketaction'] == "CloneTest"):
+	if(ticket['ticketaction'] == "TestFailed"):
   	    from publishrevert.setchangeset import SetChangesetModule
 	    setchangeset = SetChangesetModule(self.env)
             setchangesets = setchangeset.get_setchangesets(ticket_id)
@@ -218,6 +218,11 @@ class SVNRevertModule(Component):
 	    revert_rev = row[0]
 	    ticket_id = row[1]
 	    server = 1 # clone = 1, prod = 2
+	    # this if statement is a fix for files already published with no ticket_id.
+            # ticket_id was added later and there is no way to tell what ticket initially modified it
+	    if(ticket_id == None):
+		ticket_id = ticket.id
+
 	    if(int(ticket_id) == int(ticket.id)):
 	        req.hdf['error'] += self.svn_update(req,server,info['path.new'],revert_rev)
                 req.hdf['setchangeset.changes.%d' % idx] = info
@@ -226,9 +231,11 @@ class SVNRevertModule(Component):
 	        error = "ERROR: File %s could not be reverted because ticket %s has modified it. You will need to manually resolve this conflict." % (path,ticket_id)
 		req.hdf['error'] += error
    	        ticket.save_changes(req.authname, error, 0)
+		self.svn_close()
 		return False
 	self.svn_close()
 	req.hdf['svn_commands'] = req.hdf['svn_commands'].split(',')
+	return True
 
     def use_file(self, newchange, filepaths):
 	for path in filepaths:
