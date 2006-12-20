@@ -27,7 +27,7 @@ from trac.core import *
 # the following line should be added when upgrading to the newest version of trac
 # from trac.config import BoolOption, Option
 from trac.perm import IPermissionRequestor
-from trac.Search import ISearchSource, query_to_sql, shorten_result
+from trac.Search import query_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
 from trac.versioncontrol import Changeset, Node
 from trac.versioncontrol.svn_authz import SubversionAuthorizer
@@ -42,7 +42,7 @@ from trac.util import escape, Markup
 class SVNRevertModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
-               ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
+               ITimelineEventProvider, IWikiSyntaxProvider, ITemplateProvider)
 
 # the folloing line will be used when we upgrade to the newest version of Trac
 #    default_svn_path = Option('publishrevert', 'default_svn_path', '',
@@ -112,12 +112,12 @@ class SVNRevertModule(Component):
                 chgset.append(changeset)
 
             format = req.args.get('format')
-            self._render_html(req, ticket, repos, chgset, diff_options)
-	    req.hdf['setchangesets'] = setchangesets
-	    ticket['ticketaction'] = 'Doing'
-	    ticket.save_changes(req.authname, 'reverted clone', 0, db)
-	    req.hdf['message'] = 'Successfully Reverted All Files'
-            req.hdf['ticket'] = ticket.values
+            if(self._render_html(req, ticket, repos, chgset, diff_options)):
+		    req.hdf['setchangesets'] = setchangesets
+		    ticket['ticketaction'] = 'Doing'
+		    ticket.save_changes(req.authname, 'reverted clone', 0, db)
+		    req.hdf['message'] = 'Successfully Reverted All Files'
+	            req.hdf['ticket'] = ticket.values
  	else:
 	    req.hdf['error'] = 'Error: not in correct state to publish'
  
@@ -214,11 +214,19 @@ class SVNRevertModule(Component):
 	req.hdf['error'] = ''
 	req.hdf['svn_commands'] = ''
 	for info in filepaths:
-	    revert_rev = self.db_rev_num(1,path)
+	    row = self.db_rev_num(1,path)
+	    revert_rev = row[0]
+	    ticket_id = row[1]
 	    server = 1 # clone = 1, prod = 2
-            req.hdf['error'] += self.svn_update(req,server,info['path.new'],revert_rev)
-            req.hdf['setchangeset.changes.%d' % idx] = info
- 	    idx += 1
+	    if(int(ticket_id) == int(ticket.id)):
+	        req.hdf['error'] += self.svn_update(req,server,info['path.new'],revert_rev)
+                req.hdf['setchangeset.changes.%d' % idx] = info
+     	        idx += 1
+            else:
+	        error = "ERROR: File %s could not be reverted because ticket %s has modified it. You will need to manually resolve this conflict." % (path,ticket_id)
+		req.hdf['error'] += error
+   	        ticket.save_changes(req.authname, error, 0)
+		return False
 	self.svn_close()
 	req.hdf['svn_commands'] = req.hdf['svn_commands'].split(',')
 
@@ -250,29 +258,6 @@ class SVNRevertModule(Component):
         else:
             return '<a class="missing changeset" href="%s" rel="nofollow">%s</a>' \
                    % (formatter.href.changeset(rev), label)
-
-    # ISearchProvider methods
-
-    def get_search_filters(self, req):
-        if req.perm.has_permission('CHANGESET_VIEW'):
-            yield ('changeset', 'Changesets')
-
-    def get_search_results(self, req, query, filters):
-        if not 'changeset' in filters:
-            return
-        authzperm = SubversionAuthorizer(self.env, req.authname)
-        db = self.env.get_db_cnx()
-        sql, args = query_to_sql(db, query, 'message||author')
-        cursor = db.cursor()
-        cursor.execute("SELECT rev,time,author,message "
-                       "FROM revision WHERE " + sql, args)
-        for rev, date, author, log in cursor:
-            if not authzperm.has_permission_for_changeset(rev):
-                continue
-            yield (self.env.href.changeset(rev),
-                   '[%s]: %s' % (rev, util.shorten_line(log)),
-                   date, author, shorten_result(log, query.split()))
-
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -321,11 +306,11 @@ class SVNRevertModule(Component):
 
         # Fetch the standard ticket fields
         cursor = db.cursor()
-	query = 'SELECT rev FROM file_revision WHERE server=%s AND file=%s'
+	query = 'SELECT rev,ticket_id FROM file_revision WHERE server=%s AND file=%s'
 	cursor.execute(query, (server,filename))
 	db.commit()
         row = cursor.fetchone()
-	return row[0]
+	return row
 
 
     def update_rev_num(self, server, filename, rev, db=None):

@@ -23,7 +23,7 @@ import re
 from trac import mimeview, util
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.Search import ISearchSource, query_to_sql, shorten_result
+from trac.Search import query_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
 from trac.versioncontrol import Changeset, Node
 from trac.versioncontrol.svn_authz import SubversionAuthorizer
@@ -38,7 +38,7 @@ from trac.util import escape, Markup
 class SetChangesetModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
-               ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider) 
+               ITimelineEventProvider, IWikiSyntaxProvider, ITemplateProvider) 
 
 # need to add IRequestFilter when we upgrade
 
@@ -331,28 +331,6 @@ class SetChangesetModule(Component):
         else:
             return '<a class="missing changeset" href="%s" rel="nofollow">%s</a>' \
                    % (formatter.href.changeset(rev), label)
-
-    # ISearchProvider methods
-
-    def get_search_filters(self, req):
-        if req.perm.has_permission('CHANGESET_VIEW'):
-            yield ('changeset', 'Changesets')
-
-    def get_search_results(self, req, query, filters):
-        if not 'changeset' in filters:
-            return
-        authzperm = SubversionAuthorizer(self.env, req.authname)
-        db = self.env.get_db_cnx()
-        sql, args = query_to_sql(db, query, 'message||author')
-        cursor = db.cursor()
-        cursor.execute("SELECT rev,time,author,message "
-                       "FROM revision WHERE " + sql, args)
-        for rev, date, author, log in cursor:
-            if not authzperm.has_permission_for_changeset(rev):
-                continue
-            yield (self.env.href.changeset(rev),
-                   '[%s]: %s' % (rev, util.shorten_line(log)),
-                   date, author, shorten_result(log, query.split()))
 
 
     # ITemplateProvider methods

@@ -27,7 +27,7 @@ from trac.core import *
 # the following line should be added when upgrading to the newest version of trac
 # from trac.config import BoolOption, Option
 from trac.perm import IPermissionRequestor
-from trac.Search import ISearchSource, query_to_sql, shorten_result
+from trac.Search import query_to_sql, shorten_result
 from trac.Timeline import ITimelineEventProvider
 from trac.versioncontrol import Changeset, Node
 from trac.versioncontrol.svn_authz import SubversionAuthorizer
@@ -42,7 +42,7 @@ from trac.util import escape, Markup
 class SVNPublishModule(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
-               ITimelineEventProvider, IWikiSyntaxProvider, ISearchSource, ITemplateProvider)
+               ITimelineEventProvider, IWikiSyntaxProvider, ITemplateProvider)
 
 # the folloing line will be used when we upgrade to the newest version of Trac
 #    default_svn_path = Option('publishrevert', 'default_svn_path', '',
@@ -220,9 +220,9 @@ class SVNPublishModule(Component):
 	    server = 1 # clone = 1, prod = 2
 	# TODO: 
 	    if(self.db_rev_num(server,info['path.new']) == "True"):
-	       self.update_rev_num(server,info['path.new'],revert_rev)
+	       self.update_rev_num(server,info['path.new'],revert_rev,ticket.id)
 	    else:
-               self.insert_rev_num(server,info['path.new'],revert_rev)
+               self.insert_rev_num(server,info['path.new'],revert_rev,ticket.id)
 	      
 	# now do the update
             if(int(info['prod_rev']) < int(info['rev.new'])):
@@ -260,29 +260,6 @@ class SVNPublishModule(Component):
         else:
             return '<a class="missing changeset" href="%s" rel="nofollow">%s</a>' \
                    % (formatter.href.changeset(rev), label)
-
-    # ISearchProvider methods
-
-    def get_search_filters(self, req):
-        if req.perm.has_permission('CHANGESET_VIEW'):
-            yield ('changeset', 'Changesets')
-
-    def get_search_results(self, req, query, filters):
-        if not 'changeset' in filters:
-            return
-        authzperm = SubversionAuthorizer(self.env, req.authname)
-        db = self.env.get_db_cnx()
-        sql, args = query_to_sql(db, query, 'message||author')
-        cursor = db.cursor()
-        cursor.execute("SELECT rev,time,author,message "
-                       "FROM revision WHERE " + sql, args)
-        for rev, date, author, log in cursor:
-            if not authzperm.has_permission_for_changeset(rev):
-                continue
-            yield (self.env.href.changeset(rev),
-                   '[%s]: %s' % (rev, util.shorten_line(log)),
-                   date, author, shorten_result(log, query.split()))
-
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -340,7 +317,7 @@ class SVNPublishModule(Component):
 	  return "True"
 
 
-    def update_rev_num(self, server, filename, rev, db=None):
+    def update_rev_num(self, server, filename, rev, ticket_id, db=None):
         if not db:
             db = self.env.get_db_cnx()
 	    commit = True
@@ -349,12 +326,12 @@ class SVNPublishModule(Component):
 
         cursor = db.cursor()
 
-	cursor.execute('UPDATE file_revision SET rev = %s WHERE server=%s AND file=%s',(rev, server, filename))
+	cursor.execute('UPDATE file_revision SET rev = %s , ticket_id = %s WHERE server=%s AND file=%s',(rev, server, filename, ticket_id))
 	if(commit):
             db.commit()
 
 
-    def insert_rev_num(self, server, filename, rev, db=None):
+    def insert_rev_num(self, server, filename, rev, ticket_id, db=None):
         if not db:
             db = self.env.get_db_cnx()
 	    commit = True
@@ -362,8 +339,8 @@ class SVNPublishModule(Component):
 	    commit = False
 
         cursor = db.cursor()
-	query = 'INSERT INTO file_revision (rev,file,server) VALUES (%s,%s,%s)'
-	cursor.execute(query, (rev,filename,server))
+	query = 'INSERT INTO file_revision (rev,file,server,ticket_id) VALUES (%s,%s,%s,%s)'
+	cursor.execute(query, (rev,filename,server,ticket_id))
 	if(commit):
 	    db.commit()
 
