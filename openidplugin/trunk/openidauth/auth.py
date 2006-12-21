@@ -89,7 +89,6 @@ class OpenIDLoginModule(Component):
     implements(IAuthenticator, INavigationContributor, IRequestHandler,
                ITemplateProvider, IEnvironmentSetupParticipant)
 
-    sessions = {}
     require_personal_details = BoolOption('openid',
         'require_personal_details', 'true',
         """Whether we should ask the ID provider for the user's
