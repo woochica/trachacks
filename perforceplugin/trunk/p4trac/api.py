@@ -163,6 +163,10 @@ class PerforceConnector(Component):
                                         self.log)
 
 class PerforceCachedRepository(CachedRepository):
+    
+    def __init__(self, db, repos, authz, log):
+        CachedRepository.__init__(self, db, repos, authz, log)
+        self.synced = 0
 
     def checkRepositoryDir(self):
         """Check that the underlying repository_dir hasn't changed."""

@@ -8,7 +8,7 @@ setup(
 
     keywords='trac scm plugin perforce p4',
     url='http://trac-hacks.org/wiki/PerforcePlugin',
-    version='0.4.3',
+    version='0.4.4',
     license="""
     Copyright 2006, Maptek Pty Ltd
 
