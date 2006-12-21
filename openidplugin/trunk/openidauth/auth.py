@@ -15,6 +15,7 @@ from urljr.fetchers import HTTPFetchingError
 from trac.config import *
 from trac.core import *
 from trac.db import *
+from trac.env import IEnvironmentSetupParticipant
 from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.util import escape, hex_entropy, TracError, Markup
@@ -43,7 +44,7 @@ class TracOpenIDStore(sqlstore.SQLStore):
         issued INTEGER,
         lifetime INTEGER,
         assoc_type VARCHAR(64),
-        PRIMARY KEY (server_url(255), handle)
+        PRIMARY KEY (server_url, handle)
     )"""
 
     create_settings_sql = """
@@ -86,7 +87,7 @@ class OpenIDLoginModule(Component):
     """Handles OpenID identification for Trac."""
 
     implements(IAuthenticator, INavigationContributor, IRequestHandler,
-               ITemplateProvider)
+               ITemplateProvider, IEnvironmentSetupParticipant)
 
     sessions = {}
     require_personal_details = BoolOption('openid',
@@ -100,14 +101,33 @@ class OpenIDLoginModule(Component):
 
     def __init__(self):
         db = self.env.get_db_cnx()
-        self.store = TracOpenIDStore(db)
-        try:
-            # Try to create the OpenID store tables.
-            self.store.createTables()
-        except:
-            # Assume they already exist if there was a failure.
-            pass
+        self.store = self._getStore(db)
+
+    def _getStore(self, db):
+        return TracOpenIDStore(db)
+
+    def _initStore(self, db):
+        self._getStore(db).createTables()
+
+    # IEnvironmentSetupParticipant methods
+
+    def environment_created(self):
+        db = self.env.get_db_cnx()
+        self._initStore(db)
         db.commit()
+
+    def environment_needs_upgrade(self, db):
+        c = db.cursor()
+        try:
+            c.execute("SELECT count(*) FROM oid_associations")
+            db.rollback()
+            return False
+        except Exception, e:
+            db.rollback()
+            return True
+
+    def upgrade_environment(self, db):
+        self._initStore(db)
 
     # IAuthenticator methods
 
