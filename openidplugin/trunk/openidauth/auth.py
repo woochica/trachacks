@@ -120,7 +120,6 @@ class OpenIDLoginModule(Component):
         c = db.cursor()
         try:
             c.execute("SELECT count(*) FROM oid_associations")
-            db.rollback()
             return False
         except Exception, e:
             db.rollback()
