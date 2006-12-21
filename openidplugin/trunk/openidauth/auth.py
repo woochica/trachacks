@@ -1,4 +1,5 @@
 # Copyright 2006, Waldemar Kornewald <wkornew@gmx.net>
+# with modifications by Jonathan Daugherty <cygnus@janrain.com>
 # Distributed under the terms of the MIT License.
 
 import re
@@ -6,7 +7,7 @@ import time
 import thread
 import cPickle
 
-from openid.store import dumbstore
+from openid.store import sqlstore
 from openid.consumer import consumer
 from yadis.discover import DiscoveryFailure
 from urljr.fetchers import HTTPFetchingError
@@ -18,6 +19,68 @@ from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.util import escape, hex_entropy, TracError, Markup
 
+class TracOpenIDStore(sqlstore.SQLStore):
+    """
+    An SQLStore subclass for storing OpenID association data.  This
+    doesn't use the Trac database schema specification idiom, because
+    at the time of this writing, the trac sqlite backend ignores size
+    specifications on columns, which are needed for these tables.
+    """
+
+    create_nonce_sql = """
+    CREATE TABLE %(nonces)s
+    (
+        nonce CHAR(8) UNIQUE PRIMARY KEY,
+        expires INTEGER
+    )"""
+
+    create_assoc_sql = """
+    CREATE TABLE %(associations)s
+    (
+        server_url BLOB,
+        handle VARCHAR(255),
+        secret BLOB,
+        issued INTEGER,
+        lifetime INTEGER,
+        assoc_type VARCHAR(64),
+        PRIMARY KEY (server_url(255), handle)
+    )"""
+
+    create_settings_sql = """
+    CREATE TABLE %(settings)s
+    (
+        setting VARCHAR(128) UNIQUE PRIMARY KEY,
+        value BLOB
+    )"""
+
+    create_auth_sql = 'INSERT INTO %(settings)s VALUES ("auth_key", %%s);'
+    get_auth_sql = 'SELECT value FROM %(settings)s WHERE setting = "auth_key";'
+
+    set_assoc_sql = ('REPLACE INTO %(associations)s '
+                     'VALUES (%%s, %%s, %%s, %%s, %%s, %%s);')
+    get_assocs_sql = ('SELECT handle, secret, issued, lifetime, assoc_type'
+                      ' FROM %(associations)s WHERE server_url = %%s;')
+    get_assoc_sql = (
+        'SELECT handle, secret, issued, lifetime, assoc_type'
+        ' FROM %(associations)s WHERE server_url = %%s AND handle = %%s;')
+    remove_assoc_sql = ('DELETE FROM %(associations)s '
+                        'WHERE server_url = %%s AND handle = %%s;')
+
+    add_nonce_sql = 'REPLACE INTO %(nonces)s VALUES (%%s, %%s);'
+    get_nonce_sql = 'SELECT * FROM %(nonces)s WHERE nonce = %%s;'
+    remove_nonce_sql = 'DELETE FROM %(nonces)s WHERE nonce = %%s;'
+
+    def blobDecode(self, blob):
+        """
+        Decode a blob from the database.
+        """
+        return str(blob)
+
+    def blobEncode(self, s):
+        """
+        Encode a blob so it can be inserted safely.
+        """
+        return buffer(s)
 
 class OpenIDLoginModule(Component):
     """Handles OpenID identification for Trac."""
@@ -31,10 +94,20 @@ class OpenIDLoginModule(Component):
         """Whether we should ask the ID provider for the user's
         full name and email address.""")
 
+    # This key is used to store pickled OpenID state information in
+    # the trac session.
     openid_session_key = 'openid_session_data'
 
     def __init__(self):
-        self.lock = thread.allocate_lock()
+        db = self.env.get_db_cnx()
+        self.store = TracOpenIDStore(db)
+        try:
+            # Try to create the OpenID store tables.
+            self.store.createTables()
+        except:
+            # Assume they already exist if there was a failure.
+            pass
+        db.commit()
 
     # IAuthenticator methods
 
@@ -105,7 +178,7 @@ class OpenIDLoginModule(Component):
  
     def _getConsumer(self, req):
         s = self._get_session(req)
-        return consumer.Consumer(s, self._get_store()), s
+        return consumer.Consumer(s, self.store), s
 
     def _start_login(self, req, url):
         """Initiates OpenID login phase."""
@@ -203,19 +276,10 @@ class OpenIDLoginModule(Component):
 
     def _get_session(self, req):
         """Returns a session dict that can store any kind of object."""
-
-        # we must be thread-safe
-        self.lock.acquire()
         try:
-            session = cPickle.loads(str(req.session[self.openid_session_key]))
+            return cPickle.loads(str(req.session[self.openid_session_key]))
         except KeyError:
-            session = {}
-        self.lock.release()
-
-        return session
+            return {}
 
     def _commit_session(self, session, req):
         req.session[self.openid_session_key] = str(cPickle.dumps(session))
-
-    def _get_store(self):
-        return dumbstore.DumbStore('afsnjtq4tq9n3klt1gngasd9fasn43')
