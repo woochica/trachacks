@@ -4,6 +4,7 @@
 import re
 import time
 import thread
+import cPickle
 
 from openid.store import dumbstore
 from openid.consumer import consumer
@@ -29,6 +30,8 @@ class OpenIDLoginModule(Component):
         'require_personal_details', 'true',
         """Whether we should ask the ID provider for the user's
         full name and email address.""")
+
+    openid_session_key = 'openid_session_data'
 
     def __init__(self):
         self.lock = thread.allocate_lock()
@@ -100,14 +103,20 @@ class OpenIDLoginModule(Component):
     def _getReturnTo(self, req):
         return self._getTrustRoot(req) + self.env.href.openid_return()
  
+    def _getConsumer(self, req):
+        s = self._get_session(req)
+        return consumer.Consumer(s, self._get_store()), s
+
     def _start_login(self, req, url):
         """Initiates OpenID login phase."""
-        oidconsumer = consumer.Consumer(self._get_session(req), self._get_store())
+        oidconsumer, session = self._getConsumer(req)
         try:
             authreq = oidconsumer.begin(url)
         except (HTTPFetchingError, DiscoveryFailure):
             req.hdf['auth.message'] = 'Failed to retrieve identity: %s' % url
             return False
+
+        self._commit_session(session, req)
 
         if self.require_personal_details:
             # tell the IdP that we need the user's email address
@@ -122,8 +131,10 @@ class OpenIDLoginModule(Component):
         """Handles the final login step.
         
         The IdP sends the user back to us."""
-        oidconsumer = consumer.Consumer(self._get_session(req), self._get_store())
+        oidconsumer, session = self._getConsumer(req)
         response = oidconsumer.complete(req.args)
+        self._commit_session(session, req)
+
         if response.status == consumer.SUCCESS:
             if response.getReturnTo().split('?')[0] == self._getReturnTo(req):
                 self._login(req, response)
@@ -191,31 +202,20 @@ class OpenIDLoginModule(Component):
         return row[0]
 
     def _get_session(self, req):
-        """Returns a session dict that can store any kind of object.
-        
-        This is a hack to get around the OpenID library's limitations."""
+        """Returns a session dict that can store any kind of object."""
 
         # we must be thread-safe
         self.lock.acquire()
-        
-        # first get rid of old sessions
-        now = int(time.time())
-        for k, v in self.sessions.items():
-            if v['_last_access'] + 3 * 60 < now:
-                del self.sessions[k]
-        
-        # now find an existing session or create a new one
-        session = {}
-        sid = req.session.sid
-        if self.sessions.has_key(sid):
-            session = self.sessions[sid]
-        else:
-            self.sessions[sid] = session
-
-        session['_last_access'] = now
+        try:
+            session = cPickle.loads(str(req.session[self.openid_session_key]))
+        except KeyError:
+            session = {}
         self.lock.release()
 
         return session
+
+    def _commit_session(self, session, req):
+        req.session[self.openid_session_key] = str(cPickle.dumps(session))
 
     def _get_store(self):
         return dumbstore.DumbStore('afsnjtq4tq9n3klt1gngasd9fasn43')
