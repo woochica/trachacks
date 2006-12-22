@@ -51,7 +51,7 @@ class DbAuthLoginModule(Component):
 
     password_changeable = BoolOption('dbauth', 'password_changeable', 'false',
         """Allow user to change his password.""")
-    algorithm = Option('dbauth', 'algorithm', 'md5',
+    algorithm = Option('dbauth', 'algorithm', 'sha',
         """Choose which hash algorithm to use. Possible options:
         md5, sha""")
 
@@ -97,12 +97,12 @@ class DbAuthLoginModule(Component):
             if self.password_changeable:
                 yield 'metanav', 'password', \
                     Markup('<a href="%s">Password</a>' \
-                            % escape(self.env.href.password()))
+                            % escape(req.href.password()))
             yield 'metanav', 'logout', Markup('<b><a href="%s">Logout</a></b>' \
-                  % escape(self.env.href.logout()))
+                  % escape(req.href.logout()))
         else:
             yield 'metanav', 'login', Markup('<b><a href="%s">Login</a></b>' \
-                  % escape(self.env.href.login()))
+                  % escape(req.href.login()))
 
     # IRequestHandler methods
 
@@ -118,7 +118,7 @@ class DbAuthLoginModule(Component):
                 uid, pwd = req.args.get('uid').lower(), req.args.get('pwd')
                 referer = req.args.get('referer')
                 if not referer or len(referer) == 0:
-                    referer = selv.env.href()
+                    referer = req.href()
                 if self._check_login(uid, pwd):
                     self._do_login(req, uid)
                     req.redirect(referer)
@@ -140,7 +140,7 @@ class DbAuthLoginModule(Component):
         referer = req.args.get('referer') or req.get_header('Referer')
         if not referer or referer.endswith('/login') or \
                 referer.endswith('/settings') or len(referer) == 0:
-            referer = self.env.href()
+            referer = req.href()
 
         if req.path_info.startswith('/login'):
             req.hdf['referer'] = referer
@@ -173,7 +173,7 @@ class DbAuthLoginModule(Component):
     def _check_login(self, uid, pwd):
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = 'SELECT %s FROM %s WHERE %s = %%s' % \
+        sql = "SELECT %s FROM %s WHERE LOWER(%s) = LOWER(%%s)" % \
               (self.users['password'], self.users['table'],
                self.users['username'])
         cursor.execute(sql, (uid,))
@@ -190,15 +190,15 @@ class DbAuthLoginModule(Component):
         cookie = hex_entropy()
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('INSERT INTO auth_cookie ' \
-                       '(cookie ,name ,ipnr ,time) ' \
-                       'VALUES (%s, %s, %s, %s)',
+        cursor.execute("INSERT INTO auth_cookie "
+                       "(cookie ,name ,ipnr ,time) "
+                       "VALUES (%s, %s, %s, %s)",
                        (cookie, remote_user, req.remote_addr,
                         int(time.time())))
         db.commit()
 
         req.outcookie['db_auth'] = cookie
-        req.outcookie['db_auth']['path'] = self.env.href()
+        req.outcookie['db_auth']['path'] = req.href()
         req.outcookie['db_auth']['expires'] = 100000000
 
         self._update_email(remote_user)
@@ -214,8 +214,8 @@ class DbAuthLoginModule(Component):
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('DELETE FROM auth_cookie ' \
-                       'WHERE name = %s OR time < %s',
+        cursor.execute("DELETE FROM auth_cookie "
+                       "WHERE LOWER(name) = LOWER(%s) OR time < %s",
                        (req.authname, int(time.time()) - self.session_lifetime))
         db.commit()
         self._expire_cookie(req)
@@ -224,7 +224,7 @@ class DbAuthLoginModule(Component):
         """Instruct the user agent to drop the auth cookie by setting the
         "expires" property to a date in the past."""
         req.outcookie['db_auth'] = ''
-        req.outcookie['db_auth']['path'] = self.env.href()
+        req.outcookie['db_auth']['path'] = req.href()
         req.outcookie['db_auth']['expires'] = -10000
 
     def _get_name_for_cookie(self, req, cookie):
@@ -233,27 +233,27 @@ class DbAuthLoginModule(Component):
         so if you regularly use Trac you stay logged in forever."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT name, time FROM auth_cookie ' \
-                       'WHERE cookie = %s',
+        cursor.execute("SELECT name, time FROM auth_cookie "
+                       "WHERE cookie = %s",
                        (cookie,))
         row = cursor.fetchone()
         if not row or row[1] < int(time.time()) - self.session_lifetime:
             # the cookie has become invalid
-            cursor.execute('DELETE FROM auth_cookie ' \
-                           'WHERE time < %s',
+            cursor.execute("DELETE FROM auth_cookie "
+                           "WHERE time < %s",
                            (int(time.time()) - self.session_lifetime,))
             db.commit()
             self._expire_cookie(req)
             return None
         elif row[1] < int(time.time()) - 60 * 60:
             # refresh session
-            cursor.execute('UPDATE auth_cookie ' \
-                           'SET time = %s, ipnr = %s ' \
-                           'WHERE cookie = %s',
+            cursor.execute("UPDATE auth_cookie "
+                           "SET time = %s, ipnr = %s "
+                           "WHERE cookie = %s",
                            (int(time.time()), req.remote_addr, cookie))
             db.commit()
             req.outcookie['db_auth'] = cookie
-            req.outcookie['db_auth']['path'] = self.env.href()
+            req.outcookie['db_auth']['path'] = req.href()
             req.outcookie['db_auth']['expires'] = 100000000
             # Don't forget to check whether we have a new email address.
             self._update_email(row[0])
@@ -266,7 +266,7 @@ class DbAuthLoginModule(Component):
             return
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = 'SELECT %s FROM %s WHERE %s = %%s' % \
+        sql = "SELECT %s FROM %s WHERE %s = %%s" % \
               (email_field, self.users['table'],
                self.users['username'])
         cursor.execute(sql, (user,))
@@ -276,12 +276,12 @@ class DbAuthLoginModule(Component):
         email = row[0]
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('DELETE FROM session_attribute ' \
-                       'WHERE name="email" AND sid=%s AND authenticated=1',
+        cursor.execute("DELETE FROM session_attribute "
+                       "WHERE name='email' AND sid=%s AND authenticated=1",
                        (user,))
-        cursor.execute('INSERT INTO session_attribute ' \
-                       '(sid, authenticated, name, value) ' \
-                       'VALUES (%s, 1, "email", %s)',
+        cursor.execute("INSERT INTO session_attribute "
+                       "(sid, authenticated, name, value) "
+                       "VALUES (%s, 1, 'email', %s)",
                        (user, email))
         db.commit()
 
@@ -294,7 +294,7 @@ class DbAuthLoginModule(Component):
         newpwd = self.crypt.new(newpwd).hexdigest()
         db = get_db(self.env)
         cursor = db.cursor()
-        sql = 'UPDATE %s SET %s = %%s WHERE %s = %%s' % \
+        sql = "UPDATE %s SET %s = %%s WHERE LOWER(%s) = LOWER(%%s)" % \
               (self.users['table'], self.users['password'],
                self.users['username'])
         cursor.execute(sql, (newpwd, req.authname))

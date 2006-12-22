@@ -22,7 +22,6 @@
   </table>
   <div class="buttons">
     <input type="submit" name="password" value="Change" />
-    <input type="submit" name="cancel" value="Cancel" />
   </div>
 </form>
 

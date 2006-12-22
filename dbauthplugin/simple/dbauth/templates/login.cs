@@ -21,7 +21,6 @@
   <div>
     <input type="hidden" name="referer" value="<?cs var:referer ?>">
     <input type="submit" name="login" value="Login" />
-    <input type="submit" name="cancel" value="Cancel" />
   </div>
 </form>
 
