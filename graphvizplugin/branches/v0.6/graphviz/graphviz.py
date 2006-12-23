@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.8'
+__version__   = '0.6.9'
 
 
 try:
@@ -32,6 +32,7 @@ from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
 from trac.web.main import IRequestHandler
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
+from trac import mimeview
 
 
 _TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
@@ -186,8 +187,7 @@ class GraphvizMacro(Component):
 
             #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
-                content = re.sub(r'URL="(.*?)"', self.expand_wiki_links, content)
-
+                content = re.sub(r'URL="(.*?)"', self.expand_wiki_links, content.decode(encoding)).encode(encoding)
 
             # Antialias PNGs with rsvg, if requested
             if self.out_format == 'png' and self.png_anti_alias == True:
@@ -246,8 +246,7 @@ class GraphvizMacro(Component):
             except:
                 dimensions = 'width="100%" height="100%"'
             # insert SVG, IE compatibility
-            buf.write('<!--[if IE]><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (req.base_url, img_name, dimensions))
-            buf.write('<![if !IE]><object data="%s/graphviz/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (req.base_url, img_name, dimensions))
+            buf.write('<object data="%s/graphviz/%s" type="image/svg+xml" %s><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed></object>' % (req.base_url, img_name, dimensions, req.base_url, img_name, dimensions))
 
         # for binary formats, add map
         elif URL_in_graph:
@@ -524,5 +523,5 @@ class GraphvizMacro(Component):
             if len(pieces):
                 name = pieces[0]
                 img_path = os.path.join(self.cache_dir, name)
-                return req.send_file(img_path)
+                return req.send_file(img_path, mimeview.get_mimetype(img_path))
         return

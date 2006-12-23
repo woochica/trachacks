@@ -5,12 +5,19 @@ case "$1" in
     ENV=/Users/peter/projects/env0.9
     PORT=9009
     ;;
+
   10)
     ENV=/Users/peter/projects/env0.10
     PORT=9010
     ;;
+
+  11)
+    ENV=/Users/peter/projects/env0.11
+    PORT=9011
+    ;;
+
   *)
-    echo "build.sh 9|10"
+    echo "build.sh 9|10||11"
     exit 1
 esac
 
