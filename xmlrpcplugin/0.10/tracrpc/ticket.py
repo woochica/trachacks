@@ -95,8 +95,8 @@ class TicketRPC(Component):
         t.delete()
 
     def changeLog(self, req, id, when=0):
-        t = model.Ticket(self.env, id, when)
-        return t.get_changelog()
+        t = model.Ticket(self.env, id)
+        return t.get_changelog(when)
     # Use existing documentation from Ticket model
     changeLog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
 
