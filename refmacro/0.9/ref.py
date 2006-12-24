@@ -7,8 +7,11 @@ Reference section headers in the current page. To refer to the section
 }}}
 
 """
-import re
 from trac.wiki.formatter import Formatter
 
 def execute(hdf, args, env):
-	return "<a href='#%s' title='Jump to section %s'>%s</a>" % (Formatter._anchor_re.sub("", args), args.replace("'", "\\'"), args)
+    anchor = Formatter._anchor_re.sub("", args) 
+    if not anchor or not anchor[0].isalpha(): 
+        anchor = 'a' + anchor 
+    return "<a href='#%s' title='Jump to section %s'>%s</a>" % \ 
+        (anchor, args.replace("'", "\\'"), args) 
