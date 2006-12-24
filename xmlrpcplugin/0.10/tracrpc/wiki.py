@@ -167,4 +167,4 @@ class WikiRPC(Component):
 
     def wikiToHtml(self, req, text):
         """ Render arbitrary Wiki text as HTML. """
-        return wiki_to_html(text, self.env, req, absurls=1)
+        return unicode(wiki_to_html(text, self.env, req, absurls=1))
