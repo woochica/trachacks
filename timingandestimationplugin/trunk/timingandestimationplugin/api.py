@@ -251,13 +251,6 @@ class TimeTrackingSetupParticipant(Component):
         return False
 
     def do_user_man_update(self):
-        # for a while we were inserting corrupt times into the
-        # time spot for sqlite (which is typeless)
-        try:
-            sql=""" UPDATE wiki SET time = 0 WHERE time='%s' """
-            dbhelper.execute_non_query(self.env.get_db_cnx(),sql)
-        except:
-            pass
 
         when = int(time.time())
         sql = """

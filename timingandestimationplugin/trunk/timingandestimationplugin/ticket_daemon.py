@@ -49,7 +49,7 @@ class TimeTrackingTicketObserver(Component):
                 return tipe(ticket.values[name] or default)
             else:
                 cursor = self.env.get_db_cnx().cursor()
-                cursor.execute("SELECT * FROM ticket_custom where ticket=%s and name='%s'" % (ticket.id, name))
+                cursor.execute("SELECT * FROM ticket_custom where ticket=%s and name=%s" , (ticket.id, name))
                 val = cursor.fetchone()
                 if val:
                     return tipe(val[2] or default)
