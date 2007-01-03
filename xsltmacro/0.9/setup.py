@@ -4,7 +4,7 @@
 from setuptools import setup
 
 PACKAGE = 'xslt'
-VERSION = '0.4'
+VERSION = '0.5'
 
 setup(
     name=PACKAGE,
