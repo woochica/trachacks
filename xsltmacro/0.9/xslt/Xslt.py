@@ -367,7 +367,10 @@ class XsltProcessor(Component):
                 _close_obj(style_obj)
                 _close_obj(doc_obj)
                 raise RequestDone
-        req._headers.append(('Last-Modified', http_date(lastmod)))
+        if hasattr(req, '_headers'):    # 0.9 compatibility
+            req._headers.append(('Last-Modified', http_date(lastmod)))
+        else:
+            req.send_header('Last-Modified', http_date(lastmod))
 
         try:
             page, content_type = _transform(style_obj, doc_obj, params)
@@ -378,9 +381,10 @@ class XsltProcessor(Component):
         req.send_response(200)
         req.send_header('Content-Type', content_type + ';charset=utf-8')
         req.send_header('Content-Length', len(page))
-        for name, value in req._headers:
-            req.send_header(name, value)
-        req._send_cookie_headers()
+        if hasattr(req, '_headers'):    # 0.9 compatibility
+            for name, value in req._headers:
+                req.send_header(name, value)
+            req._send_cookie_headers()
         req.end_headers()
 
         if req.method != 'HEAD':
