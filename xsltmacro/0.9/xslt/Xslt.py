@@ -25,7 +25,10 @@ However, the full form is almost never necessary. There are three short forms:
 The remaining arguments are optional:
  * `use_iframe` means generate an <iframe> tag instead of directly rendering
    the result (this script needs to be installed as a plugin for this to work)
- * `if_*` are all passed as attributes to the iframe with the `if_` prefix stripped
+ * `use_object` is just like `use_iframe` except that it uses an <object> tag
+   instead of an <iframe> tag
+ * `if_*` are all passed as attributes to the <iframe> tag with the `if_` prefix stripped
+ * `obj_*` are all passed as attributes to the <object> tag with the `obj_` prefix stripped
  * `xp_*` are all passed as parameters to the xsl transformer with the `xp_` prefix
    stripped
 
@@ -77,27 +80,43 @@ def execute(hdf, args, env):
     docspec   = _parse_filespec(args[1].strip(), hdf, env)
     opts      = _parse_opts(args[2:])
 
-    if 'use_iframe' in opts:
+    if 'use_iframe' in opts or 'use_object' in opts:
         url = env.href(MY_URL, ss_mod=stylespec[0], ss_id=stylespec[1], ss_fil=stylespec[2],
                        doc_mod=docspec[0], doc_id=docspec[1], doc_fil=docspec[2],
                        **dict([(k, v) for k, v in opts.iteritems() if k.startswith('xp_')]))
 
-        attrs = { 'style': 'width: 100%; margin: 0pt', 'frameborder': '0', 'scrolling': 'auto' }
-        attrs.update(dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('if_')]))
-
-        return """
+        res = """
           <script type="text/javascript">
-          function maximizeIframe(iframe) {
-            iframe.style.scrolling = 'no'
-            if (iframe.contentDocument)         // Netscape/Mozilla/Firefox
-                docHeight = iframe.contentDocument.body.scrollHeight
+          function maximizeFrame(frame) {
+            frame.style.scrolling = 'no'
+            if (frame.contentDocument)         // Netscape/Mozilla/Firefox
+                docHeight = frame.contentDocument.body.scrollHeight
             else                                // Exploder
-                docHeight = iframe.document.body.scrollHeight
-            iframe.style.height    = docHeight + 'px'
+                docHeight = frame.document.body.scrollHeight
+            frame.style.height    = docHeight + 'px'
           }
           </script>
-          <iframe src="%(src)s" onload="maximizeIframe(this)" %(attrs)s></iframe>
-          """ % { 'src': url, 'attrs': ' '.join([ k + '="' + str(v) + '"' for k,v in attrs.iteritems() ]) }
+         """
+
+        if 'use_iframe' in opts:
+            attrs = { 'style': 'width: 100%; margin: 0pt', 'frameborder': '0', 'scrolling': 'auto' }
+            attrs.update(dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('if_')]))
+
+            res += """
+              <iframe src="%(src)s" onload="maximizeFrame(this)" %(attrs)s></iframe>
+              """ % { 'src': url,
+                      'attrs': ' '.join([ k + '="' + str(v) + '"' for k,v in attrs.iteritems() ]) }
+
+        if 'use_object' in opts:
+            attrs = { 'style': 'width: 100%; margin: 0pt' }
+            attrs.update(dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('obj_')]))
+
+            res += """
+              <object data="%(src)s" type="text/html" onload="maximizeFrame(this)" %(attrs)s></object>
+              """ % { 'src': url,
+                      'attrs': ' '.join([ k + '="' + str(v) + '"' for k,v in attrs.iteritems() ]) }
+
+        return res
 
     else:
         style_obj = _get_obj(env, hdf, *stylespec)
@@ -113,9 +132,9 @@ def execute(hdf, args, env):
         return page
 
 def _parse_opts(args):
-    s_opts = ['use_iframe']     # simple opts (no value)
-    v_opts = []                 # valued opts
-    p_opts = ['if_', 'xp_']     # prefixed opts
+    s_opts = ['use_iframe', 'use_object']       # simple opts (no value)
+    v_opts = []                                 # valued opts
+    p_opts = ['if_', 'obj_', 'xp_']             # prefixed opts
 
     opts = {}
     for arg in args:
