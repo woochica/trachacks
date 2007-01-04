@@ -271,13 +271,18 @@ class TracBlogPlugin(Component):
         for blog_entry in blog:
             if blog_entry == macropage:
                 continue
-            page = WikiPage(self.env, version=1, name=blog_entry)
-            version, post_time, author, comment, ipnr = page.get_history(
-                                                        ).next()
-            self._add_to_tallies(tallies, post_time, blog_entry)
-            page = WikiPage(self.env, name=blog_entry)
-            version, modified, author, comment, ipnr = page.get_history(
-                                                       ).next()
+            try:
+                page = WikiPage(self.env, version=1, name=blog_entry)
+                version, post_time, author, comment, ipnr = page.get_history(
+                                                            ).next()
+                
+                self._add_to_tallies(tallies, post_time, blog_entry)
+                page = WikiPage(self.env, name=blog_entry)
+                version, modified, author, comment, ipnr = page.get_history(
+                                                           ).next()
+            except:
+                self.log.debug("Error loading wiki page %s" % blog_entry, exc_info=True)
+                continue
             if poststart >= post_time >= postend:       
                 time_format = self.env.config.get('blog', 'date_format') \
                               or '%x %X'
