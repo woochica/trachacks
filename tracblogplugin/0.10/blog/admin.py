@@ -87,7 +87,7 @@ class BlogAdminPlugin(Component):
  '''Default Tag'''::
    tag to use as default when none are specified
  '''Post Max Size'''::
-   number of bytes to show before truncating the post and providing a ''(...)'' link.  Posts are truncated at line breaks, and wiki formatting is included in the byte count, so truncation will not be exact.
+   number of bytes to show before truncating the post and providing a ''(...)'' link.  Posts are truncated at line breaks, and wiki formatting is included in the byte count, so truncation will not be exact.  This means that if a line is 2KB long and ''Post Max Size'' is 1KB, then the full 2KB will be shown, as it's the next line break after the ''Post Max Size'' is reached
  '''Days of History'''::
    number of days for which to show blog posts
  '''New Blog Link'''::

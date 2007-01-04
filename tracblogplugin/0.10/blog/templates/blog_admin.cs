@@ -68,7 +68,7 @@
             </div>
             <div class="field">
                 <label>Footer:<br/>
-                    <textarea name="footer" cols=40 rows=6><?cs var:blogadmin.footer ?></textarea>
+                    <textarea name="footer" cols=30 rows=6><?cs var:blogadmin.footer ?></textarea>
                 </label>
             </div>
         <div class="buttons">

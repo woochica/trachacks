@@ -113,6 +113,8 @@ class TracBlogPlugin(Component):
     '''mark_update''' - Specify whether to show "Updated on" for posts that
     have been updated.[[br]]
     '''format''' - Show as RSS feed ('rss') or HTML (else).[[br]]
+    '''post_size''' - Number of bytes to show before truncating the post and providing a ''(...)'' link.  Posts are truncated at the next line break after the byte count is reached.
+
 
     If specifying dates with {{{year}}}, {{{month}}}, and/or {{{day}}}, the
     current value is specified if missing.  For example, if {{{day}}} is 
