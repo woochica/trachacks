@@ -9,6 +9,7 @@
 # Author: Sam Bloomquist <spooninator@hotmail.com>
 
 import time
+import sys
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
@@ -38,9 +39,10 @@ class BurndownComponent(Component):
             handle_ta = False
             
         # See if the burndown table exists, if not, return True because we need to upgrade the database
+        # the latest version of the burndown table contains a 'week' column
         cursor = db.cursor()
         try:
-            cursor.execute('SELECT * FROM burndown LIMIT 1')
+            cursor.execute('SELECT week FROM burndown LIMIT 1')
         except:
             needsUpgrade = True
             
@@ -52,16 +54,46 @@ class BurndownComponent(Component):
     def upgrade_environment(self, db):
         cursor = db.cursor()
         
-        # Create the burndown table in the database
-        sqlBurndownCreate =     "CREATE TABLE burndown (" \
-                                    "    id integer PRIMARY KEY NOT NULL,"\
-                                    "    component_name text NOT NULL,"\
-                                    "    milestone_name text NOT NULL," \
-                                    "    date text NOT NULL,"\
-                                    "    hours_remaining integer NOT NULL"\
-                                    ")"
-                                    
-        cursor.execute(sqlBurndownCreate)
+        needsCreate = False
+        try:
+            cursor.execute('SELECT * FROM burndown LIMIT 1')
+        except:
+            needsCreate = True
+            
+        if needsCreate:
+            print >> sys.stderr, 'Attempting to create the burndown table'
+            # Create the burndown table in the database
+            sqlBurndownCreate = "CREATE TABLE burndown (" \
+                                            "    id integer PRIMARY KEY NOT NULL,"\
+                                            "    component_name text NOT NULL,"\
+                                            "    milestone_name text NOT NULL," \
+                                            "    date text,"\
+                                            "    week text,"\
+                                            "    year text,"\
+                                            "    hours_remaining integer NOT NULL"\
+                                            ")"
+                                        
+            cursor.execute(sqlBurndownCreate)
+        else:
+            print >> sys.stderr, 'Attempting to modify the burndown table'
+            #burndown table already exists, just need to add week and year columns
+            sqlBurndown = [
+            """CREATE TEMP TABLE burndown_old as SELECT * FROM burndown;""",
+            """DROP TABLE burndown;""",
+            """CREATE TABLE burndown (
+                    id integer PRIMARY KEY NOT NULL,
+                    component_name text NOT NULL,
+                    milestone_name text NOT NULL,
+                    date text,
+                    week text,
+                    year text,
+                    hours_remaining integer NOT NULL
+                );""",
+            """INSERT INTO burndown(id,component_name,milestone_name,date,hours_remaining)
+            SELECT id,component_name,milestone_name,date,hours_remaining FROM burndown_old;"""
+            ]
+            for line in sqlBurndown:
+                cursor.execute(line)
         
         sqlMilestone = [
         #-- Add the 'started' column to the milestone table
@@ -164,19 +196,19 @@ class BurndownComponent(Component):
             burndown_length = 0
         burndown_data = []
         if selected_component == 'All Components':
-            for day in range (0, burndown_length):
+            for time_unit in range (0, burndown_length): #burndown can be incremented in days or weeks, so I decided to use the generic 'time_unit'
                 sumHours = 0
                 for comp in components:
                     self.log.debug('component: %s', comp);
-                    self.log.debug('day: %i', day);
-                    if (component_data[comp] and len(component_data[comp]) > day):
-                        sumHours += component_data[comp][day][1]
+                    self.log.debug('time_unit: %i', time_unit);
+                    if (component_data[comp] and len(component_data[comp]) > time_unit):
+                        sumHours += component_data[comp][time_unit][1]
                 
-                burndown_data.append((day+1, sumHours))
+                burndown_data.append((time_unit+1, sumHours))
                 
         else:
-            for day in range (0, len(component_data[selected_component])):
-                burndown_data.append((day+1, component_data[selected_component][day][1]))
+            for time_unit in range (0, len(component_data[selected_component])):
+                burndown_data.append((time_unit+1, component_data[selected_component][time_unit][1]))
             
         return burndown_data
         
