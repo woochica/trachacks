@@ -17,7 +17,7 @@ from trac.env import open_environment
 
 def main():
     if len(sys.argv) != 2:
-        print >> sys.stderr, 'Must supply a trac_env as an argument to the burndown_job'
+        print >> sys.stdout, 'Must supply a trac_env as an argument to the burndown_job'
         sys.exit(1)
         
     env_path = sys.argv[1]
@@ -37,10 +37,10 @@ def main():
     row = cursor.fetchone()
     needs_update = False
     if row:
-        print >> sys.stderr, 'burndown_job.py has already been run this week - update needed'
+        print >> sys.stdout, 'burndown_job.py has already been run this week - update needed'
         needs_update = True
     else:
-        print >> sys.stderr, 'first run of burndown_job.py this week - insert needed'
+        print >> sys.stdout, 'first run of burndown_job.py this week - insert needed'
     
     # get arrays of the various components and milestones in the trac environment
     cursor.execute("SELECT name AS comp FROM component")
