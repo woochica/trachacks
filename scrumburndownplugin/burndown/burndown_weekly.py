@@ -26,7 +26,6 @@ def main():
     today = datetime.date.today()
     today_year = today.strftime("%Y")
     today_week = today.strftime("%W")
-    print >> sys.stderr, 'today_week: %s, today_year: %s' % (today_week, today_year)
     
     # open up a connection to the trac database
     env = open_environment(env_path)
@@ -72,8 +71,6 @@ def main():
                             spent = 0
                     
                         hours += float(estimate) - float(spent)
-                        
-                print >> sys.stderr, 'milestone: %s, component: %s, hours: %f' % (mile[0], comp[0], hours)
                 
                 if needs_update:
                     cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE week = '%s' AND year = '%s' AND milestone_name = '%s'"\
