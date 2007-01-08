@@ -98,14 +98,16 @@ from trac.ticket.web_ui import TicketModule
 # TODO: move grouped_changelog_entries to model.py
 from trac.util.text import to_unicode
 from trac.web.href import Href
-f = open ("/tmp/commithook.log","w")
-f.write("Begin Log\n")
-f.close()
-def log (s):
-    f = open ("/tmp/commithook.log","a")
-    f.write(s);
-    f.write("\n")
-    f.close()
+
+# f = open ("/tmp/commithook.log","w")
+# f.write("Begin Log\n")
+# f.close()
+# def log (s):
+#     f = open ("/tmp/commithook.log","a")
+#     f.write(s);
+#     f.write("\n")
+#     f.close()
+    
 try:
     from optparse import OptionParser
 except ImportError:
@@ -144,7 +146,7 @@ else:
     rghtEnv = ''
 
 andPattern = '(?:[ ]*(?:[, &]|[ ]and[ ])[ ]*)'
-timePattern = '(?:\((?:(?:(?:spent|sp)[ ])?[0-9]+(?:\.[0-9]+)?)?(?:\))?)?'
+timePattern = '(?:\((?:(?:(?:spent|sp)[ ])?[0-9]?(?:\.[0-9]+)?)?(?:\))?)?'
 commandPattern = re.compile(leftEnv + r'(?P<action>[A-Za-z]*).?(?P<ticket>#[0-9]+[ ]*' + timePattern + '(?:' + andPattern + '#[0-9]+.?' + timePattern + '.?)*)' + rghtEnv)
 ticketSplitPattern = re.compile(r'(#[0-9]+[ ]*' + timePattern + ')')
 ticketPattern = re.compile(r'(?:#([0-9]+)[ ]*(?:\((?:(?:(?:spent|sp)[ ])?([0-9]*(?:\.[0-9]*)?))?\))?)')
@@ -177,7 +179,6 @@ class CommitHook:
         self.env.abs_href = Href(url)
 
         cmdGroups = commandPattern.findall(msg)
-
         for cmd, tkts in cmdGroups:
             funcname = CommitHook._supported_cmds.get(cmd.lower(), '')
             if funcname:
@@ -219,7 +220,6 @@ class CommitHook:
         pass
 
     def _setTimeTrackerFields(self, ticket, spent):
-	log("Ticket: %s  spent: %s" % (ticket, spent))
         if (spent != ''):
             spentTime = float(spent)
             if (ticket.values.has_key('hours')):
