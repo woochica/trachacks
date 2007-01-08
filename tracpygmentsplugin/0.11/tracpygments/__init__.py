@@ -24,6 +24,7 @@ __all__ = ['PygmentsRenderer', 'PygmentsProcessors']
 
 try:
     import pygments
+    from pygments.lexers import get_lexer_by_name
     from pygments.lexers._mapping import LEXERS
     from pygments.plugin import find_plugin_lexers
     from pygments.formatters.html import HtmlFormatter
@@ -109,7 +110,7 @@ def _iter_lexerinfo():
         yield cls.__module__, cls.name, cls.aliases, cls.filenames, cls.mimetypes
 
 def _format(lang, content, annotate=False):
-    lexer = pygments.get_lexer_by_name(lang)
+    lexer = get_lexer_by_name(lang)
     formatter = TracHtmlFormatter(cssclass = not annotate and 'code' or '')
     html = pygments.highlight(content, lexer, formatter).rstrip('\n')
     if annotate:
