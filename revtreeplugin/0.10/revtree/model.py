@@ -15,7 +15,7 @@
 import re
 import time
 
-from revtree import IRevtreeOptimizer
+from revtree import EmptyRangeError, IRevtreeOptimizer
 from trac.versioncontrol import Node, Changeset
 from trac.core import *
 # only for get_revision_properties
