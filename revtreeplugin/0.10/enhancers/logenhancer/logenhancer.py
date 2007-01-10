@@ -37,6 +37,7 @@ class LogEnhancer(Component):
         enhancer._repos = repos
         enhancer._creations = []
         enhancer._deliveries = []
+        enhancer._brings = []
         enhancer._groups = []
         enhancer._svgrevtree = svgrevtree
         # z-depth indexed widgets: back=1, fore=2
@@ -98,6 +99,31 @@ class LogEnhancer(Component):
                 elif msg.startswith('imports'):
                     svgchgset = svgbranch.svgchangeset(chgset)
                     svgchgset.set_shape('Circle')
+                elif msg.startswith('brings'):
+                    bring = chgset.prop('st:bring')
+                    if not bring:
+                        continue
+                    try:
+                        revisions = [int(c) for c in bring.split(',')]
+                        revisions.sort()
+                        ychg = enhancer._repos.changeset(revisions[-1])
+                        if not ychg:
+                            continue
+                        brname = ychg.branchname
+                        srcbranch = enhancer._repos.branch(brname)
+                        if not srcbranch:
+                            continue
+                        brrevs = [c.rev for c in srcbranch.changesets()]
+                        valrevs = [r for r in revisions if r in brrevs]
+                        fchg = enhancer._repos.changeset(valrevs[0])
+                        lchg = enhancer._repos.changeset(valrevs[-1])
+                        enhancer._groups.append((fchg,lchg))
+                        enhancer._brings.append((lchg,chgset))
+                    except ValueError:
+                        pass
+                    except IndexError:
+                        pass
+
         return enhancer
                 
     def build(self, enhancer):
@@ -136,6 +162,19 @@ class LogEnhancer(Component):
             svgdstchg = svgdstbr.svgchangeset(dstchg)
             op = SvgOperation(enhancer._svgrevtree, svgsrcchg, svgdstchg, 
                               'blue')
+            enhancer._widgets[2].append(op)
+
+        for (srcchg, dstchg) in enhancer._brings:
+            svgsrcbr = \
+                enhancer._svgrevtree.svgbranch(branchname=srcchg.branchname)
+            svgdstbr = \
+                enhancer._svgrevtree.svgbranch(branchname=dstchg.branchname)
+            if not svgsrcbr or not svgdstbr:
+                continue
+            svgsrcchg = svgsrcbr.svgchangeset(srcchg)
+            svgdstchg = svgdstbr.svgchangeset(dstchg)
+            op = SvgOperation(enhancer._svgrevtree, svgsrcchg, svgdstchg,
+                              'orange')
             enhancer._widgets[2].append(op)
             
         for wl in enhancer._widgets:
