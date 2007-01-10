@@ -12,7 +12,7 @@ __all__ = ['HTTPAuthFilter']
 class HTTPAuthFilter(Component):
     """Request filter and handler to provide HTTP authentication."""
     
-    paths = ListOption('httpauth', 'paths', default='/xmlrpc',
+    paths = ListOption('httpauth', 'paths', default='/login/xmlrpc',
                        doc='Paths to force HTTP authentication on.')
     
     implements(IRequestFilter, IAuthenticator)
