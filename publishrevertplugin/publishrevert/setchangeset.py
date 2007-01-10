@@ -94,6 +94,7 @@ class SetChangesetModule(Component):
 	
 	setchangesets = ticket.setchangesets
 	req.hdf['ticket'] = ticket
+	req.hdf['dbWarning'] = False
 
 	# get the list of changesets for the ticket_id
 	# then loop through and get the actual changesets like the following line
@@ -107,6 +108,7 @@ class SetChangesetModule(Component):
         format = req.args.get('format')
 
         self._render_html(req, ticket, repos, chgset, diff_options)
+
         return 'setchangeset.cs', None
 
     # ITimelineEventProvider methods
@@ -203,14 +205,18 @@ class SetChangesetModule(Component):
                    edits.append((idx, path, kind, base_path, base_rev))
 
 	       if self.use_file(info, filepaths):
-	               req.hdf['setchangeset.changes.%d' % idx] = info
 		       filepaths.append(info)
-        	       idx += 1
 
 	       hidden_properties = [p.strip() for p
                              in self.config.get('browser', 'hide_properties').split(',')]
-
-
+	
+	filepaths.reverse()
+	for info in filepaths:
+            req.hdf['setchangeset.changes.%d' % idx] = info
+	    if(info['path.new'] == 'trunk/db/database_modifications.sql'):
+	    	req.hdf['dbWarning'] = "True"
+	    idx += 1
+		
     def use_file(self, newchange, filepaths):
 	for path in filepaths:
             if path['path.new'] == newchange['path.new']:

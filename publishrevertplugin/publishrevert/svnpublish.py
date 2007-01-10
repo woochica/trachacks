@@ -214,6 +214,7 @@ class SVNPublishModule(Component):
    # the following lines probably belong outside of this _render_html function and inside process_request instead
 	self.svn_init()
 	req.hdf['svn_commands'] = ''
+	filepaths.reverse()
 	for info in filepaths:
 	    info['prod_rev'] = self.svn_rev_num(info['path.new'])
    	    revert_rev = info['prod_rev']

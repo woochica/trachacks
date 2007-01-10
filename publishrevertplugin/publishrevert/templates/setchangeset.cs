@@ -10,6 +10,10 @@
 <a href="../svnrevert/<?cs var:ticket_id ?>">REVERT CLONE</a>
 <?cs /if ?>
 
+<?cs if:dbWarning == "True" ?>
+<h1 style="text-align: center;">WARNING:<br/>There have been database modifications.<br/>Don't forget to backup the database and apply the new changes when publishing.</h1>
+<?cs /if ?>
+
 <?cs def:node_change(item,cl,kind) ?><?cs 
   set:ndiffs = len(item.diff) ?><?cs
   set:nprops = len(item.props) ?>
@@ -53,9 +57,15 @@
  <dt class="files">Files:</dt>
  <dd class="files">
   <ul><?cs each:item = setchangeset.changes ?>
-   <li><?cs var:item.path.new ?> <?cs var:item.rev.new ?>
+   <li>svn update -r <?cs var:item.rev.new ?> <a href="/trac/log/<?cs var:item.path.new ?>" target="_new"><?cs var:item.path.new ?></a>
    </li>
   <?cs /each ?></ul>
+ </dd>
+ <dt class="files">Files:</dt>
+ <dd class="files">
+  <?cs each:item = setchangeset.changes ?>
+   svn update -r <?cs var:item.rev.new ?> <?cs var:item.path.new ?>; 
+  <?cs /each ?>
  </dd>
  <dt>Subversion Commands:</dt>
  <dd>
@@ -63,6 +73,13 @@
    <li><?cs var:item ?></li>
   <?cs /each ?></ul>
  </dd>
+ <dt class="files">Files:</dt>
+ <dd class="files">svn info 
+  <?cs each:item = setchangeset.changes ?>
+   <?cs var:item.path.new ?> 
+  <?cs /each ?>
+ </dd>
+
 </dl>
 
 <?cs include "footer.cs"?>
