@@ -108,7 +108,7 @@ class BranchChangeset(object):
             if not self._find_simple_branch(bcre):
                 self._find_plain_branch(bcre)
         except AssertionError, e:
-            raise AssertionError, "%s rev: %d paths %s" % (e, revision, paths)
+            raise AssertionError, "%s rev: %d" % (e, self.rev or 0)
         
     def _load_properties(self):
         self.properties = self.repos.get_revision_properties(self.rev)
