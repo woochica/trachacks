@@ -19,8 +19,6 @@ from revtree import EmptyRangeError, IRevtreeOptimizer
 from trac.core import *
 from trac.util.datefmt import utc
 from trac.versioncontrol import Node, Changeset
-# only for get_revision_properties
-from svn import fs
 
 
 class DefaultRevtreeOptimizer(Component):
@@ -112,16 +110,15 @@ class BranchChangeset(object):
             raise AssertionError, "%s rev: %d" % (e, self.rev or 0)
         
     def _load_properties(self):
-        self.properties = self.repos.get_revision_properties(self.rev)
+        if not isinstance(self.properties, dict):
+            self.properties = self.repos.get_revision_properties(self.rev)
         
     def prop(self, prop):
-        if not isinstance(self.properties, dict):
-            self._load_properties()
+        self._load_properties()
         return self.properties.has_key(prop) and self.properties[prop] or ''
             
     def props(self, majtype=None):
-        if not isinstance(self.properties, dict):
-            self._load_properties()
+        self._load_properties()
         if majtype is None:
             return self.properties
         else:
@@ -322,10 +319,12 @@ class Repository(object):
         return authors
         
     def get_revision_properties(self, revision):
-        """Returns the revision properties
-        Ideally, this should be implemented by Trac core..."""
-        return fs.svn_fs_revision_proplist(self._crepos.repos.fs_ptr, revision, 
-                                           self._crepos.repos.pool())
+        """Returns the revision properties"""
+        props = {}
+        changeset = self._crepos.get_changeset(revision)
+        for name, value, flag, html in changeset.get_properties():
+            props[name] = value
+        return props
                                            
     def find_node(self, path, rev):
         node = self._crepos.get_node(path, rev)
