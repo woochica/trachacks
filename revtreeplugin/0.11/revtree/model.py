@@ -14,10 +14,11 @@
 
 import re
 import time
-
+from datetime import datetime
 from revtree import EmptyRangeError, IRevtreeOptimizer
-from trac.versioncontrol import Node, Changeset
 from trac.core import *
+from trac.util.datefmt import utc
+from trac.versioncontrol import Node, Changeset
 # only for get_revision_properties
 from svn import fs
 
@@ -340,7 +341,9 @@ class Repository(object):
                 start = timerange[0]
             if timerange[1]:
                 stop = timerange[1]
-        vcchangesets = self._crepos.get_changesets(start, stop)
+        dtstart = datetime.fromtimestamp(start, utc)
+        dtstop = datetime.fromtimestamp(stop, utc)
+        vcchangesets = self._crepos.get_changesets(dtstart, dtstop)
         if revrange:
             revmin = self._crepos.get_oldest_rev()
             revmax = self._crepos.get_youngest_rev()
