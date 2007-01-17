@@ -15,7 +15,7 @@ class S5Renderer(Component):
 
     heading_re = re.compile(r'^==\s*(?P<slide>.*?)\s*==$|^=\s*(?P<title>.*?)\s*=$')
     fixup_re = re.compile(r'^=(\s*.*?\s*)=$', re.S|re.M)
-    fixup_images_re = re.compile(r'\[\[Image\(([^/].*?)\)\]\]')
+    fixup_images_re = re.compile(r'\[\[Image\(([^:]*?)\)\]\]')
 
     # IRequestHandler methods
     def match_request(self, req):
