@@ -32,8 +32,8 @@
 <?cs if:location ?>
 <h1><?cs var:location ?></h1>
 <?cs /if ?>
-<?cs if:html_title ?>
-<h2><?cs var:html_title ?></h2>
+<?cs if:title ?>
+<h2><?cs var:title ?></h2>
 <?cs /if ?>
 </div>
 
