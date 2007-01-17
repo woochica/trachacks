@@ -44,6 +44,7 @@ class S5Renderer(Component):
         in_section = -1
         text = ''
         title = ''
+        html_title = ''
         title_page = ''
         handout = ''
         slides = []
@@ -63,6 +64,7 @@ class S5Renderer(Component):
 
                 if match.lastgroup == 'title':
                     title = match.group(match.lastgroup)
+                    title_html = htmlify(title)
                     in_section = 1
                 else:
                     in_section = 2
@@ -71,13 +73,14 @@ class S5Renderer(Component):
             text += line + '\n'
 
         if in_section == 1:
-            title_page = text
+            title_page = htmlify(text)
         elif in_section == 2:
             text = self.fixup_re.sub(r'\1', text)
             slides.append({'body': htmlify(text), 'handout': htmlify(handout)})
 
         req.hdf['theme'] = theme
         req.hdf['title'] = title
+        req.hdf['html_title'] = html_title
         req.hdf['location'] = location
         req.hdf['title_page'] = title_page
         req.hdf['slides'] = slides
