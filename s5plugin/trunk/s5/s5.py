@@ -3,6 +3,7 @@
 import re
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.mimeview.api import IContentConverter
 from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html
@@ -11,7 +12,8 @@ from trac.util import escape, Markup
 from trac.config import Option
 
 class S5Renderer(Component):
-    implements(ITemplateProvider, IRequestHandler, IWikiMacroProvider)
+    implements(ITemplateProvider, IRequestHandler, IWikiMacroProvider,
+               IContentConverter)
 
     heading_re = re.compile(r'^==\s*(?P<slide>.*?)\s*==$|^=\s*(?P<title>.*?)\s*=$')
     fixup_re = re.compile(r'^=(\s*.*?\s*)=$', re.S|re.M)
@@ -123,3 +125,10 @@ class S5Renderer(Component):
                 """% (req.href('s5', match.group(1)), content and '?' + content or '',
                       req.href('chrome', 's5')))
 
+    # IContentConverter methods
+    def get_supported_conversions(self):
+        yield ('s5', 'Slideshow', 's5', 'text/x-trac-wiki', 'text/html;style=s5', 8)
+
+    def convert_content(self, req, mimetype, content, key):
+        template, _ = self.process_request(req)
+        return req.hdf.render(template), 'text/html'
