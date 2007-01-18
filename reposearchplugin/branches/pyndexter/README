@@ -1,0 +1,15 @@
+You will need the `refactoring` branch of pyndexter, available from 
+[http://swapoff.org/svn/pyndexter/branches/refactoring/ here]. Home page is
+[http://swapoff.org/pyndexter here], though not up to date yet.
+
+You'll also need one of Xapian, Hype, the Hyperestraier SWIG bindings or Lupy
+(being the only indexers mostly working) installed.
+
+Modify trac.ini:
+
+{{{
+[repo-search]
+indexer = hype:///tmp/reposearch-hype.idx
+}}}
+
+You can use the `update-index` script to trigger manual indexing.
