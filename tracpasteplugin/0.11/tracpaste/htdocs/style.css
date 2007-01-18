@@ -1,0 +1,27 @@
+div.sidebar {
+    float: right;
+    width: 200px;
+}
+
+p.error {
+    padding: 3px;
+    font-weight: bold;
+}
+
+p.information {
+    padding: 0 0 15px 30px!important;
+    color: #555;
+}
+
+dt {
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+div.formwrapper {
+    margin-right: 210px;
+}
+
+textarea {
+    width: 100%;
+}
