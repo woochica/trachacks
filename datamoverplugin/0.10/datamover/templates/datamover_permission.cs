@@ -1,4 +1,4 @@
-<h2>Move Wiki Pages</h2>
+<h2>Move Permissions</h2>
 
 <?cs if:datamover.message ?>
 <div id="datamover_message" style="font-weight: bold">
@@ -11,32 +11,31 @@
 <fieldset>
     <legend>Source</legend>
     <div class="field">
-        <label><input type="radio" name="source" value="prefix" id="source_prefix_radio" checked="checked" />
-            Prefix
-        </label>
-        <label><input type="radio" name="source" value="glob" id="source_glob_radio" />
-            Glob
-        </label>
-        <label><input type="radio" name="source" value="regex" id="source_regex_radio" />
-            Regex
+        <label><input type="radio" name="source" value="permission" id="source_permission_radio" checked="checked" />
+            Permission
         </label>
         <label><input type="radio" name="source" value="all" id="source_all_radio" />
             All
         </label>
     </div>
-    <div class="field" id="source_prefix_div">
-        <label>Prefix:
-            <input type="text" name="prefix" />
-        </label>
-    </div>
-    <div class="field" id="source_glob_div" style="display: none">
-        <label>Glob:
-            <input type="text" name="glob" />
-        </label>
-    </div>
-    <div class="field" id="source_regex_div" style="display: none">
-        <label>Regular Expression:
-            <input type="text" name="regex" />
+    <div class="field" id="source_permission_div">
+        <label>Permission:
+            <table class="listing">
+                <thead>
+                    <tr>
+                        <th class="sel">&nbsp;</th>
+                        <th>Subject</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <?cs each:perm = datamover.permissions ?>
+                <tr>
+                    <td><input type="checkbox" name="perm" value="<?cs var:perm.0 ?>:<?cs var:perm.1 ?>"></input></td>
+                    <td><?cs var:perm.0 ?></td>
+                    <td><?cs var:perm.1 ?></td>
+                </tr>
+                <?cs /each ?>
+            </table>
         </label>
     </div>
     <div class="field" id="source_all_div" style="display: none">
@@ -67,7 +66,7 @@
     
 <script type="text/javascript">
 <!--
-    var current_div = 'source_prefix_div';
+    var current_div = 'source_permission_div';
     
     function show_div(d) {
         document.getElementById(current_div).style.display = 'none';
@@ -79,9 +78,7 @@
         addEvent(document.getElementById(d+'_radio'), 'click', function() { show_div(d+'_div'); });
     }
     
-    do_addEvent('source_prefix');
-    do_addEvent('source_glob');
-    do_addEvent('source_regex');
+    do_addEvent('source_permission');
     do_addEvent('source_all');
 //-->
 </script>

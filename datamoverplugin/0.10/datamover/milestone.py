@@ -1,33 +1,29 @@
 from trac.core import *
 from trac.web.main import _open_environment
-from trac.wiki.api import WikiSystem
-from trac.wiki.model import WikiPage
+from trac.ticket.model import Milestone
 
 from webadmin.web_ui import IAdminPageProvider
 
 from api import DatamoverSystem
-from util import copy_wiki_page
+from util import copy_milestone
 
-import fnmatch, re
-
-# TODO: datamover.ticket and datamover.wiki should really be in the same module
-
-class DatamoverWikiModule(Component):
-    """The wiki page moving component of the datamover plugin."""
+class DatamoverMilestoneModule(Component):
+    """The milestone moving component of the datamover plugin."""
 
     implements(IAdminPageProvider)
     
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
-        if req.perm.has_permission('WIKI_ADMIN'):
-            yield ('mover', 'Data Mover', 'wiki', 'Wiki')
+        if req.perm.has_permission('TRAC_ADMIN'):
+            yield ('mover', 'Data Mover', 'milestone', 'Milestones')
     
     def process_admin_request(self, req, cat, page, path_info):
         envs = DatamoverSystem(self.env).all_environments()
+        milestones = [m.name for m in Milestone.select(self.env)]
         
         if req.method == 'POST':
             source_type = req.args.get('source')
-            if not source_type or source_type not in ('prefix', 'glob', 'regex', 'all'):
+            if not source_type or source_type not in ('milestone', 'all'):
                 raise TracError, "Source type not specified or invalid"
             source = req.args.get(source_type)
             dest = req.args.get('destination')
@@ -41,36 +37,30 @@ class DatamoverWikiModule(Component):
                 
             action_verb = {'copy':'Copied', 'move':'Moved'}[action]
             
-            page_filter = None
-            if source_type == 'prefix':
-                page_filter = lambda p: p.startswith(source.strip())
-            elif source_type == 'glob':
-                page_filter = lambda p: fnmatch.fnmatch(p, source)
-            elif source_type == 'regex':
-                page_filter = lambda p: re.search(re.compile(source, re.U), p)
+            milestone_filter = None
+            if source_type == 'milestone':
+                in_milestones = req.args.getlist('milestone')
+                milestone_filter = lambda c: c in in_milestones
             elif source_type == 'all':
-                page_filter = lambda p: True
-                
-                            
+                milestone_filter = lambda c: True
+            
             try:
-                pages = [p for p in WikiSystem(self.env).get_pages() if page_filter(p)]
+                sel_milestones = [m for m in milestones if milestone_filter(m)]
                 dest_db = _open_environment(dest).get_db_cnx()
-                for page in pages:
-                    copy_wiki_page(self.env, dest, page, dest_db)
+                for milestone in sel_milestones:
+                    copy_milestone(self.env, dest, milestone, dest_db)
                 dest_db.commit()
                     
                 if action == 'move':
-                    for page in pages:
-                        WikiPage(self.env, page).delete()
+                    for milestone in sel_milestones:
+                        Milestone(self.env, milestone).delete()
                     
-                req.hdf['datamover.message'] = '%s pages %s'%(action_verb, ', '.join(pages))
+                req.hdf['datamover.message'] = '%s milestones %s'%(action_verb, ', '.join(sel_milestones))
             except TracError, e:
                 req.hdf['datamover.message'] = "An error has occured: \n"+str(e)
                 self.log.warn(req.hdf['datamover.message'], exc_info=True)
-            
-
-
+        
+        
         req.hdf['datamover.envs'] = envs
-        return 'datamover_wiki.cs', None
-
-
+        req.hdf['datamover.milestones'] = milestones
+        return 'datamover_milestone.cs', None

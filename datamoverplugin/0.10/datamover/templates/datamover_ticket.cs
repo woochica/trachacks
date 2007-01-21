@@ -22,7 +22,7 @@
         </label>
         <label><input type="radio" name="source" value="query" id="source_query_radio" />
             Query
-        </label>       
+        </label>
     </div>
     <div class="field" id="source_component_div">
         <label>Component:
@@ -80,7 +80,7 @@
     }
     
     function do_addEvent(d) {
-        addEvent(document.getElementById(d+'_radio'), 'change', function() { show_div(d+'_div'); });
+        addEvent(document.getElementById(d+'_radio'), 'click', function() { show_div(d+'_div'); });
     }
     
     do_addEvent('source_component');

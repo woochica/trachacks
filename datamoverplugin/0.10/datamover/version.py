@@ -1,33 +1,29 @@
 from trac.core import *
 from trac.web.main import _open_environment
-from trac.wiki.api import WikiSystem
-from trac.wiki.model import WikiPage
+from trac.ticket.model import Version
 
 from webadmin.web_ui import IAdminPageProvider
 
 from api import DatamoverSystem
-from util import copy_wiki_page
+from util import copy_version
 
-import fnmatch, re
-
-# TODO: datamover.ticket and datamover.wiki should really be in the same module
-
-class DatamoverWikiModule(Component):
-    """The wiki page moving component of the datamover plugin."""
+class DatamoverVersionModule(Component):
+    """The version moving component of the datamover plugin."""
 
     implements(IAdminPageProvider)
     
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
-        if req.perm.has_permission('WIKI_ADMIN'):
-            yield ('mover', 'Data Mover', 'wiki', 'Wiki')
+        if req.perm.has_permission('TRAC_ADMIN'):
+            yield ('mover', 'Data Mover', 'version', 'Versions')
     
     def process_admin_request(self, req, cat, page, path_info):
         envs = DatamoverSystem(self.env).all_environments()
+        versions = [v.name for v in Version.select(self.env)]
         
         if req.method == 'POST':
             source_type = req.args.get('source')
-            if not source_type or source_type not in ('prefix', 'glob', 'regex', 'all'):
+            if not source_type or source_type not in ('version', 'all'):
                 raise TracError, "Source type not specified or invalid"
             source = req.args.get(source_type)
             dest = req.args.get('destination')
@@ -41,36 +37,30 @@ class DatamoverWikiModule(Component):
                 
             action_verb = {'copy':'Copied', 'move':'Moved'}[action]
             
-            page_filter = None
-            if source_type == 'prefix':
-                page_filter = lambda p: p.startswith(source.strip())
-            elif source_type == 'glob':
-                page_filter = lambda p: fnmatch.fnmatch(p, source)
-            elif source_type == 'regex':
-                page_filter = lambda p: re.search(re.compile(source, re.U), p)
+            ver_filter = None
+            if source_type == 'version':
+                in_versions = req.args.getlist('version')
+                ver_filter = lambda c: c in in_versions
             elif source_type == 'all':
-                page_filter = lambda p: True
-                
-                            
+                ver_filter = lambda c: True
+            
             try:
-                pages = [p for p in WikiSystem(self.env).get_pages() if page_filter(p)]
+                sel_versions = [v for v in versions if ver_filter(v)]
                 dest_db = _open_environment(dest).get_db_cnx()
-                for page in pages:
-                    copy_wiki_page(self.env, dest, page, dest_db)
+                for version in sel_versions:
+                    copy_version(self.env, dest, version, dest_db)
                 dest_db.commit()
                     
                 if action == 'move':
-                    for page in pages:
-                        WikiPage(self.env, page).delete()
+                    for version in sel_versions:
+                        Version(self.env, version).delete()
                     
-                req.hdf['datamover.message'] = '%s pages %s'%(action_verb, ', '.join(pages))
+                req.hdf['datamover.message'] = '%s versions %s'%(action_verb, ', '.join(sel_versions))
             except TracError, e:
                 req.hdf['datamover.message'] = "An error has occured: \n"+str(e)
                 self.log.warn(req.hdf['datamover.message'], exc_info=True)
-            
-
-
+        
+        
         req.hdf['datamover.envs'] = envs
-        return 'datamover_wiki.cs', None
-
-
+        req.hdf['datamover.versions'] = versions
+        return 'datamover_version.cs', None

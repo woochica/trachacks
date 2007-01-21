@@ -16,7 +16,7 @@ class DatamoverTicketModule(Component):
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
         if req.perm.has_permission('TICKET_ADMIN'):
-            yield ('mover', 'Data Mover', 'ticket', 'Ticket')
+            yield ('mover', 'Data Mover', 'ticket', 'Tickets')
     
     def process_admin_request(self, req, cat, page, path_info):
         components = [c.name for c in TicketComponent.select(self.env)]

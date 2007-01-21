@@ -1,4 +1,4 @@
-<h2>Move Wiki Pages</h2>
+<h2>Move Attachments</h2>
 
 <?cs if:datamover.message ?>
 <div id="datamover_message" style="font-weight: bold">
@@ -11,36 +11,43 @@
 <fieldset>
     <legend>Source</legend>
     <div class="field">
-        <label><input type="radio" name="source" value="prefix" id="source_prefix_radio" checked="checked" />
-            Prefix
+        <label><input type="radio" name="source" value="type" id="source_type_radio" checked="checked" />
+            Type
         </label>
-        <label><input type="radio" name="source" value="glob" id="source_glob_radio" />
-            Glob
+        <label><input type="radio" name="source" value="wiki" id="source_wiki_radio" />
+            Wiki Page
         </label>
-        <label><input type="radio" name="source" value="regex" id="source_regex_radio" />
-            Regex
+        <label><input type="radio" name="source" value="ticket" id="source_ticket_radio" />
+            Ticket
         </label>
         <label><input type="radio" name="source" value="all" id="source_all_radio" />
             All
         </label>
     </div>
-    <div class="field" id="source_prefix_div">
-        <label>Prefix:
-            <input type="text" name="prefix" />
+    <div class="field" id="source_type_div">
+        <label>Type:
+            <select name="type">
+                <option value="wiki">Wiki</option>
+                <option value="ticket">Ticket</option>
+            </select>
         </label>
     </div>
-    <div class="field" id="source_glob_div" style="display: none">
-        <label>Glob:
-            <input type="text" name="glob" />
+    <div class="field" id="source_wiki_div" style="display: none">
+        <label>Wiki Page (only showing pages with attachments):
+            <br/>
+            <?cs each:page = datamover.wiki_pages ?>
+            <br/>
+            <input type="checkbox" name="wiki" value="<?cs var:page ?>"><?cs var:page ?></input>
+            <?cs /each ?>
         </label>
     </div>
-    <div class="field" id="source_regex_div" style="display: none">
-        <label>Regular Expression:
-            <input type="text" name="regex" />
+    <div class="field" id="source_ticket_div" style="display: none">
+        <label>Ticket ID:
+            <input type="text" name="ticket" />
         </label>
     </div>
     <div class="field" id="source_all_div" style="display: none">
-        &nbsp;
+        <p style="font-style: italic">Note: this will take a while</p>
     </div>
 </fieldset>
 
@@ -67,7 +74,7 @@
     
 <script type="text/javascript">
 <!--
-    var current_div = 'source_prefix_div';
+    var current_div = 'source_type_div';
     
     function show_div(d) {
         document.getElementById(current_div).style.display = 'none';
@@ -79,9 +86,9 @@
         addEvent(document.getElementById(d+'_radio'), 'click', function() { show_div(d+'_div'); });
     }
     
-    do_addEvent('source_prefix');
-    do_addEvent('source_glob');
-    do_addEvent('source_regex');
+    do_addEvent('source_type');
+    do_addEvent('source_wiki');
+    do_addEvent('source_ticket');
     do_addEvent('source_all');
 //-->
 </script>
