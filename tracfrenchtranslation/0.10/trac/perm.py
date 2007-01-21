@@ -190,10 +190,6 @@ class PermissionSystem(Component):
 
     def revoke_permission(self, username, action):
         """Revokes the permission of the specified user to perform an action."""
-        # TODO: Validate that this permission does in fact exist
-        if action.isupper() and action not in self.get_actions():
-            raise TracError, u"%s n'est pas une action valide" % action
-
         self.store.revoke_permission(username, action)
 
     def get_actions(self):

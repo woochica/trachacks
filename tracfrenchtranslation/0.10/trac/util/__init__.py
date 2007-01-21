@@ -37,7 +37,6 @@ from trac.util.datefmt import pretty_timedelta, format_datetime, \
                               get_datetime_format_hint, http_date, \
                               parse_date
 
-
 # -- req/session utils
 
 def get_reporter_id(req, arg_name=None):

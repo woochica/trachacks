@@ -51,7 +51,7 @@ class WikiModule(Component):
 
     # IContentConverter methods
     def get_supported_conversions(self):
-        yield ('txt', 'Texte plain', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
+        yield ('txt', 'Texte standard', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
 
     def convert_content(self, req, mimetype, content, key):
         return (content, 'text/plain;charset=utf-8')
@@ -127,6 +127,7 @@ class WikiModule(Component):
         elif action == 'history':
             self._render_history(req, db, page)
         else:
+            req.perm.assert_permission('WIKI_VIEW')            
             format = req.args.get('format')
             if format:
                 Mimeview(self.env).send_converted(req, 'text/x-trac-wiki',
@@ -169,8 +170,6 @@ class WikiModule(Component):
                 yield 'wiki', href.wiki(name), title, t, author, comment
 
             # Attachments
-            def display(id):
-                return Markup('ticket ', html.EM('#', id))
             att = AttachmentModule(self.env)
             for event in att.get_timeline_events(req, db, 'wiki', format,
                                                  start, stop,
@@ -231,10 +230,10 @@ class WikiModule(Component):
         for manipulator in self.page_manipulators:
             for field, message in manipulator.validate_wiki_page(req, page):
                 if field:
-                    raise InvalidWikiPage("Le champ %s de la page Wiki n'est pas valable : %s"
+                    raise InvalidWikiPage("Le champ %s de la page Wiki n'est pas valide : %s"
                                           % (field, message))
                 else:
-                    raise InvalidWikiPage("Page Wiki non valable : %s" % message)
+                    raise InvalidWikiPage("Page Wiki non valide : %s" % message)
 
         page.save(get_reporter_id(req, 'author'), req.args.get('comment'),
                   req.remote_addr)
@@ -418,8 +417,6 @@ class WikiModule(Component):
         req.hdf['wiki.history'] = history
 
     def _render_view(self, req, db, page):
-        req.perm.assert_permission('WIKI_VIEW')
-
         page_name = self._set_title(req, page, '')
         if page.name == 'WikiStart':
             req.hdf['title'] = ''

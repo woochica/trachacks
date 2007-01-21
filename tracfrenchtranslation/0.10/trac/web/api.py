@@ -127,6 +127,7 @@ class Request(object):
     authname = None
     perm = None
     session = None
+    form_token = None
 
     def __init__(self, environ, start_response):
         """Create the request wrapper.
@@ -170,14 +171,14 @@ class Request(object):
         args = _RequestArgs()
 
         fp = self.environ['wsgi.input']
+        # Avoid letting cgi.FieldStorage consume the input stream when the
+        # request does not contain form data
         ctype = self.get_header('Content-Type')
         if ctype:
-            # Avoid letting cgi.FieldStorage consume the input stream when the
-            # request does not contain form data
             ctype, options = cgi.parse_header(ctype)
-            if ctype not in ('application/x-www-form-urlencoded',
-                             'multipart/form-data'):
-                fp = StringIO('')
+        if ctype not in ('application/x-www-form-urlencoded',
+                         'multipart/form-data'):
+            fp = StringIO('')
 
         fs = cgi.FieldStorage(fp, environ=self.environ, keep_blank_values=True)
         if fs.list:
@@ -350,7 +351,10 @@ class Request(object):
             content_type = 'text/plain'
             data = str(self.hdf)
         else:
-            data = self.hdf.render(template)
+            form_token = None
+            if content_type in ('text/html', 'application/xhtml+xml'):
+                form_token = self.form_token
+            data = self.hdf.render(template, form_token)
 
         self.send_response(status)
         self.send_header('Cache-control', 'must-revalidate')

@@ -6,10 +6,20 @@
  else ?>
   <title><?cs var:title ?></title><?cs
  /if ?>
- <link><?cs var:base_host ?><?cs var:trac.href.report ?>/<?cs var:report.id ?></link>
+ <link><?cs var:base_host ?><?cs 
+  var:trac.href.report ?>/<?cs var:report.id ?></link>
  <description>Rapport Trac - <?cs var:report.title ?></description>
  <language>fr-fr</language>
  <generator>Trac v<?cs var:trac.version ?></generator><?cs
+  if:chrome.logo.src ?>
+   <image>
+    <title><?cs var:project.name_encoded ?></title>
+    <url><?cs if:!chrome.logo.src_abs ?><?cs var:base_host ?><?cs /if ?><?cs
+     var:chrome.logo.src ?></url>
+    <link><?cs var:base_host ?><?cs 
+     var:trac.href.report ?>/<?cs var:report.id ?></link>
+   </image><?cs
+  /if ?><?cs
  each:row = report.items ?><?cs
   set title = '' ?><?cs
   set descr = '' ?><?cs
@@ -35,8 +45,9 @@
    <pubDate><?cs var:pubdate ?></pubDate>
    <title><?cs var:'#' + id + ': ' + title ?></title>   
    <link><?cs var:link ?></link>
+   <guid isPermaLink="false"><?cs var:link ?></guid>
    <description><?cs var:descr ?></description>
-   <category>Report</category>
+   <category>Rapport</category>
   </item><?cs
  /each ?></channel>
 </rss>

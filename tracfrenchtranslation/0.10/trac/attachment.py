@@ -421,6 +421,7 @@ class AttachmentModule(Component):
             title = html.EM(os.path.basename(filename)) + \
                     ' attached to ' + display(id)
             if format == 'rss':
+                title = Markup(title).striptags()
                 descr = wiki_to_html(descr or '--', self.env, req, db,
                                      absurls=True)
                 href = req.abs_href
@@ -551,6 +552,7 @@ class AttachmentModule(Component):
             binary = is_binary(str_data)
             mime_type = mimeview.get_mimetype(attachment.filename, str_data)
 
+            # Eventually send the file directly
             format = req.args.get('format')
             if format in ('raw', 'txt'):
                 if not self.render_unsafe_content and not binary:

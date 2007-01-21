@@ -65,7 +65,7 @@ class TicketSystem(Component):
 
     restrict_owner = BoolOption('ticket', 'restrict_owner', 'false',
         """Make the owner field of tickets use a drop-down menu. See
-        [wiki:TracTickets#AssigntoasDropDownList AssignToAsDropDownList]
+        [TracTickets#Assign-toasDrop-DownList Assign-to as Drop-Down List]
         (''since 0.9'').""")
 
     # Public API
@@ -170,6 +170,9 @@ class TicketSystem(Component):
             }
             if field['type'] == 'select' or field['type'] == 'radio':
                 field['options'] = config.getlist(name + '.options', sep='|')
+                if '' in field['options']:
+                    field['optional'] = True
+                    field['options'].remove('')
             elif field['type'] == 'textarea':
                 field['width'] = config.getint(name + '.cols')
                 field['height'] = config.getint(name + '.rows')

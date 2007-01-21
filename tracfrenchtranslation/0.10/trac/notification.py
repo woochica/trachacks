@@ -84,6 +84,13 @@ class NotificationSystem(Component):
         
     use_tls = BoolOption('notification', 'use_tls', 'false',
         """Use SSL/TLS to send notifications (''since 0.10'').""")
+    smtp_subject_prefix = Option('notification', 'smtp_subject_prefix',
+                                 '__default__', 
+        """Text to prepend to subject line of notification emails. 
+        
+        If the setting is not defined, then the [$project_name] prefix.
+        If no prefix is desired, then specifying an empty option 
+        will disable it.(''since 0.10.1'').""")
 
 
 class Notify(object):
@@ -221,7 +228,7 @@ class NotifyEmail(Notify):
         if not email:
             return header
         else:
-            return "\"%s\" <%s>" % (header, email)
+            return '"%s" <%s>' % (header, email)
 
     def add_headers(self, msg, headers):
         for h in headers:
@@ -326,6 +333,7 @@ class NotifyEmail(Notify):
         
         # if there is not valid recipient, leave immediately
         if len(recipients) < 1:
+            self.env.log.info('no recipient for a ticket notification')
             return
 
         pcc = accaddrs

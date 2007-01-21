@@ -16,17 +16,18 @@
 # Author: Christopher Lenz <cmlenz@gmx.de>
 #         Matthew Good <trac@matt-good.net>
 
+import cgi
+import dircache
 import locale
 import os
 import sys
-import dircache
 import urllib
 
 from trac.config import ExtensionOption, OrderedExtensionsOption
 from trac.core import *
 from trac.env import open_environment
 from trac.perm import PermissionCache, NoPermissionCache, PermissionError
-from trac.util import reversed, get_last_traceback
+from trac.util import reversed, get_last_traceback, hex_entropy
 from trac.util.datefmt import format_datetime, http_date
 from trac.util.html import Markup
 from trac.util.text import to_unicode
@@ -163,6 +164,8 @@ class RequestDispatcher(Component):
         # Select the component that should handle the request
         chosen_handler = None
         early_error = None
+        req.authname = 'anonymous'
+        req.perm = NoPermissionCache()
         try:
             if not req.path_info or req.path_info == '/':
                 chosen_handler = self.default_handler
@@ -172,6 +175,19 @@ class RequestDispatcher(Component):
                         chosen_handler = handler
                         break
 
+            # Attach user information to the request early, so that
+            # the IRequestFilter can see it while preprocessing
+            if not getattr(chosen_handler, 'anonymous_request', False):
+                try:
+                    req.authname = self.authenticate(req)
+                    req.perm = PermissionCache(self.env, req.authname)
+                    req.session = Session(self.env, req)
+                    req.form_token = self._get_form_token(req)
+                except:
+                    req.authname = 'anonymous'
+                    req.perm = NoPermissionCache()
+                    early_error = sys.exc_info()
+
             chosen_handler = self._pre_process_request(req, chosen_handler)
         except:
             early_error = sys.exc_info()
@@ -180,21 +196,6 @@ class RequestDispatcher(Component):
             early_error = (HTTPNotFound(u'Aucun composant ne peut gérer la '
                                         u'requète %s', req.path_info),
                            None, None)
-
-        # Attach user information to the request
-        anonymous_request = getattr(chosen_handler, 'anonymous_request',
-                                    False)
-        if not anonymous_request:
-            try:
-                req.authname = self.authenticate(req)
-                req.perm = PermissionCache(self.env, req.authname)
-                req.session = Session(self.env, req)
-            except:
-                anonymous_request = True
-                early_error = sys.exc_info()
-        if anonymous_request:
-            req.authname = 'anonymous'
-            req.perm = NoPermissionCache()
 
         # Prepare HDF for the clearsilver template
         try:
@@ -220,31 +221,44 @@ class RequestDispatcher(Component):
         # Process the request and render the template
         try:
             try:
+                # Protect against CSRF attacks: we validate the form token for
+                # all POST requests with a content-type corresponding to form
+                # submissions
+                if req.method == 'POST':
+                    ctype = req.get_header('Content-Type')
+                    if ctype:
+                        ctype, options = cgi.parse_header(ctype)
+                    if ctype in ('application/x-www-form-urlencoded',
+                                 'multipart/form-data') and \
+                            req.args.get('__FORM_TOKEN') != req.form_token:
+                        raise HTTPBadRequest(u'Jeton de formulaire manquant '
+                                             u'ou invalide. Votre navigateur '
+                                             u'est-il configuré pour utiliser'
+                                             u' les cookies ?')
+
+                resp = chosen_handler.process_request(req)
+                if resp:
+                    template, content_type = self._post_process_request(req,
+                                                                        *resp)
+                    # Give the session a chance to persist changes
+                    if req.session:
+                        req.session.save()
+                    req.display(template, content_type or 'text/html')
+                else:
+                    self._post_process_request(req)
+            except RequestDone:
+                raise
+            except:
+                err = sys.exc_info()
                 try:
-                    resp = chosen_handler.process_request(req)
-                    if resp:
-                        template, content_type = \
-                                  self._post_process_request(req, *resp)
-                        req.display(template, content_type or 'text/html')
-                    else:
-                        self._post_process_request(req)
-                except RequestDone:
-                    raise
-                except:
-                    err = sys.exc_info()
-                    try:
-                        self._post_process_request(req)
-                    except Exception, e:
-                        self.log.exception(e)
-                    raise err[0], err[1], err[2]
-            except PermissionError, e:
-                raise HTTPForbidden(to_unicode(e))
-            except TracError, e:
-                raise HTTPInternalError(e.message)
-        finally:
-            # Give the session a chance to persist changes
-            if req.session:
-                req.session.save()
+                    self._post_process_request(req)
+                except Exception, e:
+                    self.log.exception(e)
+                raise err[0], err[1], err[2]
+        except PermissionError, e:
+            raise HTTPForbidden(to_unicode(e))
+        except TracError, e:
+            raise HTTPInternalError(e.message)
 
     def _pre_process_request(self, req, chosen_handler):
         for f in self.filters:
@@ -257,6 +271,24 @@ class RequestDispatcher(Component):
                                                             content_type)
         return template, content_type
 
+    def _get_form_token(self, req):
+        """Used to protect against CSRF.
+
+        The 'form_token' is strong shared secret stored in a user cookie.
+        By requiring that every POST form to contain this value we're able to
+        protect against CSRF attacks. Since this value is only known by the
+        user and not by an attacker.
+        
+        If the the user does not have a `trac_form_token` cookie a new
+        one is generated.
+        """
+        if req.incookie.has_key('trac_form_token'):
+            return req.incookie['trac_form_token'].value
+        else:
+            req.outcookie['trac_form_token'] = hex_entropy(24)
+            req.outcookie['trac_form_token']['path'] = req.base_path
+            return req.outcookie['trac_form_token'].value
+        
 
 def dispatch_request(environ, start_response):
     """Main entry point for the Trac web interface.
@@ -353,7 +385,8 @@ def dispatch_request(environ, start_response):
                                u'sont pas définies. Trac a besoin d\'une de ces '
                                u'options pour localiser le ou les environnments '
                                u'Trac.')
-    env = _open_environment(env_path, run_once=environ['wsgi.run_once'])
+    run_once = environ['wsgi.run_once']
+    env = _open_environment(env_path, run_once=run_once)
 
     if env.base_url:
         environ['trac.base_url'] = env.base_url
@@ -368,7 +401,7 @@ def dispatch_request(environ, start_response):
                 pass
             return req._response or []
         finally:
-            if environ.get('wsgi.multithread', False):
+            if not run_once:
                 env.shutdown(threading._get_ident())
 
     except HTTPException, e:

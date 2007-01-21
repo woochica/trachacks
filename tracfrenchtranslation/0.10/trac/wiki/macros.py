@@ -125,10 +125,13 @@ class RecentChangesMacro(WikiMacroBase):
         return html.DIV(
             [html.H3(date) +
              html.UL([html.LI(
-            html.A(wiki.format_page_name(name), href=req.href.wiki(name)), ' ',
+            html.A(wiki.format_page_name(name), href=req.href.wiki(name)),
+            ' ',
+            version > 1 and 
             html.SMALL('(', html.A('diff',
                                    href=req.href.wiki(name, action='diff',
-                                                      version=version)), ')'))
+                                                      version=version)), ')') \
+            or None)
                       for name, version in entries])
              for date, entries in entries_per_date])
 
@@ -337,7 +340,7 @@ class ImageMacro(WikiMacroBase):
                 id = path_info[2]
             if module not in ['wiki', 'ticket']:
                 raise Exception(u'Impossible de référencer un fichier joint '
-                                 u'depuis cet endroit') 
+                                u'depuis cet endroit') 
         else:
             raise Exception(u'Pas de définition de fichier reçue')
         if not url: # this is an attachment
@@ -452,7 +455,7 @@ class UserMacroProvider(Component):
                     found.append(name)
                     yield name
                 except Exception, e:
-                    self.log.error(u'Impossible de charger la macro Wiki %s (%s)',
+                    self.log.error('Failed to load wiki macro %s (%s)',
                                    filename, e, exc_info=True)
 
     def get_macro_description(self, name):
@@ -463,7 +466,7 @@ class UserMacroProvider(Component):
         try:
             return module.execute(req and req.hdf, content, self.env)
         except Exception, e:
-            self.log.error(u'Échec de la macro Wiki %s (%s)', name, e, exc_info=True)
+            self.log.error('Wiki macro %s failed (%s)', name, e, exc_info=True)
             raise
 
     def _load_macro(self, name):

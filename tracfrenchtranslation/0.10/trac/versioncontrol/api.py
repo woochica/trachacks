@@ -15,10 +15,16 @@
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
 from heapq import heappop, heappush
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
+    threading._get_ident = lambda: 0
 
 from trac.config import Option
 from trac.core import *
 from trac.perm import PermissionError
+from trac.web.api import IRequestFilter
 
 
 class IRepositoryConnector(Interface):
@@ -45,6 +51,8 @@ class RepositoryManager(Component):
     It provides easy access to the configured implementation.
     """
 
+    implements(IRequestFilter)
+
     connectors = ExtensionPoint(IRepositoryConnector)
 
     repository_type = Option('trac', 'repository_type', 'svn',
@@ -53,7 +61,21 @@ class RepositoryManager(Component):
         """Path to local repository""")
 
     def __init__(self):
+        self._cache = {}
+        self._lock = threading.Lock()
         self._connector = None
+
+    # IRequestFilter methods
+
+    def pre_process_request(self, req, handler):
+        from trac.web.chrome import Chrome        
+        if handler is not Chrome(self.env):
+            self.get_repository(req.authname) # triggers a sync if applicable
+        return handler
+
+    def post_process_request(self, req, template, content_type):
+        return (template, content_type)
+
 
     # Public API methods
 
@@ -69,8 +91,27 @@ class RepositoryManager(Component):
                 raise TracError(u'Système de contrôle de version non supporté "%s"'
                                 % self.repository_type)
             self._connector = heappop(candidates)[1]
-        return self._connector.get_repository(self.repository_type,
-                                              self.repository_dir, authname)
+        try:
+            self._lock.acquire()
+            tid = threading._get_ident()
+            if tid in self._cache:
+                repos = self._cache[tid]
+            else:
+                rtype, rdir = self.repository_type, self.repository_dir
+                repos = self._connector.get_repository(rtype, rdir, authname)
+                self._cache[tid] = repos
+            return repos
+        finally:
+            self._lock.release()
+
+    def shutdown(self, tid=None):
+        if tid:
+            assert tid == threading._get_ident()
+            try:
+                self._lock.acquire()
+                self._cache.pop(tid, None)
+            finally:
+                self._lock.release()
 
 
 class NoSuchChangeset(TracError):
@@ -94,6 +135,10 @@ class Repository(object):
     def close(self):
         """Close the connection to the repository."""
         raise NotImplementedError
+
+    def clear(self):
+        """Clear any data that may have been cached in instance properties."""
+        pass
 
     def get_changeset(self, rev):
         """Retrieve a Changeset corresponding to the  given revision `rev`."""
@@ -319,6 +364,9 @@ class Changeset(object):
     DELETE = 'delete'
     EDIT = 'edit'
     MOVE = 'move'
+
+    # change types which can have diff associated to them
+    DIFF_CHANGES = (EDIT, COPY, MOVE) # MERGE
 
     def __init__(self, rev, message, author, date):
         self.rev = rev

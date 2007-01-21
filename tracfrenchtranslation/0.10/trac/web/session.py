@@ -91,8 +91,8 @@ class Session(dict):
 
     def change_sid(self, new_sid):
         assert self.req.authname == 'anonymous', \
-               u'Impossible de changer l\'identifiant d\'une session authentifiée'
-        assert new_sid, u'L\'identifiant de session ne peut être vide'
+               u"Impossible de changer l'identifiant d'une session authentifiée"
+        assert new_sid, u"L'identifiant de session ne peut être vide"
         if new_sid == self.sid:
             return
         db = self.env.get_db_cnx()
@@ -100,7 +100,8 @@ class Session(dict):
         cursor.execute("SELECT sid FROM session WHERE sid=%s", (new_sid,))
         if cursor.fetchone():
             raise TracError(Markup(u"La session '%s' existe déjà.<br />"
-                                   u"Merci de choisir un identifiant de session différent." % new_sid), \
+                                   u"Merci de choisir un identifiant de session "
+                                   u"différent." % new_sid), \
                                    u'Erreur de renommage de session')
         self.env.log.debug('Changing session ID %s to %s' % (self.sid, new_sid))
         cursor.execute("UPDATE session SET sid=%s WHERE sid=%s "
@@ -198,7 +199,7 @@ class Session(dict):
             # Purge expired sessions. We do this only when the session was
             # changed as to minimize the purging.
             mintime = now - PURGE_AGE
-            self.env.log.debug(u'Purge des sessions arrivées à expiration.')
+            self.env.log.debug('Purging old, expired, sessions.')
             cursor.execute("DELETE FROM session_attribute "
                            "WHERE authenticated=0 AND sid "
                            "IN (SELECT sid FROM session WHERE "

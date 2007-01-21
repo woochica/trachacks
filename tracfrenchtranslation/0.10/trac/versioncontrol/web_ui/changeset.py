@@ -33,9 +33,8 @@ from trac.Timeline import ITimelineEventProvider
 from trac.util.datefmt import format_datetime, pretty_timedelta
 from trac.util.html import html, escape, unescape, Markup
 from trac.util.text import unicode_urlencode, shorten_line, CRLF
-from trac.versioncontrol import Changeset, Node
+from trac.versioncontrol import Changeset, Node, NoSuchChangeset
 from trac.versioncontrol.diff import get_diff_options, hdf_diff, unified_diff
-from trac.versioncontrol.svn_authz import SubversionAuthorizer
 from trac.versioncontrol.web_ui.util import render_node_property
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, add_link, add_stylesheet
@@ -79,7 +78,7 @@ class ChangesetModule(Component):
 
     max_diff_files = IntOption('changeset', 'max_diff_files', 0,
         """Maximum number of modified files for which the changeset view will
-        attempt to show the diffs inlined (''since 0.10'')."""),
+        attempt to show the diffs inlined (''since 0.10'').""")
 
     max_diff_bytes = IntOption('changeset', 'max_diff_bytes', 10000000,
         """Maximum total size in bytes of the modified files (their old size
@@ -155,11 +154,11 @@ class ChangesetModule(Component):
         repos = self.env.get_repository(req.authname)
         new_path = repos.normalize_path(new_path)
         new = repos.normalize_rev(new)
+
+        repos.authz.assert_permission_for_changeset(new)
+
         old_path = repos.normalize_path(old_path or new_path)
         old = repos.normalize_rev(old or new)
-
-        authzperm = SubversionAuthorizer(self.env, req.authname)
-        authzperm.assert_permission_for_changeset(new)
 
         if old_path == new_path and old == new: # revert to Changeset
             old_path = old = None
@@ -348,7 +347,10 @@ class ChangesetModule(Component):
                 if restricted:
                     next_rev = repos.next_rev(chgset.rev, path)
                     if next_rev:
-                        next_href = req.href.changeset(next_rev, path)
+                        if repos.has_node(path, next_rev):
+                            next_href = req.href.changeset(next_rev, path)
+                        else: # must be a 'D'elete or 'R'ename, show full cset
+                            next_href = req.href.changeset(next_rev)
                 else:
                     add_link(req, 'last', req.href.changeset(youngest_rev),
                              u'Version %s' % youngest_rev)
@@ -460,8 +462,8 @@ class ChangesetModule(Component):
                         break
                 if context < 0:
                     context = None
-                tabwidth = self.config['diff'].getint('tab_width',
-                                self.config['mimeviewer'].getint('tab_width'))
+                tabwidth = self.config['diff'].getint('tab_width') or \
+                           self.config['mimeviewer'].getint('tab_width', 8)
                 return hdf_diff(old_content.splitlines(),
                                 new_content.splitlines(),
                                 context, tabwidth,
@@ -475,7 +477,7 @@ class ChangesetModule(Component):
             diff_bytes = diff_files = 0
             if self.max_diff_bytes or self.max_diff_files:
                 for old_node, new_node, kind, change in get_changes():
-                    if change == Changeset.EDIT and kind == Node.FILE:
+                    if change in Changeset.DIFF_CHANGES and kind == Node.FILE:
                         diff_files += 1
                         diff_bytes += _estimate_changes(old_node, new_node)
             show_diffs = (not self.max_diff_files or \
@@ -489,7 +491,7 @@ class ChangesetModule(Component):
         idx = 0
         for old_node, new_node, kind, change in get_changes():
             show_entry = change != Changeset.EDIT
-            if change in (Changeset.EDIT, Changeset.COPY, Changeset.MOVE) and \
+            if change in Changeset.DIFF_CHANGES and \
                    req.perm.has_permission('FILE_VIEW'):
                 assert old_node and new_node
                 props = _prop_changes(old_node, new_node)
@@ -505,7 +507,7 @@ class ChangesetModule(Component):
                         show_entry = True
             if show_entry or not show_diffs:
                 info = _change_info(old_node, new_node, change)
-                if change == Changeset.EDIT and not show_diffs:
+                if change in Changeset.DIFF_CHANGES and not show_diffs:
                     if chgset:
                         diff_href = req.href.changeset(new_node.rev,
                                                        new_node.path)
@@ -709,14 +711,12 @@ class ChangesetModule(Component):
             rev, path = chgset[:sep], chgset[sep:]
         else:
             rev, path = chgset, None
-        cursor = formatter.db.cursor()
-        cursor.execute('SELECT message FROM revision WHERE rev=%s', (rev,))
-        row = cursor.fetchone()
-        if row:
+        try:
+            changeset = self.env.get_repository().get_changeset(rev)
             return html.A(label, class_="changeset",
-                          title=shorten_line(row[0]),
+                          title=shorten_line(changeset.message),
                           href=formatter.href.changeset(rev, path))
-        else:
+        except NoSuchChangeset:
             return html.A(label, class_="missing changeset",
                           href=formatter.href.changeset(rev, path),
                           rel="nofollow")
@@ -755,14 +755,14 @@ class ChangesetModule(Component):
     def get_search_results(self, req, terms, filters):
         if not 'changeset' in filters:
             return
-        authzperm = SubversionAuthorizer(self.env, req.authname)
+        repos = self.env.get_repository(req.authname)
         db = self.env.get_db_cnx()
         sql, args = search_to_sql(db, ['message', 'author'], terms)
         cursor = db.cursor()
         cursor.execute("SELECT rev,time,author,message "
                        "FROM revision WHERE " + sql, args)
         for rev, date, author, log in cursor:
-            if not authzperm.has_permission_for_changeset(rev):
+            if not repos.authz.has_permission_for_changeset(rev):
                 continue
             yield (req.href.changeset(rev),
                    '[%s]: %s' % (rev, shorten_line(log)),
@@ -792,9 +792,8 @@ class AnyDiffModule(Component):
         old_path = repos.normalize_path(old_path)
         old_rev = repos.normalize_rev(old_rev)
 
-        authzperm = SubversionAuthorizer(self.env, req.authname)
-        authzperm.assert_permission_for_changeset(new_rev)
-        authzperm.assert_permission_for_changeset(old_rev)
+        repos.authz.assert_permission_for_changeset(new_rev)
+        repos.authz.assert_permission_for_changeset(old_rev)
 
         # -- prepare rendering
         req.hdf['anydiff'] = {

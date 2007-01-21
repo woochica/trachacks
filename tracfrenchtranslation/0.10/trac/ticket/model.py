@@ -36,7 +36,7 @@ class Ticket(object):
         self.env = env
         self.fields = TicketSystem(self.env).get_ticket_fields()
         self.values = {}
-        if tkt_id:
+        if tkt_id is not None:
             self._fetch_ticket(tkt_id, db)
         else:
             self._init_defaults(db)
@@ -65,14 +65,11 @@ class Ticket(object):
                 options = field.get('options')
                 if default and options and default not in options:
                     try:
-                        default_idx = int(default)
-                        if default_idx > len(options):
-                            raise ValueError
-                        default = options[default_idx]
-                    except ValueError:
-                        self.env.log.warning('Invalid default value for '
-                                             'custom field "%s"'
-                                             % field['name'])
+                        default = options[int(default)]
+                    except (ValueError, IndexError):
+                        self.env.log.warning('Invalid default value "%s" '
+                                             'for custom field "%s"'
+                                             % (default, field['name']))
             if default:
                 self.values.setdefault(field['name'], default)
 
@@ -187,12 +184,13 @@ class Ticket(object):
     def save_changes(self, author, comment, when=0, db=None, cnum=''):
         """
         Store ticket changes in the database. The ticket must already exist in
-        the database.
+        the database.  Returns False if there were no changes to save, True
+        otherwise.
         """
         assert self.exists, u'Impossible de mettre à jour un nouveau ticket'
 
         if not self._old and not comment:
-            return # Not modified
+            return False # Not modified
 
         db, handle_ta = self._get_db_for_write(db)
         cursor = db.cursor()
@@ -262,6 +260,7 @@ class Ticket(object):
 
         for listener in TicketSystem(self.env).change_listeners:
             listener.ticket_changed(self, comment, author, old_values)
+        return True
 
     def get_changelog(self, when=0, db=None):
         """Return the changelog as a list of tuples of the form

@@ -19,7 +19,6 @@ try:
 except ImportError:
     import dummy_threading as threading
     threading._get_ident = lambda: 0
-import sys
 import time
 
 from trac.db.util import ConnectionWrapper
@@ -35,26 +34,40 @@ class PooledConnection(ConnectionWrapper):
     to the pool.
     """
 
-    def __init__(self, pool, cnx):
+    def __init__(self, pool, cnx, tid):
         ConnectionWrapper.__init__(self, cnx)
         self._pool = pool
+        self._tid = tid
 
     def close(self):
         if self.cnx:
-            self._pool._return_cnx(self.cnx)
+            self._pool._return_cnx(self.cnx, self._tid)
             self.cnx = None
 
     def __del__(self):
         self.close()
 
 
+def try_rollback(cnx):
+    """Resets the Connection in a safe way, returning True when it succeeds.
+    
+    The rollback we do for safety on a Connection can fail at
+    critical times because of a timeout on the Connection.
+    """
+    try:
+        cnx.rollback() # resets the connection
+        return True
+    except Exception:
+        cnx.close()
+        return False
+
 class ConnectionPool(object):
     """A very simple connection pool implementation."""
 
     def __init__(self, maxsize, connector, **kwargs):
-        self._dormant = [] # inactive connections in pool
+        self._dormant = {} # inactive connections in pool
         self._active = {} # active connections by thread ID
-        self._available = threading.Condition(threading.Lock())
+        self._available = threading.Condition(threading.RLock())
         self._maxsize = maxsize # maximum pool size
         self._cursize = 0 # current pool size, includes active connections
         self._connector = connector
@@ -66,61 +79,74 @@ class ConnectionPool(object):
         try:
             tid = threading._get_ident()
             if tid in self._active:
-                self._active[tid][0] += 1
-                return PooledConnection(self, self._active[tid][1])
+                num, cnx = self._active.get(tid)
+                if num == 0: # was pushed back (see _cleanup)
+                    if not try_rollback(cnx):
+                        del self._active[tid]
+                        cnx = None
+                if cnx:
+                    self._active[tid][0] = num + 1
+                    return PooledConnection(self, cnx, tid)
             while True:
                 if self._dormant:
-                    cnx = self._dormant.pop()
-                    try:
-                        cnx.cursor() # check whether the connection is stale
+                    if tid in self._dormant: # prefer same thread
+                        cnx = self._dormant.pop(tid)
+                    else: # pick a random one
+                        cnx = self._dormant.pop(self._dormant.keys()[0])
+                    if try_rollback(cnx):
                         break
-                    except Exception:
-                        cnx.close()
+                    else:
+                        self._cursize -= 1
                 elif self._maxsize and self._cursize < self._maxsize:
                     cnx = self._connector.get_connection(**self._kwargs)
                     self._cursize += 1
                     break
                 else:
                     if timeout:
-                        self._available.wait(timeout)
                         if (time.time() - start) >= timeout:
                             raise TimeoutError, u'Impossible de se connecter à' \
                                                 u' la base de données sous %d ' \
                                                 u'secondes' % timeout
+                        self._available.wait(timeout)
                     else:
-                        print>>sys.stderr, '[%d] wait for connection...' % tid
                         self._available.wait()
             self._active[tid] = [1, cnx]
-            return PooledConnection(self, cnx)
+            return PooledConnection(self, cnx, tid)
         finally:
             self._available.release()
 
-    def _return_cnx(self, cnx):
+    def _return_cnx(self, cnx, tid):
         self._available.acquire()
         try:
-            tid = threading._get_ident()
             if tid in self._active:
                 num, cnx_ = self._active.get(tid)
-                assert cnx is cnx_
-                if num > 1:
-                    self._active[tid][0] = num - 1
-                else:
-                    self._cleanup(tid)
+                if cnx is cnx_:
+                    if num > 1:
+                        self._active[tid][0] = num - 1
+                    else:
+                        self._cleanup(tid)
+                # otherwise, cnx was already cleaned up during a shutdown(tid),
+                # and in the meantime, `tid` has been reused (#3504)
         finally:
             self._available.release()
 
     def _cleanup(self, tid):
-        # Note: self._available *must* be acquired
+        """Note: self._available *must* be acquired when calling this one."""
         if tid in self._active:
             cnx = self._active.pop(tid)[1]
-            if cnx not in self._dormant:
-                cnx.rollback()
-                if cnx.poolable:
-                    self._dormant.append(cnx)
+            assert tid not in self._dormant # hm, how could that happen?
+            if cnx.poolable: # i.e. we can manipulate it from other threads
+                if try_rollback(cnx):
+                    self._dormant[tid] = cnx
                 else:
-                    cnx.close()
                     self._cursize -= 1
-                self._available.notify()
+            elif tid == threading._get_ident():
+                if try_rollback(cnx): # non-poolable but same thread: close
+                    cnx.close()
+                self._cursize -= 1
+            else: # non-poolable, different thread: push it back
+                self._active[tid] = [0, cnx]
+            self._available.notify()
 
     def shutdown(self, tid=None):
         self._available.acquire()
@@ -132,7 +158,7 @@ class ConnectionPool(object):
             for tid in cleanup_list:
                 self._cleanup(tid)
             if not tid:
-                for cnx in self._dormant:
+                for _, cnx in self._dormant.iteritems():
                     cnx.close()
         finally:
             self._available.release()

@@ -9,8 +9,16 @@
   /if ?>
   <link><?cs var:base_host ?><?cs var:ticket.href ?></link>
   <description><?cs var:ticket.description.formatted ?></description>
-  <language>en-us</language>
+  <language>fr-fr</language>
   <generator>Trac v<?cs var:trac.version ?></generator><?cs 
+  if:chrome.logo.src ?>
+   <image>
+    <title><?cs var:project.name_encoded ?></title>
+    <url><?cs if:!chrome.logo.src_abs ?><?cs var:base_host ?><?cs /if ?><?cs
+     var:chrome.logo.src ?></url>
+    <link><?cs var:base_host ?><?cs var:ticket.href ?></link>
+   </image><?cs
+  /if ?><?cs 
   each:change = ticket.changes ?>
    <item><?cs
     if:change.author ?><author><?cs var:change.author ?></author><?cs
@@ -20,17 +28,20 @@
     <link><?cs var:base_host ?><?cs var:ticket.href ?><?cs 
      if:change.cnum ?>#comment:<?cs var:change.cnum ?><?cs
      /if ?></link>
+    <guid isPermaLink="false"><?cs var:base_host ?><?cs var:ticket.href ?><?cs 
+     if:change.cnum ?>#comment:<?cs var:change.cnum ?><?cs
+     /if ?></guid>
     <description>
     <?cs if:len(change.fields) ?>
     &lt;ul&gt;<?cs
     each:field = change.fields ?>
     &lt;li&gt;&lt;strong&gt;<?cs name:field ?>&lt;/strong&gt; <?cs
-     if:!field.old ?>set to &lt;em&gt;<?cs
+     if:!field.old ?>défini à &lt;em&gt;<?cs
       var:field.new ?>&lt;/em&gt;<?cs
-     elif:field.new ?>changed from &lt;em&gt;<?cs var:field.old
-      ?>&lt;/em&gt; to &lt;em&gt;<?cs
+     elif:field.new ?>modifié de &lt;em&gt;<?cs var:field.old
+      ?>&lt;/em&gt; à &lt;em&gt;<?cs
       var:field.new ?>&lt;/em&gt;.<?cs
-     else ?>deleted<?cs
+     else ?>supprimé<?cs
      /if ?>&lt;/li&gt;<?cs
     /each ?>
     &lt;/ul&gt;

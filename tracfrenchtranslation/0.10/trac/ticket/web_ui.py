@@ -112,7 +112,7 @@ class NewticketModule(TicketModuleBase):
     # IRequestHandler methods
 
     def match_request(self, req):
-        return re.match(r'/newticket/?', req.path_info) is not None
+        return re.match(r'/newticket/?$', req.path_info) is not None
 
     def process_request(self, req):
         req.perm.assert_permission('TICKET_CREATE')
@@ -167,7 +167,6 @@ class NewticketModule(TicketModuleBase):
                     if milestone.is_completed:
                         options.remove(option)
                 field['options'] = options
-
             field['label'] = translate(self.env, field['label'])
             req.hdf['newticket.fields.' + name] = field
 
@@ -261,7 +260,7 @@ class TicketModule(TicketModuleBase):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/ticket/([0-9]+)', req.path_info)
+        match = re.match(r'/ticket/([0-9]+)$', req.path_info)
         if match:
             req.args['id'] = match.group(1)
             return True
@@ -543,17 +542,17 @@ class TicketModule(TicketModuleBase):
         internal_cnum = cnum
         if cnum and replyto: # record parent.child relationship
             internal_cnum = '%s.%s' % (replyto, cnum)
-        ticket.save_changes(get_reporter_id(req, 'author'),
-                            req.args.get('comment'), when=now, db=db,
-                            cnum=internal_cnum)
-        db.commit()
+        if ticket.save_changes(get_reporter_id(req, 'author'),
+                               req.args.get('comment'), when=now, db=db,
+                               cnum=internal_cnum):
+            db.commit()
 
-        try:
-            tn = TicketNotifyEmail(self.env)
-            tn.notify(ticket, newticket=False, modtime=now)
-        except Exception, e:
-            self.log.exception(u"Échec d'envoi de la notification de " \
-                               u"modification du ticket #%s: %s" % (ticket.id, e))
+            try:
+                tn = TicketNotifyEmail(self.env)
+                tn.notify(ticket, newticket=False, modtime=now)
+            except Exception, e:
+                self.log.exception("Failure sending notification on change to "
+                                   "ticket #%s: %s" % (ticket.id, e))
 
         fragment = cnum and '#comment:'+cnum or ''
         req.redirect(req.href.ticket(ticket.id) + fragment)
@@ -575,6 +574,10 @@ class TicketModule(TicketModuleBase):
             if field['type'] in ('radio', 'select'):
                 value = ticket.values.get(field['name'])
                 options = field['options']
+                if field['name'] == 'milestone' \
+                    and not req.perm.has_permission('TICKET_ADMIN'):
+                    options = [opt for opt in options if not
+                               Milestone(self.env, opt, db=db).is_completed]
                 if value and not value in options:
                     # Current ticket value must be visible even if its not in the
                     # possible values

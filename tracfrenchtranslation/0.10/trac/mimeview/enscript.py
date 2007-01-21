@@ -103,7 +103,7 @@ class EnscriptRenderer(Component):
         """Path to the Enscript executable.""")
 
     enscript_modes = ListOption('mimeviewer', 'enscript_modes',
-        'text/x-dylan:dylan:4',
+        'text/x-dylan:dylan:4', doc=
         """List of additional MIME types known by Enscript.
         For each, a tuple `mimetype:mode:quality` has to be
         specified, where `mimetype` is the MIME type,
@@ -133,7 +133,7 @@ class EnscriptRenderer(Component):
         mimetype = mimetype.split(';', 1)[0] # strip off charset
         mode = self._types[mimetype][0]
         cmdline += ' --color -h -q --language=html -p - -E%s' % mode
-        self.env.log.debug(u"Ligne de commande Enscript : %s" % cmdline)
+        self.env.log.debug("Enscript command line: %s" % cmdline)
 
         np = NaivePopen(cmdline, content.encode('utf-8'), capturestderr=1)
         if np.errorlevel or np.err:

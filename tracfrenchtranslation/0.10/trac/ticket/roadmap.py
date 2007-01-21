@@ -87,11 +87,8 @@ def calc_ticket_stats(tickets):
     }
 
 def milestone_to_hdf(env, db, req, milestone):
-    safe_name = None
-    if milestone.exists:
-        safe_name = milestone.name.replace('/', '%2F')
     hdf = {'name': milestone.name,
-           'href': req.href.milestone(safe_name)}
+           'href': req.href.milestone(milestone.name)}
     if milestone.description:
         hdf['description_source'] = milestone.description
         hdf['description'] = wiki_to_html(milestone.description, env, req, db)
@@ -246,7 +243,7 @@ class RoadmapModule(Component):
             if milestone.has_key('due'):
                 write_prop('BEGIN', 'VEVENT')
                 write_prop('UID', uid)
-                write_date('DTSTAMP', localtime(milestone['due']))
+                write_utctime('DTSTAMP', localtime(milestone['due']))
                 write_date('DTSTART', localtime(milestone['due']))
                 write_prop('SUMMARY', 'Milestone %s' % milestone['name'])
                 write_prop('URL', req.base_url + '/milestone/' +
@@ -292,7 +289,7 @@ class MilestoneModule(Component):
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
-        return u'jalon'
+        return 'roadmap'
 
     def get_navigation_items(self, req):
         return []
@@ -342,19 +339,20 @@ class MilestoneModule(Component):
             return True
 
     def process_request(self, req):
+        milestone_id = req.args.get('id')
+            
         req.perm.assert_permission('MILESTONE_VIEW')
 
         add_link(req, 'up', req.href.roadmap(), 'Roadmap')
 
         db = self.env.get_db_cnx()
-        milestone = Milestone(self.env, req.args.get('id'), db)
+        milestone = Milestone(self.env, milestone_id, db)
         action = req.args.get('action', 'view')
 
         if req.method == 'POST':
             if req.args.has_key('cancel'):
                 if milestone.exists:
-                    safe_name = milestone.name.replace('/', '%2F')
-                    req.redirect(req.href.milestone(safe_name))
+                    req.redirect(req.href.milestone(milestone.name))
                 else:
                     req.redirect(req.href.roadmap())
             elif action == 'edit':
@@ -367,6 +365,9 @@ class MilestoneModule(Component):
             self._render_confirm(req, db, milestone)
         else:
             self._render_view(req, db, milestone)
+
+        if not milestone_id and action != 'new':
+            req.redirect(req.href.roadmap())
 
         add_stylesheet(req, 'common/css/roadmap.css')
         return 'milestone.cs', None
@@ -413,8 +414,8 @@ class MilestoneModule(Component):
                 cursor.execute("UPDATE ticket SET milestone=%s WHERE "
                                "milestone=%s and status != 'closed'",
                                 (retarget_to, milestone.name))
-                self.env.log.info(u'Les tickets associés au jalon %s '
-                                  u'sont déplacés vers %s' % 
+                self.env.log.info('Tickets associated with milestone %s '
+                                  'retargeted to %s' % 
                                   (milestone.name, retarget_to))
         else:
             milestone.completed = 0
@@ -429,8 +430,7 @@ class MilestoneModule(Component):
             milestone.insert()
         db.commit()
 
-        safe_name = milestone.name.replace('/', '%2F')
-        req.redirect(req.href.milestone(safe_name))
+        req.redirect(req.href.milestone(milestone.name))
 
     def _render_confirm(self, req, db, milestone):
         req.perm.assert_permission('MILESTONE_DELETE')

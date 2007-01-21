@@ -163,7 +163,9 @@ schema = [
 ## Default Reports
 ##
 
-reports = (
+def get_reports(db):
+    owner = db.concat('owner', "' *'")
+    return (
 ('Active Tickets',
 """
  * List all active tickets by priority.
@@ -173,15 +175,15 @@ reports = (
 """
 SELECT p.value AS __color__,
    id AS ticket, summary, component, version, milestone, t.type AS type, 
-   (CASE status WHEN 'assigned' THEN owner||' *' ELSE owner END) AS owner,
+   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
    time AS created,
    changetime AS _changetime, description AS _description,
    reporter AS _reporter
-  FROM ticket t, enum p
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
   WHERE status IN ('new', 'assigned', 'reopened') 
-AND p.name = t.priority AND p.type = 'priority'
   ORDER BY p.value, milestone, t.type, time
-"""),
+""" % owner),
 #----------------------------------------------------------------------------
  ('Active Tickets by Version',
 """
@@ -195,17 +197,17 @@ for useful RSS export.
 SELECT p.value AS __color__,
    version AS __group__,
    id AS ticket, summary, component, version, t.type AS type, 
-   (CASE status WHEN 'assigned' THEN owner||' *' ELSE owner END) AS owner,
+   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
    time AS created,
    changetime AS _changetime, description AS _description,
    reporter AS _reporter
-  FROM ticket t, enum p
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
   WHERE status IN ('new', 'assigned', 'reopened') 
-AND p.name = t.priority AND p.type = 'priority'
   ORDER BY (version IS NULL),version, p.value, t.type, time
-"""),
+""" % owner),
 #----------------------------------------------------------------------------
-('All Tickets by Milestone',
+('Active Tickets by Milestone',
 """
 This report shows how to color results by priority,
 while grouping results by milestone.
@@ -215,17 +217,17 @@ for useful RSS export.
 """,
 """
 SELECT p.value AS __color__,
-   milestone||' Release' AS __group__,
+   %s AS __group__,
    id AS ticket, summary, component, version, t.type AS type, 
-   (CASE status WHEN 'assigned' THEN owner||' *' ELSE owner END) AS owner,
+   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
    time AS created,
    changetime AS _changetime, description AS _description,
    reporter AS _reporter
-  FROM ticket t, enum p
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
   WHERE status IN ('new', 'assigned', 'reopened') 
-AND p.name = t.priority AND p.type = 'priority'
   ORDER BY (milestone IS NULL),milestone, p.value, t.type, time
-"""),
+""" % (db.concat('milestone', "' Release'"), owner)),
 #----------------------------------------------------------------------------
 ('Assigned, Active Tickets by Owner',
 """
@@ -238,9 +240,9 @@ SELECT p.value AS __color__,
    id AS ticket, summary, component, milestone, t.type AS type, time AS created,
    changetime AS _changetime, description AS _description,
    reporter AS _reporter
-  FROM ticket t,enum p
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
   WHERE status = 'assigned'
-AND p.name=t.priority AND p.type='priority'
   ORDER BY owner, p.value, t.type, time
 """),
 #----------------------------------------------------------------------------
@@ -255,9 +257,9 @@ SELECT p.value AS __color__,
    id AS ticket, summary, component, milestone, t.type AS type, time AS created,
    description AS _description_,
    changetime AS _changetime, reporter AS _reporter
-  FROM ticket t, enum p
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
   WHERE status = 'assigned'
-AND p.name = t.priority AND p.type = 'priority'
   ORDER BY owner, p.value, t.type, time
 """),
 #----------------------------------------------------------------------------
@@ -277,8 +279,8 @@ SELECT p.value AS __color__,
    resolution,version, t.type AS type, priority, owner,
    changetime AS modified,
    time AS _time,reporter AS _reporter
-  FROM ticket t,enum p
-  WHERE p.name=t.priority AND p.type='priority'
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
   ORDER BY (milestone IS NULL), milestone DESC, (status = 'closed'), 
         (CASE status WHEN 'closed' THEN modified ELSE (-1)*p.value END) DESC
 """),
@@ -296,9 +298,9 @@ SELECT p.value AS __color__,
    t.type AS type, priority, time AS created,
    changetime AS _changetime, description AS _description,
    reporter AS _reporter
-  FROM ticket t, enum p
-  WHERE t.status IN ('new', 'assigned', 'reopened') 
-AND p.name = t.priority AND p.type = 'priority' AND owner = '$USER'
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+  WHERE t.status IN ('new', 'assigned', 'reopened') AND owner = '$USER'
   ORDER BY (status = 'assigned') DESC, p.value, milestone, t.type, time
 """),
 #----------------------------------------------------------------------------
@@ -314,15 +316,15 @@ SELECT p.value AS __color__,
      ELSE 'Active Tickets' 
     END) AS __group__,
    id AS ticket, summary, component, version, milestone, t.type AS type, 
-   (CASE status WHEN 'assigned' THEN owner||' *' ELSE owner END) AS owner,
+   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
    time AS created,
    changetime AS _changetime, description AS _description,
    reporter AS _reporter
-  FROM ticket t, enum p
+  FROM ticket t
+  LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
   WHERE status IN ('new', 'assigned', 'reopened') 
-AND p.name = t.priority AND p.type = 'priority'
   ORDER BY (owner = '$USER') DESC, p.value, milestone, t.type, time
-"""))
+""" % owner))
 
 
 ##
@@ -330,7 +332,8 @@ AND p.name = t.priority AND p.type = 'priority'
 ##
 
 # (table, (column1, column2), ((row1col1, row1col2), (row2col1, row2col2)))
-data = (('component',
+def get_data(db):
+   return (('component',
              ('name', 'owner'),
                (('component1', 'somebody'),
                 ('component2', 'somebody'))),
@@ -386,7 +389,8 @@ data = (('component',
                (('database_version', str(db_version)),)),
            ('report',
              ('author', 'title', 'query', 'description'),
-               __mkreports(reports)))
+               __mkreports(get_reports(db))))
+
 
 default_components = ('trac.About', 'trac.attachment',
                       'trac.db.mysql_backend', 'trac.db.postgres_backend',

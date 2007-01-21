@@ -1,4 +1,4 @@
-# -*- coding: iso8859-1 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005-2006 Edgewall Software
 # Copyright (C) 2005-2006 Christopher Lenz <cmlenz@gmx.de>
@@ -150,6 +150,9 @@ class MySQLConnection(ConnectionWrapper):
             type = 'signed'
         return 'CAST(%s AS %s)' % (column, type)
 
+    def concat(self, *args):
+        return 'concat(%s)' % ', '.join(args)
+
     def like(self):
         return "LIKE %s ESCAPE '/'"
 
@@ -158,3 +161,7 @@ class MySQLConnection(ConnectionWrapper):
 
     def get_last_id(self, cursor, table, column='id'):
         return self.cnx.insert_id()
+
+    def rollback(self):
+        self.cnx.rollback()
+        self.cnx.ping()

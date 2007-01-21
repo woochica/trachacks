@@ -46,7 +46,7 @@ if have_pysqlite == 2:
         def _rollback_on_error(self, function, *args, **kwargs):
             try:
                 return function(self, *args, **kwargs)
-            except sqlite.OperationalError, e:
+            except sqlite.DatabaseError, e:
                 self.cnx.rollback()
                 raise
         def execute(self, sql, args=None):
@@ -134,7 +134,7 @@ class SQLiteConnection(ConnectionWrapper):
     """Connection wrapper for SQLite."""
 
     __slots__ = ['_active_cursors']
-    poolable = False
+    poolable = have_pysqlite and sqlite_version >= 30301
 
     def __init__(self, path, params={}):
         assert have_pysqlite > 0
@@ -157,6 +157,7 @@ class SQLiteConnection(ConnectionWrapper):
             self._active_cursors = weakref.WeakKeyDictionary()
             timeout = int(params.get('timeout', 10.0))
             cnx = sqlite.connect(path, detect_types=sqlite.PARSE_DECLTYPES,
+                                 check_same_thread=sqlite_version < 30301,
                                  timeout=timeout)
         else:
             timeout = int(params.get('timeout', 10000))
@@ -189,6 +190,9 @@ class SQLiteConnection(ConnectionWrapper):
             return '1*' + column
         else:
             return column
+
+    def concat(self, *args):
+        return '||'.join(args)
 
     def like(self):
         if sqlite_version >= 30100:

@@ -256,11 +256,13 @@ class SubversionConnector(Component):
         The repository is generally wrapped in a `CachedRepository`,
         unless `direct-svn-fs` is the specified type.
         """
-        authz = None
+        repos = SubversionRepository(dir, None, self.log)
+        crepos = CachedRepository(self.env.get_db_cnx(), repos, None, self.log)
         if authname:
-            authz = SubversionAuthorizer(self.env, authname)
-        repos = SubversionRepository(dir, authz, self.log)
-        return CachedRepository(self.env.get_db_cnx(), repos, authz, self.log)
+            authz = SubversionAuthorizer(self.env, crepos, authname)
+            repos.authz = crepos.authz = authz
+        return crepos
+            
 
 
 class SubversionRepository(Repository):
@@ -303,9 +305,9 @@ class SubversionRepository(Repository):
         else:
             self.scope = '/'
         assert self.scope[0] == '/'
-        
-        self.log.debug("Opening subversion file-system at %s with scope %s" \
-                       % (self.path, self.scope))
+        self.clear()
+
+    def clear(self):
         self.youngest = None
         self.oldest = None
 
@@ -334,7 +336,6 @@ class SubversionRepository(Repository):
         return rev
 
     def close(self):
-        self.log.debug("Closing subversion file-system at %s" % self.path)
         self.repos = None
         self.fs_ptr = None
         self.pool = None
@@ -489,7 +490,7 @@ class SubversionRepository(Repository):
             text_deltas = 0 # as this is anyway re-done in Diff.py...
             entry_props = 0 # "... typically used only for working copy updates"
             repos.svn_repos_dir_delta(old_root,
-                                      _to_svn(self.scope, old_path), '',
+                                      _to_svn(self.scope + old_path), '',
                                       new_root,
                                       _to_svn(self.scope + new_path),
                                       e_ptr, e_baton, authz_cb,
@@ -620,6 +621,8 @@ class SubversionNode(Node):
     def get_last_modified(self):
         date = fs.revision_prop(self.fs_ptr, self.created_rev,
                                 core.SVN_PROP_REVISION_DATE, self.pool())
+        if not date:
+            return 0
         return core.svn_time_from_cstring(date, self.pool()) / 1000000
 
     def _get_prop(self, name):
@@ -637,7 +640,10 @@ class SubversionChangeset(Changeset):
         message = self._get_prop(core.SVN_PROP_REVISION_LOG)
         author = self._get_prop(core.SVN_PROP_REVISION_AUTHOR)
         date = self._get_prop(core.SVN_PROP_REVISION_DATE)
-        date = core.svn_time_from_cstring(date, self.pool()) / 1000000
+        if date:
+            date = core.svn_time_from_cstring(date, self.pool()) / 1000000
+        else:
+            date = 0
         Changeset.__init__(self, rev, message, author, date)
 
     def get_changes(self):

@@ -58,8 +58,7 @@ class PhpDeuglifier(Deuglifier):
     rules = classmethod(rules)
 
 class PHPRenderer(Component):
-    """
-    Syntax highlighting using the PHP executable if available.
+    """Syntax highlighting using the PHP executable if available.
     """
 
     implements(IHTMLPreviewRenderer)
@@ -75,23 +74,23 @@ class PHPRenderer(Component):
         return 0
 
     def render(self, req, mimetype, content, filename=None, rev=None):
-        cmdline = self.config.get('mimeviewer', 'php_path')
         # -n to ignore php.ini so we're using default colors
-        cmdline += ' -sn'
-        self.env.log.debug(u"Ligne de commande PHP : %s" % cmdline)
-        
+        cmdline = '%s -sn' % self.path
+        self.env.log.debug("PHP command line: %s" % cmdline)
+
         content = content_to_unicode(self.env, content, mimetype)
         content = content.encode('utf-8')
         np = NaivePopen(cmdline, content, capturestderr=1)
         if (os.name != 'nt' and np.errorlevel) or np.err:
-            err = u'L\'exécution de la commande (%s) a echoué : %s, %s.' % (cmdline, np.errorlevel,
-                                                    np.err)
-            raise Exception, err
+            msg = u'L\'exécution de la commande (%s) a echoué : %s, %s.' \
+                        % (cmdline, np.errorlevel, np.err)
+            raise Exception(msg)
         odata = ''.join(np.out.splitlines()[1:-1])
-        if odata.startswith('X-Powered-By'):
-            raise TracError, u'Apparemment, vous utilisez la version CGI de PHP.  ' \
-                             u'Trac a besoin de la version CLI pour réaliser la ' \
-                             u'coloration syntaxique.'
+        if odata.startswith('X-Powered-By:') or \
+                odata.startswith('Content-type:'):
+            raise TracError(u'Apparemment, vous utilisez la version CGI de PHP. '
+                            u'Trac a besoin de la version CLI pour réaliser la '
+                            u'coloration syntaxique.')
 
         epilogues = ["</span>", "</font>"]
         for e in epilogues:

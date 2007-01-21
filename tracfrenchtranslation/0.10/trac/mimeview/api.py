@@ -330,7 +330,7 @@ class Mimeview(Component):
 
     mime_map = ListOption('mimeviewer', 'mime_map',
         'text/x-dylan:dylan,text/x-idl:ice,text/x-ada:ads:adb',
-        """List of additional MIME types and keyword mappings.
+        doc="""List of additional MIME types and keyword mappings.
         Mappings are comma-separated, and for each MIME type,
         there's a colon (":") separated list of associated keywords
         or file extensions. (''since 0.10'').""")
@@ -349,7 +349,7 @@ class Mimeview(Component):
             for k, n, e, im, om, q in converter.get_supported_conversions():
                 if im == mimetype and q > 0:
                     converters.append((k, n, e, im, om, q, converter))
-        converters = sorted(converters, key=lambda i: i[-1], reverse=True)
+        converters = sorted(converters, key=lambda i: i[-2], reverse=True)
         return converters
 
     def convert_content(self, req, mimetype, content, key, filename=None,
@@ -462,8 +462,8 @@ class Mimeview(Component):
                     buf.write('</pre></div>')
                     return Markup(buf.getvalue())
             except Exception, e:
-                self.log.error(e)
-                #self.log.warning(u'HTML preview using %s failed ' % renderer + e, exc_info=True)
+                self.log.warning('HTML preview using %s failed (%s)'
+                                 % (renderer, e), exc_info=True)
 
     def _annotate(self, lines, annotations):
         buf = StringIO()
