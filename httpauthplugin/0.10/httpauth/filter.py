@@ -3,7 +3,10 @@ from trac.config import ListOption
 from trac.web.api import IRequestFilter, RequestDone, IAuthenticator
 from trac.web.chrome import INavigationContributor
 
-import base64
+try:  
+    from base64 import b64decode  
+except ImportError:  
+    from base64 import decodestring as b64decode
 
 from acct_mgr.api import AccountManager
 
@@ -65,6 +68,6 @@ class HTTPAuthFilter(Component):
         header = req.get_header('Authorization')
         if header:
             token = header.split()[1]
-            user, passwd = base64.b64decode(token).split(':', 1)
+            user, passwd = b64decode(token).split(':', 1)
             if AccountManager(self.env).check_password(user, passwd):
                 return user
