@@ -15,32 +15,28 @@ class HTTPAuthFilter(Component):
     paths = ListOption('httpauth', 'paths', default='/login/xmlrpc',
                        doc='Paths to force HTTP authentication on.')
     
+    formats = ListOption('httpauth', 'formats', doc='Request formats to force HTTP authentication on')
+    
     implements(IRequestFilter, IAuthenticator)
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
+        check = False
         for path in self.paths:
             if req.path_info.startswith(path):
-                header = req.get_header('Authorization')
-                if header is None:
-                    self.log.info('HTTPAuthFilter: No authentication data given, returing 403')
-                    return self # Run HTTP auth
-                else:
-                    token = header.split()[1]
-                    user, passwd = base64.b64decode(token).split(':', 1)
-                    if AccountManager(self.env).check_password(user, passwd):
-                        self.log.debug('HTTPAuthFilter: Authentication okay')
-                        req.__user = user
-                    else:
-                        self.log.info('HTTPAuthFilter: Bad authentication data given, returing 403')
-                        return self # Failed auth
-        
+                check = True
+                break
+        if req.args.get('format') in self.formats:
+            check = True
+        if check and not self._check_password(req):
+            self.log.info('HTTPAuthFilter: No/bad authentication data given, returing 403')
+            return self
         return handler
         
     def post_process_request(self, req, template, content_type):
         return template, content_type
 
-    # IRequestHandler methods        
+    # IRequestHandler methods (sort of)       
     def process_request(self, req):
         if req.session:
             req.session.save() # Just in case
@@ -59,7 +55,16 @@ class HTTPAuthFilter(Component):
 
     # IAuthenticator methods
     def authenticate(self, req):
-        try:
-            return req.__user
-        except AttributeError:
-            return None # Bail out
+        user = self._check_password(req)
+        if user:
+            self.log.debug('HTTPAuthFilter: Authentication okay for %s', user)
+            return user
+            
+    # Internal methods
+    def _check_password(self, req):
+        header = req.get_header('Authorization')
+        if header:
+            token = header.split()[1]
+            user, passwd = base64.b64decode(token).split(':', 1)
+            if AccountManager(self.env).check_password(user, passwd):
+                return user

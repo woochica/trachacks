@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracHTTPAuth',
-    version = '1.0.1',
+    version = '1.1',
     packages = ['httpauth'],
     #package_data = { 'httpauth': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
