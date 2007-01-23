@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -12,10 +12,11 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 
-from revtree import IRevtreeEnhancer
+from revtree.api import IRevtreeEnhancer
 from revtree.svgview import SvgOperation, SvgGroup
 from trac.core import *
 
+__all__ = ['SimpleEnhancer']
 
 class SimpleContainer(object):
     """Simple container for enhancer parameters"""

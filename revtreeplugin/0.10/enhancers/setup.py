@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevtreeEnhancers'
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 setup (
     name = PACKAGE,

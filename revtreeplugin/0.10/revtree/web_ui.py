@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -28,6 +28,7 @@ from trac.web.chrome import add_stylesheet, add_script, \
 from trac.web.href import Href
 from trac.wiki import wiki_to_html, WikiSystem
 
+__all__ = ['RevtreeModule']
 
 class RevtreeStore(object):
     """User revtree properties"""

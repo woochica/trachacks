@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevtreePlugin'
-VERSION = '0.4.5'
+VERSION = '0.4.7'
 
 setup (
     name = PACKAGE,
@@ -38,7 +38,8 @@ setup (
     entry_points = {
         'trac.plugins': [
             'revtree.web_ui = revtree.web_ui',
-            'revtree.enhancer = revtree.enhancer'
+            'revtree.enhancer = revtree.enhancer',
+            'revtree.optimizer = revtree.optimizer'
         ]
     }
 )
