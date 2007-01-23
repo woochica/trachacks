@@ -6,12 +6,10 @@ assert len(sys.argv) == 2, "\n\nusage: %s <trac-environment>\n\nRe-index reposit
 
 from pyndexter import Framework
 from trac.env import Environment
-from tracreposearch import RepoSource
+from tracreposearch import RepoSource, TracRepoSearchPlugin
 
 e = Environment(sys.argv[1])
-f = Framework(e.config['repo-search'].get('indexer'))
-repo = e.get_repository()
-f.add_source(RepoSource(e, f, repo, include=['*.py']))
+rs = TracRepoSearchPlugin(e)
 
 def logger(context, stream):
     for transition, uri in stream:
@@ -19,5 +17,5 @@ def logger(context, stream):
         yield transition, uri
 
 
-f.update(logger)
-f.close()
+rs.framework.update(filter=logger)
+rs.framework.close()
