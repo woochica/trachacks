@@ -1,18 +1,18 @@
-# vim: expandtab tabstop=4
+# -*- coding: utf-8 -*-
+import os
+import re
+from StringIO import StringIO
 
 from trac.core import *
-from trac.util import escape
-from trac.wiki.formatter import Formatter, OutlineFormatter, wiki_to_oneliner, wiki_to_outline, system_message
-from trac.wiki.api import WikiSystem
+from trac.wiki.formatter import Formatter, OutlineFormatter, system_message
+from trac.wiki.api import WikiSystem, parse_args
 from trac.wiki.macros import WikiMacroBase 
-from trac.wiki.model import WikiPage
-from StringIO import StringIO
-import os, re
+
 
 __all__ = ['TOCMacro']
 
 class NullOut(object):
-   def write(self, *args): pass
+    def write(self, *args): pass
 
 
 class MyOutlineFormatter(OutlineFormatter):
@@ -58,9 +58,10 @@ class TOCMacro(WikiMacroBase):
     To generate a table of contents for a set of pages, simply pass them
     as comma separated arguments to the TOC macro, e.g. as in
     {{{
-    [[TOC(TracGuide, TracInstall, TracUpgrade, TracIni, TracAdmin, TracBackup, TracLogging,
-             TracPermissions, TracWiki, WikiFormatting, TracBrowser, TracRoadmap, TracChangeset,
-             TracTickets, TracReports, TracQuery, TracTimeline, TracRss, TracNotification)]]
+    [[TOC(TracGuide, TracInstall, TracUpgrade, TracIni, TracAdmin, TracBackup,
+          TracLogging, TracPermissions, TracWiki, WikiFormatting, TracBrowser,
+          TracRoadmap, TracChangeset, TracTickets, TracReports, TracQuery,
+          TracTimeline, TracRss, TracNotification)]]
     }}}
     The following ''control'' arguments change the default behaviour of
     the TOC macro: 
@@ -70,52 +71,47 @@ class TOCMacro(WikiMacroBase):
     || {{{depth=<n>}}}   || Display headings of ''subsequent'' pages to a maximum depth of '''<n>'''. ||
     || {{{inline}}}      || Display TOC inline rather than as a side-bar. ||
     || {{{titleindex}}}  || Only display the page name and title of each page, similar to TitleIndex. ||
+    
     Note that the current page must also be specified if individual wiki
     pages are given in the argument list.
     """
     
-    def render_macro(self, req, name, args):
-        # Note for 0.11: `req` will be replaced by `formatter`
-        #  req = formatter.req
-        #  db = formatter.db
-        db = self.env.get_db_cnx()
-        formatter = MyOutlineFormatter(self.env) # FIXME 0.11: give 'req'
+    def render_macro(self, formatter, name, args):
+        # Note for 0.11: `render_macro` will be replaced by `format_macro`...
+        db = formatter.db
+        context = formatter.context
+        outlineformatter = MyOutlineFormatter(context)
         
         # Bail out if we are in a no-float zone
-        # Note for 0.11: if 'macro_no_float' in formatter.properties
-        if 'macro_no_float' in req.hdf:
+        if hasattr(formatter, 'properties') and \
+               'macro_no_float' in formatter.properties:
             return ''
         
-        # If this is a page preview, try to figure out where its from
-        # Note for 0.11: formatter.context could be the main `object`
-        # to which the text being formatted belongs to...
-        current_page = req.hdf.get('wiki.page_name','WikiStart')
-        in_preview = req.args.has_key('preview')
+        current_page = context.id
          
         def get_page_text(pagename):
-            """Return a tuple of (text, exists) for a page,
-            taking into account previews.
-
-            Note for 0.11: `formatter` should have the original text,
-            so there would be no need for the `in_preview` stuff.
-            """
-            if in_preview and pagename == current_page:
-                return (req.args.get('text',''), True)
+            """Return a tuple of `(text, exists)` for the given `pagename`."""
+            if pagename == current_page:
+                return (formatter.source, True)
             else:
-                page = WikiPage(self.env,pagename)
-                return (page.text, page.exists)            
+                # TODO: after sandbox/security merge
+                # page = context(id=pagename).resource
+                from trac.wiki.model import WikiPage
+                page = WikiPage(self.env, pagename, db=db)
+                return (page.text, page.exists)
                 
         # Split the args
-        if not args: args = ''
-        args = [x.strip() for x in args.split(',')]
+        args, kw = parse_args(args)
         # Options
         inline = False
-        heading = 'Table of Contents'
         pagenames = []
-        root = ''
-        params = { 'title_index': False, 'min_depth': 1, 'max_depth': 6 }
+        heading = kw.pop('heading', 'Table of Contents')
+        root = kw.pop('root', '')
+        
+        params = {'title_index': False, 'min_depth': 1, 'max_depth': 6}
         # Global options
         for arg in args:
+            arg = arg.strip()
             if arg == 'inline':
                 inline = True
             elif arg == 'noheading':
@@ -127,15 +123,12 @@ class TOCMacro(WikiMacroBase):
                 heading = ''
             elif arg == 'nofloat':
                 return ''
-            elif arg.startswith('heading='):
-                heading = arg[8:]
-            elif arg.startswith('depth='):
-                params['max_depth'] = int(arg[6:])
-            elif arg.startswith('root='):
-                root = arg[5:]
             elif arg != '':
                 pagenames.append(arg)
-        
+
+        if 'depth' in kw:
+           params['max_depth'] = int(kw['depth'])
+
         # Has the user supplied a list of pages?
         if not pagenames:
             pagenames.append(current_page)
@@ -149,7 +142,8 @@ class TOCMacro(WikiMacroBase):
             out.write("<h4>%s</h4>\n" % heading)
         for pagename in pagenames:
             if params['title_index']:
-                li_class = pagename.startswith(current_page) and ' class="active"' or ''
+                li_class = pagename.startswith(current_page) and \
+                           ' class="active"' or ''
                 prefix = (pagename.split('/'))[0]
                 prefix = prefix.replace('\'', '\'\'')
                 all_pages = list(WikiSystem(self.env).get_pages(prefix))
@@ -159,24 +153,31 @@ class TOCMacro(WikiMacroBase):
                     for page in all_pages:
                         page_text, _ = get_page_text(page)
     
-                        formatter.format(current_page, page, page_text, NullOut(), 1, 1)
+                        outlineformatter.format(current_page, page, page_text,
+                                                NullOut(), 1, 1)
                         header = ''
-                        if formatter.outline:
-                            title = formatter.outline[0][1]
+                        if outlineformatter.outline:
+                            title = outlineformatter.outline[0][1]
                             title = re.sub('<[^>]*>','', title) # Strip all tags
                             header = ': ' + wiki_to_oneliner(title, self.env)
-                        out.write('<li%s> <a href="%s">%s</a> %s</li>\n' % (li_class, req.href.wiki(page), page, header))
-                    out.write('</ol>')        
+                        out.write('<li%s> <a href="%s">%s</a> %s</li>\n' %
+                                  (li_class, context.href.wiki(page), page,
+                                   header))
+                    out.write('</ol>')
                 else:
-                    out.write(system_message('Error: No page matching %s found' % prefix))
+                    out.write(system_message('Error: No page matching %s '
+                                             'found' % prefix))
             else:
                 page = root + pagename
                 page_text, page_exists = get_page_text(page)
                 if page_exists:
-                    formatter.format(current_page, page, page_text, out, params['min_depth'], params['max_depth'])
+                    outlineformatter.format(current_page, page, page_text, out,
+                                            params['min_depth'],
+                                            params['max_depth'])
                 else:
-                    out.write(system_message('Error: Page %s does not exist' % pagename))
+                    print pagename, len(page_text)
+                    out.write(system_message('Error: Page %s does not exist' %
+                                             pagename))
         if not inline:
             out.write("</div>\n")
         return out.getvalue()
-

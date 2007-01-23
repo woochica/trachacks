@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracTocMacro',
-    version = '1.0',
+    version = '11.0.0.1',
     packages = ['tractoc'],
     #package_data = { 'toc': ['templates/*.cs','htdocs/*' ] },
 
