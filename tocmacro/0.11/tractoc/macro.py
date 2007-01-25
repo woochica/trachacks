@@ -117,23 +117,21 @@ class TOCMacro(WikiMacroBase):
             params['min_depth'] = 2     # Skip page title
 
         base = inline and tag() or tag.div(class_='wiki-toc')
-        if heading:
-            base.append(tag.h4(heading))
+        ol = tag.ol()
+        base.append([heading and tag.h4(heading), ol])
 
         active = len(pagenames) > 1
         if pagenames:
-            ol = tag.ol()
             for pagename in pagenames:
                 if 'title_index' in params:
                     prefix = pagename.split('/')[0]
                     prefix = prefix.replace("'", "''") # FIXME: what's this?
-                    self._render_title_index(
-                        prefix, active and pagename.startswith(current_page))
+                    self._render_title_index(ol, prefix, active and \
+                                             pagename.startswith(current_page))
                 else:
                     self._render_page_outline(ol, pagename, active, params)
-            base.append(ol)
         else:
-            base.append(self._render_title_index('', False))
+            self._render_title_index(ol, '', False)
         return base
 
     def get_page_text(self, pagename):
@@ -147,11 +145,10 @@ class TOCMacro(WikiMacroBase):
             page = WikiPage(self.env, pagename, db=self.formatter.db)
             return (page.text, page.exists)
 
-    def _render_title_index(self, prefix, active):
+    def _render_title_index(self, ol, prefix, active):
         all_pages = list(WikiSystem(self.env).get_pages(prefix))
         if all_pages:
             all_pages.sort()
-            ol = tag.ol()
             for page in all_pages:
                 ctx = self.formatter.context('wiki', page)
                 fmt = OutlineFormatter(ctx)
@@ -160,12 +157,12 @@ class TOCMacro(WikiMacroBase):
                 title = ''
                 if fmt.outline:
                     title = ': ' + fmt.outline[0][2]
-                ol.append(tag.li(tag.a(page, href=ctx.self_href()),
-                                 Markup(title),
-                                 class_= active and 'active' or None))
-            return ol
+                ol.append((tag.li(tag.a(page, href=ctx.self_href()),
+                                  Markup(title),
+                                  class_= active and 'active' or None)))
         else:
-            return system_message('Error: No page matching %s found' % prefix)
+            ol.append(system_message('Error: No page matching %s found' %
+                                     prefix))
 
     def _render_page_outline(self, ol, pagename, active, params):
         page = params.get('root', '') + pagename
@@ -174,8 +171,9 @@ class TOCMacro(WikiMacroBase):
             ctx = self.formatter.context('wiki', page)
             fmt = OutlineFormatter(ctx)
             fmt.format(page_text, NullOut())
-            return outline_tree(ol, fmt.outline, ctx,
-                                active and page == self.formatter.context.id,
-                                params['min_depth'], params['max_depth'])
+            outline_tree(ol, fmt.outline, ctx,
+                         active and page == self.formatter.context.id,
+                         params['min_depth'], params['max_depth'])
         else:
-            return system_message('Error: Page %s does not exist' % pagename)
+            ol.append(system_message('Error: Page %s does not exist' %
+                                     pagename))
