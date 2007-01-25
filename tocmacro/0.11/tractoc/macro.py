@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-from StringIO import StringIO
+
+from genshi.builder import tag
 
 from trac.core import *
-from trac.wiki.formatter import Formatter, OutlineFormatter, system_message
+from trac.wiki.formatter import OutlineFormatter, system_message
 from trac.wiki.api import WikiSystem, parse_args
 from trac.wiki.macros import WikiMacroBase 
 
@@ -15,36 +16,26 @@ class NullOut(object):
     def write(self, *args): pass
 
 
-class MyOutlineFormatter(OutlineFormatter):
-
-    def format(self, active_page, page, text, out, min_depth, max_depth):
-        # XXX Code copied straight out of OutlineFormatter
-        self.outline = []
-        Formatter.format(self, text)
-
-        active = ''
-        if page == active_page:
-            active = ' class="active"'
-
-        if min_depth > max_depth:
-            min_depth, max_depth = max_depth, min_depth
-        max_depth = min(6, max_depth)
-        min_depth = max(1, min_depth)
-
-        curr_depth = min_depth - 1
-        for depth, anchor, heading in self.outline:
-            if depth < min_depth or depth > max_depth:
-                continue
-            if depth < curr_depth:
-                out.write('</li></ol><li%s>' % active * (curr_depth - depth))
-            elif depth > curr_depth:
-                out.write('<ol><li%s>' % active * (depth - curr_depth))
-            else:
-                out.write("</li><li%s>\n" % active)
-            curr_depth = depth
-            out.write('<a href="%s#%s">%s</a>' %
-                      (self.href.wiki(page), anchor, heading))
-        out.write('</li></ol>' * curr_depth)
+def outline_tree(outline, context, active, min_depth, max_depth):
+    if min_depth > max_depth:
+        min_depth, max_depth = max_depth, min_depth
+    max_depth = min(6, max_depth)
+    min_depth = max(1, min_depth)
+    previous_depth = min_depth
+    
+    stack = [None] * max_depth
+    stack[previous_depth] = tag.ol()
+    
+    for depth, anchor, heading in outline:
+        if min_depth <= depth <= max_depth:
+            for d in range(previous_depth, depth):
+                stack[d+1] = ol = tag.ol()
+                stack[d].append(tag.li(ol))
+            href = context.self_href() + '#' + anchor
+            stack[depth].append(tag.li(tag.a(heading, href=href),
+                                       class_=active and 'active'))
+            previous_depth = depth
+    return stack[min_depth]
 
 
 class TOCMacro(WikiMacroBase):
@@ -79,7 +70,6 @@ class TOCMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, args):
         db = formatter.db
         context = formatter.context
-        outlineformatter = MyOutlineFormatter(context)
         
         # Bail out if we are in a no-float zone
         if hasattr(formatter, 'properties') and \
@@ -134,49 +124,47 @@ class TOCMacro(WikiMacroBase):
             root = ''
             params['min_depth'] = 2     # Skip page title
 
-        out = StringIO()
-        if not inline:
-            out.write("<div class='wiki-toc'>\n")
+        base = inline and tag() or tag.div(class_='wiki-toc')
         if heading:
-            out.write("<h4>%s</h4>\n" % heading)
+            base.append(tag.h4(heading))
+
         for pagename in pagenames:
             if params['title_index']:
-                li_class = pagename.startswith(current_page) and \
-                           ' class="active"' or ''
-                prefix = (pagename.split('/'))[0]
-                prefix = prefix.replace('\'', '\'\'')
+                active = pagename.startswith(current_page)
+                prefix = pagename.split('/')[0]
+                prefix = prefix.replace("'", "''")
                 all_pages = list(WikiSystem(self.env).get_pages(prefix))
                 if all_pages:
                     all_pages.sort()
-                    out.write('<ol>')
+                    ol = tag.ol()
                     for page in all_pages:
-                        ctx = context(id=page)
-                        page_text, _ = get_page_text(page)
-    
-                        outlineformatter.format(current_page, page, page_text,
-                                                NullOut(), 1, 1)
+                        ctx = context('wiki', page)
+                        fmt = OutlineFormatter(ctx)
+                        page_text, _ = get_page_text(page) # ctx.resource.text
+                        fmt.format(page_text, NullOut())
                         header = ''
-                        if outlineformatter.outline:
-                            title = outlineformatter.outline[0][2]
-                            title = re.sub('<[^>]*>','', title) # Strip all tags
+                        if fmt.outline:
+                            title = fmt.outline[0][2]
+                            title = re.sub('<[^>]*>', '', title) # Strip all tags (?)
                             header = ': ' + ctx.wiki_to_oneliner(title)
-                        out.write('<li%s> <a href="%s">%s</a> %s</li>\n' %
-                                  (li_class, ctx.self_href(), page, header))
-                    out.write('</ol>')
+                        ol.append(tag.li(tag.a(page, href=ctx.self_href()),
+                                         header, class_= active and 'active'))
+                    base.append(ol)
                 else:
-                    out.write(system_message('Error: No page matching %s '
-                                             'found' % prefix))
+                    base.append(system_message('Error: No page matching %s '
+                                               'found' % prefix))
             else:
                 page = root + pagename
                 page_text, page_exists = get_page_text(page)
                 if page_exists:
-                    outlineformatter.format(current_page, page, page_text, out,
-                                            params['min_depth'],
-                                            params['max_depth'])
+                    ctx = context('wiki', page)
+                    fmt = OutlineFormatter(ctx)
+                    fmt.format(page_text, NullOut())
+                    base.append(outline_tree(fmt.outline, ctx,
+                                             page == current_page,
+                                             params['min_depth'],
+                                             params['max_depth']))
                 else:
-                    print pagename, len(page_text)
-                    out.write(system_message('Error: Page %s does not exist' %
-                                             pagename))
-        if not inline:
-            out.write("</div>\n")
-        return out.getvalue()
+                    base.append(system_message('Error: Page %s does not exist' %
+                                               pagename))
+        return base
