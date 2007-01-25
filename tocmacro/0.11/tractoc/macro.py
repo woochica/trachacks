@@ -77,7 +77,6 @@ class TOCMacro(WikiMacroBase):
     """
     
     def expand_macro(self, formatter, name, args):
-        # Note for 0.11: `render_macro` will be replaced by `format_macro`...
         db = formatter.db
         context = formatter.context
         outlineformatter = MyOutlineFormatter(context)
@@ -151,18 +150,18 @@ class TOCMacro(WikiMacroBase):
                     all_pages.sort()
                     out.write('<ol>')
                     for page in all_pages:
+                        ctx = context(id=page)
                         page_text, _ = get_page_text(page)
     
                         outlineformatter.format(current_page, page, page_text,
                                                 NullOut(), 1, 1)
                         header = ''
                         if outlineformatter.outline:
-                            title = outlineformatter.outline[0][1]
+                            title = outlineformatter.outline[0][2]
                             title = re.sub('<[^>]*>','', title) # Strip all tags
-                            header = ': ' + wiki_to_oneliner(title, self.env)
+                            header = ': ' + ctx.wiki_to_oneliner(title)
                         out.write('<li%s> <a href="%s">%s</a> %s</li>\n' %
-                                  (li_class, context.href.wiki(page), page,
-                                   header))
+                                  (li_class, ctx.self_href(), page, header))
                     out.write('</ol>')
                 else:
                     out.write(system_message('Error: No page matching %s '
