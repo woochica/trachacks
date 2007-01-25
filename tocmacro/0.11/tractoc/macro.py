@@ -32,7 +32,10 @@ def outline_tree(outline, context, active, min_depth, max_depth):
             for d in range(previous_depth, depth):
                 stack[d+1] = ol = tag.ol()
                 stack[d].append(tag.li(ol))
-            href = context.self_href() + '#' + anchor
+            href = context.self_href()
+            if href.endswith(context.req.path_info):
+                href = ''
+            href += '#' + anchor
             stack[depth].append(tag.li(tag.a(Markup(heading), href=href),
                                        class_=active and 'active' or None))
             previous_depth = depth
