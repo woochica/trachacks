@@ -72,7 +72,7 @@ class TOCMacro(WikiMacroBase):
     """
     
     def expand_macro(self, formatter, name, args):
-        db = formatter.db
+        self.formatter = formatter
         context = formatter.context
         
         # Bail out if we are in a no-float zone
@@ -82,26 +82,14 @@ class TOCMacro(WikiMacroBase):
         
         current_page = context.id
          
-        def get_page_text(pagename):
-            """Return a tuple of `(text, exists)` for the given `pagename`."""
-            if pagename == current_page:
-                return (formatter.source, True)
-            else:
-                # TODO: after sandbox/security merge
-                # page = context(id=pagename).resource
-                from trac.wiki.model import WikiPage
-                page = WikiPage(self.env, pagename, db=db)
-                return (page.text, page.exists)
-                
         # Split the args
         args, kw = parse_args(args)
         # Options
         inline = False
         pagenames = []
         heading = kw.pop('heading', 'Table of Contents')
-        root = kw.pop('root', '')
         
-        params = {'title_index': False, 'min_depth': 1, 'max_depth': 6}
+        params = {'min_depth': 1, 'max_depth': 6}
         # Global options
         for arg in args:
             arg = arg.strip()
@@ -123,9 +111,9 @@ class TOCMacro(WikiMacroBase):
            params['max_depth'] = int(kw['depth'])
 
         # Has the user supplied a list of pages?
-        if not pagenames:
+        if not pagenames and 'title_index' not in params:
             pagenames.append(current_page)
-            root = ''
+            params['root'] = ''
             params['min_depth'] = 2     # Skip page title
 
         base = inline and tag() or tag.div(class_='wiki-toc')
@@ -133,42 +121,60 @@ class TOCMacro(WikiMacroBase):
             base.append(tag.h4(heading))
 
         active = len(pagenames) > 1
-        for pagename in pagenames:
-            if params['title_index']:
-                active = active and pagename.startswith(current_page)
-                prefix = pagename.split('/')[0]
-                prefix = prefix.replace("'", "''")
-                all_pages = list(WikiSystem(self.env).get_pages(prefix))
-                if all_pages:
-                    all_pages.sort()
-                    ol = tag.ol()
-                    for page in all_pages:
-                        ctx = context('wiki', page)
-                        fmt = OutlineFormatter(ctx)
-                        page_text, _ = get_page_text(page) # ctx.resource.text
-                        fmt.format(page_text, NullOut())
-                        title = ''
-                        if fmt.outline:
-                            title = ': ' + fmt.outline[0][2]
-                        ol.append(tag.li(tag.a(page, href=ctx.self_href()),
-                                         Markup(title),
-                                         class_= active and 'active' or None))
-                    base.append(ol)
+        if pagenames:
+            for pagename in pagenames:
+                if 'title_index' in params:
+                    prefix = pagename.split('/')[0]
+                    prefix = prefix.replace("'", "''") # FIXME: what's this?
+                    base.append(self._render_title_index(
+                        prefix, active and pagename.startswith(current_page)))
                 else:
-                    base.append(system_message('Error: No page matching %s '
-                                               'found' % prefix))
-            else:
-                page = root + pagename
-                page_text, page_exists = get_page_text(page)
-                if page_exists:
-                    ctx = context('wiki', page)
-                    fmt = OutlineFormatter(ctx)
-                    fmt.format(page_text, NullOut())
-                    base.append(outline_tree(fmt.outline, ctx,
-                                             active and page == current_page,
-                                             params['min_depth'],
-                                             params['max_depth']))
-                else:
-                    base.append(system_message('Error: Page %s does not exist' %
-                                               pagename))
+                    base.append(self._render_page_outline(
+                        pagename, active, params))
+        else:
+            base.append(self._render_title_index('', False))
         return base
+
+    def get_page_text(self, pagename):
+        """Return a tuple of `(text, exists)` for the given `pagename`."""
+        if pagename == self.formatter.context.id:
+            return (self.formatter.source, True)
+        else:
+            # TODO: after sandbox/security merge
+            # page = context(id=pagename).resource
+            from trac.wiki.model import WikiPage
+            page = WikiPage(self.env, pagename, db=self.formatter.db)
+            return (page.text, page.exists)
+
+    def _render_title_index(self, prefix, active):
+        all_pages = list(WikiSystem(self.env).get_pages(prefix))
+        if all_pages:
+            all_pages.sort()
+            ol = tag.ol()
+            for page in all_pages:
+                ctx = self.formatter.context('wiki', page)
+                fmt = OutlineFormatter(ctx)
+                page_text, _ = self.get_page_text(page) # ctx.resource.text
+                fmt.format(page_text, NullOut())
+                title = ''
+                if fmt.outline:
+                    title = ': ' + fmt.outline[0][2]
+                ol.append(tag.li(tag.a(page, href=ctx.self_href()),
+                                 Markup(title),
+                                 class_= active and 'active' or None))
+            return ol
+        else:
+            return system_message('Error: No page matching %s found' % prefix)
+
+    def _render_page_outline(self, pagename,active, params):
+        page = params.get('root', '') + pagename
+        page_text, page_exists = self.get_page_text(page)
+        if page_exists:
+            ctx = self.formatter.context('wiki', page)
+            fmt = OutlineFormatter(ctx)
+            fmt.format(page_text, NullOut())
+            return outline_tree(fmt.outline, ctx,
+                                active and page == self.formatter.context.id,
+                                params['min_depth'], params['max_depth'])
+        else:
+            return system_message('Error: Page %s does not exist' % pagename)
