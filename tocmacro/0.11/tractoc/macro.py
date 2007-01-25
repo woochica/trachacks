@@ -76,7 +76,7 @@ class TOCMacro(WikiMacroBase):
     pages are given in the argument list.
     """
     
-    def render_macro(self, formatter, name, args):
+    def expand_macro(self, formatter, name, args):
         # Note for 0.11: `render_macro` will be replaced by `format_macro`...
         db = formatter.db
         context = formatter.context
