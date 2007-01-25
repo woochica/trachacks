@@ -34,7 +34,7 @@ def outline_tree(outline, context, active, min_depth, max_depth):
                 stack[d].append(tag.li(ol))
             href = context.self_href() + '#' + anchor
             stack[depth].append(tag.li(tag.a(Markup(heading), href=href),
-                                       class_=active and 'active'))
+                                       class_=active and 'active' or None))
             previous_depth = depth
     return stack[min_depth]
 
@@ -148,7 +148,7 @@ class TOCMacro(WikiMacroBase):
                             title = ': ' + fmt.outline[0][2]
                         ol.append(tag.li(tag.a(page, href=ctx.self_href()),
                                          Markup(title),
-                                         class_= active and 'active'))
+                                         class_= active and 'active' or None))
                     base.append(ol)
                 else:
                     base.append(system_message('Error: No page matching %s '
