@@ -129,9 +129,10 @@ class TOCMacro(WikiMacroBase):
         if heading:
             base.append(tag.h4(heading))
 
+        active = len(pagenames) > 1
         for pagename in pagenames:
             if params['title_index']:
-                active = pagename.startswith(current_page)
+                active = active and pagename.startswith(current_page)
                 prefix = pagename.split('/')[0]
                 prefix = prefix.replace("'", "''")
                 all_pages = list(WikiSystem(self.env).get_pages(prefix))
@@ -161,7 +162,7 @@ class TOCMacro(WikiMacroBase):
                     fmt = OutlineFormatter(ctx)
                     fmt.format(page_text, NullOut())
                     base.append(outline_tree(fmt.outline, ctx,
-                                             page == current_page,
+                                             active and page == current_page,
                                              params['min_depth'],
                                              params['max_depth']))
                 else:
