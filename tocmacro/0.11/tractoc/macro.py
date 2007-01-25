@@ -17,7 +17,7 @@ class NullOut(object):
     def write(self, *args): pass
 
 
-def outline_tree(outline, context, active, min_depth, max_depth):
+def outline_tree(ol, outline, context, active, min_depth, max_depth):
     if min_depth > max_depth:
         min_depth, max_depth = max_depth, min_depth
     max_depth = min(6, max_depth)
@@ -25,7 +25,7 @@ def outline_tree(outline, context, active, min_depth, max_depth):
     previous_depth = min_depth
     
     stack = [None] * max_depth
-    stack[previous_depth] = tag.ol()
+    stack[previous_depth] = ol
     
     for depth, anchor, heading in outline:
         if min_depth <= depth <= max_depth:
@@ -48,7 +48,7 @@ class TOCMacro(WikiMacroBase):
     If no arguments are given, a table of contents is generated for the
     current page, with the top-level title stripped: 
     {{{
-        [[TOC]]
+        [[TOC]] 
     }}}
     To generate a table of contents for a set of pages, simply pass them
     as comma separated arguments to the TOC macro, e.g. as in
@@ -122,15 +122,16 @@ class TOCMacro(WikiMacroBase):
 
         active = len(pagenames) > 1
         if pagenames:
+            ol = tag.ol()
             for pagename in pagenames:
                 if 'title_index' in params:
                     prefix = pagename.split('/')[0]
                     prefix = prefix.replace("'", "''") # FIXME: what's this?
-                    base.append(self._render_title_index(
-                        prefix, active and pagename.startswith(current_page)))
+                    self._render_title_index(
+                        prefix, active and pagename.startswith(current_page))
                 else:
-                    base.append(self._render_page_outline(
-                        pagename, active, params))
+                    self._render_page_outline(ol, pagename, active, params)
+            base.append(ol)
         else:
             base.append(self._render_title_index('', False))
         return base
@@ -166,14 +167,14 @@ class TOCMacro(WikiMacroBase):
         else:
             return system_message('Error: No page matching %s found' % prefix)
 
-    def _render_page_outline(self, pagename,active, params):
+    def _render_page_outline(self, ol, pagename, active, params):
         page = params.get('root', '') + pagename
         page_text, page_exists = self.get_page_text(page)
         if page_exists:
             ctx = self.formatter.context('wiki', page)
             fmt = OutlineFormatter(ctx)
             fmt.format(page_text, NullOut())
-            return outline_tree(fmt.outline, ctx,
+            return outline_tree(ol, fmt.outline, ctx,
                                 active and page == self.formatter.context.id,
                                 params['min_depth'], params['max_depth'])
         else:
