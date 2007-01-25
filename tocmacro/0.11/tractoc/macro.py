@@ -2,6 +2,7 @@
 import os
 import re
 
+from genshi.core import Markup
 from genshi.builder import tag
 
 from trac.core import *
@@ -32,7 +33,7 @@ def outline_tree(outline, context, active, min_depth, max_depth):
                 stack[d+1] = ol = tag.ol()
                 stack[d].append(tag.li(ol))
             href = context.self_href() + '#' + anchor
-            stack[depth].append(tag.li(tag.a(heading, href=href),
+            stack[depth].append(tag.li(tag.a(Markup(heading), href=href),
                                        class_=active and 'active'))
             previous_depth = depth
     return stack[min_depth]
@@ -142,13 +143,12 @@ class TOCMacro(WikiMacroBase):
                         fmt = OutlineFormatter(ctx)
                         page_text, _ = get_page_text(page) # ctx.resource.text
                         fmt.format(page_text, NullOut())
-                        header = ''
+                        title = ''
                         if fmt.outline:
-                            title = fmt.outline[0][2]
-                            title = re.sub('<[^>]*>', '', title) # Strip all tags (?)
-                            header = ': ' + ctx.wiki_to_oneliner(title)
+                            title = ': ' + fmt.outline[0][2]
                         ol.append(tag.li(tag.a(page, href=ctx.self_href()),
-                                         header, class_= active and 'active'))
+                                         Markup(title),
+                                         class_= active and 'active'))
                     base.append(ol)
                 else:
                     base.append(system_message('Error: No page matching %s '
