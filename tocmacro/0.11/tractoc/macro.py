@@ -25,21 +25,31 @@ def outline_tree(ol, outline, context, active, min_depth, max_depth):
     previous_depth = min_depth
     
     stack = [None] * max_depth
-    stack[previous_depth] = ol
+    # stack of (<element for new sublists>, <element for new items>)
+    stack[previous_depth] = (None, ol)
     
     for depth, anchor, heading in outline:
         if min_depth <= depth <= max_depth:
             for d in range(previous_depth, depth):
-                stack[d+1] = ol = tag.ol()
-                stack[d].append(tag.li(ol))
+                li, ol = stack[d]
+                if not li:
+                    li = tag.li()
+                    ol.append(li)
+                    stack[d] = (li, ol)
+                new_ol = tag.ol()
+                li.append(new_ol)
+                stack[d+1] = (None, new_ol)
             href = context.self_href()
             if href.endswith(context.req.path_info):
                 href = ''
             href += '#' + anchor
-            stack[depth].append(tag.li(tag.a(Markup(heading), href=href),
-                                       class_=active and 'active' or None))
+            li, ol = stack[depth]
+            li = tag.li(tag.a(Markup(heading), href=href),
+                        class_=active and 'active' or None)
+            ol.append(li)
+            stack[depth] = (li, ol)
             previous_depth = depth
-    return stack[min_depth]
+    return stack[min_depth][0]
 
 
 class TOCMacro(WikiMacroBase):
@@ -116,7 +126,7 @@ class TOCMacro(WikiMacroBase):
             params['root'] = ''
             params['min_depth'] = 2     # Skip page title
 
-        base = inline and tag() or tag.div(class_='wiki-toc')
+        base = tag.div(class_=not inline and 'wiki-toc' or '')
         ol = tag.ol()
         base.append([heading and tag.h4(heading), ol])
 
