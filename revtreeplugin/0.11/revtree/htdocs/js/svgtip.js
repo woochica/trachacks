@@ -8,8 +8,6 @@
  *   <emmanuel.blot@free.fr>
  */
 
-$(document).ready(JT_init);
-
 function JT_init(){
     $('a[@id^=rev]')
     .hover(function(){JT_show(this)},function(){JT_hide(this)})

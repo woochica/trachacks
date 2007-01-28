@@ -9,6 +9,20 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>${rt.title}</title>
+    <script type="text/javascript">
+    function updateLimits() {
+      $('#period').enable($('#limperiod').checked());
+      $('#revmin').enable($('#limrev').checked());
+      $('#revmax').enable($('#limrev').checked());
+    }
+    $(document).ready(function() {
+      $("#limits input[@name='limits']").click(function() { 
+          updateLimits(); 
+          });
+       JT_init();
+       updateLimits(); 
+    });
+    </script>    
   </head>
   <body>
     <div id="ctxtnav"></div>
@@ -25,14 +39,14 @@
                 <label for="branch">Branch</label>
                 <select id="branch" name="branch">
                   <option py:for="br in rt.branches" value="${br.name}" 
-                          selected="${br.name == rt.branch or None}">${br.label}</option>
+                          selected="${br.name == rt.branch and 'selected' or None}">${br.label}</option>
                 </select>
               </div>
               <div class="field">
                 <label for="author">Author</label>
                 <select id="author" name="author">
                   <option py:for="a in rt.authors" value="${a.name}"
-                          selected="${a.name == rt.author or None}">${a.label}</option>
+                          selected="${a.name == rt.author and 'selected' or None}">${a.label}</option>
                 </select>
               </div>
             </fieldset>
@@ -44,11 +58,11 @@
               </legend>
               <div class="field">
                 <input type="radio" id="limperiod" name="limits" value="limperiod" 
-                       checked="${rt.limits == 'limperiod' or None}" />
+                       checked="${rt.limits == 'limperiod' and 'checked' or None}" />
                 <label for="period">Show last </label>
                 <select id="period" name="period">
                   <option py:for="prd in rt.periods" value="${prd.name}"
-                          selected="${prd.name == rt.period or None}">${prd.label}</option>
+                          selected="${prd.name == rt.period and 'selected' or None}">${prd.label}</option>
                 </select>
               </div>
               <div class="field">
@@ -57,12 +71,12 @@
                 <label for="revmin">From </label>
                 <select id="revmin" name="revmin">
                   <option py:for="rev in rt.revisions" value="${rev}"
-                          selected="${rev == rt.revmin or None}">${rev}</option>
+                          selected="${rev == rt.revmin and 'selected' or None}">${rev}</option>
                 </select>
                 <label for="revmax">up to </label>
                 <select id="revmax" name="revmax">
                   <option py:for="rev in rt.revisions" 
-                          selected="${rev == rt.revmax or None}">${rev}</option>
+                          selected="${rev == rt.revmax and 'selected' or None}">${rev}</option>
                 </select>
               </div>
             </fieldset>
@@ -74,7 +88,7 @@
               </legend>
               <div class="field">
                 <input type="checkbox" id="showdel" name="showdel" 
-                       checked="${rt.showdel or None}" />
+                       checked="${rt.showdel and 'checked' or None}" />
                 <label for="showdel">Show deleted branches</label>
               </div>
             </fieldset>
@@ -88,13 +102,13 @@
                 <div>
                   <input type="radio" id="compact" 
                          name="style" value="compact" 
-                         checked="${rt.style == 'compact' or None}" />
+                         checked="${rt.style == 'compact' and 'checked' or None}" />
                   <label for="compact">Compact</label>
                 </div>
                 <div>
                   <input type="radio" id="timeline" 
                          name="style" value="timeline" 
-                         checked="${rt.style == 'timeline' or None}" />
+                         checked="${rt.style == 'timeline' and 'checked' or None}" />
                   <label for="compact">Timeline</label>
                 </div>
               </div>
@@ -105,19 +119,6 @@
           </div>
         </form>
       </div>
-      <!-- FIXME: use Jquery rather than custom script -->
-      <script type="text/javascript"><![CDATA[
-      var limrev = document.getElementById('limrev');
-      var limperiod = document.getElementById('limperiod');
-      var updateActionFields = function() {
-        enableControl('period', limperiod.checked);
-        enableControl('revmin', limrev.checked);
-        enableControl('revmax', limrev.checked);
-      };
-      addEvent(window, 'load', updateActionFields);
-      addEvent(limperiod, 'click', updateActionFields);
-      addEvent(limrev, 'click', updateActionFields);
-    ]]></script>
       <py:if test="rt.legend">
         <div id="legend">
           ${rt.legend}
