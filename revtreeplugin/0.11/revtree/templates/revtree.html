@@ -1,12 +1,16 @@
 <!DOCTYPE html 
-    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+    PUBLIC "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
+    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" 
       xmlns:xi="http://www.w3.org/2001/XInclude" 
       xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="layout.html" />
   <xi:include href="macros.html" />
   <head>
+    <!-- This document conforms to XHTML + SVG + MathML 
+         However, a tiny issue in Trac (#4614) prevents the validation of
+         the RevtreePlugin documents.
+      -->
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>${rt.title}</title>
     <script type="text/javascript">
@@ -29,7 +33,7 @@
     <div id="content" class="revtree">
       <h1>${rt.title}</h1>
       <div id="settings">
-        <form id="prefs" method="GET" action="">
+        <form id="prefs" method="get" action="">
           <div class="revprops">
             <fieldset id="properties">
               <legend>
@@ -129,8 +133,6 @@
           <p class="message">${rt.errormsg}</p>
         </div>
         <div py:otherwise="" class="svg">
-          <!-- Inline SVG breaks the XHTML 1.0 strict conformance
-             XHTML + SVG + MathML document type does not help ... -->
           ${rt.svg}
         </div>
       </div>

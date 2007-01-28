@@ -150,16 +150,16 @@ class RevtreeModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/revtree(_log)?/?', req.path_info)
+        match = re.match(r'/revtree(_log)?(?:/([^/]+))?', req.path_info)
         if match:
             if match.group(1):
-                req.args['log'] = True
+                req.args['logrev'] = match.group(2)
             return True
 
     def process_request(self, req):
         req.perm.assert_permission('REVTREE_VIEW')
             
-        if req.args.has_key('log'):
+        if req.args.has_key('logrev'):
             return self._process_log(req)
         else:
             return self._process_revtree(req)
@@ -205,7 +205,7 @@ class RevtreeModule(Component):
     def _process_log(self, req):
         """Handle AJAX log requests"""
         try:
-            rev = int(req.args['rev'])
+            rev = int(req.args['logrev'])
             repos = self.env.get_repository(req.authname)
             chgset = repos.get_changeset(rev)
             wikimsg = wiki_to_html(chgset.message, self.env, req, None, 

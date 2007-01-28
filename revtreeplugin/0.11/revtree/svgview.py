@@ -279,12 +279,8 @@ class SvgChangeset(SvgBaseChangeset):
         title.attributes['style'] = 'fill:%s; text-anchor: middle' % \
                                     self._textcolor.rgb()
         widgets.append(title)
-
         g = SVG.group('grp%d' % self._revision, elements=widgets)
-        
-        link = "%s/revtree_log/?rev=%d&link=%s/changeset/%d" \
-            % (self._parent.urlbase(), self._revision, 
-               self._parent.urlbase(), self._revision)
+        link = "%s/changeset/%d" % (self._parent.urlbase(), self._revision)
         self._link = SVG.link(link, elements=[g])
         if self._revision:
             self._link.attributes['id'] = 'rev%d' % self._revision
@@ -761,7 +757,10 @@ class SvgArrows(object):
         self._markers = {}
         
     def _get_name(self, color, head):
-        return 'arrow_%s_%s' % (head and 'head' or 'tail', color)
+        fcolor = str(color)
+        if fcolor.startswith('#'):
+            fcolor = fcolor[1:]
+        return 'arrow_%s_%s' % (head and 'head' or 'tail', fcolor)
         
     def create(self, color, head):
         name = self._get_name(color, head)
@@ -966,7 +965,8 @@ class SvgRevtree(object):
     def render(self, scale=1, width=None, height=None, linkparent=False):
         """Render the revision tree"""
         self._svg = SVG.svg((0,0,self._extent[0],self._extent[1]),
-                            scale*self._extent[0], scale*self._extent[1])
+                            scale*self._extent[0], scale*self._extent[1],
+                            True)
         self._arrows.render()
         # FIXME: only two levels for enhancers (background, foreground)
         map(lambda e: e.render(self._addons[e], 1), self.enhancers)

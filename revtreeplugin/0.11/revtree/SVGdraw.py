@@ -56,7 +56,10 @@ This module was created using the SVG specification of www.w3c.org and the
 O'Reilly (www.oreilly.com) python books as information sources. A svg viewer
 is available from www.adobe.com"""
 
-__version__="1.0"
+# Note: Emmanuel Blot, 2007:
+# The version has been updated to reflect the small changes made to
+# support SVG 1.1 and the hack to support inline SVG (in XHTML host document)
+__version__="1.0a"
 
 # there are two possibilities to generate svg:
 # via a dom implementation and directly using <element>text</element> strings
@@ -252,9 +255,9 @@ class SVGelement:
         """
         self.elements.append(SVGelement)
 
-    def toXml(self,level,f):
+    def toXml(self,level,f,prefix=''):
         f.write('\t'*level)
-        f.write('<'+self.type)
+        f.write('<'+prefix+self.type)
         for attkey in self.attributes.keys():
             f.write(' '+_escape(str(attkey))+'='+_quoteattr(str(self.attributes[attkey])))
         if self.namespace:
@@ -268,7 +271,7 @@ class SVGelement:
         if self.elements:
             f.write('\n')
         for element in self.elements:
-            element.toXml(level+1,f)
+            element.toXml(level+1,f,prefix)
         if self.cdata:
             f.write('\n'+'\t'*(level+1)+'<![CDATA[')
             for line in self.cdata.splitlines():
@@ -280,11 +283,11 @@ class SVGelement:
             else:                         #If the text is a spannedtext class
                 f.write(str(self.text))
         if self.elements:
-            f.write('\t'*level+'</'+self.type+'>\n')
+            f.write('\t'*level+'</'+prefix+self.type+'>\n')
         elif self.text: 
-            f.write('</'+self.type+'>\n')
+            f.write('</'+prefix+self.type+'>\n')
         elif self.cdata:
-            f.write('\t'*level+'</'+self.type+'>\n')
+            f.write('\t'*level+'</'+prefix+self.type+'>\n')
         else:
             f.write('/>\n')
             
@@ -870,17 +873,22 @@ class svg(SVGelement):
     d.setSVG(s)
     d.toXml()
     """
-    def __init__(self,viewBox=None, width=None, height=None,**args):
+    def __init__(self,viewBox=None, width=None, height=None,
+                 svgns=None,**args):
         SVGelement.__init__(self,'svg',**args)
+        self._svgns = svgns
         if viewBox<>None:
             self.attributes['viewBox']=_viewboxlist(viewBox)
         if width<>None:
             self.attributes['width']=width
         if height<>None:
             self.attributes['height']=height
-        #self.namespace="http://www.w3.org/2000/svg"
-        self.namespace = { 'xmlns': "http://www.w3.org/2000/svg",
+        ns = svgns and 'xmlns:svg' or 'xmlns'
+        self.namespace = { ns: "http://www.w3.org/2000/svg",
                            'xmlns:xlink': "http://www.w3.org/1999/xlink" }
+                           
+    def toXml(self,level,f):
+        SVGelement.toXml(self,level,f,self._svgns and 'svg:' or '')
         
 class drawing:
     """d=drawing()

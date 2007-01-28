@@ -5,23 +5,22 @@
  * JTip is built on top of the very light weight jquery library.
  *
  * Badly hacked & tweaked to support XHTML/XML and SVG for the RevtreePlugin
- *   <emmanuel.blot@free.fr>
+ * by Emmanuel Blot <emmanuel.blot@free.fr> 2006-2007
  */
 
 function JT_init(){
-    $('a[@id^=rev]')
-    .hover(function(){JT_show(this)},function(){JT_hide(this)})
-      .click(function(){return false});     
+  $('a[@id^=rev]').hover(function(){JT_show(this)},function(){JT_hide(this)});
 }
 
 function JT_hide(object) {
-   $('#JT').remove()
+  $('#JT').remove()
 }
 
 function JT_show(object) {
   var href = 'href';
   if (! jQuery.browser.opera) { href = 'xlink:' + href; }
   var url = object.getAttribute(href);
+  var logurl = url.replace(/\/changeset\//, '/revtree_log/');
   var id = object.getAttribute('id');
   var title = id.replace(/^rev/, 'Changeset ');
   var box = getSvgPosition(id);
@@ -33,10 +32,6 @@ function JT_show(object) {
   var queryString = url.replace(/^[^\?]+\??/,'');
   var params = parseQuery( queryString );
   if(params['width'] === undefined){params['width'] = 250};
-  if(params['link'] !== undefined){     
-  $(object).bind('click',function(){window.location = params['link']});
-  //$(object).css('cursor','pointer');
-  }
     
   if(hasArea>((params['width']*1)+box.w)){
      var arrowOffset = box.w + 11;
@@ -72,12 +67,13 @@ function JT_show(object) {
 
   document.getElementsByTagName('body')[0].appendChild(d0);
 
-  // netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
   $('#JT').show();
-  $('#JT_copy').load(url);
+  $('#JT_copy').load(logurl);
 }
 
 function getSvgPosition(objectId) {
+   // The following loop could be simplified to use JQuery
+   // JQuery has some trouble with XML documents for now
    var svg = document.getElementsByTagName('svg')[0];
    var anodes = svg.getElementsByTagName('a');
    var object;
@@ -90,7 +86,7 @@ function getSvgPosition(objectId) {
    var cnodes = object.childNodes
    var elem;
 	for ( var n = 0; n < cnodes.length; n++ ) {
-      if ( cnodes[n].tagName == "g" ) {
+      if ( cnodes[n].tagName == "svg:g" ) {
          elem = cnodes[n]
          break;
       } 
