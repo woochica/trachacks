@@ -19,6 +19,7 @@ from datetime import datetime
 from revtree import EmptyRangeError, IRevtreeOptimizer
 from trac.core import *
 from trac.util.datefmt import utc
+from trac.util.text import to_unicode
 from trac.versioncontrol import Node, Changeset
 
 __all__ = ['Repository']
@@ -63,7 +64,8 @@ class BranchChangeset(object):
         
     def prop(self, prop):
         self._load_properties()
-        return self.properties.has_key(prop) and self.properties[prop] or ''
+        uprop = to_unicode(prop)
+        return self.properties.has_key(uprop) and self.properties[uprop] or ''
             
     def props(self, majtype=None):
         self._load_properties()
@@ -268,11 +270,8 @@ class Repository(object):
         
     def get_revision_properties(self, revision):
         """Returns the revision properties"""
-        props = {}
         changeset = self._crepos.get_changeset(revision)
-        for name, value, flag, html in changeset.get_properties():
-            props[name] = value
-        return props
+        return changeset.get_properties()
                                            
     def find_node(self, path, rev):
         node = self._crepos.get_node(path, rev)
