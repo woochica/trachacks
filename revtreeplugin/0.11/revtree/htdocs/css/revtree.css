@@ -4,6 +4,11 @@ div.revtree div#legend {
 div.revtree div#errormsg {
  border: solid red 2px;
  background-color: #fcc;
+ margin-left: 2ex;
+ margin-right: 2ex;
+}
+div.revtree p.message {
+   padding-left: 1ex;
 }
 div.revprops {
  padding-left: 2ex;
@@ -24,7 +29,7 @@ div.revprops span.legend {
 }
 #treeoptions label {
    margin-top: 0;
-   padding-left: 3ex;
+   padding-left: 1ex;
    text-align: right;
 }
 #treestyle {

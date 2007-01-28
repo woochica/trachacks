@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevtreeEnhancers'
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 setup (
     name = PACKAGE,
@@ -26,12 +26,12 @@ setup (
     license='BSD', 
     url='http://trac-hacks.org/wiki/RevtreePlugin/LogEnhancer',
     keywords = "trac revision svg graphical tree browser log",
-    install_requires = [ 'TracRevtreePlugin > 0.4.3', 
-                         'TracRevtreePlugin < 0.5 '],
+    install_requires = [ 'TracRevtreePlugin >= 0.5dev', 
+                         'TracRevtreePlugin < 0.6 '],
     packages = find_packages(exclude=['ez_setup', '*.tests*']),
     entry_points = {
         'trac.plugins': [
-            'revtree.logenhancer = logenhancer'
+            'logenhancer = logenhancer'
         ]
     }
 )

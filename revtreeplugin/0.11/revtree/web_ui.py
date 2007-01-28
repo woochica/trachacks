@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -16,11 +16,12 @@ import re
 import os
 import time
 
+from genshi.core import Markup
 from revtree.api import EmptyRangeError, RevtreeSystem
 from revtree.model import Repository
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.util import Markup, TracError
+from trac.util import TracError
 from trac.util.datefmt import format_datetime, pretty_timedelta
 from trac.web import IRequestHandler
 from trac.web.chrome import add_stylesheet, add_script, \
@@ -28,66 +29,72 @@ from trac.web.chrome import add_stylesheet, add_script, \
 from trac.web.href import Href
 from trac.wiki import wiki_to_html, WikiSystem
 
+__all__ = ['RevtreeModule']
 
 class RevtreeStore(object):
     """User revtree properties"""
     
+    FIELDS = ( 'revmin', 'revmax', 'period', 'branch', 'author',
+               'limits', 'showdel', 'style' )
+    
     def __init__(self, env, authname, revspan, timebase, style):
         """Initialize the instance with default values"""
         self.env = env
-        self.fields = self.get_fields()
         self.values = {}
-        self.anybranch = 'All'
-        self.anyauthor = 'All'
         self.revrange = None
         self.timerange = None
         self.revspan = revspan
-        self.authname = authname
+        self.authname = (authname != 'anonymous') and authname or None
         self.timebase = timebase
         self['revmin'] = str(self.revspan[0])
         self['revmax'] = str(self.revspan[1])
-        self['period'] = 14
+        self['period'] = 31
         self['limits'] = 'limperiod'
-        self['treestyle'] = style
-        self['branch'] = self.anybranch
-        self['author'] = authname or self.anyauthor
-        self['hideterm'] = '1'
+        self['style'] = style
+        self['branch'] = None
+        self['author'] = self.authname
+        self['showdel'] = None
 
-    def get_fields(self):
-        """Returns the sequence of supported fields"""
-        return [ 'revmin', 'revmax', 'period', 'branch', 'author',
-                 'limits', 'hideterm', 'treestyle' ]
+    def __getitem__(self, name):
+        """Getter (dictionary)"""
+        return self.values[name]
+   
+    def __setitem__(self, name, value):
+        """Setter (dictionary)"""
+        self.values[name] = value
         
     def load(self, session):
         """Load user parameters from a previous session"""
-        for field in self.fields:
+        for field in RevtreeStore.FIELDS:
             key = 'revtree.%s' % field
             if session.has_key(key):
                 self[field] = session.get(key, '')
 
     def save(self, session):
         """Store user parameters"""
-        for field in self.fields:
+        for field in RevtreeStore.FIELDS:
             key = 'revtree.%s' % field
             if self[field]:
                 session[key] = self[field]
             else:
                 if session.has_key(key):
                     del session[key]
-
+                    
+    def clear(self, session):
+        """Remove all the revtree data from the user session"""
+        for key in filter(lambda k: k.startswith('revtree'), session.keys()):
+            del session[key]
+        self.env.log.debug('Revtree data removed from user session')
+            
     def populate(self, values):
-        """Populate the revtree from the request"""
-        for name in [name for name in values.keys() if name in self.fields]:
-            genkey = 'any%s' % name
-            if self.__dict__.has_key(genkey):
-                if self.__dict__[genkey] == values.get(name, ''):
-                    self[name] = self.__dict__[genkey]
-                    continue
+        """Populate the store from the request"""
+        for name in filter(lambda v: v in RevtreeStore.FIELDS, values.keys()):
             self[name] = values.get(name, '')
-        for name in [name for name in values.keys() if name[9:] in self.fields
-                     and name.startswith('checkbox_')]:
-            if not values.has_key(name[9:]):
-                self[name[9:]] = '0'
+        # checkboxes need to be postprocessed
+        if values.has_key('showdel') and values['showdel']:
+            self['showdel'] = True
+        else:
+            self['showdel'] = False
 
     def compute_range(self, timebase):
         """Computes the range of revisions to show"""
@@ -99,7 +106,6 @@ class RevtreeStore(object):
             if period:
                 now = timebase
                 self.timerange = (now-period*86400, now)
-                return
 
     def can_be_rendered(self):
         """Reports whether the revtree has enough items to produce a valid 
@@ -109,36 +115,10 @@ class RevtreeStore(object):
         if self.revrange and (self.revrange[0] < self.revrange[1]):
             return True
         return False
-        
-    def get_authors(self):
-        """Returns the list of selected authors, or None if no author filter
-        is selected"""
-        if self.anyauthor in self['author']:
-            return None
-        return [self['author']]
-        #return [a for a in self['author'] if a != self.anyauthor]
-
-    def get_branches(self):
-        """Returns the list of selected branches, or None if no branch filter 
-        is selected"""
-        if self.anybranch in self['branch']:
-            return None
-        return [self['branch']]
-        #return [b for b in self['branch'] if b != self.anybranch]
-        
-    def get_hidetermbranch(self):
-        return int(self['hideterm']) == 1
-        
-    def get_style(self):
-        return self['treestyle']
-        
-    def __getitem__(self, name):
-        """Getter (dictionary)"""
-        return self.values[name]
-
-    def __setitem__(self, name, value):
-        """Setter (dictionnary)"""
-        self.values[name] = value
+                
+    def get_values(self):
+        """Returns a dictionary of the stored values"""
+        return self.values        
 
 
 class RevtreeModule(Component):
@@ -147,9 +127,9 @@ class RevtreeModule(Component):
     implements(IPermissionRequestor, INavigationContributor, \
                IRequestHandler, ITemplateProvider)
                    
-    PERIODS = { 1 : 'day', 2 : '2 days', 3 : '3 days', 7: 'week',
-                14 : 'fortnight', 31 : 'month', 61 : '2 months', 
-                91 : '3 months', 366 : 'year', 0 : 'all' }
+    PERIODS = { 1: 'day', 2: '2 days', 3: '3 days', 5: '5 days', 7:'week',
+                14: 'fortnight', 31: 'month', 61: '2 months', 
+                91: 'quarter', 183: 'semester', 366: 'year', 0: 'all' }
     
     # IPermissionRequestor methods
 
@@ -230,10 +210,7 @@ class RevtreeModule(Component):
             chgset = repos.get_changeset(rev)
             wikimsg = wiki_to_html(chgset.message, self.env, req, None, 
                                    True, False)
-            # FIXME: check if there is a better way to discard ellipsis
-            #        which are not valid in pure XML
-            wikimsg = Markup(wikimsg.replace('...', ''));
-            req.hdf['changeset'] = {
+            data = {
                 'chgset': True,
                 'revision': rev,
                 'time': format_datetime(chgset.date),
@@ -241,7 +218,7 @@ class RevtreeModule(Component):
                 'author': chgset.author or 'anonymous',
                 'message': wikimsg, 
             }
-            return 'revtree_log.cs', 'application/xhtml+xml'
+            return 'revtree_log.html', {'log': data}, 'application/xhtml+xml'
         except Exception, e:
             raise TracError, "Invalid revision log request: %s" % e
         
@@ -256,89 +233,91 @@ class RevtreeModule(Component):
         revstore = RevtreeStore(self.env, req.authname, \
                                 (self.oldest, youngest), 
                                 timebase, self.style)
-        revstore.load(req.session)
-        revstore.populate(req.args)
+        if req.args.has_key('reset') and req.args['reset']:
+            revstore.clear(req.session)
+        else:
+            revstore.load(req.session)
+        if req.args:
+            revstore.populate(req.args)
         revstore.compute_range(timebase)
-
-        # fill in the HDF 
-        for field in revstore.fields:
-            req.hdf['revtree.' + field] = revstore[field]
-        req.hdf['title'] = 'Revision Tree'
-        req.hdf['revtree.periods'] = self._get_periods()
-
-        # add javascript for AJAX tooltips 
-        add_script(req, 'revtree/js/jquery.js')
-        add_script(req, 'revtree/js/svgtip.js')    
-
+        data = revstore.get_values()
+                
         try:
             if not revstore.can_be_rendered():
                 raise EmptyRangeError
-                
             repos = Repository(self.env, req.authname)
             repos.build(self.bcre, revstore.revrange, revstore.timerange)
-
             (branches, authors) = \
                 self._select_parameters(repos, req, revstore)
-                                        
             svgrevtree = RevtreeSystem(self.env).get_revtree(repos)
-            svgrevtree.create(req, revstore.revrange, revstore.get_branches(), 
-                              revstore.get_authors(), 
-                              revstore.get_hidetermbranch(), 
-                              revstore.get_style())
+            if revstore['branch']:
+                sbranches = [revstore['branch']]
+                sbranches.extend(filter(lambda t: t not in sbranches, 
+                                        self.trunks))
+            else:
+                sbranches = None
+            sauthors = revstore['author'] and [revstore['author']] or None
+            svgrevtree.create(req, 
+                              revisions=revstore.revrange, 
+                              branches=sbranches, authors=sauthors, 
+                              hidetermbranch=not revstore['showdel'], 
+                              style=revstore['style'])
             svgrevtree.build()
             svgrevtree.render(self.scale*0.6)
-            req.hdf.set_unescaped('revtree.svg.image', str(svgrevtree))
-            
+            # prevent from escaping the SVG stream
+            data.update({'svg': Markup(svgrevtree)})
             # create and order the drop-down list content, starting with the
             # global values 
             branches = repos.branches().keys()
             authors = repos.authors()
-            branches.sort()
-            authors.sort()
-            # prepend the trunks to the selected branches
-            for b in self.trunks:
-                if b not in branches:
-                    branches.insert(0, b)
-            branches.insert(0, revstore.anybranch)
-            authors.insert(0, revstore.anyauthor)
-            
             # save the user parameters only if the tree can be rendered
             revstore.save(req.session)
-            
         except EmptyRangeError:
-            req.hdf['revtree.errormsg'] = "Selected filters cannot render" \
-                                          " a revision tree"
+            data.update({'errormsg': \
+                         "Selected filters cannot render a revision tree"})
             # restore default parameters
             repos = Repository(self.env, req.authname)
             repos.build(self.bcre, revrange=(self.oldest, youngest))
             branches = repos.branches().keys()
-            branches.sort()
-            branches.reverse()
             authors = repos.authors()
-            authors.sort()
             
         revrange = repos.revision_range()
         revisions = self._get_ui_revisions((self.oldest, youngest), revrange)
+        branches.sort()
+        # prepend the trunks to the selected branches
+        for b in filter(lambda t: t not in branches, self.trunks):
+                branches.insert(0, b)
+        branches = filter(None, branches)
+        branches.insert(0, '')
+        authors.sort()
+        authors = filter(None, authors)
+        authors.insert(0, '')
 
-        # fill in the HDF 
-        req.hdf['revtree.revmin'] = revrange[0]
-        req.hdf['revtree.revmax'] = revrange[1]
-        req.hdf['revtree.revisions'] = revisions
-        req.hdf['revtree.branches'] = branches
-        req.hdf['revtree.authors'] = authors
+        dauthors = [dict(name=a, label=a or 'All') for a in authors]
+        dbranches = [dict(name=b, label=b or 'All') for b in branches]
+        
+        data.update({
+            'title': 'Revision Tree',
+            'periods': self._get_periods(),
+            'revmin': str(revrange[0]),
+            'revmax': str(revrange[1]),
+            'revisions': revisions,
+            'branches': dbranches,
+            'authors': dauthors
+        })
                                                                                
+        # add javascript for AJAX tooltips 
+        add_script(req, 'revtree/js/svgtip.js')
+        # add custom stylesheet
         add_stylesheet(req, 'revtree/css/revtree.css')
-        return 'revtree.cs', 'application/xhtml+xml'
+        return 'revtree.html', {'rt': data}, 'application/xhtml+xml'
 
     def _get_periods(self):
         """Generates a list of periods"""
-        values = RevtreeModule.PERIODS
-        periods = []
-        days = values.keys()
+        periods = RevtreeModule.PERIODS
+        days = periods.keys()
         days.sort()
-        for d in days:
-            periods.append( { 'value' : d, 'label' : values[d] } )
-        return periods
+        return [dict(name=str(d), label=periods[d]) for d in days]
 
     def _get_ui_revisions(self, revspan, revrange):
         """Generates the list of displayable revisions"""
@@ -349,7 +328,10 @@ class RevtreeModule(Component):
         revs.reverse()
         revisions = []
         for rev in revs:
-            if len(revisions) > 40:
+            if len(revisions) > 50:
+                if int(rev)%100 and (rev not in revrange):
+                    continue
+            elif len(revisions) > 30:
                 if int(rev)%20 and (rev not in revrange):
                     continue
             elif len(revisions) > 10:
@@ -371,12 +353,8 @@ class RevtreeModule(Component):
         branches = []
         authors = repos.authors()
         vbranches = None
-        brfilter = None
-        if revstore['branch'] != revstore.anybranch:
-            brfilter = revstore['branch']
-        authfilter = None
-        if revstore['author'] != revstore.anyauthor:
-            authfilter = revstore['author']
+        brfilter = revstore['branch']
+        authfilter = revstore['author']
         for b in brnames:
             if brfilter and brfilter != b:
                 continue

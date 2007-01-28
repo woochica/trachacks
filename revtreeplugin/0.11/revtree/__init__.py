@@ -11,5 +11,4 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
 
-from revtree.api import EmptyRangeError, IRevtreeEnhancer, \
-                        IRevtreeOptimizer, RevtreeSystem
+from revtree.api import *

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -19,8 +19,10 @@ import md5
 from colorsys import rgb_to_hsv, hsv_to_rgb
 from math import sqrt
 from random import randrange, seed
-from revtree import EmptyRangeError, IRevtreeEnhancer, IRevtreeOptimizer
+from revtree.api import *
 from trac.core import *
+
+__all__ = ['SvgColor', 'SvgGroup', 'SvgOperation', 'SvgRevtree']
 
 UNIT = 25
 SQRT2=sqrt(2)
@@ -88,7 +90,7 @@ class SvgColor(object):
         self._color = SvgColor.str2col(string)
         
     def str2col(string):
-        if string[0] is '#':
+        if string.startswith('#'):
             string = string[1:]
             if len(string) == 6:
                 r = int(string[0:2], 16)

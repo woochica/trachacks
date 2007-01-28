@@ -1,0 +1,138 @@
+<!DOCTYPE html 
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:xi="http://www.w3.org/2001/XInclude" 
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>${rt.title}</title>
+  </head>
+  <body>
+    <div id="ctxtnav"></div>
+    <div id="content" class="revtree">
+      <h1>${rt.title}</h1>
+      <div id="settings">
+        <form id="prefs" method="GET" action="">
+          <div class="revprops">
+            <fieldset id="properties">
+              <legend>
+                <span class="legend">Filters</span>
+              </legend>
+              <div class="field">
+                <label for="branch">Branch</label>
+                <select id="branch" name="branch">
+                  <option py:for="br in rt.branches" value="${br.name}" 
+                          selected="${br.name == rt.branch or None}">${br.label}</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="author">Author</label>
+                <select id="author" name="author">
+                  <option py:for="a in rt.authors" value="${a.name}"
+                          selected="${a.name == rt.author or None}">${a.label}</option>
+                </select>
+              </div>
+            </fieldset>
+          </div>
+          <div class="revprops">
+            <fieldset id="limits">
+              <legend>
+                <span class="legend">Revisions</span>
+              </legend>
+              <div class="field">
+                <input type="radio" id="limperiod" name="limits" value="limperiod" 
+                       checked="${rt.limits == 'limperiod' or None}" />
+                <label for="period">Show last </label>
+                <select id="period" name="period">
+                  <option py:for="prd in rt.periods" value="${prd.name}"
+                          selected="${prd.name == rt.period or None}">${prd.label}</option>
+                </select>
+              </div>
+              <div class="field">
+                <input type="radio" id="limrev" name="limits" value="limrev" 
+                       checked="${rt.limits == 'limrev' or None}" />
+                <label for="revmin">From </label>
+                <select id="revmin" name="revmin">
+                  <option py:for="rev in rt.revisions" value="${rev}"
+                          selected="${rev == rt.revmin or None}">${rev}</option>
+                </select>
+                <label for="revmax">up to </label>
+                <select id="revmax" name="revmax">
+                  <option py:for="rev in rt.revisions" 
+                          selected="${rev == rt.revmax or None}">${rev}</option>
+                </select>
+              </div>
+            </fieldset>
+          </div>
+          <div class="revprops" id="treeoptions">
+            <fieldset>
+              <legend>
+                <span class="legend">Options</span>
+              </legend>
+              <div class="field">
+                <input type="checkbox" id="showdel" name="showdel" 
+                       checked="${rt.showdel or None}" />
+                <label for="showdel">Show deleted branches</label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="revprops" id="treestyle">
+            <fieldset>
+              <legend>
+                <span class="legend">Style</span>
+              </legend>
+              <div class="field">
+                <div>
+                  <input type="radio" id="compact" 
+                         name="style" value="compact" 
+                         checked="${rt.style == 'compact' or None}" />
+                  <label for="compact">Compact</label>
+                </div>
+                <div>
+                  <input type="radio" id="timeline" 
+                         name="style" value="timeline" 
+                         checked="${rt.style == 'timeline' or None}" />
+                  <label for="compact">Timeline</label>
+                </div>
+              </div>
+              <div class="buttons">
+                <input type="submit" value="Update" />
+              </div>
+            </fieldset>
+          </div>
+        </form>
+      </div>
+      <!-- FIXME: use Jquery rather than custom script -->
+      <script type="text/javascript"><![CDATA[
+      var limrev = document.getElementById('limrev');
+      var limperiod = document.getElementById('limperiod');
+      var updateActionFields = function() {
+        enableControl('period', limperiod.checked);
+        enableControl('revmin', limrev.checked);
+        enableControl('revmax', limrev.checked);
+      };
+      addEvent(window, 'load', updateActionFields);
+      addEvent(limperiod, 'click', updateActionFields);
+      addEvent(limrev, 'click', updateActionFields);
+    ]]></script>
+      <py:if test="rt.legend">
+        <div id="legend">
+          ${rt.legend}
+        </div>
+      </py:if>
+      <div py:choose="">
+        <div py:when="rt.errormsg" id="errormsg" class="error">
+          <p class="message">${rt.errormsg}</p>
+        </div>
+        <div py:otherwise="" class="svg">
+          <!-- Inline SVG breaks the XHTML 1.0 strict conformance
+             XHTML + SVG + MathML document type does not help ... -->
+          ${rt.svg}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

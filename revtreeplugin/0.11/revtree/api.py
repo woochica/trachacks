@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -15,6 +15,8 @@
 from trac.config import ExtensionOption
 from trac.core import *
 
+__all__ = ['IRevtreeEnhancer', 'IRevtreeOptimizer', 
+           'EmptyRangeError', 'RevtreeSystem']
 
 class IRevtreeEnhancer(Interface):
     """Provide graphical enhancements to a revision tree"""
