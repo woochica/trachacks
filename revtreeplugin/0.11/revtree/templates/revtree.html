@@ -128,13 +128,13 @@
           ${rt.legend}
         </div>
       </py:if>
-      <div py:choose="">
-        <div py:when="rt.errormsg" id="errormsg" class="error">
-          <p class="message">${rt.errormsg}</p>
-        </div>
-        <div py:otherwise="" class="svg">
-          ${rt.svg}
-        </div>
+      <div py:choose="" py:strip="">
+      <div py:when="rt.errormsg" id="errormsg" class="error">
+        <p class="message">${rt.errormsg}</p>
+      </div>
+      <div py:otherwise="" class="svg">
+        ${rt.svg}
+      </div>
       </div>
     </div>
   </body>

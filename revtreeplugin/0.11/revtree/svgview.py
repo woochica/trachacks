@@ -42,11 +42,6 @@ def textwidth(text):
     length = text and len(text) or 0
     return (1+length)*(UNIT/2.5)
 
-def plink(url):
-    """Create a javascript link to replace the parent window content"""
-    return "javascript:window.parent.location.href='%s'" % url
-
-
 class SvgColor(object):
     """Helpers for color management (conversion, generation, ...)"""
     
@@ -336,8 +331,8 @@ class SvgBranchHeader(object):
         text.attributes['style'] = 'text-anchor: middle'
         name = self._title.encode('ascii', 'ignore').replace('/','')
         g = SVG.group('grp%s' % name, elements=[rect, text])
-        self._link = SVG.link(plink('%s/browser/%s' % \
-                              (self._parent.urlbase(), self._title)), 
+        self._link = SVG.link('%s/browser/%s' % \
+                              (self._parent.urlbase(), self._title), 
                               elements=[g])
         
     def render(self):

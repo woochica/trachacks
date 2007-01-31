@@ -1,6 +1,6 @@
 <html xmlns:py="http://genshi.edgewall.org/">
   <div id="revtree">
-    <dl py:if="log.chgset" id="overview">
+    <dl py:if="log.chgset">
       <dt class="property time">Timestamp:</dt>
       <dd class="time">${log.time}
         (<span py:replace="log.age">less than one hour</span>)</dd>
