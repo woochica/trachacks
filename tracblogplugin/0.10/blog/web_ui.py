@@ -58,6 +58,12 @@ def bool_val(val):
         return val.strip().lower() in BOOLS_TRUE
     return None
 
+def date_crop(year, month, day):
+    """Makes sure that the day passed in is avalid for the month and
+       year"""
+    _, numdays = calendar.monthrange(year, month)
+    return (day <= numdays) and day or numdays
+
 
 class NoFloatFormatter(Formatter):
     """A modified formatter that inserts macro_no_float=1 into the HDF."""
@@ -379,7 +385,8 @@ class TracBlogPlugin(Component):
         month = self._choose_value('month', req, None, convert=int) or \
                 now.month
         day = self._choose_value('day', req, None, convert=int) or \
-              now.day 
+              now.day
+        day = date_crop(year, month, day)
         baseday = datetime.datetime(year, month, day)
         week_day = self.env.config.get('blog', 'first_week_day', 'SUNDAY')
         first_day = getattr(calendar, week_day.upper())
@@ -539,11 +546,10 @@ class TracBlogPlugin(Component):
                 month = month or now.month
             if month:
                 year = year or now.year
-            days_in_month = calendar.monthrange(year, month or 12)[1]
-            start = datetime.datetime(year, month or 12, 
-                                      day or days_in_month)
+            day = date_crop(year, month or 12, day or 1)
+            start = datetime.datetime(year, month or 12, day)
             start += oneday
-            end = datetime.datetime(year, month or 1, day or 1)
+            end = datetime.datetime(year, month or 1, day)
             start = time.mktime(start.timetuple())
             end = time.mktime(end.timetuple())
         else:
