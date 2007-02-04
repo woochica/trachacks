@@ -153,18 +153,9 @@ class TracRepoSearchPlugin(Component):
                             'You need to set "repo-search.indexer".')
 
         db = self.env.get_db_cnx()
-
-        def logging_filter(context, stream):
-            for transition, uri in stream:
-                self.env.log.debug('Updating index %s, %s' % (transition, uri))
-                yield transition, uri
-
-        self.framework.update(filter=logging_filter)
-        self.framework.sync()
-
         to_unicode = Mimeview(self.env).to_unicode
 
-        self.env.log.debug(query)
+        self._update_index()
 
         for hit in self.framework.search(' '.join(query)):
             node = self.repo.get_node(hit.uri)
@@ -189,3 +180,13 @@ class TracRepoSearchPlugin(Component):
                 yield (self.env.href.browser(node.path) + (found and '#L%i' % found or ''),
                        node.path, change.date, change.author,
                        shorten_result(content, query))
+
+    # Internal methods
+    def _update_index(self):
+        def logging_filter(context, stream):
+            for transition, uri in stream:
+                self.env.log.debug('Updating index %s, %s' % (transition, uri))
+                yield transition, uri
+
+        self.framework.update(filter=logging_filter)
+        self.framework.sync()

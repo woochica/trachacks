@@ -9,13 +9,6 @@ from trac.env import Environment
 from tracreposearch import RepoSource, TracRepoSearchPlugin
 
 e = Environment(sys.argv[1])
-rs = TracRepoSearchPlugin(e)
-
-def logger(context, stream):
-    for transition, uri in stream:
-        print transition, uri
-        yield transition, uri
-
-
-rs.framework.update(filter=logger)
-rs.framework.close()
+s = TracRepoSearchPlugin(e)
+s._update_index()
+s.framework.close()
