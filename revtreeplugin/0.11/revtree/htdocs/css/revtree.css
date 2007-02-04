@@ -16,11 +16,11 @@ div.revprops {
  margin-left: 1ex;
  white-space: nowrap;
  float: left;
- border-right: solid 1px #333;
+ border-right: inset 1px #333;
 }
 div.revprops span.legend {
    /*Seemms that legend tag cannot be selected, use span instead*/
-	font-weight:bold;
+	font-weight: bold;
 }
 #treeoptions {
    white-space: normal;
@@ -50,8 +50,9 @@ div.revprops span.legend {
  margin-top: 2em;
  float: left;
 }
-div.svg {
+.svg {
  float: none;
+ padding-top: 1em;
  margin-left: 4ex;
 }
 div#revtree {

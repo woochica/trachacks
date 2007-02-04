@@ -264,8 +264,12 @@ class RevtreeModule(Component):
                               style=revstore['style'])
             svgrevtree.build()
             svgrevtree.render(self.scale*0.6)
-            # prevent from escaping the SVG stream
-            data.update({'svg': Markup(svgrevtree)})
+            style = req.href.chrome('revtree/css/revtree.css')
+            svgstyle = '<?xml-stylesheet href="%s" type="text/css"?>' % style
+            data.update({
+                'svg': Markup(svgrevtree),
+                'svgstyle': Markup(svgstyle)
+            })
             # create and order the drop-down list content, starting with the
             # global values 
             branches = repos.branches().keys()
