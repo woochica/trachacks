@@ -312,7 +312,7 @@ class TracBlogPlugin(Component):
                 for i, t in enumerate(pagetags[:3]):
                     d = { 'link' : t,
                           'name' : t,
-                          'last' : i == 2,
+                          'last' : i == (len(pagetags[:3]) - 1),
                         }
                     tagtags.append(d)
                     continue
