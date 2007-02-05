@@ -7,7 +7,7 @@
    <title><?cs var:title ?></title><?cs
   /if ?>
   <link><?cs var:base_host ?><?cs var:trac.href.blog ?></link>
-  <description>Trac Blog</description>
+  <description><?cs var:project.descr ?></description>
   <language>en-us</language>
   <generator>Trac v<?cs var:trac.version ?></generator><?cs
   if:chrome.logo.src ?>
