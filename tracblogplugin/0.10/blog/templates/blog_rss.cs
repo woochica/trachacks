@@ -38,7 +38,7 @@
             <?cs var:tag.name ?>&lt;/a&gt;<?cs
           if ! tag.last ?>,<?cs 
           /if ?><?cs
-        /each ?><?cs
+        /each ?>&lt;/p&gt;<?cs
       /if ?>
     </description>
    </item><?cs
