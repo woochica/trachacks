@@ -13,7 +13,7 @@ setup(
     description = "Allows the setup of restricted areas with access only for privileged users.",
     license = "BSD",
     keywords = "trac plugin restricted area access",
-    url = "http://dfki.de/~cspurk",
+    url = "http://trac-hacks.org/wiki/RestrictedAreaPlugin",
     classifiers = [
         'Framework :: Trac',
     ],
