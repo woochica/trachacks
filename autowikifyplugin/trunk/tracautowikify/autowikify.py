@@ -56,13 +56,13 @@ class AutoWikify(Component):
     # Internal methods
     def _all_pages(self):
         self.pages = set(WikiSystem(self.env).get_pages())
-        
+
     def _update(self):
         explicitly_wikified = set([p.strip() for p in (self.env.config.get('autowikify', 'explicitly_wikify') or '').split(',') if p.strip()])
         pages = set([p for p in self.pages if len(p) >= self.minimum_length])
         pages.update(self.explicitly_wikify)
         pages.difference_update(self.exclude)
-        pattern = r'\b(?P<autowiki>' + '|'.join(pages) + r')\b'
+        pattern = r'\b(?P<autowiki>' + '|'.join([re.escape(page) for page in pages]) + r')\b'
         self.pages_re = pattern
         WikiSystem(self.env)._compiled_rules = None
 
