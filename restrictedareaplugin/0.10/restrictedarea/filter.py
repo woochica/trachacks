@@ -23,6 +23,9 @@ class RestrictedAreaFilter(Component):
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         for path in self.paths:
+            if req.perm is None:
+                # at least in Trac 0.10.2 req.perm seems to be always None ...
+                raise TracError("To use the RestrictedAreaPlugin you need at least Trac 0.10.3.")
             if req.path_info.startswith(path) and not req.perm.has_permission(self.__action_name):
                 raise HTTPForbidden(to_unicode(PermissionError(self.__action_name)))
         return handler
