@@ -71,22 +71,22 @@ class DiscussionApi(object):
 
         # Populate active group
         if req.args.has_key('group'):
-            group_id = req.args.get('group')
+            group_id = int(req.args.get('group') or 0)
             group = self.get_group(cursor, group_id)
 
         # Populate active forum
         if req.args.has_key('forum'):
-            forum_id = req.args.get('forum')
+            forum_id = int(req.args.get('forum') or 0)
             forum = self.get_forum(cursor, forum_id)
 
         # Populate active topic
         if req.args.has_key('topic'):
-            topic_id = req.args.get('topic')
+            topic_id = int(req.args.get('topic') or 0)
             topic = self.get_topic(cursor, topic_id)
 
         # Populate active topic
         if req.args.has_key('message'):
-            message_id = req.args.get('message')
+            message_id = int(req.args.get('message') or 0)
             message = self.get_message(cursor, message_id)
 
         self.log.debug('message: %s' % message)
@@ -562,7 +562,7 @@ class DiscussionApi(object):
 
                 # Update this topic visit time and save to session.
                 visited[topic['id']] = int(time.time())
-                req.session['visited-topics'] = str(visited)
+                req.session['visited-topics'] = unicode(visited)
 
                 # Mark new topic.
                 if int(topic['time']) > visit_time:
@@ -792,20 +792,20 @@ class DiscussionApi(object):
         return groups
 
     def get_forums(self, req, cursor, order_by = 'subject', desc = False):
-        if not order_by in ('topics', 'replies', 'lastreply', 'lasttopic'):
+        if not order_by in ('topics', 'replies', 'lasttopic', 'lastreply'):
             order_by = 'f.' + order_by
         columns = ('id', 'name', 'author', 'time', 'moderators', 'group',
-          'subject', 'description', 'topics', 'replies', 'lastreply',
-          'lasttopic')
-        sql = "SELECT f.id, f.name, f.author, f.time, f.moderators," \
-          " f.forum_group, f.subject, f.description, tm.topics, tm.replies," \
-          " tm.lastreply, tm.lasttopic FROM forum f LEFT JOIN ( SELECT" \
-          " tf.forum AS forum, topics, lasttopic, replies, lastreply FROM" \
-          " (SELECT COUNT(id) AS topics, MAX(time) AS lasttopic, forum" \
-          " FROM topic GROUP BY forum) tf, (SELECT COUNT(id) AS replies," \
-          " MAX(time) AS lastreply, forum FROM message GROUP BY forum) mf" \
-          " WHERE tf.forum = mf.forum) tm ON f.id = tm.forum ORDER BY " \
-          + order_by + (" ASC", " DESC")[bool(desc)]
+          'subject', 'description', 'topics', 'replies', 'lasttopic',
+          'lastreply')
+        sql = "SELECT f.id, f.name, f.author, f.time, f.moderators, " \
+          "f.forum_group, f.subject, f.description, ta.topics, ta.replies, " \
+          "ta.lasttopic, ta.lastreply FROM forum f LEFT JOIN (SELECT " \
+          "COUNT(t.id) AS topics, MAX(t.time) AS lasttopic, SUM(ma.replies) " \
+          "AS replies, MAX(ma.lastreply) AS lastreply, t.forum AS forum FROM " \
+          " topic t LEFT JOIN (SELECT COUNT(m.id) AS replies, MAX(m.time) AS " \
+          "lastreply, m.topic AS topic FROM message m GROUP BY m.topic) ma ON " \
+          "t.id = ma.topic GROUP BY forum) ta ON f.id = ta.forum ORDER BY " + \
+          order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
         cursor.execute(sql)
         forums = []
@@ -824,7 +824,7 @@ class DiscussionApi(object):
                 row['lasttopic'] = 'No topics'
             if not row['topics']:
                 row['topics'] = 0
-	    if not row['replies']:
+            if not row['replies']:
                 row['replies'] = 0
             row['time'] = format_datetime(row['time'])
             forums.append(row)
@@ -837,7 +837,7 @@ class DiscussionApi(object):
           'replies', 'lastreply')
         sql = "SELECT t.id, t.forum, t.time, t.subject, t.body, t.author," \
           " m.replies, m.lastreply FROM topic t LEFT JOIN (SELECT COUNT(id)" \
-          " AS replies, MAX(time) as lastreply, topic FROM message GROUP BY" \
+          " AS replies, MAX(time) AS lastreply, topic FROM message GROUP BY" \
           " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
           + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql % (forum,))
@@ -927,9 +927,9 @@ class DiscussionApi(object):
             group = '0'
         sql = "INSERT INTO forum (name, author, time, moderators, subject," \
           " description, forum_group) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        self.log.debug(sql % (name, author, str(int(time.time())), moderators,
+        self.log.debug(sql % (name, author, int(time.time()), moderators,
           subject, description, group))
-        cursor.execute(sql, (name, author, str(int(time.time())), moderators,
+        cursor.execute(sql, (name, author, int(time.time()), moderators,
           subject, description, group))
 
     def add_topic(self, cursor, forum, subject, author, body):
