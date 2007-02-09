@@ -28,7 +28,7 @@ setup(
     entry_points= {
         'trac.plugins' : [
          'testManagement=testManagementPlugin.testManager',
-         'manageTestRuns=testManagementPlugin.TestRunManager',
+         'manageTestRuns=testManagementPlugin.testRuns',
          'testRunResults=testManagementPlugin.testResults'
         ]
     },
