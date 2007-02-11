@@ -224,4 +224,4 @@ class XMLRPCSystem(Component):
         version number, second is the minor. Changes to the major version
         indicate API breaking changes, while minor version changes are simple
         additions, bug fixes, etc. """
-        return [0, 1]
+        return [0, 2]

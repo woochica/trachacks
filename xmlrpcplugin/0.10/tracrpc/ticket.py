@@ -5,7 +5,9 @@ from tracrpc.util import to_timestamp
 import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
+from trac.ticket.notification import TicketNotifyEmail
 
+import time
 import pydoc
 import xmlrpclib
 from StringIO import StringIO
@@ -24,8 +26,8 @@ class TicketRPC(Component):
         yield ('TICKET_VIEW', ((list, xmlrpclib.DateTime),), self.getRecentChanges)
         yield ('TICKET_VIEW', ((list, int),), self.getAvailableActions)
         yield ('TICKET_VIEW', ((list, int),), self.get)
-        yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict)), self.create)
-        yield ('TICKET_APPEND', ((list, int, str), (list, int, str, dict)), self.update)
+        yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict), (int, str, str, dict, bool)), self.create)
+        yield ('TICKET_APPEND', ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
         yield ('TICKET_ADMIN', ((None, int),), self.delete)
         yield ('TICKET_VIEW', ((dict, int), (dict, int, int)), self.changeLog)
         yield ('TICKET_VIEW', ((list, int),), self.listAttachments)
@@ -69,7 +71,7 @@ class TicketRPC(Component):
         t = model.Ticket(self.env, id)
         return (t.id, t.time_created, t.time_changed, t.values)
 
-    def create(self, req, summary, description, attributes = {}):
+    def create(self, req, summary, description, attributes = {}, notify=False):
         """ Create a new ticket, returning the ticket ID. """
         t = model.Ticket(self.env)
         t['status'] = 'new'
@@ -79,14 +81,34 @@ class TicketRPC(Component):
         for k, v in attributes.iteritems():
             t[k] = v
         t.insert()
+
+        if notify:
+            try:
+                tn = TicketNotifyEmail(self.env)
+                tn.notify(t, newticket=True)
+            except Exception, e:
+                self.log.exception("Failure sending notification on creation "
+                                   "of ticket #%s: %s" % (t.id, e))
+		
         return t.id
 
-    def update(self, req, id, comment, attributes = {}):
+    def update(self, req, id, comment, attributes = {}, notify=False):
         """ Update a ticket, returning the new ticket in the same form as getTicket(). """
+        now = int(time.time())
+
         t = model.Ticket(self.env, id)
         for k, v in attributes.iteritems():
             t[k] = v
         t.save_changes(req.authname or 'anonymous', comment)
+
+        if notify:
+            try:
+                tn = TicketNotifyEmail(self.env)
+                tn.notify(t, newticket=False, modtime=now)
+            except Exception, e:
+                self.log.exception("Failure sending notification on change of "
+                                   "ticket #%s: %s" % (t.id, e))
+
         return self.get(req, t.id)
 
     def delete(self, req, id):
