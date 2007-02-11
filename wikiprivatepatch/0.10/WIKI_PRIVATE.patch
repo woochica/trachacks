@@ -1,0 +1,97 @@
+diff -uprN trac-0.10.3-vanilla/build/lib/trac/wiki/web_ui.py trac-0.10.3/build/lib/trac/wiki/web_ui.py
+--- trac-0.10.3-vanilla/build/lib/trac/wiki/web_ui.py	2007-02-10 19:41:08.753252250 -0300
++++ trac-0.10.3/build/lib/trac/wiki/web_ui.py	2007-02-10 20:06:28.000000000 -0300
+@@ -73,7 +73,7 @@ class WikiModule(Component):
+     # IPermissionRequestor methods
+ 
+     def get_permission_actions(self):
+-        actions = ['WIKI_CREATE', 'WIKI_DELETE', 'WIKI_MODIFY', 'WIKI_VIEW']
++        actions = ['WIKI_CREATE', 'WIKI_DELETE', 'WIKI_MODIFY', 'WIKI_VIEW', 'WIKI_PRIVATE']
+         return actions + [('WIKI_ADMIN', actions)]
+ 
+     # IRequestHandler methods
+@@ -127,7 +127,11 @@ class WikiModule(Component):
+         elif action == 'history':
+             self._render_history(req, db, page)
+         else:
+-            req.perm.assert_permission('WIKI_VIEW')            
++            req.perm.assert_permission('WIKI_VIEW')
++            match = re.match(r'Private', page.name)
++            if match: 
++            	req.perm.assert_permission('WIKI_PRIVATE')
++
+             format = req.args.get('format')
+             if format:
+                 Mimeview(self.env).send_converted(req, 'text/x-trac-wiki',
+@@ -269,6 +273,11 @@ class WikiModule(Component):
+             raise TracError("Version %s of page %s does not exist" %
+                             (req.args.get('version'), page.name))
+ 
++        match = re.match(r'Private', page.name)
++        if match: 
++	        req.perm.assert_permission('WIKI_PRIVATE')
++
++
+         add_stylesheet(req, 'common/css/diff.css')
+ 
+         self._set_title(req, page, 'diff')
+@@ -396,6 +405,10 @@ class WikiModule(Component):
+         """
+         req.perm.assert_permission('WIKI_VIEW')
+ 
++        match = re.match(r'Private', page.name)
++        if match: 
++	        req.perm.assert_permission('WIKI_PRIVATE')
++
+         if not page.exists:
+             raise TracError, "Page %s does not exist" % page.name
+ 
+diff -uprN trac-0.10.3-vanilla/trac/wiki/web_ui.py trac-0.10.3/trac/wiki/web_ui.py
+--- trac-0.10.3-vanilla/trac/wiki/web_ui.py	2007-02-10 19:41:08.725250500 -0300
++++ trac-0.10.3/trac/wiki/web_ui.py	2007-02-10 20:06:28.860253000 -0300
+@@ -73,7 +73,7 @@ class WikiModule(Component):
+     # IPermissionRequestor methods
+ 
+     def get_permission_actions(self):
+-        actions = ['WIKI_CREATE', 'WIKI_DELETE', 'WIKI_MODIFY', 'WIKI_VIEW']
++        actions = ['WIKI_CREATE', 'WIKI_DELETE', 'WIKI_MODIFY', 'WIKI_VIEW', 'WIKI_PRIVATE']
+         return actions + [('WIKI_ADMIN', actions)]
+ 
+     # IRequestHandler methods
+@@ -127,7 +127,11 @@ class WikiModule(Component):
+         elif action == 'history':
+             self._render_history(req, db, page)
+         else:
+-            req.perm.assert_permission('WIKI_VIEW')            
++            req.perm.assert_permission('WIKI_VIEW')
++            match = re.match(r'Private', page.name)
++            if match: 
++            	req.perm.assert_permission('WIKI_PRIVATE')
++
+             format = req.args.get('format')
+             if format:
+                 Mimeview(self.env).send_converted(req, 'text/x-trac-wiki',
+@@ -269,6 +273,11 @@ class WikiModule(Component):
+             raise TracError("Version %s of page %s does not exist" %
+                             (req.args.get('version'), page.name))
+ 
++        match = re.match(r'Private', page.name)
++        if match: 
++	        req.perm.assert_permission('WIKI_PRIVATE')
++
++
+         add_stylesheet(req, 'common/css/diff.css')
+ 
+         self._set_title(req, page, 'diff')
+@@ -396,6 +405,10 @@ class WikiModule(Component):
+         """
+         req.perm.assert_permission('WIKI_VIEW')
+ 
++        match = re.match(r'Private', page.name)
++        if match: 
++	        req.perm.assert_permission('WIKI_PRIVATE')
++
+         if not page.exists:
+             raise TracError, "Page %s does not exist" % page.name
+ 
+Binary files trac-0.10.3-vanilla/trac/wiki/.web_ui.py.swp and trac-0.10.3/trac/wiki/.web_ui.py.swp differ
