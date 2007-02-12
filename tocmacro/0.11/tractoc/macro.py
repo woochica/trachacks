@@ -24,7 +24,7 @@ def outline_tree(ol, outline, context, active, min_depth, max_depth):
     min_depth = max(1, min_depth)
     previous_depth = min_depth
     
-    stack = [None] * max_depth
+    stack = [None] * (max_depth + 1)
     # stack of (<element for new sublists>, <element for new items>)
     stack[previous_depth] = (None, ol)
     
