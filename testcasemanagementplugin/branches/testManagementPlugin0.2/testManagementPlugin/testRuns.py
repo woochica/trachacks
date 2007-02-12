@@ -126,7 +126,7 @@ class TestRunManager(Component):
                     ticket.populate(req.args)            
                     ticket.values['reporter'] = req.authname #the reporter is whoever is logged in
                     ticket.values['summary'] = "Testrun " + version + " " + milestone + " : " + test.getSummary()
-                    ticket.values['description'] = "Description: \n\n" + test.getDescription() + "\n\nExpected result: \n\n" + test.getExpectedResult()
+                    ticket.values['description'] = "-----------------Test Details----------------- \n\n" + test.getDescription() + "\n\n-----------------Expected result-----------------\n\n" + test.getExpectedResult()
                     ticket.values['type'] = 'testcase'
                     ticket.values['status'] = 'new'
                     ticket.values['action'] = 'create'
