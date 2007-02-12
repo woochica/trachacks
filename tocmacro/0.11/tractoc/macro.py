@@ -39,7 +39,7 @@ def outline_tree(ol, outline, context, active, min_depth, max_depth):
                 new_ol = tag.ol()
                 li.append(new_ol)
                 stack[d+1] = (None, new_ol)
-            href = context.self_href()
+            href = context.resource_href()
             if href.endswith(context.req.path_info):
                 href = ''
             href += '#' + anchor
@@ -167,7 +167,7 @@ class TOCMacro(WikiMacroBase):
                 title = ''
                 if fmt.outline:
                     title = ': ' + fmt.outline[0][2]
-                ol.append((tag.li(tag.a(page, href=ctx.self_href()),
+                ol.append((tag.li(tag.a(page, href=ctx.resource_href()),
                                   Markup(title),
                                   class_= active and 'active' or None)))
         else:
