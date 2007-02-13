@@ -84,6 +84,7 @@ class TestRunManager(Component):
         testcases = req.args.get('testcases')
         version = str( req.args.get('selectedversion'))
         milestone = str( req.args.get('selectedmilestone'))
+        testConfiguration = str( req.args.get('testconfiguration'))
         
         #-----------------------------------ERROR CHECKING ON PARAMETERS--------------------------------------------
         if version == None:
@@ -125,7 +126,7 @@ class TestRunManager(Component):
                     ticket = Ticket(self.env, db=db)
                     ticket.populate(req.args)            
                     ticket.values['reporter'] = req.authname #the reporter is whoever is logged in
-                    ticket.values['summary'] = "TestID: " + test.getId() + " -- " + test.getSummary()
+                    ticket.values['summary'] = "TestID: " + test.getId() + " -- " + testConfiguration
                     ticket.values['description'] = "''''''Test Details:''''''\n\n" + test.getDescription() + "\n\n''''''Expected result:'''''' \n\n" + test.getExpectedResult()
                     ticket.values['type'] = 'testcase'
                     ticket.values['status'] = 'new'

@@ -7,6 +7,14 @@
             <div id="createNewRun">
                 <table>
                     <tr>
+                        <td>   
+                            <fieldset>
+                                <label>Enter a test configuration keyword.  This keyword can be used to differentiate between test runs.  An example would be internal versus and external client test configuration</label><br/>
+                                <input type="text" name="testconfiguration"/>
+                            </fieldset>
+                        </td>
+                    </tr>
+                    <tr>
                         <td>
                             <fieldset>
                                 <legend>REQUIRED FIELD</legend>
