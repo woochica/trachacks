@@ -9,8 +9,9 @@
                     <tr>
                         <td>   
                             <fieldset>
-                                <label>Enter a test configuration keyword.  This keyword can be used to differentiate between test runs.  An example would be internal versus and external client test configuration</label><br/>
+                                <label>Enter a test configuration keyword.  This keyword can be used to differentiate between test runs.  An example would be internal versus an external client test configuration.  This is not a required field</label><br/>
                                 <input type="text" name="testconfiguration"/>
+                                <br/>
                             </fieldset>
                         </td>
                     </tr>
@@ -58,20 +59,26 @@
                     </tr>
                     <tr>
                         <td>
-                            <label><b>Select Templates to use:</b></label><br/>                    
-                                <select name="testtemplates" cols="10" MULTIPLE size="10">
-                                     <?cs each:template = testcase.run.testtemplates ?>
-                                         <option value="<?cs var:template ?>"><?cs var:template ?></option>
-                                    <?cs /each ?>
-                                </select>
-                        </td>
-                        <td>
-                            <label><b>Select Additional Testcases:</b></label><br/>                    
-                                <select name="testcases" cols="10" MULTIPLE size="10">
-                                     <?cs each:test = testcase.run.testcases ?>
-                                         <option value="<?cs var:test ?>"><?cs var:test ?></option>
-                                    <?cs /each ?>
-                                </select>
+                            <table>
+                                <th>Select Templates</th>
+                                <th>Select Additional Tests</th>
+                                <tr>
+                                    <td>
+                                        <select name="testtemplates" cols="10" MULTIPLE size="10">
+                                            <?cs each:template = testcase.run.testtemplates ?>
+                                                <option value="<?cs var:template ?>"><?cs var:template ?></option>
+                                            <?cs /each ?>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="testcases" cols="10" MULTIPLE size="10">
+                                            <?cs each:test = testcase.run.testcases ?>
+                                                <option value="<?cs var:test ?>"><?cs var:test ?></option>
+                                            <?cs /each ?>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                 </table>
