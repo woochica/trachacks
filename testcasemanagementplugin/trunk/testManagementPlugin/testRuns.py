@@ -125,7 +125,7 @@ class TestRunManager(Component):
                     ticket = Ticket(self.env, db=db)
                     ticket.populate(req.args)            
                     ticket.values['reporter'] = req.authname #the reporter is whoever is logged in
-                    ticket.values['summary'] = "Testrun " + version + " " + milestone + " : " + test.getSummary()
+                    ticket.values['summary'] = "TestID: " + test.getId() + " -- " + test.getSummary()
                     ticket.values['description'] = "''''''Test Details:''''''\n\n" + test.getDescription() + "\n\n''''''Expected result:'''''' \n\n" + test.getExpectedResult()
                     ticket.values['type'] = 'testcase'
                     ticket.values['status'] = 'new'
