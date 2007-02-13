@@ -1,0 +1,25 @@
+
+.scrum td, .scrum td.active { padding: 0.2em 0; }
+
+.scrum td a { width: 100%; display: block; border: 0; }
+
+.scrum a.color1 { background: #fdc; color: #a22;
+	border: 1px solid #e88;  border-bottom: 5px solid #e88; }
+.scrum a.color2 { background: #ffb; color: #880;
+	border: 1px solid #eea;  border-bottom: 5px solid #eea; }
+.scrum a.color3 { background: #fbfbfb; color: #444; 
+	border: 1px solid #ddd;  border-bottom: 5px solid #ddd; }
+.scrum a.color4 { background: #e7ffff; color: #099;
+	border: 1px solid #cee;  border-bottom: 5px solid #cee; }
+.scrum a.color5 { background: #e7eeff; color: #469;
+	border: 1px solid #cde;  border-bottom: 5px solid #cde; }
+.scrum a.color6 { background: #f0f0f0; color: #888;
+	border: 1px solid #ddd;  border-bottom: 5px solid #ddd; }
+
+.scrum a.color1:hover { background: #fdc; color: #a22 }
+.scrum a.color2:hover { background: #ffb; color: #880 }
+.scrum a.color3:hover { background: #fbfbfb; color: #444 }
+.scrum a.color4:hover { background: #e7ffff; color: #099 }
+.scrum a.color5:hover { background: #e7eeff; color: #469 }
+.scrum a.color6:hover { background: #f0f0f0; color: #888 }
+
