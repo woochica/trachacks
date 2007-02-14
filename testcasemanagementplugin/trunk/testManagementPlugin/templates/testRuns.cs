@@ -59,7 +59,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <table>
+                            <table cellpadding="3" cellspacing="3" border="1">
                                 <th>Select Templates</th>
                                 <th>Select Additional Tests</th>
                                 <tr>
