@@ -1,0 +1,22 @@
+# download pyexcelerator from 
+# http://downloads.sourceforge.net/pyexcelerator/pyexcelerator-0.6.3a.zip
+
+# install the pyexcelerator following the instructions
+
+# download trac-0.10.3
+svn co http://svn.edgewall.org/repos/trac/tags/trac-0.10.3 trac-0.10.3
+
+
+
+# apply the patch, and copy the new file icon
+
+cd trac-0.10.3
+patch -p0 < ../trac-0.10.3-excelreport.patch 
+cp ../trac/htdocs/xls.png htdocs
+
+
+# add to your trac.ini:
+
+# [ticket]
+# show_excel_link = true
+
