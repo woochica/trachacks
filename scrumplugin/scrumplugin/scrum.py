@@ -15,7 +15,7 @@ from trac.util import escape, Markup, format_date
 class ScrumComponent(Component):
     implements(IEnvironmentSetupParticipant, INavigationContributor,
                IRequestHandler, ITemplateProvider, IPermissionRequestor)
-    
+
     #---------------------------------------------------------------------------
     # IEnvironmentSetupParticipant methods
     #---------------------------------------------------------------------------
@@ -49,50 +49,50 @@ class ScrumComponent(Component):
             RETURNS timestamp AS
           $BODY$select 'epoch'::timestamp +$1* INTERVAL '1 second'$BODY$
             LANGUAGE 'sql' IMMUTABLE;""")
-        
+
         self.log.info("Creating first_value function...")
         cursor.execute("""
           CREATE OR REPLACE FUNCTION first_value(int4, text)
-            RETURNS text AS          
-          $BODY$          
-          select value          
-          from          
-          (          
-            select ticket.time, oldvalue as value          
-            from ticket, ticket_change          
-            where id=ticket and ticket=$1 and field=$2          
-            union          
-            select ticket.time, value          
-            from ticket, ticket_custom          
-            where id=ticket and ticket=$1 and name=$2          
-          ) as tbl          
-          order by time asc          
-          $BODY$          
+            RETURNS text AS
+          $BODY$
+          select value
+          from
+          (
+            select ticket.time, oldvalue as value
+            from ticket, ticket_change
+            where id=ticket and ticket=$1 and field=$2 and oldvalue<>''
+            union
+            select ticket.time, value
+            from ticket, ticket_custom
+            where id=ticket and ticket=$1 and name=$2 and value<>''
+          ) as tbl
+          order by time asc
+          $BODY$
             LANGUAGE 'sql' STABLE;""")
-        
+
         self.log.info("Creating value_at_t function...")
         cursor.execute("""
           CREATE OR REPLACE FUNCTION value_at_t(int4, text, int4)
-            RETURNS text AS          
-          $BODY$          
-            select value          
-            from          
-            (          
-              select ticket_change.time, newvalue as value          
-              from ticket_change          
-              where ticket=$1 and field=$2 and ticket_change.time<=$3          
-              union          
-              select ticket.time, first_value($1, $2) as value          
-              from ticket          
-              where ticket.id=$1 and ticket.time<=$3          
-            ) as tbl          
-            order by time desc          
-          $BODY$          
+            RETURNS text AS
+          $BODY$
+            select value
+            from
+            (
+              select ticket_change.time, newvalue as value
+              from ticket_change
+              where ticket=$1 and field=$2 and ticket_change.time<=$3 and newvalue<>''
+              union
+              select ticket.time, first_value($1, $2) as value
+              from ticket
+              where ticket.id=$1 and ticket.time<=$3
+            ) as tbl
+            order by time desc
+          $BODY$
             LANGUAGE 'sql' STABLE;""")
 
         self.log.info("Creating ticket_work view...")
         cursor.execute("""
-          CREATE OR REPLACE VIEW ticket_work AS  
+          CREATE OR REPLACE VIEW ticket_work AS
             SELECT t.id AS ticket, sum(
                    CASE
                        WHEN c.name = 'estimatedwork' THEN c.value::real
@@ -104,21 +104,21 @@ class ScrumComponent(Component):
                    END) AS workdone
               FROM ticket t
               LEFT JOIN ticket_custom c ON t.id = c.ticket
-             WHERE c.name = 'estimatedwork' OR c.name = 'workdone'
+             WHERE c.name IN ('estimatedwork', 'workdone') AND c.value<>''
              GROUP BY t.id;""")
-        
+
         self.log.info("Creating milestone_work view...")
         cursor.execute("""
-          CREATE OR REPLACE VIEW milestone_work AS 
-            SELECT t.milestone, sum(w.estimatedwork) AS estimatedwork,          
-                   sum(w.workdone) AS workdone          
-              FROM ticket t, ticket_work w          
-             WHERE t.id = w.ticket          
+          CREATE OR REPLACE VIEW milestone_work AS
+            SELECT t.milestone, sum(w.estimatedwork) AS estimatedwork,
+                   sum(w.workdone) AS workdone
+              FROM ticket t, ticket_work w
+             WHERE t.id = w.ticket
              GROUP BY t.milestone;""")
-        
+
         self.log.info("Creating milestone_dates view...")
         cursor.execute("""
-          CREATE OR REPLACE VIEW milestone_dates AS 
+          CREATE OR REPLACE VIEW milestone_dates AS
             SELECT m.*, COALESCE(NULLIF(m.completed, 0), NULLIF(m.due, 0)) AS end_date
               FROM milestone m;""")
 
@@ -138,13 +138,13 @@ class ScrumComponent(Component):
             WHERE t.id = c.ticket AND (c.field = 'estimatedwork' OR c.field = 'workdone')
             GROUP BY t.milestone, c.time
             ORDER BY t.milestone, c.time;""")
-        
+
         self.log.info("Creating end_milestone_workdone view...")
         cursor.execute("""
           CREATE OR REPLACE VIEW end_milestone_workdone AS
             SELECT m.*, sum(value_at_t(t.id, 'workdone', end_date)::real) AS workdone
               FROM milestone_dates m LEFT JOIN ticket t on t.milestone = m.name
-             WHERE t.status = 'closed'          
+             WHERE t.status = 'closed'
              GROUP BY m.name, m.due, m.completed, m.description, m.started, m.end_date;""")
 
         self.log.info("Creating end_milestone_estimatedwork view...")
@@ -154,13 +154,13 @@ class ScrumComponent(Component):
                    sum(value_at_t(t.id, 'estimatedwork', end_date)::real) AS estimatedwork
               FROM milestone_dates m LEFT JOIN ticket t on t.milestone = m.name
              GROUP BY m.name, m.due, m.completed, m.description, m.started, m.end_date;""")
-            
+
         self.log.info("Creating milestone_stats view...")
         cursor.execute("""
           CREATE OR REPLACE VIEW milestone_stats AS
             SELECT m1.*, m2.estimatedwork, workdone*60*60*24 / (m1.end_date - m1.started) AS velocity,
-                   (SELECT count(DISTINCT c.author)         
-                      FROM ticket t LEFT JOIN ticket_change c ON t.id = c.ticket          
+                   (SELECT count(DISTINCT c.author)
+                      FROM ticket t LEFT JOIN ticket_change c ON t.id = c.ticket
                      WHERE t.milestone = m1.name AND c.field = 'workdone' AND
                            c.time>=m1.started AND c.time<=m1.end_date) AS engineers
               FROM end_milestone_workdone m1, end_milestone_estimatedwork m2
@@ -168,7 +168,7 @@ class ScrumComponent(Component):
 
         self.log.info("Creating reports...")
         cursor.execute("DELETE FROM report WHERE author='scrumplugin';")
-        
+
         reports = [
           [
             "Ticket work by milestone",
@@ -178,11 +178,11 @@ SELECT milestone as __group__, __style__, __color__, ticket,
        summary, status, type, owner, estimatedwork as "Estimated work",
        workdone as "Work done", __ord__
   FROM
-  
+
     (SELECT 0 as __ord__, p.value AS __color__,
-            (CASE status 
+            (CASE status
              WHEN 'closed' THEN 'color: #777; background: #ddd; border-color: #ccc;'
-             ELSE 
+             ELSE
               (CASE owner
                WHEN '$USER' THEN 'font-weight: bold'
                END)
@@ -219,29 +219,29 @@ GROUP BY milestone, modified;"""
 SELECT name, description, trac_date(started)::date::text AS "Begin",
        trac_date(end_date)::date::text AS "End", estimatedwork as "Estimated work",
        workdone AS "Work done", ROUND(velocity) as velocity, engineers,
-       CASE WHEN engineers<>0 THEN ROUND(velocity/engineers) ELSE NULL END AS "Velocity per Eng" 
+       CASE WHEN engineers<>0 THEN ROUND(velocity/engineers) ELSE NULL END AS "Velocity per Eng"
 FROM milestone_stats
 ORDER BY started, end_date;"""
           ]
         ]
-        
+
         cursor.executemany("""
-          INSERT INTO report (author, title, description, query) 
+          INSERT INTO report (author, title, description, query)
           VALUES ('scrumplugin', %s, %s, %s);""", reports)
-            
-        db.commit()  
+
+        db.commit()
 
     #---------------------------------------------------------------------------
     # INavigationContributor methods
     #---------------------------------------------------------------------------
     def get_active_navigation_item(self, req):
         return 'scrum'
-                
+
     def get_navigation_items(self, req):
         yield 'mainnav', 'scrum', Markup('<a href="%s">Charts</a>', (req.href.scrum()))
 # Trac 0.11
 #        yield 'mainnav', 'scrum', tag.a('Scrum', href=req.href.scrum(), title='Scrum')
-        
+
     #---------------------------------------------------------------------------
     # IPermissionRequestor methods
     #---------------------------------------------------------------------------
@@ -253,30 +253,30 @@ ORDER BY started, end_date;"""
     #---------------------------------------------------------------------------
     def match_request(self, req):
         return req.path_info == '/scrum'
-    
+
     def process_request(self, req):
         req.perm.assert_permission('SCRUM_VIEW')
-        
+
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        
+
         cursor.execute("SELECT name FROM milestone;")
         milestone_lists = cursor.fetchall()
         milestones = []
         for mile in milestone_lists:
             milestones.append(mile[0])
-            
+
         selected_milestone = req.args.get('selected_milestone', milestones[0])
-        
+
         # expose display data to the clearsilver templates
         req.hdf['milestones'] = milestones
         req.hdf['selected_milestone'] = selected_milestone
         req.hdf['draw_graph'] = False
         req.hdf['start_complete'] = False
-        
+
         if req.perm.has_permission("MILESTONE_MODIFY"):
             req.hdf['start_complete'] = True # show the start and complete milestone buttons to admins
-        
+
         if req.args.has_key('start'):
             self.setMilestoneDate(db, selected_milestone, "started", time.time())
         elif req.args.has_key('complete'):
@@ -290,10 +290,10 @@ ORDER BY started, end_date;"""
             end = int(self.getMilestoneDate(db, selected_milestone, 'due'))
         if end<1:
             end = int(time.time())
-        req.hdf['milestone.end'] = end 
+        req.hdf['milestone.end'] = end
         add_stylesheet(req, 'hw/css/projectcharts.css')
         return 'projectcharts.cs', None
-        
+
     def getTimeSeries(self, db, selected_milestone, field_name):
         cursor = db.cursor()
         sql = "SELECT time, " + field_name + """
@@ -324,7 +324,7 @@ ORDER BY started, end_date;"""
         sql = "UPDATE milestone SET " + date_attr_name + "=%s WHERE name=%s"
         cursor.execute(sql, ( str(int(t)), milestone ) )
         db.commit()
-                
+
     #---------------------------------------------------------------------------
     # ITemplateProvider methods
     #---------------------------------------------------------------------------
@@ -344,7 +344,7 @@ ORDER BY started, end_date;"""
         Each item in the list must be a `(prefix, abspath)` tuple. The
         `prefix` part defines the path in the URL that requests to these
         resources are prefixed with.
-        
+
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
