@@ -21,13 +21,10 @@ class TestResults(Component):
     implements(ITestManagerRequestHandler)
     
     def process_testmanager_request(self, req ):
-                
-        req.hdf['testcase.results.testcases']="gasArchive01"
-        req.hdf['testcase.results.versions']="1.1.1"
-        req.hdf['testcase.results.builds']="r1234"
-        req.hdf['testcase.results.bugnumber']=""
-        
-        return 'testResults.cs', None
+        #for now let's just re-direct to a query page that shows all open testcases grouped by owner and ordered by milestone 
+        query_URL = req.base_url + "/query?status=new&status=assigned&status=reopened&testcase_result=&type=testcase&order=milestone&group=owner"
+        req.redirect(
+            
         
 
     def get_path( self, req ):
