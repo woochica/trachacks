@@ -10,8 +10,8 @@ setup(name=PACKAGE,
     version='1.0.0',
     url='',
     license='http://www.opensource.org/licenses/mit-license.php',
-    author='Alessio Massaro',
-    author_email='',
+    author='Alessio M.',
+    author_email='amassaro@fastmail.fm',
     long_description="""
 This plugin provides some basic project management essentials to do
 Scrum-style iteration planning in an Agile project.
