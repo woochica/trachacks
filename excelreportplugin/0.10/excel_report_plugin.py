@@ -5,6 +5,9 @@ from trac.ticket.report import ITicketReportRenderer
 from trac.ticket.web_ui import TicketModule
 from trac.ticket.query import QueryModule
 from pyExcelerator import * 
+from datetime import datetime 
+import copy
+import types
 
 class XlsDoc(CompoundDoc.XlsDoc): 
     def get(self, stream): 
@@ -43,8 +46,7 @@ class ReportToExcel(Component):
 		  
 	def get_report_linkclass(self):
 		return None #'xls'
-			
-		
+					
 	def render(self, req, cols, rows): 
 		
 	        req.send_response(200) 
@@ -57,17 +59,14 @@ class ReportToExcel(Component):
 	        sheetname = "%s - %s" % (req.hdf['report.title'], 
 	                                 req.hdf['project.name']) 
 	       
-		sheetname = sheetname.replace('/','-') 
-		try:
-		    ws = wb.add_sheet(sheetname.decode('utf-8')) 
-	        except: 
-	            ws = wb.add_sheet(sheetname) 
+		
+	        ws = wb.add_sheet(self.convertSheetName(sheetname)) 
+	        
 		ws.panes_frozen = True 
 	        ro = 1 
 	        ws.horz_split_pos = ro 
-	 
-	        import copy 
-	 
+	        
+	        
 	        font0 = Font() 
 	        font0.charset = font0.CHARSET_SYS_DEFAULT 
 	        font0.name = 'MS UI Gothic' 
@@ -81,60 +80,104 @@ class ReportToExcel(Component):
 	        align2 = copy.copy(align1) 
 	        align2.wrap = align2.WRAP_AT_RIGHT 
 	 
-	        style0 = XFStyle() 
-	        style0.font = font0 
-	        style0.alignment = align1 
-	        style0.num_format_str = 'general' 
-	        style_colheader = copy.copy(style0) 
-	        style_colheader.num_format_str = '@' 
-	        style_colheader.font = font1 
-	        style_num = copy.copy(style0) 
-	        style_str = copy.copy(style0) 
-	        style_str.num_format_str = '@' 
-	        style_wrap_str = copy.copy(style0) 
-	        style_wrap_str.alignment = align2 
-	        style_wrap_str.font = font2 
-	        style_date = copy.copy(style0) 
-	        style_date.num_format_str = 'yyyy/mm/dd' 
+	        self.style0 = XFStyle() 
+	        self.style0.font = font0 
+	        self.style0.alignment = align1 
+	        self.style0.num_format_str = 'general' 
+	        self.style_colheader = copy.copy(self.style0) 
+	        self.style_colheader.num_format_str = '@' 
+	        self.style_colheader.font = font1 
+	        self.style_num = copy.copy(self.style0) 
+	        self.style_str = copy.copy(self.style0) 
+	        self.style_str.num_format_str = '@' 
+	        self.style_wrap_str = copy.copy(self.style0) 
+	        self.style_wrap_str.alignment = align2 
+	        self.style_wrap_str.font = font2 
+	        self.style_date = copy.copy(self.style0) 
+	        self.style_date.num_format_str = 'yyyy/mm/dd' 
 	 
 	        for col, cx in map(lambda x, y: [x, y], cols, range(len(cols))): 
 	           
 		    name = str(col).replace('_','') 
-	            ws.write(ro-1, cx, name.decode('utf-8'), style_colheader) 
+	            ws.write(ro-1, cx, name.decode('utf-8'), self.style_colheader) 
 	           
-	            def conv(x):
-		        try:	
-			    a = str(x).replace('\r','').rstrip('\r\n').decode('utf-8') 
-	                except:
-	                    return x.replace('\r','').rstrip('\r\n')
-			return a
+	            conv = self.convertComments
 	
-	            style = style_str 
-	            if name in ['time', 'date','changetime', 'created', 'modified']: 
+	            style = self.style_str 
+	            
+	            if name in ['time', 'date','changetime', 'created', 'modified',
+	            		'hora', 'fecha','cambio'   ,'creado'  ,'modificado']: 
 	                ws.col(cx).width = 0xb00 
-	                from datetime import datetime 
-	                conv = lambda x: datetime.fromtimestamp(float(x)) 
-	                style = style_date 
-	            elif name in ['summary', 'description']: 
-	                if name == 'description': 
-	                    ws.col(cx).width = 0x7000 
-	                else: 
-	                    ws.col(cx).width = 0x1a00 
-	                style = style_wrap_str 
+	                conv = self.convertTimeStamp
+	                style = self.style_date 
+	                
+	            elif name in ['summary','resumen']:
+	            	ws.col(cx).width = 0x1a00 
+	                style = self.style_wrap_str 
+	                
+	            elif name in ['description','descripcion']:
+	                ws.col(cx).width = 0x7000 
+	                style = self.style_wrap_str 
+	                
 	            elif name in ['color', 'ticket', 'id']: 
 	                if name in ['color']: 
 	                    ws.col(cx).hidden = 1 
-	                conv = lambda x: int(x) 
-	                style = style_num 
+	                conv = self.convertInteger 
+	                style = self.style_num 
 	            elif name in ['style']: 
 	                ws.col(cx).hidden = 1 
 	            elif name == "component":
 			ws.col(cx).width = 0x1a00 
+			
+			
 		    for value, rx in map(lambda x, y: [conv(x[cx]), ro + y], \
 	                                 rows, range(len(rows))): 
-	                ws.write(rx, cx, value, style) 
+	           	if type(value) is int:
+	           		ws.write(rx, cx, value, self.style_num) 
+	           	elif type(value) is datetime:
+	           		ws.write(rx, cx, value, self.style_date) 
+	           	elif type(value) is types.NoneType:
+	           		ws.write(rx, cx, '-',self.style_str)
+	           	else:
+	           		ws.write(rx, cx, value, style) 
+	           	
+	           	
+	           		
+	           
 	        req.write(wb.get())     
 
+	def convertComments(self, x):
+		try:	
+			if type(x) is types.NoneType:
+				return x
+			else:
+				return str(x).replace('\r','').rstrip('\r\n').decode('utf-8') 
+	    	except:
+			return x.replace('\r','').rstrip('\r\n')
 		
+	
+	def convertTimeStamp(self,timestamp):
+		
+		try:
+			return datetime.fromtimestamp(float(timestamp)) 
+		except:
+			return timestamp
+		
+	def convertInteger(self,value):
+		try:
+			return int(value)
+		except:
+			return value
+			
+	def convertSheetName(self, sheetname):
+		
+		sheetname = sheetname.replace('/','-') 
+		
+		try:
+			return sheetname.decode('utf-8')
+		except:
+			return sheetname
+			
+		  
 			
 		
