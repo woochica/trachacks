@@ -1,0 +1,74 @@
+Index: trac/ticket/report.py
+===================================================================
+--- trac/ticket/report.py	(revision 4752)
++++ trac/ticket/report.py	(working copy)
+@@ -32,6 +32,26 @@
+ from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
+ from trac.wiki import wiki_to_html, IWikiSyntaxProvider, Formatter
+ 
++class ITicketReportRenderer(Interface):
++    """Extension point interface for components that implement new report 
++    writing formats."""
++
++    def get_report_format():
++        """Called to get the id for a report format, for example: .xls"""
++        
++	def get_report_mimetype():
++		"""Called to get the mimetype string for a report format"""
++	
++	def get_report_linkname():
++		"""Called to get the report link name that will appear on the UI"""
++	  	  
++	def get_report_linkclass():
++		"""Called to get the class of the link that will appear on the UI"""
++
++	def render(req, cols, rows):
++		"""Render the report, takes the request, columns and rows"""   
++
++
+ class ReportModule(Component):
+ 
+     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
+@@ -111,6 +131,8 @@
+         add_stylesheet(req, 'common/css/report.css')
+         return 'report.cs', None
+ 
++    renderers = ExtensionPoint(ITicketReportRenderer)
++
+     # Internal methods
+ 
+     def _do_create(self, req, db):
+@@ -364,7 +386,12 @@
+         elif format == 'tab':
+             self._render_csv(req, cols, rows, '\t')
+             return None
+-
++        else:
++        	for renderer in self.renderers:
++        		if renderer.get_report_format()==format:
++        			renderer.render(req,cols,rows)
++        			return None
++	
+         return 'report.cs', None
+ 
+     def add_alternate_links(self, req, args):
+@@ -385,6 +412,19 @@
+         if req.perm.has_permission('REPORT_SQL_VIEW'):
+             add_link(req, 'alternate', '?format=sql', 'SQL Query',
+                      'text/plain')
++                     
++        # add link for every loaded component 
++        # that implements ITicketReportRenderer             
++        
++        for renderer in self.renderers:
++			format = renderer.get_report_format()
++			mimetype = renderer.get_report_mimetype()
++			linkname = renderer.get_report_linkname()
++			linkclass = renderer.get_report_linkclass()
++        		
++			add_link(req,'alternate','?format='+format+href,
++            		 linkname,mimetype,linkclass)
++            				 
+ 
+     def execute_report(self, req, db, id, sql, args):
+         sql, args = self.sql_sub_vars(req, sql, args, db)

@@ -1,0 +1,10 @@
+# Miguel Angel Ajo Pelayo <miguelangel <AT> ajo.es>
+
+
+# download trac-0.10.3
+svn co http://svn.edgewall.org/repos/trac/tags/trac-0.10.3 trac-0.10.3
+
+cd trac-0.10.3
+patch -p0 < ../trac-0.10.3-report-plugin.patch 
+
+
