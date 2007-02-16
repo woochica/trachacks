@@ -132,6 +132,9 @@ class DoxygenPlugin(Component):
             else:
                 self.log.warn("redirect without link")
 
+        if req.path_info == '/doxygen':
+            req.redirect(req.href.doxygen('/'))
+
         # Handle /doxygen request
         if action == 'index':
             wiki = self.wiki_index
@@ -149,8 +152,12 @@ class DoxygenPlugin(Component):
             # use configured Doxygen index
             path = os.path.join(self.base_path, self.default_doc,
                                 self.html_output, self.index)
+        # security check
+        path = os.path.abspath(path)
+        if not path.startswith(self.base_path):
+            raise TracError("Can't access paths outside of " + self.base_path)
 
-        # view 
+        # view
         mimetype = mimetypes.guess_type(path)[0]
         if mimetype == 'text/html':
             add_stylesheet(req, 'doxygen/css/doxygen.css')
