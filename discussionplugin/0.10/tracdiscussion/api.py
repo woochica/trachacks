@@ -1,10 +1,11 @@
 # -*- coding: utf8 -*-
 
+from tracdiscussion.notification import *
 from trac.core import *
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.perm import PermissionError
-from trac.util import format_datetime, pretty_timedelta, Markup
+from trac.util import format_datetime, pretty_timedelta
 import time
 
 class DiscussionApi(object):
@@ -89,10 +90,10 @@ class DiscussionApi(object):
             message_id = int(req.args.get('message') or 0)
             message = self.get_message(cursor, message_id)
 
-        self.log.debug('message: %s' % message)
-        self.log.debug('topic: %s' % topic)
-        self.log.debug('forum: %s' % forum)
         self.log.debug('group: %s' % group)
+        self.log.debug('forum: %s' % forum)
+        self.log.debug('topic: %s' % topic)
+        self.log.debug('message: %s' % message)
         return group, forum, topic, message
 
     def _get_modes(self, req, group, forum, topic, message):
@@ -307,8 +308,8 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                new_name = Markup(req.args.get('name'))
-                new_description = Markup(req.args.get('description'))
+                new_name = req.args.get('name')
+                new_description = req.args.get('description')
 
                 # Add new group.
                 self.add_group(cursor, new_name, new_description)
@@ -317,9 +318,9 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                new_group = req.args.get('group')
-                new_name = Markup(req.args.get('name'))
-                new_description = Markup(req.args.get('description'))
+                new_group = int(req.args.get('group') or 0)
+                new_name = req.args.get('name')
+                new_description = req.args.get('description')
 
                 # Edit group.
                 self.edit_group(cursor, new_group, new_name, new_description)
@@ -338,7 +339,7 @@ class DiscussionApi(object):
                 # Delete selected groups.
                 if selection:
                     for group_id in selection:
-                        self.delete_group(cursor, group_id)
+                        self.delete_group(cursor, int(group_id))
 
             elif mode == 'forum-list':
                 req.perm.assert_permission('DISCUSSION_VIEW')
@@ -388,12 +389,12 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values
-                new_name = Markup(req.args.get('name'))
+                new_name = req.args.get('name')
                 new_author = req.authname
-                new_subject = Markup(req.args.get('subject'))
-                new_description = Markup(req.args.get('description'))
+                new_subject = req.args.get('subject')
+                new_description = req.args.get('description')
                 new_moderators = req.args.get('moderators')
-                new_group = req.args.get('group')
+                new_group = int(req.args.get('group') or 0)
                 if not new_moderators:
                     new_moderators = []
                 if not isinstance(new_moderators, list):
@@ -407,12 +408,12 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                new_forum = req.args.get('forum')
-                new_name = Markup(req.args.get('name'))
-                new_subject = Markup(req.args.get('subject'))
-                new_description = Markup(req.args.get('description'))
+                new_forum = int(req.args.get('forum') or 0)
+                new_name = req.args.get('name')
+                new_subject = req.args.get('subject')
+                new_description = req.args.get('description')
                 new_moderators = req.args.get('moderators')
-                new_group = req.args.get('group')
+                new_group = int(req.args.get('group') or 0)
                 if not new_moderators:
                     new_moderators = []
                 if not isinstance(new_moderators, list):
@@ -439,7 +440,7 @@ class DiscussionApi(object):
                 # Delete selected forums.
                 if selection:
                     for forum_id in selection:
-                        self.delete_forum(cursor, forum_id)
+                        self.delete_forum(cursor, int(forum_id))
 
             elif mode == 'topic-list':
                 req.perm.assert_permission('DISCUSSION_VIEW')
@@ -458,9 +459,9 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Get form values.
-                new_subject = Markup(req.args.get('subject'))
-                new_author = Markup(req.args.get('author'))
-                new_body = Markup(req.args.get('body'))
+                new_subject = req.args.get('subject')
+                new_author = req.args.get('author')
+                new_body = req.args.get('body')
 
                 # Display Add Topic form.
                 if new_subject:
@@ -486,13 +487,21 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Get form values.
-                new_subject = Markup(req.args.get('subject'))
-                new_author = Markup(req.args.get('author'))
-                new_body = Markup(req.args.get('body'))
+                new_subject = req.args.get('subject')
+                new_author = req.args.get('author')
+                new_body = req.args.get('body')
+                new_time = int(time.time())
 
-                #Add topic.
-                self.add_topic(cursor, forum['id'], new_subject, new_author,
-                  new_body)
+                # Add topic.
+                self.log.debug(new_body)
+                self.add_topic(cursor, forum['id'], new_subject, new_time,
+                  new_author, new_body)
+
+                # Get new popic and notify about creation.
+                new_topic = self.get_topic_by_time(cursor, new_time)
+                new_topic['moderators'] = ' '.join(forum['moderators'])
+                notifier = DiscussionNotifyEmail(self.env)
+                notifier.notify(req, cursor, mode, new_topic)
 
             elif mode == 'topic-edit':
                 req.perm.assert_permission('DISCUSSION_APPEND')
@@ -509,8 +518,8 @@ class DiscussionApi(object):
                     raise PermissionError('Topic edit')
 
                 # Get form values.
-                new_subject = Markup(req.args.get('subject'))
-                new_body = Markup(req.args.get('body'))
+                new_subject = req.args.get('subject')
+                new_body = req.args.get('body')
 
                 # Edit topic.
                 topic['subject'] = new_subject
@@ -532,7 +541,7 @@ class DiscussionApi(object):
                     raise PermissionError('Forum moderate')
 
                 # Get form values
-                new_forum = req.args.get('new_forum')
+                new_forum = int(req.args.get('new_forum') or 0)
 
                 # Move topic.
                 self.set_forum(cursor, topic['id'], new_forum)
@@ -549,9 +558,9 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values.
-                new_author = Markup(req.args.get('author'))
-                new_subject = Markup(req.args.get('subject'))
-                new_body = Markup(req.args.get('body'))
+                new_author = req.args.get('author')
+                new_subject = req.args.get('subject')
+                new_body = req.args.get('body')
 
                 # Get time when topic was visited from session.
                 visited = eval(req.session.get('visited-topics') or '{}')
@@ -605,16 +614,24 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Get form values.
-                new_author = Markup(req.args.get('author'))
-                new_body = Markup(req.args.get('body'))
+                new_author = req.args.get('author')
+                new_body = req.args.get('body')
+                new_time = int(time.time())
 
-                #Add message.
+                # Add message.
                 if message:
                     self.add_message(cursor, forum['id'], topic['id'],
-                      message['id'], new_author, new_body)
+                      message['id'], new_time, new_author, new_body)
                 else:
                     self.add_message(cursor, forum['id'], topic['id'], '-1',
-                      new_author, new_body)
+                      new_time, new_author, new_body)
+
+                # Get inserted message and notify about its creation.
+                new_message = self.get_message_by_time(cursor, new_time)
+                new_message['subject'] = topic['subject']
+                new_message['moderators'] = ' '.join(forum['moderators'])
+                notifier = DiscussionNotifyEmail(self.env)
+                notifier.notify(req, cursor, mode, new_message)
 
             elif mode == 'message-edit':
                 req.perm.assert_permission('DISCUSSION_APPEND')
@@ -630,7 +647,7 @@ class DiscussionApi(object):
                     raise PermissionError('Message edit')
 
                 # Get form values.
-                new_body = Markup(req.args.get('body'))
+                new_body = req.args.get('body')
 
                 # Edit message.
                 message['body'] = new_body
@@ -667,9 +684,20 @@ class DiscussionApi(object):
             return row
         return None
 
+    def get_message_by_time(self, cursor, time):
+        columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
+        sql = "SELECT id, forum, topic, replyto, time, author, body FROM" \
+          " message WHERE time = %s"
+        self.log.debug(sql % (time,))
+        cursor.execute(sql, (time,))
+        for row in cursor:
+            row = dict(zip(columns, row))
+            return row
+        return None
+
     def get_topic(self, cursor, id):
-        columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
-        sql = "SELECT id, forum, time, subject, body, author FROM topic WHERE" \
+        columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
+        sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " id = %s"
         self.log.debug(sql % (id,))
         cursor.execute(sql, (id,))
@@ -678,9 +706,20 @@ class DiscussionApi(object):
             return row
         return None
 
+    def get_topic_by_time(self, cursor, time):
+        columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
+        sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
+          " time = %s"
+        self.log.debug(sql % (time,))
+        cursor.execute(sql, (time,))
+        for row in cursor:
+            row = dict(zip(columns, row))
+            return row
+        return None
+
     def get_topic_by_subject(self, cursor, subject):
-        columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
-        sql = "SELECT id, forum, time, subject, body, author FROM topic WHERE" \
+        columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
+        sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " subject = '%s'" % (subject)
         self.log.debug(sql)
         cursor.execute(sql)
@@ -690,10 +729,10 @@ class DiscussionApi(object):
         return None
 
     def get_forum(self, cursor, id):
-        columns = ('name', 'moderators', 'id', 'time', 'subject',
-          'description', 'group')
-        sql = "SELECT name, moderators, id, time, subject, description," \
-          " forum_group FROM forum WHERE id = %s"
+        columns = ('id', 'group', 'name', 'subject', 'time', 'moderators',
+          'description')
+        sql = "SELECT id, forum_group, name, subject, time, moderators," \
+           " description FROM forum WHERE id = %s"
         self.log.debug(sql % (id,))
         cursor.execute(sql, (id,))
         for row in cursor:
@@ -826,6 +865,9 @@ class DiscussionApi(object):
                 row['topics'] = 0
             if not row['replies']:
                 row['replies'] = 0
+            else:
+                # SUM on PosgreSQL returns float number.
+                row['replies'] = int(row['replies'])
             row['time'] = format_datetime(row['time'])
             forums.append(row)
         return forums
@@ -923,8 +965,6 @@ class DiscussionApi(object):
     def add_forum(self, cursor, name, author, subject, description, moderators,
       group):
         moderators = ' '.join(moderators)
-        if not group:
-            group = '0'
         sql = "INSERT INTO forum (name, author, time, moderators, subject," \
           " description, forum_group) VALUES (%s, %s, %s, %s, %s, %s, %s)"
         self.log.debug(sql % (name, author, int(time.time()), moderators,
@@ -932,19 +972,17 @@ class DiscussionApi(object):
         cursor.execute(sql, (name, author, int(time.time()), moderators,
           subject, description, group))
 
-    def add_topic(self, cursor, forum, subject, author, body):
-        sql = "INSERT INTO topic (forum, time, author, subject, body) VALUES" \
+    def add_topic(self, cursor, forum, subject, time, author, body):
+        sql = "INSERT INTO topic (forum, subject, time, author, body) VALUES" \
           " (%s, %s, %s, %s, %s)"
-        self.log.debug(sql % (forum, int(time.time()), author, subject, body))
-        cursor.execute(sql, (forum, int(time.time()), author, subject, body))
+        self.log.debug(sql % (forum, subject, time, author, body))
+        cursor.execute(sql, (forum, subject, time, author, body))
 
-    def add_message(self, cursor, forum, topic, replyto, author, body):
+    def add_message(self, cursor, forum, topic, replyto, time, author, body):
         sql = "INSERT INTO message (forum, topic, replyto, time, author," \
           " body) VALUES (%s, %s, %s, %s, %s, %s)"
-        self.log.debug(sql % (forum, topic, replyto, int(time.time()),
-          author, body))
-        cursor.execute(sql, (forum, topic, replyto, int(time.time()),
-          author, body))
+        self.log.debug(sql % (forum, topic, replyto, time, author, body))
+        cursor.execute(sql, (forum, topic, replyto, time, author, body))
 
     # Delete items functions
 
@@ -981,6 +1019,8 @@ class DiscussionApi(object):
         self.log.debug(sql % (message,))
         cursor.execute(sql, (message,))
         replies = []
+
+        # Get all replies first.
         for row in cursor:
             replies.append(row[0])
 

@@ -36,7 +36,7 @@ class DiscussionSearch(Component):
         cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
-            yield (self.env.href.discussion(row['forum'], row['id']) + '#-1',
+            yield (req.href.discussion(row['forum'], row['id']) + '#-1',
               "topic: %d: %s" % (row['id'], util.shorten_line(row['subject'])),
               row['time'], row['author'], shorten_result(row['body'],
               [query]))
@@ -51,7 +51,7 @@ class DiscussionSearch(Component):
         cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
-            yield (self.env.href.discussion(row['forum'], row['topic'],
-              row['id']) + '#%s' % (row['id']), "message: %d: %s" %
-              (row['id'], util.shorten_line(row['subject'])), row['time'],
-              row['author'], shorten_result(row['body'], [query]))
+            yield (req.href.discussion(row['forum'], row['topic'], row['id'])
+              + '#%s' % (row['id']), "message: %d: %s" % (row['id'],
+              util.shorten_line(row['subject'])), row['time'], row['author'],
+              shorten_result(row['body'], [query]))

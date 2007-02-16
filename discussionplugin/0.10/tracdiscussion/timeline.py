@@ -34,11 +34,11 @@ class DiscussionTimeline(Component):
                 time = forum['time']
                 author = forum['author']
                 if format == 'rss':
-                    href = self.env.abs_href.discussion(forum['id'])
+                    href = req.abs_href.discussion(forum['id'])
                     message = wiki_to_html('%s - %s' % (forum['subject'],
                       forum['description']), self.env, req, db)
                 else:
-                    href = self.env.href.discussion(forum['id'])
+                    href = req.href.discussion(forum['id'])
                     message = wiki_to_oneliner('%s - %s' % (forum['subject'],
                       forum['description']), self.env, db)  
                 yield kind, href, title, time, author, message
@@ -52,11 +52,11 @@ class DiscussionTimeline(Component):
                 time = topic['time']
                 author = topic['author']
                 if format == 'rss':
-                    href = self.env.abs_href.discussion(topic['forum'],
+                    href = req.abs_href.discussion(topic['forum'],
                       topic['id'])
                     message = wiki_to_html(topic['subject'], self.env, req, db)
                 else:
-                    href = self.env.href.discussion(topic['forum'], topic['id'])
+                    href = req.href.discussion(topic['forum'], topic['id'])
                     message = wiki_to_oneliner(topic['subject'], self.env, db)
                 yield kind, href, title, time, author, message
 
@@ -69,12 +69,12 @@ class DiscussionTimeline(Component):
                 time = message['time']
                 author = message['author']
                 if format == 'rss':
-                    href = self.env.abs_href.discussion(message['forum'],
+                    href = req.abs_href.discussion(message['forum'],
                       message['topic'], message['id']) + '#%s' % (message['id'])
                     message = wiki_to_html(message['topic_subject'], self.env,
                       req, db)
                 else:
-                    href = self.env.href.discussion(message['forum'],
+                    href = req.href.discussion(message['forum'],
                       message['topic'], message['id']) + '#%s' % (message['id'])
                     message = wiki_to_oneliner(message['topic_subject'],
                       self.env, db)
@@ -97,8 +97,9 @@ class DiscussionTimeline(Component):
     def _get_changed_topics(self, cursor, start, stop):
         columns = ('id', 'subject', 'author', 'time', 'forum', 'forum_name')
         sql = "SELECT t.id, t.subject, t.author, t.time, t.forum, f.name" \
-          " FROM topic t LEFT JOIN (SELECT name, id FROM forum GROUP BY id)" \
-          " f ON t.forum = f.id WHERE time BETWEEN %s AND %s"
+          " FROM topic t LEFT JOIN (SELECT id, name FROM forum)" \
+          " f ON t.forum = f.id WHERE t.time BETWEEN %s AND %s"
+
         self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
@@ -109,9 +110,10 @@ class DiscussionTimeline(Component):
         columns = ('id', 'author', 'time', 'forum', 'topic', 'forum_name',
           'topic_subject')
         sql = "SELECT m.id, m.author, m.time, m.forum, m.topic, f.name," \
-          " t.subject FROM message m, (SELECT name, id FROM forum GROUP BY" \
-          " id) f, (SELECT subject, id FROM topic GROUP BY id) t WHERE" \
-          " t.id = m.topic AND f.id = m.forum AND time BETWEEN %s AND %s"
+          " t.subject FROM message m, (SELECT id, name FROM forum) f, (SELECT" \
+          " id, subject FROM topic) t WHERE t.id = m.topic AND f.id = m.forum" \
+          " AND time BETWEEN %s AND %s"
+
         self.log.debug(sql % (start, stop))
         cursor.execute(sql, (start, stop))
         for row in cursor:
