@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="Wiki Editor"
+            extensions="wiki"
+            icon="icons/trac_16.png"
+            contributorClass="mm.eclipse.trac.editors.WikiEditorContributor"
+            class="mm.eclipse.trac.editors.WikiEditor"
+            id="mm.eclipse.trac.editors.WikiEditor">
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Trac"
+            id="mm.eclipse.trac">
+      </category>
+      <view
+            name="Trac Navigator"
+            icon="icons/trac_16.png"
+            category="mm.eclipse.trac"
+            class="mm.eclipse.trac.views.TracNavigator"
+            id="mm.eclipse.trac.views.TracNavigator">
+      </view>
+      <view
+            category="mm.eclipse.trac"
+            class="mm.eclipse.trac.views.WikiPageHistory"
+            icon="icons/trac_16.png"
+            id="mm.eclipse.trac.views.WikiPageHistory"
+            name="Wiki Page History"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.decorators">
+      <decorator
+            adaptable="true"
+            class="mm.eclipse.trac.views.TracLabelDecorator"
+            id="mm.eclipse.trac.models.TracLabelDecorator"
+            label="Trac Decorator"
+            lightweight="true"
+            state="true">
+         <enablement>
+			<objectClass name="mm.eclipse.trac.models.WikiPage"/>
+         </enablement>
+      </decorator>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.editors.documentProviders">
+      <provider
+            class="mm.eclipse.trac.editors.WikiDocumentProvider"
+            id="mm.eclipse.trac.editors.WikiPageDocumentProvider"
+            inputTypes="mm.eclipse.trac.models.WikiPage"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="mm.eclipse.trac.preferences.TracPreferencePage"
+            id="mm.eclipse.trac.preferences.TracPreferencePage"
+            name="Trac"/>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="mm.eclipse.trac.preferences.PreferenceInitializer"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors.templates">
+      <contextType
+            class="org.eclipse.jface.text.templates.TemplateContextType"
+            id="mm.eclipse.trac.templates"
+            name="Wiki Templates"/>
+      <include file="templates/templates.xml"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="mm.eclipse.trac.perspective.PerspectiveFactory"
+            fixed="false"
+            icon="icons/trac_16.png"
+            id="mm.eclipse.trac.perspective"
+            name="Trac"/>
+   </extension>
+
+</plugin>

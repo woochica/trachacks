@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Xmlrpc Plug-in
+Bundle-SymbolicName: org.apache.xmlrpc
+Bundle-Version: 1.0.0
+Export-Package: org.apache.xmlrpc.client,
+ org.apache.xmlrpc.common
