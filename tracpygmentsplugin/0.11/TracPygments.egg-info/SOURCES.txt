@@ -1,0 +1,11 @@
+setup.cfg
+setup.py
+TracPygments.egg-info/PKG-INFO
+TracPygments.egg-info/SOURCES.txt
+TracPygments.egg-info/dependency_links.txt
+TracPygments.egg-info/entry_points.txt
+TracPygments.egg-info/requires.txt
+TracPygments.egg-info/top_level.txt
+TracPygments.egg-info/zip-safe
+tracpygments/__init__.py
+tracpygments/templates/pygments_settings.cs

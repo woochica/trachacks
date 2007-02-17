@@ -1,0 +1,13 @@
+Metadata-Version: 1.0
+Name: TracPygments
+Version: 0.3dev-r1
+Summary: Trac syntax colorer using Pygments
+Home-page: http://trac-hacks.org/wiki/TracPygmentsPlugin
+Author: Matt Good
+Author-email: matt@matt-good.net
+License: BSD
+Description: 
+Keywords: trac.mimeview
+Platform: UNKNOWN
+Classifier: Framework :: Trac
+Classifier: License :: OSI Approved :: BSD License
