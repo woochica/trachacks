@@ -7,58 +7,124 @@ from trac.util.text import CRLF, wrap
 class DiscussionNotifyEmail(NotifyEmail):
 
     template_name = "discussion-notify-body.cs"
+    forum = None
+    topic = None
+    message = None
+    torcpts = []
+    ccrcpts = []
     COLS = 75
 
     def __init__(self, env):
         NotifyEmail.__init__(self, env)
 
-    def notify(self, req, cursor, action, object):
+    def notify(self, req, cursor, action, forum = None, topic = None,
+      message = None, torcpts = [], ccrcpts = []):
         self.env.log.debug("action: %s" % action)
-        self.env.log.debug("object: %s" % object)
+        self.env.log.debug("forum: %s" % forum)
+        self.env.log.debug("topic: %s" % topic)
+        self.env.log.debug("message: %s" % message)
+        self.env.log.debug("torcpts: %s" % torcpts)
+        self.env.log.debug("ccrcpts: %s" % ccrcpts)
 
-        # Prepare action specific email content.
-        if action == 'topic-post-add':
-            title = 'Topic'
-            re = ''
-            link = req.abs_href.discussion(object['forum'], object['id'])
-        elif action == 'topic-post-edit':
-            title = 'Topic'
-            re = ''
-            link = req.abs_href.discussion(object['forum'], object['id'])
-        elif action == 'message-post-add':
-            title = 'Message'
-            re = 'Re: '
-            link = req.abs_href.discussion(object['forum'], object['topic'],
-              object['id']) + '#%s' % object['id']
-        elif action == 'message-post-edit':
-            title = 'Message'
-            re = 'Re: '
-            link = req.abs_href.discussion(object['forum'], object['topic'],
-              object['id']) + '#%s' % object['id']
+        # Store link to currently notifying forum, topic and message.
+        self.forum = forum
+        self.topic = topic
+        self.message = message
+        self.torcpts = torcpts
+        self.ccrcpts = ccrcpts
 
-        # Format body table items.
-        author = "    Author:  %s" % object['author']
-        time = "      Time:  %s" % format_datetime(object['time'])
-        moderators = "Moderators: %s" % object['moderators']
+        # Get action and item of action.
+        index = action.find('-')
+        item = action[:index]
+        action = action[index + 1:]
+
+        # Which item notify about:
+        if item == 'topic':
+            # Prepare topic specific fields.
+            re = ''
+            title = 'Topic'
+            id = self.topic['id']
+            author = "    Author:  %s" % self.topic['author']
+            time = "      Time:  %s" % format_datetime(self.topic['time'])
+            body = self.topic['body']
+            link = req.abs_href.discussion(self.forum['id'], self.topic['id'])
+
+            # Save link for bad times.
+            topic['link'] = link
+        elif item == 'message':
+            # Prepare message specific fields
+            re = 'Re: '
+            title = 'Message'
+            id = self.message['id']
+            author = "    Author:  %s" % self.message['author']
+            time = "      Time:  %s" % format_datetime(self.message['time'])
+            body = self.message['body']
+            link = req.abs_href.discussion(self.forum['id'], self.topic['id'],
+              self.message['id']) + '#%s' % self.message['id']
+
+            # Save link for bad times.
+            message['link'] = link
+        else:
+            return
+
+        prefix = self.config.get('notification', 'smtp_subject_prefix')
+        if prefix == '__default__':
+            prefix = self.env.project_name
+        moderators = "Moderators:  %s" % ' '.join(self.forum['moderators'])
+        subject = self.topic['subject']
 
         # Set set e-mail template values.
         self.hdf.set_unescaped('discussion.re', re)
-        prefix = self.config.get('notification', 'smtp_subject_prefix')
-        if prefix != '__default__':
-            self.hdf.set_unescaped('discussion.prefix', prefix)
+        self.hdf.set_unescaped('discussion.prefix', prefix)
         self.hdf.set_unescaped('discussion.title', title)
-        self.hdf.set_unescaped('discussion.id', object['id'])
+        self.hdf.set_unescaped('discussion.id', id)
         self.hdf.set_unescaped('discussion.author', author)
-        self.hdf.set_unescaped('discussion.moderators', moderators)
         self.hdf.set_unescaped('discussion.time', time)
-        self.hdf.set_unescaped('discussion.subject', object['subject'])
-        self.hdf.set_unescaped('discussion.body', object['body'])
+        self.hdf.set_unescaped('discussion.moderators', moderators)
+        self.hdf.set_unescaped('discussion.subject', subject)
+        self.hdf.set_unescaped('discussion.body', body)
         self.hdf.set_unescaped('discussion.link', link)
 
         # Render body and send notification.
         subject = self.hdf.render('discussion-notify-subject.cs')
         self.env.log.debug(subject)
-        NotifyEmail.notify(self, object['id'], subject)
+        NotifyEmail.notify(self, id, subject)
+
+    def get_topic_id(self, forum_id, topic_id):
+        return "%s-%s-%s" % (forum_id, topic_id, 0)
+
+    def get_message_id(self, forum_id, topic_id, message_id):
+        return "%s-%s-%s" % (forum_id, topic_id, message_id)
 
     def get_recipients(self, resid):
-        return ([], [])
+        return (self.torcpts, self.ccrcpts)
+
+    def send(self, torcpts, ccrcpts):
+        header = {}
+
+        # Add item specific e-mail header fields.
+        if self.message:
+            # Get this messge ID.
+            header['Message-ID'] = self.get_message_id(self.forum['id'],
+              self.topic['id'], self.message['id'])
+            header['X-Trac-Message-ID'] = str(self.message['id'])
+            header['X-Trac-Discussion-URL'] = self.message['link']
+
+            # Get replied message ID.
+            if self.message['replyto'] == -1:
+                reply_id = self.get_topic_id(self.forum['id'],
+                  self.topic['id'])
+            else:
+                reply_id = self.get_message_id(self.forum['id'],
+                  self.topic['id'], self.message['replyto'])
+            header['In-Reply-To'] = reply_id
+            header['References'] = reply_id
+        else:
+            # Get this message ID.
+            header['Message-ID'] = self.get_topic_id(self.forum['id'],
+              self.topic['id'])
+            header['X-Trac-Topic-ID'] = str(self.topic['id'])
+            header['X-Trac-Discussion-URL'] = self.topic['link']
+
+        # Send e-mail.
+        NotifyEmail.send(self, torcpts, ccrcpts, header)

@@ -499,9 +499,11 @@ class DiscussionApi(object):
 
                 # Get new popic and notify about creation.
                 new_topic = self.get_topic_by_time(cursor, new_time)
-                new_topic['moderators'] = ' '.join(forum['moderators'])
+                to = self.get_topic_to_recipients(cursor, topic['id'])
+                cc = self.get_topic_cc_recipients(cursor, topic['id'])
                 notifier = DiscussionNotifyEmail(self.env)
-                notifier.notify(req, cursor, mode, new_topic)
+                notifier.notify(req, cursor, mode, forum, new_topic, None, to,
+                  cc)
 
             elif mode == 'topic-edit':
                 req.perm.assert_permission('DISCUSSION_APPEND')
@@ -628,10 +630,11 @@ class DiscussionApi(object):
 
                 # Get inserted message and notify about its creation.
                 new_message = self.get_message_by_time(cursor, new_time)
-                new_message['subject'] = topic['subject']
-                new_message['moderators'] = ' '.join(forum['moderators'])
+                to = self.get_topic_to_recipients(cursor, topic['id'])
+                cc = self.get_topic_cc_recipients(cursor, topic['id'])
                 notifier = DiscussionNotifyEmail(self.env)
-                notifier.notify(req, cursor, mode, new_message)
+                notifier.notify(req, cursor, mode, forum, topic, new_message,
+                  to, cc)
 
             elif mode == 'message-edit':
                 req.perm.assert_permission('DISCUSSION_APPEND')
@@ -727,6 +730,20 @@ class DiscussionApi(object):
             row = dict(zip(columns, row))
             return row
         return None
+
+    def get_topic_to_recipients(self, cursor, id):
+        sql = "SELECT t.author FROM topic t WHERE t.id = %s UNION SELECT" \
+          " m.author FROM message m WHERE m.topic = %s"
+        self.log.debug(sql % (id, id))
+        cursor.execute(sql, (id, id))
+        to_recipients = []
+        for row in cursor:
+            to_recipients.append(row[0])
+        self.log.debug(to_recipients)
+        return to_recipients
+
+    def get_topic_cc_recipients(self, cursor, id):
+        return []
 
     def get_forum(self, cursor, id):
         columns = ('id', 'group', 'name', 'subject', 'time', 'moderators',
@@ -872,7 +889,7 @@ class DiscussionApi(object):
             forums.append(row)
         return forums
 
-    def get_topics(self, req, cursor, forum, order_by = 'time', desc = False):
+    def get_topics(self, req, cursor, forum_id, order_by = 'time', desc = False):
         if not order_by in ('replies', 'lastreply',):
             order_by = 't.' + order_by
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
@@ -882,8 +899,8 @@ class DiscussionApi(object):
           " AS replies, MAX(time) AS lastreply, topic FROM message GROUP BY" \
           " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
           + order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql % (forum,))
-        cursor.execute(sql, (forum,))
+        self.log.debug(sql % (forum_id,))
+        cursor.execute(sql, (forum_id,))
         topics = []
         for row in cursor:
             row = dict(zip(columns, row))
@@ -899,13 +916,13 @@ class DiscussionApi(object):
             topics.append(row)
         return topics
 
-    def get_messages(self, req, cursor, topic, time, order_by = 'time', desc = False):
+    def get_messages(self, req, cursor, topic_id, time, order_by = 'time', desc = False):
         order_by = 'm.' + order_by
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m WHERE" \
           " m.topic = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql % (topic,))
-        cursor.execute(sql, (topic,))
+        self.log.debug(sql % (topic_id,))
+        cursor.execute(sql, (topic_id,))
         messagemap = {}
         messages = []
         for row in cursor:
@@ -931,13 +948,13 @@ class DiscussionApi(object):
                     parent['replies'] = [message]
         return messages;
 
-    def get_flat_messages(self, req, cursor, topic, time, order_by =
+    def get_flat_messages(self, req, cursor, topic_id, time, order_by =
       'ORDER BY time ASC'):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m" \
           " WHERE m.topic = %s " + order_by
-        self.log.debug(sql % (topic,))
-        cursor.execute(sql, (topic,))
+        self.log.debug(sql % (topic_id,))
+        cursor.execute(sql, (topic_id,))
         messages = []
         for row in cursor:
             row = dict(zip(columns, row))
