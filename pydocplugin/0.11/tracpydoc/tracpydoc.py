@@ -281,13 +281,11 @@ class PyDoc(Component):
     def process_request(self, req):
         add_stylesheet(req, 'pydoc/css/pydoc.css')
         target = req.path_info[7:]
-        req.hdf['trac.href.pydoc'] = req.href.pydoc()
-        req.hdf['pydoc.trail'] = [Markup(to_unicode(x)) for x in 
-                                  self.doc._path_links(target)[:-1]]
-        req.hdf['pydoc.trail_last'] = target.split('.')[-1]
-        req.hdf['pydoc.content'] = self.generate_help(target)
-        req.hdf['title'] = target
-        return 'pydoc.cs', None
+        data = {'trail': [Markup(to_unicode(x)) for x in 
+                          self.doc._path_links(target)],
+                'generate_help': self.generate_help,
+                'target': target}
+        return 'pydoc.html', data, None
 
     # ITemplateProvider methods
     
