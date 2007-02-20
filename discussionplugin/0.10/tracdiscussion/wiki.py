@@ -42,6 +42,8 @@ class DiscussionWiki(Component):
 
     def render_macro(self, req, name, content):
         if name == 'ViewTopic':
+            self.log.debug("Rendering ViewTopic macro...")
+
             # Determine topic subject
             if content:
                 subject = content
@@ -55,67 +57,33 @@ class DiscussionWiki(Component):
             # Get topic by subject
             api = DiscussionApi(self, req)
             topic = api.get_topic_by_subject(cursor, subject)
+            self.log.debug('subject: %s' % (subject,))
             self.log.debug('topic: %s' % (topic,))
 
             # Return macro content
+            req.args['component'] = 'wiki'
             if topic:
-                req.hdf['discussion.no_navigation'] = True
-                req.args['component'] = 'wiki'
-                req.args['forum'] = str(topic['forum'])
-                req.args['topic'] = str(topic['id'])
-                template, type = api.render_discussion(req, cursor)
-                db.commit()
-                return req.hdf.render(template)
-            else:
-                req.hdf['discussion.no_navigation'] = True
-                return req.hdf.render('message-list.cs')
+                req.args['forum'] = topic['forum']
+                req.args['topic'] = topic['id']
+            content = api.render_discussion(req, cursor)
+            db.commit()
+            return req.hdf.render(content[0])
         else:
             raise TracError('Not implemented macro %s' % (name))
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
+        # Change method from POST to GET.
         match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
         action = req.args.get('discussion_action')
-        redirect = req.args.get('redirect', '0')
-        if match and action in ('post-add', 'post-edit', 'delete') \
-          and redirect == '1':
-            return self
-        else:
-            return handler
+        if match and action and req.method == 'POST':
+            req.environ['REQUEST_METHOD'] = 'GET'
+
+        # Continue processing request.
+        return handler
 
     def post_process_request(self, req, template, content_type):
         return (template, content_type)
-
-    # IRequestHandler methods
-    def match_request(self, req):
-        match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
-        return match
-
-    def process_request(self, req):
-        # Determine topic subject
-        subject = req.path_info[6:] or 'WikiStart'
-
-        # Get database access
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-
-        # Get topic by subject
-        api = DiscussionApi(self, req)
-        topic = api.get_topic_by_subject(cursor, subject)
-        self.log.debug('topic: %s' % (topic,))
-
-        # Return macro content
-        if topic:
-            req.hdf['discussion.no_navigation'] = True
-            req.args['component'] = 'wiki'
-            req.args['forum'] = str(topic['forum'])
-            req.args['topic'] = str(topic['id'])
-            template, type = api.render_discussion(req, cursor)
-            db.commit()
-
-        # Redirect to wiki page
-        req.args['redirect'] = '0'
-        req.redirect(req.href.wiki(**dict(req.args.items())))
 
     # Core code methods
     def _discussion_link(self, formatter, ns, params, label):

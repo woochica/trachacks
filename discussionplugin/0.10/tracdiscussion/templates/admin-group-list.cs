@@ -1,4 +1,4 @@
-<?cs include "my_macros.cs" ?>
+<?cs include "discussion-macros.cs" ?>
 
 <h2>Forum Groups</h2>
 
@@ -52,9 +52,9 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
-          <?cs call:my_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/group' + '?') ?>
-          <?cs call:my_sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/group' + '?') ?>
-          <?cs call:my_sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/group' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/group' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/group' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/group' + '?') ?>
         </tr>
       </thead>
       <tbody>

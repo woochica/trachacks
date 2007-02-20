@@ -1,5 +1,5 @@
 <?cs include "macros.cs" ?>
-<?cs include "my_macros.cs" ?>
+<?cs include "discussion-macros.cs" ?>
 
 <?cs def:display_group(group, forums) ?>
   <table class="listing">
@@ -13,14 +13,14 @@
         <tr>
       <?cs /if ?>
       <tr>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'subject', 'Forum', discussion.href + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', discussion.href + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'lasttopic', 'Last Topic', discussion.href + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'topics', 'Topics', discussion.href + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'subject', 'Forum', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'lasttopic', 'Last Topic', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'topics', 'Topics', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '?') ?>
       </tr>
     </thead>
     <tbody>

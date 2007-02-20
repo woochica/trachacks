@@ -119,27 +119,27 @@ class DiscussionApi(object):
                 pass
             elif component == 'wiki':
                 if action == 'add':
-                    return ['message-list']
+                    return ['wiki-message-list']
                 elif action == 'quote':
-                    return ['message-quote', 'message-list']
+                    return ['message-quote', 'wiki-message-list']
                 elif action == 'post-add':
                     if preview:
-                        return ['message-list']
+                        return ['wiki-message-list']
                     else:
-                        return ['message-post-add', 'message-list']
+                        return ['message-post-add', 'wiki-message-list']
                 elif action == 'edit':
-                    return ['message-edit', 'message-list']
+                    return ['message-edit', 'wiki-message-list']
                 elif action == 'post-edit':
                     if preview:
-                        return ['message-list']
+                        return ['wiki-message-list']
                     else:
-                        return ['message-post-edit', 'message-list']
+                        return ['message-post-edit', 'wiki-message-list']
                 elif action == 'delete':
-                    return ['message-delete', 'message-list']
+                    return ['message-delete', 'wiki-message-list']
                 elif action == 'set-display':
-                    return ['message-set-display', 'message-list']
+                    return ['message-set-display', 'wiki-message-list']
                 else:
-                    return ['message-list']
+                    return ['wiki-message-list']
             else:
                 if action == 'add':
                     return ['message-list']
@@ -168,28 +168,25 @@ class DiscussionApi(object):
                 pass
             elif component == 'wiki':
                 if action == 'add':
-                    return ['message-list']
+                    return ['wiki-message-list']
                 elif action == 'quote':
-                    return ['topic-quote', 'message-list']
+                    return ['topic-quote','wiki-message-list']
                 elif action == 'post-add':
                     if preview:
-                        return ['message-list']
+                        return ['wiki-message-list']
                     else:
-                        return ['message-post-add', 'message-list']
+                        return ['message-post-add', 'wiki-message-list']
                 elif action == 'edit':
-                    return ['topic-edit', 'message-list']
+                    return ['topic-edit', 'wiki-message-list']
                 elif action == 'post-edit':
                     if preview:
-                        return ['message-list']
+                        return ['wiki-message-list']
                     else:
-                        return ['topic-post-edit', 'message-list']
-                elif action == 'delete':
-                    req.hdf['discussion.no_display'] = True
-                    return ['topic-delete', 'message-list']
+                        return ['topic-post-edit', 'wiki-message-list']
                 elif action == 'set-display':
-                    return ['message-set-display', 'message-list']
+                    return ['message-set-display', 'wiki-message-list']
                 else:
-                    return ['message-list']
+                    return ['wiki-message-list']
             else:
                 if action == 'add':
                     return ['message-list']
@@ -224,7 +221,7 @@ class DiscussionApi(object):
                 else:
                     return ['admin-forum-list']
             elif component == 'wiki':
-                pass
+                return ['wiki-message-list']
             else:
                 if action == 'add':
                     return ['topic-add']
@@ -251,7 +248,7 @@ class DiscussionApi(object):
                     else:
                         return ['admin-forum-list']
             elif component == 'wiki':
-                pass
+                return ['wiki-message-list']
             else:
                 if action == 'post-add':
                     return ['forum-post-add', 'forum-list']
@@ -266,7 +263,7 @@ class DiscussionApi(object):
                 else:
                     return ['admin-group-list']
             elif component == 'wiki':
-                pass
+                return ['wiki-message-list']
             else:
                 if action == 'add':
                     return ['forum-add']
@@ -499,8 +496,8 @@ class DiscussionApi(object):
 
                 # Get new popic and notify about creation.
                 new_topic = self.get_topic_by_time(cursor, new_time)
-                to = self.get_topic_to_recipients(cursor, topic['id'])
-                cc = self.get_topic_cc_recipients(cursor, topic['id'])
+                to = self.get_topic_to_recipients(cursor, new_topic['id'])
+                cc = self.get_topic_cc_recipients(cursor, new_topic['id'])
                 notifier = DiscussionNotifyEmail(self.env)
                 notifier.notify(req, cursor, mode, forum, new_topic, None, to,
                   cc)
@@ -511,8 +508,10 @@ class DiscussionApi(object):
                     raise PermissionError('Topic edit')
 
                 # Prepare form values.
-                req.hdf['args.body'] = topic['body']
+                req.args['subject'] = topic['subject']
+                req.args['body'] = topic['body']
                 req.hdf['args.subject'] = topic['subject']
+                req.hdf['args.body'] = topic['body']
 
             elif mode == 'topic-post-edit':
                 req.perm.assert_permission('DISCUSSION_APPEND')
@@ -558,50 +557,11 @@ class DiscussionApi(object):
 
             elif mode == 'message-list':
                 req.perm.assert_permission('DISCUSSION_VIEW')
+                self._prepare_message_list(req, cursor, topic)
 
-                # Get form values.
-                new_author = req.args.get('author')
-                new_subject = req.args.get('subject')
-                new_body = req.args.get('body')
-
-                # Get time when topic was visited from session.
-                visited = eval(req.session.get('visited-topics') or '{}')
-                if visited.has_key(topic['id']):
-                    visit_time = int(visited[topic['id']])
-                else:
-                    visit_time = 0
-
-                # Update this topic visit time and save to session.
-                visited[topic['id']] = int(time.time())
-                req.session['visited-topics'] = unicode(visited)
-
-                # Mark new topic.
-                if int(topic['time']) > visit_time:
-                    topic['new'] = True
-
-                # Prepare display of topic
-                if new_author:
-                    req.hdf['discussion.author'] = wiki_to_oneliner(
-                      new_author, self.env)
-                if new_subject:
-                    req.hdf['discussion.subject'] = wiki_to_oneliner(
-                      new_subject, self.env)
-                if new_body:
-                    req.hdf['discussion.body'] = wiki_to_html(new_body,
-                      self.env, req)
-
-                # Prepare display of messages
-                display = req.session.get('message-list-display')
-                req.hdf['discussion.display'] = display
-                if display == 'flat-asc':
-                    req.hdf['discussion.messages'] = self.get_flat_messages(
-                      req, cursor, topic['id'], visit_time)
-                elif display == 'flat-desc':
-                    req.hdf['discussion.messages'] = self.get_flat_messages(
-                      req, cursor, topic['id'], visit_time, 'ORDER BY time DESC')
-                else:
-                    req.hdf['discussion.messages'] = self.get_messages(req,
-                      cursor, topic['id'], visit_time)
+            elif mode == 'wiki-message-list':
+                if topic:
+                    self._prepare_message_list(req, cursor, topic)
 
             elif mode == 'message-quote':
                 req.perm.assert_permission('DISCUSSION_APPEND')
@@ -642,6 +602,7 @@ class DiscussionApi(object):
                     raise PermissionError('Message edit')
 
                 # Prepare form values.
+                req.args['body'] = message['body']
                 req.hdf['args.body'] = message['body']
 
             elif mode == 'message-post-edit':
@@ -673,6 +634,50 @@ class DiscussionApi(object):
 
                 # Set message list display mode to session
                 req.session['message-list-display'] = display
+
+    def _prepare_message_list(self, req, cursor, topic):
+        # Get form values.
+        new_author = req.args.get('author')
+        new_subject = req.args.get('subject')
+        new_body = req.args.get('body')
+
+        # Get time when topic was visited from session.
+        visited = eval(req.session.get('visited-topics') or '{}')
+        if visited.has_key(topic['id']):
+            visit_time = int(visited[topic['id']])
+        else:
+            visit_time = 0
+
+        # Update this topic visit time and save to session.
+        visited[topic['id']] = int(time.time())
+        req.session['visited-topics'] = unicode(visited)
+
+        # Mark new topic.
+        if int(topic['time']) > visit_time:
+            topic['new'] = True
+
+        # Prepare display of topic
+        if new_author:
+            req.hdf['discussion.author'] = wiki_to_oneliner(new_author,
+              self.env)
+        if new_subject:
+            req.hdf['discussion.subject'] = wiki_to_oneliner(new_subject,
+              self.env)
+        if new_body:
+            req.hdf['discussion.body'] = wiki_to_html(new_body, self.env, req)
+
+        # Prepare display of messages
+        display = req.session.get('message-list-display')
+        req.hdf['discussion.display'] = display
+        if display == 'flat-asc':
+            req.hdf['discussion.messages'] = self.get_flat_messages(req, cursor,
+              topic['id'], visit_time)
+        elif display == 'flat-desc':
+            req.hdf['discussion.messages'] = self.get_flat_messages(req, cursor,
+              topic['id'], visit_time, 'ORDER BY time DESC')
+        else:
+            req.hdf['discussion.messages'] = self.get_messages(req, cursor,
+             topic['id'], visit_time)
 
     # Get one item functions
 

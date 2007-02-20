@@ -1,5 +1,5 @@
 <?cs include "macros.cs" ?>
-<?cs include "my_macros.cs" ?>
+<?cs include "discussion-macros.cs" ?>
 
 <?cs include "discussion-header.cs" ?>
 
@@ -14,12 +14,12 @@
   <table class="listing">
     <thead>
       <tr>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'author', 'Author', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:my_sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'author', 'Author', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '/' + discussion.forum.id + '?') ?>
       </tr>
     </thead>
     </tbody>

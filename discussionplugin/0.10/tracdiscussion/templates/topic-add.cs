@@ -32,10 +32,10 @@
     </legend>
     <div class="field">
       <label for="author">Author:</label><br/>
-      <?cs if:args.author ?>
-        <input type="text" name="author" value="<?cs var:args.author ?>"/><br/>
+      <?cs if:discussion.authname == 'anonymous' ?>
+        <input type="text" name="author" value="<?cs alt:args.author ?>anonymous<?cs /alt ?>"/><br/>
       <?cs else ?>
-        <input type="text" name="author" value="<?cs var:discussion.authname ?>"/><br/>
+        <input type="text" name="author" value="<?cs var:discussion.authname ?>" readonly="true"/><br/>
       <?cs /if ?>
     </div>
     <div class="field">
