@@ -16,7 +16,12 @@ public class Log
     
     public static void warning( String message )
     {
-        log( Status.WARNING, message, null );
+        warning( message, null );
+    }
+    
+    public static void warning( String message, Exception e )
+    {
+        log( Status.WARNING, message, e );
     }
     
     public static void info( String message )
@@ -26,9 +31,8 @@ public class Log
     
     private static void log( int level, String message, Exception e )
     {
-        Activator.getDefault().getLog()
-                .log(
-                        new Status( level, Activator.PLUGIN_ID, Status.OK,
-                                message, e ) );
+        Activator.getDefault().getLog().log(
+                                             new Status( level, Activator.PLUGIN_ID,
+                                                         Status.OK, message, e ) );
     }
 }

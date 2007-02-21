@@ -3,24 +3,22 @@ package mm.eclipse.trac.views;
 import java.util.Collection;
 
 import mm.eclipse.trac.Activator;
-import mm.eclipse.trac.Log;
-import mm.eclipse.trac.models.IWikiPageListener;
+import mm.eclipse.trac.models.ITracListener;
+import mm.eclipse.trac.models.TracServer;
+import mm.eclipse.trac.models.TracServerList;
 import mm.eclipse.trac.models.WikiPage;
-import mm.eclipse.trac.views.actions.CommitPage;
-import mm.eclipse.trac.views.actions.OpenEditor;
-import mm.eclipse.trac.xmlrpc.Trac;
+import mm.eclipse.trac.views.actions.IActionsProvider;
+import mm.eclipse.trac.views.actions.TracServerActionProvider;
+import mm.eclipse.trac.views.actions.WikiPageActionsProvider;
 
-import org.eclipse.core.runtime.Preferences.IPropertyChangeListener;
-import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
-import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
@@ -29,29 +27,23 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IDecoratorManager;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.navigator.CommonViewer;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 
-public class TracNavigator extends ViewPart implements IPropertyChangeListener,
-        IWikiPageListener
+public class TracNavigator extends ViewPart implements ITracListener
 {
     private CommonViewer     viewer;
     
     private DrillDownAdapter drillDownAdapter;
     
-    private Action           action1;
+    private IActionsProvider tracServerActions;
     
-    private Action           actionCommitPage;
-    
-    private Action           actionOpenEditor;
+    private IActionsProvider wikiPageActions;
     
     class NameSorter extends ViewerSorter
-    {
-    }
+    {}
     
     /**
      * The constructor.
@@ -66,7 +58,8 @@ public class TracNavigator extends ViewPart implements IPropertyChangeListener,
     public void createPartControl( Composite parent )
     {
         viewer = new CommonViewer( "mm.eclipse.trac.views", parent, SWT.MULTI
-                | SWT.H_SCROLL | SWT.V_SCROLL );
+                                                                    | SWT.H_SCROLL
+                                                                    | SWT.V_SCROLL );
         drillDownAdapter = new DrillDownAdapter( viewer );
         viewer.setContentProvider( new WikiContentProvider() );
         
@@ -76,29 +69,12 @@ public class TracNavigator extends ViewPart implements IPropertyChangeListener,
         viewer.setLabelProvider( new DecoratingLabelProvider( labelProvider, manager ) );
         
         viewer.setSorter( new NameSorter() );
-        propertyChange( null );
+        viewer.setInput( TracServerList.getInstance() );
+        TracServerList.getInstance().addListener( this );
         
         makeActions();
         hookContextMenu();
         contributeToActionBars();
-        
-        Activator.getDefault().getPluginPreferences().addPropertyChangeListener( this );
-    }
-    
-    public void propertyChange( PropertyChangeEvent event )
-    {
-        Log.info( "TracNavigator: Configuration changed. Reload Tree" );
-        if ( !Trac.getInstance().isEnabled() )
-        {
-            viewer.setInput( null );
-            return;
-        }
-        
-        WikiPage invisibleRoot = new WikiPage( "", false );
-        WikiPage root = new WikiPage( "", false );
-        root.setRoot( true );
-        invisibleRoot.addChild( root );
-        viewer.setInput( invisibleRoot );
     }
     
     private void hookContextMenu()
@@ -108,7 +84,16 @@ public class TracNavigator extends ViewPart implements IPropertyChangeListener,
         menuMgr.addMenuListener( new IMenuListener() {
             public void menuAboutToShow( IMenuManager manager )
             {
-                TracNavigator.this.fillContextMenu( manager );
+                IStructuredSelection selection = (IStructuredSelection) viewer
+                        .getSelection();
+                
+                tracServerActions.fillMenu( manager, selection );
+                manager.add(  new Separator() );
+                wikiPageActions.fillMenu( manager, selection );
+                manager.add(  new Separator() );
+                drillDownAdapter.addNavigationActions( manager );
+                // Other plug-ins can contribute there actions here
+                manager.add( new Separator( IWorkbenchActionConstants.MB_ADDITIONS ) );
             }
         } );
         Menu menu = menuMgr.createContextMenu( viewer.getControl() );
@@ -125,53 +110,19 @@ public class TracNavigator extends ViewPart implements IPropertyChangeListener,
     
     private void fillLocalPullDown( IMenuManager manager )
     {
-        manager.add( actionOpenEditor );
-        manager.add( actionCommitPage );
         manager.add( new Separator() );
-        manager.add( action1 );
-    }
-    
-    private void fillContextMenu( IMenuManager manager )
-    {
-        manager.add( actionOpenEditor );
-        manager.add( actionCommitPage );
-        manager.add( new Separator() );
-        manager.add( action1 );
-        
-        drillDownAdapter.addNavigationActions( manager );
-        // Other plug-ins can contribute there actions here
-        manager.add( new Separator( IWorkbenchActionConstants.MB_ADDITIONS ) );
     }
     
     private void fillLocalToolBar( IToolBarManager manager )
     {
-        manager.add( action1 );
         manager.add( new Separator() );
         drillDownAdapter.addNavigationActions( manager );
     }
     
     private void makeActions()
     {
-        actionOpenEditor = new OpenEditor( viewer );
-        
-        action1 = new Action() {
-            public void run()
-            {
-                showMessage( "Action 1 executed" );
-            }
-        };
-        action1.setText( "Action 1" );
-        action1.setToolTipText( "Action 1 tooltip" );
-        action1.setImageDescriptor( PlatformUI.getWorkbench().getSharedImages()
-                .getImageDescriptor( ISharedImages.IMG_OBJS_INFO_TSK ) );
-        
-        actionCommitPage = new CommitPage( viewer );
-    }
-    
-    private void showMessage( String message )
-    {
-        MessageDialog.openInformation( viewer.getControl().getShell(), "Sample View",
-                                       message );
+        tracServerActions = new TracServerActionProvider( viewer );
+        wikiPageActions = new WikiPageActionsProvider( viewer );
     }
     
     /**
@@ -185,11 +136,11 @@ public class TracNavigator extends ViewPart implements IPropertyChangeListener,
     /*
      * (non-Javadoc)
      * 
-     * @see mm.eclipse.trac.models.IWikiPageListener#wikiPageChanged(java.lang.Object)
+     * @see mm.eclipse.trac.models.ITracListener#wikiPageChanged(java.lang.Object)
      */
-    public void wikiPageChanged( Object page )
+    public void tracResourceModified( Object element )
     {
-        viewer.refresh( page, true );
+        viewer.refresh( element, true );
     }
     
     // ////////////////////////////////////////////////////////////////////////
@@ -211,6 +162,28 @@ public class TracNavigator extends ViewPart implements IPropertyChangeListener,
         
         public Object[] getChildren( Object obj )
         {
+            if ( obj instanceof TracServerList )
+            {
+                TracServerList serverList = (TracServerList) obj;
+                for ( TracServer s : serverList )
+                    s.addListener( TracNavigator.this );
+                return serverList.getServers().toArray();
+            }
+            if ( obj instanceof TracServer )
+            {
+                TracServer server = (TracServer) obj;
+                
+                if ( server.isConnected() )
+                {
+                    WikiPage rootPage = new WikiPage( server, "", true );
+                    rootPage.setRoot( true );
+                    return new WikiPage[] { rootPage };
+                }
+                else
+                {
+                    return new WikiPage[0];
+                }
+            }
             if ( obj instanceof WikiPage )
             {
                 WikiPage page = (WikiPage) obj;
@@ -225,16 +198,24 @@ public class TracNavigator extends ViewPart implements IPropertyChangeListener,
         
         public Object getParent( Object obj )
         {
+            if ( obj instanceof TracServer ) { return TracServerList.getInstance(); }
             if ( obj instanceof WikiPage )
             {
                 WikiPage page = (WikiPage) obj;
-                return page.getParent();
+                if ( page.isRoot() )
+                    return page.getServer();
+                else return page.getParent();
             }
             return null;
         }
         
         public boolean hasChildren( Object obj )
         {
+            if ( obj instanceof TracServer )
+            {
+                TracServer server = (TracServer) obj;
+                return server.isConnected();
+            }
             if ( obj instanceof WikiPage )
             {
                 WikiPage page = (WikiPage) obj;

@@ -1,7 +1,7 @@
 package mm.eclipse.trac.editors;
 
 import mm.eclipse.trac.Log;
-import mm.eclipse.trac.xmlrpc.Trac;
+import mm.eclipse.trac.models.WikiPage;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
@@ -54,16 +54,15 @@ public class WikiPreview
         browser = null;
     }
     
-    public void showContent( String wikiSource )
+    public void showContent( WikiPage page, String wikiSource )
     {
         try
         {
-            
-            String htmlContent = Trac.getInstance().getWiki().wikiToHtml(
+            String htmlContent = page.getServer().getWiki().wikiToHtml(
                     wikiSource );
             
             String content;
-            String serverUrl = Trac.getInstance().getServerURL();
+            String serverUrl = page.getServer().getUrl().toString();
             if ( !serverUrl.endsWith( "/" ) )
                 serverUrl += "/";
             

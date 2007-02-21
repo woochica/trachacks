@@ -1,6 +1,7 @@
 package mm.eclipse.trac.editors;
 
 import mm.eclipse.trac.Log;
+import mm.eclipse.trac.models.WikiPage;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -176,7 +177,8 @@ public class WikiEditor extends MultiPageEditorPart implements
             
             String editorText = editor.getDocumentProvider()
                     .getDocument( editor.getEditorInput() ).get();
-            wikiPreview.showContent( editorText );
+            WikiPage page = (WikiPage)((WikiEditorInput)editor.getEditorInput()).getWikiPage();
+            wikiPreview.showContent( page, editorText );
             wikiPreview.setFocus();
         }
     }

@@ -5,7 +5,7 @@ import java.util.List;
 
 import mm.eclipse.trac.editors.WikiEditor;
 import mm.eclipse.trac.editors.WikiEditorInput;
-import mm.eclipse.trac.models.IWikiPageListener;
+import mm.eclipse.trac.models.ITracListener;
 import mm.eclipse.trac.models.WikiPage;
 import mm.eclipse.trac.models.WikiPageVersion;
 
@@ -26,7 +26,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 
-public class WikiPageHistory extends ViewPart implements IPartListener, IWikiPageListener
+public class WikiPageHistory extends ViewPart implements IPartListener, ITracListener
 {
     private TableViewer viewer;
     
@@ -119,9 +119,9 @@ public class WikiPageHistory extends ViewPart implements IPartListener, IWikiPag
     /*
      * (non-Javadoc)
      * 
-     * @see mm.eclipse.trac.models.IWikiPageListener#wikiPageChanged(java.lang.Object)
+     * @see mm.eclipse.trac.models.ITracListener#wikiPageChanged(java.lang.Object)
      */
-    public void wikiPageChanged( Object page )
+    public void tracResourceModified( Object page )
     {
         if ( page == this.page && viewer.getInput() != null )
         {

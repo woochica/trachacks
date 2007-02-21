@@ -32,6 +32,13 @@
             icon="icons/trac_16.png"
             id="mm.eclipse.trac.views.WikiPageHistory"
             name="Wiki Page History"/>
+      <view
+            allowMultiple="false"
+            category="mm.eclipse.trac"
+            class="mm.eclipse.trac.server.ServerView"
+            icon="icons/server.png"
+            id="mm.eclipse.trac.server.ServerView"
+            name="Trac Servers"/>
    </extension>
    <extension
          point="org.eclipse.ui.decorators">
@@ -43,7 +50,7 @@
             lightweight="true"
             state="true">
          <enablement>
-			<objectClass name="mm.eclipse.trac.models.WikiPage"/>
+			<objectClass name="mm.eclipse.trac.models.ModelBase"/>
          </enablement>
       </decorator>
    </extension>
@@ -85,6 +92,20 @@
             icon="icons/trac_16.png"
             id="mm.eclipse.trac.perspective"
             name="Trac"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="mm.eclipse.trac.server"
+            name="Trac"/>
+      <wizard
+            category="mm.eclipse.trac.server"
+            class="mm.eclipse.trac.server.NewTracServer"
+            finalPerspective="Trac"
+            icon="icons/trac_16.png"
+            id="mm.eclipse.trac.server.NewTracServer"
+            name="Add a Trac Server"
+            project="false"/>
    </extension>
 
 </plugin>

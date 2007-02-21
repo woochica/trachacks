@@ -1,6 +1,6 @@
 package mm.eclipse.trac.views.actions;
 
-import mm.eclipse.trac.Activator;
+import mm.eclipse.trac.Images;
 import mm.eclipse.trac.Log;
 import mm.eclipse.trac.models.WikiPage;
 
@@ -8,21 +8,19 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.window.Window;
 
 public class CommitPage extends Action
 {
-    private static final String ImagePath = "icons/page-commit.gif";
+    private final StructuredViewer    viewer;
     
-    private final TreeViewer    viewer;
-    
-    public CommitPage( TreeViewer viewer )
+    public CommitPage( StructuredViewer viewer )
     {
         this.viewer = viewer;
         setText( "Commit page" );
         setToolTipText( "Commit page in Trac database" );
-        setImageDescriptor( Activator.getImageDescriptor( ImagePath ) );
+        setImageDescriptor( Images.getDescriptor( Images.PageCommit ) );
     }
     
     @Override

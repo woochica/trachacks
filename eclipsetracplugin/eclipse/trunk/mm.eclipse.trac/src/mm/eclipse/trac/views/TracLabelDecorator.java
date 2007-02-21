@@ -8,10 +8,10 @@
  ******************************************************************************/
 package mm.eclipse.trac.views;
 
-import mm.eclipse.trac.Activator;
+import mm.eclipse.trac.Images;
+import mm.eclipse.trac.models.TracServer;
 import mm.eclipse.trac.models.WikiPage;
 
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
@@ -26,24 +26,24 @@ import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 public class TracLabelDecorator implements ILightweightLabelDecorator
 {
     
-    /** The integer value representing the placement options */
-    private static int      quadrant = IDecoration.BOTTOM_RIGHT;
-    
-    /** The icon image location in the project folder */
-    private static String   iconPath = "icons/modified.png";
-                                                                 
-    /**
-     * The image description used in
-     * <code>addOverlay(ImageDescriptor, int)</code>
-     */
-    private ImageDescriptor descriptor = Activator.getImageDescriptor( iconPath );
-    
     public void decorate( Object element, IDecoration decoration )
     {
-        WikiPage page = (WikiPage)element;
-        if ( page.isDirty() )
+        if ( element instanceof TracServer )
         {
-            decoration.addOverlay( descriptor, quadrant );
+            TracServer server = (TracServer) element;
+            if ( !server.isValid() )
+                decoration.addOverlay( Images.getDescriptor( Images.Error ),
+                                       IDecoration.TOP_LEFT );
+            
+        }
+        else if ( element instanceof WikiPage )
+        {
+            WikiPage page = (WikiPage) element;
+            if ( page.isDirty() )
+            {
+                decoration.addOverlay( Images.getDescriptor( Images.Modified ),
+                                       IDecoration.BOTTOM_RIGHT );
+            }
         }
     }
     

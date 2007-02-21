@@ -7,14 +7,14 @@ package mm.eclipse.trac.models;
  * @author Matteo Merli
  * 
  */
-public interface IWikiPageListener
+public interface ITracListener
 {
     /**
      * Notify when the observed page gets modified.
      * 
-     * @param page
+     * @param resource
      *            The modified wiki page.
      */
-    void wikiPageChanged( Object page );
+    void tracResourceModified( Object resource );
     
 }

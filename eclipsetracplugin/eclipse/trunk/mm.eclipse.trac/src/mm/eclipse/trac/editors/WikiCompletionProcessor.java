@@ -14,11 +14,10 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import mm.eclipse.trac.Activator;
+import mm.eclipse.trac.Images;
 import mm.eclipse.trac.editors.model.WikiMacro;
-import mm.eclipse.trac.xmlrpc.Trac;
+import mm.eclipse.trac.models.WikiPage;
 
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -37,7 +36,6 @@ import org.eclipse.jface.text.templates.TemplateContext;
 import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.jface.text.templates.TemplateProposal;
-import org.eclipse.swt.graphics.Image;
 
 public class WikiCompletionProcessor implements IContentAssistProcessor
 {
@@ -57,15 +55,9 @@ public class WikiCompletionProcessor implements IContentAssistProcessor
         }
     }
     
-    private static final String    TemplateIcon    = "icons/template.gif";
-    
-    private static final String    WordIcon        = "icons/word.png";
-    
-    private static final String    MacroIcon       = "icons/macro.gif";
-    
     private static final String    TemplateContext = "mm.eclipse.trac.templates";
     
-    private static List<WikiMacro> macros          = null;
+    private List<WikiMacro>        macros          = null;
     
     private final WikiSourceEditor editor;
     
@@ -128,7 +120,7 @@ public class WikiCompletionProcessor implements IContentAssistProcessor
     
     private List<ICompletionProposal> computeMacroProposals( ITextViewer viewer,
                                                              IRegion region, String prefix )
-    {        
+    {
         List<ICompletionProposal> result = new ArrayList<ICompletionProposal>();
         
         for ( WikiMacro macro : getMacros() )
@@ -140,7 +132,7 @@ public class WikiCompletionProcessor implements IContentAssistProcessor
                         .getDescription() );
                 ICompletionProposal prop = new CompletionProposal( replace, region
                         .getOffset(), prefix.length(), replace.length() - 3,
-                                                                   getImage( MacroIcon ),
+                                                                   Images.get( Images.Macro ),
                                                                    macro.getName(), info,
                                                                    "Bla bla bla bla" );
                 result.add( prop );
@@ -197,7 +189,7 @@ public class WikiCompletionProcessor implements IContentAssistProcessor
             // String message = MessageFormat.format( "test {0}", word );
             result.add( new CompletionProposal( word, region.getOffset(),
                                                 prefix.length(), word.length(),
-                                                getImage( WordIcon ), null, null, null ) );
+                                                Images.get( Images.Word ), null, null, null ) );
         }
         
         return result;
@@ -234,18 +226,20 @@ public class WikiCompletionProcessor implements IContentAssistProcessor
             if ( !template.getName().toLowerCase().startsWith( prefix ) ) continue;
             
             matches.add( new TemplateProposal( template, context, region,
-                                               getImage( TemplateIcon ), 1 ) );
+                                               Images.get( Images.Template ), 1 ) );
         }
         
         // Collections.sort( matches, proposalComparator );
         return matches;
     }
     
-    private static List<WikiMacro> getMacros()
+    private List<WikiMacro> getMacros()
     {
         if ( macros != null ) return macros;
         
-        Map<String, String> macroMap = Trac.getInstance().getWikiExt().getMacros();
+        WikiPage page = ((WikiEditorInput) editor.getEditorInput()).getWikiPage();
+        
+        Map<String, String> macroMap = page.getServer().getWikiExt().getMacros();
         
         macros = new ArrayList<WikiMacro>( macroMap.size() );
         for ( Entry<String, String> entry : macroMap.entrySet() )
@@ -276,22 +270,6 @@ public class WikiCompletionProcessor implements IContentAssistProcessor
         {
             return "";
         }
-    }
-    
-    /**
-     * Always return the default image.
-     */
-    private Image getImage( String icon )
-    {
-        ImageRegistry registry = Activator.getDefault().getImageRegistry();
-        Image image = registry.get( icon );
-        if ( image == null )
-        {
-            ImageDescriptor desc = Activator.getImageDescriptor( icon );
-            registry.put( icon, desc );
-            image = registry.get( icon );
-        }
-        return image;
     }
     
     public IContextInformation[] computeContextInformation( ITextViewer viewer, int offset )

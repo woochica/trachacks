@@ -12,7 +12,8 @@ import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.swt.SWT;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
@@ -25,13 +26,14 @@ import org.eclipse.ui.ide.IDE;
  */
 public class OpenEditor extends Action implements IDoubleClickListener
 {
-    TreeViewer viewer;
+    StructuredViewer viewer;
     
-    public OpenEditor( TreeViewer viewer )
+    public OpenEditor( StructuredViewer viewer )
     {
         this.viewer = viewer;
         setText( "Open" );
         setToolTipText( "Open wiki page in editor." );
+        setAccelerator( SWT.F3 );
         viewer.addDoubleClickListener( this );
     }
     
@@ -48,7 +50,6 @@ public class OpenEditor extends Action implements IDoubleClickListener
         if ( obj instanceof WikiPage )
         {
             WikiPage page = (WikiPage) obj;
-            Log.info( "Opening: " + page );
             
             WikiEditorInput wikiEditorInput = new WikiEditorInput( page );
             

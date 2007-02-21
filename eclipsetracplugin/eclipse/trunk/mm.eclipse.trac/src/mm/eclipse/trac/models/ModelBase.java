@@ -11,17 +11,16 @@ import mm.eclipse.trac.util.WeakCollection;
  */
 public abstract class ModelBase
 {
-    private WeakCollection<IWikiPageListener> listeners;
+    private WeakCollection<ITracListener> listeners;
     
-    public void addListener( IWikiPageListener listener )
+    public void addListener( ITracListener listener )
     {
-        if ( listeners == null )
-            listeners = new WeakCollection<IWikiPageListener>();
+        if ( listeners == null ) listeners = new WeakCollection<ITracListener>();
         
         listeners.add( listener );
     }
     
-    public void removeListener( IWikiPageListener listener )
+    public void removeListener( ITracListener listener )
     {
         if ( listeners != null )
         {
@@ -31,8 +30,15 @@ public abstract class ModelBase
     
     protected void notifyChanged()
     {
-        for ( IWikiPageListener listener : listeners )
-            listener.wikiPageChanged( this );
+        if ( listeners == null ) return;
+        /*
+        Display.getDefault().asyncExec( new Runnable() {
+            public void run()
+            {
+          */      for ( ITracListener listener : listeners )
+                    listener.tracResourceModified( this );
+          /*  }
+        } ); */
     }
     
 }

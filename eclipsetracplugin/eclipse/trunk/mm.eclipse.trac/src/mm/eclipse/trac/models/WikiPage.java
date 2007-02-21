@@ -9,13 +9,14 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import mm.eclipse.trac.xmlrpc.Trac;
 import mm.eclipse.trac.xmlrpc.WikiExt;
 
 import org.eclipse.core.runtime.IAdaptable;
 
 public class WikiPage extends ModelBase implements IAdaptable
 {
+    private TracServer            server;
+    
     private String                fullName;
     private boolean               exists      = false;
     private boolean               hasChildren = false;
@@ -27,25 +28,31 @@ public class WikiPage extends ModelBase implements IAdaptable
     
     private List<WikiPageVersion> versions    = null;
     
-    public WikiPage( String fullName, boolean exists )
+    public WikiPage( TracServer server, String fullName, boolean exists )
     {
-        this.fullName = fullName;
-        this.exists = exists;
-        
-        WikiExt wikiExt = Trac.getInstance().getWikiExt();
-        this.hasChildren = wikiExt.hasChildren( fullName );
+        this( server, fullName, exists, server.getWikiExt().hasChildren( fullName ) );
     }
     
-    public WikiPage( String fullName, boolean exists, boolean hasChildren )
+    public WikiPage( TracServer server, String fullName, boolean exists,
+                     boolean hasChildren )
     {
+        this.server = server;
         this.fullName = fullName;
         this.exists = exists;
         this.hasChildren = hasChildren;
     }
     
-    public WikiPage( String fullName )
+    public WikiPage( TracServer server, String fullName )
     {
-        this( fullName, true );
+        this( server, fullName, true );
+    }
+    
+    /**
+     * @return the server
+     */
+    public TracServer getServer()
+    {
+        return server;
     }
     
     /**
@@ -75,11 +82,11 @@ public class WikiPage extends ModelBase implements IAdaptable
     
     public void addChild( WikiPage child )
     {
-        if ( children == null )
-            children = new ArrayList<WikiPage>();
+        if ( children == null ) children = new ArrayList<WikiPage>();
         
         children.add( child );
         child.parent = this;
+        notifyChanged();
     }
     
     public boolean hasChildren()
@@ -89,11 +96,10 @@ public class WikiPage extends ModelBase implements IAdaptable
     
     public Collection<WikiPage> getChildren()
     {
-        if ( children != null )
-            return children;
+        if ( children != null ) return children;
         
         children = new ArrayList<WikiPage>();
-        WikiExt wikiExt = Trac.getInstance().getWikiExt();
+        WikiExt wikiExt = server.getWikiExt();
         
         Map<String, Map<String, Boolean>> childrenMap = wikiExt.getChildren( fullName );
         SortedSet<String> names = new TreeSet<String>( childrenMap.keySet() );
@@ -103,8 +109,9 @@ public class WikiPage extends ModelBase implements IAdaptable
             Map<String, Boolean> attrs = childrenMap.get( name );
             boolean exists = attrs.get( "exists" );
             boolean hasChildren = attrs.get( "hasChildren" );
-            children.add( new WikiPage( name, exists, hasChildren ) );
+            children.add( new WikiPage( server, name, exists, hasChildren ) );
         }
+        
         return children;
     }
     
@@ -120,8 +127,7 @@ public class WikiPage extends ModelBase implements IAdaptable
     
     public String getContent()
     {
-        if ( content == null )
-            content = Trac.getInstance().getWiki().getPage( fullName );
+        if ( content == null ) content = server.getWiki().getPage( fullName );
         return content;
     }
     
@@ -142,7 +148,7 @@ public class WikiPage extends ModelBase implements IAdaptable
     {
         Map<String, String> attributes = new HashMap<String, String>();
         attributes.put( "comment", comment );
-        Trac.getInstance().getWiki().putPage( fullName, content, attributes );
+        server.getWiki().putPage( fullName, content, attributes );
         
         // Should refresh with newly created version
         versions = null;
@@ -152,12 +158,10 @@ public class WikiPage extends ModelBase implements IAdaptable
     
     public List<WikiPageVersion> getVersions()
     {
-        if ( versions != null )
-            return versions;
+        if ( versions != null ) return versions;
         
         versions = new ArrayList<WikiPageVersion>();
-        Object[] remoteVersions = Trac.getInstance().getWikiExt()
-                .getPageVersions( fullName );
+        Object[] remoteVersions = server.getWikiExt().getPageVersions( fullName );
         
         for ( Object o : remoteVersions )
         {

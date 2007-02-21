@@ -198,23 +198,24 @@ public class WeakCollection<T> implements Collection<T>
     }
     
     /**
-     * @param <T>
+     * @param <E>
      * @param a
      * @return
-     * @see java.util.Collection#toArray(T[])
+     * @see java.util.Collection#toArray(E[])
      */
-    public <T> T[] toArray( T[] a )
+    @SuppressWarnings("unchecked")
+    public <E> E[] toArray( E[] a )
     {
-        T[] array;
+        Object[] array;
         if ( a.length >= data.size() )
             array = a;
-        else array = (T[]) new Object[data.size()];
+        else array = new Object[data.size()];
         
         int i = 0;
         for ( Object item : data )
             array[i++] = ((WeakReference<T>) item).get();
         
-        return array;
+        return (E[]) array;
     }
     
     private int indexOf( Object item )

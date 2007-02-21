@@ -3,7 +3,7 @@
  */
 package mm.eclipse.trac.editors;
 
-import mm.eclipse.trac.Activator;
+import mm.eclipse.trac.Images;
 import mm.eclipse.trac.models.WikiPage;
 
 import org.eclipse.core.resources.IStorage;
@@ -54,7 +54,7 @@ public class WikiEditorInput implements IStorageEditorInput
      */
     public ImageDescriptor getImageDescriptor()
     {
-        return Activator.getImageDescriptor( "icons/trac_16.png" );
+        return Images.getDescriptor( Images.Trac16 );
     }
     
     /*
