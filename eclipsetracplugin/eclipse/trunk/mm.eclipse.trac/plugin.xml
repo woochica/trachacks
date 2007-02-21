@@ -63,20 +63,6 @@
             inputTypes="mm.eclipse.trac.models.WikiPage"/>
    </extension>
    <extension
-         point="org.eclipse.ui.preferencePages">
-      <page
-            class="mm.eclipse.trac.preferences.TracPreferencePage"
-            id="mm.eclipse.trac.preferences.TracPreferencePage"
-            name="Trac"/>
-   </extension>
-   <extension
-         point="org.eclipse.core.runtime.preferences">
-      <initializer class="mm.eclipse.trac.preferences.PreferenceInitializer"/>
-   </extension>
-   <extension
-         point="org.eclipse.ui.preferencePages">
-   </extension>
-   <extension
          point="org.eclipse.ui.editors.templates">
       <contextType
             class="org.eclipse.jface.text.templates.TemplateContextType"
