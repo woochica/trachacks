@@ -1,12 +1,16 @@
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
 import datetime
-import trac.util.datefmt
 
 def identity(x):
     return x;
 
-to_timestamp = trac.util.datefmt or identity;
+try:
+    import trac.util.datefmt
+    to_timestamp = trac.util.datefmt.to_timestamp
+except Exception:
+    to_timestamp = identity
+
 
 def save_custom_field_value( db, ticket_id, field, value ):
     cursor = db.cursor();
