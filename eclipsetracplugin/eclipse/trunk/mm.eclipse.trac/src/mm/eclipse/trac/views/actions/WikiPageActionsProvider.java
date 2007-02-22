@@ -31,7 +31,8 @@ public class WikiPageActionsProvider implements IActionsProvider
     
     public void fillMenu( IMenuManager menu, IStructuredSelection selection )
     {
-        if ( selection.size() != 1 ) return;
+        if ( selection.size() != 1 )
+            return;
         
         if ( selection.getFirstElement() instanceof WikiPage )
         {
@@ -42,6 +43,26 @@ public class WikiPageActionsProvider implements IActionsProvider
             
             menu.add( actionOpenEditor );
             menu.add( actionCommitPage );
+        }
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see mm.eclipse.trac.views.actions.IActionsProvider#doubleClick(org.eclipse.jface.viewers.IStructuredSelection)
+     */
+    public void doubleClick( IStructuredSelection selection )
+    {
+        if ( selection.size() != 1 )
+            return;
+        
+        if ( selection.getFirstElement() instanceof WikiPage )
+        {
+            WikiPage page = (WikiPage) selection.getFirstElement();
+            if ( page.exists() && !page.isRoot() )
+            {
+                actionOpenEditor.run();
+            }
         }
     }
     

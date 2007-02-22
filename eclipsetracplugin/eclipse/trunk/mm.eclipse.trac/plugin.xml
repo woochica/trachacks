@@ -50,7 +50,11 @@
             lightweight="true"
             state="true">
          <enablement>
-			<objectClass name="mm.eclipse.trac.models.ModelBase"/>
+   <or>
+      <objectClass name="mm.eclipse.trac.models.WikiPage"/>
+      <objectClass name="mm.eclipse.trac.models.TracServer"/>
+      <objectClass name="mm.eclipse.trac.models.TracServerList"/>
+   </or>
          </enablement>
       </decorator>
    </extension>

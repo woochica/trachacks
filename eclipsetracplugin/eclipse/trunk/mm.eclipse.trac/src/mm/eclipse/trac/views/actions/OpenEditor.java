@@ -8,8 +8,6 @@ import mm.eclipse.trac.editors.WikiEditorInput;
 import mm.eclipse.trac.models.WikiPage;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
@@ -24,7 +22,7 @@ import org.eclipse.ui.ide.IDE;
  * @author Matteo Merli
  * 
  */
-public class OpenEditor extends Action implements IDoubleClickListener
+public class OpenEditor extends Action
 {
     StructuredViewer viewer;
     
@@ -34,12 +32,6 @@ public class OpenEditor extends Action implements IDoubleClickListener
         setText( "Open" );
         setToolTipText( "Open wiki page in editor." );
         setAccelerator( SWT.F3 );
-        viewer.addDoubleClickListener( this );
-    }
-    
-    public void doubleClick( DoubleClickEvent event )
-    {
-        run();
     }
     
     public void run()

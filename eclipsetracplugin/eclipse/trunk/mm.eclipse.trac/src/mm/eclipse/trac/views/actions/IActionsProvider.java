@@ -6,4 +6,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 public interface IActionsProvider
 {   
     void fillMenu( IMenuManager menu, IStructuredSelection selection );
+    
+    void doubleClick( IStructuredSelection selection );
 }

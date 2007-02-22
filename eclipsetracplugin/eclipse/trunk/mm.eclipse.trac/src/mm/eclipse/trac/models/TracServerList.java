@@ -54,11 +54,13 @@ public class TracServerList extends ModelBase implements Iterable<TracServer>
             TracServer server = new TracServer( "Entorno.Tpvs",
                                                 new URL( "http://entorno.tpvs/trac" ),
                                                 "mme002es", "bjc2100", false );
+            server.connect();
             servers.add( server );
             
-            server = new TracServer( "Otro", new URL( "http://entorsd" ), "mme002es",
-                                     "bjc2100", false );
-            // servers.add( server );
+            server = new TracServer( "Ubuntu", new URL( "http://ubuntu" ), "",
+                                     "", true );
+            server.connect();
+            servers.add( server );
             
         } catch ( MalformedURLException e )
         {

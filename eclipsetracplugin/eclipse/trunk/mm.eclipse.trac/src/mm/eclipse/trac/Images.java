@@ -7,13 +7,13 @@ import org.eclipse.ui.PlatformUI;
 
 public enum Images {
     
-    Error("error.gif"), Modified("modified.gif"),
+    Error("error.gif"), Modified("modified.png"),
 
     ServerConnected("server.png"), ServerDisconnected("server_disconnected.png"),
     NewServer("newServer.png"),
 
     PageCommit("page-commit.gif"), Macro("macro.gif"), Word("word.png"),
-    Template("template.png"),
+    Template("template.gif"),
 
     Step("step.gif"),
 

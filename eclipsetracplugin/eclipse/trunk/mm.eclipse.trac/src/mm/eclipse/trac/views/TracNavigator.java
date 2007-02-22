@@ -17,6 +17,8 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -32,7 +34,8 @@ import org.eclipse.ui.navigator.CommonViewer;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 
-public class TracNavigator extends ViewPart implements ITracListener
+public class TracNavigator extends ViewPart implements ITracListener,
+        IDoubleClickListener
 {
     private CommonViewer     viewer;
     
@@ -43,7 +46,8 @@ public class TracNavigator extends ViewPart implements ITracListener
     private IActionsProvider wikiPageActions;
     
     class NameSorter extends ViewerSorter
-    {}
+    {
+    }
     
     /**
      * The constructor.
@@ -58,8 +62,7 @@ public class TracNavigator extends ViewPart implements ITracListener
     public void createPartControl( Composite parent )
     {
         viewer = new CommonViewer( "mm.eclipse.trac.views", parent, SWT.MULTI
-                                                                    | SWT.H_SCROLL
-                                                                    | SWT.V_SCROLL );
+                | SWT.H_SCROLL | SWT.V_SCROLL );
         drillDownAdapter = new DrillDownAdapter( viewer );
         viewer.setContentProvider( new WikiContentProvider() );
         
@@ -68,6 +71,7 @@ public class TracNavigator extends ViewPart implements ITracListener
                 .getDecoratorManager();
         viewer.setLabelProvider( new DecoratingLabelProvider( labelProvider, manager ) );
         
+        viewer.addDoubleClickListener( this );
         viewer.setSorter( new NameSorter() );
         viewer.setInput( TracServerList.getInstance() );
         TracServerList.getInstance().addListener( this );
@@ -88,9 +92,9 @@ public class TracNavigator extends ViewPart implements ITracListener
                         .getSelection();
                 
                 tracServerActions.fillMenu( manager, selection );
-                manager.add(  new Separator() );
+                manager.add( new Separator() );
                 wikiPageActions.fillMenu( manager, selection );
-                manager.add(  new Separator() );
+                manager.add( new Separator() );
                 drillDownAdapter.addNavigationActions( manager );
                 // Other plug-ins can contribute there actions here
                 manager.add( new Separator( IWorkbenchActionConstants.MB_ADDITIONS ) );
@@ -143,6 +147,13 @@ public class TracNavigator extends ViewPart implements ITracListener
         viewer.refresh( element, true );
     }
     
+    public void doubleClick( DoubleClickEvent event )
+    {
+        IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
+        tracServerActions.doubleClick( selection );
+        wikiPageActions.doubleClick( selection );
+    }
+    
     // ////////////////////////////////////////////////////////////////////////
     
     private class WikiContentProvider implements IStructuredContentProvider,
@@ -178,8 +189,7 @@ public class TracNavigator extends ViewPart implements ITracListener
                     WikiPage rootPage = new WikiPage( server, "", true );
                     rootPage.setRoot( true );
                     return new WikiPage[] { rootPage };
-                }
-                else
+                } else
                 {
                     return new WikiPage[0];
                 }
@@ -198,13 +208,17 @@ public class TracNavigator extends ViewPart implements ITracListener
         
         public Object getParent( Object obj )
         {
-            if ( obj instanceof TracServer ) { return TracServerList.getInstance(); }
+            if ( obj instanceof TracServer )
+            {
+                return TracServerList.getInstance();
+            }
             if ( obj instanceof WikiPage )
             {
                 WikiPage page = (WikiPage) obj;
                 if ( page.isRoot() )
                     return page.getServer();
-                else return page.getParent();
+                else
+                    return page.getParent();
             }
             return null;
         }

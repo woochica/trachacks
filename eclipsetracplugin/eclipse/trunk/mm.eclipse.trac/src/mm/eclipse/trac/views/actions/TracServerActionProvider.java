@@ -78,7 +78,8 @@ public class TracServerActionProvider implements IActionsProvider
      */
     public void fillMenu( IMenuManager menu, IStructuredSelection selection )
     {
-        if ( selection.size() != 1 ) return;
+        if ( selection.size() != 1 )
+            return;
         
         if ( selection.getFirstElement() instanceof TracServer )
         {
@@ -91,6 +92,14 @@ public class TracServerActionProvider implements IActionsProvider
             menu.add( disconnectAction );
         }
     }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see mm.eclipse.trac.views.actions.IActionsProvider#doubleClick(org.eclipse.jface.viewers.IStructuredSelection)
+     */
+    public void doubleClick( IStructuredSelection selection )
+    {}
     
     private static abstract class ServerExecutor implements Runnable
     {
