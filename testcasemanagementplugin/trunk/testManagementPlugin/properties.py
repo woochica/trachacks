@@ -6,7 +6,7 @@ import sys, traceback
 import time
 import logging
 import logging.handlers
-from trac.db import get_column_names
+#from trac.db import get_column_names
 from trac.core import *
 from trac.versioncontrol import Changeset, Node
 from trac.versioncontrol.svn_authz import SubversionAuthorizer
@@ -81,9 +81,14 @@ class Properties :
             match = re.match('testtemplates.xml',  entry.get_name() )
             #we want to parse testcases not the testtemplate file...
             if not match:
-                content = entry.get_content().read()
-                testcase = TestCase( entry.get_name(), str(content), component )
-                testcases[ testcase.getId().encode('ascii', 'ignore').strip() ] =  testcase 
+                try:
+                    content = entry.get_content().read()
+                    testcase = TestCase( entry.get_name(), str(content), component )
+                    testcases[ testcase.getId().encode('ascii', 'ignore').strip() ] =  testcase 
+                except Exception, ex:
+                    req.hdf['testcase.run.errormessage'] = "The testcase  :" + entry.get_name() + "  is not well formed xml...a parse error occured " 
+                    component.env.log.debug( "Error validating testcases " + repr(ex) )
+                    return None
         
         #first let's do some validation on the testcases...
         components = self.getComponents( component, req )
