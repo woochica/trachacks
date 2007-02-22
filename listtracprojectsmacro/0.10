@@ -27,6 +27,7 @@ import dircache
 import string
 from trac.env import open_environment
 from trac.web.href import Href
+from trac.util.text import to_unicode
 
 def execute(hdf, txt, env):
 	### ATTENTION!! SET THIS VARIBALE
