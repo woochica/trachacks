@@ -6,11 +6,8 @@ import sys, traceback
 import time
 import logging
 import logging.handlers
-#from trac.db import get_column_names
-from trac.core import *
-from trac.versioncontrol import Changeset, Node
-from trac.versioncontrol.svn_authz import SubversionAuthorizer
-from trac.versioncontrol.web_ui.util import render_node_property
+from trac import env
+from trac.versioncontrol import api
 from trac.ticket import Component, Version, Milestone, Ticket, TicketSystem
 import xml.dom.minidom
     
@@ -44,10 +41,14 @@ class Properties :
         testcasePath = self.getTestCasePath( component, req )
         repository = self.getRepository( component, req )
         
-        return repository.has_node( testcasePath, repository.youngest_rev ), testcasePath  
+        #return repository.has_node( testcasePath ), testcasePath  
+        return True, testcasePath
             
     def getTestCasePath(self, component, req):
         return component.config.get( self.trac_config_testcase_section , self.trac_config_testcase_property)
+    
+    def getRepositoryRoot( self, component, req ) :
+        return component.config.get( "trac" , "repository_dir" )
     
     def getKnownUserNamesOnly( self, component, req ) :
         tempListNames = []
@@ -67,10 +68,6 @@ class Properties :
     def getTestCases(self, component, req ):
 
         repository = self.getRepository( component, req )
-        authzperm = SubversionAuthorizer( component.env, req.authname) 
-        authzperm.assert_permission_for_changeset(repository.youngest_rev)
-
-         
         node = repository.get_node( self.getTestCasePath( component, req ), repository.youngest_rev )
         entries = node.get_entries()
         
@@ -107,9 +104,7 @@ class Properties :
     def getTemplates( self, component, req ):
         #templates.xml is stored in the same directory as the testcases
         repository = self.getRepository( component, req )
-        authzperm = SubversionAuthorizer( component.env, req.authname) 
-        authzperm.assert_permission_for_changeset(repository.youngest_rev)
-
+        
         node = repository.get_node( self.getTestCasePath( component, req ), repository.youngest_rev )
         entries = node.get_entries()
         

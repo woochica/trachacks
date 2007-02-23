@@ -8,8 +8,8 @@ import sys, traceback
 import time
 import logging
 import logging.handlers
-from trac.ticket import Component, Milestone, Ticket, TicketSystem   #, ITicketManipulator
 from trac.core import *
+from trac.ticket import Component as TracComponent, Milestone, Ticket, TicketSystem 
 from testManagementPlugin.properties import Properties
 
 from testManager import ITestManagerRequestHandler

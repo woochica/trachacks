@@ -15,8 +15,8 @@ from trac.web import IRequestHandler
 from trac.util import Markup
 from trac.web.chrome import INavigationContributor
 from trac.web.chrome import add_stylesheet, INavigationContributor, ITemplateProvider
-from trac.web.href import Href
-from trac.wiki import wiki_to_html
+#from trac.web.href import Href
+#from trac.wiki import wiki_to_html
 
 #env: The environment, an instance of the trac.env.Environment class (see trac.env). 
 #config: The configuration, an instance of the trac.config.Configuration class (see trac.config). 
@@ -75,18 +75,18 @@ class TestManager(Component):
         
         page_providers_paths = {}  
         for provider in self.page_providers :
-            page_providers_paths[ provider.get_path(req) ] = { 'name': provider.get_descriptive_name(), 'path': provider.get_path(req) }
+            page_providers_paths[ provider.get_path(req) ] = { 'name': provider.get_descriptive_name(), 'path': req.base_url + "/testmanagement/" + provider.get_path(req) }
     
         req.hdf['testcase.page_providers_paths'] = page_providers_paths
         
         if pageProvider : 
             template, content_type = pageProvider.process_testmanager_request( req )
             req.hdf['testcase.page_template'] = template
-            return 'testcase.cs',  content_type #content_type probably = none which is by default rendered as MIME type text/html
+            return 'testManagement.cs',  content_type #content_type probably = none which is by default rendered as MIME type text/html
         else :
             req.hdf['testcase.page_content'] = "select option from above list"  #you could insert a message here if you wanted...
                       
-        return 'testcase.cs', None #content_type probably = none which is by default rendered as MIME type text/html
+        return 'testManagement.cs', None #content_type probably = none which is by default rendered as MIME type text/html
        
     
     def getPageProvider(self, req):
