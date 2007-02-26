@@ -31,6 +31,7 @@ proto.config = {
     divId: null,
     imagesLocation: 'images/',
     imagesExtension: '.gif',
+    selectorWidth: '100px',
     controlLayout: [
         'save', 'cancel', 'mode_selector', '/',
         // 'selector',
@@ -89,7 +90,7 @@ proto.initializeObject = function() {
     var config = this.config;
     for (var i = 0; i < config.controlLayout.length; i++) {
         var action = config.controlLayout[i];
-        var label = config.controlLabels[action]
+        var label = config.controlLabels[action];
         if (action == 'save')
             this.addControlItem(label, 'saveChanges');
         else if (action == 'cancel')
@@ -115,6 +116,26 @@ proto.enableThis = function() {
 
 proto.disableThis = function() {
     this.div.style.display = 'none';
+}
+
+proto.setup_widgets_pulldown = function(title) {
+    var widgets_list = Wikiwyg.Widgets.widgets;
+    var widget_data = Wikiwyg.Widgets.widget;
+
+    var tb = eval(this.classname).prototype;
+
+    tb.styleSelector = [ 'label' ];
+    for (var i = 0; i < widgets_list.length; i++) {
+        var widget = widgets_list[i];
+        tb.styleSelector.push('widget_' + widget);
+    }
+    tb.controlLayout.push('selector');
+
+    tb.controlLabels.label = title;
+    for (var i = 0; i < widgets_list.length; i++) {
+        var widget = widgets_list[i];
+        tb.controlLabels['widget_' + widget] = widget_data[widget].label;
+    }
 }
 
 proto.make_button = function(type, label) {
@@ -245,18 +266,17 @@ proto.add_styles = function() {
     var options = this.config.styleSelector;
     var labels = this.config.controlLabels;
 
-    this.styleSelect = Wikiwyg.createElementWithAttrs(
-        'select', {
-            'class': 'wikiwyg_selector'
-        }
-    );
+    this.styleSelect = document.createElement('select');
+    this.styleSelect.className = 'wikiwyg_selector';
+    if (this.config.selectorWidth)
+        this.styleSelect.style.width = this.config.selectorWidth;
 
     for (var i = 0; i < options.length; i++) {
         value = options[i];
         var option = Wikiwyg.createElementWithAttrs(
             'option', { 'value': value }
         );
-        option.appendChild(document.createTextNode(labels[value]));
+        option.appendChild(document.createTextNode(labels[value] || value));
         this.styleSelect.appendChild(option);
     }
     var self = this;

@@ -24,10 +24,24 @@ General Public License for more details.
 
  =============================================================================*/
 
+// Like alert but uses confirm and throw in case you are looped
+function XXX(msg) {
+    if (! confirm(msg))
+        throw("terminated...");
+    return msg;
+}
+
+// A JSON dumper that uses XXX
+function JJJ(obj) {
+    XXX(JSON.stringify(obj));
+    return obj;
+}
+
+
+// A few handy debugging functions
 (function() {
 
-new Subclass('XXX');
-var klass = XXX;
+var klass = Debug = function() {};
 
 klass.sort_object_keys = function(o) {
     var a = [];
@@ -40,7 +54,7 @@ klass.dump_keys = function(o) {
     var str='';
     for (p in a)
         str += a[p] + "\t";
-    alert(str);
+    XXX(str);
 }
 
 klass.dump_object_into_screen = function(o) {
@@ -58,3 +72,4 @@ klass.dump_object_into_screen = function(o) {
 }
 
 })();
+

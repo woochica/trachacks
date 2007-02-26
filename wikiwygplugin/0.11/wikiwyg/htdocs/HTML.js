@@ -44,7 +44,7 @@ proto.initializeObject = function() {
 }
 
 proto.enableThis = function() {
-    this.superfunc('enableThis').call(this);
+    Wikiwyg.Mode.prototype.enableThis.call(this);
     this.textarea.style.width = '100%';
     this.textarea.style.height = '200px';
 }
@@ -55,6 +55,10 @@ proto.fromHtml = function(html) {
 
 proto.toHtml = function(func) {
     func(this.textarea.value);
+}
+
+proto.sanitize_html = function(html) {
+    return html;
 }
 
 proto.process_command = function(command) {};

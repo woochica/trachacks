@@ -46,12 +46,15 @@ proto.initializeObject = function() {
     this.set_design_mode_early();
 }
 
-proto.set_design_mode_early = function() { // Se IE, below
+proto.set_design_mode_early = function() { // See IE, below
     // Unneeded for Gecko
 }
 
 proto.fromHtml = function(html) {
-    this.set_inner_html(this.sanitize_html(html));
+    var dom = document.createElement('div');
+    dom.innerHTML = html;
+    this.sanitize_dom(dom);
+    this.set_inner_html(dom.innerHTML);
 }
 
 proto.toHtml = function(func) {
@@ -69,7 +72,7 @@ proto.fix_up_relative_imgs = function() {
 }
 
 proto.enableThis = function() {
-    this.superfunc('enableThis').call(this);
+    Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px black solid';
     this.edit_iframe.width = '100%';
     this.setHeightOf(this.edit_iframe);
@@ -78,6 +81,28 @@ proto.enableThis = function() {
     this.apply_stylesheets();
     this.enable_keybindings();
     this.clear_inner_html();
+    if ( Wikiwyg.is_ie ) {
+        var self = this;
+        var win = this.get_edit_window();
+        var doc = this.get_edit_document();
+        self.ieSelectionBookmark = null;
+        var bookmark = function() {
+            var range = doc.selection.createRange();
+            if ( range.getBookmark ) {
+                self.ieSelectionBookmark = range.getBookmark();
+            }
+        }
+        doc.attachEvent("onbeforedeactivate", bookmark);
+        var restoreBookmark = function() {
+             if (self.ieSelectionBookmark) {
+                 var range = doc.body.createTextRange();
+                 range.moveToBookmark(self.ieSelectionBookmark);
+                 range.collapse();
+                 range.select();
+             }
+        }
+        doc.attachEvent("onactivate", restoreBookmark);
+    }
 }
 
 proto.clear_inner_html = function() {
@@ -119,11 +144,12 @@ proto.get_edit_document = function() { // See IE, below
 proto.get_inner_html = function() {
     return this.get_edit_document().body.innerHTML;
 }
+
 proto.set_inner_html = function(html) {
     this.get_edit_document().body.innerHTML = html;
 }
 
-proto.apply_stylesheets = function(styles) {
+proto.apply_stylesheets = function() {
     var styles = document.styleSheets;
     var head   = this.get_edit_document().getElementsByTagName("head")[0];
 
@@ -139,7 +165,45 @@ proto.apply_stylesheets = function(styles) {
 }
 
 proto.apply_inline_stylesheet = function(style, head) {
-    // TODO: figure this out
+    var style_string = "";
+    for ( var i = 0 ; i < style.cssRules.length ; i++ ) {
+        if ( style.cssRules[i].type == 3 ) {
+            // IMPORT_RULE
+
+            /* It's pretty strange that this doesnt work.
+               That's why Ajax.get() is used to retrive the css text.
+               
+            this.apply_linked_stylesheet({
+                href: style.cssRules[i].href,
+                type: 'text/css'
+            }, head);
+            */
+            
+            style_string += Ajax.get(style.cssRules[i].href);
+        } else {
+            style_string += style.cssRules[i].cssText + "\n";
+        }
+    }
+    if (style_string.length > 0) {
+        style_string += "\nbody { padding: 5px; }\n";
+        this.append_inline_style_element(style_string, head);
+    }
+}
+
+proto.append_inline_style_element = function(style_string, head) {
+    // Add a body padding so words are not touching borders.
+    var style_elt = document.createElement("style");
+    style_elt.setAttribute("type", "text/css");
+    if ( style_elt.styleSheet ) { /* IE */
+        style_elt.styleSheet.cssText = style_string;
+    }
+    else { /* w3c */
+        var style_text = document.createTextNode(style_string);
+        style_elt.appendChild(style_text);
+        head.appendChild(style_elt);
+    }
+    // XXX This doesn't work in IE!!
+    // head.appendChild(style_elt);
 }
 
 proto.should_link_stylesheet = function(style, head) {
@@ -219,10 +283,10 @@ proto.do_table = function() {
         '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' +
         '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' +
         '</tbody></table>';
-    this.insert_table(html);
+    this.insert_html(html);
 }
 
-proto.insert_table = function(html) { // See IE
+proto.insert_html = function(html) { // See IE
     this.get_edit_window().focus();
     this.exec_command('inserthtml', html);
 }
@@ -242,6 +306,14 @@ proto.do_link = function() {
         url = '?' + escape(selection); 
     }
     this.exec_command('createlink', url);
+}
+
+proto.do_www = function() {
+    var selection = this.get_link_selection_text();
+	if (selection != null) {
+		var  url =  prompt("Please enter a link", "Type in your link here");
+		this.exec_command('createlink', url);
+	}
 }
 
 proto.get_selection_text = function() { // See IE, below
@@ -282,7 +354,7 @@ proto.get_selection_text = function() {
     return '';
 }
 
-proto.insert_table = function(html) {
+proto.insert_html = function(html) {
     var doc = this.get_edit_document();
     var range = this.get_edit_document().selection.createRange();
     if (range.boundingTop == 2 && range.boundingLeft == 2)
@@ -290,6 +362,40 @@ proto.insert_table = function(html) {
     range.pasteHTML(html);
     range.collapse(false);
     range.select();
+}
+
+proto.get_inner_html = function( cb ) {
+    if ( cb ) {
+        this.get_inner_html_async( cb );
+        return;
+    }
+    return this.get_edit_document().body.innerHTML;
+}
+
+proto.get_inner_html_async = function( cb ) {
+    var self = this;
+    var doc = this.get_edit_document();
+    if ( doc.readyState == 'loading' ) {
+        setTimeout( function() {
+            self.get_inner_html(cb);
+        }, 50);
+    } else {
+        var html = this.get_edit_document().body.innerHTML;
+        cb(html);
+        return html;
+    }
+}
+
+proto.set_inner_html = function(html) {
+    var self = this;
+    var doc = this.get_edit_document();
+    if ( doc.readyState == 'loading' ) {
+        setTimeout( function() {
+            self.set_inner_html(html);
+        }, 50);
+    } else {
+        this.get_edit_document().body.innerHTML = html;
+    }
 }
 
 // Use IE's design mode default key bindings for now.

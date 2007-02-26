@@ -56,7 +56,8 @@ proto.config = {
         unordered: ['start_lines', '*'],
         indent: ['start_lines', '>'],
         hr: ['line_alone', '----'],
-        table: ['line_alone', '| A | B | C |\n|   |   |   |\n|   |   |   |']
+        table: ['line_alone', '| A | B | C |\n|   |   |   |\n|   |   |   |'],
+        www: ['bound_phrase', '[', ']']
     }
 }
 
@@ -77,6 +78,7 @@ proto.initialize_object = function() {
 }
 
 proto.clear_inner_text = function() {
+    if ( Wikiwyg.is_safari ) return;
     var self = this;
     this.area.onclick = function() {
         var inner_text = self.area.value;
@@ -87,7 +89,7 @@ proto.clear_inner_text = function() {
 }
 
 proto.enableThis = function() {
-    this.superfunc('enableThis').call(this);
+    Wikiwyg.Mode.prototype.enableThis.call(this);
     this.textarea.style.width = '100%';
     this.setHeightOfEditor();
     this.enable_keybindings();
@@ -97,7 +99,10 @@ proto.setHeightOfEditor = function() {
     var config = this.config;
     var adjust = config.editHeightAdjustment;
     var area   = this.textarea;
-    var text   = this.getTextArea();
+
+    if ( Wikiwyg.is_safari) return area.setAttribute('rows', 25);
+
+    var text   = this.getTextArea() ;
     var rows   = text.split(/\n/).length;
 
     var height = parseInt(rows * adjust);
@@ -156,7 +161,7 @@ proto.get_keybinding_area = function() {
 /*==============================================================================
 Code to markup wikitext
  =============================================================================*/
-Wikiwyg.Wikitext.phrase_end_re = /[\s\.\:\;\,\!\?\(\)]/;
+Wikiwyg.Wikitext.phrase_end_re = /[\s\.\:\;\,\!\?\(\)\"]/;
 
 proto.find_left = function(t, selection_start, matcher) {
     var substring = t.substr(selection_start - 1, 1);
@@ -509,6 +514,22 @@ proto.do_unordered = klass.make_do('unordered');
 proto.do_hr = klass.make_do('hr');
 proto.do_table = klass.make_do('table');
 
+proto.do_www = function() {
+    var  url =  prompt("Please enter a link", "Type in your link here");
+	var old = this.config.markupRules.www[1];
+	this.config.markupRules.www[1] += url + " ";
+  
+	// do the transformation 
+	var markup = this.config.markupRules['www'];
+    var handler = markup[0];
+     if (! this['markup_' + handler])
+    	die('No handler for markup: "' + handler + '"');
+    this['markup_' + handler](markup);
+
+	// reset
+	this.config.markupRules.www[1] = old;	
+}
+
 proto.selection_mangle = function(method) {
     var scroll_top = this.area.scrollTop;
     if (! this.get_lines()) {
@@ -566,15 +587,6 @@ proto.kill_linkedness = function(str) {
     return str;
 }
 
-// uncomment these to run tests:
-// assertEquals('turkey', proto.kill_linkedness('[turkey]'), 'basic')
-// assertEquals('a s d f', proto.kill_linkedness('a [s] d [f]'), 'in the midst')
-// assertEquals('] xyz', proto.kill_linkedness('xyz]'), 'tail end snip')
-// assertEquals('abc [', proto.kill_linkedness('[abc'), 'circumcision')
-// assertEquals('h j k [', proto.kill_linkedness('[h] j [k'), 'devious combo 1')
-// assertEquals('] q w e', proto.kill_linkedness('q] w [e]'), 'devious combo 2')
-// assertEquals('robot', proto.kill_linkedness('robot'), 'no-change')
-
 proto.markup_line_alone = function(markup_array) {
     var t = this.area;
     var scroll_top = t.scrollTop;
@@ -611,8 +623,10 @@ proto.convert_html_to_wikitext = function(html) {
     this.output = [];
     this.list_type = [];
     this.indent_level = 0;
+    this.no_collapse_text = false;
 
     this.normalizeDomWhitespace(dom);
+    this.normalizeDomStructure(dom);
 
     this.walk(dom);
 
@@ -620,6 +634,89 @@ proto.convert_html_to_wikitext = function(html) {
     this.assert_new_line();
 
     return this.join_output(this.output);
+}
+
+proto.normalizeDomStructure = function(dom) {
+    this.normalize_styled_blocks(dom, 'p');
+    this.normalize_styled_lists(dom, 'ol');
+    this.normalize_styled_lists(dom, 'ul');
+    this.normalize_styled_blocks(dom, 'li');
+    this.normalize_span_whitespace(dom, 'span');
+}
+
+proto.normalize_span_whitespace = function(dom,tag ) {
+    var grep = function(element) {
+        return Boolean(element.getAttribute('style'));
+    }
+
+    var elements = this.array_elements_by_tag_name(dom, tag, grep);
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        var node = element.firstChild;
+        while (node) {
+            if (node.nodeType == 3) {
+                node.nodeValue = node.nodeValue.replace(/^\n+/,"");
+                break;
+            }
+            node = node.nextSibling;
+        }
+        var node = element.lastChild;
+        while (node) {
+            if (node.nodeType == 3) {
+                node.nodeValue = node.nodeValue.replace(/\n+$/,"");
+                break;
+            }
+            node = node.previousSibling;
+        }
+    }
+}
+
+proto.normalize_styled_blocks = function(dom, tag) {
+    var elements = this.array_elements_by_tag_name(dom, tag);
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        var style = element.getAttribute('style');
+        if (!style || this.style_is_bogus(style)) continue;
+        element.removeAttribute('style');
+        element.innerHTML =
+            '<span style="' + style + '">' + element.innerHTML + '</span>';
+    }
+}
+
+proto.style_is_bogus = function(style) {
+    var attributes = [ 'line-through', 'bold', 'italic', 'underline' ];
+    for (var i = 0; i < attributes.length; i++) {
+        if (this.check_style_for_attribute(style, attributes[i]))
+            return false;
+    }
+    return true;
+}
+
+proto.normalize_styled_lists = function(dom, tag) {
+    var elements = this.array_elements_by_tag_name(dom, tag);
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        var style = element.getAttribute('style');
+        if (!style) continue;
+        element.removeAttribute('style');
+
+        var items = element.getElementsByTagName('li');
+        for (var j = 0; j < items.length; j++) {
+            items[j].innerHTML = 
+                '<span style="' + style + '">' + items[j].innerHTML + '</span>';
+        }
+    }
+}
+
+proto.array_elements_by_tag_name = function(dom, tag, grep) {
+    var result = dom.getElementsByTagName(tag);
+    var elements = [];
+    for (var i = 0; i < result.length; i++) {
+        if (grep && ! grep(result[i]))
+            continue;
+        elements.push(result[i]);
+    }
+    return elements;
 }
 
 proto.normalizeDomWhitespace = function(dom) {
@@ -653,6 +750,16 @@ proto.normalizePhraseWhitespace = function(element) {
     var prev_node = this.getPreviousTextNode(element);
     var last_node = this.getLastTextNode(element);
     var next_node = this.getNextTextNode(element);
+
+    // This if() here is for a special condition on firefox.
+    // When a bold span is the last visible thing in the dom,
+    // Firefox puts an extra <br> in right before </span> when user
+    // press space, while normally it put &nbsp;.
+
+    if(Wikiwyg.is_gecko && element.tagName == 'SPAN') {
+        var tmp = element.innerHTML;
+        element.innerHTML = tmp.replace(/<br>$/i, '');
+    }
 
     if (this.destroyPhraseMarkup(element)) return;
 
@@ -701,13 +808,14 @@ proto.end_is_no_good = function(element) {
     if (! last_node) return true;
     if (last_node.nodeValue.match(/ $/)) return false;
     if (! next_node || next_node.nodeValue == '\n') return false;
-    return ! next_node.nodeValue.match(/^[ ."\n]/);
+    return ! next_node.nodeValue.match(Wikiwyg.Wikitext.phrase_end_re);
 }
 
 proto.destroyElement = function(element) {
-    var span = document.createElement('font');
-    span.innerHTML = element.innerHTML;
-    element.parentNode.replaceChild(span, element);
+    var range = element.ownerDocument.createRange();
+    range.selectNode(element);
+    var docfrag = range.createContextualFragment( element.innerHTML );
+    element.parentNode.replaceChild(docfrag, element);
     return true;
 }
 
@@ -764,17 +872,28 @@ proto.remove_stops = function(list) {
 proto.walk = function(element) {
     if (!element) return;
     for (var part = element.firstChild; part; part = part.nextSibling) {
-        if (part.nodeType == 1) {
+        /* Saving the part's properties in local vars seems to give us
+         * a minor speed boost in this method, which can be called
+         * thousands of times for large documents. */
+        var nodeType = part.nodeType;
+        if (nodeType == 1) {
             this.dispatch_formatter(part);
         }
-        else if (part.nodeType == 3) {
-            if (part.nodeValue.match(/[^\n]/) &&
-                ! part.nodeValue.match(/^\n[\ \t]*$/)
+        else if (nodeType == 3) {
+            var nodeValue = part.nodeValue;
+            if (nodeValue.match(/[^\n]/) &&
+                ! nodeValue.match(/^\n[\n\ \t]*$/)
                ) {
-                this.appendOutput(this.collapse(part.nodeValue));
+                if (this.no_collapse_text) { 
+                    this.appendOutput(nodeValue);
+                }
+                else {
+                    this.appendOutput(this.collapse(nodeValue));
+                }
             }
         }
     }
+    this.no_collapse_text = false;
 }
 
 proto.dispatch_formatter = function(element) {
@@ -859,6 +978,7 @@ proto.format_textarea = proto.skip;
 proto.format_tfoot = proto.pass;
 proto.format_thead = proto.pass;
 proto.format_wiki = proto.pass;
+proto.format_www = proto.skip;
 
 proto.format_img = function(element) {
     var uri = element.getAttribute('src');
@@ -928,19 +1048,29 @@ proto.format_div = function(element) {
 }
 
 proto.format_span = function(element) {
+    // This fixes a mysterious wrapper SPAN in IE for the "asap" link.
+    if (element.firstChild &&
+        element.firstChild.nodeName == 'SPAN' &&
+        (! (element.style && element.style.fontWeight != '')) &&
+        element.firstChild == element.lastChild
+       ) {
+        this.walk(element);
+        return;
+    }
     if (this.is_opaque(element)) {
         this.handle_opaque_phrase(element);
         return;
     }
 
     var style = element.getAttribute('style');
-    if (!style) {
+    var style_text = this.squish_style_object_into_string(style);
+    if (!style_text) {
         this.pass(element);
         return;
     }
 
-    if (! this.element_has_text_content(element)) return;
-
+    if (! this.element_has_text_content(element) &&
+        ! this.element_has_only_image_content(element)) return;
     var attributes = [ 'line-through', 'bold', 'italic', 'underline' ];
     for (var i = 0; i < attributes.length; i++)
         this.check_style_and_maybe_mark_up(style, attributes[i], 1);
@@ -953,6 +1083,12 @@ proto.format_span = function(element) {
 proto.element_has_text_content = function(element) {
     return element.innerHTML.replace(/<.*?>/g, '')
                             .replace(/&nbsp;/g, '').match(/\S/);
+}
+
+proto.element_has_only_image_content = function(element) {
+    return    element.childNodes.length == 1
+           && element.firstChild.nodeType == 1
+           && element.firstChild.tagName.toLowerCase() == 'img';
 }
 
 proto.check_style_and_maybe_mark_up = function(style, attribute, open_close) {
@@ -981,7 +1117,8 @@ proto.squish_style_object_into_string = function(style) {
         var pair = interesting_attributes[i];
         var css = pair[0] + '-' + pair[1];
         var js = pair[0] + pair[1].ucFirst();
-        string += css + ': ' + style[js] + '; ';
+        if (style[js])
+            string += css + ': ' + style[js] + '; ';
     }
     return string;
 }
@@ -1000,7 +1137,7 @@ klass.make_empty_formatter = function(style) {
 
 klass.make_formatter = function(style) {
     return function(element) {
-        if (this.element_has_text_content(element))
+        if (this.element_has_text_content(element) || this.element_has_only_image_content(element) )
             this.basic_formatter(element, style);
     }
 }
@@ -1109,8 +1246,7 @@ proto.make_list = function(element, list_type) {
     this.list_type.push(list_type);
     this.walk(element);
     this.list_type.pop();
-
-    if (!this.list_type.length)
+    if (this.list_type.length == 0)
         this.assert_blank_line();
 }
 
@@ -1124,7 +1260,7 @@ proto.format_ul = function(element) {
 
 proto.format_li = function(element) {
     var level = this.list_type.length;
-    if (!level) die("List error");
+    if (!level) die("Wikiwyg list error");
     var type = this.list_type[level - 1];
     var markup = this.config.markupRules[type];
     this.appendOutput(markup[1].times(level) + ' ');
@@ -1184,8 +1320,11 @@ proto.insert_new_line = function() {
     var fang = '';
     var indentChar = this.config.markupRules.indent[1];
     var newline = '\n';
-    if (this.indent_level > 0)
-        fang = indentChar.times(this.indent_level) + ' ';
+    if (this.indent_level > 0) {
+        fang = indentChar.times(this.indent_level);
+        if (fang.length)
+            fang += ' ';
+    }
     // XXX - ('\n' + fang) MUST be in the same element in this.output so that
     // it can be properly matched by chomp above.
     if (fang.length && this.first_indent_line) {
@@ -1299,8 +1438,10 @@ proto.COMMENT_NODE_TYPE = 8;
 proto.get_wiki_comment = function(element) {
     for (var node = element.firstChild; node; node = node.nextSibling) {
         if (node.nodeType == this.COMMENT_NODE_TYPE
-            && node.data.match(/^\s*wiki/))
+            && node.data.match(/^\s*wiki/)
+        ) {
             return node;
+        }
     }
     return null;
 }
@@ -1335,21 +1476,15 @@ proto.handle_opaque_phrase = function(element) {
 
 proto.smart_trailing_space = function(element) {
     var next = element.nextSibling;
-    if (! next) {
-        // do nothing
-    }
-    else if (next.nodeType == 1) {
-        this.appendOutput(' ');
+    if (! next) return;
+    if (next.nodeType == 1) {
+        if (next.nodeName != 'BR') {
+            this.appendOutput(' ');
+        }
     }
     else if (next.nodeType == 3) {
-        var text = next.nodeValue;
-        if (text.match(/^\n/))
-            this.appendOutput('\n');
-        else if (text.match(/^\s/)) {
-            // do nothing
-        }
-        else
-            this.no_following_whitespace()
+        if (! next.nodeValue.match(/^\s/))
+            this.no_following_whitespace();
     }
 }
 
@@ -1366,6 +1501,12 @@ proto.make_wikitext_link = function(label, href, element) {
     var before = this.config.markupRules.link[1];
     var after  = this.config.markupRules.link[2];
 
+	// handle external links
+	if (this.looks_like_a_url(href)) {
+		before = this.config.markupRules.www[1];
+		after = this.config.markupRules.www[2];
+	}
+	
     this.assert_space_or_newline();
     if (! href) {
         this.appendOutput(label);
@@ -1395,7 +1536,7 @@ proto.href_is_wiki_link = function(href) {
         return true;
     if (! href.match(/\?/))
         return false;
-    if (href.match(/\/static\/\d+\.\d+\.\d+\.\d+\//))
+    if (href.match(/\/static\//) && href.match(/\/js-test\//))
         href = location.href;
     var no_arg_input   = href.split('?')[0];
     var no_arg_current = location.href.split('?')[0];

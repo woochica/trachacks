@@ -14,12 +14,13 @@ See the Wikiwyg documentation for details.
 
 AUTHORS:
 
-    Brian Ingerson <ingy@cpan.org>
+    Ingy döt Net <ingy@cpan.org>
     Casey West <casey@geeknest.com>
     Chris Dent <cdent@burningchrome.com>
     Matt Liggett <mml@pobox.com>
     Ryan King <rking@panoptic.com>
     Dave Rolsky <autarch@urth.org>
+    Kang-min Liu <gugod@gugod.org>
 
 COPYRIGHT:
 
@@ -47,11 +48,10 @@ General Public License for more details.
 /*==============================================================================
 Subclass - this can be used to create new classes
  =============================================================================*/
+Subclass = function(class_name, base_class_name) {
+    if (!class_name) throw("Can't create a subclass without a name");
 
-Subclass = function(name, base) {
-    if (!name) die("Can't create a subclass without a name");
-
-    var parts = name.split('.');
+    var parts = class_name.split('.');
     var subclass = window;
     for (var i = 0; i < parts.length; i++) {
         if (! subclass[parts[i]])
@@ -59,37 +59,14 @@ Subclass = function(name, base) {
         subclass = subclass[parts[i]];
     }
 
-    if (base) {
-        var baseclass = eval('new ' + base + '()');
+    if (base_class_name) {
+        var baseclass = eval('new ' + base_class_name + '()');
         subclass.prototype = baseclass;
-        subclass.prototype.baseclass = base;
-        subclass.prototype.superfunc = Subclass.generate_superfunc();
+        subclass.prototype.baseclass = baseclass;
     }
-    subclass.prototype.classname = name;
-    return subclass.prototype;
-}
 
-Subclass.generate_superfunc = function() {
-    return function(func) {
-        var p;
-        var found = false;
-        var caller_func = arguments.callee.caller;
-        for (var b = this.classname; b; b = p.baseclass) {
-            p = eval(b + '.prototype');
-            if (! found) {
-                if (p[func] && p[func] == caller_func)
-                    found = true;
-                continue;
-            }
-            if (p[func] && p[func] != caller_func)
-                return p[func];
-        }
-        die(
-            "No superfunc function for: " + func + "\n" +
-            "baseclass was: " + this.baseclass + "\n" +
-            "caller was: " + arguments.callee.caller
-        );
-    }
+    subclass.prototype.classname = class_name;
+    return subclass.prototype;
 }
 
 /*==============================================================================
@@ -99,7 +76,7 @@ Wikiwyg - Primary Wikiwyg base class
 // Constructor and class methods
 proto = new Subclass('Wikiwyg');
 
-Wikiwyg.VERSION = '0.12';
+Wikiwyg.VERSION = '0.13';
 
 // Browser support properties
 Wikiwyg.ua = navigator.userAgent.toLowerCase();
@@ -110,7 +87,8 @@ Wikiwyg.is_ie = (
 );
 Wikiwyg.is_gecko = (
     Wikiwyg.ua.indexOf('gecko') != -1 &&
-    Wikiwyg.ua.indexOf('safari') == -1
+    Wikiwyg.ua.indexOf('safari') == -1 &&
+    Wikiwyg.ua.indexOf('konqueror') == -1
 );
 Wikiwyg.is_safari = (
     Wikiwyg.ua.indexOf('safari') != -1
@@ -118,6 +96,9 @@ Wikiwyg.is_safari = (
 Wikiwyg.is_opera = (
     Wikiwyg.ua.indexOf('opera') != -1
 );
+Wikiwyg.is_konqueror = (
+    Wikiwyg.ua.indexOf("konqueror") != -1
+)
 Wikiwyg.browserIsSupported = (
     Wikiwyg.is_gecko ||
     Wikiwyg.is_ie
@@ -129,7 +110,7 @@ proto.createWikiwygArea = function(div, config) {
     this.initializeObject(div, config);
 };
 
-proto.config = {
+proto.default_config = {
     javascriptLocation: 'lib/',
     doubleClickToEdit: false,
     toolbarClass: 'Wikiwyg.Toolbar',
@@ -148,6 +129,8 @@ proto.initializeObject = function(div, config) {
     this.div = div;
     this.divHeight = this.div.offsetHeight;
     if (!config) config = {};
+
+    this.set_config(config);
 
     this.mode_objects = {};
     for (var i = 0; i < this.config.modeClasses.length; i++) {
@@ -188,11 +171,27 @@ proto.initializeObject = function(div, config) {
 
 // Wikiwyg environment setup private methods
 proto.set_config = function(user_config) {
-    for (var key in this.config)
-        if (user_config && user_config[key])
-            this.config[key] = user_config[key];
-        else if (this[key] != null)
-            this.config[key] = this[key];
+    var new_config = {};
+    var keys = [];
+    for (var key in this.default_config) {
+        keys.push(key);
+    }
+    if (user_config != null) {
+        for (var key in user_config) {
+            keys.push(key);
+        }
+    }
+    for (var ii = 0; ii < keys.length; ii++) {
+        var key = keys[ii];
+        if (user_config != null && user_config[key] != null) {
+            new_config[key] = user_config[key];
+        } else if (this.default_config[key] != null) {
+            new_config[key] = this.default_config[key];
+        } else if (this[key] != null) {
+            new_config[key] = this[key];
+        }
+    }
+    this.config = new_config;
 }
 
 proto.insert_div_before = function(div) {
@@ -272,32 +271,22 @@ Wikiwyg.createUniqueId = function() {
     return 'wikiwyg_' + Wikiwyg.unique_id_base++;
 }
 
+// This method is deprecated. Use Ajax.get and Ajax.post.
 Wikiwyg.liveUpdate = function(method, url, query, callback) {
-    var req = new XMLHttpRequest();
-    var data = null;
-    if (method == 'GET')
-        url = url + '?' + query;
-    else
-        data = query;
-    req.open(method, url);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4 && req.status == 200) {
-            try {
-                response_text = req.responseText;
-            }
-            catch(e) {
-                return;
-            }
-            callback(response_text);
-        }
-    }
-    if (method == 'POST') {
-        req.setRequestHeader(
-            'Content-Type', 
-            'application/x-www-form-urlencoded'
+    if (method == 'GET') {
+        return Ajax.get(
+            url + '?' + query,
+            callback
         );
     }
-    req.send(data);
+    if (method == 'POST') {
+        return Ajax.post(
+            url,
+            query,
+            callback
+        );
+    }
+    throw("Bad method: " + method + " passed to Wikiwyg.liveUpdate");
 }
 
 Wikiwyg.htmlUnescape = function(escaped) {
@@ -346,7 +335,6 @@ Wikiwyg.createElementWithAttrs = function(element, attrs, doc) {
     return Wikiwyg.create_element_with_attrs(element, attrs, doc);
 }
 
-// See IE, below
 Wikiwyg.create_element_with_attrs = function(element, attrs, doc) {
     var elem = doc.createElement(element);
     for (name in attrs)
@@ -372,6 +360,9 @@ Base class for Wikiwyg classes
 proto = new Subclass('Wikiwyg.Base');
 
 proto.set_config = function(user_config) {
+    if (Wikiwyg.Widgets && this.setup_widgets)
+        this.setup_widgets();
+
     for (var key in this.config) {
         if (user_config != null && user_config[key] != null)
             this.merge_config(key, user_config[key]);
@@ -498,9 +489,8 @@ proto.setHeightOf = function(elem) {
     elem.height = this.get_edit_height() + 'px';
 }
 
-proto.sanitize_html = function(html) { // See IE, below
-    var dom = this.create_dom(html);
-    return this.element_transforms(dom, {
+proto.sanitize_dom = function(dom) { // See IE, below
+    this.element_transforms(dom, {
         del: {
             name: 'strike',
             attr: { }
@@ -513,21 +503,19 @@ proto.sanitize_html = function(html) { // See IE, below
             name: 'span',
             attr: { style: 'font-style: italic;' }
         }
-    }).innerHTML;
-}
-
-proto.create_dom = function(html) {
-    var dom = document.createElement('div');
-    dom.innerHTML = html;
-    return dom;
+    });
 }
 
 proto.element_transforms = function(dom, el_transforms) {
     for (var orig in el_transforms) {
         var elems = dom.getElementsByTagName(orig);
-        if (elems.length == 0) continue;
-        for (var i = 0; i < elems.length; i++) {
-            var elem = elems[i];
+        var elems_arr = [];
+        for (var ii = 0; ii < elems.length; ii++) {
+            elems_arr.push(elems[ii])
+        }
+
+        while ( elems_arr.length > 0 ) {
+            var elem = elems_arr.shift();
             var replace = el_transforms[orig];
             var new_el =
               Wikiwyg.createElementWithAttrs(replace.name, replace.attr);
@@ -535,21 +523,12 @@ proto.element_transforms = function(dom, el_transforms) {
             elem.parentNode.replaceChild(new_el, elem);
         }
     }
-    return dom;
 }
 
 /*==============================================================================
 Support for Internet Explorer in Wikiwyg
  =============================================================================*/
 if (Wikiwyg.is_ie) {
-
-Wikiwyg.create_element_with_attrs = function(element, attrs, doc) {
-     var str = '';
-     // Note the double-quotes (make sure your data doesn't use them):
-     for (name in attrs)
-         str += ' ' + name + '="' + attrs[name] + '"';
-     return doc.createElement('<' + element + str + '>');
-}
 
 die = function(e) {
     alert(e);
@@ -560,14 +539,13 @@ proto = Wikiwyg.Mode.prototype;
 
 proto.enable_keybindings = function() {}
 
-proto.sanitize_html = function(html) {
-    var dom = this.create_dom(html);
-    return this.element_transforms(dom, {
+proto.sanitize_dom = function(dom) {
+    this.element_transforms(dom, {
         del: {
             name: 'strike',
             attr: { }
         }
-    }).innerHTML;
+    });
 }
 
 } // end of global if statement for IE overrides
