@@ -9,7 +9,7 @@ setup(
     packages = ['wikiwyg'],
     package_data = {'wikiwyg': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css', 'htdocs/*.gif']},
     
-    author = "soloturn, Erik Rose, and Frank J. Wierzbicki",
+    author = "soloturn, Erik Rose, and Frank Wierzbicki",
     author_email = "somebody@example.com",
     description = "Add a WYSIWYG wiki editor to Trac.",
     long_description = "Gives Trac a WYSIWYG editor which outputs nice WikiFormatting rather than HTML, care of the Wikiwyg library.",
