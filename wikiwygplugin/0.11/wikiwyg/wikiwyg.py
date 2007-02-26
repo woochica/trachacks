@@ -1,6 +1,6 @@
 # vim: expandtab tabstop=4
 
-# TraciWyg plugin
+# wikiwyg plugin
 
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_javascript
@@ -12,7 +12,7 @@ class UserbaseModule(Component):
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        return 'traciwyg'
+        return 'wikiwyg'
                 
     def get_navigation_items(self, req):
         add_stylesheet(req, 'twyg/wikiwyg.css')
@@ -22,11 +22,11 @@ class UserbaseModule(Component):
         add_javascript(req, 'twyg/Wikitext.js')
         add_javascript(req, 'twyg/Preview.js')
         add_javascript(req, 'twyg/Trac.js')
-        yield 'mainnav', 'prepare-wikiwyg', Markup('<a href="%s">prepare wikiwyg</a>', self.env.href.traciwyg())
+        yield 'mainnav', 'prepare-wikiwyg', Markup('<a href="%s">prepare wikiwyg</a>', self.env.href.wikiwyg())
 
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info == '/traciwyg'
+        return req.path_info == '/wikiwyg'
     
     def process_request(self, req):
         return 'wikiwyg.cs', None
