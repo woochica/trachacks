@@ -107,7 +107,7 @@ class TestManager(Component):
         static resources (such as images, style sheets, etc).
         """
         from pkg_resources import resource_filename
-        return [('testcase', resource_filename(__name__, 'htdocs'))]
+        return [('testmanagement', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
         """Return the absolute path of the directory containing the provided
