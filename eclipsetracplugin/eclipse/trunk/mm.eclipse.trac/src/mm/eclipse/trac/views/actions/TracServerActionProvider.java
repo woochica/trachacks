@@ -4,9 +4,11 @@
 package mm.eclipse.trac.views.actions;
 
 import mm.eclipse.trac.models.TracServer;
+import mm.eclipse.trac.models.TracServerList;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Display;
@@ -21,6 +23,7 @@ public class TracServerActionProvider implements IActionsProvider
     
     private Action           connectAction;
     private Action           disconnectAction;
+    private Action           deleteAction;
     
     public TracServerActionProvider( StructuredViewer viewer )
     {
@@ -68,6 +71,21 @@ public class TracServerActionProvider implements IActionsProvider
             }
         };
         disconnectAction.setText( "Disconnect from server" );
+        
+        deleteAction = new Action() {
+        	@Override
+        	public void run() {
+                if ( !viewer.getSelection().isEmpty() )
+                {
+                    TracServer server = (TracServer) ((IStructuredSelection) viewer
+                            .getSelection()).getFirstElement();
+                    TracServerList.getInstance().removeServer(server);
+                }
+        		
+        	}
+        };
+        
+        deleteAction.setText("Delete the Trac Server Setting");
     }
     
     /*
@@ -90,6 +108,8 @@ public class TracServerActionProvider implements IActionsProvider
             
             menu.add( connectAction );
             menu.add( disconnectAction );
+            menu.add( new Separator() );
+            menu.add( deleteAction );
         }
     }
     
