@@ -9,7 +9,6 @@ import time
 import logging
 import logging.handlers
 from trac.core import *
-from trac.db import get_column_names
 from trac.ticket import Milestone, Ticket, TicketSystem
 from trac.web import IRequestHandler
 from trac.util import Markup
