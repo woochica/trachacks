@@ -151,7 +151,10 @@ class BurndownComponent(Component):
         for comp in component_lists:
             components.append(comp[0])
         
-        selected_milestone = req.args.get('selected_milestone', milestones[0])
+        if (milestones and milestones[0]):
+            selected_milestone = req.args.get('selected_milestone', milestones[0])
+        else:
+            selected_milestone = ''
         selected_component = req.args.get('selected_component', 'All Components')
         
         # expose display data to the clearsilver templates
