@@ -16,7 +16,7 @@ class TracWikiwygModule(Component):
     
     def get_htdocs_dirs(self):
         """Provide the static JavaScript files, CSS, etc."""
-        yield '', resource_filename(__name__, 'htdocs')
+        yield 'wikiwyg', resource_filename(__name__, 'htdocs')
     
     
     # IRequestFilter methods
