@@ -16,20 +16,22 @@ class TracWikiwygModule(Component):
     
     def get_htdocs_dirs(self):
         """Provide the static JavaScript files, CSS, etc."""
-        yield ('', resource_filename(__name__, 'htdocs'))
+        yield '', resource_filename(__name__, 'htdocs')
     
     
     # IRequestFilter methods
     
     def pre_process_request(self, req, handler):
-        """Load Wikiwyg libs on every page.
+        """Load Wikiwyg libs pages that make use of them."""
+        def uses_wikiwyg(req):
+            """Return whether the page referenced by req can make use of Wikiwyg."""
+            return True  # TODO: Replace this with actual intelligence: perhaps all wiki pages, etc.
         
-        (We might want to get more selective eventually.)
-        """
-        for curScript in ['Wikiwyg', 'Toolbar', 'Wysiwyg', 'Wikitext', 'Preview', 'ClientServer']:
-            add_script(req, 'wikiwyg/%s.js' % curScript)
+        if uses_wikiwyg(req):
+            for curScript in ['Wikiwyg', 'Toolbar', 'Wysiwyg', 'Wikitext', 'Preview', 'Trac']:  # 'ClientServer' (put this back in when you implement async save)
+                add_script(req, 'wikiwyg/%s.js' % curScript)
         return handler
     
-    # for Genshi templates
+    # the Genshi template version
     def post_process_request(self, req, template, data, content_type):
         return template, data, content_type

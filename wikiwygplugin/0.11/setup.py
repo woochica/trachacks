@@ -7,7 +7,7 @@ setup(
     name = 'TracWikiwyg',
     version = '1.0',
     packages = ['wikiwyg'],
-    package_data = {'wikiwyg': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css', 'htdocs/*.gif', 'htdocs/*.htc']},
+    package_data = {'wikiwyg': ['htdocs/*.js', 'htdocs/*.css', 'htdocs/*.gif', 'htdocs/*.htc']},  # 'templates/*.html' can go back in here if we need it
     
     author = "soloturn, Erik Rose, and Frank Wierzbicki",
     author_email = "somebody@example.com",
