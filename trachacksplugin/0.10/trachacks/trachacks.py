@@ -55,7 +55,9 @@ class TracHacksMacros(Component):
                 body = re.sub('\\[\\[TagIt.*', '', body)
                 out.write('<legend style="color: #999;"><a href="%s">%s</a></legend>\n' % (self.env.href.wiki(pagename), title))
                 out.write('%s\n' % wiki_to_html(body, self.env, req))
+
                 out.write('</fieldset>\n')
+
         return out.getvalue()
 
 class TracHacksAccountManager(HtPasswdStore):
@@ -106,12 +108,12 @@ class TracHacksRPC(Component):
         yield ('XML_RPC', ((dict,str),), self.getDetails)
 
     # Other methods
-    def getReleases(self):
+    def getReleases(self, req):
         """ Return a list of Trac releases TracHacks is aware of. """
         from tractags.api import TagEngine
         return TagEngine(self.env).tagspace.wiki.get_tagged_names(['release'])
 
-    def getTypes(self):
+    def getTypes(self, req):
         """ Return a list of known Hack types. """
         from tractags.api import TagEngine
         return TagEngine(self.env).tagspace.wiki.get_tagged_names(['type'])
