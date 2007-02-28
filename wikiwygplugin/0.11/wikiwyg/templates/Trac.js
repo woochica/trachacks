@@ -1,11 +1,12 @@
 //------------------------------------------------------------------------------
 // onload should wikify the html. search for a better possibility
 //
-onload = function() {
-  alert("wikifying start ...");
-  var wiki = document.getElementById('wikipage');
-  Wikiwyg.Trac.setup_wikiwyg_section(wiki, '<?cs var:htdocs_location ?>');
-  }
+addEvent("onload", (
+  function() {
+    var div = $(".wikipage")[0];  // uses JQuery
+    Wikiwyg.Trac.setup_wikiwyg_section(div, '${href()}/chrome/');  //should be something like '/my-env/chrome/'
+  })
+);
 
 
 //------------------------------------------------------------------------------
