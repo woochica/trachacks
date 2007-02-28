@@ -93,8 +93,12 @@ class TestRunManager(Component):
             milestone = ""
         if users == None :
             return False, "No users selected for test run"
+            
+        #check to see if the user parameter is a str or a list (well if it isn't a unicode or str then it is a list)
         if isinstance( users, unicode): 
             users = [users.encode('ascii', 'ignore')]
+        if isinstance( users, str): 
+            users = [users]       
         
         
         version = version.encode('ascii', 'ignore').strip()
@@ -152,9 +156,13 @@ class TestRunManager(Component):
         return True, req.base_url + "/query?status=new&status=assigned&status=reopened&testcase_result=&version=" + version + "&milestone=" + milestone + "&type=testcase&order=priority&group=owner"
 
     def createCombinedTestCaseList( self, testTemplates, testcases, req ) :
-        #ok we are expecting lists to be returned for testcase,templates,and users...but if only one user is returned that's no good so check to see if we are dealing with a list or unicode string
+        #ok we are expecting a testcases to be a list but check to see if it is a str or unicode str.  If it is convert it to a list.
         if isinstance( testcases, unicode) :
             testcases = [testcases.encode('ascii', 'ignore')]
+        
+        if isinstance( testcases, str ):
+            testcases = [testcases]
+        
         if isinstance( testTemplates, unicode) :
             testTemplates = [testTemplates.encode('ascii', 'ignore')]
         
