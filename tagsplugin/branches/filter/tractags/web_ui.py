@@ -1,11 +1,13 @@
 from trac.core import *
 from trac.web.main import IRequestHandler
-from trac.web.chrome import ITemplateProvider, INavigationContributor
+from trac.web.chrome import ITemplateProvider, INavigationContributor, add_stylesheet
 from trac.web.api import IStreamFilter, IRequestFilter
 from trac.util import Markup
 from StringIO import StringIO
 from trac.wiki.web_ui import WikiModule
 from trac.wiki.formatter import wiki_to_oneliner
+from trac.wiki.model import WikiPage
+
 from genshi.builder import tag
 from genshi.core import START, END
 from tractags.expr import Expression
@@ -84,26 +86,34 @@ class TagsWikiFilter(Component):
     # IStreamFilter methods
     def match_stream(self, req, stream, method):
         return req.path_info.startswith('/wiki') and \
-               req.args.get('action') == 'edit' and \
+               req.args.get('action','view') in ('edit', 'view') and \
                method == 'xhtml'
                
     def process_stream(self, req, stream, method):
         page_name = req.path_info[6:] or 'WikiStart'
-        stage = 1
+        tags = TagEngine(self.env).tagspace.wiki.get_tags([page_name])
+        action = req.args.get('action','view')
+        if action == 'edit':
+            return self._process_edit(req, stream, method, tags)
+        elif action == 'view':
+            return self._process_view(req, stream, method, tags)
+                      
+         
+    def _process_edit(self, req, stream, method, tags):
+        stage = 1                     
         elm = tag.div([tag.label('Tag under: (', 
                                  tag.a('view all tags', href=req.href.tags()),
-                                  ')', 
-                                  for_='tags'), 
+                                 ')', 
+                                 for_='tags'), 
                        tag.br(), 
                        tag.input(title='Comma separated list of tags',
                                  type='text',
                                  id='tags',
                                  size='30',
                                  name='tags',
-                                 value=', '.join(TagEngine(self.env).tagspace.wiki.get_tags([page_name]))
+                                 value=', '.join(tags)
                                 ),
                       ], class_='field')
-                      
         for kind, data, pos in stream:            
             yield kind, data, pos
             if stage == 1 and \
@@ -117,10 +127,60 @@ class TagsWikiFilter(Component):
                 for e in elm.generate():
                     yield e
                 stage = None
+                
+    def _process_view(self, req, stream, method, tags):
+        stage = 1
+        div_count = 1
+        
+        def tag_data():
+            engine = TagEngine(self.env)
+            for t in tags:
+                href, title = engine.get_tag_link(t)
+                yield t, href, title
+        
+        elm = tag.ul(tags and tag.lh('Tags'),
+                     [tag.li(tag.a(t, href=href, title=title), ' ') for t, href, title in tag_data()],
+                     class_='tags')
+                     
+        for kind, data, pos in stream:
+            yield kind, data, pos
+            if stage == 1 and \
+               kind is START and \
+               data[0].localname == 'div' and \
+               'wikipage' in data[1].get('class', ''):
+                stage = 2
+            elif stage == 2:
+                if kind is START and data[0].localname == 'div':
+                    div_count += 1
+                elif kind is END and data.localname == 'div':
+                    div_count -= 1
+                    
+                if not div_count:
+                    for e in elm.generate():
+                        yield e
+                    stage = None
+                    
             
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
+        tags = req.args.get('tags')
+        if isinstance(handler, WikiModule):
+            add_stylesheet(req, 'tags/css/tractags.css')
         
+            if req.method == 'POST' and tags is not None:
+                page_name = req.path_info[6:] or 'WikiStart'
+                new_tags = set([t.strip() for t in tags.split(',') if t.strip()])
+                old_tags = TagEngine(self.env).tagspace.wiki.get_tags([page_name])        
+                if old_tags != new_tags:
+                    TagEngine(self.env).tagspace.wiki.replace_tags(req, page_name, new_tags)
+                    if req.args.get('text') == WikiPage(self.env, page_name).text:
+                        # The wiki module would think this is wasn't changed,
+                        # so redirect around it.
+                        req.redirect(req.href.wiki(page_name))
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        return template, data, content_type
 
 class TagsModule(Component):
     """ Serve a /tags namespace. Top-level displays tag cloud, sub-levels
