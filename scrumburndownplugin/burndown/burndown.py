@@ -191,7 +191,7 @@ class BurndownComponent(Component):
                 cursor.execute(sqlBurndown)
                 component_data[comp] = cursor.fetchall()
             
-        if component_data[component_data.keys()[0]]:
+        if len(component_data) > 0 and component_data[component_data.keys()[0]]:
             burndown_length = len(component_data[component_data.keys()[0]])
         else:
             burndown_length = 0
