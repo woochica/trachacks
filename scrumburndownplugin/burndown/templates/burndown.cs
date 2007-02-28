@@ -25,9 +25,8 @@
     </select>
 
     <div class="buttons">
-        <?cs if:start_complete ?>
+        <?cs if:start ?>
             <input type="submit" name="start" value="Start Milestone" />
-            <input type="submit" name="complete" value="Milestone Complete" />
         <?cs /if ?>
         <input type="submit" value="Show Burndown Chart" />
     </div>
@@ -52,39 +51,6 @@
     <?cs each:tuple = burndown_data ?>
         g.add('<?cs var:tuple[0] ?>', <?cs var:tuple[1] ?>);
     <?cs /each ?>
-
-    /*
-    g.add('1', 1200);
-    g.add('2', 1140);
-    g.add('3', 1107);
-    g.add('4', 1045);
-    g.add('5', 900);
-    g.add('6', 928);
-    g.add('7', 887);
-    g.add('8', 850);
-    g.add('9', 924);
-    g.add('10', 880);
-    g.add('11', 809);
-    g.add('12', 670);
-    g.add('13', 612);
-    g.add('14', 546);
-    g.add('15', 500);
-    g.add('16', 541);
-    g.add('17', 508);
-    g.add('18', 432);
-    g.add('19', 500);
-    g.add('20', 412);
-    g.add('21', 360);
-    g.add('22', 300);
-    g.add('23', 215);
-    g.add('24', 205);
-    g.add('25', 246);
-    g.add('26', 180);
-    g.add('27', 110);
-    g.add('28', 90);
-    g.add('29', 40);
-    g.add('30', 0);
-    */
     
     //If called without a height parameter, defaults to 250
     g.render("myCanvas", "hours remaining vs. days of sprint", 300);

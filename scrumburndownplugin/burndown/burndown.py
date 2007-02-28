@@ -163,15 +163,13 @@ class BurndownComponent(Component):
         req.hdf['selected_milestone'] = selected_milestone
         req.hdf['selected_component'] = selected_component
         req.hdf['draw_graph'] = False
-        req.hdf['start_complete'] = False
+        req.hdf['start'] = False
         
         if req.perm.has_permission("BURNDOWN_ADMIN"):
-            req.hdf['start_complete'] = True # show the start and complete milestone buttons to admins
+            req.hdf['start'] = True # show the start and complete milestone buttons to admins
         
         if req.args.has_key('start'):
             self.startMilestone(db, selected_milestone)
-        elif req.args.has_key('complete'):
-            self.completeMilestone(db, selected_milestone)
         else:
             req.hdf['draw_graph'] = True
             req.hdf['burndown_data'] = self.getBurndownData(db, selected_milestone, components, selected_component) # this will be a list of (id, hours_remaining) tuples
@@ -223,17 +221,6 @@ class BurndownComponent(Component):
             raise TracError("Milestone '%s' was already started on %s" % (milestone, format_date(int(row[0]))))
             
         cursor.execute("UPDATE milestone SET started = %i WHERE name = '%s'" % (int(time.time()), milestone))
-        
-        db.commit()
-        
-    def completeMilestone(self, db, milestone):
-        cursor = db.cursor()
-        cursor.execute("SELECT completed FROM milestone WHERE name = '%s'" % milestone)
-        row = cursor.fetchone()
-        if row and row[0] > 0:
-            raise TracError("Milestone '%s' was already completed on %s" % (milestone, format_date(int(row[0]))))
-            
-        cursor.execute("UPDATE milestone SET completed = %i WHERE name = '%s'" % (int(time.time()), milestone))
         
         db.commit()
         
