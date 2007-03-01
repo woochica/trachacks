@@ -178,7 +178,7 @@ class TagMacros(Component):
         tags = set(tags)
         taginfo = {}
         out = StringIO()
-        out.write('<ul class="listtagged">')
+        out.write('<ul class="listtagged">\n')
         # If expression was passed as an argument, do a full walk, using the
         # expression as the predicate. Silently assumes that failed expressions
         # are normal tags.
