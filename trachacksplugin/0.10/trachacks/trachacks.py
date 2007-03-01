@@ -6,6 +6,36 @@ from acct_mgr.htfile import HtPasswdStore
 from acct_mgr.api import IPasswordStore
 import sys, inspect
 
+
+def try_int(s):
+    "Convert to integer if possible."
+    try: return int(s)
+    except: return s
+
+def natsort_key(s):
+    "Used internally to get a tuple by which s is sorted."
+    import re
+    return map(try_int, re.findall(r'(\d+|\D+)', s))
+
+def natcmp(a, b):
+    "Natural string comparison, case sensitive."
+    return cmp(natsort_key(a), natsort_key(b))
+
+def natcasecmp(a, b):
+    "Natural string comparison, ignores case."
+    return natcmp(a.lower(), b.lower())
+
+def natsort(seq, cmp=natcmp):
+    "In-place natural string sort."
+    seq.sort(cmp)
+
+def natsorted(seq, cmp=natcmp):
+    "Returns a copy of seq, sorted by natural string sort."
+    temp = list(seq)
+    natsort(temp, cmp)
+    return temp
+
+
 class TracHacksMacros(Component):
     """ List of meta types """
     implements(IWikiMacroProvider)
@@ -30,20 +60,33 @@ class TracHacksMacros(Component):
         out = StringIO()
         pages = tagspace.get_tagged_names(tags=['type'])
         pages = sorted(pages)
-        self.env.log.debug(pages)
 
+        out.write('<form style="text-align: right; padding-top: 1em; margin-right: 5em;" method="get">')
+        out.write('<span style="font-size: xx-small">')
+        out.write('Show hacks for releases: ')
+        releases = natsorted(tagspace.get_tagged_names(tags=['release']))
+        if 'update_th_filter' in req.args:
+            show_releases = req.args.get('release', ['0.10'])
+            if isinstance(show_releases, basestring):
+                show_releases = [show_releases]
+            req.session['th_release_filter'] = ','.join(show_releases)
+        else:
+            show_releases = req.session.get('th_release_filter', '0.10').split(',')
+        for version in releases:
+            checked = version in show_releases
+            out.write('<input type="checkbox" name="release" value="%s"%s>%s\n' % (version, checked and ' checked' or '', version))
+        out.write('<input name="update_th_filter" type="submit" style="font-size: xx-small; padding: 0; border: solid 1px black" value="Update"/>')
+        out.write('</span>')
+        out.write('</form>')
         for i, pagename in enumerate(pages):
             page = WikiPage(self.env, pagename)
             if page.text:
-                if i > 0:
-                    topmargin = '0em'
-                else:
-                    topmargin = '2em'
+                topmargin = '0em'
                 if i < len(pages) - 1:
                     bottommargin = '0em'
                 else:
                     bottommargin = '2em'
-                    
+
                 out.write('<fieldset style="padding: 1em; margin: %s 5em %s 5em; border: 1px solid #999;">\n' % (topmargin, bottommargin))
                 body = page.text
                 title = re.search('=+\s([^=]*)=+', body)
@@ -54,7 +97,17 @@ class TracHacksMacros(Component):
                     title = pagename
                 body = re.sub('\\[\\[TagIt.*', '', body)
                 out.write('<legend style="color: #999;"><a href="%s">%s</a></legend>\n' % (self.env.href.wiki(pagename), title))
-                out.write('%s\n' % wiki_to_html(body, self.env, req))
+                body = wiki_to_html(body, self.env, req)
+                # Dear God, the horror!
+                for line in body.splitlines():
+                    show = False
+                    for release in show_releases:
+                        self.env.log.debug(release)
+                        if '>%s</a>' % release in line:
+                            show = True
+                            break
+                    if show or not '<li>' in line:
+                        out.write(line)
 
                 out.write('</fieldset>\n')
 
