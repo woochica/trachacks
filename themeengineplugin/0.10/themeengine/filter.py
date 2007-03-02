@@ -8,7 +8,7 @@ import os
 from pkg_resources import resource_filename
 try:
     set = set
-except ImportError:
+except NameError:
     from sets import Set as set
 
 
