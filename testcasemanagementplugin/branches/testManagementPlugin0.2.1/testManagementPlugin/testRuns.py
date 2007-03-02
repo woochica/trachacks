@@ -87,19 +87,36 @@ class TestRunManager(Component):
         testConfiguration = str( req.args.get('testconfiguration'))
         
         #-----------------------------------ERROR CHECKING ON PARAMETERS--------------------------------------------
+        #it might make sense to create a new method to validate the parameters passed in but for now we'll leave it.
+        
         if version == None:
             version = ""
         if milestone == None:
             milestone = ""
         if users == None :
             return False, "No users selected for test run"
-        #check to see if the user parameter is a str or a list (well if it isn't a unicode or str then it is a list)
+            
+        #check to see if the user, templates or testcases parameters is a str/unicode or a list (well if it isn't a unicode or str then it is a list)
         if isinstance( users, unicode): 
             users = [users.encode('ascii', 'ignore')]
+            
         if isinstance( users, str): 
-            users = [users]
+            users = [users]   
+
+        if isinstance( testcases, unicode) :
+            testcases = [testcases.encode('ascii', 'ignore')]
         
-        version = version.encode('ascii', 'ignore').strip()
+        if isinstance( testcases, str ):
+            testcases = [testcases]
+        
+        if isinstance( testTemplates, unicode) :
+            testTemplates = [testTemplates.encode('ascii', 'ignore')]
+            
+        if isinstance( testTemplates, str ):
+            testcases = [testTemplates]
+        
+        
+        version = version.encode('ascii', 'ignore').strip()  
         milestone = milestone.encode('ascii', 'ignore').strip()
 
         if testcases == None :
@@ -110,13 +127,15 @@ class TestRunManager(Component):
         elif testTemplates == None :
             testTemplates = []
     
+        #--------------------------------------------DONE ERROR CHECKING -----------------------------------------------
+       
+    
         #create combined testcase list        
         testcases = self.createCombinedTestCaseList( testTemplates, testcases, req ) 
             
         allTestcases = self.properties.getTestCases( self, req ) #fetch the testcases...
         if allTestcases == None : 
             return False, None
-        #--------------------------------------------DONE ERROR CHECKING -----------------------------------------------
         
         #ok this is where we actually create the tickets...
         db = self.env.get_db_cnx()
@@ -154,15 +173,7 @@ class TestRunManager(Component):
         return True, req.base_url + "/query?status=new&status=assigned&status=reopened&testcase_result=&version=" + version + "&milestone=" + milestone + "&type=testcase&order=priority&group=owner"
 
     def createCombinedTestCaseList( self, testTemplates, testcases, req ) :
-        #ok we are expecting a testcases to be a list but check to see if it is a str or unicode str.  If it is convert it to a list.if isinstance( testcases, unicode) :
-        testcases = [testcases.encode('ascii', 'ignore')]
-        
-        if isinstance( testcases, str ):
-            testcases = [testcases]
-        
-        if isinstance( testTemplates, unicode) :
-            testTemplates = [testTemplates.encode('ascii', 'ignore')]
-        
+                 
         if len(testTemplates) < 1 :
             return testcases #hopefully testcases isn't < 1 as well...
         else:
