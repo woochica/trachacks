@@ -105,7 +105,7 @@ class BranchChangeset(object):
             return False
         self.branchname = path_mo.group('branch').lower()
         if src_mo:
-            self.clone = (int(base_rev), src_mo.group('branch').lower())
+            self.clone = (int(base_rev), src_mo.group('branch'))
         return True
 
     def _find_plain_branch(self, bcre):
