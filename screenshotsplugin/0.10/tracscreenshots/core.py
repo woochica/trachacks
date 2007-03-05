@@ -7,7 +7,7 @@ from trac.perm import IPermissionRequestor
 from trac.config import Option
 from trac.util import Markup, format_datetime, TracError
 from trac.util.html import html
-import re, os, os.path, time, mimetypes
+import sets, re, os, os.path, time, mimetypes
 
 # Try import TracTagsPlugin.
 try:
@@ -233,16 +233,6 @@ class ScreenshotsCore(Component):
                 for new_version in new_versions:
                     self.api.add_version(cursor, screenshot['id'], new_version)
 
-                # Create screenshot tags.
-                if is_tags:
-                    tags = TagEngine(self.env).tagspace.screenshots
-                    tag_names = new_components
-                    tag_names.extend(new_versions)
-                    tag_names.extend([screenshot['name'], screenshot['author']])
-                    if screenshot['tags']:
-                        tag_names.extend(screenshot['tags'].split(' '))
-                    tags.replace_tags(req, screenshot['id'], tag_names)
-
                 # Prepare file paths
                 path = os.path.join(self.path, str(self.id))
                 large_filepath = os.path.join(path, large_filename)
@@ -264,7 +254,28 @@ class ScreenshotsCore(Component):
                     os.system('convert "%s" -resize 120!x90! "%s"' % (
                       large_filename, small_filename))
                 except:
-                    raise TracError('Error storing file.')
+                    self.api.delete_screenshot(cursor, screenshot['id'])
+                    try:
+                        os.remove(small_filepath)
+                        os.remove(medium_filepath)
+                        os.remove(large_filepath)
+                        os.rmdir(path)
+                    except:
+                        pass
+                    raise TracError('Error storing file. Is directory specified' \
+                      ' in path config option in [screenshots] section of' \
+                      ' trac.ini existing? Are ImageMagick tools installed?')
+
+                # Create screenshot tags.
+                if is_tags:
+                    tags = TagEngine(self.env).tagspace.screenshots
+                    tag_names = new_components
+                    tag_names.extend(new_versions)
+                    tag_names.extend([screenshot['name'], screenshot['author']])
+                    if screenshot['tags']:
+                        tag_names.extend(screenshot['tags'].split(' '))
+                    tags.replace_tags(req, screenshot['id'],
+                      list(sets.Set(tag_names)))
 
             elif mode == 'edit':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
@@ -299,7 +310,8 @@ class ScreenshotsCore(Component):
                     tag_names.extend([new_name, screenshot['author']])
                     if new_tags:
                         tag_names.extend(new_tags.split(' '))
-                    tags.replace_tags(req, screenshot['id'], tag_names)
+                    tags.replace_tags(req, screenshot['id'],
+                      list(sets.Set(tag_names)))
 
                 # Edit screenshot.
                 self.api.edit_screenshot(cursor, screenshot['id'], new_name,
@@ -333,7 +345,8 @@ class ScreenshotsCore(Component):
                     tag_names.extend([screenshot['name'], screenshot['author']])
                     if screenshot['tags']:
                         tag_names.extend(screenshot['tags'].split(' '))
-                    tags.remove_tags(req, screenshot['id'], tag_names)
+                    tags.remove_tags(req, screenshot['id'],
+                      list(sets.Set(tag_names)))
 
                 # Set new screenshot id.
                 if index > 1:
@@ -350,17 +363,17 @@ class ScreenshotsCore(Component):
                 index = self._get_screenshot_index(screenshots, self.id) or 0
 
                 # Prepare displayed screenshots.
-                lenght = len(screenshots)
+                length = len(screenshots)
                 previous = []
                 current = []
                 next = []
-                if lenght > 0:
+                if length > 0:
                     current.append(screenshots[index])
-                if (index + 1) < lenght:
+                if (index + 1) < length:
                     next.append(screenshots[index + 1])
                 else:
                     next.append(no_screenshot)
-                if (index + 2) < lenght:
+                if (index + 2) < length:
                     next.append(screenshots[index + 2])
                 else:
                     next.append(no_screenshot)
@@ -372,6 +385,10 @@ class ScreenshotsCore(Component):
                     previous.append(screenshots[index - 1])
                 else:
                     previous.append(no_screenshot)
+                self.log.debug('length: %s' % (length,))
+                self.log.debug('current: %s' % (current,))
+                self.log.debug('previous: %s' % (previous,))
+                self.log.debug('next: %s' % (next,))
 
                 # Fill HDF structure
                 req.hdf['screenshots.index'] = index + 1
