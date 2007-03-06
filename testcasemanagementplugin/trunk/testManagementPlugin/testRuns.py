@@ -113,7 +113,7 @@ class TestRunManager(Component):
             testTemplates = [testTemplates.encode('ascii', 'ignore')]
             
         if isinstance( testTemplates, str ):
-            testcases = [testTemplates]
+            testTemplates = [testTemplates]
         
         
         version = version.encode('ascii', 'ignore').strip()  
