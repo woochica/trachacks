@@ -47,4 +47,4 @@ class DropbearFilter(Component):
         
         data = {}
         data['dropbears'] = int(req.session.get('dropbears', 0))
-        return 'prefs_dropbear.html', data
+        return 'prefs_dropbears.html', data
