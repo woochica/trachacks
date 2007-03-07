@@ -2,15 +2,19 @@ from trac.core import *
 from trac.web.main import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.prefs.api import IPreferencePanelProvider
+from trac.config import IntOption
 
 class DropbearFilter(Component):
     """A filter to show dropbears."""
+    
+    default_dropbears = IntOption('dropbears', 'default', default=0,
+                                  doc='The number of dropbears to show by default.')
     
     implements(IRequestFilter, IRequestHandler, ITemplateProvider, IPreferencePanelProvider)
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        if int(req.session.get('dropbears', 0)):
+        if int(req.session.get('dropbears', self.default_dropbears)):
             add_stylesheet(req, 'dropbear/dropbears.css')
             add_script(req, '/dropbear/dropbears.js')
         return handler
@@ -24,7 +28,7 @@ class DropbearFilter(Component):
         
     def process_request(self, req):
         data = {}
-        data['dropbears'] = int(req.session.get('dropbears', 0))
+        data['dropbears'] = int(req.session.get('dropbears', self.default_dropbears))
         return 'dropbears.js', data, 'text/plain'
         
     # ITemplateProvider methods
@@ -46,5 +50,5 @@ class DropbearFilter(Component):
             req.redirect(req.href.prefs(panel))
         
         data = {}
-        data['dropbears'] = int(req.session.get('dropbears', 0))
+        data['dropbears'] = int(req.session.get('dropbears', self.default_dropbears))
         return 'prefs_dropbears.html', data
