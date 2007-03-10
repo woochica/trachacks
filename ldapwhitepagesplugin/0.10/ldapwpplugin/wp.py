@@ -92,6 +92,9 @@ class LdapWpPlugin(Component):
         raise Exception("macro name '%s' not recognized" % name)
 
     # ITemplateProvider
+    def get_htdocs_dirs(self):
+        return []
+    
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
