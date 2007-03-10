@@ -20,6 +20,7 @@ public class PerspectiveFactory implements IPerspectiveFactory
         // Bottom: Page Histoy view
         IFolderLayout bottom = layout.createFolder( "bottom", IPageLayout.BOTTOM, 0.85f,
                                                     editorArea );
+        bottom.addView( "mm.eclipse.trac.server.ServerView" );
         bottom.addView( "mm.eclipse.trac.views.WikiPageHistory" );
         
         // Top Right: Outline view
