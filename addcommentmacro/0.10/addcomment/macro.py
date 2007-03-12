@@ -9,6 +9,7 @@ from trac.wiki.model import WikiPage
 from trac.util import Markup
 from trac.util import TracError
 from trac.web.chrome import add_link
+from trac.util.text import to_unicode
 
 import re, time
 
@@ -49,7 +50,7 @@ def execute(hdf, args, env):
 
     disabled = ''
 
-    comment = Markup(hdf.getValue("args.addcomment", "")).unescape()
+    comment = Markup(to_unicode(hdf.getValue("args.addcomment", ""))).unescape()
     preview = hdf.getValue("args.previewaddcomment", "")
     cancel = hdf.getValue("args.canceladdcomment", "")
     submit = hdf.getValue("args.submitaddcomment", "")
@@ -93,7 +94,7 @@ def execute(hdf, args, env):
         else:
             out.write("<div class='system-message'><strong>ERROR: [[AddComment]] macro call must be the only content on its line. Could not add comment.</strong></div>\n")
 
-    out.write("<form action='%s#commentpreview' method='get'>\n" % env.href.wiki(pagename))
+    out.write("<form action='%s#commentpreview' method='post'>\n" % env.href.wiki(pagename))
     out.write("<fieldset>\n<legend>Add comment</legend>\n")
     out.write("<div class='field'>\n<textarea class='wikitext' id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
     if wikipreview:
