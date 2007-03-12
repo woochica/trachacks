@@ -14,6 +14,9 @@ setup(
     license = "BSD",
     keywords = "trac plugin wiki",
     url = "http://trac-hacks.org/wiki/MacroPostPlugin",
+    classifiers = [
+        'Framework :: Trac',
+    ],
 
     entry_points = {
         'trac.plugins': [
