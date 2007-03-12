@@ -18,9 +18,9 @@ class PageToPDFPlugin(Component):
         hfile, hfilename = mkstemp('tracpdf')
 	# htmldoc doesn't support utf-8, we need to use some other input encoding
 	codepage = self.env.config.get('trac', 'charset', 'iso-8859-1')
-        page = wiki_to_html(source, self.env, req).encode(codepage)
+        self.env.log.debug('HTML output for PageToPDF in charset %s' % codepage)
+        page = wiki_to_html(source, self.env, req).encode(codepage, 'replace')
         page = re.sub('<img src="(?!\w+://)', '<img src="%s://%s:%d' % (req.scheme, req.server_name, req.server_port), page)
-        self.env.log.debug('HTML output for PageToPDF charset: %s' % codepage)
 	meta = ('<meta http-equiv="Content-Type" content="text/html; charset=%s"/>' % codepage).encode(codepage)
         os.write(hfile, '<html><head>' + meta + '</head><body>' + page + '</body></html>')
         os.close(hfile)
