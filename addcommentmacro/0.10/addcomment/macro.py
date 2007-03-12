@@ -93,7 +93,7 @@ def execute(hdf, args, env):
         else:
             out.write("<div class='system-message'><strong>ERROR: [[AddComment]] macro call must be the only content on its line. Could not add comment.</strong></div>\n")
 
-    out.write("<form action='%s#commentpreview' method='post'>\n" % env.href.wiki(pagename))
+    out.write("<form action='%s#commentpreview' method='get'>\n" % env.href.wiki(pagename))
     out.write("<fieldset>\n<legend>Add comment</legend>\n")
     out.write("<div class='field'>\n<textarea class='wikitext' id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
     if wikipreview:
