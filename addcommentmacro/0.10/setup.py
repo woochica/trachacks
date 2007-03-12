@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracAddCommentMacro',
-    version = '0.1',
+    version = '0.2',
     packages = ['addcomment'],
     package_data={ 'addcomment' : [  ] },
     author = "Alec Thomas",
@@ -13,12 +13,15 @@ setup(
     license = "BSD",
     keywords = "trac plugin macro comments",
     url = "http://trac-hacks.org/wiki/AddCommentMacro",
-
+    classifiers = [
+        'Framework :: Trac',
+    ],
+    
     entry_points = {
         'trac.plugins': [
             'addcomment.macro = addcomment.macro',
         ],
     },
 
-    install_requires = [  ],
+    install_requires = [ 'TracMacroPost' ],
 )
