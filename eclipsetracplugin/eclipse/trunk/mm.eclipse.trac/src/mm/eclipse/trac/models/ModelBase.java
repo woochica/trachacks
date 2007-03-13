@@ -15,7 +15,8 @@ public abstract class ModelBase
     
     public void addListener( ITracListener listener )
     {
-        if ( listeners == null ) listeners = new WeakCollection<ITracListener>();
+        if ( listeners == null )
+            listeners = new WeakCollection<ITracListener>();
         
         listeners.add( listener );
     }
@@ -30,15 +31,14 @@ public abstract class ModelBase
     
     protected void notifyChanged()
     {
-        if ( listeners == null ) return;
-        /*
-        Display.getDefault().asyncExec( new Runnable() {
-            public void run()
-            {
-          */      for ( ITracListener listener : listeners )
-                    listener.tracResourceModified( this );
-          /*  }
-        } ); */
+        if ( listeners == null )
+            return;
+        
+        for ( ITracListener listener : listeners )
+        {
+            if ( listener != null )
+                listener.tracResourceModified( this );
+        }
     }
     
 }

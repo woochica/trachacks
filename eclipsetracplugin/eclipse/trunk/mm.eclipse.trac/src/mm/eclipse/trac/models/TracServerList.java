@@ -173,22 +173,7 @@ public class TracServerList extends ModelBase implements Iterable<TracServer>
 				} catch (IOException e1) {
 				}
 			}
-		}
-
-		
-    // Activator.getDefault().getPluginPreferences().
-    // IEclipsePreferences prefs = new ConfigurationScope().getNode( CATEGORY );
-    // // try
-    // // {
-    // // prefs.removeNode();
-    // // } catch ( BackingStoreException e )
-    // // {
-    // // Log.error( "BackingStoreException.", e );
-    // // }
-    //        
-    // prefs.put( "server1", "primo" );
-    // prefs.put( "server2", "secondo" );
-    // prefs.put( "server3", "terzo" );
+        }
     }
     
     private String getServerInfoAsXML() throws ParserConfigurationException, IOException, TransformerException {
