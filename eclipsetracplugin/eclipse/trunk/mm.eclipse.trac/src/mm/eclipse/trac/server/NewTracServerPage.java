@@ -136,9 +136,9 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         {
             url = new URL( getServerUrl() );
             
-            if ( ! "http".equals( url.getProtocol() ) )
+            if ( ! "http".equals( url.getProtocol() ) && ! "https".equals( url.getProtocol() ) )
             {
-                updateStatus( "Invalid protocol scheme '" + url.getProtocol() + "'. Must be 'http' " );
+                updateStatus( "Invalid protocol scheme '" + url.getProtocol() + "'. Must be 'http' or 'https' " );
                 return;
             }
             
