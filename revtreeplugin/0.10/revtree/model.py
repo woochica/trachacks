@@ -103,7 +103,7 @@ class BranchChangeset(object):
             return False
         if path_mo.group('path'):
             return False
-        self.branchname = path_mo.group('branch').lower()
+        self.branchname = path_mo.group('branch')
         if src_mo:
             self.clone = (int(base_rev), src_mo.group('branch'))
         return True
@@ -115,7 +115,7 @@ class BranchChangeset(object):
             mo = bcre.match(path)
             if mo:
                 try:
-                    br = mo.group('branch').lower()
+                    br = mo.group('branch')
                 except IndexError:
                     raise AssertionError, "Invalid RE: missing 'branch' group"
             else:
