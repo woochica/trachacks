@@ -16,7 +16,8 @@ from trac.config import ExtensionOption
 from trac.core import *
 
 __all__ = ['IRevtreeEnhancer', 'IRevtreeOptimizer', 
-           'EmptyRangeError', 'RevtreeSystem']
+           'EmptyRangeError', 'BranchPathError', 'RevtreeSystem']
+
 
 class IRevtreeEnhancer(Interface):
     """Provide graphical enhancements to a revision tree"""
@@ -47,7 +48,13 @@ class EmptyRangeError(TracError):
     def __init__(self, msg=None):
         TracError.__init__(self, "%sNo changeset" \
                            % (msg and '%s: ' % msg or ''))
+
                            
+class BranchPathError(TracError):
+    """Defines a RevTree error (incoherent paths in a branch)"""
+    def __init__(self, msg=None):
+        TracError.__init__(self, "Incoherent path %s" % (msg or ''))
+
 
 class RevtreeSystem(Component):
     """ """

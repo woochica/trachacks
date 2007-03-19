@@ -16,7 +16,7 @@ import re
 import time
 from datetime import datetime
 
-from revtree import EmptyRangeError, IRevtreeOptimizer
+from revtree import EmptyRangeError, BranchPathError, IRevtreeOptimizer
 from trac.core import *
 from trac.util.datefmt import utc
 from trac.util.text import to_unicode
@@ -28,11 +28,13 @@ class BranchChangeset(object):
     """Represents a Subversion revision with additionnal properties"""
 
     def __init__(self, repos, changeset):
-        # Repository
+        # repository
         self.repos = repos
-        # Trac changeset
+        # environment
+        self.env = repos.env
+        # trac changeset
         self.changeset = changeset
-        ## revision number
+        # revision number
         self.rev = self.changeset.rev
         # branch name
         self.branchname = None
@@ -48,15 +50,15 @@ class BranchChangeset(object):
         return cmp(self.rev, other.rev)
             
     def build(self, bcre):
-        """Loads a changeset from a SVN repository"""
-        """
-        cre should define two named groups 'branch' and 'path'
+        """Loads a changeset from a SVN repository
+        bcre should define two named groups 'branch' and 'path'
         """
         try:
             if not self._find_simple_branch(bcre):
                 self._find_plain_branch(bcre)
-        except AssertionError, e:
-            raise AssertionError, "%s rev: %d" % (e, self.rev or 0)
+        except BranchPathError, e:
+            self.env.log.warn("%s @ rev %s" % (e, self.rev or 0))
+            self.branchname = None 
         
     def _load_properties(self):
         if not isinstance(self.properties, dict):
@@ -124,8 +126,7 @@ class BranchChangeset(object):
             if not branch:
                 branch = br
             elif branch != br:
-                raise AssertionError, 'Incoherent path [%s] != [%s]' \
-                                      % (br, branch)
+                raise BranchPathError, "'%s' != '%s'" % (br, branch)
         self.branchname = branch
         return True
 

@@ -13,7 +13,8 @@ function JT_init(){
 }
 
 function JT_hide(object) {
-  $('#JT').remove()
+   var jt = $('#JT');
+   if ( jt ) { jt.remove(); }
 }
 
 function JT_show(object) {

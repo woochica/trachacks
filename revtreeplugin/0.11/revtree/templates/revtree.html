@@ -24,7 +24,9 @@
           updateLimits(); 
           });
        JT_init();
-       updateLimits(); 
+       updateLimits();
+     // the following function is required for Safari to operate properly
+     $(window).unload(function(){JT_hide()});
     });
     </script>    
   </head>
