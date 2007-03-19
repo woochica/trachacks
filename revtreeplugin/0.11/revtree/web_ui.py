@@ -16,7 +16,8 @@ import re
 import os
 import time
 
-from genshi.core import Markup
+from genshi import Markup
+from genshi.builder import tag
 from revtree.api import EmptyRangeError, RevtreeSystem
 from revtree.model import Repository
 from trac.core import *
@@ -144,8 +145,8 @@ class RevtreeModule(Component):
     def get_navigation_items(self, req):
         if not req.perm.has_permission('REVTREE_VIEW'):
             return
-        yield ('mainnav', 'revtree', Markup('<a href="%s">Rev Tree</a>',
-                                             self.env.href.revtree()))
+        yield ('mainnav', 'revtree', 
+               tag.a('Rev Tree', href=req.href.revtree()))
 
     # IRequestHandler methods
 
