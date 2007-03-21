@@ -13,12 +13,14 @@ def execute(hdf, txt, env):
     return parse(hdf, txt, env)
 
 def parse(hdf, txt, env):
-    txt = txt.lstrip();
+    req = None
+
+    txt = txt.lstrip()
     if (0 == len(txt)):
         return ""
     
     html = ""
-    match = re.search(r"^(from:?\s+?)?(.*)$\s+?^(sent:?\s*)?(.*)$\s+?^to:?\s+?(.*)$\s+?^(cc:?\s+?(.*)$\s+?)?^subject:?\s+(.*)$", txt, re.IGNORECASE | re.MULTILINE)
+    match = re.search(r"^(from:?\s+?)?(.*)$\s+?^(sent:?\s*)?(.*)$\s+?^\s*to:?\s+?(.*)$\s+?^(\s*cc:?\s+?(.*)$\s+?)?^\s*subject:?\s+(.*)$", txt, re.IGNORECASE | re.MULTILINE)
     if match:
         if (-1 == match.start(1)):
             pre_content = match.string[0:match.start(2)]
@@ -34,13 +36,13 @@ def parse(hdf, txt, env):
         subject = match.group(8)
         content = match.string[match.end(8):]
     else:
-        return wiki_to_html(txt, env, hdf, env.get_db_cnx(), escape_newlines=True)
+        return wiki_to_html(txt, env, req, escape_newlines=True)
     
     html = '%s<br />'\
            '<fieldset style="%s">'\
            '<legend style="%s">%s</legend>'\
            'From: %s<br />'\
-           'To: %s<br />' % (wiki_to_html(pre_content, env, hdf, env.get_db_cnx(), escape_newlines=True), 
+           'To: %s<br />' % (wiki_to_html(pre_content, env, req, escape_newlines=True), 
                              STYLE, 
                              STYLE, 
                              date, 
