@@ -17,7 +17,7 @@ class PrivateTicketsSystem(Component):
     
     group_providers = ExtensionPoint(IPermissionGroupProvider)
 
-    blacklist = ListOption('privatetickets', 'group_blacklist', default='anonymous,authenticated',
+    blacklist = ListOption('privatetickets', 'group_blacklist', default='anonymous, authenticated',
                            doc='Groups that do not affect the common membership check.')
     
     # IPermissionRequestor methods
