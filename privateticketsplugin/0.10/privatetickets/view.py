@@ -5,6 +5,7 @@ from trac.ticket.query import QueryModule
 from trac.Search import SearchModule
 from trac.ticket.report import ReportModule
 from trac.attachment import AttachmentModule
+from trac.util.html import html
 
 from api import PrivateTicketsSystem
 
@@ -35,6 +36,9 @@ class PrivateTicketsViewModule(Component):
             elif QueryModule(self.env).match_request(req):
                 req.args['DO_PRIVATETICKETS_FILTER'] = 'query'
                 self._grant_view(req) # Further filtering in query.py
+                # NOTE: Send this back here because the button would be hidden otherwise. <NPK t:1129>
+                return [('mainnav', 'tickets',
+                         html.A('View Tickets', href=req.href.query()))]
             elif SearchModule(self.env).match_request(req):
                 if 'ticket' in req.args.keys():
                     req.args['pticket'] = req.args['ticket']
