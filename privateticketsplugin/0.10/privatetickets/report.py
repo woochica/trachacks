@@ -1,5 +1,6 @@
 from trac.core import *
 from trac.web.api import IRequestFilter
+from trac.ticket.report import ReportModule
 
 from api import PrivateTicketsSystem
 
@@ -12,10 +13,14 @@ class PrivateTicketsReportFilter(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
+        if isinstance(handler, ReportModule) and \
+           not req.perm.has_permission('TICKET_VIEW') and \
+           req.args.get('format') in ('tab', 'csv'):
+            raise TracError('Access denied')
         return handler
         
     def post_process_request(self, req, template, content_type):
-        if req.args.get('DO_PRIVATETICKETS_FILTER') == 'report':
+        if req.args.get('DO_PRIVATETICKETS_FILTER') == 'report':            
             # Walk the HDF
             fn = PrivateTicketsSystem(self.env).check_ticket_access
             deleted = []
