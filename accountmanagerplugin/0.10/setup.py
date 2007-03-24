@@ -31,6 +31,8 @@ this stuff is worth it, you can buy me a beer in return.   Matthew Good''',
             'acct_mgr.http = acct_mgr.http',
             'acct_mgr.api = acct_mgr.api',
             'acct_mgr.admin = acct_mgr.admin',
+            'acct_mgr.db = acct_mgr.db',
+            'acct_mgr.pwhash = acct_mgr.pwhash',
         ]
     },
 
