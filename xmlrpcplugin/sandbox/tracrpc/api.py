@@ -1,4 +1,5 @@
 from trac.core import *
+from trac.perm import IPermissionRequestor
 import inspect
 import types
 import xmlrpclib
@@ -139,11 +140,15 @@ class Method(object):
 
 class XMLRPCSystem(Component):
     """ Core of the XML-RPC system. """
-    implements(IXMLRPCHandler)
+    implements(IPermissionRequestor, IXMLRPCHandler)
 
     method_handlers = ExtensionPoint(IXMLRPCHandler)
 
-    #     # IXMLRPCHandler methods
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        yield 'XML_RPC'
+
+    # IXMLRPCHandler methods
     def xmlrpc_namespace(self):
         return 'system'
 

@@ -89,7 +89,7 @@ class TicketRPC(Component):
             except Exception, e:
                 self.log.exception("Failure sending notification on creation "
                                    "of ticket #%s: %s" % (t.id, e))
-
+		
         return t.id
 
     def update(self, req, id, comment, attributes = {}, notify=False):
@@ -118,9 +118,6 @@ class TicketRPC(Component):
 
     def changeLog(self, req, id, when=0):
         t = model.Ticket(self.env, id)
-        #return [change for change in
-        #        [field is not None and field or '' for field
-        #         in t.get_changelog(when)]]
         return t.get_changelog(when)
     # Use existing documentation from Ticket model
     changeLog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
