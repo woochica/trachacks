@@ -103,7 +103,7 @@ class TicketSubscribable(Component):
                        
         db.commit()
         
-    def ticket_changed(self, ticket, comment, old_values):
+    def ticket_changed(self, ticket, comment, author, old_values):
         self.log.debug("TicketSubscribable: In ticket_changed(%s) for '%s'"%(ticket.id,self.env.path))
         # Check for loops
         if self._check_ticket(ticket):
@@ -116,7 +116,6 @@ class TicketSubscribable(Component):
         frame = sys._getframe(1)
         locals = frame.f_locals
         
-        author = locals['author']
         when = locals['when']
         cnum = locals['cnum']
         
