@@ -1,0 +1,160 @@
+= Wiki Content Negotiation System =
+
+This plugin provides content negotiation mechanism for Trac wiki
+pages.  With this plugin, your trac site can provides localized pages
+for users.
+
+Content negotiation is a commonly used mechanism in modern http
+servers to select a page to serve by regarding to 'Accept-Language:'
+header in http request. You can provide multi-language page with
+single url. For example, the plugin check the request header and
+tells Trac to render `WikiStart.ja` instead of `WikiStart`
+for URL `http://www.sample.org/trac/wiki/WikiStart`.
+This example mentioned about only Japanese, multiple languages
+can be served, of course.
+
+Thus, what you should do is a writing a localized contents.
+Enjoy!
+
+== How to Install ==
+
+Build egg file and place it appropriate place
+
+If you want to install as system wide plugin:
+{{{
+$ python setup.py install
+}}}
+
+If you want to build plugin egg file and use it in some projects,
+build egg file and copy it into `plugins` directory under the trac
+environment directory:
+{{{
+$ python setup.py bdist_egg
+...
+$ cp dist/*.egg /your/trac/project/plugins
+}}}
+
+
+== How to Setup ==
+
+On using this plugin, do not forget enabling plugin 
+`WikiNegotiator` in `trac.ini` or via `WebAdmin` page.
+
+{{{
+[components]
+tracnegotiator.* = enabled
+
+[wiki]
+default_language = en
+
+}}}
+
+
+== How to Use ===
+
+Using the negotiation feature is simply providing suffixed page like
+'Foo.ja' for Japanese, 'Foo.fr' for French, so on.  When Japanese user
+(with Japanese setting in browser) access to the page 'Foo', he will
+see the content of `Foo.ja` instead of `Foo`. Likewise, French use
+will see the content of `Foo.fr`. So what you should to do is creating
+localized page content as usual way. Note that suffix like '.ja' and
+'.fr' is to be a standard language code.
+
+Non-suffixed page `Foo` is also usable for default content
+when no suffixed page is matched to user's request.
+
+To see the page for your language, nothing to do to view localized page.
+To see the page for other language, specify the appropreate suffix for
+wiki page name in url explicitly, or add query parameter like "?lang=xx".
+
+To edit the page, you can edit the page now you are seeing by simply
+press "Edit" button.
+To edit the page for other language, first, visit the desired page
+with a way described above, then press "Edit" button.
+
+
+==  Bonus Macro ==
+
+For bonus, this plugin contains one new macro: `MultiLangTitleIndex`.
+This is alternative macro of `TitleIndex`. 
+
+The difference of two are:
+ * Display in one line for variants like: "* WikiStart (ja, en, other)".
+ * List pages in two columns: one is for user's pages, one is for
+   system provided pages. System pages are the pages made by trac.
+   `WikiStart` and `SandBox` are exception by default because it is
+   a page to be edited by user.
+
+It is useful for the site having many localized pages.
+You can use it by editing `TitleIndex` page.
+
+== How it Works ==
+
+This mechanism is implemented by replacing target page name
+before processing via `pre_process_request()` hook provided by
+`IRequestFilter`. This entry point can be used on Trac 0.10 or later.
+
+The point of this feature is a page naming rule of language suffix.
+For example, `WikiStart.ja` page means "WikiStart page for Japanese".
+
+When you accessed to non-suffixed page (like `WikiStart`), negotiation
+is enabled.  The plugin make a list of acceptable languages for user
+from `lang=xx` query parameter, from `Accept-Language` in http request
+and from `default_wiki_lang` option. If no matching variant is exist,
+non-suffixed page is used.  When you access to obviously suffixed page
+name, negotiation is disabled and spcified page is used.
+
+The `default_wiki_lang` option can be specified in `trac.ini`.  The
+defeault is "en". This value is weak language code for non-suffed
+page. This means the page `Foo` will substitute for `Foo.en` when the
+page `Foo.en` is not exist.
+
+For example, if user have language setting of browser as
+Japanese (ja) as primary language and English (en) as secondary,
+accessing to page `Foo` goes like this:
+ 1. Enable negotiation because accessing to non-suffixed page.
+ 2. Use language xx if `lang=xx` query parameter is specified.
+    Or make list of preferred languages from `Accept-Language:`.
+ 3. Find variant of `Foo` matching in preferred language.
+    At this time, if suffixed page for default language is not exist,
+    non-suffixed page is used as for the language.
+ 4. If it cannot be decided the page in step 3, non-suffixed page
+    is used as "default page for any other languages".
+
+Here are more examples to explain the behaviour of this plugin.
+
+Example 1:
+  If user preferred 'ja' then 'en', the pages 'Foo' and 'Foo.fr' is exist,
+  request to 'Foo' handles contents of 'Foo.ja'.
+
+Example 2:
+  If user preferred 'ja' then 'en', the pages 'Foo', 'Foo.ja' and 'Foo.fr'
+  is exist, request to 'Foo.fr' handles contents of 'Foo.fr' because
+  negotiation is disabled to access for suffixed page.
+
+Example 3:
+  If user preferred 'ja' then 'en', the pages 'Foo' and 'Foo.fr' is exist,
+  request to 'Foo' with 'lang=fr' parameter, the wiki module handles
+  contents of 'Foo.fr' because language is specified explicitly and
+  overrides preffered languages.
+
+Example 4:
+  If user preferred 'ja' then 'en', the pages 'Foo' and 'Foo.fr' is exist,
+  and default language is 'en',
+  'Foo' is used because 'Foo' is treated as 'Foo.en'.
+
+Example 5:
+  If user preferred 'ja' then 'en', the pages 'Foo', 'Foo.en' and 'Foo.fr'
+  is exist, and default language is 'en',
+  'Foo.en' (not 'Foo') is used because 'Foo.en' is exst.
+
+Example 6:
+  If user preferred 'ja' then 'en', the pages 'Foo', 'Foo.en' and 'Foo.fr'
+  is exist, and requested with 'lang=other' query parameter,
+  'Foo' is used because language 'other' is not matched with any variants.
+
+Example 7:
+  In special notation, access to the page 'Foo.' (with dot on the tail)
+  disables negotiation and handles contents of 'Foo' (without dot).
+  This is equiv to the case with 'lang=' (empty lang name) query parameter.
+
