@@ -89,7 +89,6 @@ class UserbaseModule(Component):
           i = i + 1
 
         req.hdf['trail'] = tuples
-        req.hdf['path_info'] = req.path_info
         
 
     def get_trail_relevant(self, title, path):
