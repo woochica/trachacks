@@ -46,7 +46,7 @@ class MultiLangTitleIndex(WikiMacroBase):
         lang_map = {}                       # language list for each page
         re_lang = re.compile('^(.*)\.([a-z]{2}(?:-[a-z]{2})?)$')
         for page, author in curs:
-            # note: language varie is not stored in system_pages.
+            # note: language variant is not stored in system_pages.
             m = re_lang.match(page)
             if m:
                 p, l = m.groups()
@@ -71,7 +71,12 @@ class MultiLangTitleIndex(WikiMacroBase):
         prefix = content or None
         wiki = WikiSystem(env)
         user_pages = []                       # pages marked as user's
-        for page in sorted(wiki.get_pages(prefix)):
+        pages = list(wiki.get_pages(prefix))
+        for page in lang_map.keys():
+            # register base page despite of eixstance
+            if page not in pages:
+                pages.append(page)
+        for page in sorted(pages):
             if re_lang.match(page):
                 continue
             if not re_sys.match(page):
