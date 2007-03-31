@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+from urlparse import urlparse
 from trac.core import Component, implements
 from trac.wiki import WikiSystem
 from trac.wiki.web_ui import WikiModule
@@ -34,6 +35,16 @@ class WikiNegotiator(Component):
             if page != orig:
                 req.args['page'] = page
                 self.env.log.debug('Negotiated: %s' % page)
+                # Set Content-Language only when language specific
+                # page is selected.
+                # TODO: I don't know we should set default language
+                #       for base page.
+                _, lang = self._split_lang(page)
+                req.send_header('Content-Language',
+                                lang or self._default_lang)
+            # always send Vary header to tell language negitiation is
+            # available
+            req.send_header('Vary', 'Accept-Language')
         return handler
 
     def post_process_request(self, req, template, content_type):
@@ -56,6 +67,16 @@ class WikiNegotiator(Component):
         if req.args.get('action', None):
             return orig
 
+        # No negotiation to display edited page after commit.
+        # 'Referrer' header can be used to detect this case
+        # by checking 'action=edit' parameter.
+        # ex. "Referer: http://host/wiki/WikiStart?action=edit"
+        referer = req.get_header('Referer')
+        if referer and referer.startswith(req.base_url) and \
+                'action=edit' in urlparse(referer)[4].split('&'):
+            self.env.log.debug('disable negotiation for edited page.')
+            return orig
+
         # Use requested page itself if the page name has language
         # suffix. As special case, if the name ends with period '.',
         # use non-suffixed page is used.
@@ -74,7 +95,7 @@ class WikiNegotiator(Component):
         # Check language suffixed page existance in order of preffered
         # language codes in http request and use it if exist.
         wiki = WikiSystem(self.env)
-        for lang in self._get_prefered_langs(req):
+        for lang in self._get_preferred_langs(req):
             lpage = '%s.%s' % (page, lang)
             if wiki.has_page(lpage):
                 #debug('case 2 : have suffixed page: %s' % lpage)
@@ -82,7 +103,7 @@ class WikiNegotiator(Component):
             # Consideration of default_lang setting.
             # This is required not access to lower ordered
             # language page. For example,
-            #   prefered language:  ja, en, fr
+            #   preferred language:  ja, en, fr
             #   default_lang: en
             #   existing pages:  'page', 'page.fr'
             # We should search page in order:
@@ -108,7 +129,7 @@ class WikiNegotiator(Component):
             return (page, lang)                     # without lang suffix
 
 
-    def _get_prefered_langs(self, req):
+    def _get_preferred_langs(self, req):
         # decide by language denotation in url parameter: '?lang=xx'
         if req.args.has_key('lang'):
             return [req.args.get('lang')]
@@ -121,7 +142,7 @@ class WikiNegotiator(Component):
 
 
     def _parse_langs(self, al):
-        """Make list of language tag in prefered order.
+        """Make list of language tag in preferred order.
         For example,
         Accept-Language: ja,en-us;q=0.8,en;q=0.2
         or
