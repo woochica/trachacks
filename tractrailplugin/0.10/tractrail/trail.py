@@ -33,7 +33,7 @@ class UserbaseModule(Component):
         relevant = None
 
         if (req.hdf.has_key('title')):
-            relevant = self.get_trail_relevant(req.hdf['title'], req.path_info)
+            relevant = self.get_trail_relevant(req)
 
         if (relevant == None and (req.path_info == '/' or req.path_info == '' or req.path_info == None)):
             relevant = 'Wiki', 'Wiki'
@@ -91,7 +91,12 @@ class UserbaseModule(Component):
         req.hdf['trail'] = tuples
         
 
-    def get_trail_relevant(self, title, path):
+    def get_trail_relevant(self, req):
+         title = req.hdf['title']
+         path = req.path_info
+
+         if (req.hdf.has_key('args.action')):
+            return None
 
          if (path.startswith('/wiki') or path == '/'):
             return title, title

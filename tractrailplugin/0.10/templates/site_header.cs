@@ -2,8 +2,6 @@
 ####################################################################
 # Site header - Contents are automatically inserted above Trac HTML
 ?>
-|<?cs var:path_info ?>|
-
 <?cs def:trailnav(items) ?><?cs
  if:len(items) ?><ul><?cs
   set:idx = 0 ?><?cs
