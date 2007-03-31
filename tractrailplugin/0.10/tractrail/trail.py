@@ -98,7 +98,7 @@ class UserbaseModule(Component):
          if (req.hdf.has_key('args.action')):
             return None
 
-         if (path.startswith('/wiki') or path == '/'):
+         if (path.startswith('/wiki') or path == '/' or path == None):
             return title, title
 
          if (path.startswith('/milestone')):
