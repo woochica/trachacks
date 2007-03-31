@@ -57,7 +57,7 @@ class BranchPathError(TracError):
 
 
 class RevtreeSystem(Component):
-    """ """
+    """Revision tree constructor"""
     
     enhancers = ExtensionPoint(IRevtreeEnhancer)
     optimizer = ExtensionOption('revtree', 'optimizer', IRevtreeOptimizer,
@@ -65,11 +65,8 @@ class RevtreeSystem(Component):
         """Name of the component implementing `IRevtreeOptimizer`, which is 
         used for optimizing revtree element placements.""")
     
-    def get_revtree(self, repos):
-        self.urlbase = self.config.get('trac', 'base_url')
-        if not self.urlbase:
-            raise TracError, "Base URL not defined"
+    def get_revtree(self, repos, req):
         self.env.log.debug("Enhancers: %s" % self.enhancers)
         from revtree.svgview import SvgRevtree
-        return SvgRevtree(self.env, repos, self.urlbase, 
+        return SvgRevtree(self.env, repos, req.abs_href(), 
                           self.enhancers, self.optimizer)

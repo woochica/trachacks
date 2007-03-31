@@ -202,6 +202,7 @@ class RevtreeModule(Component):
         self.style = self.config.get('revtree', 'style', 'compact')
         if self.style not in [ 'compact', 'timeline']:
             raise TracError, "Unsupported style: %s" % self.style
+        self.rt = RevtreeSystem(self.env)
 
     def _process_log(self, req):
         """Handle AJAX log requests"""
@@ -250,7 +251,7 @@ class RevtreeModule(Component):
             repos.build(self.bcre, revstore.revrange, revstore.timerange)
             (branches, authors) = \
                 self._select_parameters(repos, req, revstore)
-            svgrevtree = RevtreeSystem(self.env).get_revtree(repos)
+            svgrevtree = self.rt.get_revtree(repos, req)
             if revstore['branch']:
                 sbranches = [revstore['branch']]
                 sbranches.extend(filter(lambda t: t not in sbranches, 
