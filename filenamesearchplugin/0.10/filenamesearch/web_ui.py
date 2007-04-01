@@ -28,7 +28,8 @@ class FilenameSearchModule(Component):
         cursor = db.cursor()
         repo = self.env.get_repository(req.authname)
         youngest_rev = repo.get_youngest_rev()
-        if isinstance(youngest_rev, basestr) and youngest_rev.isdigit():
+        # ???: Ask cboos about this. <NPK>
+        if isinstance(youngest_rev, basestring) and youngest_rev.isdigit():
             youngest_rev = int(youngest_rev)        
 
         cursor.execute("""SELECT max("""+db.cast('rev','int')+"""), path FROM node_change
