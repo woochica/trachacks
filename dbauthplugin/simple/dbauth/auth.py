@@ -1,21 +1,7 @@
-# -*- coding: iso8859-1 -*-
+# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2003-2005 Edgewall Software
-# Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
-# Copyright (C) 2006 Brad Anderson <brad@dsource.org>
-# Copyright (C) 2006 Waldemar Kornewald <wkornewald@gmx.net>
-# All rights reserved.
-#
-# This software is licensed as described in the file COPYING, which
-# you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
-#
-# This software consists of voluntary contributions made by many
-# individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
-#
-# Authors: Brad Anderson <brad@dsource.org>
-#          Waldemar Kornewald <wkornewald@gmx.net>
+# Copyright 2007 Waldemar Kornewald
+# All rights reserved. Distributed under the terms of the MIT license.
 
 import re
 import time
@@ -25,9 +11,10 @@ import sha
 from trac.core import *
 from trac.config import *
 from trac.db import *
-from trac.web.api import IAuthenticator, IRequestHandler
+from trac.web.api import IAuthenticator
+from trac.web.main import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
-from trac.util import escape, hex_entropy, TracError, Markup
+from trac.util import escape, hex_entropy, Markup
 
 
 def get_db(env):
@@ -97,12 +84,12 @@ class DbAuthLoginModule(Component):
             if self.password_changeable:
                 yield 'metanav', 'password', \
                     Markup('<a href="%s">Password</a>' \
-                            % escape(req.href.password()))
+                            % req.href.password())
             yield 'metanav', 'logout', Markup('<b><a href="%s">Logout</a></b>' \
-                  % escape(req.href.logout()))
+                  % req.href.logout())
         else:
             yield 'metanav', 'login', Markup('<b><a href="%s">Login</a></b>' \
-                  % escape(req.href.login()))
+                  % req.href.login())
 
     # IRequestHandler methods
 
@@ -113,58 +100,37 @@ class DbAuthLoginModule(Component):
                 or req.path_info == '/login'
 
     def process_request(self, req):
-        if req.method == 'POST':
-            if req.args.get('login'):
-                uid, pwd = req.args.get('uid').lower(), req.args.get('pwd')
-                referer = req.args.get('referer')
-                if not referer or len(referer) == 0:
-                    referer = req.href()
-                if self._check_login(uid, pwd):
-                    self._do_login(req, uid)
-                    req.redirect(referer)
-                else:
-                    req.hdf['auth.message'] = 'Login Incorrect'
-                    req.hdf['referer'] = referer
-            elif req.args.get('password'):
-                old, new, repeat = req.args.get('opwd'), req.args.get('npwd'), req.args.get('rpwd')
-                if not new or len(new) < 5:
-                    req.hdf['auth.message'] = 'New password too short'
-                elif new != repeat:
-                    req.hdf['auth.message'] = 'Repeated password does not match'
-                elif not self._check_login(req.authname, old):
-                    req.hdf['auth.message'] = 'Wrong Password'
-                else:
-                    req.hdf['auth.message'] = 'Password Changed'
-                    self._change_password(req, new)
-
         referer = req.args.get('referer') or req.get_header('Referer')
         if not referer or referer.endswith('/login') or \
                 referer.endswith('/settings') or len(referer) == 0:
             referer = req.href()
 
+        data = {'referer': referer}
+
+        if req.method == 'POST':
+            if req.args.get('login'):
+                uid, pwd = req.args.get('user').lower(), req.args.get('password')
+                if self._check_login(uid, pwd):
+                    self._do_login(req, uid)
+                    req.redirect(referer)
+                else:
+                    data['login_error'] = 'Wrong username or password. Please try again.'
+            else:
+                data['login_error'] = 'Could not understand your command. Did you really use this web form?'
+
         if req.path_info.startswith('/login'):
-            req.hdf['referer'] = referer
-            template = "login.cs"
-        elif req.path_info.startswith('/password'):
-            template = 'password.cs'
+            template = "login.html"
         elif req.path_info.startswith('/logout'):
             self._do_logout(req)
             req.redirect(referer)
-        return template, None
+        return template, data, None
 
     # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        from pkg_resources import resource_filename
-        return [('dbauth', resource_filename(__name__, 'htdocs'))]
-    
+        return []
+
     def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
@@ -283,19 +249,4 @@ class DbAuthLoginModule(Component):
                        "(sid, authenticated, name, value) "
                        "VALUES (%s, 1, 'email', %s)",
                        (user, email))
-        db.commit()
-
-    def _change_password(self, req, newpwd):
-        if req.authname == 'anonymous':
-            # Not logged in
-            return
-
-        # change the password
-        newpwd = self.crypt.new(newpwd).hexdigest()
-        db = get_db(self.env)
-        cursor = db.cursor()
-        sql = "UPDATE %s SET %s = %%s WHERE LOWER(%s) = LOWER(%%s)" % \
-              (self.users['table'], self.users['password'],
-               self.users['username'])
-        cursor.execute(sql, (newpwd, req.authname))
         db.commit()
