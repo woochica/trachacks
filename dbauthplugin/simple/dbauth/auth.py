@@ -105,7 +105,7 @@ class DbAuthLoginModule(Component):
                 referer.endswith('/settings') or len(referer) == 0:
             referer = req.href()
 
-        data = {'referer': referer}
+        data = {'referer': referer, 'login_error': None}
 
         if req.method == 'POST':
             if req.args.get('login'):
