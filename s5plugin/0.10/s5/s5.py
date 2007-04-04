@@ -64,7 +64,8 @@ class S5Renderer(Component):
 
                 if match.lastgroup == 'title':
                     title = match.group(match.lastgroup)
-                    title_html = htmlify(title)
+                    html_title = htmlify(title)
+                    title = html_title.plaintext()
                     in_section = 1
                 else:
                     in_section = 2
