@@ -125,13 +125,8 @@
           </div>
         </form>
       </div>
-      <py:if test="rt.legend">
-        <div id="legend">
-          ${rt.legend}
-        </div>
-      </py:if>
       <div py:choose="" py:strip="">
-      <div py:when="rt.errormsg" id="errormsg" class="error">
+      <div py:when="'errormsg' in rt" id="errormsg" class="error">
         <p class="message">${rt.errormsg}</p>
       </div>
       <div py:otherwise="" class="svg">
