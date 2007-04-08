@@ -14,6 +14,7 @@ public enum Images {
 
     PageCommit("page-commit.gif"), Macro("macro.gif"), Word("word.png"),
     Template("template.gif"),
+    CreatePage("create_page.png"),
 
     Step("step.gif"),
 

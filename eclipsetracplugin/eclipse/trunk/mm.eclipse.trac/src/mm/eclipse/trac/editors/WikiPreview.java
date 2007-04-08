@@ -66,7 +66,7 @@ public class WikiPreview
             if ( !serverUrl.endsWith( "/" ) )
                 serverUrl += "/";
             
-            content = template.replace( "{server.url}", serverUrl );
+            content = template.replace( "{server.url}", serverUrl.replace( "https://", "http://" ) );
             content = content.replace( "{page.content}", htmlContent );
             
             browser.setText( content );

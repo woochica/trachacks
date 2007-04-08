@@ -96,6 +96,16 @@
             id="mm.eclipse.trac.server.NewTracServer"
             name="Add a Trac Server"
             project="false"/>
+      <wizard
+            category="mm.eclipse.trac.server"
+            class="mm.eclipse.trac.wiki.NewWikiPage"
+            descriptionImage="icons/trac_48.png"
+            finalPerspective="Trac"
+            icon="icons/trac_16.png"
+            id="mm.eclipse.trac.wiki.NewWikiPage"
+            name="Create a  wiki  page"
+            project="false">
+      </wizard>
    </extension>
 
 </plugin>

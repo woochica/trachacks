@@ -186,9 +186,7 @@ public class TracNavigator extends ViewPart implements ITracListener,
                 
                 if ( server.isConnected() )
                 {
-                    WikiPage rootPage = new WikiPage( server, "", true );
-                    rootPage.setRoot( true );
-                    return new WikiPage[] { rootPage };
+                    return new WikiPage[] { server.getRootWikiPage() };
                 } else
                 {
                     return new WikiPage[0];

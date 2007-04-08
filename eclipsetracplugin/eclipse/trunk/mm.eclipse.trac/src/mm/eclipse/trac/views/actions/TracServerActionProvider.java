@@ -3,12 +3,14 @@
  */
 package mm.eclipse.trac.views.actions;
 
+import mm.eclipse.trac.Log;
 import mm.eclipse.trac.models.TracServer;
 import mm.eclipse.trac.models.TracServerList;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Display;
@@ -25,6 +27,8 @@ public class TracServerActionProvider implements IActionsProvider
     private Action           disconnectAction;
     private Action           deleteAction;
     
+    private Action           createPageAction;
+    
     public TracServerActionProvider( StructuredViewer viewer )
     {
         this.viewer = viewer;
@@ -37,8 +41,7 @@ public class TracServerActionProvider implements IActionsProvider
         connectAction = new Action() {
             public void run()
             {
-                if ( !viewer.getSelection().isEmpty() )
-                {
+                if (!viewer.getSelection().isEmpty()) {
                     TracServer server = (TracServer) ((IStructuredSelection) viewer
                             .getSelection()).getFirstElement();
                     
@@ -57,8 +60,7 @@ public class TracServerActionProvider implements IActionsProvider
         disconnectAction = new Action() {
             public void run()
             {
-                if ( !viewer.getSelection().isEmpty() )
-                {
+                if (!viewer.getSelection().isEmpty()) {
                     TracServer server = (TracServer) ((IStructuredSelection) viewer
                             .getSelection()).getFirstElement();
                     Display.getDefault().asyncExec( new ServerExecutor( server ) {
@@ -73,19 +75,33 @@ public class TracServerActionProvider implements IActionsProvider
         disconnectAction.setText( "Disconnect from server" );
         
         deleteAction = new Action() {
-        	@Override
-        	public void run() {
-                if ( !viewer.getSelection().isEmpty() )
-                {
+            @Override
+            public void run()
+            {
+                if (!viewer.getSelection().isEmpty()) {
                     TracServer server = (TracServer) ((IStructuredSelection) viewer
                             .getSelection()).getFirstElement();
-                    TracServerList.getInstance().removeServer(server);
+                    
+                    // Open a dialog and ask to confirm
+                    boolean res = MessageDialog.openQuestion( viewer.getControl()
+                            .getShell(), "Confirm Trac server deletion",
+                            "Are you sure to delete the '" + server.getName()
+                                    + "' server configuration?" );
+                    
+                    if (res != true)
+                        return;
+                    
+                    TracServerList.getInstance().removeServer( server );
+                    
+                    Log.info( "Deleted Server " + server.getName() );
                 }
-        		
-        	}
+                
+            }
         };
         
-        deleteAction.setText("Delete the Trac Server Setting");
+        deleteAction.setText( "Delete the Trac Server Setting" );
+        
+        createPageAction = new CreatePage( viewer );
     }
     
     /*
@@ -96,16 +112,18 @@ public class TracServerActionProvider implements IActionsProvider
      */
     public void fillMenu( IMenuManager menu, IStructuredSelection selection )
     {
-        if ( selection.size() != 1 )
+        if (selection.size() != 1)
             return;
         
-        if ( selection.getFirstElement() instanceof TracServer )
-        {
+        if (selection.getFirstElement() instanceof TracServer) {
             TracServer server = (TracServer) selection.getFirstElement();
             
             connectAction.setEnabled( !server.isConnected() );
             disconnectAction.setEnabled( server.isConnected() );
+            createPageAction.setEnabled( server.isConnected() );
             
+            menu.add( createPageAction );
+            menu.add( new Separator() );
             menu.add( connectAction );
             menu.add( disconnectAction );
             menu.add( new Separator() );
@@ -119,7 +137,8 @@ public class TracServerActionProvider implements IActionsProvider
      * @see mm.eclipse.trac.views.actions.IActionsProvider#doubleClick(org.eclipse.jface.viewers.IStructuredSelection)
      */
     public void doubleClick( IStructuredSelection selection )
-    {}
+    {
+    }
     
     private static abstract class ServerExecutor implements Runnable
     {

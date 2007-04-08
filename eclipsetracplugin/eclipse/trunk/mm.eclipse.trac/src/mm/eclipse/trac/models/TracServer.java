@@ -31,6 +31,8 @@ public class TracServer extends ModelBase implements IAdaptable
     
     private Trac    trac;
     
+    private WikiPage rootWikiPage;
+    
     public TracServer( String name, URL url, String username, String password,
                        boolean anonymous )
     {
@@ -41,6 +43,9 @@ public class TracServer extends ModelBase implements IAdaptable
         this.anonymous = anonymous;
         connected = false;
         problems = false;
+        
+        rootWikiPage = new WikiPage( this, "", true, true );
+        rootWikiPage.setRoot( true );
     }
     
     public void connect()
@@ -90,6 +95,12 @@ public class TracServer extends ModelBase implements IAdaptable
     {
         assert connected;
         return trac.getWikiExt();
+    }
+    
+    
+    public WikiPage getRootWikiPage()
+    {
+        return rootWikiPage;
     }
     
     // Accessors:

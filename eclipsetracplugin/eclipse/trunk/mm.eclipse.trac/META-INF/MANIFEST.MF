@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Trac Plug-in
 Bundle-SymbolicName: mm.eclipse.trac; singleton:=true
-Bundle-Version: 1.0.2
+Bundle-Version: 1.0.3
 Bundle-Activator: mm.eclipse.trac.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
@@ -13,6 +13,6 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.ui.navigator,
  org.eclipse.ui.views,
- org.apache.xmlrpc;visibility:=reexport
+ org.apache.xmlrpc
 Eclipse-LazyStart: true
 Bundle-Vendor: Matteo Merli

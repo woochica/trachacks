@@ -49,6 +49,15 @@ public class TracServerList extends ModelBase implements Iterable<TracServer>
         return servers;
     }
     
+    public TracServer getServerByName( String name ) 
+    {
+        for ( TracServer server : servers )
+            if ( server.getName().equals( name ) )
+                return server;
+        
+        return null;
+    }
+    
     public void addServer( TracServer server )
     {
         servers.add( server );
