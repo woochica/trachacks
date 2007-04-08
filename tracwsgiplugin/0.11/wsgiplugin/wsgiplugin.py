@@ -53,12 +53,15 @@ class WSGIPluginModule(Component):
 
 class WSGITrac:
     """Callable class. Initi with path=/path/to/trac/env"""
-    def __init__(self, path, secure=False):
+    def __init__(self, path, secure=False, parent=False):
       self.path = path
       self.secure = secure
-      
+      self.parent = parent
     def __call__(self, environ, start_response):
-      environ['trac.env_path'] = self.path
+      if self.parent:
+        environ['trac.env_parent_dir'] = self.path
+      else:
+        environ['trac.env_path'] = self.path
       
       https = environ.get("HTTPS", "off")
       if self.secure and https != 'on':
@@ -99,6 +102,9 @@ def reconstruct_url(environ):
                         
 def wsgi_trac(global_conf, path = None, secure = False, **local_conf):
     return WSGITrac(path, secure=asbool(secure))
+
+def wsgi_tracs(global_conf, path = None, secure = False, **local_conf):
+    return WSGITrac(path, secure=asbool(secure), parent = True)
 
 
 class Redirect():

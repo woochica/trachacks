@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'WSGITrac'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(
     name=PACKAGE, version=VERSION,
@@ -22,6 +22,8 @@ setup(
         ],
         'paste.app_factory': [
             'main = wsgiplugin.wsgiplugin:wsgi_trac',
+            'trac = wsgiplugin.wsgiplugin:wsgi_trac',
+            'tracs = wsgiplugin.wsgiplugin:wsgi_tracs',
             'permanent_redirect = wsgiplugin.wsgiplugin:permanent_redirect',
             'temporary_redirect = wsgiplugin.wsgiplugin:temporary_redirect'
         ]
