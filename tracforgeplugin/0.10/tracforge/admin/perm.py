@@ -52,7 +52,8 @@ class TracForgePermissionModule(DefaultPermissionStore):
         cursor = db.cursor()
         cursor.execute("SELECT username,action FROM permission")
         rows = cursor.fetchall()
-        if not self._extract_req().path_info.startswith('/admin/general/perm'):
+        req = self._extract_req()
+        if req is not None and not req.path_info.startswith('/admin/general/perm'):
             master_db = self.master_env.get_db_cnx()
             master_cursor = master_db.cursor()
             master_cursor.execute("SELECT username,action FROM tracforge_permission")
@@ -65,7 +66,7 @@ class TracForgePermissionModule(DefaultPermissionStore):
             locals = record[0].f_locals
             if 'req' in locals:
                 return locals['req']
-        raise Exception, "Error: Penguins On Fire. Can't isolate a req."
+        return None
 
 class TracForgeGroupsModule(Component):
     """A component to provide virtual groups based on the membership system."""

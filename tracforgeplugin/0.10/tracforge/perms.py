@@ -10,5 +10,5 @@ class TracForgePermissions(Component):
     
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        actions = ['TRACFORGE_CREATE']
+        actions = ['TRACFORGE_CREATE', 'PROJECT_VIEW']
         return actions + [('TRACFORGE_ADMIN', actions)]
