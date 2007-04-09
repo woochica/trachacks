@@ -92,7 +92,7 @@ class TracForgeDispatcherModule(Component):
             except Exception, e:
                 # Only show errors to admins to prevent excessive disclosure
                 if req.perm.has_permission('TRACFORGE_ADMIN'):
-                    project.append({
+                    projects.append({
                         'name': env.project_name,
                         'description': to_unicode(e)
                     })
