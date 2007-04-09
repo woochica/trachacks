@@ -1,14 +1,18 @@
 from paste.deploy import loadapp
 from paste.deploy.converters import asbool
+from paste.request import construct_url, path_info_pop
 
 import re
 import urlparse
+import os
 
 from trac.config import *
 from trac.core import *
 from trac.web.api import IRequestHandler, RequestDone
+from trac.perm import PermissionCache, PermissionSystem
+from genshi.template.plugin import MarkupTemplateEnginePlugin
 
-from trac.web.main import dispatch_request
+from trac.web.main import dispatch_request, _open_environment
 __all__ = ["WSGIPluginModule", "WSGITrac"]
 
 class WSGIPluginModule(Component):
@@ -35,10 +39,7 @@ class WSGIPluginModule(Component):
         return result
 
     def process_request(self, req):
-        # XXX: set SCRIPT_NAME and PATH_INFO as needed
-        # print req.environ["SCRIPT_NAME"], req.environ["PATH_INFO"]
-        # XXX: URLMap here maybe ?
-        app = self.apps[req.environ["PATH_INFO"].strip("/").split("/")[0]]
+        app = self.apps[path_info_pop(req.environ)]
         def my_start_response(status, headers, exc=None):
           req.send_response(int(status.split(" ")[0]))
           for key, value in headers:
@@ -57,47 +58,59 @@ class WSGITrac:
       self.path = path
       self.secure = secure
       self.parent = parent
+      self.template = MarkupTemplateEnginePlugin()
+    
     def __call__(self, environ, start_response):
-      if self.parent:
-        environ['trac.env_parent_dir'] = self.path
-      else:
-        environ['trac.env_path'] = self.path
-      
+
       https = environ.get("HTTPS", "off")
       if self.secure and https != 'on':
         return redirect_https(environ, start_response)
+    
+      if self.parent:
+        project = path_info_pop(environ)
+        if project:
+            environ['trac.env_path'] = os.path.join(self.path, project)
+            return dispatch_request(environ, start_response)
+        else:
+            return self._send_index(environ, start_response)
+          
+      else:
+        environ['trac.env_path'] = self.path
+        return dispatch_request(environ, start_response)
+            
+        
+    def _send_index(self, environ, start_response):
+        projects = []
+                          
+        for env_name in os.listdir(self.path):
+            env_path = os.path.join(self.path, env_name)
+            try:
+              env = _open_environment(env_path)
+              env_perm = PermissionCache(PermissionSystem(env).get_user_permissions(environ.get("REMOTE_USER", "anonymous")))
+                      
+              if env_perm.has_permission('WIKI_VIEW'):
+                  projects.append({
+                      'name': env.project_name,
+                      'description': env.project_description,
+                      # XXX: get rid of the double / in the beginning
+                      'href': construct_url(environ, path_info="/"+env_name),
+                  })
+            except Exception:
+              pass
 
-      return dispatch_request(environ, start_response)
+        projects.sort(lambda x, y: cmp(x['name'].lower(), y['name'].lower()))
+        start_response("200 OK", [('content-type', 'text/html')])
+        return self.template.render({"projects":projects}, format='xhtml', template = "wsgiplugin.index")
+        
 
-
+# XXX: This has nothing to do with Trac
 def redirect_https(environ, start_response):
-	url = reconstruct_url(environ)
+	url = construct_url(environ)
 	s=list(urlparse.urlsplit(url))
 	s[0]="https"
 	u2 = urlparse.urlunsplit(s)
 	start_response("302 Temporary Redirect", [('location', u2), ('content-type', 'text/plain')])
 	return [u2]
-
-def reconstruct_url(environ):
-	from urllib import quote
-	url = environ['wsgi.url_scheme']+'://'
-	
-	if environ.get('HTTP_HOST'):
-		url += environ['HTTP_HOST']
-	else:
-		url += environ['SERVER_NAME']
-
-		if environ['wsgi.url_scheme'] == 'https':
-			if environ['SERVER_PORT'] != '443':
-				url += ':' + environ['SERVER_PORT']
-		else:
-			if environ['SERVER_PORT'] != '80':
-				url += ':' + environ['SERVER_PORT']
-	url += quote(environ.get('SCRIPT_NAME',''))
-	url += quote(environ.get('PATH_INFO',''))
-	if environ.get('QUERY_STRING'):
-		url += '?' + environ['QUERY_STRING']
-	return url
 
                         
 def wsgi_trac(global_conf, path = None, secure = False, **local_conf):
@@ -120,4 +133,3 @@ def permanent_redirect(global_conf, url):
 
 def temporary_redirect(global_conf, url):	
   return Redirect(url, 302)
-                                                                                                                        
