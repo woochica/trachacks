@@ -8,9 +8,10 @@ Run the following commands in the source directory:
 }}}
 
 == Syntax ==
-[[wantedPages]]
+[[WantedPages]] or [[WantedPages(show_referrers)]]
 
-Will yield a list of wanted wiki pages.
+Will yield a list of wanted wiki pages or a list of wanted wiki pages with
+a list of pages where the wanted wiki page link was found, respectively.
 
 == Running the Tests ==
 
@@ -65,6 +66,8 @@ http://c2.com/cgi/wiki?WikiHistory
 * The macro currently incorrectly identifies the following as a !MyPage link:
   !attachment:wiki:MyPage:the_file.txt creates a link to the attachment the_file.txt of the !MyPage wiki page
 
+== 0.3 Changelog ==
+ * Added support to show the referrers for each wanted page
 
 == 0.2 Changelog ==
 
