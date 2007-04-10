@@ -1,7 +1,14 @@
 import unittest
-from wanted_pages import *
+import wanted_pages
 from trac.test import EnvironmentStub
 from trac.web.api import Request
+
+orig = wanted_pages.exec_wiki_sql
+def mock(rows):
+    wanted_pages.exec_wiki_sql = lambda x: rows
+
+def unmock():
+    wanted_pages.exec_wiki_sql = orig
 
 class WantedPagesTestCase(unittest.TestCase):
 
@@ -11,8 +18,7 @@ class WantedPagesTestCase(unittest.TestCase):
 
     def setUp(self):
         env = EnvironmentStub()        
-        self.macro = WantedPagesMacro(env)
-        self.req = Request()
+        self.macro = wanted_pages.WantedPagesMacro(env)
         
         readme = open('README')
         self.readmeText = readme.read()
@@ -20,9 +26,10 @@ class WantedPagesTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.macro = None
+        unmock()
 
     def test_matches(self):
-        links = self.macro.findBrokenLinks([self.readmeText], self.req)
+        links = self.macro.findBrokenLinks(self.readmeText)
         self.assertTrue('TimLowe' in links, 'TimLowe not found')
         self.assertTrue('TimLeo' in links, 'TimLeo not found')
         self.assertTrue('ParentWiki/SubWiki' in links, 'ParentWiki/SubWiki not found')
@@ -32,7 +39,7 @@ class WantedPagesTestCase(unittest.TestCase):
         self.assertTrue('EndOfFile' in links, 'EndOfFile not found')        
 
     def test_falseMatches(self):
-        links = self.macro.findBrokenLinks([self.readmeText], self.req)
+        links = self.macro.findBrokenLinks(self.readmeText)
         self.assertFalse('!TimLewo' in links, '!TimLewo found')
         self.assertFalse('TimLoo' in links, '3TimLoo found')
         self.assertFalse('TimLee' in links, '`TimLee` found')        
@@ -47,6 +54,17 @@ class WantedPagesTestCase(unittest.TestCase):
         self.assertFalse('IfModule' in links, '{{{...IfModule...}}} found')
         self.assertFalse('NestedBlocks' in links, '{{{...{{{ }}} NestedBlocks...}}} found')
         self.assertFalse('WikiHistory' in links, 'http://c2.com/cgi/wiki?WikiHistory found')
+        
+    def test_referrersAddedToWikiText(self):
+        mock([('pagename', 'BrokenLink'), ('page2', 'BrokenLink')])
+        txt = self.macro.buildWikiText(True)
+        self.assertTrue('[wiki:pagename]' in txt)
+        self.assertTrue('[wiki:page2]' in txt)
+        
+    def test_referrersNotAddedByDefault(self):
+        mock([('pagename', 'BrokenLink'), ('page2', 'BrokenLink')])
+        txt = self.macro.buildWikiText()
+        self.assertFalse('[wiki:pagename]' in txt)
 
 def suite():
     return unittest.makeSuite(WantedPagesTestCase, 'test')
