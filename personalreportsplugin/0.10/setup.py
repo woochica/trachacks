@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracPersonalReports',
-    version = '1.0',
+    version = '1.1',
     packages = ['personalreports'],
     package_data = { 'personalreports': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
