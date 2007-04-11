@@ -56,6 +56,8 @@ class PersonalReportsModule(ReportModule):
                 req.perm.perms[perm] = True
                 req.hdf['trac.acl.%s'%perm] = '1'
             grant('REPORT_CREATE')
+            grant('REPORT_MODIFY')
+            grant('REPORT_DELETE')
         
         # Silly args hack
         req.args['PREPORTSUSER'] = req.args.get('user', req.authname)
@@ -89,7 +91,7 @@ class PersonalReportsModule(ReportModule):
         req.hdf['chrome.links.up.0.title'] = 'Available Reports'
         
         # Redirect form submissions
-        req.hdf['report.href'] = req.href.preport()
+        #req.hdf['report.href'] = req.href.preport()
         
         return rv
         
@@ -216,3 +218,87 @@ class PersonalReportsModule(ReportModule):
                        "VALUES (%s,%s,%s,%s,%s)",(id, req.authname, title, query, description))
         db.commit()
         req.redirect(req.href.preport(id))
+        
+    def _do_delete(self, req, db, id):
+        req.perm.assert_permission('REPORT_DELETE')
+
+        if req.args.has_key('cancel'):
+            req.redirect(req.href.preport(id))
+
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM personal_reports WHERE id=%s AND user=%s", (id,req.authname))
+        db.commit()
+        req.redirect(req.href.preport())
+
+    def _do_save(self, req, db, id):
+        req.perm.assert_permission('REPORT_MODIFY')
+
+        self.log.debug('Executing preport:_do_save %s for %s', id, req.authname)
+        if not req.args.has_key('cancel'):
+            self.log.debug(' keys: ' + '|'.join(req.args.keys()))
+            self.log.debug(' values: ' + '|'.join(req.args.values()))
+            title = req.args.get('title', '')
+            query = req.args.get('query', '')
+            description = req.args.get('description', '')
+            cursor = db.cursor()
+            cursor.execute("UPDATE personal_reports SET title=%s,query=%s,description=%s "
+                           "WHERE id=%s AND user=%s", (title, query, description, id, req.authname))
+            db.commit()
+        req.redirect(req.href.preport(id))
+
+    def _render_confirm_delete(self, req, db, id):
+        req.perm.assert_permission('REPORT_DELETE')
+
+        cursor = db.cursor()
+        cursor.execute("SELECT title FROM personal_reports WHERE id = %s AND user=%s", (id,req.authname))
+        row = cursor.fetchone()
+        if not row:
+            raise TracError('Personal report %s does not exist for user %s.' % (id, req.authname),
+                            'Invalid Personal Report Number')
+        req.hdf['title'] = 'Delete Personal Report {%s} %s' % (id, row[0])
+        req.hdf['report'] = {
+            'id': id,
+            'mode': 'delete',
+            'title': row[0],
+            'href': req.href.preport(id)
+        }
+
+    def _render_editor(self, req, db, id, copy=False):
+        self.log.debug('Executing preport:_render_editor %s for %s', id, req.authname)
+
+        if id == -1:
+            self.log.debug(' Creating new personal report')
+            req.perm.assert_permission('REPORT_CREATE')
+            title = query = description = ''
+        else:
+            self.log.debug(' Editing personal report')
+            req.perm.assert_permission('REPORT_MODIFY')
+            cursor = db.cursor()
+            cursor.execute("SELECT title,description,query FROM personal_reports "
+                           "WHERE id=%s AND user=%s", (id,req.authname))
+            row = cursor.fetchone()
+            if not row:
+                raise TracError('Report %s does not exist.' % id,
+                                'Invalid Report Number')
+            title = row[0] or ''
+            description = row[1] or ''
+            query = row[2] or ''
+
+        if copy:
+            title += ' (copy)'
+
+        if copy or id == -1:
+            req.hdf['title'] = 'Create New Personal Report'
+            req.hdf['report.href'] = req.href.preport()
+            req.hdf['report.action'] = 'new'
+        else:
+            req.hdf['title'] = 'Edit Personal Report {%d} %s' % (id, title)
+            req.hdf['report.href'] = req.href.preport(id)
+            req.hdf['report.action'] = 'edit'
+
+        req.hdf['report.id'] = id
+        req.hdf['report.mode'] = 'edit'
+        req.hdf['report.title'] = title
+        req.hdf['report.sql'] = query
+        req.hdf['report.description'] = description
+        self.log.debug('%s', req.hdf['report.href'])
