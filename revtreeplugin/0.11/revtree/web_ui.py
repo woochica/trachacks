@@ -269,7 +269,7 @@ class RevtreeModule(Component):
             style = req.href.chrome('revtree/css/revtree.css')
             svgstyle = '<?xml-stylesheet href="%s" type="text/css"?>' % style
             data.update({
-                'svg': Markup(svgrevtree),
+                'svg': Markup(unicode(str(svgrevtree), 'utf-8')),
                 'svgstyle': Markup(svgstyle)
             })
             # create and order the drop-down list content, starting with the

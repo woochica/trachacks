@@ -21,6 +21,7 @@ from math import sqrt
 from random import randrange, seed
 from revtree.api import *
 from trac.core import *
+from trac.web.href import Href
 
 __all__ = ['SvgColor', 'SvgGroup', 'SvgOperation', 'SvgRevtree']
 
@@ -114,7 +115,7 @@ class SvgColor(object):
     random = staticmethod(random)
     
     def from_name(name):
-        dig = md5.new(name).digest()
+        dig = md5.new(name.encode('utf-8')).digest()
         vr = 14*(int(ord(dig[0]))%10)
         vg = 14*(int(ord(dig[1]))%10)
         vb = 14*(int(ord(dig[2]))%10)
@@ -326,14 +327,13 @@ class SvgBranchHeader(object):
         rect.attributes['ry'] = r        
         text = SVG.text(self._position[0]++self._w/2, 
                         self._position[1]+self._h/2+UNIT/6,
-                        "/%s" % self._title, 
+                        "/%s" % self._title.encode('utf-8'), 
                         self._parent.fontsize(), self._parent.fontname())
         text.attributes['style'] = 'text-anchor: middle'
-        name = self._title.encode('ascii', 'ignore').replace('/','')
+        name = self._title.encode('utf-8').replace('/','')
         g = SVG.group('grp%s' % name, elements=[rect, text])
-        self._link = SVG.link('%s/browser/%s' % \
-                              (self._parent.urlbase(), self._title), 
-                              elements=[g])
+        href = Href(self._parent.urlbase())
+        self._link = SVG.link(href.browser(self._title), elements=[g])
         
     def render(self):
         self._parent.svg().addElement(self._link)
@@ -945,7 +945,7 @@ class SvgRevtree(object):
         return self._svg
 
     def __str__(self):
-        """Dump the revision tree as a SVG string"""
+        """Dump the revision tree as a SVG UTF-8 string"""
         import cStringIO
         xml=cStringIO.StringIO()
         self._svg.toXml(0, xml)
