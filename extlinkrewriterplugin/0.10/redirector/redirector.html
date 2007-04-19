@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript">
+//<!--
+function whenload() {
+  var jumptime = 1;
+  document.getElementById("jumptime").innerHTML = jumptime + "";
+  
+  var url = window.location.href;
+  var link_url = url.substring(url.indexOf("?") + 1);
+  var link = document.getElementById("link");
+  link.href = link_url;
+  link.innerHTML = link_url;
+  
+  window.setTimeout(function () {
+    window.location.href = link_url;
+  }, jumptime);
+}
+//-->
+</script>
+<title>JS Redirector</title>
+</head>
+<body onload="whenload()">
+<h1>JS Redirector</h1>
+<div>jump to: <a id="link" href=""></a>
+     after <span id="jumptime">1</span> sec.</div>
+</body>
+</html>
