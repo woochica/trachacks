@@ -5,5 +5,6 @@ setup(
     version="0.3",
     packages=['ExtLinkRewriter'],
     entry_points = {'trac.plugins':
-                    ['ExtLinkRewriter.provider = ExtLinkRewriter.provider',],})
+                    ['ExtLinkRewriter.provider = ExtLinkRewriter.provider',],},
+    license = "BSD")
 
