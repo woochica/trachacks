@@ -31,3 +31,6 @@ format = /redrector.html?%s
 namespaces = http,https,ftp
 target = _blank
 }}}
+
+== site ==
+ * http://www.trac-hacks.org/wiki/ExtLinkRewriterPlugin
