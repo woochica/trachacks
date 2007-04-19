@@ -1,0 +1,71 @@
+#!/bin/sh
+
+#NOTE: no checks are made to ensure that the wiki_page or user exist.
+
+#define usage string
+usage="USAGE: $0 <trac-env> <wiki page> <user> -- <file list>"
+
+#help message
+if [ "$1" == "-h" ]; then
+	echo $usage
+	exit
+fi
+
+#"parse" parameters
+trac_env=$1
+wiki_page=$2
+user=$3
+guard=$4
+shift 4
+
+#print usage if parameters not provided
+if [ -z "$trac_env" -o -z "$wiki_page" -o -z "$user" ]; then
+	echo "Required parameter omitted"
+	echo $usage
+	exit 1
+fi
+if [ "$guard" != "--" ]; then
+	echo "Nothing to do (did you omit -- before the file list?)"
+	echo $usage
+	exit
+fi
+if [ -z "$*" ]; then
+	echo "Nothing to do"
+	echo $usage
+	exit
+fi
+
+#calculate interesting values
+db=$trac_env/db/trac.db
+destdir=$trac_env/attachments/wiki/$wiki_page
+
+#validate
+if [ ! -d $trac_env ]; then
+	echo "$trac_env is not a valid trac environment"
+	exit 1
+fi
+if [ ! -f $db ]; then
+	echo "$db is not a valid trac database"
+	exit 1
+fi
+
+#make the attachments directory
+mkdir -p $destdir || exit 1
+
+#copy the files into attachments directory
+cp "$@" $destdir || exit 1
+
+#set owner/permissions
+chown -R www-data:www-data $destdir
+chmod -R 755 $destdir
+
+#add records
+time=`date +%s`
+for f in "$@"; do
+	base=`basename "$f"`
+	size=`ls -l "$f"|awk '{ print $5 }'`
+	echo "DELETE FROM attachment WHERE id='$wiki_page' AND filename='$base';"
+	echo "INSERT INTO attachment (type, id, filename, size, time, author, ipnr) VALUES ('wiki', '$wiki_page', '$base', '$size', '$time', '$user', '127.0.0.1');"
+	echo "$base attached to $wiki_page" 1>&2
+done | sqlite $db || exit 1
+
