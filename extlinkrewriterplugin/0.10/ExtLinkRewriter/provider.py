@@ -9,7 +9,7 @@ class ExtLinkRewriterProvider(Component):
     """
     implements(IWikiSyntaxProvider)
     
-    _rewrite_format = "/redirector.html?%s"
+    _rewrite_format = "http://del.icio.us/url?url=%s"
     _rewrite_namespaces = "http,https,ftp"
     _rewrite_target = ""
     
