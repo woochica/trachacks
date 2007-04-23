@@ -1,0 +1,34 @@
+# add this to the bottom of your trac.ini
+[translation]
+assigned = toegekend
+blocker = blokkering
+change = wijziging
+changeset = versie
+closed = gesloten
+component = onderdeel
+created = aangemaakt
+critical = kritisch
+defect = defect
+duplicate = duplicaat
+enhancement = verbetering
+fixed = opgelost
+invalid = ongeldig
+keywords = sleutelwoorden
+major = majeur
+milestone = mijlpaal
+minor = mineur
+modified = aangepast
+new = nieuw
+owner = eigenaar
+priority = prioriteit
+reassign = opnieuwtoegekend
+reopened = heropend
+report = rapport
+reporter = rapporteur
+resolution = oplossing
+summary = samenvatting
+task = taak
+title = titel
+trivial = triviaal
+wontfix = onoplosbaar
+worksforme = nietreproduceerbaar
