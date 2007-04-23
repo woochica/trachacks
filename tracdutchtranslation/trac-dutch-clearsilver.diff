@@ -1,0 +1,2368 @@
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/report.cs
+===================================================================
+--- templates.ori/report.cs (revision 306)
++++ templates/report.cs (revision 316)
+@@ -145,14 +145,14 @@
+          <?cs if cell.hidden || cell.hidehtml ?>
+          <?cs elif name(cell) == "ticket" || name(cell) == "id" ?>
+            <?cs call:report_cell('ticket',
+-                                 '<a title="View ticket" href="'+
++                                 '<a title="Toon melding" href="'+
+                                  $cell.ticket_href+'">#'+$cell+'</a>') ?>
+          <?cs elif name(cell) == "summary" && cell.ticket_href ?>
+-           <?cs call:report_cell('summary', '<a title="View ticket" href="'+
++           <?cs call:report_cell('summary', '<a title="Toon melding" href="'+
+                                  $cell.ticket_href+'">'+$cell+'</a>') ?>
+          <?cs elif name(cell) == "report" ?>
+            <?cs call:report_cell('report',
+-                '<a title="View report" href="'+$cell.report_href+'">{'+$cell+'}</a>') ?>
++                '<a title="Toon rapport" href="'+$cell.report_href+'">{'+$cell+'}</a>') ?>
+            <?cs set:report_href=$cell.report_href ?>
+          <?cs elif name(cell) == "time" ?>
+            <?cs call:report_cell('date', $cell.date) ?>
+@@ -164,7 +164,7 @@
+            <?cs call:report_cell('', $cell.parsed) ?>
+          <?cs elif name(cell) == "title" && $report.id == -1 ?>
+            <?cs call:report_cell('title',
+-                                 '<a  title="View report" href="'+
++                                 '<a  title="Toon rapport" href="'+
+                                  $report_href+'">'+$cell+'</a>') ?>
+          <?cs else ?>
+            <?cs call:report_cell(name(cell), $cell) ?>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/anydiff.cs
+===================================================================
+--- templates.ori/anydiff.cs (revision 306)
++++ templates/anydiff.cs (revision 316)
+@@ -4,41 +4,41 @@
+ 
+ <div id="content" class="changeset">
+  <div id="title">
+-    <h1>Select Base and Target for Diff:</h1>
++    <h1>Selecteer basis en doel voor diff-bestand:</h1>
+  </div>
+ 
+  <div id="anydiff">
+   <form action="<?cs var:anydiff.changeset_href ?>" method="get">
+    <table>
+     <tr>
+-     <th><label for="old_path">From:</label></th>
++     <th><label for="old_path">Van:</label></th>
+      <td>
+       <input type="text" id="old_path" name="old_path" value="<?cs
+          var:anydiff.old_path ?>" size="44" />
+-      <label for="old_rev">at Revision:</label>
++      <label for="old_rev">op revisie:</label>
+       <input type="text" id="old_rev" name="old" value="<?cs
+          var:anydiff.old_rev ?>" size="4" />
+      </td>
+     </tr>
+     <tr>
+-     <th><label for="new_path">To:</label></th>
++     <th><label for="new_path">Naar:</label></th>
+      <td>
+       <input type="text" id="new_path" name="new_path" value="<?cs
+          var:anydiff.new_path ?>" size="44" />
+-      <label for="new_rev">at Revision:</label>
++      <label for="new_rev">op revisie:</label>
+       <input type="text" id="new_rev" name="new" value="<?cs
+          var:anydiff.new_rev ?>" size="4" />
+      </td>
+     </tr>
+    </table>
+    <div class="buttons">
+-      <input type="submit" value="View changes" />
++      <input type="submit" value="Toon wijzigingen" />
+    </div>
+   </form>
+  </div>
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
+-  ?>/TracChangeset#ExaminingDifferencesBetweenBranches">TracChangeset</a> for help on using the arbitrary diff feature.
++  <strong>Opmerking:</strong> Zie <a href="<?cs var:trac.href.wiki
++  ?>/hulp/broncode/verschillen">Hulp bij het gebruik van diff-bestanden</a>.
+  </div>
+ </div>
+ 
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/log.cs
+===================================================================
+--- templates.ori/log.cs (revision 306)
++++ templates/log.cs (revision 316)
+@@ -3,19 +3,19 @@
+ 
+ <div id="ctxtnav" class="nav">
+  <ul>
+-  <li class="first <?cs if:len(chrome.links.prev)+len(chrome.links.next) == 0 ?>last<?cs /if ?>">
+-   <a href="<?cs var:log.browser_href ?>">View Latest Revision</a>
++  <li class="eerste <?cs if:len(chrome.links.prev)+len(chrome.links.next) == 0 ?>laatste<?cs /if ?>">
++   <a href="<?cs var:log.browser_href ?>">Toon laatste revisie</a>
+   </li><?cs
+   if:len(chrome.links.prev) ?>
+-   <li class="<?cs if:!len(chrome.links.next) ?> last<?cs /if ?>">
++   <li class="<?cs if:!len(chrome.links.next) ?> laatste<?cs /if ?>">
+     &larr; <a href="<?cs var:chrome.links.prev.0.href ?>" title="<?cs
+-      var:chrome.links.prev.0.title ?>">Newer Revisions</a>
++      var:chrome.links.prev.0.title ?>">Nieuwere revisies</a>
+    </li><?cs
+   /if ?><?cs
+   if:len(chrome.links.next) ?>
+    <li class="last">
+     <a href="<?cs var:chrome.links.next.0.href ?>" title="<?cs
+-      var:chrome.links.next.0.title ?>">Older Revisions</a> &rarr;
++      var:chrome.links.next.0.title ?>">Oudere revisies</a> &rarr;
+    </li><?cs
+   /if ?>
+  </ul>
+@@ -27,70 +27,70 @@
+  <form id="prefs" action="<?cs var:browser_current_href ?>" method="get">
+   <div>
+    <input type="hidden" name="action" value="<?cs var:log.mode ?>" />
+-   <label>View log starting at <input type="text" id="rev" name="rev" value="<?cs
++   <label>Toon log per <input type="text" id="rev" name="rev" value="<?cs
+     var:log.items.0.rev ?>" size="5" /></label>
+    <label>and back to <input type="text" id="stop_rev" name="stop_rev" value="<?cs
+     var:log.stop_rev ?>" size="5" /></label>
+    <br />
+    <div class="choice">
+     <fieldset>
+-     <legend>Mode:</legend>
++     <legend>Modus:</legend>
+      <label for="stop_on_copy">
+       <input type="radio" id="stop_on_copy" name="mode" value="stop_on_copy" <?cs
+        if:log.mode != "follow_copy" || log.mode != "path_history" ?> checked="checked" <?cs
+        /if ?> />
+-      Stop on copy 
++      Stop bij kopie 
+      </label>
+      <label for="follow_copy">
+       <input type="radio" id="follow_copy" name="mode" value="follow_copy" <?cs
+        if:log.mode == "follow_copy" ?> checked="checked" <?cs /if ?> />
+-      Follow copies
++      Volg kopiÃ«n
+      </label>
+      <label for="path_history">
+       <input type="radio" id="path_history" name="mode" value="path_history" <?cs
+        if:log.mode == "path_history" ?> checked="checked" <?cs /if ?> />
+-      Show only adds, moves and deletes
++      Toon alleen toevoegingen, verplaatsingen en verwijderingen
+      </label>
+     </fieldset>
+    </div>
+    <label><input type="checkbox" name="verbose" <?cs
+     if:log.verbose ?> checked="checked" <?cs
+-    /if ?> /> Show full log messages</label>
++    /if ?> /> Toon volledige logberichten</label>
+   </div>
+   <div class="buttons">
+-   <input type="submit" value="Update" 
+-          title="Warning: by updating, you will clear the page history" />
++   <input type="submit" value="Bijwerken" 
++          title="Let op: by updating, door bij te werken wordt de paginahistorie verwijderd " />
+   </div>
+  </form>
+ 
+  <div class="diff">
+   <div id="legend">
+-   <h3>Legend:</h3>
++   <h3>Legenda:</h3>
+    <dl>
+-    <dt class="add"></dt><dd>Added</dd><?cs
++    <dt class="add"></dt><dd>Toegevoegd</dd><?cs
+     if:log.mode == "path_history" ?>
+-     <dt class="rem"></dt><dd>Removed</dd><?cs
++     <dt class="rem"></dt><dd>Verwijderd</dd><?cs
+     /if ?>
+-    <dt class="mod"></dt><dd>Modified</dd>
+-    <dt class="cp"></dt><dd>Copied or renamed</dd>
++    <dt class="mod"></dt><dd>Aangepast</dd>
++    <dt class="cp"></dt><dd>Gekopieerd of hernoemd</dd>
+    </dl>
+   </div>
+  </div>
+ 
+  <form  class="printableform" action="<?cs var:log.changeset_href ?>" method="get">
+   <div class="buttons"><input type="submit" value="View changes" 
+-       title="Diff from Old Revision to New Revision (select them below)" />
++       title="Diff van oude revisie naar oude revisie (selecteer ze hieronder)" />
+  </div>
+  <table id="chglist" class="listing">
+   <thead>
+    <tr>
+     <th class="diff"></th>
+     <th class="change"></th>
+-    <th class="rev">Rev</th>
+-    <th class="chgset">Chgset</th>
+-    <th class="date">Date</th>
+-    <th class="author">Author</th>
+-    <th class="summary"><?cs if:!log.verbose ?>Log Message<?cs /if ?></th>
++    <th class="rev">Revisie</th>
++    <th class="chgset">Wijziging</th>
++    <th class="date">Datum</th>
++    <th class="author">Auteur</th>
++    <th class="summary"><?cs if:!log.verbose ?>Logbericht<?cs /if ?></th>
+    </tr>
+   </thead>
+   <tbody><?cs
+@@ -105,7 +105,7 @@
+     if:item.copyfrom_path ?>
+      <tr class="<?cs var:even_odd ?>">
+       <td class="copyfrom_path" colspan="7" style="padding-left: <?cs var:indent ?>em">
+-       copied from <a href="<?cs var:item.browser_href ?>"><?cs var:item.copyfrom_path ?></a>:
++       gekopieerd van <a href="<?cs var:item.browser_href ?>"><?cs var:item.copyfrom_path ?></a>:
+       </td>
+      </tr><?cs
+      set:indent = indent + #1 ?><?cs
+@@ -121,18 +121,18 @@
+              value="<?cs var:item.path ?>@<?cs var:item.rev ?>" <?cs
+           if:idx == #0 ?> checked="checked" <?cs /if ?> /></td>
+      <td class="change" style="padding-left:<?cs var:indent ?>em">
+-      <a title="View log starting at this revision" href="<?cs var:item.log_href ?>">
++      <a title="Bekijk log, beginnend bij deze revisie" href="<?cs var:item.log_href ?>">
+        <span class="<?cs var:item.change ?>"></span>
+        <span class="comment">(<?cs var:item.change ?>)</span>
+       </a>
+      </td>
+      <td class="rev">
+       <a href="<?cs var:item.browser_href ?>" 
+-         title="Browse at revision <?cs var:item.rev ?>">@<?cs var:item.rev ?></a>
++         title="Blader door revisie <?cs var:item.rev ?>">@<?cs var:item.rev ?></a>
+      </td>
+      <td class="chgset">
+       <a href="<?cs var:item.changeset_href ?>"
+-         title="View changeset [<?cs var:item.rev ?>]">[<?cs var:item.rev ?>]</a>
++         title="Bekijk wijzigingen [<?cs var:item.rev ?>]">[<?cs var:item.rev ?>]</a>
+      </td>
+      <td class="date"><?cs var:log.changes[item.rev].date ?></td>
+      <td class="author"><?cs var:log.changes[item.rev].author ?></td>
+@@ -149,8 +149,8 @@
+   </tbody>
+  </table><?cs
+  if:len(log.items) > #10 ?>
+-  <div class="buttons"><input type="submit" value="View changes" 
+-       title="Diff from Old Revision to New Revision (select them above)" />
++  <div class="buttons"><input type="submit" value="Toon verschillen" 
++       title="Diff van oude revisie naar nieuwe revisie (selecteer ze hierboven)" />
+   </div><?cs
+  /if ?>
+  </form><?cs
+@@ -158,18 +158,18 @@
+   if:len(links.prev) ?><li class="first<?cs
+    if:!len(links.next) ?> last<?cs /if ?>">&larr; <a href="<?cs
+    var:links.prev.0.href ?>" title="<?cs
+-   var:links.prev.0.title ?>">Younger Revisions</a></li><?cs
++   var:links.prev.0.title ?>">Jongere revisies</a></li><?cs
+   /if ?><?cs
+   if:len(links.next) ?><li class="<?cs
+    if:len(links.prev) ?>first <?cs /if ?>last"><a href="<?cs
+    var:links.next.0.href ?>" title="<?cs
+-   var:links.next.0.title ?>">Older Revisions</a> &rarr;</li><?cs
++   var:links.next.0.title ?>">Oudere revisies</a> &rarr;</li><?cs
+   /if ?></ul></div><?cs
+  /if ?>
+ 
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
+-  ?>/TracRevisionLog">TracRevisionLog</a> for help on using the revision log.
++  <strong>Hulp:</strong> <a href="<?cs var:trac.href.wiki
++  ?>/hulp/revisies">Hulp bij revisies</a>.
+  </div>
+ 
+ </div>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/browser.cs
+===================================================================
+--- templates.ori/browser.cs (revision 306)
++++ templates/browser.cs (revision 316)
+@@ -4,9 +4,9 @@
+ <div id="ctxtnav" class="nav">
+  <ul>
+   <li class="first"><a href="<?cs var:browser.restr_changeset_href ?>">
+-   Last Change</a></li>
++   Laatste wijziging</a></li>
+   <li class="last"><a href="<?cs var:browser.log_href ?>">
+-   Revision Log</a></li>
++   Revisie log</a></li>
+  </ul>
+ </div>
+ 
+@@ -18,7 +18,7 @@
+  <div id="jumprev">
+   <form action="" method="get">
+    <div>
+-    <label for="rev">View revision:</label>
++    <label for="rev">Toon revisie:</label>
+     <input type="text" id="rev" name="rev" value="<?cs
+        var:browser.revision ?>" size="4" />
+    </div>
+@@ -42,7 +42,7 @@
+      call:sortable_th(browser.order, browser.desc, 'size', 'Size', browser.order_href) ?>
+      <th class="rev">Rev</th><?cs 
+      call:sortable_th(browser.order, browser.desc, 'date', 'Age', browser.order_href) ?>
+-     <th class="change">Last Change</th>
++     <th class="change">Laatste wijziging</th>
+     </tr>
+    </thead>
+    <tbody>
+@@ -85,15 +85,15 @@
+   <table id="info" summary="Revision info"><?cs
+    if:!browser.is_dir ?><tr>
+     <th scope="col">
+-     Revision <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>, <?cs var:file.size ?>
+-     (checked in by <?cs var:file.author ?>, <?cs var:file.age ?> ago)
++     Revisie <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>, <?cs var:file.size ?>
++     (ingechecked door <?cs var:file.author ?>, <?cs var:file.age ?> ago)
+     </th></tr><tr>
+     <td class="message"><?cs var:file.message ?></td>
+    </tr><?cs /if ?><?cs
+    if:len(browser.props) ?><tr>
+     <td colspan="2"><ul class="props"><?cs
+      each:prop = browser.props ?>
+-      <li>Property <strong><?cs var:prop.name ?></strong> set to <em><code><?cs
++      <li>Waarde van eigenschap <strong><?cs var:prop.name ?></strong> veranderd naar <em><code><?cs
+       var:prop.value ?></code></em></li><?cs
+      /each ?>
+     </ul></td></tr><?cs
+@@ -117,7 +117,7 @@
+ 
+  <div id="help">
+   <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
+-  ?>/TracBrowser">TracBrowser</a> for help on using the browser.
++  ?>/hulp/broncode">Hulp bij het gebruik van broncode</a>.
+  </div>
+ 
+   <div id="anydiff">
+@@ -127,7 +127,7 @@
+      <input type="hidden" name="old_path" value="<?cs var:browser.path ?>" />
+      <input type="hidden" name="new_rev" value="<?cs var:browser.revision ?>" />
+      <input type="hidden" name="old_rev" value="<?cs var:browser.revision ?>" />
+-     <input type="submit" value="View changes..." title="Prepare an Arbitrary Diff" />
++     <input type="submit" value="Toon wijzigingen..." title="Een willekeurig diff-bestand voorbereiden" />
+     </div>
+    </form>
+   </div>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/roadmap.cs
+===================================================================
+--- templates.ori/roadmap.cs (revision 306)
++++ templates/roadmap.cs (revision 316)
+@@ -4,35 +4,35 @@
+ <div id="ctxtnav" class="nav"></div>
+ 
+ <div id="content" class="roadmap">
+- <h1>Roadmap</h1>
++ <h1>Planning</h1>
+ 
+  <form id="prefs" method="get" action="">
+   <div>
+    <input type="checkbox" id="showall" name="show" value="all"<?cs
+     if:roadmap.showall ?> checked="checked"<?cs /if ?> />
+-   <label for="showall">Show already completed milestones</label>
++   <label for="showall">Toon gecompleteerde mijlpalen</label>
+   </div>
+   <div class="buttons">
+-   <input type="submit" value="Update" />
++   <input type="submit" value="Bijwerken" />
+   </div>
+  </form>
+ 
+  <ul class="milestones"><?cs each:milestone = roadmap.milestones ?>
+   <li class="milestone">
+    <div class="info">
+-    <h2><a href="<?cs var:milestone.href ?>">Milestone: <em><?cs
++    <h2><a href="<?cs var:milestone.href ?>">Mijlpaal: <em><?cs
+       var:milestone.name ?></em></a></h2>
+     <p class="date"<?cs
+      if:milestone.completed_date ?> title="<?cs var:milestone.completed_date ?>">
+-      Completed <?cs var:milestone.completed_delta ?> ago<?cs
++      Gecompleteerd <?cs var:milestone.completed_delta ?> geleden<?cs
+      elif:milestone.due_date ?> title="<?cs var:milestone.due_date ?>"><?cs
+       if:milestone.late ?>
+-       <strong><?cs var:milestone.due_delta ?> late</strong><?cs
++       <strong><?cs var:milestone.due_delta ?> te laat</strong><?cs
+       else ?>
+-       Due in <?cs var:milestone.due_delta ?><?cs
++       Gereed over <?cs var:milestone.due_delta ?><?cs
+       /if ?> (<?cs var:milestone.due_date ?>)<?cs
+      else ?>>
+-      No date set<?cs
++      Geen datum ingesteld<?cs
+      /if ?>
+     </p><?cs
+     with:stats = milestone.stats ?><?cs
+@@ -42,23 +42,23 @@
+         <td class="closed" style="width: <?cs
+           var:#stats.percent_closed ?>%"><a href="<?cs
+           var:milestone.queries.closed_tickets ?>" title="<?cs
+-          var:#stats.closed_tickets ?> of <?cs
+-          var:#stats.total_tickets ?> ticket<?cs
+-          if:#stats.total_tickets != #1 ?>s<?cs /if ?> closed"></a></td>
++          var:#stats.closed_tickets ?> van <?cs
++          var:#stats.total_tickets ?> melding<?cs
++          if:#stats.total_tickets != #1 ?>s<?cs /if ?> afgesloten"></a></td>
+         <td class="open" style="width: <?cs
+           var:#stats.percent_active ?>%"><a href="<?cs
+           var:milestone.queries.active_tickets ?>" title="<?cs
+-          var:#stats.active_tickets ?> of <?cs
+-          var:#stats.total_tickets ?> ticket<?cs
+-          if:#stats.total_tickets != #1 ?>s<?cs /if ?> active"></a></td>
++          var:#stats.active_tickets ?> van <?cs
++          var:#stats.total_tickets ?> melding<?cs
++          if:#stats.total_tickets != #1 ?>s<?cs /if ?> open"></a></td>
+        </tr>
+       </table>
+       <p class="percent"><?cs var:#stats.percent_closed ?>%</p>
+       <dl>
+-       <dt>Closed tickets:</dt>
++       <dt>Afgesloten meldingen:</dt>
+        <dd><a href="<?cs var:milestone.queries.closed_tickets ?>"><?cs
+          var:stats.closed_tickets ?></a></dd>
+-       <dt>Active tickets:</dt>
++       <dt>Openstaande meldingen:</dt>
+        <dd><a href="<?cs var:milestone.queries.active_tickets ?>"><?cs
+          var:stats.active_tickets ?></a></dd>
+       </dl><?cs
+@@ -72,14 +72,14 @@
+   <div class="buttons">
+    <form method="get" action="<?cs var:trac.href.milestone ?>"><div>
+     <input type="hidden" name="action" value="new" />
+-    <input type="submit" value="Add new milestone" />
++    <input type="submit" value="Nieuwe mijlpaal toevoegen" />
+    </div></form>
+   </div><?cs
+  /if ?>
+ 
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs
+-    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> for help on using the roadmap.
++  <strong>Opmerking:</strong> Zie <a href="<?cs
++    var:trac.href.wiki ?>/hulp/planning">Hulp bij het gebruik van de planning</a>.
+  </div>
+ 
+ </div>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/ticket.cs
+===================================================================
+--- templates.ori/ticket.cs (revision 306)
++++ templates/ticket.cs (revision 316)
+@@ -2,26 +2,26 @@
+ <?cs include "macros.cs" ?>
+ 
+ <div id="ctxtnav" class="nav">
+- <h2>Ticket Navigation</h2><?cs
++ <h2>Meldingen navigatie</h2><?cs
+  with:links = chrome.links ?><?cs
+   if:len(links.prev) || len(links.up) || len(links.next) ?><ul><?cs
+    if:len(links.prev) ?>
+     <li class="first<?cs if:!len(links.up) && !len(links.next) ?> last<?cs /if ?>">
+      &larr; <a href="<?cs var:links.prev.0.href ?>" title="<?cs
+-       var:links.prev.0.title ?>">Previous Ticket</a>
++       var:links.prev.0.title ?>">Vorige melding</a>
+     </li><?cs
+    /if ?><?cs
+    if:len(links.up) ?>
+     <li class="<?cs if:!len(links.prev) ?>first<?cs /if ?><?cs
+                     if:!len(links.next) ?> last<?cs /if ?>">
+      <a href="<?cs var:links.up.0.href ?>" title="<?cs
+-       var:links.up.0.title ?>">Back to Query</a>
++       var:links.up.0.title ?>">Terug naar zoekopdracht</a>
+     </li><?cs
+    /if ?><?cs
+    if:len(links.next) ?>
+     <li class="<?cs if:!len(links.prev) && !len(links.up) ?>first <?cs /if ?>last">
+      <a href="<?cs var:links.next.0.href ?>" title="<?cs
+-       var:links.next.0.title ?>">Next Ticket</a> &rarr;
++       var:links.next.0.title ?>">Volgende melding</a> &rarr;
+     </li><?cs
+    /if ?></ul><?cs
+   /if ?><?cs
+@@ -30,7 +30,7 @@
+ 
+ <div id="content" class="ticket">
+ 
+- <h1>Ticket #<?cs var:ticket.id ?> <span class="status">(<?cs 
++ <h1>Melding #<?cs var:ticket.id ?> <span class="status">(<?cs 
+   var:ticket.status ?><?cs 
+   if:ticket.type ?> <?cs var:ticket.type ?><?cs 
+   /if ?><?cs 
+@@ -40,19 +40,19 @@
+ <div id="searchable">
+ <div id="ticket">
+  <div class="date">
+-  <p title="<?cs var:ticket.opened ?>">Opened <?cs var:ticket.opened_delta ?> ago</p><?cs
++  <p title="<?cs var:ticket.opened ?>">Geopend <?cs var:ticket.opened_delta ?> geleden</p><?cs
+   if:ticket.lastmod ?>
+-   <p title="<?cs var:ticket.lastmod ?>">Last modified <?cs var:ticket.lastmod_delta ?> ago</p>
++   <p title="<?cs var:ticket.lastmod ?>">Laatste wijziging <?cs var:ticket.lastmod_delta ?> geleden</p>
+   <?cs /if ?>
+  </div>
+  <h2 class="summary"><?cs var:ticket.summary ?></h2>
+  <table class="properties">
+   <tr>
+-   <th id="h_reporter">Reported by:</th>
++   <th id="h_reporter">Gerapporteerd door:</th>
+    <td headers="h_reporter"><?cs var:ticket.reporter ?></td>
+-   <th id="h_owner">Assigned to:</th>
++   <th id="h_owner">Toegewezen aan:</th>
+    <td headers="h_owner"><?cs var:ticket.owner ?><?cs
+-     if:ticket.status == 'assigned' ?> (accepted)<?cs /if ?></td>
++     if:ticket.status == 'assigned' ?> (geaccepteerd)<?cs /if ?></td>
+   </tr><tr><?cs
+   each:field = ticket.fields ?><?cs
+    if:!field.skip ?><?cs
+@@ -79,11 +79,11 @@
+      if:trac.acl.TICKET_APPEND ?>
+      <span class="inlinebuttons">
+       <input type="hidden" name="replyto" value="description" />
+-      <input type="submit" value="Reply" title="Reply, quoting this description" />
++      <input type="submit" value="Reply" title="Reageer (waarbij deze omschrijving gequot wordt" />
+      </span><?cs
+      /if ?>
+-     Description <?cs
+-     if:ticket.description.lastmod ?><span class="lastmod" title="<?cs var:ticket.description.lastmod ?>">(Last modified by <?cs var:ticket.description.author ?>)</span><?cs
++     Omschrijving <?cs
++     if:ticket.description.lastmod ?><span class="lastmod" title="<?cs var:ticket.description.lastmod ?>">(Laatst gewijzigd door <?cs var:ticket.description.author ?>)</span><?cs
+      /if ?>
+     </h3>
+     <?cs var:ticket.description.formatted ?>
+@@ -100,7 +100,7 @@
+ <a href="#comment:<?cs var:cnum ?>"><small><?cs var:prefix ?><?cs var:cnum ?></small></a>
+ <?cs /def ?>
+ 
+-<?cs if:len(ticket.changes) ?><h2>Change History</h2>
++<?cs if:len(ticket.changes) ?><h2>Wijzigingshistorie</h2>
+ <div id="changelog"><?cs
+  each:change = ticket.changes ?>
+  <form method="get" action="<?cs var:ticket.href ?>#comment" class="printableform">
+@@ -110,7 +110,7 @@
+     if:trac.acl.TICKET_APPEND ?>
+     <span class="inlinebuttons">
+      <input type="hidden" name="replyto" value="<?cs var:change.cnum ?>" />
+-     <input type="submit" value="Reply" title="Reply to comment <?cs var:change.cnum ?>" />
++     <input type="submit" value="Reply" title="Reageer op opmerking <?cs var:change.cnum ?>" />
+     </span><?cs
+     /if ?>
+     <span class="threading"><?cs
+@@ -128,18 +128,18 @@
+     /if ?>
+     </span><?cs
+    /if ?><?cs
+-   var:change.date ?> changed by <?cs var:change.author ?>
++   var:change.date ?> gewijzigd door <?cs var:change.author ?>
+   </h3><?cs
+   if:len(change.fields) ?>
+    <ul class="changes"><?cs
+    each:field = change.fields ?>
+     <li><strong><?cs var:name(field) ?></strong> <?cs
+-    if:name(field) == 'attachment' ?><em><?cs var:field.new ?></em> added<?cs
+-    elif:field.old && field.new ?>changed from <em><?cs
+-     var:field.old ?></em> to <em><?cs var:field.new ?></em><?cs
+-    elif:!field.old && field.new ?>set to <em><?cs var:field.new ?></em><?cs
+-    elif:field.old && !field.new ?>deleted<?cs
+-    else ?>changed<?cs
++    if:name(field) == 'attachment' ?><em><?cs var:field.new ?></em> toegevoegd<?cs
++    elif:field.old && field.new ?>gewijzigd van <em><?cs
++     var:field.old ?></em> naar <em><?cs var:field.new ?></em><?cs
++    elif:!field.old && field.new ?>ingesteld op <em><?cs var:field.new ?></em><?cs
++    elif:field.old && !field.new ?>verwijderd<?cs
++    else ?>gewijzigd<?cs
+     /if ?>.</li>
+     <?cs
+    /each ?>
+@@ -159,49 +159,49 @@
+    var:ticket.id ?> (<?cs var:ticket.summary ?>)</a></h3>
+  <?cs if:trac.authname == "anonymous" ?>
+   <div class="field">
+-   <label for="author">Your email or username:</label><br />
++   <label for="author">Je e-mailadres of gebruikersnaam:</label><br />
+    <input type="text" id="author" name="author" size="40"
+      value="<?cs var:ticket.reporter_id ?>" /><br />
+   </div>
+  <?cs /if ?>
+  <div class="field">
+   <fieldset class="iefix">
+-   <label for="comment">Comment (you may use <a tabindex="42" href="<?cs
+-     var:trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here):</label><br />
++   <label for="comment">Je mag <a tabindex="42" href="<?cs
++     var:trac.href.wiki ?>/hulp/opmaak">Wiki opmaak</a> gebruiken</label><br />
+    <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78">
+ <?cs var:ticket.comment ?></textarea></p>
+   </fieldset><?cs
+   if ticket.comment_preview ?>
+    <fieldset id="preview">
+-    <legend>Comment Preview</legend>
++    <legend>Voorbeeld van opmerking</legend>
+     <?cs var:ticket.comment_preview ?>
+    </fieldset><?cs
+   /if ?>
+  </div>
+ 
+  <?cs if:trac.acl.TICKET_CHGPROP ?><fieldset id="properties">
+-  <legend>Change Properties</legend>
++  <legend>Eigenschappen wijziging</legend>
+   <table><tr>
+-   <th><label for="summary">Summary:</label></th>
++   <th><label for="summary">Samenvatting:</label></th>
+    <td class="fullrow" colspan="3"><input type="text" id="summary" name="summary" value="<?cs
+      var:ticket.summary ?>" size="70" /></td>
+    </tr><?cs
+    if:len(ticket.fields.type.options) ?>
+    <tr>
+-    <th><label for="type">Type:</label></th>
++    <th><label for="type">Soort:</label></th>
+     <td><?cs 
+      call:hdf_select(ticket.fields.type.options, 'type', ticket.type, 0) ?>
+     </td>
+    </tr><?cs
+    /if ?><?cs
+    if:trac.acl.TICKET_ADMIN ?><tr>
+-    <th><label for="description">Description:</label></th>
++    <th><label for="description">Omschrijving:</label></th>
+     <td class="fullrow" colspan="3">
+      <textarea id="description" name="description" class="wikitext" rows="10" cols="68">
+ <?cs var:ticket.description ?></textarea>
+     </td>
+    </tr><tr>
+-    <th><label for="reporter">Reporter:</label></th>
++    <th><label for="reporter">Schrijver:</label></th>
+     <td class="fullrow" colspan="3"><input type="text" value="<?cs 
+       var:ticket.reporter ?>" id="reporter" name="reporter" size="70" /></td>
+    </tr><?cs
+@@ -263,7 +263,7 @@
+  <?cs if:ticket.actions.accept || ticket.actions.reopen ||
+          ticket.actions.resolve || ticket.actions.reassign ?>
+  <fieldset id="action">
+-  <legend>Action</legend><?cs
++  <legend>Actie</legend><?cs
+   if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
+   /if ?><?cs
+   def:action_radio(id) ?>
+@@ -272,27 +272,27 @@
+      /if ?> /><?cs
+   /def ?>
+   <?cs call:action_radio('leave') ?>
+-   <label for="leave">leave as <?cs var:ticket.status ?></label><br /><?cs
++   <label for="leave">behoudt status <?cs var:ticket.status ?></label><br /><?cs
+   if:ticket.actions.accept ?><?cs
+    call:action_radio('accept') ?>
+-   <label for="accept">accept ticket</label><br /><?cs
++   <label for="accept">accepteer melding</label><br /><?cs
+   /if ?><?cs
+   if:ticket.actions.reopen ?><?cs
+    call:action_radio('reopen') ?>
+-   <label for="reopen">reopen ticket</label><br /><?cs
++   <label for="reopen">heropen melding</label><br /><?cs
+   /if ?><?cs
+   if:ticket.actions.resolve ?><?cs
+    call:action_radio('resolve') ?>
+-   <label for="resolve">resolve</label><?cs
++   <label for="resolve">los op</label><?cs
+    if:len(ticket.fields.resolution.options) ?>
+-    <label for="resolve_resolution">as:</label>
++    <label for="resolve_resolution">als:</label>
+     <?cs call:hdf_select(ticket.fields.resolution.options, "resolve_resolution",
+                          ticket.resolve_resolution, 0) ?><br /><?cs
+    /if ?><?cs
+   /if ?><?cs
+   if:ticket.actions.reassign ?><?cs
+    call:action_radio('reassign') ?>
+-   <label for="reassign">reassign</label>
++   <label for="reassign">toekennen aan:</label>
+    <label>to:<?cs
+    if:len(ticket.fields.owner.options) ?><?cs
+     call:hdf_select(ticket.fields.owner.options, "reassign_owner",
+@@ -329,15 +329,15 @@
+   <input type="hidden" name="ts" value="<?cs var:ticket.ts ?>" />
+   <input type="hidden" name="replyto" value="<?cs var:ticket.replyto ?>" />
+   <input type="hidden" name="cnum" value="<?cs var:ticket.cnum ?>" />
+-  <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+-  <input type="submit" value="Submit changes" />
++  <input type="submit" name="preview" value="Voorbeeld" accesskey="r" />&nbsp;
++  <input type="submit" value="Veranderingen doorvoeren" />
+  </div>
+ </form>
+ <?cs /if ?>
+ 
+  </div>
+  <script type="text/javascript">
+-  addHeadingLinks(document.getElementById("searchable"), "Permalink to $id");
++  addHeadingLinks(document.getElementById("searchable"), "Permalink naar $id");
+  </script>
+ </div>
+ <?cs include "footer.cs"?>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/header.cs
+===================================================================
+--- templates.ori/header.cs (revision 306)
++++ templates/header.cs (revision 316)
+@@ -39,9 +39,9 @@
+ 
+ <form id="search" action="<?cs var:trac.href.search ?>" method="get">
+  <?cs if:trac.acl.SEARCH_VIEW ?><div>
+-  <label for="proj-search">Search:</label>
++  <label for="proj-search">Zoeken:</label>
+   <input type="text" id="proj-search" name="q" size="10" accesskey="f" value="" />
+-  <input type="submit" value="Search" />
++  <input type="submit" value="Snel zoeken" />
+   <input type="hidden" name="wiki" value="on" />
+   <input type="hidden" name="changeset" value="on" />
+   <input type="hidden" name="ticket" value="on" />
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/attachment.cs
+===================================================================
+--- templates.ori/attachment.cs (revision 306)
++++ templates/attachment.cs (revision 316)
+@@ -6,29 +6,29 @@
+ <div id="content" class="attachment">
+ 
+ <?cs if:attachment.mode == 'new' ?>
+- <h1>Add Attachment to <a href="<?cs var:attachment.parent.href?>"><?cs
++ <h1>Bijlage toevoegen aan <a href="<?cs var:attachment.parent.href?>"><?cs
+    var:attachment.parent.name ?></a></h1>
+  <form id="attachment" method="post" enctype="multipart/form-data" action="">
+   <div class="field">
+-   <label>File:<br /><input type="file" name="attachment" /></label>
++   <label>Bestand:<br /><input type="file" name="attachment" /></label>
+   </div>
+   <fieldset>
+-   <legend>Attachment Info</legend>
++   <legend>Info over bijlage</legend>
+    <?cs if:trac.authname == "anonymous" ?>
+     <div class="field">
+-     <label>Your email or username:<br />
++     <label>Je e-mailadres of gebruikersnaam:<br />
+      <input type="text" name="author" size="30" value="<?cs
+        var:attachment.author?>" /></label>
+     </div>
+    <?cs /if ?>
+    <div class="field">
+-    <label>Description of the file (optional):<br />
++    <label>Omschrijving van het bestand (optioneel):<br />
+     <input type="text" name="description" size="60" /></label>
+    </div>
+    <br />
+    <div class="options">
+     <label><input type="checkbox" name="replace" />
+-    Replace existing attachment of the same name</label>
++    Bestaande bijlage met dezelfde naam vervangen</label>
+    </div>
+    <br />
+   </fieldset>
+@@ -36,20 +36,20 @@
+    <input type="hidden" name="action" value="new" />
+    <input type="hidden" name="type" value="<?cs var:attachment.parent.type ?>" />
+    <input type="hidden" name="id" value="<?cs var:attachment.parent.id ?>" />
+-   <input type="submit" value="Add attachment" />
+-   <input type="submit" name="cancel" value="Cancel" />
++   <input type="submit" value="Bijlage toevoegen" />
++   <input type="submit" name="cancel" value="Annuleren" />
+   </div>
+  </form>
+ <?cs elif:attachment.mode == 'delete' ?>
+  <h1><a href="<?cs var:attachment.parent.href ?>"><?cs
+    var:attachment.parent.name ?></a>: <?cs var:attachment.filename ?></h1>
+- <p><strong>Are you sure you want to delete this attachment?</strong><br />
+- This is an irreversible operation.</p>
++ <p><strong>Weet je zeker dat je deze bijlage wilt verwijderen?</strong><br />
++ Deze actie kan niet ongedaan gemaakt worden.</p>
+  <div class="buttons">
+   <form method="post" action=""><div id="delete">
+    <input type="hidden" name="action" value="delete" />
+-   <input type="submit" name="cancel" value="Cancel" />
+-   <input type="submit" value="Delete attachment" />
++   <input type="submit" name="cancel" value="Annuleren" />
++   <input type="submit" value="Bijlage verwijderen" />
+   </div></form>
+  </div>
+ <?cs elif:attachment.mode == 'list' ?>
+@@ -61,8 +61,8 @@
+    var:attachment.parent.name ?></a>: <?cs var:attachment.filename ?></h1>
+  <table id="info" summary="Description"><tbody><tr>
+    <th scope="col">
+-    File <?cs var:attachment.filename ?>, <?cs var:attachment.size ?> 
+-    (added by <?cs var:attachment.author ?>,  <?cs var:attachment.age ?> ago)
++    Bestand <?cs var:attachment.filename ?>, <?cs var:attachment.size ?> 
++    (toegevoegd door <?cs var:attachment.author ?>,  <?cs var:attachment.age ?> geleden)
+    </th></tr><tr>
+    <td class="message"><?cs var:attachment.description ?></td>
+   </tr>
+@@ -71,18 +71,18 @@
+   if:attachment.preview ?>
+    <?cs var:attachment.preview ?><?cs
+   elif:attachment.max_file_size_reached ?>
+-   <strong>HTML preview not available</strong>, since the file size exceeds
+-   <?cs var:attachment.max_file_size  ?> bytes. You may <a href="<?cs
+-     var:attachment.raw_href ?>">download the file</a> instead.<?cs
++   <strong>HTML-voorbeeld niet beschikbaar</strong> aangezien het bestandgroter is dan
++   <?cs var:attachment.max_file_size  ?> bytes. Je kunt wel <a href="<?cs
++     var:attachment.raw_href ?>">het bestand downloaden</a>.<?cs
+   else ?>
+-   <strong>HTML preview not available</strong>. To view the file,
+-   <a href="<?cs var:attachment.raw_href ?>">download the file</a>.<?cs
++   <strong>HTML preview not available</strong>. 
++   <a href="<?cs var:attachment.raw_href ?>">Download het bestand</a> om het te zien.<?cs
+   /if ?>
+  </div>
+  <?cs if:attachment.can_delete ?><div class="buttons">
+   <form method="get" action=""><div id="delete">
+    <input type="hidden" name="action" value="delete" />
+-   <input type="submit" value="Delete attachment" />
++   <input type="submit" value="Bijlage verwijderen" />
+   </div></form>
+  </div><?cs /if ?>
+ <?cs /if ?>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/error.cs
+===================================================================
+--- templates.ori/error.cs (revision 306)
++++ templates/error.cs (revision 316)
+@@ -5,13 +5,13 @@
+ <div id="content" class="error">
+ 
+  <?cs if error.type == "TracError" ?>
+-  <h1><?cs var:error.title ?></h1>
++  <h1>Fout: <?cs var:error.title ?></h1>
+   <p class="message"><?cs var:error.message ?></p>
+ 
+  <?cs elif error.type == "internal" ?>
+-  <h1>Oops&hellip;</h1>
++  <h1>Oeps&hellip;</h1>
+   <div class="message">
+-   <strong>Trac detected an internal error:</strong>
++   <strong>Trac heeft een interne four gedetecteerd:</strong>
+    <pre><?cs var:error.message ?></pre>
+   </div>
+   <p>If you think this really should work and you can reproduce it, you  should
+@@ -24,8 +24,7 @@
+  <?cs /if ?>
+ 
+  <p>
+-  <a href="<?cs var:trac.href.wiki ?>/TracGuide">TracGuide</a>
+-  &mdash; The Trac User and Administration Guide
++  <a href="<?cs var:trac.href.wiki ?>/hulp">Hulp bij het gebruik van deze website</a>
+  </p>
+  <?cs if:error.traceback ?>
+   <h4>Python Traceback</h4>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/newticket.cs
+===================================================================
+--- templates.ori/newticket.cs (revision 306)
++++ templates/newticket.cs (revision 316)
+@@ -7,43 +7,43 @@
+ <div id="ctxtnav" class="nav"></div>
+ 
+ <div id="content" class="ticket">
+-<h1>Create New Ticket</h1>
++<h1>Nieuwe melding maken</h1>
+ <?cs include:"site_newticket.cs" ?>
+ <form id="newticket" method="post" action="<?cs
+   var:trac.href.newticket ?>#preview">
+  <?cs if:trac.authname == "anonymous" ?>
+   <div class="field">
+-   <label for="reporter">Your email or username:</label><br />
++   <label for="reporter">Je e-mailadres of gebruikersnaam:</label><br />
+    <input type="text" id="reporter" name="reporter" size="40" value="<?cs
+      var:newticket.reporter ?>" /><br />
+   </div>
+  <?cs /if ?>
+  <div class="field">
+-  <label for="summary">Short summary:</label><br />
++  <label for="summary">Korte samenvatting:</label><br />
+   <input id="summary" type="text" name="summary" size="80" value="<?cs
+     var:newticket.summary ?>"/>
+  </div><?cs
+  if:len(newticket.fields.type.options) ?>
+-  <div class="field"><label for="type">Type:</label> <?cs
++  <div class="field"><label for="type">Soort:</label> <?cs
+    call:hdf_select(newticket.fields.type.options, 'type',
+                    newticket.type, 0) ?>
+   </div><?cs
+  /if ?>
+  <div class="field">
+-  <label for="description">Full description (you may use <a tabindex="42" href="<?cs
+-    var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here):</label><br />
++  <label for="description">Volledige omschrijving (je mag <a tabindex="42" href="<?cs
++    var:$trac.href.wiki ?>/hulp/opmaak">Wiki-opmaak</a> gebruiken):</label><br />
+   <textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+ <?cs var:newticket.description ?></textarea><?cs
+   if:newticket.description_preview ?>
+    <fieldset id="preview">
+-    <legend>Description Preview</legend>
++    <legend>Voorbeeld van omschrijving</legend>
+     <?cs var:newticket.description_preview ?>
+    </fieldset><?cs
+   /if ?>
+  </div>
+ 
+  <fieldset id="properties">
+-  <legend>Ticket Properties</legend>
++  <legend>Eigenschappen van melding</legend>
+   <input type="hidden" name="action" value="create" />
+   <input type="hidden" name="status" value="new" />
+   <table><tr><?cs set:num_fields = 0 ?><?cs
+@@ -105,20 +105,20 @@
+  <?cs if newticket.can_attach ?><p>
+   <label><input type="checkbox" name="attachment"<?cs
+     if:newticket.attachment ?> checked="checked"<?cs /if ?> />
+-    I have files to attach to this ticket
++    Aan deze melding wil ik bestanden toevoegen
+   </label>
+  </p><?cs
+  /if ?>
+ 
+  <div class="buttons">
+-  <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
++  <input type="submit" name="preview" value="Voorbeeld" accesskey="r" />&nbsp;
+   <input type="submit" value="Submit ticket" />
+  </div>
+ </form>
+ 
+ <div id="help">
+- <strong>Note:</strong> See <a href="<?cs
+-   var:trac.href.wiki ?>/TracTickets">TracTickets</a> for help on using tickets.
++ <strong>Hulp:</strong> Zie <a href="<?cs
++   var:trac.href.wiki ?>/hulp/meldingen">Hulp bij meldingen</a> voor hulp over het gebruik van meldingen.
+ </div>
+ </div>
+ 
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/footer.cs
+===================================================================
+--- templates.ori/footer.cs (revision 306)
++++ templates/footer.cs (revision 316)
+@@ -1,6 +1,6 @@
+ <script type="text/javascript">searchHighlight()</script><?cs
+ if:len(chrome.links.alternate) ?>
+-<div id="altlinks"><h3>Download in other formats:</h3><ul><?cs
++<div id="altlinks"><h3>Download in andere formaten:</h3><ul><?cs
+  each:link = chrome.links.alternate ?><?cs
+   set:isfirst = name(link) == 0 ?><?cs
+   set:islast = name(link) == len(chrome.links.alternate) - 1?><li<?cs
+@@ -19,11 +19,11 @@
+  <hr />
+  <a id="tracpowered" href="http://trac.edgewall.org/"><img src="<?cs
+    var:htdocs_location ?>trac_logo_mini.png" height="30" width="107"
+-   alt="Trac Powered"/></a>
++   alt="Draait op trac"/></a>
+  <p class="left">
+-  Powered by <a href="<?cs var:trac.href.about ?>"><strong>Trac <?cs
++  Draait op <a href="<?cs var:trac.href.about ?>"><strong>Trac <?cs
+   var:trac.version ?></strong></a><br />
+-  By <a href="http://www.edgewall.org/">Edgewall Software</a>.
++  van <a href="http://www.edgewall.org/">Edgewall Software</a>.
+  </p>
+  <p class="right">
+   <?cs var:project.footer ?>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/milestone.cs
+===================================================================
+--- templates.ori/milestone.cs (revision 306)
++++ templates/milestone.cs (revision 316)
+@@ -5,13 +5,13 @@
+ 
+ <div id="content" class="milestone">
+  <?cs if:milestone.mode == "new" ?>
+- <h1>New Milestone</h1>
++ <h1>Nieuwe mijlpaal</h1>
+  <?cs elif:milestone.mode == "edit" ?>
+- <h1>Edit Milestone <?cs var:milestone.name ?></h1>
++ <h1>Bewerk mijlpaal <?cs var:milestone.name ?></h1>
+  <?cs elif:milestone.mode == "delete" ?>
+- <h1>Delete Milestone <?cs var:milestone.name ?></h1>
++ <h1>Verwijder mijlpaal <?cs var:milestone.name ?></h1>
+  <?cs else ?>
+- <h1>Milestone <?cs var:milestone.name ?></h1>
++ <h1>Mijlpaal <?cs var:milestone.name ?></h1>
+  <?cs /if ?>
+ 
+  <?cs if:milestone.mode == "edit" || milestone.mode == "new" ?>
+@@ -24,41 +24,41 @@
+    <input type="hidden" name="id" value="<?cs var:milestone.name ?>" />
+    <input type="hidden" name="action" value="edit" />
+    <div class="field">
+-    <label>Name of the milestone:<br />
++    <label>Naam van de mijlpaal:<br />
+     <input type="text" id="name" name="name" size="32" value="<?cs
+       var:milestone.name ?>" /></label>
+    </div>
+    <fieldset>
+-    <legend>Schedule</legend>
+-    <label>Due:<br />
++    <legend>Planning</legend>
++    <label>Datum gereed:<br />
+      <input type="text" id="duedate" name="duedate" size="<?cs
+        var:len(milestone.date_hint) ?>" value="<?cs
+-       var:milestone.due_date ?>" title="Format: <?cs var:milestone.date_hint ?>" />
+-     <em>Format: <?cs var:milestone.date_hint ?></em>
++       var:milestone.due_date ?>" title="Formaat: <?cs var:milestone.date_hint ?>" />
++     <em>Formaat: <?cs var:milestone.date_hint ?></em>
+     </label>
+     <div class="field">
+      <label>
+       <input type="checkbox" id="completed" name="completed"<?cs
+         if:milestone.completed ?> checked="checked"<?cs /if ?> />
+-      Completed:<br />
++      Gecompleteerd:<br />
+      </label>
+      <label>
+       <input type="text" id="completeddate" name="completeddate" size="<?cs
+         var:len(milestone.date_hint) ?>" value="<?cs
+         alt:milestone.completed_date ?><?cs
+          var:milestone.datetime_now ?><?cs
+-        /alt ?>" title="Format: <?cs
++        /alt ?>" title="Formaat: <?cs
+         var:milestone.datetime_hint ?>" />
+-      <em>Format: <?cs var:milestone.datetime_hint ?></em>
++      <em>Formaat: <?cs var:milestone.datetime_hint ?></em>
+      </label><?cs
+      if:len(milestones) ?>
+      <br/>
+      <input type="checkbox" id="retarget" name="retarget" checked="checked"
+             onclick="enableControl('target', this.checked)"/>
+      <label>
+-      Retarget associated open tickets to milestone
++      Herijk openstaande meldingen naar mijlpaal
+       <select id="target" name="target">
+-       <option value="">None</option><?cs
++       <option value="">Geen</option><?cs
+        each:name = milestones ?>
+        <option><?cs var:name ?></option><?cs
+        /each ?>
+@@ -80,19 +80,19 @@
+    </fieldset>
+    <div class="field">
+     <fieldset class="iefix">
+-     <label for="description">Description (you may use <a tabindex="42" href="<?cs
+-       var:trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here):</label>
++     <label for="description">Omschrijving (u kunt <a tabindex="42" href="<?cs
++       var:trac.href.wiki ?>/hulp/opmaak">Wiki opmaak</a> gebruiken):</label>
+      <p><textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+ <?cs var:milestone.description_source ?></textarea></p>
+     </fieldset>
+    </div>
+    <div class="buttons">
+     <?cs if:milestone.mode == "new"
+-     ?><input type="submit" value="Add milestone" /><?cs
++     ?><input type="submit" value="Mijlpaal toevoegen" /><?cs
+     else
+-     ?><input type="submit" value="Submit changes" /><?cs
++     ?><input type="submit" value="Veranderingen doorvoeren" /><?cs
+     /if ?>
+-    <input type="submit" name="cancel" value="Cancel" />
++    <input type="submit" name="cancel" value="Annuleren" />
+    </div>
+    <script type="text/javascript" src="<?cs
+      var:htdocs_location ?>js/wikitoolbar.js"></script>
+@@ -101,19 +101,19 @@
+   <form action="<?cs var:milestone.href ?>" method="post">
+    <input type="hidden" name="id" value="<?cs var:milestone.name ?>" />
+    <input type="hidden" name="action" value="delete" />
+-   <p><strong>Are you sure you want to delete this milestone?</strong></p>
++   <p><strong>Weet u zeker dat u deze mijlpaal wilt verwijderen?</strong></p>
+    <input type="checkbox" id="retarget" name="retarget" checked="checked"
+        onclick="enableControl('target', this.checked)"/>
+-   <label for="target">Retarget associated tickets to milestone</label>
++   <label for="target">Herijk gekoppelde meldingen naar mijlpaal</label>
+    <select name="target" id="target">
+-    <option value="">None</option><?cs
++    <option value="">Geen</option><?cs
+      each:other = milestones ?><?cs if:other != milestone.name ?>
+       <option><?cs var:other ?></option><?cs 
+      /if ?><?cs /each ?>
+    </select>
+    <div class="buttons">
+-    <input type="submit" name="cancel" value="Cancel" />
+-    <input type="submit" value="Delete milestone" />
++    <input type="submit" name="cancel" value="Annuleren" />
++    <input type="submit" value="Mijlpaal verwijderen" />
+    </div>
+   </form>
+  <?cs else ?>
+@@ -121,15 +121,15 @@
+   <div class="info">
+    <p class="date"><?cs
+     if:milestone.completed_date ?>
+-     Completed <?cs var:milestone.completed_delta ?> ago (<?cs var:milestone.completed_date ?>)<?cs
++     Gecompleteerd <?cs var:milestone.completed_delta ?> geleden (<?cs var:milestone.completed_date ?>)<?cs
+     elif:milestone.due_date ?><?cs
+      if:milestone.late ?>
+-      <strong><?cs var:milestone.due_delta ?> late</strong><?cs
++      <strong><?cs var:milestone.due_delta ?> te laat</strong><?cs
+      else ?>
+-      Due in <?cs var:milestone.due_delta ?><?cs
++      Gereed over <?cs var:milestone.due_delta ?><?cs
+      /if ?> (<?cs var:milestone.due_date ?>)<?cs
+     else ?>
+-     No date set<?cs
++     Geen datum ingesteld<?cs
+     /if ?>
+    </p><?cs
+    with:stats = milestone.stats ?><?cs
+@@ -140,24 +140,24 @@
+         var:#stats.percent_closed ?>%">
+         <a href="<?cs
+         var:milestone.queries.closed_tickets ?>" title="<?cs
+-        var:#stats.closed_tickets ?> of <?cs
+-        var:#stats.total_tickets ?> ticket<?cs
+-        if:#stats.total_tickets != #1 ?>s<?cs /if ?> closed"></a></td>
++        var:#stats.closed_tickets ?> van <?cs
++        var:#stats.total_tickets ?> melding<?cs
++        if:#stats.total_tickets != #1 ?>s<?cs /if ?> afgesloten"></a></td>
+       <td class="open" style="width: <?cs
+         var:#stats.percent_active ?>%">
+         <a href="<?cs
+         var:milestone.queries.active_tickets ?>" title="<?cs
+-        var:#stats.active_tickets ?> of <?cs
+-        var:#stats.total_tickets ?> ticket<?cs
+-        if:#stats.total_tickets != #1 ?>s<?cs /if ?> active"></a>
++        var:#stats.active_tickets ?> van <?cs
++        var:#stats.total_tickets ?> melding<?cs
++        if:#stats.total_tickets != #1 ?>s<?cs /if ?> openstaand"></a>
+       </tr>
+      </table>
+      <p class="percent"><?cs var:#stats.percent_closed ?>%</p>
+      <dl>
+-      <dt>Closed tickets:</dt>
++      <dt>Afgesloten meldingen:</dt>
+       <dd><a href="<?cs var:milestone.queries.closed_tickets ?>"><?cs
+         var:stats.closed_tickets ?></a></dd>
+-      <dt>Active tickets:</dt>
++      <dt>Openstaande meldingen:</dt>
+       <dd><a href="<?cs var:milestone.queries.active_tickets ?>"><?cs
+         var:stats.active_tickets ?></a></dd>
+      </dl><?cs
+@@ -167,16 +167,16 @@
+   <form id="stats" action="" method="get">
+    <fieldset>
+     <legend>
+-     <label for="by">Ticket status by</label>
++     <label for="by">Status van melding tonen op</label>
+      <select id="by" name="by" onchange="this.form.submit()"><?cs
+      each:group = milestone.stats.available_groups ?>
+       <option value="<?cs var:group.name ?>" <?cs
+         if:milestone.stats.grouped_by == group.name ?> selected="selected"<?cs
+         /if ?>><?cs var:group.label ?></option><?cs
+      /each ?></select>
+-     <noscript><input type="submit" value="Update" /></noscript>
++     <noscript><input type="submit" value="Bijwerken" /></noscript>
+     </legend>
+-    <table summary="Shows the milestone completion status grouped by <?cs
++    <table summary="Toon de voortgangsstatus van de mijlpaal gegroepeerd op <?cs
+       var:milestone.stats.grouped_by ?>"><?cs
+      each:group = milestone.stats.groups ?>
+       <tr>
+@@ -189,16 +189,16 @@
+           <td class="closed" style="width: <?cs
+             var:#group.percent_closed ?>%"><a href="<?cs
+             var:group.queries.closed_tickets ?>" title="<?cs
+-           var:group.closed_tickets ?> of <?cs
+-           var:group.total_tickets ?> ticket<?cs
+-           if:group.total_tickets != #1 ?>s<?cs /if ?> closed"></a>
++           var:group.closed_tickets ?> van <?cs
++           var:group.total_tickets ?> melding<?cs
++           if:group.total_tickets != #1 ?>s<?cs /if ?> afgesloten"></a>
+           </td>
+           <td class="open" style="width: <?cs
+             var:#group.percent_active ?>%"><a href="<?cs
+             var:group.queries.active_tickets ?>" title="<?cs
+-           var:group.active_tickets ?> of <?cs
+-           var:group.total_tickets ?> ticket<?cs
+-           if:group.total_tickets != 1 ?>s<?cs /if ?> active"></a>
++           var:group.active_tickets ?> van <?cs
++           var:group.total_tickets ?> melding<?cs
++           if:group.total_tickets != 1 ?>s<?cs /if ?> openstaand"></a>
+           </td>
+          </tr>
+         </table>
+@@ -219,7 +219,7 @@
+       if:milestone.id_param ?>
+        <input type="hidden" name="id" value="<?cs var:milestone.name ?>" /><?cs
+       /if ?>
+-      <input type="submit" value="Edit milestone info" accesskey="e" />
++      <input type="submit" value="Gegevens van mijlpaal bewerken" accesskey="e" />
+      </div></form><?cs
+     /if ?><?cs
+     if:trac.acl.MILESTONE_DELETE ?>
+@@ -228,7 +228,7 @@
+       if:milestone.id_param ?>
+        <input type="hidden" name="id" value="<?cs var:milestone.name ?>" /><?cs
+       /if ?>
+-      <input type="submit" value="Delete milestone" />
++      <input type="submit" value="Mijlpaal verwijderen" />
+      </div></form><?cs
+     /if ?>
+    </div><?cs
+@@ -236,8 +236,8 @@
+  /if ?>
+ 
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs
+-    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> for help on using the roadmap.
++  <strong>Opmerking:</strong> Zie <a href="<?cs
++    var:trac.href.wiki ?>/hulp/planning">Hulp bij planning</a> voor hulp bij het gebruik van de planning.
+  </div>
+ 
+ </div>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/settings.cs
+===================================================================
+--- templates.ori/settings.cs (revision 306)
++++ templates/settings.cs (revision 316)
+@@ -5,59 +5,59 @@
+ 
+ <div id="content" class="settings">
+ 
+- <h1>Settings and Session Management</h1>
++ <h1>Instellingen en sessiebeheer</h1>
+ 
+- <h2>User Settings</h2>
++ <h2>Gebruikersinstellingen</h2>
+  <p>
+- This page lets you customize and personalize your Trac settings. Session
+- settings are stored on the server and identified using  a 'Session Key'
+- stored in a browser cookie. The cookie lets Trac restore your settings.
++ Met deze pagina kun je deze website aanpassen en personaliseren. Instellingen 
++ voor de sessie worden opgeslagen op de server en kunnen teruggehaald worden met
++ een 'Sessiesleutel' die wordt opgeslagen als een cookie in je browser. 
+  </p>
+  <form method="post" action="">
+  <div>
+-  <h3>Personal Information</h3>
++  <h3>Persoonlijke informatie</h3>
+   <div>
+    <input type="hidden" name="action" value="save" />
+-   <label for="name">Name:</label>
++   <label for="name">Naam:</label>
+    <input type="text" id="name" name="name" class="textwidget" size="30"
+           value="<?cs var:settings.name ?>" />
+   </div>
+   <div>
+-   <label for="email">Email:</label>
++   <label for="email">E-mailadres:</label>
+    <input type="text" id="email" name="email" class="textwidget" size="30"
+           value="<?cs var:settings.email ?>" />
+   </div><?cs
+   if:settings.session_id ?>
+-   <h3>Session</h3>
++   <h3>Sessie</h3>
+    <div>
+-    <label for="newsid">Session Key:</label>
++    <label for="newsid">Sessiesleutel:</label>
+     <input type="text" id="newsid" name="newsid" class="textwidget" size="30"
+            value="<?cs var:settings.session_id ?>" />
+-    <p>The session key is used to identify stored  custom settings and session
+-    data on the server. Automatically generated by default, you may change it
+-    to something easier to remember at any time if you wish to use your settings
+-    in a different web browser.</p>
++    <p>De sessiesleutel wordt gebruikt om je gepersonaliseerde aanpassingen
++    op te zoeken op de server.</p>
++    <p>Je kunt de automatisch gegenereerde sleutel aanpassen
++    naar een makkkelijker te onthouden woord, zodat je je instellingen ook binnen
++    andere webbrowsers (en computers) kunt opvragen.</p>
+    </div><?cs
+   /if ?>
+   <div>
+    <br />
+-   <input type="submit" value="Submit changes" />
++   <input type="submit" value="Wijzigingen doorvoeren" />
+   </div >
+  </div>
+ </form><?cs
+ if:settings.session_id ?>
+  <hr />
+- <h2>Load Session</h2>
+- <p>You may load a previously created session by entering the corresponding
+- session key below and clicking 'Recover'. This lets you share settings between
+- multiple computers and/or web browsers.</p>
++ <h2>Sessie laden</h2>
++ <p>Je kunt een eerder gemaakte sessie openen door de overeenkomstige sessiesleutel 
++ in te voeren en te klikken op <code>Herstellen</code>.</p>
+  <form method="post" action="">
+   <div>
+    <input type="hidden" name="action" value="load" />
+-   <label for="loadsid">Existing Session Key:</label>
++   <label for="loadsid">Bestaande sessiesleutel:</label>
+    <input type="text" id="loadsid" name="loadsid" class="textwidget" size="30"
+           value="" />
+-   <input type="submit" value="Recover" />
++   <input type="submit" value="Herstellen" />
+   </div>
+  </form><?cs
+ /if ?>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/changeset.cs
+===================================================================
+--- templates.ori/changeset.cs (revision 306)
++++ templates/changeset.cs (revision 316)
+@@ -2,7 +2,7 @@
+ <?cs include "macros.cs"?>
+ 
+ <div id="ctxtnav" class="nav">
+- <h2>Navigation</h2><?cs
++ <h2>Navigatie</h2><?cs
+  with:links = chrome.links ?>
+   <ul><?cs
+    if:changeset.chgset ?><?cs
+@@ -14,21 +14,21 @@
+     <li class="first"><?cs
+      if:len(links.prev) ?> &larr; 
+       <a class="prev" href="<?cs var:links.prev.0.href ?>" title="<?cs
+-       var:links.prev.0.title ?>">Previous <?cs var:change ?></a> <?cs 
++       var:links.prev.0.title ?>">Vorige <?cs var:change ?></a> <?cs 
+      else ?>
+-      <span class="missing">&larr; Previous <?cs var:change ?></span><?cs 
++      <span class="missing">&larr; Vorige <?cs var:change ?></span><?cs 
+      /if ?>
+     </li>
+     <li class="last"><?cs
+      if:len(links.next) ?>
+       <a class="next" href="<?cs var:links.next.0.href ?>" title="<?cs
+-       var:links.next.0.title ?>">Next <?cs var:change ?></a> &rarr; <?cs 
++       var:links.next.0.title ?>">Volgende <?cs var:change ?></a> &rarr; <?cs 
+      else ?>
+-      <span class="missing">Next <?cs var:change ?> &rarr;</span><?cs
++      <span class="missing">Volgende <?cs var:change ?> &rarr;</span><?cs
+      /if ?>
+     </li><?cs
+    else ?>
+-    <li class="last"><a href="<?cs var:changeset.reverse_href ?>">Reverse Diff</a></li><?cs
++    <li class="last"><a href="<?cs var:changeset.reverse_href ?>">Omgekeerde Diff</a></li><?cs
+    /if ?>
+   </ul><?cs
+  /with ?>
+@@ -38,29 +38,29 @@
+  <div id="title"><?cs
+   if:changeset.chgset ?><?cs
+    if:changeset.restricted ?>
+-    <h1>Changeset <a title="Show full changeset" href="<?cs var:changeset.href.new_rev ?>">
++    <h1>Wijziging <a title="Show full changeset" href="<?cs var:changeset.href.new_rev ?>">
+       <?cs var:changeset.new_rev ?></a> 
+      for <a title="Show entry in browser" href="<?cs var:changeset.href.new_path ?>">
+       <?cs var:changeset.new_path ?></a> 
+     </h1><?cs
+    else ?>
+-    <h1>Changeset <?cs var:changeset.new_rev ?></h1><?cs
++    <h1>Wijziging <?cs var:changeset.new_rev ?></h1><?cs
+    /if ?><?cs
+   else ?><?cs
+     if:changeset.restricted ?>
+-    <h1>Changes in <a title="Show entry in browser" href="<?cs var:changeset.href.new_path ?>">
++    <h1>Wijzigingen in <a title="Toon in browser" href="<?cs var:changeset.href.new_path ?>">
+       <?cs var:changeset.new_path ?></a>
+-      <a title="Show revision log" href="<?cs var:changeset.href.log ?>">
++      <a title="Toon revisielog" href="<?cs var:changeset.href.log ?>">
+       [<?cs var:changeset.old_rev ?>:<?cs var:changeset.new_rev ?>]</a>
+     </h1><?cs
+    else ?>
+-    <h1>Changes from <a title="Show entry in browser" href="<?cs var:changeset.href.old_path ?>">
++    <h1>Wijzigingen van <a title="Toon in browser" href="<?cs var:changeset.href.old_path ?>">
+       <?cs var:changeset.old_path ?></a> 
+-     at <a title="Show full changeset" href="<?cs var:changeset.href.old_rev ?>">
++     in <a title="Show full changeset" href="<?cs var:changeset.href.old_rev ?>">
+       r<?cs var:changeset.old_rev ?></a>
+-     to <a title="Show entry in browser" href="<?cs var:changeset.href.new_path ?>">
++     tot <a title="Show entry in browser" href="<?cs var:changeset.href.new_path ?>">
+      <?cs var:changeset.new_path ?></a> 
+-     at <a title="Show full changeset" href="<?cs var:changeset.href.new_rev ?>">
++     in <a title="Show full changeset" href="<?cs var:changeset.href.new_rev ?>">
+      r<?cs var:changeset.new_rev ?></a>
+     </h1><?cs
+    /if ?><?cs
+@@ -81,7 +81,7 @@
+    <input type="hidden" name="old" value="<?cs var:changeset.old_rev ?>" />
+    <input type="hidden" name="new" value="<?cs var:changeset.new_rev ?>" /><?cs
+   /if ?>
+-  <label for="style">View differences</label>
++  <label for="style">Verschillen weergeven</label>
+   <select id="style" name="style">
+    <option value="inline"<?cs
+      if:diff.style == 'inline' ?> selected="selected"<?cs
+@@ -91,30 +91,30 @@
+      /if ?>>side by side</option>
+   </select>
+   <div class="field">
+-   Show <input type="text" name="contextlines" id="contextlines" size="2"
++   Toon <input type="text" name="contextlines" id="contextlines" size="2"
+      maxlength="3" value="<?cs var:diff.options.contextlines ?>" />
+-   <label for="contextlines">lines around each change</label>
++   <label for="contextlines">regels om elke wijziging</label>
+   </div>
+   <fieldset id="ignore">
+-   <legend>Ignore:</legend>
++   <legend>Negeer:</legend>
+    <div class="field">
+     <input type="checkbox" id="blanklines" name="ignoreblanklines"<?cs
+       if:diff.options.ignoreblanklines ?> checked="checked"<?cs /if ?> />
+-    <label for="blanklines">Blank lines</label>
++    <label for="blanklines">Lege regels</label>
+    </div>
+    <div class="field">
+     <input type="checkbox" id="case" name="ignorecase"<?cs
+       if:diff.options.ignorecase ?> checked="checked"<?cs /if ?> />
+-    <label for="case">Case changes</label>
++    <label for="case">Verandering van hoofd/kleine-letters</label>
+    </div>
+    <div class="field">
+     <input type="checkbox" id="whitespace" name="ignorewhitespace"<?cs
+       if:diff.options.ignorewhitespace ?> checked="checked"<?cs /if ?> />
+-    <label for="whitespace">White space changes</label>
++    <label for="whitespace">Veranderingen aan witruimte</label>
+    </div>
+   </fieldset>
+   <div class="buttons">
+-   <input type="submit" name="update" value="Update" />
++   <input type="submit" name="update" value="Bijwerken" />
+   </div>
+  </div>
+ </form><?cs /if ?>
+@@ -124,22 +124,22 @@
+   set:nprops = len(item.props) ?>
+   <div class="<?cs var:cl ?>"></div><?cs 
+   if:cl == "rem" ?>
+-   <a title="Show what was removed (rev. <?cs var:item.rev.old ?>)" href="<?cs
++   <a title="Laat zien wat verwijders werd (rev. <?cs var:item.rev.old ?>)" href="<?cs
+      var:item.browser_href.old ?>"><?cs var:item.path.old ?></a><?cs
+   else ?>
+-   <a title="Show entry in browser" href="<?cs
++   <a title="Toon in browser" href="<?cs
+      var:item.browser_href.new ?>"><?cs alt:item.path.new ?>(root)<?cs /alt?></a><?cs
+   /if ?>
+   <span class="comment">(<?cs var:kind ?>)</span><?cs
+   if:item.path.old && item.change == 'copy' || item.change == 'move' ?>
+-   <small><em>(<?cs var:kind ?> from <a href="<?cs
+-    var:item.browser_href.old ?>" title="Show original file (rev. <?cs
++   <small><em>(<?cs var:kind ?> van <a href="<?cs
++    var:item.browser_href.old ?>" title="Toon origineel bestand (rev. <?cs
+     var:item.rev.old ?>)"><?cs var:item.path.old ?></a>)</em></small><?cs
+   /if ?><?cs
+   if:item.diff_href ?>
+-    (<a href="<?cs var:item.diff_href ?>" title="Show differences">view diffs</a>)<?cs
++    (<a href="<?cs var:item.diff_href ?>" title="Toon verschillen">toon verschillen</a>)<?cs
+   elif:$ndiffs + $nprops > #0 ?>
+-    (<a href="#file<?cs var:name(item) ?>" title="Show differences"><?cs
++    (<a href="#file<?cs var:name(item) ?>" title="Toon verschillen"><?cs
+       if:$ndiffs > #0 ?><?cs var:ndiffs ?>&nbsp;diff<?cs if:$ndiffs > #1 ?>s<?cs /if ?><?cs 
+       /if ?><?cs
+       if:$ndiffs && $nprops ?>, <?cs /if ?><?cs 
+@@ -153,24 +153,24 @@
+ 
+ <dl id="overview"><?cs
+  if:changeset.chgset ?>
+- <dt class="property time">Timestamp:</dt>
++ <dt class="property time">Tijdsstempel:</dt>
+  <dd class="time"><?cs var:changeset.time ?> 
+-  (<?cs alt:changeset.age ?>less than one hour<?cs /alt ?> ago)</dd>
+- <dt class="property author">Author:</dt>
++  (<?cs alt:changeset.age ?>minder dan Ã©Ã©n uur<?cs /alt ?> ago)</dd>
++ <dt class="property author">Auteur:</dt>
+  <dd class="author"><?cs var:changeset.author ?></dd>
+  <?cs each:prop = changeset.properties ?>
+  <dt class="property <?cs var:prop.htmlclass ?>"><?cs var:prop.name ?>:</dt>
+  <dd class="<?cs var:prop.htmlclass ?>"><?cs var:prop.value ?></dd>
+  <?cs /each ?>
+- <dt class="property message">Message:</dt>
++ <dt class="property message">Opmerking:</dt>
+  <dd class="message" id="searchable"><?cs
+   alt:changeset.message ?>&nbsp;<?cs /alt ?></dd><?cs
+  /if ?>
+  <dt class="property files"><?cs 
+   if:len(changeset.changes) > #0 ?>
+-   Files:<?cs
++   Bestanden:<?cs
+   else ?>
+-   (No files)<?cs
++   (geen bestanden)<?cs
+   /if ?>
+  </dt>
+  <dd class="files">
+@@ -194,47 +194,47 @@
+ 
+ <div class="diff">
+  <div id="legend">
+-  <h3>Legend:</h3>
++  <h3>Legenda:</h3>
+   <dl>
+-   <dt class="unmod"></dt><dd>Unmodified</dd>
+-   <dt class="add"></dt><dd>Added</dd>
+-   <dt class="rem"></dt><dd>Removed</dd>
+-   <dt class="mod"></dt><dd>Modified</dd>
+-   <dt class="cp"></dt><dd>Copied</dd>
+-   <dt class="mv"></dt><dd>Moved</dd>
++   <dt class="unmod"></dt><dd>Niet gewijzigd</dd>
++   <dt class="add"></dt><dd>Toegevoegd</dd>
++   <dt class="rem"></dt><dd>Verwijderd</dd>
++   <dt class="mod"></dt><dd>Gewijzigd</dd>
++   <dt class="cp"></dt><dd>GekopiÃ«erd</dd>
++   <dt class="mv"></dt><dd>Verplaatst</dd>
+   </dl>
+  </div>
+  <ul class="entries"><?cs
+  each:item = changeset.changes ?><?cs
+   if:len(item.diff) || len(item.props) ?><li class="entry" id="file<?cs
+    var:name(item) ?>"><h2><a href="<?cs
+-   var:item.browser_href.new ?>" title="Show new revision <?cs
+-   var:item.rev.new ?> of this file in browser"><?cs
++   var:item.browser_href.new ?>" title="Toon nieuwe revisie <?cs
++   var:item.rev.new ?> van dit bestand in browser"><?cs
+    var:item.path.new ?></a></h2><?cs
+    if:len(item.props) ?><ul class="props"><?cs
+-    each:prop = item.props ?><li>Property <strong><?cs
++    each:prop = item.props ?><li>Eigenschap <strong><?cs
+      var:prop.name ?></strong> <?cs
+-     if:prop.old && prop.new ?>changed from <?cs
++     if:prop.old && prop.new ?>veranderd van <?cs
+      elif:!prop.old ?>set<?cs
+      else ?>deleted<?cs
+      /if ?><?cs
+      if:prop.old && prop.new ?><em><tt><?cs var:prop.old ?></tt></em><?cs /if ?><?cs
+-     if:prop.new ?> to <em><tt><?cs var:prop.new ?></tt></em><?cs /if ?></li><?cs
++     if:prop.new ?> naar <em><tt><?cs var:prop.new ?></tt></em><?cs /if ?></li><?cs
+     /each ?></ul><?cs
+    /if ?><?cs
+    if:len(item.diff) ?><table class="<?cs
+-    var:diff.style ?>" summary="Differences" cellspacing="0"><?cs
++    var:diff.style ?>" summary="Verschillen" cellspacing="0"><?cs
+     if:diff.style == 'sidebyside' ?>
+      <colgroup class="l"><col class="lineno" /><col class="content" /></colgroup>
+      <colgroup class="r"><col class="lineno" /><col class="content" /></colgroup>
+      <thead><tr>
+       <th colspan="2"><a href="<?cs
+-       var:item.browser_href.old ?>" title="Show old rev. <?cs
+-       var:item.rev.old ?> of <?cs var:item.path.old ?>">Revision <?cs
++       var:item.browser_href.old ?>" title="Toon oude revisie <?cs
++       var:item.rev.old ?> van <?cs var:item.path.old ?>">Revisie <?cs
+        var:item.rev.old ?></a></th>
+       <th colspan="2"><a href="<?cs
+-       var:item.browser_href.new ?>" title="Show new rev. <?cs
+-       var:item.rev.new ?> of <?cs var:item.path.new ?>">Revision <?cs
++       var:item.browser_href.new ?>" title="Toon nieuwe revisie <?cs
++       var:item.rev.new ?> of <?cs var:item.path.new ?>">Revisie <?cs
+        var:item.rev.new ?></a></th>
+       </tr>
+      </thead><?cs
+@@ -247,11 +247,11 @@
+     else ?>
+      <colgroup><col class="lineno" /><col class="lineno" /><col class="content" /></colgroup>
+      <thead><tr>
+-      <th title="Revision <?cs var:item.rev.old ?>"><a href="<?cs
+-       var:item.browser_href.old ?>" title="Show old version of <?cs
++      <th title="Revisie <?cs var:item.rev.old ?>"><a href="<?cs
++       var:item.browser_href.old ?>" title="Toon oude versie van <?cs
+        var:item.path.old ?>">r<?cs var:item.shortrev.old ?></a></th>
+       <th title="Revision <?cs var:item.rev.new ?>"><a href="<?cs
+-       var:item.browser_href.new ?>" title="Show new version of <?cs
++       var:item.browser_href.new ?>" title="Toon nieuwe versie van <?cs
+        var:item.path.new ?>">r<?cs var:item.shortrev.new ?></a></th>
+       <th>&nbsp;</th></tr>
+      </thead><?cs
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/wiki.cs
+===================================================================
+--- templates.ori/wiki.cs (revision 306)
++++ templates/wiki.cs (revision 316)
+@@ -2,33 +2,33 @@
+ <?cs include "macros.cs" ?>
+ 
+ <div id="ctxtnav" class="nav">
+- <h2>Wiki Navigation</h2>
++ <h2>Wiki navigatie</h2>
+  <ul><?cs
+   if:wiki.action == "diff" ?>
+    <li class="first"><?cs
+      if:len(chrome.links.prev) ?> &larr;
+       <a class="prev" href="<?cs var:chrome.links.prev.0.href ?>" title="<?cs
+-       var:chrome.links.prev.0.title ?>">Previous Change</a><?cs
++       var:chrome.links.prev.0.title ?>">Vorige wijziging</a><?cs
+      else ?>
+-      <span class="missing">&larr; Previous Change</span><?cs
++      <span class="missing">&larr; Vorige wijziging</span><?cs
+      /if ?>
+    </li>
+-   <li><a href="<?cs var:wiki.history_href ?>">Page History</a></li>
++   <li><a href="<?cs var:wiki.history_href ?>">Geschiedenis van pagina</a></li>
+    <li class="last"><?cs
+      if:len(chrome.links.next) ?>
+       <a class="next" href="<?cs var:chrome.links.next.0.href ?>" title="<?cs
+-       var:chrome.links.next.0.title ?>">Next Change</a> &rarr; <?cs
++       var:chrome.links.next.0.title ?>">Volgende wijziging</a> &rarr; <?cs
+      else ?>
+-      <span class="missing">Next Change &rarr;</span><?cs
++      <span class="missing">Volgende wijziging &rarr;</span><?cs
+      /if ?>
+    </li><?cs
+   elif:wiki.action == "history" ?>
+-   <li class="last"><a href="<?cs var:wiki.current_href ?>">View Latest Version</a></li><?cs
++   <li class="last"><a href="<?cs var:wiki.current_href ?>"></a></li><?cs
+   else ?>
+-   <li><a href="<?cs var:trac.href.wiki ?>">Start Page</a></li>
+-   <li><a href="<?cs var:trac.href.wiki ?>/TitleIndex">Index by Title</a></li>
+-   <li><a href="<?cs var:trac.href.wiki ?>/RecentChanges">Index by Date</a></li>
+-   <li class="last"><a href="<?cs var:wiki.last_change_href ?>">Last Change</a></li><?cs
++   <li><a href="<?cs var:trac.href.wiki ?>">Startpagina</a></li>
++   <li><a href="<?cs var:trac.href.wiki ?>/TitelIndex">Titelindex</a></li>
++   <li><a href="<?cs var:trac.href.wiki ?>/RecenteWijzigingen">Datumindex</a></li>
++   <li class="last"><a href="<?cs var:wiki.last_change_href ?>">Laatste wijziging</a></li><?cs
+   /if ?>
+  </ul>
+  <hr />
+@@ -39,25 +39,25 @@
+  <?cs if wiki.action == "delete" ?><?cs
+   if:wiki.version - wiki.old_version > 1 ?><?cs
+    set:first_version = wiki.old_version + 1 ?><?cs
+-   set:version_range = "versions "+first_version+" to "+wiki.version+" of " ?><?cs
+-   set:delete_what = "those versions" ?><?cs
++   set:version_range = "versies "+first_version+" tot "+wiki.version+" van " ?><?cs
++   set:delete_what = "deze versies" ?><?cs
+   elif:wiki.version ?><?cs
+-   set:version_range = "version "+wiki.version+" of " ?><?cs
+-   set:delete_what = "this version" ?><?cs
++   set:version_range = "versie "+wiki.version+" van " ?><?cs
++   set:delete_what = "deze versie" ?><?cs
+   else ?><?cs
+    set:version_range = "" ?><?cs
+-   set:delete_what = "page" ?><?cs
++   set:delete_what = "pagina" ?><?cs
+   /if ?>
+-  <h1>Delete <?cs var:version_range ?><a href="<?cs
++  <h1>Verwijder <?cs var:version_range ?><a href="<?cs
+     var:wiki.current_href ?>"><?cs var:wiki.page_name ?></a></h1>
+   <form action="<?cs var:wiki.current_href ?>" method="post">
+    <input type="hidden" name="action" value="delete" />
+-   <p><strong>Are you sure you want to <?cs
+-    if:!?wiki.version ?>completely <?cs
+-    /if ?>delete <?cs var:version_range ?>this page?</strong><br /><?cs
++   <p><strong>Weet u zeker dat u deze pagina<?cs
++    if:!?wiki.version ?>volledig <?cs
++    /if ?><?cs var:version_range ?>wilt verwijderen?</strong><br /><?cs
+    if:wiki.only_version ?>
+-    This is the only version the page, so the page will be removed
+-    completely!<?cs
++    Dit is de enige versie van de pagina, het verwijderen er van zal 
++    de complete pagina verwijderen!<?cs
+    /if ?><?cs
+    if:?wiki.version ?>
+     <input type="hidden" name="version" value="<?cs var:wiki.version ?>" /><?cs
+@@ -65,112 +65,112 @@
+    if:wiki.old_version ?>
+     <input type="hidden" name="old_version" value="<?cs var:wiki.old_version ?>" /><?cs
+    /if ?>
+-   This is an irreversible operation.</p>
++   Dit is een actie die niet ongedaan gemaakt kan worden.</p>
+    <div class="buttons">
+-    <input type="submit" name="cancel" value="Cancel" />
+-    <input type="submit" value="Delete <?cs var:delete_what ?>" />
++    <input type="submit" name="cancel" value="Annuleren" />
++    <input type="submit" value="Verwijder <?cs var:delete_what ?>" />
+    </div>
+   </form>
+ 
+  <?cs elif:wiki.action == "diff" ?>
+-  <h1>Changes <?cs
+-    if:wiki.old_version ?>between
+-     <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.old_version?>">Version <?cs var:wiki.old_version?></a> and <?cs
+-    else ?>from <?cs
++  <h1>Verschillen <?cs
++    if:wiki.old_version ?>tussen
++     <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.old_version?>">versie <?cs var:wiki.old_version?></a> en <?cs
++    else ?>van <?cs
+     /if ?>
+-    <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.version?>">Version <?cs var:wiki.version?></a> of
++    <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.version?>">versie <?cs var:wiki.version?></a> van
+     <a href="<?cs var:wiki.current_href ?>"><?cs var:wiki.page_name ?></a></h1>
+   <form method="post" id="prefs" action="<?cs var:wiki.current_href ?>">
+    <div>
+     <input type="hidden" name="action" value="diff" />
+     <input type="hidden" name="version" value="<?cs var:wiki.version ?>" />
+     <input type="hidden" name="old_version" value="<?cs var:wiki.old_version ?>" />
+-    <label>View differences <select name="style">
++    <label>Toon verschillen <select name="style">
+      <option value="inline"<?cs
+        if:diff.style == 'inline' ?> selected="selected"<?cs
+-       /if ?>>inline</option>
++       /if ?>>per regel</option>
+      <option value="sidebyside"<?cs
+        if:diff.style == 'sidebyside' ?> selected="selected"<?cs
+-       /if ?>>side by side</option>
++       /if ?>>naast elkaar</option>
+     </select></label>
+     <div class="field">
+-     Show <input type="text" name="contextlines" id="contextlines" size="2"
++     Toon <input type="text" name="contextlines" id="contextlines" size="2"
+        maxlength="3" value="<?cs var:diff.options.contextlines ?>" />
+-     <label for="contextlines">lines around each change</label>
++     <label for="contextlines">regels om elke wijziging</label>
+     </div>
+     <fieldset id="ignore">
+-     <legend>Ignore:</legend>
++     <legend>Negeer verschillen in:</legend>
+      <div class="field">
+       <input type="checkbox" id="blanklines" name="ignoreblanklines"<?cs
+         if:diff.options.ignoreblanklines ?> checked="checked"<?cs /if ?> />
+-      <label for="blanklines">Blank lines</label>
++      <label for="blanklines">lege regels</label>
+      </div>
+      <div class="field">
+       <input type="checkbox" id="case" name="ignorecase"<?cs
+         if:diff.options.ignorecase ?> checked="checked"<?cs /if ?> />
+-      <label for="case">Case changes</label>
++      <label for="case">hoofd/kleine letters</label>
+      </div>
+      <div class="field">
+       <input type="checkbox" id="whitespace" name="ignorewhitespace"<?cs
+         if:diff.options.ignorewhitespace ?> checked="checked"<?cs /if ?> />
+-      <label for="whitespace">White space changes</label>
++      <label for="whitespace">witruimte</label>
+      </div>
+     </fieldset>
+     <div class="buttons">
+-     <input type="submit" name="update" value="Update" />
++     <input type="submit" name="update" value="Bijwerken" />
+     </div>
+    </div>
+   </form>
+   <dl id="overview">
+-   <dt class="property author">Author:</dt>
++   <dt class="property author">Auteur:</dt>
+    <dd class="author"><?cs
+-    if:wiki.num_changes > 1 ?><em class="multi">(multiple changes)</em><?cs
+-    else ?><?cs var:wiki.author ?> <span class="ipnr">(IP: <?cs
++    if:wiki.num_changes > 1 ?><em class="multi">(meerdere wijzigingen)</em><?cs
++    else ?><?cs var:wiki.author ?> <span class="ipnr">(IP-adres: <?cs
+      var:wiki.ipnr ?>)</span><?cs
+     /if ?></dd>
+-   <dt class="property time">Timestamp:</dt>
++   <dt class="property time">Tijdsstempel:</dt>
+    <dd class="time"><?cs
+-    if:wiki.num_changes > 1 ?><em class="multi">(multiple changes)</em><?cs
+-    elif:wiki.time ?><?cs var:wiki.time ?> (<?cs var:wiki.time_delta ?> ago)<?cs
++    if:wiki.num_changes > 1 ?><em class="multi">(meerdere wijzigingen)</em><?cs
++    elif:wiki.time ?><?cs var:wiki.time ?> (<?cs var:wiki.time_delta ?> geleden)<?cs
+     else ?>--<?cs
+     /if ?></dd>
+-   <dt class="property message">Comment:</dt>
++   <dt class="property message">Opmerking:</dt>
+    <dd class="message"><?cs
+-    if:wiki.num_changes > 1 ?><em class="multi">(multiple changes)</em><?cs
++    if:wiki.num_changes > 1 ?><em class="multi">(meerdere wijzigingen)</em><?cs
+     else ?><?cs var:wiki.comment ?><?cs /if ?></dd>
+   </dl>
+   <div class="diff">
+    <div id="legend">
+-    <h3>Legend:</h3>
++    <h3>Legenda:</h3>
+     <dl>
+-     <dt class="unmod"></dt><dd>Unmodified</dd>
+-     <dt class="add"></dt><dd>Added</dd>
+-     <dt class="rem"></dt><dd>Removed</dd>
+-     <dt class="mod"></dt><dd>Modified</dd>
++     <dt class="unmod"></dt><dd>Niet gewijzigd</dd>
++     <dt class="add"></dt><dd>Toegevoegd</dd>
++     <dt class="rem"></dt><dd>Verwijderd</dd>
++     <dt class="mod"></dt><dd>Gewijzigd</dd>
+     </dl>
+    </div>
+    <ul class="entries">
+     <li class="entry">
+      <h2><?cs var:wiki.page_name ?></h2><?cs
+       if:diff.style == 'sidebyside' ?>
+-      <table class="sidebyside" summary="Differences">
++      <table class="sidebyside" summary="Verschillen">
+        <colgroup class="l"><col class="lineno" /><col class="content" /></colgroup>
+        <colgroup class="r"><col class="lineno" /><col class="content" /></colgroup>
+        <thead><tr>
+-        <th colspan="2">Version <?cs var:wiki.old_version ?></th>
+-        <th colspan="2">Version <?cs var:wiki.version ?></th>
++        <th colspan="2">Versie <?cs var:wiki.old_version ?></th>
++        <th colspan="2">Versie <?cs var:wiki.version ?></th>
+        </tr></thead><?cs
+        each:change = wiki.diff ?><?cs
+         call:diff_display(change, diff.style) ?><?cs
+        /each ?>
+       </table><?cs
+      else ?>
+-      <table class="inline" summary="Differences">
++      <table class="inline" summary="Verschillen">
+        <colgroup><col class="lineno" /><col class="lineno" /><col class="content" /></colgroup>
+        <thead><tr>
+-        <th title="Version <?cs var:wiki.old_version ?>">v<?cs
++        <th title="Versie <?cs var:wiki.old_version ?>">v<?cs
+           alt:wiki.old_version ?>0<?cs /alt ?></th>
+-        <th title="Version <?cs var:wiki.version ?>">v<?cs
++        <th title="Versie <?cs var:wiki.version ?>">v<?cs
+           var:wiki.version ?></th>
+         <th>&nbsp;</th>
+        </tr></thead><?cs
+@@ -187,29 +187,29 @@
+      <input type="hidden" name="action" value="delete" />
+      <input type="hidden" name="version" value="<?cs var:wiki.version ?>" />
+      <input type="hidden" name="old_version" value="<?cs var:wiki.old_version ?>" />
+-     <input type="submit" name="delete_version" value="Delete <?cs
+-     if:wiki.version - wiki.old_version > 1 ?> version <?cs
+-      var:wiki.old_version+1 ?> to <?cs
+-     /if ?>version <?cs var:wiki.version ?>" />
++     <input type="submit" name="delete_version" value="Verwijder <?cs
++     if:wiki.version - wiki.old_version > 1 ?> versie <?cs
++      var:wiki.old_version+1 ?> tot <?cs
++     /if ?>versie <?cs var:wiki.version ?>" />
+     </form><?cs
+    /if ?>
+   </div>
+ 
+  <?cs elif wiki.action == "history" ?>
+-  <h1>Change History of <a href="<?cs var:wiki.current_href ?>"><?cs
++  <h1>Wijzigingshistorie van <a href="<?cs var:wiki.current_href ?>"><?cs
+     var:wiki.page_name ?></a></h1>
+   <?cs if:len(wiki.history) ?><form class="printableform" method="get" action="">
+    <input type="hidden" name="action" value="diff" />
+    <div class="buttons">
+-    <input type="submit" value="View changes" />
+-   </div>
+-   <table id="wikihist" class="listing" summary="Change history">
++    <input type="submit" value="Toon wijzigingen" />
++   </div>
++   <table id="wikihist" class="listing" summary="Wijzigingshistorie">
+     <thead><tr>
+      <th class="diff"></th>
+-     <th class="version">Version</th>
+-     <th class="date">Date</th>
+-     <th class="author">Author</th>
+-     <th class="comment">Comment</th>
++     <th class="version">Versie</th>
++     <th class="date">Datum</th>
++     <th class="author">Auteur</th>
++     <th class="comment">Opmerking</th>
+     </tr></thead>
+     <tbody><?cs each:item = wiki.history ?>
+      <tr class="<?cs if:name(item) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
+@@ -221,10 +221,10 @@
+         if:name(item) == 0 ?> checked="checked"<?cs
+         /if ?> /></td>
+       <td class="version"><a href="<?cs
+-        var:item.url ?>" title="View this version"><?cs
++        var:item.url ?>" title="Toon deze versie"><?cs
+         var:item.version ?></a></td>
+       <td class="date"><?cs var:item.time ?></td>
+-      <td class="author" title="IP-Address: <?cs var:item.ipaddr ?>"><?cs
++      <td class="author" title="IP-adress: <?cs var:item.ipaddr ?>"><?cs
+         var:item.author ?></td>
+       <td class="comment"><?cs var:item.comment ?></td>
+      </tr>
+@@ -232,30 +232,30 @@
+    </table><?cs
+    if:len(wiki.history) > #10 ?>
+     <div class="buttons">
+-     <input type="submit" value="View changes" />
++     <input type="submit" value="Toon wijzigingen" />
+     </div><?cs
+    /if ?>
+   </form><?cs /if ?>
+ 
+  <?cs else ?>
+   <?cs if wiki.action == "edit" || wiki.action == "preview" || wiki.action == "collision" ?>
+-   <h1>Editing "<?cs var:wiki.page_name ?>"</h1><?cs
++   <h1>Bewerken van "<?cs var:wiki.page_name ?>"</h1><?cs
+     if wiki.action == "preview" ?>
+-     <table id="info" summary="Revision info"><tbody><tr>
++     <table id="info" summary="Revisie info"><tbody><tr>
+        <th scope="col">
+-        Preview of future version <?cs var:$wiki.version+1 ?> (modified by <?cs var:wiki.author ?>)
++        Voorbeeld van toekomstige versie <?cs var:$wiki.version+1 ?> (gewijzigd door <?cs var:wiki.author ?>)
+        </th></tr><tr>
+        <td class="message"><?cs var:wiki.comment_html ?></td>
+       </tr>
+      </tbody></table>
+      <fieldset id="preview">
+-      <legend>Preview (<a href="#edit">skip</a>)</legend>
++      <legend>Voorbeeld (<a href="#edit">skip</a>)</legend>
+         <div class="wikipage"><?cs var:wiki.page_html ?></div>
+      </fieldset><?cs
+      elif wiki.action =="collision"?>
+      <div class="system-message">
+-       Sorry, this page has been modified by somebody else since you started
+-       editing. Your changes cannot be saved.
++       Sorry, deze pagina is gewijzigd door een andere gebruiker nadat u begon
++       met bewerken. Uw wijzigingen kunnen niet opgeslagen worden.
+      </div><?cs
+     /if ?>
+    <form id="edit" action="<?cs var:wiki.current_href ?>" method="post">
+@@ -265,7 +265,7 @@
+      <input type="hidden" id="scroll_bar_pos" name="scroll_bar_pos" value="<?cs
+        var:wiki.scroll_bar_pos ?>" />
+      <div id="rows">
+-      <label for="editrows">Adjust edit area height:</label>
++      <label for="editrows">Hoogte van bewerkgebied aanpassen:</label>
+       <select size="1" name="editrows" id="editrows" tabindex="43"
+         onchange="resizeTextArea('text', this.options[selectedIndex].value)"><?cs
+        loop:rows = 8, 42, 4 ?>
+@@ -288,21 +288,21 @@
+      </script>
+     </fieldset>
+     <div id="help">
+-     <b>Note:</b> See <a href="<?cs var:$trac.href.wiki
+-?>/WikiFormatting">WikiFormatting</a> and <a href="<?cs var:$trac.href.wiki
+-?>/TracWiki">TracWiki</a> for help on editing wiki content.
++     <b>Opmerking:</b> zie <a href="<?cs var:$trac.href.wiki
++?>/hulp/opmaak">hulp/opmaak</a> en <a href="<?cs var:$trac.href.wiki
++?>/hulp/wiki">hulp/wiki</a> voor hulp bij het bewerken van wiki-pagina's.
+     </div>
+     <fieldset id="changeinfo">
+-     <legend>Change information</legend>
++     <legend>Informatie over veranderingen</legend>
+      <?cs if:trac.authname == "anonymous" ?>
+       <div class="field">
+-       <label>Your email or username:<br />
++       <label>Uw e-mailadres of gebruikersnaam:<br />
+        <input id="author" type="text" name="author" size="30" value="<?cs
+          var:wiki.author ?>" /></label>
+       </div>
+      <?cs /if ?>
+      <div class="field">
+-      <label>Comment about this change (optional):<br />
++      <label>Opmerking over deze verandering (optioneel):<br />
+       <input id="comment" type="text" name="comment" size="60" value="<?cs
+         var:wiki.comment?>" /></label>
+      </div><br />
+@@ -310,19 +310,19 @@
+       <div class="options">
+        <label><input type="checkbox" name="readonly" id="readonly" <?cs
+          if wiki.readonly == "1"?>checked="checked"<?cs /if ?> />
+-       Page is read-only</label>
++       Pagina is alleen-lezen</label>
+       </div>
+      <?cs /if ?>
+     </fieldset>
+     <div class="buttons"><?cs
+      if wiki.action == "collision" ?>
+-      <input type="submit" name="preview" value="Preview" disabled="disabled" />&nbsp;
+-      <input type="submit" name="save" value="Submit changes" disabled="disabled" />&nbsp;
++      <input type="submit" name="preview" value="Voorbeeld" disabled="disabled" />&nbsp;
++      <input type="submit" name="save" value="Veranderingen doorvoeren" disabled="disabled" />&nbsp;
+      <?cs else ?>
+-      <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+-      <input type="submit" name="save" value="Submit changes" />&nbsp;
++      <input type="submit" name="preview" value="Voorbeeld" accesskey="r" />&nbsp;
++      <input type="submit" name="save" value="Veranderingen doorvoeren" />&nbsp;
+      <?cs /if ?>
+-     <input type="submit" name="cancel" value="Cancel" />
++     <input type="submit" name="cancel" value="Annuleren" />
+     </div>
+     <script type="text/javascript" src="<?cs
+       var:htdocs_location ?>js/wikitoolbar.js"></script>
+@@ -330,9 +330,9 @@
+   <?cs /if ?>
+   <?cs if wiki.action == "view" ?>
+    <?cs if:wiki.comment_html ?>
+-    <table id="info" summary="Revision info"><tbody><tr>
++    <table id="info" summary="Revisie-informatie"><tbody><tr>
+       <th scope="col">
+-       Version <?cs var:wiki.version ?> (modified by <?cs var:wiki.author ?>, <?cs var:wiki.age ?> ago)
++       Versie <?cs var:wiki.version ?> (gewijzigd door <?cs var:wiki.author ?>, <?cs var:wiki.age ?> geleden)
+       </th></tr><tr>
+       <td class="message"><?cs var:wiki.comment_html ?></td>
+      </tr>
+@@ -342,13 +342,13 @@
+     <div id="searchable"><?cs var:wiki.page_html ?></div>
+    </div>
+    <?cs if:len(wiki.attachments) ?>
+-    <h3 id="tkt-changes-hdr">Attachments</h3>
++    <h3 id="tkt-changes-hdr">Bijlagen</h3>
+     <ul class="tkt-chg-list"><?cs
+      each:attachment = wiki.attachments ?><li class="tkt-chg-change"><a href="<?cs
+       var:attachment.href ?>"><?cs
+       var:attachment.filename ?></a> (<?cs var:attachment.size ?>) -<?cs
+       if:attachment.description ?><q><?cs var:attachment.description ?></q>,<?cs
+-      /if ?> added by <?cs var:attachment.author ?> on <?cs
++      /if ?> toegevoegd door <?cs var:attachment.author ?> op <?cs
+       var:attachment.time ?>.</li><?cs
+      /each ?>
+     </ul>
+@@ -359,13 +359,13 @@
+     if:trac.acl.WIKI_MODIFY ?>
+      <form method="get" action="<?cs var:wiki.current_href ?>"><div>
+       <input type="hidden" name="action" value="edit" />
+-      <input type="submit" value="<?cs if:wiki.exists ?>Edit<?cs
+-        else ?>Create<?cs /if ?> this page" accesskey="e" />
++      <input type="submit" value="<?cs if:wiki.exists ?>Bewerk<?cs
++        else ?>Maak<?cs /if ?> deze pagina" accesskey="e" />
+      </div></form><?cs
+      if:wiki.exists ?>
+       <form method="get" action="<?cs var:wiki.attach_href ?>"><div>
+        <input type="hidden" name="action" value="new" />
+-       <input type="submit" value="Attach file" />
++       <input type="submit" value="Bijlage toevoegen" />
+       </div></form><?cs
+      /if ?><?cs
+     /if ?><?cs
+@@ -374,15 +374,15 @@
+       <input type="hidden" name="action" value="delete" />
+       <input type="hidden" name="version" value="<?cs var:wiki.version ?>" /><?cs
+       if:wiki.version == wiki.latest_version ?>
+-       <input type="submit" name="delete_version" value="Delete this version" /><?cs
++       <input type="submit" name="delete_version" value="Verwijder deze versie" /><?cs
+       /if ?>
+-      <input type="submit" value="Delete page" />
++      <input type="submit" value="Verwijder pagina" />
+      </div></form>
+     <?cs /if ?>
+    </div>
+   <?cs /if ?>
+   <script type="text/javascript">
+-   addHeadingLinks(document.getElementById("searchable"), "Link to this section");
++   addHeadingLinks(document.getElementById("searchable"), "Maak snelkoppeling naar dit onderdeel");
+   </script>
+  <?cs /if ?>
+  <?cs /if ?>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/query.cs
+===================================================================
+--- templates.ori/query.cs (revision 306)
++++ templates/query.cs (revision 316)
+@@ -4,13 +4,13 @@
+ <div id="ctxtnav" class="nav"><?cs
+  if:query.report_href ?><ul>
+   <li class="first"><a href="<?cs
+-    var:query.report_href ?>">Available Reports</a></li>
+-  <li class="last">Custom Query</li></ul><?cs
++    var:query.report_href ?>">Beschikbare rapporten</a></li>
++  <li class="last">Aangepaste zoekopdracht</li></ul><?cs
+  /if ?>
+ </div>
+ 
+ <?cs def:num_matches(v) ?><span class="numrows">(<?cs 
+- alt:v ?>No<?cs /alt ?> match<?cs if:v != 1 ?>es<?cs /if ?>)</span><?cs
++ alt:v ?>Geen<?cs /alt ?> resultaat<?cs if:v != 1 ?><?cs /if ?>)</span><?cs
+ /def ?>
+ 
+ <div id="content" class="query">
+@@ -61,7 +61,7 @@
+           <td class="actions"><input type="submit" name="rm_filter_<?cs
+              var:name(field) ?>_<?cs var:name(value) ?>" value="-" /></td>
+          </tr><tr class="<?cs var:name(field) ?>">
+-          <th colspan="2"><label>or</label></th>
++          <th colspan="2"><label>of</label></th>
+           <td class="filter"><?cs
+          /if ?><?cs
+         /each ?><?cs
+@@ -71,7 +71,7 @@
+            var:option ?>" name="<?cs var:name(field) ?>" value="<?cs
+            var:option ?>"<?cs call:checkbox_checked(constraint, option) ?> />
+          <label for="<?cs var:name(field) ?>_<?cs var:option ?>"><?cs
+-           alt:option ?>none<?cs /alt ?></label><?cs
++           alt:option ?>geen<?cs /alt ?></label><?cs
+         /each ?><?cs
+        elif:field.type == "checkbox" ?>
+         <input type="radio" id="<?cs var:name(field) ?>_on" name="<?cs
+@@ -91,7 +91,7 @@
+           <td class="actions"><input type="submit" name="rm_filter_<?cs
+              var:name(field) ?>_<?cs var:name(value) ?>" value="-" /></td>
+          </tr><tr class="<?cs var:name(field) ?>">
+-          <th colspan="2"><label>or</label></th>
++          <th colspan="2"><label>of</label></th>
+           <td class="filter"><?cs
+          /if ?><?cs
+         /each ?><?cs
+@@ -107,7 +107,7 @@
+    /each ?>
+    <tbody><tr class="actions">
+     <td class="actions" colspan="4" style="text-align: right">
+-     <label for="add_filter">Add filter</label>&nbsp;
++     <label for="add_filter">Filter toevoegen</label>&nbsp;
+      <select name="add_filter" id="add_filter">
+       <option></option><?cs
+       each:field = query.fields ?>
+@@ -124,7 +124,7 @@
+   </table>
+  </fieldset>
+  <p class="option">
+-  <label for="group">Group results by</label>
++  <label for="group">Groepeer resulaten op</label>
+   <select name="group" id="group">
+    <option></option><?cs
+    each:field = query.fields ?><?cs
+@@ -151,12 +151,12 @@
+  <p class="option">
+   <input type="checkbox" name="verbose" id="verbose"<?cs
+     if:query.verbose ?> checked="checked"<?cs /if ?> />
+-  <label for="verbose">Show full description under each result</label>
++  <label for="verbose">Toon volledige omschrijving onder elk resultaat</label>
+  </p>
+  <div class="buttons">
+   <input type="hidden" name="order" value="<?cs var:query.order ?>" />
+   <?cs if:query.desc ?><input type="hidden" name="desc" value="1" /><?cs /if ?>
+-  <input type="submit" name="update" value="Update" />
++  <input type="submit" name="update" value="Bijwerken" />
+  </div>
+  <hr />
+ </form>
+@@ -182,8 +182,8 @@
+  <thead><tr><?cs each:header = query.headers ?>
+   <th class="<?cs var:header.name ?><?cs if:query.order == header.name ?> <?cs
+     if:query.desc ?>desc<?cs else ?>asc<?cs /if ?><?cs /if ?>">
+-   <a title="Sort by <?cs var:header.label ?><?cs
+-     if:query.order == header.name && !query.desc ?> (descending)<?cs
++   <a title="Sorteer op <?cs var:header.label ?><?cs
++     if:query.order == header.name && !query.desc ?> (aflopend)<?cs
+      /if ?>" href="<?cs var:header.href ?>"><?cs var:header.label ?></a>
+   </th><?cs
+  /each ?></tr></thead>
+@@ -214,10 +214,10 @@
+    if:result.removed ?> removed<?cs /if ?>"><?cs
+   each:header = query.headers ?><?cs
+    if:name(header) == 0 ?><td class="id"><a href="<?cs
+-    var:result.href ?>" title="View ticket"><?cs var:result.id ?></a></td><?cs
++    var:result.href ?>" title="Toon melding"><?cs var:result.id ?></a></td><?cs
+    else ?><td class="<?cs var:header.name ?>"><?cs
+      if:header.name == 'summary' ?><a href="<?cs
+-      var:result.href ?>" title="View ticket"><?cs
++      var:result.href ?>" title="Toon melding"><?cs
+       var:result.summary ?></a><?cs
+      else ?><span><?cs var:result[header.name] ?></span><?cs
+      /if ?></td><?cs
+@@ -225,7 +225,7 @@
+   /each ?>
+   <?cs if:query.verbose ?>
+    </tr><tr class="fullrow"><td colspan="<?cs var:len(query.headers) ?>">
+-    <p class="meta">Reported by <strong><?cs var:result.reporter ?></strong>,
++    <p class="meta">Gerapporteerd door <strong><?cs var:result.reporter ?></strong>,
+     <?cs var:result.time ?><?cs if:result.description ?>:<?cs /if ?></p>
+     <?cs if:result.description ?><p><?cs var:result.description ?></p><?cs /if ?>
+    </td>
+@@ -235,8 +235,7 @@
+ /if ?>
+ 
+ <div id="help">
+- <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki ?>/TracQuery">TracQuery</a> 
+- for help on using queries.
++ <strong>Opmerking:</strong> Zie <a href="<?cs var:trac.href.wiki ?>/hulp/query">Hulp voor aangepaste zoekopdracht</a>.
+ </div>
+ 
+ </div>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/search.cs
+===================================================================
+--- templates.ori/search.cs (revision 306)
++++ templates/search.cs (revision 316)
+@@ -1,18 +1,18 @@
+ <?cs include:"header.cs"?>
+-<script type="text/javascript">
++\<script type="text/javascript">
+ addEvent(window, 'load', function() { document.getElementById('q').focus()}); 
+ </script>
+ <div id="ctxtnav" class="nav"><?cs
+  with:links = chrome.links ?><?cs
+   if:len(links.prev) || len(links.next) ?><ul><?cs
+    if:len(links.prev) ?>
+-    <li class="first<?cs if:!len(links.up) && !len(links.next) ?> last<?cs /if ?>">
++    <li class="first<?cs if:!len(links.up) && !len(links.next) ?> laatste<?cs /if ?>">
+      &larr; <a href="<?cs var:links.prev.0.href ?>"><?cs
+        var:links.prev.0.title ?></a>
+     </li><?cs
+    /if ?><?cs
+    if:len(links.next) ?>
+-    <li class="<?cs if:!len(links.prev) && !len(links.up) ?>first <?cs /if ?>last">
++    <li class="<?cs if:!len(links.prev) && !len(links.up) ?>eerste <?cs /if ?>laatste">
+      <a href="<?cs var:links.next.0.href ?>"><?cs
+        var:links.next.0.title ?></a> &rarr;
+     </li><?cs
+@@ -23,12 +23,13 @@
+ 
+ <div id="content" class="search">
+ 
+-<h1><label for="q">Search</label></h1>
++<h1><label for="q">Zoeken</label></h1>
++<p>Geef ÃÂ©ÃÂ©n of meerdere woorden in, selecteer eventueel naar welke onderdelen je wilt zoeken en druk op <em>Zoeken</em>.</p>
+ <form action="<?cs var:trac.href.search ?>" method="get">
+  <p>
+   <input type="text" id="q" name="q" size="40" value="<?cs var:search.q ?>" />
+   <input type="hidden" name="noquickjump" value="1" />
+-  <input type="submit" value="Search" />
++  <input type="submit" value="Zoeken" />
+  </p>
+  <p><?cs
+   each filter=search.filters ?>
+@@ -43,7 +44,7 @@
+ if:len(search.result) || len(search.quickjump) ?>
+  <hr /><?cs
+  if:len(search.result) ?>
+- <h2>Search results <?cs
++ <h2>Zoek resultaten <?cs
+   if:search.n_pages > 1 ?>(<?cs
+    var:(search.page-1) * search.page_size + 1 ?> - <?cs
+    var:(search.page-1) * search.page_size + len(search.result) ?> 
+@@ -53,17 +54,17 @@
+  <div id="searchable">
+   <dl id="results"><?cs
+    if:len(search.quickjump) ?>
+-    <dt id=quickjump><a href="<?cs var:search.quickjump.href ?>">Quickjump to <?cs var:search.quickjump.name ?></a></dt>
++    <dt id=quickjump><a href="<?cs var:search.quickjump.href ?>">Ga naar <?cs var:search.quickjump.name ?></a></dt>
+     <dd><?cs var:search.quickjump.description ?></dd><?cs 
+    /if ?><?cs 
+    each item=search.result ?>
+     <dt><a href="<?cs var:item.href ?>"><?cs var:item.title ?></a></dt>
+     <dd><?cs var:item.excerpt ?></dd>
+     <dd>
+-     <span class="author">By <?cs var:item.author ?></span> &mdash;
++     <span class="author">Door <?cs var:item.author ?></span> &mdash;
+      <span class="date"><?cs var:item.date ?></span><?cs
+      if:item.keywords ?> &mdash
+-      <span class="keywords">Keywords: <em><?cs var:item.keywords ?></em></span><?cs
++      <span class="keywords">Sleutelwoorden: <em><?cs var:item.keywords ?></em></span><?cs
+      /if ?>
+     </dd><?cs
+    /each ?>
+@@ -90,12 +91,12 @@
+  /if ?><?cs
+ 
+ elif:search.q && !search.quickjump ?>
+- <div id="notfound">No matches found.</div><?cs
++ <div id="notfound">Zoektekst niet gevonden.</div><?cs
+ /if ?>
+ 
+ <div id="help">
+- <strong>Note:</strong> See <a href="<?cs
+-   var:trac.href.wiki ?>/TracSearch">TracSearch</a>  for help on searching.
++ <strong>Hulp:</strong> Zie <a href="<?cs
++   var:trac.href.wiki ?>/hulp/zoeken">Hulp bij zoeken</a>.
+ </div>
+ 
+ </div>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/timeline.cs
+===================================================================
+--- templates.ori/timeline.cs (revision 306)
++++ templates/timeline.cs (revision 316)
+@@ -3,14 +3,14 @@
+ <div id="ctxtnav" class="nav"></div>
+ 
+ <div id="content" class="timeline">
+-<h1>Timeline</h1>
++<h1>Tijdslijn</h1>
+ 
+ <form id="prefs" method="get" action="<?cs var:trac.href.timeline ?>">
+  <div>
+-  <label>View changes from <input type="text" size="10" name="from" value="<?cs
+-    var:timeline.from ?>" /></label> and
++  <label>Bekijk wijzigingen vanaf <input type="text" size="10" name="from" value="<?cs
++    var:timeline.from ?>" /></label> en
+   <label><input type="text" size="3" name="daysback" value="<?cs
+-    var:timeline.daysback ?>" /> days back</label>.
++    var:timeline.daysback ?>" /> dagen terug</label>.
+  </div>
+  <fieldset><?cs
+   each:filter = timeline.filters ?>
+@@ -20,7 +20,7 @@
+   /each ?>
+  </fieldset>
+  <div class="buttons">
+-  <input type="submit" name="update" value="Update" />
++  <input type="submit" name="update" value="Bijwerken" />
+  </div>
+ </form><?cs
+ 
+@@ -43,8 +43,7 @@
+ 
+ <div id="help">
+  <hr />
+- <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki ?>/TracTimeline">TracTimeline</a> 
+- for information about the timeline view.
++ <strong>Opmerking:</strong> Zie <a href="<?cs var:trac.href.wiki ?>/hulp/tijdslijn">Hulp bij tijdslijn</a>.
+ </div>
+ 
+ </div>
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/index.cs
+===================================================================
+--- templates.ori/index.cs (revision 306)
++++ templates/index.cs (revision 316)
+@@ -2,14 +2,14 @@
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+ <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+-<head><title>Available Projects</title></head>
+-<body><h1>Available Projects</h1><ul><?cs
++<head><title>Beschikbare projecten</title></head>
++<body><h1>Beschikbare projecten</h1><ul><?cs
+  each:project = projects ?><li><?cs
+   if:project.href ?>
+    <a href="<?cs var:project.href ?>" title="<?cs var:project.description ?>">
+     <?cs var:project.name ?></a><?cs
+   else ?>
+-   <small><?cs var:project.name ?>: <em>Error</em> <br />
++   <small><?cs var:project.name ?>: <em>Fout</em> <br />
+    (<?cs var:project.description ?>)</small><?cs
+   /if ?>
+   </li><?cs
+Index: /gedeeld/trac/debian-source/trac-0.10.3/templates/about.cs
+===================================================================
+--- templates.ori/about.cs (revision 306)
++++ templates/about.cs (revision 316)
+@@ -1,11 +1,11 @@
+ <?cs include "header.cs"?>
+ <div id="ctxtnav" class="nav">
+- <h2>About Navigation</h2>
++ <h2>Over navigatie</h2>
+  <ul>
+   <li class="first<?cs if:!about.config_href ?> last<?cs /if ?>"><a href="<?cs
+-    var:trac.href.about ?>">Overview</a></li><?cs
++    var:trac.href.about ?>">Overzicht</a></li><?cs
+   if:about.config_href ?>
+-   <li><a href="<?cs var:about.config_href ?>">Configuration</a></li><?cs
++   <li><a href="<?cs var:about.config_href ?>">Configuratie</a></li><?cs
+   /if ?><?cs
+   if:about.plugins_href ?>
+    <li class="last"><a href="<?cs var:about.plugins_href ?>">Plugins</a></li><?cs
+@@ -15,9 +15,9 @@
+ <div id="content" class="about<?cs if:about.page ?>_<?cs var:about.page ?><?cs /if ?>">
+ 
+  <?cs if:about.page == "config"?>
+-  <h1>Configuration</h1>
+-  <table><thead><tr><th class="section">Section</th>
+-   <th class="name">Name</th><th class="value">Value</th></tr></thead><?cs
++  <h1>Configuratie</h1>
++  <table><thead><tr><th class="section">Sectie</th>
++   <th class="name">Naam</th><th class="value">Waarde</th></tr></thead><?cs
+   each:section = about.config ?><?cs
+    if:len(section.options) ?>
+     <tr><th class="section" rowspan="<?cs var:len(section.options) ?>"><?cs var:section.name ?></th><?cs
+@@ -29,8 +29,8 @@
+    /if ?><?cs
+   /each ?></table>
+   <div id="help">
+-   See <a href="<?cs var:trac.href.wiki ?>/TracIni">TracIni</a> for information about
+-   the configuration.
++   Zie <a href="<?cs var:trac.href.wiki ?>/TracIni">TracIni</a> voor informatie over
++   de configuratie.
+   </div>
+ 
+  <?cs elif:about.page == "plugins" ?>
+@@ -45,12 +45,12 @@
+       <span class="path"><?cs var:plugin.path ?></span></td>
+      </tr><?cs
+      if:plugin.description ?><tr>
+-      <th class="description" scope="row">Description</th>
++      <th class="description" scope="row">Omschrijving</th>
+       <td class="description"><?cs var:plugin.description ?></td>
+      </tr><?cs /if ?><?cs
+      if:len(plugin.extension_points) ?><tr>
+       <th class="xtnpts" rowspan="<?cs var:len(plugin.extension_points) ?>">
+-       Extension points:</th><?cs
++       Uitbreidingspunten:</th><?cs
+        each:extension_point = plugin.extension_points ?><?cs
+         if:name(extension_point) != 0 ?><tr><?cs /if ?>
+         <td class="xtnpts">        
+@@ -73,22 +73,22 @@
+  <?cs else ?>
+   <a href="http://trac.edgewall.org/" style="border: none; float: right; margin-left: 2em">
+    <img style="display: block" src="<?cs var:chrome.href ?>/common/trac_banner.png"
+-     alt="Trac: Integrated SCM &amp; Project Management"/>
++     alt="Trac: geÃ¯ntegreerd revisiecontrole- en projectbeheer"/>
+   </a>
+-  <h1>About Trac <?cs var:trac.version ?></h1>
+-  <p>Trac is a web-based software project management and bug/issue tracking
+-  system emphasizing ease of use and low ceremony. It provides an integrated
+-  Wiki, an interface to version control systems, and a number convenient ways
+-  to stay on top of events and changes within a project.</p>
+-  <p>Trac is distributed under the modified BSD License. The complete text of
+-  the license can be found
+-  <a href="http://trac.edgewall.org/wiki/TracLicense">online</a> as well as in
+-  the <tt>COPYING</tt> file included in the distribution.</p>
++  <h1>Over Trac <?cs var:trac.version ?></h1>
++  <p>Trac is web-gebaseerde oplossing voor (software-) projectbeheer en meldingssysteem
++  met de nadruk op gebruikersgemak en minimale overhead. Trac bevat een geÃ¯ntegreerde 
++  Wiki, een interface voor revisiecontrolesystemen en een aantal handige manieren
++  om projectbeheer en wijzigingen te volgen.</p>
++  <p>Trac wordt uitgegeven onder een gemodificeerde BSD licentie. De volledige tekst van 
++  deze licentie staat
++  <a href="http://trac.edgewall.org/wiki/TracLicense">online</a> en in het bestand
++  <tt>COPYING</tt> dat in het distributie-pakket zit.</p>
+   <a href="http://www.python.org/" style="border: none; float: right">
+    <img style="display: block" src="<?cs var:htdocs_location ?>python.png"
+      alt="python powered" width="140" height="56" />
+   </a>
+-  <p>Please visit the Trac open source project at
++  <p>Bezoek het Trac open source project op
+   <a href="http://trac.edgewall.org/">http://trac.edgewall.org/</a>.</p>
+   <p>Copyright &copy; 2003-2006 <a href="http://www.edgewall.org/">Edgewall
+   Software</a></p>
