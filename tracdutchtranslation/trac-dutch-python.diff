@@ -2,7 +2,10 @@ Index: trac/env.py
 ===================================================================
 --- trac.ori/env.py (revision 314)
 +++ trac/env.py (revision 315)
-@@ -104,0 +104,33 @@
+@@ -101,6 +101,39 @@
+         
+         Should be one of (`CRITICAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`).""")
+ 
 +    tr_fixed = Option('translation', 'fixed', u'opgelost', '')
 +    tr_invalid = Option('translation', 'invalid', u'ongeldig', '')
 +    tr_wontfix = Option('translation', 'wontfix', u'onoplosbaar', '')
@@ -36,9 +39,21 @@ Index: trac/env.py
 +    tr_change = Option('translation', 'change', u'wijziging', '')
 +    tr_changeset = Option('translation', 'changeset', u'versie', '')
 +
-@@ -127,0 +160,1 @@
+     def __init__(self, path, create=False, options=[]):
+         """Initialize the Trac environment.
+         
+@@ -124,6 +157,7 @@
+             self.create(options)
+         else:
+             self.verify()
 +            self.init_translations()
-@@ -249,0 +283,8 @@
+ 
+         if create:
+             for setup_participant in self.setup_participants:
+@@ -246,6 +280,14 @@
+                     if self.config.has_site_option(section, name):
+                         value = None
+                     self.config.set(section, name, value)
 +
 +    def init_translations(self):
 +        self.translations = {}
@@ -47,88 +62,199 @@ Index: trac/env.py
 +            ck = k.capitalize()
 +            cv = v.capitalize()
 +            self.translations[ck] = cv
+ 
+     def get_templates_dir(self):
+         """Return absolute path to the templates directory."""
 Index: trac/core.py
 ===================================================================
 --- trac.ori/core.py (revision 314)
 +++ trac/core.py (revision 315)
-@@ -177,1 +177,1 @@
+@@ -174,11 +174,11 @@
+         component = self.components.get(cls)
+         if not component:
+             if cls not in ComponentMeta._components:
 -                raise TracError, 'Component "%s" not registered' % cls.__name__
 +                raise TracError, 'Component "%s" niet geregistreerd' % cls.__name__
-@@ -181,1 +181,1 @@
+             try:
+                 component = cls(self)
+             except TypeError, e:
 -                raise TracError, 'Unable to instantiate component %r (%s)' \
 +                raise TracError, 'Kan component niet laden %r (%s)' \
+                                  % (cls, e)
+         return component
+ 
 Index: trac/attachment.py
 ===================================================================
 --- trac.ori/attachment.py (revision 314)
 +++ trac/attachment.py (revision 315)
-@@ -103,2 +103,2 @@
+@@ -100,8 +100,8 @@
+         cursor.close()
+         if not row:
+             self.filename = filename
 -            raise TracError('Attachment %s does not exist.' % (self.title),
 -                            'Invalid Attachment')
 +            raise TracError('Bijlage %s bestaat niet.' % (self.title),
 +                            'Ongeldige bijlage')
-@@ -133,1 +133,1 @@
+         self.filename = row[0]
+         self.description = row[1]
+         self.size = row[2] and int(row[2]) or 0
+@@ -130,7 +130,7 @@
+     title = property(_get_title)
+ 
+     def delete(self, db=None):
 -        assert self.filename, 'Cannot delete non-existent attachment'
 +        assert self.filename, 'Kan niet bestaande bijlage niet verwijderen'
-@@ -152,1 +152,1 @@
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -149,7 +149,7 @@
+                                    self.path, exc_info=True)
+                 if handle_ta:
+                     db.rollback()
 -                raise TracError, 'Could not delete attachment'
 +                raise TracError, 'Kan bijlage niet verwijderen'
-@@ -253,1 +253,1 @@
+ 
+         self.env.log.info('Attachment removed: %s' % self.title)
+         if handle_ta:
+@@ -250,7 +250,7 @@
+         try:
+             fd = open(self.path, 'rb')
+         except IOError:
 -            raise TracError('Attachment %s not found' % self.filename)
 +            raise TracError('Bijlage %s niet gevonden' % self.filename)
-@@ -339,1 +339,1 @@
+         return fd
+ 
+ 
+@@ -336,9 +336,9 @@
+         parent_type = req.args.get('type')
+         path = req.args.get('path')
+         if not parent_type or not path:
 -            raise HTTPBadRequest('Bad request')
 +            raise HTTPBadRequest('Ongeldig verzoek')
-@@ -341,1 +341,1 @@
+         if not parent_type in ['ticket', 'wiki']:
 -            raise HTTPBadRequest('Unknown attachment type')
 +            raise HTTPBadRequest('Bestandstype bijlage onbekend')
-@@ -354,1 +354,1 @@
+ 
+         action = req.args.get('action', 'view')
+         if action == 'new':
+@@ -351,7 +351,7 @@
+                 self._render_list(req, parent_type, last_segment)
+                 return 'attachment.cs', None
+             if not last_segment:
 -                raise HTTPBadRequest('Bad request')
 +                raise HTTPBadRequest('Ongeldig verzoek')
-@@ -379,1 +379,1 @@
+             attachment = Attachment(self.env, parent_type, parent_id,
+                                     last_segment)
+         parent_link, parent_text = self._parent_to_hdf(
+@@ -376,7 +376,7 @@
+         # Populate attachment.parent:
+         parent_link = req.href(parent_type, parent_id)
+         if parent_type == 'ticket':
 -            parent_text = 'Ticket #' + parent_id
 +            parent_text = 'Melding #' + parent_id
-@@ -430,1 +430,1 @@
+         else: # 'wiki'
+             parent_text = parent_id
+         req.hdf['attachment.parent'] = {
+@@ -427,7 +427,7 @@
+                 href = req.abs_href
+             else:
+                 descr = wiki_to_oneliner(descr, self.env, db, shorten=True)
 -                title += Markup(' by %s', author)
 +                title += Markup(' door %s', author)
-@@ -446,1 +446,1 @@
+                 href = req.href
+             yield('attachment', href.attachment(type, id, filename), title,
+                   time, author, descr)
+@@ -443,19 +443,19 @@
+ 
+         upload = req.args['attachment']
+         if not hasattr(upload, 'filename') or not upload.filename:
 -            raise TracError('No file uploaded')
 +            raise TracError('Geen bestand ontvangen')
-@@ -452,1 +452,1 @@
+         if hasattr(upload.file, 'fileno'):
+             size = os.fstat(upload.file.fileno())[6]
+         else:
+             size = upload.file.len
+         if size == 0:
 -            raise TracError("Can't upload empty file")
 +            raise TracError("Kan leeg bestand niet versturen")
-@@ -457,2 +457,2 @@
+ 
+         # Maximum attachment size (in bytes)
+         max_size = self.max_size
+         if max_size >= 0 and size > max_size:
 -            raise TracError('Maximum attachment size: %d bytes' % max_size,
 -                            'Upload failed')
 +            raise TracError('Maximale bestandsgrootte van bijlagen: %d bytes' % max_size,
 +                            'Upload mislukt')
-@@ -467,1 +467,1 @@
+ 
+         # We try to normalize the filename to unicode NFC if we can.
+         # Files uploaded from OS X might be in NFD.
+@@ -464,7 +464,7 @@
+         filename = filename.replace('\\', '/').replace(':', '/')
+         filename = os.path.basename(filename)
+         if not filename:
 -            raise TracError('No file uploaded')
 +            raise TracError('Geen bestand verstuurd')
-@@ -477,1 +477,1 @@
+ 
+         attachment.description = req.args.get('description', '')
+         attachment.author = get_reporter_id(req, 'author')
+@@ -474,10 +474,10 @@
+         for manipulator in self.manipulators:
+             for field, message in manipulator.validate_attachment(req, attachment):
+                 if field:
 -                    raise InvalidAttachment('Attachment field %s is invalid: %s'
 +                    raise InvalidAttachment('Veld %s van bijlage is ongeldig: %s'
-@@ -480,1 +480,1 @@
+                                             % (field, message))
+                 else:
 -                    raise InvalidAttachment('Invalid attachment: %s' % message)
 +                    raise InvalidAttachment('Ongeldige bijlage: %s' % message)
-@@ -515,1 +515,1 @@
+ 
+         if req.args.get('replace'):
+             try:
+@@ -512,7 +512,7 @@
+         perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
+         req.perm.assert_permission(perm_map[attachment.parent_type])
+ 
 -        req.hdf['title'] = '%s (delete)' % attachment.title
 +        req.hdf['title'] = '%s (verwijder)' % attachment.title
-@@ -575,1 +575,1 @@
+         req.hdf['attachment'] = {'filename': attachment.filename,
+                                  'mode': 'delete'}
+ 
+@@ -572,12 +572,12 @@
+             if self.render_unsafe_content and not binary and \
+                mime_type and not mime_type.startswith('text/plain'):
+                 plaintext_href = attachment.href(req, format='txt')
 -                add_link(req, 'alternate', plaintext_href, 'Plain Text',
 +                add_link(req, 'alternate', plaintext_href, 'Standaard tekst',
-@@ -580,1 +580,1 @@
+                          mime_type)
+ 
+             # add ''Original Format'' alternate link (always)
+             raw_href = attachment.href(req, format='raw')
 -            add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
 +            add_link(req, 'alternate', raw_href, 'Origineel formaat', mime_type)
-@@ -621,1 +621,1 @@
+ 
+             self.log.debug("Rendering preview of file %s with mime-type %s"
+                            % (attachment.filename, mime_type))
+@@ -618,7 +618,7 @@
+             if formatter.req:
+                 href = attachment.href(formatter.req) + params
+             return html.A(label, class_='attachment', href=href,
 -                          title='Attachment %s' % attachment.title)
 +                          title='Bijlage %s' % attachment.title)
+         except TracError:
+             return html.A(label, class_='missing attachment', rel='nofollow',
+                           href=formatter.href())
 Index: trac/siteconfig.py
 ===================================================================
 --- trac.ori/siteconfig.py (revision 314)
 +++ trac/siteconfig.py (revision 315)
-@@ -3,1 +3,1 @@
+@@ -1,6 +1,6 @@
+ 
+ # PLEASE DO NOT EDIT THIS FILE!
 -# This file was autogenerated when installing Trac 0.10.3.
 +# This file was autogenerated when installing Trac 0.10.
+ #
+ __default_conf_dir__ = '/etc/trac'
+ __default_templates_dir__ = '/usr/share/trac/templates'
 Index: trac/ticket/api.py
 ===================================================================
 --- trac.ori/ticket/api.py (revision 314)
@@ -137,46 +263,95 @@ Index: trac/ticket/web_ui.py
 ===================================================================
 --- trac.ori/ticket/web_ui.py (revision 314)
 +++ trac/ticket/web_ui.py (revision 315)
-@@ -32,1 +32,1 @@
+@@ -29,7 +29,7 @@
+ from trac.util import get_reporter_id
+ from trac.util.datefmt import format_datetime, pretty_timedelta, http_date
+ from trac.util.html import html, Markup
 -from trac.util.text import CRLF
 +from trac.util.text import CRLF, translate
-@@ -110,1 +110,1 @@
+ from trac.web import IRequestHandler
+ from trac.web.chrome import add_link, add_stylesheet, INavigationContributor
+ from trac.wiki import wiki_to_html, wiki_to_oneliner
+@@ -107,7 +107,7 @@
+         if not req.perm.has_permission('TICKET_CREATE'):
+             return
+         yield ('mainnav', 'newticket', 
 -               html.A('New Ticket', href=req.href.newticket(), accesskey=7))
 +               html.A('Nieuwe melding', href=req.href.newticket(), accesskey=7))
-@@ -137,1 +137,1 @@
+ 
+     # IRequestHandler methods
+ 
+@@ -134,7 +134,7 @@
+             description = wiki_to_html(ticket['description'], self.env, req, db)
+             req.hdf['newticket.description_preview'] = description
+ 
 -        req.hdf['title'] = 'New Ticket'
 +        req.hdf['title'] = 'Nieuwe melding'
-@@ -159,1 +159,1 @@
+         req.hdf['newticket'] = ticket.values
+ 
+         field_names = [field['name'] for field in ticket.fields
+@@ -156,7 +156,7 @@
+                         'resolution'):
+                 field['skip'] = True
+             elif name == 'owner':
 -                field['label'] = 'Assign to'
 +                field['label'] = 'Toekennen aan'
-@@ -170,0 +170,2 @@
+                 if not req.perm.has_permission('TICKET_MODIFY'):
+                     field['skip'] = True
+             elif name == 'milestone':
+@@ -167,6 +167,8 @@
+                     if milestone.is_completed:
+                         options.remove(option)
+                 field['options'] = options
 +
 +            field['label'] = translate(self.env, field['label'])
-@@ -235,1 +237,1 @@
+             req.hdf['newticket.fields.' + name] = field
+ 
+         if req.perm.has_permission('TICKET_APPEND'):
+@@ -232,9 +234,9 @@
+     # IContentConverter methods
+ 
+     def get_supported_conversions(self):
 -        yield ('csv', 'Comma-delimited Text', 'csv',
 +        yield ('csv', 'Komma-gescheiden tekst', 'csv',
-@@ -237,1 +239,1 @@
+                'trac.ticket.Ticket', 'text/csv', 8)
 -        yield ('tab', 'Tab-delimited Text', 'tsv',
 +        yield ('tab', 'TAB-gescheiden tekst', 'tsv',
-@@ -318,1 +320,1 @@
+                'trac.ticket.Ticket', 'text/tab-separated-values', 8)
+         yield ('rss', 'RSS Feed', 'xml',
+                'trac.ticket.Ticket', 'application/rss+xml', 8)
+@@ -315,14 +317,14 @@
+                 idx = tickets.index(str(ticket.id))
+                 if idx > 0:
+                     add_link(req, 'first', req.href.ticket(tickets[0]),
 -                             'Ticket #%s' % tickets[0])
 +                             'Melding #%s' % tickets[0])
-@@ -320,1 +322,1 @@
+                     add_link(req, 'prev', req.href.ticket(tickets[idx - 1]),
 -                             'Ticket #%s' % tickets[idx - 1])
 +                             'Melding #%s' % tickets[idx - 1])
-@@ -323,1 +325,1 @@
+                 if idx < len(tickets) - 1:
+                     add_link(req, 'next', req.href.ticket(tickets[idx + 1]),
 -                             'Ticket #%s' % tickets[idx + 1])
 +                             'Melding #%s' % tickets[idx + 1])
-@@ -325,1 +327,1 @@
+                     add_link(req, 'last', req.href.ticket(tickets[-1]),
 -                             'Ticket #%s' % tickets[-1])
 +                             'Melding #%s' % tickets[-1])
-@@ -342,1 +344,1 @@
+                 add_link(req, 'up', req.session['query_href'])
+ 
+         add_stylesheet(req, 'common/css/ticket.css')
+@@ -339,17 +341,17 @@
+ 
+     def get_timeline_filters(self, req):
+         if req.perm.has_permission('TICKET_VIEW'):
 -            yield ('ticket', 'Ticket changes')
 +            yield ('ticket', 'Aanpassingen van melding')
-@@ -344,1 +346,1 @@
+             if self.timeline_details:
 -                yield ('ticket_details', 'Ticket details', False)
 +                yield ('ticket_details', 'Details van melding', False)
-@@ -349,4 +351,4 @@
+ 
+     def get_timeline_events(self, req, start, stop, filters):
+         format = req.args.get('format')
+ 
 -        status_map = {'new': ('newticket', 'created'),
 -                      'reopened': ('newticket', 'reopened'),
 -                      'closed': ('closedticket', 'closed'),
@@ -185,148 +360,356 @@ Index: trac/ticket/web_ui.py
 +                      'reopened': ('newticket', 'heropend'),
 +                      'closed': ('closedticket', 'gesloten'),
 +                      'edit': ('editedticket', 'bijgewerkt')}
-@@ -363,1 +365,1 @@
+ 
+         href = format == 'rss' and req.abs_href or req.href
+ 
+@@ -360,7 +362,7 @@
+                     info = ''
+                     if len(fields) > 0:
+                         info = ', '.join(['<i>%s</i>' % f for f in \
 -                                          fields.keys()]) + ' changed<br />'
 +                                          fields.keys()]) + ' gewijzigd<br />'
-@@ -377,2 +379,2 @@
+                 else:
+                     return None
+             elif 'ticket' in filters:
+@@ -374,11 +376,11 @@
+                 return None
+             kind, verb = status_map[status]
+             if format == 'rss':
 -                title = 'Ticket #%s (%s %s): %s' % \
 -                        (id, type.lower(), verb, summary)
 +                title = 'Melding #%s (%s %s): %s' % \
 +                        (id, translate(self.env, type).lower(), verb, summary)
-@@ -380,2 +382,2 @@
+             else:
 -                title = Markup('Ticket <em title="%s">#%s</em> (%s) %s by %s',
 -                               summary, id, type, verb, author)
 +                title = Markup('Melding <em title="%s">#%s</em> (%s) %s par %s',
 +                               summary, id, translate(self.env, type), verb, author)
-@@ -609,1 +611,1 @@
+             ticket_href = href.ticket(id)
+             if cid:
+                 ticket_href += '#comment:' + cid
+@@ -606,7 +608,7 @@
+         def quote_original(author, original, link):
+             if not 'comment' in req.args: # i.e. the comment was not yet edited
+                 req.hdf['ticket.comment'] = '\n'.join(
 -                    ['Replying to [%s %s]:' % (link, author)] +
 +                    ['Reagerend op [%s %s]:' % (link, author)] +
+                     ['> %s' % line for line in original.splitlines()] + [''])
+ 
+         if replyto == 'description':
 Index: trac/ticket/report.py
 ===================================================================
 --- trac.ori/ticket/report.py (revision 314)
 +++ trac/ticket/report.py (revision 315)
-@@ -49,1 +50,1 @@
+@@ -46,7 +47,7 @@
+         if not req.perm.has_permission('REPORT_VIEW'):
+             return
+         yield ('mainnav', 'tickets',
 -               html.A('View Tickets', href=req.href.report()))
 +               html.A('Meldingen weergeven', href=req.href.report()))
-@@ -96,1 +97,1 @@
+ 
+     # IPermissionRequestor methods  
+ 
+@@ -93,7 +94,7 @@
+                return resp
+ 
+         if id != -1 or action == 'new':
 -            add_link(req, 'up', req.href.report(), 'Available Reports')
 +            add_link(req, 'up', req.href.report(), 'Beschikbare rapporten')
+ 
+             # Kludge: Reset session vars created by query module so that the
+             # query navigation links on the ticket page don't confuse the user
 Index: trac/ticket/model.py
 ===================================================================
 --- trac.ori/ticket/model.py (revision 314)
 +++ trac/ticket/model.py (revision 315)
-@@ -86,2 +86,2 @@
+@@ -83,8 +83,8 @@
+                        % ','.join(std_fields), (tkt_id,))
+         row = cursor.fetchone()
+         if not row:
 -            raise TracError('Ticket %d does not exist.' % tkt_id,
 -                            'Invalid Ticket Number')
 +            raise TracError('Melding %d bestaat niet.' % tkt_id,
 +                            'Ongeldig meldingsnummer')
-@@ -134,1 +134,1 @@
+ 
+         self.id = tkt_id
+         for i in range(len(std_fields)):
+@@ -131,7 +131,7 @@
+ 
+     def insert(self, when=0, db=None):
+         """Add ticket to database"""
 -        assert not self.exists, 'Cannot insert an existing ticket'
 +        assert not self.exists, 'Kan een reeds bestaande melding niet opnieuw invoeren'
-@@ -190,1 +190,1 @@
+         db, handle_ta = self._get_db_for_write(db)
+ 
+         # Add a timestamp
+@@ -187,7 +187,7 @@
+         the database.  Returns False if there were no changes to save, True
+         otherwise.
+         """
 -        assert self.exists, 'Cannot update a new ticket'
 +        assert self.exists, 'Kan een nieuwe melding niet bijwerken'
-@@ -334,1 +334,1 @@
+ 
+         if not self._old and not comment:
+             return False # Not modified
+@@ -331,7 +331,7 @@
+                            (self.type, name))
+             row = cursor.fetchone()
+             if not row:
 -                raise TracError, '%s %s does not exist.' % (self.type, name)
 +                raise TracError, '%s %s bestaat niet.' % (self.type, name)
-@@ -344,1 +344,1 @@
+             self.value = self._old_value = row[0]
+             self.name = self._old_name = name
+         else:
+@@ -341,7 +341,7 @@
+     exists = property(fget=lambda self: self._old_value is not None)
+ 
+     def delete(self, db=None):
 -        assert self.exists, 'Cannot deleting non-existent %s' % self.type
 +        assert self.exists, 'Kan niet bestaande melding %s niet verwijderen' % self.type
-@@ -362,2 +362,2 @@
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -359,8 +359,8 @@
+         self.name = self._old_name = None
+ 
+     def insert(self, db=None):
 -        assert not self.exists, 'Cannot insert existing %s' % self.type
 -        assert self.name, 'Cannot create %s with no name' % self.type
 +        assert not self.exists, 'Kan reeds bestaande %s niet invoegen' % self.type
 +        assert self.name, 'Kan %s niet maken zonder naam' % self.type
-@@ -387,2 +387,2 @@
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -384,8 +384,8 @@
+         self._old_value = self.value
+ 
+     def update(self, db=None):
 -        assert self.exists, 'Cannot update non-existent %s' % self.type
 -        assert self.name, 'Cannot update %s with no name' % self.type
 +        assert self.exists, 'Kan niet bestaande melding %s niet bijwerken' % self.type
 +        assert self.name, 'Kan %s zonder naam niet bijwerken' % self.type
-@@ -460,1 +460,1 @@
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -457,7 +457,7 @@
+                            "WHERE name=%s", (name,))
+             row = cursor.fetchone()
+             if not row:
 -                raise TracError, 'Component %s does not exist.' % name
 +                raise TracError, 'Onderdeel %s bestaat niet.' % name
-@@ -472,1 +472,1 @@
+             self.name = self._old_name = name
+             self.owner = row[0] or None
+             self.description = row[1] or ''
+@@ -469,7 +469,7 @@
+     exists = property(fget=lambda self: self._old_name is not None)
+ 
+     def delete(self, db=None):
 -        assert self.exists, 'Cannot deleting non-existent component'
 +        assert self.exists, 'Kan een niet bestaand onderdeel niet verwijderen'
-@@ -489,2 +489,2 @@
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -486,8 +486,8 @@
+             db.commit()
+ 
+     def insert(self, db=None):
 -        assert not self.exists, 'Cannot insert existing component'
 -        assert self.name, 'Cannot create component with no name'
 +        assert not self.exists, 'Kan reeds bestaand onderdeel niet invoegen'
 +        assert self.name, 'Kan onderdeel zonder naam niet maken'
-@@ -508,2 +508,2 @@
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -505,8 +505,8 @@
+             db.commit()
+ 
+     def update(self, db=None):
 -        assert self.exists, 'Cannot update non-existent component'
 -        assert self.name, 'Cannot update component with no name'
 +        assert self.exists, 'Kan niet bestaand onderdeel niet bijwerken'
 +        assert self.name, 'Kan onderdeel zonder naam niet bijwerken'
-@@ -597,1 +597,1 @@
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -594,14 +594,14 @@
+         for tkt_id in tkt_ids:
+             ticket = Ticket(self.env, tkt_id, db)
+             ticket['milestone'] = retarget_to
 -            ticket.save_changes(author, 'Milestone %s deleted' % self.name,
 +            ticket.save_changes(author, 'Mijlpaal %s verwijderd' % self.name,
-@@ -604,1 +604,1 @@
+                                 now, db=db)
+ 
+         if handle_ta:
+             db.commit()
+ 
+     def insert(self, db=None):
 -        assert self.name, 'Cannot create milestone with no name'
 +        assert self.name, 'Kan mijlpaal zonder naam niet maken'
-@@ -622,1 +622,1 @@
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -619,7 +619,7 @@
+             db.commit()
+ 
+     def update(self, db=None):
 -        assert self.name, 'Cannot update milestone with no name'
 +        assert self.name, 'Kan mijlpaal zonder naam niet bijwerken'
-@@ -693,1 +693,1 @@
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -690,7 +690,7 @@
+     exists = property(fget=lambda self: self._old_name is not None)
+ 
+     def delete(self, db=None):
 -        assert self.exists, 'Cannot deleting non-existent version'
 +        assert self.exists, 'Kan niet bestaande versie niet verwijderen'
-@@ -711,1 +711,1 @@
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -708,7 +708,7 @@
+ 
+     def insert(self, db=None):
+         assert not self.exists, 'Cannot insert existing version'
 -        assert self.name, 'Cannot create version with no name'
 +        assert self.name, 'Kan versie zonder naam niet maken'
-@@ -729,2 +729,2 @@
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -726,8 +726,8 @@
+             db.commit()
+ 
+     def update(self, db=None):
 -        assert self.exists, 'Cannot update non-existent version'
 -        assert self.name, 'Cannot update version with no name'
 +        assert self.exists, 'Kan niet bestaande versie niet bijwerken'
 +        assert self.name, 'Kan versie zonder naam niet bijwerken'
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
 Index: trac/ticket/roadmap.py
 ===================================================================
 --- trac.ori/ticket/roadmap.py (revision 314)
 +++ trac/ticket/roadmap.py (revision 315)
-@@ -90,0 +90,3 @@
+@@ -87,8 +87,11 @@
+     }
+ 
+ def milestone_to_hdf(env, db, req, milestone):
 +    safe_name = None
 +    if milestone.exists:
 +        safe_name = milestone.name.replace('/', '%2F')
-@@ -91,1 +94,1 @@
+     hdf = {'name': milestone.name,
 -           'href': req.href.milestone(milestone.name)}
 +           'href': req.href.milestone(safe_name)}
-@@ -132,1 +135,1 @@
+     if milestone.description:
+         hdf['description_source'] = milestone.description
+         hdf['description'] = wiki_to_html(milestone.description, env, req, db)
+@@ -129,7 +132,7 @@
+         if not req.perm.has_permission('ROADMAP_VIEW'):
+             return
+         yield ('mainnav', 'roadmap',
 -               html.a('Roadmap', href=req.href.roadmap(), accesskey=3))
 +               html.a('Planning', href=req.href.roadmap(), accesskey=3))
-@@ -146,1 +149,1 @@
+ 
+     # IPermissionRequestor methods
+ 
+@@ -143,7 +146,7 @@
+ 
+     def process_request(self, req):
+         req.perm.assert_permission('ROADMAP_VIEW')
 -        req.hdf['title'] = 'Roadmap'
 +        req.hdf['title'] = 'Planning'
-@@ -246,1 +249,1 @@
+ 
+         showall = req.args.get('show') == 'all'
+         req.hdf['roadmap.showall'] = showall
+@@ -243,7 +246,7 @@
+             if milestone.has_key('due'):
+                 write_prop('BEGIN', 'VEVENT')
+                 write_prop('UID', uid)
 -                write_utctime('DTSTAMP', localtime(milestone['due']))
 +                write_date('DTSTAMP', localtime(milestone['due']))
-@@ -292,1 +295,1 @@
+                 write_date('DTSTART', localtime(milestone['due']))
+                 write_prop('SUMMARY', 'Milestone %s' % milestone['name'])
+                 write_prop('URL', req.base_url + '/milestone/' +
+@@ -289,7 +292,7 @@
+     # INavigationContributor methods
+ 
+     def get_active_navigation_item(self, req):
 -        return 'roadmap'
 +        return 'planning'
-@@ -309,1 +312,1 @@
+ 
+     def get_navigation_items(self, req):
+         return []
+@@ -306,7 +309,7 @@
+ 
+     def get_timeline_filters(self, req):
+         if req.perm.has_permission('MILESTONE_VIEW'):
 -            yield ('milestone', 'Milestones')
 +            yield ('milestone', 'Mijlpalen')
-@@ -320,1 +323,1 @@
+ 
+     def get_timeline_events(self, req, start, stop, filters):
+         if 'milestone' in filters:
+@@ -317,7 +320,7 @@
+                            "WHERE completed>=%s AND completed<=%s",
+                            (start, stop,))
+             for completed, name, description in cursor:
 -                title = Markup('Milestone <em>%s</em> completed', name)
 +                title = Markup('Mijlpaal <em>%s</em> gecompleteerd', name)
-@@ -438,1 +440,1 @@
+                 if format == 'rss':
+                     href = req.abs_href.milestone(name)
+                     message = wiki_to_html(description, self.env, req, db,
+@@ -435,7 +437,7 @@
+     def _render_confirm(self, req, db, milestone):
+         req.perm.assert_permission('MILESTONE_DELETE')
+ 
 -        req.hdf['title'] = 'Milestone %s' % milestone.name
 +        req.hdf['title'] = 'Mijlpaal %s' % milestone.name
-@@ -450,1 +452,1 @@
+         req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
+         req.hdf['milestone.mode'] = 'delete'
+ 
+@@ -447,14 +449,14 @@
+     def _render_editor(self, req, db, milestone):
+         if milestone.exists:
+             req.perm.assert_permission('MILESTONE_MODIFY')
 -            req.hdf['title'] = 'Milestone %s' % milestone.name
 +            req.hdf['title'] = 'Mijlpaal %s' % milestone.name
-@@ -457,1 +459,1 @@
+             req.hdf['milestone.mode'] = 'edit'
+             req.hdf['milestones'] = [m.name for m in
+                                      Milestone.select(self.env)
+                                      if m.name != milestone.name]
+         else:
+             req.perm.assert_permission('MILESTONE_CREATE')
 -            req.hdf['title'] = 'New Milestone'
 +            req.hdf['title'] = 'Nieuwe mijlpaal'
-@@ -468,1 +470,1 @@
+             req.hdf['milestone.mode'] = 'new'
+ 
+         from trac.util.datefmt import get_date_format_hint, \
+@@ -465,7 +467,7 @@
+         req.hdf['milestone.datetime_now'] = format_datetime()
+ 
+     def _render_view(self, req, db, milestone):
 -        req.hdf['title'] = 'Milestone %s' % milestone.name
 +        req.hdf['title'] = 'Mijlpaal %s' % milestone.name
+         req.hdf['milestone.mode'] = 'view'
+ 
+         req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
 Index: trac/ticket/query.py
 ===================================================================
 --- trac.ori/ticket/query.py (revision 314)
 +++ trac/ticket/query.py (revision 315)
-@@ -380,1 +380,1 @@
+@@ -377,7 +377,7 @@
+         if req.perm.has_permission('TICKET_VIEW') and \
+                 not self.env.is_component_enabled(ReportModule):
+             yield ('mainnav', 'tickets',
 -                   html.A('View Tickets', href=req.href.query()))
 +                   html.A('Meldingen weergeven', href=req.href.query()))
-@@ -488,4 +488,4 @@
+ 
+     # IRequestHandler methods
+ 
+@@ -485,21 +485,21 @@
+     def _get_constraint_modes(self):
+         modes = {}
+         modes['text'] = [
 -            {'name': "contains", 'value': "~"},
 -            {'name': "doesn't contain", 'value': "!~"},
 -            {'name': "begins with", 'value': "^"},
@@ -335,111 +718,236 @@ Index: trac/ticket/query.py
 +            {'name': "bevat niet", 'value': "!~"},
 +            {'name': "begint met", 'value': "^"},
 +            {'name': "eindigt met", 'value': "$"},
-@@ -493,1 +493,1 @@
+             {'name': "is", 'value': ""},
 -            {'name': "is not", 'value': "!"}
 +            {'name': "is niet", 'value': "!"}
-@@ -497,1 +497,1 @@
+         ]
+         modes['select'] = [
+             {'name': "is", 'value': ""},
 -            {'name': "is not", 'value': "!"}
 +            {'name': "is niet", 'value': "!"}
-@@ -502,1 +502,1 @@
+         ]
+         return modes
+ 
+     def display_html(self, req, query):
 -        req.hdf['title'] = 'Custom Query'
 +        req.hdf['title'] = 'Aangepaste zoekopdracht'
+         add_stylesheet(req, 'common/css/report.css')
+         add_script(req, 'common/js/query.js')
+ 
 Index: trac/__init__.py
 ===================================================================
 --- trac.ori/__init__.py (revision 314)
 +++ trac/__init__.py (revision 315)
-@@ -14,1 +14,1 @@
+@@ -11,7 +11,7 @@
+ """
+ __docformat__ = 'epytext en'
+ 
 -__version__ = '0.10.3'
 +__version__ = '0.10'
+ __url__ = 'http://trac.edgewall.org/'
+ __copyright__ = '(C) 2003-2006 Edgewall Software'
+ __license__ = 'BSD'
 Index: trac/versioncontrol/web_ui/changeset.py
 ===================================================================
 --- trac.ori/versioncontrol/web_ui/changeset.py (revision 314)
 +++ trac/versioncontrol/web_ui/changeset.py (revision 315)
-@@ -264,1 +264,1 @@
+@@ -261,7 +261,7 @@
+                                              'old': old})
+         add_link(req, 'alternate', '?format=diff&'+diff_params, 'Unified Diff',
+                  'text/plain', 'diff')
 -        add_link(req, 'alternate', '?format=zip&'+diff_params, 'Zip Archive',
 +        add_link(req, 'alternate', '?format=zip&'+diff_params, 'Zip-archief',
+                  'application/zip', 'zip')
+         add_stylesheet(req, 'common/css/changeset.css')
+         add_stylesheet(req, 'common/css/diff.css')
 Index: trac/versioncontrol/web_ui/browser.py
 ===================================================================
 --- trac.ori/versioncontrol/web_ui/browser.py (revision 314)
 +++ trac/versioncontrol/web_ui/browser.py (revision 315)
-@@ -69,1 +69,1 @@
+@@ -66,7 +66,7 @@
+         if not req.perm.has_permission('BROWSER_VIEW'):
+             return
+         yield ('mainnav', 'browser',
 -               html.A('Browse Source', href=req.href.browser()))
 +               html.A('Bronbestanden', href=req.href.browser()))
+ 
+     # IPermissionRequestor methods
+ 
 Index: trac/Settings.py
 ===================================================================
 --- trac.ori/Settings.py (revision 314)
 +++ trac/Settings.py (revision 315)
-@@ -36,1 +36,1 @@
+@@ -33,7 +33,7 @@
+ 
+     def get_navigation_items(self, req):
+         yield ('metanav', 'settings',
 -               html.A('Settings', href=req.href.settings()))
 +               html.A('Instellingen', href=req.href.settings()))
-@@ -52,1 +52,1 @@
+ 
+     # IRequestHandler methods
+ 
+@@ -49,7 +49,7 @@
+             elif action == 'load':
+                 self._do_load(req)
+ 
 -        req.hdf['title'] = 'Settings'
 +        req.hdf['title'] = 'Instellingen'
+         req.hdf['settings'] = req.session
+         if req.authname == 'anonymous':
+             req.hdf['settings.session_id'] = req.session.sid
 Index: trac/Search.py
 ===================================================================
 --- trac.ori/Search.py (revision 314)
 +++ trac/Search.py (revision 315)
-@@ -77,1 +77,1 @@
+@@ -74,7 +74,7 @@
+     parameters. The result is returned as a (string, params) tuple.
+     """
+     if len(columns) < 1 or len(terms) < 1:
 -        raise TracError('Empty search attempt, this should really not happen.')
 +        raise TracError('Leeg zoekresultaat; dit zou niet moeten gebeuren.')
-@@ -135,1 +135,1 @@
+ 
+     likes = ['%s %s' % (i, db.like()) for i in columns]
+     c = ' OR '.join(likes)
+@@ -132,7 +132,7 @@
+         if not req.perm.has_permission('SEARCH_VIEW'):
+             return
+         yield ('mainnav', 'search',
 -               html.A('Search', href=req.href.search(), accesskey=4))
 +               html.A('Zoeken', href=req.href.search(), accesskey=4))
-@@ -165,1 +165,1 @@
+ 
+     # IPermissionRequestor methods
+ 
+@@ -162,7 +162,7 @@
+               'active': filter[0] in filters
+             } for filter in available_filters]
+                 
 -        req.hdf['title'] = 'Search'
 +        req.hdf['title'] = 'Zoeken'
-@@ -176,3 +176,3 @@
+ 
+         query = req.args.get('q')
+         if query:
+@@ -173,9 +173,9 @@
+             terms = search_terms(query)
+             # Refuse queries that obviously would result in a huge result set
+             if len(terms) == 1 and len(terms[0]) < self.min_query_length:
 -                raise TracError('Search query too short. '
 -                                'Query must be at least %d characters long.' % \
 -                                self.min_query_length, 'Search Error')
 +                raise TracError('Zoekterm te kort. '
 +                                'Een zoekopdracht moet uit minimaal %d karakters bestaan.' % \
 +                                self.min_query_length, 'Zoekfout')
-@@ -188,1 +188,1 @@
+             results = []
+             for source in self.search_sources:
+                 results += list(source.get_search_results(req, terms, filters))
+@@ -185,7 +185,7 @@
+             n_pages = (n-1) / page_size + 1
+             results = results[(page-1) * page_size: page * page_size]
+ 
 -            req.hdf['title'] = 'Search Results'
 +            req.hdf['title'] = 'Zoekresultaten'
-@@ -198,1 +198,1 @@
+             req.hdf['search.q'] = req.args.get('q')
+             req.hdf['search.page'] = page
+             req.hdf['search.n_hits'] = n
+@@ -195,12 +195,12 @@
+                 next_href = req.href.search(zip(filters, ['on'] * len(filters)),
+                                             q=req.args.get('q'), page=page + 1,
+                                             noquickjump=1)
 -                add_link(req, 'next', next_href, 'Next Page')
 +                add_link(req, 'next', next_href, 'Volgende pagina')
-@@ -203,1 +203,1 @@
+             if page > 1:
+                 prev_href = req.href.search(zip(filters, ['on'] * len(filters)),
+                                             q=req.args.get('q'), page=page - 1,
+                                             noquickjump=1)
 -                add_link(req, 'prev', prev_href, 'Previous Page')
 +                add_link(req, 'prev', prev_href, 'Vorige pagina')
-@@ -225,1 +225,1 @@
+             req.hdf['search.page_href'] = req.href.search(
+                 zip(filters, ['on'] * len(filters)), q=req.args.get('q'),
+                 noquickjump=1)
+@@ -222,7 +222,7 @@
+         if kwd[0] == '/':
+             quickjump_href = req.href.browser(kwd)
+             name = kwd
 -            description = 'Browse repository path ' + kwd
 +            description = 'Blader door repository ' + kwd
+         else:
+             link = wiki_to_link(kwd, self.env, req)
+             if isinstance(link, Element):
 Index: trac/Timeline.py
 ===================================================================
 --- trac.ori/Timeline.py (revision 314)
 +++ trac/Timeline.py (revision 315)
-@@ -80,1 +80,1 @@
+@@ -77,7 +77,7 @@
+         if not req.perm.has_permission('TIMELINE_VIEW'):
+             return
+         yield ('mainnav', 'timeline',
 -               html.A('Timeline', href=req.href.timeline(), accesskey=2))
 +               html.A('Tijdslijn', href=req.href.timeline(), accesskey=2))
-@@ -154,1 +154,1 @@
+ 
+     # IPermissionRequestor methods
+ 
+@@ -151,7 +151,7 @@
+         if maxrows and len(events) > maxrows:
+             del events[maxrows:]
+ 
 -        req.hdf['title'] = 'Timeline'
 +        req.hdf['title'] = 'Tijdslijn'
+ 
+         # Get the email addresses of all known users
+         email_map = {}
 Index: trac/About.py
 ===================================================================
 --- trac.ori/About.py (revision 314)
 +++ trac/About.py (revision 315)
-@@ -41,1 +41,1 @@
+@@ -38,7 +38,7 @@
+ 
+     def get_navigation_items(self, req):
+         yield ('metanav', 'about',
 -               html.a('About Trac', href=req.href.about()))
 +               html.a('Over Trac', href=req.href.about()))
-@@ -59,1 +59,1 @@
+ 
+     # IPermissionRequestor methods
+ 
+@@ -56,7 +56,7 @@
+ 
+     def process_request(self, req):
+         page = req.args.get('page', 'default')
 -        req.hdf['title'] = 'About Trac'
 +        req.hdf['title'] = 'Over Trac'
+         if req.perm.has_permission('CONFIG_VIEW'):
+             req.hdf['about.config_href'] = req.href.about('config')
+             req.hdf['about.plugins_href'] = req.href.about('plugins')
 Index: trac/wiki/web_ui.py
 ===================================================================
 --- trac.ori/wiki/web_ui.py (revision 314)
 +++ trac/wiki/web_ui.py (revision 315)
-@@ -70,1 +70,1 @@
+@@ -67,7 +67,7 @@
+         yield ('mainnav', 'wiki',
+                html.A('Wiki', href=req.href.wiki(), accesskey=1))
+         yield ('metanav', 'help',
 -               html.A('Help/Guide', href=req.href.wiki('TracGuide'),
 +               html.A('Hulp', href=req.href.wiki('hulp'),
-@@ -145,1 +145,1 @@
+                       accesskey=6))
+ 
+     # IPermissionRequestor methods
+@@ -142,7 +142,7 @@
+ 
+     def get_timeline_filters(self, req):
+         if req.perm.has_permission('WIKI_VIEW'):
 -            yield ('wiki', 'Wiki changes')
 +            yield ('wiki', 'Wijzigingen in Wiki')
-@@ -158,1 +158,1 @@
+ 
+     def get_timeline_events(self, req, start, stop, filters):
+         if 'wiki' in filters:
+@@ -155,7 +155,7 @@
+                            "FROM wiki WHERE time>=%s AND time<=%s",
+                            (start, stop))
+             for t,name,comment,author,version in cursor:
 -                title = Markup('<em>%s</em> edited by %s',
 +                title = Markup('<em>%s</em> bewerkt door %s',
+                                wiki.format_page_name(name), author)
+                 diff_link = html.A('diff', href=href.wiki(name, action='diff',
+                                                           version=version))
 Index: trac/test.py
 ===================================================================
 --- trac.ori/test.py (revision 314)
@@ -448,14 +956,23 @@ Index: trac/util/__init__.py
 ===================================================================
 --- trac.ori/util/__init__.py (revision 314)
 +++ trac/util/__init__.py (revision 315)
-@@ -33,1 +33,1 @@
+@@ -30,7 +30,7 @@
+ from trac.core import TracError
+ from trac.util.html import escape, unescape, Markup, Deuglifier
+ from trac.util.text import CRLF, to_utf8, to_unicode, shorten_line, \
 -                           wrap, pretty_size
 +                           wrap, pretty_size, translate
+ from trac.util.datefmt import pretty_timedelta, format_datetime, \
+                               format_date, format_time, \
+                               get_date_format_hint, \
 Index: trac/util/datefmt.py
 ===================================================================
 --- trac.ori/util/datefmt.py (revision 314)
 +++ trac/util/datefmt.py (revision 315)
-@@ -33,6 +33,6 @@
+@@ -30,17 +30,17 @@
+     if not time2: time2 = time.time()
+     if time1 > time2:
+         time2, time1 = time1, time2
 -    units = ((3600 * 24 * 365, 'year',   'years'),
 -             (3600 * 24 * 30,  'month',  'months'),
 -             (3600 * 24 * 7,   'week',   'weeks'),
@@ -468,9 +985,15 @@ Index: trac/util/datefmt.py
 +             (3600 * 24,       'dag',    'dagen'),
 +             (3600,            'uur',   'uren'),
 +             (60,              'minuut', 'minuten'))
-@@ -43,1 +43,1 @@
+     age_s = int(time2 - time1)
+     if resolution and age_s < resolution:
+         return ''
+     if age_s < 60:
 -        return '%i second%s' % (age_s, age_s != 1 and 's' or '')
 +        return '%i seconde%s' % (age_s, age_s != 1 and 'n' or '')
+     for u, unit, unit_plural in units:
+         r = float(age_s) / float(u)
+         if r >= 0.9:
 Index: trac/util/html.py
 ===================================================================
 --- trac.ori/util/html.py (revision 314)
@@ -479,7 +1002,10 @@ Index: trac/util/text.py
 ===================================================================
 --- trac.ori/util/text.py (revision 314)
 +++ trac/util/text.py (revision 315)
-@@ -149,0 +149,9 @@
+@@ -146,3 +146,12 @@
+         size /= 1024.
+ 
+     return '%.1f %s' % (size, units[i - 1])
 +
 +# -- Translation
 +
@@ -493,13 +1019,25 @@ Index: trac/web/chrome.py
 ===================================================================
 --- trac.ori/web/chrome.py (revision 314)
 +++ trac/web/chrome.py (revision 315)
-@@ -280,1 +280,1 @@
+@@ -277,7 +277,7 @@
+         # HTML <head> links
+         add_link(req, 'start', req.href.wiki())
+         add_link(req, 'search', req.href.search())
 -        add_link(req, 'help', req.href.wiki('TracGuide'))
 +        add_link(req, 'help', req.href.wiki('hulp'))
+         add_stylesheet(req, 'common/css/trac.css')
+         add_script(req, 'common/js/trac.js')
+ 
 Index: trac/web/main.py
 ===================================================================
 --- trac.ori/web/main.py (revision 314)
 +++ trac/web/main.py (revision 315)
-@@ -33,1 +33,1 @@
+@@ -30,7 +30,7 @@
+ from trac.util import reversed, get_last_traceback, hex_entropy
+ from trac.util.datefmt import format_datetime, http_date
+ from trac.util.html import Markup
 -from trac.util.text import to_unicode
 +from trac.util.text import to_unicode, translate
+ from trac.web.api import *
+ from trac.web.chrome import Chrome
+ from trac.web.clearsilver import HDFWrapper
