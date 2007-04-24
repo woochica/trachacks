@@ -69,11 +69,11 @@ class LogEnhancer(Component):
             if not svgbranch:
                 continue
             for chgset in branch.changesets():
+                if chgset.prop('st:export'):
+                    svgchgset = svgbranch.svgchangeset(chgset)
+                    svgchgset.set_shape('hexa')
                 msg = chgset.changeset.message.lower()
                 if msg.startswith('delivers'):
-                    if chgset.prop('st:export'):
-                        svgchgset = svgbranch.svgchangeset(chgset)
-                        svgchgset.set_shape('hexa')
                     deliver = chgset.prop('st:deliver')
                     if not deliver:
                         continue
