@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracPrivateTickets',
-    version = '1.1',
+    version = '1.1.1',
     packages = ['privatetickets'],
     #package_data = { 'privatetickets': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
