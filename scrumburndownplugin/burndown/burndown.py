@@ -9,6 +9,7 @@
 # Author: Sam Bloomquist <spooninator@hotmail.com>
 
 import time
+import datetime
 import sys
 
 from trac.core import *
@@ -20,7 +21,7 @@ from trac.util import escape, Markup, format_date
 
 class BurndownComponent(Component):
     implements(IEnvironmentSetupParticipant, INavigationContributor,
-                    IRequestHandler, ITemplateProvider, IPermissionRequestor)
+                    IRequestHandler, ITemplateProvider, IPermissionRequestor, ITicketChangeListener)
     
     #---------------------------------------------------------------------------
     # IEnvironmentSetupParticipant methods
@@ -29,6 +30,7 @@ class BurndownComponent(Component):
         pass
 
     def environment_needs_upgrade(self, db):
+        self.log.debug('burndown plugin - environment needs upgrade')
         needsUpgrade = False
         
         #get a database connection if we don't already have one
@@ -111,16 +113,33 @@ class BurndownComponent(Component):
         ]
         for s in sqlMilestone:
             cursor.execute(s)
+            
+    #---------------------------------------------------------------------------
+    # ITicketChangeListener methods
+    #---------------------------------------------------------------------------
+    
+    def ticket_created(self, ticket):
+        update_burndown_data()
+        
+    def ticket_changed(self, ticket, comment, author, old_values):
+        update_burndown_data()
+        
+    def ticket_deleted(self, ticket):
+        update_burndown_data()
 
     #---------------------------------------------------------------------------
     # INavigationContributor methods
     #---------------------------------------------------------------------------
     def get_active_navigation_item(self, req):
-        return 'burndown'
-                
+        if re.search('/burndown', req.path_info):
+            return "burndown"
+        else:
+            return ""
+
     def get_navigation_items(self, req):
-        yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>', self.env.href.burndown())
-        
+        if req.perm.has_permission("BURNDOWN_VIEW"):
+            yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>', self.env.href.burndown())
+
     #---------------------------------------------------------------------------
     # IPermissionRequestor methods
     #---------------------------------------------------------------------------
@@ -169,15 +188,15 @@ class BurndownComponent(Component):
             req.hdf['start'] = True # show the start and complete milestone buttons to admins
         
         if req.args.has_key('start'):
-            self.startMilestone(db, selected_milestone)
+            self.start_milestone(db, selected_milestone)
         else:
             req.hdf['draw_graph'] = True
-            req.hdf['burndown_data'] = self.getBurndownData(db, selected_milestone, components, selected_component) # this will be a list of (id, hours_remaining) tuples
+            req.hdf['burndown_data'] = self.get_burndown_data(db, selected_milestone, components, selected_component) # this will be a list of (id, hours_remaining) tuples
         
         add_stylesheet(req, 'hw/css/burndown.css')
         return 'burndown.cs', None
         
-    def getBurndownData(self, db, selected_milestone, components, selected_component):
+    def get_burndown_data(self, db, selected_milestone, components, selected_component):
         cursor = db.cursor()
         
         component_data = {} # this will be a dictionary of lists of tuples -- e.g. component_data = {'componentName':[(id, hours_remaining), (id, hours_remaining), (id, hours_remaining)]}
@@ -213,7 +232,7 @@ class BurndownComponent(Component):
             
         return burndown_data
         
-    def startMilestone(self, db, milestone):
+    def start_milestone(self, db, milestone):
         cursor = db.cursor()
         cursor.execute("SELECT started FROM milestone WHERE name = '%s'" % milestone)
         row = cursor.fetchone()
@@ -249,3 +268,83 @@ class BurndownComponent(Component):
         """
         from pkg_resources import resource_filename
         return [('hw', resource_filename(__name__, 'htdocs'))]
+
+
+    #------------------------------------------------------------------------
+    # update_burndown_data
+    #  - add up the hours remaining for the open tickets for each open milestone and put the sums into the burndown table
+    #------------------------------------------------------------------------
+    def update_burndown_data():
+        is_weekly = BoolOption('burndown', 'is_weekly', False, """Boolean for whether the unit of time for the burndown chart is a week or a day.""")
+        
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        # today's date
+        if is_weekly:
+            today = datetime.date.today()
+            today_year = today.strftime("%Y")
+            today_week = today.strftime("%W")
+            
+            # make sure that there isn't already an entry for this week in the burndown table
+            cursor.execute("SELECT id FROM burndown WHERE week = '%s' and year = '%s'" % (today_week, today_year))
+        else:
+            today = format_date(int(time.time()))
+            
+            # make sure that there isn't already an entry for today in the burndown table
+            cursor.execute("SELECT id FROM burndown WHERE date = '%s'" % today)
+            
+        row = cursor.fetchone()
+        needs_update = False
+        if row:
+            print >> sys.stderr, 'update_burndown_data has already been run - update needed'
+            needs_update = True
+        else:
+            print >> sys.stderr, 'first run of update_burndown_data - insert needed'
+        
+        # get arrays of the various components and milestones in the trac environment
+        cursor.execute("SELECT name AS comp FROM component")
+        components = cursor.fetchall()
+        cursor.execute("SELECT name, started, completed FROM milestone")
+        milestones = cursor.fetchall()
+        
+        for mile in milestones:
+            if mile[1] and not mile[2]: # milestone started, but not completed
+                for comp in components:
+                    sqlSelect =     "SELECT est.value AS estimate, ts.value AS spent "\
+                                        "FROM ticket t "\
+                                        "    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'estimatedhours') "\
+                                        "    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'totalhours') "\
+                                        "WHERE t.component = '%s' AND t.milestone = '%s'"\
+                                        "    AND status IN ('new', 'assigned', 'reopened') "
+                    cursor.execute(sqlSelect % (comp[0], mile[0]))
+                
+                    rows = cursor.fetchall()
+                    hours = 0
+                    estimate = 0
+                    spent = 0
+                    if rows:
+                        for estimate, spent in rows:
+                            if not estimate:
+                                estimate = 0
+                            if not spent:
+                                spent = 0
+                        
+                            hours += float(estimate) - float(spent)
+                    
+                    if needs_update:
+                        if is_weekly:
+                            cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE week = '%s' AND year = '%s' AND milestone_name = '%s'"\
+                                            "AND component_name = '%s'" % (hours, today_week, today_year, mile[0], comp[0]))
+                        else:
+                            cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE date = '%s' AND milestone_name = '%s'"\
+                                            "AND component_name = '%s'" % (hours, today, mile[0], comp[0]))
+                    else:
+                        if is_weekly:
+                            cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, week, year, hours_remaining) "\
+                                            "    VALUES(NULL,'%s','%s','%s','%s',%f)" % (comp[0], mile[0], today_week, today_year, hours))
+                        else:
+                            cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
+                                            "    VALUES(NULL,'%s','%s','%s',%f)" % (comp[0], mile[0], today, hours))
+                                         
+        db.commit()

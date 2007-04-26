@@ -5,7 +5,7 @@
  <h1>Burndown Chart</h1>
 </div>
 
-<form action="<?cs var:burndown.href ?>" method="post">
+<form action="<?cs var:burndown.href ?>" method="get">
     <label for="selected_milestone">Select milestone:</label>
     <select id="selected_milestone" name="selected_milestone">
         <?cs each:mile = milestones ?>

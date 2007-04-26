@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracBurndown'
-VERSION = '01.07.10' # the last two decimals are meant to signify the Trac version
+VERSION = '01.08.10' # the last two decimals are meant to signify the Trac version
 
 setup(name=PACKAGE,
       description='Plugin to provide a dynamic burndown chart in Trac.',
