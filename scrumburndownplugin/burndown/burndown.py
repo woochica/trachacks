@@ -13,11 +13,13 @@ import datetime
 import sys
 
 from trac.core import *
+from trac.config import BoolOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup, format_date
+from trac.ticket import ITicketChangeListener
 
 class BurndownComponent(Component):
     implements(IEnvironmentSetupParticipant, INavigationContributor,
@@ -30,7 +32,6 @@ class BurndownComponent(Component):
         pass
 
     def environment_needs_upgrade(self, db):
-        self.log.debug('burndown plugin - environment needs upgrade')
         needsUpgrade = False
         
         #get a database connection if we don't already have one
@@ -119,22 +120,22 @@ class BurndownComponent(Component):
     #---------------------------------------------------------------------------
     
     def ticket_created(self, ticket):
-        update_burndown_data()
+        self.log.debug('burndown plugin - ticket_created')
+        self.update_burndown_data()
         
     def ticket_changed(self, ticket, comment, author, old_values):
-        update_burndown_data()
+        self.log.debug('burndown plugin - ticket_changed')
+        self.update_burndown_data()
         
     def ticket_deleted(self, ticket):
-        update_burndown_data()
+        self.log.debug('burndown plugin - ticket_modified')
+        self.update_burndown_data()
 
     #---------------------------------------------------------------------------
     # INavigationContributor methods
     #---------------------------------------------------------------------------
     def get_active_navigation_item(self, req):
-        if re.search('/burndown', req.path_info):
-            return "burndown"
-        else:
-            return ""
+        return "burndown"
 
     def get_navigation_items(self, req):
         if req.perm.has_permission("BURNDOWN_VIEW"):
@@ -274,8 +275,10 @@ class BurndownComponent(Component):
     # update_burndown_data
     #  - add up the hours remaining for the open tickets for each open milestone and put the sums into the burndown table
     #------------------------------------------------------------------------
-    def update_burndown_data():
+    def update_burndown_data(self):
         is_weekly = BoolOption('burndown', 'is_weekly', False, """Boolean for whether the unit of time for the burndown chart is a week or a day.""")
+        
+        self.log.debug('burndown plugin - is_weekly: %b', is_weekly)
         
         db = self.env.get_db_cnx()
         cursor = db.cursor()
