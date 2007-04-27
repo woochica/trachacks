@@ -1,0 +1,22 @@
+
+/* These are based on trac.css, but trac.css forgot to include the password
+ * input type */
+input[type=password] { border: 1px solid #d7d7d7 }
+input[type=password] { padding: .25em .5em }
+input[type=password]:focus { border: 1px solid #886; }
+
+th { font-weight: bold; background: #d7d7d7 }
+th, td { padding: 0.5em }
+
+/* Make the little hints very compact */
+p.hint { color: #666; font-size: 90%; margin: 0em .5em .5em }
+
+/* Stack these ones to the left */
+.left { float: left; padding-right: 1em }
+
+/* Extra space for the SlimTimer fieldset */
+#st_fieldset { margin: .5em 0em; float: left }
+
+/* The pop-out form */
+#moddiv { background: white; display: none }
+
