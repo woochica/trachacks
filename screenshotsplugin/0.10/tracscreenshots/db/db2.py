@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from trac.db import Table, Column, Index, DatabaseManager
 
 tables = [
@@ -66,7 +68,6 @@ def do_upgrade(env, cursor):
           " VALUES (%s, %s)"
         cursor.execute(sql, (screenshot['id'], screenshot['version']))
 
-    # Delete temporary table and set database schema version.
-    cursor.execute("DROP TABLE screenshot_old")
+    # Set database schema version.
     cursor.execute("UPDATE system SET value = '2' WHERE name ="
       " 'screenshots_version'")

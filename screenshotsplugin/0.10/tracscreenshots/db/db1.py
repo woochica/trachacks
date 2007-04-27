@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from trac.db import Table, Column, Index, DatabaseManager
 
 tables = [

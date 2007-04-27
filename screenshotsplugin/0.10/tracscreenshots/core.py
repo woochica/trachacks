@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from tracscreenshots.api import *
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
@@ -170,7 +172,7 @@ class ScreenshotsCore(Component):
 
                 # Return screenshots image action.
                 file = screenshot['%s_file' % (size,)]
-                path = os.path.join(self.path, str(screenshot['id']), file)
+                path = os.path.join(self.path, unicode(screenshot['id']), file)
                 self.log.debug('file: %s' % (file,))
                 self.log.debug('path: %s' % (path,))
                 type = mimetypes.guess_type(path)[0]
@@ -234,7 +236,7 @@ class ScreenshotsCore(Component):
                     self.api.add_version(cursor, screenshot['id'], new_version)
 
                 # Prepare file paths
-                path = os.path.join(self.path, str(self.id))
+                path = os.path.join(self.path, unicode(self.id))
                 large_filepath = os.path.join(path, large_filename)
                 medium_filepath = os.path.join(path, medium_filename)
                 small_filepath =  os.path.join(path, small_filename)
@@ -329,7 +331,7 @@ class ScreenshotsCore(Component):
                 # Delete screenshot.
                 try:
                     self.api.delete_screenshot(cursor, self.id)
-                    path = os.path.join(self.path, str(self.id))
+                    path = os.path.join(self.path, unicode(self.id))
                     os.remove(os.path.join(path, screenshot['large_file']))
                     os.remove(os.path.join(path, screenshot['medium_file']))
                     os.remove(os.path.join(path, screenshot['small_file']))
@@ -450,5 +452,4 @@ class ScreenshotsCore(Component):
             size = image.file.len
         if size == 0:
             raise TracError('Can\'t upload empty file.')
-
-        return image.file, image.filename
+        return image.file, unicode(image.filename, 'utf-8')

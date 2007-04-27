@@ -1,6 +1,8 @@
+# -*- coding: utf8 -*-
+
 from trac.core import *
 from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import format_datetime, escape
+from trac.util import format_datetime
 import time
 
 class ScreenshotsApi(object):
@@ -123,8 +125,8 @@ class ScreenshotsApi(object):
           " %s, %s, %s)"
         self.log.debug(sql % (name, description, time, author, tags, large_file,
           medium_file, small_file))
-        cursor.execute(sql, (escape(name), escape(description), time,
-          escape(author), tags, large_file, medium_file, small_file))
+        cursor.execute(sql, (name, description, time, author, tags, large_file,
+          medium_file, small_file))
 
     def add_component(self, cursor, screenshot, component):
         sql = "INSERT INTO screenshot_component (screenshot, component)" \
@@ -146,8 +148,7 @@ class ScreenshotsApi(object):
         sql = "UPDATE screenshot SET name = %s, description = %s, tags = %s" \
           " WHERE id = %s"
         self.log.debug(sql % (name, description, tags, screenshot))
-        cursor.execute(sql, (escape(name), escape(description), tags,
-          screenshot))
+        cursor.execute(sql, name, description, tags, screenshot)
 
         # Replace components
         sql = "DELETE FROM screenshot_component WHERE screenshot = %s"

@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from tracscreenshots.api import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider
