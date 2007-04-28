@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCtxtnavAdd',
-    version = '1.1-r1',
+    version = '2.0',
     packages = ['ctxtnavadd'],
     package_data={ 'ctxtnavadd' : [ 'templates/*.cs' , 'htdocs/js/*.js' ] },
     author = "Noah Kantrowitz",
@@ -15,12 +15,13 @@ setup(
     license = "BSD",
     keywords = "trac plugin ctxtnav",
     url = "http://trac-hacks.org/wiki/CtxtnavAddPlugin",
-
+    classifiers = [
+        'Framework :: Trac',
+    ],
+    
     entry_points = {
         'trac.plugins': [
             'ctxtnavadd.web_ui = ctxtnavadd.web_ui',
         ],
     },
-
-    install_requires = [  ],
 )

@@ -1,21 +1,30 @@
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider
-from trac.util import Markup
-
-try:
-    from trac.web.chrome import add_javascript
-    have_aj = True
-except ImportError:
-    have_aj = False
+from trac.web.chrome import ITemplateProvider, add_script
+from trac.web.api import IRequestHandler, IRequestFilter
+from genshi.core import Markup
+from genshi.builder import tag
 
 from ctxtnavadd.api import ICtxtnavAdder
 
 inc_script = """<script type="text/javascript" src="%s"></script>""" 
 
+class ReqProxy(object):
+    """A proxy to intercept req.path_info."""
+    
+    def __init__(self, req, path_info):
+        object.__setattr__(self, '_req', req)
+        object.__setattr__(self, 'path_info', path_info)
+        
+    def __getattr__(self, key):
+        return getattr(self._req, key)
+        
+    def __setattr__(self, key, value):
+        setattr(self._req, key, value)
+
 class CtxtnavAddModule(Component):
     """An evil module that adds buttons to the ctxtnav bar of other plugins."""
  
-    implements(INavigationContributor, ITemplateProvider)
+    implements(ITemplateProvider, IRequestFilter, IRequestHandler)
     
     ctxtnav_adders = ExtensionPoint(ICtxtnavAdder)
     
@@ -25,63 +34,51 @@ class CtxtnavAddModule(Component):
         
     def get_navigation_items(self, req):
         evil_js = '/'.join(['ctxtnavadd','js','ctxtnavadd.js'])
-        if have_aj:
-            add_javascript(req, evil_js)
-        else:
-            self._add_js_inc(req, req.href.chrome(evil_js))
-        self._add_js(req,self._make_js(req))
+        #add_script(req, evil_js)
+        #self._add_js(req,self._make_js(req))
         
         return [] # This returns no buttons
         
     # ITemplateProvider methods    
     def get_templates_dirs(self):
-        """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
         from pkg_resources import resource_filename
-        #return [resource_filename(__name__, 'templates')]
-        return []
+        return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        """
-        Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-        
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
         from pkg_resources import resource_filename
         return [('ctxtnavadd', resource_filename(__name__, 'htdocs'))]
 
-    # Internal methods
-    def _add_js(self, req, data):
-        """Add javascript to a page via hdf['project.footer']"""
-        footer = req.hdf['project.footer']
-        footer += data
-        req.hdf['project.footer'] = Markup(footer)
-    
-    def _add_js_inc(self, req, file):
-        """Add a javascript include via hdf['project.footer']"""
-        self._add_js(req, inc_script%file)
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info.startswith('/ctxtnavadd')
+            
+    def process_request(self, req):
+        data = {}        
+        real_path = req.path_info[11:]
+        fake_req = ReqProxy(req, real_path)
+        data['adds'] = self._get_adds(fake_req)
+        return 'ctxtnavadd.js', data, 'text/plain'
+            
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+        
+    def post_process_request(self, req, template, data, content_type):
+        add_script(req, 'ctxtnavadd/js/ctxtnavadd.js')
+        add_script(req, '/ctxtnavadd'+req.path_info)
+        #self._add_js(req, data, self._make_js(req))
+        return template, data, content_type        
 
-    def _make_js(self, req):
-        """Generate the needed Javascript."""
-        adds = []
+    # Internal methods
+    def _get_adds(self, req):
+        """Find all links to add."""
         for adder in self.ctxtnav_adders:
             if adder.match_ctxtnav_add(req):
                 for add in adder.get_ctxtnav_adds(req):
                     if isinstance(add, Markup):
-                        adds.append(Markup(add.replace("'","\\'")))
+                        yield Markup(add.replace("'","\\'"))
                     else:
-                        href, text = add
-                        adds.append(Markup('<a href="%s">%s</a>'%(href,Markup.escape(text,False))))
-        js = ""
-        for add in adds:
-            js += "add_ctxtnav('%s');\n"%add
-        return """<script type="text/javascript">%s</script>"""%js
+                        yield tag.a(add[1], href=Markup(add[0]))
+
     
+
