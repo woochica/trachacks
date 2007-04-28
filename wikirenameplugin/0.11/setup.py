@@ -34,6 +34,6 @@ setup(
     #install_requires = [],
     # Waiting on the extras support patch for this
     extras_require = {
-        'ctxtnav' : [ 'TracCtxtnavAdd' ],
+        'ctxtnav' : [ 'TracCtxtnavAdd>=2.0' ],
     },
 )

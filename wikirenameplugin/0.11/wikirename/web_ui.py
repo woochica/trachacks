@@ -30,11 +30,11 @@ class WikiRenameModule(Component):
         }
         
         if 'submit' in req.args.keys():
-            if not src or not dest:
+            if not data['src'] or not data['dest']:
                 raise TracError, "Please provide both the old and new names"
             rename_page(self.env, data['src'], data['dest'], req.authname, req.remote_addr, debug=self.log.debug)
             if data['redir']:
-                req.redirect(req.href.wiki(dest))
+                req.redirect(req.href.wiki(data['dest']))
             # Reset for the next display
             data['src'] = ''
             data['dest'] = ''
