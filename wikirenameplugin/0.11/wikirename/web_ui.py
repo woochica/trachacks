@@ -1,67 +1,45 @@
 from trac.core import *
-from trac.util import Markup
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import ITemplateProvider
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin.web_ui import IAdminPanelProvider
+from genshi.core import Markup
 
 from wikirename.util import rename_page
 
 import urllib
 
-_implements = [IPermissionRequestor, IAdminPageProvider, ITemplateProvider]
-
-try:
-    from ctxtnavadd.api import ICtxtnavAdder
-    _implements.append(ICtxtnavAdder)
-except ImportError:
-    pass
-
 class WikiRenameModule(Component):
     """An evil module that adds a rename button to the wiki UI."""
  
-    implements(*_implements)
+    implements(IPermissionRequestor, IAdminPanelProvider, ITemplateProvider)
     
-    # ICtxtnavAdder methods
-    def match_ctxtnav_add(self, req):
-        perm = req.perm.has_permission('WIKI_RENAME') or req.perm.has_permission('WIKI_ADMIN')
-        return req.path_info.startswith('/wiki') and perm
-        
-    def get_ctxtnav_adds(self, req):
-        page = req.path_info[6:] or 'WikiStart'
-        yield (req.href.admin('general','wikirename')+'?redirect=1&src_page='+page,'Rename page')
-
     # IPermissionRequestor methods
     def get_permission_actions(self):
         return ['WIKI_RENAME']
 
-    # IAdminPageProvider methods
-    def get_admin_pages(self, req):
+    # IAdminPanelProvider methods
+    def get_admin_panels(self, req):
         if req.perm.has_permission('WIKI_RENAME') or req.perm.has_permission('WIKI_ADMIN'):
             yield ('general', 'General', 'wikirename', 'Wiki Rename')
             
-    def process_admin_request(self, req, cat, page, path_info):
-        src = req.args.get('src_page','')
-        dest = req.args.get('dest_page','')
-        redir = req.args.get('redirect','') == '1'
-        
-        # Handle escaped chars (#TH672)
-        src = urllib.unquote_plus(src)
-        dest = urllib.unquote_plus(dest)
+    def render_admin_panel(self, req, cat, page, path_info):
+        data = {
+            'src': urllib.unquote_plus(req.args.get('src_page','')),
+            'dest': urllib.unquote_plus(req.args.get('dest_page','')),
+            'redir': req.args.get('redirect','') == '1',
+        }
         
         if 'submit' in req.args.keys():
             if not src or not dest:
                 raise TracError, "Please provide both the old and new names"
-            rename_page(self.env, src, dest, req.authname, req.remote_addr, debug=self.log.debug)
-            if redir:
+            rename_page(self.env, data['src'], data['dest'], req.authname, req.remote_addr, debug=self.log.debug)
+            if data['redir']:
                 req.redirect(req.href.wiki(dest))
             # Reset for the next display
-            src = ''
-            dest = ''
+            data['src'] = ''
+            data['dest'] = ''
 
-        req.hdf['wikirename.src'] = src
-        req.hdf['wikirename.dest'] = dest
-        req.hdf['wikirename.redir'] = redir
-        return 'wikirename_admin.cs', None
+        return 'admin_wikirename.html', data
         
 
     # ITemplateProvider methods
