@@ -7,7 +7,7 @@ setup(
     name = 'TracWikiRename',
     version = '2.0',
     packages = ['wikirename'],
-    package_data={ 'wikirename' : [ 'templates/*.cs' ] },
+    package_data={ 'wikirename' : [ 'templates/*.html' ] },
 
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
