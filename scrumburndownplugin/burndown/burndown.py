@@ -276,26 +276,14 @@ class BurndownComponent(Component):
     #  - add up the hours remaining for the open tickets for each open milestone and put the sums into the burndown table
     #------------------------------------------------------------------------
     def update_burndown_data(self):
-        is_weekly = BoolOption('burndown', 'is_weekly', False, """Boolean for whether the unit of time for the burndown chart is a week or a day.""")
-        
-        self.log.debug('burndown plugin - is_weekly: %b', is_weekly)
-        
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
         # today's date
-        if is_weekly:
-            today = datetime.date.today()
-            today_year = today.strftime("%Y")
-            today_week = today.strftime("%W")
-            
-            # make sure that there isn't already an entry for this week in the burndown table
-            cursor.execute("SELECT id FROM burndown WHERE week = '%s' and year = '%s'" % (today_week, today_year))
-        else:
-            today = format_date(int(time.time()))
-            
-            # make sure that there isn't already an entry for today in the burndown table
-            cursor.execute("SELECT id FROM burndown WHERE date = '%s'" % today)
+        today = format_date(int(time.time()))
+        
+        # make sure that there isn't already an entry for today in the burndown table
+        cursor.execute("SELECT id FROM burndown WHERE date = '%s'" % today)
             
         row = cursor.fetchone()
         needs_update = False
@@ -336,18 +324,10 @@ class BurndownComponent(Component):
                             hours += float(estimate) - float(spent)
                     
                     if needs_update:
-                        if is_weekly:
-                            cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE week = '%s' AND year = '%s' AND milestone_name = '%s'"\
-                                            "AND component_name = '%s'" % (hours, today_week, today_year, mile[0], comp[0]))
-                        else:
-                            cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE date = '%s' AND milestone_name = '%s'"\
-                                            "AND component_name = '%s'" % (hours, today, mile[0], comp[0]))
+                        cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE date = '%s' AND milestone_name = '%s'"\
+                                        "AND component_name = '%s'" % (hours, today, mile[0], comp[0]))
                     else:
-                        if is_weekly:
-                            cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, week, year, hours_remaining) "\
-                                            "    VALUES(NULL,'%s','%s','%s','%s',%f)" % (comp[0], mile[0], today_week, today_year, hours))
-                        else:
-                            cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
-                                            "    VALUES(NULL,'%s','%s','%s',%f)" % (comp[0], mile[0], today, hours))
+                        cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
+                                        "    VALUES(NULL,'%s','%s','%s',%f)" % (comp[0], mile[0], today, hours))
                                          
         db.commit()
