@@ -78,7 +78,7 @@ class Properties :
             match = re.match('testtemplates.xml',  entry.get_name() )
             #we want to parse testcases not the testtemplate file...
             if not match:
-                match = re.match('*.xml$',  entry.get_name() )  #this allows us to have other files 
+                match = re.match('\S.xml$',  entry.get_name() )  #this allows us to have other files 
                 if match:
                     try:
                         content = entry.get_content().read()
