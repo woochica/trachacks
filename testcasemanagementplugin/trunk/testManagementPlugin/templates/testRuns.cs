@@ -80,6 +80,17 @@
                                 </tr>
                             </table>
                         </td>
+                        <td>
+                            <table>
+                                <th>Selected Test Case Description</th>
+                                <tr>
+                                    <td>
+                                    
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                        </td>
                     </tr>
                 </table>
             </div>            

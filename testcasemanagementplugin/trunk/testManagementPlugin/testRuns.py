@@ -210,7 +210,7 @@ class TestRunManager(Component):
         
         if testcases == None : 
             #there was an error of some kind fetching the testcases...    
-            return "testRunNotConfigured.cs", None
+            return "testRunNotConfigured.cs", None 
             
         for key, testcase in testcases.iteritems():
             testcaseNames.append( testcase.getId() )
