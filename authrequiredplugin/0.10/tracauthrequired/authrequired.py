@@ -48,6 +48,7 @@ class AuthRequired(Component):
     def get_navigation_items(self, req):
         if ((req.authname and req.authname != 'anonymous') or \
             req.path_info.startswith('/login') or \
+            req.path_info.startswith('/reset_password') or \
             req.path_info.startswith('/register')):
             return []
         self.log.debug('Redirecting anonymous request to /login')
