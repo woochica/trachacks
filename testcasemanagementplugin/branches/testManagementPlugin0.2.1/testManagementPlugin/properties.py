@@ -78,15 +78,17 @@ class Properties :
             match = re.match('testtemplates.xml',  entry.get_name() )
             #we want to parse testcases not the testtemplate file...
             if not match:
-                try:
-                    content = entry.get_content().read()
-                    testcase = TestCase( entry.get_name(), str(content), component )
-                    testcases[ testcase.getId().encode('ascii', 'ignore').strip() ] =  testcase 
-                except Exception, ex:
-                    req.hdf['testcase.run.errormessage'] = "The testcase  :" + entry.get_name() + "  is not well formed xml...a parse error occured " 
-                    component.env.log.debug( "Error validating testcases " + repr(ex) )
-                    return None
-        
+                match = re.match('*.xml$',  entry.get_name() )  #this allows us to have other files 
+                if match:
+                    try:
+                        content = entry.get_content().read()
+                        testcase = TestCase( entry.get_name(), str(content), component )
+                        testcases[ testcase.getId().encode('ascii', 'ignore').strip() ] =  testcase 
+                    except Exception, ex:
+                        req.hdf['testcase.run.errormessage'] = "The testcsae  :" + entry.get_name() + "  is not well formed xml...a parse error occured " 
+                        component.env.log.debug( "Error validating testcases " + repr(ex) )
+                        return None
+                        
         #first let's do some validation on the testcases...
         components = self.getComponents( component, req )
         currentTestcase = None
