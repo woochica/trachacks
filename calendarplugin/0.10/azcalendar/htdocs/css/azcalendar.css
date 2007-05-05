@@ -1,0 +1,192 @@
+div.azcalendar h1 {
+        background: white;
+}
+
+
+table.add_event {
+    text-align:right;
+    border: solid 1px;
+}
+
+table.azweekcal {
+        border: 3px solid Silver;
+        border-collapse: collapse;
+        font-family: Helvetica;
+        width:150em;
+}
+
+table.azweekcal tr.gutter {
+        border-bottom: 2px solid Silver;
+}
+
+table.azweekcal tr.gutter td {
+        background-color: Silver;
+        padding: 0;
+        width: 1%;
+}
+
+table.azweekcal tr td.dayname {
+        vertical-align: top;
+        padding: 0;
+        border-right: 2px solid Silver;
+}
+
+table.azweekcal tr td.dayname div.dow {
+        font-weight: bold;
+}
+
+table.azweekcal tr td.dayname div.date {
+        font-size: smaller;
+}
+
+table.azweekcal tr.head {
+        background-color: NavajoWhite;
+}
+
+table.azweekcal tr.head td {
+        border-left: 1px solid black;
+        padding: 0 0.5em 0 0.5em;
+        text-align: center;
+}
+
+table.azweekcal tr.line td.empty {
+        background-color: White;
+        border: none;
+}
+
+table.azweekcal tr.line td.plus {
+	vertical-align: top;
+	text-align: center;
+        background-color: White;
+        border: none;
+}
+
+table.azweekcal tr.line td.plus a {
+	display: block;
+        background-color: Beige;
+	color: Black;
+	font-weight: bold;
+        border: 1px solid Silver;
+}
+
+table.azweekcal tr.line td.plus a:hover {
+	display: block;
+	color: Red;
+	font-weight: bold;
+        border: 1px solid Silver;
+}
+
+table.azweekcal tr.line td.important {
+        border: 1px solid Gray;
+        background-color: Darkorange;
+        text-align: center;
+}
+
+table.azweekcal tr.line td.normal {
+        border: 1px solid Gray;
+        background-color: LightBlue;
+        text-align: center;
+}
+
+table.azweekcal tr.line td.important a,
+table.azweekcal tr.line td.normal a {
+	background-color: Transparent;
+        font-weight: bold;
+	border: none;
+	color: Black;
+}
+
+table.azweekcal tr.line td.important a:hover,
+table.azweekcal tr.line td.normal a:hover,
+table.azweekcal tr.line td.important a:active,
+table.azweekcal tr.line td.normal a:active {
+	color: Red;
+}
+
+div.azweekcalscroll {
+        width: 95%;
+        overflow: auto;
+        border: 1px solid Silver;
+        padding: 4px;
+}
+
+
+table.azmonthcal {
+        border: 3px solid Silver;
+        border-collapse: collapse;
+        width: 99%;
+}
+
+table.azmonthcal tr.head td.title {
+        font-family: Helvetica;
+        font-weight: bold;
+        text-align: center;
+        border-bottom: 1px solid Black;
+        background-color: NavajoWhite;
+}
+
+table.azmonthcal tr.days td.dayname {
+        padding: 0;
+        font-weight: bold;
+        border-bottom: 1px solid Black;
+        border-left: 1px solid Gray;
+        border-right: 1px solid Gray;
+        text-align: center;
+}
+
+table.azmonthcal tr.cal td {
+        text-align: center;
+        border: 1px solid Gray;
+	max-width: 14.28%;
+	width: 14.28%;
+}
+
+table.azmonthcal tr.cal td a {
+	border: none;
+	display: block;
+        color: Black;
+	background: none;
+	padding: 1px;
+}
+
+table.azmonthcal tr.cal td a:hover {
+        color: Red;
+}
+
+table.azmonthcal tr.cal td.empty {
+        background-color: White;
+	border: none;
+}
+
+table.azmonthcal tr.cal td.none {
+        background-color: White;
+	border: none;
+}
+
+table.azmonthcal tr.cal td.normal {
+        background-color: LightBlue;
+}
+
+table.azmonthcal tr.cal td.important {
+        background-color: Darkorange;
+}
+
+table.azmonthcal tr.empty td.empty {
+        background-color: White;
+        border: none;
+}
+
+table.azmonthcal-container {
+        width: 100%;
+        padding: 0;
+}
+
+table.azmonthcal-container td.azmonthcal-container {
+        vertical-align: top;
+}
+
+div.azmonthcalscroll {
+        width: 95%;
+        border: none;
+        padding: 4px;
+}
