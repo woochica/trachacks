@@ -515,14 +515,14 @@ class Node(object):
         @type: C{boolean}
         """
 
-        # The root path is always a directory
-        if self._nodePath.isRoot:
-            return True
-
         # Use the latest revision if no revision specified
         if self._nodePath.rev is None:
             latestChange = self._repo.getLatestChange()
             self._nodePath = NodePath(self._nodePath.path, latestChange)
+
+        # The root path is always a directory
+        if self._nodePath.isRoot:
+            return True
 
         # Do we already know it's a directory?
         dirInfo = self._repo._getDirInfo(self._nodePath)
