@@ -65,18 +65,22 @@ def:azweekcal(urlbase, events) ?>
     		    /if ?><?cs
 		/each ?><?cs
 
+		set:tmp.first_line = 1 ?><?cs
     		each:line = dayevents.events ?>
 		    <tr class='line'><?cs
-		        if:first(line) ?><?cs
+		        if:tmp.first_line ?><?cs
 			    call:azweekcal_daynamecell(dayevents, subcount(dayevents.events) + tmp.extra_space_for_plus) ?><?cs
 			    set:tmp.have_day = 1 ?><?cs
+			    set:tmp.first_line = 0 ?><?cs
 			/if ?><?cs
 			set:tmp.last_end = 0 ?><?cs
 
+			set:tmp.first_event = 1 ?><?cs
 			each:event = line ?><?cs
-    			    if:tmp.have_plus == 0 && first(event) && event.brd_begin > 1 ?><?cs
+    			    if:tmp.have_plus == 0 && tmp.first_event && event.brd_begin > 1 ?><?cs
 				set:tmp.last_end = 1 ?><?cs
 				set:tmp.have_plus = 1 ?><?cs
+				set:tmp.first_event = 0 ?><?cs
 				call:azweekcal_pluscell(urlbase, dayevents.date) ?><?cs
     			    /if ?><?cs
 			    set:tmp.space = event.brd_begin - tmp.last_end ?><?cs
