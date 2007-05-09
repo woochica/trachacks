@@ -1,0 +1,369 @@
+#!/usr/bin/env python
+
+from optparse import OptionParser
+
+import os
+import re
+import md5
+import time
+import random
+import sys
+import string
+import commands
+
+from ConfigParser import ConfigParser
+
+
+def index ( dirs , cleanold=False ):
+	"""Build index.swish-e using swish-e"""
+	"""index files are stored in /path/to/env/attachments/index"""
+
+	# Check if index directory already exists or not
+	index_dir = os.path.join ( trac_env , 'attachments', 'index' )
+	if not os.path.exists( index_dir ):
+		os.mkdir ( index_dir )
+
+	os.chdir ( index_dir )
+
+	# Write config
+	key = generate_key()
+	conf_file = 'swish.config.' + key
+	if os.path.exists( conf_file ):
+		os.remove ( conf_file )
+
+	# Crate config file
+     	f = open( conf_file , 'w' )
+	for d in dirs:
+		f.write (' IndexDir %s\n' % os.path.join ( trac_env , d ) )
+	f.write( 'IndexOnly .meta          \n')
+	f.write( 'IndexContents TXT* .meta \n')
+	f.close()
+
+	# Make sure index dir exists
+	index_file = 'index.swish-e.' + key
+	index_dir  = os.path.join ( trac_env , 'attachments' , 'index' )
+
+	if not os.path.exists ( index_dir ):
+		os.mkdir ( index_dir )
+
+	# Launch commmand
+	cmd  = '%s -c %s -v 2 -f %s' % ( options.swish , conf_file , index_file )
+	os.system( cmd + '&& echo "Writing index to index.swish-e.%s"' % key)
+
+	# Remove config file	
+        if os.path.exists( conf_file ):
+                os.remove ( conf_file )
+
+	if cleanold:	
+		clean ( key )
+	return
+
+def clean ( key ):
+	"""Clean all indexes not matching key"""
+	
+	for file in os.listdir( os.path.join ( trac_env , 'attachments', 'index' ) ):
+
+		if file == 'index.swish-e':
+			robust_delete ( file )
+
+		pattern  = re.compile ('^index.swish-e.(.*)$')
+		matching = pattern.match ( file )
+		if matching:
+			suffix = matching.group(1)
+			regexp = '^%s.*$' % key
+			if not re.compile( regexp ).match ( suffix ):
+				# Not the current index ... delete
+				robust_delete ( file )
+	return
+
+
+def get_key ( filename ):
+
+	p1 = re.compile('^index\.swish-e\.(.*)$')
+        m1 = p1.match ( filename )
+
+       	if m1:
+		suffix = m1.group(1)
+                p2 = re.compile ('^(.*)\.prop$')
+                m2 = p2.match ( suffix )
+                if m2:
+                	return m2.group(1)
+                else:
+                	return suffix
+		
+	return None
+
+
+def robust_delete ( file ):
+
+	try:
+		os.remove( file )
+		print 'deleting %s' % file
+	except:
+		pass
+
+	return
+
+
+def get_extension ( path ):
+
+	pattern  = re.compile( '^.*\.([a-zA-Z0-9]*)$' )
+	suffix = pattern.match( os.path.basename(path) )
+
+	if suffix:
+		ext = suffix.group(1).lower()
+
+                # Synonyms for txt
+                if ext in [ 'txt' , 'text' , 'xml' ]:
+                	return 'txt'
+                else:
+                	return ext
+
+                # No suffix...may be a text file
+	elif is_text_file ( path ):
+        	return 'txt'
+
+        # Cannot determine type
+        else:
+        	return False
+
+def is_text( content ):
+        """Determines if the content is text"""
+
+        text_characters = "".join(map(chr, range(32, 127)) + list("\n\r\t\b"))
+        _null_trans = string.maketrans("", "")
+
+        if "\0" in content:
+                return False
+
+        if not content:  # Empty files are considered text
+                return True
+
+        # Get the non-text "binary" characters
+        binary = content.translate( _null_trans , text_characters )
+
+        # If more than 30% non-text characters, then
+        # this is considered a binary file
+        if len(binary) <= len(content) * 0.3:
+                return True
+
+        return False
+
+def is_text_file(  filepath , blocksize = 512 ):
+        """Read the first 512 bytes of the specified file"""
+        """Returns True if it's a text file. False otherwise"""
+
+        if is_text(open(filepath).read(blocksize)):
+                return True
+        else:
+                return False
+
+def convert ( path , ext ):
+
+	if ext == 'meta':
+		return False
+
+	meta_file = path + '.meta'
+
+	# Remove existing meta_file
+	if os.path.exists ( meta_file):
+		os.remove ( meta_file )
+
+	# Create new meta file
+	cmd  = filters[ext] % ( path , meta_file ) 
+	error , output = commands.getstatusoutput ( cmd )
+	if error:
+		return error
+	else:
+		return True
+
+
+def generate_key ():
+	"""Generate unique key"""
+
+	random.seed()
+	n = random.random()*1000000000000
+	data = str(n) + 'jklsvjksldvjkjkl'
+	base = md5.new( data )
+	key = base.hexdigest()
+
+	return key
+
+
+
+
+
+def deletemeta ( dir , level=0  ):
+
+        mylist = {}
+        for item in os.listdir (dir):
+                path     = os.path.join ( dir , item )
+                if os.path.isfile ( path ) :
+                        mylist[item] = 0
+                else:
+                        mylist[item] = 1
+
+        # Now sort by value to list  directories first
+        slist = list( mylist.iteritems() )
+        slist.sort(lambda i1, i2: cmp(i1[1], i2[1]))
+	num = 0
+        for tuple in slist :
+                path     = os.path.join ( dir , tuple[0] )
+                if tuple[1]:
+                        # This is a directory
+                        subnum = deletemeta ( path , level + 1  )
+			num = num + subnum
+		else:
+                        # This is a file.Convert it.
+                        ext = get_extension ( path )
+                        if ext == 'meta' :
+				num = num + 1
+                                os.remove ( path )
+
+	return num
+
+def meta ( dir , level=0  ):
+
+	print ' ' * 2 * level + ' \033[44m+ ' + dir + '\033[0m'
+	mylist = {}	
+	for item in os.listdir (dir):
+                path     = os.path.join ( dir , item )
+		if os.path.isfile ( path ) :
+			mylist[item] = 0
+		else:
+			mylist[item] = 1
+
+	# Now sort by value to list  directories first
+	slist = list( mylist.iteritems() )
+	slist.sort(lambda i1, i2: cmp(i1[1], i2[1]))
+
+	for tuple in slist :
+                path     = os.path.join ( dir , tuple[0] )
+		if tuple[1]:
+			# This is a directory
+			meta ( path , level + 1  )
+		else:
+			# This is a file.Convert it.
+			ext = get_extension ( path )
+			if ext and ( ext != 'meta' ) and ( ext in filters) :
+				result = convert ( path , ext )
+				if result:
+					status = '\033[0;35m%s\033[0m:\033[1;32mMETAOK\033[0m' % ext
+					close = '\033[0m'
+				else:
+					status = '%s:\033[1;31m ERROR' % ext
+					close = '\033[0m'
+
+			elif not ext in filters:
+				 status = '\033[0;35m%s\033[0m:\033[1;33mIGNORE\033[0m' % ext
+                                 close = '\033[0m'
+
+			else:
+				status = ' ? '
+				close = ''
+	
+			# TODO: Utiliser ERR pour erreur sur format connu et ? pour format inconnu
+			if ext != 'meta':	
+	                       	print ' ' * 2 * level + ' \033[44m|\033[0m - %s  ' % status + tuple[0] 
+	return
+
+def vararg (option, opt_str, value, parser):
+	assert value is None
+	done = 0
+	value = []
+	rargs = parser.rargs
+	while rargs:
+        	arg = rargs[0]
+
+        	# Stop if we hit an arg like "--foo", "-a", "-fx", "--file=f",
+	        # etc.  Note that this also stops on "-3" or "-3.0", so if
+        	# your option takes numeric values, you will need to handle
+	        # this.
+        	if ((arg[:2] == "--" and len(arg) > 2) or
+	            (arg[:1] == "-" and len(arg) > 1 and arg[1] != "-")):
+        	    break
+	        else:
+        	    value.append(arg)
+	            del rargs[0]
+
+	setattr(parser.values, option.dest, value)
+	return
+
+# Parsz input line
+usage = "usage: %prog </path/to/projenv> [command] [options]"
+usage = usage + '\n\nwhere command can be one of the following combination:'
+usage = usage + '\n * meta           : crawl directory and generate meta files'
+usage = usage + '\n * deletemeta     : crawl directory and delete all meta files'
+usage = usage + '\n * index          : build index with swish-e'
+
+
+parser = OptionParser( usage=usage , version="%prog 0.1" )
+
+parser.add_option( "-d", "--dir", dest="dir", action="callback" , callback=vararg , metavar="DIR1 DIR2 ..." ,
+                  help="list of space separated directories to crawl or to index. " \
+			"Pathes are relative to the trac project env directory. [ attachments/wiki attachments/ticket ]" )
+
+parser.add_option( "-c", "--clean", action="store_true" , dest="clean" , 
+                  help="remove old indexes after building index. ")
+
+parser.add_option( "-s", "--swish", action="store" , dest="swish" , metavar="EXEC" , default="/usr/local/bin/swish-e",
+                  help="path to swish-e binary on the system ")
+
+
+(options, args) = parser.parse_args()
+
+
+# Default value for optiosn.dir
+if not options.dir:
+        options.dir = ('attachments/wiki', 'attachments/ticket')
+
+
+# main switch
+if len(sys.argv) == 1:
+	print 'You must specify the path to the trac environment ar first argument. Try %s --help' % os.path.basename(sys.argv[0])
+	sys.exit(1)
+elif len (sys.argv) == 2:
+	print 'no command specified. Try %s --help' % os.path.basename(sys.argv[0])
+	sys.exit(1)
+
+trac_env = sys.argv[1]
+command  = sys.argv[2]
+
+if not os.path.exists( trac_env ):
+	print "The specificied Trac environment does not exist: %s" % trac_env
+	sys.exit(1)
+
+
+if command == 'index':
+		print 'clean %s' % options.clean
+		if options.clean:
+			index ( options.dir , True )
+		else:
+			index ( options.dir )
+
+elif command == 'meta' :
+
+	# Read supported filters for trac.ini
+	trac = ConfigParser()
+	trac_ini = os.path.join ( trac_env , 'conf' , 'trac.ini' )
+	trac.readfp(open( trac_ini ))
+
+	# Make global variable filter
+	filters = {}
+	for entry in trac.options('attachment'):
+		p = re.compile ('^filter.(.*)$')
+		m = p.match ( entry )
+		if m:
+			ext = m.group(1)
+			filters[ext] = trac.get('attachment', entry)
+	
+	for d in options.dir:
+		meta ( os.path.join( trac_env , d ) )
+
+elif command == 'deletemeta':
+	for d in options.dir:
+                print "in %s" % d
+		print "   %d .meta files deleted" % deletemeta ( os.path.join( trac_env , d ) )
+
+else:
+	print 'Unkown command. Try %s --help' % os.path.basename(sys.argv[0])
