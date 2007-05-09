@@ -405,5 +405,5 @@ class UserbaseModule(Component):
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
-        actions = ['CAL_ADMIN', ['CAL_EDIT', ['CAL_VIEW',]]]
+        actions = [('CAL_ADMIN', ('CAL_EDIT',)), ('CAL_EDIT', ('CAL_VIEW',)), 'CAL_VIEW']
         return actions
