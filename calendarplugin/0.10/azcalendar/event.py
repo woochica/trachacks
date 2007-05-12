@@ -1,15 +1,6 @@
 import enum
 from trac.db import Table, Column, Index
 
-try:
-    import sqlite
-except ImportError:
-    try:
-        import pysqlite2._sqlite as sqlite
-    except ImportError, e:
-        print e
-
-
 EventPriority = enum.Enum ("normal", "important")
 EventType = enum.Enum ("public", "protected", "private")
 
@@ -129,12 +120,10 @@ class Event:
             req.hdf['sql'] = sql
             cursor.execute(sql)
             db.commit()
-        except sqlite.Error, e:
-            req.hdf['azcalendar.reason'] = "Error occured: %s" % e.args[0] + str(sql)
+            return 'redirect.cs', None
+        except:
+            req.hdf['azcalendar.reason'] = "Database failure."
             return 'azerror.cs', None
-
-        return 'redirect.cs', None
-
 
     def save (self, env, req):
         """
@@ -157,12 +146,10 @@ class Event:
                    self._time_begin_, self._time_end_ , self._type_, self._priority_, self._title_)
             cursor.execute(sql)
             db.commit()
-        except sqlite.Error, e:
-            req.hdf['azcalendar.reason'] = "Error occured: %s" % e.args[0] + str(sql)
+            return 'redirect.cs', None
+        except:
+            req.hdf['azcalendar.reason'] = "Database failure."
             return 'azerror.cs', None
-
-        return 'redirect.cs', None
-
 
     def delete (self, env):
         """
@@ -171,10 +158,14 @@ class Event:
 
         db = env.get_db_cnx()
         cursor = db.cursor()
-        sql = "DELETE FROM azcalendar_event WHERE id = \"%s\"" % self._id_
-        cursor.execute(sql)
-        db.commit()
-        return 'redirect.cs', None
+        try:
+            sql = "DELETE FROM azcalendar_event WHERE id = \"%s\"" % self._id_
+            cursor.execute(sql)
+            db.commit()
+            return 'redirect.cs', None
+        except:
+            req.hdf['azcalendar.reason'] = "Database failure."
+            return 'azerror.cs', None
 
 
     def parse_row (cls, row):

@@ -13,14 +13,6 @@ import time
 import calendar
 import cal_layout
 
-try:
-    import sqlite
-except ImportError:
-    try:
-        import pysqlite2._sqlite as sqlite
-    except ImportError, e:
-        print e
-
 class UserbaseModule(Component):
     implements(INavigationContributor,
                IRequestHandler,

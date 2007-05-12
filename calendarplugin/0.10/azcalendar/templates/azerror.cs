@@ -2,7 +2,7 @@
 <?cs include "macros.cs" ?>
 
 <div>
-    Chyba: <?cs var:azcalendar.reason ?>
+    An error has occured: <?cs var:azcalendar.reason ?>.
 </div>
 
 <?cs include "footer.cs" ?>
