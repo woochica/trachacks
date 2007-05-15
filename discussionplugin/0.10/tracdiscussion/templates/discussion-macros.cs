@@ -106,11 +106,7 @@
         Message #<?cs var:message.id ?>
       </div>
       <div class="body">
-        <?cs if:(args.message == message.id) && args.preview ?>
-          <?cs var:discussion.body ?>
-        <?cs else?>
-          <?cs var:message.body ?>
-        <?cs /if ?>
+        <?cs var:message.body ?>
       </div>
       <div class="controls">
         <?cs if:trac.acl.DISCUSSION_APPEND ?>

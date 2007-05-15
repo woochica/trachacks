@@ -105,8 +105,7 @@ class DiscussionWiki(Component):
         elif ns == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
             sql = "SELECT t.forum, f.subject, t.subject FROM topic t LEFT" \
-              " JOIN (SELECT subject, id FROM forum GROUP BY id) f ON" \
-              " t.forum = f.id WHERE t.id = %s"
+              " JOIN forum f ON t.forum = f.id WHERE t.id = %s"
             self.log.debug(sql % (id,))
             cursor.execute(sql, (id,))
             for row in cursor:
@@ -119,8 +118,8 @@ class DiscussionWiki(Component):
         elif ns == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
             sql = "SELECT m.forum, m.topic, f.subject, t.subject FROM" \
-              " message m, (SELECT subject, id FROM forum GROUP BY id) f," \
-              " (SELECT subject, id FROM topic GROUP BY id) t WHERE" \
+              " message m, (SELECT subject, id FROM forum) f," \
+              " (SELECT subject, id FROM topic) t WHERE" \
               " m.forum = f.id AND m.topic = t.id AND m.id = %s"
             self.log.debug(sql % (id,))
             cursor.execute(sql, (id,))

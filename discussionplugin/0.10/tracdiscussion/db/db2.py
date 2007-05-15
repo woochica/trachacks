@@ -36,6 +36,5 @@ def do_upgrade(env, cursor):
       " FROM forum_old")
 
     # Set database schema version.
-    cursor.execute("DROP TABLE forum_old")
     cursor.execute("UPDATE system SET value = '2' WHERE" \
       " name = 'discussion_version'")

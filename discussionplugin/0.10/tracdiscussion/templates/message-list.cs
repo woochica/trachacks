@@ -2,7 +2,7 @@
 
 <?cs linclude "discussion-header.cs" ?>
 
-<h1>Forum #<?cs var:discussion.forum.id ?> - Topic #<?cs var:discussion.topic.id ?> - Message List</h1>
+<h1><?cs var:discussion.forum.name ?> (#<?cs var:discussion.forum.id ?>) - <?cs var:discussion.topic.subject ?> (#<?cs var:discussion.topic.id ?>) - Message List</h1>
 <?cs set:discussion.href = discussion.href + '/' + discussion.forum.id + '/' + discussion.topic.id ?>
 <?cs call:display_discussion(discussion) ?>
 <?cs if:trac.acl.DISCUSSION_MODERATE && discussion.is_moderator ?>

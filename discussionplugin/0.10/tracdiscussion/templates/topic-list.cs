@@ -3,13 +3,9 @@
 
 <?cs include "discussion-header.cs" ?>
 
-<h1>Forum #<?cs var:discussion.forum.id ?> - Topic List</h1>
-<div class="name">
-  <?cs var:discussion.forum.name ?>
-</div>
-<div class="description">
-  <?cs var:discussion.forum.description ?>
-</div>
+<h1><?cs var:discussion.forum.name ?> (#<?cs var:discussion.forum.id ?>) - Topic List</h1>
+<h2><?cs var:discussion.forum.subject ?></h2>
+<p><?cs var:discussion.forum.description ?></p>
 <?cs if:discussion.topics.0.id ?>
   <table class="listing">
     <thead>
