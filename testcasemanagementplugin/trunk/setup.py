@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 from setuptools import setup, find_packages
 
 PACKAGE = 'testManagementPlugin'
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 setup(
     name=PACKAGE, version=VERSION,
@@ -29,7 +29,8 @@ setup(
         'trac.plugins' : [
          'testManagement=testManagementPlugin.testManager',
          'manageTestRuns=testManagementPlugin.testRuns',
-         'testRunResults=testManagementPlugin.testResults'
+         'testRunResults=testManagementPlugin.testResults',
+         'validateTestRun=testManagementPlugin.testScriptValidator'
         ]
     },
 )
