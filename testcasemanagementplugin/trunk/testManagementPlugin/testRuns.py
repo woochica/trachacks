@@ -133,9 +133,24 @@ class TestRunManager(Component):
         #create combined testcase list        
         testcases = self.createCombinedTestCaseList( testTemplates, testcases, req ) 
             
-        allTestcases = self.properties.getTestCases( self, req ) #fetch the testcases...
+        allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
+        if errors :
+            return False, errors
+        
         if allTestcases == None : 
             return False, None
+        
+        #one last validation step
+        errorMessages = []
+        for aUser in users : 
+            for testId in testcases : 
+                testId = testId.encode('ascii', 'ignore').strip()
+                if testId in allTestcases :
+                    continue
+                else:
+                     errorMessages.append( "The test: " + testId + ", doesn't match it's file name or you've specified it wrong in the testtemplates.xml file" )
+        if errorMessages:
+            return False, errorMessages
         
         #ok this is where we actually create the tickets...
         db = self.env.get_db_cnx()
@@ -143,6 +158,7 @@ class TestRunManager(Component):
             for testId in testcases : 
                 testId = testId.encode('ascii', 'ignore').strip()
                 if testId in allTestcases :
+                
                     test = allTestcases[ testId ]
                     ticket = Ticket(self.env, db=db)
                     ticket.populate(req.args)            
@@ -206,10 +222,12 @@ class TestRunManager(Component):
         
         #ok now let's extract out of testcases what we need which is mostly testcase ids and template names..
         
-        testcases = self.properties.getTestCases( self, req ) #fetch the testcases...
+        testcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
         
-        if testcases == None : 
+        if testcases == None or errors : 
             #there was an error of some kind fetching the testcases...    
+            req.hdf['testcase.run.errormessage'] = errors
+                    
             return "testRunNotConfigured.cs", None 
             
         for key, testcase in testcases.iteritems():
@@ -239,4 +257,4 @@ class TestRunManager(Component):
         return "runs"
     
     def get_descriptive_name(self):
-        return "Test Runs"
+        return "Create Test Run"

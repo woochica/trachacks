@@ -72,37 +72,39 @@ class Properties :
         entries = node.get_entries()
         
         testcases = {}
+        errors = []
         
-
         #let's create the list of testcases...
         for entry in entries :
             match = re.match('testtemplates.xml',  entry.get_name() )
             #we want to parse testcases not the testtemplate file...
             if not match:
-                match = re.match('xml$',  entry.get_name() )  #this allows us to have other files 
+                match = re.match('\S*xml$',  entry.get_name() )  #this allows us to have other files 
                 if match:
                     try:
                         content = entry.get_content().read()
                         testcase = TestCase( entry.get_name(), str(content), component )
                         testcases[ testcase.getId().encode('ascii', 'ignore').strip() ] =  testcase 
                     except Exception, ex:
-                        req.hdf['testcase.run.errormessage'] = "The testcsae  :" + entry.get_name() + "  is not well formed xml...a parse error occured " 
-                        component.env.log.debug( "Error validating testcases " + repr(ex) )
-                        return None
+                        errors.append( "The testcsae  :" + entry.get_name() + "  is not well formed xml...a parse error occured " )
+                        component.env.log.debug( "The testcsae  :" + entry.get_name() + "  is not well formed xml...a parse error occured " )
+                        
                         
         #first let's do some validation on the testcases...
         components = self.getComponents( component, req )
         currentTestcase = None
+        component.env.log.debug( "testcases length is : " + repr( len( testcases ) ) )
         try:
             for key, value in testcases.iteritems():
                 currentTestcase = value #incase we do toss an exception I'll want some information from this testcase
                 components.index( value.getComponent().encode('ascii', 'ignore').strip() ) #this will toss an exception if the component in the testcase doesn't exist in the trac project
         except Exception, ex:
-            req.hdf['testcase.run.errormessage'] = "The component :" + currentTestcase.getComponent() + " in the testcase : " + currentTestcase.getId() + " does not exist in the trac project " 
-            component.env.log.debug( "Error validating testcases " + repr(ex) )
-            return None
-        
-        return testcases #ok return the testcases
+            errors.append( "The component :" + currentTestcase.getComponent() + ", in the testcase : " + currentTestcase.getId() + ", does not exist in the trac project "  )
+            component.env.log.debug( "The component :" + currentTestcase.getComponent() + ", in the testcase : " + currentTestcase.getId() + ", does not exist in the trac project "  )
+            
+        component.env.log.debug( "testcases length is : " + repr( len( testcases ) ) )
+
+        return testcases, errors #ok return the testcases
         
     def getTemplates( self, component, req ):
         #templates.xml is stored in the same directory as the testcases

@@ -12,7 +12,17 @@ There appears to be a configuration problem for the testcaseplugin.  The reason 
 </tr>
 </table>
 <p>
-Error message if any specified here : <?cs var:testcase.run.errormessage ?>
+Error message if any specified here : 
+<table>
+<?cs each:error_msg = testcase.run.errormessage  ?>
+                <tr>
+                    <td>
+                        <?cs var:error_msg ?>
+                    </td>
+                </tr>
+<?cs /each ?>    
+<?cs var:testcase.run.errormessage ?>
+</table>
 </p>
 
 </fieldset>
