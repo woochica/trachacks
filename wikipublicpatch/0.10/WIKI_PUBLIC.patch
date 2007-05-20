@@ -1,7 +1,7 @@
-diff -Naur trac-0.10.3-vanilla/trac/attachment.py trac-0.10.3/trac/attachment.py
---- trac-0.10.3-vanilla/trac/attachment.py	2006-12-12 19:44:08.000000000 +0100
-+++ trac-0.10.3/trac/attachment.py	2007-03-06 21:49:08.000000000 +0100
-@@ -524,7 +524,10 @@
+diff -Naur trac-0.10.4-vanilla/trac/attachment.py trac-0.10.4/trac/attachment.py
+--- trac-0.10.4-vanilla/trac/attachment.py	2007-04-20 15:41:51.000000000 +0200
++++ trac-0.10.4/trac/attachment.py	2007-05-20 15:38:18.000000000 +0200
+@@ -526,7 +526,10 @@
                                   'author': get_reporter_id(req)}
  
      def _render_view(self, req, attachment):
@@ -13,9 +13,9 @@ diff -Naur trac-0.10.3-vanilla/trac/attachment.py trac-0.10.3/trac/attachment.py
          req.perm.assert_permission(perm_map[attachment.parent_type])
  
          req.check_modified(attachment.time)
-diff -Naur trac-0.10.3-vanilla/trac/wiki/web_ui.py trac-0.10.3/trac/wiki/web_ui.py
---- trac-0.10.3-vanilla/trac/wiki/web_ui.py	2006-12-12 19:44:07.000000000 +0100
-+++ trac-0.10.3/trac/wiki/web_ui.py	2007-03-06 16:20:48.000000000 +0100
+diff -Naur trac-0.10.4-vanilla/trac/wiki/web_ui.py trac-0.10.4/trac/wiki/web_ui.py
+--- trac-0.10.4-vanilla/trac/wiki/web_ui.py	2007-04-20 15:41:49.000000000 +0200
++++ trac-0.10.4/trac/wiki/web_ui.py	2007-05-20 15:38:18.000000000 +0200
 @@ -73,7 +73,7 @@
      # IPermissionRequestor methods
  
