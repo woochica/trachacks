@@ -1,0 +1,21 @@
+diff -Naur trac-0.10.4-publicpatch/trac/wiki/web_ui.py trac-0.10.4/trac/wiki/web_ui.py
+--- trac-0.10.4-publicpatch/trac/wiki/web_ui.py	2007-05-20 15:55:26.000000000 +0200
++++ trac-0.10.4/trac/wiki/web_ui.py	2007-05-20 15:57:07.000000000 +0200
+@@ -127,7 +127,7 @@
+         elif action == 'history':
+             self._render_history(req, db, page)
+         else:
+-            if re.search(r'Public', page.name):
++            if re.search(r'Public', page.name) or page.name == 'WikiStart':
+                 req.perm.assert_permission('WIKI_PUBLIC')
+             else:
+                 req.perm.assert_permission('WIKI_VIEW')
+@@ -266,7 +266,7 @@
+                                'only_version': num_versions == 1}
+ 
+     def _render_diff(self, req, db, page):
+-        if re.search(r'Public', page.name):
++        if re.search(r'Public', page.name) or page.name == 'WikiStart':
+             req.perm.assert_permission('WIKI_PUBLIC')
+         else:
+             req.perm.assert_permission('WIKI_VIEW')
