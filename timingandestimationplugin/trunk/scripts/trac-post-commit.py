@@ -146,7 +146,7 @@ else:
     rghtEnv = ''
 
 andPattern = '(?:[ ]*(?:[, &]|[ ]and[ ])[ ]*)'
-timePattern = '(?:\((?:(?:(?:spent|sp)[ ])?[0-9]?(?:\.[0-9]+)?)?(?:\))?)?'
+timePattern = '(?:\((?:(?:(?:spent|sp)[ ])?[0-9]*(?:\.[0-9]+)?)?(?:\))?)?'
 commandPattern = re.compile(leftEnv + r'(?P<action>[A-Za-z]*).?(?P<ticket>#[0-9]+[ ]*' + timePattern + '(?:' + andPattern + '#[0-9]+.?' + timePattern + '.?)*)' + rghtEnv)
 ticketSplitPattern = re.compile(r'(#[0-9]+[ ]*' + timePattern + ')')
 ticketPattern = re.compile(r'(?:#([0-9]+)[ ]*(?:\((?:(?:(?:spent|sp)[ ])?([0-9]*(?:\.[0-9]*)?))?\))?)')
