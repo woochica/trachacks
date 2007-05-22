@@ -11,7 +11,7 @@ import re
 import zipfile
 from odtformatter import wiki_to_odt
 
-dump_contents = False
+dump_contents = True
 
 class PageToODTPlugin(Component):
     """Convert Wiki pages to ODT"""

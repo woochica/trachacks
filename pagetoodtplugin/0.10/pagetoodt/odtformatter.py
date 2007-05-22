@@ -1,4 +1,5 @@
 from trac.wiki.formatter import Formatter
+from trac.util.html import escape
 from StringIO import StringIO
 import os
 
@@ -6,11 +7,28 @@ class OpenDocumentFormatter(Formatter):
     def __init__(self, env, req=None, absurls=False, db=None, styles=None):
         Formatter.__init__(self, env, req=None, absurls=False, db=None)
         self.styles = styles
+        self._in_list_item = False
 
-    def open_paragraph(self):
+    def get_style(self, style):
+        try:
+            return self.styles[style]
+        except:
+            raise
+            return self.styles['standard']
+
+    def simple_span_handler(self, text, style):
+        return self.simple_tag_handler(text,
+            '<text:span text:style-name="%s">' % self.get_style(style),
+            '</text:span>')
+
+    def p(self, style):
+        if style is None:
+            return "<text:p>"
+        return "<text:p text:style-name='%s'>" % self.get_style(style)
+
+    def open_paragraph(self, style='standard'):
         if not self.paragraph_open:
-            self.out.write("<text:p text:style-name='%s'>" %
-                self.styles['standard'])
+            self.out.write(self.p(style))
             self.paragraph_open = 1
 
     def close_paragraph(self):
@@ -28,7 +46,76 @@ class OpenDocumentFormatter(Formatter):
         self.close_def_list()
         depth, heading, anchor = self._parse_heading(match, fullmatch, False)
         self.out.write('<text:p text:style-name="%s" id="%s">%s</text:p>' %
-                       (self.styles['heading%s' % depth], anchor, heading))
+                       (self.get_style('heading_%s' % depth), anchor, heading))
+
+
+
+    def _set_list_depth(self, depth, new_type, list_class, start):
+        def open_item():
+            list_type = new_type == 'ol' and 'ordered' or 'unordered'
+            style = '%s_list' % ( list_type )
+            self.out.write('<text:list-item>')
+            self.open_paragraph(None)
+        def close_item():
+            self.close_paragraph()
+            self.out.write('</text:list-item>')
+        def open_list():
+            self.close_table()
+            self.close_paragraph()
+            self.close_indentation() # FIXME: why not lists in quotes?
+            self._list_stack.append((new_type, depth))
+            self._set_tab(depth)
+            list_type = new_type == 'ol' and 'ordered' or 'unordered'
+            self.out.write('<text:list text:style-name="%s">' % (
+                    self.get_style('%s_list' % (
+                        list_type))))
+            open_item()
+
+        def close_list(tp):
+            self._list_stack.pop()
+            close_item()
+            self.out.write('</text:list>')
+
+        # depending on the indent/dedent, open or close lists
+        if depth > self._get_list_depth():
+            open_list()
+        else:
+            while self._list_stack:
+                deepest_type, deepest_offset = self._list_stack[-1]
+                if depth >= deepest_offset:
+                    break
+                close_list(deepest_type)
+            if depth > 0:
+                if self._list_stack:
+                    old_type, old_offset = self._list_stack[-1]
+                    if new_type and old_type != new_type:
+                        close_list(old_type)
+                        open_list()
+                    else:
+                        if old_offset != depth: # adjust last depth
+                            self._list_stack[-1] = (old_type, depth)
+                        close_item()
+                        open_item()
+                else:
+                    open_list()
+
+    def _bold_formatter(self, match, fullmatch):
+        return self.simple_span_handler(match, 'bold')
+
+    def _italic_formatter(self, match, fullmatch):
+        return self.simple_span_handler(match, 'italic')
+
+    def _bolditalic_formatter(self, match, fullmatch):
+        return self.simple_span_handler(match, 'bolditalic')
+
+    def _inlinecode_formatter(self, match, fullmatch):
+        return '<text:span text:style-name="%s">%s</text:span>' % (
+            self.get_style('inline'), escape(fullmatch.group('inline')))
+
+    def _inlinecode2_formatter(self, match, fullmatch):
+        return '<text:span text:style-name="%s">%s</text:span>' % (
+            self.get_style('inline'), escape(fullmatch.group('inline2')))
+
 
 def wiki_to_odt(wikitext, env, req, styles,
     db=None, absurls=False, escape_newlines=False):
