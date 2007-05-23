@@ -1,0 +1,29 @@
+ul.ini {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.ini li {
+  width: 30%;
+  display: inline;
+  float: left;
+  margin: 0.5em;
+  padding-right: 0.25em;
+}
+.ini li.align2 {
+  clear: right;
+}
+.ini input[type="text"] {
+  width: 90%;
+}
+.ini div.help {
+  font-size: small;
+}
+.ini div.help p {
+  margin: 0.5em;
+}
+.ini input[type="submit"] {
+  clear: both;
+  float: left;
+}
