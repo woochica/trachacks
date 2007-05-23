@@ -29,28 +29,37 @@ class TestScriptValidator(Component):
         #query_URL = req.base_url + "/query?status=new&status=assigned&status=reopened&testcase_result=&type=testcase&order=milestone&group=owner"
         #req.redirect( query_URL )
         tempTestCaseList = []
+        errors = []
         
         projTemplates = self.properties.getTemplates(self, req )
-        for name in projTemplates.getTemplateNames() : 
-            name = name.encode('ascii', 'ignore')
-            testIds = projTemplates.getTestsForTemplate( name )
-            if testIds != None : 
-                for id in testIds : 
-                    if id not in tempTestCaseList :
-                        tempTestCaseList.append( id )
-            
-            
-        allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
+        if projTemplates != None :         
+            for name in projTemplates.getTemplateNames() : 
+                name = name.encode('ascii', 'ignore')
+                testIds = projTemplates.getTestsForTemplate( name )
+                if testIds != None : 
+                    for id in testIds : 
+                        if id not in tempTestCaseList :
+                            tempTestCaseList.append( id )
+
+            allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
         
-        if allTestcases == None : 
-            return False, None
-        
-        for testId in tempTestCaseList:
-            if testId in allTestcases : 
-                continue
-            else:
-                errors.append( "The test: " + testId + ", in the testtemplates.xml file cannont be matched with a real test case" )
-                       
+            if allTestcases == None : 
+                return False, None
+            
+            for testId in tempTestCaseList:
+                if testId in allTestcases : 
+                    continue
+                else:
+                    errors.append( "The test: " + testId + ", in the testtemplates.xml file cannont be matched with a real test case" )
+        else:
+            #ok if no testtemplates file exists we should definately flag that.  However rather than bail we could also still validate 
+            #the existing testcases to make sure they are well formed.
+            allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
+            
+            #append the error message saying testtemplates.xml doesn't exist, then exit.
+            errors.append( "No file called testtemplates.xml file found.  This is the file necessary for grouping testcases into predefined test scripts...like a smoke test" )
+                
+            
         if errors : 
             req.hdf['testcase.run.errormessage'] = errors
             return "testRunNotConfigured.cs", None
