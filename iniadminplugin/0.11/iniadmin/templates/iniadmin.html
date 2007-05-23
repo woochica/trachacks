@@ -11,45 +11,41 @@
   <body>
     <h2>[${iniadmin.section}]</h2>
     
-    <form method="post">
-      <ul class="ini">
-        <li py:for="idx, option in enumerate(iniadmin.options)" class="align${idx % 3}">
-          <fieldset class="col${idx % 2}">
-            <legend>${option.name}</legend>
-            <py:choose>
-              <div class="select" py:when="option.type == 'extension'">
-                <select name="${option.name}">
-                  <py:for each="opt in option.options">
-                    <py:choose>
-                      <option value="${opt}" selected="selected" py:when="option.value == opt">${opt}</option>
-                      <option value="${opt}" py:otherwise="">${opt}</option>
-                    </py:choose>
-                  </py:for>
-                </select>
+    <div class="ini">
+      <form method="post">
+        <ul>
+          <li py:for="idx, option in enumerate(iniadmin.options)" class="align${idx % 3}">
+            <fieldset class="col${idx % 2}">
+              <legend>${option.name}</legend>
+              <py:choose>
+                <div class="select" py:when="option.type == 'extension'">
+                  <select name="${option.name}">
+                    <py:for each="opt in option.options">
+                      <py:choose>
+                        <option value="${opt}" selected="selected" py:when="option.value == opt">${opt}</option>
+                        <option value="${opt}" py:otherwise="">${opt}</option>
+                      </py:choose>
+                    </py:for>
+                  </select>
+                </div>
+                <div class="bool" py:when="option.type == 'bool'">
+                  <label><input type="radio" name="${option.name}" value="true" checked="${option.value == 'true' or None}" /> true</label>
+                  <label><input type="radio" name="${option.name}" value="false" checked="${option.value == 'false' or None}" /> false</label>
+                </div>
+                <div class="text" py:otherwise="">
+                  <input type="text" name="${option.name}" value="${option.value}" />
+                </div>
+              </py:choose>
+              <div class="help">
+                ${option.doc}
               </div>
-              <div class="bool" py:when="option.type == 'bool'">
-                <py:choose>
-                  <label py:when="option.value == 'true'"><input type="radio" name="${option.name}" value="true" checked="checked" /> true</label>
-                  <label py:otherwise=""><input type="radio" name="${option.name}" value="true" /> true</label>
-                </py:choose>
-                <py:choose>
-                  <label py:when="option.value == 'false'"><input type="radio" name="${option.name}" value="false" checked="checked" /> false</label>
-                  <label py:otherwise=""><input type="radio" name="${option.name}" value="false" /> false</label>
-                </py:choose>
-              </div>
-              <div class="text" py:otherwise="">
-                <input type="text" name="${option.name}" value="${option.value}" />
-              </div>
-            </py:choose>
-            <div class="help">
-              ${option.doc}
-            </div>
-          </fieldset>
-        </li>
-      </ul>
-      <div class="ini buttons">
-        <input type="submit" value="Apply changes" />
-      </div>
-    </form>
+            </fieldset>
+          </li>
+        </ul>
+        <div class="ini buttons">
+          <input type="submit" value="Apply changes" />
+        </div>
+      </form>
+    </div>
   </body>
 </html>
