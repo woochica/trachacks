@@ -12,7 +12,7 @@ def _get_env(req):
     # Find the env_path from the Apache config
     options = req.get_options()
     if 'TracEnv' not in options:
-        print 'Must specify a Trac environment'
+        req.log_error('mod_auth_acctmgr: Must specify a Trac environment')
         return None
     env_path = options['TracEnv']
 
@@ -22,7 +22,7 @@ def _get_env(req):
 def authenhandler(req):
     pw = req.get_basic_auth_pw()
     user = req.user
-
+    
     env = _get_env(req)
     if env is None:
         return apache.HTTP_FORBIDDEN
@@ -32,27 +32,37 @@ def authenhandler(req):
         from acct_mgr.api import AccountManager
         acct_mgr = AccountManager
 
+    options = req.get_options()
+    #if 'TracPerm' not in options:
+    #    req.log_error('mod_auth_acctmgr: You must specify a permission')
+    #    return apache.HTTP_FORBIDDEN
+    perm = options.get('TracPerm')
+
     if acct_mgr(env).check_password(user, pw):
+        if perm:
+            user_perms = PermissionSystem(env).get_user_permissions(user)
+            if not user_perms.get(perm):
+                return apache.HTTP_FORBIDDEN
         return apache.OK
     else:
         return apache.HTTP_UNAUTHORIZED
 
-def authzhandler(req):
+def perms(req):
     user = req.user
     
     env = _get_env(req)
     if env is None:
-        return apache.DECLINED
+        return apache.HTTP_FORBIDDEN
         
     options = req.get_options()
     if 'TracPerm' not in options:
-        print 'You must specify a permission'
-        return apache.DECLINED
+        req.log_error('mod_auth_acctmgr: You must specify a permission')
+        return apache.HTTP_FORBIDDEN
     perm = options['TracPerm']
     
     user_perms = PermissionSystem(self.env).get_user_permissions(user)
     if user_perms.get(perm):
         return apache.OK
     else:
-        return apache.DECLINED
+        return apache.HTTP_FORBIDDEN
     
