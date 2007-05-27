@@ -21,8 +21,6 @@ setup(
     classifiers = [
         'Framework :: Trac',
     ],
-    
-    install_requires = ['TracAccountManager'],
 
     entry_points = {
         'trac.plugins': [
