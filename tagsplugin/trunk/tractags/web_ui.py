@@ -1,7 +1,7 @@
 from trac.core import *
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, INavigationContributor
-from trac.util import Markup
+from trac.util import Markup, escape
 from StringIO import StringIO
 from trac.wiki.web_ui import WikiModule
 from trac.wiki.formatter import wiki_to_oneliner
@@ -169,7 +169,7 @@ class TagsModule(Component):
                 expr = req.args.get('e')
             else:
                 expr = req.path_info[6:]
-            req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % expr)
+            req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % escape(expr))
             req.hdf['tag.expression'] = expr
             try:
                 Expression(expr)

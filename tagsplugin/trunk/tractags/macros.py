@@ -1,7 +1,6 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import model 
-from trac.util import Markup
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from StringIO import StringIO
 from tractags.api import TagEngine, ITagSpaceUser, sorted, set
