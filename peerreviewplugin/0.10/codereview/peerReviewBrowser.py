@@ -224,14 +224,13 @@ class peerReviewBrowser(Component):
                                                        format='txt')
                     add_link(req, 'alternate', plain_href, 'Plain Text',
                              'text/plain')
-            req.hdf['file'] = mimeview.preview_to_hdf(req, mime_type, charset,
-                                                      content,
-                                                      node.name, node.rev,
-                                                      annotations=['addFileNums'])
 
             raw_href = self.env.href.peerReviewBrowser(node.path, rev=rev and node.rev,
                                              format='raw')
-            req.hdf['file.raw_href'] = util.escape(raw_href)
+            req.hdf['file'] = mimeview.preview_to_hdf(req, content, len(content),
+                                                      mime_type, node.created_path,
+                                                      raw_href, annotations=['addFileNums'])
+
             add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
 
             add_stylesheet(req, 'common/css/code.css')

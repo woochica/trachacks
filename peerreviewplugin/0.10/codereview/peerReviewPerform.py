@@ -170,7 +170,7 @@ class UserbaseModule(Component):
                 add_link(req, 'alternate', plain_href, 'Plain Text', 'text/plain')
                 
         #assign the preview to a variable for clearsilver
-        req.hdf['file'] = mimeview.preview_to_hdf(req, mime_type, charset, content, node.name, node.rev, annotations=['performCodeReview'])
+        req.hdf['file'] = mimeview.preview_to_hdf(req, content, len(content), mime_type, node.created_path, None, annotations=['performCodeReview'])
         
 	add_stylesheet(req, 'common/css/code.css')
 	add_stylesheet(req, 'common/css/browser.css')	
