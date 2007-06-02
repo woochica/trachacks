@@ -43,32 +43,17 @@ function JT_show(object) {
      var side = 'right';
   }
 
-  var ns = "http://www.w3.org/1999/xhtml";
-  var d0=document.createElementNS(ns,"div");
-  d0.setAttribute("id","JT");
-  d0.setAttribute("style", "width:"+params['width']*1+"px; " +
-                           "left:"+clickElementx+"px; " +
-                           "top:"+clickElementy+"px");
-  var d1=document.createElementNS(ns,"div");
-  d1.setAttribute("id","JT_arrow_"+side);
-  if ( side == 'right' ) {
-     d1.setAttribute("style", "left:"+((params['width']*1)+1)+"px");
-  }
-  var d2=document.createElementNS(ns,"div");
-  d2.setAttribute("id","JT_close_"+side);
-  d2.appendChild(document.createTextNode(title));
-  var d3=document.createElementNS(ns,"div");
-  d3.setAttribute("id","JT_copy");
-  var d4=document.createElementNS(ns,"div");
-  d4.setAttribute("id","JT_loader");
-  d3.appendChild(d4);
-  d0.appendChild(d1);
-  d0.appendChild(d2);
-  d0.appendChild(d3);
-
-  document.getElementsByTagName('body')[0].appendChild(d0);
-
-  $('#JT').show();
+  $('body').append('<div id="JT" style="width:'+params['width']*1+'px; '+
+                                       'left:'+clickElementx+'px; ' +
+                                       'top:'+clickElementy+'px;"></div>');
+  var style='';
+  if (side=='right'){style='style="left:'+((params['width']*1)+1)+'px;"'}
+  $('#JT').append('<div id="JT_arrow_'+side+'" '+style+'></div>' +
+                  '<div id="JT_close_'+side+'" >'+title+'</div>' +
+                  '<div id="JT_copy" ><div id="JT_loader">' +
+                  '<span id="loading">loading changeset&#8230;</span>' +
+                  '</div></div>');
+  $('#JT').show();  
   $('#JT_copy').load(logurl);
 }
 
