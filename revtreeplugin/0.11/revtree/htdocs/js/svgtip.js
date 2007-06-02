@@ -8,21 +8,42 @@
  * by Emmanuel Blot <emmanuel.blot@free.fr> 2006-2007
  */
 
+var jttimeout = null;
 function JT_init(){
-  $('a[@id^=rev]').hover(function(){JT_show(this)},function(){JT_hide(this)});
+  $('a[@id^=rev]').hover(function(){JT_show(this)},
+                         function(){jttimeout=setTimeout("JT_remove();", 250);});
 }
 
-function JT_hide(object) {
+function JT_cancel() {
+   if (jttimeout) {
+      clearTimeout(jttimeout);
+      jttimeout = null;
+   }
+}
+
+function JT_remove() {
    var jt = $('#JT');
-   if ( jt ) { jt.remove(); }
+   if ( jt ) {  jt.remove(); }
+}
+
+function JT_hide() {
+   JT_cancel();
+   JT_remove();
 }
 
 function JT_show(object) {
+  if ( $('#JT') ) {
+     JT_hide();
+  }
   var href = 'href';
   if (! jQuery.browser.opera) { href = 'xlink:' + href; }
   var url = object.getAttribute(href);
   var logurl = url.replace(/\/changeset\//, '/revtree_log/');
   var id = object.getAttribute('id');
+  var style = object.getAttribute('style');
+  var colors = style.split(';')
+  var fgc = colors[0].replace(/^.*color:/,'');
+  var bgc = colors[1].replace(/^.*color:/,'');
   var title = id.replace(/^rev/, 'Changeset ');
   var box = getSvgPosition(id);
   if(title == false)title=' ';
@@ -35,22 +56,26 @@ function JT_show(object) {
   if(params['width'] === undefined){params['width'] = 250};
     
   if(hasArea>((params['width']*1)+box.w)){
-     var arrowOffset = box.w + 11;
-     var clickElementx = box.x + arrowOffset + 3;
+     var clickElementx = box.x + box.w + 4;
      var side = 'left';
   } else {
-     var clickElementx = box.x - ((params['width']*1) + 15) - 3;
+     var clickElementx = box.x - (params['width']*1) - 5;
      var side = 'right';
   }
 
   $('body').append('<div id="JT" style="width:'+params['width']*1+'px; '+
                                        'left:'+clickElementx+'px; ' +
-                                       'top:'+clickElementy+'px;"></div>');
+                                       'top:'+clickElementy+'px; ' +
+                                       'border: 2px solid '+fgc+'">' +
+                                       '</div>');
+  $('#JT').hover(function(){JT_cancel();},
+                 function(){JT_remove();});
+
   var style='';
   if (side=='right'){style='style="left:'+((params['width']*1)+1)+'px;"'}
-  $('#JT').append('<div id="JT_arrow_'+side+'" '+style+'></div>' +
-                  '<div id="JT_close_'+side+'" >'+title+'</div>' +
-                  '<div id="JT_copy" ><div id="JT_loader">' +
+  $('#JT').append('<div id="JT_close_'+side+'" style="background-color:'+bgc+
+                    '">'+title+'</div>' +
+                  '<div id="JT_copy"><div id="JT_loader">' +
                   '<span id="loading">loading changeset&#8230;</span>' +
                   '</div></div>');
   $('#JT').show();  

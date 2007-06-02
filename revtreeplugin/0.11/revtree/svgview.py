@@ -209,44 +209,44 @@ class SvgChangeset(SvgBaseChangeset):
     def mark_first(self):
         """Marks the changeset as the first of the branch.
            Inverts the background and the foreground color"""
-        (self._fillcolor, self._strokecolor) = \
-            (self._strokecolor, self._fillcolor)
-        self._textcolor.invert()
+        #(self._fillcolor, self._strokecolor) = \
+        #    (self._strokecolor, self._fillcolor)
+        #self._textcolor.invert()
         self._classes.append('firstchangeset')
         
     def mark_last(self):
         """Mark the changeset as the latest of the branch"""
-        self._fillcolor = SvgColor('black')
-        self._textcolor = SvgColor('white')
         self._classes.append('lastchangeset')
 
     def build(self):
         SvgBaseChangeset.build(self)
+        (fgc, bgc) = (self._strokecolor, self._fillcolor)
+        txc = self._textcolor
+        if 'firstchangeset' in self._classes:
+            (fgc, bgc) = (bgc, fgc)
+        if 'lastchangeset' in self._classes:
+            bgc = SvgColor('black')
+            txc = SvgColor('white')
+            
         widgets = []
         if self._shape == 'circle':
             widgets.append(SVG.circle(self._position[0], self._position[1],
-                                      self._radius, 
-                                      self._fillcolor,
-                                      self._strokecolor,
+                                      self._radius, bgc, fgc,
                                       self._parent.strokewidth()))
             if self._enhance:
                 (x,y) = self._position
                 (d,hr) = (self._radius*SQRT3/2, self._radius/2)
                 widgets.append(SVG.line(x-d,y-hr,x+d,y-hr, 
-                                        self._strokecolor,
-                                        self._parent.strokewidth()))
+                                        fgc, self._parent.strokewidth()))
                 widgets.append(SVG.line(x-d,y+hr,x+d,y+hr, 
-                                        self._strokecolor,
-                                        self._parent.strokewidth()))
+                                        fgc, self._parent.strokewidth()))
                               
         elif self._shape == 'square':
             r = UNIT/6
             size = self._radius-r
             widgets.append(SVG.rect(self._position[0]-size, 
                                     self._position[1]-size,
-                                    2*size, 2*size, 
-                                    self._fillcolor,
-                                    self._strokecolor,
+                                    2*size, 2*size, bgc, fgc,
                                     self._parent.strokewidth()))
             outline.attributes['rx'] = r
             outline.attributes['ry'] = r        
@@ -262,8 +262,7 @@ class SvgChangeset(SvgBaseChangeset):
             pd.line(x-r,y+hr)
             pd.line(x-r,y-hr)
             pd.line(x,y-r)
-            widgets.append(SVG.path(pd, self._parent.fillcolor(), 
-                                    self._parent.strokecolor(), 
+            widgets.append(SVG.path(pd, bgc, fgc, 
                                     self._parent.strokewidth()))
         else:
             raise AssertionError, \
@@ -272,13 +271,15 @@ class SvgChangeset(SvgBaseChangeset):
                          self._position[1] + UNIT/6,
                          str(self._revision), 
                          self._parent.fontsize(), self._parent.fontname())
-        title.attributes['style'] = 'fill:%s; text-anchor: middle' % \
-                                    self._textcolor.rgb()
+        title.attributes['style'] = 'fill:%s; text-anchor: middle' % txc.rgb()
         widgets.append(title)
         g = SVG.group('grp%d' % self._revision, elements=widgets)
         link = "%s/changeset/%d" % (self._parent.urlbase(), self._revision)
         self._link = SVG.link(link, elements=[g])
         if self._revision:
+            self._link.attributes['style'] = \
+                'color: %s; background-color: %s' % \
+                    (self._strokecolor, self._fillcolor)
             self._link.attributes['id'] = 'rev%d' % self._revision
             self._link.attributes['class'] = ' '.join(self._classes)
                     
