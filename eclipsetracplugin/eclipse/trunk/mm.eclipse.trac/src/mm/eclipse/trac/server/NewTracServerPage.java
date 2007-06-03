@@ -13,6 +13,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -33,6 +34,7 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
     private Text       serverUrl;
     
     private Button     anonymous;
+    private Button     validateButton;
     
     private Text       username;
     private Text       password;
@@ -45,6 +47,7 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         setImageDescriptor( Images.getDescriptor( Images.Trac48 ) );
         setTitle( "Add a connection with Trac server" );
         setDescription( "This wizard creates a new connections with a Trac server." );
+        setPageComplete( false );
     }
     
     /**
@@ -109,6 +112,30 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         password.setEchoChar( (char) 0x2022 );
         password.addModifyListener( this );
         
+        validateButton = new Button( container, SWT.PUSH );
+        validateButton.setText( "Validate server connection" );
+        validateButton.addSelectionListener( new SelectionListener() {
+
+            public void widgetDefaultSelected( SelectionEvent e )
+            {
+            }
+
+            public void widgetSelected( SelectionEvent e )
+            {
+                validateConnection();
+                if ( isPageComplete() )
+                {
+                    validateButton.setText( "Connection with server is OK." );
+                    validateButton.setEnabled( false );
+                }
+                else
+                {
+                    validateButton.setText( "Cannot connect to server." );
+                }
+            }
+            
+        } );
+        
         setControl( container );
     }
     
@@ -119,6 +146,9 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
      */
     public void modifyText( ModifyEvent e )
     {
+        validateButton.setEnabled( true );
+        validateButton.setText( "Validate server connection" );
+        
         if ( getServerName().length() == 0 )
         {
             updateStatus( "Please specify a server name" );
@@ -136,9 +166,11 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         {
             url = new URL( getServerUrl() );
             
-            if ( ! "http".equals( url.getProtocol() ) && ! "https".equals( url.getProtocol() ) )
+            if ( !"http".equals( url.getProtocol() )
+                    && !"https".equals( url.getProtocol() ) )
             {
-                updateStatus( "Invalid protocol scheme '" + url.getProtocol() + "'. Must be 'http' or 'https' " );
+                updateStatus( "Invalid protocol scheme '" + url.getProtocol()
+                        + "'. Must be 'http' or 'https' " );
                 return;
             }
             
@@ -154,14 +186,29 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
             return;
         }
         
+        setErrorMessage( null );
+    }
+    
+    private void validateConnection()
+    {
         // Validate connection
-        
-        server = new TracServer( getServerName(), url, getUsername(),
-                                            getPassword(), getAnonymous() );
-        server.connect();
-        if ( !server.isConnected() )
+        URL url;
+        try
         {
-            updateStatus( "Connection with server failed." );
+            url = new URL( getServerUrl() );
+            
+            server = new TracServer( getServerName(), url, getUsername(), getPassword(),
+                                     getAnonymous() );
+            server.connect();
+            if ( !server.isConnected() )
+            {
+                updateStatus( "Connection with server failed." );
+                return;
+            }
+            
+        } catch ( MalformedURLException e )
+        {
+            updateStatus( "The URL is not valid." );
             return;
         }
         

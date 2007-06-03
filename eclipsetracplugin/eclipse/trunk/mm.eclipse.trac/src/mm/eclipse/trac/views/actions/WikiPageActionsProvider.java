@@ -4,7 +4,6 @@ import mm.eclipse.trac.models.WikiPage;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 
@@ -17,7 +16,7 @@ public class WikiPageActionsProvider implements IActionsProvider
     
     private Action           actionOpenEditor;
     
-    private Action		     actionCreatePage;
+    // private Action		     actionCreatePage;
     
     public WikiPageActionsProvider( StructuredViewer viewer )
     {
@@ -30,7 +29,8 @@ public class WikiPageActionsProvider implements IActionsProvider
     {
         actionOpenEditor = new OpenEditor( viewer );
         actionCommitPage = new CommitPage( viewer );
-        actionCreatePage = new CreatePage( viewer );
+        // TODO: Enable create page action
+        // actionCreatePage = new CreatePage( viewer );
     }
     
     public void fillMenu( IMenuManager menu, IStructuredSelection selection )
@@ -44,7 +44,7 @@ public class WikiPageActionsProvider implements IActionsProvider
             
             actionOpenEditor.setEnabled( page.exists() && !page.isRoot() );
             actionCommitPage.setEnabled( page.exists() && page.isDirty() );
-            actionCreatePage.setEnabled( true );
+            // actionCreatePage.setEnabled( true );
             
             menu.add( actionOpenEditor );
             menu.add( actionCommitPage );

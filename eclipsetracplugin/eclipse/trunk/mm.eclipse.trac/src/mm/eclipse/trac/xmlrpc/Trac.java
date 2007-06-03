@@ -15,6 +15,8 @@ import mm.eclipse.trac.Log;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcLiteHttpTransportFactory;
+import org.apache.xmlrpc.client.XmlRpcSunHttpTransport;
+import org.apache.xmlrpc.client.XmlRpcSunHttpTransportFactory;
 
 public class Trac
 {
@@ -53,7 +55,7 @@ public class Trac
         
         XmlRpcClient client = new XmlRpcClient();
         client.setConfig( config );
-        client.setTransportFactory( new XmlRpcLiteHttpTransportFactory( client ) );
+        client.setTransportFactory( new XmlRpcSunHttpTransportFactory( client ) );
         
         proxy = new DynamicProxy( client );
         

@@ -122,8 +122,9 @@ public class TracServerActionProvider implements IActionsProvider
             disconnectAction.setEnabled( server.isConnected() );
             createPageAction.setEnabled( server.isConnected() );
             
-            menu.add( createPageAction );
-            menu.add( new Separator() );
+            // TODO: Enable create page action
+            // menu.add( createPageAction );
+            // menu.add( new Separator() );
             menu.add( connectAction );
             menu.add( disconnectAction );
             menu.add( new Separator() );
