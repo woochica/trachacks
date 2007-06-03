@@ -5,6 +5,7 @@ import java.net.URL;
 
 import mm.eclipse.trac.Images;
 import mm.eclipse.trac.models.TracServer;
+import mm.eclipse.trac.models.TracServerList;
 
 import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.jface.wizard.WizardPage;
@@ -13,7 +14,6 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -41,13 +41,25 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
     
     private TracServer server;
     
+    private boolean    isEditing;
+    private String     oldName;
+    
     public NewTracServerPage()
+    {
+        this( null );
+    }
+    
+    public NewTracServerPage( TracServer tracServer )
     {
         super( "wizardPage" );
         setImageDescriptor( Images.getDescriptor( Images.Trac48 ) );
         setTitle( "Add a connection with Trac server" );
         setDescription( "This wizard creates a new connections with a Trac server." );
         setPageComplete( false );
+        server = tracServer;
+        isEditing = server != null;
+        if ( isEditing )
+            oldName = server.getName();
     }
     
     /**
@@ -67,7 +79,7 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         serverName = new Text( container, SWT.BORDER | SWT.SINGLE );
         GridData gd = new GridData( GridData.FILL_HORIZONTAL );
         serverName.setLayoutData( gd );
-        serverName.addModifyListener( this );
+        serverName.setToolTipText( "A human-friendly name for this server profile." );
         
         label = new Label( container, SWT.NULL );
         label.setText( "Server &URL" );
@@ -75,12 +87,51 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         serverUrl = new Text( container, SWT.BORDER | SWT.SINGLE );
         gd = new GridData( GridData.FILL_HORIZONTAL );
         serverUrl.setLayoutData( gd );
-        serverUrl.addModifyListener( this );
+        serverUrl.setToolTipText( "The base URL of the Trac project"  );
         
         anonymous = new Button( container, SWT.CHECK );
         anonymous.setText( "Connect anonymously" );
         gd = new GridData( GridData.FILL_HORIZONTAL );
         anonymous.setLayoutData( gd );
+        anonymous.setToolTipText( "Whether to use anonymous login or not" );
+        
+        new Label( container, SWT.NULL );
+        
+        label = new Label( container, SWT.NULL );
+        label.setText( "User&name" );
+        
+        username = new Text( container, SWT.BORDER | SWT.SINGLE );
+        gd = new GridData( GridData.FILL_HORIZONTAL );
+        username.setLayoutData( gd );
+        username.setToolTipText( "Your Trac account username" );
+        
+        label = new Label( container, SWT.NULL );
+        label.setText( "&Password" );
+        
+        password = new Text( container, SWT.BORDER | SWT.SINGLE );
+        gd = new GridData( GridData.FILL_HORIZONTAL );
+        password.setLayoutData( gd );
+        password.setEchoChar( (char) 0x2022 );
+        password.setToolTipText( "Your Trac account password" );
+        
+        validateButton = new Button( container, SWT.PUSH );
+        validateButton.setText( "Validate server connection" );
+        
+        if ( isEditing )
+        {
+            serverName.setText( server.getName() );
+            serverUrl.setText( server.getUrl().toString() );
+            anonymous.setSelection( server.isAnonymous() );
+            if ( server.getUsername() != null )
+                username.setText( server.getUsername() );
+            password.setText( server.getPassword() );
+        }
+        
+        serverName.addModifyListener( this );
+        serverUrl.addModifyListener( this );
+        username.addModifyListener( this );
+        password.addModifyListener( this );
+        
         anonymous.addSelectionListener( new SelectionListener() {
             public void widgetDefaultSelected( SelectionEvent e )
             {}
@@ -93,33 +144,11 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
             }
         } );
         
-        new Label( container, SWT.NULL );
-        
-        label = new Label( container, SWT.NULL );
-        label.setText( "User&name" );
-        
-        username = new Text( container, SWT.BORDER | SWT.SINGLE );
-        gd = new GridData( GridData.FILL_HORIZONTAL );
-        username.setLayoutData( gd );
-        username.addModifyListener( this );
-        
-        label = new Label( container, SWT.NULL );
-        label.setText( "&Password" );
-        
-        password = new Text( container, SWT.BORDER | SWT.SINGLE );
-        gd = new GridData( GridData.FILL_HORIZONTAL );
-        password.setLayoutData( gd );
-        password.setEchoChar( (char) 0x2022 );
-        password.addModifyListener( this );
-        
-        validateButton = new Button( container, SWT.PUSH );
-        validateButton.setText( "Validate server connection" );
         validateButton.addSelectionListener( new SelectionListener() {
-
+            
             public void widgetDefaultSelected( SelectionEvent e )
-            {
-            }
-
+            {}
+            
             public void widgetSelected( SelectionEvent e )
             {
                 validateConnection();
@@ -127,8 +156,7 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
                 {
                     validateButton.setText( "Connection with server is OK." );
                     validateButton.setEnabled( false );
-                }
-                else
+                } else
                 {
                     validateButton.setText( "Cannot connect to server." );
                 }
@@ -153,6 +181,15 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         {
             updateStatus( "Please specify a server name" );
             return;
+        }
+        
+        if ( ! isEditing || ! oldName.equals( getServerName() ) )
+        {
+            if ( TracServerList.getInstance().hasServerName( getServerName() ) )
+            {
+                updateStatus( "Name '" + getServerName() + "' is already used." );
+                return;
+            }
         }
         
         if ( getServerUrl().length() == 0 )
@@ -187,6 +224,7 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         }
         
         setErrorMessage( null );
+        validateButton.setEnabled( true );
     }
     
     private void validateConnection()
@@ -195,25 +233,47 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         URL url;
         try
         {
-            url = new URL( getServerUrl() );
+            String s = getServerUrl();
             
-            server = new TracServer( getServerName(), url, getUsername(), getPassword(),
-                                     getAnonymous() );
+            // Remove trailing Trac URL paths
+            if ( s.endsWith( "/login/xmlrpc" ) )
+            {
+                s = s.replace( "/login/xmlrpc", "" );
+            } else if ( s.endsWith( "/xmlrpc" ) )
+            {
+                s = s.replace( "/xmlrpc", "" );
+            }
+            
+            url = new URL( s );
+            
+            if ( server == null )
+                server = new TracServer( getServerName(), url, getUsername(), getPassword(),
+                                         getAnonymous() );
+            else
+            {
+                server.disconnect();
+                server.setName( getServerName() );
+                server.setUrl( url );
+                server.setAnonymous( getAnonymous() );
+                server.setUsername( getUsername() );
+                server.setPassword( getPassword() );
+            }
+            
             server.connect();
-            if ( !server.isConnected() )
+            if ( server.isConnected() )
+            {
+                setErrorMessage( null );
+                setPageComplete( true );
+            }
+            else
             {
                 updateStatus( "Connection with server failed." );
-                return;
             }
             
         } catch ( MalformedURLException e )
         {
             updateStatus( "The URL is not valid." );
-            return;
         }
-        
-        setErrorMessage( null );
-        setPageComplete( true );
     }
     
     private void updateStatus( String message )
@@ -221,6 +281,7 @@ public class NewTracServerPage extends WizardPage implements ModifyListener
         server = null;
         setErrorMessage( message );
         setPageComplete( false );
+        validateButton.setEnabled( false );
     }
     
     public String getServerName()

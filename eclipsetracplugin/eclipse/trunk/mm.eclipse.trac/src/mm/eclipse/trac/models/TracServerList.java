@@ -13,6 +13,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,37 +44,42 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class TracServerList extends ModelBase implements Iterable<TracServer>
 {
-    private List<TracServer>    servers;
+    private SortedMap<String,TracServer>    servers;
     
     public List<TracServer> getServers()
     {
-        return servers;
+        return new ArrayList<TracServer>( servers.values() );
     }
     
     public TracServer getServerByName( String name ) 
     {
-        for ( TracServer server : servers )
-            if ( server.getName().equals( name ) )
-                return server;
-        
-        return null;
+        return servers.get( name );
+    }
+    
+    /**
+     *  @param name Trac server name to check
+     * @return
+     */
+    public boolean hasServerName( String name )
+    {
+        return servers.get( name ) != null;
     }
     
     public void addServer( TracServer server )
     {
-        servers.add( server );
+        servers.put( server.getName(), server );
         notifyChanged();
     }
     
     public void removeServer( TracServer server )
     {
-        servers.remove( server );
+        servers.remove( server.getName() );
         notifyChanged();
     }
     
     private TracServerList()
     {
-    	servers = new ArrayList<TracServer>();
+    	servers = new TreeMap<String,TracServer>();
         loadPreferences();
         
     }
@@ -108,7 +115,7 @@ public class TracServerList extends ModelBase implements Iterable<TracServer>
 							String anonymous = element.getAttribute("anonymous"); //$NON-NLS-1$
 							TracServer server = new TracServer(name,new URL(url),username,password,Boolean.parseBoolean(anonymous));
 							server.connect();
-							servers.add(server);
+							servers.put( name, server );
 						}
 					}
 				}
@@ -134,7 +141,7 @@ public class TracServerList extends ModelBase implements Iterable<TracServer>
     {
         if ( servers == null ) return null;
         
-        return servers.iterator();
+        return servers.values().iterator();
     }
     
     public static TracServerList getInstance()

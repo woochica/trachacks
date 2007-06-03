@@ -2,7 +2,7 @@
 <feature
       id="EclipseTrac"
       label="Eclipse Trac"
-      version="1.0.4"
+      version="1.0.5"
       provider-name="Matteo Merli"
       plugin="mm.eclipse.trac">
 

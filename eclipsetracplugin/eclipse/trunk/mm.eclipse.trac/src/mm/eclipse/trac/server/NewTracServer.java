@@ -1,6 +1,7 @@
 package mm.eclipse.trac.server;
 
 import mm.eclipse.trac.Log;
+import mm.eclipse.trac.models.TracServer;
 import mm.eclipse.trac.models.TracServerList;
 
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -21,14 +22,21 @@ import org.eclipse.ui.IWorkbenchWizard;
 public class NewTracServer extends Wizard implements INewWizard
 {
     private NewTracServerPage page;
+    private TracServer        server;
     
     /**
      * Constructor for NewTracServer.
      */
     public NewTracServer()
     {
+        this( null );
+    }
+    
+    public NewTracServer( TracServer tracServer )
+    {
         super();
         setNeedsProgressMonitor( true );
+        this.server = tracServer;
     }
     
     /**
@@ -37,7 +45,7 @@ public class NewTracServer extends Wizard implements INewWizard
     
     public void addPages()
     {
-        page = new NewTracServerPage();
+        page = new NewTracServerPage( server );
         addPage( page );
     }
     

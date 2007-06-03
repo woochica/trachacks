@@ -3,7 +3,7 @@
    <description url="http://trac-hacks.org/svn/eclipsetracplugin/eclipse/update/">
       Trac Plugin
    </description>
-   <feature url="features/EclipseTrac_1.0.4.jar" id="EclipseTrac" version="1.0.4">
+   <feature url="features/EclipseTrac_1.0.5.jar" id="EclipseTrac" version="1.0.5">
       <category name="Trac"/>
    </feature>
    <category-def name="Trac" label="Trac"/>

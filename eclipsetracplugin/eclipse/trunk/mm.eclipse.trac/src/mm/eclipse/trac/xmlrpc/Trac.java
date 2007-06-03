@@ -14,8 +14,6 @@ import mm.eclipse.trac.Log;
 
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
-import org.apache.xmlrpc.client.XmlRpcLiteHttpTransportFactory;
-import org.apache.xmlrpc.client.XmlRpcSunHttpTransport;
 import org.apache.xmlrpc.client.XmlRpcSunHttpTransportFactory;
 
 public class Trac
@@ -33,8 +31,13 @@ public class Trac
         
         String sUrl = url.toString();
         String sep = sUrl.endsWith( "/" ) ? "" : "/";
+        String path;
+        if ( anonymous )
+            path = "xmlrpc";
+        else
+            path = "login/xmlrpc";
         
-        config.setServerURL( new URL( sUrl + sep + "login/xmlrpc" ) );
+        config.setServerURL( new URL( sUrl + sep + path ) );
         
         if ( !anonymous )
         {

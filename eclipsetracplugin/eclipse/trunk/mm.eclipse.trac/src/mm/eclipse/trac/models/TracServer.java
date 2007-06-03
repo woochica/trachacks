@@ -5,6 +5,7 @@ package mm.eclipse.trac.models;
 
 import java.net.URL;
 
+import mm.eclipse.trac.Log;
 import mm.eclipse.trac.xmlrpc.Trac;
 import mm.eclipse.trac.xmlrpc.Wiki;
 import mm.eclipse.trac.xmlrpc.WikiExt;
@@ -60,6 +61,7 @@ public class TracServer extends ModelBase implements IAdaptable
             
         } catch ( Throwable t )
         {
+            Log.warning( "Error connecting to server '" + url.toString() + "': " + t.getMessage(), new Exception( t.getCause() ) );
             connected = false;
             problems = true;
         }
