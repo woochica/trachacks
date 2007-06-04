@@ -13,6 +13,6 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.ui.navigator,
  org.eclipse.ui.views,
- org.apache.xmlrpc
+ org.apache.xmlrpc;bundle-version="3.0.0"
 Eclipse-LazyStart: true
 Bundle-Vendor: Matteo Merli

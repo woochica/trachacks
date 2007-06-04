@@ -14,6 +14,7 @@ import mm.eclipse.trac.Log;
 
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 import org.apache.xmlrpc.client.XmlRpcSunHttpTransportFactory;
 
 public class Trac
@@ -41,7 +42,7 @@ public class Trac
         
         if ( !anonymous )
         {
-            // If the user chose not to autheticate anonymously
+            // If the user chose not to authenticate anonymously
             // but not provided any password, make sure the authentication
             // will fail, without the system asking credentials with an
             // intrusive dialog.
@@ -58,7 +59,7 @@ public class Trac
         
         XmlRpcClient client = new XmlRpcClient();
         client.setConfig( config );
-        client.setTransportFactory( new XmlRpcSunHttpTransportFactory( client ) );
+        client.setTransportFactory( new XmlRpcCommonsTransportFactory( client ) );
         
         proxy = new DynamicProxy( client );
         
