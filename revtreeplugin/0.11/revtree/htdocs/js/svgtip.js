@@ -24,6 +24,8 @@ function JT_cancel() {
 function JT_remove() {
    var jt = $('#JT');
    if ( jt ) {  jt.remove(); }
+   var jt_connect = $('#JT_connect');
+   if ( jt_connect ) { jt_connect.remove(); }
 }
 
 function JT_hide() {
@@ -44,41 +46,49 @@ function JT_show(object) {
   var colors = style.split(';')
   var fgc = colors[0].replace(/^.*color:/,'');
   var bgc = colors[1].replace(/^.*color:/,'');
-  var title = id.replace(/^rev/, 'Changeset ');
+  var title = id.replace(/^rev/, 'Changeset <a href="'+url+'">[') + ']</a>';
   var box = getSvgPosition(id);
   if(title == false)title=' ';
   var de = document.documentElement;
   var w = self.innerWidth || (de&&de.clientWidth) || document.body.clientWidth;
   var hasArea = w - box.x;
-  var clickElementy = box.y+8;
+  var clickElementy = box.y + (box.h/2);
   var queryString = url.replace(/^[^\?]+\??/,'');
   var params = parseQuery( queryString );
   if(params['width'] === undefined){params['width'] = 250};
     
   if(hasArea>((params['width']*1)+box.w)){
-     var clickElementx = box.x + box.w + 4;
+     var clickElementx = box.x + box.w + 20;
+     var connectx = box.x + box.w;
      var side = 'left';
   } else {
-     var clickElementx = box.x - (params['width']*1) - 5;
+     var clickElementx = box.x - (params['width']*1) - 21;
+     var connectx = box.x - 20;
      var side = 'right';
   }
 
   $('body').append('<div id="JT" style="width:'+params['width']*1+'px; '+
                                        'left:'+clickElementx+'px; ' +
-                                       'top:'+clickElementy+'px; ' +
+                                       'top:'+(clickElementy-13)+'px; ' +
                                        'border: 2px solid '+fgc+'">' +
                                        '</div>');
+  $('body').append('<div id="JT_connect" style="' +
+                      'left:'+connectx+'px; ' +
+                      'top:'+(clickElementy-1)+'px; ' +
+                      'border: 2px solid '+fgc+'">' +
+                      '</div>');
   $('#JT').hover(function(){JT_cancel();},
                  function(){JT_remove();});
 
   var style='';
   if (side=='right'){style='style="left:'+((params['width']*1)+1)+'px;"'}
-  $('#JT').append('<div id="JT_close_'+side+'" style="background-color:'+bgc+
-                    '">'+title+'</div>' +
+  $('#JT').append('<div id="JT_title" style="background-color:'+bgc+
+                    '" class="changeset"><span>'+title+'</span></div>' +
                   '<div id="JT_copy"><div id="JT_loader">' +
                   '<span id="loading">loading changeset&#8230;</span>' +
                   '</div></div>');
-  $('#JT').show();  
+  $('#JT').show();
+  $('#JT_connect').show();
   $('#JT_copy').load(logurl);
 }
 

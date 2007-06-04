@@ -80,6 +80,11 @@ div#revtree {
  border: 2px solid #CCCCCC;
  background-color: #fff;
 }
+#JT_connect {
+ position: absolute;
+ z-index:90;
+ width: 17px;
+}
 #JT_copy {
  padding:10px 10px 10px 10px;
  color:#333333;
@@ -94,19 +99,13 @@ div#revtree {
 #JT_loader #loading {
  padding-left: 24px;
 }
-#JT_close_left {
+#JT_title {
  text-align: left;
  padding-left: 8px;
  padding-bottom: 5px;
  padding-top: 2px;
- font-weight:bold;
-}
-#JT_close_right {
- text-align: left;
- padding-left: 8px;
- padding-bottom: 5px;
- padding-top: 2px;
- font-weight:bold;
+ font-weight: bold;
+ font-size: 95%;
 }
 #JT_copy p {
  margin:3px 0;

@@ -209,9 +209,6 @@ class SvgChangeset(SvgBaseChangeset):
     def mark_first(self):
         """Marks the changeset as the first of the branch.
            Inverts the background and the foreground color"""
-        #(self._fillcolor, self._strokecolor) = \
-        #    (self._strokecolor, self._fillcolor)
-        #self._textcolor.invert()
         self._classes.append('firstchangeset')
         
     def mark_last(self):
