@@ -1,10 +1,15 @@
 
     <h2>Manage Test Run</h2>
-    
     <form class="mod" id="orgTemp" method="post">
          <fieldset>
             <legend>Create new test run</legend>
             <div id="createNewRun">
+                <fieldset>
+                    <label>
+                        The current testcase path location is: <input type="text" name="pathConfiguration" size="60" value="<?cs var:testcase.run.pathConfiguration ?>" readonly="true" /> 
+                        <br/>To Validate the test configuration for the tests in the above location click the following link: <a href="<?cs var:testcase.run.validatePath ?>">Validate Link</a>
+                    </label>        
+                </fieldset>
                 <table>
                     <tr>
                         <td>   
@@ -84,7 +89,7 @@
                 </table>
             </div>            
             <div class="buttons">
-                <input type="submit" value="GenerateTestRun">
+                <input type="submit" name="GenerateTestRun" value="Generate Test Run"/> 
             </div>
         </fieldset>
     </form>

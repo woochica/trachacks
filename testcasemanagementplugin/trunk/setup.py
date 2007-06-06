@@ -14,7 +14,7 @@ VERSION = '0.0.3'
 setup(
     name=PACKAGE, version=VERSION,
     description='test case management tool',
-    author="edunne", author_email="eoin.dunne@divestco.com",
+    author="Eoin Dunne", author_email="eoin.dunne@divestco.com",
     license='BSD', url='http://www.trac-hacks.org/wiki/TestCaseManagementPlugin',
     packages=['testManagementPlugin'],
     package_data={
@@ -29,6 +29,7 @@ setup(
         'trac.plugins' : [
          'testManagement=testManagementPlugin.testManager',
          'manageTestRuns=testManagementPlugin.testRuns',
+         'setPathForTestcases=testManagementPlugin.pathManager',
          'testRunResults=testManagementPlugin.testResults',
          'validateTestRun=testManagementPlugin.testScriptValidator'
         ]

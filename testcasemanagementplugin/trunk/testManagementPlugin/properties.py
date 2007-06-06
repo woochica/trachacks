@@ -45,7 +45,12 @@ class Properties :
         return True, testcasePath
             
     def getTestCasePath(self, component, req):
-        return component.config.get( self.trac_config_testcase_section , self.trac_config_testcase_property)
+        #potentially a user wants to use the branch for testcases so check that first
+        path = req.args.get('pathConfiguration')
+        if path != None:
+            return path
+        else:
+            return component.config.get( self.trac_config_testcase_section , self.trac_config_testcase_property)
     
     def getRepositoryRoot( self, component, req ) :
         return component.config.get( "trac" , "repository_dir" )
@@ -125,6 +130,44 @@ class Properties :
             #    component.env.log.debug( "didn't care about : " + entry.get_name() )
         
         return None
+        
+    #todo...maybe look at how validateTestCases could be used in getTestCases.  Can't right now because a circular dependency would be created.
+    def validateTestCases( self, component, req ):
+    
+        tempTestCaseList = []
+        errors = []
+        
+        projTemplates = self.getTemplates(component, req )
+        
+        if projTemplates != None :         
+            for name in projTemplates.getTemplateNames() : 
+                name = name.encode('ascii', 'ignore')
+                testIds = projTemplates.getTestsForTemplate( name )
+                if testIds != None : 
+                    for id in testIds : 
+                        if id not in tempTestCaseList :
+                            tempTestCaseList.append( id )
+
+            allTestcases, errors = self.getTestCases( component, req ) #fetch the testcases...
+        
+            if allTestcases == None : 
+                return False, None
+            
+            for testId in tempTestCaseList:
+                if testId in allTestcases : 
+                    continue
+                else:
+                    errors.append( "The test: " + testId + ", in the testtemplates.xml file cannont be matched with a real test case" )
+        else:
+            #ok if no testtemplates file exists we should definately flag that.  However rather than bail we could also still validate 
+            #the existing testcases to make sure they are well formed.
+            allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
+            
+            #append the error message saying testtemplates.xml doesn't exist, then exit.
+            errors.append( "No file called testtemplates.xml file found.  This is the file necessary for grouping testcases into predefined test scripts...like a smoke test" )
+        
+        return errors
+        
         
 class Templates:
     

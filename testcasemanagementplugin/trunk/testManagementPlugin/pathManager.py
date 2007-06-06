@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import re
 
 import string
@@ -19,29 +17,31 @@ from testManager import ITestManagerRequestHandler
 #log: The configured logger, see the Python logging API for more information. 
    
 
-class TestScriptValidator(Component):
+class SetPathManager (Component):
     implements(ITestManagerRequestHandler)
     
     properties = Properties() #get set up with with a properties instance...
         
     def process_testmanager_request(self, req ):
-        #check for errors in the testcases and configuration, if there are no errors let the user know, and vice versa
-        
-        errors = self.properties.validateTestCases( self, req )
-        
-        if errors : 
-            req.hdf['testcase.run.errormessage'] = errors
-            return "testRunNotConfigured.cs", None
+        if req.method == "POST":
+
+            allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
+            
+            if errors :
+                req.hdf['testcase.run.errormessage'] = errors
+                return "testRunNotConfigured.cs", None      
+            else : 
+                 req.redirect( req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath( self, req) )
+
         else:
-            req.hdf['testcase.validate.pathConfiguration'] = self.properties.getTestCasePath( self, req)
-            req.hdf['testcase.validate.urlPath'] = req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath( self, req) 
-            return "validated.cs", None
+            req.hdf['testcases.path.path'] = self.properties.getTestCasePath( self, req)
+            return "choosePathForTestRun.cs", None
 
     def get_path( self, req ):
-        return "validate"
+        return "testrunbranch"
         
     def get_descriptive_name(self):
-        return "Validate Test Scripts from mainline"
+        return "Create Test Run from branch or tag location"
 
         
 

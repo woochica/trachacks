@@ -51,6 +51,8 @@ class TestRunManager(Component):
                 
                 else:
                     req.hdf['testcase.run.errormessage'] = errorMessage_orQueryURL
+                    req.hdf['testcase.run.pathConfiguration'] = self.properties.getTestCasePath(self, req)
+                    req.hdf['testcase.run.urlPath'] = req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath(self, req)
                     return "testRunNotConfigured.cs", None
                 
             else :
@@ -244,6 +246,8 @@ class TestRunManager(Component):
         versions = self.properties.getVersions(self, req )
         versions.append("")  #ditto
         
+        req.hdf['testcase.run.validatePath'] = req.base_url + "/testmanagement/validate?pathConfiguration=" + self.properties.getTestCasePath(self, req)
+        req.hdf['testcase.run.pathConfiguration'] = self.properties.getTestCasePath(self, req)
         req.hdf['testcase.run.users']= self.properties.getKnownUserNamesOnly(self, req)
         req.hdf['testcase.run.testcases']= testcaseNames
         req.hdf['testcase.run.testtemplates']= templateNames
@@ -257,4 +261,4 @@ class TestRunManager(Component):
         return "runs"
     
     def get_descriptive_name(self):
-        return "Create Test Run"
+        return "Create Test Run from mainline"
