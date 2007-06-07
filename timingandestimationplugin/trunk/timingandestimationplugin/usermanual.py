@@ -1,8 +1,11 @@
 user_manual_title = "Timing and Estimation Plugin User Manual"
-user_manual_version = 7
+user_manual_version = 8
 user_manual_wiki_title = "TimingAndEstimationPluginUserManual"
 user_manual_content = """
+[[TOC]]
 = Timing and Estimation Plugin User Manual =
+[http://trac-hacks.org/wiki/TimingAndEstimationPlugin TimingAndEstimationPlugin on TracHacks] | [http://trac-hacks.org/report/9?COMPONENT=TimingAndEstimationPlugin Open Tickets] | [http://trac-hacks.org/newticket?component=TimingAndEstimationPlugin&owner=bobbysmith007 New Ticket]  | 
+[http://trac-hacks.org/browser/timingandestimationplugin/trunk Web Browsable Source Code]
 
 == Abstract Design Goal ==
 My goal in writing this plugin was to use as much of the existing structure as possible (therefore not needing to add extra structure that might make maintainability difficult).  The largest downside I have found to this is that there is no way to attach more permissions to anything.
