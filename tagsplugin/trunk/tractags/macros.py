@@ -63,7 +63,7 @@ class TagMacros(Component):
         return getattr(self, 'render_' + name.lower(), content)(req, *args, **kwargs)
 
     # Macro implementations
-    def render_tagcloud(self, req, smallest=10, biggest=20, showcount=True, tagspace=None, mincount=1, tagspaces=[]):
+    def render_tagcloud(self, req, smallest=10, biggest=20, showcount=True, tagspace=None, mincount=1, tagspaces=[], **kwargs):
         """ This macro displays a [http://en.wikipedia.org/wiki/Tag_cloud tag cloud] (weighted list)
             of all tags.
 
