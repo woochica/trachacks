@@ -1,0 +1,21 @@
+div.components {
+  width: 45%;
+}
+
+div.interfaces {
+  float: right;
+  width: 45%;
+}
+.interface h3, .component h3 {
+  margin: 0.2em 0;
+}
+
+.selected {
+  border: dashed 2px #eed;
+  padding: 0.4em;
+  background: #ffe;
+}
+
+.interface div, .component div {
+  margin-left: 1em;
+}

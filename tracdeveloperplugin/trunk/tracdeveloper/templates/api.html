@@ -1,0 +1,53 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+<head>
+<title>Components</title>
+</head>
+<body>
+<div class="interfaces" id="interfaces">
+  <h2>Interfaces</h2>
+  <div id="${interface.name.replace('.', '_')}" class="interface" py:for="_, interface in sorted(api.interfaces.items())">
+    <h3 title="${interface.doc}">${interface.name}</h3>
+    <div class="docstring" py:if="interface.doc">${interface.formatted_doc}</div>
+    <div class="methods">
+      <h4>Interface methods</h4>
+      <div py:for="method in interface.methods">
+        <h5>${method.name}${method.args}</h5>
+        <div py:if="method.doc">${method.formatted_doc}</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="components" id="components">
+  <h2>Components</h2>
+  <div id="${component.name.replace('.', '_')}" class="component" py:for="_, component in sorted(api.components.items())">
+    <h3 title="${component.doc}">${component.name}</h3>
+    <div class="docstring" py:if="component.doc">${component.formatted_doc}</div>
+    <div class="implements" py:if="component.implements">
+      <h4>Implements interfaces</h4>
+      <div py:for="interface in component.implements">
+        <a class="implements" href="#${interface.name.replace('.', '_')}">${interface.name}</a>
+      </div>
+    </div>
+    <div py:if="component.extensionpoints" class="extensionpoints">
+      <h4>Uses interfaces</h4>
+      <div py:for="interface in component.extensionpoints">
+        <a class="implements" href="#${interface.interface.name.replace('.', '_')}">${interface.interface.name}</a>
+      </div>
+    </div>
+    <div class="methods" py:if="component.methods">
+      <h4>Non-interface methods</h4>
+      <div py:for="method in component.methods">
+        <h5>${method.name}${method.args}</h5>
+        <div py:if="method.doc">${method.formatted_doc}</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
