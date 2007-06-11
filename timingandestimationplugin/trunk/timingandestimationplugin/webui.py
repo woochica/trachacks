@@ -18,7 +18,7 @@ class TimingEstimationAndBillingPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     #CACHING THIS WAS CAUSING PROBLEMS ON A GLOBAL INSTALL
-    def get_copy_report_hash_for_render(self):
+    def get_copy_report_hash_for_render(self, req):
         new_reports = []
         sql = "SELECT id, title FROM report ORDER BY ID"
         self.reportmap = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]
@@ -37,7 +37,7 @@ class TimingEstimationAndBillingPage(Component):
                 
                     new_report = {"title" : title,
                                   "reportnumber" : reportid,
-                                  "href" : "%s/%s" % (self.env.href.report(), reportid)}
+                                  "href" : "%s/%s" % (req.href.report(), reportid)}
                     new_reports_list.extend([ new_report ])
                 except:
                     pass
@@ -73,7 +73,7 @@ class TimingEstimationAndBillingPage(Component):
             return ""
 
     def get_navigation_items(self, req):
-        url = self.env.href.Billing()
+        url = req.href.Billing()
         if req.perm.has_permission("REPORT_VIEW"):
             yield 'mainnav', "Billing", \
                   Markup('<a href="%s">%s</a>' % \
@@ -114,9 +114,9 @@ class TimingEstimationAndBillingPage(Component):
                 addMessage("All tickets last bill date updated")
                 
         req.hdf["billing_info"] = {"messages": messages,
-                                   "href":self.env.href.Billing(),
-                                   "reports": self.get_copy_report_hash_for_render(),
-                                   "usermanual_href":self.env.href.wiki(user_manual_wiki_title),
+                                   "href":req.href.Billing(),
+                                   "reports": self.get_copy_report_hash_for_render(req),
+                                   "usermanual_href":req.href.wiki(user_manual_wiki_title),
                                    "usermanual_title":user_manual_title
                                    }
         self.set_request_billing_dates(req)
