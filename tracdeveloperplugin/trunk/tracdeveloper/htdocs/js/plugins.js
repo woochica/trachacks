@@ -6,6 +6,9 @@ $(document).ready(function () {
 
     $('.selected').removeClass('selected');
     $(id).addClass('selected');
+    if ($(id).find('div').css('display') == 'none') {
+      $(id).find('div').slideDown();
+    }
   });
 
   // Component and interface browsing
