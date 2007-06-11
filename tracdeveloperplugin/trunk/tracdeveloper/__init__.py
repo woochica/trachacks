@@ -7,29 +7,8 @@ from trac.wiki.formatter import wiki_to_html
 from trac.admin.api import IAdminPanelProvider
 
 
-def extract_section(cls):
-    module = cls.__module__
-    if module.startswith('trac.'):
-        return module.split('.')[1]
-    else:
-        return module.split('.')[0] + '*'
-
-
-class APIBrowser(Component):
-    implements(IAdminPanelProvider, ITemplateProvider)
-
-    # IAdminPanelProvider methods
-
-    def get_admin_panels(self, req):
-        if 'TRAC_ADMIN' not in req.perm: return
-        yield ('developer', 'Trac Developer', 'api', 'API')
-
-    def render_admin_panel(self, req, category, page, path_info):
-        if 'TRAC_ADMIN' not in req.perm: return
-        add_script(req, 'tracdeveloper/js/api.js')
-        add_stylesheet(req, 'tracdeveloper/css/api.css')
-        data = {'api': self.get_api(req)}
-        return 'api.html', data
+class DeveloperTemplates(Component):
+    implements(ITemplateProvider)
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -40,6 +19,22 @@ class APIBrowser(Component):
         from pkg_resources import resource_filename
         return [('tracdeveloper', resource_filename(__name__, 'htdocs'))]
 
+
+class PluginBrowser(Component):
+    implements(IAdminPanelProvider)
+
+    # IAdminPanelProvider methods
+
+    def get_admin_panels(self, req):
+        if 'TRAC_ADMIN' not in req.perm: return
+        yield ('developer', 'Trac Developer', 'plugins', 'Plugins')
+
+    def render_admin_panel(self, req, category, page, path_info):
+        if 'TRAC_ADMIN' not in req.perm: return
+        add_script(req, 'tracdeveloper/js/api.js')
+        add_stylesheet(req, 'tracdeveloper/css/api.css')
+        data = {'api': self.get_api(req)}
+        return 'api.html', data
 
     # Internal methods
     def extract_methods(self, req, cls, exclude_methods=None):
@@ -67,6 +62,9 @@ class APIBrowser(Component):
               for name, m in xp if isinstance(m, ExtensionPoint)]
         return xp
 
+    def config_options(self, req, cls):
+        options = [m for m in dir(cls) if not m.startswith('_')]
+
     def get_api(self, req):
         api = {}
 
@@ -75,6 +73,7 @@ class APIBrowser(Component):
         for interface in Interface.__subclasses__():
             data = self.base_data(req, interface)
             data['methods'] = self.extract_methods(req, interface)
+            data['implemented_by'] = []
             interfaces[data['name']] = data
         api['interfaces'] = interfaces
 
@@ -88,6 +87,8 @@ class APIBrowser(Component):
             data['extensionpoints'] = self.extension_points(req, component)
             data['implements'] = impl
             data['methods'] = methods
+            for imp in impl:
+                imp['implemented_by'].append(data)
             components[data['name']] = data
         api['components'] = components
         return api

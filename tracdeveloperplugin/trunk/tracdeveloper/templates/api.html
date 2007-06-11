@@ -14,6 +14,12 @@
   <div id="${interface.name.replace('.', '_')}" class="interface" py:for="_, interface in sorted(api.interfaces.items())">
     <h3 title="${interface.doc}">${interface.name}</h3>
     <div class="docstring" py:if="interface.doc">${interface.formatted_doc}</div>
+    <div class="implemented_by" py:if="interface.implemented_by">
+      <h4>Implemented by</h4>
+      <div py:for="component in interface.implemented_by">
+        <a class="implements" href="#${component.name.replace('.', '_')}">${component.name}</a>
+      </div>
+    </div>
     <div class="methods">
       <h4>Interface methods</h4>
       <div py:for="method in interface.methods">

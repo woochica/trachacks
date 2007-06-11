@@ -7,18 +7,9 @@ $(document).ready(function () {
     $('.selected').removeClass('selected');
     $(id).addClass('selected');
   });
-  $('#interfaces h3').each(function() {
-    $(this).wrap('<a href="javascript:void(0)"></a>').click(function() {
-    var root = this.parentNode.parentNode
 
-      $(root).find('div').toggleClass('expanded').slideToggle();
-      $('.selected').removeClass('selected');
-      if ($(root).find('div').css('display') == 'none') {
-        $(root).addClass('selected');
-      }
-    });
-  });
-  $('#components h3').each(function() {
+  // Component and interface browsing
+  $('#components h3, #interfaces h3').each(function() {
     $(this).wrap('<a href="javascript:void(0)"></a>').click(function() {
     var root = this.parentNode.parentNode;
 

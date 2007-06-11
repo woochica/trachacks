@@ -11,9 +11,9 @@ div.interfaces {
 }
 
 .selected {
-  border: dashed 2px #eed;
+  border: dashed 2px #ddc;
   padding: 0.4em;
-  background: #ffe;
+  background: #ffa;
 }
 
 .interface div, .component div {
