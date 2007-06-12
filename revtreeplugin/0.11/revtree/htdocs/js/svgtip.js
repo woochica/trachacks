@@ -8,16 +8,16 @@
  * by Emmanuel Blot <emmanuel.blot@free.fr> 2006-2007
  */
 
-var jttimeout = null;
+var jttimer = null;
 function JT_init(){
   $('a[@id^=rev]').hover(function(){JT_show(this)},
-                         function(){jttimeout=setTimeout("JT_remove();", 250);});
+                         function(){jttimer=setTimeout("JT_remove();", 250);});
 }
 
 function JT_cancel() {
-   if (jttimeout) {
-      clearTimeout(jttimeout);
-      jttimeout = null;
+   if (jttimer) {
+      clearTimeout(jttimer);
+      jttimer = null;
    }
 }
 
@@ -46,50 +46,81 @@ function JT_show(object) {
   var colors = style.split(';')
   var fgc = colors[0].replace(/^.*color:/,'');
   var bgc = colors[1].replace(/^.*color:/,'');
-  var title = id.replace(/^rev/, 'Changeset <a href="'+url+'">[') + ']</a>';
+  var rev = id.replace(/^rev/, '');
   var box = getSvgPosition(id);
-  if(title == false)title=' ';
   var de = document.documentElement;
   var w = self.innerWidth || (de&&de.clientWidth) || document.body.clientWidth;
   var hasArea = w - box.x;
   var clickElementy = box.y + (box.h/2);
-  var queryString = url.replace(/^[^\?]+\??/,'');
-  var params = parseQuery( queryString );
-  if(params['width'] === undefined){params['width'] = 250};
+  var tipw = 250;
     
-  if(hasArea>((params['width']*1)+box.w)){
+  if( hasArea > (tipw+box.w) ) {
      var clickElementx = box.x + box.w + 20;
      var connectx = box.x + box.w;
      var side = 'left';
   } else {
-     var clickElementx = box.x - (params['width']*1) - 21;
+     var clickElementx = box.x - tipw - 21;
      var connectx = box.x - 20;
      var side = 'right';
   }
 
-  $('body').append('<div id="JT" style="width:'+params['width']*1+'px; '+
-                                       'left:'+clickElementx+'px; ' +
-                                       'top:'+(clickElementy-13)+'px; ' +
-                                       'border: 2px solid '+fgc+'">' +
-                                       '</div>');
-  $('body').append('<div id="JT_connect" style="' +
-                      'left:'+connectx+'px; ' +
-                      'top:'+(clickElementy-1)+'px; ' +
-                      'border: 2px solid '+fgc+'">' +
-                      '</div>');
-  $('#JT').hover(function(){JT_cancel();},
-                 function(){JT_remove();});
+  // cannot use jQuery .append() because the document type is 
+  // application/xhtml+xml; need to use the verbose solution
+  var ns = 'http://www.w3.org/1999/xhtml';
+  var jt = document.createElementNS(ns, 'div');
+  jt.setAttribute('id', 'JT');
+  jt.setAttribute('style', 'width:' + tipw + 'px;' +
+                           'left:' + clickElementx+'px;' +
+                           'top:' + (clickElementy-13) + 'px;' +
+                           'border: 2px solid ' + fgc);
+  var jt_connect = document.createElementNS(ns, 'div');
+  jt_connect.setAttribute('id', 'JT_connect');
+  jt_connect.setAttribute('style', 'left:' + connectx + 'px; ' +
+                                   'top:' + (clickElementy-1) + 'px; ' +
+                                   'border: 2px solid ' + fgc);
+  var jt_title = document.createElementNS(ns, 'div');
+  jt_title.setAttribute('id', 'JT_title');
+  jt_title.setAttribute('class', 'changeset');
+  jt_title.setAttribute('style', 'background-color:' + bgc);
+  var title = document.createElementNS(ns, 'span');
+  title.appendChild(document.createTextNode('Changeset '));
+  var titlelink = document.createElementNS(ns, 'a');
+  titlelink.setAttribute('href', url);
+  titlelink.appendChild(document.createTextNode('[' + rev +']'));
+  title.appendChild(titlelink);
+  jt_title.appendChild(title);
+  var jt_copy = document.createElementNS(ns, 'div');
+  jt_copy.setAttribute('id', 'JT_copy');
+  var jt_loader = document.createElementNS(ns, 'div');
+  jt_loader.setAttribute('id', 'JT_loader');
+  var span2 = document.createElementNS(ns, 'span');
+  span2.setAttribute('id', 'loading');
+  var hellip = String.fromCharCode(8230);
+  span2.appendChild(document.createTextNode('loading changeset info' + 
+                                            hellip));
+  jt_loader.appendChild(span2);
+  jt_copy.appendChild(jt_loader);
+  jt.appendChild(jt_title);
+  jt.appendChild(jt_copy);
+                           
+  $('body').append(jt);
+  $('body').append(jt_connect);
 
-  var style='';
-  if (side=='right'){style='style="left:'+((params['width']*1)+1)+'px;"'}
-  $('#JT').append('<div id="JT_title" style="background-color:'+bgc+
-                    '" class="changeset"><span>'+title+'</span></div>' +
-                  '<div id="JT_copy"><div id="JT_loader">' +
-                  '<span id="loading">loading changeset&#8230;</span>' +
-                  '</div></div>');
-  $('#JT').show();
+  $('#JT').hover(function() { JT_cancel(); }, function() { JT_remove(); });
   $('#JT_connect').show();
-  $('#JT_copy').load(logurl);
+  $('#JT').show();
+  // we want text result from the XHTML+XML server response for use 
+  // wtih innerHTML, as load() does not work for some reason (why?)  
+  // cannot use $.get(), need to go with $.ajax()
+  $.ajax({async: true, type: "GET", dataType: 'html', 
+          url: logurl, success: updateJT});
+}
+
+function updateJT(data) {
+  // cannot use innerHTML with jQuery
+  var copy = document.getElementById('JT_copy');
+  // why innerHTML work with application/xhtml+xml doctype here?
+  copy.innerHTML = data;
 }
 
 function getSvgPosition(objectId) {
@@ -120,16 +151,14 @@ function getSvgPosition(objectId) {
    
    // Not sure who's right or wrong here: Opera, Gecko ?
    // Anyway the following hack seems to work. Javascript, oh my...
-   if ( jQuery.browser.opera || jQuery.browser.safari )
-   {
+   if ( jQuery.browser.opera || jQuery.browser.safari ) {
       r.x = Math.floor(box.x*mx.a)+svgpos[0];
       r.y = Math.floor(box.y*mx.d)+svgpos[1];
       r.w = Math.floor(box.width*mx.a);
       r.h = Math.floor(box.height*mx.d);
       return r;
    }
-   else
-   {
+   else {
       var p1 = svg.createSVGPoint();
       var p2 = svg.createSVGPoint();
       p1.x = box.x;
@@ -176,26 +205,3 @@ function posTop() {
             document.documentElement.scrollTop : 
             document.body.scrollTop ? document.body.scrollTop : 0;
 } 
-
-function parseQuery (query) {
-  var Params = new Object ();
-  if ( ! query ) return Params; // return empty object
-  var Pairs = query.split(/[;&]/);
-  for ( var i = 0; i < Pairs.length; i++ ) {
-     var KeyVal = Pairs[i].split('=');
-     if ( ! KeyVal || KeyVal.length != 2 ) continue;
-     var key = unescape( KeyVal[0] );
-     var val = unescape( KeyVal[1] );
-     val = val.replace(/\+/g, ' ');
-     Params[key] = val;
-  }
-  return Params;
-}
-
-function blockEvents(evt) {
-  if(evt.target){
-    evt.preventDefault();
-  }else{
-    evt.returnValue = false;
-  }
-}
