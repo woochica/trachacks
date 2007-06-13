@@ -188,7 +188,7 @@ class RevtreeModule(Component):
         if self.config.get('trac', 'repository_type') != 'svn':
             raise TracError, "Revtree only supports Subversion repositories"
         bre = self.config.get('revtree', 'branch_re',
-                  r'^(?P<branch>branches/[^/]+|trunk|tags)'
+                  r'^(?P<branch>trunk|(?:branches|tags)/[^/]+)'
                   r'(?:/(?P<path>.*))?$')
         self.bcre = re.compile(bre)
         self.trunks = self.env.config.get('revtree', 'trunks', 

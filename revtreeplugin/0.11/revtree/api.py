@@ -68,5 +68,5 @@ class RevtreeSystem(Component):
     def get_revtree(self, repos, req):
         self.env.log.debug("Enhancers: %s" % self.enhancers)
         from revtree.svgview import SvgRevtree
-        return SvgRevtree(self.env, repos, req.abs_href(), 
+        return SvgRevtree(self.env, repos, req.href(), 
                           self.enhancers, self.optimizer)

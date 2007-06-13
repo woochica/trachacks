@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevtreePlugin'
-VERSION = '0.5.5'
+VERSION = '0.5.6'
 
 setup (
     name = PACKAGE,
