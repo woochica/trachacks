@@ -1,0 +1,8 @@
+setup.py
+FlashView.egg-info/PKG-INFO
+FlashView.egg-info/SOURCES.txt
+FlashView.egg-info/dependency_links.txt
+FlashView.egg-info/entry_points.txt
+FlashView.egg-info/top_level.txt
+flashview/__init__.py
+flashview/flashview.py
