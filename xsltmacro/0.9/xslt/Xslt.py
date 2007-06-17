@@ -109,7 +109,7 @@ def execute(hdf, args, env):
 
         if 'use_object' in opts:
             attrs = { 'style': 'width: 100%; margin: 0pt' }
-            attrs.update(dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('obj_')]))
+            attrs.update(dict([(k[4:], v) for k, v in opts.iteritems() if k.startswith('obj_')]))
 
             res += """
               <object data="%(src)s" type="text/html" onload="maximizeFrame(this)" %(attrs)s></object>
