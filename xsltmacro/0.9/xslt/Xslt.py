@@ -59,6 +59,9 @@ Passing parameters to the transform:
 
 import os
 import inspect
+import threading
+import re
+import libxml2
 
 from trac.core import Component, implements
 from trac.web.api import RequestDone
@@ -68,6 +71,19 @@ from trac.util import http_date
 from trac.versioncontrol import Node
 
 MY_URL = '/extras/xslt'
+tl     = threading.local()
+
+def resolver(URL, ID, ctxt):
+    scheme = URL.split(':', 2)[0]
+    if scheme not in ['wiki', 'ticket', 'browser', 'file']:
+        return None
+
+    auth, path = re.match('[^:]*://([^/]*)/(.*)', URL).group(1, 2)
+    obj = _get_src(tl.env, tl.hdf, scheme, auth.replace('%2F', '/'), path)
+    return obj.getStream()
+
+libxml2.setEntityLoader(resolver)
+
 
 def execute(hdf, args, env):
     # parse arguments
@@ -119,15 +135,11 @@ def execute(hdf, args, env):
         return res
 
     else:
-        style_obj = _get_obj(env, hdf, *stylespec)
-        doc_obj   = _get_obj(env, hdf, *docspec)
+        style_obj = _get_src(env, hdf, *stylespec)
+        doc_obj   = _get_src(env, hdf, *docspec)
         params    = dict([(_to_str(k[3:]), _to_str(v)) for k, v in opts.iteritems() if k.startswith('xp_')])
 
-        try:
-            page, ct  = _transform(style_obj, doc_obj, params)
-        finally:
-            _close_obj(style_obj)
-            _close_obj(doc_obj)
+        page, ct  = _transform(style_obj, doc_obj, params, env, hdf)
 
         return page
 
@@ -223,11 +235,66 @@ def _parse_filespec(filespec, hdf, env):
 
     return module, id, file
 
-def _get_obj(env, hdf, module, id, file):
-    """Returns a filename (str or unicode), a trac browser Node, or a urllib 
-       addinfourl.
-    """
+def _transform(style_obj, doc_obj, params, env, hdf):
+    import libxslt
 
+    tl.env = env
+    tl.hdf = hdf
+
+    doc    = None
+    style  = None;
+    result = None;
+
+    try:
+        try:
+            doc = _parse_xml(doc_obj)
+        except Exception, e:
+            raise Exception("Error parsing %s: %s" % (doc_obj, e))
+
+        try:
+            styledoc = _parse_xml(style_obj)
+        except Exception, e:
+            raise Exception("Error parsing %s: %s" % (style_obj, e))
+
+        style = libxslt.parseStylesheetDoc(styledoc)
+        if not style:
+            styledoc.freeDoc()
+            raise Exception("%s is not a valid stylesheet" % style_obj)
+
+        result = style.applyStylesheet(doc, params)
+        try:
+            output = style.saveResultToString(result)
+        except Exception, e:
+            # detect empty result doc
+            if str(e) != 'error return without exception set':
+                raise e
+            output = ''
+
+        if result.get_type() == 'document_xml':
+            ct = 'text/xml'
+        elif result.get_type() == 'document_html':
+            ct = 'text/html'
+        elif result.get_type() == 'document_text':
+            ct = 'text/plain'
+        else:
+            ct = 'application/octet-stream'
+
+    finally:
+        if doc:    doc.freeDoc()
+        if style:  style.freeStylesheet()
+        if result: result.freeDoc()
+        tl.env = None
+        tl.hdf = None
+
+    return output, ct
+
+def _parse_xml(obj):
+    if obj.isFile():
+        return libxml2.parseFile(obj.getFile())
+    else:
+        return libxml2.readDoc(obj.getStream().read(), obj.getUrl(), None, 0)
+
+def _get_src(env, hdf, module, id, file):
     # check permissions first
     if module == 'wiki'    and not hdf.has_key('trac.acl.WIKI_VIEW')   or \
        module == 'ticket'  and not hdf.has_key('trac.acl.TICKET_VIEW') or \
@@ -235,14 +302,78 @@ def _get_obj(env, hdf, module, id, file):
        module == 'browser' and not hdf.has_key('trac.acl.BROWSER_VIEW'):
         raise Exception('Permission denied: %s' % module)
 
-    obj = None
-
     if module == 'browser':
+        return BrowserSource(env, hdf, file)
+    if module == 'file':
+        return FileSource(env, id, file)
+    if module == 'wiki' or module == 'ticket':
+        return AttachmentSource(env, module, id, file)
+    if module == 'url':
+        return UrlSource(file)
+
+    raise Exception("unsupported module '%s'" % module)
+
+class TransformSource(object):
+    """Represents the source of an input (stylesheet or xml-doc) to the transformer"""
+
+    def __init__(self, module, id, file, obj):
+        self.module = module
+        self.id     = id
+        self.file   = file
+        self.obj    = obj
+
+    def isFile(self):
+        return False
+
+    def getFile(self):
+        return None
+
+    def getUrl(self):
+        return "%s://%s/%s" % (self.module, self.id.replace("/", "%2F"), self.file)
+
+    def get_last_modified(self):
+        import time
+        return time.time()
+
+    def __str__(self):
+        return str(self.obj)
+
+    def __del__(self):
+        if hasattr(self.obj, 'close') and callable(self.obj.close):
+            self.obj.close()
+
+    class CloseableStream(object):
+        """Implement close even if underlying stream doesn't"""
+
+        def __init__(self, stream):
+            self.stream = stream
+
+        def read(self, len=None):
+            return self.stream.read(len)
+
+        def close(self):
+            if hasattr(self.stream, 'close') and callable(self.stream.close):
+                self.stream.close()
+
+class BrowserSource(TransformSource):
+    def __init__(self, env, hdf, file):
         from trac.versioncontrol.web_ui import get_existing_node
         repos = env.get_repository(hdf.get('trac.authname'))
         obj   = get_existing_node(env, repos, file, None)
 
-    elif module == 'file':
+        TransformSource.__init__(self, "browser", "source", file, obj)
+
+    def getStream(self):
+        return self.CloseableStream(self.obj.get_content())
+
+    def __str__(self):
+        return self.obj.path
+
+    def get_last_modified(self):
+        return self.obj.get_last_modified()
+
+class FileSource(TransformSource):
+    def __init__(self, env, id, file):
         import re
         file = re.sub('[^a-zA-Z0-9._/-]', '', file)     # remove forbidden chars
         file = re.sub('^/+', '', file)                  # make sure it's relative
@@ -255,95 +386,66 @@ def _get_obj(env, hdf, module, id, file):
 
         obj = os.path.join(env.get_htdocs_dir(), file)
 
-    elif module == 'wiki' or module == 'ticket':
-        from trac.attachment import Attachment
-        attachment = Attachment(env, module, id, file)
-        obj = attachment.path
+        TransformSource.__init__(self, "file", id, file, obj)
 
-    elif module == 'url':
+    def isFile(self):
+        return True
+
+    def getFile(self):
+        return self.obj
+
+    def getStream(self):
         import urllib
+        return urllib.urlopen(self.obj)
 
-        if id:
-            raise Exception("unsupported url id '%s'" % id)
+    def get_last_modified(self):
+        return os.stat(self.obj).st_mtime
 
+    def __str__(self):
+        return self.obj
+
+class AttachmentSource(TransformSource):
+    def __init__(self, env, module, id, file):
+        from trac.attachment import Attachment
+        obj = Attachment(env, module, id, file)
+
+        TransformSource.__init__(self, module, id, file, obj)
+
+    def getStream(self):
+        return self.obj.open()
+
+    def get_last_modified(self):
+        return os.stat(self.obj.path).st_mtime
+
+    def __str__(self):
+        return self.obj.path
+
+class UrlSource(TransformSource):
+    def __init__(self, url):
+        import urllib
         try:
-           obj = urllib.urlopen(file)
+            obj = urllib.urlopen(url)
         except Exception, e:
             raise Exception('Could not read from url "%s": %s' % (file, e))
 
-    else:
-        raise Exception("unsupported module '%s'" % module)
+        TransformSource.__init__(self, "url", None, url, obj)
 
-    return obj
+    def getStream(self):
+        return self.obj
 
-def _close_obj(obj):
-    if hasattr(obj, 'close') and callable(obj.close):
-        obj.close()
+    def getUrl(self):
+        return self.file
 
-def _obj_tostr(obj):
-    if isinstance(obj, str) or isinstance(obj, unicode):
-        return obj
-    if isinstance(obj, Node):
-        return obj.path
-    if hasattr(obj, 'url'):
-        return obj.url
-    return str(obj)
+    def get_last_modified(self):
+        import time
 
-def _transform(style_obj, doc_obj, params):
-    import libxslt
+        lm = self.obj.info().getdate('Last-modified')
+        if lm:
+            return time.mktime(lm)
+        return time.time()
 
-    try:
-        styledoc = _parse_xml(style_obj)
-    except Exception, e:
-        raise Exception("Error parsing %s: %s" % (_obj_tostr(style_obj), e))
-
-    try:
-        doc = _parse_xml(doc_obj)
-    except Exception, e:
-        styledoc.freeDoc()
-        raise Exception("Error parsing %s: %s" % (_obj_tostr(doc_obj), e))
-
-    style = libxslt.parseStylesheetDoc(styledoc)
-    if not style:
-        styledoc.freeDoc()
-        doc.freeDoc()
-        raise Exception("%s is not a valid stylesheet" % _obj_tostr(style_obj))
-
-    result = style.applyStylesheet(doc, params)
-    try:
-        output = style.saveResultToString(result)
-    except Exception, e:
-        # detect empty result doc
-        if str(e) != 'error return without exception set':
-            raise e
-        output = ''
-
-    if result.get_type() == 'document_xml':
-        ct = 'text/xml'
-    elif result.get_type() == 'document_html':
-        ct = 'text/html'
-    elif result.get_type() == 'document_text':
-        ct = 'text/plain'
-    else:
-        ct = 'application/octet-stream'
-
-    style.freeStylesheet()
-    doc.freeDoc()
-    result.freeDoc()
-
-    return output, ct
-
-def _parse_xml(obj):
-    import libxml2
-
-    if isinstance(obj, str) or isinstance(obj, unicode):
-        return libxml2.parseFile(obj)
-    if isinstance(obj, Node):
-        return libxml2.parseDoc(obj.get_content().read())
-    if hasattr(obj, 'read') and callable(obj.read):
-        return libxml2.parseDoc(obj.read())
-
-    raise Exception("unsupported object type '%s'" % type(obj))
+    def __str__(self):
+        return self.obj.url
 
 class XsltProcessor(Component):
     implements(IWikiMacroProvider, IRequestHandler)
@@ -371,31 +473,25 @@ class XsltProcessor(Component):
            not docspec[0] or not docspec[1] or not docspec[2]:
             raise TracError('Bad request')
 
-        style_obj = _get_obj(self.env, req.hdf, *stylespec)
-        doc_obj   = _get_obj(self.env, req.hdf, *docspec)
+        style_obj = _get_src(self.env, req.hdf, *stylespec)
+        doc_obj   = _get_src(self.env, req.hdf, *docspec)
         params    = dict([(k[3:], req.args.get(k)) for k in req.args.keys() if k.startswith('xp_')])
 
-        lastmod = max(self._get_last_modified(style_obj),
-                      self._get_last_modified(doc_obj))
+        lastmod = max(style_obj.get_last_modified(),
+                      doc_obj.get_last_modified())
 
         req.check_modified(lastmod)
         if not req.get_header('If-None-Match'):
             if http_date(lastmod) == req.get_header('If-Modified-Since'):
                 req.send_response(304)
                 req.end_headers()
-                _close_obj(style_obj)
-                _close_obj(doc_obj)
                 raise RequestDone
         if hasattr(req, '_headers'):    # 0.9 compatibility
             req._headers.append(('Last-Modified', http_date(lastmod)))
         else:
             req.send_header('Last-Modified', http_date(lastmod))
 
-        try:
-            page, content_type = _transform(style_obj, doc_obj, params)
-        finally:
-            _close_obj(style_obj)
-            _close_obj(doc_obj)
+        page, content_type = _transform(style_obj, doc_obj, params, env, hdf)
 
         req.send_response(200)
         req.send_header('Content-Type', content_type + ';charset=utf-8')
@@ -410,17 +506,4 @@ class XsltProcessor(Component):
             req.write(page)
 
         raise RequestDone
-
-    def _get_last_modified(self, obj):
-        import time
-
-        if isinstance(obj, str) or isinstance(obj, unicode):
-            return os.stat(obj).st_mtime
-        if isinstance(obj, Node):
-            return obj.get_last_modified()
-        if hasattr(obj, 'info') and callable(obj.info):
-            lm = obj.info().getdate('Last-modified')
-            if lm:
-                return time.mktime(lm)
-        return time.time()
 
