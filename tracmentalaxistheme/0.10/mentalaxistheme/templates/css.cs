@@ -326,8 +326,8 @@ div .wiki-toc h4 {
   font-weight:bold;
 }                               
    
-table.progress td.closed { background: #83ADE0; }
-table.progress td.open { background: #DDDDDD; }            
+table.progress td.closed { background: #5CE05D; }
+table.progress td.open { background: #DD5243; }            
 .milestone .info h2 em { color: #444; font-style: normal; }        
                        
 #ticket {
