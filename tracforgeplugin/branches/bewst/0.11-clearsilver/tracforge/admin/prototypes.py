@@ -7,6 +7,9 @@ import sys
 import os
 import time
 
+import trac.config
+import trac.admin.console
+
 class ProjectSetupParticipantBase(Component):
     """Base class for project setup participants."""
     # Based on WikiMacroBase
@@ -34,15 +37,13 @@ class MakeTracEnvironmentAction(ProjectSetupParticipantBase):
         repo_type = hasattr(proj, 'repo_type') and proj.repo_type or 'svn'
         repo_path = hasattr(proj, 'repo_path') and proj.repo_path or ''
     
-        from trac.config import default_dir
-        from trac.scripts.admin import run
-        return run([proj.env_path, 
+        return trac.admin.console.run([proj.env_path, 
                     'initenv', 
                     req.args.get('fullname','').strip(), 
                     'sqlite:db/trac.db', 
                     repo_type.strip(), 
                     repo_path.strip(), 
-                    default_dir('templates'),
+                    trac.config.default_dir('templates'),
                    ]) == 0
 
 class MakeSubversionRepositoryAction(ProjectSetupParticipantBase):

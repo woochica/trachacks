@@ -18,16 +18,15 @@ import re
 
 from trac.core import *
 from trac.perm import PermissionSystem
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin import IAdminPanelProvider
 
 from config import EnvironmentOption
 
 class PermissionAdminPage(Component):
 
-    implements(IAdminPageProvider)
+    implements(IAdminPanelProvider)
 
-    # IAdminPageProvider
-    def get_admin_pages(self, req):
+    def get_admin_panels(self, req):
         if req.perm.has_permission('TRACFORGE_ADMIN'):
             yield ('tracforge', 'TracForge', 'perm', 'Permissions')
 
@@ -68,7 +67,7 @@ class PermissionAdminPage(Component):
                                    'key': '%s:%s' % p
                                   } for p in perms]
         
-        return 'admin_perm.cs', None
+        return 'tracforge_admin_perm.cs', None
 
     # Internal methods
     def _get_all_permissions(self):

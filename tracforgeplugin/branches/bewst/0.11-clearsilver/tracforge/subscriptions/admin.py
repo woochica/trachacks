@@ -1,6 +1,6 @@
 # TracForge subscription manager
 from trac.core import *
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin import IAdminPanelProvider
 
 from manager import SubscriptionManager
 from util import open_env
@@ -8,10 +8,10 @@ from util import open_env
 class TracForgeSubscriptionAdmin(Component):
     """Admin GUI for subscriptions."""
     
-    implements(IAdminPageProvider)
+    implements(IAdminPanelProvider)
     
-    # IAdminPageProvider methods
-    def get_admin_pages(self, req):
+    # IAdminPanelProvider methods
+    def get_admin_panels(self, req):
         if req.perm.has_permission('TRACFORGE_ADMIN'):
             yield ('tracforge', 'Tracforge', 'subscriptions', 'Subscriptions')
             

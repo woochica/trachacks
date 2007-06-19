@@ -17,9 +17,9 @@ tables = [
         Column('stderr'),
     ],
     #Table('tracforge_project_output', key=('ts'
-    Table('tracforge_members', key=('project', 'user'))[
+    Table('tracforge_members', key=('project', 'sid'))[
         Column('project'),
-        Column('user'),
+        Column('sid'),
         Column('role'),
     ],
     Table('tracforge_permission', key=('username', 'action'))[

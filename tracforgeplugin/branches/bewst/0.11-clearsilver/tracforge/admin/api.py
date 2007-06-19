@@ -1,5 +1,6 @@
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
+from trac.db import DatabaseManager
 
 import db_default
 
@@ -56,12 +57,7 @@ class TracForgeAdminSystem(Component):
             return self.found_db_version < db_default.version
         
     def upgrade_environment(self, db):
-        # 0.10 compatibility hack (thanks Alec)
-        try:
-            from trac.db import DatabaseManager
-            db_manager, _ = DatabaseManager(self.env)._get_connector()
-        except ImportError:
-            db_manager = db
+        db_manager, _ = DatabaseManager(self.env)._get_connector()
             
         # Insert the default table
         old_data = {} # {table_name: (col_names, [row, ...]), ...}

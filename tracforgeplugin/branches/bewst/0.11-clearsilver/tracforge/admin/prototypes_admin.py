@@ -2,7 +2,7 @@
 from trac.core import *
 from trac.web.chrome import add_stylesheet, add_script
 
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin import IAdminPanelProvider
 
 from model import Prototype, ConfigSet
 from api import IProjectSetupParticipant, TracForgeAdminSystem
@@ -12,9 +12,9 @@ class TracForgePrototypesAdminModule(Component):
 
     #setup_participants = ExtensionPoint(IProjectSetupParticipant)
 
-    implements(IAdminPageProvider)
+    implements(IAdminPanelProvider)
     
-    def get_admin_pages(self, req):
+    def get_admin_panels(self, req):
         if req.perm.has_permission('TRACFORGE_ADMIN'):
             yield ('tracforge', 'TracForge', 'prototypes', 'Project Prototypes')
             
@@ -112,7 +112,7 @@ class TracForgePrototypesAdminModule(Component):
                     raise TracError('"new" and "configset" are reserved names')
             
                 data = req.args.get('data')
-                if not data:
+                if data is None:
                     raise TracError("Warning: Peguins on fire. You might have JavaScript off, don't do that")
                 data = data[4:] # Strip off the 'data' literal at the start
                 if not data:

@@ -32,12 +32,12 @@ class Members(object, DictMixin):
     def __getitem__(self, key):
         cursor = self.db.cursor()
         
-        cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND user=%s',(self.name, key))
+        cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND sid=%s',(self.name, key))
         row = cursor.fetchone()
         if row:
             return row[0]
         else:
-            cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND user=%s',('*', key))
+            cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND sid=%s',('*', key))
             row = cursor.fetchone()
             if row:
                 return row[0]
@@ -47,9 +47,9 @@ class Members(object, DictMixin):
     def __setitem__(self, key, val):
         cursor = self.db.cursor()
         
-        cursor.execute('UPDATE tracforge_members SET role=%s WHERE project=%s AND user=%s',(val, self.name, key))
+        cursor.execute('UPDATE tracforge_members SET role=%s WHERE project=%s AND sid=%s',(val, self.name, key))
         if not cursor.rowcount:
-            cursor.execute('INSERT INTO tracforge_members (project, user, role) VALUES (%s, %s, %s)', (self.name, key, val))
+            cursor.execute('INSERT INTO tracforge_members (project, sid, role) VALUES (%s, %s, %s)', (self.name, key, val))
             
         if self.handle_commit:
             self.db.commit()
@@ -57,7 +57,7 @@ class Members(object, DictMixin):
     def __delitem__(self, key):
         cursor = self.db.cursor()
         
-        cursor.execute('DELETE FROM tracforge_members WHERE project=%s AND user=%s',(self.name, key))
+        cursor.execute('DELETE FROM tracforge_members WHERE project=%s AND sid=%s',(self.name, key))
         
         if self.handle_commit:
             self.db.commit()
@@ -65,7 +65,7 @@ class Members(object, DictMixin):
     def keys(self):
         cursor = self.db.cursor()
         
-        cursor.execute('SELECT user FROM tracforge_members WHERE project=%s',(self.name,))
+        cursor.execute('SELECT sid FROM tracforge_members WHERE project=%s',(self.name,))
         for row in cursor:
             yield row[0]
 
@@ -138,7 +138,7 @@ class Project(object):
 
 
     def __contains__(self, key):
-        """Allow the nice syntax of `if 'user' in project:`"""
+        """Allow the nice syntax of `if 'sid' in project:`"""
         return self.members.__contains__(key)    
 
     def select(cls, env, db=None):

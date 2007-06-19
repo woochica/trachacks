@@ -1,17 +1,17 @@
 from trac.core import *
 from trac.web.chrome import add_stylesheet
 
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin import IAdminPanelProvider
 
 from model import Project, Members
 
 class TracForgeMembershipModule(Component):
     """A module to manage project memberships."""
 
-    implements(IAdminPageProvider)    
+    implements(IAdminPanelProvider)
     
     # IAdminPageProvider methods
-    def get_admin_pages(self, req):
+    def get_admin_panels(self, req):
         if req.perm.has_permission('TRACFORGE_ADMIN'):
             yield ('tracforge', 'TracForge', 'membership', 'Membership')
             

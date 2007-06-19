@@ -67,9 +67,9 @@ function remove_step() {
     step.animate({height:'hide',opacity:'hide'}, 400, function() {
         $(this).remove()
     });
-    var step_type = step.id().substr(5);
+    var step_type = step.attr("id").substr(5);
     $("#addstep-form select[@name=type]").find("option[@value="+step_type+"]").remove().end()
-                                         .append('<option value="'+step_type+'">'+step_type+'</option>');
+                                         .append('\74option value="'+step_type+'"\76'+step_type+'\74/option\76');
 }
     
 function up_step() {
@@ -83,7 +83,7 @@ function down_step() {
     var me = $(this).parents(".step");
     var next = $(me).next(".step");
     if(next.length == 0) { return; } // Bottom item
-    if(next.id() == "addstep" || next.id() == "step_TEMPLATE") { return; }
+    if(next.attr("id") == "addstep" || next.attr("id") == "step_TEMPLATE") { return; }
     me.animatedSwap(next, 400);
 }
 
@@ -97,7 +97,7 @@ function collect_steps() {
     var steps = Array();
     $("#steps").children().each(function() {
         var step = Array();
-        step[0] = this.id.substr(5);
+        step[0] = $(this).attr("id").substr(5);
         step[1] = $(this).find("input[@name=args]").val()
         steps.push(step);
     });
@@ -128,7 +128,7 @@ $(function() {
         if(step_type == "") { return; }
 
         $("#step_TEMPLATE").clone().insertBefore("#step_TEMPLATE")
-            .id("step_"+step_type)
+            .attr("id", "step_"+step_type)
             .find(".step-name").empty().prepend(step_type).end()
             .find(".step-text").empty().prepend(DESCRIPTIONS[step_type]).end()
             .animate({height: 'show'}, DURATION)

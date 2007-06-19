@@ -6,6 +6,7 @@ from trac.env import IEnvironmentSetupParticipant
 from api import ISubscribable, ISubscriptionFilter
 from util import *
 from db_default import db_version, default_table
+from trac.db import DatabaseManager
 
 import os
 
@@ -85,12 +86,7 @@ class SubscriptionManager(Component):
             return self.found_db_version < db_version
         
     def upgrade_environment(self, db):
-        # 0.10 compatibility hack (thanks Alec)
-        try:
-            from trac.db import DatabaseManager
-            db_manager, _ = DatabaseManager(self.env)._get_connector()
-        except ImportError:
-            db_manager = db
+        db_manager, _ = DatabaseManager(self.env)._get_connector()
     
         # Insert the default table
         cursor = db.cursor()

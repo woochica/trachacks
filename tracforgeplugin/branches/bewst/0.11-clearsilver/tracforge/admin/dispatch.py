@@ -77,7 +77,8 @@ class TracForgeDispatcherModule(Component):
             # Don't list this environment
             if env_path == self.env.path:
                 continue
-            
+
+            env = None
             try:
                 env = _open_environment(env_path)
                 #self.log.debug(env.path)
@@ -93,7 +94,7 @@ class TracForgeDispatcherModule(Component):
                 # Only show errors to admins to prevent excessive disclosure
                 if req.perm.has_permission('TRACFORGE_ADMIN'):
                     projects.append({
-                        'name': env.project_name,
+                        'name': env and env.project_name or env_path,
                         'description': to_unicode(e)
                     })
             

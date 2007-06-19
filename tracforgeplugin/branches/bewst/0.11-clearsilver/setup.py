@@ -35,5 +35,5 @@ setup(
         ],
     },
 
-    install_requires = [ 'TracWebAdmin' ],
+#    install_requires = [ 'TracWebAdmin' ],
 )
