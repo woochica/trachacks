@@ -38,7 +38,6 @@ class TracForgeDispatcherModule(Component):
             except IOError:
                 raise TracError('No such project "%s"'%project)
             project_perm = PermissionCache(project_env, req.authname)
-            self.log.debug(project_perm.perms)
             project_perm.assert_permission('PROJECT_VIEW')
             
             return self._send_project(req, path_info)
