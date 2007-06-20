@@ -1,0 +1,2683 @@
+Index: templates/report.cs
+===================================================================
+--- templates/report.cs	(revision 5702)
++++ templates/report.cs	(working copy)
+@@ -5,11 +5,11 @@
+  <h2>Report Navigation</h2>
+  <ul><li class="first"><?cs
+    if:chrome.links.up.0.href ?><a href="<?cs
+-    var:chrome.links.up.0.href ?>">Available Reports</a><?cs
+-   else ?>Available Reports<?cs
++    var:chrome.links.up.0.href ?>">Reportes Disponibles</a><?cs
++   else ?>Reportes Disponibles<?cs
+   /if ?></li><?cs
+   if:report.query_href ?><li class="last"><a href="<?cs
+-   var:report.query_href ?>">Custom Query</a></li><?cs
++   var:report.query_href ?>">Consulta Personalizada</a></li><?cs
+   /if ?></ul>
+ </div>
+ 
+@@ -84,7 +84,7 @@
+  <?cs if:report.mode == "list" ?>
+   <h1><?cs var:title ?><?cs
+    if:report.numrows && report.id != -1 ?><span class="numrows"> (<?cs
+-    var:report.numrows ?> matches)</span><?cs
++    var:report.numrows ?> coincidencia(s))</span><?cs
+    /if ?></h1><?cs
+    if:report.description ?><div id="description"><?cs
+     var:report.description ?></div><?cs
+@@ -94,15 +94,15 @@
+      <div class="buttons"><?cs
+       if:report.can_modify ?><form action="" method="get"><div>
+        <input type="hidden" name="action" value="edit" />
+-       <input type="submit" value="Edit report" accesskey="e" />
++       <input type="submit" value="Editar reporte" accesskey="e" />
+       </div></form><?cs /if ?><?cs
+       if:report.can_create ?><form action="" method="get"><div>
+        <input type="hidden" name="action" value="copy" />
+-       <input type="submit" value="Copy report" />
++       <input type="submit" value="Copiar reporte" />
+       </div></form><?cs /if ?><?cs
+       if:report.can_delete ?><form action="" method="get"><div>
+        <input type="hidden" name="action" value="delete" />
+-       <input type="submit" value="Delete report" />
++       <input type="submit" value="Eliminar reporte" />
+       </div></form><?cs /if ?>
+      </div><?cs
+     /if ?><?cs
+@@ -145,14 +145,14 @@
+          <?cs if cell.hidden || cell.hidehtml ?>
+          <?cs elif name(cell) == "ticket" || name(cell) == "id" ?>
+            <?cs call:report_cell('ticket',
+-                                 '<a title="View ticket" href="'+
++                                 '<a title="Ver ticket" href="'+
+                                  $cell.ticket_href+'">#'+$cell+'</a>') ?>
+          <?cs elif name(cell) == "summary" && cell.ticket_href ?>
+-           <?cs call:report_cell('summary', '<a title="View ticket" href="'+
++           <?cs call:report_cell('summary', '<a title="Ver ticket" href="'+
+                                  $cell.ticket_href+'">'+$cell+'</a>') ?>
+          <?cs elif name(cell) == "report" ?>
+            <?cs call:report_cell('report',
+-                '<a title="View report" href="'+$cell.report_href+'">{'+$cell+'}</a>') ?>
++                '<a title="Ver reporte" href="'+$cell.report_href+'">{'+$cell+'}</a>') ?>
+            <?cs set:report_href=$cell.report_href ?>
+          <?cs elif name(cell) == "time" ?>
+            <?cs call:report_cell('date', $cell.date) ?>
+@@ -164,7 +164,7 @@
+            <?cs call:report_cell('', $cell.parsed) ?>
+          <?cs elif name(cell) == "title" && $report.id == -1 ?>
+            <?cs call:report_cell('title',
+-                                 '<a  title="View report" href="'+
++                                 '<a  title="Ver reporte" href="'+
+                                  $report_href+'">'+$cell+'</a>') ?>
+          <?cs else ?>
+            <?cs call:report_cell(name(cell), $cell) ?>
+@@ -177,13 +177,13 @@
+    if:report.id == -1 && report.can_create?><div class="buttons">
+     <form action="" method="get"><div>
+      <input type="hidden" name="action" value="new" />
+-     <input type="submit" value="Create new report" />
++     <input type="submit" value="Crear nuevo reporte" />
+     </div></form></div><?cs
+    /if ?><?cs
+    if report.message ?>
+     <div class="system-message"><?cs var report.message ?></div><?cs
+    elif:idx == #0 ?>
+-    <div id="report-notfound">No matches found.</div><?cs
++    <div id="report-notfound">No se encontraron coincidencias.</div><?cs
+    /if ?>
+ 
+  <?cs elif:report.mode == "delete" ?>
+@@ -192,10 +192,10 @@
+   <form action="<?cs var:report.href ?>" method="post">
+    <input type="hidden" name="id" value="<?cs var:report.id ?>" />
+    <input type="hidden" name="action" value="delete" />
+-   <p><strong>Are you sure you want to delete this report?</strong></p>
++   <p><strong>¿Estás seguro de querer eliminar este reporte?</strong></p>
+    <div class="buttons">
+-    <input type="submit" name="cancel" value="Cancel" />
+-    <input type="submit" value="Delete report" />
++    <input type="submit" name="cancel" value="Cancelar" />
++    <input type="submit" value="Eliminar reporte" />
+    </div>
+   </form>
+  
+@@ -206,27 +206,27 @@
+     <div>
+      <input type="hidden" name="action" value="<?cs var:report.action ?>" />
+      <div class="field">
+-      <label for="title">Report Title:</label><br />
++      <label for="title">Título del Reporte:</label><br />
+       <input type="text" id="title" name="title"
+              value="<?cs var:report.title ?>" size="50" /><br />
+      </div>
+      <div class="field">
+       <label for="description">
+-       Description:</label> (You may use <a tabindex="42" href="<?cs
+-         var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here)
++       Descripción:</label> (Puedes utilizar <a tabindex="42" href="<?cs
++         var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> aquí)
+       </label><br />
+       <textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+ <?cs var:report.description ?></textarea>
+      </div>
+      <div class="field">
+       <label for="query">
+-       SQL Query for Report:</label><br />
++       Consulta SQL para el Reporte:</label><br />
+       <textarea id="query" name="query" cols="85" rows="20"><?cs
+         var:report.sql ?></textarea>
+      </div>
+      <div class="buttons">
+-      <input type="submit" value="Save report" />
+-      <input type="submit" name="cancel" value="Cancel" />
++      <input type="submit" value="Guardar reporte" />
++      <input type="submit" name="cancel" value="Cancelar" />
+      </div>
+     </div>
+     <script type="text/javascript" src="<?cs
+@@ -235,9 +235,9 @@
+  <?cs /if?>
+  
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs
+-    var:trac.href.wiki ?>/TracReports">TracReports</a> for help on using and
+-  creating reports.
++  <strong>Nota:</strong> Véa <a href="<?cs
++    var:trac.href.wiki ?>/TracReports">TracReports</a> para ayuda acerca de utilizar
++  y crear reportes.
+  </div>
+  
+ </div>
+Index: templates/anydiff.cs
+===================================================================
+--- templates/anydiff.cs	(revision 5702)
++++ templates/anydiff.cs	(working copy)
+@@ -4,41 +4,41 @@
+ 
+ <div id="content" class="changeset">
+  <div id="title">
+-    <h1>Select Base and Target for Diff:</h1>
++    <h1>Selecione Base y Objetivo para el Diff:</h1>
+  </div>
+ 
+  <div id="anydiff">
+   <form action="<?cs var:anydiff.changeset_href ?>" method="get">
+    <table>
+     <tr>
+-     <th><label for="old_path">From:</label></th>
++     <th><label for="old_path">De:</label></th>
+      <td>
+       <input type="text" id="old_path" name="old_path" value="<?cs
+          var:anydiff.old_path ?>" size="44" />
+-      <label for="old_rev">at Revision:</label>
++      <label for="old_rev">en la Revisión:</label>
+       <input type="text" id="old_rev" name="old" value="<?cs
+          var:anydiff.old_rev ?>" size="4" />
+      </td>
+     </tr>
+     <tr>
+-     <th><label for="new_path">To:</label></th>
++     <th><label for="new_path">A:</label></th>
+      <td>
+       <input type="text" id="new_path" name="new_path" value="<?cs
+          var:anydiff.new_path ?>" size="44" />
+-      <label for="new_rev">at Revision:</label>
++      <label for="new_rev">en la Revisión:</label>
+       <input type="text" id="new_rev" name="new" value="<?cs
+          var:anydiff.new_rev ?>" size="4" />
+      </td>
+     </tr>
+    </table>
+    <div class="buttons">
+-      <input type="submit" value="View changes" />
++      <input type="submit" value="Ver cambios" />
+    </div>
+   </form>
+  </div>
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
+-  ?>/TracChangeset#ExaminingDifferencesBetweenBranches">TracChangeset</a> for help on using the arbitrary diff feature.
++  <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki
++  ?>/TracChangeset#ExaminingDifferencesBetweenBranches">TracChangeset</a> para ayuda acerca de utilizar la característica 'diff arbitrario'.
+  </div>
+ </div>
+ 
+Index: templates/log.cs
+===================================================================
+--- templates/log.cs	(revision 5702)
++++ templates/log.cs	(working copy)
+@@ -4,18 +4,18 @@
+ <div id="ctxtnav" class="nav">
+  <ul>
+   <li class="first <?cs if:len(chrome.links.prev)+len(chrome.links.next) == 0 ?>last<?cs /if ?>">
+-   <a href="<?cs var:log.browser_href ?>">View Latest Revision</a>
++   <a href="<?cs var:log.browser_href ?>">Ver la Última Revisión</a>
+   </li><?cs
+   if:len(chrome.links.prev) ?>
+    <li class="<?cs if:!len(chrome.links.next) ?> last<?cs /if ?>">
+     &larr; <a href="<?cs var:chrome.links.prev.0.href ?>" title="<?cs
+-      var:chrome.links.prev.0.title ?>">Newer Revisions</a>
++      var:chrome.links.prev.0.title ?>">Revisiones más Actuales</a>
+    </li><?cs
+   /if ?><?cs
+   if:len(chrome.links.next) ?>
+    <li class="last">
+     <a href="<?cs var:chrome.links.next.0.href ?>" title="<?cs
+-      var:chrome.links.next.0.title ?>">Older Revisions</a> &rarr;
++      var:chrome.links.next.0.title ?>">Revisiones Anteriores</a> &rarr;
+    </li><?cs
+   /if ?>
+  </ul>
+@@ -27,59 +27,59 @@
+  <form id="prefs" action="<?cs var:browser_current_href ?>" method="get">
+   <div>
+    <input type="hidden" name="action" value="<?cs var:log.mode ?>" />
+-   <label>View log starting at <input type="text" id="rev" name="rev" value="<?cs
++   <label>Ver bitácora comenzando desde <input type="text" id="rev" name="rev" value="<?cs
+     var:log.items.0.rev ?>" size="5" /></label>
+-   <label>and back to <input type="text" id="stop_rev" name="stop_rev" value="<?cs
++   <label>y hasta <input type="text" id="stop_rev" name="stop_rev" value="<?cs
+     var:log.stop_rev ?>" size="5" /></label>
+    <br />
+    <div class="choice">
+     <fieldset>
+-     <legend>Mode:</legend>
++     <legend>Modo:</legend>
+      <label for="stop_on_copy">
+       <input type="radio" id="stop_on_copy" name="mode" value="stop_on_copy" <?cs
+        if:log.mode != "follow_copy" || log.mode != "path_history" ?> checked="checked" <?cs
+        /if ?> />
+-      Stop on copy 
++      Parar en caso de copia 
+      </label>
+      <label for="follow_copy">
+       <input type="radio" id="follow_copy" name="mode" value="follow_copy" <?cs
+        if:log.mode == "follow_copy" ?> checked="checked" <?cs /if ?> />
+-      Follow copies
++      Continuar en copias
+      </label>
+      <label for="path_history">
+       <input type="radio" id="path_history" name="mode" value="path_history" <?cs
+        if:log.mode == "path_history" ?> checked="checked" <?cs /if ?> />
+-      Show only adds, moves and deletes
++      Mostrar sólo añadidos, movidos y eliminados
+      </label>
+     </fieldset>
+    </div>
+    <label><input type="checkbox" name="verbose" <?cs
+     if:log.verbose ?> checked="checked" <?cs
+-    /if ?> /> Show full log messages</label>
++    /if ?> /> Mostrar el registro completo de los mensajes</label>
+   </div>
+   <div class="buttons">
+-   <input type="submit" value="Update" 
+-          title="Warning: by updating, you will clear the page history" />
++   <input type="submit" value="Actualizar" 
++          title="Advertencia: al actualizar, se limpiará el historial de la página" />
+   </div>
+  </form>
+ 
+  <div class="diff">
+   <div id="legend">
+-   <h3>Legend:</h3>
++   <h3>Leyenda:</h3>
+    <dl>
+-    <dt class="add"></dt><dd>Added</dd><?cs
++    <dt class="add"></dt><dd>Añadido</dd><?cs
+     if:log.mode == "path_history" ?>
+-     <dt class="rem"></dt><dd>Removed</dd><?cs
++     <dt class="rem"></dt><dd>Eliminado</dd><?cs
+     /if ?>
+-    <dt class="mod"></dt><dd>Modified</dd>
+-    <dt class="cp"></dt><dd>Copied or renamed</dd>
++    <dt class="mod"></dt><dd>Modificado</dd>
++    <dt class="cp"></dt><dd>Copiado ó renombrado</dd>
+    </dl>
+   </div>
+  </div>
+ 
+  <form  class="printableform" action="<?cs var:log.changeset_href ?>" method="get">
+-  <div class="buttons"><input type="submit" value="View changes" 
+-       title="Diff from Old Revision to New Revision (select them below)" />
++  <div class="buttons"><input type="submit" value="Ver cambios" 
++       title="Diff de las revisiones Inicio a Fin (selecciónelas abajo)" />
+  </div>
+  <table id="chglist" class="listing">
+   <thead>
+@@ -87,10 +87,10 @@
+     <th class="diff"></th>
+     <th class="change"></th>
+     <th class="rev">Rev</th>
+-    <th class="chgset">Chgset</th>
+-    <th class="date">Date</th>
+-    <th class="author">Author</th>
+-    <th class="summary"><?cs if:!log.verbose ?>Log Message<?cs /if ?></th>
++    <th class="chgset">CjtoCambios</th>
++    <th class="date">Fecha</th>
++    <th class="author">Autor</th>
++    <th class="summary"><?cs if:!log.verbose ?>Mensaje registrado<?cs /if ?></th>
+    </tr>
+   </thead>
+   <tbody><?cs
+@@ -105,7 +105,7 @@
+     if:item.copyfrom_path ?>
+      <tr class="<?cs var:even_odd ?>">
+       <td class="copyfrom_path" colspan="7" style="padding-left: <?cs var:indent ?>em">
+-       copied from <a href="<?cs var:item.browser_href ?>"><?cs var:item.copyfrom_path ?></a>:
++       copiado desde <a href="<?cs var:item.browser_href ?>"><?cs var:item.copyfrom_path ?></a>:
+       </td>
+      </tr><?cs
+      set:indent = indent + #1 ?><?cs
+@@ -121,18 +121,18 @@
+              value="<?cs var:item.path ?>@<?cs var:item.rev ?>" <?cs
+           if:idx == #0 ?> checked="checked" <?cs /if ?> /></td>
+      <td class="change" style="padding-left:<?cs var:indent ?>em">
+-      <a title="View log starting at this revision" href="<?cs var:item.log_href ?>">
++      <a title="Ver bitácora comenzando desde esta revisión" href="<?cs var:item.log_href ?>">
+        <span class="<?cs var:item.change ?>"></span>
+        <span class="comment">(<?cs var:item.change ?>)</span>
+       </a>
+      </td>
+      <td class="rev">
+       <a href="<?cs var:item.browser_href ?>" 
+-         title="Browse at revision <?cs var:item.rev ?>">@<?cs var:item.rev ?></a>
++         title="Explorar en la revisión <?cs var:item.rev ?>">@<?cs var:item.rev ?></a>
+      </td>
+      <td class="chgset">
+       <a href="<?cs var:item.changeset_href ?>"
+-         title="View changeset [<?cs var:item.rev ?>]">[<?cs var:item.rev ?>]</a>
++         title="Ver el conjunto de cambios [<?cs var:item.rev ?>]">[<?cs var:item.rev ?>]</a>
+      </td>
+      <td class="date"><?cs var:log.changes[item.rev].date ?></td>
+      <td class="author"><?cs var:log.changes[item.rev].author ?></td>
+@@ -149,8 +149,8 @@
+   </tbody>
+  </table><?cs
+  if:len(log.items) > #10 ?>
+-  <div class="buttons"><input type="submit" value="View changes" 
+-       title="Diff from Old Revision to New Revision (select them above)" />
++  <div class="buttons"><input type="submit" value="Ver cambios" 
++       title="Diff de las revisiones Inicio a Fin (selecciónelas arriba)" />
+   </div><?cs
+  /if ?>
+  </form><?cs
+@@ -158,18 +158,18 @@
+   if:len(links.prev) ?><li class="first<?cs
+    if:!len(links.next) ?> last<?cs /if ?>">&larr; <a href="<?cs
+    var:links.prev.0.href ?>" title="<?cs
+-   var:links.prev.0.title ?>">Younger Revisions</a></li><?cs
++   var:links.prev.0.title ?>">Revisiones más actuales</a></li><?cs
+   /if ?><?cs
+   if:len(links.next) ?><li class="<?cs
+    if:len(links.prev) ?>first <?cs /if ?>last"><a href="<?cs
+    var:links.next.0.href ?>" title="<?cs
+-   var:links.next.0.title ?>">Older Revisions</a> &rarr;</li><?cs
++   var:links.next.0.title ?>">Revisiones anteriores</a> &rarr;</li><?cs
+   /if ?></ul></div><?cs
+  /if ?>
+ 
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
+-  ?>/TracRevisionLog">TracRevisionLog</a> for help on using the revision log.
++  <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki
++  ?>/TracRevisionLog">TracRevisionLog</a> para ayuda acerca de utilizar la bitácora de revisiones.
+  </div>
+ 
+ </div>
+Index: templates/ticket_notify_email.cs
+===================================================================
+--- templates/ticket_notify_email.cs	(revision 5702)
++++ templates/ticket_notify_email.cs	(working copy)
+@@ -4,20 +4,20 @@
+ <?cs var:ticket.description ?>
+ <?cs else ?><?cs 
+  if:email.changes_body ?>
+-Changes (by <?cs var:ticket.change.author ?>):
++Cambios (por <?cs var:ticket.change.author ?>):
+ 
+ <?cs var:email.changes_body ?><?cs
+  /if ?><?cs 
+ var:email.changes_descr 
+ ?><?cs if:ticket.change.comment ?>
+-Comment<?cs 
+- if:!email.changes_body ?> (by <?cs 
++Comentario<?cs 
++ if:!email.changes_body ?> (por <?cs 
+    var:ticket.change.author ?>)<?cs /if ?>:
+ 
+ <?cs var:ticket.change.comment ?>
+ <?cs /if ?><?cs 
+ /if ?>
+ -- 
+-Ticket URL: <<?cs var:ticket.link ?>>
++URL del Ticket: <<?cs var:ticket.link ?>>
+ <?cs var:project.name ?> <<?cs var:project.url ?>>
+ <?cs var:project.descr ?>
+\ No newline at end of file
+Index: templates/browser.cs
+===================================================================
+--- templates/browser.cs	(revision 5702)
++++ templates/browser.cs	(working copy)
+@@ -4,9 +4,9 @@
+ <div id="ctxtnav" class="nav">
+  <ul>
+   <li class="first"><a href="<?cs var:browser.restr_changeset_href ?>">
+-   Last Change</a></li>
++   Último cambio</a></li>
+   <li class="last"><a href="<?cs var:browser.log_href ?>">
+-   Revision Log</a></li>
++   Bitácora de Revisiones</a></li>
+  </ul>
+ </div>
+ 
+@@ -18,7 +18,7 @@
+  <div id="jumprev">
+   <form action="" method="get">
+    <div>
+-    <label for="rev">View revision:</label>
++    <label for="rev">Ver revisión:</label>
+     <input type="text" id="rev" name="rev" value="<?cs
+        var:browser.revision ?>" size="4" />
+    </div>
+@@ -28,7 +28,7 @@
+  <?cs def:sortable_th(order, desc, class, title, href) ?>
+  <th class="<?cs var:class ?><?cs if:order == class ?> <?cs
+    if:desc ?>desc<?cs else ?>asc<?cs /if ?><?cs /if ?>">
+-  <a title="Sort by <?cs var:class ?><?cs
++  <a title="Ordenar por <?cs var:class ?><?cs
+     if:order == class && !desc ?> (descending)<?cs /if ?>" 
+      href="<?cs var:href[class] ?>"><?cs var:title ?></a>
+  </th>
+@@ -38,18 +38,18 @@
+   <table class="listing" id="dirlist">
+    <thead>
+     <tr><?cs 
+-     call:sortable_th(browser.order, browser.desc, 'name', 'Name', browser.order_href) ?><?cs 
+-     call:sortable_th(browser.order, browser.desc, 'size', 'Size', browser.order_href) ?>
++     call:sortable_th(browser.order, browser.desc, 'name', 'Nombre', browser.order_href) ?><?cs 
++     call:sortable_th(browser.order, browser.desc, 'size', 'Tamaño', browser.order_href) ?>
+      <th class="rev">Rev</th><?cs 
+-     call:sortable_th(browser.order, browser.desc, 'date', 'Age', browser.order_href) ?>
+-     <th class="change">Last Change</th>
++     call:sortable_th(browser.order, browser.desc, 'date', 'Edad', browser.order_href) ?>
++     <th class="change">Última modificación</th>
+     </tr>
+    </thead>
+    <tbody>
+     <?cs if:len(chrome.links.up) ?>
+      <tr class="even">
+       <td class="name" colspan="5">
+-       <a class="parent" title="Parent Directory" href="<?cs
++       <a class="parent" title="Directorio superior" href="<?cs
+          var:chrome.links.up.0.href ?>">../</a>
+       </td>
+      </tr>
+@@ -59,15 +59,15 @@
+      <tr class="<?cs if:name(item) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
+       <td class="name"><?cs
+        if:item.is_dir ?>
+-        <a class="dir" title="Browse Directory" href="<?cs
++        <a class="dir" title="Listar Directorio" href="<?cs
+           var:item.browser_href ?>"><?cs var:item.name ?></a><?cs
+        else ?>
+-        <a class="file" title="View File" href="<?cs
++        <a class="file" title="Ver archivo" href="<?cs
+           var:item.browser_href ?>"><?cs var:item.name ?></a><?cs
+        /if ?>
+       </td>
+       <td class="size"><?cs var:item.size ?></td>
+-      <td class="rev"><?cs if:item.permission != '' ?><a title="View Revision Log" href="<?cs
++      <td class="rev"><?cs if:item.permission != '' ?><a title="Ver Bitácora de Revisiones" href="<?cs
+         var:item.log_href ?>"><?cs var:item.rev ?></a><?cs else ?><?cs var:item.rev ?><?cs /if ?></td>
+       <td class="age"><span title="<?cs var:browser.changes[item.rev].date ?>"><?cs
+         var:browser.changes[item.rev].age ?></span></td>
+@@ -85,15 +85,15 @@
+   <table id="info" summary="Revision info"><?cs
+    if:!browser.is_dir ?><tr>
+     <th scope="col">
+-     Revision <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>, <?cs var:file.size ?>
+-     (checked in by <?cs var:file.author ?>, <?cs var:file.age ?> ago)
++     Revisión <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>, <?cs var:file.size ?>
++     (creada por <?cs var:file.author ?>, edad <?cs var:file.age ?>)
+     </th></tr><tr>
+     <td class="message"><?cs var:file.message ?></td>
+    </tr><?cs /if ?><?cs
+    if:len(browser.props) ?><tr>
+     <td colspan="2"><ul class="props"><?cs
+      each:prop = browser.props ?>
+-      <li>Property <strong><?cs var:prop.name ?></strong> set to <em><code><?cs
++      <li>Propiedad <strong><?cs var:prop.name ?></strong> fijada en <em><code><?cs
+       var:prop.value ?></code></em></li><?cs
+      /each ?>
+     </ul></td></tr><?cs
+@@ -106,18 +106,18 @@
+    if:file.preview ?><?cs
+     var:file.preview ?><?cs
+    elif:file.max_file_size_reached ?>
+-    <strong>HTML preview not available</strong>, since the file size exceeds
+-    <?cs var:file.max_file_size ?> bytes. Try <a href="<?cs
+-    var:file.raw_href ?>">downloading</a> the file instead.<?cs
+-   else ?><strong>HTML preview not available</strong>. To view, <a href="<?cs
+-    var:file.raw_href ?>">download</a> the file.<?cs
++    <strong>Vista previa HTML no disponible</strong>, debido a que el archivo excede los
++    <?cs var:file.max_file_size ?> bytes. Pruebe en su lugar <a href="<?cs
++    var:file.raw_href ?>">descargar</a> el archivo.<?cs
++   else ?><strong>Vista previa HTML no disponible</strong>. Para verlo, <a href="<?cs
++    var:file.raw_href ?>">descargue</a> el archivo.<?cs
+    /if ?>
+   </div><?cs
+  /if ?>
+ 
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
+-  ?>/TracBrowser">TracBrowser</a> for help on using the browser.
++  <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki
++  ?>/TracBrowser">TracBrowser</a> para ayuda acerca de explorar el repositorio.
+  </div>
+ 
+   <div id="anydiff">
+@@ -127,7 +127,7 @@
+      <input type="hidden" name="old_path" value="<?cs var:browser.path ?>" />
+      <input type="hidden" name="new_rev" value="<?cs var:browser.revision ?>" />
+      <input type="hidden" name="old_rev" value="<?cs var:browser.revision ?>" />
+-     <input type="submit" value="View changes..." title="Prepare an Arbitrary Diff" />
++     <input type="submit" value="Ver cambios..." title="Preparar un Diff Arbitrario" />
+     </div>
+    </form>
+   </div>
+Index: templates/roadmap.cs
+===================================================================
+--- templates/roadmap.cs	(revision 5702)
++++ templates/roadmap.cs	(working copy)
+@@ -4,35 +4,35 @@
+ <div id="ctxtnav" class="nav"></div>
+ 
+ <div id="content" class="roadmap">
+- <h1>Roadmap</h1>
++ <h1>Hitos</h1>
+ 
+  <form id="prefs" method="get" action="">
+   <div>
+    <input type="checkbox" id="showall" name="show" value="all"<?cs
+     if:roadmap.showall ?> checked="checked"<?cs /if ?> />
+-   <label for="showall">Show already completed milestones</label>
++   <label for="showall">Mostrar los hitos ya completados</label>
+   </div>
+   <div class="buttons">
+-   <input type="submit" value="Update" />
++   <input type="submit" value="Actualizar" />
+   </div>
+  </form>
+ 
+  <ul class="milestones"><?cs each:milestone = roadmap.milestones ?>
+   <li class="milestone">
+    <div class="info">
+-    <h2><a href="<?cs var:milestone.href ?>">Milestone: <em><?cs
++    <h2><a href="<?cs var:milestone.href ?>">Hito: <em><?cs
+       var:milestone.name ?></em></a></h2>
+     <p class="date"<?cs
+      if:milestone.completed_date ?> title="<?cs var:milestone.completed_date ?>">
+-      Completed <?cs var:milestone.completed_delta ?> ago<?cs
++      Completado hace <?cs var:milestone.completed_delta ?> <?cs
+      elif:milestone.due_date ?> title="<?cs var:milestone.due_date ?>"><?cs
+       if:milestone.late ?>
+-       <strong><?cs var:milestone.due_delta ?> late</strong><?cs
++       <strong>atrasado <?cs var:milestone.due_delta ?></strong><?cs
+       else ?>
+-       Due in <?cs var:milestone.due_delta ?><?cs
++       Estimado para <?cs var:milestone.due_delta ?><?cs
+       /if ?> (<?cs var:milestone.due_date ?>)<?cs
+      else ?>>
+-      No date set<?cs
++      Sin fecha definida<?cs
+      /if ?>
+     </p><?cs
+     with:stats = milestone.stats ?><?cs
+@@ -42,23 +42,23 @@
+         <td class="closed" style="width: <?cs
+           var:#stats.percent_closed ?>%"><a href="<?cs
+           var:milestone.queries.closed_tickets ?>" title="<?cs
+-          var:#stats.closed_tickets ?> of <?cs
++          var:#stats.closed_tickets ?> de <?cs
+           var:#stats.total_tickets ?> ticket<?cs
+-          if:#stats.total_tickets != #1 ?>s<?cs /if ?> closed"></a></td>
++          if:#stats.total_tickets != #1 ?>s<?cs /if ?> cerrados"></a></td>
+         <td class="open" style="width: <?cs
+           var:#stats.percent_active ?>%"><a href="<?cs
+           var:milestone.queries.active_tickets ?>" title="<?cs
+-          var:#stats.active_tickets ?> of <?cs
++          var:#stats.active_tickets ?> de <?cs
+           var:#stats.total_tickets ?> ticket<?cs
+-          if:#stats.total_tickets != #1 ?>s<?cs /if ?> active"></a></td>
++          if:#stats.total_tickets != #1 ?>s<?cs /if ?> activos"></a></td>
+        </tr>
+       </table>
+       <p class="percent"><?cs var:#stats.percent_closed ?>%</p>
+       <dl>
+-       <dt>Closed tickets:</dt>
++       <dt>Tickets cerrados:</dt>
+        <dd><a href="<?cs var:milestone.queries.closed_tickets ?>"><?cs
+          var:stats.closed_tickets ?></a></dd>
+-       <dt>Active tickets:</dt>
++       <dt>Tickets activos:</dt>
+        <dd><a href="<?cs var:milestone.queries.active_tickets ?>"><?cs
+          var:stats.active_tickets ?></a></dd>
+       </dl><?cs
+@@ -72,14 +72,14 @@
+   <div class="buttons">
+    <form method="get" action="<?cs var:trac.href.milestone ?>"><div>
+     <input type="hidden" name="action" value="new" />
+-    <input type="submit" value="Add new milestone" />
++    <input type="submit" value="Añadir nuevo hito" />
+    </div></form>
+   </div><?cs
+  /if ?>
+ 
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs
+-    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> for help on using the roadmap.
++  <strong>Note:</strong> Véa <a href="<?cs
++    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> para ayuda acerca de utilizar hitos.
+  </div>
+ 
+ </div>
+Index: templates/ticket.cs
+===================================================================
+--- templates/ticket.cs	(revision 5702)
++++ templates/ticket.cs	(working copy)
+@@ -8,20 +8,20 @@
+    if:len(links.prev) ?>
+     <li class="first<?cs if:!len(links.up) && !len(links.next) ?> last<?cs /if ?>">
+      &larr; <a href="<?cs var:links.prev.0.href ?>" title="<?cs
+-       var:links.prev.0.title ?>">Previous Ticket</a>
++       var:links.prev.0.title ?>">Anterior Ticket</a>
+     </li><?cs
+    /if ?><?cs
+    if:len(links.up) ?>
+     <li class="<?cs if:!len(links.prev) ?>first<?cs /if ?><?cs
+                     if:!len(links.next) ?> last<?cs /if ?>">
+      <a href="<?cs var:links.up.0.href ?>" title="<?cs
+-       var:links.up.0.title ?>">Back to Query</a>
++       var:links.up.0.title ?>">Volver a la Consulta</a>
+     </li><?cs
+    /if ?><?cs
+    if:len(links.next) ?>
+     <li class="<?cs if:!len(links.prev) && !len(links.up) ?>first <?cs /if ?>last">
+      <a href="<?cs var:links.next.0.href ?>" title="<?cs
+-       var:links.next.0.title ?>">Next Ticket</a> &rarr;
++       var:links.next.0.title ?>">Siguiente Ticket</a> &rarr;
+     </li><?cs
+    /if ?></ul><?cs
+   /if ?><?cs
+@@ -40,19 +40,19 @@
+ <div id="searchable">
+ <div id="ticket">
+  <div class="date">
+-  <p title="<?cs var:ticket.opened ?>">Opened <?cs var:ticket.opened_delta ?> ago</p><?cs
++  <p title="<?cs var:ticket.opened ?>">Abierto hace <?cs var:ticket.opened_delta ?></p><?cs
+   if:ticket.lastmod ?>
+-   <p title="<?cs var:ticket.lastmod ?>">Last modified <?cs var:ticket.lastmod_delta ?> ago</p>
++   <p title="<?cs var:ticket.lastmod ?>">Última modificación hace <?cs var:ticket.lastmod_delta ?></p>
+   <?cs /if ?>
+  </div>
+  <h2 class="summary"><?cs var:ticket.summary ?></h2>
+  <table class="properties">
+   <tr>
+-   <th id="h_reporter">Reported by:</th>
++   <th id="h_reporter">Reportado por:</th>
+    <td headers="h_reporter"><?cs var:ticket.reporter ?></td>
+-   <th id="h_owner">Assigned to:</th>
++   <th id="h_owner">Asignado a:</th>
+    <td headers="h_owner"><?cs var:ticket.owner ?><?cs
+-     if:ticket.status == 'assigned' ?> (accepted)<?cs /if ?></td>
++     if:ticket.status == 'assigned' ?> (aceptado)<?cs /if ?></td>
+   </tr><tr><?cs
+   each:field = ticket.fields ?><?cs
+    if:!field.skip ?><?cs
+@@ -79,11 +79,11 @@
+      if:trac.acl.TICKET_APPEND ?>
+      <span class="inlinebuttons">
+       <input type="hidden" name="replyto" value="description" />
+-      <input type="submit" value="Reply" title="Reply, quoting this description" />
++      <input type="submit" value="Responder" title="Responder, citando esta descripción" />
+      </span><?cs
+      /if ?>
+-     Description <?cs
+-     if:ticket.description.lastmod ?><span class="lastmod" title="<?cs var:ticket.description.lastmod ?>">(Last modified by <?cs var:ticket.description.author ?>)</span><?cs
++     Descripción <?cs
++     if:ticket.description.lastmod ?><span class="lastmod" title="<?cs var:ticket.description.lastmod ?>">(Última modificación por <?cs var:ticket.description.author ?>)</span><?cs
+      /if ?>
+     </h3>
+     <?cs var:ticket.description.formatted ?>
+@@ -100,7 +100,7 @@
+ <a href="#comment:<?cs var:cnum ?>"><small><?cs var:prefix ?><?cs var:cnum ?></small></a>
+ <?cs /def ?>
+ 
+-<?cs if:len(ticket.changes) ?><h2>Change History</h2>
++<?cs if:len(ticket.changes) ?><h2>Historial de Cambios</h2>
+ <div id="changelog"><?cs
+  each:change = ticket.changes ?>
+  <form method="get" action="<?cs var:ticket.href ?>#comment" class="printableform">
+@@ -110,17 +110,17 @@
+     if:trac.acl.TICKET_APPEND ?>
+     <span class="inlinebuttons">
+      <input type="hidden" name="replyto" value="<?cs var:change.cnum ?>" />
+-     <input type="submit" value="Reply" title="Reply to comment <?cs var:change.cnum ?>" />
++     <input type="submit" value="Responder" title="Responder al comentario <?cs var:change.cnum ?>" />
+     </span><?cs
+     /if ?>
+     <span class="threading"><?cs
+      set:nreplies = len(ticket.replies[change.cnum]) ?><?cs
+      if:nreplies || change.replyto ?>(<?cs
+-      if:change.replyto ?>in reply to: <?cs 
++      if:change.replyto ?>en respuesta a: <?cs 
+        call:commentref('&uarr;&nbsp;', change.replyto) ?><?cs if nreplies ?>; <?cs /if ?><?cs
+       /if ?><?cs
+       if nreplies ?><?cs
+-       call:plural('follow-up', nreplies) ?>: <?cs 
++       call:plural('respuesta', nreplies) ?>: <?cs 
+        each:reply = ticket.replies[change.cnum] ?><?cs 
+         call:commentref('&darr;&nbsp;', reply) ?><?cs 
+        /each ?><?cs 
+@@ -128,18 +128,18 @@
+     /if ?>
+     </span><?cs
+    /if ?><?cs
+-   var:change.date ?> changed by <?cs var:change.author ?>
++   var:change.date ?> modificado por <?cs var:change.author ?>
+   </h3><?cs
+   if:len(change.fields) ?>
+    <ul class="changes"><?cs
+    each:field = change.fields ?>
+     <li><strong><?cs var:name(field) ?></strong> <?cs
+-    if:name(field) == 'attachment' ?><em><?cs var:field.new ?></em> added<?cs
+-    elif:field.old && field.new ?>changed from <em><?cs
+-     var:field.old ?></em> to <em><?cs var:field.new ?></em><?cs
+-    elif:!field.old && field.new ?>set to <em><?cs var:field.new ?></em><?cs
+-    elif:field.old && !field.new ?>deleted<?cs
+-    else ?>changed<?cs
++    if:name(field) == 'attachment' ?><em><?cs var:field.new ?></em> añadido<?cs
++    elif:field.old && field.new ?>modificado de <em><?cs
++     var:field.old ?></em> a <em><?cs var:field.new ?></em><?cs
++    elif:!field.old && field.new ?>fijado en <em><?cs var:field.new ?></em><?cs
++    elif:field.old && !field.new ?>borrado<?cs
++    else ?>modificado<?cs
+     /if ?>.</li>
+     <?cs
+    /each ?>
+@@ -155,53 +155,53 @@
+ <?cs if:trac.acl.TICKET_CHGPROP || trac.acl.TICKET_APPEND ?>
+ <form action="<?cs var:ticket.href ?>#preview" method="post">
+  <hr />
+- <h3><a name="edit" onfocus="document.getElementById('comment').focus()">Add/Change #<?cs
++ <h3><a name="edit" onfocus="document.getElementById('comment').focus()">Añadir/Modificar #<?cs
+    var:ticket.id ?> (<?cs var:ticket.summary ?>)</a></h3>
+  <?cs if:trac.authname == "anonymous" ?>
+   <div class="field">
+-   <label for="author">Your email or username:</label><br />
++   <label for="author">Correo electrónico ó nombre de usuario:</label><br />
+    <input type="text" id="author" name="author" size="40"
+      value="<?cs var:ticket.reporter_id ?>" /><br />
+   </div>
+  <?cs /if ?>
+  <div class="field">
+   <fieldset class="iefix">
+-   <label for="comment">Comment (you may use <a tabindex="42" href="<?cs
+-     var:trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here):</label><br />
++   <label for="comment">Comentario (puedes utilizar <a tabindex="42" href="<?cs
++     var:trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> aquí):</label><br />
+    <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78">
+ <?cs var:ticket.comment ?></textarea></p>
+   </fieldset><?cs
+   if ticket.comment_preview ?>
+    <fieldset id="preview">
+-    <legend>Comment Preview</legend>
++    <legend>Vista previa del comentario</legend>
+     <?cs var:ticket.comment_preview ?>
+    </fieldset><?cs
+   /if ?>
+  </div>
+ 
+  <?cs if:trac.acl.TICKET_CHGPROP ?><fieldset id="properties">
+-  <legend>Change Properties</legend>
++  <legend>Modificar Propiedades</legend>
+   <table><tr>
+-   <th><label for="summary">Summary:</label></th>
++   <th><label for="summary">Sumario:</label></th>
+    <td class="fullrow" colspan="3"><input type="text" id="summary" name="summary" value="<?cs
+      var:ticket.summary ?>" size="70" /></td>
+    </tr><?cs
+    if:len(ticket.fields.type.options) ?>
+    <tr>
+-    <th><label for="type">Type:</label></th>
++    <th><label for="type">Tipo:</label></th>
+     <td><?cs 
+      call:hdf_select(ticket.fields.type.options, 'type', ticket.type, 0) ?>
+     </td>
+    </tr><?cs
+    /if ?><?cs
+    if:trac.acl.TICKET_ADMIN ?><tr>
+-    <th><label for="description">Description:</label></th>
++    <th><label for="description">Descripción:</label></th>
+     <td class="fullrow" colspan="3">
+      <textarea id="description" name="description" class="wikitext" rows="10" cols="68">
+ <?cs var:ticket.description ?></textarea>
+     </td>
+    </tr><tr>
+-    <th><label for="reporter">Reporter:</label></th>
++    <th><label for="reporter">Informante:</label></th>
+     <td class="fullrow" colspan="3"><input type="text" value="<?cs 
+       var:ticket.reporter ?>" id="reporter" name="reporter" size="70" /></td>
+    </tr><?cs
+@@ -263,7 +263,7 @@
+  <?cs if:ticket.actions.accept || ticket.actions.reopen ||
+          ticket.actions.resolve || ticket.actions.reassign ?>
+  <fieldset id="action">
+-  <legend>Action</legend><?cs
++  <legend>Acción</legend><?cs
+   if:!ticket.action ?><?cs set:ticket.action = 'leave' ?><?cs
+   /if ?><?cs
+   def:action_radio(id) ?>
+@@ -272,28 +272,28 @@
+      /if ?> /><?cs
+   /def ?>
+   <?cs call:action_radio('leave') ?>
+-   <label for="leave">leave as <?cs var:ticket.status ?></label><br /><?cs
++   <label for="leave">dejar como <?cs var:ticket.status ?></label><br /><?cs
+   if:ticket.actions.accept ?><?cs
+    call:action_radio('accept') ?>
+-   <label for="accept">accept ticket</label><br /><?cs
++   <label for="accept">aceptar ticket</label><br /><?cs
+   /if ?><?cs
+   if:ticket.actions.reopen ?><?cs
+    call:action_radio('reopen') ?>
+-   <label for="reopen">reopen ticket</label><br /><?cs
++   <label for="reopen">re-abrir ticket</label><br /><?cs
+   /if ?><?cs
+   if:ticket.actions.resolve ?><?cs
+    call:action_radio('resolve') ?>
+-   <label for="resolve">resolve</label><?cs
++   <label for="resolve">resolver</label><?cs
+    if:len(ticket.fields.resolution.options) ?>
+-    <label for="resolve_resolution">as:</label>
++    <label for="resolve_resolution">como:</label>
+     <?cs call:hdf_select(ticket.fields.resolution.options, "resolve_resolution",
+                          ticket.resolve_resolution, 0) ?><br /><?cs
+    /if ?><?cs
+   /if ?><?cs
+   if:ticket.actions.reassign ?><?cs
+    call:action_radio('reassign') ?>
+-   <label for="reassign">reassign</label>
+-   <label>to:<?cs
++   <label for="reassign">re-asignar</label>
++   <label>a:<?cs
+    if:len(ticket.fields.owner.options) ?><?cs
+     call:hdf_select(ticket.fields.owner.options, "reassign_owner",
+                     ticket.reassign_owner, 1) ?><?cs
+@@ -329,8 +329,8 @@
+   <input type="hidden" name="ts" value="<?cs var:ticket.ts ?>" />
+   <input type="hidden" name="replyto" value="<?cs var:ticket.replyto ?>" />
+   <input type="hidden" name="cnum" value="<?cs var:ticket.cnum ?>" />
+-  <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+-  <input type="submit" value="Submit changes" />
++  <input type="submit" name="preview" value="Vista previa" accesskey="r" />&nbsp;
++  <input type="submit" value="Guardar cambios" />
+  </div>
+ </form>
+ <?cs /if ?>
+Index: templates/macros.cs
+===================================================================
+--- templates/macros.cs	(revision 5702)
++++ templates/macros.cs	(working copy)
+@@ -21,9 +21,9 @@
+  set:first = #1 ?><?cs
+   each:part = path ?><?cs
+    set:last = name(part) == len(path) - #1 ?><a<?cs 
+-   if:first ?> class="first" title="Go to root directory"<?cs 
++   if:first ?> class="first" title="Ir al directorio raiz"<?cs 
+     set:first = #0 ?><?cs 
+-   else ?> title="View <?cs var:part.name ?>"<?cs
++   else ?> title="Ver <?cs var:part.name ?>"<?cs
+    /if ?> href="<?cs var:part.href ?>"><?cs var:part.name ?></a><?cs
+    if:!last ?><span class="sep">/</span><?cs /if ?><?cs 
+  /each ?><?cs
+@@ -172,12 +172,12 @@
+ /def ?><?cs 
+ 
+ def:list_of_attachments(attachments, attach_href) ?>
+-<h2>Attachments</h2><?cs
++<h2>Adjuntos</h2><?cs
+  if:len(attachments) ?><div id="attachments">
+   <dl class="attachments"><?cs each:attachment = attachments ?>
+-   <dt><a href="<?cs var:attachment.href ?>" title="View attachment"><?cs
+-   var:attachment.filename ?></a> (<?cs var:attachment.size ?>) - added by <em><?cs
+-   var:attachment.author ?></em> on <?cs
++   <dt><a href="<?cs var:attachment.href ?>" title="Ver adjunto"><?cs
++   var:attachment.filename ?></a> (<?cs var:attachment.size ?>) - añadido por <em><?cs
++   var:attachment.author ?></em> en <?cs
+    var:attachment.time ?>.</dt><?cs
+    if:attachment.description ?>
+     <dd><?cs var:attachment.description ?></dd><?cs
+@@ -187,7 +187,7 @@
+  if:attach_href ?>
+   <form method="get" action="<?cs var:attach_href ?>"><div>
+    <input type="hidden" name="action" value="new" />
+-   <input type="submit" value="Attach File" />
++   <input type="submit" value="Adjuntar archivo" />
+   </div></form><?cs
+  /if ?><?cs if:len(attachments) ?></div><?cs /if ?><?cs
+ /def ?><?cs
+Index: templates/header.cs
+===================================================================
+--- templates/header.cs	(revision 5702)
++++ templates/header.cs	(working copy)
+@@ -41,7 +41,7 @@
+  <?cs if:trac.acl.SEARCH_VIEW ?><div>
+   <label for="proj-search">Search:</label>
+   <input type="text" id="proj-search" name="q" size="10" accesskey="f" value="" />
+-  <input type="submit" value="Search" />
++  <input type="submit" value="Buscar" />
+   <input type="hidden" name="wiki" value="on" />
+   <input type="hidden" name="changeset" value="on" />
+   <input type="hidden" name="ticket" value="on" />
+Index: templates/attachment.cs
+===================================================================
+--- templates/attachment.cs	(revision 5702)
++++ templates/attachment.cs	(working copy)
+@@ -6,29 +6,29 @@
+ <div id="content" class="attachment">
+ 
+ <?cs if:attachment.mode == 'new' ?>
+- <h1>Add Attachment to <a href="<?cs var:attachment.parent.href?>"><?cs
++ <h1>Añadir Adjunto a <a href="<?cs var:attachment.parent.href?>"><?cs
+    var:attachment.parent.name ?></a></h1>
+  <form id="attachment" method="post" enctype="multipart/form-data" action="">
+   <div class="field">
+-   <label>File:<br /><input type="file" name="attachment" /></label>
++   <label>Archivo:<br /><input type="file" name="attachment" /></label>
+   </div>
+   <fieldset>
+-   <legend>Attachment Info</legend>
++   <legend>Información del adjunto</legend>
+    <?cs if:trac.authname == "anonymous" ?>
+     <div class="field">
+-     <label>Your email or username:<br />
++     <label>Correo electrónico ó nombre de usuario:<br />
+      <input type="text" name="author" size="30" value="<?cs
+        var:attachment.author?>" /></label>
+     </div>
+    <?cs /if ?>
+    <div class="field">
+-    <label>Description of the file (optional):<br />
++    <label>Descripción del archivo (opcional):<br />
+     <input type="text" name="description" size="60" /></label>
+    </div>
+    <br />
+    <div class="options">
+     <label><input type="checkbox" name="replace" />
+-    Replace existing attachment of the same name</label>
++    Reemplazar adjunto existente con el mismo nombre</label>
+    </div>
+    <br />
+   </fieldset>
+@@ -36,20 +36,20 @@
+    <input type="hidden" name="action" value="new" />
+    <input type="hidden" name="type" value="<?cs var:attachment.parent.type ?>" />
+    <input type="hidden" name="id" value="<?cs var:attachment.parent.id ?>" />
+-   <input type="submit" value="Add attachment" />
+-   <input type="submit" name="cancel" value="Cancel" />
++   <input type="submit" value="Añadir adjunto" />
++   <input type="submit" name="cancel" value="Cancelar" />
+   </div>
+  </form>
+ <?cs elif:attachment.mode == 'delete' ?>
+  <h1><a href="<?cs var:attachment.parent.href ?>"><?cs
+    var:attachment.parent.name ?></a>: <?cs var:attachment.filename ?></h1>
+- <p><strong>Are you sure you want to delete this attachment?</strong><br />
+- This is an irreversible operation.</p>
++ <p><strong>¿Estás seguro de querer eliminar este adjunto?</strong><br />
++ Esta en una operación irreversible.</p>
+  <div class="buttons">
+   <form method="post" action=""><div id="delete">
+    <input type="hidden" name="action" value="delete" />
+-   <input type="submit" name="cancel" value="Cancel" />
+-   <input type="submit" value="Delete attachment" />
++   <input type="submit" name="cancel" value="Cancelar" />
++   <input type="submit" value="Eliminar adjunto" />
+   </div></form>
+  </div>
+ <?cs elif:attachment.mode == 'list' ?>
+@@ -61,8 +61,8 @@
+    var:attachment.parent.name ?></a>: <?cs var:attachment.filename ?></h1>
+  <table id="info" summary="Description"><tbody><tr>
+    <th scope="col">
+-    File <?cs var:attachment.filename ?>, <?cs var:attachment.size ?> 
+-    (added by <?cs var:attachment.author ?>,  <?cs var:attachment.age ?> ago)
++    Archivo <?cs var:attachment.filename ?>, <?cs var:attachment.size ?> 
++    (añadido por <?cs var:attachment.author ?>, hace <?cs var:attachment.age ?>)
+    </th></tr><tr>
+    <td class="message"><?cs var:attachment.description ?></td>
+   </tr>
+@@ -71,18 +71,18 @@
+   if:attachment.preview ?>
+    <?cs var:attachment.preview ?><?cs
+   elif:attachment.max_file_size_reached ?>
+-   <strong>HTML preview not available</strong>, since the file size exceeds
+-   <?cs var:attachment.max_file_size  ?> bytes. You may <a href="<?cs
+-     var:attachment.raw_href ?>">download the file</a> instead.<?cs
++   <strong>Vista previa HTML no disponible</strong>, debido a que el archivo excede los
++   <?cs var:attachment.max_file_size  ?> bytes. Tal vez quisieras <a href="<?cs
++     var:attachment.raw_href ?>">descargar el archivo</a>.<?cs
+   else ?>
+-   <strong>HTML preview not available</strong>. To view the file,
+-   <a href="<?cs var:attachment.raw_href ?>">download the file</a>.<?cs
++   <strong>Vista previa HTML no disponible</strong>. Para ver el archivo,
++   <a href="<?cs var:attachment.raw_href ?>">descarga el archivo</a>.<?cs
+   /if ?>
+  </div>
+  <?cs if:attachment.can_delete ?><div class="buttons">
+   <form method="get" action=""><div id="delete">
+    <input type="hidden" name="action" value="delete" />
+-   <input type="submit" value="Delete attachment" />
++   <input type="submit" value="Eliminar adjunto" />
+   </div></form>
+  </div><?cs /if ?>
+ <?cs /if ?>
+Index: templates/error.cs
+===================================================================
+--- templates/error.cs	(revision 5702)
++++ templates/error.cs	(working copy)
+@@ -11,24 +11,24 @@
+  <?cs elif error.type == "internal" ?>
+   <h1>Oops&hellip;</h1>
+   <div class="message">
+-   <strong>Trac detected an internal error:</strong>
++   <strong>Trac detectó un error interno:</strong>
+    <pre><?cs var:error.message ?></pre>
+   </div>
+-  <p>If you think this really should work and you can reproduce it, you  should
+-   consider reporting this problem to the Trac team.</p>
+-  <p>Go to <a href="<?cs var:trac.href.homepage ?>"><?cs
+-   var:trac.href.homepage ?></a> and create a new ticket where you describe
+-   the problem, how to reproduce it. Don't forget to include the Python
+-   traceback found below.</p>
++  <p>Si crees que esto realmente debería funcionar y puedes reproducirlo, deberías
++   considerar reportar este problema al equipo Trac.</p>
++  <p>Vé a <a href="<?cs var:trac.href.homepage ?>"><?cs
++   var:trac.href.homepage ?></a> y crea un nuevo ticket en el cuál describas
++   el problema y cómo reproducirlo. No olvides incluir la traza de ejecución Python
++   localizada en la parte inferior.</p>
+ 
+  <?cs /if ?>
+ 
+  <p>
+-  <a href="<?cs var:trac.href.wiki ?>/TracGuide">TracGuide</a>
+-  &mdash; The Trac User and Administration Guide
++  <a href="<?cs var:trac.href.wiki ?>/TracGuide">Guía de Trac</a>
++  &mdash; La Guía de Usuario y Administrativa de Trac
+  </p>
+  <?cs if:error.traceback ?>
+-  <h4>Python Traceback</h4>
++  <h4>Traza de ejecución Python</h4>
+   <pre><?cs var:error.traceback ?></pre>
+  <?cs /if ?>
+ 
+Index: templates/query_rss.cs
+===================================================================
+--- templates/query_rss.cs	(revision 5702)
++++ templates/query_rss.cs	(working copy)
+@@ -2,13 +2,13 @@
+ <rss version="2.0">
+  <channel><?cs
+   if:project.name_encoded ?>
+-   <title><?cs var:project.name_encoded ?>: Ticket Query</title><?cs
++   <title><?cs var:project.name_encoded ?>: Consulta Personalizada para Tickets</title><?cs
+   else ?>
+-   <title>Ticket Query</title><?cs
++   <title>Consulta Personalizada para Tickets</title><?cs
+   /if ?>
+   <link><?cs var:query.href ?></link>
+   <description><?cs var:project.descr ?></description>
+-  <language>en-US</language>
++  <language>es-ES</language>
+   <generator>Trac v<?cs var:trac.version ?></generator><?cs
+   if:chrome.logo.src ?>
+    <image>
+Index: templates/newticket.cs
+===================================================================
+--- templates/newticket.cs	(revision 5702)
++++ templates/newticket.cs	(working copy)
+@@ -7,43 +7,43 @@
+ <div id="ctxtnav" class="nav"></div>
+ 
+ <div id="content" class="ticket">
+-<h1>Create New Ticket</h1>
++<h1>Crer Nuevo Ticket</h1>
+ <?cs include:"site_newticket.cs" ?>
+ <form id="newticket" method="post" action="<?cs
+   var:trac.href.newticket ?>#preview">
+  <?cs if:trac.authname == "anonymous" ?>
+   <div class="field">
+-   <label for="reporter">Your email or username:</label><br />
++   <label for="reporter">Correo electrónico ó nombre de usuario:</label><br />
+    <input type="text" id="reporter" name="reporter" size="40" value="<?cs
+      var:newticket.reporter ?>" /><br />
+   </div>
+  <?cs /if ?>
+  <div class="field">
+-  <label for="summary">Short summary:</label><br />
++  <label for="summary">Breve sumario:</label><br />
+   <input id="summary" type="text" name="summary" size="80" value="<?cs
+     var:newticket.summary ?>"/>
+  </div><?cs
+  if:len(newticket.fields.type.options) ?>
+-  <div class="field"><label for="type">Type:</label> <?cs
++  <div class="field"><label for="type">Tipo:</label> <?cs
+    call:hdf_select(newticket.fields.type.options, 'type',
+                    newticket.type, 0) ?>
+   </div><?cs
+  /if ?>
+  <div class="field">
+-  <label for="description">Full description (you may use <a tabindex="42" href="<?cs
+-    var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here):</label><br />
++  <label for="description">Descripción completa (puedes utilizar <a tabindex="42" href="<?cs
++    var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> aquí):</label><br />
+   <textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+ <?cs var:newticket.description ?></textarea><?cs
+   if:newticket.description_preview ?>
+    <fieldset id="preview">
+-    <legend>Description Preview</legend>
++    <legend>Vista previa de la Descripción</legend>
+     <?cs var:newticket.description_preview ?>
+    </fieldset><?cs
+   /if ?>
+  </div>
+ 
+  <fieldset id="properties">
+-  <legend>Ticket Properties</legend>
++  <legend>Propiedades del Ticket</legend>
+   <input type="hidden" name="action" value="create" />
+   <input type="hidden" name="status" value="new" />
+   <table><tr><?cs set:num_fields = 0 ?><?cs
+@@ -105,20 +105,20 @@
+  <?cs if newticket.can_attach ?><p>
+   <label><input type="checkbox" name="attachment"<?cs
+     if:newticket.attachment ?> checked="checked"<?cs /if ?> />
+-    I have files to attach to this ticket
++    Tengo archivos que adjuntar a este ticket
+   </label>
+  </p><?cs
+  /if ?>
+ 
+  <div class="buttons">
+-  <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+-  <input type="submit" value="Submit ticket" />
++  <input type="submit" name="preview" value="Vista previa" accesskey="r" />&nbsp;
++  <input type="submit" value="Crear ticket" />
+  </div>
+ </form>
+ 
+ <div id="help">
+- <strong>Note:</strong> See <a href="<?cs
+-   var:trac.href.wiki ?>/TracTickets">TracTickets</a> for help on using tickets.
++ <strong>Nota:</strong> Véa <a href="<?cs
++   var:trac.href.wiki ?>/TracTickets">TracTickets</a> para ayuda acerca de utilizar tickets.
+ </div>
+ </div>
+ 
+Index: templates/timeline_rss.cs
+===================================================================
+--- templates/timeline_rss.cs	(revision 5702)
++++ templates/timeline_rss.cs	(working copy)
+@@ -7,8 +7,8 @@
+    <title><?cs var:title ?></title><?cs
+   /if ?>
+   <link><?cs var:base_host ?><?cs var:trac.href.timeline ?></link>
+-  <description>Trac Timeline</description>
+-  <language>en-us</language>
++  <description>Histórico Trac</description>
++  <language>es-ES</language>
+   <generator>Trac v<?cs var:trac.version ?></generator><?cs
+   if:chrome.logo.src ?>
+    <image>
+Index: templates/footer.cs
+===================================================================
+--- templates/footer.cs	(revision 5702)
++++ templates/footer.cs	(working copy)
+@@ -1,6 +1,6 @@
+ <script type="text/javascript">searchHighlight()</script><?cs
+ if:len(chrome.links.alternate) ?>
+-<div id="altlinks"><h3>Download in other formats:</h3><ul><?cs
++<div id="altlinks"><h3>Descargar en otros formatos:</h3><ul><?cs
+  each:link = chrome.links.alternate ?><?cs
+   set:isfirst = name(link) == 0 ?><?cs
+   set:islast = name(link) == len(chrome.links.alternate) - 1?><li<?cs
+Index: templates/milestone.cs
+===================================================================
+--- templates/milestone.cs	(revision 5702)
++++ templates/milestone.cs	(working copy)
+@@ -5,13 +5,13 @@
+ 
+ <div id="content" class="milestone">
+  <?cs if:milestone.mode == "new" ?>
+- <h1>New Milestone</h1>
++ <h1>Nuevo Hito</h1>
+  <?cs elif:milestone.mode == "edit" ?>
+- <h1>Edit Milestone <?cs var:milestone.name ?></h1>
++ <h1>Editar Hito <?cs var:milestone.name ?></h1>
+  <?cs elif:milestone.mode == "delete" ?>
+- <h1>Delete Milestone <?cs var:milestone.name ?></h1>
++ <h1>Eliminar Hito <?cs var:milestone.name ?></h1>
+  <?cs else ?>
+- <h1>Milestone <?cs var:milestone.name ?></h1>
++ <h1>Hito <?cs var:milestone.name ?></h1>
+  <?cs /if ?>
+ 
+  <?cs if:milestone.mode == "edit" || milestone.mode == "new" ?>
+@@ -24,23 +24,23 @@
+    <input type="hidden" name="id" value="<?cs var:milestone.name ?>" />
+    <input type="hidden" name="action" value="edit" />
+    <div class="field">
+-    <label>Name of the milestone:<br />
++    <label>Nombre del hito:<br />
+     <input type="text" id="name" name="name" size="32" value="<?cs
+       var:milestone.name ?>" /></label>
+    </div>
+    <fieldset>
+-    <legend>Schedule</legend>
+-    <label>Due:<br />
++    <legend>Planificación</legend>
++    <label>Estimado:<br />
+      <input type="text" id="duedate" name="duedate" size="<?cs
+        var:len(milestone.date_hint) ?>" value="<?cs
+-       var:milestone.due_date ?>" title="Format: <?cs var:milestone.date_hint ?>" />
+-     <em>Format: <?cs var:milestone.date_hint ?></em>
++       var:milestone.due_date ?>" title="Formato: <?cs var:milestone.date_hint ?>" />
++     <em>Formato: <?cs var:milestone.date_hint ?></em>
+     </label>
+     <div class="field">
+      <label>
+       <input type="checkbox" id="completed" name="completed"<?cs
+         if:milestone.completed ?> checked="checked"<?cs /if ?> />
+-      Completed:<br />
++      Completado:<br />
+      </label>
+      <label>
+       <input type="text" id="completeddate" name="completeddate" size="<?cs
+@@ -49,16 +49,16 @@
+          var:milestone.datetime_now ?><?cs
+         /alt ?>" title="Format: <?cs
+         var:milestone.datetime_hint ?>" />
+-      <em>Format: <?cs var:milestone.datetime_hint ?></em>
++      <em>Formato: <?cs var:milestone.datetime_hint ?></em>
+      </label><?cs
+      if:len(milestones) ?>
+      <br/>
+      <input type="checkbox" id="retarget" name="retarget" checked="checked"
+             onclick="enableControl('target', this.checked)"/>
+      <label>
+-      Retarget associated open tickets to milestone
++      Re-planificar los tickets activos (asociados) para el hito
+       <select id="target" name="target">
+-       <option value="">None</option><?cs
++       <option value="">Ninguno</option><?cs
+        each:name = milestones ?>
+        <option><?cs var:name ?></option><?cs
+        /each ?>
+@@ -80,19 +80,19 @@
+    </fieldset>
+    <div class="field">
+     <fieldset class="iefix">
+-     <label for="description">Description (you may use <a tabindex="42" href="<?cs
+-       var:trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here):</label>
++     <label for="description">Descripción (puedes utilizar <a tabindex="42" href="<?cs
++       var:trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> aquí):</label>
+      <p><textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+ <?cs var:milestone.description_source ?></textarea></p>
+     </fieldset>
+    </div>
+    <div class="buttons">
+     <?cs if:milestone.mode == "new"
+-     ?><input type="submit" value="Add milestone" /><?cs
++     ?><input type="submit" value="Añadir hito" /><?cs
+     else
+-     ?><input type="submit" value="Submit changes" /><?cs
++     ?><input type="submit" value="Guardar cambios" /><?cs
+     /if ?>
+-    <input type="submit" name="cancel" value="Cancel" />
++    <input type="submit" name="cancel" value="Cancelar" />
+    </div>
+    <script type="text/javascript" src="<?cs
+      var:htdocs_location ?>js/wikitoolbar.js"></script>
+@@ -101,19 +101,19 @@
+   <form action="<?cs var:milestone.href ?>" method="post">
+    <input type="hidden" name="id" value="<?cs var:milestone.name ?>" />
+    <input type="hidden" name="action" value="delete" />
+-   <p><strong>Are you sure you want to delete this milestone?</strong></p>
++   <p><strong>¿Estás seguro de querer eliminar este hito?</strong></p>
+    <input type="checkbox" id="retarget" name="retarget" checked="checked"
+        onclick="enableControl('target', this.checked)"/>
+-   <label for="target">Retarget associated tickets to milestone</label>
++   <label for="target">Re-planificar los tickets asociados para el hito</label>
+    <select name="target" id="target">
+-    <option value="">None</option><?cs
++    <option value="">Ninguno</option><?cs
+      each:other = milestones ?><?cs if:other != milestone.name ?>
+       <option><?cs var:other ?></option><?cs 
+      /if ?><?cs /each ?>
+    </select>
+    <div class="buttons">
+-    <input type="submit" name="cancel" value="Cancel" />
+-    <input type="submit" value="Delete milestone" />
++    <input type="submit" name="cancel" value="Cancelar" />
++    <input type="submit" value="Eliminar hito" />
+    </div>
+   </form>
+  <?cs else ?>
+@@ -121,15 +121,15 @@
+   <div class="info">
+    <p class="date"><?cs
+     if:milestone.completed_date ?>
+-     Completed <?cs var:milestone.completed_delta ?> ago (<?cs var:milestone.completed_date ?>)<?cs
++     Completado hace <?cs var:milestone.completed_delta ?> (<?cs var:milestone.completed_date ?>)<?cs
+     elif:milestone.due_date ?><?cs
+      if:milestone.late ?>
+-      <strong><?cs var:milestone.due_delta ?> late</strong><?cs
++      <strong>atrasado <?cs var:milestone.due_delta ?></strong><?cs
+      else ?>
+-      Due in <?cs var:milestone.due_delta ?><?cs
++      Estimado para <?cs var:milestone.due_delta ?><?cs
+      /if ?> (<?cs var:milestone.due_date ?>)<?cs
+     else ?>
+-     No date set<?cs
++     Sin fecha definida<?cs
+     /if ?>
+    </p><?cs
+    with:stats = milestone.stats ?><?cs
+@@ -140,24 +140,24 @@
+         var:#stats.percent_closed ?>%">
+         <a href="<?cs
+         var:milestone.queries.closed_tickets ?>" title="<?cs
+-        var:#stats.closed_tickets ?> of <?cs
++        var:#stats.closed_tickets ?> de <?cs
+         var:#stats.total_tickets ?> ticket<?cs
+-        if:#stats.total_tickets != #1 ?>s<?cs /if ?> closed"></a></td>
++        if:#stats.total_tickets != #1 ?>s<?cs /if ?> cerrados"></a></td>
+       <td class="open" style="width: <?cs
+         var:#stats.percent_active ?>%">
+         <a href="<?cs
+         var:milestone.queries.active_tickets ?>" title="<?cs
+-        var:#stats.active_tickets ?> of <?cs
++        var:#stats.active_tickets ?> de <?cs
+         var:#stats.total_tickets ?> ticket<?cs
+-        if:#stats.total_tickets != #1 ?>s<?cs /if ?> active"></a>
++        if:#stats.total_tickets != #1 ?>s<?cs /if ?> activos"></a>
+       </tr>
+      </table>
+      <p class="percent"><?cs var:#stats.percent_closed ?>%</p>
+      <dl>
+-      <dt>Closed tickets:</dt>
++      <dt>Tickets cerrados:</dt>
+       <dd><a href="<?cs var:milestone.queries.closed_tickets ?>"><?cs
+         var:stats.closed_tickets ?></a></dd>
+-      <dt>Active tickets:</dt>
++      <dt>Tickets activos:</dt>
+       <dd><a href="<?cs var:milestone.queries.active_tickets ?>"><?cs
+         var:stats.active_tickets ?></a></dd>
+      </dl><?cs
+@@ -167,14 +167,14 @@
+   <form id="stats" action="" method="get">
+    <fieldset>
+     <legend>
+-     <label for="by">Ticket status by</label>
++     <label for="by">Estado de los tickets por</label>
+      <select id="by" name="by" onchange="this.form.submit()"><?cs
+      each:group = milestone.stats.available_groups ?>
+       <option value="<?cs var:group.name ?>" <?cs
+         if:milestone.stats.grouped_by == group.name ?> selected="selected"<?cs
+         /if ?>><?cs var:group.label ?></option><?cs
+      /each ?></select>
+-     <noscript><input type="submit" value="Update" /></noscript>
++     <noscript><input type="submit" value="Actualizar" /></noscript>
+     </legend>
+     <table summary="Shows the milestone completion status grouped by <?cs
+       var:milestone.stats.grouped_by ?>"><?cs
+@@ -189,16 +189,16 @@
+           <td class="closed" style="width: <?cs
+             var:#group.percent_closed ?>%"><a href="<?cs
+             var:group.queries.closed_tickets ?>" title="<?cs
+-           var:group.closed_tickets ?> of <?cs
++           var:group.closed_tickets ?> de <?cs
+            var:group.total_tickets ?> ticket<?cs
+-           if:group.total_tickets != #1 ?>s<?cs /if ?> closed"></a>
++           if:group.total_tickets != #1 ?>s<?cs /if ?> cerrados"></a>
+           </td>
+           <td class="open" style="width: <?cs
+             var:#group.percent_active ?>%"><a href="<?cs
+             var:group.queries.active_tickets ?>" title="<?cs
+-           var:group.active_tickets ?> of <?cs
++           var:group.active_tickets ?> def <?cs
+            var:group.total_tickets ?> ticket<?cs
+-           if:group.total_tickets != 1 ?>s<?cs /if ?> active"></a>
++           if:group.total_tickets != 1 ?>s<?cs /if ?> activos"></a>
+           </td>
+          </tr>
+         </table>
+@@ -219,7 +219,7 @@
+       if:milestone.id_param ?>
+        <input type="hidden" name="id" value="<?cs var:milestone.name ?>" /><?cs
+       /if ?>
+-      <input type="submit" value="Edit milestone info" accesskey="e" />
++      <input type="submit" value="Editar información del hito" accesskey="e" />
+      </div></form><?cs
+     /if ?><?cs
+     if:trac.acl.MILESTONE_DELETE ?>
+@@ -228,7 +228,7 @@
+       if:milestone.id_param ?>
+        <input type="hidden" name="id" value="<?cs var:milestone.name ?>" /><?cs
+       /if ?>
+-      <input type="submit" value="Delete milestone" />
++      <input type="submit" value="Eliminar hito" />
+      </div></form><?cs
+     /if ?>
+    </div><?cs
+@@ -236,8 +236,8 @@
+  /if ?>
+ 
+  <div id="help">
+-  <strong>Note:</strong> See <a href="<?cs
+-    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> for help on using the roadmap.
++  <strong>Nota:</strong> Véa <a href="<?cs
++    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> para ayuda acerca de utilizar hitos.
+  </div>
+ 
+ </div>
+Index: templates/settings.cs
+===================================================================
+--- templates/settings.cs	(revision 5702)
++++ templates/settings.cs	(working copy)
+@@ -5,59 +5,59 @@
+ 
+ <div id="content" class="settings">
+ 
+- <h1>Settings and Session Management</h1>
++ <h1>Configuraciones y Administración de Sesiones</h1>
+ 
+- <h2>User Settings</h2>
++ <h2>Configuraciones de Usuario</h2>
+  <p>
+- This page lets you customize and personalize your Trac settings. Session
+- settings are stored on the server and identified using  a 'Session Key'
+- stored in a browser cookie. The cookie lets Trac restore your settings.
++ Esta página te permite personalizar y fijar preferencias para Trac. La configuración de sesión
++ se almacena en el servidor y es identificada mediante el uso de una 'Clave de Sesión'
++ almacenada en un cookie en tu navegador. El cookie almacenado en tu navegador le permitirá a Trac el restaurar tus preferencias.
+  </p>
+  <form method="post" action="">
+  <div>
+-  <h3>Personal Information</h3>
++  <h3>Información Personal</h3>
+   <div>
+    <input type="hidden" name="action" value="save" />
+-   <label for="name">Name:</label>
++   <label for="name">Nombre:</label>
+    <input type="text" id="name" name="name" class="textwidget" size="30"
+           value="<?cs var:settings.name ?>" />
+   </div>
+   <div>
+-   <label for="email">Email:</label>
++   <label for="email">E-mail:</label>
+    <input type="text" id="email" name="email" class="textwidget" size="30"
+           value="<?cs var:settings.email ?>" />
+   </div><?cs
+   if:settings.session_id ?>
+    <h3>Session</h3>
+    <div>
+-    <label for="newsid">Session Key:</label>
++    <label for="newsid">Clave de Sesión:</label>
+     <input type="text" id="newsid" name="newsid" class="textwidget" size="30"
+            value="<?cs var:settings.session_id ?>" />
+-    <p>The session key is used to identify stored  custom settings and session
+-    data on the server. Automatically generated by default, you may change it
+-    to something easier to remember at any time if you wish to use your settings
+-    in a different web browser.</p>
++    <p>La clave de sesión será utilizada para identificar los ajustes personalizados y la información de sesión
++    en el servidor. Por defecto, será generado automáticamente, pero puedes modificarlo
++    por algo más fácil de recordar en cualquier momento en que quieras utilizar tus preferencias
++    en un navegador web diferente.</p>
+    </div><?cs
+   /if ?>
+   <div>
+    <br />
+-   <input type="submit" value="Submit changes" />
++   <input type="submit" value="Guardar cambios" />
+   </div >
+  </div>
+ </form><?cs
+ if:settings.session_id ?>
+  <hr />
+- <h2>Load Session</h2>
+- <p>You may load a previously created session by entering the corresponding
+- session key below and clicking 'Recover'. This lets you share settings between
+- multiple computers and/or web browsers.</p>
++ <h2>Cargar Sesión</h2>
++ <p>Puedes cargar una sesión creada previamente mediante el ingreso de su correspondiente
++ clave de sesión (abajo) y seleccionando 'Recuperar'. Esto te permite compartir preferencias entre
++ múltiples computadoras y/ó navegadores web.</p>
+  <form method="post" action="">
+   <div>
+    <input type="hidden" name="action" value="load" />
+-   <label for="loadsid">Existing Session Key:</label>
++   <label for="loadsid">Clave de Sesión Existente:</label>
+    <input type="text" id="loadsid" name="loadsid" class="textwidget" size="30"
+           value="" />
+-   <input type="submit" value="Recover" />
++   <input type="submit" value="Recuperar" />
+   </div>
+  </form><?cs
+ /if ?>
+Index: templates/changeset.cs
+===================================================================
+--- templates/changeset.cs	(revision 5702)
++++ templates/changeset.cs	(working copy)
+@@ -7,28 +7,28 @@
+   <ul><?cs
+    if:changeset.chgset ?><?cs
+     if:changeset.restricted ?><?cs
+-     set:change = "Change" ?><?cs
++     set:change = "Cambio" ?><?cs
+     else ?><?cs 
+-     set:change = "Changeset" ?><?cs
++     set:change = "Conjunto de cambios" ?><?cs
+     /if ?>
+     <li class="first"><?cs
+      if:len(links.prev) ?> &larr; 
+       <a class="prev" href="<?cs var:links.prev.0.href ?>" title="<?cs
+-       var:links.prev.0.title ?>">Previous <?cs var:change ?></a> <?cs 
++       var:links.prev.0.title ?>">Anterior <?cs var:change ?></a> <?cs 
+      else ?>
+-      <span class="missing">&larr; Previous <?cs var:change ?></span><?cs 
++      <span class="missing">&larr; Anterior <?cs var:change ?></span><?cs 
+      /if ?>
+     </li>
+     <li class="last"><?cs
+      if:len(links.next) ?>
+       <a class="next" href="<?cs var:links.next.0.href ?>" title="<?cs
+-       var:links.next.0.title ?>">Next <?cs var:change ?></a> &rarr; <?cs 
++       var:links.next.0.title ?>">Siguiente <?cs var:change ?></a> &rarr; <?cs 
+      else ?>
+-      <span class="missing">Next <?cs var:change ?> &rarr;</span><?cs
++      <span class="missing">Siguiente <?cs var:change ?> &rarr;</span><?cs
+      /if ?>
+     </li><?cs
+    else ?>
+-    <li class="last"><a href="<?cs var:changeset.reverse_href ?>">Reverse Diff</a></li><?cs
++    <li class="last"><a href="<?cs var:changeset.reverse_href ?>">Invertir Diff</a></li><?cs
+    /if ?>
+   </ul><?cs
+  /with ?>
+@@ -38,29 +38,29 @@
+  <div id="title"><?cs
+   if:changeset.chgset ?><?cs
+    if:changeset.restricted ?>
+-    <h1>Changeset <a title="Show full changeset" href="<?cs var:changeset.href.new_rev ?>">
++    <h1>Conjunto de cambios <a title="Mostrar todo el conjunto de cambios" href="<?cs var:changeset.href.new_rev ?>">
+       <?cs var:changeset.new_rev ?></a> 
+-     for <a title="Show entry in browser" href="<?cs var:changeset.href.new_path ?>">
++     para <a title="Mostrar entrada en el navegador" href="<?cs var:changeset.href.new_path ?>">
+       <?cs var:changeset.new_path ?></a> 
+     </h1><?cs
+    else ?>
+-    <h1>Changeset <?cs var:changeset.new_rev ?></h1><?cs
++    <h1>Conjunto de cambios <?cs var:changeset.new_rev ?></h1><?cs
+    /if ?><?cs
+   else ?><?cs
+     if:changeset.restricted ?>
+-    <h1>Changes in <a title="Show entry in browser" href="<?cs var:changeset.href.new_path ?>">
++    <h1>Cambios en <a title="Mostrar entrada en el navegador" href="<?cs var:changeset.href.new_path ?>">
+       <?cs var:changeset.new_path ?></a>
+-      <a title="Show revision log" href="<?cs var:changeset.href.log ?>">
++      <a title="Mostrar bitácora de revisiones" href="<?cs var:changeset.href.log ?>">
+       [<?cs var:changeset.old_rev ?>:<?cs var:changeset.new_rev ?>]</a>
+     </h1><?cs
+    else ?>
+-    <h1>Changes from <a title="Show entry in browser" href="<?cs var:changeset.href.old_path ?>">
++    <h1>Changes de <a title="Mostrar entrada en el navegador" href="<?cs var:changeset.href.old_path ?>">
+       <?cs var:changeset.old_path ?></a> 
+-     at <a title="Show full changeset" href="<?cs var:changeset.href.old_rev ?>">
++     a <a title="Mostrar todo el conjunto de cambios" href="<?cs var:changeset.href.old_rev ?>">
+       r<?cs var:changeset.old_rev ?></a>
+-     to <a title="Show entry in browser" href="<?cs var:changeset.href.new_path ?>">
++     a <a title="Mostrar entrada en el navegador" href="<?cs var:changeset.href.new_path ?>">
+      <?cs var:changeset.new_path ?></a> 
+-     at <a title="Show full changeset" href="<?cs var:changeset.href.new_rev ?>">
++     en <a title="Mostrar todo el conjunto de cambios" href="<?cs var:changeset.href.new_rev ?>">
+      r<?cs var:changeset.new_rev ?></a>
+     </h1><?cs
+    /if ?><?cs
+@@ -81,40 +81,40 @@
+    <input type="hidden" name="old" value="<?cs var:changeset.old_rev ?>" />
+    <input type="hidden" name="new" value="<?cs var:changeset.new_rev ?>" /><?cs
+   /if ?>
+-  <label for="style">View differences</label>
++  <label for="style">Ver diferencias</label>
+   <select id="style" name="style">
+    <option value="inline"<?cs
+      if:diff.style == 'inline' ?> selected="selected"<?cs
+-     /if ?>>inline</option>
++     /if ?>>en línea</option>
+    <option value="sidebyside"<?cs
+      if:diff.style == 'sidebyside' ?> selected="selected"<?cs
+-     /if ?>>side by side</option>
++     /if ?>>lado a lado</option>
+   </select>
+   <div class="field">
+-   Show <input type="text" name="contextlines" id="contextlines" size="2"
++   Mostrar <input type="text" name="contextlines" id="contextlines" size="2"
+      maxlength="3" value="<?cs var:diff.options.contextlines ?>" />
+-   <label for="contextlines">lines around each change</label>
++   <label for="contextlines">líneas alrededor de cada cambio</label>
+   </div>
+   <fieldset id="ignore">
+-   <legend>Ignore:</legend>
++   <legend>Ignorar:</legend>
+    <div class="field">
+     <input type="checkbox" id="blanklines" name="ignoreblanklines"<?cs
+       if:diff.options.ignoreblanklines ?> checked="checked"<?cs /if ?> />
+-    <label for="blanklines">Blank lines</label>
++    <label for="blanklines">Líneas vacías</label>
+    </div>
+    <div class="field">
+     <input type="checkbox" id="case" name="ignorecase"<?cs
+       if:diff.options.ignorecase ?> checked="checked"<?cs /if ?> />
+-    <label for="case">Case changes</label>
++    <label for="case">Mayúsculas/minúsculas</label>
+    </div>
+    <div class="field">
+     <input type="checkbox" id="whitespace" name="ignorewhitespace"<?cs
+       if:diff.options.ignorewhitespace ?> checked="checked"<?cs /if ?> />
+-    <label for="whitespace">White space changes</label>
++    <label for="whitespace">Cambios en espacios en blanco</label>
+    </div>
+   </fieldset>
+   <div class="buttons">
+-   <input type="submit" name="update" value="Update" />
++   <input type="submit" name="update" value="Actualizar" />
+   </div>
+  </div>
+ </form><?cs /if ?>
+@@ -124,30 +124,30 @@
+   set:nprops = len(item.props) ?>
+   <div class="<?cs var:cl ?>"></div><?cs 
+   if:cl == "rem" ?>
+-   <a title="Show what was removed (rev. <?cs var:item.rev.old ?>)" href="<?cs
++   <a title="Mostrar lo que fué eliminado (rev. <?cs var:item.rev.old ?>)" href="<?cs
+      var:item.browser_href.old ?>"><?cs var:item.path.old ?></a><?cs
+   else ?>
+-   <a title="Show entry in browser" href="<?cs
++   <a title="Mostrar entrada en el navegador" href="<?cs
+      var:item.browser_href.new ?>"><?cs alt:item.path.new ?>(root)<?cs /alt?></a><?cs
+   /if ?>
+   <span class="comment">(<?cs var:kind ?>)</span><?cs
+   if:item.path.old && item.change == 'copy' || item.change == 'move' ?>
+    <small><em>(<?cs var:kind ?> from <a href="<?cs
+-    var:item.browser_href.old ?>" title="Show original file (rev. <?cs
++    var:item.browser_href.old ?>" title="Mostrar archivo original (rev. <?cs
+     var:item.rev.old ?>)"><?cs var:item.path.old ?></a>)</em></small><?cs
+   /if ?><?cs
+   if:item.diff_href ?>
+-    (<a href="<?cs var:item.diff_href ?>" title="Show differences">view diffs</a>)<?cs
++    (<a href="<?cs var:item.diff_href ?>" title="Mostrar diferencias">ver diffs</a>)<?cs
+   elif:$ndiffs + $nprops > #0 ?>
+-    (<a href="#file<?cs var:name(item) ?>" title="Show differences"><?cs
+-      if:$ndiffs > #0 ?><?cs var:ndiffs ?>&nbsp;diff<?cs if:$ndiffs > #1 ?>s<?cs /if ?><?cs 
++    (<a href="#file<?cs var:name(item) ?>" title="Mostrar diferencias"><?cs
++      if:$ndiffs > #0 ?><?cs var:ndiffs ?>&nbsp;diferencia<?cs if:$ndiffs > #1 ?>s<?cs /if ?><?cs 
+       /if ?><?cs
+       if:$ndiffs && $nprops ?>, <?cs /if ?><?cs 
+-      if:$nprops > #0 ?><?cs var:nprops ?>&nbsp;prop<?cs if:$nprops > #1 ?>s<?cs /if ?><?cs
++      if:$nprops > #0 ?><?cs var:nprops ?>&nbsp;propiedad<?cs if:$nprops > #1 ?>es<?cs /if ?><?cs
+       /if ?></a>)<?cs
+   elif:cl == "mod" ?>
+     (<a href="<?cs var:item.browser_href.old ?>"
+-        title="Show previous version in browser">previous</a>)<?cs
++        title="Mostrar la versión anterior en el navegador">anterior</a>)<?cs
+   /if ?>
+ <?cs /def ?>
+ 
+@@ -155,22 +155,22 @@
+  if:changeset.chgset ?>
+  <dt class="property time">Timestamp:</dt>
+  <dd class="time"><?cs var:changeset.time ?> 
+-  (<?cs alt:changeset.age ?>less than one hour<?cs /alt ?> ago)</dd>
+- <dt class="property author">Author:</dt>
++  (hace <?cs alt:changeset.age ?>menos de una hora<?cs /alt ?>)</dd>
++ <dt class="property author">Autor:</dt>
+  <dd class="author"><?cs var:changeset.author ?></dd>
+  <?cs each:prop = changeset.properties ?>
+  <dt class="property <?cs var:prop.htmlclass ?>"><?cs var:prop.name ?>:</dt>
+  <dd class="<?cs var:prop.htmlclass ?>"><?cs var:prop.value ?></dd>
+  <?cs /each ?>
+- <dt class="property message">Message:</dt>
++ <dt class="property message">Mensaje:</dt>
+  <dd class="message" id="searchable"><?cs
+   alt:changeset.message ?>&nbsp;<?cs /alt ?></dd><?cs
+  /if ?>
+  <dt class="property files"><?cs 
+   if:len(changeset.changes) > #0 ?>
+-   Files:<?cs
++   Archivos:<?cs
+   else ?>
+-   (No files)<?cs
++   (Ningún archivo)<?cs
+   /if ?>
+  </dt>
+  <dd class="files">
+@@ -194,32 +194,32 @@
+ 
+ <div class="diff">
+  <div id="legend">
+-  <h3>Legend:</h3>
++  <h3>Leyenda:</h3>
+   <dl>
+-   <dt class="unmod"></dt><dd>Unmodified</dd>
+-   <dt class="add"></dt><dd>Added</dd>
+-   <dt class="rem"></dt><dd>Removed</dd>
+-   <dt class="mod"></dt><dd>Modified</dd>
+-   <dt class="cp"></dt><dd>Copied</dd>
+-   <dt class="mv"></dt><dd>Moved</dd>
++   <dt class="unmod"></dt><dd>Sin modificar</dd>
++   <dt class="add"></dt><dd>Añadido</dd>
++   <dt class="rem"></dt><dd>Eliminado</dd>
++   <dt class="mod"></dt><dd>Modificado</dd>
++   <dt class="cp"></dt><dd>Copiado</dd>
++   <dt class="mv"></dt><dd>Movido</dd>
+   </dl>
+  </div>
+  <ul class="entries"><?cs
+  each:item = changeset.changes ?><?cs
+   if:len(item.diff) || len(item.props) ?><li class="entry" id="file<?cs
+    var:name(item) ?>"><h2><a href="<?cs
+-   var:item.browser_href.new ?>" title="Show new revision <?cs
+-   var:item.rev.new ?> of this file in browser"><?cs
++   var:item.browser_href.new ?>" title="Mostrar la nueva revisión <?cs
++   var:item.rev.new ?> de este archivo en el navegador"><?cs
+    var:item.path.new ?></a></h2><?cs
+    if:len(item.props) ?><ul class="props"><?cs
+-    each:prop = item.props ?><li>Property <strong><?cs
++    each:prop = item.props ?><li>Propiedad <strong><?cs
+      var:prop.name ?></strong> <?cs
+-     if:prop.old && prop.new ?>changed from <?cs
+-     elif:!prop.old ?>set<?cs
+-     else ?>deleted<?cs
++     if:prop.old && prop.new ?>modificada de <?cs
++     elif:!prop.old ?>fijada<?cs
++     else ?>eliminada<?cs
+      /if ?><?cs
+      if:prop.old && prop.new ?><em><tt><?cs var:prop.old ?></tt></em><?cs /if ?><?cs
+-     if:prop.new ?> to <em><tt><?cs var:prop.new ?></tt></em><?cs /if ?></li><?cs
++     if:prop.new ?> en <em><tt><?cs var:prop.new ?></tt></em><?cs /if ?></li><?cs
+     /each ?></ul><?cs
+    /if ?><?cs
+    if:len(item.diff) ?><table class="<?cs
+@@ -229,12 +229,12 @@
+      <colgroup class="r"><col class="lineno" /><col class="content" /></colgroup>
+      <thead><tr>
+       <th colspan="2"><a href="<?cs
+-       var:item.browser_href.old ?>" title="Show old rev. <?cs
+-       var:item.rev.old ?> of <?cs var:item.path.old ?>">Revision <?cs
++       var:item.browser_href.old ?>" title="Mostrar la anterior revisión<?cs
++       var:item.rev.old ?> of <?cs var:item.path.old ?>">Revisión <?cs
+        var:item.rev.old ?></a></th>
+       <th colspan="2"><a href="<?cs
+-       var:item.browser_href.new ?>" title="Show new rev. <?cs
+-       var:item.rev.new ?> of <?cs var:item.path.new ?>">Revision <?cs
++       var:item.browser_href.new ?>" title="Mostrar la nueva revisión<?cs
++       var:item.rev.new ?> of <?cs var:item.path.new ?>">Revisión <?cs
+        var:item.rev.new ?></a></th>
+       </tr>
+      </thead><?cs
+@@ -247,11 +247,11 @@
+     else ?>
+      <colgroup><col class="lineno" /><col class="lineno" /><col class="content" /></colgroup>
+      <thead><tr>
+-      <th title="Revision <?cs var:item.rev.old ?>"><a href="<?cs
+-       var:item.browser_href.old ?>" title="Show old version of <?cs
++      <th title="Revisión <?cs var:item.rev.old ?>"><a href="<?cs
++       var:item.browser_href.old ?>" title="Mostrar la anterior versión de <?cs
+        var:item.path.old ?>">r<?cs var:item.shortrev.old ?></a></th>
+-      <th title="Revision <?cs var:item.rev.new ?>"><a href="<?cs
+-       var:item.browser_href.new ?>" title="Show new version of <?cs
++      <th title="Revisión <?cs var:item.rev.new ?>"><a href="<?cs
++       var:item.browser_href.new ?>" title="Mostrar la nueva versión de <?cs
+        var:item.path.new ?>">r<?cs var:item.shortrev.new ?></a></th>
+       <th>&nbsp;</th></tr>
+      </thead><?cs
+Index: templates/report_rss.cs
+===================================================================
+--- templates/report_rss.cs	(revision 5702)
++++ templates/report_rss.cs	(working copy)
+@@ -8,8 +8,8 @@
+  /if ?>
+  <link><?cs var:base_host ?><?cs 
+   var:trac.href.report ?>/<?cs var:report.id ?></link>
+- <description>Trac Report - <?cs var:report.title ?></description>
+- <language>en-us</language>
++ <description>Reporte Trac - <?cs var:report.title ?></description>
++ <language>es-ES</language>
+  <generator>Trac v<?cs var:trac.version ?></generator><?cs
+   if:chrome.logo.src ?>
+    <image>
+@@ -47,7 +47,7 @@
+    <link><?cs var:link ?></link>
+    <guid isPermaLink="false"><?cs var:link ?></guid>
+    <description><?cs var:descr ?></description>
+-   <category>Report</category>
++   <category>Reporte</category>
+   </item><?cs
+  /each ?></channel>
+ </rss>
+Index: templates/wiki.cs
+===================================================================
+--- templates/wiki.cs	(revision 5702)
++++ templates/wiki.cs	(working copy)
+@@ -8,27 +8,27 @@
+    <li class="first"><?cs
+      if:len(chrome.links.prev) ?> &larr;
+       <a class="prev" href="<?cs var:chrome.links.prev.0.href ?>" title="<?cs
+-       var:chrome.links.prev.0.title ?>">Previous Change</a><?cs
++       var:chrome.links.prev.0.title ?>">Anterior Modificación</a><?cs
+      else ?>
+-      <span class="missing">&larr; Previous Change</span><?cs
++      <span class="missing">&larr; Anterior Modificación</span><?cs
+      /if ?>
+    </li>
+-   <li><a href="<?cs var:wiki.history_href ?>">Page History</a></li>
++   <li><a href="<?cs var:wiki.history_href ?>">Historial de la Página</a></li>
+    <li class="last"><?cs
+      if:len(chrome.links.next) ?>
+       <a class="next" href="<?cs var:chrome.links.next.0.href ?>" title="<?cs
+-       var:chrome.links.next.0.title ?>">Next Change</a> &rarr; <?cs
++       var:chrome.links.next.0.title ?>">Siguiente Modificación</a> &rarr; <?cs
+      else ?>
+-      <span class="missing">Next Change &rarr;</span><?cs
++      <span class="missing">Siguiente Modificación &rarr;</span><?cs
+      /if ?>
+    </li><?cs
+   elif:wiki.action == "history" ?>
+-   <li class="last"><a href="<?cs var:wiki.current_href ?>">View Latest Version</a></li><?cs
++   <li class="last"><a href="<?cs var:wiki.current_href ?>">Ver la Última Versión</a></li><?cs
+   else ?>
+-   <li><a href="<?cs var:trac.href.wiki ?>">Start Page</a></li>
+-   <li><a href="<?cs var:trac.href.wiki ?>/TitleIndex">Index by Title</a></li>
+-   <li><a href="<?cs var:trac.href.wiki ?>/RecentChanges">Index by Date</a></li>
+-   <li class="last"><a href="<?cs var:wiki.last_change_href ?>">Last Change</a></li><?cs
++   <li><a href="<?cs var:trac.href.wiki ?>">Página Inicio</a></li>
++   <li><a href="<?cs var:trac.href.wiki ?>/TitleIndex">Índice por Título</a></li>
++   <li><a href="<?cs var:trac.href.wiki ?>/RecentChanges">Índice por Fecha</a></li>
++   <li class="last"><a href="<?cs var:wiki.last_change_href ?>">Último cambio</a></li><?cs
+   /if ?>
+  </ul>
+  <hr />
+@@ -39,25 +39,25 @@
+  <?cs if wiki.action == "delete" ?><?cs
+   if:wiki.version - wiki.old_version > 1 ?><?cs
+    set:first_version = wiki.old_version + 1 ?><?cs
+-   set:version_range = "versions "+first_version+" to "+wiki.version+" of " ?><?cs
+-   set:delete_what = "those versions" ?><?cs
++   set:version_range = "versiones "+first_version+" a la "+wiki.version+" de " ?><?cs
++   set:delete_what = "esas versiones" ?><?cs
+   elif:wiki.version ?><?cs
+-   set:version_range = "version "+wiki.version+" of " ?><?cs
+-   set:delete_what = "this version" ?><?cs
++   set:version_range = "versión "+wiki.version+" de " ?><?cs
++   set:delete_what = "esta versión" ?><?cs
+   else ?><?cs
+    set:version_range = "" ?><?cs
+-   set:delete_what = "page" ?><?cs
++   set:delete_what = "página" ?><?cs
+   /if ?>
+-  <h1>Delete <?cs var:version_range ?><a href="<?cs
++  <h1>Eliminar <?cs var:version_range ?><a href="<?cs
+     var:wiki.current_href ?>"><?cs var:wiki.page_name ?></a></h1>
+   <form action="<?cs var:wiki.current_href ?>" method="post">
+    <input type="hidden" name="action" value="delete" />
+-   <p><strong>Are you sure you want to <?cs
+-    if:!?wiki.version ?>completely <?cs
+-    /if ?>delete <?cs var:version_range ?>this page?</strong><br /><?cs
++   <p><strong>Estás seguro de querer eliminar <?cs
++    if:!?wiki.version ?>completamente <?cs
++    /if ?> <?cs var:version_range ?>esta página?</strong><br /><?cs
+    if:wiki.only_version ?>
+-    This is the only version the page, so the page will be removed
+-    completely!<?cs
++    Esta es la única versión de la página, así que la página será eliminada
++    completamente!<?cs
+    /if ?><?cs
+    if:?wiki.version ?>
+     <input type="hidden" name="version" value="<?cs var:wiki.version ?>" /><?cs
+@@ -65,64 +65,64 @@
+    if:wiki.old_version ?>
+     <input type="hidden" name="old_version" value="<?cs var:wiki.old_version ?>" /><?cs
+    /if ?>
+-   This is an irreversible operation.</p>
++   Esta es una operación irreversible.</p>
+    <div class="buttons">
+-    <input type="submit" name="cancel" value="Cancel" />
+-    <input type="submit" value="Delete <?cs var:delete_what ?>" />
++    <input type="submit" name="cancel" value="Cancelar" />
++    <input type="submit" value="Eliminar <?cs var:delete_what ?>" />
+    </div>
+   </form>
+ 
+  <?cs elif:wiki.action == "diff" ?>
+-  <h1>Changes <?cs
+-    if:wiki.old_version ?>between
+-     <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.old_version?>">Version <?cs var:wiki.old_version?></a> and <?cs
+-    else ?>from <?cs
++  <h1>Cambios <?cs
++    if:wiki.old_version ?>entre
++     <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.old_version?>">Versión <?cs var:wiki.old_version?></a> y <?cs
++    else ?>de la <?cs
+     /if ?>
+-    <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.version?>">Version <?cs var:wiki.version?></a> of
++    <a href="<?cs var:wiki.current_href ?>?version=<?cs var:wiki.version?>">Versión <?cs var:wiki.version?></a> de
+     <a href="<?cs var:wiki.current_href ?>"><?cs var:wiki.page_name ?></a></h1>
+   <form method="post" id="prefs" action="<?cs var:wiki.current_href ?>">
+    <div>
+     <input type="hidden" name="action" value="diff" />
+     <input type="hidden" name="version" value="<?cs var:wiki.version ?>" />
+     <input type="hidden" name="old_version" value="<?cs var:wiki.old_version ?>" />
+-    <label>View differences <select name="style">
++    <label>Ver diferencias <select name="style">
+      <option value="inline"<?cs
+        if:diff.style == 'inline' ?> selected="selected"<?cs
+-       /if ?>>inline</option>
++       /if ?>>en línea</option>
+      <option value="sidebyside"<?cs
+        if:diff.style == 'sidebyside' ?> selected="selected"<?cs
+-       /if ?>>side by side</option>
++       /if ?>>lado a lado</option>
+     </select></label>
+     <div class="field">
+-     Show <input type="text" name="contextlines" id="contextlines" size="2"
++     Mostrar <input type="text" name="contextlines" id="contextlines" size="2"
+        maxlength="3" value="<?cs var:diff.options.contextlines ?>" />
+-     <label for="contextlines">lines around each change</label>
++     <label for="contextlines">líneas alrededor de cada cambio</label>
+     </div>
+     <fieldset id="ignore">
+-     <legend>Ignore:</legend>
++     <legend>Ignorar:</legend>
+      <div class="field">
+       <input type="checkbox" id="blanklines" name="ignoreblanklines"<?cs
+         if:diff.options.ignoreblanklines ?> checked="checked"<?cs /if ?> />
+-      <label for="blanklines">Blank lines</label>
++      <label for="blanklines">Líneas vacías</label>
+      </div>
+      <div class="field">
+       <input type="checkbox" id="case" name="ignorecase"<?cs
+         if:diff.options.ignorecase ?> checked="checked"<?cs /if ?> />
+-      <label for="case">Case changes</label>
++      <label for="case">Mayúsculas/minúsculas</label>
+      </div>
+      <div class="field">
+       <input type="checkbox" id="whitespace" name="ignorewhitespace"<?cs
+         if:diff.options.ignorewhitespace ?> checked="checked"<?cs /if ?> />
+-      <label for="whitespace">White space changes</label>
++      <label for="whitespace">Cambios en espacios en blanco</label>
+      </div>
+     </fieldset>
+     <div class="buttons">
+-     <input type="submit" name="update" value="Update" />
++     <input type="submit" name="update" value="Actualizar" />
+     </div>
+    </div>
+   </form>
+   <dl id="overview">
+-   <dt class="property author">Author:</dt>
++   <dt class="property author">Autor:</dt>
+    <dd class="author"><?cs
+     if:wiki.num_changes > 1 ?><em class="multi">(multiple changes)</em><?cs
+     else ?><?cs var:wiki.author ?> <span class="ipnr">(IP: <?cs
+@@ -134,19 +134,19 @@
+     elif:wiki.time ?><?cs var:wiki.time ?> (<?cs var:wiki.time_delta ?> ago)<?cs
+     else ?>--<?cs
+     /if ?></dd>
+-   <dt class="property message">Comment:</dt>
++   <dt class="property message">Comentario:</dt>
+    <dd class="message"><?cs
+     if:wiki.num_changes > 1 ?><em class="multi">(multiple changes)</em><?cs
+     else ?><?cs var:wiki.comment ?><?cs /if ?></dd>
+   </dl>
+   <div class="diff">
+    <div id="legend">
+-    <h3>Legend:</h3>
++    <h3>Leyenda:</h3>
+     <dl>
+-     <dt class="unmod"></dt><dd>Unmodified</dd>
+-     <dt class="add"></dt><dd>Added</dd>
+-     <dt class="rem"></dt><dd>Removed</dd>
+-     <dt class="mod"></dt><dd>Modified</dd>
++     <dt class="unmod"></dt><dd>Sin modificar</dd>
++     <dt class="add"></dt><dd>Añadido</dd>
++     <dt class="rem"></dt><dd>Quitado</dd>
++     <dt class="mod"></dt><dd>Modificado</dd>
+     </dl>
+    </div>
+    <ul class="entries">
+@@ -157,8 +157,8 @@
+        <colgroup class="l"><col class="lineno" /><col class="content" /></colgroup>
+        <colgroup class="r"><col class="lineno" /><col class="content" /></colgroup>
+        <thead><tr>
+-        <th colspan="2">Version <?cs var:wiki.old_version ?></th>
+-        <th colspan="2">Version <?cs var:wiki.version ?></th>
++        <th colspan="2">Versión <?cs var:wiki.old_version ?></th>
++        <th colspan="2">Versión <?cs var:wiki.version ?></th>
+        </tr></thead><?cs
+        each:change = wiki.diff ?><?cs
+         call:diff_display(change, diff.style) ?><?cs
+@@ -168,9 +168,9 @@
+       <table class="inline" summary="Differences">
+        <colgroup><col class="lineno" /><col class="lineno" /><col class="content" /></colgroup>
+        <thead><tr>
+-        <th title="Version <?cs var:wiki.old_version ?>">v<?cs
++        <th title="Versión <?cs var:wiki.old_version ?>">v<?cs
+           alt:wiki.old_version ?>0<?cs /alt ?></th>
+-        <th title="Version <?cs var:wiki.version ?>">v<?cs
++        <th title="Versión <?cs var:wiki.version ?>">v<?cs
+           var:wiki.version ?></th>
+         <th>&nbsp;</th>
+        </tr></thead><?cs
+@@ -187,29 +187,29 @@
+      <input type="hidden" name="action" value="delete" />
+      <input type="hidden" name="version" value="<?cs var:wiki.version ?>" />
+      <input type="hidden" name="old_version" value="<?cs var:wiki.old_version ?>" />
+-     <input type="submit" name="delete_version" value="Delete <?cs
+-     if:wiki.version - wiki.old_version > 1 ?> version <?cs
+-      var:wiki.old_version+1 ?> to <?cs
+-     /if ?>version <?cs var:wiki.version ?>" />
++     <input type="submit" name="delete_version" value="Eliminar <?cs
++     if:wiki.version - wiki.old_version > 1 ?> versión <?cs
++      var:wiki.old_version+1 ?> a <?cs
++     /if ?>versión <?cs var:wiki.version ?>" />
+     </form><?cs
+    /if ?>
+   </div>
+ 
+  <?cs elif wiki.action == "history" ?>
+-  <h1>Change History of <a href="<?cs var:wiki.current_href ?>"><?cs
++  <h1>Historial de Cambios de <a href="<?cs var:wiki.current_href ?>"><?cs
+     var:wiki.page_name ?></a></h1>
+   <?cs if:len(wiki.history) ?><form class="printableform" method="get" action="">
+    <input type="hidden" name="action" value="diff" />
+    <div class="buttons">
+-    <input type="submit" value="View changes" />
++    <input type="submit" value="Ver cambios" />
+    </div>
+    <table id="wikihist" class="listing" summary="Change history">
+     <thead><tr>
+      <th class="diff"></th>
+-     <th class="version">Version</th>
+-     <th class="date">Date</th>
+-     <th class="author">Author</th>
+-     <th class="comment">Comment</th>
++     <th class="version">Versión</th>
++     <th class="date">Fecha</th>
++     <th class="author">Autor</th>
++     <th class="comment">Comentario</th>
+     </tr></thead>
+     <tbody><?cs each:item = wiki.history ?>
+      <tr class="<?cs if:name(item) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
+@@ -221,7 +221,7 @@
+         if:name(item) == 0 ?> checked="checked"<?cs
+         /if ?> /></td>
+       <td class="version"><a href="<?cs
+-        var:item.url ?>" title="View this version"><?cs
++        var:item.url ?>" title="Ver esta versión"><?cs
+         var:item.version ?></a></td>
+       <td class="date"><?cs var:item.time ?></td>
+       <td class="author" title="IP-Address: <?cs var:item.ipaddr ?>"><?cs
+@@ -232,30 +232,30 @@
+    </table><?cs
+    if:len(wiki.history) > #10 ?>
+     <div class="buttons">
+-     <input type="submit" value="View changes" />
++     <input type="submit" value="Ver cambios" />
+     </div><?cs
+    /if ?>
+   </form><?cs /if ?>
+ 
+  <?cs else ?>
+   <?cs if wiki.action == "edit" || wiki.action == "preview" || wiki.action == "collision" ?>
+-   <h1>Editing "<?cs var:wiki.page_name ?>"</h1><?cs
++   <h1>Editando "<?cs var:wiki.page_name ?>"</h1><?cs
+     if wiki.action == "preview" ?>
+      <table id="info" summary="Revision info"><tbody><tr>
+        <th scope="col">
+-        Preview of future version <?cs var:$wiki.version+1 ?> (modified by <?cs var:wiki.author ?>)
++        Vista previa de la futura versión <?cs var:$wiki.version+1 ?> (modificada por <?cs var:wiki.author ?>)
+        </th></tr><tr>
+        <td class="message"><?cs var:wiki.comment_html ?></td>
+       </tr>
+      </tbody></table>
+      <fieldset id="preview">
+-      <legend>Preview (<a href="#edit">skip</a>)</legend>
++      <legend>Vista previa (<a href="#edit">omitir</a>)</legend>
+         <div class="wikipage"><?cs var:wiki.page_html ?></div>
+      </fieldset><?cs
+      elif wiki.action =="collision"?>
+      <div class="system-message">
+-       Sorry, this page has been modified by somebody else since you started
+-       editing. Your changes cannot be saved.
++       Lo siento, esta página ha sido modificada por alguien más desde que iniciaste
++       la edición. Tus cambios no pueden ser guardados.
+      </div><?cs
+     /if ?>
+    <form id="edit" action="<?cs var:wiki.current_href ?>" method="post">
+@@ -265,7 +265,7 @@
+      <input type="hidden" id="scroll_bar_pos" name="scroll_bar_pos" value="<?cs
+        var:wiki.scroll_bar_pos ?>" />
+      <div id="rows">
+-      <label for="editrows">Adjust edit area height:</label>
++      <label for="editrows">Ajustar la altura del área de edición:</label>
+       <select size="1" name="editrows" id="editrows" tabindex="43"
+         onchange="resizeTextArea('text', this.options[selectedIndex].value)"><?cs
+        loop:rows = 8, 42, 4 ?>
+@@ -288,21 +288,21 @@
+      </script>
+     </fieldset>
+     <div id="help">
+-     <b>Note:</b> See <a href="<?cs var:$trac.href.wiki
+-?>/WikiFormatting">WikiFormatting</a> and <a href="<?cs var:$trac.href.wiki
+-?>/TracWiki">TracWiki</a> for help on editing wiki content.
++     <b>Nota:</b> Véa <a href="<?cs var:$trac.href.wiki
++?>/WikiFormatting">WikiFormatting</a> y <a href="<?cs var:$trac.href.wiki
++?>/TracWiki">TracWiki</a> para ayuda acerca de la edición del contenido del wiki.
+     </div>
+     <fieldset id="changeinfo">
+-     <legend>Change information</legend>
++     <legend>Información de cambio</legend>
+      <?cs if:trac.authname == "anonymous" ?>
+       <div class="field">
+-       <label>Your email or username:<br />
++       <label>Correo electrónico ó nombre de usuario:<br />
+        <input id="author" type="text" name="author" size="30" value="<?cs
+          var:wiki.author ?>" /></label>
+       </div>
+      <?cs /if ?>
+      <div class="field">
+-      <label>Comment about this change (optional):<br />
++      <label>Comentario acerca de este cambio (opcional):<br />
+       <input id="comment" type="text" name="comment" size="60" value="<?cs
+         var:wiki.comment?>" /></label>
+      </div><br />
+@@ -310,7 +310,7 @@
+       <div class="options">
+        <label><input type="checkbox" name="readonly" id="readonly" <?cs
+          if wiki.readonly == "1"?>checked="checked"<?cs /if ?> />
+-       Page is read-only</label>
++       La página es de sólo lectura</label>
+       </div>
+      <?cs /if ?>
+     </fieldset>
+@@ -319,10 +319,10 @@
+       <input type="submit" name="preview" value="Preview" disabled="disabled" />&nbsp;
+       <input type="submit" name="save" value="Submit changes" disabled="disabled" />&nbsp;
+      <?cs else ?>
+-      <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+-      <input type="submit" name="save" value="Submit changes" />&nbsp;
++      <input type="submit" name="preview" value="Vista previa" accesskey="r" />&nbsp;
++      <input type="submit" name="save" value="Confirmar cambios" />&nbsp;
+      <?cs /if ?>
+-     <input type="submit" name="cancel" value="Cancel" />
++     <input type="submit" name="cancel" value="Cancelar" />
+     </div>
+     <script type="text/javascript" src="<?cs
+       var:htdocs_location ?>js/wikitoolbar.js"></script>
+@@ -332,7 +332,7 @@
+    <?cs if:wiki.comment_html ?>
+     <table id="info" summary="Revision info"><tbody><tr>
+       <th scope="col">
+-       Version <?cs var:wiki.version ?> (modified by <?cs var:wiki.author ?>, <?cs var:wiki.age ?> ago)
++       Versión <?cs var:wiki.version ?> (modificada por <?cs var:wiki.author ?>, hace <?cs var:wiki.age ?>)
+       </th></tr><tr>
+       <td class="message"><?cs var:wiki.comment_html ?></td>
+      </tr>
+@@ -342,13 +342,13 @@
+     <div id="searchable"><?cs var:wiki.page_html ?></div>
+    </div>
+    <?cs if:len(wiki.attachments) ?>
+-    <h3 id="tkt-changes-hdr">Attachments</h3>
++    <h3 id="tkt-changes-hdr">Adjuntos</h3>
+     <ul class="tkt-chg-list"><?cs
+      each:attachment = wiki.attachments ?><li class="tkt-chg-change"><a href="<?cs
+       var:attachment.href ?>"><?cs
+       var:attachment.filename ?></a> (<?cs var:attachment.size ?>) -<?cs
+       if:attachment.description ?><q><?cs var:attachment.description ?></q>,<?cs
+-      /if ?> added by <?cs var:attachment.author ?> on <?cs
++      /if ?> añadido por <?cs var:attachment.author ?> en <?cs
+       var:attachment.time ?>.</li><?cs
+      /each ?>
+     </ul>
+@@ -359,13 +359,13 @@
+     if:trac.acl.WIKI_MODIFY ?>
+      <form method="get" action="<?cs var:wiki.current_href ?>"><div>
+       <input type="hidden" name="action" value="edit" />
+-      <input type="submit" value="<?cs if:wiki.exists ?>Edit<?cs
+-        else ?>Create<?cs /if ?> this page" accesskey="e" />
++      <input type="submit" value="<?cs if:wiki.exists ?>Editar<?cs
++        else ?>Crear<?cs /if ?> esta página" accesskey="e" />
+      </div></form><?cs
+      if:wiki.exists ?>
+       <form method="get" action="<?cs var:wiki.attach_href ?>"><div>
+        <input type="hidden" name="action" value="new" />
+-       <input type="submit" value="Attach file" />
++       <input type="submit" value="Adjuntar archivo" />
+       </div></form><?cs
+      /if ?><?cs
+     /if ?><?cs
+@@ -374,15 +374,15 @@
+       <input type="hidden" name="action" value="delete" />
+       <input type="hidden" name="version" value="<?cs var:wiki.version ?>" /><?cs
+       if:wiki.version == wiki.latest_version ?>
+-       <input type="submit" name="delete_version" value="Delete this version" /><?cs
++       <input type="submit" name="delete_version" value="Eliminar esta versión" /><?cs
+       /if ?>
+-      <input type="submit" value="Delete page" />
++      <input type="submit" value="Eliminar página" />
+      </div></form>
+     <?cs /if ?>
+    </div>
+   <?cs /if ?>
+   <script type="text/javascript">
+-   addHeadingLinks(document.getElementById("searchable"), "Link to this section");
++   addHeadingLinks(document.getElementById("searchable"), "Enlace a esta sección");
+   </script>
+  <?cs /if ?>
+  <?cs /if ?>
+Index: templates/query.cs
+===================================================================
+--- templates/query.cs	(revision 5702)
++++ templates/query.cs	(working copy)
+@@ -4,13 +4,13 @@
+ <div id="ctxtnav" class="nav"><?cs
+  if:query.report_href ?><ul>
+   <li class="first"><a href="<?cs
+-    var:query.report_href ?>">Available Reports</a></li>
+-  <li class="last">Custom Query</li></ul><?cs
++    var:query.report_href ?>">Reportes Disponibles</a></li>
++  <li class="last">Consulta Personalizada</li></ul><?cs
+  /if ?>
+ </div>
+ 
+ <?cs def:num_matches(v) ?><span class="numrows">(<?cs 
+- alt:v ?>No<?cs /alt ?> match<?cs if:v != 1 ?>es<?cs /if ?>)</span><?cs
++ alt:v ?>No hay<?cs /alt ?> coincidencia<?cs if:v != 1 ?>s<?cs /if ?>)</span><?cs
+ /def ?>
+ 
+ <div id="content" class="query">
+@@ -18,7 +18,7 @@
+ 
+ <form id="query" method="post" action="<?cs var:trac.href.query ?>">
+  <fieldset id="filters">
+-  <legend>Filters</legend>
++  <legend>Filtros</legend>
+   <?cs def:checkbox_checked(constraint, option) ?><?cs
+    set:checked = 0 ?><?cs
+    each:value = constraint.values ?><?cs
+@@ -61,7 +61,7 @@
+           <td class="actions"><input type="submit" name="rm_filter_<?cs
+              var:name(field) ?>_<?cs var:name(value) ?>" value="-" /></td>
+          </tr><tr class="<?cs var:name(field) ?>">
+-          <th colspan="2"><label>or</label></th>
++          <th colspan="2"><label>ó</label></th>
+           <td class="filter"><?cs
+          /if ?><?cs
+         /each ?><?cs
+@@ -71,13 +71,13 @@
+            var:option ?>" name="<?cs var:name(field) ?>" value="<?cs
+            var:option ?>"<?cs call:checkbox_checked(constraint, option) ?> />
+          <label for="<?cs var:name(field) ?>_<?cs var:option ?>"><?cs
+-           alt:option ?>none<?cs /alt ?></label><?cs
++           alt:option ?>ninguno<?cs /alt ?></label><?cs
+         /each ?><?cs
+        elif:field.type == "checkbox" ?>
+         <input type="radio" id="<?cs var:name(field) ?>_on" name="<?cs
+           var:name(field) ?>" value="1"<?cs
+           if:constraint.mode != '!' ?> checked="checked"<?cs /if ?> />
+-        <label for="<?cs var:name(field) ?>_on">yes</label>
++        <label for="<?cs var:name(field) ?>_on">si</label>
+         <input type="radio" id="<?cs var:name(field) ?>_off" name="<?cs
+           var:name(field) ?>" value="!1"<?cs
+           if:constraint.mode == '!' ?> checked="checked"<?cs /if ?> />
+@@ -91,7 +91,7 @@
+           <td class="actions"><input type="submit" name="rm_filter_<?cs
+              var:name(field) ?>_<?cs var:name(value) ?>" value="-" /></td>
+          </tr><tr class="<?cs var:name(field) ?>">
+-          <th colspan="2"><label>or</label></th>
++          <th colspan="2"><label>ó</label></th>
+           <td class="filter"><?cs
+          /if ?><?cs
+         /each ?><?cs
+@@ -107,7 +107,7 @@
+    /each ?>
+    <tbody><tr class="actions">
+     <td class="actions" colspan="4" style="text-align: right">
+-     <label for="add_filter">Add filter</label>&nbsp;
++     <label for="add_filter">Añadir filtro</label>&nbsp;
+      <select name="add_filter" id="add_filter">
+       <option></option><?cs
+       each:field = query.fields ?>
+@@ -124,7 +124,7 @@
+   </table>
+  </fieldset>
+  <p class="option">
+-  <label for="group">Group results by</label>
++  <label for="group">Agrupar resultados por</label>
+   <select name="group" id="group">
+    <option></option><?cs
+    each:field = query.fields ?><?cs
+@@ -138,7 +138,7 @@
+   </select>
+   <input type="checkbox" name="groupdesc" id="groupdesc"<?cs
+     if:query.groupdesc ?> checked="checked"<?cs /if ?> />
+-  <label for="groupdesc">descending</label>
++  <label for="groupdesc">orden descendente</label>
+   <script type="text/javascript">
+     var group = document.getElementById("group");
+     var updateGroupDesc = function() {
+@@ -151,12 +151,12 @@
+  <p class="option">
+   <input type="checkbox" name="verbose" id="verbose"<?cs
+     if:query.verbose ?> checked="checked"<?cs /if ?> />
+-  <label for="verbose">Show full description under each result</label>
++  <label for="verbose">Mostrar la descripción completa abajo de cada resultado</label>
+  </p>
+  <div class="buttons">
+   <input type="hidden" name="order" value="<?cs var:query.order ?>" />
+   <?cs if:query.desc ?><input type="hidden" name="desc" value="1" /><?cs /if ?>
+-  <input type="submit" name="update" value="Update" />
++  <input type="submit" name="update" value="Actualizar" />
+  </div>
+  <hr />
+ </form>
+@@ -182,7 +182,7 @@
+  <thead><tr><?cs each:header = query.headers ?>
+   <th class="<?cs var:header.name ?><?cs if:query.order == header.name ?> <?cs
+     if:query.desc ?>desc<?cs else ?>asc<?cs /if ?><?cs /if ?>">
+-   <a title="Sort by <?cs var:header.label ?><?cs
++   <a title="Ordenar por <?cs var:header.label ?><?cs
+      if:query.order == header.name && !query.desc ?> (descending)<?cs
+      /if ?>" href="<?cs var:header.href ?>"><?cs var:header.label ?></a>
+   </th><?cs
+@@ -214,10 +214,10 @@
+    if:result.removed ?> removed<?cs /if ?>"><?cs
+   each:header = query.headers ?><?cs
+    if:name(header) == 0 ?><td class="id"><a href="<?cs
+-    var:result.href ?>" title="View ticket"><?cs var:result.id ?></a></td><?cs
++    var:result.href ?>" title="Ver ticket"><?cs var:result.id ?></a></td><?cs
+    else ?><td class="<?cs var:header.name ?>"><?cs
+      if:header.name == 'summary' ?><a href="<?cs
+-      var:result.href ?>" title="View ticket"><?cs
++      var:result.href ?>" title="Ver ticket"><?cs
+       var:result.summary ?></a><?cs
+      else ?><span><?cs var:result[header.name] ?></span><?cs
+      /if ?></td><?cs
+@@ -225,7 +225,7 @@
+   /each ?>
+   <?cs if:query.verbose ?>
+    </tr><tr class="fullrow"><td colspan="<?cs var:len(query.headers) ?>">
+-    <p class="meta">Reported by <strong><?cs var:result.reporter ?></strong>,
++    <p class="meta">Reportado por <strong><?cs var:result.reporter ?></strong>,
+     <?cs var:result.time ?><?cs if:result.description ?>:<?cs /if ?></p>
+     <?cs if:result.description ?><p><?cs var:result.description ?></p><?cs /if ?>
+    </td>
+@@ -235,8 +235,8 @@
+ /if ?>
+ 
+ <div id="help">
+- <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki ?>/TracQuery">TracQuery</a> 
+- for help on using queries.
++ <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki ?>/TracQuery">TracQuery</a> 
++ para ayuda acerca de utilizar consultas personalizadas.
+ </div>
+ 
+ </div>
+Index: templates/search.cs
+===================================================================
+--- templates/search.cs	(revision 5702)
++++ templates/search.cs	(working copy)
+@@ -23,12 +23,12 @@
+ 
+ <div id="content" class="search">
+ 
+-<h1><label for="q">Search</label></h1>
++<h1><label for="q">Buscar</label></h1>
+ <form action="<?cs var:trac.href.search ?>" method="get">
+  <p>
+   <input type="text" id="q" name="q" size="40" value="<?cs var:search.q ?>" />
+   <input type="hidden" name="noquickjump" value="1" />
+-  <input type="submit" value="Search" />
++  <input type="submit" value="Buscar" />
+  </p>
+  <p><?cs
+   each filter=search.filters ?>
+@@ -43,27 +43,27 @@
+ if:len(search.result) || len(search.quickjump) ?>
+  <hr /><?cs
+  if:len(search.result) ?>
+- <h2>Search results <?cs
++ <h2>Resultados de la Búsqueda <?cs
+   if:search.n_pages > 1 ?>(<?cs
+    var:(search.page-1) * search.page_size + 1 ?> - <?cs
+    var:(search.page-1) * search.page_size + len(search.result) ?> 
+-   of <?cs var:search.n_hits?>)<?cs
++   de <?cs var:search.n_hits?>)<?cs
+   /if ?></h2><?cs
+  /if ?>
+  <div id="searchable">
+   <dl id="results"><?cs
+    if:len(search.quickjump) ?>
+-    <dt id=quickjump><a href="<?cs var:search.quickjump.href ?>">Quickjump to <?cs var:search.quickjump.name ?></a></dt>
++    <dt id=quickjump><a href="<?cs var:search.quickjump.href ?>">Atajo a <?cs var:search.quickjump.name ?></a></dt>
+     <dd><?cs var:search.quickjump.description ?></dd><?cs 
+    /if ?><?cs 
+    each item=search.result ?>
+     <dt><a href="<?cs var:item.href ?>"><?cs var:item.title ?></a></dt>
+     <dd><?cs var:item.excerpt ?></dd>
+     <dd>
+-     <span class="author">By <?cs var:item.author ?></span> &mdash;
++     <span class="author">Por <?cs var:item.author ?></span> &mdash;
+      <span class="date"><?cs var:item.date ?></span><?cs
+      if:item.keywords ?> &mdash
+-      <span class="keywords">Keywords: <em><?cs var:item.keywords ?></em></span><?cs
++      <span class="keywords">Palabras clave: <em><?cs var:item.keywords ?></em></span><?cs
+      /if ?>
+     </dd><?cs
+    /each ?>
+@@ -90,12 +90,12 @@
+  /if ?><?cs
+ 
+ elif:search.q && !search.quickjump ?>
+- <div id="notfound">No matches found.</div><?cs
++ <div id="notfound">No se hallaron coincidencias.</div><?cs
+ /if ?>
+ 
+ <div id="help">
+- <strong>Note:</strong> See <a href="<?cs
+-   var:trac.href.wiki ?>/TracSearch">TracSearch</a>  for help on searching.
++ <strong>Nota:</strong> Véa <a href="<?cs
++   var:trac.href.wiki ?>/TracSearch">TracSearch</a> para ayuda al realizar búsquedas.
+ </div>
+ 
+ </div>
+Index: templates/timeline.cs
+===================================================================
+--- templates/timeline.cs	(revision 5702)
++++ templates/timeline.cs	(working copy)
+@@ -3,14 +3,14 @@
+ <div id="ctxtnav" class="nav"></div>
+ 
+ <div id="content" class="timeline">
+-<h1>Timeline</h1>
++<h1>Histórico</h1>
+ 
+ <form id="prefs" method="get" action="<?cs var:trac.href.timeline ?>">
+  <div>
+-  <label>View changes from <input type="text" size="10" name="from" value="<?cs
+-    var:timeline.from ?>" /></label> and
++  <label>Ver cambios desde <input type="text" size="10" name="from" value="<?cs
++    var:timeline.from ?>" /></label> y
+   <label><input type="text" size="3" name="daysback" value="<?cs
+-    var:timeline.daysback ?>" /> days back</label>.
++    var:timeline.daysback ?>" /> días atrás</label>.
+  </div>
+  <fieldset><?cs
+   each:filter = timeline.filters ?>
+@@ -20,7 +20,7 @@
+   /each ?>
+  </fieldset>
+  <div class="buttons">
+-  <input type="submit" name="update" value="Update" />
++  <input type="submit" name="update" value="Actualizar" />
+  </div>
+ </form><?cs
+ 
+@@ -43,8 +43,8 @@
+ 
+ <div id="help">
+  <hr />
+- <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki ?>/TracTimeline">TracTimeline</a> 
+- for information about the timeline view.
++ <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki ?>/TracTimeline">TracTimeline</a> 
++ para información acerca del histórico.
+ </div>
+ 
+ </div>
+Index: templates/index.cs
+===================================================================
+--- templates/index.cs	(revision 5702)
++++ templates/index.cs	(working copy)
+@@ -2,8 +2,8 @@
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+ <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+-<head><title>Available Projects</title></head>
+-<body><h1>Available Projects</h1><ul><?cs
++<head><title>Proyectos Disponibles</title></head>
++<body><h1>Proyectos Disponibles</h1><ul><?cs
+  each:project = projects ?><li><?cs
+   if:project.href ?>
+    <a href="<?cs var:project.href ?>" title="<?cs var:project.description ?>">
+Index: templates/log_rss.cs
+===================================================================
+--- templates/log_rss.cs	(revision 5702)
++++ templates/log_rss.cs	(working copy)
+@@ -3,13 +3,13 @@
+ <rss version="2.0">
+  <channel><?cs 
+   if:project.name_encoded ?>
+-   <title><?cs var:project.name_encoded ?>: Revisions of <?cs var:log.path ?></title><?cs 
++   <title><?cs var:project.name_encoded ?>: Revisiones de <?cs var:log.path ?></title><?cs 
+   else ?>
+-   <title>Revisions of <?cs var:log.path ?></title><?cs 
++   <title>Revisiones de <?cs var:log.path ?></title><?cs 
+   /if ?>
+   <link><?cs var:base_host ?><?cs var:log.log_href ?></link>
+-  <description>Trac Log - Revisions of <?cs var:log.path ?></description>
+-  <language>en-us</language>
++  <description>Bitácora Trac - Revisiones de <?cs var:log.path ?></description>
++  <language>es-ES</language>
+   <generator>Trac v<?cs var:trac.version ?></generator><?cs
+   if:chrome.logo.src ?>
+    <image>
+@@ -25,12 +25,12 @@
+      if:change.author ?><author><?cs var:change.author ?></author><?cs
+      /if ?>
+      <pubDate><?cs var:change.date ?></pubDate>
+-     <title>Revision <?cs var:item.rev ?>: <?cs var:change.shortlog ?></title>
++     <title>Revisión <?cs var:item.rev ?>: <?cs var:change.shortlog ?></title>
+      <link><?cs var:base_host ?><?cs var:item.restricted_href ?></link>
+      <guid isPermaLink="false"><?cs var:base_host ?><?cs 
+ 	   var:item.restricted_href ?></guid>
+      <description><?cs var:change.message ?></description>
+-     <category>Log</category>
++     <category>Bitácora</category>
+     </item><?cs 
+    /with ?><?cs 
+   /each ?>
+Index: templates/about.cs
+===================================================================
+--- templates/about.cs	(revision 5702)
++++ templates/about.cs	(working copy)
+@@ -3,9 +3,9 @@
+  <h2>About Navigation</h2>
+  <ul>
+   <li class="first<?cs if:!about.config_href ?> last<?cs /if ?>"><a href="<?cs
+-    var:trac.href.about ?>">Overview</a></li><?cs
++    var:trac.href.about ?>">Vista general</a></li><?cs
+   if:about.config_href ?>
+-   <li><a href="<?cs var:about.config_href ?>">Configuration</a></li><?cs
++   <li><a href="<?cs var:about.config_href ?>">Configuración</a></li><?cs
+   /if ?><?cs
+   if:about.plugins_href ?>
+    <li class="last"><a href="<?cs var:about.plugins_href ?>">Plugins</a></li><?cs
+@@ -15,9 +15,9 @@
+ <div id="content" class="about<?cs if:about.page ?>_<?cs var:about.page ?><?cs /if ?>">
+ 
+  <?cs if:about.page == "config"?>
+-  <h1>Configuration</h1>
+-  <table><thead><tr><th class="section">Section</th>
+-   <th class="name">Name</th><th class="value">Value</th></tr></thead><?cs
++  <h1>Configuración</h1>
++  <table><thead><tr><th class="section">Sección</th>
++   <th class="name">Nombre</th><th class="value">Valor</th></tr></thead><?cs
+   each:section = about.config ?><?cs
+    if:len(section.options) ?>
+     <tr><th class="section" rowspan="<?cs var:len(section.options) ?>"><?cs var:section.name ?></th><?cs
+@@ -29,8 +29,8 @@
+    /if ?><?cs
+   /each ?></table>
+   <div id="help">
+-   See <a href="<?cs var:trac.href.wiki ?>/TracIni">TracIni</a> for information about
+-   the configuration.
++   Véa <a href="<?cs var:trac.href.wiki ?>/TracIni">TracIni</a> para información acerca
++   de la configuración.
+   </div>
+ 
+  <?cs elif:about.page == "plugins" ?>
+@@ -40,17 +40,17 @@
+     <h2 id="<?cs var:plugin.module ?>.<?cs var:plugin.name ?>"><?cs var:plugin.name ?></h2>
+     <table>
+      <tr>
+-      <th class="module" scope="row">Module</th>
++      <th class="module" scope="row">Módulo</th>
+       <td class="module"><?cs var:plugin.module ?><br />
+       <span class="path"><?cs var:plugin.path ?></span></td>
+      </tr><?cs
+      if:plugin.description ?><tr>
+-      <th class="description" scope="row">Description</th>
++      <th class="description" scope="row">Descripción</th>
+       <td class="description"><?cs var:plugin.description ?></td>
+      </tr><?cs /if ?><?cs
+      if:len(plugin.extension_points) ?><tr>
+       <th class="xtnpts" rowspan="<?cs var:len(plugin.extension_points) ?>">
+-       Extension points:</th><?cs
++       Puntos de Extensión:</th><?cs
+        each:extension_point = plugin.extension_points ?><?cs
+         if:name(extension_point) != 0 ?><tr><?cs /if ?>
+         <td class="xtnpts">        
+@@ -75,20 +75,20 @@
+    <img style="display: block" src="<?cs var:chrome.href ?>/common/trac_banner.png"
+      alt="Trac: Integrated SCM &amp; Project Management"/>
+   </a>
+-  <h1>About Trac <?cs var:trac.version ?></h1>
+-  <p>Trac is a web-based software project management and bug/issue tracking
+-  system emphasizing ease of use and low ceremony. It provides an integrated
+-  Wiki, an interface to version control systems, and a number convenient ways
+-  to stay on top of events and changes within a project.</p>
+-  <p>Trac is distributed under the modified BSD License. The complete text of
+-  the license can be found
+-  <a href="http://trac.edgewall.org/wiki/TracLicense">online</a> as well as in
+-  the <tt>COPYING</tt> file included in the distribution.</p>
++  <h1>Acerca de Trac <?cs var:trac.version ?></h1>
++  <p>Trac es un sistema de software basado-en-web para la gestión de proyectos, rastreo de 
++  errores/incidencias que enfatiza la facilidad de uso y reduce la 'ceremonia'. Provee un
++  Wiki integrado, una interfaz para sistemas de control de versiones, y un número conveniente de formas
++  para permanecer al día respecto a los eventos y cambios de un proyecto.</p>
++  <p>Trac se distribuye bajo una Licencia BSD modificada. El texto completo de dicha
++  licencia puede ser encontrado 
++  <a href="http://trac.edgewall.org/wiki/TracLicense">en línea</a> como también en el archivo
++  <tt>COPYING</tt> incluído en la distribución.</p>
+   <a href="http://www.python.org/" style="border: none; float: right">
+    <img style="display: block" src="<?cs var:htdocs_location ?>python.png"
+      alt="python powered" width="140" height="56" />
+   </a>
+-  <p>Please visit the Trac open source project at
++  <p>Por favor visite el proyecto open source Trac en
+   <a href="http://trac.edgewall.org/">http://trac.edgewall.org/</a>.</p>
+   <p>Copyright &copy; 2003-2006 <a href="http://www.edgewall.org/">Edgewall
+   Software</a></p>
+Index: templates/ticket_rss.cs
+===================================================================
+--- templates/ticket_rss.cs	(revision 5702)
++++ templates/ticket_rss.cs	(working copy)
+@@ -36,12 +36,12 @@
+     &lt;ul&gt;<?cs
+     each:field = change.fields ?>
+     &lt;li&gt;&lt;strong&gt;<?cs name:field ?>&lt;/strong&gt; <?cs
+-     if:!field.old ?>set to &lt;em&gt;<?cs
++     if:!field.old ?>fijado en &lt;em&gt;<?cs
+       var:field.new ?>&lt;/em&gt;<?cs
+-     elif:field.new ?>changed from &lt;em&gt;<?cs var:field.old
+-      ?>&lt;/em&gt; to &lt;em&gt;<?cs
++     elif:field.new ?>modificado de &lt;em&gt;<?cs var:field.old
++      ?>&lt;/em&gt; a &lt;em&gt;<?cs
+       var:field.new ?>&lt;/em&gt;.<?cs
+-     else ?>deleted<?cs
++     else ?>borrado<?cs
+      /if ?>&lt;/li&gt;<?cs
+     /each ?>
+     &lt;/ul&gt;

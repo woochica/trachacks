@@ -1,0 +1,60 @@
+Templates
+---------
+Timestamp = Timestamp
+Overview = Vista general
+browser = explorador de repositorios
+traceback = traza de ejecución
+Log Message = 
+Quickjump = Atajo
+Ticket Query = Consulta Personalizada para Tickets
+match(es) = coincidencia(s)
+
+Trac Engine
+-----------
+upload/download:
+  http://forum.wordreference.com/showthread.php?t=23471
+owner = responsable
+reporter = informante
+release = lanzamiento
+full-row display = vista-de-fila-completa
+egg plugin = plugin-egg
+encoding = codificación
+timeline = histórico (TracTermsEs)
+curtom field = campo personalizado
+Repository checkins = cambios en el repositorio
+bindings = librerías
+SVN bindings = librerias SVN para Python
+completion = conclusión
+cache = caché
+metadata = meta-datos ???
+type = ingrese
+enviroment = entorno "Trac"
+lexer = analizador de léxico/ analizador lexicográfico
+permission = permiso
+permission rule = regla de permisos
+projectenv/projenv = proyecto
+templatepath = ruta_plantillas
+template = plantilla
+site-wide = ?? (admin.py)
+stdout = salida estándar
+stdin = entrada estándar
+standalone = 
+priority value = 
+due = vencimiento
+time = fecha (respecto a version)
+hot backup copy = copia de seguridad 'caliente'
+Hotcopying = 
+macro = 
+processor = procesador ???
+parsing = ? (formatter.py)
+RecentChanges = sin traducción (wiki-default) (interwiki.py)
+anonymous = sin traducción (wiki/web_ui.py)
+logged in as = sesión iniciada como 
+invalid password line in = contraseña inválida en 
+realm = dominio
+session ID = "identificador" (ID) de sesión
+No handler matched request = (web/main.py)
+created = sin traducción (reportes)
+modified = sin traducción (reportes)
+description = sin traducción (reportes)
+_description = descripción
