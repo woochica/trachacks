@@ -26,17 +26,20 @@ class TestScriptValidator(Component):
         
     def process_testmanager_request(self, req ):
         #check for errors in the testcases and configuration, if there are no errors let the user know, and vice versa
-        
-        errors = self.properties.validateTestCases( self, req )
-        
-        if errors : 
-            req.hdf['testcase.run.errormessage'] = errors
+        try:
+            errors = self.properties.validateTestCases( self, req )
+            
+            if errors : 
+                req.hdf['testcase.run.errormessage'] = errors
+                return "testRunNotConfigured.cs", None
+            else:
+                req.hdf['testcase.validate.pathConfiguration'] = self.properties.getTestCasePath( self, req)
+                req.hdf['testcase.validate.urlPath'] = req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath( self, req) 
+                return "validated.cs", None
+        except Exception, ex:
+            req.hdf['testcase.run.errormessage'] = str( ex )
             return "testRunNotConfigured.cs", None
-        else:
-            req.hdf['testcase.validate.pathConfiguration'] = self.properties.getTestCasePath( self, req)
-            req.hdf['testcase.validate.urlPath'] = req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath( self, req) 
-            return "validated.cs", None
-
+            
     def get_path( self, req ):
         return "validate"
         
