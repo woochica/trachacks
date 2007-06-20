@@ -10,11 +10,13 @@ setup(
     author="Martin Paljak", author_email="martin@paljak.pri.ee",
     license='GPL', url='http://www.trac-hacks.org/wiki/TracWsgiPlugin',
     packages=find_packages(exclude=['ez_setup', '*.tests*']),
-    zip_safe=False,
+    zip_safe=True,
+    include_package_data=True,
     install_requires = [
             'setuptools>=0.6c5',
             'Trac>=0.11dev',
             'PasteDeploy',
+            'Genshi'
         ],
     entry_points = {
         'trac.plugins': [
