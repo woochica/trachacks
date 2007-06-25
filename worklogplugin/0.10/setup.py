@@ -16,7 +16,7 @@ setup(name=PACKAGE,
       I'll write this later!
       """,
       packages=[PACKAGE],
-      package_data={PACKAGE : ['templates/*.cs', 'htdocs/*']},
+      package_data={PACKAGE : ['templates/*.cs', 'htdocs/*.css', 'htdocs/*.png', 'htdocs/*.js']},
       entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)})
 
 

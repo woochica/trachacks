@@ -28,7 +28,16 @@
 }
 #messages{ 
 }
-.message{ 
+.message
+{ 
   font-weight:bold;
   color:#283;
- }
+}
+dt.workstart, dt.workstart a
+{
+  background-image: url(workstart.png);
+}
+dt.workstop, dt.workstop a
+{
+  background-image: url(workstop.png);
+}

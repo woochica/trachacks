@@ -4,6 +4,7 @@ from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.util import Markup
+from trac.web.chrome import add_stylesheet
 from trac.web.href import Href
 from trac.Timeline import ITimelineEventProvider
 
@@ -22,6 +23,7 @@ class WorkLogTimelineAddon(Component):
 
         # Ticket changes
         if 'worklog' in filters:
+            add_stylesheet(req, "worklog/worklogplugin.css")
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
