@@ -32,8 +32,8 @@ jQuery.fn.animatedSwap = function(next, duration) {
     me.css('visibility', 'hidden');
     next.css('visibility', 'hidden');
             
-    me_copy.animate({top:(1.0*next_copy.top().replace("px",""))}, duration);
-    next_copy.animate({top:(1.0*me_copy.top().replace("px",""))}, duration, function() {
+    me_copy.animate({top:(1.0*next_copy.css('top').replace("px",""))}, duration);
+    next_copy.animate({top:(1.0*me_copy.css('top').replace("px",""))}, duration, function() {
         me.css('visibility', 'visible');
         next.css('visibility', 'visible');
         next.after(me);
