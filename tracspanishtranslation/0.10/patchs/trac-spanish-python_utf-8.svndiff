@@ -1,7 +1,29 @@
 Index: trac/env.py
 ===================================================================
---- trac/env.py	(revision 5702)
+--- trac/env.py	(revision 5756)
 +++ trac/env.py	(working copy)
+@@ -70,17 +70,17 @@
+         setups, usually involving running Trac behind a HTTP proxy, you may
+         need to use this option to force Trac to use the correct URL.""")
+ 
+-    project_name = Option('project', 'name', 'My Project',
++    project_name = Option('project', 'name', 'Mi Proyecto',
+         """Name of the project.""")
+ 
+-    project_description = Option('project', 'descr', 'My example project',
++    project_description = Option('project', 'descr', 'Mi proyecto ejemplo',
+         """Short description of the project.""")
+ 
+-    project_url = Option('project', 'url', 'http://example.org/',
++    project_url = Option('project', 'url', 'http://ejemplo.org/',
+         """URL of the main project web site.""")
+ 
+     project_footer = Option('project', 'footer',
+-                            'Visit the Trac open source project at<br />'
++                            'Visite el proyecto open source Trac en<br />'
+                             '<a href="http://trac.edgewall.org/">'
+                             'http://trac.edgewall.org/</a>',
+         """Page footer text (right-aligned).""")
 @@ -330,7 +330,7 @@
  
          db_str = self.config.get('trac', 'database')
@@ -78,7 +100,7 @@ Index: trac/env.py
      return env
 Index: trac/core.py
 ===================================================================
---- trac/core.py	(revision 5702)
+--- trac/core.py	(revision 5756)
 +++ trac/core.py	(working copy)
 @@ -45,7 +45,7 @@
          """
@@ -114,7 +136,7 @@ Index: trac/core.py
  
 Index: trac/attachment.py
 ===================================================================
---- trac/attachment.py	(revision 5702)
+--- trac/attachment.py	(revision 5756)
 +++ trac/attachment.py	(working copy)
 @@ -100,8 +100,8 @@
          cursor.close()
@@ -309,7 +331,7 @@ Index: trac/attachment.py
                            href=formatter.href())
 Index: trac/db_default.py
 ===================================================================
---- trac/db_default.py	(revision 5702)
+--- trac/db_default.py	(revision 5756)
 +++ trac/db_default.py	(working copy)
 @@ -166,106 +166,106 @@
  def get_reports(db):
@@ -576,7 +598,7 @@ Index: trac/db_default.py
                 (('anonymous', 'LOG_VIEW'),
 Index: trac/mimeview/rst.py
 ===================================================================
---- trac/mimeview/rst.py	(revision 5702)
+--- trac/mimeview/rst.py	(revision 5756)
 +++ trac/mimeview/rst.py	(working copy)
 @@ -52,9 +52,9 @@
              from docutils.parsers import rst
@@ -610,7 +632,7 @@ Index: trac/mimeview/rst.py
          # 1 required arg, 1 optional arg, spaces allowed in last arg
 Index: trac/mimeview/api.py
 ===================================================================
---- trac/mimeview/api.py	(revision 5702)
+--- trac/mimeview/api.py	(revision 5756)
 +++ trac/mimeview/api.py	(working copy)
 @@ -376,7 +376,7 @@
          candidates = list(self.get_supported_conversions(mimetype))
@@ -674,7 +696,7 @@ Index: trac/mimeview/api.py
              yield escape(line)
 Index: trac/mimeview/tests/php.py
 ===================================================================
---- trac/mimeview/tests/php.py	(revision 5702)
+--- trac/mimeview/tests/php.py	(revision 5756)
 +++ trac/mimeview/tests/php.py	(working copy)
 @@ -66,7 +66,7 @@
              s = StringIO(stuff)
@@ -687,7 +709,7 @@ Index: trac/mimeview/tests/php.py
  
 Index: trac/mimeview/silvercity.py
 ===================================================================
---- trac/mimeview/silvercity.py	(revision 5702)
+--- trac/mimeview/silvercity.py	(revision 5756)
 +++ trac/mimeview/silvercity.py	(working copy)
 @@ -109,7 +109,7 @@
              except IndexError:
@@ -700,7 +722,7 @@ Index: trac/mimeview/silvercity.py
          # SilverCity does not like unicode strings
 Index: trac/mimeview/patch.py
 ===================================================================
---- trac/mimeview/patch.py	(revision 5702)
+--- trac/mimeview/patch.py	(revision 5756)
 +++ trac/mimeview/patch.py	(working copy)
 @@ -69,7 +69,7 @@
          d = self._diff_to_hdf(content.splitlines(),
@@ -713,7 +735,7 @@ Index: trac/mimeview/patch.py
          hdf['diff.files'] = d
 Index: trac/mimeview/enscript.py
 ===================================================================
---- trac/mimeview/enscript.py	(revision 5702)
+--- trac/mimeview/enscript.py	(revision 5756)
 +++ trac/mimeview/enscript.py	(working copy)
 @@ -133,11 +133,11 @@
          mimetype = mimetype.split(';', 1)[0] # strip off charset
@@ -731,7 +753,7 @@ Index: trac/mimeview/enscript.py
          odata = np.out
 Index: trac/mimeview/php.py
 ===================================================================
---- trac/mimeview/php.py	(revision 5702)
+--- trac/mimeview/php.py	(revision 5756)
 +++ trac/mimeview/php.py	(working copy)
 @@ -77,13 +77,13 @@
      def render(self, req, mimetype, content, filename=None, rev=None):
@@ -764,7 +786,7 @@ Index: trac/mimeview/php.py
          for e in epilogues:
 Index: trac/ticket/api.py
 ===================================================================
---- trac/ticket/api.py	(revision 5702)
+--- trac/ticket/api.py	(revision 5756)
 +++ trac/ticket/api.py	(working copy)
 @@ -142,12 +142,12 @@
  
@@ -793,7 +815,7 @@ Index: trac/ticket/api.py
   
 Index: trac/ticket/web_ui.py
 ===================================================================
---- trac/ticket/web_ui.py	(revision 5702)
+--- trac/ticket/web_ui.py	(revision 5756)
 +++ trac/ticket/web_ui.py	(working copy)
 @@ -57,10 +57,10 @@
                  value = ticket[name]
@@ -1005,7 +1027,7 @@ Index: trac/ticket/web_ui.py
          if replyto == 'description':
 Index: trac/ticket/report.py
 ===================================================================
---- trac/ticket/report.py	(revision 5702)
+--- trac/ticket/report.py	(revision 5756)
 +++ trac/ticket/report.py	(working copy)
 @@ -46,7 +46,7 @@
          if not req.perm.has_permission('REPORT_VIEW'):
@@ -1145,7 +1167,7 @@ Index: trac/ticket/report.py
              values.append(arg)
 Index: trac/ticket/model.py
 ===================================================================
---- trac/ticket/model.py	(revision 5702)
+--- trac/ticket/model.py	(revision 5756)
 +++ trac/ticket/model.py	(working copy)
 @@ -67,8 +67,8 @@
                      try:
@@ -1462,7 +1484,7 @@ Index: trac/ticket/model.py
                         (self.name, self.time, self.description,
 Index: trac/ticket/roadmap.py
 ===================================================================
---- trac/ticket/roadmap.py	(revision 5702)
+--- trac/ticket/roadmap.py	(revision 5756)
 +++ trac/ticket/roadmap.py	(working copy)
 @@ -129,7 +129,7 @@
          if not req.perm.has_permission('ROADMAP_VIEW'):
@@ -1604,7 +1626,7 @@ Index: trac/ticket/roadmap.py
          req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
 Index: trac/ticket/query.py
 ===================================================================
---- trac/ticket/query.py	(revision 5702)
+--- trac/ticket/query.py	(revision 5756)
 +++ trac/ticket/query.py	(working copy)
 @@ -67,11 +67,11 @@
          for filter in filters:
@@ -1696,7 +1718,7 @@ Index: trac/ticket/query.py
                  return html.DL([(html.DT(ticket_anchor(ticket)),
 Index: trac/db/sqlite_backend.py
 ===================================================================
---- trac/db/sqlite_backend.py	(revision 5702)
+--- trac/db/sqlite_backend.py	(revision 5756)
 +++ trac/db/sqlite_backend.py	(working copy)
 @@ -116,7 +116,7 @@
          if path != ':memory:':
@@ -1729,7 +1751,7 @@ Index: trac/db/sqlite_backend.py
          if have_pysqlite == 2:
 Index: trac/db/api.py
 ===================================================================
---- trac/db/api.py	(revision 5702)
+--- trac/db/api.py	(revision 5756)
 +++ trac/db/api.py	(working copy)
 @@ -94,7 +94,7 @@
                      candidates[scheme] = (connector, priority)
@@ -1753,7 +1775,7 @@ Index: trac/db/api.py
              host = None
 Index: trac/db/pool.py
 ===================================================================
---- trac/db/pool.py	(revision 5702)
+--- trac/db/pool.py	(revision 5756)
 +++ trac/db/pool.py	(working copy)
 @@ -104,8 +104,8 @@
                  else:
@@ -1768,327 +1790,20 @@ Index: trac/db/pool.py
                      else: # Warning: without timeout, Trac *might* hang
 Index: trac/db/mysql_backend.py
 ===================================================================
---- trac/db/mysql_backend.py	(revision 5702)
+--- trac/db/mysql_backend.py	(revision 5756)
 +++ trac/db/mysql_backend.py	(working copy)
-@@ -1,9 +1,7 @@
--# -*- coding: iso8859-1 -*-
-+# -*- coding: utf-8 -*-
- #
--# Copyright (C) 2005-2006 Edgewall Software
--# Copyright (C) 2005-2006 Christopher Lenz <cmlenz@gmx.de>
--# Copyright (C) 2005 Jeff Weiss <trac@jeffweiss.org>
--# Copyright (C) 2006 Andres Salomon <dilinger@athenacr.com>
-+# Copyright (C) 2005 Edgewall Software
-+# Copyright (C) 2005 Christopher Lenz <cmlenz@gmx.de>
- # All rights reserved.
- #
- # This software is licensed as described in the file COPYING, which
-@@ -13,170 +11,163 @@
- # This software consists of voluntary contributions made by many
- # individuals. For the exact contribution history, see the revision
- # history and logs, available at http://trac.edgewall.org/log/.
-+#
-+# Author: Christopher Lenz <cmlenz@gmx.de>
- 
--import re
-+import os
-+import urllib
- 
-+from trac.config import Option, IntOption
- from trac.core import *
--from trac.db.api import IDatabaseConnector
--from trac.db.util import ConnectionWrapper
-+from trac.db.pool import ConnectionPool
-+from trac.util.text import unicode_passwd
- 
--_like_escape_re = re.compile(r'([/_%])')
- 
-+def get_column_names(cursor):
-+    return cursor.description and \
-+           [(isinstance(d[0], str) and [unicode(d[0], 'utf-8')] or [d[0]])[0]
-+            for d in cursor.description] or []
- 
--class MySQLConnector(Component):
--    """MySQL database support for version 4.1 and greater.
--    
--    Database urls should be of the form:
--        mysql://user[:password]@host[:port]/database
--    """
- 
--    implements(IDatabaseConnector)
-+class IDatabaseConnector(Interface):
-+    """Extension point interface for components that support the connection to
-+    relational databases."""
- 
--    def get_supported_schemes(self):
--        return [('mysql', 1)]
-+    def get_supported_schemes():
-+        """Return the connection URL schemes supported by the connector, and
-+        their relative priorities as an iterable of `(scheme, priority)` tuples.
-+        """
- 
--    def get_connection(self, path, user=None, password=None, host=None,
--                       port=None, params={}):
--        return MySQLConnection(path, user, password, host, port, params)
--
--    def init_db(self, path, user=None, password=None, host=None, port=None,
--                params={}):
--        cnx = self.get_connection(path, user, password, host, port, params)
--        cursor = cnx.cursor()
--        from trac.db_default import schema
--        for table in schema:
--            for stmt in self.to_sql(table):
--                self.env.log.debug(stmt)
--                cursor.execute(stmt)
--        cnx.commit()
--
--    def _collist(self, table, columns):
--        """Take a list of columns and impose limits on each so that indexing
--        works properly.
-+    def get_connection(**kwargs):
-+        """Create a new connection to the database."""
-         
--        Some Versions of MySQL limit each index prefix to 500 bytes total, with
--        a max of 255 bytes per column.
--        """
--        cols = []
--        limit = 333 / len(columns)
--        if limit > 255:
--            limit = 255
--        for c in columns:
--            name = '`%s`' % c
--            table_col = filter((lambda x: x.name == c), table.columns)
--            if len(table_col) == 1 and table_col[0].type.lower() == 'text':
--                if name == '`rev`':
--                    name += '(20)'
--                elif name == '`path`':
--                    name += '(255)'
--                elif name == '`change_type`':
--                    name += '(2)'
--                else:
--                    name += '(%s)' % limit
--            # For non-text columns, we simply throw away the extra bytes.
--            # That could certainly be optimized better, but for now let's KISS.
--            cols.append(name)
--        return ','.join(cols)
-+    def init_db(**kwargs):
-+        """Initialize the database."""
- 
--    def to_sql(self, table):
--        sql = ['CREATE TABLE %s (' % table.name]
--        coldefs = []
--        for column in table.columns:
--            ctype = column.type
--            if column.auto_increment:
--                ctype = 'INT UNSIGNED NOT NULL AUTO_INCREMENT'
--                # Override the column type, as a text field cannot
--                # use auto_increment.
--                column.type = 'int'
--            coldefs.append('    `%s` %s' % (column.name, ctype))
--        if len(table.key) > 0:
--            coldefs.append('    PRIMARY KEY (%s)' %
--                           self._collist(table, table.key))
--        sql.append(',\n'.join(coldefs) + '\n)')
--        yield '\n'.join(sql)
-+    def to_sql(table):
-+        """Return the DDL statements necessary to create the specified table,
-+        including indices."""
- 
--        for index in table.indices:
--            yield 'CREATE INDEX %s_%s_idx ON %s (%s);' % (table.name,
--                  '_'.join(index.columns), table.name,
--                  self._collist(table, index.columns))
- 
-+class DatabaseManager(Component):
- 
--class MySQLConnection(ConnectionWrapper):
--    """Connection wrapper for MySQL."""
-+    connectors = ExtensionPoint(IDatabaseConnector)
- 
--    poolable = True
-+    connection_uri = Option('trac', 'database', 'sqlite:db/trac.db',
-+        """Database connection
-+        [wiki:TracEnvironment#DatabaseConnectionStrings string] for this
-+        project""")
- 
--    def _mysqldb_gt_or_eq(self, v):
--        """This function checks whether the version of python-mysqldb
--        is greater than or equal to the version that's passed to it.
--        Note that the tuple only checks the major, minor, and sub versions;
--        the sub-sub version is weird, so we only check for 'final' versions.
--        """
--        from MySQLdb import version_info as ver
--        if ver[0] < v[0] or ver[1] < v[1] or ver[2] < v[2]:
--            return False
--        if ver[3] != 'final':
--            return False
--        return True
-+    timeout = IntOption('trac', 'timeout', '20',
-+        """Timeout value for database connection, in seconds.
-+        Use '0' to specify ''no timeout''. ''(Since 0.11)''""")
- 
--    def _set_character_set(self, cnx, charset):
--        vers = tuple([ int(n) for n in cnx.get_server_info().split('.')[:2] ])
--        if vers < (4, 1):
+@@ -122,7 +122,7 @@
+     def _set_character_set(self, cnx, charset):
+         vers = tuple([ int(n) for n in cnx.get_server_info().split('.')[:2] ])
+         if vers < (4, 1):
 -            raise TracError, 'MySQL servers older than 4.1 are not supported!'
--        cnx.query('SET NAMES %s' % charset)
--        cnx.store_result()
--        cnx.charset = charset
-+    def __init__(self):
-+        self._cnx_pool = None
- 
--    def __init__(self, path, user=None, password=None, host=None,
--                 port=None, params={}):
--        import MySQLdb
-+    def init_db(self):
-+        connector, args = self._get_connector()
-+        connector.init_db(**args)
- 
--        if path.startswith('/'):
--            path = path[1:]
--        if password == None:
--            password = ''
--        if port == None:
--            port = 3306
-+    def get_connection(self):
-+        if not self._cnx_pool:
-+            connector, args = self._get_connector()
-+            self._cnx_pool = ConnectionPool(5, connector, **args)
-+        return self._cnx_pool.get_cnx(self.timeout or None)
- 
--        # python-mysqldb 1.2.1 added a 'charset' arg that is required for
--        # unicode stuff.  We hack around that here for older versions; at
--        # some point, this hack should be removed, and a strict requirement
--        # on 1.2.1 made.  -dilinger
--        if (self._mysqldb_gt_or_eq((1, 2, 1))):
--            cnx = MySQLdb.connect(db=path, user=user, passwd=password,
--                                  host=host, port=port, charset='utf8')
--        else:
--            cnx = MySQLdb.connect(db=path, user=user, passwd=password,
--                                  host=host, port=port, use_unicode=True)
--            self._set_character_set(cnx, 'utf8')
--        ConnectionWrapper.__init__(self, cnx)
--        self._is_closed = False
-+    def shutdown(self, tid=None):
-+        if self._cnx_pool:
-+            self._cnx_pool.shutdown(tid)
-+            if not tid:
-+                self._cnx_pool = None
- 
--    def cast(self, column, type):
--        if type == 'int':
--            type = 'signed'
--        return 'CAST(%s AS %s)' % (column, type)
-+    def _get_connector(self): ### FIXME: Make it public?
-+        scheme, args = _parse_db_str(self.connection_uri)
-+        candidates = {}
-+        connector = None
-+        for connector in self.connectors:
-+            for scheme_, priority in connector.get_supported_schemes():
-+                if scheme_ != scheme:
-+                    continue
-+                highest = candidates.get(scheme_, (None, 0))[1]
-+                if priority > highest:
-+                    candidates[scheme] = (connector, priority)
-+            connector = candidates.get(scheme, [None])[0]
-+        if not connector:
-+            raise TracError('Tipo de base de datos no soportado "%s"' % scheme)
- 
--    def concat(self, *args):
--        return 'concat(%s)' % ', '.join(args)
-+        if scheme == 'sqlite':
-+            # Special case for SQLite to support a path relative to the
-+            # environment directory
-+            if args['path'] != ':memory:' and \
-+                   not args['path'].startswith('/'):
-+                args['path'] = os.path.join(self.env.path,
-+                                            args['path'].lstrip('/'))
- 
--    def like(self):
--        return "LIKE %s ESCAPE '/'"
-+        return connector, args
- 
--    def like_escape(self, text):
--        return _like_escape_re.sub(r'/\1', text)
- 
--    def get_last_id(self, cursor, table, column='id'):
--        return self.cnx.insert_id()
-+def _parse_db_str(db_str):
-+    scheme, rest = db_str.split(':', 1)
- 
--    def rollback(self):
--        if self.cnx.ping():
--            self._set_character_set(self.cnx, 'utf8')
--            self.cnx.rollback()
-+    if not rest.startswith('/'):
-+        if scheme == 'sqlite':
-+            # Support for relative and in-memory SQLite connection strings
-+            host = None
-+            path = rest
-         else:
--            self._is_closed = True
-+            raise TracError('La cadena de conexión a la base de datos debe comenzar con '
-+                            'esquema:/')
-+    else:
-+        if rest.startswith('/') and not rest.startswith('//'):
-+            host = None
-+            rest = rest[1:]
-+        elif rest.startswith('///'):
-+            host = None
-+            rest = rest[3:]
-+        else:
-+            rest = rest[2:]
-+            if rest.find('/') == -1:
-+                host = rest
-+                rest = ''
-+            else:
-+                host, rest = rest.split('/', 1)
-+        path = None
- 
--    def close(self):
--        if not self._is_closed:
--            self.cnx.close()
--            self._is_closed = True
-+    if host and host.find('@') != -1:
-+        user, host = host.split('@', 1)
-+        if user.find(':') != -1:
-+            user, password = user.split(':', 1)
-+        else:
-+            password = None
-+        if user:
-+            user = urllib.unquote(user)
-+        if password:
-+            password = unicode_passwd(urllib.unquote(password))
-+    else:
-+        user = password = None
-+    if host and host.find(':') != -1:
-+        host, port = host.split(':')
-+        port = int(port)
-+    else:
-+        port = None
-+
-+    if not path:
-+        path = '/' + rest
-+    if os.name == 'nt':
-+        # Support local paths containing drive letters on Win32
-+        if len(rest) > 1 and rest[1] == '|':
-+            path = "%s:%s" % (rest[0], rest[2:])
-+
-+    params = {}
-+    if path.find('?') != -1:
-+        path, qs = path.split('?', 1)
-+        qs = qs.split('&')
-+        for param in qs:
-+            name, value = param.split('=', 1)
-+            value = urllib.unquote(value)
-+            params[name] = value
-+
-+    args = zip(('user', 'password', 'host', 'port', 'path', 'params'),
-+               (user, password, host, port, path, params))
-+    return scheme, dict([(key, value) for key, value in args if value])
++            raise TracError, 'Los servidores MySQL anteriores a 4.1 no son soportados!'
+         cnx.query('SET NAMES %s' % charset)
+         cnx.store_result()
+         cnx.charset = charset
 Index: trac/versioncontrol/api.py
 ===================================================================
---- trac/versioncontrol/api.py	(revision 5702)
+--- trac/versioncontrol/api.py	(revision 5756)
 +++ trac/versioncontrol/api.py	(working copy)
 @@ -88,9 +88,9 @@
                          continue
@@ -2143,7 +1858,7 @@ Index: trac/versioncontrol/api.py
          return True
 Index: trac/versioncontrol/svn_fs.py
 ===================================================================
---- trac/versioncontrol/svn_fs.py	(revision 5702)
+--- trac/versioncontrol/svn_fs.py	(revision 5756)
 +++ trac/versioncontrol/svn_fs.py	(working copy)
 @@ -254,7 +254,7 @@
          self.path = path # might be needed by __del__()/close()
@@ -2184,7 +1899,7 @@ Index: trac/versioncontrol/svn_fs.py
          subpool = Pool(self.pool)
 Index: trac/versioncontrol/svn_authz.py
 ===================================================================
---- trac/versioncontrol/svn_authz.py	(revision 5702)
+--- trac/versioncontrol/svn_authz.py	(revision 5756)
 +++ trac/versioncontrol/svn_authz.py	(working copy)
 @@ -41,7 +41,7 @@
      if not os.path.isabs(authz_file):
@@ -2197,8 +1912,17 @@ Index: trac/versioncontrol/svn_authz.py
      return RealSubversionAuthorizer(repos, authname, module_name, authz_file)
 Index: trac/versioncontrol/web_ui/util.py
 ===================================================================
---- trac/versioncontrol/web_ui/util.py	(revision 5702)
+--- trac/versioncontrol/web_ui/util.py	(revision 5756)
 +++ trac/versioncontrol/web_ui/util.py	(working copy)
+@@ -72,7 +72,7 @@
+     return changes
+ 
+ def get_path_links(href, fullpath, rev):
+-    links = [{'name': 'root', 'href': href.browser(rev=rev)}]
++    links = [{'name': 'raíz', 'href': href.browser(rev=rev)}]
+     path = ''
+     for part in [p for p in fullpath.split('/') if p]:
+         path += part + '/'
 @@ -97,9 +97,9 @@
      try: 
          return repos.get_node(path, rev) 
@@ -2214,7 +1938,7 @@ Index: trac/versioncontrol/web_ui/util.py
  
 Index: trac/versioncontrol/web_ui/changeset.py
 ===================================================================
---- trac/versioncontrol/web_ui/changeset.py	(revision 5702)
+--- trac/versioncontrol/web_ui/changeset.py	(revision 5756)
 +++ trac/versioncontrol/web_ui/changeset.py	(working copy)
 @@ -259,9 +259,9 @@
                                               'new': new,
@@ -2296,7 +2020,7 @@ Index: trac/versioncontrol/web_ui/changeset.py
          if not 'changeset' in filters:
 Index: trac/versioncontrol/web_ui/log.py
 ===================================================================
---- trac/versioncontrol/web_ui/log.py	(revision 5702)
+--- trac/versioncontrol/web_ui/log.py	(revision 5756)
 +++ trac/versioncontrol/web_ui/log.py	(working copy)
 @@ -94,7 +94,7 @@
          path_links = get_path_links(req.href, path, rev)
@@ -2345,14 +2069,14 @@ Index: trac/versioncontrol/web_ui/log.py
  
 Index: trac/versioncontrol/web_ui/browser.py
 ===================================================================
---- trac/versioncontrol/web_ui/browser.py	(revision 5702)
+--- trac/versioncontrol/web_ui/browser.py	(revision 5756)
 +++ trac/versioncontrol/web_ui/browser.py	(working copy)
 @@ -78,7 +78,7 @@
          if not req.perm.has_permission('BROWSER_VIEW'):
              return
          yield ('mainnav', 'browser',
 -               html.A('Browse Source', href=req.href.browser()))
-+               html.A('Ver código fuente', href=req.href.browser()))
++               html.A('Explorar repositorio', href=req.href.browser()))
  
      # IPermissionRequestor methods
  
@@ -2394,7 +2118,7 @@ Index: trac/versioncontrol/web_ui/browser.py
              del content # the remainder of that content is not needed
 Index: trac/versioncontrol/cache.py
 ===================================================================
---- trac/versioncontrol/cache.py	(revision 5702)
+--- trac/versioncontrol/cache.py	(revision 5756)
 +++ trac/versioncontrol/cache.py	(working copy)
 @@ -79,16 +79,16 @@
          repository_dir = metadata.get(CACHE_REPOSITORY_DIR)
@@ -2475,7 +2199,7 @@ Index: trac/versioncontrol/cache.py
                          kind = kindmap[kind]
 Index: trac/Settings.py
 ===================================================================
---- trac/Settings.py	(revision 5702)
+--- trac/Settings.py	(revision 5756)
 +++ trac/Settings.py	(working copy)
 @@ -33,7 +33,7 @@
  
@@ -2497,7 +2221,7 @@ Index: trac/Settings.py
              req.hdf['settings.session_id'] = req.session.sid
 Index: trac/scripts/admin.py
 ===================================================================
---- trac/scripts/admin.py	(revision 5702)
+--- trac/scripts/admin.py	(revision 5756)
 +++ trac/scripts/admin.py	(working copy)
 @@ -67,8 +67,8 @@
  class TracAdmin(cmd.Cmd):
@@ -3191,7 +2915,7 @@ Index: trac/scripts/admin.py
                      if cmd.startswith(content):
 Index: trac/scripts/tests/admin.py
 ===================================================================
---- trac/scripts/tests/admin.py	(revision 5702)
+--- trac/scripts/tests/admin.py	(revision 5756)
 +++ trac/scripts/tests/admin.py	(working copy)
 @@ -185,7 +185,7 @@
              self.assertEqual(0, rv)
@@ -3240,7 +2964,7 @@ Index: trac/scripts/tests/admin.py
  
 Index: trac/perm.py
 ===================================================================
---- trac/perm.py	(revision 5702)
+--- trac/perm.py	(revision 5756)
 +++ trac/perm.py	(working copy)
 @@ -32,7 +32,7 @@
          self.action = action
@@ -3262,7 +2986,7 @@ Index: trac/perm.py
  
 Index: trac/Search.py
 ===================================================================
---- trac/Search.py	(revision 5702)
+--- trac/Search.py	(revision 5756)
 +++ trac/Search.py	(working copy)
 @@ -74,7 +74,7 @@
      parameters. The result is returned as a (string, params) tuple.
@@ -3339,7 +3063,7 @@ Index: trac/Search.py
              if isinstance(link, Element):
 Index: trac/config.py
 ===================================================================
---- trac/config.py	(revision 5702)
+--- trac/config.py	(revision 5756)
 +++ trac/config.py	(working copy)
 @@ -220,7 +220,7 @@
                      yield option
@@ -3374,7 +3098,7 @@ Index: trac/config.py
  
 Index: trac/loader.py
 ===================================================================
---- trac/loader.py	(revision 5702)
+--- trac/loader.py	(revision 5756)
 +++ trac/loader.py	(working copy)
 @@ -47,7 +47,7 @@
              try:
@@ -3449,14 +3173,14 @@ Index: trac/loader.py
              if modules:
 Index: trac/Timeline.py
 ===================================================================
---- trac/Timeline.py	(revision 5702)
+--- trac/Timeline.py	(revision 5756)
 +++ trac/Timeline.py	(working copy)
 @@ -77,7 +77,7 @@
          if not req.perm.has_permission('TIMELINE_VIEW'):
              return
          yield ('mainnav', 'timeline',
 -               html.A('Timeline', href=req.href.timeline(), accesskey=2))
-+               html.A('Histórico', href=req.href.timeline(), accesskey=2))
++               html.A('Cronología', href=req.href.timeline(), accesskey=2))
  
      # IPermissionRequestor methods
  
@@ -3465,7 +3189,7 @@ Index: trac/Timeline.py
              del events[maxrows:]
  
 -        req.hdf['title'] = 'Timeline'
-+        req.hdf['title'] = 'Histórico'
++        req.hdf['title'] = 'Cronología'
  
          # Get the email addresses of all known users
          email_map = {}
@@ -3479,11 +3203,11 @@ Index: trac/Timeline.py
 -            '<p>You may want to see the other kind of events from the '
 -            '<a href="%s">Timeline</a></p>', 
 +            '<p>Tal vez quiera ver los otros tipos de eventos del '
-+            '<a href="%s">Histórico</a></p>', 
++            '<a href="%s">Cronología</a></p>', 
              ", ".join(guilty_kinds), ep_name, exc_name, to_unicode(exc), href))
 Index: trac/About.py
 ===================================================================
---- trac/About.py	(revision 5702)
+--- trac/About.py	(revision 5756)
 +++ trac/About.py	(working copy)
 @@ -38,7 +38,7 @@
  
@@ -3505,7 +3229,7 @@ Index: trac/About.py
              req.hdf['about.plugins_href'] = req.href.about('plugins')
 Index: trac/wiki/api.py
 ===================================================================
---- trac/wiki/api.py	(revision 5702)
+--- trac/wiki/api.py	(revision 5756)
 +++ trac/wiki/api.py	(working copy)
 @@ -143,7 +143,7 @@
          try:
@@ -3536,8 +3260,17 @@ Index: trac/wiki/api.py
      def wiki_page_version_deleted(self, page):
 Index: trac/wiki/web_ui.py
 ===================================================================
---- trac/wiki/web_ui.py	(revision 5702)
+--- trac/wiki/web_ui.py	(revision 5756)
 +++ trac/wiki/web_ui.py	(working copy)
+@@ -51,7 +51,7 @@
+ 
+     # IContentConverter methods
+     def get_supported_conversions(self):
+-        yield ('txt', 'Plain Text', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
++        yield ('txt', 'Texto Plano', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
+ 
+     def convert_content(self, req, mimetype, content, key):
+         return (content, 'text/plain;charset=utf-8')
 @@ -67,7 +67,7 @@
          yield ('mainnav', 'wiki',
                 html.A('Wiki', href=req.href.wiki(), accesskey=1))
@@ -3623,7 +3356,7 @@ Index: trac/wiki/web_ui.py
          req.hdf['wiki.attachments'] = attachments_to_hdf(self.env, req, db,
 Index: trac/wiki/intertrac.py
 ===================================================================
---- trac/wiki/intertrac.py	(revision 5702)
+--- trac/wiki/intertrac.py	(revision 5756)
 +++ trac/wiki/intertrac.py	(working copy)
 @@ -41,13 +41,13 @@
      def process_request(self, req):
@@ -3668,7 +3401,7 @@ Index: trac/wiki/intertrac.py
              [generate_prefix(p) for p in sorted(intertracs.keys())])
 Index: trac/wiki/model.py
 ===================================================================
---- trac/wiki/model.py	(revision 5702)
+--- trac/wiki/model.py	(revision 5756)
 +++ trac/wiki/model.py	(working copy)
 @@ -68,7 +68,7 @@
      exists = property(fget=lambda self: self.version > 0)
@@ -3705,7 +3438,7 @@ Index: trac/wiki/model.py
              db.commit()
 Index: trac/wiki/formatter.py
 ===================================================================
---- trac/wiki/formatter.py	(revision 5702)
+--- trac/wiki/formatter.py	(revision 5756)
 +++ trac/wiki/formatter.py	(working copy)
 @@ -72,7 +72,7 @@
                  self.processor = self._mimeview_processor
@@ -3757,7 +3490,7 @@ Index: trac/wiki/formatter.py
      # Headings
 Index: trac/wiki/macros.py
 ===================================================================
---- trac/wiki/macros.py	(revision 5702)
+--- trac/wiki/macros.py	(revision 5756)
 +++ trac/wiki/macros.py	(working copy)
 @@ -252,7 +252,7 @@
          # we expect the 1st argument to be a filename (filespec)
@@ -3824,7 +3557,7 @@ Index: trac/wiki/macros.py
 +        raise TracError, 'No se encontró el macro %s' % name
 Index: trac/wiki/interwiki.py
 ===================================================================
---- trac/wiki/interwiki.py	(revision 5702)
+--- trac/wiki/interwiki.py	(revision 5756)
 +++ trac/wiki/interwiki.py	(working copy)
 @@ -131,7 +131,7 @@
          yield 'InterWiki'
@@ -3846,7 +3579,7 @@ Index: trac/wiki/interwiki.py
                           for w in interwikis ],
 Index: trac/upgrades/db10.py
 ===================================================================
---- trac/upgrades/db10.py	(revision 5702)
+--- trac/upgrades/db10.py	(revision 5756)
 +++ trac/upgrades/db10.py	(working copy)
 @@ -22,4 +22,4 @@
  def do_upgrade(env, ver, cursor):
@@ -3856,7 +3589,7 @@ Index: trac/upgrades/db10.py
 +    print 'Por favor realice un "resync" después de esta actualización.'
 Index: trac/web/standalone.py
 ===================================================================
---- trac/web/standalone.py	(revision 5702)
+--- trac/web/standalone.py	(revision 5756)
 +++ trac/web/standalone.py	(working copy)
 @@ -106,26 +106,26 @@
  
@@ -3944,17 +3677,24 @@ Index: trac/web/standalone.py
          else:
 Index: trac/web/auth.py
 ===================================================================
---- trac/web/auth.py	(revision 5702)
+--- trac/web/auth.py	(revision 5756)
 +++ trac/web/auth.py	(working copy)
-@@ -83,7 +83,7 @@
+@@ -83,12 +83,12 @@
  
      def get_navigation_items(self, req):
          if req.authname and req.authname != 'anonymous':
 -            yield ('metanav', 'login', 'logged in as %s' % req.authname)
 +            yield ('metanav', 'login', 'sesión iniciada como %s' % req.authname)
              yield ('metanav', 'logout',
-                    html.A('Logout', href=req.href.logout()))
+-                   html.A('Logout', href=req.href.logout()))
++                   html.A('Cerrar Sesión', href=req.href.logout()))
          else:
+             yield ('metanav', 'login',
+-                   html.A('Login', href=req.href.login()))
++                   html.A('Iniciar Sesión', href=req.href.login()))
+ 
+     # IRequestHandler methods
+ 
 @@ -119,10 +119,10 @@
          case sensitive regarding user names and domain names
          """
@@ -4019,7 +3759,7 @@ Index: trac/web/auth.py
          values = {}
 Index: trac/web/api.py
 ===================================================================
---- trac/web/api.py	(revision 5702)
+--- trac/web/api.py	(revision 5756)
 +++ trac/web/api.py	(working copy)
 @@ -408,7 +408,7 @@
          "304 Not Modified" response if it matches.
@@ -4032,7 +3772,7 @@ Index: trac/web/api.py
          last_modified = http_date(stat.st_mtime)
 Index: trac/web/clearsilver.py
 ===================================================================
---- trac/web/clearsilver.py	(revision 5702)
+--- trac/web/clearsilver.py	(revision 5756)
 +++ trac/web/clearsilver.py	(working copy)
 @@ -132,7 +132,7 @@
              import neo_util
@@ -4045,7 +3785,7 @@ Index: trac/web/clearsilver.py
  
 Index: trac/web/chrome.py
 ===================================================================
---- trac/web/chrome.py	(revision 5702)
+--- trac/web/chrome.py	(revision 5756)
 +++ trac/web/chrome.py	(working copy)
 @@ -230,7 +230,7 @@
                  if os.path.isfile(path):
@@ -4058,7 +3798,7 @@ Index: trac/web/chrome.py
      # ITemplateProvider methods
 Index: trac/web/session.py
 ===================================================================
---- trac/web/session.py	(revision 5702)
+--- trac/web/session.py	(revision 5756)
 +++ trac/web/session.py	(working copy)
 @@ -99,10 +99,10 @@
          cursor = db.cursor()
@@ -4077,7 +3817,7 @@ Index: trac/web/session.py
          cursor.execute("UPDATE session_attribute SET sid=%s "
 Index: trac/util/tests/text.py
 ===================================================================
---- trac/util/tests/text.py	(revision 5702)
+--- trac/util/tests/text.py	(revision 5756)
 +++ trac/util/tests/text.py	(working copy)
 @@ -25,9 +25,9 @@
      def test_from_exception_using_unicode_args(self):
@@ -4093,7 +3833,7 @@ Index: trac/util/tests/text.py
          u = u'Das Ger\xe4t oder die Ressource ist belegt'
 Index: trac/util/datefmt.py
 ===================================================================
---- trac/util/datefmt.py	(revision 5702)
+--- trac/util/datefmt.py	(revision 5756)
 +++ trac/util/datefmt.py	(working copy)
 @@ -30,17 +30,17 @@
      if not time2: time2 = time.time()
@@ -4129,7 +3869,7 @@ Index: trac/util/datefmt.py
      return seconds
 Index: trac/notification.py
 ===================================================================
---- trac/notification.py	(revision 5702)
+--- trac/notification.py	(revision 5756)
 +++ trac/notification.py	(working copy)
 @@ -190,7 +190,7 @@
              self._charset.input_codec = None

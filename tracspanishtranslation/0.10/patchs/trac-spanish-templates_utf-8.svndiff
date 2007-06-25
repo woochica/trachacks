@@ -1,6 +1,6 @@
 Index: templates/report.cs
 ===================================================================
---- templates/report.cs	(revision 5702)
+--- templates/report.cs	(revision 5756)
 +++ templates/report.cs	(working copy)
 @@ -5,11 +5,11 @@
   <h2>Report Navigation</h2>
@@ -144,14 +144,14 @@ Index: templates/report.cs
 -    var:trac.href.wiki ?>/TracReports">TracReports</a> for help on using and
 -  creating reports.
 +  <strong>Nota:</strong> Véa <a href="<?cs
-+    var:trac.href.wiki ?>/TracReports">TracReports</a> para ayuda acerca de utilizar
++    var:trac.href.wiki ?>/TracReports">TracReports</a> para ayuda sobre cómo utilizar
 +  y crear reportes.
   </div>
   
  </div>
 Index: templates/anydiff.cs
 ===================================================================
---- templates/anydiff.cs	(revision 5702)
+--- templates/anydiff.cs	(revision 5756)
 +++ templates/anydiff.cs	(working copy)
 @@ -4,41 +4,41 @@
  
@@ -199,13 +199,13 @@ Index: templates/anydiff.cs
 -  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
 -  ?>/TracChangeset#ExaminingDifferencesBetweenBranches">TracChangeset</a> for help on using the arbitrary diff feature.
 +  <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki
-+  ?>/TracChangeset#ExaminingDifferencesBetweenBranches">TracChangeset</a> para ayuda acerca de utilizar la característica 'diff arbitrario'.
++  ?>/TracChangeset#ExaminingDifferencesBetweenBranches">TracChangeset</a> para ayuda sobre cómo utilizar la característica 'diff arbitrario'.
   </div>
  </div>
  
 Index: templates/log.cs
 ===================================================================
---- templates/log.cs	(revision 5702)
+--- templates/log.cs	(revision 5756)
 +++ templates/log.cs	(working copy)
 @@ -4,18 +4,18 @@
  <div id="ctxtnav" class="nav">
@@ -381,13 +381,13 @@ Index: templates/log.cs
 -  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
 -  ?>/TracRevisionLog">TracRevisionLog</a> for help on using the revision log.
 +  <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki
-+  ?>/TracRevisionLog">TracRevisionLog</a> para ayuda acerca de utilizar la bitácora de revisiones.
++  ?>/TracRevisionLog">TracRevisionLog</a> para ayuda sobre cómo utilizar la bitácora de revisiones.
   </div>
  
  </div>
 Index: templates/ticket_notify_email.cs
 ===================================================================
---- templates/ticket_notify_email.cs	(revision 5702)
+--- templates/ticket_notify_email.cs	(revision 5756)
 +++ templates/ticket_notify_email.cs	(working copy)
 @@ -4,20 +4,20 @@
  <?cs var:ticket.description ?>
@@ -417,7 +417,7 @@ Index: templates/ticket_notify_email.cs
 \ No newline at end of file
 Index: templates/browser.cs
 ===================================================================
---- templates/browser.cs	(revision 5702)
+--- templates/browser.cs	(revision 5756)
 +++ templates/browser.cs	(working copy)
 @@ -4,9 +4,9 @@
  <div id="ctxtnav" class="nav">
@@ -460,7 +460,7 @@ Index: templates/browser.cs
       <th class="rev">Rev</th><?cs 
 -     call:sortable_th(browser.order, browser.desc, 'date', 'Age', browser.order_href) ?>
 -     <th class="change">Last Change</th>
-+     call:sortable_th(browser.order, browser.desc, 'date', 'Edad', browser.order_href) ?>
++     call:sortable_th(browser.order, browser.desc, 'date', 'Antigüedad', browser.order_href) ?>
 +     <th class="change">Última modificación</th>
      </tr>
     </thead>
@@ -499,7 +499,7 @@ Index: templates/browser.cs
 -     Revision <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>, <?cs var:file.size ?>
 -     (checked in by <?cs var:file.author ?>, <?cs var:file.age ?> ago)
 +     Revisión <a href="<?cs var:file.changeset_href ?>"><?cs var:file.rev ?></a>, <?cs var:file.size ?>
-+     (creada por <?cs var:file.author ?>, edad <?cs var:file.age ?>)
++     (creada por <?cs var:file.author ?>, antigüedad <?cs var:file.age ?>)
      </th></tr><tr>
      <td class="message"><?cs var:file.message ?></td>
     </tr><?cs /if ?><?cs
@@ -533,7 +533,7 @@ Index: templates/browser.cs
 -  <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki
 -  ?>/TracBrowser">TracBrowser</a> for help on using the browser.
 +  <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki
-+  ?>/TracBrowser">TracBrowser</a> para ayuda acerca de explorar el repositorio.
++  ?>/TracBrowser">TracBrowser</a> para ayuda sobre explorar el repositorio.
   </div>
  
    <div id="anydiff">
@@ -548,7 +548,7 @@ Index: templates/browser.cs
    </div>
 Index: templates/roadmap.cs
 ===================================================================
---- templates/roadmap.cs	(revision 5702)
+--- templates/roadmap.cs	(revision 5756)
 +++ templates/roadmap.cs	(working copy)
 @@ -4,35 +4,35 @@
  <div id="ctxtnav" class="nav"></div>
@@ -638,13 +638,13 @@ Index: templates/roadmap.cs
 -  <strong>Note:</strong> See <a href="<?cs
 -    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> for help on using the roadmap.
 +  <strong>Note:</strong> Véa <a href="<?cs
-+    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> para ayuda acerca de utilizar hitos.
++    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> para ayuda sobre cómo utilizar hitos.
   </div>
  
  </div>
 Index: templates/ticket.cs
 ===================================================================
---- templates/ticket.cs	(revision 5702)
+--- templates/ticket.cs	(revision 5756)
 +++ templates/ticket.cs	(working copy)
 @@ -8,20 +8,20 @@
     if:len(links.prev) ?>
@@ -888,7 +888,7 @@ Index: templates/ticket.cs
  <?cs /if ?>
 Index: templates/macros.cs
 ===================================================================
---- templates/macros.cs	(revision 5702)
+--- templates/macros.cs	(revision 5756)
 +++ templates/macros.cs	(working copy)
 @@ -21,9 +21,9 @@
   set:first = #1 ?><?cs
@@ -930,7 +930,7 @@ Index: templates/macros.cs
  /def ?><?cs
 Index: templates/header.cs
 ===================================================================
---- templates/header.cs	(revision 5702)
+--- templates/header.cs	(revision 5756)
 +++ templates/header.cs	(working copy)
 @@ -41,7 +41,7 @@
   <?cs if:trac.acl.SEARCH_VIEW ?><div>
@@ -943,7 +943,7 @@ Index: templates/header.cs
    <input type="hidden" name="ticket" value="on" />
 Index: templates/attachment.cs
 ===================================================================
---- templates/attachment.cs	(revision 5702)
+--- templates/attachment.cs	(revision 5756)
 +++ templates/attachment.cs	(working copy)
 @@ -6,29 +6,29 @@
  <div id="content" class="attachment">
@@ -1046,7 +1046,7 @@ Index: templates/attachment.cs
  <?cs /if ?>
 Index: templates/error.cs
 ===================================================================
---- templates/error.cs	(revision 5702)
+--- templates/error.cs	(revision 5756)
 +++ templates/error.cs	(working copy)
 @@ -11,24 +11,24 @@
   <?cs elif error.type == "internal" ?>
@@ -1085,7 +1085,7 @@ Index: templates/error.cs
  
 Index: templates/query_rss.cs
 ===================================================================
---- templates/query_rss.cs	(revision 5702)
+--- templates/query_rss.cs	(revision 5756)
 +++ templates/query_rss.cs	(working copy)
 @@ -2,13 +2,13 @@
  <rss version="2.0">
@@ -1106,7 +1106,7 @@ Index: templates/query_rss.cs
     <image>
 Index: templates/newticket.cs
 ===================================================================
---- templates/newticket.cs	(revision 5702)
+--- templates/newticket.cs	(revision 5756)
 +++ templates/newticket.cs	(working copy)
 @@ -7,43 +7,43 @@
  <div id="ctxtnav" class="nav"></div>
@@ -1127,7 +1127,7 @@ Index: templates/newticket.cs
   <?cs /if ?>
   <div class="field">
 -  <label for="summary">Short summary:</label><br />
-+  <label for="summary">Breve sumario:</label><br />
++  <label for="summary">Breve descripción:</label><br />
    <input id="summary" type="text" name="summary" size="80" value="<?cs
      var:newticket.summary ?>"/>
   </div><?cs
@@ -1141,7 +1141,7 @@ Index: templates/newticket.cs
   <div class="field">
 -  <label for="description">Full description (you may use <a tabindex="42" href="<?cs
 -    var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> here):</label><br />
-+  <label for="description">Descripción completa (puedes utilizar <a tabindex="42" href="<?cs
++  <label for="description">Descripción detallada (puedes utilizar <a tabindex="42" href="<?cs
 +    var:$trac.href.wiki ?>/WikiFormatting">WikiFormatting</a> aquí):</label><br />
    <textarea id="description" name="description" class="wikitext" rows="10" cols="78">
  <?cs var:newticket.description ?></textarea><?cs
@@ -1182,13 +1182,13 @@ Index: templates/newticket.cs
 - <strong>Note:</strong> See <a href="<?cs
 -   var:trac.href.wiki ?>/TracTickets">TracTickets</a> for help on using tickets.
 + <strong>Nota:</strong> Véa <a href="<?cs
-+   var:trac.href.wiki ?>/TracTickets">TracTickets</a> para ayuda acerca de utilizar tickets.
++   var:trac.href.wiki ?>/TracTickets">TracTickets</a> para ayuda sobre cómo utilizar tickets.
  </div>
  </div>
  
 Index: templates/timeline_rss.cs
 ===================================================================
---- templates/timeline_rss.cs	(revision 5702)
+--- templates/timeline_rss.cs	(revision 5756)
 +++ templates/timeline_rss.cs	(working copy)
 @@ -7,8 +7,8 @@
     <title><?cs var:title ?></title><?cs
@@ -1196,14 +1196,14 @@ Index: templates/timeline_rss.cs
    <link><?cs var:base_host ?><?cs var:trac.href.timeline ?></link>
 -  <description>Trac Timeline</description>
 -  <language>en-us</language>
-+  <description>Histórico Trac</description>
++  <description>Cronología Trac</description>
 +  <language>es-ES</language>
    <generator>Trac v<?cs var:trac.version ?></generator><?cs
    if:chrome.logo.src ?>
     <image>
 Index: templates/footer.cs
 ===================================================================
---- templates/footer.cs	(revision 5702)
+--- templates/footer.cs	(revision 5756)
 +++ templates/footer.cs	(working copy)
 @@ -1,6 +1,6 @@
  <script type="text/javascript">searchHighlight()</script><?cs
@@ -1215,7 +1215,7 @@ Index: templates/footer.cs
    set:islast = name(link) == len(chrome.links.alternate) - 1?><li<?cs
 Index: templates/milestone.cs
 ===================================================================
---- templates/milestone.cs	(revision 5702)
+--- templates/milestone.cs	(revision 5756)
 +++ templates/milestone.cs	(working copy)
 @@ -5,13 +5,13 @@
  
@@ -1449,13 +1449,13 @@ Index: templates/milestone.cs
 -  <strong>Note:</strong> See <a href="<?cs
 -    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> for help on using the roadmap.
 +  <strong>Nota:</strong> Véa <a href="<?cs
-+    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> para ayuda acerca de utilizar hitos.
++    var:trac.href.wiki ?>/TracRoadmap">TracRoadmap</a> para ayuda sobre cómo utilizar hitos.
   </div>
  
  </div>
 Index: templates/settings.cs
 ===================================================================
---- templates/settings.cs	(revision 5702)
+--- templates/settings.cs	(revision 5756)
 +++ templates/settings.cs	(working copy)
 @@ -5,59 +5,59 @@
  
@@ -1539,7 +1539,7 @@ Index: templates/settings.cs
  /if ?>
 Index: templates/changeset.cs
 ===================================================================
---- templates/changeset.cs	(revision 5702)
+--- templates/changeset.cs	(revision 5756)
 +++ templates/changeset.cs	(working copy)
 @@ -7,28 +7,28 @@
    <ul><?cs
@@ -1816,7 +1816,7 @@ Index: templates/changeset.cs
       </thead><?cs
 Index: templates/report_rss.cs
 ===================================================================
---- templates/report_rss.cs	(revision 5702)
+--- templates/report_rss.cs	(revision 5756)
 +++ templates/report_rss.cs	(working copy)
 @@ -8,8 +8,8 @@
   /if ?>
@@ -1840,7 +1840,7 @@ Index: templates/report_rss.cs
  </rss>
 Index: templates/wiki.cs
 ===================================================================
---- templates/wiki.cs	(revision 5702)
+--- templates/wiki.cs	(revision 5756)
 +++ templates/wiki.cs	(working copy)
 @@ -8,27 +8,27 @@
     <li class="first"><?cs
@@ -2154,7 +2154,7 @@ Index: templates/wiki.cs
 -?>/TracWiki">TracWiki</a> for help on editing wiki content.
 +     <b>Nota:</b> Véa <a href="<?cs var:$trac.href.wiki
 +?>/WikiFormatting">WikiFormatting</a> y <a href="<?cs var:$trac.href.wiki
-+?>/TracWiki">TracWiki</a> para ayuda acerca de la edición del contenido del wiki.
++?>/TracWiki">TracWiki</a> para ayuda sobre cómo editar el contenido del wiki.
      </div>
      <fieldset id="changeinfo">
 -     <legend>Change information</legend>
@@ -2259,7 +2259,7 @@ Index: templates/wiki.cs
   <?cs /if ?>
 Index: templates/query.cs
 ===================================================================
---- templates/query.cs	(revision 5702)
+--- templates/query.cs	(revision 5756)
 +++ templates/query.cs	(working copy)
 @@ -4,13 +4,13 @@
  <div id="ctxtnav" class="nav"><?cs
@@ -2401,13 +2401,13 @@ Index: templates/query.cs
 - <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki ?>/TracQuery">TracQuery</a> 
 - for help on using queries.
 + <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki ?>/TracQuery">TracQuery</a> 
-+ para ayuda acerca de utilizar consultas personalizadas.
++ para ayuda sobre cómo utilizar consultas personalizadas.
  </div>
  
  </div>
 Index: templates/search.cs
 ===================================================================
---- templates/search.cs	(revision 5702)
+--- templates/search.cs	(revision 5756)
 +++ templates/search.cs	(working copy)
 @@ -23,12 +23,12 @@
  
@@ -2469,20 +2469,20 @@ Index: templates/search.cs
 - <strong>Note:</strong> See <a href="<?cs
 -   var:trac.href.wiki ?>/TracSearch">TracSearch</a>  for help on searching.
 + <strong>Nota:</strong> Véa <a href="<?cs
-+   var:trac.href.wiki ?>/TracSearch">TracSearch</a> para ayuda al realizar búsquedas.
++   var:trac.href.wiki ?>/TracSearch">TracSearch</a> para ayuda sobre cómo realizar búsquedas.
  </div>
  
  </div>
 Index: templates/timeline.cs
 ===================================================================
---- templates/timeline.cs	(revision 5702)
+--- templates/timeline.cs	(revision 5756)
 +++ templates/timeline.cs	(working copy)
 @@ -3,14 +3,14 @@
  <div id="ctxtnav" class="nav"></div>
  
  <div id="content" class="timeline">
 -<h1>Timeline</h1>
-+<h1>Histórico</h1>
++<h1>Cronología</h1>
  
  <form id="prefs" method="get" action="<?cs var:trac.href.timeline ?>">
   <div>
@@ -2512,13 +2512,13 @@ Index: templates/timeline.cs
 - <strong>Note:</strong> See <a href="<?cs var:trac.href.wiki ?>/TracTimeline">TracTimeline</a> 
 - for information about the timeline view.
 + <strong>Nota:</strong> Véa <a href="<?cs var:trac.href.wiki ?>/TracTimeline">TracTimeline</a> 
-+ para información acerca del histórico.
++ para información acerca de la cronología.
  </div>
  
  </div>
 Index: templates/index.cs
 ===================================================================
---- templates/index.cs	(revision 5702)
+--- templates/index.cs	(revision 5756)
 +++ templates/index.cs	(working copy)
 @@ -2,8 +2,8 @@
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -2533,7 +2533,7 @@ Index: templates/index.cs
     <a href="<?cs var:project.href ?>" title="<?cs var:project.description ?>">
 Index: templates/log_rss.cs
 ===================================================================
---- templates/log_rss.cs	(revision 5702)
+--- templates/log_rss.cs	(revision 5756)
 +++ templates/log_rss.cs	(working copy)
 @@ -3,13 +3,13 @@
  <rss version="2.0">
@@ -2570,7 +2570,7 @@ Index: templates/log_rss.cs
    /each ?>
 Index: templates/about.cs
 ===================================================================
---- templates/about.cs	(revision 5702)
+--- templates/about.cs	(revision 5756)
 +++ templates/about.cs	(working copy)
 @@ -3,9 +3,9 @@
   <h2>About Navigation</h2>
@@ -2662,7 +2662,7 @@ Index: templates/about.cs
    Software</a></p>
 Index: templates/ticket_rss.cs
 ===================================================================
---- templates/ticket_rss.cs	(revision 5702)
+--- templates/ticket_rss.cs	(revision 5756)
 +++ templates/ticket_rss.cs	(working copy)
 @@ -36,12 +36,12 @@
      &lt;ul&gt;<?cs
