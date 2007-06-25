@@ -338,7 +338,7 @@ table.progress td.open { border: 0; background: #DD5243; }
 
 /* Tags */
 .tagcloud {
-  width:400px;
+  width:600px;
 }
 
 .tagcloud a {
