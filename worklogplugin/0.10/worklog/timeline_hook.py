@@ -1,5 +1,5 @@
 import re
-import dbhelper
+from util import *
 from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
@@ -27,15 +27,15 @@ class WorkLogTimelineAddon(Component):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
-            cursor.execute("""SELECT wl.user,wl.ticket,wl.time,wl.kind,wl.humankind,t.summary
+            cursor.execute("""SELECT wl.user,wl.ticket,wl.time,wl.starttime,wl.kind,wl.humankind,t.summary
                              FROM (
                              
-                             SELECT user, ticket, starttime AS time, 'workstart' AS kind, 'started' AS humankind
+                             SELECT user, ticket, starttime AS time, starttime, 'workstart' AS kind, 'started' AS humankind
                              FROM work_log
 
                              UNION
 
-                             SELECT user, ticket, endtime AS time, 'workstop' AS kind, 'stopped' AS humankind
+                             SELECT user, ticket, endtime AS time, starttime, 'workstop' AS kind, 'stopped' AS humankind
                              FROM work_log
 
                              ) AS wl
@@ -44,7 +44,7 @@ class WorkLogTimelineAddon(Component):
                            ORDER BY wl.time"""
                            % (start, stop))
             previous_update = None
-            for user,ticket,time,kind,humankind,summary in cursor:
+            for user,ticket,time,starttime,kind,humankind,summary in cursor:
                 ticket_href = href.ticket(ticket)
                 if format == 'rss':
                     title = '%s %s working on Ticket #%s: %s' % \
@@ -53,6 +53,10 @@ class WorkLogTimelineAddon(Component):
                     title = Markup('%s %s working on Ticket <em title="%s">#%s</em>' % \
                                    (user, humankind, summary, ticket))
                 message = ''
+                if kind == 'workstop':
+                    started = datetime.fromtimestamp(starttime)
+                    finished = datetime.fromtimestamp(time)
+                    message = 'Time spent: ~' + pretty_timedelta(started, finished)
                 yield kind, ticket_href, title, time, user, message
 
 

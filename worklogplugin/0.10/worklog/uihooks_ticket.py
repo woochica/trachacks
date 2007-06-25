@@ -1,5 +1,5 @@
 import re
-import dbhelper
+from util import *
 from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
@@ -65,25 +65,23 @@ class WorkLogTicketAddon(Component):
         return Markup(script)
         
     def get_navigation_items(self, req):
+        if req.authname == 'anonymous':
+            return
+        
         match = re.match(r'/ticket/([0-9]+)$', req.path_info)
         if match:
             ticket = int(match.group(1))
 
             # Check to see if y
-            workingon = dbhelper.get_active_task(self.env, req.authname)
-            if not workingon:
-                workingon = { 'starttime': 1,
-                              'endtime': 1,
-                              'ticket': 0}
+            task = get_latest_task(self.env.get_db_cnx(), req.authname)
 
-            # Check state
-            if not workingon['endtime'] == 0:
-                # Should display a "Work on Link" button.
+            # If we are not working on anything or our latest task is finished we
+            # can start working on this task.
+            if not task or not task['endtime'] == 0:
+                # Display a "Work on Link" button.
                 yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, 0)
                 return
-
+            
             # We are working on SOMETHING, but not this ticket...
-            if not workingon['ticket'] == ticket:
-                return
-
-            yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, 1)
+            if task and task['ticket'] == ticket:
+                yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, 1)

@@ -1,5 +1,6 @@
 import re
 import dbhelper
+from util import *
 from time import time
 from datetime import tzinfo, timedelta, datetime
 from usermanual import *
@@ -33,33 +34,6 @@ class WorkLogPage(Component):
             yield 'mainnav', "worklog", \
                   Markup('<a href="%s">%s</a>' % \
                          (url , "Work Log"))
-
-    # Stolen from Trac trunk :)
-    def pretty_timedelta(self, time1, time2=None, resolution=None):
-        """Calculate time delta (inaccurately, only for decorative purposes ;-) for
-        prettyprinting. If time1 is None, the current time is used."""
-        if not time1: time1 = datetime.now()
-        if not time2: time2 = datetime.now()
-        if time1 > time2:
-            time2, time1 = time1, time2
-        units = ((3600 * 24 * 365, 'year',   'years'),
-                 (3600 * 24 * 30,  'month',  'months'),
-                 (3600 * 24 * 7,   'week',   'weeks'),
-                 (3600 * 24,       'day',    'days'),
-                 (3600,            'hour',   'hours'),
-                 (60,              'minute', 'minutes'))
-        diff = time2 - time1
-        age_s = int(diff.days * 86400 + diff.seconds)
-        if resolution and age_s < resolution:
-            return ''
-        if age_s < 60:
-            return '%i second%s' % (age_s, age_s != 1 and 's' or '')
-        for u, unit, unit_plural in units:
-            r = float(age_s) / float(u)
-            if r >= 0.9:
-                r = int(round(r))
-                return '%d %s' % (r, r == 1 and unit or unit_plural)
-        return ''
 
     # IRequestHandler methods
     def get_worklog(self, req):
@@ -100,14 +74,14 @@ class WorkLogPage(Component):
                           "summary": summary,
                           "started": started,
                           "delta": 'Started ' + format_date(starttime) + " " + format_time(starttime) + \
-                                   " (" + self.pretty_timedelta(started) + " ago)"
+                                   " (" + pretty_timedelta(started) + " ago)"
                           }
 
             if not endtime == 0:
                 finished = datetime.fromtimestamp(endtime)
                 log[user]["finished"] = finished
                 log[user]["delta"] = 'Worked on from ' + format_date(starttime) + " " + format_time(starttime) + " - " + format_date(endtime) + " " + format_time(endtime) + \
-                                   " (" + self.pretty_timedelta(started, finished) + ")"
+                                   " (" + pretty_timedelta(started, finished) + ")"
 
                 
         return log
@@ -129,15 +103,11 @@ class WorkLogPage(Component):
                          (req.href.ticket(ticket), tckt['summary'], "#" + ticket))
             tckt_link = Markup('#' + ticket)
 
-            sql = "SELECT MAX(lastchange) FROM work_log WHERE user='%s'" % (authname)
-            lastchange = dbhelper.get_scalar(self.env.get_db_cnx(), sql)
-            if lastchange:
-                sql = "SELECT endtime FROM work_log WHERE user='%s' AND lastchange=%s" % (authname, lastchange)
-                endtime = dbhelper.get_scalar(self.env.get_db_cnx(), sql)
-                if endtime == 0:
-                    addMessage("You cannot work on ticket " + tckt_link + " as you seem to already be working on another ticket.")
-                    return
-            
+            task = get_latest_task(self.env.get_db_cnx(), authname)
+            if task and task['endtime'] == 0:
+                addMessage("You cannot work on ticket " + tckt_link + " as you seem to already be working on another ticket.")
+                return
+
             if not authname == tckt['owner']:
                 addMessage("You cannot work on ticket " + tckt_link + " as you are not the owner.")
                 return
@@ -150,7 +120,9 @@ class WorkLogPage(Component):
             now = int(time())
             sql = "INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) VALUES ('%s', %s, %s, %s, %s)" % \
                   (authname, ticket, now, now, 0)
-            dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
+            db = self.env.get_db_cnx();
+            cursor = db.cursor()
+            cursor.execute(sql)
             addMessage("You are now working on ticket " + tckt_link + ".")
 
         def stop_work(authname, ticket):
@@ -159,30 +131,25 @@ class WorkLogPage(Component):
                          (req.href.ticket(ticket), tckt['summary'], "#" + ticket))
             tckt_link = Markup('#' + ticket)
 
-            sql = "SELECT MAX(lastchange) FROM work_log WHERE user='%s'" % (authname)
-            lastchange = dbhelper.get_scalar(self.env.get_db_cnx(), sql)
-            if not lastchange:
+            task = get_latest_task(self.env.get_db_cnx(), authname)
+            if not task:
                 addMessage("You cannot stop working on ticket " + tckt_link + " as it apears you've not started working on anything yet!")
                 return
             
-            sql = "SELECT ticket,endtime FROM work_log WHERE user='%s' AND lastchange=%s" % (authname, lastchange)
-            data = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]
-            if not data:
+            if not task['endtime'] == 0:
                 addMessage("You cannot stop working on ticket " + tckt_link + " as it appears you've not started working on it yet!")
                 return
-            for (activeticket, endtime) in data:
-                if not activeticket == int(ticket):
-                    addMessage("You cannot stop working on ticket " + tckt_link + " as it appears you've not started working on it yet! " + str(activeticket) + " " + str(endtime))
-                    return
-                if not endtime == 0:
-                    addMessage("You cannot stop working on ticket " + tckt_link + " as it apears you've already finished working!")
-                    return
+            if not task['ticket'] == int(ticket):
+                addMessage("You cannot stop working on ticket " + tckt_link + " as it appears you're working on something else!")
+                return
             
             # Here we should calculate times and automatically add hours to ticket etc.
             now = int(time());
             sql = "UPDATE work_log SET endtime=%s, lastchange=%s WHERE user='%s' AND lastchange=%s AND endtime=0" % \
-                  (now, now, authname, lastchange)
-            dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
+                  (now, now, authname, task['lastchange'])
+            db = self.env.get_db_cnx();
+            cursor = db.cursor()
+            cursor.execute(sql)
             addMessage("You are no longer working on ticket " + tckt_link + ".")
             
         if not re.search('/worklog', req.path_info):

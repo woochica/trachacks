@@ -83,23 +83,6 @@ def get_result_set(db, sql, *params):
     """Executes the query and returns a Result Set"""
     return ResultSet(get_all(db, sql, *params))
 
-def get_active_task(env, authname):
-    sql = "SELECT MAX(lastchange) FROM work_log WHERE user='%s'" % (authname)
-    lastchange = get_scalar(env.get_db_cnx(), sql)
-    if not lastchange:
-        return None
-
-    sql = "SELECT user,ticket,starttime,endtime FROM work_log WHERE user='%s' AND lastchange=%s" % (authname, lastchange)
-    data = get_all(env.get_db_cnx(), sql)[1]
-    task = {}
-    for row in data:
-        task["user"] = row[0]
-        task["ticket"] = row[1]
-        task["starttime"] = row[2]
-        task["endtime"] = row[3]
-    return task
-
-
 class ResultSet:
     """ the result of calling getResultSet """
     def __init__ (self, (columnDescription, rows)):
