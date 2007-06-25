@@ -1,0 +1,3964 @@
+Index: trac/env.py
+===================================================================
+--- trac/env.py	(revision 5756)
++++ trac/env.py	(working copy)
+@@ -70,17 +70,17 @@
+         setups, usually involving running Trac behind a HTTP proxy, you may
+         need to use this option to force Trac to use the correct URL.""")
+ 
+-    project_name = Option('project', 'name', 'My Project',
++    project_name = Option('project', 'name', 'Mi Proyecto',
+         """Name of the project.""")
+ 
+-    project_description = Option('project', 'descr', 'My example project',
++    project_description = Option('project', 'descr', 'Mi proyecto ejemplo',
+         """Short description of the project.""")
+ 
+-    project_url = Option('project', 'url', 'http://example.org/',
++    project_url = Option('project', 'url', 'http://ejemplo.org/',
+         """URL of the main project web site.""")
+ 
+     project_footer = Option('project', 'footer',
+-                            'Visit the Trac open source project at<br />'
++                            'Visite el proyecto open source Trac en<br />'
+                             '<a href="http://trac.edgewall.org/">'
+                             'http://trac.edgewall.org/</a>',
+         """Page footer text (right-aligned).""")
+@@ -330,7 +330,7 @@
+ 
+         db_str = self.config.get('trac', 'database')
+         if not db_str.startswith('sqlite:'):
+-            raise EnvironmentError('Can only backup sqlite databases')
++            raise EnvironmentError('Sólo se pueden realizar copias de seguridad de las bases de datos sqlite')
+         db_name = os.path.join(self.path, db_str[7:])
+         if not dest:
+             dest = '%s.%i.bak' % (db_name, self.get_version())
+@@ -341,7 +341,7 @@
+         db = self.get_db_cnx()
+         for participant in self.setup_participants:
+             if participant.environment_needs_upgrade(db):
+-                self.log.warning('Component %s requires environment upgrade',
++                self.log.warning('El componente %s requiere la actualización del entorno',
+                                  participant)
+                 return True
+         return False
+@@ -398,7 +398,7 @@
+         if dbver == db_default.db_version:
+             return False
+         elif dbver > db_default.db_version:
+-            raise TracError, 'Database newer than Trac version'
++            raise TracError, 'La base de datos es más actual que la versión de Trac'
+         return True
+ 
+     def upgrade_environment(self, db):
+@@ -410,12 +410,12 @@
+                 upgrades = __import__('upgrades', globals(), locals(), [name])
+                 script = getattr(upgrades, name)
+             except AttributeError:
+-                err = 'No upgrade module for version %i (%s.py)' % (i, name)
++                err = 'No existe un módulo de actualización para la versión %i (%s.py)' % (i, name)
+                 raise TracError, err
+             script.do_upgrade(self.env, i, cursor)
+         cursor.execute("UPDATE system SET value=%s WHERE "
+                        "name='database_version'", (db_default.db_version,))
+-        self.log.info('Upgraded database version from %d to %d',
++        self.log.info('Se realizó la actualización de la base de datos de la versión %d a la versión %d',
+                       dbver, db_default.db_version)
+         self._update_sample_config()
+ 
+@@ -429,11 +429,11 @@
+                 config.set(section, name, value)
+         try:
+             config.save()
+-            self.log.info('Wrote sample configuration file with the new '
+-                          'settings and their default values: %s',
++            self.log.info('Se escribió un archivo de configuración -ejemplo- con las nuevas '
++                          'configuraciones y sus valores por defecto: %s',
+                           filename)
+         except IOError, e:
+-            self.log.warn('Couldn\'t write sample configuration file (%s)', e,
++            self.log.warn('No se pudo escribir el archivo de configuración -ejemplo- (%s)', e,
+                           exc_info=True)
+ 
+ 
+@@ -448,12 +448,12 @@
+     if not env_path:
+         env_path = os.getenv('TRAC_ENV')
+     if not env_path:
+-        raise TracError, 'Missing environment variable "TRAC_ENV". Trac ' \
+-                         'requires this variable to point to a valid Trac ' \
+-                         'environment.'
++        raise TracError, 'Falta la variable de entorno "TRAC_ENV". Trac ' \
++                         'requiere que esta variable apunte a un entorno válido ' \
++                         'Trac.'
+ 
+     env = Environment(env_path)
+     if env.needs_upgrade():
+-        raise TracError, 'The Trac Environment needs to be upgraded. Run ' \
++        raise TracError, 'El entorno Trac necesita ser actualizado. Ejecute ' \
+                          'trac-admin %s upgrade"' % env_path
+     return env
+Index: trac/core.py
+===================================================================
+--- trac/core.py	(revision 5756)
++++ trac/core.py	(working copy)
+@@ -45,7 +45,7 @@
+         """
+         property.__init__(self, self.extensions)
+         self.interface = interface
+-        self.__doc__ = 'List of components that implement `%s`' % \
++        self.__doc__ = 'Lista de componentes que implementan `%s`' % \
+                        self.interface.__name__
+ 
+     def extensions(self, component):
+@@ -56,7 +56,7 @@
+ 
+     def __repr__(self):
+         """Return a textual representation of the extension point."""
+-        return '<ExtensionPoint %s>' % self.interface.__name__
++        return '<PuntoDeExtensión %s>' % self.interface.__name__
+ 
+ 
+ class ComponentMeta(type):
+@@ -174,11 +174,11 @@
+         component = self.components.get(cls)
+         if not component:
+             if cls not in ComponentMeta._components:
+-                raise TracError, 'Component "%s" not registered' % cls.__name__
++                raise TracError, 'El componente "%s" no está registrado' % cls.__name__
+             try:
+                 component = cls(self)
+             except TypeError, e:
+-                raise TracError, 'Unable to instantiate component %r (%s)' \
++                raise TracError, 'No se puede instanciar el componente %r (%s)' \
+                                  % (cls, e)
+         return component
+ 
+Index: trac/attachment.py
+===================================================================
+--- trac/attachment.py	(revision 5756)
++++ trac/attachment.py	(working copy)
+@@ -100,8 +100,8 @@
+         cursor.close()
+         if not row:
+             self.filename = filename
+-            raise TracError('Attachment %s does not exist.' % (self.title),
+-                            'Invalid Attachment')
++            raise TracError('El adjunto %s no existe.' % (self.title),
++                            'Adjunto Inválido')
+         self.filename = row[0]
+         self.description = row[1]
+         self.size = row[2] and int(row[2]) or 0
+@@ -130,7 +130,7 @@
+     title = property(_get_title)
+ 
+     def delete(self, db=None):
+-        assert self.filename, 'Cannot delete non-existent attachment'
++        assert self.filename, 'No se puede eliminar un adjunto que no existe'
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -145,13 +145,13 @@
+             try:
+                 os.unlink(self.path)
+             except OSError:
+-                self.env.log.error('Failed to delete attachment file %s',
++                self.env.log.error('Falló la eliminación del archivo adjunto %s',
+                                    self.path, exc_info=True)
+                 if handle_ta:
+                     db.rollback()
+-                raise TracError, 'Could not delete attachment'
++                raise TracError, 'No se pudo eliminar el adjunto'
+ 
+-        self.env.log.info('Attachment removed: %s' % self.title)
++        self.env.log.info('Se eliminó el adjunto: %s' % self.title)
+         if handle_ta:
+             db.commit()
+ 
+@@ -196,7 +196,7 @@
+             shutil.copyfileobj(fileobj, targetfile)
+             self.filename = filename
+ 
+-            self.env.log.info('New attachment: %s by %s', self.title,
++            self.env.log.info('Nuevo adjunto: %s por %s', self.title,
+                               self.author)
+ 
+             if handle_ta:
+@@ -239,18 +239,18 @@
+             try:
+                 os.rmdir(attachment_dir)
+             except OSError:
+-                env.log.error("Can't delete attachment directory %s",
++                env.log.error('No se puede eliminar el directorio de adjuntos %s',
+                               attachment_dir, exc_info=True)
+             
+     select = classmethod(select)
+     delete_all = classmethod(delete_all)
+ 
+     def open(self):
+-        self.env.log.debug('Trying to open attachment at %s', self.path)
++        self.env.log.debug('Intentando abrir el adjunto en %s', self.path)
+         try:
+             fd = open(self.path, 'rb')
+         except IOError:
+-            raise TracError('Attachment %s not found' % self.filename)
++            raise TracError('El adjunto %s no fué encontrado' % self.filename)
+         return fd
+ 
+ 
+@@ -336,9 +336,9 @@
+         parent_type = req.args.get('type')
+         path = req.args.get('path')
+         if not parent_type or not path:
+-            raise HTTPBadRequest('Bad request')
++            raise HTTPBadRequest('Mala solicitud')
+         if not parent_type in ['ticket', 'wiki']:
+-            raise HTTPBadRequest('Unknown attachment type')
++            raise HTTPBadRequest('Tipo de adjunto desconocido')
+ 
+         action = req.args.get('action', 'view')
+         if action == 'new':
+@@ -351,7 +351,7 @@
+                 self._render_list(req, parent_type, last_segment)
+                 return 'attachment.cs', None
+             if not last_segment:
+-                raise HTTPBadRequest('Bad request')
++                raise HTTPBadRequest('Mala solicitud')
+             attachment = Attachment(self.env, parent_type, parent_id,
+                                     last_segment)
+         parent_link, parent_text = self._parent_to_hdf(
+@@ -419,7 +419,7 @@
+         for change, type, id, filename, time, descr, author in \
+                 self.get_history(start, stop, type):
+             title = html.EM(os.path.basename(filename)) + \
+-                    ' attached to ' + display(id)
++                    ' adjunto a ' + display(id)
+             if format == 'rss':
+                 title = Markup(title).striptags()
+                 descr = wiki_to_html(descr or '--', self.env, req, db,
+@@ -427,7 +427,7 @@
+                 href = req.abs_href
+             else:
+                 descr = wiki_to_oneliner(descr, self.env, db, shorten=True)
+-                title += Markup(' by %s', author)
++                title += Markup(' por %s', author)
+                 href = req.href
+             yield('attachment', href.attachment(type, id, filename), title,
+                   time, author, descr)
+@@ -443,7 +443,7 @@
+ 
+         upload = req.args['attachment']
+         if not hasattr(upload, 'filename') or not upload.filename:
+-            raise TracError('No file uploaded')
++            raise TracError('No se cargó el archivo adjunto')
+         if hasattr(upload.file, 'fileno'):
+             size = os.fstat(upload.file.fileno())[6]
+         else:
+@@ -451,13 +451,13 @@
+             size = upload.file.tell()
+             upload.file.seek(0)
+         if size == 0:
+-            raise TracError("Can't upload empty file")
++            raise TracError('No se puede cargar un fichero vacío')
+ 
+         # Maximum attachment size (in bytes)
+         max_size = self.max_size
+         if max_size >= 0 and size > max_size:
+-            raise TracError('Maximum attachment size: %d bytes' % max_size,
+-                            'Upload failed')
++            raise TracError('El tamaño máximo para adjuntos es: %d bytes' % max_size,
++                            'La carga de adjunto falló')
+ 
+         # We try to normalize the filename to unicode NFC if we can.
+         # Files uploaded from OS X might be in NFD.
+@@ -466,7 +466,7 @@
+         filename = filename.replace('\\', '/').replace(':', '/')
+         filename = os.path.basename(filename)
+         if not filename:
+-            raise TracError('No file uploaded')
++            raise TracError('No se cargó el archivo adjunto')
+ 
+         attachment.description = req.args.get('description', '')
+         attachment.author = get_reporter_id(req, 'author')
+@@ -476,10 +476,10 @@
+         for manipulator in self.manipulators:
+             for field, message in manipulator.validate_attachment(req, attachment):
+                 if field:
+-                    raise InvalidAttachment('Attachment field %s is invalid: %s'
++                    raise InvalidAttachment('El campo -adjunto- %s es inválido: %s'
+                                             % (field, message))
+                 else:
+-                    raise InvalidAttachment('Invalid attachment: %s' % message)
++                    raise InvalidAttachment('Adjunto inválido: %s' % message)
+ 
+         if req.args.get('replace'):
+             try:
+@@ -514,7 +514,7 @@
+         perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
+         req.perm.assert_permission(perm_map[attachment.parent_type])
+ 
+-        req.hdf['title'] = '%s (delete)' % attachment.title
++        req.hdf['title'] = '%s (eliminar)' % attachment.title
+         req.hdf['attachment'] = {'filename': attachment.filename,
+                                  'mode': 'delete'}
+ 
+@@ -576,14 +576,14 @@
+             if (self.render_unsafe_content and 
+                 mime_type and not mime_type.startswith('text/plain')):
+                 plaintext_href = attachment.href(req, format='txt')
+-                add_link(req, 'alternate', plaintext_href, 'Plain Text',
++                add_link(req, 'alternate', plaintext_href, 'Texto Plano',
+                          mime_type)
+ 
+             # add ''Original Format'' alternate link (always)
+             raw_href = attachment.href(req, format='raw')
+-            add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
++            add_link(req, 'alternate', raw_href, 'Formato Original', mime_type)
+ 
+-            self.log.debug("Rendering preview of file %s with mime-type %s"
++            self.log.debug('Presentando vista previa del archivo %s con el tipo-mime %s'
+                            % (attachment.filename, mime_type))
+ 
+             req.hdf['attachment'] = mimeview.preview_to_hdf(
+@@ -622,7 +622,7 @@
+             if formatter.req:
+                 href = attachment.href(formatter.req) + params
+             return html.A(label, class_='attachment', href=href,
+-                          title='Attachment %s' % attachment.title)
++                          title='Adjunto %s' % attachment.title)
+         except TracError:
+             return html.A(label, class_='missing attachment', rel='nofollow',
+                           href=formatter.href())
+Index: trac/db_default.py
+===================================================================
+--- trac/db_default.py	(revision 5756)
++++ trac/db_default.py	(working copy)
+@@ -166,106 +166,106 @@
+ def get_reports(db):
+     owner = db.concat('owner', "' *'")
+     return (
+-('Active Tickets',
++('Tickets Activos',
+ """
+- * List all active tickets by priority.
+- * Color each row based on priority.
+- * If a ticket has been accepted, a '*' is appended after the owner's name
++ * Listar todos los tickets activos por prioridad.
++ * Colorear cada fila de acuerdo a la prioridad.
++ * Si un ticket ha sido aceptado, se añadirá un '*' después del nombre del responsable
+ """,
+ """
+ SELECT p.value AS __color__,
+-   id AS ticket, summary, component, version, milestone, t.type AS type, 
+-   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
++   id AS ticket, summary AS sumario, component AS componente, version AS versión, milestone AS Hito, t.type AS tipo, 
++   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
+    time AS created,
+-   changetime AS _changetime, description AS _description,
+-   reporter AS _reporter
++   changetime AS _ultimo_cambio, description AS _descripción,
++   reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   WHERE status IN ('new', 'assigned', 'reopened') 
+   ORDER BY p.value, milestone, t.type, time
+ """ % owner),
+ #----------------------------------------------------------------------------
+- ('Active Tickets by Version',
++ ('Tickets Activos por Versión',
+ """
+-This report shows how to color results by priority,
+-while grouping results by version.
++Este reporte muestra cómo colorear los resultados por prioridad,
++y al mismo tiempo, agruparlos por versión.
+ 
+-Last modification time, description and reporter are included as hidden fields
+-for useful RSS export.
++Fecha de la última modificación, descripción y quién-lo-reportó se incluyen como campos ocultos
++para su útil exportación hacia RSS.
+ """,
+ """
+ SELECT p.value AS __color__,
+    version AS __group__,
+-   id AS ticket, summary, component, version, t.type AS type, 
+-   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
++   id AS ticket, summary AS sumario, component AS componente, version AS versión, t.type AS tipo, 
++   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
+    time AS created,
+-   changetime AS _changetime, description AS _description,
+-   reporter AS _reporter
++   changetime AS _ultimo_cambio, description AS _descripción,
++   reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   WHERE status IN ('new', 'assigned', 'reopened') 
+   ORDER BY (version IS NULL),version, p.value, t.type, time
+ """ % owner),
+ #----------------------------------------------------------------------------
+-('Active Tickets by Milestone',
++('Tickets Activos por Hito',
+ """
+-This report shows how to color results by priority,
+-while grouping results by milestone.
++Este reporte muestra como colorear los resultados por prioridad,
++y al mismo tiempo, agrupar los resultados por hito.
+ 
+-Last modification time, description and reporter are included as hidden fields
+-for useful RSS export.
++Fecha de la última modificación, descripción y quién-lo-reportó se incluyen como campos ocultos
++para su útil exportación hacia RSS.
+ """,
+ """
+ SELECT p.value AS __color__,
+    %s AS __group__,
+-   id AS ticket, summary, component, version, t.type AS type, 
+-   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
++   id AS ticket, summary AS sumario, component AS componente, version AS versión, t.type AS tipo, 
++   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
+    time AS created,
+-   changetime AS _changetime, description AS _description,
+-   reporter AS _reporter
++   changetime AS _ultimo_cambio, description AS _descripción,
++   reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   WHERE status IN ('new', 'assigned', 'reopened') 
+   ORDER BY (milestone IS NULL),milestone, p.value, t.type, time
+-""" % (db.concat('milestone', "' Release'"), owner)),
++""" % (db.concat("'Lanzamiento '", 'milestone'), owner)),
+ #----------------------------------------------------------------------------
+-('Assigned, Active Tickets by Owner',
++('Tickets Asignados y Activos por Responsable',
+ """
+-List assigned tickets, group by ticket owner, sorted by priority.
++Lista los tickets asignados, agrupados por responsable del ticket, ordenados por prioridad.
+ """,
+ """
+ 
+ SELECT p.value AS __color__,
+    owner AS __group__,
+-   id AS ticket, summary, component, milestone, t.type AS type, time AS created,
+-   changetime AS _changetime, description AS _description,
+-   reporter AS _reporter
++   id AS ticket, summary AS sumario, component AS componente, milestone AS hito, t.type AS tipo, time AS created,
++   changetime AS _ultimo_cambio, description AS _descripción,
++   reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   WHERE status = 'assigned'
+   ORDER BY owner, p.value, t.type, time
+ """),
+ #----------------------------------------------------------------------------
+-('Assigned, Active Tickets by Owner (Full Description)',
++('Tickets Asignados y Activos por Responsable (Descripción completa)',
+ """
+-List tickets assigned, group by ticket owner.
+-This report demonstrates the use of full-row display.
++Lista los tickets asignados, agrupados por responsable del ticket.
++Este reporte demuestra el uso de vista-de-fila-completa.
+ """,
+ """
+ SELECT p.value AS __color__,
+    owner AS __group__,
+-   id AS ticket, summary, component, milestone, t.type AS type, time AS created,
+-   description AS _description_,
+-   changetime AS _changetime, reporter AS _reporter
++   id AS ticket, summary AS sumario, component AS componente, milestone AS hito, t.type AS tipo, time AS created,
++   description AS _descripción_,
++   changetime AS _ultimo_cambio, reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   WHERE status = 'assigned'
+   ORDER BY owner, p.value, t.type, time
+ """),
+ #----------------------------------------------------------------------------
+-('All Tickets By Milestone  (Including closed)',
++('Todos los Tickets por Hito (Incluyendo los cerrados)',
+ """
+-A more complex example to show how to make advanced reports.
++Un ejemplo más complejo para mostrar el cómo hacer reportes avanzados.
+ """,
+ """
+ SELECT p.value AS __color__,
+@@ -275,51 +275,51 @@
+       ELSE 
+         (CASE owner WHEN $USER THEN 'font-weight: bold' END)
+     END) AS __style__,
+-   id AS ticket, summary, component, status, 
+-   resolution,version, t.type AS type, priority, owner,
++   id AS ticket, summary AS sumario, component AS componente, status AS estado, 
++   resolution AS resolución, version AS versión, t.type AS tipo, priority AS prioridad, owner AS responsable,
+    changetime AS modified,
+-   time AS _time,reporter AS _reporter
++   time AS _fecha, reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   ORDER BY (milestone IS NULL), milestone DESC, (status = 'closed'), 
+         (CASE status WHEN 'closed' THEN modified ELSE (-1)*p.value END) DESC
+ """),
+ #----------------------------------------------------------------------------
+-('My Tickets',
++('Mis Tickets',
+ """
+-This report demonstrates the use of the automatically set 
+-USER dynamic variable, replaced with the username of the
+-logged in user when executed.
++Este reporte demuestra el uso de la variable dinámica y automáticamente fijada 
++USER, la cuál es reemplazada con el nombre del usuario que ha iniciado sesión
++a la hora de ser ejecutado.
+ """,
+ """
+ SELECT p.value AS __color__,
+-   (CASE status WHEN 'assigned' THEN 'Assigned' ELSE 'Owned' END) AS __group__,
+-   id AS ticket, summary, component, version, milestone,
+-   t.type AS type, priority, time AS created,
+-   changetime AS _changetime, description AS _description,
+-   reporter AS _reporter
++   (CASE status WHEN 'assigned' THEN 'Asignado' ELSE 'Responsable' END) AS __group__,
++   id AS ticket, summary AS sumario, component AS componente, version AS versión, milestone AS hito,
++   t.type AS tipo, priority AS prioridad, time AS created,
++   changetime AS _ultimo_cambio, description AS _descripción,
++   reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   WHERE t.status IN ('new', 'assigned', 'reopened') AND owner = $USER
+   ORDER BY (status = 'assigned') DESC, p.value, milestone, t.type, time
+ """),
+ #----------------------------------------------------------------------------
+-('Active Tickets, Mine first',
++('Tickets Activos, primero los Míos',
+ """
+- * List all active tickets by priority.
+- * Show all tickets owned by the logged in user in a group first.
++ * Lista todos los tickets activos por prioridad.
++ * Muestra primero, en un grupo, todos los tickets de los cuales es responsable el usuario que ha iniciado sesión.
+ """,
+ """
+ SELECT p.value AS __color__,
+    (CASE owner 
+-     WHEN $USER THEN 'My Tickets' 
+-     ELSE 'Active Tickets' 
++     WHEN $USER THEN 'Mis Tickets' 
++     ELSE 'Tickets Activos' 
+     END) AS __group__,
+-   id AS ticket, summary, component, version, milestone, t.type AS type, 
+-   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
++   id AS ticket, summary AS sumario, component AS componente, version AS versión, milestone AS hito, t.type AS tipo, 
++   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
+    time AS created,
+-   changetime AS _changetime, description AS _description,
+-   reporter AS _reporter
++   changetime AS _ultimo_cambio, description AS _descripción,
++   reporter AS _reportado_por
+   FROM ticket t
+   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+   WHERE status IN ('new', 'assigned', 'reopened') 
+@@ -335,14 +335,14 @@
+ def get_data(db):
+    return (('component',
+              ('name', 'owner'),
+-               (('component1', 'somebody'),
+-                ('component2', 'somebody'))),
++               (('componente1', 'somebody'),
++                ('componente2', 'somebody'))),
+            ('milestone',
+              ('name', 'due', 'completed'),
+-               (('milestone1', 0, 0),
+-                ('milestone2', 0, 0),
+-                ('milestone3', 0, 0),
+-                ('milestone4', 0, 0))),
++               (('hito1', 0, 0),
++                ('hito2', 0, 0),
++                ('hito3', 0, 0),
++                ('hito4', 0, 0))),
+            ('version',
+              ('name', 'time'),
+                (('1.0', 0),
+@@ -358,14 +358,14 @@
+                 ('resolution', 'wontfix', 3),
+                 ('resolution', 'duplicate', 4),
+                 ('resolution', 'worksforme', 5),
+-                ('priority', 'blocker', 1),
+-                ('priority', 'critical', 2),
+-                ('priority', 'major', 3),
+-                ('priority', 'minor', 4),
++                ('priority', 'bloqueante', 1),
++                ('priority', 'critica', 2),
++                ('priority', 'mayor', 3),
++                ('priority', 'menor', 4),
+                 ('priority', 'trivial', 5),
+-                ('ticket_type', 'defect', 1),
+-                ('ticket_type', 'enhancement', 2),
+-                ('ticket_type', 'task', 3))),
++                ('ticket_type', 'defecto', 1),
++                ('ticket_type', 'mejora', 2),
++                ('ticket_type', 'tarea', 3))),
+            ('permission',
+              ('username', 'action'),
+                (('anonymous', 'LOG_VIEW'),
+Index: trac/mimeview/rst.py
+===================================================================
+--- trac/mimeview/rst.py	(revision 5756)
++++ trac/mimeview/rst.py	(working copy)
+@@ -52,9 +52,9 @@
+             from docutils.parsers import rst
+             from docutils import __version__
+         except ImportError:
+-            raise TracError, 'Docutils not found'
++            raise TracError, 'No se encontró Docutils'
+         if StrictVersion(__version__) < StrictVersion('0.3.9'):
+-            raise TracError, 'Docutils version >= %s required, %s found' \
++            raise TracError, 'Se requiere Docutils versión >= %s, se encontró %s' \
+                              % ('0.3.9', __version__)
+ 
+         def trac_get_reference(rawtext, target, text):
+@@ -113,7 +113,7 @@
+             # didn't find a match (invalid TracLink),
+             # report a warning
+             warning = state_machine.reporter.warning(
+-                    '%s is not a valid TracLink' % (arguments[0]),
++                    '%s no es un TracLink válido' % (arguments[0]),
+                     nodes.literal_block(block_text, block_text),
+                     line=lineno)
+             return [warning]
+@@ -130,7 +130,7 @@
+             if reference:
+                 return [reference], []
+             warning = nodes.warning(None, nodes.literal_block(text,
+-                'WARNING: %s is not a valid TracLink' % rawtext))
++                'WARNING: %s no es un TracLink válido' % rawtext))
+             return warning, []
+ 
+         # 1 required arg, 1 optional arg, spaces allowed in last arg
+Index: trac/mimeview/api.py
+===================================================================
+--- trac/mimeview/api.py	(revision 5756)
++++ trac/mimeview/api.py	(working copy)
+@@ -376,7 +376,7 @@
+         candidates = list(self.get_supported_conversions(mimetype))
+         candidates = [c for c in candidates if key in (c[0], c[4])]
+         if not candidates:
+-            raise TracError('No available MIME conversions from %s to %s' %
++            raise TracError('No están disponibles conversiones MIME de %s a %s' %
+                             (mimetype, key))
+ 
+         # First successful conversion wins
+@@ -386,7 +386,7 @@
+             if not output:
+                 continue
+             return (output[0], output[1], ext)
+-        raise TracError('No available MIME conversions from %s to %s' %
++        raise TracError('No están disponibles conversiones MIME de %s a %s' %
+                         (mimetype, key))
+ 
+     def get_annotation_types(self):
+@@ -435,7 +435,7 @@
+         expanded_content = None
+         for qr, renderer in candidates:
+             try:
+-                self.log.debug('Trying to render HTML preview using %s'
++                self.log.debug('Intentando presentar vista previa HTML usando %s'
+                                % renderer.__class__.__name__)
+                 # check if we need to perform a tab expansion
+                 rendered_content = content
+@@ -463,7 +463,7 @@
+                     buf.write('</pre></div>')
+                     return Markup(buf.getvalue())
+             except Exception, e:
+-                self.log.warning('HTML preview using %s failed (%s)'
++                self.log.warning('La generación de la vista previa HTML utilizando %s falló (%s)'
+                                  % (renderer, e), exc_info=True)
+ 
+     def _annotate(self, lines, annotations):
+@@ -577,8 +577,8 @@
+                 mimetype, mode, quality = mapping.split(':')
+                 types[mimetype] = (mode, int(quality))
+             except (TypeError, ValueError):
+-                self.log.warning("Invalid mapping '%s' specified in '%s' "
+-                                 "option." % (mapping, option))
++                self.log.warning("El mapeo '%s' especificado mediante la opción '%s' "
++                                 "es inválido." % (mapping, option))
+         return types
+     
+     def preview_to_hdf(self, req, content, length, mimetype, filename,
+@@ -684,10 +684,10 @@
+ 
+     def render(self, req, mimetype, content, filename=None, url=None):
+         if is_binary(content):
+-            self.env.log.debug("Binary data; no preview available")
++            self.env.log.debug("Datos binarios; no está disponible la vista previa")
+             return
+ 
+-        self.env.log.debug("Using default plain text mimeviewer")
++        self.env.log.debug("Utilizando el visor-mime por defecto para texto plano")
+         content = content_to_unicode(self.env, content, mimetype)
+         for line in content.splitlines():
+             yield escape(line)
+Index: trac/mimeview/tests/php.py
+===================================================================
+--- trac/mimeview/tests/php.py	(revision 5756)
++++ trac/mimeview/tests/php.py	(working copy)
+@@ -66,7 +66,7 @@
+             s = StringIO(stuff)
+         else:
+             raise NotImplementedException(
+-                "Pass either type=file or type=string")
++                "Pase ya sea type=file ó type=string")
+         result = list(r.render(None, None, s))
+         return result
+ 
+Index: trac/mimeview/silvercity.py
+===================================================================
+--- trac/mimeview/silvercity.py	(revision 5756)
++++ trac/mimeview/silvercity.py	(working copy)
+@@ -109,7 +109,7 @@
+             except IndexError:
+                 pass
+         except (KeyError, AttributeError):
+-            err = "No SilverCity lexer found for mime-type '%s'." % mimetype
++            err = "No se encontró ningún analizador de léxico SilverCity para el tipo-mime '%s'." % mimetype
+             raise Exception, err
+ 
+         # SilverCity does not like unicode strings
+Index: trac/mimeview/patch.py
+===================================================================
+--- trac/mimeview/patch.py	(revision 5756)
++++ trac/mimeview/patch.py	(working copy)
+@@ -69,7 +69,7 @@
+         d = self._diff_to_hdf(content.splitlines(),
+                               Mimeview(self.env).tab_width)
+         if not d:
+-            raise TracError, 'Invalid unified diff content'
++            raise TracError, 'El contenido diff unificado es inválido'
+         hdf = HDFWrapper(loadpaths=[self.env.get_templates_dir(),
+                                     self.config.get('trac', 'templates_dir')])
+         hdf['diff.files'] = d
+Index: trac/mimeview/enscript.py
+===================================================================
+--- trac/mimeview/enscript.py	(revision 5756)
++++ trac/mimeview/enscript.py	(working copy)
+@@ -133,11 +133,11 @@
+         mimetype = mimetype.split(';', 1)[0] # strip off charset
+         mode = self._types[mimetype][0]
+         cmdline += ' --color -h -q --language=html -p - -E%s' % mode
+-        self.env.log.debug("Enscript command line: %s" % cmdline)
++        self.env.log.debug("Línea de comandos Enscript: %s" % cmdline)
+ 
+         np = NaivePopen(cmdline, content.encode('utf-8'), capturestderr=1)
+         if np.errorlevel or np.err:
+-            err = 'Running (%s) failed: %s, %s.' % (cmdline, np.errorlevel,
++            err = 'La ejecución de (%s) falló: %s, %s.' % (cmdline, np.errorlevel,
+                                                     np.err)
+             raise Exception, err
+         odata = np.out
+Index: trac/mimeview/php.py
+===================================================================
+--- trac/mimeview/php.py	(revision 5756)
++++ trac/mimeview/php.py	(working copy)
+@@ -77,13 +77,13 @@
+     def render(self, req, mimetype, content, filename=None, rev=None):
+         # -n to ignore php.ini so we're using default colors
+         cmdline = '%s -sn' % self.path
+-        self.env.log.debug("PHP command line: %s" % cmdline)
++        self.env.log.debug("Línea de comandos PHP: %s" % cmdline)
+ 
+         content = content_to_unicode(self.env, content, mimetype)
+         content = content.encode('utf-8')
+         np = NaivePopen(cmdline, content, capturestderr=1)
+         if (os.name != 'nt' and np.errorlevel) or np.err:
+-            msg = 'Running (%s) failed: %s, %s.' % (cmdline,
++            msg = 'La ejecución de (%s) falló: %s, %s.' % (cmdline,
+                                                     np.errorlevel,
+                                                     np.err)
+             raise Exception(msg)
+@@ -91,9 +91,9 @@
+         odata = ''.join(np.out.splitlines()[1:-1])
+         if odata.startswith('X-Powered-By:') or \
+                 odata.startswith('Content-type:'):
+-            raise TracError('You appear to be using the PHP CGI '
+-                            'binary. Trac requires the CLI version '
+-                            'for syntax highlighting.')
++            raise TracError('Parece que se está utilizando el binario PHP CGI '
++                            'Trac requiere la versión CLI '
++                            'para resaltar (colorear) la sintaxis.')
+ 
+         epilogues = ["</span>", "</font>"]
+         for e in epilogues:
+Index: trac/ticket/api.py
+===================================================================
+--- trac/ticket/api.py	(revision 5756)
++++ trac/ticket/api.py	(working copy)
+@@ -142,12 +142,12 @@
+ 
+         for field in self.get_custom_fields():
+             if field['name'] in [f['name'] for f in fields]:
+-                self.log.warning('Duplicate field name "%s" (ignoring)',
++                self.log.warning('Nombre de campo duplicado "%s" (ignorándolo)',
+                                  field['name'])
+                 continue
+             if not re.match('^[a-zA-Z][a-zA-Z0-9_]+$', field['name']):
+-                self.log.warning('Invalid name for custom field: "%s" '
+-                                 '(ignoring)', field['name'])
++                self.log.warning('Nombre inválido para campo personalizado: "%s" '
++                                 '(ignorándolo)', field['name'])
+                 continue
+             field['custom'] = True
+             fields.append(field)
+@@ -244,7 +244,7 @@
+                     cnum = target
+         if href:
+             return html.A(label, href="%s#comment:%s" % (href, cnum),
+-                          title="Comment %s for %s:%s" % (cnum, type, id))
++                          title="Comentario %s para %s:%s" % (cnum, type, id))
+         else:
+             return label
+  
+Index: trac/ticket/web_ui.py
+===================================================================
+--- trac/ticket/web_ui.py	(revision 5756)
++++ trac/ticket/web_ui.py	(working copy)
+@@ -57,10 +57,10 @@
+                 value = ticket[name]
+                 if value:
+                     if value not in field['options']:
+-                        raise InvalidTicket('"%s" is not a valid value for '
+-                                            'the %s field.' % (value, name))
++                        raise InvalidTicket('"%s" no es un valor válido para '
++                                            'el campo %s.' % (value, name))
+                 elif not field.get('optional', False):
+-                    raise InvalidTicket('field %s must be set' % name)
++                    raise InvalidTicket('El campo %s debe ser fijado' % name)
+ 
+         try:
+             # comment index must be a number
+@@ -70,16 +70,16 @@
+             if replyto != 'description':
+                 int(replyto or 0)
+         except ValueError:
+-            raise InvalidTicket('Invalid comment threading identifier')
++            raise InvalidTicket('Identificador de serie de comentarios inválido')
+ 
+         # Custom validation rules
+         for manipulator in self.ticket_manipulators:
+             for field, message in manipulator.validate_ticket(req, ticket):
+                 if field:
+-                    raise InvalidTicket("The ticket %s field is invalid: %s" %
++                    raise InvalidTicket("EL campo %s del ticket es inválido: %s" %
+                                         (field, message))
+                 else:
+-                    raise InvalidTicket("Invalid ticket: %s" % message)
++                    raise InvalidTicket("Ticket inválido: %s" % message)
+ 
+ 
+ class NewticketModule(TicketModuleBase):
+@@ -118,7 +118,7 @@
+         if not req.perm.has_permission('TICKET_CREATE'):
+             return
+         yield ('mainnav', 'newticket', 
+-               html.A('New Ticket', href=req.href.newticket(), accesskey=7))
++               html.A('Nuevo Ticket', href=req.href.newticket(), accesskey=7))
+ 
+     # IRequestHandler methods
+ 
+@@ -145,7 +145,7 @@
+             description = wiki_to_html(ticket['description'], self.env, req, db)
+             req.hdf['newticket.description_preview'] = description
+ 
+-        req.hdf['title'] = 'New Ticket'
++        req.hdf['title'] = 'Nuevo Ticket'
+         req.hdf['newticket'] = ticket.values
+ 
+         field_names = [field['name'] for field in ticket.fields
+@@ -167,10 +167,11 @@
+                         'resolution'):
+                 field['skip'] = True
+             elif name == 'owner':
+-                field['label'] = 'Assign to'
++                field['label'] = 'Asignar a'
+                 if not req.perm.has_permission('TICKET_MODIFY'):
+                     field['skip'] = True
+             elif name == 'milestone':
++                field['label'] = 'Hito'
+                 # Don't make completed milestones available for selection
+                 options = field['options'][:]
+                 for option in field['options']:
+@@ -179,6 +180,29 @@
+                         options.remove(option)
+                 field['options'] = options
+             req.hdf['newticket.fields.' + name] = field
++            
++            if name == 'summary':
++                field['label'] = 'Sumario'
++            if name == 'reporter':
++                field['label'] = 'Informante'
++            if name == 'description':
++                field['label'] = 'Descripción'
++            if name == 'type':
++                field['label'] = 'Tipo'
++            if name == 'status':
++                field['label'] = 'Estado'
++            if name == 'resolution':
++                field['label'] = 'Resolución'
++            if name == 'priority':
++                field['label'] = 'Prioridad'
++            if name == 'severity':
++                field['label'] = 'Severidad'
++            if name == 'component':
++                field['label'] = 'Componente'
++            if name == 'version':
++                field['label'] = 'Versión'
++            if name == 'keywords':
++                field['label'] = 'Palabras clave'
+ 
+         if req.perm.has_permission('TICKET_APPEND'):
+             req.hdf['newticket.can_attach'] = True
+@@ -191,7 +215,7 @@
+ 
+     def _do_create(self, req, db):
+         if not req.args.get('summary'):
+-            raise TracError('Tickets must contain a summary.')
++            raise TracError('Los tickets deben contener un sumario.')
+ 
+         ticket = Ticket(self.env, db=db)
+         ticket.populate(req.args)
+@@ -206,7 +230,7 @@
+             tn = TicketNotifyEmail(self.env)
+             tn.notify(ticket, newticket=True)
+         except Exception, e:
+-            self.log.exception("Failure sending notification on creation of "
++            self.log.exception("Falló el envío de la notificación de creación del "
+                                "ticket #%s: %s" % (ticket.id, e))
+ 
+         # Redirect the user to the newly created ticket
+@@ -243,11 +267,11 @@
+     # IContentConverter methods
+ 
+     def get_supported_conversions(self):
+-        yield ('csv', 'Comma-delimited Text', 'csv',
++        yield ('csv', 'Texto separado por comas', 'csv',
+                'trac.ticket.Ticket', 'text/csv', 8)
+-        yield ('tab', 'Tab-delimited Text', 'tsv',
++        yield ('tab', 'Texto separado por tabulaciones', 'tsv',
+                'trac.ticket.Ticket', 'text/tab-separated-values', 8)
+-        yield ('rss', 'RSS Feed', 'xml',
++        yield ('rss', 'Fuente en formato RSS', 'xml',
+                'trac.ticket.Ticket', 'application/rss+xml', 8)
+ 
+     def convert_content(self, req, mimetype, ticket, key):
+@@ -350,17 +374,17 @@
+ 
+     def get_timeline_filters(self, req):
+         if req.perm.has_permission('TICKET_VIEW'):
+-            yield ('ticket', 'Ticket changes')
++            yield ('ticket', 'Cambios en tickets')
+             if self.timeline_details:
+-                yield ('ticket_details', 'Ticket details', False)
++                yield ('ticket_details', 'Detalles en Tickets', False)
+ 
+     def get_timeline_events(self, req, start, stop, filters):
+         format = req.args.get('format')
+ 
+-        status_map = {'new': ('newticket', 'created'),
+-                      'reopened': ('newticket', 'reopened'),
+-                      'closed': ('closedticket', 'closed'),
+-                      'edit': ('editedticket', 'updated')}
++        status_map = {'new': ('newticket', 'creado'),
++                      'reopened': ('newticket', 'reabierto'),
++                      'closed': ('closedticket', 'cerrado'),
++                      'edit': ('editedticket', 'modificado')}
+ 
+         href = format == 'rss' and req.abs_href or req.href
+ 
+@@ -371,7 +395,7 @@
+                     info = ''
+                     if len(fields) > 0:
+                         info = ', '.join(['<i>%s</i>' % f for f in \
+-                                          fields.keys()]) + ' changed<br />'
++                                          fields.keys()]) + ' modificado<br />'
+                 else:
+                     return None
+             elif 'ticket' in filters:
+@@ -509,7 +533,7 @@
+         if req.perm.has_permission('TICKET_CHGPROP'):
+             # TICKET_CHGPROP gives permission to edit the ticket
+             if not req.args.get('summary'):
+-                raise TracError('Tickets must contain summary.')
++                raise TracError('Los tickets deben contener un sumario.')
+ 
+             if req.args.has_key('description') or req.args.has_key('reporter'):
+                 req.perm.assert_permission('TICKET_ADMIN')
+@@ -520,15 +544,15 @@
+ 
+         # Mid air collision?
+         if int(req.args.get('ts')) != ticket.time_changed:
+-            raise TracError("Sorry, can not save your changes. "
+-                            "This ticket has been modified by someone else "
+-                            "since you started", 'Mid Air Collision')
++            raise TracError("Lo siento, no se pueden guardar tus cambios. "
++                            "Este ticket ha sido modificado por alguien más "
++                            "desde que tu comenzaste", 'Colisión en pleno aire')
+ 
+         # Do any action on the ticket?
+         action = req.args.get('action')
+         actions = TicketSystem(self.env).get_available_actions(ticket, req.perm)
+         if action not in actions:
+-            raise TracError('Invalid action')
++            raise TracError('Acción inválida')
+ 
+         # TODO: this should not be hard-coded like this
+         if action == 'accept':
+@@ -561,7 +585,7 @@
+                 tn = TicketNotifyEmail(self.env)
+                 tn.notify(ticket, newticket=False, modtime=now)
+             except Exception, e:
+-                self.log.exception("Failure sending notification on change to "
++                self.log.exception("Falló el envío de la notificación de cambio del "
+                                    "ticket #%s: %s" % (ticket.id, e))
+ 
+         fragment = cnum and '#comment:'+cnum or ''
+@@ -617,7 +641,7 @@
+         def quote_original(author, original, link):
+             if not 'comment' in req.args: # i.e. the comment was not yet edited
+                 req.hdf['ticket.comment'] = '\n'.join(
+-                    ['Replying to [%s %s]:' % (link, author)] +
++                    ['En respuesta a [%s %s]:' % (link, author)] +
+                     ['> %s' % line for line in original.splitlines()] + [''])
+ 
+         if replyto == 'description':
+Index: trac/ticket/report.py
+===================================================================
+--- trac/ticket/report.py	(revision 5756)
++++ trac/ticket/report.py	(working copy)
+@@ -46,7 +46,7 @@
+         if not req.perm.has_permission('REPORT_VIEW'):
+             return
+         yield ('mainnav', 'tickets',
+-               html.A('View Tickets', href=req.href.report()))
++               html.A('Ver Tickets', href=req.href.report()))
+ 
+     # IPermissionRequestor methods  
+ 
+@@ -93,7 +93,7 @@
+                return resp
+ 
+         if id != -1 or action == 'new':
+-            add_link(req, 'up', req.href.report(), 'Available Reports')
++            add_link(req, 'up', req.href.report(), 'Reportes disponibles')
+ 
+             # Kludge: Reset session vars created by query module so that the
+             # query navigation links on the ticket page don't confuse the user
+@@ -163,9 +163,9 @@
+         cursor.execute("SELECT title FROM report WHERE id = %s", (id,))
+         row = cursor.fetchone()
+         if not row:
+-            raise TracError('Report %s does not exist.' % id,
+-                            'Invalid Report Number')
+-        req.hdf['title'] = 'Delete Report {%s} %s' % (id, row[0])
++            raise TracError('El Reporte %s no existe.' % id,
++                            'Número de Reporte Inválido')
++        req.hdf['title'] = 'Eliminar Reporte {%s} %s' % (id, row[0])
+         req.hdf['report'] = {
+             'id': id,
+             'mode': 'delete',
+@@ -184,8 +184,8 @@
+                            "WHERE id=%s", (id,))
+             row = cursor.fetchone()
+             if not row:
+-                raise TracError('Report %s does not exist.' % id,
+-                                'Invalid Report Number')
++                raise TracError('El Reporte %s no existe.' % id,
++                                'Número de Reporte Inválido')
+             title = row[0] or ''
+             description = row[1] or ''
+             query = row[2] or ''
+@@ -194,11 +194,11 @@
+             title += ' (copy)'
+ 
+         if copy or id == -1:
+-            req.hdf['title'] = 'Create New Report'
++            req.hdf['title'] = 'Crear Nuevo Reporte'
+             req.hdf['report.href'] = req.href.report()
+             req.hdf['report.action'] = 'new'
+         else:
+-            req.hdf['title'] = 'Edit Report {%d} %s' % (id, title)
++            req.hdf['title'] = 'Editar Reporte {%d} %s' % (id, title)
+             req.hdf['report.href'] = req.href.report(id)
+             req.hdf['report.action'] = 'edit'
+ 
+@@ -223,7 +223,7 @@
+         try:
+             args = self.get_var_args(req)
+         except ValueError,e:
+-            raise TracError, 'Report failed: %s' % e
++            raise TracError, 'Falló el Reporte: %s' % e
+ 
+         title, description, sql = self.get_info(db, id, args)
+ 
+@@ -245,7 +245,7 @@
+         try:
+             cols, rows = self.execute_report(req, db, id, sql, args)
+         except Exception, e:
+-            req.hdf['report.message'] = 'Report execution failed: %s' % e
++            req.hdf['report.message'] = 'Falló la ejecución del Reporte: %s' % e
+             return 'report.cs', None
+ 
+         # Convert the header info to HDF-format
+@@ -381,24 +381,24 @@
+         href = ''
+         if params:
+             href = '&' + unicode_urlencode(params)
+-        add_link(req, 'alternate', '?format=rss' + href, 'RSS Feed',
++        add_link(req, 'alternate', '?format=rss' + href, 'Fuente en formato RSS',
+                  'application/rss+xml', 'rss')
+         add_link(req, 'alternate', '?format=csv' + href,
+-                 'Comma-delimited Text', 'text/plain')
++                 'Texto separado por comas', 'text/plain')
+         add_link(req, 'alternate', '?format=tab' + href,
+-                 'Tab-delimited Text', 'text/plain')
++                 'Texto separado por tabulaciones', 'text/plain')
+         if req.perm.has_permission('REPORT_SQL_VIEW'):
+-            add_link(req, 'alternate', '?format=sql', 'SQL Query',
++            add_link(req, 'alternate', '?format=sql', 'Consulta SQL',
+                      'text/plain')
+ 
+     def execute_report(self, req, db, id, sql, args):
+         sql, args = self.sql_sub_vars(req, sql, args, db)
+         if not sql:
+-            raise TracError('Report %s has no SQL query.' % id)
++            raise TracError('El Reporte %s no tiene una consulta SQL.' % id)
+         if sql.find('__group__') == -1:
+             req.hdf['report.sorting.enabled'] = 1
+ 
+-        self.log.debug('Executing report with SQL "%s" (%s)', sql, args)
++        self.log.debug('Ejecutando el reporte con la consulta SQL "%s" (%s)', sql, args)
+ 
+         cursor = db.cursor()
+         cursor.execute(sql, args)
+@@ -415,17 +415,17 @@
+         if id == -1:
+             # If no particular report was requested, display
+             # a list of available reports instead
+-            title = 'Available Reports'
++            title = 'Reportes Disponibles'
+             sql = 'SELECT id AS report, title FROM report ORDER BY report'
+-            description = 'This is a list of reports available.'
++            description = 'Esta es una lista de los reportes disponibles.'
+         else:
+             cursor = db.cursor()
+             cursor.execute("SELECT title,query,description from report "
+                            "WHERE id=%s", (id,))
+             row = cursor.fetchone()
+             if not row:
+-                raise TracError('Report %d does not exist.' % id,
+-                                'Invalid Report Number')
++                raise TracError('El Reporte %d no existe.' % id,
++                                'Número de Reporte Inválido')
+             title = row[0] or ''
+             sql = row[1]
+             description = row[2] or ''
+@@ -453,7 +453,7 @@
+             try:
+                 arg = args[aname]
+             except KeyError:
+-                raise TracError("Dynamic variable '$%s' not defined." \
++                raise TracError("La variable Dinámica '$%s' no esta definida." \
+                                 % aname)
+             req.hdf['report.var.' + aname] = arg
+             values.append(arg)
+Index: trac/ticket/model.py
+===================================================================
+--- trac/ticket/model.py	(revision 5756)
++++ trac/ticket/model.py	(working copy)
+@@ -67,8 +67,8 @@
+                     try:
+                         default = options[int(default)]
+                     except (ValueError, IndexError):
+-                        self.env.log.warning('Invalid default value "%s" '
+-                                             'for custom field "%s"'
++                        self.env.log.warning('El valor por defecto "%s" no es válido '
++                                             'para el campo personalizado "%s"'
+                                              % (default, field['name']))
+             if default:
+                 self.values.setdefault(field['name'], default)
+@@ -83,8 +83,8 @@
+                        % ','.join(std_fields), (tkt_id,))
+         row = cursor.fetchone()
+         if not row:
+-            raise TracError('Ticket %d does not exist.' % tkt_id,
+-                            'Invalid Ticket Number')
++            raise TracError('El Ticket %d no existe.' % tkt_id,
++                            'Número de Ticket Inválido')
+ 
+         self.id = tkt_id
+         for i in range(len(std_fields)):
+@@ -131,7 +131,7 @@
+ 
+     def insert(self, when=0, db=None):
+         """Add ticket to database"""
+-        assert not self.exists, 'Cannot insert an existing ticket'
++        assert not self.exists, 'No se puede insertar un ticket ya existente'
+         db, handle_ta = self._get_db_for_write(db)
+ 
+         # Add a timestamp
+@@ -187,7 +187,7 @@
+         the database.  Returns False if there were no changes to save, True
+         otherwise.
+         """
+-        assert self.exists, 'Cannot update a new ticket'
++        assert self.exists, 'No se puede actualizar un nuevo ticket'
+ 
+         if not self._old and not comment:
+             return False # Not modified
+@@ -331,7 +331,7 @@
+                            (self.type, name))
+             row = cursor.fetchone()
+             if not row:
+-                raise TracError, '%s %s does not exist.' % (self.type, name)
++                raise TracError, '%s %s no existe.' % (self.type, name)
+             self.value = self._old_value = row[0]
+             self.name = self._old_name = name
+         else:
+@@ -341,7 +341,7 @@
+     exists = property(fget=lambda self: self._old_value is not None)
+ 
+     def delete(self, db=None):
+-        assert self.exists, 'Cannot deleting non-existent %s' % self.type
++        assert self.exists, 'No se puede eliminar el inexistente %s' % self.type
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -349,7 +349,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Deleting %s %s' % (self.type, self.name))
++        self.env.log.info('Eliminando %s %s' % (self.type, self.name))
+         cursor.execute("DELETE FROM enum WHERE type=%s AND value=%s",
+                        (self.type, self._old_value))
+ 
+@@ -359,8 +359,8 @@
+         self.name = self._old_name = None
+ 
+     def insert(self, db=None):
+-        assert not self.exists, 'Cannot insert existing %s' % self.type
+-        assert self.name, 'Cannot create %s with no name' % self.type
++        assert not self.exists, 'No se puede insertar el existente %s' % self.type
++        assert self.name, 'No se puede crear %s sin nombre' % self.type
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -369,7 +369,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.debug("Creating new %s '%s'" % (self.type, self.name))
++        self.env.log.debug("Creando nuevo %s '%s'" % (self.type, self.name))
+         if not self.value:
+             cursor.execute(("SELECT COALESCE(MAX(%s),0) FROM enum "
+                             "WHERE type=%%s") % db.cast('value', 'int'),
+@@ -384,8 +384,8 @@
+         self._old_value = self.value
+ 
+     def update(self, db=None):
+-        assert self.exists, 'Cannot update non-existent %s' % self.type
+-        assert self.name, 'Cannot update %s with no name' % self.type
++        assert self.exists, 'No se puede actualizar el inexistente %s' % self.type
++        assert self.name, 'No se puede actualizar %s sin nombre' % self.type
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -394,7 +394,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Updating %s "%s"' % (self.type, self.name))
++        self.env.log.info('Actualizando %s "%s"' % (self.type, self.name))
+         cursor.execute("UPDATE enum SET name=%s,value=%s "
+                        "WHERE type=%s AND name=%s",
+                        (self.name, self.value, self.type, self._old_name))
+@@ -457,7 +457,7 @@
+                            "WHERE name=%s", (name,))
+             row = cursor.fetchone()
+             if not row:
+-                raise TracError, 'Component %s does not exist.' % name
++                raise TracError, 'El componente %s no existe.' % name
+             self.name = self._old_name = name
+             self.owner = row[0] or None
+             self.description = row[1] or ''
+@@ -469,7 +469,7 @@
+     exists = property(fget=lambda self: self._old_name is not None)
+ 
+     def delete(self, db=None):
+-        assert self.exists, 'Cannot deleting non-existent component'
++        assert self.exists, 'No se puede eliminar un componente inexistente'
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -477,7 +477,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Deleting component %s' % self.name)
++        self.env.log.info('Eliminando el componente %s' % self.name)
+         cursor.execute("DELETE FROM component WHERE name=%s", (self.name,))
+ 
+         self.name = self._old_name = None
+@@ -486,8 +486,8 @@
+             db.commit()
+ 
+     def insert(self, db=None):
+-        assert not self.exists, 'Cannot insert existing component'
+-        assert self.name, 'Cannot create component with no name'
++        assert not self.exists, 'No se puede insertar un componente ya existente'
++        assert self.name, 'No se puede crear un componente sin nombre'
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -496,7 +496,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.debug("Creating new component '%s'" % self.name)
++        self.env.log.debug("Creando nuevo componente '%s'" % self.name)
+         cursor.execute("INSERT INTO component (name,owner,description) "
+                        "VALUES (%s,%s,%s)",
+                        (self.name, self.owner, self.description))
+@@ -505,8 +505,8 @@
+             db.commit()
+ 
+     def update(self, db=None):
+-        assert self.exists, 'Cannot update non-existent component'
+-        assert self.name, 'Cannot update component with no name'
++        assert self.exists, 'No se puede actualizar un componente inexistente'
++        assert self.name, 'No se puede actualizar un componente sin nombre'
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -515,7 +515,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Updating component "%s"' % self.name)
++        self.env.log.info('Actualizando el componente "%s"' % self.name)
+         cursor.execute("UPDATE component SET name=%s,owner=%s,description=%s "
+                        "WHERE name=%s",
+                        (self.name, self.owner, self.description,
+@@ -564,8 +564,8 @@
+                        "FROM milestone WHERE name=%s", (name,))
+         row = cursor.fetchone()
+         if not row:
+-            raise TracError('Milestone %s does not exist.' % name,
+-                            'Invalid Milestone Name')
++            raise TracError('El Hito %s no existe.' % name,
++                            'Nombre de Hito inválido')
+         self.name = row[0]
+         self.due = row[1] and int(row[1]) or 0
+         self.completed = row[2] and int(row[2]) or 0
+@@ -584,7 +584,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Deleting milestone %s' % self.name)
++        self.env.log.info('Eliminando Hito %s' % self.name)
+         cursor.execute("DELETE FROM milestone WHERE name=%s", (self.name,))
+ 
+         # Retarget/reset tickets associated with this milestone
+@@ -594,14 +594,14 @@
+         for tkt_id in tkt_ids:
+             ticket = Ticket(self.env, tkt_id, db)
+             ticket['milestone'] = retarget_to
+-            ticket.save_changes(author, 'Milestone %s deleted' % self.name,
++            ticket.save_changes(author, 'El Hito %s ha sido eliminado' % self.name,
+                                 now, db=db)
+ 
+         if handle_ta:
+             db.commit()
+ 
+     def insert(self, db=None):
+-        assert self.name, 'Cannot create milestone with no name'
++        assert self.name, 'No se puede crear un hito sin nombre'
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -610,7 +610,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.debug("Creating new milestone '%s'" % self.name)
++        self.env.log.debug("Creando nuevo hito '%s'" % self.name)
+         cursor.execute("INSERT INTO milestone (name,due,completed,description) "
+                        "VALUES (%s,%s,%s,%s)",
+                        (self.name, self.due, self.completed, self.description))
+@@ -619,7 +619,7 @@
+             db.commit()
+ 
+     def update(self, db=None):
+-        assert self.name, 'Cannot update milestone with no name'
++        assert self.name, 'No se puede actualizar un hito sin nombre'
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -628,13 +628,13 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Updating milestone "%s"' % self.name)
++        self.env.log.info('Actualizando hito "%s"' % self.name)
+         cursor.execute("UPDATE milestone SET name=%s,due=%s,"
+                        "completed=%s,description=%s WHERE name=%s",
+                        (self.name, self.due, self.completed, self.description,
+                         self._old_name))
+-        self.env.log.info('Updating milestone field of all tickets '
+-                          'associated with milestone "%s"' % self.name)
++        self.env.log.info('Actualizando el campo hito de todos los tickets '
++                          'asociados con el hito "%s"' % self.name)
+         cursor.execute("UPDATE ticket SET milestone=%s WHERE milestone=%s",
+                        (self.name, self._old_name))
+         self._old_name = self.name
+@@ -678,7 +678,7 @@
+                            "WHERE name=%s", (name,))
+             row = cursor.fetchone()
+             if not row:
+-                raise TracError, 'Version %s does not exist.' % name
++                raise TracError, 'La versión %s no existe.' % name
+             self.name = self._old_name = name
+             self.time = row[0] and int(row[0]) or None
+             self.description = row[1] or ''
+@@ -690,7 +690,7 @@
+     exists = property(fget=lambda self: self._old_name is not None)
+ 
+     def delete(self, db=None):
+-        assert self.exists, 'Cannot deleting non-existent version'
++        assert self.exists, 'No puede eliminarse una versión inexistente'
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -698,7 +698,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Deleting version %s' % self.name)
++        self.env.log.info('Eliminando versión %s' % self.name)
+         cursor.execute("DELETE FROM version WHERE name=%s", (self.name,))
+ 
+         self.name = self._old_name = None
+@@ -707,8 +707,8 @@
+             db.commit()
+ 
+     def insert(self, db=None):
+-        assert not self.exists, 'Cannot insert existing version'
+-        assert self.name, 'Cannot create version with no name'
++        assert not self.exists, 'No puede insertarse una versión ya existente'
++        assert self.name, 'No puede crearse una versión sin nombre'
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -717,7 +717,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.debug("Creating new version '%s'" % self.name)
++        self.env.log.debug("Creando nueva versión '%s'" % self.name)
+         cursor.execute("INSERT INTO version (name,time,description) "
+                        "VALUES (%s,%s,%s)",
+                        (self.name, self.time, self.description))
+@@ -726,8 +726,8 @@
+             db.commit()
+ 
+     def update(self, db=None):
+-        assert self.exists, 'Cannot update non-existent version'
+-        assert self.name, 'Cannot update version with no name'
++        assert self.exists, 'No puede actualizarse una versión inexistente'
++        assert self.name, 'No puede actualizarse una versión sin nombre'
+         self.name = self.name.strip()
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -736,7 +736,7 @@
+             handle_ta = False
+ 
+         cursor = db.cursor()
+-        self.env.log.info('Updating version "%s"' % self.name)
++        self.env.log.info('Actualizando versión "%s"' % self.name)
+         cursor.execute("UPDATE version SET name=%s,time=%s,description=%s "
+                        "WHERE name=%s",
+                        (self.name, self.time, self.description,
+Index: trac/ticket/roadmap.py
+===================================================================
+--- trac/ticket/roadmap.py	(revision 5756)
++++ trac/ticket/roadmap.py	(working copy)
+@@ -129,7 +129,7 @@
+         if not req.perm.has_permission('ROADMAP_VIEW'):
+             return
+         yield ('mainnav', 'roadmap',
+-               html.a('Roadmap', href=req.href.roadmap(), accesskey=3))
++               html.a('Hitos', href=req.href.roadmap(), accesskey=3))
+ 
+     # IPermissionRequestor methods
+ 
+@@ -143,7 +143,7 @@
+ 
+     def process_request(self, req):
+         req.perm.assert_permission('ROADMAP_VIEW')
+-        req.hdf['title'] = 'Roadmap'
++        req.hdf['title'] = 'Hitos'
+ 
+         showall = req.args.get('show') == 'all'
+         req.hdf['roadmap.showall'] = showall
+@@ -236,7 +236,7 @@
+                    % __version__)
+         write_prop('METHOD', 'PUBLISH')
+         write_prop('X-WR-CALNAME',
+-                   self.config.get('project', 'name') + ' - Roadmap')
++                   self.config.get('project', 'name') + ' - Hitos')
+         for milestone in milestones:
+             uid = '<%s/milestone/%s@%s>' % (req.base_path, milestone['name'],
+                                             host)
+@@ -289,7 +289,7 @@
+     # INavigationContributor methods
+ 
+     def get_active_navigation_item(self, req):
+-        return 'roadmap'
++        return 'hitos'
+ 
+     def get_navigation_items(self, req):
+         return []
+@@ -306,7 +306,7 @@
+ 
+     def get_timeline_filters(self, req):
+         if req.perm.has_permission('MILESTONE_VIEW'):
+-            yield ('milestone', 'Milestones')
++            yield ('milestone', 'Hitos')
+ 
+     def get_timeline_events(self, req, start, stop, filters):
+         if 'milestone' in filters:
+@@ -317,7 +317,7 @@
+                            "WHERE completed>=%s AND completed<=%s",
+                            (start, stop,))
+             for completed, name, description in cursor:
+-                title = Markup('Milestone <em>%s</em> completed', name)
++                title = Markup('El hito <em>%s</em> ha sido completado', name)
+                 if format == 'rss':
+                     href = req.abs_href.milestone(name)
+                     message = wiki_to_html(description, self.env, req, db,
+@@ -343,7 +343,7 @@
+             
+         req.perm.assert_permission('MILESTONE_VIEW')
+ 
+-        add_link(req, 'up', req.href.roadmap(), 'Roadmap')
++        add_link(req, 'up', req.href.roadmap(), 'Hitos')
+ 
+         db = self.env.get_db_cnx()
+         milestone = Milestone(self.env, milestone_id, db)
+@@ -391,31 +391,31 @@
+             req.perm.assert_permission('MILESTONE_CREATE')
+ 
+         if not req.args.has_key('name'):
+-            raise TracError('You must provide a name for the milestone.',
+-                            'Required Field Missing')
++            raise TracError('Debes proveer un nombre para el hito.',
++                            'Falta un Campo Requerido')
+ 
+         due = req.args.get('duedate', '')
+         try:
+             milestone.due = due and parse_date(due) or 0
+         except ValueError, e:
+-            raise TracError(to_unicode(e), 'Invalid Date Format')
++            raise TracError(to_unicode(e), 'Formato de Fecha Inválido')
+         if req.args.has_key('completed'):
+             completed = req.args.get('completeddate', '')
+             try:
+                 milestone.completed = completed and parse_date(completed) or 0
+             except ValueError, e:
+-                raise TracError(to_unicode(e), 'Invalid Date Format')
++                raise TracError(to_unicode(e), 'Formato de Fecha Inválido')
+             if milestone.completed > time():
+-                raise TracError('Completion date may not be in the future',
+-                                'Invalid Completion Date')
++                raise TracError('La fecha de conclusión no puede estar en el futuro',
++                                'Fecha de Conclusión Inválida')
+             retarget_to = req.args.get('target')
+             if req.args.has_key('retarget'):
+                 cursor = db.cursor()
+                 cursor.execute("UPDATE ticket SET milestone=%s WHERE "
+                                "milestone=%s and status != 'closed'",
+                                 (retarget_to, milestone.name))
+-                self.env.log.info('Tickets associated with milestone %s '
+-                                  'retargeted to %s' % 
++                self.env.log.info('Los Tickets asociados con el hito %s '
++                                  'fueron replanificados para el hito %s' % 
+                                   (milestone.name, retarget_to))
+         else:
+             milestone.completed = 0
+@@ -435,7 +435,7 @@
+     def _render_confirm(self, req, db, milestone):
+         req.perm.assert_permission('MILESTONE_DELETE')
+ 
+-        req.hdf['title'] = 'Milestone %s' % milestone.name
++        req.hdf['title'] = 'Hito %s' % milestone.name
+         req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
+         req.hdf['milestone.mode'] = 'delete'
+ 
+@@ -447,14 +447,14 @@
+     def _render_editor(self, req, db, milestone):
+         if milestone.exists:
+             req.perm.assert_permission('MILESTONE_MODIFY')
+-            req.hdf['title'] = 'Milestone %s' % milestone.name
++            req.hdf['title'] = 'Hito %s' % milestone.name
+             req.hdf['milestone.mode'] = 'edit'
+             req.hdf['milestones'] = [m.name for m in
+                                      Milestone.select(self.env)
+                                      if m.name != milestone.name]
+         else:
+             req.perm.assert_permission('MILESTONE_CREATE')
+-            req.hdf['title'] = 'New Milestone'
++            req.hdf['title'] = 'Nuevo Hito'
+             req.hdf['milestone.mode'] = 'new'
+ 
+         from trac.util.datefmt import get_date_format_hint, \
+@@ -465,7 +465,7 @@
+         req.hdf['milestone.datetime_now'] = format_datetime()
+ 
+     def _render_view(self, req, db, milestone):
+-        req.hdf['title'] = 'Milestone %s' % milestone.name
++        req.hdf['title'] = 'Hito %s' % milestone.name
+         req.hdf['milestone.mode'] = 'view'
+ 
+         req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
+Index: trac/ticket/query.py
+===================================================================
+--- trac/ticket/query.py	(revision 5756)
++++ trac/ticket/query.py	(working copy)
+@@ -67,11 +67,11 @@
+         for filter in filters:
+             filter = filter.split('=')
+             if len(filter) != 2:
+-                raise QuerySyntaxError, 'Query filter requires field and ' \
+-                                        'constraints separated by a "="'
++                raise QuerySyntaxError, 'El filtro de consultas requiere que los campos y ' \
++                                        'sus criterios de búsqueda están separadas por un "="'
+             field,values = filter
+             if not field:
+-                raise QuerySyntaxError, 'Query filter requires field name'
++                raise QuerySyntaxError, 'El filtro de consultas requiere un nombre de campo'
+             values = values.split('|')
+             mode, neg = '', ''
+             if field[-1] in ('~', '^', '$'):
+@@ -150,7 +150,7 @@
+             self.get_columns()
+ 
+         sql, args = self.get_sql()
+-        self.env.log.debug("Query SQL: " + sql % tuple([repr(a) for a in args]))
++        self.env.log.debug("Consulta SQL: " + sql % tuple([repr(a) for a in args]))
+ 
+         if not db:
+             db = self.env.get_db_cnx()
+@@ -352,11 +352,11 @@
+ 
+     # IContentConverter methods
+     def get_supported_conversions(self):
+-        yield ('rss', 'RSS Feed', 'xml',
++        yield ('rss', 'Fuente en formato RSS', 'xml',
+                'trac.ticket.Query', 'application/rss+xml', 8)
+-        yield ('csv', 'Comma-delimited Text', 'csv',
++        yield ('csv', 'Texto separado por comas', 'csv',
+                'trac.ticket.Query', 'text/csv', 8)
+-        yield ('tab', 'Tab-delimited Text', 'tsv',
++        yield ('tab', 'Texto separado por tabulaciones', 'tsv',
+                'trac.ticket.Query', 'text/tab-separated-values', 8)
+ 
+     def convert_content(self, req, mimetype, query, key):
+@@ -377,7 +377,7 @@
+         if req.perm.has_permission('TICKET_VIEW') and \
+                 not self.env.is_component_enabled(ReportModule):
+             yield ('mainnav', 'tickets',
+-                   html.A('View Tickets', href=req.href.query()))
++                   html.A('Ver Tickets', href=req.href.query()))
+ 
+     # IRequestHandler methods
+ 
+@@ -485,21 +485,21 @@
+     def _get_constraint_modes(self):
+         modes = {}
+         modes['text'] = [
+-            {'name': "contains", 'value': "~"},
+-            {'name': "doesn't contain", 'value': "!~"},
+-            {'name': "begins with", 'value': "^"},
+-            {'name': "ends with", 'value': "$"},
+-            {'name': "is", 'value': ""},
+-            {'name': "is not", 'value': "!"}
++            {'name': "contenga", 'value': "~"},
++            {'name': "no contenga", 'value': "!~"},
++            {'name': "empieze con", 'value': "^"},
++            {'name': "termine con", 'value': "$"},
++            {'name': "es", 'value': ""},
++            {'name': "no es", 'value': "!"}
+         ]
+         modes['select'] = [
+-            {'name': "is", 'value': ""},
+-            {'name': "is not", 'value': "!"}
++            {'name': "es", 'value': ""},
++            {'name': "no es", 'value': "!"}
+         ]
+         return modes
+ 
+     def display_html(self, req, query):
+-        req.hdf['title'] = 'Custom Query'
++        req.hdf['title'] = 'Consulta Personalizada'
+         add_stylesheet(req, 'common/css/report.css')
+         add_script(req, 'common/js/query.js')
+ 
+@@ -717,7 +717,7 @@
+                 return html.SPAN(alist[0], *[(', ', a) for a in alist[1:]])
+             elif count:
+                 cnt = len(tickets)
+-                return html.SPAN(cnt, title='%d tickets for which %s' % 
++                return html.SPAN(cnt, title='%d tickets para los cuales %s' % 
+                                  (cnt, query_string))
+             else:
+                 return html.DL([(html.DT(ticket_anchor(ticket)),
+Index: trac/db/sqlite_backend.py
+===================================================================
+--- trac/db/sqlite_backend.py	(revision 5756)
++++ trac/db/sqlite_backend.py	(working copy)
+@@ -116,7 +116,7 @@
+         if path != ':memory:':
+             # make the directory to hold the database
+             if os.path.exists(path):
+-                raise TracError, 'Database already exists at %s' % path
++                raise TracError, 'Ya existe una base de datos en %s' % path
+             os.makedirs(os.path.split(path)[0])
+         cnx = sqlite.connect(path, timeout=int(params.get('timeout', 10000)))
+         cursor = cnx.cursor()
+@@ -141,15 +141,15 @@
+         self.cnx = None
+         if path != ':memory:':
+             if not os.access(path, os.F_OK):
+-                raise TracError, 'Database "%s" not found.' % path
++                raise TracError, 'No se encuentra la base de datos "%s".' % path
+ 
+             dbdir = os.path.dirname(path)
+             if not os.access(path, os.R_OK + os.W_OK) or \
+                    not os.access(dbdir, os.R_OK + os.W_OK):
+                 from getpass import getuser
+-                raise TracError('The user %s requires read _and_ write ' \
+-                                'permission to the database file %s and the ' \
+-                                'directory it is located in.' \
++                raise TracError('El usuario %s requiere permisos de lectura ' \
++                                '_y_ escritura para el archivo base de datos %s y el ' \
++                                'directorio donde este se encuentra.' \
+                                 % (getuser(), path))
+ 
+         if have_pysqlite == 2:
+Index: trac/db/api.py
+===================================================================
+--- trac/db/api.py	(revision 5756)
++++ trac/db/api.py	(working copy)
+@@ -94,7 +94,7 @@
+                     candidates[scheme] = (connector, priority)
+             connector = candidates.get(scheme, [None])[0]
+         if not connector:
+-            raise TracError('Unsupported database type "%s"' % scheme)
++            raise TracError('Tipo de base de datos no soportado "%s"' % scheme)
+ 
+         if scheme == 'sqlite':
+             # Special case for SQLite to support a path relative to the
+@@ -116,8 +116,8 @@
+             host = None
+             path = rest
+         else:
+-            raise TracError('Database connection string must start with '
+-                            'scheme:/')
++            raise TracError('La cadena de conexión a la base de datos debe comenzar con '
++                            'esquema:/')
+     else:
+         if rest.startswith('/') and not rest.startswith('//'):
+             host = None
+Index: trac/db/pool.py
+===================================================================
+--- trac/db/pool.py	(revision 5756)
++++ trac/db/pool.py	(working copy)
+@@ -104,8 +104,8 @@
+                 else:
+                     if timeout:
+                         if (time.time() - start) >= timeout:
+-                            raise TimeoutError('Unable to get database '
+-                                               'connection within %d seconds'
++                            raise TimeoutError('No se pudo obtener una conexión a la '
++                                               'base de datos en el plazo de %d segundos'
+                                                 % timeout)
+                         self._available.wait(timeout)
+                     else: # Warning: without timeout, Trac *might* hang
+Index: trac/db/mysql_backend.py
+===================================================================
+--- trac/db/mysql_backend.py	(revision 5756)
++++ trac/db/mysql_backend.py	(working copy)
+@@ -122,7 +122,7 @@
+     def _set_character_set(self, cnx, charset):
+         vers = tuple([ int(n) for n in cnx.get_server_info().split('.')[:2] ])
+         if vers < (4, 1):
+-            raise TracError, 'MySQL servers older than 4.1 are not supported!'
++            raise TracError, 'Los servidores MySQL anteriores a 4.1 no son soportados!'
+         cnx.query('SET NAMES %s' % charset)
+         cnx.store_result()
+         cnx.charset = charset
+Index: trac/versioncontrol/api.py
+===================================================================
+--- trac/versioncontrol/api.py	(revision 5756)
++++ trac/versioncontrol/api.py	(working copy)
+@@ -88,9 +88,9 @@
+                         continue
+                     heappush(candidates, (-prio, connector))
+             if not candidates:
+-                raise TracError('Unsupported version control system "%s". '
+-                                'Check that the Python bindings for "%s" are '
+-                                'correctly installed.' %
++                raise TracError('Sistema de control de versiones no soportado "%s". '
++                                'Verifique que las librerías Python para "%s" están '
++                                'correctamente instaladas.' %
+                                 ((self.repository_type,)*2))
+             self._connector = heappop(candidates)[1]
+         db = self.env.get_db_cnx() # prevent possible deadlock, see #4465
+@@ -119,11 +119,11 @@
+ 
+ class NoSuchChangeset(TracError):
+     def __init__(self, rev):
+-        TracError.__init__(self, "No changeset %s in the repository" % rev)
++        TracError.__init__(self, "No existe el conjunto de cambios %s en el repositorio" % rev)
+ 
+ class NoSuchNode(TracError):
+     def __init__(self, path, rev, msg=None):
+-        TracError.__init__(self, "%sNo node %s at revision %s" \
++        TracError.__init__(self, "%sNo existe el nodo %s en la revisión %s" \
+                            % (msg and '%s: ' % msg or '', path, rev))
+ 
+ class Repository(object):
+@@ -298,7 +298,7 @@
+ 
+     def __init__(self, path, rev, kind):
+         assert kind in (Node.DIRECTORY, Node.FILE), \
+-               "Unknown node kind %s" % kind
++               "Tipo de nodo desconocido %s" % kind
+         self.path = unicode(path)
+         self.rev = rev
+         self.kind = kind
+@@ -442,12 +442,12 @@
+     def assert_permission(self, path):
+         if not self.has_permission(path):
+             raise PermissionDenied, \
+-                  'Insufficient permissions to access %s' % path
++                  'Permisos insuficientes para acceder a %s' % path
+ 
+     def assert_permission_for_changeset(self, rev):
+         if not self.has_permission_for_changeset(rev):
+             raise PermissionDenied, \
+-                  'Insufficient permissions to access changeset %s' % rev
++                  'Permisos insuficientes para acceder al conjunto de cambios %s' % rev
+ 
+     def has_permission(self, path):
+         return True
+Index: trac/versioncontrol/svn_fs.py
+===================================================================
+--- trac/versioncontrol/svn_fs.py	(revision 5756)
++++ trac/versioncontrol/svn_fs.py	(working copy)
+@@ -254,7 +254,7 @@
+         self.path = path # might be needed by __del__()/close()
+         self.log = log
+         if core.SVN_VER_MAJOR < 1:
+-            raise TracError("Subversion >= 1.0 required: Found %d.%d.%d" % \
++            raise TracError("Se requiere Subversion >= 1.0: Se encontró %d.%d.%d" % \
+                             (core.SVN_VER_MAJOR,
+                              core.SVN_VER_MINOR,
+                              core.SVN_VER_MICRO))
+@@ -266,7 +266,7 @@
+         path = os.path.normpath(path).replace('\\', '/')
+         self.path = repos.svn_repos_find_root_path(path, self.pool())
+         if self.path is None:
+-            raise TracError("%s does not appear to be a Subversion repository." \
++            raise TracError("%s no parece ser un repositorio Subversion." \
+                             % path)
+ 
+         self.repos = repos.svn_repos_open(self.path, self.pool())
+@@ -475,14 +475,14 @@
+         if self.has_node(old_path, old_rev):
+             old_node = self.get_node(old_path, old_rev)
+         else:
+-            raise NoSuchNode(old_path, old_rev, 'The Base for Diff is invalid')
++            raise NoSuchNode(old_path, old_rev, 'La base para el Diff es inválida')
+         if self.has_node(new_path, new_rev):
+             new_node = self.get_node(new_path, new_rev)
+         else:
+-            raise NoSuchNode(new_path, new_rev, 'The Target for Diff is invalid')
++            raise NoSuchNode(new_path, new_rev, 'El objetivo para el Diff es inválido')
+         if new_node.kind != old_node.kind:
+-            raise TracError('Diff mismatch: Base is a %s (%s in revision %s) '
+-                            'and Target is a %s (%s in revision %s).' \
++            raise TracError('Incoincidencia Diff: La Base es  %s (%s en la revisión %s) '
++                            'y el Objetivo es %s (%s en la revisión %s).' \
+                             % (old_node.kind, old_path, old_rev,
+                                new_node.kind, new_path, new_rev))
+         subpool = Pool(self.pool)
+Index: trac/versioncontrol/svn_authz.py
+===================================================================
+--- trac/versioncontrol/svn_authz.py	(revision 5756)
++++ trac/versioncontrol/svn_authz.py	(working copy)
+@@ -41,7 +41,7 @@
+     if not os.path.isabs(authz_file):
+         authz_file = os.path.join(env.path, authz_file)
+     if not os.path.exists(authz_file):
+-        env.log.error('[trac] authz_file (%s) does not exist.' % authz_file)
++        env.log.error('[trac] authz_file (%s) no existe.' % authz_file)
+ 
+     module_name = env.config.get('trac', 'authz_module_name')
+     return RealSubversionAuthorizer(repos, authname, module_name, authz_file)
+Index: trac/versioncontrol/web_ui/util.py
+===================================================================
+--- trac/versioncontrol/web_ui/util.py	(revision 5756)
++++ trac/versioncontrol/web_ui/util.py	(working copy)
+@@ -72,7 +72,7 @@
+     return changes
+ 
+ def get_path_links(href, fullpath, rev):
+-    links = [{'name': 'root', 'href': href.browser(rev=rev)}]
++    links = [{'name': 'raíz', 'href': href.browser(rev=rev)}]
+     path = ''
+     for part in [p for p in fullpath.split('/') if p]:
+         path += part + '/'
+@@ -97,9 +97,9 @@
+     try: 
+         return repos.get_node(path, rev) 
+     except NoSuchNode, e:
+-        raise TracError(Markup('%s<br><p>You can <a href="%s">search</a> ' 
+-                               'in the repository history to see if that path '
+-                               'existed but was later removed.</p>', e.message,
++        raise TracError(Markup('%s<br><p>Tu puedes <a href="%s">buscar</a> ' 
++                               'en el historial del repositorio para ver si la ruta '
++                               'existía pero fué posteriormente eliminada.</p>', e.message,
+                                req.href.log(path, rev=rev,
+                                             mode='path_history')))
+ 
+Index: trac/versioncontrol/web_ui/changeset.py
+===================================================================
+--- trac/versioncontrol/web_ui/changeset.py	(revision 5756)
++++ trac/versioncontrol/web_ui/changeset.py	(working copy)
+@@ -259,9 +259,9 @@
+                                              'new': new,
+                                              'old_path': old_path,
+                                              'old': old})
+-        add_link(req, 'alternate', '?format=diff&'+diff_params, 'Unified Diff',
++        add_link(req, 'alternate', '?format=diff&'+diff_params, 'Diff Unificado',
+                  'text/plain', 'diff')
+-        add_link(req, 'alternate', '?format=zip&'+diff_params, 'Zip Archive',
++        add_link(req, 'alternate', '?format=zip&'+diff_params, 'Archivo Zip',
+                  'application/zip', 'zip')
+         add_stylesheet(req, 'common/css/changeset.css')
+         add_stylesheet(req, 'common/css/diff.css')
+@@ -304,9 +304,9 @@
+ 
+             def _changeset_title(rev):
+                 if restricted:
+-                    return 'Changeset %s for %s' % (rev, path)
++                    return 'Conjunto de cambios %s para %s' % (rev, path)
+                 else:
+-                    return 'Changeset %s' % rev
++                    return 'Conjunto de cambios %s' % rev
+ 
+             title = _changeset_title(rev)
+             properties = []
+@@ -335,7 +335,7 @@
+                         prev_path = prev_rev = None
+                 else:
+                     add_link(req, 'first', req.href.changeset(oldest_rev),
+-                             'Changeset %s' % oldest_rev)
++                             'Conjunto de cambios %s' % oldest_rev)
+                     prev_path = diff.old_path
+                     prev_rev = repos.previous_rev(chgset.rev)
+                     if prev_rev:
+@@ -353,7 +353,7 @@
+                             next_href = req.href.changeset(next_rev)
+                 else:
+                     add_link(req, 'last', req.href.changeset(youngest_rev),
+-                             'Changeset %s' % youngest_rev)
++                             'Conjunto de cambios %s' % youngest_rev)
+                     next_rev = repos.next_rev(chgset.rev)
+                     if next_rev:
+                         next_href = req.href.changeset(next_rev)
+@@ -626,7 +626,7 @@
+ 
+     def get_timeline_filters(self, req):
+         if req.perm.has_permission('CHANGESET_VIEW'):
+-            yield ('changeset', 'Repository checkins')
++            yield ('changeset', 'Cambios en el repositorio')
+ 
+     def get_timeline_events(self, req, start, stop, filters):
+         if 'changeset' in filters:
+@@ -644,7 +644,7 @@
+                     shortlog = shorten_line(message)
+ 
+                 if format == 'rss':
+-                    title = Markup('Changeset [%s]: %s', chgset.rev, shortlog)
++                    title = Markup('Conjunto de cambios [%s]: %s', chgset.rev, shortlog)
+                     href = req.abs_href.changeset(chgset.rev)
+                     if wiki_format:
+                         message = wiki_to_html(message, self.env, req, db,
+@@ -652,7 +652,7 @@
+                     else:
+                         message = html.PRE(message)
+                 else:
+-                    title = Markup('Changeset <em>[%s]</em> by %s', chgset.rev,
++                    title = Markup('Conjunto de cambios <em>[%s]</em> por %s', chgset.rev,
+                                    chgset.author)
+                     href = req.href.changeset(chgset.rev)
+ 
+@@ -750,7 +750,7 @@
+ 
+     def get_search_filters(self, req):
+         if req.perm.has_permission('CHANGESET_VIEW'):
+-            yield ('changeset', 'Changesets')
++            yield ('changeset', 'Conjuntos de cambios')
+ 
+     def get_search_results(self, req, terms, filters):
+         if not 'changeset' in filters:
+Index: trac/versioncontrol/web_ui/log.py
+===================================================================
+--- trac/versioncontrol/web_ui/log.py	(revision 5756)
++++ trac/versioncontrol/web_ui/log.py	(working copy)
+@@ -94,7 +94,7 @@
+         path_links = get_path_links(req.href, path, rev)
+         req.hdf['log.path'] = path_links
+         if path_links:
+-            add_link(req, 'up', path_links[-1]['href'], 'Parent directory')
++            add_link(req, 'up', path_links[-1]['href'], 'Directorio superior')
+ 
+         # The `history()` method depends on the mode:
+         #  * for ''stop on copy'' and ''follow copies'', it's `Node.history()` 
+@@ -134,9 +134,9 @@
+             previous_path = old_path
+         if info == []:
+             # FIXME: we should send a 404 error here
+-            raise TracError("The file or directory '%s' doesn't exist "
+-                            "at revision %s or at any previous revision."
+-                            % (path, rev), 'Nonexistent path')
++            raise TracError("El archivo o directorio '%s' no existe "
++                            "en la revisión %s o ni en ninguna revisión previa."
++                            % (path, rev), 'Ruta inexistente')
+ 
+         def make_log_href(path, **args):
+             link_rev = rev
+@@ -152,7 +152,7 @@
+             next_rev = info[-1]['rev']
+             next_path = info[-1]['path']
+             add_link(req, 'next', make_log_href(next_path, rev=next_rev),
+-                     'Revision Log (restarting at %s, rev. %s)'
++                     'Bitácora de Revisiones (reiniciando en %s, rev. %s)'
+                      % (next_path, next_rev))
+             # now, only show 'limit' results
+             del info[-1]
+@@ -202,11 +202,11 @@
+         add_stylesheet(req, 'common/css/diff.css')
+ 
+         rss_href = make_log_href(path, format='rss', stop_rev=stop_rev)
+-        add_link(req, 'alternate', rss_href, 'RSS Feed', 'application/rss+xml',
++        add_link(req, 'alternate', rss_href, 'Fuente en formato RSS', 'application/rss+xml',
+                  'rss')
+         changelog_href = make_log_href(path, format='changelog',
+                                        stop_rev=stop_rev)
+-        add_link(req, 'alternate', changelog_href, 'ChangeLog', 'text/plain')
++        add_link(req, 'alternate', changelog_href, 'Bitácora de cambios', 'text/plain')
+ 
+         return 'log.cs', None
+ 
+Index: trac/versioncontrol/web_ui/browser.py
+===================================================================
+--- trac/versioncontrol/web_ui/browser.py	(revision 5756)
++++ trac/versioncontrol/web_ui/browser.py	(working copy)
+@@ -78,7 +78,7 @@
+         if not req.perm.has_permission('BROWSER_VIEW'):
+             return
+         yield ('mainnav', 'browser',
+-               html.A('Browse Source', href=req.href.browser()))
++               html.A('Explorar repositorio', href=req.href.browser()))
+ 
+     # IPermissionRequestor methods
+ 
+@@ -140,7 +140,7 @@
+ 
+         path_links = get_path_links(req.href, path, rev)
+         if len(path_links) > 1:
+-            add_link(req, 'up', path_links[-2]['href'], 'Parent directory')
++            add_link(req, 'up', path_links[-2]['href'], 'Directorio superior')
+         req.hdf['browser.path'] = path_links
+ 
+         if node.isdir:
+@@ -205,7 +205,7 @@
+                filter(None, [fnmatchcase(node.path, p) for p in patterns]):
+             zip_href = req.href.changeset(rev or repos.youngest_rev, node.path,
+                                           old=rev, old_path='/', format='zip')
+-            add_link(req, 'alternate', zip_href, 'Zip Archive',
++            add_link(req, 'alternate', zip_href, 'Archivo Zip',
+                      'application/zip', 'zip')
+ 
+         req.hdf['browser'] = {'order': order, 'desc': desc and 1 or 0,
+@@ -270,14 +270,14 @@
+             # add ''Plain Text'' alternate link if needed
+             if not is_binary(chunk) and mime_type != 'text/plain':
+                 plain_href = req.href.browser(node.path, rev=rev, format='txt')
+-                add_link(req, 'alternate', plain_href, 'Plain Text',
++                add_link(req, 'alternate', plain_href, 'Texto Plano',
+                          'text/plain')
+ 
+             # add ''Original Format'' alternate link (always)
+             raw_href = req.href.export(rev or repos.youngest_rev, node.path)
+-            add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
++            add_link(req, 'alternate', raw_href, 'Formato Original', mime_type)
+ 
+-            self.log.debug("Rendering preview of node %s@%s with mime-type %s"
++            self.log.debug("Presentando vista previa del nodo %s@%s con el tipo-mime %s"
+                            % (node.name, str(rev), mime_type))
+ 
+             del content # the remainder of that content is not needed
+Index: trac/versioncontrol/cache.py
+===================================================================
+--- trac/versioncontrol/cache.py	(revision 5756)
++++ trac/versioncontrol/cache.py	(working copy)
+@@ -79,16 +79,16 @@
+         repository_dir = metadata.get(CACHE_REPOSITORY_DIR)
+         if repository_dir:
+             if repository_dir != self.name:
+-                self.log.info("'repository_dir' has changed from %r to %r"
++                self.log.info("'repository_dir' ha cambiado de %r a %r"
+                               % (repository_dir, self.name))
+-                raise TracError("The 'repository_dir' has changed, "
+-                                "a 'trac-admin resync' operation is needed.")
++                raise TracError("La entrada 'repository_dir' ha cambiado, "
++                                "es necesario realizar la operación 'trac-admin resync'.")
+         elif repository_dir is None: # 
+-            self.log.info('Storing initial "repository_dir": %s' % self.name)
++            self.log.info('Almacenando entrada inicial "repository_dir": %s' % self.name)
+             cursor.execute("INSERT INTO system (name,value) VALUES (%s,%s)",
+                            (CACHE_REPOSITORY_DIR, self.name,))
+         else: # 'repository_dir' cleared by a resync
+-            self.log.info('Resetting "repository_dir": %s' % self.name)
++            self.log.info('Reiniciando entrada "repository_dir": %s' % self.name)
+             cursor.execute("UPDATE system SET value=%s WHERE name=%s",
+                            (self.name, CACHE_REPOSITORY_DIR))
+ 
+@@ -100,23 +100,23 @@
+ 
+         # -- retrieve the youngest revision cached so far
+         if CACHE_YOUNGEST_REV not in metadata:
+-            raise TracError('Missing "youngest_rev" in cache metadata')
++            raise TracError('No existe "youngest_rev" en el cache de meta-datos')
+         
+         self.youngest = metadata[CACHE_YOUNGEST_REV]
+ 
+         if self.youngest:
+             self.youngest = self.repos.normalize_rev(self.youngest)
+             if not self.youngest:
+-                self.log.debug('normalize_rev failed (youngest_rev=%r)' %
++                self.log.debug('normalize_rev falló (youngest_rev=%r)' %
+                                self.youngest_rev)
+         else:
+-            self.log.debug('cache metadata undefined (youngest_rev=%r)' %
++            self.log.debug('cache de meta-datos no definido (youngest_rev=%r)' %
+                            self.youngest_rev)
+             self.youngest = None
+ 
+         # -- compare them and try to resync if different
+         if self.youngest != repos_youngest:
+-            self.log.info("repos rev [%s] != cached rev [%s]" %
++            self.log.info("la revisión de repositorio [%s] != de la revisión cacheada [%s]" %
+                           (repos_youngest, self.youngest))
+             if self.youngest:
+                 next_youngest = self.repos.next_rev(self.youngest)
+@@ -153,7 +153,7 @@
+                 while next_youngest is not None:
+                     
+                     # 1.1 Attempt to resync the 'revision' table
+-                    self.log.info("Trying to sync revision [%s]" %
++                    self.log.info("Intentando sincronizarse a la revisión [%s]" %
+                                   next_youngest)
+                     cset = self.repos.get_changeset(next_youngest)
+                     try:
+@@ -163,7 +163,7 @@
+                                        (str(next_youngest), cset.date,
+                                         cset.author, cset.message))
+                     except Exception, e: # *another* 1.1. resync attempt won 
+-                        self.log.warning('Revision %s already cached: %s' %
++                        self.log.warning('La revisión %s ya está cacheada: %s' %
+                                          (next_youngest, e))
+                         # also potentially in progress, so keep ''previous''
+                         # notion of 'youngest'
+@@ -175,7 +175,7 @@
+                     #      (i.e. there *shouldn't* be any race condition here)
+ 
+                     for path,kind,action,bpath,brev in cset.get_changes():
+-                        self.log.debug("Caching node change in [%s]: %s"
++                        self.log.debug("Cacheando cambio en nodo en [%s]: %s"
+                                        % (next_youngest,
+                                           (path,kind,action,bpath,brev)))
+                         kind = kindmap[kind]
+Index: trac/Settings.py
+===================================================================
+--- trac/Settings.py	(revision 5756)
++++ trac/Settings.py	(working copy)
+@@ -33,7 +33,7 @@
+ 
+     def get_navigation_items(self, req):
+         yield ('metanav', 'settings',
+-               html.A('Settings', href=req.href.settings()))
++               html.A('Configuración', href=req.href.settings()))
+ 
+     # IRequestHandler methods
+ 
+@@ -49,7 +49,7 @@
+             elif action == 'load':
+                 self._do_load(req)
+ 
+-        req.hdf['title'] = 'Settings'
++        req.hdf['title'] = 'Configuración'
+         req.hdf['settings'] = req.session
+         if req.authname == 'anonymous':
+             req.hdf['settings.session_id'] = req.session.sid
+Index: trac/scripts/admin.py
+===================================================================
+--- trac/scripts/admin.py	(revision 5756)
++++ trac/scripts/admin.py	(working copy)
+@@ -67,8 +67,8 @@
+ class TracAdmin(cmd.Cmd):
+     intro = ''
+     license = trac.__license_long__
+-    doc_header = 'Trac Admin Console %(ver)s\n' \
+-                 'Available Commands:\n' \
++    doc_header = 'Consola Administrativa Trac %(ver)s\n' \
++                 'Commandos Disponibles:\n' \
+                  % {'ver':trac.__version__ }
+     ruler = ''
+     prompt = "Trac> "
+@@ -97,17 +97,17 @@
+         except SystemExit:
+             raise
+         except Exception, e:
+-            print>>sys.stderr, 'Command failed: %s' % e
++            print>>sys.stderr, 'El comando falló: %s' % e
+             rv = 2
+         if not self.interactive:
+             return rv
+ 
+     def run(self):
+         self.interactive = True
+-        print 'Welcome to trac-admin %(ver)s\n'                \
+-              'Interactive Trac administration console.\n'       \
++        print 'Bienvenido a trac-admin %(ver)s\n'                \
++              'Consola interactiva de administración Trac.\n'       \
+               'Copyright (c) 2003-2006 Edgewall Software\n\n'                                    \
+-              "Type:  '?' or 'help' for help on commands.\n" %  \
++              "Ingrese:  '?' � 'help' para obtener ayuda acerca de los comandos.\n" %  \
+               {'ver':trac.__version__}
+         self.cmdloop()
+ 
+@@ -134,7 +134,7 @@
+                 self.__env = Environment(self.envname)
+             return self.__env
+         except Exception, e:
+-            print 'Failed to open environment.', e
++            print 'No se pudo abrir el entorno Trac.', e
+             traceback.print_exc()
+             sys.exit(1)
+ 
+@@ -283,7 +283,7 @@
+             except ValueError:
+                 pass
+         if seconds == None:
+-            print>>sys.stderr, 'Unknown time format %s' % t
++            print>>sys.stderr, 'Formato de hora desconocido %s' % t
+         return seconds
+ 
+     def _format_date(self, s):
+@@ -298,7 +298,7 @@
+     ##
+ 
+     ## Help
+-    _help_help = [('help', 'Show documentation')]
++    _help_help = [('help', 'Mostrar documentación')]
+ 
+     def all_docs(cls):
+         return (cls._help_about + cls._help_help +
+@@ -320,30 +320,30 @@
+                 doc = getattr(self, "_help_" + arg[0])
+                 self.print_doc(doc)
+             except AttributeError:
+-                print "No documentation found for '%s'" % arg[0]
++                print "No se encontró documentación para '%s'" % arg[0]
+         else:
+-            print 'trac-admin - The Trac Administration Console %s' \
++            print 'trac-admin - La Consola Administrativa Trac %s' \
+                   % trac.__version__
+             if not self.interactive:
+                 print
+-                print "Usage: trac-admin </path/to/projenv> [command [subcommand] [option ...]]\n"
+-                print "Invoking trac-admin without command starts "\
+-                      "interactive mode."
++                print "Uso: trac-admin </ruta/al/proyecto> [comando [subcomando] [opción ...]]\n"
++                print "El invocar trac-admin sin ningún comando, inicia "\
++                      "el modo interactivo."
+             self.print_doc(self.all_docs())
+ 
+     
+     ## About / Version
+-    _help_about = [('about', 'Shows information about trac-admin')]
++    _help_about = [('about', 'Mostrar información acerca de trac-admin')]
+ 
+     def do_about(self, line):
+         print
+-        print 'Trac Admin Console %s' % trac.__version__
++        print 'Consola Administrativa Trac %s' % trac.__version__
+         print '================================================================='
+         print self.license
+ 
+ 
+     ## Quit / EOF
+-    _help_quit = [['quit', 'Exit the program']]
++    _help_quit = [['quit', 'Salir del programa']]
+     _help_exit = _help_quit
+     _help_EOF = _help_quit
+ 
+@@ -356,14 +356,14 @@
+ 
+ 
+     # Component
+-    _help_component = [('component list', 'Show available components'),
+-                       ('component add <name> <owner>', 'Add a new component'),
+-                       ('component rename <name> <newname>',
+-                        'Rename a component'),
+-                       ('component remove <name>',
+-                        'Remove/uninstall component'),
+-                       ('component chown <name> <owner>',
+-                        'Change component ownership')]
++    _help_component = [('component list', 'Mostrar los componentes disponibles'),
++                       ('component add <nombre> <responsable>', 'Añadir un nuevo componente'),
++                       ('component rename <nombre> <nuevo_nombre>',
++                        'Renombrar un componente'),
++                       ('component remove <nombre>',
++                        'Quitar/eliminar un componente'),
++                       ('component chown <nombre> <responsable>',
++                        'Modificar el responsable del componente')]
+ 
+     def complete_component(self, text, line, begidx, endidx):
+         if begidx in (16, 17):
+@@ -400,7 +400,7 @@
+         data = []
+         for c in Component.select(self.env_open()):
+             data.append((c.name, c.owner))
+-        self.print_listing(['Name', 'Owner'], data)
++        self.print_listing(['Nombre', 'Responsable'], data)
+ 
+     def _do_component_add(self, name, owner):
+         component = Component(self.env_open())
+@@ -424,11 +424,11 @@
+ 
+ 
+     ## Permission
+-    _help_permission = [('permission list [user]', 'List permission rules'),
+-                        ('permission add <user> <action> [action] [...]',
+-                         'Add a new permission rule'),
+-                        ('permission remove <user> <action> [action] [...]',
+-                         'Remove permission rule')]
++    _help_permission = [('permission list [user]', 'Listar las reglas de permisos'),
++                        ('permission add <usuario> <acción> [acción] [...]',
++                         'Añadir una nueva regla de permisos'),
++                        ('permission remove <usuario> <acción> [acción] [...]',
++                         'Quitar una regla de permisos')]
+ 
+     def complete_permission(self, text, line, begidx, endidx):
+         argv = self.arg_tokenize(line)
+@@ -472,9 +472,9 @@
+         else:
+             rows = self._permsys.get_all_permissions()
+         rows.sort()
+-        self.print_listing(['User', 'Action'], rows)
++        self.print_listing(['Usuario', 'Acción'], rows)
+         print
+-        print 'Available actions:'
++        print 'Acciones disponibles:'
+         actions = self._permsys.get_actions()
+         actions.sort()
+         text = ', '.join(actions)
+@@ -486,7 +486,7 @@
+         if not self._permsys:
+             self._permsys = PermissionSystem(self.env_open())
+         if not action.islower() and not action.isupper():
+-            print 'Group names must be in lower case and actions in upper case'
++            print 'Los nombres de los grupos deben estar en minúsculas y las acciones en mayúsculas'
+             return
+         self._permsys.grant_permission(user, action)
+ 
+@@ -509,72 +509,72 @@
+ 
+     ## Initenv
+     _help_initenv = [('initenv',
+-                      'Create and initialize a new environment interactively'),
+-                     ('initenv <projectname> <db> <repostype> <repospath> <templatepath>',
+-                      'Create and initialize a new environment from arguments')]
++                      'Crear e inicializar un nuevo entorno de manera interactiva'),
++                     ('initenv <nombre_proyecto> <db> <tipo_repositorio> <ruta_repositorio> <ruta_plantillas>',
++                      'Crear e inicializar un nuevo entorno en base a los argumentos')]
+ 
+     def do_initdb(self, line):
+         self.do_initenv(line)
+ 
+     def get_initenv_args(self):
+         returnvals = []
+-        print 'Creating a new Trac environment at %s' % self.envname
++        print 'Creando un nuevo entorno Trac en %s' % self.envname
+         print
+-        print 'Trac will first ask a few questions about your environment '
+-        print 'in order to initalize and prepare the project database.'
++        print 'Trac primero realizará algunas preguntas acerca de tu entorno '
++        print 'para poder inicializar y preparar la base de datos del proyecto.'
+         print
+-        print " Please enter the name of your project."
+-        print " This name will be used in page titles and descriptions."
++        print " Por favor ingrese en nombre de su proyecto."
++        print " Este nombre será utilizado en títulos de páginas y descripciones."
+         print
+-        dp = 'My Project'
+-        returnvals.append(raw_input('Project Name [%s]> ' % dp).strip() or dp)
++        dp = 'Mi Proyecto'
++        returnvals.append(raw_input('Nombre del Proyecto [%s]> ' % dp).strip() or dp)
+         print
+-        print ' Please specify the connection string for the database to use.'
+-        print ' By default, a local SQLite database is created in the environment '
+-        print ' directory. It is also possible to use an already existing '
+-        print ' PostgreSQL database (check the Trac documentation for the exact '
+-        print ' connection string syntax).'
++        print ' Por favor especifique la cadena de conexión para la base de datos a utilizar.'
++        print ' Por defecto, se creará una base de datos local SQLite en el directorio '
++        print ' del entorno. También es posible utilizar una base de datos PostgreSQL '
++        print ' ya existente (revise la documentación de Trac para informarse acerca de la '
++        print ' sintaxis exacta de la cadena de conexión).'
+         print
+         ddb = 'sqlite:db/trac.db'
+-        prompt = 'Database connection string [%s]> ' % ddb
++        prompt = 'Cadena de conexión para la base de datos [%s]> ' % ddb
+         returnvals.append(raw_input(prompt).strip() or ddb)
+         print
+-        print ' Please specify the type of version control system,'
+-        print ' By default, it will be svn.'
++        print ' Por favor especifique el tipo de sistema de control de versiones,'
++        print ' Por defecto, será svn.'
+         print
+-        print ' If you don\'t want to use Trac with version control integration, '
+-        print ' choose the default here and don\'t specify a repository directory. '
+-        print ' in the next question.'
++        print ' Si no desea utilizar Trac con integración a un sistema de control de versiones,'
++        print ' escoja acá el valor por defecto y no especifique un directorio-repositorio '
++        print ' en la siguiente pregunta.'
+         print 
+         drpt = 'svn'
+-        prompt = 'Repository type [%s]> ' % drpt
++        prompt = 'Tipo de repositorio [%s]> ' % drpt
+         returnvals.append(raw_input(prompt).strip() or drpt)
+         print
+-        print ' Please specify the absolute path to the version control '
+-        print ' repository, or leave it blank to use Trac without a repository.'
+-        print ' You can also set the repository location later.'
++        print ' Por favor especifique la ruta absoluta al repositorio de control de '
++        print ' versiones, o en su lugar, deje este campo en blanco para usar Trac sin un repositorio.'
++        print ' También será posible fijar la localización del repositorio más adelante.'
+         print 
+-        prompt = 'Path to repository [/path/to/repos]> '
++        prompt = 'Ruta al repositorio [/ruta/al/repositorio]> '
+         returnvals.append(raw_input(prompt).strip())
+         print
+-        print ' Please enter location of Trac page templates.'
+-        print ' Default is the location of the site-wide templates installed with Trac.'
++        print ' Por favor ingrese la localización de las plantillas de las páginas de Trac.'
++        print ' Por defecto se escoge la localización de las plantillas ubicadas en la instalación de Trac.'
+         print
+         dt = default_dir('templates')
+-        prompt = 'Templates directory [%s]> ' % dt
++        prompt = 'Directorio de plantillas [%s]> ' % dt
+         returnvals.append(raw_input(prompt).strip() or dt)
+         print
+         return returnvals
+ 
+     def do_initenv(self, line):
+         if self.env_check():
+-            print "Initenv for '%s' failed." % self.envname
+-            print "Does an environment already exist?"
++            print "Falló initenv para '%s'." % self.envname
++            print "�Ser� posible que ya exista un entorno?"
+             return 2
+ 
+         if os.path.exists(self.envname) and os.listdir(self.envname):
+-            print "Initenv for '%s' failed." % self.envname
+-            print "Directory exists and is not empty."
++            print "Falló initenv para '%s'." % self.envname
++            print "El directorio existe y no está vacío."
+             return 2
+ 
+         arg = self.arg_tokenize(line)
+@@ -587,20 +587,20 @@
+             project_name, db_str, repository_type, repository_dir, \
+                           templates_dir = returnvals
+         elif len(arg) != 5:
+-            print 'Wrong number of arguments to initenv: %d' % len(arg)
++            print 'Número incorrecto de argumentos para initenv: %d' % len(arg)
+             return 2
+         else:
+             project_name, db_str, repository_type, repository_dir, \
+                           templates_dir = arg[:5]
+ 
+         if not os.access(os.path.join(templates_dir, 'header.cs'), os.F_OK):
+-            print templates_dir, "doesn't look like a Trac templates directory"
++            print templates_dir, "no parece un directorio de plantillas Trac"
+             return 2
+         if templates_dir == default_dir('templates'):
+             templates_dir = None # let the runtime default_dir() take over
+ 
+         try:
+-            print 'Creating and Initializing Project'
++            print 'Creando e Inicializando el Proyecto'
+             options = [
+                 ('trac', 'database', db_str),
+                 ('trac', 'repository_type', repository_type),
+@@ -612,12 +612,12 @@
+                 self.__env = Environment(self.envname, create=True,
+                                          options=options)
+             except Exception, e:
+-                print 'Failed to create environment.', e
++                print 'Falló la creación del entorno.', e
+                 traceback.print_exc()
+                 sys.exit(1)
+ 
+             # Add a few default wiki pages
+-            print ' Installing default wiki pages'
++            print ' Instalando páginas por defecto del wiki'
+             cnx = self.__env.get_db_cnx()
+             cursor = cnx.cursor()
+             self._do_wiki_load(default_dir('wiki'), cursor)
+@@ -627,50 +627,50 @@
+                 try:
+                     repos = self.__env.get_repository()
+                     if repos:
+-                        print ' Indexing repository'
++                        print ' Indexando el repositorio'
+                         self._resync(repos)
+                 except TracError, e:
+-                    print>>sys.stderr, "\nWarning:\n"
++                    print>>sys.stderr, "\nAdvertencia:\n"
+                     if repository_type == "svn":
+-                        print>>sys.stderr, "You should install the SVN bindings"
++                        print>>sys.stderr, "Debería instalar las librerías SVN para Python"
+                     else:
+-                        print>>sys.stderr, "Repository type %s not supported" \
++                        print>>sys.stderr, "El tipo de repositorio %s no es soportado" \
+                                            % repository_type
+         except Exception, e:
+-            print 'Failed to initialize environment.', e
++            print 'Falló la inicialización del entorno.', e
+             traceback.print_exc()
+             return 2
+ 
+         print """
+ ---------------------------------------------------------------------
+-Project environment for '%(project_name)s' created.
++El entorno del proyecto para '%(project_name)s' fué creado.
+ 
+-You may now configure the environment by editing the file:
++Ahora puedes realizar la configuración del entorno editando el archivo:
+ 
+   %(config_path)s
+ 
+-If you'd like to take this new project environment for a test drive,
+-try running the Trac standalone web server `tracd`:
++Si quieres efectuar una prueba de este nuevo entorno-proyecto,
++prueba ejecutar el servidor web `tracd`:
+ 
+   tracd --port 8000 %(project_path)s
+ 
+-Then point your browser to http://localhost:8000/%(project_dir)s.
+-There you can also browse the documentation for your installed
+-version of Trac, including information on further setup (such as
+-deploying Trac to a real web server).
++Luego dirige tu navegador hacia http://localhost:8000/%(project_dir)s.
++Allá también podrás encontrar la documentación para la versión de Trac 
++que tienes instalada, incluyendo información acerca de configuración adicional 
++(como el desplegar Trac en un verdadero servidor web).
+ 
+-The latest documentation can also always be found on the project
+-website:
++La documentación más actual siempre estará disponible en el
++sitio web del proyecto:
+ 
+   http://trac.edgewall.org/
+ 
+-Congratulations!
++Felicitaciones!
+ """ % dict(project_name=project_name, project_path=self.envname,
+            project_dir=os.path.basename(self.envname),
+            config_path=os.path.join(self.envname, 'conf', 'trac.ini'))
+ 
+-    _help_resync = [('resync', 'Re-synchronize trac with the repository'),
+-                    ('resync <rev>', 'Re-synchronize only the given <rev>')]
++    _help_resync = [('resync', 'Re-sincronizar trac con el repositorio'),
++                    ('resync <revisión>', 'Re-sincronizar sólo la <revisión> dada')]
+ 
+     def _resync(self, repos):
+         if hasattr(repos, 'sync'): # introduced "officially" in 0.10.4
+@@ -689,10 +689,10 @@
+             rev = argv[0]
+             if rev:
+                 env.get_repository().sync_changeset(rev)
+-                print '%s resynced.' % rev
++                print '%s resincronizado.' % rev
+                 return
+         from trac.versioncontrol.cache import CACHE_METADATA_KEYS
+-        print 'Resyncing repository history... '
++        print 'Resincronizando el historial del repositorio... '
+         cnx = self.db_open()
+         cursor = cnx.cursor()
+         cursor.execute("DELETE FROM revision")
+@@ -705,22 +705,22 @@
+         repos = self._resync(env.get_repository())
+         cursor.execute("SELECT count(rev) FROM revision")
+         for cnt, in cursor:
+-            print cnt, 'revisions cached.',
+-        print 'Done.'
++            print cnt, 'revisiones cacheadas.',
++        print 'Terminado.'
+ 
+     ## Wiki
+-    _help_wiki = [('wiki list', 'List wiki pages'),
+-                  ('wiki remove <name>', 'Remove wiki page'),
+-                  ('wiki export <page> [file]',
+-                   'Export wiki page to file or stdout'),
+-                  ('wiki import <page> [file]',
+-                   'Import wiki page from file or stdin'),
+-                  ('wiki dump <directory>',
+-                   'Export all wiki pages to files named by title'),
+-                  ('wiki load <directory>',
+-                   'Import all wiki pages from directory'),
++    _help_wiki = [('wiki list', 'Listar las páginas del wiki'),
++                  ('wiki remove <nombre>', 'Eliminar una página del wiki'),
++                  ('wiki export <página> [archivo]',
++                   'Exportar una página del wiki a un archivo ó a la salida estándar'),
++                  ('wiki import <página> [archivo]',
++                   'Importar una página del wiki de un archivo ó de la entrada estándar'),
++                  ('wiki dump <directorio>',
++                   'Exportar todas las páginas del wiki hacia archivos, nombrando los archivos de acuerdo al título de cada página'),
++                  ('wiki load <directorio>',
++                   'Importar todas las páginas del wiki de un directorio'),
+                   ('wiki upgrade',
+-                   'Upgrade default wiki pages to current version')]
++                   'Actualizar las páginas por defecto del wiki a la versión actual')]
+ 
+     def complete_wiki(self, text, line, begidx, endidx):
+         argv = self.arg_tokenize(line)
+@@ -773,7 +773,7 @@
+     def _do_wiki_list(self):
+         rows = self.db_query("SELECT name, max(version), max(time) "
+                              "FROM wiki GROUP BY name ORDER BY name")
+-        self.print_listing(['Title', 'Edits', 'Modified'],
++        self.print_listing(['Título', 'Ediciones', 'Modificado'],
+                            [(r[0], int(r[1]), self._format_datetime(r[2]))
+                             for r in rows])
+ 
+@@ -784,7 +784,7 @@
+     def _do_wiki_import(self, filename, title, cursor=None,
+                         create_only=[]):
+         if not os.path.isfile(filename):
+-            raise Exception, '%s is not a file' % filename
++            raise Exception, '%s no es un archivo' % filename
+ 
+         f = open(filename,'r')
+         data = to_unicode(f.read(), 'utf-8')
+@@ -795,10 +795,10 @@
+                              params=(title,))
+         old = list(rows)
+         if old and title in create_only:
+-            print '  %s already exists.' % title
++            print '  %s ya existe.' % title
+             return
+         if old and data == old[0][0]:
+-            print '  %s already up to date.' % title
++            print '  %s ya está actualizado.' % title
+             return
+         f.close()
+ 
+@@ -816,7 +816,7 @@
+             print text
+         else:
+             if os.path.isfile(filename):
+-                raise Exception("File '%s' exists" % filename)
++                raise Exception("El archivo '%s' ya existe" % filename)
+             f = open(filename,'w')
+             f.write(text.encode('utf-8'))
+             f.close()
+@@ -839,7 +839,7 @@
+                 self._do_wiki_import(filename, page, cursor, create_only)
+ 
+     ## Ticket
+-    _help_ticket = [('ticket remove <number>', 'Remove ticket')]
++    _help_ticket = [('ticket remove <número>', 'Eliminar un ticket')]
+ 
+     def complete_ticket(self, text, line, begidx, endidx):
+         argv = self.arg_tokenize(line)
+@@ -857,7 +857,7 @@
+             try:
+                 number = int(arg[1])
+             except ValueError:
+-                print>>sys.stderr, "<number> must be a number"
++                print>>sys.stderr, "<número> debe ser un número"
+                 return
+             self._do_ticket_remove(number)
+         else:    
+@@ -866,17 +866,17 @@
+     def _do_ticket_remove(self, number):
+         ticket = Ticket(self.env_open(), number)
+         ticket.delete()
+-        print "Ticket %d and all associated data removed." % number
++        print "El ticket %d y todos los datos asociados fueron eliminados." % number
+ 
+ 
+     ## (Ticket) Type
+-    _help_ticket_type = [('ticket_type list', 'Show possible ticket types'),
+-                         ('ticket_type add <value>', 'Add a ticket type'),
+-                         ('ticket_type change <value> <newvalue>',
+-                          'Change a ticket type'),
+-                         ('ticket_type remove <value>', 'Remove a ticket type'),
+-                         ('ticket_type order <value> up|down',
+-                          'Move a ticket type up or down in the list')]
++    _help_ticket_type = [('ticket_type list', 'Mostrar los posibles tipos de tickets'),
++                         ('ticket_type add <value>', 'Añadir un nuevo tipo de ticket'),
++                         ('ticket_type change <valor> <nuevo_valor>',
++                          'Modificar un tipo de ticket'),
++                         ('ticket_type remove <valor>', 'Eliminar un tipo de ticket'),
++                         ('ticket_type order <valor> up|down',
++                          'Mover un tipo de ticket arriba ó abajo en la lista')]
+ 
+     def complete_ticket_type (self, text, line, begidx, endidx):
+         if begidx == 16:
+@@ -889,13 +889,13 @@
+         self._do_enum('ticket_type', line)
+  
+     ## (Ticket) Priority
+-    _help_priority = [('priority list', 'Show possible ticket priorities'),
+-                       ('priority add <value>', 'Add a priority value option'),
+-                       ('priority change <value> <newvalue>',
+-                        'Change a priority value'),
+-                       ('priority remove <value>', 'Remove priority value'),
+-                       ('priority order <value> up|down',
+-                        'Move a priority value up or down in the list')]
++    _help_priority = [('priority list', 'Mostrar las posibles prioridades de un ticket'),
++                       ('priority add <valor>', 'Añadir una opción a los valores de prioridad'),
++                       ('priority change <valor> <nuevo_valor>',
++                        'Modificar un valor de prioridad'),
++                       ('priority remove <valor>', 'Eliminar un valor de prioridad'),
++                       ('priority order <valor> up|down',
++                        'Mover un valor de prioridad arriba ó abajo en la lista')]
+ 
+     def complete_priority (self, text, line, begidx, endidx):
+         if begidx == 16:
+@@ -908,13 +908,13 @@
+         self._do_enum('priority', line)
+ 
+     ## (Ticket) Severity
+-    _help_severity = [('severity list', 'Show possible ticket severities'),
+-                      ('severity add <value>', 'Add a severity value option'),
+-                      ('severity change <value> <newvalue>',
+-                       'Change a severity value'),
+-                      ('severity remove <value>', 'Remove severity value'),
+-                      ('severity order <value> up|down',
+-                       'Move a severity value up or down in the list')]
++    _help_severity = [('severity list', 'Mostrar las posibles severidades de un ticket'),
++                      ('severity add <valor>', 'Añadir una opción a los valores de severidad'),
++                      ('severity change <valor> <nuevo_valor>',
++                       'Modificar un valor de severidad'),
++                      ('severity remove <valor>', 'Eliminar un valor de severidad'),
++                      ('severity order <valor> up|down',
++                       'Mover un valor de severidad arriba ó abajo en la lista')]
+ 
+     def complete_severity (self, text, line, begidx, endidx):
+         if begidx == 16:
+@@ -957,7 +957,7 @@
+ 
+     def _do_enum_list(self, type):
+         enum_cls = self._enum_map[type]
+-        self.print_listing(['Possible Values'],
++        self.print_listing(['Valores Posibles'],
+                            [(e.name,) for e in enum_cls.select(self.env_open())])
+ 
+     def _do_enum_add(self, type, name):
+@@ -997,17 +997,17 @@
+ 
+     ## Milestone
+ 
+-    _help_milestone = [('milestone list', 'Show milestones'),
+-                       ('milestone add <name> [due]', 'Add milestone'),
+-                       ('milestone rename <name> <newname>',
+-                        'Rename milestone'),
+-                       ('milestone due <name> <due>',
+-                        'Set milestone due date (Format: "%s" or "now")'
++    _help_milestone = [('milestone list', 'Mostrar hitos'),
++                       ('milestone add <nombre> [vencimiento]', 'Añadir hito'),
++                       ('milestone rename <nombre> <nuevo_nombre>',
++                        'Renombrar un hito'),
++                       ('milestone due <nombre> <vencimiento>',
++                        'Fijar la fecha de vencimiento de un hito (Formato: "%s" ó "now")'
+                         % _date_format_hint),
+-                       ('milestone completed <name> <completed>',
+-                        'Set milestone completed date (Format: "%s" or "now")'
++                       ('milestone completed <nombre> <conclusión>',
++                        'Fijar la fecha de conclusión de un hito (Formato: "%s" ó "now")'
+                         % _date_format_hint),
+-                       ('milestone remove <name>', 'Remove milestone')]
++                       ('milestone remove <nombre>', 'Eliminar hito')]
+ 
+     def complete_milestone (self, text, line, begidx, endidx):
+         if begidx in (15, 17):
+@@ -1041,7 +1041,7 @@
+             data.append((m.name, m.due and self._format_date(m.due),
+                          m.completed and self._format_datetime(m.completed)))
+ 
+-        self.print_listing(['Name', 'Due', 'Completed'], data)
++        self.print_listing(['Nombre', 'Vencimiento', 'Conclusión'], data)
+ 
+     def _do_milestone_rename(self, name, newname):
+         milestone = Milestone(self.env_open(), name)
+@@ -1068,14 +1068,14 @@
+         milestone.update()
+ 
+     ## Version
+-    _help_version = [('version list', 'Show versions'),
+-                       ('version add <name> [time]', 'Add version'),
+-                       ('version rename <name> <newname>',
+-                        'Rename version'),
+-                       ('version time <name> <time>',
+-                        'Set version date (Format: "%s" or "now")'
++    _help_version = [('version list', 'Mostrar versiones'),
++                       ('version add <nombre> [fecha]', 'Añadir versión'),
++                       ('version rename <nombre> <nuevo_nombre>',
++                        'Renombrar una versión'),
++                       ('version time <nombre> <fecha>',
++                        'Fijar la fecha de una versión (Formato: "%s" ó "now")'
+                         % _date_format_hint),
+-                       ('version remove <name>', 'Remove version')]
++                       ('version remove <nombre>', 'Eliminar una versión')]
+ 
+     def complete_version (self, text, line, begidx, endidx):
+         if begidx in (13, 15):
+@@ -1105,7 +1105,7 @@
+         data = []
+         for v in Version.select(self.env_open()):
+             data.append((v.name, v.time and self._format_date(v.time)))
+-        self.print_listing(['Name', 'Time'], data)
++        self.print_listing(['Nombre', 'Fecha'], data)
+ 
+     def _do_version_rename(self, name, newname):
+         version = Version(self.env_open(), name)
+@@ -1126,7 +1126,7 @@
+         version.time = self._parse_date(t)
+         version.update()
+ 
+-    _help_upgrade = [('upgrade', 'Upgrade database to current version')]
++    _help_upgrade = [('upgrade', 'Actualizar la base de datos a la versión actual')]
+     def do_upgrade(self, line):
+         arg = self.arg_tokenize(line)
+         do_backup = True
+@@ -1135,7 +1135,7 @@
+         self.db_open()
+ 
+         if not self.__env.needs_upgrade():
+-            print "Database is up to date, no upgrade necessary."
++            print "La base de datos ya está actualizada, no es necesario actualizarla nuevamente."
+             return
+ 
+         try:
+@@ -1143,14 +1143,14 @@
+         except EnvironmentError, e:
+             msg = unicode(e)
+             if 'backup' in msg:
+-                raise TracError("Backup failed '%s'.\nUse `--no-backup' to "
+-                                "upgrade without doing a backup." % msg)
++                raise TracError("Falló la copia de seguridad '%s'.\nUtilice `--no-backup' para "
++                                "actualizar sin realizar una copia de seguridad." % msg)
+             else:
+                 raise
+-        print 'Upgrade done.'
++        print 'Actualización terminada.'
+ 
+-    _help_hotcopy = [('hotcopy <backupdir>',
+-                      'Make a hot backup copy of an environment')]
++    _help_hotcopy = [('hotcopy <dir_copia_seguridad>',
++                      "Realizar una copia de seguridad 'caliente' de un entorno")]
+     def do_hotcopy(self, line):
+         arg = self.arg_tokenize(line)
+         if arg[0]:
+@@ -1165,7 +1165,7 @@
+         cursor.execute("UPDATE system SET name=NULL WHERE name IS NULL")
+ 
+         try:
+-            print 'Hotcopying %s to %s ...' % (self.__env.path, dest),
++            print "Copiando en 'caliente' %s en %s ..." % (self.__env.path, dest),
+             db_str = self.__env.config.get('trac', 'database')
+             prefix, db_path = db_str.split(':', 1)
+             if prefix == 'sqlite':
+@@ -1200,7 +1200,7 @@
+                 arg = content.split(' ', 1)[0]
+                 doc = getattr(TracAdmin, '_help_' + arg)
+             except AttributeError:
+-                raise TracError('Unknown trac-admin command "%s"' % content)
++                raise TracError('Comando trac-admin "%s" desconocido' % content)
+             if arg != content:
+                 for cmd, help in doc:
+                     if cmd.startswith(content):
+Index: trac/scripts/tests/admin.py
+===================================================================
+--- trac/scripts/tests/admin.py	(revision 5756)
++++ trac/scripts/tests/admin.py	(working copy)
+@@ -185,7 +185,7 @@
+             self.assertEqual(0, rv)
+             self.assertEqual(self.expected_results[test_name], output)
+         except SkipTest, e:
+-            print>>sys.stderr, 'Skipping test %s: %s' % (test_name, e)
++            print>>sys.stderr, 'Omitiendo el test %s: %s' % (test_name, e)
+ 
+     def test_permission_add_one_action_ok(self):
+         """
+@@ -200,7 +200,7 @@
+             self.assertEqual(0, rv)
+             self.assertEqual(self.expected_results[test_name], output)
+         except SkipTest, e:
+-            print>>sys.stderr, 'Skipping test %s: %s' % (test_name, e)
++            print>>sys.stderr, 'Omitiendo el test %s: %s' % (test_name, e)
+ 
+     def test_permission_add_multiple_actions_ok(self):
+         """
+@@ -215,7 +215,7 @@
+             self.assertEqual(0, rv)
+             self.assertEqual(self.expected_results[test_name], output)
+         except SkipTest, e:
+-            print>>sys.stderr, 'Skipping test %s: %s' % (test_name, e)
++            print>>sys.stderr, 'Omitiendo el test %s: %s' % (test_name, e)
+ 
+     def test_permission_remove_one_action_ok(self):
+         """
+@@ -230,7 +230,7 @@
+             self.assertEqual(0, rv)
+             self.assertEqual(self.expected_results[test_name], output)
+         except SkipTest, e:
+-            print>>sys.stderr, 'Skipping test %s: %s' % (test_name, e)
++            print>>sys.stderr, 'Omitiendo el test %s: %s' % (test_name, e)
+ 
+     def test_permission_remove_multiple_actions_ok(self):
+         """
+@@ -246,7 +246,7 @@
+             self.assertEqual(0, rv)
+             self.assertEqual(self.expected_results[test_name], output)
+         except SkipTest, e:
+-            print>>sys.stderr, 'Skipping test %s: %s' % (test_name, e)
++            print>>sys.stderr, 'Omitiendo el test %s: %s' % (test_name, e)
+ 
+     # Component tests
+ 
+Index: trac/perm.py
+===================================================================
+--- trac/perm.py	(revision 5756)
++++ trac/perm.py	(working copy)
+@@ -32,7 +32,7 @@
+         self.action = action
+ 
+     def __str__ (self):
+-        return '%s privileges are required to perform this operation' % self.action
++        return 'Se requiere el privilegio %s para realizar esta operación' % self.action
+ 
+ 
+ class IPermissionRequestor(Interface):
+@@ -185,7 +185,7 @@
+         """Grant the user with the given name permission to perform to specified
+         action."""
+         if action.isupper() and action not in self.get_actions():
+-            raise TracError, '%s is not a valid action.' % action
++            raise TracError, '%s no es una acción válida.' % action
+ 
+         self.store.grant_permission(username, action)
+ 
+Index: trac/Search.py
+===================================================================
+--- trac/Search.py	(revision 5756)
++++ trac/Search.py	(working copy)
+@@ -74,7 +74,7 @@
+     parameters. The result is returned as a (string, params) tuple.
+     """
+     if len(columns) < 1 or len(terms) < 1:
+-        raise TracError('Empty search attempt, this should really not happen.')
++        raise TracError('Intento de búsqueda con criterio vacío, esto no debería pasar realmente.')
+ 
+     likes = ['%s %s' % (i, db.like()) for i in columns]
+     c = ' OR '.join(likes)
+@@ -132,7 +132,7 @@
+         if not req.perm.has_permission('SEARCH_VIEW'):
+             return
+         yield ('mainnav', 'search',
+-               html.A('Search', href=req.href.search(), accesskey=4))
++               html.A('Buscar', href=req.href.search(), accesskey=4))
+ 
+     # IPermissionRequestor methods
+ 
+@@ -162,7 +162,7 @@
+               'active': filter[0] in filters
+             } for filter in available_filters]
+                 
+-        req.hdf['title'] = 'Search'
++        req.hdf['title'] = 'Buscar'
+ 
+         query = req.args.get('q')
+         if query:
+@@ -173,9 +173,9 @@
+             terms = search_terms(query)
+             # Refuse queries that obviously would result in a huge result set
+             if len(terms) == 1 and len(terms[0]) < self.min_query_length:
+-                raise TracError('Search query too short. '
+-                                'Query must be at least %d characters long.' % \
+-                                self.min_query_length, 'Search Error')
++                raise TracError('El criterio de búsqueda es demasiado corto. '
++                                'El criterio de búsqueda debe tener al menos %d caracteres de longitud.' % \
++                                self.min_query_length, 'Error en la Búsqueda')
+             results = []
+             for source in self.search_sources:
+                 results += list(source.get_search_results(req, terms, filters))
+@@ -185,7 +185,7 @@
+             n_pages = (n-1) / page_size + 1
+             results = results[(page-1) * page_size: page * page_size]
+ 
+-            req.hdf['title'] = 'Search Results'
++            req.hdf['title'] = 'Resultados de la Búsqueda'
+             req.hdf['search.q'] = req.args.get('q')
+             req.hdf['search.page'] = page
+             req.hdf['search.n_hits'] = n
+@@ -195,12 +195,12 @@
+                 next_href = req.href.search(zip(filters, ['on'] * len(filters)),
+                                             q=req.args.get('q'), page=page + 1,
+                                             noquickjump=1)
+-                add_link(req, 'next', next_href, 'Next Page')
++                add_link(req, 'next', next_href, 'Siguiente página')
+             if page > 1:
+                 prev_href = req.href.search(zip(filters, ['on'] * len(filters)),
+                                             q=req.args.get('q'), page=page - 1,
+                                             noquickjump=1)
+-                add_link(req, 'prev', prev_href, 'Previous Page')
++                add_link(req, 'prev', prev_href, 'Página anterior')
+             req.hdf['search.page_href'] = req.href.search(
+                 zip(filters, ['on'] * len(filters)), q=req.args.get('q'),
+                 noquickjump=1)
+@@ -222,7 +222,7 @@
+         if kwd[0] == '/':
+             quickjump_href = req.href.browser(kwd)
+             name = kwd
+-            description = 'Browse repository path ' + kwd
++            description = 'Buscar ruta en el repositorio ' + kwd
+         else:
+             link = wiki_to_link(kwd, self.env, req)
+             if isinstance(link, Element):
+Index: trac/config.py
+===================================================================
+--- trac/config.py	(revision 5756)
++++ trac/config.py	(working copy)
+@@ -220,7 +220,7 @@
+                     yield option
+ 
+     def __repr__(self):
+-        return '<Section [%s]>' % (self.name)
++        return '<Sección [%s]>' % (self.name)
+ 
+     def get(self, name, default=None):
+         """Return the value of the specified option."""
+@@ -332,7 +332,7 @@
+         return None
+ 
+     def __set__(self, instance, value):
+-        raise AttributeError, 'can\'t set attribute'
++        raise AttributeError, 'no se puede fijar el valor del atributo'
+ 
+     def __repr__(self):
+         return '<%s [%s] "%s">' % (self.__class__.__name__, self.section,
+@@ -376,9 +376,9 @@
+         for impl in self.xtnpt.extensions(instance):
+             if impl.__class__.__name__ == value:
+                 return impl
+-        raise AttributeError('Cannot find an implementation of the "%s" '
+-                             'interface named "%s".  Please update the option '
+-                             '%s.%s in trac.ini.'
++        raise AttributeError('No se puede encontrar una implementación de la interfaz "%s" '
++                             'denominada "%s".  Por favor actualice la opción '
++                             '%s.%s en trac.ini.'
+                              % (self.xtnpt.interface.__name__, value,
+                                 self.section, self.name))
+ 
+Index: trac/loader.py
+===================================================================
+--- trac/loader.py	(revision 5756)
++++ trac/loader.py	(working copy)
+@@ -47,7 +47,7 @@
+             try:
+                 plugin_name = os.path.basename(plugin_file[:-3])
+                 if plugin_name not in loaded_components:
+-                    env.log.debug('Loading file plugin %s from %s' % \
++                    env.log.debug('Cargando archivo plugin %s de %s' % \
+                                   (plugin_name, plugin_file))
+                     module = imp.load_source(plugin_name, plugin_file)
+                     loaded_components.append(plugin_name)
+@@ -56,7 +56,7 @@
+                         env.config['components'].set(plugin_name + '.*',
+                                                      'enabled')
+             except Exception, e:
+-                env.log.error('Failed to load plugin from %s', plugin_file,
++                env.log.error('Falló la carga del plugin de %s', plugin_file,
+                               exc_info=True)
+ 
+     # If setuptools is installed try to load any eggs from the plugins
+@@ -79,9 +79,9 @@
+                          yield predecessor
+                      yield dist
+                  except pkg_resources.DistributionNotFound, e:
+-                     env.log.error('Skipping "%s" ("%s" not found)', dist, e)
++                     env.log.error('Pasando por alto "%s" ("%s" no fué encontrado)', dist, e)
+                  except pkg_resources.VersionConflict, e:
+-                     env.log.error('Skipping "%s" (version conflict: "%s")',
++                     env.log.error('Pasando por alto "%s" (conflicto de versión: "%s")',
+                                    dist, e)
+ 
+         for egg in flatten([pkg_env[name][0] for name in pkg_env]):
+@@ -91,7 +91,7 @@
+                 # Load plugins declared via the `trac.plugins` entry point.
+                 # This is the only supported option going forward, the
+                 # others will be dropped at some point in the future.
+-                env.log.debug('Loading egg plugin %s from %s', name,
++                env.log.debug('Cargando plugin-egg %s de %s', name,
+                               egg.location)
+                 egg.activate()
+                 try:
+@@ -100,18 +100,18 @@
+                         try:
+                             entry_point.load()
+                         except pkg_resources.DistributionNotFound, e:
+-                            env.log.warning('Cannot load plugin %s because it '
+-                                            'requires "%s"', name, e)
++                            env.log.warning('No se puede cargar el plugin %s debido a que '
++                                            'requiere "%s"', name, e)
+                         modules.append(entry_point.module_name)
+                         loaded_components.append(entry_point.module_name)
+                 except ImportError, e:
+-                    env.log.error('Failed to load plugin %s from %s', name,
++                    env.log.error('Falló la carga del plugin %s de %s', name,
+                                   egg.location, exc_info=True)
+ 
+             else:
+                 # Support for pre-entry-point plugins
+                 if egg.has_metadata('trac_plugin.txt'):
+-                    env.log.debug('Loading plugin %s', egg.location)
++                    env.log.debug('Cargando plugin %s', egg.location)
+                     egg.activate()
+                     for modname in egg.get_metadata_lines('trac_plugin.txt'):
+                         module = None
+@@ -121,7 +121,7 @@
+                                 loaded_components.append(modname)
+                                 modules.append(modname)
+                             except ImportError, e:
+-                                env.log.error('Component module %s not found',
++                                env.log.error('El módulo componente %s no fué encontrado',
+                                               modname, exc_info=True)
+ 
+             if modules:
+Index: trac/Timeline.py
+===================================================================
+--- trac/Timeline.py	(revision 5756)
++++ trac/Timeline.py	(working copy)
+@@ -77,7 +77,7 @@
+         if not req.perm.has_permission('TIMELINE_VIEW'):
+             return
+         yield ('mainnav', 'timeline',
+-               html.A('Timeline', href=req.href.timeline(), accesskey=2))
++               html.A('Cronología', href=req.href.timeline(), accesskey=2))
+ 
+     # IPermissionRequestor methods
+ 
+@@ -151,7 +151,7 @@
+         if maxrows and len(events) > maxrows:
+             del events[maxrows:]
+ 
+-        req.hdf['title'] = 'Timeline'
++        req.hdf['title'] = 'Cronología'
+ 
+         # Get the email addresses of all known users
+         email_map = {}
+@@ -216,8 +216,8 @@
+                                                'daysback')]
+         href = req.href.timeline(args+[(f, 'on') for f in other_filters])
+         raise TracError(Markup(
+-            '%s  event provider (<tt>%s</tt>) failed:<br /><br />'
++            'El proveedor de eventos %s (<tt>%s</tt>) falló:<br /><br />'
+             '%s: %s'
+-            '<p>You may want to see the other kind of events from the '
+-            '<a href="%s">Timeline</a></p>', 
++            '<p>Tal vez quiera ver los otros tipos de eventos del '
++            '<a href="%s">Cronología</a></p>', 
+             ", ".join(guilty_kinds), ep_name, exc_name, to_unicode(exc), href))
+Index: trac/About.py
+===================================================================
+--- trac/About.py	(revision 5756)
++++ trac/About.py	(working copy)
+@@ -38,7 +38,7 @@
+ 
+     def get_navigation_items(self, req):
+         yield ('metanav', 'about',
+-               html.a('About Trac', href=req.href.about()))
++               html.a('Acerca de Trac', href=req.href.about()))
+ 
+     # IPermissionRequestor methods
+ 
+@@ -56,7 +56,7 @@
+ 
+     def process_request(self, req):
+         page = req.args.get('page', 'default')
+-        req.hdf['title'] = 'About Trac'
++        req.hdf['title'] = 'Acerca de Trac'
+         if req.perm.has_permission('CONFIG_VIEW'):
+             req.hdf['about.config_href'] = req.href.about('config')
+             req.hdf['about.plugins_href'] = req.href.about('plugins')
+Index: trac/wiki/api.py
+===================================================================
+--- trac/wiki/api.py	(revision 5756)
++++ trac/wiki/api.py	(working copy)
+@@ -143,7 +143,7 @@
+         try:
+             now = time.time()
+             if now > self._last_index_update + WikiSystem.INDEX_UPDATE_INTERVAL:
+-                self.log.debug('Updating wiki page index')
++                self.log.debug('Actualizando el índice de páginas del wiki')
+                 db = self.env.get_db_cnx()
+                 cursor = db.cursor()
+                 cursor.execute("SELECT DISTINCT name FROM wiki")
+@@ -222,7 +222,7 @@
+ 
+     def wiki_page_added(self, page):
+         if not self.has_page(page.name):
+-            self.log.debug('Adding page %s to index' % page.name)
++            self.log.debug('Añadiendo página %s al índice' % page.name)
+             self._index[page.name] = True
+ 
+     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
+@@ -230,7 +230,7 @@
+ 
+     def wiki_page_deleted(self, page):
+         if self.has_page(page.name):
+-            self.log.debug('Removing page %s from index' % page.name)
++            self.log.debug('Eliminando página %s del índice' % page.name)
+             del self._index[page.name]
+ 
+     def wiki_page_version_deleted(self, page):
+Index: trac/wiki/web_ui.py
+===================================================================
+--- trac/wiki/web_ui.py	(revision 5756)
++++ trac/wiki/web_ui.py	(working copy)
+@@ -51,7 +51,7 @@
+ 
+     # IContentConverter methods
+     def get_supported_conversions(self):
+-        yield ('txt', 'Plain Text', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
++        yield ('txt', 'Texto Plano', 'txt', 'text/x-trac-wiki', 'text/plain', 9)
+ 
+     def convert_content(self, req, mimetype, content, key):
+         return (content, 'text/plain;charset=utf-8')
+@@ -67,7 +67,7 @@
+         yield ('mainnav', 'wiki',
+                html.A('Wiki', href=req.href.wiki(), accesskey=1))
+         yield ('metanav', 'help',
+-               html.A('Help/Guide', href=req.href.wiki('TracGuide'),
++               html.A('Ayuda/Guía', href=req.href.wiki('TracGuide'),
+                       accesskey=6))
+ 
+     # IPermissionRequestor methods
+@@ -142,7 +142,7 @@
+ 
+     def get_timeline_filters(self, req):
+         if req.perm.has_permission('WIKI_VIEW'):
+-            yield ('wiki', 'Wiki changes')
++            yield ('wiki', 'Cambios en el Wiki')
+ 
+     def get_timeline_events(self, req, start, stop, filters):
+         if 'wiki' in filters:
+@@ -155,7 +155,7 @@
+                            "FROM wiki WHERE time>=%s AND time<=%s",
+                            (start, stop))
+             for t,name,comment,author,version in cursor:
+-                title = Markup('<em>%s</em> edited by %s',
++                title = Markup('<em>%s</em> editado por %s',
+                                wiki.format_page_name(name), author)
+                 diff_link = html.A('diff', href=href.wiki(name, action='diff',
+                                                           version=version))
+@@ -230,10 +230,10 @@
+         for manipulator in self.page_manipulators:
+             for field, message in manipulator.validate_wiki_page(req, page):
+                 if field:
+-                    raise InvalidWikiPage("The Wiki page field %s is invalid: %s"
++                    raise InvalidWikiPage("El campo %s de la página del wiki es inválido: %s"
+                                           % (field, message))
+                 else:
+-                    raise InvalidWikiPage("Invalid Wiki page: %s" % message)
++                    raise InvalidWikiPage("Página del wiki inválida: %s" % message)
+ 
+         page.save(get_reporter_id(req, 'author'), req.args.get('comment'),
+                   req.remote_addr)
+@@ -265,7 +265,7 @@
+         req.perm.assert_permission('WIKI_VIEW')
+ 
+         if not page.exists:
+-            raise TracError("Version %s of page %s does not exist" %
++            raise TracError("La versión %s de la página %s no existe" %
+                             (req.args.get('version'), page.name))
+ 
+         add_stylesheet(req, 'common/css/diff.css')
+@@ -322,11 +322,11 @@
+         if prev_version:
+             add_link(req, 'prev', req.href.wiki(page.name, action='diff',
+                                                 version=prev_version),
+-                     'Version %d' % prev_version)
++                     'Versión %d' % prev_version)
+         if next_version:
+             add_link(req, 'next', req.href.wiki(page.name, action='diff',
+                                                 version=next_version),
+-                     'Version %d' % next_version)
++                     'Versión %d' % next_version)
+ 
+         # -- text diffs
+         diff_style, diff_options = get_diff_options(req)
+@@ -396,7 +396,7 @@
+         req.perm.assert_permission('WIKI_VIEW')
+ 
+         if not page.exists:
+-            raise TracError, "Page %s does not exist" % page.name
++            raise TracError, "La página %s no existe" % page.name
+ 
+         self._set_title(req, page, 'history')
+ 
+@@ -454,8 +454,8 @@
+                     }
+         else:
+             if not req.perm.has_permission('WIKI_CREATE'):
+-                raise HTTPNotFound('Page %s not found', page.name)
+-            req.hdf['wiki.page_html'] = html.P('Describe "%s" here' % page_name)
++                raise HTTPNotFound('No se encontró la página %s', page.name)
++            req.hdf['wiki.page_html'] = html.P('Describa aquí "%s"' % page_name)
+ 
+         # Show attachments
+         req.hdf['wiki.attachments'] = attachments_to_hdf(self.env, req, db,
+Index: trac/wiki/intertrac.py
+===================================================================
+--- trac/wiki/intertrac.py	(revision 5756)
++++ trac/wiki/intertrac.py	(working copy)
+@@ -41,13 +41,13 @@
+     def process_request(self, req):
+         link = req.args.get('link', '')
+         if not link:
+-            raise TracError('No TracLinks given')
++            raise TracError('No se pasó un TracLink')
+         link_elt = wiki_to_link(link, self.env, req)
+         if isinstance(link_elt, Element):
+             href = link_elt.attr['href']
+             if href:
+                 req.redirect(href)
+-        raise TracError('"%s" is not a TracLinks' % link)
++        raise TracError('"%s" no es un TracLink' % link)
+ 
+ 
+     # IWikiMacroProvider methods
+@@ -56,7 +56,7 @@
+         yield 'InterTrac'
+ 
+     def get_macro_description(self, name): 
+-        return "Provide a list of known InterTrac prefixes."
++        return "Proveer una lista de prefijos conocidos InterTrac."
+ 
+     def render_macro(self, req, name, content):
+         intertracs = {}
+@@ -73,7 +73,7 @@
+             intertrac = intertracs[prefix]
+             if isinstance(intertrac, basestring):
+                 yield html.TR(html.TD(html.B(prefix)),
+-                              html.TD('Alias for ', html.B(intertrac)))
++                              html.TD('Alias para ', html.B(intertrac)))
+             else:
+                 url = intertrac.get('url', '')
+                 if url:
+@@ -83,5 +83,5 @@
+                                   html.TD(html.A(title, href=url)))
+ 
+         return html.TABLE(class_="wiki intertrac")(
+-            html.TR(html.TH(html.EM('Prefix')), html.TH(html.EM('Trac Site'))),
++            html.TR(html.TH(html.EM('Prefijo')), html.TH(html.EM('Sitio Trac'))),
+             [generate_prefix(p) for p in sorted(intertracs.keys())])
+Index: trac/wiki/model.py
+===================================================================
+--- trac/wiki/model.py	(revision 5756)
++++ trac/wiki/model.py	(working copy)
+@@ -68,7 +68,7 @@
+     exists = property(fget=lambda self: self.version > 0)
+ 
+     def delete(self, version=None, db=None):
+-        assert self.exists, 'Cannot delete non-existent page'
++        assert self.exists, 'No se puede eliminar una página no existente'
+         if not db:
+             db = self.env.get_db_cnx()
+             handle_ta = True
+@@ -80,12 +80,12 @@
+         if version is None:
+             # Delete a wiki page completely
+             cursor.execute("DELETE FROM wiki WHERE name=%s", (self.name,))
+-            self.env.log.info('Deleted page %s' % self.name)
++            self.env.log.info('Se eliminó la página %s' % self.name)
+         else:
+             # Delete only a specific page version
+             cursor.execute("DELETE FROM wiki WHERE name=%s and version=%s",
+                            (self.name, version))
+-            self.env.log.info('Deleted version %d of page %s'
++            self.env.log.info('Se eliminó la versión %d de la página %s'
+                               % (version, self.name))
+ 
+         if version is None or version == self.version:
+@@ -131,7 +131,7 @@
+             cursor.execute("UPDATE wiki SET readonly=%s WHERE name=%s",
+                            (self.readonly, self.name))
+         else:
+-            raise TracError('Page not modified')
++            raise TracError('La página no se modificó')
+ 
+         if handle_ta:
+             db.commit()
+Index: trac/wiki/formatter.py
+===================================================================
+--- trac/wiki/formatter.py	(revision 5756)
++++ trac/wiki/formatter.py	(working copy)
+@@ -72,7 +72,7 @@
+                 self.processor = self._mimeview_processor
+             else:
+                 self.processor = self._default_processor
+-                self.error = "No macro or processor named '%s' found" % name
++                self.error = "No se encontró un macro ó procesador (processor) denominado '%s'" % name
+ 
+     # builtin processors
+ 
+@@ -97,7 +97,7 @@
+ 
+     def _macro_processor(self, req, text):
+         # TODO: macro should take a `formatter` argument
+-        self.env.log.debug('Executing Wiki macro %s by provider %s'
++        self.env.log.debug('Ejecutando Wiki macro %s mediante proveedor %s'
+                            % (self.name, self.macro_provider))
+         return self.macro_provider.render_macro(req, self.name, text)
+ 
+@@ -107,7 +107,7 @@
+ 
+     def process(self, req, text, in_paragraph=False):
+         if self.error:
+-            text = system_message(Markup('Error: Failed to load processor '
++            text = system_message(Markup('Error: Falló la carga del procesador '
+                                          '<code>%s</code>', self.name),
+                                   self.error)
+         else:
+@@ -380,7 +380,7 @@
+         intertrac_config = self.env.config['intertrac']
+         url = intertrac_config.get(ns+'.url')
+         if url:
+-            name = intertrac_config.get(ns+'.title', 'Trac project %s' % ns)
++            name = intertrac_config.get(ns+'.title', 'Proyecto Trac %s' % ns)
+             compat = intertrac_config.getbool(ns+'.compat', 'true')
+             # TODO: set `compat` default to False once 0.10 gets widely used
+             # and remove compatibility code altogether once 0.[89] disappear...
+@@ -440,9 +440,9 @@
+             macro = WikiProcessor(self.env, name)
+             return macro.process(self.req, args, True)
+         except Exception, e:
+-            self.env.log.error('Macro %s(%s) failed' % (name, args),
++            self.env.log.error('Falló el macro %s(%s)' % (name, args),
+                                exc_info=True)
+-            return system_message('Error: Macro %s(%s) failed' % (name, args),
++            return system_message('Error: Falló el macro %s(%s)' % (name, args),
+                                   e)
+ 
+     # Headings
+Index: trac/wiki/macros.py
+===================================================================
+--- trac/wiki/macros.py	(revision 5756)
++++ trac/wiki/macros.py	(working copy)
+@@ -252,7 +252,7 @@
+         # we expect the 1st argument to be a filename (filespec)
+         args = content.split(',')
+         if len(args) == 0:
+-            raise Exception("No argument.")
++            raise Exception("Faltan argumentos.")
+         filespec = args[0]
+         size_re = re.compile('[0-9]+%?$')
+         attr_re = re.compile('(align|border|width|height|alt'
+@@ -293,7 +293,7 @@
+             if parts[0] in ['wiki', 'ticket']:
+                 module, id, file = parts
+             else:
+-                raise Exception("%s module can't have attachments" % parts[0])
++                raise Exception("El módulo %s no puede tener adjuntos" % parts[0])
+         elif len(parts) == 2:
+             from trac.versioncontrol.web_ui import BrowserModule
+             try:
+@@ -334,9 +334,9 @@
+             if len(path_info) > 2:
+                 id = path_info[2]
+             if module not in ['wiki', 'ticket']:
+-                raise Exception('Cannot reference local attachment from here')
++                raise Exception('No se puede referenciar a un adjunto local desde aquí')
+         else:
+-            raise Exception('No filespec given')
++            raise Exception('No se pasó el argumento "filespec"')
+         if not url: # this is an attachment
+             from trac.attachment import Attachment
+             attachment = Attachment(self.env, module, id, file)
+@@ -380,7 +380,7 @@
+                         descr = wiki_to_html(descr or '', self.env, req)
+                     except Exception, e:
+                         descr = Markup(system_message(
+-                            "Error: Can't get description for macro %s" \
++                            "Error: No se puede obtener la descripción para el macro %s" \
+                             % macro_name, e))
+                     yield (macro_name, descr)
+ 
+@@ -447,7 +447,7 @@
+                     found.append(name)
+                     yield name
+                 except Exception, e:
+-                    self.log.error('Failed to load wiki macro %s (%s)',
++                    self.log.error('Falló la carga del wiki-macro %s (%s)',
+                                    filename, e, exc_info=True)
+ 
+     def get_macro_description(self, name):
+@@ -458,7 +458,7 @@
+         try:
+             return module.execute(req and req.hdf, content, self.env)
+         except Exception, e:
+-            self.log.error('Wiki macro %s failed (%s)', name, e, exc_info=True)
++            self.log.error('El wiki-macro %s falló (%s)', name, e, exc_info=True)
+             raise
+ 
+     def _load_macro(self, name):
+@@ -466,4 +466,4 @@
+             macro_file = os.path.join(path, name + '.py')
+             if os.path.isfile(macro_file):
+                 return imp.load_source(name, macro_file)
+-        raise TracError, 'Macro %s not found' % name
++        raise TracError, 'No se encontró el macro %s' % name
+Index: trac/wiki/interwiki.py
+===================================================================
+--- trac/wiki/interwiki.py	(revision 5756)
++++ trac/wiki/interwiki.py	(working copy)
+@@ -131,7 +131,7 @@
+         yield 'InterWiki'
+ 
+     def get_macro_description(self, name): 
+-        return "Provide a description list for the known InterWiki prefixes."
++        return "Proveer una lista descriptiva de los prefijos InterWiki conocidos."
+ 
+     def render_macro(self, req, name, content):
+         from trac.util import sorted
+@@ -144,7 +144,7 @@
+                 'rc_url': self._expand_or_append(url, ['RecentChanges']),
+                 'description': title == prefix and url or title})
+ 
+-        return _.TABLE(_.TR(_.TH(_.EM("Prefix")), _.TH(_.EM("Site"))),
++        return _.TABLE(_.TR(_.TH(_.EM("Prefijo")), _.TH(_.EM("Sitio"))),
+                        [ _.TR(_.TD(_.A(w['prefix'], href=w['rc_url'])),
+                               _.TD(_.A(w['description'], href=w['url'])))
+                          for w in interwikis ],
+Index: trac/upgrades/db10.py
+===================================================================
+--- trac/upgrades/db10.py	(revision 5756)
++++ trac/upgrades/db10.py	(working copy)
+@@ -22,4 +22,4 @@
+ def do_upgrade(env, ver, cursor):
+     for s in sql:
+         cursor.execute(s)
+-    print 'Please perform a "resync" after this upgrade.'
++    print 'Por favor realice un "resync" después de esta actualización.'
+Index: trac/web/standalone.py
+===================================================================
+--- trac/web/standalone.py	(revision 5756)
++++ trac/web/standalone.py	(working copy)
+@@ -106,26 +106,26 @@
+ 
+ def main():
+     from optparse import OptionParser, OptionValueError
+-    parser = OptionParser(usage='usage: %prog [options] [projenv] ...',
++    parser = OptionParser(usage='uso: %prog [opciones] [proyecto] ...',
+                           version='%%prog %s' % VERSION)
+ 
+     auths = {}
+     def _auth_callback(option, opt_str, value, parser, cls):
+         info = value.split(',', 3)
+         if len(info) != 3:
+-            raise OptionValueError("Incorrect number of parameters for %s"
++            raise OptionValueError("Número incorrecto de parámetros para %s"
+                                    % option)
+ 
+         env_name, filename, realm = info
+         if env_name in auths:
+-            print >>sys.stderr, 'Ignoring duplicate authentication option for ' \
+-                                'project: %s' % env_name
++            print >>sys.stderr, 'Ignorando opción de autenticación duplicada para ' \
++                                'el proyecto: %s' % env_name
+         else:
+             auths[env_name] = cls(os.path.abspath(filename), realm)
+ 
+     def _validate_callback(option, opt_str, value, parser, valid_values):
+         if value not in valid_values:
+-            raise OptionValueError('%s must be one of: %s, not %s'
++            raise OptionValueError('%s debe ser uno de: %s, no %s'
+                                    % (opt_str, '|'.join(valid_values), value))
+         setattr(parser.values, option.dest, value)
+ 
+@@ -174,15 +174,15 @@
+     options, args = parser.parse_args()
+ 
+     if not args and not options.env_parent_dir:
+-        parser.error('either the --env-parent-dir option or at least one '
+-                     'environment must be specified')
++        parser.error('ya sea la opción --env-parent-dir ó al menos un '
++                     'entorno deben ser especificados')
+     if options.single_env:
+         if options.env_parent_dir:
+-            parser.error('the --single-env option cannot be used with '
++            parser.error('la opción --single-env no puede ser utilizada en conjunto a '
+                          '--env-parent-dir')
+         elif len(args) > 1:
+-            parser.error('the --single-env option cannot be used with '
+-                         'more than one enviroment')
++            parser.error('la opción --single-env no puede ser utilizada con '
++                         'más de un entorno')
+ 
+     if options.port is None:
+         options.port = {
+@@ -196,9 +196,9 @@
+     if options.daemonize and options.autoreload:
+         for path in args + [options.env_parent_dir, options.pidfile]:
+             if path and not os.path.isabs(path):
+-                parser.error('"%s" is not an absolute path.\n\n'
+-                             'when using both --auto-reload and --daemonize '
+-                             'all path arguments must be absolute'
++                parser.error('"%s" no es una ruta absoluta.\n\n'
++                             'cuando se utiliza en conjunto --auto-reload y --daemonize '
++                             'todos los argumentos referentes a rutas deben ser absolutos'
+                              % path)
+ 
+     # relative paths don't work when daemonized
+@@ -251,7 +251,7 @@
+                         if e.errno != errno.ESRCH:
+                             raise
+                     else:
+-                        sys.exit("tracd is already running with pid %s" % pid)
++                        sys.exit("tracd ya está corriendo con el pid %s" % pid)
+                 realserve = serve
+                 def serve():
+                     try:
+@@ -270,7 +270,7 @@
+ 
+         if options.autoreload:
+             def modification_callback(file):
+-                print>>sys.stderr, 'Detected modification of %s, restarting.' \
++                print>>sys.stderr, 'Se detectó la modificación de %s, reiniciando.' \
+                                    % file
+             autoreload.main(serve, modification_callback)
+         else:
+Index: trac/web/auth.py
+===================================================================
+--- trac/web/auth.py	(revision 5756)
++++ trac/web/auth.py	(working copy)
+@@ -83,12 +83,12 @@
+ 
+     def get_navigation_items(self, req):
+         if req.authname and req.authname != 'anonymous':
+-            yield ('metanav', 'login', 'logged in as %s' % req.authname)
++            yield ('metanav', 'login', 'sesión iniciada como %s' % req.authname)
+             yield ('metanav', 'logout',
+-                   html.A('Logout', href=req.href.logout()))
++                   html.A('Cerrar Sesión', href=req.href.logout()))
+         else:
+             yield ('metanav', 'login',
+-                   html.A('Login', href=req.href.login()))
++                   html.A('Iniciar Sesión', href=req.href.login()))
+ 
+     # IRequestHandler methods
+ 
+@@ -119,10 +119,10 @@
+         case sensitive regarding user names and domain names
+         """
+         if not req.remote_user:
+-            raise TracError(html("Authentication information not available. "
+-                                 "Please refer to the ",
+-                                 html.a('installation documentation',
+-                                        title="Configuring Authentication",
++            raise TracError(html("La información de autenticación no está disponible. "
++                                 "Por favor, refiérase a la ",
++                                 html.a('documentación de instalación',
++                                        title="Configurando Autenticación",
+                                         href=req.href.wiki('TracInstall') +
+                                         "#ConfiguringAuthentication"), "."))
+         remote_user = req.remote_user
+@@ -130,7 +130,7 @@
+             remote_user = remote_user.lower()
+ 
+         assert req.authname in ('anonymous', remote_user), \
+-               'Already logged in as %s.' % req.authname
++               'Ya ha iniciado sesión como %s.' % req.authname
+ 
+         cookie = hex_entropy()
+         db = self.env.get_db_cnx()
+@@ -242,17 +242,17 @@
+             try:
+                 u, h = line.split(':')
+             except ValueError:
+-                print >>sys.stderr, 'Warning: invalid password line in %s: %s' \
++                print >>sys.stderr, 'Advertencia: contraseña inválida en %s: %s' \
+                                     % (filename, line)
+                 continue
+             if '$' in h or self.crypt:
+                 self.hash[u] = h
+             else:
+-                print >>sys.stderr, 'Warning: cannot parse password for ' \
+-                                    'user "%s" without the "crypt" module' % u
++                print >>sys.stderr, 'Advertencia: no se puede verificar la contraseña del ' \
++                                    'usuario "%s" sin el módulo "crypt"' % u
+ 
+         if self.hash == {}:
+-            print >> sys.stderr, "Warning: found no users in file:", filename
++            print >> sys.stderr, "Advertencia: no existen usuarios en el archivo:", filename
+ 
+     def test(self, user, password):
+         self.check_reload()
+@@ -304,13 +304,13 @@
+             try:
+                 u, r, a1 = line.split(':')
+             except ValueError:
+-                print >>sys.stderr, 'Warning: invalid digest line in %s: %s' \
++                print >>sys.stderr, 'Advertencia: entrada "digest" inválida en %s: %s' \
+                                     % (filename, line)
+                 continue
+             if r == self.realm:
+                 self.hash[u] = a1
+         if self.hash == {}:
+-            print >> sys.stderr, "Warning: found no users in realm:", self.realm
++            print >> sys.stderr, "Advertencia: no existen usuarios en el dominio:", self.realm
+         
+     def parse_auth_header(self, authorization):
+         values = {}
+Index: trac/web/api.py
+===================================================================
+--- trac/web/api.py	(revision 5756)
++++ trac/web/api.py	(working copy)
+@@ -408,7 +408,7 @@
+         "304 Not Modified" response if it matches.
+         """
+         if not os.path.isfile(path):
+-            raise HTTPNotFound("File %s not found" % path)
++            raise HTTPNotFound("No se encontró el archivo %s" % path)
+ 
+         stat = os.stat(path)
+         last_modified = http_date(stat.st_mtime)
+Index: trac/web/clearsilver.py
+===================================================================
+--- trac/web/clearsilver.py	(revision 5756)
++++ trac/web/clearsilver.py	(working copy)
+@@ -132,7 +132,7 @@
+             import neo_util
+             self.hdf = neo_util.HDF()
+         except ImportError, e:
+-            raise TracError, "ClearSilver not installed (%s)" % e
++            raise TracError, "ClearSilver no está instalado (%s)" % e
+         
+         self['hdf.loadpaths'] = loadpaths
+ 
+Index: trac/web/chrome.py
+===================================================================
+--- trac/web/chrome.py	(revision 5756)
++++ trac/web/chrome.py	(working copy)
+@@ -230,7 +230,7 @@
+                 if os.path.isfile(path):
+                     req.send_file(path, mimeview.get_mimetype(path))
+ 
+-        self.log.warning('File %s not found in any of %s', filename, dirs)
++        self.log.warning('No se encontró el archivo %s en ninguno de los directorios %s', filename, dirs)
+         raise HTTPNotFound('File %s not found', filename)
+ 
+     # ITemplateProvider methods
+Index: trac/web/session.py
+===================================================================
+--- trac/web/session.py	(revision 5756)
++++ trac/web/session.py	(working copy)
+@@ -99,10 +99,10 @@
+         cursor = db.cursor()
+         cursor.execute("SELECT sid FROM session WHERE sid=%s", (new_sid,))
+         if cursor.fetchone():
+-            raise TracError(Markup('Session "%s" already exists.<br />'
+-                                   'Please choose a different session ID.',
+-                                   new_sid), 'Error renaming session')
+-        self.env.log.debug('Changing session ID %s to %s' % (self.sid, new_sid))
++            raise TracError(Markup('La sesión "%s" ya existe.<br />'
++                                   'Por favor escoja un diferente "identificador" (ID) de sesión.',
++                                   new_sid), 'Error al renombrar sesión')
++        self.env.log.debug('Modificando el "identificador" (ID) de sesión %s a %s' % (self.sid, new_sid))
+         cursor.execute("UPDATE session SET sid=%s WHERE sid=%s "
+                        "AND authenticated=0", (new_sid, self.sid))
+         cursor.execute("UPDATE session_attribute SET sid=%s "
+Index: trac/util/tests/text.py
+===================================================================
+--- trac/util/tests/text.py	(revision 5756)
++++ trac/util/tests/text.py	(working copy)
+@@ -25,9 +25,9 @@
+     def test_from_exception_using_unicode_args(self):
+         u = u'\uB144'
+         try:
+-            raise ValueError, '%s is not a number.' % u
++            raise ValueError, '%s no es un número.' % u
+         except ValueError, e:
+-            self.assertEquals(u'\uB144 is not a number.', to_unicode(e))
++            self.assertEquals(u'\uB144 no es un número.', to_unicode(e))
+ 
+     def test_from_exception_using_str_args(self):
+         u = u'Das Ger\xe4t oder die Ressource ist belegt'
+Index: trac/util/datefmt.py
+===================================================================
+--- trac/util/datefmt.py	(revision 5756)
++++ trac/util/datefmt.py	(working copy)
+@@ -30,17 +30,17 @@
+     if not time2: time2 = time.time()
+     if time1 > time2:
+         time2, time1 = time1, time2
+-    units = ((3600 * 24 * 365, 'year',   'years'),
+-             (3600 * 24 * 30,  'month',  'months'),
+-             (3600 * 24 * 7,   'week',   'weeks'),
+-             (3600 * 24,       'day',    'days'),
+-             (3600,            'hour',   'hours'),
+-             (60,              'minute', 'minutes'))
++    units = ((3600 * 24 * 365, 'año',   'años'),
++             (3600 * 24 * 30,  'mes',  'meses'),
++             (3600 * 24 * 7,   'semana',   'semanas'),
++             (3600 * 24,       'día',    'días'),
++             (3600,            'hora',   'horas'),
++             (60,              'minuto', 'minutos'))
+     age_s = int(time2 - time1)
+     if resolution and age_s < resolution:
+         return ''
+     if age_s < 60:
+-        return '%i second%s' % (age_s, age_s != 1 and 's' or '')
++        return '%i segundo%s' % (age_s, age_s != 1 and 's' or '')
+     for u, unit, unit_plural in units:
+         r = float(age_s) / float(u)
+         if r >= 0.9:
+@@ -111,5 +111,5 @@
+         except ValueError:
+             continue
+     if seconds == None:
+-        raise ValueError, '%s is not a known date format.' % text
++        raise ValueError, '%s no es un formato de fecha conocido.' % text
+     return seconds
+Index: trac/notification.py
+===================================================================
+--- trac/notification.py	(revision 5756)
++++ trac/notification.py	(working copy)
+@@ -190,7 +190,7 @@
+             self._charset.input_codec = None
+             self._charset.output_charset = 'ascii'
+         else:
+-            raise TracError, 'Invalid email encoding setting: %s' % pref
++            raise TracError, 'Configuración de codificación de correo electrónico inválida: %s' % pref
+ 
+     def notify(self, resid, subject):
+         self.subject = subject
+@@ -203,11 +203,11 @@
+         self.replyto_email = self.config['notification'].get('smtp_replyto')
+         self.from_email = self.from_email or self.replyto_email
+         if not self.from_email and not self.replyto_email:
+-            raise TracError(Markup('Unable to send email due to identity '
+-                                   'crisis.<p>Neither <b>notification.from</b> '
+-                                   'nor <b>notification.reply_to</b> are '
+-                                   'specified in the configuration.</p>'),
+-                            'SMTP Notification Error')
++            raise TracError(Markup('No se pudo enviar correo electrónico debido a una crisis '
++                                   'de identidad.<p>Ni <b>notification.from</b> '
++                                   'ni <b>notification.reply_to</b> han sido'
++                                   'especificados en la configuración.</p>'),
++                            'Error de Notificación SMTP')
+ 
+         # Authentication info (optional)
+         self.user_name = self.config['notification'].get('smtp_user')
+@@ -220,7 +220,7 @@
+         maxlength = MAXHEADERLEN-(len(key)+2)
+         # Do not sent ridiculous short headers
+         if maxlength < 10:
+-            raise TracError, "Header length is too short"
++            raise TracError, "La longitud del encabezado es demasiado corta"
+         try:
+             tmp = name.encode('ascii')
+             header = Header(tmp, 'ascii', maxlinelen=maxlength)
+@@ -250,7 +250,7 @@
+                 if domain:
+                     address = "%s@%s" % (address, domain)
+                 else:
+-                    self.env.log.info("Email address w/o domain: %s" % address)
++                    self.env.log.info("Dirección de correo electrónico sin dominio: %s" % address)
+                     return None
+         mo = NotifyEmail.shortaddr_re.search(address)
+         if mo:
+@@ -258,7 +258,7 @@
+         mo = NotifyEmail.longaddr_re.search(address)
+         if mo:
+             return mo.group(2)
+-        self.env.log.info("Invalid email address: %s" % address)
++        self.env.log.info("Dirección de correo electrónico inválida: %s" % address)
+         return None
+ 
+     def encode_header(self, key, value):
+@@ -280,7 +280,7 @@
+         if self._use_tls:
+             self.server.ehlo()
+             if not self.server.esmtp_features.has_key('starttls'):
+-                raise TracError, "TLS enabled but server does not support TLS"
++                raise TracError, "TLS está habilitado pero el servidor no soporta TLS"
+             self.server.starttls()
+             self.server.ehlo()
+         if self.user_name:
+@@ -333,7 +333,7 @@
+         
+         # if there is not valid recipient, leave immediately
+         if len(recipients) < 1:
+-            self.env.log.info('no recipient for a ticket notification')
++            self.env.log.info('no existen destinatarios para la notificación de este ticket')
+             return
+ 
+         pcc = accaddrs
+@@ -349,8 +349,8 @@
+             try:
+                 dummy = body.encode('ascii')
+             except UnicodeDecodeError:
+-                raise TracError, "Ticket contains non-Ascii chars. " \
+-                                 "Please change encoding setting"
++                raise TracError, "El ticket contiene caracteres no-Ascii. " \
++                                 "Por favor modifique la configuración de codificación"
+         msg = MIMEText(body, 'plain')
+         # Message class computes the wrong type from MIMEText constructor,
+         # which does not take a Charset object as initializer. Reset the
+@@ -359,7 +359,7 @@
+         msg.set_charset(self._charset)
+         self.add_headers(msg, headers);
+         self.add_headers(msg, mime_headers);
+-        self.env.log.debug("Sending SMTP notification to %s on port %d to %s"
++        self.env.log.debug("Enviando notificaciones SMTP a %s por el puerto %d a %s"
+                            % (self.smtp_server, self.smtp_port, recipients))
+         msgtext = msg.as_string()
+         # Ensure the message complies with RFC2822: use CRLF line endings
