@@ -72,17 +72,18 @@ class WorkLogTicketAddon(Component):
             # Check to see if y
             workingon = dbhelper.get_active_task(self.env, req.authname)
             if not workingon:
-                workingon = { 'state': 0,
+                workingon = { 'starttime': 1,
+                              'endtime': 1,
                               'ticket': 0}
 
             # Check state
-            if workingon['state'] == 0:
+            if not workingon['endtime'] == 0:
                 # Should display a "Work on Link" button.
-                yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, workingon['state'])
+                yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, 0)
                 return
 
             # We are working on SOMETHING, but not this ticket...
             if not workingon['ticket'] == ticket:
                 return
 
-            yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, workingon['state'])
+            yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, 1)

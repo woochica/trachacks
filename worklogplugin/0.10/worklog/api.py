@@ -44,8 +44,9 @@ class WorkLogSetupParticipant(Component):
             CREATE TABLE work_log (
             user text,
             ticket integer,
-            time integer,
-            state integer
+            lastchange integer,
+            starttime integer,
+            endtime integer
             );
             """
             dbhelper.execute_non_query(self.env.get_db_cnx(), sql)

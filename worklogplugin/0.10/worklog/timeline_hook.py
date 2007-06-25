@@ -20,36 +20,37 @@ class WorkLogTimelineAddon(Component):
 
         href = format == 'rss' and req.abs_href or req.href
 
-        def produce(user,ticket,time,state,summary):
-            kind = 'workstop'
-            humankind = 'stopped'
-            if state == 1:
-                kind = 'workstart'
-                humankind = 'started'
-            ticket_href = href.ticket(ticket)
-            if format == 'rss':
-                title = '%s %s working on Ticket #%s: %s' % \
-                        (user, humankind, ticket, summary)
-            else:
-                title = Markup('%s %s working on Ticket <em title="%s">#%s</em>' % \
-                               (user, humankind, summary, ticket))
-            message = ''
-            return kind, ticket_href, title, time, user, message
-
         # Ticket changes
         if 'worklog' in filters:
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
-            cursor.execute("SELECT wl.user,wl.ticket,wl.time,wl.state,t.summary"
-                           "  FROM work_log wl "
-                           "    INNER JOIN ticket t ON t.id = wl.ticket "
-                           "      AND wl.time>=%s AND wl.time<=%s "
-                           "ORDER BY wl.time"
+            cursor.execute("""SELECT wl.user,wl.ticket,wl.time,wl.kind,wl.humankind,t.summary
+                             FROM (
+                             
+                             SELECT user, ticket, starttime AS time, 'workstart' AS kind, 'started' AS humankind
+                             FROM work_log
+
+                             UNION
+
+                             SELECT user, ticket, endtime AS time, 'workstop' AS kind, 'stopped' AS humankind
+                             FROM work_log
+
+                             ) AS wl
+                             INNER JOIN ticket t ON t.id = wl.ticket 
+                                 AND wl.time>=%s AND wl.time<=%s 
+                           ORDER BY wl.time"""
                            % (start, stop))
             previous_update = None
-            for user,ticket,time,state,summary in cursor:
-                ev = produce(user,ticket,time,state,summary)
-                if ev:
-                    yield ev
+            for user,ticket,time,kind,humankind,summary in cursor:
+                ticket_href = href.ticket(ticket)
+                if format == 'rss':
+                    title = '%s %s working on Ticket #%s: %s' % \
+                            (user, humankind, ticket, summary)
+                else:
+                    title = Markup('%s %s working on Ticket <em title="%s">#%s</em>' % \
+                                   (user, humankind, summary, ticket))
+                message = ''
+                yield kind, ticket_href, title, time, user, message
+
 

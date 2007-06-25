@@ -19,13 +19,13 @@
     <?cs each:log = worklog.worklog ?>
     <tr>
       <td><?cs var:log.name ?> (<?cs var:log.user ?>)</td>
-      <?cs if:log.started_at > #0 ?>
-      <?cs if:log.state == #1 ?>
+      <?cs if:log.started > #0 ?>
+      <?cs if:log.finished == #0 ?>
       <td><a href="<?cs var:log.ticket_url ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?></td>
       <?cs else ?>
       <td><em>Idle</em> <small>(Last worked on: <a href="<?cs var:log.ticket_url ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?>)</small></td>      
       <?cs /if ?>
-      <td><?cs var:log.started_at_human ?></td>
+      <td><?cs var:log.delta ?></td>
       <?cs else ?>
       <td colspan="2"><em><?cs var:log.name ?> has never done an iota of work.... EVER!!</em></td>
       <?cs /if ?>
