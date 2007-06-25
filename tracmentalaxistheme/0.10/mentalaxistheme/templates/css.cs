@@ -336,6 +336,16 @@ table.progress td.open { border: 0; background: #DD5243; }
   padding: 10px; 	
 }
 
+/* Tags */
+.tagcloud {
+  width:400px;
+}
+
+.tagcloud a {
+  text-decoration: none;
+  border: none;
+}
+
 .tagcount {
   font-size: 70%;
   color: #AAAAAA;
