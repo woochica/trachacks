@@ -168,7 +168,7 @@ class Properties :
             else:
                 #ok if no testtemplates file exists we should definately flag that.  However rather than bail we could also still validate 
                 #the existing testcases to make sure they are well formed.
-                allTestcases, errors = self.getTestCases( self, req ) #fetch the testcases...
+                allTestcases, errors = self.getTestCases( component, req ) #fetch the testcases...
                 
                 #append the error message saying testtemplates.xml doesn't exist, then exit.
                 errors.append( "No file called testtemplates.xml file found.  This is the file necessary for grouping testcases into predefined test scripts...like a smoke test" )
