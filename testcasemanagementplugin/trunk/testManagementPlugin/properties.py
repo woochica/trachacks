@@ -141,14 +141,20 @@ class Properties :
             projTemplates = self.getTemplates(component, req )
             
             if projTemplates != None :         
-                for name in projTemplates.getTemplateNames() : 
-                    name = name.encode('ascii', 'ignore')
-                    testIds = projTemplates.getTestsForTemplate( name )
-                    if testIds != None : 
-                        for id in testIds : 
-                            if id not in tempTestCaseList :
-                                tempTestCaseList.append( id )
-    
+                try:                    
+                    for name in projTemplates.getTemplateNames() : 
+                            name = name.encode('ascii', 'ignore')
+                            testIds = projTemplates.getTestsForTemplate( name )
+                            if testIds != None : 
+                                for id in testIds : 
+                                    if id not in tempTestCaseList :
+                                        tempTestCaseList.append( id )
+                except Exception, ex:
+                    #add the error message and continue to search for more errors.
+                    errors.append( "Could not parse the testtemplates.xml file.  Make sure it exists and make sure it is valid xml...(open it in internet explorer)")
+                    errors.append( "Exception was: " + str(ex) )
+                    
+                
                 allTestcases, errors = self.getTestCases( component, req ) #fetch the testcases...
             
                 if allTestcases == None : 
@@ -162,7 +168,7 @@ class Properties :
             else:
                 #ok if no testtemplates file exists we should definately flag that.  However rather than bail we could also still validate 
                 #the existing testcases to make sure they are well formed.
-                allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
+                allTestcases, errors = self.getTestCases( self, req ) #fetch the testcases...
                 
                 #append the error message saying testtemplates.xml doesn't exist, then exit.
                 errors.append( "No file called testtemplates.xml file found.  This is the file necessary for grouping testcases into predefined test scripts...like a smoke test" )
