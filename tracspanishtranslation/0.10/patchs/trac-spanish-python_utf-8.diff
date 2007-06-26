@@ -1,6 +1,6 @@
 Index: trac/env.py
 ===================================================================
---- trac/env.py	(revision 5756)
+--- trac/env.py	(revision 5758)
 +++ trac/env.py	(working copy)
 @@ -70,17 +70,17 @@
          setups, usually involving running Trac behind a HTTP proxy, you may
@@ -33,15 +33,6 @@ Index: trac/env.py
          db_name = os.path.join(self.path, db_str[7:])
          if not dest:
              dest = '%s.%i.bak' % (db_name, self.get_version())
-@@ -341,7 +341,7 @@
-         db = self.get_db_cnx()
-         for participant in self.setup_participants:
-             if participant.environment_needs_upgrade(db):
--                self.log.warning('Component %s requires environment upgrade',
-+                self.log.warning('El componente %s requiere la actualización del entorno',
-                                  participant)
-                 return True
-         return False
 @@ -398,7 +398,7 @@
          if dbver == db_default.db_version:
              return False
@@ -51,7 +42,7 @@ Index: trac/env.py
          return True
  
      def upgrade_environment(self, db):
-@@ -410,12 +410,12 @@
+@@ -410,7 +410,7 @@
                  upgrades = __import__('upgrades', globals(), locals(), [name])
                  script = getattr(upgrades, name)
              except AttributeError:
@@ -60,27 +51,6 @@ Index: trac/env.py
                  raise TracError, err
              script.do_upgrade(self.env, i, cursor)
          cursor.execute("UPDATE system SET value=%s WHERE "
-                        "name='database_version'", (db_default.db_version,))
--        self.log.info('Upgraded database version from %d to %d',
-+        self.log.info('Se realizó la actualización de la base de datos de la versión %d a la versión %d',
-                       dbver, db_default.db_version)
-         self._update_sample_config()
- 
-@@ -429,11 +429,11 @@
-                 config.set(section, name, value)
-         try:
-             config.save()
--            self.log.info('Wrote sample configuration file with the new '
--                          'settings and their default values: %s',
-+            self.log.info('Se escribió un archivo de configuración -ejemplo- con las nuevas '
-+                          'configuraciones y sus valores por defecto: %s',
-                           filename)
-         except IOError, e:
--            self.log.warn('Couldn\'t write sample configuration file (%s)', e,
-+            self.log.warn('No se pudo escribir el archivo de configuración -ejemplo- (%s)', e,
-                           exc_info=True)
- 
- 
 @@ -448,12 +448,12 @@
      if not env_path:
          env_path = os.getenv('TRAC_ENV')
@@ -100,7 +70,7 @@ Index: trac/env.py
      return env
 Index: trac/core.py
 ===================================================================
---- trac/core.py	(revision 5756)
+--- trac/core.py	(revision 5758)
 +++ trac/core.py	(working copy)
 @@ -45,7 +45,7 @@
          """
@@ -136,7 +106,7 @@ Index: trac/core.py
  
 Index: trac/attachment.py
 ===================================================================
---- trac/attachment.py	(revision 5756)
+--- trac/attachment.py	(revision 5758)
 +++ trac/attachment.py	(working copy)
 @@ -100,8 +100,8 @@
          cursor.close()
@@ -158,46 +128,16 @@ Index: trac/attachment.py
          if not db:
              db = self.env.get_db_cnx()
              handle_ta = True
-@@ -145,13 +145,13 @@
-             try:
-                 os.unlink(self.path)
-             except OSError:
--                self.env.log.error('Failed to delete attachment file %s',
-+                self.env.log.error('Falló la eliminación del archivo adjunto %s',
+@@ -149,7 +149,7 @@
                                     self.path, exc_info=True)
                  if handle_ta:
                      db.rollback()
 -                raise TracError, 'Could not delete attachment'
 +                raise TracError, 'No se pudo eliminar el adjunto'
  
--        self.env.log.info('Attachment removed: %s' % self.title)
-+        self.env.log.info('Se eliminó el adjunto: %s' % self.title)
+         self.env.log.info('Attachment removed: %s' % self.title)
          if handle_ta:
-             db.commit()
- 
-@@ -196,7 +196,7 @@
-             shutil.copyfileobj(fileobj, targetfile)
-             self.filename = filename
- 
--            self.env.log.info('New attachment: %s by %s', self.title,
-+            self.env.log.info('Nuevo adjunto: %s por %s', self.title,
-                               self.author)
- 
-             if handle_ta:
-@@ -239,18 +239,18 @@
-             try:
-                 os.rmdir(attachment_dir)
-             except OSError:
--                env.log.error("Can't delete attachment directory %s",
-+                env.log.error('No se puede eliminar el directorio de adjuntos %s',
-                               attachment_dir, exc_info=True)
-             
-     select = classmethod(select)
-     delete_all = classmethod(delete_all)
- 
-     def open(self):
--        self.env.log.debug('Trying to open attachment at %s', self.path)
-+        self.env.log.debug('Intentando abrir el adjunto en %s', self.path)
+@@ -250,7 +250,7 @@
          try:
              fd = open(self.path, 'rb')
          except IOError:
@@ -267,7 +207,7 @@ Index: trac/attachment.py
 -            raise TracError('Maximum attachment size: %d bytes' % max_size,
 -                            'Upload failed')
 +            raise TracError('El tamaño máximo para adjuntos es: %d bytes' % max_size,
-+                            'La carga de adjunto falló')
++                            'La carga del adjunto falló')
  
          # We try to normalize the filename to unicode NFC if we can.
          # Files uploaded from OS X might be in NFD.
@@ -302,7 +242,7 @@ Index: trac/attachment.py
          req.hdf['attachment'] = {'filename': attachment.filename,
                                   'mode': 'delete'}
  
-@@ -576,14 +576,14 @@
+@@ -576,12 +576,12 @@
              if (self.render_unsafe_content and 
                  mime_type and not mime_type.startswith('text/plain')):
                  plaintext_href = attachment.href(req, format='txt')
@@ -315,11 +255,8 @@ Index: trac/attachment.py
 -            add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
 +            add_link(req, 'alternate', raw_href, 'Formato Original', mime_type)
  
--            self.log.debug("Rendering preview of file %s with mime-type %s"
-+            self.log.debug('Presentando vista previa del archivo %s con el tipo-mime %s'
+             self.log.debug("Rendering preview of file %s with mime-type %s"
                             % (attachment.filename, mime_type))
- 
-             req.hdf['attachment'] = mimeview.preview_to_hdf(
 @@ -622,7 +622,7 @@
              if formatter.req:
                  href = attachment.href(formatter.req) + params
@@ -331,7 +268,7 @@ Index: trac/attachment.py
                            href=formatter.href())
 Index: trac/db_default.py
 ===================================================================
---- trac/db_default.py	(revision 5756)
+--- trac/db_default.py	(revision 5758)
 +++ trac/db_default.py	(working copy)
 @@ -166,106 +166,106 @@
  def get_reports(db):
@@ -598,7 +535,7 @@ Index: trac/db_default.py
                 (('anonymous', 'LOG_VIEW'),
 Index: trac/mimeview/rst.py
 ===================================================================
---- trac/mimeview/rst.py	(revision 5756)
+--- trac/mimeview/rst.py	(revision 5758)
 +++ trac/mimeview/rst.py	(working copy)
 @@ -52,9 +52,9 @@
              from docutils.parsers import rst
@@ -626,13 +563,13 @@ Index: trac/mimeview/rst.py
                  return [reference], []
              warning = nodes.warning(None, nodes.literal_block(text,
 -                'WARNING: %s is not a valid TracLink' % rawtext))
-+                'WARNING: %s no es un TracLink válido' % rawtext))
++                'ADVERTENCIA: %s no es un TracLink válido' % rawtext))
              return warning, []
  
          # 1 required arg, 1 optional arg, spaces allowed in last arg
 Index: trac/mimeview/api.py
 ===================================================================
---- trac/mimeview/api.py	(revision 5756)
+--- trac/mimeview/api.py	(revision 5758)
 +++ trac/mimeview/api.py	(working copy)
 @@ -376,7 +376,7 @@
          candidates = list(self.get_supported_conversions(mimetype))
@@ -652,51 +589,9 @@ Index: trac/mimeview/api.py
                          (mimetype, key))
  
      def get_annotation_types(self):
-@@ -435,7 +435,7 @@
-         expanded_content = None
-         for qr, renderer in candidates:
-             try:
--                self.log.debug('Trying to render HTML preview using %s'
-+                self.log.debug('Intentando presentar vista previa HTML usando %s'
-                                % renderer.__class__.__name__)
-                 # check if we need to perform a tab expansion
-                 rendered_content = content
-@@ -463,7 +463,7 @@
-                     buf.write('</pre></div>')
-                     return Markup(buf.getvalue())
-             except Exception, e:
--                self.log.warning('HTML preview using %s failed (%s)'
-+                self.log.warning('La generación de la vista previa HTML utilizando %s falló (%s)'
-                                  % (renderer, e), exc_info=True)
- 
-     def _annotate(self, lines, annotations):
-@@ -577,8 +577,8 @@
-                 mimetype, mode, quality = mapping.split(':')
-                 types[mimetype] = (mode, int(quality))
-             except (TypeError, ValueError):
--                self.log.warning("Invalid mapping '%s' specified in '%s' "
--                                 "option." % (mapping, option))
-+                self.log.warning("El mapeo '%s' especificado mediante la opción '%s' "
-+                                 "es inválido." % (mapping, option))
-         return types
-     
-     def preview_to_hdf(self, req, content, length, mimetype, filename,
-@@ -684,10 +684,10 @@
- 
-     def render(self, req, mimetype, content, filename=None, url=None):
-         if is_binary(content):
--            self.env.log.debug("Binary data; no preview available")
-+            self.env.log.debug("Datos binarios; no está disponible la vista previa")
-             return
- 
--        self.env.log.debug("Using default plain text mimeviewer")
-+        self.env.log.debug("Utilizando el visor-mime por defecto para texto plano")
-         content = content_to_unicode(self.env, content, mimetype)
-         for line in content.splitlines():
-             yield escape(line)
 Index: trac/mimeview/tests/php.py
 ===================================================================
---- trac/mimeview/tests/php.py	(revision 5756)
+--- trac/mimeview/tests/php.py	(revision 5758)
 +++ trac/mimeview/tests/php.py	(working copy)
 @@ -66,7 +66,7 @@
              s = StringIO(stuff)
@@ -709,7 +604,7 @@ Index: trac/mimeview/tests/php.py
  
 Index: trac/mimeview/silvercity.py
 ===================================================================
---- trac/mimeview/silvercity.py	(revision 5756)
+--- trac/mimeview/silvercity.py	(revision 5758)
 +++ trac/mimeview/silvercity.py	(working copy)
 @@ -109,7 +109,7 @@
              except IndexError:
@@ -722,7 +617,7 @@ Index: trac/mimeview/silvercity.py
          # SilverCity does not like unicode strings
 Index: trac/mimeview/patch.py
 ===================================================================
---- trac/mimeview/patch.py	(revision 5756)
+--- trac/mimeview/patch.py	(revision 5758)
 +++ trac/mimeview/patch.py	(working copy)
 @@ -69,7 +69,7 @@
          d = self._diff_to_hdf(content.splitlines(),
@@ -735,14 +630,9 @@ Index: trac/mimeview/patch.py
          hdf['diff.files'] = d
 Index: trac/mimeview/enscript.py
 ===================================================================
---- trac/mimeview/enscript.py	(revision 5756)
+--- trac/mimeview/enscript.py	(revision 5758)
 +++ trac/mimeview/enscript.py	(working copy)
-@@ -133,11 +133,11 @@
-         mimetype = mimetype.split(';', 1)[0] # strip off charset
-         mode = self._types[mimetype][0]
-         cmdline += ' --color -h -q --language=html -p - -E%s' % mode
--        self.env.log.debug("Enscript command line: %s" % cmdline)
-+        self.env.log.debug("Línea de comandos Enscript: %s" % cmdline)
+@@ -137,7 +137,7 @@
  
          np = NaivePopen(cmdline, content.encode('utf-8'), capturestderr=1)
          if np.errorlevel or np.err:
@@ -753,16 +643,9 @@ Index: trac/mimeview/enscript.py
          odata = np.out
 Index: trac/mimeview/php.py
 ===================================================================
---- trac/mimeview/php.py	(revision 5756)
+--- trac/mimeview/php.py	(revision 5758)
 +++ trac/mimeview/php.py	(working copy)
-@@ -77,13 +77,13 @@
-     def render(self, req, mimetype, content, filename=None, rev=None):
-         # -n to ignore php.ini so we're using default colors
-         cmdline = '%s -sn' % self.path
--        self.env.log.debug("PHP command line: %s" % cmdline)
-+        self.env.log.debug("Línea de comandos PHP: %s" % cmdline)
- 
-         content = content_to_unicode(self.env, content, mimetype)
+@@ -83,7 +83,7 @@
          content = content.encode('utf-8')
          np = NaivePopen(cmdline, content, capturestderr=1)
          if (os.name != 'nt' and np.errorlevel) or np.err:
@@ -786,24 +669,8 @@ Index: trac/mimeview/php.py
          for e in epilogues:
 Index: trac/ticket/api.py
 ===================================================================
---- trac/ticket/api.py	(revision 5756)
+--- trac/ticket/api.py	(revision 5758)
 +++ trac/ticket/api.py	(working copy)
-@@ -142,12 +142,12 @@
- 
-         for field in self.get_custom_fields():
-             if field['name'] in [f['name'] for f in fields]:
--                self.log.warning('Duplicate field name "%s" (ignoring)',
-+                self.log.warning('Nombre de campo duplicado "%s" (ignorándolo)',
-                                  field['name'])
-                 continue
-             if not re.match('^[a-zA-Z][a-zA-Z0-9_]+$', field['name']):
--                self.log.warning('Invalid name for custom field: "%s" '
--                                 '(ignoring)', field['name'])
-+                self.log.warning('Nombre inválido para campo personalizado: "%s" '
-+                                 '(ignorándolo)', field['name'])
-                 continue
-             field['custom'] = True
-             fields.append(field)
 @@ -244,7 +244,7 @@
                      cnum = target
          if href:
@@ -815,7 +682,7 @@ Index: trac/ticket/api.py
   
 Index: trac/ticket/web_ui.py
 ===================================================================
---- trac/ticket/web_ui.py	(revision 5756)
+--- trac/ticket/web_ui.py	(revision 5758)
 +++ trac/ticket/web_ui.py	(working copy)
 @@ -57,10 +57,10 @@
                  value = ticket[name]
@@ -882,11 +749,12 @@ Index: trac/ticket/web_ui.py
                  # Don't make completed milestones available for selection
                  options = field['options'][:]
                  for option in field['options']:
-@@ -179,6 +180,29 @@
+@@ -179,6 +180,30 @@
                          options.remove(option)
                  field['options'] = options
              req.hdf['newticket.fields.' + name] = field
 +            
++            #el siguiente bloque, no funciona como se esperaba
 +            if name == 'summary':
 +                field['label'] = 'Sumario'
 +            if name == 'reporter':
@@ -912,7 +780,7 @@ Index: trac/ticket/web_ui.py
  
          if req.perm.has_permission('TICKET_APPEND'):
              req.hdf['newticket.can_attach'] = True
-@@ -191,7 +215,7 @@
+@@ -191,7 +216,7 @@
  
      def _do_create(self, req, db):
          if not req.args.get('summary'):
@@ -921,16 +789,7 @@ Index: trac/ticket/web_ui.py
  
          ticket = Ticket(self.env, db=db)
          ticket.populate(req.args)
-@@ -206,7 +230,7 @@
-             tn = TicketNotifyEmail(self.env)
-             tn.notify(ticket, newticket=True)
-         except Exception, e:
--            self.log.exception("Failure sending notification on creation of "
-+            self.log.exception("Falló el envío de la notificación de creación del "
-                                "ticket #%s: %s" % (ticket.id, e))
- 
-         # Redirect the user to the newly created ticket
-@@ -243,11 +267,11 @@
+@@ -243,11 +268,11 @@
      # IContentConverter methods
  
      def get_supported_conversions(self):
@@ -945,7 +804,7 @@ Index: trac/ticket/web_ui.py
                 'trac.ticket.Ticket', 'application/rss+xml', 8)
  
      def convert_content(self, req, mimetype, ticket, key):
-@@ -350,17 +374,17 @@
+@@ -350,17 +375,17 @@
  
      def get_timeline_filters(self, req):
          if req.perm.has_permission('TICKET_VIEW'):
@@ -969,7 +828,7 @@ Index: trac/ticket/web_ui.py
  
          href = format == 'rss' and req.abs_href or req.href
  
-@@ -371,7 +395,7 @@
+@@ -371,7 +396,7 @@
                      info = ''
                      if len(fields) > 0:
                          info = ', '.join(['<i>%s</i>' % f for f in \
@@ -978,7 +837,7 @@ Index: trac/ticket/web_ui.py
                  else:
                      return None
              elif 'ticket' in filters:
-@@ -509,7 +533,7 @@
+@@ -509,7 +534,7 @@
          if req.perm.has_permission('TICKET_CHGPROP'):
              # TICKET_CHGPROP gives permission to edit the ticket
              if not req.args.get('summary'):
@@ -987,7 +846,7 @@ Index: trac/ticket/web_ui.py
  
              if req.args.has_key('description') or req.args.has_key('reporter'):
                  req.perm.assert_permission('TICKET_ADMIN')
-@@ -520,15 +544,15 @@
+@@ -520,15 +545,15 @@
  
          # Mid air collision?
          if int(req.args.get('ts')) != ticket.time_changed:
@@ -1007,16 +866,7 @@ Index: trac/ticket/web_ui.py
  
          # TODO: this should not be hard-coded like this
          if action == 'accept':
-@@ -561,7 +585,7 @@
-                 tn = TicketNotifyEmail(self.env)
-                 tn.notify(ticket, newticket=False, modtime=now)
-             except Exception, e:
--                self.log.exception("Failure sending notification on change to "
-+                self.log.exception("Falló el envío de la notificación de cambio del "
-                                    "ticket #%s: %s" % (ticket.id, e))
- 
-         fragment = cnum and '#comment:'+cnum or ''
-@@ -617,7 +641,7 @@
+@@ -617,7 +642,7 @@
          def quote_original(author, original, link):
              if not 'comment' in req.args: # i.e. the comment was not yet edited
                  req.hdf['ticket.comment'] = '\n'.join(
@@ -1027,7 +877,7 @@ Index: trac/ticket/web_ui.py
          if replyto == 'description':
 Index: trac/ticket/report.py
 ===================================================================
---- trac/ticket/report.py	(revision 5756)
+--- trac/ticket/report.py	(revision 5758)
 +++ trac/ticket/report.py	(working copy)
 @@ -46,7 +46,7 @@
          if not req.perm.has_permission('REPORT_VIEW'):
@@ -1103,7 +953,7 @@ Index: trac/ticket/report.py
              return 'report.cs', None
  
          # Convert the header info to HDF-format
-@@ -381,24 +381,24 @@
+@@ -381,20 +381,20 @@
          href = ''
          if params:
              href = '&' + unicode_urlencode(params)
@@ -1129,11 +979,6 @@ Index: trac/ticket/report.py
          if sql.find('__group__') == -1:
              req.hdf['report.sorting.enabled'] = 1
  
--        self.log.debug('Executing report with SQL "%s" (%s)', sql, args)
-+        self.log.debug('Ejecutando el reporte con la consulta SQL "%s" (%s)', sql, args)
- 
-         cursor = db.cursor()
-         cursor.execute(sql, args)
 @@ -415,17 +415,17 @@
          if id == -1:
              # If no particular report was requested, display
@@ -1167,19 +1012,8 @@ Index: trac/ticket/report.py
              values.append(arg)
 Index: trac/ticket/model.py
 ===================================================================
---- trac/ticket/model.py	(revision 5756)
+--- trac/ticket/model.py	(revision 5758)
 +++ trac/ticket/model.py	(working copy)
-@@ -67,8 +67,8 @@
-                     try:
-                         default = options[int(default)]
-                     except (ValueError, IndexError):
--                        self.env.log.warning('Invalid default value "%s" '
--                                             'for custom field "%s"'
-+                        self.env.log.warning('El valor por defecto "%s" no es válido '
-+                                             'para el campo personalizado "%s"'
-                                              % (default, field['name']))
-             if default:
-                 self.values.setdefault(field['name'], default)
 @@ -83,8 +83,8 @@
                         % ','.join(std_fields), (tkt_id,))
          row = cursor.fetchone()
@@ -1227,15 +1061,6 @@ Index: trac/ticket/model.py
          if not db:
              db = self.env.get_db_cnx()
              handle_ta = True
-@@ -349,7 +349,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Deleting %s %s' % (self.type, self.name))
-+        self.env.log.info('Eliminando %s %s' % (self.type, self.name))
-         cursor.execute("DELETE FROM enum WHERE type=%s AND value=%s",
-                        (self.type, self._old_value))
- 
 @@ -359,8 +359,8 @@
          self.name = self._old_name = None
  
@@ -1247,15 +1072,6 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -369,7 +369,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.debug("Creating new %s '%s'" % (self.type, self.name))
-+        self.env.log.debug("Creando nuevo %s '%s'" % (self.type, self.name))
-         if not self.value:
-             cursor.execute(("SELECT COALESCE(MAX(%s),0) FROM enum "
-                             "WHERE type=%%s") % db.cast('value', 'int'),
 @@ -384,8 +384,8 @@
          self._old_value = self.value
  
@@ -1267,15 +1083,6 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -394,7 +394,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Updating %s "%s"' % (self.type, self.name))
-+        self.env.log.info('Actualizando %s "%s"' % (self.type, self.name))
-         cursor.execute("UPDATE enum SET name=%s,value=%s "
-                        "WHERE type=%s AND name=%s",
-                        (self.name, self.value, self.type, self._old_name))
 @@ -457,7 +457,7 @@
                             "WHERE name=%s", (name,))
              row = cursor.fetchone()
@@ -1294,15 +1101,6 @@ Index: trac/ticket/model.py
          if not db:
              db = self.env.get_db_cnx()
              handle_ta = True
-@@ -477,7 +477,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Deleting component %s' % self.name)
-+        self.env.log.info('Eliminando el componente %s' % self.name)
-         cursor.execute("DELETE FROM component WHERE name=%s", (self.name,))
- 
-         self.name = self._old_name = None
 @@ -486,8 +486,8 @@
              db.commit()
  
@@ -1314,15 +1112,6 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -496,7 +496,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.debug("Creating new component '%s'" % self.name)
-+        self.env.log.debug("Creando nuevo componente '%s'" % self.name)
-         cursor.execute("INSERT INTO component (name,owner,description) "
-                        "VALUES (%s,%s,%s)",
-                        (self.name, self.owner, self.description))
 @@ -505,8 +505,8 @@
              db.commit()
  
@@ -1334,15 +1123,6 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -515,7 +515,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Updating component "%s"' % self.name)
-+        self.env.log.info('Actualizando el componente "%s"' % self.name)
-         cursor.execute("UPDATE component SET name=%s,owner=%s,description=%s "
-                        "WHERE name=%s",
-                        (self.name, self.owner, self.description,
 @@ -564,8 +564,8 @@
                         "FROM milestone WHERE name=%s", (name,))
          row = cursor.fetchone()
@@ -1354,15 +1134,6 @@ Index: trac/ticket/model.py
          self.name = row[0]
          self.due = row[1] and int(row[1]) or 0
          self.completed = row[2] and int(row[2]) or 0
-@@ -584,7 +584,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Deleting milestone %s' % self.name)
-+        self.env.log.info('Eliminando Hito %s' % self.name)
-         cursor.execute("DELETE FROM milestone WHERE name=%s", (self.name,))
- 
-         # Retarget/reset tickets associated with this milestone
 @@ -594,14 +594,14 @@
          for tkt_id in tkt_ids:
              ticket = Ticket(self.env, tkt_id, db)
@@ -1380,15 +1151,6 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -610,7 +610,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.debug("Creating new milestone '%s'" % self.name)
-+        self.env.log.debug("Creando nuevo hito '%s'" % self.name)
-         cursor.execute("INSERT INTO milestone (name,due,completed,description) "
-                        "VALUES (%s,%s,%s,%s)",
-                        (self.name, self.due, self.completed, self.description))
 @@ -619,7 +619,7 @@
              db.commit()
  
@@ -1398,23 +1160,6 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -628,13 +628,13 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Updating milestone "%s"' % self.name)
-+        self.env.log.info('Actualizando hito "%s"' % self.name)
-         cursor.execute("UPDATE milestone SET name=%s,due=%s,"
-                        "completed=%s,description=%s WHERE name=%s",
-                        (self.name, self.due, self.completed, self.description,
-                         self._old_name))
--        self.env.log.info('Updating milestone field of all tickets '
--                          'associated with milestone "%s"' % self.name)
-+        self.env.log.info('Actualizando el campo hito de todos los tickets '
-+                          'asociados con el hito "%s"' % self.name)
-         cursor.execute("UPDATE ticket SET milestone=%s WHERE milestone=%s",
-                        (self.name, self._old_name))
-         self._old_name = self.name
 @@ -678,7 +678,7 @@
                             "WHERE name=%s", (name,))
              row = cursor.fetchone()
@@ -1433,15 +1178,6 @@ Index: trac/ticket/model.py
          if not db:
              db = self.env.get_db_cnx()
              handle_ta = True
-@@ -698,7 +698,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Deleting version %s' % self.name)
-+        self.env.log.info('Eliminando versión %s' % self.name)
-         cursor.execute("DELETE FROM version WHERE name=%s", (self.name,))
- 
-         self.name = self._old_name = None
 @@ -707,8 +707,8 @@
              db.commit()
  
@@ -1453,15 +1189,6 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -717,7 +717,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.debug("Creating new version '%s'" % self.name)
-+        self.env.log.debug("Creando nueva versión '%s'" % self.name)
-         cursor.execute("INSERT INTO version (name,time,description) "
-                        "VALUES (%s,%s,%s)",
-                        (self.name, self.time, self.description))
 @@ -726,8 +726,8 @@
              db.commit()
  
@@ -1473,18 +1200,9 @@ Index: trac/ticket/model.py
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-@@ -736,7 +736,7 @@
-             handle_ta = False
- 
-         cursor = db.cursor()
--        self.env.log.info('Updating version "%s"' % self.name)
-+        self.env.log.info('Actualizando versión "%s"' % self.name)
-         cursor.execute("UPDATE version SET name=%s,time=%s,description=%s "
-                        "WHERE name=%s",
-                        (self.name, self.time, self.description,
 Index: trac/ticket/roadmap.py
 ===================================================================
---- trac/ticket/roadmap.py	(revision 5756)
+--- trac/ticket/roadmap.py	(revision 5758)
 +++ trac/ticket/roadmap.py	(working copy)
 @@ -129,7 +129,7 @@
          if not req.perm.has_permission('ROADMAP_VIEW'):
@@ -1549,7 +1267,7 @@ Index: trac/ticket/roadmap.py
  
          db = self.env.get_db_cnx()
          milestone = Milestone(self.env, milestone_id, db)
-@@ -391,31 +391,31 @@
+@@ -391,23 +391,23 @@
              req.perm.assert_permission('MILESTONE_CREATE')
  
          if not req.args.has_key('name'):
@@ -1579,16 +1297,6 @@ Index: trac/ticket/roadmap.py
              retarget_to = req.args.get('target')
              if req.args.has_key('retarget'):
                  cursor = db.cursor()
-                 cursor.execute("UPDATE ticket SET milestone=%s WHERE "
-                                "milestone=%s and status != 'closed'",
-                                 (retarget_to, milestone.name))
--                self.env.log.info('Tickets associated with milestone %s '
--                                  'retargeted to %s' % 
-+                self.env.log.info('Los Tickets asociados con el hito %s '
-+                                  'fueron replanificados para el hito %s' % 
-                                   (milestone.name, retarget_to))
-         else:
-             milestone.completed = 0
 @@ -435,7 +435,7 @@
      def _render_confirm(self, req, db, milestone):
          req.perm.assert_permission('MILESTONE_DELETE')
@@ -1626,7 +1334,7 @@ Index: trac/ticket/roadmap.py
          req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
 Index: trac/ticket/query.py
 ===================================================================
---- trac/ticket/query.py	(revision 5756)
+--- trac/ticket/query.py	(revision 5758)
 +++ trac/ticket/query.py	(working copy)
 @@ -67,11 +67,11 @@
          for filter in filters:
@@ -1643,15 +1351,6 @@ Index: trac/ticket/query.py
              values = values.split('|')
              mode, neg = '', ''
              if field[-1] in ('~', '^', '$'):
-@@ -150,7 +150,7 @@
-             self.get_columns()
- 
-         sql, args = self.get_sql()
--        self.env.log.debug("Query SQL: " + sql % tuple([repr(a) for a in args]))
-+        self.env.log.debug("Consulta SQL: " + sql % tuple([repr(a) for a in args]))
- 
-         if not db:
-             db = self.env.get_db_cnx()
 @@ -352,11 +352,11 @@
  
      # IContentConverter methods
@@ -1718,7 +1417,7 @@ Index: trac/ticket/query.py
                  return html.DL([(html.DT(ticket_anchor(ticket)),
 Index: trac/db/sqlite_backend.py
 ===================================================================
---- trac/db/sqlite_backend.py	(revision 5756)
+--- trac/db/sqlite_backend.py	(revision 5758)
 +++ trac/db/sqlite_backend.py	(working copy)
 @@ -116,7 +116,7 @@
          if path != ':memory:':
@@ -1745,13 +1444,13 @@ Index: trac/db/sqlite_backend.py
 -                                'directory it is located in.' \
 +                raise TracError('El usuario %s requiere permisos de lectura ' \
 +                                '_y_ escritura para el archivo base de datos %s y el ' \
-+                                'directorio donde este se encuentra.' \
++                                'directorio donde éste se encuentra.' \
                                  % (getuser(), path))
  
          if have_pysqlite == 2:
 Index: trac/db/api.py
 ===================================================================
---- trac/db/api.py	(revision 5756)
+--- trac/db/api.py	(revision 5758)
 +++ trac/db/api.py	(working copy)
 @@ -94,7 +94,7 @@
                      candidates[scheme] = (connector, priority)
@@ -1775,7 +1474,7 @@ Index: trac/db/api.py
              host = None
 Index: trac/db/pool.py
 ===================================================================
---- trac/db/pool.py	(revision 5756)
+--- trac/db/pool.py	(revision 5758)
 +++ trac/db/pool.py	(working copy)
 @@ -104,8 +104,8 @@
                  else:
@@ -1790,7 +1489,7 @@ Index: trac/db/pool.py
                      else: # Warning: without timeout, Trac *might* hang
 Index: trac/db/mysql_backend.py
 ===================================================================
---- trac/db/mysql_backend.py	(revision 5756)
+--- trac/db/mysql_backend.py	(revision 5758)
 +++ trac/db/mysql_backend.py	(working copy)
 @@ -122,7 +122,7 @@
      def _set_character_set(self, cnx, charset):
@@ -1803,7 +1502,7 @@ Index: trac/db/mysql_backend.py
          cnx.charset = charset
 Index: trac/versioncontrol/api.py
 ===================================================================
---- trac/versioncontrol/api.py	(revision 5756)
+--- trac/versioncontrol/api.py	(revision 5758)
 +++ trac/versioncontrol/api.py	(working copy)
 @@ -88,9 +88,9 @@
                          continue
@@ -1858,7 +1557,7 @@ Index: trac/versioncontrol/api.py
          return True
 Index: trac/versioncontrol/svn_fs.py
 ===================================================================
---- trac/versioncontrol/svn_fs.py	(revision 5756)
+--- trac/versioncontrol/svn_fs.py	(revision 5758)
 +++ trac/versioncontrol/svn_fs.py	(working copy)
 @@ -254,7 +254,7 @@
          self.path = path # might be needed by __del__()/close()
@@ -1897,22 +1596,9 @@ Index: trac/versioncontrol/svn_fs.py
                              % (old_node.kind, old_path, old_rev,
                                 new_node.kind, new_path, new_rev))
          subpool = Pool(self.pool)
-Index: trac/versioncontrol/svn_authz.py
-===================================================================
---- trac/versioncontrol/svn_authz.py	(revision 5756)
-+++ trac/versioncontrol/svn_authz.py	(working copy)
-@@ -41,7 +41,7 @@
-     if not os.path.isabs(authz_file):
-         authz_file = os.path.join(env.path, authz_file)
-     if not os.path.exists(authz_file):
--        env.log.error('[trac] authz_file (%s) does not exist.' % authz_file)
-+        env.log.error('[trac] authz_file (%s) no existe.' % authz_file)
- 
-     module_name = env.config.get('trac', 'authz_module_name')
-     return RealSubversionAuthorizer(repos, authname, module_name, authz_file)
 Index: trac/versioncontrol/web_ui/util.py
 ===================================================================
---- trac/versioncontrol/web_ui/util.py	(revision 5756)
+--- trac/versioncontrol/web_ui/util.py	(revision 5758)
 +++ trac/versioncontrol/web_ui/util.py	(working copy)
 @@ -72,7 +72,7 @@
      return changes
@@ -1938,7 +1624,7 @@ Index: trac/versioncontrol/web_ui/util.py
  
 Index: trac/versioncontrol/web_ui/changeset.py
 ===================================================================
---- trac/versioncontrol/web_ui/changeset.py	(revision 5756)
+--- trac/versioncontrol/web_ui/changeset.py	(revision 5758)
 +++ trac/versioncontrol/web_ui/changeset.py	(working copy)
 @@ -259,9 +259,9 @@
                                               'new': new,
@@ -2020,7 +1706,7 @@ Index: trac/versioncontrol/web_ui/changeset.py
          if not 'changeset' in filters:
 Index: trac/versioncontrol/web_ui/log.py
 ===================================================================
---- trac/versioncontrol/web_ui/log.py	(revision 5756)
+--- trac/versioncontrol/web_ui/log.py	(revision 5758)
 +++ trac/versioncontrol/web_ui/log.py	(working copy)
 @@ -94,7 +94,7 @@
          path_links = get_path_links(req.href, path, rev)
@@ -2069,7 +1755,7 @@ Index: trac/versioncontrol/web_ui/log.py
  
 Index: trac/versioncontrol/web_ui/browser.py
 ===================================================================
---- trac/versioncontrol/web_ui/browser.py	(revision 5756)
+--- trac/versioncontrol/web_ui/browser.py	(revision 5758)
 +++ trac/versioncontrol/web_ui/browser.py	(working copy)
 @@ -78,7 +78,7 @@
          if not req.perm.has_permission('BROWSER_VIEW'):
@@ -2098,7 +1784,7 @@ Index: trac/versioncontrol/web_ui/browser.py
                       'application/zip', 'zip')
  
          req.hdf['browser'] = {'order': order, 'desc': desc and 1 or 0,
-@@ -270,14 +270,14 @@
+@@ -270,12 +270,12 @@
              # add ''Plain Text'' alternate link if needed
              if not is_binary(chunk) and mime_type != 'text/plain':
                  plain_href = req.href.browser(node.path, rev=rev, format='txt')
@@ -2111,38 +1797,24 @@ Index: trac/versioncontrol/web_ui/browser.py
 -            add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
 +            add_link(req, 'alternate', raw_href, 'Formato Original', mime_type)
  
--            self.log.debug("Rendering preview of node %s@%s with mime-type %s"
-+            self.log.debug("Presentando vista previa del nodo %s@%s con el tipo-mime %s"
+             self.log.debug("Rendering preview of node %s@%s with mime-type %s"
                             % (node.name, str(rev), mime_type))
- 
-             del content # the remainder of that content is not needed
 Index: trac/versioncontrol/cache.py
 ===================================================================
---- trac/versioncontrol/cache.py	(revision 5756)
+--- trac/versioncontrol/cache.py	(revision 5758)
 +++ trac/versioncontrol/cache.py	(working copy)
-@@ -79,16 +79,16 @@
-         repository_dir = metadata.get(CACHE_REPOSITORY_DIR)
-         if repository_dir:
+@@ -81,8 +81,8 @@
              if repository_dir != self.name:
--                self.log.info("'repository_dir' has changed from %r to %r"
-+                self.log.info("'repository_dir' ha cambiado de %r a %r"
+                 self.log.info("'repository_dir' has changed from %r to %r"
                                % (repository_dir, self.name))
 -                raise TracError("The 'repository_dir' has changed, "
 -                                "a 'trac-admin resync' operation is needed.")
 +                raise TracError("La entrada 'repository_dir' ha cambiado, "
 +                                "es necesario realizar la operación 'trac-admin resync'.")
          elif repository_dir is None: # 
--            self.log.info('Storing initial "repository_dir": %s' % self.name)
-+            self.log.info('Almacenando entrada inicial "repository_dir": %s' % self.name)
+             self.log.info('Storing initial "repository_dir": %s' % self.name)
              cursor.execute("INSERT INTO system (name,value) VALUES (%s,%s)",
-                            (CACHE_REPOSITORY_DIR, self.name,))
-         else: # 'repository_dir' cleared by a resync
--            self.log.info('Resetting "repository_dir": %s' % self.name)
-+            self.log.info('Reiniciando entrada "repository_dir": %s' % self.name)
-             cursor.execute("UPDATE system SET value=%s WHERE name=%s",
-                            (self.name, CACHE_REPOSITORY_DIR))
- 
-@@ -100,23 +100,23 @@
+@@ -100,7 +100,7 @@
  
          # -- retrieve the youngest revision cached so far
          if CACHE_YOUNGEST_REV not in metadata:
@@ -2151,55 +1823,9 @@ Index: trac/versioncontrol/cache.py
          
          self.youngest = metadata[CACHE_YOUNGEST_REV]
  
-         if self.youngest:
-             self.youngest = self.repos.normalize_rev(self.youngest)
-             if not self.youngest:
--                self.log.debug('normalize_rev failed (youngest_rev=%r)' %
-+                self.log.debug('normalize_rev falló (youngest_rev=%r)' %
-                                self.youngest_rev)
-         else:
--            self.log.debug('cache metadata undefined (youngest_rev=%r)' %
-+            self.log.debug('cache de meta-datos no definido (youngest_rev=%r)' %
-                            self.youngest_rev)
-             self.youngest = None
- 
-         # -- compare them and try to resync if different
-         if self.youngest != repos_youngest:
--            self.log.info("repos rev [%s] != cached rev [%s]" %
-+            self.log.info("la revisión de repositorio [%s] != de la revisión cacheada [%s]" %
-                           (repos_youngest, self.youngest))
-             if self.youngest:
-                 next_youngest = self.repos.next_rev(self.youngest)
-@@ -153,7 +153,7 @@
-                 while next_youngest is not None:
-                     
-                     # 1.1 Attempt to resync the 'revision' table
--                    self.log.info("Trying to sync revision [%s]" %
-+                    self.log.info("Intentando sincronizarse a la revisión [%s]" %
-                                   next_youngest)
-                     cset = self.repos.get_changeset(next_youngest)
-                     try:
-@@ -163,7 +163,7 @@
-                                        (str(next_youngest), cset.date,
-                                         cset.author, cset.message))
-                     except Exception, e: # *another* 1.1. resync attempt won 
--                        self.log.warning('Revision %s already cached: %s' %
-+                        self.log.warning('La revisión %s ya está cacheada: %s' %
-                                          (next_youngest, e))
-                         # also potentially in progress, so keep ''previous''
-                         # notion of 'youngest'
-@@ -175,7 +175,7 @@
-                     #      (i.e. there *shouldn't* be any race condition here)
- 
-                     for path,kind,action,bpath,brev in cset.get_changes():
--                        self.log.debug("Caching node change in [%s]: %s"
-+                        self.log.debug("Cacheando cambio en nodo en [%s]: %s"
-                                        % (next_youngest,
-                                           (path,kind,action,bpath,brev)))
-                         kind = kindmap[kind]
 Index: trac/Settings.py
 ===================================================================
---- trac/Settings.py	(revision 5756)
+--- trac/Settings.py	(revision 5758)
 +++ trac/Settings.py	(working copy)
 @@ -33,7 +33,7 @@
  
@@ -2221,7 +1847,7 @@ Index: trac/Settings.py
              req.hdf['settings.session_id'] = req.session.sid
 Index: trac/scripts/admin.py
 ===================================================================
---- trac/scripts/admin.py	(revision 5756)
+--- trac/scripts/admin.py	(revision 5758)
 +++ trac/scripts/admin.py	(working copy)
 @@ -67,8 +67,8 @@
  class TracAdmin(cmd.Cmd):
@@ -2915,7 +2541,7 @@ Index: trac/scripts/admin.py
                      if cmd.startswith(content):
 Index: trac/scripts/tests/admin.py
 ===================================================================
---- trac/scripts/tests/admin.py	(revision 5756)
+--- trac/scripts/tests/admin.py	(revision 5758)
 +++ trac/scripts/tests/admin.py	(working copy)
 @@ -185,7 +185,7 @@
              self.assertEqual(0, rv)
@@ -2964,7 +2590,7 @@ Index: trac/scripts/tests/admin.py
  
 Index: trac/perm.py
 ===================================================================
---- trac/perm.py	(revision 5756)
+--- trac/perm.py	(revision 5758)
 +++ trac/perm.py	(working copy)
 @@ -32,7 +32,7 @@
          self.action = action
@@ -2986,7 +2612,7 @@ Index: trac/perm.py
  
 Index: trac/Search.py
 ===================================================================
---- trac/Search.py	(revision 5756)
+--- trac/Search.py	(revision 5758)
 +++ trac/Search.py	(working copy)
 @@ -74,7 +74,7 @@
      parameters. The result is returned as a (string, params) tuple.
@@ -3063,7 +2689,7 @@ Index: trac/Search.py
              if isinstance(link, Element):
 Index: trac/config.py
 ===================================================================
---- trac/config.py	(revision 5756)
+--- trac/config.py	(revision 5758)
 +++ trac/config.py	(working copy)
 @@ -220,7 +220,7 @@
                      yield option
@@ -3096,84 +2722,9 @@ Index: trac/config.py
                               % (self.xtnpt.interface.__name__, value,
                                  self.section, self.name))
  
-Index: trac/loader.py
-===================================================================
---- trac/loader.py	(revision 5756)
-+++ trac/loader.py	(working copy)
-@@ -47,7 +47,7 @@
-             try:
-                 plugin_name = os.path.basename(plugin_file[:-3])
-                 if plugin_name not in loaded_components:
--                    env.log.debug('Loading file plugin %s from %s' % \
-+                    env.log.debug('Cargando archivo plugin %s de %s' % \
-                                   (plugin_name, plugin_file))
-                     module = imp.load_source(plugin_name, plugin_file)
-                     loaded_components.append(plugin_name)
-@@ -56,7 +56,7 @@
-                         env.config['components'].set(plugin_name + '.*',
-                                                      'enabled')
-             except Exception, e:
--                env.log.error('Failed to load plugin from %s', plugin_file,
-+                env.log.error('Falló la carga del plugin de %s', plugin_file,
-                               exc_info=True)
- 
-     # If setuptools is installed try to load any eggs from the plugins
-@@ -79,9 +79,9 @@
-                          yield predecessor
-                      yield dist
-                  except pkg_resources.DistributionNotFound, e:
--                     env.log.error('Skipping "%s" ("%s" not found)', dist, e)
-+                     env.log.error('Pasando por alto "%s" ("%s" no fué encontrado)', dist, e)
-                  except pkg_resources.VersionConflict, e:
--                     env.log.error('Skipping "%s" (version conflict: "%s")',
-+                     env.log.error('Pasando por alto "%s" (conflicto de versión: "%s")',
-                                    dist, e)
- 
-         for egg in flatten([pkg_env[name][0] for name in pkg_env]):
-@@ -91,7 +91,7 @@
-                 # Load plugins declared via the `trac.plugins` entry point.
-                 # This is the only supported option going forward, the
-                 # others will be dropped at some point in the future.
--                env.log.debug('Loading egg plugin %s from %s', name,
-+                env.log.debug('Cargando plugin-egg %s de %s', name,
-                               egg.location)
-                 egg.activate()
-                 try:
-@@ -100,18 +100,18 @@
-                         try:
-                             entry_point.load()
-                         except pkg_resources.DistributionNotFound, e:
--                            env.log.warning('Cannot load plugin %s because it '
--                                            'requires "%s"', name, e)
-+                            env.log.warning('No se puede cargar el plugin %s debido a que '
-+                                            'requiere "%s"', name, e)
-                         modules.append(entry_point.module_name)
-                         loaded_components.append(entry_point.module_name)
-                 except ImportError, e:
--                    env.log.error('Failed to load plugin %s from %s', name,
-+                    env.log.error('Falló la carga del plugin %s de %s', name,
-                                   egg.location, exc_info=True)
- 
-             else:
-                 # Support for pre-entry-point plugins
-                 if egg.has_metadata('trac_plugin.txt'):
--                    env.log.debug('Loading plugin %s', egg.location)
-+                    env.log.debug('Cargando plugin %s', egg.location)
-                     egg.activate()
-                     for modname in egg.get_metadata_lines('trac_plugin.txt'):
-                         module = None
-@@ -121,7 +121,7 @@
-                                 loaded_components.append(modname)
-                                 modules.append(modname)
-                             except ImportError, e:
--                                env.log.error('Component module %s not found',
-+                                env.log.error('El módulo componente %s no fué encontrado',
-                                               modname, exc_info=True)
- 
-             if modules:
 Index: trac/Timeline.py
 ===================================================================
---- trac/Timeline.py	(revision 5756)
+--- trac/Timeline.py	(revision 5758)
 +++ trac/Timeline.py	(working copy)
 @@ -77,7 +77,7 @@
          if not req.perm.has_permission('TIMELINE_VIEW'):
@@ -3202,12 +2753,12 @@ Index: trac/Timeline.py
              '%s: %s'
 -            '<p>You may want to see the other kind of events from the '
 -            '<a href="%s">Timeline</a></p>', 
-+            '<p>Tal vez quiera ver los otros tipos de eventos del '
++            '<p>Tal vez quiera ver los otros tipos de eventos de la '
 +            '<a href="%s">Cronología</a></p>', 
              ", ".join(guilty_kinds), ep_name, exc_name, to_unicode(exc), href))
 Index: trac/About.py
 ===================================================================
---- trac/About.py	(revision 5756)
+--- trac/About.py	(revision 5758)
 +++ trac/About.py	(working copy)
 @@ -38,7 +38,7 @@
  
@@ -3227,40 +2778,9 @@ Index: trac/About.py
          if req.perm.has_permission('CONFIG_VIEW'):
              req.hdf['about.config_href'] = req.href.about('config')
              req.hdf['about.plugins_href'] = req.href.about('plugins')
-Index: trac/wiki/api.py
-===================================================================
---- trac/wiki/api.py	(revision 5756)
-+++ trac/wiki/api.py	(working copy)
-@@ -143,7 +143,7 @@
-         try:
-             now = time.time()
-             if now > self._last_index_update + WikiSystem.INDEX_UPDATE_INTERVAL:
--                self.log.debug('Updating wiki page index')
-+                self.log.debug('Actualizando el índice de páginas del wiki')
-                 db = self.env.get_db_cnx()
-                 cursor = db.cursor()
-                 cursor.execute("SELECT DISTINCT name FROM wiki")
-@@ -222,7 +222,7 @@
- 
-     def wiki_page_added(self, page):
-         if not self.has_page(page.name):
--            self.log.debug('Adding page %s to index' % page.name)
-+            self.log.debug('Añadiendo página %s al índice' % page.name)
-             self._index[page.name] = True
- 
-     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
-@@ -230,7 +230,7 @@
- 
-     def wiki_page_deleted(self, page):
-         if self.has_page(page.name):
--            self.log.debug('Removing page %s from index' % page.name)
-+            self.log.debug('Eliminando página %s del índice' % page.name)
-             del self._index[page.name]
- 
-     def wiki_page_version_deleted(self, page):
 Index: trac/wiki/web_ui.py
 ===================================================================
---- trac/wiki/web_ui.py	(revision 5756)
+--- trac/wiki/web_ui.py	(revision 5758)
 +++ trac/wiki/web_ui.py	(working copy)
 @@ -51,7 +51,7 @@
  
@@ -3356,7 +2876,7 @@ Index: trac/wiki/web_ui.py
          req.hdf['wiki.attachments'] = attachments_to_hdf(self.env, req, db,
 Index: trac/wiki/intertrac.py
 ===================================================================
---- trac/wiki/intertrac.py	(revision 5756)
+--- trac/wiki/intertrac.py	(revision 5758)
 +++ trac/wiki/intertrac.py	(working copy)
 @@ -41,13 +41,13 @@
      def process_request(self, req):
@@ -3401,7 +2921,7 @@ Index: trac/wiki/intertrac.py
              [generate_prefix(p) for p in sorted(intertracs.keys())])
 Index: trac/wiki/model.py
 ===================================================================
---- trac/wiki/model.py	(revision 5756)
+--- trac/wiki/model.py	(revision 5758)
 +++ trac/wiki/model.py	(working copy)
 @@ -68,7 +68,7 @@
      exists = property(fget=lambda self: self.version > 0)
@@ -3412,21 +2932,6 @@ Index: trac/wiki/model.py
          if not db:
              db = self.env.get_db_cnx()
              handle_ta = True
-@@ -80,12 +80,12 @@
-         if version is None:
-             # Delete a wiki page completely
-             cursor.execute("DELETE FROM wiki WHERE name=%s", (self.name,))
--            self.env.log.info('Deleted page %s' % self.name)
-+            self.env.log.info('Se eliminó la página %s' % self.name)
-         else:
-             # Delete only a specific page version
-             cursor.execute("DELETE FROM wiki WHERE name=%s and version=%s",
-                            (self.name, version))
--            self.env.log.info('Deleted version %d of page %s'
-+            self.env.log.info('Se eliminó la versión %d de la página %s'
-                               % (version, self.name))
- 
-         if version is None or version == self.version:
 @@ -131,7 +131,7 @@
              cursor.execute("UPDATE wiki SET readonly=%s WHERE name=%s",
                             (self.readonly, self.name))
@@ -3438,7 +2943,7 @@ Index: trac/wiki/model.py
              db.commit()
 Index: trac/wiki/formatter.py
 ===================================================================
---- trac/wiki/formatter.py	(revision 5756)
+--- trac/wiki/formatter.py	(revision 5758)
 +++ trac/wiki/formatter.py	(working copy)
 @@ -72,7 +72,7 @@
                  self.processor = self._mimeview_processor
@@ -3448,15 +2953,6 @@ Index: trac/wiki/formatter.py
 +                self.error = "No se encontró un macro ó procesador (processor) denominado '%s'" % name
  
      # builtin processors
- 
-@@ -97,7 +97,7 @@
- 
-     def _macro_processor(self, req, text):
-         # TODO: macro should take a `formatter` argument
--        self.env.log.debug('Executing Wiki macro %s by provider %s'
-+        self.env.log.debug('Ejecutando Wiki macro %s mediante proveedor %s'
-                            % (self.name, self.macro_provider))
-         return self.macro_provider.render_macro(req, self.name, text)
  
 @@ -107,7 +107,7 @@
  
@@ -3476,12 +2972,9 @@ Index: trac/wiki/formatter.py
              compat = intertrac_config.getbool(ns+'.compat', 'true')
              # TODO: set `compat` default to False once 0.10 gets widely used
              # and remove compatibility code altogether once 0.[89] disappear...
-@@ -440,9 +440,9 @@
-             macro = WikiProcessor(self.env, name)
-             return macro.process(self.req, args, True)
+@@ -442,7 +442,7 @@
          except Exception, e:
--            self.env.log.error('Macro %s(%s) failed' % (name, args),
-+            self.env.log.error('Falló el macro %s(%s)' % (name, args),
+             self.env.log.error('Macro %s(%s) failed' % (name, args),
                                 exc_info=True)
 -            return system_message('Error: Macro %s(%s) failed' % (name, args),
 +            return system_message('Error: Falló el macro %s(%s)' % (name, args),
@@ -3490,7 +2983,7 @@ Index: trac/wiki/formatter.py
      # Headings
 Index: trac/wiki/macros.py
 ===================================================================
---- trac/wiki/macros.py	(revision 5756)
+--- trac/wiki/macros.py	(revision 5758)
 +++ trac/wiki/macros.py	(working copy)
 @@ -252,7 +252,7 @@
          # we expect the 1st argument to be a filename (filespec)
@@ -3531,24 +3024,6 @@ Index: trac/wiki/macros.py
                              % macro_name, e))
                      yield (macro_name, descr)
  
-@@ -447,7 +447,7 @@
-                     found.append(name)
-                     yield name
-                 except Exception, e:
--                    self.log.error('Failed to load wiki macro %s (%s)',
-+                    self.log.error('Falló la carga del wiki-macro %s (%s)',
-                                    filename, e, exc_info=True)
- 
-     def get_macro_description(self, name):
-@@ -458,7 +458,7 @@
-         try:
-             return module.execute(req and req.hdf, content, self.env)
-         except Exception, e:
--            self.log.error('Wiki macro %s failed (%s)', name, e, exc_info=True)
-+            self.log.error('El wiki-macro %s falló (%s)', name, e, exc_info=True)
-             raise
- 
-     def _load_macro(self, name):
 @@ -466,4 +466,4 @@
              macro_file = os.path.join(path, name + '.py')
              if os.path.isfile(macro_file):
@@ -3557,7 +3032,7 @@ Index: trac/wiki/macros.py
 +        raise TracError, 'No se encontró el macro %s' % name
 Index: trac/wiki/interwiki.py
 ===================================================================
---- trac/wiki/interwiki.py	(revision 5756)
+--- trac/wiki/interwiki.py	(revision 5758)
 +++ trac/wiki/interwiki.py	(working copy)
 @@ -131,7 +131,7 @@
          yield 'InterWiki'
@@ -3579,7 +3054,7 @@ Index: trac/wiki/interwiki.py
                           for w in interwikis ],
 Index: trac/upgrades/db10.py
 ===================================================================
---- trac/upgrades/db10.py	(revision 5756)
+--- trac/upgrades/db10.py	(revision 5758)
 +++ trac/upgrades/db10.py	(working copy)
 @@ -22,4 +22,4 @@
  def do_upgrade(env, ver, cursor):
@@ -3589,7 +3064,7 @@ Index: trac/upgrades/db10.py
 +    print 'Por favor realice un "resync" después de esta actualización.'
 Index: trac/web/standalone.py
 ===================================================================
---- trac/web/standalone.py	(revision 5756)
+--- trac/web/standalone.py	(revision 5758)
 +++ trac/web/standalone.py	(working copy)
 @@ -106,26 +106,26 @@
  
@@ -3677,7 +3152,7 @@ Index: trac/web/standalone.py
          else:
 Index: trac/web/auth.py
 ===================================================================
---- trac/web/auth.py	(revision 5756)
+--- trac/web/auth.py	(revision 5758)
 +++ trac/web/auth.py	(working copy)
 @@ -83,12 +83,12 @@
  
@@ -3759,7 +3234,7 @@ Index: trac/web/auth.py
          values = {}
 Index: trac/web/api.py
 ===================================================================
---- trac/web/api.py	(revision 5756)
+--- trac/web/api.py	(revision 5758)
 +++ trac/web/api.py	(working copy)
 @@ -408,7 +408,7 @@
          "304 Not Modified" response if it matches.
@@ -3772,7 +3247,7 @@ Index: trac/web/api.py
          last_modified = http_date(stat.st_mtime)
 Index: trac/web/clearsilver.py
 ===================================================================
---- trac/web/clearsilver.py	(revision 5756)
+--- trac/web/clearsilver.py	(revision 5758)
 +++ trac/web/clearsilver.py	(working copy)
 @@ -132,7 +132,7 @@
              import neo_util
@@ -3783,41 +3258,26 @@ Index: trac/web/clearsilver.py
          
          self['hdf.loadpaths'] = loadpaths
  
-Index: trac/web/chrome.py
-===================================================================
---- trac/web/chrome.py	(revision 5756)
-+++ trac/web/chrome.py	(working copy)
-@@ -230,7 +230,7 @@
-                 if os.path.isfile(path):
-                     req.send_file(path, mimeview.get_mimetype(path))
- 
--        self.log.warning('File %s not found in any of %s', filename, dirs)
-+        self.log.warning('No se encontró el archivo %s en ninguno de los directorios %s', filename, dirs)
-         raise HTTPNotFound('File %s not found', filename)
- 
-     # ITemplateProvider methods
 Index: trac/web/session.py
 ===================================================================
---- trac/web/session.py	(revision 5756)
+--- trac/web/session.py	(revision 5758)
 +++ trac/web/session.py	(working copy)
-@@ -99,10 +99,10 @@
+@@ -99,9 +99,9 @@
          cursor = db.cursor()
          cursor.execute("SELECT sid FROM session WHERE sid=%s", (new_sid,))
          if cursor.fetchone():
 -            raise TracError(Markup('Session "%s" already exists.<br />'
 -                                   'Please choose a different session ID.',
 -                                   new_sid), 'Error renaming session')
--        self.env.log.debug('Changing session ID %s to %s' % (self.sid, new_sid))
 +            raise TracError(Markup('La sesión "%s" ya existe.<br />'
 +                                   'Por favor escoja un diferente "identificador" (ID) de sesión.',
 +                                   new_sid), 'Error al renombrar sesión')
-+        self.env.log.debug('Modificando el "identificador" (ID) de sesión %s a %s' % (self.sid, new_sid))
+         self.env.log.debug('Changing session ID %s to %s' % (self.sid, new_sid))
          cursor.execute("UPDATE session SET sid=%s WHERE sid=%s "
                         "AND authenticated=0", (new_sid, self.sid))
-         cursor.execute("UPDATE session_attribute SET sid=%s "
 Index: trac/util/tests/text.py
 ===================================================================
---- trac/util/tests/text.py	(revision 5756)
+--- trac/util/tests/text.py	(revision 5758)
 +++ trac/util/tests/text.py	(working copy)
 @@ -25,9 +25,9 @@
      def test_from_exception_using_unicode_args(self):
@@ -3833,7 +3293,7 @@ Index: trac/util/tests/text.py
          u = u'Das Ger\xe4t oder die Ressource ist belegt'
 Index: trac/util/datefmt.py
 ===================================================================
---- trac/util/datefmt.py	(revision 5756)
+--- trac/util/datefmt.py	(revision 5758)
 +++ trac/util/datefmt.py	(working copy)
 @@ -30,17 +30,17 @@
      if not time2: time2 = time.time()
@@ -3869,7 +3329,7 @@ Index: trac/util/datefmt.py
      return seconds
 Index: trac/notification.py
 ===================================================================
---- trac/notification.py	(revision 5756)
+--- trac/notification.py	(revision 5758)
 +++ trac/notification.py	(working copy)
 @@ -190,7 +190,7 @@
              self._charset.input_codec = None
@@ -3906,24 +3366,6 @@ Index: trac/notification.py
          try:
              tmp = name.encode('ascii')
              header = Header(tmp, 'ascii', maxlinelen=maxlength)
-@@ -250,7 +250,7 @@
-                 if domain:
-                     address = "%s@%s" % (address, domain)
-                 else:
--                    self.env.log.info("Email address w/o domain: %s" % address)
-+                    self.env.log.info("Dirección de correo electrónico sin dominio: %s" % address)
-                     return None
-         mo = NotifyEmail.shortaddr_re.search(address)
-         if mo:
-@@ -258,7 +258,7 @@
-         mo = NotifyEmail.longaddr_re.search(address)
-         if mo:
-             return mo.group(2)
--        self.env.log.info("Invalid email address: %s" % address)
-+        self.env.log.info("Dirección de correo electrónico inválida: %s" % address)
-         return None
- 
-     def encode_header(self, key, value):
 @@ -280,7 +280,7 @@
          if self._use_tls:
              self.server.ehlo()
@@ -3933,15 +3375,6 @@ Index: trac/notification.py
              self.server.starttls()
              self.server.ehlo()
          if self.user_name:
-@@ -333,7 +333,7 @@
-         
-         # if there is not valid recipient, leave immediately
-         if len(recipients) < 1:
--            self.env.log.info('no recipient for a ticket notification')
-+            self.env.log.info('no existen destinatarios para la notificación de este ticket')
-             return
- 
-         pcc = accaddrs
 @@ -349,8 +349,8 @@
              try:
                  dummy = body.encode('ascii')
@@ -3953,12 +3386,3 @@ Index: trac/notification.py
          msg = MIMEText(body, 'plain')
          # Message class computes the wrong type from MIMEText constructor,
          # which does not take a Charset object as initializer. Reset the
-@@ -359,7 +359,7 @@
-         msg.set_charset(self._charset)
-         self.add_headers(msg, headers);
-         self.add_headers(msg, mime_headers);
--        self.env.log.debug("Sending SMTP notification to %s on port %d to %s"
-+        self.env.log.debug("Enviando notificaciones SMTP a %s por el puerto %d a %s"
-                            % (self.smtp_server, self.smtp_port, recipients))
-         msgtext = msg.as_string()
-         # Ensure the message complies with RFC2822: use CRLF line endings
