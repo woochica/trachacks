@@ -9,6 +9,7 @@ There appears to be a configuration problem for the testcaseplugin.  The reason 
 <li>the trac.ini file is missing the config variable SubversionPathToTestCases under the section 'testManagementExtension'</li>
 <li>the current user is not allowed to access the subversion repository using the current trac acount</li>
 <li>there is a problem with a test case or the testtemplates.xml file...check the errors below</li>
+<li>do you have a testtemplates.xml file in the directory with your testcases?</li>
 </td>
 </tr>
 </table>
