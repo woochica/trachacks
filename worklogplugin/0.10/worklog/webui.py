@@ -43,15 +43,9 @@ class WorkLogPage(Component):
         for (user, name) in users:
             usermap[user] = name
 
-        sql = "CREATE TEMPORARY TABLE work_log_tmp (user text, lastchange integer)"
-        dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
-        
-        sql = "INSERT INTO work_log_tmp SELECT user,MAX(lastchange) FROM work_log GROUP BY user"
-        dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
-
         sql = """
         SELECT wl.user, wl.starttime, wl.endtime, wl.ticket, t.summary
-        FROM work_log_tmp wlt
+        FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt
         LEFT JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange
         LEFT JOIN ticket t ON wl.ticket=t.id
         """
