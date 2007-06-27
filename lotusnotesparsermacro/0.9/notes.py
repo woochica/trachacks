@@ -78,7 +78,7 @@ class LotusNotesRenderer(Component):
         html += 'Subject: %s<br />'\
                 '</fieldset><br />'\
                 '%s<br />' % (subject,
-                              parse(req, content, self.env))
+                              self.render(req, mimetype, content))
     
         return html
 
