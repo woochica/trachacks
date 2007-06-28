@@ -1,0 +1,28 @@
+Index: trac/templates/macros.html
+===================================================================
+--- trac/templates/macros.html	(revision 5758)
++++ trac/templates/macros.html	(working copy)
+@@ -231,9 +231,9 @@
+       </tr>
+     </table>
+     <p class="percent">${percent is None and '%d%%' % stats.done_percent or percent}</p>
+-    <dl py:if="legend">
++    <dl class="progress" py:if="legend">
+       <py:for each="idx, interval in enumerate(stats.intervals)">
+-        <dt>${interval.title.capitalize()} ${stats.unit}s:</dt>
++        <dt class="$interval.css_class">${interval.title.capitalize()} ${stats.unit}s:</dt>
+         <dd><a href="${interval_hrefs[idx]}">${interval.count}</a></dd>
+       </py:for>
+       <py:if test="stats_href">
+Index: trac/web/chrome.py
+===================================================================
+--- trac/web/chrome.py	(revision 5758)
++++ trac/web/chrome.py	(working copy)
+@@ -561,6 +561,7 @@
+         if content_type is None:
+             content_type = 'text/html'
+         method = {'text/html': 'xhtml',
++                  'text/css': 'text',
+                   'text/plain': 'text'}.get(content_type, 'xml')
+ 
+         template = self.load_template(filename, method=method)

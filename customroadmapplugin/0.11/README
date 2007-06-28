@@ -1,0 +1,39 @@
+Preparation
+===========
+
+The plugin relies on the ability to serve up css using a Genshi
+TextTemplate.  This requires the trac-0.11dev.patch be applied to
+Trac.  I am hoping there will be a way to avoid this very soon.
+
+Installation
+============
+
+1. Create the egg file and copy it to your plugins directory.
+
+$ python setup.py bdist_egg
+$ cp dist/CustomRoadmap-0.3-py2.3.egg $PATH_TO_TRAC/plugins/
+
+
+2. Edit your trac.ini to enable the new roadmap stats provider.
+
+[roadmap]
+stats_provider = CustomRoadmapTicketGroupStatsProvider
+
+[milestone]
+stats_provider = CustomRoadmapTicketGroupStatsProvider
+
+
+3. Define your new roadmap groups in trac.ini.
+
+[roadmap-groups]
+groups = closed,open,new
+
+closed.status = closed
+closed.color = #bae0ba
+closed.counts = true
+
+open.status = assigned,reopened
+open.color = #ffff00
+
+new.status = new
+new.color = #ffffff
