@@ -124,12 +124,6 @@
   padding: 0em 0em 0em 2em;
 }
 
-.message-list div.replies ul.reply > li
-{
-  margin: 0.25em;
-  padding: 0.25em;
-}
-
 .message-list div.controls
 {
   float: right;
@@ -190,4 +184,28 @@
 .message-list div.set-display a
 {
   margin: 0.5em;
+}
+
+.message-list form.add_form
+{
+  margin-left: 0em;
+  margin-right: 2em;
+}
+
+.message-list form.edit_form
+{
+  margin-left: -2em;
+  margin-right: 2em;
+}
+
+.message-list div.topic > form.edit_form
+{
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
+.message-list h1, .message-list h2, .message-list h3, .message-list h4,
+.message-list h5, .message-list h6
+{
+  margin-left: 0em;
 }

@@ -1,0 +1,23 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<div xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" class="discussion">
+  <xi:include href="discussion-macros.html"/>
+  <div id="${discussion.mode}" class="${discussion.mode}">
+    <py:choose>
+      <py:when test="'DISCUSSION_VIEW' in perm(context) and discussion.topic">
+        <xi:include href="wiki-discussion-header.html"/>
+        ${display_discussion(discussion, href.wiki(discussion.page_name))}
+        <xi:include href="wiki-discussion-footer.html"/>
+      </py:when>
+      <py:when test="'DISCUSSION_VIEW' in perm(context) and not discussion.topic">
+        <xi:include href="wiki-discussion-header.html"/>
+        <xi:include href="wiki-discussion-missing.html"/>
+        <xi:include href="wiki-discussion-footer.html"/>
+      </py:when>
+      <py:otherwise>
+        <xi:include href="wiki-discussion-header.html"/>
+        <xi:include otherwise="" href="wiki-discussion-denied.html"/>
+        <xi:include href="wiki-discussion-footer.html"/>
+      </py:otherwise>
+    </py:choose>
+  </div>
+</div>

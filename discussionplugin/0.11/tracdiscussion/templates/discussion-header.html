@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+  <div id="ctxtnav" class="nav">
+    <h2>Discussion Navigation</h2>
+    <ul>
+      <li py:if="discussion.forum" class="${discussion.topic and None or 'last'}">
+        <a href="${href.discussion()}">
+          Forum Index
+        </a>
+      </li>
+      <li py:if="discussion.topic" class="${discussion.message and None or 'last'}">
+        <a href="${href.discussion(discussion.forum.id)}">
+          ${discussion.forum.subject}
+        </a>
+      </li>
+      <li py:if="discussion.message" class="last">
+        <a href="${href.discussion(discussion.forum.id, discussion.topic.id)}">
+          ${discussion.topic.subject}
+        </a>
+      </li>
+    </ul>
+    <hr/>
+  </div>
+</html>

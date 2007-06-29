@@ -1,0 +1,13 @@
+${discussion.title} #${discussion.id} - ${discussion.subject}
+----------------------------------------------------------------------------
+${discussion.author}
+${discussion.time}
+${discussion.moderators}
+----------------------------------------------------------------------------
+
+${discussion.body}
+
+--
+${discussion.title} URL: <${discussion.link}>
+${project_name} <${project_url}>
+${project_descr}
