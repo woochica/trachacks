@@ -33,10 +33,11 @@ class TracForgeDispatcherModule(Component):
                 req.redirect(req.href())
                 
             # Assert permissions on the desination environment
+            project_path = os.path.join(os.path.dirname(self.env.path), project)
             try:
-                project_env = _open_environment(os.path.join(os.path.dirname(self.env.path), project))
+                project_env = _open_environment(project_path)
             except IOError:
-                raise TracError('No such project "%s"'%project)
+                raise TracError('No such project "%s" at %s'% (project,project_path))
             project_perm = PermissionCache(project_env, req.authname)
             project_perm.assert_permission('PROJECT_VIEW')
             
@@ -58,9 +59,19 @@ class TracForgeDispatcherModule(Component):
         
         environ['SCRIPT_NAME'] = req.href.projects()
         environ['PATH_INFO'] = path_info
-        environ['TRAC_ENV_PARENT_DIR'] = os.path.dirname(self.env.path)
-        if 'TRAC_ENV' in environ:
-            del environ['TRAC_ENV']
+        print 'setting parent dir to', os.path.dirname(self.env.path)
+        
+#        environ['TRAC_ENV_PARENT_DIR'] = os.path.dirname(self.env.path)
+#        if 'TRAC_ENV' in environ:
+#            del environ['TRAC_ENV']
+
+# The above incantation didn't work on the development server.  If we have
+# problems serving subprojects on the real server, though, we may need to
+# reinstate it along with the replacement below.
+
+        environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
+        if 'trac.env_path' in environ:
+            del environ['trac.env_path']
         
         req._response = dispatch_request(environ, start_response)
         
