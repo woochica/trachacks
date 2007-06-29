@@ -1,12 +1,18 @@
 # -*- coding: utf8 -*-
 
+from trac.core import *
+from trac.web.chrome import Chrome
 from trac.notification import NotifyEmail
 from trac.util import format_datetime
-from trac.util.text import CRLF, wrap
+
+from trac.web.chrome import ITemplateProvider
+
+from genshi.template import TemplateLoader, TextTemplate
+
 
 class DiscussionNotifyEmail(NotifyEmail):
 
-    template_name = "discussion-notify-body.cs"
+    template_name = "discussion-notify-body.txt"
     forum = None
     topic = None
     message = None
@@ -17,14 +23,10 @@ class DiscussionNotifyEmail(NotifyEmail):
     def __init__(self, env):
         NotifyEmail.__init__(self, env)
 
-    def notify(self, req, cursor, action, forum = None, topic = None,
+    def notify(self, context, action, forum = None, topic = None,
       message = None, torcpts = [], ccrcpts = []):
-        self.env.log.debug("action: %s" % action)
-        self.env.log.debug("forum: %s" % forum)
-        self.env.log.debug("topic: %s" % topic)
-        self.env.log.debug("message: %s" % message)
-        self.env.log.debug("torcpts: %s" % torcpts)
-        self.env.log.debug("ccrcpts: %s" % ccrcpts)
+        # Init internal data structure.
+        self.data = {}
 
         # Store link to currently notifying forum, topic and message.
         self.forum = forum
@@ -34,9 +36,7 @@ class DiscussionNotifyEmail(NotifyEmail):
         self.ccrcpts = ccrcpts
 
         # Get action and item of action.
-        index = action.find('-')
-        item = action[:index]
-        action = action[index + 1:]
+        item, sep, action = action.split('-')
 
         # Which item notify about:
         if item == 'topic':
@@ -47,7 +47,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             author = "    Author:  %s" % self.topic['author']
             time = "      Time:  %s" % format_datetime(self.topic['time'])
             body = self.topic['body']
-            link = req.abs_href.discussion(self.forum['id'], self.topic['id'])
+            link = self.env.abs_href.discussion(self.forum['id'], self.topic['id'])
 
             # Save link for bad times.
             topic['link'] = link
@@ -59,7 +59,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             author = "    Author:  %s" % self.message['author']
             time = "      Time:  %s" % format_datetime(self.message['time'])
             body = self.message['body']
-            link = req.abs_href.discussion(self.forum['id'], self.topic['id'],
+            link = self.env.abs_href.discussion(self.forum['id'], self.topic['id'],
               self.message['id']) + '#%s' % self.message['id']
 
             # Save link for bad times.
@@ -74,20 +74,13 @@ class DiscussionNotifyEmail(NotifyEmail):
         subject = self.topic['subject']
 
         # Set set e-mail template values.
-        self.hdf.set_unescaped('discussion.re', re)
-        self.hdf.set_unescaped('discussion.prefix', prefix)
-        self.hdf.set_unescaped('discussion.title', title)
-        self.hdf.set_unescaped('discussion.id', id)
-        self.hdf.set_unescaped('discussion.author', author)
-        self.hdf.set_unescaped('discussion.time', time)
-        self.hdf.set_unescaped('discussion.moderators', moderators)
-        self.hdf.set_unescaped('discussion.subject', subject)
-        self.hdf.set_unescaped('discussion.body', body)
-        self.hdf.set_unescaped('discussion.link', link)
+        self.data.update({'discussion' : {'re' : re, 'prefix': prefix, 'title' : title, 'id' :
+          id, 'author' : author, 'time' : time, 'moderators' : moderators,
+          'subject' : subject, 'body' : body, 'link' : link}})
 
-        # Render body and send notification.
-        subject = self.hdf.render('discussion-notify-subject.cs')
-        self.env.log.debug(subject)
+        # Render subject template and send notification.
+        subject = Chrome(self.env).render_template(context.req,
+          'discussion-notify-subject.txt', self.data, 'text/plain')
         NotifyEmail.notify(self, id, subject)
 
     def get_topic_id(self, forum_id, topic_id):
@@ -107,7 +100,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             # Get this messge ID.
             header['Message-ID'] = self.get_message_id(self.forum['id'],
               self.topic['id'], self.message['id'])
-            header['X-Trac-Message-ID'] = str(self.message['id'])
+            header['X-Trac-Message-ID'] = unicode(self.message['id'])
             header['X-Trac-Discussion-URL'] = self.message['link']
 
             # Get replied message ID.
@@ -123,10 +116,8 @@ class DiscussionNotifyEmail(NotifyEmail):
             # Get this message ID.
             header['Message-ID'] = self.get_topic_id(self.forum['id'],
               self.topic['id'])
-            header['X-Trac-Topic-ID'] = str(self.topic['id'])
+            header['X-Trac-Topic-ID'] = unicode(self.topic['id'])
             header['X-Trac-Discussion-URL'] = self.topic['link']
-
-        print torcpts, ccrcpts, header
 
         # Send e-mail.
         NotifyEmail.send(self, torcpts, ccrcpts, header)

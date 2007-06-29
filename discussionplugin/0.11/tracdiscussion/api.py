@@ -1,125 +1,128 @@
 # -*- coding: utf8 -*-
 
-from tracdiscussion.notification import *
+import time, datetime
+
 from trac.core import *
-from trac.web.chrome import add_stylesheet
-from trac.wiki import wiki_to_html, wiki_to_oneliner
+from trac.web.chrome import add_stylesheet, add_script
+from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.perm import PermissionError
-from trac.util import format_datetime, pretty_timedelta
-import time
+from trac.util.datefmt import format_datetime, pretty_timedelta, FixedOffset
+
+from genshi.template import TemplateLoader
+
+from tracdiscussion.notification import *
+
+utc = FixedOffset(0, 'UTC')
 
 class DiscussionApi(object):
-    def __init__(self, component, req):
-        self.env = component.env
-        self.log = component.log
+
+    def __init__(self):
+        self.data = {}
 
     # Main request processing function
 
-    def render_discussion(self, req, cursor):
-        # Get request mode
-        group, forum, topic, message = self._get_items(req, cursor)
-        modes = self._get_modes(req, group, forum, topic, message)
-        self.log.debug('modes: %s' % modes)
+    def process_discussion(self, context):
+        # Get request items and modes.
+        group, forum, topic, message = self._get_items(context)
+        modes = self._get_modes(context, group, forum, topic, message)
+
+        # Debug
+        context.env.log.debug(group)
+        context.env.log.debug(forum)
+        context.env.log.debug(topic)
+        context.env.log.debug(message)
+        context.env.log.debug(modes)
 
         # Determine moderator rights.
-        if forum:
-            is_moderator = (req.authname in forum['moderators']) or \
-              req.perm.has_permission('DISCUSSION_ADMIN')
-        else:
-            is_moderator = req.perm.has_permission('DISCUSSION_ADMIN')
-
-        # Perform mode actions
-        self._do_action(req, cursor, modes, group, forum, topic, message,
-          is_moderator)
+        is_moderator = forum and (context.req.authname in forum['moderators']) \
+          or context.req.perm.has_permission('DISCUSSION_ADMIN')
 
         # Add CSS styles
-        add_stylesheet(req, 'common/css/wiki.css')
-        add_stylesheet(req, 'discussion/css/discussion.css')
-        add_stylesheet(req, 'discussion/css/admin.css')
+        add_stylesheet(context.req, 'common/css/wiki.css')
+        add_stylesheet(context.req, 'discussion/css/discussion.css')
+        add_stylesheet(context.req, 'discussion/css/admin.css')
 
-        # Fill up HDF structure and return template
-        req.hdf['discussion.authname'] = req.authname
-        req.hdf['discussion.is_moderator'] = is_moderator
+        add_script(context.req, 'common/js/trac.js')
+        add_script(context.req, 'common/js/search.js')
+        add_script(context.req, 'common/js/wikitoolbar.js')
+
+        # Perform mode actions
+        self._do_action(context, modes, group, forum, topic, message,
+          is_moderator)
+
+        # Fill up template data struture.
+        self.data['authname'] = context.req.authname
+        self.data['is_moderator'] = is_moderator
+        self.data['group'] = group
+        self.data['forum'] = forum
+        self.data['topic'] = topic
+        self.data['message'] = message
+        self.data['mode'] = modes[-1]
+        self.data['time'] = format_datetime(datetime.datetime.now(utc))
+        self.data['realm'] = context.realm
+
+        # Convert group, forum topic and message values for pressentation.
         if group:
-            group['name'] = wiki_to_oneliner(group['name'], self.env)
-            group['description'] = wiki_to_oneliner(group['description'],
-              self.env)
-            req.hdf['discussion.group'] = group
+            group['name'] = format_to_oneliner(context, group['name'])
+            group['description'] = format_to_oneliner(context,
+              group['description'])
         if forum:
-            forum['name'] = wiki_to_oneliner(forum['name'], self.env)
-            forum['description'] = wiki_to_oneliner(forum['description'],
-              self.env)
-            forum['subject'] = wiki_to_oneliner(forum['subject'], self.env)
+            forum['name'] = format_to_oneliner(context, forum['name'])
+            forum['subject'] = format_to_oneliner(context, forum['subject'])
+            forum['description'] = format_to_oneliner(context,
+              forum['description'])
             forum['time'] = format_datetime(forum['time'])
-            req.hdf['discussion.forum'] = forum
         if topic:
-            topic['subject'] = wiki_to_oneliner(topic['subject'], self.env)
-            topic['author'] = wiki_to_oneliner(topic['author'], self.env)
-            topic['body'] = wiki_to_html(topic['body'], self.env, req)
+            topic['subject'] = format_to_oneliner(context, topic['subject'])
+            topic['author'] = format_to_oneliner(context, topic['author'])
+            topic['body'] = format_to_html(context, topic['body'])
             topic['time'] = format_datetime(topic['time'])
-            req.hdf['discussion.topic'] = topic
         if message:
-            message['author'] = wiki_to_oneliner(message['author'], self.env)
-            message['body'] = wiki_to_html(message['body'], self.env, req)
+            message['author'] = format_to_oneliner(context, message['author'])
+            message['body'] = format_to_html(context, message['body'])
             message['time'] = format_datetime(message['time'])
-            req.hdf['discussion.message'] = message
-        req.hdf['discussion.mode'] = modes[-1]
-        req.hdf['discussion.time'] = format_datetime(time.time())
-        return modes[-1] + '.cs', None
 
-    def _get_items(self, req, cursor):
+        # Return template and data.
+        return modes[-1] + '.html', {'discussion' : self.data}
+
+    def _get_items(self, context):
         group, forum, topic, message = None, None, None, None
 
         # Populate active group
-        if req.args.has_key('group'):
-            group_id = int(req.args.get('group') or 0)
-            group = self.get_group(cursor, group_id)
+        if context.req.args.has_key('group'):
+            group_id = int(context.req.args.get('group') or 0)
+            group = self.get_group(context, group_id)
 
         # Populate active forum
-        if req.args.has_key('forum'):
-            forum_id = int(req.args.get('forum') or 0)
-            forum = self.get_forum(cursor, forum_id)
+        if context.req.args.has_key('forum'):
+            forum_id = int(context.req.args.get('forum') or 0)
+            forum = self.get_forum(context, forum_id)
 
         # Populate active topic
-        if req.args.has_key('topic'):
-            topic_id = int(req.args.get('topic') or 0)
-            topic = self.get_topic(cursor, topic_id)
+        if context.req.args.has_key('topic'):
+            topic_id = int(context.req.args.get('topic') or 0)
+            topic = self.get_topic(context, topic_id)
 
         # Populate active topic
-        if req.args.has_key('message'):
-            message_id = int(req.args.get('message') or 0)
-            message = self.get_message(cursor, message_id)
+        if context.req.args.has_key('message'):
+            message_id = int(context.req.args.get('message') or 0)
+            message = self.get_message(context, message_id)
 
-        self.log.debug('group: %s' % group)
-        self.log.debug('forum: %s' % forum)
-        self.log.debug('topic: %s' % topic)
-        self.log.debug('message: %s' % message)
         return group, forum, topic, message
 
-    def _get_modes(self, req, group, forum, topic, message):
+    def _get_modes(self, context, group, forum, topic, message):
         # Get action
-        component = req.args.get('component')
-        action = req.args.get('discussion_action')
-        preview = req.args.has_key('preview');
-        submit = req.args.has_key('submit');
-        self.log.debug('component: %s' % component)
-        self.log.debug('action: %s' % action)
-
-        if component == 'admin':
-            req.hdf['discussion.href'] = req.href.admin('discussion')
-        elif component == 'wiki':
-            req.hdf['discussion.href'] = req.href(req.path_info)
-        else:
-            req.hdf['discussion.href'] = req.href.discussion()
-        req.hdf['discussion.component'] = component
+        action = context.req.args.get('discussion_action')
+        preview = context.req.args.has_key('preview');
+        submit = context.req.args.has_key('submit');
 
         # Determine mode
         if message:
-            if component == 'admin':
+            if context.realm == 'discussion-admin':
                 pass
-            elif component == 'wiki':
+            elif context.realm == 'discussion-wiki':
                 if action == 'add':
-                    return ['wiki-message-list']
+                    return ['message-add', 'wiki-message-list']
                 elif action == 'quote':
                     return ['message-quote', 'wiki-message-list']
                 elif action == 'post-add':
@@ -142,7 +145,7 @@ class DiscussionApi(object):
                     return ['wiki-message-list']
             else:
                 if action == 'add':
-                    return ['message-list']
+                    return ['message-add', 'message-list']
                 elif action == 'quote':
                     return ['message-quote', 'message-list']
                 elif action == 'post-add':
@@ -164,11 +167,11 @@ class DiscussionApi(object):
                 else:
                     return ['message-list']
         if topic:
-            if component == 'admin':
+            if context.realm == 'discussion-admin':
                 pass
-            elif component == 'wiki':
+            elif context.realm == 'discussion-wiki':
                 if action == 'add':
-                    return ['wiki-message-list']
+                    return ['message-add', 'wiki-message-list']
                 elif action == 'quote':
                     return ['topic-quote','wiki-message-list']
                 elif action == 'post-add':
@@ -189,7 +192,7 @@ class DiscussionApi(object):
                     return ['wiki-message-list']
             else:
                 if action == 'add':
-                    return ['message-list']
+                    return ['message-add', 'message-list']
                 elif action == 'quote':
                     return ['topic-quote', 'message-list']
                 elif action == 'post-add':
@@ -215,12 +218,12 @@ class DiscussionApi(object):
                 else:
                     return ['message-list']
         elif forum:
-            if component == 'admin':
+            if context.realm == 'discussion-admin':
                 if action == 'post-edit':
                     return ['forum-post-edit', 'admin-forum-list']
                 else:
                     return ['admin-forum-list']
-            elif component == 'wiki':
+            elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'add':
@@ -235,7 +238,7 @@ class DiscussionApi(object):
                 else:
                     return ['topic-list']
         elif group:
-            if component == 'admin':
+            if context.realm == 'discussion-admin':
                 if action == 'post-add':
                     return ['forum-post-add', 'admin-forum-list']
                 elif action == 'post-edit':
@@ -247,7 +250,7 @@ class DiscussionApi(object):
                         return ['admin-group-list']
                     else:
                         return ['admin-forum-list']
-            elif component == 'wiki':
+            elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'post-add':
@@ -255,14 +258,14 @@ class DiscussionApi(object):
                 else:
                     return ['forum-list']
         else:
-            if component == 'admin':
+            if context.realm == 'discussion-admin':
                 if action == 'post-add':
                     return ['group-post-add', 'admin-group-list']
                 elif action == 'delete':
                     return ['groups-delete', 'admin-group-list']
                 else:
                     return ['admin-group-list']
-            elif component == 'wiki':
+            elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'add':
@@ -272,565 +275,547 @@ class DiscussionApi(object):
                 else:
                     return ['forum-list']
 
-    def _do_action(self, req, cursor, modes, group, forum, topic, message,
+    def _do_action(self, context, modes, group, forum, topic, message,
       is_moderator):
         for mode in modes:
-            self.log.debug('doing %s mode action' % (mode,))
             if mode == 'group-list':
-                req.perm.assert_permission('DISCUSSION_VIEW')
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Display groups.
-                req.hdf['discussion.groups'] = self.get_groups(req, cursor)
+                self.data['groups'] = self.get_groups(context)
 
             elif mode == 'admin-group-list':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
+
+                # Prepare values for edit form.
+                if group:
+                    self.data['name'] = group['name']
+                    self.data['description'] = group['description']
 
                 # Display groups.
-                req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
-                if group:
-                    req.hdf['discussion.name'] = group['name']
-                    req.hdf['discussion.description'] = \
-                      group['description']
-                req.hdf['discussion.groups'] = self.get_groups(req, cursor, order, desc)
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['groups'] = self.get_groups(context, order, desc)
 
             elif mode == 'group-add':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
             elif mode == 'group-post-add':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                new_name = req.args.get('name')
-                new_description = req.args.get('description')
+                new_name = context.req.args.get('name')
+                new_description = context.req.args.get('description')
 
                 # Add new group.
-                self.add_group(cursor, new_name, new_description)
+                self.add_group(context, new_name, new_description)
 
             elif mode == 'group-post-edit':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                new_group = int(req.args.get('group') or 0)
-                new_name = req.args.get('name')
-                new_description = req.args.get('description')
+                new_group = int(context.req.args.get('group') or 0)
+                new_name = context.req.args.get('name')
+                new_description = context.req.args.get('description')
 
                 # Edit group.
-                self.edit_group(cursor, new_group, new_name, new_description)
+                self.edit_group(context, new_group, new_name, new_description)
 
             elif mode == 'group-delete':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
             elif mode == 'groups-delete':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get selected groups.
-                selection = req.args.get('selection')
+                selection = context.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
 
                 # Delete selected groups.
                 if selection:
                     for group_id in selection:
-                        self.delete_group(cursor, int(group_id))
+                        self.delete_group(context, int(group_id))
 
             elif mode == 'forum-list':
-                req.perm.assert_permission('DISCUSSION_VIEW')
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
 
                 # Display forums.
-                req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
-                req.hdf['discussion.groups'] = self.get_groups(req, cursor)
-                req.hdf['discussion.forums'] = self.get_forums(req, cursor,
-                  order, desc)
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['groups'] = self.get_groups(context)
+                self.data['forums'] = self.get_forums(context, order, desc)
+                self.data['forum'] = None
 
             elif mode == 'admin-forum-list':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
-                # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                # Get ordering arguments values
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
+
+                # Prepare values for edit form.
+                if forum:
+                    self.data['name'] = forum['name']
+                    self.data['subject'] = forum['subject']
+                    self.data['description'] = forum['description']
+                    self.data['moderators'] = forum['moderators']
+                    self.data['group'] = forum['group']
 
                 # Display forums.
-                req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
-                self.log.debug(forum)
-                if forum:
-                    req.hdf['discussion.name'] = forum['name']
-                    req.hdf['discussion.subject'] = forum['subject']
-                    req.hdf['discussion.description'] = \
-                      forum['description']
-                    req.hdf['discussion.moderators'] = forum['moderators']
-                    req.hdf['discussion.group'] = forum['group']
-                req.hdf['discussion.users'] = self.get_users()
-                req.hdf['discussion.groups'] = self.get_groups(req, cursor)
-                req.hdf['discussion.forums'] = self.get_forums(req, cursor,
-                  order, desc)
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['users'] = self.get_users(context)
+                self.data['groups'] = self.get_groups(context)
+                self.data['forums'] = self.get_forums(context, order, desc)
 
             elif mode == 'forum-add':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Display Add Forum form.
-                req.hdf['discussion.users'] = self.get_users()
-                req.hdf['discussion.groups'] = self.get_groups(req, cursor)
+                self.data['users'] = self.get_users(context)
+                self.data['groups'] = self.get_groups(context)
 
             elif mode == 'forum-post-add':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values
-                new_name = req.args.get('name')
-                new_author = req.authname
-                new_subject = req.args.get('subject')
-                new_description = req.args.get('description')
-                new_moderators = req.args.get('moderators')
-                new_group = int(req.args.get('group') or 0)
+                new_name = context.req.args.get('name')
+                new_author = context.req.authname
+                new_subject = context.req.args.get('subject')
+                new_description = context.req.args.get('description')
+                new_moderators = context.req.args.get('moderators')
+                new_group = int(context.req.args.get('group') or 0)
                 if not new_moderators:
                     new_moderators = []
                 if not isinstance(new_moderators, list):
                      new_moderators = [new_moderators]
 
                 # Perform new forum add.
-                self.add_forum(cursor, new_name, new_author, new_subject,
+                self.add_forum(context, new_name, new_author, new_subject,
                    new_description, new_moderators, new_group)
 
             elif mode == 'forum-post-edit':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                new_forum = int(req.args.get('forum') or 0)
-                new_name = req.args.get('name')
-                new_subject = req.args.get('subject')
-                new_description = req.args.get('description')
-                new_moderators = req.args.get('moderators')
-                new_group = int(req.args.get('group') or 0)
+                new_forum = int(context.req.args.get('forum') or 0)
+                new_name = context.req.args.get('name')
+                new_subject = context.req.args.get('subject')
+                new_description = context.req.args.get('description')
+                new_moderators = context.req.args.get('moderators')
+                new_group = int(context.req.args.get('group') or 0)
                 if not new_moderators:
                     new_moderators = []
                 if not isinstance(new_moderators, list):
                     new_moderators = [new_moderators]
 
                 # Perform forum edit.
-                self.edit_forum(cursor, new_forum, new_name, new_subject,
+                self.edit_forum(context, new_forum, new_name, new_subject,
                   new_description, new_moderators, new_group)
 
             elif mode == 'forum-delete':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Delete forum
-                self.delete_forum(cursor, forum['id'])
+                self.delete_forum(context, forum['id'])
 
             elif mode == 'forums-delete':
-                req.perm.assert_permission('DISCUSSION_ADMIN')
+                context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get selected forums.
-                selection = req.args.get('selection')
+                selection = context.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
 
                 # Delete selected forums.
                 if selection:
                     for forum_id in selection:
-                        self.delete_forum(cursor, int(forum_id))
+                        self.delete_forum(context, int(forum_id))
 
             elif mode == 'topic-list':
-                req.perm.assert_permission('DISCUSSION_VIEW')
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
 
                 # Display topics.
-                req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
-                req.hdf['discussion.topics'] = self.get_topics(req, cursor,
-                  forum['id'], order, desc)
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['topics'] = self.get_topics(context, forum['id'],
+                  order, desc)
 
             elif mode == 'topic-add':
-                req.perm.assert_permission('DISCUSSION_APPEND')
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Get form values.
-                new_subject = req.args.get('subject')
-                new_author = req.args.get('author')
-                new_body = req.args.get('body')
+                new_subject = context.req.args.get('subject')
+                new_author = context.req.args.get('author')
+                new_body = context.req.args.get('body')
 
                 # Display Add Topic form.
                 if new_subject:
-                    req.hdf['discussion.subject'] = wiki_to_oneliner(
-                      new_subject, self.env)
+                    self.data['subject'] = format_to_oneliner(context,
+                      new_subject)
                 if new_author:
-                    req.hdf['discussion.author'] = wiki_to_oneliner(
-                     new_author, self.env)
+                    self.data['author'] = format_to_oneliner(context,
+                      new_author)
                 if new_body:
-                    req.hdf['discussion.body'] = wiki_to_html(new_body,
-                      self.env, req)
+                    self.data['body'] = format_to_html(context, new_body)
 
             elif mode == 'topic-quote':
-                req.perm.assert_permission('DISCUSSION_APPEND')
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Prepare old content.
                 lines = topic['body'].splitlines()
                 for I in xrange(len(lines)):
                     lines[I] = '> %s' % (lines[I])
-                req.hdf['args.body'] = '\n'.join(lines)
+                context.req.args['body'] = '\n'.join(lines)
+
+                # Signalise that message is being added.
+                context.req.args['message'] = message and  message['id'] or '-1'
 
             elif mode == 'topic-post-add':
-                req.perm.assert_permission('DISCUSSION_APPEND')
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Get form values.
-                new_subject = req.args.get('subject')
-                new_author = req.args.get('author')
-                new_body = req.args.get('body')
+                new_subject = context.req.args.get('subject')
+                new_author = context.req.args.get('author')
+                new_body = context.req.args.get('body')
                 new_time = int(time.time())
 
                 # Add topic.
-                self.log.debug(new_body)
-                self.add_topic(cursor, forum['id'], new_subject, new_time,
+                self.add_topic(context, forum['id'], new_subject, new_time,
                   new_author, new_body)
 
                 # Get new popic and notify about creation.
-                new_topic = self.get_topic_by_time(cursor, new_time)
-                self.log.debug(new_topic)
-                to = self.get_topic_to_recipients(cursor, new_topic['id'])
-                cc = self.get_topic_cc_recipients(cursor, new_topic['id'])
-                notifier = DiscussionNotifyEmail(self.env)
-                notifier.notify(req, cursor, mode, forum, new_topic, None, to,
-                  cc)
+                new_topic = self.get_topic_by_time(context, new_time)
+                to = self.get_topic_to_recipients(context, new_topic['id'])
+                cc = self.get_topic_cc_recipients(context, new_topic['id'])
+                notifier = DiscussionNotifyEmail(context.env)
+                notifier.notify(context, mode, forum, new_topic, None, to, cc)
 
             elif mode == 'topic-edit':
-                req.perm.assert_permission('DISCUSSION_APPEND')
-                if not is_moderator and (topic['author'] != req.authname):
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
+                if not is_moderator and (topic['author'] !=
+                  context.req.authname):
                     raise PermissionError('Topic edit')
 
                 # Prepare form values.
-                req.args['subject'] = topic['subject']
-                req.args['body'] = topic['body']
-                req.hdf['args.subject'] = topic['subject']
-                req.hdf['args.body'] = topic['body']
+                context.req.args['subject'] = topic['subject']
+                context.req.args['body'] = topic['body']
 
             elif mode == 'topic-post-edit':
-                req.perm.assert_permission('DISCUSSION_APPEND')
-                if not is_moderator and (topic['author'] != req.authname):
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
+                if not is_moderator and (topic['author'] != 
+                  context.req.authname):
                     raise PermissionError('Topic edit')
 
                 # Get form values.
-                new_subject = req.args.get('subject')
-                new_body = req.args.get('body')
+                new_subject = context.req.args.get('subject')
+                new_body = context.req.args.get('body')
 
                 # Edit topic.
                 topic['subject'] = new_subject
                 topic['body'] = new_body
-                self.edit_topic(cursor, topic['id'], topic['forum'],
-                  new_subject, new_body)
+                self.edit_topic(context, topic['id'], topic['forum'],
+                  topic['subject'], topic['body'])
 
             elif mode == 'topic-move':
-                req.perm.assert_permission('DISCUSSION_MODERATE')
+                context.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
 
                 # Display Move Topic form
-                req.hdf['discussion.forums'] = self.get_forums(req, cursor)
+                self.data['forums'] = self.get_forums(context)
 
             elif mode == 'topic-post-move':
-                req.perm.assert_permission('DISCUSSION_MODERATE')
+                context.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
 
                 # Get form values
-                new_forum = int(req.args.get('new_forum') or 0)
+                new_forum = int(context.req.args.get('new_forum') or 0)
 
                 # Move topic.
-                self.set_forum(cursor, topic['id'], new_forum)
+                self.set_forum(context, topic['id'], new_forum)
 
             elif mode == 'topic-delete':
-                req.perm.assert_permission('DISCUSSION_MODERATE')
+                context.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
 
                 # Delete topic.
-                self.delete_topic(cursor, topic['id'])
+                self.delete_topic(context, topic['id'])
 
             elif mode == 'message-list':
-                req.perm.assert_permission('DISCUSSION_VIEW')
-                self._prepare_message_list(req, cursor, topic)
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
+                self._prepare_message_list(context, topic)
 
             elif mode == 'wiki-message-list':
                 if topic:
-                    self._prepare_message_list(req, cursor, topic)
+                    self._prepare_message_list(context, topic)
+
+            elif mode == 'message-add':
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
+
+                # Signalise that message is being added.
+                context.req.args['message'] = message and  message['id'] or '-1'
 
             elif mode == 'message-quote':
-                req.perm.assert_permission('DISCUSSION_APPEND')
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Prepare old content.
                 lines = message['body'].splitlines()
                 for I in xrange(len(lines)):
                     lines[I] = '> %s' % (lines[I])
-                req.hdf['args.body'] = '\n'.join(lines)
+                context.req.args['body'] = '\n'.join(lines)
 
             elif mode == 'message-post-add':
-                req.perm.assert_permission('DISCUSSION_APPEND')
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Get form values.
-                new_author = req.args.get('author')
-                new_body = req.args.get('body')
+                new_author = context.req.args.get('author')
+                new_body = context.req.args.get('body')
                 new_time = int(time.time())
 
                 # Add message.
-                if message:
-                    self.add_message(cursor, forum['id'], topic['id'],
-                      message['id'], new_time, new_author, new_body)
-                else:
-                    self.add_message(cursor, forum['id'], topic['id'], '-1',
-                      new_time, new_author, new_body)
+                self.add_message(context, forum['id'], topic['id'], message and
+                  message['id'] or '-1', new_time, new_author, new_body)
 
                 # Get inserted message and notify about its creation.
-                new_message = self.get_message_by_time(cursor, new_time)
-                to = self.get_topic_to_recipients(cursor, topic['id'])
-                cc = self.get_topic_cc_recipients(cursor, topic['id'])
-                notifier = DiscussionNotifyEmail(self.env)
-                notifier.notify(req, cursor, mode, forum, topic, new_message,
-                  to, cc)
+                new_message = self.get_message_by_time(context, new_time)
+                to = self.get_topic_to_recipients(context, topic['id'])
+                cc = self.get_topic_cc_recipients(context, topic['id'])
+                notifier = DiscussionNotifyEmail(context.env)
+                notifier.notify(context, mode, forum, topic, new_message, to, cc)
 
             elif mode == 'message-edit':
-                req.perm.assert_permission('DISCUSSION_APPEND')
-                if not is_moderator and (message['author'] != req.authname):
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
+                if not is_moderator and (message['author'] !=
+                  context.req.authname):
                     raise PermissionError('Message edit')
 
                 # Prepare form values.
-                req.args['body'] = message['body']
-                req.hdf['args.body'] = message['body']
+                context.req.args['body'] = message['body']
 
             elif mode == 'message-post-edit':
-                req.perm.assert_permission('DISCUSSION_APPEND')
-                if not is_moderator and (message['author'] != req.authname):
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
+                if not is_moderator and (message['author'] !=
+                  context.req.authname):
                     raise PermissionError('Message edit')
 
                 # Get form values.
-                new_body = req.args.get('body')
+                new_body = context.req.args.get('body')
 
                 # Edit message.
                 message['body'] = new_body
-                self.edit_message(cursor, message['id'], message['forum'],
+                self.edit_message(context, message['id'], message['forum'],
                   message['topic'], message['replyto'], new_body)
 
             elif mode == 'message-delete':
-                req.perm.assert_permission('DISCUSSION_MODERATE')
+                context.req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
                     raise PermissionError('Forum moderate')
 
                 # Delete message.
-                self.delete_message(cursor, message['id'])
+                self.delete_message(context, message['id'])
 
             elif mode == 'message-set-display':
-                req.perm.assert_permission('DISCUSSION_VIEW')
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values
-                display = req.args.get('display')
+                display = context.req.args.get('display')
 
                 # Set message list display mode to session
-                req.session['message-list-display'] = display
+                context.req.session['message-list-display'] = display
 
-    def _prepare_message_list(self, req, cursor, topic):
+
+
+    def _prepare_message_list(self, context, topic):
         # Get form values.
-        new_author = req.args.get('author')
-        new_subject = req.args.get('subject')
-        new_body = req.args.get('body')
+        new_author = context.req.args.get('author')
+        new_subject = context.req.args.get('subject')
+        new_body = context.req.args.get('body')
 
         # Get time when topic was visited from session.
-        visited = eval(req.session.get('visited-topics') or '{}')
-        if visited.has_key(topic['id']):
-            visit_time = int(visited[topic['id']])
-        else:
-            visit_time = 0
+        visited = eval(context.req.session.get('visited-topics') or '{}')
+        visit_time = visited.has_key(topic['id']) and \
+          int(visited[topic['id']]) or 0
 
         # Update this topic visit time and save to session.
         visited[topic['id']] = int(time.time())
-        req.session['visited-topics'] = unicode(visited)
+        context.req.session['visited-topics'] = unicode(visited)
 
         # Mark new topic.
-        if int(topic['time']) > visit_time:
+        if topic['time'] > visit_time:
             topic['new'] = True
 
         # Prepare display of topic
         if new_author:
-            req.hdf['discussion.author'] = wiki_to_oneliner(new_author,
-              self.env)
+            self.data['author'] = format_to_oneliner(context, new_author)
         if new_subject:
-            req.hdf['discussion.subject'] = wiki_to_oneliner(new_subject,
-              self.env)
+            self.data['subject'] = format_to_oneliner(context, new_subject)
         if new_body:
-            req.hdf['discussion.body'] = wiki_to_html(new_body, self.env, req)
+            self.data['body'] = format_to_html(context, new_body)
 
         # Prepare display of messages
-        display = req.session.get('message-list-display')
-        req.hdf['discussion.display'] = display
+        display = context.req.session.get('message-list-display')
+        self.data['display'] = display
         if display == 'flat-asc':
-            req.hdf['discussion.messages'] = self.get_flat_messages(req, cursor,
+            self.data['messages'] = self.get_flat_messages(context,
               topic['id'], visit_time)
         elif display == 'flat-desc':
-            req.hdf['discussion.messages'] = self.get_flat_messages(req, cursor,
+            self.data['messages'] = self.get_flat_messages(context,
               topic['id'], visit_time, 'ORDER BY time DESC')
         else:
-            req.hdf['discussion.messages'] = self.get_messages(req, cursor,
-             topic['id'], visit_time)
+            self.data['messages'] = self.get_messages(context, topic['id'],
+              visit_time)
 
     # Get one item functions
 
-    def get_message(self, cursor, id):
+    def get_message(self, context, id):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
         sql = "SELECT id, forum, topic, replyto, time, author, body FROM" \
           " message WHERE id = %s"
-        self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return None
 
-    def get_message_by_time(self, cursor, time):
+    def get_message_by_time(self, context, time):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
         sql = "SELECT id, forum, topic, replyto, time, author, body FROM" \
           " message WHERE time = %s"
-        self.log.debug(sql % (time,))
-        cursor.execute(sql, (time,))
-        for row in cursor:
+        context.cursor.execute(sql, (time,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return None
 
-    def get_topic(self, cursor, id):
+    def get_topic(self, context, id):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " id = %s"
-        self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return None
 
-    def get_topic_by_time(self, cursor, time):
+    def get_topic_by_time(self, context, time):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " time = %s"
-        self.log.debug(sql % (time,))
-        cursor.execute(sql, (time,))
-        for row in cursor:
+
+        context.cursor.execute(sql, (time,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return None
 
-    def get_topic_by_subject(self, cursor, subject):
+    def get_topic_by_subject(self, context, subject):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " subject = '%s'" % (subject)
-        self.log.debug(sql)
-        cursor.execute(sql)
-        for row in cursor:
+        context.cursor.execute(sql)
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return None
 
-    def get_topic_to_recipients(self, cursor, id):
+    def get_topic_to_recipients(self, context, id):
         sql = "SELECT t.author FROM topic t WHERE t.id = %s UNION SELECT" \
           " m.author FROM message m WHERE m.topic = %s"
-        self.log.debug(sql % (id, id))
-        cursor.execute(sql, (id, id))
+        context.cursor.execute(sql, (id, id))
         to_recipients = []
-        for row in cursor:
+        for row in context.cursor:
             to_recipients.append(row[0])
-        self.log.debug(to_recipients)
         return to_recipients
 
-    def get_topic_cc_recipients(self, cursor, id):
+    def get_topic_cc_recipients(self, context, id):
         return []
 
-    def get_forum(self, cursor, id):
+    def get_forum(self, context, id):
         columns = ('id', 'group', 'name', 'subject', 'time', 'moderators',
           'description')
         sql = "SELECT id, forum_group, name, subject, time, moderators," \
            " description FROM forum WHERE id = %s"
-        self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
             return row
         return None
 
-    def get_group(self, cursor, id):
+    def get_group(self, context, id):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM forum_group WHERE id = %s"
-        self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return {'id' : 0, 'name': 'None', 'description': 'No Group'}
 
     # Set item functions
 
-    def set_group(self, cursor, forum, group):
+    def set_group(self, context, forum, group):
         if not group:
             group = '0'
         sql = "UPDATE forum SET forum_group = %s WHERE id = %s"
-        self.log.debug(sql % (group, forum))
-        cursor.execute(sql, (group, forum))
+        context.cursor.execute(sql, (group, forum))
 
-    def set_forum(self, cursor, topic, forum):
+    def set_forum(self, context, topic, forum):
         sql = "UPDATE topic SET forum = %s WHERE id = %s"
-        self.log.debug(sql % (forum, topic))
-        cursor.execute(sql, (forum, topic))
+        context.cursor.execute(sql, (forum, topic))
         sql = "UPDATE message SET forum = %s WHERE topic = %s"
-        self.log.debug(sql % (forum, topic))
-        cursor.execute(sql, (forum, topic))
+        context.cursor.execute(sql, (forum, topic))
 
     # Edit all functons
 
-    def edit_group(self, cursor, group, name, description):
+    def edit_group(self, context, group, name, description):
         sql = "UPDATE forum_group SET name = %s, description = %s WHERE id = %s"
-        self.log.debug(sql % (name, description, group))
-        cursor.execute(sql, (name, description, group))
+        context.cursor.execute(sql, (name, description, group))
 
-    def edit_forum(self, cursor, forum, name, subject, description, moderators,
+    def edit_forum(self, context, forum, name, subject, description, moderators,
       group):
         moderators = ' '.join(moderators)
         if not group:
             group = '0'
         sql = "UPDATE forum SET name = %s, subject = %s, description = %s," \
           " moderators = %s, forum_group = %s WHERE id = %s"
-        self.log.debug(sql % (name, subject, description, moderators,
+        context.cursor.execute(sql, (name, subject, description, moderators,
           group, forum))
-        cursor.execute(sql, (name, subject, description, moderators, group,
-          forum))
 
-    def edit_topic(self, cursor, topic, forum, subject, body):
+    def edit_topic(self, context, topic, forum, subject, body):
         sql = "UPDATE topic SET forum = %s, subject = %s, body = %s WHERE id" \
           " = %s"
-        self.log.debug(sql % (forum, subject, body, topic))
-        cursor.execute(sql, (forum, subject, body, topic))
+        context.cursor.execute(sql, (forum, subject, body, topic))
 
-    def edit_message(self, cursor, message, forum, topic, replyto, body):
+    def edit_message(self, context, message, forum, topic, replyto, body):
         sql = "UPDATE message SET forum = %s, topic = %s, replyto = %s, body" \
           " = %s WHERE id = %s"
-        self.log.debug(sql % (forum, topic, replyto, body, message))
-        cursor.execute(sql, (forum, topic, replyto, body, message))
+        context.cursor.execute(sql, (forum, topic, replyto, body, message))
 
     # Get list functions
 
-    def get_groups(self, req, cursor, order_by = 'id', desc = False):
+    def get_groups(self, context, order_by = 'id', desc = False):
         # Get count of forums without group
         sql = "SELECT COUNT(f.id) FROM forum f WHERE f.forum_group = 0"
-        self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         no_group_forums = 0
-        for row in cursor:
+        for row in context.cursor:
             no_group_forums = row[0]
         groups = [{'id' : 0, 'name' : 'None', 'description' : 'No Group',
           'forums' : no_group_forums}]
@@ -844,16 +829,15 @@ class DiscussionApi(object):
           " forum_group FROM forum GROUP BY forum_group) f ON g.id = " \
           " f.forum_group ORDER BY " + order_by + (" ASC",
           " DESC")[bool(desc)]
-        self.log.debug(sql)
-        cursor.execute(sql)
-        for row in cursor:
+        context.cursor.execute(sql)
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['name'] = wiki_to_oneliner(row['name'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
+            row['name'] = format_to_oneliner(context, row['name'])
+            row['description'] = format_to_oneliner(context, row['description'])
             groups.append(row)
         return groups
 
-    def get_forums(self, req, cursor, order_by = 'subject', desc = False):
+    def get_forums(self, context, order_by = 'subject', desc = False):
         if not order_by in ('topics', 'replies', 'lasttopic', 'lastreply'):
             order_by = 'f.' + order_by
         columns = ('id', 'name', 'author', 'time', 'moderators', 'group',
@@ -868,34 +852,24 @@ class DiscussionApi(object):
           "lastreply, m.topic AS topic FROM message m GROUP BY m.topic) ma ON " \
           "t.id = ma.topic GROUP BY forum) ta ON f.id = ta.forum ORDER BY " + \
           order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         forums = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['moderators'] = wiki_to_oneliner(row['moderators'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
-            if row['lastreply']:
-                row['lastreply'] = pretty_timedelta(float(row['lastreply']))
-            else:
-                row['lastreply'] = 'No replies'
-            if row['lasttopic']:
-                self.log.debug('lasttopic: %s' % row['lasttopic'])
-                row['lasttopic'] = pretty_timedelta(float(row['lasttopic']))
-            else:
-                row['lasttopic'] = 'No topics'
-            if not row['topics']:
-                row['topics'] = 0
-            if not row['replies']:
-                row['replies'] = 0
-            else:
-                # SUM on PosgreSQL returns float number.
-                row['replies'] = int(row['replies'])
+            row['moderators'] = format_to_oneliner(context, row['moderators'])
+            row['subject'] = format_to_oneliner(context, row['subject'])
+            row['description'] = format_to_oneliner(context, row['description'])
+            row['lastreply'] = row['lastreply'] and pretty_timedelta(datetime.
+              datetime.fromtimestamp(row['lastreply'], utc)) or 'No replies'
+            row['lasttopic'] = row['lasttopic'] and  pretty_timedelta(datetime.
+              datetime.fromtimestamp(row['lasttopic'], utc)) or 'No topics'
+            row['topics'] = row['topics'] or 0
+            row['replies'] = row['replies'] and int(row['replies']) or 0
             row['time'] = format_datetime(row['time'])
             forums.append(row)
         return forums
 
-    def get_topics(self, req, cursor, forum_id, order_by = 'time', desc = False):
+    def get_topics(self, context, forum_id, order_by = 'time', desc = False):
         if not order_by in ('replies', 'lastreply',):
             order_by = 't.' + order_by
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
@@ -905,36 +879,32 @@ class DiscussionApi(object):
           " AS replies, MAX(time) AS lastreply, topic FROM message GROUP BY" \
           " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
           + order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql % (forum_id,))
-        cursor.execute(sql, (forum_id,))
+
+        context.cursor.execute(sql, (forum_id,))
         topics = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, req)
-            if row['lastreply']:
-                row['lastreply'] = pretty_timedelta(float(row['lastreply']))
-            else:
-                row['lastreply'] = 'No replies'
-            if not row['replies']:
-                row['replies'] = 0
+            row['author'] = format_to_oneliner(context, row['author'])
+            row['body'] = format_to_html(context, row['body'])
+            row['lastreply'] = row['lastreply'] and pretty_timedelta(datetime.
+              datetime.fromtimestamp(row['lastreply'], utc)) or 'No replies'
+            row['replies'] = row['replies'] or 0
             row['time'] = format_datetime(row['time'])
             topics.append(row)
         return topics
 
-    def get_messages(self, req, cursor, topic_id, time, order_by = 'time', desc = False):
+    def get_messages(self, context, topic_id, time, order_by = 'time', desc = False):
         order_by = 'm.' + order_by
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m WHERE" \
           " m.topic = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql % (topic_id,))
-        cursor.execute(sql, (topic_id,))
+        context.cursor.execute(sql, (topic_id,))
         messagemap = {}
         messages = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, req)
+            row['author'] = format_to_oneliner(context, row['author'])
+            row['body'] = format_to_html(context, row['body'])
             if int(row['time']) > time:
                 row['new'] = True
             row['time'] = format_datetime(row['time'])
@@ -954,104 +924,89 @@ class DiscussionApi(object):
                     parent['replies'] = [message]
         return messages;
 
-    def get_flat_messages(self, req, cursor, topic_id, time, order_by =
+    def get_flat_messages(self, context, topic_id, time, order_by =
       'ORDER BY time ASC'):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m" \
           " WHERE m.topic = %s " + order_by
-        self.log.debug(sql % (topic_id,))
-        cursor.execute(sql, (topic_id,))
+        context.cursor.execute(sql, (topic_id,))
         messages = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            row['body'] = wiki_to_html(row['body'], self.env, req)
+            row['author'] = format_to_oneliner(context, row['author'])
+            row['body'] = format_to_html(context, row['body'])
             if int(row['time']) > time:
                 row['new'] = True
             row['time'] = format_datetime(row['time'])
             messages.append(row)
         return messages
 
-    def get_users(self):
+    def get_users(self, context):
         users = []
-        for user in self.env.get_known_users():
+        for user in context.env.get_known_users():
             users.append(user[0])
         return users
 
     # Add items functions
 
-    def add_group(self, cursor, name, description):
+    def add_group(self, context, name, description):
         sql = "INSERT INTO forum_group (name, description) VALUES (%s, %s)"
-        self.log.debug(sql % (name, description))
-        cursor.execute(sql, (name, description))
+        context.cursor.execute(sql, (name, description))
 
-    def add_forum(self, cursor, name, author, subject, description, moderators,
+    def add_forum(self, context, name, author, subject, description, moderators,
       group):
         moderators = ' '.join(moderators)
         sql = "INSERT INTO forum (name, author, time, moderators, subject," \
           " description, forum_group) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        self.log.debug(sql % (name, author, int(time.time()), moderators,
-          subject, description, group))
-        cursor.execute(sql, (name, author, int(time.time()), moderators,
+        context.cursor.execute(sql, (name, author, int(time.time()), moderators,
           subject, description, group))
 
-    def add_topic(self, cursor, forum, subject, time, author, body):
+    def add_topic(self, context, forum, subject, time, author, body):
         sql = "INSERT INTO topic (forum, subject, time, author, body) VALUES" \
           " (%s, %s, %s, %s, %s)"
-        self.log.debug(sql % (forum, subject, time, author, body))
-        cursor.execute(sql, (forum, subject, time, author, body))
+        context.cursor.execute(sql, (forum, subject, time, author, body))
 
-    def add_message(self, cursor, forum, topic, replyto, time, author, body):
+    def add_message(self, context, forum, topic, replyto, time, author, body):
         sql = "INSERT INTO message (forum, topic, replyto, time, author," \
           " body) VALUES (%s, %s, %s, %s, %s, %s)"
-        self.log.debug(sql % (forum, topic, replyto, time, author, body))
-        cursor.execute(sql, (forum, topic, replyto, time, author, body))
+        context.cursor.execute(sql, (forum, topic, replyto, time, author, body))
 
     # Delete items functions
 
-    def delete_group(self, cursor, group):
+    def delete_group(self, context, group):
         sql = "DELETE FROM forum_group WHERE id = %s"
-        self.log.debug(sql % (group,))
-        cursor.execute(sql, (group,))
+        context.cursor.execute(sql, (group,))
         sql = "UPDATE forum SET forum_group = 0 WHERE forum_group = %s"
-        self.log.debug(sql % (group,))
-        cursor.execute(sql, (group,))
+        context.cursor.execute(sql, (group,))
 
-    def delete_forum(self, cursor, forum):
+    def delete_forum(self, context, forum):
         sql = "DELETE FROM message WHERE forum = %s"
-        self.log.debug(sql % (forum,))
-        cursor.execute(sql, (forum,))
+        context.cursor.execute(sql, (forum,))
         sql = "DELETE FROM topic WHERE forum = %s"
-        self.log.debug(sql % (forum,))
-        cursor.execute(sql, (forum,))
+        context.cursor.execute(sql, (forum,))
         sql = "DELETE FROM forum WHERE id = %s"
-        self.log.debug(sql % (forum,))
-        cursor.execute(sql, (forum,))
+        context.cursor.execute(sql, (forum,))
 
-    def delete_topic(self, cursor, topic):
+    def delete_topic(self, context, topic):
         sql = "DELETE FROM message WHERE topic = %s"
-        self.log.debug(sql % (topic,))
-        cursor.execute(sql, (topic,))
+        context.cursor.execute(sql, (topic,))
         sql = "DELETE FROM topic WHERE id = %s"
-        self.log.debug(sql % (topic,))
-        cursor.execute(sql, (topic,))
+        context.cursor.execute(sql, (topic,))
 
-    def delete_message(self, cursor, message):
+    def delete_message(self, context, message):
         # Get message replies
         sql = "SELECT m.id FROM message m WHERE m.replyto = %s"
-        self.log.debug(sql % (message,))
-        cursor.execute(sql, (message,))
+        context.cursor.execute(sql, (message,))
         replies = []
 
         # Get all replies first.
-        for row in cursor:
+        for row in context.cursor:
             replies.append(row[0])
 
         # Delete all replies
         for reply in replies:
-            self.delete_message(cursor, reply)
+            self.delete_message(context, reply)
 
         # Delete message itself
         sql = "DELETE FROM message WHERE id = %s"
-        self.log.debug(sql % (message,))
-        cursor.execute(sql, (message,))
+        context.cursor.execute(sql, (message,))

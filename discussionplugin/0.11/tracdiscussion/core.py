@@ -1,13 +1,18 @@
 # -*- coding: utf8 -*-
 
-from tracdiscussion.api import *
+import re
+
 from trac.core import *
+from trac.context import Context
+from trac.config import Option
+from trac.util.html import html
+
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
-from trac.config import Option
 from trac.perm import IPermissionRequestor
-from trac.util.html import html
-import re
+
+from tracdiscussion.api import *
+
 
 class DiscussionCore(Component):
     """
@@ -60,15 +65,14 @@ class DiscussionCore(Component):
         return match
 
     def process_request(self, req):
-        # Prepare request object
-        req.args['component'] = 'core'
+        # Create request context.
+        context = Context(self.env, req)('discussion-core')
+        context.cursor = context.db.cursor()
 
-        # Get database access
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        # Process request.
+        api = DiscussionApi()
+        content = api.process_discussion(context)
+        context.db.commit()
 
-        # Return page content
-        api = DiscussionApi(self, req)
-        content = api.render_discussion(req, cursor)
-        db.commit()
-        return content
+        # Return request result content.
+        return (content[0], content[1], None)

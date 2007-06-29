@@ -1,11 +1,11 @@
 # -*- coding: utf8 -*-
 
 from trac.core import *
-from trac.Timeline import ITimelineEventProvider
-from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import Markup
-from trac.util.html import html
-import time
+from trac.context import Context
+from trac.config import Option
+from trac.timeline import ITimelineEventProvider, TimelineEvent
+from trac.wiki.formatter import format_to_html, format_to_oneliner
+from trac.util.datefmt import to_timestamp, to_datetime, utc
 
 class DiscussionTimeline(Component):
     """
@@ -14,108 +14,110 @@ class DiscussionTimeline(Component):
     """
     implements(ITimelineEventProvider)
 
+    title = Option('discussion', 'title', 'Discussion',
+      'Main navigation bar button title.')
+
     # ITimelineEventProvider
+    def get_timeline_filters(self, req):
+        if 'DISCUSSION_VIEW' in req.perm:
+            yield ('discussion', self.title + ' changes')
+
     def get_timeline_events(self, req, start, stop, filters):
         self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
           filters))
-        if 'discussion' in filters:
-            # Create database context
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
+        if ('discussion' in filters) and 'DISCUSSION_VIEW' in req.perm:
+            # Create context.
+            context = Context(self.env, req)('discussion')
+            context.cursor = context.db.cursor()
+
+            # Determine timeline format.
             format = req.args.get('format')
             self.log.debug("format: %s" % (format))
 
             # Get forum events
-            for forum in self._get_changed_forums(cursor, start, stop):
-                self.log.debug("forum: %s" % (forum))
-                kind = 'changeset'
-                title = Markup('New forum %s created by %s' %
-                  (forum['name'], forum['author']))
-                time = forum['time']
-                author = forum['author']
-                if format == 'rss':
-                    href = req.abs_href.discussion(forum['id'])
-                    message = wiki_to_html('%s - %s' % (forum['subject'],
-                      forum['description']), self.env, req, db)
-                else:
-                    href = req.href.discussion(forum['id'])
-                    message = wiki_to_oneliner('%s - %s' % (forum['subject'],
-                      forum['description']), self.env, db)  
-                yield kind, href, title, time, author, message
+            for forum in self._get_changed_forums(context, start, stop):
+                # Prepare event object attributes.
+                event = TimelineEvent(self, 'changeset')
+                event.set_changeinfo(forum['time'], forum['author'],
+                  forum['author'] != 'anonymous')
+                event.add_markup(title = 'New forum %s' % (forum['name']),
+                  header = forum['subject'] + ' - ')
+                event.add_wiki(context, body = forum['description'])
+                event.href_fragment = unicode(forum['id'])
+
+                # Return event.
+                yield event
 
             # Get topic events
-            for topic in self._get_changed_topics(cursor, start, stop):
-                self.log.debug("topic: %s" % (topic))
-                kind = 'newticket'
-                title = Markup('New topic on %s created by %s' % \
-                  (topic['forum_name'], topic['author']))
-                time = topic['time']
-                author = topic['author']
-                if format == 'rss':
-                    href = req.abs_href.discussion(topic['forum'],
-                      topic['id'])
-                    message = wiki_to_html(topic['subject'], self.env, req, db)
-                else:
-                    href = req.href.discussion(topic['forum'], topic['id'])
-                    message = wiki_to_oneliner(topic['subject'], self.env, db)
-                yield kind, href, title, time, author, message
+            for topic in self._get_changed_topics(context, start, stop):
+                # Prepare event object attributes.
+                event = TimelineEvent(self, 'newticket')
+                event.set_changeinfo(topic['time'], topic['author'],
+                  topic['author'] != 'anonymous')
+                event.add_markup(title = 'New topic on %s' %
+                  (topic['forum_name']), header = topic['subject'] + ' - ')
+                event.add_wiki(context, body = topic['body'])
+                event.href_fragment = '%s/%s' % (topic['forum'], topic['id'])
+
+                # Return event.
+                yield event
 
             # Get message events
-            for message in self._get_changed_messages(cursor, start, stop):
-                self.log.debug("message: %s" % (message))
-                kind = 'editedticket'
-                title = Markup('New reply on %s created by %s' % \
-                  (message['forum_name'], message['author']))
-                time = message['time']
-                author = message['author']
-                if format == 'rss':
-                    href = req.abs_href.discussion(message['forum'],
-                      message['topic'], message['id']) + '#%s' % (message['id'])
-                    message = wiki_to_html(message['topic_subject'], self.env,
-                      req, db)
-                else:
-                    href = req.href.discussion(message['forum'],
-                      message['topic'], message['id']) + '#%s' % (message['id'])
-                    message = wiki_to_oneliner(message['topic_subject'],
-                      self.env, db)
-                yield kind, href, title, time, author, message
+            for message in self._get_changed_messages(context, start, stop):
+                # Prepare event object attributes.
+                event = TimelineEvent(self, 'editedticket')
+                event.set_changeinfo(message['time'], message['author'],
+                  message['author'] != 'anonymous')
+                event.add_markup(title = 'New reply on %s' %
+                  (message['forum_name']), header = message['topic_subject'] +
+                  ' - ')
+                event.add_wiki(context, body = message['body'])
+                event.href_fragment = '%s/%s/%s#%s' % (message['forum'],
+                  message['topic'], message['id'], message['id'])
 
-    def get_timeline_filters(self, req):
-        if req.perm.has_permission('DISCUSSION_VIEW'):
-            yield ('discussion', 'Discussion changes')
+                # Return event.
+                yield event
 
-    def _get_changed_forums(self, cursor, start, stop):
+    def event_formatter(self, event, wikitext_key):
+        return None
+
+    # Internal methods.
+    def _get_changed_forums(self, context, start, stop):
         columns = ('id', 'name', 'author', 'subject', 'description', 'time')
         sql = "SELECT f.id, f.name, f.author, f.subject, f.description," \
           " f.time FROM forum f WHERE f.time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
-        cursor.execute(sql, (start, stop))
-        for row in cursor:
+        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
+        for row in context.cursor:
             row = dict(zip(columns, row))
+            row['time'] = to_datetime(row['time'], utc)
             yield row
 
-    def _get_changed_topics(self, cursor, start, stop):
-        columns = ('id', 'subject', 'author', 'time', 'forum', 'forum_name')
-        sql = "SELECT t.id, t.subject, t.author, t.time, t.forum, f.name" \
-          " FROM topic t LEFT JOIN (SELECT id, name FROM forum)" \
+    def _get_changed_topics(self, context, start, stop):
+        columns = ('id', 'subject', 'body', 'author', 'time', 'forum',
+          'forum_name')
+        sql = "SELECT t.id, t.subject, t.body, t.author, t.time, t.forum," \
+          " f.name FROM topic t LEFT JOIN (SELECT id, name FROM forum)" \
           " f ON t.forum = f.id WHERE t.time BETWEEN %s AND %s"
-
         self.log.debug(sql % (start, stop))
-        cursor.execute(sql, (start, stop))
-        for row in cursor:
+        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
+        for row in context.cursor:
             row = dict(zip(columns, row))
+            row['time'] = to_datetime(row['time'], utc)
+            row['subject'] = format_to_oneliner(context, row['subject'])
             yield row
 
-    def _get_changed_messages(self, cursor, start, stop):
-        columns = ('id', 'author', 'time', 'forum', 'topic', 'forum_name',
+    def _get_changed_messages(self, context, start, stop):
+        columns = ('id', 'author', 'time', 'forum', 'topic', 'body', 'forum_name',
           'topic_subject')
-        sql = "SELECT m.id, m.author, m.time, m.forum, m.topic, f.name," \
+        sql = "SELECT m.id, m.author, m.time, m.forum, m.topic, m.body, f.name," \
           " t.subject FROM message m, (SELECT id, name FROM forum) f, (SELECT" \
           " id, subject FROM topic) t WHERE t.id = m.topic AND f.id = m.forum" \
           " AND time BETWEEN %s AND %s"
-
         self.log.debug(sql % (start, stop))
-        cursor.execute(sql, (start, stop))
-        for row in cursor:
+        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
+        for row in context.cursor:
             row = dict(zip(columns, row))
+            row['time'] = to_datetime(row['time'], utc)
+            row['topic_subject'] = format_to_oneliner(context, row['topic_subject'])
             yield row

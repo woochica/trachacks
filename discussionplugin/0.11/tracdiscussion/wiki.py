@@ -5,7 +5,7 @@ from tracdiscussion.core import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.web.main import IRequestHandler, IRequestFilter
-from trac.web.chrome import add_stylesheet
+from trac.web.chrome import Chrome, add_stylesheet
 from trac.util import format_datetime
 from trac.util.html import html
 import time, re
@@ -35,39 +35,46 @@ class DiscussionWiki(Component):
         yield 'ViewTopic'
 
     def get_macro_description(self, name):
-        if name == 'VisitCounter':
+        if name == 'ViewTopic':
             return view_topic_doc
         else:
             return ""
 
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
         if name == 'ViewTopic':
             self.log.debug("Rendering ViewTopic macro...")
 
             # Determine topic subject
-            if content:
-                subject = content
-            else:
-                subject = req.path_info[6:] or 'WikiStart'
+            page_name = formatter.req.path_info[6:] or 'WikiStart'
+            subject = content or page_name
 
-            # Get database access
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
+            # Create request context.
+            context = formatter.context('discussion-wiki')
+            context.cursor = context.db.cursor()
+
+            # Create API object.
+            api = DiscussionApi()
 
             # Get topic by subject
-            api = DiscussionApi(self, req)
-            topic = api.get_topic_by_subject(cursor, subject)
+            topic = api.get_topic_by_subject(context, subject)
             self.log.debug('subject: %s' % (subject,))
             self.log.debug('topic: %s' % (topic,))
 
-            # Return macro content
-            req.args['component'] = 'wiki'
+            # Prepare request object.
             if topic:
-                req.args['forum'] = topic['forum']
-                req.args['topic'] = topic['id']
-            content = api.render_discussion(req, cursor)
-            db.commit()
-            return req.hdf.render(content[0])
+                formatter.req.args['forum'] = topic['forum']
+                formatter.req.args['topic'] = topic['id']
+
+            # Process discussion request.
+            template, data = api.process_discussion(context)
+            context.db.commit()
+
+            # Return rendered template.
+            data['discussion']['mode'] = 'message-list'
+            data['discussion']['page_name'] = page_name
+            content = Chrome(self.env).render_template(formatter.req, template,
+              data, 'text/html', True)
+            return content
         else:
             raise TracError('Not implemented macro %s' % (name))
 

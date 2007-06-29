@@ -1,9 +1,11 @@
 # -*- coding: utf8 -*-
 
 from trac.core import *
+from trac.context import Context
 from trac.config import Option
-from trac.Search import ISearchSource, shorten_result
-from trac import util
+from trac.search import ISearchSource, shorten_result, search_to_sql
+from trac.util import shorten_line
+from trac.util.datefmt import to_datetime, utc
 
 class DiscussionSearch(Component):
     """
@@ -16,42 +18,45 @@ class DiscussionSearch(Component):
 
     #ISearchSource
     def get_search_filters(self, req):
-        if req.perm.has_permission('DISCUSSION_VIEW'):
-            yield ("discussion", self.title)
+        if 'DISCUSSION_VIEW' in req.perm:
+            yield ('discussion', self.title)
 
-    def get_search_results(self, req, keywords, filters):
+    def get_search_results(self, req, terms, filters):
         if not 'discussion' in filters:
             return
 
-        # Create database context
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        # Create context.
+        context = Context(self.env, req)('discussion')
+        cursor = context.db.cursor()
 
         # Search in topics.
-        query = ' '.join(keywords)
+        query, args = search_to_sql(context.db, ['author', 'subject', 'body'],
+          terms)
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
         sql = "SELECT id, forum, time, subject, body, author FROM topic" \
-          " WHERE subject || body LIKE '%%%s%%'" % (query)
+          " WHERE " + query
         self.log.debug(sql)
-        cursor.execute(sql)
+        cursor.execute(sql, args)
         for row in cursor:
             row = dict(zip(columns, row))
+            row['time'] = to_datetime(row['time'], utc)
             yield (req.href.discussion(row['forum'], row['id']) + '#-1',
-              "topic: %d: %s" % (row['id'], util.shorten_line(row['subject'])),
-              row['time'], row['author'], shorten_result(row['body'],
-              [query]))
+              "topic: %d: %s" % (row['id'], shorten_line(row['subject'])),
+              row['time'], row['author'], shorten_result(row['body'], [query]))
 
         # Search in messages
+        query, args = search_to_sql(context.db, ['m.author', 'm.body',
+          't.subject'],  terms)
         columns = ('id', 'forum', 'topic', 'time', 'author', 'body', 'subject')
         sql = "SELECT m.id, m.forum, m.topic, m.time, m.author, m.body," \
           " t.subject FROM message m LEFT JOIN (SELECT subject, id FROM" \
-          " topic) t ON t.id = m.topic WHERE body LIKE '%%%s%%'" \
-          % (query)
+          " topic) t ON t.id = m.topic WHERE " + query
         self.log.debug(sql)
-        cursor.execute(sql)
+        cursor.execute(sql, args)
         for row in cursor:
             row = dict(zip(columns, row))
+            row['time'] = to_datetime(row['time'], utc)
             yield (req.href.discussion(row['forum'], row['topic'], row['id'])
               + '#%s' % (row['id']), "message: %d: %s" % (row['id'],
-              util.shorten_line(row['subject'])), row['time'], row['author'],
+              shorten_line(row['subject'])), row['time'], row['author'],
               shorten_result(row['body'], [query]))

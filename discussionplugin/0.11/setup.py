@@ -5,9 +5,9 @@ from setuptools import setup
 
 setup(
   name = 'TracDiscussion',
-  version = '0.5',
+  version = '0.6',
   packages = ['tracdiscussion', 'tracdiscussion.db'],
-  package_data = {'tracdiscussion' : ['templates/*.cs', 'htdocs/css/*.css']},
+  package_data = {'tracdiscussion' : ['templates/*.html', 'templates/*.txt', 'htdocs/css/*.css']},
   entry_points = {'trac.plugins': ['TracDiscussion.core = tracdiscussion.core',
     'TracDiscussion.init = tracdiscussion.init',
     'TracDiscussion.wiki = tracdiscussion.wiki',
@@ -15,10 +15,10 @@ setup(
     'TracDiscussion.admin = tracdiscussion.admin',
     'TracDiscussion.search = tracdiscussion.search',
     'TracDiscussion.notification = tracdiscussion.notification']},
-  install_requires = ['TracWebAdmin'],
+  install_requires = [''],
   keywords = 'trac discussion',
-  author = 'Alec Thomas, Radek Bartoň',
-  author_email = 'trac-hacks@swapoff.org',
+  author = 'Radek Bartoň, Alec Thomas',
+  author_email = 'blackhex@post.cz',
   url = 'http://trac-hacks.swapoff.org/wiki/DiscussionPlugin',
   description = 'Discussion forum plugin for Trac',
   license = '''

@@ -1,27 +1,31 @@
 # -*- coding: utf8 -*-
 
-from tracdiscussion.api import *
+import time
+
 from trac.core import *
-from trac.perm import IPermissionRequestor
+from trac.context import Context
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
-from webadmin.web_ui import IAdminPageProvider
-import time
+
+from trac.perm import IPermissionRequestor
+from trac.admin import IAdminPanelProvider
+
+from tracdiscussion.api import *
 
 class DiscussionWebAdmin(Component):
     """
         The webadmin module implements discussion plugin administration
         via WebAdminPlugin.
     """
-    implements(IAdminPageProvider)
+    implements(IAdminPanelProvider)
 
     # IAdminPageProvider
-    def get_admin_pages(self, req):
+    def get_admin_panels(self, req):
         if req.perm.has_permission('DISCUSSION_ADMIN'):
             yield ('discussion', 'Discussion System', 'group', 'Forum Groups')
             yield ('discussion', 'Discussion System', 'forum', 'Forums')
 
-    def process_admin_request(self, req, category, page, path_info):
+    def render_admin_panel(self, req, category, page, path_info):
         # Prepare request object
         if page == 'forum':
             if not req.args.has_key('group'):
@@ -31,14 +35,15 @@ class DiscussionWebAdmin(Component):
         else:
             if path_info:
                 req.args['group'] = path_info
-        req.args['component'] = 'admin'
 
-        # Get database access
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        # Create request context.
+        context = Context(self.env, req)('discussion-admin')
+        context.cursor = context.db.cursor()
+
+        # Process request.
+        api = DiscussionApi()
+        content = api.process_discussion(context)
+        context.db.commit()
 
         # Retrun page content
-        api = DiscussionApi(self, req)
-        content = api.render_discussion(req, cursor)
-        db.commit()
         return content
