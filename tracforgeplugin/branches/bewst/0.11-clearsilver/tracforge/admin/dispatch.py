@@ -59,20 +59,18 @@ class TracForgeDispatcherModule(Component):
         
         environ['SCRIPT_NAME'] = req.href.projects()
         environ['PATH_INFO'] = path_info
-        print 'setting parent dir to', os.path.dirname(self.env.path)
         
-#        environ['TRAC_ENV_PARENT_DIR'] = os.path.dirname(self.env.path)
-#        if 'TRAC_ENV' in environ:
-#            del environ['TRAC_ENV']
-
-# The above incantation didn't work on the development server.  If we have
-# problems serving subprojects on the real server, though, we may need to
-# reinstate it along with the replacement below.
-
         environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
         if 'trac.env_path' in environ:
-            del environ['trac.env_path']
-        
+            # WARNING: this is a really FRAGILE HACK!!
+            #
+            # The code here used to delete the 'trac.env_path' key from environ,
+            # but then other code in web/main.py would use setdefault to bring
+            # it back to life... with the wrong value.  Code later in that file
+            # checks environ['trac.env_path'] as a truth value and treats empty 
+            # results as absent.
+            environ['trac.env_path'] = ''
+
         req._response = dispatch_request(environ, start_response)
         
     def _send_index(self, req):

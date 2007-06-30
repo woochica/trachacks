@@ -279,7 +279,7 @@ class Prototype(list):
                 db = self.env.get_db_cnx()
                 cursor = db.cursor()
                 cursor.execute('INSERT INTO tracforge_project_log (project, action, args, return, stdout, stderr) VALUES (%s, %s, %s, %s, %s, %s)',
-                               (proj.name, action, args, rv, o_data, e_data))
+                               (proj.name, action, args, unicode(rv), o_data, e_data))
                 db.commit()
                 db.close()
                 
