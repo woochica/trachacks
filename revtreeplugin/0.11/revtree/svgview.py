@@ -138,6 +138,16 @@ class SvgColor(object):
         (r,g,b) = hsv_to_rgb(h,s,v)
         return SvgColor((int(r*0xff),int(g*0xff),int(b*0xff)))
 
+    def lighten(self):
+        (r,g,b) = (float(self._color[0])/0xff, 
+                   float(self._color[1])/0xff, 
+                   float(self._color[2])/0xff)
+        (h,s,v) = rgb_to_hsv(r,g,b)
+        v *= 1.5;
+        if v > 1: v = 1
+        (r,g,b) = hsv_to_rgb(h,s,v)
+        return SvgColor((int(r*0xff),int(g*0xff),int(b*0xff)))
+
 
 class SvgBaseChangeset(object):
     """Base class for graphical changeset/revision nodes
@@ -577,12 +587,14 @@ class SvgChangeLink(object):
 class SvgGroup(object):
     """Graphical group of consecutive changesets within a same branch"""
     
-    def __init__(self, parent, firstChg, lastChg, color='#fffbdb'):
+    def __init__(self, parent, firstChg, lastChg, 
+                 color='#fffbdb', opacity=50):
         self._parent = parent
         self._first = firstChg
         self._last  = lastChg
         self._fillcolor = SvgColor(color)
         self._strokecolor = self._fillcolor.strongify()
+        self._opacity = opacity
     
     def build(self):
         spos = self._first.position()[1]
@@ -602,7 +614,7 @@ class SvgGroup(object):
                                 self._parent.strokewidth())
         self._widget.attributes['rx'] = r 
         self._widget.attributes['ry'] = r 
-        self._widget.attributes['opacity'] = '0.5' 
+        self._widget.attributes['opacity'] = str(self._opacity/100.0) 
         self._extent = (w,h)
         
     def extent(self):

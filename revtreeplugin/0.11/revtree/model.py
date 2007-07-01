@@ -241,7 +241,11 @@ class Repository(object):
             return None
 
     def branch(self, branchname):
-        """Returns a tracked branch from its name (path)"""
+        """Returns a tracked branch from its name (path)
+           
+           branchname should be a unicode string, and should not start with
+           a leading path separator (/)
+        """
         if not self._branches.has_key(branchname):
             return None
         else:
@@ -273,6 +277,9 @@ class Repository(object):
         """Returns the revision properties"""
         changeset = self._crepos.get_changeset(revision)
         return changeset.get_properties()
+        
+    def get_node_properties(self, path, revision):
+        return self._crepos.get_node(path, revision).get_properties()
                                            
     def find_node(self, path, rev):
         node = self._crepos.get_node(path, rev)
