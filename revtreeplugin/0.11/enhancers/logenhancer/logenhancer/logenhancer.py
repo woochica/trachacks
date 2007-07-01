@@ -26,7 +26,7 @@ class SimpleContainer(object):
 
 
 class LogEnhancer(Component):
-    """Improved enhancer, based on specific log messages and custom properties
+    """Revtree enhancer based on specific log messages and custom properties
     This class is provided as-is, as an example
     """
     

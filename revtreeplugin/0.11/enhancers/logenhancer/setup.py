@@ -14,8 +14,8 @@
 
 from setuptools import setup, find_packages
 
-PACKAGE = 'TracRevtreeEnhancers'
-VERSION = '0.1.2'
+PACKAGE = 'TracRevtreeLogEnhancer'
+VERSION = '0.1.3'
 
 setup (
     name = PACKAGE,
