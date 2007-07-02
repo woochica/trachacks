@@ -71,6 +71,21 @@ class TracForgeDispatcherModule(Component):
             # results as absent.
             environ['trac.env_path'] = ''
 
+        # Reconstruct the wsgi.input stream from req.args, so dispatch_request
+        # can read it again.  If we don't do this, POST data gets lost because
+        # the original stream has already been read once.
+        if environ['wsgi.input']:
+            data = urllib.urlencode(req.args) 
+            class InputStream:
+                def __init__(self, data):
+                    self.data = data
+                def read(self, size=None):
+                    result = self.data[:size]
+                    self.data = self.data[size:]
+                    return result
+                
+            environ['wsgi.input'] = InputStream(data)
+
         req._response = dispatch_request(environ, start_response)
         
     def _send_index(self, req):
