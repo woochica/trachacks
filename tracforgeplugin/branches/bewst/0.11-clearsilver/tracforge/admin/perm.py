@@ -68,6 +68,51 @@ class TracForgePermissionModule(DefaultPermissionStore):
                 return locals['req']
         return None
 
+class UserDefinedPermissionGroupProvider(
+    object
+    # Component
+    ):
+    """A component that provides the groups defined by users
+
+    (by assigning lowercase action names).  This should really be handled by
+    trac.perm.DefaultPermissionGroupProvider, or so we believe.  See
+    http://trac.edgewall.org/ticket/5648 for details.  This code was shamelessly
+    copied from trac.perm.DefaultPermissionStore
+    """
+
+    # Normally we'd declare this, but for efficiency reasons we really don't
+    # want it linked in as an extension point, since it does redundant work.
+    # We're just going to use it explicitly in TracForgeGroupsModule
+    
+    # implements(IPermissionGroupProvider)
+    def __init__(self, env):
+        self.env = env
+    
+    def get_permission_groups(self, username):
+        subjects = set([username])
+        actions = set([])
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT username,action FROM permission")
+        rows = cursor.fetchall()
+        while True:
+            num_users = len(subjects)
+            num_actions = len(actions)
+            for user, action in rows:
+                if user in subjects:
+                    if action.isupper() and action not in actions:
+                        actions.add(action)
+                    if not action.isupper() and action not in subjects:
+                        # action is actually the name of the permission group
+                        # here
+                        subjects.add(action)
+            if num_users == len(subjects) and num_actions == len(actions):
+                break
+            
+        return [s for s in subjects if s != username]
+
+
+    
 class TracForgeGroupsModule(Component):
     """A component to provide virtual groups based on the membership system."""
     
@@ -80,6 +125,8 @@ class TracForgeGroupsModule(Component):
     def get_permission_groups(self, username):
         group_extn_point = PermissionSystem(self.master_env).store.group_providers
         group_providers = [x for x in group_extn_point if x.__class__.__name__ != self.__class__.__name__] # Filter out this one (recursion block)
+
+        group_providers.append(UserDefinedPermissionGroupProvider(self.env))
         
         master_groups = []
         for prov in group_providers:
@@ -98,6 +145,8 @@ class TracForgeGroupsModule(Component):
             return ['admin', 'member']
         elif 'member' in access:
             return ['member']
+        elif 'staff' in access:
+            return ['staff']
         else:
             return []   
         
