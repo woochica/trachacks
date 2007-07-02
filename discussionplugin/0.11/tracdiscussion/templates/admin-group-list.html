@@ -18,12 +18,12 @@
 
           <div class="field">
             <label for="name">Name:</label><br/>
-            <input type="text" name="name" value="${is_edit and discussion.name or None}"/><br/>
+            <input type="text" id="name" name="name" value="${is_edit and discussion.name or None}"/><br/>
           </div>
 
           <div class="field">
             <label for="description">Description:</label><br/>
-            <input type="text" name="description" value="${is_edit and discussion.description or None}"/><br/>
+            <input type="text" id="description" name="description" value="${is_edit and discussion.description or None}"/><br/>
           </div>
 
           <div class="buttons">
@@ -53,19 +53,25 @@
                     <input type="checkbox" name="selection" value="${group.id}"/>
                   </td>
                   <td class="id">
-                    <a href="${panel_href(group.id)}">
-                      <div class="id">${group.id}</div>
-                    </a>
+                    <div class="id">
+                      <a href="${panel_href(group.id)}">
+                        <span>${group.id}</span>
+                      </a>
+                    </div>
                   </td>
                   <td class="name">
-                    <a href="${panel_href(group.id)}">
-                      <div class="name">${group.name or '&nbsp;'}</div>
-                    </a>
+                    <div class="name">
+                      <a href="${panel_href(group.id)}">
+                        <span>${group.name or '&nbsp;'}</span>
+                      </a>
+                    </div>
                   </td>
                   <td class="description">
-                    <a href="${panel_href(group.id)}">
-                      <div class="description">${group.description or '&nbsp;'}</div>
-                    </a>
+                    <div class="description">
+                      <a href="${panel_href(group.id)}">
+                        <span>${group.description or '&nbsp;'}</span>
+                      </a>
+                    </div>
                   </td>
                 </tr>
               </py:for>

@@ -93,34 +93,46 @@
                     <input type="checkbox" name="selection" value="${forum.id}"/>
                   </td>
                   <td class="id">
-                    <a href="${panel_href(forum.id)}">
-                      <div class="id">${forum.id}</div>
-                    </a>
+                    <div class="id">
+                      <a href="${panel_href(forum.id)}">
+                        <span>${forum.id}</span>
+                      </a>
+                    </div>
                   </td>
                   <td class="name">
-                    <a href="${panel_href(forum.id)}">
-                      <div class="name">${forum.name or '&nbsp;'}</div>
-                    </a>
+                    <div class="name">
+                      <a href="${panel_href(forum.id)}">
+                        <span>${forum.name or '&nbsp;'}</span>
+                      </a>
+                    </div>
                   </td>
                   <td class="subject">
-                    <a href="${panel_href(forum.id)}">
-                      <div class="subject">${forum.subject or '&nbsp;'}</div>
-                    </a>
+                    <div class="subject">
+                      <a href="${panel_href(forum.id)}">
+                        <span>${forum.subject or '&nbsp;'}</span>
+                      </a>
+                    </div>
                   </td>
                   <td class="description">
-                    <a href="${panel_href(forum.id)}">
-                      <div class="description">${forum.description or '&nbsp;'}</div>
-                    </a>
+                    <div class="description">
+                      <a href="${panel_href(forum.id)}">
+                        <span>${forum.description or '&nbsp;'}</span>
+                      </a>
+                    </div>
                   </td>
                   <td class="moderators">
-                    <a href="${panel_href(forum.id)}">
-                      <div class="moderators">${forum.moderators or '&nbsp;'}</div>
-                    </a>
+                    <div class="moderators">
+                      <a href="${panel_href(forum.id)}">
+                        <span>${forum.moderators or '&nbsp;'}</span>
+                      </a>
+                    </div>
                   </td>
                   <td py:if="len(discussion.groups) > 1" class="group">
-                    <a href="${panel_href(forum.id)}">
-                      <div py:for="group in discussion.groups" py:if="group.id == forum.group" class="group">${group.name}</div>
-                    </a>
+                    <div py:for="group in discussion.groups" py:if="group.id == forum.group" class="group">
+                      <a href="${panel_href(forum.id)}">
+                        <span>${group.name}</span>
+                      </a>
+                    </div>
                   </td>
                 </tr>
               </py:for>

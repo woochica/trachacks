@@ -45,14 +45,14 @@
             <div class="field">
               <label for="author">Author:</label><br/>
               <py:choose>
-                <input py:when="discussion.authname == 'anonymous'" type="text" name="author" value="${req.args.author or 'anonymous'}"/>
-                <input py:otherwise="" type="text" name="author" value="${discussion.authname}" readonly="true"/>
+                <input py:when="discussion.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or 'anonymous'}"/>
+                <input py:otherwise="" type="text" id="author" name="author" value="${discussion.authname}" readonly="readonly"/>
               </py:choose><br/>
             </div>
 
             <div class="field">
               <label for="subject">Subject:</label><br/>
-              <input type="text" name="subject" value="${req.args.subject}"/><br/>
+              <input type="text" id="subject" name="subject" value="${req.args.subject}"/><br/>
             </div>
 
             <div class="field">

@@ -12,7 +12,7 @@ from genshi.template import TemplateLoader, TextTemplate
 
 class DiscussionNotifyEmail(NotifyEmail):
 
-    template_name = "discussion-notify-body.txt"
+    template_name = 'discussion-notify-body.txt'
     forum = None
     topic = None
     message = None

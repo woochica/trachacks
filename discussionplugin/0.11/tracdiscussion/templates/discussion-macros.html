@@ -1,5 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+<html xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
   <py:def function="sortable_th(order, desc, Class, title, href)">
     <th class="${Class}${order == Class and (desc and ' desc' or ' asc') or ''}">
@@ -56,9 +55,13 @@
 
           <py:if test="(str(req.args.message) == '-1') and (req.args.discussion_action in ('add', 'quote', 'post-add')) and (not req.args.submit)">
             ${display_preview()}
-            ${display_form(href, 'Reply:', 'add_form', 'post-add')}
+            <li>
+              ${display_form(href, 'Reply:', 'add_form', 'post-add')}
+            </li>
           </py:if>
+          <li></li>
         </ul>
+
 
         ${display_set_display(href)}
 
@@ -77,15 +80,15 @@
         <div class="field">
           <label for="author">Author:</label><br/>
           <py:choose>
-            <input py:when="discussion.authname == 'anonymous'" type="text" name="author" value="${req.args.author or 'anonymous'}"/>
-            <input py:otherwise="" type="text" name="author" value="${discussion.authname}" readonly="true"/>
+            <input py:when="discussion.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or 'anonymous'}"/>
+            <input py:otherwise="" type="text" id="author" name="author" value="${discussion.authname}" readonly="readonly"/>
           </py:choose><br/>
         </div>
 
         <div py:if="not req.args.message" class="field">
           <label for="subject">Subject:</label><br/>
           <py:choose>
-            <input py:when="discussion.realm == 'discussion-wiki'" type="text" id="subject" name="subject" value="${req.args.subject}" readonly="true"/>
+            <input py:when="discussion.realm == 'discussion-wiki'" type="text" id="subject" name="subject" value="${req.args.subject}" readonly="readonly"/>
             <input py:otherwise="" type="text" id="subject" name="subject" value="${req.args.subject}"/>
           </py:choose><br/>
         </div>
@@ -171,16 +174,22 @@
         <py:if test="(str(req.args.message) == str(message.id)) and (not req.args.submit)">
           <py:if test="req.args.discussion_action in ('add', 'quote', 'post-add')">
             ${display_preview()}
-            ${display_form(href, 'Reply:', 'add_form', 'post-add')}
+            <li>
+              ${display_form(href, 'Reply:', 'add_form', 'post-add')}
+            </li>
           </py:if>
+
           <py:if test="req.args.discussion_action in ('edit', 'post-edit')">
-            ${display_form(href, 'Edit:', 'edit_form', 'post-edit')}
+            <li>
+              ${display_form(href, 'Edit:', 'edit_form', 'post-edit')}
+            </li>
           </py:if>
         </py:if>
 
         <py:if test="message.replies and len(message.replies)">
           ${display_messages(href, message.replies)}
         </py:if>
+        <li></li>
       </ul>
 
     </li>
