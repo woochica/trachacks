@@ -52,6 +52,8 @@ class AuthRequired(Component):
             req.path_info.startswith('/register')):
             return []
         self.log.debug('Redirecting anonymous request to /login')
-        req.redirect(req.href.login())
+        #req.redirect(req.href.login())
+        # Testing new redirect syntax.  Thanks to jfernandez@ist.psu.edu
+        req.redirect(self.env.href(req.href.login(), {'referer':req.abs_href(req.path_info)}))
         return [] # We don't really get here, but what the heck...
 
