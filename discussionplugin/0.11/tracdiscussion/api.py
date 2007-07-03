@@ -677,12 +677,11 @@ class DiscussionApi(object):
     # Get one item functions
 
     def get_message(self, context, id):
-        id = unicode(id)
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
         sql = "SELECT id, forum, topic, replyto, time, author, body FROM" \
           " message WHERE id = %s"
-        context.env.log.debug(sql % (id))
-        context.cursor.execute(sql, (id))
+        context.env.log.debug(sql % (unicode(id),))
+        context.cursor.execute(sql, (unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
@@ -692,20 +691,19 @@ class DiscussionApi(object):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
         sql = "SELECT id, forum, topic, replyto, time, author, body FROM" \
           " message WHERE time = %s"
-        context.env.log.debug(sql % (time))
-        context.cursor.execute(sql, (time))
+        context.env.log.debug(sql % (time,))
+        context.cursor.execute(sql, (time,))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return None
 
     def get_topic(self, context, id):
-        id = unicode(id)
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " id = %s"
-        context.env.log.debug(sql % (id))
-        context.cursor.execute(sql, (id))
+        context.env.log.debug(sql % (unicode(id),))
+        context.cursor.execute(sql, (unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
@@ -715,8 +713,8 @@ class DiscussionApi(object):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " time = %s"
-        context.env.log.debug(sql % (time))
-        context.cursor.execute(sql, (time))
+        context.env.log.debug(sql % (time,))
+        context.cursor.execute(sql, (time,))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
@@ -726,19 +724,18 @@ class DiscussionApi(object):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " subject = %s"
-        context.env.log.debug(sql % (subject))
-        context.cursor.execute(sql, (subject))
+        context.env.log.debug(sql % (subject,))
+        context.cursor.execute(sql, (subject,))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
         return None
 
     def get_topic_to_recipients(self, context, id):
-        id = unicode(id)
         sql = "SELECT t.author FROM topic t WHERE t.id = %s UNION SELECT" \
           " m.author FROM message m WHERE m.topic = %s"
-        context.env.log.debug(sql % (id, id))
-        context.cursor.execute(sql, (id, id))
+        context.env.log.debug(sql % (unicode(id), unicode(id)))
+        context.cursor.execute(sql, (unicode(id), unicode(id)))
         to_recipients = []
         for row in context.cursor:
             to_recipients.append(row[0])
@@ -748,13 +745,12 @@ class DiscussionApi(object):
         return []
 
     def get_forum(self, context, id):
-        id = unicode(id)
         columns = ('id', 'group', 'name', 'subject', 'time', 'moderators',
           'description')
         sql = "SELECT id, forum_group, name, subject, time, moderators," \
            " description FROM forum WHERE id = %s"
-        context.env.log.debug(sql % (id))
-        context.cursor.execute(sql, (id))
+        context.env.log.debug(sql % (unicode(id),))
+        context.cursor.execute(sql, (unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
@@ -762,11 +758,10 @@ class DiscussionApi(object):
         return None
 
     def get_group(self, context, id):
-        id = unicode(id)
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM forum_group WHERE id = %s"
-        context.env.log.debug(sql % (id))
-        context.cursor.execute(sql, (id))
+        context.env.log.debug(sql % (unicode(id),))
+        context.cursor.execute(sql, (unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
@@ -894,8 +889,8 @@ class DiscussionApi(object):
           " AS replies, MAX(time) AS lastreply, topic FROM message GROUP BY" \
           " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
           + order_by + (" ASC", " DESC")[bool(desc)]
-        context.env.log.debug(sql % (forum_id))
-        context.cursor.execute(sql, (forum_id))
+        context.env.log.debug(sql % (unicode(forum_id),))
+        context.cursor.execute(sql, (unicode(forum_id),))
         topics = []
         for row in context.cursor:
             row = dict(zip(columns, row))
@@ -914,8 +909,8 @@ class DiscussionApi(object):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m WHERE" \
           " m.topic = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
-        context.env.log.debug(sql % (topic_id))
-        context.cursor.execute(sql, (topic_id))
+        context.env.log.debug(sql % (unicode(topic_id),))
+        context.cursor.execute(sql, (unicode(topic_id),))
         messagemap = {}
         messages = []
         for row in context.cursor:
@@ -946,8 +941,8 @@ class DiscussionApi(object):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m" \
           " WHERE m.topic = %s " + order_by
-        context.env.log.debug(sql % (topic_id))
-        context.cursor.execute(sql, (topic_id))
+        context.env.log.debug(sql % (unicode(topic_id),))
+        context.cursor.execute(sql, (unicode(topic_id),))
         messages = []
         for row in context.cursor:
             row = dict(zip(columns, row))
@@ -998,36 +993,36 @@ class DiscussionApi(object):
 
     def delete_group(self, context, group):
         sql = "DELETE FROM forum_group WHERE id = %s"
-        context.env.log.debug(sql % (group))
-        context.cursor.execute(sql, (group))
+        context.env.log.debug(sql % (unicode(group),))
+        context.cursor.execute(sql, (unicode(group),))
         sql = "UPDATE forum SET forum_group = 0 WHERE forum_group = %s"
-        context.env.log.debug(sql % (group))
-        context.cursor.execute(sql, (group))
+        context.env.log.debug(sql % (unicode(group),))
+        context.cursor.execute(sql, (unicode(group),))
 
     def delete_forum(self, context, forum):
         sql = "DELETE FROM message WHERE forum = %s"
-        context.env.log.debug(sql % (forum))
-        context.cursor.execute(sql, (forum))
+        context.env.log.debug(sql % (unicode(forum),))
+        context.cursor.execute(sql, (unicode(forum),))
         sql = "DELETE FROM topic WHERE forum = %s"
-        context.env.log.debug(sql % (forum))
-        context.cursor.execute(sql, (forum))
+        context.env.log.debug(sql % (unicode(forum),))
+        context.cursor.execute(sql, (unicode(forum),))
         sql = "DELETE FROM forum WHERE id = %s"
-        context.env.log.debug(sql % (forum))
-        context.cursor.execute(sql, (forum))
+        context.env.log.debug(sql % (unicode(forum),))
+        context.cursor.execute(sql, (unicode(forum),))
 
     def delete_topic(self, context, topic):
         sql = "DELETE FROM message WHERE topic = %s"
-        context.env.log.debug(sql % (topic))
-        context.cursor.execute(sql, (topic))
+        context.env.log.debug(sql % (unicode(topic),))
+        context.cursor.execute(sql, (unicode(topic),))
         sql = "DELETE FROM topic WHERE id = %s"
-        context.env.log.debug(sql % (topic))
-        context.cursor.execute(sql, (topic))
+        context.env.log.debug(sql % (unicode(topic),))
+        context.cursor.execute(sql, (unicode(topic),))
 
     def delete_message(self, context, message):
         # Get message replies
         sql = "SELECT m.id FROM message m WHERE m.replyto = %s"
-        context.env.log.debug(sql % (message))
-        context.cursor.execute(sql, (message))
+        context.env.log.debug(sql % (unicode(message),))
+        context.cursor.execute(sql, (unicode(message),))
         replies = []
 
         # Get all replies first.
@@ -1040,5 +1035,5 @@ class DiscussionApi(object):
 
         # Delete message itself
         sql = "DELETE FROM message WHERE id = %s"
-        context.env.log.debug(sql % (message))
-        context.cursor.execute(sql, (message))
+        context.env.log.debug(sql % (unicode(message),))
+        context.cursor.execute(sql, (unicode(message),))
