@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 from setuptools import setup, find_packages
 
 PACKAGE = 'testManagementPlugin'
-VERSION = '0.0.3'
+VERSION = '0.4.0'
 
 setup(
     name=PACKAGE, version=VERSION,
