@@ -12,6 +12,7 @@ from trac.util.html import html as tag
 import os
 import os.path
 import copy
+import urllib
 
 class TracForgeDispatcherModule(Component):
     """A request handler to dispatch /projects as if it were a TRAC_ENV_PARENT_DIR folder."""

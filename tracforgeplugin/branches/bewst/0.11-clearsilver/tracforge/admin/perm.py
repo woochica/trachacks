@@ -5,6 +5,7 @@ from trac.env import Environment
 
 from model import Project
 from config import EnvironmentOption
+from tracforge.userlist import UserManager
 
 import inspect
 
@@ -43,6 +44,32 @@ class TracForgePermissionModule(DefaultPermissionStore):
                 break
         return [action for action in actions if not action.islower()]
 
+    def get_users_with_permissions(self, permissions):
+        
+        # This is really inefficient when there are many users.  The best way to
+        # do this would be to find all roles to which these permissions had been
+        # directly granted, then expand each role to get the users it contained.
+        # However, I don't think we currently have that interface in Trac.
+        result = set()
+
+        
+        def intersects(s1,s2):
+            if len(s1) < len(s2):
+                for x in s1:
+                    if x in s2: return True
+            else:
+                for x in s2:
+                    if x in s1: return True
+            return False
+
+        perms = set(permissions)
+        
+        for u in UserManager(self.env).get_all_users():
+            if intersects(set(self.get_user_permissions(u)), perms):
+                result.add(u)
+                
+        return list(result)
+                
     def get_all_permissions(self):
         """Return all permissions for all users.
 
@@ -68,23 +95,16 @@ class TracForgePermissionModule(DefaultPermissionStore):
                 return locals['req']
         return None
 
-class UserDefinedPermissionGroupProvider(
-    object
-    # Component
-    ):
+class DefaultPermissionGroupProvider(object):
     """A component that provides the groups defined by users
 
     (by assigning lowercase action names).  This should really be handled by
-    trac.perm.DefaultPermissionGroupProvider, or so we believe.  See
+    trac.perm.DefaultPermissionGroupProvider.  See
     http://trac.edgewall.org/ticket/5648 for details.  This code was shamelessly
     copied from trac.perm.DefaultPermissionStore
     """
-
-    # Normally we'd declare this, but for efficiency reasons we really don't
-    # want it linked in as an extension point, since it does redundant work.
-    # We're just going to use it explicitly in TracForgeGroupsModule
+    implements(IPermissionGroupProvider)
     
-    # implements(IPermissionGroupProvider)
     def __init__(self, env):
         self.env = env
     
@@ -126,8 +146,6 @@ class TracForgeGroupsModule(Component):
         group_extn_point = PermissionSystem(self.master_env).store.group_providers
         group_providers = [x for x in group_extn_point if x.__class__.__name__ != self.__class__.__name__] # Filter out this one (recursion block)
 
-        group_providers.append(UserDefinedPermissionGroupProvider(self.env))
-        
         master_groups = []
         for prov in group_providers:
             master_groups += list(prov.get_permission_groups(username))
