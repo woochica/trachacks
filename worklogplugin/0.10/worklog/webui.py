@@ -150,10 +150,10 @@ class WorkLogPage(Component):
             return None
 
 
-        if req.method == 'POST':
-            if req.args.has_key('startwork') and req.args.has_key('ticket'):
+        if req.method == 'POST' and req.args.has_key('ticket'):
+            if req.args.has_key('startwork'):
                 start_work(req.authname, req.args["ticket"])
-            elif req.args.has_key('stopwork') and req.args.has_key('ticket'):
+            elif req.args.has_key('stopwork'):
                 stop_work(req.authname, req.args["ticket"])
                 
         req.hdf["worklog"] = {"messages": messages,

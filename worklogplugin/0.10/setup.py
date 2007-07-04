@@ -17,7 +17,8 @@ setup(name=PACKAGE,
       """,
       packages=[PACKAGE],
       package_data={PACKAGE : ['templates/*.cs', 'htdocs/*.css', 'htdocs/*.png', 'htdocs/*.js']},
-      entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)})
+      entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)},
+      install_requires=[ 'TracWebAdmin' ])
 
 
 #### AUTHORS ####
