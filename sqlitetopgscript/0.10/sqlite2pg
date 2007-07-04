@@ -300,7 +300,7 @@ def doArgs():
                 print ("You must specify a project name\n")
                 sys.exit(1)
             options.project = args[0]
-            options.tracenv = os.path.join(optionss.tracbase, args[0])
+            options.tracenv = os.path.join(options.tracbase, args[0])
 
     if not options.pg_uri.startswith('postgres://'):
         print ("You must specify a valid URI for the PostgreSQL database.")
