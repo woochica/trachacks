@@ -1,6 +1,6 @@
 import re
 import dbhelper
-import time import time
+from time import time
 #from ticket_daemon import *
 from usermanual import *
 #from reports import all_reports
