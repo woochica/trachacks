@@ -23,7 +23,7 @@ class WorklogAdminPage(Component):
         section = "worklog"
 
         bools = [ "timingandestimation", "comment",
-                  "autostop", "autoaccept" ]
+                  "autostop", "autostopstart", "autoreassignaccept" ]
         
         if req.method == 'POST' and req.args.has_key('update'):
             for yesno in bools:

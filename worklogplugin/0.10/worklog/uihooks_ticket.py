@@ -18,9 +18,9 @@ class WorkLogTicketAddon(Component):
     def get_active_navigation_item(self, req):
     
         if re.search('ticket', req.path_info):
-            return "ticket-addon"
+            return 'ticket-worklog-addon'
         else:
-            return ""
+            return ''
 
 
     def get_javascript(self, req, ticket, state):
@@ -79,9 +79,9 @@ class WorkLogTicketAddon(Component):
             # can start working on this task.
             if not task or not task['endtime'] == 0:
                 # Display a "Work on Link" button.
-                yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, 0)
+                yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(req, ticket, 0)
                 return
             
             # We are working on SOMETHING, but not this ticket...
             if task and task['ticket'] == ticket:
-                yield 'mainnav', "ticket-addon", self.get_javascript(req, ticket, 1)
+                yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(req, ticket, 1)

@@ -4,6 +4,7 @@ from util import *
 from time import time
 from datetime import tzinfo, timedelta, datetime
 from usermanual import *
+from manager import WorkLogManager
 from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
@@ -95,19 +96,11 @@ class WorkLogPage(Component):
             tckt = Ticket(self.env, ticket)
             tckt_link = Markup('<a href="%s" title="%s">%s</a>' % \
                          (req.href.ticket(ticket), tckt['summary'], "#" + ticket))
-            tckt_link = Markup('#' + ticket)
+            tckt_link = '#' + ticket
 
-            task = get_latest_task(self.env.get_db_cnx(), authname)
-            if task and task['endtime'] == 0:
-                addMessage("You cannot work on ticket " + tckt_link + " as you seem to already be working on another ticket.")
-                return
-
-            if not authname == tckt['owner']:
-                addMessage("You cannot work on ticket " + tckt_link + " as you are not the owner.")
-                return
-
-            if "closed" == tckt['status']:
-                addMessage("You cannot work on ticket " + tckt_link + " as it is currently in a closed state.")
+            mgr = WorkLogManager(self.env, self.config, req.authname)
+            if not mgr.can_work_on(ticket):
+                addMessage(mgr.get_explanation())
                 return
             
             # Add a comment here if we are gonna do that.
