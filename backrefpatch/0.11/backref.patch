@@ -1,23 +1,23 @@
 Index: trac/ticket/web_ui.py
 ===================================================================
---- trac/ticket/web_ui.py	(revision 4391)
+--- trac/ticket/web_ui.py	(revision 5807)
 +++ trac/ticket/web_ui.py	(working copy)
-@@ -214,6 +214,8 @@
-             # Store a timestamp in order to detect "mid air collisions"
-             data['timestamp'] = str(ticket.time_changed)
+@@ -431,6 +431,8 @@
+                          # Store a timestamp for detecting "mid air collisions"
+                          'timestamp': str(ticket.time_changed)})
  
-+        data['backrefs'] = self._get_backrefs(db, ticket)
-+		
-         self._insert_ticket_data(req, db, ticket, data,
-                                  get_reporter_id(req, 'author'))
++        data['backrefs'] = self._get_backrefs(context, ticket)
++
+         self._insert_ticket_data(context, data, get_reporter_id(req, 'author'),
+                                  field_changes)
  
-@@ -716,6 +718,40 @@
-         fragment = cnum and '#comment:'+cnum or ''
-         req.redirect(req.href.ticket(ticket.id) + fragment)
+@@ -894,6 +896,39 @@
+         for key in field_changes:
+             ticket[key] = field_changes[key]['new']
  
-+    def _get_backrefs(self, db, ticket):
++    def _get_backrefs(self, context, ticket):
 +        id = ticket.id
-+        cursor = db.cursor()
++        cursor = context.db.cursor()
 +        refs = ""
 +
 +        cursor.execute("SELECT 0, id, description "
@@ -47,29 +47,28 @@ Index: trac/ticket/web_ui.py
 +                ref = ('#[ '[rtyp] + str(rid) + ' ] '[rtyp])
 +                refs += ref.strip() + " - "
 +        return refs[:-3]
-+        
-+		
-     def _insert_ticket_data(self, req, db, ticket, data, reporter_id):
-         """Insert ticket data into the hdf"""
-         replyto = req.args.get('replyto')
-Index: templates/ticket_view.html
++
+     def _insert_ticket_data(self, context, data, author_id, field_changes):
+         """Insert ticket data into the template `data`"""
+         req = context.req
+Index: trac/ticket/templates/ticket.html
 ===================================================================
---- templates/ticket_view.html	(revision 4391)
-+++ templates/ticket_view.html	(working copy)
-@@ -93,6 +93,16 @@
+--- trac/ticket/templates/ticket.html	(revision 5807)
++++ trac/ticket/templates/ticket.html	(working copy)
+@@ -209,6 +209,16 @@
+                 ${wiki_to_html(context, ticket.description)}
+               </div>
              </div>
-           </div>
-         </form>
 +
-+        <py:if test="backrefs">
-+          <div class="description">
-+            <h3 id="comment:backref">Referenced by</h3>
-+            <div class="searchable">
-+              ${wiki_to_html(backrefs)} 
++            <div py:if="backrefs">
++               <div class="description">
++                    <h3 id="comment:bakref">Referenced by </h3>
++                    <div class="searchable">
++                       ${wiki_to_html(context, backrefs)}
++                    </div>
++               </div>
 +            </div>
-+          </div>
-+        </py:if>
 +
-       </div>
- 
-       <py:if test="not version and version != 0">
+         </div>
+       </fieldset>
+       <!--! End of ticket box -->
