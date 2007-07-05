@@ -1,14 +1,14 @@
 from setuptools import setup
 
 setup(name='TracCustomFieldAdmin',
-      version='0.1',
+      version='0.2',
       packages=['customfieldadmin'],
       author='CodeResort.com & Optaros.com',
-      description='Expose ticket custom fields using Trac 0.10 config option API',
+      description='Admin panel for managing Trac ticket custom fields.',
       url='http://trac-hacks.org/wiki/CustomFieldAdminPlugin',
       license='BSD',
       entry_points={'trac.plugins': [
-		    'customfieldadmin.api = customfieldadmin.api',
-		    'customfieldadmin.customfieldadmin = customfieldadmin.customfieldadmin']},
-      package_data={'customfieldadmin' : ['htdocs/css/*.css','htdocs/js/*.js', 'templates/*.cs', ]},
-      install_requires=['TracWebAdmin'])
+            'customfieldadmin.api = customfieldadmin.api',
+            'customfieldadmin.customfieldadmin = customfieldadmin.customfieldadmin']},
+      package_data={'customfieldadmin' : ['htdocs/css/*.css','htdocs/js/*.js', 'templates/*.html', ]},
+      install_requires = [])

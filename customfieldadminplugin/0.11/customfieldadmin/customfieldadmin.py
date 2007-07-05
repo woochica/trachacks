@@ -10,20 +10,22 @@ License: BSD
 
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin.api import IAdminPanelProvider
 from api import CustomFields
 from trac.util.text import to_unicode
 
 
 class CustomFieldAdminPage(Component):
-    implements(ITemplateProvider, IAdminPageProvider)
+    
+    implements(ITemplateProvider, IAdminPanelProvider)
 
-    # IAdminPageProvider methods
-    def get_admin_pages(self, req):
+    # IAdminPanelProvider methods
+    
+    def get_admin_panels(self, req):
         if req.perm.has_permission('TRAC_ADMIN'):
             yield ('ticket', 'Ticket System', 'customfields', 'Custom Fields') 
 
-    def process_admin_request(self, req, cat, page, customfield):
+    def render_admin_panel(self, req, cat, page, customfield):
         #assert req.perm.has_permission('TRAC_ADMIN')
         req.perm.assert_permission('TRAC_ADMIN')
         
@@ -41,6 +43,7 @@ class CustomFieldAdminPage(Component):
             return cfdict
         
         cfapi = CustomFields(self.env)
+        cfadmin = {} # Return values for template rendering
         
         # Detail view?
         if customfield:
@@ -57,7 +60,8 @@ class CustomFieldAdminPage(Component):
             currentcf = cfapi.get_custom_fields(self.env, {'name': customfield})
             if currentcf.has_key('options'):
                 currentcf['options'] = "\n".join(currentcf['options'])
-            req.hdf['admin.customfield'] = currentcf
+            cfadmin['customfield'] = currentcf
+            cfadmin['display'] = 'detail'
         else:
             if req.method == 'POST':
                 # Add Custom Field
@@ -91,13 +95,14 @@ class CustomFieldAdminPage(Component):
                         cfapi.update_custom_field(self.env, cur_cf)
                     req.redirect(req.href.admin(cat, page))
 
-            hdf_list = []
+            cf_list = []
             for item in cfapi.get_custom_fields(self.env):
                 item['href'] = req.href.admin(cat, page, item['name'])
-                hdf_list.append(item)
-            req.hdf['admin.customfields'] = hdf_list
+                cf_list.append(item)
+            cfadmin['customfields'] = cf_list
+            cfadmin['display'] = 'list'
 
-        return 'customfieldadmin.cs', None
+        return ('customfieldadmin.html', {'cfadmin': cfadmin})
         
 
     # ITemplateProvider methods
