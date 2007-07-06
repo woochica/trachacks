@@ -540,15 +540,18 @@ class TracBlogPlugin(Component):
         defaults = not (startdate or enddate or delta or year or month or day)
         now = datetime.datetime.now()
         oneday = datetime.timedelta(days=1)
+        increment = None
         if year or month or day:
             if day:
                 year = year or now.year
                 month = month or now.month
+                increment = oneday
             if month:
                 year = year or now.year
+                increment = increment or datetime.timedelta(days=date_crop(year, month, 34))
             day = date_crop(year, month or 12, day or 1)
             start = datetime.datetime(year, month or 12, day)
-            start += oneday
+            start += increment
             end = datetime.datetime(year, month or 1, day)
             start = time.mktime(start.timetuple())
             end = time.mktime(end.timetuple())
