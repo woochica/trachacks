@@ -35,7 +35,7 @@ class WorkLogTicketAddon(Component):
                     var x = document.getElementById('ticket').parentNode;
                     var f = document.createElement('form')
                     f.setAttribute('method', 'POST');
-                    f.setAttribute('action', '/worklog')
+                    f.setAttribute('action', '""" + req.href.worklog() + """')
                     f.setAttribute('class', 'inlinebuttons');
                     var h = document.createElement('input');
                     h.setAttribute('type', 'hidden');
