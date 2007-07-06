@@ -131,7 +131,7 @@ LEFT JOIN ticket_custom as client ON client.name='client'
   
   WHERE t.status IN ($NEW, $ASSIGNED, $REOPENED, $CLOSED) 
     AND billable.value in ($BILLABLE, $UNBILLABLE)
-  GROUP BY t.component
+  GROUP BY client.value
 )  as tbl
 ORDER BY __group__, _ord ASC,ticket
     """
@@ -214,7 +214,7 @@ LEFT JOIN ticket_custom as client ON client.name='client'
   
   WHERE t.status IN ($NEW, $ASSIGNED, $REOPENED, $CLOSED) 
     AND billable.value in ($BILLABLE, $UNBILLABLE)
-  GROUP BY t.component
+  GROUP BY client.value
 )  as tbl
 ORDER BY __group__, _ord ASC,ticket
     """
