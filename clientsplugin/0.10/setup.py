@@ -19,6 +19,7 @@ setup(name=PACKAGE,
     package_data={PACKAGE : ['templates/*.cs']},
     entry_points = {
         'trac.plugins': [
+            'clients.api = clients.api',
             'clients.client = clients.client'
         ]
     },
