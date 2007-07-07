@@ -1,29 +1,5 @@
 from datetime import datetime
 
-def get_latest_task(db, authname):
-    if authname == 'anonymous':
-        return None
-    
-    cursor = db.cursor()
-    sql = "SELECT MAX(lastchange) FROM work_log WHERE user='%s'" % (authname)
-    cursor.execute(sql)
-    row = cursor.fetchone()
-    if not row or not row[0]:
-        return None
-    
-    lastchange = row[0]
-    
-    task = {}
-    sql = "SELECT user,ticket,lastchange,starttime,endtime FROM work_log WHERE user='%s' AND lastchange=%s" % (authname, lastchange)
-    cursor.execute(sql)
-    for user,ticket,lastchange,starttime,endtime in cursor:
-        task['user'] = user
-        task['ticket'] = ticket
-        task['lastchange'] = lastchange
-        task['starttime'] = starttime
-        task['endtime'] = endtime
-    return task
-
 # Stolen from Trac trunk :)
 def pretty_timedelta(time1, time2=None, resolution=None):
     """Calculate time delta (inaccurately, only for decorative purposes ;-) for

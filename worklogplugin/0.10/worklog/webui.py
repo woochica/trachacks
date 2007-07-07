@@ -101,43 +101,23 @@ class WorkLogPage(Component):
                 return
             addMessage("You are now working on ticket " + tckt_link + ".")
 
-        def stop_work(authname, ticket):
-            tckt = Ticket(self.env, ticket)
-            tckt_link = Markup('<a href="%s" title="%s">%s</a>' % \
-                         (req.href.ticket(ticket), tckt['summary'], "#" + ticket))
-            tckt_link = Markup('#' + ticket)
-
-            task = get_latest_task(self.env.get_db_cnx(), authname)
-            if not task:
-                addMessage("You cannot stop working on ticket " + tckt_link + " as it apears you've not started working on anything yet!")
+        def stop_work(authname):
+            mgr = WorkLogManager(self.env, self.config, req.authname)
+            if not mgr.stop_work():
+                addMessage(mgr.get_explanation())
                 return
-            
-            if not task['endtime'] == 0:
-                addMessage("You cannot stop working on ticket " + tckt_link + " as it appears you've not started working on it yet!")
-                return
-            if not task['ticket'] == int(ticket):
-                addMessage("You cannot stop working on ticket " + tckt_link + " as it appears you're working on something else!")
-                return
-            
-            # Here we should calculate times and automatically add hours to ticket etc.
-            now = int(time());
-            sql = "UPDATE work_log SET endtime=%s, lastchange=%s WHERE user='%s' AND lastchange=%s AND endtime=0" % \
-                  (now, now, authname, task['lastchange'])
-            db = self.env.get_db_cnx();
-            cursor = db.cursor()
-            cursor.execute(sql)
-            addMessage("You are no longer working on ticket " + tckt_link + ".")
+            addMessage('You have stopped working.')
             
         if not re.search('/worklog', req.path_info):
             return None
 
 
-        if req.method == 'POST' and req.args.has_key('ticket'):
-            if req.args.has_key('startwork'):
+        if req.method == 'POST':
+            if req.args.has_key('startwork') and req.args.has_key('ticket'):
                 start_work(req.authname, req.args["ticket"])
             elif req.args.has_key('stopwork'):
-                stop_work(req.authname, req.args["ticket"])
-                
+                stop_work(req.authname)
+        
         req.hdf["worklog"] = {"messages": messages,
                               "worklog": self.get_worklog(req),
                               "href":req.href.worklog(),

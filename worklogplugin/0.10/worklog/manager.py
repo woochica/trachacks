@@ -74,6 +74,7 @@ class WorkLogManager:
         
         tn = TicketNotifyEmail(self.env)
         tn.notify(tckt, newticket=0, modtime=self.now)
+        # We fudge time as it has to be unique
         self.now += 1
         
 
@@ -81,6 +82,10 @@ class WorkLogManager:
 
         if not self.can_work_on(ticket):
             return False
+
+        # We could just horse all the fields of the ticket to the right values
+        # bit it seems more correct to follow the in-build state-machine for
+        # ticket modification.
 
         # If the ticket is closed, we need to reopen it.
         db = self.env.get_db_cnx()
@@ -112,13 +117,35 @@ class WorkLogManager:
         if 'assigned' != tckt['status']:
             tckt['status'] = 'assigned'
             self.save_ticket(tckt, db, 'Automatically accepting in order to start work.')
-                
-        now = int(time())
-        sql = "INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) VALUES ('%s', %s, %s, %s, %s)" % \
-              (self.authname, ticket, now, now, 0)
+
+        # There is a chance the user may be working on another ticket at the moment
+        # depending on config options
+        if self.config.getbool('worklog', 'autostopstart'):
+            # Don't care if this fails.
+            self.stop_work()
+            self.explanation = ''
+            
         cursor = db.cursor()
-        cursor.execute(sql)
+        cursor.execute('INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) '
+                       'VALUES (%s, %s, %s, %s, %s)',
+                       (self.authname, ticket, self.now, self.now, 0))
+        return True
+
+    
+    def stop_work(self):
+        active = self.get_active_task()
+        if not active:
+            self.explanation = 'You cannot stop working as you appear to be a complete slacker already!'
+            return False
         
+        db = self.env.get_db_cnx();
+        cursor = db.cursor()
+        cursor.execute('UPDATE work_log '
+                       'SET endtime=%s, lastchange=%s '
+                       'WHERE user=%s AND lastchange=%s AND endtime=0',
+                       (self.now - 1, self.now - 1, self.authname, active['lastchange']))
+        return True
+
 
     def who_is_working_on(self, ticket):
         db = self.env.get_db_cnx()

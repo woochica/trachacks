@@ -7,6 +7,7 @@ from trac.util import Markup
 from trac.web.chrome import add_stylesheet, add_script, \
      INavigationContributor, ITemplateProvider
 from trac.web.href import Href
+from manager import WorkLogManager
 
 class WorkLogTicketAddon(Component):
     implements(INavigationContributor)
@@ -72,16 +73,13 @@ class WorkLogTicketAddon(Component):
         if match:
             ticket = int(match.group(1))
 
-            # Check to see if y
-            task = get_latest_task(self.env.get_db_cnx(), req.authname)
-
-            # If we are not working on anything or our latest task is finished we
-            # can start working on this task.
-            if not task or not task['endtime'] == 0:
+            mgr = WorkLogManager(self.env, self.config, req.authname)
+            if mgr.can_work_on(ticket):
                 # Display a "Work on Link" button.
                 yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(req, ticket, 0)
                 return
             
-            # We are working on SOMETHING, but not this ticket...
+            # OK, so let's see if we are working on this ticket
+            task = mgr.get_active_task()
             if task and task['ticket'] == ticket:
                 yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(req, ticket, 1)

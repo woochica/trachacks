@@ -26,7 +26,7 @@
       <label for="autoreassignaccept">Automatically reassign and accept (if necessary) when starting work?</label>
     </div>
     <div class="field">
-      <input type="checkbox" id="autostopstart" name="autostopstart" value="1" <?cs var:settings.autostop ?>>
+      <input type="checkbox" id="autostopstart" name="autostopstart" value="1" <?cs var:settings.autostopstart ?>>
       <label for="autostopstart">Allow users to start working on a different ticket (i.e. automatically stop working on current ticket)?</label>
     </div>
   </fieldset>
