@@ -7,7 +7,7 @@ Index: trac/ticket/web_ui.py
                           'timestamp': str(ticket.time_changed)})
  
 +        data['backrefs'] = self._get_backrefs(context, ticket)
-+
++ 
          self._insert_ticket_data(context, data, get_reporter_id(req, 'author'),
                                   field_changes)
  
@@ -18,35 +18,35 @@ Index: trac/ticket/web_ui.py
 +    def _get_backrefs(self, context, ticket):
 +        id = ticket.id
 +        cursor = context.db.cursor()
-+        refs = ""
++        refs = []
 +
-+        cursor.execute("SELECT 0, id, description "
++        cursor.execute("SELECT 'ticket', id, description "
 +                       "FROM ticket WHERE description LIKE '%%#%s%%' "
 +                       " OR description LIKE '%%ticket:%s%%' "
 +                       "UNION "
-+                       "SELECT 0, t.id, newvalue "
++                       "SELECT 'ticket', t.id, newvalue "
 +                       "FROM ticket_change c JOIN ticket t on c.ticket = t.id "
 +                       "WHERE newvalue LIKE '%%#%s%%' "
 +                       " OR newvalue LIKE '%%ticket:%s%%' "
 +                       "UNION "
-+                       "SELECT 1, rev, message "
++                       "SELECT 'changeset', rev, message "
 +                       "FROM revision WHERE message LIKE '%%#%s%%' "
++                       " OR message LIKE '%%ticket:%s%%' "
 +                       "UNION "
-+                       "SELECT 2, name, text "
++                       "SELECT 'wiki', name, text "
 +                       "FROM wiki WHERE (text LIKE '%%#%s%%' "
 +                       " OR text LIKE '%%ticket:%s%%') "
 +                       "AND version = (SELECT max(version) FROM wiki w "
 +                       " WHERE w.name = wiki.name) "
 +                       "ORDER BY 1 desc, 2"
-+                       % ((id,) * 7))
++                       % ((id,) * 8))
 +
 +        for idx, row in enumerate(cursor):
 +            rtyp, rid, text = row
-+            # check weather the link is an single word
-+            if re.search(r"(\s|^)#%s(\s|$)" % id, text):
-+                ref = ('#[ '[rtyp] + str(rid) + ' ] '[rtyp])
-+                refs += ref.strip() + " - "
-+        return refs[:-3]
++            # check whether the link is an single word
++            if re.search(r"(\W|^)#%s(\W|$)" % id, text):
++                refs.append(context(rtyp, rid)) 
++        return refs
 +
      def _insert_ticket_data(self, context, data, author_id, field_changes):
          """Insert ticket data into the template `data`"""
@@ -55,16 +55,20 @@ Index: trac/ticket/templates/ticket.html
 ===================================================================
 --- trac/ticket/templates/ticket.html	(revision 5807)
 +++ trac/ticket/templates/ticket.html	(working copy)
-@@ -209,6 +209,16 @@
+@@ -209,6 +209,20 @@
                  ${wiki_to_html(context, ticket.description)}
                </div>
              </div>
 +
 +            <div py:if="backrefs">
 +               <div class="description">
-+                    <h3 id="comment:bakref">Referenced by </h3>
++                    <h3 id="comment:bakref">Referenced by</h3>
 +                    <div class="searchable">
-+                       ${wiki_to_html(context, backrefs)}
++                        <py:for each="ref in backrefs">
++                            <a class="new ticket" 
++                            href="${ref.resource_href()+'?q=%%23%i+ticket%%3A%i' % (ticket.id, ticket.id)}" 
++                            title="${[ref.summary(),''][ref.summary()==ref.shortname()]}">${ref.shortname()}</a>
++                        </py:for>
 +                    </div>
 +               </div>
 +            </div>
@@ -72,3 +76,154 @@ Index: trac/ticket/templates/ticket.html
          </div>
        </fieldset>
        <!--! End of ticket box -->
+Index: trac/versioncontrol/web_ui/changeset.py
+===================================================================
+--- trac/versioncontrol/web_ui/changeset.py	(revision 5807)
++++ trac/versioncontrol/web_ui/changeset.py	(working copy)
+@@ -590,6 +590,8 @@
+                 info = None
+             changes.append(info) # the sequence should be immutable
+ 
++        data['backrefs'] = self._get_backrefs(context, rev)
++
+         data.update({'has_diffs': has_diffs, 'changes': changes, 'xhr': xhr,
+                      'filestats': filestats,
+                      'files': files, 'location': self._get_location(files),
+@@ -903,6 +905,44 @@
+                                             old=data['old_rev']) + query
+         return tag.a(label, class_="changeset", title=title, href=href)
+ 
++    def _get_backrefs(self, context, rev):
++        cursor = context.db.cursor()
++        refs = []
++
++        cursor.execute("SELECT 'ticket', id, description "
++                       "FROM ticket WHERE description LIKE '%%[%s]%%' "
++                       " OR description LIKE '%%r%s%%' "
++                       " OR description LIKE '%%changeset:%s%%' "
++                       "UNION "
++                       "SELECT 'ticket', t.id, newvalue "
++                       "FROM ticket_change c JOIN ticket t on c.ticket = t.id "
++                       "WHERE newvalue LIKE '%%[%s%%' "
++                       " OR newvalue LIKE '%%r:%s%%' "
++                       " OR newvalue LIKE '%%changeset:%s%%' "
++                       "UNION "
++                       "SELECT 'changeset', rev, message "
++                       "FROM revision WHERE message LIKE '%%[%s]%%' "
++                       " OR message LIKE '%%r:%s%%' "
++                       " OR message LIKE '%%changeset:%s%%' "
++                       "UNION "
++                       "SELECT 'wiki', name, text "
++                       "FROM wiki WHERE (text LIKE '%%[%s]%%' "
++                       " OR text LIKE '%%r:%s%%' "
++                       " OR text LIKE '%%changeset:%s%%' ) "
++                       " AND version = (SELECT max(version) FROM wiki w "
++                       " WHERE w.name = wiki.name) "
++                       "ORDER BY 1 desc, 2"
++                       % ((rev,) * 12))
++
++        self.env.log.info(rev)
++        for idx, row in enumerate(cursor):
++            rtyp, rid, text = row
++            self.env.log.info(row)
++            # check whether the link is an single word
++            if re.search(r"(\W|^)(\[|r:|changeset:)%s\]?(\W|$)" % id, text) or 1:
++                refs.append(context(rtyp, rid)) 
++        return refs
++
+     # ISearchSource methods
+ 
+     def get_search_filters(self, req):
+Index: trac/versioncontrol/templates/changeset.html
+===================================================================
+--- trac/versioncontrol/templates/changeset.html	(revision 5807)
++++ trac/versioncontrol/templates/changeset.html	(working copy)
+@@ -130,6 +130,18 @@
+             </py:when>
+             <py:otherwise><pre>${changeset.message}</pre></py:otherwise>
+           </dd>
++
++          <py:if test="backrefs">
++             <dt class="property message">Referenced&nbsp;by:</dt>
++             <dd class="message searchable">
++                <py:for each="ref in backrefs">
++                    <a class="new ticket" 
++                    href="${ref.resource_href()+'?q=%%5B%i%%5D+r%i+changeset%%3A%i' % (context.id, context.id, context.id)}" 
++                    title="${[ref.summary(),''][ref.summary()==ref.shortname()]}">${ref.shortname()}</a>
++                </py:for>
++             </dd>
++          </py:if>
++
+         </py:if>
+         <py:if test="location and len(files) &gt; 1">
+           <dt class="property location">Location:</dt>
+Index: trac/wiki/web_ui.py
+===================================================================
+--- trac/wiki/web_ui.py	(revision 5807)
++++ trac/wiki/web_ui.py	(working copy)
+@@ -512,6 +512,8 @@
+                      WikiSystem(self.env).get_pages(prefix) if 'WIKI_VIEW'
+                      in req.perm(context(id=t))]
+ 
++        data['backrefs'] = self._get_backrefs(context, page)
++ 
+         # -- prev/up/next links
+         if prev_version:
+             add_link(req, 'prev', req.href.wiki(page.name,
+@@ -533,6 +535,35 @@
+         })
+         return 'wiki_view.html', data, None
+ 
++    def _get_backrefs(self, context, page):
++        id = page.id
++        cursor = context.db.cursor()
++        refs = []
++
++        cursor.execute("SELECT 'ticket', id, description "
++                       "FROM ticket WHERE description LIKE '%%%s%%' "
++                       "UNION "
++                       "SELECT 'ticket', t.id, newvalue "
++                       "FROM ticket_change c JOIN ticket t on c.ticket = t.id "
++                       "WHERE newvalue LIKE '%%%s%%' "
++                       "UNION "
++                       "SELECT 'changeset', rev, message "
++                       "FROM revision WHERE message LIKE '%%%s%%' "
++                       "UNION "
++                       "SELECT 'wiki', name, text "
++                       "FROM wiki WHERE text LIKE '%%%s%%' "
++                       "AND version = (SELECT max(version) FROM wiki w "
++                       " WHERE w.name = wiki.name) "
++                       "ORDER BY 1 desc, 2"
++                       % ((id,) * 4))
++
++        for idx, row in enumerate(cursor):
++            rtyp, rid, text = row
++            # check whether the link is an single word
++            if re.search(r"(\W|^)(wiki:)?%s(\W|$)" % id, text):
++                refs.append(context(rtyp, rid)) 
++        return refs
++
+     # ITimelineEventProvider methods
+ 
+     def get_timeline_filters(self, req):
+Index: trac/wiki/templates/wiki_view.html
+===================================================================
+--- trac/wiki/templates/wiki_view.html	(revision 5807)
++++ trac/wiki/templates/wiki_view.html	(working copy)
+@@ -104,6 +104,16 @@
+                   <input type="submit" value="${_('Delete page')}" />
+                 </div>
+               </form>
++              
++	          <py:if test="backrefs">
++	             <p>Referenced&nbsp;by:
++                 <py:for each="ref in backrefs">
++	                 <a class="new ticket" 
++	                 href="${ref.resource_href()+'?q=%s' % context.id}" 
++	                 title="${[ref.summary(),''][ref.summary()==ref.shortname()]}">${ref.shortname()}</a>
++	             </py:for></p>
++	          </py:if>
++              
+             </py:if>
+           </div>
+         </py:if>
