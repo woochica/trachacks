@@ -564,7 +564,7 @@ class TracBlogPlugin(Component):
         defaults = not (startdate or enddate or delta or year or month or day)
         now = datetime.datetime.now()
         oneday = datetime.timedelta(days=1)
-        increment = None
+        increment = datetime.timedelta(days=0) # Default Increment is zero
         if year or month or day:
             if day:
                 year = year or now.year
