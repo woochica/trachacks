@@ -90,9 +90,13 @@ class SVNHooksPlugin(Component):
 	      subject = req.args.get('subject')
 	      mfilter = req.args.get('filter')
               try:
-	        fp = open(hookfile,'r')
-		current = fp.read()
-		fp.close()
+		current=""
+	        try:
+	          fp = open(hookfile,'r')
+	 	  current = fp.read()
+		  fp.close()
+		except:
+		  pass
 	        fp = open(hookfile,'a')
 		fp.writelines('\n')
 		if 'REPOS="$1"' not in current:
@@ -118,9 +122,13 @@ class SVNHooksPlugin(Component):
 	        raise TracError("Can't write repository hook %s" % hookfile)
 	  elif req.args.get('addtrac'):
               try:
-	        fp = open(hookfile,'r')
-		current = fp.read()
-		fp.close()
+		current=""
+	        try:
+	          fp = open(hookfile,'r')
+	 	  current = fp.read()
+		  fp.close()
+		except:
+		  pass
 	        fp = open(hookfile,'a')
 		fp.writelines('\n')
 		if 'REPOS="$1"' not in current:
