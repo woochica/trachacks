@@ -1,16 +1,21 @@
+from time import time
+from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket import Ticket
+from trac.ticket.web_ui import TicketModule
 
 class WorkLogManager:
     env = None
     config = None
     authname = None
     explanation = None
+    now = None
     
     def __init__(self, env, config, authname='anonymous'):
         self.env = env
         self.config = config
         self.authname = authname
         self.explanation = ""
+        self.now = int(time()) - 1
 
     def get_explanation(self):
         return self.explanation
@@ -23,6 +28,11 @@ class WorkLogManager:
         # 3. a) Is the autoreassignaccept setting true? or
         #    b) Is the ticket assigned to the user?
 
+        # 0. Are you logged in?
+        if self.authname == 'anonymous':
+            self.explanation = 'You need to be logged in to work on tickets.'
+            return False
+        
         # 1. Other user working on it?
         who,since = self.who_is_working_on(ticket)
         if who:
@@ -50,6 +60,65 @@ class WorkLogManager:
 
         # If we get here then we know we can start work :)
         return True
+
+    def save_ticket(self, tckt, db, msg):
+        # determine sequence number... 
+        cnum = 0
+        tm = TicketModule(self.env)
+        for change in tm.grouped_changelog_entries(tckt, db):
+            if change['permanent']:
+                cnum += 1
+
+        tckt.save_changes(self.authname, msg, self.now, db, cnum+1)
+        db.commit()
+        
+        tn = TicketNotifyEmail(self.env)
+        tn.notify(tckt, newticket=0, modtime=self.now)
+        self.now += 1
+        
+
+    def start_work(self, ticket):
+
+        if not self.can_work_on(ticket):
+            return False
+
+        # If the ticket is closed, we need to reopen it.
+        db = self.env.get_db_cnx()
+        tckt = Ticket(self.env, ticket, db)
+
+        if 'closed' == tckt['status']:
+            tckt['status'] = 'reopened'
+            tckt['resolution'] = ''
+            self.save_ticket(tckt, db, 'Automatically reopening in order to start work.')
+
+            # Reinitialise for next test
+            db = self.env.get_db_cnx()
+            tckt = Ticket(self.env, ticket, db)
+
+            
+        if self.authname != tckt['owner']:
+            tckt['owner'] = self.authname
+            if 'new' == tckt['status']:
+                tckt['status'] = 'assigned'
+            else:
+                tckt['status'] = 'new'
+            self.save_ticket(tckt, db, 'Automatically reassigning in order to start work.')
+
+            # Reinitialise for next test
+            db = self.env.get_db_cnx()
+            tckt = Ticket(self.env, ticket, db)
+
+
+        if 'assigned' != tckt['status']:
+            tckt['status'] = 'assigned'
+            self.save_ticket(tckt, db, 'Automatically accepting in order to start work.')
+                
+        now = int(time())
+        sql = "INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) VALUES ('%s', %s, %s, %s, %s)" % \
+              (self.authname, ticket, now, now, 0)
+        cursor = db.cursor()
+        cursor.execute(sql)
+        
 
     def who_is_working_on(self, ticket):
         db = self.env.get_db_cnx()

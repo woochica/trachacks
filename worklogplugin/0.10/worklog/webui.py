@@ -93,23 +93,12 @@ class WorkLogPage(Component):
             messages.extend([s]);
 
         def start_work(authname, ticket):
-            tckt = Ticket(self.env, ticket)
-            tckt_link = Markup('<a href="%s" title="%s">%s</a>' % \
-                         (req.href.ticket(ticket), tckt['summary'], "#" + ticket))
             tckt_link = '#' + ticket
 
             mgr = WorkLogManager(self.env, self.config, req.authname)
-            if not mgr.can_work_on(ticket):
+            if not mgr.start_work(ticket):
                 addMessage(mgr.get_explanation())
                 return
-            
-            # Add a comment here if we are gonna do that.
-            now = int(time())
-            sql = "INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) VALUES ('%s', %s, %s, %s, %s)" % \
-                  (authname, ticket, now, now, 0)
-            db = self.env.get_db_cnx();
-            cursor = db.cursor()
-            cursor.execute(sql)
             addMessage("You are now working on ticket " + tckt_link + ".")
 
         def stop_work(authname, ticket):
