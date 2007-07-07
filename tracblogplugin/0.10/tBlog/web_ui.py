@@ -21,7 +21,7 @@ import inspect
 import calendar
 import re
 from StringIO import StringIO
-from pkg_resources import resource_filename, require as pkg_require
+from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_link
@@ -39,7 +39,6 @@ from trac.perm import IPermissionRequestor
 from tractags.api import TagEngine
 from tractags.parseargs import parseargs
 
-pkg_require("tBlog")
 
 _title_split_match = re.compile(r'\s*^=+\s+([^\n\r=]+?)\s+=+\s+(.+)$',
                                 re.MULTILINE|re.DOTALL).match
