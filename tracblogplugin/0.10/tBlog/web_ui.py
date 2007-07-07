@@ -176,7 +176,8 @@ class TracBlogPlugin(Component):
 
     # IWikiMacroProvider
     def get_macros(self):
-        yield "BlogShow", "SplitPost"
+        yield "BlogShow"
+        yield "SplitPost"
 
     def get_macro_description(self, name):
         """Return the subclass's docstring."""
@@ -229,6 +230,8 @@ class TracBlogPlugin(Component):
         if not tags:
             tstr = self.env.config.get('blog', 'default_tag', 'blog')
             tags = [t.strip() for t in _tag_split.split(tstr) if t.strip()]
+        num_posts = self.env.config.get('blog', 'num_posts', 0)
+        kwargs.setdefault('num_posts', num_posts)
         self._generate_blog(req, *tags, **kwargs)
         if format == 'rss':
             return 'blog_rss.cs', 'application/rss+xml'

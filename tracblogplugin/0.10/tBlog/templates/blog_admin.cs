@@ -37,6 +37,12 @@
                 </label>
             </div>
             <div class="field">
+                <label>Number of Posts:<br/>
+                    <input type="text" name="num_posts" 
+                    value="<?cs var:blogadmin.num_posts ?>" />
+                </label>
+            </div>
+            <div class="field">
                 <label>New Blog Link:<br/>
                     <input type="text" name="new_blog_link" 
                     value="<?cs var:blogadmin.new_blog_link ?>" />

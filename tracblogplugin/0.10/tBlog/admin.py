@@ -58,6 +58,7 @@ class BlogAdminPlugin(Component):
                         'default_tag'  : 'blog', 
                         'post_size'    : 1024,
                         'history_days' : 30,
+                        'num_posts' : 0,
                         'new_blog_link' : 'New Blog Post',
                         'first_week_day' : 'SUNDAY',
                         'mark_updated' : 'true',
@@ -90,6 +91,8 @@ class BlogAdminPlugin(Component):
    number of bytes to show before truncating the post and providing a ''(...)'' link.  Posts are truncated at line breaks, and wiki formatting is included in the byte count, so truncation will not be exact.  This means that if a line is 2KB long and ''Post Max Size'' is 1KB, then the full 2KB will be shown, as it's the next line break after the ''Post Max Size'' is reached
  '''Days of History'''::
    number of days for which to show blog posts
+ '''Number of Posts'''::
+   display the last X number of posts instead of the posts in days of history.  This setting overrides '''Days of History'''.
  '''New Blog Link'''::
    text to show for the new blog link
  '''Calendar Week Start Day'''::
