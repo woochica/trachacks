@@ -21,7 +21,7 @@ import inspect
 import calendar
 import re
 from StringIO import StringIO
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename, require as pkg_require
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_link
@@ -39,8 +39,10 @@ from trac.perm import IPermissionRequestor
 from tractags.api import TagEngine
 from tractags.parseargs import parseargs
 
-_title_split_match = re.compile(r'^=+\s+([^\n\r=]+?)\s+=+\s+(.+)$',
-                                re.DOTALL).match
+pkg_require("tBlog")
+
+_title_split_match = re.compile(r'\s*^=+\s+([^\n\r=]+?)\s+=+\s+(.+)$',
+                                re.MULTILINE|re.DOTALL).match
 
 BOOLS_TRUE = ['true', 'yes', 'ok', 'on', 'enabled', '1']
 
@@ -120,6 +122,7 @@ class TracBlogPlugin(Component):
     have been updated.[[br]]
     '''format''' - Show as RSS feed ('rss') or HTML (else).[[br]]
     '''post_size''' - Number of bytes to show before truncating the post and providing a ''(...)'' link.  Posts are truncated at the next line break after the byte count is reached.
+    '''poster''' - Show only entries made by a single named user.[[br]]
 
 
     If specifying dates with {{{year}}}, {{{month}}}, and/or {{{day}}}, the
@@ -135,6 +138,9 @@ class TracBlogPlugin(Component):
     are shown.  If a date option is not specified, then it will show the last 
     {{{num_posts}}} posts.
 
+    The {{{poster}}} option is bounded by all of the above options and also
+    limits the calendar to display tallies respective of the named user.
+
     === Examples ===
     {{{
     [[BlogShow()]]
@@ -146,6 +152,7 @@ class TracBlogPlugin(Component):
     [[BlogShow(blog,pacopablo,year=2006,month=4,day=12)]]
     [[BlogShow(blog,pacopablo,delta=5)]]
     [[BlogShow(blog,pacopablo,delta=5,mark_updated=False)]]
+    [[BlogShow(blog,poster=UserName)]]
     }}}
     """
 
@@ -170,7 +177,7 @@ class TracBlogPlugin(Component):
 
     # IWikiMacroProvider
     def get_macros(self):
-        yield "BlogShow"
+        yield "BlogShow", "SplitPost"
 
     def get_macro_description(self, name):
         """Return the subclass's docstring."""
@@ -178,6 +185,8 @@ class TracBlogPlugin(Component):
 
     def render_macro(self, req, name, content):
         """ Display the blog in the wiki page """
+        if name == 'SplitPost':
+            return '<hr/>'
         add_stylesheet(req, 'blog/css/blog.css')
         tags, kwargs = self._split_macro_args(content)
         if not tags:
@@ -264,11 +273,19 @@ class TracBlogPlugin(Component):
         macro_bl = [name.strip() for name in macro_bl if name.strip()]
         macro_bl.append('BlogShow')
 
-        # Get the email addresses of all known users
+        # Get the email addresses of all known users and validate the "poster"
+        # BlogShow optional argument at the same time (avoids looping the user
+        # list twice).
+        is_poster = None
+        limit_poster = self._choose_value('poster', req, kwargs, convert=None)
         email_map = {}
         for username, name, email in self.env.get_known_users():
             if email:
                 email_map[username] = email
+            if limit_poster != None:
+                if username == limit_poster:
+                    is_poster = username
+
                        
         num_posts = self._choose_value('num_posts', req, kwargs, convert=int)
         if num_posts and default_times:
@@ -281,7 +298,12 @@ class TracBlogPlugin(Component):
                 page = WikiPage(self.env, version=1, name=blog_entry)
                 version, post_time, author, comment, ipnr = page.get_history(
                                                             ).next()
-                
+                # if we're limiting by poster, do so now so that the calendar
+                # only shows the number of entries the specific poster made.
+                if is_poster != None:
+                    if is_poster != author:
+                        continue
+
                 self._add_to_tallies(tallies, post_time, blog_entry)
                 page = WikiPage(self.env, name=blog_entry)
                 version, modified, author, comment, ipnr = page.get_history(
@@ -602,6 +624,8 @@ class TracBlogPlugin(Component):
         line_count = 0
         in_code_block = False
         lines = text.split('\n')
+        splitpost_macro = re.compile('\[\[SplitPost(?:\((?P<moretxt>.+)\))?\]\]')
+        moretxt = None
         if not post_size:
             ret = re.search('^\s*=\s+.*=', text, re.M)
             tlines.append(ret and ret.group(0) or '')
@@ -614,13 +638,25 @@ class TracBlogPlugin(Component):
                     in_code_block = line.strip() == '{{{'
                 else:
                     in_code_block = in_code_block and line.strip() != '}}}'
+                # Try to split post by SplitPost macro 
+                splitpost_match = splitpost_macro.match(line) 
+                if splitpost_match: 
+                    tlines.pop() # remove SplitPost macro from output 
+                    moretxt = splitpost_match.group('moretxt') 
+                    if in_code_block: 
+                        tlines.append('}}}') 
+                    break 
+                # Try to split post by max size 
                 if entry_size > post_size:
                     if in_code_block:
                         tlines.append('}}}')
                     break
                 continue
+        if not moretxt:
+            moretxt = '...'
+
         if (line_count < len(lines)) and post_size:
-            tlines.append("''[wiki:%s (...)]''" % page_name)
+            tlines.append("''[wiki:%s (%s)]''" % (page_name, moretxt))
             
         return '\n'.join(tlines)
 
