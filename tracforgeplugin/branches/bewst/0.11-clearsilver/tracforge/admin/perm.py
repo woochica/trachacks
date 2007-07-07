@@ -63,12 +63,17 @@ class TracForgePermissionModule(DefaultPermissionStore):
             return False
 
         perms = set(permissions)
+
+        all_users = UserManager(self.env).get_all_users()
+        all_users |= UserManager(self.master_env).get_all_users()
         
-        for u in UserManager(self.env).get_all_users():
+        for u in all_users:
             if intersects(set(self.get_user_permissions(u)), perms):
                 result.add(u)
-                
-        return list(result)
+
+        result = list(result)
+        result.sort()
+        return result
                 
     def get_all_permissions(self):
         """Return all permissions for all users.

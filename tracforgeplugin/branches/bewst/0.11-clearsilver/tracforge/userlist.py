@@ -60,6 +60,7 @@ class DefaultUserList(Component):
     
     def get_all_users(self):
 
+        self.env.log.debug('*** get_all_users *** ')
         def as_set(s):
             if isinstance(s,set):
                 return s
@@ -67,7 +68,9 @@ class DefaultUserList(Component):
             
         roles = set()
         for p in self.role_providers:
+            self.env.log.debug('role provider: %s'%type(p))
             roles |= as_set(p.get_roles())
+            self.env.log.debug('roles: %s'%roles)
 
         # The following is horribly inefficient.  However, for restrict_owner
         # (which uses get_users_with_permissions) it is essential to eliminate
@@ -76,10 +79,9 @@ class DefaultUserList(Component):
         potential_users = set(roles)
         groups = set()
         for p in self.group_providers:
-            print 'group provider: ', type(p)
+            self.env.log.debug('group provider: %s'% type(p))
             for u in potential_users:
-                print 'groups of', u,
-                print '=', p.get_permission_groups(u)
+                self.env.log.debug('groups of %s = %s'%(u,p.get_permission_groups(u)))
                 groups |= as_set(p.get_permission_groups(u))
             
         return potential_users - groups
