@@ -4,22 +4,20 @@
   <fieldset>
     <legend>Options:</legend>
     <p style="font-weight: bold">
-      NONE of these options currently work as intended and they should all be disabled.<br>
-      If they are enabled they will change how things operate in which will break several logical things and leave you
-      with a potentially very confused database.<br>
+      The options below that have a line through them do not currently work!<br>
       Implementations will come in time, please be patient!
     </p>
     <div class="field">
       <input type="checkbox" id="timingandestimation" name="timingandestimation" value="1" <?cs var:settings.timingandestimation ?>>
-      <label for="timingandestimation">Record time via <a href="http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin">Timing and Estimation Plugin</a>?</label>
+      <label for="timingandestimation" style="text-decoration: line-through">Record time via <a href="http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin">Timing and Estimation Plugin</a>?</label>
     </div>
     <div class="field">
       <input type="checkbox" id="comment" name="comment" value="1" <?cs var:settings.comment ?>>
-      <label for="comment">Automatically add a comment when you stop work on a ticket?</label>
+      <label for="comment" style="text-decoration: line-through">Automatically add a comment when you stop work on a ticket?</label>
     </div>
     <div class="field">
       <input type="checkbox" id="autostop" name="autostop" value="1" <?cs var:settings.autostop ?>>
-      <label for="autostop">Stop work automatically if ticket is closed?</label>
+      <label for="autostop" style="text-decoration: line-through">Stop work automatically if ticket is closed?</label>
     </div>
     <div class="field">
       <input type="checkbox" id="autoreassignaccept" name="autoreassignaccept" value="1" <?cs var:settings.autoreassignaccept ?>>
