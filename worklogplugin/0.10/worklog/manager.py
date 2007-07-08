@@ -175,12 +175,15 @@ class WorkLogManager:
         lastchange = row[0]
     
         task = {}
-        cursor.execute('SELECT user,ticket,lastchange,starttime,endtime FROM work_log '
-                       'WHERE user=%s AND lastchange=%s', (self.authname, lastchange))
+        cursor.execute('SELECT wl.user, wl.ticket, t.summary, wl.lastchange, wl.starttime, wl.endtime '
+                       'FROM work_log wl '
+                       'LEFT JOIN ticket t ON wl.ticket=t.id '
+                       'WHERE wl.user=%s AND wl.lastchange=%s', (self.authname, lastchange))
 
-        for user,ticket,lastchange,starttime,endtime in cursor:
+        for user,ticket,summary,lastchange,starttime,endtime in cursor:
             task['user'] = user
             task['ticket'] = ticket
+            task['summary'] = summary
             task['lastchange'] = lastchange
             task['starttime'] = starttime
             task['endtime'] = endtime
@@ -188,6 +191,8 @@ class WorkLogManager:
     
     def get_active_task(self):
         task = self.get_latest_task()
+        if not task:
+            return None
         if not task.has_key('endtime'):
             return None
 

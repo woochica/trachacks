@@ -41,3 +41,18 @@ dt.workstop, dt.workstop a
 {
   background-image: url(workstop.png);
 }
+
+
+/* Ticket Page */
+fieldset.workloginfo form
+{
+    float: right;
+}
+fieldset.workloginfo ul
+{
+  margin: 0;
+  padding: 0;
+  padding-left: 3em;
+  font-size: 12px;
+  list-style: url(work.png) disc;
+}

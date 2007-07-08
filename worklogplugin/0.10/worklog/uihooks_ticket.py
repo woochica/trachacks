@@ -8,6 +8,7 @@ from trac.web.chrome import add_stylesheet, add_script, \
      INavigationContributor, ITemplateProvider
 from trac.web.href import Href
 from manager import WorkLogManager
+from util import pretty_timedelta
 
 class WorkLogTicketAddon(Component):
     implements(INavigationContributor)
@@ -23,63 +24,141 @@ class WorkLogTicketAddon(Component):
         else:
             return ''
 
+    def get_task_js(self, req, ticket, task):
+        script = """
+  li_task = document.createElement('li');
+  ul.appendChild(li_task);
+  li_task.appendChild(document.createTextNode('You have been working on '));"""
+        if task:
+            if ticket == task['ticket']:
+                script += """
+  li_task.appendChild(document.createTextNode('this ticket'));"""
+            else:
+                script += """
+  li_task.appendChild(document.createTextNode('ticket '));
+  var a = document.createElement('a');
+  a.setAttribute('href', '""" + req.href.ticket(task['ticket']) + """');
+  a.setAttribute('title', '""" + task['summary'].replace("'", "\\'") + """');
+  a.appendChild(document.createTextNode('#""" + str(task['ticket']) + """'));
+  li_task.appendChild(a);"""
 
-    def get_javascript(self, req, ticket, state):
-        script = """<script language="javascript" type="text/javascript">
-                  function AddEventListener(elem, evt, func, capture){
-                    capture = capture || false;
-                    if(elem.addEventListener) elem.addEventListener( evt, func, capture);
-                    else elem.attachEvent('on'+evt, func);
-                    return func;
-                  };
-                  InitWorklog = function(){
-                    var x = document.getElementById('ticket').parentNode;
-                    var f = document.createElement('form')
-                    f.setAttribute('method', 'POST');
-                    f.setAttribute('action', '""" + req.href.worklog() + """')
-                    f.setAttribute('class', 'inlinebuttons');
-                    var h = document.createElement('input');
-                    h.setAttribute('type', 'hidden');
-                    h.setAttribute('name', 'ticket');
-                    h.setAttribute('value', '""" + str(ticket) + """');
-                    f.appendChild(h);
-                    var h2 = document.createElement('input');
-                    h2.setAttribute('type', 'hidden');
-                    h2.setAttribute('name', '__FORM_TOKEN');
-                    h2.setAttribute('value', '""" + str(req.incookie['trac_form_token'].value) + """');
-                    f.appendChild(h2);
-                    var s = document.createElement('input');
-                    s.setAttribute('type', 'submit');
-                    """
-        if state == 0:
-            script = script + """s.setAttribute('name', 'startwork');
-                    s.setAttribute('value', 'Work on this ticket now');"""
+            timedelta = pretty_timedelta(datetime.fromtimestamp(task['starttime']), None, True);
+            script += """
+  li_task.appendChild(document.createTextNode(' for """ + timedelta + """'));"""
+        return script;
+
+
+    def get_ticket_js(self, who, since):
+        timedelta = pretty_timedelta(datetime.fromtimestamp(since), None, True);
+        script = """
+  li_tctk = document.createElement('li');
+  ul.appendChild(li_tctk);
+  li_tctk.appendChild(document.createTextNode('""" + who + """ has been working on this ticket for """ + timedelta + """'));"""
+        return script;
+
+    def get_ticket_js_noone(self):
+        script = """
+  li_tctk = document.createElement('li');
+  ul.appendChild(li_tctk);
+  li_tctk.appendChild(document.createTextNode('Nobody is working on this ticket.'));"""
+        return script;
+
+
+    def get_button_js(self, req, ticket, stop=False):
+        script = """
+  var f = document.createElement('form');
+  d.appendChild(f);
+  f.setAttribute('method', 'POST');
+  f.setAttribute('action', '""" + req.href.worklog() + """')
+  f.setAttribute('class', 'inlinebuttons');
+  var h = document.createElement('input');
+  h.setAttribute('type', 'hidden');
+  h.setAttribute('name', 'ticket');
+  h.setAttribute('value', '""" + str(ticket) + """');
+  f.appendChild(h);
+  var h2 = document.createElement('input');
+  h2.setAttribute('type', 'hidden');
+  h2.setAttribute('name', '__FORM_TOKEN');
+  h2.setAttribute('value', '""" + str(req.incookie['trac_form_token'].value) + """');
+  f.appendChild(h2);
+  var s = document.createElement('input');
+  s.setAttribute('type', 'submit');"""
+        if stop:
+            script += """
+  s.setAttribute('name', 'stopwork');
+  s.setAttribute('value', 'Stop Work');"""
         else:
-            script = script + """s.setAttribute('name', 'stopwork');
-                    s.setAttribute('value', 'Stop working on this ticket now');"""
-        script = script + """f.appendChild(s);
+            script += """
+  s.setAttribute('name', 'startwork');
+  s.setAttribute('value', 'Start Work');"""
+        script += """
+  f.appendChild(s);"""
+        return script
 
-                    x.parentNode.insertBefore(f, x);
-                  }
-                  AddEventListener(window, 'load', InitWorklog)
-                  </script>"""
+
+    def get_javascript(self, task_js='', ticket_js='', button_js=''):
+        script = """
+<script language=\"javascript\" type=\"text/javascript\">
+function wlAddEventListener(elem, evt, func, capture)
+{
+  capture = capture || false;
+  if (elem.addEventListener)
+    elem.addEventListener(evt, func, capture);
+  else
+    elem.attachEvent('on'+evt, func);
+    return func;
+}
+
+InitWorklog = function()
+{
+  var x = document.getElementById('ticket').parentNode;
+  var d = document.createElement('fieldset');
+  d.setAttribute('class', 'workloginfo');
+  l = document.createElement('legend')
+  l.appendChild(document.createTextNode('Work Log Info'));
+  d.appendChild(l);
+  """ + button_js + """
+  ul = document.createElement('ul');
+  d.appendChild(ul);
+  """ + task_js + ticket_js + """  
+  x.parentNode.insertBefore(d, x);
+}
+wlAddEventListener(window, 'load', InitWorklog)
+</script>
+"""
         return Markup(script)
         
     def get_navigation_items(self, req):
-        if req.authname == 'anonymous':
-            return
-        
         match = re.match(r'/ticket/([0-9]+)$', req.path_info)
         if match:
+            add_stylesheet(req, "worklog/worklogplugin.css")
             ticket = int(match.group(1))
 
             mgr = WorkLogManager(self.env, self.config, req.authname)
-            if mgr.can_work_on(ticket):
-                # Display a "Work on Link" button.
-                yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(req, ticket, 0)
-                return
+            task_js = ''
+            if req.authname != 'anonymous':
+                task = mgr.get_active_task()
+                if task:
+                    task_js = self.get_task_js(req, ticket, task)
+
+            who,since = mgr.who_is_working_on(ticket)
+            ticket_js = ''
+            if who:
+                # If who == req.authname then we will have some text from above.
+                if who != req.authname:
+                    ticket_js = self.get_ticket_js(who, since)
+            else:
+                ticket_js = self.get_ticket_js_noone()
             
-            # OK, so let's see if we are working on this ticket
-            task = mgr.get_active_task()
-            if task and task['ticket'] == ticket:
-                yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(req, ticket, 1)
+            button_js = ''
+            if req.authname != 'anonymous':
+                if mgr.can_work_on(ticket):
+                    self.log.debug('Hello')
+                    # Display a "Work on Link" button.
+                    button_js = self.get_button_js(req, ticket)
+                elif task and task['ticket'] == ticket:
+                    # We are currnetly working on this, so display the stop button...
+                    self.log.debug('Bye')
+                    button_js = self.get_button_js(req, ticket, True)
+
+            yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(task_js, ticket_js, button_js)
