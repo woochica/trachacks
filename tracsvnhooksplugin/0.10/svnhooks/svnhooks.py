@@ -1,8 +1,6 @@
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from webadmin.web_ui import IAdminPageProvider
-from webadmin.plugin import TRAC_PATH
-from trac.config import Option
 import string
 import os
 
