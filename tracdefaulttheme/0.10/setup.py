@@ -11,7 +11,7 @@ setup(
     description = "Trac default theme",
     license = "BSD",
     keywords = "trac theme",
-    url = "http://trac-hacks.org/wiki/TracSvnHooksPlugin",
+    url = "http://trac-hacks.org/wiki/TracDefaultTheme",
     classifiers = [ 'Framework :: Trac', ],
     install_requires = ['TracThemeEngine'],
     packages=['defaulttheme'],
