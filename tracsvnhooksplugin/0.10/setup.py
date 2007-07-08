@@ -16,6 +16,6 @@ setup(
   install_requires = ['TracWebAdmin'],
   packages=['svnhooks'],
   entry_points={'trac.plugins': '%s = svnhooks' % PACKAGE},
-  package_data={'svnhooks': ['htdocs/js/*.js','htdocs/css/*.css', 'htdocs/images/*.jpg', 'templates/*.cs']},
+  package_data={'svnhooks': ['templates/*.cs']},
 )
 		  
