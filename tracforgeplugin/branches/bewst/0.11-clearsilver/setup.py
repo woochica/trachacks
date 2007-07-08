@@ -33,12 +33,13 @@ setup(
             'tracforge.admin = tracforge.admin',
             'tracforge.linker = tracforge.linker',
             'tracforge.userlist = tracforge.userlist',
+            'tracforge.authzgroups = tracforge.authzgroups [authzgroups]',
             'tracforge.acct_mgr_roles = tracforge.acct_mgr_roles [acct_mgr]',
         ],
     },
 
     extras_require = {
         'acct_mgr' : [ 'TracAccountManager>0.1' ],
+        'authzgroups' : [ 'TracAuthzGroups>0.0' ],
     }
-#    install_requires = [ 'TracWebAdmin' ],
 )

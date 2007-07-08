@@ -16,9 +16,9 @@ class TracForgePermissionModule(DefaultPermissionStore):
                                    doc='Path to master Trac')
                          
     def get_user_permissions(self, username):
-        subjects = [username]
+        subjects = set([username])
         for provider in self.group_providers:
-            subjects += list(provider.get_permission_groups(username))
+            subjects |= set(provider.get_permission_groups(username))
 
         actions = []
         db = self.env.get_db_cnx()
@@ -39,7 +39,7 @@ class TracForgePermissionModule(DefaultPermissionStore):
                     if action.islower() and action not in subjects:
                         # action is actually the name of the permission group
                         # here
-                        subjects.append(action)
+                        subjects.add(action)
             if num_users == len(subjects) and num_actions == len(actions):
                 break
         return [action for action in actions if not action.islower()]
@@ -51,7 +51,6 @@ class TracForgePermissionModule(DefaultPermissionStore):
         # directly granted, then expand each role to get the users it contained.
         # However, I don't think we currently have that interface in Trac.
         result = set()
-
         
         def intersects(s1,s2):
             if len(s1) < len(s2):
@@ -64,8 +63,7 @@ class TracForgePermissionModule(DefaultPermissionStore):
 
         perms = set(permissions)
 
-        all_users = UserManager(self.env).get_all_users()
-        all_users |= UserManager(self.master_env).get_all_users()
+        all_users = UserManager(self.master_env).get_all_users()
         
         for u in all_users:
             if intersects(set(self.get_user_permissions(u)), perms):
@@ -158,11 +156,11 @@ class TracForgeGroupsModule(Component):
         self.log.debug('TracForgeGroupModule: Detected master groups (%s) for %s'%(', '.join([str(x) for x in master_groups]), username))
 
         proj = Project.by_env_path(self.master_env, self.env.path)
-        access = {}
+        access = set()
         subjects = [username] + master_groups
         for subj in subjects:
             if subj in proj:
-                 access[proj.members[subj]] = True
+                access.add(proj.members[subj])
                  
         if 'admin' in access:
             return ['admin', 'member']
