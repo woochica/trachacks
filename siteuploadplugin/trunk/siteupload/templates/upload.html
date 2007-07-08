@@ -44,18 +44,22 @@
         </thead>
         <tbody>
             <tr py:for="file in siteupload.files" >
-                <py:if test="'SITEUPLOAD_MANAGE' in perm(context)">
-                <td><input type="checkbox" name="sel" value="${file.name}" /></td>
-                </py:if>
+                <td>
+                    <py:if test="'SITEUPLOAD_MANAGE' in perm(context)">
+                    <input type="checkbox" name="sel" value="${file.name}" />
+                    </py:if>
+                </td>
                 <td>${file.link}</td>
                 <td>${file.size}</td>
             </tr>
         </tbody>
     </table>
+    <py:if test="'SITEUPLOAD_MANAGE' in perm(context)">
     <div class="buttons">
         <input type="submit" name="delete" value="Delete selected files"
          disabled="${siteupload.readonly and 'disabled' or None}" />
     </div>
+    </py:if>
 </form>
 
 </body>

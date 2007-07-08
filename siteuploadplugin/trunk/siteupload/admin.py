@@ -43,7 +43,7 @@ class SiteuploadAdminPage(Component):
 
     # IAdminPanelPageProvider methods
     def get_admin_panels(self, req):
-        if req.perm.has_permission('SITEUPLOAD_MANAGE') or req.perm.has_permission('SITEUPLOAD_MANAGE'):
+        if req.perm.has_permission('SITEUPLOAD_MANAGE') or req.perm.has_permission('SITEUPLOAD_UPLOAD'):
             yield ('siteupload', 'Site Files', 'files', 'Files')
 
     def render_admin_panel(self, req, cat, page, path_info):

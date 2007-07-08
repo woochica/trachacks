@@ -32,17 +32,24 @@
         <tbody>
             <?cs each:file = siteupload.files ?>
             <tr>
+                <td>
                 <?cs if:trac.acl.SITEUPLOAD_MANAGE ?>
-                <td><input type="checkbox" name="sel" value="<?cs var:file.name ?>" /></td>
+                    <input type="checkbox" name="sel" 
+                        value="<?cs var:file.name ?>" />
+                <?cs else ?>
+                    &nbsp;
                 <?cs /if ?>
+                </td>
                 <td><?cs var:file.link ?></td>
                 <td><?cs var:file.size ?></td>
             </tr>
             <?cs /each ?>
         </tbody>
     </table>
+    <?cs if:trac.acl.SITEUPLOAD_MANAGE ?>
     <div class="buttons">
         <input type="submit" name="delete" value="Delete selected files" <?cs
           if:siteupload.readonly ?> disabled="disabled"<?cs /if ?> />
     </div>
+    <?cs /if ?>
 </form>
