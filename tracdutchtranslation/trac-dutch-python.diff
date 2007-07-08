@@ -967,16 +967,14 @@ diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py 
      def get_search_results(self, req, terms, filters):
          if not 'changeset' in filters:
              return
--        repos = self.env.get_repository(req.authname)
-+        authzperm = SubversionAuthorizer(self.env, req.authname)
+         repos = self.env.get_repository(req.authname)
          db = self.env.get_db_cnx()
          sql, args = search_to_sql(db, ['message', 'author'], terms)
          cursor = db.cursor()
          cursor.execute("SELECT rev,time,author,message "
                         "FROM revision WHERE " + sql, args)
          for rev, date, author, log in cursor:
--            if not repos.authz.has_permission_for_changeset(rev):
-+            if not authzperm.has_permission_for_changeset(rev):
+             if not repos.authz.has_permission_for_changeset(rev):
                  continue
              yield (req.href.changeset(rev),
                     '[%s]: %s' % (rev, shorten_line(log)),
@@ -992,19 +990,17 @@ diff -uNr usr/share/python-support/trac/trac/web/auth.py /usr/share/python-suppo
              yield ('metanav', 'logout',
                     html.A('Logout', href=req.href.logout()))
          else:
-@@ -118,19 +113,14 @@
+@@ -118,19 +113,19 @@
          problems on installations authenticating against Windows which is not
          case sensitive regarding user names and domain names
          """
--        if not req.remote_user:
--            raise TracError(html("Authentication information not available. "
--                                 "Please refer to the ",
--                                 html.a('installation documentation',
--                                        title="Configuring Authentication",
--                                        href=req.href.wiki('TracInstall') +
--                                        "#ConfiguringAuthentication"), "."))
-+        assert req.remote_user, 'Authentication information not available.'
-+
+         if not req.remote_user:
+             raise TracError(html("Authentication information not available. "
+                                  "Please refer to the ",
+                                  html.a('installation documentation',
+                                         title="Configuring Authentication",
+                                         href=req.href.wiki('TracInstall') +
+                                         "#ConfiguringAuthentication"), "."))
          remote_user = req.remote_user
          if self.ignore_case:
              remote_user = remote_user.lower()
@@ -1030,24 +1026,22 @@ diff -uNr usr/share/python-support/trac/trac/web/chrome.py /usr/share/python-sup
 diff -uNr usr/share/python-support/trac/trac/web/main.py /usr/share/python-support/trac/trac/web/main.py
 --- usr/share/python-support/trac/trac/web/main.py	2006-12-01 13:40:48.000000000 +0100
 +++ /usr/share/python-support/trac/trac/web/main.py	2007-05-03 20:08:26.948051291 +0200
-@@ -16,21 +16,20 @@
+@@ -16,21 +16,21 @@
  # Author: Christopher Lenz <cmlenz@gmx.de>
  #         Matthew Good <trac@matt-good.net>
  
--import cgi
--import dircache
+ import cgi
+ import dircache
  import locale
  import os
  import sys
-+import dircache
  import urllib
  
  from trac.config import ExtensionOption, OrderedExtensionsOption
  from trac.core import *
  from trac.env import open_environment
  from trac.perm import PermissionCache, NoPermissionCache, PermissionError
--from trac.util import reversed, get_last_traceback, hex_entropy
-+from trac.util import reversed, get_last_traceback
+ from trac.util import reversed, get_last_traceback, hex_entropy
  from trac.util.datefmt import format_datetime, http_date
  from trac.util.html import Markup
 -from trac.util.text import to_unicode
