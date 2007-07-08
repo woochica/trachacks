@@ -115,7 +115,7 @@ InitWorklog = function()
   var d = document.createElement('fieldset');
   d.setAttribute('class', 'workloginfo');
   l = document.createElement('legend')
-  l.appendChild(document.createTextNode('Work Log Info'));
+  l.appendChild(document.createTextNode('Work Log'));
   d.appendChild(l);
   """ + button_js + """
   ul = document.createElement('ul');
