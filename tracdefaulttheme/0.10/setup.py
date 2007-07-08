@@ -11,7 +11,7 @@ setup(
     description = "Trac default theme",
     license = "BSD",
     keywords = "trac theme",
-    url = "http://www.geophysik.lmu.de/~barsch/projects/TracDefaultTheme",
+    url = "http://trac-hacks.org/wiki/TracSvnHooksPlugin",
     classifiers = [ 'Framework :: Trac', ],
     install_requires = ['TracThemeEngine'],
     packages=['defaulttheme'],
