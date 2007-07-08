@@ -1,4 +1,4 @@
-diff -uNr usr/share/python-support/trac/trac/About.py /usr/share/python-support/trac/trac/About.py
+diff -uar usr/share/python-support/trac/trac/About.py /usr/share/python-support/trac/trac/About.py
 --- usr/share/python-support/trac/trac/About.py	2006-08-08 11:33:10.000000000 +0200
 +++ /usr/share/python-support/trac/trac/About.py	2007-05-03 20:02:21.494579257 +0200
 @@ -38,7 +38,7 @@
@@ -19,7 +19,7 @@ diff -uNr usr/share/python-support/trac/trac/About.py /usr/share/python-support/
          if req.perm.has_permission('CONFIG_VIEW'):
              req.hdf['about.config_href'] = req.href.about('config')
              req.hdf['about.plugins_href'] = req.href.about('plugins')
-diff -uNr usr/share/python-support/trac/trac/attachment.py /usr/share/python-support/trac/trac/attachment.py
+diff -uar usr/share/python-support/trac/trac/attachment.py /usr/share/python-support/trac/trac/attachment.py
 --- usr/share/python-support/trac/trac/attachment.py	2006-12-01 02:16:18.000000000 +0100
 +++ /usr/share/python-support/trac/trac/attachment.py	2007-05-03 20:02:21.494579257 +0200
 @@ -100,8 +100,8 @@
@@ -178,7 +178,7 @@ diff -uNr usr/share/python-support/trac/trac/attachment.py /usr/share/python-sup
          except TracError:
              return html.A(label, class_='missing attachment', rel='nofollow',
                            href=formatter.href())
-diff -uNr usr/share/python-support/trac/trac/core.py /usr/share/python-support/trac/trac/core.py
+diff -uar usr/share/python-support/trac/trac/core.py /usr/share/python-support/trac/trac/core.py
 --- usr/share/python-support/trac/trac/core.py	2006-09-13 14:31:25.000000000 +0200
 +++ /usr/share/python-support/trac/trac/core.py	2007-05-03 20:02:21.494579257 +0200
 @@ -174,11 +174,11 @@
@@ -195,7 +195,7 @@ diff -uNr usr/share/python-support/trac/trac/core.py /usr/share/python-support/t
                                   % (cls, e)
          return component
  
-diff -uNr usr/share/python-support/trac/trac/env.py /usr/share/python-support/trac/trac/env.py
+diff -uar usr/share/python-support/trac/trac/env.py /usr/share/python-support/trac/trac/env.py
 --- usr/share/python-support/trac/trac/env.py	2006-10-24 01:50:21.000000000 +0200
 +++ /usr/share/python-support/trac/trac/env.py	2007-05-03 20:02:21.494579257 +0200
 @@ -101,6 +101,39 @@
@@ -261,7 +261,104 @@ diff -uNr usr/share/python-support/trac/trac/env.py /usr/share/python-support/tr
      def get_templates_dir(self):
          """Return absolute path to the templates directory."""
          return os.path.join(self.path, 'templates')
-diff -uNr usr/share/python-support/trac/trac/perm.py /usr/share/python-support/trac/trac/perm.py
+diff -uar usr/share/python-support/trac/trac/mimeview/api.py /usr/share/python-support/trac/trac/mimeview/api.py
+--- usr/share/python-support/trac/trac/mimeview/api.py	2006-11-30 11:20:28.000000000 +0100
++++ /usr/share/python-support/trac/trac/mimeview/api.py	2007-05-03 20:08:14.997615611 +0200
+@@ -330,7 +330,7 @@
+ 
+     mime_map = ListOption('mimeviewer', 'mime_map',
+         'text/x-dylan:dylan,text/x-idl:ice,text/x-ada:ads:adb',
+-        doc="""List of additional MIME types and keyword mappings.
++        """List of additional MIME types and keyword mappings.
+         Mappings are comma-separated, and for each MIME type,
+         there's a colon (":") separated list of associated keywords
+         or file extensions. (''since 0.10'').""")
+@@ -349,7 +349,7 @@
+             for k, n, e, im, om, q in converter.get_supported_conversions():
+                 if im == mimetype and q > 0:
+                     converters.append((k, n, e, im, om, q, converter))
+-        converters = sorted(converters, key=lambda i: i[-2], reverse=True)
++        converters = sorted(converters, key=lambda i: i[-1], reverse=True)
+         return converters
+ 
+     def convert_content(self, req, mimetype, content, key, filename=None,
+diff -uar usr/share/python-support/trac/trac/mimeview/enscript.py /usr/share/python-support/trac/trac/mimeview/enscript.py
+--- usr/share/python-support/trac/trac/mimeview/enscript.py	2006-10-12 09:22:12.000000000 +0200
++++ /usr/share/python-support/trac/trac/mimeview/enscript.py	2007-05-03 20:08:18.457741752 +0200
+@@ -103,7 +103,7 @@
+         """Path to the Enscript executable.""")
+ 
+     enscript_modes = ListOption('mimeviewer', 'enscript_modes',
+-        'text/x-dylan:dylan:4', doc=
++        'text/x-dylan:dylan:4',
+         """List of additional MIME types known by Enscript.
+         For each, a tuple `mimetype:mode:quality` has to be
+         specified, where `mimetype` is the MIME type,
+diff -uar usr/share/python-support/trac/trac/mimeview/php.py /usr/share/python-support/trac/trac/mimeview/php.py
+--- usr/share/python-support/trac/trac/mimeview/php.py	2006-11-24 14:43:33.000000000 +0100
++++ /usr/share/python-support/trac/trac/mimeview/php.py	2007-05-03 20:08:21.297845293 +0200
+@@ -57,9 +57,9 @@
+         return color_rules + [ r'(?P<font><font.*?>)', r'(?P<endfont></font>)' ]
+     rules = classmethod(rules)
+ 
+-
+ class PHPRenderer(Component):
+-    """Syntax highlighting using the PHP executable if available.
++    """
++    Syntax highlighting using the PHP executable if available.
+     """
+ 
+     implements(IHTMLPreviewRenderer)
+@@ -75,25 +75,23 @@
+         return 0
+ 
+     def render(self, req, mimetype, content, filename=None, rev=None):
++        cmdline = self.config.get('mimeviewer', 'php_path')
+         # -n to ignore php.ini so we're using default colors
+-        cmdline = '%s -sn' % self.path
++        cmdline += ' -sn'
+         self.env.log.debug("PHP command line: %s" % cmdline)
+-
++        
+         content = content_to_unicode(self.env, content, mimetype)
+         content = content.encode('utf-8')
+         np = NaivePopen(cmdline, content, capturestderr=1)
+         if (os.name != 'nt' and np.errorlevel) or np.err:
+-            msg = 'Running (%s) failed: %s, %s.' % (cmdline,
+-                                                    np.errorlevel,
++            err = 'Running (%s) failed: %s, %s.' % (cmdline, np.errorlevel,
+                                                     np.err)
+-            raise Exception(msg)
+-
++            raise Exception, err
+         odata = ''.join(np.out.splitlines()[1:-1])
+-        if odata.startswith('X-Powered-By:') or \
+-                odata.startswith('Content-type:'):
+-            raise TracError('You appear to be using the PHP CGI '
+-                            'binary. Trac requires the CLI version '
+-                            'for syntax highlighting.')
++        if odata.startswith('X-Powered-By'):
++            raise TracError, 'You appear to be using the PHP CGI binary.  ' \
++                             'Trac requires the CLI version for syntax ' \
++                             'highlighting.'
+ 
+         epilogues = ["</span>", "</font>"]
+         for e in epilogues:
+diff -uar usr/share/python-support/trac/trac/mimeview/silvercity.py /usr/share/python-support/trac/trac/mimeview/silvercity.py
+--- usr/share/python-support/trac/trac/mimeview/silvercity.py	2006-11-14 15:48:14.000000000 +0100
++++ /usr/share/python-support/trac/trac/mimeview/silvercity.py	2007-05-03 20:08:21.297845293 +0200
+@@ -63,8 +63,8 @@
+ 
+     implements(IHTMLPreviewRenderer)
+ 
+-    silvercity_modes = ListOption('mimeviewer', 'silvercity_modes',
+-        '', doc=
++    enscript_modes = ListOption('mimeviewer', 'silvercity_modes',
++        '',
+         """List of additional MIME types known by SilverCity.
+         For each, a tuple `mimetype:mode:quality` has to be
+         specified, where `mimetype` is the MIME type,
+diff -uar usr/share/python-support/trac/trac/perm.py /usr/share/python-support/trac/trac/perm.py
 --- usr/share/python-support/trac/trac/perm.py	2006-11-27 23:17:32.000000000 +0100
 +++ /usr/share/python-support/trac/trac/perm.py	2007-07-07 23:17:06.433743146 +0200
 @@ -21,6 +21,7 @@
@@ -281,7 +378,32 @@ diff -uNr usr/share/python-support/trac/trac/perm.py /usr/share/python-support/t
  
  
  class IPermissionRequestor(Interface):
-diff -uNr usr/share/python-support/trac/trac/Search.py /usr/share/python-support/trac/trac/Search.py
+diff -uar usr/share/python-support/trac/trac/scripts/admin.py /usr/share/python-support/trac/trac/scripts/admin.py
+--- usr/share/python-support/trac/trac/scripts/admin.py	2006-11-24 10:44:33.000000000 +0100
++++ /usr/share/python-support/trac/trac/scripts/admin.py	2007-05-03 20:08:43.158642370 +0200
+@@ -596,8 +596,6 @@
+         if not os.access(os.path.join(templates_dir, 'header.cs'), os.F_OK):
+             print templates_dir, "doesn't look like a Trac templates directory"
+             return 2
+-        if templates_dir == default_dir('templates'):
+-            templates_dir = None # let the runtime default_dir() take over
+ 
+         try:
+             print 'Creating and Initializing Project'
+@@ -678,8 +676,11 @@
+         cursor = cnx.cursor()
+         cursor.execute("DELETE FROM revision")
+         cursor.execute("DELETE FROM node_change")
++        repos = self.__env.get_repository()
+         cursor.execute("DELETE FROM system WHERE name='repository_dir'")
+-        repos = self.__env.get_repository() # this will do the sync()
++        cursor.execute("INSERT INTO system (name,value) "
++                       "VALUES ('repository_dir',%s)", (repos.name,))
++        repos.sync()
+         print 'Done.'
+ 
+     ## Wiki
+diff -uar usr/share/python-support/trac/trac/Search.py /usr/share/python-support/trac/trac/Search.py
 --- usr/share/python-support/trac/trac/Search.py	2006-09-24 23:14:41.000000000 +0200
 +++ /usr/share/python-support/trac/trac/Search.py	2007-05-03 20:02:21.494579257 +0200
 @@ -74,7 +74,7 @@
@@ -357,7 +479,7 @@ diff -uNr usr/share/python-support/trac/trac/Search.py /usr/share/python-support
          else:
              link = wiki_to_link(kwd, self.env, req)
              if isinstance(link, Element):
-diff -uNr usr/share/python-support/trac/trac/Settings.py /usr/share/python-support/trac/trac/Settings.py
+diff -uar usr/share/python-support/trac/trac/Settings.py /usr/share/python-support/trac/trac/Settings.py
 --- usr/share/python-support/trac/trac/Settings.py	2006-08-08 11:33:10.000000000 +0200
 +++ /usr/share/python-support/trac/trac/Settings.py	2007-05-03 20:02:21.494579257 +0200
 @@ -33,7 +33,7 @@
@@ -378,9 +500,61 @@ diff -uNr usr/share/python-support/trac/trac/Settings.py /usr/share/python-suppo
          req.hdf['settings'] = req.session
          if req.authname == 'anonymous':
              req.hdf['settings.session_id'] = req.session.sid
-diff -uNr usr/share/python-support/trac/trac/ticket/model.py /usr/share/python-support/trac/trac/ticket/model.py
+diff -uar usr/share/python-support/trac/trac/ticket/api.py /usr/share/python-support/trac/trac/ticket/api.py
+--- usr/share/python-support/trac/trac/ticket/api.py	2006-10-11 16:30:24.000000000 +0200
++++ /usr/share/python-support/trac/trac/ticket/api.py	2007-05-03 20:08:06.957322514 +0200
+@@ -65,7 +65,7 @@
+ 
+     restrict_owner = BoolOption('ticket', 'restrict_owner', 'false',
+         """Make the owner field of tickets use a drop-down menu. See
+-        [TracTickets#Assign-toasDrop-DownList Assign-to as Drop-Down List]
++        [wiki:TracTickets#AssigntoasDropDownList AssignToAsDropDownList]
+         (''since 0.9'').""")
+ 
+     # Public API
+@@ -168,9 +168,7 @@
+             }
+             if field['type'] == 'select' or field['type'] == 'radio':
+                 field['options'] = config.getlist(name + '.options', sep='|')
+-                if '' in field['options']:
+-                    field['optional'] = True
+-                    field['options'].remove('')
++                field['optional'] = '' in field['options']
+             elif field['type'] == 'textarea':
+                 field['width'] = config.getint(name + '.cols')
+                 field['height'] = config.getint(name + '.rows')
+diff -uar usr/share/python-support/trac/trac/ticket/model.py /usr/share/python-support/trac/trac/ticket/model.py
 --- usr/share/python-support/trac/trac/ticket/model.py	2006-11-28 09:16:10.000000000 +0100
 +++ /usr/share/python-support/trac/trac/ticket/model.py	2007-05-03 20:08:06.957322514 +0200
+@@ -36,7 +36,7 @@
+         self.env = env
+         self.fields = TicketSystem(self.env).get_ticket_fields()
+         self.values = {}
+-        if tkt_id is not None:
++        if tkt_id:
+             self._fetch_ticket(tkt_id, db)
+         else:
+             self._init_defaults(db)
+@@ -65,11 +65,14 @@
+                 options = field.get('options')
+                 if default and options and default not in options:
+                     try:
+-                        default = options[int(default)]
+-                    except (ValueError, IndexError):
+-                        self.env.log.warning('Invalid default value "%s" '
+-                                             'for custom field "%s"'
+-                                             % (default, field['name']))
++                        default_idx = int(default)
++                        if default_idx > len(options):
++                            raise ValueError
++                        default = options[default_idx]
++                    except ValueError:
++                        self.env.log.warning('Invalid default value for '
++                                             'custom field "%s"'
++                                             % field['name'])
+             if default:
+                 self.values.setdefault(field['name'], default)
+ 
 @@ -83,8 +86,8 @@
                         % ','.join(std_fields), (tkt_id,))
          row = cursor.fetchone()
@@ -418,6 +592,14 @@ diff -uNr usr/share/python-support/trac/trac/ticket/model.py /usr/share/python-s
  
          db, handle_ta = self._get_db_for_write(db)
          cursor = db.cursor()
+@@ -260,7 +262,6 @@
+ 
+         for listener in TicketSystem(self.env).change_listeners:
+             listener.ticket_changed(self, comment, author, old_values)
+-        return True
+ 
+     def get_changelog(self, when=0, db=None):
+         """Return the changelog as a list of tuples of the form
 @@ -331,7 +332,7 @@
                             (self.type, name))
              row = cursor.fetchone()
@@ -487,7 +669,111 @@ diff -uNr usr/share/python-support/trac/trac/ticket/model.py /usr/share/python-s
          self.name = self.name.strip()
          if not db:
              db = self.env.get_db_cnx()
-diff -uNr usr/share/python-support/trac/trac/ticket/query.py /usr/share/python-support/trac/trac/ticket/query.py
+diff -uar usr/share/python-support/trac/trac/ticket/notification.py /usr/share/python-support/trac/trac/ticket/notification.py
+--- usr/share/python-support/trac/trac/ticket/notification.py	2006-11-16 02:06:26.000000000 +0100
++++ /usr/share/python-support/trac/trac/ticket/notification.py	2007-05-03 20:08:06.957322514 +0200
+@@ -63,8 +63,6 @@
+         self.ticket['description'] = wrap(self.ticket.values.get('description', ''),
+                                           self.COLS, initial_indent=' ',
+                                           subsequent_indent=' ', linesep=CRLF)
+-        self.reporter = ''
+-        self.owner = ''
+         self.hdf.set_unescaped('email.ticket_props', self.format_props())
+         self.hdf.set_unescaped('email.ticket_body_hdr', self.format_hdr())
+         self.hdf['ticket.new'] = self.newticket
+@@ -186,14 +184,9 @@
+                                                  self.COLS, linesep=CRLF))
+ 
+     def format_subj(self):
+-        prefix = self.config.get('notification', 'smtp_subject_prefix')
+-        if prefix == '__default__': 
+-            prefix = '[%s]' % self.config.get('project', 'name') 
+-        if prefix: 
+-            return '%s #%s: %s' % (prefix, self.ticket.id,
+-                                  self.ticket['summary'])
+-        else:
+-            return '#%s: %s' % (self.ticket.id, self.ticket['summary']) 
++        projname = self.config.get('project', 'name')
++        return '[%s] #%s: %s' % (projname, self.ticket.id,
++                                 self.ticket['summary'])
+ 
+     def get_recipients(self, tktid):
+         notify_reporter = self.config.getbool('notification',
+@@ -206,15 +199,13 @@
+         ccrecipients = self.prev_cc
+         torecipients = []
+         cursor = self.db.cursor()
+-        
++
+         # Harvest email addresses from the cc, reporter, and owner fields
+         cursor.execute("SELECT cc,reporter,owner FROM ticket WHERE id=%s",
+                        (tktid,))
+         row = cursor.fetchone()
+         if row:
+             ccrecipients += row[0] and row[0].replace(',', ' ').split() or []
+-            self.reporter = row[1]
+-            self.owner = row[2]
+             if notify_reporter:
+                 torecipients.append(row[1])
+             if notify_owner:
+@@ -228,27 +219,11 @@
+                 torecipients.append(author)
+ 
+         # Suppress the updater from the recipients
+-        updater = None
+-        cursor.execute("SELECT author FROM ticket_change WHERE ticket=%s "
+-                       "ORDER BY time DESC LIMIT 1", (tktid,))
+-        for updater, in cursor:
+-            break
+-        else:
+-            cursor.execute("SELECT reporter FROM ticket WHERE id=%s",
+-                           (tktid,))
+-            for updater, in cursor:
+-                break
+-
+         if not notify_updater:
+-            filter_out = True
+-            if notify_reporter and (updater == self.reporter):
+-                filter_out = False
+-            if notify_owner and (updater == self.owner):
+-                filter_out = False
+-            if filter_out:
+-                torecipients = [r for r in torecipients if r and r != updater]
+-        elif updater:
+-            torecipients.append(updater)
++            cursor.execute("SELECT author FROM ticket_change WHERE ticket=%s "
++                           "ORDER BY time DESC LIMIT 1", (tktid,))
++            (updater, ) = cursor.fetchone() 
++            torecipients = [r for r in torecipients if r and r != updater]
+ 
+         return (torecipients, ccrecipients)
+ 
+@@ -263,14 +238,19 @@
+         return msgid
+ 
+     def send(self, torcpts, ccrcpts):
+-        dest = self.reporter or 'anonymous'
+         hdrs = {}
+-        hdrs['Message-ID'] = self.get_message_id(dest, self.modtime)
++        always_cc = self.config['notification'].get('smtp_always_cc')
++        always_bcc = self.config['notification'].get('smtp_always_bcc')
++        dest = filter(None, torcpts) or filter(None, ccrcpts) or \
++               filter(None, [always_cc]) or filter(None, [always_bcc])
++        if not dest:
++            self.env.log.info('no recipient for a ticket notification')
++            return
++        hdrs['Message-ID'] = self.get_message_id(dest[0], self.modtime)
+         hdrs['X-Trac-Ticket-ID'] = str(self.ticket.id)
+         hdrs['X-Trac-Ticket-URL'] = self.ticket['link']
+         if not self.newticket:
+-            msgid = self.get_message_id(dest)
+-            hdrs['In-Reply-To'] = msgid
+-            hdrs['References'] = msgid
++            hdrs['In-Reply-To'] = self.get_message_id(dest[0])
++            hdrs['References'] = self.get_message_id(dest[0])
+         NotifyEmail.send(self, torcpts, ccrcpts, hdrs)
+ 
+diff -uar usr/share/python-support/trac/trac/ticket/query.py /usr/share/python-support/trac/trac/ticket/query.py
 --- usr/share/python-support/trac/trac/ticket/query.py	2006-12-08 11:34:03.000000000 +0100
 +++ /usr/share/python-support/trac/trac/ticket/query.py	2007-07-08 17:23:47.851958727 +0200
 @@ -377,7 +377,7 @@
@@ -528,7 +814,7 @@ diff -uNr usr/share/python-support/trac/trac/ticket/query.py /usr/share/python-s
          add_stylesheet(req, 'common/css/report.css')
          add_script(req, 'common/js/query.js')
  
-diff -uNr usr/share/python-support/trac/trac/ticket/report.py /usr/share/python-support/trac/trac/ticket/report.py
+diff -uar usr/share/python-support/trac/trac/ticket/report.py /usr/share/python-support/trac/trac/ticket/report.py
 --- usr/share/python-support/trac/trac/ticket/report.py	2006-10-24 03:35:04.000000000 +0200
 +++ /usr/share/python-support/trac/trac/ticket/report.py	2007-05-03 20:08:06.957322514 +0200
 @@ -32,6 +32,7 @@
@@ -557,9 +843,81 @@ diff -uNr usr/share/python-support/trac/trac/ticket/report.py /usr/share/python-
  
              # Kludge: Reset session vars created by query module so that the
              # query navigation links on the ticket page don't confuse the user
-diff -uNr usr/share/python-support/trac/trac/ticket/roadmap.py /usr/share/python-support/trac/trac/ticket/roadmap.py
+@@ -387,7 +388,7 @@
+                      'text/plain')
+ 
+     def execute_report(self, req, db, id, sql, args):
+-        sql, args = self.sql_sub_vars(req, sql, args, db)
++        sql, args = self.sql_sub_vars(req, sql, args)
+         if not sql:
+             raise TracError('Report %s has no SQL query.' % id)
+         if sql.find('__group__') == -1:
+@@ -430,7 +431,7 @@
+     def get_var_args(self, req):
+         report_args = {}
+         for arg in req.args.keys():
+-            if not arg.isupper():
++            if not arg == arg.upper():
+                 continue
+             report_args[arg] = req.args.get(arg)
+ 
+@@ -440,9 +441,7 @@
+ 
+         return report_args
+ 
+-    def sql_sub_vars(self, req, sql, args, db=None):
+-        if db is None:
+-            db = self.env.get_db_cnx()
++    def sql_sub_vars(self, req, sql, args):
+         values = []
+         def add_value(aname):
+             try:
+@@ -453,26 +452,18 @@
+             req.hdf['report.var.' + aname] = arg
+             values.append(arg)
+ 
+-        # simple parameter substitution outside literal
++        # simple parameter substitution
+         def repl(match):
+             add_value(match.group(1))
+             return '%s'
+ 
+-        # inside a literal break it and concatenate with the parameter
+-        def repl_literal(match):
+-            add_value(match.group(1))
+-            return db.concat("'", "%s", "'")
+-
+-        var_re = re.compile("[$]([A-Z]+)")
++        var_re = re.compile("'?[$]([A-Z]+)'?")
+         sql_io = StringIO()
+ 
+         # break SQL into literals and non-literals to handle replacing
+         # variables within them with query parameters
+         for expr in re.split("('(?:[^']|(?:''))*')", sql):
+-            if expr.startswith("'"):
+-                sql_io.write(var_re.sub(repl_literal, expr))
+-            else:
+-                sql_io.write(var_re.sub(repl, expr))
++            sql_io.write(var_re.sub(repl, expr))
+         return sql_io.getvalue(), values
+ 
+     def _render_csv(self, req, cols, rows, sep=','):
+diff -uar usr/share/python-support/trac/trac/ticket/roadmap.py /usr/share/python-support/trac/trac/ticket/roadmap.py
 --- usr/share/python-support/trac/trac/ticket/roadmap.py	2006-12-06 12:38:18.000000000 +0100
 +++ /usr/share/python-support/trac/trac/ticket/roadmap.py	2007-05-24 12:07:05.565186987 +0200
+@@ -87,8 +87,11 @@
+     }
+ 
+ def milestone_to_hdf(env, db, req, milestone):
++    safe_name = None
++    if milestone.exists:
++        safe_name = milestone.name.replace('/', '%2F')
+     hdf = {'name': milestone.name,
+-           'href': req.href.milestone(milestone.name)}
++           'href': req.href.milestone(safe_name)}
+     if milestone.description:
+         hdf['description_source'] = milestone.description
+         hdf['description'] = wiki_to_html(milestone.description, env, req, db)
 @@ -129,7 +132,7 @@
          if not req.perm.has_permission('ROADMAP_VIEW'):
              return
@@ -578,6 +936,15 @@ diff -uNr usr/share/python-support/trac/trac/ticket/roadmap.py /usr/share/python
  
          showall = req.args.get('show') == 'all'
          req.hdf['roadmap.showall'] = showall
+@@ -243,7 +246,7 @@
+             if milestone.has_key('due'):
+                 write_prop('BEGIN', 'VEVENT')
+                 write_prop('UID', uid)
+-                write_utctime('DTSTAMP', localtime(milestone['due']))
++                write_date('DTSTAMP', localtime(milestone['due']))
+                 write_date('DTSTART', localtime(milestone['due']))
+                 write_prop('SUMMARY', 'Milestone %s' % milestone['name'])
+                 write_prop('URL', req.base_url + '/milestone/' +
 @@ -289,7 +292,7 @@
      # INavigationContributor methods
  
@@ -605,6 +972,40 @@ diff -uNr usr/share/python-support/trac/trac/ticket/roadmap.py /usr/share/python
                  if format == 'rss':
                      href = req.abs_href.milestone(name)
                      message = wiki_to_html(description, self.env, req, db,
+@@ -339,20 +342,19 @@
+             return True
+ 
+     def process_request(self, req):
+-        milestone_id = req.args.get('id')
+-            
+         req.perm.assert_permission('MILESTONE_VIEW')
+ 
+         add_link(req, 'up', req.href.roadmap(), 'Roadmap')
+ 
+         db = self.env.get_db_cnx()
+-        milestone = Milestone(self.env, milestone_id, db)
++        milestone = Milestone(self.env, req.args.get('id'), db)
+         action = req.args.get('action', 'view')
+ 
+         if req.method == 'POST':
+             if req.args.has_key('cancel'):
+                 if milestone.exists:
+-                    req.redirect(req.href.milestone(milestone.name))
++                    safe_name = milestone.name.replace('/', '%2F')
++                    req.redirect(req.href.milestone(safe_name))
+                 else:
+                     req.redirect(req.href.roadmap())
+             elif action == 'edit':
+@@ -366,9 +368,6 @@
+         else:
+             self._render_view(req, db, milestone)
+ 
+-        if not milestone_id and action != 'new':
+-            req.redirect(req.href.roadmap())
+-
+         add_stylesheet(req, 'common/css/roadmap.css')
+         return 'milestone.cs', None
+ 
 @@ -430,12 +429,13 @@
              milestone.insert()
          db.commit()
@@ -647,7 +1048,7 @@ diff -uNr usr/share/python-support/trac/trac/ticket/roadmap.py /usr/share/python
          req.hdf['milestone.mode'] = 'view'
  
          req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
-diff -uNr usr/share/python-support/trac/trac/ticket/web_ui.py /usr/share/python-support/trac/trac/ticket/web_ui.py
+diff -uar usr/share/python-support/trac/trac/ticket/web_ui.py /usr/share/python-support/trac/trac/ticket/web_ui.py
 --- usr/share/python-support/trac/trac/ticket/web_ui.py	2006-11-15 22:34:40.000000000 +0100
 +++ /usr/share/python-support/trac/trac/ticket/web_ui.py	2007-07-07 22:26:48.043095023 +0200
 @@ -29,7 +29,7 @@
@@ -670,7 +1071,7 @@ diff -uNr usr/share/python-support/trac/trac/ticket/web_ui.py /usr/share/python-
  
      def match_request(self, req):
 -        return re.match(r'/newticket/?$', req.path_info) is not None
-+        return re.match(r'/newticket/?$', req.path_info) is not None
++        return re.match(r'/newticket/?', req.path_info) is not None
  
      def process_request(self, req):
          req.perm.assert_permission('TICKET_CREATE')
@@ -701,6 +1102,24 @@ diff -uNr usr/share/python-support/trac/trac/ticket/web_ui.py /usr/share/python-
              req.hdf['newticket.fields.' + name] = field
  
          if req.perm.has_permission('TICKET_APPEND'):
+@@ -180,7 +182,7 @@
+ 
+     def _do_create(self, req, db):
+         if not req.args.get('summary'):
+-            raise TracError('Tickets must contain a summary.')
++            raise TracError('ATickets must contain a summary.')
+ 
+         ticket = Ticket(self.env, db=db)
+         ticket.populate(req.args)
+@@ -205,7 +207,7 @@
+             req.redirect(req.href.ticket(ticket.id))
+ 
+ 
+-class TicketModule(TicketModuleBase):
++class TicketMdule(TicketModuleBase):
+ 
+     implements(INavigationContributor, IRequestHandler, ITimelineEventProvider,
+                IContentConverter)
 @@ -232,9 +234,9 @@
      # IContentConverter methods
  
@@ -713,6 +1132,15 @@ diff -uNr usr/share/python-support/trac/trac/ticket/web_ui.py /usr/share/python-
                 'trac.ticket.Ticket', 'text/tab-separated-values', 8)
          yield ('rss', 'RSS Feed', 'xml',
                 'trac.ticket.Ticket', 'application/rss+xml', 8)
+@@ -259,7 +261,7 @@
+     # IRequestHandler methods
+ 
+     def match_request(self, req):
+-        match = re.match(r'/ticket/([0-9]+)$', req.path_info)
++        match = re.match(r'/ticket/([0-9]+)', req.path_info)
+         if match:
+             req.args['id'] = match.group(1)
+             return True
 @@ -315,14 +317,14 @@
                  idx = tickets.index(str(ticket.id))
                  if idx > 0:
@@ -781,6 +1209,46 @@ diff -uNr usr/share/python-support/trac/trac/ticket/web_ui.py /usr/share/python-
              ticket_href = href.ticket(id)
              if cid:
                  ticket_href += '#comment:' + cid
+@@ -541,17 +543,17 @@
+         internal_cnum = cnum
+         if cnum and replyto: # record parent.child relationship
+             internal_cnum = '%s.%s' % (replyto, cnum)
+-        if ticket.save_changes(get_reporter_id(req, 'author'),
+-                               req.args.get('comment'), when=now, db=db,
+-                               cnum=internal_cnum):
+-            db.commit()
+-
+-            try:
+-                tn = TicketNotifyEmail(self.env)
+-                tn.notify(ticket, newticket=False, modtime=now)
+-            except Exception, e:
+-                self.log.exception("Failure sending notification on change to "
+-                                   "ticket #%s: %s" % (ticket.id, e))
++        ticket.save_changes(get_reporter_id(req, 'author'),
++                            req.args.get('comment'), when=now, db=db,
++                            cnum=internal_cnum)
++        db.commit()
++
++        try:
++            tn = TicketNotifyEmail(self.env)
++            tn.notify(ticket, newticket=False, modtime=now)
++        except Exception, e:
++            self.log.exception("Failure sending notification on change to "
++                               "ticket #%s: %s" % (ticket.id, e))
+ 
+         fragment = cnum and '#comment:'+cnum or ''
+         req.redirect(req.href.ticket(ticket.id) + fragment)
+@@ -573,10 +575,6 @@
+             if field['type'] in ('radio', 'select'):
+                 value = ticket.values.get(field['name'])
+                 options = field['options']
+-                if field['name'] == 'milestone' \
+-                    and not req.perm.has_permission('TICKET_ADMIN'):
+-                    options = [opt for opt in options if not
+-                               Milestone(self.env, opt, db=db).is_completed]
+                 if value and not value in options:
+                     # Current ticket value must be visible even if its not in the
+                     # possible values
 @@ -606,7 +604,7 @@
          def quote_original(author, original, link):
              if not 'comment' in req.args: # i.e. the comment was not yet edited
@@ -790,7 +1258,7 @@ diff -uNr usr/share/python-support/trac/trac/ticket/web_ui.py /usr/share/python-
                      ['> %s' % line for line in original.splitlines()] + [''])
  
          if replyto == 'description':
-diff -uNr usr/share/python-support/trac/trac/Timeline.py /usr/share/python-support/trac/trac/Timeline.py
+diff -uar usr/share/python-support/trac/trac/Timeline.py /usr/share/python-support/trac/trac/Timeline.py
 --- usr/share/python-support/trac/trac/Timeline.py	2006-10-02 18:54:42.000000000 +0200
 +++ /usr/share/python-support/trac/trac/Timeline.py	2007-05-03 20:02:21.504579628 +0200
 @@ -77,7 +77,7 @@
@@ -811,7 +1279,7 @@ diff -uNr usr/share/python-support/trac/trac/Timeline.py /usr/share/python-suppo
  
          # Get the email addresses of all known users
          email_map = {}
-diff -uNr usr/share/python-support/trac/trac/util/datefmt.py /usr/share/python-support/trac/trac/util/datefmt.py
+diff -uar usr/share/python-support/trac/trac/util/datefmt.py /usr/share/python-support/trac/trac/util/datefmt.py
 --- usr/share/python-support/trac/trac/util/datefmt.py	2006-09-13 07:22:18.000000000 +0200
 +++ /usr/share/python-support/trac/trac/util/datefmt.py	2007-05-24 12:39:45.640756375 +0200
 @@ -30,17 +30,17 @@
@@ -859,7 +1327,20 @@ diff -uNr usr/share/python-support/trac/trac/util/datefmt.py /usr/share/python-s
 -        raise ValueError, '%s is not a known date format.' % text
 +        raise ValueError, '%s is een ongeldige datumopmaak.' % text
      return seconds
-diff -uNr usr/share/python-support/trac/trac/util/__init__.py /usr/share/python-support/trac/trac/util/__init__.py
+diff -uar usr/share/python-support/trac/trac/util/html.py /usr/share/python-support/trac/trac/util/html.py
+--- usr/share/python-support/trac/trac/util/html.py	2006-11-07 14:09:23.000000000 +0100
++++ /usr/share/python-support/trac/trac/util/html.py	2007-05-03 20:08:50.158897647 +0200
+@@ -465,9 +465,6 @@
+ 
+ class Tags(object):
+ 
+-    def __call__(self, *args):
+-        return Fragment()(*args)
+-
+     def __getattribute__(self, name):
+         return Element(name.lower())
+ 
+diff -uar usr/share/python-support/trac/trac/util/__init__.py /usr/share/python-support/trac/trac/util/__init__.py
 --- usr/share/python-support/trac/trac/util/__init__.py	2006-08-08 11:33:10.000000000 +0200
 +++ /usr/share/python-support/trac/trac/util/__init__.py	2007-05-03 20:08:50.158897647 +0200
 @@ -30,7 +30,7 @@
@@ -871,7 +1352,7 @@ diff -uNr usr/share/python-support/trac/trac/util/__init__.py /usr/share/python-
  from trac.util.datefmt import pretty_timedelta, format_datetime, \
                                format_date, format_time, \
                                get_date_format_hint, \
-diff -uNr usr/share/python-support/trac/trac/util/text.py /usr/share/python-support/trac/trac/util/text.py
+diff -uar usr/share/python-support/trac/trac/util/text.py /usr/share/python-support/trac/trac/util/text.py
 --- usr/share/python-support/trac/trac/util/text.py	2006-07-25 09:55:02.000000000 +0200
 +++ /usr/share/python-support/trac/trac/util/text.py	2007-05-03 20:08:50.158897647 +0200
 @@ -146,3 +146,12 @@
@@ -887,7 +1368,305 @@ diff -uNr usr/share/python-support/trac/trac/util/text.py /usr/share/python-supp
 +    else:
 +        return env.translations.get(name.lower(), name)
 +
-diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/browser.py /usr/share/python-support/trac/trac/versioncontrol/web_ui/browser.py
+diff -uar usr/share/python-support/trac/trac/versioncontrol/api.py /usr/share/python-support/trac/trac/versioncontrol/api.py
+--- usr/share/python-support/trac/trac/versioncontrol/api.py	2006-11-16 12:20:40.000000000 +0100
++++ /usr/share/python-support/trac/trac/versioncontrol/api.py	2007-05-03 20:20:37.134738846 +0200
+@@ -15,16 +15,10 @@
+ # Author: Christopher Lenz <cmlenz@gmx.de>
+ 
+ from heapq import heappop, heappush
+-try:
+-    import threading
+-except ImportError:
+-    import dummy_threading as threading
+-    threading._get_ident = lambda: 0
+ 
+ from trac.config import Option
+ from trac.core import *
+ from trac.perm import PermissionError
+-from trac.web.api import IRequestFilter
+ 
+ 
+ class IRepositoryConnector(Interface):
+@@ -51,8 +45,6 @@
+     It provides easy access to the configured implementation.
+     """
+ 
+-    implements(IRequestFilter)
+-
+     connectors = ExtensionPoint(IRepositoryConnector)
+ 
+     repository_type = Option('trac', 'repository_type', 'svn',
+@@ -61,22 +53,8 @@
+         """Path to local repository""")
+ 
+     def __init__(self):
+-        self._cache = {}
+-        self._lock = threading.Lock()
+         self._connector = None
+ 
+-    # IRequestFilter methods
+-
+-    def pre_process_request(self, req, handler):
+-        from trac.web.chrome import Chrome        
+-        if handler is not Chrome(self.env):
+-            self.get_repository(req.authname) # triggers a sync if applicable
+-        return handler
+-
+-    def post_process_request(self, req, template, content_type):
+-        return (template, content_type)
+-
+-
+     # Public API methods
+ 
+     def get_repository(self, authname):
+@@ -91,27 +69,8 @@
+                 raise TracError('Unsupported version control system "%s"'
+                                 % self.repository_type)
+             self._connector = heappop(candidates)[1]
+-        try:
+-            self._lock.acquire()
+-            tid = threading._get_ident()
+-            if tid in self._cache:
+-                repos = self._cache[tid]
+-            else:
+-                rtype, rdir = self.repository_type, self.repository_dir
+-                repos = self._connector.get_repository(rtype, rdir, authname)
+-                self._cache[tid] = repos
+-            return repos
+-        finally:
+-            self._lock.release()
+-
+-    def shutdown(self, tid=None):
+-        if tid:
+-            assert tid == threading._get_ident()
+-            try:
+-                self._lock.acquire()
+-                self._cache.pop(tid, None)
+-            finally:
+-                self._lock.release()
++        return self._connector.get_repository(self.repository_type,
++                                              self.repository_dir, authname)
+ 
+ 
+ class NoSuchChangeset(TracError):
+@@ -135,10 +94,6 @@
+         """Close the connection to the repository."""
+         raise NotImplementedError
+ 
+-    def clear(self):
+-        """Clear any data that may have been cached in instance properties."""
+-        pass
+-
+     def get_changeset(self, rev):
+         """Retrieve a Changeset corresponding to the  given revision `rev`."""
+         raise NotImplementedError
+@@ -364,9 +319,6 @@
+     EDIT = 'edit'
+     MOVE = 'move'
+ 
+-    # change types which can have diff associated to them
+-    DIFF_CHANGES = (EDIT, COPY, MOVE) # MERGE
+-
+     def __init__(self, rev, message, author, date):
+         self.rev = rev
+         self.message = message
+diff -uar usr/share/python-support/trac/trac/versioncontrol/cache.py /usr/share/python-support/trac/trac/versioncontrol/cache.py
+--- usr/share/python-support/trac/trac/versioncontrol/cache.py	2006-11-21 18:35:50.000000000 +0100
++++ /usr/share/python-support/trac/trac/versioncontrol/cache.py	2007-05-03 20:20:37.134738846 +0200
+@@ -31,16 +31,22 @@
+         Repository.__init__(self, repos.name, authz, log)
+         self.db = db
+         self.repos = repos
+-        self.sync()
++        self.synced = 0
+ 
+     def close(self):
+         self.repos.close()
+ 
+     def get_changeset(self, rev):
++        if not self.synced:
++            self.sync()
++            self.synced = 1
+         return CachedChangeset(self.repos.normalize_rev(rev), self.db,
+                                self.authz)
+ 
+     def get_changesets(self, start, stop):
++        if not self.synced:
++            self.sync()
++            self.synced = 1
+         cursor = self.db.cursor()
+         cursor.execute("SELECT rev FROM revision "
+                        "WHERE time >= %s AND time < %s "
+@@ -50,20 +56,21 @@
+                 yield self.get_changeset(rev)
+ 
+     def sync(self):
++        self.log.debug("Checking whether sync with repository is needed")
+         cursor = self.db.cursor()
+ 
+         # -- repository used for populating the cache
+         cursor.execute("SELECT value FROM system WHERE name='repository_dir'")
+-        for previous_repository_dir, in cursor:
+-            if previous_repository_dir != self.name:
+-                raise TracError("The 'repository_dir' has changed, "
+-                                "a 'trac-admin resync' operation is needed.")
+-            break
++        row = cursor.fetchone()
++        if row:
++            previous_repository_dir = row[0]
+         else: # no 'repository_dir' stored yet, assume everything's OK
+-            cursor.execute("INSERT INTO system (name,value) "
+-                           "VALUES ('repository_dir',%s)", (self.name,))
++            previous_repository_dir = self.name
++
++        if self.name != previous_repository_dir:
++            raise TracError, ("The 'repository_dir' has changed, "
++                              "a 'trac-admin resync' operation is needed.")
+ 
+-        self.repos.clear()
+         youngest_stored = self.repos.get_youngest_rev_in_cache(self.db)
+ 
+         if youngest_stored != str(self.repos.youngest_rev):
+@@ -113,7 +120,7 @@
+         return self.repos.oldest_rev
+ 
+     def get_youngest_rev(self):
+-        return self.repos.get_youngest_rev_in_cache(self.db)
++        return self.repos.youngest_rev
+ 
+     def previous_rev(self, rev):
+         return self.repos.previous_rev(rev)
+diff -uar usr/share/python-support/trac/trac/versioncontrol/diff.py /usr/share/python-support/trac/trac/versioncontrol/diff.py
+--- usr/share/python-support/trac/trac/versioncontrol/diff.py	2006-10-18 02:55:53.000000000 +0200
++++ /usr/share/python-support/trac/trac/versioncontrol/diff.py	2007-05-03 20:20:37.134738846 +0200
+@@ -104,7 +104,7 @@
+     """
+     # Full context produces all the opcodes
+     if n is None:
+-        yield list(opcodes)
++        yield opcodes
+         return
+ 
+     # Otherwise we leave at most n lines with the tag 'equal' before and after
+diff -uar usr/share/python-support/trac/trac/versioncontrol/svn_authz.py /usr/share/python-support/trac/trac/versioncontrol/svn_authz.py
+--- usr/share/python-support/trac/trac/versioncontrol/svn_authz.py	2006-11-09 14:18:53.000000000 +0100
++++ /usr/share/python-support/trac/trac/versioncontrol/svn_authz.py	2007-05-03 20:20:37.134738846 +0200
+@@ -32,13 +32,14 @@
+         """The module prefix used in the authz_file.""")
+ 
+ 
+-def SubversionAuthorizer(env, repos, authname):
++def SubversionAuthorizer(env, authname):
+     authz_file = env.config.get('trac', 'authz_file')
+     if not authz_file:
+         return Authorizer()
+ 
+     module_name = env.config.get('trac', 'authz_module_name')
+-    return RealSubversionAuthorizer(repos, authname, module_name, authz_file)
++    db = env.get_db_cnx()
++    return RealSubversionAuthorizer(db, authname, module_name, authz_file)
+ 
+ def parent_iter(path):
+     path = path.strip('/')
+@@ -63,8 +64,8 @@
+     module_name = ''
+     conf_authz = None
+ 
+-    def __init__(self, repos, auth_name, module_name, cfg_file, cfg_fp=None):
+-        self.repos = repos
++    def __init__(self, db, auth_name, module_name, cfg_file, cfg_fp=None):
++        self.db = db
+         self.auth_name = auth_name
+         self.module_name = module_name
+                                 
+@@ -93,9 +94,10 @@
+         return 0
+ 
+     def has_permission_for_changeset(self, rev):
+-        changeset = self.repos.get_changeset(rev)
+-        for path,_,_,_,_ in changeset.get_changes():
+-            if self.has_permission(path):
++        cursor = self.db.cursor()
++        cursor.execute("SELECT path FROM node_change WHERE rev=%s", (rev,))
++        for row in cursor:
++            if self.has_permission(row[0]):
+                 return 1
+         return 0
+ 
+diff -uar usr/share/python-support/trac/trac/versioncontrol/svn_fs.py /usr/share/python-support/trac/trac/versioncontrol/svn_fs.py
+--- usr/share/python-support/trac/trac/versioncontrol/svn_fs.py	2006-11-21 18:35:50.000000000 +0100
++++ /usr/share/python-support/trac/trac/versioncontrol/svn_fs.py	2007-05-03 20:20:37.134738846 +0200
+@@ -256,13 +256,11 @@
+         The repository is generally wrapped in a `CachedRepository`,
+         unless `direct-svn-fs` is the specified type.
+         """
+-        repos = SubversionRepository(dir, None, self.log)
+-        crepos = CachedRepository(self.env.get_db_cnx(), repos, None, self.log)
++        authz = None
+         if authname:
+-            authz = SubversionAuthorizer(self.env, crepos, authname)
+-            repos.authz = crepos.authz = authz
+-        return crepos
+-            
++            authz = SubversionAuthorizer(self.env, authname)
++        repos = SubversionRepository(dir, authz, self.log)
++        return CachedRepository(self.env.get_db_cnx(), repos, authz, self.log)
+ 
+ 
+ class SubversionRepository(Repository):
+@@ -304,9 +302,9 @@
+         else:
+             self.scope = '/'
+         assert self.scope[0] == '/'
+-        self.clear()
+-
+-    def clear(self):
++        
++        self.log.debug("Opening subversion file-system at %s with scope %s" \
++                       % (self.path, self.scope))
+         self.youngest = None
+         self.oldest = None
+ 
+@@ -335,6 +333,7 @@
+         return rev
+ 
+     def close(self):
++        self.log.debug("Closing subversion file-system at %s" % self.path)
+         self.repos = None
+         self.fs_ptr = None
+         self.pool = None
+@@ -486,7 +485,7 @@
+             text_deltas = 0 # as this is anyway re-done in Diff.py...
+             entry_props = 0 # "... typically used only for working copy updates"
+             repos.svn_repos_dir_delta(old_root,
+-                                      _to_svn(self.scope + old_path), '',
++                                      _to_svn(self.scope, old_path), '',
+                                       new_root,
+                                       _to_svn(self.scope + new_path),
+                                       e_ptr, e_baton, authz_cb,
+@@ -617,8 +616,6 @@
+     def get_last_modified(self):
+         date = fs.revision_prop(self.fs_ptr, self.created_rev,
+                                 core.SVN_PROP_REVISION_DATE, self.pool())
+-        if not date:
+-            return 0
+         return core.svn_time_from_cstring(date, self.pool()) / 1000000
+ 
+     def _get_prop(self, name):
+@@ -636,10 +633,7 @@
+         message = self._get_prop(core.SVN_PROP_REVISION_LOG)
+         author = self._get_prop(core.SVN_PROP_REVISION_AUTHOR)
+         date = self._get_prop(core.SVN_PROP_REVISION_DATE)
+-        if date:
+-            date = core.svn_time_from_cstring(date, self.pool()) / 1000000
+-        else:
+-            date = 0
++        date = core.svn_time_from_cstring(date, self.pool()) / 1000000
+         Changeset.__init__(self, rev, message, author, date)
+ 
+     def get_changes(self):
+diff -uar usr/share/python-support/trac/trac/versioncontrol/web_ui/browser.py /usr/share/python-support/trac/trac/versioncontrol/web_ui/browser.py
 --- usr/share/python-support/trac/trac/versioncontrol/web_ui/browser.py	2006-08-16 16:13:23.000000000 +0200
 +++ /usr/share/python-support/trac/trac/versioncontrol/web_ui/browser.py	2007-07-08 17:19:53.723873771 +0200
 @@ -66,7 +66,7 @@
@@ -899,10 +1678,10 @@ diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/browser.py /u
  
      # IPermissionRequestor methods
  
-diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py /usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py
+diff -uar usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py /usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py
 --- usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py	2006-11-09 22:35:12.000000000 +0100
-+++ /usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py	2007-07-07 22:30:10.606026949 +0200
-@@ -304,9 +305,9 @@
++++ /usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py	2007-07-08 21:13:05.498962914 +0200
+@@ -304,9 +304,9 @@
  
              def _changeset_title(rev):
                  if restricted:
@@ -914,7 +1693,7 @@ diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py 
  
              title = _changeset_title(rev)
              properties = []
-@@ -335,7 +336,7 @@
+@@ -335,7 +335,7 @@
                          prev_path = prev_rev = None
                  else:
                      add_link(req, 'first', req.href.changeset(oldest_rev),
@@ -923,22 +1702,45 @@ diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py 
                      prev_path = diff.old_path
                      prev_rev = repos.previous_rev(chgset.rev)
                      if prev_rev:
-@@ -347,13 +348,13 @@
-                 if restricted:
-                     next_rev = repos.next_rev(chgset.rev, path)
-                     if next_rev:
-                         if repos.has_node(path, next_rev):
-                             next_href = req.href.changeset(next_rev, path)
-                         else: # must be a 'D'elete or 'R'ename, show full cset
-                             next_href = req.href.changeset(next_rev)
-                 else:
-                     add_link(req, 'last', req.href.changeset(youngest_rev),
--                             'Changeset %s' % youngest_rev)
-+                             'Wijziging %s' % youngest_rev)
-                     next_rev = repos.next_rev(chgset.rev)
-                     if next_rev:
-                         next_href = req.href.changeset(next_rev)
-@@ -644,7 +642,7 @@
+@@ -462,8 +462,8 @@
+                         break
+                 if context < 0:
+                     context = None
+-                tabwidth = self.config['diff'].getint('tab_width') or \
+-                           self.config['mimeviewer'].getint('tab_width', 8)
++                tabwidth = self.config['diff'].getint('tab_width',
++                                self.config['mimeviewer'].getint('tab_width'))
+                 return hdf_diff(old_content.splitlines(),
+                                 new_content.splitlines(),
+                                 context, tabwidth,
+@@ -477,7 +477,7 @@
+             diff_bytes = diff_files = 0
+             if self.max_diff_bytes or self.max_diff_files:
+                 for old_node, new_node, kind, change in get_changes():
+-                    if change in Changeset.DIFF_CHANGES and kind == Node.FILE:
++                    if change == Changeset.EDIT and kind == Node.FILE:
+                         diff_files += 1
+                         diff_bytes += _estimate_changes(old_node, new_node)
+             show_diffs = (not self.max_diff_files or \
+@@ -491,7 +491,7 @@
+         idx = 0
+         for old_node, new_node, kind, change in get_changes():
+             show_entry = change != Changeset.EDIT
+-            if change in Changeset.DIFF_CHANGES and \
++            if change in (Changeset.EDIT, Changeset.COPY, Changeset.MOVE) and \
+                    req.perm.has_permission('FILE_VIEW'):
+                 assert old_node and new_node
+                 props = _prop_changes(old_node, new_node)
+@@ -507,7 +507,7 @@
+                         show_entry = True
+             if show_entry or not show_diffs:
+                 info = _change_info(old_node, new_node, change)
+-                if change in Changeset.DIFF_CHANGES and not show_diffs:
++                if change == Changeset.EDIT and not show_diffs:
+                     if chgset:
+                         diff_href = req.href.changeset(new_node.rev,
+                                                        new_node.path)
+@@ -644,7 +644,7 @@
                      shortlog = shorten_line(message)
  
                  if format == 'rss':
@@ -947,7 +1749,7 @@ diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py 
                      href = req.abs_href.changeset(chgset.rev)
                      if wiki_format:
                          message = wiki_to_html(message, self.env, req, db,
-@@ -652,7 +650,7 @@
+@@ -652,7 +652,7 @@
                      else:
                          message = html.PRE(message)
                  else:
@@ -956,7 +1758,26 @@ diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py 
                                     chgset.author)
                      href = req.href.changeset(chgset.rev)
  
-@@ -750,19 +750,19 @@
+@@ -711,12 +711,14 @@
+             rev, path = chgset[:sep], chgset[sep:]
+         else:
+             rev, path = chgset, None
+-        try:
+-            changeset = self.env.get_repository().get_changeset(rev)
++        cursor = formatter.db.cursor()
++        cursor.execute('SELECT message FROM revision WHERE rev=%s', (rev,))
++        row = cursor.fetchone()
++        if row:
+             return html.A(label, class_="changeset",
+-                          title=shorten_line(changeset.message),
++                          title=shorten_line(row[0]),
+                           href=formatter.href.changeset(rev, path))
+-        except NoSuchChangeset:
++        else:
+             return html.A(label, class_="missing changeset",
+                           href=formatter.href.changeset(rev, path),
+                           rel="nofollow")
+@@ -750,19 +752,19 @@
  
      def get_search_filters(self, req):
          if req.perm.has_permission('CHANGESET_VIEW'):
@@ -966,21 +1787,80 @@ diff -uNr usr/share/python-support/trac/trac/versioncontrol/web_ui/changeset.py 
      def get_search_results(self, req, terms, filters):
          if not 'changeset' in filters:
              return
-         repos = self.env.get_repository(req.authname)
+-        repos = self.env.get_repository(req.authname)
++        authzperm = SubversionAuthorizer(self.env, req.authname)
          db = self.env.get_db_cnx()
          sql, args = search_to_sql(db, ['message', 'author'], terms)
          cursor = db.cursor()
          cursor.execute("SELECT rev,time,author,message "
                         "FROM revision WHERE " + sql, args)
          for rev, date, author, log in cursor:
-             if not repos.authz.has_permission_for_changeset(rev):
+-            if not repos.authz.has_permission_for_changeset(rev):
++            if not authzperm.has_permission_for_changeset(rev):
                  continue
              yield (req.href.changeset(rev),
                     '[%s]: %s' % (rev, shorten_line(log)),
-diff -uNr usr/share/python-support/trac/trac/web/auth.py /usr/share/python-support/trac/trac/web/auth.py
+@@ -792,8 +794,9 @@
+         old_path = repos.normalize_path(old_path)
+         old_rev = repos.normalize_rev(old_rev)
+ 
+-        repos.authz.assert_permission_for_changeset(new_rev)
+-        repos.authz.assert_permission_for_changeset(old_rev)
++        authzperm = SubversionAuthorizer(self.env, req.authname)
++        authzperm.assert_permission_for_changeset(new_rev)
++        authzperm.assert_permission_for_changeset(old_rev)
+ 
+         # -- prepare rendering
+         req.hdf['anydiff'] = {
+Alleen in /usr/share/python-support/trac/trac/versioncontrol/web_ui: changeset.py~\n
+diff -uar usr/share/python-support/trac/trac/web/api.py /usr/share/python-support/trac/trac/web/api.py
+--- usr/share/python-support/trac/trac/web/api.py	2006-11-13 12:41:07.000000000 +0100
++++ /usr/share/python-support/trac/trac/web/api.py	2007-05-03 20:08:26.938050927 +0200
+@@ -127,7 +127,6 @@
+     authname = None
+     perm = None
+     session = None
+-    form_token = None
+ 
+     def __init__(self, environ, start_response):
+         """Create the request wrapper.
+@@ -171,15 +170,14 @@
+         args = _RequestArgs()
+ 
+         fp = self.environ['wsgi.input']
+-
+-        # Avoid letting cgi.FieldStorage consume the input stream when the
+-        # request does not contain form data
+         ctype = self.get_header('Content-Type')
+         if ctype:
++            # Avoid letting cgi.FieldStorage consume the input stream when the
++            # request does not contain form data
+             ctype, options = cgi.parse_header(ctype)
+-        if ctype not in ('application/x-www-form-urlencoded',
+-                         'multipart/form-data'):
+-            fp = StringIO('')
++            if ctype not in ('application/x-www-form-urlencoded',
++                             'multipart/form-data'):
++                fp = StringIO('')
+ 
+         fs = cgi.FieldStorage(fp, environ=self.environ, keep_blank_values=True)
+         if fs.list:
+@@ -352,10 +350,7 @@
+             content_type = 'text/plain'
+             data = str(self.hdf)
+         else:
+-            form_token = None
+-            if content_type in ('text/html', 'application/xhtml+xml'):
+-                form_token = self.form_token
+-            data = self.hdf.render(template, form_token)
++            data = self.hdf.render(template)
+ 
+         self.send_response(status)
+         self.send_header('Cache-control', 'must-revalidate')
+diff -uar usr/share/python-support/trac/trac/web/auth.py /usr/share/python-support/trac/trac/web/auth.py
 --- usr/share/python-support/trac/trac/web/auth.py	2006-11-07 14:09:23.000000000 +0100
-+++ /usr/share/python-support/trac/trac/web/auth.py	2007-07-07 21:22:41.637625828 +0200
-@@ -83,7 +78,7 @@
++++ /usr/share/python-support/trac/trac/web/auth.py	2007-07-08 21:17:56.276255841 +0200
+@@ -83,7 +83,7 @@
  
      def get_navigation_items(self, req):
          if req.authname and req.authname != 'anonymous':
@@ -989,19 +1869,7 @@ diff -uNr usr/share/python-support/trac/trac/web/auth.py /usr/share/python-suppo
              yield ('metanav', 'logout',
                     html.A('Logout', href=req.href.logout()))
          else:
-@@ -118,19 +113,19 @@
-         problems on installations authenticating against Windows which is not
-         case sensitive regarding user names and domain names
-         """
-         if not req.remote_user:
-             raise TracError(html("Authentication information not available. "
-                                  "Please refer to the ",
-                                  html.a('installation documentation',
-                                         title="Configuring Authentication",
-                                         href=req.href.wiki('TracInstall') +
-                                         "#ConfiguringAuthentication"), "."))
-         remote_user = req.remote_user
-         if self.ignore_case:
+@@ -130,7 +130,7 @@
              remote_user = remote_user.lower()
  
          assert req.authname in ('anonymous', remote_user), \
@@ -1010,7 +1878,8 @@ diff -uNr usr/share/python-support/trac/trac/web/auth.py /usr/share/python-suppo
  
          cookie = hex_entropy()
          db = self.env.get_db_cnx()
-diff -uNr usr/share/python-support/trac/trac/web/chrome.py /usr/share/python-support/trac/trac/web/chrome.py
+Alleen in /usr/share/python-support/trac/trac/web: auth.py~\n
+diff -uar usr/share/python-support/trac/trac/web/chrome.py /usr/share/python-support/trac/trac/web/chrome.py
 --- usr/share/python-support/trac/trac/web/chrome.py	2006-09-11 09:11:49.000000000 +0200
 +++ /usr/share/python-support/trac/trac/web/chrome.py	2007-05-03 20:08:26.938050927 +0200
 @@ -277,7 +277,7 @@
@@ -1022,24 +1891,93 @@ diff -uNr usr/share/python-support/trac/trac/web/chrome.py /usr/share/python-sup
          add_stylesheet(req, 'common/css/trac.css')
          add_script(req, 'common/js/trac.js')
  
-diff -uNr usr/share/python-support/trac/trac/web/main.py /usr/share/python-support/trac/trac/web/main.py
---- usr/share/python-support/trac/trac/web/main.py	2006-12-01 13:40:48.000000000 +0100
-+++ /usr/share/python-support/trac/trac/web/main.py	2007-05-03 20:08:26.948051291 +0200
-@@ -16,21 +16,21 @@
+diff -uar usr/share/python-support/trac/trac/web/clearsilver.py /usr/share/python-support/trac/trac/web/clearsilver.py
+--- usr/share/python-support/trac/trac/web/clearsilver.py	2006-11-13 12:41:07.000000000 +0100
++++ /usr/share/python-support/trac/trac/web/clearsilver.py	2007-05-03 20:08:26.938050927 +0200
+@@ -14,8 +14,6 @@
+ #
  # Author: Christopher Lenz <cmlenz@gmx.de>
- #         Matthew Good <trac@matt-good.net>
  
- import cgi
- import dircache
- import locale
- import os
- import sys
- import urllib
+-from HTMLParser import HTMLParser
+-
+ from trac.core import TracError
+ from trac.util.html import Markup, Fragment, escape
+ from trac.util.text import to_unicode
+@@ -276,7 +274,7 @@
+         cs.parseStr(string)
+         return cs
  
- from trac.config import ExtensionOption, OrderedExtensionsOption
- from trac.core import *
- from trac.env import open_environment
- from trac.perm import PermissionCache, NoPermissionCache, PermissionError
+-    def render(self, template, form_token=None):
++    def render(self, template):
+         """Render the HDF using the given template.
+ 
+         The template parameter can be either an already parse neo_cs.CS
+@@ -288,60 +286,7 @@
+             import neo_cs
+             template = neo_cs.CS(self.hdf)
+             template.parseFile(filename)
+-
+-        if form_token:
+-            from cStringIO import StringIO
+-            out = StringIO()
+-            injector = FormTokenInjector(form_token, out)
+-            injector.feed(template.render())
+-            return out.getvalue()
+-        else:
+-            return template.render()
+-
+-
+-class FormTokenInjector(HTMLParser):
+-    """Identify and protect forms from CSRF attacks
+-
+-    This filter works by adding a hidden input field to all POST forms.
+-    """
+-    def __init__(self, form_token, out):
+-        HTMLParser.__init__(self)
+-        self.out = out
+-        self.token = form_token
+-
+-    def handle_starttag(self, tag, attrs):
+-        self.out.write(self.get_starttag_text())
+-        if tag.lower() == 'form':
+-            for name, value in attrs:
+-                if name.lower() == 'method' and value.lower() == 'post':
+-                    self.out.write('<div><input type="hidden" '
+-                                   ' name="__FORM_TOKEN" value="%s" /></div>'
+-                                   % self.token)
+-                    break
+-
+-    def handle_startendtag(self, tag, attrs):
+-        self.out.write(self.get_starttag_text())
+-
+-    def handle_charref(self, name):
+-        self.out.write('&#%s;' % name)
+-
+-    def handle_entityref(self, name):
+-        self.out.write('&%s;' % name)
+-
+-    def handle_comment(self, data):
+-        self.out.write('<!--%s-->' % data)
+-
+-    def handle_decl(self, data):
+-        self.out.write('<!%s>' % data)
+-
+-    def handle_pi(self, data):
+-        self.out.write('<?%s>' % data)
+-
+-    def handle_data(self, data):
+-        self.out.write(data)
+-
+-    def handle_endtag(self, tag):
+-        self.out.write('</' + tag + '>')
++        return template.render()
+ 
+ 
+ if __name__ == '__main__':
+diff -uar usr/share/python-support/trac/trac/web/main.py /usr/share/python-support/trac/trac/web/main.py
+--- usr/share/python-support/trac/trac/web/main.py	2006-12-01 13:40:48.000000000 +0100
++++ /usr/share/python-support/trac/trac/web/main.py	2007-07-08 21:16:11.179162533 +0200
+@@ -30,7 +30,7 @@
  from trac.util import reversed, get_last_traceback, hex_entropy
  from trac.util.datefmt import format_datetime, http_date
  from trac.util.html import Markup
@@ -1048,7 +1986,119 @@ diff -uNr usr/share/python-support/trac/trac/web/main.py /usr/share/python-suppo
  from trac.web.api import *
  from trac.web.chrome import Chrome
  from trac.web.clearsilver import HDFWrapper
-diff -uNr usr/share/python-support/trac/trac/wiki/web_ui.py /usr/share/python-support/trac/trac/wiki/web_ui.py
+Alleen in /usr/share/python-support/trac/trac/web: main.py~\n
+diff -uar usr/share/python-support/trac/trac/web/modpython_frontend.py /usr/share/python-support/trac/trac/web/modpython_frontend.py
+--- usr/share/python-support/trac/trac/web/modpython_frontend.py	2006-10-24 11:54:48.000000000 +0200
++++ /usr/share/python-support/trac/trac/web/modpython_frontend.py	2007-05-03 20:08:26.948051291 +0200
+@@ -33,8 +33,8 @@
+     def read(self, size=-1):
+         return self.req.read(size)
+ 
+-    def readline(self, size=-1):
+-        return self.req.readline(size)
++    def readline(self):
++        return self.req.readline()
+ 
+     def readlines(self, hint=-1):
+         return self.req.readlines(hint)
+diff -uar usr/share/python-support/trac/trac/web/standalone.py /usr/share/python-support/trac/trac/web/standalone.py
+--- usr/share/python-support/trac/trac/web/standalone.py	2006-11-07 14:11:39.000000000 +0100
++++ /usr/share/python-support/trac/trac/web/standalone.py	2007-05-03 20:08:26.948051291 +0200
+@@ -99,10 +99,6 @@
+ 
+     server_version = 'tracd/' + VERSION
+ 
+-    def address_string(self):
+-        # Disable reverse name lookups
+-        return self.client_address[:2][0]
+-
+ 
+ def main():
+     from optparse import OptionParser, OptionValueError
+diff -uar usr/share/python-support/trac/trac/wiki/api.py /usr/share/python-support/trac/trac/wiki/api.py
+--- usr/share/python-support/trac/trac/wiki/api.py	2006-12-09 01:10:24.000000000 +0100
++++ /usr/share/python-support/trac/trac/wiki/api.py	2007-05-03 20:08:56.729137258 +0200
+@@ -230,9 +230,8 @@
+ 
+     # IWikiSyntaxProvider methods
+ 
+-    XML_NAME = r"[\w:](?<!\d)(?:[\w:.-]*[\w-])?"
+-    # See http://www.w3.org/TR/REC-xml/#id,
+-    # here adapted to exclude terminal "." and ":" characters
++    XML_NAME = r"[\w:](?<!\d)(?:[\w:.-]*?[\w:-])*"
++    # See http://www.w3.org/TR/REC-xml/#id, here adapted to exclude terminal "."
+ 
+     def format_page_name(self, page):
+         if self.split_page_names:
+@@ -244,7 +243,7 @@
+         wiki_page_name = (
+             r"[A-Z][a-z]+(?:[A-Z][a-z]*[a-z/])+" # wiki words
+             r"(?:#%s)?" % self.XML_NAME + # optional fragment id
+-            r"(?=:(?:\Z|\s)|[^:a-zA-Z]|\s|\Z)" # what should follow it
++            r"(?=:?\Z|:?\s|[.,;!?\)}\'\"\]])" # what should follow it
+             )
+         
+         # Regular WikiPageNames
+diff -uar usr/share/python-support/trac/trac/wiki/formatter.py /usr/share/python-support/trac/trac/wiki/formatter.py
+--- usr/share/python-support/trac/trac/wiki/formatter.py	2006-10-22 00:07:46.000000000 +0200
++++ /usr/share/python-support/trac/trac/wiki/formatter.py	2007-05-03 20:08:56.729137258 +0200
+@@ -164,7 +164,7 @@
+ 
+     QUOTED_STRING = r"'[^']+'|\"[^\"]+\""
+ 
+-    SHREF_TARGET_FIRST = r"[a-zA-Z0-9/?!#@]" # we don't want "_"
++    SHREF_TARGET_FIRST = r"[\w/?!#@]"
+     SHREF_TARGET_MIDDLE = r"(?:\|(?=[^|\s])|[^|<>\s])"
+     SHREF_TARGET_LAST = r"[a-zA-Z0-9/=]" # we don't want "_"
+ 
+@@ -214,9 +214,9 @@
+         #  * list
+         r"(?P<list>^(?P<ldepth>\s+)(?:[-*]|\d+\.|[a-zA-Z]\.|[ivxIVX]{1,5}\.) )",
+         # definition:: 
+-        r"(?P<definition>^\s+((?:%s[^%s]*%s|%s.*?%s|[^%s%s:]|:[^:])+::)(?:\s+|$))"
+-        % (INLINE_TOKEN, INLINE_TOKEN, INLINE_TOKEN,
+-           STARTBLOCK_TOKEN, ENDBLOCK_TOKEN, INLINE_TOKEN, STARTBLOCK[0]),
++        r"(?P<definition>^\s+((?:%s.*?%s|%s.*?%s|[^%s%s])+?::)(?:\s+|$))"
++        % (INLINE_TOKEN, INLINE_TOKEN, STARTBLOCK_TOKEN, ENDBLOCK_TOKEN,
++           INLINE_TOKEN, STARTBLOCK[0]),
+         # (leading space)
+         r"(?P<indent>^(?P<idepth>\s+)(?=\S))",
+         # || table ||
+diff -uar usr/share/python-support/trac/trac/wiki/intertrac.py /usr/share/python-support/trac/trac/wiki/intertrac.py
+--- usr/share/python-support/trac/trac/wiki/intertrac.py	2006-10-11 07:03:13.000000000 +0200
++++ /usr/share/python-support/trac/trac/wiki/intertrac.py	2007-05-03 20:08:56.729137258 +0200
+@@ -61,9 +61,8 @@
+     def render_macro(self, req, name, content):
+         intertracs = {}
+         for key, value in self.config.options('intertrac'):
+-            idx = key.rfind('.') # rsplit only in 2.4
+-            if idx > 0: # 0 itself doesn't help much: .xxx = ...
+-                prefix, attribute = key[:idx], key[idx+1:]
++            if '.' in key:
++                prefix, attribute = key.split('.', 1)
+                 intertrac = intertracs.setdefault(prefix, {})
+                 intertrac[attribute] = value
+             else:
+diff -uar usr/share/python-support/trac/trac/wiki/macros.py /usr/share/python-support/trac/trac/wiki/macros.py
+--- usr/share/python-support/trac/trac/wiki/macros.py	2006-10-24 10:12:48.000000000 +0200
++++ /usr/share/python-support/trac/trac/wiki/macros.py	2007-05-03 20:08:56.729137258 +0200
+@@ -125,13 +125,10 @@
+         return html.DIV(
+             [html.H3(date) +
+              html.UL([html.LI(
+-            html.A(wiki.format_page_name(name), href=req.href.wiki(name)),
+-            ' ',
+-            version > 1 and 
++            html.A(wiki.format_page_name(name), href=req.href.wiki(name)), ' ',
+             html.SMALL('(', html.A('diff',
+                                    href=req.href.wiki(name, action='diff',
+-                                                      version=version)), ')') \
+-            or None)
++                                                      version=version)), ')'))
+                       for name, version in entries])
+              for date, entries in entries_per_date])
+ 
+diff -uar usr/share/python-support/trac/trac/wiki/web_ui.py /usr/share/python-support/trac/trac/wiki/web_ui.py
 --- usr/share/python-support/trac/trac/wiki/web_ui.py	2006-11-11 16:05:36.000000000 +0100
 +++ /usr/share/python-support/trac/trac/wiki/web_ui.py	2007-05-03 20:08:56.729137258 +0200
 @@ -67,7 +67,7 @@
@@ -1060,6 +2110,14 @@ diff -uNr usr/share/python-support/trac/trac/wiki/web_ui.py /usr/share/python-su
                        accesskey=6))
  
      # IPermissionRequestor methods
+@@ -127,7 +127,6 @@
+         elif action == 'history':
+             self._render_history(req, db, page)
+         else:
+-            req.perm.assert_permission('WIKI_VIEW')            
+             format = req.args.get('format')
+             if format:
+                 Mimeview(self.env).send_converted(req, 'text/x-trac-wiki',
 @@ -142,7 +141,7 @@
  
      def get_timeline_filters(self, req):
@@ -1078,3 +2136,21 @@ diff -uNr usr/share/python-support/trac/trac/wiki/web_ui.py /usr/share/python-su
                                 wiki.format_page_name(name), author)
                  diff_link = html.A('diff', href=href.wiki(name, action='diff',
                                                            version=version))
+@@ -170,6 +169,8 @@
+                 yield 'wiki', href.wiki(name), title, t, author, comment
+ 
+             # Attachments
++            def display(id):
++                return Markup('ticket ', html.EM('#', id))
+             att = AttachmentModule(self.env)
+             for event in att.get_timeline_events(req, db, 'wiki', format,
+                                                  start, stop,
+@@ -417,6 +418,8 @@
+         req.hdf['wiki.history'] = history
+ 
+     def _render_view(self, req, db, page):
++        req.perm.assert_permission('WIKI_VIEW')
++
+         page_name = self._set_title(req, page, '')
+         if page.name == 'WikiStart':
+             req.hdf['title'] = ''
