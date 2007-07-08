@@ -12,6 +12,7 @@
 <body>
 <h2>Manage Site Files</h2>
 
+<py:if test="'SITEUPLOAD_UPLOAD' in perm(context)">
 <form id="addfile" class="addnew" method="post" enctype="multipart/form-data">
  <fieldset>
   <legend>Upload File:</legend>
@@ -34,6 +35,7 @@
   </div>
  </fieldset>
 </form>
+</py:if>
 
 <form method="post">
     <table class="listing" id="sitelist">
@@ -42,7 +44,9 @@
         </thead>
         <tbody>
             <tr py:for="file in siteupload.files" >
+                <py:if test="'SITEUPLOAD_MANAGE' in perm(context)">
                 <td><input type="checkbox" name="sel" value="${file.name}" /></td>
+                </py:if>
                 <td>${file.link}</td>
                 <td>${file.size}</td>
             </tr>

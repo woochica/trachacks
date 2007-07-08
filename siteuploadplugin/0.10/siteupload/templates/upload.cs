@@ -1,5 +1,6 @@
 <h2>Manage Site Files</h2>
 
+<?cs if:trac.acl.SITEUPLOAD_UPLOAD ?>
 <form id="addfile" class="addnew" method="post" enctype="multipart/form-data">
  <fieldset>
   <legend>Upload File:</legend>
@@ -21,6 +22,7 @@
   </div>
  </fieldset>
 </form>
+<?cs /if ?>
 
 <form method="post">
     <table class="listing" id="sitelist">
@@ -30,7 +32,9 @@
         <tbody>
             <?cs each:file = siteupload.files ?>
             <tr>
+                <?cs if:trac.acl.SITEUPLOAD_MANAGE ?>
                 <td><input type="checkbox" name="sel" value="<?cs var:file.name ?>" /></td>
+                <?cs /if ?>
                 <td><?cs var:file.link ?></td>
                 <td><?cs var:file.size ?></td>
             </tr>

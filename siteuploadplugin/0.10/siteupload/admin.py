@@ -16,7 +16,7 @@
 
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, PermissionError
 from trac.util import Markup, pretty_size
 from webadmin.web_ui import IAdminPageProvider
 
@@ -43,11 +43,12 @@ class SiteuploadAdminPage(Component):
 
     # IAdminPageProvider methods
     def get_admin_pages(self, req):
-        if req.perm.has_permission('SITEUPLOAD_ADMIN'):
+        if req.perm.has_permission('SITEUPLOAD_MANAGE') or req.perm.has_permission('SITEUPLOAD_MANAGE'):
             yield ('siteupload', 'Site Files', 'files', 'Files')
 
     def process_admin_request(self, req, cat, page, path_info):
-        assert req.perm.has_permission('SITEUPLOAD_ADMIN')
+        if not req.perm.has_permission('SITEUPLOAD_MANAGE') and not req.perm.has_permission('SITEUPLOAD_UPLOAD'):
+            raise PermissionError('SITEUPLOAD_MANAGE or SITEUPLOAD_UPLOAD')
         target_path = os.path.join(self.env.path, 'htdocs')
         if not (os.path.exists(target_path) and os.path.isdir(target_path) and os.access(target_path, os.F_OK + os.W_OK)):
             req.hdf['siteupload.readonly'] = True
@@ -55,8 +56,12 @@ class SiteuploadAdminPage(Component):
             req.hdf['siteupload.readonly'] = False
         if req.method == 'POST':
             if req.args.has_key('delete'):
+                if not req.perm.has_permission('SITEUPLOAD_MANAGE'):
+                    raise PermissionError('SITEUPLOAD_MANAGE')
                 self._do_delete(req)
             elif req.args.has_key('upload'):
+                if not req.perm.has_permission('SITEUPLOAD_UPLOAD'):
+                    raise PermissionError('SITEUPLOAD_UPLOAD')
                 self._do_upload(req)
             else:
                 self.log.warning('Unknown POST request: %s', req.args)                                                                               
