@@ -153,12 +153,10 @@ wlAddEventListener(window, 'load', InitWorklog)
             button_js = ''
             if req.authname != 'anonymous':
                 if mgr.can_work_on(ticket):
-                    self.log.debug('Hello')
                     # Display a "Work on Link" button.
                     button_js = self.get_button_js(req, ticket)
                 elif task and task['ticket'] == ticket:
                     # We are currnetly working on this, so display the stop button...
-                    self.log.debug('Bye')
                     button_js = self.get_button_js(req, ticket, True)
 
             yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(task_js, ticket_js, button_js)
