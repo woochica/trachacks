@@ -180,6 +180,7 @@ class SVNHooksPlugin(Component):
 	req.hdf['svnhooks.project_name'] = project_name
         req.hdf['svnhooks.description'] = description
 	
+        add_stylesheet(req, 'svnhooks/css/svnhooks.css')
         return 'svnhooks.cs', None
 
     # ITemplateProvider methods
