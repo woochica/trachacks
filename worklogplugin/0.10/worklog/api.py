@@ -13,6 +13,7 @@ from webui import *
 from webadminui import * 
 from uihooks_ticket import *
 from timeline_hook import *
+from ticket_daemon import *
 
 ## report columns
 ## id|author|title|query|description

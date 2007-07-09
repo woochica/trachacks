@@ -17,7 +17,7 @@
     </div>
     <div class="field">
       <input type="checkbox" id="autostop" name="autostop" value="1" <?cs var:settings.autostop ?>>
-      <label for="autostop" style="text-decoration: line-through">Stop work automatically if ticket is closed?</label>
+      <label for="autostop">Stop work automatically if ticket is closed?</label>
     </div>
     <div class="field">
       <input type="checkbox" id="autoreassignaccept" name="autoreassignaccept" value="1" <?cs var:settings.autoreassignaccept ?>>
