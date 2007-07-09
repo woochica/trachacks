@@ -1,6 +1,6 @@
 import re
 import dbhelper
-from time import time
+import time
 #from ticket_daemon import *
 from usermanual import *
 #from reports import all_reports
@@ -180,7 +180,7 @@ class WorkLogSetupParticipant(Component):
 
     def do_user_man_update(self):
 
-        when = int(time())
+        when = int(time.time())
         sql = """
         INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly)
         VALUES ( %s, %s, %s, 'Timing and Estimation Plugin', '127.0.0.1', %s,'',0)
