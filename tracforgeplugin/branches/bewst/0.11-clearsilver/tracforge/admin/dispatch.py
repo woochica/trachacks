@@ -76,7 +76,12 @@ class TracForgeDispatcherModule(Component):
         # can read it again.  If we don't do this, POST data gets lost because
         # the original stream has already been read once.
         if environ['wsgi.input']:
-            data = urllib.urlencode(req.args) 
+            args = {} 
+            for k,v in req.args.iteritems():
+                if isinstance(v, unicode):
+                    v = v.encode('utf-8')
+                args[k] = v
+            data = urllib.urlencode(args) 
             class InputStream:
                 def __init__(self, data):
                     self.data = data
@@ -86,6 +91,8 @@ class TracForgeDispatcherModule(Component):
                     return result
                 
             environ['wsgi.input'] = InputStream(data)
+            # This doesn't match up sometimes. Don't know why yet.
+            environ['CONTENT_LENGTH'] = len(data)
 
         req._response = dispatch_request(environ, start_response)
         
