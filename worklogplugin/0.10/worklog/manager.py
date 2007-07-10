@@ -1,7 +1,10 @@
 from time import time
+from datetime import tzinfo, timedelta, datetime
+from util import pretty_timedelta
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket import Ticket
 from trac.ticket.web_ui import TicketModule
+from trac.util.datefmt import format_date, format_time
 
 class WorkLogManager:
     env = None
@@ -155,6 +158,39 @@ class WorkLogManager:
                        'SET endtime=%s, lastchange=%s '
                        'WHERE user=%s AND lastchange=%s AND endtime=0',
                        (stoptime, stoptime, self.authname, active['lastchange']))
+
+        message = ''
+        if self.config.getbool('worklog', 'comment'):
+            started = datetime.fromtimestamp(active['starttime'])
+            finished = datetime.fromtimestamp(stoptime)
+            message = '%s worked on this ticket for %s between %s %s and %s %s' % \
+                      (self.authname, pretty_timedelta(started, finished), \
+                       format_date(active['starttime']), format_time(active['starttime']), \
+                       format_date(stoptime), format_time(stoptime))
+        if self.config.getbool('worklog', 'timingandestimation') and \
+               self.config.get('ticket-custom', 'hours'):
+            if not message:
+                message = 'Hours recorded automatically by the worklog plugin.'
+
+            round_delta = float(self.config.getint('worklog', 'roundup') or 1)
+            
+            # Get the delta in minutes
+            delta = float(int(stoptime) - int(active['starttime'])) / float(60)
+            
+            # Round up if needed
+            delta = int(round((delta / round_delta) + float(0.5))) * int(round_delta)
+            
+            db = self.env.get_db_cnx()
+            tckt = Ticket(self.env, active['ticket'], db)
+            tckt['hours'] = str(float(delta) / 60)
+            self.save_ticket(tckt, db, message)
+            message = ''
+
+        if message:
+            db = self.env.get_db_cnx()
+            tckt = Ticket(self.env, active['ticket'], db)
+            self.save_ticket(tckt, db, message)
+        
         return True
 
 
