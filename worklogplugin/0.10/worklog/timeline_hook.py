@@ -45,10 +45,11 @@ class WorkLogTimelineAddon(Component):
                            % (start, stop))
             previous_update = None
             for user,ticket,time,starttime,kind,humankind,summary in cursor:
+                summary = Markup.escape(summary)
                 ticket_href = href.ticket(ticket)
                 if format == 'rss':
-                    title = '%s %s working on Ticket #%s: %s' % \
-                            (user, humankind, ticket, summary)
+                    title = Markup('%s %s working on Ticket #%s (%s)' % \
+                                   (user, humankind, ticket, summary))
                 else:
                     title = Markup('%s %s working on Ticket <em title="%s">#%s</em>' % \
                                    (user, humankind, summary, ticket))

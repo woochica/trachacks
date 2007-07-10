@@ -1,7 +1,7 @@
 from datetime import datetime
 
 # Stolen from Trac trunk :)
-def pretty_timedelta(time1, time2=None, full=False):
+def pretty_timedelta(time1, time2=None):
     """Calculate time delta (inaccurately, only for decorative purposes ;-) for
     prettyprinting. If time1 is None, the current time is used."""
     if not time1: time1 = datetime.now()
@@ -17,18 +17,15 @@ def pretty_timedelta(time1, time2=None, full=False):
     diff = time2 - time1
     age_s = int(diff.days * 86400 + diff.seconds)
     if age_s < 60:
-        return '%i second%s' % (age_s, age_s != 1 and 's' or '')
+        return 'less than a minute'
     rv = ''
     for u, unit, unit_plural in units:
-        r = float(age_s) / float(u)
-        if r >= 0.9:
-            r = int(round(r))
+        r = int(float(age_s) / float(u))
+        if r > 0:
             tmp_rv = '%d %s' % (r, r == 1 and unit or unit_plural)
-            if not full:
-                return tmp_rv
             if rv:
                 rv += ', '
             rv += tmp_rv
-            age_s = float(age_s) - (r * float(u)) 
+        age_s = float(age_s) - (r * float(u)) 
     return rv
 

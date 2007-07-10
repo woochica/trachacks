@@ -42,14 +42,14 @@ class WorkLogTicketAddon(Component):
   a.appendChild(document.createTextNode('#""" + str(task['ticket']) + """'));
   li_task.appendChild(a);"""
 
-            timedelta = pretty_timedelta(datetime.fromtimestamp(task['starttime']), None, True);
+            timedelta = pretty_timedelta(datetime.fromtimestamp(task['starttime']), None);
             script += """
   li_task.appendChild(document.createTextNode(' for """ + timedelta + """'));"""
         return script;
 
 
     def get_ticket_js(self, who, since):
-        timedelta = pretty_timedelta(datetime.fromtimestamp(since), None, True);
+        timedelta = pretty_timedelta(datetime.fromtimestamp(since), None);
         script = """
   li_tctk = document.createElement('li');
   ul.appendChild(li_tctk);
