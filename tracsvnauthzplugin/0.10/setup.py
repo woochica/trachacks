@@ -16,6 +16,6 @@ setup(
   install_requires = ['TracWebAdmin'],
   packages=['svnauthz'],
   entry_points={'trac.plugins': '%s = svnauthz' % PACKAGE},
-  package_data={'svnauthz': ['htdocs/css/*.css', 'templates/*.cs']},
+  package_data={'svnauthz': ['templates/*.cs']},
 )
 		  

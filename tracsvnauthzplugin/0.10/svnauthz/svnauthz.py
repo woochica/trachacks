@@ -1,8 +1,7 @@
 from trac.core import *
-from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.web.chrome import ITemplateProvider
 from webadmin.web_ui import IAdminPageProvider
 import os
-import string
 
 class SVNAuthzPlugin(Component):
     implements(ITemplateProvider, IAdminPageProvider)
@@ -43,7 +42,6 @@ class SVNAuthzPlugin(Component):
 
 	req.hdf['svnauthz.current'] = current
 
-        add_stylesheet(req, 'svnauthz/css/svnauthz.css')
         return 'svnauthz.cs', None
 
 
@@ -52,7 +50,5 @@ class SVNAuthzPlugin(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
-
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-	return [('svnauthz', resource_filename(__name__, 'htdocs'))]
+	return []
