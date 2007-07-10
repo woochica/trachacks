@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.web.chrome import ITemplateProvider
 from webadmin.web_ui import IAdminPageProvider
 import string
 import os
@@ -180,8 +180,8 @@ class SVNHooksPlugin(Component):
 	req.hdf['svnhooks.project_name'] = project_name
         req.hdf['svnhooks.description'] = description
 	
-        add_stylesheet(req, 'svnhooks/css/svnhooks.css')
         return 'svnhooks.cs', None
+
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -189,5 +189,4 @@ class SVNHooksPlugin(Component):
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('svnhooks', resource_filename(__name__, 'htdocs'))]
+        return []
