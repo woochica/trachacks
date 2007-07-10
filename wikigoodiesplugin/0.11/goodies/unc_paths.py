@@ -21,7 +21,7 @@ class UNCPathLink(Component):
 
     # IWikiSyntaxProvider methods
 
-    _unc_path_regexp = r"\\\\[^\s\\]+(?:\\[^\s\\]*)*"
+    _unc_path_regexp = r"!?\\\\[^\s\\]+(?:\\[^\s\\]*)*"
     
     def get_wiki_syntax(self):
         yield (self._unc_path_regexp,

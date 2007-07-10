@@ -49,7 +49,7 @@ class Symbols(Component):
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
-        yield (prepare_regexp(SYMBOLS), self._format_symbol)
+        yield ("!?" + prepare_regexp(SYMBOLS), self._format_symbol)
 
     def get_link_resolvers(self):
         return []

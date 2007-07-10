@@ -62,8 +62,8 @@ class Entities(Component):
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
-        yield (r"&#\d+;", self._format_entity)
-        yield (r"&(?:%s);" % '|'.join(ENTITIES), self._format_entity)
+        yield (r"!?&#\d+;", self._format_entity)
+        yield (r"!?&(?:%s);" % '|'.join(ENTITIES), self._format_entity)
 
     def get_link_resolvers(self):
         return []

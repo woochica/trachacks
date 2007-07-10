@@ -77,7 +77,8 @@ class Smileys(Component):
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
-        yield (r"(?<!\w)(?:%s)" % prepare_regexp(SMILEYS), self._format_smiley)
+        yield (r"(?<!\w)!?(?:%s)" % prepare_regexp(SMILEYS),
+               self._format_smiley)
 
     def get_link_resolvers(self):
         return []

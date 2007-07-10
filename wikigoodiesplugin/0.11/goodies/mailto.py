@@ -21,7 +21,7 @@ class MailToLink(Component):
 
     # IWikiSyntaxProvider methods
 
-    _email_regexp = r"<[^@]+@[^>]+>"
+    _email_regexp = r"!?<[^@]+@[^>]+>"
     
     def get_wiki_syntax(self):
         chrome = Chrome(self.env)

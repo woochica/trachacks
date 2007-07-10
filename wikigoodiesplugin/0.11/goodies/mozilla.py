@@ -32,7 +32,7 @@ class Mozilla(Component):
                 return tag.em(expr)
             else:
                 return tag.span(expr, class_='underline')
-        yield (r"(?:^|(?<=\W))(?:\*%s\*|/%s/|_%s_)(?:(?=\W)|$)" % ((word,)*3),
+        yield (r"(?<!\w)!?(?:\*%s\*|/%s/|_%s_)(?:(?=\W)|$)" % ((word,)*3),
                mozillate)
 
     def get_link_resolvers(self):
