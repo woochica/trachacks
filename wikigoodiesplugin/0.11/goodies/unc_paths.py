@@ -12,23 +12,21 @@
 from genshi.builder import tag
 
 from trac.core import implements, Component
-from trac.web.chrome import Chrome
 from trac.wiki import IWikiSyntaxProvider
 
-class MailToLink(Component):
+
+class UNCPathLink(Component):
 
     implements(IWikiSyntaxProvider)
 
     # IWikiSyntaxProvider methods
 
-    _email_regexp = r"<[^@]+@[^>]+>"
+    _unc_path_regexp = r"\\\\[^\s\\]+(?:\\[^\s\\]*)*"
     
     def get_wiki_syntax(self):
-        chrome = Chrome(self.env)
-        def mailto(formatter, match, fullmatch):
-            return tag.a(chrome.format_author(formatter.req, match),
-                         href="mailto:"+match[1:-1])
-        yield (self._email_regexp, mailto)
+        yield (self._unc_path_regexp,
+               (lambda x, y, z:
+                tag.a(y, href='file:///'+y.replace('\\', '/'))))
 
     def get_link_resolvers(self):
         return []

@@ -15,6 +15,8 @@ import re
 
 from genshi.builder import tag
 
+from pkg_resources import resource_filename
+
 from trac.core import implements, Component
 from trac.web.chrome import ITemplateProvider
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
@@ -47,9 +49,12 @@ SMILEYS = {
     "(!)": "idea.png",
     "<!>": "attention.png",
     '/!\\': "alert.png",
-    "{1}": "prio1.png",
-    "{2}": "prio2.png",
-    "{3}": "prio3.png",
+    "{p1}": "prio1.png",
+    "{p2}": "prio2.png",
+    "{p3}": "prio3.png",
+    "{P1}": "prio1.png",
+    "{P2}": "prio2.png",
+    "{P3}": "prio3.png",
     "{o}": "star_off.png",
     "{*}": "star_on.png",
     "{OK}": "thumbs-up.png",
@@ -64,7 +69,6 @@ class Smileys(Component):
     # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('smileys', resource_filename(__name__, 'htdocs/modern/img'))]
                 
     def get_templates_dirs(self):
@@ -73,7 +77,7 @@ class Smileys(Component):
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
-        yield (prepare_regexp(SMILEYS), self._format_smiley)
+        yield (r"(?<!\w)(?:%s)" % prepare_regexp(SMILEYS), self._format_smiley)
 
     def get_link_resolvers(self):
         return []
@@ -92,7 +96,7 @@ class Smileys(Component):
                 "Optional argument is the number of columns in the table "
                 "(defaults 3).")
 
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
         return render_table(SMILEYS.keys(), content,
-                            lambda s: self._format_smiley(req, s, None))
+                            lambda s: self._format_smiley(formatter, s, None))
 

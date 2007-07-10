@@ -5,8 +5,8 @@ from setuptools import setup
 setup(name='TracWikiGoodies',
       description='Plugin for Trac which extends the Wiki with some goodies',
       keywords='trac wiki plugin smileys entities symbols',
-      url='http://trac-hacks.swapoff.org/wiki/WikiGoodiesPlugin',
-      version='0.11.1',
+      url='http://trac-hacks.org/wiki/WikiGoodiesPlugin',
+      version='0.11.2',
       license='BSD',
       author='Christian Boos',
       author_email='cboos@neuf.fr',
@@ -16,6 +16,9 @@ setup(name='TracWikiGoodies',
 
       Single words surrounded by "*", "/" or "_" characters are tranformed
       to bold, italic and underline text, respectively.
+
+      E-mail are transformed to "mailto:" links and UNC paths are transformed
+      to "file:" links.
 
       It also comes with a set of 3 macros that can be used
       to provide a visual index of the markup:
