@@ -92,31 +92,24 @@ class WorkLogPage(Component):
         def addMessage(s):
             messages.extend([s]);
 
-        def start_work(authname, ticket):
-            tckt_link = '#' + ticket
-
-            mgr = WorkLogManager(self.env, self.config, req.authname)
-            if not mgr.start_work(ticket):
-                addMessage(mgr.get_explanation())
-                return
-            addMessage("You are now working on ticket " + tckt_link + ".")
-
-        def stop_work(authname):
-            mgr = WorkLogManager(self.env, self.config, req.authname)
-            if not mgr.stop_work():
-                addMessage(mgr.get_explanation())
-                return
-            addMessage('You have stopped working.')
-            
         if not re.search('/worklog', req.path_info):
             return None
 
-
         if req.method == 'POST':
+            mgr = WorkLogManager(self.env, self.config, req.authname)
             if req.args.has_key('startwork') and req.args.has_key('ticket'):
-                start_work(req.authname, req.args["ticket"])
+                if not mgr.start_work(req.args['ticket']):
+                    addMessage(mgr.get_explanation())
+                else:
+                    addMessage('You are now working on ticket #%s.' % (req.args['ticket'],))
             elif req.args.has_key('stopwork'):
-                stop_work(req.authname)
+                stoptime = None
+                if req.args.has_key('stoptime'):
+                    stoptime = int(req.args['stoptime'])
+                if not mgr.stop_work(stoptime):
+                    addMessage(mgr.get_explanation())
+                else:
+                    addMessage('You have stopped working.')
         
         req.hdf["worklog"] = {"messages": messages,
                               "worklog": self.get_worklog(req),

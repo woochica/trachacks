@@ -121,7 +121,8 @@ class WorkLogManager:
         # There is a chance the user may be working on another ticket at the moment
         # depending on config options
         if self.config.getbool('worklog', 'autostopstart'):
-            # Don't care if this fails.
+            # Don't care if this fails, as with these arguments the only failure
+            # point is if there is no active task... which is the desired scenario :)
             self.stop_work()
             self.explanation = ''
             
@@ -132,18 +133,28 @@ class WorkLogManager:
         return True
 
     
-    def stop_work(self):
+    def stop_work(self, stoptime=None):
         active = self.get_active_task()
         if not active:
             self.explanation = 'You cannot stop working as you appear to be a complete slacker already!'
             return False
+
+        if stoptime:
+            if stoptime <= active['starttime']:
+                self.explanation = 'You cannot set your stop time to that value as it is before the start time!'
+                return False
+            elif stoptime >= self.now:
+                self.explanation = 'You cannot set your stop time to that value as it is in the future!'
+                return False
+        else:
+            stoptime = self.now - 1
         
         db = self.env.get_db_cnx();
         cursor = db.cursor()
         cursor.execute('UPDATE work_log '
                        'SET endtime=%s, lastchange=%s '
                        'WHERE user=%s AND lastchange=%s AND endtime=0',
-                       (self.now - 1, self.now - 1, self.authname, active['lastchange']))
+                       (stoptime, stoptime, self.authname, active['lastchange']))
         return True
 
 

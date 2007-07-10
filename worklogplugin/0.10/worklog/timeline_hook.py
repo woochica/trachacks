@@ -57,7 +57,7 @@ class WorkLogTimelineAddon(Component):
                 if kind == 'workstop':
                     started = datetime.fromtimestamp(starttime)
                     finished = datetime.fromtimestamp(time)
-                    message = 'Time spent: ~' + pretty_timedelta(started, finished)
+                    message = 'Time spent: ' + pretty_timedelta(started, finished)
                 yield kind, ticket_href, title, time, user, message
 
 
