@@ -69,7 +69,7 @@ class SVNHooksPlugin(Component):
 	    else:
 	      os.chmod(hookfile,0660)
 	  if req.args.get('savehookfile'):
- 	    current=req.args.get('current').strip()    
+ 	    current=req.args.get('current').strip().replace('\r', '')
             if current:
 	      try:
  	        fp = open(hookfile,'w')
@@ -96,25 +96,25 @@ class SVNHooksPlugin(Component):
 		except:
 		  pass
 	        fp = open(hookfile,'a')
-		fp.writelines('\n')
+		fp.writelines(os.linesep)
 		if 'REPOS="$1"' not in current:
-		  fp.writelines('REPOS="$1"\n')
+		  fp.writelines('REPOS="$1"'+os.linesep)
 		if 'REV="$2"' not in current:
-		  fp.writelines('REV="$2"\n')
-  	        fp.writelines('/usr/lib/subversion/hook-scripts/commit-email.pl "$REPOS" "$REV" \\\n')
+		  fp.writelines('REV="$2"'+os.linesep)
+  	        fp.writelines('/usr/lib/subversion/hook-scripts/commit-email.pl "$REPOS" "$REV" \\'+os.linesep)
                 if smtp_from:
-		  fp.writelines('--from "'+smtp_from+'" \\\n')
+		  fp.writelines('--from "'+smtp_from+'" \\'+os.linesep)
                 if smtp_replyto:
-		  fp.writelines('-r "'+smtp_replyto+'" \\\n')
+		  fp.writelines('-r "'+smtp_replyto+'" \\'+os.linesep)
                 if smtp_default_domain:
-		  fp.writelines('-h "'+smtp_default_domain+'" \\\n')
+		  fp.writelines('-h "'+smtp_default_domain+'" \\'+os.linesep)
                 if mfilter:
-  		  fp.writelines('-m "'+mfilter+'" \\\n')
+  		  fp.writelines('-m "'+mfilter+'" \\'+os.linesep)
 		if subject:
-		  fp.writelines('-s "'+subject+'" \\\n')
+		  fp.writelines('-s "'+subject+'" \\'+os.linesep)
 		for email in emails.strip().split():
-		  fp.writelines(email+' \\\n')
-		fp.writelines('\n')
+		  fp.writelines(email+' \\'+os.linesep)
+		fp.writelines(os.linesep)
 	        fp.close()
 	      except:
 	        raise TracError("Can't write repository hook %s" % hookfile)
@@ -128,26 +128,26 @@ class SVNHooksPlugin(Component):
 		except:
 		  pass
 	        fp = open(hookfile,'a')
-		fp.writelines('\n')
+		fp.writelines(os.linesep)
 		if 'REPOS="$1"' not in current:
-		  fp.writelines('REPOS="$1"\n')
+		  fp.writelines('REPOS="$1"'+os.linesep)
 		if 'REV="$2"' not in current:
-		  fp.writelines('REV="$2"\n')
+		  fp.writelines('REV="$2"'+os.linesep)
 		if 'LOG=' not in current:
-		  fp.writelines('LOG=`/usr/bin/svnlook log -r $REV $REPOS`\n')
+		  fp.writelines('LOG=`/usr/bin/svnlook log -r $REV $REPOS`'+os.linesep)
 		if 'AUTHOR=' not in current:
-		  fp.writelines('AUTHOR=`/usr/bin/svnlook author -r $REV $REPOS`\n')
+		  fp.writelines('AUTHOR=`/usr/bin/svnlook author -r $REV $REPOS`'+os.linesep)
 		if 'TRAC_ENV=' not in current:
-		  fp.writelines('TRAC_ENV="'+self.env.path+'"\n')
+		  fp.writelines('TRAC_ENV="'+self.env.path+'"'+os.linesep)
 		if 'TRAC_URL=' not in current:
-		  fp.writelines('TRAC_URL="'+base_url+'"\n')
-  	        fp.writelines('/usr/bin/python /usr/share/trac/contrib/trac-post-commit-hook \\\n')
-		fp.writelines('-p "$TRAC_ENV" \\\n')
-		fp.writelines('-r "$REV" \\\n')
-		fp.writelines('-u "$AUTHOR" \\\n')
-		fp.writelines('-m "$LOG" \\\n')
-		fp.writelines('-s "$TRAC_URL"\n')
-		fp.writelines('\n')
+		  fp.writelines('TRAC_URL="'+base_url+'"'+os.linesep)
+  	        fp.writelines('/usr/bin/python /usr/share/trac/contrib/trac-post-commit-hook \\'+os.linesep)
+		fp.writelines('-p "$TRAC_ENV" \\'+os.linesep)
+		fp.writelines('-r "$REV" \\'+os.linesep)
+		fp.writelines('-u "$AUTHOR" \\'+os.linesep)
+		fp.writelines('-m "$LOG" \\'+os.linesep)
+		fp.writelines('-s "$TRAC_URL"'+os.linesep)
+		fp.writelines(os.linesep)
 	      except:
 	        raise TracError("Can't write repository hook %s" % hookfile)
 	      
