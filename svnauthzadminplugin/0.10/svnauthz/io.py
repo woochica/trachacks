@@ -124,7 +124,7 @@ class AuthzFileParser:
         assert (len(subjectstr) > 0)        
         if subjectstr.startswith("@"):            
             assert (len(subjectstr) > 1)        
-            subject = m.find_group(subjectstr.lstrip("@"))
+            subject = m.find_group(subjectstr.lstrip("@"), True)
             assert (subject != None)
         else:
             subject = User(subjectstr)

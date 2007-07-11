@@ -149,10 +149,14 @@ class AuthModel:
     def get_paths(self):
         return self.paths
     
-    def find_group(self, name):
+    def find_group(self, name, creategroup=False):
         for g in self.groups:
             if name == g.get_name():
                 return g
+        if creategroup:
+            g = Group(name, [])
+            self.add_group(g)
+            return g
         return None
     
     def find_path(self, path, repo=None):
