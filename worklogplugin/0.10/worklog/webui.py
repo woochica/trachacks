@@ -38,32 +38,22 @@ class WorkLogPage(Component):
 
     # IRequestHandler methods
     def get_worklog(self, req):
-        sql = "SELECT sid,value FROM session_attribute WHERE name='name'"
-        users = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]
-        usermap = {}
-        for (user, name) in users:
-            usermap[user] = name
-
         sql = """
-        SELECT wl.user, wl.starttime, wl.endtime, wl.ticket, t.summary
+        SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary
         FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt
         LEFT JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange
         LEFT JOIN ticket t ON wl.ticket=t.id
+        LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name='name'
         """
         worklog = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]
         log = {}
-        for user in usermap.keys():
-            log[user] = { "user": user,
-                          "name": usermap[user]
-                          }
-        if not worklog:
-            return log
-        
-        for (user,starttime,endtime,ticket,summary) in worklog:
+        for (user,name,starttime,endtime,ticket,summary) in worklog:
             started = datetime.fromtimestamp(starttime)
 
-            log[user] = { "user": user,
-                          "name": usermap[user],
+            dispname = user
+            if name:
+                dispname = '%s (%s)' % (name, user)
+            log[user] = { "name": dispname,
                           "ticket": ticket,
                           "ticket_url": req.href.ticket(ticket),
                           "summary": summary,
