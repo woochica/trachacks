@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>Project Dashboard</title>
+
+  </head>
+
+  <body>
+
+    <div id="ctxtnav" class="nav"></div>
+
+    <div id="content" class="pdashboard">
+      <h1>Project: <em>${project.name}</em></h1>
+	   <p>${project.description}</p>
+
+      <form id="prefs" method="get" action="">
+        <div>
+          <input type="checkbox" id="showall" name="show" value="all"
+                 checked="${showall or None}" />
+          <label for="showall">Show already completed milestones</label>
+        </div>
+        <div class="buttons">
+          <input type="submit" value="Update" />
+        </div>
+      </form>
+
+		
+		<h2>Milestone Summary:</h2>
+		<table style="width: 800px" class="listing milestone">
+	      <thead>
+				<tr>
+					<th style="width: 357px" class="style1">Milestone</th>
+					<th style="width: 219px">Status</th>
+					<th style="width: 91px">New</th>
+					<th style="width: 90px">In-progress</th>
+					<th style="width: 90px">Completed</th>
+					<th style="width: 89px">Total</th>
+					<th style="width: 100px">Complete</th>
+				</tr>
+			</thead>
+			<tbody>
+					<tr py:for="idx, milestone in enumerate(milestones)" class="milestone"
+					    py:with="mstats = milestone_stats[idx]">
+						<td style="width: 357px"><a href="${href.mdashboard(milestone.name)}">${milestone.name}</a></td>
+						<td style="width: 219px">
+							<py:choose>
+								<p py:when="milestone.completed" class="date">
+			                Completed ${dateinfo(milestone.completed)} ago
+			                (${format_date(milestone.completed)})
+			              	</p>
+			              	<p py:when="milestone.is_late" class="date">
+				             <strong>${dateinfo(milestone.due)} late</strong>
+				                (${format_date(milestone.due)})
+				             </p>
+				             <p py:when="milestone.due" class="date">
+				                Due in ${dateinfo(milestone.due)}
+				                (${format_date(milestone.due)})
+				             </p>
+				             <p py:otherwise="" class="date">
+				                No date set
+				             </p>
+			            </py:choose>
+						</td>
+						<td style="width: 91px">${mstats.stats.intervals[2].count}</td>
+						<td style="width: 90px">${mstats.stats.intervals[1].count}</td>
+						<td style="width: 90px">${mstats.stats.intervals[0].count}</td>
+						<td style="width: 89px">${sum([x.count for x in mstats.stats.intervals], 0)}</td>
+						<td style="width: 100px">${'%d%%' % mstats.stats.done_percent}</td>
+					</tr>
+			</tbody>			
+		</table>
+
+    </div>
+
+    <div id="help"><strong>Note:</strong> See
+      <a href="${href.wiki('TracRoadmap')}">TracRoadmap</a> for help on using
+      the roadmap.
+    </div>
+
+  </body>
+</html>
