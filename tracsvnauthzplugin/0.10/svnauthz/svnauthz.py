@@ -23,7 +23,7 @@ class SVNAuthzPlugin(Component):
 
         # evaluate forms
 	if req.method == 'POST':
-	  current=req.args.get('current').strip()
+	  current=req.args.get('current').strip().replace('\r', '')
 	  try:
 	    fp = open(authz_file,'w')
 	    current = fp.write(current)
