@@ -7,7 +7,7 @@ setup(
     name = 'TracCtxtnavAdd',
     version = '2.0',
     packages = ['ctxtnavadd'],
-    package_data={ 'ctxtnavadd' : [ 'templates/*.cs' , 'htdocs/js/*.js' ] },
+    package_data={ 'ctxtnavadd' : [ 'templates/*.js' , 'htdocs/js/*.js' ] },
     author = "Noah Kantrowitz",
     author_email = "coderanger@yahoo.com",
     description = "Allow adding to the ctxtnav bar of other plugins.",
