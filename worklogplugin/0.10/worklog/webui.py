@@ -1,5 +1,4 @@
 import re
-import dbhelper
 from util import *
 from time import time
 from datetime import tzinfo, timedelta, datetime
@@ -38,16 +37,17 @@ class WorkLogPage(Component):
 
     # IRequestHandler methods
     def get_worklog(self, req):
-        sql = """
-        SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary
-        FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt
-        LEFT JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange
-        LEFT JOIN ticket t ON wl.ticket=t.id
-        LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name='name'
-        """
-        worklog = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary '
+                       'FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt '
+                       'LEFT JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange '
+                       'LEFT JOIN ticket t ON wl.ticket=t.id '
+                       'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
+                       'ORDER BY wl.lastchange DESC, wl.user')
+
         log = {}
-        for (user,name,starttime,endtime,ticket,summary) in worklog:
+        for (user,name,starttime,endtime,ticket,summary) in cursor:
             started = datetime.fromtimestamp(starttime)
 
             dispname = user

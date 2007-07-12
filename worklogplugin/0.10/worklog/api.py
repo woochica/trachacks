@@ -1,9 +1,7 @@
 import re
 import dbhelper
 import time
-#from ticket_daemon import *
 from usermanual import *
-#from reports import all_reports
 from trac.log import logger_factory
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
@@ -15,8 +13,6 @@ from uihooks_ticket import *
 from timeline_hook import *
 from ticket_daemon import *
 
-## report columns
-## id|author|title|query|description
    
 class WorkLogSetupParticipant(Component):
     implements(IEnvironmentSetupParticipant)
@@ -25,10 +21,8 @@ class WorkLogSetupParticipant(Component):
     creation and upgrading of Trac environments, for example to create
     additional database tables."""
     def __init__(self):
-        sql = "SELECT id, title FROM report ORDER BY ID"
-        dbhelper.mylog = self.log
-        self.reportmap = dbhelper.get_all(self.env.get_db_cnx(), sql)[1]
-        
+        pass
+    
     def environment_created(self):
         """Called when a new Trac environment is created."""
         if self.environment_needs_upgrade(None):
@@ -53,124 +47,6 @@ class WorkLogSetupParticipant(Component):
             """
             dbhelper.execute_non_query(self.env.get_db_cnx(), sql)
     
-    def reports_need_upgrade(self):
-        return False
-        bit = False
-        report_version = dbhelper.db_table_exists(self.env.get_db_cnx(), 'report_version');
-        if not report_version:
-            return True
-        
-        #make versions hash        
-        _versions = dbhelper.get_result_set(self.env.get_db_cnx(),
-                                           """
-                                           SELECT report as id, version, r.title as title
-                                           FROM report_version
-                                           JOIN report r ON r.Id = report_version.report
-                                           """)
-        versions = {}
-        for (id, version, title) in _versions.rows:
-            versions[title] = (id, version)
-        
-            
-        for report_group in all_reports:
-            rlist = report_group["reports"]
-            for report in rlist:
-                title = report["title"]
-                new_version = report["version"]
-                #the report map is a list of (id, name) tuples for the reports
-                # here we want to see if our report is in the list
-                idx = [i for i in range(0, len(self.reportmap)) if self.reportmap[i][1] == title]
-                if not idx:
-                    self.log.warning("Report '%s' needs to be added" % title)
-                    bit = True;
-                else:
-                    # If we had a report make sure its at the correct version
-                    if versions.has_key(title):
-                        (id, ver) = versions[title]
-                    else:
-                        ver = 0
-                    if ver < new_version:
-                        bit = True
-        return bit
-                
-    def do_reports_upgrade(self):
-        return None
-        self.log.debug( "Beginning Reports Upgrade");
-        #make version hash
-        _versions = dbhelper.get_result_set(self.env.get_db_cnx(),
-                                           """
-                                           SELECT report as id, version, r.title as title
-                                           FROM report_version
-                                           JOIN report r ON r.Id = report_version.report
-                                           """)
-        versions = {}
-        for (id, version, title) in _versions.rows:
-            versions[title] = (id, version)
-            
-        biggestId = dbhelper.get_scalar(self.env.get_db_cnx(),
-                                        "SELECT ID FROM report ORDER BY ID DESC LIMIT 1")
-        def insert_report_version(id, ver):
-            sql = "DELETE FROM report_version WHERE report = %s;"
-            dbhelper.execute_non_query(self.env.get_db_cnx(), sql, id  )
-            sql = """
-            INSERT INTO report_version (report, version)
-            VALUES (%s, %s);"""
-            # print "about to insert report_version"
-            dbhelper.execute_non_query(self.env.get_db_cnx(), sql, id, ver )
-            # print "inserted report_version"
-            
-        for report_group in all_reports:
-            rlist = report_group["reports"]
-            for report in rlist:
-                title = report["title"]
-                new_version = report["version"]
-                report_id = [rid
-                             for (rid, map_title) in self.reportmap
-                             if map_title == title]
-                if not report_id:
-                    bit = True; 
-                    sql = """INSERT INTO report (id,author,title,query,description) 
-                             VALUES (%s,'Timing and Estimation Plugin',%s,%s,'') """
-                    biggestId += 1
-                    dbhelper.execute_non_query(self.env.get_db_cnx(), sql,
-                                               biggestId, title, report["sql"])
-                    insert_report_version(biggestId, new_version)
-
-                    report["reportnumber"] = biggestId
-                    self.reportmap.extend([(biggestId,title)])
-                else:
-                    report_id = report_id[0]
-                    report["reportnumber"] = report_id
-                     # If we had a report make sure its at the correct version
-                    if versions.has_key(title):
-                        ( _ , ver) = versions[title]
-                    else:
-                        ver = 0
-                    if not ver:
-                        sql = """
-                        UPDATE report
-                        SET query=%s 
-                        WHERE id = %s """
-                        print "updating report: %s" % title
-                        dbhelper.execute_non_query(self.env.get_db_cnx(), sql,
-                                                   report["sql"], report_id )
-                        insert_report_version( report_id, new_version )
-                    elif ver < new_version:
-                        sql = """
-                        UPDATE report
-                        SET query=%s 
-                        WHERE id = %s """
-                        print "updating report to new version: %s" % title
-                        dbhelper.execute_non_query(self.env.get_db_cnx(), sql,
-                                                   report["sql"], report_id )
-                        
-                        sql = """
-                        UPDATE report_version
-                        SET version = %s
-                        WHERE report = %s
-                        """
-                        dbhelper.execute_non_query(self.env.get_db_cnx(), sql, new_version, report_id)
-                        
     def needs_user_man(self):
         maxversion = dbhelper.get_scalar(self.env.get_db_cnx(),
                                          "SELECT MAX(version) FROM wiki WHERE name like %s", 0,
@@ -200,9 +76,8 @@ class WorkLogSetupParticipant(Component):
         performed, `False` otherwise.
 
         """
-        return (self.db_needs_upgrade()) or \
-               (self.reports_need_upgrade()) or \
-               (self.needs_user_man()) 
+        return (self.db_needs_upgrade() \
+                or self.needs_user_man())
             
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade.
@@ -218,9 +93,6 @@ class WorkLogSetupParticipant(Component):
         if self.db_needs_upgrade():
             p("Upgrading Database")
             self.db_do_upgrade()
-        if self.reports_need_upgrade():
-            p("Upgrading reports")
-            self.do_reports_upgrade()
         if self.needs_user_man():
             p("Upgrading usermanual")
             self.do_user_man_update()
