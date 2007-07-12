@@ -23,25 +23,5 @@ class TicketWebUiAddon(Component):
 
     def get_navigation_items(self, req):
         if re.search('ticket', req.path_info):
-            yield 'mainnav', "ticket-addon", \
-                  Markup("""<script language="javascript" type="text/javascript">
-                  function AddEventListener( elem, evt, func, capture){
-                    capture = capture || false;
-                    if(elem.addEventListener) elem.addEventListener( evt, func, capture);
-                    else elem.attachEvent('on'+evt, func);
-                    return func;
-                  };
-                  InitBilling = function(){
-                    var x = document.getElementById('totalhours');
-                    x = x || document.getElementById('field-totalhours');
-                    if(x){
-                      var p = x.parentNode;
-                      var n = document.createElement('span')
-                      n.id = x.id;
-                      n.innerHTML = x.value
-                      p.removeChild(x);
-                      p.appendChild(n);
-                    }
-                  }
-                  AddEventListener(window, 'load', InitBilling)
-                  </script>""")
+            add_script(req, 'Billing/ticket.js')
+            yield 'mainnav', "ticket-addon", ""
