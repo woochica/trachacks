@@ -1,12 +1,51 @@
 # FlashView plugin
 
-from StringIO import StringIO
+from struct import unpack
+from zlib import decompressobj
 from cgi import escape as escapeHTML
-
-import re
 import os
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
+
+def swfsize(f):
+    magic, version, datasz = unpack("<3s1B1L", f.read(8))
+    if ( magic != 'FWS' and magic != 'CWS' ) or datasz < 9:
+        raise "Invalid format"
+    datasz -= 8
+    if magic == 'FWS':
+        data = f.read(min(datasz, 16))
+    else:
+        d = decompressobj()
+        data = ''
+        while len( data ) < min(datasz, 16):
+            data += d.decompress(f.read(64))
+    data = unpack('%dB' % len(data), data)
+    nbits = data[0] >> 3
+    coord = {}
+    q = 0
+    r = 5
+    for p in ('sx', 'ex', 'sy', 'ey'):
+        c = nbits
+        v = 0
+        while c > 8:
+            v <<= 8
+            v |= (data[q] << r) & 0xff
+            c -= 8
+            q += 1
+            v |= data[q] >> (8 - r)
+        m = min(c, 8)
+        v <<= m
+        r = m - (8 - r)
+        if r > 0:
+            v |= (data[q] << r) & 0xff
+            q += 1
+            v |= data[q] >> (8 - r)
+        else:
+            v |= (data[q] >> -r) & ((1 << m) - 1)
+            r = 8 + r
+        coord[p] = v
+    return (float(coord['ex'] - coord['sx']) / 20,
+           float(coord['ey'] - coord['sy']) / 20)
 
 class FlashViewMacro(Component):
     """ FlashView Macro """
@@ -84,24 +123,41 @@ class FlashViewMacro(Component):
             url = attachment.href(req)
             raw_url = attachment.href(req, format='raw')
             desc = attachment.description
-        
-        width = int(args[1])
-        height = int(args[2])
-        
-        buf = StringIO()
-        buf.write("<object classid='clsid:D27CDB6E-AE6D-11cf-96B8-444553540000'")
-        buf.write(" codebase='http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,0,0'")
-        buf.write(" width='%s'" % width)
-        buf.write(" height='%s'>" % height)
-        buf.write("<param name='movie' value='%s'>" % raw_url)
-        buf.write("<param name='quality' value='low'>")
-        buf.write("<param name='play' value='true'>")
-        buf.write("<embed src='%s'" % raw_url)
-        buf.write(" quality='low'")
-        buf.write(" width='%s'" % width)
-        buf.write(" height='%s'" % height)
-        buf.write(" type='application/x-shockwave-flash'")
-        buf.write(" pluginspage='http://www.macromedia.com/go/getflashplayer'></embed>")
-        buf.write("</object>")
+            width, height = swfsize(attachment.open())
+            if len(args) == 3:
+                if args[1][0] == '*':
+                    width = int(width * float(args[1][1:]))
+                else:
+                    width = args[1]
+                if args[2][0] == '*':
+                    height = int(height * float(args[2][1:]))
+                else:
+                    height = args[2]
+            elif len(args) != 1:
+                raise Exception('Too few arguments. (filespec, width, height)')
+        else:
+            if len(args) < 3:
+                raise Exception('Too few arguments. (filespec, width, height)')
+            else:
+                width = args[1]
+                height = args[2]
 
-        return buf.getvalue()
+        vars = {
+            'width': width,
+            'height': height,
+            'raw_url': raw_url
+            }
+
+        return """
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+        codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab"
+        width="%(width)s" height="%(height)s">
+  <param name="movie" value="%(raw_url)s">
+  <param name="quality" value="low">
+  <param name="play" value="true">
+  <embed src="%(raw_url)s" quality="low" width="%(width)s" height="%(height)s"
+         type="application/x-shockwave-flash"
+         pluginspage="http://www.macromedia.com/go/getflashplayer">
+  </embed>
+</object>
+        """ % dict(map(lambda i: (i[0], escapeHTML(str(i[1]))), vars.items()))
