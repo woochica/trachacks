@@ -275,20 +275,21 @@ def make_cummulative_data(env, tkt_counts):
  
     return tkt_cummulative
 
-def create_chart(name, dataset): 
+def create_cummulative_chart(env, numdates, tkt_cummulative_table): 
     
-    env.log.info('plot graph') 
-    plot([1,2,3,4], [1,4,9,16], 'ro')
-    axis([0, 6, 0, 20])
-    
-    env.log.info(os.path.join(env.path, 'cache', 'tracdashboardplugin', 'matplotfig.png'))     
-    env.log.info(os.path.join('cache', 'tracdashboardplugin', 'matplotfig.png'))     
-    
-    #must check if the folder exist before executing this statement
-    savefig(os.path.join(env.path, 'cache', 'tracdashboardplugin', 'matplotfig.png'))    
-    
-    return []
+    plot(numdates, tkt_cummulative_table['Enter'], 'b-', \
+         numdates, tkt_cummulative_table['Leave'], 'r-', \
+         numdates, tkt_cummulative_table['Finish'], 'g-' )
+        
+    filename = "cummulativeflow_%s" % (milestone.name,)
+    env.log.info(os.path.join(self.env.path, 'cache', 'tracmetrixplugin', milestone.name, '_cummulativeflow.png'))  
 
+    path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
+        
+    savefig(path)   
+
+    return path
+    
 class MDashboard(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
@@ -332,7 +333,9 @@ class MDashboard(Component):
 
     def match_request(self, req):
         import re, urllib
+
         match = re.match(r'/mdashboard(?:/(.+))?', req.path_info)
+               
         if match:
             if match.group(1):
                 req.args['id'] = match.group(1)
@@ -343,6 +346,7 @@ class MDashboard(Component):
 
 
     def process_request(self, req):
+        
         req.perm.require('MILESTONE_VIEW')
         
         milestone_id = req.args.get('id')
@@ -356,9 +360,10 @@ class MDashboard(Component):
             req.redirect(req.href.pdashboard())
         
         add_stylesheet(req, 'pd/css/dashboard.css')     
+       
         return self._render_view(req, db, milestone)
 
-
+        
         
 
     def _render_view(self, req, db, milestone):
@@ -437,11 +442,6 @@ class MDashboard(Component):
         # returns sorted list of tuple of (key, value)
         sorted_events = sorted(tkt_history.items(), key=lambda(k,v):(k))
         
-        #debug
-        for event in tkt_counts:
-            self.env.log.info(tkt_counts[event]) 
-
-        
         # Get first date that ticket enter the milestone
         min_time = min(sorted_events)[0] #in Epoch Seconds
         begin_date = datetime.fromtimestamp(min_time, utc).date()    
@@ -491,6 +491,7 @@ class MDashboard(Component):
         data['dates'] = dates
         
 
+        
         return 'mdashboard.html', data, None
    
     # IWikiSyntaxProvider methods
