@@ -1,0 +1,1 @@
+from mediawiki import *
