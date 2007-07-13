@@ -8,6 +8,7 @@
 import re
 import os
 
+from string import find
 from bisect import bisect
 from itertools import groupby
 from datetime import datetime, timedelta, date
@@ -20,6 +21,7 @@ from pylab import drange, array, searchsorted, date2num, num2date, \
                   plot, savefig, axis
 
 from trac import __version__
+from trac import mimeview
 from trac.core import *
 from trac.context import Context
 from trac.core import *
@@ -334,13 +336,26 @@ class MDashboard(Component):
     def match_request(self, req):
         import re, urllib
 
+        self.env.log.info("mdashboard match request %s" % (req.path_info,))  
+
         match = re.match(r'/mdashboard(?:/(.+))?', req.path_info)
                
         if match:
             if match.group(1):
-                req.args['id'] = match.group(1)
+                
+                # split the milestone name.  This part can be 'milestone name' or 
+                # 'milestone name/image name'
+                
+                urlcomp = match.group(1).split('/')
+                
+                if len(urlcomp) == 1: #url has 2 
+                    req.args['id'] = urlcomp[0]
+                    req.args['imagename'] = None
+                else:
+                    req.args['id'] = urlcomp[0]
+                    req.args['imagename'] = urlcomp[1]
+                    
             return True
-
         # This code should do what above does.
         #req.path_info.startswith('/mdashboard')
 
@@ -351,19 +366,30 @@ class MDashboard(Component):
         
         milestone_id = req.args.get('id')
 
+        self.env.log.info("mdashboard process request %s, %s" % (req.path_info,req.args.get('id')))  
+
         add_link(req, 'up', req.href.pdashboard(), 'Dashboard')
 
         db = self.env.get_db_cnx()
         milestone = Milestone(self.env, milestone_id, db)
 
         if not milestone_id:
-            req.redirect(req.href.pdashboard())
+            req.redirect(req.href.pdashboard())     
+            
+        if req.args.get('imagename') == 'cummulativeflow.png':    
+            
+            self.env.log.info("request for image")
+            filename = "cummulativeflow_%s.png" % (milestone.name,)
+            path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
+            req.send_file(path, mimeview.get_mimetype(path))
+            
+        else:
+            
+            self.env.log.info("request mdashboard")
         
-        add_stylesheet(req, 'pd/css/dashboard.css')     
-       
-        return self._render_view(req, db, milestone)
-
-        
+            add_stylesheet(req, 'pd/css/dashboard.css')  
+            
+            return self._render_view(req, db, milestone)        
         
 
     def _render_view(self, req, db, milestone):
@@ -566,7 +592,11 @@ class PDashboard(Component):
 
     # IRequestHandler methods
 
+
     def match_request(self, req):
+
+        self.env.log.info("pdashboard match request %s" % (req.path_info,))  
+                
         return re.match(r'/pdashboard/?', req.path_info) is not None
 
     def process_request(self, req):
