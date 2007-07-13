@@ -946,9 +946,10 @@ def replaceInternalLinks(text):
                                         sb.append(alt)
                                 sb.append(u'" /></a>')
                         elif namespace == 'wiki':
-                                sb.append(u'<a href="/')
-                                sb.append(namespace)
-                                sb.append(u'/')
+                                sb.append(u'<a href="')
+                                #sb.append(u'<a href="/')
+                                #sb.append(namespace)
+                                #sb.append(u'/')
                                 sb.append(slugify(link))
                                 if alt:
                                         link = alt
