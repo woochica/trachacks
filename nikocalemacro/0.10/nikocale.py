@@ -68,7 +68,7 @@ class NikoCale(object):
             for d in e:
                 if not d in dates:
                     dates.append(d)
-        dates = sorted(dates)
+        dates.sort()
 
         buf.write("<table style='border: 1px solid; border-collapse: collapse;'>\n")
         buf.write("  <tr>\n")
