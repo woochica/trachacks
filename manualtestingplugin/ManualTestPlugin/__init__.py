@@ -1,1 +1,0 @@
-from ManualTestPlugin import *

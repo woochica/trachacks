@@ -1,4 +1,4 @@
-# ManualTestPlugin
+# ManualTestingPlugin
 
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
