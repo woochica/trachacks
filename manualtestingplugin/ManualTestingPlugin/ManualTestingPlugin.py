@@ -5,7 +5,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_style
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup
 
-class UserbaseModule(Component):
+class ManualTestingPlugin(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     # INavigationContributor methods
