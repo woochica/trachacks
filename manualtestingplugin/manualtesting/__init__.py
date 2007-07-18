@@ -1,1 +1,1 @@
-from MTP_EnvironmentSetupParticipant import *
+from manualtesting import *

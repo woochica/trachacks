@@ -1,11 +1,11 @@
-# ManualTestingPlugin
+# ManualTesting.core
 
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup
 
-class ManualTestingPlugin(Component):
+class ManualTestingCore(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     # INavigationContributor methods
