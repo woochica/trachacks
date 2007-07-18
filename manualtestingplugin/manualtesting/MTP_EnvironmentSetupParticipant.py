@@ -1,7 +1,9 @@
 # MTP_EnvironmentSetupParticipant
 
 from trac.core import *
+from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
+# from DBSchema import *
 
 """
 Extension point interface for components that need to participate in the
@@ -12,7 +14,7 @@ class MTP_EnvironmentSetupParticipant(Component):
 
     """
     Called when a new Trac environment is created."""
-    def environment_created():
+    def environment_created(self):
         self.db_version_key = 'ManualTestingPlugin_database_version'
         self.db_version_value = 1
         self.db_installed_version_value = 0
@@ -35,7 +37,7 @@ class MTP_EnvironmentSetupParticipant(Component):
     Called when Trac checks whether the environment needs to be upgraded.
     Should return `True` if this participant needs an upgrade to be
     performed, `False` otherwise."""
-    def environment_needs_upgrade(db):
+    def environment_needs_upgrade(self, db):
         needsUpgrade = (self.db_installed_version_value < self.db_version_value)
         print "ManualTestingPlugin needs upgrade: %s", needsUpgrade
         return needsUpgrade
@@ -46,9 +48,9 @@ class MTP_EnvironmentSetupParticipant(Component):
     Implementations of this method should not commit any database
     transactions. This is done implicitly after all participants have
     performed the upgrades they need without an error being raised."""
-    def upgrade_environment(db):
-        db = self.env.get_db_cnx()
+    def upgrade_environment(self, db):
         cursor = db.cursor()
+        # sqlStatement = DBSchema.versions[1]
         sqlStatement = """
             CREATE TABLE mtp_suites (
                 id INTEGER
@@ -87,5 +89,3 @@ class MTP_EnvironmentSetupParticipant(Component):
             );
         """
         cursor.execute(sqlStatement)
-        db.commit()
-        db.close()
