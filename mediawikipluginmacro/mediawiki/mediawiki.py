@@ -26,3 +26,7 @@ class MediaWikiRenderer(Component):
         def expand_macro(self, formatter, name, content):
                 if name == 'mediawiki':
                         return parse(content)
+
+        # deprecated interface prior trac 0.11
+        def render_macro(self, req, name, content):
+                return self.expand_macro(None, name, content)
