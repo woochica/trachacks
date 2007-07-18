@@ -7,8 +7,7 @@ from trac.env import IEnvironmentSetupParticipant
 
 # Database schema variables
 db_version_key = 'manualtesting_version'
-db_version_value = 1
-db_installed_version_value = 0
+db_version = 1
 
 """
 Extension point interface for components that need to participate in the
@@ -20,27 +19,30 @@ class MTP_EnvironmentSetupParticipant(Component):
     """
     Called when a new Trac environment is created."""
     def environment_created(self):
-        # Initialise database schema version tracking.
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("SELECT value FROM system WHERE name=%s", (db_version_key,))
-        try:
-            db_installed_version_value = int( cursor.fetchone()[0] )
-        except:
-            db_installed_version_value = 0
-            cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)", (db_version_key, db_version_value) )
-            db.commit()
-            db.close()
-        print "ManualTestingPlugin database version %s initialized." % db_version_value
-
+        pass
 
     """
     Called when Trac checks whether the environment needs to be upgraded.
     Should return `True` if this participant needs an upgrade to be
     performed, `False` otherwise."""
     def environment_needs_upgrade(self, db):
-        needsUpgrade = (db_installed_version_value < db_version_value)
-        print "ManualTesting needs upgrade: %s" % needsUpgrade
+        # Initialise database schema version tracking.
+        cursor = db.cursor()
+        # Get currently installed database schema version
+        db_installed_version = 0
+        try:
+            sqlGetInstalledVersion = "SELECT value FROM system WHERE name = '%s'" % db_version_key
+            cursor.execute(sqlGetInstalledVersion)
+            db_installed_version = int(cursor.fetchone()[0])
+        except:
+            # No version currently, inserting new one.
+            sqlInsertVersion = "INSERT INTO system (name, value) VALUES ('%s','%s')" % (db_version_key, db_version)
+            cursor.execute(sqlInsertVersion)
+            db.commit()
+            db.close()
+        print "ManualTesting database schema version: %s initialized." % db_version
+        # return boolean for if we need to update or not
+        needsUpgrade = (db_installed_version < db_version)
         return needsUpgrade
 
 
@@ -51,6 +53,6 @@ class MTP_EnvironmentSetupParticipant(Component):
     performed the upgrades they need without an error being raised."""
     def upgrade_environment(self, db):
         cursor = db.cursor()
-        dbImportModuleName = ('DBSchema_version_%s' % db_version_value)
+        dbImportModuleName = ('DBSchema_version_%s' % db_version)
         DB_module = __import__(dbImportModuleName, globals(), locals(), ['do_upgrade'])
         DB_module.do_upgrade(self.env, cursor)
