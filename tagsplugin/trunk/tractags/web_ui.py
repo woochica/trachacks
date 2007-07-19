@@ -146,7 +146,7 @@ class TagsModule(Component):
 
         def update_from_req(args):
             for k in req.args.keys():
-                args[str(k)] = str(req.args.get(k))
+                args[k] = unicode(req.args.get(k))
 
         if not req.args.has_key('e') and re.match('^/tags/?$', req.path_info):
             index = self.env.config.get('tags', 'index', 'cloud')
@@ -174,48 +174,10 @@ class TagsModule(Component):
             try:
                 Expression(expr)
             except Exception, e:
-                req.hdf['tag.expression.error'] = str(e).replace(' (line 1)', '')
+                req.hdf['tag.expression.error'] = unicode(e).replace(' (line 1)', '')
             args['expression'] = expr
             tags = []
             update_from_req(args)
             req.hdf['tag.body'] = Markup(
                 TagMacros(self.env).render_listtagged(req, *tags, **args))
         return 'tags.cs', None
-
-# XXX I think this is planned for some AJAX goodness, commenting out for now. (Alec) XXX
-#class TagsLi(Component):
-#    implements(IRequestHandler)
-#    
-#    # IRequestHandler methods
-#    def match_request(self, req):
-#        return req.path_info == '/tagli'
-#                
-#    def process_request(self, req):
-#        db = self.env.get_db_cnx()
-#        cursor = db.cursor()
-#        cs = db.cursor()
-#        tag = req.args.get('tag')
-#        req.send_response(200)
-#        req.send_header('Content-Type', 'text/plain')
-#        req.end_headers()
-#        buf = StringIO()
-#        if tag:
-#            buf.write('WHERE tag LIKE \'%s%s\'' % (tag,'%'))
-#            
-#        cursor.execute('SELECT DISTINCT tag FROM tags %s ORDER BY tag' % (buf.getvalue()))
-#
-#        msg = StringIO()
-#
-#        msg.write('<ul>')
-#        while 1:
-#            row = cursor.fetchone()
-#            if row == None:
-#                 break
-#
-#            t = row[0]
-#            msg.write('<li>')
-#            msg.write(t)
-#            msg.write('</li>')
-#
-#        msg.write('</ul>')
-#        req.write(msg.getvalue())

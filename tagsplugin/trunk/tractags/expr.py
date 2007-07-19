@@ -31,7 +31,7 @@ class Expression:
                 expr.append('"%s"' % token)
             else:
                 expr.append(token)
-        self.expression = ' '.join(expr)
+        self.expression = (u' '.join(expr)).encode('utf-8') 
         self.ast = compiler.parse(self.expression, 'eval')
 
     def get_tags(self):
@@ -52,6 +52,7 @@ class Expression:
         return tags
 
     def __call__(self, context):
+        context = [tag.encode('utf-8') for tag in context] 
         return self._visit(self.ast, context)
 
     def _visit(self, node, context):
@@ -60,7 +61,7 @@ class Expression:
             try:
                 v = getattr(self, '_visit_%s' % node.__class__.__name__.lower())
             except AttributeError:
-                raise TracError('invalid expression node "%s"' % str(node.__class__.__name__.lower()))
+                raise TracError('invalid expression node "%s"' % node.__class__.__name__.lower()) 
             self.__visitors[node.__class__] = v
         return v(node, context)
 

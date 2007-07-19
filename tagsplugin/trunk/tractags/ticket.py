@@ -3,9 +3,10 @@ from tractags.api import ITaggingSystemProvider, TaggingSystem, sorted, set
 from trac.ticket.query import Query
 from trac.ticket import model
 import re
+from trac.util.text import to_unicode
 
 class TicketTaggingSystem(TaggingSystem):
-    _keyword_split = re.compile(r'''\w[\w.@-]+''')
+    _keyword_split = re.compile(r'''\w[\w.@-]+''', re.UNICODE)
 
     # These builtin fields can be used as tag sources
     _builtin_fields = ('component', 'severity', 'priority', 'owner',
@@ -45,7 +46,8 @@ class TicketTaggingSystem(TaggingSystem):
         for row in cursor:
             id, ttags = row[0], ' '.join([f for f in row[1:-1] if f])
             ticket_tags = set(self._keyword_split.findall(ttags))
-            if not tags or ticket_tags.intersection(tags):
+            tags = set([to_unicode(x) for x in tags])
+            if not tags or ticket_tags.intersection(tags):                
                 if predicate(id, ticket_tags):
                     yield (id, ticket_tags)
                 
