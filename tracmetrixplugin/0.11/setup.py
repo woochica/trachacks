@@ -8,7 +8,9 @@ setup(
     packages=find_packages(exclude=['*.tests*']),
     entry_points = """
         [trac.plugins]
+        tracmetrixplugin.mdashboard = tracmetrixplugin.mdashboard
         tracmetrixplugin.web_ui = tracmetrixplugin.web_ui
+        tracmetrixplugin.api = tracmetrixplugin.api
     """,
     package_data={'tracmetrixplugin': ['templates/*.html', 
                                        'htdocs/css/*.css', 

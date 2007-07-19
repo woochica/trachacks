@@ -1,4 +1,4 @@
-<!DOCTYPE html
+﻿<!DOCTYPE html
     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
@@ -55,20 +55,20 @@
       <div class="table">
       	<h2>Ticket History Table</h2>
       	
-      	<table style="width: 800px" class="ticket history">
+      	<table style="width: 300px" class="listing ticket history">
 	      <thead>
 				<tr>
-					<th style="width: 219px">Date</th>
-					<th style="width: 91px">Enter</th>
-					<th style="width: 90px">Leave</th>
+					<th style="width: 90px">Date</th>
+					<th style="width: 50px">Enter</th>
+					<th style="width: 55px">Leave</th>
 					<th style="width: 90px">Completed</th>
 				</tr>
 			</thead>
 			<tbody>
 					<tr py:for="idx, date in enumerate(dates)" class="date">
-						<td style="width: 219px">${format_date(date)}</td>
-						<td style="width: 91px">${tickethistory['Enter'][idx]}</td>
-						<td style="width: 90px">${tickethistory['Leave'][idx]}</td>
+						<td style="width: 90px">${format_date(date,tzinfo=utc)}</td>
+						<td style="width: 50px">${tickethistory['Enter'][idx]}</td>
+						<td style="width: 55px">${tickethistory['Leave'][idx]}</td>
 						<td style="width: 90px">${tickethistory['Finish'][idx]}</td>
 					</tr>
 			</tbody>			
