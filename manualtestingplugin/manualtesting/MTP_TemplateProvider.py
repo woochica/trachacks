@@ -1,27 +1,11 @@
-# ManualTesting.core
+# ManualTesting.MTP_TemplateProvider
 
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
-from trac.web.main import IRequestHandler
-from trac.util import escape, Markup
+from trac.web.chrome import ITemplateProvider
+from trac.util import escape
 
-class ManualTestingCore(Component):
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
-
-    # INavigationContributor methods
-    def get_active_navigation_item(self, req):
-        return 'testing'
-
-    def get_navigation_items(self, req):
-        yield 'mainnav', 'testing', Markup('<a href="%s">Testing</a>', self.env.href.testing() )
-
-    # IRequestHandler methods
-    def match_request(self, req):
-        return req.path_info == '/testing'
-
-    def process_request(self, req):
-        add_stylesheet(req, 'mt/css/manualtesting.css')
-        return 'testing.cs', None
+class MTP_TemplateProvider(Component):
+    implements(ITemplateProvider)
 
     # ITemplateProvider methods
     def get_templates_dirs(self):

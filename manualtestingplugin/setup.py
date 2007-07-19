@@ -17,7 +17,11 @@ setup(
   entry_points = {
       'trac.plugins': [
           '%s.core = manualtesting.core' % PACKAGE,
-          '%s.MTP_EnvironmentSetupParticipant = manualtesting.MTP_EnvironmentSetupParticipant' % PACKAGE
+          '%s.UICore = manualtesting.UICore' % PACKAGE,
+          '%s.MTP_EnvironmentSetupParticipant = manualtesting.MTP_EnvironmentSetupParticipant' % PACKAGE,
+          '%s.MTP_NavigationContributor = manualtesting.MTP_NavigationContributor' % PACKAGE,
+          '%s.MTP_TemplateProvider = manualtesting.MTP_TemplateProvider' % PACKAGE,
+          '%s.MTP_RequestHandler = manualtesting.MTP_RequestHandler' % PACKAGE
       ]
   },
   description = 'Plugin to make Trac support manual testing',
