@@ -15,10 +15,18 @@ class MTP_RequestHandler(Component):
     """
     Return whether the handler wants to process the given request."""
     def match_request(self, req):
-        # return req.path_info == '/testing'
-        match = re.match('/testing', req.path_info)
+        match = re.match(r'''/testing(?:/?$|/(\d+)(?:/?$|/(\d+))(?:/?$|/(\d+)))$''', req.path_info)
         if match:
-            return True
+            forum = match.group(1)
+            topic = match.group(2)
+            message = match.group(3)
+            if forum:
+                req.args['forum'] = forum
+            if topic:
+                req.args['topic'] = topic
+            if message:
+                req.args['message'] = message
+        return match
 
     """
     Process the request. Should return a (template_name, content_type)
@@ -33,7 +41,7 @@ class MTP_RequestHandler(Component):
         add_stylesheet(req, 'mt/css/manualtesting.css')
 
         # Prepare request object
-        # req.args['component'] = 'core'
+        req.args['component'] = 'core'
 
         # Get database access
         db = self.env.get_db_cnx()
@@ -41,7 +49,7 @@ class MTP_RequestHandler(Component):
 
         # Return page content
         mtAPI = ManualTestingAPI(self, req)
-        content = mtAPI.render(req, cursor)
-        # db.commit()
+        content = mtAPI.renderUI(req, cursor)
+        db.commit()
 
         return content

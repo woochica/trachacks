@@ -14,7 +14,7 @@ class ManualTestingAPI(object):
 
     # Main request processing function
 
-    def render(self, req, cursor):
+    def renderUI(self, req, cursor):
         # Get request mode
         """
         group, forum, topic, message = self._get_items(req, cursor)
@@ -62,7 +62,16 @@ class ManualTestingAPI(object):
         req.hdf['discussion.time'] = format_datetime(time.time())
         # return modes[-1] + '.cs', None
         """
+        myData = self.getData(req, cursor)
+        req.hdf['data'] = myData
         return 'testing.cs', None
+
+    def getData(self, req, cursor, order_by = 'id', desc = False):
+        data = {
+            "value1" : 123456,
+            "newValue" : 789
+        }
+        return data
 
     def _get_items(self, req, cursor):
         group, forum, topic, message = None, None, None, None
@@ -269,8 +278,7 @@ class ManualTestingAPI(object):
                 else:
                     return ['forum-list']
 
-    def _do_action(self, req, cursor, modes, group, forum, topic, message,
-      is_moderator):
+    def _do_action(self, req, cursor, modes, group, forum, topic, message, is_moderator):
         for mode in modes:
             self.log.debug('doing %s mode action' % (mode,))
             if mode == 'group-list':
