@@ -66,11 +66,15 @@ class ManualTestingAPI(object):
         req.hdf['data'] = myData
         return 'testing.cs', None
 
-    def getData(self, req, cursor, order_by = 'id', desc = False):
-        data = {
-            "value1" : 123456,
-            "newValue" : 789
-        }
+    def getData(self, req, cursor):
+        data = [{'name' : 'default', 'value': 'none'}]
+        columns = ('name', 'value')
+        sql = "SELECT * FROM system"
+        self.log.debug(sql)
+        cursor.execute(sql)
+        for row in cursor:
+            row = dict(zip(columns, row))
+            data.append(row)
         return data
 
     def _get_items(self, req, cursor):
