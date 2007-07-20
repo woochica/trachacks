@@ -13,6 +13,6 @@ class ManualTestingAPI:
     # Main request processing function
 
     def renderUI(self, req, cursor):
-        myData = self.dbUtils.getData(cursor)
-        req.hdf['data'] = myData
+        suites = self.dbUtils.get_suites(cursor)
+        req.hdf['manualtesting.suites'] = suites
         return 'testing.cs', None

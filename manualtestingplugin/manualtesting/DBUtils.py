@@ -7,13 +7,14 @@ class DBUtils:
         self.env = component.env
         self.log = component.log
 
-    def getData(self, cursor):
-        data = [{'name' : 'default', 'value': 'none'}]
-        columns = ('name', 'value')
-        sql = "SELECT * FROM system"
+    def get_suites(self, cursor):
+        rows = []
+        columns = ('id','title','description','component','deleted','user')
+        # INSERT INTO mtp_suites (title, description, component, deleted, user) VALUES ('Search suite','Searching test plans','Search',0,'radams');
+        sql = "SELECT * FROM mtp_suites"
         self.log.debug(sql)
         cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
-            data.append(row)
-        return data
+            rows.append(row)
+        return rows
