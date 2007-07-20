@@ -48,7 +48,7 @@ class MTP_RequestHandler(Component):
         cursor = db.cursor()
 
         # Return page content
-        mtAPI = ManualTestingAPI(self, req)
+        mtAPI = ManualTestingAPI(req)
         content = mtAPI.renderUI(req, cursor)
         db.commit()
 
