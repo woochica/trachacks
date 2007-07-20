@@ -38,11 +38,10 @@ class MTP_EnvironmentSetupParticipant(Component):
             # No version currently, inserting new one.
             sqlInsertVersion = "INSERT INTO system (name, value) VALUES ('%s','%s')" % (db_version_key, db_version)
             cursor.execute(sqlInsertVersion)
-            db.commit()
-            db.close()
         print "ManualTesting database schema version: %s initialized." % db_version
         # return boolean for if we need to update or not
         needsUpgrade = (db_installed_version < db_version)
+        print "ManualTesting database schema is out of date: %s" % needsUpgrade
         return needsUpgrade
 
 
@@ -52,6 +51,7 @@ class MTP_EnvironmentSetupParticipant(Component):
     transactions. This is done implicitly after all participants have
     performed the upgrades they need without an error being raised."""
     def upgrade_environment(self, db):
+        print "Upgrading ManualTesting database schema"
         cursor = db.cursor()
         dbImportModuleName = ('DBSchema_version_%s' % db_version)
         DB_module = __import__(dbImportModuleName, globals(), locals(), ['do_upgrade'])
