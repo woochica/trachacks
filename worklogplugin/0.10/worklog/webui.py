@@ -108,7 +108,7 @@ class WorkLogPage(Component):
                               "usermanual_title":user_manual_title
                              }
         add_stylesheet(req, "worklog/worklogplugin.css")
-        return 'worklog.cs', 'text/html'
+        return 'worklog.cs', None
         
         
     # ITemplateProvider

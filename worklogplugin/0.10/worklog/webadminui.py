@@ -13,7 +13,6 @@ class WorklogAdminPage(Component):
     implements(IAdminPageProvider)
 
     # IAdminPageProvider methods
-
     def get_admin_pages(self, req):
         if req.perm.has_permission('TICKET_ADMIN'):
             yield ('ticket', 'Ticket System', 'worklog', 'Work Log')
@@ -52,6 +51,4 @@ class WorklogAdminPage(Component):
             settings['roundup'] = self.config.getint(section, 'roundup')
 
         req.hdf['settings'] = settings
-        return 'webadminui.cs', None
-
-
+        return 'worklog_webadminui.cs', None

@@ -4,8 +4,7 @@ from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.util import Markup
-from trac.web.chrome import add_stylesheet, add_script, \
-     INavigationContributor, ITemplateProvider
+from trac.web.chrome import add_stylesheet, add_script, INavigationContributor
 from trac.web.href import Href
 from manager import WorkLogManager
 from util import pretty_timedelta
