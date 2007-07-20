@@ -35,7 +35,7 @@ class WorkLogPage(Component):
                   Markup('<a href="%s">%s</a>' % \
                          (url , "Work Log"))
 
-    # IRequestHandler methods
+    # Internal Methods
     def get_worklog(self, req):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -48,6 +48,9 @@ class WorkLogPage(Component):
 
         log = {}
         for (user,name,starttime,endtime,ticket,summary) in cursor:
+            starttime = float(starttime)
+            endtime = float(endtime)
+            
             started = datetime.fromtimestamp(starttime)
 
             dispname = user
@@ -71,6 +74,7 @@ class WorkLogPage(Component):
                 
         return log
         
+    # IRequestHandler methods
     def match_request(self, req):
         if re.search('/worklog', req.path_info):
             return True

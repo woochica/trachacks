@@ -46,7 +46,9 @@ class WorkLogTimelineAddon(Component):
             previous_update = None
             for user,ticket,time,starttime,kind,humankind,summary in cursor:
                 summary = Markup.escape(summary)
-                ticket_href = href.ticket(ticket)
+                time = float(time)
+                starttime = float(starttime)
+                
                 if format == 'rss':
                     title = Markup('%s %s working on Ticket #%s (%s)' % \
                                    (user, humankind, ticket, summary))
@@ -58,6 +60,6 @@ class WorkLogTimelineAddon(Component):
                     started = datetime.fromtimestamp(starttime)
                     finished = datetime.fromtimestamp(time)
                     message = 'Time spent: ' + pretty_timedelta(started, finished)
-                yield kind, ticket_href, title, time, user, message
+                yield kind, href.ticket(ticket), title, time, user, message
 
 

@@ -151,6 +151,8 @@ class WorkLogManager:
                 return False
         else:
             stoptime = self.now - 1
+
+        stoptime = float(stoptime)
         
         db = self.env.get_db_cnx();
         cursor = db.cursor()
@@ -200,7 +202,7 @@ class WorkLogManager:
         cursor.execute('SELECT user,starttime FROM work_log WHERE ticket=%s AND endtime=0', (ticket,))
         try:
             who,since = cursor.fetchone()
-            return who,since
+            return who,float(since)
         except:
             pass
         return None,None
@@ -231,9 +233,9 @@ class WorkLogManager:
             task['user'] = user
             task['ticket'] = ticket
             task['summary'] = summary
-            task['lastchange'] = lastchange
-            task['starttime'] = starttime
-            task['endtime'] = endtime
+            task['lastchange'] = float(lastchange)
+            task['starttime'] = float(starttime)
+            task['endtime'] = float(endtime)
         return task
     
     def get_active_task(self):
