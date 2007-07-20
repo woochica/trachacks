@@ -40,7 +40,7 @@ class BranchChangeset(object):
         self.branchname = None
         # clone information (if any)
         self.clone = None
-        # last changeset of a branch
+        # very last changeset of a branch (deleted branch)
         self.last = False
         # SVN properties
         self.properties = None
@@ -97,8 +97,9 @@ class BranchChangeset(object):
             path_mo = bcre.match(path)
             src_mo = bcre.match(base_path)
         elif change is Changeset.DELETE:
-            self.last = True
             path_mo = bcre.match(base_path)
+            if path_mo and not path_mo.group('path'):
+                self.last = True
             src_mo = False
         else:
             return False

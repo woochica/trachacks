@@ -872,7 +872,7 @@ class SvgRevtree(object):
                                  self.repos.branches().values())
         else:
             allbranches = self.repos.branches().values()
-        revisions = []        
+        revisions = []
         for b in allbranches:
             if branches:
                 if b.name not in branches:
