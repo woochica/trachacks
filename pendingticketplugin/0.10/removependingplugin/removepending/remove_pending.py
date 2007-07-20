@@ -11,7 +11,7 @@ class RemovePendingPlugin(Component):
 		pass
 
 	def ticket_changed(self, ticket, comment, author, old_values):
-		if (author == ticket['reporter'] and ticket['pending'] == '1'):
+		if (author == ticket['reporter'] and ticket['pending'] == '1' and not old_values.has_key('pending')):
 			db, handle_ta = ticket._get_db_for_write(None)
 			cursor = db.cursor()
 
