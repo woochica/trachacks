@@ -11,6 +11,7 @@ from schema import schema, schema_version, Event, EventPriority, EventType
 from compat import schema_to_sql
 import time
 import calendar
+import caltools
 import cal_layout
 
 class UserbaseModule(Component):
@@ -38,21 +39,27 @@ class UserbaseModule(Component):
 
     def process_add(self, req):
         add_stylesheet (req, 'hw/css/azcalendar.css')
+
         if req.method == 'GET' and req.args.has_key('date'):
             req.hdf['azcalendar.time_begin'] = time.strftime("%Y/%m/%d",(time.strptime(req.args['date'],"%Y%m%d")))
             req.hdf['azcalendar.time_end'] = time.strftime("%Y/%m/%d",(time.strptime(req.args['date'],"%Y%m%d")))
             return 'add_event.cs', None
+
         elif req.method == 'GET' and req.args.has_key('new_event'):
-            begin_t = int(time.mktime(time.strptime(req.args['time_begin'],"%Y/%m/%d %H:%M")))
-            end_t = int(time.mktime(time.strptime(req.args['time_end'],"%Y/%m/%d %H:%M")))
-            date = time.strftime("%Y%m%d",(time.strptime(req.args['time_begin'],"%Y/%m/%d %H:%M")))
+            begin_time, end_time, begin_stamp, end_stamp \
+              = caltools.parse_time_begin_end(req.args['time_begin'], req.args['time_end'])
+
+            date = time.strftime("%Y%m%d", begin_time)
             req.hdf['redir_url'] = str(self.env.href.azcalendar()) + "?date=%s" % date
-            current_time = int(time.time())
-            #id = 0 -> its autocreated by DB
+
+            current_stamp = int(time.time())
+
+            # Events with id 0 are created automatically by a DB layer.
             author = req.authname
-            evt = Event(0,author,current_time, current_time, begin_t, end_t,
-                       req.args['type'], req.args['priority'], req.args['title'])
-            return evt.save( self.env, req )
+            evt = Event(0, author, current_stamp, current_stamp, begin_stamp, end_stamp,
+                        req.args['type'], req.args['priority'], req.args['title'])
+
+            return evt.save(self.env, req)
 
     def process_show(self, req):
         def get_week(date):
@@ -249,7 +256,7 @@ class UserbaseModule(Component):
     def process_delete(self, req):
         if req.args.has_key('id'):
             import re
-            xid = req.args['id'];
+            xid = req.args['id']
             if not re.match (r"[0-9]+", xid):
                 return self.process_invalid(req)
             evt = Event.get_event(self.env,req.args['id'])
@@ -270,21 +277,29 @@ class UserbaseModule(Component):
             req.hdf['azcalendar.priority.'+str(EventPriority[evt.get_priority()])] = 1
             req.hdf['azcalendar.last_update'] = time.strftime("%Y/%m/%d %H:%M:%S",time.localtime(evt.get_time_update()))
             return 'azevent.cs', None
+
         elif req.method == 'GET' and req.args.has_key('update_event'):
+            begin_time, end_time, begin_stamp, end_stamp \
+              = caltools.parse_time_begin_end(req.args['time_begin'], req.args['time_end'])
+
             evt = Event.get_event(self.env,req.args['evid'])
             #evt.set_author(req.authname)
             evt.set_type(req.args['type'])
             evt.set_priority(req.args['priority'])
             evt.set_time_update(int(time.time()))
-            evt.set_time_begin(int(time.mktime(time.strptime(req.args['time_begin'],"%Y/%m/%d %H:%M"))))
-            evt.set_time_end(int(time.mktime(time.strptime(req.args['time_end'],"%Y/%m/%d %H:%M"))))
+            evt.set_time_begin(begin_stamp)
+            evt.set_time_end(end_stamp)
             evt.set_title(req.args['title'])
-            date = time.strftime("%Y%m%d",(time.strptime(req.args['time_begin'],"%Y/%m/%d %H:%M")))
+            date = time.strftime("%Y%m%d", begin_time)
             req.hdf['redir_url'] = str(self.env.href.azcalendar()) + "?date=%s" % date
             return evt.update(self.env, req)
+
         elif req.method == 'GET' and req.args.has_key('delete_event'):
+            begin_time, end_time, begin_stamp, end_stamp \
+              = caltools.parse_time_begin_end(req.args['time_begin'], req.args['time_end'])
+
             evt = Event.get_event(self.env,req.args['evid'])
-            date = time.strftime("%Y%m%d",(time.strptime(req.args['time_begin'],"%Y/%m/%d %H:%M")))
+            date = time.strftime("%Y%m%d", time_begin)
             req.hdf['redir_url'] = str(self.env.href.azcalendar()) + "?date=%s" % date
             return evt.delete(self.env)
 
@@ -297,7 +312,7 @@ class UserbaseModule(Component):
     def process_request(self, req):
         KEY = "/azcalendar"
         query = req.path_info[req.path_info.index (KEY):]
-            
+
         import re
         if not re.match ("%s(/add|/delete|/event)?($|\?.*)" % KEY, query):
             return self.process_invalid(req)

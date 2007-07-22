@@ -19,6 +19,11 @@ def:azweekcal_evtcell(urlbase, event) ?><?cs
     set:tmp.title = event.time_begin + ' - ' + event.time_end ?><?cs
     set:tmp.urlbase = urlbase + '/event?id=' + event.id ?><?cs
     set:tmp.span = event.brd_end - event.brd_begin ?><?cs
+
+    if:event.title == '' ?><?cs
+    	set:event.title = '(no title)' ?><?cs
+    /if ?><?cs
+
     if:tmp.span >= 4 ?><?cs
         set:tmp.show = event.title ?><?cs
     else ?><?cs
