@@ -1,0 +1,287 @@
+Index: trac/ticket/web_ui.py
+===================================================================
+--- trac/ticket/web_ui.py	(revision 5856)
++++ trac/ticket/web_ui.py	(working copy)
+@@ -309,6 +309,8 @@
+             # Store a timestamp in order to detect "mid air collisions"
+             req.hdf['ticket.ts'] = ticket.time_changed
+ 
++        req.hdf['backrefs'] = self._get_backrefs(req, ticket)
++
+         self._insert_ticket_data(req, db, ticket,
+                                  get_reporter_id(req, 'author'))
+ 
+@@ -567,6 +569,58 @@
+         fragment = cnum and '#comment:'+cnum or ''
+         req.redirect(req.href.ticket(ticket.id) + fragment)
+ 
++    def _get_backrefs(self, req, ticket):
++        id = ticket.id
++        db = self.env.get_db_cnx()
++        cursor = db.cursor()
++        refs = []
++
++        cursor.execute("SELECT 'ticket', id, description "
++                       "FROM ticket WHERE description LIKE '%%#%s%%' "
++                       " OR description LIKE '%%ticket:%s%%' "
++                       "UNION "
++                       "SELECT 'ticket', t.id, newvalue "
++                       "FROM ticket_change c JOIN ticket t on c.ticket = t.id "
++                       "WHERE newvalue LIKE '%%#%s%%' "
++                       " OR newvalue LIKE '%%ticket:%s%%' "
++                       "UNION "
++                       "SELECT 'changeset', rev, message "
++                       "FROM revision WHERE message LIKE '%s%%' "
++                       " OR message LIKE '%%ticket:%s%%' "
++                       "UNION "
++                       "SELECT 'wiki', name, text "
++                       "FROM wiki WHERE (text LIKE '%%#%s%%' "
++                       " OR text LIKE '%%ticket:%s%%') "
++                       "AND version = (SELECT max(version) FROM wiki w "
++                       " WHERE w.name = wiki.name) "
++                       "ORDER BY 1 desc, 2"
++                       % ((id,) * 8))
++
++        for idx, row in enumerate(cursor):
++            rtyp, rid, text = row
++            # check whether the link is an single word
++            if re.search(r"(\W|^)#%s(\W|$)" % id, text):
++                ref = ({
++                    'href': req.href(rtyp, rid, q='#%s ticket%s'%(id,id)),
++                    'summary': '',
++                    'closed': '',
++                    }) 
++                if rtyp == "ticket":
++                    t = Ticket(self.env, id)
++                    ref.update({
++                        'shortname': '#%i' % rid,
++                        'summary': ticket['summary'],
++                        'closed': ticket['status'] == 'closed'
++                        }) 
++                elif rtyp == "changeset":
++                    ref['shortname'] = '[%s]' % rid
++                elif rtyp == "wiki":
++                    ref['shortname'] = rid 
++                refs.append(ref)
++                    
++        return refs
++
++
+     def _insert_ticket_data(self, req, db, ticket, reporter_id):
+         """Insert ticket data into the hdf"""
+         replyto = req.args.get('replyto')
+Index: trac/versioncontrol/web_ui/changeset.py
+===================================================================
+--- trac/versioncontrol/web_ui/changeset.py	(revision 5856)
++++ trac/versioncontrol/web_ui/changeset.py	(working copy)
+@@ -323,6 +323,9 @@
+                 'author': chgset.author or 'anonymous',
+                 'message': message, 'properties': properties
+             }
++
++            req.hdf['backrefs'] = self._get_backrefs(req, chgset.rev)
++
+             oldest_rev = repos.oldest_rev
+             if chgset.rev != oldest_rev:
+                 if restricted:
+@@ -746,6 +749,59 @@
+                                         old=diff.old_rev)
+         return html.A(label, class_="changeset", title=title, href=href)
+ 
++    def _get_backrefs(self, req, rev):
++        db = self.env.get_db_cnx()
++        cursor = db.cursor()
++        refs = []
++
++        cursor.execute("SELECT 'ticket', id, description "
++                       "FROM ticket WHERE description LIKE '%%[%s]%%' "
++                       " OR description LIKE '%%r%s%%' "
++                       " OR description LIKE '%%changeset:%s%%' "
++                       "UNION "
++                       "SELECT 'ticket', t.id, newvalue "
++                       "FROM ticket_change c JOIN ticket t on c.ticket = t.id "
++                       "WHERE newvalue LIKE '%%[%s%%' "
++                       " OR newvalue LIKE '%%r:%s%%' "
++                       " OR newvalue LIKE '%%changeset:%s%%' "
++                       "UNION "
++                       "SELECT 'changeset', rev, message "
++                       "FROM revision WHERE message LIKE '%%[%s]%%' "
++                       " OR message LIKE '%%r:%s%%' "
++                       " OR message LIKE '%%changeset:%s%%' "
++                       "UNION "
++                       "SELECT 'wiki', name, text "
++                       "FROM wiki WHERE (text LIKE '%%[%s]%%' "
++                       " OR text LIKE '%%r:%s%%' "
++                       " OR text LIKE '%%changeset:%s%%' ) "
++                       " AND version = (SELECT max(version) FROM wiki w "
++                       " WHERE w.name = wiki.name) "
++                       "ORDER BY 1 desc, 2"
++                       % ((rev,) * 12))
++        for idx, row in enumerate(cursor):
++            rtyp, rid, text = row
++            # check whether the link is an single word
++            if re.search(r"(\W|^)(\[|r:|changeset:)%s\]?(\W|$)" % id, text) or 1:
++                ref = ({
++                    'href': req.href(rtyp, rid, q='[%s] r%s changeset:%s'%(rev,rev,rev)),
++                    'summary': '',
++                    'closed': '',
++                    }) 
++                if rtyp == "ticket":
++                    t = Ticket(self.env, id)
++                    ref.update({
++                        'shortname': '#%i' % rid,
++                        'summary': ticket['summary'],
++                        'closed': ticket['status'] == 'closed'
++                        }) 
++                elif rtyp == "changeset":
++                    ref['shortname'] = '[%s]' % rid
++                elif rtyp == "wiki":
++                    ref['shortname'] = rid 
++                refs.append(ref)
++                
++        return refs
++
+     # ISearchSource methods
+ 
+     def get_search_filters(self, req):
+Index: trac/wiki/web_ui.py
+===================================================================
+--- trac/wiki/web_ui.py	(revision 5856)
++++ trac/wiki/web_ui.py	(working copy)
+@@ -136,6 +136,7 @@
+ 
+         req.hdf['wiki.action'] = action
+         req.hdf['wiki.current_href'] = req.href.wiki(page.name)
++        req.hdf['backrefs'] = self._get_backrefs(req, page)
+         return 'wiki.cs', None
+ 
+     # ITimelineEventProvider methods
+@@ -465,6 +466,52 @@
+             attach_href = req.href.attachment('wiki', page.name)
+             req.hdf['wiki.attach_href'] = attach_href
+ 
++    def _get_backrefs(self, req, page):
++        id = page.name
++        db = self.env.get_db_cnx()
++        cursor = db.cursor()
++        refs = []
++
++        cursor.execute("SELECT 'ticket', id, description "
++                       "FROM ticket WHERE description LIKE '%%%s%%' "
++                       "UNION "
++                       "SELECT 'ticket', t.id, newvalue "
++                       "FROM ticket_change c JOIN ticket t on c.ticket = t.id "
++                       "WHERE newvalue LIKE '%%%s%%' "
++                       "UNION "
++                       "SELECT 'changeset', rev, message "
++                       "FROM revision WHERE message LIKE '%%%s%%' "
++                       "UNION "
++                       "SELECT 'wiki', name, text "
++                       "FROM wiki WHERE text LIKE '%%%s%%' "
++                       "AND version = (SELECT max(version) FROM wiki w "
++                       " WHERE w.name = wiki.name) "
++                       "ORDER BY 1 desc, 2"
++                       % ((id,) * 4))
++
++        for idx, row in enumerate(cursor):
++            rtyp, rid, text = row
++            # check whether the link is an single word
++            if re.search(r"(\W|^)(wiki:)?%s(\W|$)" % id, text):
++                ref = ({
++                    'href': req.href(rtyp, rid, q='%s'%id),
++                    'summary': '',
++                    'closed': '',
++                    }) 
++                if rtyp == "ticket":
++                    t = Ticket(self.env, id)
++                    ref.update({
++                        'shortname': '#%i' % rid,
++                        'summary': ticket['summary'],
++                        'closed': ticket['status'] == 'closed'
++                        }) 
++                elif rtyp == "changeset":
++                    ref['shortname'] = '[%s]' % rid
++                elif rtyp == "wiki":
++                    ref['shortname'] = rid 
++                refs.append(ref)
++        return refs
++
+     # ISearchSource methods
+ 
+     def get_search_filters(self, req):
+Index: templates/ticket.cs
+===================================================================
+--- templates/ticket.cs	(revision 5856)
++++ templates/ticket.cs	(working copy)
+@@ -88,6 +88,20 @@
+     </h3>
+     <?cs var:ticket.description.formatted ?>
+    </div>
++   <?cs if:len(backrefs) ?>
++    <div class="description">
++     <h3 id="comment:backref">Referenced by</h3>
++     <div class="searchable">
++      <?cs each:ref = backrefs ?>
++       <a class="new ticket" 
++        <?cs if:ref.closed ?> style="text-decoration: line-through" <?cs /if ?>
++        href="<?cs var:ref.href ?>" 
++        title="<?cs var:ref.summary ?>">
++        <?cs var:ref.shortname ?></a>
++      <?cs /each ?>
++     </div>
++    </div>
++   <?cs /if ?>
+   </form><?cs 
+  /if ?>
+ </div>
+Index: templates/changeset.cs
+===================================================================
+--- templates/changeset.cs	(revision 5856)
++++ templates/changeset.cs	(working copy)
+@@ -166,6 +166,21 @@
+  <dd class="message" id="searchable"><?cs
+   alt:changeset.message ?>&nbsp;<?cs /alt ?></dd><?cs
+  /if ?>
++
++ <?cs if:len(backrefs) ?>
++    <dt class="property message">Referenced&nbsp;by:</dt>
++    <dd class="message searchable">
++       <?cs each:ref = backrefs ?>
++        <a class="new ticket" 
++         <?cs if:ref.closed ?> style="text-decoration: line-through" <?cs /if ?>
++         href="<?cs var:ref.href ?>" 
++         title="<?cs var:ref.summary ?>">
++         <?cs var:ref.shortname ?></a>
++       <?cs /each ?>
++    </dd>
++ <?cs /if ?>
++
++
+  <dt class="property files"><?cs 
+   if:len(changeset.changes) > #0 ?>
+    Files:<?cs
+Index: templates/wiki.cs
+===================================================================
+--- templates/wiki.cs	(revision 5856)
++++ templates/wiki.cs	(working copy)
+@@ -353,6 +353,20 @@
+      /each ?>
+     </ul>
+   <?cs /if ?>
++  <?cs if:len(backrefs) ?>
++   <div class="description">
++    <h3 id="comment:backref">Referenced by</h3>
++    <div class="searchable">
++     <?cs each:ref = backrefs ?>
++      <a  
++       <?cs if:ref.closed ?> style="text-decoration: line-through" <?cs /if ?>
++       href="<?cs var:ref.href ?>" 
++       title="<?cs var:ref.summary ?>">
++       <?cs var:ref.shortname ?></a>
++     <?cs /each ?>
++    </div>
++   </div>
++  <?cs /if ?>
+   <?cs if wiki.action == "view" && (trac.acl.WIKI_MODIFY || trac.acl.WIKI_DELETE)
+       && (wiki.readonly == "0" || trac.acl.WIKI_ADMIN) ?>
+    <div class="buttons"><?cs
