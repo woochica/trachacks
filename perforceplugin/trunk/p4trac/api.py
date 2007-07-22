@@ -278,6 +278,8 @@ class PerforceCachedRepository(CachedRepository):
             finally:
                 self.repos.authz = authz
 
+        self.youngest = youngestStored
+
     def get_changesets(self, start, stop):
         if not self.synced:
             self.sync()
