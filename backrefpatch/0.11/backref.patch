@@ -1,8 +1,8 @@
 Index: trac/ticket/web_ui.py
 ===================================================================
---- trac/ticket/web_ui.py	(revision 5807)
+--- trac/ticket/web_ui.py	(revision 5856)
 +++ trac/ticket/web_ui.py	(working copy)
-@@ -431,6 +431,8 @@
+@@ -432,6 +432,8 @@
                           # Store a timestamp for detecting "mid air collisions"
                           'timestamp': str(ticket.time_changed)})
  
@@ -11,7 +11,7 @@ Index: trac/ticket/web_ui.py
          self._insert_ticket_data(context, data, get_reporter_id(req, 'author'),
                                   field_changes)
  
-@@ -894,6 +896,39 @@
+@@ -892,6 +894,39 @@
          for key in field_changes:
              ticket[key] = field_changes[key]['new']
  
@@ -48,15 +48,15 @@ Index: trac/ticket/web_ui.py
 +                refs.append(context(rtyp, rid)) 
 +        return refs
 +
-     def _insert_ticket_data(self, context, data, author_id, field_changes):
-         """Insert ticket data into the template `data`"""
-         req = context.req
+     def _prepare_fields(self, req, ticket):
+         fields = []
+         for field in ticket.fields:
 Index: trac/ticket/templates/ticket.html
 ===================================================================
---- trac/ticket/templates/ticket.html	(revision 5807)
+--- trac/ticket/templates/ticket.html	(revision 5856)
 +++ trac/ticket/templates/ticket.html	(working copy)
-@@ -209,6 +209,20 @@
-                 ${wiki_to_html(context, ticket.description)}
+@@ -205,6 +205,21 @@
+                 ${wiki_to_html(context, ticket.description, escape_newlines=True)}
                </div>
              </div>
 +
@@ -66,8 +66,9 @@ Index: trac/ticket/templates/ticket.html
 +                    <div class="searchable">
 +                        <py:for each="ref in backrefs">
 +                            <a class="new ticket" 
-+                            href="${ref.resource_href()+'?q=%%23%i+ticket%%3A%i' % (ticket.id, ticket.id)}" 
-+                            title="${[ref.summary(),''][ref.summary()==ref.shortname()]}">${ref.shortname()}</a>
++                            href="${ref.resource_href(q='#%i ticket:%i' % ((ticket.id, )*2))}" 
++                            title="${[ref.summary(),''][ref.summary()==ref.shortname()]}"
++                            >${ref.shortname()}</a>
 +                        </py:for>
 +                    </div>
 +               </div>
@@ -78,9 +79,9 @@ Index: trac/ticket/templates/ticket.html
        <!--! End of ticket box -->
 Index: trac/versioncontrol/web_ui/changeset.py
 ===================================================================
---- trac/versioncontrol/web_ui/changeset.py	(revision 5807)
+--- trac/versioncontrol/web_ui/changeset.py	(revision 5856)
 +++ trac/versioncontrol/web_ui/changeset.py	(working copy)
-@@ -590,6 +590,8 @@
+@@ -594,6 +594,8 @@
                  info = None
              changes.append(info) # the sequence should be immutable
  
@@ -89,7 +90,7 @@ Index: trac/versioncontrol/web_ui/changeset.py
          data.update({'has_diffs': has_diffs, 'changes': changes, 'xhr': xhr,
                       'filestats': filestats,
                       'files': files, 'location': self._get_location(files),
-@@ -903,6 +905,44 @@
+@@ -907,6 +909,42 @@
                                              old=data['old_rev']) + query
          return tag.a(label, class_="changeset", title=title, href=href)
  
@@ -122,10 +123,8 @@ Index: trac/versioncontrol/web_ui/changeset.py
 +                       "ORDER BY 1 desc, 2"
 +                       % ((rev,) * 12))
 +
-+        self.env.log.info(rev)
 +        for idx, row in enumerate(cursor):
 +            rtyp, rid, text = row
-+            self.env.log.info(row)
 +            # check whether the link is an single word
 +            if re.search(r"(\W|^)(\[|r:|changeset:)%s\]?(\W|$)" % id, text) or 1:
 +                refs.append(context(rtyp, rid)) 
@@ -136,9 +135,9 @@ Index: trac/versioncontrol/web_ui/changeset.py
      def get_search_filters(self, req):
 Index: trac/versioncontrol/templates/changeset.html
 ===================================================================
---- trac/versioncontrol/templates/changeset.html	(revision 5807)
+--- trac/versioncontrol/templates/changeset.html	(revision 5856)
 +++ trac/versioncontrol/templates/changeset.html	(working copy)
-@@ -130,6 +130,18 @@
+@@ -130,6 +130,19 @@
              </py:when>
              <py:otherwise><pre>${changeset.message}</pre></py:otherwise>
            </dd>
@@ -148,8 +147,9 @@ Index: trac/versioncontrol/templates/changeset.html
 +             <dd class="message searchable">
 +                <py:for each="ref in backrefs">
 +                    <a class="new ticket" 
-+                    href="${ref.resource_href()+'?q=%%5B%i%%5D+r%i+changeset%%3A%i' % (context.id, context.id, context.id)}" 
-+                    title="${[ref.summary(),''][ref.summary()==ref.shortname()]}">${ref.shortname()}</a>
++                    href="${ref.resource_href(q='[%i] r%i changeset:%i' % ((context.id,)*3))}" 
++                    title="${[ref.summary(),''][ref.summary()==ref.shortname()]}"
++                    >${ref.shortname()}</a>
 +                </py:for>
 +             </dd>
 +          </py:if>
@@ -159,9 +159,9 @@ Index: trac/versioncontrol/templates/changeset.html
            <dt class="property location">Location:</dt>
 Index: trac/wiki/web_ui.py
 ===================================================================
---- trac/wiki/web_ui.py	(revision 5807)
+--- trac/wiki/web_ui.py	(revision 5856)
 +++ trac/wiki/web_ui.py	(working copy)
-@@ -512,6 +512,8 @@
+@@ -514,6 +514,8 @@
                       WikiSystem(self.env).get_pages(prefix) if 'WIKI_VIEW'
                       in req.perm(context(id=t))]
  
@@ -170,7 +170,7 @@ Index: trac/wiki/web_ui.py
          # -- prev/up/next links
          if prev_version:
              add_link(req, 'prev', req.href.wiki(page.name,
-@@ -533,6 +535,35 @@
+@@ -535,6 +537,35 @@
          })
          return 'wiki_view.html', data, None
  
@@ -208,22 +208,22 @@ Index: trac/wiki/web_ui.py
      def get_timeline_filters(self, req):
 Index: trac/wiki/templates/wiki_view.html
 ===================================================================
---- trac/wiki/templates/wiki_view.html	(revision 5807)
+--- trac/wiki/templates/wiki_view.html	(revision 5856)
 +++ trac/wiki/templates/wiki_view.html	(working copy)
-@@ -104,6 +104,16 @@
-                   <input type="submit" value="${_('Delete page')}" />
-                 </div>
-               </form>
-+              
-+	          <py:if test="backrefs">
-+	             <p>Referenced&nbsp;by:
-+                 <py:for each="ref in backrefs">
-+	                 <a class="new ticket" 
-+	                 href="${ref.resource_href()+'?q=%s' % context.id}" 
-+	                 title="${[ref.summary(),''][ref.summary()==ref.shortname()]}">${ref.shortname()}</a>
-+	             </py:for></p>
-+	          </py:if>
-+              
-             </py:if>
-           </div>
-         </py:if>
+@@ -61,6 +61,16 @@
+ 
+       ${list_of_attachments(attachments, compact=True)}
+ 
++      <py:if test="backrefs">
++         <p>Referenced&nbsp;by:
++         <py:for each="ref in backrefs">
++             <a class="new ticket" 
++             href="${ref.resource_href(q=context.id)}" 
++             title="${[ref.summary(),''][ref.summary()==ref.shortname()]}"
++             >${ref.shortname()}</a>
++         </py:for></p>
++      </py:if>
++
+       <py:with vars="modify_perm = 'WIKI_MODIFY' in perm(context);
+                      delete_perm = 'WIKI_DELETE' in perm(context);
+                      admin_perm = 'WIKI_ADMIN' in perm(context)">
