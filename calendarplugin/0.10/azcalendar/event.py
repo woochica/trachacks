@@ -89,13 +89,16 @@ class Event:
 
         db = env.get_db_cnx()
         cursor = db.cursor()
-        sql = "SELECT * FROM azcalendar_event WHERE id = \"%s\"" % evid
-        cursor.execute ( sql )
+        sql = """
+        SELECT *
+        FROM azcalendar_event
+        WHERE id = %s
+        """
+        cursor.execute(sql, (evid, ))
         row = cursor.fetchone()
         return Event(*tuple([i for i in row]))
 
     get_event = classmethod(get_event)
-
 
     def update(self, env, req):
         """
@@ -104,26 +107,26 @@ class Event:
 
         db = env.get_db_cnx()
         cursor = db.cursor()
-        try:
-            sql = """
-            UPDATE azcalendar_event set
-            author = \"%s\",
-            time_insert =%s,
-            time_update =%s,
-            time_begin =%s,
-            time_end =%s,
-            type= %s,
-            priority = %s,
-            title = \"%s\" where id = %s
-            """ % ( self._author_,self._time_insert_, self._time_update_ ,
-                        self._time_begin_,  self._time_end_ , self._type_ ,self._priority_, self._title_, self._id_ )
-            req.hdf['sql'] = sql
-            cursor.execute(sql)
-            db.commit()
-            return 'redirect.cs', None
-        except:
-            req.hdf['azcalendar.reason'] = "Database failure."
-            return 'azerror.cs', None
+        sql = """
+        UPDATE azcalendar_event
+        SET
+          author = %s,
+          time_insert = %s,
+          time_update = %s,
+          time_begin = %s,
+          time_end = %s,
+          type = %s,
+          priority = %s,
+          title = %s
+        WHERE
+          id = %s
+        """
+        cursor.execute(sql,
+                       (self._author_,
+                        self._time_insert_, self._time_update_, self._time_begin_, self._time_end_,
+                        self._type_, self._priority_, self._title_, self._id_))
+        db.commit()
+        return 'redirect.cs', None
 
     def save (self, env, req):
         """
@@ -132,24 +135,22 @@ class Event:
 
         db = env.get_db_cnx()
         cursor = db.cursor()
-        try:
-            sql = """
-            INSERT INTO azcalendar_event
-            (author,
-            time_insert, time_update, time_begin, time_end,
-            type, priority, title)
-            VALUES
-            (\"%s\",
-            %s, %s, %s, %s,
-            %s, %s, "%s" )
-            """ % (self._author_, self._time_insert_, self._time_update_,
-                   self._time_begin_, self._time_end_ , self._type_, self._priority_, self._title_)
-            cursor.execute(sql)
-            db.commit()
-            return 'redirect.cs', None
-        except:
-            req.hdf['azcalendar.reason'] = "Database failure."
-            return 'azerror.cs', None
+        sql = """
+        INSERT INTO azcalendar_event (
+          author,
+          time_insert, time_update, time_begin, time_end,
+          type, priority, title)
+        VALUES (
+          %s,
+          %s, %s, %s, %s,
+          %s, %s, %s)
+        """
+        cursor.execute(sql,
+                       (self._author_,
+                        self._time_insert_, self._time_update_, self._time_begin_, self._time_end_,
+                        self._type_, self._priority_, self._title_))
+        db.commit()
+        return 'redirect.cs', None
 
     def delete (self, env):
         """
@@ -158,14 +159,12 @@ class Event:
 
         db = env.get_db_cnx()
         cursor = db.cursor()
-        try:
-            sql = "DELETE FROM azcalendar_event WHERE id = \"%s\"" % self._id_
-            cursor.execute(sql)
-            db.commit()
-            return 'redirect.cs', None
-        except:
-            req.hdf['azcalendar.reason'] = "Database failure."
-            return 'azerror.cs', None
+        sql = """
+        DELETE FROM azcalendar_event WHERE id = %s
+        """
+        cursor.execute(sql, (self._id_,))
+        db.commit()
+        return 'redirect.cs', None
 
 
     def parse_row (cls, row):

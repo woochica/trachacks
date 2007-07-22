@@ -299,7 +299,7 @@ class UserbaseModule(Component):
               = caltools.parse_time_begin_end(req.args['time_begin'], req.args['time_end'])
 
             evt = Event.get_event(self.env,req.args['evid'])
-            date = time.strftime("%Y%m%d", time_begin)
+            date = time.strftime("%Y%m%d", begin_time)
             req.hdf['redir_url'] = str(self.env.href.azcalendar()) + "?date=%s" % date
             return evt.delete(self.env)
 
