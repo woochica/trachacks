@@ -116,6 +116,9 @@ class OpenDocumentFormatter(Formatter):
         return '<text:span text:style-name="%s">%s</text:span>' % (
             self.get_style('inline'), escape(fullmatch.group('inline2')))
 
+    def _make_ext_link(self, url, text, title=''):
+    	return '<text:a xlink:href="%s"%s>%s</text:a>' % (
+		url, title and 'office:name="%s"' % title or '', text)
 
 def wiki_to_odt(wikitext, env, req, styles,
     db=None, absurls=False, escape_newlines=False):

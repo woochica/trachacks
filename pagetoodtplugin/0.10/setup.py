@@ -1,10 +1,10 @@
 from setuptools import setup
 
 PACKAGE = 'TracPageToODT'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(name='TracPageToODT',
-      version='0.1',
+      version='0.2',
       packages=['pagetoodt'],
       author='Christophe de Vienne',
       author_email='cdevienne@gmail.com',
