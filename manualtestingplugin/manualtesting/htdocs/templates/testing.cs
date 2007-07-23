@@ -23,9 +23,9 @@
                 <!--
                 columns = ('id','title','description','component','deleted','user')
                 -->
-                <th>Report</th>
-                <th>Title</th>
-                <th>Description</th>
+                <th><a href="#" title="">Report</a></th>
+                <th><a href="#" title="">Title</a></th>
+                <th><a href="#" title="">Description</a></th>
             </tr>
         </thead>
         <tbody>
@@ -38,13 +38,17 @@
                     <?cs else ?>
                         <tr class="odd">
                     <?cs /if ?>
-                            <td>
-                                <?cs var:row.id ?>
+                            <td class="report">
+                                <a href="#" title="View Suite">
+                                    <?cs var:row.id ?>
+                                </a>
                             </td>
-                            <td>
-                                <?cs var:row.title ?>
+                            <td class="title">
+                                <a href="#" title="View Suite">
+                                    <?cs var:row.title ?>
+                                </a>
                             </td>
-                            <td>
+                            <td class="description">
                                 <?cs var:row.description ?>
                             </td>
                     </tr>
