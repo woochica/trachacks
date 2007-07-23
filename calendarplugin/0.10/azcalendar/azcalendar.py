@@ -66,48 +66,6 @@ class UserbaseModule(Component):
     def process_show(self, req):
         req.perm.assert_permission('CAL_VIEW')
 
-        def get_week(date):
-            # If there is a simpler way to do this, let me know.  For now...
-            d_year, d_doy, d_dow = date[0], date[-2], date[-3]
-
-            doy_start = d_doy - d_dow
-            y_start = d_year
-            if doy_start < 1:
-                y_start -= 1
-                doy_start += 365 + int (calendar.isleap (y_start))
-
-            doy_end = d_doy - d_dow + 7
-            y_end = d_year
-            if doy_end > 365 + int (calendar.isleap (y_end)):
-                doy_end -= 365 + int (calendar.isleap (y_end))
-                y_end += 1
-
-            week_start = time.strptime (str(y_start) + str(doy_start), "%Y%j")
-            week_end = time.strptime (str(y_end) + str(doy_end), "%Y%j")
-            return week_start, week_end
-
-        def get_month_range(date):
-            d_year, d_month = date[0], date[1]
-            month_start = tuple([d_year, d_month, 1] + [0 for _ in date[3:]])
-            d_month = d_month + 1
-            if d_month > 12:
-                d_year += 1
-                d_month = 1
-            month_end = tuple([d_year, d_month, 1] + [0 for _ in date[3:]])
-            return month_start, month_end
-
-        def relative_day(week_start, which_day):
-            d_year, d_doy = week_start[0], week_start[-2]
-            doy = d_doy + which_day
-            if doy < 1:
-                d_year -= 1
-                doy += 365 + int (calendar.isleap (d_year))
-            elif doy > 365 + int (calendar.isleap (d_year)):
-                doy -= 365 + int (calendar.isleap (d_year))
-                d_year += 1
-            day = time.strptime (str(d_year) + str(doy), "%Y%j")
-            return day
-
         def stamp_dow (stamp):
             return time.localtime(stamp)[6]
 
@@ -131,7 +89,7 @@ class UserbaseModule(Component):
             date = time.localtime ()
 
         cweek = [[] for _ in xrange(7)]
-        week_range = get_week(date)
+        week_range = caltools.get_week_range(date)
         bg, en = time.mktime(week_range[0]), time.mktime(week_range[1])
         for ev in Event.events_between (self.env, bg, en,req.authname):
             begin = max (bg, ev.get_time_begin ())
@@ -145,7 +103,7 @@ class UserbaseModule(Component):
                        for evts in cweek]
 
         for d in xrange (len (day_layouts)):
-            today = relative_day(week_start, d)
+            today = caltools.relative_day(week_start, d)
             today_stamp = time.mktime (today)
             tomorrow_stamp = today_stamp + 24 * 60 * 60
 
@@ -182,7 +140,7 @@ class UserbaseModule(Component):
                     req.hdf[base + '.time_end'] = time.strftime (fmt, time.localtime (ev.get_time_end()))
 
         display_months = []
-        dm_year, dm_month = get_month_range (week_start)[0][:2]
+        dm_year, dm_month = caltools.get_month_range (week_start)[0][:2]
 
         prev_year, prev_month, prev_day = date[:3]
         prev_month -= 1
@@ -199,7 +157,7 @@ class UserbaseModule(Component):
         next_day = min (calendar.monthrange (next_year, next_month)[1], next_day)
 
         for i in range(3):
-            month_range = get_month_range (tuple([dm_year, dm_month, 1] + [0 for i in range(6)]))
+            month_range = caltools.get_month_range (tuple([dm_year, dm_month, 1] + [0 for i in range(6)]))
             interesting_days = {}
 
             bg, en = time.mktime(month_range[0]), time.mktime(month_range[1])
