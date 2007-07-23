@@ -5,7 +5,7 @@ from trac.core import *
 from manualtesting.DBUtils import *
 
 class ManualTestingAPI:
-    def __init__(self, component):
+    def __init__(self, component, req):
         self.env = component.env
         self.log = component.log
         self.dbUtils = DBUtils(self)
