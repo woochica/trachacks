@@ -28,8 +28,9 @@ class UserbaseModule(Component):
         return 'azcalendar'
 
     def get_navigation_items(self, req):
-        yield 'mainnav', 'azcalendar', Markup('<a href="%s">Azcalendar</a>',
-                self.env.href.azcalendar())
+        if req.perm.has_permission('CAL_VIEW'):
+            yield ('mainnav', 'azcalendar',
+                   Markup('<a href="%s">Azcalendar</a>', self.env.href.azcalendar()))
 
 
     # IRequestHandler methods
@@ -38,6 +39,7 @@ class UserbaseModule(Component):
         return "azcalendar" in req.path_info
 
     def process_add(self, req):
+        req.perm.assert_permission('CAL_EDIT')
         add_stylesheet (req, 'hw/css/azcalendar.css')
 
         if req.method == 'GET' and req.args.has_key('date'):
@@ -62,6 +64,8 @@ class UserbaseModule(Component):
             return evt.save(self.env, req)
 
     def process_show(self, req):
+        req.perm.assert_permission('CAL_VIEW')
+
         def get_week(date):
             # If there is a simpler way to do this, let me know.  For now...
             d_year, d_doy, d_dow = date[0], date[-2], date[-3]
@@ -82,7 +86,7 @@ class UserbaseModule(Component):
             week_end = time.strptime (str(y_end) + str(doy_end), "%Y%j")
             return week_start, week_end
 
-        def get_month(date):
+        def get_month_range(date):
             d_year, d_month = date[0], date[1]
             month_start = tuple([d_year, d_month, 1] + [0 for _ in date[3:]])
             d_month = d_month + 1
@@ -178,7 +182,7 @@ class UserbaseModule(Component):
                     req.hdf[base + '.time_end'] = time.strftime (fmt, time.localtime (ev.get_time_end()))
 
         display_months = []
-        dm_year, dm_month = get_month (week_start)[0][:2]
+        dm_year, dm_month = get_month_range (week_start)[0][:2]
 
         prev_year, prev_month, prev_day = date[:3]
         prev_month -= 1
@@ -195,7 +199,7 @@ class UserbaseModule(Component):
         next_day = min (calendar.monthrange (next_year, next_month)[1], next_day)
 
         for i in range(3):
-            month_range = get_month (tuple([dm_year, dm_month, 1] + [0 for i in range(6)]))
+            month_range = get_month_range (tuple([dm_year, dm_month, 1] + [0 for i in range(6)]))
             interesting_days = {}
 
             bg, en = time.mktime(month_range[0]), time.mktime(month_range[1])
@@ -254,6 +258,8 @@ class UserbaseModule(Component):
         return 'azcalendar.cs', None
 
     def process_delete(self, req):
+	req.perm.assert_permission('CAL_ADMIN')
+
         if req.args.has_key('id'):
             import re
             xid = req.args['id']
@@ -265,6 +271,8 @@ class UserbaseModule(Component):
         return self.process_show(req)
 
     def process_event(self, req):
+        req.perm.assert_permission('CAL_VIEW')
+
         add_stylesheet (req, 'hw/css/azcalendar.css')
         if req.method == 'GET' and req.args.has_key('id'):
             evt = Event.get_event(self.env,req.args['id'])
@@ -279,6 +287,8 @@ class UserbaseModule(Component):
             return 'azevent.cs', None
 
         elif req.method == 'GET' and req.args.has_key('update_event'):
+	    req.perm.assert_permission('CAL_EDIT')
+
             begin_time, end_time, begin_stamp, end_stamp \
               = caltools.parse_time_begin_end(req.args['time_begin'], req.args['time_end'])
 
@@ -295,6 +305,7 @@ class UserbaseModule(Component):
             return evt.update(self.env, req)
 
         elif req.method == 'GET' and req.args.has_key('delete_event'):
+	    req.perm.assert_permission('CAL_ADMIN')
             begin_time, end_time, begin_stamp, end_stamp \
               = caltools.parse_time_begin_end(req.args['time_begin'], req.args['time_end'])
 
@@ -310,6 +321,8 @@ class UserbaseModule(Component):
         return 'azerror.cs', None
 
     def process_request(self, req):
+	req.perm.assert_permission('CAL_VIEW')
+
         KEY = "/azcalendar"
         query = req.path_info[req.path_info.index (KEY):]
 
