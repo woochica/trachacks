@@ -10,6 +10,9 @@ setup(
   package_data = {
       'manualtesting' : [
         'htdocs/templates/*.cs',
+        'htdocs/graphics/*.gif',
+        'htdocs/graphics/*.jpg',
+        'htdocs/graphics/*.png',
         'htdocs/scripts/*.js',
         'htdocs/css/*.css'
       ]
