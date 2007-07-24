@@ -32,7 +32,7 @@
         <legend>Add Test Plan:</legend>
         <div class="field">
             <label for="user">Your email or username:</label><br/>
-            <input type="text" name="user" size="40" value="<?cs alt:args.author ?>anonymous<?cs /alt ?>" /><br/>
+            <input type="text" name="user" size="40" value="<?cs alt:trac.authname ?>anonymous<?cs /alt ?>" /><br/>
         </div>
         <div class="field">
             <label for="priority">Priority:</label><br/>
