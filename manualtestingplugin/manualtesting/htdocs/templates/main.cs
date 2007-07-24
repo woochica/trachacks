@@ -25,6 +25,7 @@
                 -->
                 <th><a href="#" title="">Report</a></th>
                 <th><a href="#" title="">Title</a></th>
+                <th><a href="#" title="">Component</a></th>
                 <th><a href="#" title="">Description</a></th>
             </tr>
         </thead>
@@ -48,6 +49,9 @@
                                     <?cs var:row.title ?>
                                 </a>
                             </td>
+                            <td class="Component">
+                                <?cs var:row.component ?>
+                            </td>
                             <td class="description">
                                 <?cs var:row.description ?>
                             </td>
@@ -59,6 +63,12 @@
     <?cs else ?>
         <p class="help">No matches found.</p>
     <?cs /if ?>
+    <div class="buttons">
+        <form method="post" action="<?cs var:manualtesting.href ?>">
+              <input type="submit" name="addsuite" value="Add Test Suite" />
+              <input type="hidden" name="manualtesting_action" value="add" />
+        </form>
+    </div>
     <div class="buttons">
         <form method="post" action="<?cs var:manualtesting.href ?>">
               <input type="submit" name="addsuite" value="Add Test Suite" />

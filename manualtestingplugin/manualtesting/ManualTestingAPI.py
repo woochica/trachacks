@@ -66,7 +66,12 @@ class ManualTestingAPI:
             else:
                 return ['suite-view']
         else:
-            return ['main']
+            if action == 'add':
+                return ['suite-add-form']
+            elif action == 'suite-add':
+                return ['suite-add-submit', 'main']
+            else:
+                return ['main']
 
     def performAction(self, req, cursor, modes, suite_id, plan_id):
         for mode in modes:
@@ -75,7 +80,7 @@ class ManualTestingAPI:
                 # Display the main page (a listing of available suites.)
                 suites = self.dbUtils.get_suites(cursor)
                 req.hdf['manualtesting.suites'] = suites
-                return 'suites.cs'
+                return 'main.cs'
 
             elif mode == 'plan-add-form':
                 suite = self.dbUtils.get_suite(cursor, suite_id)
@@ -112,3 +117,20 @@ class ManualTestingAPI:
                 req.hdf['manualtesting.suite'] = suite
                 req.hdf['manualtesting.plans'] = plans
                 return 'suite.cs'
+
+            elif mode == 'suite-add-form':
+                components = self.dbUtils.get_tracComponents(cursor)
+                req.hdf['manualtesting.trac.components'] = components
+                # Return template
+                return 'suite-add.cs'
+
+            elif mode == 'suite-add-submit':
+                # Get form values.
+                new_user = req.args.get('user')
+                new_title = req.args.get('title')
+                new_component = req.args.get('component')
+                new_description = req.args.get('description')
+                new_time = int( time.time() )
+                # Add plan.
+                self.log.debug(new_description)
+                self.dbUtils.add_suite(cursor,new_user,new_title,new_component,new_description,new_time)

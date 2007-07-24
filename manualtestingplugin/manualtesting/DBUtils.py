@@ -29,6 +29,12 @@ class DBUtils:
             return row
         return None
 
+    def add_suite(self,cursor,new_user,new_title,new_component,new_description,new_time):
+        sql = "INSERT INTO mtp_suites (title,component,description,deleted,user) VALUES ('%s','%s','%s',%s,'%s')" % (new_title,new_component,new_description,0,new_user)
+        self.log.debug(sql)
+        # ToDo: values in SQL statement must be escaped.
+        cursor.execute(sql)
+
     def get_plans(self, req, cursor, suite_id):
         rows = []
         columns = ('id','title','description')
@@ -46,3 +52,25 @@ class DBUtils:
         self.log.debug(sql)
         # ToDo: values in SQL statement must be escaped.
         cursor.execute(sql)
+
+    def get_tracComponents(self, cursor):
+        rows = []
+        columns = ('name','owner','default')
+        sql = "SELECT * FROM component"
+        self.log.debug(sql)
+        cursor.execute(sql)
+        for row in cursor:
+            row = dict(zip(columns, row))
+            rows.append(row)
+        return rows
+
+    def get_tracVersions(self, cursor):
+        rows = []
+        columns = ('name','time','default')
+        sql = "SELECT * FROM version"
+        self.log.debug(sql)
+        cursor.execute(sql)
+        for row in cursor:
+            row = dict(zip(columns, row))
+            rows.append(row)
+        return rows
