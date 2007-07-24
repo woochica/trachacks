@@ -1,6 +1,7 @@
 # ManualTesting.DBUtils
 
 from trac.core import *
+from trac.wiki import wiki_to_html, wiki_to_oneliner
 
 class DBUtils:
     def __init__(self, component):
@@ -28,13 +29,14 @@ class DBUtils:
             return row
         return None
 
-    def get_plans(self, cursor, suite_id):
+    def get_plans(self, req, cursor, suite_id):
         rows = []
         columns = ('id','title','description')
-        sql = "SELECT id, title, description FROM mtp_plans WHERE id = %s" % suite_id
+        sql = "SELECT id, title, description FROM mtp_plans WHERE suite_id = %s" % suite_id
         self.log.debug(sql)
         cursor.execute(sql)
         for row in cursor:
             row = dict(zip(columns, row))
+            row['description'] = wiki_to_html(row['description'], self.env, req)
             rows.append(row)
         return rows

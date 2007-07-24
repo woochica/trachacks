@@ -73,7 +73,7 @@ class ManualTestingAPI:
             elif mode == 'suite-view':
                 # Display the plans in a suite.
                 suite = self.dbUtils.get_suite(cursor, suite_id)
-                plans = self.dbUtils.get_plans(cursor, suite_id)
+                plans = self.dbUtils.get_plans(req, cursor, suite_id)
                 req.hdf['manualtesting.suite'] = suite
                 req.hdf['manualtesting.plans'] = plans
                 return 'suite.cs'
