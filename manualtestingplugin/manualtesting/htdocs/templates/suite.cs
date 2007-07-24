@@ -13,7 +13,7 @@
     </ul>
 </div>
 
-<div id="content" class="suites">
+<div id="content" class="listing suite">
     <h1>{<?cs var:manualtesting.suite.id ?>} <?cs var:manualtesting.suite.title ?></h1>
     <p>
         <?cs var:manualtesting.suite.description ?>
@@ -71,10 +71,8 @@
                     <?cs else ?>
                         <tr class="odd">
                     <?cs /if ?>
-                            <td>
-                                <strong>Description</strong>
-                            </td>
-                            <td colspan="2">
+                            <td colspan="3">
+                                <strong>Description:</strong><br />
                                 <?cs var:row.description ?>
                             </td>
                         </tr>
@@ -86,11 +84,10 @@
         <p class="help">No matches found.</p>
     <?cs /if ?>
     <div class="buttons">
-        <form action="" method="get">
-        <div>
-            <input type="submit" value="Create new Test Plan" />
-            <input type="hidden" name="action" value="new" />
-        </div>
+        <form method="post" action="<?cs var:manualtesting.href ?>/<?cs var:manualtesting.suite.id ?>">
+              <input type="submit" name="addplan" value="Add Test Plan" />
+              <input type="hidden" name="suite_id" value="<?cs var:manualtesting.suite.id ?>" />
+              <input type="hidden" name="manualtesting_action" value="add" />
         </form>
     </div>
 </div>

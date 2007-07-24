@@ -40,3 +40,9 @@ class DBUtils:
             row['description'] = wiki_to_html(row['description'], self.env, req)
             rows.append(row)
         return rows
+
+    def add_plan(self,cursor,suite_id,new_user,new_title,new_priority,new_description,new_time):
+        sql = "INSERT INTO mtp_plans (suite_id,cDate,mDate,title,priority,description,user) VALUES (%s,%s,%s,'%s','%s','%s','%s')" % (suite_id,1,1,new_title,new_priority,new_description,new_user)
+        self.log.debug(sql)
+        # ToDo: values in SQL statement must be escaped.
+        cursor.execute(sql)

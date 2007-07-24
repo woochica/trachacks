@@ -60,11 +60,9 @@
         <p class="help">No matches found.</p>
     <?cs /if ?>
     <div class="buttons">
-        <form action="" method="get">
-        <div>
-            <input type="submit" value="Create new Test Suite" />
-            <input type="hidden" name="action" value="new" />
-        </div>
+        <form method="post" action="<?cs var:manualtesting.href ?>">
+              <input type="submit" name="addsuite" value="Add Test Suite" />
+              <input type="hidden" name="manualtesting_action" value="add" />
         </form>
     </div>
 </div>
