@@ -1,10 +1,8 @@
-from tracdownloads.api import *
 from trac.core import *
-from trac.perm import IPermissionRequestor
-from trac.web.chrome import add_stylesheet
-from trac.wiki import wiki_to_html, wiki_to_oneliner
+
 from webadmin.web_ui import IAdminPageProvider
-import time
+
+from tracdownloads.api import *
 
 class DownloadsWebAdmin(Component):
     """
@@ -14,15 +12,33 @@ class DownloadsWebAdmin(Component):
     implements(IAdminPageProvider)
 
     # IAdminPageProvider
+
     def get_admin_pages(self, req):
         if req.perm.has_permission('DOWNLOADS_ADMIN'):
             yield ('downloads', 'Downloads System', 'downloads', 'Downloads')
             yield ('downloads', 'Downloads System', 'architectures', 'Architectures')
-	    yield ('downloads', 'Downloads System', 'platforms', 'Platforms')
-	    yield ('downloads', 'Downloads System', 'types', 'Types')
+            yield ('downloads', 'Downloads System', 'platforms', 'Platforms')
+            yield ('downloads', 'Downloads System', 'types', 'Types')
 
     def process_admin_request(self, req, category, page, path_info):
-        # Create API object
-        api = DownloadsApi(self, req)
-	
-        return None
+        # Get cursor.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        # Prepare arguments and HDF structure.
+        req.args['context'] = 'admin'
+        req.args['page'] = page
+        if page == 'architectures':
+            req.args['architecture'] = path_info
+        elif page == 'platforms':
+            req.args['platform'] = path_info
+        elif page == 'types':
+            req.args['type'] = path_info
+        elif page == 'downloads':
+            req.args['download'] = path_info
+
+        # Return page content.
+        api = DownloadsApi(self.env)
+        content = api.process_downloads(req, cursor)
+        db.commit()
+        return content

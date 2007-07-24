@@ -10,6 +10,7 @@ tables = [
     Column('size', type = 'integer'),
     Column('time', type = 'integer'),
     Column('author'),
+    Column('tags'),
     Column('component'),
     Column('version'),
     Column('architecture', type = 'integer'),

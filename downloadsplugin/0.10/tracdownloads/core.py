@@ -1,13 +1,16 @@
-from tracdownloads.api import *
+import re
+
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
-from trac.web.main import IRequestHandler
-from trac.perm import IPermissionRequestor
 from trac.config import Option
+from trac.web.chrome import add_stylesheet
 from trac.util import format_datetime, TracError
 from trac.util.html import html
-import re, os, os.path, time, mimetypes
-from tractags.api import TagEngine
+
+from trac.web.main import IRequestHandler
+from trac.perm import IPermissionRequestor
+from trac.web.chrome import INavigationContributor, ITemplateProvider
+
+from tracdownloads.api import *
 
 class DownloadsCore(Component):
     """
@@ -19,7 +22,7 @@ class DownloadsCore(Component):
 
     title = Option('downloads', 'title', 'Downloads',
       'Main navigation bar button title.')
-    path = Option('downloads', 'path', '/var/lib/trac/downloads'
+    path = Option('downloads', 'path', '/var/lib/trac/downloads',
       'Directory to store uploaded downloads.')
 
     # IPermissionRequestor methods.
@@ -56,7 +59,7 @@ class DownloadsCore(Component):
 
     def process_request(self, req):
         # Create API object.
-        self.api = DownloadsApi(self)
+        self.api = DownloadsApi(self.env)
 
         # Get cursor.
         db = self.env.get_db_cnx()
@@ -83,60 +86,26 @@ class DownloadsCore(Component):
         self.log.debug('action: %s' % (action,))
         if action == 'get_file':
             return ['get-file']
-        elif action == 'add':
-            return ['add', 'add-display']
-        elif action == 'post-add':
-            return ['post-add', 'display']
-        elif action == 'edit':
-            return ['edit', 'add-display']
-        elif action == 'post-edit':
-            return ['post-edit', 'display']
-        elif action == 'delete':
-            return ['delete', 'display']
         else:
-            return ['display']
+            return ['downloads-list']
 
     def _do_actions(self, req, cursor, modes):
         for mode in modes:
             if mode == 'get-file':
                 req.perm.assert_permission('DOWNLOADS_VIEW')
 
-            elif mode == 'add':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
-
-            elif mode == 'post-add':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
-
-            elif mode == 'edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
-
-            elif mode == 'post-edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
-
-            elif mode == 'delete':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
-
-            elif mode == 'display':
+            elif mode == 'downloads-list':
                 req.perm.assert_permission('DOWNLOADS_VIEW')
 
+                # Get form values
+                order = req.args.get('order') or 'id'
+                desc = req.args.get('desc')
+
+                # Fill HDF structure
+                req.hdf['downloads.order'] = order
+                req.hdf['downloads.desc'] = desc
+                req.hdf['downloads.downloads'] = self.api.get_downloads(req,
+                  cursor)
+
                 return 'downloads.cs', None
-
-            elif mode == 'add-display':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
-
-                return 'downloads-add.cs', None
-
-    def _get_file_from_req(self, req):
-        image = req.args['image']
-
-        # Test if file is uploaded.
-        if not hasattr(image, 'filename') or not image.filename:
-            raise TracError('No file uploaded.')
-        if hasattr(image.file, 'fileno'):
-            size = os.fstat(image.file.fileno())[6]
-        else:
-            size = image.file.len
-        if size == 0:
-            raise TracError('Can\'t upload empty file.')
-
-        return image.file, image.filename
+                #return mode + '.cs', None
