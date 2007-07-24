@@ -36,7 +36,17 @@
         </div>
         <div class="field">
             <label for="priority">Priority:</label><br/>
-            <input type="text" name="priority" value="<?cs alt:args.author ?>Major<?cs /alt ?>" /><br/>
+            <select name="priority">
+                <?cs each:priority = manualtesting.trac.priorities ?>
+                    <?cs if $priority.name == 'major' ?>
+                        <option selected="selected">
+                    <?cs else ?>
+                        <option>
+                    <?cs /if ?>
+                            <?cs var:priority.name ?>
+                        </option>
+                <?cs /each ?>
+            </select><br/>
         </div>
         <div class="field">
             <label for="title">Title:</label><br/>
@@ -47,7 +57,7 @@
             <textarea name="description" class="wikitext" rows="10" cols="78"><?cs alt:args.body ?><?cs /alt ?></textarea><br/>
         </div>
         <div class="buttons">
-            <input type="submit" name="preview" value="Preview" />
+            <!-- <input type="submit" name="preview" value="Preview" /> -->
             <input type="submit" name="submit" value="Submit" />
             <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href?>/<?cs var:discussion.forum.id ?>'"/>
             <input type="hidden" name="manualtesting_action" value="plan-add" />

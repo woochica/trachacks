@@ -74,3 +74,14 @@ class DBUtils:
             row = dict(zip(columns, row))
             rows.append(row)
         return rows
+
+    def get_tracPriorities(self, cursor):
+        rows = []
+        columns = ('name','value')
+        sql = "SELECT name,value FROM enum WHERE type = 'priority'"
+        self.log.debug(sql)
+        cursor.execute(sql)
+        for row in cursor:
+            row = dict(zip(columns, row))
+            rows.append(row)
+        return rows

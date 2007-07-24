@@ -84,7 +84,9 @@ class ManualTestingAPI:
 
             elif mode == 'plan-add-form':
                 suite = self.dbUtils.get_suite(cursor, suite_id)
+                priorities = self.dbUtils.get_tracPriorities(cursor)
                 req.hdf['manualtesting.suite'] = suite
+                req.hdf['manualtesting.trac.priorities'] = priorities
                 # Get form values.
                 new_title = req.args.get('title')
                 new_description = req.args.get('description')
@@ -128,7 +130,7 @@ class ManualTestingAPI:
                 # Get form values.
                 new_user = req.args.get('user')
                 new_title = req.args.get('title')
-                new_component = req.args.get('component')
+                new_component = req.args.get('tracComponent')
                 new_description = req.args.get('description')
                 new_time = int( time.time() )
                 # Add plan.

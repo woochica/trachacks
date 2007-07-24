@@ -35,10 +35,10 @@
             <input type="text" name="user" size="40" value="<?cs alt:trac.authname ?>anonymous<?cs /alt ?>" /><br/>
         </div>
         <div class="field">
-            <label for="component">Component:</label><br/>
-            <select name="component">
+            <label for="tracComponent">Component:</label><br/>
+            <select name="tracComponent">
                 <?cs each:component = manualtesting.trac.components ?>
-                    <option value="<?cs var:component.name ?>"><?cs var:component.name ?></option>
+                    <option><?cs var:component.name ?></option>
                 <?cs /each ?>
             </select><br/>
         </div>
@@ -51,7 +51,7 @@
             <textarea name="description" class="wikitext" rows="10" cols="78"><?cs alt:args.body ?><?cs /alt ?></textarea><br/>
         </div>
         <div class="buttons">
-            <input type="submit" name="preview" value="Preview" />
+            <!-- <input type="submit" name="preview" value="Preview" /> -->
             <input type="submit" name="submit" value="Submit" />
             <input type="button" name="cancel" value="Cancel" onclick="location.href = '<?cs var:discussion.href?>/<?cs var:discussion.forum.id ?>'"/>
             <input type="hidden" name="manualtesting_action" value="suite-add" />
