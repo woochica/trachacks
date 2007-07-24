@@ -39,12 +39,12 @@
                         <tr class="odd">
                     <?cs /if ?>
                             <td class="report">
-                                <a href="#" title="View Suite">
+                                <a href="/trac/testing/<?cs var:row.id ?>" title="View Suite">
                                     <?cs var:row.id ?>
                                 </a>
                             </td>
                             <td class="title">
-                                <a href="#" title="View Suite">
+                                <a href="/trac/testing/<?cs var:row.id ?>" title="View Suite">
                                     <?cs var:row.title ?>
                                 </a>
                             </td>

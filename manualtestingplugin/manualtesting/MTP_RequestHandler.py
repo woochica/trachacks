@@ -17,15 +17,12 @@ class MTP_RequestHandler(Component):
     def match_request(self, req):
         match = re.match(r'''/testing(?:/?$|/(\d+)(?:/?$|/(\d+))(?:/?$|/(\d+)))$''', req.path_info)
         if match:
-            forum = match.group(1)
-            topic = match.group(2)
-            message = match.group(3)
-            if forum:
-                req.args['forum'] = forum
-            if topic:
-                req.args['topic'] = topic
-            if message:
-                req.args['message'] = message
+            suite = match.group(1)
+            plan = match.group(2)
+            if suite:
+                req.args['suite'] = suite
+            if plan:
+                req.args['plan'] = plan
         return match
 
     """
