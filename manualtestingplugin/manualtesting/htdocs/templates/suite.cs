@@ -32,7 +32,6 @@
                 -->
                 <th><a href="#" title="">Plan</a></th>
                 <th><a href="#" title="">Title</a></th>
-                <th><a href="#" title="">Description</a></th>
                 <th>Action</td>
             </tr>
         </thead>
@@ -56,9 +55,6 @@
                                     <?cs var:row.title ?>
                                 </a>
                             </td>
-                            <td class="description">
-                                <?cs var:row.description ?>
-                            </td>
                             <td>
                                 <a href="#">
                                     <img src="/trac/chrome/mt/graphics/pass.png" alt="Pass" />
@@ -69,7 +65,19 @@
                                     Fail
                                 </a>
                             </td>
-                    </tr>
+                        </tr>
+                    <?cs if idx % #2 ?>
+                        <tr class="even">
+                    <?cs else ?>
+                        <tr class="odd">
+                    <?cs /if ?>
+                            <td>
+                                <strong>Description</strong>
+                            </td>
+                            <td colspan="2">
+                                <?cs var:row.description ?>
+                            </td>
+                        </tr>
                 <?cs /if ?>
             <?cs /each ?>
         </tbody>
