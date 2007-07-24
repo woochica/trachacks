@@ -60,8 +60,14 @@
                                 <?cs var:row.description ?>
                             </td>
                             <td>
-                                <a href="#">Pass</a> |
-                                <a href="#">Fail</a>
+                                <a href="#">
+                                    <img src="/trac/chrome/mt/graphics/pass.png" alt="Pass" />
+                                    Pass
+                                </a> |
+                                <a href="#">
+                                    <img src="/trac/chrome/mt/graphics/fail.png" alt="Pass" />
+                                    Fail
+                                </a>
                             </td>
                     </tr>
                 <?cs /if ?>
