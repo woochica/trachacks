@@ -45,19 +45,24 @@ class DiscussionCore(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        match = re.match(r'''/discussion(?:/?$|/(\d+)(?:/?$|/(\d+))(?:/?$|/(\d+)))$''',
-          req.path_info)
-        if match:
-            forum = match.group(1)
-            topic = match.group(2)
-            message = match.group(3)
-            if forum:
-                req.args['forum'] = forum
-            if topic:
-                req.args['topic'] = topic
-            if message:
-                req.args['message'] = message
-        return match
+        if req.path_info == '/discussion/redirect':
+            # Proces redirection request.
+            req.redirect(req.href(req.args.get('href')))
+        else:
+            # Prepare regular requests.
+            match = re.match(r'''/discussion(?:/?$|/(\d+)(?:/?$|/(\d+))(?:/?$|/(\d+)))$''',
+              req.path_info)
+            if match:
+                forum = match.group(1)
+                topic = match.group(2)
+                message = match.group(3)
+                if forum:
+                    req.args['forum'] = forum
+                if topic:
+                    req.args['topic'] = topic
+                if message:
+                    req.args['message'] = message
+            return match
 
     def process_request(self, req):
         # Prepare request object

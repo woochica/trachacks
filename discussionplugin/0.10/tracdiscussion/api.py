@@ -311,6 +311,10 @@ class DiscussionApi(object):
                 # Add new group.
                 self.add_group(cursor, new_name, new_description)
 
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
+
             elif mode == 'group-post-edit':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
@@ -321,6 +325,10 @@ class DiscussionApi(object):
 
                 # Edit group.
                 self.edit_group(cursor, new_group, new_name, new_description)
+
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
 
             elif mode == 'group-delete':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -337,6 +345,10 @@ class DiscussionApi(object):
                 if selection:
                     for group_id in selection:
                         self.delete_group(cursor, int(group_id))
+
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
 
             elif mode == 'forum-list':
                 req.perm.assert_permission('DISCUSSION_VIEW')
@@ -401,6 +413,10 @@ class DiscussionApi(object):
                 self.add_forum(cursor, new_name, new_author, new_subject,
                    new_description, new_moderators, new_group)
 
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
+
             elif mode == 'forum-post-edit':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
@@ -420,11 +436,19 @@ class DiscussionApi(object):
                 self.edit_forum(cursor, new_forum, new_name, new_subject,
                   new_description, new_moderators, new_group)
 
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
+
             elif mode == 'forum-delete':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Delete forum
                 self.delete_forum(cursor, forum['id'])
+
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
 
             elif mode == 'forums-delete':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -438,6 +462,10 @@ class DiscussionApi(object):
                 if selection:
                     for forum_id in selection:
                         self.delete_forum(cursor, int(forum_id))
+
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
 
             elif mode == 'topic-list':
                 req.perm.assert_permission('DISCUSSION_VIEW')
@@ -503,6 +531,10 @@ class DiscussionApi(object):
                 notifier.notify(req, cursor, mode, forum, new_topic, None, to,
                   cc)
 
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
+
             elif mode == 'topic-edit':
                 req.perm.assert_permission('DISCUSSION_APPEND')
                 if not is_moderator and (topic['author'] != req.authname):
@@ -529,6 +561,10 @@ class DiscussionApi(object):
                 self.edit_topic(cursor, topic['id'], topic['forum'],
                   new_subject, new_body)
 
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
+
             elif mode == 'topic-move':
                 req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
@@ -548,6 +584,10 @@ class DiscussionApi(object):
                 # Move topic.
                 self.set_forum(cursor, topic['id'], new_forum)
 
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
+
             elif mode == 'topic-delete':
                 req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
@@ -555,6 +595,10 @@ class DiscussionApi(object):
 
                 # Delete topic.
                 self.delete_topic(cursor, topic['id'])
+
+                # Redirect request to prevent re-submit.
+                req.redirect(req.href.discussion('redirect', href =
+                  req.path_info))
 
             elif mode == 'message-list':
                 req.perm.assert_permission('DISCUSSION_VIEW')
@@ -597,6 +641,12 @@ class DiscussionApi(object):
                 notifier.notify(req, cursor, mode, forum, topic, new_message,
                   to, cc)
 
+                # Redirect request to prevent re-submit.
+                self.log.debug(req.href(req.path_info) + '/')
+                if req.args.get('component') != 'wiki':
+                    req.redirect(req.href.discussion('redirect', href =
+                      req.path_info))
+
             elif mode == 'message-edit':
                 req.perm.assert_permission('DISCUSSION_APPEND')
                 if not is_moderator and (message['author'] != req.authname):
@@ -619,6 +669,11 @@ class DiscussionApi(object):
                 self.edit_message(cursor, message['id'], message['forum'],
                   message['topic'], message['replyto'], new_body)
 
+                # Redirect request to prevent re-submit.
+                if req.args.get('component') != 'wiki':
+                    req.redirect(req.href.discussion('redirect', href =
+                      req.path_info))
+
             elif mode == 'message-delete':
                 req.perm.assert_permission('DISCUSSION_MODERATE')
                 if not is_moderator:
@@ -626,6 +681,11 @@ class DiscussionApi(object):
 
                 # Delete message.
                 self.delete_message(cursor, message['id'])
+
+                # Redirect request to prevent re-submit.
+                if req.args.get('component') != 'wiki':
+                    req.redirect(req.href.discussion('redirect', href =
+                      req.path_info))
 
             elif mode == 'message-set-display':
                 req.perm.assert_permission('DISCUSSION_VIEW')
