@@ -35,7 +35,7 @@ from trac.util.datefmt import parse_date, utc, to_timestamp, to_datetime, \
                               get_date_format_hint, get_datetime_format_hint, \
                               format_date, format_datetime, pretty_timedelta
 from trac.util.text import shorten_line, CRLF, to_unicode
-from trac.ticket import Milestone, Ticket, TicketSystem #These are object
+from trac.ticket import Milestone, Ticket, TicketSystem, model #These are object
 from trac.ticket.query import Query
 from trac.ticket.roadmap import ITicketGroupStatsProvider, DefaultTicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
@@ -72,7 +72,10 @@ def get_every_tickets_in_milestone(db, milestone):
                 
     return tickets       
 
-def add_milestone_event(history, time, event, ticket_id):
+def add_milestone_event(env, history, time, event, ticket_id):
+    
+    env.log.info("Date: %s Ticket %s event %s" % (datetime.fromtimestamp(time, utc).date(), ticket_id, event))
+                    
     
     if history.has_key(time):
 
@@ -84,7 +87,7 @@ def add_milestone_event(history, time, event, ticket_id):
         #this is to handle the case where many ticket fields are changed 
         #at the same time.
         history[time][event].add(ticket_id)
-
+                                
 def collect_tickets_status_history(env, db, history, ticket_ids, milestone):
 
     cursor = db.cursor()
@@ -116,21 +119,26 @@ def collect_tickets_status_history(env, db, history, ticket_ids, milestone):
     
     # TODO The tricky thing about this is that we have to deterimine 5 different type of ticket.
     # 1) created with milestone and remain in milestone (new and modified)
-    # 2) create w/o milestone and later assigned to milestone and remain in the milestone
-    # 3) create with milestone then later leave milestone
-    # 4) create w/o milestone then later assigned to milestone but then later leave milestone
-    # 5) created with milestone and leave milestone and come back and remain in milestone
+    # 2) create with milestone then later leave milestone 
+    # 3) created with milestone and leave milestone and come back and remain in milestone
+    # 4) create w/o milestone and later assigned to milestone and remain in the milestone
+    # 5) create w/o milestone then later assigned to milestone but then later leave milestone
+    # 6) Create w/o milestone and closed then later assigned to milestone
+    # 7) create with different milestone then later assigned to milestone
     # Need to find the first time each ticket enters the milestone
     
     # key is the tuple (tkt_id, tkt_createdtime)    
     for ticket, events in groupby(event_history, lambda l: (l[0], l[2])):
     
-        # assume that ticket assigned milestone when created.
-        add_milestone_event(history, ticket[1], 'Enter', ticket[0])
+        status_events = []
+        # flag to determine whether the milestone has changed for the first time
+        milestone_changed = False
         
-        # flag to deterimine when milestone is changed for the first time
-        first_milestone = True
-    
+        # Assume that ticket is created with out milestone.
+        # The event will be store in the list until we find out what milestone do the
+        # event belog to.
+        current_milestone = None
+        current_status = 'Active'
         for tkt_id, tkt_type, tkt_createdtime, tkt_status, tkt_changedtime, \
             tkt_milestone, tkt_field, tkt_oldvalue, tkt_newvalue in events:
                 
@@ -139,40 +147,74 @@ def collect_tickets_status_history(env, db, history, ticket_ids, milestone):
 
                 # Ticket that was created with out milestone
                 if tkt_field == 'milestone':
-                    
+
+                    # Ticket was created with blank milestone or other milestone
                     if tkt_newvalue == milestone.name:
                         
-                        # means that ticket was moved to this milestone
-                        # adjust the enter date accordingly
-                        if first_milestone == True:
-                            history[tkt_createdtime]['Enter'].remove(tkt_id)              
-                            
-                            # remove the key if nothing is in there
-                            if (len(history[tkt_createdtime]['Enter']) == 0 and \
-                                len(history[tkt_createdtime]['Leave']) == 0 and \
-                                len(history[tkt_createdtime]['Finish']) == 0 ):
-                                history.pop(tkt_createdtime)                                
-                            
-                            add_milestone_event(history, tkt_changedtime, 'Enter', tkt_id)
-                            first_milestone = False
-                            
-                        # means that ticket was assigned back to the milestone again
-                        elif first_milestone == False:
-                            add_milestone_event(history, tkt_changedtime, 'Enter', tkt_id)
-                
-                    # ticket was rescheduled to different milestone
-                    elif tkt_oldvalue == milestone.name:
-                        add_milestone_event(history, tkt_changedtime, 'Leave', tkt_id)
-                
-                elif tkt_field == 'status':
-                    # ticket was closed                
-                    if tkt_newvalue == 'closed':
-                        add_milestone_event(history, tkt_changedtime, 'Finish', tkt_id)
-                
-                    # ticket was reopened
-                    elif tkt_newvalue == 'reopened':
-                        add_milestone_event(history, tkt_changedtime, 'Enter', tkt_id)
+                        current_milestone = milestone.name
                         
+                        # in case that closed ticket was assigned to the milestone
+                        if current_status == 'closed':
+                            add_milestone_event(env, history, tkt_changedtime, 'Enter', tkt_id)
+                            add_ticket_status_event(env,history, tkt_changedtime, tkt_status, tkt_id)
+                        else:
+                            add_milestone_event(env, history, tkt_changedtime, 'Enter', tkt_id)
+                    
+                    # Ticket leave the milestone
+                    elif tkt_oldvalue == milestone.name:
+                        
+                        current_milestone = tkt_newvalue
+                        
+                        # Ticket was create with milestone
+                        if milestone_changed == False:
+                            # update the enter event
+                            add_milestone_event(env, history, tkt_createdtime, 'Enter', tkt_id)
+                            # it means that the eariler status event has to be in the milestone.
+                            for tkt_changedtime, tkt_newvalue, tkt_id in status_events:
+                                add_ticket_status_event(env, history, tkt_changedtime, tkt_newvalue, tkt_id)
+                            
+                        add_milestone_event(env, history, tkt_changedtime, 'Leave', tkt_id)
+                    
+                    milestone_changed = True                        
+                 
+                elif tkt_field == 'status':
+                    
+                    current_status = tkt_newvalue
+                    
+                    # this event happen before milestone is changed
+                    if milestone_changed == False:
+                        
+                        status_events.append((tkt_changedtime, tkt_newvalue, tkt_id))
+                        
+                        env.log.info(status_events)
+                    
+                    else:
+                        # only add ticket status that happen in the milestone
+                        if current_milestone == milestone.name:
+                            add_ticket_status_event(env, history, tkt_changedtime, tkt_newvalue, tkt_id)
+                    
+            # new ticket that was created and assigned to the milestone
+            else:
+                add_milestone_event(env, history, ticket[1], 'Enter', ticket[0])
+
+        # if milestone never changed it means that the ticket was assing to the milestone.
+        if milestone_changed == False:
+           
+            add_milestone_event(env, history, tkt_createdtime, 'Enter', tkt_id)                            
+            # it means that the eariler status event has to be in the milestone.
+            for tkt_changedtime, tkt_newvalue, tkt_id in status_events:
+                add_ticket_status_event(env, history, tkt_changedtime, tkt_newvalue, tkt_id)
+
+def add_ticket_status_event(env, history, time, status, tkt_id):
+    
+    # ticket was closed                
+    if status == 'closed':
+        add_milestone_event(env, history, time, 'Finish', tkt_id)
+                
+    # ticket was reopened
+    elif status == 'reopened':
+        add_milestone_event(env, history, time, 'Enter', tkt_id)
+
 
 def make_ticket_history_table(env, dates, sorted_events):
     """
@@ -276,6 +318,13 @@ class MDashboard(Component):
     stats_provider = ExtensionOption('mdashboard', 'stats_provider',
                                      ITicketGroupStatsProvider,
                                      'ProgressTicketGroupStatsProvider',
+        """Name of the component implementing `ITicketGroupStatsProvider`, 
+        which is used to collect statistics on groups of tickets for display
+        in the milestone views.""")
+    
+    tickettype_stats_provider = ExtensionOption('mdashboard', 'tickettype_stats_provider',
+                                     ITicketGroupStatsProvider,
+                                     'TicketTypeGroupStatsProvider',
         """Name of the component implementing `ITicketGroupStatsProvider`, 
         which is used to collect statistics on groups of tickets for display
         in the milestone views.""")
@@ -392,11 +441,8 @@ class MDashboard(Component):
 
         tickets = get_tickets_for_milestone(self.env, db, milestone.name, by)
         stat = get_ticket_stats(self.stats_provider, tickets)
+        tstat = get_ticket_stats(self.tickettype_stats_provider, tickets)
                 
-        # get list of ticket ids that in the milestone
-        #ctickets = get_tickets_for_milestone(self.env, db, milestone.name, 'type')
-        everytickets = get_every_tickets_in_milestone(db, milestone.name)
-        
         # Parse the from date and adjust the timestamp to the last second of
         # the day
         today = datetime.now(req.tz)
@@ -408,95 +454,87 @@ class MDashboard(Component):
 #            fromdate = parse_date(req.session.get('mdashboard.fromdate'), req.tz)        
 #        else: 
         fromdate = today - timedelta(days=self.default_daysback + 1)
- 
-        #precisedate is in datetime type.
-        precisedate = precision = None
-        
-        # When the update button is clicked.
-        if 'from' in req.args:            
-            precisedate = parse_date(req.args.get('from'), req.tz)
-            fromdate = precisedate
-            precision = req.args.get('precision', '')
-            if precision.startswith('second'):
-                precision = timedelta(seconds=1)
-            elif precision.startswith('minutes'):
-                precision = timedelta(minutes=1)
-            elif precision.startswith('hours'):
-                precision = timedelta(hours=1)
-            else:
-                precision = None
-
         fromdate = fromdate.replace(hour=23, minute=59, second=59)
-                
-        # TODO: Create the data structure to store the history table.
-        # This can either be list of dict or dict of dict.  
-        tkt_history = {}
-        
-        collect_tickets_status_history(self.env, db, tkt_history, \
-                                       everytickets, milestone)
-                        
-        # Sort the key in the history list
-        # returns sorted list of tuple of (key, value)
-        sorted_events = sorted(tkt_history.items(), key=lambda(k,v):(k))
 
-        #debug  
-        for event in sorted_events:
-            self.env.log.info("date: %s: event: %s" % (format_date(to_datetime(event[0])), event[1]))
-
-      
-        # Get first date that ticket enter the milestone
-        min_time = min(sorted_events)[0] #in Epoch Seconds
-        begin_date = datetime.fromtimestamp(min_time, utc).date() 
-        
-        if milestone.completed != None:
-            end_date = milestone.completed        
-        else:
-            end_date = datetime.now(utc).date()
-        
-        self.env.log.info("begindate: Timezone %s:%s, UTC:%s)" % \
-                          (req.tz,datetime.fromtimestamp(min_time, req.tz).date(), \
-                           datetime.fromtimestamp(min_time, utc).date())) 
-
-        self.env.log.info("enddate: UTC:%s" % (end_date,))
-        
         # Data for milestone and timeline
         data = {'fromdate': fromdate,
                 'milestone': milestone,
-                'begindate' : begin_date,
-                'enddate' : end_date,
                 'tickethistory' : [],
-                'dates' : []}
-        
+                'dates' : [],
+                'ticketstat' : {}
+                }
+            
         data.update(milestone_stats_data(req, stat, milestone.name))
         
-    
-        # this is array of date in numpy
-        numdates = drange(begin_date, end_date + timedelta(days=1), timedelta(days=1))
+        ticketstat = {'name':'ticket type'}
+        ticketstat.update(milestone_stats_data(req, tstat, milestone.name))
+        data['ticketstat'] = ticketstat
         
-        tkt_history_table = make_ticket_history_table(self.env, numdates, sorted_events)
-
-        #debug
-        self.env.log.info("tkt_history_table: %s", (tkt_history_table,))   
+        self.env.log.info("ticketstat = %s" % (ticketstat,))
         
-        #Create a data for the cumulative flow chart.
-        tkt_cummulative_table = make_cummulative_data(self.env, tkt_history_table)
+        # get list of ticket ids that in the milestone
+        #ctickets = get_tickets_for_milestone(self.env, db, milestone.name, 'type')
+        everytickets = get_every_tickets_in_milestone(db, milestone.name)
         
-        #debug
-        self.env.log.info(tkt_cummulative_table)   
-    
-        # creat list of dateobject from dates
-        dates = []
-        for numdate in numdates:
+        if everytickets != []:
+        
+            tkt_history = {}
             
-            utc_date = num2date(numdate)
-            dates.append(utc_date)
-            self.env.log.info("%s: %s" % (utc_date, format_date(utc_date, tzinfo=utc)))
-                              
+            collect_tickets_status_history(self.env, db, tkt_history, \
+                                           everytickets, milestone)
+                            
+            # Sort the key in the history list
+            # returns sorted list of tuple of (key, value)
+            sorted_events = sorted(tkt_history.items(), key=lambda(k,v):(k))
+    
+            #debug  
+            #for event in sorted_events:
+            #    self.env.log.info("date: %s: event: %s" % (format_date(to_datetime(event[0])), event[1]))
+    
+          
+            # Get first date that ticket enter the milestone
+            min_time = min(sorted_events)[0] #in Epoch Seconds
+            begin_date = datetime.fromtimestamp(min_time, utc).date() 
+            
+            if milestone.completed != None:
+                end_date = milestone.completed        
+            else:
+                end_date = datetime.now(utc).date()
+            
+            self.env.log.info("begindate: Timezone %s:%s, UTC:%s)" % \
+                              (req.tz,datetime.fromtimestamp(min_time, req.tz).date(), \
+                               datetime.fromtimestamp(min_time, utc).date())) 
+    
+            self.env.log.info("enddate: UTC:%s" % (end_date,))
+
+            
         
-        data['tickethistory'] = tkt_cummulative_table
-        data['dates'] = dates
+            # this is array of date in numpy
+            numdates = drange(begin_date, end_date + timedelta(days=1), timedelta(days=1))
+            
+            tkt_history_table = make_ticket_history_table(self.env, numdates, sorted_events)
+    
+            #debug
+            self.env.log.info("tkt_history_table: %s", (tkt_history_table,))   
+            
+            #Create a data for the cumulative flow chart.
+            tkt_cummulative_table = make_cummulative_data(self.env, tkt_history_table)
+            
+            #debug
+            self.env.log.info(tkt_cummulative_table)   
         
-        create_cummulative_chart(self.env, milestone, numdates, tkt_cummulative_table)
+            # creat list of dateobject from dates
+            dates = []
+            for numdate in numdates:
+                
+                utc_date = num2date(numdate)
+                dates.append(utc_date)
+                #self.env.log.info("%s: %s" % (utc_date, format_date(utc_date, tzinfo=utc)))
+            
+            data['tickethistory'] = tkt_cummulative_table
+            data['dates'] = dates
+            
+            create_cummulative_chart(self.env, milestone, numdates, tkt_cummulative_table)
 
         
         return 'mdashboard.html', data, None
