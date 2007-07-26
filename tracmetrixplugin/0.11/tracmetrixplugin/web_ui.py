@@ -14,7 +14,7 @@ from trac.config import ExtensionOption
 from trac.context import Context
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.ticket import Milestone, Ticket #These are object
+from trac.ticket import Milestone, Ticket, model #These are object
 from trac.ticket.query import Query
 from trac.ticket.roadmap import ITicketGroupStatsProvider, DefaultTicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
@@ -65,6 +65,49 @@ class ProgressTicketGroupStatsProvider(Component):
         stat.add_interval('new', active_cnt,
                           {'status': ['new', 'reopened']},
                           'new', False)
+                          
+        stat.refresh_calcs()
+        return stat
+
+
+class TicketTypeGroupStatsProvider(Component):
+    implements(ITicketGroupStatsProvider)
+
+    def get_ticket_group_stats(self, ticket_ids):
+        
+        # ticket_ids is a list of ticket id as number.
+        total_cnt = len(ticket_ids)
+        if total_cnt:
+            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
+            cursor = self.env.get_db_cnx().cursor()  # get database connection    
+            
+            type_count = [] # list of dictionary with key name and count
+            
+            for type in model.Type.select(self.env):
+            
+                count = cursor.execute("SELECT count(1) FROM ticket "
+                                        "WHERE type = '%s' AND id IN "
+                                        "(%s)" % (type.name, ",".join(str_ids))) # execute query and get cursor obj.
+                count = 0
+                for cnt, in cursor:
+                    count = cnt
+
+                if count > 0:
+                    type_count.append({'name':type.name,'count':count})
+
+        
+        stat = TicketGroupStats('ticket type', 'ticket')
+        
+        for type in type_count:
+                
+            if type['name'] != 'defect': # default ticket type 'defect'
+        
+                stat.add_interval(type['name'], type['count'],
+                                  {'type': type['name']}, 'value', True)
+            
+            else:
+                stat.add_interval(type['name'], type['count'],
+                                  {'type': type['name']}, 'waste', False)
                           
         stat.refresh_calcs()
         return stat

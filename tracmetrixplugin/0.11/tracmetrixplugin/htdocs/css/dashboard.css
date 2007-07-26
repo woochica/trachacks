@@ -21,6 +21,8 @@ table.progress :link:hover, table.progress :visited:hover {
 table.progress td { background: #fff; padding: 0 }
 table.progress td.closed { background: #bae0ba }
 table.progress td.inprogress { background: #ffff66 }
+table.progress td.value { background: #bae0ba }
+table.progress td.waste { background: #ff6666 }
 table.progress td :hover { background: none }
 p.percent { font-size: 10px; line-height: 2.4em; margin: 0.9em 0 0 }
 

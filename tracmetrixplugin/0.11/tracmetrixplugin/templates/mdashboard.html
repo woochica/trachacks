@@ -49,8 +49,13 @@
             No date set
           </p>
         </py:choose>
+      	<h2>Ticket Status Summary</h2>  
         <py:if test="stats.count">${progress_bar(stats, interval_hrefs, stats_href=stats_href)}</py:if>
+       	<h2>Ticket Type Summary</h2>  
+      	<py:if test="ticketstat.stats.count">${progress_bar(ticketstat.stats, ticketstat.interval_hrefs,stats_href=ticketstat.stats_href)}</py:if>
+
       </div>
+      
       
       <div class="table">
       	<h2>Ticket History Table</h2>
