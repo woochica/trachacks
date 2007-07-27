@@ -9,6 +9,7 @@ tables = [
     Column('description'),
     Column('size', type = 'integer'),
     Column('time', type = 'integer'),
+    Column('count', type = 'integer'),
     Column('author'),
     Column('tags'),
     Column('component'),
@@ -49,6 +50,7 @@ values = ["INSERT INTO architecture (name) VALUES ('alpha')",
   "INSERT INTO download_type (name) VALUES ('source')",
   "INSERT INTO download_type (name) VALUES ('data')",
   "INSERT INTO download_type (name) VALUES ('other')",
+  "INSERT INTO system (name, value) VALUES ('downloads_description', 'Here is a list of available downloads:')"
 ]
 
 def do_upgrade(env, cursor):
@@ -63,6 +65,6 @@ def do_upgrade(env, cursor):
     for statement in values:
         cursor.execute(statement)
 
-    # Set database schema version
+    # Set database schema version.
     cursor.execute("INSERT INTO system (name, value) VALUES"
       " ('downloads_version', '1')")

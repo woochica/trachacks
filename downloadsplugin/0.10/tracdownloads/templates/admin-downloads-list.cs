@@ -127,6 +127,7 @@
           <?cs call:sortable_th(downloads.order, downloads.desc, 'description', 'Description', downloads.href) ?>
           <?cs call:sortable_th(downloads.order, downloads.desc, 'size', 'Size', downloads.href) ?>
           <?cs call:sortable_th(downloads.order, downloads.desc, 'time', 'Uploaded', downloads.href) ?>
+          <?cs call:sortable_th(downloads.order, downloads.desc, 'count', 'Downloads', downloads.href) ?>
           <?cs call:sortable_th(downloads.order, downloads.desc, 'author', 'Uploader', downloads.href) ?>
           <?cs if:downloads.has_tags ?>
             <?cs call:sortable_th(downloads.order, downloads.desc, 'tags', 'Tags', downloads.href) ?>
@@ -163,9 +164,7 @@
 
             <td class="description">
               <div class="description">
-                <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>?order=<?cs var:downloads.order ?>;desc=<?cs var:downloads.desc ?>">
-                  <?cs var:download.description ?>
-                </a>
+                <?cs var:download.description ?>
               </div>
             </td>
 
@@ -181,6 +180,14 @@
               <div class="time">
                 <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>?order=<?cs var:downloads.order ?>;desc=<?cs var:downloads.desc ?>">
                   <?cs var:download.time ?>
+                </a>
+              </div>
+            </td>
+
+            <td class="count">
+              <div class="count">
+                <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>?order=<?cs var:downloads.order ?>;desc=<?cs var:downloads.desc ?>">
+                  <?cs var:download.count ?>
                 </a>
               </div>
             </td>
@@ -242,7 +249,7 @@
                 </a>
               </div>
             </td>
-
+          </tr>
         <?cs /each ?>
       </tbody>
     </table>

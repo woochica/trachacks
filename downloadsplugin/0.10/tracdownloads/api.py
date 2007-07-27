@@ -1,10 +1,10 @@
-import os, time, re
+import os, time, re, mimetypes
 
 from trac.core import *
 from trac.config import Option
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.util import format_datetime, pretty_timedelta, pretty_size
-from trac.web.chrome import add_stylesheet
+from trac.web.chrome import add_stylesheet, add_script
 
 class IDownloadChangeListener(Interface):
     """Extension point interface for components that require notification
@@ -25,6 +25,8 @@ class IDownloadChangeListener(Interface):
 
 class DownloadsApi(Component):
 
+    title = Option('downloads', 'title', 'Downloads',
+      'Main navigation bar button title.')
     path = Option('downloads', 'path', '/var/lib/trac/downloads',
       'Directory to store uploaded downloads.')
     ext = Option('downloads', 'ext', 'zip gz bz2 rar',
@@ -65,9 +67,10 @@ class DownloadsApi(Component):
         return components
 
     def get_downloads(self, req, cursor, order_by = 'id', desc = False):
-        columns = ('id', 'file', 'description', 'size', 'time', 'author',
-          'tags', 'component', 'version', 'architecture', 'platform', 'type')
-        sql = "SELECT id, file, description, size, time, author, tags," \
+        columns = ('id', 'file', 'description', 'size', 'time', 'count',
+          'author', 'tags', 'component', 'version', 'architecture', 'platform',
+          'type')
+        sql = "SELECT id, file, description, size, time, count, author, tags," \
           " component, version, architecture, platform, type FROM download " \
           "ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
@@ -78,6 +81,7 @@ class DownloadsApi(Component):
             row['description'] = wiki_to_oneliner(row['description'], self.env)
             row['size'] = pretty_size(row['size'])
             row['time'] = pretty_timedelta(row['time'])
+            row['count'] = row['count'] or 0
             downloads.append(row)
 
         # Replace field ids with apropriate objects.
@@ -134,27 +138,31 @@ class DownloadsApi(Component):
     # Get one item functions.
 
     def get_download(self, cursor, id):
-        columns = ('id', 'file', 'description', 'size', 'time', 'author',
-          'tags', 'component', 'version', 'architecture', 'platform', 'type')
-        sql = "SELECT id, file, description, size, time, author, tags," \
+        columns = ('id', 'file', 'description', 'size', 'time', 'count',
+          'author', 'tags', 'component', 'version', 'architecture', 'platform',
+          'type')
+        sql = "SELECT id, file, description, size, time, count, author, tags," \
           " component, version, architecture, platform, type FROM download" \
           " WHERE id = %s"
         self.log.debug(sql % (id,))
         cursor.execute(sql, (id,))
         for row in cursor:
             row = dict(zip(columns, row))
+            row['count'] = row['count'] or 0
             return row
 
     def get_download_by_time(self, cursor, time):
-        columns = ('id', 'file', 'description', 'size', 'time', 'author',
-          'tags', 'component', 'version', 'architecture', 'platform', 'type')
-        sql = "SELECT id, file, description, size, time, author, tags," \
+        columns = ('id', 'file', 'description', 'size', 'time', 'count',
+          'author', 'tags', 'component', 'version', 'architecture', 'platform',
+          'type')
+        sql = "SELECT id, file, description, size, time, count, author, tags," \
           " component, version, architecture, platform, type FROM download" \
           " WHERE time = %s"
         self.log.debug(sql % (time,))
         cursor.execute(sql, (time,))
         for row in cursor:
             row = dict(zip(columns, row))
+            row['count'] = row['count'] or 0
             return row
 
     def get_architecture(self, cursor, id):
@@ -183,6 +191,13 @@ class DownloadsApi(Component):
         for row in cursor:
             row = dict(zip(columns, row))
             return row
+
+    def get_description(self, req, cursor):
+        sql = "SELECT value FROM system WHERE name = 'downloads_description'"
+        self.log.debug(sql)
+        cursor.execute(sql)
+        for row in cursor:
+            return (row[0], wiki_to_html(row[0], self.env, req))
 
     # Add item functions.
 
@@ -228,6 +243,11 @@ class DownloadsApi(Component):
     def edit_type(self, cursor, id, type):
         self._edit_item(cursor, 'download_type', id, type)
 
+    def edit_description(self, cursor, description):
+        sql = "UPDATE system SET value = %s WHERE name = 'downloads_description'"
+        self.log.debug(sql % (description,))
+        cursor.execute(sql, (description,))
+
     # Delete item functions.
 
     def _delete_item(self, cursor, table, id):
@@ -270,10 +290,12 @@ class DownloadsApi(Component):
         add_stylesheet(req, 'downloads/css/downloads.css')
         add_stylesheet(req, 'downloads/css/admin.css')
 
+        # Add JavaScripts
+        add_script(req, 'common/js/trac.js')
+        add_script(req, 'common/js/wikitoolbar.js')
+
         # Fill up HDF structure and return template
         req.hdf['download.authname'] = req.authname
-        req.hdf['downloads.href'] = req.href.admin('downloads', req.args.get(
-          'page'))
         req.hdf['download.time'] = format_datetime(time.time())
         return modes[-1] + '.cs', None
 
@@ -284,8 +306,13 @@ class DownloadsApi(Component):
         context = req.args.get('context')
         page = req.args.get('page')
         action = req.args.get('action')
-        self.log.debug('component: %s page: %s action: %s' % (context, page,
+        self.log.debug('context: %s page: %s action: %s' % (context, page,
           action))
+
+        if context == 'admin':
+            req.hdf['downloads.href'] = req.href.admin('downloads', page)
+        elif context == 'core':
+            req.hdf['downloads.href'] = req.href.downloads()
 
         # Determine mode.
         if context == 'admin':
@@ -325,13 +352,62 @@ class DownloadsApi(Component):
                     return ['types-delete', 'admin-types-list']
                 else:
                     return ['admin-types-list']
+        elif context == 'core':
+            if action == 'get-file':
+                return ['get-file']
+            elif action == 'edit':
+                return ['description-edit', 'downloads-list']
+            elif action == 'post-edit':
+                return ['description-post-edit', 'downloads-list']
+            else:
+                return ['downloads-list']
         else:
             pass
 
     def _do_action(self, req, cursor, modes):
         for mode in modes:
-            if mode == 'downloads-list':
-               req.perm.assert_permission('DOWNLOADS_VIEW')
+            if mode == 'get-file':
+                req.perm.assert_permission('DOWNLOADS_VIEW')
+
+                # Get form values.
+                download_id = req.args.get('id')
+
+                # Get download.
+                download = self.get_download(cursor, download_id)
+
+                if download:
+                    path = os.path.join(self.path, unicode(download['id']),
+                      download['file'])
+                    self.log.debug('path: %s' % (path,))
+
+                    # Increase downloads count.
+                    db = self.env.get_db_cnx()
+                    cursor = db.cursor()
+                    self.edit_download(cursor, download['id'], {'count' :
+                      download['count'] + 1})
+                    db.commit()
+
+                    # Return uploaded file to request.
+                    type = mimetypes.guess_type(path)[0]
+                    req.send_file(path, type)
+                else:
+                    raise TracError('File not found.')
+
+            elif mode == 'downloads-list':
+                req.perm.assert_permission('DOWNLOADS_VIEW')
+
+                # Get form values.
+                order = req.args.get('order') or 'id'
+                desc = req.args.get('desc')
+
+                req.hdf['downloads.order'] = order
+                req.hdf['downloads.desc'] = desc
+                req.hdf['downloads.has_tags'] = self.env.is_component_enabled(
+                  'TagEngine')
+                req.hdf['downloads.title'] = self.title
+                req.hdf['downloads.description'] = self.get_description(req, cursor)
+                req.hdf['downloads.downloads'] = self.get_downloads(req,
+                  cursor, order, desc)
 
             elif mode == 'admin-downloads-list':
                 req.perm.assert_permission('DOWNLOADS_ADMIN')
@@ -358,7 +434,18 @@ class DownloadsApi(Component):
                 req.hdf['downloads.platforms'] = self.get_platforms(req,
                   cursor)
                 req.hdf['downloads.types'] = self.get_types(req, cursor)
-                return mode + '.cs', None
+
+            elif mode == 'description-edit':
+                req.perm.assert_permission('DOWNLOADS_ADMIN')
+
+            elif mode == 'description-post-edit':
+                req.perm.assert_permission('DOWNLOADS_ADMIN')
+
+                # Get form values.
+                description = req.args.get('description')
+
+                # Set new description.
+                self.edit_description(cursor, description)
 
             elif mode == 'downloads-post-add':
                 req.perm.assert_permission('DOWNLOADS_ADMIN')

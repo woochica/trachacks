@@ -22,8 +22,6 @@ class DownloadsCore(Component):
 
     title = Option('downloads', 'title', 'Downloads',
       'Main navigation bar button title.')
-    path = Option('downloads', 'path', '/var/lib/trac/downloads',
-      'Directory to store uploaded downloads.')
 
     # IPermissionRequestor methods.
     def get_permission_actions(self):
@@ -49,63 +47,26 @@ class DownloadsCore(Component):
 
     # IRequestHandler methods.
     def match_request(self, req):
-        if re.match(r'''^/downloads($|/$)''', req.path_info):
+        match = re.match(r'''^/downloads($|/$)''', req.path_info)
+        if match:
             return True
-        if re.match(r'''^/downloads/(\d+)$''',
-          req.path_info):
-            req.args['action'] = 'get_file'
+        match = re.match(r'''^/downloads/(\d+)$''',req.path_info)
+        if match:
+            req.args['action'] = 'get-file'
+            req.args['id'] = match.group(1)
             return True
         return False
 
     def process_request(self, req):
-        # Create API object.
-        self.api = DownloadsApi(self.env)
-
         # Get cursor.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        # CSS styles
-        add_stylesheet(req, 'downloads/css/downloads.css')
+        # Prepare arguments and HDF structure.
+        req.args['context'] = 'core'
 
-        # Prepare HDF structure.
-        req.hdf['downloads.href'] = req.href.downloads()
-        req.hdf['downloads.title'] = self.title
-
-        # Do actions and return content.
-        modes = self._get_modes(req)
-        self.log.debug('modes: %s' % (modes,))
-        content = self._do_actions(req, cursor, modes)
+        # Return page content.
+        api = DownloadsApi(self.env)
+        content = api.process_downloads(req, cursor)
         db.commit()
         return content
-
-    # Private functions.
-
-    def _get_modes(self, req):
-        action = req.args.get('action')
-        self.log.debug('action: %s' % (action,))
-        if action == 'get_file':
-            return ['get-file']
-        else:
-            return ['downloads-list']
-
-    def _do_actions(self, req, cursor, modes):
-        for mode in modes:
-            if mode == 'get-file':
-                req.perm.assert_permission('DOWNLOADS_VIEW')
-
-            elif mode == 'downloads-list':
-                req.perm.assert_permission('DOWNLOADS_VIEW')
-
-                # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
-
-                # Fill HDF structure
-                req.hdf['downloads.order'] = order
-                req.hdf['downloads.desc'] = desc
-                req.hdf['downloads.downloads'] = self.api.get_downloads(req,
-                  cursor)
-
-                return 'downloads.cs', None
-                #return mode + '.cs', None
