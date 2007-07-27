@@ -103,13 +103,14 @@ class NikoCaleMacro(WikiMacroBase):
     }}}
 
     """
+
     def render_macro(self, req, name, content):
         nikocale = NikoCale(req)
         for line in content.split('\n'):
             line = line.strip()
             if re.match('^\s*#', line) or re.match('^\s*$', line):
                 continue
-            parts = line.split(',')
+            parts = line.split(',', 3)
             if not (len(parts) == 3 or len(parts) == 4):
                 continue
             if len(parts) == 3:
