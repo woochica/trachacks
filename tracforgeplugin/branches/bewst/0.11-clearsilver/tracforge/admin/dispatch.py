@@ -12,7 +12,6 @@ from trac.util.html import html as tag
 import os
 import os.path
 import copy
-import urllib
 
 class TracForgeDispatcherModule(Component):
     """A request handler to dispatch /projects as if it were a TRAC_ENV_PARENT_DIR folder."""
@@ -71,28 +70,6 @@ class TracForgeDispatcherModule(Component):
             # checks environ['trac.env_path'] as a truth value and treats empty 
             # results as absent.
             environ['trac.env_path'] = ''
-
-        # Reconstruct the wsgi.input stream from req.args, so dispatch_request
-        # can read it again.  If we don't do this, POST data gets lost because
-        # the original stream has already been read once.
-        if environ['wsgi.input']:
-            args = {} 
-            for k,v in req.args.iteritems():
-                if isinstance(v, unicode):
-                    v = v.encode('utf-8')
-                args[k] = v
-            data = urllib.urlencode(args) 
-            class InputStream:
-                def __init__(self, data):
-                    self.data = data
-                def read(self, size=None):
-                    result = self.data[:size]
-                    self.data = self.data[size:]
-                    return result
-                
-            environ['wsgi.input'] = InputStream(data)
-            # This doesn't match up sometimes. Don't know why yet.
-            environ['CONTENT_LENGTH'] = len(data)
 
         req._response = dispatch_request(environ, start_response)
         
