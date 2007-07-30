@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 import os, time, re, mimetypes
 
 from trac.core import *
@@ -91,6 +93,21 @@ class DownloadsApi(Component):
             download['platform'] = self.get_platform(cursor,
               download['platform'])
             download['type'] = self.get_type(cursor, download['type'])
+        return downloads
+
+    def get_new_downloads(self, req, cursor, start, stop):
+        columns = ('id', 'file', 'description', 'size', 'time', 'count',
+          'author', 'tags', 'component', 'version', 'architecture', 'platform',
+          'type')
+        sql = "SELECT id, file, description, size, time, count, author, tags," \
+          " component, version, architecture, platform, type FROM download " \
+          "WHERE time BETWEEN %s AND %s"
+        self.log.debug(sql % (start, stop))
+        cursor.execute(sql, (start, stop))
+        downloads = []
+        for row in cursor:
+            row = dict(zip(columns, row))
+            downloads.append(row)
         return downloads
 
     def get_architectures(self, req, cursor, order_by = 'id', desc = False):

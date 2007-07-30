@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from tracdownloads.api import *
 from trac.core import *
 from tractags.api import ITaggingSystemProvider, DefaultTaggingSystem

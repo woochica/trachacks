@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 import re
 
 from trac.core import *

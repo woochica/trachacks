@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 
 from trac.core import *
 from trac.util.html import html

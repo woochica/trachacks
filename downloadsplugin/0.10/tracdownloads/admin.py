@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from trac.core import *
 
 from webadmin.web_ui import IAdminPageProvider
