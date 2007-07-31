@@ -29,7 +29,7 @@ class AuthzFileWriter:
 
 
 
-
+PARSE_NORMAL = 0
 PARSE_GROUPS = 1
 PARSE_PATH_ACL = 2
 
@@ -40,10 +40,12 @@ class AuthzFileParser:
     def __init__(self, filename, fp):
         self.filename = filename
         self.fp = fp
+        self.state = PARSE_NORMAL
     
     def parse(self):
         try:
             m = AuthModel(self.filename, [], [])
+            self.state = PARSE_NORMAL
             self._parse_root(m)
             return m        
         finally:
@@ -56,6 +58,9 @@ class AuthzFileParser:
             if (line == ""):
                 break
             line = line.strip()
+            if line.startswith("#"):
+                # Ignore comments
+                continue
             if (len(line) == 0):
                 continue
             if line == "[groups]":
