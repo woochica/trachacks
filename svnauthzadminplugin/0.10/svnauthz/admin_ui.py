@@ -28,6 +28,9 @@ class SvnAuthzAdminPage(Component):
 
     def __init__(self):
         self.authz_file = self.env.config.get("trac", "authz_file")
+        self.authz_module = self.env.config.get("trac", "authz_module_name")
+        if self.authz_module != None and self.authz_module.strip() == "":
+            self.authz_module = None
         self.account_manager = AccountManager(self.env)
 
     # IAdminPageProvider
@@ -68,6 +71,9 @@ class SvnAuthzAdminPage(Component):
 
         paths_disp = []
         for repository, path in [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]:
+            if repository != self.authz_module:
+                # We ignore the paths from other modules from the display 
+                continue
             path_disp = self._get_disp_path_name(repository, path)
             path_disp_url = pathname2url("%s:%s" % (repository, path))
             if editpath and editpath == path_disp_url:
@@ -144,7 +150,7 @@ class SvnAuthzAdminPage(Component):
             for urlpath in paths_to_del:
                 validpath = self._get_valid_path(paths, url2pathname(urlpath))
                 if validpath:
-                    self.authz.del_path(validpath[1])
+                    self.authz.del_path(validpath[1], self.authz_module)
         except Exception, e:
             req.hdf['delpath.error'] = e
 
@@ -153,7 +159,7 @@ class SvnAuthzAdminPage(Component):
         path = req.args.get('path')
         repository = None
         try:
-            self.authz.add_path(Path(path, []))
+            self.authz.add_path(Path(path, [], self.authz_module))
         except Exception, e:
             req.hdf['addpath.error'] = e
 
@@ -181,7 +187,7 @@ class SvnAuthzAdminPage(Component):
             req.hdf['changepathmember.error'] = "Not a valid path: %s" % editpath
             return
         path = validpath[1]        
-        path_members = self.authz.find_path(path)
+        path_members = self.authz.find_path(path, self.authz_module)
         
         read = False
         write = False     
@@ -233,7 +239,7 @@ class SvnAuthzAdminPage(Component):
         path = validpath[1]
         members_to_del = req.args.get('selpathmember')
         member_acls = req.args.get('selpathmember_acl')
-        path_members = self.authz.find_path(path)
+        path_members = self.authz.find_path(path, self.authz_module)
         
         if len(path_members) == 0:
             # Nothing to do
@@ -346,10 +352,7 @@ class SvnAuthzAdminPage(Component):
         return None
     
     def _get_disp_path_name(self, repository, path):
-            if repository == None or repository == "":
-                return path
-            else:
-                return "%s:%s" % (repository, path)
+        return path
 
     def _get_model(self):
        r = AuthzFileReader()

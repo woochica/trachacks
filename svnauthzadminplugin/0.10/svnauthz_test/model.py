@@ -72,9 +72,12 @@ class AuthModelTest(unittest.TestCase):
         
     def test_find_path(self):
         p = Path("/ize", [])
-        m = AuthModel("fname", [], [p])
+        p2 = Path("/ize2", [], "bigyo")
+        m = AuthModel("fname", [], [p, p2])
         self.assertEquals(None, m.find_path("/bigyo"))
         self.assertEquals(p, m.find_path("/ize"))
+        self.assertEquals(None, m.find_path("/ize2"))
+        self.assertEquals(p2, m.find_path("/ize2", "bigyo"))
 
     def test_find_group(self):
         g = Group("ize", [])

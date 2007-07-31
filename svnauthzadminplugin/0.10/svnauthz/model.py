@@ -169,12 +169,12 @@ class AuthModel:
         if isinstance(p, Path):           
             self.paths.append(p)
 
-    def del_path(self, p):
+    def del_path(self, p, repo = None):
         if isinstance(p, Path):           
             self.paths.remove(p)
         elif isinstance(p, types.StringTypes):
-            rp = self.find_path(p)
-            if rp:
+            rp = self.find_path(p, repo)
+            if isinstance(rp, Path):
                 self.paths.remove(rp)
 
     
