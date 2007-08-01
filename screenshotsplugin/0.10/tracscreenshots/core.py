@@ -7,7 +7,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, \
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
 from trac.config import Option
-from trac.util import Markup, format_datetime, TracError
+from trac.util import format_datetime, TracError
 from trac.util.html import html
 import sets, re, os, os.path, time, mimetypes
 
@@ -78,11 +78,9 @@ class ScreenshotsCore(Component):
         # Create API object.
         self.api = ScreenshotsApi(self)
 
-        # Get cursor.
+        # Get database access.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-
-        self.log.debug('path: %s' % (self.path,))
 
         # Get current screenshot id
         self.id = int(req.args.get('id') or 0)
@@ -133,9 +131,7 @@ class ScreenshotsCore(Component):
         # Do actions and return content.
         modes = self._get_modes(req)
         self.log.debug('modes: %s' % (modes,))
-        content = self._do_actions(req, cursor, modes, component, version)
-        db.commit()
-        return content
+        return self._do_actions(req, modes, component, version)
 
     # Private functions.
 
@@ -157,7 +153,12 @@ class ScreenshotsCore(Component):
         else:
             return ['display']
 
-    def _do_actions(self, req, cursor, modes, component, version):
+    def _do_actions(self, req, modes, component, version):
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
         for mode in modes:
             if mode == 'get-file':
                 req.perm.assert_permission('SCREENSHOTS_VIEW')
@@ -185,8 +186,8 @@ class ScreenshotsCore(Component):
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get form values.
-                new_name = Markup(req.args.get('name'))
-                new_description = Markup(req.args.get('description'))
+                new_name = req.args.get('name')
+                new_description = req.args.get('description')
                 new_author = req.authname
                 file, filename = self._get_file_from_req(req)
                 content = file.read()
@@ -247,15 +248,15 @@ class ScreenshotsCore(Component):
                 # Store uploaded image.
                 try:
                     os.mkdir(path)
-                    out_file = open(large_filepath, "w+")
+                    out_file = open(large_filepath, "wb+")
                     out_file.write(content)
                     out_file.close()
                     os.chdir(path)
-                    os.system('convert "%s" -resize 400!x300! "%s"' % (
-                      large_filename, medium_filename))
-                    os.system('convert "%s" -resize 120!x90! "%s"' % (
-                      large_filename, small_filename))
-                except:
+                    os.system(('convert "%s" -resize 400!x300! "%s"' % (
+                      large_filename, medium_filename)).encode('utf-8'))
+                    os.system(('convert "%s" -resize 120!x90! "%s"' % (
+                      large_filename, small_filename)).encode('utf-8'))
+                except:	
                     self.api.delete_screenshot(cursor, screenshot['id'])
                     try:
                         os.remove(small_filepath)
@@ -286,8 +287,8 @@ class ScreenshotsCore(Component):
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get form values.
-                new_name = Markup(req.args.get('name'))
-                new_description = Markup(req.args.get('description'))
+                new_name = req.args.get('name')
+                new_description = req.args.get('description')
                 new_components = req.args.get('components')
                 if not isinstance(new_components, list):
                      new_components = [new_components]
@@ -399,6 +400,7 @@ class ScreenshotsCore(Component):
                 req.hdf['screenshots.current'] = current
                 req.hdf['screenshots.next'] = next
 
+                db.commit()
                 return 'screenshots.cs', None
 
             elif mode == 'add-display':
@@ -411,6 +413,7 @@ class ScreenshotsCore(Component):
                 # Fill HDF structure
                 req.hdf['screenshots.current'] = [screenshot]
 
+                db.commit()
                 return 'screenshot-add.cs', None
 
     def _get_screenshot_index(self, screenshots, id):
@@ -452,4 +455,6 @@ class ScreenshotsCore(Component):
             size = image.file.len
         if size == 0:
             raise TracError('Can\'t upload empty file.')
-        return image.file, unicode(image.filename, 'utf-8')
+        filename = os.path.basename(image.filename).decode('utf-8')
+        self.log.debug(filename)
+        return image.file, filename
