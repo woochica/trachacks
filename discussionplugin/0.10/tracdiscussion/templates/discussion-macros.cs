@@ -106,7 +106,11 @@
         Message #<?cs var:message.id ?>
       </div>
       <div class="body">
-        <?cs var:message.body ?>
+        <?cs if:(args.message == message.id) && !args.submit && ((args.discussion_action == 'edit') || (args.discussion_action == 'post-edit')) ?>
+          <?cs var:discussion.body ?>
+        <?cs else?>
+          <?cs var:message.body ?>
+        <?cs /if ?>
       </div>
       <div class="controls">
         <?cs if:trac.acl.DISCUSSION_APPEND ?>

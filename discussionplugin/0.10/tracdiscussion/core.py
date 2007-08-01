@@ -47,6 +47,8 @@ class DiscussionCore(Component):
     def match_request(self, req):
         if req.path_info == '/discussion/redirect':
             # Proces redirection request.
+            self.log.debug(req.path_info)
+            self.log.debug(req.args.get('href'))
             req.redirect(req.href(req.args.get('href')))
         else:
             # Prepare regular requests.
@@ -68,12 +70,6 @@ class DiscussionCore(Component):
         # Prepare request object
         req.args['component'] = 'core'
 
-        # Get database access
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-
         # Return page content
         api = DiscussionApi(self, req)
-        content = api.render_discussion(req, cursor)
-        db.commit()
-        return content
+        return api.render_discussion(req)

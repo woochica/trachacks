@@ -50,7 +50,7 @@ class DiscussionWiki(Component):
             else:
                 subject = req.path_info[6:] or 'WikiStart'
 
-            # Get database access
+            # Get database access.
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
@@ -65,9 +65,7 @@ class DiscussionWiki(Component):
             if topic:
                 req.args['forum'] = topic['forum']
                 req.args['topic'] = topic['id']
-            content = api.render_discussion(req, cursor)
-            db.commit()
-            return req.hdf.render(content[0])
+            return req.hdf.render(api.render_discussion(req)[0])
         else:
             raise TracError('Not implemented macro %s' % (name))
 
@@ -89,8 +87,10 @@ class DiscussionWiki(Component):
     def _discussion_link(self, formatter, ns, params, label):
         id = params
 
+        # Get database access.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+
         if ns == 'forum':
             columns = ('subject',)
             sql = "SELECT f.subject FROM forum f WHERE f.id = %s"

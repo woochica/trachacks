@@ -15,9 +15,9 @@ class DiscussionApi(object):
 
     # Main request processing function
 
-    def render_discussion(self, req, cursor):
+    def render_discussion(self, req):
         # Get request mode
-        group, forum, topic, message = self._get_items(req, cursor)
+        group, forum, topic, message = self._get_items(req)
         modes = self._get_modes(req, group, forum, topic, message)
         self.log.debug('modes: %s' % modes)
 
@@ -29,8 +29,7 @@ class DiscussionApi(object):
             is_moderator = req.perm.has_permission('DISCUSSION_ADMIN')
 
         # Perform mode actions
-        self._do_action(req, cursor, modes, group, forum, topic, message,
-          is_moderator)
+        self._do_action(req, modes, group, forum, topic, message, is_moderator)
 
         # Add CSS styles
         add_stylesheet(req, 'common/css/wiki.css')
@@ -67,8 +66,12 @@ class DiscussionApi(object):
         req.hdf['discussion.time'] = format_datetime(time.time())
         return modes[-1] + '.cs', None
 
-    def _get_items(self, req, cursor):
+    def _get_items(self, req):
         group, forum, topic, message = None, None, None, None
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
 
         # Populate active group
         if req.args.has_key('group'):
@@ -272,8 +275,13 @@ class DiscussionApi(object):
                 else:
                     return ['forum-list']
 
-    def _do_action(self, req, cursor, modes, group, forum, topic, message,
+    def _do_action(self, req, modes, group, forum, topic, message,
       is_moderator):
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
         for mode in modes:
             self.log.debug('doing %s mode action' % (mode,))
             if mode == 'group-list':
@@ -312,6 +320,7 @@ class DiscussionApi(object):
                 self.add_group(cursor, new_name, new_description)
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -327,6 +336,7 @@ class DiscussionApi(object):
                 self.edit_group(cursor, new_group, new_name, new_description)
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -347,6 +357,7 @@ class DiscussionApi(object):
                         self.delete_group(cursor, int(group_id))
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -414,6 +425,7 @@ class DiscussionApi(object):
                    new_description, new_moderators, new_group)
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -437,6 +449,7 @@ class DiscussionApi(object):
                   new_description, new_moderators, new_group)
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -447,6 +460,7 @@ class DiscussionApi(object):
                 self.delete_forum(cursor, forum['id'])
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -464,6 +478,7 @@ class DiscussionApi(object):
                         self.delete_forum(cursor, int(forum_id))
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -532,6 +547,7 @@ class DiscussionApi(object):
                   cc)
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -562,6 +578,7 @@ class DiscussionApi(object):
                   new_subject, new_body)
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -585,6 +602,7 @@ class DiscussionApi(object):
                 self.set_forum(cursor, topic['id'], new_forum)
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -597,6 +615,7 @@ class DiscussionApi(object):
                 self.delete_topic(cursor, topic['id'])
 
                 # Redirect request to prevent re-submit.
+                db.commit()
                 req.redirect(req.href.discussion('redirect', href =
                   req.path_info))
 
@@ -642,8 +661,8 @@ class DiscussionApi(object):
                   to, cc)
 
                 # Redirect request to prevent re-submit.
-                self.log.debug(req.href(req.path_info) + '/')
                 if req.args.get('component') != 'wiki':
+                    db.commit()
                     req.redirect(req.href.discussion('redirect', href =
                       req.path_info))
 
@@ -671,6 +690,7 @@ class DiscussionApi(object):
 
                 # Redirect request to prevent re-submit.
                 if req.args.get('component') != 'wiki':
+                    db.commit()
                     req.redirect(req.href.discussion('redirect', href =
                       req.path_info))
 
@@ -684,6 +704,7 @@ class DiscussionApi(object):
 
                 # Redirect request to prevent re-submit.
                 if req.args.get('component') != 'wiki':
+                    db.commit()
                     req.redirect(req.href.discussion('redirect', href =
                       req.path_info))
 
@@ -695,6 +716,9 @@ class DiscussionApi(object):
 
                 # Set message list display mode to session
                 req.session['message-list-display'] = display
+
+        # Commit database changes.
+        db.commit()
 
     def _prepare_message_list(self, req, cursor, topic):
         # Get form values.
