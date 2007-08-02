@@ -62,6 +62,7 @@ class TracForgeDispatcherModule(Component):
         environ['TRAC_ENV_PARENT_DIR'] = os.path.dirname(self.env.path)
         if 'TRAC_ENV' in environ:
             del environ['TRAC_ENV']
+        environ['tracforge_master_link'] = req.href.projects()
         
         req._response = dispatch_request(environ, start_response)
         
