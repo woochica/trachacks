@@ -68,7 +68,7 @@ class DownloadsCore(Component):
         req.args['context'] = 'core'
 
         # Return page content.
-        api = DownloadsApi(self.env)
+        api = self.env[DownloadsApi]
         content = api.process_downloads(req, cursor)
         db.commit()
         return content

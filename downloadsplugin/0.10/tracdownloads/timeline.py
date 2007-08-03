@@ -28,7 +28,7 @@ class DownloadsTimeline(Component):
             cursor = db.cursor()
 
             # Get API component.
-            api = DownloadsApi(self.env)
+            api = self.env[DownloadsApi]
 
             format = req.args.get('format')
             self.log.debug("format: %s" % (format))

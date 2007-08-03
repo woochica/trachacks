@@ -30,7 +30,7 @@ class DownloadsWiki(Component):
                 cursor = db.cursor()
 
                 # Get API component.
-                api = DownloadsApi(self.env)
+                api = self.env[DownloadsApi]
 
                 # Get download.
                 download = api.get_download(cursor, params)

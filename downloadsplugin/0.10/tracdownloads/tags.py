@@ -23,7 +23,7 @@ class DownloadsTaggingSystem(DefaultTaggingSystem):
         cursor = db.cursor()
 
         # Get API object.
-        api = DownloadsApi(self.env)
+        api = self.env[DownloadsApi]
 
         # Get tagged download.
         download = api.get_download(cursor, name)
@@ -62,7 +62,8 @@ class DownloadsTags(Component):
         tag_names = [download['author'], download['component'],
           download['version'], download['architecture'],
           download['platform'], download['type']]
-        tag_names.extend(download['tags'].split(' '))
+        if download['tags']:
+            tag_names.extend(download['tags'].split(' '))
 
         # Add tags to download.
         self.log.debug(tag_names)
@@ -78,7 +79,8 @@ class DownloadsTags(Component):
         tag_names = [download['author'], download['component'],
           download['version'], download['architecture'],
           download['platform'], download['type']]
-        tag_names.extend(download['tags'].split(' '))
+        if download['tags']:
+            tag_names.extend(download['tags'].split(' '))
 
         # Add tags to download.
         self.log.debug(tag_names)
@@ -92,7 +94,8 @@ class DownloadsTags(Component):
         tag_names = [download['author'], download['component'],
           download['version'], download['architecture'],
           download['platform'], download['type']]
-        tag_names.extend(download['tags'].split(' '))
+        if download['tags']:
+            tag_names.extend(download['tags'].split(' '))
 
         # Add tags to download.
         self.log.debug(tag_names)
@@ -107,7 +110,7 @@ class DownloadsTags(Component):
         cursor = db.cursor()
 
         # Resolve architecture platform and type names.
-        api = DownloadsApi(self.env)
+        api = self.env[DownloadsApi]
         architecture = api.get_architecture(cursor, download['architecture'])
         platform = api.get_platform(cursor, download['platform'])
         type = api.get_type(cursor, download['type'])

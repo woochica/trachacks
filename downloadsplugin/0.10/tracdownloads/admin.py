@@ -41,7 +41,7 @@ class DownloadsWebAdmin(Component):
             req.args['download'] = path_info
 
         # Return page content.
-        api = DownloadsApi(self.env)
+        api = self.env[DownloadsApi]
         content = api.process_downloads(req, cursor)
         db.commit()
         return content
