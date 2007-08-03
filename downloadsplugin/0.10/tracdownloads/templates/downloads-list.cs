@@ -44,81 +44,119 @@
       <table class="listing">
         <thead>
           <tr>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'id', 'ID', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'file', 'File', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'description', 'Description', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'size', 'Size', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'time', 'Uploaded', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'count', 'Downloads', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'author', 'Uploader', downloads.href) ?>
-            <?cs if:downloads.has_tags ?>
+            <?cs if:downloads.visible_fields.id ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'id', 'ID', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.file ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'file', 'File', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.description ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'description', 'Description', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.size ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'size', 'Size', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.time ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'time', 'Uploaded', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.count ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'count', 'Downloads', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.author ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'author', 'Uploader', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.tags && downloads.has_tags ?>
               <?cs call:sortable_th(downloads.order, downloads.desc, 'tags', 'Tags', downloads.href) ?>
             <?cs /if ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'component', 'Component', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'version', 'Version', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'architecture', 'Architecture', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'platform', 'Platform', downloads.href) ?>
-            <?cs call:sortable_th(downloads.order, downloads.desc, 'type', 'Type', downloads.href) ?>
+            <?cs if:downloads.visible_fields.component ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'component', 'Component', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.version ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'version', 'Version', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.architecture ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'architecture', 'Architecture', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.platform ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'platform', 'Platform', downloads.href) ?>
+            <?cs /if ?>
+            <?cs if:downloads.visible_fields.type ?>
+              <?cs call:sortable_th(downloads.order, downloads.desc, 'type', 'Type', downloads.href) ?>
+            <?cs /if ?>
           </tr>
         </thead>
         <tbody>
           <?cs each:download = downloads.downloads ?>
             <tr class="<?cs if:download.id % #2 ?>odd<?cs else ?>even<?cs /if ?>">
-              <td class="id">
-                <div class="id">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.id ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.id ?>
+                <td class="id">
+                  <div class="id">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.id ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="file">
-                <div class="file">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.file ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.file ?>
+                <td class="file">
+                  <div class="file">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.file ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="description">
-                <div class="description">
-                  <?cs var:download.description ?>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.description ?>
+                <td class="description">
+                  <div class="description">
+                    <?cs var:download.description ?>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="size">
-                <div class="size">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.size ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.size ?>
+                <td class="size">
+                  <div class="size">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.size ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="time">
-                <div class="time">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.time ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.time ?>
+                <td class="time">
+                  <div class="time">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.time ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="count">
-                <div class="count">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.count ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.count ?>
+                <td class="count">
+                  <div class="count">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.count ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="author">
-                <div class="author">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.author ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.author ?>
+                <td class="author">
+                  <div class="author">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.author ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <?cs if:downloads.has_tags ?>
+              <?cs if:downloads.visible_fields.tags && downloads.has_tags ?>
                 <td class="tags">
                   <div class="tags">
                     <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
@@ -128,45 +166,55 @@
                 </td>
               <?cs /if ?>
 
-              <td class="component">
-                <div class="component">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.component ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.component ?>
+                <td class="component">
+                  <div class="component">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.component ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="version">
-                <div class="version">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.version ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.version ?>
+                <td class="version">
+                  <div class="version">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.version ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="architecture">
-                <div class="architecture">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.architecture.name ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.architecture ?>
+                <td class="architecture">
+                  <div class="architecture">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.architecture.name ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="platform">
-                <div class="platform">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.platform.name ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.platform ?>
+                <td class="platform">
+                  <div class="platform">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.platform.name ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
 
-              <td class="type">
-                <div class="type">
-                  <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
-                    <?cs var:download.type.name ?>
-                  </a>
-                </div>
-              </td>
+              <?cs if:downloads.visible_fields.type ?>
+                <td class="type">
+                  <div class="type">
+                    <a href="<?cs var:downloads.href ?>/<?cs var:download.id ?>">
+                      <?cs var:download.type.name ?>
+                    </a>
+                  </div>
+                </td>
+              <?cs /if ?>
             </tr>
           <?cs /each ?>
         </tbody>

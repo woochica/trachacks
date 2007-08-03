@@ -9,7 +9,7 @@ from tracdownloads.api import *
 
 class DownloadsWiki(Component):
     """
-        The wiki module implements macro for screenshots referencing.
+        The wiki module implements macro for downloads referencing.
     """
     implements(IWikiSyntaxProvider)
 

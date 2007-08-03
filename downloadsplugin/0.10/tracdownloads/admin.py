@@ -18,7 +18,8 @@ class DownloadsWebAdmin(Component):
     def get_admin_pages(self, req):
         if req.perm.has_permission('DOWNLOADS_ADMIN'):
             yield ('downloads', 'Downloads System', 'downloads', 'Downloads')
-            yield ('downloads', 'Downloads System', 'architectures', 'Architectures')
+            yield ('downloads', 'Downloads System', 'architectures',
+              'Architectures')
             yield ('downloads', 'Downloads System', 'platforms', 'Platforms')
             yield ('downloads', 'Downloads System', 'types', 'Types')
 

@@ -27,12 +27,23 @@ class IDownloadChangeListener(Interface):
 
 class DownloadsApi(Component):
 
+    # List of all field of downloads table.
+    all_fields = ['id', 'file', 'description', 'size', 'time', 'count', 'author',
+      'tags', 'component', 'version', 'architecture', 'platform', 'type']
+
+    # Downloads change listeners.
+    change_listeners = ExtensionPoint(IDownloadChangeListener)
+
+    # Configuration options.
     title = Option('downloads', 'title', 'Downloads',
       'Main navigation bar button title.')
     path = Option('downloads', 'path', '/var/lib/trac/downloads',
       'Directory to store uploaded downloads.')
     ext = Option('downloads', 'ext', 'zip gz bz2 rar',
       'List of file extensions allowed to upload.')
+    visible_fields = Option('downloads', 'visible_fields',
+      ' '.join(all_fields), 'List of downloads table fields that should'
+      ' be visible to users on Downloads section.')
 
     # Get list functions.
 
@@ -151,6 +162,16 @@ class DownloadsApi(Component):
               self.env)
             types.append(row)
         return types
+
+    def get_visible_fields(self):
+        # Get list of enabled fields from config option.
+        visible_fields = self.visible_fields.split(' ')
+
+        # Construct dictionary of visible_fields.
+        fields = {}
+        for field in self.all_fields:
+            fields[field] = field in visible_fields
+        return fields
 
     # Get one item functions.
 
@@ -398,15 +419,25 @@ class DownloadsApi(Component):
                     self.log.debug('path: %s' % (path,))
 
                     # Increase downloads count.
+                    new_download = {'count' : download['count'] + 1}
+
+                    # Edit download.
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
-                    self.edit_download(cursor, download['id'], {'count' :
-                      download['count'] + 1})
+                    self.edit_download(cursor, download['id'], new_download)
                     db.commit()
 
+                    # Notify change listeners.
+                    for listener in self.change_listeners:
+                        listener.download_changed(new_download, download)
+
                     # Return uploaded file to request.
-                    type = mimetypes.guess_type(path)[0]
-                    req.send_file(path, type)
+                    self.log.debug(download['file'])
+                    req.send_header('Content-Disposition',
+                      'attachment;filename=%s' % (download['file']))
+                    req.send_header('Content-Description',
+                      download['description'])
+                    req.send_file(path, mimetypes.guess_type(path)[0])
                 else:
                     raise TracError('File not found.')
 
@@ -420,11 +451,12 @@ class DownloadsApi(Component):
                 req.hdf['downloads.order'] = order
                 req.hdf['downloads.desc'] = desc
                 req.hdf['downloads.has_tags'] = self.env.is_component_enabled(
-                  'TagEngine')
+                  'tractags.api.TagEngine')
                 req.hdf['downloads.title'] = self.title
                 req.hdf['downloads.description'] = self.get_description(req, cursor)
                 req.hdf['downloads.downloads'] = self.get_downloads(req,
                   cursor, order, desc)
+                req.hdf['downloads.visible_fields'] = self.get_visible_fields()
 
             elif mode == 'admin-downloads-list':
                 req.perm.assert_permission('DOWNLOADS_ADMIN')
@@ -438,7 +470,7 @@ class DownloadsApi(Component):
                 req.hdf['downloads.order'] = order
                 req.hdf['downloads.desc'] = desc
                 req.hdf['downloads.has_tags'] = self.env.is_component_enabled(
-                  'TagEngine')
+                  'tractags.api.TagEngine')
                 req.hdf['downloads.download'] = self.get_download(cursor,
                   download_id)
                 req.hdf['downloads.downloads'] = self.get_downloads(req,
@@ -503,6 +535,10 @@ class DownloadsApi(Component):
                 filepath = os.path.join(path, download['file'])
                 self.log.debug('filepath: %s' % (filepath))
 
+                # Notify change listeners.
+                for listener in self.change_listeners:
+                    listener.download_created(download)
+
                 # Store uploaded image.
                 try:
                     os.mkdir(path)
@@ -510,11 +546,10 @@ class DownloadsApi(Component):
                     out_file.write(file_content)
                     out_file.close()
 
-                    # Notify about change.
-                    # TODO
+
 
                 except:
-                    self.api.delete_download(cursor, download['id'])
+                    self.delete_download(cursor, download['id'])
                     try:
                         os.remove(filepath)
                         os.rmdir(path)
@@ -529,6 +564,7 @@ class DownloadsApi(Component):
 
                 # Get form values.
                 download_id = req.args.get('id')
+                old_download = self.get_download(cursor, download_id)
                 download = {'description' : req.args.get('description'),
                             'tags' : req.args.get('tags'),
                             'component' : req.args.get('component'),
@@ -540,8 +576,9 @@ class DownloadsApi(Component):
                 # Edit Download.
                 self.edit_download(cursor, download_id, download)
 
-                # Notify about change.
-                # TODO
+                # Notify change listeners.
+                for listener in self.change_listeners:
+                    listener.download_changed(download, old_download)
 
             elif mode == 'downloads-delete':
                 req.perm.assert_permission('DOWNLOADS_ADMIN')
@@ -562,9 +599,9 @@ class DownloadsApi(Component):
                             os.remove(os.path.join(path, download['file']))
                             os.rmdir(path)
 
-                            # Notify about change.
-                            # TODO
-
+                            # Notify change listeners.
+                            for listener in self.change_listeners:
+                                listener.download_deleted(download)
                         except:
                             pass
 
