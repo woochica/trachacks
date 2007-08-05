@@ -134,7 +134,10 @@ class AccountModule(Component):
 
     #INavigationContributor methods
     def get_active_navigation_item(self, req):
-        return 'account'
+        if req.path_info == '/account':
+            return 'account'
+        elif req.path_info == '/reset_password':
+            return 'reset_password'
 
     def get_navigation_items(self, req):
         if not self._write_check():
@@ -142,6 +145,9 @@ class AccountModule(Component):
         if req.authname != 'anonymous':
             yield 'metanav', 'account', Markup('<a href="%s">My Account</a>',
                                                (req.href.account()))
+        elif self.reset_password_enabled and not LoginModule(self.env).enabled:
+            yield 'metanav', 'reset_password', Markup('<a href="%s">Forgot your password?</a>',
+                                                      (req.href.reset_password()))
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -155,6 +161,12 @@ class AccountModule(Component):
         elif req.path_info == '/reset_password':
             self._do_reset_password(req)
             return 'reset_password.cs', None
+
+    def reset_password_enabled(self):
+        return (self.env.is_component_enabled(AccountModule)
+                and NotificationSystem(self.env).smtp_enabled
+                and self._write_check())
+    reset_password_enabled = property(reset_password_enabled)
 
     def _do_account(self, req):
         if req.authname == 'anonymous':
@@ -350,8 +362,7 @@ class LoginModule(auth.LoginModule):
     def process_request(self, req):
         if req.path_info.startswith('/login') and req.authname == 'anonymous':
             req.hdf['referer'] = self._referer(req)
-            if self.env.is_component_enabled(AccountModule) \
-               and NotificationSystem(self.env).smtp_enabled:
+            if AccountModule(self.env).reset_password_enabled:
                 req.hdf['trac.href.reset_password'] = req.href.reset_password()
             if req.method == 'POST':
                 req.hdf['login.error'] = 'Invalid username or password'
