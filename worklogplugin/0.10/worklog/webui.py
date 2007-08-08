@@ -135,6 +135,7 @@ class WorkLogPage(Component):
 
         if req.args.has_key('format') and req.args['format'] == 'csv':
             req.send_header('Content-Type', 'text/csv;charset=utf-8')
+            req.send_header('Content-Disposition', 'filename=worklog.csv')
             self.worklog_csv(req)
             return None
 
