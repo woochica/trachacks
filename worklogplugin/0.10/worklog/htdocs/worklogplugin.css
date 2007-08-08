@@ -1,13 +1,23 @@
-#content.worklog
-{
-  width: 100%;
-}
 #worklogmanual
 {
   display: block;
   float: right;
 }
-
+#worklog_comment 
+{
+  font-size: 70%;
+  color: green;
+}
+#worklog_time_delta 
+{
+  font-size: 70%;
+  color: green;
+}
+table#worklog_report 
+{
+  width: 99%;
+  clear: both;
+}
 #content.worklog table th
 {
   background: #f7f7f7;
@@ -25,8 +35,6 @@
 #content.worklog table td small
 {
   color: #999;
-}
-#messages{ 
 }
 .message
 { 

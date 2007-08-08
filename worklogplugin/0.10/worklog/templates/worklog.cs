@@ -10,11 +10,12 @@
     <?cs /each ?>
   </div>
 
-  <table border="0" cellspacing="0" cellpadding="0">
+  <table border="0" cellspacing="0" cellpadding="0" id="worklog_report">
     <tr>
       <th>User</th>
       <th>Activity</th>
-      <th>Last Change</th>
+      <th>Time</th>
+      <th>Comment</th>
     </tr>
     <?cs each:log = worklog.worklog ?>
     <tr>
@@ -22,9 +23,10 @@
       <?cs if:log.finished == #0 ?>
       <td><a href="<?cs var:log.ticket_url ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?></td>
       <?cs else ?>
-      <td><em>Idle</em> <small>(Last worked on: <a href="<?cs var:log.ticket_url ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?>)</small></td>      
+      <td><em>Idle</em> <small>(Last worked on: <a href="<?cs var:log.ticket_url ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?>)</small></td>
       <?cs /if ?>
-      <td><?cs var:log.delta ?></td>
+      <td><span id="worklog_time_delta"><?cs var:log.delta ?></span></td>
+      <td><span id="worklog_comment"><?cs var:log.comment ?></span></td>
     </tr>
     <?cs /each ?>
   </table>

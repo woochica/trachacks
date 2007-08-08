@@ -70,16 +70,39 @@ class WorkLogTicketAddon(Component):
   f.setAttribute('method', 'POST');
   f.setAttribute('action', '""" + req.href.worklog() + """')
   f.setAttribute('class', 'inlinebuttons');
+  
+  var h_url = document.createElement('input');
+  h_url.setAttribute('type', 'hidden');
+  h_url.setAttribute('name', 'source_url');
+  h_url.setAttribute('value', location.pathname);
+  f.appendChild(h_url);
+  
   var h = document.createElement('input');
   h.setAttribute('type', 'hidden');
   h.setAttribute('name', 'ticket');
   h.setAttribute('value', '""" + str(ticket) + """');
   f.appendChild(h);
+  
   var h2 = document.createElement('input');
   h2.setAttribute('type', 'hidden');
   h2.setAttribute('name', '__FORM_TOKEN');
   h2.setAttribute('value', '""" + str(req.incookie['trac_form_token'].value) + """');
-  f.appendChild(h2);
+  f.appendChild(h2);"""
+  
+        if stop:
+            script += """
+  var s_comment_label = document.createElement('span');
+  s_comment_label.id = 'worklog_comment';
+  s_comment_label.innerHTML = 'Comment: ';
+  f.appendChild(s_comment_label);
+  
+  var s_comment = document.createElement('input');
+  s_comment.type = 'text';
+  s_comment.size = '50';
+  s_comment.name = 'comment';
+  f.appendChild(s_comment);"""
+  
+        script += """
   var s = document.createElement('input');
   s.setAttribute('type', 'submit');"""
         if stop:
@@ -155,7 +178,7 @@ wlAddEventListener(window, 'load', InitWorklog)
                     # Display a "Work on Link" button.
                     button_js = self.get_button_js(req, ticket)
                 elif task and task['ticket'] == ticket:
-                    # We are currnetly working on this, so display the stop button...
+                    # We are currently working on this, so display the stop button...
                     button_js = self.get_button_js(req, ticket, True)
 
             yield 'mainnav', 'ticket-worklog-addon', self.get_javascript(task_js, ticket_js, button_js)

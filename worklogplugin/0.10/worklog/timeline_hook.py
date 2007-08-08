@@ -7,6 +7,7 @@ from trac.util import Markup
 from trac.web.chrome import add_stylesheet
 from trac.web.href import Href
 from trac.Timeline import ITimelineEventProvider
+from trac.wiki.formatter import wiki_to_html, wiki_to_oneliner
 
 class WorkLogTimelineAddon(Component):
     implements(ITimelineEventProvider)
@@ -27,15 +28,15 @@ class WorkLogTimelineAddon(Component):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
-            cursor.execute("""SELECT wl.user,wl.ticket,wl.time,wl.starttime,wl.kind,wl.humankind,t.summary
+            cursor.execute("""SELECT wl.user,wl.ticket,wl.time,wl.starttime,wl.comment,wl.kind,wl.humankind,t.summary
                              FROM (
                              
-                             SELECT user, ticket, starttime AS time, starttime, 'workstart' AS kind, 'started' AS humankind
+                             SELECT user, ticket, starttime AS time, starttime, comment, 'workstart' AS kind, 'started' AS humankind
                              FROM work_log
 
                              UNION
 
-                             SELECT user, ticket, endtime AS time, starttime, 'workstop' AS kind, 'stopped' AS humankind
+                             SELECT user, ticket, endtime AS time, starttime, comment, 'workstop' AS kind, 'stopped' AS humankind
                              FROM work_log
 
                              ) AS wl
@@ -44,14 +45,13 @@ class WorkLogTimelineAddon(Component):
                            ORDER BY wl.time"""
                            % (start, stop))
             previous_update = None
-            for user,ticket,time,starttime,kind,humankind,summary in cursor:
+            for user,ticket,time,starttime,comment,kind,humankind,summary in cursor:
                 summary = Markup.escape(summary)
                 time = float(time)
                 starttime = float(starttime)
-                
                 if format == 'rss':
-                    title = Markup('%s %s working on Ticket #%s (%s)' % \
-                                   (user, humankind, ticket, summary))
+                    title = Markup('%s %s working on Ticket #%s (%s): %s' % \
+                                   (user, humankind, ticket, summary, comment))
                 else:
                     title = Markup('%s %s working on Ticket <em title="%s">#%s</em>' % \
                                    (user, humankind, summary, ticket))
@@ -59,7 +59,10 @@ class WorkLogTimelineAddon(Component):
                 if kind == 'workstop':
                     started = datetime.fromtimestamp(starttime)
                     finished = datetime.fromtimestamp(time)
-                    message = 'Time spent: ' + pretty_timedelta(started, finished)
+                    if comment:
+                        message =  wiki_to_oneliner(comment, self.env, req, shorten=True) + Markup('<br />(Time spent: %s)' % pretty_timedelta(started, finished))
+                    else:
+                        message = 'Time spent: %s' % pretty_timedelta(started, finished)
                 yield kind, href.ticket(ticket), title, time, user, message
 
 

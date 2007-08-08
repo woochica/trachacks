@@ -128,7 +128,7 @@ class WorkLogManager:
             # point is if there is no active task... which is the desired scenario :)
             self.stop_work()
             self.explanation = ''
-            
+ 
         cursor = db.cursor()
         cursor.execute('INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) '
                        'VALUES (%s, %s, %s, %s, %s)',
@@ -136,7 +136,7 @@ class WorkLogManager:
         return True
 
     
-    def stop_work(self, stoptime=None):
+    def stop_work(self, stoptime=None, comment=''):
         active = self.get_active_task()
         if not active:
             self.explanation = 'You cannot stop working as you appear to be a complete slacker already!'
@@ -157,18 +157,23 @@ class WorkLogManager:
         db = self.env.get_db_cnx();
         cursor = db.cursor()
         cursor.execute('UPDATE work_log '
-                       'SET endtime=%s, lastchange=%s '
+                       'SET endtime=%s, lastchange=%s, comment=%s '
                        'WHERE user=%s AND lastchange=%s AND endtime=0',
-                       (stoptime, stoptime, self.authname, active['lastchange']))
+                       (stoptime, stoptime, comment, self.authname, active['lastchange']))
 
         message = ''
-        if self.config.getbool('worklog', 'comment'):
+        # Leave a comment if the user has configured this or if they have entered
+        # a work log comment.
+        if self.config.getbool('worklog', 'comment') or comment:
             started = datetime.fromtimestamp(active['starttime'])
             finished = datetime.fromtimestamp(stoptime)
-            message = '%s worked on this ticket for %s between %s %s and %s %s' % \
+            message = '%s worked on this ticket for %s between %s %s and %s %s.' % \
                       (self.authname, pretty_timedelta(started, finished), \
                        format_date(active['starttime']), format_time(active['starttime']), \
                        format_date(stoptime), format_time(stoptime))
+            if comment:
+                message += "\n[[BR]]\n" + comment
+            
         if self.config.getbool('worklog', 'timingandestimation') and \
                self.config.get('ticket-custom', 'hours'):
             if not message:
@@ -184,7 +189,9 @@ class WorkLogManager:
             
             db = self.env.get_db_cnx()
             tckt = Ticket(self.env, active['ticket'], db)
-            tckt['hours'] = str(float(delta) / 60)
+            # This hideous hack is here because I don't yet know how to do variable-DP rounding in python - sorry!
+            # It's meant to round to 2 DP, so please replace it if you know how.  Many thanks, MK.
+            tckt['hours'] = str(float(int(100 * float(delta) / 60) / 100.0))
             self.save_ticket(tckt, db, message)
             message = ''
 
@@ -224,18 +231,22 @@ class WorkLogManager:
         lastchange = row[0]
     
         task = {}
-        cursor.execute('SELECT wl.user, wl.ticket, t.summary, wl.lastchange, wl.starttime, wl.endtime '
+        cursor.execute('SELECT wl.user, wl.ticket, t.summary, wl.lastchange, wl.starttime, wl.endtime, wl.comment '
                        'FROM work_log wl '
                        'LEFT JOIN ticket t ON wl.ticket=t.id '
                        'WHERE wl.user=%s AND wl.lastchange=%s', (self.authname, lastchange))
 
-        for user,ticket,summary,lastchange,starttime,endtime in cursor:
+        for user,ticket,summary,lastchange,starttime,endtime,comment in cursor:
+            if not comment:
+                comment = ''
+            
             task['user'] = user
             task['ticket'] = ticket
             task['summary'] = summary
             task['lastchange'] = float(lastchange)
             task['starttime'] = float(starttime)
             task['endtime'] = float(endtime)
+            task['comment'] = comment
         return task
     
     def get_active_task(self):

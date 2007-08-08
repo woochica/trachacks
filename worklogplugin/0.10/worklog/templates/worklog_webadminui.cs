@@ -9,7 +9,8 @@
     </div>
     <div class="field">
       <input type="checkbox" id="comment" name="comment" value="1" <?cs var:settings.comment ?>>
-      <label for="comment">Automatically add a comment when you stop work on a ticket?</label>
+      <label for="comment">Automatically add a comment when you stop work on a ticket?</label><br />
+      <small>Please note that if you leave a comment when you stop work, then a comment is always added to the ticket to ensure all information is present on the ticket.</small>
     </div>
     <div class="field">
       <input type="checkbox" id="autostop" name="autostop" value="1" <?cs var:settings.autostop ?>>
@@ -29,7 +30,7 @@
     <legend>Paramaters:</legend>
     <div class="field">
       <label for="roundup">Round up to nearest minute</label>&nbsp;
-      <input type="text" id="roundup" name="roundup" size="4" value="<?cs var:settings.roundup ?>"><br>
+      <input type="text" id="roundup" name="roundup" size="4" value="<?cs var:settings.roundup ?>"><br />
       <small>This only applies when integrating with the 
              <a href="http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin">Timing and Estimation Plugin</a></small>
     </div>
