@@ -93,30 +93,29 @@ class WorkLogPage(Component):
 
     def worklog_csv(self, req):
         # Headers
-        req.write('user,full_name,starttime,endtime,ticket,ticket_summary,work_comment')
-        req.write(CRLF)
+        sep=','
+        req.write(sep.join(['user',
+                            'full_name',
+                            'starttime',
+                            'endtime',
+                            'ticket',
+                            'ticket_summary',
+                            'work_comment']) + CRLF)
 
         # Rows
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, wl.comment, t.summary '
+        cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
                        'FROM work_log wl '
                        'LEFT JOIN ticket t ON wl.ticket=t.id '
                        'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
                        'ORDER BY wl.lastchange DESC, wl.user')
-        for (user,name,starttime,endtime,ticket,comment,summary) in cursor:
-            if not comment:
-                comment = ''
-            
-            req.write(user + ',')
-            req.write(name + ',')
-            req.write(str(starttime) + ',')
-            req.write(str(endtime) + ',')
-            req.write(str(ticket) + ',')
-            req.write(summary + ',')
-            req.write(comment)
-            req.write(CRLF)
 
+        for row in cursor:
+            req.write(sep.join([str(item)
+                                .replace(sep, '_').replace('\\', '\\\\')
+                                .replace('\n', '\\n').replace('\r', '\\r')
+                                for item in row]) + CRLF)
 
                 
     # IRequestHandler methods
@@ -135,7 +134,7 @@ class WorkLogPage(Component):
             return None
 
         if req.args.has_key('format') and req.args['format'] == 'csv':
-            req.send_header('Content-Type', 'text/plain;charset=utf-8')
+            req.send_header('Content-Type', 'text/csv;charset=utf-8')
             self.worklog_csv(req)
             return None
 

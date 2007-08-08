@@ -32,4 +32,7 @@
   </table>
 </div>
 </form>
+
+<div id="altlinks">  <h3>Download in other formats:</h3><ul><li class="first last"><a href="?format=csv" class="csv">CSV</a></li></ul></div>
+
 <?cs include "footer.cs"?>
