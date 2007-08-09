@@ -11,7 +11,10 @@ from webadminui import *
 from uihooks_ticket import *
 from timeline_hook import *
 from ticket_daemon import *
-from xmlrpc import *
+try:
+    from xmlrpc import *
+except:
+    pass
 
    
 class WorkLogSetupParticipant(Component):

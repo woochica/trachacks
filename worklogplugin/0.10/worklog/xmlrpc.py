@@ -1,7 +1,3 @@
-#try:
-#    from cStringIO import StringIO
-#except ImportError:
-#    from StringIO import StringIO
 import xmlrpclib
 import posixpath
 
@@ -9,12 +5,7 @@ from manager import WorkLogManager
 
 from trac.core import *
 from trac.perm import IPermissionRequestor
-#from trac.wiki.api import WikiSystem
-#from trac.wiki.model import WikiPage
-#from trac.wiki.formatter import wiki_to_html
-#from trac.attachment import Attachment
 from tracrpc.api import IXMLRPCHandler, expose_rpc
-#from tracrpc.util import to_timestamp
 
 class WorlLogRPC(Component):
     """ Interface to the [http://trac-hacks.org/wiki/WorkLogPlugin Work Log Plugin] """
