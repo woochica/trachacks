@@ -11,6 +11,7 @@ from webadminui import *
 from uihooks_ticket import *
 from timeline_hook import *
 from ticket_daemon import *
+from xmlrpc import *
 
    
 class WorkLogSetupParticipant(Component):

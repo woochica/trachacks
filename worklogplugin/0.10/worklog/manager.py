@@ -215,7 +215,7 @@ class WorkLogManager:
         return None,None
 
     def who_last_worked_on(self, ticket):
-        pass
+        return "Not implemented"
 
     def get_latest_task(self):
         if self.authname == 'anonymous':
