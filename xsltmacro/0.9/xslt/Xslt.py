@@ -339,7 +339,7 @@ class TransformSource(object):
         return str(self.obj)
 
     def __del__(self):
-        if hasattr(self.obj, 'close') and callable(self.obj.close):
+        if self.obj and hasattr(self.obj, 'close') and callable(self.obj.close):
             self.obj.close()
 
     class CloseableStream(object):
