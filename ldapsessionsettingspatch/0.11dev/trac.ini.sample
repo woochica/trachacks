@@ -1,0 +1,20 @@
+
+[session]
+## this setting indicates that if the user hasn't filled 
+##   in a name on their 'Preferences' page, go try and 
+##   grab it from the LDAP/AD server (the 'displayName' user property)
+## defaults:
+##   get_name_from_ldap_if_empty = false
+##   get_name_from_ldap_userattribute = displayName
+get_name_from_ldap_if_empty = true
+get_name_from_ldap_userattribute = displayName
+
+## this setting indicates that if the user hasn't filled 
+##   in an email on their 'Preferences' page, go try and 
+##   grab it from the LDAP/AD server (the 'mail' user property)
+## defaults:
+##   get_email_from_ldap_if_empty = false
+##   get_email_from_ldap_userattribute = mail
+get_email_from_ldap_if_empty = true
+get_email_from_ldap_userattribute = mail
+

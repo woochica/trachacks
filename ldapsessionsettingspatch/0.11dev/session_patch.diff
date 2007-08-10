@@ -1,0 +1,103 @@
+Index: session.py
+===================================================================
+--- session.py	(revision 5898)
++++ session.py	(working copy)
+@@ -23,6 +23,21 @@
+ from trac.util import hex_entropy
+ from trac.util.html import Markup
+ 
++## imports for LDAP name/email lookup
++import platform
++LDAP_AD_LOOKUP_AVAILABLE = False
++if platform.system().lower()=='windows':
++    try:
++        import active_directory
++        LDAP_AD_LOOKUP_AVAILABLE = True
++    except:
++        LDAP_AD_LOOKUP_AVAILABLE = False
++    try:
++        import threading, pythoncom
++        LDAP_AD_LOOKUP_AVAILABLE = True
++    except:
++        LDAP_AD_LOOKUP_AVAILABLE = False    
++
+ UPDATE_INTERVAL = 3600*24 # Update session last_visit time stamp after 1 day
+ PURGE_AGE = 3600*24*90 # Purge session after 90 days idle
+ COOKIE_KEY = 'trac_session'
+@@ -83,10 +98,76 @@
+         cursor.execute("SELECT name,value FROM session_attribute "
+                        "WHERE sid=%s and authenticated=%s",
+                        (sid, int(authenticated)))
++        hademail = hadname = False                          # used by NEW LDAP CODE
+         for name, value in cursor:
+             self[name] = value
++            if name.strip() == 'email': hademail = True     # used by NEW LDAP CODE
++            if name.strip() == 'name': hadname = True       # used by NEW LDAP CODE
+         self._old.update(self)
+ 
++        #### BEGIN NEW LDAP CODE ####################################################
++        if LDAP_AD_LOOKUP_AVAILABLE:
++            _needsave = False
++            ldap_user = None    # so that we don't have to hit the ldap server twice if both features are enabled
++            get_email_from_ldap_if_empty = self.env.config.getbool('session', 'get_email_from_ldap_if_empty')
++            get_email_from_ldap_userattribute = self.env.config.get('session','get_email_from_ldap_userattribute','mail')
++            if not hademail and get_email_from_ldap_if_empty:
++                #self.env.log.debug("No email address in session data")
++                self.env.log.info("Searching for email address via LDAP (using active_directory module) for user '%s'..." % sid)
++                """
++                To fix a bizarro error ultimately caused by the 
++                active_directory module's use of pywin32 (and pythoncom 
++                via pywin32) the error will be something like 
++                "com_error: (-2147221008, 'CoInitialize has not been called.', None, None)"
++                http://mail.python.org/pipermail/python-win32/2006-December/005425.html
++                """
++                if threading.currentThread().getName() <> 'MainThread':
++                    pythoncom.CoInitialize()
++                if not ldap_user:
++                    ldap_user = active_directory.find_user(str(sid))
++                if ldap_user:
++                    try:
++                        ldap_address = ''
++                        ldap_address = str(getattr(ldap_user,get_email_from_ldap_userattribute)).strip().lower()
++                        if ldap_address != '':
++                            self.env.log.info("Found email address for user via LDAP: %s -> %s" % (str(sid), str(ldap_address)))
++                            self['email'] = ldap_address
++                            _needsave = True
++                    except AttributeError, e:
++                        self.env.log.error("Specified LDAP user attribute does not exist: %s" % get_email_from_ldap_userattribute)
++
++            get_name_from_ldap_if_empty = self.env.config.getbool('session', 'get_name_from_ldap_if_empty')
++            get_name_from_ldap_userattribute = self.env.config.get('session','get_name_from_ldap_userattribute','displayName')
++            if not hadname and get_name_from_ldap_if_empty:
++                self.env.log.info("Searching for name via LDAP (using active_directory module) for user '%s'..." % sid)
++                """
++                To fix a bizarro error ultimately caused by the 
++                active_directory module's use of pywin32 (and pythoncom 
++                via pywin32) the error will be something like 
++                "com_error: (-2147221008, 'CoInitialize has not been called.', None, None)"
++                http://mail.python.org/pipermail/python-win32/2006-December/005425.html
++                """
++                if threading.currentThread().getName() <> 'MainThread':
++                    pythoncom.CoInitialize()
++                if not ldap_user:
++                    ldap_user = active_directory.find_user(str(sid))
++                if ldap_user:
++                    try:
++                        ldap_name = ''
++                        ldap_name = str(getattr(ldap_user,get_name_from_ldap_userattribute)).strip()
++                        if ldap_name != '':
++                            self.env.log.info("Found name for user via LDAP: %s -> %s" % (str(sid), str(ldap_name)))
++                            self['name'] = ldap_name
++                            _needsave = True
++                    except AttributeError, e:
++                        self.env.log.error("Specified LDAP user attribute does not exist: %s" % get_name_from_ldap_userattribute)
++                  
++            if _needsave:
++                ## we don't actually want to update() the old dict, we want to save() so 
++                ##    the new data gets written to the db as well
++                self.save()
++        #### END NEW LDAP CODE ####################################################
++
+         # Refresh the session cookie if this is the first visit since over a day
+         if not authenticated and refresh_cookie:
+             self.bake_cookie()

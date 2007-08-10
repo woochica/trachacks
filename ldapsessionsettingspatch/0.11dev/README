@@ -1,0 +1,74 @@
+== LdapSessionSettingsPatch ==
+
+This patch adds functionality to retrieve email and name from 
+an Active Directory server for a logged in user if their either 
+their 'Name' and/or 'Email' session settings are blank. Looks for 
+[session] trac.ini flags to enable/disable/configure each. 
+
+
+==== DEPENDENCIES ====
+* pywin32 (http://sourceforge.net/projects/pywin32/)
+* active_directory (http://tgolden.sc.sabren.com/python/active_directory.html)
+* Trac 0.11dev-r5883 or newer (might work with lower revs, but this is what I tested on); 
+ 
+NOTE: this patch adds module-level imports in session.py for the
+two required modules, pywin32 and active_directory. These imports
+are wrapped inside (1) a platform sanity-check (platform.system() == 'Windows') 
+and (2) each import is within its own try/except. If any of the checks 
+fail, then none of the new code will ever be reached. 
+
+
+==== SETUP ====
+1) install the required modules: pywin32 and active_directory 
+2) Apply the file patch session_patch.diff to your existing 
+	/trac/web/session.py (or just copy (and rename) the provided 
+	session_full.py over your existing /trac/web/session.py -- BACKUP
+	YOUR ORIGINAL FIRST!!) 
+	
+3) Modify your trac.ini file [session] section (see the included trac.ini.sample):
+[session]
+## this setting indicates that if the user hasn't filled 
+##   in a name on their 'Preferences' page, go try and 
+##   grab it from the LDAP/AD server (the 'displayName' user property)
+## defaults:
+##   get_name_from_ldap_if_empty = false
+##   get_name_from_ldap_userattribute = displayName
+get_name_from_ldap_if_empty = true
+get_name_from_ldap_userattribute = displayName
+
+## this setting indicates that if the user hasn't filled 
+##   in an email on their 'Preferences' page, go try and 
+##   grab it from the LDAP/AD server (the 'mail' user property)
+## defaults:
+##   get_email_from_ldap_if_empty = false
+##   get_email_from_ldap_userattribute = mail
+get_email_from_ldap_if_empty = true
+get_email_from_ldap_userattribute = mail
+
+4) restart Apache
+
+
+==== TROUBLESHOOTING ====
+Q) Nothing is happening!  WTF?!?!
+A) Verify that your Active Directory server isn't setup to ALWAYS require 
+	authentication, even for read-only operations (like a search/query).
+	If it IS configured to always require authentication, then you must 
+	change your Apache service to run as an authenticated user, not as
+	SYSTEM (which is the default).
+	
+Q) STILL nothing is happening!!!
+A) Check the user attribute that you specified against the available user 
+	attributes on your Active Directory setup, as these could certainly be
+	changed.  The best way to do this is via an interactive python session:
+	>>> import active_directory
+	>>> u = ad.find_user('someuser')
+	>>> u.foobar
+	Traceback (most recent call last):
+	  File "<stdin>", line 1, in <module>
+	  File "build\bdist.win32\egg\active_directory.py", line 421, in __getattr__
+	AttributeError	
+
+
+_____________________
+2007 R. Morris
+	
