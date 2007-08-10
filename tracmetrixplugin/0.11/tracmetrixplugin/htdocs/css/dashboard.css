@@ -27,6 +27,41 @@ table.progress td :hover { background: none }
 p.percent { font-size: 10px; line-height: 2.4em; margin: 0.9em 0 0 }
 
 /* Styles for the pdashbard view */
+ul.pdashboard { margin: 2em 0 0; padding: 0 }
+li.pdashboard { list-style: none; margin-bottom: 4em }
+.pdashboard .info { white-space: nowrap }
+.pdashboard .info h2 {
+ background: #f7f7f7;
+ border-bottom: 1px solid #d7d7d7;
+ margin: 0;
+}
+.pdashboard .info h2 :link, .pdashboard .info h2 :visited {
+ color: #000;
+ display: block;
+ border-bottom: none;
+}
+.pdashboard .info h2 :link:hover, .pdashboard .info h2 :visited:hover {
+ color: #000;
+}
+.pdashboard .info h2 em { color: #b00; font-style: normal }
+.pdashboard .info .date {
+ color: #888;
+ font-size: 11px;
+ font-style: italic;
+ margin: 0;
+}
+.pdashboard .info .progress { margin: 1em 1em 0; width: 40em; max-width: 70% }
+.pdashboard .info dl {
+ font-size: 10px;
+ font-style: italic;
+ margin: 0 1em 2em;
+ white-space: nowrap;
+}
+.pdashboard .info dt { display: inline; margin-left: .5em }
+.pdashboard .info dd { display: inline; margin: 0 1em 0 .5em }
+.pdashboard .description { margin-left: 1em }
+
+/* Styles for the mdashbard view */
 ul.milestones { margin: 2em 0 0; padding: 0 }
 li.milestone { list-style: none; margin-bottom: 4em }
 .milestone .info { white-space: nowrap }

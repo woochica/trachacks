@@ -11,6 +11,7 @@ setup(
         tracmetrixplugin.mdashboard = tracmetrixplugin.mdashboard
         tracmetrixplugin.web_ui = tracmetrixplugin.web_ui
         tracmetrixplugin.api = tracmetrixplugin.api
+        tracmetrixplugin.model = tracmetrixplugin.model
     """,
     package_data={'tracmetrixplugin': ['templates/*.html', 
                                        'htdocs/css/*.css', 
