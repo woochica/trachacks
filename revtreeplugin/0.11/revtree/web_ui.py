@@ -23,7 +23,7 @@ from revtree.model import Repository
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import TracError
-from trac.util.datefmt import format_datetime, pretty_timedelta
+from trac.util.datefmt import format_datetime, pretty_timedelta, to_timestamp
 from trac.web import IRequestHandler
 from trac.web.chrome import add_stylesheet, add_script, \
                             INavigationContributor, ITemplateProvider
@@ -198,7 +198,7 @@ class RevtreeModule(Component):
         self.oldest = int(self.env.config.get('revtree', 'revbase', 
                                               tracrepos.get_oldest_rev()))
         youngest = int(tracrepos.get_youngest_rev())
-        self.abstime = self.config.getbool('revtree', 'reltime', True)
+        self.abstime = self.config.getbool('revtree', 'abstime', True)
         self.style = self.config.get('revtree', 'style', 'compact')
         if self.style not in [ 'compact', 'timeline']:
             raise TracError, "Unsupported style: %s" % self.style
@@ -231,7 +231,7 @@ class RevtreeModule(Component):
         if self.abstime:
             timebase = int(time.time())
         else:
-            timebase = int(tracrepos.get_changeset(youngest).date)
+            timebase = to_timestamp(tracrepos.get_changeset(youngest).date)
         revstore = RevtreeStore(self.env, req.authname, \
                                 (self.oldest, youngest), 
                                 timebase, self.style)
