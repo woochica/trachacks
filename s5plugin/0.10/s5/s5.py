@@ -135,4 +135,4 @@ class S5Renderer(Component):
 
     def convert_content(self, req, mimetype, content, key):
         template, _ = self.process_request(req)
-        return req.hdf.render(template), 'text/html'
+        return req.hdf.render(template), 'text/html;charset=utf-8'
