@@ -212,7 +212,7 @@ class TagMacros(Component):
                 tags = sorted(tags)
                 taginfo = self._tag_details(taginfo, tags)
                 href, link, title = engine.name_details(tagspace, name)
-                htitle = wiki_to_oneliner(title, self.env)
+                htitle = wiki_to_oneliner(title, self.env, req=req)
                 name_tags = ['<a href="%s" title="%s">%s</a>'
                               % (taginfo[tag][0], taginfo[tag][1], tag)
                               for tag in tags]
@@ -259,7 +259,7 @@ class TagMacros(Component):
         tag_details = {}
         for tag, names in sorted(engine.get_tags(tagspaces=tagspaces, detailed=True).iteritems()):
             href, title = engine.get_tag_link(tag)
-            htitle = wiki_to_oneliner(title, self.env)
+            htitle = wiki_to_oneliner(title, self.env, req=req)
             out.write('<li><a href="%s" title="%s">%s</a> %s <span class="tagcount">(%i)</span>' % (href, title, tag, htitle, len(names)))
             if showpages == 'true':
                 out.write('\n')

@@ -85,9 +85,8 @@ class TicketTaggingSystem(TaggingSystem):
     def name_details(self, name):
         ticket = model.Ticket(self.env, name)
         href = self.env.href.ticket(name)
-        from trac.wiki.formatter import wiki_to_oneliner
         summary = ticket['summary'] or u''
-        return (href, wiki_to_oneliner('#%s' % name, self.env),
+        return (href, '<a href="%s">#%s</a>' % (href, name),
                 ticket.exists and summary)
 
 class TicketTags(Component):

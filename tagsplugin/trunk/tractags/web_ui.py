@@ -9,7 +9,6 @@ from trac.wiki.api import IWikiPageManipulator
 from trac.util.html import Markup, escape
 from trac.util.compat import set
 from trac.wiki.web_ui import WikiModule
-from trac.wiki.formatter import wiki_to_oneliner
 from tractags.expr import Expression
 from genshi.builder import tag as T
 from genshi.filters.transform import Transformer
@@ -18,7 +17,7 @@ from genshi.filters.transform import Transformer
 _tag_split = re.compile('[,\s]+')
 
 
-class TagsWikiField(Component):
+class TagsUserInterface(Component):
     implements(ITemplateStreamFilter, IWikiPageManipulator)
 
     # Internal methods
