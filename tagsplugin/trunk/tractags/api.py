@@ -38,6 +38,7 @@ tags.add_tags(None, 'WikiStart', ['start'])
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import Table, Column, Index
+from trac.util.html import Markup
 import sys
 import re
 
@@ -175,9 +176,9 @@ class DefaultTaggingSystem(TaggingSystem):
         db.commit()
         
     def name_details(self, name):
-        from trac.wiki.formatter import wiki_to_oneliner
         return (getattr(self.env.href, self.tagspace),
-                wiki_to_oneliner('[%s:"%s" %s]' % (self.tagspace, name, name), self.env), '')
+                Markup('<a href="%s">%s</a>' % (self.env.href(self.tagspace, name), name)),
+                '')
 
 class TagspaceProxy:
     """ A convenience for performing operations on a specific tagspace,

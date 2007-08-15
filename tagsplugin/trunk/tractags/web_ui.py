@@ -6,7 +6,7 @@ from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, INavigationContributor, add_stylesheet
 from trac.web.api import ITemplateStreamFilter
 from trac.wiki.api import IWikiPageManipulator
-from trac.util.html import Markup
+from trac.util.html import Markup, escape
 from trac.util.compat import set
 from trac.wiki.web_ui import WikiModule
 from trac.wiki.formatter import wiki_to_oneliner
