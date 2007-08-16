@@ -76,7 +76,6 @@ def add_milestone_event(env, history, time, event, ticket_id):
     
     #env.log.info("Date: %s Ticket %s event %s" % (datetime.fromtimestamp(time, utc).date(), ticket_id, event))
                     
-    
     if history.has_key(time):
 
         history[time][event].add(ticket_id)
@@ -88,7 +87,9 @@ def add_milestone_event(env, history, time, event, ticket_id):
         #at the same time.
         history[time][event].add(ticket_id)
                                 
-def collect_tickets_status_history(env, db, history, ticket_ids, milestone):
+def collect_tickets_status_history(env, db, ticket_ids, milestone):
+    
+    history = {}
 
     cursor = db.cursor()
     str_ids = [str(x) for x in sorted(ticket_ids)]
@@ -115,7 +116,7 @@ def collect_tickets_status_history(env, db, history, ticket_ids, milestone):
     #env.log.info(sqlquery)
     event_history = cursor.fetchall()
     
-    #env.log.info("event_history = %s" % (event_history,))
+    env.log.info("event_history = %s" % (event_history,))
     
     # TODO The tricky thing about this is that we have to deterimine 5 different type of ticket.
     # 1) created with milestone and remain in milestone (new and modified)
@@ -204,6 +205,8 @@ def collect_tickets_status_history(env, db, history, ticket_ids, milestone):
             # it means that the eariler status event has to be in the milestone.
             for tkt_changedtime, tkt_newvalue, tkt_id in status_events:
                 add_ticket_status_event(env, history, tkt_changedtime, tkt_newvalue, tkt_id)
+
+    return history
 
 def add_ticket_status_event(env, history, time, status, tkt_id):
     
@@ -409,7 +412,6 @@ class MDashboard(Component):
         else:
             
             self.env.log.info("request mdashboard")
-        
             add_stylesheet(req, 'pd/css/dashboard.css')  
             
             return self._render_view(req, db, milestone)        
@@ -477,18 +479,21 @@ class MDashboard(Component):
         
         if everytickets != []:
         
-            tkt_history = {}
+            #tkt_history = {}
             
-            collect_tickets_status_history(self.env, db, tkt_history, \
-                                           everytickets, milestone)
+#            collect_tickets_status_history(self.env, db, tkt_history, \
+#                                           everytickets, milestone)
+            
+            tkt_history = collect_tickets_status_history(self.env, db, everytickets, milestone)
+            
                             
             # Sort the key in the history list
             # returns sorted list of tuple of (key, value)
             sorted_events = sorted(tkt_history.items(), key=lambda(k,v):(k))
     
             #debug  
-            #for event in sorted_events:
-            #    self.env.log.info("date: %s: event: %s" % (format_date(to_datetime(event[0])), event[1]))
+            for event in sorted_events:
+                self.env.log.info("date: %s: event: %s" % (format_date(to_datetime(event[0])), event[1]))
     
           
             # Get first date that ticket enter the milestone

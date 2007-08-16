@@ -100,9 +100,11 @@ class TicketGroupMetrics(object):
     def __init__(self, env, tkt_ids):
 
         self.env = env
-        self.tickets = tkt_ids
+        self.ticket_ids = tkt_ids
         self.num_tickets = len(tkt_ids)
-        self.ticket_metrics = [TicketMetrics(env,id) for id in tkt_ids]
+        
+        self.tickets = [Ticket(env,id) for id in tkt_ids]
+        self.ticket_metrics = [TicketMetrics(env,ticket) for ticket in self.tickets ]
     
     def get_num_comment_stats(self):
         
@@ -135,7 +137,9 @@ class TicketGroupMetrics(object):
     
     def get_lead_time_stats(self):
         
-        data = [tkt_metrics.lead_time for tkt_metrics in self.ticket_metrics]      
+        data = [tkt_metrics.lead_time for tkt_metrics in self.ticket_metrics] 
+        
+        self.env.log.info(data)     
         stats = DescriptiveStats(data)
         return stats
     
@@ -144,21 +148,97 @@ class TicketGroupMetrics(object):
         stats = DescriptiveStats(data)
         return stats
     
+    def get_tickets_created_during(self, start_date, end_date):
+        
+        tkt_ids = []
+        
+        for ticket in self.tickets:            
+            if start_date <= ticket.time_created <= end_date:
+                tkt_ids.append(ticket.id)
+        
+        return tkt_ids
+    
+    def get_remaning_opened_ticket_on(self, end_date):
+     
+        tkt_ids = []
+        
+        for ticket in self.tickets:            
+            
+            # only consider the ticket that was created before the end date.
+            if ticket.time_created <= end_date:
+            
+                if ticket.values['status'] == 'closed':        
+                    
+                    
+                    was_opened = True        
+                    # check change log to find the date when the ticket was closed.
+                    for t, author, field, oldvalue, newvalue, permanent in ticket.get_changelog():
+                        if field == 'status':
+                               
+                            if newvalue == 'closed':
+                                if t <= end_date:
+                                    was_opened = False
+                            
+                            else:
+                                if t <= end_date:
+                                    was_opened = True    
+                    
+                    if was_opened == True:
+                        tkt_ids.append(ticket.id)     
+                
+                # Assume that ticket that is not closed are opened
+                else:
+                    # only add the ticket that was modified before the end date
+                    if end_date >= ticket.time_changed:
+                        tkt_ids.append(ticket.id)
+            
+            
+        self.env.log.info(tkt_ids)
+        
+        return tkt_ids
+    
+        
+    
+    def get_tickets_closed_during(self, start_date, end_date):
+        
+        tkt_ids = []
+        
+        for ticket in self.tickets:
+            for t, author, field, oldvalue, newvalue, permanent in ticket.get_changelog():
+                if field == 'status' and \
+                   newvalue == 'closed' and \
+                   start_date <= t <= end_date:
+                
+                   tkt_ids.append(ticket.id)
+                   
+                   #only count the first closed
+                   break
+                
+        return tkt_ids
+    
+    def get_bmi_monthly_stats(self, start_date, end_date):     
+        
+        created_tickets = self.get_tickets_created_during(start_date, end_date)
+        opened_tickets = self.get_remaning_opened_ticket_on(end_date)
+        closed_tickets = self.get_tickets_closed_during(start_date, end_date)
+        
+        return ("%s/%s" % (start_date.month, start_date.year),
+                created_tickets,
+                opened_tickets,
+                closed_tickets,
+                float(len(closed_tickets)) * 100 / float(len(opened_tickets)))
     
 class TicketMetrics(object):
     
-    def __init__(self, env, tkt_id):
+    def __init__(self, env, ticket):
     
-        self.id = tkt_id
+        #self.ticket = ticket
     
         self.lead_time = 0
         self.closed_time = 0
         self.num_comment = 0
         self.num_closed = 0
         self.num_milestone = 0        
-    
-        #get ticket object
-        ticket = Ticket(env, tkt_id)
     
         self.__collect_history_data(ticket)
     

@@ -41,8 +41,11 @@ def get_project_tickets(env):
     tkt_ids = [id for id , in cursor]
     
     return tkt_ids
-    
 
+def last_day_of_month(year, month):
+    
+    return datetime(year, month+1, 1, tzinfo=utc) - timedelta(seconds=1)
+    
 
 class PDashboard(Component):
 
@@ -129,6 +132,21 @@ class PDashboard(Component):
         tkt_frequency_stats = tkt_group_metrics.get_frequency_metrics_stats()
         tkt_duration_stats = tkt_group_metrics.get_duration_metrics_stats()
         
+        #stat for this month
+        today = datetime.now()
+        bmi_stats = []
+        
+        first_day = datetime(today.year, today.month, 1, tzinfo=utc)
+        last_day = last_day_of_month(today.year, today.month)
+        bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
+        
+        # stat for last month
+        first_day = datetime(today.year, today.month-1, 1, tzinfo=utc)
+        last_day = last_day_of_month(today.year, today.month-1)
+        bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
+        
+        data['project_bmi_stats'] = bmi_stats
+        self.env.log.info(bmi_stats)
         data['ticket_frequency_stats'] = tkt_frequency_stats
         data['ticket_duration_stats'] = tkt_duration_stats
         
