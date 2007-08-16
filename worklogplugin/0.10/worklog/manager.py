@@ -133,6 +133,7 @@ class WorkLogManager:
         cursor.execute('INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) '
                        'VALUES (%s, %s, %s, %s, %s)',
                        (self.authname, ticket, self.now, self.now, 0))
+        db.commit()
         return True
 
     
@@ -160,6 +161,7 @@ class WorkLogManager:
                        'SET endtime=%s, lastchange=%s, comment=%s '
                        'WHERE user=%s AND lastchange=%s AND endtime=0',
                        (stoptime, stoptime, comment, self.authname, active['lastchange']))
+        db.commit()
 
         message = ''
         # Leave a comment if the user has configured this or if they have entered
