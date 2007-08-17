@@ -340,12 +340,12 @@ Index: trac/db_default.py
  SELECT p.value AS __color__,
 -   id AS ticket, summary, component, version, milestone, t.type AS type, 
 -   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
-+   id AS ticket, summary AS sumario, component AS componente, version AS versión, milestone AS Hito, t.type AS tipo, 
++   id AS ticket, summary AS summary, component AS componente, version AS versión, milestone AS Hito, t.type AS tipo, 
 +   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
     time AS created,
 -   changetime AS _changetime, description AS _description,
 -   reporter AS _reporter
-+   changetime AS _ultimo_cambio, description AS _descripción,
++   changetime AS _ultimo_cambio, description AS _description,
 +   reporter AS _reportado_por
    FROM ticket t
    LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
@@ -371,12 +371,12 @@ Index: trac/db_default.py
     version AS __group__,
 -   id AS ticket, summary, component, version, t.type AS type, 
 -   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
-+   id AS ticket, summary AS sumario, component AS componente, version AS versión, t.type AS tipo, 
++   id AS ticket, summary AS summary, component AS componente, version AS versión, t.type AS tipo, 
 +   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
     time AS created,
 -   changetime AS _changetime, description AS _description,
 -   reporter AS _reporter
-+   changetime AS _ultimo_cambio, description AS _descripción,
++   changetime AS _ultimo_cambio, description AS _description,
 +   reporter AS _reportado_por
    FROM ticket t
    LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
@@ -402,12 +402,12 @@ Index: trac/db_default.py
     %s AS __group__,
 -   id AS ticket, summary, component, version, t.type AS type, 
 -   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
-+   id AS ticket, summary AS sumario, component AS componente, version AS versión, t.type AS tipo, 
++   id AS ticket, summary AS summary, component AS componente, version AS versión, t.type AS tipo, 
 +   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
     time AS created,
 -   changetime AS _changetime, description AS _description,
 -   reporter AS _reporter
-+   changetime AS _ultimo_cambio, description AS _descripción,
++   changetime AS _ultimo_cambio, description AS _description,
 +   reporter AS _reportado_por
    FROM ticket t
    LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
@@ -429,8 +429,8 @@ Index: trac/db_default.py
 -   id AS ticket, summary, component, milestone, t.type AS type, time AS created,
 -   changetime AS _changetime, description AS _description,
 -   reporter AS _reporter
-+   id AS ticket, summary AS sumario, component AS componente, milestone AS hito, t.type AS tipo, time AS created,
-+   changetime AS _ultimo_cambio, description AS _descripción,
++   id AS ticket, summary AS summary, component AS componente, milestone AS hito, t.type AS tipo, time AS created,
++   changetime AS _ultimo_cambio, description AS _description,
 +   reporter AS _reportado_por
    FROM ticket t
    LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
@@ -452,8 +452,8 @@ Index: trac/db_default.py
 -   id AS ticket, summary, component, milestone, t.type AS type, time AS created,
 -   description AS _description_,
 -   changetime AS _changetime, reporter AS _reporter
-+   id AS ticket, summary AS sumario, component AS componente, milestone AS hito, t.type AS tipo, time AS created,
-+   description AS _descripción_,
++   id AS ticket, summary AS summary, component AS componente, milestone AS hito, t.type AS tipo, time AS created,
++   description AS _description_,
 +   changetime AS _ultimo_cambio, reporter AS _reportado_por
    FROM ticket t
    LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
@@ -475,7 +475,7 @@ Index: trac/db_default.py
      END) AS __style__,
 -   id AS ticket, summary, component, status, 
 -   resolution,version, t.type AS type, priority, owner,
-+   id AS ticket, summary AS sumario, component AS componente, status AS estado, 
++   id AS ticket, summary AS summary, component AS componente, status AS estado, 
 +   resolution AS resolución, version AS versión, t.type AS tipo, priority AS prioridad, owner AS responsable,
     changetime AS modified,
 -   time AS _time,reporter AS _reporter
@@ -504,7 +504,7 @@ Index: trac/db_default.py
 -   changetime AS _changetime, description AS _description,
 -   reporter AS _reporter
 +   (CASE status WHEN 'assigned' THEN 'Asignado' ELSE 'Responsable' END) AS __group__,
-+   id AS ticket, summary AS sumario, component AS componente, version AS versión, milestone AS hito,
++   id AS ticket, summary AS summary, component AS componente, version AS versión, milestone AS hito,
 +   t.type AS tipo, priority AS prioridad, time AS created,
 +   changetime AS _ultimo_cambio, description AS _descripción,
 +   reporter AS _reportado_por
@@ -532,12 +532,12 @@ Index: trac/db_default.py
      END) AS __group__,
 -   id AS ticket, summary, component, version, milestone, t.type AS type, 
 -   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS owner,
-+   id AS ticket, summary AS sumario, component AS componente, version AS versión, milestone AS hito, t.type AS tipo, 
++   id AS ticket, summary AS summary, component AS componente, version AS versión, milestone AS hito, t.type AS tipo, 
 +   (CASE status WHEN 'assigned' THEN %s ELSE owner END) AS responsable,
     time AS created,
 -   changetime AS _changetime, description AS _description,
 -   reporter AS _reporter
-+   changetime AS _ultimo_cambio, description AS _descripción,
++   changetime AS _ultimo_cambio, description AS _description,
 +   reporter AS _reportado_por
    FROM ticket t
    LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
