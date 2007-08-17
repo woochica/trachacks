@@ -1,6 +1,6 @@
 Index: templates/report.cs
 ===================================================================
---- templates/report.cs	(revision 5827)
+--- templates/report.cs	(revision 5935)
 +++ templates/report.cs	(working copy)
 @@ -5,11 +5,11 @@
   <h2>Report Navigation</h2>
@@ -151,7 +151,7 @@ Index: templates/report.cs
  </div>
 Index: templates/anydiff.cs
 ===================================================================
---- templates/anydiff.cs	(revision 5827)
+--- templates/anydiff.cs	(revision 5935)
 +++ templates/anydiff.cs	(working copy)
 @@ -4,41 +4,41 @@
  
@@ -205,7 +205,7 @@ Index: templates/anydiff.cs
  
 Index: templates/log.cs
 ===================================================================
---- templates/log.cs	(revision 5827)
+--- templates/log.cs	(revision 5935)
 +++ templates/log.cs	(working copy)
 @@ -4,18 +4,18 @@
  <div id="ctxtnav" class="nav">
@@ -387,7 +387,7 @@ Index: templates/log.cs
  </div>
 Index: templates/ticket_notify_email.cs
 ===================================================================
---- templates/ticket_notify_email.cs	(revision 5827)
+--- templates/ticket_notify_email.cs	(revision 5935)
 +++ templates/ticket_notify_email.cs	(working copy)
 @@ -4,20 +4,20 @@
  <?cs var:ticket.description ?>
@@ -417,7 +417,7 @@ Index: templates/ticket_notify_email.cs
 \ No newline at end of file
 Index: templates/browser.cs
 ===================================================================
---- templates/browser.cs	(revision 5827)
+--- templates/browser.cs	(revision 5935)
 +++ templates/browser.cs	(working copy)
 @@ -4,9 +4,9 @@
  <div id="ctxtnav" class="nav">
@@ -548,7 +548,7 @@ Index: templates/browser.cs
    </div>
 Index: templates/roadmap.cs
 ===================================================================
---- templates/roadmap.cs	(revision 5827)
+--- templates/roadmap.cs	(revision 5935)
 +++ templates/roadmap.cs	(working copy)
 @@ -4,35 +4,35 @@
  <div id="ctxtnav" class="nav"></div>
@@ -644,7 +644,7 @@ Index: templates/roadmap.cs
  </div>
 Index: templates/ticket.cs
 ===================================================================
---- templates/ticket.cs	(revision 5827)
+--- templates/ticket.cs	(revision 5935)
 +++ templates/ticket.cs	(working copy)
 @@ -8,20 +8,20 @@
     if:len(links.prev) ?>
@@ -888,7 +888,7 @@ Index: templates/ticket.cs
  <?cs /if ?>
 Index: templates/macros.cs
 ===================================================================
---- templates/macros.cs	(revision 5827)
+--- templates/macros.cs	(revision 5935)
 +++ templates/macros.cs	(working copy)
 @@ -21,9 +21,9 @@
   set:first = #1 ?><?cs
@@ -930,7 +930,7 @@ Index: templates/macros.cs
  /def ?><?cs
 Index: templates/header.cs
 ===================================================================
---- templates/header.cs	(revision 5827)
+--- templates/header.cs	(revision 5935)
 +++ templates/header.cs	(working copy)
 @@ -41,7 +41,7 @@
   <?cs if:trac.acl.SEARCH_VIEW ?><div>
@@ -943,7 +943,7 @@ Index: templates/header.cs
    <input type="hidden" name="ticket" value="on" />
 Index: templates/attachment.cs
 ===================================================================
---- templates/attachment.cs	(revision 5827)
+--- templates/attachment.cs	(revision 5935)
 +++ templates/attachment.cs	(working copy)
 @@ -6,29 +6,29 @@
  <div id="content" class="attachment">
@@ -1046,7 +1046,7 @@ Index: templates/attachment.cs
  <?cs /if ?>
 Index: templates/error.cs
 ===================================================================
---- templates/error.cs	(revision 5827)
+--- templates/error.cs	(revision 5935)
 +++ templates/error.cs	(working copy)
 @@ -11,24 +11,24 @@
   <?cs elif error.type == "internal" ?>
@@ -1085,7 +1085,7 @@ Index: templates/error.cs
  
 Index: templates/query_rss.cs
 ===================================================================
---- templates/query_rss.cs	(revision 5827)
+--- templates/query_rss.cs	(revision 5935)
 +++ templates/query_rss.cs	(working copy)
 @@ -2,13 +2,13 @@
  <rss version="2.0">
@@ -1106,7 +1106,7 @@ Index: templates/query_rss.cs
     <image>
 Index: templates/newticket.cs
 ===================================================================
---- templates/newticket.cs	(revision 5827)
+--- templates/newticket.cs	(revision 5935)
 +++ templates/newticket.cs	(working copy)
 @@ -7,43 +7,43 @@
  <div id="ctxtnav" class="nav"></div>
@@ -1188,7 +1188,7 @@ Index: templates/newticket.cs
  
 Index: templates/timeline_rss.cs
 ===================================================================
---- templates/timeline_rss.cs	(revision 5827)
+--- templates/timeline_rss.cs	(revision 5935)
 +++ templates/timeline_rss.cs	(working copy)
 @@ -7,8 +7,8 @@
     <title><?cs var:title ?></title><?cs
@@ -1203,7 +1203,7 @@ Index: templates/timeline_rss.cs
     <image>
 Index: templates/footer.cs
 ===================================================================
---- templates/footer.cs	(revision 5827)
+--- templates/footer.cs	(revision 5935)
 +++ templates/footer.cs	(working copy)
 @@ -1,6 +1,6 @@
  <script type="text/javascript">searchHighlight()</script><?cs
@@ -1215,7 +1215,7 @@ Index: templates/footer.cs
    set:islast = name(link) == len(chrome.links.alternate) - 1?><li<?cs
 Index: templates/milestone.cs
 ===================================================================
---- templates/milestone.cs	(revision 5827)
+--- templates/milestone.cs	(revision 5935)
 +++ templates/milestone.cs	(working copy)
 @@ -5,13 +5,13 @@
  
@@ -1455,7 +1455,7 @@ Index: templates/milestone.cs
  </div>
 Index: templates/settings.cs
 ===================================================================
---- templates/settings.cs	(revision 5827)
+--- templates/settings.cs	(revision 5935)
 +++ templates/settings.cs	(working copy)
 @@ -5,59 +5,59 @@
  
@@ -1539,7 +1539,7 @@ Index: templates/settings.cs
  /if ?>
 Index: templates/changeset.cs
 ===================================================================
---- templates/changeset.cs	(revision 5827)
+--- templates/changeset.cs	(revision 5935)
 +++ templates/changeset.cs	(working copy)
 @@ -7,28 +7,28 @@
    <ul><?cs
@@ -1837,7 +1837,7 @@ Index: templates/changeset.cs
       </thead><?cs
 Index: templates/report_rss.cs
 ===================================================================
---- templates/report_rss.cs	(revision 5827)
+--- templates/report_rss.cs	(revision 5935)
 +++ templates/report_rss.cs	(working copy)
 @@ -8,8 +8,8 @@
   /if ?>
@@ -1861,7 +1861,7 @@ Index: templates/report_rss.cs
  </rss>
 Index: templates/wiki.cs
 ===================================================================
---- templates/wiki.cs	(revision 5827)
+--- templates/wiki.cs	(revision 5935)
 +++ templates/wiki.cs	(working copy)
 @@ -8,27 +8,27 @@
     <li class="first"><?cs
@@ -2280,7 +2280,7 @@ Index: templates/wiki.cs
   <?cs /if ?>
 Index: templates/query.cs
 ===================================================================
---- templates/query.cs	(revision 5827)
+--- templates/query.cs	(revision 5935)
 +++ templates/query.cs	(working copy)
 @@ -4,13 +4,13 @@
  <div id="ctxtnav" class="nav"><?cs
@@ -2428,7 +2428,7 @@ Index: templates/query.cs
  </div>
 Index: templates/search.cs
 ===================================================================
---- templates/search.cs	(revision 5827)
+--- templates/search.cs	(revision 5935)
 +++ templates/search.cs	(working copy)
 @@ -23,12 +23,12 @@
  
@@ -2496,7 +2496,7 @@ Index: templates/search.cs
  </div>
 Index: templates/timeline.cs
 ===================================================================
---- templates/timeline.cs	(revision 5827)
+--- templates/timeline.cs	(revision 5935)
 +++ templates/timeline.cs	(working copy)
 @@ -3,14 +3,14 @@
  <div id="ctxtnav" class="nav"></div>
@@ -2539,7 +2539,7 @@ Index: templates/timeline.cs
  </div>
 Index: templates/index.cs
 ===================================================================
---- templates/index.cs	(revision 5827)
+--- templates/index.cs	(revision 5935)
 +++ templates/index.cs	(working copy)
 @@ -2,8 +2,8 @@
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -2554,7 +2554,7 @@ Index: templates/index.cs
     <a href="<?cs var:project.href ?>" title="<?cs var:project.description ?>">
 Index: templates/log_rss.cs
 ===================================================================
---- templates/log_rss.cs	(revision 5827)
+--- templates/log_rss.cs	(revision 5935)
 +++ templates/log_rss.cs	(working copy)
 @@ -3,13 +3,13 @@
  <rss version="2.0">
@@ -2591,7 +2591,7 @@ Index: templates/log_rss.cs
    /each ?>
 Index: templates/about.cs
 ===================================================================
---- templates/about.cs	(revision 5827)
+--- templates/about.cs	(revision 5935)
 +++ templates/about.cs	(working copy)
 @@ -3,9 +3,9 @@
   <h2>About Navigation</h2>
@@ -2683,7 +2683,7 @@ Index: templates/about.cs
    Software</a></p>
 Index: templates/ticket_rss.cs
 ===================================================================
---- templates/ticket_rss.cs	(revision 5827)
+--- templates/ticket_rss.cs	(revision 5935)
 +++ templates/ticket_rss.cs	(working copy)
 @@ -36,12 +36,12 @@
      &lt;ul&gt;<?cs

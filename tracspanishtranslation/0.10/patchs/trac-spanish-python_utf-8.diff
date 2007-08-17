@@ -1,6 +1,55 @@
+Index: htdocs/js/trac.js
+===================================================================
+--- htdocs/js/trac.js	(revision 5935)
++++ htdocs/js/trac.js	(working copy)
+@@ -129,3 +129,44 @@
+     addLinks(container.getElementsByTagName('h' + lvl));
+   }
+ }
++
++function clearAuthenticationCache(page) {
++  // Default to a non-existing page (give error 500).
++  // An empty page is better, here.
++  if (!page) page = '.force_logout';
++  try{
++    var agt=navigator.userAgent.toLowerCase();
++    if (agt.indexOf("msie") != -1) {
++      // IE clear HTTP Authentication
++      document.execCommand("ClearAuthenticationCache");
++    }
++    else {
++      // Let's create an xmlhttp object
++      var xmlhttp = createXMLObject();
++      // Let's prepare invalid credentials
++      xmlhttp.open("GET", page, true, "logout", "logout");
++      // Let's send the request to the server
++      xmlhttp.send("");
++      // Let's abort the request
++      xmlhttp.abort();
++    }
++  } catch(e) {
++    // There was an error
++    return;
++  }
++}
++    
++function createXMLObject() {
++  try {
++    if (window.XMLHttpRequest) {
++      xmlhttp = new XMLHttpRequest();
++    }
++    // code for IE
++    else if (window.ActiveXObject) {
++      xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
++    }
++  } catch (e) {
++    xmlhttp=false
++  }
++  return xmlhttp;
++}
 Index: trac/env.py
 ===================================================================
---- trac/env.py	(revision 5827)
+--- trac/env.py	(revision 5935)
 +++ trac/env.py	(working copy)
 @@ -70,19 +70,19 @@
          setups, usually involving running Trac behind a HTTP proxy, you may
@@ -73,7 +122,7 @@ Index: trac/env.py
      return env
 Index: trac/core.py
 ===================================================================
---- trac/core.py	(revision 5827)
+--- trac/core.py	(revision 5935)
 +++ trac/core.py	(working copy)
 @@ -45,7 +45,7 @@
          """
@@ -109,7 +158,7 @@ Index: trac/core.py
  
 Index: trac/attachment.py
 ===================================================================
---- trac/attachment.py	(revision 5827)
+--- trac/attachment.py	(revision 5935)
 +++ trac/attachment.py	(working copy)
 @@ -100,8 +100,8 @@
          cursor.close()
@@ -271,7 +320,7 @@ Index: trac/attachment.py
                            href=formatter.href())
 Index: trac/db_default.py
 ===================================================================
---- trac/db_default.py	(revision 5827)
+--- trac/db_default.py	(revision 5935)
 +++ trac/db_default.py	(working copy)
 @@ -166,106 +166,106 @@
  def get_reports(db):
@@ -538,7 +587,7 @@ Index: trac/db_default.py
                 (('anonymous', 'LOG_VIEW'),
 Index: trac/mimeview/rst.py
 ===================================================================
---- trac/mimeview/rst.py	(revision 5827)
+--- trac/mimeview/rst.py	(revision 5935)
 +++ trac/mimeview/rst.py	(working copy)
 @@ -52,9 +52,9 @@
              from docutils.parsers import rst
@@ -572,7 +621,7 @@ Index: trac/mimeview/rst.py
          # 1 required arg, 1 optional arg, spaces allowed in last arg
 Index: trac/mimeview/api.py
 ===================================================================
---- trac/mimeview/api.py	(revision 5827)
+--- trac/mimeview/api.py	(revision 5935)
 +++ trac/mimeview/api.py	(working copy)
 @@ -376,7 +376,7 @@
          candidates = list(self.get_supported_conversions(mimetype))
@@ -594,7 +643,7 @@ Index: trac/mimeview/api.py
      def get_annotation_types(self):
 Index: trac/mimeview/tests/php.py
 ===================================================================
---- trac/mimeview/tests/php.py	(revision 5827)
+--- trac/mimeview/tests/php.py	(revision 5935)
 +++ trac/mimeview/tests/php.py	(working copy)
 @@ -66,7 +66,7 @@
              s = StringIO(stuff)
@@ -607,7 +656,7 @@ Index: trac/mimeview/tests/php.py
  
 Index: trac/mimeview/silvercity.py
 ===================================================================
---- trac/mimeview/silvercity.py	(revision 5827)
+--- trac/mimeview/silvercity.py	(revision 5935)
 +++ trac/mimeview/silvercity.py	(working copy)
 @@ -109,7 +109,7 @@
              except IndexError:
@@ -620,7 +669,7 @@ Index: trac/mimeview/silvercity.py
          # SilverCity does not like unicode strings
 Index: trac/mimeview/patch.py
 ===================================================================
---- trac/mimeview/patch.py	(revision 5827)
+--- trac/mimeview/patch.py	(revision 5935)
 +++ trac/mimeview/patch.py	(working copy)
 @@ -69,7 +69,7 @@
          d = self._diff_to_hdf(content.splitlines(),
@@ -633,7 +682,7 @@ Index: trac/mimeview/patch.py
          hdf['diff.files'] = d
 Index: trac/mimeview/enscript.py
 ===================================================================
---- trac/mimeview/enscript.py	(revision 5827)
+--- trac/mimeview/enscript.py	(revision 5935)
 +++ trac/mimeview/enscript.py	(working copy)
 @@ -137,7 +137,7 @@
  
@@ -646,7 +695,7 @@ Index: trac/mimeview/enscript.py
          odata = np.out
 Index: trac/mimeview/php.py
 ===================================================================
---- trac/mimeview/php.py	(revision 5827)
+--- trac/mimeview/php.py	(revision 5935)
 +++ trac/mimeview/php.py	(working copy)
 @@ -83,7 +83,7 @@
          content = content.encode('utf-8')
@@ -672,7 +721,7 @@ Index: trac/mimeview/php.py
          for e in epilogues:
 Index: trac/ticket/api.py
 ===================================================================
---- trac/ticket/api.py	(revision 5827)
+--- trac/ticket/api.py	(revision 5935)
 +++ trac/ticket/api.py	(working copy)
 @@ -244,7 +244,7 @@
                      cnum = target
@@ -685,7 +734,7 @@ Index: trac/ticket/api.py
   
 Index: trac/ticket/web_ui.py
 ===================================================================
---- trac/ticket/web_ui.py	(revision 5827)
+--- trac/ticket/web_ui.py	(revision 5935)
 +++ trac/ticket/web_ui.py	(working copy)
 @@ -57,10 +57,10 @@
                  value = ticket[name]
@@ -840,16 +889,16 @@ Index: trac/ticket/web_ui.py
                  else:
                      return None
              elif 'ticket' in filters:
-@@ -388,7 +413,7 @@
-                 title = 'Ticket #%s (%s %s): %s' % \
-                         (id, type.lower(), verb, summary)
+@@ -389,7 +414,7 @@
+                         (id, type_ and type_.lower() or '', verb, summary)
              else:
--                title = Markup('Ticket <em title="%s">#%s</em> (%s) %s by %s',
-+                title = Markup('Ticket <em title="%s">#%s</em> (%s) %s por %s',
-                                summary, id, type, verb, author)
+                 typeinfo = type_ and '(%s)' % type_ or ''
+-                title = Markup('Ticket <em title="%s">#%s</em> %s %s by %s',
++                title = Markup('Ticket <em title="%s">#%s</em> %s %s por %s',
+                                summary, id, typeinfo, verb, author)
              ticket_href = href.ticket(id)
              if cid:
-@@ -509,7 +534,7 @@
+@@ -510,7 +535,7 @@
          if req.perm.has_permission('TICKET_CHGPROP'):
              # TICKET_CHGPROP gives permission to edit the ticket
              if not req.args.get('summary'):
@@ -858,7 +907,7 @@ Index: trac/ticket/web_ui.py
  
              if req.args.has_key('description') or req.args.has_key('reporter'):
                  req.perm.assert_permission('TICKET_ADMIN')
-@@ -520,15 +545,15 @@
+@@ -521,15 +546,15 @@
  
          # Mid air collision?
          if int(req.args.get('ts')) != ticket.time_changed:
@@ -878,7 +927,7 @@ Index: trac/ticket/web_ui.py
  
          # TODO: this should not be hard-coded like this
          if action == 'accept':
-@@ -617,7 +642,7 @@
+@@ -618,7 +643,7 @@
          def quote_original(author, original, link):
              if not 'comment' in req.args: # i.e. the comment was not yet edited
                  req.hdf['ticket.comment'] = '\n'.join(
@@ -889,7 +938,7 @@ Index: trac/ticket/web_ui.py
          if replyto == 'description':
 Index: trac/ticket/report.py
 ===================================================================
---- trac/ticket/report.py	(revision 5827)
+--- trac/ticket/report.py	(revision 5935)
 +++ trac/ticket/report.py	(working copy)
 @@ -46,7 +46,7 @@
          if not req.perm.has_permission('REPORT_VIEW'):
@@ -1024,7 +1073,7 @@ Index: trac/ticket/report.py
              values.append(arg)
 Index: trac/ticket/model.py
 ===================================================================
---- trac/ticket/model.py	(revision 5827)
+--- trac/ticket/model.py	(revision 5935)
 +++ trac/ticket/model.py	(working copy)
 @@ -83,8 +83,8 @@
                         % ','.join(std_fields), (tkt_id,))
@@ -1214,7 +1263,7 @@ Index: trac/ticket/model.py
              db = self.env.get_db_cnx()
 Index: trac/ticket/roadmap.py
 ===================================================================
---- trac/ticket/roadmap.py	(revision 5827)
+--- trac/ticket/roadmap.py	(revision 5935)
 +++ trac/ticket/roadmap.py	(working copy)
 @@ -129,7 +129,7 @@
          if not req.perm.has_permission('ROADMAP_VIEW'):
@@ -1346,7 +1395,7 @@ Index: trac/ticket/roadmap.py
          req.hdf['milestone'] = milestone_to_hdf(self.env, db, req, milestone)
 Index: trac/ticket/query.py
 ===================================================================
---- trac/ticket/query.py	(revision 5827)
+--- trac/ticket/query.py	(revision 5935)
 +++ trac/ticket/query.py	(working copy)
 @@ -67,11 +67,11 @@
          for filter in filters:
@@ -1429,7 +1478,7 @@ Index: trac/ticket/query.py
                  return html.DL([(html.DT(ticket_anchor(ticket)),
 Index: trac/db/sqlite_backend.py
 ===================================================================
---- trac/db/sqlite_backend.py	(revision 5827)
+--- trac/db/sqlite_backend.py	(revision 5935)
 +++ trac/db/sqlite_backend.py	(working copy)
 @@ -116,7 +116,7 @@
          if path != ':memory:':
@@ -1462,7 +1511,7 @@ Index: trac/db/sqlite_backend.py
          if have_pysqlite == 2:
 Index: trac/db/api.py
 ===================================================================
---- trac/db/api.py	(revision 5827)
+--- trac/db/api.py	(revision 5935)
 +++ trac/db/api.py	(working copy)
 @@ -94,7 +94,7 @@
                      candidates[scheme] = (connector, priority)
@@ -1486,7 +1535,7 @@ Index: trac/db/api.py
              host = None
 Index: trac/db/pool.py
 ===================================================================
---- trac/db/pool.py	(revision 5827)
+--- trac/db/pool.py	(revision 5935)
 +++ trac/db/pool.py	(working copy)
 @@ -104,8 +104,8 @@
                  else:
@@ -1501,7 +1550,7 @@ Index: trac/db/pool.py
                      else: # Warning: without timeout, Trac *might* hang
 Index: trac/db/mysql_backend.py
 ===================================================================
---- trac/db/mysql_backend.py	(revision 5827)
+--- trac/db/mysql_backend.py	(revision 5935)
 +++ trac/db/mysql_backend.py	(working copy)
 @@ -122,7 +122,7 @@
      def _set_character_set(self, cnx, charset):
@@ -1514,7 +1563,7 @@ Index: trac/db/mysql_backend.py
          cnx.charset = charset
 Index: trac/versioncontrol/api.py
 ===================================================================
---- trac/versioncontrol/api.py	(revision 5827)
+--- trac/versioncontrol/api.py	(revision 5935)
 +++ trac/versioncontrol/api.py	(working copy)
 @@ -88,9 +88,9 @@
                          continue
@@ -1569,7 +1618,7 @@ Index: trac/versioncontrol/api.py
          return True
 Index: trac/versioncontrol/svn_fs.py
 ===================================================================
---- trac/versioncontrol/svn_fs.py	(revision 5827)
+--- trac/versioncontrol/svn_fs.py	(revision 5935)
 +++ trac/versioncontrol/svn_fs.py	(working copy)
 @@ -254,7 +254,7 @@
          self.path = path # might be needed by __del__()/close()
@@ -1610,7 +1659,7 @@ Index: trac/versioncontrol/svn_fs.py
          subpool = Pool(self.pool)
 Index: trac/versioncontrol/web_ui/util.py
 ===================================================================
---- trac/versioncontrol/web_ui/util.py	(revision 5827)
+--- trac/versioncontrol/web_ui/util.py	(revision 5935)
 +++ trac/versioncontrol/web_ui/util.py	(working copy)
 @@ -72,7 +72,7 @@
      return changes
@@ -1636,7 +1685,7 @@ Index: trac/versioncontrol/web_ui/util.py
  
 Index: trac/versioncontrol/web_ui/changeset.py
 ===================================================================
---- trac/versioncontrol/web_ui/changeset.py	(revision 5827)
+--- trac/versioncontrol/web_ui/changeset.py	(revision 5935)
 +++ trac/versioncontrol/web_ui/changeset.py	(working copy)
 @@ -259,9 +259,9 @@
                                               'new': new,
@@ -1718,7 +1767,7 @@ Index: trac/versioncontrol/web_ui/changeset.py
          if not 'changeset' in filters:
 Index: trac/versioncontrol/web_ui/log.py
 ===================================================================
---- trac/versioncontrol/web_ui/log.py	(revision 5827)
+--- trac/versioncontrol/web_ui/log.py	(revision 5935)
 +++ trac/versioncontrol/web_ui/log.py	(working copy)
 @@ -94,7 +94,7 @@
          path_links = get_path_links(req.href, path, rev)
@@ -1767,7 +1816,7 @@ Index: trac/versioncontrol/web_ui/log.py
  
 Index: trac/versioncontrol/web_ui/browser.py
 ===================================================================
---- trac/versioncontrol/web_ui/browser.py	(revision 5827)
+--- trac/versioncontrol/web_ui/browser.py	(revision 5935)
 +++ trac/versioncontrol/web_ui/browser.py	(working copy)
 @@ -78,7 +78,7 @@
          if not req.perm.has_permission('BROWSER_VIEW'):
@@ -1813,7 +1862,7 @@ Index: trac/versioncontrol/web_ui/browser.py
                             % (node.name, str(rev), mime_type))
 Index: trac/versioncontrol/cache.py
 ===================================================================
---- trac/versioncontrol/cache.py	(revision 5827)
+--- trac/versioncontrol/cache.py	(revision 5935)
 +++ trac/versioncontrol/cache.py	(working copy)
 @@ -81,8 +81,8 @@
              if repository_dir != self.name:
@@ -1837,7 +1886,7 @@ Index: trac/versioncontrol/cache.py
  
 Index: trac/Settings.py
 ===================================================================
---- trac/Settings.py	(revision 5827)
+--- trac/Settings.py	(revision 5935)
 +++ trac/Settings.py	(working copy)
 @@ -33,7 +33,7 @@
  
@@ -1859,7 +1908,7 @@ Index: trac/Settings.py
              req.hdf['settings.session_id'] = req.session.sid
 Index: trac/scripts/admin.py
 ===================================================================
---- trac/scripts/admin.py	(revision 5827)
+--- trac/scripts/admin.py	(revision 5935)
 +++ trac/scripts/admin.py	(working copy)
 @@ -67,8 +67,8 @@
  class TracAdmin(cmd.Cmd):
@@ -2555,7 +2604,7 @@ Index: trac/scripts/admin.py
                      if cmd.startswith(content):
 Index: trac/scripts/tests/admin.py
 ===================================================================
---- trac/scripts/tests/admin.py	(revision 5827)
+--- trac/scripts/tests/admin.py	(revision 5935)
 +++ trac/scripts/tests/admin.py	(working copy)
 @@ -185,7 +185,7 @@
              self.assertEqual(0, rv)
@@ -2604,7 +2653,7 @@ Index: trac/scripts/tests/admin.py
  
 Index: trac/perm.py
 ===================================================================
---- trac/perm.py	(revision 5827)
+--- trac/perm.py	(revision 5935)
 +++ trac/perm.py	(working copy)
 @@ -32,7 +32,7 @@
          self.action = action
@@ -2626,7 +2675,7 @@ Index: trac/perm.py
  
 Index: trac/Search.py
 ===================================================================
---- trac/Search.py	(revision 5827)
+--- trac/Search.py	(revision 5935)
 +++ trac/Search.py	(working copy)
 @@ -74,7 +74,7 @@
      parameters. The result is returned as a (string, params) tuple.
@@ -2703,7 +2752,7 @@ Index: trac/Search.py
              if isinstance(link, Element):
 Index: trac/config.py
 ===================================================================
---- trac/config.py	(revision 5827)
+--- trac/config.py	(revision 5935)
 +++ trac/config.py	(working copy)
 @@ -220,7 +220,7 @@
                      yield option
@@ -2738,7 +2787,7 @@ Index: trac/config.py
  
 Index: trac/Timeline.py
 ===================================================================
---- trac/Timeline.py	(revision 5827)
+--- trac/Timeline.py	(revision 5935)
 +++ trac/Timeline.py	(working copy)
 @@ -77,7 +77,7 @@
          if not req.perm.has_permission('TIMELINE_VIEW'):
@@ -2781,7 +2830,7 @@ Index: trac/Timeline.py
              ", ".join(guilty_kinds), ep_name, exc_name, to_unicode(exc), href))
 Index: trac/About.py
 ===================================================================
---- trac/About.py	(revision 5827)
+--- trac/About.py	(revision 5935)
 +++ trac/About.py	(working copy)
 @@ -38,7 +38,7 @@
  
@@ -2803,7 +2852,7 @@ Index: trac/About.py
              req.hdf['about.plugins_href'] = req.href.about('plugins')
 Index: trac/wiki/web_ui.py
 ===================================================================
---- trac/wiki/web_ui.py	(revision 5827)
+--- trac/wiki/web_ui.py	(revision 5935)
 +++ trac/wiki/web_ui.py	(working copy)
 @@ -51,7 +51,7 @@
  
@@ -2899,7 +2948,7 @@ Index: trac/wiki/web_ui.py
          req.hdf['wiki.attachments'] = attachments_to_hdf(self.env, req, db,
 Index: trac/wiki/intertrac.py
 ===================================================================
---- trac/wiki/intertrac.py	(revision 5827)
+--- trac/wiki/intertrac.py	(revision 5935)
 +++ trac/wiki/intertrac.py	(working copy)
 @@ -41,13 +41,13 @@
      def process_request(self, req):
@@ -2944,7 +2993,7 @@ Index: trac/wiki/intertrac.py
              [generate_prefix(p) for p in sorted(intertracs.keys())])
 Index: trac/wiki/model.py
 ===================================================================
---- trac/wiki/model.py	(revision 5827)
+--- trac/wiki/model.py	(revision 5935)
 +++ trac/wiki/model.py	(working copy)
 @@ -68,7 +68,7 @@
      exists = property(fget=lambda self: self.version > 0)
@@ -2966,7 +3015,7 @@ Index: trac/wiki/model.py
              db.commit()
 Index: trac/wiki/formatter.py
 ===================================================================
---- trac/wiki/formatter.py	(revision 5827)
+--- trac/wiki/formatter.py	(revision 5935)
 +++ trac/wiki/formatter.py	(working copy)
 @@ -72,7 +72,7 @@
                  self.processor = self._mimeview_processor
@@ -3008,7 +3057,7 @@ Index: trac/wiki/formatter.py
      # Headings
 Index: trac/wiki/macros.py
 ===================================================================
---- trac/wiki/macros.py	(revision 5827)
+--- trac/wiki/macros.py	(revision 5935)
 +++ trac/wiki/macros.py	(working copy)
 @@ -252,7 +252,7 @@
          # we expect the 1st argument to be a filename (filespec)
@@ -3057,7 +3106,7 @@ Index: trac/wiki/macros.py
 +        raise TracError, unicode('No se encontró el macro %s', 'utf-8') % name
 Index: trac/wiki/interwiki.py
 ===================================================================
---- trac/wiki/interwiki.py	(revision 5827)
+--- trac/wiki/interwiki.py	(revision 5935)
 +++ trac/wiki/interwiki.py	(working copy)
 @@ -131,7 +131,7 @@
          yield 'InterWiki'
@@ -3079,17 +3128,17 @@ Index: trac/wiki/interwiki.py
                           for w in interwikis ],
 Index: trac/upgrades/db10.py
 ===================================================================
---- trac/upgrades/db10.py	(revision 5827)
+--- trac/upgrades/db10.py	(revision 5935)
 +++ trac/upgrades/db10.py	(working copy)
 @@ -22,4 +22,4 @@
  def do_upgrade(env, ver, cursor):
      for s in sql:
          cursor.execute(s)
 -    print 'Please perform a "resync" after this upgrade.'
-+    print unicode('Por favor realice un "resync" después de esta actualización.', 'latin-1').encode('latin-1')
++    print unicode('Por favor realice un "resync" después de esta actualización.', 'utf-8').encode('utf-8')
 Index: trac/web/standalone.py
 ===================================================================
---- trac/web/standalone.py	(revision 5827)
+--- trac/web/standalone.py	(revision 5935)
 +++ trac/web/standalone.py	(working copy)
 @@ -106,26 +106,26 @@
  
@@ -3178,9 +3227,9 @@ Index: trac/web/standalone.py
          else:
 Index: trac/web/auth.py
 ===================================================================
---- trac/web/auth.py	(revision 5827)
+--- trac/web/auth.py	(revision 5935)
 +++ trac/web/auth.py	(working copy)
-@@ -83,12 +83,12 @@
+@@ -83,12 +83,13 @@
  
      def get_navigation_items(self, req):
          if req.authname and req.authname != 'anonymous':
@@ -3188,7 +3237,8 @@ Index: trac/web/auth.py
 +            yield ('metanav', 'login', unicode('sesión iniciada como %s', 'utf-8') % req.authname)
              yield ('metanav', 'logout',
 -                   html.A('Logout', href=req.href.logout()))
-+                   html.A(unicode('Cerrar Sesión', 'utf-8'), href=req.href.logout()))
++                   html.A(unicode('Cerrar Sesión', 'utf-8'), href=req.href.logout(), 
++                           onclick="clearAuthenticationCache(\'%s\')" % req.href.logout()))
          else:
              yield ('metanav', 'login',
 -                   html.A('Login', href=req.href.login()))
@@ -3196,7 +3246,7 @@ Index: trac/web/auth.py
  
      # IRequestHandler methods
  
-@@ -119,10 +119,10 @@
+@@ -119,10 +120,10 @@
          case sensitive regarding user names and domain names
          """
          if not req.remote_user:
@@ -3211,7 +3261,7 @@ Index: trac/web/auth.py
                                          href=req.href.wiki('TracInstall') +
                                          "#ConfiguringAuthentication"), "."))
          remote_user = req.remote_user
-@@ -130,7 +130,7 @@
+@@ -130,7 +131,7 @@
              remote_user = remote_user.lower()
  
          assert req.authname in ('anonymous', remote_user), \
@@ -3220,12 +3270,12 @@ Index: trac/web/auth.py
  
          cookie = hex_entropy()
          db = self.env.get_db_cnx()
-@@ -242,17 +242,17 @@
+@@ -242,17 +243,17 @@
              try:
                  u, h = line.split(':')
              except ValueError:
 -                print >>sys.stderr, 'Warning: invalid password line in %s: %s' \
-+                print >>sys.stderr, unicode('Advertencia: contraseña inválida en %s: %s', 'latin-1').encode('latin-1') \
++                print >>sys.stderr, unicode('Advertencia: contraseña inválida en %s: %s', 'utf-8').encode('utf-8') \
                                      % (filename, line)
                  continue
              if '$' in h or self.crypt:
@@ -3234,7 +3284,7 @@ Index: trac/web/auth.py
 -                print >>sys.stderr, 'Warning: cannot parse password for ' \
 -                                    'user "%s" without the "crypt" module' % u
 +                print >>sys.stderr, unicode('Advertencia: no se puede verificar la contraseña del ' \
-+                                    'usuario "%s" sin el módulo "crypt"', 'latin-1').encode('latin-1') % u
++                                    'usuario "%s" sin el módulo "crypt"', 'utf-8').encode('utf-8') % u
  
          if self.hash == {}:
 -            print >> sys.stderr, "Warning: found no users in file:", filename
@@ -3242,12 +3292,12 @@ Index: trac/web/auth.py
  
      def test(self, user, password):
          self.check_reload()
-@@ -304,13 +304,13 @@
+@@ -304,13 +305,13 @@
              try:
                  u, r, a1 = line.split(':')
              except ValueError:
 -                print >>sys.stderr, 'Warning: invalid digest line in %s: %s' \
-+                print >>sys.stderr, unicode('Advertencia: entrada "digest" inválida en %s: %s', 'latin-1').encode('latin-1') \
++                print >>sys.stderr, unicode('Advertencia: entrada "digest" inválida en %s: %s', 'utf-8').encode('utf-8') \
                                      % (filename, line)
                  continue
              if r == self.realm:
@@ -3260,7 +3310,7 @@ Index: trac/web/auth.py
          values = {}
 Index: trac/web/api.py
 ===================================================================
---- trac/web/api.py	(revision 5827)
+--- trac/web/api.py	(revision 5935)
 +++ trac/web/api.py	(working copy)
 @@ -44,7 +44,7 @@
          self.message = message
@@ -3282,7 +3332,7 @@ Index: trac/web/api.py
          last_modified = http_date(stat.st_mtime)
 Index: trac/web/clearsilver.py
 ===================================================================
---- trac/web/clearsilver.py	(revision 5827)
+--- trac/web/clearsilver.py	(revision 5935)
 +++ trac/web/clearsilver.py	(working copy)
 @@ -132,7 +132,7 @@
              import neo_util
@@ -3295,7 +3345,7 @@ Index: trac/web/clearsilver.py
  
 Index: trac/web/session.py
 ===================================================================
---- trac/web/session.py	(revision 5827)
+--- trac/web/session.py	(revision 5935)
 +++ trac/web/session.py	(working copy)
 @@ -99,9 +99,9 @@
          cursor = db.cursor()
@@ -3312,7 +3362,7 @@ Index: trac/web/session.py
                         "AND authenticated=0", (new_sid, self.sid))
 Index: trac/util/datefmt.py
 ===================================================================
---- trac/util/datefmt.py	(revision 5827)
+--- trac/util/datefmt.py	(revision 5935)
 +++ trac/util/datefmt.py	(working copy)
 @@ -30,17 +30,17 @@
      if not time2: time2 = time.time()
@@ -3348,7 +3398,7 @@ Index: trac/util/datefmt.py
      return seconds
 Index: trac/notification.py
 ===================================================================
---- trac/notification.py	(revision 5827)
+--- trac/notification.py	(revision 5935)
 +++ trac/notification.py	(working copy)
 @@ -190,7 +190,7 @@
              self._charset.input_codec = None
