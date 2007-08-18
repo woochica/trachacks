@@ -58,6 +58,7 @@ function handlerowclick(num){
             <td>Filename</td>
             <td>Revision</td>
             <td>Line Numbers</td>
+            <td># of Comments</td>
         </tr>
     </thead>
     <tbody>
@@ -72,6 +73,7 @@ function handlerowclick(num){
                     <td><a href="<?cs var:trac.href.peerReviewPerform ?>?IDFile=<?cs var:item[0]?>"><?cs var:item[2]?></a></td>
                     <td><a href="<?cs var:trac.href.peerReviewPerform ?>?IDFile=<?cs var:item[0]?>"><?cs var:item[5]?></a></td>
                     <td><a href="<?cs var:trac.href.peerReviewPerform ?>?IDFile=<?cs var:item[0]?>"><?cs var:item[3]?>-<?cs var:item[4]?></a></td>
+                    <td><a href="<?cs var:trac.href.peerReviewPerform ?>?IDFile=<?cs var:item[0]?>"><?cs var:item[6]?></a></td>
                 </tr>
             <?cs /each ?>
         <?cs /if ?>

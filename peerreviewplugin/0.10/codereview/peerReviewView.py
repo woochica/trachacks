@@ -81,6 +81,7 @@ class UserbaseModule(Component):
             newfile.append(struct.LineStart)
             newfile.append(struct.LineEnd)
             newfile.append(struct.Version)
+            newfile.append(len(dbBack.getCommentsByFileID(struct.IDFile)))
             returnfiles.append(newfile)
             newfile = []
         req.hdf['files'] = returnfiles
