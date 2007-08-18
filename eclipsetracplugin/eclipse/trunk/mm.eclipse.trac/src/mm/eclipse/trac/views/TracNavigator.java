@@ -3,14 +3,17 @@ package mm.eclipse.trac.views;
 import java.util.Collection;
 
 import mm.eclipse.trac.Activator;
+import mm.eclipse.trac.Images;
 import mm.eclipse.trac.models.ITracListener;
 import mm.eclipse.trac.models.TracServer;
 import mm.eclipse.trac.models.TracServerList;
 import mm.eclipse.trac.models.WikiPage;
+import mm.eclipse.trac.server.NewTracServer;
 import mm.eclipse.trac.views.actions.IActionsProvider;
 import mm.eclipse.trac.views.actions.TracServerActionProvider;
 import mm.eclipse.trac.views.actions.WikiPageActionsProvider;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -24,6 +27,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
@@ -44,6 +48,8 @@ public class TracNavigator extends ViewPart implements ITracListener,
     private IActionsProvider tracServerActions;
     
     private IActionsProvider wikiPageActions;
+    
+    private Action newServerAction;
     
     class NameSorter extends ViewerSorter
     {
@@ -91,6 +97,11 @@ public class TracNavigator extends ViewPart implements ITracListener,
                 IStructuredSelection selection = (IStructuredSelection) viewer
                         .getSelection();
                 
+                if ( selection.isEmpty() )
+                {
+                    manager.add( newServerAction );
+                }
+                
                 tracServerActions.fillMenu( manager, selection );
                 manager.add( new Separator() );
                 wikiPageActions.fillMenu( manager, selection );
@@ -127,6 +138,25 @@ public class TracNavigator extends ViewPart implements ITracListener,
     {
         tracServerActions = new TracServerActionProvider( viewer );
         wikiPageActions = new WikiPageActionsProvider( viewer );
+        
+        newServerAction = new Action() {
+            public void run()
+            {
+                // Create the wizard
+                WizardDialog dialog = new WizardDialog( viewer.getControl().getShell(),
+                                                        new NewTracServer() );
+                dialog.open();
+            }
+        };
+        newServerAction.setText( "Add a Trac server" );
+        newServerAction.setImageDescriptor( Images.getDescriptor( Images.NewServer ) );
+        
+        IToolBarManager toolBarManager = getViewSite().getActionBars()
+                .getToolBarManager();
+        toolBarManager.add( newServerAction );
+        
+        IMenuManager menuManager = getViewSite().getActionBars().getMenuManager();
+        menuManager.add( newServerAction );
     }
     
     /**
