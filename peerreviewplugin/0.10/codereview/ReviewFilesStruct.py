@@ -34,12 +34,12 @@ class ReviewFileStruct(object):
     def __init__(self, row):
         if(row != None):
             #initialize variables
-            self.IDFile = `row[0]`
-            self.IDReview = `row[1]`
+            self.IDFile = row[0]
+            self.IDReview = row[1]
             self.Path = row[2]
-            self.LineStart = `row[3]`
-            self.LineEnd = `row[4]`
-            self.Version = `row[5]`
+            self.LineStart = row[3]
+            self.LineEnd = row[4]
+            self.Version = row[5]
 
     def save(self, db):
         cursor = db.cursor()
@@ -48,8 +48,7 @@ class ReviewFileStruct(object):
             query = "INSERT INTO ReviewFiles VALUES(NULL,'" + dbEscape(self.IDReview) + "', '" + dbEscape(self.Path) + "','" + dbEscape(self.LineStart) + "','" + dbEscape(self.LineEnd) + "','" + dbEscape(self.Version) + "')"
             cursor.execute(query)
             db.commit()
-            cursor.execute("SELECT last_insert_rowid() FROM ReviewFiles")
-            self.IDFile = `cursor.fetchone()[0]`
+            self.IDFile = cursor.lastrowid;
         else:
         #Update information in existing database entry
             query = "UPDATE ReviewFiles SET IDReview = '" + dbEscape(self.IDReview) + "', Path = '" + dbEscape(self.Path) + + "', LineStart = '" + dbEscape(self.LineStart) + "', LineEnd = '" + dbEscape(self.LineEnd) + "', Version = '" + dbEscape(self.Version) + "' WHERE IDFile = '" + dbEscape(self.IDFile) + "'"

@@ -131,8 +131,8 @@ class UserbaseModule(Component):
         req.hdf['review.lineEnd'] = resultFile.LineEnd
         req.hdf['review.reviewID'] = resultFile.IDReview
         #make these global for the line annotator
-        self.lineEnd = string.atoi(resultFile.LineEnd)
-        self.lineStart = string.atoi(resultFile.LineStart)
+        self.lineEnd = resultFile.LineEnd
+        self.lineStart = resultFile.LineStart
 
         #if the repository can't be found - display an error message
         if(repos == None):

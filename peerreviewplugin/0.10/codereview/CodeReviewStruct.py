@@ -34,7 +34,7 @@ class CodeReviewStruct(object):
     def __init__(self, row):
         if(row != None):
             #initialize variables
-            self.IDReview = `row[0]`
+            self.IDReview = row[0]
             self.Author = row[1]
             self.Status = row[2]
             self.DateCreate = row[3]
@@ -49,8 +49,7 @@ class CodeReviewStruct(object):
             query = "INSERT INTO CodeReviews VALUES(NULL,'" + dbEscape(self.Author) + "','" + dbEscape(self.Status) + "','" + `self.DateCreate` + "','" + dbEscape(self.Name) + "','" + dbEscape(self.Notes) + "')"
             cursor.execute(query)
             db.commit()
-            cursor.execute("SELECT last_insert_rowid() FROM CodeReviews")
-            self.IDReview = `cursor.fetchone()[0]`
+            self.IDReview = cursor.lastrowid;
         else:
         #Update information in existing database entry
             query = "UPDATE CodeReviews SET Author = '" + dbEscape(self.Author) + "', Status = '" + dbEscape(self.Status) + "', DateCreate = '" + `self.DateCreate` + "', Name = '" + dbEscape(self.Name) + "', Notes = '" + dbEscape(self.Notes) +  "' WHERE IDReview = '" + dbEscape(self.IDReview) + "'"

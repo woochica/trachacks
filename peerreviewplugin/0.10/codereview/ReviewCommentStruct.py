@@ -44,10 +44,10 @@ class ReviewCommentStruct(object):
     def __init__(self, row):
         if(row != None):
             #initialize variables
-            self.IDComment = `row[0]`
-            self.IDFile = `row[1]`
-            self.IDParent = `row[2]`
-            self.LineNum = `row[3]`
+            self.IDComment = row[0]
+            self.IDFile = row[1]
+            self.IDParent = row[2]
+            self.LineNum = row[3]
             self.Author = row[4]
             self.Text = row[5]
             self.AttachmentPath = row[6]
@@ -61,8 +61,7 @@ class ReviewCommentStruct(object):
             query = "INSERT INTO ReviewComments VALUES(NULL,'" + dbEscape(self.IDFile) + "', '" + dbEscape(self.IDParent) + "','" + dbEscape(self.LineNum) + "','" + dbEscape(self.Author) + "','" + dbEscape(self.Text) + "','" + dbEscape(self.AttachmentPath) + "','" + `self.DateCreate` + "')"
             cursor.execute(query)
             db.commit()
-            cursor.execute("SELECT last_insert_rowid() FROM ReviewComments")
-            self.IDComment = `cursor.fetchone()[0]`
+            self.IDComment = cursor.lastrowid;
         else:
         #Update information in existing database entry
             query = "UPDATE ReviewComments SET IDFile = '" + dbEscape(self.IDFile) + "', IDParent = '" + dbEscape(self.IDParent) + "', LineNum = '" + dbEscape(self.LineNum) + "', Author = '" + dbEscape(self.Author) + "', Text = '" + dbEscape(self.Text) + "', AttachmentPath = '" + dbEscape(self.AttachmentPath) + "', DateCreate = '" + `self.DateCreate` + "' WHERE IDComment = '" + dbEscape(self.IDComment) + "'"

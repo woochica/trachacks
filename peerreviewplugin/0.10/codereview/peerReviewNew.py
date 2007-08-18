@@ -134,9 +134,9 @@ class UserbaseModule(Component):
                     review = dbBack.getCodeReviewsByID(oldid)
                     review.Status = "Closed"
                     review.save(db)
-                returnid = self.createCodeReview(req);
+                returnid = self.createCodeReview(req)
                 #If no errors then redirect to the viewCodeReview page
-                req.redirect(self.env.href.peerReviewView() + '?Review=' + returnid)
+                req.redirect(self.env.href.peerReviewView() + '?Review=' + str(returnid))
             else:
                 req.hdf['new'] = "yes"
                 

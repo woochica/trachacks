@@ -12,5 +12,8 @@
 #A very simple method to escape values going into SQL queries
 def dbEscape(text):
     if isinstance(text, int):
-    	return str(text)
-    return text.replace("'", "''")
+    	return `text`
+    elif isinstance(text, long):
+        return `text`
+    else:
+        return text.replace("'", "''")

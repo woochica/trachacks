@@ -28,10 +28,10 @@ class ReviewerStruct(object):
     def __init__(self, row):
         if(row != None):
             #initialize variables
-            self.IDReview = `row[0]`
+            self.IDReview = row[0]
             self.Reviewer = row[1]
             self.Status = row[2]
-            self.Vote = `row[3]`
+            self.Vote = row[3]
 
     def save(self, db):
         #Add information to a new database entry

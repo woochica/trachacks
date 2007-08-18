@@ -36,7 +36,7 @@ class UserbaseModule(Component):
             return 'peerReviewCommentCallback.cs', None
 
 
-	req.hdf['invalid'] = 0
+        req.hdf['invalid'] = 0
         req.hdf['trac.href.peerReviewCommentCallback'] = self.env.href.peerReviewCommentCallback()
         actionType = req.args.get('actionType')
 
@@ -109,35 +109,34 @@ class UserbaseModule(Component):
         #The basic parts of this code were taken from the file upload portion of
         #the trac wiki code
 	
-	if req.args.has_key('FileUp'):
-   	     upload = req.args['FileUp']
-             if upload.filename:
-                 self.path = os.path.join(self.env.path, 'attachments', 'CodeReview', urllib.quote(struct.IDFile))
-                 self.path = os.path.normpath(self.path) 
-                 size = 0
-                 if hasattr(upload.file, 'fileno'):
-                     size = os.fstat(upload.file.fileno())[6]
-                 else:
-                     size = upload.file.len
-                 if size != 0:
-                     filename = urllib.unquote(upload.filename)
-                     filename = filename.replace('\\', '/').replace(':', '/')
-                     filename = os.path.basename(filename)
-                     import sys, unicodedata
-                     if sys.version_info[0] > 2 or (sys.version_info[0] == 2 and sys.version_info[1] >= 3):
-                         filename = unicodedata.normalize('NFC',unicode(filename,'utf-8')).encode('utf-8')
-                     attachments_dir = os.path.join(os.path.normpath(self.env.path),'attachments')
-                     commonprefix = os.path.commonprefix([attachments_dir, self.path])
-                     assert commonprefix == attachments_dir
-                     if not os.access(self.path, os.F_OK):
-                         os.makedirs(self.path)
-                     path, targetfile = util.create_unique_file(os.path.join(self.path,filename))
-                     try:
-                         shutil.copyfileobj(upload.file, targetfile)
-                         struct.AttachmentPath = os.path.basename(path)
-                     finally:
-                         targetfile.close()
-                    
+        if req.args.has_key('FileUp'):
+            upload = req.args['FileUp']
+            if upload and upload.filename:
+                self.path = os.path.join(self.env.path, 'attachments', 'CodeReview', urllib.quote(struct.IDFile))
+                self.path = os.path.normpath(self.path) 
+                size = 0
+                if hasattr(upload.file, 'fileno'):
+                    size = os.fstat(upload.file.fileno())[6]
+                else:
+                    size = upload.file.len
+                if size != 0:
+                    filename = urllib.unquote(upload.filename)
+                    filename = filename.replace('\\', '/').replace(':', '/')
+                    filename = os.path.basename(filename)
+                    import sys, unicodedata
+                    if sys.version_info[0] > 2 or (sys.version_info[0] == 2 and sys.version_info[1] >= 3):
+                        filename = unicodedata.normalize('NFC',unicode(filename,'utf-8')).encode('utf-8')
+                    attachments_dir = os.path.join(os.path.normpath(self.env.path),'attachments')
+                    commonprefix = os.path.commonprefix([attachments_dir, self.path])
+                    assert commonprefix == attachments_dir
+                    if not os.access(self.path, os.F_OK):
+                        os.makedirs(self.path)
+                    path, targetfile = util.create_unique_file(os.path.join(self.path,filename))
+                    try:
+                        shutil.copyfileobj(upload.file, targetfile)
+                        struct.AttachmentPath = os.path.basename(path)
+                    finally:
+                        targetfile.close()
         struct.save(self.env.get_db_cnx())
 
     #Returns a comment tree for the requested line number
@@ -180,14 +179,14 @@ class UserbaseModule(Component):
         factor = 15
         width = (5+nodesIn*factor);
         
-        html = "<table width=\"400px\" style=\"border-collapse: collapse\" id=\"" + comment.IDParent + ":" + comment.IDComment + "\">"
+        html = "<table width=\"400px\" style=\"border-collapse: collapse\" id=\"" + `comment.IDParent` + ":" + `comment.IDComment` + "\">"
         if not first:
             html += "<tr><td width=\"" + `width` + "px\"></td>"
             html += "<td colspan=\"3\" width=\"" + `(400-width)` + "px\" style=\"border-top: 1px solid #C0C0C0;\"></td></tr>"
         html += "<tr><td width=\"" + `width` + "px\"></td>"
         html += "<td colspan=\"2\" align=\"left\" width=\"" + `(400-100-width)` + "px\">Author: " + comment.Author + "</td>"
         html += "<td width=\"100px\" align=\"right\">" + util.format_date(comment.DateCreate) + "</td></tr>"
-        html += "<tr><td width=\"" + `width` + "px\"></td><td valign=\"top\" width=\"" + `factor` + "px\" id=\"" + comment.IDComment + "TreeButton\">"
+        html += "<tr><td width=\"" + `width` + "px\"></td><td valign=\"top\" width=\"" + `factor` + "px\" id=\"" + `comment.IDComment` + "TreeButton\">"
         if not childrenHTML == "":
             html += "<img src=\"" + self.env.href.chrome() + "/hw/images/minus.gif\" onclick=\"collapseComments(" + comment.IDComment + ");\">"
         html += "</td>"
@@ -198,7 +197,7 @@ class UserbaseModule(Component):
             html += "<a border=0 alt=\"Code Attachment\"  href=\"" + self.env.href.peerReviewCommentCallback() + "?actionType=getCommentFile&fileName=" + comment.AttachmentPath + "&IDFile=" + IDFile + "\"><img src=\"" + self.env.href.chrome() + "/hw/images/paper_clip.gif\"> " +  comment.AttachmentPath + "</a>"
         html += "</td>"
         html += "<td width=\"100px\" align=\"right\">"
-        html += "<a href=\"javascript:addComment(" + LineNum + ", " + IDFile + ", " +  comment.IDComment + ")\">Reply</a></td></tr>"
+        html += "<a href=\"javascript:addComment(" + `LineNum` + ", " + `IDFile` + ", " +  `comment.IDComment` + ")\">Reply</a></td></tr>"
         html += "<tr height=\"3\"><td width=\"" + `width` + "px\"></td><td width=\"" + `factor` + "px\"></td><td width=\"" + `(400-width-factor)` + "px\" colspan=\"2\"></td></tr>"
         html += "</table>"
 
