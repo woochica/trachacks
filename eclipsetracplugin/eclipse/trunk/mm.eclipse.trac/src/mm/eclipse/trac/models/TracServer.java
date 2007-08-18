@@ -59,9 +59,9 @@ public class TracServer extends ModelBase implements IAdaptable
             connected = true;
             problems = false;
             
-        } catch ( Throwable t )
+        } catch ( Exception e )
         {
-            Log.warning( "Error connecting to server '" + url.toString() + "': " + t.getMessage(), new Exception( t.getCause() ) );
+            Log.warning( "Error connecting to server '" + url.toString() + "': " + e.getMessage(), e );
             connected = false;
             problems = true;
         }

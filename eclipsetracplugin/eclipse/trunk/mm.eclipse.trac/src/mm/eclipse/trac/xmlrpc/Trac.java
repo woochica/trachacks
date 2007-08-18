@@ -55,16 +55,21 @@ public class Trac
             config.setBasicPassword( password );
         }
         
-        config.setGzipCompressing( true );
+        // config.setGzipCompressing( true );
         
         XmlRpcClient client = new XmlRpcClient();
         client.setConfig( config );
         client.setTransportFactory( new XmlRpcCommonsTransportFactory( client ) );
         
         proxy = new DynamicProxy( client );
+        Log.info( "Created dynamic proxy" );
         
         // Call a method to make sure we can communicate with server
+        client.execute( "wiki.getRPCVersionSupported", new Object[0] );
+        getWiki();
+        Log.info( "Wiki instantiation ok." );
         getWiki().getRPCVersionSupported();
+        Log.info( "Method call ok" );
     }
     
     public Wiki getWiki()

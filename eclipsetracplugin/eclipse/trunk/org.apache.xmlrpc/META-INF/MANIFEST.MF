@@ -7,5 +7,7 @@ Export-Package: org.apache.xmlrpc.client,
  org.apache.xmlrpc.common
 Bundle-ClassPath: lib/xmlrpc-client-3.0.jar,
  lib/xmlrpc-common-3.0.jar,
- lib/ws-commons-util-1.0.1.jar
-Require-Bundle: org.apache.commons.httpclient
+ lib/ws-commons-util-1.0.1.jar,
+ lib/commons-httpclient-3.1-rc1.jar,
+ lib/commons-logging-1.1.jar,
+ lib/commons-codec-1.3.jar
