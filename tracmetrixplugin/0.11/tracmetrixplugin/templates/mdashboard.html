@@ -55,8 +55,8 @@
       	<py:if test="ticketstat.stats.count">${progress_bar(ticketstat.stats, ticketstat.interval_hrefs,stats_href=ticketstat.stats_href)}</py:if>
 
       </div>
-      
-      
+
+	  <div>	<img src="${href.mdashboard('%s/cummulativeflow.png' % (milestone.name,))}"/></div>     
       <div class="table">
       	<h2>Ticket History Table</h2>
       	
@@ -80,11 +80,6 @@
 		</table>
 	  </div>
     </div>
-    
-    
-
-	<div>	<img src="${href.mdashboard('%s/cummulativeflow.png' % (milestone.name,))}"/></div>
-
 
 
     <div id="help"><strong>Note:</strong> See

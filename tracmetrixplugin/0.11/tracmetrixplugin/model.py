@@ -1,9 +1,16 @@
 import sys
+import os
+
 from datetime import timedelta, datetime
 from trac.core import *
 from trac.ticket import Ticket, model
-from trac.util.datefmt import utc
+from trac.util.datefmt import utc, to_timestamp, to_datetime
 from trac.ticket.roadmap import ITicketGroupStatsProvider, TicketGroupStats
+
+from bisect import bisect
+import matplotlib
+from pylab import *
+from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
 
 
 class ProgressTicketGroupStatsProvider(Component):
@@ -52,6 +59,89 @@ class ProgressTicketGroupStatsProvider(Component):
         stat.refresh_calcs()
         return stat
 
+    def get_ticket_resolution_group_stats(self, ticket_ids):
+        
+        # ticket_ids is a list of ticket id as number.
+        total_cnt = len(ticket_ids)
+        if total_cnt:
+            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
+            cursor = self.env.get_db_cnx().cursor()  # get database connection    
+            
+            type_count = [] # list of dictionary with key name and count
+            
+            for type in model.Resolution.select(self.env):
+            
+                count = cursor.execute("SELECT count(1) FROM ticket "
+                                        "WHERE status = 'closed' AND resolution = '%s' AND id IN "
+                                        "(%s)" % (type.name, ",".join(str_ids))) # execute query and get cursor obj.
+                count = 0
+                for cnt, in cursor:
+                    count = cnt
+
+                if count > 0:
+                    type_count.append({'name':type.name,'count':count})
+
+        else:
+            type_count = []
+        
+        stat = TicketGroupStats('ticket resolution', 'ticket')
+        
+        
+        for type in type_count:
+                
+            if type['name'] == 'fixed': # default ticket type 'defect'
+        
+                stat.add_interval(type['name'], type['count'],
+                                  {'type': type['name']}, 'value', True)
+            
+            else:
+                stat.add_interval(type['name'], type['count'],
+                                  {'type': type['name']}, 'waste', False)
+                          
+        stat.refresh_calcs()
+        return stat
+
+    def get_ticket_type_group_stats(self, ticket_ids):
+        
+        # ticket_ids is a list of ticket id as number.
+        total_cnt = len(ticket_ids)
+        if total_cnt:
+            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
+            cursor = self.env.get_db_cnx().cursor()  # get database connection    
+            
+            type_count = [] # list of dictionary with key name and count
+            
+            for type in model.Type.select(self.env):
+            
+                count = cursor.execute("SELECT count(1) FROM ticket "
+                                        "WHERE type = '%s' AND id IN "
+                                        "(%s)" % (type.name, ",".join(str_ids))) # execute query and get cursor obj.
+                count = 0
+                for cnt, in cursor:
+                    count = cnt
+
+                if count > 0:
+                    type_count.append({'name':type.name,'count':count})
+
+        else:
+            type_count = []
+        
+        stat = TicketGroupStats('ticket type', 'ticket')
+        
+        
+        for type in type_count:
+                
+            if type['name'] != 'defect': # default ticket type 'defect'
+        
+                stat.add_interval(type['name'], type['count'],
+                                  {'type': type['name']}, 'value', True)
+            
+            else:
+                stat.add_interval(type['name'], type['count'],
+                                  {'type': type['name']}, 'waste', False)
+                          
+        stat.refresh_calcs()
+        return stat
 
 class TicketTypeGroupStatsProvider(Component):
     implements(ITicketGroupStatsProvider)
@@ -78,8 +168,11 @@ class TicketTypeGroupStatsProvider(Component):
                 if count > 0:
                     type_count.append({'name':type.name,'count':count})
 
+        else:
+            type_count = []
         
         stat = TicketGroupStats('ticket type', 'ticket')
+        
         
         for type in type_count:
                 
@@ -150,6 +243,8 @@ class TicketGroupMetrics(object):
     
     def get_tickets_created_during(self, start_date, end_date):
         
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
         tkt_ids = []
         
         for ticket in self.tickets:            
@@ -160,6 +255,8 @@ class TicketGroupMetrics(object):
     
     def get_remaning_opened_ticket_on(self, end_date):
      
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+     
         tkt_ids = []
         
         for ticket in self.tickets:            
@@ -168,7 +265,6 @@ class TicketGroupMetrics(object):
             if ticket.time_created <= end_date:
             
                 if ticket.values['status'] == 'closed':        
-                    
                     
                     was_opened = True        
                     # check change log to find the date when the ticket was closed.
@@ -188,18 +284,16 @@ class TicketGroupMetrics(object):
                 
                 # Assume that ticket that is not closed are opened
                 else:
-                    # only add the ticket that was modified before the end date
-                    if end_date >= ticket.time_changed:
+                    # only add the ticket that was created before the end date
+                    if end_date >= ticket.time_created:
                         tkt_ids.append(ticket.id)
-            
-            
-        self.env.log.info(tkt_ids)
-        
+                    
         return tkt_ids
-    
-        
+          
     
     def get_tickets_closed_during(self, start_date, end_date):
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)
         
         tkt_ids = []
         
@@ -227,7 +321,142 @@ class TicketGroupMetrics(object):
                 opened_tickets,
                 closed_tickets,
                 float(len(closed_tickets)) * 100 / float(len(opened_tickets)))
+        
+    def get_daily_backlog_history(self, start_date, end_date):
+        """
+            returns list of tuple (date,stats)
+                date is date value in epoc time
+                stats is dictionary of {'created':[], 'opened':[], 'closed':[]}
+        """    
+        
+        # this is array of date in numpy
+        numdates = drange(start_date, end_date + timedelta(days=1), timedelta(days=1))
+        
+#        for date in numdates:
+#            self.env.log.info(num2date(date))
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        
+        # each key is the list of list of ticket.  The index of the list is corresponding
+        # to the index of the date in numdates list.
+        backlog_stats = {'created':[], 'opened':[], 'closed':[]}
+        
+        # initialize backlog_stats
+        
+        for date in numdates:
+            for key in backlog_stats:
+                backlog_stats[key].append([])
+        
+        # start by getting the list of opened ticket at the end of the start date.        
+        backlog_stats['opened'][0] = self.get_remaning_opened_ticket_on(start_date)
+        
+        for ticket in self.tickets:
+        
+            # only consider the ticket that was created before end dates.
+            if ticket.time_created <= end_date:
+                
+                # only track the ticket that create since start_date
+                if ticket.time_created >= start_date:
+                    # determine index
+                    date = ticket.time_created.date()            
+                    #get index of day in the dates list
+                    index = bisect(numdates, date2num(date)) - 1                
+                
+                    # add ticket created ticket list
+                    backlog_stats['created'][index].append(ticket.id)
+            
+                for t, author, field, oldvalue, newvalue, permanent in ticket.get_changelog():
+
+                    # determine index
+                    date = t.date()            
+                    #get index of day in the dates list
+                    index = bisect(numdates, date2num(date)) - 1   
+                    
+                    if field == 'status' and start_date <= t <= end_date:
+                        
+                        if newvalue == 'closed':
+                            # add ticket created ticket list
+                            backlog_stats['closed'][index].append(ticket.id)
+                        
+                        elif newvalue == 'reopen':
+                            backlog_stats['opened'][index].append(ticket.id)
+
+        # update opened ticket list
+        for idx, list in enumerate(backlog_stats['opened']):
+            
+            if idx > 0:
+                
+                # merge list of opened ticket from previous day
+                list.extend(backlog_stats['opened'][idx-1])
+                
+                # add created ticket to opened ticket list
+                list.extend(backlog_stats['created'][idx])
+        
+                # remove closed ticket from opened ticket list.
+                for id in backlog_stats['closed'][idx]:
+                    list.remove(id)
+                
+                list.sort()
+                
+#        for idx, numdate in enumerate(numdates):
+#            self.env.log.info(num2date(numdate))
+#            self.env.log.info(backlog_stats['created'][idx])
+#            self.env.log.info(backlog_stats['opened'][idx])
+#            self.env.log.info(backlog_stats['closed'][idx])                                                        
+                                                                              
+        return (numdates, backlog_stats)
+            
+    def get_daily_backlog_chart(self, backlog_history):
+        
+        numdates = backlog_history[0]
+        backlog_stats = backlog_history[1]
+        
+        # create counted list.
+        opened_tickets_dataset = [len(list) for list in backlog_stats['opened']]
+        created_tickets_dataset = [len(list) for list in backlog_stats['created']]
+        
+        # need to add create and closed ticket for charting purpose. We want to show
+        # closed tickets on top of opened ticket in bar chart.
+        closed_tickets_dataset = []
+        for i in range(len(created_tickets_dataset)):
+            closed_tickets_dataset.append(created_tickets_dataset[i] + len(backlog_stats['closed'][i]))
+                
+        bmi_dataset = []
+        for i in range(len(opened_tickets_dataset)):
+            bmi_dataset.append(float(closed_tickets_dataset[i])*100/float(opened_tickets_dataset[i]))
     
+#        for idx, numdate in enumerate(numdates):
+#            self.env.log.info("%s: %s, %s, %s" % (num2date(numdate), 
+#                                                    closed_tickets_dataset[idx],
+#                                                    opened_tickets_dataset[idx],
+#                                                    created_tickets_dataset[idx]))
+        
+        matplotlib.use('Agg')
+        #cla()
+        fig = figure(figsize = (6,4))
+        ax = fig.add_subplot(111) # Create supplot with key 111       
+        line1 = ax.plot_date(numdates, opened_tickets_dataset, '-')
+        line2 = ax.bar(numdates, closed_tickets_dataset, 0.5, color='#bae0ba') 
+        line3 = ax.bar(numdates, created_tickets_dataset, 0.5, color='#9966ff') 
+        ax.set_xlim( numdates[0], numdates[-1] )
+        ax.xaxis.set_major_locator(DayLocator())
+        ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
+        labels = ax.get_xticklabels()
+        setp(labels, rotation=45, fontsize=6)
+        
+        xlabel('Dates (day)')
+        ylabel('Number of tickets')
+        title('Opened/Closed Tickets')
+        ax.legend((line1, line2[0], line3[0]), ('Opened Tickets', 'Closed/day', 'Created/day'), loc='best')
+        
+        filename = "dailybacklog"
+        path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
+        
+        fig.savefig(path)
+        
+        return path
+            
 class TicketMetrics(object):
     
     def __init__(self, env, ticket):
@@ -348,3 +577,78 @@ class DescriptiveStats(object):
             sdsq = sum([(i - avg) ** 2 for i in self.sequence])
             stdev = (sdsq / (len(self.sequence) - 1 or 1)) ** .5
             return stdev
+        
+class ChangesetsStats:
+    
+    def __init__(self, env, start_date=None, stop_date=None):
+    
+        self.env = env
+        
+        self.start_date = start_date
+        self.stop_date = stop_date
+        self.first_rev = self.last_rev = None
+        
+        if start_date != None and stop_date !=None:
+            self.set_date_range(start_date, stop_date)
+    
+    def set_date_range(self, start_date, stop_date): 
+
+        cursor = self.env.get_db_cnx().cursor()
+        cursor.execute("SELECT rev, time, author FROM revision "
+                       "WHERE time >= %s AND time < %s ORDER BY time",
+                       (to_timestamp(start_date), to_timestamp(stop_date)))
+        
+        self.changesets = []
+        for rev, time, author in cursor:
+            self.changesets.append((rev,time,author))
+        
+        self.start_date = start_date
+        self.stop_date = stop_date    
+        self.first_rev = self.changesets[0][0]
+        self.last_rev = self.changesets[-1][0]
+    
+    def get_commit_by_date(self):
+        
+        numdates = drange(self.start_date, self.stop_date, timedelta(days=1))
+
+        numcommits = [0 for i in numdates]
+        
+        for rev, time, author in self.changesets:
+            
+            date = to_datetime(time, utc).date()
+            #get index of day in the dates list
+            index = bisect(numdates, date2num(date)) - 1     
+            
+            numcommits[index] += 1
+        
+        return (numdates, numcommits)
+    
+    
+    def get_commit_by_date_chart(self, commit_history):
+        
+        numdates = commit_history[0]
+        numcommits = commit_history[1]
+        
+        matplotlib.use('Agg')
+        #cla()
+        fig = figure(figsize = (6,4))
+        ax = fig.add_subplot(111) # Create supplot with key 111       
+        line1 = ax.bar(numdates, numcommits, 0.5, color='#9966ff') 
+        ax.set_xlim( numdates[0], numdates[-1] )
+        ax.xaxis.set_major_locator(DayLocator())
+        ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
+        labels = ax.get_xticklabels()
+        setp(labels, rotation=45, fontsize=6)
+        
+        xlabel('Dates (day)')
+        ylabel('Number of commits')
+        title('Commits by Date')
+        
+        filename = "commitsbydate"
+        path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
+        
+        fig.savefig(path)
+        
+        return path
+         
+        

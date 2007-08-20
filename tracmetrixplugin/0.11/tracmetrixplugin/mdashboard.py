@@ -116,7 +116,7 @@ def collect_tickets_status_history(env, db, ticket_ids, milestone):
     #env.log.info(sqlquery)
     event_history = cursor.fetchall()
     
-    env.log.info("event_history = %s" % (event_history,))
+    #env.log.info("event_history = %s" % (event_history,))
     
     # TODO The tricky thing about this is that we have to deterimine 5 different type of ticket.
     # 1) created with milestone and remain in milestone (new and modified)
@@ -286,9 +286,10 @@ def make_cummulative_data(env, tkt_counts):
 def create_cummulative_chart(env, milestone, numdates, tkt_cummulative_table): 
     
     matplotlib.use('Agg')
-    cla()
-    fig = figure()
+    #cla()
+    fig = figure(figsize = (6,4))
     ax = fig.add_subplot(111) # Create supplot with key 111       
+    ax.cla()
     ax.plot(numdates, tkt_cummulative_table['Enter'], 'b-')
     ax.plot(numdates, tkt_cummulative_table['Leave'], 'r-') 
     ax.plot(numdates, tkt_cummulative_table['Finish'], 'g-')
@@ -297,12 +298,12 @@ def create_cummulative_chart(env, milestone, numdates, tkt_cummulative_table):
     ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
     ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S')
     labels = ax.get_xticklabels()
-    setp(labels, rotation=45, fontsize=8)
+    setp(labels, rotation=45, fontsize=6)
     
     xlabel('Dates (day)')
     ylabel('Counts (times)')
     title('Cummulative flow chart for ticket status history')
-    legend(('Ticket Entered', 'Ticket Left', 'Ticket Completed'), loc='upper left')
+    legend(('Ticket Entered', 'Ticket Left', 'Ticket Completed'), loc='best')
     
     filename = "cummulativeflow_%s" % (milestone.name,)
     path = os.path.join(env.path, 'cache', 'tracmetrixplugin', filename)
@@ -486,59 +487,61 @@ class MDashboard(Component):
             
             tkt_history = collect_tickets_status_history(self.env, db, everytickets, milestone)
             
+            if tkt_history != {}:
                             
-            # Sort the key in the history list
-            # returns sorted list of tuple of (key, value)
-            sorted_events = sorted(tkt_history.items(), key=lambda(k,v):(k))
-    
-            #debug  
-            for event in sorted_events:
-                self.env.log.info("date: %s: event: %s" % (format_date(to_datetime(event[0])), event[1]))
-    
-          
-            # Get first date that ticket enter the milestone
-            min_time = min(sorted_events)[0] #in Epoch Seconds
-            begin_date = datetime.fromtimestamp(min_time, utc).date() 
-            
-            if milestone.completed != None:
-                end_date = milestone.completed        
-            else:
-                end_date = datetime.now(utc).date()
-            
-            #self.env.log.info("begindate: Timezone %s:%s, UTC:%s)" % \
-            #                  (req.tz,datetime.fromtimestamp(min_time, req.tz).date(), \
-            #                   datetime.fromtimestamp(min_time, utc).date())) 
-    
-            #self.env.log.info("enddate: UTC:%s" % (end_date,))
-
-            
+                # Sort the key in the history list
+                # returns sorted list of tuple of (key, value)
+                sorted_events = sorted(tkt_history.items(), key=lambda(k,v):(k))
         
-            # this is array of date in numpy
-            numdates = drange(begin_date, end_date + timedelta(days=1), timedelta(days=1))
-            
-            tkt_history_table = make_ticket_history_table(self.env, numdates, sorted_events)
-    
-            #debug
-            #self.env.log.info("tkt_history_table: %s", (tkt_history_table,))   
-            
-            #Create a data for the cumulative flow chart.
-            tkt_cummulative_table = make_cummulative_data(self.env, tkt_history_table)
-            
-            #debug
-            #self.env.log.info(tkt_cummulative_table)   
+                #debug  
+                self.env.log.info("sorted_event content")
+                for event in sorted_events:
+                    self.env.log.info("date: %s: event: %s" % (format_date(to_datetime(event[0])), event[1]))
         
-            # creat list of dateobject from dates
-            dates = []
-            for numdate in numdates:
+              
+                # Get first date that ticket enter the milestone
+                min_time = min(sorted_events)[0] #in Epoch Seconds
+                begin_date = datetime.fromtimestamp(min_time, utc).date() 
                 
-                utc_date = num2date(numdate)
-                dates.append(utc_date)
-                #self.env.log.info("%s: %s" % (utc_date, format_date(utc_date, tzinfo=utc)))
+                if milestone.completed != None:
+                    end_date = milestone.completed        
+                else:
+                    end_date = datetime.now(utc).date()
+                
+                #self.env.log.info("begindate: Timezone %s:%s, UTC:%s)" % \
+                #                  (req.tz,datetime.fromtimestamp(min_time, req.tz).date(), \
+                #                   datetime.fromtimestamp(min_time, utc).date())) 
+        
+                #self.env.log.info("enddate: UTC:%s" % (end_date,))
+    
+                
             
-            data['tickethistory'] = tkt_cummulative_table
-            data['dates'] = dates
+                # this is array of date in numpy
+                numdates = drange(begin_date, end_date + timedelta(days=1), timedelta(days=1))
+                
+                tkt_history_table = make_ticket_history_table(self.env, numdates, sorted_events)
+        
+                #debug
+                #self.env.log.info("tkt_history_table: %s", (tkt_history_table,))   
+                
+                #Create a data for the cumulative flow chart.
+                tkt_cummulative_table = make_cummulative_data(self.env, tkt_history_table)
+                
+                #debug
+                #self.env.log.info(tkt_cummulative_table)   
             
-            create_cummulative_chart(self.env, milestone, numdates, tkt_cummulative_table)
+                # creat list of dateobject from dates
+                dates = []
+                for numdate in numdates:
+                    
+                    utc_date = num2date(numdate)
+                    dates.append(utc_date)
+                    #self.env.log.info("%s: %s" % (utc_date, format_date(utc_date, tzinfo=utc)))
+                
+                data['tickethistory'] = tkt_cummulative_table
+                data['dates'] = dates
+                
+                create_cummulative_chart(self.env, milestone, numdates, tkt_cummulative_table)
 
         
         return 'mdashboard.html', data, None

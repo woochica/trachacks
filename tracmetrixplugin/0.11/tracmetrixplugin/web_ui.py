@@ -36,7 +36,7 @@ def get_project_tickets(env):
     
     cursor = env.get_db_cnx().cursor()
     
-    cursor.execute("SELECT id FROM ticket")
+    cursor.execute("SELECT id FROM ticket ORDER BY id")
 
     tkt_ids = [id for id , in cursor]
     
@@ -44,8 +44,7 @@ def get_project_tickets(env):
 
 def last_day_of_month(year, month):
     
-    return datetime(year, month+1, 1, tzinfo=utc) - timedelta(seconds=1)
-    
+    return datetime(year, month+1, 1, tzinfo=utc) - timedelta(days=1)
 
 class PDashboard(Component):
 
@@ -79,15 +78,43 @@ class PDashboard(Component):
 
         self.env.log.info("pdashboard match request %s" % (req.path_info,))  
                 
-        return re.match(r'/pdashboard/?', req.path_info) is not None
+        urlcomp = req.path_info.split('/')
+        
+        self.env.log.info(urlcomp)
+                
+        if urlcomp[1] == 'pdashboard':
+            if len(urlcomp) == 3: #url has 2 
+                req.args['imagename'] = urlcomp[2]
+            else:
+                req.args['imagename'] = None
+                    
+            return True
 
     def process_request(self, req):
         req.perm.require('ROADMAP_VIEW')
 
-        showall = req.args.get('show') == 'all'
-
         db = self.env.get_db_cnx()
         
+        filename = req.args.get('imagename')
+                    
+        if filename != None:    
+            
+            self.env.log.info("request for image")
+            path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
+            req.send_file(path, mimeview.get_mimetype(path))
+            
+        else:
+            
+            self.env.log.info("request mdashboard")
+            add_stylesheet(req, 'pd/css/dashboard.css')  
+            
+            return self._render_view(req, db) 
+        
+
+    def _render_view(self, req, db):
+        
+        showall = req.args.get('show') == 'all'
+                
         # Get list of milestone object for the project
         milestones = list(Milestone.select(self.env, showall, db))
         stats = []
@@ -103,8 +130,6 @@ class PDashboard(Component):
             'name': self.env.project_name,
             'description': self.env.project_description
         }
-
-        
         
         data = {
             'context': Context(self.env, req),
@@ -126,7 +151,14 @@ class PDashboard(Component):
                                       'interval_hrefs': [req.href.query(interval['qry_args'])
                                                          for interval in proj_stat.intervals]}
 
-                
+        closed_stat = self.stats_provider.get_ticket_resolution_group_stats(project_tickets)
+
+        data['proj_closed_stat'] = {'stats': closed_stat,
+                                      'stats_href': req.href.query(closed_stat.qry_args),
+                                      'interval_hrefs': [req.href.query(interval['qry_args'])
+                                                         for interval in closed_stat.intervals]}
+
+
         tkt_group_metrics = TicketGroupMetrics(self.env, project_tickets)      
         
         tkt_frequency_stats = tkt_group_metrics.get_frequency_metrics_stats()
@@ -144,6 +176,17 @@ class PDashboard(Component):
         first_day = datetime(today.year, today.month-1, 1, tzinfo=utc)
         last_day = last_day_of_month(today.year, today.month-1)
         bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
+        
+        # get daily stat from today and a month back
+        last_day = datetime(today.year, today.month, today.day, tzinfo=utc)
+        first_day = datetime(today.year, today.month-1, today.day, tzinfo=utc)
+        
+        backlog_history = tkt_group_metrics.get_daily_backlog_history(first_day, last_day)
+        daily_backlog_chart_path = tkt_group_metrics.get_daily_backlog_chart(backlog_history)
+        
+        changeset_group_stats = ChangesetsStats(self.env, first_day, last_day)
+        commits_by_date = changeset_group_stats.get_commit_by_date()
+        commits_by_date_chart = changeset_group_stats.get_commit_by_date_chart(commits_by_date)
         
         data['project_bmi_stats'] = bmi_stats
         self.env.log.info(bmi_stats)
