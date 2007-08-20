@@ -4,7 +4,19 @@ from setuptools import find_packages, setup
 # name that is used in packages is the one that is used in the trac.ini file.
 # use package name as entry_points
 setup(
-    name='TracMetrixPlugin', version='0.11',
+    description='Plugin to provide Trac project metrics and statistics',
+    keywords='trac plugin metrics statistics',
+    version='0.1.0',
+    url='',
+    license='http://www.opensource.org/licenses/bsd-license.php',
+    author='Bhuricha Sethanandha at Portland State University',
+    author_email='khundeen@gmail.com',
+    long_description="""
+    This Trac 0.11 plugin provides support for project metrics and statistics.
+
+    See http://trac-hacks.org/wiki/TracMetrixPlugin for details.
+    """,
+    name='TracMetrixPlugin',
     packages=find_packages(exclude=['*.tests*']),
     entry_points = """
         [trac.plugins]
