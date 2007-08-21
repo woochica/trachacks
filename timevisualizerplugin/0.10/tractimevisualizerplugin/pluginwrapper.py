@@ -18,7 +18,7 @@ class SVGRenderer(Component):
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
-        return req.path_info.find('/tracburndownimage') == 0;
+        return req.path_info.find('/tractimevisualizer') == 0;
 
     def process_request(self, req):
         DEVELOPING = False
@@ -46,5 +46,5 @@ Example macro usage:
             for arg in args:
                 i = arg.index('=')
                 options[arg[:i]] = arg[i+1:]
-        return '<iframe frameborder="1" src="%s/tracburndownimage?%s" width="%s" height="%s"></iframe>' \
+        return '<iframe frameborder="1" src="%s/tractimevisualizer?%s" width="%s" height="%s"></iframe>' \
             % (req.base_path, options.get('query', ''), options.get('width', '600'), options.get('height', '200'))
