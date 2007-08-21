@@ -63,9 +63,6 @@ class TagsUserInterface(Component):
         return stream | Transformer('//div[@id="changeinfo1"]').append(insert)
 
     # ITemplateStreamFilter methods
-    def match_stream(self, req, method, filename, stream, data):
-        return filename in ('wiki_edit.html', 'wiki_view.html')
-
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'wiki_view.html':
             return self._wiki_view(req, stream)
