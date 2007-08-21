@@ -31,10 +31,13 @@ class TagsUserInterface(Component):
         return current_tags
 
     def _wiki_view(self, req, stream):
+        tags = self._page_tags(req)
+        if not tags:
+            return stream
         engine = TagEngine(self.env)
         add_stylesheet(req, 'tags/css/tractags.css')
         li = []
-        for tag in self._page_tags(req):
+        for tag in tags:
             href, title = engine.get_tag_link(tag)
             li.append(T.li(T.a(title=title, href=href)(tag), ' '))
 
