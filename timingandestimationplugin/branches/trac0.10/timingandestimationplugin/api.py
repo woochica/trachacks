@@ -49,7 +49,7 @@ class TimeTrackingSetupParticipant(Component):
         # Setup logging
         dbhelper.mylog = self.log
         self.db_version_key = 'TimingAndEstimationPlugin_Db_Version'
-        self.db_version = 5
+        self.db_version = 6
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
