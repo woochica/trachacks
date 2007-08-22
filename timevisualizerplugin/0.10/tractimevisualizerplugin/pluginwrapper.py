@@ -21,6 +21,7 @@ class SVGRenderer(Component):
         return req.path_info.find('/tractimevisualizer') == 0;
 
     def process_request(self, req):
+        req.perm.assert_permission('TICKET_VIEW')
         DEVELOPING = False
 
         import impl
