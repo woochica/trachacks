@@ -2,8 +2,8 @@
 
 from tractimevisualizerplugin import *
 
-__version__ = '0.2'
-__url__ = 'http://trac.edgewall.org/'
+__version__ = '0.3'
+__url__ = 'http://trac-hacks.org/wiki/TimeVisualizerPlugin'
 __author__ = 'Markus Pelkonen'
 __copyright__ = 'Copyright (C) 2007 Markus Pelkonen'
 __license__ = 'BSD'

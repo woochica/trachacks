@@ -83,9 +83,11 @@ This function does all the work. Options for method are:
         return result
 
     def tofloat(obj):
-        """Converts object to float even if comma is used instead of dot"""
+        """Converts object to float. Accepts bot dot and comma as decimal separator. If object is None or empty string, 0.0 is returned."""
         if isinstance(obj,float):
             return obj
+        if not obj: # None or empty string
+            return 0.0
         if isinstance(obj,str) or isinstance(obj,unicode):
             return float(obj.replace(",","."))
         return float(obj) #fallback
