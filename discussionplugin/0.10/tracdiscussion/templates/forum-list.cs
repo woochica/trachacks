@@ -10,7 +10,7 @@
             <div class="name"><?cs var:group.name ?></div>
             <div class="description"><?cs var:group.description ?></div>
           </th>
-        <tr>
+        </tr>
       <?cs /if ?>
       <tr>
         <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '?') ?>
@@ -28,45 +28,65 @@
         <?cs if forum.group == group.id ?>
           <tr class="<?cs if:name(forum) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
             <td class="id">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="id"><?cs var:forum.id ?></div>
-              </a>
+              <div class="id">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs var:forum.id ?>
+                </a>
+              </div>
             </td>
             <td class="title">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="subject"><?cs alt:forum.subject ?>&nbsp;<?cs /alt ?></div>
-                <div class="description"><?cs alt:forum.description ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="subject">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs alt:forum.subject ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
+              <div class="description">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs alt:forum.description ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="moderators">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="moderators"><?cs alt:forum.moderators ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="moderators">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs alt:forum.moderators ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="lasttopic">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="lasttopic"><?cs alt:forum.lasttopic ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="lasttopic">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs alt:forum.lasttopic ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="lastreply">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="lastreply"><?cs alt:forum.lastreply ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="lastreply">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs alt:forum.lastreply ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="founded">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-               <div class="founded"><?cs alt:forum.time ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="founded">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs alt:forum.time ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="topics">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="topics"><?cs var:forum.topics ?></div>
-              </a>
+              <div class="topics">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs var:forum.topics ?>
+                </a>
+              </div>
             </td>
             <td class="replies">
-              <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
-                <div class="replies"><?cs var:forum.replies ?></div>
-              </a>
+              <div class="replies">
+                <a href="<?cs var:discussion.href ?>/<?cs var:forum.id ?>">
+                  <?cs var:forum.replies ?>
+                </a>
+              </div>
             </td>
           </tr>
         <?cs /if ?>
@@ -89,12 +109,12 @@
 <?cs /if ?>
 
 <?cs if:trac.acl.DISCUSSION_ADMIN ?>
-  <div class="buttons">
-    <form method="post" action="<?cs var:discussion.href ?>">
+  <form method="post" action="<?cs var:discussion.href ?>">
+    <div class="buttons">
       <input type="submit" name="newforum" value="New Forum"/>
       <input type="hidden" name="discussion_action" value="add"/>
-    </form>
-  </div>
+    </div>
+  </form>
 <?cs /if ?>
 
 <?cs linclude "discussion-footer.cs" ?>

@@ -21,7 +21,7 @@
     <div class="field">
       <label for="moderators">Moderators:</label><br/>
       <?cs if:discussion.users.0 ?>
-        <select id="moderators" name="moderators" multiple="on">
+        <select id="moderators" name="moderators" multiple="multiple">
           <?cs each:user = discussion.users ?>
             <option value="<?cs var:user ?>"><?cs var:user ?></option>
           <?cs /each ?>

@@ -18,38 +18,50 @@
         <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '/' + discussion.forum.id + '?') ?>
       </tr>
     </thead>
-    </tbody>
+    <tbody>
       <?cs each:topic = discussion.topics ?>
         <tr class="<?cs if:name(topic) % #2 ?>even<?cs else ?>odd<?cs /if ?>">
           <td class="id">
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
-              <div class="id"><?cs var:topic.id ?></div>
-            </a>
+            <div class="id">
+              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
+                <?cs var:topic.id ?>
+              </a>
+            </div>
           </td>
           <td class="subject">
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
-              <div class="subject"><?cs alt:topic.subject ?>&nbsp;<?cs /alt ?></div>
-            </a>
+            <div class="subject">
+              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
+                <?cs alt:topic.subject ?>&nbsp;<?cs /alt ?>
+              </a>
+            </div>
           </td>
           <td class="author">
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
-              <div class="author" ><?cs alt:topic.author ?>&nbsp;<?cs /alt ?></div>
-            </a>
+            <div class="author" >
+              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
+                <?cs alt:topic.author ?>&nbsp;<?cs /alt ?>
+              </a>
+            </div>
           </td>
           <td class="lastreply">
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
-              <div class="lastreply"><?cs alt:topic.lastreply ?>&nbsp;<?cs /alt ?></div>
-            </a>
+            <div class="lastreply">
+              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
+                <?cs alt:topic.lastreply ?>&nbsp;<?cs /alt ?>
+              </a>
+            </div>
           </td>
           <td class="founded">
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
-              <div class="founded" ><?cs alt:topic.time ?>&nbsp;<?cs /alt ?></div>
-            </a>
+            <div class="founded" >
+              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
+                <?cs alt:topic.time ?>&nbsp;<?cs /alt ?>
+              </a>
+            </div>
           </td>
           <td class="replies">
-            <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
-              <div class="replies" ><?cs var:topic.replies ?></div>
-            </a>
+            <div class="replies" >
+              <a href="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>/<?cs var:topic.id ?>">
+                <?cs var:topic.replies ?>
+              </a>
+            </div>
           </td>
         </tr>
       <?cs /each ?>
@@ -59,21 +71,23 @@
   <p class="help">There are no topics created in this forum.</p>
 <?cs /if ?>
 
-<div class="buttons">
-  <?cs if:trac.acl.DISCUSSION_APPEND ?>
-    <form method="post" action="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>">
+<?cs if:trac.acl.DISCUSSION_APPEND ?>
+  <form method="post" action="<?cs var:discussion.href ?>/<?cs var:discussion.forum.id ?>">
+    <div class="buttons">
       <input type="submit" name="newtopic" value="New Topic"/>
       <input type="hidden" name="forum" value="<?cs var:discussion.forum.id ?>"/>
       <input type="hidden" name="discussion_action" value="add"/>
-    </form>
-  <?cs /if ?>
-  <?cs if:trac.acl.DISCUSSION_ADMIN ?>
-    <form method="post" action="<?cs var:discussion.href ?>">
+    </div>
+  </form>
+<?cs /if ?>
+<?cs if:trac.acl.DISCUSSION_ADMIN ?>
+  <form method="post" action="<?cs var:discussion.href ?>">
+    <div class="buttons">
       <input type="submit" name="deleteforum" value="Delete Forum" onclick="return confirm('Do you realy want to delete this forum?')"/>
       <input type="hidden" name="forum" value="<?cs var:discussion.forum.id ?>"/>
-      <input type="hidden" name="discussion_action" value="delete">
-    </form>
-  <?cs /if ?>
-</div>
+      <input type="hidden" name="discussion_action" value="delete"/>
+    </div>
+  </form>
+<?cs /if ?>
 
-<?cs include "footer.cs" ?>
+<?cs include "discussion-footer.cs" ?>

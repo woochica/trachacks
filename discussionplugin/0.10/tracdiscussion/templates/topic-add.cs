@@ -33,18 +33,18 @@
     <div class="field">
       <label for="author">Author:</label><br/>
       <?cs if:discussion.authname == 'anonymous' ?>
-        <input type="text" name="author" value="<?cs alt:args.author ?>anonymous<?cs /alt ?>"/><br/>
+        <input type="text" id="author" name="author" value="<?cs alt:args.author ?>anonymous<?cs /alt ?>"/><br/>
       <?cs else ?>
-        <input type="text" name="author" value="<?cs var:discussion.authname ?>" readonly="true"/><br/>
+        <input type="text" id="author" name="author" value="<?cs var:discussion.authname ?>" readonly="readonly"/><br/>
       <?cs /if ?>
     </div>
     <div class="field">
       <label for="subject">Subject:</label><br/>
-      <input type="text" name="subject" value="<?cs var:args.subject ?>"/><br/>
+      <input type="text" id="subject" name="subject" value="<?cs var:args.subject ?>"/><br/>
     </div>
     <div class="field">
       <label for="body">Body:</label><br/>
-      <textarea name="body" class="wikitext" rows="10" cols="78"><?cs alt:args.body ?>Enter your message here...<?cs /alt ?></textarea><br/>
+      <textarea id="body" name="body" class="wikitext" rows="10" cols="78"><?cs alt:args.body ?>Enter your message here...<?cs /alt ?></textarea><br/>
     </div>
     <div class="buttons">
       <input type="submit" name="preview" value="Preview"/>

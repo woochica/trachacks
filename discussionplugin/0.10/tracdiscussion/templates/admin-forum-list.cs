@@ -87,7 +87,7 @@
       <div class="field">
         <label for="moderators">Moderators:</label><br/>
         <?cs if:discussion.users.0 ?>
-          <select id="moderators" name="moderators" multiple="on">
+          <select id="moderators" name="moderators" multiple="multiple">
             <?cs each:user = discussion.users ?>
               <option value="<?cs var:user ?>"><?cs var:user ?></option>
             <?cs /each ?>
@@ -139,39 +139,51 @@
               <input type="checkbox" name="selection" value="<?cs var:forum.id ?>"/>
             </td>
             <td class="id">
-              <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
-                <div class="id"><?cs var:forum.id ?></div>
-              </a>
+              <div class="id">
+                <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
+                  <?cs var:forum.id ?>
+                </a>
+              </div>
             </td>
             <td class="name">
-              <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
-                <div class="name"><?cs alt:forum.name ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="name">
+                <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
+                  <?cs alt:forum.name ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="subject">
-              <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
-                <div class="subject"><?cs alt:forum.subject ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="subject">
+                <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
+                  <?cs alt:forum.subject ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="description">
-              <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
-                <div class="description"><?cs alt:forum.description ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="description">
+                <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
+                  <?cs alt:forum.description ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <td class="moderators">
-              <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
-                <div class="moderators"><?cs alt:forum.moderators ?>&nbsp;<?cs /alt ?></div>
-              </a>
+              <div class="moderators">
+                <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
+                  <?cs alt:forum.moderators ?>&nbsp;<?cs /alt ?>
+                </a>
+              </div>
             </td>
             <?cs if:discussion.groups.1.id ?>
               <td class="group">
-                <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
-                  <?cs each:group = discussion.groups ?>
-                    <?cs if:group.id == forum.group ?>
-                      <div class="group"><?cs var:group.name ?></div>
-                    <?cs /if ?>
-                  <?cs /each ?>
-                </a>
+                <div class="group">
+                  <a href="<?cs var:discussion.href ?>/forum/<?cs var:forum.id ?>">
+                    <?cs each:group = discussion.groups ?>
+                      <?cs if:group.id == forum.group ?>
+                        <?cs var:group.name ?>
+                      <?cs /if ?>
+                    <?cs /each ?>
+                  </a>
+                </div>
               </td>
             <?cs /if ?>
           </tr>

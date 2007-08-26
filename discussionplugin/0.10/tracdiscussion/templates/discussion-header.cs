@@ -2,8 +2,8 @@
 
 <div id="ctxtnav" class="nav">
   <h2>Wiki Navigation</h2>
-  <ul>
-    <?cs if:discussion.forum.id ?>
+  <?cs if:discussion.forum.id ?>
+    <ul>
       <?cs if:discussion.topic.id ?>
         <li>
           <a href="<?cs var:discussion.href ?>">Forum Index</a>
@@ -31,8 +31,8 @@
           <a href="<?cs var:discussion.href ?>">Forum Index</a>
         </li>
       <?cs /if ?>
-    <?cs /if ?>
-  </ul>
+    </ul>
+  <?cs /if ?>
   <hr/>
 </div>
 

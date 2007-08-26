@@ -10,11 +10,11 @@
       </legend>
       <div class="field">
         <label for="name">Name:</label><br/>
-        <input type="text" name="name" value="<?cs var:discussion.name ?>"/><br/>
+        <input type="text" id="name" name="name" value="<?cs var:discussion.name ?>"/><br/>
       </div>
       <div class="field">
         <label for="description">Description:</label><br/>
-        <input type="text" name="description" value="<?cs var:discussion.description ?>"/><br/>
+        <input type="text" id="description" name="description" value="<?cs var:discussion.description ?>"/><br/>
       </div>
       <div class="buttons">
         <input type="submit" name="submit" value="Edit"/>
@@ -32,11 +32,11 @@
       </legend>
       <div class="field">
         <label for="name">Name:</label><br/>
-        <input type="text" name="name" value=""/><br/>
+        <input type="text" id="name" name="name" value=""/><br/>
       </div>
       <div class="field">
         <label for="description">Description:</label><br/>
-        <input type="text" name="description" value=""/><br/>
+        <input type="text" id="description" name="description" value=""/><br/>
       </div>
       <div class="buttons">
         <input type="submit" name="submit" value="Add"/>
@@ -65,19 +65,25 @@
                 <input type="checkbox" name="selection" value="<?cs var:group.id ?>"/>
               </td>
               <td class="id">
-                <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
-                  <div class="id"><?cs var:group.id ?></div>
-                </a>
+                <div class="id">
+                  <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
+                    <?cs var:group.id ?>
+                  </a>
+                </div>
               </td>
               <td class="name">
-                <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
-                  <div class="name"><?cs alt:group.name ?>&nbsp;<?cs /alt ?></div>
-                </a>
+                <div class="name">
+                  <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
+                    <?cs alt:group.name ?>&nbsp;<?cs /alt ?>
+                  </a>
+                </div>
               </td>
               <td class="description">
-                <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
-                  <div class="description" ><?cs alt:group.description ?>&nbsp;<?cs /alt ?></div>
-                </a>
+                <div class="description">
+                  <a href="<?cs var:discussion.href ?>/group/<?cs var:group.id ?>">
+                    <?cs alt:group.description ?>&nbsp;<?cs /alt ?>
+                  </a>
+                </div>
               </td>
             </tr>
           <?cs /if ?>

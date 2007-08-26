@@ -39,7 +39,7 @@
           <?cs if:discussion.authname == 'anonymous' ?>
             <input type="text" id="author" name="author" value="<?cs alt:args.author ?>anonymous<?cs /alt ?>"/><br/>
           <?cs else ?>
-            <input type="text" id="author" name="author" value="<?cs var:discussion.authname ?>" readonly="true"/><br/>
+            <input type="text" id="author" name="author" value="<?cs var:discussion.authname ?>" readonly="readonly"/><br/>
           <?cs /if ?>
         </div>
         <div class="field">
@@ -50,11 +50,11 @@
           <input type="submit" name="preview" value="Preview"/>
           <input type="submit" name="submit" value="Reply"/>
           <input type="button" name="cancel" value="Cancel" onclick="location.replace('<?cs var:discussion.href ?>')"/>
+          <?cs if:args.message ?>
+            <input type="hidden" name="message" value="<?cs var:args.message ?>"/>
+          <?cs /if ?>
+          <input type="hidden" name="discussion_action" value="post-add"/>
         </div>
-        <?cs if:args.message ?>
-          <input type="hidden" name="message" value="<?cs var:args.message ?>"/>
-        <?cs /if ?>
-        <input type="hidden" name="discussion_action" value="post-add"/>
       </form>
     </fieldset>
   </li>
@@ -136,18 +136,20 @@
         <?cs call:display_edit_form() ?>
       <?cs /if ?>
     </li>
-    <?cs if:message.replies.0.id || args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
-      <ul class="reply">
-        <?cs if:message.replies.0.id ?>
-          <?cs call:display_replies(message.replies) ?>
-        <?cs /if ?>
-        <?cs if:(args.message == message.id) && !args.submit && (args.discussion_action && (args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
-          <?cs if:args.preview ?>
-            <?cs call:display_preview() ?>
+    <?cs if:message.replies.0.id || (args.message == message.id) && (((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add'))) ?>
+      <li>
+        <ul class="reply">
+          <?cs if:message.replies.0.id ?>
+            <?cs call:display_replies(message.replies) ?>
           <?cs /if ?>
-          <?cs call:display_reply_form() ?>
-        <?cs /if ?>
-      </ul>
+          <?cs if:(args.message == message.id) && !args.submit && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
+            <?cs if:args.preview ?>
+              <?cs call:display_preview() ?>
+            <?cs /if ?>
+            <?cs call:display_reply_form() ?>
+          <?cs /if ?>
+        </ul>
+      </li>
     <?cs /if ?>
   <?cs /each ?>
 <?cs /def ?>
@@ -193,14 +195,15 @@
       <?cs call:display_edit_form() ?>
     <?cs /if ?>
   </div>
-  <?cs if:discussion.messages.0.id || args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
+
+  <?cs if:discussion.messages.0.id || (args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add') ?>
     <div class="replies <?cs if:discussion.topic.new ?>new<?cs /if ?>">
       <?cs call:display_set_display() ?>
       <ul class="reply">
         <?cs if:discussion.messages.0.id ?>
           <?cs call:display_replies(discussion.messages) ?>
         <?cs /if ?>
-        <?cs if:!args.message && !args.submit && args.discussion_action && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
+        <?cs if:!args.message && !args.submit && ((args.discussion_action == 'add') || (args.discussion_action == 'quote') || (args.discussion_action == 'post-add')) ?>
           <?cs if:args.preview ?>
             <?cs call:display_preview() ?>
           <?cs /if ?>
