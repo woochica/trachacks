@@ -24,6 +24,7 @@ from trac.ticket.roadmap import ITicketGroupStatsProvider, TicketGroupStats
 
 from bisect import bisect
 import matplotlib
+matplotlib.use('Agg') # disable interactive option
 from pylab import *
 from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
 
@@ -643,8 +644,7 @@ class ChangesetsStats:
         
         numdates = commit_history[0]
         numcommits = commit_history[1]
-        
-        matplotlib.use('Agg')
+
         #cla()
         fig = figure(figsize = (6,4))
         ax = fig.add_subplot(111) # Create supplot with key 111       

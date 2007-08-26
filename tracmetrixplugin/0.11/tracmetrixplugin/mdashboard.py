@@ -28,6 +28,7 @@ from genshi.builder import tag
 #from pylab import drange, array, searchsorted, date2num, num2date, \
 #                  plot, savefig, axis, xlabel, ylable, title, legend
 import matplotlib
+matplotlib.use('Agg') # disable interactive option
 from pylab import *
 from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
 
@@ -293,7 +294,6 @@ def make_cummulative_data(env, tkt_counts):
 
 def create_cummulative_chart(env, milestone, numdates, tkt_cummulative_table): 
     
-    matplotlib.use('Agg')
     #cla()
     fig = figure(figsize = (6,4))
     ax = fig.add_subplot(111) # Create supplot with key 111       
