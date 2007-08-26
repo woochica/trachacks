@@ -89,14 +89,14 @@ class PDashboard(Component):
         urlcomp = req.path_info.split('/')
         
         self.env.log.info(urlcomp)
-                
-        if urlcomp[1] == 'pdashboard':
-            if len(urlcomp) == 3: #url has 2 
-                req.args['imagename'] = urlcomp[2]
-            else:
-                req.args['imagename'] = None
-                    
-            return True
+        
+        if len(urlcomp) >= 2:
+            if urlcomp[1] == 'pdashboard' and len(urlcomp) >= 2:
+                if len(urlcomp) == 3: #url has 2 
+                    req.args['imagename'] = urlcomp[2]
+                else:
+                    req.args['imagename'] = None
+                return True
 
     def process_request(self, req):
         req.perm.require('ROADMAP_VIEW')
