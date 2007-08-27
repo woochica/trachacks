@@ -25,11 +25,14 @@ class PermRedirectModule(Component):
     def post_process_request(self, req, template, content_type):
         if template is None:
             # Some kind of exception in progress
-            exctype = sys.exc_info()[0]
-            if issubclass(exctype, PermissionError) and req.authname == 'anonymous':
+            exctype, exc = sys.exc_info()[0:2]
+            if req.authname == 'anonymous' and \
+               (issubclass(exctype, PermissionError) or \
+                (issubclass(exctype, TracError) and \
+                 exc.message == 'No admin pages available')):
                 # Do our redirect
                 try:
-                    req.redirect(req.href.login(referer=req.href(req.path_info)))
+                    req.redirect(req.href.login())
                 except RequestDone:
                     pass # Mask the raise from here, we need to do it later
                 
