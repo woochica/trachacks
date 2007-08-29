@@ -23,6 +23,8 @@ This function does all the work. Options for method are:
  * dateend - overrides timeend when passed - e.g. '8/20/07'
  * hidedates - any non empty string causes start and end times not to be rendered to the graph
  * hidehours - any non empty string causes hours not to be rendered to the graph
+ 
+Note that filtering tickets that are not belonging to any milestone or component is not currently possible, because there is no way to indicate 'NULL' milestone or component!
 """
 
     if not debug:
@@ -33,15 +35,12 @@ This function does all the work. Options for method are:
             return type(val)
         return val
 
-    from time import time
-    script_started = int(time())
-
     targetmilestone=options.get('targetmilestone', None)
     targetticket=strtotype(options.get('targetticket', None), int)
     targetcomponent=options.get('targetcomponent', None)
     time_interval=strtotype(options.get('timeinterval', 3600*24), int)
     timestart=strtotype(options.get('timestart', 0), int)
-    timeend=strtotype(options.get('timeend', script_started), int)
+    timeend=strtotype(options.get('timeend',0), int)
     datestart=options.get('datestart', None)
     dateend=options.get('dateend', None)
     hidedates=options.get('hidedates')
@@ -62,24 +61,17 @@ This function does all the work. Options for method are:
     except Exception:
         raise Exception, "invalid dateend: '%s', expected format: '%s'" % (str(dateend), trac.util.get_date_format_hint())
 
-    print>>debug, "dateend", dateend
-    print>>debug, "timeend", timeend
-
-    cursor = db.cursor()
+    # this dict stores tickets. Tickets are updated on each 'revision' visited - so this is somekinf of snapshot of ticket data at given time
     tickets = {}
 
     def calc_hours(tickets,max_time):
-        """Calculates totalhours of tickets on current tickets state taking filters in the account. Tickets created after given timestamp are excluded (they doesn't don't exist yet)"""
+        """Calculates totalhours of tickets on current tickets state taking filters in the account."""
         result = 0.0
         for ticket in tickets.values():
             if targetmilestone and ticket['milestone'] != targetmilestone: continue
             if targetticket and ticket['ticket'] != targetticket: continue
-
-            # note: following impl includes also tickets which are targeted to component - matching to null values is currently impossible - for any fields... if the db would use empty string, then None would include all tickets and '' only tickets tied to that component
             if targetcomponent and ticket['component'] != targetcomponent: continue
-
-            if ticket['time'] <= max_time:
-                result += (ticket['estimate'] - ticket['totalhours'])
+            result += (ticket['estimate'] - ticket['totalhours'])
         return result
 
     def tofloat(obj):
@@ -92,8 +84,13 @@ This function does all the work. Options for method are:
             return float(obj.replace(",","."))
         return float(obj) #fallback
 
-    # fetch the last known ticket information (HEAD version) from db
-    # note: outer join may return zero or '' if there is no such field, so we use arithmetic -0.0 to force result to be valid float value
+    cursor = db.cursor()
+
+    # ----------------------------------------------------
+    # fetch the last known state (HEAD revision) of tickets and store to memory
+    # ----------------------------------------------------
+
+    # outer join may return zero or '' if there is no such field, so we use arithmetic opration -0.0 to 'cast' result to be valid float value
     sql = """
         SELECT t.id, t.time, t.status, t.milestone, est.value-0.0, th.value-0.0, t.component
         FROM ticket t
@@ -101,65 +98,86 @@ This function does all the work. Options for method are:
             LEFT OUTER JOIN ticket_custom th ON (t.id = th.ticket AND th.name = 'totalhours')
         ORDER BY t.id
         """
-    data = cursor.execute(sql).fetchall()
+    for (ticket,time, status,milestone,estimate,totalhours,component) in cursor.execute(sql).fetchall():
+        tickets[ticket] = {'ticket':ticket,
+                           'status':status,
+                           'milestone':milestone,
+                           'estimate':estimate,
+                           'totalhours':totalhours,
+                           'time':time,
+                           'component':component}
+        #print>>debug, "ticket #%d: %s" % (ticket, str(tickets[ticket]))
 
-    # store tickets to dictionary
-    for (ticket,time, status,milestone,estimate,totalhours,component) in data:
-        tickets[ticket] = {'ticket':ticket, 'status':status, 'milestone':milestone, 'estimate':estimate, 'totalhours':totalhours, 'time':time,
-            'component':component}
 
-    tickets_create_times = cursor.execute("select distinct time-0 from ticket").fetchall()
-    tickets_create_times.sort()
-
-    # iterate ticket_change backward and write 'histogram' as x,y
-
-    sql = """
-        SELECT ticket, time, field, oldvalue, newvalue
-        FROM ticket_change
-        WHERE field in('estimatedhours', 'totalhours', 'milestone')
-        ORDER BY time desc;
-        """
-    data = cursor.execute(sql).fetchall()
-
-    #print>>debug, "\n\nticket_change data"
-    #for line in data:
-    #    print>>debug, line
-
-    currenttime = timeend # this shall be timeend
+    # ----------------------------------------------------
+    # process timestamps from last ticket change/creation
+    # to first ticket created and build x/y-pairs to result array
+    # ----------------------------------------------------
 
     result = []
-
     def process_time(time):
-        if time < timestart or time >= timeend: return
-        hours = calc_hours(tickets,time)
-
-        if len(result) < 2 or result[-1] != hours:
+        hours = calc_hours(tickets,time) # todo: remove time from call
+        if len(result) >= 2 and result[-1] == hours:
+            # update timestamp
+            result[-2] = time
+        elif len(result) < 2 or result[-1] != hours:
             # data changed from previous item -> write row
             result.append(time)
             result.append(hours)
+            
 
-    for (ticket,time,field,oldvalue,newvalue) in data:
-        # process possible ticket creation phases
-        while tickets_create_times[-1] < currenttime and tickets_create_times[-1] > time:
-            process_time(tickets_create_times.pop())
+    def process_ticket_create(t, id):
+        del tickets[id]
 
-        # if ticket changed in resultrow, process current status first...
-        if time != currenttime:
-            process_time(time)
-            currenttime = time
+    def process_ticket_change(t, id):
+        sql = """
+            SELECT ticket, time, field, oldvalue, newvalue
+            FROM ticket_change
+            WHERE time=%d AND ticket=%d AND field IN('estimatedhours', 'totalhours', 'milestone', 'component') 
+            ORDER BY time desc""" % (t,id)
+        data = cursor.execute(sql).fetchall()
+        # print>>debug, "ticket_change data:"
+        #for line in data:
+        #    print>>debug, line
 
-        # ... and then process the row in next line
-        if field == 'totalhours':
-            tickets[ticket]['totalhours'] = tofloat(oldvalue) # we iterate backwards, thus old value
-        elif field == 'estimatedhours':
-            tickets[ticket]['estimatedhours'] = tofloat(oldvalue) # we iterate backwards, thus old value
-        elif field == 'milestone':
-            tickets[ticket]['milestone'] = oldvalue
+        for (ticket,time,field,oldvalue,newvalue) in data:
+            # we iterate backwards, thus we save old values
+            if field == 'totalhours':
+                tickets[ticket]['totalhours'] = tofloat(oldvalue)
+            elif field == 'estimatedhours':
+                tickets[ticket]['estimatedhours'] = tofloat(oldvalue)
+            elif field == 'milestone':
+                tickets[ticket]['milestone'] = oldvalue
+            elif field == 'component':
+                tickets[ticket]['component'] = oldvalue
 
-    # todo: if there is less that 4 items in array, special treatment is needed. I'm not sure if it is possible to have only two items in the array at all... actually there seems to be allways at least 2 items - in those cases that no ticket matched filters.
-    # so quick & dirty solution is to return a notification about that
-    if len(result) < 4:
-        return \
+    # -- find out timestamps (revisions) and bind processors for them
+
+    timestamps = {}
+    for line in cursor.execute("SELECT DISTINCT time, id from ticket ORDER BY time").fetchall():
+        timestamps[int(line[0])] = [(process_ticket_create, int(line[1]))]
+
+    for line in cursor.execute("SELECT DISTINCT time, ticket from ticket_change ORDER BY time").fetchall():
+        item = timestamps.get(int(line[0]),[])
+        item.insert(0, (process_ticket_change, int(line[1])))
+        timestamps[int(line[0])] = item
+
+    # -- process each timestamp from oldest to newest (direction is importat cos we know only the latest time)
+
+    tmp = [] + timestamps.keys()
+    tmp.sort()
+    tmp.reverse() # from oldest to youngest
+    for t in tmp:
+        # print status after changes first (remember backward iterating)
+        process_time(t)
+        for processor in timestamps[t]:
+            processor[0](t, processor[1])
+
+    # ----------------------------------------------------
+    # generate graph based on results
+    # ----------------------------------------------------
+
+    NO_DATA = \
 """<?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
 "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
@@ -167,14 +185,35 @@ This function does all the work. Options for method are:
     <text x="50%" y="50%" text-anchor="middle" style="font-family:verdana;">No data</text>
 </svg>
 """
-
-    # last item in the array is junk showing change from zero level (if filtered by time, this may also be something else - previous hours should be known then - now we just expect that to be zero)
+    if len(result) < 4:
+        return NO_DATA
+    
+    # last item is zero and timestamp is updated to first ticket creation, so it needs to be 'scaled' to first item where hours change
     result[-2] = result[-4]
 
-    #result.insert(0, result[1])
-    #result.insert(0, timeend)
-
     #print>>debug, "result=",str(result)
+
+    # if start or end times are defined, drop results outside of them
+    if timestart:
+        for i in range(0, len(result),2):
+            if result[i] >= timestart: continue
+            if i == 0:
+                return NO_DATA
+            result[i] = timestart
+            result[i+1] = result[i-1]
+            result = result[:i+2]
+            break
+
+    if timeend:
+        starti = len(result)-2
+        for i in range(starti, -2, -2):
+            if result[i] <= timeend: continue
+            if i == starti:
+                return NO_DATA
+            result[i] = timeend
+            result[i+1] = result[i+3]
+            result = result[i:]
+            break
 
     # translate time from something big to origin (from timestart+n..timestart+n+x -> timestart .. timestart+x)
     # if timestart is zero (not give), the graph is translated using the smallest x-y pair in result
@@ -185,15 +224,19 @@ This function does all the work. Options for method are:
         result[i] -= smallesttime
 
     largesttime = result[0] #largest time is result[0] because values were got from sorted sql resultset
-    if largesttime + smallesttime < timeend:
+    if timeend:
         largesttime = timeend - smallesttime
 
-    #print>>debug, "result=",str(result)
 
-    maxhours = 0.1; # if there all hours are zero, this 0.1 is left and will not cause division by zero.. when zeroes are multiplied, no problem even this is nonzero
+
+
+    maxhours = 0.1; # there was division by zero if all hours are zero (should not happen anymore though)
     for i in range(0, len(result),2):
         if result[i+1] > maxhours:
             maxhours = result[i+1]
+
+    # todo: margin as percents
+    #margin = 2
 
     fx = 100.0 / largesttime
     fy = 100.0 / maxhours
@@ -222,10 +265,14 @@ This function does all the work. Options for method are:
                 svg += '<text x="0" y="%f%%" text-anchor="start" style="font-family:verdana;">%s</text>\n' %  (y, str(i))
             i += step
 
-    # example result: [1764457.0, 22.5, 886999, 22.5, 616137, 25.5, 531911, 16.5, 531899, 17.5, 531875, 18.5, 528859, 11.5, 528738, 10.5, 528635, 11.5, 362372, 5.5, 360492, 6.0, 355196, 4.0, 17698, 6.0, 17442, 7.0, 0, 5.0, 0, 6.0]
+    #result= [1581,5,     0,2,     0,0]
+    #result= [1581,5,     700,2,     300,4,  0,0]
     for i in range(0, len(result)-2, 2):
         svg += """<line x1="%f%%" y1="%f%%" x2="%f%%" y2="%f%%" style="stroke:rgb(0,200,0);stroke-width:3"/>\n""" % \
-            (result[i] * fx, 100 - result[i+1] * fy, result[i+2] * fx, 100 - result[i+3] * fy)
+            (result[i] * fx, 100 - result[i+1] * fy, result[i] * fx, 100 - result[i+3] * fy)
+
+        svg += """<line x1="%f%%" y1="%f%%" x2="%f%%" y2="%f%%" style="stroke:rgb(0,200,0);stroke-width:3"/>\n""" % \
+            (result[i] * fx, 100 - result[i+3] * fy, result[i+2] * fx, 100 - result[i+3] * fy)
 
     if not hidedates:
         # draw graph start & end dates
@@ -244,7 +291,7 @@ if __name__ == "__main__":
         return build_svg(args)
 
     from trac.env import open_environment
-    env = open_environment("c:\\scm\\trac\\test")
+    env = open_environment("c:\\scm\\trac\\visualizerdemo")
     db = env.get_db_cnx()
     import sys
     svg = build_svg_paramlist(db, milestone='mile1', time_interval=3600*24, debug=sys.stdout, datestart="8/1/07", dateend="10/1/07")
@@ -260,8 +307,10 @@ def process_request(plugin, req):
         def write(self, data):
             self.out += data
 
+    import tractimevisualizerplugin
     debug = None;
-    #debug = MyDebug() # uncomment this line to turn on debugging
+    if tractimevisualizerplugin.DEVELOPER_MODE:
+        debug = MyDebug()
     try:
         from trac.web import RequestDone
         from trac.util.datefmt import http_date

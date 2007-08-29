@@ -22,10 +22,10 @@ class SVGRenderer(Component):
 
     def process_request(self, req):
         req.perm.assert_permission('TICKET_VIEW')
-        DEVELOPING = False
 
         import impl
-        if DEVELOPING:
+        import tractimevisualizerplugin
+        if tractimevisualizerplugin.DEVELOPER_MODE:
             reload(impl)
 
         return impl.process_request(self, req)

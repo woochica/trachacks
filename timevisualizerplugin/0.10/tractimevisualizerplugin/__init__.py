@@ -1,8 +1,10 @@
-"This module is a plugin for Trac to render burndown and other time related graphs."
+"This module is a plugin for Trac to render burndown and other time related graphs based on ticket history."
 
 from tractimevisualizerplugin import *
 
-__version__ = '0.3'
+DEVELOPER_MODE=False
+
+__version__ = '0.4'
 __url__ = 'http://trac-hacks.org/wiki/TimeVisualizerPlugin'
 __author__ = 'Markus Pelkonen'
 __copyright__ = 'Copyright (C) 2007 Markus Pelkonen'
