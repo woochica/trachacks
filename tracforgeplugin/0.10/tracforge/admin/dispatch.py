@@ -1,6 +1,7 @@
 # Created by Noah Kantrowitz on 2007-04-09.
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
 import inspect
+import traceback
 
 from trac.core import *
 from trac.core import ComponentMeta
@@ -98,9 +99,10 @@ class TracForgeDispatcherModule(Component):
                 #self.log.debug('TracForgeDispatch: wsgi.input contains %s', req.read())
                 self._send_project(req, path_info)
                 self.log.debug('TracForgeDispatch: Relaunch completed, terminating request')
+                self.log.debug('TracForgeDispatch: Response was %r', req._response)
                 
-                req._tracforge_evil = True
-                        
+                req._tf_print = True
+                
                 return True
 
     def process_request(self, req):
@@ -132,6 +134,16 @@ class TracForgeDispatcherModule(Component):
         start_response = req._start_response
         environ = copy.copy(req.environ)
         
+        class hacked_start_response(object):
+        
+            def __init__(self, start_response, log):
+                self.start_response = start_response
+                self.log = log
+                
+            def __call__(self, *args):
+                self.log.debug('TracForgeDispatch: start_response called with (%s)', ', '.join(repr(x) for x in args))
+                return self.start_response(*args)
+        
         environ['SCRIPT_NAME'] = req.href.projects()
         environ['PATH_INFO'] = path_info
         environ['TRAC_ENV_PARENT_DIR'] = os.path.dirname(self.env.path)
@@ -141,7 +153,7 @@ class TracForgeDispatcherModule(Component):
         
         self.log.debug('TracForgeDispatch: Calling next dispatch_request')
         try:
-            req._response = dispatch_request(environ, start_response)
+            req._response = dispatch_request(environ, hacked_start_response(start_response, self.log))
         except RequestDone:
             self.log.debug('TracForgeDispatch: Masking inner RequestDone')
         self.log.debug('TracForgeDispatch: Done')
@@ -150,6 +162,7 @@ class TracForgeDispatcherModule(Component):
         self.log.debug('TracForgeDispatch: Sending evil RequestDone')
         raise RequestDone
     anonymous_request = property(_evil)
+    use_template = property(_evil)
 
 # Evil
 env = None
@@ -195,13 +208,14 @@ def __init__(self, environ, start_response):
     self.abs_href = Href(self.base_url)
  
     self._args = None
-    env.log.debug('TracForgeEvil: Using patched init')
+    env.log.debug('TracForgeEvil: Using patched init (%s)', id(self))
     
 Request.__init__ = __init__
 
 def get_args(req):
     if not req._args:
-        env.log.debug('TracForgeEvil: Expanding req.args')
+        env.log.debug('TracForgeEvil: Expanding req.args (%s)', id(req))
+        #env.log.debug('TracForgeEvil: %s', traceback.format_stack())
         req._args = req._parse_args()
     return req._args
 
