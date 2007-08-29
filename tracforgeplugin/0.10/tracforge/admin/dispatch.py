@@ -1,5 +1,6 @@
 # Created by Noah Kantrowitz on 2007-04-09.
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+import sys
 import inspect
 import traceback
 
@@ -158,11 +159,24 @@ class TracForgeDispatcherModule(Component):
             self.log.debug('TracForgeDispatch: Masking inner RequestDone')
         self.log.debug('TracForgeDispatch: Done')
         
-    def _evil(self):
+    def _evil_phase_1(self):
+        self.log.debug('TracForgeDispatch: Sending early_error')
+        raise Exception # Dump into early_error mode
+    anonymous_request = property(_evil_phase_1)
+
+    def _evil_phase_2(self):
+        for frame in inspect.stack()[1:]:
+            locals = frame[0].f_locals
+            if 'early_error' in locals:
+                self.log.debug('TracForgeDispatch: Erasing early_error')
+                locals['early_error'][:] = []
+                break
+        else:
+            self.log.error('TracForgeDispatch: evil_phase_2 unable to isolate early error. Contact coderanger ASAP!')
+            raise TracError('Something went wrong, check the log and contact coderanger')
         self.log.debug('TracForgeDispatch: Sending evil RequestDone')
         raise RequestDone
-    anonymous_request = property(_evil)
-    use_template = property(_evil)
+    use_template = property(_evil_phase_2)
 
 # Evil
 env = None
@@ -220,3 +234,12 @@ def get_args(req):
     return req._args
 
 Request.args = property(lambda self: get_args(self))
+
+# Monkey patch sys.exc_info
+exc_info = sys.exc_info
+def new_exc_info():
+    rv = exc_info()
+    if isinstance(rv, tuple):
+        rv = list(rv)
+    return rv
+sys.exc_info = new_exc_info
