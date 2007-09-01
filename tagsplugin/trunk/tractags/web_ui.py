@@ -2,6 +2,7 @@ import re
 from tractags.api import TagEngine
 from StringIO import StringIO
 from trac.core import *
+from trac.perm import IPermissionRequestor
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, INavigationContributor, add_stylesheet
 from trac.web.api import ITemplateStreamFilter
@@ -18,7 +19,7 @@ _tag_split = re.compile('[,\s]+')
 
 
 class TagsUserInterface(Component):
-    implements(ITemplateStreamFilter, IWikiPageManipulator)
+    implements(ITemplateStreamFilter, IWikiPageManipulator, IPermissionRequestor)
 
     # Internal methods
     def _page_tags(self, req):
@@ -65,11 +66,15 @@ class TagsUserInterface(Component):
             )
         return stream | Transformer('//div[@id="changeinfo1"]').append(insert)
 
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['TAGS_VIEW', 'TAGS_MODIFY']
+
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == 'wiki_view.html':
+        if filename == 'wiki_view.html' and 'TAGS_VIEW' in req.perm:
             return self._wiki_view(req, stream)
-        elif filename == 'wiki_edit.html':
+        elif filename == 'wiki_edit.html' and 'TAGS_MODIFY' in req.perm:
             return self._wiki_edit(req, stream)
         return stream
 
@@ -78,63 +83,11 @@ class TagsUserInterface(Component):
         pass
 
     def validate_wiki_page(self, req, page):
-        if req and req.path_info.startswith('/wiki') and 'save' in req.args:
+        if req and 'TAGS_MODIFY' in req.perm and req.path_info.startswith('/wiki') \
+                and 'save' in req.args:
             self._update_tags(req, page)
         return []
 
-#class TagsWikiModule(WikiModule):
-#    """ Replacement for the default Wiki module. Tag editing is much more
-#        intuitive now, as it no longer requires the TagIt macro and JavaScript
-#        magic. """
-#
-#    def _do_save(self, req, db, page):
-#        # This method is overridden so the user doesn't get "Page not modified"
-#        # exceptions when updating tags but not wiki content.
-#        from tractags.api import TagEngine
-#        if 'tags' in req.args:
-#            newtags = set([t.strip() for t in
-#                          _tag_split.split(req.args.get('tags')) if t.strip()])
-#            wikitags = TagEngine(self.env).tagspace.wiki
-#            oldtags = wikitags.get_tags([page.name])
-#
-#            if oldtags != newtags:
-#                wikitags.replace_tags(req, page.name, newtags)
-#                # No changes, just redirect
-#                if req.args.get('text') == page.text:
-#                    req.redirect(self.env.href.wiki(page.name))
-#                    return
-#        return WikiModule._do_save(self, req, db, page)
-#
-#    def process_request(self, req):
-#        from tractags.api import TagEngine
-#        from trac.web.chrome import add_stylesheet
-#
-#        add_stylesheet(req, 'tags/css/tractags.css')
-#
-#        pagename = req.args.get('page', 'WikiStart')
-#        action = req.args.get('action', 'view')
-#
-#        engine = TagEngine(self.env)
-#        wikitags = engine.tagspace.wiki
-#        tags = list(wikitags.get_tags([pagename]))
-#        tags.sort()
-#
-#        if action == 'edit':
-#            req.hdf['tags'] = req.args.get('tags', ', '.join(tags))
-#        elif action == 'view':
-#            hdf_tags = []
-#            for tag in tags:
-#                href, title = engine.get_tag_link(tag)
-#                hdf_tags.append({'name': tag,
-#                                 'href': href,
-#                                 'title': title})
-#            req.hdf['tags'] = hdf_tags
-#        result = WikiModule.process_request(self, req)
-#        if result is None:
-#            return None
-#        if result[0] == 'wiki.cs':
-#            return 'tagswiki.cs', None
-#        return result
 
 class TagsModule(Component):
     """ Serve a /tags namespace. Top-level displays tag cloud, sub-levels
@@ -189,28 +142,32 @@ class TagsModule(Component):
         """
         from pkg_resources import resource_filename
         return [('tags', resource_filename(__name__, 'htdocs'))]
-    
+
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        return 'tags'
+        if 'TAGS_VIEW' in req.perm:
+            return 'tags'
 
     def get_navigation_items(self, req):
         from trac.web.chrome import Chrome
-        yield ('mainnav', 'tags',
-               Markup('<a href="%s" accesskey="T">Tags</a>',
-                      self.env.href.tags()))
+        if 'TAGS_VIEW' in req.perm:
+            yield ('mainnav', 'tags',
+                   Markup('<a href="%s" accesskey="T">Tags</a>',
+                          req.href.tags()))
 
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info.startswith('/tags')
+        return 'TAGS_VIEW' in req.perm and req.path_info.startswith('/tags')
 
     def process_request(self, req):
         from tractags.macros import TagMacros
         from tractags.parseargs import parseargs
         from trac.web.chrome import add_stylesheet
 
+        req.perm.require('TAGS_VIEW')
+
         add_stylesheet(req, 'tags/css/tractags.css')
-        req.hdf['trac.href.tags'] = self.env.href.tags()
+        req.hdf['trac.href.tags'] = req.href.tags()
 
         def update_from_req(args):
             for k in req.args.keys():
