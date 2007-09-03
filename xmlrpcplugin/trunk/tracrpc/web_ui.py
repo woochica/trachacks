@@ -33,7 +33,6 @@ class XMLRPCWeb(Component):
 
         # Dump RPC functions
         content_type = req.get_header('Content-Type') or 'text/html'
-        self.env.log.debug(content_type)
         if not self.content_type_re.match(content_type):
             namespaces = {}
             for method in XMLRPCSystem(self.env).all_methods(req):

@@ -28,7 +28,7 @@ class TicketRPC(Component):
         yield ('TICKET_VIEW', ((list, int),), self.getAvailableActions)
         yield ('TICKET_VIEW', ((list, int),), self.get)
         yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict), (int, str, str, dict, bool)), self.create)
-        yield ('TICKET_APPEND', ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
+        yield ('TICKET_ADMIN', ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
         yield ('TICKET_ADMIN', ((None, int),), self.delete)
         yield ('TICKET_VIEW', ((dict, int), (dict, int, int)), self.changeLog)
         yield ('TICKET_VIEW', ((list, int),), self.listAttachments)
