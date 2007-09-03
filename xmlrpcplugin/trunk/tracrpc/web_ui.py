@@ -49,7 +49,7 @@ class XMLRPCWeb(Component):
                     traceback.print_exc(file=out)
                     raise Exception('%s: %s\n%s' % (method.name, str(e), out.getvalue()))
             add_stylesheet(req, 'common/css/wiki.css')
-            return ('xmlrpclist.cs', {'xmlrpc': {'functions': namespaces}}, None)
+            return ('xmlrpclist.html', {'xmlrpc': {'functions': namespaces}}, None)
 
         # Handle XML-RPC call
         args, method = xmlrpclib.loads(req.read(int(req.get_header('Content-Length'))))
