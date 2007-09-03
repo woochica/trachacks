@@ -16,7 +16,8 @@ from tracrpc.api import IXMLRPCHandler, expose_rpc
 from tracrpc.util import to_timestamp, to_datetime
 
 class WikiRPC(Component):
-    """ Implementation of the [http://www.jspwiki.org/Wiki.jsp?page=WikiRPCInterface2 WikiRPC API]. """
+    """Superset of the
+    [http://www.jspwiki.org/Wiki.jsp?page=WikiRPCInterface2 WikiRPC API]. """
 
     implements(IXMLRPCHandler)
 
@@ -43,6 +44,7 @@ class WikiRPC(Component):
         yield ('WIKI_MODIFY', ((bool, str, str, str, xmlrpclib.Binary),
                                (bool, str, str, str, xmlrpclib.Binary, bool)),
                                self.putAttachmentEx)
+        yield ('WIKI_DELETE', ((bool, str),(bool, str, int)), self.deletePage)
         yield ('WIKI_DELETE', ((bool, str),), self.deleteAttachment)
         yield ('WIKI_VIEW', ((list, str),), self.listLinks)
         yield ('WIKI_VIEW', ((str, str),), self.wikiToHtml)
@@ -115,6 +117,17 @@ class WikiRPC(Component):
                   attributes.get('comment'),
                   req.remote_addr)
         return True
+
+    def deletePage(self, req, name, version=None):
+        """Delete a Wiki page (all versions) or a specific version by
+        including an optional version number. Attachments will also be
+        deleted if page no longer exists. Returns True for success."""
+        try:
+            wp = WikiPage(self.env, name, version)
+            wp.delete(version)
+            return True
+        except:
+            return False
 
     def listAttachments(self, req, pagename):
         """ Lists attachments on a given page. """
