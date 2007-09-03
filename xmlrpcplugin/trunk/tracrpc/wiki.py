@@ -49,20 +49,20 @@ class WikiRPC(Component):
         yield ('WIKI_VIEW', ((list, str),), self.listLinks)
         yield ('WIKI_VIEW', ((str, str),), self.wikiToHtml)
 
-    def _page_info(self, name, time, author, version):
+    def _page_info(self, name, time, author, version, comment):
         return dict(name=name, lastModified=xmlrpclib.DateTime(int(time)),
-                    author=author, version=int(version))
+                    author=author, version=int(version), comment=comment)
 
     def getRecentChanges(self, req, since):
         """ Get list of changed pages since timestamp """
         since = to_timestamp(since)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT name, max(time), author, version FROM wiki'
+        cursor.execute('SELECT name, max(time), author, version, comment FROM wiki'
                        ' WHERE time >= %s GROUP BY name ORDER BY max(time) DESC', (since,))
         result = []
-        for name, time, author, version in cursor:
-            result.append(self._page_info(name, time, author, version))
+        for name, time, author, version, comment in cursor:
+            result.append(self._page_info(name, time, author, version, comment))
         return result
 
     def getRPCVersionSupported(self, req):
@@ -95,9 +95,9 @@ class WikiRPC(Component):
         page = WikiPage(self.env, pagename, version)
         if page.exists:
             last_update = page.get_history().next()
-            return self._page_info(page.name, 
-                                   time.mktime(last_update[1].utctimetuple()), 
-                                   last_update[2], page.version)
+            return self._page_info(page.name,
+                                   time.mktime(last_update[1].utctimetuple()),
+                                   last_update[2], page.version, page.comment)
 
     def putPage(self, req, pagename, content, attributes):
         """ writes the content of the page. """
