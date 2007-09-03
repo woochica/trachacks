@@ -1,7 +1,8 @@
 from trac.core import *
 from tracrpc.api import IXMLRPCHandler
 from tracrpc.util import to_datetime
-from trac.search import ISearchSource
+from trac.search.api import ISearchSource
+from trac.search.web_ui import SearchModule
 
 try:
     a = set()
@@ -30,19 +31,21 @@ class SearchRPC(Component):
             for filter in source.get_search_filters(req):
                 yield filter
 
-    def performSearch(self, req, query, filters = []):
+    def performSearch(self, req, query, filters=None):
         """ Perform a search using the given filters. Defaults to all if not
             provided. Results are returned as a list of tuples in the form
            (href, title, date, author, excerpt)."""
-        from trac.Search import search_terms
-        query = search_terms(query)
-        chosen_filters = set(filters)
+        query = SearchModule(self.env)._get_search_terms(query)
+        filters_provided = filters is not None
+        chosen_filters = set(filters or [])
         available_filters = []
         for source in self.search_sources:
             available_filters += source.get_search_filters(req)
 
         filters = [f[0] for f in available_filters if f[0] in chosen_filters]
         if not filters:
+            if filters_provided:
+                return []
             filters = [f[0] for f in available_filters]
         self.env.log.debug("Searching with %s" % filters)
 
