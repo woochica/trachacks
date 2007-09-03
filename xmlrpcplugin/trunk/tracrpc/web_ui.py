@@ -1,15 +1,18 @@
+import re
+import xmlrpclib
 from pkg_resources import resource_filename
 from trac.core import *
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from tracrpc.api import IXMLRPCHandler, XMLRPCSystem
 from trac.wiki.formatter import wiki_to_oneliner
-import xmlrpclib
 
 class XMLRPCWeb(Component):
     """ Handle XML-RPC calls from HTTP clients, as well as presenting a list of
         methods available to the currently logged in user. Browsing to
         <trac>/xmlrpc or <trac>/login/xmlrpc will display this list. """
+
+    content_type_re = re.compile(r'(text|application)/xml')
 
     implements(IRequestHandler, ITemplateProvider)
 
@@ -17,9 +20,9 @@ class XMLRPCWeb(Component):
     def match_request(self, req):
         return req.path_info in ('/login/xmlrpc', '/xmlrpc')
 
-    def _send_response(self, req, response):
+    def _send_response(self, req, response, content_type='application/xml'):
         req.send_response(200)
-        req.send_header('Content-Type', 'text/xml')
+        req.send_header('Content-Type', content_type)
         req.send_header('Content-Length', len(response))
         req.end_headers()
         req.write(response)
@@ -29,8 +32,9 @@ class XMLRPCWeb(Component):
         req.perm.assert_permission('XML_RPC')
 
         # Dump RPC functions
-        content_type = req.get_header('Content-Type')
-        if content_type is None or 'text/xml' not in content_type:
+        content_type = req.get_header('Content-Type') or 'text/html'
+        self.env.log.debug(content_type)
+        if not self.content_type_re.match(content_type):
             namespaces = {}
             for method in XMLRPCSystem(self.env).all_methods(req):
                 namespace = method.namespace.replace('.', '_')
@@ -55,10 +59,10 @@ class XMLRPCWeb(Component):
         args, method = xmlrpclib.loads(req.read(int(req.get_header('Content-Length'))))
         try:
             result = XMLRPCSystem(self.env).get_method(method)(req, args)
-            self._send_response(req, xmlrpclib.dumps(result, methodresponse=True))
+            self._send_response(req, xmlrpclib.dumps(result, methodresponse=True), content_type)
         except xmlrpclib.Fault, e:
             self.log.error(e)
-            self._send_response(req, xmlrpclib.dumps(e))
+            self._send_response(req, xmlrpclib.dumps(e), content_type)
         except Exception, e:
             self.log.error(e)
             import traceback
