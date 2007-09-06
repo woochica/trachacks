@@ -8,7 +8,9 @@ from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
+from trac.util.html import html
 
+from genshi import Markup
 from genshi.template import TemplateLoader
 
 from tracdiscussion.notification import *
@@ -27,6 +29,7 @@ class DiscussionApi(Component):
         # Get request items and modes.
         group, forum, topic, message = self._get_items(context)
         modes = self._get_modes(context, group, forum, topic, message)
+        self.log.debug(modes)
 
         # Determine moderator rights.
         is_moderator = forum and (context.req.authname in forum['moderators']) \
@@ -70,8 +73,8 @@ class DiscussionApi(Component):
             forum['time'] = format_datetime(forum['time'])
         if topic:
             topic['subject'] = format_to_oneliner(context, topic['subject'])
-            topic['author'] = format_to_oneliner(context, topic['author'])
             topic['body'] = format_to_html(context, topic['body'])
+            topic['author'] = format_to_oneliner(context, topic['author'])
             topic['time'] = format_datetime(topic['time'])
         if message:
             message['author'] = format_to_oneliner(context, message['author'])
@@ -122,6 +125,8 @@ class DiscussionApi(Component):
         action = context.req.args.get('discussion_action')
         preview = context.req.args.has_key('preview');
         submit = context.req.args.has_key('submit');
+        self.log.debug('realm: %s, action: %s, preview: %s, submit: %s' % (
+          context.realm, action, preview, submit))
 
         # Determine mode.
         if message:
@@ -531,6 +536,8 @@ class DiscussionApi(Component):
                 new_body = context.req.args.get('body')
                 new_time = to_timestamp(datetime.now(utc))
 
+                self.log.debug((new_subject, new_body))
+
                 # Add topic.
                 self.add_topic(context, forum['id'], new_subject, new_time,
                   new_author, new_body)
@@ -565,6 +572,7 @@ class DiscussionApi(Component):
                 # Get form values.
                 new_subject = context.req.args.get('subject')
                 new_body = context.req.args.get('body')
+                self.log.debug('new_body: ' + new_body)
 
                 # Edit topic.
                 topic['subject'] = new_subject
@@ -715,8 +723,8 @@ class DiscussionApi(Component):
         new_body = context.req.args.get('body')
 
         # Get time when topic was visited from session.
-        visit_time = context.visited_topics.has_key(topic['id']) and \
-          int(context.visited_topics[topic['id']] or 0)
+        visit_time = int(context.visited_topics.has_key(topic['id']) and
+          (context.visited_topics[topic['id']] or 0))
 
         # Update this topic visit time.
         context.visited_topics[topic['id']] = to_timestamp(datetime.now(utc))
@@ -726,11 +734,12 @@ class DiscussionApi(Component):
             topic['new'] = True
 
         # Prepare display of topic.
-        if new_author:
+        self.log.debug( (new_body,))
+        if new_author != None:
             self.data['author'] = format_to_oneliner(context, new_author)
-        if new_subject:
+        if new_subject != None:
             self.data['subject'] = format_to_oneliner(context, new_subject)
-        if new_body:
+        if new_body != None:
             self.data['body'] = format_to_html(context, new_body)
 
         # Prepare display of messages.
@@ -873,8 +882,8 @@ class DiscussionApi(Component):
     def get_forums(self, context, order_by = 'subject', desc = False):
 
         def _get_new_topic_count(context, forum_id):
-           time = context.visited_forums.has_key(forum_id) and \
-             int(context.visited_forums[forum_id] or 0)
+           time = int(context.visited_forums.has_key(forum_id) and
+             (context.visited_forums[forum_id] or 0))
            sql = "SELECT COUNT(id) FROM topic t WHERE t.forum = %s AND t.time > %s"
 
            context.env.log.debug(sql % (forum_id, time))
@@ -884,15 +893,27 @@ class DiscussionApi(Component):
            return 0
 
         def _get_new_replies_count(context, forum_id):
-           time = context.visited_forums.has_key(forum_id) and \
-             int(context.visited_topics[forum_id] or 0)
-           sql = "SELECT COUNT(id) FROM message m WHERE m.forum = %s AND m.time > %s"
+           sql = "SELECT id FROM topic t WHERE t.forum = %s"
+           context.env.log.debug(sql % (forum_id,))
+           context.cursor.execute(sql, (forum_id,))
 
-           context.env.log.debug(sql % (forum_id, time))
-           context.cursor.execute(sql, (forum_id, time))
+           # Get IDs of topics in this forum.
+           topics = []
            for row in context.cursor:
-              return int(row[0])
-           return 0
+               topics.append(row[0])
+
+           # Count unseen messages.
+           count = 0
+           for topic_id in topics:
+               time = int(context.visited_topics.has_key(topic_id) and
+                 (context.visited_topics[topic_id] or 0))
+               sql = "SELECT COUNT(id) FROM message m WHERE m.topic = %s AND m.time > %s"
+               context.env.log.debug(sql % (topic_id, time))
+               context.cursor.execute(sql, (topic_id, time))
+               for row in context.cursor:
+                   count += int(row[0])
+
+           return count
 
         if not order_by in ('topics', 'replies', 'lasttopic', 'lastreply'):
             order_by = 'f.' + order_by
@@ -937,8 +958,8 @@ class DiscussionApi(Component):
     def get_topics(self, context, forum_id, order_by = 'time', desc = False):
 
         def _get_new_replies_count(context, topic_id):
-            time = context.visited_topics.has_key(topic_id) and \
-             int(context.visited_topics[topic_id] or 0)
+            time = int(context.visited_topics.has_key(topic_id) and
+              (context.visited_topics[topic_id] or 0))
             sql = "SELECT COUNT(id) FROM message m WHERE m.topic = %s AND m.time > %s"
 
             context.env.log.debug(sql % (topic_id, time))

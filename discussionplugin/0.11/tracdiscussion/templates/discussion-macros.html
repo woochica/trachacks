@@ -13,13 +13,23 @@
       <div class="topic ${discussion.topic.new and 'new' or None}">
         <a name="-1"></a>
 
-        <div class="header">
-          <div class="subject">
-            ${is_topic_edit and discussion.subject or discussion.topic.subject}
-          </div>
-          <div class="body">
-            ${is_topic_edit and discussion.body or discussion.topic.body}
-          </div>
+        <div class="header" py:choose="">
+          <py:when test="is_topic_edit">
+            <div class="subject">
+              ${discussion.subject or '&nbsp;'}
+            </div>
+            <div class="body">
+              ${discussion.body or '&nbsp;'}
+            </div>
+          </py:when>
+          <py:otherwise>
+            <div class="subject">
+              ${discussion.topic.subject or '&nbsp;'}
+            </div>
+            <div class="body">
+              ${discussion.topic.body or '&nbsp;'}
+            </div>
+          </py:otherwise>
         </div>
 
         <div class="controls">
@@ -117,7 +127,7 @@
           Message #??
       </div>
       <div class="body">
-        ${discussion.body}
+        ${discussion.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
       </div>
       <div class="footer">
         <div class="author">
@@ -147,8 +157,13 @@
           Message #${message.id}
         </div>
 
-        <div class="body">
-          ${is_message_edit and discussion.body or message.body}
+        <div class="body" py:choose="">
+          <py:when test="is_message_edit">
+            ${discussion.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+          </py:when>
+          <py:otherwise>
+            ${message.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+          </py:otherwise>
         </div>
 
         <div class="controls">

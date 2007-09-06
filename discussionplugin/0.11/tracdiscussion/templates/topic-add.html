@@ -18,10 +18,10 @@
           <div class="topic">
             <div class="header">
               <div class="subject">
-                ${discussion.subject}
+                ${discussion.subject or '&nbsp;'}
               </div>
               <div class="body">
-                ${discussion.body}
+                ${discussion.body or '&nbsp;'}
               </div>
               <div class="footer">
                 <div class="author">
@@ -57,7 +57,14 @@
 
             <div class="field">
               <label for="body">Body:</label><br/>
-              <textarea id="body" class="wikitext" name="body" cols="80" rows="20">${req.args.body or 'Enter your message here...'}</textarea><br/>
+              <py:choose>
+                <py:when test="req.args.preview">
+                  <textarea id="body" class="wikitext" name="body" cols="80" rows="20">${req.args.body}</textarea><br/>
+                </py:when>
+                <py:otherwise>
+                  <textarea id="body" class="wikitext" name="body" cols="80" rows="20">Enter your message here...</textarea><br/>
+                </py:otherwise>
+              </py:choose>
             </div>
 
             <div class="buttons">
