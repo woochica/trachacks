@@ -72,12 +72,7 @@ class DiscussionCore(Component):
     def process_request(self, req):
         # Create request context.
         context = Context(self.env, req)('discussion-core')
-        context.cursor = context.db.cursor()
 
-        # Process request.
-        api = DiscussionApi()
-        content = api.process_discussion(context)
-        context.db.commit()
-
-        # Return request result content.
-        return (content[0], content[1], None)
+        # Process request and return content.
+        api = self.env[DiscussionApi]
+        return api.process_discussion(context) + (None,)

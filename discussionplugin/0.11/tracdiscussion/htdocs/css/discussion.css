@@ -23,7 +23,7 @@
 
 .forum-list td.id, .forum-list td.moderators, .forum-list td.lasttopic,
 .forum-list td.lastreply, .forum-list td.time, .forum-list td.topics,
-.forum-list td.replies
+.forum-list td.new_topics, .forum-list td.replies, .forum-list td.new_replies
 {
   text-align: center;
 }
@@ -52,7 +52,7 @@
 
 /* Topic list */
 .topic-list td.id, .topic-list td.author, .topic-list td.lastreply,
-.topic-list td.time, .topic-list td.replies
+.topic-list td.time, .topic-list td.replies, .topic-list td.new_replies
 {
   text-align: center;
 }

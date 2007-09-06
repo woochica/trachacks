@@ -23,7 +23,9 @@
           ${sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', href.discussion())}
           ${sortable_th(discussion.order, discussion.desc, 'time', 'Founded', href.discussion())}
           ${sortable_th(discussion.order, discussion.desc, 'topics', 'Topics', href.discussion())}
+          <th>New Topics</th>
           ${sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', href.discussion())}
+          <th>New Replies</th>
         </tr>
       </thead>
       <tbody>
@@ -83,10 +85,24 @@
                 </a>
               </div>
             </td>
+            <td class="new_topics">
+              <div class="new_topics">
+                <a href="${href.discussion(forum.id)}">
+                  <span>${forum.new_topics or '0'}</span>
+                </a>
+              </div>
+            </td>
             <td class="replies">
               <div class="replies">
                 <a href="${href.discussion(forum.id)}">
                   <span>${forum.replies or '0'}</span>
+                </a>
+              </div>
+            </td>
+            <td class="new_replies">
+              <div class="new_replies">
+                <a href="${href.discussion(forum.id)}">
+                  <span>${forum.new_replies or '0'}</span>
                 </a>
               </div>
             </td>
