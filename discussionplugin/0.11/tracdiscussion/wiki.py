@@ -52,8 +52,8 @@ class DiscussionWiki(Component):
             context = formatter.context('discussion-wiki')
             context.cursor = context.db.cursor()
 
-            # Create API object.
-            api = DiscussionApi()
+            # Get API object.
+            api = self.env[DiscussionApi]
 
             # Get topic by subject
             topic = api.get_topic_by_subject(context, subject)
@@ -67,14 +67,15 @@ class DiscussionWiki(Component):
 
             # Process discussion request.
             template, data = api.process_discussion(context)
-            context.db.commit()
+
+            if context.req.args.get('body') == '':
+               context.req.args['body'] = ' '
 
             # Return rendered template.
             data['discussion']['mode'] = 'message-list'
             data['discussion']['page_name'] = page_name
-            content = Chrome(self.env).render_template(formatter.req, template,
+            return Chrome(self.env).render_template(formatter.req, template,
               data, 'text/html', True)
-            return content
         else:
             raise TracError('Not implemented macro %s' % (name))
 

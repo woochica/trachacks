@@ -38,12 +38,7 @@ class DiscussionWebAdmin(Component):
 
         # Create request context.
         context = Context(self.env, req)('discussion-admin')
-        context.cursor = context.db.cursor()
 
         # Process request.
-        api = DiscussionApi()
-        content = api.process_discussion(context)
-        context.db.commit()
-
-        # Retrun page content
-        return content
+        api = self.env[DiscussionApi]
+        return api.process_discussion(context)

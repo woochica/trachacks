@@ -654,7 +654,7 @@ class DiscussionApi(Component):
                 notifier.notify(context, mode, forum, topic, new_message, to, cc)
 
                 # Redirect request to prevent re-submit.
-                if context.req.args.get('component') != 'wiki':
+                if context.realm != 'discussion-wiki':
                     context.req.redirect(context.req.href.discussion('redirect',
                       href = context.req.path_info))
 
@@ -682,7 +682,7 @@ class DiscussionApi(Component):
                   message['topic'], message['replyto'], new_body)
 
                 # Redirect request to prevent re-submit.
-                if context.req.args.get('component') != 'wiki':
+                if context.realm != 'discussion-wiki':
                     context.req.redirect(context.req.href.discussion('redirect',
                       href = context.req.path_info))
 
@@ -695,7 +695,7 @@ class DiscussionApi(Component):
                 self.delete_message(context, message['id'])
 
                 # Redirect request to prevent re-submit.
-                if context.req.args.get('component') != 'wiki':
+                if context.realm != 'discussion-wiki':
                     context.req.redirect(context.req.href.discussion('redirect',
                       href = context.req.path_info))
 
