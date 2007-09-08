@@ -52,7 +52,7 @@
 			    <td style="width: 200px">${len(bmi[1])} ${wiki_to_html(context(), ', '.join(['#%s' % i for i in bmi[1]]))}</td>
 			    <td style="width: 200px">${len(bmi[2])} ${wiki_to_html(context(), ', '.join(['#%s' % i for i in bmi[2]]))}</td>
 			    <td style="width: 200px">${len(bmi[3])} ${wiki_to_html(context(), ', '.join(['#%s' % i for i in bmi[3]]))}</td>
-			    <td style="width: 90px">${"%.2f %%" % (float(len(bmi[3])) * 100 / float(len(bmi[2])),)}</td>
+			    <td style="width: 90px">${"%.2f %%" % (bmi[4])}</td>
 			  </tr>
 		    </tbody>		  
 		  </table>
@@ -74,19 +74,19 @@
 		  <tbody>
   			<tr py:for="key in ticket_duration_stats" class="statistics">
 			  <th style="width: 357px" class="style1">${key}</th>
-			  <th style="width: 100px">${pretty_timedelta(0, ticket_duration_stats[key].avg())}</th>
-			  <th style="width: 100px">${pretty_timedelta(0, ticket_duration_stats[key].median())}</th>
-			  <th style="width: 91px">${pretty_timedelta(0, ticket_duration_stats[key].max())}</th>
-			  <th style="width: 90px">${pretty_timedelta(0, ticket_duration_stats[key].min())}</th>
-			  <th style="width: 90px">${pretty_timedelta(0, ticket_duration_stats[key].stdev())}</th>
+			  <th style="width: 100px"><py:if test="ticket_duration_stats[key].avg()">${pretty_timedelta(0, ticket_duration_stats[key].avg())}</py:if></th>
+			  <th style="width: 100px"><py:if test="ticket_duration_stats[key].median()">${pretty_timedelta(0, ticket_duration_stats[key].median())}</py:if></th>
+			  <th style="width: 91px"><py:if test="ticket_duration_stats[key].max()">${pretty_timedelta(0, ticket_duration_stats[key].max())}</py:if></th>
+			  <th style="width: 90px"><py:if test="ticket_duration_stats[key].min()">${pretty_timedelta(0, ticket_duration_stats[key].min())}</py:if></th>
+			  <th style="width: 90px"><py:if test="ticket_duration_stats[key].stdev()">${pretty_timedelta(0, ticket_duration_stats[key].stdev())}</py:if></th>
 			</tr>
   			<tr py:for="key in ticket_frequency_stats" class="statistics">
 			  <th style="width: 357px" class="style1">${key}</th>
-			  <th style="width: 100px">${"%.4f" % ticket_frequency_stats[key].avg()}</th>
-			  <th style="width: 100px">${"%.4f" % ticket_frequency_stats[key].median()}</th>
-			  <th style="width: 91px">${"%.4f" % ticket_frequency_stats[key].max()}</th>
-			  <th style="width: 90px">${"%.4f" % ticket_frequency_stats[key].min()}</th>
-			  <th style="width: 90px">${"%.4f" % ticket_frequency_stats[key].stdev()}</th>
+			  <th style="width: 100px"><py:if test="ticket_frequency_stats[key].avg()">${"%.4f" % ticket_frequency_stats[key].avg()}</py:if></th>
+			  <th style="width: 100px"><py:if test="ticket_frequency_stats[key].median()">${"%.4f" % ticket_frequency_stats[key].median()}</py:if></th>
+			  <th style="width: 91px"><py:if test="ticket_frequency_stats[key].max()">${"%.4f" % ticket_frequency_stats[key].max()}</py:if></th>
+			  <th style="width: 90px"><py:if test="ticket_frequency_stats[key].min()">${"%.4f" % ticket_frequency_stats[key].min()}</py:if></th>
+			  <th style="width: 90px"><py:if test="ticket_frequency_stats[key].stdev()">${"%.4f" % ticket_frequency_stats[key].stdev()}</py:if></th>
 			</tr>
 		  </tbody>		  
 		</table>

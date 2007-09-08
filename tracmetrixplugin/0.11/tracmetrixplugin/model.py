@@ -331,12 +331,17 @@ class TicketGroupMetrics(object):
         created_tickets = self.get_tickets_created_during(start_date, end_date)
         opened_tickets = self.get_remaning_opened_ticket_on(end_date)
         closed_tickets = self.get_tickets_closed_during(start_date, end_date)
-        
+
+        if opened_tickets == []:
+            bmi = 0
+        else:
+            bmi = float(len(closed_tickets)) * 100 / float(len(opened_tickets))
+            
         return ("%s/%s" % (start_date.month, start_date.year),
                 created_tickets,
                 opened_tickets,
                 closed_tickets,
-                float(len(closed_tickets)) * 100 / float(len(opened_tickets)))
+                bmi)
         
     def get_daily_backlog_history(self, start_date, end_date):
         """
@@ -440,7 +445,10 @@ class TicketGroupMetrics(object):
                 
         bmi_dataset = []
         for i in range(len(opened_tickets_dataset)):
-            bmi_dataset.append(float(closed_tickets_dataset[i])*100/float(opened_tickets_dataset[i]))
+            if opened_tickets_dataset[i] == 0:
+                 bmi_dataset.append(0.0)
+            else:
+                bmi_dataset.append(float(closed_tickets_dataset[i])*100/float(opened_tickets_dataset[i]))
     
 #        for idx, numdate in enumerate(numdates):
 #            self.env.log.info("%s: %s, %s, %s" % (num2date(numdate), 
@@ -620,8 +628,10 @@ class ChangesetsStats:
         
         self.start_date = start_date
         self.stop_date = stop_date    
-        self.first_rev = self.changesets[0][0]
-        self.last_rev = self.changesets[-1][0]
+        
+        if self.changesets != []:
+            self.first_rev = self.changesets[0][0]
+            self.last_rev = self.changesets[-1][0]
     
     def get_commit_by_date(self):
         
