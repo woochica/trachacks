@@ -9,7 +9,7 @@ from trac.ticket.api import TicketSystem
 from trac.ticket.notification import TicketNotifyEmail
 
 import time
-import pydoc
+import inspect
 import xmlrpclib
 from StringIO import StringIO
 
@@ -123,7 +123,7 @@ class TicketRPC(Component):
         for date, author, field, old, new, permanent in t.get_changelog(when):
             yield (to_datetime(date), author, field, old, new, permanent)
     # Use existing documentation from Ticket model
-    changeLog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
+    changeLog.__doc__ = inspect.getdoc(model.Ticket.get_changelog)
 
     def listAttachments(self, req, ticket):
         """ Lists attachments for a given ticket. Returns (filename,
