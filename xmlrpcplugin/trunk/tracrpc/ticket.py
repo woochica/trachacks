@@ -96,7 +96,7 @@ class TicketRPC(Component):
 
     def update(self, req, id, comment, attributes = {}, notify=False):
         """ Update a ticket, returning the new ticket in the same form as getTicket(). """
-        now = int(time.time())
+        now = time.time()
 
         t = model.Ticket(self.env, id)
         for k, v in attributes.iteritems():

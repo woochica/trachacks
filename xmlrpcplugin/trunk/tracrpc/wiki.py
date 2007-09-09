@@ -51,7 +51,7 @@ class WikiRPC(Component):
 
     def _page_info(self, name, time, author, version, comment):
         return dict(name=name, lastModified=xmlrpclib.DateTime(int(time)),
-                    author=author, version=int(version), comment=comment)
+                    author=author, version=int(version), comment=comment or '')
 
     def getRecentChanges(self, req, since):
         """ Get list of changed pages since timestamp """

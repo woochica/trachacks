@@ -225,8 +225,10 @@ class XMLRPCSystem(Component):
         return [','.join([RPC_TYPES[x] for x in sig]) for sig in p.xmlrpc_signatures()]
 
     def getAPIVersion(self, req):
-        """ Returns a list with two elements. First element is the major
-        version number, second is the minor. Changes to the major version
+        """ Returns a list with three elements. First element is the
+        epoch (0=Trac 0.10, 1=Trac 0.11 or higher). Second element is the major
+        version number, third is the minor. Changes to the major version
         indicate API breaking changes, while minor version changes are simple
         additions, bug fixes, etc. """
-        return [0, 3]
+        import tracrpc
+        return map(int, tracrpc.__version__.split('.'))
