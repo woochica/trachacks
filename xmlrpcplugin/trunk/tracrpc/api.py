@@ -54,7 +54,6 @@ class AbstractRPCHandler(Component):
     abstract = True
 
     def _init_methods(self):
-        import inspect
         self._rpc_methods = []
         for name, val in inspect.getmembers(self):
             if hasattr(val, '_xmlrpc_signatures'):
@@ -70,17 +69,16 @@ class Method(object):
     """ Represents an XML-RPC exposed method. """
     def __init__(self, provider, permission, signatures, callable, name = None):
         """ Accept a signature in the form returned by xmlrpc_methods. """
-        import pydoc
         self.permission = permission
         self.callable = callable
         self.rpc_signatures = signatures
-        self.description = pydoc.getdoc(callable)
+        self.description = inspect.getdoc(callable)
         if name is None:
             self.name = provider.xmlrpc_namespace() + '.' + callable.__name__
         else:
             self.name = provider.xmlrpc_namespace() + '.' + name
         self.namespace = provider.xmlrpc_namespace()
-        self.namespace_description = pydoc.getdoc(provider)
+        self.namespace_description = inspect.getdoc(provider)
 
     def __call__(self, req, args):
         req.perm.assert_permission(self.permission)
