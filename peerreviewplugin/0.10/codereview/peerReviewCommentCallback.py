@@ -186,9 +186,9 @@ class UserbaseModule(Component):
         html += "<tr><td width=\"" + `width` + "px\"></td>"
         html += "<td colspan=\"2\" align=\"left\" width=\"" + `(400-100-width)` + "px\">Author: " + comment.Author + "</td>"
         html += "<td width=\"100px\" align=\"right\">" + util.format_date(comment.DateCreate) + "</td></tr>"
-        html += "<tr><td width=\"" + `width` + "px\"></td><td valign=\"top\" width=\"" + `factor` + "px\" id=\"" + `comment.IDComment` + "TreeButton\">"
+        html += "<tr><td width=\"" + `width` + "px\"></td><td valign=\"top\" width=\"" + `factor` + "px\" id=\"" + str(comment.IDComment) + "TreeButton\">"
         if not childrenHTML == "":
-            html += "<img src=\"" + self.env.href.chrome() + "/hw/images/minus.gif\" onclick=\"collapseComments(" + comment.IDComment + ");\">"
+            html += "<img src=\"" + self.env.href.chrome() + "/hw/images/minus.gif\" onclick=\"collapseComments(" + str(comment.IDComment) + ");\">"
         html += "</td>"
         html += "<td colspan=\"2\" align=\"left\" width=\"" + `(400-width-factor)` + "px\" bgcolor=\"#F7F7F0\" style=\"border: 1px solid #999999\">" + comment.Text + "</td></tr>"
         html += "<tr><td width=\"" + `width` + "px\"></td><td width=\"" + `factor` + "px\"></td>"
@@ -197,7 +197,7 @@ class UserbaseModule(Component):
             html += "<a border=0 alt=\"Code Attachment\"  href=\"" + self.env.href.peerReviewCommentCallback() + "?actionType=getCommentFile&fileName=" + comment.AttachmentPath + "&IDFile=" + IDFile + "\"><img src=\"" + self.env.href.chrome() + "/hw/images/paper_clip.gif\"> " +  comment.AttachmentPath + "</a>"
         html += "</td>"
         html += "<td width=\"100px\" align=\"right\">"
-        html += "<a href=\"javascript:addComment(" + `LineNum` + ", " + `IDFile` + ", " +  `comment.IDComment` + ")\">Reply</a></td></tr>"
+        html += "<a href=\"javascript:addComment(" + str(LineNum) + ", " + str(IDFile) + ", " +  str(comment.IDComment) + ")\">Reply</a></td></tr>"
         html += "<tr height=\"3\"><td width=\"" + `width` + "px\"></td><td width=\"" + `factor` + "px\"></td><td width=\"" + `(400-width-factor)` + "px\" colspan=\"2\"></td></tr>"
         html += "</table>"
 
