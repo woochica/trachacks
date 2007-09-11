@@ -1,0 +1,5 @@
+- possibly allow other way to get keywords and descriptions:
+  - from a file in svn ?
+  - from a Keywords wiki page ?
+  - from pages under Keywords, one per keyword ?
+
