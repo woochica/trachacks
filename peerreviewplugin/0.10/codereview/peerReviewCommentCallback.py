@@ -179,7 +179,7 @@ class UserbaseModule(Component):
         factor = 15
         width = (5+nodesIn*factor);
         
-        html = "<table width=\"400px\" style=\"border-collapse: collapse\" id=\"" + `comment.IDParent` + ":" + `comment.IDComment` + "\">"
+        html = "<table width=\"400px\" style=\"border-collapse: collapse\" id=\"" + str(comment.IDParent) + ":" + str(comment.IDComment) + "\">"
         if not first:
             html += "<tr><td width=\"" + `width` + "px\"></td>"
             html += "<td colspan=\"3\" width=\"" + `(400-width)` + "px\" style=\"border-top: 1px solid #C0C0C0;\"></td></tr>"
