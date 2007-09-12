@@ -4,4 +4,5 @@
   - from pages under Keywords, one per keyword ?
 - sort keywords alphabetically, since iterating over the section doesn't
   respect the order from the config
+- http://www.scottandrew.com/weblog/articles/cbs-events
 
