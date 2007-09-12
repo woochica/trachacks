@@ -202,7 +202,7 @@ try:
     elif sys.argv[1] == "list":
         showSettings()
     else:
-        print "useage: ./ezProduceTrac.sh [ add | del | list ]"
+        print "useage: python ./ezProduceTrac.py [ add | del | list ]"
 except IndexError:
     showSettings()
 
