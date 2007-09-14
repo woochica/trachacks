@@ -28,6 +28,9 @@ class SimpleContainer(object):
 class LogEnhancer(Component):
     """Revtree enhancer based on specific log messages and custom properties
     This class is provided as-is, as an example
+
+    'rth' stands for 'RevTree Hack', as I've been unable to come with a 
+    better name.
     """
     
     implements(IRevtreeEnhancer)    
@@ -69,12 +72,12 @@ class LogEnhancer(Component):
             if not svgbranch:
                 continue
             for chgset in branch.changesets():
-                if chgset.prop('st:export'):
+                if chgset.prop('rth:export'):
                     svgchgset = svgbranch.svgchangeset(chgset)
                     svgchgset.set_shape('hexa')
                 msg = chgset.changeset.message.lower()
                 if msg.startswith('delivers'):
-                    deliver = chgset.prop('st:deliver')
+                    deliver = chgset.prop('rth:deliver')
                     if not deliver:
                         continue
                     try:
@@ -101,7 +104,7 @@ class LogEnhancer(Component):
                     svgchgset = svgbranch.svgchangeset(chgset)
                     svgchgset.set_shape('Circle')
                 elif msg.startswith('brings'):
-                    bring = chgset.prop('st:bring')
+                    bring = chgset.prop('rth:bring')
                     if not bring:
                         continue
                     try:
