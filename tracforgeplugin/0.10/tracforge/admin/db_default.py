@@ -1,7 +1,7 @@
 from trac.db import Table, Column
 
 name = 'tracforge.admin'
-version = 7
+version = 8
 tables = [
     Table('tracforge_projects', key='name')[
         Column('name'),
@@ -17,9 +17,9 @@ tables = [
         Column('stderr'),
     ],
     #Table('tracforge_project_output', key=('ts'
-    Table('tracforge_members', key=('project', 'user'))[
+    Table('tracforge_members', key=('project', 'username'))[
         Column('project'),
-        Column('user'),
+        Column('username'),
         Column('role'),
     ],
     Table('tracforge_permission', key=('username', 'action'))[
@@ -39,4 +39,17 @@ tables = [
         Column('value'),
         Column('action'),
     ],
+]
+
+def rename_user_to_username(data):
+    """Change tracforge_members.user to tracforge_members.username to work with
+    Postgres as "user" is a keyword.
+    """
+    colnames = data['tracforge_members'][0]
+    for i, col in enumerate(colnames):
+        if col == 'user':
+            colnames[i] = 'username'
+    
+migrations = [
+    (xrange(1,8), rename_user_to_username),
 ]

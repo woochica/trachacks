@@ -80,6 +80,11 @@ class TracForgeAdminSystem(Component):
                         raise e # If it is an OperationalError, just move on to the next table
                         
             
+        for vers, migration in db_default.migrations:
+            if self.found_db_version in vers:
+                self.log.info('TracForgeAdminModule: Running migration %s', migration.__doc__)
+                migration(old_data)
+
         for tbl in db_default.tables:
             for sql in db_manager.to_sql(tbl):
                 cursor.execute(sql)
@@ -94,4 +99,6 @@ class TracForgeAdminSystem(Component):
                         cursor.execute(sql, row)
                     except Exception, e:
                         if 'OperationalError' not in e.__class__.__name__:
-                            raise e
+                            raise
+                        else:
+                            self.log.debug('TracForgeAdminModule: Masking exception %s', e)

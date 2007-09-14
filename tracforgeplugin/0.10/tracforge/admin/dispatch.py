@@ -41,21 +41,29 @@ class TracForgeIndexModule(Component):
             
             try:
                 env = _open_environment(env_path)
-                #self.log.debug(env.path)
-                env_perm = PermissionCache(env, req.authname)
-                #self.log.debug(env_perm.perms)
-                if env_perm.has_permission('PROJECT_VIEW'):
-                    projects.append({
-                        'name': env.project_name,
-                        'description': env.project_description,
-                        'href': req.href.projects(env_name),
-                    })
+
+                try:
+                    #self.log.debug(env.path)
+                    env_perm = PermissionCache(env, req.authname)
+                    #self.log.debug(env_perm.perms)
+                    if env_perm.has_permission('PROJECT_VIEW'):
+                        projects.append({
+                            'name': env.project_name,
+                            'description': env.project_description,
+                            'href': req.href.projects(env_name),
+                        })
+                except Exception, e:
+                    # Only show errors to admins to prevent excessive disclosure
+                    if req.perm.has_permission('TRACFORGE_ADMIN'):
+                        projects.append({
+                            'name': env.project_name,
+                            'description': to_unicode(e)
+                        })
             except Exception, e:
-                # Only show errors to admins to prevent excessive disclosure
                 if req.perm.has_permission('TRACFORGE_ADMIN'):
                     projects.append({
-                        'name': env.project_name,
-                        'description': to_unicode(e)
+                        'name': env_path,
+                        'description': u'Massive loading failure',
                     })
             
         projects.sort(lambda x, y: cmp(x['name'].lower(), y['name'].lower()))
@@ -138,6 +146,8 @@ class TracForgeDispatcherModule(Component):
         class hacked_start_response(object):
         
             def __init__(self, start_response, log):
+                if hasattr(start_response, 'log'):
+                    raise Exception("BOOM!")
                 self.start_response = start_response
                 self.log = log
                 
@@ -145,16 +155,29 @@ class TracForgeDispatcherModule(Component):
                 self.log.debug('TracForgeDispatch: start_response called with (%s)', ', '.join(repr(x) for x in args))
                 return self.start_response(*args)
         
-        environ['SCRIPT_NAME'] = req.href.projects()
+        environ['SCRIPT_NAME'] = req.href.projects('/')
         environ['PATH_INFO'] = path_info
-        environ['TRAC_ENV_PARENT_DIR'] = os.path.dirname(self.env.path)
+        environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
         if 'TRAC_ENV' in environ:
             del environ['TRAC_ENV']
+        if 'trac.env_path' in environ:
+            del environ['trac.env_path']
         environ['tracforge_master_link'] = req.href.projects()
         
+        # Remove mod_python option to avoid conflicts
+        if 'mod_python.subprocess_env' in environ:
+            del environ['mod_python.subprocess_env']
+        if 'mod_python.options' in environ:
+            del environ['mod_python.options']
+        
+        
+        self.log.debug('TracForgeDispatch: environ %r', environ)
         self.log.debug('TracForgeDispatch: Calling next dispatch_request')
         try:
-            req._response = dispatch_request(environ, hacked_start_response(start_response, self.log))
+            if not hasattr(start_response, 'log'):
+                self.log.debug('TracForgeDispatch: Setting start_request logging hack')
+                #start_response = hacked_start_response(start_response, self.log)
+            req._response = dispatch_request(environ, start_response)
         except RequestDone:
             self.log.debug('TracForgeDispatch: Masking inner RequestDone')
         self.log.debug('TracForgeDispatch: Done')
