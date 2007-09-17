@@ -5,7 +5,7 @@ from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 
 # Last screenshots database shcema version
-last_db_version = 2
+last_db_version = 3
 
 class ScreenshotsInit(Component):
     """
@@ -31,12 +31,19 @@ class ScreenshotsInit(Component):
         db_version = self._get_db_version(cursor)
 
 
-        # Perform incremental upgrades
-        for I in range(db_version + 1, last_db_version + 1):
-            script_name  = 'db%i' % (I)
-            module = __import__('tracscreenshots.db.%s' % (script_name),
-            globals(), locals(), ['do_upgrade'])
-            module.do_upgrade(self.env, cursor)
+        # Is this clean installation?
+        if db_version == 0:
+            # Perform single upgrade.
+            module = __import__('tracscreenshots.db.db%s' % (last_db_version),
+              globals(), locals(), ['do_upgrade'])
+            module.do_upgrade(self.env, cursor, False)
+        else:
+            # Perform incremental upgrades
+            for I in range(db_version + 1, last_db_version + 1):
+                script_name  = 'db%i' % (I)
+                module = __import__('tracscreenshots.db.%s' % (script_name),
+                  globals(), locals(), ['do_upgrade'])
+                module.do_upgrade(self.env, cursor, True)
 
     def _get_db_version(self, cursor):
         try:

@@ -1,22 +1,20 @@
 # -*- coding: utf8 -*-
 
-from tracscreenshots.api import *
+import sets, re, os, os.path, time, mimetypes, Image
+
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider, \
-  add_stylesheet
+from trac.config import Option
+from trac.web.main import populate_hdf
+from trac.web.chrome import Chrome, add_stylesheet
+from trac.web.clearsilver import HDFWrapper
+from trac.util import Markup, format_datetime, TracError
+from trac.util.html import html
+
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
-from trac.config import Option
-from trac.util import format_datetime, TracError
-from trac.util.html import html
-import sets, re, os, os.path, time, mimetypes
+from trac.web.chrome import INavigationContributor, ITemplateProvider
 
-# Try import TracTagsPlugin.
-try:
-    from tractags.api import TagEngine
-    is_tags = True
-except:
-    is_tags = False
+from tracscreenshots.api import *
 
 no_screenshot = {'id' : 0}
 
@@ -28,6 +26,13 @@ class ScreenshotsCore(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
       IPermissionRequestor)
 
+    # Screenshots renderers.
+    renderers = ExtensionPoint(IScreenshotsRenderer)
+
+    # Screenshot change listeners.
+    change_listeners = ExtensionPoint(IScreenshotChangeListener)
+
+    # Configuration options.
     title = Option('screenshots', 'title', 'Screenshots',
       'Main navigation bar button title.')
     path = Option('screenshots', 'path', '/var/lib/trac/screenshots',
@@ -43,10 +48,12 @@ class ScreenshotsCore(Component):
       'Option to disable display of screenshot name and author.')
 
     # IPermissionRequestor methods.
+
     def get_permission_actions(self):
-        return ['SCREENSHOTS_VIEW', 'SCREENSHOTS_ADMIN',]
+        return ['SCREENSHOTS_VIEW', 'SCREENSHOTS_FILTER', 'SCREENSHOTS_ADMIN']
 
     # ITemplateProvider methods.
+
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('screenshots', resource_filename(__name__, 'htdocs'))]
@@ -56,6 +63,7 @@ class ScreenshotsCore(Component):
         return [resource_filename(__name__, 'templates')]
 
     # INavigationContributor methods.
+
     def get_active_navigation_item(self, req):
         return 'screenshots'
 
@@ -65,144 +73,121 @@ class ScreenshotsCore(Component):
               href = req.href.screenshots())
 
     # IRequestHandler methods.
+
     def match_request(self, req):
-        if re.match(r'''^/screenshots($|/$)''', req.path_info):
+        match = re.match(r'''^/screenshots($|/$)''', req.path_info)
+        if match:
             return True
-        if re.match(r'''^/screenshots/(\d+)/(small|medium|large)$''',
-          req.path_info):
-            req.args['action'] = 'get_file'
+        match = re.match(r'''^/screenshots/(\d+)$''', req.path_info)
+        if match:
+            req.args['action'] = 'get-file'
+            req.args['id'] = match.group(1)
             return True
         return False
 
     def process_request(self, req):
-        # Create API object.
-        self.api = ScreenshotsApi(self)
 
-        # Get database access.
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        # Get action from request and perform them.
+        actions = self._get_actions(req)
+        self.log.debug('actions: %s' % (actions,))
+        template, data, content_type = self._do_actions(req, actions)
 
-        # Get current screenshot id
-        self.id = int(req.args.get('id') or 0)
-
-        # Get components and versions.
-        components = self.api.get_components(cursor)
-        component_id = int(req.args.get('component') or 0)
-        if component_id:
-            component = self._get_component(components, component_id)
-        else:
-            component = self._get_component_by_name(components, self.component)
-            if not component:
-              if components:
-                  component = components[0]
-              else:
-                  raise TracError('Screenshots plugin can\'t work when there'
-                    ' are no components.')
-        versions = self.api.get_versions(cursor)
-        version_id = int(req.args.get('version') or 0)
-        if version_id:
-            version = self._get_version(versions, version_id)
-        else:
-            version = self._get_version_by_name(versions, self.version)
-            if not version:
-                if versions:
-                    version = versions[0]
-                else:
-                    raise TracError('Screenshots plugin can\'t work when there'
-                      ' are no versions.')
-
-        self.log.debug('component_id: %s' % (component_id,))
-        self.log.debug('component: %s' % (component,))
-        self.log.debug('version_id: %s' % (version_id,))
-        self.log.debug('version: %s' % (version,))
-
-        # CSS styles
+        # Add CSS style and JavaScript scripts.
         add_stylesheet(req, 'screenshots/css/screenshots.css')
 
-        # Prepare HDF structure.
-        req.hdf['screenshots.component'] = component
-        req.hdf['screenshots.components'] = components
-        req.hdf['screenshots.versions'] = versions
-        req.hdf['screenshots.version'] = version
+        # Prepare HDF structure and return template.
+        req.hdf['screenshots'] = data
         req.hdf['screenshots.href'] = req.href.screenshots()
         req.hdf['screenshots.title'] = self.title
-        req.hdf['screenshots.show_name'] = self.show_name
+        return template, content_type
 
-        # Do actions and return content.
-        modes = self._get_modes(req)
-        self.log.debug('modes: %s' % (modes,))
-        return self._do_actions(req, modes, component, version)
+    # Internal functions.
 
-    # Private functions.
-
-    def _get_modes(self, req):
+    def _get_actions(self, req):
         action = req.args.get('action')
         self.log.debug('action: %s' % (action,))
-        if action == 'get_file':
+        if action == 'get-file':
             return ['get-file']
         elif action == 'add':
-            return ['add', 'add-display']
+            return ['add']
         elif action == 'post-add':
-            return ['post-add', 'display']
+            return ['post-add', 'view']
         elif action == 'edit':
-            return ['edit', 'add-display']
+            return ['edit', 'add']
         elif action == 'post-edit':
-            return ['post-edit', 'display']
+            return ['post-edit', 'view']
         elif action == 'delete':
-            return ['delete', 'display']
+            return ['delete', 'view']
         else:
-            return ['display']
+            return ['view']
 
-    def _do_actions(self, req, modes, component, version):
+    def _do_actions(self, req, actions):
+
+        # Initialize dictionary for data.
+        data = {}
 
         # Get database access.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        for mode in modes:
-            if mode == 'get-file':
+        # Get API component.
+        api = self.env[ScreenshotsApi]
+
+        for action in actions:
+            if action == 'get-file':
                 req.perm.assert_permission('SCREENSHOTS_VIEW')
 
-                # Get screenshot
-                match = re.match(r'''^/screenshots/(\d+)/(small|medium|large)$''',
-                  req.path_info)
-                if match:
-                    id = match.group(1)
-                    size = match.group(2)
-                screenshot = self.api.get_screenshot(cursor, id)
+                # Get request arguments.
+                screenshot_id = int(req.args.get('id') or 0)
+                width = int(req.args.get('width') or 0)
+                height =  int(req.args.get('height') or 0)
 
-                # Return screenshots image action.
-                file = screenshot['%s_file' % (size,)]
-                path = os.path.join(self.path, unicode(screenshot['id']), file)
-                self.log.debug('file: %s' % (file,))
-                self.log.debug('path: %s' % (path,))
-                type = mimetypes.guess_type(path)[0]
-                req.send_file(path, type)
+                # Get screenshot.
+                screenshot = api.get_screenshot(cursor, screenshot_id)
 
-            elif mode == 'add':
+                if screenshot:
+                    # Set missing dimensions.
+                    width = width or screenshot['width']
+                    height = height or screenshot['height']
+
+                    # Prepare screenshot filename.
+                    name, ext = os.path.splitext(screenshot['file'])
+                    path = os.path.join(self.path, unicode(screenshot['id']))
+                    file_name = os.path.join(path, '%s-%sx%s%s' % (name, width,
+                      height, ext))
+                    orig_name = os.path.join(path, '%s-%sx%s%s' % (name,
+                      screenshot['width'], screenshot['height'], ext))
+                    self.log.debug('filemame: %s' % (file_name,))
+
+                    # Send file to request.
+                    if not os.path.exists(file_name):
+                        self._create_thumbnail(orig_name, path, name, ext,
+                          width, height)
+
+                    req.send_header('Content-Disposition',
+                      'attachment;filename=%s' % (screenshot['file']))
+                    req.send_header('Content-Description',
+                      screenshot['description'])
+                    req.send_file(file_name, mimetypes.guess_type(file_name)[0])
+                else:
+                    raise TracError('Screenshot not found.')
+
+            elif action == 'add':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
-            elif mode == 'post-add':
+                # Fill data dictionary.
+                data['index'] = req.args.get('index')
+                data['versions'] = api.get_versions(cursor)
+                data['components'] = api.get_components(cursor)
+
+                # Return template with add screenshot form.
+                return ('screenshot-add.cs', data, None)
+
+            elif action == 'post-add':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
-                # Get form values.
-                new_name = req.args.get('name')
-                new_description = req.args.get('description')
-                new_author = req.authname
+                # Get image file from request.
                 file, filename = self._get_file_from_req(req)
-                content = file.read()
-                new_tags = req.args.get('tags')
-                new_components = req.args.get('components')
-                if not isinstance(new_components, list):
-                     new_components = [new_components]
-                new_versions = req.args.get('versions')
-                if not isinstance(new_versions, list):
-                     new_versions = [new_versions]
-
-                # Check form values
-                if not new_components or not new_versions:
-                    raise TracError('You must select at least one component' \
-                      ' and version.')
 
                 # Check correct file type.
                 reg = re.compile(r'^(.*)[.](.*)$')
@@ -213,235 +198,204 @@ class ScreenshotsCore(Component):
                 else:
                     raise TracError('Unsupported uploaded file type.')
 
-                # Prepare images filenames.
-                large_filename = re.sub(reg, r'\1_large.\2', filename)
-                medium_filename = re.sub(reg, r'\1_medium.\2', filename)
-                small_filename = re.sub(reg, r'\1_small.\2', filename)
+                # Create image object.
+                image = Image.open(file)
+
+                # Construct screenshot dictionary from form values.
+                screenshot = {'name' :  req.args.get('name'),
+                              'description' : req.args.get('description'),
+                              'time' : int(time.time()),
+                              'author' : req.authname,
+                              'tags' : req.args.get('tags'),
+                              'file' : filename,
+                              'width' : image.size[0],
+                              'height' : image.size[1]}
 
                 # Add new screenshot.
-                screenshot_time = int(time.time())
-                self.api.add_screenshot(cursor, new_name, new_description,
-                  screenshot_time, new_author, new_tags, large_filename,
-                  medium_filename, small_filename)
+                api.add_screenshot(cursor, screenshot)
 
-                # Get inserted screenshot.
-                screenshot = self.api.get_screenshot_by_time(cursor,
-                  screenshot_time)
-                self.id = screenshot['id']
+                # Get inserted screenshot to with new id.
+                screenshot = api.get_screenshot_by_time(cursor,
+                   screenshot['time'])
 
-                # Add components and versions to screenshot.
-                for new_component in new_components:
-                    self.api.add_component(cursor, screenshot['id'],
-                      new_component)
-                for new_version in new_versions:
-                    self.api.add_version(cursor, screenshot['id'], new_version)
+                # Add components to screenshot.
+                components = req.args.get('components')
+                if not isinstance(components, list):
+                     components = [components]
+                for component in components:
+                    component = {'screenshot' : screenshot['id'],
+                                 'component' : component}
+                    api.add_component(cursor, component)
+                screenshot['components'] = components
+
+                # Add versions to screenshots
+                versions = req.args.get('versions')
+                if not isinstance(versions, list):
+                     versions = [versions]
+                for version in versions:
+                    version = {'screenshot' : screenshot['id'],
+                               'version' : version}
+                    api.add_version(cursor, version)
+                screenshot['versions'] = versions
+
+                self.log.debug(screenshot)
 
                 # Prepare file paths
-                path = os.path.join(self.path, unicode(self.id))
-                large_filepath = os.path.join(path, large_filename)
-                medium_filepath = os.path.join(path, medium_filename)
-                small_filepath =  os.path.join(path, small_filename)
-                self.log.debug('large_filepath: %s' % (large_filepath,))
-                self.log.debug('medium_filepath: %s' % (medium_filepath,))
-                self.log.debug('small_filepath: %s' % (small_filepath,))
+                path = os.path.join(self.path, unicode(screenshot['id']))
+                file_name = os.path.join(path, '%s-%ix%i.%s' % (result.group(1),
+                  screenshot['width'], screenshot['height'], result.group(2)))
+                file_name = file_name.encode('utf-8')
+                self.log.debug('file_name: %s' % (file_name,))
 
                 # Store uploaded image.
                 try:
                     os.mkdir(path)
-                    out_file = open(large_filepath, "wb+")
-                    out_file.write(content)
-                    out_file.close()
-                    os.chdir(path)
-                    os.system(('convert "%s" -resize 400!x300! "%s"' % (
-                      large_filename, medium_filename)).encode('utf-8'))
-                    os.system(('convert "%s" -resize 120!x90! "%s"' % (
-                      large_filename, small_filename)).encode('utf-8'))
+                    image.save(file_name)
                 except:	
-                    self.api.delete_screenshot(cursor, screenshot['id'])
+                    api.delete_screenshot(cursor, screenshot['id'])
                     try:
-                        os.remove(small_filepath)
-                        os.remove(medium_filepath)
-                        os.remove(large_filepath)
+                        os.remove(file_name)
                         os.rmdir(path)
                     except:
                         pass
                     raise TracError('Error storing file. Is directory specified' \
                       ' in path config option in [screenshots] section of' \
-                      ' trac.ini existing? Are ImageMagick tools installed?')
+                      ' trac.ini existing?')
 
-                # Create screenshot tags.
-                if is_tags:
-                    tags = TagEngine(self.env).tagspace.screenshots
-                    tag_names = new_components
-                    tag_names.extend(new_versions)
-                    tag_names.extend([screenshot['name'], screenshot['author']])
-                    if screenshot['tags']:
-                        tag_names.extend(screenshot['tags'].split(' '))
-                    tags.replace_tags(req, screenshot['id'],
-                      list(sets.Set(tag_names)))
+                # Notify change listeners.
+                for listener in self.change_listeners:
+                    listener.screenshot_created(screenshot)
 
-            elif mode == 'edit':
+                # Clear id to prevent display of edit and delete button.
+                req.args['id'] = None
+
+            elif action == 'edit':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
-            elif mode == 'post-edit':
+                # Get request arguments.
+                screenshot_id = req.args.get('id')
+
+                # Prepare data dictionary.
+                data['screenshot'] = api.get_screenshot(cursor, screenshot_id)
+                self.log.debug(data['screenshot'])
+
+            elif action == 'post-edit':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
-
-                # Get form values.
-                new_name = req.args.get('name')
-                new_description = req.args.get('description')
-                new_components = req.args.get('components')
-                if not isinstance(new_components, list):
-                     new_components = [new_components]
-                new_versions = req.args.get('versions')
-                if not isinstance(new_versions, list):
-                     new_versions = [new_versions]
-                new_tags = req.args.get('tags')
-
-                # Check form values
-                if not new_components or not new_versions:
-                    raise TracError('You must select at least one component' \
-                      ' and version.')
 
                 # Get old screenshot
-                screenshot = self.api.get_screenshot(cursor, self.id)
+                screenshot_id = int(req.args.get('id') or 0)
+                old_screenshot = api.get_screenshot(cursor, screenshot_id)
 
-                # Update screenshot tags.
-                if is_tags:
-                    tags = TagEngine(self.env).tagspace.screenshots
-                    tag_names = new_components
-                    tag_names.extend(new_versions)
-                    tag_names.extend([new_name, screenshot['author']])
-                    if new_tags:
-                        tag_names.extend(new_tags.split(' '))
-                    tags.replace_tags(req, screenshot['id'],
-                      list(sets.Set(tag_names)))
+                if old_screenshot:
+                    # Construct screenshot dictionary from form values.
+                    screenshot = {'name' :  req.args.get('name'),
+                                  'description' : req.args.get('description'),
+                                  'author' : req.authname,
+                                  'tags' : req.args.get('tags'),
+                                  'components' : req.args.get('components'),
+                                  'versions' : req.args.get('versions')}
 
-                # Edit screenshot.
-                self.api.edit_screenshot(cursor, screenshot['id'], new_name,
-                  new_description, new_tags, new_components, new_versions)
+                    # Converst components and versions to list if only one item is
+                    # selected.
+                    if not isinstance(screenshot['components'], list):
+                         screenshot['components'] = [screenshot['components']]
+                    if not isinstance(screenshot['versions'], list):
+                         screenshot['versions'] = [screenshot['versions']]
 
-            elif mode == 'delete':
+                    # Edit screenshot.
+                    api.edit_screenshot(cursor, screenshot_id, screenshot)
+
+                    # Notify change listeners.
+                    for listener in self.change_listeners:
+                        listener.screenshot_changed(screenshot, old_screenshot)
+
+                    # Clear id to prevent display of edit and delete button.
+                    req.args['id'] = None
+
+                else:
+                    raise TracError('Edited screenshot not found.',
+                      'Screenshot not found.')
+
+            elif action == 'delete':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
-                # Get screenshots
-                screenshots = self.api.get_screenshots(cursor,
-                  component['name'], version['name'])
-                index = self._get_screenshot_index(screenshots, self.id) or 0
-                screenshot = self.api.get_screenshot(cursor, self.id)
+                # Get screenshot.
+                screenshot = api.get_screenshot(cursor, req.args.get('id'))
 
-                # Delete screenshot.
                 try:
-                    self.api.delete_screenshot(cursor, self.id)
-                    path = os.path.join(self.path, unicode(self.id))
-                    os.remove(os.path.join(path, screenshot['large_file']))
-                    os.remove(os.path.join(path, screenshot['medium_file']))
-                    os.remove(os.path.join(path, screenshot['small_file']))
+                    # Delete screenshot.
+                    api.delete_screenshot(cursor, screenshot['id'])
+
+                    # Delete screenshot files. Don't append any other files there :-).
+                    path = os.path.join(self.path, unicode(screenshot['id']))
+                    for file in os.listdir(path):
+                        file = os.path.join(path, file)
+                        os.remove(file)
                     os.rmdir(path)
                 except:
                     pass
 
-                # Delete screenshot tags.
-                if is_tags:
-                    tags = TagEngine(self.env).tagspace.screenshots
-                    tag_names = screenshot['components']
-                    tag_names.extend(screenshot['versions'])
-                    tag_names.extend([screenshot['name'], screenshot['author']])
-                    if screenshot['tags']:
-                        tag_names.extend(screenshot['tags'].split(' '))
-                    tags.remove_tags(req, screenshot['id'],
-                      list(sets.Set(tag_names)))
+                # Notify change listeners.
+                for listener in self.change_listeners:
+                    listener.screenshot_deleted(screenshot)
 
-                # Set new screenshot id.
-                if index > 1:
-                    self.id = screenshots[index - 1]['id']
-                else:
-                    self.id = screenshots[0]['id']
 
-            elif mode == 'display':
+                # Clear id to prevent display of edit and delete button.
+                req.args['id'] = None
+
+            elif action == 'view':
                 req.perm.assert_permission('SCREENSHOTS_VIEW')
 
-                # Get screenshots of selected version and component.
-                screenshots = self.api.get_screenshots(cursor,
-                  component['name'], version['name'])
-                index = self._get_screenshot_index(screenshots, self.id) or 0
+                # Check that at least one IScreenshotsRenderer is enabled
+                if len(self.renderers) == 0:
+                    raise TracError('No screenshots renderer enabled. Enable at least one.',
+                      'No screenshots renderer enabled')
 
-                # Prepare displayed screenshots.
-                length = len(screenshots)
-                previous = []
-                current = []
-                next = []
-                if length > 0:
-                    current.append(screenshots[index])
-                if (index + 1) < length:
-                    next.append(screenshots[index + 1])
-                else:
-                    next.append(no_screenshot)
-                if (index + 2) < length:
-                    next.append(screenshots[index + 2])
-                else:
-                    next.append(no_screenshot)
-                if (index - 1) > 0:
-                    previous.append(screenshots[index - 2])
-                else:
-                    previous.append(no_screenshot)
-                if (index) > 0:
-                    previous.append(screenshots[index - 1])
-                else:
-                    previous.append(no_screenshot)
-                self.log.debug('length: %s' % (length,))
-                self.log.debug('current: %s' % (current,))
-                self.log.debug('previous: %s' % (previous,))
-                self.log.debug('next: %s' % (next,))
+                # Fill data dictionary.
+                data['id'] = int(req.args.get('id') or 0)
+                data['versions'] = api.get_versions(cursor)
+                data['components'] = api.get_components(cursor)
+                data['screenshots'] = api.get_screenshots(cursor)
+                data['href'] = req.href.screenshots()
 
-                # Fill HDF structure
-                req.hdf['screenshots.index'] = index + 1
-                req.hdf['screenshots.count'] = len(screenshots)
-                req.hdf['screenshots.previous'] = previous
-                req.hdf['screenshots.current'] = current
-                req.hdf['screenshots.next'] = next
+                # Get screenshots content template and data.
+                template, data, content_type = self.renderers[0]. \
+                  render_screenshots(req, data)
 
-                db.commit()
-                return 'screenshots.cs', None
+                # Prepare HDF structure.
+                chrome = Chrome(self.env)
+                hdf = HDFWrapper(chrome.get_all_templates_dirs())
+                populate_hdf(hdf, self.env, req)
 
-            elif mode == 'add-display':
+                # Fixing bug in Trac 0.10.
+                for action in req.perm.permissions():
+                    hdf['trac.acl.' + action] = True
+
+                # Fill HDF with screenshots data.
+                hdf['screenshots'] = data
+
+                # Return main template.
+                data['content'] = Markup(hdf.render(template))
+                return ('screenshots.cs', data, content_type)
+
+            elif actions == 'screenshot-add':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get screenshot
-                screenshot = self.api.get_screenshot(cursor, self.id)
+                screenshot = api.get_screenshot(cursor, self.id)
                 self.log.debug('screenshot: %s' % (screenshot,))
 
                 # Fill HDF structure
                 req.hdf['screenshots.current'] = [screenshot]
 
-                db.commit()
-                return 'screenshot-add.cs', None
+        # Commit database changes.
+        db.commit()
 
-    def _get_screenshot_index(self, screenshots, id):
-        index = 0
-        for screenshot in screenshots:
-            if screenshot['id'] == id:
-                return index
-            index = index + 1
-
-    def _get_component(self, components, id):
-        for component in components:
-            if component['id'] == id:
-                return component
-
-    def _get_component_by_name(self, components, name):
-        for component in components:
-            if component['name'] == name:
-                return component
-
-    def _get_version(self, versions, id):
-        for version in versions:
-            if version['id'] == id:
-                return version
-
-    def _get_version_by_name(self, versions, name):
-        for version in versions:
-            if version['name'] == name:
-                return version
+    def _create_thumbnail(self, orig_name, path, name, ext, width, height):
+        image = Image.open(orig_name)
+        image = image.resize((width, height), Image.BICUBIC)
+        image.save(os.path.join(path, '%s-%sx%s%s' % (name, width, height,
+          ext)))
 
     def _get_file_from_req(self, req):
         image = req.args['image']

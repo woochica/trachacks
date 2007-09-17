@@ -29,45 +29,52 @@ tables = [
   ]
 ]
 
-def do_upgrade(env, cursor):
+def do_upgrade(env, cursor, incremental):
     db_connector, _ = DatabaseManager(env)._get_connector()
 
-    # Backup old screenshot table.
-    cursor.execute("CREATE TEMPORARY TABLE screenshot_old AS SELECT * FROM screenshot")
-    cursor.execute("DROP TABLE screenshot")
+    if incremental:
+        # Backup old screenshot table.
+        cursor.execute("CREATE TEMPORARY TABLE screenshot_old AS SELECT * "
+          "FROM screenshot")
+        cursor.execute("DROP TABLE screenshot")
 
     # Create new tables
     for table in tables:
         for statement in db_connector.to_sql(table):
             cursor.execute(statement)
 
-    # Get all screenshots from old table.
-    columns = ('id', 'name', 'description', 'time', 'author', 'large_file',
+    if incremental:
+        # Get all screenshots from old table.
+        columns = ('id', 'name', 'description', 'time', 'author', 'large_file',
           'medium_file', 'small_file', 'component', 'version')
-    sql = "SELECT id, name, description, time, author, large_file," \
+        sql = "SELECT id, name, description, time, author, large_file," \
           " medium_file, small_file, component, version FROM screenshot_old"
-    cursor.execute(sql)
-    screenshots = []
-    for row in cursor:
-        row = dict(zip(columns, row))
-        screenshots.append(row)
+        cursor.execute(sql)
+        screenshots = []
+        for row in cursor:
+            row = dict(zip(columns, row))
+            screenshots.append(row)
 
-    # Copy them to new tables.
-    for screenshot in screenshots:
-        sql = "INSERT INTO screenshot (id, name, description, time, author," \
-          " large_file, medium_file, small_file) VALUES (%s, %s, %s, %s, %s," \
-          " %s, %s, %s)"
-        cursor.execute(sql, (screenshot['id'], screenshot['name'],
-          screenshot['description'], screenshot['time'], screenshot['author'],
-          screenshot['large_file'], screenshot['medium_file'],
-          screenshot['small_file']))
-        sql = "INSERT INTO screenshot_component (screenshot, component)" \
-          " VALUES (%s, %s)"
-        cursor.execute(sql, (screenshot['id'], screenshot['component']))
-        sql = "INSERT INTO screenshot_version (screenshot, version)" \
-          " VALUES (%s, %s)"
-        cursor.execute(sql, (screenshot['id'], screenshot['version']))
+        # Copy them to new tables.
+        for screenshot in screenshots:
+            sql = "INSERT INTO screenshot (id, name, description, time, " \
+              "author, large_file, medium_file, small_file) VALUES (%s, %s, " \
+              "%s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, (screenshot['id'], screenshot['name'],
+              screenshot['description'], screenshot['time'],
+              screenshot['author'], screenshot['large_file'],
+              screenshot['medium_file'], screenshot['small_file']))
+            sql = "INSERT INTO screenshot_component (screenshot, component)" \
+              " VALUES (%s, %s)"
+            cursor.execute(sql, (screenshot['id'], screenshot['component']))
+            sql = "INSERT INTO screenshot_version (screenshot, version)" \
+              " VALUES (%s, %s)"
+            cursor.execute(sql, (screenshot['id'], screenshot['version']))
 
     # Set database schema version.
-    cursor.execute("UPDATE system SET value = '2' WHERE name ="
-      " 'screenshots_version'")
+    if incremental:
+        cursor.execute("UPDATE system SET value = '2' WHERE name = "
+          "'screenshots_version'")
+    else:
+        cursor.execute("INSERT INTO system (name, value) VALUES "
+          "('screenshots_version', '2')")

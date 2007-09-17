@@ -8,7 +8,7 @@
     <h1><?cs var:screenshots.title ?></h1>
   </div>
 
-  <form class="add_form" method="post" enctype="multipart/form-data" action="<?cs var:screenshots.href ?>/?component=<?cs var:screenshots.component.id ?>;version=<?cs var:screenshots.version.id ?>">
+  <form class="add_form" method="post" enctype="multipart/form-data" action="<?cs var:screenshots.href ?>">
     <fieldset>
       <legend>
         <?cs if:args.action == 'add' ?>
@@ -22,7 +22,7 @@
         <?cs if:args.action == 'add' ?>
           <input type="text" id="name" name="name" value=""/><br/>
         <?cs else ?>
-          <input type="text" id="name" name="name" value="<?cs var:screenshots.current.0.name ?>"/><br/>
+          <input type="text" id="name" name="name" value="<?cs var:screenshots.screenshot.name ?>"/><br/>
         <?cs /if ?>
       </div>
       <div class="field">
@@ -30,7 +30,7 @@
         <?cs if:args.action == 'add' ?>
           <input type="text" id="description" name="description" value=""/><br/>
         <?cs else ?>
-          <input type="text" id="description" name="description" value="<?cs var:screenshots.current.0.description ?>"/><br/>
+          <input type="text" id="description" name="description" value="<?cs var:screenshots.screenshot.description ?>"/><br/>
         <?cs /if ?>
       </div>
       <?cs if:args.action == 'add' ?>
@@ -44,7 +44,7 @@
         <?cs if:args.action == 'add' ?>
           <input type="text" id="tags" name="tags" value=""/><br/>
         <?cs else ?>
-          <input type="text" id="tags" name="tags" value="<?cs var:screenshots.current.0.tags ?>"/><br/>
+          <input type="text" id="tags" name="tags" value="<?cs var:screenshots.screenshot.tags ?>"/><br/>
         <?cs /if ?>
       </div>
       <div class="field">
@@ -52,14 +52,12 @@
         <select id="components" name="components" multiple="on">
           <?cs each:component = screenshots.components ?>
             <?cs set:selected = 0 ?>
-            <?cs if:screenshots.current.0.components.0 ?>
-              <?cs each:component_name = screenshots.current.0.components ?>
-                <?cs if:(component.name == component_name) || (component.name == screenshots.component.name) ?>
+            <?cs if:screenshots.screenshot.components.0 ?>
+              <?cs each:component_name = screenshots.screenshot.components ?>
+                <?cs if:component.name == component_name ?>
                   <?cs set:selected = 1 ?>
                 <?cs /if ?>
               <?cs /each ?>
-            <?cs else ?>
-              <?cs set:selected = (component.name == screenshots.component.name) ?>
             <?cs /if ?>
             <?cs if:selected ?>
               <option value="<?cs var:component.name ?>" selected="selected"><?cs var:component.name ?></option>
@@ -74,14 +72,12 @@
         <select id="versions" name="versions" multiple="on">
           <?cs each:version = screenshots.versions ?>
             <?cs set:selected = 0 ?>
-            <?cs if:screenshots.current.0.versions.0 ?>
-              <?cs each:version_name = screenshots.current.0.versions ?>
+            <?cs if:screenshots.screenshot.versions.0 ?>
+              <?cs each:version_name = screenshots.screenshot.versions ?>
                 <?cs if:version.name == version_name ?>
                   <?cs set:selected = 1 ?>
                 <?cs /if ?>
               <?cs /each ?>
-            <?cs else ?>
-              <?cs set:selected = (version.name == screenshots.version.name) ?>
             <?cs /if ?>
             <?cs if:selected ?>
               <option value="<?cs var:version.name ?>" selected="selected"><?cs var:version.name ?></option>
@@ -94,7 +90,8 @@
       <div class="buttons">
         <input type="submit" name="submit" value="Submit"/>
         <input type="button" name="cancel" value="Cancel" onclick="history.back()"/>
-        <input type="hidden" name="id" value="<?cs var:screenshots.current.0.id ?>"/>
+        <input type="hidden" name="id" value="<?cs var:screenshots.screenshot.id ?>"/>
+        <input type="hidden" name="index" value="<?cs var:screenshots.index ?>"/>
         <?cs if:args.action == 'add' ?>
           <input type="hidden" name="action" value="post-add"/>
         <?cs else ?>

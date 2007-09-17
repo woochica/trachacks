@@ -1,5 +1,7 @@
 # -*- coding: utf8 -*-
 
+import re
+
 from tracscreenshots.api import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider
@@ -22,35 +24,40 @@ class ScreenshotsWiki(Component):
 
     def _screenshot_link(self, formatter, ns, params, label):
         if ns == 'screenshot':
-            # Get cursor.
+            # Get database access.
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
-            # Get referenced screenshot.
-            api = ScreenshotsApi(self)
-            screenshot = api.get_screenshot(cursor, params)
+            # Get API component.
+            api = self.env[ScreenshotsApi]
+
+            # Get macro values.
+            match = re.match(r'''^(\d+)($|,(\d+)x(\d+)$)''', params)
+            screenshot_id = int(match.group(1))
+            screenshot_width = int(match.group(3) or 0)
+            screenshot_height = int(match.group(4) or 0)
+            self.log.debug('screenshot: %d %dx%d' % (screenshot_id,
+              screenshot_width, screenshot_height))
+
+            # Set original dimensions if zeros given.
+            screenshot = api.get_screenshot(cursor, screenshot_id)
+            if not screenshot_width:
+                screenshot_width = screenshot['width']
+            if not screenshot_height:
+                screenshot_height = screenshot['height']
 
             # Return macro content
             if screenshot:
-                components = api.get_components(cursor)
-                component = self._get_component_by_name(components,
-                  screenshot['components'][0])
-                versions =  api.get_versions(cursor)
-                version = self._get_version_by_name(versions,
-                  screenshot['versions'][0])
-                return html.a(label, href = formatter.href.screenshots()
-                  + '?component=%s;version=%s;id=%s' % (component['id'],
-                  version['id'], screenshot['id']), title = screenshot['name'])
+                if match.group(2):
+                    image = html.img(src = formatter.href.screenshots(
+                      screenshot['id'], width = screenshot_width,
+                      height = screenshot_height), alt = screenshot['description'],
+                      width = screenshot_width, height = screenshot_height)
+                    return html.a(image, href = formatter.href.screenshots(
+                      screenshot['id']), title = label)
+                else:
+                    return html.a(label, href = formatter.href.screenshots(
+                      screenshot['id']), title = screenshot['description'])
             else:
                 return html.a(label, href = formatter.href.screenshots(),
                   title = params, class_ = 'missing')
-
-    def _get_component_by_name(self, components, name):
-        for component in components:
-            if component['name'] == name:
-                return component
-
-    def _get_version_by_name(self, versions, name):
-        for version in versions:
-            if version['name'] == name:
-                return version

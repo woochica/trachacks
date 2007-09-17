@@ -1,0 +1,36 @@
+/* Images matrix style. */
+div.screenshots div.images
+{
+  margin: 1em 2em;
+  padding: 1em 2em;
+  border: 1px solid #d7d7d7;
+  background-color: #f7f7f7;
+  overflow: auto;
+}
+
+div.screenshots div.images table
+{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+div.screenshots div.images div.image img
+{
+  border: 2px solid #b00;
+}
+
+div.screenshots div.images div.noimage
+{
+  border: 2px solid #f7f7f7;
+}
+
+/* Controls style. */
+div.screenshots div.controls
+{
+  text-align: center;
+}
+
+div.screenshots div.controls td a
+{
+  margin: 0em 0.5em;
+}

@@ -1,9 +1,11 @@
 # -*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 
 from trac.db import Table, Column, Index, DatabaseManager
 
 tables = [
-  Table('screenshot', key = 'id')[
+  Table('screenshot', key = 'id')
+  [
     Column('id', type = 'integer', auto_increment = True),
     Column('name'),
     Column('description'),
@@ -17,7 +19,7 @@ tables = [
   ]
 ]
 
-def do_upgrade(env, cursor):
+def do_upgrade(env, cursor, incremental):
     db_connector, _ = DatabaseManager(env)._get_connector()
 
     # Create tables

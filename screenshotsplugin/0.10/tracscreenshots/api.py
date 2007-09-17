@@ -1,116 +1,156 @@
 # -*- coding: utf8 -*-
 
-from trac.core import *
-from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import format_datetime
 import time
 
-class ScreenshotsApi(object):
+from trac.core import *
+from trac.config import Option
+from trac.wiki import wiki_to_html, wiki_to_oneliner
+from trac.util import format_datetime
 
-    def __init__(self, component):
-        self.env = component.env
-        self.log = component.log
+class IScreenshotChangeListener(Interface):
+    """Extension point interface for components that require notification
+    when screenshots are created, modified, or deleted."""
+
+    def screenshot_created(screenshot):
+        """Called when a screenshot is created. Only argument `screenshot` is
+        a dictionary with screenshot field values."""
+
+    def screenshot_changed(screenshot, old_screenshot):
+        """Called when a screenshot is modified.
+        `old_screenshot` is a dictionary containing the previous values of the
+        fields and `screenshot` is a dictionary with new values. """
+
+    def screenshot_deleted(screenshot):
+        """Called when a screenshot is deleted. `screenshot` argument is
+        a dictionary with values of fields of just deleted screenshot."""
+
+class IScreenshotsRenderer(Interface):
+    """Extension point interface for components providing view on
+       screenshots."""
+
+    def render_screenshots(req, name, data):
+        """Provides template and data for screenshots view. Inputs request
+           object and dictionary with screenshots data and should return tuple
+           with template name modified or unchanged data and content type."""
+
+    def get_screenshots_view(req):
+        """Returns tuple with name and title of implemented screenshots
+           view."""
+
+class ScreenshotsApi(Component):
 
     # Get list functions
 
-    def get_versions(self, cursor):
-        columns = ('name', 'description')
-        sql = "SELECT name, description FROM version"
-        self.log.debug(sql)
-        cursor.execute(sql)
-        versions = []
-        id = 0
+    def _get_items(self, cursor, table, columns, where = '', value = None):
+        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + ' ' + where
+        if where:
+            self.log.debug(sql % (value,))
+            cursor.execute(sql, (value,))
+        else:
+            self.log.debug(sql)
+            cursor.execute(sql)
+        items = []
         for row in cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'],
+            items.append(row)
+        return items
+
+    def get_versions(self, cursor):
+        # Get versions from database.
+        versions = self._get_items(cursor, 'version', ('name', 'description'))
+
+        # Prepare them for display.
+        for version in versions:
+            version['description'] = wiki_to_oneliner(version['description'],
               self.env)
-            id = id + 1
-            row['id'] = id
-            versions.append(row)
         return versions
 
     def get_components(self, cursor):
-        columns = ('name', 'description')
-        sql = "SELECT name, description FROM component"
-        self.log.debug(sql)
-        cursor.execute(sql)
-        components = []
-        id = 0
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'],
-              self.env)
-            id = id + 1
-            row['id'] = id
-            components.append(row)
+        # Get components from database.
+        components = self._get_items(cursor, 'component', ('name',
+          'description'))
+
+        # Prepare them for display.
+        for component in components:
+            component['description'] = wiki_to_oneliner(
+              component['description'], self.env)
         return components
 
-    def get_screenshots(self, cursor, component, version):
-        columns = ('id', 'name', 'description', 'time', 'author', 'tags',
-          'large_file', 'medium_file', 'small_file')
-        sql = "SELECT s.id, s.name, s.description, s.time, s.author, s.tags," \
-          " s.large_file, s.medium_file, s.small_file FROM screenshot s," \
-          " screenshot_component c, screenshot_version v WHERE c.component" \
-          " = %s AND v.version = %s AND s.id = c.screenshot AND s.id =" \
-          " v.screenshot ORDER BY s.id"
-        self.log.debug(sql % (component, version))
-        cursor.execute(sql, (component, version))
-        screenshots = []
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['name'] = wiki_to_oneliner(row['name'], self.env)
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
-            row['author'] = wiki_to_oneliner(row['author'], self.env)
-            screenshots.append(row)
+    def get_screenshots(self, cursor):
+        # Get screenshots from database.
+        screenshots = self._get_items(cursor, 'screenshot', ('id', 'name',
+          'description', 'time', 'author', 'tags', 'file', 'width', 'height'))
+
+        # Prepare them for display.
+        for screenshot in screenshots:
+            screenshot['name'] = wiki_to_oneliner(screenshot['name'], self.env)
+            screenshot['description'] = wiki_to_oneliner(
+              screenshot['description'], self.env)
+            screenshot['author'] = wiki_to_oneliner(screenshot['author'],
+              self.env)
         return screenshots
 
     # Get one item functions
 
-    def get_screenshot(self, cursor, id):
-        columns = ('id', 'name', 'description', 'time', 'author', 'tags',
-          'large_file', 'medium_file', 'small_file')
-        sql = "SELECT id, name, description, time, author, tags, large_file," \
-          " medium_file, small_file FROM screenshot" \
-          " WHERE id = %s"
-        self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
+    def _get_item(self, cursor, table, columns, where = '', value = None):
+        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + ' ' + where
+        if where:
+            self.log.debug(sql % (value,))
+            cursor.execute(sql, (value,))
+        else:
+            self.log.debug(sql)
+            cursor.execute(sql)
+        items = []
         for row in cursor:
             row = dict(zip(columns, row))
-            row['components'] = self.get_screenshot_components(cursor,
-              row['id'])
-            row['versions'] = self.get_screenshot_versions(cursor, row['id'])
             return row
+
+    def get_screenshot(self, cursor, id):
+        # Get screenshot from database.
+        screenshot = self._get_item(cursor, 'screenshot', ('id', 'name',
+          'description', 'time', 'author', 'tags', 'file', 'width', 'height'),
+          'WHERE id = %s', id)
+
+        # Prepare it for display.
+        if screenshot:
+            screenshot['components'] = self.get_screenshot_components(cursor,
+              screenshot['id'])
+            screenshot['versions'] = self.get_screenshot_versions(cursor,
+              screenshot['id'])
+            screenshot['width'] = int(screenshot['width'])
+            screenshot['height'] = int(screenshot['height'])
+            return screenshot
+        else:
+            return None
 
     def get_screenshot_by_time(self, cursor, time):
-        columns = ('id', 'name', 'description', 'time', 'author', 'tags',
-          'large_file', 'medium_file', 'small_file')
-        sql = "SELECT id, name, description, time, author, tags, large_file," \
-          " medium_file, small_file FROM screenshot" \
-          " WHERE time = %s"
-        self.log.debug(sql % (time,))
-        cursor.execute(sql, (time,))
-        for row in cursor:
-            row = dict(zip(columns, row))
-            row['components'] = self.get_screenshot_components(cursor,
-              row['id'])
-            row['versions'] = self.get_screenshot_versions(cursor, row['id'])
-            return row
+        # Get screenshot from database.
+        screenshot = self._get_item(cursor, 'screenshot', ('id', 'name',
+          'description', 'time', 'author', 'tags', 'file', 'width', 'height'),
+          'WHERE time = %s', time)
 
-    def get_screenshot_components(self, cursor, screenshot):
-        sql = "SELECT component FROM screenshot_component WHERE screenshot =" \
-          " %s"
-        self.log.debug(sql % (screenshot,))
-        cursor.execute(sql, (screenshot,))
+        #Prepare it for display.
+        screenshot['components'] = self.get_screenshot_components(cursor,
+          screenshot['id'])
+        screenshot['versions'] = self.get_screenshot_versions(cursor,
+          screenshot['id'])
+        screenshot['width'] = int(screenshot['width'])
+        screenshot['height'] = int(screenshot['height'])
+        return screenshot
+
+    def get_screenshot_components(self, cursor, id):
+        sql = 'SELECT component FROM screenshot_component WHERE screenshot = %s'
+        self.log.debug(sql % (id,))
+        cursor.execute(sql, (id,))
         components = []
         for row in cursor:
             components.append(row[0])
         return components
 
-    def get_screenshot_versions(self, cursor, screenshot):
-        sql = "SELECT version FROM screenshot_version WHERE screenshot =" \
-          " %s"
-        self.log.debug(sql % (screenshot,))
-        cursor.execute(sql, (screenshot,))
+    def get_screenshot_versions(self, cursor, id):
+        sql = 'SELECT version FROM screenshot_version WHERE screenshot = %s'
+        self.log.debug(sql % (id,))
+        cursor.execute(sql, (id,))
         versions = []
         for row in cursor:
             versions.append(row[0])
@@ -118,61 +158,72 @@ class ScreenshotsApi(object):
 
     # Add item functions
 
-    def add_screenshot(self, cursor, name, description, time, author, tags,
-      large_file, medium_file, small_file):
-        sql = "INSERT INTO screenshot (name, description, time, author, tags," \
-          " large_file, medium_file, small_file) VALUES (%s, %s, %s, %s, %s," \
-          " %s, %s, %s)"
-        self.log.debug(sql % (name, description, time, author, tags, large_file,
-          medium_file, small_file))
-        cursor.execute(sql, (name, description, time, author, tags, large_file,
-          medium_file, small_file))
+    def _add_item(self, cursor, table, item):
+        fields = item.keys()
+        values = item.values()
+        sql = "INSERT INTO %s (" % (table,) + ", ".join(fields) + ") VALUES (" \
+          + ", ".join(["%s" for I in xrange(len(fields))]) + ")"
+        self.log.debug(sql % tuple(values))
+        cursor.execute(sql, tuple(values))
 
-    def add_component(self, cursor, screenshot, component):
-        sql = "INSERT INTO screenshot_component (screenshot, component)" \
-          " VALUES (%s, %s)"
-        self.log.debug(sql % (screenshot, component))
-        cursor.execute(sql, (screenshot, component))
+    def add_screenshot(self, cursor, screenshot):
+        self._add_item(cursor, 'screenshot', screenshot)
 
-    def add_version(self, cursor, screenshot, version):
-        sql = "INSERT INTO screenshot_version (screenshot, version)" \
-          " VALUES (%s, %s)"
-        self.log.debug(sql % (screenshot, version))
-        cursor.execute(sql, (screenshot, version))
+    def add_component(self, cursor, component):
+        self._add_item(cursor, 'screenshot_component', component)
+
+    def add_version(self, cursor, version):
+        self._add_item(cursor, 'screenshot_version', version)
 
     # Edit item functions
 
-    def edit_screenshot(self, cursor, screenshot, name, description, tags, components,
-      versions):
+    def _edit_item(self, cursor, table, id, item):
+        fields = item.keys()
+        values = item.values()
+        sql = "UPDATE %s SET " % (table,) + ", ".join([("%s = %%s" % (field))
+          for field in fields]) + " WHERE id = %s"
+        self.log.debug(sql % tuple(values + [id]))
+        cursor.execute(sql, tuple(values + [id]))
+
+    def edit_screenshot(self, cursor, id, screenshot):
+        # Replace components.
+        self.delete_components(cursor, id)
+        for component in screenshot['components']:
+            component = {'screenshot' : id,
+                         'component' : component}
+            self.add_component(cursor, component)
+
+        # Replace versions.
+        self.delete_versions(cursor, id)
+        for version in screenshot['versions']:
+            version = {'screenshot' : id,
+                       'version' : version}
+            self.add_version(cursor, version)
+
         # Update screenshot values.
-        sql = "UPDATE screenshot SET name = %s, description = %s, tags = %s" \
-          " WHERE id = %s"
-        self.log.debug(sql % (name, description, tags, screenshot))
-        cursor.execute(sql, name, description, tags, screenshot)
+        del screenshot['components']
+        del screenshot['versions']
+        self._edit_item(cursor, 'screenshot', id, screenshot)
 
-        # Replace components
-        sql = "DELETE FROM screenshot_component WHERE screenshot = %s"
-        self.log.debug(sql % (screenshot,))
-        cursor.execute(sql, (screenshot,))
-        for component in components:
-            self.add_component(cursor, screenshot, component)
-
-        # Replace versions
-        sql = "DELETE FROM screenshot_version WHERE screenshot = %s"
-        self.log.debug(sql % (screenshot,))
-        cursor.execute(sql, (screenshot,))
-        for version in versions:
-            self.add_version(cursor, screenshot, version)
 
     # Delete item functions
 
     def delete_screenshot(self, cursor, id):
+        # Delete screenshot.
         sql = "DELETE FROM screenshot WHERE id = %s"
         self.log.debug(sql % (id,))
         cursor.execute(sql, (id,))
-        sql = "DELETE FROM screenshot_component WHERE screenshot = %s"
+
+        # Delete versions and components.
+        self.delete_versions(cursor, id)
+        self.delete_components(cursor, id)
+
+    def delete_versions(self, cursor, id):
+        sql = "DELETE FROM screenshot_version WHERE screenshot = %s"
         self.log.debug(sql % (id,))
         cursor.execute(sql, (id,))
-        sql = "DELETE FROM screenshot_version WHERE screenshot = %s"
+
+    def delete_components(self, cursor, id):
+        sql = "DELETE FROM screenshot_component WHERE screenshot = %s"
         self.log.debug(sql % (id,))
         cursor.execute(sql, (id,))

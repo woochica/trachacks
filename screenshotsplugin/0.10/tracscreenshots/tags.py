@@ -45,3 +45,37 @@ class ScreenshotsTags(Component):
 
     def get_tagging_system(self, tagspace):
         return ScreenshotsTaggingSystem(self.env, self, None)
+
+
+    # Create screenshot tags.
+    """if is_tags:
+        tags = TagEngine(self.env).tagspace.screenshots
+        tag_names = new_components
+        tag_names.extend(new_versions)
+        tag_names.extend([screenshot['name'], screenshot['author']])
+        if screenshot['tags']:
+            tag_names.extend(screenshot['tags'].split(' '))
+            tags.replace_tags(req, screenshot['id'],
+              list(sets.Set(tag_names)))
+
+                # Update screenshot tags.
+                if is_tags:
+                    tags = TagEngine(self.env).tagspace.screenshots
+                    tag_names = new_components
+                    tag_names.extend(new_versions)
+                    tag_names.extend([new_name, screenshot['author']])
+                    if new_tags:
+                        tag_names.extend(new_tags.split(' '))
+                    tags.replace_tags(req, screenshot['id'],
+                      list(sets.Set(tag_names)))
+
+                # Delete screenshot tags.
+                if is_tags:
+                    tags = TagEngine(self.env).tagspace.screenshots
+                    tag_names = screenshot['components']
+                    tag_names.extend(screenshot['versions'])
+                    tag_names.extend([screenshot['name'], screenshot['author']])
+                    if screenshot['tags']:
+                        tag_names.extend(screenshot['tags'].split(' '))
+                    tags.remove_tags(req, screenshot['id'],
+                      list(sets.Set(tag_names)))"""
