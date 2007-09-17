@@ -16,8 +16,8 @@
 # Author: Felix Tiede
 
 """
-$Id: $
-$HeadURL: $
+$Id$
+$HeadURL$
 
 Copyright (c) 2007 Felix Tiede. All rights reserved.
 Copyright (c) 2007 EyeC GmbH. All rights reserved.
@@ -25,9 +25,9 @@ Copyright (c) 2007 EyeC GmbH. All rights reserved.
 TODO: Get me module documentation here! ASAP!
 """
 
-__revision__  = '$LastChangedRevision: $'
-__id__        = '$Id: $'
-__headurl__   = '$HeadURL: $'
+__revision__  = '$LastChangedRevision$'
+__id__        = '$Id$'
+__headurl__   = '$HeadURL$'
 __version__   = '0.10'
 
 import re
