@@ -14,7 +14,7 @@ setup(
 	description = "Provides a dependency graph for blocked tickets.",
 	license = "GPLv2",
 	keywords = "trac plugin ticket dependencies graph",
-	url = "",
+	url = "http://trac-hacks.org/wiki/TracTicketDepgraphPlugin",
 	classifiers = [
 		'Framework :: Trac',
 	],
