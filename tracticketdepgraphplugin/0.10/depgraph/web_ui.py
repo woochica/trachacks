@@ -78,7 +78,8 @@ class DepgraphModule(Component):
 		req.perm.assert_permission('TICKET_VIEW')
 
 		ticket = int(req.args.get('id'))
-		cursor = self.env.get_db_cnx().cursor()
+		db = self.env.get_db_cnx()
+		cursor = db.cursor()
 		cursor.execute("SELECT 1 FROM ticket WHERE id=%s" %ticket)
 		row = cursor.fetchone()
 		if not row:
