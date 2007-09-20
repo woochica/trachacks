@@ -36,7 +36,7 @@ from pkg_resources import resource_filename
 
 from trac.core import *
 from trac.web.api import IRequestFilter, IRequestHandler
-from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 #from trac.ticket.model import Ticket
 from trac.util.html import html, Markup
 
@@ -54,16 +54,9 @@ class DepgraphModule(Component):
 	def post_process_request(self, req, template, content_type):
 		if req.path_info.startswith('/ticket'):
 			ticket_id = req.path_info[8:]
-#			raise TracError(req.hdf)
 
-			req.hdf['ticket.extras'] = Markup(html.DIV(html.A('Dependency graph', href=req.href.depgraph(ticket_id))))
-			req.hdf['ticket.fields.extras'] = {
-				'value': '',
-				'custom': 1,
-				'type': 'text',
-				'label': 'Extras',
-				'order': 10,
-			}
+			req.hdf['depgraph.href'] = req.href.depgraph(ticket_id)
+			template = "dg_ticket.cs"
 
 		return template, content_type
 
