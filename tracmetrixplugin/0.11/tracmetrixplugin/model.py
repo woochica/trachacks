@@ -22,6 +22,10 @@ from trac.ticket import Ticket, model
 from trac.util.datefmt import utc, to_timestamp, to_datetime
 from trac.ticket.roadmap import ITicketGroupStatsProvider, TicketGroupStats
 
+# set HOME environment variable to a directory the httpd server can write to
+# (matplotlib needs this)
+os.environ[ 'HOME' ] = '/tmp/'
+
 from bisect import bisect
 import matplotlib
 matplotlib.use('Agg') # disable interactive option
@@ -416,7 +420,11 @@ class TicketGroupMetrics(object):
         
                 # remove closed ticket from opened ticket list.
                 for id in backlog_stats['closed'][idx]:
-                    list.remove(id)
+                    try:
+                        list.remove(id)
+                    except ValueError, e:
+                        pass
+                    
                 
                 list.sort()
                 
