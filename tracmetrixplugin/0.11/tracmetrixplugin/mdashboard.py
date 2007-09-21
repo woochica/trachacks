@@ -25,6 +25,10 @@ from time import localtime, strftime, time, mktime
 
 from genshi.builder import tag
 
+# set HOME environment variable to a directory the httpd server can write to
+# (matplotlib needs this)
+os.environ[ 'HOME' ] = '/tmp/'
+
 #from pylab import drange, array, searchsorted, date2num, num2date, \
 #                  plot, savefig, axis, xlabel, ylable, title, legend
 import matplotlib
@@ -267,42 +271,42 @@ def make_ticket_history_table(env, dates, sorted_events):
     
     
     
-def make_cummulative_data(env, tkt_counts):
+def make_cumulative_data(env, tkt_counts):
      
-    #create cummulative ticket count list
+    #create cumulative ticket count list
     
-    tkt_cummulative = {}
+    tkt_cumulative = {}
     
     # initialize by assigning the first data point of 
-    # each data set in tkt_counts to tkt_cummulative
+    # each data set in tkt_counts to tkt_cumulative
    
     for key in tkt_counts:
         
-        tkt_cummulative[key] = []
+        tkt_cumulative[key] = []
                 
         for index, num_ticket in enumerate(tkt_counts[key]):
             if index == 0:
                 next_value = tkt_counts[key][index]                
             else:
-                next_value = tkt_cummulative[key][index-1] + tkt_counts[key][index]
+                next_value = tkt_cumulative[key][index-1] + tkt_counts[key][index]
             
-            tkt_cummulative[key].append(next_value)
+            tkt_cumulative[key].append(next_value)
  
-#    for event in tkt_cummulative:
-#        env.log.info(tkt_cummulative[event])            
-    return tkt_cummulative
+#    for event in tkt_cumulative:
+#        env.log.info(tkt_cumulative[event])            
+    return tkt_cumulative
 
-def create_cummulative_chart(env, milestone, numdates, tkt_cummulative_table): 
+def create_cumulative_chart(env, milestone, numdates, tkt_cumulative_table): 
     
     #cla()
-    fig = figure(figsize = (6,4))
+    fig = figure(figsize = (8,4))
     ax = fig.add_subplot(111) # Create supplot with key 111       
     ax.cla()
-    ax.plot(numdates, tkt_cummulative_table['Enter'], 'b-')
-    ax.plot(numdates, tkt_cummulative_table['Leave'], 'r-') 
-    ax.plot(numdates, tkt_cummulative_table['Finish'], 'g-')
+    ax.plot(numdates, tkt_cumulative_table['Enter'], 'b-')
+    ax.plot(numdates, tkt_cumulative_table['Leave'], 'r-') 
+    ax.plot(numdates, tkt_cumulative_table['Finish'], 'g-')
     ax.set_xlim( numdates[0], numdates[-1] )
-    ax.xaxis.set_major_locator(DayLocator())
+    ax.xaxis.set_major_locator(DayLocator(interval=7))
     ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
     ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S')
     labels = ax.get_xticklabels()
@@ -310,10 +314,11 @@ def create_cummulative_chart(env, milestone, numdates, tkt_cummulative_table):
     
     xlabel('Dates (day)')
     ylabel('Counts (times)')
-    title('Cummulative flow chart for ticket status history')
+    title('Cumulative flow chart for ticket status history')
     legend(('Ticket Entered', 'Ticket Left', 'Ticket Completed'), loc='best')
     
-    filename = "cummulativeflow_%s" % (milestone.name,)
+    mname = re.sub(r'\.', '_', milestone.name)
+    filename = "cumulativeflow_%s" % (mname,)
     path = os.path.join(env.path, 'cache', 'tracmetrixplugin', filename)
     #env.log.info(path)  
     
@@ -411,10 +416,11 @@ class MDashboard(Component):
         if not milestone_id:
             req.redirect(req.href.pdashboard())     
             
-        if req.args.get('imagename') == 'cummulativeflow.png':    
+        if req.args.get('imagename') == 'cumulativeflow.png':    
             
             self.env.log.info("request for image")
-            filename = "cummulativeflow_%s.png" % (milestone.name,)
+            mname = re.sub(r'\.', '_', milestone.name)
+            filename = "cumulativeflow_%s.png" % (mname,)
             path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
             req.send_file(path, mimeview.get_mimetype(path))
             
@@ -533,10 +539,10 @@ class MDashboard(Component):
                 #self.env.log.info("tkt_history_table: %s", (tkt_history_table,))   
                 
                 #Create a data for the cumulative flow chart.
-                tkt_cummulative_table = make_cummulative_data(self.env, tkt_history_table)
+                tkt_cumulative_table = make_cumulative_data(self.env, tkt_history_table)
                 
                 #debug
-                #self.env.log.info(tkt_cummulative_table)   
+                #self.env.log.info(tkt_cumulative_table)   
             
                 # creat list of dateobject from dates
                 dates = []
@@ -546,10 +552,10 @@ class MDashboard(Component):
                     dates.append(utc_date)
                     #self.env.log.info("%s: %s" % (utc_date, format_date(utc_date, tzinfo=utc)))
                 
-                data['tickethistory'] = tkt_cummulative_table
+                data['tickethistory'] = tkt_cumulative_table
                 data['dates'] = dates
                 
-                create_cummulative_chart(self.env, milestone, numdates, tkt_cummulative_table)
+                create_cumulative_chart(self.env, milestone, numdates, tkt_cumulative_table)
 
         
         return 'mdashboard.html', data, None
