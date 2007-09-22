@@ -108,7 +108,7 @@ class DoxygenPlugin(Component):
                 req.args['action'] = action
                 req.args['path'] = path
             return True
-            
+
     def process_request(self, req):
         req.perm.assert_permission('DOXYGEN_VIEW')
 
@@ -153,6 +153,9 @@ class DoxygenPlugin(Component):
             # use configured Doxygen index
             path = os.path.join(self.base_path, self.default_doc,
                                 self.html_output, self.index)
+
+        self.log.debug('path: %s' % (path,))
+
         # security check
         path = os.path.abspath(path)
         if not path.startswith(self.base_path):
@@ -214,7 +217,7 @@ class DoxygenPlugin(Component):
                       None
 
     # IWikiSyntaxProvider
-    
+
     def get_link_resolvers(self):
         def doxygen_link(formatter, ns, params, label):
             if '/' not in params:
@@ -264,8 +267,8 @@ class DoxygenPlugin(Component):
                                                    self.html_output,
                                                    file or self.index])
             else:
-                doc = ''
-        
+                doc = self.html_output
+
         def lookup(file, category='undefined'):
             """Build (full path, relative link) and check if path exists."""
             path = os.path.join(self.base_path, doc, file)
