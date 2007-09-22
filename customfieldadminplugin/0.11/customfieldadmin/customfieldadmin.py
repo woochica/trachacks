@@ -59,7 +59,10 @@ class CustomFieldAdminPage(Component):
                     req.redirect(req.href.admin(cat, page))
             currentcf = cfapi.get_custom_fields(self.env, {'name': customfield})
             if currentcf.has_key('options'):
-                currentcf['options'] = "\n".join(currentcf['options'])
+                optional_line = ''
+                if currentcf.get('optional', False):
+                    optional_line = "\n\n"
+                currentcf['options'] = optional_line + "\n".join(currentcf['options'])
             cfadmin['customfield'] = currentcf
             cfadmin['display'] = 'detail'
         else:
