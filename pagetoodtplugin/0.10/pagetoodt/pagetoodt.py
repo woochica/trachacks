@@ -5,7 +5,13 @@ from trac.mimeview.api import IContentConverter
 from trac.util.html import Markup
 from trac.wiki.api import WikiSystem
 from StringIO import StringIO
-import cElementTree as ElementTree
+try:
+    # python 2.5 way of life :)
+    import xml.etree.cElementTree as ElementTree
+except:
+    # python 2.4
+    import cElementTree as ElementTree 
+
 import os
 import re
 import zipfile
