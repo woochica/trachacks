@@ -1,5 +1,8 @@
+# -*- coding: utf8 -*-
+
 from trac.core import *
 from trac.db import *
+
 from trac.env import IEnvironmentSetupParticipant
 
 # Last guestbook database schema version

@@ -1,18 +1,23 @@
-from __future__ import generators
+# -*- coding: utf8 -*-
 
-# General includes
 import time
 
-# Track includes
 from trac.core import *
 from trac.db import *
-from trac.web import IRequestHandler
 from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.env import IEnvironmentSetupParticipant
-from trac.web.chrome import INavigationContributor, ITemplateProvider, \
-  add_stylesheet
-from trac.perm import IPermissionRequestor
+from trac.web.chrome import add_stylesheet, add_script
 from trac.util import Markup, format_datetime
+
+from trac.web import IRequestHandler
+from trac.perm import IPermissionRequestor
+from trac.web.chrome import INavigationContributor, ITemplateProvider
+
+# Determine SpamFilterPlugin presence.
+try:
+    from tracspamfilter.api import FilterSystem
+    has_spam_filter = True
+except:
+    has_spam_filter = False
 
 """
   Guestbook plugin for Trac. Allows to get some feedback from anonymous users
@@ -94,17 +99,32 @@ class GuestbookPlugin(Component):
             # process append request
             if req.args['action'] == 'newentry':
                 req.perm.assert_permission('GUESTBOOK_APPEND')
-                self._append_message(cursor, req.args['author'],
-                  req.args['title'], req.args['text'])
+
+                # get form values
+                author = req.args['author']
+                title = req.args['title']
+                text = req.args['text']
+
+                # check for spam
+                self.log.debug('has_spam_filter: %s' % (has_spam_filter,))
+                if has_spam_filter:
+                    FilterSystem(self.env).test(req, author, [(None, title),
+                      (None, text)])
+
+                self._append_message(cursor, author, title, text)
+
             # process delete request
             if req.args['action'] == 'delete':
                 req.perm.assert_permission('GUESTBOOK_DELETE')
                 self._delete_message(cursor, req.args['id'])
 
         # adding stylesheets
-        add_stylesheet(req, 'common/css/default.css')
         add_stylesheet(req, 'common/css/wiki.css')
         add_stylesheet(req, 'guestbook/css/guestbook.css')
+
+        # adding scripts
+        add_script(req, 'common/js/trac.js')
+        add_script(req, 'common/js/wikitoolbar.js')
 
         # passing variables to template
         req.hdf['guestbook.title'] = self.env.config.get('guestbook',
