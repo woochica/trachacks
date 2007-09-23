@@ -5,7 +5,7 @@ import time
 from trac.core import *
 from trac.config import Option
 from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import format_datetime
+from trac.util import format_datetime, pretty_timedelta
 
 class IScreenshotChangeListener(Interface):
     """Extension point interface for components that require notification
@@ -119,6 +119,7 @@ class ScreenshotsApi(Component):
               screenshot['id'])
             screenshot['width'] = int(screenshot['width'])
             screenshot['height'] = int(screenshot['height'])
+            screenshot['time'] = pretty_timedelta(screenshot['time'])
             return screenshot
         else:
             return None
@@ -136,6 +137,7 @@ class ScreenshotsApi(Component):
           screenshot['id'])
         screenshot['width'] = int(screenshot['width'])
         screenshot['height'] = int(screenshot['height'])
+        screenshot['time'] = pretty_timedelta(screenshot['time'])
         return screenshot
 
     def get_screenshot_components(self, cursor, id):

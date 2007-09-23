@@ -13,6 +13,10 @@ class ScreenshotsWiki(Component):
     """
     implements(IWikiSyntaxProvider)
 
+    # [screenshot] macro attributes regular expression.
+    attributes_re = re.compile('(align|border|width|height|alt|title|longdesc|'
+      'class|id|usemap)=(.+)')
+
     # IWikiSyntaxProvider
     def get_link_resolvers(self):
         yield ('screenshot', self._screenshot_link)
@@ -31,28 +35,35 @@ class ScreenshotsWiki(Component):
             # Get API component.
             api = self.env[ScreenshotsApi]
 
-            # Get macro values.
-            match = re.match(r'''^(\d+)($|,(\d+)x(\d+)$)''', params)
-            screenshot_id = int(match.group(1))
-            screenshot_width = int(match.group(3) or 0)
-            screenshot_height = int(match.group(4) or 0)
-            self.log.debug('screenshot: %d %dx%d' % (screenshot_id,
-              screenshot_width, screenshot_height))
-
-            # Set original dimensions if zeros given.
+            # Get macro arguments and screenshot.
+            arguments = params.split(',')
+            screenshot_id = int(arguments[0])
             screenshot = api.get_screenshot(cursor, screenshot_id)
-            if not screenshot_width:
-                screenshot_width = screenshot['width']
-            if not screenshot_height:
-                screenshot_height = screenshot['height']
 
             # Return macro content
             if screenshot:
-                if match.group(2):
+                # Set default values of image attributes.
+                attributes = {'alt' : screenshot['description']}
+
+                # Fill attributes from macro arguments.
+                for argument in arguments[1:]:
+                    argument = argument.strip()
+                    match = self.attributes_re.match(argument)
+                    if match:
+                        attributes[str(match.group(1))] = match.group(2)
+                if attributes.has_key('width'):
+                    if attributes['width'] == '0':
+                        attributes['width'] = screenshot['width']
+                if attributes.has_key('height'):
+                    if attributes['height'] == '0':
+                        attributes['height'] = screenshot['height']
+                self.log.debug('attributes: %s' % (attributes,))
+
+                # Build screenshot image and/or screenshot link.
+                if attributes.has_key('width') and attributes.has_key('height'):
                     image = html.img(src = formatter.href.screenshots(
-                      screenshot['id'], width = screenshot_width,
-                      height = screenshot_height), alt = screenshot['description'],
-                      width = screenshot_width, height = screenshot_height)
+                      screenshot['id'], width = attributes['width'], height =
+                      attributes['height'], format = 'raw'), **attributes)
                     return html.a(image, href = formatter.href.screenshots(
                       screenshot['id']), title = label)
                 else:

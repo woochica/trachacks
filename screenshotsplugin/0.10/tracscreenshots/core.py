@@ -40,6 +40,10 @@ class ScreenshotsCore(Component):
     ext = Option('screenshots', 'ext', 'jpg png',
       'List of screenshot file extensions that can be uploaded. Must be'
       ' supported by ImageMagick.')
+    formats = Option('screenshots', 'formats', 'raw html jpg png',
+      'List of allowed formats for screenshot download.')
+    default_format = Option('screenshots', 'default_format', 'html',
+      'Default format for screenshot download links.')
     component = Option('screenshots', 'component', '',
       'Name of default component.')
     version = Option('screenshots', 'version', '',
@@ -139,8 +143,14 @@ class ScreenshotsCore(Component):
 
                 # Get request arguments.
                 screenshot_id = int(req.args.get('id') or 0)
+                format = req.args.get('format') or self.default_format
                 width = int(req.args.get('width') or 0)
                 height =  int(req.args.get('height') or 0)
+
+                # Check if requested format is allowed.
+                if not format in self.formats.split(' '):
+                    raise TracError('Requested screenshot format that is not allowed.',
+                      'Requested format not allowed.')
 
                 # Get screenshot.
                 screenshot = api.get_screenshot(cursor, screenshot_id)
@@ -150,25 +160,34 @@ class ScreenshotsCore(Component):
                     width = width or screenshot['width']
                     height = height or screenshot['height']
 
-                    # Prepare screenshot filename.
-                    name, ext = os.path.splitext(screenshot['file'])
-                    path = os.path.join(self.path, unicode(screenshot['id']))
-                    file_name = os.path.join(path, '%s-%sx%s%s' % (name, width,
-                      height, ext))
-                    orig_name = os.path.join(path, '%s-%sx%s%s' % (name,
-                      screenshot['width'], screenshot['height'], ext))
-                    self.log.debug('filemame: %s' % (file_name,))
+                    if format == 'html':
+                        # Prepare data dictionary.
+                        data['screenshot'] = screenshot
 
-                    # Send file to request.
-                    if not os.path.exists(file_name):
-                        self._create_thumbnail(orig_name, path, name, ext,
-                          width, height)
+                        # Return screenshot template and data.
+                        return ('screenshot.cs', data, None)
 
-                    req.send_header('Content-Disposition',
-                      'attachment;filename=%s' % (screenshot['file']))
-                    req.send_header('Content-Description',
-                      screenshot['description'])
-                    req.send_file(file_name, mimetypes.guess_type(file_name)[0])
+                    else:
+                        # Prepare screenshot filename.
+                        name, ext = os.path.splitext(screenshot['file'])
+                        format = (format == 'raw') and ext or '.' + format
+                        path = os.path.join(self.path, unicode(screenshot['id']))
+                        file_name = os.path.join(path, '%s-%sx%s%s' % (name, width,
+                          height, format))
+                        orig_name = os.path.join(path, '%s-%sx%s%s' % (name,
+                          screenshot['width'], screenshot['height'], ext))
+                        self.log.debug('filemame: %s' % (file_name,))
+
+                        # Send file to request.
+                        if not os.path.exists(file_name):
+                            self._create_image(orig_name, path, name, format,
+                              width, height)
+
+                        req.send_header('Content-Disposition',
+                          'attachment;filename=%s' % (os.path.basename(file_name)))
+                        req.send_header('Content-Description',
+                          screenshot['description'])
+                        req.send_file(file_name, mimetypes.guess_type(file_name)[0])
                 else:
                     raise TracError('Screenshot not found.')
 
@@ -187,11 +206,13 @@ class ScreenshotsCore(Component):
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
 
                 # Get image file from request.
-                file, filename = self._get_file_from_req(req)
+                file, file_name = self._get_file_from_req(req)
+                name, ext = os.path.splitext(file_name)
+                file_name = name + ext.lower()
 
                 # Check correct file type.
                 reg = re.compile(r'^(.*)[.](.*)$')
-                result = reg.match(filename)
+                result = reg.match(file_name)
                 if result:
                     if not result.group(2).lower() in self.ext.split(' '):
                         raise TracError('Unsupported uploaded file type.')
@@ -207,7 +228,7 @@ class ScreenshotsCore(Component):
                               'time' : int(time.time()),
                               'author' : req.authname,
                               'tags' : req.args.get('tags'),
-                              'file' : filename,
+                              'file' : file_name,
                               'width' : image.size[0],
                               'height' : image.size[1]}
 
@@ -391,7 +412,7 @@ class ScreenshotsCore(Component):
         # Commit database changes.
         db.commit()
 
-    def _create_thumbnail(self, orig_name, path, name, ext, width, height):
+    def _create_image(self, orig_name, path, name, ext, width, height):
         image = Image.open(orig_name)
         image = image.resize((width, height), Image.BICUBIC)
         image.save(os.path.join(path, '%s-%sx%s%s' % (name, width, height,
@@ -409,6 +430,6 @@ class ScreenshotsCore(Component):
             size = image.file.len
         if size == 0:
             raise TracError('Can\'t upload empty file.')
-        filename = os.path.basename(image.filename).decode('utf-8')
+        file_name = os.path.basename(image.filename).decode('utf-8')
         self.log.debug(filename)
-        return image.file, filename
+        return image.file, file_name
