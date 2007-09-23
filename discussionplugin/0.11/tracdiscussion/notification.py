@@ -9,7 +9,6 @@ from trac.web.chrome import ITemplateProvider
 
 from genshi.template import TemplateLoader, TextTemplate
 
-
 class DiscussionNotifyEmail(NotifyEmail):
 
     template_name = 'discussion-notify-body.txt'

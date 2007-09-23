@@ -9,5 +9,5 @@ ${discussion.body}
 
 --
 ${discussion.title} URL: <${discussion.link}>
-${project_name} <${project_url}>
-${project_descr}
+${discussion.project_name} <${discussion.project_url}>
+${discussion.project_description}
