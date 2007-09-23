@@ -71,8 +71,18 @@ class WorkLogManager:
         for change in tm.grouped_changelog_entries(tckt, db):
             if change['permanent']:
                 cnum += 1
-
         tckt.save_changes(self.authname, msg, self.now, db, cnum+1)
+        ## Often the time overlaps and causes a db error,
+        ## especially when the trac integration post-commit hook is used.
+        ## NOTE TO SELF. I DON'T THINK THIS IS NECESSARY RIGHT NOW...
+        #count = 0
+        #while count < 10:
+        #    try:
+        #        tckt.save_changes(self.authname, msg, self.now, db, cnum+1)
+        #        count = 42
+        #    except Exception, e:
+        #        self.now += 1
+        #        count += 1
         db.commit()
         
         tn = TicketNotifyEmail(self.env)
@@ -191,6 +201,7 @@ class WorkLogManager:
             
             db = self.env.get_db_cnx()
             tckt = Ticket(self.env, active['ticket'], db)
+            
             # This hideous hack is here because I don't yet know how to do variable-DP rounding in python - sorry!
             # It's meant to round to 2 DP, so please replace it if you know how.  Many thanks, MK.
             tckt['hours'] = str(float(int(100 * float(delta) / 60) / 100.0))
