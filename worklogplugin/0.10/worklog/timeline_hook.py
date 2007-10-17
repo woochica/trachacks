@@ -45,7 +45,7 @@ class WorkLogTimelineAddon(Component):
                            ORDER BY wl.time"""
                            % (start, stop))
             previous_update = None
-            for user,ticket,time,starttime,comment,kind,humankind,summary in cursor:
+            for user,ticket,time,starttime,comment,kind,humankind,summary,status in cursor:
                 summary = Markup.escape(summary)
                 time = float(time)
                 starttime = float(starttime)
