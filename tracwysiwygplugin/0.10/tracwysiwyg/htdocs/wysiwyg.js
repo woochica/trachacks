@@ -3,7 +3,11 @@ var TracWysiwyg = function(textarea) {
     var editorMode = TracWysiwyg.getEditorMode();
 
     this.textarea = textarea;
-    this.wikitextToolbar = textarea.previousSibling;
+    var wikitextToolbar = textarea.previousSibling;
+    if (wikitextToolbar.nodeType != 1 || wikitextToolbar.className != "wikitoolbar") {
+        wikitextToolbar = null;
+    }
+    this.wikitextToolbar = wikitextToolbar;
 
     var anonymous = document.createElement("div");
     anonymous.innerHTML = '<iframe class="wysiwyg" '
@@ -32,25 +36,48 @@ var TracWysiwyg = function(textarea) {
         body.insertBefore(this.menus[i], body.firstChild);
     }
 
+    var styleStatic = { position: "static", left: "-2000px", top: "-2000px" };
+    var styleAbsolute = { position: "absolute", left: "-2000px", top: "-2000px" };
     switch (editorMode) {
     case "textarea":
-        frame.style.display = this.wysiwygToolbar.style.display = "none";
+        TracWysiwyg.setStyle(textarea, styleStatic);
+        if (wikitextToolbar) {
+            TracWysiwyg.setStyle(wikitextToolbar, styleStatic);
+        }
+        TracWysiwyg.setStyle(frame, styleAbsolute);
+        TracWysiwyg.setStyle(this.wysiwygToolbar, styleAbsolute);
         break;
     case "wysiwyg":
-        textarea.style.display = this.wikitextToolbar.style.display = "none";
+        TracWysiwyg.setStyle(textarea, styleAbsolute);
+        if (wikitextToolbar) {
+            TracWysiwyg.setStyle(wikitextToolbar, styleAbsolute);
+        }
+        TracWysiwyg.setStyle(frame, styleStatic);
+        TracWysiwyg.setStyle(this.wysiwygToolbar, styleStatic);
         break;
     }
     this.setupToggleEditorButtons();
+    this.setupSyncResizingTextArea();
 
     function lazySetup() {
         if (self.contentDocument.body) {
+            var exception;
             try { self.execCommand("useCSS", false); } catch (e) { }
             try { self.execCommand("styleWithCSS", false); } catch (e) { }
             if (editorMode == "wysiwyg") {
-                self.loadWysiwygDocument();
+                try { self.loadWysiwygDocument() } catch (e) { exception = e }
             }
             self.setupEditorEvents();
             self.setupFormEvent();
+            if (exception) {
+                self.textarea.style.position = "static";
+                if (self.wikitextToolbar) {
+                    self.wikitextToolbar.style.position = "static";
+                }
+                self.frame.style.position = self.wysiwygToolbar.style.position = "absolute";
+                alert("Failed to activate the wysiwyg editor.");
+                throw exception;
+            }
         }
         else {
             setTimeout(lazySetup, 100);
@@ -68,7 +95,7 @@ TracWysiwyg.prototype.initializeEditor = function(d) {
         '<!DOCTYPE html PUBLIC',
         ' "-//W3C//DTD XHTML 1.0 Transitional//EN"',
         ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n',
-        '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:tw="http://trac-hacks.org/wiki/TracWysiwygPlugin">',
+        '<html xmlns="http://www.w3.org/1999/xhtml">',
         '<head>',
         '<base href="', l.protocol, '//', l.host, '/" />',
         '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
@@ -91,20 +118,34 @@ TracWysiwyg.prototype.listenerToggleEditor = function(type) {
     switch (type) {
     case "textarea":
         return function(event) {
-            if (self.textarea.style.display == "none") {
-                self.textarea.style.display = self.wikitextToolbar.style.display = "";
-                self.frame.style.display = self.wysiwygToolbar.style.display = "none";
+            if (self.textarea.style.position == "absolute") {
+                self.hideAllMenus();
                 self.loadTracWikiText();
+                self.textarea.style.position = "static";
+                if (self.wikitextToolbar) {
+                    self.wikitextToolbar.style.position = "static";
+                }
+                self.frame.style.position = self.wysiwygToolbar.style.position = "absolute";
                 TracWysiwyg.setEditorMode(type);
             }
             self.focusTextarea();
         };
     case "wysiwyg":
         return function(event) {
-            if (self.frame.style.display == "none") {
-                self.textarea.style.display = self.wikitextToolbar.style.display = "none";
-                self.frame.style.display = self.wysiwygToolbar.style.display = "";
-                self.loadWysiwygDocument();
+            if (self.frame.style.position == "absolute") {
+                try {
+                    self.loadWysiwygDocument();
+                }
+                catch (e) {
+                    TracWysiwyg.stopEvent(event || window.event);
+                    alert("Failed to activate the wysiwyg editor.");
+                    throw e;
+                }
+                self.textarea.style.position = "absolute";
+                if (self.wikitextToolbar) {
+                    self.wikitextToolbar.style.position = "absolute";
+                }
+                self.frame.style.position = self.wysiwygToolbar.style.position = "static";
                 TracWysiwyg.setEditorMode(type);
             }
             self.focusWysiwyg();
@@ -118,7 +159,7 @@ TracWysiwyg.prototype.setupFormEvent = function() {
     function listener(event) {
         var textarea = self.textarea;
         try {
-            if (textarea.style.display == "none") {
+            if (textarea.style.position == "absolute") {
                 var body = self.contentDocument.body;
                 if (self.savedWysiwygHTML !== null && body.innerHTML != self.savedWysiwygHTML) {
                     textarea.value = self.domToWikitext(body);
@@ -155,8 +196,7 @@ TracWysiwyg.prototype.createWysiwygToolbar = function(d) {
         '</ul>' ];
     var div = d.createElement("div");
     div.className = "wysiwyg-toolbar";
-    div.innerHTML = html.join("");
-
+    div.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
     return div;
 };
 
@@ -170,31 +210,25 @@ TracWysiwyg.prototype.createStyleMenu = function(d) {
         '<h5><a id="wt-heading5" href="#">Header 5</a></h5>',
         '<h6><a id="wt-heading6" href="#">Header 6</a></h6>',
         '<pre class="wiki"><a id="wt-code" href="#">Code block</a></pre>',
-        '<blockquote class="citation"><a id="wt-quote" href="#">Quote</a></blockquote>' ].join("");
+        '<blockquote class="citation"><a id="wt-quote" href="#">Quote</a></blockquote>' ];
     var menu = d.createElement("div");
     menu.className = "wysiwyg-menu";
-    var style = menu.style;
-    style.top = style.left = "-1000px";
-    style.position = "absolute";
-    style.zIndex = 1000;
-    menu.innerHTML = html;
+    TracWysiwyg.setStyle(menu, { position: "absolute", left: "-1000px", top: "-1000px", zIndex: 1000 });
+    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
     return menu;
 };
 
 TracWysiwyg.prototype.createDecorationMenu = function(d) {
     var html = [
         '<ul class="menu">',
-        '<li><a id="wt-strike" href="#">Strike</a></li>',
+        '<li><a id="wt-strike" href="#">Strike through</a></li>',
         '<li><a id="wt-sup" href="#">Superscript</a></li>',
         '<li><a id="wt-sub" href="#">Subscript</a></li>',
-        '</ul>' ].join("");
+        '</ul>' ];
     var menu = d.createElement("div");
     menu.className = "wysiwyg-menu";
-    var style = menu.style;
-    style.top = style.left = "-1000px";
-    style.position = "absolute";
-    style.zIndex = 1000;
-    menu.innerHTML = html;
+    TracWysiwyg.setStyle(menu, { position: "absolute", left: "-1000px", top: "-1000px", zIndex: 1000 });
+    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
     return menu;
 };
 
@@ -207,14 +241,11 @@ TracWysiwyg.prototype.createTableMenu = function(d) {
         '<li><a id="wt-insert-col-after" href="#">Insert column after</a></li>',
         '<li><a id="wt-delete-row" href="#">Delete row</a></li>',
         '<li><a id="wt-delete-col" href="#">Delete column</a></li>',
-        '</ul>' ].join("");
+        '</ul>' ];
     var menu = d.createElement("div");
     menu.className = "wysiwyg-menu";
-    var style = menu.style;
-    style.top = style.left = "-1000px";
-    style.position = "absolute";
-    style.zIndex = 1000;
-    menu.innerHTML = html;
+    TracWysiwyg.setStyle(menu, { position: "absolute", left: "-1000px", top: "-1000px", zIndex: 1000 });
+    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
     return menu;
 };
 
@@ -224,13 +255,16 @@ TracWysiwyg.prototype.setupMenuEvents = function() {
         addEvent(element, "click", function(event) {
             var w = self.contentWindow;
             TracWysiwyg.stopEvent(event || w.event);
-            var keepMenus = false;
-            try { keepMenus = method.apply(self, args) } catch (e) { }
+            var keepMenus = false, exception;
+            try { keepMenus = method.apply(self, args) } catch (e) { exception = e }
             if (!keepMenus) {
                 self.hideAllMenus();
             }
             element.blur();
             w.focus();
+            if (exception) {
+                throw exception;
+            }
         });
     }
 
@@ -298,12 +332,10 @@ TracWysiwyg.prototype.setupMenuEvents = function() {
 };
 
 TracWysiwyg.prototype.toggleMenu = function(menu, element) {
-    var style = menu.style;
-    if (parseInt(style.left, 10) < 0) {
+    if (parseInt(menu.style.left, 10) < 0) {
         this.hideAllMenus(menu);
         var position = TracWysiwyg.elementPosition(element);
-        style.left = position[0] + "px";
-        style.top = (position[1] + 18 /* XXX */) + "px";
+        TracWysiwyg.setStyle(menu, { left: position[0] + "px", top: (position[1] + 18) + "px" });
     }
     else {
         this.hideAllMenus();
@@ -316,8 +348,7 @@ TracWysiwyg.prototype.hideAllMenus = function(except) {
     var length = menus.length;
     for (var i = 0; i < length; i++) {
         if (menus[i] != except) {
-            var style = menus[i].style;
-            style.left = style.top = "-1000px";
+            TracWysiwyg.setStyle(menus[i], { left: "-1000px", top: "-1000px" });
         }
     }
 };
@@ -360,12 +391,13 @@ TracWysiwyg.prototype.execDecorateMonospace = function() {
 };
 
 TracWysiwyg.prototype.execCommand = function(name, arg) {
-    this.contentDocument.execCommand(name, false, arg);
+    return this.contentDocument.execCommand(name, false, arg);
 };
 
 TracWysiwyg.prototype.setupEditorEvents = function() {
     var self = this;
     var d = this.contentDocument;
+    var w = this.contentWindow;
 
     function listenerKeydown(event) {
         var method = null;
@@ -384,6 +416,14 @@ TracWysiwyg.prototype.setupEditorEvents = function() {
             case 0x55:  // C-u
                 method = self.execDecorate;
                 args = [ "underline" ];
+                break;
+            case 0x59:  // C-y
+                method = self.execCommand;
+                args = [ "redo" ];
+                break;
+            case 0x5a:  // C-z
+                method = self.execCommand;
+                args = [ "undo" ];
                 break;
             }
         }
@@ -474,8 +514,23 @@ TracWysiwyg.prototype.setupToggleEditorButtons = function() {
         var button = buttons[i];
         addEvent(button, "click", this.listenerToggleEditor(button.value));
     }
-    var wikitextToolbar = this.wikitextToolbar;
-    wikitextToolbar.parentNode.insertBefore(toggle, wikitextToolbar);
+    var element = this.wikitextToolbar || this.textarea;
+    element.parentNode.insertBefore(toggle, element);
+};
+
+TracWysiwyg.prototype.setupSyncResizingTextArea = function() {
+    var editrows = document.getElementById("editrows");
+    if (editrows) {
+        var self = this;
+        function timeout() {
+            var height = self.textarea.offsetHeight;
+            var frame = self.frame;
+            if (height > 0 && frame.height != height) {
+                frame.height = height;
+            }
+        }
+        addEvent(editrows, "change", function() { setTimeout(timeout, 100) });
+    }
 };
 
 TracWysiwyg.prototype.formatParagraph = function() {
@@ -529,19 +584,21 @@ TracWysiwyg.prototype.insertTable = function() {
         return;
     }
     var id = this.generateDomId();
-    var html = [
-        '<table class="wiki">',
-        '<tbody>',
-        '<tr><td id="' + id + '"></td><td></td><td></td></tr>',
-        '<tr><td></td><td></td><td></td></tr>',
-        '</tbody>',
-        '</table>' ];
-    this.insertHTML(html.join(""));
+    this.insertHTML(this.tableHTML(id, 2, 3));
     var element = this.contentDocument.getElementById(id)
     if (element) {
         this.selectNodeContents(element);
     }
     this.selectionChanged();
+};
+
+TracWysiwyg.prototype._tableHTML = function(row, col) {
+    var tr = "<tr>" + ((1 << col) - 1).toString(2).replace(/1/g, "<td></td>") + "</tr>";
+    var html = [
+        '<table class="wiki">', '<tbody>',
+        ((1 << row) - 1).toString(2).replace(/1/g, tr),
+        '</tbody>', '</table>' ];
+    return html.join("");
 };
 
 TracWysiwyg.prototype._getFocusForTable = function() {
@@ -682,7 +739,9 @@ TracWysiwyg.prototype.insertHorizontalRule = function() {
     if (this.selectionContainsTagName("table") || this.selectionContainsTagName("pre")) {
         return;
     }
-    this.execCommand("inserthorizontalrule");
+    if (!this.execCommand("inserthorizontalrule")) {
+        this.insertHTML("<hr />");
+    }
     this.selectionChanged();
 };
 
@@ -694,7 +753,7 @@ TracWysiwyg.prototype.createLink = function() {
     var focus = this.getFocusNode();
     var anchor = TracWysiwyg.getSelfOrAncestor(focus, "a");
     var expand = anchor || TracWysiwyg.getSelfOrAncestor(focus, "tt");
-    var currLink = anchor ? (anchor.getAttribute("tw:link") || anchor.href) : "";
+    var currLink = anchor && (anchor.getAttribute("tracwysiwyg-link") || anchor.href) || "";
     if (expand) {
         this.selectNodeContents(expand);
     }
@@ -710,7 +769,8 @@ TracWysiwyg.prototype.createLink = function() {
         anchor.id = id;
         anchor.href = TracWysiwyg.quickSearchURL(newLink);
         anchor.title = newLink;
-        anchor.setAttribute("tw:link", newLink);
+        anchor.setAttribute("tracwysiwyg-link", newLink);
+        anchor.setAttribute("onclick", "return false;");
         anchor.appendChild(d.createTextNode(text));
         anonymous.appendChild(anchor);
         this.insertHTML(anonymous.innerHTML);
@@ -754,8 +814,14 @@ TracWysiwyg.prototype.selectionChanged = function() {
         blockquote: "quote" };
     var position = this.getSelectionPosition();
 
-    var node = position.start == position.end ? position.start.firstChild : position.start.nextSibling;
-    node = node || position.start;
+    var node;
+    if (position.start) {
+        node = position.start == position.end ? position.start.firstChild : position.start.nextSibling;
+        node = node || position.start;
+    }
+    else {
+        node = null;
+    }
     while (node) {
         if (node.nodeType == 1) {
             var name = node.tagName.toLowerCase();
@@ -1105,24 +1171,24 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         var anchor = d.createElement("a");
         anchor.href = quickSearchURL(link);
         anchor.title = link;
-        anchor.setAttribute("tw:link", link);
+        anchor.setAttribute("tracwysiwyg-link", link);
+        anchor.setAttribute("onclick", "return false;");
         anchor.appendChild(d.createTextNode(label));
         holder.appendChild(anchor);
     }
 
     function handleTracLinks(value) {
-        var d = contentDocument;
         var match = handleTracLinks.pattern.exec(value);
         if (match) {
             var link = match[1];
             if (!/^(?:[\w.+-]+:|[\/.#].*)/.test(link)) {
                 link = "wiki:" + link;
             }
-            var text = (match[2] || match[1]).replace(/^(["'])(.*)\1$/g, "$2");
+            var text = (match[2] || match[1].replace(/^[\w.+-]+:/, "")).replace(/^(["'])(.*)\1$/g, "$2");
             createAnchor(link, text);
         }
         else {
-            holder.appendChild(d.createTextNode(value));
+            holder.appendChild(contentDocument.createTextNode(value));
         }
     }
     handleTracLinks.pattern = new RegExp("\\["
@@ -1176,7 +1242,6 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 className = "upperroman";
                 break;
             default:
-                start = match[3];
                 if (match[4]) {
                     start = parseInt(match[4], 10);
                 }
@@ -1196,21 +1261,29 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             openList(tag, className, start, depth);
         }
         else {
-            while (listDepth.length > 1) {
-                if (depth >= listDepth[last]) {
-                    break;
-                }
-                closeList();
-                last = listDepth.length - 1;
+            var container, list;
+            if (listDepth.length > 1 && depth < listDepth[last]) {
+                do {
+                    if (depth >= listDepth[last]) {
+                        break;
+                    }
+                    closeList();
+                    last = listDepth.length - 1;
+                } while (listDepth.length > 1);
+                container = holder;
             }
-            var list = getSelfOrAncestor(holder, "li");
-            if (tag != list.parentNode.tagName.toLowerCase()) {
-                closeList();
+            else {
+                list = getSelfOrAncestor(holder, "li");
+                container = list.parentNode;
+            }
+            if (tag != container.tagName.toLowerCase()) {
+                holder = container.parentNode;
+                listDepth.pop();
                 openList(tag, className, start, depth);
             }
             else {
                 var tmp = contentDocument.createElement("li");
-                list.parentNode.appendChild(tmp);
+                container.appendChild(tmp);
                 holder = tmp;
                 listDepth[last] = depth;
             }
@@ -1237,10 +1310,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         }
         else {
             target = getSelfOrAncestor(h, "li");
-            if (!target) {
-                closeToFragment();
-                target = fragment;
-            }
+            target = target ? target.parentNode : h;
         }
         target.appendChild(container);
         holder = list;
@@ -1248,8 +1318,9 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
     }
 
     function closeList() {
-        var target = getSelfOrAncestor(holder, "li");
-        holder = target.parentNode.parentNode;
+        var h = holder;
+        var target = getSelfOrAncestor(h, "li");
+        holder = (target ? target.parentNode : h).parentNode;
         listDepth.pop();
     }
 
@@ -1383,30 +1454,32 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         var _fragment = fragment;
 
         while (element != _fragment) {
+            var method;
             switch (element.tagName.toLowerCase()) {
             case "p":
-                closeParagraph();
-                element = holder;
+                method = closeParagraph;
                 break;
-            case "li":
-                closeList();
-                element = holder;
+            case "li": case "ul": case "ol":
+                method = closeList;
                 break;
             case "dd":
-                closeDefList();
-                element = holder;
+                method = closeDefList;
                 break;
             case "blockquote":
-                closeQuote();
-                element = holder;
+                method = closeQuote;
                 break;
             case "td": case "tr": case "tbody": case "table":
-                closeTable();
-                element = holder;
+                method = closeTable;
                 break;
             default:
-                element = element.parentNode;
                 break;
+            }
+            if (method) {
+                method();
+                element = holder;
+            }
+            else {
+                element = element.parentNode;
             }
         }
 
@@ -1655,7 +1728,8 @@ TracWysiwyg.prototype.wikiBlockTags = {
 
 TracWysiwyg.prototype.wikiInlineTags = {
     "a": true, "tt": true, "b": true, "strong": true, "i": true, "u": true,
-    "del": true, "strike": true, "sub": true, "sup": true, "br": true };
+    "del": true, "strike": true, "sub": true, "sup": true, "br": true,
+    "span": true };
 
 TracWysiwyg.prototype.domToWikitext = function(root) {
     var getTextContent = TracWysiwyg.getTextContent;
@@ -1704,6 +1778,32 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
             }
         }
         return false;
+    }
+
+    function tokenFromSpan(node) {
+        if (node.className == "underline") {
+            return wikiOpenTokens["u"];
+        }
+        var style = node.style;
+        if (style.fontWeight == "bold") {
+            return wikiOpenTokens["b"];
+        }
+        if (style.fontStyle == "italic") {
+            return wikiOpenTokens["i"];
+        }
+        switch (style.textDecoration) {
+        case "underline":
+            return wikiOpenTokens["u"];
+        case "line-through":
+            return wikiOpenTokens["del"];
+        }
+        switch (style.verticalAlign) {
+        case "sub":
+            return wikiOpenTokens["sub"];
+        case "sup":
+            return wikiOpenTokens["sup"];
+        }
+        return null;
     }
 
     function nodeDecorations(node) {
@@ -1811,38 +1911,37 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
     }
 
     function pushAnchor(node) {
-        var link = node.getAttribute("tw:link") || node.href;
+        var link = node.getAttribute("tracwysiwyg-link") || node.href;
         var value = getTextContent(node).replace(/^\s+|\s+$/g, "");
         if (!value) {
             return;
         }
         var text = null;
-        if (link == value) {
-            text = tracLinkPattern.test(value) ? value : "[" + value + "]";
-        }
-        else {
-            var usingValue = false;
-            var match = /^([\w.+-]+):(@?(.*))$/.exec(link);
-            switch (match && match[1]) {
-            case "wiki":
-                usingValue = value == match[2] && wikiPageNamePattern.test(value);
-                break;
-            case "changeset":
-                usingValue = value == "[" + match[2] + "]"
-                    || /^\d+$/.test(match[2]) && value == "r" + match[2];
-                break;
-            case "log":
-                usingValue = value == "[" + match[3] + "]" || value == "r" + match[3];
-                break;
-            case "report":
-                usingValue = value == "{" + match[2] + "}";
-                break;
-            case "ticket":
-                usingValue = value == "#" + match[2];
-                break;
+        var match = /^([\w.+-]+):(@?(.*))$/.exec(link);
+        if (match) {
+            if (value == match[2]) {
+                text = "[" + link + "]";
             }
-            if (usingValue) {
-                text = value;
+            else {
+                var usingValue = false;
+                switch (match[1]) {
+                case "changeset":
+                    usingValue = value == "[" + match[2] + "]"
+                        || /^\d+$/.test(match[2]) && value == "r" + match[2];
+                    break;
+                case "log":
+                    usingValue = value == "[" + match[3] + "]" || value == "r" + match[3];
+                    break;
+                case "report":
+                    usingValue = value == "{" + match[2] + "}";
+                    break;
+                case "ticket":
+                    usingValue = value == "#" + match[2];
+                    break;
+                }
+                if (usingValue) {
+                    text = value;
+                }
             }
         }
         if (isTailEscape()) {
@@ -2005,9 +2104,17 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                 }
                 break;
             case "span":
-                if (node.className == "underline") {
-                    texts.push(wikiOpenTokens["u"]);
+                var token = tokenFromSpan(node);
+                if (token) {
+                    if (name in wikiInlineTags && isTailEscape()) {
+                        texts.push(" ");
+                    }
+                    pushOpenToken(token);
                 }
+                break;
+            case "script":
+            case "style":
+                skipNode = node;
                 break;
             }
         }
@@ -2026,11 +2133,9 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
         }
         else if (token) {
             if (name in wikiInlineTags && isTailEscape()) {
-                texts.push(" ", token);
+                texts.push(" ");
             }
-            else {
-                texts.push(token);
-            }
+            texts.push(token);
         }
         else {
             switch (name) {
@@ -2080,8 +2185,12 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                 quoteDepth--;
                 break;
             case "span":
-                if (node.className == "underline") {
-                    texts.push(wikiCloseTokens["u"]);
+                var token = tokenFromSpan(node);
+                if (token) {
+                    if (name in wikiInlineTags && isTailEscape()) {
+                        texts.push(" ");
+                    }
+                    texts.push(token);
                 }
                 break;
             }
@@ -2139,6 +2248,10 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
 };
 
 if (window.getSelection) {
+    TracWysiwyg.prototype.tableHTML = function(id, row, col) {
+        var html = this._tableHTML(row, col);
+        return html.replace(/<td><\/td>/g, "<td><br /></td>").replace(/<td>/, '<td id="' + id + '">');
+    };
     TracWysiwyg.prototype.insertTableCell = function(row, index) {
         var cell = row.insertCell(index);
         cell.appendChild(this.contentDocument.createElement("br"));
@@ -2147,24 +2260,98 @@ if (window.getSelection) {
     TracWysiwyg.prototype.getFocusNode = function() {
         return this.contentWindow.getSelection().focusNode;
     };
-    TracWysiwyg.prototype.selectNode = function(node) {
-        var selection = this.contentWindow.getSelection();
-        selection.removeAllRanges();
-        var range = this.contentDocument.createRange();
-        range.selectNode(node);
-        selection.addRange(range);
-    };
-    TracWysiwyg.prototype.selectNodeContents = function(node) {
-        var selection = this.contentWindow.getSelection();
-        selection.removeAllRanges();
-        var range = this.contentDocument.createRange();
-        range.selectNodeContents(node);
-        selection.addRange(range);
-    };
-    TracWysiwyg.prototype.getSelectionRange = function() {
-        var selection = this.contentWindow.getSelection();
-        return selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-    };
+    if (window.getSelection().removeAllRanges) {
+        TracWysiwyg.prototype.selectNode = function(node) {
+            var selection = this.contentWindow.getSelection();
+            selection.removeAllRanges();
+            var range = this.contentDocument.createRange();
+            range.selectNode(node);
+            selection.addRange(range);
+        };
+        TracWysiwyg.prototype.selectNodeContents = function(node) {
+            var selection = this.contentWindow.getSelection();
+            selection.removeAllRanges();
+            var range = this.contentDocument.createRange();
+            range.selectNodeContents(node);
+            selection.addRange(range);
+        };
+        TracWysiwyg.prototype.getSelectionRange = function() {
+            var selection = this.contentWindow.getSelection();
+            return selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        };
+        TracWysiwyg.prototype.expandSelectionToElement = function(arg) {
+            if (arg.start || arg.end) {
+                var selection = this.contentWindow.getSelection();
+                var range = this.getSelectionRange() || this.contentDocument.createRange();
+                selection.removeAllRanges();
+                if (arg.start) {
+                    range.setStartBefore(arg.start);
+                }
+                if (arg.end) {
+                    range.setEndAfter(arg.end);
+                }
+                selection.addRange(range);
+            }
+        };
+        TracWysiwyg.prototype.insertHTML = function(html) {
+            this.execCommand("inserthtml", html);
+        };
+    }
+    else {      // Safari 2
+        TracWysiwyg.prototype.selectNode = function(node) {
+            var selection = this.contentWindow.getSelection();
+            var range = this.contentDocument.createRange();
+            range.selectNode(node);
+            selection.setBaseAndExtent(range.startContainer, range.startOffset, range.endContainer, range.endOffset);
+            range.detach();
+        };
+        TracWysiwyg.prototype.selectNodeContents = function(node) {
+            var selection = this.contentWindow.getSelection();
+            selection.setBaseAndExtent(node, 0, node, node.childNodes.length);
+        };
+        TracWysiwyg.prototype.getSelectionRange = function() {
+            var selection = this.contentWindow.getSelection();
+            if (selection.anchorNode) {
+                var range = this.contentDocument.createRange();
+                range.setStart(selection.baseNode, selection.baseOffset);
+                range.setEnd(selection.extentNode, selection.extentOffset);
+                if (range.collapsed && !selection.isCollapsed) {
+                    range.setStart(selection.extentNode, selection.extentOffset);
+                    range.setEnd(selection.baseNode, selection.baseOffset);
+                }
+                return range;
+            }
+            return null;
+        };
+        TracWysiwyg.prototype.expandSelectionToElement = function(arg) {
+            if (arg.start || arg.end) {
+                var selection = this.contentWindow.getSelection();
+                var range = this.getSelectionRange();
+                if (arg.start) {
+                    range.setStartBefore(arg.start);
+                }
+                if (arg.end) {
+                    range.setEndAfter(arg.end);
+                }
+                selection.setBaseAndExtent(range.startContainer, range.startOffset, range.endContainer, range.endOffset);
+                range.detach();
+            }
+        };
+        TracWysiwyg.prototype.insertHTML = function(html) {
+            var range = this.getSelectionRange();
+            if (range) {
+                var d = this.contentDocument;
+                var tmp = d.createRange();
+                tmp.setStart(d.body, 0);
+                tmp.setEnd(d.body, 0);
+                var fragment = tmp.createContextualFragment(html);
+                range.deleteContents();
+                range.insertNode(fragment);
+                range.detach();
+                tmp.detach();
+            }
+        };
+    }
     TracWysiwyg.prototype.getSelectionText = function() {
         var range = this.getSelectionRange();
         return range ? range.toString() : null;
@@ -2188,26 +2375,13 @@ if (window.getSelection) {
         }
         return position;
     };
-    TracWysiwyg.prototype.expandSelectionToElement = function(arg) {
-        var selection = this.contentWindow.getSelection();
-        if (arg.start || arg.end) {
-            var range = selection.rangeCount > 0 ? selection.getRangeAt(0) : this.contentDocument.createRange();
-            selection.removeAllRanges();
-            if (arg.start) {
-                range.setStartBefore(arg.start);
-            }
-            if (arg.end) {
-                range.setEndAfter(arg.end);
-            }
-            selection.addRange(range);
-        }
-    };
     TracWysiwyg.prototype.selectionContainsTagName = function(name) {
         var selection = this.contentWindow.getSelection();
-        if (selection.rangeCount <= 0) {
+        var range = this.getSelectionRange();
+        if (!range) {
             return false;
         }
-        var ancestor = selection.getRangeAt(0).commonAncestorContainer;
+        var ancestor = range.commonAncestorContainer;
         if (!ancestor) {
             return false;
         }
@@ -2226,11 +2400,12 @@ if (window.getSelection) {
         }
         return false;
     };
-    TracWysiwyg.prototype.insertHTML = function(html) {
-        this.execCommand("inserthtml", html);
-    };
 }
 else if (document.selection) {
+    TracWysiwyg.prototype.tableHTML = function(id, row, col) {
+        var html = this._tableHTML(row, col);
+        return html.replace(/<td>/, '<td id="' + id + '">');
+    };
     TracWysiwyg.prototype.insertTableCell = function(row, index) {
         return row.insertCell(index);
     };
@@ -2374,65 +2549,44 @@ else {
     TracWysiwyg.prototype.insertHTML = function(html) { };
 }
 
-TracWysiwyg.prototype.treeWalk = (function() {
-    var accept, reject;
-
-    function filter(node) {
-        switch (node.nodeType) {
-        case 1: // element
-            return /^(?:script|style)/i.test(node.tagName) ? reject : accept;
-        case 3: // text
-            return accept;
-        default:
-            return reject;
+if (document.createTreeWalker) {
+    TracWysiwyg.prototype.treeWalk = function(root, iterator) {
+        var walker = root.ownerDocument.createTreeWalker(
+            root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null, true);
+        while (walker.nextNode()) {
+            iterator(walker.currentNode);
         }
-    }
-
-    if (document.createTreeWalker && navigator.userAgent.indexOf("AppleWebKit/") < 0) {
-        accept = NodeFilter.FILTER_ACCEPT;
-        reject = NodeFilter.FILTER_REJECT;
-        return function(root, iterator) {
-            var d = root.ownerDocument;
-            var walker = d.createTreeWalker(root,
-                NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
-                { acceptNode: filter }, true);
-            while (walker.nextNode()) {
-                iterator(walker.currentNode);
+        iterator(null);
+    };
+}
+else {
+    TracWysiwyg.prototype.treeWalk = function(root, iterator) {
+        var element = root;
+        var tmp;
+        while (element) {
+            if (tmp = element.firstChild) {
+                element = tmp;
             }
-            iterator(null);
-        };
-    }
-    else {
-        accept = true;
-        reject = false;
-        return function(root, iterator) {
-            var element = root;
-            var tmp;
-            while (element) {
-                if ((tmp = element.firstChild) && filter(tmp) === accept) {
-                    element = tmp;
-                }
-                else if (tmp = element.nextSibling) {
-                    element = tmp;
-                }
-                else {
-                    for ( ; ; ) {
-                        element = element.parentNode;
-                        if (element == root || !element) {
-                            iterator(null);
-                            return;
-                        }
-                        if (tmp = element.nextSibling) {
-                            element = tmp;
-                            break;
-                        }
+            else if (tmp = element.nextSibling) {
+                element = tmp;
+            }
+            else {
+                for ( ; ; ) {
+                    element = element.parentNode;
+                    if (element == root || !element) {
+                        iterator(null);
+                        return;
+                    }
+                    if (tmp = element.nextSibling) {
+                        element = tmp;
+                        break;
                     }
                 }
-                iterator(element);
             }
-        };
-    }
-})();
+            iterator(element);
+        }
+    };
+}
 
 TracWysiwyg.count = 0;
 TracWysiwyg.tracBasePath = null;
@@ -2507,6 +2661,13 @@ TracWysiwyg.stopEvent = function(event) {
     }
 };
 
+TracWysiwyg.setStyle = function(element, object) {
+    var style = element.style;
+    for (var name in object) {
+        style[name] = object[name];
+    }
+};
+
 TracWysiwyg.elementPosition = function(element) {
     var left = 0, top = 0;
     while (element) {
@@ -2551,9 +2712,6 @@ TracWysiwyg.initialize = function() {
         return;
     }
     if (typeof document.designMode == "undefined") {
-        return;
-    }
-    if (navigator.appVersion.indexOf("AppleWebKit/") >= 0) {
         return;
     }
     TracWysiwyg.tracBasePath = TracWysiwyg.getTracBasePath();
