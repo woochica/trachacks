@@ -28,7 +28,7 @@ class WorkLogTimelineAddon(Component):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
-            cursor.execute("""SELECT wl.user,wl.ticket,wl.time,wl.starttime,wl.comment,wl.kind,wl.humankind,t.summary
+            cursor.execute("""SELECT wl.user,wl.ticket,wl.time,wl.starttime,wl.comment,wl.kind,wl.humankind,t.summary,t.status
                              FROM (
                              
                              SELECT user, ticket, starttime AS time, starttime, comment, 'workstart' AS kind, 'started' AS humankind

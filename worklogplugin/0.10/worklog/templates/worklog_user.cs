@@ -14,7 +14,7 @@
     </tr>
     <?cs each:log = worklog.worklog ?>
     <tr>
-      <td><a href="<?cs var:worklog.ticket_href ?>/<?cs var:log.ticket ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?></td>
+      <td><a class="<?cs var:log.status ?> ticket" href="<?cs var:worklog.ticket_href ?>/<?cs var:log.ticket ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?></td>
       <td><span id="worklog_time_delta"><?cs var:log.delta ?></span></td>
       <td><span id="worklog_comment"><?cs var:log.comment ?></span></td>
     </tr>

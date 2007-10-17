@@ -21,9 +21,9 @@
     <tr>
       <td><a href="<?cs var:worklog.href ?>/users/<?cs var:log.user ?>"><?cs var:log.dispname ?></a></td>
       <?cs if:log.finished == #0 ?>
-      <td><a href="<?cs var:worklog.ticket_href ?>/<?cs var:log.ticket ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?></td>
+      <td><a class="<?cs var:log.status ?> ticket" href="<?cs var:worklog.ticket_href ?>/<?cs var:log.ticket ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?></td>
       <?cs else ?>
-      <td><em>Idle</em> <small>(Last worked on: <a href="<?cs var:log.ticket_url ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?>)</small></td>
+      <td><em>Idle</em> <small>(Last worked on: <a class="<?cs var:log.status ?> ticket" href="<?cs var:log.ticket_url ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?>)</small></td>
       <?cs /if ?>
       <td><span id="worklog_time_delta"><?cs var:log.delta ?></span></td>
       <td><span id="worklog_comment"><?cs var:log.comment ?></span></td>

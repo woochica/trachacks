@@ -278,28 +278,28 @@ class WorkLogManager:
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if mode == 'user':
-            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
+            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
                            'FROM work_log wl '
                            'INNER JOIN ticket t ON wl.ticket=t.id '
                            'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
                            'WHERE wl.user=%s '
                            'ORDER BY wl.lastchange DESC', (self.authname,))
         elif mode == 'summary':
-            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
+            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
                            'FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt '
                            'INNER JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange '
                            'INNER JOIN ticket t ON wl.ticket=t.id '
                            'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
                            'ORDER BY wl.lastchange DESC, wl.user')
         else:
-            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
+            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
                            'FROM work_log wl '
                            'INNER JOIN ticket t ON wl.ticket=t.id '
                            'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
                            'ORDER BY wl.lastchange DESC, wl.user')
         
         rv = []
-        for user,name,starttime,endtime,ticket,summary,comment  in cursor:
+        for user,name,starttime,endtime,ticket,summary,status,comment  in cursor:
             starttime = float(starttime)
             endtime = float(endtime)
             
@@ -328,6 +328,7 @@ class WorkLogManager:
                        'delta': delta,
                        'ticket': ticket,
                        'summary': summary,
+                       'status': status,
                        'comment': comment})
         return rv
         
