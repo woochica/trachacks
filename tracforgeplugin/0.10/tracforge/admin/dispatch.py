@@ -63,7 +63,7 @@ class TracForgeIndexModule(Component):
                 if req.perm.has_permission('TRACFORGE_ADMIN'):
                     projects.append({
                         'name': env_path,
-                        'description': u'Massive loading failure',
+                        'description': to_unicode(e),
                     })
             
         projects.sort(lambda x, y: cmp(x['name'].lower(), y['name'].lower()))
