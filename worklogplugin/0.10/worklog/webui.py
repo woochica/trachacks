@@ -37,87 +37,34 @@ class WorkLogPage(Component):
                          (url , "Work Log"))
 
     # Internal Methods
-    def get_worklog(self, req):
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, wl.comment, t.summary '
-                       'FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt '
-                       'LEFT JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange '
-                       'LEFT JOIN ticket t ON wl.ticket=t.id '
-                       'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
-                       'ORDER BY wl.lastchange DESC, wl.user')
+    def worklog_csv(self, req, log):
+      #req.send_header('Content-Type', 'text/plain')
+      req.send_header('Content-Type', 'text/csv;charset=utf-8')
+      req.send_header('Content-Disposition', 'filename=worklog.csv')
+      
+      # Headers
+      fields = ['user',
+                'name',
+                'starttime',
+                'endtime',
+                'ticket',
+                'summary',
+                'comment']
+      sep=','
+      req.write(sep.join(fields) + CRLF)
 
-        log = {}
-        for (user,name,starttime,endtime,ticket,comment,summary) in cursor:
-            starttime = float(starttime)
-            endtime = float(endtime)
-            
-            started = datetime.fromtimestamp(starttime)
-
-            dispname = user
-            if name:
-                dispname = '%s (%s)' % (name, user)
-                        
-            finished = ''
-            delta = ''
-            if not endtime == 0:
-                finished = datetime.fromtimestamp(endtime)
-                delta = 'Worked for %s (between %s %s and %s %s)' % \
-                        (pretty_timedelta(started, finished),
-                         format_date(starttime), format_time(starttime),
-                         format_date(endtime), format_time(endtime))
-            else:
-                delta = 'Started %s ago (%s %s)' % \
-                        (pretty_timedelta(started),
-                         format_date(starttime), format_time(starttime))
-                         
-
-            minutes_elapsed = 0
-            if endtime == 0:
-                minutes_elapsed = int((int(time()) - starttime) / 60)
-            else:
-                minutes_elapsed = int((endtime - starttime) / 60)
-                
-            log[user] = { "name": dispname,
-                          "ticket": ticket,
-                          "ticket_url": req.href.ticket(ticket),
-                          "comment": wiki_to_html(comment, self.env, req),
-                          "summary": summary,
-                          "started": started,
-                          "delta": delta,
-                          "finished": finished,
-                          "minutes_elapsed": minutes_elapsed
-                          }
-                
-        return log
-
-    def worklog_csv(self, req):
-        # Headers
-        sep=','
-        req.write(sep.join(['user',
-                            'full_name',
-                            'starttime',
-                            'endtime',
-                            'ticket',
-                            'ticket_summary',
-                            'work_comment']) + CRLF)
-
-        # Rows
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
-                       'FROM work_log wl '
-                       'LEFT JOIN ticket t ON wl.ticket=t.id '
-                       'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
-                       'ORDER BY wl.lastchange DESC, wl.user')
-
-        for row in cursor:
-            req.write(sep.join([str(item)
-                                .replace(sep, '_').replace('\\', '\\\\')
-                                .replace('\n', '\\n').replace('\r', '\\r')
-                                for item in row]) + CRLF)
-
-                
+      # Rows
+      for row in log:
+        first = True
+        for field in fields:
+          if not first:
+            req.write(sep)
+          first = False
+          req.write(str(row[field])
+                    .replace(sep, '_').replace('\\', '\\\\')
+                    .replace('\n', '\\n').replace('\r', '\\r'))
+        req.write(CRLF)
+        
     # IRequestHandler methods
     def match_request(self, req):
         if re.search('/worklog', req.path_info):
@@ -130,17 +77,33 @@ class WorkLogPage(Component):
         def addMessage(s):
             messages.extend([s]);
 
+        # General protection (not strictly needed if Trac behaves itself)
         if not re.search('/worklog', req.path_info):
             return None
-
-        if req.args.has_key('format') and req.args['format'] == 'csv':
-            req.send_header('Content-Type', 'text/csv;charset=utf-8')
-            req.send_header('Content-Disposition', 'filename=worklog.csv')
-            self.worklog_csv(req)
+        
+        # Specific pages:
+        match = re.search('/worklog/users/(.*)', req.path_info)
+        if match:
+          mgr = WorkLogManager(self.env, self.config, match.group(1))
+          if req.args.has_key('format') and req.args['format'] == 'csv':
+            self.worklog_csv(req, mgr.get_work_log('user'))
             return None
+          
+          req.hdf["worklog"] = {"worklog": mgr.get_work_log('user'),
+                                "ticket_href": req.href.ticket(),
+                                "usermanual_href":req.href.wiki(user_manual_wiki_title),
+                                "usermanual_title":user_manual_title
+                               }
+          add_stylesheet(req, "worklog/worklogplugin.css")
+          return 'worklog_user.cs', None
 
+        mgr = WorkLogManager(self.env, self.config, req.authname)
+        if req.args.has_key('format') and req.args['format'] == 'csv':
+            self.worklog_csv(req, mgr.get_work_log())
+            return None
+        
+        # Not any specific page, so process POST actions here.
         if req.method == 'POST':
-            mgr = WorkLogManager(self.env, self.config, req.authname)
             if req.args.has_key('startwork') and req.args.has_key('ticket'):
                 if not mgr.start_work(req.args['ticket']):
                     addMessage(mgr.get_explanation())
@@ -169,10 +132,11 @@ class WorkLogPage(Component):
         
         # no POST, so they're just wanting a list of the worklog entries
         req.hdf["worklog"] = {"messages": messages,
-                              "worklog": self.get_worklog(req),
-                              "href":req.href.worklog(),
-                              "usermanual_href":req.href.wiki(user_manual_wiki_title),
-                              "usermanual_title":user_manual_title
+                              "worklog": mgr.get_work_log('summary'),
+                              "href": req.href.worklog(),
+                              "ticket_href": req.href.ticket(),
+                              "usermanual_href": req.href.wiki(user_manual_wiki_title),
+                              "usermanual_title": user_manual_title
                              }
         add_stylesheet(req, "worklog/worklogplugin.css")
         return 'worklog.cs', None

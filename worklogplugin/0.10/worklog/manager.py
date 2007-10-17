@@ -273,3 +273,61 @@ class WorkLogManager:
             return None
 
         return task
+
+    def get_work_log(self, mode='all'):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        if mode == 'user':
+            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
+                           'FROM work_log wl '
+                           'INNER JOIN ticket t ON wl.ticket=t.id '
+                           'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
+                           'WHERE wl.user=%s '
+                           'ORDER BY wl.lastchange DESC', (self.authname,))
+        elif mode == 'summary':
+            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
+                           'FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt '
+                           'INNER JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange '
+                           'INNER JOIN ticket t ON wl.ticket=t.id '
+                           'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
+                           'ORDER BY wl.lastchange DESC, wl.user')
+        else:
+            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, wl.comment '
+                           'FROM work_log wl '
+                           'INNER JOIN ticket t ON wl.ticket=t.id '
+                           'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
+                           'ORDER BY wl.lastchange DESC, wl.user')
+        
+        rv = []
+        for user,name,starttime,endtime,ticket,summary,comment  in cursor:
+            starttime = float(starttime)
+            endtime = float(endtime)
+            
+            started = datetime.fromtimestamp(starttime)
+            
+            dispname = user
+            if name:
+                dispname = '%s (%s)' % (name, user)
+            
+            if not endtime == 0:
+                finished = datetime.fromtimestamp(endtime)
+                delta = 'Worked for %s (between %s %s and %s %s)' % \
+                        (pretty_timedelta(started, finished),
+                         format_date(starttime), format_time(starttime),
+                         format_date(endtime), format_time(endtime))
+            else:
+                delta = 'Started %s ago (%s %s)' % \
+                        (pretty_timedelta(started),
+                         format_date(starttime), format_time(starttime))
+
+            rv.append({'user': user,
+                       'name': name,
+                       'dispname': dispname,
+                       'starttime': int(starttime),
+                       'endtime': int(endtime),
+                       'delta': delta,
+                       'ticket': ticket,
+                       'summary': summary,
+                       'comment': comment})
+        return rv
+        
