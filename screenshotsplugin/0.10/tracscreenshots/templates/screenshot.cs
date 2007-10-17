@@ -14,6 +14,22 @@
         </th>
       </tr>
       <tr>
+        <td class="components">
+          <strong>Components:</strong>
+          <?cs each:component = screenshots.screenshot.components ?>
+            <?cs var:component ?>
+          <?cs /each ?>
+        </td>
+      </tr>
+      <tr>
+        <td class="versions">
+          <strong>Versions:</strong> 
+          <?cs each:version = screenshots.screenshot.versions ?>
+            <?cs var:version ?>
+          <?cs /each ?>
+        </td>
+      </tr>
+      <tr>
         <td class="message">
           <?cs var:screenshots.screenshot.description ?>
         </td>

@@ -8,7 +8,7 @@
     <h1><?cs var:screenshots.title ?></h1>
   </div>
 
-  <?cs var:screenshots.content ?>
+  <?cs include:screenshots.content_template ?>
 
   <?cs if:trac.acl.SCREENSHOTS_ADMIN ?>
     <div class="buttons screenshot_buttons">
@@ -47,9 +47,48 @@
           <legend>
             Display filter:
           </legend>
-          <div>
-            <input type="hidden" name="action" value="display"/>
+
+          <fieldset>
+            <legend>
+              Components:
+            </legend>
+
+            <div>
+              <?cs each:component = screenshots.components ?>
+                <?cs if:screenshots.enabled_components[component.name] ?>
+                  <input type="checkbox" name="components" value="<?cs var:component.name ?>" checked="yes"> <?cs var:component.name ?>
+                <?cs else ?>
+                  <input type="checkbox" name="components" value="<?cs var:component.name ?>"> <?cs var:component.name ?>
+                <?cs /if ?>
+              <?cs /each ?>
+              <input type="button" name="all" value="All" onclick="check_all('components', true)"/>
+              <input type="button" name="none" value="None" onclick="check_all('components', false)"/>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>
+              Versions:
+            </legend>
+
+            <div>
+              <?cs each:version = screenshots.versions ?>
+                <?cs if:screenshots.enabled_versions[version.name] ?>
+                  <input type="checkbox" name="versions" value="<?cs var:version.name ?>" checked="yes"> <?cs var:version.name ?>
+                <?cs else ?>
+                  <input type="checkbox" name="versions" value="<?cs var:version.name ?>"> <?cs var:version.name ?>
+                <?cs /if?>
+              <?cs /each ?>
+              <input type="button" name="all" value="All" onclick="check_all('versions', true)"/>
+              <input type="button" name="none" value="None" onclick="check_all('versions', false)"/>
+            </div>
+          </fieldset>
+
+          <div class="buttons">
+            <input type="submit" name="filter" value="Apply Filter"/>
+            <input type="hidden" name="action" value="filter"/>
           </div>
+
         </fieldset>
       </form>
     </div>

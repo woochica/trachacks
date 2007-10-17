@@ -1,8 +1,11 @@
 # -*- coding: utf8 -*-
 
+import sets
+
 from tracscreenshots.api import *
 from trac.core import *
-from tractags.api import ITaggingSystemProvider, DefaultTaggingSystem
+from tractags.api import ITaggingSystemProvider, DefaultTaggingSystem, \
+  TagEngine
 
 class ScreenshotsTaggingSystem(DefaultTaggingSystem):
     """
@@ -19,7 +22,7 @@ class ScreenshotsTaggingSystem(DefaultTaggingSystem):
         cursor = db.cursor()
 
         # Get tagged screenshots.
-        api = ScreenshotsApi(self.component)
+        api = self.env[ScreenshotsApi]
         screenshot = api.get_screenshot(cursor, name)
 
         # Return a tuple of (href, wikilink, title)
@@ -36,7 +39,7 @@ class ScreenshotsTags(Component):
         The tags module implements plugin's ability to create tags related
         to screenshots.
     """
-    implements(ITaggingSystemProvider)
+    implements(ITaggingSystemProvider, IScreenshotChangeListener)
 
     # ITaggingSystemProvider methods.
 
@@ -46,36 +49,37 @@ class ScreenshotsTags(Component):
     def get_tagging_system(self, tagspace):
         return ScreenshotsTaggingSystem(self.env, self, None)
 
+    # IScreenshotChangeListener methods.
 
-    # Create screenshot tags.
-    """if is_tags:
+    def screenshot_created(self, screenshot):
+        # Add tags to screenshot.
         tags = TagEngine(self.env).tagspace.screenshots
-        tag_names = new_components
-        tag_names.extend(new_versions)
-        tag_names.extend([screenshot['name'], screenshot['author']])
+        tag_names = self._get_tags(screenshot)
+        tags.replace_tags(None, screenshot['id'], list(sets.Set(tag_names)))
+
+    def screenshot_changed(self, screenshot, old_screenshot):
+        # Add tags to screenshot.
+        old_screenshot.update(screenshot)
+        tags = TagEngine(self.env).tagspace.screenshots
+        tag_names = self._get_tags(old_screenshot)
+        tags.replace_tags(None, old_screenshot['id'], list(sets.Set(tag_names)))
+
+    def screenshot_deleted(self, screenshot):
+        # Add tags to screenshot.
+        tags = TagEngine(self.env).tagspace.screenshots
+        tag_names = self._get_tags(screenshot)
+        tags.remove_tags(None, screenshot['id'], list(sets.Set(tag_names)))
+
+    def _get_tags(self, screenshot):
+        # Prepare tag names.
+        tags = [screenshot['author']]
+        if screenshot['components']:
+            tags += [component for component in screenshot['components']]
+        if screenshot['versions']:
+            tags += [version for version in screenshot['versions']]
+        if screenshot['name']:
+            tags += [screenshot['name']]
         if screenshot['tags']:
-            tag_names.extend(screenshot['tags'].split(' '))
-            tags.replace_tags(req, screenshot['id'],
-              list(sets.Set(tag_names)))
-
-                # Update screenshot tags.
-                if is_tags:
-                    tags = TagEngine(self.env).tagspace.screenshots
-                    tag_names = new_components
-                    tag_names.extend(new_versions)
-                    tag_names.extend([new_name, screenshot['author']])
-                    if new_tags:
-                        tag_names.extend(new_tags.split(' '))
-                    tags.replace_tags(req, screenshot['id'],
-                      list(sets.Set(tag_names)))
-
-                # Delete screenshot tags.
-                if is_tags:
-                    tags = TagEngine(self.env).tagspace.screenshots
-                    tag_names = screenshot['components']
-                    tag_names.extend(screenshot['versions'])
-                    tag_names.extend([screenshot['name'], screenshot['author']])
-                    if screenshot['tags']:
-                        tag_names.extend(screenshot['tags'].split(' '))
-                    tags.remove_tags(req, screenshot['id'],
-                      list(sets.Set(tag_names)))"""
+            tags += screenshot['tags'].split()
+        self.log.debug(tags)
+        return tags

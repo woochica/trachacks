@@ -11,7 +11,7 @@
               <?cs if:image.id != -1 ?>
                 <div class="image">
                   <a href="<?cs var:screenshots.href ?>/<?cs var:image.id ?>" title="<?cs var:image.name ?>">
-                    <img src="<?cs var:screenshots.href ?>/<?cs var:image.id ?>?width=<?cs var:screenshots.width ?>;height=<?cs var:screenshots.height ?>"
+                    <img src="<?cs var:screenshots.href ?>/<?cs var:image.id ?>?width=<?cs var:screenshots.width ?>;height=<?cs var:screenshots.height ?>;format=raw"
                       alt="<?cs var:image.description ?>" width="<?cs var:screenshots.width ?>" height="<?cs var:screenshots.height ?>"/>
                   </a>
                 </div>

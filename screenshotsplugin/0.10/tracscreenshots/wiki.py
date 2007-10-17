@@ -70,5 +70,5 @@ class ScreenshotsWiki(Component):
                     return html.a(label, href = formatter.href.screenshots(
                       screenshot['id']), title = screenshot['description'])
             else:
-                return html.a(label, href = formatter.href.screenshots(),
+                return html.a(arguments[0], href = formatter.href.screenshots(),
                   title = params, class_ = 'missing')

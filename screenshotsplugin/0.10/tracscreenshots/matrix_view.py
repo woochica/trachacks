@@ -41,14 +41,15 @@ class ScreenshotsMatrixView(Component):
         index = int(req.args.get('index') or 0)
 
         # Compute current page, page count, next and previous page id.
-        count = self.rows * self.columns
-        page = (index / count) + 1
-        page_cout = (len(data['screenshots']) + (count - 1)) / count
-        max_index = page_cout * count
-        prev_index = (index - count)
+        count = len(data['screenshots'])
+        count_on_page = self.rows * self.columns
+        page = (index / count_on_page) + 1
+        page_cout = (count + (count_on_page - 1)) / count_on_page
+        prev_index = (index - count_on_page)
+        next_index = (index + count_on_page)
+        max_index = page_cout * count_on_page - 1
         if prev_index < 0:
              prev_index = -1
-        next_index = (index + count)
         if next_index > max_index:
              next_index = -1
 
