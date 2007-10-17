@@ -19,7 +19,7 @@
     </tr>
     <?cs each:log = worklog.worklog ?>
     <tr>
-      <td><a href="<?cs var:worklog.href ?>/users/<?cs var:log.user ?>"><?cs var:log.name ?></a></td>
+      <td><a href="<?cs var:worklog.href ?>/users/<?cs var:log.user ?>"><?cs var:log.dispname ?></a></td>
       <?cs if:log.finished == #0 ?>
       <td><a href="<?cs var:worklog.ticket_href ?>/<?cs var:log.ticket ?>">#<?cs var:log.ticket ?></a>: <?cs var:log.summary ?></td>
       <?cs else ?>
