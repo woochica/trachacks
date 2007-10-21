@@ -54,7 +54,7 @@ class GringottsPage(Component):
         return handler
     
     # Noop
-    def post_process_request(req, template, data, content_type):
+    def post_process_request(self, req, template, data, content_type):
         return template, data, content_type
     
     # IRequestHandler methods
