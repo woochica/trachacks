@@ -2,7 +2,7 @@ import re
 from time import time
 from trac.log import logger_factory
 from trac.core import *
-from trac.web import IRequestHandler
+from trac.web import IRequestHandler, IRequestFilter
 from trac.util.datefmt import format_date, format_time
 from trac.util import Markup
 from trac.ticket import Ticket
@@ -13,7 +13,7 @@ from util import validate_acl
 import ezPyCrypto
 
 class GringottsPage(Component):
-    implements(INavigationContributor, ITemplateProvider, IRequestHandler)
+    implements(INavigationContributor, ITemplateProvider, IRequestHandler, IRequestFilter)
 
     def __init__(self):
         pass
@@ -26,9 +26,6 @@ class GringottsPage(Component):
             return ''
 
     def get_navigation_items(self, req):
-        # Add Stylesheet here, so that macro's will get it
-        #add_stylesheet(req, 'gringotts/gringotts.css')
-        
         url = req.href.gringotts()
         if req.perm.has_permission("REPORT_VIEW"):
             yield 'mainnav', 'gringotts', \
@@ -50,6 +47,16 @@ class GringottsPage(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        # Add Stylesheet here, so that macro's will get it
+        add_stylesheet(req, 'gringotts/gringotts.css')
+        return handler
+    
+    # Noop
+    def post_process_request(req, template, data, content_type):
+        return template, data, content_type
+    
     # IRequestHandler methods
     def match_request(self, req):
         match = re.match(r'^/gringotts(?:/([a-zA-Z0-9]+))?$', req.path_info)
