@@ -1,0 +1,123 @@
+.nav li {
+	white-space: normal;
+}
+
+.tooltip {	
+  background-color: #ffff99;
+  margin: 0.5em;
+  width: 20em;
+  z-index: 9999;
+}
+
+ul#moodList {
+  margin-left: 0;
+  margin-top: 0;
+  padding-left: 0;
+  padding-top: 0;
+  white-space: nowrap;
+}
+
+#personal {
+	width: 95%;
+}
+
+#yourMood {
+	float: left;
+}
+
+#yourComment {
+	float: right;
+}
+
+#yourComment textarea {
+	width: 22em;
+}
+
+#commentButtons {
+	clear: both;
+}
+
+#moodList li {
+  display: inline;
+  list-style-type: none;
+  background: #eee;
+  border-color: #ddd #bbb #aaa #ccc;
+  border-style: solid;
+  border-width: 1px;
+  color: inherit;
+  float: left;
+  margin-left: 3px;
+  margin-right: 3px;
+  margin-bottom: 3px;
+  width: 64px;
+  height: 64px;
+}
+
+#moodList a {
+  background-color: #eee;
+  height: 100%;
+  display: block;
+  border: none;
+}
+
+#moodList #active a {
+  background-color: #ffff99;
+}
+
+#moodList a:hover {
+  background-color: #fff;
+  text-decoration: none;
+}
+
+
+#moodList img {
+  color: inherit;
+  padding: 7px;
+  vertical-align: top;
+}
+
+#teamMood {
+  clear: both;
+}
+
+#teamMood h2 {
+  padding-top: 1em;
+}
+
+#teamMood table {
+  background: #eee;
+  border: none;
+  border-color: #ddd #bbb #aaa #ccc;
+  border-style: solid;
+  border-width: 1px;
+  padding: 0;
+  margin: 0;
+}
+
+#teamMood table td {
+  width: 7em;
+  text-align: center;
+  padding: 0;
+  margin: 0;
+}
+
+#teamMood table thead tr {
+  background: #ddd;
+}
+
+#teamMood table thead td {
+  border: none;
+  padding: 4px;
+  border-bottom-color: #aaa;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  font-style: italic;
+}
+
+#teamMood table td.username {
+  border-right-color: #bbb;
+  border-right-style: solid;
+  border-right-width: 1px;
+  padding: 4px;
+  font-weight: bold;
+}
