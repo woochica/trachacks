@@ -5,21 +5,15 @@ from trac import util
 from trac.core import *
 from trac.perm import IPermissionRequestor, PermissionSystem
 from trac.util import Markup
-from trac.admin.web_ui import IAdminPageProvider
+from trac.ticket.admin import TicketAdminPage
 
 
-class WorklogAdminPage(Component):
+class WorklogAdminPage(TicketAdminPage):
+    _type = 'worklog'
+    _label = ('Work Log', 'Work Log')
 
-    implements(IAdminPageProvider)
-
-    # IAdminPageProvider methods
-    def get_admin_pages(self, req):
-        if req.perm.has_permission('TICKET_ADMIN'):
-            yield ('ticket', 'Ticket System', 'worklog', 'Work Log')
-
-    def process_admin_request(self, req, cat, page, component):
-        req.perm.assert_permission('TICKET_ADMIN')
-        section = "worklog"
+    def _render_admin_panel(self, req, cat, page, component):
+        req.perm.require('TICKET_ADMIN')
 
         bools = [ "timingandestimation", "comment",
                   "autostop", "autostopstart", "autoreassignaccept" ]
@@ -27,9 +21,9 @@ class WorklogAdminPage(Component):
         if req.method == 'POST' and req.args.has_key('update'):
             for yesno in bools:
                 if req.args.has_key(yesno):
-                    self.config.set(section, yesno, True)
+                    self.config.set(self._type, yesno, True)
                 else:
-                    self.config.set(section, yesno, False)
+                    self.config.set(self._type, yesno, False)
                 roundup = 1
                 if req.args.has_key('roundup'):
                     try:
@@ -37,18 +31,17 @@ class WorklogAdminPage(Component):
                             roundup = int(req.args.get('roundup'))
                     except:
                         pass
-                self.config.set(section, 'roundup', roundup)
+                self.config.set(self._type, 'roundup', roundup)
                 
             self.config.save()
 
-        mytrue = Markup('checked="checked"')
         settings = {}
         for yesno in bools:
-            if self.config.getbool(section, yesno):
-                settings[yesno] = mytrue
+            if self.config.getbool(self._type, yesno):
+                settings[yesno] = 'checked'
 
-        if self.config.getint(section, 'roundup'):
-            settings['roundup'] = self.config.getint(section, 'roundup')
-
-        req.hdf['settings'] = settings
-        return 'worklog_webadminui.cs', None
+        if self.config.getint(self._type, 'roundup'):
+            settings['roundup'] = self.config.getint(self._type, 'roundup')
+        
+        settings['view'] = 'settings'
+        return 'worklog_webadminui.html', settings

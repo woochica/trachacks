@@ -6,8 +6,8 @@ from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor, PermissionSystem
-from webui import * 
-from webadminui import * 
+from webui import *
+from webadminui import *
 from uihooks_ticket import *
 from timeline_hook import *
 from ticket_daemon import *
@@ -16,7 +16,6 @@ try:
 except:
     pass
 
-   
 class WorkLogSetupParticipant(Component):
     implements(IEnvironmentSetupParticipant)
 
