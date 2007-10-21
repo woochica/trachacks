@@ -1,0 +1,23 @@
+.gringottframe
+{
+  background: url(border.gif);
+  margin: 8px;
+  padding: 2px;
+}
+
+.gringottframe div div div div div div div.gringott
+{
+  padding: 8px;
+  background: #f9f9f9;
+}
+
+.gringottcontrol
+{
+  text-align: right;
+}
+
+.gringottcontrol a
+{
+  font-size: x-small;
+  color: #777;
+}
