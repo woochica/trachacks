@@ -26,11 +26,10 @@ class WysiwygWikiFilter(Component):
         return handler
 
     # IRequestFilter#post_process_request
-    def post_process_request(self, req, template, content_type):
+    def post_process_request(self, req, template, data, content_type):
         add_stylesheet(req, 'tracwysiwyg/wysiwyg.css')
         add_script(req, 'tracwysiwyg/wysiwyg.js')
-        footer = req.hdf['project.footer'] + '<script type="text/javascript">TracWysiwyg.initialize();</script>'
-        req.hdf['project.footer'] = Markup(footer)
-        return (template, content_type)
+        add_script(req, 'tracwysiwyg/wysiwyg-load.js')
+        return (template, data, content_type)
 
 
