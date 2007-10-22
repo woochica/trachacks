@@ -99,12 +99,12 @@ class WorkLogPage(Component):
             self.worklog_csv(req, mgr.get_work_log('user'))
             return None
           
-          req.hdf["worklog"] = {"worklog": mgr.get_work_log('user'),
-                                "ticket_href": req.href.ticket(),
-                                "usermanual_href":req.href.wiki(user_manual_wiki_title),
-                                "usermanual_title":user_manual_title
-                               }
-          return 'worklog_user.cs', None
+          data = {"worklog": mgr.get_work_log('user'),
+                  "ticket_href": req.href.ticket(),
+                  "usermanual_href":req.href.wiki(user_manual_wiki_title),
+                  "usermanual_title":user_manual_title
+                  }
+          return 'worklog_user.html', data, None
 
         mgr = WorkLogManager(self.env, self.config, req.authname)
         if req.args.has_key('format') and req.args['format'] == 'csv':
