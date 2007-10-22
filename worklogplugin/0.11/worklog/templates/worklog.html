@@ -28,9 +28,9 @@
           </tr>
           <tr py:for="log in worklog">
             <td><a href="${worklog_href}/users/${log.user}">${log.dispname}</a></td>
-            <py:choose test="log.finished">
-            <td py:when="'0'"><a class="${log.status} ticket" href="${ticket_href}/${log.ticket}">#${log.ticket}</a>: ${log.summary}</td>
-            <td py:otherwise=""><em>Idle</em> <small>(Last worked on: <a class="${log.status}  ticket" href="${ticket_href}/${log.ticket}">#${log.ticket}</a>: ${log.summary})</small></td>
+            <py:choose>
+              <td py:when="log.endtime==0"><a class="${log.status} ticket" href="${ticket_href}/${log.ticket}">#${log.ticket}</a>: ${log.summary}</td>
+              <td py:otherwise=""><em>Idle</em> <small>(Last worked on: <a class="${log.status}  ticket" href="${ticket_href}/${log.ticket}">#${log.ticket}</a>: ${log.summary})</small></td>
             </py:choose>
             <td><span id="worklog_time_delta">${log.delta}</span></td>
             <td><span id="worklog_comment">${log.comment}</span></td>
