@@ -140,14 +140,14 @@ class WorkLogPage(Component):
                 return None
         
         # no POST, so they're just wanting a list of the worklog entries
-        req.hdf["worklog"] = {"messages": messages,
-                              "worklog": mgr.get_work_log('summary'),
-                              "href": req.href.worklog(),
-                              "ticket_href": req.href.ticket(),
-                              "usermanual_href": req.href.wiki(user_manual_wiki_title),
-                              "usermanual_title": user_manual_title
-                             }
-        return 'worklog.cs', None
+        data = {"messages": messages,
+                "worklog": mgr.get_work_log('summary'),
+                "worklog_href": req.href.worklog(),
+                "ticket_href": req.href.ticket(),
+                "usermanual_href": req.href.wiki(user_manual_wiki_title),
+                "usermanual_title": user_manual_title
+                }
+        return 'worklog.html', data, None
         
         
     # ITemplateProvider
