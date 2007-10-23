@@ -4,7 +4,14 @@
 from trac.core import *
 from trac.config import Option
 from trac.web.auth import LoginModule
-from trac.web.main import _open_environment
+
+# Compatibility hack to make this code work with older 0.11 revisions
+try:
+    from trac.env import open_environment as _open_environment
+    def open_environment(x): return _open_environment(x,True)
+except:
+    from trac.web.main import _open_environment as open_environment
+    
 from trac.web.href import Href
 from trac.util.html import escape, html
 from trac.web.api import IRequestFilter, Request
@@ -17,7 +24,7 @@ class TracForgeLoginModule(LoginModule):
     master_path = Option('tracforge', 'master_path',
                          doc='Path to master Trac')
 
-    master_env = property(lambda self: _open_environment(self.master_path))
+    master_env = property(lambda self: open_environment(self.master_path))
     master_href = property(lambda self: Href(self.master_env.base_url))
             
     # INavigationContributor methods

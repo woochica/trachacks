@@ -1,5 +1,12 @@
 from trac.env import Environment
-from trac.web.main import _open_environment
+
+# Compatibility hack to make this code work with older 0.11 revisions
+try:
+    from trac.env import open_environment as _open_environment
+    def open_environment(x): return _open_environment(x,True)
+except:
+    from trac.web.main import _open_environment as open_environment
+    
 from trac.config import Configuration, Section
 
 from UserDict import DictMixin
@@ -32,12 +39,12 @@ class Members(object, DictMixin):
     def __getitem__(self, key):
         cursor = self.db.cursor()
         
-        cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND sid=%s',(self.name, key))
+        cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND username=%s',(self.name, key))
         row = cursor.fetchone()
         if row:
             return row[0]
         else:
-            cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND sid=%s',('*', key))
+            cursor.execute('SELECT role FROM tracforge_members WHERE project=%s AND username=%s',('*', key))
             row = cursor.fetchone()
             if row:
                 return row[0]
@@ -47,9 +54,9 @@ class Members(object, DictMixin):
     def __setitem__(self, key, val):
         cursor = self.db.cursor()
         
-        cursor.execute('UPDATE tracforge_members SET role=%s WHERE project=%s AND sid=%s',(val, self.name, key))
+        cursor.execute('UPDATE tracforge_members SET role=%s WHERE project=%s AND username=%s',(val, self.name, key))
         if not cursor.rowcount:
-            cursor.execute('INSERT INTO tracforge_members (project, sid, role) VALUES (%s, %s, %s)', (self.name, key, val))
+            cursor.execute('INSERT INTO tracforge_members (project, username, role) VALUES (%s, %s, %s)', (self.name, key, val))
             
         if self.handle_commit:
             self.db.commit()
@@ -65,7 +72,7 @@ class Members(object, DictMixin):
     def keys(self):
         cursor = self.db.cursor()
         
-        cursor.execute('SELECT sid FROM tracforge_members WHERE project=%s',(self.name,))
+        cursor.execute('SELECT username FROM tracforge_members WHERE project=%s',(self.name,))
         for row in cursor:
             yield row[0]
 
@@ -96,7 +103,7 @@ class Project(object):
         if not self._env:
             assert self.exists, "Can't use a non-existant project"
             try:
-                self._env = _open_environment(self.env_path)
+                self._env = open_environment(self.env_path)
                 self._valid = True
             except Exception, e:
                 self._env = BadEnv(self.env_path, e)
@@ -279,7 +286,7 @@ class Prototype(list):
                 db = self.env.get_db_cnx()
                 cursor = db.cursor()
                 cursor.execute('INSERT INTO tracforge_project_log (project, action, args, return, stdout, stderr) VALUES (%s, %s, %s, %s, %s, %s)',
-                               (proj.name, action, args, unicode(rv), o_data, e_data))
+                               (proj.name, action, args, int(rv), o_data, e_data))
                 db.commit()
                 db.close()
                 
