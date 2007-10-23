@@ -1,3 +1,4 @@
+import time
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from reportmanager import CustomReportManager
@@ -5,40 +6,73 @@ from reportmanager import CustomReportManager
 class ClientsSetupParticipant(Component):
     implements(IEnvironmentSetupParticipant)
     
-    version = 1
-    installed_version = 0
-    name = "clients_plugin_version"
-
+    db_version_key = None
+    db_version = None
+    db_installed_version = None
+    
     def __init__(self):
+        self.db_version_key = 'clients_plugin_version'
+        self.db_version = 2
+        self.db_installed_version = None
+
         # Initialise database schema version tracking.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT value FROM system WHERE name=%s',
-                       (self.name,))
+        cursor.execute("SELECT value FROM system WHERE name=%s", (self.db_version_key,))
         try:
-            self.installed_version = int(cursor.fetchone()[0])
+            self.db_installed_version = int(cursor.fetchone()[0])
         except:
-            self.installed_version = 0
-            cursor.execute('INSERT INTO system (name,value) VALUES(%s,%s)',
-                           (self.name, self.installed_version))
+            self.db_installed_version = 0
+            cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
+                           (self.db_version_key, self.db_installed_version))
             db.commit()
             db.close()
 
     def system_needs_upgrade(self):
-        return self.installed_version < self.version
-        
+        return self.db_installed_version < self.db_version
+    
     def do_db_upgrade(self):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('UPDATE system SET value=%s WHERE name=%s',
-                       (self.version, self.name))
-        db.commit()
-        db.close()
+
+        # Do the staged updates
+        try:
+            if self.db_installed_version < 2:
+                print 'Creating client table'
+                cursor.execute('CREATE TABLE client ('
+                               'name            TEXT,'
+                               'description     TEXT,'
+                               'changes         INTEGER,'
+                               'changes_freq    INTEGER,'
+                               'changes_last    INTEGER,'
+                               'summary         INTEGER,'
+                               'summary_freq    INTEGER,'
+                               'summary_last    INTEGER'
+                               ')')
+                # Import old Enums
+                now = int(time.time())
+                cursor.execute('INSERT INTO client (name, changes, changes_freq, changes_last, summary, summary_freq, summary_last) '
+                               'SELECT name,%s,%s,%s,%s,%s,%s FROM enum WHERE type=%s', (0, 24, now, 0, 168, now, 'client'))
+                # Clean them out
+                cursor.execute('DELETE FROM enum WHERE type=%s', ('client',))
+            
+            #if self.db_installed_version < 3:
+            #    print 'Updating clients table (v3)'
+            #    cursor.execute('...')
+            
+            # Updates complete, set the version
+            cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
+                           (self.db_version, self.db_version_key))
+            db.commit()
+            db.close()
+        except Exception, e:
+            self.log.error("WorklogPlugin Exception: %s" % (e,));
+            db.rollback()
 
     def do_reports_upgrade(self):
         mgr = CustomReportManager(self.env, self.log)
         r = __import__('reports', globals(), locals(), ['reports'])
-
+        
         for report_group in r.reports:
             rlist = report_group['reports']
             group_title = report_group['title']
@@ -53,7 +87,7 @@ class ClientsSetupParticipant(Component):
 
     def ticket_fields_need_upgrade(self):
         section = 'ticket-custom'
-        return not (self.config.get(section, 'client'))
+        return not (self.config.get(section, 'client') and self.config.get(section, 'client_rate'))
     
     def do_ticket_field_upgrade(self):
         section = 'ticket-custom'
@@ -61,9 +95,15 @@ class ClientsSetupParticipant(Component):
         self.config.set(section,'client', 'select')
         if not self.config.get(section, 'client.order'):
             self.config.set(section, 'client.order', '1')
-        self.config.set(section,'client.options', 'enum:client')
+        self.config.set(section,'client.options', 'custom:ClientsList')
         self.config.set(section,'client.label', 'Client')
         self.config.set(section,'client.value', '0')
+
+        self.config.set(section,'client_rate', 'text')
+        if not self.config.get(section, 'client_rate.order'):
+            self.config.set(section, 'client_rate.order', '2')
+        self.config.set(section,'client_rate.label', 'Client Charge Rate')
+        self.config.set(section,'client_rate.value', '')
 
         self.config.save();
 

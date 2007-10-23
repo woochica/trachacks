@@ -16,11 +16,13 @@ setup(name=PACKAGE,
     I'll write this later!
     """,
     packages=[PACKAGE],
-    package_data={PACKAGE : ['templates/*.cs']},
+    package_data={PACKAGE : ['templates/*.html', 'htdocs/*.css']},
     entry_points = {
         'trac.plugins': [
             'clients.api = clients.api',
-            'clients.client = clients.client'
+            'clients.admin = clients.admin',
+            'clients.client = clients.client',
+            'clients.model = clients.model'
         ]
     })
 

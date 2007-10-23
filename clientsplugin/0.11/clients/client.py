@@ -1,13 +1,18 @@
-from trac.ticket.model import AbstractEnum
-from trac.ticket.admin import AbstractEnumAdminPage
+from trac.core import *
+from trac.env import IEnvironmentSetupParticipant
+from trac.ticket import ITicketCustomFieldValues
 
+class ClientsList(Component):
+    implements(ITicketCustomFieldValues)
+    
+    def __init__(self):
+        pass
+    def get_values(self):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT name FROM client")
+        rv = []
+        for name in cursor:
+          rv.append((name,None))
+        return rv
 
-class Client(AbstractEnum):
-    type = 'client'
-    custom = True
-
-
-class ClientAdminPage(AbstractEnumAdminPage):
-    _type = 'client'
-    _enum_cls = Client
-    _label = ('Client', 'Clients')
