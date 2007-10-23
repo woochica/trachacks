@@ -120,7 +120,7 @@ class TracForgeDispatcherModule(Component):
                 
                 req._tf_print = True
                 
-                return True
+                raise RequestDone, 'request done'
 
     def process_request(self, req):
         raise TracError('How did I get here?')
