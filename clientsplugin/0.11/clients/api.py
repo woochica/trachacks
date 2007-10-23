@@ -42,17 +42,14 @@ class ClientsSetupParticipant(Component):
                 cursor.execute('CREATE TABLE client ('
                                'name            TEXT,'
                                'description     TEXT,'
-                               'changes         INTEGER,'
-                               'changes_freq    INTEGER,'
-                               'changes_last    INTEGER,'
-                               'summary         INTEGER,'
-                               'summary_freq    INTEGER,'
-                               'summary_last    INTEGER'
+                               'changes_list    TEXT,'
+                               'changes_period  TEXT,'
+                               'summary_list    TEXT,'
+                               'summary_period  TEXT'
                                ')')
                 # Import old Enums
-                now = int(time.time())
-                cursor.execute('INSERT INTO client (name, changes, changes_freq, changes_last, summary, summary_freq, summary_last) '
-                               'SELECT name,%s,%s,%s,%s,%s,%s FROM enum WHERE type=%s', (0, 24, now, 0, 168, now, 'client'))
+                cursor.execute('INSERT INTO client (name) '
+                               'SELECT name FROM enum WHERE type=%s', ('client',))
                 # Clean them out
                 cursor.execute('DELETE FROM enum WHERE type=%s', ('client',))
             

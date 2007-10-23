@@ -26,18 +26,27 @@ class Client(object):
             if not db:
                 db = self.env.get_db_cnx()
             cursor = db.cursor()
-            cursor.execute("SELECT description FROM client "
+            cursor.execute("SELECT description,"
+                           "changes_list, changes_period,"
+                           "summary_list, summary_period "
+                           "FROM client "
                            "WHERE name=%s", (name,))
             row = cursor.fetchone()
             if not row:
                 raise TracError('Client %s does not exist.' % name)
             self.name = self._old_name = name
-            #self.owner = row[0] or None
             self.description = row[0] or ''
+            self.changes_list = row[1] or ''
+            self.changes_period = row[2] or 'never'
+            self.summary_list = row[3] or ''
+            self.summary_period = row[4] or 'never'
         else:
             self.name = self._old_name = None
-            #self.owner = None
             self.description = None
+            self.changes_list = ''
+            self.changes_period = 'never'
+            self.summary_list = ''
+            self.summary_period = 'never'
 
     exists = property(fget=lambda self: self._old_name is not None)
 
@@ -70,9 +79,13 @@ class Client(object):
 
         cursor = db.cursor()
         self.env.log.debug("Creating new client '%s'" % self.name)
-        cursor.execute("INSERT INTO client (name,description) "
-                       "VALUES (%s,%s)",
-                       (self.name, self.description))
+        cursor.execute("INSERT INTO client (name,description,"
+                       " changes_list, changes_period,"
+                       " summary_list, summary_period) "
+                       "VALUES (%s,%s, %s,%s)",
+                       (self.name, self.description,
+                        self.changes_list, self.changes_period,
+                        self.summary_list, self.summary_period))
 
         if handle_ta:
             db.commit()
@@ -89,9 +102,13 @@ class Client(object):
 
         cursor = db.cursor()
         self.env.log.info('Updating client "%s"' % self.name)
-        cursor.execute("UPDATE client SET name=%s,description=%s "
+        cursor.execute("UPDATE client SET name=%s,description=%s,"
+                       " changes_list=%s, changes_period=%s,"
+                       " summary_list=%s, summary_period=%s "
                        "WHERE name=%s",
                        (self.name, self.description,
+                        self.changes_list, self.changes_period,
+                        self.summary_list, self.summary_period,
                         self._old_name))
         if self.name != self._old_name:
             # Update tickets
@@ -107,12 +124,18 @@ class Client(object):
         if not db:
             db = env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT name,description FROM client "
+        cursor.execute("SELECT name,description,"
+                       " changes_list,changes_period,"
+                       " summary_list,summary_period "
+                       "FROM client "
                        "ORDER BY name")
-        for name, description in cursor:
+        for name, description, changes_list, changes_period, summary_list, summary_period in cursor:
             client = cls(env)
             client.name = client._old_name = name
-            #client.owner = owner or None
             client.description = description or ''
+            client.changes_list = changes_list or ''
+            client.changes_period = changes_period or 'never'
+            client.summary_list = summary_list or ''
+            client.summary_period = summary_period or 'never'
             yield client
     select = classmethod(select)
