@@ -40,12 +40,14 @@ class ClientsSetupParticipant(Component):
             if self.db_installed_version < 2:
                 print 'Creating client table'
                 cursor.execute('CREATE TABLE client ('
-                               'name            TEXT,'
-                               'description     TEXT,'
-                               'changes_list    TEXT,'
-                               'changes_period  TEXT,'
-                               'summary_list    TEXT,'
-                               'summary_period  TEXT'
+                               'name               TEXT,'
+                               'description        TEXT,'
+                               'changes_list       TEXT,'
+                               'changes_period     TEXT,'
+                               'changes_lastupdate INTEGER,'
+                               'summary_list       TEXT,'
+                               'summary_period     TEXT,'
+                               'summary_lastupdate INTEGER'
                                ')')
                 # Import old Enums
                 cursor.execute('INSERT INTO client (name) '
