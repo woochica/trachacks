@@ -27,8 +27,8 @@ class Client(object):
                 db = self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute("SELECT description,"
-                           "changes_list, changes_period,"
-                           "summary_list, summary_period "
+                           "changes_list, changes_period, changes_lastupdate,"
+                           "summary_list, summary_period, summary_lastupdate "
                            "FROM client "
                            "WHERE name=%s", (name,))
             row = cursor.fetchone()
@@ -38,15 +38,19 @@ class Client(object):
             self.description = row[0] or ''
             self.changes_list = row[1] or ''
             self.changes_period = row[2] or 'never'
-            self.summary_list = row[3] or ''
-            self.summary_period = row[4] or 'never'
+            self.changes_lastupdate = row[3] or 0
+            self.summary_list = row[4] or ''
+            self.summary_period = row[5] or 'never'
+            self.summary_lastupdate = row[6] or 0
         else:
             self.name = self._old_name = None
             self.description = None
             self.changes_list = ''
             self.changes_period = 'never'
+            self.changes_lastupdate = 0
             self.summary_list = ''
             self.summary_period = 'never'
+            self.summary_lastupdate = 0
 
     exists = property(fget=lambda self: self._old_name is not None)
 
@@ -80,12 +84,12 @@ class Client(object):
         cursor = db.cursor()
         self.env.log.debug("Creating new client '%s'" % self.name)
         cursor.execute("INSERT INTO client (name,description,"
-                       " changes_list, changes_period,"
-                       " summary_list, summary_period) "
-                       "VALUES (%s,%s, %s,%s)",
+                       " changes_list, changes_period, changes_lastupdate,"
+                       " summary_list, summary_period, summary_lastupdate) "
+                       "VALUES (%s,%s, %s,%s,%s, %s,%s,%s)",
                        (self.name, self.description,
-                        self.changes_list, self.changes_period,
-                        self.summary_list, self.summary_period))
+                        self.changes_list, self.changes_period, int(time.time()),
+                        self.summary_list, self.summary_period, int(time.time())))
 
         if handle_ta:
             db.commit()
@@ -125,17 +129,19 @@ class Client(object):
             db = env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("SELECT name,description,"
-                       " changes_list,changes_period,"
-                       " summary_list,summary_period "
+                       " changes_list, changes_period, changes_lastupdate,"
+                       " summary_list, summary_period, summary_lastupdate "
                        "FROM client "
                        "ORDER BY name")
-        for name, description, changes_list, changes_period, summary_list, summary_period in cursor:
+        for name, description, changes_list, changes_period, changes_lastupdate, summary_list, summary_period, summary_lastupdate in cursor:
             client = cls(env)
             client.name = client._old_name = name
             client.description = description or ''
             client.changes_list = changes_list or ''
             client.changes_period = changes_period or 'never'
+            client.changes_lastupdate = changes_lastupdate or 0
             client.summary_list = summary_list or ''
             client.summary_period = summary_period or 'never'
+            client.summary_lastupdate = summary_lastupdate or 0
             yield client
     select = classmethod(select)
