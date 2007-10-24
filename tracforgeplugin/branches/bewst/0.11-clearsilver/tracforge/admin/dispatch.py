@@ -165,7 +165,6 @@ class TracForgeDispatcherModule(Component):
         
         environ['SCRIPT_NAME'] = req.href.projects('/')
         environ['PATH_INFO'] = path_info
-        self.log.debug('*** SCRIPT_NAME = %r ; PATH_INFO = %r' % (environ['SCRIPT_NAME'],environ['PATH_INFO']))
         environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
         if 'TRAC_ENV' in environ:
             del environ['TRAC_ENV']
