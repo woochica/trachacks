@@ -39,23 +39,17 @@ import os
 import sys
 import locale
 import time
+import libxml2
+import libxslt
 from datetime import datetime
+from optparse import OptionParser
+from StringIO import StringIO
 
+from trac import __version__
+from trac.core import *
 from trac.env import open_environment
-from trac.ticket.notification import TicketNotifyEmail
-from trac.ticket import Ticket
-from trac.ticket.web_ui import TicketModule
-# TODO: move grouped_changelog_entries to model.py
-from trac.util.text import to_unicode
-from trac.util.datefmt import utc
-from trac.versioncontrol.api import NoSuchChangeset
 from trac.util.datefmt import format_date, to_datetime
 
-from optparse import OptionParser
-
-#from xml.dom.minidom import DOMImplementation
-from StringIO import StringIO
-import libxml2, libxslt
 
 parser = OptionParser()
 depr = '(not used anymore)'
@@ -94,63 +88,100 @@ def fxslthackview(ctx):
 libxslt.registerExtModuleFunction('hack', 'http://hack.com/hack', fxslthackview)
 ## End Hack
 
-
-def SendClientMail(subject, addresses, info, formatter):
-  global xslthackview
+class SendClientMailer(object):
+  def __init__(self, env):
+    self.env = env
+    self.config = env.config
   
-  # Thanks to the author of this recipe:
-  # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473810
-  
-  from email.MIMEMultipart import MIMEMultipart
-  from email.MIMEText import MIMEText
-  from email.MIMEImage import MIMEImage
-  
-  str_from = 'trac'
-  
-  # Create the root message and fill in the from, to, and subject headers
-  msg_root = MIMEMultipart('related')
-  msg_root['Subject'] = subject
-  msg_root['From'] = str_from
-  msg_root['To'] = str(', ').join(addresses)
-  msg_root.preamble = 'This is a multi-part message in MIME format.'
-  
-  # Encapsulate the plain and HTML versions of the message body in an
-  # 'alternative' part, so message agents can decide which they want to display.
-  msg_alternative = MIMEMultipart('alternative')
-  msg_root.attach(msg_alternative)
-  
-  
-  # This should use XSLT params... but it's b0rken
-  view = 'plain'
-  xslthackview = view
-  result = formatter.applyStylesheet(info, None)
-  msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
-  msg_alternative.attach(msg_text)
-  result.freeDoc()
-  
-  view = 'html'
-  xslthackview = view
-  result = formatter.applyStylesheet(info, None)
-  msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
-  msg_alternative.attach(msg_text)
-  result.freeDoc()
-  
-  # TODO handle images...
-  # This example assumes the image is in the current directory
-  #fp = open('test.jpg', 'rb')
-  #msgImage = MIMEImage(fp.read())
-  #fp.close()
-  
-  # Define the image's ID as referenced above
-  #msgImage.add_header('Content-ID', '<image1>')
-  #msgRoot.attach(msgImage)
-  
-  # Send the email (this example assumes SMTP authentication is required)
-  import smtplib
-  smtp = smtplib.SMTP()
-  smtp.connect()
-  smtp.sendmail(str_from, addresses, msg_root.as_string())
-  smtp.quit()
+  def Send(self, subject, addresses, info, formatter):
+    global xslthackview
+    if not self.config.getbool('notification', 'smtp_enabled'):
+      return
+    smtp_server = self.config['notification'].get('smtp_server')
+    smtp_port = self.config['notification'].getint('smtp_port')
+    from_email = self.config['notification'].get('smtp_from')
+    from_name = self.config['notification'].get('smtp_from_name')
+    replyto_email = self.config['notification'].get('smtp_replyto')
+    from_email = from_email or replyto_email
+    if not from_email:
+      return
+    
+    # Authentication info (optional)
+    user_name = self.config['notification'].get('smtp_user')
+    password = self.config['notification'].get('smtp_password')
+    
+    # Thanks to the author of this recipe:
+    # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473810
+    
+    from email.MIMEMultipart import MIMEMultipart
+    from email.MIMEText import MIMEText
+    from email.MIMEImage import MIMEImage
+    
+    projname = self.config.get('project', 'name')
+    
+    # Create the root message and fill in the from, to, and subject headers
+    msg_root = MIMEMultipart('related')
+    msg_root['To'] = str(', ').join(addresses)
+    
+    msg_root['X-Mailer'] = 'ClientsPlugin for Trac'
+    msg_root['X-Trac-Version'] =  __version__
+    msg_root['X-Trac-Project'] =  projname
+    msg_root['Precedence'] = 'bulk'
+    msg_root['Auto-Submitted'] = 'auto-generated'
+    msg_root['Subject'] = subject
+    msg_root['From'] = '%s <%s>' % (from_name or projname, from_email)
+    msg_root['Reply-To'] = replyto_email
+    msg_root.preamble = 'This is a multi-part message in MIME format.'
+    
+    # Encapsulate the plain and HTML versions of the message body in an
+    # 'alternative' part, so message agents can decide which they want to display.
+    msg_alternative = MIMEMultipart('alternative')
+    msg_root.attach(msg_alternative)
+    
+    
+    # This should use XSLT params... but it's b0rken
+    view = 'plain'
+    xslthackview = view
+    result = formatter.applyStylesheet(info, None)
+    msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
+    msg_alternative.attach(msg_text)
+    result.freeDoc()
+    
+    view = 'html'
+    xslthackview = view
+    result = formatter.applyStylesheet(info, None)
+    msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
+    msg_alternative.attach(msg_text)
+    result.freeDoc()
+    
+    # Handle image embedding...
+    view = 'images'
+    xslthackview = view
+    result = formatter.applyStylesheet(info, None)
+    if result and result.children and result.children.children:
+      for img in result.children.children:
+        if 'img' != img.name:
+          continue
+        if not img.hasProp('id') or not img.hasProp('src'):
+          continue
+        
+        fp = open(img.prop('src'), 'rb')
+        if not fp:
+          continue
+        msg_img = MIMEImage(fp.read())
+        fp.close()
+        msg_img.add_header('Content-ID', '<%s>' % img.prop('id'))
+        msg_root.attach(msg_img)
+    result.freeDoc()
+    
+    # Send the email (this example assumes SMTP authentication is required)
+    import smtplib
+    smtp = smtplib.SMTP() #smtp_server, smtp_port)
+    if False and user_name:
+        smtp.login(user_name, password)
+    smtp.connect()
+    smtp.sendmail(from_email, addresses, msg_root.as_string())
+    smtp.quit()
 
 class SendClientEmails:
 
@@ -187,6 +218,7 @@ class SendClientEmails:
                "WHERE %s_period=" % (field, field, field)) + "%s"
         
         now = int(time.time())
+        mailer = SendClientMailer(self.env)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute(sql, (options.period,))
@@ -218,7 +250,7 @@ class SendClientEmails:
           ##    returned tickets closed since last summary, but really
           ##    that's what the change notificiation is for...
           sql = ("""\
-            SELECT t.id, t.summary, t.status, m.due
+            SELECT t.id, t.summary, t.description, t.status, m.due
             FROM ticket t
             LEFT JOIN milestone m ON t.milestone=m.name 
             WHERE t.id IN
@@ -251,10 +283,11 @@ class SendClientEmails:
           cur2 = db.cursor()
           cur2.execute(sql, (name, lastupdate, now))
           xml.write('<summary>')
-          for tid, summary, status, due in cur2:
+          for tid, summary, description, status, due in cur2:
             xml.write('<ticket>')
             xml.write('<id>%s</id>' % tid)
             xml.write('<summary>%s</summary>' % summary)
+            xml.write('<description>%s</description>' % extract_client_text(description))
             xml.write('<status>%s</status>' % status)
             xml.write('<due>%s</due>' % format_date(due))
             xml.write('</ticket>')
@@ -301,8 +334,8 @@ class SendClientEmails:
           xml.write('</clientsplugin>')
           
           doc = libxml2.parseDoc(xml.getvalue())
-          SendClientMail('Ticket Summary for %s' % name,
-                         emails, doc, style)
+          mailer.Send('Ticket Summary for %s' % name,
+                      emails, doc, style)
           doc.freeDoc()
 
         style.freeStylesheet()

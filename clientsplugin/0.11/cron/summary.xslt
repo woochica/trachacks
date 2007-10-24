@@ -9,7 +9,7 @@
   version="1.0">
 
   <xsl:import href="xsltsl/stdlib.xsl"/>
-  <xsl:output method="xml" indent="yes" encoding="UTF-8" omit-xml-declaration="yes"/>
+  <xsl:output method="html" indent="yes" encoding="UTF-8" omit-xml-declaration="yes"/>
   <xsl:decimal-format name="GBP" decimal-separator="." grouping-separator=","/>
   
   <!-- Disabled until http://bugzilla.gnome.org/show_bug.cgi?id=489854 is fixed
@@ -56,10 +56,89 @@ Please enable the HTML view or use an HTML compatible email client.
   
   <xsl:template name="html">
     <!-- The root element needs to be created with xsl:element to prevent namespaces sneaking in. -->
-    <xsl:element name="div">
-      <xsl:for-each select="accommodation">
-    
-      </xsl:for-each>
+    <xsl:element name="html">
+      <head>
+        <title>Ticket Summary for <xsl:value-of select="/clientsplugin/client/name"/></title>
+        <style type="text/css">
+        body {
+          background: #f3f3f3;
+        }
+        .ticket {
+          background: #eee;
+          padding: 0;
+          margin: 2px;
+          margin-bottom: 20px;
+          border: 1px solid #222;
+        }
+        .id {
+          float: left;
+          margin: 0;
+          padding: 5px;
+          text-align: center;
+          background: #222;
+          color: #eee;
+          width: 5em;
+          font-weight: bold;
+        }
+        .summary {
+          float: left;
+          margin: 0 0 0 1em;
+          padding: 5px;
+          font-style: italic;
+        }
+        .description {
+          clear: both;
+          margin: 2em;
+          margin-top: 3em;
+          padding: 1em;
+          border: 1px solid #222;
+          background: #fff;
+        }
+        .status {
+          clear: both;
+        }
+        .status, .due {
+          float: left;
+          margin: 4px;
+          padding: 0;
+          font-variant: small-caps;
+        }
+        .status:before {
+          content: "Status: ";
+        }
+        .due {
+          float: right;
+        }
+        .due:before {
+          content: "Expected Delivery Date: ";
+        }
+        .fin {
+          clear: both;
+        }
+        </style>
+      </head>
+      <body>
+        <h1>Ticket Summary for <xsl:value-of select="/clientsplugin/client/name"/></h1>
+        <xsl:choose>
+          <xsl:when test="/clientsplugin/summary/ticket">
+            <xsl:for-each select="/clientsplugin/summary">
+              <div class="ticket">
+                <div class="id">#<xsl:value-of select="ticket/id"/></div>
+                <div class="summary"><xsl:value-of select="ticket/summary"/></div>
+                <xsl:if test="ticket/description!=''">
+                  <div class="description"><xsl:value-of select="ticket/description"/></div>
+                </xsl:if>
+                <div class="status"><xsl:value-of select="ticket/status"/></div>
+                <div class="due"><xsl:value-of select="ticket/due"/></div>
+                <div class="fin"></div>
+              </div>
+            </xsl:for-each>
+          </xsl:when>
+          <xsl:otherwise>
+            <p>You do not currently have any active tickets</p>
+          </xsl:otherwise>
+        </xsl:choose>
+      </body>
     </xsl:element>
   </xsl:template>
 </xsl:stylesheet>
