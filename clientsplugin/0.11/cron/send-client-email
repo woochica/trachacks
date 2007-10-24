@@ -1,0 +1,314 @@
+#!/usr/bin/env python
+
+# send-client-email
+# ----------------------------------------------------------------------------
+# Copyright (c) 2007 Colin Guthrie
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+#   The above copyright notice and this permission notice shall be included in
+#   all copies or substantial portions of the Software. 
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+# ----------------------------------------------------------------------------
+
+# This email integration script is meant to interface to the Trac
+# (http://www.edgewall.com/products/trac/) issue tracking/wiki/etc
+# system
+#
+# It should be called from the command line or Subversion hook script,
+# such as via:
+#
+# /usr/bin/python /path/to/send-client-emails \
+#  -e "<env>" -p <period> -t ["summary"|"changes"]
+#
+
+import re
+import os
+import sys
+import locale
+import time
+from datetime import datetime
+
+from trac.env import open_environment
+from trac.ticket.notification import TicketNotifyEmail
+from trac.ticket import Ticket
+from trac.ticket.web_ui import TicketModule
+# TODO: move grouped_changelog_entries to model.py
+from trac.util.text import to_unicode
+from trac.util.datefmt import utc
+from trac.versioncontrol.api import NoSuchChangeset
+from trac.util.datefmt import format_date, to_datetime
+
+from optparse import OptionParser
+
+#from xml.dom.minidom import DOMImplementation
+from StringIO import StringIO
+import libxml2, libxslt
+
+parser = OptionParser()
+depr = '(not used anymore)'
+parser.add_option('-e', '--env', dest='envpath',
+                  help='Required. Path to the Trac environment.')
+parser.add_option('-p', '--period', dest='period',
+                  help='Period string as specified in the configuration of notifications. Defaults to "daily"')
+parser.add_option('-t', '--type', dest='mailtype',
+                  choices=['summary','changes'],
+                  help='The type of email. Can be either "summary" (default) or "changes".')
+parser.add_option('-x', '--xslt', dest='xslt',
+                  help='The XSLT used to convert the change information to an email (optional, will use "MAILTYPE.xslt" from the current folder).')
+parser.set_defaults(period='daily', mailtype='summary')
+(options, args) = parser.parse_args(sys.argv[1:])
+
+
+## Hideous hack to work around libxslt-python 1.1.22 bug
+## http://bugzilla.gnome.org/show_bug.cgi?id=489854
+xslthackview = 'plain'
+def fxslthackview(ctx):
+    global xslthackview
+
+    #
+    # Small check to verify the context is correcly accessed
+    #
+    try:
+        pctxt = libxslt.xpathParserContext(_obj=ctx)
+        ctxt = pctxt.context()
+        tctxt = ctxt.transformContext()
+        nodeName = tctxt.insertNode().name
+    except:
+        pass
+
+    return xslthackview
+
+libxslt.registerExtModuleFunction('hack', 'http://hack.com/hack', fxslthackview)
+## End Hack
+
+
+def SendClientMail(subject, addresses, info, formatter):
+  global xslthackview
+  
+  # Thanks to the author of this recipe:
+  # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473810
+  
+  from email.MIMEMultipart import MIMEMultipart
+  from email.MIMEText import MIMEText
+  from email.MIMEImage import MIMEImage
+  
+  str_from = 'trac'
+  
+  # Create the root message and fill in the from, to, and subject headers
+  msg_root = MIMEMultipart('related')
+  msg_root['Subject'] = subject
+  msg_root['From'] = str_from
+  msg_root['To'] = str(', ').join(addresses)
+  msg_root.preamble = 'This is a multi-part message in MIME format.'
+  
+  # Encapsulate the plain and HTML versions of the message body in an
+  # 'alternative' part, so message agents can decide which they want to display.
+  msg_alternative = MIMEMultipart('alternative')
+  msg_root.attach(msg_alternative)
+  
+  
+  # This should use XSLT params... but it's b0rken
+  view = 'plain'
+  xslthackview = view
+  result = formatter.applyStylesheet(info, None)
+  msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
+  msg_alternative.attach(msg_text)
+  result.freeDoc()
+  
+  view = 'html'
+  xslthackview = view
+  result = formatter.applyStylesheet(info, None)
+  msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
+  msg_alternative.attach(msg_text)
+  result.freeDoc()
+  
+  # TODO handle images...
+  # This example assumes the image is in the current directory
+  #fp = open('test.jpg', 'rb')
+  #msgImage = MIMEImage(fp.read())
+  #fp.close()
+  
+  # Define the image's ID as referenced above
+  #msgImage.add_header('Content-ID', '<image1>')
+  #msgRoot.attach(msgImage)
+  
+  # Send the email (this example assumes SMTP authentication is required)
+  import smtplib
+  smtp = smtplib.SMTP()
+  smtp.connect()
+  smtp.sendmail(str_from, addresses, msg_root.as_string())
+  smtp.quit()
+
+class SendClientEmails:
+
+    def __init__(self):
+        global xslthackview
+        
+        locale.setlocale(locale.LC_ALL, '')
+        self.env = open_environment(options.envpath)
+        from clients.processor import extract_client_text
+
+        # Sync the repo so that any commits that happen to have been made
+        # that include client comments are included.
+        repos = self.env.get_repository()
+        repos.sync()
+        
+        field = 'summary'
+        if 'changes' == options.mailtype:
+          field = 'changes'
+        
+        stylesheet = '%s.xslt' % options.mailtype
+        if options.xslt:
+          stylesheet = options.xslt
+        
+        try:
+          styledoc = libxml2.parseFile(stylesheet)
+          style = libxslt.parseStylesheetDoc(styledoc)
+        except:
+          print "Error: Cannot load/parse stylesheet '%s'" % stylesheet
+          exit(1)
+          
+        
+        sql = ("SELECT name, %s_list, %s_lastupdate "
+               "FROM client "
+               "WHERE %s_period=" % (field, field, field)) + "%s"
+        
+        now = int(time.time())
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute(sql, (options.period,))
+        for name, emaillist, lastupdate in cursor:
+          # Don't clobber clients with historical updates
+          if not lastupdate:
+              lastupdate = now
+          
+          emails = []
+          for email in emaillist.replace(',', ' ').split(' '):
+            if '' != email.strip():
+              emails.append(email.strip())
+          
+          if not emails:
+            # No emails, so no where to send it.
+            continue
+          
+          xml = StringIO()
+          xml.write('<clientsplugin>')
+          
+          # Place basic client info here
+          xml.write('<client>')
+          xml.write('<name>%s</name>' % name)
+          xml.write('<lastupdate>%s</lastupdate>' % format_date(lastupdate))
+          xml.write('</client>')
+          
+          # Load in a summary of the client's tickets
+          ## NB the disabled second part of the query would have
+          ##    returned tickets closed since last summary, but really
+          ##    that's what the change notificiation is for...
+          sql = ("""\
+            SELECT t.id, t.summary, t.status, m.due
+            FROM ticket t
+            LEFT JOIN milestone m ON t.milestone=m.name 
+            WHERE t.id IN
+              (
+                SELECT ticket 
+                FROM ticket_custom tcust 
+                WHERE tcust.name = 'client'
+                  AND tcust.value = %s
+              )
+              AND
+              (
+                t.status IN ('new','assigned','reopened')
+                OR
+                (
+                  0
+                  AND t.status='closed'
+                  AND t.id IN
+                    (
+                      SELECT tchng.ticket
+                      FROM ticket_change tchng
+                      WHERE tchng.ticket=t.id
+                        AND tchng.field='status'
+                        AND tchng.oldvalue != 'closed'
+                        AND tchng.time >= %s
+                        AND tchng.time < %s
+                    )
+                )
+              )
+            """)
+          cur2 = db.cursor()
+          cur2.execute(sql, (name, lastupdate, now))
+          xml.write('<summary>')
+          for tid, summary, status, due in cur2:
+            xml.write('<ticket>')
+            xml.write('<id>%s</id>' % tid)
+            xml.write('<summary>%s</summary>' % summary)
+            xml.write('<status>%s</status>' % status)
+            xml.write('<due>%s</due>' % format_date(due))
+            xml.write('</ticket>')
+          
+          xml.write('</summary>')
+
+          # Load in any changes that have happend
+          sql = ("""\
+            SELECT t.id, t.summary, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
+            FROM ticket_custom tcust
+            LEFT JOIN ticket t ON tcust.ticket=t.id
+            LEFT JOIN ticket_change tchng ON t.id=tchng.ticket
+            LEFT JOIN milestone m ON t.milestone=m.name
+            WHERE tcust.name = 'client'
+              AND tcust.value = %s
+              AND tchng.time >= %s
+              AND tchng.time < %s
+            ORDER BY t.time
+            """)
+          cur2 = db.cursor()
+          cur2.execute(sql, (name, lastupdate, now))
+          xml.write('<changes>')
+          for tid, summary, due, field, oldvalue, newvalue in cur2:
+            text = ''
+            if 'status' == field:
+              text = 'Status changed from "%s" to "%s"' % (oldvalue, newvalue)
+            elif 'comment' == field:
+              # Todo - extract...
+              text = extract_client_text(newvalue)
+              if '' == text.strip():
+                # No comments for the client here so ignore it.
+                continue
+            else:
+              # Client should not know any more than this
+              continue
+            
+            xml.write('<ticket>')
+            xml.write('<id>%s</id>' % tid)
+            xml.write('<summary>%s</summary>' % summary)
+            xml.write('<due>%s</due>' % format_date(due))
+            xml.write('<%s>%s</%s>' % (field, text, field))
+            xml.write('</ticket>')
+          xml.write('</changes>')
+          xml.write('</clientsplugin>')
+          
+          doc = libxml2.parseDoc(xml.getvalue())
+          SendClientMail('Ticket Summary for %s' % name,
+                         emails, doc, style)
+          doc.freeDoc()
+
+        style.freeStylesheet()
+
+if __name__ == "__main__":
+    if not options.envpath:
+        print "For usage: %s --help" % (sys.argv[0])
+    else:
+        SendClientEmails()
