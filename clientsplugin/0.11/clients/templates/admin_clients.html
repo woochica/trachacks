@@ -16,7 +16,7 @@
     </py:def>
 
     <py:choose test="view">
-      <form py:when="'detail'" class="mod" id="modcomp" method="post">
+      <form py:when="'detail'" class="mod" id="modclient" method="post">
         <fieldset>
           <legend>Modify Client:</legend>
           <div class="field">
@@ -86,7 +86,7 @@ $client.description</textarea>
       </form>
 
       <py:otherwise>
-        <form class="addnew" id="addcomp" method="post">
+        <form class="addnew" id="addclient" method="post">
           <fieldset>
             <legend>Add Client:</legend>
             <div class="field">
@@ -101,21 +101,21 @@ $client.description</textarea>
 
         <py:choose>
           <form py:when="clients" method="POST">
-            <table class="listing" id="complist">
+            <table class="listing" id="clientlist">
               <thead>
                 <tr><th class="sel">&nbsp;</th>
                   <th>Name</th><th>Default</th>
                 </tr>
               </thead>
               <tbody>
-                <tr py:for="comp in clients">
-                  <td class="sel"><input type="checkbox" name="sel" value="$comp.name" /></td>
+                <tr py:for="client in clients">
+                  <td class="sel"><input type="checkbox" name="sel" value="$client.name" /></td>
                   <td class="name">
-                    <a href="${panel_href(comp.name)}">$comp.name</a>
+                    <a href="${panel_href(client.name)}">$client.name</a>
                   </td>
                   <td class="default">
-                    <input type="radio" name="default" value="$comp.name"
-                           checked="${comp.name==default or None}" />
+                    <input type="radio" name="default" value="$client.name"
+                           checked="${client.name==default or None}" />
                   </td>
                 </tr>
               </tbody>

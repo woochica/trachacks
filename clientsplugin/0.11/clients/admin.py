@@ -34,29 +34,30 @@ class ClientAdminPage(TicketAdminPage):
     def _render_admin_panel(self, req, cat, page, client):
         # Detail view?
         if client:
-            comp = model.Client(self.env, client)
+            clnt = model.Client(self.env, client)
             if req.method == 'POST':
                 if req.args.get('save'):
-                    comp.name = req.args.get('name')
-                    comp.owner = req.args.get('owner')
-                    comp.description = req.args.get('description')
-                    comp.update()
+                    clnt.name = req.args.get('name')
+                    clnt.description = req.args.get('description')
+                    clnt.changes_list = req.args.get('changes_list')
+                    clnt.changes_period = req.args.get('changes_period')
+                    clnt.summary_list = req.args.get('summary_list')
+                    clnt.summary_period = req.args.get('summary_period')
+                    clnt.update()
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('cancel'):
                     req.redirect(req.href.admin(cat, page))
 
             add_script(req, 'common/js/wikitoolbar.js')
-            data = {'view': 'detail', 'client': comp}
+            data = {'view': 'detail', 'client': clnt}
 
         else:
             if req.method == 'POST':
                 # Add Client
                 if req.args.get('add') and req.args.get('name'):
-                    comp = model.Client(self.env)
-                    comp.name = req.args.get('name')
-                    if req.args.get('owner'):
-                        comp.owner = req.args.get('owner')
-                    comp.insert()
+                    clnt = model.Client(self.env)
+                    clnt.name = req.args.get('name')
+                    clnt.insert()
                     req.redirect(req.href.admin(cat, page))
 
                 # Remove clients
@@ -67,8 +68,8 @@ class ClientAdminPage(TicketAdminPage):
                         raise TracError('No client selected')
                     db = self.env.get_db_cnx()
                     for name in sel:
-                        comp = model.Client(self.env, name, db=db)
-                        comp.delete(db=db)
+                        clnt = model.Client(self.env, name, db=db)
+                        clnt.delete(db=db)
                     db.commit()
                     req.redirect(req.href.admin(cat, page))
 

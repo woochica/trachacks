@@ -22,7 +22,8 @@ setup(name=PACKAGE,
             'clients.api = clients.api',
             'clients.admin = clients.admin',
             'clients.client = clients.client',
-            'clients.model = clients.model'
+            'clients.model = clients.model',
+            'clients.processor = clients.processor'
         ]
     })
 
