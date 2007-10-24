@@ -165,11 +165,20 @@ class TracForgeDispatcherModule(Component):
         
         environ['SCRIPT_NAME'] = req.href.projects('/')
         environ['PATH_INFO'] = path_info
+        self.log.debug('*** SCRIPT_NAME = %r ; PATH_INFO = %r' % (environ['SCRIPT_NAME'],environ['PATH_INFO']))
         environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
         if 'TRAC_ENV' in environ:
             del environ['TRAC_ENV']
         if 'trac.env_path' in environ:
-            del environ['trac.env_path']
+            # WARNING: this is a really FRAGILE HACK!!
+            #
+            # The code here used to delete the 'trac.env_path' key from environ,
+            # but then other code in web/main.py would use setdefault to bring
+            # it back to life... with the wrong value.  Code later in that file
+            # checks environ['trac.env_path'] as a truth value and treats empty 
+            # results as absent.
+            environ['trac.env_path'] = ''
+
         environ['tracforge_master_link'] = req.href.projects()
         
         # Remove mod_python option to avoid conflicts
