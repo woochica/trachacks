@@ -26,13 +26,7 @@
 # This email integration script is meant to interface to the Trac
 # (http://www.edgewall.com/products/trac/) issue tracking/wiki/etc
 # system
-#
-# It should be called from the command line or Subversion hook script,
-# such as via:
-#
-# /usr/bin/python /path/to/send-client-emails \
-#  -e "<env>" -p <period> -t ["summary"|"changes"]
-#
+
 
 import re
 import os
@@ -316,13 +310,13 @@ class SendClientEmails:
             cur2.execute(sql, (name, lastupdate, now))
             xml.write('<changes>')
             lasttid = 0
-            for tid, summary, description, due, field, oldvalue, newvalue in cur2:
+            for tid, summary, description, due, cgfield, oldvalue, newvalue in cur2:
               text = ''
-              if 'status' == field:
+              if 'status' == cgfield:
                 text = 'Status changed from &quot;%s&quot; to &quot;%s&quot;' % (oldvalue, newvalue)
-              elif 'milestone' == field:
+              elif 'milestone' == cgfield:
                 text = 'Milestone updated - please check for revised delivery date.'
-              elif 'comment' == field:
+              elif 'comment' == cgfield:
                 # Todo - extract...
                 text = extract_client_text(newvalue).strip()
                 if '' == text:
@@ -355,18 +349,20 @@ class SendClientEmails:
             xml.write('</changes>')
           
           if not have_data:
-            print "No data"
             continue
           xml.write('</clientsplugin>')
           
-          #print xml.getvalue()
-          #exit(0)
           doc = libxml2.parseDoc(xml.getvalue())
           mailer.Send('Ticket Summary for %s' % name,
                       emails, doc, style)
           doc.freeDoc()
-
+          # Update the date field
+          sql = ("UPDATE client SET %s_lastupdate" % field) + \
+                 "=%s WHERE name=%s"
+          cursor.execute(sql, (now, name))
         style.freeStylesheet()
+        db.commit()
+        db.close()
 
 if __name__ == "__main__":
     if not options.envpath:
