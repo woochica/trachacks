@@ -245,94 +245,122 @@ class SendClientEmails:
           xml.write('<lastupdate>%s</lastupdate>' % format_date(lastupdate))
           xml.write('</client>')
           
-          # Load in a summary of the client's tickets
-          ## NB the disabled second part of the query would have
-          ##    returned tickets closed since last summary, but really
-          ##    that's what the change notificiation is for...
-          sql = ("""\
-            SELECT t.id, t.summary, t.description, t.status, m.due
-            FROM ticket t
-            LEFT JOIN milestone m ON t.milestone=m.name 
-            WHERE t.id IN
-              (
-                SELECT ticket 
-                FROM ticket_custom tcust 
-                WHERE tcust.name = 'client'
-                  AND tcust.value = %s
-              )
-              AND
-              (
-                t.status IN ('new','assigned','reopened')
-                OR
+          have_data = False
+          if 'summary' == field:
+            # Load in a summary of the client's tickets
+            ## NB the disabled second part of the query would have
+            ##    returned tickets closed since last summary, but really
+            ##    that's what the change notificiation is for...
+            sql = ("""\
+              SELECT t.id, t.summary, t.description, t.status, m.due
+              FROM ticket t
+              LEFT JOIN milestone m ON t.milestone=m.name 
+              WHERE t.id IN
                 (
-                  0
-                  AND t.status='closed'
-                  AND t.id IN
-                    (
-                      SELECT tchng.ticket
-                      FROM ticket_change tchng
-                      WHERE tchng.ticket=t.id
-                        AND tchng.field='status'
-                        AND tchng.oldvalue != 'closed'
-                        AND tchng.time >= %s
-                        AND tchng.time < %s
-                    )
+                  SELECT ticket 
+                  FROM ticket_custom tcust 
+                  WHERE tcust.name = 'client'
+                    AND tcust.value = %s
                 )
-              )
-            """)
-          cur2 = db.cursor()
-          cur2.execute(sql, (name, lastupdate, now))
-          xml.write('<summary>')
-          for tid, summary, description, status, due in cur2:
-            xml.write('<ticket>')
-            xml.write('<id>%s</id>' % tid)
-            xml.write('<summary>%s</summary>' % summary)
-            xml.write('<description>%s</description>' % extract_client_text(description))
-            xml.write('<status>%s</status>' % status)
-            xml.write('<due>%s</due>' % format_date(due))
-            xml.write('</ticket>')
-          
-          xml.write('</summary>')
-
-          # Load in any changes that have happend
-          sql = ("""\
-            SELECT t.id, t.summary, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
-            FROM ticket_custom tcust
-            LEFT JOIN ticket t ON tcust.ticket=t.id
-            LEFT JOIN ticket_change tchng ON t.id=tchng.ticket
-            LEFT JOIN milestone m ON t.milestone=m.name
-            WHERE tcust.name = 'client'
-              AND tcust.value = %s
-              AND tchng.time >= %s
-              AND tchng.time < %s
-            ORDER BY t.time
-            """)
-          cur2 = db.cursor()
-          cur2.execute(sql, (name, lastupdate, now))
-          xml.write('<changes>')
-          for tid, summary, due, field, oldvalue, newvalue in cur2:
-            text = ''
-            if 'status' == field:
-              text = 'Status changed from "%s" to "%s"' % (oldvalue, newvalue)
-            elif 'comment' == field:
-              # Todo - extract...
-              text = extract_client_text(newvalue)
-              if '' == text.strip():
-                # No comments for the client here so ignore it.
-                continue
-            else:
-              # Client should not know any more than this
-              continue
+                AND
+                (
+                  t.status IN ('new','assigned','reopened')
+                  OR
+                  (
+                    0
+                    AND t.status='closed'
+                    AND t.id IN
+                      (
+                        SELECT tchng.ticket
+                        FROM ticket_change tchng
+                        WHERE tchng.ticket=t.id
+                          AND tchng.field='status'
+                          AND tchng.oldvalue != 'closed'
+                          AND tchng.time >= %s
+                          AND tchng.time < %s
+                      )
+                  )
+                )
+              """)
+            cur2 = db.cursor()
+            cur2.execute(sql, (name, lastupdate, now))
+            xml.write('<summary>')
+            for tid, summary, description, status, due in cur2:
+              have_data = True
+              xml.write('<ticket>')
+              xml.write('<id>%s</id>' % tid)
+              xml.write('<summary>%s</summary>' % summary)
+              xml.write('<description>%s</description>' % extract_client_text(description))
+              xml.write('<status>%s</status>' % status)
+              xml.write('<due>%s</due>' % format_date(due))
+              xml.write('</ticket>')
             
-            xml.write('<ticket>')
-            xml.write('<id>%s</id>' % tid)
-            xml.write('<summary>%s</summary>' % summary)
-            xml.write('<due>%s</due>' % format_date(due))
-            xml.write('<%s>%s</%s>' % (field, text, field))
-            xml.write('</ticket>')
-          xml.write('</changes>')
+            xml.write('</summary>')
+          
+          elif 'changes' == field:
+            # Load in any changes that have happend
+            sql = ("""\
+              SELECT t.id, t.summary, t.description, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
+              FROM ticket_custom tcust
+              LEFT JOIN ticket t ON tcust.ticket=t.id
+              LEFT JOIN ticket_change tchng ON t.id=tchng.ticket
+              LEFT JOIN milestone m ON t.milestone=m.name
+              WHERE tcust.name = 'client'
+                AND tcust.value = %s
+                AND tchng.field IN ('comment', 'status', 'milestone')
+                AND tchng.time >= %s
+                AND tchng.time < %s
+              ORDER BY t.time
+              """)
+            cur2 = db.cursor()
+            cur2.execute(sql, (name, lastupdate, now))
+            xml.write('<changes>')
+            lasttid = 0
+            for tid, summary, description, due, field, oldvalue, newvalue in cur2:
+              text = ''
+              if 'status' == field:
+                text = 'Status changed from &quot;%s&quot; to &quot;%s&quot;' % (oldvalue, newvalue)
+              elif 'milestone' == field:
+                text = 'Milestone updated - please check for revised delivery date.'
+              elif 'comment' == field:
+                # Todo - extract...
+                text = extract_client_text(newvalue).strip()
+                if '' == text:
+                  # No comments for the client here so ignore it.
+                  continue
+                text = '<em>Comments for your attention:</em><br /><br />' + text
+              else:
+                # Client should not know any more than this
+                continue
+              
+              have_data = True
+              if lasttid and lasttid != tid:
+                xml.write('</changelog>')
+                xml.write('</ticket>')
+              
+              if lasttid != tid:
+                xml.write('<ticket>')
+                xml.write('<id>%s</id>' % tid)
+                xml.write('<summary>%s</summary>' % summary)
+                xml.write('<description>%s</description>' % extract_client_text(description))
+                xml.write('<due>%s</due>' % format_date(due))
+                xml.write('<changelog>')
+              
+              xml.write('<detail>%s</detail>' % text)
+              lasttid = tid
+            
+            if lasttid:
+              xml.write('</changelog>')
+              xml.write('</ticket>')
+            xml.write('</changes>')
+          
+          if not have_data:
+            print "No data"
+            continue
           xml.write('</clientsplugin>')
           
+          #print xml.getvalue()
+          #exit(0)
           doc = libxml2.parseDoc(xml.getvalue())
           mailer.Send('Ticket Summary for %s' % name,
                       emails, doc, style)
