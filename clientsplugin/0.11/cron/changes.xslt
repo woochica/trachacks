@@ -111,9 +111,10 @@ Please enable the HTML view or use an HTML compatible email client.
                 <div class="id">#<xsl:value-of select="ticket/id"/></div>
                 <div class="summary"><xsl:value-of select="ticket/summary"/></div>
                 <div class="description">
-                  <xsl:value-of select="ticket/description"/>
+                  <xsl:copy-of select="ticket/description"/>
                   <xsl:for-each select="ticket/changelog/detail">
-                    <hr /><xsl:value-of select="."/>
+                    <hr />
+                    <xsl:copy-of select="."/>
                   </xsl:for-each>
                 </div>
                 <div class="due"><xsl:value-of select="ticket/due"/></div>

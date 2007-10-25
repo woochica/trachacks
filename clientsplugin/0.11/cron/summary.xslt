@@ -119,7 +119,7 @@ Please enable the HTML view or use an HTML compatible email client.
                 <div class="id">#<xsl:value-of select="ticket/id"/></div>
                 <div class="summary"><xsl:value-of select="ticket/summary"/></div>
                 <xsl:if test="ticket/description!=''">
-                  <div class="description"><xsl:value-of select="ticket/description"/></div>
+                  <div class="description"><xsl:copy-of select="ticket/description"/></div>
                 </xsl:if>
                 <div class="status"><xsl:value-of select="ticket/status"/></div>
                 <div class="due"><xsl:value-of select="ticket/due"/></div>

@@ -43,6 +43,7 @@ from trac import __version__
 from trac.core import *
 from trac.env import open_environment
 from trac.util.datefmt import format_date, to_datetime
+from trac.wiki import wiki_to_html
 
 
 parser = OptionParser()
@@ -64,6 +65,7 @@ class SendClientMailer(object):
   def __init__(self, env):
     self.env = env
     self.config = env.config
+    self.encoding = 'us-ascii'
   
   def Send(self, subject, addresses, info, formatter):
     if not self.config.getbool('notification', 'smtp_enabled'):
@@ -112,13 +114,13 @@ class SendClientMailer(object):
     
     view = 'plain'
     result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
-    msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
+    msg_text = MIMEText(formatter.saveResultToString(result), view, self.encoding)
     msg_alternative.attach(msg_text)
     result.freeDoc()
     
     view = 'html'
     result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
-    msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
+    msg_text = MIMEText(formatter.saveResultToString(result), view, self.encoding)
     msg_alternative.attach(msg_text)
     result.freeDoc()
     
@@ -155,6 +157,7 @@ class SendClientEmails:
     def __init__(self):
         locale.setlocale(locale.LC_ALL, '')
         self.env = open_environment(options.envpath)
+        self.req = None
         from clients.processor import extract_client_text
 
         # Sync the repo so that any commits that happen to have been made
@@ -213,50 +216,26 @@ class SendClientEmails:
           have_data = False
           if 'summary' == field:
             # Load in a summary of the client's tickets
-            ## NB the disabled second part of the query would have
-            ##    returned tickets closed since last summary, but really
-            ##    that's what the change notificiation is for...
             sql = ("""\
-              SELECT t.id, t.summary, t.description, t.status, m.due
-              FROM ticket t
-              LEFT JOIN milestone m ON t.milestone=m.name 
-              WHERE t.id IN
-                (
-                  SELECT ticket 
-                  FROM ticket_custom tcust 
-                  WHERE tcust.name = 'client'
-                    AND tcust.value = %s
-                )
-                AND
-                (
-                  t.status IN ('new','assigned','reopened')
-                  OR
-                  (
-                    0
-                    AND t.status='closed'
-                    AND t.id IN
-                      (
-                        SELECT tchng.ticket
-                        FROM ticket_change tchng
-                        WHERE tchng.ticket=t.id
-                          AND tchng.field='status'
-                          AND tchng.oldvalue != 'closed'
-                          AND tchng.time >= %s
-                          AND tchng.time < %s
-                      )
-                  )
-                )
+              SELECT t.id, t.summary, t.description, t.status, t.milestone, m.due
+              FROM ticket_custom tcust
+              INNER JOIN ticket t ON tcust.ticket=t.id
+              LEFT JOIN milestone m ON t.milestone=m.name
+              WHERE tcust.name = 'client'
+                AND tcust.value = %s
+                AND t.status IN ('new','assigned','reopened')
               """)
             cur2 = db.cursor()
-            cur2.execute(sql, (name, lastupdate, now))
+            cur2.execute(sql, (name,))
             xml.write('<summary>')
-            for tid, summary, description, status, due in cur2:
+            for tid, summary, description, status, milestone, due in cur2:
               have_data = True
               xml.write('<ticket>')
               xml.write('<id>%s</id>' % tid)
               xml.write('<summary>%s</summary>' % summary)
-              xml.write('<description>%s</description>' % extract_client_text(description))
+              xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
               xml.write('<status>%s</status>' % status)
+              xml.write('<milestone>%s</milestone>' % milestone)
               xml.write('<due>%s</due>' % format_date(due))
               xml.write('</ticket>')
             
@@ -265,10 +244,10 @@ class SendClientEmails:
           elif 'changes' == field:
             # Load in any changes that have happend
             sql = ("""\
-              SELECT t.id, t.summary, t.description, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
+              SELECT t.id, t.summary, t.description, t.milestone, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
               FROM ticket_custom tcust
-              LEFT JOIN ticket t ON tcust.ticket=t.id
-              LEFT JOIN ticket_change tchng ON t.id=tchng.ticket
+              INNER JOIN ticket t ON tcust.ticket=t.id
+              INNER JOIN ticket_change tchng ON t.id=tchng.ticket
               LEFT JOIN milestone m ON t.milestone=m.name
               WHERE tcust.name = 'client'
                 AND tcust.value = %s
@@ -281,19 +260,19 @@ class SendClientEmails:
             cur2.execute(sql, (name, lastupdate, now))
             xml.write('<changes>')
             lasttid = 0
-            for tid, summary, description, due, cgfield, oldvalue, newvalue in cur2:
+            for tid, summary, description, milestone, due, cgfield, oldvalue, newvalue in cur2:
               text = ''
               if 'status' == cgfield:
                 text = 'Status changed from &quot;%s&quot; to &quot;%s&quot;' % (oldvalue, newvalue)
               elif 'milestone' == cgfield:
-                text = 'Milestone updated - please check for revised delivery date.'
+                text = 'Milestone changed from &quot;%s&quot; to &quot;%s&quot; - please check for revised delivery date.' % (oldvalue, newvalue)
               elif 'comment' == cgfield:
                 # Todo - extract...
                 text = extract_client_text(newvalue).strip()
                 if '' == text:
                   # No comments for the client here so ignore it.
                   continue
-                text = '<em>Comments for your attention:</em><br /><br />' + text
+                text = "''Comment for your information:''[[BR]][[BR]]" + text
               else:
                 # Client should not know any more than this
                 continue
@@ -307,11 +286,12 @@ class SendClientEmails:
                 xml.write('<ticket>')
                 xml.write('<id>%s</id>' % tid)
                 xml.write('<summary>%s</summary>' % summary)
-                xml.write('<description>%s</description>' % extract_client_text(description))
+                xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
+                xml.write('<milestone>%s</milestone>' % milestone)
                 xml.write('<due>%s</due>' % format_date(due))
                 xml.write('<changelog>')
               
-              xml.write('<detail>%s</detail>' % text)
+              xml.write('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req))
               lasttid = tid
             
             if lasttid:
@@ -330,7 +310,7 @@ class SendClientEmails:
           # Update the date field
           sql = ("UPDATE client SET %s_lastupdate" % field) + \
                  "=%s WHERE name=%s"
-          cursor.execute(sql, (now, name))
+          #cursor.execute(sql, (now, name))
         style.freeStylesheet()
         db.commit()
         db.close()
