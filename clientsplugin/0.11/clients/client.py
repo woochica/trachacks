@@ -8,7 +8,6 @@ from genshi.core import Markup
 from genshi.builder import tag
 from genshi.filters.transform import Transformer 
 
-#from util import *
 from clients import model
 
 class ClientModule(Component):
@@ -25,6 +24,7 @@ class ClientModule(Component):
             for field in data['fields']:
                 if 'client' == field['name']:
                     field['type'] = 'select'
+                    field['options'] = []
                     for client in model.Client.select(self.env):
                         field['options'].append(client.name)
                     break
