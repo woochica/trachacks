@@ -2,19 +2,12 @@
 <!DOCTYPE xsl:stylesheet [ <!ENTITY nbsp "&#160;"> ]>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:dt="http://xsltsl.org/date-time"
-  xmlns:str="http://xsltsl.org/string"
-  xmlns:hack='http://hack.com/hack'
-  xsl:exclude-result-prefixes='hack'
   version="1.0">
-
-  <xsl:import href="xsltsl/stdlib.xsl"/>
+  
   <xsl:output method="html" indent="yes" encoding="UTF-8" omit-xml-declaration="yes"/>
   <xsl:decimal-format name="GBP" decimal-separator="." grouping-separator=","/>
   
-  <!-- Disabled until http://bugzilla.gnome.org/show_bug.cgi?id=489854 is fixed
-  <xsl:param name="view" /> -->
-  <xsl:variable name="view" select="hack:hack()"/>
+  <xsl:param name="view" />
   
   <!-- Match the root of the XML render the three views -->
   <xsl:template match="/">

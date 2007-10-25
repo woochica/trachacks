@@ -60,35 +60,12 @@ parser.set_defaults(period='daily', mailtype='summary')
 (options, args) = parser.parse_args(sys.argv[1:])
 
 
-## Hideous hack to work around libxslt-python 1.1.22 bug
-## http://bugzilla.gnome.org/show_bug.cgi?id=489854
-xslthackview = 'plain'
-def fxslthackview(ctx):
-    global xslthackview
-
-    #
-    # Small check to verify the context is correcly accessed
-    #
-    try:
-        pctxt = libxslt.xpathParserContext(_obj=ctx)
-        ctxt = pctxt.context()
-        tctxt = ctxt.transformContext()
-        nodeName = tctxt.insertNode().name
-    except:
-        pass
-
-    return xslthackview
-
-libxslt.registerExtModuleFunction('hack', 'http://hack.com/hack', fxslthackview)
-## End Hack
-
 class SendClientMailer(object):
   def __init__(self, env):
     self.env = env
     self.config = env.config
   
   def Send(self, subject, addresses, info, formatter):
-    global xslthackview
     if not self.config.getbool('notification', 'smtp_enabled'):
       return
     smtp_server = self.config['notification'].get('smtp_server')
@@ -133,25 +110,21 @@ class SendClientMailer(object):
     msg_root.attach(msg_alternative)
     
     
-    # This should use XSLT params... but it's b0rken
     view = 'plain'
-    xslthackview = view
-    result = formatter.applyStylesheet(info, None)
+    result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
     msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
     msg_alternative.attach(msg_text)
     result.freeDoc()
     
     view = 'html'
-    xslthackview = view
-    result = formatter.applyStylesheet(info, None)
+    result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
     msg_text = MIMEText(formatter.saveResultToString(result), view, 'utf-8')
     msg_alternative.attach(msg_text)
     result.freeDoc()
     
     # Handle image embedding...
     view = 'images'
-    xslthackview = view
-    result = formatter.applyStylesheet(info, None)
+    result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
     if result and result.children and result.children.children:
       for img in result.children.children:
         if 'img' != img.name:
