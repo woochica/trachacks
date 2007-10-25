@@ -28,7 +28,8 @@ class Client(object):
             cursor = db.cursor()
             cursor.execute("SELECT description,"
                            "changes_list, changes_period, changes_lastupdate,"
-                           "summary_list, summary_period, summary_lastupdate "
+                           "summary_list, summary_period, summary_lastupdate,"
+                           "default_rate, currency "
                            "FROM client "
                            "WHERE name=%s", (name,))
             row = cursor.fetchone()
@@ -42,6 +43,8 @@ class Client(object):
             self.summary_list = row[4] or ''
             self.summary_period = row[5] or 'never'
             self.summary_lastupdate = row[6] or 0
+            self.default_rate = row[7] or ''
+            self.currency = row[8] or ''
         else:
             self.name = self._old_name = None
             self.description = None
@@ -51,6 +54,8 @@ class Client(object):
             self.summary_list = ''
             self.summary_period = 'never'
             self.summary_lastupdate = 0
+            self.default_rate = ''
+            self.currency = ''
 
     exists = property(fget=lambda self: self._old_name is not None)
 
@@ -85,11 +90,13 @@ class Client(object):
         self.env.log.debug("Creating new client '%s'" % self.name)
         cursor.execute("INSERT INTO client (name,description,"
                        " changes_list, changes_period, changes_lastupdate,"
-                       " summary_list, summary_period, summary_lastupdate) "
-                       "VALUES (%s,%s, %s,%s,%s, %s,%s,%s)",
+                       " summary_list, summary_period, summary_lastupdate,"
+                       " default_rate, currency) "
+                       "VALUES (%s,%s, %s,%s,%s, %s,%s,%s, %s,%s)",
                        (self.name, self.description,
                         self.changes_list, self.changes_period, int(time.time()),
-                        self.summary_list, self.summary_period, int(time.time())))
+                        self.summary_list, self.summary_period, int(time.time()),
+                        self.default_rate, self.currency))
 
         if handle_ta:
             db.commit()
@@ -108,11 +115,13 @@ class Client(object):
         self.env.log.info('Updating client "%s"' % self.name)
         cursor.execute("UPDATE client SET name=%s,description=%s,"
                        " changes_list=%s, changes_period=%s,"
-                       " summary_list=%s, summary_period=%s "
+                       " summary_list=%s, summary_period=%s,"
+                       " default_rate=%s, currency=%s "
                        "WHERE name=%s",
                        (self.name, self.description,
                         self.changes_list, self.changes_period,
                         self.summary_list, self.summary_period,
+                        self.default_rate, self.currency,
                         self._old_name))
         if self.name != self._old_name:
             # Update tickets
@@ -130,10 +139,11 @@ class Client(object):
         cursor = db.cursor()
         cursor.execute("SELECT name,description,"
                        " changes_list, changes_period, changes_lastupdate,"
-                       " summary_list, summary_period, summary_lastupdate "
+                       " summary_list, summary_period, summary_lastupdate,"
+                       " default_rate, currency "
                        "FROM client "
                        "ORDER BY name")
-        for name, description, changes_list, changes_period, changes_lastupdate, summary_list, summary_period, summary_lastupdate in cursor:
+        for name, description, changes_list, changes_period, changes_lastupdate, summary_list, summary_period, summary_lastupdate, default_rate, currency in cursor:
             client = cls(env)
             client.name = client._old_name = name
             client.description = description or ''
@@ -143,5 +153,7 @@ class Client(object):
             client.summary_list = summary_list or ''
             client.summary_period = summary_period or 'never'
             client.summary_lastupdate = summary_lastupdate or 0
+            client.default_rate = default_rate or ''
+            client.currency = currency or ''
             yield client
     select = classmethod(select)

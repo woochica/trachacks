@@ -7,22 +7,22 @@
   <xi:include href="admin.html" />
   <head>
     <title>Clients</title>
+    <style type="text/css">
+      p.contextual { margin-top:0; margin-bottom:2em }
+    </style>
   </head>
 
   <body>
     <h2>Manage Clients</h2>
-
-    <py:def function="owner_field(default_owner='')">
-    </py:def>
 
     <py:choose test="view">
       <form py:when="'detail'" class="mod" id="modclient" method="post">
         <fieldset>
           <legend>Modify Client:</legend>
           <div class="field">
-            <label>Name:<br /><input type="text" name="name" value="$client.name"/></label>
+            <label>Name:<br />
+            <input type="text" name="name" value="$client.name"/></label>
           </div>
-          ${owner_field(client.owner)}
           <div class="field">
             <fieldset class="iefix">
               <label for="description">
@@ -36,6 +36,16 @@
 $client.description</textarea>
               </p>
             </fieldset>
+          </div>
+          <div py:if="42==1" class="field">
+            <label>Currency:<br />
+            <input type="text" name="currency" value="$client.currency"/></label>
+            <p class="contextual help">Purely cosmetic and for display purposes only. The currency symbol to use for this client.</p>
+          </div>
+          <div class="field">
+            <label>Default Charge Rate:<br />
+            <input type="text" name="default_rate" value="$client.default_rate"/></label>
+            <p class="contextual help">The default numeric hourly rate for this client (will be copied to the ticket on creation)</p>
           </div>
         </fieldset>
         <fieldset>
@@ -52,12 +62,12 @@ $client.description</textarea>
           <div class="field">
             <label>Change Notification List (emails):<br />
             <input type="text" name="changes_list" size="60" value="$client.changes_list"/></label>
-            <p class="help" style="margin-top:0;margin-bottom:2em">Comma or space separated list of email addresses</p>
+            <p class="contextual help">Comma or space separated list of email addresses</p>
           </div>
           <div class="field">
             <label>Change Notification Period:<br />
             <input type="text" name="changes_period" value="$client.changes_period"/></label>
-            <p class="help" style="margin-top:0;margin-bottom:2em">Period name as used in the corresponding crontab</p>
+            <p class="contextual help">Period name as used in the corresponding crontab</p>
           </div>
         </fieldset>
         <fieldset>
@@ -71,12 +81,12 @@ $client.description</textarea>
           <div class="field">
             <label>Summary Notification List (emails):<br />
             <input type="text" name="summary_list" size="60" value="$client.summary_list"/></label>
-            <p class="help" style="margin-top:0;margin-bottom:2em">Comma or space separated list of email addresses</p>
+            <p class="contextual help">Comma or space separated list of email addresses</p>
           </div>
           <div class="field">
             <label>Summary Notification Period:<br />
             <input type="text" name="summary_period" value="$client.summary_period"/></label>
-            <p class="help" style="margin-top:0;margin-bottom:2em">Period name as used in the corresponding crontab</p>
+            <p class="contextual help">Period name as used in the corresponding crontab</p>
           </div>
         </fieldset>
         <div class="buttons">
@@ -92,7 +102,6 @@ $client.description</textarea>
             <div class="field">
               <label>Name:<br /><input type="text" name="name" /></label>
             </div>
-            ${owner_field()}
             <div class="buttons">
               <input type="submit" name="add" value="Add"/>
             </div>

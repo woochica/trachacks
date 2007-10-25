@@ -1,7 +1,6 @@
 from trac.core import *
 #from trac.ticket.model import AbstractEnum
 #from trac.ticket.admin import AbstractEnumAdminPage
-from trac.web.chrome import ITemplateProvider
 from trac.ticket.admin import TicketAdminPage
 
 from clients import model
@@ -10,26 +9,10 @@ from trac.util.datefmt import utc, parse_date, get_date_format_hint, \
 from trac.web.chrome import add_link, add_script
 
 class ClientAdminPage(TicketAdminPage):
-    implements(ITemplateProvider)
     
     _type = 'clients'
     _label = ('Client', 'Clients')
 
-    # ITemplateProvider
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        from pkg_resources import resource_filename
-        return [('clients', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
-    
     # TicketAdminPage methods
     def _render_admin_panel(self, req, cat, page, client):
         # Detail view?
@@ -43,6 +26,8 @@ class ClientAdminPage(TicketAdminPage):
                     clnt.changes_period = req.args.get('changes_period')
                     clnt.summary_list = req.args.get('summary_list')
                     clnt.summary_period = req.args.get('summary_period')
+                    clnt.default_rate = req.args.get('default_rate')
+                    clnt.currency = req.args.get('currency')
                     clnt.update()
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('cancel'):

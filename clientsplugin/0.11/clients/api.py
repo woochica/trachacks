@@ -12,7 +12,7 @@ class ClientsSetupParticipant(Component):
     
     def __init__(self):
         self.db_version_key = 'clients_plugin_version'
-        self.db_version = 2
+        self.db_version = 3
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
@@ -55,8 +55,15 @@ class ClientsSetupParticipant(Component):
                 # Clean them out
                 cursor.execute('DELETE FROM enum WHERE type=%s', ('client',))
             
-            #if self.db_installed_version < 3:
-            #    print 'Updating clients table (v3)'
+            if self.db_installed_version < 3:
+               print 'Updating clients table (v3)'
+               cursor.execute('ALTER TABLE client '
+                              'ADD COLUMN default_rate INTEGER')
+               cursor.execute('ALTER TABLE client '
+                              'ADD COLUMN currency     TEXT')
+            
+            #if self.db_installed_version < 4:
+            #    print 'Updating clients table (v4)'
             #    cursor.execute('...')
             
             # Updates complete, set the version
@@ -87,7 +94,7 @@ class ClientsSetupParticipant(Component):
     def ticket_fields_need_upgrade(self):
         section = 'ticket-custom'
         return ('text' != self.config.get(section, 'client') \
-                or 'text' != self.config.get(section, 'client_rate'))
+                or 'text' != self.config.get(section, 'clientrate'))
     
     def do_ticket_field_upgrade(self):
         section = 'ticket-custom'
@@ -95,8 +102,8 @@ class ClientsSetupParticipant(Component):
         self.config.set(section,'client', 'text')
         self.config.set(section,'client.label', 'Client')
 
-        self.config.set(section,'client_rate', 'text')
-        self.config.set(section,'client_rate.label', 'Client Charge Rate')
+        self.config.set(section,'clientrate', 'text')
+        self.config.set(section,'clientrate.label', 'Client Charge Rate')
 
         self.config.save();
 
