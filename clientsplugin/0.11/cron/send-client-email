@@ -141,7 +141,7 @@ class SendClientMailer(object):
         msg_root.attach(msg_img)
     result.freeDoc()
     
-    # Send the email (this example assumes SMTP authentication is required)
+    # Send the email
     import smtplib
     smtp = smtplib.SMTP() #smtp_server, smtp_port)
     if False and user_name:
@@ -153,8 +153,6 @@ class SendClientMailer(object):
 class SendClientEmails:
 
     def __init__(self):
-        global xslthackview
-        
         locale.setlocale(locale.LC_ALL, '')
         self.env = open_environment(options.envpath)
         from clients.processor import extract_client_text
