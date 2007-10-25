@@ -310,7 +310,7 @@ class SendClientEmails:
           # Update the date field
           sql = ("UPDATE client SET %s_lastupdate" % field) + \
                  "=%s WHERE name=%s"
-          #cursor.execute(sql, (now, name))
+          cursor.execute(sql, (now, name))
         style.freeStylesheet()
         db.commit()
         db.close()
