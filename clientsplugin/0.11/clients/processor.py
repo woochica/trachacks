@@ -3,7 +3,6 @@ from trac.wiki.api import IWikiMacroProvider, WikiSystem, parse_args
 from trac.wiki import wiki_to_html
 from trac.wiki.macros import WikiMacroBase
 from trac.env import IEnvironmentSetupParticipant
-from trac.ticket import ITicketCustomFieldValues
 from trac.wiki.parser import WikiParser
 from StringIO import StringIO
 
