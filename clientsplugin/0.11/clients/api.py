@@ -86,23 +86,17 @@ class ClientsSetupParticipant(Component):
 
     def ticket_fields_need_upgrade(self):
         section = 'ticket-custom'
-        return not (self.config.get(section, 'client') and self.config.get(section, 'client_rate'))
+        return ('text' != self.config.get(section, 'client') \
+                or 'text' != self.config.get(section, 'client_rate'))
     
     def do_ticket_field_upgrade(self):
         section = 'ticket-custom'
         
-        self.config.set(section,'client', 'select')
-        if not self.config.get(section, 'client.order'):
-            self.config.set(section, 'client.order', '1')
-        self.config.set(section,'client.options', 'custom:ClientsList')
+        self.config.set(section,'client', 'text')
         self.config.set(section,'client.label', 'Client')
-        self.config.set(section,'client.value', '0')
 
         self.config.set(section,'client_rate', 'text')
-        if not self.config.get(section, 'client_rate.order'):
-            self.config.set(section, 'client_rate.order', '2')
         self.config.set(section,'client_rate.label', 'Client Charge Rate')
-        self.config.set(section,'client_rate.value', '')
 
         self.config.save();
 
