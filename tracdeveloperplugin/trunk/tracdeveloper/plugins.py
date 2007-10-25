@@ -65,8 +65,9 @@ class DeveloperPlugins(Component):
 
         components = {}
         for component in [c.__class__ for c in self.env.components.values()]:
-            impl = [interfaces['%s.%s' % (i.__module__, i.__name__)]
-                          for i in component._implements]
+            if hasattr(component, '_implements'):
+                impl = [interfaces['%s.%s' % (i.__module__, i.__name__)]
+                        for i in component._implements]
             interface_methods = [m['name'] for i in impl for m in i['methods']]
             methods = self.extract_methods(req, component, interface_methods)
             data = self.base_data(req, component)
