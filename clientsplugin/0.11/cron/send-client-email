@@ -44,7 +44,7 @@ from trac.core import *
 from trac.env import open_environment
 from trac.util.datefmt import format_date, to_datetime
 from trac.wiki import wiki_to_html
-
+from genshi import escape
 
 parser = OptionParser()
 depr = '(not used anymore)'
@@ -225,7 +225,7 @@ class SendClientEmails:
               LEFT JOIN milestone m ON t.milestone=m.name
               WHERE tcust.name = 'client'
                 AND tcust.value = %s
-                AND t.status IN ('new','assigned','reopened')
+                AND t.status != 'closed'
               """)
             cur2 = db.cursor()
             cur2.execute(sql, (name,))
@@ -234,7 +234,7 @@ class SendClientEmails:
               have_data = True
               xml.write('<ticket>')
               xml.write('<id>%s</id>' % tid)
-              xml.write('<summary>%s</summary>' % summary)
+              xml.write('<summary>%s</summary>' % escape(summary))
               xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
               xml.write('<status>%s</status>' % status)
               xml.write('<milestone>%s</milestone>' % milestone)
@@ -246,7 +246,7 @@ class SendClientEmails:
           elif 'changes' == field:
             # Load in any changes that have happend
             sql = ("""\
-              SELECT t.id, t.summary, t.description, t.milestone, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
+              SELECT t.id, t.summary, t.description, t.status, t.milestone, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
               FROM ticket_custom tcust
               INNER JOIN ticket t ON tcust.ticket=t.id
               INNER JOIN ticket_change tchng ON t.id=tchng.ticket
@@ -262,12 +262,12 @@ class SendClientEmails:
             cur2.execute(sql, (name, lastupdate, now))
             xml.write('<changes>')
             lasttid = 0
-            for tid, summary, description, milestone, due, cgfield, oldvalue, newvalue in cur2:
+            for tid, summary, description, status, milestone, due, cgfield, oldvalue, newvalue in cur2:
               text = ''
               if 'status' == cgfield:
-                text = 'Status changed from &quot;%s&quot; to &quot;%s&quot;' % (oldvalue, newvalue)
+                text = 'Status changed from "%s" to "%s"' % (oldvalue, newvalue)
               elif 'milestone' == cgfield:
-                text = 'Milestone changed from &quot;%s&quot; to &quot;%s&quot; - please check for revised delivery date.' % (oldvalue, newvalue)
+                text = 'Milestone changed from "%s" to "%s" - please check for revised delivery date.' % (oldvalue, newvalue)
               elif 'comment' == cgfield:
                 # Todo - extract...
                 text = extract_client_text(newvalue).strip()
@@ -287,8 +287,9 @@ class SendClientEmails:
               if lasttid != tid:
                 xml.write('<ticket>')
                 xml.write('<id>%s</id>' % tid)
-                xml.write('<summary>%s</summary>' % summary)
+                xml.write('<summary>%s</summary>' % escape(summary))
                 xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
+                xml.write('<status>%s</status>' % status)
                 xml.write('<milestone>%s</milestone>' % milestone)
                 xml.write('<due>%s</due>' % myformat_date(due))
                 xml.write('<changelog>')
