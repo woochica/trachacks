@@ -1,0 +1,14 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+  <!--! Add site-specific style sheet -->
+  <head py:match="head" py:attrs="select('@*')">
+    ${select('*')}
+    <link rel="stylesheet" type="text/css"
+          href="${href.chrome('site/css/path.css')}" />
+  </head>
+  <body py:match="body" py:attrs="select('@*')">
+    <script type="text/javascript" 
+        src="${href.chrome('site/js/path.js')}"></script>
+    ${select('*')}
+  </body>
+</html>
