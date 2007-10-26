@@ -1,7 +1,9 @@
 from trac.core import *
+from trac.perm import PermissionSystem
 #from trac.ticket.model import AbstractEnum
 #from trac.ticket.admin import AbstractEnumAdminPage
 from trac.ticket.admin import TicketAdminPage
+
 
 from clients import model
 from trac.util.datefmt import utc, parse_date, get_date_format_hint, \
