@@ -155,6 +155,11 @@ class SendClientMailer(object):
 class SendClientEmails:
 
     def __init__(self):
+        def myformat_date(dte):
+          if dte:
+            return format_date(dte)
+          return 'No date set'
+        
         locale.setlocale(locale.LC_ALL, '')
         self.env = open_environment(options.envpath)
         self.req = None
@@ -210,7 +215,7 @@ class SendClientEmails:
           # Place basic client info here
           xml.write('<client>')
           xml.write('<name>%s</name>' % name)
-          xml.write('<lastupdate>%s</lastupdate>' % format_date(lastupdate))
+          xml.write('<lastupdate>%s</lastupdate>' % myformat_date(lastupdate))
           xml.write('</client>')
           
           have_data = False
@@ -236,7 +241,7 @@ class SendClientEmails:
               xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
               xml.write('<status>%s</status>' % status)
               xml.write('<milestone>%s</milestone>' % milestone)
-              xml.write('<due>%s</due>' % format_date(due))
+              xml.write('<due>%s</due>' % myformat_date(due))
               xml.write('</ticket>')
             
             xml.write('</summary>')
@@ -288,7 +293,7 @@ class SendClientEmails:
                 xml.write('<summary>%s</summary>' % summary)
                 xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
                 xml.write('<milestone>%s</milestone>' % milestone)
-                xml.write('<due>%s</due>' % format_date(due))
+                xml.write('<due>%s</due>' % myformat_date(due))
                 xml.write('<changelog>')
               
               xml.write('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req))
