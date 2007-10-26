@@ -106,18 +106,20 @@ Please enable the HTML view or use an HTML compatible email client.
         <h1>Ticket Summary for <xsl:value-of select="/clientsplugin/client/name"/></h1>
         <xsl:choose>
           <xsl:when test="/clientsplugin/changes/ticket">
-            <xsl:for-each select="/clientsplugin/changes">
+            <xsl:for-each select="/clientsplugin/changes/ticket">
               <div class="ticket">
-                <div class="id">#<xsl:value-of select="ticket/id"/></div>
-                <div class="summary"><xsl:value-of select="ticket/summary"/></div>
+                <div class="id">#<xsl:value-of select="id"/></div>
+                <div class="summary"><xsl:value-of select="summary"/></div>
                 <div class="description">
-                  <xsl:copy-of select="ticket/description"/>
-                  <xsl:for-each select="ticket/changelog/detail">
+                  <xsl:if test="description!=''">
+                    <xsl:copy-of select="description"/>
+                  </xsl:if>
+                  <xsl:for-each select="changelog/detail">
                     <hr />
                     <xsl:copy-of select="."/>
                   </xsl:for-each>
                 </div>
-                <div class="due"><xsl:value-of select="ticket/due"/></div>
+                <div class="due"><xsl:value-of select="due"/></div>
                 <div class="fin"></div>
               </div>
             </xsl:for-each>
