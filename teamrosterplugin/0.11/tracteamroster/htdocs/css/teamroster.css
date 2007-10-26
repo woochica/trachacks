@@ -1,0 +1,325 @@
+/**
+ * Main Layout
+ */
+div#tr_panel{
+	float:right;
+	width:30%;
+}
+
+div#tr_activeUserProfiles{
+	width:67%;
+	padding:5px;
+}
+
+
+/**
+ *	Active User Profiles 
+ */
+div#tr_activeUserProfiles TABLE{
+	width:100%;
+	border: 1px solid #DDDDDD;
+	
+}
+div#tr_activeUserProfiles TABLE TD{
+	padding:0px;
+	border-width:0px 1px;
+}
+
+div#tr_activeUserProfiles TABLE TH, div#tr_activeUserProfiles TABLE TR{
+	border-width:0px 1px;
+}
+div#tr_activeUserProfiles TABLE TFOOT TH{
+	padding:5px;
+	background-color:#F7F7F0;
+	text-align:right;
+	/*border-color:rgb(215, 215, 215) rgb(215, 215, 215) rgb(153, 153, 153);
+	border-style:solid;
+	border-width:1px;*/
+	font-size:11px;
+	font-weight:bold;
+	padding:2px 0.5em;
+	vertical-align:bottom;
+}
+
+div#tr_activeUserProfiles TABLE TH input[type="submit"]{
+	padding:0px;
+	margin:0px;
+	font-size:8pt;
+}
+div#tr_activeUserProfiles span.expander{
+	cursor:pointer;
+	_cursor:hand;
+	background:url(../img/expander_normal.png) no-repeat 0% 50% ;
+	padding-left:16px;
+}
+
+div#tr_activeUserProfiles span.expander_open{
+	cursor:pointer;
+	_cursor:hand;
+	background:url(../img/expander_open.png) no-repeat 0% 50% ;
+	padding-left:16px;
+}
+
+
+div#tr_activeUserProfiles .tr_userProfile{
+	display:none;
+	background:#F7F7F7 none repeat scroll 0%;
+	padding:10px;
+	text-align:left;	
+}
+
+div#tr_activeUserProfiles .tr_userProfile FORM{
+	margin:0px;
+	display:inline;
+}
+
+div#tr_activeUserProfiles .tr_userProfile .tr_userProfile_panel{
+	text-align:right;
+	border-top:1px solid #D7D7D7;
+	display:none;
+}
+
+div#tr_activeUserProfiles .tr_userProfile .tr_userProfile_panel IMG{
+	width:20px;
+	vertical-align:middle;
+	margin-right:5px;
+	height:auto;
+}
+
+div#tr_activeUserProfiles .tr_userProfile .tr_userProfile_picture{
+	float:left;
+	width:100px;
+	min-height:100px;
+	margin:0px 10px 10px 0px;
+	border:1px solid #D7D7D7;
+}
+
+div#tr_activeUserProfiles .tr_userProfile .tr_userProfile_picture IMG{
+	width:100px;
+	height:auto;
+}
+
+
+div#tr_activeUserProfiles .tr_userProfile .tr_userProfile_title{
+	color:#D7D7D7;
+	border-bottom:1px solid #D7D7D7;
+}
+
+div#tr_activeUserProfiles .tr_userProfile .tr_userProfile_field{
+	list-style-type:none;
+	margin-bottom:2px;
+	text-align:justify;
+}
+
+div#tr_activeUserProfiles .tr_userProfile .tr_userProfile_field LABEL{
+	margin:0px 5px;
+	font-weight:bold;	
+	float:left;
+}
+
+
+/**
+ *	Search Form
+ */
+div#tr_search_result{
+	height:200px;
+	border:1px solid #D7D7D7;
+	overflow:auto;
+	margin-left:2px;
+}
+
+div#tr_search_result .listing {
+	margin:0px;
+	width:99%;
+}
+
+div#tr_search_result .listing TR > TD:first-child{
+	width:30px;
+	text-align:center;
+}
+
+div#tr_search_result .listing TR TD span.project_name{
+	font-size:smaller;
+	margin-left:10px;
+}
+
+
+div#tr_search_result .listing tbody tr.selected{
+	background-color:#C6C6C6;
+}
+
+div#tr_search_result .listing tbody tr.selected:hover { 
+	background: #E6E6E6 !important 
+}
+
+/**
+ *	Create new user profile
+ */
+#tr_create_add .field LABEL{
+	display:block;
+}
+
+#tr_create_add .field TEXTAREA{
+	width:100%;
+}
+
+
+/**
+ * Update user profile
+ */
+TABLE.tr_userProfile_update{
+	width:100%;
+	
+}
+
+TABLE.tr_userProfile_update TH {
+	padding:0.3em 0.5em 0.3em 0.3em;
+	text-align:right;
+	border-right:1px solid #D7D7D7;
+	width:80px;
+}
+
+TABLE.tr_userProfile_update TD {
+	padding:0.3em 0.3em 0.3em 0.5em;
+}
+
+
+TABLE.tr_userProfile_update TEXTAREA{
+	width:100%;
+}
+
+DIV.tr_userProfile_actions{
+	margin-top:3px;
+}
+
+DIV.tr_userProfile_picture{
+	float:right;
+	margin-right:10px;
+	border:1px solid #D7D7D7;
+	padding:1px;
+}
+DIV.tr_userProfile_picture IMG{
+	width:100px;
+	height:auto;
+}
+
+DIV.tr_message {
+	width:100%;
+	text-align:center;
+}
+
+DIV.tr_message SPAN{
+	border:1px solid #D0D0D0;
+	background-color:#AAFFCC;
+	padding:4px 30px 4px 30px;
+}
+
+/**
+ * UserProfile inline update
+ *
+ */
+div#tr_activeUserProfiles .tr_userProfile.editing{
+	border:1px solid #999999;
+}
+.tr_userProfile_field TEXTAREA{
+	width:90%;
+	vertical-align:top;
+}	
+.tr_editable{
+	padding: 2px 3px;
+}
+.tr_editable:hover{
+	background-color:#FFFFDD;
+	border:1px solid #a8a8a8;
+	padding:1px 2px;
+}
+
+.tr_editable.textarea{
+	display:block;
+	/*padding-top:0px;*/
+}
+.tr_editable.textarea P:first-child{
+	padding-top:0px;
+	margin-top:0px;
+}
+
+.tr_editable .source{
+	display:none;
+}
+
+/**
+ * UserProfiles macro - TeamRoster
+ *
+ */
+DIV.tr_userProfile_macro TABLE{
+	border-collapse:separate;
+}
+
+DIV.tr_userProfile_macro TABLE TD{
+	padding:0px;
+	border-width:0px 1px;
+}
+
+DIV.tr_userProfile_macro TABLE TR{
+	border-width:0px 1px;
+}
+
+DIV.tr_userProfile_macro TABLE TFOOT TH{
+	padding:5px;
+	background-color:#F7F7F0;
+	text-align:right;
+	/*border-color:rgb(215, 215, 215) rgb(215, 215, 215) rgb(153, 153, 153);
+	border-style:solid;
+	border-width:1px;*/
+	font-size:11px;
+	font-weight:bold;
+	padding:2px 0.5em;
+	vertical-align:bottom;
+}
+
+DIV.tr_userProfile_macro span.expander{
+	cursor:pointer;
+	_cursor:hand;
+	background:url(../img/expander_normal.png) no-repeat 0% 50% ;
+	padding-left:16px;
+}
+
+DIV.tr_userProfile_macro span.expander_open{
+	cursor:pointer;
+	_cursor:hand;
+	background:url(../img/expander_open.png) no-repeat 0% 50% ;
+	padding-left:16px;
+}
+
+DIV.tr_userProfile_macro .tr_userProfile{
+	display:none;
+	background:#F7F7F7 none repeat scroll 0%;
+	padding:10px;
+	text-align:left;	
+}
+
+DIV.tr_userProfile_macro .tr_userProfile .tr_userProfile_picture{
+	float:left;
+	width:100px;
+	min-height:100px;
+	margin:0px 10px 10px 0px;
+	border:1px solid #D7D7D7;
+}
+
+DIV.tr_userProfile_macro .tr_userProfile .tr_userProfile_picture IMG{
+	width:100px;
+	height:auto;
+}
+
+DIV.tr_userProfile_macro .tr_userProfile .tr_userProfile_field{
+	list-style-type:none;
+	margin-bottom:2px;
+	text-align:justify;
+}
+
+DIV.tr_userProfile_macro .tr_userProfile .tr_userProfile_field LABEL {
+	margin:0px 5px;
+	font-weight:bold;	
+	float:left;
+}
+

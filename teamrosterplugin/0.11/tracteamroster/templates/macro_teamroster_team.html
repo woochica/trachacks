@@ -1,0 +1,63 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+    <div class="tr_userProfile_macro">
+		<table class="listing" cellpading="0" cellspacing="0">	
+			<thead>
+				<tr>
+					<th width="1%" align="left"></th>
+					<th align="left">User</th>
+					<th align="left">Full Name</th>
+					<th align="left">E-mail</th>
+					<th align="left">Role</th>
+				</tr>		
+			</thead>
+			<tbody>
+			<py:for each="userProfile in teamRoster.userProfiles">
+				<tr>
+					<th rowspan="2"><img src="${href.chrome('tracteamroster')+'/img/teamMember.png'}" /></th>
+					<th rowspan="1" valign="top" align="left"><span class="expander" for="tr_userProfile_$userProfile.id" title="Expand Profile">$userProfile.id</span></th>
+					<th align="left" >$userProfile.name</th>
+					<th align="left" >$userProfile.email</th>
+					<th align="left" >$userProfile.role</th>
+				</tr>
+				<tr>
+					<td colspan="4" >
+						<div class="tr_userProfile" name="tr_userProfile_$userProfile.id" style="display:none">
+							<div py:choose="" class="tr_userProfile_picture">
+								<img py:when="userProfile.picture_href" src="$userProfile.picture_href"/>
+								<img py:otherwise="" src="${href.chrome('tracteamroster')}/img/no_picture.png"/>
+							</div>
+							<ul>
+								<li	class="tr_userProfile_field" py:if="userProfile.name">
+									<label>Name: </label><span>$userProfile.name</span>
+								</li>
+								<li class="tr_userProfile_field" py:if="userProfile.email">
+									<label>E-mail: </label><span><a href="mailto:$userProfile.email">$userProfile.email</a></span>
+								</li>
+								<li class="tr_userProfile_field" py:if="userProfile.role">
+									<label>Role:</label><span>$userProfile.role</span>
+								</li>
+								<li	class="tr_userProfile_field" py:if="userProfile.bio_html">
+									<label>Bio: </label><span >$userProfile.bio_html</span>
+								</li>
+							</ul>
+						</div>
+					</td>
+				</tr>
+			</py:for>
+			<tr py:if="len(teamRoster.userProfiles)==0">
+				<td colspan="5" align="center">( Empty )</td>
+			</tr>	
+		</tbody>
+		<tfoot>
+			<tr>
+				<th colspan="6">Members count: ${len(teamRoster.userProfiles)}</th>
+			</tr>
+		</tfoot>
+		</table>
+	</div>
+</html>

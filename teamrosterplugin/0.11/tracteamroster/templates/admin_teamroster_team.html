@@ -1,0 +1,144 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+ 	<xi:include href="admin.html" />
+ 	<head>
+    	<title>Manage Team ...</title>
+  	</head>
+  	<body>
+		<h2>Manage Team</h2>
+		<div name="tr_panel" id="tr_panel">
+			<form name="tr_create_add" id="tr_create_add" method="post">
+				<fieldset>
+					<legend>Create &#38; Add</legend>
+					<div class="field" >
+						<label for="tr_newprofile_id">Username</label>
+						<input type="text" name="tr_newprofile_id" id="tr_newprofile_id" />
+					</div>
+					<div class="field">
+						<label for="tr_newprofile_name">Full Name</label>
+						<input type="text" name="tr_newprofile_name" id="tr_newprofile_name" />
+					</div>
+					<div class="field">
+						<label for="tr_newprofile_email">Email</label>
+						<input type="text" name="tr_newprofile_email" id="tr_newprofile_email"/>
+					</div>
+					<div class="field">
+						<label for="tr_newprofile_role">Role</label>
+						<input type="text" name="tr_newprofile_role" id="tr_newprofile_role" />
+					</div>
+					<div class="field">
+						<label for="tr_newprofile_bio">Bio</label>
+						<textarea name="tr_newprofile_bio" id="tr_newprofile_bio" rows="10" class="wikitext"></textarea>
+					</div>
+					<input type="submit" name="tr_userProfile_create" value="Create &#38; Add"/>
+				</fieldset>
+			</form>
+			<form id="tr_search" name="tr_search" method="post" action="#tr_search">
+				<fieldset>
+					<legend>Search User Profile</legend>
+					<div class="field">
+						<input type="text" name="tr_search_name" id="tr_search_name"/>
+						<input type="submit" name="tr_userProfile_search" value="Search"/>
+					</div>
+					<div name="tr_search_result" id="tr_search_result">
+					<table class="listing">
+					<py:for each="userProfile in teamRoster.search_result" >
+						<tr>
+							<td><input	type="checkbox"	name="tr_search_result_userProfile"	value="$userProfile.uniq_id"/></td>
+							<td>
+								$userProfile.name 
+								<span py:if="userProfile.project_name" class="project_name">
+									(<b>Project</b>: $userProfile.project_name)
+								</span>
+							</td>
+						</tr>
+					</py:for>
+					</table>
+					</div>
+					<input type="submit" name="tr_userProfile_add" value="Add Selected"/>
+				</fieldset>
+			</form>
+		</div>
+		<div id="tr_activeUserProfiles">
+			<table class="listing" cellpading="0" cellspacing="0">	
+				<thead>
+					<tr>
+						<th width="1%" align="left"></th>
+						<th align="left">User</th>
+						<th align="left">Full Name</th>
+						<th align="left">E-mail</th>
+						<th align="left">Role</th>
+						<th width="1%" align="center">Actions</th>
+					</tr>		
+				</thead>
+				<tbody>
+				<py:for each="userProfile in teamRoster.activeUserProfiles">
+					<tr>
+						<th rowspan="2"><img src="${href.chrome('tracteamroster')+'/img/teamMember.png'}" /></th>
+						<th rowspan="1" valign="top" align="left"><span class="expander ${userProfile.id == teamRoster.lastUpdatedProfile.id and 'expander_open' or ''}" for="tr_userProfile_$userProfile.id" title="Expand Profile">$userProfile.id</span></th>
+						<th align="left" >$userProfile.name</th>
+						<th align="left" >$userProfile.email</th>
+						<th align="left" >$userProfile.role</th>
+						<th align="left" >
+							<form method="POST" action="#tr_panel">
+								<input type="hidden" name="tr_userProfile_id" value="$userProfile.id"/>					
+								<input type="submit" name="tr_userProfile_remove" value="Remove"/>
+							</form>
+						</th>
+					</tr>
+					<tr>
+						<td colspan="5" >
+							<form method="POST" action="#tr_userProfile_$userProfile.id">
+							<div class="tr_userProfile" id="tr_userProfile_$userProfile.id" style="display:${userProfile.id == teamRoster.lastUpdatedProfile.id and 'block' or 'none'}">
+								<input type="hidden" name="tr_userProfile_id" value="$userProfile.id"/>					
+								<div py:choose="" class="tr_userProfile_picture">
+									<img py:when="userProfile.picture_href" src="$userProfile.picture_href"/>
+									<img py:otherwise="" src="${href.chrome('tracteamroster')}/img/no_picture.png"/>
+								</div>
+								<ul>
+									<li	class="tr_userProfile_field">
+										<label>Name: </label><span name="tr_userProfile_name" class="tr_editable text">$userProfile.name</span>
+									</li>
+									<li class="tr_userProfile_field">
+										<label>E-mail: </label><span name="tr_userProfile_email" class="tr_editable text">$userProfile.email</span>
+									</li>
+									<li class="tr_userProfile_field">
+										<label>Role:</label>
+										<span name="tr_userProfile_role" class="tr_editable text">$userProfile.role</span>
+									</li>
+									<li class="tr_userProfile_field">
+										<label>Picture:</label>
+										<span name="tr_userProfile_picture" class="tr_editable file">[Upload new Picture]</span>
+									</li>
+									<li	class="tr_userProfile_field">
+										<label>Bio: </label><span name="tr_userProfile_bio" rows="15" cols="40" class="tr_editable textarea wikitext">$userProfile.bio_html<xmp py:if="len(userProfile.bio)>0" class="source">$userProfile.bio</xmp></span>
+									</li>
+								</ul>
+								<div class="tr_userProfile_panel">
+										<img src="${href.chrome('tracteamroster')}/img/tr.alert.png'"/>Update Profile :
+										<input type="submit" name="tr_userProfile_update" value="Update"/>
+										<input type="submit" name="tr_userProfile_cancel_update" value="Cancel"/>
+								</div>								
+							</div>
+							</form>							
+						</td>
+					</tr>
+
+				</py:for>
+				<tr py:if="len(teamRoster.activeUserProfiles)==0">
+					<td colspan="6" align="center">( Empty )</td>
+				</tr>	
+			</tbody>
+			<tfoot>
+				<tr>
+					<th colspan="6">Members count: ${len(teamRoster.activeUserProfiles)}</th>
+				</tr>
+			</tfoot>
+			</table>
+		</div>
+	</body>
+</html>

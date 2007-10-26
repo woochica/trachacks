@@ -1,0 +1,42 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+ 	<xi:include href="prefs.html" />
+ 	<head>
+   		<title>${_('My Profile')}</title>
+	</head>
+	<body>
+		<form method="POST" enctype="multipart/form-data" py:match="div[@id='tabcontent']/form">	
+			<div id="content" class="settings">
+				<div py:if="teamRoster.message" class="tr_message"><span>$teamRoster.message</span></div>
+				<div class="tr_userProfile_picture"><img src="$teamRoster.userProfile.picture_href"/></div>
+				<table class="tr_userProfile_update" cellpadding="0" cellspacing="0">
+					<tr>
+						<th>${_('Name')}</th>
+						<td><input type="text" name="tr_userProfile_name" id="tr_userProfile_name" value="$teamRoster.userProfile.name"/></td>
+					</tr>
+					<tr>
+						<th>${_('Email')}</th>
+						<td><input type="text" name="tr_userProfile_email" id="tr_userProfile_email" value="$teamRoster.userProfile.email"/></td>
+					</tr>	
+					<tr>
+						<th>${_('Role')}</th>
+						<td><input type="text" name="tr_userProfile_role" id="tr_userProfile_role" value="$teamRoster.userProfile.role"/></td>
+					</tr>
+					<tr>
+						<th>${_('Picture')}</th>
+						<td><input type="file" name="tr_userProfile_picture" id="tr_userProfile_picture" value=""/></td>
+					</tr>
+					<tr>
+						<th>${_('Bio')}</th>
+						<td><textarea name="tr_userProfile_bio" rows="20" id="tr_userProfile_bio" class="wikitext">$teamRoster.userProfile.bio</textarea></td>
+					</tr>
+				</table>
+			</div>
+			<div class="buttons"><input type="submit" value="${_('Save changes')}"/></div>
+		</form>
+	</body>
+</html>
