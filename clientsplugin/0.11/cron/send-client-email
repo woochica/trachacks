@@ -93,7 +93,7 @@ class SendClientMailer(object):
     projname = self.config.get('project', 'name')
     
     # Create the root message and fill in the from, to, and subject headers
-    msg_root = MIMEMultipart('related')
+    msg_root = MIMEMultipart('alternative')
     msg_root['To'] = str(', ').join(addresses)
     
     msg_root['X-Mailer'] = 'ClientsPlugin for Trac'
@@ -106,22 +106,19 @@ class SendClientMailer(object):
     msg_root['Reply-To'] = replyto_email
     msg_root.preamble = 'This is a multi-part message in MIME format.'
     
-    # Encapsulate the plain and HTML versions of the message body in an
-    # 'alternative' part, so message agents can decide which they want to display.
-    msg_alternative = MIMEMultipart('alternative')
-    msg_root.attach(msg_alternative)
-    
-    
     view = 'plain'
     result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
     msg_text = MIMEText(formatter.saveResultToString(result), view, self.encoding)
-    msg_alternative.attach(msg_text)
+    msg_root.attach(msg_text)
     result.freeDoc()
+    
+    msg_related = MIMEMultipart('related')
+    msg_root.attach(msg_related)
     
     view = 'html'
     result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
     msg_text = MIMEText(formatter.saveResultToString(result), view, self.encoding)
-    msg_alternative.attach(msg_text)
+    msg_related.attach(msg_text)
     result.freeDoc()
     
     # Handle image embedding...
@@ -140,7 +137,7 @@ class SendClientMailer(object):
         msg_img = MIMEImage(fp.read())
         fp.close()
         msg_img.add_header('Content-ID', '<%s>' % img.prop('id'))
-        msg_root.attach(msg_img)
+        msg_related.attach(msg_img)
     result.freeDoc()
     
     # Send the email
