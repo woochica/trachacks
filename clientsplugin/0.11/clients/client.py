@@ -22,13 +22,18 @@ class ClientModule(Component):
         return handler
         
     def post_process_request(self, req, template, data, content_type):
-        if req.path_info.startswith('/ticket/') or req.path_info.startswith('/newticket'):
+        newticket = req.path_info.startswith('/newticket')
+        if req.path_info.startswith('/ticket/') or newticket:
             for field in data['fields']:
                 if 'client' == field['name']:
                     field['type'] = 'select'
                     field['options'] = []
                     for client in model.Client.select(self.env):
                         field['options'].append(client.name)
+                    if newticket:
+                        default_client = self.config.get('ticket', 'default_client')
+                        if default_client:
+                            data['ticket']['client'] = default_client
                     break;
         return template, data, content_type
     
