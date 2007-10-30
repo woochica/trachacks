@@ -57,6 +57,10 @@ parser.add_option('-t', '--type', dest='mailtype',
                   help='The type of email. Can be either "summary" (default) or "changes".')
 parser.add_option('-x', '--xslt', dest='xslt',
                   help='The XSLT used to convert the change information to an email (optional, will use "MAILTYPE.xslt" from the current folder).')
+parser.add_option('-d', action='store_true', dest='debug',
+                  help='Turn on debug mode - does not update database and prints verbose messages.')
+parser.add_option('-m', '--mail', dest='mail',
+                  help='Email override. Useful in combination with -d.')
 parser.set_defaults(period='daily', mailtype='summary')
 (options, args) = parser.parse_args(sys.argv[1:])
 
@@ -149,6 +153,7 @@ class SendClientMailer(object):
     smtp.sendmail(from_email, addresses, msg_root.as_string())
     smtp.quit()
 
+
 class SendClientEmails:
 
     def __init__(self):
@@ -193,6 +198,9 @@ class SendClientEmails:
         cursor = db.cursor()
         cursor.execute(sql, (options.period,))
         for name, emaillist, lastupdate in cursor:
+          if options.debug:
+            print "Processing client '%s'" % name
+          
           # Don't clobber clients with historical updates
           if not lastupdate:
               lastupdate = now
@@ -201,9 +209,17 @@ class SendClientEmails:
           for email in emaillist.replace(',', ' ').split(' '):
             if '' != email.strip():
               emails.append(email.strip())
-          
+
+          if options.mail:
+            if options.debug:
+              print "  Overriding emails ('%s') to '%s'" % (emaillist, options.mail)
+            emails = []
+            emails.append(options.mail)
+            
           if not emails:
             # No emails, so no where to send it.
+            if options.debug:
+              print "  No email addresses registered. Skipping."
             continue
           
           xml = StringIO()
@@ -232,6 +248,8 @@ class SendClientEmails:
             xml.write('<summary>')
             for tid, summary, description, status, milestone, due in cur2:
               have_data = True
+              if options.debug:
+                print "  Summarising ticket #%s" % tid
               xml.write('<ticket>')
               xml.write('<id>%s</id>' % tid)
               xml.write('<summary>%s</summary>' % escape(summary))
@@ -279,6 +297,8 @@ class SendClientEmails:
                 # Client should not know any more than this
                 continue
               
+              if options.debug:
+                print "  Change notification (%s) for ticket #%s" % (cgfield, tid)
               have_data = True
               if lasttid and lasttid != tid:
                 xml.write('</changelog>')
@@ -307,13 +327,21 @@ class SendClientEmails:
           xml.write('</clientsplugin>')
           
           doc = libxml2.parseDoc(xml.getvalue())
-          mailer.Send('Ticket Summary for %s' % name,
-                      emails, doc, style)
+          subject = 'Ticket Summary for %s' % name
+          if 'changes' == field:
+            subject = 'Ticket Change Summary for %s' % name
+          if options.debug:
+            print "  Sending email '%s'" % subject
+          mailer.Send(subject, emails, doc, style)
           doc.freeDoc()
-          # Update the date field
-          sql = ("UPDATE client SET %s_lastupdate" % field) + \
-                 "=%s WHERE name=%s"
-          cursor.execute(sql, (now, name))
+
+          if not options.debug:
+            # Update the date field
+            sql = ("UPDATE client SET %s_lastupdate" % field) + \
+                   "=%s WHERE name=%s"
+            cursor2 = db.cursor()
+            cursor2.execute(sql, (now, name))
+          
         style.freeStylesheet()
         db.commit()
         db.close()
