@@ -1656,7 +1656,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 }
                 var tmp;
                 if (matchFirstIndex == 16) {
-                    tmp = matchText == "[[BR]]"
+                    tmp = matchText.toLowerCase() == "[[br]]"
                         ? contentDocument.createElement("br")
                         : contentDocument.createTextNode(matchText);
                 }
