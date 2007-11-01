@@ -133,7 +133,7 @@ function wlAddEventListener(elem, evt, func, capture)
 
 InitWorklog = function()
 {
-  var x = document.getElementById('ticket').parentNode;
+  var x = document.getElementById('ticket');
   var d = document.createElement('fieldset');
   d.setAttribute('class', 'workloginfo');
   l = document.createElement('legend')
