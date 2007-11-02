@@ -8,7 +8,7 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor, PermissionSystem
 from webui import *
 from webadminui import *
-from uihooks_ticket import *
+from ticket_filter import *
 from timeline_hook import *
 from ticket_daemon import *
 try:
