@@ -93,8 +93,8 @@ class SafeUserProfilesStore(Component):
                     _newUserProfile=UserProfile(0, self)
                     _fieldsFromDb=[]
                 _newUserProfile.id=sid
-            _newUserProfile[name]=str(value)
-            _fieldsFromDb.append(str(name))
+            _newUserProfile[name]=value
+            _fieldsFromDb.append(name)
         
         # last _newUserProfile 
         if _newUserProfile.id!=-1:
@@ -234,7 +234,7 @@ class SafeUserProfilesStore(Component):
                              (" OR ".join(["name='%s' AND value like '%s'"%(k, v) for k,v in userProfileTemplate.items()]),
                             len(userProfileTemplate.items())))
     
-        userProfiles_ids=[str(id) for id, cnd in cursor]
+        userProfiles_ids=[id for id, cnd in cursor]
         if len(userProfiles_ids)>0:
             return self._get_userProfiles(userProfiles_ids)
         else:
@@ -296,7 +296,7 @@ class DefaultUserProfilesStore(Component):
         _newUserProfile=UserProfile(-1, self)
 
         for sid, name, value in cursor:
-            _newUserProfile[name] = str(value)
+            _newUserProfile[name] = value
             _newUserProfile.id = sid
             _newUserProfile.exists = True
         
@@ -387,7 +387,7 @@ class DefaultUserProfilesStore(Component):
                              (" OR ".join(["name='%s' AND value like '%s'"%(k, v) for k,v in userProfileTemplate.items()]),
                             len(userProfileTemplate.items())))
             
-        userProfiles_ids=[str(id) for id, cnd in cursor]
+        userProfiles_ids=[id for id, cnd in cursor]
         if len(userProfiles_ids)>0:
             return [self.get_userProfile(uid) for uid in userProfiles_ids]
         else:
