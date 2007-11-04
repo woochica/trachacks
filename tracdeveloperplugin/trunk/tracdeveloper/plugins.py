@@ -68,6 +68,8 @@ class DeveloperPlugins(Component):
             if hasattr(component, '_implements'):
                 impl = [interfaces['%s.%s' % (i.__module__, i.__name__)]
                         for i in component._implements]
+            else:
+                impl = []
             interface_methods = [m['name'] for i in impl for m in i['methods']]
             methods = self.extract_methods(req, component, interface_methods)
             data = self.base_data(req, component)
