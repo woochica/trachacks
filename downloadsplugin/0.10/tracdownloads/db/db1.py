@@ -66,5 +66,6 @@ def do_upgrade(env, cursor):
         cursor.execute(statement)
 
     # Set database schema version.
+    print 'tady';
     cursor.execute("INSERT INTO system (name, value) VALUES"
       " ('downloads_version', '1')")
