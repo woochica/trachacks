@@ -31,7 +31,7 @@ class DownloadsApi(Component):
     all_fields = ['id', 'file', 'description', 'size', 'time', 'count', 'author',
       'tags', 'component', 'version', 'architecture', 'platform', 'type']
 
-    # Downloads change listeners.
+    # Download change listeners.
     change_listeners = ExtensionPoint(IDownloadChangeListener)
 
     # Configuration options.
@@ -408,7 +408,7 @@ class DownloadsApi(Component):
                 req.perm.assert_permission('DOWNLOADS_VIEW')
 
                 # Get form values.
-                download_id = req.args.get('id')
+                download_id = req.args.get('id') or 0
 
                 # Get download.
                 download = self.get_download(cursor, download_id)
@@ -545,9 +545,6 @@ class DownloadsApi(Component):
                     out_file = open(filepath, "w+")
                     out_file.write(file_content)
                     out_file.close()
-
-
-
                 except:
                     self.delete_download(cursor, download['id'])
                     try:
@@ -763,7 +760,9 @@ class DownloadsApi(Component):
         if hasattr(file.file, 'fileno'):
             size = os.fstat(file.file.fileno())[6]
         else:
-            size = file.file.len
+            file.file.seek(0, 2)
+            size = file.file.tell()
+            file.file.seek(0)
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 

@@ -26,10 +26,12 @@ class DownloadsCore(Component):
       'Main navigation bar button title.')
 
     # IPermissionRequestor methods.
+
     def get_permission_actions(self):
         return ['DOWNLOADS_VIEW', 'DOWNLOADS_ADMIN',]
 
     # ITemplateProvider methods.
+
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('downloads', resource_filename(__name__, 'htdocs'))]
@@ -48,11 +50,12 @@ class DownloadsCore(Component):
               href = req.href.downloads())
 
     # IRequestHandler methods.
+
     def match_request(self, req):
         match = re.match(r'''^/downloads($|/$)''', req.path_info)
         if match:
             return True
-        match = re.match(r'''^/downloads/(\d+)$''',req.path_info)
+        match = re.match(r'''^/downloads/(\d+)$''', req.path_info)
         if match:
             req.args['action'] = 'get-file'
             req.args['id'] = match.group(1)
