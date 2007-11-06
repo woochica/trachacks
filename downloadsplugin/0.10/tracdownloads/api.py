@@ -1,11 +1,12 @@
 # -*- coding: utf8 -*-
 
-import os, time, re, mimetypes
+import os, shutil, time, re, mimetypes
 
 from trac.core import *
 from trac.config import Option
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.util import format_datetime, pretty_timedelta, pretty_size
+from trac.util.text import unicode_unquote
 from trac.web.chrome import add_stylesheet, add_script
 
 class IDownloadChangeListener(Interface):
@@ -500,11 +501,10 @@ class DownloadsApi(Component):
                 req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                file, file_name = self._get_file_from_req(req)
-                file_content = file.read()
-                download = {'file' : file_name,
+                file, filename, file_size = self._get_file_from_req(req)
+                download = {'file' : filename,
                             'description' : req.args.get('description'),
-                            'size' : len(file_content),
+                            'size' : file_size,
                             'time' : int(time.time()),
                             'author' : req.authname,
                             'tags' : req.args.get('tags'),
@@ -543,7 +543,7 @@ class DownloadsApi(Component):
                 try:
                     os.mkdir(path)
                     out_file = open(filepath, "w+")
-                    out_file.write(file_content)
+                    shutil.copyfileobj(file, out_file)
                     out_file.close()
                 except:
                     self.delete_download(cursor, download['id'])
@@ -766,4 +766,4 @@ class DownloadsApi(Component):
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 
-        return file.file, file.filename
+        return file.file, unicode_unquote(file.filename), size
