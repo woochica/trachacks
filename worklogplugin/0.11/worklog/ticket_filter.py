@@ -2,6 +2,7 @@ import re
 from util import *
 from trac.core import *
 from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki import wiki_to_oneliner
 
 from manager import WorkLogManager
@@ -40,26 +41,58 @@ class WorkLogTicketAddon(Component):
     
     def get_button_markup(self, req, ticket, stop=False):
         if stop:
-            button = '''
-                <span id="worklog_comment">Comment:
-                <input type="text" size="50" name="comment" /></span>
-                <input type="submit" name="stopwork" value="Stop Work" />
-                '''
+            action = 'stop'
+            label = 'Stop Work'
         else:
-            button = '''
-                <input type="submit" name="startwork" value="Start Work" />
-                '''
+            action = 'start'
+            label = 'Start Work'
         
         return '''
-            <form method="post" action="%s" class="inlinebuttons">
+            <form id="worklogTicketForm" method="post" action="%s" class="inlinebuttons" onsubmit="return tracWorklog.%s();">
               <input type="hidden" name="source_url" value="%s" />
               <input type="hidden" name="ticket" value="%s" />
-              %s
+              <input type="submit" name="%swork" value="%s" />
             </form>
-            ''' % (req.href.worklog(), 
-                   req.href.ticket(ticket), 
+            <div id="worklogPopup" class="jqmWindow">
+              <div style="text-align: right;">
+                <span style="text-decoration: underline; color: blue; cursor: pointer;" class="jqmClose">close</span>
+              </div>
+              <form method="post" action="%s" class="inlinebuttons">
+                <input type="hidden" name="source_url" value="%s" />
+                <input type="hidden" name="ticket" value="%s" />
+                <input id="worklogStoptime" type="hidden" name="stoptime" value="" />
+                <fieldset>
+                  <legend>Stop work</legend>
+                  <div class="field">
+                    <fieldset class="iefix">
+                      <label for="worklogComment">Optional: Leave a comment about the work you have done...</label>
+                      <p><textarea id="worklogComment" name="comment" class="wikitext" rows="6" cols="60"></textarea></p>
+                    </fieldset>
+                  </div>
+                  <div class="field">
+                    <label>Override end time</label>
+                    <div align="center">
+                      <div style="width: 185px;">
+                        <div id="worklogStopDate"></div>
+                        <br clear="all" />
+                        <div style="text-align: right;">
+                          &nbsp;&nbsp;@&nbsp;<input id="worklogStopTime" type="text" size="6" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="text-align: right;"><input id="worklogSubmit" type="submit" name="%swork" value="%s" /></div>
+                </fieldset>
+              </form>
+            </div>
+            ''' % (req.href.worklog(), action,
+                   req.href.ticket(ticket),
                    ticket,
-                   button)
+                   action, label,
+                   req.href.worklog(),
+                   req.href.ticket(ticket),
+                   ticket,
+                   action, label)
 
 
     # ITemplateStreamFilter methods
@@ -67,6 +100,16 @@ class WorkLogTicketAddon(Component):
         match = re.match(r'/ticket/([0-9]+)$', req.path_info)
         if match:
             ticket = int(match.group(1))
+            add_script(req, 'worklog/jqModal.js')
+            add_stylesheet(req, 'worklog/jqModal.css')
+            
+            add_script(req, 'worklog/ui.datepicker.js')
+            add_stylesheet(req, 'worklog/ui.datepicker.css')
+            
+            add_script(req, 'worklog/jquery.mousewheel.pack.js')
+            add_script(req, 'worklog/jquery.timeentry.pack.js')
+            
+            add_script(req, 'worklog/tracWorklog.js')
             
             mgr = WorkLogManager(self.env, self.config, req.authname)
             task_markup = ''

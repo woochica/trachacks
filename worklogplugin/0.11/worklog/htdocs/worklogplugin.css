@@ -52,7 +52,7 @@ dt.workstop, dt.workstop a
 
 
 /* Ticket Page */
-fieldset.workloginfo form
+#worklogTicketForm
 {
     float: right;
 }
@@ -63,4 +63,13 @@ fieldset.workloginfo ul
   padding-left: 3em;
   font-size: 11px;
   list-style: url(work.png) disc;
+}
+
+html .jqmWindow {
+    margin-left: -250px;
+    width: 500px;
+    
+    background-color: #fff;
+    border: 1px solid black;
+    padding: 12px;
 }

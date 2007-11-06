@@ -124,7 +124,7 @@ class WorkLogPage(Component):
                 
             elif req.args.has_key('stopwork'):
                 stoptime = None
-                if req.args.has_key('stoptime'):
+                if req.args.has_key('stoptime') and req.args['stoptime']:
                     stoptime = int(req.args['stoptime'])
 
                 comment = ''
