@@ -12,6 +12,7 @@
 
 ## python imports
 from pprint import pprint, pformat
+import psycopg2 #import IntegrityError
 
 ## trac imports
 from trac.env import Environment
@@ -207,30 +208,54 @@ class FlexibleAssignTo(Component):
         _tag = tag.select(option_tags, id=id, name=id)
         return _tag
 
+    def _get_allusers_session_info(self, cnx):
+        """
+        """
+        cursor = cnx.cursor()
+        cursor.execute('''
+            SELECT DISTINCT n.sid AS sid, n.value AS name, e.value AS email
+            FROM session_attribute AS n 
+             LEFT JOIN session_attribute AS e ON (e.sid=n.sid
+                AND e.authenticated=1 AND e.name = 'email')
+            WHERE n.authenticated=1 
+                AND n.name = 'name'
+            ORDER BY n.sid''')
+        for username,name,email in cursor:
+            yield username, name, email        
+
     def _ensure_user_data(self, users):
         """
         Insert user data for each SimpleUser object in the users list into
         session_attribute.  NOTE: this method will NOT overwrite existing
         values for 'name' or 'email'.
         """
-        EMAIL_SQL = '''INSERT OR IGNORE INTO session_attribute 
+        EMAIL_SQL = '''INSERT INTO session_attribute 
             (sid, authenticated, name, value) 
-            VALUES ("%s", 1, "email" , "%s")'''
-        NAME_SQL = '''INSERT OR IGNORE INTO session_attribute 
+            VALUES ('%s', 1, 'email' , '%s')'''
+        NAME_SQL = '''INSERT INTO session_attribute 
             (sid, authenticated, name, value) 
-            VALUES ("%s", 1, "name" , "%s")'''
+            VALUES ('%s', 1, 'name' , '%s')'''
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+        known_users = self._get_allusers_session_info(db)
+        known_usernames = [u[0] for u in known_users]
         for u in users:
             _username = str(u.getUsername()).strip()
             _email = str(u.email).strip()
             _fullname = str(u.fullname).strip()
-            if u.getUsername() and _username != '':
+            if u.getUsername() and _username != '' and \
+                                            _username not in known_usernames:
                 if u.email and _email != '':
-                    cursor.execute(EMAIL_SQL % (_username, _email))
+                    try:
+                        cursor.execute(EMAIL_SQL % (_username, _email))
+                    except psycopg2.IntegrityError:
+                        pass
                 if u.fullname and _fullname != '':
-                    cursor.execute(NAME_SQL % (_username, _fullname))
-        db.commit()
+                    try:
+                        cursor.execute(NAME_SQL % (_username, _fullname))
+                    except psycopg2.IntegrityError:
+                        pass                    
+        #db.commit()
         cursor.close()
 
     # internal method for 'use_custom_get_known_users' option
