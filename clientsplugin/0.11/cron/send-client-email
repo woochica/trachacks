@@ -203,7 +203,12 @@ class SendClientEmails:
           
           # Don't clobber clients with historical updates
           if not lastupdate:
-              lastupdate = now
+              # Update the date field and forget about this run.
+              sql = ("UPDATE client SET %s_lastupdate" % field) + \
+                     "=%s WHERE name=%s"
+              cursor2 = db.cursor()
+              cursor2.execute(sql, (now, name))
+              continue
           
           emails = []
           for email in emaillist.replace(',', ' ').split(' '):
@@ -322,9 +327,13 @@ class SendClientEmails:
               xml.write('</ticket>')
             xml.write('</changes>')
           
+          xml.write('</clientsplugin>')
+
+          #if options.debug:
+          #  print xml.getvalue()
+
           if not have_data:
             continue
-          xml.write('</clientsplugin>')
           
           doc = libxml2.parseDoc(xml.getvalue())
           subject = 'Ticket Summary for %s' % name
