@@ -33,6 +33,9 @@ from trac.util.datefmt import utc
 from trac.web import IRequestHandler, IRequestFilter
 from trac.web.chrome import add_stylesheet, INavigationContributor, ITemplateProvider
 
+# Constants
+DAYS_BACK = 28
+
 def get_project_tickets(env):
     """
         This method collect interesting data of each ticket in the project.
@@ -185,9 +188,9 @@ class PDashboard(Component):
         last_day = last_day_of_month(today.year, today.month-1)
         bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
         
-        # get daily stat from today and a month back
+        # get daily stat from today and 4 weeks back
         last_day = datetime(today.year, today.month, today.day, tzinfo=utc)
-        first_day = datetime(today.year, today.month-1, today.day, tzinfo=utc)
+        first_day = last_day - timedelta(days=DAYS_BACK)
         
         backlog_history = tkt_group_metrics.get_daily_backlog_history(first_day, last_day)
         daily_backlog_chart_path = tkt_group_metrics.get_daily_backlog_chart(backlog_history)
