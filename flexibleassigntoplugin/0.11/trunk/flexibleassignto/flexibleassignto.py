@@ -12,7 +12,6 @@
 
 ## python imports
 from pprint import pprint, pformat
-import psycopg2 #import IntegrityError
 
 ## trac imports
 from trac.env import Environment
@@ -246,16 +245,10 @@ class FlexibleAssignTo(Component):
             if u.getUsername() and _username != '' and \
                                             _username not in known_usernames:
                 if u.email and _email != '':
-                    try:
-                        cursor.execute(EMAIL_SQL % (_username, _email))
-                    except psycopg2.IntegrityError:
-                        pass
+                    cursor.execute(EMAIL_SQL % (_username, _email))
                 if u.fullname and _fullname != '':
-                    try:
-                        cursor.execute(NAME_SQL % (_username, _fullname))
-                    except psycopg2.IntegrityError:
-                        pass                    
-        #db.commit()
+                    cursor.execute(NAME_SQL % (_username, _fullname))
+        db.commit()
         cursor.close()
 
     # internal method for 'use_custom_get_known_users' option
