@@ -35,6 +35,12 @@ class ClientModule(Component):
                         if default_client:
                             data['ticket']['client'] = default_client
                     break;
+        elif req.path_info.startswith('/query'):
+            if data['fields'].has_key('client'):
+                data['fields']['client']['type'] = 'select'
+                data['fields']['client']['options'] = []
+                for client in model.Client.select(self.env):
+                    data['fields']['client']['options'].append(client.name)
         return template, data, content_type
     
     # ITemplateStreamFilter methods
