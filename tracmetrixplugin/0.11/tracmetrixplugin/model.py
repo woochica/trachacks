@@ -112,11 +112,11 @@ class ProgressTicketGroupStatsProvider(Component):
             if type['name'] == 'fixed': # default ticket type 'defect'
         
                 stat.add_interval(type['name'], type['count'],
-                                  {'type': type['name']}, 'value', True)
+                                  {'resolution': type['name']}, 'value', True)
             
             else:
                 stat.add_interval(type['name'], type['count'],
-                                  {'type': type['name']}, 'waste', False)
+                                  {'resolution': type['name']}, 'waste', False)
                           
         stat.refresh_calcs()
         return stat
