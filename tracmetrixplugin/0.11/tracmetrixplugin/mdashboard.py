@@ -310,7 +310,7 @@ def create_cumulative_chart(env, milestone, numdates, tkt_cumulative_table):
     ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
     ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S')
     labels = ax.get_xticklabels()
-    setp(labels, rotation=45, fontsize=6)
+    setp(labels, rotation=90, fontsize=6)
     
     xlabel('Dates (day)')
     ylabel('Counts (times)')

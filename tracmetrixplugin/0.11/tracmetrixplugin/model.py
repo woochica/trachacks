@@ -475,7 +475,7 @@ class TicketGroupMetrics(object):
         ax.xaxis.set_major_locator(DayLocator())
         ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
         labels = ax.get_xticklabels()
-        setp(labels, rotation=45, fontsize=6)
+        setp(labels, rotation=90, fontsize=6)
         
         xlabel('Dates (day)')
         ylabel('Number of tickets')
