@@ -4,7 +4,7 @@ var TracWysiwyg = function(textarea) {
 
     this.textarea = textarea;
     var wikitextToolbar = textarea.previousSibling;
-    if (wikitextToolbar.nodeType != 1 || wikitextToolbar.className != "wikitoolbar") {
+    if (wikitextToolbar && (wikitextToolbar.nodeType != 1 || wikitextToolbar.className != "wikitoolbar")) {
         wikitextToolbar = null;
     }
     this.wikitextToolbar = wikitextToolbar;
@@ -1199,8 +1199,8 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         createAnchor(value, value);
     }
 
-    function handleWikiPageName(value) {
-        createAnchor("wiki:" + value, value);
+    function handleWikiPageName(name, label) {
+        createAnchor("wiki:" + name, label || name);
     }
 
     function handleTracOtherLinks(value) {
@@ -1607,7 +1607,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     handleWikiPageName(matchText);
                     continue;
                 case 18:    // ["internal free link"]
-                    handleWikiPageName(matchText.slice(1, -1));
+                    handleWikiPageName(matchText.slice(1, -1), matchText.slice(2, -2));
                     continue;
                 case 19:    // citation
                     handleCitation(matchText);
@@ -1631,6 +1631,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                         handleIndent(matchText);
                         continue;
                     }
+                    matchText = matchText.replace(/^\s+/, " ");
                     break;
                 case 24:    // opening table row
                     handleTableCell(1);
@@ -1656,8 +1657,10 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 }
                 var tmp;
                 if (matchFirstIndex == 16) {
-                    tmp = matchText.toLowerCase() == "[[br]]"
-                        ? contentDocument.createElement("br")
+                    tmp = /^!?\[\[br\]\]$/i.test(matchText)
+                        ? (matchText.charCodeAt(0) == 0x21
+                            ? contentDocument.createTextNode(matchText.substring(1))
+                            : contentDocument.createElement("br"))
                         : contentDocument.createTextNode(matchText);
                 }
                 else {
@@ -1695,7 +1698,7 @@ TracWysiwyg.prototype.wikiOpenTokens = {
     "hr": "----\n",
     "dl": true,
     "dt": " ",
-    "dd": "   ",
+    "dd": " ",
     "table": true,
     "tbody": true,
     "tr": true,
@@ -1715,7 +1718,7 @@ TracWysiwyg.prototype.wikiCloseTokens = {
     "br": true,
     "hr": true,
     "dl": "\n",
-    "dt": "::\n",
+    "dt": "::",
     "dd": "\n",
     "table": "\n",
     "tbody": true,
@@ -1753,8 +1756,9 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
     var skipNode = null;
 
     function escapeText(s) {
-        if (/^!?\[\[/.test(s) && /\]\]$/.test(s)) {
-            return s != "[[BR]]" ? s : "!" + s;
+        var match = /^!?\[\[(.+)\]\]$/.exec(s);
+        if (match) {
+            return match[1].toLowerCase() != "br" ? s : "!" + s;
         }
         if (/^&#\d+/.test(s)) {
             return s;
@@ -1926,11 +1930,10 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                 var usingValue = false;
                 switch (match[1]) {
                 case "changeset":
-                    usingValue = value == "[" + match[2] + "]"
-                        || /^\d+$/.test(match[2]) && value == "r" + match[2];
+                    usingValue = value == "[" + match[2] + "]";
                     break;
                 case "log":
-                    usingValue = value == "[" + match[3] + "]" || value == "r" + match[3];
+                    usingValue = value == "[" + match[3] + "]";
                     break;
                 case "report":
                     usingValue = value == "{" + match[2] + "}";
@@ -1948,7 +1951,7 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
             texts.push(" ");
         }
         if (text === null) {
-            if (!/[\]\"\']/.test(value)) {
+            if (!/\]/.test(value) && !/^[\"\']/.test(value)) {
                 text = "[" + link + " " + value + "]";
             }
             else if (!/\"/.test(value)) {
@@ -2018,7 +2021,7 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                 var container = node.parentNode;
                 if ((container.tagName || "").toLowerCase() == "ol") {
                     var start = container.getAttribute("start") || "";
-                    if (/^(?:[0-9]+|[a-zA-Z]|[ivxIVX]{1,5})$/.test(start)) {
+                    if (start != "1" && /^(?:[0-9]+|[a-zA-Z]|[ivxIVX]{1,5})$/.test(start)) {
                         texts.push(start, ". ");
                     }
                     else {
@@ -2065,10 +2068,9 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                 }
                 break;
             case "pre":
-                if (isInlineNode(node.previousSibling)) {
-                    texts.push("\n");
-                }
-                texts.push(/^(?:li|dd)$/i.test(node.parentNode.tagName) ? "\n{{{\n" : "{{{\n");
+                texts.push(
+                    /^(?:li|dd)$/i.test(node.parentNode.tagName) || isInlineNode(node.previousSibling)
+                    ? "\n{{{\n" : "{{{\n");
                 needEscape = false;
                 inCodeBlock = true;
                 break;
@@ -2171,7 +2173,7 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                         text = "\n}}}\n";
                     }
                     if (text.slice(-1) == "\n") {
-                        text += listDepth > 0 ? string("  ", listDepth + 1) : "    ";
+                        text += listDepth > 0 ? string("  ", listDepth) : "    ";
                     }
                 }
                 else {
