@@ -11,6 +11,7 @@ var TracWysiwyg = function(textarea) {
 
     var anonymous = document.createElement("div");
     anonymous.innerHTML = '<iframe class="wysiwyg" '
+        + 'src="javascript:\'\'" '
         + 'width="100%" height="' + textarea.offsetHeight + '" '
         + 'frameborder="0" marginwidth="0" marginheight="0">'
         + '</iframe>';
@@ -106,10 +107,15 @@ TracWysiwyg.prototype.initializeEditor = function(d) {
         '<body></body>',
         '</html>' ];
 
-    d.designMode = "On";
+    if (d.addEventListener) {
+        d.designMode = "On";
+    }
     d.open();
     d.write(html.join(""));
     d.close();
+    if (!d.addEventListener) {
+        d.designMode = "On";
+    }
 };
 
 TracWysiwyg.prototype.listenerToggleEditor = function(type) {
