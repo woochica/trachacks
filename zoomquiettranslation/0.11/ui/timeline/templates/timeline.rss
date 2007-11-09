@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:py="http://genshi.edgewall.org/"
+                   xmlns:dc="http://purl.org/dc/elements/1.1/"
+                   xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="macros.rss" />
+  <channel>
+    <title>${project.name}</title>
+    <link>${abs_href.timeline()}</link>
+    <description>Trac Timeline</description>
+    <language>en-US</language>
+    <generator>Trac ${trac.version}</generator>
+    <image py:if="chrome.logo.src">
+      <title>${project.name}</title>
+      <url>${chrome.logo.src_abs and chrome.logo.src \
+                                 or abs_href(chrome.logo.src)}</url>
+      <link>${abs_href.timeline()}</link>
+    </image>
+
+    <item py:for="event in events">
+      <title>${plaintext(event.markup.get('summary') or event.markup.get('title'), keeplinebreaks=False)}</title>
+      ${author_or_creator(event.author, email_map)}
+      <pubDate>${http_date(event.date)}</pubDate>
+      <link>${event.get_href(abs_href)}</link>
+      <guid isPermaLink="false">${event.get_href(abs_href)}/${event.dateuid()}</guid>
+      <description>${
+        unicode(event.markup.get('header', ''))
+      }<py:if test="'body' in event.wikitext">${unicode(wiki_to_html(event.context(abs_urls=True), event.wikitext.get('body'), abs_urls=True))}</py:if>${
+        unicode(event.markup.get('footer', ''))
+      }</description>
+       <category>$event.kind</category>
+    </item>
+
+   </channel>
+</rss>
