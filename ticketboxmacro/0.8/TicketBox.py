@@ -53,6 +53,10 @@ def uniq(x):
             y.append(i)
     return y
 
+def sqlstr(x):
+    """Make quoted value string for SQL."""
+    return "'%s'" % x.replace( "'","''" )
+
 def execute(hdf, txt, env):
     if not txt:
         txt = ''
@@ -90,7 +94,9 @@ def execute(hdf, txt, env):
                 (sql,) = curs.fetchone()
                 # replace dynamic variables
                 for k, v in dv.iteritems():
-                    sql = re.sub(r'\$%s\b' % k, v, sql)
+                    s = r'\$%s' % k
+                    s = '(?:"%s"|\'%s\'|%s\\b)' % (s, s, s)
+                    sql = re.sub(s, sqlstr(v), sql)
                 #env.log.debug('sql = %s' % sql)
                 curs.execute(sql)
                 rows = curs.fetchall()
