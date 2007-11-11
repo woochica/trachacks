@@ -57,7 +57,10 @@ def sqlstr(x):
     """Make quoted value string for SQL."""
     return "'%s'" % x.replace( "'","''" )
 
-def execute(hdf, txt, env):
+def execute(formatter, args):
+    txt = args
+    req = formatter.req
+    env = formatter.env
     if not txt:
         txt = ''
     items = []
@@ -81,7 +84,7 @@ def execute(hdf, txt, env):
             dv = {}
             # username, do not override if specified
             if not dv.has_key('USER'):
-                dv['USER'] = hdf.getValue('trac.authname', 'anonymous')
+                dv['USER'] = req.authname
             if match.group('dv'):
                 for expr in string.split(match.group('dv')[1:], '&'):
                     k, v = string.split(expr, '=')
@@ -113,16 +116,9 @@ def execute(hdf, txt, env):
     items = uniq(items)
     items.sort()
     html = ''
-    try:
-        # for trac 0.9 or later
-        from trac.wiki.formatter import wiki_to_oneliner
-        html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
-                               env, env.get_db_cnx())
-    except:
-        # for trac 0.8.x
-        from trac.WikiFormatter import wiki_to_oneliner
-        html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
-                                hdf, env, env.get_db_cnx())
+    from trac.wiki.formatter import wiki_to_oneliner, wiki_to_outline
+    html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
+                            env, env.get_db_cnx(), req=formatter.req)
     if html != '':
         try:
             title = title % len(items)  # process %d in title
@@ -134,7 +130,6 @@ def execute(hdf, txt, env):
     else:
         return ''
 
-# trac version 0.11 and up compatibility
 
 from trac.wiki.macros import WikiMacroBase
 
@@ -149,4 +144,4 @@ class TicketBoxMacro(WikiMacroBase):
           Note that if there are ''no'' parenthesis (like in, e.g.
           [[HelloWorld]]), then `args` is `None`.
         """
-        return execute(formatter.req.hdf, args, formatter.env)
+        return execute(formatter, args)
