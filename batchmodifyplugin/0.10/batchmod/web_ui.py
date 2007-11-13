@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2006 Ashwin Phatak
 
+import re
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
@@ -40,7 +41,7 @@ class BatchModifyModule(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-       return QueryModule(self.env).match_request(req)
+        return QueryModule(self.env).match_request(req)
     
     def process_request(self, req):
         if req.args.has_key('batchmod'):
@@ -58,7 +59,9 @@ class BatchModifyModule(Component):
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
-   
+
+    def get_htdocs_dirs(self):
+        return []
  
     # IPermissionRequestor methods
     def get_permission_actions(self):
