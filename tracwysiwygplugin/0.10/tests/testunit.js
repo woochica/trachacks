@@ -139,6 +139,9 @@ TracWysiwyg.TestUnit = function() {
             catch (e) {
                 cell.className = "failure";
                 var message = e.message || e.toString();
+                if (e.stack) {
+                    message = [ message, e.stack ].join("\n\n");
+                }
                 cell.replaceChild(
                     element("textarea", { id: "testcase." + count + ".textarea", rows: message.split("\n").length, cols: 80 }),
                     cell.firstChild);

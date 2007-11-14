@@ -1,9 +1,7 @@
 addEvent(window, "load", function() {
-    var unit = new TracWysiwyg.TestUnit();
-
-    TracWysiwyg.tracBasePath = "./";
-    var instance = new TracWysiwyg(unit.$("textarea"));
-    var document = instance.contentDocument;
+    TracWysiwyg.tracPaths = { base: "./", htdocs: "./" };
+    var instance = new TracWysiwyg(document.getElementById("textarea"));
+    var contentDocument = instance.contentDocument;
 
     function generate(dom, wikitext, withoutDomToWikitext, withoutWikitextToFragment) {
         dom = dom.cloneNode(true);
@@ -11,8 +9,8 @@ addEvent(window, "load", function() {
         anonymous.appendChild(dom);
 
         if (!withoutWikitextToFragment) {
-            var fragment = instance.wikitextToFragment(wikitext, document);
-            var generated = document.createElement("div");
+            var fragment = instance.wikitextToFragment(wikitext, contentDocument);
+            var generated = contentDocument.createElement("div");
             generated.appendChild(fragment);
             var generatedHtml = generated.innerHTML;
             if (!generated.addEventListener || window.opera) {
@@ -30,6 +28,7 @@ addEvent(window, "load", function() {
     }
 
     function run() {
+        var unit = new TracWysiwyg.TestUnit();
         var fragment = unit.fragment;
         var element = unit.element;
 
@@ -816,6 +815,7 @@ addEvent(window, "load", function() {
                 "      blockquote 1.1.1 cont. 1.1.1",
                 "    blockquote 1.2",
                 "  blockquote 2",
+                "",
                 "Paragraph" ].join("\n"));
         });
 
@@ -847,8 +847,62 @@ addEvent(window, "load", function() {
                 "Paragraph" ].join("\n"));
         });
 
+        unit.add("blockquote + table", function() {
+            var dom = fragment(
+                element("p", "Paragraph"),
+                element("table", { "class": "wiki" },
+                    element("tbody",
+                        element("tr", element("td", "pre.1"), element("td", "pre.2")))),
+                element("blockquote",
+                    element("table", { "class": "wiki" },
+                        element("tbody",
+                            element("tr", element("td", "1.1"), element("td", "1.2")),
+                            element("tr", element("td", "2.1")))),
+                    element("blockquote",
+                        element("table", { "class": "wiki" },
+                            element("tbody",
+                                element("tr", element("td", "deep"))))),
+                    element("table", { "class": "wiki" },
+                        element("tbody",
+                            element("tr",
+                                element("td", "3.1"),
+                                element("td", element("u", "3.2")),
+                                element("td", element("tt", "3.3")))))),
+                element("table", { "class": "wiki" },
+                    element("tbody",
+                        element("tr", element("td", "post.1"), element("td", "post.2")))),
+                element("p", "Paragraph"));
+            generateFragment.call(this, dom, [
+                "Paragraph",
+                "||pre.1||pre.2||",
+                " ||1.1||1.2||",
+                " ||2.1",
+                "  ||deep||",
+                " ||3.1||__3.2__||`3.3`",
+                "||post.1||post.2||",
+                "Paragraph" ].join("\n"));
+            generate.call(this, dom, [
+                "Paragraph",
+                "",
+                "||pre.1||pre.2||",
+                "",
+                "  ||1.1||1.2||",
+                "  ||2.1||",
+                "    ||deep||",
+                "  ||3.1||__3.2__||`3.3`||",
+                "",
+                "||post.1||post.2||",
+                "",
+                "Paragraph" ].join("\n"));
+        });
+
         unit.run();
     }
 
-    setTimeout(run, 1000);
+    var button = document.createElement("button");
+    button.innerHTML = "run &#187;";
+    button.style.textDecoration = "underline";
+    document.body.appendChild(button);
+    addEvent(button, "click", run);
+    button.focus();
 });

@@ -916,9 +916,8 @@ TracWysiwyg.prototype.selectionChanged = function() {
                                             // 22. definition
     wikiRules.push("^[ \\t\\r\\f\\v]+(?:`[^`]*`|\\{\\{\\{.*?\\}\\}\\}|[^`{:]|:[^:])+::(?:[ \\t\\r\\f\\v]+|$)");
     wikiRules.push("^[ \\t\\r\\f\\v]+(?=[^ \\t\\r\\f\\v])");    // 23. leading space
-    wikiRules.push("^[ \\t\\r\\f\\v]*\\|\\|");  // 24. opening table row
-    wikiRules.push("\\|\\|[ \\t\\r\\f\\v]*$");  // 25. closing table row
-    wikiRules.push("\\|\\|");               // 26. cell
+    wikiRules.push("\\|\\|[ \\t\\r\\f\\v]*$");  // 24. closing table row
+    wikiRules.push("\\|\\|");                   // 25. cell
 
     var wikiSyntaxRules = [];
     wikiSyntaxRules.push(_ticketLink);
@@ -1369,6 +1368,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
 
         if (depth > (last >= 0 ? quoteDepth[last] : 0)) {
             closeParagraph();
+            closeTable();
             openQuote(depth, false);
         }
         else {
@@ -1376,7 +1376,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 if (depth >= quoteDepth[last]) {
                     break;
                 }
-                closeParagraph();
+                closeToFragment("blockquote");
                 closeQuote();
                 last = quoteDepth.length - 1;
             }
@@ -1406,20 +1406,21 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
 
     function handleTableCell(action) {
         var d = contentDocument;
-        var h = holder;
-        var table, tbody;
+        var h, table, tbody;
 
         if (!inTable) {
-            closeToFragment();
+            closeToFragment("blockquote");
+            h = holder;
             table = d.createElement("table");
             table.className = "wiki";
             tbody = d.createElement("tbody");
             table.appendChild(tbody);
-            fragment.appendChild(table);
+            h.appendChild(table);
             inTable = true;
             inTableRow = false;
         }
         else {
+            h = holder;
             tbody = getSelfOrAncestor(h, "tbody");
         }
 
@@ -1455,13 +1456,19 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         }
     }
 
-    function closeToFragment() {
+    function closeToFragment(stopTag) {
         var element = holder;
         var _fragment = fragment;
+        stopTag = stopTag ? stopTag.toLowerCase() : null;
 
         while (element != _fragment) {
+            var tag = element.tagName.toLowerCase();
+            if (tag == stopTag) {
+                holder = element;
+                return;
+            }
             var method;
-            switch (element.tagName.toLowerCase()) {
+            switch (tag) {
             case "p":
                 method = closeParagraph;
                 break;
@@ -1547,7 +1554,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 if (inParagraph && (prevIndex == 0 || /^(?:(?: *>)+|\s+)$/.test(line.substring(0, prevIndex)))) {
                     text = text ? (" " + text) : " ";
                 }
-                if (holder == fragment || quoteDepth.length > 0) {
+                if (!inTable && quoteDepth.length > 0 || holder == fragment) {
                     if (!inParagraph) {
                         openParagraph();
                     }
@@ -1639,21 +1646,18 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     }
                     matchText = matchText.replace(/^\s+/, " ");
                     break;
-                case 24:    // opening table row
-                    handleTableCell(1);
-                    continue;
-                case 25:    // closing table row
+                case 24:    // closing table row
                     if (inTable) {
                         handleTableCell(-1);
                         continue;
                     }
                     break;
-                case 26:    // cell
-                    if (inTable) {
-                        handleTableCell(0);
-                        continue;
+                case 25:    // cell
+                    if (quoteDepth.length > 0 && match.index == 0) {
+                        closeToFragment();
                     }
-                    break;
+                    handleTableCell(inTableRow ? 0 : 1);
+                    continue;
                 }
             }
 
@@ -1707,7 +1711,6 @@ TracWysiwyg.prototype.wikiOpenTokens = {
     "dd": " ",
     "table": true,
     "tbody": true,
-    "tr": true,
     "td": "||", "th": "||" };
 
 TracWysiwyg.prototype.wikiCloseTokens = {
@@ -1726,7 +1729,6 @@ TracWysiwyg.prototype.wikiCloseTokens = {
     "dl": "\n",
     "dt": "::",
     "dd": "\n",
-    "table": "\n",
     "tbody": true,
     "tr": "||\n",
     "td": true, "th": true };
@@ -2089,6 +2091,11 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                     quoteCitation = (node.className == "citation");
                 }
                 break;
+            case "tr":
+                if (quoteDepth > 0) {
+                    texts.push(string(quoteCitation ? ">" : "  ", quoteDepth));
+                }
+                break;
             case "tt":
                 skipNode = node;
                 var value = getTextContent(node);
@@ -2191,6 +2198,9 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                 break;
             case "blockquote":
                 quoteDepth--;
+                if (quoteDepth == 0 && !quoteCitation) {
+                    texts.push("\n");
+                }
                 break;
             case "span":
                 var token = tokenFromSpan(node);
@@ -2199,6 +2209,11 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                         texts.push(" ");
                     }
                     texts.push(token);
+                }
+                break;
+            case "table":
+                if (quoteDepth == 0) {
+                    texts.push("\n");
                 }
                 break;
             }
