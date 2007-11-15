@@ -12,19 +12,17 @@
 # /usr/bin/python /path/to/trac_scripts/close_old_pending.py \
 #  -p "$TRAC_ENV" -d $DAYS_PENDING -s "$TRAC_URL"
 
-#TRAC_ENV='/home/var/trac/pidgin'
 AUTHOR='trac-robot'
 MESSAGE="This ticket was closed automatically by the system.  " \
         "It was previously set to a Pending status and hasn't been updated within %s days."
 
-#import re
-#import os
 import sys
 import time 
 
 from trac.env import open_environment
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket import Ticket
+from trac.ticket.web_ui import TicketModule
 from trac.web.href import Href
 
 try:
@@ -57,20 +55,19 @@ class CloseOldPendingTickets:
         cursor = db.cursor()
 
         if url is None:
-		url = self.env.config.get('trac', 'base_url')
+        	url = self.env.config.get('trac', 'base_url')
 
-	self.env.href = Href(url)
-	self.env.abs_href = Href(url)
+        self.env.href = Href(url)
+        self.env.abs_href = Href(url)
 
-	self.msg = MESSAGE % (maxage)
-	self.now = int(time.time())
+        self.msg = MESSAGE % (maxage)
+        self.now = int(time.time())
 
-	maxtime = int(time.time()) - (60 * 60 * 24 * maxage)
-	#maxtime = int(time.time()) - 10
+        maxtime = int(time.time()) - (60 * 60 * 24 * maxage)
 
         cursor.execute("SELECT id FROM ticket t, ticket_custom c " \
                        "WHERE t.status <> %s " \
-		       "AND t.changetime < %s " \
+        	       "AND t.changetime < %s " \
                        "AND t.id = c.ticket " \
                        "AND c.name = %s " \
                        "AND c.value = %s ", ('closed', maxtime, 'pending', '1'))
@@ -78,15 +75,22 @@ class CloseOldPendingTickets:
         rows = cursor.fetchall()
 
         for row in rows:
-	    id = row[0]
-	    try:
+            id = row[0]
+            try:
                 ticket = Ticket(self.env, id, db);
 
                 ticket['status'] = 'closed'
-		ticket['pending'] = '0';
-                #ticket['resolution'] = 'fixed'
+                ticket['pending'] = '0';
+
+                # determine sequence number...
+                cnum = 0
+                tm = TicketModule(self.env)
+                for change in tm.grouped_changelog_entries(ticket, db):
+                	if change['permanent']:
+                		cnum += 1
+
         
-                ticket.save_changes(author, self.msg, self.now, db, 1)
+                ticket.save_changes(author, self.msg, self.now, db, cnum + 1)
                 db.commit()
 
                 print 'Closing Ticket %s (%s)\n' % (id, ticket['summary'])
