@@ -32,14 +32,15 @@
    function FloatToHoursMins(hours)
    {
       if (0 == hours) return hours;
-      mins = Math.floor((hours - Math.floor(hours)) * 60);
-      str = '';
-      if (hours) str += Math.floor(hours) + 'h';
-      if (mins)
-      {
-	 if (str) str += ' ';
-	 str += mins + 'm';
+      var neg = false;
+      if(hours < 0){
+	 neg = true;
+	 hours *= -1;
       }
+      mins = Math.floor((hours - Math.floor(hours)) * 60);
+      str = neg ? '-' : '';
+      if (hours) str += Math.floor(hours) + 'h';
+      if (mins)	 str += ' ' + mins + 'm';
       return str;
    }
    
