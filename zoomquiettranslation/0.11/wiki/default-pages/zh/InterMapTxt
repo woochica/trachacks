@@ -1,0 +1,102 @@
+= InterMapTxt =
+== This is the place for defining InterWiki prefixes ==
+== 这是定义Interwiki前缀的地方 ==
+This page was modelled after the MeatBall:InterMapTxt page.
+In addition, an optional comment is allowed after the mapping.
+该页是效仿MeatBall:InterMapTxt页的。另外，在绘图后可以选择添加一个评论。
+
+This page is interpreted in a special way by Trac, in order to support
+!InterWiki links in a flexible and dynamic way.
+Trac以一种特殊的方式来诠释该页，为了能构以一种灵活的和动态的方式支持InterWiki链接。
+
+The code block after the first line separator in this page
+will be interpreted as a list of !InterWiki specifications:
+该页中第一个行分隔符后的代码组将被作为InterWiki说明书的一个列表来解释：
+{{{
+prefix <space> URL [<space> # comment]
+}}}
+
+By using `$1`, `$2`, etc. within the URL, it is possible to create 
+InterWiki links which support multiple arguments, e.g. Trac:ticket:40.
+The URL itself can be optionally followed by a comment, 
+which will subsequently be used for decorating the links 
+using that prefix.
+通过使用URL内的`$1`, `$2`等，可以创建支持多参数的InterWiki链接，例如Trac:ticket:40。URL本身可以添加评论，该评论会用来修饰那些使用了该前缀的链接。
+
+New !InterWiki links can be created by adding to that list, in real time.
+新！InterWiki链接可通过添加到那个列表中而实时创建出来。
+Note however that ''deletions'' are also taken into account immediately,
+注意，“删除的内容”也会立即被考虑到。
+so it may be better to use comments for disabling prefixes.因此可能勇评论来关闭前缀可能会更好一些。- RFC 2616 Hypertext Transfer Protocol-HTTP/1.1, The Internet Society, Berners-Lee, T., R. Fielding, H. Frystyk, J. Gettys, P.Leach, L. Masinter, and J. Mogul, 1999, http://www.rfc-editor.org. 
+- RFC 3986 Uniform Resource Identifier (URI): Generic Syntax, The Internet Society, Berners-Lee, T., R. Fielding, and L. Masinter, 2005, http://www.rfc-editor.org. 
+- RFC 3987 Internationalized Resource Identifiers (IRIs), The Internet Society, Duerst, M. and M. Suignard, 2005, http://www.rfc-editor.org. 
+- RFC 4234 Augmented BNF for Syntax Specifications: ABNF, The Internet Society, Crocker, D., (editor), 2005, 21 http://www.rfc-editor.org.
+
+[Vender Specification]
+[销售商说明书]
+- ZIP File Format Specification, Version 6.2.1, PKWARE Inc., 2005. (PKWARE, Inc)
+- ZIP 文件格式说明书，版本6.2.1，PKWARE Inc., 2005. (PKWARE, Inc)
+<< Part 3: Primer >>
+Bibliography N/A
+
+<< Part 4: Markup Language Reference >>
+<< 第4部分: 置标语言引用 >>
+Bibliography N/A
+
+<< Part 5: Markup Compatibility and Extensibility >>
+<< Part 5: 置标兼容性和扩展性 >>
+Annex B. Bibliography
+
+[ISO]
+- ISO/IEC 197575-4, Information technology信息技术 - Document Schema Definition Languages (DSDL) 文献模式定义语言- Part 4: Namespace-based Validation Dispatching Language (NVDL).
+- ISO/IEC Directives Part 2, Rules for the structure and drafting of International Standards, Fourth edition, 2001, ISBN 92-67-01070-0. 
+
+[W3C]
+- Extensible Markup Language (XML) 1.0 (Fourth Edition), W3C Recommendation, 16 August 2006. 
+- Namespaces in XML 1.0 (Second Edition), W3C Recommendation, 16 August 2006.  
+- XML Base, W3C Recommendation, 27 June 2001. 
+- XML Schema Part 1: Structures Second Edition, W3C Recommendation, 28 October 2004. 
+- XML Schema Part 2: Datatypes Second Edition, W3C Recommendation, 28 October 2004.
+
+Also note that !InterWiki prefixes are case insensitive.
+还要注意一点，InterWiki的前缀是区分大小写的。
+
+== List of Active Prefixes ==
+== 动态前缀列表 ==
+[[InterWiki]]
+
+
+----
+
+== Prefix Definitions ==
+== 前缀定义 ==
+{{{
+PEP     http://www.python.org/peps/pep-$1.html                                       # Python Enhancement Proposal 
+Trac-ML  http://thread.gmane.org/gmane.comp.version-control.subversion.trac.general/ # Message $1 in Trac Mailing List
+trac-dev http://thread.gmane.org/gmane.comp.version-control.subversion.trac.devel/   # Message $1 in Trac Development Mailing List
+
+Mercurial http://www.selenic.com/mercurial/wiki/index.cgi/ # the wiki for the Mercurial distributed SCM
+RFC       http://rfc.net/rfc$1.html # IETF's RFC $1
+
+#
+# A arbitrary pick of InterWiki prefixes...
+#
+Acronym          http://www.acronymfinder.com/af-query.asp?String=exact&Acronym=
+C2find           http://c2.com/cgi/wiki?FindPage&value=
+Cache            http://www.google.com/search?q=cache:
+CPAN             http://search.cpan.org/perldoc?
+DebianBug        http://bugs.debian.org/
+DebianPackage    http://packages.debian.org/
+Dictionary       http://www.dict.org/bin/Dict?Database=*&Form=Dict1&Strategy=*&Query=
+Google           http://www.google.com/search?q=
+GoogleGroups     http://groups.google.com/group/$1/msg/$2        # Message $2 in $1 Google Group
+JargonFile       http://downlode.org/perl/jargon-redirect.cgi?term=
+MeatBall         http://www.usemod.com/cgi-bin/mb.pl?
+MetaWiki         http://sunir.org/apps/meta.pl?
+MetaWikiPedia    http://meta.wikipedia.org/wiki/
+MoinMoin         http://moinmoin.wikiwikiweb.de/
+WhoIs            http://www.whois.sc/
+Why              http://clublet.com/c/c/why?
+c2Wiki             http://c2.com/cgi/wiki?
+WikiPedia        http://en.wikipedia.org/wiki/
+}}}

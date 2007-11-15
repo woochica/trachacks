@@ -1,0 +1,24 @@
+= Wiki Page Templates = 
+= Wiki 网页模板 = 
+
+  ''(since [http://trac.edgewall.org/milestone/0.11 0.11])''
+
+The default content for a new wiki page can be chosen from a list of page templates.
+一个新的wiki页的默认内容可以从网页模板的列表中挑选出来。
+
+This list is made up from the wiki pages having a name starting with ''PageTemplates/''.
+该列表由以''PageTemplates/''开头命名的wiki网页而组成。
+The initial content of a new page will simply be the content of the chosen template page, or a blank page if the special ''(blank page)'' entry is selected. When there's actually no wiki pages matching that prefix, the initial content will always be the blank page and the list selector will not be shown (i.e. this matches the behavior we had up to now).
+一个新网页的最初的内容一般就是选中的模板页中的内容，或者是一个空白页如果选了某个特殊选项的话，比如说''(blank page)''。当没有wiki网页匹配该前缀时，网页中的最初内容将一直...(be后面怎么没有内容了？)
+To create a new template, simply create a new page having a name starting with ''PageTemplates/''.
+为了创建一个新的模板，只需创建一个名字以''PageTemplates/''开头的的网页。
+(Hint: one could even create a ''!PageTemplates/Template'' for facilitating the creation of new templates!)
+(提示：为了方便创建新模板，甚至可以创建一个''!PageTemplates/Template''模板)
+Available templates:
+[[TitleIndex(PageTemplates/)]]
+现有的模板：
+[[TitleIndex(PageTemplates/)]]
+
+----
+See also: TracWiki
+相关信息：TracWiki
