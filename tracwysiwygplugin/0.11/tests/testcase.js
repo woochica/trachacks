@@ -245,9 +245,9 @@ addEvent(window, "load", function() {
                 element("a", "[345/trunk]", {
                     href: "./search?q=changeset%3A345%2Ftrunk", title: "changeset:345/trunk",
                     "tracwysiwyg-link": "changeset:345/trunk", onclick: "return false;" }),
-                ", [123], r234, [345/trunk]");
-            generateFragment.call(this, dom, "[123], r234, [345/trunk], ![123], !r234, ![345/trunk]");
-            generate.call(this, dom, "[123], [changeset:234 r234], [345/trunk], ![123], !r234, ![345/trunk]");
+                ", [123], r234, [345/trunk], ar123");
+            generateFragment.call(this, dom, "[123], r234, [345/trunk], ![123], !r234, ![345/trunk], ar123");
+            generate.call(this, dom, "[123], [changeset:234 r234], [345/trunk], ![123], !r234, ![345/trunk], ar123");
         });
 
         unit.add("[log]", function() {
@@ -456,11 +456,11 @@ addEvent(window, "load", function() {
                     href: "./search?q=" + encodeURIComponent("wiki:CamelCase"),
                     title: "wiki:CamelCase", "tracwysiwyg-link": "wiki:CamelCase",
                     onclick: "return false;" }),
-                " CamelCase FooBarA FOo FoobarA OneÅngström Oneångström");
+                " CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor");
             generateFragment.call(this, dom,
-                "CamelCase !CamelCase FooBarA FOo FoobarA OneÅngström Oneångström");
+                "CamelCase !CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor");
             generate.call(this, dom,
-                "[wiki:CamelCase] !CamelCase FooBarA FOo FoobarA OneÅngström Oneångström");
+                "[wiki:CamelCase] !CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor");
         });
 
         unit.add('["internal free link"]', function() {

@@ -902,7 +902,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
                                             // 16. [[macro]]
     wikiInlineRules.push("!?\\[\\[[\\w/+-]+(?:\\]\\]|\\(.*?\\)\\]\\])");
                                             // 17. WikiPageName
-    wikiInlineRules.push("!?" + _wikiPageName);
+    wikiInlineRules.push("(?:\\b|!)" + _wikiPageName);
                                             // 18. ["internal free link"]
     wikiInlineRules.push("!?\\[(?:" + _quotedString + ")\\]");
 
@@ -1750,7 +1750,6 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
     var wikiBlockTags = this.wikiBlockTags;
     var wikiInlineRulesPattern = this.wikiInlineRulesPattern;
     var tracLinkPattern = new RegExp("^" + this._tracLink + "$");
-    var wikiPageNamePattern = new RegExp("^" + this._wikiPageName + "$");
     var decorationTokenPattern = /^(?:'''|''|__|\^|,,)$/;
 
     var texts = [];
