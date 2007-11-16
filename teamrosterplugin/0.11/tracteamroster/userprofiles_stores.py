@@ -293,7 +293,7 @@ class DefaultUserProfilesStore(Component):
         cursor = db.cursor()
         cursor.execute("SELECT sid, name, value FROM session_attribute "
                         "WHERE sid=%s and authenticated=1 ORDER BY sid", (userProfile_id,))
-        _newUserProfile=UserProfile(-1, self)
+        _newUserProfile=UserProfile(userProfile_id, self)
 
         for sid, name, value in cursor:
             _newUserProfile[name] = value
