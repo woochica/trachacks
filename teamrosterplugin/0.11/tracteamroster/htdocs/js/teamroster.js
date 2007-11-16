@@ -78,12 +78,11 @@ $(document).ready(function(){
 
 	$(".tr_editable.file")
 		.click(function(){
-			if(this.innerHTML=='[blank]')this.innerHTML='';
-			var newTextareaElement=document.createElement('INPUT');
-			newTextareaElement.type="FILE";
-			newTextareaElement.name=this.getAttribute('name');
-			this.parentNode.appendChild(newTextareaElement);
-			newTextareaElement.form.enctype="multipart/form-data";
+			var newFileElement=document.createElement('INPUT');
+			newFileElement.name=this.getAttribute('name');
+			newFileElement.type="FILE";
+			this.parentNode.appendChild(newFileElement);
+			newFileElement.form.enctype="multipart/form-data";
 			this.style.display='none';
 			teamroster_notifyContainer($(this).parents('.tr_userProfile:first'), this);
 		});

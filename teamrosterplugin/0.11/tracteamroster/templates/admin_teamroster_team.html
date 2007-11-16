@@ -92,7 +92,7 @@
 					</tr>
 					<tr>
 						<td colspan="5" >
-							<form method="POST" action="#tr_userProfile_$userProfile.id">
+							<form method="POST" action="#tr_userProfile_$userProfile.id" enctype="multipart/form-data">
 							<div class="tr_userProfile" id="tr_userProfile_$userProfile.id" style="display:${userProfile.id == teamRoster.lastUpdatedProfile.id and 'block' or 'none'}">
 								<input type="hidden" name="tr_userProfile_id" value="$userProfile.id"/>					
 								<div py:choose="" class="tr_userProfile_picture">
