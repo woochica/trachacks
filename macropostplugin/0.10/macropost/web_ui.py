@@ -1,8 +1,10 @@
 # MacroPost dispatcher
 # Copyright 2006 Noah Kantrowitz
 from trac.core import *
+from trac.mimeview.api import Context
+from trac.resource import Resource
 from trac.web.api import IRequestFilter
-from trac.wiki.formatter import WikiProcessor
+from trac.wiki.formatter import Formatter, WikiProcessor
 from trac.wiki.model import WikiPage
 
 from api import IMacroPoster
@@ -41,7 +43,9 @@ class MacroPostModule(Component):
                     matches = self.macro_re.findall(page.text) + self.proc_re.findall(page.text)
                     for name in matches:
                         self.log.debug('MacroPostModule: Found macro "%s"', name)
-                        wp = WikiProcessor(self.env, name)
+                        resource = Resource('wiki', name)
+                        context = Context.from_request(req, resource)
+                        wp = WikiProcessor(Formatter(self.env, context), name)
                         if wp.macro_provider is None:
                             self.log.debug('MacroPostModule: Invalid name!!! How did that happen')
                             continue
@@ -52,5 +56,5 @@ class MacroPostModule(Component):
 
         return handler
         
-    def post_process_request(self, req, template, content_type):
-        return (template, content_type)
+    def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)
