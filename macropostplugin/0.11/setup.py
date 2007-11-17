@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracMacroPost',
-    version = '0.1',
+    version = '0.2',
     packages = ['macropost'],
     package_data={ 'macropost' : [ ] },
     author = "Noah Kantrowitz",
