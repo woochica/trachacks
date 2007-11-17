@@ -1,5 +1,6 @@
 TracWysiwyg.TestUnit = function() {
     this.cases = {};
+    this.assertCount = 0;
 };
 
 (function() {
@@ -84,11 +85,13 @@ TracWysiwyg.TestUnit = function() {
         this.cases[name] = method;
     };
 
-    prototype.assertEqual = function(expected, actual) {
+    prototype.assertEqual = function(expected, actual, label) {
+        this.assertCount++;
         if (typeof (expected) == typeof (actual) && expected == actual) {
             return true;
         }
-        throw this.inspect(expected) + " (" + expected.length + ")\n"
+        throw (label || "") + "[@]\n".replace(/@/g, this.assertCount)
+            + this.inspect(expected) + " (" + expected.length + ")\n"
             + this.inspect(actual) + " (" + actual.length + ")";
     };
 
@@ -121,6 +124,7 @@ TracWysiwyg.TestUnit = function() {
                     element("td", { id: "testcase." + count }, "...")));
         }
 
+        this.assertCount = 0;
         count = 0;
         var success = 0;
         var invoke = function() {

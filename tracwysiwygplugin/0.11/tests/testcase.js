@@ -16,15 +16,19 @@ addEvent(window, "load", function() {
             if (!generated.addEventListener || window.opera) {
                 generatedHtml = generatedHtml.replace(/\n\r/g, "\uffff").replace(/\uffff\n?/g, "\n");
             }
-            this.assertEqual(anonymous.innerHTML, generatedHtml);
+            this.assertEqual(anonymous.innerHTML, generatedHtml, "wikitextToFragment");
         }
         if (!withoutDomToWikitext) {
-            this.assertEqual(wikitext, instance.domToWikitext(anonymous));
+            this.assertEqual(wikitext, instance.domToWikitext(anonymous), "domToWikitext");
         }
     }
 
     function generateFragment(dom, wikitext) {
         generate.call(this, dom, wikitext, true);
+    }
+
+    function generateWikitext(dom, wikitext) {
+        generate.call(this, dom, wikitext, false, true);
     }
 
     function run() {
@@ -57,6 +61,23 @@ addEvent(window, "load", function() {
                 "= level 1",
                 "}}}" ].join("\n");
             generate.call(this, dom, wikitext);
+        });
+
+        unit.add("paragraph", function() {
+            var dom = fragment(
+                element("p", "Paragraph continued..."),
+                element("p", "Second paragraph continued..."));
+            generateFragment.call(this, dom, [
+                "Paragraph",
+                "continued...",
+                "",
+                "Second paragraph",
+                "continued...",
+                "" ].join("\n"));
+            generate.call(this, dom, [
+                "Paragraph continued...",
+                "",
+                "Second paragraph continued..." ].join("\n"));
         });
 
         unit.add("hr", function() {
@@ -477,20 +498,28 @@ addEvent(window, "load", function() {
         unit.add("citation", function() {
             var dom = fragment(
                 element("blockquote", { "class": "citation" },
-                    element("p", " This is the quoted text"),
-                    element("blockquote", { "class": "citation" }, element("p", " a nested quote"))),
+                    element("p", "This is the quoted text continued"),
+                    element("blockquote", { "class": "citation" }, element("p", "a nested quote"))),
                 element("p", "A comment on the above"),
                 element("blockquote", { "class": "citation" },
                     element("blockquote", { "class": "citation" },
-                        element("p", " start 2nd level")),
-                    element("p", " first level")));
-            generate.call(this, dom, [
-                "> This is the quoted text",
-                ">> a nested quote",
+                        element("p", "start 2nd level")),
+                    element("p", "first level")));
+            generateFragment.call(this, dom, [
+                ">This is the quoted text",
+                ">continued",
+                ">>a nested quote",
                 "A comment on the above",
                 "",
-                ">> start 2nd level",
-                "> first level" ].join("\n"));
+                ">>start 2nd level",
+                ">first level" ].join("\n"));
+            generate.call(this, dom, [
+                ">This is the quoted text continued",
+                ">>a nested quote",
+                "A comment on the above",
+                "",
+                ">>start 2nd level",
+                ">first level" ].join("\n"));
         });
 
         unit.add("header", function() {
@@ -720,7 +749,7 @@ addEvent(window, "load", function() {
                         element("li",
                             "item 1.1",
                             element("pre", { "class": "wiki" }, "code"),
-                            " cont.",
+                            "cont.",
                             element("pre", { "class": "wiki" }, "code"))),
                     element("li",
                         "item 2",
@@ -894,6 +923,58 @@ addEvent(window, "load", function() {
                 "||post.1||post.2||",
                 "",
                 "Paragraph" ].join("\n"));
+        });
+
+        unit.add("table [ paragraph, ul ]", function() {
+            var dom = fragment(
+                element("table", { "class": "wiki" },
+                    element("tbody",
+                        element("tr",
+                            element("td", element("p", "1.1")),
+                            element("td",
+                                element("ul",
+                                    element("li", "item 1"),
+                                    element("li", "item 2")))),
+                        element("tr",
+                            element("td",
+                                element("p", "2.1"),
+                                element("ul",
+                                    element("li", "item 3"),
+                                    element("li", "item 4")))))));
+            generateWikitext.call(this, dom, [
+                "||1.1|| * item 1[[BR]] * item 2||",
+                "||2.1[[BR]][[BR]] * item 3[[BR]] * item 4||" ].join("\n"));
+        });
+
+        unit.add("table from word", function() {
+            var dom = element("div");
+            dom.innerHTML = [
+                '',
+                '<table class="MsoTableGrid" style="border: medium none ; border-collapse: collapse;" border="1" cellpadding="0" cellspacing="0">',
+                ' <tbody><tr style="">',
+                '  <td style="border: 1pt solid windowtext; padding: 0mm 5.4pt; width: 217.55pt;" valign="top" width="290">',
+                '  <p class="MsoNormal"><span lang="EN-US">a<o:p></o:p></span></p>',
+                '  <p class="MsoNormal"><span lang="EN-US">b<o:p></o:p></span></p>',
+                '  </td>',
+                '  <td style="border-style: solid solid solid none; border-color: windowtext windowtext windowtext -moz-use-text-color; border-width: 1pt 1pt 1pt medium; padding: 0mm 5.4pt; width: 217.55pt;" valign="top" width="290">',
+                '',
+                '  <p class="MsoNormal"><span lang="EN-US">b<o:p></o:p></span></p>',
+                '  </td>',
+                ' </tr>',
+                ' <tr style="">',
+                '  <td style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0mm 5.4pt; width: 217.55pt;" valign="top" width="290">',
+                '  <p class="MsoNormal"><span lang="EN-US">c<o:p></o:p></span></p>',
+                '  </td>',
+                '  <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0mm 5.4pt; width: 217.55pt;" valign="top" width="290">',
+                '',
+                '  <p class="MsoNormal"><span lang="EN-US">d<o:p></o:p></span></p>',
+                '  </td>',
+                ' </tr>',
+                '</tbody></table>',
+                '' ].join("");
+            generateWikitext.call(this, dom, [
+                "||a[[BR]][[BR]]b||b||",
+                "||c||d||" ].join("\n"));
         });
 
         unit.run();
