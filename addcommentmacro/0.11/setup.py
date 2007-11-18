@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracAddCommentMacro',
-    version = '0.2',
+    version = '0.3',
     packages = ['addcomment'],
     package_data={ 'addcomment' : [  ] },
     author = "Alec Thomas",
@@ -23,5 +23,5 @@ setup(
         ],
     },
 
-    install_requires = [ 'TracMacroPost' ],
+    install_requires = [ 'TracMacroPost>=0.2' ],
 )

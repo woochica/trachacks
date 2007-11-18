@@ -1,114 +1,152 @@
 # vim: expandtab
-from trac.core import *
-from trac.wiki.macros import WikiMacroBase
-
-import trac.perm
-from StringIO import StringIO
-from trac.wiki.formatter import wiki_to_html
-from trac.wiki.model import WikiPage
-from trac.util import Markup
-from trac.util import TracError
-from trac.web.chrome import add_link
-from trac.util.text import to_unicode
-
 import re, time
+from StringIO import StringIO
+
+from genshi.builder import tag
+
+from trac.core import *
+from trac.wiki.formatter import format_to_html
+from trac.util import TracError
+from trac.util.text import to_unicode
+from trac.web.chrome import add_link, add_script
+from trac.wiki.api import parse_args
+from trac.wiki.macros import WikiMacroBase
+from trac.wiki.model import WikiPage
+
 
 class AddCommentMacro(WikiMacroBase):
-    """A macro to add comments to a page."""
+    """A macro to add comments to a page. Usage:
+    {{{
+    [[AddComment]]
+    }}}
+    The macro accepts one optional argument that allows appending
+    to the wiki page even though user may not have modify permission:
+    {{{
+    [[AddComment(appendonly)]]
+    }}}
+    """
     
-    def render_macro(self, req, name, content):
-        return execute(req.hdf, content, self.env)
+    def expand_macro(self, formatter, name, content):
+        
+        args, kw = parse_args(content)
+        req = formatter.req
+        context = formatter.context
+        
+        # Prevent multiple inclusions - store a temp in req
+        if hasattr(req, 'addcommentmacro'):
+            raise TracError('\'AddComment\' macro cannot be included twice.')
+        req.addcommentmacro = True
+        
+        # Prevent it being used outside of wiki page context
+        resource = context.resource
+        if not resource.realm == 'wiki':
+            raise TracError('\'AddComment\' macro can only be used in Wiki pages.')
+        
+        # Setup info and defaults
+        authname = req.authname
+        page = WikiPage(self.env, resource)
+        page_url = req.href.wiki(resource.id)
+        wikipreview = req.args.get("preview", "")
+        appendonly = ('appendonly' in args)
+        # Can this user add a comment to this page?
+        cancomment = not page.readonly
+        # Is this an "append-only" comment or are we an administrator?
+        if 'WIKI_ADMIN' in req.perm(resource) or appendonly:
+            cancomment = True
+        if not cancomment:
+            raise TracError('Error: Insufficient privileges to AddComment')
+        disabled = False
+        
+        # Get the data from the POST
+        comment = req.args.get("addcomment", "")
+        preview = req.args.get("previewaddcomment", "")
+        cancel = req.args.get("canceladdcomment", "")
+        submit = req.args.get("submitaddcomment", "")
+        if not cancel and req.authname == 'anonymous':
+            authname = req.args.get("authoraddcomment", authname)
+        
+        # Ensure [[AddComment]] is not present in comment, so that infinite
+        # recursion does not occur.
+        comment = to_unicode(re.sub('(^|[^!])(\[\[AddComment)', '\\1!\\2', comment))
+        
+        the_preview = the_message = the_form = tag()
+        
+        if wikipreview or not ('WIKI_MODIFY' in req.perm(resource) or appendonly):
+            disabled = True
+        
+        # If we are submitting or previewing, inject comment as it should look
+        if cancomment and comment and (preview or submit):
+            heading = tag.h4("Comment by ", authname, " on ",
+                        to_unicode(time.strftime('%c', time.localtime())),
+                        id="commentpreview")
+            if preview:
+                the_preview = tag.div(heading,
+                                format_to_html(self.env, context, comment),
+                                class_="wikipage", id="preview")
+        
+        # When submitting, inject comment before macro
+        if comment and submit:
+            submitted = False
+            newtext = ""
+            for line in page.text.splitlines():
+                if line.find('[[AddComment') == 0:
+                    newtext += "==== Comment by %s on %s ====\n%s\n\n" % (
+                            authname,
+                            to_unicode(time.strftime('%c', time.localtime())),
+                            comment)
+                    submitted = True
+                newtext += line+"\n"
+            if submitted:
+                page.text = newtext
+                page.save(authname, 'Comment added', req.environ['REMOTE_ADDR'])
+                req.warning("Comment saved.")
+                req.redirect(page_url)
+            else:
+                the_message = tag.div(tag.strong("ERROR: "), "[[AddComment]] "
+                          "macro call must be the only content on its line. "
+                          "Could not add comment.",
+                          class_="system-message")
 
-    def _render_macro(self, req, name, content):
-        pass # Fill in a deuglified version here
+        the_form = tag.form(
+                    tag.fieldset(
+                        tag.legend("Add comment"),
+                        tag.div(
+                            (wikipreview and "Page preview..." or None),
+                            tag.textarea((not cancel and comment or ""),
+                                        class_="wikitext",
+                                        id="addcomment",
+                                        name="addcomment",
+                                        cols=80, rows=5,
+                                        disabled=(disabled and "disabled" or None)),
+                            class_="field"
+                        ),
+                        (req.authname == 'anonymous' and tag.div(
+                            tag.label("Your email or username:",
+                                    for_="authoraddcomment"),
+                            tag.input(id="authoraddcomment", type="text",
+                                    size=30, value=authname)
+                        ) or None),
+                        tag.div(
+                            tag.input(value="Add comment", type="submit",
+                                    name="submitaddcomment", size=30,
+                                    disabled=(disabled and "disabled" or None)),
+                            tag.input(value="Preview comment", type="submit",
+                                    name="previewaddcomment",
+                                    disabled=(disabled and "disabled" or None)),
+                            tag.input(value="Cancel", type="submit",
+                                    name="canceladdcomment",
+                                    disabled=(disabled and "disabled" or None)),
+                            class_="buttons"
+                        ),
+                    ),
+                    method="post",
+                    action=page_url+"#commenting",
+                )
+        
+        add_script(req, 'common/js/wikitoolbar.js')
 
+        return tag.div(the_preview, the_message, the_form, id="commenting")
+    
     def process_macro_post(self, req):
         self.log.debug('AddCommentMacro: Got a POST')
-        
-def execute(hdf, args, env):
-    # prevents from multiple inclusions
-    if hdf.has_key('addcommentmacro'):
-       raise TracError('\'AddComment\' macro cannot be included twice')
-    hdf['addcommentmacro'] = True
-
-    authname = hdf.getValue("trac.authname", "anonymous")
-    db = env.get_db_cnx()
-    perm = trac.perm.PermissionCache(env, authname)
-    pagename = hdf.getValue("wiki.page_name", "WikiStart")
-    page = WikiPage(env, pagename, None, db)
-    wikipreview = hdf.getValue("wiki.preview", "")
-    appendonly = (args == 'appendonly')
-    readonlypage = int(hdf.getValue("wiki.readonly", "0"))
-    # Can this user add a comment to this page?
-    cancomment = not readonlypage
-    # Is this an "append-only" comment or are we an administrator?
-    if perm.has_permission('WIKI_ADMIN') or appendonly:
-        cancomment = True
-
-    if not cancomment:
-        raise TracError('Error: Insufficient privileges to AddComment')
-
-    disabled = ''
-
-    comment = Markup(to_unicode(hdf.getValue("args.addcomment", ""))).unescape()
-    preview = hdf.getValue("args.previewaddcomment", "")
-    cancel = hdf.getValue("args.canceladdcomment", "")
-    submit = hdf.getValue("args.submitaddcomment", "")
-    if not cancel:
-        authname = hdf.getValue("args.authoraddcomment", authname)
-
-    # Ensure [[AddComment]] is not present in comment, so that infinite
-    # recursion does not occur.
-    comment = re.sub('(^|[^!])(\[\[AddComment)', '\\1!\\2', comment)
-
-    out = StringIO()
-    if wikipreview or not (perm.has_permission('WIKI_MODIFY') or appendonly):
-        disabled = ' disabled="disabled"'
-
-    # If we are submitting or previewing, inject comment as it should look
-    if cancomment and comment and (preview or submit):
-        if preview:
-            out.write("<div class='wikipage' id='preview'>\n")
-        out.write("<h4 id='commentpreview'>Comment by %s on %s</h4>\n<p>\n%s\n</p>\n" % (authname, time.strftime('%c', time.localtime()), wiki_to_html(comment, env, None)))
-        if preview:
-            out.write("</div>\n")
-
-    # When submitting, inject comment before macro
-    if comment and submit:
-        submitted = False
-        newtext = StringIO()
-        for line in page.text.splitlines():
-            if line.find('[[AddComment') == 0:
-                newtext.write("==== Comment by %s on %s ====\n%s\n\n" % (authname, time.strftime('%c', time.localtime()), comment))
-                submitted = True
-            newtext.write(line + "\n")
-        if submitted:
-            # XXX Is this the dodgiest hack ever? This is needed in 
-            # "appendonly" mode when the page is readonly. XXX
-#            if appendonly:
-#                perm.expand_meta_permission('WIKI_ADMIN');
-            # TODO: How do we get remote_addr from a macro?
-            page.text = newtext.getvalue()
-            page.save(authname, 'Comment added', None)
-            comment = ""
-        else:
-            out.write("<div class='system-message'><strong>ERROR: [[AddComment]] macro call must be the only content on its line. Could not add comment.</strong></div>\n")
-
-    out.write("<form action='%s#commentpreview' method='post'>\n" % env.href.wiki(pagename))
-    out.write("<fieldset>\n<legend>Add comment</legend>\n")
-    out.write("<div class='field'>\n<textarea class='wikitext' id='addcomment' name='addcomment' cols='80' rows='5'%s>" % disabled)
-    if wikipreview:
-        out.write("Page preview...")
-    elif not cancel:
-        out.write(comment)
-    out.write("</textarea>\n")
-    out.write("</div>\n")
-    out.write('<div class="field">\n<label for="authoraddcomment">Your email or username:</label>\n<br/><input id="authoraddcomment" type="text" name="authoraddcomment" size="30" value="%s" />\n</div>' % authname)
-    out.write("<div class='field'>\n<input size='30' type='submit' name='submitaddcomment' value='Add comment'%s/>\n" % disabled)
-    out.write("<input type='submit' name='previewaddcomment' value='Preview comment'%s/>\n" % disabled)
-    out.write("<input type='submit' name='canceladdcomment' value='Cancel'%s/>\n</div>\n" % disabled)
-    out.write('<script type="text/javascript" src="%sjs/wikitoolbar.js"></script>' % hdf['htdocs_location'])
-    out.write("</fieldset>\n</form>\n")
-
-    return out.getvalue()# + "<pre>" + hdf.dump() + "</pre>"
 
