@@ -27,6 +27,8 @@ class TracForgeIndexModule(Component):
         return req.path_info == '/projects'
 
     def process_request(self, req):
+        req.perm.assert_permission('PROJECT_LIST')
+    
         parent_dir = os.path.dirname(self.env.path)
         #env_paths = dict([(filename, os.path.join(parent_dir, filename))
         #                  for filename in os.listdir(parent_dir)])
@@ -75,7 +77,8 @@ class TracForgeIndexModule(Component):
         return 'projects'
 
     def get_navigation_items(self, req):
-        yield 'mainnav', 'projects', tag.a('Projects', href=req.href.projects())
+        if req.perm.has_permission('PROJECT_LIST'):
+            yield 'mainnav', 'projects', tag.a('Projects', href=req.href.projects())
             
 
 class TracForgeDispatcherModule(Component):
