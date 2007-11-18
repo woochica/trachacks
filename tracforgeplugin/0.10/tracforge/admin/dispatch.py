@@ -165,7 +165,8 @@ class TracForgeDispatcherModule(Component):
             del environ['TRAC_ENV']
         if 'trac.env_path' in environ:
             del environ['trac.env_path']
-        environ['tracforge_master_link'] = req.href.projects()
+        if req.perm.has_permission('PROJECT_LIST'):
+            environ['tracforge_master_link'] = req.href.projects()
         
         # Remove mod_python option to avoid conflicts
         if 'mod_python.subprocess_env' in environ:

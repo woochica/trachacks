@@ -28,10 +28,21 @@ class TracForgeLoginModule(LoginModule):
         if req.authname and req.authname != 'anonymous':
             yield ('metanav', 'login', 'logged in as %s' % req.authname)
             yield ('metanav', 'logout',
-                   html.A('Logout', href=self.master_href.logout(referer=req.href(req.path_info))))
+                   html.A('Logout', href=self.master_href.logout()))
         else:
             yield ('metanav', 'login',
-                   html.A('Login', href=self.master_href.login(referer=req.href(req.path_info))))
+                   html.A('Login', href=self.master_href.login()))
+                   
+    # IRequestHandler methods
+    def process_request(self, req):
+        if req.path_info.startswith('/login'):
+            if req.authname and req.authname != 'anonymous':
+                # Already logged in, reconstruct last path
+                req.redirect(req.href())
+            else:
+                # Safe, send to master
+                req.redirect(self.master_href.login())
+        raise TracError
 
     # Internal methods
     def _get_name_for_cookie(self, req, cookie):
