@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
+"""Adds a wiki macro [[Components]] which lists and describes the project's components, and links to wiki pages describing the components in more detail, and any tickets for the components.
+
+terry_n_brown@yahoo.com
 """
 
 import inspect
