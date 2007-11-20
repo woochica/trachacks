@@ -6,9 +6,12 @@ from genshi.core import Markup
 from genshi.builder import tag
 
 from trac.core import *
+from trac.resource import get_resource_url
+from trac.util.compat import sorted
 from trac.wiki.formatter import OutlineFormatter, system_message
 from trac.wiki.api import WikiSystem, parse_args
-from trac.wiki.macros import WikiMacroBase 
+from trac.wiki.macros import WikiMacroBase
+from trac.wiki.model import WikiPage
 
 
 __all__ = ['TOCMacro']
@@ -17,7 +20,7 @@ class NullOut(object):
     def write(self, *args): pass
 
 
-def outline_tree(ol, outline, context, active, min_depth, max_depth):
+def outline_tree(env, ol, outline, context, active, min_depth, max_depth):
     if min_depth > max_depth:
         min_depth, max_depth = max_depth, min_depth
     max_depth = min(6, max_depth)
@@ -39,7 +42,7 @@ def outline_tree(ol, outline, context, active, min_depth, max_depth):
                 new_ol = tag.ol()
                 li.append(new_ol)
                 stack[d+1] = (None, new_ol)
-            href = context.resource_href()
+            href = get_resource_url(env, context.resource, context.href)
             if href.endswith(context.req.path_info):
                 href = ''
             href += '#' + anchor
@@ -68,6 +71,11 @@ class TOCMacro(WikiMacroBase):
           TracRoadmap, TracChangeset, TracTickets, TracReports, TracQuery,
           TracTimeline, TracRss, TracNotification)]]
     }}}
+    A wildcard '*' can be used to fetch a sorted list of all pages starting with
+    the preceding pagename stub:
+    {{{
+    [[TOC(Trac*, WikiFormatting, WikiMacros)]]
+    }}}
     The following ''control'' arguments change the default behaviour of
     the TOC macro: 
     || '''Argument'''    || '''Meaning''' ||
@@ -76,29 +84,32 @@ class TOCMacro(WikiMacroBase):
     || {{{depth=<n>}}}   || Display headings of ''subsequent'' pages to a maximum depth of '''<n>'''. ||
     || {{{inline}}}      || Display TOC inline rather than as a side-bar. ||
     || {{{titleindex}}}  || Only display the page name and title of each page, similar to TitleIndex. ||
-    
-    Note that the current page must also be specified if individual wiki
-    pages are given in the argument list.
+    || {{{notitle}}}     || Supress display of page title. ||
+    For 'titleindex' argument, an empty pagelist will evaluate to all pages:
+    {{{
+    [[TOC(titleindex, notitle, heading=All pages)]]
+    }}}
     """
     
     def expand_macro(self, formatter, name, args):
         self.formatter = formatter
-        context = formatter.context
+        self.context = formatter.context
+        self.resource = formatter.context.resource
         
         # Bail out if we are in a no-float zone
         if hasattr(formatter, 'properties') and \
                'macro_no_float' in formatter.properties:
             return ''
         
-        current_page = context.id
+        current_page = self.resource.id
          
         # Split the args
         args, kw = parse_args(args)
         # Options
         inline = False
         pagenames = []
-        heading = kw.pop('heading', 'Table of Contents')
         
+        default_heading = 'Table of Contents'
         params = {'min_depth': 1, 'max_depth': 6}
         # Global options
         for arg in args:
@@ -106,83 +117,91 @@ class TOCMacro(WikiMacroBase):
             if arg == 'inline':
                 inline = True
             elif arg == 'noheading':
-                heading = ''
+                default_heading = ''
             elif arg == 'notitle':
                 params['min_depth'] = 2     # Skip page title
             elif arg == 'titleindex':
                 params['title_index'] = True
-                heading = ''
+                default_heading = default_heading and 'Page Index'
             elif arg == 'nofloat':
                 return ''
             elif arg != '':
                 pagenames.append(arg)
+        heading = kw.pop('heading', '') or default_heading
 
         if 'depth' in kw:
            params['max_depth'] = int(kw['depth'])
 
         # Has the user supplied a list of pages?
-        if not pagenames and 'title_index' not in params:
-            pagenames.append(current_page)
-            params['root'] = ''
-            params['min_depth'] = 2     # Skip page title
+        if not pagenames:
+            if 'title_index' in params:
+                pagenames.append('*')       # A marker for 'all'
+            else:
+                pagenames.append(current_page)
+                params['root'] = ''
+                params['min_depth'] = 2     # Skip page title
+        # Check for wildcards and expand lists
+        temp_pagenames = []
+        for pagename in pagenames:
+            if pagename.endswith('*'):
+                temp_pagenames.extend(sorted(
+                        WikiSystem(self.env).get_pages(pagename[:-1])))
+            else:
+                temp_pagenames.append(pagename)
+        pagenames = temp_pagenames
 
-        base = tag.div(class_=not inline and 'wiki-toc' or '')
+        base = tag.div(class_=inline and 'wiki-toc-inline' or 'wiki-toc')
         ol = tag.ol()
         base.append([heading and tag.h4(heading), ol])
 
         active = len(pagenames) > 1
-        if pagenames:
-            for pagename in pagenames:
-                if 'title_index' in params:
-                    prefix = pagename.split('/')[0]
-                    prefix = prefix.replace("'", "''") # FIXME: what's this?
-                    self._render_title_index(ol, prefix, active and \
-                                             pagename.startswith(current_page))
-                else:
-                    self._render_page_outline(ol, pagename, active, params)
-        else:
-            self._render_title_index(ol, '', False)
+        for pagename in pagenames:
+            page_resource = self.resource(id=pagename)
+            if not 'WIKI_VIEW' in self.context.perm(page_resource):
+                # Not access to the page, so should not be included
+                continue
+            if 'title_index' in params:
+                self._render_title_index(ol, page_resource, active and \
+                            pagename == current_page,
+                            params['min_depth'] < 2)
+            else:
+                self._render_page_outline(ol, page_resource, active, params)
         return base
 
-    def get_page_text(self, pagename):
-        """Return a tuple of `(text, exists)` for the given `pagename`."""
-        if pagename == self.formatter.context.id:
+    def get_page_text(self, page_resource):
+        """Return a tuple of `(text, exists)` for the given page (resource)."""
+        if page_resource.id == self.resource.id:
             return (self.formatter.source, True)
         else:
-            # TODO: after sandbox/security merge
-            # page = context(id=pagename).resource
-            from trac.wiki.model import WikiPage
-            page = WikiPage(self.env, pagename, db=self.formatter.db)
+            page = WikiPage(self.env, page_resource)
             return (page.text, page.exists)
 
-    def _render_title_index(self, ol, prefix, active):
-        all_pages = list(WikiSystem(self.env).get_pages(prefix))
-        if all_pages:
-            all_pages.sort()
-            for page in all_pages:
-                ctx = self.formatter.context('wiki', page)
-                fmt = OutlineFormatter(ctx)
-                page_text, _ = self.get_page_text(page) # ctx.resource.text
-                fmt.format(page_text, NullOut())
-                title = ''
-                if fmt.outline:
-                    title = ': ' + fmt.outline[0][2]
-                ol.append((tag.li(tag.a(page, href=ctx.resource_href()),
-                                  Markup(title),
-                                  class_= active and 'active' or None)))
-        else:
+    def _render_title_index(self, ol, page_resource, active, show_title):
+        page_text, page_exists = self.get_page_text(page_resource)
+        if not page_exists:
             ol.append(system_message('Error: No page matching %s found' %
-                                     prefix))
+                                     page_resource.id))
+            return
+        ctx = self.context(page_resource)
+        fmt = OutlineFormatter(self.env, ctx)
+        fmt.format(page_text, NullOut())
+        title = ''
+        if show_title and fmt.outline:
+            title = ': ' + fmt.outline[0][2]
+        ol.append((tag.li(tag.a(page_resource.id,
+                      href=get_resource_url(self.env, page_resource, ctx.href)),
+                      Markup(title),
+                      class_= active and 'active' or None)))
 
-    def _render_page_outline(self, ol, pagename, active, params):
-        page = params.get('root', '') + pagename
-        page_text, page_exists = self.get_page_text(page)
+    def _render_page_outline(self, ol, page_resource, active, params):
+        page = params.get('root', '') + page_resource.id
+        page_text, page_exists = self.get_page_text(page_resource)
         if page_exists:
-            ctx = self.formatter.context('wiki', page)
-            fmt = OutlineFormatter(ctx)
+            ctx = self.context(page_resource)
+            fmt = OutlineFormatter(self.env, ctx)
             fmt.format(page_text, NullOut())
-            outline_tree(ol, fmt.outline, ctx,
-                         active and page == self.formatter.context.id,
+            outline_tree(self.env, ol, fmt.outline, ctx,
+                         active and page_resource.id == self.resource.id,
                          params['min_depth'], params['max_depth'])
         else:
             ol.append(system_message('Error: Page %s does not exist' %
