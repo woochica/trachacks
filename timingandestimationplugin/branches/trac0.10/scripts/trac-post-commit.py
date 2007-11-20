@@ -86,7 +86,7 @@ from trac.ticket.web_ui import TicketModule
 from trac.versioncontrol.api import NoSuchChangeset
 
 logfile = "/var/trac/commithook.log"
-LOG = True
+LOG = False
 
 if LOG:
     f = open (logfile,"w")
