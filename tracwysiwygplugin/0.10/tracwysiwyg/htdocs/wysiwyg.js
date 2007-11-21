@@ -2605,6 +2605,10 @@ if (document.createTreeWalker) {
 }
 else {
     TracWysiwyg.prototype.treeWalk = function(root, iterator) {
+        if (!root.firstChild) {
+            iterator(null);
+            return;
+        }
         var element = root;
         var tmp;
         while (element) {
