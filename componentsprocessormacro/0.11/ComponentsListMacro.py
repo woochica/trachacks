@@ -7,10 +7,9 @@ terry_n_brown@yahoo.com
 import inspect
 import sys
 
-from StringIO import StringIO
 from trac.core import Component, implements
 from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.formatter import Formatter
+from trac.wiki import format_to_html
 
 class ComponentsProcessor(Component):
     implements(IWikiMacroProvider)
@@ -21,23 +20,23 @@ class ComponentsProcessor(Component):
         yield 'Components'
 
     def get_macro_description(self, name):
-        #return inspect.getdoc(inspect.getmodule(self))	# works only in py >= 2.4
         return inspect.getdoc(sys.modules.get(self.__module__))
 
     def expand_macro(self, formatter, name, content):
-        content = []
+
         cursor = self.env.get_db_cnx().cursor()
 
-	query = "SELECT name, description from component;"
+	query = "SELECT name, description from component order by name;"
 	cursor.execute(query)
 
         comps = [comp for comp in cursor]
-	comps.sort(cmp=lambda x,y: cmp(x[0], y[0]))
 
-        # get a list of all components for which there are tickets
-        query = "SELECT distinct component from ticket;"
+        # get a distinct list of all components for which there are tickets
+        query = "SELECT component from ticket group by component;"
         cursor.execute(query)
         tickets = [page[0] for page in cursor]
+
+        content = []
 
         for name, descrip in comps:
             dt = ' [wiki:%s]' % name
@@ -50,16 +49,14 @@ class ComponentsProcessor(Component):
 
         content = '\n'.join(content)
 
-        out = StringIO()
-        Formatter(self.env, formatter.context).format(content, out)
-	return out.getvalue()
+        content = format_to_html(self.env, formatter.context, content)
 
-    def _parse_args(self, args):
-        firstArgs = None;
-        if args.rfind(")"):
-            firstArgs = args[args.find("(") + 1 : args.rfind(")")];
-            args      = args[:args.find("(")] + args[args.rfind(")") + 1:]
+        content = '<div class="component-list">%s</div>' % content
 
-        macros = map(lambda s: s.strip(), args.split(','));
+        # to avoid things like the above it might be nicer to use
+        # Genshi tag() construction, but this way the wiki formatter
+        # gets to deal with '[query:component=%s tickets]' etc.
+        # if going the Genshi route you'd replace that with something
+        # like req.href.query(component="mycomp", status="open")
 
-        return macros, firstArgs
+        return content
