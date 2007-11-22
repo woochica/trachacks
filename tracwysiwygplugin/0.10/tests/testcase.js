@@ -267,8 +267,7 @@ addEvent(window, "load", function() {
                     href: "./search?q=changeset%3A345%2Ftrunk", title: "changeset:345/trunk",
                     "tracwysiwyg-link": "changeset:345/trunk", onclick: "return false;" }),
                 ", [123], r234, [345/trunk], ar123");
-            generateFragment.call(this, dom, "[123], r234, [345/trunk], ![123], !r234, ![345/trunk], ar123");
-            generate.call(this, dom, "[123], [changeset:234 r234], [345/trunk], ![123], !r234, ![345/trunk], ar123");
+            generate.call(this, dom, "[123], r234, [345/trunk], ![123], !r234, ![345/trunk], ar123");
         });
 
         unit.add("[log]", function() {
@@ -290,8 +289,7 @@ addEvent(window, "load", function() {
                     href: "./search?q=log%3Atrunk%401%3A3", title: "log:trunk@1:3",
                     "tracwysiwyg-link": "log:trunk@1:3", onclick: "return false;" }),
                 ", log:trunk@1:3");
-            generateFragment.call(this, dom, "log - r1:3, !r1:3, [1:3], ![1:3], log:@1:3, !log:@1:3, log:trunk@1:3, !log:trunk@1:3");
-            generate.call(this, dom, "log - [log:@1:3 r1:3], !r1:3, [1:3], ![1:3], [log:@1:3 log:@1:3], !log:@1:3, [log:trunk@1:3 log:trunk@1:3], !log:trunk@1:3");
+            generate.call(this, dom, "log - r1:3, !r1:3, [1:3], ![1:3], log:@1:3, !log:@1:3, log:trunk@1:3, !log:trunk@1:3");
         });
 
         unit.add("wiki:TracLinks", function() {
@@ -337,20 +335,42 @@ addEvent(window, "load", function() {
                     href: "./search?q=" + encodeURIComponent("rfc-2396.compatible://link"),
                     title: "rfc-2396.compatible://link", "tracwysiwyg-link": "rfc-2396.compatible://link",
                     onclick: "return false;" }),
-                " link:'Foo Bar#baz'");
+                " ",
+                element("a", "foo:bar", {
+                    href: "./search?q=" + encodeURIComponent("foo:bar"),
+                    title: "foo:bar", "tracwysiwyg-link": "foo:bar",
+                    onclick: "return false;" }),
+                " begin",
+                element("a", "foo:bar", {
+                    href: "./search?q=" + encodeURIComponent("foo:bar"),
+                    title: "foo:bar", "tracwysiwyg-link": "foo:bar",
+                    onclick: "return false;" }),
+                " ",
+                element("a", "foo:bar", {
+                    href: "./search?q=" + encodeURIComponent("foo:bar"),
+                    title: "foo:bar", "tracwysiwyg-link": "foo:bar",
+                    onclick: "return false;" }),
+                "end begin",
+                element("a", "WikiStart", {
+                    href: "./search?q=" + encodeURIComponent("wiki:WikiStart"),
+                    title: "wiki:WikiStart", "tracwysiwyg-link": "wiki:WikiStart",
+                    onclick: "return false;" }),
+                "end link:'Foo Bar#baz'");
             generateFragment.call(this, dom, [
                 "link:WikiName",
                 'link:"Foo Bar" link:"Foo Bar#baz"',
                 "link:'Foo Bar' link:'Foo Bar#baz'",
                 "svn+ssh://example.com/trunk [svn+ssh://example.com/trunk repository]",
                 "rfc-2396.compatible://link [rfc-2396.compatible://link RFC 2396]",
+                "foo:bar begin[foo:bar foo:bar] [foo:bar foo:bar]end begin[wiki:WikiStart]end",
                 "!link:'Foo Bar#baz'" ].join(" "));
             generate.call(this, dom, [
-                "[link:WikiName link:WikiName]",
-                '[link:"Foo Bar" link:"Foo Bar"] [link:"Foo Bar#baz" link:"Foo Bar#baz"]',
-                "[link:'Foo Bar' link:'Foo Bar'] [link:'Foo Bar#baz' link:'Foo Bar#baz']",
-                "[svn+ssh://example.com/trunk svn+ssh://example.com/trunk] [svn+ssh://example.com/trunk repository]",
-                "[rfc-2396.compatible://link rfc-2396.compatible://link] [rfc-2396.compatible://link RFC 2396]",
+                "link:WikiName",
+                'link:"Foo Bar" link:"Foo Bar#baz"',
+                "link:'Foo Bar' link:'Foo Bar#baz'",
+                "svn+ssh://example.com/trunk [svn+ssh://example.com/trunk repository]",
+                "rfc-2396.compatible://link [rfc-2396.compatible://link RFC 2396]",
+                "foo:bar begin[foo:bar foo:bar] [foo:bar foo:bar]end begin[wiki:WikiStart]end",
                 "!link:'Foo Bar#baz'" ].join(" "));
         });
 

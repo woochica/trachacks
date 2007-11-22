@@ -1791,7 +1791,7 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
     function isTailEscape() {
         var t = texts;
         var length = t.length;
-        return length > 0 && /!$/.test(t[length - 1]);
+        return length > 0 ? /!$/.test(t[length - 1]) : false;
     }
 
     function tokenFromSpan(node) {
@@ -1924,36 +1924,54 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
         }
     }
 
+    function tracLinkText(link, label) {
+        if (!/\]/.test(label) && !/^[\"\']/.test(label)) {
+            return "[" + link + " " + label + "]";
+        }
+        if (!/\"/.test(label)) {
+            return "[" + link + ' "' + label + '"]';
+        }
+        if (!/\'/.test(label)) {
+            return "[" + link + " '" + label + "']";
+        }
+        return "[" + link + ' "' + label.replace(/"+/g, "") + '"]';
+    }
+
     function pushAnchor(node) {
-        var link = node.getAttribute("tracwysiwyg-link") || node.href;
+        var link = (node.getAttribute("tracwysiwyg-link") || node.href).replace(/^\s+|\s+$/g, "");
         var value = getTextContent(node).replace(/^\s+|\s+$/g, "");
         if (!value) {
             return;
         }
         var text = null;
-        var match = /^([\w.+-]+):(@?(.*))$/.exec(link);
-        if (match) {
-            if (value == match[2]) {
-                text = "[" + link + "]";
-            }
-            else {
-                var usingValue = false;
-                switch (match[1]) {
-                case "changeset":
-                    usingValue = value == "[" + match[2] + "]";
-                    break;
-                case "log":
-                    usingValue = value == "[" + match[3] + "]";
-                    break;
-                case "report":
-                    usingValue = value == "{" + match[2] + "}";
-                    break;
-                case "ticket":
-                    usingValue = value == "#" + match[2];
-                    break;
+        if (tracLinkPattern.test(link) && link == value) {
+            text = link;
+        }
+        else {
+            var match = /^([\w.+-]+):(@?(.*))$/.exec(link);
+            if (match) {
+                if (value == match[2]) {
+                    text = "[" + link + "]";
                 }
-                if (usingValue) {
-                    text = value;
+                else {
+                    var usingValue = false;
+                    switch (match[1]) {
+                    case "changeset":
+                        usingValue = value == "[" + match[2] + "]" || /^\d+$/.test(match[2]) && value == "r" + match[2];
+                        break;
+                    case "log":
+                        usingValue = value == "[" + match[3] + "]" || value == "r" + match[3];
+                        break;
+                    case "report":
+                        usingValue = value == "{" + match[2] + "}";
+                        break;
+                    case "ticket":
+                        usingValue = value == "#" + match[2];
+                        break;
+                    }
+                    if (usingValue) {
+                        text = value;
+                    }
                 }
             }
         }
@@ -1961,20 +1979,20 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
             texts.push(" ");
         }
         if (text === null) {
-            if (!/\]/.test(value) && !/^[\"\']/.test(value)) {
-                text = "[" + link + " " + value + "]";
-            }
-            else if (!/\"/.test(value)) {
-                text = "[" + link + ' "' + value + '"]';
-            }
-            else if (!/\'/.test(value)) {
-                text = "[" + link + " '" + value + "']";
-            }
-            else {
-                text = "[" + link + ' "' + value.replace(/"+/g, "") + '"]';
-            }
+            text = tracLinkText(link, value);
         }
         pushTextWithDecorations(text, node);
+
+        if (/^[\w.+-]/.test(text)) {
+            if (texts.length > 1 && /[\w.+-]$/.test(texts[texts.length - 2])) {
+                texts[texts.length - 1] = tracLinkText(link, value);
+            }
+            else {
+                text = new String(text);
+                text["tracwysiwyg-traclink"] = tracLinkText(link, value); 
+                texts[texts.length - 1] = text;
+            }
+        }
     }
 
     function string(source, times) {
@@ -2021,6 +2039,10 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                         value = value.replace(wikiInlineRulesPattern, escapeText);
                     }
                     if (value) {
+                        var prev = texts.length > 0 ? texts[texts.length - 1] : null;
+                        if (prev && prev["tracwysiwyg-traclink"] && tracLinkPattern.test(prev + value.substring(0, 1))) {
+                            texts[texts.length - 1] = prev["tracwysiwyg-traclink"];
+                        }
                         texts.push(value);
                     }
                 }
