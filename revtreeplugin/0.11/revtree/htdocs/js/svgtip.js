@@ -112,12 +112,12 @@ function JT_show(object) {
   // we want text result from the XHTML+XML server response for use 
   // wtih innerHTML, as load() does not work for some reason (why?)  
   // cannot use $.get(), need to go with $.ajax()
-  $.ajax({async: true, type: "GET", dataType: 'html', 
+  $.ajax({async: true, type: "GET", dataType: 'text', 
           url: logurl, success: updateJT});
 }
 
 function updateJT(data) {
-  // cannot use innerHTML with jQuery
+  // cannot use innerHTML with jQuery ($('#JT_copy').innerHTML)
   var copy = document.getElementById('JT_copy');
   // why innerHTML work with application/xhtml+xml doctype here?
   copy.innerHTML = data;
