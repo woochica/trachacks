@@ -2615,6 +2615,37 @@ else {
     TracWysiwyg.prototype.insertHTML = function(html) { };
 }
 
+TracWysiwyg.prototype._treeWalkEmulation = function(root, iterator) {
+    if (!root.firstChild) {
+        iterator(null);
+        return;
+    }
+    var element = root;
+    var tmp;
+    while (element) {
+        if (tmp = element.firstChild) {
+            element = tmp;
+        }
+        else if (tmp = element.nextSibling) {
+            element = tmp;
+        }
+        else {
+            for ( ; ; ) {
+                element = element.parentNode;
+                if (element == root || !element) {
+                    iterator(null);
+                    return;
+                }
+                if (tmp = element.nextSibling) {
+                    element = tmp;
+                    break;
+                }
+            }
+        }
+        iterator(element);
+    }
+};
+
 if (document.createTreeWalker) {
     TracWysiwyg.prototype.treeWalk = function(root, iterator) {
         var walker = root.ownerDocument.createTreeWalker(
@@ -2626,36 +2657,7 @@ if (document.createTreeWalker) {
     };
 }
 else {
-    TracWysiwyg.prototype.treeWalk = function(root, iterator) {
-        if (!root.firstChild) {
-            iterator(null);
-            return;
-        }
-        var element = root;
-        var tmp;
-        while (element) {
-            if (tmp = element.firstChild) {
-                element = tmp;
-            }
-            else if (tmp = element.nextSibling) {
-                element = tmp;
-            }
-            else {
-                for ( ; ; ) {
-                    element = element.parentNode;
-                    if (element == root || !element) {
-                        iterator(null);
-                        return;
-                    }
-                    if (tmp = element.nextSibling) {
-                        element = tmp;
-                        break;
-                    }
-                }
-            }
-            iterator(element);
-        }
-    };
+    TracWysiwyg.prototype.treeWalk = TracWysiwyg.prototype._treeWalkEmulation;
 }
 
 TracWysiwyg.count = 0;

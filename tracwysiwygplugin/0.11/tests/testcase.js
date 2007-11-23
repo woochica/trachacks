@@ -36,6 +36,65 @@ addEvent(window, "load", function() {
         var fragment = unit.fragment;
         var element = unit.element;
 
+        unit.add("treeWalk", function() {
+            var list;
+            function iterator(node) {
+                var value;
+                if (node) {
+                    switch (node.nodeType) {
+                    case 1: value = node.tagName.toLowerCase(); break;
+                    case 3: value = "#text"; break;
+                    }
+                }
+                else {
+                    value = "(null)";
+                }
+                list.push(value);
+            }
+
+            function doTreeWalk(expected, dom) {
+                list = [];
+                instance.treeWalk(dom, iterator);
+                this.assertEqual(expected, list.join(" "));
+
+                list = [];
+                instance._treeWalkEmulation(dom, iterator);
+                this.assertEqual(expected, list.join(" "));
+            }
+
+            doTreeWalk.call(this, "p #text (null)", element("div", element("p", "paragraph")));
+            doTreeWalk.call(this, "#text (null)", element("div", element("p", "paragraph")).firstChild);
+            doTreeWalk.call(this, "(null)", element("div", element("p")).firstChild);
+
+            var dom = element("div");
+            dom.innerHTML = [
+                '<h2 id="Tables">Tables</h2>',
+                '<p>',
+                'Simple tables can be created like this:',
+                '</p>',
+                '<pre class="wiki">||Cell 1||Cell 2||Cell 3||',
+                '||Cell 4||Cell 5||Cell 6||',
+                '</pre><p>',
+                'Display:',
+                '</p>',
+                '<table class="wiki">',
+                '<tbody><tr><td>Cell 1</td><td>Cell 2</td><td>Cell 3',
+                '</td></tr><tr><td>Cell 4</td><td>Cell 5</td><td>Cell 6',
+                '</td></tr></tbody></table>',
+                '<p>',
+                'Note that more complex tables can be created using',
+                '<a class="wiki" href="/practice/wiki/WikiRestructuredText#BiggerReSTExample">reStructuredText</a>.',
+                '</p>' ].join("");
+            var expected = [
+                'h2', '#text', 'p', '#text', 'pre', '#text', 'p', '#text',
+                'table', 'tbody',
+                'tr', 'td', '#text', 'td', '#text', 'td', '#text',
+                'tr', 'td', '#text', 'td', '#text', 'td', '#text',
+                'p', '#text', 'a', '#text', '#text',
+                '(null)'].join(" ");
+            doTreeWalk.call(this, expected, dom);
+        });
+
         unit.add("code block", function() {
             var dom = fragment(
                 element("p", element("tt", "abc")),
