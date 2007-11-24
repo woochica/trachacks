@@ -31,7 +31,7 @@ def execute(hdf, args, env):
        raise TracError('\'AddComment\' macro cannot be included twice')
     hdf['addcommentmacro'] = True
 
-    authname = hdf.getValue("trac.authname", "anonymous")
+    authname = to_unicode(hdf.getValue("trac.authname", "anonymous"))
     db = env.get_db_cnx()
     perm = trac.perm.PermissionCache(env, authname)
     pagename = hdf.getValue("wiki.page_name", "WikiStart")
@@ -55,7 +55,7 @@ def execute(hdf, args, env):
     cancel = hdf.getValue("args.canceladdcomment", "")
     submit = hdf.getValue("args.submitaddcomment", "")
     if not cancel:
-        authname = hdf.getValue("args.authoraddcomment", authname)
+        authname = to_unicode(hdf.getValue("args.authoraddcomment", authname))
 
     # Ensure [[AddComment]] is not present in comment, so that infinite
     # recursion does not occur.
@@ -69,7 +69,9 @@ def execute(hdf, args, env):
     if cancomment and comment and (preview or submit):
         if preview:
             out.write("<div class='wikipage' id='preview'>\n")
-        out.write("<h4 id='commentpreview'>Comment by %s on %s</h4>\n<p>\n%s\n</p>\n" % (authname, time.strftime('%c', time.localtime()), wiki_to_html(comment, env, None)))
+        out.write("<h4 id='commentpreview'>Comment by %s on %s</h4>\n<p>\n%s\n</p>\n" % (
+                    authname, to_unicode(time.strftime('%c', time.localtime())),
+                    wiki_to_html(comment, env, None)))
         if preview:
             out.write("</div>\n")
 
@@ -79,7 +81,9 @@ def execute(hdf, args, env):
         newtext = StringIO()
         for line in page.text.splitlines():
             if line.find('[[AddComment') == 0:
-                newtext.write("==== Comment by %s on %s ====\n%s\n\n" % (authname, time.strftime('%c', time.localtime()), comment))
+                newtext.write("==== Comment by %s on %s ====\n%s\n\n" % (
+                        authname, to_unicode(time.strftime('%c', time.localtime())),
+                        comment))
                 submitted = True
             newtext.write(line + "\n")
         if submitted:
