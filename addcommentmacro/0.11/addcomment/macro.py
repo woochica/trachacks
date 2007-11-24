@@ -47,15 +47,19 @@ class AddCommentMacro(WikiMacroBase):
         page = WikiPage(self.env, resource)
         page_url = req.href.wiki(resource.id)
         wikipreview = req.args.get("preview", "")
-        appendonly = ('appendonly' in args)
+        
         # Can this user add a comment to this page?
-        cancomment = not page.readonly
-        # Is this an "append-only" comment or are we an administrator?
-        if 'WIKI_ADMIN' in req.perm(resource) or appendonly:
+        appendonly = ('appendonly' in args)
+        cancomment = False
+        if page.readonly:
+            if 'WIKI_ADMIN' in req.perm(resource):
+                cancomment = True
+        elif 'WIKI_MODIFY' in req.perm(resource):
             cancomment = True
-        if not cancomment:
+        elif appendonly and 'WIKI_VIEW' in req.perm(resource):
+            cancomment = True
+        else:
             raise TracError('Error: Insufficient privileges to AddComment')
-        disabled = False
         
         # Get the data from the POST
         comment = req.args.get("addcomment", "")
@@ -70,10 +74,7 @@ class AddCommentMacro(WikiMacroBase):
         comment = to_unicode(re.sub('(^|[^!])(\[\[AddComment)', '\\1!\\2', comment))
         
         the_preview = the_message = the_form = tag()
-        
-        if wikipreview or not ('WIKI_MODIFY' in req.perm(resource) or appendonly):
-            disabled = True
-        
+
         # If we are submitting or previewing, inject comment as it should look
         if cancomment and comment and (preview or submit):
             heading = tag.h4("Comment by ", authname, " on ",
@@ -84,8 +85,17 @@ class AddCommentMacro(WikiMacroBase):
                                 format_to_html(self.env, context, comment),
                                 class_="wikipage", id="preview")
         
+        # Check the form_token
+        form_ok = True
+        if submit and req.args.get('__FORM_TOKEN','') != req.form_token:
+            form_ok = False
+            the_message = tag.div(tag.strong("ERROR: "),
+                "AddComment received incorrect form token. "
+                "Do you have cookies enabled?",
+                class_="system-message")
+        
         # When submitting, inject comment before macro
-        if comment and submit:
+        if comment and submit and cancomment and form_ok:
             submitted = False
             newtext = ""
             for line in page.text.splitlines():
@@ -117,7 +127,7 @@ class AddCommentMacro(WikiMacroBase):
                                         id="addcomment",
                                         name="addcomment",
                                         cols=80, rows=5,
-                                        disabled=(disabled and "disabled" or None)),
+                                    disabled=(not cancomment and "disabled" or None)),
                             class_="field"
                         ),
                         (req.authname == 'anonymous' and tag.div(
@@ -126,16 +136,18 @@ class AddCommentMacro(WikiMacroBase):
                             tag.input(id="authoraddcomment", type="text",
                                     size=30, value=authname)
                         ) or None),
+                        tag.input(type="hidden", name="__FORM_TOKEN",
+                                        value=req.form_token),
                         tag.div(
                             tag.input(value="Add comment", type="submit",
                                     name="submitaddcomment", size=30,
-                                    disabled=(disabled and "disabled" or None)),
+                                    disabled=(not cancomment and "disabled" or None)),
                             tag.input(value="Preview comment", type="submit",
                                     name="previewaddcomment",
-                                    disabled=(disabled and "disabled" or None)),
+                                    disabled=(not cancomment and "disabled" or None)),
                             tag.input(value="Cancel", type="submit",
                                     name="canceladdcomment",
-                                    disabled=(disabled and "disabled" or None)),
+                                    disabled=(not cancomment and "disabled" or None)),
                             class_="buttons"
                         ),
                     ),
@@ -144,7 +156,7 @@ class AddCommentMacro(WikiMacroBase):
                 )
         
         add_script(req, 'common/js/wikitoolbar.js')
-
+        
         return tag.div(the_preview, the_message, the_form, id="commenting")
     
     def process_macro_post(self, req):
