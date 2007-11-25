@@ -10,7 +10,7 @@ TracWysiwyg.TestUnit = function() {
         var type = typeof value;
         switch (type) {
         case "string":
-            return value.replace(/[\u0000-\u001f\u007f\ufffe\uffff]/g, function(m) {
+            return value.replace(/[\u0000-\u001f\\\u007f\ufffe\uffff]/g, function(m) {
                 var code = m.charCodeAt(0);
                 switch (code) {
                 case 9:  return "\\t";
@@ -18,8 +18,9 @@ TracWysiwyg.TestUnit = function() {
                 case 11: return "\\v";
                 case 12: return "\\f";
                 case 13: return "\\r";
+                case 92: return "\\\\";
                 }
-                return "\\" + (0x10000 + code).toString(16).substring(1);
+                return "\\u" + (0x10000 + code).toString(16).substring(1);
             });
             break;
         default:

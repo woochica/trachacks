@@ -595,6 +595,7 @@ addEvent(window, "load", function() {
             generate.call(this, dom, [
                 ">This is the quoted text continued",
                 ">>a nested quote",
+                "",
                 "A comment on the above",
                 "",
                 ">>start 2nd level",
@@ -1050,10 +1051,65 @@ addEvent(window, "load", function() {
                 '  </td>',
                 ' </tr>',
                 '</tbody></table>',
-                '' ].join("");
+                '' ].join("\n");
             generateWikitext.call(this, dom, [
                 "||a[[BR]][[BR]]b||b||",
                 "||c||d||" ].join("\n"));
+        });
+
+        unit.add("domToWikitext for code block", function() {
+            var br = function() { return element("br") };
+            var dom = fragment(
+                element("h1", "Heading", br(), "1"),
+                element("h2", "Heading", br(), "2"),
+                element("h3", "Heading", br(), "3"),
+                element("h4", "Heading", br(), "4"),
+                element("h5", "Heading", br(), "5"),
+                element("h6", "Heading", br(), "6"),
+                element("p",
+                    "var TracWysiwyg = function(textarea) {", br(),
+                    "...", br(),
+                    "}"),
+                element("blockquote", { "class": "citation" }, element("p", "citation", br(), "continued")),
+                element("blockquote", element("p", "quote", br(), "continued")),
+                element("ul",
+                    element("li", "item 1", br(), "continued"),
+                    element("ol", element("li", "item", br(), "1.1"))),
+                element("dl",
+                    element("dt", "def to_s(", br(), ")"),
+                    element("dd", "dt", br(), "dd")),
+                element("table",
+                    element("tbody",
+                        element("tr",
+                            element("td", "cell", br(), "1"),
+                            element("th", "cell", br(), "2")))));
+            var wikitext = instance.domToWikitext(dom, { formatCodeBlock: true });
+            this.assertEqual([
+                "= Heading 1 =",
+                "== Heading 2 ==",
+                "=== Heading 3 ===",
+                "==== Heading 4 ====",
+                "===== Heading 5 =====",
+                "====== Heading 6 ======",
+                "var TracWysiwyg = function(textarea) {",
+                "...",
+                "}",
+                "",
+                ">citation",
+                ">continued",
+                "",
+                "  quote",
+                "  continued",
+                "",
+                " * item 1",
+                "   continued",
+                "   1. item",
+                "     1.1",
+                "",
+                " def to_s( ):: dt",
+                "    dd",
+                "",
+                "||cell[[BR]]1||cell[[BR]]2||" ].join("\n"), wikitext);
         });
 
         unit.run();

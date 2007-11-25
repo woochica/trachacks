@@ -681,7 +681,7 @@ TracWysiwyg.prototype.formatCodeBlock = function() {
     }
 
     var fragment = this.getSelectionFragment();
-    text = this.domToWikitext(fragment).replace(/\s+$/, "");
+    text = this.domToWikitext(fragment, { formatCodeBlock: true }).replace(/\s+$/, "");
 
     var d = this.contentDocument;
     var anonymous = d.createElement("div");
@@ -1756,7 +1756,10 @@ TracWysiwyg.prototype.wikiInlineTags = {
     "del": true, "strike": true, "sub": true, "sup": true, "br": true,
     "span": true };
 
-TracWysiwyg.prototype.domToWikitext = function(root) {
+TracWysiwyg.prototype.domToWikitext = function(root, options) {
+    options = options || {};
+    var formatCodeBlock = !!options.formatCodeBlock;
+
     var self = this;
     var getTextContent = TracWysiwyg.getTextContent;
     var wikiOpenTokens = this.wikiOpenTokens;
@@ -1773,7 +1776,6 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
     var listDepth = 0;
     var quoteDepth = 0;
     var quoteCitation = false;
-    var needEscape = true;
     var inCodeBlock = false;
     var skipNode = null;
 
@@ -2034,9 +2036,9 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                             value = value.replace(/[ \t\r\n\f\v]+$/g, "");
                         }
                         value = value.replace(/\r?\n/g, " ");
-                    }
-                    if (needEscape) {
-                        value = value.replace(wikiInlineRulesPattern, escapeText);
+                        if (!formatCodeBlock) {
+                            value = value.replace(wikiInlineRulesPattern, escapeText);
+                        }
                     }
                     if (value) {
                         var prev = texts.length > 0 ? texts[texts.length - 1] : null;
@@ -2101,6 +2103,29 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                     if (inCodeBlock) {
                         value = "\n";
                     }
+                    else if (formatCodeBlock) {
+                        switch (((node.parentNode || {}).tagName || "").toLowerCase()) {
+                        case "li":
+                            value = "\n " + string("  ", listDepth);
+                            break;
+                        case "p": case "blockquote":
+                            value = "\n";
+                            if (quoteDepth > 0) {
+                                value += string(quoteCitation ? ">" : "  ", quoteDepth);
+                            }
+                            break;
+                        case "dd":
+                            value = "\n    ";
+                            break;
+                        case "dt":
+                        case "h1": case "h2": case "h3": case "h4": case "h5": case "h6":
+                            value = " ";
+                            break;
+                        default:
+                            value = "\n";
+                            break;
+                        }
+                    }
                     else if (isTailEscape()) {
                         value = " [[BR]]";
                     }
@@ -2114,7 +2139,6 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                 texts.push(
                     /^(?:li|dd)$/i.test(node.parentNode.tagName) || self.isInlineNode(node.previousSibling)
                     ? "\n{{{\n" : "{{{\n");
-                needEscape = false;
                 inCodeBlock = true;
                 break;
             case "blockquote":
@@ -2236,12 +2260,11 @@ TracWysiwyg.prototype.domToWikitext = function(root) {
                     text = "\n}}}\n";
                 }
                 texts.push(text);
-                needEscape = true;
                 inCodeBlock = false;
                 break;
             case "blockquote":
                 quoteDepth--;
-                if (quoteDepth == 0 && !quoteCitation) {
+                if (quoteDepth == 0) {
                     texts.push("\n");
                 }
                 break;
