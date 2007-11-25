@@ -578,28 +578,32 @@ addEvent(window, "load", function() {
             var dom = fragment(
                 element("blockquote", { "class": "citation" },
                     element("p", "This is the quoted text continued"),
-                    element("blockquote", { "class": "citation" }, element("p", "a nested quote"))),
+                    element("blockquote", { "class": "citation" },
+                        element("p", "a nested quote"),
+                        element("blockquote", { "class": "citation" },
+                            element("p", "a nested-nested quote")))),
                 element("p", "A comment on the above"),
                 element("blockquote", { "class": "citation" },
                     element("blockquote", { "class": "citation" },
                         element("p", "start 2nd level")),
                     element("p", "first level")));
             generateFragment.call(this, dom, [
-                ">This is the quoted text",
-                ">continued",
-                ">>a nested quote",
+                "> This is the quoted text",
+                "> continued",
+                "> > a nested quote",
+                "> > > a nested-nested quote",
                 "A comment on the above",
-                "",
-                ">>start 2nd level",
+                "> > start 2nd level",
                 ">first level" ].join("\n"));
             generate.call(this, dom, [
-                ">This is the quoted text continued",
-                ">>a nested quote",
+                "> This is the quoted text continued",
+                "> > a nested quote",
+                "> > > a nested-nested quote",
                 "",
                 "A comment on the above",
                 "",
-                ">>start 2nd level",
-                ">first level" ].join("\n"));
+                "> > start 2nd level",
+                "> first level" ].join("\n"));
         });
 
         unit.add("header", function() {
@@ -1095,8 +1099,8 @@ addEvent(window, "load", function() {
                 "...",
                 "}",
                 "",
-                ">citation",
-                ">continued",
+                "> citation",
+                "> continued",
                 "",
                 "  quote",
                 "  continued",

@@ -866,7 +866,6 @@ TracWysiwyg.prototype.selectionChanged = function() {
 (function() {
     var _linkScheme = "[\\w.+-]+";
     var _quotedString = "'[^']+'|" + '"[^"]+"';
-    var _citation = "^(?: *>)+";
     var _changesetId = "(?:\\d+|[a-fA-F\\d]{6,})";
     var _ticketLink = "#\\d+";
     var _reportLink = "\\{\\d+\\}";
@@ -908,7 +907,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
 
     var wikiRules = [];
     wikiRules.push.apply(wikiRules, wikiInlineRules);
-    wikiRules.push(_citation);              // 19. citation
+    wikiRules.push("^(?: *>)+[ \\t\\r\\f\\v]*");    // 19. citation
                                             // 20. header
     wikiRules.push("^ *={1,6} *.*? *={1,6} *(?:#[\\w:][-\\w\\d.:]*)?$");
                                             // 21. list
@@ -934,7 +933,6 @@ TracWysiwyg.prototype.selectionChanged = function() {
 
     TracWysiwyg.prototype._linkScheme = _linkScheme;
     TracWysiwyg.prototype._quotedString = _quotedString;
-    TracWysiwyg.prototype._citation = _citation;
     TracWysiwyg.prototype._changesetId = _changesetId;
     TracWysiwyg.prototype._tracLink = _tracLink;
     TracWysiwyg.prototype._wikiPageName = _wikiPageName;
@@ -1054,7 +1052,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
 
     function handleCitation(value) {
         var quote = /^(?: *>)+/.exec(value)[0];
-        var depth = quote.replace(/ +/, "").length;
+        var depth = quote.replace(/ +/g, "").length;
 
         if (depth > quoteDepth.length) {
             closeParagraph();
@@ -1563,7 +1561,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 closeToFragment();
             }
             if (text || match && matchFirstIndex <= wikiInlineRules.length) {
-                if (inParagraph && (prevIndex == 0 || /^(?:(?: *>)+|\s+)$/.test(line.substring(0, prevIndex)))) {
+                if (inParagraph && (prevIndex == 0 || /^(?:(?: *>)+\s*|\s+)$/.test(line.substring(0, prevIndex)))) {
                     text = text ? (" " + text) : " ";
                 }
                 if (!inTable && quoteDepth.length > 0 || holder == fragment) {
@@ -2051,7 +2049,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 break;
             case "p":
                 if (quoteDepth > 0) {
-                    texts.push(string(quoteCitation ? ">" : "  ", quoteDepth));
+                    texts.push(string(quoteCitation ? "> " : "  ", quoteDepth));
                 }
                 else if (!/[^ \t\r\n\f\v]/.test(getTextContent(node))) {
                     skipNode = node;
@@ -2111,7 +2109,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                         case "p": case "blockquote":
                             value = "\n";
                             if (quoteDepth > 0) {
-                                value += string(quoteCitation ? ">" : "  ", quoteDepth);
+                                value += string(quoteCitation ? "> " : "  ", quoteDepth);
                             }
                             break;
                         case "dd":
