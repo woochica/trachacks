@@ -97,7 +97,7 @@ class NikoNikoComponent(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         now = datetime.datetime.now()
-        date_time = now.strftime("%d/%m/%Y");
+        date_time = str(now.date())
         username = req.authname;
         
         # Get current mood
