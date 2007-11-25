@@ -102,9 +102,9 @@ class NikoNikoComponent(Component):
         
         # Get current mood
         getMoodSQL = "SELECT nikoniko_mood,nikoniko_comment FROM nikoniko WHERE "\
-                     "nikoniko_username = '" + username + "' AND "\
-                     "nikoniko_date = '" + date_time + "'"
-        cursor.execute(getMoodSQL)
+                     "nikoniko_username = %s AND "\
+                     "nikoniko_date = %s "
+        cursor.execute(getMoodSQL, (username,date_time) )
         row = cursor.fetchone()
         if row and row[0] > 0:
             todays_mood = row[0]
@@ -189,10 +189,10 @@ class NikoNikoComponent(Component):
         comment_data = {}
         getMoodsSQL = "SELECT nikoniko_username,nikoniko_date,nikoniko_mood,nikoniko_comment "\
             "FROM nikoniko WHERE "\
-            "nikoniko_date >= '" + start_of_week.strftime("%Y-%m-%d") + "' "\
+            "nikoniko_date >= %s "\
             "AND "\
-            "nikoniko_date <= '" + end_of_week.strftime("%Y-%m-%d") + "'"
-        cursor.execute(getMoodsSQL)        
+            "nikoniko_date <= %s "
+        cursor.execute(getMoodsSQL, ( str(start_of_week.date()), str( end_of_week.date() ) ) )
         niko_data = cursor.fetchall()
         for row in niko_data:
             username = row[0]
@@ -226,21 +226,22 @@ class NikoNikoComponent(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
+        cursor = db.cursor()
         if new_mood:
             changeMoodSQL = "INSERT INTO nikoniko ("\
                          "nikoniko_username,nikoniko_date,nikoniko_mood,nikoniko_comment) "\
-                         "VALUES ('" + username + "',"\
-                         "'" + date_time.strftime("%Y-%m-%d") + "',"\
-                         "'" + todays_mood + "','" + comment + "')"
+                         "VALUES ( %s,"\
+                         " %s,"\
+                         " %s, %s )"
+            cursor.execute(changeMoodSQL, (username, str(date_time.date()), todays_mood, comment ) )
         else: 
             changeMoodSQL = "UPDATE nikoniko SET nikoniko_mood = "\
-                            "'" + todays_mood + "', nikoniko_comment = "\
-                            "'" + comment + "' WHERE "\
-                            "nikoniko_username = '" + username + "' AND "\
+                            " %s, nikoniko_comment = "\
+                            " %s WHERE "\
+                            "nikoniko_username = %s AND "\
                             "nikoniko_date = "\
-                            "'" + date_time.strftime("%Y-%m-%d") + "'"
-        cursor = db.cursor()
-        cursor.execute(changeMoodSQL)
+                            " %s "
+            cursor.execute(changeMoodSQL, ( todays_mood, comment, username, str(date_time.date()) ) )
         db.commit()
 
         return todays_mood
