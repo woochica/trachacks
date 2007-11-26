@@ -32,13 +32,13 @@ def execute_non_query(db, sql, *params):
         mylog.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
-        
     try:
         db.close()
     except:
         pass
-
-def get_scalar(db, sql, col=0, *params):
+    
+def get_first_row(db, sql,*params):
+    """ Returns the first row of the query results as a tuple of values (or None)"""
     cur = db.cursor()
     data = None;
     try:
@@ -47,16 +47,39 @@ def get_scalar(db, sql, col=0, *params):
         db.commit();
     except Exception, e:
         mylog.error('There was a problem executing sql:%s \n \
-with parameters:%s\nException:%s'%(sql, params, e));
+        with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback()
     try:
         db.close()
     except:
         pass
+    return data;
+
+def get_scalar(db, sql, col=0, *params):
+    """ Gets a single value (in the specified column) from the result set of the query"""
+    data = get_first_row(db, sql, *params);
     if data:
         return data[col]
     else:
         return None;
+
+def execute_in_trans(db, *args):
+    success = True
+    cur = db.cursor()
+    try:
+        for sql, params in args:
+            cur.execute(sql, params)
+        db.commit()
+    except Exception, e:
+        mylog.error('There was a problem executing sql:%s \n \
+        with parameters:%s\nException:%s'%(sql, params, e));
+        db.rollback();
+        success = False
+    try:
+        db.close()
+    except:
+        pass
+    return success
 
 def db_table_exists(db, table):
     sql = "SELECT * FROM %s LIMIT 1" % table;
@@ -77,6 +100,16 @@ def db_table_exists(db, table):
 
 def get_column_as_list(db, sql, col=0, *params):
     return [valueList[col] for valueList in get_all(db, sql, *params)[1]]
+
+def get_system_value(db, key):
+    return get_scalar(db, "SELECT value FROM system WHERE name=%s", 0, key)
+
+def set_system_value(env,  key, value):
+    if get_system_value(env.get_db_cnx(), key):
+        execute_non_query(env.get_db_cnx(), "UPDATE system SET value=%s WHERE name=%s", value, key)        
+    else:
+        execute_non_query(env.get_db_cnx(), "INSERT INTO system (value, name) VALUES (%s, %s)",
+            value, key)
 
 
 def get_result_set(db, sql, *params):

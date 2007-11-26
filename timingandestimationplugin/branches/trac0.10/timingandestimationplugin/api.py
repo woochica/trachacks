@@ -126,9 +126,7 @@ class TimeTrackingSetupParticipant(Component):
         
         
         # This statement block always goes at the end this method
-        sql = "UPDATE system SET value=%s WHERE name=%s"
-        dbhelper.execute_non_query(self.env.get_db_cnx(),
-                                   sql, self.db_version, self.db_version_key)
+        dbhelper.set_system_value(self.env, self.db_version_key, self.db_version)
         self.db_installed_version = self.db_version
     
 
