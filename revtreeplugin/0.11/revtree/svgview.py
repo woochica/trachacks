@@ -548,42 +548,6 @@ class SvgTransition(object):
         self._parent.svg().addElement(self._widget)
 
 
-class SvgChangeLink(object):
-    """Deprecated. Set of associated changeset on the same branch"""
-    
-    def __init__(self, parent, srcChg, dstChg, color='#000'):
-        self._parent = parent
-        self._source = srcChg
-        self._dest = dstChg
-        self._color = SvgColor(color)
-        
-    def build(self):
-        (x0,y0) = self._source.position('se')
-        (x5,y5) = self._dest.position('ne')
-        pd = SVG.pathdata()
-        pd.move(x0,y0)
-        (x1,y1) = (x0+UNIT,y0+UNIT)
-        (x2,y2) = (x0+UNIT,y0+2*UNIT)
-        (x3,y3) = (x5+UNIT,y5-2*UNIT)
-        (x4,y4) = (x5+UNIT,y5-UNIT)
-        if x2 < x4:
-            pd.qbezier(x1,y1,x2,y2)
-            pd.line(x3,y3)
-            pd.qbezier(x4,y4,x5,y5)
-        else:
-            pd.qbezier(x0+UNIT,(y5+y0)/2,x5,y5)
-        self._extent = (abs(x5-x0),abs(y5-y0))
-        self._widget = SVG.path(pd, 'none', self._color, 
-                                self._parent.strokewidth())
-        self._widget.attributes['stroke-dasharray']='5, 5'
-        
-    def extent(self):
-        return self._extent
-        
-    def render(self):
-        self._parent.svg().addElement(self._widget)
-
-
 class SvgGroup(object):
     """Graphical group of consecutive changesets within a same branch"""
     
@@ -967,9 +931,9 @@ class SvgRevtree(object):
         d.setSVG(self._svg)
         d.toXml(filename)
         
-    def render(self, scale=1, width=None, height=None, linkparent=False):
+    def render(self, scale=1.0):
         """Render the revision tree"""
-        self._svg = SVG.svg((0,0,self._extent[0],self._extent[1]),
+        self._svg = SVG.svg((0, 0, self._extent[0], self._extent[1]),
                             scale*self._extent[0], scale*self._extent[1],
                             True)
         self._arrows.render()

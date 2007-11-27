@@ -49,7 +49,7 @@ class RevtreeStore(object):
         self.timebase = timebase
         self['revmin'] = str(self.revspan[0])
         self['revmax'] = str(self.revspan[1])
-        self['period'] = 31
+        self['period'] = '31'
         self['limits'] = 'limperiod'
         self['style'] = style
         self['branch'] = None
@@ -76,7 +76,7 @@ class RevtreeStore(object):
         for field in RevtreeStore.FIELDS:
             key = 'revtree.%s' % field
             if self[field]:
-                session[key] = self[field]
+                session[key] = str(self[field])
             else:
                 if session.has_key(key):
                     del session[key]
@@ -92,10 +92,7 @@ class RevtreeStore(object):
         for name in filter(lambda v: v in RevtreeStore.FIELDS, values.keys()):
             self[name] = values.get(name, '')
         # checkboxes need to be postprocessed
-        if values.has_key('showdel') and values['showdel']:
-            self['showdel'] = True
-        else:
-            self['showdel'] = False
+        self['showdel'] = values.has_key('showdel') and values['showdel']
 
     def compute_range(self, timebase):
         """Computes the range of revisions to show"""
@@ -259,10 +256,14 @@ class RevtreeModule(Component):
             else:
                 sbranches = None
             sauthors = revstore['author'] and [revstore['author']] or None
+            if revstore['showdel']:
+                hidetermbranch = False
+            else:
+                hidetermbranch = True
             svgrevtree.create(req, 
                               revisions=revstore.revrange, 
                               branches=sbranches, authors=sauthors, 
-                              hidetermbranch=not revstore['showdel'], 
+                              hidetermbranch=hidetermbranch, 
                               style=revstore['style'])
             svgrevtree.build()
             svgrevtree.render(self.scale*0.6)
