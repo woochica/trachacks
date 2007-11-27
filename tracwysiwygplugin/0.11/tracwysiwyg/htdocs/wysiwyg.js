@@ -1844,7 +1844,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         return hash;
     }
 
-    function pushTextWithDecorations(text, node) {
+    function pushTextWithDecorations(text, node, traclink) {
         var _texts = texts;
         var _decorationTokenPattern = decorationTokenPattern;
         var decorationsHash = nodeDecorations(node);
@@ -1881,16 +1881,28 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         decorations.sort();
 
         if (decorations.length > 0) {
-            texts.push.apply(texts, decorations);
+            _texts.push.apply(_texts, decorations);
         }
-        texts.push(text);
+        if (traclink) {
+            if (_texts.length > 0 && /[\w.+-]$/.test(_texts[_texts.length - 1])) {
+                _texts.push(traclink);
+            }
+            else {
+                text = new String(text);
+                text["tracwysiwyg-traclink"] = traclink;
+                _texts.push(text);
+            }
+        }
+        else {
+            _texts.push(text);
+        }
         if (decorations.length > 0) {
             decorations.reverse();
-            texts.push.apply(texts, decorations);
+            _texts.push.apply(_texts, decorations);
         }
         if (cancelDecorations.length > 0) {
             cancelDecorations.reverse();
-            texts.push.apply(texts, cancelDecorations);
+            _texts.push.apply(_texts, cancelDecorations);
         }
     }
 
@@ -1981,18 +1993,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         if (text === null) {
             text = tracLinkText(link, value);
         }
-        pushTextWithDecorations(text, node);
-
-        if (/^[\w.+-]/.test(text)) {
-            if (texts.length > 1 && /[\w.+-]$/.test(texts[texts.length - 2])) {
-                texts[texts.length - 1] = tracLinkText(link, value);
-            }
-            else {
-                text = new String(text);
-                text["tracwysiwyg-traclink"] = tracLinkText(link, value); 
-                texts[texts.length - 1] = text;
-            }
-        }
+        pushTextWithDecorations(text, node, /^[\w.+-]/.test(text) ? tracLinkText(link, value) : null);
     }
 
     function string(source, times) {

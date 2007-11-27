@@ -35,6 +35,12 @@ addEvent(window, "load", function() {
         var unit = new TracWysiwyg.TestUnit();
         var fragment = unit.fragment;
         var element = unit.element;
+        var a = function(link, label) {
+            var attrs = {
+                href: "./search?q=" + encodeURIComponent(link),
+                title: link, "tracwysiwyg-link": link, onclick: "return false;" };
+            return element("a", attrs, label);
+        };
 
         unit.add("treeWalk", function() {
             var list;
@@ -572,6 +578,39 @@ addEvent(window, "load", function() {
                     onclick: "return false;" }),
                 ' - ["free link"]');
             generate.call(this, dom, 'link - [wiki:"internal free link" internal free link] - !["free link"]');
+        });
+
+        unit.add("traclink + underline", function() {
+            var dom = element("p",
+                element("u", a("ticket:123", "#123")), " ",
+                a("ticket:123", element("u", "#123")), " ",
+                element("u", a("report:123", "{123}")), " ",
+                a("report:123", element("u", "{123}")), " ",
+                element("u", a("changeset:123", "[123]")), " ",
+                a("changeset:123", element("u", "[123]")), " ",
+                element("u", a("changeset:123", "r123")), " ",
+                a("changeset:123", element("u", "r123")), " ",
+                element("u", a("log:@123:234", "[123:234]")), " ",
+                a("log:@123:234", element("u", "[123:234]")), " ",
+                element("u", a("wiki:WikiStart", "wiki:WikiStart")), " ",
+                a("wiki:WikiStart", element("u", "wiki:WikiStart")), " ",
+                element("u", a("wiki:WikiStart", "WikiStart")), " ",
+                a("wiki:WikiStart", element("u", "WikiStart")));
+            generateWikitext.call(this, dom, [
+                '__#123__',
+                '__#123__',
+                '__{123}__',
+                '__{123}__',
+                '__[123]__',
+                '__[123]__',
+                '__[changeset:123 r123]__',
+                '__[changeset:123 r123]__',
+                '__[123:234]__',
+                '__[123:234]__',
+                '__[wiki:WikiStart wiki:WikiStart]__',
+                '__[wiki:WikiStart wiki:WikiStart]__',
+                '__[wiki:WikiStart]__',
+                '__[wiki:WikiStart]__' ].join(" "));
         });
 
         unit.add("citation", function() {
