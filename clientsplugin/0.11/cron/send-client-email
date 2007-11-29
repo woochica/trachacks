@@ -154,6 +154,20 @@ class SendClientMailer(object):
     smtp.quit()
 
 
+class SendClientFakeReq:
+  def __init__(self):
+    class SendClientFakeHref:
+      def __call__(self, *args, **keywords):
+        return ''
+      def wiki(self, *args, **keywords):
+        return ''
+    self.href = SendClientFakeHref()
+  
+  def perm(self, *args, **keywords):
+    return []
+
+    return SendClientFakeWiki()
+
 class SendClientEmails:
 
     def __init__(self):
@@ -164,7 +178,7 @@ class SendClientEmails:
         
         locale.setlocale(locale.LC_ALL, '')
         self.env = open_environment(options.envpath)
-        self.req = None
+        self.req = SendClientFakeReq()
         from clients.processor import extract_client_text
 
         # Sync the repo so that any commits that happen to have been made
