@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
@@ -19,6 +19,8 @@ class ClientModule(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
+        # Add Stylesheet here, so that the ticket page gets it too :)
+        add_stylesheet(req, "clients/clients.css")
         return handler
         
     def post_process_request(self, req, template, data, content_type):

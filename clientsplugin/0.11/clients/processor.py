@@ -19,7 +19,7 @@ class ClientWikiProcessor(Component):
     return 'No real formatting but allows for easy extraction of specific text blocks designed to be displayed to the client'
   
   def expand_macro(self, formatter, name, content):
-    return '<fieldset><legend>Comments to Client</legend>%s</fieldset>' % \
+    return '<fieldset class="client"><legend>Comments to Client</legend>%s</fieldset>' % \
            wiki_to_html(content, self.env, formatter.req)
 
 
