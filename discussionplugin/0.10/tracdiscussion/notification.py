@@ -2,7 +2,7 @@
 
 from trac.notification import NotifyEmail
 from trac.util import format_datetime
-from trac.util.text import CRLF, wrap
+from trac.util.text import CRLF, wrap, to_unicode
 
 class DiscussionNotifyEmail(NotifyEmail):
 
@@ -84,10 +84,14 @@ class DiscussionNotifyEmail(NotifyEmail):
         self.hdf.set_unescaped('discussion.subject', subject)
         self.hdf.set_unescaped('discussion.body', body)
         self.hdf.set_unescaped('discussion.link', link)
+        self.hdf.set_unescaped('discussion.project_name',
+          self.env.project_name)
+        self.hdf.set_unescaped('discussion.project_description',
+          self.env.project_description)
+        self.hdf.set_unescaped('discussion.project_url', self.env.project_url)
 
         # Render body and send notification.
-        subject = self.hdf.render('discussion-notify-subject.cs')
-        self.env.log.debug(subject)
+        subject = to_unicode(self.hdf.render('discussion-notify-subject.cs'))
         NotifyEmail.notify(self, id, subject)
 
     def get_topic_id(self, forum_id, topic_id):

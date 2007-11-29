@@ -6,6 +6,7 @@ from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.perm import PermissionError
 from trac.util import format_datetime, pretty_timedelta
+from trac.util.text import to_unicode
 import time
 
 class DiscussionApi(object):
@@ -385,7 +386,6 @@ class DiscussionApi(object):
                 # Display forums.
                 req.hdf['discussion.order'] = order
                 req.hdf['discussion.desc'] = desc
-                self.log.debug(forum)
                 if forum:
                     req.hdf['discussion.name'] = forum['name']
                     req.hdf['discussion.subject'] = forum['subject']
@@ -533,13 +533,11 @@ class DiscussionApi(object):
                 new_time = int(time.time())
 
                 # Add topic.
-                self.log.debug(new_body)
                 self.add_topic(cursor, forum['id'], new_subject, new_time,
                   new_author, new_body)
 
                 # Get new popic and notify about creation.
                 new_topic = self.get_topic_by_time(cursor, new_time)
-                self.log.debug(new_topic)
                 to = self.get_topic_to_recipients(cursor, new_topic['id'])
                 cc = self.get_topic_cc_recipients(cursor, new_topic['id'])
                 notifier = DiscussionNotifyEmail(self.env)
@@ -735,7 +733,7 @@ class DiscussionApi(object):
 
         # Update this topic visit time and save to session.
         visited[topic['id']] = int(time.time())
-        req.session['visited-topics'] = unicode(visited)
+        req.session['visited-topics'] = to_unicode(visited)
 
         # Mark new topic.
         if int(topic['time']) > visit_time:

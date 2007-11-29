@@ -8,6 +8,7 @@ from trac.web.main import IRequestHandler, IRequestFilter
 from trac.web.chrome import add_stylesheet
 from trac.util import format_datetime
 from trac.util.html import html
+from trac.util.text import to_unicode
 import time, re
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
@@ -65,7 +66,7 @@ class DiscussionWiki(Component):
             if topic:
                 req.args['forum'] = topic['forum']
                 req.args['topic'] = topic['id']
-            return req.hdf.render(api.render_discussion(req)[0])
+            return to_unicode(req.hdf.render(api.render_discussion(req)[0]))
         else:
             raise TracError('Not implemented macro %s' % (name))
 
