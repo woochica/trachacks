@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 
 from trac.core import *
-from trac.context import Context
+from trac.mimeview import Context
 from trac.config import Option
 from trac.search import ISearchSource, shorten_result, search_to_sql
 from trac.util import shorten_line
@@ -26,12 +26,14 @@ class DiscussionSearch(Component):
             return
 
         # Create context.
-        context = Context(self.env, req)('discussion')
-        cursor = context.db.cursor()
+        context = Context.from_request(req)('discussion')
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
 
         # Search in topics.
-        query, args = search_to_sql(context.db, ['author', 'subject', 'body'],
-          terms)
+        query, args = search_to_sql(db, ['author', 'subject', 'body'], terms)
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
         sql = "SELECT id, forum, time, subject, body, author FROM topic" \
           " WHERE " + query
@@ -45,7 +47,7 @@ class DiscussionSearch(Component):
               row['time'], row['author'], shorten_result(row['body'], [query]))
 
         # Search in messages
-        query, args = search_to_sql(context.db, ['m.author', 'm.body',
+        query, args = search_to_sql(db, ['m.author', 'm.body',
           't.subject'],  terms)
         columns = ('id', 'forum', 'topic', 'time', 'author', 'body', 'subject')
         sql = "SELECT m.id, m.forum, m.topic, m.time, m.author, m.body," \

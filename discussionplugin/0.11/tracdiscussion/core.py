@@ -3,7 +3,7 @@
 import re
 
 from trac.core import *
-from trac.context import Context
+from trac.mimeview import Context
 from trac.config import Option
 from trac.util.html import html
 
@@ -12,7 +12,6 @@ from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
 
 from tracdiscussion.api import *
-
 
 class DiscussionCore(Component):
     """
@@ -71,7 +70,7 @@ class DiscussionCore(Component):
 
     def process_request(self, req):
         # Create request context.
-        context = Context(self.env, req)('discussion-core')
+        context = Context.from_request(req)('discussion-core')
 
         # Process request and return content.
         api = self.env[DiscussionApi]

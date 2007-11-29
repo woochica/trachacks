@@ -9,8 +9,8 @@ from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
 from trac.util.html import html
+from trac.util.text import to_unicode
 
-from genshi import Markup
 from genshi.template import TemplateLoader
 
 from tracdiscussion.notification import *
@@ -24,7 +24,8 @@ class DiscussionApi(Component):
         self.data = {}
 
         # Get database access.
-        context.cursor = context.db.cursor()
+        db = self.env.get_db_cnx()
+        context.cursor = db.cursor()
 
         # Get request items and modes.
         group, forum, topic, message = self._get_items(context)
@@ -46,10 +47,35 @@ class DiscussionApi(Component):
           is_moderator)
 
         # Update session data.
-        context.req.session['visited-topics'] = unicode(context.visited_topics)
-        context.req.session['visited-forums'] = unicode(context.visited_forums)
+        context.req.session['visited-topics'] = to_unicode(context.visited_topics)
+        context.req.session['visited-forums'] = to_unicode(context.visited_forums)
 
-        # Fill up template data struture.
+        # Convert group, forum topic and message values for pressentation.
+        if group:
+            group['name'] = format_to_oneliner(self.env, context, group['name'])
+            group['description'] = format_to_oneliner(self.env, context,
+              group['description'])
+        if forum:
+            forum['name'] = format_to_oneliner(self.env, context, forum['name'])
+            forum['subject'] = format_to_oneliner(self.env,context,
+              forum['subject'])
+            forum['description'] = format_to_oneliner(self.env, context,
+              forum['description'])
+            forum['time'] = format_datetime(forum['time'])
+        if topic:
+            topic['subject'] = format_to_oneliner(self.env, context,
+              topic['subject'])
+            topic['body'] = format_to_html(self.env, context, topic['body'])
+            topic['author'] = format_to_oneliner(self.env, context,
+              topic['author'])
+            topic['time'] = format_datetime(topic['time'])
+        if message:
+            message['author'] = format_to_oneliner(self.env, context,
+              message['author'])
+            message['body'] = format_to_html(self.env, context, message['body'])
+            message['time'] = format_datetime(message['time'])
+
+        # Fill up template data structure.
         self.data['authname'] = context.req.authname
         self.data['is_moderator'] = is_moderator
         self.data['group'] = group
@@ -58,41 +84,19 @@ class DiscussionApi(Component):
         self.data['message'] = message
         self.data['mode'] = modes[-1]
         self.data['time'] = format_datetime(datetime.now(utc))
-        self.data['realm'] = context.realm
-
-        # Convert group, forum topic and message values for pressentation.
-        if group:
-            group['name'] = format_to_oneliner(context, group['name'])
-            group['description'] = format_to_oneliner(context,
-              group['description'])
-        if forum:
-            forum['name'] = format_to_oneliner(context, forum['name'])
-            forum['subject'] = format_to_oneliner(context, forum['subject'])
-            forum['description'] = format_to_oneliner(context,
-              forum['description'])
-            forum['time'] = format_datetime(forum['time'])
-        if topic:
-            topic['subject'] = format_to_oneliner(context, topic['subject'])
-            topic['body'] = format_to_html(context, topic['body'])
-            topic['author'] = format_to_oneliner(context, topic['author'])
-            topic['time'] = format_datetime(topic['time'])
-        if message:
-            message['author'] = format_to_oneliner(context, message['author'])
-            message['body'] = format_to_html(context, message['body'])
-            message['time'] = format_datetime(message['time'])
+        self.data['realm'] = context.resource.realm
 
         # Add CSS styles and scripts.
         add_stylesheet(context.req, 'common/css/wiki.css')
         add_stylesheet(context.req, 'discussion/css/discussion.css')
         add_stylesheet(context.req, 'discussion/css/admin.css')
-
         add_script(context.req, 'common/js/trac.js')
         add_script(context.req, 'common/js/search.js')
         add_script(context.req, 'common/js/wikitoolbar.js')
 
         # Commit database changes and return template and data.
-        context.db.commit()
-        context.env.log.debug(self.data)
+        db.commit()
+        self.env.log.debug(self.data)
         return modes[-1] + '.html', {'discussion' : self.data}
 
     def _get_items(self, context):
@@ -126,13 +130,13 @@ class DiscussionApi(Component):
         preview = context.req.args.has_key('preview');
         submit = context.req.args.has_key('submit');
         self.log.debug('realm: %s, action: %s, preview: %s, submit: %s' % (
-          context.realm, action, preview, submit))
+          context.resource.realm, action, preview, submit))
 
         # Determine mode.
         if message:
-            if context.realm == 'discussion-admin':
+            if context.resource.realm == 'discussion-admin':
                 pass
-            elif context.realm == 'discussion-wiki':
+            elif context.resource.realm == 'discussion-wiki':
                 if action == 'add':
                     return ['message-add', 'wiki-message-list']
                 elif action == 'quote':
@@ -179,9 +183,9 @@ class DiscussionApi(Component):
                 else:
                     return ['message-list']
         if topic:
-            if context.realm == 'discussion-admin':
+            if context.resource.realm == 'discussion-admin':
                 pass
-            elif context.realm == 'discussion-wiki':
+            elif context.resource.realm == 'discussion-wiki':
                 if action == 'add':
                     return ['message-add', 'wiki-message-list']
                 elif action == 'quote':
@@ -230,12 +234,12 @@ class DiscussionApi(Component):
                 else:
                     return ['message-list']
         elif forum:
-            if context.realm == 'discussion-admin':
+            if context.resource.realm == 'discussion-admin':
                 if action == 'post-edit':
                     return ['forum-post-edit', 'admin-forum-list']
                 else:
                     return ['admin-forum-list']
-            elif context.realm == 'discussion-wiki':
+            elif context.resource.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'add':
@@ -250,7 +254,7 @@ class DiscussionApi(Component):
                 else:
                     return ['topic-list']
         elif group:
-            if context.realm == 'discussion-admin':
+            if context.resource.realm == 'discussion-admin':
                 if action == 'post-add':
                     return ['forum-post-add', 'admin-forum-list']
                 elif action == 'post-edit':
@@ -262,7 +266,7 @@ class DiscussionApi(Component):
                         return ['admin-group-list']
                     else:
                         return ['admin-forum-list']
-            elif context.realm == 'discussion-wiki':
+            elif context.resource.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'post-add':
@@ -270,14 +274,14 @@ class DiscussionApi(Component):
                 else:
                     return ['forum-list']
         else:
-            if context.realm == 'discussion-admin':
+            if context.resource.realm == 'discussion-admin':
                 if action == 'post-add':
                     return ['group-post-add', 'admin-group-list']
                 elif action == 'delete':
                     return ['groups-delete', 'admin-group-list']
                 else:
                     return ['admin-group-list']
-            elif context.realm == 'discussion-wiki':
+            elif context.resource.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'add':
@@ -507,13 +511,14 @@ class DiscussionApi(Component):
 
                 # Display Add Topic form.
                 if new_subject:
-                    self.data['subject'] = format_to_oneliner(context,
+                    self.data['subject'] = format_to_oneliner(self.env, context,
                       new_subject)
                 if new_author:
-                    self.data['author'] = format_to_oneliner(context,
+                    self.data['author'] = format_to_oneliner(self.env, context,
                       new_author)
                 if new_body:
-                    self.data['body'] = format_to_html(context, new_body)
+                    self.data['body'] = format_to_html(self.env, context,
+                      new_body)
 
             elif mode == 'topic-quote':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -546,7 +551,7 @@ class DiscussionApi(Component):
                 new_topic = self.get_topic_by_time(context, new_time)
                 to = self.get_topic_to_recipients(context, new_topic['id'])
                 cc = self.get_topic_cc_recipients(context, new_topic['id'])
-                notifier = DiscussionNotifyEmail(context.env)
+                notifier = DiscussionNotifyEmail(self.env)
                 notifier.notify(context, mode, forum, new_topic, None, to, cc)
 
                 # Redirect request to prevent re-submit.
@@ -658,11 +663,11 @@ class DiscussionApi(Component):
                 new_message = self.get_message_by_time(context, new_time)
                 to = self.get_topic_to_recipients(context, topic['id'])
                 cc = self.get_topic_cc_recipients(context, topic['id'])
-                notifier = DiscussionNotifyEmail(context.env)
+                notifier = DiscussionNotifyEmail(self.env)
                 notifier.notify(context, mode, forum, topic, new_message, to, cc)
 
                 # Redirect request to prevent re-submit.
-                if context.realm != 'discussion-wiki':
+                if context.resource.realm != 'discussion-wiki':
                     context.req.redirect(context.req.href.discussion('redirect',
                       href = context.req.path_info))
 
@@ -690,7 +695,7 @@ class DiscussionApi(Component):
                   message['topic'], message['replyto'], new_body)
 
                 # Redirect request to prevent re-submit.
-                if context.realm != 'discussion-wiki':
+                if context.resource.realm != 'discussion-wiki':
                     context.req.redirect(context.req.href.discussion('redirect',
                       href = context.req.path_info))
 
@@ -703,7 +708,7 @@ class DiscussionApi(Component):
                 self.delete_message(context, message['id'])
 
                 # Redirect request to prevent re-submit.
-                if context.realm != 'discussion-wiki':
+                if context.resource.realm != 'discussion-wiki':
                     context.req.redirect(context.req.href.discussion('redirect',
                       href = context.req.path_info))
 
@@ -736,11 +741,11 @@ class DiscussionApi(Component):
         # Prepare display of topic.
         self.log.debug( (new_body,))
         if new_author != None:
-            self.data['author'] = format_to_oneliner(context, new_author)
+            self.data['author'] = format_to_oneliner(self.env, context, new_author)
         if new_subject != None:
-            self.data['subject'] = format_to_oneliner(context, new_subject)
+            self.data['subject'] = format_to_oneliner(self.env, context, new_subject)
         if new_body != None:
-            self.data['body'] = format_to_html(context, new_body)
+            self.data['body'] = format_to_html(self.env, context, new_body)
 
         # Prepare display of messages.
         display = context.req.session.get('message-list-display')
@@ -761,8 +766,8 @@ class DiscussionApi(Component):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
         sql = "SELECT id, forum, topic, replyto, time, author, body FROM" \
           " message WHERE id = %s"
-        context.env.log.debug(sql % (unicode(id),))
-        context.cursor.execute(sql, (unicode(id),))
+        self.env.log.debug(sql % (to_unicode(id),))
+        context.cursor.execute(sql, (to_unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
@@ -772,7 +777,7 @@ class DiscussionApi(Component):
         columns = ('id', 'forum', 'topic', 'replyto', 'time', 'author', 'body')
         sql = "SELECT id, forum, topic, replyto, time, author, body FROM" \
           " message WHERE time = %s"
-        context.env.log.debug(sql % (time,))
+        self.env.log.debug(sql % (time,))
         context.cursor.execute(sql, (time,))
         for row in context.cursor:
             row = dict(zip(columns, row))
@@ -783,8 +788,8 @@ class DiscussionApi(Component):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " id = %s"
-        context.env.log.debug(sql % (unicode(id),))
-        context.cursor.execute(sql, (unicode(id),))
+        self.env.log.debug(sql % (to_unicode(id),))
+        context.cursor.execute(sql, (to_unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
@@ -794,7 +799,7 @@ class DiscussionApi(Component):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " time = %s"
-        context.env.log.debug(sql % (time,))
+        self.env.log.debug(sql % (time,))
         context.cursor.execute(sql, (time,))
         for row in context.cursor:
             row = dict(zip(columns, row))
@@ -805,7 +810,7 @@ class DiscussionApi(Component):
         columns = ('id', 'forum', 'subject', 'time', 'author', 'body')
         sql = "SELECT id, forum, subject, time, author, body FROM topic WHERE" \
           " subject = %s"
-        context.env.log.debug(sql % (subject,))
+        self.env.log.debug(sql % (subject,))
         context.cursor.execute(sql, (subject,))
         for row in context.cursor:
             row = dict(zip(columns, row))
@@ -815,8 +820,8 @@ class DiscussionApi(Component):
     def get_topic_to_recipients(self, context, id):
         sql = "SELECT t.author FROM topic t WHERE t.id = %s UNION SELECT" \
           " m.author FROM message m WHERE m.topic = %s"
-        context.env.log.debug(sql % (unicode(id), unicode(id)))
-        context.cursor.execute(sql, (unicode(id), unicode(id)))
+        self.env.log.debug(sql % (to_unicode(id), to_unicode(id)))
+        context.cursor.execute(sql, (to_unicode(id), to_unicode(id)))
         to_recipients = []
         for row in context.cursor:
             to_recipients.append(row[0])
@@ -830,8 +835,8 @@ class DiscussionApi(Component):
           'description')
         sql = "SELECT id, forum_group, name, subject, time, moderators," \
            " description FROM forum WHERE id = %s"
-        context.env.log.debug(sql % (unicode(id),))
-        context.cursor.execute(sql, (unicode(id),))
+        self.env.log.debug(sql % (to_unicode(id),))
+        context.cursor.execute(sql, (to_unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             row['moderators'] = row['moderators'].split(' ')
@@ -841,8 +846,8 @@ class DiscussionApi(Component):
     def get_group(self, context, id):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM forum_group WHERE id = %s"
-        context.env.log.debug(sql % (unicode(id),))
-        context.cursor.execute(sql, (unicode(id),))
+        self.env.log.debug(sql % (to_unicode(id),))
+        context.cursor.execute(sql, (to_unicode(id),))
         for row in context.cursor:
             row = dict(zip(columns, row))
             return row
@@ -853,7 +858,7 @@ class DiscussionApi(Component):
     def get_groups(self, context, order_by = 'id', desc = False):
         # Get count of forums without group.
         sql = "SELECT COUNT(f.id) FROM forum f WHERE f.forum_group = 0"
-        context.env.log.debug(sql)
+        self.env.log.debug(sql)
         context.cursor.execute(sql)
         no_group_forums = 0
         for row in context.cursor:
@@ -870,12 +875,13 @@ class DiscussionApi(Component):
           " forum_group FROM forum GROUP BY forum_group) f ON g.id = " \
           " f.forum_group ORDER BY " + order_by + (" ASC",
           " DESC")[bool(desc)]
-        context.env.log.debug(sql)
+        self.env.log.debug(sql)
         context.cursor.execute(sql)
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['name'] = format_to_oneliner(context, row['name'])
-            row['description'] = format_to_oneliner(context, row['description'])
+            row['name'] = format_to_oneliner(self.env, context, row['name'])
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             groups.append(row)
         return groups
 
@@ -886,7 +892,7 @@ class DiscussionApi(Component):
              (context.visited_forums[forum_id] or 0))
            sql = "SELECT COUNT(id) FROM topic t WHERE t.forum = %s AND t.time > %s"
 
-           context.env.log.debug(sql % (forum_id, time))
+           self.env.log.debug(sql % (forum_id, time))
            context.cursor.execute(sql, (forum_id, time))
            for row in context.cursor:
               return int(row[0])
@@ -894,7 +900,7 @@ class DiscussionApi(Component):
 
         def _get_new_replies_count(context, forum_id):
            sql = "SELECT id FROM topic t WHERE t.forum = %s"
-           context.env.log.debug(sql % (forum_id,))
+           self.env.log.debug(sql % (forum_id,))
            context.cursor.execute(sql, (forum_id,))
 
            # Get IDs of topics in this forum.
@@ -908,7 +914,7 @@ class DiscussionApi(Component):
                time = int(context.visited_topics.has_key(topic_id) and
                  (context.visited_topics[topic_id] or 0))
                sql = "SELECT COUNT(id) FROM message m WHERE m.topic = %s AND m.time > %s"
-               context.env.log.debug(sql % (topic_id, time))
+               self.env.log.debug(sql % (topic_id, time))
                context.cursor.execute(sql, (topic_id, time))
                for row in context.cursor:
                    count += int(row[0])
@@ -929,16 +935,19 @@ class DiscussionApi(Component):
           "lastreply, m.topic AS topic FROM message m GROUP BY m.topic) ma ON " \
           "t.id = ma.topic GROUP BY forum) ta ON f.id = ta.forum ORDER BY " + \
           order_by + (" ASC", " DESC")[bool(desc)]
-        context.env.log.debug(sql)
+        self.env.log.debug(sql)
         context.cursor.execute(sql)
 
         # Convert certain forum attributes.
         forums = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['moderators'] = format_to_oneliner(context, row['moderators'])
-            row['subject'] = format_to_oneliner(context, row['subject'])
-            row['description'] = format_to_oneliner(context, row['description'])
+            row['moderators'] = format_to_oneliner(self.env, context,
+              row['moderators'])
+            row['subject'] = format_to_oneliner(self.env, context,
+              row['subject'])
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             row['lastreply'] = row['lastreply'] and pretty_timedelta(
               to_datetime(row['lastreply'], utc)) or 'No replies'
             row['lasttopic'] = row['lasttopic'] and  pretty_timedelta(
@@ -962,7 +971,7 @@ class DiscussionApi(Component):
               (context.visited_topics[topic_id] or 0))
             sql = "SELECT COUNT(id) FROM message m WHERE m.topic = %s AND m.time > %s"
 
-            context.env.log.debug(sql % (topic_id, time))
+            self.env.log.debug(sql % (topic_id, time))
             context.cursor.execute(sql, (topic_id, time))
             for row in context.cursor:
                return int(row[0])
@@ -977,16 +986,16 @@ class DiscussionApi(Component):
           " AS replies, MAX(time) AS lastreply, topic FROM message GROUP BY" \
           " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
           + order_by + (" ASC", " DESC")[bool(desc)]
-        context.env.log.debug(sql % (unicode(forum_id),))
-        context.cursor.execute(sql, (unicode(forum_id),))
+        self.env.log.debug(sql % (to_unicode(forum_id),))
+        context.cursor.execute(sql, (to_unicode(forum_id),))
 
         # Convert certain topic attributes.
         topics = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['author'] = format_to_oneliner(context, row['author'])
-            row['subject'] = format_to_oneliner(context, row['subject'])
-            row['body'] = format_to_html(context, row['body'])
+            row['author'] = format_to_oneliner(self.env, context, row['author'])
+            row['subject'] = format_to_oneliner(self.env, context, row['subject'])
+            row['body'] = format_to_html(self.env, context, row['body'])
             row['lastreply'] = row['lastreply'] and pretty_timedelta(
               to_datetime(row['lastreply'], utc)) or 'No replies'
             row['replies'] = row['replies'] or 0
@@ -1004,14 +1013,14 @@ class DiscussionApi(Component):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m WHERE" \
           " m.topic = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
-        context.env.log.debug(sql % (unicode(topic_id),))
-        context.cursor.execute(sql, (unicode(topic_id),))
+        self.env.log.debug(sql % (to_unicode(topic_id),))
+        context.cursor.execute(sql, (to_unicode(topic_id),))
         messagemap = {}
         messages = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['author'] = format_to_oneliner(context, row['author'])
-            row['body'] = format_to_html(context, row['body'])
+            row['author'] = format_to_oneliner(self.env, context, row['author'])
+            row['body'] = format_to_html(self.env, context, row['body'])
             if int(row['time']) > time:
                 row['new'] = True
             row['time'] = format_datetime(row['time'])
@@ -1036,13 +1045,13 @@ class DiscussionApi(Component):
         columns = ('id', 'replyto', 'time', 'author', 'body')
         sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m" \
           " WHERE m.topic = %s " + order_by
-        context.env.log.debug(sql % (unicode(topic_id),))
-        context.cursor.execute(sql, (unicode(topic_id),))
+        self.env.log.debug(sql % (to_unicode(topic_id),))
+        context.cursor.execute(sql, (to_unicode(topic_id),))
         messages = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['author'] = format_to_oneliner(context, row['author'])
-            row['body'] = format_to_html(context, row['body'])
+            row['author'] = format_to_oneliner(self.env, context, row['author'])
+            row['body'] = format_to_html(self.env, context, row['body'])
             if int(row['time']) > time:
                 row['new'] = True
             row['time'] = format_datetime(row['time'])
@@ -1051,7 +1060,7 @@ class DiscussionApi(Component):
 
     def get_users(self, context):
         users = []
-        for user in context.env.get_known_users():
+        for user in self.env.get_known_users():
             users.append(user[0])
         return users
 
@@ -1059,7 +1068,7 @@ class DiscussionApi(Component):
 
     def add_group(self, context, name, description):
         sql = "INSERT INTO forum_group (name, description) VALUES (%s, %s)"
-        context.env.log.debug(sql % (name, description))
+        self.env.log.debug(sql % (name, description))
         context.cursor.execute(sql, (name, description))
 
     def add_forum(self, context, name, author, subject, description, moderators,
@@ -1067,7 +1076,7 @@ class DiscussionApi(Component):
         moderators = ' '.join(moderators)
         sql = "INSERT INTO forum (name, author, time, moderators, subject," \
           " description, forum_group) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        context.env.log.debug(sql % (name, author, to_timestamp(datetime.now(utc)),
+        self.env.log.debug(sql % (name, author, to_timestamp(datetime.now(utc)),
           moderators, subject, description, group))
         context.cursor.execute(sql, (name, author, to_timestamp(datetime.now(utc)),
           moderators, subject, description, group))
@@ -1075,49 +1084,49 @@ class DiscussionApi(Component):
     def add_topic(self, context, forum, subject, time, author, body):
         sql = "INSERT INTO topic (forum, subject, time, author, body) VALUES" \
           " (%s, %s, %s, %s, %s)"
-        context.env.log.debug(sql % (forum, subject, time, author, body))
+        self.env.log.debug(sql % (forum, subject, time, author, body))
         context.cursor.execute(sql, (forum, subject, time, author, body))
 
     def add_message(self, context, forum, topic, replyto, time, author, body):
         sql = "INSERT INTO message (forum, topic, replyto, time, author," \
           " body) VALUES (%s, %s, %s, %s, %s, %s)"
-        context.env.log.debug(sql % (forum, topic, replyto, time, author, body))
+        self.env.log.debug(sql % (forum, topic, replyto, time, author, body))
         context.cursor.execute(sql, (forum, topic, replyto, time, author, body))
 
     # Delete items functions.
 
     def delete_group(self, context, group):
         sql = "DELETE FROM forum_group WHERE id = %s"
-        context.env.log.debug(sql % (unicode(group),))
-        context.cursor.execute(sql, (unicode(group),))
+        self.env.log.debug(sql % (to_unicode(group),))
+        context.cursor.execute(sql, (to_unicode(group),))
         sql = "UPDATE forum SET forum_group = 0 WHERE forum_group = %s"
-        context.env.log.debug(sql % (unicode(group),))
-        context.cursor.execute(sql, (unicode(group),))
+        self.env.log.debug(sql % (to_unicode(group),))
+        context.cursor.execute(sql, (to_unicode(group),))
 
     def delete_forum(self, context, forum):
         sql = "DELETE FROM message WHERE forum = %s"
-        context.env.log.debug(sql % (unicode(forum),))
-        context.cursor.execute(sql, (unicode(forum),))
+        self.env.log.debug(sql % (to_unicode(forum),))
+        context.cursor.execute(sql, (to_unicode(forum),))
         sql = "DELETE FROM topic WHERE forum = %s"
-        context.env.log.debug(sql % (unicode(forum),))
-        context.cursor.execute(sql, (unicode(forum),))
+        self.env.log.debug(sql % (to_unicode(forum),))
+        context.cursor.execute(sql, (to_unicode(forum),))
         sql = "DELETE FROM forum WHERE id = %s"
-        context.env.log.debug(sql % (unicode(forum),))
-        context.cursor.execute(sql, (unicode(forum),))
+        self.env.log.debug(sql % (to_unicode(forum),))
+        context.cursor.execute(sql, (to_unicode(forum),))
 
     def delete_topic(self, context, topic):
         sql = "DELETE FROM message WHERE topic = %s"
-        context.env.log.debug(sql % (unicode(topic),))
-        context.cursor.execute(sql, (unicode(topic),))
+        self.env.log.debug(sql % (to_unicode(topic),))
+        context.cursor.execute(sql, (to_unicode(topic),))
         sql = "DELETE FROM topic WHERE id = %s"
-        context.env.log.debug(sql % (unicode(topic),))
-        context.cursor.execute(sql, (unicode(topic),))
+        self.env.log.debug(sql % (to_unicode(topic),))
+        context.cursor.execute(sql, (to_unicode(topic),))
 
     def delete_message(self, context, message):
         # Get message replies.
         sql = "SELECT m.id FROM message m WHERE m.replyto = %s"
-        context.env.log.debug(sql % (unicode(message),))
-        context.cursor.execute(sql, (unicode(message),))
+        self.env.log.debug(sql % (to_unicode(message),))
+        context.cursor.execute(sql, (to_unicode(message),))
         replies = []
 
         # Get all replies first.
@@ -1130,8 +1139,8 @@ class DiscussionApi(Component):
 
         # Delete message itself.
         sql = "DELETE FROM message WHERE id = %s"
-        context.env.log.debug(sql % (unicode(message),))
-        context.cursor.execute(sql, (unicode(message),))
+        self.env.log.debug(sql % (to_unicode(message),))
+        context.cursor.execute(sql, (to_unicode(message),))
 
     # Set item functions.
 
@@ -1139,22 +1148,22 @@ class DiscussionApi(Component):
         if not group:
             group = '0'
         sql = "UPDATE forum SET forum_group = %s WHERE id = %s"
-        context.env.log.debug(sql % (group, forum))
+        self.env.log.debug(sql % (group, forum))
         context.cursor.execute(sql, (group, forum))
 
     def set_forum(self, context, topic, forum):
         sql = "UPDATE topic SET forum = %s WHERE id = %s"
-        context.env.log.debug(sql % (forum, topic))
+        self.env.log.debug(sql % (forum, topic))
         context.cursor.execute(sql, (forum, topic))
         sql = "UPDATE message SET forum = %s WHERE topic = %s"
-        context.env.log.debug(sql % (forum, topic))
+        self.env.log.debug(sql % (forum, topic))
         context.cursor.execute(sql, (forum, topic))
 
     # Edit functions.
 
     def edit_group(self, context, group, name, description):
         sql = "UPDATE forum_group SET name = %s, description = %s WHERE id = %s"
-        context.env.log.debug(sql % (name, description, group))
+        self.env.log.debug(sql % (name, description, group))
         context.cursor.execute(sql, (name, description, group))
 
     def edit_forum(self, context, forum, name, subject, description, moderators,
@@ -1164,7 +1173,7 @@ class DiscussionApi(Component):
             group = '0'
         sql = "UPDATE forum SET name = %s, subject = %s, description = %s," \
           " moderators = %s, forum_group = %s WHERE id = %s"
-        context.env.log.debug(sql % (name, subject, description, moderators,
+        self.env.log.debug(sql % (name, subject, description, moderators,
           group, forum))
         context.cursor.execute(sql, (name, subject, description, moderators,
           group, forum))
@@ -1172,11 +1181,11 @@ class DiscussionApi(Component):
     def edit_topic(self, context, topic, forum, subject, body):
         sql = "UPDATE topic SET forum = %s, subject = %s, body = %s WHERE id" \
           " = %s"
-        context.env.log.debug(sql % (forum, subject, body, topic))
+        self.env.log.debug(sql % (forum, subject, body, topic))
         context.cursor.execute(sql, (forum, subject, body, topic))
 
     def edit_message(self, context, message, forum, topic, replyto, body):
         sql = "UPDATE message SET forum = %s, topic = %s, replyto = %s, body" \
           " = %s WHERE id = %s"
-        context.env.log.debug(sql % (forum, topic, replyto, body, message))
+        self.env.log.debug(sql % (forum, topic, replyto, body, message))
         context.cursor.execute(sql, (forum, topic, replyto, body, message))

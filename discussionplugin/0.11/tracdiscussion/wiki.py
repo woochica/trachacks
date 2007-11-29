@@ -8,6 +8,7 @@ from trac.web.main import IRequestHandler, IRequestFilter
 from trac.web.chrome import Chrome, add_stylesheet
 from trac.util import format_datetime
 from trac.util.html import html
+from trac.util.text import to_unicode
 import time, re
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
@@ -49,8 +50,11 @@ class DiscussionWiki(Component):
             subject = content or page_name
 
             # Create request context.
-            context = formatter.context('discussion-wiki')
-            context.cursor = context.db.cursor()
+            context = Context.from_request(formatter.req)('discussion-wiki')
+
+            # Get database access.
+            db = self.env.get_db_cnx()
+            context.cursor = db.cursor()
 
             # Get API object.
             api = self.env[DiscussionApi]
@@ -74,8 +78,8 @@ class DiscussionWiki(Component):
             # Return rendered template.
             data['discussion']['mode'] = 'message-list'
             data['discussion']['page_name'] = page_name
-            return Chrome(self.env).render_template(formatter.req, template,
-              data, 'text/html', True)
+            return to_unicode(Chrome(self.env).render_template(formatter.req,
+              template, data, 'text/html', True))
         else:
             raise TracError('Not implemented macro %s' % (name))
 
@@ -97,8 +101,10 @@ class DiscussionWiki(Component):
     def _discussion_link(self, formatter, ns, params, label):
         id = params
 
+        # Get database access.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+
         if ns == 'forum':
             columns = ('subject',)
             sql = "SELECT f.subject FROM forum f WHERE f.id = %s"

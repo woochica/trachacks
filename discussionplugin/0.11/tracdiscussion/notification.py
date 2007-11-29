@@ -4,6 +4,7 @@ from trac.core import *
 from trac.web.chrome import Chrome
 from trac.notification import NotifyEmail
 from trac.util import format_datetime
+from trac.util.text import to_unicode
 
 from trac.web.chrome import ITemplateProvider
 
@@ -78,8 +79,8 @@ class DiscussionNotifyEmail(NotifyEmail):
           'subject' : subject, 'body' : body, 'link' : link}})
 
         # Render subject template and send notification.
-        subject = Chrome(self.env).render_template(context.req,
-          'discussion-notify-subject.txt', self.data, 'text/plain')
+        subject = to_unicode(Chrome(self.env).render_template(context.req,
+          'discussion-notify-subject.txt', self.data, 'text/plain'))
         NotifyEmail.notify(self, id, subject)
 
     def get_topic_id(self, forum_id, topic_id):
@@ -99,7 +100,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             # Get this messge ID.
             header['Message-ID'] = self.get_message_id(self.forum['id'],
               self.topic['id'], self.message['id'])
-            header['X-Trac-Message-ID'] = unicode(self.message['id'])
+            header['X-Trac-Message-ID'] = to_unicode(self.message['id'])
             header['X-Trac-Discussion-URL'] = self.message['link']
 
             # Get replied message ID.
@@ -115,7 +116,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             # Get this message ID.
             header['Message-ID'] = self.get_topic_id(self.forum['id'],
               self.topic['id'])
-            header['X-Trac-Topic-ID'] = unicode(self.topic['id'])
+            header['X-Trac-Topic-ID'] = to_unicode(self.topic['id'])
             header['X-Trac-Discussion-URL'] = self.topic['link']
 
         # Send e-mail.

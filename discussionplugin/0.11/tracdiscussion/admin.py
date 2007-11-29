@@ -3,7 +3,7 @@
 import time
 
 from trac.core import *
-from trac.context import Context
+from trac.mimeview import Context
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 
@@ -37,7 +37,7 @@ class DiscussionWebAdmin(Component):
                 req.args['group'] = path_info
 
         # Create request context.
-        context = Context(self.env, req)('discussion-admin')
+        context = Context.from_request(req)('discussion-admin')
 
         # Process request.
         api = self.env[DiscussionApi]
