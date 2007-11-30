@@ -182,8 +182,6 @@ class RevtreeModule(Component):
             
     def __init__(self):
         """Reads the configuration and run sanity checks"""
-        if self.config.get('trac', 'repository_type') != 'svn':
-            raise TracError, "Revtree only supports Subversion repositories"
         bre = self.config.get('revtree', 'branch_re',
                   r'^(?P<branch>trunk|(?:branches|tags)/[^/]+)'
                   r'(?:/(?P<path>.*))?$')
@@ -191,14 +189,12 @@ class RevtreeModule(Component):
         self.trunks = self.env.config.get('revtree', 'trunks', 
                                           'trunk').split(' ')
         self.scale = float(self.env.config.get('revtree', 'scale', '1'))
-        tracrepos = self.env.get_repository()
-        self.oldest = int(self.env.config.get('revtree', 'revbase', 
-                                              tracrepos.get_oldest_rev()))
-        youngest = int(tracrepos.get_youngest_rev())
+        self.oldest = int(self.env.config.get('revtree', 'revbase', '1'))
         self.abstime = self.config.getbool('revtree', 'abstime', True)
         self.style = self.config.get('revtree', 'style', 'compact')
         if self.style not in [ 'compact', 'timeline']:
-            raise TracError, "Unsupported style: %s" % self.style
+            self.env.log.warning("Unsupported style: %s" % self.style)
+            self.style = 'compact'
         self.rt = RevtreeSystem(self.env)
 
     def _process_log(self, req):
@@ -225,12 +221,13 @@ class RevtreeModule(Component):
         """Handle revtree generation requests"""
         tracrepos = self.env.get_repository()
         youngest = int(tracrepos.get_youngest_rev())
+        oldest = max(self.oldest, int(tracrepos.get_oldest_rev()))
         if self.abstime:
             timebase = int(time.time())
         else:
             timebase = to_timestamp(tracrepos.get_changeset(youngest).date)
         revstore = RevtreeStore(self.env, req.authname, \
-                                (self.oldest, youngest), 
+                                (oldest, youngest), 
                                 timebase, self.style)
         if req.args.has_key('reset') and req.args['reset']:
             revstore.clear(req.session)
@@ -284,12 +281,12 @@ class RevtreeModule(Component):
                          "Selected filters cannot render a revision tree"})
             # restore default parameters
             repos = Repository(self.env, req.authname)
-            repos.build(self.bcre, revrange=(self.oldest, youngest))
+            repos.build(self.bcre, revrange=(oldest, youngest))
             branches = repos.branches().keys()
             authors = repos.authors()
             
         revrange = repos.revision_range()
-        revisions = self._get_ui_revisions((self.oldest, youngest), revrange)
+        revisions = self._get_ui_revisions((oldest, youngest), revrange)
         branches.sort()
         # prepend the trunks to the selected branches
         for b in filter(lambda t: t not in branches, self.trunks):

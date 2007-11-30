@@ -66,6 +66,11 @@ class RevtreeSystem(Component):
         used for optimizing revtree element placements.""")
     
     def get_revtree(self, repos, req):
+        # ideally, the repository type should be requested from the repos
+        # instance; however it is usually hidden behind the repository cache
+        # that does not report the actual repository backend
+        if self.config.get('trac', 'repository_type') != 'svn':
+            raise TracError, "Revtree only supports Subversion repositories"
         self.env.log.debug("Enhancers: %s" % self.enhancers)
         from revtree.svgview import SvgRevtree
         return SvgRevtree(self.env, repos, req.href(), 
