@@ -35,7 +35,7 @@ if:admin.customfield.name ?>
       var:admin.customfield.label ?>" /></label>
    </div>
    <div class="field">
-    <label>Default value (regular text for Text/Textarea, or index number for Select):<br />
+    <label>Default value (regular text for Text, Textarea, or Select):<br />
     <input type="text" name="value" value="<?cs
       var:admin.customfield.value ?>" /></label>
    </div>
@@ -112,11 +112,11 @@ else ?>
     <td><?cs var:cf.type ?></td>
     <td><?cs var:cf.label ?></td>
     <td class="default"><select name="order_<?cs var:cf.name ?>"><?cs
-	  each:other = admin.customfields ?><option<?cs
-  	 if:other.order == cf.order ?> selected="selected"<?cs
-  	 /if ?>><?cs var:other.order ?></option><?cs
-  	/each ?>
- 	</select></td>
+    each:other = admin.customfields ?><option<?cs
+     if:other.order == cf.order ?> selected="selected"<?cs
+     /if ?>><?cs var:other.order ?></option><?cs
+    /each ?>
+  </select></td>
    </tr><?cs
    /each ?></tbody>
   </table>
