@@ -23,25 +23,49 @@ TracWysiwyg.TestUnit = function() {
                 return "\\u" + (0x10000 + code).toString(16).substring(1);
             });
             break;
-        default:
-            return "{%}".replace("%", type) + value.toString();
+        case "object":
+        case "function":
+            if (value instanceof RegExp) {
+                return value.toString();
+            }
         }
+        return "{%}".replace("%", type) + value.toString();
     };
 
     prototype.fragment = function() {
-        var fragment = document.createDocumentFragment();
+        var start = 0;
+        var arg = arguments[0];
+        var d;
+        if (arg.nodeType != 9) {
+            d = document;
+        }
+        else {
+            d = arg;
+            start = 1;
+        }
+        var fragment = d.createDocumentFragment();
         var length = arguments.length;
-        for (var i = 0; i < length; i++) {
+        for (var i = start; i < length; i++) {
             fragment.appendChild(arguments[i]);
         }
         return fragment;
     };
 
     prototype.element = function(tag) {
-        var d = document;
+        var start = 0;
+        var arg = arguments[start++];
+        var d, tag;
+        if (typeof arg == "string") {
+            d = document;
+            tag = arg;
+        }
+        else {
+            d = arg;
+            tag = arguments[start++];
+        }
         var element = d.createElement(tag);
-        for (var i = 1; i < arguments.length; i++) {
-            var arg = arguments[i];
+        for (var i = start; i < arguments.length; i++) {
+            arg = arguments[i];
             switch (typeof arg) {
             case "object":
                 if (typeof arg.nodeType == "undefined") {
@@ -71,8 +95,19 @@ TracWysiwyg.TestUnit = function() {
         return element;
     };
 
-    prototype.text = function(text) {
-        return document.createTextNode(text);
+    prototype.text = function() {
+        var start = 0;
+        var arg = arguments[start++];
+        var d, text;
+        if (typeof arg == "string") {
+            d = document;
+            text = arg;
+        }
+        else {
+            d = arg;
+            text = arguments[start++];
+        }
+        return d.createTextNode(text);
     };
 
     prototype.$ = function(id) {
@@ -94,6 +129,16 @@ TracWysiwyg.TestUnit = function() {
         throw (label || "") + "[@]\n".replace(/@/g, this.assertCount)
             + this.inspect(expected) + " (" + expected.length + ")\n"
             + this.inspect(actual) + " (" + actual.length + ")";
+    };
+
+    prototype.assertMatch = function(pattern, string, label) {
+        this.assertCount++;
+        if (pattern.test(string)) {
+            return true;
+        }
+        throw (label || "") + "[@]\n".replace(/@/g, this.assertCount)
+            + this.inspect(pattern) + "\n"
+            + this.inspect(string) + " (" + string.length + ")";
     };
 
     prototype.run = function() {

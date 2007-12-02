@@ -1155,6 +1155,55 @@ addEvent(window, "load", function() {
                 "||cell[[BR]]1||cell[[BR]]2||" ].join("\n"), wikitext);
         });
 
+        unit.add("selectRange", function() {
+            var d = instance.contentDocument;
+            function _element() {
+                var args = [ d ];
+                args.push.apply(args, arguments);
+                return element.apply(this, args);
+            }
+            function _text() {
+                var args = [ d ];
+                args.push.apply(args, arguments);
+                return text.apply(this, args);
+            }
+            function assertRangeText(expected, start, startOffset, end, endOffset) {
+                instance.selectRange(start, startOffset, end, endOffset);
+                if (expected instanceof RegExp) {
+                    unit.assertMatch(expected, instance.getSelectionText());
+                }
+                else {
+                    unit.assertEqual(expected, instance.getSelectionText());
+                }
+            }
+            var body = d.body;
+            body.appendChild(fragment(d,
+                _element("p",
+                    "The", " quick", " brown",
+                    _element("b", " fox", " jumps", " over"),
+                    " the", " lazy", " dog."),
+                _element("p", "Brick ", "quiz ", "whangs ", "jumpy ", "veldt ", "fox.")));
+
+            var paragraph1 = body.childNodes[0];
+            var paragraph2 = body.childNodes[1];
+            var bold = paragraph1.childNodes[3];
+            assertRangeText("The", paragraph1.childNodes[0], 0, paragraph1.childNodes[0], 3);
+            assertRangeText("he", paragraph1.childNodes[0], 1, paragraph1.childNodes[0], 3);
+            assertRangeText("e quick brow", paragraph1.childNodes[0], 2, paragraph1.childNodes[2], 5);
+            assertRangeText("ick brown", paragraph1.childNodes[1], 3, paragraph1.childNodes[2], 6);
+            assertRangeText("ick brown fox j", paragraph1.childNodes[1], 3, bold.childNodes[1], 2);
+            assertRangeText("ver the laz", bold.childNodes[2], 2, paragraph1.childNodes[5], 4);
+            assertRangeText(" the lazy", paragraph1.childNodes[4], 0, paragraph1.childNodes[5], 5);
+            assertRangeText("lazy dog.", paragraph1.childNodes[5], 1, paragraph1.childNodes[6], 5);
+            assertRangeText(/^fox jumps over the lazy dog\.[\r\n]*Brick quiz whangs$/,
+                bold.childNodes[0], 1, paragraph2.childNodes[2], 6);
+            assertRangeText(" fox jumps over", paragraph1, 3, paragraph1, 4);
+            assertRangeText(" dog.", paragraph1, 6, paragraph1, 7);
+            assertRangeText("", paragraph1, 7, paragraph1, 7);
+            assertRangeText("quick brown fox jumps over", paragraph1.childNodes[1], 1, paragraph1, 4);
+            assertRangeText(" fox jumps over t", paragraph1, 3, paragraph1.childNodes[4], 2);
+        });
+
         unit.run();
     }
 
