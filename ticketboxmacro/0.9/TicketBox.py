@@ -38,11 +38,14 @@ styles = { "float": "right",
            "background": "#f7f7f0",
            "width": "25%",
            }
+inline_styles = { "background": "#f7f7f0", }
 
 args_pat = [r"#?(?P<tktnum>\d+)",
             r"{(?P<rptnum>\d+)}",
             r"\[report:(?P<rptnum2>\d+)(?P<dv>\?.*)?\]",
             r"(?P<width>\d+(pt|px|%))",
+            r"(?P<summary>summary)",
+            r"(?P<inline>inline)",
             r"(?P<title1>'.*')",
             r'(?P<title2>".*")']
 
@@ -61,6 +64,9 @@ def execute(hdf, txt, env):
     if not txt:
         txt = ''
     items = []
+    long_items = {}
+    show_summary = False
+    inline = False
     title = "Tickets"
     args_re = re.compile("^(?:" + string.join(args_pat, "|") + ")$")
     for arg in [string.strip(s) for s in txt.split(',')]:
@@ -76,6 +82,10 @@ def execute(hdf, txt, env):
             styles['width'] = match.group('width')
         elif match.group('tktnum'):
             items.append(int(match.group('tktnum')))
+        elif match.group('summary'):
+            show_summary = True
+        elif match.group('inline'):
+            inline = True
         elif match.group('rptnum') or match.group('rptnum2'):
             num = match.group('rptnum') or match.group('rptnum2')
             dv = {}
@@ -103,8 +113,10 @@ def execute(hdf, txt, env):
                 if rows:
                     descriptions = [desc[0] for desc in curs.description]
                     idx = descriptions.index('ticket')
+                    summ = descriptions.index('summary')
                     for row in rows:
                         items.append(row[idx])
+                        long_items[row[idx]] = row[summ]
             finally:
                 if not hasattr(env, 'get_cnx_pool'):
                     # without db connection pool, we should close db.
@@ -116,19 +128,26 @@ def execute(hdf, txt, env):
     try:
         # for trac 0.9 or later
         from trac.wiki.formatter import wiki_to_oneliner
-        html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
-                               env, env.get_db_cnx())
     except:
         # for trac 0.8.x
         from trac.WikiFormatter import wiki_to_oneliner
+
+    if show_summary:
+        html = string.join([wiki_to_oneliner("%s (#%d)" % (v,k),
+                                             env, env.get_db_cnx()) for k,v in long_items.iteritems()], "<br>")
+    else:
         html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
-                                hdf, env, env.get_db_cnx())
+                                env, env.get_db_cnx())
+
     if html != '':
         try:
             title = title % len(items)  # process %d in title
         except:
             pass
-        style = string.join(["%s:%s" % (k,v) for k,v in styles.items() if v <> ""], "; ")
+        if inline:
+            style = string.join(["%s:%s" % (k,v) for k,v in inline_styles.items() if v <> ""], "; ")
+        else:
+            style = string.join(["%s:%s" % (k,v) for k,v in styles.items() if v <> ""], "; ")
         return '<fieldset class="ticketbox" style="%s"><legend>%s</legend>%s</fieldset>' % \
                (style, title, html)
     else:
