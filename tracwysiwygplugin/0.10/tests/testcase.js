@@ -557,16 +557,23 @@ addEvent(window, "load", function() {
         });
 
         unit.add("WikiPageName", function() {
-            var dom = element("p",
-                element("a", "CamelCase", {
-                    href: "./search?q=" + encodeURIComponent("wiki:CamelCase"),
-                    title: "wiki:CamelCase", "tracwysiwyg-link": "wiki:CamelCase",
-                    onclick: "return false;" }),
-                " CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor");
-            generateFragment.call(this, dom,
-                "CamelCase !CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor");
-            generate.call(this, dom,
-                "[wiki:CamelCase] !CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor");
+            var dom = fragment(
+                element("p",
+                    a("wiki:CamelCase", "CamelCase"),
+                    " CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor"),
+                element("p",
+                    a("wiki:WikiStart", "WikiStart"),
+                    " Wiki",
+                    a("wiki:Start", "Start"),
+                    " ",
+                    a("wiki:Wiki", "Wiki"),
+                    "Start Wiki",
+                    a("wiki:Start", "Start"),
+                    "Wiki"));
+            generate.call(this, dom, [
+                "CamelCase !CamelCase FooBarA FOo FoobarA OneÅngström Oneångström setTextColor",
+                "",
+                "WikiStart Wiki[wiki:Start] [wiki:Wiki]Start Wiki[wiki:Start]Wiki" ].join("\n"));
         });
 
         unit.add('["internal free link"]', function() {

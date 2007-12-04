@@ -472,9 +472,6 @@ TracWysiwyg.prototype.setupEditorEvents = function() {
     addEvent(d, window.opera ? "keypress" : "keydown", listenerKeydown);
 
     function listenerKeypress(event) {
-        if (!self.autolink) {
-            return;
-        }
         event = event || self.contentWindow.event;
         switch (event.charCode || event.keyCode) {
         case 0x20:  // SPACE
@@ -607,6 +604,9 @@ TracWysiwyg.prototype.setupSyncResizingTextArea = function() {
 };
 
 TracWysiwyg.prototype.detectTracLink = function(event) {
+    if (!this.autolink) {
+        return;
+    }
     var range = this.getSelectionRange();
     var node = range.startContainer;
     if (!node || !range.collapsed) {
@@ -639,6 +639,9 @@ TracWysiwyg.prototype.detectTracLink = function(event) {
     var endContainer = node;
     var text = [ node.nodeValue.substring(0, offset) ];
     for ( ; ; ) {
+        if (/[ \t\r\n\f\v]/.test(text[text.length - 1])) {
+            break;
+        }
         node = node.previousSibling;
         if (!node || node.nodeType == 1) {
             break;
@@ -653,7 +656,7 @@ TracWysiwyg.prototype.detectTracLink = function(event) {
     }
 
     var pattern = this.wikiDetectTracLinkPattern;
-    pattern.lastIndex = 0;
+    pattern.lastIndex = /[^ \t\r\n\f\v]*$/.exec(text).index;
     var match, tmp;
     for (tmp = pattern.exec(text); tmp; tmp = pattern.exec(text)) {
         match = tmp;
@@ -662,8 +665,8 @@ TracWysiwyg.prototype.detectTracLink = function(event) {
         return;
     }
 
-    var label = match[match.length - 1];
-    var link = this.convertWikiSyntax(label);
+    var label = match[0];
+    var link = this.normalizeTracLink(label);
     var id = this.generateDomId();
     var anchor = this.createAnchor(link, label, { id: id, "tracwysiwyg-autolink": true });
     var anonymous = this.contentDocument.createElement("div");
@@ -1990,6 +1993,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
     var wikiInlineRulesPattern = this.wikiInlineRulesPattern;
     var wikiSyntaxPattern = this.wikiSyntaxPattern;
     var tracLinkPattern = new RegExp("^" + this._tracLink + "$");
+    var wikiPageNamePattern = new RegExp("^" + this._wikiPageName + "$");
     var decorationTokenPattern = /^(?:'''|''|__|\^|,,)$/;
 
     var texts = [];
@@ -2180,17 +2184,37 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
             return;
         }
         var text = null;
-        if (node.getAttribute("tracwysiwyg-autolink") == "tracwysiwyg-autolink"
-            ? (wikiSyntaxPattern.test(label) || tracLinkPattern.test(label))
-            : (link == label && tracLinkPattern.test(label)))
-        {
-            text = label;
+        var traclink = null;
+        if (node.getAttribute("tracwysiwyg-autolink") == "tracwysiwyg-autolink") {
+            if (wikiPageNamePattern.test(label)) {
+                text = label;
+                link = "wiki:" + label;
+                traclink = "[wiki:" + label + "]";
+            }
+            else if (wikiSyntaxPattern.test(label)) {
+                text = label;
+                link = self.convertWikiSyntax(label);
+            }
+            else if (tracLinkPattern.test(label)) {
+                text = link = label;
+            }
+        }
+        else {
+            if (link == label && tracLinkPattern.test(label)) {
+                text = label;
+            }
         }
         if (!text) {
             var match = /^([\w.+-]+):(@?(.*))$/.exec(link);
             if (match) {
                 if (label == match[2]) {
-                    text = "[" + link + "]";
+                    if (match[1] == "wiki" && wikiPageNamePattern.test(match[2])) {
+                        text = match[2];
+                        traclink = "[wiki:" + text + "]";
+                    }
+                    else {
+                        text = "[" + link + "]";
+                    }
                 }
                 else {
                     var usingLabel = false;
@@ -2220,7 +2244,10 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         if (text === null) {
             text = tracLinkText(link, label);
         }
-        pushTextWithDecorations(text, node, /^[\w.+-]/.test(text) ? tracLinkText(link, label) : null);
+        if (!traclink && /^[\w.+-]/.test(text)) {
+            traclink = tracLinkText(link, label);
+        }
+        pushTextWithDecorations(text, node, traclink);
     }
 
     function string(source, times) {
