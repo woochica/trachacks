@@ -41,8 +41,8 @@ var TracWysiwyg = function(textarea) {
     this.setupToggleEditorButtons();
     this.setupSyncResizingTextArea();
 
-    var styleStatic = { position: "static", left: "-2000px", top: "-2000px" };
-    var styleAbsolute = { position: "absolute", left: "-2000px", top: "-2000px" };
+    var styleStatic = { position: "static", left: "-9999px", top: "-9999px" };
+    var styleAbsolute = { position: "absolute", left: "-9999px", top: "-9999px" };
     switch (editorMode) {
     case "textarea":
         TracWysiwyg.setStyle(textarea, styleStatic);
@@ -54,7 +54,8 @@ var TracWysiwyg = function(textarea) {
         TracWysiwyg.setStyle(this.autolinkButton.parentNode, { display: "none" });
         break;
     case "wysiwyg":
-        TracWysiwyg.setStyle(textarea, styleAbsolute);
+        TracWysiwyg.setStyle(textarea, { position: "absolute", left: "-9999px" });
+        TracWysiwyg.setStyle(textarea, { top: TracWysiwyg.elementPosition(textarea).top + "px" });
         if (wikitextToolbar) {
             TracWysiwyg.setStyle(wikitextToolbar, styleAbsolute);
         }
@@ -3176,14 +3177,40 @@ TracWysiwyg.setStyle = function(element, object) {
     }
 };
 
+if (document.defaultView) {
+    TracWysiwyg.getStyle = function(element, name) {
+        var value = element.style[name];
+        if (!value) {
+            var style = element.ownerDocument.defaultView.getComputedStyle(element, null)
+            value = style ? style[name] : null;
+        }
+        return value;
+    };
+}
+else {
+    TracWysiwyg.getStyle = function(element, name) {
+        return element.style[name] || element.currentStyle[name];
+    };
+}
+
 TracWysiwyg.elementPosition = function(element) {
-    var left = 0, top = 0;
-    while (element) {
-        left += element.offsetLeft || 0;
-        top += element.offsetTop || 0;
-        element = element.offsetParent;
+    function vector(left, top) {
+        var value = [ left, top ];
+        value.left = left;
+        value.top = top;
+        return value;
     }
-    return [ left, top ];
+    var position = TracWysiwyg.getStyle(element, "position");
+    var left = 0, top = 0;
+    for (var node = element; node; node = node.offsetParent) {
+        left += node.offsetLeft || 0;
+        top += node.offsetTop || 0;
+    }
+    if (position != "absolute") {
+        return vector(left, top);
+    }
+    var offset = TracWysiwyg.elementPosition(element.offsetParent);
+    return vector(left - offset.left, top - offset.top);
 };
 
 TracWysiwyg.getSelfOrAncestor = function(element, name) {
