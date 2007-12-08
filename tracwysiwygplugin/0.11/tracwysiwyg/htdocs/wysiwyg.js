@@ -205,7 +205,19 @@ TracWysiwyg.prototype.setupFormEvent = function() {
 TracWysiwyg.prototype.createWysiwygToolbar = function(d) {
     var html = [
         '<ul>',
-        '<li title="Style"><a id="wt-style" href="#">Style</a></li>',
+        '<li class="wysiwyg-menu-style" title="Style">',
+        '<a id="wt-style" href="#">',
+        '<span class="wysiwyg-menu-style">Style</span>',
+        '<span class="wysiwyg-menu-paragraph">Normal</span>',
+        '<span class="wysiwyg-menu-heading1">Header 1</span>',
+        '<span class="wysiwyg-menu-heading2">Header 2</span>',
+        '<span class="wysiwyg-menu-heading3">Header 3</span>',
+        '<span class="wysiwyg-menu-heading4">Header 4</span>',
+        '<span class="wysiwyg-menu-heading5">Header 5</span>',
+        '<span class="wysiwyg-menu-heading6">Header 6</span>',
+        '<span class="wysiwyg-menu-code">Code block</span>',
+        '<span class="wysiwyg-menu-quote">Quote</span>',
+        '</a></li>',
         '<li title="Bold (Ctrl+B)"><a id="wt-strong" href="#"></a></li>',
         '<li title="Italic (Ctrl+I)"><a id="wt-em" href="#"></a></li>',
         '<li title="Underline (Ctrl+U)"><a id="wt-underline" href="#"></a></li>',
@@ -1069,16 +1081,15 @@ TracWysiwyg.prototype.selectionChanged = function() {
     var styles = [ "quote", "paragraph", "code", "heading1",
         "heading2", "heading3", "heading4", "heading5", "heading6" ];
     var styleButton = toolbarButtons["style"];
-    var styleButtonText = "Style";
+    var styleButtonClass = "wysiwyg-menu-style";
     for (var i = 0; i < styles.length; i++) {
-        if (status[styles[i]]) {
-            styleButtonText = TracWysiwyg.getTextContent(toolbarButtons[styles[i]]);
+        var name = styles[i];
+        if (status[name]) {
+            styleButtonClass = "wysiwyg-menu-" + name;
             break;
         }
     }
-    if (TracWysiwyg.getTextContent(styleButton) != styleButtonText) {
-        styleButton.replaceChild(document.createTextNode(styleButtonText), styleButton.firstChild);
-    }
+    styleButton.parentNode.className = styleButtonClass;
 };
 
 (function() {
