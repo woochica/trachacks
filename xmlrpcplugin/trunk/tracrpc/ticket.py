@@ -7,8 +7,9 @@ import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
 from trac.ticket.notification import TicketNotifyEmail
+from trac.util.datefmt import utc
 
-import time
+from datetime import datetime
 import inspect
 import xmlrpclib
 from StringIO import StringIO
@@ -96,7 +97,7 @@ class TicketRPC(Component):
 
     def update(self, req, id, comment, attributes = {}, notify=False):
         """ Update a ticket, returning the new ticket in the same form as getTicket(). """
-        now = time.time()
+        now = datetime.now(utc)
 
         t = model.Ticket(self.env, id)
         for k, v in attributes.iteritems():
