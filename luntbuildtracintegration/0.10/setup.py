@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from setuptools import find_packages, setup
 
 setup(
