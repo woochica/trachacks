@@ -6,9 +6,9 @@ plugin = tractimevisualizerplugin
 setup(\
     name='TracTimeVisualizerPlugin',
     version=plugin.__version__,
-    description='A plugin for rendering burndown images, depends timing and estimation plugin',
+    description='A plugin to render burndown graphs from ticket history',
     author=plugin.__author__,
-    author_email='',
+    author_email='th07@homepelko.com',
     license=plugin.__license__,
     packages=['tractimevisualizerplugin'],
     url=plugin.__url__,

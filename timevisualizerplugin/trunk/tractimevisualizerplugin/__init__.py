@@ -4,7 +4,7 @@ from tractimevisualizerplugin import *
 
 DEVELOPER_MODE=False
 
-__version__ = '0.4'
+__version__ = '0.5'
 __url__ = 'http://trac-hacks.org/wiki/TimeVisualizerPlugin'
 __author__ = 'Markus Pelkonen'
 __copyright__ = 'Copyright (C) 2007 Markus Pelkonen'

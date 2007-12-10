@@ -45,6 +45,8 @@ Note that filtering tickets that are not belonging to any milestone or component
     dateend=options.get('dateend', None)
     hidedates=options.get('hidedates')
     hidehours=options.get('hidehours')
+    calc_fields_str = options.get('calc_fields')
+    calc_fields = calc_fields_str.split('-')
 
     print>>debug, "********************** serving ***********************"
 
@@ -71,7 +73,11 @@ Note that filtering tickets that are not belonging to any milestone or component
             if targetmilestone and ticket['milestone'] != targetmilestone: continue
             if targetticket and ticket['ticket'] != targetticket: continue
             if targetcomponent and ticket['component'] != targetcomponent: continue
-            result += (ticket['estimate'] - ticket['totalhours'])
+            if len(calc_fields) == 2:
+                result += ticket[calc_fields[0]] - ticket[calc_fields[1]]
+            else:
+                result += ticket[calc_fields[0]]
+            #print>>debug, ticket
         return result
 
     def tofloat(obj):
@@ -90,24 +96,40 @@ Note that filtering tickets that are not belonging to any milestone or component
     # fetch the last known state (HEAD revision) of tickets and store to memory
     # ----------------------------------------------------
 
-    # outer join may return zero or '' if there is no such field, so we use arithmetic opration -0.0 to 'cast' result to be valid float value
-    sql = """
-        SELECT t.id, t.time, t.status, t.milestone, est.value-0.0, th.value-0.0, t.component
-        FROM ticket t
-            LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'estimatedhours')
-            LEFT OUTER JOIN ticket_custom th ON (t.id = th.ticket AND th.name = 'totalhours')
-        ORDER BY t.id
-        """
-    for (ticket,time, status,milestone,estimate,totalhours,component) in cursor.execute(sql).fetchall():
-        tickets[ticket] = {'ticket':ticket,
-                           'status':status,
-                           'milestone':milestone,
-                           'estimate':estimate,
-                           'totalhours':totalhours,
-                           'time':time,
-                           'component':component}
-        #print>>debug, "ticket #%d: %s" % (ticket, str(tickets[ticket]))
+    if len(calc_fields) == 2:
+        sql = """
+            SELECT t.id, t.time, t.status, t.milestone, est.value, th.value, t.component
+            FROM ticket t
+                LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = '%s')
+                LEFT OUTER JOIN ticket_custom th ON (t.id = th.ticket AND th.name = '%s')
+            ORDER BY t.id
+            """ % (calc_fields[0], calc_fields[1])
 
+        cursor.execute(sql)
+        for (ticket,time, status,milestone,estimatedhours,totalhours,component) in cursor.fetchall():
+            tickets[ticket] = {'ticket':ticket,
+                               'time':time,
+                               'status':status,
+                               'milestone':milestone,
+                               calc_fields[0]:tofloat(estimatedhours),
+                               calc_fields[1]:tofloat(totalhours),
+                               'component':component}
+    else:
+        sql = """
+            SELECT t.id, t.time, t.status, t.milestone, cust.value, t.component
+            FROM ticket t
+                LEFT OUTER JOIN ticket_custom cust ON (t.id = cust.ticket AND cust.name = '%s')
+            ORDER BY t.id
+            """ % (calc_fields[0])
+
+        cursor.execute(sql)
+        for (ticket,time, status,milestone,workleft,component) in cursor.fetchall():
+            tickets[ticket] = {'ticket':ticket,
+                               'time':time,
+                               'status':status,
+                               'milestone':milestone,
+                               calc_fields[0]:tofloat(workleft),
+                               'component':component}
 
     # ----------------------------------------------------
     # process timestamps from last ticket change/creation
@@ -124,7 +146,6 @@ Note that filtering tickets that are not belonging to any milestone or component
             # data changed from previous item -> write row
             result.append(time)
             result.append(hours)
-            
 
     def process_ticket_create(t, id):
         del tickets[id]
@@ -133,19 +154,21 @@ Note that filtering tickets that are not belonging to any milestone or component
         sql = """
             SELECT ticket, time, field, oldvalue, newvalue
             FROM ticket_change
-            WHERE time=%d AND ticket=%d AND field IN('estimatedhours', 'totalhours', 'milestone', 'component') 
+            WHERE time=%d AND ticket=%d
             ORDER BY time desc""" % (t,id)
-        data = cursor.execute(sql).fetchall()
+
+        cursor.execute(sql)
+        data = cursor.fetchall()
         # print>>debug, "ticket_change data:"
         #for line in data:
         #    print>>debug, line
 
         for (ticket,time,field,oldvalue,newvalue) in data:
             # we iterate backwards, thus we save old values
-            if field == 'totalhours':
-                tickets[ticket]['totalhours'] = tofloat(oldvalue)
-            elif field == 'estimatedhours':
-                tickets[ticket]['estimatedhours'] = tofloat(oldvalue)
+            if field == calc_fields[0]:
+                tickets[ticket][calc_fields[0]] = tofloat(oldvalue)
+            elif len(calc_fields) == 0 and field == calc_fields[1]:
+                tickets[ticket][calc_fields[1]] = tofloat(oldvalue)
             elif field == 'milestone':
                 tickets[ticket]['milestone'] = oldvalue
             elif field == 'component':
@@ -154,10 +177,12 @@ Note that filtering tickets that are not belonging to any milestone or component
     # -- find out timestamps (revisions) and bind processors for them
 
     timestamps = {}
-    for line in cursor.execute("SELECT DISTINCT time, id from ticket ORDER BY time").fetchall():
+    cursor.execute("SELECT DISTINCT time, id from ticket ORDER BY time")
+    for line in cursor.fetchall():
         timestamps[int(line[0])] = [(process_ticket_create, int(line[1]))]
 
-    for line in cursor.execute("SELECT DISTINCT time, ticket from ticket_change ORDER BY time").fetchall():
+    cursor.execute("SELECT DISTINCT time, ticket from ticket_change ORDER BY time")
+    for line in cursor.fetchall():
         item = timestamps.get(int(line[0]),[])
         item.insert(0, (process_ticket_change, int(line[1])))
         timestamps[int(line[0])] = item
@@ -238,8 +263,8 @@ Note that filtering tickets that are not belonging to any milestone or component
     # todo: margin as percents
     #margin = 2
 
-    fx = 100.0 / largesttime
-    fy = 100.0 / maxhours
+    fx = 100.0 / max(largesttime, 1)
+    fy = 100.0 / max(maxhours, 1)
 
     svg =\
 """<?xml version="1.0" standalone="no"?>
@@ -288,7 +313,7 @@ if __name__ == "__main__":
     "This is just for testing the stuff from command line"
 
     def build_svg_paramlist(db, **args):
-        return build_svg(args)
+        return build_svg(db, args)
 
     from trac.env import open_environment
     env = open_environment("c:\\scm\\trac\\visualizerdemo")
@@ -312,6 +337,7 @@ def process_request(plugin, req):
     if tractimevisualizerplugin.DEVELOPER_MODE:
         debug = MyDebug()
     try:
+        #print>>debug, dir(req)
         from trac.web import RequestDone
         from trac.util.datefmt import http_date
         from time import time
@@ -323,7 +349,9 @@ def process_request(plugin, req):
 
         if req.method != 'HEAD':
             db = plugin.env.get_db_cnx()
-            req.write(build_svg(db, req.args, debug))
+            args = req.args.copy()
+            args['calc_fields'] = plugin.env.config.get('timevisualizer','calc_fields','estimatedhours-totalhours')
+            req.write(build_svg(db, args, debug))
         raise RequestDone
     finally:
         if debug:
