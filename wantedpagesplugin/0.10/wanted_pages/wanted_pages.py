@@ -59,10 +59,10 @@ class WantedPagesMacro(Component):
         db = self.env.get_db_cnx()
 
         for name, text in exec_wiki_sql(db): # query is ordered by latest version first
-        	if name not in wikiPages:
-				wikiPages.append(name)
-            	self.index[name] = name
-            	texts.append(('[wiki:%s]' % name, text))
+            if name not in wikiPages:
+                wikiPages.append(name)
+                self.index[name] = name
+                texts.append(('[wiki:%s]' % name, text))
 
         for id, text in exec_ticket_sql(db):
             texts.append(('#%s' % id, text))
