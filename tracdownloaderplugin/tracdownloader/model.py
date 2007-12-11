@@ -5,10 +5,10 @@ import shutil
 import time
 import string
 import locale
-import downloader.db
+import tracdownloader.db
 
 from string import *
-from downloader import form_data
+from tracdownloader import form_data
 from trac.core import *
 from trac import util
 
@@ -195,7 +195,7 @@ class Categories(object):
             self.db = db
         
         """Downloader DB existence check"""
-        downloader.db.DownloaderDB(self.env)
+        tracdownloader.db.DownloaderDB(self.env)
         
         self._categories = None
         

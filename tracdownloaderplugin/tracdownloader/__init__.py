@@ -11,4 +11,4 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
 
-from downloader.web_ui import *
+from tracdownloader.web_ui import *

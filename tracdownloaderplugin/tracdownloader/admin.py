@@ -32,8 +32,8 @@ from trac.util import Markup
 from trac.web.chrome import add_stylesheet, ITemplateProvider, add_link
 from trac.web.href import Href
 from webadmin.web_ui import IAdminPageProvider
-from downloader.model import *
-from downloader import form_data
+from tracdownloader.model import *
+from tracdownloader import form_data
 from string import *
                             
 try:
@@ -550,7 +550,7 @@ class DownloaderAdminPage(Component):
         
     def _render_forms(self, req):
         
-        if not os.access(downloader.model.downloader_dir, os.F_OK + os.W_OK):
+        if not os.access(tracdownloader.model.downloader_dir, os.F_OK + os.W_OK):
             req.hdf['files_dir.readonly'] = True
         
         req.hdf['selected'] = self.selected
