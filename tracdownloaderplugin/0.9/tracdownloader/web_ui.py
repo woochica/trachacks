@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005-2006 Edgewall Software
-# Copyright (C) 2005 Jonas Borgström <jonas@edgewall.com>
+# Author: Petr Škoda <pecast_cz@seznam.cz>
 # All rights reserved.
 #
-# This software is licensed as described in the file COPYING, which
-# you should have received as part of this distribution. The terms
-# are also available at http://trac.edgewall.com/license.html.
+# This software is licensed under GNU GPL. You can read  it at
+# http://www.gnu.org/licenses/gpl-3.0.html
 #
-# This software consists of voluntary contributions made by many
-# individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
-#
-# Author: Jonas Borgström <jonas@edgewall.com>
 
 import re
 import os

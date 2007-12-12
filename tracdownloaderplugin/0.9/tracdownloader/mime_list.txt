@@ -1,3 +1,10 @@
+// This file contains a list of known MIME types which are given
+// to user's browser when file type is detected by it's extension.
+// Format of file is extension without . and after space whole MIME type.
+// Empty lines and lines starting with // are skipped.
+// This file is automaticcaly translated to python source file mime_list.py 
+// to provide the fastest acces to this list.
+
 ai application/postscript 
 aif audio/x-aiff 
 aifc audio/x-aiff 
@@ -169,3 +176,4 @@ xul application/vnd.mozilla.xul+xml
 xwd image/x-xwindowdump 
 xyz chemical/x-xyz 
 zip application/zip 
+

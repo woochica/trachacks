@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Author: Petr Škoda <pecast_cz@seznam.cz>
+# All rights reserved.
+#
+# This software is licensed under GNU GPL. You can read  it at
+# http://www.gnu.org/licenses/gpl-3.0.html
+#
+
 import os
 import re
 import random
@@ -1077,6 +1086,9 @@ class MimeTypes:
         self.py_list_f.write('mime_dict = {' + "\n")
         
         for line in self.text_list_f:
+            # Skip empty lines and comment lines
+            if strip(line) == '' or line.startswith('//'):
+              continue
             line = string.split(line, ' ')
             self.py_list_f.write("'" + line[0] + "':'" + line[1] + "',\n")
         
