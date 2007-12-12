@@ -471,7 +471,7 @@ class DownloaderAdminPage(Component):
                 if not row.has_key(it[0]):
                     row[it[0]] = ''
                 row_l.append(quot + 
-                          str(row[it[0]]).replace('&#8203;', '') + quot)
+                          unicode(row[it[0]]).replace('&#8203;', '') + quot)
             rows_l.append(join(row_l, delim))
         
         data = join(rows_l, "\n")

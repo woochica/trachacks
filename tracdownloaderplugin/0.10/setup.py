@@ -8,15 +8,15 @@ from setuptools import setup
 setup(
   name = 'TracDownloader',
   version = '0.1',
-  packages = ['downloader'],
-  package_data = {'downloader' : ['templates/*.cs', 
+  packages = ['tracdownloader'],
+  package_data = {'tracdownloader' : ['templates/*.cs', 
                                   'htdocs/css/*.css',
                                   'htdocs/img/*.png',
                                   '*.txt']},
-  entry_points = {'trac.plugins': ['downloader.web_ui = downloader.web_ui',
-                                   'downloader.admin = downloader.admin',
-                                   'downloader.db = downloader.db',
-                                   'downloader.model = downloader.model']
+  entry_points = {'trac.plugins': ['tracdownloader.web_ui = tracdownloader.web_ui',
+                                   'tracdownloader.admin = tracdownloader.admin',
+                                   'tracdownloader.db = tracdownloader.db',
+                                   'tracdownloader.model = tracdownloader.model']
                   },
   install_requires = ['PyCAPTCHA >= 0.4',
                       'PIL >= 1.1.5'],
