@@ -140,7 +140,7 @@ class DepgraphMacro(Component):
 		try:
 			options = args.split(',')
 		except:
-			options = []
+			options = ['']
 
 		# Generate graph header
 		result = "digraph G%s { rankdir = \"LR\"\n node [ style=filled ]\n" \
