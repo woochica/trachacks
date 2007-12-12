@@ -77,7 +77,7 @@ class FootNoteMacro(WikiMacroBase):
         else:
             # Dump all accumulated notes
             footnotes = formatter._footnotes[:]
-            formatter._footnotes = [(None, None)]*len(footnotes)
+            formatter._footnotes = [(content, None) for content, markup in footnotes]
             return tag.div(
                 tag.hr(),
                 tag.ol(
@@ -90,7 +90,7 @@ class FootNoteMacro(WikiMacroBase):
                         ' ',
                         markup,
                         id='FootNote%s'%(i+1),
-                    ) for i, (content, markup) in enumerate(footnotes) if content],
+                    ) for i, (content, markup) in enumerate(footnotes) if markup],
                 ),
                 class_='footnotes',
             )
