@@ -1,0 +1,27 @@
+.footnote a {
+  font-size: 8pt;
+  font-weight: bold;
+}
+
+.footnotes hr {
+  width: 10%;
+  padding: 0;
+  margin: 2em 0 1em 0;
+}
+
+.footnotes ol {
+  padding: 0 0 0 1em;
+  margin: 0;
+}
+
+.footnotes li {
+  list-style: none;
+}
+
+.footnotes .sigil {
+  font-weight: bold;
+}
+
+.footnote-active {
+  background-color: #DDD;
+}
