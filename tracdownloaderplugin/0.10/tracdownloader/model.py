@@ -14,7 +14,6 @@ import shutil
 import time
 import string
 import locale
-import tracdownloader.db
 
 from string import *
 from tracdownloader import form_data
@@ -54,20 +53,18 @@ def file_directory_check(env, req, config):
     if downloader_dir and not os.access(downloader_dir, os.F_OK + os.W_OK):
         downloader_dir = None
     if not downloader_dir and (not req.args.has_key('page_part') or \
-            not req.args['page_part'] == 'settings'):
+            not req.args.get('page_part') == 'settings'):
         req.redirect(env.href.admin('general', 
                                     'downloader', 
                                     'settings'))
         return None
     if not downloader_dir and req.args.has_key('page_part') and \
-            req.args['page_part'] == 'settings':
+            req.args.get('page_part') == 'settings':
         req.hdf['file_dir_not_set'] = 1
         
 def config_defaults(obj, env):
     """Sets config values to object which asks any for Trac 0.9 and 0.10"""
     ## FIXME
-    """Downloader DB existence check"""
-    tracdownloader.db.DownloaderDB(env)
     
     defaults = [
         ['form_only_first_time', 'false'],
@@ -241,7 +238,6 @@ class Categories(object):
             q_deleted = 'WHERE deleted IS NULL'
         else:
             q_deleted = ' '
-        self.env.log.info("Qdel %s" %  q_deleted)
         
         cursor = self.db.cursor()
         cursor.execute(("SELECT id FROM downloader_category " + \
@@ -538,7 +534,8 @@ class File(object):
         
     def _fetch_file(self, id):
         cursor = self.db.cursor()
-        cursor.execute("SELECT id, release, name, notes, sort, timestamp, architecture "
+        cursor.execute("SELECT id, release, name, notes, sort, timestamp, "
+            " architecture, deleted "
             "FROM downloader_file "
             "WHERE id = %s", (id,))
         record = cursor.fetchone()
@@ -552,6 +549,7 @@ class File(object):
         self.sort = record[4]
         self.timestamp = record[5]
         self.architecture = record[6]
+        self.deleted = record[7]
         self.is_new = False
         
         self.name_disp = replace(self.name_disp, '+', '+&#8203;')
@@ -564,6 +562,10 @@ class File(object):
         self._set_file_path()
     
     def _set_file_path(self):
+        # If path missing, set file path to None
+        if downloader_dir == None:
+            self.file = None
+            return
         file = downloader_dir + "/" + str(self.id)
         self.file = file
     
@@ -718,7 +720,7 @@ class DownloadData:
             if req.args.has_key(item['name']):
                 # Radiobox
                 if item.has_key('type') and item['type'] == 'radio':
-                    if req.args[item['name']] == item['value']:
+                    if req.args.get(item['name']) == item['value']:
                         self.schema[key]['selected'] = True
                     continue
                 # Checkbox
@@ -727,8 +729,8 @@ class DownloadData:
                     continue
                 # Everything else
                 #self.env.log.info("Read_data: " + item['name'] + "=" \
-                #                  + req.args[item['name']])
-                self.schema[key]['value'] = req.args[item['name']]        
+                #                  + req.args.get(item['name']))
+                self.schema[key]['value'] = req.args.get(item['name'])        
         
         # Captcha validity
         if not conf.getbool('downloader', 'no_captcha', 'false') \
@@ -736,10 +738,10 @@ class DownloadData:
             err_mes = "Wrong code from picture, please try again."
             if req.args.has_key('captcha_key') and req.args.has_key('captcha'):
                 cap = MyCaptcha(self.env).\
-                    get(req.args['captcha_key'])
+                    get(req.args.get('captcha_key'))
                 if not cap or not cap.valid:
                     self.errors.append("Picture timed out, please try again.")
-                elif not cap.testSolutions([lower(req.args['captcha'])]):
+                elif not cap.testSolutions([lower(req.args.get('captcha'))]):
                     self.errors.append(err_mes)
                     req.hdf['captcha_bad'] = True
             else:
@@ -899,7 +901,7 @@ class DownloadData:
             min_val, max_val = range
             q_rng_where = (" AND c.timestamp>= %d " + 
                           " AND c.timestamp<= %d " +
-                          " AND c.deleted > %d ") % \
+                          " AND (c.deleted >= %d OR c.deleted IS NULL )") % \
                           (min_val, max_val, min_val)
         else:
             q_rng_where = ' '
@@ -1085,7 +1087,7 @@ class DownloadData:
         and item.has_key('regexp') \
         and item.has_key('type') and item['type'] == 'text':
             regexp = re.compile(item['regexp'])
-            val = self.req.args[item['name']]
+            val = self.req.args.get(item['name'])
             if regexp.match(val) is None:
                 # Set errinfo for output if exists
                 if item.has_key('errinfo'):
@@ -1144,6 +1146,12 @@ class MimeTypes:
             """Try to create empty file."""
             self.text_list_f = file(self.text_list, 'w')
             
+        # If the py file isinstance unwriteble, just log it and return
+        if not os.access(self.py_list, os.F_OK + os.W_OK):
+            self.env.log.warning(("File '%s' should be writable to use" + \
+                                 " modified MIME list from mime_list.txt.") % \
+                                 self.py_list)
+            return
         self.py_list_f = file(self.py_list, 'w')
         
         # Write start of python dictionary
@@ -1160,6 +1168,7 @@ class MimeTypes:
         self.py_list_f.write('}')
         
         self.py_list_f.close()
+        self.text_list_f.close()
 
 class MyCaptcha:
     """Wrapper for easy use of captcha"""

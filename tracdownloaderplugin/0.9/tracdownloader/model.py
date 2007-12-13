@@ -14,7 +14,6 @@ import shutil
 import time
 import string
 import locale
-import tracdownloader.db
 
 from string import *
 from tracdownloader import form_data
@@ -41,7 +40,7 @@ import Captcha.Visual.Distortions
 from Captcha.Visual import ImageCaptcha
 cap_work = True'''
 
-config = None
+env = None
 downloader_dir = None
 
 def file_directory_check(env, req, config):
@@ -54,26 +53,44 @@ def file_directory_check(env, req, config):
     if downloader_dir and not os.access(downloader_dir, os.F_OK + os.W_OK):
         downloader_dir = None
     if not downloader_dir and (not req.args.has_key('page_part') or \
-            not req.args['page_part'].value == 'settings'):
+            not req.args.get('page_part') == 'settings'):
         req.redirect(env.href.admin('general', 
                                     'downloader', 
                                     'settings'))
         return None
     if not downloader_dir and req.args.has_key('page_part') and \
-            req.args['page_part'].value == 'settings':
+            req.args.get('page_part') == 'settings':
         req.hdf['file_dir_not_set'] = 1
         
-def config_defaults(config):
-    config.setdefault('downloader', 'form_only_first_time', 'false')
-    config.setdefault('downloader', 'no_quest', 'false')
-    config.setdefault('downloader', 'no_captcha', 'false')
-    config.setdefault('downloader', 'provide_link', 'true')
-    config.setdefault('downloader', 'stats_per_page', 30)
-    config.setdefault('downloader', 'captcha_font_size', 35)
-    config.setdefault('downloader', 'captcha_font_border', 2)
-    config.setdefault('downloader', 'captcha_num_of_letters', 4)
-    config.setdefault('downloader', 'captcha_font_size', 35)
-    config.setdefault('downloader', 'captcha_hardness', 'normal')
+def config_defaults(obj, env):
+    """Sets config values to object which asks any for Trac 0.9 and 0.10"""
+    ## FIXME
+    
+    defaults = [
+        ['form_only_first_time', 'false'],
+        ['no_quest', 'false'],
+        ['no_captcha', 'false'],
+        ['provide_link', 'true'],
+        ['stats_per_page', 30],
+        ['captcha_font_size', 35],
+        ['captcha_font_border', 2],
+        ['captcha_num_of_letters', 4],
+        ['captcha_font_size', 35],
+        ['captcha_hardness', 'normal']
+    ]
+    # Trac 0.10
+    try:
+        from trac.config import Option
+        for item in defaults:
+            setattr(obj, 'cnf_' + item[0], Option('downloader', \
+                                                   item[0], item[1]))
+    
+    # Trac 0.9.3 and 0.9.6
+    except ImportError:
+        config = env.config
+        for item in defaults:
+            setattr(obj, 'cnf_' + item[0], config.get('downloader', \
+                                                       item[0], item[1]))
     
     
 def moths_in_range(start, end, env=None):
@@ -203,26 +220,29 @@ class Categories(object):
         else:
             self.db = db
         
-        """Downloader DB existence check"""
-        tracdownloader.db.DownloaderDB(self.env)
-        
         self._categories = None
         
-        self.list = self.get_categories()
+        self.list = self.get_categories(no_deleted=True)
         
-    def get_categories(self):
+    def get_categories(self, range=None, no_deleted=False):
         """
         Gets a tuple of dictionary of categories - [id: Category] and
         list of Category objects with correct order.
         """
         
-        if self._categories:
-            return self._categories
+        # Range
+        if isinstance(range, tuple) and len(range) == 2:
+            min_val, max_val = range
+            q_deleted = 'WHERE deleted > %d' % min_val
+        elif no_deleted:
+            q_deleted = 'WHERE deleted IS NULL'
+        else:
+            q_deleted = ' '
         
         cursor = self.db.cursor()
-        cursor.execute("SELECT id FROM downloader_category "
-                       "WHERE deleted IS NULL "
-                       "ORDER BY sort, name")
+        cursor.execute(("SELECT id FROM downloader_category " + \
+                       " %s " + \
+                       "ORDER BY sort, name") % (q_deleted,))
         
         categories = {}
         categories_list = []
@@ -316,9 +336,10 @@ class Category(object):
             release.delete()
            
         # Delete this category record
+        timestamp = time.time()
         cursor = self.db.cursor()
-        cursor.execute("UPDATE downloader_category SET deleted=1 " 
-                       "WHERE id=%s", (self.id,))
+        cursor.execute("UPDATE downloader_category SET deleted=%s " 
+                       "WHERE id=%s", (timestamp, self.id))
         self.db.commit()
         self.is_new = True
         self.env.log.info("Category " + self.name + " was deleted.")
@@ -430,20 +451,28 @@ class Release(object):
             file.delete()
            
         # Delete this category record
+        timestamp = time.time()
         cursor = self.db.cursor()
-        cursor.execute("UPDATE downloader_release SET deleted=1 " 
-                       "WHERE id=%s", (self.id,))
+        cursor.execute("UPDATE downloader_release SET deleted=%s " 
+                       "WHERE id=%s", (timestamp, self.id))
         self.db.commit()
         self.is_new = True
         self.env.log.info("Release " + self.name + " was deleted.")
     
-    def get_releases(env):
+    def get_releases(env, range=None):
+        # Range
+        if isinstance(range, tuple) and len(range) == 2:
+            min_val, max_val = range
+            q_deleted = 'WHERE deleted > %d' % min_val
+        else:
+            q_deleted = ' '
+            
         db = env.get_db_cnx()
         cursor = db.cursor()
         
-        cursor.execute("SELECT id FROM downloader_release "
-                       "WHERE deleted IS NULL "
-                       "ORDER BY name, timestamp")
+        cursor.execute(("SELECT id FROM downloader_release " + \
+                       " %s " + \
+                       "ORDER BY name, timestamp") % (q_deleted,))
         releases = []
         for (id,) in cursor:
             releases.append(Release(env, id, db))
@@ -505,7 +534,8 @@ class File(object):
         
     def _fetch_file(self, id):
         cursor = self.db.cursor()
-        cursor.execute("SELECT id, release, name, notes, sort, timestamp, architecture "
+        cursor.execute("SELECT id, release, name, notes, sort, timestamp, "
+            " architecture, deleted "
             "FROM downloader_file "
             "WHERE id = %s", (id,))
         record = cursor.fetchone()
@@ -519,6 +549,7 @@ class File(object):
         self.sort = record[4]
         self.timestamp = record[5]
         self.architecture = record[6]
+        self.deleted = record[7]
         self.is_new = False
         
         self.name_disp = replace(self.name_disp, '+', '+&#8203;')
@@ -531,6 +562,10 @@ class File(object):
         self._set_file_path()
     
     def _set_file_path(self):
+        # If path missing, set file path to None
+        if downloader_dir == None:
+            self.file = None
+            return
         file = downloader_dir + "/" + str(self.id)
         self.file = file
     
@@ -615,20 +650,28 @@ class File(object):
                 self.env.log.warning("File %s wasn't deleted - cannot access file." % self.file)
             
             # Maerk this file db record assert deleted
+            timestamp = time.time()
             cursor = self.db.cursor()
-            cursor.execute("UPDATE downloader_file SET deleted=1 " 
-                           "WHERE id=%s", (self.id,))
+            cursor.execute("UPDATE downloader_file SET deleted=%s " 
+                           "WHERE id=%s", (int(timestamp), self.id))
             self.db.commit()
             self.is_new = True
             self.env.log.info("File " + self.name + " was deleted.")
     
-    def get_files(env):
+    def get_files(env, range=None):
+        # Range
+        if isinstance(range, tuple) and len(range) == 2:
+            min_val, max_val = range
+            q_deleted = 'WHERE deleted > %d' % min_val
+        else:
+            q_deleted = ' '
+        
         db = env.get_db_cnx()
         cursor = db.cursor()
         
-        cursor.execute("SELECT id FROM downloader_file "
-                       "WHERE deleted IS NULL "
-                       "ORDER BY name, timestamp")
+        cursor.execute(("SELECT id FROM downloader_file " + \
+                       " %s " +
+                       "ORDER BY name, timestamp") % (q_deleted,))
         files = []
         for (id,) in cursor:
             files.append(File(env, id, db=db))
@@ -637,14 +680,14 @@ class File(object):
     get_files = staticmethod(get_files)
 
 class DownloadData:
-    def __init__(self, env, req, conf=None, file_id=None, id=None):
-        global config
-        self.env = env
+    def __init__(self, environment, req, conf=None, file_id=None, id=None):
+        global env
+        env = environment
+        self.env = environment
         self.req = req
         self.db = self.env.get_db_cnx()
         self.schema = form_data.quest_form
         self.conf = conf
-        config = conf
         self.id = id
         self.file_id = file_id
         self.timestamp = time.time()
@@ -677,7 +720,7 @@ class DownloadData:
             if req.args.has_key(item['name']):
                 # Radiobox
                 if item.has_key('type') and item['type'] == 'radio':
-                    if req.args[item['name']].value == item['value']:
+                    if req.args.get(item['name']) == item['value']:
                         self.schema[key]['selected'] = True
                     continue
                 # Checkbox
@@ -686,8 +729,8 @@ class DownloadData:
                     continue
                 # Everything else
                 #self.env.log.info("Read_data: " + item['name'] + "=" \
-                #                  + req.args[item['name']].value)
-                self.schema[key]['value'] = req.args[item['name']].value        
+                #                  + req.args.get(item['name']))
+                self.schema[key]['value'] = req.args.get(item['name'])        
         
         # Captcha validity
         if not conf.getbool('downloader', 'no_captcha', 'false') \
@@ -695,10 +738,10 @@ class DownloadData:
             err_mes = "Wrong code from picture, please try again."
             if req.args.has_key('captcha_key') and req.args.has_key('captcha'):
                 cap = MyCaptcha(self.env).\
-                    get(req.args['captcha_key'].value)
+                    get(req.args.get('captcha_key'))
                 if not cap or not cap.valid:
                     self.errors.append("Picture timed out, please try again.")
-                elif not cap.testSolutions([lower(req.args['captcha'].value)]):
+                elif not cap.testSolutions([lower(req.args.get('captcha'))]):
                     self.errors.append(err_mes)
                     req.hdf['captcha_bad'] = True
             else:
@@ -857,8 +900,9 @@ class DownloadData:
         if isinstance(range, tuple) and len(range) == 2:
             min_val, max_val = range
             q_rng_where = (" AND c.timestamp>= %d " + 
-                          " AND c.timestamp<= %d ") % \
-                          (min_val, max_val)
+                          " AND c.timestamp<= %d " +
+                          " AND (c.deleted >= %d OR c.deleted IS NULL )") % \
+                          (min_val, max_val, min_val)
         else:
             q_rng_where = ' '
         
@@ -905,7 +949,7 @@ class DownloadData:
             "SELECT %s "
             "FROM (downloader_downloaded AS d JOIN downloader_file AS f ON " \
             " f.id=d.file) AS c %s %s %s "
-            "WHERE %s AND c.deleted IS NULL %s %s "
+            "WHERE %s %s %s "
             " ORDER BY %s %s" % 
             (q_get_rng_select, q_attr_from, q_attr_on, q_fil_join, \
              q_attr_where, q_fil_where, q_rng_where, sort + desc, q_limit), 
@@ -931,18 +975,30 @@ class DownloadData:
         """
         items = []
         labels = {}
+        label_list = self.get_label_list()
         if not short:
             file = File(self.env, self.file_id)
             items.append(['Id:', self.id])
             items.append(['File:', file.name])
             items.append(['Timestamp:', util.format_datetime(self.timestamp)])
             
+        for item in label_list:
+            if strip(self.attr[item[0]]) != '':
+                items.append([item[1], self.attr[item[0]]])
+                    
+        return items
+        
+    def get_label_list():
+        """Gets list of label, each item is list like [name, label]"""
+        items = []
+        labels = {}
+        radios_added = []
         for item in form_data.quest_form:
             # External label for radio
             if item.has_key('label_for'):
                 labels[item['label_for']] = item['text']
             
-            if item.has_key('name') and self.attr.has_key(item['name']):
+            if item.has_key('name'):
                 if item.has_key('label'):
                     label = item['label']
                 else:
@@ -954,14 +1010,24 @@ class DownloadData:
                 if item.has_key('type') and \
                         item['type'] == 'radio' and \
                         item.has_key('value'):
-                    if self.attr[item['name']] != item['value']:
-                        continue
-                    label = labels[item['name']]
-                    
-                if strip(self.attr[item['name']]) != '':
-                    items.append([label, self.attr[item['name']]])
-                    
+                    if item['name'] in radios_added:
+                            continue
+                    # Label from label_for of preceding label
+                    if labels.has_key(item['name']):
+                        label = labels[item['name']]
+                    else:
+                        label = capitalize(item['name']) + ':'
+                    radios_added.append(item['name'])
+                # Show in list of downloads table
+                if item.has_key('show_in_main_list') and \
+                        item['show_in_main_list']:
+                    show = 1
+                else:
+                    show = 0
+                
+                items.append([item['name'], label, show])
         return items
+    get_label_list = staticmethod(get_label_list)
             
     def save_to_session(self):
         """
@@ -1021,7 +1087,7 @@ class DownloadData:
         and item.has_key('regexp') \
         and item.has_key('type') and item['type'] == 'text':
             regexp = re.compile(item['regexp'])
-            val = self.req.args[item['name']].value
+            val = self.req.args.get(item['name'])
             if regexp.match(val) is None:
                 # Set errinfo for output if exists
                 if item.has_key('errinfo'):
@@ -1080,6 +1146,12 @@ class MimeTypes:
             """Try to create empty file."""
             self.text_list_f = file(self.text_list, 'w')
             
+        # If the py file isinstance unwriteble, just log it and return
+        if not os.access(self.py_list, os.F_OK + os.W_OK):
+            self.env.log.warning(("File '%s' should be writable to use" + \
+                                 " modified MIME list from mime_list.txt.") % \
+                                 self.py_list)
+            return
         self.py_list_f = file(self.py_list, 'w')
         
         # Write start of python dictionary
@@ -1089,13 +1161,14 @@ class MimeTypes:
             # Skip empty lines and comment lines
             if strip(line) == '' or line.startswith('//'):
               continue
-            line = string.split(line, ' ')
+            line = string.split(line)
             self.py_list_f.write("'" + line[0] + "':'" + line[1] + "',\n")
         
         # Write end of python dictionary
         self.py_list_f.write('}')
         
         self.py_list_f.close()
+        self.text_list_f.close()
 
 class MyCaptcha:
     """Wrapper for easy use of captcha"""
@@ -1105,7 +1178,7 @@ class MyCaptcha:
     
     def get(self, id):
         """Wrapper for PersistentFactory().get()"""
-        return self.cap.get(id)
+        return self.cap.get(str(id))
     
     def new(self): 
         """Wrapper for PersistentFactory().new()"""
@@ -1120,22 +1193,24 @@ if cap_work:
     class CaptchaStyle(Captcha.Visual.ImageCaptcha):
         """Captcha layer set."""
         def getLayers(self):
-            global config # Hack coz of stupid Captcha
+            global env # Hack coz of stupid Captcha
             # Defaults for config of this Class
-            config_defaults(config)
+            config_defaults(self, env)
             
-            font_max = int(config.get('downloader', 'captcha_font_size', '35'))
+            font_max = int(env.config.get('downloader', 
+                                          'captcha_font_size', 
+                                          '35'))
             font_min = font_max - 7
             font_border = \
-                int(config.get('downloader', 'captcha_font_border', '2'))
+                int(env.config.get('downloader', 'captcha_font_border', '2'))
             
             num_of_letters = \
-                int(config.get('downloader', 'captcha_num_of_letters', '4'))
+                int(env.config.get('downloader', 'captcha_num_of_letters', '4'))
             
             word = self.getWord(num_of_letters)
             self.addSolution(lower(word))
             self.addSolution(replace(lower(word), 'o', '0')) # o replace by 0
-            if config.get('downloader', 'captcha_hardness', 'normal') == \
+            if env.config.get('downloader', 'captcha_hardness', 'normal') == \
                     'normal':
                 layers = [
                     Captcha.Visual.Backgrounds.TiledImage(),
@@ -1145,7 +1220,7 @@ if cap_work:
                         font_min, font_max), "vera"), borderSize=font_border),
                     Captcha.Visual.Distortions.SineWarp(),
                     ]
-            elif config.get('downloader', 'captcha_hardness', 'normal') == \
+            elif env.config.get('downloader', 'captcha_hardness', 'normal') == \
                     'hard':
                 layers = [
                     Captcha.Visual.Backgrounds.TiledImage(),

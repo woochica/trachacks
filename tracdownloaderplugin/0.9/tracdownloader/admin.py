@@ -16,10 +16,12 @@ import shutil
 import sys
 import math
 import urllib
+import tracdownloader.db
 
 from trac import ticket, __version__ as TRAC_VERSION
 from trac.core import *
 from trac.perm import IPermissionRequestor
+from trac.env import IEnvironmentSetupParticipant
 from trac import util
 from trac.util import Markup
 from trac.web.chrome import add_stylesheet, ITemplateProvider, add_link
@@ -53,7 +55,8 @@ required_components = ('AboutModule', 'DefaultPermissionGroupProvider',
 
 class DownloaderAdminPage(Component):
 
-    implements(IPermissionRequestor, IAdminPageProvider, ITemplateProvider)
+    implements(IPermissionRequestor, IAdminPageProvider, ITemplateProvider, 
+               IEnvironmentSetupParticipant)
     
     # IPermissionRequestor method
     
@@ -96,8 +99,11 @@ class DownloaderAdminPage(Component):
         self.cat = cat
         self.page = page
         
+        self.config
+        
         # Defaults for config in this module
-        config_defaults(self.config)
+        config_defaults(self, self.env)
+        
         # Context navigation
         cntx_nav = CntxNav(self.env.href.admin(cat, page))
         cntx_nav.add('files', 'Files Admin')
@@ -127,9 +133,9 @@ class DownloaderAdminPage(Component):
         self.run_err = []   # Currently unused
         
         # Decide what part of downloader admin to run, default is Files Admin
-        if req.args['page_part'].value == 'stats':
+        if req.args.get('page_part') == 'stats':
             template = self._serve_stats_admin(req)
-        elif req.args['page_part'].value == 'settings':
+        elif req.args.get('page_part') == 'settings':
             template = self._serve_settings_admin(req)
         else:
             template = self._serve_files_admin(req)
@@ -154,10 +160,10 @@ class DownloaderAdminPage(Component):
         
         # Set base href to downloader plug-in
         req.hdf['href.base'] = self.env.href.admin(cat, page, \
-            req.args['page_part'].value)
+            req.args.get('page_part'))
         req.hdf['href.full'] = self.env.href.admin(cat, page, \
-            req.args['page_part'].value, req.args['page'].value)
-        req.hdf['page_part'] = req.args['page_part'].value
+            req.args.get('page_part'), req.args.get('page'))
+        req.hdf['page_part'] = req.args.get('page_part')
         
         return template
 
@@ -170,11 +176,11 @@ class DownloaderAdminPage(Component):
         self.selected = self._get_selected(req)
         
         if req.method == 'POST' and req.args.has_key('form_type'):
-            if req.args['form_type'].value == 'category':
+            if req.args.get('form_type') == 'category':
                 self._serve_category(req)
-            elif req.args['form_type'].value == 'release':
+            elif req.args.get('form_type') == 'release':
                 self._serve_release(req)
-            elif req.args['form_type'].value == 'file':
+            elif req.args.get('form_type') == 'file':
                 self._serve_file(req)
         
         render_downloads_table(self.env, req)
@@ -192,22 +198,22 @@ class DownloaderAdminPage(Component):
         # Manage parameters eventually in POST method
         if req.method == 'POST':
             if req.args.has_key('per_page'):
-                if re.match(r'\w*[0-9]+\w*', req.args['per_page'].value):
+                if re.match(r'\w*[0-9]+\w*', req.args.get('per_page')):
                     self.config.set('downloader', 'stats_per_page', 
-                                     req.args['per_page'].value)
+                                     req.args.get('per_page'))
                     self.config.save()
             if req.args.has_key('delete'):
                 self._render_stats_delete(req, True)
             if req.args.has_key('navigate_back') and \
                     req.args.has_key('redirect_back'):
-                req.redirect(req.args['redirect_back'].value)
+                req.redirect(req.args.get('redirect_back'))
             if req.args.has_key('del_range_submit'):
                 self._stats_delete_range(req)
                 
         
         # Get order parameters from GET, default order is by timestamp
         if req.args.has_key('order'):
-            self.order = req.args['order'].value
+            self.order = req.args.get('order')
         else:
             self.order = 'timestamp'
         if req.args.has_key('desc'):
@@ -215,9 +221,9 @@ class DownloaderAdminPage(Component):
         else:
             self.desc = False
             
-        if req.args['get_3'].value == 'really_delete':
+        if req.args.get('get_3') == 'really_delete':
             template = self._render_stats_delete(req)
-        elif req.args['get_3'].value == 'show':
+        elif req.args.get('get_3') == 'show':
             template = self._render_stats_show(req)
         else:
             template = self._render_stats_table(req)
@@ -256,41 +262,41 @@ class DownloaderAdminPage(Component):
             
             if req.args.has_key('captcha_num_of_letters'):
                 try:
-                    val = int(req.args['captcha_num_of_letters'].value)
+                    val = int(req.args.get('captcha_num_of_letters'))
                     self.config.set('downloader', 'captcha_num_of_letters', \
                                     str(val))
                 except ValueError:
                     raise TracError, \
                         'Invalid numeric value ("%s") for Number of letters.'%\
-                        req.args['captcha_num_of_letters'].value
+                        req.args.get('captcha_num_of_letters')
             
             if req.args.has_key('captcha_font_size'):
                 try:
-                    val = int(req.args['captcha_font_size'].value)
+                    val = int(req.args.get('captcha_font_size'))
                     self.config.set('downloader', 'captcha_font_size', \
                                     str(val))
                 except ValueError:
                     raise TracError, \
                         'Invalid numeric value ("%s") for Font size.'%\
-                        req.args['captcha_font_size'].value
+                        req.args.get('captcha_font_size')
                         
             if req.args.has_key('captcha_font_size'):
                 try:
-                    val = int(req.args['captcha_font_border'].value)
+                    val = int(req.args.get('captcha_font_border'))
                     self.config.set('downloader', 'captcha_font_border', \
                                     str(val))
                 except ValueError:
                     raise TracError, \
                         'Invalid numeric value ("%s") for Font border.'%\
-                        req.args['captcha_font_border'].value
+                        req.args.get('captcha_font_border')
                         
             if req.args.has_key('captcha_hardness'):
-                val = req.args['captcha_hardness'].value
+                val = req.args.get('captcha_hardness')
                 self.config.set('downloader', 'captcha_hardness', \
                                 val)
                 
             if req.args.has_key('files_dir'):
-                val = req.args['files_dir'].value
+                val = req.args.get('files_dir')
                 self.config.set('downloader', 'files_dir', \
                                 val)
             
@@ -327,9 +333,11 @@ class DownloaderAdminPage(Component):
                 ['file_name', 'File name:', 1], 
                 ['timestamp', 'Timestamp:', 1]
                ]
-        for key, item in enumerate(form_data.quest_form):
-            if item.has_key('show_in_main_list') and item['show_in_main_list']:
-                head.append([item['name'], item['label'], 1])
+        # Get list of labels for attributes
+        labels = DownloadData.get_label_list()
+        for lab in labels:
+            if lab[2]:
+                head.append([lab[0], lab[1], 1])
         
         head.append(['actions', 'Actions:'])
         
@@ -352,11 +360,11 @@ class DownloaderAdminPage(Component):
             
         req.hdf['stats.per_page'] = per_page
         
-        if not req.args['page'].value:
+        if not req.args.get('page'):
             page = 1
         else:
             try:
-                page = int(req.args['page'].value)
+                page = int(req.args.get('page'))
             except ValueError:
                 page = 1
             
@@ -380,7 +388,7 @@ class DownloaderAdminPage(Component):
             act_show_href = self.env.href.admin(
                                     self.cat, 
                                     self.page, 
-                                    req.args['page_part'].value,
+                                    req.args.get('page_part'),
                                     page,
                                     'show',
                                     dwn.id)
@@ -389,7 +397,7 @@ class DownloaderAdminPage(Component):
             act_del_href = self.env.href.admin(
                                     self.cat, 
                                     self.page, 
-                                    req.args['page_part'].value,
+                                    req.args.get('page_part'),
                                     page,
                                     'really_delete',
                                     dwn.id)
@@ -409,7 +417,7 @@ class DownloaderAdminPage(Component):
         
         # Render in other formats
         if req.args.has_key('format'):
-            format = req.args['format'].value
+            format = req.args.get('format')
             if format == 'csv':
                 return self._render_stats_table_special(req, 
                                         self.stats_head, rows)
@@ -424,7 +432,7 @@ class DownloaderAdminPage(Component):
             href = self.env.href.admin(
                                  self.cat, 
                                  self.page, 
-                                 req.args['page_part'].value,
+                                 req.args.get('page_part'),
                                  str(num)
                                  )
             href += self.get_method_string(req)
@@ -475,14 +483,14 @@ class DownloaderAdminPage(Component):
         href_back = self.env.href.admin(
                                         self.cat, 
                                         self.page, 
-                                        req.args['page_part'].value,
-                                        req.args['page'].value
+                                        req.args.get('page_part'),
+                                        req.args.get('page')
                                         )
         href_back = href_back + self.get_method_string(req)
         
-        if not req.args['get_4'].value:
+        if not req.args.get('get_4'):
             req.redirect(href_back)
-        id = int(req.args['get_4'].value)
+        id = int(req.args.get('get_4'))
         try:
             dwnl = DownloadData(self.env, req, id=id)
         except TracError:
@@ -497,12 +505,12 @@ class DownloaderAdminPage(Component):
         href_back = self.env.href.admin(
                                         self.cat, 
                                         self.page, 
-                                        req.args['page_part'].value,
-                                        req.args['page'].value
+                                        req.args.get('page_part'),
+                                        req.args.get('page')
                                         )
-        if not req.args['get_4'].value:
+        if not req.args.get('get_4'):
             req.redirect(href_back)
-        id = int(req.args['get_4'].value)
+        id = int(req.args.get('get_4'))
         try:
             dwnl = DownloadData(self.env, req, id=id)
         except TracError:
@@ -525,7 +533,7 @@ class DownloaderAdminPage(Component):
         else:
             dwnl.delete()
             if req.args.has_key('redirect_back'):
-                req.redirect(req.args['redirect_back'].value)
+                req.redirect(req.args.get('redirect_back'))
             else:
                 req.redirect(href_back)
                 
@@ -533,17 +541,18 @@ class DownloaderAdminPage(Component):
         if not req.args.has_key('start') or not req.args.has_key('end'):
             return False
         
-        start = int(util.parse_date(req.args['start'].value))
-        end = int(util.parse_date(req.args['end'].value))
+        start = int(util.parse_date(req.args.get('start')))
+        end = int(util.parse_date(req.args.get('end')))
         
         if DownloadData.delete_range(self.env, start, end):
             self.env.log.info("Deleted records from " + \
-                               req.args['start'].value + \
-                               " to " + req.args['end'].value + ".")
+                               req.args.get('start') + \
+                               " to " + req.args.get('end') + ".")
         
     def _render_forms(self, req):
         
-        if not os.access(tracdownloader.model.downloader_dir, os.F_OK + os.W_OK):
+        if not os.access(
+                  tracdownloader.model.downloader_dir, os.F_OK + os.W_OK):
             req.hdf['files_dir.readonly'] = True
         
         req.hdf['selected'] = self.selected
@@ -551,13 +560,13 @@ class DownloaderAdminPage(Component):
     def _get_selected(self, req):
         selected = None
         if req.args.has_key('sel_type'):
-            selected = [req.args['sel_type'].value, req.args['sel_id'].value]
+            selected = [req.args.get('sel_type'), req.args.get('sel_id')]
             
         return selected
     
     def _serve_category(self, req):
         if req.args.has_key('edit_id'):
-            category = Category(self.env, id=req.args['edit_id'].value)
+            category = Category(self.env, id=req.args.get('edit_id'))
         else:
             category = Category(self.env)
         
@@ -567,20 +576,20 @@ class DownloaderAdminPage(Component):
             category.delete()
             return
         
-        category.name = req.args['name'].value
-        category.sort = req.args['sort'].value
-        category.notes = req.args['notes'].value
+        category.name = req.args.get('name')
+        category.sort = req.args.get('sort')
+        category.notes = req.args.get('notes')
         
         category.save()
         self.selected = ['category', category.id]
     
     def _serve_release(self, req):
         if req.args.has_key('edit_id'):
-            release = Release(self.env, id=req.args['edit_id'].value)
-            self.selected = ['release', req.args['edit_id'].value]
+            release = Release(self.env, id=req.args.get('edit_id'))
+            self.selected = ['release', req.args.get('edit_id')]
         elif req.args.has_key('super_id'):
             release = Release(self.env)
-            release.category = req.args['super_id'].value
+            release.category = req.args.get('super_id')
             self.selected = ['category', release.category]
         else:
             self.run_err.append("Wrong form data, nothing changed.")
@@ -592,9 +601,9 @@ class DownloaderAdminPage(Component):
             release.delete()
             return
         
-        release.name = req.args['name'].value
-        release.sort = req.args['sort'].value
-        release.notes = req.args['notes'].value
+        release.name = req.args.get('name')
+        release.sort = req.args.get('sort')
+        release.notes = req.args.get('notes')
         
         release.save()
         
@@ -602,8 +611,8 @@ class DownloaderAdminPage(Component):
         """Server file - create, edit or delete."""
             
         if req.args.has_key('edit_id'):
-            file = File(self.env, id=req.args['edit_id'].value)
-            self.selected = ['file', req.args['edit_id'].value]
+            file = File(self.env, id=req.args.get('edit_id'))
+            self.selected = ['file', req.args.get('edit_id')]
         elif req.args.has_key('super_id'):
             
             upload = req.args['file_to_upload']
@@ -617,7 +626,7 @@ class DownloaderAdminPage(Component):
                 raise TracError, 'No file uploaded'
             
             file = File(self.env)
-            file.release = req.args['super_id'].value
+            file.release = req.args.get('super_id')
             file.fileobj = upload.file
             self.selected = ['release', file.release]
         else:
@@ -630,10 +639,10 @@ class DownloaderAdminPage(Component):
             file.delete()
             return
         
-        file.name = req.args['name'].value
-        file.sort = req.args['sort'].value
-        file.architecture = req.args['architecture'].value
-        file.notes = req.args['notes'].value
+        file.name = req.args.get('name')
+        file.sort = req.args.get('sort')
+        file.architecture = req.args.get('architecture')
+        file.notes = req.args.get('notes')
         
         file.save()
         
@@ -663,6 +672,7 @@ class DownloaderAdminPage(Component):
         contains all attributes actually given by GET method
         listed in self.get_attrs
         """
+        
         if not hasattr(self, 'get_attrs') and not get_attrs:
             return ''
         
@@ -672,13 +682,37 @@ class DownloaderAdminPage(Component):
         lst = []
         for item in get_attrs:
             if req.args.has_key(item):
-                lst.append(str(item) + '=' + str(req.args[item].value))
+                lst.append(str(item) + '=' + str(req.args.get(item)))
         
         if len(lst):
             return util.Markup('?' + join(lst, "&"))
         else:
             return ''
-            
+    
+    # IEnvironmentSetupParticipant methods
+    
+    def environment_created(self):
+        """Called when a new Trac environment is created."""
+        pass
+    
+    def upgrade_environment(self, db):
+        """Actually perform an environment upgrade.
+        
+        Implementations of this method should not commit any database
+        transactions. This is done implicitly after all participants have
+        performed the upgrades they need without an error being raised.
+        """
+        tracdownloader.db.DownloaderDB(self.env).upgrade_environment(db)
+    
+    def environment_needs_upgrade(self, db):
+        """Called when Trac checks whether the environment needs to be upgraded.
+        
+        Should return `True` if this participant needs an upgrade to be
+        performed, `False` otherwise.
+        """
+        return tracdownloader.db.DownloaderDB(self.env).\
+               environment_needs_upgrade(db)
+    
     # ITemplateProvider
 
     def get_htdocs_dirs(self):

@@ -17,6 +17,7 @@ from string import *
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import Markup
+from trac.wiki.api import IWikiSyntaxProvider
 from trac.web import IRequestHandler
 from trac.web.chrome import add_stylesheet, INavigationContributor, \
                             ITemplateProvider
@@ -24,8 +25,9 @@ from trac.web.href import Href
 from tracdownloader.model import *
 
 class DownloaderModule(Component):
-
-    implements(IPermissionRequestor, INavigationContributor, IRequestHandler, ITemplateProvider)
+    
+    implements(IPermissionRequestor, INavigationContributor, IRequestHandler, 
+               ITemplateProvider, IWikiSyntaxProvider)
     
     # IPermissionRequestor method
     
@@ -72,21 +74,13 @@ class DownloaderModule(Component):
 
     def _get_pages(self, req):
         """Return a list of available admin pages."""
-        """pages = []
-        providers = {}
-        for provider in self.page_providers:
-            p = list(provider.get_admin_pages(req))
-            for page in p:
-                providers[(page[0], page[2])] = provider
-            pages += p
-        pages.sort()"""
         pages = ['notes', 'getfile', 'form']
         pages.sort()
         return pages
 
     def process_request(self, req):
         # Defaults for config of this Class
-        config_defaults(self.config)
+        config_defaults(self, self.env)
         
         req.hdf['title'] = 'Downloader'
         
@@ -96,7 +90,7 @@ class DownloaderModule(Component):
         file_directory_check(self.env, req, self.config)
         
         # Default page
-        if not req.args['arg_1'].value:
+        if not req.args.get('arg_1'):
             req.args['arg_1'] = 'download'
             self.arg_1 = 'download'
         
@@ -109,8 +103,9 @@ class DownloaderModule(Component):
             cntx_nav.add('release_stats', 'Release stats')
             cntx_nav.add('category_stats', 'Category stats')
         
-        req.hdf['page_part'] = req.args['arg_1'].value
+        req.hdf['page_part'] = req.args.get('arg_1')
         
+        output = None
         # Switch part of page
         if self.arg_1 == 'download':
             output = self._render_downloads(req)
@@ -130,6 +125,9 @@ class DownloaderModule(Component):
         
         # Context navigation render
         cntx_nav.render(req)
+        
+        if output == None:
+            raise TracError, "No handler matched request to /%s ." % self.arg_1
         
         add_stylesheet(req, 'downloader/css/downloader.css')
         return output
@@ -369,11 +367,11 @@ class DownloaderModule(Component):
         
         elements = None
         if filter == 'file':
-            elements = File.get_files(self.env)
+            elements = File.get_files(self.env, range)
         elif filter == 'release':
-            elements = Release.get_releases(self.env)
+            elements = Release.get_releases(self.env, range)
         elif filter == 'category':
-            _, elements = Categories(self.env).get_categories()
+            _, elements = Categories(self.env).get_categories(range=range)
         
         maximum = 0
         graph_data = []
@@ -446,11 +444,11 @@ class DownloaderModule(Component):
             req.session['downloader_files'] = ''
         #self.env.log.info("Files: " + req.session.get('downloader_files'))
         
-        if req.args['arg_2'].value:
-            arg_1 = req.args['arg_1'].value
-            arg_2 = req.args['arg_2'].value
-            arg_3 = req.args['arg_3'].value
-            arg_4 = req.args['arg_4'].value
+        if req.args.get('arg_2'):
+            arg_1 = req.args.get('arg_1')
+            arg_2 = req.args.get('arg_2')
+            arg_3 = req.args.get('arg_3')
+            arg_4 = req.args.get('arg_4')
             if arg_2 == 'notes' and arg_3 and arg_4 != '':
                 self._render_note(req, arg_3, arg_4)
             elif arg_2 == 'file' and arg_2 != '':
@@ -596,6 +594,54 @@ class DownloaderModule(Component):
             req.hdf['notes.text'] = split(elem.notes, "\n")
         except TypeError:
             raise TracError('Unknown ' + type + ' id ' + "'" + id + "'.")
+            
+    def _format_wiki_link(self, formatter, ns, target, label):
+        # Config defaults must be set
+        config_defaults(self, self.env)
+        try:
+            # Try to use fancier code for Trac 10
+            from trac.util.html import html
+            return self._format_wiki_link_10(formatter, ns, target, label)
+        except ImportError:
+            return self._format_wiki_link_09(formatter, ns, target, label)
+    
+    def _format_wiki_link_10(self, formatter, ns, target, label):
+        try:
+            file = File(self.env, int(target))
+        except TracError, ValueError:
+            return html.A(label, rel='nofollow', href='#', 
+                          title = 'File with this id not found.')
+            
+        fname = file.name
+        if label == ns + ':' + target:
+            label = fname
+            
+        if file.deleted:
+            return html.A(label, rel='nofollow', href='#', 
+                          title='Sorry, file was deleted.')
+        
+        href = formatter.href.downloader('download', 'file', target, fname)
+        return html.A(label, href=href)
+    
+    def _format_wiki_link_09(self, formatter, ns, target, label):
+        try:
+            file = File(self.env, int(target))
+        except TracError, ValueError:
+            return ('<a href="%s" rel="%s" title="%s">%s</a>' % \
+                   ('#', 'nofollow',  \
+                    'File with this id not found.', label))
+            
+        fname = file.name
+        if label == ns + ':' + target:
+            label = fname
+            
+        if file.deleted:
+            return ('<a href="%s" rel="%s" title="%s">%s</a>' % \
+                   ('#', 'nofollow',  \
+                   'Sorry, file was deleted.', label))
+        
+        href = formatter.href.downloader('download', 'file', target, fname)
+        return ('<a href="%s">%s</a>' % (href, label))
     
     # ITemplateProvider
 
@@ -613,3 +659,13 @@ class DownloaderModule(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
         
+
+    # IWikiSyntaxProvider methods
+    
+    def get_wiki_syntax(self):
+        return []
+
+    def get_link_resolvers(self):
+        yield ('downloader', self._format_wiki_link)
+                
+

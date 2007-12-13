@@ -139,7 +139,6 @@ quest_form = [
         'name': 'purpose_shool_which',
         'cat': 'purpose',
         'label': 'Which school:',
-        'show_in_main_list': True,
     },
     {
         'type': 'radio',
@@ -154,6 +153,5 @@ quest_form = [
         'name': 'purpose_commercial_which',
         'cat': 'purpose',
         'label': 'Which company:',
-        'show_in_main_list': True,
     },
 ]
