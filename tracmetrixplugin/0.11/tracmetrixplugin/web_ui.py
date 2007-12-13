@@ -55,7 +55,7 @@ def get_project_tickets(env):
 
 def last_day_of_month(year, month):
     
-    return datetime(year, month+1, 1, tzinfo=utc) - timedelta(days=1)
+    return datetime(year, (month+1)%12 , 1, tzinfo=utc) - timedelta(days=1)
 
 class PDashboard(Component):
 
@@ -182,10 +182,10 @@ class PDashboard(Component):
         first_day = datetime(today.year, today.month, 1, tzinfo=utc)
         last_day = last_day_of_month(today.year, today.month)
         bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
-        
-        # stat for last month
-        first_day = datetime(today.year, today.month-1, 1, tzinfo=utc)
-        last_day = last_day_of_month(today.year, today.month-1)
+         
+        # stat for last month        
+        last_day = first_day - timedelta(days=1)
+        first_day = datetime(last_day.year, last_day.month, 1, tzinfo=utc)
         bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
         
         # get daily stat from today and 4 weeks back
