@@ -672,7 +672,6 @@ class DownloaderAdminPage(Component):
         contains all attributes actually given by GET method
         listed in self.get_attrs
         """
-        
         if not hasattr(self, 'get_attrs') and not get_attrs:
             return ''
         

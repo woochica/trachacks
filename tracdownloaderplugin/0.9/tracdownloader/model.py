@@ -121,7 +121,7 @@ def moths_in_range(start, end, env=None):
             months[year_str].append(month_str)
     return years, months
 
-def render_downloads_table(env, req):
+def render_downloads_table(env, req, filter=None, f_id=None):
     """Prepares data for table of downloads."""
     
     categories_d = {}
@@ -130,6 +130,19 @@ def render_downloads_table(env, req):
     categories_obj, categories_list = Categories(env).list
     categories = []
     for category in categories_list:
+        releases_obj, releases_list = category.get_releases()
+        releases = []
+        
+        # Skip unwanted records
+        if filter == 'category' and f_id != category.id:
+            continue
+        elif filter == 'release':
+            display = False
+            for r in releases_list:
+                if r.id == f_id:
+                    display = True
+            if not display:
+                continue
         category_dict = {'id': category.id,
                          'name': category.name,
                          'notes': category.notes,
@@ -138,9 +151,10 @@ def render_downloads_table(env, req):
         # Format timestamp
         category_dict['timestamp'] = util.format_datetime(category_dict['timestamp'])
         
-        releases_obj, releases_list = category.get_releases()
-        releases = []
         for release in releases_list:
+            # Skip unwanted records
+            if filter == 'release' and f_id != release.id:
+                continue
             release_dict = {'id': release.id,
                             'name': release.name,
                             'notes': release.notes,
@@ -278,19 +292,23 @@ class Category(object):
         self.notes = None
         self.sort = None
         self.timestamp = time.time()
+        self.deleted = None
         self.is_new = True
         
     def _fetch_cat(self, id):
         cursor = self.db.cursor()
-        cursor.execute("SELECT id, name, notes, sort, timestamp "
-            "FROM downloader_category "
-            "WHERE id = %s", (id,))
+        cursor.execute("SELECT id, name, notes, sort, timestamp, deleted "
+                       "FROM downloader_category "
+                       "WHERE id = %s", (id,))
         record = cursor.fetchone()
+        if not record:
+            raise TracError('Category with id ' + str(id) + ' not found.')
         self.id = record[0]
         self.name = record[1]
         self.notes = record[2]
         self.sort = record[3]
         self.timestamp = record[4]
+        self.deleted = record[5]
         self.is_new = False
     
     def _insert(self):
@@ -393,20 +411,25 @@ class Release(object):
         self.notes = None
         self.sort = None
         self.timestamp = time.time()
+        self.deleted = None
         self.is_new = True
         
     def _fetch_rel(self, id):
         cursor = self.db.cursor()
-        cursor.execute("SELECT id, category, name, notes, sort, timestamp "
+        cursor.execute("SELECT id, category, name, notes, sort, timestamp, " 
+            "deleted "
             "FROM downloader_release "
             "WHERE id = %s", (id,))
         record = cursor.fetchone()
+        if not record:
+            raise TracError('Release with id ' + str(id) + ' not found.')
         self.id = record[0]
         self.category = record[1]
         self.name = record[2]
         self.notes = record[3]
         self.sort = record[4]
         self.timestamp = record[5]
+        self.deleted = record[6]
         self.is_new = False
     
     def _insert(self):
@@ -530,6 +553,7 @@ class File(object):
         self.name_disp = None
         self.timestamp = time.time()
         self.architecture = None
+        self.deleted = None
         self.is_new = True
         
     def _fetch_file(self, id):

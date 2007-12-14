@@ -1,4 +1,5 @@
-<table class="listing<?cs if:(!in_adm&&!download_link && !subcount(quest))?> wide<?cs /if ?>">
+<?cs if:href.filter ?><a href="<?cs var:href.base ?>">show all downloads</a><?cs /if 
+?><table class="listing<?cs if:(!in_adm&&!download_link && !subcount(quest))?> wide<?cs /if ?>">
   <thead>
     <tr>
       <th>Category</th>
@@ -17,10 +18,10 @@
     <?cs /if ?>
     <tr class="<?cs var:row_class ?> category">
       <td colspan="5">
-        <?cs if in_adm ?><a href="<?cs var:href.base ?>/category/<?cs var:category.id ?>"><?cs /if 
-            ?><?cs var:category.name ?><?cs if in_adm ?></a><?cs /if ?>
+        <a href="<?cs var:href.base ?>/category/<?cs var:category.id ?>"><?cs 
+          var:category.name ?><?cs if in_adm ?></a><?cs /if ?>
         <?cs if !in_adm ?>
-            <a href="<?cs var:href.base ?>/notes/category/<?cs var:category.id ?>">
+            <a href="<?cs var:href.base+href.filter ?>/notes/category/<?cs var:category.id ?>">
                 <img alt="Category notes" src="<?cs var:chrome.href ?>/downloader/img/notes.png" />
             </a>
         <?cs /if ?>
@@ -36,11 +37,11 @@
       <tr class="<?cs var:row_class ?> release">
         <td>&nbsp;</td>
         <td colspan="4">
-          <?cs if in_adm ?><a href="<?cs var:href.base ?>/release/<?cs var:release.id ?>"><?cs /if ?>
+          <a href="<?cs var:href.base ?>/release/<?cs var:release.id ?>">
             <?cs var:release.name ?>
           <?cs if in_adm ?></a><?cs /if ?>
           <?cs if !in_adm ?>
-            <a href="<?cs var:href.base ?>/notes/release/<?cs var:release.id ?>">
+            <a href="<?cs var:href.base+href.filter ?>/notes/release/<?cs var:release.id ?>">
                 <img alt="Release notes" src="<?cs var:chrome.href ?>/downloader/img/notes.png" />
             </a>
         <?cs /if ?>
@@ -57,11 +58,11 @@
         <tr class="<?cs var:row_class ?> file">
           <td colspan="2">&nbsp;</td>
           <td>
-            <a href="<?cs var:href.base ?>/file/<?cs var:file.id ?>">
+            <a href="<?cs var:href.base+href.filter ?>/file/<?cs var:file.id ?>">
               <?cs var:file.name_disp ?><?cs if:!file.name_disp ?>--<?cs /if ?>
             </a>
             <?cs if !in_adm ?>
-                <a href="<?cs var:href.base ?>/notes/file/<?cs var:file.id ?>">
+                <a href="<?cs var:href.base+href.filter ?>/notes/file/<?cs var:file.id ?>">
                     <img alt="File notes" src="<?cs var:chrome.href ?>/downloader/img/notes.png" />
                 </a>
             <?cs /if ?>

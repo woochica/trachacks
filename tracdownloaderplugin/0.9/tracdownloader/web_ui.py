@@ -57,7 +57,7 @@ class DownloaderModule(Component):
     def match_request(self, req):
         match = re.match( \
             '/downloader(?:/([^/]+))?(?:/([^/]+))?' + \
-            '(?:/([^/]+))?(?:/([^/]+))?(?:/(.*)$)?', \
+            '(?:/([^/]+))?(?:/([^/]+))?(?:/([^/]+))?(?:/(.*)$)?', \
             req.path_info)
         if match:
             req.args['arg_1'] = match.group(1)
@@ -70,13 +70,16 @@ class DownloaderModule(Component):
             self.arg_4 = match.group(4)
             req.args['arg_5'] = match.group(5)
             self.arg_5 = match.group(5)
+            req.args['arg_6'] = match.group(6)
+            self.arg_6 = match.group(6)
             return True
-
+    '''
     def _get_pages(self, req):
         """Return a list of available admin pages."""
         pages = ['notes', 'getfile', 'form']
         pages.sort()
         return pages
+    '''
 
     def process_request(self, req):
         # Defaults for config of this Class
@@ -444,25 +447,48 @@ class DownloaderModule(Component):
             req.session['downloader_files'] = ''
         #self.env.log.info("Files: " + req.session.get('downloader_files'))
         
+        filter = None
+        f_id = None
         if req.args.get('arg_2'):
             arg_1 = req.args.get('arg_1')
             arg_2 = req.args.get('arg_2')
             arg_3 = req.args.get('arg_3')
             arg_4 = req.args.get('arg_4')
+            arg_5 = req.args.get('arg_5')
+            arg_6 = req.args.get('arg_6')
             if arg_2 == 'notes' and arg_3 and arg_4 != '':
                 self._render_note(req, arg_3, arg_4)
-            elif arg_2 == 'file' and arg_2 != '':
-                if self._serve_file(req, arg_3, arg_4):
+            elif arg_2 == 'file' and arg_3 != '':
+                href_base = self.env.href.downloader(arg_1,
+                                                     arg_2)
+                if self._serve_file(req, arg_3, arg_4, href_base):
                     return None
+            elif arg_2 == 'release' or arg_2 == 'category' and arg_3 != '':
+                try:
+                    f_id = int(arg_3)
+                    filter = arg_2
+                except ValueError:
+                    pass
+                req.hdf['href.filter'] = '/' + arg_2 + '/' + arg_3
+                if arg_4 == 'file' and arg_5 != '':
+                    href_base = self.env.href.downloader(arg_1,
+                                                         arg_2,
+                                                         arg_3,
+                                                         arg_4)
+                    
+                    if self._serve_file(req, arg_5, arg_6, href_base):
+                        return None
+                elif arg_4 == 'notes' and arg_5 and arg_6 != '':
+                    self._render_note(req, arg_5, arg_6)
         else:
             # Test if session works
             req.session['downloader_test'] = 'test'
         
-        render_downloads_table(self.env, req)
+        render_downloads_table(self.env, req, filter=filter, f_id=f_id)
         
         return 'downloader.cs', None
     
-    def _serve_file(self, req, id, file_name):
+    def _serve_file(self, req, id, file_name, href_base):
         """
         Workarounds and decisions about what to do when file is clicked.
         * Just serves file like real link if no_quest = true is in config.
@@ -475,10 +501,7 @@ class DownloaderModule(Component):
         file = File(self.env, id)
         # Redirect to address with filename at the end
         if file_name == '' or file_name == None:
-            req.redirect(self.env.href.downloader(self.arg_1, 
-                                                  'file', 
-                                                  id, 
-                                                  file.name))
+            req.redirect(href_base + '/' + str(id) + '/' + file.name)
             return False
         
         # Serve questionnaire if wanted
@@ -598,49 +621,70 @@ class DownloaderModule(Component):
     def _format_wiki_link(self, formatter, ns, target, label):
         # Config defaults must be set
         config_defaults(self, self.env)
+        
+        if ns == 'downloader':
+            what = 'file'
+            try:
+                obj = File(self.env, int(target))
+            except TracError, ValueError:
+                obj = None
+        elif ns == 'downloaderrel':
+            what = 'release'
+            try:
+                obj = Release(self.env, int(target))
+            except TracError, ValueError:
+                obj = None
+        elif ns == 'downloadercat':
+            try:
+                obj = Category(self.env, int(target))
+            except TracError, ValueError:
+                obj = None
+            what = 'category'
+            
         try:
             # Try to use fancier code for Trac 10
             from trac.util.html import html
-            return self._format_wiki_link_10(formatter, ns, target, label)
+            return self._format_wiki_link_10(formatter, ns, target, label, obj,
+                                             what)
         except ImportError:
-            return self._format_wiki_link_09(formatter, ns, target, label)
+            return self._format_wiki_link_09(formatter, ns, target, label, obj,
+                                             what)
     
-    def _format_wiki_link_10(self, formatter, ns, target, label):
-        try:
-            file = File(self.env, int(target))
-        except TracError, ValueError:
-            return html.A(label, rel='nofollow', href='#', 
-                          title = 'File with this id not found.')
-            
-        fname = file.name
-        if label == ns + ':' + target:
-            label = fname
-            
-        if file.deleted:
-            return html.A(label, rel='nofollow', href='#', 
-                          title='Sorry, file was deleted.')
+    def _format_wiki_link_10(self, formatter, ns, target, label, obj, what):
+        from trac.util.html import html
         
-        href = formatter.href.downloader('download', 'file', target, fname)
+        if not obj:
+            return html.A(label, rel='nofollow', href='#', 
+                          title = '%s with this id not found.' %\
+                          capitalize(what))
+            
+        name = obj.name
+        if label == ns + ':' + target:
+            label = name
+            
+        if obj.deleted:
+            return html.A(label, rel='nofollow', href='#', 
+                          title='Sorry, %s was deleted.' % what)
+        
+        href = formatter.href.downloader('download', what, target, name)
         return html.A(label, href=href)
     
-    def _format_wiki_link_09(self, formatter, ns, target, label):
-        try:
-            file = File(self.env, int(target))
-        except TracError, ValueError:
+    def _format_wiki_link_09(self, formatter, ns, target, label, obj, what):
+        if not obj:
             return ('<a href="%s" rel="%s" title="%s">%s</a>' % \
                    ('#', 'nofollow',  \
-                    'File with this id not found.', label))
+                    '%s with this id not found.' % capitalize(what), label))
             
-        fname = file.name
+        name = obj.name
         if label == ns + ':' + target:
-            label = fname
+            label = name
             
-        if file.deleted:
+        if obj.deleted:
             return ('<a href="%s" rel="%s" title="%s">%s</a>' % \
                    ('#', 'nofollow',  \
-                   'Sorry, file was deleted.', label))
+                   'Sorry, %s was deleted.' % what, label))
         
-        href = formatter.href.downloader('download', 'file', target, fname)
+        href = formatter.href.downloader('download', what, target, name)
         return ('<a href="%s">%s</a>' % (href, label))
     
     # ITemplateProvider
@@ -666,6 +710,8 @@ class DownloaderModule(Component):
         return []
 
     def get_link_resolvers(self):
-        yield ('downloader', self._format_wiki_link)
+        return [('downloader', self._format_wiki_link),
+                ('downloaderrel', self._format_wiki_link),
+                ('downloadercat', self._format_wiki_link)]
                 
 
