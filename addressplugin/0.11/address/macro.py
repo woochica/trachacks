@@ -21,9 +21,9 @@ class AddressMacro(Component):
     The rendered map shows other addresses in proximity.
     {{{
 
-    [[Address("123 Any Street, Anytown, NY 14450","Some Location"]]
+    [[Address("123 Any Street, Anytown, NY 14450","Some Location")]]
 
-    [[Address("123 Any Street, Anytown, NY 14450"]]
+    [[Address("123 Any Street, Anytown, NY 14450")]]
 
     }}}
     """
