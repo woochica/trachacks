@@ -2,13 +2,13 @@ import sys
 sys.path.append('../')
 import wikiaddress
 
-_API_KEY = 'ABQIAAAA3VM3oU5dUaRzj4mZKrWenRR-aua9fIhr0mssyA66j0SiUW84BRT6dpcTl-e73A90avaJpS5TGZYrCQ'
+_API_KEY = 'PUT YOUR KEY HERE'
 
 my_dbapi = __import__("MySQLdb")
 mydb = my_dbapi.connect(host='localhost',
-                        user='rottentrac',
-                        passwd='rottentrac',
-                        db='rottentrac')
+                        user='userid',
+                        passwd='password',
+                        db='password')
 
 w = wikiaddress.wikiaddress(mydb,'mundo grill',_API_KEY,'somebody','1.2.3.4','2833 Monroe Ave, Rochester NY 14618',None)
 

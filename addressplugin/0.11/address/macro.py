@@ -1,9 +1,3 @@
-# Implements the Moin-style IncludePages macro.
-#
-# This plugin base on WikiInclude macro By Vegard Eriksen zyp at jvnv dot net.
-# See: http://projects.edgewall.com/trac/wiki/MacroBazaar#WikiInclude
-# and on the variant written by  yu-ji
-
 from genshi.builder import Element, tag
 from genshi.core import Markup
 
@@ -18,12 +12,22 @@ import wikiaddress, geocode
 
 __all__ = ['AddressMacro']
 
-_API_KEY = 'ABQIAAAA3VM3oU5dUaRzj4mZKrWenRR-aua9fIhr0mssyA66j0SiUW84BRT6dpcTl-e73A90avaJpS5TGZYrCQ'
+_API_KEY = 'PUT YOUR KEY HERE'
 
 class AddressMacro(Component):
     """
+    Creates a Google map for the supplied address and optional location.
+    This map is stored in the trac database and associated with the page.
+    The rendered map shows other addresses in proximity.
+    {{{
 
+    [[Address("123 Any Street, Anytown, NY 14450","Some Location"]]
+
+    [[Address("123 Any Street, Anytown, NY 14450"]]
+
+    }}}
     """
+
     implements(IWikiMacroProvider)
 
     def get_macros(self):
