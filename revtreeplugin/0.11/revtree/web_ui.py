@@ -24,8 +24,8 @@ from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import TracError
 from trac.util.datefmt import format_datetime, pretty_timedelta, to_timestamp
-from trac.web import IRequestHandler
-from trac.web.chrome import add_stylesheet, add_script, \
+from trac.web import IRequestFilter, IRequestHandler
+from trac.web.chrome import add_ctxtnav, add_script, add_stylesheet, \
                             INavigationContributor, ITemplateProvider
 from trac.web.href import Href
 from trac.wiki import wiki_to_html, WikiSystem
@@ -123,7 +123,7 @@ class RevtreeModule(Component):
     """Implements the revision tree feature"""
     
     implements(IPermissionRequestor, INavigationContributor, \
-               IRequestHandler, ITemplateProvider)
+               IRequestFilter, IRequestHandler, ITemplateProvider)
                    
     PERIODS = { 1: 'day', 2: '2 days', 3: '3 days', 5: '5 days', 7:'week',
                 14: 'fortnight', 31: 'month', 61: '2 months', 
@@ -142,8 +142,22 @@ class RevtreeModule(Component):
     def get_navigation_items(self, req):
         if not req.perm.has_permission('REVTREE_VIEW'):
             return
+        if self.contexts:
+            return
         yield ('mainnav', 'revtree', 
                tag.a('Rev Tree', href=req.href.revtree()))
+
+    # IRequestFilter methods
+
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if req.perm.has_permission('REVTREE_VIEW'):
+            url_parts = req.path_info.split(u'/')
+            if (url_parts > 1) and (url_parts[1] in self.contexts):
+                add_ctxtnav(req, 'Revtree', href=req.href.revtree())
+        return (template, data, content_type)
 
     # IRequestHandler methods
 
@@ -195,6 +209,8 @@ class RevtreeModule(Component):
         if self.style not in [ 'compact', 'timeline']:
             self.env.log.warning("Unsupported style: %s" % self.style)
             self.style = 'compact'
+        contexts = self.config.get('revtree', 'contexts', None)
+        self.contexts = contexts and [c.strip() for c in contexts.split(u',')]
         self.rt = RevtreeSystem(self.env)
 
     def _process_log(self, req):
