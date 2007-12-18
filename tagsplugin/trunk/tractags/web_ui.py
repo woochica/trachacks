@@ -167,7 +167,7 @@ class TagsModule(Component):
         req.perm.require('TAGS_VIEW')
 
         add_stylesheet(req, 'tags/css/tractags.css')
-        req.hdf['trac.href.tags'] = req.href.tags()
+        data = {}
 
         def update_from_req(args):
             for k in req.args.keys():
@@ -181,10 +181,10 @@ class TagsModule(Component):
             update_from_req(index_kwargs)
 
             if index == 'cloud':
-                req.hdf['tag.body'] = Markup(
+                data['tag_body'] = Markup(
                     TagMacros(self.env).render_tagcloud(req, **index_kwargs))
             elif index == 'list':
-                req.hdf['tag.body'] = Markup(
+                data['tag_body'] = Markup(
                     TagMacros(self.env).render_listtagged(req, **index_kwargs))
             else:
                 raise TracError("Invalid index style '%s'" % index)
@@ -194,15 +194,15 @@ class TagsModule(Component):
                 expr = req.args.get('e')
             else:
                 expr = req.path_info[6:]
-            req.hdf['tag.title'] = Markup('Objects matching the expression <i>%s</i>' % escape(expr))
-            req.hdf['tag.expression'] = expr
+            data['tag_title'] = Markup('Objects matching the expression <i>%s</i>' % escape(expr))
+            data['tag_expression'] = expr
             try:
                 Expression(expr)
             except Exception, e:
-                req.hdf['tag.expression.error'] = unicode(e).replace(' (line 1)', '')
+                data['tag_expression_error'] = unicode(e).replace(' (line 1)', '')
             args['expression'] = expr
             tags = []
             update_from_req(args)
-            req.hdf['tag.body'] = Markup(
+            data['tag_body'] = Markup(
                 TagMacros(self.env).render_listtagged(req, *tags, **args))
-        return 'tags.cs', None
+        return 'tags.html', data, None

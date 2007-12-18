@@ -1,0 +1,35 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head></head>
+
+  <body>
+    <div id="content" class="tags">
+      <form id="expression" action="${href.tags()}" method="get">
+        <label for="tag-expression">Filter tags:</label>
+        <input type="text" id="tag-expression" name="e" size="40" accesskey="t"
+          value="${tag_expression}"/>
+        <input type="submit" value="Filter Tags" name="filter"/>
+        <div>
+          <strong>Note:</strong> See
+          <a href="http://trac-hacks.org/wiki/TagsPlugin">TracTags</a> for
+          information about using tag expressions.
+        </div>
+        <div py:if="tag_expression_error" id="expression-error">
+          <strong>Error:</strong> ${expression_error}
+        </div>
+      </form>
+
+      <p>
+        <h1 py:if="tag_title">${tag_title}</h1>
+        ${tag_body}
+      </p>
+    </div>
+  </body>
+</html>
