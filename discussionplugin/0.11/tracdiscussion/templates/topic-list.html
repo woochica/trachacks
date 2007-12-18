@@ -87,14 +87,14 @@
         </py:choose>
 
         <div class="buttons">
-          <form py:if="'DISCUSSION_APPEND' in perm(context)" method="post" action="${href.discussion(discussion.forum.id)}">
+          <form py:if="'DISCUSSION_APPEND' in perm" method="post" action="${href.discussion(discussion.forum.id)}">
             <div>
               <input type="submit" name="newtopic" value="New Topic"/>
               <input type="hidden" name="forum" value="${discussion.forum.id}"/>
               <input type="hidden" name="discussion_action" value="add"/>
             </div>
           </form>
-          <form py:if="'DISCUSSION_ADMIN' in perm(context)" method="post" action="${href.discussion()}">
+          <form py:if="'DISCUSSION_ADMIN' in perm" method="post" action="${href.discussion()}">
             <div>
               <input type="submit" name="deleteforum" value="Delete Forum" onclick="return confirm('Do you realy want to delete this forum?')"/>
               <input type="hidden" name="forum" value="${discussion.forum.id}"/>

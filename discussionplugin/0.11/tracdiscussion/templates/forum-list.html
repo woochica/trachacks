@@ -129,7 +129,7 @@
           <p py:otherwise="" class="help">There are no forums created.</p>
         </py:choose>
 
-        <div py:if="'DISCUSSION_ADMIN' in perm(context)" class="buttons">
+        <div py:if="'DISCUSSION_ADMIN' in perm" class="buttons">
           <form method="post" action="${href.discussion()}">
             <div>
               <input type="submit" name="newforum" value="New Forum"/>
