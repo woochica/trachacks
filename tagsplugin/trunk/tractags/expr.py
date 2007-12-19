@@ -3,6 +3,7 @@ import operator
 import parser
 import re
 from trac.core import TracError
+from trac.util.text import to_unicode
 
 try:
     set = set
@@ -23,7 +24,7 @@ class Expression:
     __visitors = {}
 
     def __init__(self, expression):
-        self.expression = expression.decode('utf-8')
+        self.expression = expression.encode('utf-8')
         self.ast = compiler.parse(self.expression, 'eval')
 
     def get_tags(self):
