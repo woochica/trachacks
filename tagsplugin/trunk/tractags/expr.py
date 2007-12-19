@@ -1,5 +1,6 @@
 import compiler
 import operator
+import parser
 import re
 from trac.core import TracError
 
@@ -10,34 +11,24 @@ except:
 
 class Expression:
     """ Pass a set of tags through a basic expression filter.
-    
-        Supported operators are: unary - (not); binary +, - and | (and, and
-        not, or). All values in the expression are treated as tags. Any tag
-        not in the same form as a Python variable must be quoted.
-        
+
+        Expressions are valid, basic Python expressions.
+
         eg. Match all objects tagged with ticket and workflow, and not tagged
         with wiki or closed.
-        
-            (ticket+workflow)-(wiki|closed)
+
+            (ticket and workflow) and not (wiki or closed)
         """
     __slots__ = ['ast', 'expression']
     __visitors = {}
 
     def __init__(self, expression):
-        tokenizer = re.compile(r'''"[^"]*"|'[^']*'|[-|,+()\[\]]|[^-,|+()\[\]\s]+''')
-        expr = []
-        for token in tokenizer.findall(expression):
-            if token not in '-|+()[],' and token[0] not in '"\'':
-                expr.append('"%s"' % token)
-            else:
-                expr.append(token)
-        self.expression = (u' '.join(expr)).encode('utf-8') 
+        self.expression = expression.decode('utf-8')
         self.ast = compiler.parse(self.expression, 'eval')
 
     def get_tags(self):
         """ Fetch tags used in this expression. """
         tags = set()
-        import parser
         def walk(node):
             if node[0] == 1:
                 tags.add(node[1])
@@ -73,13 +64,28 @@ class Expression:
         return self._visit(node.left, context) \
                and not self._visit(node.right, context)
 
-    def _visit_add(self, node, context):
-        return self._visit(node.left, context) \
-               and self._visit(node.right, context)
+    def _visit_not(self, node, context):
+        return not self._visit(node.expr, context)
 
-    def _visit_bitor(self, node, context):
-        return self._visit(node.nodes[0], context) \
-               or self._visit(node.nodes[1], context)
+    def _visit_and(self, node, context):
+        result = True
+        for arg in node.nodes:
+            result = result and self._visit(arg, context)
+            if not result:
+                return False
+        return True
+
+    _visit_add = _visit_and
+
+    def _visit_or(self, node, context):
+        result = False
+        for arg in node.nodes:
+            result = result or self._visit(arg, context)
+            if result:
+                return True
+        return False
+
+    _visit_bitor = _visit_or
 
     def _visit_name(self, node, context):
         return node.name in context

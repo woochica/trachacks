@@ -107,25 +107,26 @@ class TagsModule(Component):
     """
     implements(IRequestHandler, INavigationContributor, ITemplateProvider)
 
-    def _prepare_wiki(self, req):
-        from tractags.api import TagEngine
-        page = req.path_info[6:] or 'WikiStart'
-        engine = TagEngine(self.env)
-        wikitags = engine.tagspace.wiki
-        tags = list(wikitags.get_tags(page))
-        tags.sort()
-
-        action = req.args.get('action', 'view')
-        if action == 'edit':
-            req.hdf['tags'] = req.args.get('tags', ', '.join(tags))
-        elif action == 'view':
-            hdf_tags = []
-            for tag in tags:
-                href, title = engine.get_tag_link(tag)
-                hdf_tags.append({'name': tag,
-                                 'href': href,
-                                 'title': title})
-            req.hdf['tags'] = hdf_tags
+    # This method is never really called by anything.... Remove?
+    # def _prepare_wiki(self, req):
+    #     from tractags.api import TagEngine
+    #     page = req.path_info[6:] or 'WikiStart'
+    #     engine = TagEngine(self.env)
+    #     wikitags = engine.tagspace.wiki
+    #     tags = list(wikitags.get_tags(page))
+    #     tags.sort()
+    # 
+    #     action = req.args.get('action', 'view')
+    #     if action == 'edit':
+    #         req.hdf['tags'] = req.args.get('tags', ', '.join(tags))
+    #     elif action == 'view':
+    #         hdf_tags = []
+    #         for tag in tags:
+    #             href, title = engine.get_tag_link(tag)
+    #             hdf_tags.append({'name': tag,
+    #                              'href': href,
+    #                              'title': title})
+    #         req.hdf['tags'] = hdf_tags
 
     # ITemplateProvider methods
     def get_templates_dirs(self):

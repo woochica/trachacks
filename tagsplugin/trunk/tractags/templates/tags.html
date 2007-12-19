@@ -16,13 +16,18 @@
         <input type="text" id="tag-expression" name="e" size="40" accesskey="t"
           value="${tag_expression}"/>
         <input type="submit" value="Filter Tags" name="filter"/>
-        <div>
-          <strong>Note:</strong> See
-          <a href="http://trac-hacks.org/wiki/TagsPlugin">TracTags</a> for
-          information about using tag expressions.
-        </div>
         <div py:if="tag_expression_error" id="expression-error">
-          <strong>Error:</strong> ${expression_error}
+          <strong>Error:</strong> ${tag_expression_error}
+        </div>
+        <div>
+          <p><strong>Tag expressions:</strong></p>
+          <ul>
+            <li><strong>and</strong> for AND operation: tag1 and tag2</li>
+            <li><strong>or</strong> for OR operation: tag1 or tag2</li>
+            <li><strong>not</strong> for NOT operation: tag1 and not tag2</li>
+            <li><strong>()</strong> to group sub-expressions:(tag1 or tag2) and not tag3</li>
+            <li><strong>'quoted string'</strong> to quote words with non-ASCII characters</li>
+          </ul>
         </div>
       </form>
 

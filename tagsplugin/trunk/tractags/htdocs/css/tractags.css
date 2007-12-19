@@ -31,8 +31,11 @@ ul.tagcloud { list-style: none; }
 	clear: both;
 	font-size: 10px;
 	height: 2.2em;
-	margin: 0 0 2em 2em;
-	text-align: right;
+	margin: 0 0 15em 2em;
+	text-align: left;
+}
+#expression ul {
+    list-style: none;
 }
 #expression input { font-size: 10px }
 #expression label { display: none }

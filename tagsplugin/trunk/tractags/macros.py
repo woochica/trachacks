@@ -30,7 +30,8 @@ class TagMacros(Component):
         return links
 
     def _current_page(self, req):
-        return req.hdf.getValue('wiki.page_name', '')
+        # FIXME Butt ugly - should be formatter.context.resource.id or something
+        return req.path_info.rstrip('/').split('/')[-1]
 
     # IWikiMacroProvider methods
     def get_macros(self):
@@ -43,10 +44,10 @@ class TagMacros(Component):
         import pydoc
         return pydoc.getdoc(getattr(self, 'render_' + name.lower()))
 
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
         from trac.web.chrome import add_stylesheet
         from parseargs import parseargs
-        add_stylesheet(req, 'tags/css/tractags.css')
+        add_stylesheet(formatter.req, 'tags/css/tractags.css')
         # Translate macro args into python args
         args = []
         kwargs = {}
@@ -60,7 +61,7 @@ class TagMacros(Component):
         except Exception, e:
             raise TracError("Invalid arguments '%s' (%s %s)" % (content, e.__class__.__name__, e))
 
-        return getattr(self, 'render_' + name.lower(), content)(req, *args, **kwargs)
+        return getattr(self, 'render_' + name.lower(), content)(formatter.req, *args, **kwargs)
 
     # Macro implementations
     def render_tagcloud(self, req, smallest=10, biggest=20, showcount=True, tagspace=None, mincount=1, tagspaces=[], **kwargs):
@@ -170,7 +171,7 @@ class TagMacros(Component):
             raise TracError("Invalid tag set operation '%s'" % operation)
 
         engine = TagEngine(self.env)
-        page_name = req.hdf.get('wiki.page_name')
+        page_name = self._current_page(req)
         if page_name:
             tags = [tag == '.' and page_name or tag for tag in tags]
 
@@ -185,6 +186,7 @@ class TagMacros(Component):
             from tractags.expr import Expression
             try:
                 expr = Expression(expression)
+                self.env.log.debug(repr(expr))
             except Exception, e:
                 self.env.log.error("Invalid expression '%s'" % expression, exc_info=True)
                 tags.update([x.strip() for x in re.split('[+,]', expression) if x.strip()])
