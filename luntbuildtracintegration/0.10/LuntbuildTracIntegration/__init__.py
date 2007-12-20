@@ -1,2 +1,2 @@
 # Lunt Trac module
-from LuntTrac import *
+from LuntbuildTracIntegration import *

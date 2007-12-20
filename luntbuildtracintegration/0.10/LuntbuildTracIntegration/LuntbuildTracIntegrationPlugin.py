@@ -9,7 +9,7 @@ from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.Timeline import ITimelineEventProvider
 
-class LuntTracPlugin(Component):
+class LuntbuildTracIntegrationPlugin(Component):
 
     implements(INavigationContributor, ITimelineEventProvider, ITemplateProvider)
     
