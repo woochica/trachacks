@@ -4,7 +4,7 @@ setup(
     name='TracTags',
     version='0.5',
     packages=['tractags'],
-	package_data={'tractags' : ['templates/*.cs', 'htdocs/js/*.js', 'htdocs/css/*.css']},
+	package_data={'tractags' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']},
     author='Muness Alrubaie',
     url='http://trac-hacks.org/wiki/TagsPlugin',
     description='Tag plugin for Trac',
