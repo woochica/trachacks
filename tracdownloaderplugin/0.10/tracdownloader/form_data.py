@@ -109,7 +109,10 @@ quest_form = [
         'label': 'E-mail:',
         'description': 'Valid e-mail address.',
         'show_in_main_list': True,
-        'regexp': r'\S*@\S*\.\S*',
+        #'regexp': r'\S*@\S*\.\S*',
+        # You can use regexp above if the one below doesn't work for you
+        # Or look here - http://www.regular-expressions.info/email.html
+        'regexp': r"[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+(?:[a-zA-Z]{2}|com|COM|org|ORG|net|NET|gov|GOV|mil|MIL|biz|BIZ|info|INFO|mobi|MOBIL|name|NAME|aero|AERO|biz|BIZ|info|INFO|jobs|JOBS|museum|MUSEUM)\b",
         'errinfo': 'You must enter valid e-mail address.'
     },
     {
