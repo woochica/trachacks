@@ -1,0 +1,156 @@
+== Notes during implementation ==
+
+When ticket is closed (resolved by some means), hour fields are not touch - there can be hours left in closed tickets! Current implementation doesn't handle this kind of situations. Possible ways to fix this:
+
+  * It would be quite simple to change latest implementation to filter out closed tickets when hours are calculated in the same means as it treates the ticket creation timestamp.
+
+  * TimindAndEstimationPlugin could be improved to decrease estimated hours to current hours when a ticket is closed.
+
+When ticket is created, fields in ticket tables are created, also ticket_custom rows are written. But a specific feature is that if hours is given during creation, a 'revision' is create so that ticket_change will contain property changes for 'hours' and 'totalhours'. Unfortunately estimated hours is not treated in the similar manner! That's why the implementation needs not only to process ticket_change but also ticket table for creation timestamps. This makes implementation quite messy.
+
+Values returned by SQL queries are most ofter unicode strings - especially custom ticket fields are allways strings. However, they can be 'cast' to floats already in sql (at least with sqlite) by using meaningless calculation in select clause, e.g.
+{{{
+SELECT oldvalue-0.0 FROM ticket_change WHERE field = 'totalhours';
+}}}
+
+One more warning: component field in ticket may be empty string or null, for example my test env seems to have this data:
+{{{
+>>> cursor.execute("select component from ticket").fetchall()
+[(u'',), (u'',), (u'',), (u'',), (u'',), (u'',), (u'',), (u'',), (u'',), (u'',),
+ (u'',), (u'',), (u'',), (u'',), (u'',), (u'',), (u'',), (u'',), (None,), (None,
+), (None,), (None,), (None,), (None,)]
+}}}
+
+SVG is smple format to produce. Unfortunately polyline doesn't support percent sized values, so lines are used instead. Current implementation renders two kind of stuff: time function and hour/date separators. A simple example of the result is something like:
+
+{{{
+#!xml
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<line x1="100.000000%" y1="0%" x2="100.000000%" y2="100%" style="stroke:rgb(80,255,255);stroke-width:3"/>
+<line x1="85.979375%" y1="0%" x2="85.979375%" y2="100%" style="stroke:rgb(80,255,255);stroke-width:3"/>
+<line x1="71.958750%" y1="0%" x2="71.958750%" y2="100%" style="stroke:rgb(80,255,255);stroke-width:3"/>
+<line x1="0.268242%" y1="73.584906%" x2="0.015903%" y2="81.132075%" style="stroke:rgb(0,255,0);stroke-width:10"/>
+<line x1="0.015903%" y1="81.132075%" x2="0.009574%" y2="77.358491%" style="stroke:rgb(0,255,0);stroke-width:10"/>
+<line x1="0.009574%" y1="77.358491%" x2="0.000000%" y2="77.358491%" style="stroke:rgb(0,255,0);stroke-width:10"/>
+</svg>
+}}}
+
+More about svg can be found from
+
+ * http://www.w3schools.com/svg/default.asp
+ * http://www.w3.org/TR/SVG/coords.html#TransformAttribute
+
+And finally the implemnetation algorithm is described below:
+
+ * First the last known ticket status is cached to memory
+ * ticket_change is begin crawled and cached tickets updated based on history information.
+ * when timestamp changes, totalhours is calculated (based on filters) and stored for graph as current timestamp (revision) and hours left
+ * if ticket is created with estimated hours, no any changes exist ticket_change. That's why also tickets creation timestamps have to be included
+   when producing graph data
+ * when all data is produced, timestamps are first scaled to origin
+ * because svg lines need percentual values for coordinates, timestamp (x-axis) and hours (y-axis) are scaled between 0 and 100 during line rendering
+
+== Improvement ideas ==
+
+ * ticket models for each timestamp could be stored permanently to db or to some other place. Then it would be much more faster to create
+   reports, because there would not be need to do the same work each time
+
+== Some usefull SQL statements to discover db ==
+
+{{{
+SELECT ticket, time, field, oldvalue, newvalue
+FROM ticket_change
+WHERE field in('totalhours', 'estimatedhours', 'hours', 'milestone')
+ORDER BY time DESC;
+
+SELECT ticket, time, field, oldvalue, newvalue
+FROM ticket_change WHERE field in('estimatedhours', 'hours', 'milestone')
+ORDER BY time DESC;
+
+SELECT t.id, t.status, t.milestone, est.value as estimate, ts.value as totalhours, est.value - ts.value as hoursleft
+FROM ticket t
+    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'estimatedhours')
+    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'totalhours')
+ORDER BY milestone, status;
+}}}
+
+== Last revision of tickets ==
+
+{{{
+CREATE TABLE ticket (
+    id integer PRIMARY KEY,
+    type text,
+    time integer,
+    changetime integer,
+    component text,
+    severity text,
+    priority text,
+    owner text,
+    reporter text,
+    cc text,
+    version text,
+    milestone text,
+    status text,
+    resolution text,
+    summary text,
+    description text,
+    keywords text
+);
+CREATE INDEX ticket_status_idx ON ticket (status);
+CREATE INDEX ticket_time_idx ON ticket (time);
+}}}
+
+Earlier revisions can be produced from [#Ticketchangehistory change history]
+
+== Custom tickets fields ==
+
+Custom ticket properties are stored to `ticket_custom`
+{{{
+sqlite> .schema ticket_custom
+CREATE TABLE ticket_custom (
+    ticket integer,
+    name text,
+    value text,
+    UNIQUE (ticket,name)
+);
+
+sqlite> select distinct name from ticket_custom;
+estimatedhours
+hours
+billable
+totalhours
+}}}
+
+== Ticket change history ==
+
+Practically any changes to ticket properties are recorded to 'ticket_change':
+{{{
+sqlite>.schema ticket_change
+CREATE TABLE ticket_change (
+    ticket integer,
+    time integer,
+    author text,
+    field text,
+    oldvalue text,
+    newvalue text,
+    UNIQUE (ticket,time,field)
+);
+CREATE INDEX ticket_change_ticket_idx ON ticket_change (ticket);
+CREATE INDEX ticket_change_time_idx ON ticket_change (time);
+
+sqlite> select distinct field from ticket_change;
+summary
+comment
+milestone
+hours
+totalhours
+description
+status
+resolution
+priority
+estimatedhours
+}}}
