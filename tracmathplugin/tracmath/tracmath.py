@@ -1,3 +1,8 @@
+""" TracMath - A trac plugin that renders latex formulas within a wiki page.
+
+This has currently been tested only on trac 0.11.
+"""
+
 import codecs
 import re
 import sha
@@ -16,6 +21,7 @@ from trac.wiki.formatter import wiki_to_oneliner
 from trac import mimeview
 
 __author__ = 'Reza Lotun'
+__author_email__ = 'rlotun@gmail.com'
 
 tex_preamble = r"""
 \documentclass{article}
@@ -58,7 +64,7 @@ class TracMathPlugin(Component):
         self.dvipng_cmd = self.config.get('tracmath', 'dvipng_cmd') or dvipng
         self.max_png = self.config.get('tracmath', 'max_png') or max_png
         self.max_png = int(self.max_png)
-                                                        
+
         if not os.path.exists(self.cacheDirectory):
             os.mkdir(self.cacheDirectory, 0777)
 
@@ -131,7 +137,7 @@ class TracMathPlugin(Component):
             self.manage_cache()
 
         return '<img src="%s/tracmath/%s" />' % (req.base_url, imgname)
-    
+
     def manage_cache(self):
 
         ftime = []
@@ -150,7 +156,7 @@ class TracMathPlugin(Component):
 
         numfiles = len(ftime)
         files = (name for _, name in ftime)
-        
+
         while numfiles > self.max_png:
             name = files.next()
             os.unlink(os.path.join(self.cacheDirectory, name))
