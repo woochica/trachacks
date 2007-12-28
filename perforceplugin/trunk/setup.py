@@ -1,4 +1,5 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+
 
 setup(
     name='TracPerforce',
@@ -19,14 +20,14 @@ setup(
     provided the above notices are retained on all copies.
     """,
     long_description="""
-    This Trac 0.10+ plugin provides support for the Perforce SCM.
+    This Trac 0.11 plugin provides support for the Perforce SCM.
     """,
     zip_safe=True,
     packages=['p4trac'],
     entry_points = {'trac.plugins':
                     ['perforce = p4trac.api'],
                     },
-    install_requires=["PyPerforce >=0.3a1",
+    install_requires=["PyPerforce >=0.4",
                       "PyProtocols >=0.9.3",
                       ],
     )

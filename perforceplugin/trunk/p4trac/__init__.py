@@ -6,7 +6,7 @@ To configure the perforce plugin:
 
 [trac]
 repository_type = perforce
-repository_dir = perforce
+repository_dir = /
 
 [perforce]
 port = perforce:1666

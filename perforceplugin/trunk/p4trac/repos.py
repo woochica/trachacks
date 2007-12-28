@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+#
+# Authors: Lewis Baker <lewbaker99@hotmail.com>
+#          Thomas Tressières <thomas.tressieres@free.fr>
+
 """Perforce repository classes that can be used to query information
 about Perforce entities.
 """
@@ -6,6 +11,13 @@ import re
 import protocols
 from perforce.results import IOutputConsumer
 from p4trac.util import AutoAttributesMeta
+
+# FIXME: 
+# This is a hack around the fact that a Connection object with empty client
+# will default to the user name client and you can not add new attributes to a
+# Connection object. We use a dummy client name to indicate that we don't want
+# to use the client
+NO_CLIENT = '_P4TRAC_DUMMY_CLIENT'
 
 class _ChangeInfo(object):
     """A data structure for recording info about a changelist.
@@ -515,14 +527,14 @@ class Node(object):
         @type: C{boolean}
         """
 
+        # The root path is always a directory
+        if self._nodePath.isRoot:
+            return True
+
         # Use the latest revision if no revision specified
         if self._nodePath.rev is None:
             latestChange = self._repo.getLatestChange()
             self._nodePath = NodePath(self._nodePath.path, latestChange)
-
-        # The root path is always a directory
-        if self._nodePath.isRoot:
-            return True
 
         # Do we already know it's a directory?
         dirInfo = self._repo._getDirInfo(self._nodePath)
@@ -803,11 +815,17 @@ class Node(object):
         subdirNodes = []
         for subdir in dirInfo.subdirs:
             if self._nodePath.isRoot:
-                nodePath = NodePath(u'//%s' % subdir,
-                                    self._nodePath.rev)
+                if self._repo._connection.client != NO_CLIENT:
+                    nodePath = NodePath(u'//%s/%s' % (self._repo._connection.client, subdir),
+                                        self._nodePath.rev)
+                else:
+                    nodePath = NodePath(u'//%s' % subdir,
+                                        self._nodePath.rev)
             else:
                 nodePath = NodePath(u'%s/%s' % (self._nodePath.path, subdir),
                                     self._nodePath.rev)
+
+            self._repo._log.debug("_get_subDirectories '%s ' " % (nodePath._path))
             node = Node(nodePath, self._repo)
             subdirNodes.append(node)
 
@@ -846,7 +864,7 @@ class Node(object):
 
         return fileNodes
 
-class Repository(object):
+class P4Repository(object):
     """The repository object.
 
     The root of all Perforce repository queries.
@@ -855,7 +873,7 @@ class Repository(object):
     retrieved more than once.
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection, log):
         """Create a new Perforce repository object.
 
         Associated with a Perforce server via a connection that it uses to
@@ -863,7 +881,8 @@ class Repository(object):
 
         The connection must already be connected.
         """
-        
+
+        self._log = log
         self._connection = connection
         assert self._connection.connected
 
@@ -1343,9 +1362,13 @@ class Repository(object):
 
         if subdirs:
             if nodePath.isRoot:
-                query = u'//*%s' % nodePath.rev
+                if self._connection.client != NO_CLIENT:
+                    query = u'//%s/*%s' % (self._connection.client, nodePath.rev)
+                else:
+                    query = u'//*%s' % nodePath.rev
             else:
                 query = u'%s/*%s' % (nodePath.path, nodePath.rev)
+            self._log.debug("_rundirs '%s' " % query)
         else:
             query = unicode(nodePath)
 
@@ -1361,6 +1384,9 @@ class Repository(object):
                                        create=output.dirs)
             if dirInfo is not None:
                 dirInfo.subdirs = [np.leaf for np in output.dirs]
+                if self._connection.client != NO_CLIENT:
+                    dirInfo.path = u'//%s/' % self._connection.client
+                self._log.debug("sub dirs '%s %s %s %s' " % (dirInfo.path, dirInfo.subdirs, dirInfo.files, dirInfo.change))
 
         if output.errors:
             raise PerforceError(output.errors)
@@ -1383,7 +1409,10 @@ class Repository(object):
         else:
             assert wildcard in [u'*', u'...']
             if nodePath.isRoot:
-                queryPath = u'//%s' % wildcard
+                if self._connection.client != NO_CLIENT:
+                    queryPath = u'//%s/%s' % (self._connection.client, wildcard)
+                else:
+                    queryPath = u'//%s' % wildcard
             else:
                 queryPath = u'%s/%s%s' % (nodePath.path,
                                           wildcard,
@@ -1448,7 +1477,10 @@ class Repository(object):
             queryPath = nodePath.fullPath
         else:
             if nodePath.isRoot:
-                queryPath = u'//%s' % wildcard
+                if self._connection.client != NO_CLIENT:
+                    queryPath = u'//%s/%s' % (self._connection.client, wildcard)
+                else:
+                    queryPath = u'//%s' % wildcard
             else:
                 queryPath = u'%s/%s%s' % (nodePath.path,
                                           wildcard,
@@ -1489,8 +1521,13 @@ class Repository(object):
             queryPath = nodePath.fullPath
         else:
             if nodePath.isRoot:
-                queryPath = u'//%s%s' % (wildcard,
-                                         nodePath.rev)
+                if self._connection.client != NO_CLIENT:
+                    queryPath = u'//%s/%s%s' % (self._connection.client,
+                                             wildcard,
+                                             nodePath.rev)
+                else:
+                    queryPath = u'//%s%s' % (wildcard,
+                                             nodePath.rev)
             else:
                 queryPath = u'%s/%s%s' % (nodePath.path,
                                           wildcard,
@@ -1926,21 +1963,19 @@ class _P4Diff2OutputConsumer(object):
     def outputMessage(self, message):
         if message.isError():
             self.errors.append(message)
-            
+
         elif message.isInfo():
             line = self.repository.toUnicode(message.format())
-            
+
             if line.startswith(u'==== '):
                 match = self.summaryLineRE.match(line)
                 if match:
                     file1 = match.group(u'file1')
                     path1 = match.group(u'path1')
-
                     file2 = match.group(u'file2')
                     path2 = match.group(u'path2')
 
                     summary = match.group(u'summary')
-
                     if summary != u'identical':
                         if path1:
                             i = path1.find(u'#')
@@ -1957,7 +1992,6 @@ class _P4Diff2OutputConsumer(object):
                         self.changes.append( (nodePath1, nodePath2) )
 
     def outputRecord(self, record):
-
         if record['status'] != 'identical':
             if 'depotFile' in record:
                 path1 = self.repository.toUnicode(record['depotFile'])
@@ -1972,7 +2006,6 @@ class _P4Diff2OutputConsumer(object):
                 nodePath2 = NodePath(path2, u'#%s' % rev2)
             else:
                 nodePath2 = None
-                
             self.changes.append( (nodePath1, nodePath2) )
 
     def _doNothing(self, *args, **kw):

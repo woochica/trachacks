@@ -21,7 +21,7 @@ Requirements:
  * Python 2.4 or later
    http://www.python.org/
 
- * Trac 0.10
+ * Trac 0.11
    http://trac.edgewall.org/
 
  * setuptools 0.6c1 or later
@@ -30,7 +30,7 @@ Requirements:
  * PyProtocols 0.9.3 or later
    http://peak.telecommunity.com/PyProtocols.html
 
- * PyPerforce 0.3a1 or later
+ * PyPerforce 0.4 or later
    http://pyperforce.sourceforge.net/
 
 Installation:
@@ -55,7 +55,7 @@ Installation:
 
    [trac]
    repository_type = perforce
-   repository_dir = perforce
+   repository_dir = /
 
    [perforce]
    port = perforce:1666
@@ -90,23 +90,17 @@ Future work:
  * Add an 'integrations' property to changesets/files that lists integrated
    revisions merged in that revision.
 
- * Better support for detecting modified change descriptions and updating
-   changeset cache.
-
- * Reduce configuration requirements to a single string such as
-   'p4://user:password@host:port'.
-
  * Auto-detection of unicode Perforce servers
 
 Credits:
 
  Written by Lewis Baker <lewisbaker@users.sourceforge.net>
+ and by Thomas Tressieres <thomas.tressieres@free.fr>
 
  Thanks to these people for their input into this version and earlier versions
  of the Perforce plugin.
 
   * David Pearce
-  * Thomas Tressieres
   * Jason Parks
   * Christian Boos
   * kenjin@clazzsoft.com
