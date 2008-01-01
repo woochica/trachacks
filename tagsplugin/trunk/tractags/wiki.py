@@ -1,89 +1,131 @@
 from trac.core import *
-from tractags.api import DefaultTaggingSystem, ITaggingSystemProvider, TagEngine
-from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider
-from tractags.expr import Expression
-from trac.util import Markup
-import re
+from tractags.api import DefaultTagProvider, TagSystem
+from trac.web.chrome import add_stylesheet
+from trac.wiki.api import IWikiSyntaxProvider
+from trac.resource import Resource, render_resource_link, get_resource_url
+from trac.mimeview.api import Context
+from trac.web.api import ITemplateStreamFilter
+from trac.wiki.api import IWikiPageManipulator
+from trac.util.compat import sorted
+from genshi.builder import tag
+from genshi.filters.transform import Transformer
 
-class WikiTaggingSystem(DefaultTaggingSystem):
-    """ Subclass of DefaultTaggingSystem that knows how to retrieve wiki page
-        titles. """
-    def __init__(self, env):
-        DefaultTaggingSystem.__init__(self, env, 'wiki')
 
-    def page_info(self, page):
-        from trac.wiki import model
-        """ Return tuple of (model.WikiPage, title) """
-        page = model.WikiPage(self.env, page)
+class WikiTagProvider(DefaultTagProvider):
+    """Tag provider for the Wiki."""
+    realm = 'wiki'
 
-        title = ''
+    def check_permission(self, perm, operation):
+        map = {'view': 'WIKI_VIEW', 'modify': 'WIKI_MODIFY'}
+        return super(WikiTagProvider, self).check_permission(perm, operation) \
+            and map[operation] in perm
 
-        if page.exists:
-            text = page.text
-            ret = re.search('=\s+([^=]*)=',text)
-            title = ret and ret.group(1) or ''
 
-        return (page, title)
+class WikiTagInterface(Component):
+    implements(ITemplateStreamFilter, IWikiPageManipulator)
 
-    def name_details(self, name):
-        """ Return a tuple of (href, wikilink, title). eg. ("/ticket/1", "#1", "Broken links") """
-        page, title = self.page_info(name)
-        href = self.env.href.wiki(name)
-        defaults = DefaultTaggingSystem.name_details(self, name)
-        return defaults[0:2] + (title,)
+    # ITemplateStreamFilter methods
+    def filter_stream(self, req, method, filename, stream, data):
+        page_name = req.args.get('page', 'WikiStart')
+        resource = Resource('wiki', page_name)
+        if filename == 'wiki_view.html' and 'TAGS_VIEW' in req.perm(resource):
+            return self._wiki_view(req, stream)
+        elif filename == 'wiki_edit.html' and 'TAGS_MODIFY' in req.perm(resource):
+            return self._wiki_edit(req, stream)
+        return stream
 
-class WikiTags(Component):
-    """ Implement tags in the Wiki system, a tag:<tag> link resolver and
-        correctly deletes tags from Wiki pages that are removed. """
+    # IWikiPageManipulator methods
+    def prepare_wiki_page(self, req, page, fields):
+        pass
 
-    implements(ITaggingSystemProvider, IWikiChangeListener, IWikiSyntaxProvider)
+    def validate_wiki_page(self, req, page):
+        if req and 'TAGS_MODIFY' in req.perm(page.resource) \
+                and req.path_info.startswith('/wiki') and 'save' in req.args:
+            if self._update_tags(req, page) and \
+                    page.text == req.args.get('text') and \
+                    page.readonly == int('readonly' in req.args):
+                req.redirect(get_resource_url(self.env, page.resource, req.href, version=None))
+        return []
 
-    # ITaggingSystemProvider methods
-    def get_tagspaces_provided(self):
-        yield 'wiki'
+    # Internal methods
+    def _page_tags(self, req):
+        pagename = req.args.get('page', 'WikiStart')
 
-    def get_tagging_system(self, tagspace):
-        return WikiTaggingSystem(self.env)
+        tag_system = TagSystem(self.env)
+        resource = Resource('wiki', pagename)
+        tags = sorted(tag_system.get_tags(req, resource))
+        return tags
 
-    # IWikiChangeListener methods
-    def wiki_page_added(self, page):
-        TagEngine(self.env).flush_link_cache(page)
+    def _wiki_view(self, req, stream):
+        tags = self._page_tags(req)
+        if not tags:
+            return stream
+        tag_system = TagSystem(self.env)
+        add_stylesheet(req, 'tags/css/tractags.css')
+        li = []
+        for tag_ in tags:
+            resource = Resource('tag', tag_)
+            anchor = render_resource_link(self.env,
+                Context.from_request(req, resource), resource)
+            li.append(tag.li(anchor, ' '))
 
-    def wiki_page_changed(self, page, version, t, comment, author, ipnr):
-        TagEngine(self.env).flush_link_cache(page)
+        insert = tag.ul(class_='tags')(tag.lh('Tags'), li)
+        return stream | Transformer('//div[@class="buttons"]').before(insert)
 
-    def wiki_page_deleted(self, page):
-        # No point having tags on a non-existent page.
-        self.env.log.debug("Removing all tags from 'wiki:%s'" % page.name)
-        engine = TagEngine(self.env)
-        engine.tagspace.wiki.remove_all_tags(None, page.name)
-        engine.flush_link_cache(page)
+    def _update_tags(self, req, page):
+        tag_system = TagSystem(self.env)
+        newtags = tag_system.split_into_tags(req.args.get('tags', ''))
+        oldtags = tag_system.get_tags(req, page.resource)
 
-    def wiki_page_version_deleted(self, page):
-        # Wiki tags are not versioned. If they were, we'd delete them here.
-        TagEngine(self.env).flush_link_cache(page)
+        if oldtags != newtags:
+            tag_system.set_tags(req, page.resource, newtags)
+            return True
+        return False
+
+    def _wiki_edit(self, req, stream):
+        insert = tag.div(class_='field')(
+            tag.label(
+                'Tag under: (', tag.a('view all tags', href=req.href.tags()), ')',
+                tag.br(),
+                tag.input(id='tags', type='text', name='tags', size='30',
+                          value=req.args.get('tags', ' '.join(self._page_tags(req)))),
+                )
+            )
+        return stream | Transformer('//div[@id="changeinfo1"]').append(insert)
+
+
+class TagWikiSyntaxProvider(Component):
+    """Provide tag:<expr> links."""
+
+    implements(IWikiSyntaxProvider)
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
-        yield (r'''\[tagged:(?P<tlpexpr>(?:'.*?'|".*?"|\S)+)\s+(?P<tlptitle>.*?]*)\]''',
-               lambda f, n, m: self._format_tagged(
+        yield (r'''\[tag(?:ged)?:(?P<tlpexpr>(?:'.*?'|".*?"|\S)+)\s+(?P<tlptitle>.*?]*)\]''',
+               lambda f, n, m: self._format_tagged(f,
                                     m.group('tlpexpr'),
                                     m.group('tlptitle')))
-        yield (r'''tagged:(?P<texpr>(?:'.*?'|".*?"|\S)+)''',
-               lambda f, n, m: self._format_tagged(
+        yield (r'''tag(?:ged)?:(?P<texpr>(?:'.*?'|".*?"|\S)+)''',
+               lambda f, n, m: self._format_tagged(f,
                                     m.group('texpr'),
                                     'tagged:' + m.group('texpr')))
 
     def get_link_resolvers(self):
         return []
 
-    def _format_tagged(self, target, label):
-        if '?' in target:
-            target, args = target.split('?')[0:2]
-            args = '?' + args
-        else:
-            args = ''
-        href, title = TagEngine(self.env).get_tag_link(target, is_expression=True)
-        return Markup('<a href="%s%s" title="%s">%s</a>' % (href, args,
-                                                            title, label))
+    def _format_tagged(self, formatter, target, label):
+        if label:
+            href = formatter.context.href
+            if target[0] in '\'"':
+                q = target.strip('\'"')
+                target = None
+            else:
+                q = None
+            url = get_resource_url(
+                self.env, Resource('tag', target),
+                formatter.context.href
+                )
+            return tag.a(label, href=href(url, q=q))
+        return render_resource_link(self.env, formatter.context,
+                                    Resource('tag', target))
 

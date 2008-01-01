@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='TracTags',
-    version='0.5',
+    version='0.6',
     packages=['tractags'],
 	package_data={'tractags' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']},
     author='Muness Alrubaie',
