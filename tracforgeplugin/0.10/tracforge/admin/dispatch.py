@@ -106,12 +106,11 @@ class TracForgeDispatcherModule(Component):
                 authname = RequestDispatcher(self.env).authenticate(req)
                 project_perm = PermissionCache(project_env, authname)
                 project_perm.assert_permission('PROJECT_VIEW')
-                self.log.debug('TracForgeDispath: Access granted, running relaunch')
-                self.log.debug('TracForgeDispatch: Status of req.args is %r', req.__dict__.get('args', 'NOT FOUND'))
-                #self.log.debug('TracForgeDispatch: wsgi.input contains %s', req.read())
+                self.debug('TracForgeDispath: Access granted, running relaunch')
+                self.debug('TracForgeDispatch: Status of req.args is %r', req.__dict__.get('args', 'NOT FOUND'))
                 self._send_project(req, path_info)
-                self.log.debug('TracForgeDispatch: Relaunch completed, terminating request')
-                self.log.debug('TracForgeDispatch: Response was %r', req._response)
+                self.debug('TracForgeDispatch: Relaunch completed, terminating request')
+                self.debug('TracForgeDispatch: Response was %r', req._response)
                 
                 req._tf_print = True
                 
@@ -119,28 +118,7 @@ class TracForgeDispatcherModule(Component):
 
     def process_request(self, req):
         raise TracError('How did I get here?')
-        path_info = req.path_info[10:]
-        
-        if path_info:
-            project = path_info.split('/', 1)[0]
-            
-            # Check that we aren't trying to recurse (possible link loop)
-            if project == os.path.basename(self.env.path):
-                req.redirect(req.href())
-                
-            # Assert permissions on the desination environment
-            try:
-                project_env = _open_environment(os.path.join(os.path.dirname(self.env.path), project))
-            except IOError:
-                raise TracError('No such project "%s"'%project)
-            project_perm = PermissionCache(project_env, req.authname)
-            self.log.debug(project_perm.perms)
-            project_perm.assert_permission('PROJECT_VIEW')
-            
-            return self._send_project(req, path_info)
-        else:
-            return self._send_index(req)
-            
+
     # Internal methods
     def _send_project(self, req, path_info):
         start_response = req._start_response
@@ -155,7 +133,7 @@ class TracForgeDispatcherModule(Component):
                 self.log = log
                 
             def __call__(self, *args):
-                self.log.debug('TracForgeDispatch: start_response called with (%s)', ', '.join(repr(x) for x in args))
+                self.log('TracForgeDispatch: start_response called with (%s)', ', '.join(repr(x) for x in args))
                 return self.start_response(*args)
         
         environ['SCRIPT_NAME'] = req.href.projects('/')
@@ -165,8 +143,7 @@ class TracForgeDispatcherModule(Component):
             del environ['TRAC_ENV']
         if 'trac.env_path' in environ:
             del environ['trac.env_path']
-        if req.perm.has_permission('PROJECT_LIST'):
-            environ['tracforge_master_link'] = req.href.projects()
+        environ['tracforge_master_link'] = req.href.projects()
         
         # Remove mod_python option to avoid conflicts
         if 'mod_python.subprocess_env' in environ:
@@ -175,19 +152,19 @@ class TracForgeDispatcherModule(Component):
             del environ['mod_python.options']
         
         
-        self.log.debug('TracForgeDispatch: environ %r', environ)
-        self.log.debug('TracForgeDispatch: Calling next dispatch_request')
+        self.debug('TracForgeDispatch: environ %r', environ)
+        self.debug('TracForgeDispatch: Calling next dispatch_request')
         try:
             if not hasattr(start_response, 'log'):
-                self.log.debug('TracForgeDispatch: Setting start_request logging hack')
+                self.debug('TracForgeDispatch: Setting start_request logging hack')
                 #start_response = hacked_start_response(start_response, self.log)
             req._response = dispatch_request(environ, start_response)
         except RequestDone:
-            self.log.debug('TracForgeDispatch: Masking inner RequestDone')
-        self.log.debug('TracForgeDispatch: Done')
+            self.debug('TracForgeDispatch: Masking inner RequestDone')
+        self.debug('TracForgeDispatch: Done')
         
     def _evil_phase_1(self):
-        self.log.debug('TracForgeDispatch: Sending early_error')
+        self.debug('TracForgeDispatch: Sending early_error')
         raise Exception # Dump into early_error mode
     anonymous_request = property(_evil_phase_1)
 
@@ -195,15 +172,19 @@ class TracForgeDispatcherModule(Component):
         for frame in inspect.stack()[1:]:
             locals = frame[0].f_locals
             if 'early_error' in locals:
-                self.log.debug('TracForgeDispatch: Erasing early_error')
+                self.debug('TracForgeDispatch: Erasing early_error')
                 locals['early_error'][:] = []
                 break
         else:
             self.log.error('TracForgeDispatch: evil_phase_2 unable to isolate early error. Contact coderanger ASAP!')
             raise TracError('Something went wrong, check the log and contact coderanger')
-        self.log.debug('TracForgeDispatch: Sending evil RequestDone')
+        self.debug('TracForgeDispatch: Sending evil RequestDone')
         raise RequestDone
     use_template = property(_evil_phase_2)
+
+    def debug(self, *args):
+        # self.log.debug(*args)
+        pass
 
 # Evil
 env = None
@@ -249,13 +230,13 @@ def __init__(self, environ, start_response):
     self.abs_href = Href(self.base_url)
  
     self._args = None
-    env.log.debug('TracForgeEvil: Using patched init (%s)', id(self))
+    #env.log.debug('TracForgeEvil: Using patched init (%s)', id(self))
     
 Request.__init__ = __init__
 
 def get_args(req):
     if not req._args:
-        env.log.debug('TracForgeEvil: Expanding req.args (%s)', id(req))
+        #env.log.debug('TracForgeEvil: Expanding req.args (%s)', id(req))
         #env.log.debug('TracForgeEvil: %s', traceback.format_stack())
         req._args = req._parse_args()
     return req._args

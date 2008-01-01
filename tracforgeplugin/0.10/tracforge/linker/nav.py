@@ -15,5 +15,5 @@ class TracForgeClientNavModule(Component):
         return 'backtoindex'
 
     def get_navigation_items(self, req):
-        if 'tracforge_master_link' in req.environ:
+        if 'tracforge_master_link' in req.environ and req.perm.has_permission('PROJECT_LIST'):
             yield 'metanav', ' backtoindex', tag.a('Back to Index', href=req.environ['tracforge_master_link'])
