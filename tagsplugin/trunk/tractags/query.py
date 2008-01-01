@@ -6,6 +6,9 @@
 # you should have received as part of this distribution.
 #
 
+"""
+A generalised query parser and matcher.
+"""
 
 import re
 from trac.core import TracError
@@ -48,8 +51,8 @@ class QueryNode(object):
 
     __slots__ = ('type', 'value', 'left', 'right')
 
-    _type_map = {NULL: 'null', TERM: 'term', NOT: 'not', AND: 'and', OR: 'or',
-                 ATTR: 'attr'}
+    _type_map = {None: 'null', NULL: 'null', TERM: 'term', NOT: 'not', AND:
+                 'and', OR: 'or', ATTR: 'attr'}
 
     def __init__(self, type, value=None, left=None, right=None):
         self.type = type
@@ -205,6 +208,8 @@ class Query(QueryNode):
             return None
         if tokens[0][0] == QueryNode.BEGINSUB:
             tokens.pop(0)
+            if tokens[0][0] == QueryNode.ENDSUB:
+                return None
             node = self.parse(tokens)
             if not tokens or tokens[0][0] != QueryNode.ENDSUB:
                 raise InvalidQuery('Expected ) at end of sub-expression')
@@ -263,7 +268,9 @@ class Query(QueryNode):
     def match(self, node, terms):
         """Match a node against a set of terms."""
         def _match(node):
-            if node.type == node.TERM:
+            if not node or node.type == node.NULL:
+                return True
+            elif node.type == node.TERM:
                 return node.value in terms
             elif node.type == node.AND:
                 return _match(node.left) and _match(node.right)

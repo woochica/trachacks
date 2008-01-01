@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from trac.resource import Resource, get_resource_url, render_resource_link
 from trac.wiki.macros import WikiMacroBase
 from trac.util.compat import sorted, set

@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import re
 from trac.core import *
 from trac.resource import Resource
@@ -18,7 +26,7 @@ class ITagProvider(Interface):
     def get_taggable_realm():
         """Return the realm this provider supports tags on."""
 
-    def get_tagged_resources(req, tags=[]):
+    def get_tagged_resources(req, tags=None):
         """Return a sequence of resources and *all* their tags.
 
         :param tags: If provided, return only those resources with the given
@@ -42,13 +50,16 @@ class DefaultTagProvider(Component):
 
     Use this if you need storage for your tags. Simply set the class variable
     `realm` and optionally `check_permission()`.
-    """
-    abstract = True
 
-    # Resource realm this provider manages tags for
-    realm = None
+    See tractags.wiki.WikiTagProvider for an example.
+    """
 
     implements(ITagProvider)
+
+    abstract = True
+
+    # Resource realm this provider manages tags for. Set this.
+    realm = None
 
     # Public methods
     def check_permission(self, perm, operation):

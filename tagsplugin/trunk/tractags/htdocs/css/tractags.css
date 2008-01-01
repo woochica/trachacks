@@ -26,20 +26,19 @@ ul.tagcloud { list-style: none; }
 .tagcloud li:after { content: ", "; }
 .tagcloud li.last:after { content: ""; }
 
-#expression {
+#query {
 	float: right;
 	clear: both;
 	font-size: 10px;
-	height: 2.2em;
-	margin: 0 0 15em 2em;
 	text-align: left;
 }
-#expression ul {
+#query ul {
     list-style: none;
+    padding: 0;
+    padding-left: 2em;
 }
-#expression input { font-size: 10px }
-#expression label { display: none }
-#expression-error {
+#query input { font-size: 10px }
+#query-error {
 	color: #a00;
 	font-size: 11px;
 	margin: 0.3em 0;

@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from trac.core import *
 from tractags.api import DefaultTagProvider, TagSystem
 from trac.web.chrome import add_stylesheet
@@ -22,6 +30,7 @@ class WikiTagProvider(DefaultTagProvider):
 
 
 class WikiTagInterface(Component):
+    """Implement the user interface for tagging Wiki pages."""
     implements(ITemplateStreamFilter, IWikiPageManipulator)
 
     # ITemplateStreamFilter methods
