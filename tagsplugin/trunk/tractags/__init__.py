@@ -15,3 +15,4 @@ import wiki
 import ticket
 import web_ui
 import macros
+import model
