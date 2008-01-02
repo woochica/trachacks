@@ -13,27 +13,37 @@ from tractags.api import TagSystem
 from genshi.builder import tag as builder
 
 
-def render_cloud(req, cloud, rel='tag'):
-    """Render a dictionary of {object: (count, href)}."""
+def render_cloud(env, req, cloud, renderer=None):
+    """Render a tag cloud
+
+    :cloud: Dictionary of {object: count} representing the cloud.
+    :param renderer: A callable with signature (tag, count, px) used to
+                     render the cloud objects.
+    """
     min_px = 10.0
     max_px = 30.0
     scale = 1.0
 
+    if renderer is None:
+        def default_renderer(tag, count, px):
+            href = get_resource_url(env, Resource('tag', tag), req.href)
+            return builder.a(tag, rel='tag', title='%i' % count, href=href,
+                             style='font-size: %ipx' % px)
+        renderer = default_renderer
+
     size_lut = dict([(c, float(i)) for i, c in
-                     enumerate(sorted(set([r[0] for r in cloud.values()])))])
+                     enumerate(sorted(set([r for r in cloud.values()])))])
     if size_lut:
         scale = (max_px - min_px) / len(size_lut)
 
     ul = builder.ul(class_='tagcloud')
     last = len(cloud) - 1
-    for i, (tag, (count, href)) in enumerate(sorted(cloud.iteritems())):
-        li = builder.li()
+    for i, (tag, count) in enumerate(sorted(cloud.iteritems())):
+        px = min_px + int(size_lut[count] * scale)
+        li = builder.li(renderer(tag, count, px))
         if i == last:
             li(class_='last')
-        li(builder.a(
-            tag, rel=rel, title='%i' % count, href=href,
-            style='font-size: %ipx' % (min_px + int(size_lut[count] * scale)),
-            ))
+        li()
         ul(li)
     return ul
 
@@ -50,11 +60,7 @@ class TagCloudMacro(WikiMacroBase):
                     all_tags[tag] += 1
                 except KeyError:
                     all_tags[tag] = 1
-
-        for tag, count in all_tags.items():
-            all_tags[tag] = \
-                (count, get_resource_url(self.env, Resource('tag', tag), req.href))
-        return render_cloud(req, all_tags)
+        return render_cloud(self.env, req, all_tags)
 
 
 
@@ -68,7 +74,7 @@ class ListTaggedMacro(WikiMacroBase):
                                         resource, 'compact')
 
         ul = builder.ul(class_='taglist')
-        for resource, tags in sorted(query_result, key=lambda r: r[0].id):
+        for resource, tags in sorted(query_result):
             tags = sorted(tags)
             if tags:
                 rendered_tags = [

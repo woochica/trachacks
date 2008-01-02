@@ -13,7 +13,7 @@ from trac.wiki.api import IWikiSyntaxProvider
 from trac.resource import Resource, render_resource_link, get_resource_url
 from trac.mimeview.api import Context
 from trac.web.api import ITemplateStreamFilter
-from trac.wiki.api import IWikiPageManipulator
+from trac.wiki.api import IWikiPageManipulator, IWikiChangeListener
 from trac.util.compat import sorted
 from genshi.builder import tag
 from genshi.filters.transform import Transformer
@@ -31,7 +31,8 @@ class WikiTagProvider(DefaultTagProvider):
 
 class WikiTagInterface(Component):
     """Implement the user interface for tagging Wiki pages."""
-    implements(ITemplateStreamFilter, IWikiPageManipulator)
+    implements(ITemplateStreamFilter, IWikiPageManipulator,
+               IWikiChangeListener)
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
@@ -55,6 +56,23 @@ class WikiTagInterface(Component):
                     page.readonly == int('readonly' in req.args):
                 req.redirect(get_resource_url(self.env, page.resource, req.href, version=None))
         return []
+
+    # IWikiChangeListener methods
+    def wiki_page_added(self, page):
+        pass
+
+    def wiki_page_changed(self, page, version, t, comment, author, ipnr):
+        pass
+
+    def wiki_page_deleted(self, page):
+        tag_system = TagSystem(self.env)
+        # XXX Ugh. Hopefully this will be sufficient to full any endpoints.
+        from trac.test import Mock, MockPerm
+        req = Mock(authname='anonymous', perm=MockPerm())
+        tag_system.delete_tags(req, page.resource)
+
+    def wiki_page_version_deleted(self, page):
+        pass
 
     # Internal methods
     def _page_tags(self, req):

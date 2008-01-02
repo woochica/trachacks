@@ -152,22 +152,28 @@ class TagSystem(Component):
     _realm_provider_map = None
 
     # Public methods
-    def query(self, req, query=''):
+    def query(self, req, query='', attribute_handlers=None):
         """Return a sequence of (resource, tags) tuples matching a query.
 
         Query syntax is described in tractags.query.
-        """
-        def realm_handler(_, node):
-            return query.match(node, [resource.realm])
 
-        query = Query(query, attribute_handlers={
+        :param attribute_handlers: Register additional query attribute
+                                   handlers. See Query documentation for more
+                                   information.
+        """
+        def realm_handler(_, node, context):
+            return query.match(node, [context.realm])
+
+        all_attribute_handlers = {
             'realm': realm_handler,
-            })
+            }
+        all_attribute_handlers.update(attribute_handlers or {})
+        query = Query(query, attribute_handlers=all_attribute_handlers)
 
         query_tags = set(query.terms())
         for provider in self.tag_providers:
             for resource, tags in provider.get_tagged_resources(req, query_tags):
-                if query(tags):
+                if query(tags, context=resource):
                     yield resource, tags
 
     def get_tags(self, req, resource):
@@ -189,11 +195,19 @@ class TagSystem(Component):
         tags.update(self.get_tags(req, resource))
         self.set_tags(req, resource, tags)
 
-    def delete_tags(self, req, resource, tags):
-        """Delete tags on a resource."""
-        tags = set(tags)
-        return self._get_provider(resource.realm) \
-            .remove_resource_tags(req, resource, set(tags))
+    def delete_tags(self, req, resource, tags=None):
+        """Delete tags on a resource.
+
+        If tags is None, remove all tags on the resource.
+        """
+        provider = self._get_provider(resource.realm)
+        if tags is None:
+            provider.remove_resource_tags(req, resource)
+        else:
+            tags = set(tags)
+            current_tags = provider.get_resource_tags(req, resource)
+            current_tags.remove(tags)
+            provider.set_resource_tags(req, resource, tags)
 
     def split_into_tags(self, text):
         """Split plain text into tags."""

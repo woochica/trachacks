@@ -157,8 +157,9 @@ class Query(QueryNode):
         """Construct a new Query.
 
         Attribute handlers are callables with the signature
-        (attribute_name, node) where node is the QueryNode representing the
-        RHS of the attribute expression.
+        (attribute_name, node, context) where node is the QueryNode
+        representing the RHS of the attribute expression and context is a custom
+        parameter passed to Query.__call__().
 
         :param phrase: Query phrase.
         :param attribute_handlers: A dictionary of attribute handlers.
@@ -261,11 +262,11 @@ class Query(QueryNode):
 
         return _convert(self)
 
-    def __call__(self, terms):
+    def __call__(self, terms, context=None):
         """Match the query against a sequence of terms."""
-        return self.match(self, terms)
+        return self.match(self, terms, context)
 
-    def match(self, node, terms):
+    def match(self, node, terms, context=None):
         """Match a node against a set of terms."""
         def _match(node):
             if not node or node.type == node.NULL:
@@ -282,7 +283,7 @@ class Query(QueryNode):
                 return self.attribute_handlers.get(
                     node.left.value,
                     self.attribute_handlers['*']
-                    )(node.left.value, node.right)
+                    )(node.left.value, node.right, context)
             elif node.type is None:
                 return True
             else:
