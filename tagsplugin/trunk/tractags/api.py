@@ -98,7 +98,6 @@ class DefaultTagProvider(Component):
         # XXX Is this going to be excruciatingly slow?
         sql = 'SELECT DISTINCT name, tag FROM tags WHERE tagspace=%%s AND ' \
               'name IN (%s) ORDER BY name' % ', '.join(['%s' for _ in resources])
-        self.env.log.debug(sql, *args)
         cursor.execute(sql, args)
 
         for name, tags in groupby(cursor, lambda row: row[0]):

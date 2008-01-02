@@ -13,15 +13,36 @@ from tractags.api import TagSystem
 from genshi.builder import tag as builder
 
 
+def render_cloud(req, cloud, rel='tag'):
+    """Render a dictionary of {object: (count, href)}."""
+    min_px = 10.0
+    max_px = 30.0
+    scale = 1.0
+
+    size_lut = dict([(c, float(i)) for i, c in
+                     enumerate(sorted(set([r[0] for r in cloud.values()])))])
+    if size_lut:
+        scale = (max_px - min_px) / len(size_lut)
+
+    ul = builder.ul(class_='tagcloud')
+    last = len(cloud) - 1
+    for i, (tag, (count, href)) in enumerate(sorted(cloud.iteritems())):
+        li = builder.li()
+        if i == last:
+            li(class_='last')
+        li(builder.a(
+            tag, rel=rel, title='%i' % count, href=href,
+            style='font-size: %ipx' % (min_px + int(size_lut[count] * scale)),
+            ))
+        ul(li)
+    return ul
+
+
 class TagCloudMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         query_result = TagSystem(self.env).query(req, content)
-
-        min_px = 10.0
-        max_px = 30.0
         all_tags = {}
-        scale = 1.0
         # Find tag counts
         for resource, tags in query_result:
             for tag in tags:
@@ -30,24 +51,11 @@ class TagCloudMacro(WikiMacroBase):
                 except KeyError:
                     all_tags[tag] = 1
 
-        size_lut = dict([(c, float(i)) for i, c in
-                         enumerate(sorted(set(all_tags.values())))])
-        if size_lut:
-            scale = (max_px - min_px) / len(size_lut)
+        for tag, count in all_tags.items():
+            all_tags[tag] = \
+                (count, get_resource_url(self.env, Resource('tag', tag), req.href))
+        return render_cloud(req, all_tags)
 
-        ul = builder.ul(class_='tagcloud')
-        last = len(all_tags) - 1
-        for i, (tag, count) in enumerate(sorted(all_tags.iteritems())):
-            li = builder.li()
-            if i == last:
-                li(class_='last')
-            href = get_resource_url(self.env, Resource('tag', tag), req.href)
-            li(builder.a(
-                tag, rel='tag', title='%i' % count, href=href,
-                style='font-size: %ipx' % (min_px + int(size_lut[count] * scale)),
-                ))
-            ul(li)
-        return ul
 
 
 class ListTaggedMacro(WikiMacroBase):
