@@ -360,7 +360,8 @@ class NodePath(object):
 
     def __ne__(self, other):
         return not (self == other)
-    
+
+
 class Changelist(object):
     """A proxy object that gives access to details about a particular
     changelist in a Perforce repository.
@@ -1646,6 +1647,7 @@ class _P4DescribeOutputConsumer(object):
             fileInfo = self.repository._getFileInfo([nodePathFile,
                                                      nodePathRepo],
                                                     create=True)
+
             if fileInfo.rev is None:
                 fileInfo.rev = rev
                 
