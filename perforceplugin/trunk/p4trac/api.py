@@ -557,7 +557,7 @@ class PerforceNode(Node):
         self._repos = repos
         self._node = self._repos.getNode(nodePath)
         node_type = self._get_kind()
-        self.created_rev = self._nodePath.rev
+        self.created_rev = self._node.change
         self.created_path = self._nodePath.path
         self.rev = self.created_rev
         Node.__init__(self, self._nodePath.path, self.rev, node_type)
