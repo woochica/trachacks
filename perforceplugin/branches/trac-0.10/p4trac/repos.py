@@ -7,6 +7,7 @@ import protocols
 from perforce.results import IOutputConsumer
 from p4trac.util import AutoAttributesMeta
 
+
 class _ChangeInfo(object):
     """A data structure for recording info about a changelist.
 
@@ -30,6 +31,7 @@ class _ChangeInfo(object):
         self.client = None
         self.status = None
         self.files = None
+
 
 class _FileInfo(object):
     """A data structure for recording info about a file.
@@ -60,6 +62,7 @@ class _FileInfo(object):
         self.sources = None
         self.attributes = None
 
+
 class _DirectoryInfo(object):
     """A data structure for recording info about a directory.
 
@@ -80,6 +83,7 @@ class _DirectoryInfo(object):
         self.files = None
         self.change = None
 
+
 class PerforceError(Exception):
 
     def __init__(self, errors):
@@ -88,10 +92,12 @@ class PerforceError(Exception):
     def __str__(self):
         return '\n'.join([e.format() for e in self.errors])
 
+
 class NoSuchChangelist(Exception):
 
     def __init__(self, change):
         self.change = change
+
 
 class NoSuchNode(Exception):
     
@@ -99,8 +105,10 @@ class NoSuchNode(Exception):
         self.path = path
         self.rev = rev
 
+
 class NoSuchFile(NoSuchNode):
     pass
+
 
 class NoSuchDirectory(NoSuchNode):
     pass
@@ -109,6 +117,7 @@ class NoSuchDirectory(NoSuchNode):
 _slashDotSlashRE = re.compile(ur'/(\./)+')
 _dirSlashDotDotRE = re.compile(ur'[^/]+/..(/|$)')
 _trailingSlashesRE = re.compile(ur'(?<=[^/])/*$')
+
 
 class NodePath(object):
     """A path to a node in the Perforce repository.
@@ -349,6 +358,7 @@ class NodePath(object):
     def __ne__(self, other):
         return not (self == other)
     
+
 class Changelist(object):
     """A proxy object that gives access to details about a particular
     changelist in a Perforce repository.
@@ -489,6 +499,7 @@ class Changelist(object):
             nodes.append(node)
 
         return nodes
+
 
 class Node(object):
     """A Perforce node is a particular revision of a path in the repository.
@@ -846,7 +857,8 @@ class Node(object):
 
         return fileNodes
 
-class Repository(object):
+
+class P4Repository(object):
     """The repository object.
 
     The root of all Perforce repository queries.
