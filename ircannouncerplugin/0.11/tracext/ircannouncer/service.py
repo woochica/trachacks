@@ -6,7 +6,7 @@
     This module implements a component the bot can use to get information
     about tickets or changesets.
 
-    :copyright: Copyright 2007 by Armin Ronacher.
+    :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
 from trac.core import *
@@ -44,7 +44,7 @@ class BotService(Component):
             chgset = repo.get_changeset(ident)
         except NoSuchChangeset:
             raise NotFound()
-        return prepare_changeset_values(chgset)
+        return prepare_changeset_values(self.env, chgset)
 
     # -- IRequestHandler methods
 

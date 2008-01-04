@@ -5,7 +5,7 @@
 
     Contains some utils.
 
-    :copyright: Copyright 2007 by Armin Ronacher.
+    :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
 import posixpath
@@ -41,16 +41,30 @@ def NotFound(msg='Not Found'):
     return Fault(50, msg)
 
 
+def add_environment_info(env, values):
+    """Add infos about the trac to the values dict."""
+    url = env.abs_href()
+    if not url.endswith('/'):
+        url += '/'
+    values['trac'] = {
+        'name':         env.project_name,
+        'description':  env.project_description,
+        'url':          url
+    }
+    return values
+
+
 def prepare_ticket_values(ticket, action=None):
     """Converts a ticket object into a dict."""
     values = ticket.values.copy()
     values['id'] = ticket.id
     if action is not None:
         values['action'] = action
-    return values
+    values['url'] = ticket.env.abs_href.ticket(ticket.id)
+    return add_environment_info(ticket.env, values)
 
 
-def prepare_changeset_values(chgset):
+def prepare_changeset_values(env, chgset):
     """Converts a changeset object into a dict."""
     outer_path = None
     files = 0
@@ -63,10 +77,11 @@ def prepare_changeset_values(chgset):
         files += 1
     if not outer_path.startswith('/'):
         outer_path = '/' + outer_path
-    return {
+    return add_environment_info(env, {
         'file_count':   files,
         'path':         outer_path,
         'rev':          chgset.rev,
         'author':       chgset.author,
-        'message':      chgset.message
-    }
+        'message':      chgset.message,
+        'url':          env.abs_href.changeset(chgset.rev)
+    })

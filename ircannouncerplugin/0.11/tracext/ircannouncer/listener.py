@@ -6,11 +6,11 @@
     This part of the plugin implements the listeners used by the script
     to send the changes to a supybot.
 
-    :copyright: Copyright 2007 by Armin Ronacher.
+    :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
 from socket import error as SocketError
-from xmlrpclib import ServerProxy
+from xmlrpclib import ServerProxy, Fault
 
 from trac.config import *
 from trac.core import *
@@ -35,8 +35,10 @@ class ChangeListener(Component):
         """Notify the bot about some changes."""
         try:
             self.bot.ircannouncer.notify(type, values)
-        except (IOError, SocketError):
-            pass
+        except (IOError, SocketError, Fault):
+            raise
+            return False
+        return True
 
     # -- ITicketChangeListener
 
@@ -54,8 +56,7 @@ class ChangeListener(Component):
         self.notify('ticket', values)
 
     def ticket_deleted(self, ticket):
-        values = prepare_ticket_values(ticket, 'deleted')
-        self.notify('ticket', values)
+        pass
 
     # -- IRepositoryListener
 
@@ -63,4 +64,4 @@ class ChangeListener(Component):
         pass
 
     def changeset_commited(self, chgset):
-        self.notify('changeset', prepare_changeset_values(chgset))
+        self.notify('changeset', prepare_changeset_values(self.env, chgset))
