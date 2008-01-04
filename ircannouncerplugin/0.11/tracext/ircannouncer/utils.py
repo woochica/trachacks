@@ -85,3 +85,19 @@ def prepare_changeset_values(env, chgset):
         'message':      chgset.message,
         'url':          env.abs_href.changeset(chgset.rev)
     })
+
+
+def prepare_wiki_page_values(page, action=None):
+    """Converts a wiki page object into a dict."""
+    values = add_environment_info(page.env, {
+        'name':         page.name,
+        'version':      page.version,
+        'readonly':     page.readonly,
+        'exists':       page.exists,
+        'author':       page.author or '',
+        'comment':      page.comment or '',
+        'url':          page.env.abs_href.wiki(page.name)
+    })
+    if action is not None:
+        values['action'] = action
+    return values

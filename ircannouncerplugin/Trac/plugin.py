@@ -56,7 +56,7 @@ class XMLRPCServer(SimpleXMLRPCServer, Thread):
 
     def _dispatch(self, name, args):
         if name not in self.connector.rpcMethods:
-            raise TypeError('no such method')
+            raise TypeError('no such method (%s)' % name)
         try:
             return self.connector.rpcMethods[name](*args)
         except Fault:
@@ -89,9 +89,9 @@ class ResourceNotFound(TracError, LookupError):
 
 class Trac(callbacks.PrivmsgCommandAndRegexp):
     threaded = True
-    regexps = ['ticketRegexp', 'changesetRegexp']
+    regexps = ['ticketRegexp', 'changesetRegexp', 'wikipageRegexp']
     commands = ['ticket', 'changeset', 'add', 'remove', 'announce',
-                'denounce']
+                'denounce', 'wikipage']
 
     def __init__(self, irc):
         self.__parent = super(Trac, self)
@@ -165,6 +165,11 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
                 self._changesetLink(irc, msg, trac_name, changeset_id,
                                     silent=True)
 
+    def wikipageRegexp(self, irc, msg, match):
+        r"(?:\b([a-zA-Z_]+):)?\bwiki:(\w[\w_]*)"
+        trac_name, wiki_page = match.groups()
+        self._wikipageLink(irc, msg, trac_name, wiki_page, silent=True)
+
     # Regular Callbacks
 
     def ticket(self, irc, msg, args, ticket_id, trac_name):
@@ -185,6 +190,16 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
         self._changesetLink(irc, msg, trac_name, changeset_id, silent=False)
     changeset = wrap(changeset, [('regexpMatcher', '/^[a-fA-F0-9:]+$/'),
                                  optional('commandName')])
+
+    def wikipage(self, irc, msg, args, wiki_page, trac_name):
+        """<wiki page> [<trac>]
+
+        Get a link to that wiki page.  If the trac is not provided, the
+        channel's default trac is used.
+        """
+        wiki_page = '_'.join(wiki_page.split())
+        self._wikipageLink(irc, msg, trac_name, wiki_page, silent=False)
+    wikipage = wrap(wikipage, ['something', optional('commandName')])
 
     def add(self, irc, msg, args, trac_name, trac_url):
         """<trac name> <trac url>
@@ -254,20 +269,30 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
             if not silent:
                 irc.error('No such ticket')
 
+    def _wikipageLink(self, irc, msg, trac_name, wiki_page, silent=False):
+        try:
+            trac = self._openTrac(irc, msg, trac_name, silent)
+            for line in self._printWikiPage(trac.getWikiPage(wiki_page)):
+                irc.reply(line, prefixNick=False)
+        except ResourceNotFound:
+            if not silent:
+                irc.error('No such wiki page')
+
     def _onRemoteNotify(self, type, values):
         trac = self._findTracByURL(values['trac']['url'])
         if trac is None:
             return 1
         handler = {
             'changeset':        self._printChangeset,
-            'ticket':           self._printTicket
+            'ticket':           self._printTicket,
+            'wiki_page':        self._printWikiPage
         }[type]
         for irc, channel in self._findAnnouncementChannels(trac):
-            for line in handler(values, detailed=True):
+            for line in handler(values):
                 irc.sendMsg(ircmsgs.privmsg(channel, line))
         return 0
 
-    def _printChangeset(self, values, detailed=False):
+    def _printChangeset(self, values):
         yield format('%s [%s] by %s in %s (%n): %s',
             bold('Changeset'),
             values['rev'],
@@ -278,14 +303,17 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
         )
         yield '<%s>' % values['url']
 
-    def _printTicket(self, values, detailed=False):
+    def _printTicket(self, values):
         action = values.get('action')
         if action is not None:
             if action == 'created':
                 action = 'created by %s' % underline(values['reporter'])
             elif action == 'changed':
                 action = 'changed by %s' % underline(values['author'])
-            action = ' (%s)' % action
+            comment = values['comment']
+            if comment:
+                comment = ', ' + comment
+            action = ' (%s%s)' % (action, comment)
         yield format('%s #%s: %s%s',
             bold('Ticket'),
             values['id'],
@@ -293,6 +321,20 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
             action or ''
         )
         yield '<%s>' % values['url']
+
+    def _printWikiPage(self, values):
+        action = values.get('action')
+        if action is not None:
+            if action == 'created':
+                action = 'created by %s' % underline(values['author'])
+            elif action == 'changed':
+                action = 'changed by %s' % underline(values['author'])
+            action = ' (%s)' % action
+        yield format('%s%s %u',
+            bold(values['name']),
+            action or '',
+            values['url']
+        )
 
     def _findTracByURL(self, trac_url):
         trac_url = trac_url.rstrip('/')

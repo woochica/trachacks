@@ -14,9 +14,11 @@ from trac.web.main import IRequestHandler
 from trac.ticket.model import Ticket
 from trac.resource import ResourceNotFound
 from trac.versioncontrol.api import NoSuchChangeset
+from trac.wiki.model import WikiPage
 
 from tracext.ircannouncer.utils import TracXMLRPCRequestHandler, \
-     NotFound, prepare_ticket_values, prepare_changeset_values
+     NotFound, prepare_ticket_values, prepare_changeset_values, \
+     prepare_wiki_page_values
 
 
 class BotService(Component):
@@ -25,7 +27,8 @@ class BotService(Component):
     def __init__(self):
         self.dispatcher = TracXMLRPCRequestHandler({
             'ircannouncer.getTicket':       self.get_ticket,
-            'ircannouncer.getChangeset':    self.get_changeset
+            'ircannouncer.getChangeset':    self.get_changeset,
+            'ircannouncer.getWikiPage':     self.get_wiki_page
         })
 
     # -- RPC methods
@@ -45,6 +48,12 @@ class BotService(Component):
         except NoSuchChangeset:
             raise NotFound()
         return prepare_changeset_values(self.env, chgset)
+
+    def get_wiki_page(self, req, page_name):
+        page = WikiPage(self.env, page_name)
+        if not page.exists:
+            raise NotFound()
+        return prepare_wiki_page_values(page)
 
     # -- IRequestHandler methods
 
