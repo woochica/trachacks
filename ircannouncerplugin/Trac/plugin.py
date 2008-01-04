@@ -89,8 +89,9 @@ class ResourceNotFound(TracError, LookupError):
 
 class Trac(callbacks.PrivmsgCommandAndRegexp):
     threaded = True
-    regexps = ['ticketRegexp']
-    commands = ['ticket', 'add', 'announce']
+    regexps = ['ticketRegexp', 'changesetRegexp']
+    commands = ['ticket', 'changeset', 'add', 'remove', 'announce',
+                'denounce']
 
     def __init__(self, irc):
         self.__parent = super(Trac, self)
@@ -114,9 +115,9 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
                 irc.error(e.message)
 
     def listCommands(self):
-        commands = self.commands + self.tracs.keys()
-        commands.sort()
-        return commands
+        commands = set(self.commands)
+        commands.update(self.tracs.keys())
+        return sorted(commands)
 
     def isCommandMethod(self, name):
         return name in self.commands or name in self.tracs
@@ -147,12 +148,22 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
     # Regular Expression Callbacks
 
     def ticketRegexp(self, irc, msg, match):
-        r"(?:([a-zA-Z_]+):)?(?:\bticket:|#)([0-9]+)|#([a-zA-Z])([0-9]+)"
+        r"(?:\b([a-zA-Z_]+):)?(?:\bticket:|#)([0-9]+)|#([a-zA-Z]+)([0-9]+)"
         for idx in xrange(1, 4, 2):
             trac_name, ticket_id = match.group(idx, idx + 1)
             if ticket_id:
                 self._ticketLink(irc, msg, trac_name, int(ticket_id),
                                  silent=True)
+
+    def changesetRegexp(self, irc, msg, match):
+        r"""(?x)
+            (?:\b([a-zA-Z_]+):)?\bchangeset:([0-9a-fA-F]+(?::[0-9a-fA-F]*)?) |
+            \B\[([a-zA-Z]+)?([0-9]+)\]"""
+        for idx in xrange(1, 4, 2):
+            trac_name, changeset_id = match.group(idx, idx + 1)
+            if changeset_id:
+                self._changesetLink(irc, msg, trac_name, changeset_id,
+                                    silent=True)
 
     # Regular Callbacks
 
@@ -160,10 +171,20 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
         """<ticket id> [<trac>]
 
         Gets the summary of the ticket provided and the link to it.  If the
-        trac is not provided, the channel's default trac is used.
+        trac is not given, the channel's default trac is used.
         """
         self._ticketLink(irc, msg, trac_name, ticket_id, silent=False)
     ticket = wrap(ticket, ['int', optional('commandName')])
+
+    def changeset(self, irc, msg, args, ticket_id, trac_name):
+        """<changeset id> [<trac>]
+
+        Gets the summary of the changeset provided and the link to it.  If the
+        trac is not given, the channel's default trac is used.
+        """
+        self._changesetLink(irc, msg, trac_name, changeset_id, silent=False)
+    changeset = wrap(changeset, [('regexpMatcher', '/^[a-fA-F0-9:]+$/'),
+                                 optional('commandName')])
 
     def add(self, irc, msg, args, trac_name, trac_url):
         """<trac name> <trac url>
@@ -172,25 +193,66 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
         word specifying the name of the trac (for example "py", "trac"
         etc.) or one letter if you want to use the short forms."""
         self._addTrac(trac_name, trac_url)
-        irc.reply('Added trac at %s as %s' % (trac_url, trac_name))
+        irc.reply('Added trac at %s as "%s"' % (trac_url, trac_name))
     add = wrap(add, ['commandName', 'httpUrl'])
 
+    def remove(self, irc, msg, args, trac_name):
+        """<trac name>
+
+        Remove a new trac to the database."""
+        if trac_name not in self.tracs:
+            irc.error('Unknown trac "%s".' % trac_name)
+        else:
+            self._removeTrac(trac_name)
+            irc.reply('Removed "%s".' % trac_name)
+    remove = wrap(remove, ['commandName'])
+
     def announce(self, irc, msg, args, channel, trac_name):
-        """<channel> <trac name>
+        """[<channel>] <trac name>
 
         Announce the trac in the channel."""
         url = self._getTracURL(irc, msg, trac_name, silent=False)
-        self._announceTrac(trac_name, channel)
+        self.registryValue('announce', channel).add(trac_name)
         irc.reply('The trac %s at %s will now be announced in %s' % (
                   trac_name, url, channel))
     announce = wrap(announce, ['channel', 'commandName'])
 
+    def denounce(self, irc, msg, args, channel, trac_name):
+        """[<channel>] <trac name>
+
+        Stop announcing a trac in a channel."""
+        if trac_name in self.tracs:
+            announced_tracs = self.registryValue('announce', channel)
+            if trac_name in announced_tracs:
+                announced_tracs.discard(trac_name)
+                irc.reply('I\'m not announcing "%s" in %s any longer' % (
+                          trac_name, channel))
+            else:
+                irc.error('I\'m not annoucing "%s" in %s!' % (
+                          trac_name, channel))
+        else:
+            irc.error('Sorry, I don\'t know "%s" yet' % trac_name)
+    denounce = wrap(denounce, ['channel', 'commandName'])
+
     # Helper methods
 
     def _ticketLink(self, irc, msg, trac_name, ticket_id, silent=False):
-        trac = self._openTrac(irc, msg, trac_name, silent)
-        detail = trac.getTicket(ticket_id)
-        irc.reply(str(detail))
+        try:
+            trac = self._openTrac(irc, msg, trac_name, silent)
+            for line in self._printTicket(trac.getTicket(ticket_id)):
+                irc.reply(line, prefixNick=False)
+        except ResourceNotFound:
+            if not silent:
+                irc.error('No such ticket')
+
+    def _changesetLink(self, irc, msg, trac_name, changeset_id, silent=False):
+        try:
+            trac = self._openTrac(irc, msg, trac_name, silent)
+            for line in self._printChangeset(trac.getChangeset(changeset_id)):
+                irc.reply(line, prefixNick=False)
+        except ResourceNotFound:
+            if not silent:
+                irc.error('No such ticket')
 
     def _onRemoteNotify(self, type, values):
         trac = self._findTracByURL(values['trac']['url'])
@@ -217,16 +279,18 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
         yield '<%s>' % values['url']
 
     def _printTicket(self, values, detailed=False):
-        action = values['action']
-        if action == 'created':
-            action = 'created by %s' % underline(values['reporter'])
-        elif action == 'changed':
-            action = 'changed by %s' % underline(values['author'])
-        yield format('%s #%s: %s (%s)',
+        action = values.get('action')
+        if action is not None:
+            if action == 'created':
+                action = 'created by %s' % underline(values['reporter'])
+            elif action == 'changed':
+                action = 'changed by %s' % underline(values['author'])
+            action = ' (%s)' % action
+        yield format('%s #%s: %s%s',
             bold('Ticket'),
             values['id'],
             values['summary'],
-            action
+            action or ''
         )
         yield '<%s>' % values['url']
 
@@ -279,9 +343,6 @@ class Trac(callbacks.PrivmsgCommandAndRegexp):
                 return
         self.tracs[name] = url
         group.register(name, registry.String(url, ''))
-
-    def _announceTrac(self, name, channel):
-        self.registryValue('announce', channel).add(name)
 
     def _removeTrac(self, name):
         self.tracs.pop(name, None)
