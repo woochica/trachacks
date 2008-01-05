@@ -13,23 +13,24 @@
 
   <body>
     <div id="content" class="tags">
-      <form id="query" action="${href.hacks()}" method="get">
+      <form id="query" method="get">
         <div>
           <input type="text" id="tag-query" name="q" size="40" accesskey="t"
-            value="${tag_query}"/>
+            value="${query}"/>
           <input type="submit" value="Filter Hacks"/>
         </div>
-        <div py:if="tag_query_error" id="query-error">
-          <strong>Error:</strong> ${tag_query_error}
+        <div py:if="query_error" id="query-error">
+          <strong>Error:</strong> ${query_error}
         </div>
         <div>
-          Showing <strong>${limit}</strong> results.
+          <ul>
+            <li>Showing <strong>${limit_message}</strong> results.</li>
+          </ul>
         </div>
       </form>
 
       <div id="tag_body">
-        <h1 py:if="tag_title">${tag_title}</h1>
-        ${tag_body}
+        ${body}
       </div>
     </div>
   </body>

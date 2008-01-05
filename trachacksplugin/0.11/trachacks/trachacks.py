@@ -19,6 +19,7 @@ from trac.web.chrome import ITemplateProvider, INavigationContributor, \
 from trac.resource import get_resource_url
 from tractags.api import TagSystem
 from tractags.macros import render_cloud
+from tractags.query import Query
 from tracvote import VoteSystem
 from genshi.builder import tag as builder
 
@@ -49,8 +50,9 @@ class TracHacksHandler(Component):
     limit = IntOption('trachacks', 'limit', 25,
         'Default maximum number of hacks to display.')
 
-    path_match = re.compile(r'/hacks/?(.+)?')
+    path_match = re.compile(r'/hacks/?(new|cloud|list)?')
     title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
+    page_split = re.compile(r'(\w+)', re.I | re.UNICODE)
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -71,89 +73,36 @@ class TracHacksHandler(Component):
         releases = natural_sort([r.id for r, _ in
                                  tag_system.query(req, 'realm:wiki release')])
 
-        hacks = self.fetch_hacks(req, data, types)
+        data['types'] = types
+        data['releases'] = releases
+
+        if view != 'new':
+            hacks = self.fetch_hacks(req, data, types)
 
         add_stylesheet(req, 'tags/css/tractags.css')
         add_stylesheet(req, 'hacks/css/trachacks.css')
         add_script(req, 'hacks/js/trachacks.js')
 
-        views = ['cloud', 'list']
+        views = ['cloud', 'list', 'new']
         for v in views:
             if v != view:
-                add_ctxtnav(req, builder.a(v.title(), href=req.href.hacks(v)))
+                if v != 'new':
+                    args = req.args
+                else:
+                    args = {}
+                add_ctxtnav(req, builder.a(v.title(),
+                            href=req.href.hacks(v, **args)))
             else:
                 add_ctxtnav(req, v.title())
-        if view == 'cloud':
-            return self.render_cloud(req, data, hacks)
-        elif view == 'list':
+        if view == 'list':
             return self.render_list(req, data, hacks)
+        elif view == 'new':
+            return self.render_new(req, data)
+        return self.render_cloud(req, data, hacks)
 
-    def fetch_hacks(self, req, data, types):
-        """Return a list of hacks in the form
-
-        [votes, rank, resource, tags, title]
-        """
-        tag_system = TagSystem(self.env)
-        vote_system = VoteSystem(self.env)
-        hacks = []
-        global limit
-        ALL = 9999
-        limit = req.args.get('limit', self.limit)
-
-        # Custom tag query modifiers
-        def top_modifier(name, node, context):
-            """top:<n> Only show the top N results."""
-            global limit
-            if node.value == 'all':
-                limit = ALL
-                return True
-            try:
-                assert node.type == node.TERM
-                limit = int(node.value)
-            except (AssertionError, ValueError):
-                raise TracError('top: expects an integer')
-            return True
-
-        data['tag_query'] = req.args.get('q', '')
-
-        # Get list of hacks from tag system
-        query = 'realm:wiki (%s)' % ' or '.join(types)
-        if req.args.get('q'):
-            query += ' (' + req.args.get('q', '') + ')'
-        self.env.log.debug('Hack query: %s', query)
-        attribute_handlers={'top': top_modifier,}
-        try:
-            tagged = list(tag_system.query(req, query,
-                                           attribute_handlers=attribute_handlers))
-        except TracError, e:
-            tagged = []
-            tagged = tag_system.query(req, 'realm:wiki (#s)' % ' or '.join(types),
-                                      attribute_handlers=attribute_handlers)
-            data['tag_query_error'] = str(e)
-
-        self.env.log.debug(limit)
-        if limit != ALL:
-            data['limit'] = 'top %s' % limit
-        else:
-            data['limit'] = 'all'
-
-        # Build hacks list
-        for resource, tags in tagged:
-            page = WikiPage(self.env, resource.id)
-            _, count, _ = vote_system.get_vote_counts(resource)
-            match = self.title_extract.search(page.text)
-            count_string = pluralise(count, 'vote')
-            if match:
-                title = '%s (%s)' % (match.group(1).strip(), count_string)
-            else:
-                title = '%s' % count_string
-            hacks.append([count, None, resource, tags, title])
-
-        # Rank
-        hacks = sorted(hacks, key=lambda i: -i[0])[:limit]
-        for i, hack in enumerate(hacks):
-            hack[1] = i
-        return hacks
+    def render_new(self, req, data):
+        add_script(req, 'common/js/wikitoolbar.js')
+        return 'hacks_new.html', data, None
 
     def render_list(self, req, data, hacks):
         ul = builder.ul()
@@ -162,7 +111,7 @@ class TracHacksHandler(Component):
                                       href=req.href.wiki(resource.id)),
                             ' - ', title)
             ul(li)
-        data['tag_body'] = ul
+        data['body'] = ul
         return 'hacks_view.html', data, None
 
     def render_cloud(self, req, data, hacks):
@@ -179,9 +128,78 @@ class TracHacksHandler(Component):
             return a
 
         cloud_hacks = dict([(hack[2].id, hack[0]) for hack in hacks])
-        data['tag_body'] = render_cloud(self.env, req, cloud_hacks, link_renderer)
+        data['body'] = render_cloud(self.env, req, cloud_hacks, link_renderer)
 
         return 'hacks_view.html', data, None
+
+    def fetch_hacks(self, req, data, types):
+        """Return a list of hacks in the form
+
+        [votes, rank, resource, tags, title]
+        """
+        tag_system = TagSystem(self.env)
+        vote_system = VoteSystem(self.env)
+
+        tagged = tag_system.query(req, 'realm:wiki (' + ' or '.join(types) + ')')
+
+        # Limit
+        try:
+            limit = int(req.args.get('limit', self.limit))
+            data['limit_message'] = 'top %s' % limit
+        except ValueError:
+            data['limit_message'] = 'all'
+            limit = 9999
+        data['limit'] = limit
+
+        # Query
+        q = req.args.get('q', '')
+        data['query'] = q
+        query = Query(q.lower())
+
+        # Build hacks list
+        hacks = []
+        for resource, tags in tagged:
+            page = WikiPage(self.env, resource.id)
+            if q:
+                text = page.name.lower() + page.text.lower() + ' '.join(tags)
+                if not query(text):
+                    continue
+            _, count, _ = vote_system.get_vote_counts(resource)
+            match = self.title_extract.search(page.text)
+            count_string = pluralise(count, 'vote')
+            if match:
+                title = '%s (%s)' % (match.group(1).strip(), count_string)
+            else:
+                title = '%s' % count_string
+            hacks.append([count, None, resource, tags, title])
+
+        # Rank
+        total_hack_count = len(hacks)
+        hacks = sorted(hacks, key=lambda i: -i[0])[:limit]
+
+        # Navigation
+        if len(hacks) >= limit:
+            add_ctxtnav(req, builder.a('More', href='?limit=%i&q=%s' % (limit + 10, q)))
+            limit = len(hacks)
+            data['limit'] = data['limit_message'] = limit
+        else:
+            add_ctxtnav(req, 'More')
+        if q or limit != self.limit:
+            add_ctxtnav(req, builder.a('Default', href='?limit=%i' % self.limit))
+        else:
+            add_ctxtnav(req, 'Default')
+        if total_hack_count > limit:
+            add_ctxtnav(req, builder.a('All', href='?limit=all&q=' + q))
+        else:
+            add_ctxtnav(req, 'All')
+        if limit > 10:
+            limit = min(limit, len(hacks))
+            add_ctxtnav(req, builder.a('Less', href='?limit=%i&q=%s' % (limit - 10 > 0 and limit - 10 or 0, q)))
+        else:
+            add_ctxtnav(req, 'Less')
+        for i, hack in enumerate(hacks):
+            hack[1] = i
+        return hacks
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
