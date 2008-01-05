@@ -1,0 +1,49 @@
+from trac.core import *
+from trac.util import escape, Markup
+from trac.wiki.api import parse_args
+from trac.wiki.macros import WikiMacroBase
+from trac.wiki.formatter import wiki_to_html
+from trac.util import format_datetime
+from StringIO import StringIO
+
+
+class SourceLogMacro(WikiMacroBase):
+    """ Provides the macro
+    {{{
+       [[SourceLog(path[,limit[,rev]])]]
+    }}}
+    which dumps the change log for path of revision rev, back
+    limit revisions. "rev" can be 0 for the latest revision.
+    """
+
+    def expand_macro(self, formatter, name, content):
+        req = formatter.req
+        args, kwargs = parse_args(content)
+        args += [None, None]
+        path, limit, rev = args
+        limit = kwargs.pop('limit', limit)
+        rev = kwargs.pop('rev', rev)
+
+        if 'CHANGESET_VIEW' not in req.perm:
+            return Markup('<i>Changelog not available</i>')
+
+        repo = self.env.get_repository(req.authname)
+
+        if rev is None:
+            rev = repo.get_youngest_rev()
+        else:
+            rev = int(rev)
+        rev = repo.normalize_rev(rev)
+        path = repo.normalize_path(path)
+        if limit is None:
+            limit = 5
+        else:
+            limit = int(limit)
+
+        node = repo.get_node(path, rev)
+        out = StringIO()
+        for npath, nrev, nlog in node.get_history(limit):
+            change = repo.get_changeset(nrev)
+            out.write(wiki_to_html("'''[%i] by %s on %s'''\n\n%s" % (nrev, change.author, format_datetime(change.date), change.message),
+                                   self.env, req));
+        return out.getvalue()
