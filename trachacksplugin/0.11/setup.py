@@ -1,0 +1,22 @@
+from setuptools import setup
+
+setup(
+    name='TracHacks',
+    license='GPL',
+    version='2.0',
+    packages=['trachacks'],
+    package_data={'trachacks' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']},
+    dependency_links=[
+        'http://trac-hacks.org/svn/tagsplugin/trunk#egg=TracTags-0.6',
+        'http://trac-hacks.org/svn/accountmanagerplugin/trunk#egg=TracAccountManager',
+        'http://trac-hacks.org/svn/voteplugin/0.11#egg=TracVote-0.1',
+        ],
+    entry_points={
+        'trac.plugins': 'trachacks = trachacks'
+        },
+    install_requires=[
+        'TracAccountManager',
+        'TracTags >= 0.6',
+        'TracVote >= 0.1',
+        ],
+    )

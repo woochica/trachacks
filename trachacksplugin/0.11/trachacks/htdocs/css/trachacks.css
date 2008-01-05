@@ -1,0 +1,2 @@
+.tagcloud li:after { content: " "; }
+.tagcloud li.last:after { content: ""; }
