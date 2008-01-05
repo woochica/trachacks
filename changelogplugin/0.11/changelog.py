@@ -7,20 +7,24 @@ from trac.util import format_datetime
 from StringIO import StringIO
 
 
-class SourceLogMacro(WikiMacroBase):
+class ChangeLogMacro(WikiMacroBase):
     """ Provides the macro
+
     {{{
-       [[SourceLog(path[,limit[,rev]])]]
+       [[ChangeLog(path[,limit[,rev]])]]
     }}}
+
     which dumps the change log for path of revision rev, back
     limit revisions. "rev" can be 0 for the latest revision.
+
+    limit and rev may be keyword arguments
     """
 
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         args, kwargs = parse_args(content)
         args += [None, None]
-        path, limit, rev = args
+        path, limit, rev = args[:3]
         limit = kwargs.pop('limit', limit)
         rev = kwargs.pop('rev', rev)
 
