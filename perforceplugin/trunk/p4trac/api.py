@@ -41,8 +41,8 @@ def normalisePath(path):
     @rtype: C{unicode}
     """
 
-    from p4trac.repos import NodePath
-    path = NodePath.normalisePath(path)
+    from p4trac.repos import P4NodePath
+    path = P4NodePath.normalisePath(path)
     if path is None:
         return u'/'
     else:
@@ -54,8 +54,8 @@ def normaliseRev(rev):
     Basically converts revisions to '@<label/client/date>' or '#<rev>' but
     returns '@<change>' as an integer value.
     """
-    from p4trac.repos import NodePath
-    rev = NodePath.normaliseRevision(rev)
+    from p4trac.repos import P4NodePath
+    rev = P4NodePath.normaliseRevision(rev)
     if rev is None:
         return rev
     elif rev.startswith(u'@') and rev[1:].isdigit():
@@ -71,12 +71,31 @@ class PerforceConnector(Component):
 
     implements(IRepositoryConnector)
 
+    port = Option('perforce', 'port', 'localhost:1666', doc=
+        """Perforce server IP address and port.
+        """)
+    user = Option('perforce', 'user', '', doc=
+        """Perforce user name used to identify requests.
+        """)
+    password = Option('perforce', 'password', '', doc=
+        """Perforce password used to identify requests.
+        """)
+    language = Option('perforce', 'password', '', doc=
+        """Perforce password used to identify requests.
+        """)
+    workspace = Option('perforce', 'workspace', NO_CLIENT, doc=
+        """Perforce workspace used to request server.
+        """)
+    charset = Option('perforce', 'charset', 'none', doc=
+        """Perforce charset used to request server.
+        valid options are 'none', 'utf-8'.
+        """)
+
     branches = ListOption('perforce', 'branches', 'main,branches/*', doc=
         """List of paths categorized as ''branches''.
         If a path ends with '*', then all the directory entries found
         below that path will be included.
         """)
-
     labels = ListOption('perforce', 'labels', 'labels/*', doc=
         """List of paths categorized as ''labels''.
         If a path ends with '*', then all the directory entries found
@@ -109,15 +128,9 @@ class PerforceConnector(Component):
         options = dict(self.config.options('perforce'))
         self.log.debug("get_repository options : %s" % (options))
 
-        if 'port' not in options:
-            raise TracError(
-                message="Missing 'port' value in [perforce] config section.",
-                title="TracPerforce configuration error",
-                )
-
         # Try to connect to the Perforce server
         from perforce import Connection, ConnectionFailed
-        p4 = Connection(port=options['port'], api='58') # Limit to 2005.2 behaviour
+        p4 = Connection(port=self.port, api='58') # Limit to 2005.2 behaviour
         try:
             from trac import __version__ as tracVersion
             p4.connect(prog='Trac', version=tracVersion)
@@ -126,30 +139,17 @@ class PerforceConnector(Component):
                 message="Could not connect to Perforce repository.",
                 title="Perforce connection error")
 
-        if 'user' not in options:
+        if 'user' == '':
             raise TracError(
                 message="Missing 'user' value in [perforce] config section.",
                 title="Perforce configuration error")
-        p4.user = options['user']
-
-        p4.password = options.get('password', '')
-        p4.charset = 'none'
-        if 'unicode' in options:
-            if options['unicode'] == '1':
-                p4.charset = 'utf8'
-            elif options['unicode'] == '0':
-                p4.charset = 'none'
-            else:
-                raise TracError(
-                    message="Invalid 'unicode' value in [perforce] config " \
-                    "section.",
-                    title="Perforce configuration error")
-
-        p4.language = options.get('language', '')
+        p4.user = self.user
+        p4.password = self.password
+        p4.charset = self.charset
+        p4.language = self.language
         jobPrefixLength = len(options.get('job_prefix', 'job'))
-        p4.client = options.get('workspace', NO_CLIENT)
+        p4.client = self.workspace
 
-        self.log.debug("get_repository [%s,%s,%s]" % (p4.user, p4.password, p4.client))
         p4_repos = PerforceRepository(p4, None, self.log, jobPrefixLength,
                                       {'labels': self.labels,
                                        'branches': self.branches})
@@ -189,7 +189,8 @@ class PerforceRepository(Repository):
         self._job_prefix_length = jobPrefixLength
         self.options = options
         self._connection = connection
-        name = 'p4://%s:%s@%s' % (self._connection.user, self._connection.password, self._connection.port)
+        name = 'p4://%s:%s@%s' % (connection.user, 
+                                  connection.password, connection.port)
         Repository.__init__(self, name, authz, log)
         from p4trac.repos import P4Repository
         self._repos = P4Repository(connection, log)
@@ -240,7 +241,7 @@ class PerforceRepository(Repository):
             yield 'labels', n.path, n.created_path, n.created_rev
 
     def get_changeset(self, rev):
-        self.log.debug('get_changeset(%r)' % rev)
+        self.log.debug('PerforceRepository.get_changeset(%r)' % rev)
         if isinstance(rev, int):
             change = rev
         else:
@@ -248,27 +249,23 @@ class PerforceRepository(Repository):
             rev = toUnicode(rev)
             if rev.startswith(u'@'):
                 rev = rev[1:]
-
             try:
                 change = int(rev)
             except ValueError:
                 raise TracError(u"Invalid changeset number '%s'" % rev)
-
         return PerforceChangeset(change, self._repos, self.log, self._job_prefix_length)
 
     def get_changesets(self, start, stop):
-
         self.log.debug('PerforceRepository.get_changesets(%r,%r)' % (start,
                                                                       stop))
         import datetime
         start = datetime.datetime.fromtimestamp(start)
         stop = datetime.datetime.fromtimestamp(stop)
-
         startDate = start.strftime('%Y/%m/%d:%H:%M:%S')
         stopDate = stop.strftime('%Y/%m/%d:%H:%M:%S')
 
-        from p4trac.repos import _P4ChangesOutputConsumer
-        output = _P4ChangesOutputConsumer(self._repos)
+        from p4trac.repos import P4ChangesOutputConsumer
+        output = P4ChangesOutputConsumer(self._repos)
         depot_path = '%s@>=%s,@<=%s' % (rootPath(self._connection), startDate, stopDate)
         self._connection.run('changes', '-l', '-s', 'submitted',
                              depot_path, output=output)
@@ -280,14 +277,14 @@ class PerforceRepository(Repository):
             yield self.get_changeset(change)
 
     def has_node(self, path, rev=None):
-        from p4trac.repos import NodePath
-        path = NodePath.normalisePath(path)
-        return self._repos.getNode(NodePath(path, rev)).exists
+        from p4trac.repos import P4NodePath
+        path = P4NodePath.normalisePath(path)
+        return self._repos.getNode(P4NodePath(path, rev)).exists
 
     def get_node(self, path, rev=None):
         self.log.debug('get_node(%s, %s) called' % (path, rev))
-        from p4trac.repos import NodePath
-        nodePath = NodePath(NodePath.normalisePath(path), rev)
+        from p4trac.repos import P4NodePath
+        nodePath = P4NodePath(P4NodePath.normalisePath(path), rev)
         return PerforceNode(nodePath, self._repos, self.log)
 
     def get_oldest_rev(self):
@@ -303,13 +300,13 @@ class PerforceRepository(Repository):
             if not isinstance(rev, int):
                 raise NoSuchChangeset(rev)
 
-        from p4trac.repos import _P4ChangesOutputConsumer
-        output = _P4ChangesOutputConsumer(self._repos)
+        from p4trac.repos import P4ChangesOutputConsumer
+        output = P4ChangesOutputConsumer(self._repos)
         self._connection.run('changes', '-l', '-s', 'submitted',
                              '-m', '1', '@<%i' % rev, output=output)
         if output.errors:
-            from p4trac.repos import PerforcError
-            raise PerforcError(output.errors)
+            from p4trac.repos import PerforceError
+            raise PerforceError(output.errors)
         if output.changes:
             return max(output.changes)
         else:
@@ -325,12 +322,12 @@ class PerforceRepository(Repository):
         # later.
         self.log.debug('next_rev(%r,%r)' % (rev, path))
 
-        from p4trac.repos import NodePath
+        from p4trac.repos import P4NodePath
         if not path:
             path = u'//'
         else:
-            path = NodePath.normalisePath(path)
-        node = self._repos.getNode(NodePath(path, rev))
+            path = P4NodePath.normalisePath(path)
+        node = self._repos.getNode(P4NodePath(path, rev))
 
         if node.isDirectory:
             if node.nodePath.isRoot:
@@ -363,8 +360,8 @@ class PerforceRepository(Repository):
                 'Looking for changes in range [%i, %i]' % (lowerBound,
                                                            batchUpperBound))
 
-            from p4trac.repos import _P4ChangesOutputConsumer
-            output = _P4ChangesOutputConsumer(self._repos)
+            from p4trac.repos import P4ChangesOutputConsumer
+            output = P4ChangesOutputConsumer(self._repos)
             depot_path = '%s%s@>=%i,@<=%i' % (rootPath(self._connection),
                                               queryPath, lowerBound, batchUpperBound)
             self._connection.run('changes', '-l', '-s', 'submitted',
@@ -372,8 +369,8 @@ class PerforceRepository(Repository):
                                  depot_path, output=output)
 
             if output.errors:
-                from p4trac.repos import PerforcError
-                raise PerforcError(output.errors)
+                from p4trac.repos import PerforceError
+                raise PerforceError(output.errors)
 
             if output.changes:
                 lowest = min(output.changes)
@@ -444,12 +441,12 @@ class PerforceRepository(Repository):
 
         # Can't compare these revisions directly,
         # Compare based on the latest change number that affects this revision.
-        from p4trac.repos import NodePath
+        from p4trac.repos import P4NodePath
         if not isinstance(rev1, int):
-            rootAtRev1 = NodePath(u'//', rev1)
+            rootAtRev1 = P4NodePath(u'//', rev1)
             rev1 = self._repos.getNode(rootAtRev1).change
         if not isinstance(rev2, int):
-            rootAtRev2 = NodePath(u'//', rev2)
+            rootAtRev2 = P4NodePath(u'//', rev2)
             rev2 = self._repos.getNode(rootAtRev2).change
         self.log.debug('Comparing by change rev1=%i, rev2=%i' % (rev1, rev2))
         return rev1 < rev2
@@ -457,8 +454,8 @@ class PerforceRepository(Repository):
     def get_path_history(self, path, rev=None, limit=None):
         # TODO: This doesn't handle the case where the head node has been
         # deleted or a file has changed to a directory or vica versa.
-        from p4trac.repos import NodePath
-        nodePath = NodePath(NodePath.normalisePath(path), rev)
+        from p4trac.repos import P4NodePath
+        nodePath = P4NodePath(P4NodePath.normalisePath(path), rev)
         node = PerforceNode(nodePath, self._repos, self.log)
         return node.get_history(limit)
 
@@ -482,11 +479,11 @@ class PerforceRepository(Repository):
         self.log.debug('PerforceRepository.get_changes(%r,%r,%r,%r)' % (
                        old_path, old_rev, new_path, new_rev))
 
-        from p4trac.repos import NodePath
-        oldNodePath = NodePath(NodePath.normalisePath(old_path), old_rev)
+        from p4trac.repos import P4NodePath
+        oldNodePath = P4NodePath(P4NodePath.normalisePath(old_path), old_rev)
         oldNode = self._repos.getNode(oldNodePath)
 
-        newNodePath = NodePath(NodePath.normalisePath(new_path), new_rev)
+        newNodePath = P4NodePath(P4NodePath.normalisePath(new_path), new_rev)
         newNode = self._repos.getNode(newNodePath)
 
         if (newNode.isFile and oldNode.isDirectory) or \
@@ -512,8 +509,8 @@ class PerforceRepository(Repository):
         else:
             raise TracError("Cannot diff two non-existant nodes")
 
-        from p4trac.repos import _P4Diff2OutputConsumer
-        output = _P4Diff2OutputConsumer(self._repos)
+        from p4trac.repos import P4Diff2OutputConsumer
+        output = P4Diff2OutputConsumer(self._repos)
 
         self._connection.run('diff2', '-ds',
                              self._repos.fromUnicode(oldQueryPath),
@@ -588,26 +585,10 @@ class PerforceNode(Node):
     def get_history(self, limit=None):
         self._log.debug('PerforceNode.get_history(%r)' % limit)
         if self._node.isFile:
-
             # Force population of the filelog history for efficiency
-            from p4trac.repos import _P4FileLogOutputConsumer
-            output = _P4FileLogOutputConsumer(self._repos)
+            self._repos._runFileLog(self._nodePath, limit)
 
-            if limit is None:
-                self._repos._connection.run(
-                    'filelog',
-                    '-i', '-l',
-                    self._repos.fromUnicode(self._nodePath.fullPath),
-                    output=output)
-            else:
-                self._repos._connection.run(
-                    'filelog',
-                    '-i', '-l',
-                    '-m', str(limit),
-                    self._repos.fromUnicode(self._nodePath.fullPath),
-                    output=output)
-
-            from p4trac.repos import NodePath
+            from p4trac.repos import P4NodePath
 
             currentNode = self._node
             i = 0
@@ -620,27 +601,22 @@ class PerforceNode(Node):
                         yield (normalisePath(currentNode.nodePath.path),
                                currentNode.change,
                                Changeset.COPY)
-                        
                         currentNode = self._repos.getNode(nodePath)
                     else:
                         yield(normalisePath(currentNode.nodePath.path),
                               currentNode.change,
                               Changeset.ADD)
-
                         if currentNode.fileRevision > 1:
                             # Get the previous revision
-                            nodePath = NodePath(currentNode.nodePath.path,
-                                                '#%i' % (currentNode.fileRevision - 1))
+                            nodePath = P4NodePath(currentNode.nodePath.path,
+                                                  '#%i' % (currentNode.fileRevision - 1))
                             currentNode = self._repos.getNode(nodePath)
                         else:
                             currentNode = None
-                            
                 elif currentNode.action in [u'edit', u'integrate']:
-
                     nextNode = None
                     if currentNode.integrations:
                         nodePath, how = currentNode.integrations[0]
-
                         if how == 'copy':
                             yield (normalisePath(currentNode.nodePath.path),
                                    currentNode.change,
@@ -654,36 +630,30 @@ class PerforceNode(Node):
                         yield (normalisePath(currentNode.nodePath.path),
                                currentNode.change,
                                Changeset.EDIT)
-
                     if nextNode is None:
                         if currentNode.fileRevision > 1:
                             currentNode = self._repos.getNode(
-                                NodePath(currentNode.nodePath.path,
-                                         '#%i' % (currentNode.fileRevision - 1)))
+                                P4NodePath(currentNode.nodePath.path,
+                                           '#%i' % (currentNode.fileRevision - 1)))
                         else:
                             currentNode = None
                     else:
                         currentNode = nextNode
-
                 elif currentNode.action in [u'delete']:
                     yield (normalisePath(currentNode.nodePath.path),
                            currentNode.change,
                            Changeset.DELETE)
-
                     if currentNode.fileRevision > 1:
                         currentNode = self._repos.getNode(
-                            NodePath(currentNode.nodePath.path,
-                                     '#%i' % (currentNode.fileRevision - 1)))
+                            P4NodePath(currentNode.nodePath.path,
+                                       '#%i' % (currentNode.fileRevision - 1)))
                     else:
                         currentNode = None
-
                 i += 1
-
         elif self._node.isDirectory:
-
             # List all changelists that have affected this directory
-            from p4trac.repos import _P4ChangesOutputConsumer
-            output = _P4ChangesOutputConsumer(self._repos)
+            from p4trac.repos import P4ChangesOutputConsumer
+            output = P4ChangesOutputConsumer(self._repos)
 
             if self._nodePath.isRoot:
                 queryPath = '%s%s' % (rootPath(self._repos._connection), self._nodePath.rev)
@@ -701,31 +671,22 @@ class PerforceNode(Node):
                                             output=output)
             if output.errors:
                 raise PerforceError(output.errors)
-
             changes = output.changes
 
-            # And describe the contents of those changelists
-            from p4trac.repos import _P4DescribeOutputConsumer
-            output = _P4DescribeOutputConsumer(self._repos)
-            self._repos._connection.run('describe', '-s',
-                                        output=output,
-                                        *[str(c) for c in changes])
+            self._repos._runDescribe(changes)
 
-            from p4trac.repos import NodePath
-
+            from p4trac.repos import P4NodePath
             for i in xrange(len(changes)):
                 change = changes[i]
-                nodePath = NodePath(self._nodePath.path, change)
-
+                nodePath = P4NodePath(self._nodePath.path, change)
                 if i < len(changes)-1:
                     prevChange = changes[i+1]
                 else:
                     prevChange = change-1
 
-                prevNodePath = NodePath(self._nodePath.path, prevChange)
+                prevNodePath = P4NodePath(self._nodePath.path, prevChange)
                 node = self._repos.getNode(nodePath)
                 prevNode = self._repos.getNode(prevNodePath)
-
                 if node.isDirectory:
                     if prevNode.isDirectory:
                         yield (normalisePath(self._nodePath.path),
@@ -739,11 +700,11 @@ class PerforceNode(Node):
                     yield (normalisePath(self._nodePath.path),
                            change,
                            Changeset.DELETE)
-                    
         else:
             raise NoSuchNode(self._nodePath.path, self._nodePath.rev)
 
     def get_annotations(self):
+        self._log.debug('PerforceNode.get_annotations')
         annotations = []
         if self.isfile:
             def blame_receiver(line_no, revision, author, date, line, pool):
@@ -798,7 +759,8 @@ class PerforceChangeset(Changeset):
         self._log = log
         self._changelist = self._repos.getChangelist(self._change)
         Changeset.__init__(self, self._change, self._changelist.description,
-                           self._changelist.user, datetime.fromtimestamp(self._changelist.time, utc))
+                           self._changelist.user,
+                           datetime.fromtimestamp(self._changelist.time, utc))
 
     def get_properties(self):
         import p4trac.repos
@@ -813,7 +775,6 @@ class PerforceChangeset(Changeset):
                 tktid = int(record['Job'][self._job_prefix_length:])
                 self._log.debug("get_properties  %d " % tktid)
                 fixes += ' %d' % tktid
-
             if fixes != '':
                 props['Tickets'] = to_unicode(fixes)
             return props
@@ -852,7 +813,7 @@ class PerforceChangeset(Changeset):
                 if node.integrations and node.integrations[0][1] == 'copy':
                     otherNodePath, how = node.integrations[0]
                     otherNode = self._repos.getNode(otherNodePath)
-                    
+
                     # A 'copy from' operation
                     yield (normalisePath(nodePath.path),
                            Node.FILE,
@@ -861,10 +822,10 @@ class PerforceChangeset(Changeset):
                            otherNode.change)
                 else:
                     if node.fileRevision > 1:
-                        from p4trac.repos import NodePath
-                        otherNode = self._repos.getNode(NodePath(nodePath.path,
-                                                                 '#%i' % (node.fileRevision - 1)))
-                            
+                        from p4trac.repos import P4NodePath
+                        otherNode = self._repos.getNode(P4NodePath(nodePath.path,
+                                                                   '#%i' % (node.fileRevision - 1)))
+
                         # A basic edit operation
                         yield (normalisePath(nodePath.path),
                                Node.FILE,
@@ -879,14 +840,12 @@ class PerforceChangeset(Changeset):
                                None)
             elif node.action in [u'delete']:
                 # The file was deleted
-                from p4trac.repos import NodePath
-                otherNodePath = NodePath(nodePath.path,
-                                         '#%i' % (node.fileRevision - 1))
+                from p4trac.repos import P4NodePath
+                otherNodePath = P4NodePath(nodePath.path,
+                                           '#%i' % (node.fileRevision - 1))
                 otherNode = self._repos.getNode(otherNodePath)
-
                 yield (normalisePath(nodePath.path),
                        Node.FILE,
                        Changeset.DELETE,
                        normalisePath(nodePath.path),
-                       otherNode.change,
-                       )
+                       otherNode.change)

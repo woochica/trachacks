@@ -19,7 +19,8 @@ from p4trac.util import AutoAttributesMeta
 # to use the client
 NO_CLIENT = '_P4TRAC_DUMMY_CLIENT'
 
-class _ChangeInfo(object):
+
+class _P4ChangeInfo(object):
     """A data structure for recording info about a changelist.
 
     @ivar change: The changelist number.
@@ -43,7 +44,8 @@ class _ChangeInfo(object):
         self.status = None
         self.files = None
 
-class _FileInfo(object):
+
+class _P4FileInfo(object):
     """A data structure for recording info about a file.
 
     @ivar path: The repository path in depot notation.
@@ -72,7 +74,8 @@ class _FileInfo(object):
         self.sources = None
         self.attributes = None
 
-class _DirectoryInfo(object):
+
+class _P4DirectoryInfo(object):
     """A data structure for recording info about a directory.
 
     @ivar path: The repository path in depot notation (no trailing slash)
@@ -92,37 +95,39 @@ class _DirectoryInfo(object):
         self.files = None
         self.change = None
 
-class PerforceError(Exception):
 
+class PerforceError(Exception):
     def __init__(self, errors):
         self.errors = errors
 
     def __str__(self):
         return '\n'.join([e.format() for e in self.errors])
 
-class NoSuchChangelist(Exception):
 
+class NoSuchChangelist(Exception):
     def __init__(self, change):
         self.change = change
 
+
 class NoSuchNode(Exception):
-    
     def __init__(self, path, rev):
         self.path = path
         self.rev = rev
 
+
 class NoSuchFile(NoSuchNode):
     pass
+
 
 class NoSuchDirectory(NoSuchNode):
     pass
 
-# Some regular expressions used by NodePath
+# Some regular expressions used by P4NodePath
 _slashDotSlashRE = re.compile(ur'/(\./)+')
 _dirSlashDotDotRE = re.compile(ur'[^/]+/..(/|$)')
 _trailingSlashesRE = re.compile(ur'(?<=[^/])/*$')
 
-class NodePath(object):
+class P4NodePath(object):
     """A path to a node in the Perforce repository.
 
     A node is a particular revision of a path in the Perforce repository and
@@ -219,10 +224,10 @@ class NodePath(object):
             return u'@%s' % rev
 
     def __init__(self, path, rev=None):
-        """Construct a NodePath object.
+        """Construct a P4NodePath object.
 
         @param path: The depot path to the node.
-        This must be a normalised path. Call L{NodePath.normalisePath} if
+        This must be a normalised path. Call L{P4NodePath.normalisePath} if
         normalisation is required.
         @type path: C{unicode}
 
@@ -233,7 +238,7 @@ class NodePath(object):
         """
         assert isinstance(path, unicode)
         self._path = path
-        self._rev = NodePath.normaliseRevision(rev)
+        self._rev = P4NodePath.normaliseRevision(rev)
 
     def _get_path(self):
         """The depot path of the node in the Perforce repository.
@@ -353,7 +358,7 @@ class NodePath(object):
         return hash(self.path) ^ hash(self.rev)
 
     def __eq__(self, other):
-        if isinstance(other, NodePath):
+        if isinstance(other, P4NodePath):
             return self.path == other.path and self.rev == other.rev
         else:
             return False
@@ -362,7 +367,7 @@ class NodePath(object):
         return not (self == other)
 
 
-class Changelist(object):
+class _P4Changelist(object):
     """A proxy object that gives access to details about a particular
     changelist in a Perforce repository.
 
@@ -375,7 +380,7 @@ class Changelist(object):
     __slots__ = ['_repo', '_change']
 
     def __init__(self, change, repository):
-        """Construct a new Changelist object.
+        """Construct a new _P4Changelist object.
 
         @param change: The change number of the changelist to query.
         @type change: C{int}
@@ -478,7 +483,7 @@ class Changelist(object):
 
         Has the value None if the changelist is not submitted.
 
-        @type: C{list} of L{Node} objects or C{None}
+        @type: C{list} of L{_P4Node} objects or C{None}
 
         @raise NoSuchChangelist: If the changelist doesn't exist in the
         Perforce repository.
@@ -497,13 +502,13 @@ class Changelist(object):
 
         nodes = []
         for path in info.files:
-            nodePath = NodePath(path, self._change)
-            node = Node(nodePath, self._repo)
+            nodePath = P4NodePath(path, self._change)
+            node = _P4Node(nodePath, self._repo)
             nodes.append(node)
-
         return nodes
 
-class Node(object):
+
+class _P4Node(object):
     """A Perforce node is a particular revision of a path in the repository.
     """
 
@@ -518,12 +523,12 @@ class Node(object):
     def _get_nodePath(self):
         """The node path of this node.
 
-        @type: L{NodePath}
+        @type: L{P4NodePath}
         """
         return self._nodePath
 
     def _get_isDirectory(self):
-        """Boolean flag indicating whether the L{Node} is a directory.
+        """Boolean flag indicating whether the L{_P4Node} is a directory.
 
         @type: C{boolean}
         """
@@ -535,7 +540,7 @@ class Node(object):
         # Use the latest revision if no revision specified
         if self._nodePath.rev is None:
             latestChange = self._repo.getLatestChange()
-            self._nodePath = NodePath(self._nodePath.path, latestChange)
+            self._nodePath = P4NodePath(self._nodePath.path, latestChange)
 
         # Do we already know it's a directory?
         dirInfo = self._repo._getDirInfo(self._nodePath)
@@ -558,7 +563,7 @@ class Node(object):
         return dirInfo is not None
 
     def _get_isFile(self):
-        """Boolean flag indicating whether the L{Node} is a file.
+        """Boolean flag indicating whether the L{_P4Node} is a file.
 
         @type: C{boolean}
         """
@@ -570,7 +575,7 @@ class Node(object):
         # Use the latest revision if no revision specified
         if self._nodePath.rev is None:
             latestChange = self._repo.getLatestChange()
-            self._nodePath = NodePath(self._nodePath.path, latestChange)
+            self._nodePath = P4NodePath(self._nodePath.path, latestChange)
 
         # Do we already know it's a file?
         fileInfo = self._repo._getFileInfo(self._nodePath)
@@ -601,7 +606,7 @@ class Node(object):
             return False
 
     def _get_exists(self):
-        """Boolean flag indicating whether the L{Node} exists or not.
+        """Boolean flag indicating whether the L{_P4Node} exists or not.
 
         @type: C{boolean}
 
@@ -614,7 +619,7 @@ class Node(object):
 
         @type: C{int}
 
-        @raise NoSuchFile: If the L{Node} isn't a file.
+        @raise NoSuchFile: If the L{_P4Node} isn't a file.
         """
 
         if not self.isFile:
@@ -634,7 +639,7 @@ class Node(object):
 
         @type: C{int}
 
-        @raise NoSuchFile: If the L{Node} isn't a file node.
+        @raise NoSuchFile: If the L{_P4Node} isn't a file node.
         """
 
         if not self.isFile:
@@ -656,7 +661,7 @@ class Node(object):
 
         @type: C{file}-like object
 
-        @raise NoSuchFile: If the L{Node} isn't a file.
+        @raise NoSuchFile: If the L{_P4Node} isn't a file.
         """
 
         if not self.isFile:
@@ -681,13 +686,13 @@ class Node(object):
 
         @type: C{int}
 
-        @raise NoSuchNode: If the L{Node} doesn't exist.
+        @raise NoSuchNode: If the L{_P4Node} doesn't exist.
         """
 
         # Use the latest revision if no revision specified
         if self._nodePath.rev is None:
             latestChange = self._repo.getLatestChange()
-            self._nodePath = NodePath(self._nodePath.path, latestChange)
+            self._nodePath = P4NodePath(self._nodePath.path, latestChange)
 
         if not self.exists:
             fileInfo = self._repo._getFileInfo(self._nodePath)
@@ -817,19 +822,18 @@ class Node(object):
         for subdir in dirInfo.subdirs:
             if self._nodePath.isRoot:
                 if self._repo._connection.client != NO_CLIENT:
-                    nodePath = NodePath(u'//%s/%s' % (self._repo._connection.client, subdir),
-                                        self._nodePath.rev)
+                    nodePath = P4NodePath(u'//%s/%s' % (self._repo._connection.client, subdir),
+                                          self._nodePath.rev)
                 else:
-                    nodePath = NodePath(u'//%s' % subdir,
-                                        self._nodePath.rev)
+                    nodePath = P4NodePath(u'//%s' % subdir,
+                                          self._nodePath.rev)
             else:
-                nodePath = NodePath(u'%s/%s' % (self._nodePath.path, subdir),
-                                    self._nodePath.rev)
+                nodePath = P4NodePath(u'%s/%s' % (self._nodePath.path, subdir),
+                                      self._nodePath.rev)
 
-            self._repo._log.debug("_get_subDirectories '%s ' " % (nodePath._path))
-            node = Node(nodePath, self._repo)
+            self._repo._log.debug("_P4Node._get_subDirectories '%s'" % (nodePath._path))
+            node = _P4Node(nodePath, self._repo)
             subdirNodes.append(node)
-
         return subdirNodes
 
     def _get_files(self):
@@ -839,8 +843,7 @@ class Node(object):
         """
 
         if not self.isDirectory:
-            raise NoSuchDirectory(self._nodePath.path,
-                                  self._nodePath.rev)
+            raise NoSuchDirectory(self._nodePath.path, self._nodePath.rev)
 
         # The root path never has any files under it
         if self._nodePath.isRoot:
@@ -853,17 +856,16 @@ class Node(object):
             except PerforceError:
                 if dirInfo.files is None:
                     raise
-            
         assert dirInfo.files is not None
 
         fileNodes = []
         for file in dirInfo.files:
-            nodePath = NodePath(u'%s/%s' % (self._nodePath.path, file),
-                                self._nodePath.rev)
-            node = Node(nodePath, self._repo)
+            nodePath = P4NodePath(u'%s/%s' % (self._nodePath.path, file),
+                                  self._nodePath.rev)
+            node = _P4Node(nodePath, self._repo)
             fileNodes.append(node)
-
         return fileNodes
+
 
 class P4Repository(object):
     """The repository object.
@@ -898,13 +900,13 @@ class P4Repository(object):
 
         self._latestChange = None
 
-        # Mapping from change number (int) to _ChangeInfo object
+        # Mapping from change number (int) to _P4ChangeInfo object
         self._changes = {}
 
-        # Mapping from node-path (unicode) to _DirectoryInfo object
+        # Mapping from node-path (unicode) to _P4DirectoryInfo object
         self._dirs = {}
 
-        # Mapping from node-path (unicode) to _FileInfo object
+        # Mapping from node-path (unicode) to _P4FileInfo object
         self._files = {}
 
         self._serverVersion = None
@@ -932,8 +934,8 @@ class P4Repository(object):
         return self._serverVersion
 
     def getChangelist(self, change):
-        """Get the Changelist object corresponding to the change number."""
-        return Changelist(change, self)
+        """Get the _P4Changelist object corresponding to the change number."""
+        return _P4Changelist(change, self)
 
     def isChangelistCached(self, change):
         """Query if info on a particular changelist is cached."""
@@ -945,14 +947,14 @@ class P4Repository(object):
                     info.description is not None and
                     info.description is not None and
                     info.time is not None)
-    
+
     def getLatestChange(self):
         """Return the number of the most recently submitted change.
 
         Returns 0 if no changes have been submitted.
         """
         if self._latestChange is None:
-            output = _P4ChangesOutputConsumer(self)
+            output = P4ChangesOutputConsumer(self)
             self._connection.run('changes',
                                  '-m', '1',
                                  '-l',
@@ -1008,7 +1010,7 @@ class P4Repository(object):
 
             batchUpperBound = lowerBound + batchSize
 
-            output = _P4ChangesOutputConsumer(self)
+            output = P4ChangesOutputConsumer(self)
             self._connection.run('changes', '-l', '-s', 'submitted',
                                  '-m', str(batchSize),
                                  '@>=%i,@<=%i' % (lowerBound,
@@ -1034,11 +1036,11 @@ class P4Repository(object):
         return None
             
     def getNode(self, nodePath):
-        """Get the Node object corresponding to the node path.
+        """Get the _P4Node object corresponding to the node path.
 
-        nodePath is a NodePath object
+        nodePath is a P4NodePath object
         """
-        return Node(nodePath, self)
+        return _P4Node(nodePath, self)
 
     def precacheFileInformationForChanges(self, changes):
         """Pre-caches integration and change information for the file
@@ -1067,19 +1069,15 @@ class P4Repository(object):
 
         def filesWithoutCachedHistory():
             for change in changes:
-                
                 changeInfo = self._getChangeInfo(change)
-                
                 assert changeInfo is not None
                 assert changeInfo.files is not None
                 
                 for file in changeInfo.files:
-                    
-                    nodePath = NodePath(file, '@%i' % change)
+                    nodePath = P4NodePath(file, '@%i' % change)
                     fileInfo = self._getFileInfo(nodePath)
-                    
                     assert fileInfo is not None
-                    
+
                     if fileInfo.sources is None:
                         yield nodePath
 
@@ -1094,13 +1092,11 @@ class P4Repository(object):
                 yield batch
 
         for batch in batchesOfFilesWithoutCachedHistory(1000):
-            
             output = _P4FileLogOutputConsumer(self)
             self._connection.run('filelog', '-m', '1',
                                  output=output,
                                  *[self.fromUnicode(np.fullPath)
                                    for np in batch])
-
             if output.errors:
                 raise PerforceError(output.errors)
 
@@ -1129,13 +1125,13 @@ class P4Repository(object):
 
         @return: The changelist info structure or C{None} if the change
         doesn't yet exist in the cache.
-        @rtype: L{_ChangeInfo} or C{None}
+        @rtype: L{_P4ChangeInfo} or C{None}
         """
 
         if change in self._changes:
             return self._changes[change]
         elif create:
-            info = _ChangeInfo(int(change))
+            info = _P4ChangeInfo(int(change))
             self._changes[change] = info
             return info
         else:
@@ -1144,18 +1140,18 @@ class P4Repository(object):
     def _getDirInfo(self, nodePaths, create=False):
         """Get the directory info structure for the set of nodePaths.
 
-        @param nodePaths: Either a NodePath or a list of NodePath objects.
+        @param nodePaths: Either a P4NodePath or a list of P4NodePath objects.
         If a list is provided, then you must already know that all of the
-        NodePaths refer to the same Node (this implies that the path component
+        NodePaths refer to the same _P4Node (this implies that the path component
         of the NodePaths are all equal).
 
         @param create: If true and the nodePaths aren't already in existence
-        then a new empty _DirectoryInfo object is inserted into the database
+        then a new empty _P4DirectoryInfo object is inserted into the database
         and is returned, otherwise None is returned. Should only be set to
         True if you already know that the nodePaths are a directory.
 
-        @return: The L{_DirectoryInfo} object for the nodePaths or C{None},
-        @rtype: L{_DirectoryInfo} or C{None}
+        @return: The L{_P4DirectoryInfo} object for the nodePaths or C{None},
+        @rtype: L{_P4DirectoryInfo} or C{None}
         """
 
         if isinstance(nodePaths, list):
@@ -1170,7 +1166,7 @@ class P4Repository(object):
             infos = [self._dirs[p]
                      for p in fullPaths
                      if p in self._dirs]
-            
+
             if infos:
                 # There are existing info objects, pick the first one
                 # and merge in any details from the others
@@ -1178,19 +1174,19 @@ class P4Repository(object):
                 for other in infos[1:]:
                     if other is not info:
                         assert other.path == info.path
-                        
+
                         if other.subdirs is not None:
                             if info.subdirs is None:
                                 info.subdirs = other.subdirs
                             else:
                                 assert info.subdirs == other.subdirs
-                                
+
                         if other.files is not None:
                             if info.files is None:
                                 info.files = other.files
                             else:
                                 assert info.files == other.files
-                                
+
                         if other.change is not None:
                             if info.change is None:
                                 info.change = other.change
@@ -1200,26 +1196,24 @@ class P4Repository(object):
                 # Update all node paths to point to the same info
                 for p in fullPaths:
                     self._dirs[p] = info
-
                 return info
             elif create and nodePaths:
-                info = _DirectoryInfo(nodePaths[0].path)
+                info = _P4DirectoryInfo(nodePaths[0].path)
                 for p in fullPaths:
                     self._dirs[p] = info
                 return info
             else:
                 return None
-
         else:
             # A single node path
             nodePath = nodePaths
             assert nodePath.rev is not None
-            
+
             fullPath = nodePath.fullPath
             if fullPath in self._dirs:
                 return self._dirs[fullPath]
             elif create:
-                info = _DirectoryInfo(nodePath.path)
+                info = _P4DirectoryInfo(nodePath.path)
                 self._dirs[fullPath] = info
                 return info
             else:
@@ -1228,13 +1222,13 @@ class P4Repository(object):
     def _getFileInfo(self, nodePaths, create=False):
         """Get the file info structure for the set of nodePaths.
 
-        @param nodePaths: Either a NodePath or a list of NodePath objects.
+        @param nodePaths: Either a P4NodePath or a list of P4NodePath objects.
         If a list is provided, then you must already know that all of the
-        NodePaths refer to the same Node (this implies that the path
+        NodePaths refer to the same _P4Node (this implies that the path
         component of the NodePaths are all equal).
 
         @param create: If true and the nodePaths aren't already in existence
-        then a new _FileInfo object is inserted into the database and is
+        then a new _P4FileInfo object is inserted into the database and is
         returned, otherwise None is returned. Should only be set to True if
         you already know the nodePaths are a file.
         """
@@ -1251,34 +1245,32 @@ class P4Repository(object):
             infos = [self._files[p]
                      for p in fullPaths
                      if p in self._files]
-            
             if infos:
                 # There are existing info objects, pick the first one
                 # and merge in any details from the others
                 info = infos[0]
                 for other in infos[1:]:
                     if other is not info:
-                        
                         assert other.path == info.path
-                        
+
                         if other.rev is not None:
                             if info.rev is None:
                                 info.rev = other.rev
                             else:
                                 assert info.rev == other.rev
-                                
+
                         if other.action is not None:
                             if info.action is None:
                                 info.action = other.action
                             else:
                                 assert info.action == other.action
-                                
+
                         if other.change is not None:
                             if info.change is None:
                                 info.change = other.change
                             else:
                                 assert info.change == other.change
-                                
+
                         if other.type is not None:
                             if info.type is None:
                                 info.type = other.type
@@ -1307,25 +1299,23 @@ class P4Repository(object):
                 for p in fullPaths:
                     self._files[p] = info
                 return info
-            
             elif create and nodePaths:
-                info = _FileInfo(nodePaths[0].path)
+                info = _P4FileInfo(nodePaths[0].path)
                 for p in fullPaths:
                     self._files[p] = info
                 return info
             else:
                 return None
-
         else:
             # A single node path
             nodePath = nodePaths
             assert nodePath.rev is not None
-            
+
             fullPath = nodePath.fullPath
             if fullPath in self._files:
                 return self._files[fullPath]
             elif create:
-                info = _FileInfo(nodePath.path)
+                info = _P4FileInfo(nodePath.path)
                 self._files[fullPath] = info
                 return info
             else:
@@ -1345,7 +1335,6 @@ class P4Repository(object):
         results = self._connection.run('describe', '-s',
                                        output=output,
                                        *args)
-
         if output.errors:
             raise PerforceError(output.errors)
 
@@ -1353,14 +1342,13 @@ class P4Repository(object):
         """Run 'p4 dirs' on the specified node path.
 
         @param nodePath: The path of the directory to query.
-        @type nodePath: L{NodePath}
+        @type nodePath: L{P4NodePath}
 
         @param subdirs: Flag indicating whether to query for the specified
         node path or for subdirectories of the specified node path.
         """
 
         assert nodePath.rev is not None
-
         if subdirs:
             if nodePath.isRoot:
                 if self._connection.client != NO_CLIENT:
@@ -1388,7 +1376,6 @@ class P4Repository(object):
                 if self._connection.client != NO_CLIENT:
                     dirInfo.path = u'//%s/' % self._connection.client
                 self._log.debug("sub dirs '%s %s %s %s' " % (dirInfo.path, dirInfo.subdirs, dirInfo.files, dirInfo.change))
-
         if output.errors:
             raise PerforceError(output.errors)
 
@@ -1396,7 +1383,7 @@ class P4Repository(object):
         """Run 'p4 fstat' on the specified node path.
 
         @param nodePath: The path to query for file info.
-        @type nodePath: L{NodePath}
+        @type nodePath: L{P4NodePath}
 
         @param wildcard: The wildcard to apply to the nodePath.
         May be either C{u'*'}, for all files in the directory, C{u'...'} for
@@ -1470,10 +1457,8 @@ class P4Repository(object):
         assert nodePath.rev is not None
 
         args = ['-l', '-i']
-
         if maxRevisions is not None:
             args.extend(['-m', str(maxRevisions)])
-
         if wildcard is None:
             queryPath = nodePath.fullPath
         else:
@@ -1486,12 +1471,10 @@ class P4Repository(object):
                 queryPath = u'%s/%s%s' % (nodePath.path,
                                           wildcard,
                                           nodePath.rev)
-
         args.append(self.fromUnicode(queryPath))
 
         output = _P4FileLogOutputConsumer(self)
         self._connection.run('filelog', output=output, *args)
-
         if output.errors:
             raise PerforcError(output.errors)
 
@@ -1514,10 +1497,8 @@ class P4Repository(object):
         assert nodePath.rev is not None
 
         args = ['-l', '-s', 'submitted']
-
         if maxChanges is not None:
             args.extend(['-m', str(maxChanges)])
-
         if wildcard is None:
             queryPath = nodePath.fullPath
         else:
@@ -1533,10 +1514,9 @@ class P4Repository(object):
                 queryPath = u'%s/%s%s' % (nodePath.path,
                                           wildcard,
                                           nodePath.rev)
-
         args.append(self.fromUnicode(queryPath))
 
-        output = _P4ChangesOutputConsumer(self)
+        output = P4ChangesOutputConsumer(self)
         self._connection.run('changes', output=output, *args)
 
         if wildcard == u'...':
@@ -1545,11 +1525,10 @@ class P4Repository(object):
             
             if output.changes:
                 latestChange = max(output.changes)
-                changeNodePath = NodePath(nodePath.path, latestChange)
+                changeNodePath = P4NodePath(nodePath.path, latestChange)
                 info = self._getDirInfo([nodePath, changeNodePath],
                                         create=True)
                 info.change = latestChange
-                
             elif not output.errors:
                 info = self._getDirInfo(nodePath)
                 if info is not None:
@@ -1558,7 +1537,8 @@ class P4Repository(object):
         if output.errors:
             raise PerforceError(output.errors)
 
-class _P4ChangesOutputConsumer(object):
+
+class P4ChangesOutputConsumer(object):
     """Output consumer for 'p4 changes' commands."""
 
     protocols.advise(
@@ -1573,21 +1553,16 @@ class _P4ChangesOutputConsumer(object):
     def outputRecord(self, record):
         change = int(record['change'])
         self.changes.append(change)
-        
-        info = self.repository._getChangeInfo(change, create=True)
 
+        info = self.repository._getChangeInfo(change, create=True)
         if info.status is None:
             info.status = self.repository.toUnicode(record['status'])
-            
         if info.client is None:
             info.client = self.repository.toUnicode(record['client'])
-            
         if info.user is None:
             info.user = self.repository.toUnicode(record['user'])
-            
         if info.time is None:
             info.time = int(record['time'])
-            
         if info.description is None:
             info.description = self.repository.toUnicode(record['desc'])
 
@@ -1603,6 +1578,7 @@ class _P4ChangesOutputConsumer(object):
     outputText = _doNothing
     finished = _doNothing
 
+
 class _P4DescribeOutputConsumer(object):
     """Output consumer for 'p4 describe' commands."""
 
@@ -1615,22 +1591,16 @@ class _P4DescribeOutputConsumer(object):
         self.errors = []
 
     def outputRecord(self, record):
-
         change = int(record['change'])
-
         info = self.repository._getChangeInfo(change, create=True)
         if info.status is None:
             info.status = self.repository.toUnicode(record['status'])
-            
         if info.client is None:
             info.client = self.repository.toUnicode(record['client'])
-            
         if info.user is None:
             info.user = self.repository.toUnicode(record['user'])
-            
         if info.time is None:
             info.time = int(record['time'])
-            
         if info.description is None:
             info.description = self.repository.toUnicode(record['desc'])
 
@@ -1641,34 +1611,29 @@ class _P4DescribeOutputConsumer(object):
             rev = int(record['rev%i' % i])
             filePaths.append(path)
 
-            nodePathFile = NodePath(path, u'#%i' % rev)
-            nodePathRepo = NodePath(path, u'@%i' % change)
-
+            nodePathFile = P4NodePath(path, u'#%i' % rev)
+            nodePathRepo = P4NodePath(path, u'@%i' % change)
             fileInfo = self.repository._getFileInfo([nodePathFile,
                                                      nodePathRepo],
                                                     create=True)
 
             if fileInfo.rev is None:
                 fileInfo.rev = rev
-                
             if fileInfo.change is None:
                 fileInfo.change = change
-                
             if fileInfo.action is None:
-                fileInfo.action = self.repository.toUnicode(
-                    record['action%i' % i])
-                
+                fileInfo.action = self.repository.toUnicode(record['action%i' % i])
             if fileInfo.type is None:
                 fileInfo.type = self.repository.toUnicode(record['type%i' % i])
-                
+
             if fileInfo.action != u'delete':
                 # The file exists at this change
                 # We can infer that all parent node paths exist at this change
                 # number, so force their creation.
-                parentNodePath = NodePath(nodePathRepo.parent, change)
+                parentNodePath = P4NodePath(nodePathRepo.parent, change)
                 while not parentNodePath.isRoot:
                     self.repository._getDirInfo(parentNodePath, create=True)
-                    parentNodePath = NodePath(parentNodePath.parent, change)
+                    parentNodePath = P4NodePath(parentNodePath.parent, change)
 
             i += 1
 
@@ -1686,9 +1651,9 @@ class _P4DescribeOutputConsumer(object):
     outputBinary = _doNothing
     outputText = _doNothing
     finished = _doNothing
+
     
 class _P4DirsOutputConsumer(object):
-
     protocols.advise(
         instancesProvide=[IOutputConsumer]
         )
@@ -1700,12 +1665,9 @@ class _P4DirsOutputConsumer(object):
         self.errors = []
 
     def outputRecord(self, record):
-
         from p4trac.util import toUnicode
-        
         path = self.repository.toUnicode(record['dir'])
-        nodePath = NodePath(path, self.revision)
-        
+        nodePath = P4NodePath(path, self.revision)
         self.dirs.append(nodePath)
 
         # Force creation of the directory info
@@ -1723,8 +1685,8 @@ class _P4DirsOutputConsumer(object):
     outputText = _doNothing
     finished = _doNothing
 
-class _P4FstatOutputConsumer(object):
 
+class _P4FstatOutputConsumer(object):
     protocols.advise(
         instancesProvide=[IOutputConsumer]
         )
@@ -1736,15 +1698,13 @@ class _P4FstatOutputConsumer(object):
         self.errors = []
 
     def outputRecord(self, record):
-
         path = self.repository.toUnicode(record['depotFile'])
         rev = int(record['headRev'])
         change = int(record['headChange'])
 
-        nodePathFile = NodePath(path, '#%i' % rev)
-        nodePathRepo = NodePath(path, '@%i' % change)
-        nodePathQuery = NodePath(path, self.revision)
-
+        nodePathFile = P4NodePath(path, '#%i' % rev)
+        nodePathRepo = P4NodePath(path, '@%i' % change)
+        nodePathQuery = P4NodePath(path, self.revision)
         info = self.repository._getFileInfo([nodePathFile,
                                              nodePathRepo,
                                              nodePathQuery],
@@ -1752,16 +1712,12 @@ class _P4FstatOutputConsumer(object):
 
         if info.rev is None:
             info.rev = rev
-            
         if info.change is None:
             info.change = change
-            
         if info.action is None:
             info.action = self.repository.toUnicode(record['headAction'])
-            
         if info.type is None:
             info.type = self.repository.toUnicode(record['headType'])
-
         if info.attributes is None:
             info.attributes = {}
             for key, value in record.iteritems():
@@ -1769,22 +1725,19 @@ class _P4FstatOutputConsumer(object):
                 if key.startswith(u'attr-'):
                     name = key[5:]
                     info.attributes[name] = self.repository.toUnicode(value)
-
         if info.size is None:
             # Note: size may not be present if the action is 'delete'.
             if 'fileSize' in record:
                 info.size = int(record['fileSize'])
-                
         if info.size is not None:
             # The file exists at this change
             self.files.append(path)
-            
             # We can infer that all parent node paths exist at this change
             # number, so force the directory info creation.
-            parentNodePath = NodePath(nodePathRepo.parent, change)
+            parentNodePath = P4NodePath(nodePathRepo.parent, change)
             while not parentNodePath.isRoot:
                 self.repository._getDirInfo(parentNodePath, create=True)
-                parentNodePath = NodePath(parentNodePath.parent, change)
+                parentNodePath = P4NodePath(parentNodePath.parent, change)
 
     def outputMessage(self, message):
         if message.isError():
@@ -1797,6 +1750,7 @@ class _P4FstatOutputConsumer(object):
     outputBinary = _doNothing
     outputText = _doNothing
     finished = _doNothing
+
     
 class _P4PrintOutputConsumer(object):
     """Writes output of a 'p4 print' command to a Python file-like object."""
@@ -1828,6 +1782,7 @@ class _P4PrintOutputConsumer(object):
     outputRecord = _doNothing
     outputForm = _doNothing
 
+
 class _P4FileLogOutputConsumer(object):
     """Stores output of 'p4 filelog' commands in the repository's cache."""
 
@@ -1846,51 +1801,41 @@ class _P4FileLogOutputConsumer(object):
     def outputRecord(self, record):
         from perforce.results import FileLog
         fileLog = FileLog.parseRecord(record)
-
         path = self.repository.toUnicode(fileLog.depotFile)
 
         for fileRev in fileLog.revisions:
-
-            nodePathRepos = NodePath(path, '@%i' % fileRev.change)
-            nodePathFile = NodePath(path, '#%i' % fileRev.rev)
+            nodePathRepos = P4NodePath(path, '@%i' % fileRev.change)
+            nodePathFile = P4NodePath(path, '#%i' % fileRev.rev)
 
             change = fileRev.change
             changeInfo = self.repository._getChangeInfo(change, create=True)
-
             if changeInfo.description is None:
                 changeInfo.description = self.repository.toUnicode(
-                    fileRev.desc)
+                                                fileRev.desc)
             if changeInfo.time is None:
                 changeInfo.time = fileRev.time
-
             if changeInfo.client is None:
                 changeInfo.client = self.repository.toUnicode(fileRev.client)
-
             if changeInfo.user is None:
                 changeInfo.user = self.repository.toUnicode(fileRev.user)
 
             fileInfo = self.repository._getFileInfo([nodePathRepos,
                                                      nodePathFile],
                                                     create=True)
-
             if fileInfo.rev is None:
                 fileInfo.rev = int(fileRev.rev)
-                
             if fileInfo.change is None:
                 fileInfo.change = int(fileRev.change)
-
             if fileInfo.action is None:
                 fileInfo.action = self.repository.toUnicode(fileRev.action)
-
             if fileInfo.sources is None:
                 fileInfo.sources = []
 
                 for integ in fileRev.integrations:
-                    
-                    otherNodePath = NodePath(
-                        self.repository.toUnicode(integ.file),
-                        self.repository.toUnicode(integ.erev))
-                    
+                    otherNodePath = P4NodePath(
+                                        self.repository.toUnicode(integ.file),
+                                        self.repository.toUnicode(integ.erev))
+
                     otherFileInfo = self.repository._getFileInfo(otherNodePath,
                                                                  create=True)
                     if otherFileInfo.rev is None:
@@ -1899,28 +1844,20 @@ class _P4FileLogOutputConsumer(object):
                     # Only interested in files that have contributed to this
                     # file, ignore information about other files this revision
                     # has been integrated into.
-
                     if integ.how == 'branch from':
                         how = u'branch'
-
                     elif integ.how == 'copy from':
                         how = u'copy'
-
                     elif integ.how == 'ignored':
                         how = u'ignore'
-
                     elif integ.how == 'delete from':
                         how = u'delete'
-
                     elif integ.how == 'edit from':
                         how = u'edit'
-
                     elif integ.how == 'merge from':
                         how = u'merge'
-                    
                     else:
                         how = None
-
                     if how is not None:
                         fileInfo.sources.append((otherNodePath, how))
 
@@ -1932,7 +1869,8 @@ class _P4FileLogOutputConsumer(object):
     outputText = _doNothing
     finished = _doNothing
 
-class _P4Diff2OutputConsumer(object):
+
+class P4Diff2OutputConsumer(object):
 
     protocols.advise(
         instancesProvide=[IOutputConsumer],
@@ -1965,10 +1903,8 @@ class _P4Diff2OutputConsumer(object):
     def outputMessage(self, message):
         if message.isError():
             self.errors.append(message)
-
         elif message.isInfo():
             line = self.repository.toUnicode(message.format())
-
             if line.startswith(u'==== '):
                 match = self.summaryLineRE.match(line)
                 if match:
@@ -1976,18 +1912,17 @@ class _P4Diff2OutputConsumer(object):
                     path1 = match.group(u'path1')
                     file2 = match.group(u'file2')
                     path2 = match.group(u'path2')
-
                     summary = match.group(u'summary')
                     if summary != u'identical':
                         if path1:
                             i = path1.find(u'#')
-                            nodePath1 = NodePath(path1[:i], path1[i:])
+                            nodePath1 = P4NodePath(path1[:i], path1[i:])
                         else:
                             nodePath1 = None
 
                         if path2:
                             i = path2.find(u'#')
-                            nodePath2 = NodePath(path2[:i], path2[i:])
+                            nodePath2 = P4NodePath(path2[:i], path2[i:])
                         else:
                             nodePath2 = None
 
@@ -1998,14 +1933,14 @@ class _P4Diff2OutputConsumer(object):
             if 'depotFile' in record:
                 path1 = self.repository.toUnicode(record['depotFile'])
                 rev1 = self.repository.toUnicode(record['rev'])
-                nodePath1 = NodePath(path1, u'#%s' % rev1)
+                nodePath1 = P4NodePath(path1, u'#%s' % rev1)
             else:
                 nodePath1 = None
 
             if 'depotFile2' in record:
                 path2 = self.repository.toUnicode(record['depotFile2'])
                 rev2 = self.repository.toUnicode(record['rev2'])
-                nodePath2 = NodePath(path2, u'#%s' % rev2)
+                nodePath2 = P4NodePath(path2, u'#%s' % rev2)
             else:
                 nodePath2 = None
             self.changes.append( (nodePath1, nodePath2) )
