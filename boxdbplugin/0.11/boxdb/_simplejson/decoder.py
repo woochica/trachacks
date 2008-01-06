@@ -194,52 +194,10 @@ ANYTHING = [
 JSONScanner = Scanner(ANYTHING)
 
 class JSONDecoder(object):
-    """
-    Simple JSON <http://json.org> decoder
-
-    Performs the following translations in decoding:
-    
-    +---------------+-------------------+
-    | JSON          | Python            |
-    +===============+===================+
-    | object        | dict              |
-    +---------------+-------------------+
-    | array         | list              |
-    +---------------+-------------------+
-    | string        | unicode           |
-    +---------------+-------------------+
-    | number (int)  | int, long         |
-    +---------------+-------------------+
-    | number (real) | float             |
-    +---------------+-------------------+
-    | true          | True              |
-    +---------------+-------------------+
-    | false         | False             |
-    +---------------+-------------------+
-    | null          | None              |
-    +---------------+-------------------+
-
-    It also understands ``NaN``, ``Infinity``, and ``-Infinity`` as
-    their corresponding ``float`` values, which is outside the JSON spec.
-    """
-
     _scanner = Scanner(ANYTHING)
     __all__ = ['__init__', 'decode', 'raw_decode']
 
     def __init__(self, encoding=None, object_hook=None):
-        """
-        ``encoding`` determines the encoding used to interpret any ``str``
-        objects decoded by this instance (utf-8 by default).  It has no
-        effect when decoding ``unicode`` objects.
-        
-        Note that currently only encodings that are a superset of ASCII work,
-        strings of other encodings should be passed in as ``unicode``.
-
-        ``object_hook``, if specified, will be called with the result
-        of every JSON object decoded and its return value will be used in
-        place of the given ``dict``.  This can be used to provide custom
-        deserializations (e.g. to support JSON-RPC class hinting).
-        """
         self.encoding = encoding
         self.object_hook = object_hook
 
@@ -255,14 +213,6 @@ class JSONDecoder(object):
         return obj
 
     def raw_decode(self, s, **kw):
-        """
-        Decode a JSON document from ``s`` (a ``str`` or ``unicode`` beginning
-        with a JSON document) and return a 2-tuple of the Python
-        representation and the index in ``s`` where the document ended.
-
-        This can be used to decode a JSON document from a string that may
-        have extraneous data at the end.
-        """
         kw.setdefault('context', self)
         try:
             obj, end = self._scanner.iterscan(s, **kw).next()

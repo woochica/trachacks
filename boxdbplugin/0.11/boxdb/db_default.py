@@ -4,14 +4,14 @@
 from trac.db import Table, Column
 
 name = 'boxdb'
-version = 2
+version = 3
 tables = [
     Table('boxdb', key=('name', 'key'))[
         Column('name'),
         Column('key'),
         Column('value'), # JSON encoded
     ],
-    Table('boxdb_changes', key=())[
+    Table('boxdb_changes', key=('document', 'time', 'key'))[
         Column('document'), 
         Column('time'),
         Column('author'),

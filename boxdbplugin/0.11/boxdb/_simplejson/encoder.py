@@ -75,79 +75,12 @@ except AttributeError:
     _need_utf8 = False
 
 class JSONEncoder(object):
-    """
-    Extensible JSON <http://json.org> encoder for Python data structures.
-
-    Supports the following objects and types by default:
-    
-    +-------------------+---------------+
-    | Python            | JSON          |
-    +===================+===============+
-    | dict              | object        |
-    +-------------------+---------------+
-    | list, tuple       | array         |
-    +-------------------+---------------+
-    | str, unicode      | string        |
-    +-------------------+---------------+
-    | int, long, float  | number        |
-    +-------------------+---------------+
-    | True              | true          |
-    +-------------------+---------------+
-    | False             | false         |
-    +-------------------+---------------+
-    | None              | null          |
-    +-------------------+---------------+
-
-    To extend this to recognize other objects, subclass and implement a
-    ``.default()`` method with another method that returns a serializable
-    object for ``o`` if possible, otherwise it should call the superclass
-    implementation (to raise ``TypeError``).
-    """
     __all__ = ['__init__', 'default', 'encode', 'iterencode']
     item_separator = ', '
     key_separator = ': '
     def __init__(self, skipkeys=False, ensure_ascii=True,
             check_circular=True, allow_nan=True, sort_keys=False,
             indent=None, separators=None, encoding='utf-8'):
-        """
-        Constructor for JSONEncoder, with sensible defaults.
-
-        If skipkeys is False, then it is a TypeError to attempt
-        encoding of keys that are not str, int, long, float or None.  If
-        skipkeys is True, such items are simply skipped.
-
-        If ensure_ascii is True, the output is guaranteed to be str
-        objects with all incoming unicode characters escaped.  If
-        ensure_ascii is false, the output will be unicode object.
-
-        If check_circular is True, then lists, dicts, and custom encoded
-        objects will be checked for circular references during encoding to
-        prevent an infinite recursion (which would cause an OverflowError).
-        Otherwise, no such check takes place.
-
-        If allow_nan is True, then NaN, Infinity, and -Infinity will be
-        encoded as such.  This behavior is not JSON specification compliant,
-        but is consistent with most JavaScript based encoders and decoders.
-        Otherwise, it will be a ValueError to encode such floats.
-
-        If sort_keys is True, then the output of dictionaries will be
-        sorted by key; this is useful for regression tests to ensure
-        that JSON serializations can be compared on a day-to-day basis.
-
-        If indent is a non-negative integer, then JSON array
-        elements and object members will be pretty-printed with that
-        indent level.  An indent level of 0 will only insert newlines.
-        None is the most compact representation.
-
-        If specified, separators should be a (item_separator, key_separator)
-        tuple. The default is (', ', ': '). To get the most compact JSON
-        representation you should specify (',', ':') to eliminate whitespace.
-
-        If encoding is not None, then all input strings will be
-        transformed into unicode using that encoding prior to JSON-encoding. 
-        The default is UTF-8.
-        """
-
         self.skipkeys = skipkeys
         self.ensure_ascii = ensure_ascii
         self.check_circular = check_circular
@@ -309,32 +242,9 @@ class JSONEncoder(object):
         return self._iterencode(newobj, markers)
 
     def default(self, o):
-        """
-        Implement this method in a subclass such that it returns
-        a serializable object for ``o``, or calls the base implementation
-        (to raise a ``TypeError``).
-
-        For example, to support arbitrary iterators, you could
-        implement default like this::
-            
-            def default(self, o):
-                try:
-                    iterable = iter(o)
-                except TypeError:
-                    pass
-                else:
-                    return list(iterable)
-                return JSONEncoder.default(self, o)
-        """
         raise TypeError("%r is not JSON serializable" % (o,))
 
     def encode(self, o):
-        """
-        Return a JSON string representation of a Python data structure.
-
-        >>> JSONEncoder().encode({"foo": ["bar", "baz"]})
-        '{"foo":["bar", "baz"]}'
-        """
         # This is for extremely simple cases and benchmarks...
         if isinstance(o, basestring):
             if isinstance(o, str):
@@ -350,15 +260,6 @@ class JSONEncoder(object):
         return ''.join(chunks)
 
     def iterencode(self, o):
-        """
-        Encode the given object and yield each string
-        representation as available.
-        
-        For example::
-            
-            for chunk in JSONEncoder().iterencode(bigobject):
-                mysocket.write(chunk)
-        """
         if self.check_circular:
             markers = {}
         else:
