@@ -1,5 +1,0 @@
-[trac.plugins]
-boxdb.api = boxdb.api
-boxdb.properties = boxdb.properties
-boxdb.web_ui = boxdb.web_ui
-

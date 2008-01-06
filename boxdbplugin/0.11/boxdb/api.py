@@ -13,12 +13,6 @@ class IDocumentPropertyRenderer(Interface):
     def get_properties():
         """Return an iterable of property names this component will handle."""
 
-    def decode_property(name, values):
-        """Return a decoded value for a property."""
-
-    def encode_property(name, value):
-        """Return an encoded string for a property, suitable for storage."""
-
     def render_property(name, value):
         """Return a value suitable for display."""
 
@@ -27,7 +21,7 @@ class BoxDBSystem(Component):
     """Core API implementation for BoxDB."""
 
     renderers = ExtensionPoint(IDocumentPropertyRenderer)
-    
+
     implements(IEnvironmentSetupParticipant)
 
     def __init__(self):
@@ -40,7 +34,7 @@ class BoxDBSystem(Component):
     def environment_created(self):
         self.found_db_version = 0
         self.upgrade_environment(self.env.get_db_cnx())
-        
+
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         cursor.execute("SELECT value FROM system WHERE name=%s", (db_default.name,))
@@ -52,7 +46,7 @@ class BoxDBSystem(Component):
             self.found_db_version = int(value[0])
             #self.log.debug('WeatherWidgetSystem: Found db version %s, current is %s' % (self.found_db_version, db_default.version))
             return self.found_db_version < db_default.version
-            
+
     def upgrade_environment(self, db):
         db_manager, _ = DatabaseManager(self.env)._get_connector()
                 
@@ -71,12 +65,12 @@ class BoxDBSystem(Component):
                 except Exception, e:
                     if 'OperationalError' not in e.__class__.__name__:
                         raise e # If it is an OperationalError, just move on to the next table
-                            
-                
+        
+        
         for tbl in db_default.tables:
             for sql in db_manager.to_sql(tbl):
                 cursor.execute(sql)
-                    
+            
             # Try to reinsert any old data
             if tbl.name in old_data:
                 data = old_data[tbl.name]
