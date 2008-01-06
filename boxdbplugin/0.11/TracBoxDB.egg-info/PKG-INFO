@@ -1,0 +1,12 @@
+Metadata-Version: 1.0
+Name: TracBoxDB
+Version: 1.0
+Summary: UNKNOWN
+Home-page: http://trac-hacks.org/wiki/BoxDBPlugin
+Author: Noah Kantrowitz
+Author-email: coderanger@yahoo.com
+License: BSD
+Description: UNKNOWN
+Keywords: trac plugin
+Platform: UNKNOWN
+Classifier: Framework :: Trac

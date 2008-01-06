@@ -1,0 +1,13 @@
+setup.py
+TracBoxDB.egg-info/PKG-INFO
+TracBoxDB.egg-info/SOURCES.txt
+TracBoxDB.egg-info/dependency_links.txt
+TracBoxDB.egg-info/entry_points.txt
+TracBoxDB.egg-info/requires.txt
+TracBoxDB.egg-info/top_level.txt
+boxdb/__init__.py
+boxdb/api.py
+boxdb/db_default.py
+boxdb/model.py
+boxdb/properties.py
+boxdb/web_ui.py
