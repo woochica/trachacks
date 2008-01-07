@@ -78,7 +78,7 @@ class TracHacksHandler(Component):
                 Pattern(r'[A-Z][A-Za-z0-9]+(?:[A-Z][A-Za-z0-9]+)*'),
                 HackDoesntExist(self.env),
                 ),
-                 'Name must be in CamelCase and must not be an existing page.')
+                 'Name must be in CamelCase.')
         form.add('title', MinLength(8),
                  'Please write a few words for the description.')
         form.add('description', MinLength(16),
@@ -219,6 +219,7 @@ class TracHacksHandler(Component):
             context = self.form.validate(data)
             data['form_context'] = context
         else:
+            data['form_context'] = None
             data['type'] = 'plugin'
             data['release'] = ['0.11']
 

@@ -31,20 +31,20 @@ discrete aspects we wish to validate:
 
 Now we validate the input:
 
->>> fields, errors = form.validate(data)
->>> fields
-{}
->>> print '\\n'.join(map(repr, sorted(errors.items())))
+>>> context = form.validate(data)
+>>> print sorted(context.fields.items())
+[('age', '12'), ('name', 'Alec')]
+>>> print '\\n'.join(map(repr, sorted(context.errors.items())))
 ('age', 'Age must be an integer > 18.')
 ('name', 'Name must be at least 6 characters.')
 
 Oops. Let's inform the user:
 
->>> print html | form.inject_errors(errors)
+>>> print html | context.inject_errors()
 <body>
   <form id="user">
-    <input type="text" name="name"/><div class="error">Name must be at least 6 characters.</div>
-    <input type="text" name="age"/><div class="error">Age must be an integer &gt; 18.</div>
+    <input type="text" name="name" class="error"/><div class="error">Name must be at least 6 characters.</div>
+    <input type="text" name="age" class="error"/><div class="error">Age must be an integer &gt; 18.</div>
     <input type="submit" id="create" value="Create user"/>
   </form>
   <form id="controls">
@@ -57,10 +57,10 @@ Then imagine they've corrected their input:
 
 >>> data['name'] = 'Alec Thomas'
 >>> data['age'] = '18'
->>> fields, errors = form.validate(data)
->>> sorted(fields.items())
+>>> context = form.validate(data)
+>>> sorted(context.fields.items())
 [('age', 18), ('name', 'Alec Thomas')]
->>> errors
+>>> context.errors
 {}
 
 Better.
@@ -71,24 +71,24 @@ from genshi.builder import tag
 from genshi.filters.transform import Transformer
 
 
-"""
-class UserForm(Schema):
-    user = Field('Name must be at least 6 characters'', [MinLength(6)])
-    age = Field('Age must be an integer > 18.', [int, Min(18)])
-"""
-
 class ValidationError(Exception):
     pass
 
 
 class Aspect(object):
+    """A marker class for validation aspects that need the validation context.
+
+    This can be the case if validation depends on multiple fields or other
+    aspects of the form.
+    """
     def apply(context, value, *aspects):
-        """Apply a set of aspects to a value."""
+        """Apply aspects of validation to a value."""
         for aspect in aspects:
             if isinstance(aspect, Aspect):
                 value = aspect(context, value)
             else:
                 value = aspect(value)
+        return value
     apply = staticmethod(apply)
 
 

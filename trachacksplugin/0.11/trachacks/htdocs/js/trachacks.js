@@ -46,8 +46,9 @@ $(document).ready(function() {
   $('input[@name="release"]').handleInfo('#releasehint', 'Compatibility');
 
   // Focus first error control. If none, focus #name.
-  if (!$('textarea[@class="error"]:first, input[@class="error"]:first').focus().size()) {
-    $('#name').focus();
+  var fields = $('input[@class="error"]:first, textarea[@class="error"]:first');
+  if (fields.size()) {
+    $(fields[0]).focus();
   }
 
   /* Add helpers to tag cloud. */
