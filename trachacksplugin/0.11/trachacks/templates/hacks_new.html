@@ -85,28 +85,6 @@
               cols="80" rows="10" class="wikitext">${description}</textarea>
           </dd>
 
-          <!-- Installation -->
-          <dt><label for="installation">Installation instructions</label></dt>
-          <dd>
-            <div>
-              Describe how to install your hack.
-            (You may use <a href="${href.wiki('WikiFormatting')}">WikiFormatting</a> here)
-            </div>
-
-            <div id="installationhint" class="hint">
-              <p>
-                Please include full instructions on how to install your Hack,
-                including changes that need to be made to the <a
-                href="http://trac.edgewall.org/wiki/TracIni">trac.ini</a> 
-                file, in particular the
-                <a href="http://trac.edgewall.org/wiki/TracIni#components-section">[components]</a>
-                section.
-              </p>
-            </div>
-
-            <textarea tabindex="4" name="installation" id="installation"
-              cols="80" rows="10" class="wikitext"></textarea>
-          </dd>
         </dl>
       </fieldset>
 
@@ -128,7 +106,7 @@
               </div>
             
               <py:for each="t in types">
-                <input tabindex="5" checked="${t == type or None}" type="radio" value="${t}"
+                <input tabindex="4" checked="${t == type or None}" type="radio" value="${t}"
                   id="${t}" name="type"/>
                 <label for="${t}">
                   <a href="${href.wiki(t)}">${t}</a>
@@ -149,7 +127,7 @@
               </div>
             
               <py:for each="r in releases">
-                <input tabindex="6" type="checkbox" name="release" value="${r}"
+                <input tabindex="5" type="checkbox" name="release" value="${r}"
                   id="${r}" checked="${r in release or None}"/>
                 <label for="${r}">
                   <a href="${href.wiki(r)}">${r}</a>
@@ -161,10 +139,55 @@
 
       <fieldset id="extra">
         <legend>Optional Extras</legend>
+        <dl>
+          <dt><label for="installation">Installation instructions</label></dt>
+          <dd>
+            <div>
+              Describe how to install your hack.
+            (You may use <a href="${href.wiki('WikiFormatting')}">WikiFormatting</a> here)
+            </div>
+
+            <div id="installationhint" class="hint">
+              <p>
+                Please include full instructions on how to install your Hack,
+                including changes that need to be made to the <a
+                href="http://trac.edgewall.org/wiki/TracIni">trac.ini</a> 
+                file, in particular the
+                <a href="http://trac.edgewall.org/wiki/TracIni#components-section">[components]</a>
+                section.
+              </p>
+            </div>
+
+            <textarea tabindex="6" name="installation" id="installation"
+              cols="80" rows="10" class="wikitext"></textarea>
+          </dd>
+
+          <dt><label for="tags">Tags</label></dt>
+          <dd>
+            <div>
+              Space-separated list of tags classifying your hack.
+            </div>
+            <div id="tagshint" class="hint">
+              <p>
+                Use any words you like. The more tags you use the easier it will
+                be for people to find your hack.
+              </p>
+              <p>
+                Toggle tags by selecting from the tag cloud.
+              </p>
+            </div>
+
+            <input tabindex="7" type="text" size="80" id="tags" name="tags" value="${tags}"/>
+
+            <div id="cloud">
+              ${cloud}
+            </div>
+          </dd>
+        </dl>
       </fieldset>
 
-      <input tabindex="7" type="submit" name="preview" value="Preview"/>
-      <input tabindex="8"
+      <input tabindex="8" type="submit" name="preview" value="Preview"/>
+      <input tabindex="9"
         disabled="${(errors or not (preview or create)) or None}"
         type="submit" name="create" value="Create Hack"/>
     </form>

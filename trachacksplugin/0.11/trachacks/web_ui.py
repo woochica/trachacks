@@ -7,6 +7,7 @@
 #
 
 import re
+import random
 from trac.core import *
 from trac.config import *
 from trac.perm import IPermissionRequestor
@@ -47,6 +48,18 @@ def natural_sort(l):
   return sorted(l, key=alphanum_key)
 
 
+class HackDoesntExist(Aspect):
+    """Validate that the hack does not exist."""
+    def __init__(self, env):
+        self.env = env
+
+    def __call__(self, context, name):
+        page_name = name + context.data.get('type', '').title()
+        if WikiPage(self.env, page_name).exists or WikiPage(self.env, name).exists:
+            raise ValidationError('Page already exists.')
+        return name
+
+
 class TracHacksHandler(Component):
     """Trac-Hacks request handler."""
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
@@ -61,8 +74,11 @@ class TracHacksHandler(Component):
     def __init__(self):
         # Validate form
         form = Form('content')
-        form.add('name', Pattern(r'[A-Z][A-Za-z0-9]+(?:[A-Z][A-Za-z0-9]+)*'),
-                 'Name must be in CamelCase.')
+        form.add('name', Chain(
+                Pattern(r'[A-Z][A-Za-z0-9]+(?:[A-Z][A-Za-z0-9]+)*'),
+                HackDoesntExist(self.env),
+                ),
+                 'Name must be in CamelCase and must not be an existing page.')
         form.add('title', MinLength(8),
                  'Please write a few words for the description.')
         form.add('description', MinLength(16),
@@ -74,9 +90,9 @@ class TracHacksHandler(Component):
     # ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
-        errors = data.get('errors')
-        if errors and req.path_info == '/hacks/new':
-            stream |= self.form.inject_errors(errors)
+        context = data.get('form_context')
+        if context and context.errors and req.path_info == '/hacks/new':
+            stream |= context.inject_errors()
         return stream
 
     # IRequestHandler methods
@@ -102,8 +118,7 @@ class TracHacksHandler(Component):
         data['types'] = types
         data['releases'] = releases
 
-        if view != 'new':
-            hacks = self.fetch_hacks(req, data, types)
+        hacks = self.fetch_hacks(req, data, types)
 
         add_stylesheet(req, 'tags/css/tractags.css')
         add_stylesheet(req, 'hacks/css/trachacks.css')
@@ -123,7 +138,7 @@ class TracHacksHandler(Component):
         if view == 'list':
             return self.render_list(req, data, hacks)
         elif view == 'new':
-            return self.render_new(req, data)
+            return self.render_new(req, data, hacks)
         return self.render_cloud(req, data, hacks)
 
     # INavigationContributor methods
@@ -155,10 +170,45 @@ class TracHacksHandler(Component):
         return ['HACK_CREATE']
 
     # Internal methods
-    def render_new(self, req, data):
+    def render_new(self, req, data, hacks):
         req.perm.require('HACK_CREATE')
 
+        tag_system = TagSystem(self.env)
+
+        hacks = list(hacks)
+        hack_names = set(r[2].id for r in hacks)
+        users = set(u.id for u, _ in tag_system.query(req, 'realm:wiki user'))
+        exclude = hack_names.union(users).union(data['types']).union(data['releases'])
+
+        cloud = {}
+
+        for votes, rank, resource, tags, title in hacks:
+            for tag in tags:
+                if tag in exclude:
+                    continue
+                try:
+                    cloud[tag] += 1
+                except KeyError:
+                    cloud[tag] = 1
+
+        # Pick the top 25 tags + a random sample of 10 from the rest.
+        cloud = sorted(cloud.items(), key=lambda i: -i[1])
+        remainder = cloud[25:]
+        cloud = dict(cloud[:25] +
+                     random.sample(remainder, min(10, len(remainder))))
+
+        # Render the cloud
+        min_px = 8
+        max_px = 20
+
+        def cloud_renderer(tag, count, percent):
+            return builder.a(tag, href='#', style='font-size: %ipx' %
+                             int(min_px + percent * (max_px - min_px)))
+
+        data['cloud'] = render_cloud(self.env, req, cloud, cloud_renderer)
+
         add_script(req, 'common/js/wikitoolbar.js')
+        add_script(req, 'common/js/folding.js')
 
         data['focus'] = 'name'
 
@@ -166,8 +216,8 @@ class TracHacksHandler(Component):
         if req.method == 'POST' and 'create' in req.args or 'preview' in req.args:
             data.update(req.args)
 
-            _, errors = self.form.validate(data)
-            data['errors'] = errors
+            context = self.form.validate(data)
+            data['form_context'] = context
         else:
             data['type'] = 'plugin'
             data['release'] = ['0.11']

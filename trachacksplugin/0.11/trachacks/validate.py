@@ -81,14 +81,23 @@ class ValidationError(Exception):
     pass
 
 
-class Chain(object):
+class Aspect(object):
+    def apply(context, value, *aspects):
+        """Apply a set of aspects to a value."""
+        for aspect in aspects:
+            if isinstance(aspect, Aspect):
+                value = aspect(context, value)
+            else:
+                value = aspect(value)
+    apply = staticmethod(apply)
+
+
+class Chain(Aspect):
     def __init__(self, *aspects):
         self.aspects = aspects
 
-    def __call__(self, value):
-        for aspect in self.aspects:
-            value = aspect(value)
-        return value
+    def __call__(self, context, value):
+        return Aspect.apply(context, value, *self.aspects)
 
 
 class Range(object):
@@ -160,7 +169,7 @@ class Not(object):
         try:
             self.aspect(value)
             raise ValidationError()
-        except:
+        except (ValueError, ValidationError, AssertionError):
             return value
 
 
@@ -196,8 +205,8 @@ class Field(object):
                         '//textarea[@name="%(name)s"] | ' \
                         '//select[@name="%(name)s"]' % {'name': name}
 
-    def validate(self, value):
-        return self.aspect(value)
+    def validate(self, context, value):
+        return Aspect.apply(context, value, self.aspect)
 
     def format_error(self, message=None):
         return tag.div(message or self.message, class_='error')
@@ -206,12 +215,25 @@ class Field(object):
         return tag.div(hint or self.hint, class_='hint')
 
 
+class Context(object):
+    """A validation context."""
+    def __init__(self, form, data, fields=None, errors=None):
+        self.form = form
+        self.data = data
+        self.fields = fields or {}
+        self.errors = errors or {}
+
+    def inject_errors(self):
+        return self.form.injector(self.form, self.errors)
+
+
 class Form(object):
     def __init__(self, id, fields=None, injector=FormInjector):
         self.id = id
         self.injector = injector
         if fields:
-            self.fields = dict((v.name, v) for v in fields)
+            for field in fields:
+                self.add(field)
         else:
             self.fields = {}
 
@@ -228,12 +250,10 @@ class Form(object):
     def add(self, name, *args, **kwargs):
         """Add a new Field."""
         if isinstance(name, Field):
-            self.fields[name.name] = name
+            field = self.fields[name.name] = name
         else:
-            self.fields[name] = Field(name, *args, **kwargs)
-
-    def inject_errors(self, errors):
-        return self.injector(self, errors)
+            field = self.fields[name] = Field(name, *args, **kwargs)
+        field.form = self
 
     def validate(self, data):
         """Validate the given data.
@@ -241,15 +261,16 @@ class Form(object):
         Returns a tuple of (fields, errors) where both are dictionaries
         mapping field names to text.
         """
-        fields = {}
-        errors = {}
+        context = Context(self, data)
         for name, field in self.fields.items():
-            value = data.get(name, '')
+            context.fields[name] = value = data.get(name, '')
             try:
-                fields[name] = field.validate(value)
-            except Exception, e:
-                errors[name] = field.message
-        return fields, errors
+                context.fields[name] = field.validate(context, value)
+            except ValidationError, e:
+                context.errors[name] = unicode(e)
+            except (ValueError, AssertionError):
+                context.errors[name] = field.message
+        return context
 
 
 if __name__ == '__main__':

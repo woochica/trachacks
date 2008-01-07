@@ -56,3 +56,9 @@
     height: 19px;
     background: url(../pointer.gif) left top no-repeat;
 }
+
+.newhack #cloud {
+  margin: 1em;
+  text-align: center;
+  width: 80%;
+}
