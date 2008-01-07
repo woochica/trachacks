@@ -9,11 +9,13 @@
 import re
 from trac.core import *
 from trac.config import *
+from trac.perm import IPermissionRequestor
+from trac.web.chrome import Chrome
 from acct_mgr.htfile import HtPasswdStore
 from acct_mgr.api import IPasswordStore
 from trac.wiki.model import WikiPage
 from trac.util.compat import sorted
-from trac.web.api import IRequestHandler
+from trac.web.api import IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, INavigationContributor, \
                             add_stylesheet, add_script, add_ctxtnav
 from trac.resource import get_resource_url
@@ -22,6 +24,8 @@ from tractags.macros import render_cloud
 from tractags.query import Query
 from tracvote import VoteSystem
 from genshi.builder import tag as builder
+from genshi.filters.transform import Transformer
+from trachacks.validate import *
 
 
 
@@ -45,16 +49,38 @@ def natural_sort(l):
 
 class TracHacksHandler(Component):
     """Trac-Hacks request handler."""
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
+    implements(INavigationContributor, IRequestHandler, ITemplateProvider,
+               IPermissionRequestor, ITemplateStreamFilter)
 
     limit = IntOption('trachacks', 'limit', 25,
         'Default maximum number of hacks to display.')
 
     path_match = re.compile(r'/hacks/?(new|cloud|list)?')
     title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
-    page_split = re.compile(r'(\w+)', re.I | re.UNICODE)
+
+    def __init__(self):
+        # Validate form
+        form = Form('content')
+        form.add('name', Pattern(r'[A-Z][A-Za-z0-9]+(?:[A-Z][A-Za-z0-9]+)*'),
+                 'Name must be in CamelCase.')
+        form.add('title', MinLength(8),
+                 'Please write a few words for the description.')
+        form.add('description', MinLength(16),
+                 'Please write at least a sentence or two for the description.')
+        form.add('release', MinLength(1), 'At least one release must be checked.',
+                 path='//dd[@id="release"]', where='append')
+        self.form = form
+
+    # ITemplateStreamFilter methods
+
+    def filter_stream(self, req, method, filename, stream, data):
+        errors = data.get('errors')
+        if errors and req.path_info == '/hacks/new':
+            stream |= self.form.inject_errors(errors)
+        return stream
 
     # IRequestHandler methods
+
     def match_request(self, req):
         return self.path_match.match(req.path_info)
 
@@ -100,8 +126,52 @@ class TracHacksHandler(Component):
             return self.render_new(req, data)
         return self.render_cloud(req, data, hacks)
 
+    # INavigationContributor methods
+    def get_active_navigation_item(self, req):
+        return 'hacks'
+
+    def get_navigation_items(self, req):
+        yield ('mainnav', 'hacks',
+                builder.a('Hacks', href=req.href.hacks(), accesskey='H'))
+
+    # ITemplateProvider methods
+    def get_templates_dirs(self):
+        """
+        Return the absolute path of the directory containing the provided
+        ClearSilver templates.
+        """
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+    def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
+        from pkg_resources import resource_filename
+        return [('hacks', resource_filename(__name__, 'htdocs'))]
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['HACK_CREATE']
+
+    # Internal methods
     def render_new(self, req, data):
+        req.perm.require('HACK_CREATE')
+
         add_script(req, 'common/js/wikitoolbar.js')
+
+        data['focus'] = 'name'
+
+        # Populate data with form submission
+        if req.method == 'POST' and 'create' in req.args or 'preview' in req.args:
+            data.update(req.args)
+
+            _, errors = self.form.validate(data)
+            data['errors'] = errors
+        else:
+            data['type'] = 'plugin'
+            data['release'] = ['0.11']
+
         return 'hacks_new.html', data, None
 
     def render_list(self, req, data, hacks):
@@ -200,30 +270,6 @@ class TracHacksHandler(Component):
         for i, hack in enumerate(hacks):
             hack[1] = i
         return hacks
-
-    # INavigationContributor methods
-    def get_active_navigation_item(self, req):
-        return 'hacks'
-
-    def get_navigation_items(self, req):
-        yield ('mainnav', 'hacks',
-                builder.a('Hacks', href=req.href.hacks(), accesskey='H'))
-
-    # ITemplateProvider methods
-    def get_templates_dirs(self):
-        """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
-
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        from pkg_resources import resource_filename
-        return [('hacks', resource_filename(__name__, 'htdocs'))]
 
 
 

@@ -1,29 +1,48 @@
 $(document).ready(function() {
-  // Move the label for each field into the info block.
-  $('.info').each(function() {
-  var info = this;
-  var fieldid = info.id.slice(0, -4);
+  // Move the label for each field into the hint block.
+  $('.hint').each(function() {
+  var hint = this;
+  var fieldid = hint.id.slice(0, -4);
 
-    $('label[@for="' + fieldid + '"]').each(function() {
-    var title = $(this).text();
-
-      $(info).prepend('<strong>' + title + '</strong>');
-    });
   });
-
-  // Fade all the info blocks out then focus the #name field
-  $('.info').fadeTo('fast', 0.4, function() {
-    $('#name').focus();
-  });
-
 
   // Handle focus/blur of input fields
-  $('input, textarea').focus(function() {
-  var id = '#' + this.id + 'info';
+  $.fn.handleInfo = function(hint, label) {
+    return this.each(function() {
+    var hintid;
 
-    $(id).fadeTo('slow', 1.0);
-  });
-  $('input, textarea').blur(function() {
-    $('#' + this.id + 'info').fadeTo('slow', 0.4);
-  });
+      if (hint == undefined)
+        hintid = '#' + this.id + 'hint';
+      else
+        hintid = hint;
+
+      hintid = $(hintid);
+
+      $(hintid).hide();
+
+      $(this).focus(function() { hintid.show(); });
+      $(this).blur(function() { hintid.hide(); });
+
+      if (hintid.attr('copied_label') == undefined) {
+      var title = label;
+
+        hintid.attr('copied_label', true);
+        if (title == undefined) {
+          $('label[@for="' + this.id + '"]').each(function() {
+            title = $(this).text();
+          });
+        }
+        hintid.prepend('<strong>' + title + '</strong>' + '<span class="hint-pointer">&nbsp;</span>');
+      }
+    });
+  }
+
+  $('#name, #title, #description, #installation').handleInfo();
+
+  $('input[@name="type"]').handleInfo('#typehint', 'Type');
+  $('input[@name="release"]').handleInfo('#releasehint', 'Compatibility');
+
+  if (!$('input[@class="error"]:first').focus().size()) {
+    $('#name').focus();
+  }
 });

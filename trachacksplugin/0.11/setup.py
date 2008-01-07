@@ -12,7 +12,9 @@ setup(
         'http://trac-hacks.org/svn/voteplugin/0.11#egg=TracVote-0.1',
         ],
     entry_points={
-        'trac.plugins': 'trachacks = trachacks'
+        'trac.plugins': [
+            'trachacks.web_ui = trachacks.web_ui',
+            ]
         },
     install_requires=[
         'TracAccountManager',

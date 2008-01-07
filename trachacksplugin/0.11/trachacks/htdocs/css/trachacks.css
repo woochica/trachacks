@@ -2,11 +2,19 @@
 .tagcloud li.last:after { content: ""; }
 
 .newhack {
-  width: 850px;
+  width: 640px;
 }
 
 .newhack input[type="text"] {
-  width: 65%;
+  width: 90%;
+  padding: 2px;
+  margin: 0.1em 0em;
+}
+
+.newhack textarea {
+  width: 90%;
+  padding: 4px;
+  margin: 0.1em 0em;
 }
 
 .newhack dt {
@@ -18,17 +26,33 @@
   margin-top: 0em;
 }
 
-.info {
-  opacity: 0.0;
-}
-
-.newhack div.info {
-  width: 40ex;
+/* TODO pointer.gif XXX XXX XXX */
+.newhack .hint {
   font-size: xx-small;
-  float: right;
-  clear: both;
+  position: absolute;
+  right: -42ex;
+  width: 200px;
   background: #b0ffb0;
-  border: 2px solid #40e040;
+  border: 1px solid #40e040;
   margin: 0em;
   padding: 0.2em 1em;
+}
+
+.newhack div.error {
+  background: #ffb0b0;
+  border: 1px solid #e04040;
+  width: 90%;
+  text-align: center;
+  margin: 0.2em 0em;
+  padding: 2px;
+  font-weight: bold;
+}
+
+.newhack .hint .hint-pointer {
+    position: absolute;
+    left: -10px;
+    top: 5px;
+    width: 10px;
+    height: 19px;
+    background: url(../pointer.gif) left top no-repeat;
 }
