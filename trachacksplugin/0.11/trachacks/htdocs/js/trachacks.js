@@ -20,8 +20,8 @@ $(document).ready(function() {
 
       $(hintid).hide();
 
-      $(this).focus(function() { hintid.show(); });
-      $(this).blur(function() { hintid.hide(); });
+      $(this).focus(function() { hintid.show(); return true; });
+      $(this).blur(function() { hintid.hide(); return true; });
 
       if (hintid.attr('copied_label') == undefined) {
       var title = label;
@@ -72,6 +72,7 @@ $(document).ready(function() {
       }
       $(this).focus();
     });
+    return false;
   });
 
   $('#tags').each(function() {

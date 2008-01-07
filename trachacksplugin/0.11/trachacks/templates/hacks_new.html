@@ -188,7 +188,7 @@
 
       <input tabindex="8" type="submit" name="preview" value="Preview"/>
       <input tabindex="9"
-        disabled="${(errors or not (preview or create)) or None}"
+        disabled="${(form_context.errors or not (preview or create)) or None}"
         type="submit" name="create" value="Create Hack"/>
     </form>
     <script type="text/javascript">

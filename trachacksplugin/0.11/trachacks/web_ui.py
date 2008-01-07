@@ -232,6 +232,7 @@ class TracHacksHandler(Component):
                             ' - ', title)
             ul(li)
         data['body'] = ul
+        # TODO Top-n + sample
         return 'hacks_view.html', data, None
 
     def render_cloud(self, req, data, hacks):
@@ -247,6 +248,7 @@ class TracHacksHandler(Component):
                 style='font-size: %ipx; color: %s' % (font_size, colour))
             return a
 
+        # TODO Top-n + sample
         cloud_hacks = dict([(hack[2].id, hack[0]) for hack in hacks])
         data['body'] = render_cloud(self.env, req, cloud_hacks, link_renderer)
 
