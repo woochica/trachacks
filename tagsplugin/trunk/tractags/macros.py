@@ -17,7 +17,7 @@ def render_cloud(env, req, cloud, renderer=None):
     """Render a tag cloud
 
     :cloud: Dictionary of {object: count} representing the cloud.
-    :param renderer: A callable with signature (tag, count, px) used to
+    :param renderer: A callable with signature (tag, count, percent) used to
                      render the cloud objects.
     """
     min_px = 10.0
@@ -25,22 +25,24 @@ def render_cloud(env, req, cloud, renderer=None):
     scale = 1.0
 
     if renderer is None:
-        def default_renderer(tag, count, px):
+        def default_renderer(tag, count, percent):
             href = get_resource_url(env, Resource('tag', tag), req.href)
             return builder.a(tag, rel='tag', title='%i' % count, href=href,
-                             style='font-size: %ipx' % px)
+                             style='font-size: %ipx' %
+                                   int(min_px + percent * (max_px - min_px)))
         renderer = default_renderer
 
+    # A LUT from count to n/len(cloud)
     size_lut = dict([(c, float(i)) for i, c in
                      enumerate(sorted(set([r for r in cloud.values()])))])
     if size_lut:
-        scale = (max_px - min_px) / len(size_lut)
+        scale = 1.0 / len(size_lut)
 
     ul = builder.ul(class_='tagcloud')
     last = len(cloud) - 1
     for i, (tag, count) in enumerate(sorted(cloud.iteritems())):
-        px = min_px + int(size_lut[count] * scale)
-        li = builder.li(renderer(tag, count, px))
+        percent = size_lut[count] * scale
+        li = builder.li(renderer(tag, count, percent))
         if i == last:
             li(class_='last')
         li()

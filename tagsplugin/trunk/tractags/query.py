@@ -170,7 +170,7 @@ class Query(QueryNode):
         self.phrase = phrase
         self._compiled = None
         self.attribute_handlers = attribute_handlers or {}
-        self.attribute_handlers.setdefault('*', lambda *_: True)
+        self.attribute_handlers.setdefault('*', self._invalid_handler)
         if root:
             # Make ourselves into the root node
             for k in self.__slots__:
@@ -389,6 +389,9 @@ class Query(QueryNode):
         tokens = [(self._group_map[token.lastgroup], token.group(token.lastindex))
                   for token in self._tokenise_re.finditer(phrase)]
         return tokens
+
+    def _invalid_handler(self, name, node, context):
+        raise InvalidQuery('Invalid attribute "%s"' % name)
 
 if __name__ == '__main__':
     import doctest
