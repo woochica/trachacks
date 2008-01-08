@@ -1,13 +1,16 @@
 # -*- coding: utf8 -*-
 
-import os, shutil, time, re, mimetypes
+import os, shutil, re, mimetypes
+from datetime import *
 
 from trac.core import *
 from trac.config import Option
-from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import format_datetime, pretty_timedelta, pretty_size
-from trac.util.text import unicode_unquote
 from trac.web.chrome import add_stylesheet, add_script
+from trac.wiki.formatter import format_to_html, format_to_oneliner
+from trac.util.datefmt import to_timestamp, to_datetime, utc, \
+  format_datetime, pretty_timedelta
+from trac.util.text import to_unicode, unicode_unquote
+
 
 class IDownloadChangeListener(Interface):
     """Extension point interface for components that require notification
@@ -48,39 +51,39 @@ class DownloadsApi(Component):
 
     # Get list functions.
 
-    def get_versions(self, req, cursor):
+    def get_versions(self, context):
         columns = ('name', 'description')
         sql = "SELECT name, description FROM version"
         self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         versions = []
         id = 0
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'],
-              self.env)
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             id = id + 1
             row['id'] = id
             versions.append(row)
         return versions
 
-    def get_components(self, req, cursor):
+    def get_components(self, context):
         columns = ('name', 'description')
         sql = "SELECT name, description FROM component"
         self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         components = []
         id = 0
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'],
-              self.env)
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             id = id + 1
             row['id'] = id
             components.append(row)
         return components
 
-    def get_downloads(self, req, cursor, order_by = 'id', desc = False):
+    def get_downloads(self, context, order_by = 'id', desc = False):
         columns = ('id', 'file', 'description', 'size', 'time', 'count',
           'author', 'tags', 'component', 'version', 'architecture', 'platform',
           'type')
@@ -88,11 +91,12 @@ class DownloadsApi(Component):
           " component, version, architecture, platform, type FROM download " \
           "ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         downloads = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'], self.env)
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             row['size'] = pretty_size(row['size'])
             row['time'] = pretty_timedelta(row['time'])
             row['count'] = row['count'] or 0
@@ -100,14 +104,14 @@ class DownloadsApi(Component):
 
         # Replace field ids with apropriate objects.
         for download in downloads:
-            download['architecture'] = self.get_architecture(cursor,
+            download['architecture'] = self.get_architecture(context.cursor,
               download['architecture'])
-            download['platform'] = self.get_platform(cursor,
+            download['platform'] = self.get_platform(context.cursor,
               download['platform'])
-            download['type'] = self.get_type(cursor, download['type'])
+            download['type'] = self.get_type(context.cursor, download['type'])
         return downloads
 
-    def get_new_downloads(self, req, cursor, start, stop):
+    def get_new_downloads(self, context, start, stop):
         columns = ('id', 'file', 'description', 'size', 'time', 'count',
           'author', 'tags', 'component', 'version', 'architecture', 'platform',
           'type')
@@ -115,52 +119,52 @@ class DownloadsApi(Component):
           " component, version, architecture, platform, type FROM download " \
           "WHERE time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
-        cursor.execute(sql, (start, stop))
+        context.cursor.execute(sql, (start, stop))
         downloads = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
             downloads.append(row)
         return downloads
 
-    def get_architectures(self, req, cursor, order_by = 'id', desc = False):
+    def get_architectures(self, context, order_by = 'id', desc = False):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM architecture ORDER BY " + \
           order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         architectures = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'],
-              self.env)
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             architectures.append(row)
         return architectures
 
-    def get_platforms(self, req, cursor, order_by = 'id', desc = False):
+    def get_platforms(self, context, order_by = 'id', desc = False):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM platform ORDER BY " + \
           order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         platforms = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'],
-              self.env)
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             platforms.append(row)
         return platforms
 
-    def get_types(self, req, cursor, order_by = 'id', desc = False):
+    def get_types(self, context, order_by = 'id', desc = False):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM download_type ORDER BY " + \
           order_by + (" ASC", " DESC")[bool(desc)]
         self.log.debug(sql)
-        cursor.execute(sql)
+        context.cursor.execute(sql)
         types = []
-        for row in cursor:
+        for row in context.cursor:
             row = dict(zip(columns, row))
-            row['description'] = wiki_to_oneliner(row['description'],
-              self.env)
+            row['description'] = format_to_oneliner(self.env, context,
+              row['description'])
             types.append(row)
         return types
 
@@ -176,7 +180,7 @@ class DownloadsApi(Component):
 
     # Get one item functions.
 
-    def get_download(self, cursor, id):
+    def get_download(self, context, id):
         columns = ('id', 'file', 'description', 'size', 'time', 'count',
           'author', 'tags', 'component', 'version', 'architecture', 'platform',
           'type')
@@ -184,13 +188,13 @@ class DownloadsApi(Component):
           " component, version, architecture, platform, type FROM download" \
           " WHERE id = %s"
         self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             row['count'] = row['count'] or 0
             return row
 
-    def get_download_by_time(self, cursor, time):
+    def get_download_by_time(self, context, time):
         columns = ('id', 'file', 'description', 'size', 'time', 'count',
           'author', 'tags', 'component', 'version', 'architecture', 'platform',
           'type')
@@ -198,163 +202,169 @@ class DownloadsApi(Component):
           " component, version, architecture, platform, type FROM download" \
           " WHERE time = %s"
         self.log.debug(sql % (time,))
-        cursor.execute(sql, (time,))
-        for row in cursor:
+        context.cursor.execute(sql, (time,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             row['count'] = row['count'] or 0
             return row
 
-    def get_architecture(self, cursor, id):
+    def get_architecture(self, context, id):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM architecture WHERE id = %s"
         self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
 
-    def get_platform(self, cursor, id):
+    def get_platform(self, context, id):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM platform WHERE id = %s"
         self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
 
-    def get_type(self, cursor, id):
+    def get_type(self, context, id):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM download_type WHERE id = %s"
         self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
-        for row in cursor:
+        context.cursor.execute(sql, (id,))
+        for row in context.cursor:
             row = dict(zip(columns, row))
             return row
 
-    def get_description(self, req, cursor):
+    def get_description(self, context):
         sql = "SELECT value FROM system WHERE name = 'downloads_description'"
         self.log.debug(sql)
-        cursor.execute(sql)
-        for row in cursor:
-            return (row[0], wiki_to_html(row[0], self.env, req))
+        context.cursor.execute(sql)
+        for row in context.cursor:
+            return (row[0], format_to_html(self.env, context, row[0]))
 
     # Add item functions.
 
-    def _add_item(self, cursor, table, item):
+    def _add_item(self, context, table, item):
         fields = item.keys()
         values = item.values()
         sql = "INSERT INTO %s (" % (table,) + ", ".join(fields) + ") VALUES (" \
           + ", ".join(["%s" for I in xrange(len(fields))]) + ")"
         self.log.debug(sql % tuple(values))
-        cursor.execute(sql, tuple(values))
+        context.cursor.execute(sql, tuple(values))
 
-    def add_download(self, cursor, download):
-        self._add_item(cursor, 'download', download)
+    def add_download(self, context, download):
+        self._add_item(context, 'download', download)
 
-    def add_architecture(self, cursor, architecture):
-        self._add_item(cursor, 'architecture', architecture)
+    def add_architecture(self, context, architecture):
+        self._add_item(context, 'architecture', architecture)
 
-    def add_platform(self, cursor, platform):
-        self._add_item(cursor, 'platform', platform)
+    def add_platform(self, context, platform):
+        self._add_item(context, 'platform', platform)
 
-    def add_type(self, cursor, type):
-        self._add_item(cursor, 'download_type', type)
+    def add_type(self, context, type):
+        self._add_item(context, 'download_type', type)
 
     # Edit item functions.
 
-    def _edit_item(self, cursor, table, id, item):
+    def _edit_item(self, context, table, id, item):
         fields = item.keys()
         values = item.values()
         sql = "UPDATE %s SET " % (table,) + ", ".join([("%s = %%s" % (field))
           for field in fields]) + " WHERE id = %s"
         self.log.debug(sql % tuple(values + [id]))
-        cursor.execute(sql, tuple(values + [id]))
+        context.cursor.execute(sql, tuple(values + [id]))
 
-    def edit_download(self, cursor, id, download):
-        self._edit_item(cursor, 'download', id, download)
+    def edit_download(self, context, id, download):
+        self._edit_item(contex, 'download', id, download)
 
-    def edit_architecture(self, cursor, id, architecture):
-        self._edit_item(cursor, 'architecture', id, architecture)
+    def edit_architecture(self, context, id, architecture):
+        self._edit_item(context, 'architecture', id, architecture)
 
-    def edit_platform(self, cursor, id, platform):
-        self._edit_item(cursor, 'platform', id, platform)
+    def edit_platform(self, context, id, platform):
+        self._edit_item(context, 'platform', id, platform)
 
-    def edit_type(self, cursor, id, type):
-        self._edit_item(cursor, 'download_type', id, type)
+    def edit_type(self, context, id, type):
+        self._edit_item(context, 'download_type', id, type)
 
-    def edit_description(self, cursor, description):
+    def edit_description(self, context, description):
         sql = "UPDATE system SET value = %s WHERE name = 'downloads_description'"
         self.log.debug(sql % (description,))
-        cursor.execute(sql, (description,))
+        context.cursor.execute(sql, (description,))
 
     # Delete item functions.
 
-    def _delete_item(self, cursor, table, id):
+    def _delete_item(self, context, table, id):
         sql = "DELETE FROM " + table + " WHERE id = %s"
         self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
+        context.cursor.execute(sql, (id,))
 
-    def _delete_item_ref(self, cursor, table, column, id):
+    def _delete_item_ref(self, context, table, column, id):
         sql = "UPDATE " + table + " SET " + column + " = NULL WHERE " + column + " = %s"
         self.log.debug(sql % (id,))
-        cursor.execute(sql, (id,))
+        context.cursor.execute(sql, (id,))
 
-    def delete_download(self, cursor, id):
-        self._delete_item(cursor, 'download', id)
+    def delete_download(self, context, id):
+        self._delete_item(context, 'download', id)
 
-    def delete_architecture(self, cursor, id):
-        self._delete_item(cursor, 'architecture', id)
-        self._delete_item_ref(cursor, 'download', 'architecture', id)
+    def delete_architecture(self, context, id):
+        self._delete_item(context, 'architecture', id)
+        self._delete_item_ref(context, 'download', 'architecture', id)
 
-    def delete_platform(self, cursor, id):
-        self._delete_item(cursor, 'platform', id)
-        self._delete_item_ref(cursor, 'download', 'platform', id)
+    def delete_platform(self, context, id):
+        self._delete_item(context, 'platform', id)
+        self._delete_item_ref(context, 'download', 'platform', id)
 
-    def delete_type(self, cursor, id):
-        self._delete_item(cursor, 'download_type', id)
-        self._delete_item_ref(cursor, 'download', 'type', id)
+    def delete_type(self, context, id):
+        self._delete_item(context, 'download_type', id)
+        self._delete_item_ref(context, 'download', 'type', id)
 
     # Proces request functions.
 
-    def process_downloads(self, req, cursor):
+    def process_downloads(self, context):
+        # Clear data for next request.
+        self.data = {}
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        context.cursor = db.cursor()
+
         # Get request mode
-        modes = self._get_modes(req)
+        modes = self._get_modes(context)
         self.log.debug('modes: %s' % modes)
 
         # Perform mode actions
-        self._do_action(req, cursor, modes)
-
-        # Add CSS styles
-        add_stylesheet(req, 'common/css/wiki.css')
-        add_stylesheet(req, 'downloads/css/downloads.css')
-        add_stylesheet(req, 'downloads/css/admin.css')
-
-        # Add JavaScripts
-        add_script(req, 'common/js/trac.js')
-        add_script(req, 'common/js/wikitoolbar.js')
+        self._do_action(context, modes)
 
         # Fill up HDF structure and return template
-        req.hdf['download.authname'] = req.authname
-        req.hdf['download.time'] = format_datetime(time.time())
-        return modes[-1] + '.cs', None
+        self.data['authname'] = context.req.authname
+        self.data['time'] = format_datetime(datetime.now(utc))
+        self.data['realm'] = context.resource.realm
+
+        # Add CSS styles
+        add_stylesheet(context.req, 'common/css/wiki.css')
+        add_stylesheet(context.req, 'downloads/css/downloads.css')
+        add_stylesheet(context.req, 'downloads/css/admin.css')
+
+        # Add JavaScripts
+        add_script(context.req, 'common/js/trac.js')
+        add_script(context.req, 'common/js/wikitoolbar.js')
+
+        # Commit database changes and return template and data.
+        db.commit()
+        self.env.log.debug(self.data)
+        return modes[-1] + '.html', {'downloads' : self.data}
 
     # Internal functions.
 
-    def _get_modes(self, req):
+    def _get_modes(self, context):
         # Get request arguments.
-        context = req.args.get('context')
-        page = req.args.get('page')
-        action = req.args.get('action')
+        page = context.req.args.get('page')
+        action = context.req.args.get('action')
         self.log.debug('context: %s page: %s action: %s' % (context, page,
           action))
 
-        if context == 'admin':
-            req.hdf['downloads.href'] = req.href.admin('downloads', page)
-        elif context == 'core':
-            req.hdf['downloads.href'] = req.href.downloads()
-
         # Determine mode.
-        if context == 'admin':
+        if context.resource.realm == 'downloads-admin':
             if page == 'downloads':
                 if action == 'post-add':
                     return ['downloads-post-add', 'admin-downloads-list']
@@ -391,7 +401,7 @@ class DownloadsApi(Component):
                     return ['types-delete', 'admin-types-list']
                 else:
                     return ['admin-types-list']
-        elif context == 'core':
+        elif context.resource.realm  == 'downloads-core':
             if action == 'get-file':
                 return ['get-file']
             elif action == 'edit':
@@ -403,19 +413,19 @@ class DownloadsApi(Component):
         else:
             pass
 
-    def _do_action(self, req, cursor, modes):
+    def _do_action(self, context, modes):
         for mode in modes:
             if mode == 'get-file':
-                req.perm.assert_permission('DOWNLOADS_VIEW')
+                context.req.perm.assert_permission('DOWNLOADS_VIEW')
 
                 # Get form values.
-                download_id = req.args.get('id') or 0
+                download_id = context.req.args.get('id') or 0
 
                 # Get download.
-                download = self.get_download(cursor, download_id)
+                download = self.get_download(context, download_id)
 
                 if download:
-                    path = os.path.join(self.path, unicode(download['id']),
+                    path = os.path.join(self.path, to_unicode(download['id']),
                       download['file'])
                     self.log.debug('path: %s' % (path,))
 
@@ -423,10 +433,7 @@ class DownloadsApi(Component):
                     new_download = {'count' : download['count'] + 1}
 
                     # Edit download.
-                    db = self.env.get_db_cnx()
-                    cursor = db.cursor()
-                    self.edit_download(cursor, download['id'], new_download)
-                    db.commit()
+                    self.edit_download(context, download['id'], new_download)
 
                     # Notify change listeners.
                     for listener in self.change_listeners:
@@ -434,91 +441,87 @@ class DownloadsApi(Component):
 
                     # Return uploaded file to request.
                     self.log.debug(download['file'])
-                    req.send_header('Content-Disposition',
+                    context.req.send_header('Content-Disposition',
                       'attachment;filename=%s' % (download['file']))
-                    req.send_header('Content-Description',
+                    context.req.send_header('Content-Description',
                       download['description'])
-                    req.send_file(path, mimetypes.guess_type(path)[0])
+                    context.req.send_file(path, mimetypes.guess_type(path)[0])
                 else:
                     raise TracError('File not found.')
 
             elif mode == 'downloads-list':
-                req.perm.assert_permission('DOWNLOADS_VIEW')
+                context.req.perm.assert_permission('DOWNLOADS_VIEW')
 
                 # Get form values.
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
 
-                req.hdf['downloads.order'] = order
-                req.hdf['downloads.desc'] = desc
-                req.hdf['downloads.has_tags'] = self.env.is_component_enabled(
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['has_tags'] = self.env.is_component_enabled(
                   'tractags.api.TagEngine')
-                req.hdf['downloads.title'] = self.title
-                req.hdf['downloads.description'] = self.get_description(req, cursor)
-                req.hdf['downloads.downloads'] = self.get_downloads(req,
-                  cursor, order, desc)
-                req.hdf['downloads.visible_fields'] = self.get_visible_fields()
+                self.data['title'] = self.title
+                self.data['description'] = self.get_description(context)
+                self.data['downloads'] = self.get_downloads(context, order,
+                  desc)
+                self.data['visible_fields'] = self.get_visible_fields()
 
             elif mode == 'admin-downloads-list':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
-                download_id = int(req.args.get('download') or 0)
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
+                download_id = int(context.req.args.get('download') or 0)
 
-                # Fill HDF structure
-                req.hdf['downloads.order'] = order
-                req.hdf['downloads.desc'] = desc
-                req.hdf['downloads.has_tags'] = self.env.is_component_enabled(
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['has_tags'] = self.env.is_component_enabled(
                   'tractags.api.TagEngine')
-                req.hdf['downloads.download'] = self.get_download(cursor,
+                self.data['download'] = self.get_download(context,
                   download_id)
-                req.hdf['downloads.downloads'] = self.get_downloads(req,
-                  cursor, order, desc)
-                req.hdf['downloads.components'] = self.get_components(req,
-                  cursor)
-                req.hdf['downloads.versions'] = self.get_versions(req, cursor)
-                req.hdf['downloads.architectures'] = self.get_architectures(
-                  req, cursor)
-                req.hdf['downloads.platforms'] = self.get_platforms(req,
-                  cursor)
-                req.hdf['downloads.types'] = self.get_types(req, cursor)
+                self.data['downloads'] = self.get_downloads(context,
+                  order, desc)
+                self.data['components'] = self.get_components(context)
+                self.data['versions'] = self.get_versions(context)
+                self.data['architectures'] = self.get_architectures(context)
+                self.data['platforms'] = self.get_platforms(context)
+                self.data['types'] = self.get_types(context)
 
             elif mode == 'description-edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
             elif mode == 'description-post-edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                description = req.args.get('description')
+                description = context.req.args.get('description')
 
                 # Set new description.
-                self.edit_description(cursor, description)
+                self.edit_description(context, description)
 
             elif mode == 'downloads-post-add':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                file, filename, file_size = self._get_file_from_req(req)
+                file, filename, file_size = self._get_file_from_req(context.req)
                 download = {'file' : filename,
-                            'description' : req.args.get('description'),
+                            'description' : context.req.args.get('description'),
                             'size' : file_size,
-                            'time' : int(time.time()),
-                            'author' : req.authname,
-                            'tags' : req.args.get('tags'),
-                            'component' : req.args.get('component'),
-                            'version' : req.args.get('version'),
-                            'architecture' : req.args.get('architecture'),
-                            'platform' : req.args.get('platform'),
-                            'type' : req.args.get('type')}
+                            'time' : int(datetime.now(utc)),
+                            'author' : context.req.authname,
+                            'tags' : context.req.args.get('tags'),
+                            'component' : context.req.args.get('component'),
+                            'version' : context.req.args.get('version'),
+                            'architecture' : context.req.args.get('architecture'),
+                            'platform' : context.req.args.get('platform'),
+                            'type' : context.req.args.get('type')}
 
                 # Add new download.
-                self.add_download(cursor, download)
+                self.add_download(context, download)
 
                 # Get inserted download.
-                download = self.get_download_by_time(cursor, download['time'])
+                download = self.get_download_by_time(context, download['time'])
 
                 # Check correct file type.
                 reg = re.compile(r'^(.*)[.](.*)$')
@@ -546,7 +549,7 @@ class DownloadsApi(Component):
                     shutil.copyfileobj(file, out_file)
                     out_file.close()
                 except:
-                    self.delete_download(cursor, download['id'])
+                    self.delete_download(context, download['id'])
                     try:
                         os.remove(filepath)
                         os.rmdir(path)
@@ -557,42 +560,43 @@ class DownloadsApi(Component):
                       ' trac.ini existing?' % (download['file']))
 
             elif mode == 'downloads-post-edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                download_id = req.args.get('id')
-                old_download = self.get_download(cursor, download_id)
-                download = {'description' : req.args.get('description'),
-                            'tags' : req.args.get('tags'),
-                            'component' : req.args.get('component'),
-                            'version' : req.args.get('version'),
-                            'architecture' : req.args.get('architecture'),
-                            'platform' : req.args.get('platform'),
-                            'type' : req.args.get('type')}
+                download_id = context.req.args.get('id')
+                old_download = self.get_download(context, download_id)
+                download = {'description' : context.req.args.get('description'),
+                            'tags' : context.req.args.get('tags'),
+                            'component' : context.req.args.get('component'),
+                            'version' : context.req.args.get('version'),
+                            'architecture' : context.req.args.get('architecture'),
+                            'platform' : context.req.args.get('platform'),
+                            'type' : context.req.args.get('type')}
 
                 # Edit Download.
-                self.edit_download(cursor, download_id, download)
+                self.edit_download(context, download_id, download)
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
                     listener.download_changed(download, old_download)
 
             elif mode == 'downloads-delete':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get selected downloads.
-                selection = req.args.get('selection')
+                selection = context.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
 
                 # Delete download.
                 if selection:
                     for download_id in selection:
-                        download = self.get_download(cursor, download_id)
+                        download = self.get_download(context, download_id)
                         self.log.debug(download)
                         try:
-                            self.delete_download(cursor, download['id'])
-                            path = os.path.join(self.path, unicode(download['id']))
+                            self.delete_download(context, download['id'])
+                            path = os.path.join(self.path, to_unicode(
+                              download['id']))
                             os.remove(os.path.join(path, download['file']))
                             os.rmdir(path)
 
@@ -603,156 +607,155 @@ class DownloadsApi(Component):
                             pass
 
             elif mode == 'admin-architectures-list':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
-                architecture_id = int(req.args.get('architecture') or 0)
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
+                architecture_id = int(context.req.args.get('architecture') or 0)
 
                 # Display architectures.
-                req.hdf['downloads.order'] = order
-                req.hdf['downloads.desc'] = desc
-                req.hdf['downloads.architecture'] = self.get_architecture(cursor,
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['architecture'] = self.get_architecture(context,
                   architecture_id)
-                req.hdf['downloads.architectures'] = self.get_architectures(req,
-                  cursor, order, desc)
+                self.data['architectures'] = self.get_architectures(context,
+                  order, desc)
 
             elif mode == 'architectures-post-add':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                architecture = {'name' : req.args.get('name'),
-                                'description' : req.args.get('description')}
+                architecture = {'name' : context.req.args.get('name'),
+                                'description' : context.req.args.get('description')}
 
                 # Add architecture.
-                self.add_architecture(cursor, architecture)
+                self.add_architecture(context, architecture)
 
             elif mode == 'architectures-post-edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                architecture_id = req.args.get('id')
-                architecture = {'name' : req.args.get('name'),
-                                'description' : req.args.get('description')}
+                architecture_id = context.req.args.get('id')
+                architecture = {'name' : context.req.args.get('name'),
+                                'description' : context.req.args.get('description')}
 
                 # Add architecture.
-                self.edit_architecture(cursor, architecture_id, architecture)
+                self.edit_architecture(context, architecture_id, architecture)
 
             elif mode == 'architectures-delete':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get selected architectures.
-                selection = req.args.get('selection')
+                selection = context.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
 
                 # Delete architectures.
                 if selection:
                     for architecture_id in selection:
-                        self.delete_architecture(cursor, architecture_id)
+                        self.delete_architecture(context, architecture_id)
 
             elif mode == 'admin-platforms-list':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
-                platform_id = int(req.args.get('platform') or 0)
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
+                platform_id = int(context.req.args.get('platform') or 0)
 
                 # Display platforms.
-                req.hdf['downloads.order'] = order
-                req.hdf['downloads.desc'] = desc
-                req.hdf['downloads.platform'] = self.get_platform(cursor,
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['platform'] = self.get_platform(context,
                   platform_id)
-                req.hdf['downloads.platforms'] = self.get_platforms(req, cursor,
-                  order, desc)
+                self.data['platforms'] = self.get_platforms(context, order,
+                  desc)
 
             elif mode == 'platforms-post-add':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                platform = {'name' : req.args.get('name'),
-                            'description' : req.args.get('description')}
+                platform = {'name' : context.req.args.get('name'),
+                            'description' : context.req.args.get('description')}
 
                 # Add platform.
-                self.add_platform(cursor, platform)
+                self.add_platform(context, platform)
 
             elif mode == 'platforms-post-edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                platform_id = req.args.get('id')
-                platform = {'name' : req.args.get('name'),
-                            'description' : req.args.get('description')}
+                platform_id = context.req.args.get('id')
+                platform = {'name' : context.req.args.get('name'),
+                            'description' : context.req.args.get('description')}
 
                 # Add platform.
-                self.edit_platform(cursor, platform_id, platform)
+                self.edit_platform(context, platform_id, platform)
 
             elif mode == 'platforms-delete':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get selected platforms.
-                selection = req.args.get('selection')
+                selection = context.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
 
                 # Delete platforms.
                 if selection:
                     for platform_id in selection:
-                        self.delete_platform(cursor, platform_id)
+                        self.delete_platform(context, platform_id)
 
             elif mode == 'admin-types-list':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
-                platform_id = int(req.args.get('type') or 0)
+                order = context.req.args.get('order') or 'id'
+                desc = context.req.args.get('desc')
+                platform_id = int(context.req.args.get('type') or 0)
 
                 # Display platforms.
-                req.hdf['downloads.order'] = order
-                req.hdf['downloads.desc'] = desc
-                req.hdf['downloads.type'] = self.get_type(cursor, platform_id)
-                req.hdf['downloads.types'] = self.get_types(req, cursor, order,
-                  desc)
+                self.data['order'] = order
+                self.data['desc'] = desc
+                self.data['type'] = self.get_type(context, platform_id)
+                self.data['types'] = self.get_types(context, order, desc)
 
             elif mode == 'types-post-add':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                type = {'name' : req.args.get('name'),
-                        'description' : req.args.get('description')}
+                type = {'name' : context.req.args.get('name'),
+                        'description' : context.req.args.get('description')}
 
                 # Add type.
-                self.add_type(cursor, type)
+                self.add_type(context, type)
 
             elif mode == 'types-post-edit':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                type_id = req.args.get('id')
-                type = {'name' : req.args.get('name'),
-                        'description' : req.args.get('description')}
+                type_id = context.req.args.get('id')
+                type = {'name' : context.req.args.get('name'),
+                        'description' : context.req.args.get('description')}
 
                 # Add platform.
-                self.edit_type(cursor, type_id, type)
+                self.edit_type(context, type_id, type)
 
             elif mode == 'types-delete':
-                req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get selected types.
-                selection = req.args.get('selection')
+                selection = context.req.args.get('selection')
                 if isinstance(selection, (str, unicode)):
                     selection = [selection]
 
                 # Delete types.
                 if selection:
                     for type_id in selection:
-                        self.delete_type(cursor, type_id)
+                        self.delete_type(context, type_id)
 
-    def _get_file_from_req(self, req):
-        file = req.args['file']
+    def _get_file_from_req(self, context):
+        file = context.req.args['file']
 
         # Test if file is uploaded.
         if not hasattr(file, 'filename') or not file.filename:

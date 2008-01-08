@@ -1,0 +1,11 @@
+<html xmlns:py="http://genshi.edgewall.org/" py:strip="">
+
+  <py:def function="sortable_th(order, desc, Class, title, href)">
+    <th class="${Class}${order == Class and (desc and ' desc' or ' asc') or ''}">
+      <a title="Sort by ${Class}${order == Class and not desc and ' (descending)' or ''}" href="${href}?order=${Class}&amp;desc=${(Class == order and not desc and 1 or None)}">
+        $title
+      </a>
+    </th>
+  </py:def>
+
+</html>
