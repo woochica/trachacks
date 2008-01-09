@@ -1,3 +1,11 @@
+import re
+from pkg_resources import resource_filename
+from trac.core import *
+from trac.web import IRequestHandler
+from trac.util import Markup
+from trac.web.chrome import add_stylesheet, add_script, \
+     INavigationContributor, ITemplateProvider
+from trac.web.href import Href
 
 class EstimationsPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
@@ -16,7 +24,7 @@ class EstimationsPage(Component):
         yield 'mainnav', "Estimate", \
               Markup('<a href="%s">%s</a>' %
                      (url , "Estimate"))
-        
+
     # IRequestHandler methods
     def match_request(self, req):
         return req.path_info.startswith('/Estimate')
@@ -27,13 +35,17 @@ class EstimationsPage(Component):
             messages.extend([s]);
         if req.method == 'POST':
             pass
-        req.hdf["estimate"]={"href":       req.href.Estimate(),
-                             "messages":   messages,
+        data = {}
+        data["estimate"]={"href":       req.href.Estimate(),
+                          "messages":   messages,
+                          "lineitems": [],
                    }
-        add_script(req, "Estimate/JsHelper.js")
+        add_script(req, "Estimate/JSHelper.js")
         add_script(req, "Estimate/Controls.js")
+        add_script(req, "Estimate/estimate.js")
         add_stylesheet(req, "Estimate/estimate.css")
-        return 'estimate.cs', 'text/html'
+        #return 'estimate.cs', 'text/html'
+        return 'estimate.html', data, None
 
     # ITemplateProvider
     def get_htdocs_dirs(self):

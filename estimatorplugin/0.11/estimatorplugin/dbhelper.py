@@ -1,8 +1,9 @@
 mylog = None;
+env = None;
 
-
-def get_all(db, sql, *params):
+def get_all(sql, *params):
     """Executes the query and returns the (description, data)"""
+    db = env.get_db_cnx()
     cur = db.cursor()
     desc  = None
     data = None
@@ -22,8 +23,9 @@ with parameters:%s\nException:%s'%(sql, params, e));
     
     return (desc, data)
 
-def execute_non_query(db, sql, *params):
+def execute_non_query( sql, *params):
     """Executes the query on the given project"""
+    db = env.get_db_cnx()
     cur = db.cursor()
     try:
         cur.execute(sql, params)
@@ -37,8 +39,9 @@ with parameters:%s\nException:%s'%(sql, params, e));
     except:
         pass
     
-def get_first_row(db, sql,*params):
+def get_first_row( sql,*params):
     """ Returns the first row of the query results as a tuple of values (or None)"""
+    db = env.get_db_cnx()
     cur = db.cursor()
     data = None;
     try:
@@ -55,15 +58,16 @@ def get_first_row(db, sql,*params):
         pass
     return data;
 
-def get_scalar(db, sql, col=0, *params):
+def get_scalar(sql, col=0, *params):
     """ Gets a single value (in the specified column) from the result set of the query"""
-    data = get_first_row(db, sql, *params);
+    data = get_first_row(sql, *params);
     if data:
         return data[col]
     else:
         return None;
 
-def execute_in_trans(db, *args):
+def execute_in_trans(*args):
+    db = env.get_db_cnx()
     success = True
     cur = db.cursor()
     try:
@@ -81,7 +85,8 @@ def execute_in_trans(db, *args):
         pass
     return success
 
-def db_table_exists(db, table):
+def db_table_exists( table):
+    db = env.get_db_cnx()
     sql = "SELECT * FROM %s LIMIT 1" % table;
     cur = db.cursor()
     has_table = True;
@@ -98,24 +103,24 @@ def db_table_exists(db, table):
         pass
     return has_table
 
-def get_column_as_list(db, sql, col=0, *params):
-    data = get_all(db, sql, *params)[1] or ()
+def get_column_as_list(sql, col=0, *params):
+    data = get_all(sql, *params)[1] or ()
     return [valueList[col] for valueList in data]
 
-def get_system_value(db, key):
-    return get_scalar(db, "SELECT value FROM system WHERE name=%s", 0, key)
+def get_system_value(key):
+    return get_scalar("SELECT value FROM system WHERE name=%s", 0, key)
 
-def set_system_value(env,  key, value):
-    if get_system_value(env.get_db_cnx(), key):
-        execute_non_query(env.get_db_cnx(), "UPDATE system SET value=%s WHERE name=%s", value, key)        
+def set_system_value(key, value):
+    if get_system_value(key):
+        execute_non_query("UPDATE system SET value=%s WHERE name=%s", value, key)        
     else:
-        execute_non_query(env.get_db_cnx(), "INSERT INTO system (value, name) VALUES (%s, %s)",
+        execute_non_query("INSERT INTO system (value, name) VALUES (%s, %s)",
             value, key)
 
 
-def get_result_set(db, sql, *params):
+def get_result_set(sql, *params):
     """Executes the query and returns a Result Set"""
-    return ResultSet(get_all(db, sql, *params))
+    return ResultSet(get_all(sql, *params))
 
 
 class ResultSet:

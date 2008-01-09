@@ -1,14 +1,31 @@
-<?cs include "header.cs"?>
-<?cs include "macros.cs"?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:py="http://genshi.edgewall.org/"
+  xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+      
+  <head>
+	<title>Time Tracking Management for Trac.11</title>
+	<script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+	<script type="text/javascript" py:choose="">
+	  $(document).ready(function() {
+          $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+    </script>
+      </head>
 
-    <form method="post" action="<?cs var:estimate.href ?>" >
+      <body>
+	<form method="post" action="${estimate.href}" >
 
-      <div id="content" class="estimate">
-	<div id="messages" >
-	  <?cs each:item = estimate.messages ?>
-            <div class="message" ><?cs var:item ?></div>
-	  <?cs /each ?>
-	</div>
+	  <div id="content" class="estimate">
+	    <div id="messages" >
+	      <py:for each="item in estimate.messages" >
+		<div class="message" >$item</div>
+	      </py:for>
+	    </div>
 
 	<table border="0" cellpadding="3" cellspacing="0" >
 	  <tr>
@@ -17,42 +34,18 @@
 	  </tr>
 	  <tr>
 	    <td ><label for="rate">Rate</label></td>
-	    <td><input id="rate" type="text" /></td>
+	    <td><input id="rate" type="text" onkeyup="runCalculation()" value="" /></td>
 	  </tr>
 	  <tr>
 	    <td ><label for="variability">Variability</label></td>
-	    <td><input id="variability" type="text" /></td>
+	    <td><input id="variability" type="text" onkeyup="runCalculation()" value="" /></td>
 	  </tr>
 	  <tr>
 	    <td ><label for="communication">Communication</label></td>
-	    <td><input id="communication" type="text" /></td>
+	    <td><input id="communication" type="text" onkeyup="runCalculation()" value="" /></td>
 	  </tr>
 	</table>
 
-	<script language="javascript" >
-	  var cn = ADW.Controls.createNode;
-	  var lineItems
-	  function lineItemRow (lineitem){
-	    var uid = function (str){
-              return uid+lineitem.id;
-	    }
-	    var valFn = function(str){
-	      if (lineitem[str]) return lineitem[str];
-	      else return "";
-	    }
-	    return cn('tr', {},
-	      cn('td', {},
-                 cn('textarea', {id:uid("description")},
-                   valFn('description'))),
-    	      cn('td', {},
-                 cn('input', {id:uid('low'), type:'text', value: valFn('low')})),
-
-    	      cn('td', {},
-                 cn('input', {id:uid('high'), type:'text', value: valFn('high')})),
-    	      cn('td', {id:uid('ave')},
-                 ))
-	  }
-	</script >
 
 	<table border="0" cellpadding="3" cellspacing="0" >
 	  <tr id="header">
@@ -60,29 +53,43 @@
 	    <th>Low </th>
 	    <th>High </th>
 	    <th>Ave </th>
+	    <th>&nbsp; </th>
 	  </tr>
 	  
 	  <!-- Item Rows Go Here -->
 
-	  <tr id="footer">
+	  <tr id="lineItemFooter">
 	    <th>Total:</th>
 	    <td id="lowTotal" ></td>
 	    <td id="highTotal"></td>
 	    <td id="aveTotal"></td>
+	    <td>&nbsp; </td>
 	  </tr>
 	  <tr>
 	    <th>Adjusted Hours:</th>
 	    <td id="lowAdjusted"></td>
 	    <td id="highAdjusted"></td>
 	    <td id="aveAdjusted"></td>
+	    <td>&nbsp; </td>
 	  </tr>
 	  <tr>
 	    <th>Cost:</th>
 	    <td id="lowCost"></td>
 	    <td id="highCost"></td>
 	    <td id="aveCost"></td>
+	    <td>&nbsp; </td>
 	  </tr>
 	</table>
+	<script language="javascript" >
+	   var lineItems = [
+	      <py:for each="item in estimate.lineitems" >
+	      </py:for>
+	   ];
+	   loadLineItems( );
+	   newLineItem();
+	</script >
+	<button onclick="newLineItem();return false;">new row</button>
+	<button onclick="runCalculation();return false;">refresh calculations</button>
 
 <!--
 	<div>
@@ -93,7 +100,8 @@
 	</div>
 -->
       </div>
-    <input type="submit" >Save Estimate</input>   
+    <input type="submit" value="Save Estimate" />
     </form>
-<?cs include "footer.cs"?>
+</body>
+</html>
     

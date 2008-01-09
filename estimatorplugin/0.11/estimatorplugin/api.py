@@ -1,12 +1,17 @@
 import re
 import dbhelper
+from webui import *
+
+from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
+
+dbversion = 1
+dbkey = 'EstimatorPluginDbVersion'
+
 
 class EstimatorSetupParticipant(Component):
     """ Makes sure our database is what we expect """
     implements(IEnvironmentSetupParticipant)
-    dbversion = 1
-    dbkey = 'EstimatorPluginDbVersion'
     def __init__(self):
         # Setup logging
         dbhelper.env = self.env
@@ -24,7 +29,9 @@ class EstimatorSetupParticipant(Component):
         performed, `False` otherwise.
         """
         ver = dbhelper.get_system_value(dbkey)
-        return (not ver) or (ver < dbversion)
+        ans = (not ver) or (ver < dbversion)
+        self.log.debug('Estimator needs upgrade? %s [installed version:%s  pluginversion:%s '%(ans, ver, dbversion))
+        return ans
 
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade.
@@ -34,7 +41,10 @@ class EstimatorSetupParticipant(Component):
         performed the upgrades they need without an error being raised.
         """
         success = True
-        if dbversion == 1:
+        ver = dbhelper.get_system_value(dbkey)
+        self.log.debug('Estimator about to upgrade from ver:%s' % ver)
+        if ver < 1:
+            self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
             success &= dbhelper.execute_in_trans(
                 ("""CREATE TABLE estimate(
                      id integer,
@@ -42,14 +52,14 @@ class EstimatorSetupParticipant(Component):
                      variability DECIMAL,
                      communication_overhead DECIMAL,
                      ticket_id integer
-                 )""",),
+                 )""",[]),
                 ("""CREATE TABLE estimate_line_item(
                      id integer,
                      estimate_id integer,
                      description VARCHAR(2048),
                      low_hours DECIMAL,
                      high_hours DECIMAL
-                )""",))
+                )""",[]))
         # SHOULD BE LAST IN THIS FUNCTION
         if success:
             dbhelper.set_system_value(dbkey, dbversion)

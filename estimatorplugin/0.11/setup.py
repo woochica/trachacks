@@ -12,6 +12,7 @@ setup(name=PACKAGE,
       long_description="""
       Produce Detailed Range Based Estimations
       """,
+      package_data={PACKAGE : ['templates/*.html', 'htdocs/*']},
       entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)},
 )
 
