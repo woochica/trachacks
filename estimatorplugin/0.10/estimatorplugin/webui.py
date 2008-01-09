@@ -30,6 +30,8 @@ class EstimationsPage(Component):
         req.hdf["estimate"]={"href":       req.href.Estimate(),
                              "messages":   messages,
                    }
+        add_script(req, "Estimate/JsHelper.js")
+        add_script(req, "Estimate/Controls.js")
         add_stylesheet(req, "Estimate/estimate.css")
         return 'estimate.cs', 'text/html'
 
