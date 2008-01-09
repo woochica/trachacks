@@ -34,15 +34,15 @@
 	  </tr>
 	  <tr>
 	    <td ><label for="rate">Rate</label></td>
-	    <td><input id="rate" type="text" onkeyup="runCalculation()" value="" /></td>
+	    <td><input id="rate" type="text" onkeyup="runCalculation()" value="${estimate.rate}" /></td>
 	  </tr>
 	  <tr>
 	    <td ><label for="variability">Variability</label></td>
-	    <td><input id="variability" type="text" onkeyup="runCalculation()" value="" /></td>
+	    <td><input id="variability" type="text" onkeyup="runCalculation()" value="${estimate.variability}" /></td>
 	  </tr>
 	  <tr>
 	    <td ><label for="communication">Communication</label></td>
-	    <td><input id="communication" type="text" onkeyup="runCalculation()" value="" /></td>
+	    <td><input id="communication" type="text" onkeyup="runCalculation()" value="${estimate.communication}" /></td>
 	  </tr>
 	</table>
 
@@ -81,10 +81,7 @@
 	  </tr>
 	</table>
 	<script language="javascript" >
-	   var lineItems = [
-	      <py:for each="item in estimate.lineitems" >
-	      </py:for>
-	   ];
+	   var lineItems = ${estimate.lineItems};
 	   loadLineItems( );
 	   newLineItem();
 	</script >

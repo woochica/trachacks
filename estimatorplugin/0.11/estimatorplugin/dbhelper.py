@@ -120,7 +120,11 @@ def set_system_value(key, value):
 
 def get_result_set(sql, *params):
     """Executes the query and returns a Result Set"""
-    return ResultSet(get_all(sql, *params))
+    tpl = get_all(sql, *params);
+    if tpl and tpl[0] and tpl[1]:
+        return ResultSet(tpl)
+    else:
+        return None
 
 
 class ResultSet:
@@ -161,3 +165,8 @@ class ResultSet:
         else:
             print ("rs.value Type Failed col:%s  row:%s" % (type(col), type(row)))
    
+    def json_out(self):
+        return "[%s]" % ','. join(
+            [("{%s}" % ','.join(["'%s':%r" %(key, self.value(val, row))
+                                 for (key, val) in columnMap.items()]))
+             for row in rows])

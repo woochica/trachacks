@@ -1,4 +1,5 @@
 import re
+import dbhelper
 from pkg_resources import resource_filename
 from trac.core import *
 from trac.web import IRequestHandler
@@ -29,6 +30,24 @@ class EstimationsPage(Component):
     def match_request(self, req):
         return req.path_info.startswith('/Estimate')
 
+    def load(self, req, addMessage, data):
+        try:
+            id = int(req.args['id'])
+            data["estimate"]["id"] = id
+            estimate_rs = dbhelper.get_result_set("SELECT * FROM estimate WHERE estimate_id=%s", id)
+            if estimate_rs:
+                data["estimate"]["rate"] = estimate_rs.get_value("rate", 0)
+                data["estimate"]["variability"] = estimate_rs.get_value("variability", 0)
+                data["estimate"]["communication"] = estimate_rs.get_value("communication", 0)
+                rs = dbhelper.get_result_set("SELECT * FROM estimate_line_item WHERE estimate_id=%s", id)
+                if rs:
+                    data["estimate"]["lineItems"] = rs.json_out()
+            else:
+                addMessage('Cant Find Estimate Id: %s' % id)
+        except Exception, e:
+            addMessage('Invalid Id: %s' % id)
+            addMessage('Error: %s' % e)
+        
     def process_request(self, req):
         messages = []
         def addMessage(s):
@@ -38,8 +57,16 @@ class EstimationsPage(Component):
         data = {}
         data["estimate"]={"href":       req.href.Estimate(),
                           "messages":   messages,
-                          "lineitems": [],
-                   }
+                          "lineItems": '[]',
+                          "rate": self.config.get( 'estimator','default_rate') or 200,
+                          "variability": self.config.get( 'estimator','default_variability') or 1,
+                          "communication": self.config.get( 'estimator','default_communication') or 1,
+                          }
+        
+        if req.args.has_key('id'):
+            self.load(req, addMessage, data)
+
+
         add_script(req, "Estimate/JSHelper.js")
         add_script(req, "Estimate/Controls.js")
         add_script(req, "Estimate/estimate.js")
