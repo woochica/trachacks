@@ -80,8 +80,8 @@ class PerforceConnector(Component):
     password = Option('perforce', 'password', '', doc=
         """Perforce password used to identify requests.
         """)
-    language = Option('perforce', 'password', '', doc=
-        """Perforce password used to identify requests.
+    language = Option('perforce', 'language', '', doc=
+        """Perforce language used for text message from the server.
         """)
     workspace = Option('perforce', 'workspace', NO_CLIENT, doc=
         """Perforce workspace used to request server.
