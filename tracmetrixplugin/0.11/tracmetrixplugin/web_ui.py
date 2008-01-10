@@ -20,7 +20,7 @@ from trac import __version__
 from trac import mimeview
 from model import *  # need it but should have worked in __init__.py
 from trac.config import ExtensionOption
-from trac.context import Context
+#from trac.context import Context
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.ticket import Milestone, Ticket, model #These are object
@@ -143,7 +143,7 @@ class PDashboard(Component):
         }
         
         data = {
-            'context': Context(self.env, req),
+#            'context': Context(self.env, req),
             'milestones': milestones,
             'milestone_stats': stats,
             'queries': queries,

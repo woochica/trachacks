@@ -39,7 +39,7 @@ from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
 from trac import __version__
 from trac import mimeview
 from trac.core import *
-from trac.context import Context
+#from trac.context import Context
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import sorted
@@ -53,7 +53,6 @@ from trac.ticket.query import Query
 from trac.ticket.roadmap import ITicketGroupStatsProvider, DefaultTicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
                                 milestone_stats_data, TicketGroupStats
-from trac.timeline.api import ITimelineEventProvider, TimelineEvent
 from trac.web import IRequestHandler, IRequestFilter
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor, ITemplateProvider
 from trac.wiki.api import IWikiSyntaxProvider
