@@ -28,7 +28,7 @@
 	      </py:for>
 	    </div>
 
-	<table border="0" cellpadding="3" cellspacing="0" >
+	<table border="0" cellpadding="3" cellspacing="0" id="estimateParams" >
 	  <tr>
 	    <td class="fieldLabel" ><label for="tickets">Ticket Numbers:</label></td>
 	    <td><input id="tickets" name="tickets" type="text"
@@ -52,7 +52,7 @@
 	</table>
 
 
-	<table border="0" cellpadding="3" cellspacing="1" >
+	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" >
 	  <tr id="lineItemheader" >
 	    <th>Description</th>
 	    <th>Low </th>
@@ -85,22 +85,24 @@
 	    <td>&nbsp; </td>
 	  </tr>
 	</table>
+
+	<button onclick="newLineItem();return false;">new row</button>
+	<button onclick="runCalculation();return false;">refresh calculations</button>
+
+
+	  <div>
+	    <h3>Comment Preview</h3>
+	    <div id="estimateoutput" >
+
+	    </div>
+	    <textarea id="comment" name="comment" style="display:none;"></textarea>
+	  </div>
+
 	<script language="javascript" >
 	   var lineItems = ${estimate.lineItems};
 	   loadLineItems();
 	   newLineItem();
 	</script >
-	<button onclick="newLineItem();return false;">new row</button>
-	<button onclick="runCalculation();return false;">refresh calculations</button>
-
-<!--
-	<div>
-	  <h3>Comment Preview</h3>
-	  <div id="estimateoutput" >
-	    
-	  </div>
-	</div>
--->
       </div>
     <input type="submit" value="Save Estimate" />
     </form>

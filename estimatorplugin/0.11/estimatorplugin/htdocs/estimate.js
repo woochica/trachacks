@@ -100,6 +100,7 @@ function runCalculation(){
    $$('lowCost').innerHTML = lowCost;
    $$('highCost').innerHTML = highCost;
    $$('aveCost').innerHTML = ave_no_zero(lowCost, highCost);
+   preparePreview();
 };
 
 function removeLineItem( btn ){
@@ -108,8 +109,47 @@ function removeLineItem( btn ){
    row.parentNode.removeChild(row);
    runCalculation();
 }
+function removeInputsAndIds(parent){
+   if(!parent.tagName) return;
+   if (parent.id) parent.id = "";
+   var name = parent.tagName.toLowerCase();
+   if(name == "input" || name == "textarea"){
+      parent.parentNode.innerHTML = parent.value;
+   }
+   else if (name == "button"){
+      parent.parentNode.removeChild(parent);
+   }
+   else{
+      for(var i=0 ; node = parent.childNodes[i] ;i++){
+	 removeInputsAndIds(node);
+      }
+   }
+   return parent;
+}
+function removeFirstRow( elem ){
+   var nd = elem.firstChild;
+   do{
+      if(nd.tagName){
+	 if(nd.tagName.toLowerCase() == 'tbody'){
+	    nd = nd.firstChild;
+	 }
+	 if(nd.tagName.toLowerCase() == 'tr'){
+	    nd.parentNode.removeChild(nd);
+	    return elem;
+	 }
+      }
+   }while(nd = nd.nextSibling);
+   return elem;
+}
+function preparePreview(){
+   var preview = $$('estimateoutput');
+   while(preview.childNodes.length > 0) preview.removeChild(preview.firstChild);
+   preview.appendChild(removeFirstRow(removeInputsAndIds($$('estimateParams').cloneNode(true))));
+   preview.appendChild(removeInputsAndIds($$('estimateBody').cloneNode(true)));
+   $$('comment').innerHTML = preview.innerHTML;
+}
 
-function loadLineItems( ){
+function loadLineItems() {
    var item;
    for(var i=0; item = lineItems[i] ; i++){
       var tr = lineItemRow(item);
