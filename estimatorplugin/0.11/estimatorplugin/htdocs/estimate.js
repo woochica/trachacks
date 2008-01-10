@@ -5,6 +5,13 @@ var uid = function (lineitem, str){
 }
 var _uid = uid;// wrappable version;
 
+function enterMeansNothing(event){
+   if(!event) event = window.event;
+   if(event.keyCode == 13){
+      return false;
+   }
+   return true;
+}
 function enterMeansNewRow(event){
    if(!event) event = window.event;
    if(event.keyCode == 13){

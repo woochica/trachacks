@@ -32,22 +32,26 @@
 	  <tr>
 	    <td class="fieldLabel" ><label for="tickets">Ticket Numbers:</label></td>
 	    <td><input id="tickets" name="tickets" type="text"
-		      value="${estimate.tickets}" /></td>
+		      value="${estimate.tickets}"
+		      onkeydown="enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
 	    <td class="fieldLabel" ><label for="rate">Rate:</label></td>
 	    <td><input id="rate" name="rate" type="text" onkeyup="runCalculation()"
-		      value="${estimate.rate}" /></td>
+		      value="${estimate.rate}"
+		      onkeydown="enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
 	    <td class="fieldLabel" ><label for="variability">Variability:</label></td>
 	    <td><input id="variability" name="variability" type="text" onkeyup="runCalculation()"
-		      value="${estimate.variability}" /></td>
+		      value="${estimate.variability}"
+		      onkeydown="enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
 	    <td class="fieldLabel" ><label for="communication">Communication:</label></td>
 	    <td><input id="communication" name="communication" type="text" onkeyup="runCalculation()"
-		      value="${estimate.communication}" /></td>
+		      value="${estimate.communication}"
+		      onkeydown="enterMeansNothing(event)" /></td>
 	  </tr>
 	</table>
 
