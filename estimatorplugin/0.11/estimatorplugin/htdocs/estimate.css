@@ -5,3 +5,13 @@
   padding:5px;
   margin:5px;
 }
+
+.numberCell{ 
+  text-align:right;
+  border:1px solid blue;
+}
+
+.fieldLabel{ 
+  font-weight:bold;
+  text-align:right;
+}

@@ -47,18 +47,18 @@ class EstimatorSetupParticipant(Component):
             self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
             success &= dbhelper.execute_in_trans(
                 ("""CREATE TABLE estimate(
-                     id integer,
+                     id integer PRIMARY KEY,
                      rate DECIMAL,
                      variability DECIMAL,
-                     communication_overhead DECIMAL,
-                     ticket_id integer
+                     communication DECIMAL,
+                     tickets VARCHAR(512)
                  )""",[]),
                 ("""CREATE TABLE estimate_line_item(
-                     id integer,
+                     id integer PRIMARY KEY,
                      estimate_id integer,
                      description VARCHAR(2048),
-                     low_hours DECIMAL,
-                     high_hours DECIMAL
+                     low DECIMAL,
+                     high DECIMAL
                 )""",[]))
         # SHOULD BE LAST IN THIS FUNCTION
         if success:

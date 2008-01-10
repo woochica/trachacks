@@ -7,12 +7,96 @@ from trac.util import Markup
 from trac.web.chrome import add_stylesheet, add_script, \
      INavigationContributor, ITemplateProvider
 from trac.web.href import Href
+from estimator import *
+
 
 class EstimationsPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
     def __init__(self):
         pass
+    def load(self, req, addMessage, data):
+        try:
+            id = int(req.args['id'])
+            data["estimate"]["id"] = id
+            estimate_rs = getEstimateResultSet(id)
+            if estimate_rs:
+                data["estimate"]["id"] = id
+                data["estimate"]["rate"] = estimate_rs.value("rate", 0)
+                data["estimate"]["tickets"] = estimate_rs.value("tickets", 0)
+                data["estimate"]["variability"] = estimate_rs.value("variability", 0)
+                data["estimate"]["communication"] = estimate_rs.value("communication", 0)
+                rs = getEstimateLineItemsResultSet(id)
+                if rs:
+                    data["estimate"]["lineItems"] = rs.json_out()
+            else:
+                addMessage('Cant Find Estimate Id: %s' % id)
+        except Exception, e:
+            addMessage('Invalid Id: %s' % req.args['id'])
+            addMessage('Error: %s' % e)
+    def line_item_hash_from_args(self, args):
+        not_line_items=['__FORM_TOKEN','tickets','variability','communication','rate', 'id']
+        itemReg = re.compile(r"(\D+)(\d+)")
+        lineItems = {}
+        def lineItemHasher( value, name, id ):
+            if not lineItems.has_key(id):
+                lineItems[id] = {}
+            lineItems[id][name] = value
+        [lineItemHasher( item[1], *itemReg.match( item[0] ).groups())
+         for item in args.items()
+         if not(not_line_items.__contains__(item[0]))]
+        return lineItems
+        
+    def save_from_form (self, args, addMessage):
+        #try:
+            tickets = args["tickets"]
+            id = args["id"]
+            if id == None or id == '' :
+                sql = estimateInsert
+                id = nextEstimateId ()
+            else:
+                sql = estimateUpdate
 
+            estimate_args = [args['rate'], args['variability'], args['communication'], tickets, id]
+            saveEstimate = (sql, estimate_args)
+            saveLineItems = []
+            newLineItemId = nextEstimateLineItemId ()
+
+            # we want to delete any rows that were not included in the form request
+            # we will not use -1 as a valid id, so this will allow us to use the same sql reguardless of anything else
+            ids = ['-1'] 
+            lineItems = self.line_item_hash_from_args(args).items()
+            lineItems.sort()
+            for item in lineItems:
+                itemId = item[0]
+                if int(itemId) < 400000000:# new ids on the HTML are this number and above
+                    ids.append(str(itemId))
+                    sql = lineItemUpdate
+                else:
+                    itemId = newLineItemId
+                    newLineItemId += 1
+                    sql = lineItemInsert
+                itemargs = [id,
+                            item[1]['description'],
+                            item[1]['low'],
+                            item[1]['high'],
+                            itemId]
+                saveLineItems.append((sql, itemargs))
+
+            sql = removeLineItemsNotInListSql % ','.join(ids)
+            addMessage("Deleting NonExistant Estimate Rows: %r - %s" % (sql , id))
+            result = dbhelper.execute_in_trans(saveEstimate,
+                                               (sql, id),
+                                               *saveLineItems)
+            if not result:
+                addMessage("Failed to save!")
+            else:
+                addMessage("Estimate Saved!")
+            
+        #except Exception, e:
+        #    raise e
+        #    addMessage("Error Saving Estimate: %s" % e)
+            
+   
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         if re.search('/Estimate', req.path_info):
@@ -29,41 +113,27 @@ class EstimationsPage(Component):
     # IRequestHandler methods
     def match_request(self, req):
         return req.path_info.startswith('/Estimate')
-
-    def load(self, req, addMessage, data):
-        try:
-            id = int(req.args['id'])
-            data["estimate"]["id"] = id
-            estimate_rs = dbhelper.get_result_set("SELECT * FROM estimate WHERE estimate_id=%s", id)
-            if estimate_rs:
-                data["estimate"]["rate"] = estimate_rs.get_value("rate", 0)
-                data["estimate"]["variability"] = estimate_rs.get_value("variability", 0)
-                data["estimate"]["communication"] = estimate_rs.get_value("communication", 0)
-                rs = dbhelper.get_result_set("SELECT * FROM estimate_line_item WHERE estimate_id=%s", id)
-                if rs:
-                    data["estimate"]["lineItems"] = rs.json_out()
-            else:
-                addMessage('Cant Find Estimate Id: %s' % id)
-        except Exception, e:
-            addMessage('Invalid Id: %s' % id)
-            addMessage('Error: %s' % e)
-        
+     
     def process_request(self, req):
         messages = []
         def addMessage(s):
             messages.extend([s]);
+        addMessage("Post Args: %s"% req.args.items())
         if req.method == 'POST':
-            pass
+            self.save_from_form(req.args, addMessage)
         data = {}
-        data["estimate"]={"href":       req.href.Estimate(),
-                          "messages":   messages,
-                          "lineItems": '[]',
-                          "rate": self.config.get( 'estimator','default_rate') or 200,
-                          "variability": self.config.get( 'estimator','default_variability') or 1,
-                          "communication": self.config.get( 'estimator','default_communication') or 1,
-                          }
+        data["estimate"]={
+            "href":       req.href.Estimate(),
+            "messages":   messages,
+            "id": None,
+            "lineItems": '[]',
+            "tickets": '',
+            "rate": self.config.get( 'estimator','default_rate') or 200,
+            "variability": self.config.get( 'estimator','default_variability') or 1,
+            "communication": self.config.get( 'estimator','default_communication') or 1,
+            }
         
-        if req.args.has_key('id'):
+        if req.args.has_key('id') and req.args['id'].strip() != '':
             self.load(req, addMessage, data)
 
 
@@ -87,3 +157,4 @@ class EstimationsPage(Component):
         """
         rtn = [resource_filename(__name__, 'templates')]
         return rtn
+

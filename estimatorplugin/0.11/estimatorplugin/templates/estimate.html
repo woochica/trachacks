@@ -8,7 +8,7 @@
   <xi:include href="macros.html" />
       
   <head>
-	<title>Time Tracking Management for Trac.11</title>
+	<title>Advanced Estimations for Trac.11</title>
 	<script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
 	<script type="text/javascript" py:choose="">
 	  $(document).ready(function() {
@@ -19,7 +19,8 @@
 
       <body>
 	<form method="post" action="${estimate.href}" >
-
+	  <input type="hidden" name="id" value="${estimate.id}"/>
+	  
 	  <div id="content" class="estimate">
 	    <div id="messages" >
 	      <py:for each="item in estimate.messages" >
@@ -29,26 +30,30 @@
 
 	<table border="0" cellpadding="3" cellspacing="0" >
 	  <tr>
-	    <td ><label for="tickets">Ticket Numbers:</label></td>
-	    <td><input id="tickets" type="text" /></td>
+	    <td class="fieldLabel" ><label for="tickets">Ticket Numbers:</label></td>
+	    <td><input id="tickets" name="tickets" type="text"
+		      value="${estimate.tickets}" /></td>
 	  </tr>
 	  <tr>
-	    <td ><label for="rate">Rate</label></td>
-	    <td><input id="rate" type="text" onkeyup="runCalculation()" value="${estimate.rate}" /></td>
+	    <td class="fieldLabel" ><label for="rate">Rate:</label></td>
+	    <td><input id="rate" name="rate" type="text" onkeyup="runCalculation()"
+		      value="${estimate.rate}" /></td>
 	  </tr>
 	  <tr>
-	    <td ><label for="variability">Variability</label></td>
-	    <td><input id="variability" type="text" onkeyup="runCalculation()" value="${estimate.variability}" /></td>
+	    <td class="fieldLabel" ><label for="variability">Variability:</label></td>
+	    <td><input id="variability" name="variability" type="text" onkeyup="runCalculation()"
+		      value="${estimate.variability}" /></td>
 	  </tr>
 	  <tr>
-	    <td ><label for="communication">Communication</label></td>
-	    <td><input id="communication" type="text" onkeyup="runCalculation()" value="${estimate.communication}" /></td>
+	    <td class="fieldLabel" ><label for="communication">Communication:</label></td>
+	    <td><input id="communication" name="communication" type="text" onkeyup="runCalculation()"
+		      value="${estimate.communication}" /></td>
 	  </tr>
 	</table>
 
 
-	<table border="0" cellpadding="3" cellspacing="0" >
-	  <tr id="header">
+	<table border="0" cellpadding="3" cellspacing="1" >
+	  <tr id="lineItemheader" >
 	    <th>Description</th>
 	    <th>Low </th>
 	    <th>High </th>
@@ -59,30 +64,30 @@
 	  <!-- Item Rows Go Here -->
 
 	  <tr id="lineItemFooter">
-	    <th>Total:</th>
-	    <td id="lowTotal" ></td>
-	    <td id="highTotal"></td>
-	    <td id="aveTotal"></td>
+	    <th class="fieldLabel" >Total:</th>
+	    <td id="lowTotal" class="numberCell" ></td>
+	    <td id="highTotal" class="numberCell"></td>
+	    <td id="aveTotal" class="numberCell"></td>
 	    <td>&nbsp; </td>
 	  </tr>
 	  <tr>
-	    <th>Adjusted Hours:</th>
-	    <td id="lowAdjusted"></td>
-	    <td id="highAdjusted"></td>
-	    <td id="aveAdjusted"></td>
+	    <th class="fieldLabel">Adjusted Hours:</th>
+	    <td id="lowAdjusted" class="numberCell" ></td>
+	    <td id="highAdjusted" class="numberCell" ></td>
+	    <td id="aveAdjusted" class="numberCell" ></td>
 	    <td>&nbsp; </td>
 	  </tr>
 	  <tr>
-	    <th>Cost:</th>
-	    <td id="lowCost"></td>
-	    <td id="highCost"></td>
-	    <td id="aveCost"></td>
+	    <th class="fieldLabel">Cost:</th>
+	    <td id="lowCost" class="numberCell" ></td>
+	    <td id="highCost" class="numberCell" ></td>
+	    <td id="aveCost" class="numberCell" ></td>
 	    <td>&nbsp; </td>
 	  </tr>
 	</table>
 	<script language="javascript" >
 	   var lineItems = ${estimate.lineItems};
-	   loadLineItems( );
+	   loadLineItems();
 	   newLineItem();
 	</script >
 	<button onclick="newLineItem();return false;">new row</button>

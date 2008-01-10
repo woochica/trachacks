@@ -13,18 +13,18 @@ function lineItemRow (lineitem){
       if (lineitem[str]) return lineitem[str];
       else return "";
    }
-   var $$ = document.getElementById;
+
    var tr = cn('tr', {},
 	     cn('td', {},
-		cn('textarea', {id:uid("description"), rows:2, cols:30},
+		cn('textarea', {id:uid("description"), name:uid("description"), cols:30, style:"height: 34px;"},
                    valFn('description'))),
 	     cn('td', { valign:'top'},
-		cn('input', {id:uid('low'), type:'text', style:"width:80px;", 
+		cn('input', {id:uid('low'),name:uid('low'), type:'text', style:"width:80px;", 
 			 value: valFn('low'), onkeyup:'runCalculation()'})),
 	     cn('td', {valign:'top'},
-		cn('input', {id:uid('high'), type:'text', style:"width:80px;"
+		cn('input', {id:uid('high'), name:uid('high'),type:'text', style:"width:80px;"
 			 , value: valFn('high'), onkeyup:'runCalculation()'})),
-	     cn('td', {id:uid('ave'), valign:'top', style:"width:80px;"}),
+	     cn('td', {id:uid('ave'), 'class':"numberCell", valign:'top', style:"width:80px;"}),
 	     cn('td', {id:uid('buttons'),valign:'top'},
 	        cn('button',{onclick:'removeLineItem(this);return false;'},'remove')));
    tr.item = lineitem;
@@ -41,21 +41,30 @@ function newLineItem(){
    foot.parentNode.insertBefore(tr, foot);
 }
 
-function makeMultiplierAccessor(id){
+function makeNumberAccessor(id, def){
    return function(){
       var str = $$(id).value.trim();
-      if (str.length == 0) return 1;
+      if (str.length == 0) return def;
       var val = Number(str);
-      if (isNaN(val)) return 1;
+      if (isNaN(val)) return def;
       return val;
    }
 }
 
-var rate = makeMultiplierAccessor('rate');
-var variability = makeMultiplierAccessor('variability');
-var communication = makeMultiplierAccessor('communication');
+var rate = makeNumberAccessor('rate', 1);
+var variability = makeNumberAccessor('variability', 1);
+var communication = makeNumberAccessor('communication', 1);
 
-var lineItemValue
+var ave_no_zero = function (x, y){
+   if(x!=0 && y!=0){
+      var val = (x+y)/2;
+      return Math.round(val * 1000)/1000;
+   }
+   else if (x !=0) return x;
+   else return y;
+}
+
+
 function runCalculation(){
    var item, lowTotal=0, highTotal=0, lowAdjusted, highAdjusted,
       lowCost, highCost;
@@ -64,38 +73,40 @@ function runCalculation(){
 	 return _uid(item, str);
       }
       var valFn = function(str){
-	 var str = $$(uid(str)).value.trim();
-	 if (str.length == 0) return 0;
-	 var val = Number(str);
-	 if (isNaN(val)) return 0;
-	 return val;
+	 return makeNumberAccessor(uid(str), 0)();
       }
       var low = valFn('low');
       var high = valFn('high');
 
       lowTotal+=low;
       highTotal+=high;
-      $$(uid('ave')).innerHTML = (low+high)/2;
+      $$(uid('ave')).innerHTML = ave_no_zero(low, high);
    }
-   lowAdjusted = variability() * communication() * lowTotal ;
-   highAdjusted = variability() * communication() * highTotal ;
-   lowCost = rate() * lowAdjusted;
-   highCost = rate() * highAdjusted;
+   var adjust = function(num){
+      return Math.round(num*1000)/1000;
+   }
+   lowTotal = adjust(lowTotal);
+   highTotal = adjust(highTotal);
+   lowAdjusted = adjust(variability() * communication() * lowTotal);
+   highAdjusted = adjust(variability() * communication() * highTotal);
+   lowCost = adjust(rate() * lowAdjusted);
+   highCost = adjust(rate() * highAdjusted);
    $$('lowTotal').innerHTML = lowTotal;
    $$('highTotal').innerHTML = highTotal;
-   $$('aveTotal').innerHTML = (lowTotal+highTotal) / 2;
+   $$('aveTotal').innerHTML = ave_no_zero(lowTotal, highTotal);
    $$('lowAdjusted').innerHTML = lowAdjusted;
    $$('highAdjusted').innerHTML = highAdjusted;
-   $$('aveAdjusted').innerHTML = (lowAdjusted+highAdjusted) / 2;
+   $$('aveAdjusted').innerHTML = ave_no_zero(lowAdjusted, highAdjusted);
    $$('lowCost').innerHTML = lowCost;
    $$('highCost').innerHTML = highCost;
-   $$('aveCost').innerHTML = (lowCost+highCost) / 2;
+   $$('aveCost').innerHTML = ave_no_zero(lowCost, highCost);
 };
 
 function removeLineItem( btn ){
    var row = btn.parentNode.parentNode;
    lineItems.removeItem(row.item);   
    row.parentNode.removeChild(row);
+   runCalculation();
 }
 
 function loadLineItems( ){
