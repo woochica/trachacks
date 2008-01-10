@@ -9,6 +9,7 @@
 .numberCell{ 
   text-align:right;
   border:1px solid blue;
+  width:80px;
 }
 
 .fieldLabel{ 

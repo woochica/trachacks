@@ -86,17 +86,17 @@
 	  </tr>
 	</table>
 
-	<button onclick="newLineItem();return false;">new row</button>
+	<button id="newrow" onclick="newLineItem();return false;">new row</button>
 	<button onclick="runCalculation();return false;">refresh calculations</button>
-
-
-	  <div>
+	<br /><br />
+	<input type="submit" value="Save Estimate" />
+	<div>
 	    <h3>Comment Preview</h3>
 	    <div id="estimateoutput" >
 
 	    </div>
 	    <textarea id="comment" name="comment" style="display:none;"></textarea>
-	  </div>
+	</div>
 
 	<script language="javascript" >
 	   var lineItems = ${estimate.lineItems};
@@ -104,7 +104,7 @@
 	   newLineItem();
 	</script >
       </div>
-    <input type="submit" value="Save Estimate" />
+
     </form>
 </body>
 </html>

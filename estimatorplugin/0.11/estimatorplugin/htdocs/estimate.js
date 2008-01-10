@@ -5,6 +5,17 @@ var uid = function (lineitem, str){
 }
 var _uid = uid;// wrappable version;
 
+function enterMeansNewRow(event){
+   if(!event) event = window.event;
+   if(event.keyCode == 13){
+      var tr = newLineItem();
+      tr.cells[0].firstChild.focus();
+      tr.cells[0].firstChild.value="";
+      return false;
+   }
+   return true;
+}
+
 function lineItemRow (lineitem){
    var uid = function (str){
       return _uid(lineitem, str);
@@ -20,10 +31,12 @@ function lineItemRow (lineitem){
                    valFn('description'))),
 	     cn('td', { valign:'top'},
 		cn('input', {id:uid('low'),name:uid('low'), type:'text', style:"width:80px;", 
-			 value: valFn('low'), onkeyup:'runCalculation()'})),
+			 value: valFn('low'), onkeyup:'runCalculation()',
+			 onkeydown:'enterMeansNewRow(event)'})),
 	     cn('td', {valign:'top'},
-		cn('input', {id:uid('high'), name:uid('high'),type:'text', style:"width:80px;"
-			 , value: valFn('high'), onkeyup:'runCalculation()'})),
+		cn('input', {id:uid('high'), name:uid('high'),type:'text', style:"width:80px;",
+			 value: valFn('high'), onkeyup:'runCalculation()',
+			 onkeydown:'enterMeansNewRow(event)'})),
 	     cn('td', {id:uid('ave'), 'class':"numberCell", valign:'top', style:"width:80px;"}),
 	     cn('td', {id:uid('buttons'),valign:'top'},
 	        cn('button',{onclick:'removeLineItem(this);return false;'},'remove')));
@@ -39,6 +52,7 @@ function newLineItem(){
    lineItems.push(lineItem);
    var foot = $$('lineItemFooter');
    foot.parentNode.insertBefore(tr, foot);
+   return tr;
 }
 
 function makeNumberAccessor(id, def){

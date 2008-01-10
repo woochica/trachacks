@@ -51,7 +51,8 @@ class EstimatorSetupParticipant(Component):
                      rate DECIMAL,
                      variability DECIMAL,
                      communication DECIMAL,
-                     tickets VARCHAR(512)
+                     tickets VARCHAR(512),
+                     comment VARCHAR(8000)
                  )""",[]),
                 ("""CREATE TABLE estimate_line_item(
                      id integer PRIMARY KEY,

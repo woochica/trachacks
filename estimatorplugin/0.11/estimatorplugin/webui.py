@@ -34,7 +34,8 @@ class EstimationsPage(Component):
             addMessage('Invalid Id: %s' % req.args['id'])
             addMessage('Error: %s' % e)
     def line_item_hash_from_args(self, args):
-        not_line_items=['__FORM_TOKEN','tickets','variability','communication','rate', 'id']
+        not_line_items=['__FORM_TOKEN','tickets','variability','communication',
+                        'rate', 'id', 'comment']
         itemReg = re.compile(r"(\D+)(\d+)")
         lineItems = {}
         def lineItemHasher( value, name, id ):
@@ -56,7 +57,9 @@ class EstimationsPage(Component):
             else:
                 sql = estimateUpdate
 
-            estimate_args = [args['rate'], args['variability'], args['communication'], tickets, id]
+            estimate_args = [args['rate'], args['variability'],
+                             args['communication'], tickets,
+                             args['communication'], id]
             saveEstimate = (sql, estimate_args)
             saveLineItems = []
             newLineItemId = nextEstimateLineItemId ()
