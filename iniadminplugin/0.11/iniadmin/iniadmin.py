@@ -38,7 +38,7 @@ class IniAdminPlugin(Component):
             if modified:
                 self.env.log.debug("Updating trac.ini")
                 self.env.config.save()
-            req.redirect(self.env.href.admin(cat, page))
+            req.redirect(req.href.admin(cat, page))
 
 
         add_stylesheet(req, 'iniadmin/css/iniadmin.css')
