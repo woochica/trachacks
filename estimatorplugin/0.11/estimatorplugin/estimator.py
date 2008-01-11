@@ -38,3 +38,5 @@ WHERE estimate_id=%%s and id not in (%s)
 """
 
     
+def getHtmlEstimate(id):
+    return dbhelper.get_scalar("SELECT COMMENT FROM estimate WHERE ID=%s", 0, id)

@@ -1,6 +1,7 @@
 import re
 import dbhelper
 from webui import *
+from macro_provider import *
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant

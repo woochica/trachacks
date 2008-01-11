@@ -59,7 +59,7 @@ class EstimationsPage(Component):
 
             estimate_args = [args['rate'], args['variability'],
                              args['communication'], tickets,
-                             args['communication'], id]
+                             args['comment'], id]
             saveEstimate = (sql, estimate_args)
             saveLineItems = []
             newLineItemId = nextEstimateLineItemId ()
@@ -89,13 +89,13 @@ class EstimationsPage(Component):
             addMessage("Deleting NonExistant Estimate Rows: %r - %s" % (sql , id))
             
             result = dbhelper.execute_in_trans(saveEstimate,
-                                               (sql, id),
+                                               (sql, [id]),
                                                *saveLineItems)
             #will be true or Exception
             if result == True:
                 addMessage("Estimate Saved!")
             else:
-                addMessage("Failed to save! %s" % e)
+                addMessage("Failed to save! %s" % result)
             
         #except Exception, e:
         #    raise e

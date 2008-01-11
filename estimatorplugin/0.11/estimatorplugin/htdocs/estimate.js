@@ -24,7 +24,7 @@ function enterMeansNewRow(event){
 }
 
 function evenDeeperClone(node){
-   //firefox 2 has a bug where it wont clone textare values sometimes
+   //firefox 2 has a bug where it wont clone textarea values sometimes
    var kids = [];
    for(var i=0 ; kid=node.childNodes[i] ; i++)
       kids[i] = evenDeeperClone(kid);
