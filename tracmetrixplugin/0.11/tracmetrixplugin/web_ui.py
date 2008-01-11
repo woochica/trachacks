@@ -55,7 +55,7 @@ def get_project_tickets(env):
 
 def last_day_of_month(year, month):
     
-    return datetime(year, (month+1)%12 , 1, tzinfo=utc) - timedelta(days=1)
+    return datetime(year, (month%12)+1 , 1, tzinfo=utc) - timedelta(days=1)
 
 class PDashboard(Component):
 
