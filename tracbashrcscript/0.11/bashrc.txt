@@ -1,0 +1,341 @@
+export TRAC_BASE="$HOME/trac"
+export INSTALL_BASE="$TRAC_BASE/install"
+export NGINX_BASE="$TRAC_BASE/nginx"
+export DEFAULT_VERSION="trunk"
+export START_PORT="8080"
+
+# Reboot apache
+alias aprs="sudo /etc/init.d/apache2 graceful"
+alias ahup="sudo killall -HUP apache2"
+
+# Apache log
+function alog {
+    tail $@ /var/log/apache2/error_log
+}
+
+# Trac log
+function tlog {
+    if [ "$1" = "tracd" ]
+    then 
+        shift
+        tail "$@" "$INSTALL_BASE/$TRAC_VERSION/.tracd.log"
+    else
+        tail "$@" "$TRAC/log/trac.log"
+    fi
+}
+
+# Connect to trac db
+function tsql {
+    sqlite3 $TRAC/db/trac.db
+}
+
+# Remove compiled python files (make ls more readable)
+function rpyc {
+    rm -f *.pyc *.pyo
+}
+
+# Trac-admin
+function tadm {
+    trac-admin $TRAC $@
+}
+
+# Edit trac.ini
+function tini {
+    $EDITOR $TRAC/conf/trac.ini
+}
+
+# Find the nearest enclosing plugin directory
+function find_setup {
+    local DEPTH=$1 RECCHECK=0
+    while [ ! -f setup.py -a "$RECCHECK" -le "$DEPTH" ]
+    do
+        RECCHECK=$(( $RECCHECK + 1 ))
+        cd ..
+    done
+    if [ ! -f setup.py ]
+    then
+        echo "Unable to find setup.py"
+        return 1
+    else
+        return 0
+    fi
+}
+
+# Install a new version of a plugin
+function insp {
+    ( # Use a subshell to prevent the change dir from affecting our shell
+        if find_setup 4
+        then
+            python setup.py bdist_egg && \
+            cp dist/*.egg $INSTALL_BASE/$TRAC_VERSION/share/trac/plugins && \
+            tserver restart
+        fi
+    )
+}
+
+# Setup a plugin using setup.py develop
+function devp {
+    (
+    if find_setup 4
+    then
+        python setup.py develop -md $INSTALL_BASE/$TRAC_VERSION/share/trac/plugins && \
+        tserver restart
+    fi
+    )
+}
+
+# Clean a plugin build directory
+function cleanp {
+    (
+    if find_setup 4
+    then
+        sudo rm -rf build dist 
+        if [ -f *.egg-info/trac_plugin.txt ]
+        then
+            cd *.egg-info
+            rm -rf PKG-INFO  top_level.txt
+        else
+            rm -rf *.egg-info
+        fi
+    fi
+    )
+}
+
+# Upload a new version of a plugin to PyPI
+function uploadp {
+    (
+    if find_setup 4
+    then
+        python2.4 setup.py register sdist bdist_egg upload
+        python2.3 setup.py bdist_egg upload
+        python2.5 setup.py bdist_egg upload
+    fi
+    )
+} 
+
+# Run an interactive shell with some Trac defaults
+function tshell {
+    ipython "$TRAC_BASE/trac-shell.py"
+}
+
+# Remove a given path from a variable
+function _rm_path {
+    local var=$1 path=$2 newpath cont
+    eval cont=\$$var
+    newpath="$(IFS=":"; for p in $cont; do if [ "$p" != "$path" ]; then echo -n ":$p"; fi; done; )"
+    eval "export $var=\"\${newpath:1}\""
+}
+    
+# Setup system paths to interact with the given Trac version
+function tversion {
+    local ver=$1
+    if [ -z "$ver" ]
+    then
+        echo "$TRAC_VERSION"
+        return 0
+    fi
+    
+    if [ ! -d "$INSTALL_BASE/$ver" ]
+    then
+        echo "Unknown version $ver"
+        return 1
+    fi
+    
+    if [ ! -z "$TRAC_VERSION" ]
+    then
+        _rm_path PATH "$INSTALL_BASE/$TRAC_VERSION/bin"
+        _rm_path PYTHONPATH "$INSTALL_BASE/$TRAC_VERSION/lib/python2.4/site-packages"
+    fi
+    
+    export TRAC_VERSION="$ver"
+    export PATH="$INSTALL_BASE/$TRAC_VERSION/bin:$PATH"
+    export PYTHONPATH="$INSTALL_BASE/$TRAC_VERSION/lib/python2.4/site-packages:$PYTHONPATH"
+    tset main
+    
+    #export PYTHONPATH="$HOME/trac/install/$ver/lib/python2.4/site-packages:$(echo $PYTHONPATH | perl -F: -lane 'print for @F' | perl -lne 'print if ! m[trac/install]')"
+}
+
+# Completion function for tversion
+function _tversion {
+    if [ "$COMP_CWORD" -gt 1 ]
+    then
+        return 0
+    fi
+    
+    local cur opts
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="$(ls $INSTALL_BASE)"
+    
+    COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+    return 0
+}
+complete -F _tversion tversion
+
+# Use the given environment in other commands
+function tset {
+    local opt=$1 path rv
+    
+    if [ -z "$opt" ]
+    then
+        echo "$TRAC"
+        return 0
+    fi
+    
+    case $opt in
+        /*) path="$opt";;
+        .*) path="$(pwd)/$opt";;
+        *) path="$INSTALL_BASE/$TRAC_VERSION/tracs/$opt"
+    esac
+    path="$(cd $path 2>/dev/null; rv=$?; pwd; exit $rv)"
+    if [ "$?" != "0" ]
+    then
+        echo "$opt is not a valid Trac environment"
+        return 1
+    fi
+    
+    export TRAC="$path"
+}
+
+# Completion function for tset
+function _tset {
+    if [ "$COMP_CWORD" -gt 1 ]
+    then
+        return 0
+    fi
+
+    local cur opts
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="$(ls $INSTALL_BASE/$TRAC_VERSION/tracs)"
+
+    COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+    return 0
+}
+complete -F _tset tset
+
+# Control the nginx and tracd servers
+function tserver {
+    local action="$1" port="$START_PORT"
+    
+    # Lets make sure we are root
+    if [ "$USER" != "root" ]
+    then
+        sudo bash -c "source $TRAC_BASE/.bashrc; tserver $action"
+        return $?
+    fi
+    
+    case $action in
+        start)
+            # Check that we aren't running
+            if [ -f $TRAC_BASE/.server.running ]
+            then
+                echo "Server already started"
+                return 1
+            fi
+            
+            # Spawn tracds for each found version
+            echo "<html><head><title>Trac Development System</title></head><body>" >$TRAC_BASE/.www/index.html
+            echo -e "location /src {\n  alias $TRAC_BASE/plugins;\n  autoindex on;\n}" >$TRAC_BASE/.www/conf
+            for version in $INSTALL_BASE/*
+            do
+                (
+                tversion "$(basename $version)"
+                echo "Starting tracd for version $TRAC_VERSION on port $port"
+                tracd -p $port -r -e $version/tracs --base-path="$TRAC_VERSION" >$version/.tracd.log 2>&1 &
+                echo "<h3><a href=\"/$(basename $version)\">Trac $(basename $version)</a></h3><ul>" >>$TRAC_BASE/.www/index.html
+                for t in $version/tracs/*
+                do
+                    echo "<li><a href=\"/$(basename $version)/$(basename $t)\">$(basename $t)</li>" >>$TRAC_BASE/.www/index.html
+                done
+                echo "</ul>" >>$TRAC_BASE/.www/index.html
+                
+                # Output proxy directives
+                echo "location /$TRAC_VERSION {" >>$TRAC_BASE/.www/conf
+                echo "  proxy_pass http://127.0.0.1:$port;" >>$TRAC_BASE/.www/conf
+                echo "  include $NGINX_BASE/conf/proxy.conf;" >>$TRAC_BASE/.www/conf
+                echo "}" >>$TRAC_BASE/.www/conf
+                )
+                
+                port=$(($port + 1))
+            done
+            echo "</body></html>" >>$TRAC_BASE/.www/index.html
+        
+            # Start Nginx
+            echo "Starting Nginx"
+            $NGINX_BASE/sbin/nginx -c $NGINX_BASE/conf/nginx.conf
+            
+            # Mark that we are running
+            touch $TRAC_BASE/.server.running
+            ;;
+        stop)
+            # Check that we running
+            if [ ! -f $TRAC_BASE/.server.running ]
+            then
+                echo "Server not running"
+                return 1
+            fi
+        
+            # Stop each tracd
+            for version in $INSTALL_BASE/*
+            do
+                pids="$(ps -axwwo pid,command | grep $version/bin/tracd | grep -v grep | awk '{print $1}')"
+                if [ "$pids" ] 
+                then
+                    echo "Stoping tracd for version $(basename $version)"
+                    echo "$pids" | xargs kill
+                fi
+            done
+        
+            # Stop nginx
+            local nginx_pid="$(ps -axwwo pid,command | grep nginx | grep -v grep | awk '{print $1}')"
+            if [ ! -z "$nginx_pid" ]
+            then
+                echo "Stopping Nginx"
+                kill $nginx_pid
+            fi
+            
+            # Reset run control file
+            rm $TRAC_BASE/.server.running
+            ;;
+        restart)
+            tserver stop
+            tserver start
+            ;;
+        zap)
+            # Reset run control file
+            rm -f $TRAC_BASE/.server.running
+            ;;
+        status)
+            # Check status of the server
+            if [ -f $TRAC_BASE/.server.running ]
+            then
+                echo "Server is running"
+                return 0
+            else
+                echo "Server is not running"
+                return 1
+            fi
+            ;;
+    esac
+}
+
+# Completion function for tserver
+function _tserver {
+    if [ "$COMP_CWORD" -gt 1 ]
+    then
+        return 0
+    fi
+    
+    local cur opts
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="start stop restart status zap"
+    
+    COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+    return 0
+}
+complete -F _tserver tserver
+
+# Set a default active set
+if [ -z "$TRAC" ]
+then
+    tversion "$DEFAULT_VERSION"
+fi
