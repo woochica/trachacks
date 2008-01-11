@@ -105,7 +105,7 @@
 	<script language="javascript" >
 	   var lineItems = ${estimate.lineItems};
 	   loadLineItems();
-	   newLineItem();
+	   if(lineItems.length == 0) newLineItem();
 	</script >
       </div>
 

@@ -40,9 +40,6 @@ class EstimatorMacroProvider(Component):
         (since 0.11)
         """
         #try:
-        x = dir(self)
-        x.sort()
-        self.log.debug('what? : %s, %r' % (self, x))
         return self.estimate_macro(int(content), formatter.req)
         #except:
         #    return "Estimate Does Not Exist"

@@ -40,3 +40,8 @@ WHERE estimate_id=%%s and id not in (%s)
     
 def getHtmlEstimate(id):
     return dbhelper.get_scalar("SELECT COMMENT FROM estimate WHERE ID=%s", 0, id)
+
+estimateChangeTicketComment = """
+INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue)
+VALUES ( %s, %s, %s, 'estimate',  '', %s )
+"""
