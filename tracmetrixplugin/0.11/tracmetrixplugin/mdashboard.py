@@ -107,16 +107,16 @@ def collect_tickets_status_history(env, db, ticket_ids, milestone):
     str_ids = [str(x) for x in sorted(ticket_ids)]
     ticket_list = ",".join(str_ids)
     
-    sqlquery = "SELECT ticket.id, ticket.type, ticket.time, ticket.status, " \
+    sqlquery = "SELECT ticket.id AS tid, ticket.type, ticket.time, ticket.status, " \
                        "ticket_change.time, ticket.milestone, ticket_change.field, " \
                        "ticket_change.oldvalue, ticket_change.newvalue " \
                        "FROM ticket LEFT JOIN ticket_change ON ticket.id = ticket_change.ticket " \
                        "WHERE (ticket_change.field='status' " \
                        "OR ticket_change.field='milestone') AND ticket.id IN (%s) " \
-                       "UNION SELECT ticket.id, ticket.type, ticket.time, ticket.status, " \
+                       "UNION SELECT ticket.id AS tid, ticket.type, ticket.time, ticket.status, " \
                        "ticket.time, ticket.milestone, null, null, null FROM ticket " \
                        "WHERE ticket.time = ticket.changetime " \
-                       "AND ticket.id IN (%s) ORDER BY ticket.id" % (ticket_list, ticket_list)
+                       "AND ticket.id IN (%s) ORDER BY tid" % (ticket_list, ticket_list)
         
 #    sqlquery = "SELECT ticket.id, ticket.type, ticket.time, ticket.status, " \
 #                   "ticket.time as changetime, null, null, null FROM ticket " \
