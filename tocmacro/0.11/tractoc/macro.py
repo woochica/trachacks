@@ -205,4 +205,4 @@ class TOCMacro(WikiMacroBase):
                          params['min_depth'], params['max_depth'])
         else:
             ol.append(system_message('Error: Page %s does not exist' %
-                                     pagename))
+                                     page_resource.id))
