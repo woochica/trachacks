@@ -100,5 +100,5 @@ class TicketTagProvider(Component):
     # Private methods
     def _ticket_tags(self, ticket):
         split_into_tags = TagSystem(self.env).split_into_tags
-        return self.split_into_tags(
+        return split_into_tags(
             ' '.join(filter(None, [ticket[f] for f in self.fields])))
