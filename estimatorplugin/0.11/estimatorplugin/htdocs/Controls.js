@@ -43,6 +43,14 @@ if(!ADW.Controls)
 	    setAttr(_node, item, attribs[item]);
 	 }
       }
+      var append = function( toApp ){
+	 if(toApp.constructor && toApp.constructor == Array){
+	    var kid;
+	    for(var i=0 ; kid = toApp[i] ; i++) append(kid);
+	 }
+	 else
+	    _node.appendChild(toApp);
+      }
       for( var i=2 ; i < arguments.length ; i++ ){
 	 var _x = arguments[i];
 	 var hasHTMLEscape;
@@ -55,9 +63,7 @@ if(!ADW.Controls)
 	       _node.innerHTML = _node.innerHTML.replace(/&amp;/igm, '&');
 	    }
 	 }
-	 else
-	    _node.appendChild(_x);
-		
+	 else append(_x);
       }
       return _node;
    };

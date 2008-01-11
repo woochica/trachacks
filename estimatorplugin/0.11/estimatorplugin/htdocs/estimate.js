@@ -23,6 +23,21 @@ function enterMeansNewRow(event){
    return true;
 }
 
+function evenDeeperClone(node){
+   //firefox 2 has a bug where it wont clone textare values sometimes
+   var kids = [];
+   for(var i=0 ; kid=node.childNodes[i] ; i++)
+      kids[i] = evenDeeperClone(kid);
+   var newNode;
+   var hsh = {style: node.style ? node.style.cssText : "", 'class': node.className};
+   if (node.value) hsh.value = node.value;
+   if (node.type && node.type!='textarea') hsh.type = node.type
+
+   if (node.tagName) newNode = cn(node.tagName, hsh, kids);
+   else newNode = node.cloneNode(true);
+   return newNode;
+}
+
 function lineItemRow (lineitem){
    var uid = function (str){
       return _uid(lineitem, str);
@@ -39,11 +54,11 @@ function lineItemRow (lineitem){
 	     cn('td', { valign:'top'},
 		cn('input', {id:uid('low'),name:uid('low'), type:'text', style:"width:80px;", 
 			 value: valFn('low'), onkeyup:'runCalculation()',
-			 onkeydown:'enterMeansNewRow(event)'})),
+			 onkeydown:'return enterMeansNewRow(event)'})),
 	     cn('td', {valign:'top'},
 		cn('input', {id:uid('high'), name:uid('high'),type:'text', style:"width:80px;",
 			 value: valFn('high'), onkeyup:'runCalculation()',
-			 onkeydown:'enterMeansNewRow(event)'})),
+			 onkeydown:'return enterMeansNewRow(event)'})),
 	     cn('td', {id:uid('ave'), 'class':"numberCell", valign:'top', style:"width:80px;"}),
 	     cn('td', {id:uid('buttons'),valign:'top'},
 	        cn('button',{onclick:'removeLineItem(this);return false;'},'remove')));
@@ -132,9 +147,12 @@ function removeLineItem( btn ){
 }
 function removeInputsAndIds(parent){
    if(!parent.tagName) return;
-   if (parent.id) parent.id = "";
    var name = parent.tagName.toLowerCase();
-   if(name == "input" || name == "textarea"){
+   if(name == "input"){
+      parent.parentNode.innerHTML = parent.value;
+   }
+   else if(name == "textarea"){
+      //alert(parent.parentNode.innerHTML);
       parent.parentNode.innerHTML = parent.value;
    }
    else if (name == "button"){
@@ -145,6 +163,7 @@ function removeInputsAndIds(parent){
 	 removeInputsAndIds(node);
       }
    }
+   if (parent.id) parent.id = "";
    return parent;
 }
 function removeFirstRow( elem ){
@@ -165,9 +184,9 @@ function removeFirstRow( elem ){
 function preparePreview(){
    var preview = $$('estimateoutput');
    while(preview.childNodes.length > 0) preview.removeChild(preview.firstChild);
-   preview.appendChild(removeFirstRow(removeInputsAndIds($$('estimateParams').cloneNode(true))));
-   preview.appendChild(removeInputsAndIds($$('estimateBody').cloneNode(true)));
-   $$('comment').innerHTML = preview.innerHTML;
+   preview.appendChild(removeFirstRow(removeInputsAndIds(evenDeeperClone($$('estimateParams')))));
+   preview.appendChild(removeInputsAndIds(evenDeeperClone($$('estimateBody'))));
+   $$('comment').value = preview.innerHTML;
 }
 
 function loadLineItems() {

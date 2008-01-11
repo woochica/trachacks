@@ -68,8 +68,8 @@ def get_scalar(sql, col=0, *params):
 
 def execute_in_trans(*args):
     db = env.get_db_cnx()
-    success = True
     cur = db.cursor()
+    result = True
     try:
         for sql, params in args:
             cur.execute(sql, params)
@@ -78,12 +78,12 @@ def execute_in_trans(*args):
         mylog.error('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
-        success = False
+        result = e
     try:
         db.close()
     except:
         pass
-    return success
+    return result
 
 def db_table_exists( table):
     db = env.get_db_cnx()
