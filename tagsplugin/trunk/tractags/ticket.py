@@ -12,7 +12,7 @@ from tractags.api import ITagProvider
 from trac.ticket.model import Ticket
 from trac.util.text import to_unicode
 from trac.util.compat import set, sorted
-from trac.config import ListOption
+from trac.config import *
 from trac.resource import Resource
 
 
@@ -25,6 +25,9 @@ class TicketTagProvider(Component):
 
     fields = ListOption('tags', 'ticket_fields', 'keywords',
         doc='List of ticket fields to expose as tags.')
+
+    ignore_closed_tickets = BoolOption('tags', 'ignore_closed_tickets', True,
+        'Do not collect tags from closed tickets.')
 
 #    custom_fields = ListOption('tags', 'custom_ticket_fields',
 #        doc='List of custom ticket fields to expose as tags.')
@@ -41,8 +44,14 @@ class TicketTagProvider(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         args = []
-        sql = "SELECT * FROM (SELECT id, %s, %s AS fields FROM ticket) s" % (','.join(self.fields),
-            '||'.join(["COALESCE(%s, '')" % f for f in self.fields]))
+        fields = self.fields
+        ignore = ''
+        if self.ignore_closed_tickets:
+            ignore = " WHERE status != 'closed'"
+        sql = "SELECT * FROM (SELECT id, %s, %s AS fields FROM ticket%s) s" % (
+            ','.join(self.fields),
+            '||'.join(["COALESCE(%s, '')" % f for f in self.fields]),
+            ignore)
         constraints = []
         if tags:
             constraints.append(
@@ -54,6 +63,7 @@ class TicketTagProvider(Component):
         if constraints:
             sql += " WHERE " + " AND ".join(constraints)
         sql += " ORDER BY id"
+        self.env.log.debug(sql)
         cursor.execute(sql, args)
         for row in cursor:
             id, ttags = row[0], ' '.join([f for f in row[1:-1] if f])
