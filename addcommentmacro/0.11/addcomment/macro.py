@@ -8,11 +8,13 @@ from trac.core import *
 from trac.wiki.formatter import format_to_html
 from trac.util import TracError
 from trac.util.text import to_unicode
-from trac.web.chrome import add_link, add_script
-from trac.wiki.api import parse_args
+from trac.web.api import IRequestFilter, RequestDone
+from trac.web.chrome import add_script
+from trac.wiki.api import parse_args, IWikiMacroProvider
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
 
+from macropost.api import IMacroPoster
 
 class AddCommentMacro(WikiMacroBase):
     """A macro to add comments to a page. Usage:
@@ -25,7 +27,8 @@ class AddCommentMacro(WikiMacroBase):
     [[AddComment(appendonly)]]
     }}}
     """
-    
+    implements(IWikiMacroProvider, IRequestFilter, IMacroPoster)
+
     def expand_macro(self, formatter, name, content):
         
         args, kw = parse_args(content)
@@ -108,9 +111,15 @@ class AddCommentMacro(WikiMacroBase):
                 newtext += line+"\n"
             if submitted:
                 page.text = newtext
-                page.save(authname, 'Comment added', req.environ['REMOTE_ADDR'])
-                req.warning("Comment saved.")
-                req.redirect(page_url)
+                page.save(authname, 'Comment added.', req.environ['REMOTE_ADDR'])
+                # We can't redirect from macro as it will raise RequestDone
+                # which like other macro errors gets swallowed in the Formatter.
+                # We need to re-raise it in a post_process_request instead.
+                try:
+                    req._outheaders = []
+                    req.redirect(page_url)
+                except RequestDone:
+                    req.addcomment_raise = True
             else:
                 the_message = tag.div(tag.strong("ERROR: "), "[[AddComment]] "
                           "macro call must be the only content on its line. "
@@ -159,6 +168,18 @@ class AddCommentMacro(WikiMacroBase):
         
         return tag.div(the_preview, the_message, the_form, id="commenting")
     
+    # IMacroPoster method
+    
     def process_macro_post(self, req):
         self.log.debug('AddCommentMacro: Got a POST')
 
+    # IRequestFilter methods
+
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if hasattr(req, 'addcomment_raise'):
+            self.env.log.debug("AddCommentMacro: Re-raising RequestDone from redirect")
+            raise RequestDone
+        return template, data, content_type
