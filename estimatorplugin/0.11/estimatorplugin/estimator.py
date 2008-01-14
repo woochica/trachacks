@@ -43,5 +43,5 @@ def getHtmlEstimate(id):
 
 estimateChangeTicketComment = """
 INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue)
-VALUES ( %s, %s, %s, 'estimate',  '', %s )
+VALUES ( %s, %s, %s, 'comment', %s, '' )
 """
