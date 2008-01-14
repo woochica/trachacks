@@ -40,7 +40,7 @@ class BreadCrumbsSystem(Component):
         return crumbs
         
     def post_process_request(self, req, template, data, content_type):
-        if self.compiled_ignore_pattern is None:
+        if self.compiled_ignore_pattern is None and self.ignore_pattern:
             self.compiled_ignore_pattern = re.compile(self.ignore_pattern)
             
         try:
