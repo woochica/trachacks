@@ -6,6 +6,7 @@ from trac.db import DatabaseManager
 from trac.env import IEnvironmentSetupParticipant
 
 from boxdb import db_default
+from boxdb.compat import simplejson
 
 class IDocumentPropertyRenderer(Interface):
     """Extension point interface for handling document properties."""
@@ -29,6 +30,19 @@ class BoxDBSystem(Component):
         for renderer in self.renderers:
             for name in renderer.get_properties():
                 self.renderers_map[name] = renderer
+
+    # Public methods
+    def get_documents(self, type=None, db=None):
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        if type is None:
+            cursor.execute('SELECT DISTINCT name FROM boxdb')
+        else:
+            cursor.execute('SELECT DISTINCT name FROM boxdb WHERE ')
+        
+        for document, in cursor:
+            yield document
 
     # IEnvironmentSetupParticipant methods
     def environment_created(self):

@@ -5,12 +5,8 @@ from datetime import datetime
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.compat import set
 
-try:
-    import simplejson
-except ImportError:
-    import _simplejson as simplejson
-
 from boxdb.api import BoxDBSystem
+from boxdb.compat import simplejson
 
 class Document(dict):
     """A single document in the database."""
@@ -49,7 +45,7 @@ class Document(dict):
         type = self._get_db(cursor, name, '__type__')
         if type:
             # Fetch and decode collection
-            type = simplejson.loads(type[0])
+            type = simplejson.loads(type)
             if type == self.name:
                 raise ValueError('Document cannot be its own type')
             self.type = type
@@ -57,7 +53,7 @@ class Document(dict):
             # Process inheritance
             inherit = self._get_db(cursor, name, '__inherit__')
             if inherit:
-                inherit = simplejson.loads(inherit[0])
+                inherit = simplejson.loads(inherit)
                 self._fetch(inherit, db)
             
             cursor.execute('SELECT  key, value FROM boxdb WHERE name=%s',
@@ -69,7 +65,11 @@ class Document(dict):
         """Get an iterable of raw values for a key in this document."""
         cursor.execute('SELECT value FROM boxdb WHERE name=%s AND key=%s',
                        (name, key))
-        return cursor.fetchone()
+        val = cursor.fetchone()
+        if val is None:
+            return val
+        else:
+            return val[0]
 
     def save(self, db=None):
         """Save the changes to the current document."""
