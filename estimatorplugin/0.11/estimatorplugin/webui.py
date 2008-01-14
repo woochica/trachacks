@@ -60,7 +60,7 @@ class EstimationsPage(Component):
                      [t,
                       to_timestamp(datetime.datetime.now(utc)),
                       req.authname,
-                      "<del>%s</del>" % comment])
+                      "{{{\n#!html\n<del>%s</del>\n}}}" % comment])
                     for t in tickets]
         except Exception, e:
             self.log.error("Error saving old ticket changes: %s" % e)
