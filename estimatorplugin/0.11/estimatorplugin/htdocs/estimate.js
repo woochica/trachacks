@@ -25,27 +25,17 @@ function enterMeansNewRow(event){
 
 function evenDeeperClone(node){
    //firefox 2 has a bug where it wont clone textarea values sometimes
-   var kids = [], kid;
-   
-   for(var i=0 ; kid=node.childNodes[i] ; i++)
-      kids[i] = evenDeeperClone(kid);
-   var newNode;
-   var hsh = {style: node.style ? node.style.cssText : "", 'class': node.className};
-   var name, params = ['value','width','cellpadding','cellspacing', 'border'];
-   for(var i=0 ; name = params[i];i++){
-      if (node[name] && node[name].length > 0) hsh[name] = node[name];
-   }
-   if (node.type && node.type!='textarea') hsh.type = node.type
-   if (node.tagName) newNode = cn(node.tagName, hsh, kids);
-   else
-      newNode = node.cloneNode(true);
-   /*
-   newNode = node.cloneNode(false);
+   var kid, cloned;
+   var newNode = node.cloneNode(false);
    for(var i=0 ; kid=node.childNodes[i] ; i++){
-      var cloned = evenDeeperClone(kid);
+      if(kid.tagName && kid.tagName.toLowerCase()=='textarea'){
+	 cloned = cn('textarea');
+	 cloned.value = kid.value;
+      }else{
+	 cloned = evenDeeperClone(kid);
+      } 
       newNode.appendChild(cloned);
    }
-   */
    return newNode;
 }
 
