@@ -194,13 +194,13 @@ class EstimationsPage(Component):
         if req.args.has_key('id') and req.args['id'].strip() != '':
             self.load(int(req.args['id']), addMessage, data)
 
-
+        req.hdf["estimate"] = data["estimate"]
         add_script(req, "Estimate/JSHelper.js")
         add_script(req, "Estimate/Controls.js")
         add_script(req, "Estimate/estimate.js")
         add_stylesheet(req, "Estimate/estimate.css")
-        #return 'estimate.cs', 'text/html'
-        return 'estimate.html', data, None
+        return 'estimate.cs', 'text/html'
+        #return 'estimate.html', data, None
 
     # ITemplateProvider
     def get_htdocs_dirs(self):

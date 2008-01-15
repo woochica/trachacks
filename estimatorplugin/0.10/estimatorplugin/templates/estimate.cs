@@ -10,90 +10,86 @@
 	  <?cs /each ?>
 	</div>
 
-	<table border="0" cellpadding="3" cellspacing="0" >
+	<table border="0" cellpadding="3" cellspacing="0" id="estimateParams" >
 	  <tr>
-	    <td ><label for="tickets">Ticket Numbers:</label></td>
-	    <td><input id="tickets" type="text" /></td>
+	    <td class="fieldLabel" ><label for="tickets">Ticket Numbers:</label></td>
+	    <td><input id="tickets" name="tickets" type="text"
+		      value="<?cs var:estimate.tickets ?>"
+		      onkeydown="return enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
-	    <td ><label for="rate">Rate</label></td>
-	    <td><input id="rate" type="text" /></td>
+	    <td class="fieldLabel" ><label for="rate">Rate:</label></td>
+	    <td><input id="rate" name="rate" type="text" onkeyup="runCalculation()"
+		      value="<?cs var:estimate.rate?>"
+		      onkeydown="return enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
-	    <td ><label for="variability">Variability</label></td>
-	    <td><input id="variability" type="text" /></td>
+	    <td class="fieldLabel" ><label for="variability">Variability:</label></td>
+	    <td><input id="variability" name="variability" type="text" onkeyup="runCalculation()"
+		      value="<?cs var:estimate.variability?>"
+		      onkeydown="return enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
-	    <td ><label for="communication">Communication</label></td>
-	    <td><input id="communication" type="text" /></td>
+	    <td class="fieldLabel" ><label for="communication">Communication:</label></td>
+	    <td><input id="communication" name="communication" type="text" onkeyup="runCalculation()"
+		      value="<?cs var:estimate.communication?>"
+		      onkeydown="return enterMeansNothing(event)" /></td>
 	  </tr>
 	</table>
 
-	<script language="javascript" >
-	  var cn = ADW.Controls.createNode;
-	  var lineItems
-	  function lineItemRow (lineitem){
-	    var uid = function (str){
-              return uid+lineitem.id;
-	    }
-	    var valFn = function(str){
-	      if (lineitem[str]) return lineitem[str];
-	      else return "";
-	    }
-	    return cn('tr', {},
-	      cn('td', {},
-                 cn('textarea', {id:uid("description")},
-                   valFn('description'))),
-    	      cn('td', {},
-                 cn('input', {id:uid('low'), type:'text', value: valFn('low')})),
 
-    	      cn('td', {},
-                 cn('input', {id:uid('high'), type:'text', value: valFn('high')})),
-    	      cn('td', {id:uid('ave')},
-                 ))
-	  }
-	</script >
-
-	<table border="0" cellpadding="3" cellspacing="0" >
-	  <tr id="header">
+	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" width="660" >
+	  <tr id="lineItemheader" >
 	    <th>Description</th>
 	    <th>Low </th>
 	    <th>High </th>
 	    <th>Ave </th>
+	    <th></th>
 	  </tr>
-	  
-	  <!-- Item Rows Go Here -->
 
-	  <tr id="footer">
-	    <th>Total:</th>
-	    <td id="lowTotal" ></td>
-	    <td id="highTotal"></td>
-	    <td id="aveTotal"></td>
+
+	  <tr id="lineItemFooter">
+	    <th class="fieldLabel" >Total:</th>
+	    <td id="lowTotal" class="numberCell" ></td>
+	    <td id="highTotal" class="numberCell"></td>
+	    <td id="aveTotal" class="numberCell"></td>
+	    <td></td>
 	  </tr>
 	  <tr>
-	    <th>Adjusted Hours:</th>
-	    <td id="lowAdjusted"></td>
-	    <td id="highAdjusted"></td>
-	    <td id="aveAdjusted"></td>
+	    <th class="fieldLabel">Adjusted Hours:</th>
+	    <td id="lowAdjusted" class="numberCell" ></td>
+	    <td id="highAdjusted" class="numberCell" ></td>
+	    <td id="aveAdjusted" class="numberCell" ></td>
+	    <td></td>
 	  </tr>
 	  <tr>
-	    <th>Cost:</th>
-	    <td id="lowCost"></td>
-	    <td id="highCost"></td>
-	    <td id="aveCost"></td>
+	    <th class="fieldLabel">Cost:</th>
+	    <td id="lowCost" class="numberCell" ></td>
+	    <td id="highCost" class="numberCell" ></td>
+	    <td id="aveCost" class="numberCell" ></td>
+	    <td></td>
 	  </tr>
 	</table>
 
-<!--
+	<button id="newrow" onclick="newLineItem();return false;">new row</button>
+	<button onclick="runCalculation();return false;">refresh calculations</button>
+	<br /><br />
+	<input type="submit" value="Save Estimate" onclick="runCalculation();this.form.submit();return false;" />
 	<div>
-	  <h3>Comment Preview</h3>
-	  <div id="estimateoutput" >
-	    
-	  </div>
+	    <h3>Comment Preview</h3>
+	    <div id="estimateoutput" >
+
+	    </div>
+	    <textarea id="comment" name="comment" style="display:none;"></textarea>
 	</div>
--->
+
+	<script language="javascript" >
+	   var lineItems = <?cs var:estimate.lineItems?>;
+	   loadLineItems();
+	   if(lineItems.length == 0) newLineItem();
+	</script >
       </div>
-    <input type="submit" >Save Estimate</input>   
+
     </form>
 <?cs include "footer.cs"?>
     
