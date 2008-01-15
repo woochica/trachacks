@@ -56,7 +56,7 @@
 	</table>
 
 
-	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" >
+	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" width="660" >
 	  <tr id="lineItemheader" >
 	    <th>Description</th>
 	    <th>Low </th>
@@ -93,7 +93,7 @@
 	<button id="newrow" onclick="newLineItem();return false;">new row</button>
 	<button onclick="runCalculation();return false;">refresh calculations</button>
 	<br /><br />
-	<input type="submit" value="Save Estimate" />
+	<input type="submit" value="Save Estimate" onclick="runCalculation();this.form.submit();return false;" />
 	<div>
 	    <h3>Comment Preview</h3>
 	    <div id="estimateoutput" >

@@ -31,7 +31,10 @@ function evenDeeperClone(node){
       kids[i] = evenDeeperClone(kid);
    var newNode;
    var hsh = {style: node.style ? node.style.cssText : "", 'class': node.className};
-   if (node.value) hsh.value = node.value;
+   var name, params = ['value','width','cellpadding','cellspacing', 'border'];
+   for(var i=0 ; name = params[i];i++){
+      if (node[name] && node[name].length > 0) hsh[name] = node[name];
+   }
    if (node.type && node.type!='textarea') hsh.type = node.type
    if (node.tagName) newNode = cn(node.tagName, hsh, kids);
    else
