@@ -4,7 +4,7 @@ from datetime import *
 
 from trac.core import *
 from trac.perm import PermissionError
-from trac.web.chrome import add_stylesheet, add_script
+from trac.web.chrome import add_stylesheet, add_script, add_ctxtnav
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
@@ -85,6 +85,18 @@ class DiscussionApi(Component):
         self.data['mode'] = modes[-1]
         self.data['time'] = format_datetime(datetime.now(utc))
         self.data['realm'] = context.resource.realm
+
+        # Add context navigation.
+        if forum:
+            add_ctxtnav(context.req, 'Forum Index',
+              context.req.href.discussion())
+        if topic:
+            add_ctxtnav(context.req, forum['name'],
+              context.req.href.discussion(forum['id']), forum['name'])
+        if message:
+            add_ctxtnav(context.req, topic['subject'],
+              context.req.href.discussion(forum['id'], topic['id']),
+              topic['subject'])
 
         # Add CSS styles and scripts.
         add_stylesheet(context.req, 'common/css/wiki.css')

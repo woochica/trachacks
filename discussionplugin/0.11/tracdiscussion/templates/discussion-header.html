@@ -1,23 +1,2 @@
 <html xmlns:py="http://genshi.edgewall.org/" py:strip="">
-  <div id="ctxtnav" class="nav">
-    <h2>Discussion Navigation</h2>
-    <ul py:if="discussion.forum">
-      <li py:if="discussion.forum" class="${discussion.topic and None or 'last'}">
-        <a href="${href.discussion()}">
-          Forum Index
-        </a>
-      </li>
-      <li py:if="discussion.topic" class="${discussion.message and None or 'last'}">
-        <a href="${href.discussion(discussion.forum.id)}">
-          <span>${discussion.forum.subject}</span>
-        </a>
-      </li>
-      <li py:if="discussion.message" class="last">
-        <a href="${href.discussion(discussion.forum.id, discussion.topic.id)}">
-          <span>${discussion.topic.subject}</span>
-        </a>
-      </li>
-    </ul>
-    <hr/>
-  </div>
 </html>
