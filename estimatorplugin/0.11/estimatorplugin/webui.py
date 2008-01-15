@@ -58,7 +58,9 @@ class EstimationsPage(Component):
             self.log.debug('Notifying old tickets of estimate change: %s' % tickets)
             return [(estimateChangeTicketComment,
                      [t,
-                      to_timestamp(datetime.datetime.now(utc)),
+                    #there were problems if we update the same tickets comment in the same tick
+                    # so we subtract an arbitrary tick to get around this
+                      to_timestamp(datetime.datetime.now(utc)) - 1,
                       req.authname,
                       "{{{\n#!html\n<del>%s</del>\n}}}" % comment])
                     for t in tickets]
@@ -78,8 +80,9 @@ class EstimationsPage(Component):
                     ticket['description'] = ticket['description']+'\n----\n'+tag
                     ticket.save_changes(req.authname, 'added estimate')
             return True
-        except:
-            addMessage("Tickets must be numbers")
+        except Exception, e:
+            self.log.error("Error saving new ticket changes: %s" % e)  
+            addMessage("Error: %s"  % e)
             return None
                   
         
@@ -139,8 +142,8 @@ class EstimationsPage(Component):
             result = dbhelper.execute_in_trans(*sqlToRun)
             #will be true or Exception
             if result == True:
-                addMessage("Estimate Saved!")
                 if self.notify_new_tickets( req, id, tickets, addMessage):
+                    addMessage("Estimate Saved!")
                     req.redirect(req.href.Estimate()+'?id=%s'%id)
             else:
                 addMessage("Failed to save! %s" % result)
@@ -158,10 +161,12 @@ class EstimationsPage(Component):
             return ""
 
     def get_navigation_items(self, req):
+        # for tickets with only old estimates on them, we would still like to apply style
         url = req.href.Estimate()
+        style = req.href.chrome('Estimate/estimate.css')
         yield 'mainnav', "Estimate", \
-              Markup('<a href="%s">%s</a>' %
-                     (url , "Estimate"))
+              Markup('<a href="%s">%s</a><link type="text/css" href="%s" rel="stylesheet">' %
+                     (url , "Estimate", style))
 
     # IRequestHandler methods
     def match_request(self, req):
