@@ -1,9 +1,158 @@
+import re
+import dbhelper
+from pkg_resources import resource_filename
+from trac.core import *
+from trac.web import IRequestHandler
+from trac.util import Markup
+from trac.web.chrome import add_stylesheet, add_script, \
+     INavigationContributor, ITemplateProvider
+from trac.web.href import Href
+from estimator import *
+from trac.ticket import Ticket
+import datetime
+from trac.util.datefmt import utc, to_timestamp
 
 class EstimationsPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
     def __init__(self):
         pass
+    def load(self, id, addMessage, data):
+        try:
+            data["estimate"]["id"] = id
+            estimate_rs = getEstimateResultSet(id)
+            if estimate_rs:
+                data["estimate"]["id"] = id
+                data["estimate"]["rate"] = estimate_rs.value("rate", 0)
+                data["estimate"]["tickets"] = estimate_rs.value("tickets", 0)
+                data["estimate"]["variability"] = estimate_rs.value("variability", 0)
+                data["estimate"]["communication"] = estimate_rs.value("communication", 0)
+                rs = getEstimateLineItemsResultSet(id)
+                if rs:
+                    data["estimate"]["lineItems"] = rs.json_out()
+            else:
+                addMessage('Cant Find Estimate Id: %s' % id)
+        except Exception, e:
+            addMessage('Invalid Id: %s' % id)
+            addMessage('Error: %s' % e)
+            
+    def line_item_hash_from_args(self, args):
+        not_line_items=['__FORM_TOKEN','tickets','variability','communication',
+                        'rate', 'id', 'comment']
+        itemReg = re.compile(r"(\D+)(\d+)")
+        lineItems = {}
+        def lineItemHasher( value, name, id ):
+            if not lineItems.has_key(id):
+                lineItems[id] = {}
+            lineItems[id][name] = value
+        [lineItemHasher( item[1], *itemReg.match( item[0] ).groups())
+         for item in args.items()
+         if not(not_line_items.__contains__(item[0]))]
+        return lineItems
 
+    def notify_old_tickets(self, req, id, addMessage, changer):
+        try:
+            estimate_rs = getEstimateResultSet(id)
+            tickets = estimate_rs.value('tickets', 0)
+            comment = estimate_rs.value('comment', 0)
+            tickets = [int(t.strip()) for t in tickets.split(',')]
+            self.log.debug('Notifying old tickets of estimate change: %s' % tickets)
+            return [(estimateChangeTicketComment,
+                     [t,
+                    #there were problems if we update the same tickets comment in the same tick
+                    # so we subtract an arbitrary tick to get around this
+                      to_timestamp(datetime.datetime.now(utc)) - 1,
+                      req.authname,
+                      "{{{\n#!html\n<del>%s</del>\n}}}" % comment])
+                    for t in tickets]
+        except Exception, e:
+            self.log.error("Error saving old ticket changes: %s" % e)
+            addMessage("Tickets must be numbers")
+            return None
+        
+    def notify_new_tickets(self, req, id, tickets, addMessage):
+        try:
+            tag = "[[Estimate(%s)]]" % id
+            tickets = [int(t.strip()) for t in tickets.split(',')]
+            for t in tickets:
+                ticket = Ticket (self.env, t)
+                if ticket['description'].find (tag) == -1:
+                    self.log.debug('Updating Ticket Description : %s'%t)
+                    ticket['description'] = ticket['description']+'\n----\n'+tag
+                    ticket.save_changes(req.authname, 'added estimate')
+            return True
+        except Exception, e:
+            self.log.error("Error saving new ticket changes: %s" % e)  
+            addMessage("Error: %s"  % e)
+            return None
+                  
+        
+    def save_from_form (self, req, addMessage):
+        #try:
+
+            args = req.args
+            tickets = args["tickets"]
+            id = args["id"]
+            old_tickets = None
+            if id == None or id == '' :
+                self.log.debug('Saving new estimate')
+                sql = estimateInsert
+                id = nextEstimateId ()
+            else:
+                self.log.debug('Saving edited estimate')
+                old_tickets = self.notify_old_tickets(req, id, addMessage, req.authname)
+                sql = estimateUpdate
+            self.log.debug('Old Tickets to Update: %r' % old_tickets)
+            estimate_args = [args['rate'], args['variability'],
+                             args['communication'], tickets,
+                             args['comment'], id]
+            saveEstimate = (sql, estimate_args)
+            saveLineItems = []
+            newLineItemId = nextEstimateLineItemId ()
+
+            # we want to delete any rows that were not included in the form request
+            # we will not use -1 as a valid id, so this will allow us to use the same sql reguardless of anything else
+            ids = ['-1'] 
+            lineItems = self.line_item_hash_from_args(args).items()
+            lineItems.sort()
+            for item in lineItems:
+                itemId = item[0]
+                if int(itemId) < 400000000:# new ids on the HTML are this number and above
+                    ids.append(str(itemId))
+                    sql = lineItemUpdate
+                else:
+                    itemId = newLineItemId
+                    newLineItemId += 1
+                    sql = lineItemInsert
+                itemargs = [id,
+                            item[1]['description'],
+                            item[1]['low'],
+                            item[1]['high'],
+                            itemId]
+                saveLineItems.append((sql, itemargs))
+
+            sql = removeLineItemsNotInListSql % ','.join(ids)
+            #addMessage("Deleting NonExistant Estimate Rows: %r - %s" % (sql , id))
+
+            sqlToRun = [saveEstimate,
+                        (sql, [id]),]
+            sqlToRun.extend(saveLineItems)
+            if old_tickets:
+                sqlToRun.extend(old_tickets)
+            
+            result = dbhelper.execute_in_trans(*sqlToRun)
+            #will be true or Exception
+            if result == True:
+                if self.notify_new_tickets( req, id, tickets, addMessage):
+                    addMessage("Estimate Saved!")
+                    req.redirect(req.href.Estimate()+'?id=%s'%id)
+            else:
+                addMessage("Failed to save! %s" % result)
+            
+        #except Exception, e:
+        #    raise e
+        #    addMessage("Error Saving Estimate: %s" % e)
+            
+   
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         if re.search('/Estimate', req.path_info):
@@ -12,28 +161,46 @@ class EstimationsPage(Component):
             return ""
 
     def get_navigation_items(self, req):
+        # for tickets with only old estimates on them, we would still like to apply style
         url = req.href.Estimate()
+        style = req.href.chrome('Estimate/estimate.css')
         yield 'mainnav', "Estimate", \
-              Markup('<a href="%s">%s</a>' %
-                     (url , "Estimate"))
-        
+              Markup('<a href="%s">%s</a><link type="text/css" href="%s" rel="stylesheet">' %
+                     (url , "Estimate", style))
+
     # IRequestHandler methods
     def match_request(self, req):
         return req.path_info.startswith('/Estimate')
-
+     
     def process_request(self, req):
         messages = []
         def addMessage(s):
             messages.extend([s]);
+        #addMessage("Post Args: %s"% req.args.items())
         if req.method == 'POST':
-            pass
-        req.hdf["estimate"]={"href":       req.href.Estimate(),
-                             "messages":   messages,
-                   }
-        add_script(req, "Estimate/JsHelper.js")
+            self.save_from_form(req, addMessage)
+        data = {}
+        data["estimate"]={
+            "href":       req.href.Estimate(),
+            "messages":   messages,
+            "id": None,
+            "lineItems": '[]',
+            "tickets": '',
+            "rate": self.config.get( 'estimator','default_rate') or 200,
+            "variability": self.config.get( 'estimator','default_variability') or 1,
+            "communication": self.config.get( 'estimator','default_communication') or 1,
+            }
+        
+        if req.args.has_key('id') and req.args['id'].strip() != '':
+            self.load(int(req.args['id']), addMessage, data)
+
+
+        add_script(req, "Estimate/JSHelper.js")
         add_script(req, "Estimate/Controls.js")
+        add_script(req, "Estimate/estimate.js")
         add_stylesheet(req, "Estimate/estimate.css")
-        return 'estimate.cs', 'text/html'
+        #return 'estimate.cs', 'text/html'
+        return 'estimate.html', data, None
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
@@ -48,3 +215,4 @@ class EstimationsPage(Component):
         """
         rtn = [resource_filename(__name__, 'templates')]
         return rtn
+

@@ -3,7 +3,7 @@ from setuptools import setup
 PACKAGE = 'estimatorplugin'
 
 setup(name=PACKAGE,
-      version='0.0.1',
+      version='0.0.2',
       packages=[PACKAGE],
       url='http://www.trac-hacks.org/wiki/EstimatorPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',
@@ -12,6 +12,7 @@ setup(name=PACKAGE,
       long_description="""
       Produce Detailed Range Based Estimations
       """,
+      package_data={PACKAGE : ['templates/*.html', 'htdocs/*']},
       entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)},
 )
 

@@ -66,7 +66,7 @@ Date.prototype.toTimeString.__doc__ = 'function(): returns ##:##:## format date 
 window.registerElements = function(obj){
   for(var i = 1; i < arguments.length; i++){
 	 var elemId = arguments[i];
-	 obj[elemId] = $(elemId);
+	 obj[elemId] = document.getElementById(elemId);
   }
 };
 
@@ -187,8 +187,8 @@ window.filter = function (fn, list, thisObj){
 ///Just here for cross library compatability.
 /// Also, not a bad function Just takes the list of ids and returns the list of elements
 ///
-if( typeof($) == 'undefined'){
-  function $ () {
+if( typeof($$) == 'undefined'){
+  function $$ () {
 	 var elements = new Array();
 	 
 	 for (var i = 0; i < arguments.length; i++) {
