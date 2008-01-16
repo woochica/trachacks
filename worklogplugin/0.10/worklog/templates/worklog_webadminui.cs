@@ -27,7 +27,7 @@
   </fieldset>
   <br>
   <fieldset>
-    <legend>Paramaters:</legend>
+    <legend>Parameters:</legend>
     <div class="field">
       <label for="roundup">Round up to nearest minute</label>&nbsp;
       <input type="text" id="roundup" name="roundup" size="4" value="<?cs var:settings.roundup ?>"><br />
