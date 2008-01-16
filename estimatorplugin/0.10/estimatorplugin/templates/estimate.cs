@@ -2,7 +2,7 @@
 <?cs include "macros.cs"?>
 
     <form method="post" action="<?cs var:estimate.href ?>" >
-
+      <input type="hidden" name="id" value="<?cs var:estimate.id?>"/>
       <div id="content" class="estimate">
 	<div id="messages" >
 	  <?cs each:item = estimate.messages ?>

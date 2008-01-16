@@ -9,8 +9,8 @@ from trac.web.chrome import add_stylesheet, add_script, \
 from trac.web.href import Href
 from estimator import *
 from trac.ticket import Ticket
-import datetime
-from trac.util.datefmt import utc, to_timestamp
+import time
+
 
 class EstimationsPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
@@ -60,7 +60,7 @@ class EstimationsPage(Component):
                      [t,
                     #there were problems if we update the same tickets comment in the same tick
                     # so we subtract an arbitrary tick to get around this
-                      to_timestamp(datetime.datetime.now(utc)) - 1,
+                      time.time() - 1,
                       req.authname,
                       "{{{\n#!html\n<del>%s</del>\n}}}" % comment])
                     for t in tickets]
@@ -88,10 +88,12 @@ class EstimationsPage(Component):
         
     def save_from_form (self, req, addMessage):
         #try:
-
             args = req.args
             tickets = args["tickets"]
-            id = args["id"]
+            if args.has_key("id"):
+                id = args['id']
+            else:
+                id = None
             old_tickets = None
             if id == None or id == '' :
                 self.log.debug('Saving new estimate')
