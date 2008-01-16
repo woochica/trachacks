@@ -94,6 +94,9 @@ class DefaultTagProvider(Component):
             if self.check_permission(req.perm(resource), 'view'):
                 resources[resource.id] = resource
 
+        if not resources:
+          return
+
         args = [self.realm] + list(resources)
         # XXX Is this going to be excruciatingly slow?
         sql = 'SELECT DISTINCT name, tag FROM tags WHERE tagspace=%%s AND ' \
@@ -120,24 +123,32 @@ class DefaultTagProvider(Component):
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute('DELETE FROM tags WHERE tagspace=%s AND name=%s',
-                       (self.realm, resource.id))
-        for tag in tags:
-            cursor.execute('INSERT INTO tags (tagspace, name, tag) '
-                           'VALUES (%s, %s, %s)',
-                           (self.realm, resource.id, tag))
-        db.commit()
+        try:
+            cursor = db.cursor()
+            cursor.execute('DELETE FROM tags WHERE tagspace=%s AND name=%s',
+                           (self.realm, resource.id))
+            for tag in tags:
+                cursor.execute('INSERT INTO tags (tagspace, name, tag) '
+                               'VALUES (%s, %s, %s)',
+                               (self.realm, resource.id, tag))
+            db.commit()
+        except:
+            db.rollback()
+            raise
 
     def remove_resource_tags(self, req, resource):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute('DELETE FROM tags WHERE tagspace=%s AND name=%s',
-                       (self.realm, resource.id))
-        db.commit()
+        try:
+            cursor = db.cursor()
+            cursor.execute('DELETE FROM tags WHERE tagspace=%s AND name=%s',
+                           (self.realm, resource.id))
+            db.commit()
+        except:
+            db.rollback()
+            raise
 
 
 class TagSystem(Component):

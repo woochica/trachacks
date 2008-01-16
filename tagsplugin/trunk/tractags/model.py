@@ -67,8 +67,7 @@ class TagModelProvider(Component):
                                "'wiki', name, namespace FROM wiki_namespace")
                 cursor.execute("DROP TABLE wiki_namespace")
                 db.commit()
-        except Exception, e:
+        except:
             db.rollback()
-            self.env.log.error(e, exc_info=1)
-            raise TracError(str(e))
+            raise
 
