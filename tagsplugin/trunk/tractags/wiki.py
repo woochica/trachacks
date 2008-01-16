@@ -52,7 +52,7 @@ class WikiTagInterface(Component):
         if req and 'TAGS_MODIFY' in req.perm(page.resource) \
                 and req.path_info.startswith('/wiki') and 'save' in req.args:
             if self._update_tags(req, page) and \
-                    page.text == req.args.get('text') and \
+                    page.text == page.old_text and \
                     page.readonly == int('readonly' in req.args):
                 req.redirect(get_resource_url(self.env, page.resource, req.href, version=None))
         return []
