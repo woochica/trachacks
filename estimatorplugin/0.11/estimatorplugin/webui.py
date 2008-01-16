@@ -91,7 +91,10 @@ class EstimationsPage(Component):
 
             args = req.args
             tickets = args["tickets"]
-            id = args["id"]
+            if args.has_key("id"):
+                id = args['id']
+            else:
+                id = None
             old_tickets = None
             if id == None or id == '' :
                 self.log.debug('Saving new estimate')
