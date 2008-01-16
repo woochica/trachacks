@@ -167,15 +167,21 @@ class EstimationsPage(Component):
         # for tickets with only old estimates on them, we would still like to apply style
         url = req.href.Estimate()
         style = req.href.chrome('Estimate/estimate.css')
-        yield 'mainnav', "Estimate", \
-              Markup('<a href="%s">%s</a><link type="text/css" href="%s" rel="stylesheet">' %
-                     (url , "Estimate", style))
+        if req.perm.has_permission("TICKET_MODIFY"):
+            yield 'mainnav', "Estimate", \
+                  Markup('<a href="%s">%s</a><link type="text/css" href="%s" rel="stylesheet">' %
+                         (url , "Estimate", style))
+        yield 'mainnav', "Estimate-style", \
+              Markup('<link type="text/css" href="%s" rel="stylesheet">' %
+                     (style))
 
     # IRequestHandler methods
     def match_request(self, req):
         return req.path_info.startswith('/Estimate')
      
     def process_request(self, req):
+        if not req.perm.has_permission("TICKET_MODIFY"):
+            req.redirect(req.href.wiki())
         messages = []
         def addMessage(s):
             messages.extend([s]);
