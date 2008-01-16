@@ -142,7 +142,7 @@ class WorkLogManager:
             self.explanation = ''
  
         cursor = db.cursor()
-        cursor.execute('INSERT INTO work_log (user, ticket, lastchange, starttime, endtime) '
+        cursor.execute('INSERT INTO work_log (worker, ticket, lastchange, starttime, endtime) '
                        'VALUES (%s, %s, %s, %s, %s)',
                        (self.authname, ticket, self.now, self.now, 0))
         db.commit()
@@ -171,7 +171,7 @@ class WorkLogManager:
         cursor = db.cursor()
         cursor.execute('UPDATE work_log '
                        'SET endtime=%s, lastchange=%s, comment=%s '
-                       'WHERE user=%s AND lastchange=%s AND endtime=0',
+                       'WHERE worker=%s AND lastchange=%s AND endtime=0',
                        (stoptime, stoptime, comment, self.authname, active['lastchange']))
         db.commit()
 
@@ -221,7 +221,7 @@ class WorkLogManager:
     def who_is_working_on(self, ticket):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT user,starttime FROM work_log WHERE ticket=%s AND endtime=0', (ticket,))
+        cursor.execute('SELECT worker,starttime FROM work_log WHERE ticket=%s AND endtime=0', (ticket,))
         try:
             who,since = cursor.fetchone()
             return who,float(since)
@@ -238,7 +238,7 @@ class WorkLogManager:
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT MAX(lastchange) FROM work_log WHERE user=%s', (self.authname,))
+        cursor.execute('SELECT MAX(lastchange) FROM work_log WHERE worker=%s', (self.authname,))
         row = cursor.fetchone()
         if not row or not row[0]:
             return None
@@ -246,10 +246,10 @@ class WorkLogManager:
         lastchange = row[0]
     
         task = {}
-        cursor.execute('SELECT wl.user, wl.ticket, t.summary, wl.lastchange, wl.starttime, wl.endtime, wl.comment '
+        cursor.execute('SELECT wl.worker, wl.ticket, t.summary, wl.lastchange, wl.starttime, wl.endtime, wl.comment '
                        'FROM work_log wl '
                        'LEFT JOIN ticket t ON wl.ticket=t.id '
-                       'WHERE wl.user=%s AND wl.lastchange=%s', (self.authname, lastchange))
+                       'WHERE wl.worker=%s AND wl.lastchange=%s', (self.authname, lastchange))
 
         for user,ticket,summary,lastchange,starttime,endtime,comment in cursor:
             if not comment:
@@ -280,25 +280,25 @@ class WorkLogManager:
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if mode == 'user':
-            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
+            cursor.execute('SELECT wl.worker, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
                            'FROM work_log wl '
                            'INNER JOIN ticket t ON wl.ticket=t.id '
-                           'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
-                           'WHERE wl.user=%s '
+                           'LEFT JOIN session_attribute s ON wl.worker=s.sid AND s.name=\'name\' '
+                           'WHERE wl.worker=%s '
                            'ORDER BY wl.lastchange DESC', (self.authname,))
         elif mode == 'summary':
-            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
-                           'FROM (SELECT user,MAX(lastchange) lastchange FROM work_log GROUP BY user) wlt '
-                           'INNER JOIN work_log wl ON wlt.user=wl.user AND wlt.lastchange=wl.lastchange '
+            cursor.execute('SELECT wl.worker, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
+                           'FROM (SELECT worker,MAX(lastchange) lastchange FROM work_log GROUP BY worker) wlt '
+                           'INNER JOIN work_log wl ON wlt.worker=wl.worker AND wlt.lastchange=wl.lastchange '
                            'INNER JOIN ticket t ON wl.ticket=t.id '
-                           'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
-                           'ORDER BY wl.lastchange DESC, wl.user')
+                           'LEFT JOIN session_attribute s ON wl.worker=s.sid AND s.name=\'name\' '
+                           'ORDER BY wl.lastchange DESC, wl.worker')
         else:
-            cursor.execute('SELECT wl.user, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
+            cursor.execute('SELECT wl.worker, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
                            'FROM work_log wl '
                            'INNER JOIN ticket t ON wl.ticket=t.id '
-                           'LEFT JOIN session_attribute s ON wl.user=s.sid AND s.name=\'name\' '
-                           'ORDER BY wl.lastchange DESC, wl.user')
+                           'LEFT JOIN session_attribute s ON wl.worker=s.sid AND s.name=\'name\' '
+                           'ORDER BY wl.lastchange DESC, wl.worker')
         
         rv = []
         for user,name,starttime,endtime,ticket,summary,status,comment  in cursor:

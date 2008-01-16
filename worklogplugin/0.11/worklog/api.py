@@ -28,7 +28,7 @@ class WorkLogSetupParticipant(Component):
     additional database tables."""
     def __init__(self):
         self.db_version_key = 'WorklogPlugin_Db_Version'
-        self.db_version = 2
+        self.db_version = 3
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
@@ -72,23 +72,50 @@ class WorkLogSetupParticipant(Component):
 
         # Do the staged updates
         try:
+            # This var is to deal with a problem case with pgsql and the "user"
+            # keyword. We need to skip over new installations but not upgrades
+            # for other db backends.
+            skip = False
+            
             if self.db_installed_version < 1:
                 print 'Creating work_log table'
                 cursor.execute('CREATE TABLE work_log ('
-                               'user       TEXT,'
+                               'worker     TEXT,'
                                'ticket     INTEGER,'
                                'lastchange INTEGER,'
                                'starttime  INTEGER,'
                                'endtime    INTEGER'
                                ')')
+                skip = True
 
             if self.db_installed_version < 2:
                 print 'Updating work_log table (v2)'
                 cursor.execute('ALTER TABLE work_log '
                                'ADD COLUMN comment TEXT')
 
-            #if self.db_installed_version < 3:
-            #    print 'Updating work_log table (v3)'
+            if self.db_installed_version < 3:
+                print 'Updating work_log table (v3)'
+                if not skip:
+                    # This whole section is just to rename the "user" column to "worker"
+                    # This column used to be created in step 1 above, but we
+                    # can no longer do this in order to support pgsql.
+                    # This step is skipped if step 1 was also run (e.g. new installs)
+                    # The below seems to be the only way to rename (or drop) a column on sqlite *sigh*
+                    cursor.execute('CREATE TABLE work_log_tmp ('
+                                   'worker     TEXT,'
+                                   'ticket     INTEGER,'
+                                   'lastchange INTEGER,'
+                                   'starttime  INTEGER,'
+                                   'endtime    INTEGER,'
+                                   'comment    TEXT'
+                                   ')')
+                    cursor.execute('INSERT INTO work_log_tmp (worker, ticket, lastchange, starttime, endtime, comment) '
+                                   'SELECT user, ticket, lastchange, starttime, endtime, comment FROM work_log')
+                    cursor.execute('DROP TABLE work_log')
+                    cursor.execute('ALTER TABLE work_log_tmp RENAME TO work_log')
+
+            #if self.db_installed_version < 4:
+            #    print 'Updating work_log table (v4)'
             #    cursor.execute('...')
             
             # Updates complete, set the version
