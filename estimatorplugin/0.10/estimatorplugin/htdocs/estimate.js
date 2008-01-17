@@ -50,7 +50,7 @@ function lineItemRow (lineitem){
 
    var tr = cn('tr', {},
 	     cn('td', {},
-		cn('textarea', {id:uid("description"), name:uid("description"), cols:30, style:"height: 34px;"},
+		cn('textarea', {id:uid("description"), name:uid("description"), style:"height: 68px; width:100%;"},
                    valFn('description'))),
 	     cn('td', { valign:'top'},
 		cn('input', {id:uid('low'),name:uid('low'), type:'text', style:"width:80px;", 
