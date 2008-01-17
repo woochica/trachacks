@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Adds a wiki macro [[Components]] which lists and describes the project's components, and links to wiki pages describing the components in more detail, and any tickets for the components.
+"""Adds a wiki macro [[Components(pattern)]] which lists and describes the project's components, and links to wiki pages describing the components in more detail, and any tickets for the components.  The optional pattern parameter is a regex that can be used to filter components.
 
 terry_n_brown@yahoo.com
 """
 
 import inspect
 import sys
+import re
 
 from trac.core import Component, implements
 from trac.wiki.api import IWikiMacroProvider
@@ -22,7 +23,7 @@ class ComponentsProcessor(Component):
     def get_macro_description(self, name):
         return inspect.getdoc(sys.modules.get(self.__module__))
 
-    def expand_macro(self, formatter, name, content):
+    def expand_macro(self, formatter, name, pattern):
 
         cursor = self.env.get_db_cnx().cursor()
 
@@ -39,6 +40,7 @@ class ComponentsProcessor(Component):
         content = []
 
         for name, descrip in comps:
+            if pattern and not re.match(pattern, name): continue
             dt = ' [wiki:%s]' % name
             if name in tickets:
                 dt += ' ([query:component=%s tickets])' % name
