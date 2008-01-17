@@ -29,8 +29,8 @@ function evenDeeperClone(node){
    var newNode = node.cloneNode(false);
    for(var i=0 ; kid=node.childNodes[i] ; i++){
       if(kid.tagName && kid.tagName.toLowerCase()=='textarea'){
-	 cloned = cn('textarea');
-	 cloned.value = kid.value;
+	 cloned = cn('div');
+	 cloned.innerHTML = kid.value.replace('\r\n','<br />', 'g').replace('\r','<br />', 'g').replace('\n','<br />', 'g');
       }else{
 	 cloned = evenDeeperClone(kid);
       } 
