@@ -1,0 +1,39 @@
+.keywords_tree {
+    background-color: #e0e0e0;
+	margin:0px;
+	padding:0px;
+}
+.keywords_tree input{
+	background-color:#00ff00;
+	width:12px;
+	height:12px;
+}
+.keywords_tree span{
+	/*font-family:courier;
+	font-size:0.7em;*/
+	padding-left:5px;
+	padding-right:10px;
+}
+.keywords_tree ul{	/* Sub menu groups */
+	margin-left:25px;	/* Left spacing */
+	padding-left:0px;
+	margin-bottom:10px;
+	display:none;	/* Initially hide sub nodes */
+}
+.keywords_tree li{	/* Nodes */
+	/*font-size:1em;*/
+	list-style-type:none;
+	vertical-align:middle;
+}
+.keywords_tree li a{	/* Node links */
+	color:#000;
+	text-decoration:none;
+	/*font-family:arial;
+	font-size:1em;*/
+	padding-left:2px;
+}
+.keywords_tree div{
+  background-color: #e0e0e0;
+  border: 1px solid #000000;
+  width: 100%;
+}
