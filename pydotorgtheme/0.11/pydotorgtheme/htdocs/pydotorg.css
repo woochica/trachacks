@@ -165,6 +165,11 @@ h4 {
   line-height: 1.4em;
 }
 
+div.system-message {
+    margin-left: 16.5em;
+    margin-right: 10px;
+}
+
 #content {
   font-family: Arial, Verdana, Geneva, "Bitstream Vera Sans", Helvetica, sans-serif;
   left: 0;
