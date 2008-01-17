@@ -6,7 +6,7 @@
       <div id="content" class="estimate">
 	<div id="messages" >
 	  <?cs each:item = estimate.messages ?>
-            <div class="message" ><?cs var:item ?></div>
+            <div class="infomessage" ><?cs var:html_strip(item) ?></div>
 	  <?cs /each ?>
 	</div>
 

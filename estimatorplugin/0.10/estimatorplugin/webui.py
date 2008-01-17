@@ -146,7 +146,7 @@ class EstimationsPage(Component):
             if result == True:
                 if self.notify_new_tickets( req, id, tickets, addMessage):
                     addMessage("Estimate Saved!")
-                    req.redirect(req.href.Estimate()+'?id=%s'%id)
+                    req.redirect(req.href.Estimate()+'?id=%s&justsaved=true'%id)
             else:
                 addMessage("Failed to save! %s" % result)
             
@@ -165,14 +165,11 @@ class EstimationsPage(Component):
     def get_navigation_items(self, req):
         # for tickets with only old estimates on them, we would still like to apply style
         url = req.href.Estimate()
-        style = req.href.chrome('Estimate/estimate.css')
+        #style = req.href.chrome('Estimate/estimate.css')
         if req.perm.has_permission("TICKET_MODIFY"):
             yield 'mainnav', "Estimate", \
-                  Markup('<a href="%s">%s</a><link type="text/css" href="%s" rel="stylesheet">' %
-                         (url , "Estimate", style))
-        yield 'mainnav', "Estimate-style", \
-              Markup('<link type="text/css" href="%s" rel="stylesheet">' %
-                     (style))
+                  Markup('<a href="%s">%s</a>' %
+                         (url , "Estimate"))
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -201,6 +198,12 @@ class EstimationsPage(Component):
         
         if req.args.has_key('id') and req.args['id'].strip() != '':
             self.load(int(req.args['id']), addMessage, data)
+
+        if req.args.has_key('justsaved'):
+            tickets = ' '.join(
+                ['<a href="%s/%s" >#%s</a>' % (req.href.ticket(), i.strip(), i.strip())
+                 for i in data['estimate']['tickets'].split(',')])
+            addMessage("Estimate saved and added to tickets: "+tickets)
 
         req.hdf["estimate"] = data["estimate"]
         add_script(req, "Estimate/JSHelper.js")
