@@ -288,7 +288,7 @@ class WorkLogManager:
                            'ORDER BY wl.lastchange DESC', (self.authname,))
         elif mode == 'summary':
             cursor.execute('SELECT wl.worker, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '
-                           'FROM (SELECT worker,MAX(lastchange) lastchange FROM work_log GROUP BY worker) wlt '
+                           'FROM (SELECT worker,MAX(lastchange) AS lastchange FROM work_log GROUP BY worker) wlt '
                            'INNER JOIN work_log wl ON wlt.worker=wl.worker AND wlt.lastchange=wl.lastchange '
                            'INNER JOIN ticket t ON wl.ticket=t.id '
                            'LEFT JOIN session_attribute s ON wl.worker=s.sid AND s.name=\'name\' '
