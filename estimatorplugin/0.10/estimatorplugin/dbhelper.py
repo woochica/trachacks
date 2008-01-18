@@ -167,6 +167,8 @@ class ResultSet:
    
     def json_out(self):
         return "[%s]" % ','. join(
-            [("{%s}" % ','.join(["'%s':%r" %(key, str(self.value(val, row)))
-                                 for (key, val) in self.columnMap.items()]))
+            [("{%s}" % ','.join(
+            ["'%s':%r" %
+             (key, str(self.value(val, row)).replace("'","\'"))
+             for (key, val) in self.columnMap.items()]))
              for row in self.rows])
