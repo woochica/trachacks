@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='TracRestrictKeywords',
-    version = '0.1',
+    version = '0.1.1',
     description = "A plugin to restrict keywords filed in Trac's Ticket",
     author = 'Thomas Tressières',
     author_email = 'thomas.tressieres@free.fr',

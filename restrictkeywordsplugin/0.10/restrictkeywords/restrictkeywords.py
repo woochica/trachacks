@@ -83,8 +83,7 @@ class RestrictedKeywordsPlugin(Component):
         return [('rk_htdoc', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
+        return []
 
 
     # IRequestHandler methods
