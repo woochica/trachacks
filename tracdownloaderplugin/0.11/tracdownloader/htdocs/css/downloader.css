@@ -1,0 +1,233 @@
+.relnotes { 
+ background: #f7f7f7;
+ border: 1px solid #d7d7d7;
+ margin: 0 0 2em;
+ padding: 1em 1em;
+ text-align: left;
+ width: 60%;
+ min-height: 10em;
+}
+
+/* Wide lists delimited by | */
+.wide_lst { height: 1em; margin: 0.7em 0; font-size: 11px; text-align: left;}
+.wide_lst ul {
+ color: #ccc;
+ margin: 0;
+ padding: 0;
+ list-style: none;
+}
+.wide_lst li {
+ padding: 0 0.5em;
+ border-right: 1px solid #d7d7d7;
+ display: inline;
+ white-space: nowrap;
+}
+.wide_lst .choosen { color: #000; }
+.wide_lst li :link:hover, .wide_lst li :visited:hover { color: #000; }
+.wide_lst li.last { border-right: none }
+ 
+
+#show_text textarea { width: 100%; min-height: 30em; height: 30em; }
+#page_list { padding-top: 0.55em; }
+#per_page { float:right; }
+#per_page form { margin: 0; }
+#per_page .in_txt { width: 2em; padding-left: 0.2em; padding-right: 0.2em; text-align: center;}
+
+#ctxtnav .choosen {
+    color: #000;
+}
+.nav_admin { position:relative; bottom: 1.35em; left: 2em; margin-bottom: -2em; }
+
+/* List of downloads */
+.listing .file td {}
+.listing .release td { font-weight:900; background-color:#eaeaea; }
+.listing .category td { font-weight:900; background-color:#e1e1e1; }
+
+/* List table for list of data filled into form */
+.listing.wide { width: 100%; min-width: auto; }
+.listing.wide table { width: 100%; min-width: auto; }
+.listing .thin { padding: 0.25em 0.5em 0.25em 0.5em; 
+                 font-size: 12px;
+                }
+.listing .tms { font-size: 80%; white-space: nowrap;}
+.listing .id { text-align: center; font-weight: bold; font-size: 80%;}
+.listing .act { text-align: center; color: #ddd; white-space: nowrap;}
+
+.err { color: #bb0000; }
+.tabs {
+     border: 1px solid black;
+     border-color: gray black black gray;
+     margin: 2em 0;
+     padding: .5em 0 0;
+     float: left;
+     width: 12em;
+    }
+    
+.tabs ul { list-style: none; margin: 0 0 .5em; padding: 0 }
+.tabs li { margin: 0; padding: 0.1em .5em }
+.tabs li li { margin: 0 -0.5em; padding-left: 1.5em }
+.tabs li li.active { background: #ccb; }
+.tabs :link, .tabs :visited { border: none; display: block }
+.tabs :link:hover, .tabs :visited:hover { background: transparent }
+
+.tabcontents {
+ padding: 0.4em 2em;
+ margin-left: 12em;
+ min-height: 300px;
+}
+
+hr.tiny { size:1px; height:1px; padding:0; margin: 0.7em 0; }
+
+p.help { color: #666; font-size: 90%; margin: 1em .5em 0.5em }
+p.help1 { color: #666; font-size: 90%; margin: 0.2em .5em 1.2em }
+
+form.addnew { clear: right; float: right; margin: -2em 0 4em; width: 35% }
+form.addnew ul { margin-left:1.5em; padding-left:0; margin-top: 0.3em; font-size: 0.9em; }
+form.addnew .cap_img { float: right; }
+form.mod { margin-top: 1em; }
+form.mod .field { margin: .5em 0; }
+form .field em { color: #888; font-size: smaller }
+form .field .disabled em { color: #d7d7d7 }
+
+table td.right { text-align: right; }
+table.listing { clear: none; width: 64%; }
+table.listing .sel, table.listing .default { text-align: center; width: 1% }
+
+/* Stats graphing */
+.graph { padding: 1.5em; font-size: 13px; }
+.graph .inside{
+    border: #000 1px solid;
+    background-color: #ccc;
+    padding: 2em 1px .6em 1px;
+}
+.graph .inside table{
+    border-collapse: collapse;
+    background-color: #ccc;
+    width: 100%;
+}
+.graph td {
+    text-align:center;
+    padding: 0.5em 0;
+    vertical-align: bottom;
+}
+.graph .col {
+    background-color: #bb2222;
+    margin: 0 0.3em;
+    border: #000 1px solid;
+}
+.graph .colunvis {
+    margin: 0 0.3em;
+    padding: 0;
+    width: 1.2ex;
+}
+.graph .coldesc{
+    margin: 0;
+    padding: 0.3em 0;
+}
+.graph .desc tr, .graph .desc td{
+    height: 1em;
+    margin: 0;
+    padding: 0;
+}
+.graph .unvis tr, .graph .unvis td{
+    height: 0 !important;
+    margin: 0;
+    padding: 0 !important;
+    border-width: 1px;
+    border-color: #ccc;
+    border-style: solid;
+}
+.graph.hor .inside {
+    padding: 1em;
+}
+.graph.hor td {
+    text-align:left;
+    vertical-align: middle;
+    padding: 0.2em 0;
+}
+.graph.hor .coltab {
+    border-collapse: collapse;
+    margin: 0.3em 0;
+}
+.graph.hor .coltab td{
+    padding: 0;
+}
+.graph.hor .col {
+    width: 0;
+    background-color: #bb2222;
+    height: 0.2em;
+    border: #000 1px solid;
+}
+.graph.hor .zerowidthcol { /* HACK for Opera and FireFox nice zero width */
+    border-left: #000 2px solid;
+}
+.graph.hor .desc {
+    width: 33%;
+    padding: 0 0.3em;
+    vertical-align: middle;
+}
+.graph.hor .label {
+    height: 0.4em;
+    width: 5em;
+    padding: 1em;
+}
+@media print {
+    .graph .unvis tr, .graph .unvis td{
+        border-color: #fff;
+        border-style: solid;
+        height: 0 !important;
+        margin: 0;
+        padding: 0 !important;
+    }
+    .graph .flo { /* floating label */
+        text-align: center;
+        height: 14px;
+        position: relative;
+        margin: -7px -2em;
+        bottom: 1em;
+        padding: 0;
+        padding-bottom: 1px;
+    }
+}
+.graph .flo { /* floating label */
+    height: 14px;
+    position: relative;
+    margin: -7px -2em;
+    bottom: 1em;
+    padding: 0;
+    padding-bottom: 1px;
+}
+
+
+/* Plugins panel */
+form#addplug { width: 30% }
+.plugin {
+ background: #f7f7f7;
+ border: 1px solid #d7d7d7;
+ margin: 0 0 2em;
+ padding: 2px .5em;
+ text-align: left;
+ width: 60%;
+}
+
+.plugin h3 {
+ background: url(../img/expanded.png) 0 50% no-repeat;
+ margin: .5em 0 0;
+ padding-left: 16px;
+}
+.collapsed h3 { background-image: url(../img/collapsed.png); }
+.plugin .buttons { margin-top: 0; text-align: right }
+.plugin .uninstall { margin-top: -2em; padding: 0 }
+.plugin .summary, .plugin .info {
+ color: #999;
+ font-size: 80%;
+ padding-left: 16px;
+}
+.plugin .summary { margin: -.5em 0 .5em }
+.plugin .info { margin: 1em 0 .5em; }
+.plugin .info dt { float: left; width: 7em; }
+.plugin .info dd { padding: 0; margin: 0; }
+.plugin .listing { width: 100% }
+.collapsed .info, .collapsed .listing, .collapsed .update { display: none }
+.plugin .listing td { background: #fff }
+.plugin .listing .name p { color: #999; font-size: 80%; margin: 0 }
