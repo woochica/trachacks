@@ -166,9 +166,15 @@ class ResultSet:
             print ("rs.value Type Failed col:%s  row:%s" % (type(col), type(row)))
    
     def json_out(self):
-        return "[%s]" % ','. join(
+        json = "[%s]" % ',\r\n'. join(
             [("{%s}" % ','.join(
-            ["'%s':%r" %
-             (key, str(self.value(val, row)).replace("'","\'"))
+            ["'%s':'%s'" %
+             (key, str(self.value(val, row)).
+              replace("'","\\'").
+              replace('"','\\"').
+              replace('\r','\\r').
+              replace('\n','\\n'))
              for (key, val) in self.columnMap.items()]))
              for row in self.rows])
+        #mylog.debug('serializing to json : %s'% json)
+        return json
