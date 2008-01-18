@@ -18,6 +18,7 @@
 </head>
 <body>
 	<h1>${title}</h1>
+	<div id='contents'><ul>${contents}</ul></div>
 	<div id='main'>${body}</div>
 </body>
 </html>

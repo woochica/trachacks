@@ -20,9 +20,11 @@ from string import Template as Template
 class HTMLTemplate:
 	def __init__(self, title):
 		self.tpl_index = self.readTemplate('template_index.tpl')
+		self.tpl_index = self.readTemplate('template_contents.tpl')
 		self.tpl_report = self.readTemplate('template_report.tpl')
 		self.tpl_details = self.readTemplate('template_details.tpl')
 		self.index_body = ''
+		self.contents = ''
 		self.title = title
 	def readTemplate(self, filename):
 		fp = open(filename, 'r')
@@ -30,9 +32,12 @@ class HTMLTemplate:
 		fp.close()
 		return str
 	def openReport(self, title, description):
+                self.report_id = len(self.contents)
 		self.report_title = title
 		self.report_description = description
 		self.report_details = ''
+		t = Template(self.tpl_contents)
+		self.contents += t.substitute(id=self.report_id, title=self.report_title)
 	def closeReport(self):
 		t = Template(self.tpl_report)
 		self.index_body += t.substitute(title=self.report_title, description=self.report_description,
@@ -42,9 +47,8 @@ class HTMLTemplate:
 		self.report_details += t.substitute(img=filename, data=data)
 	def write(self, filename):
 		t = Template(self.tpl_index)
-		contents = t.substitute(title=self.title, body=self.index_body)
 		fp = open(filename, 'w')
-		fp.write(contents)
+		fp.write(t.substitute(title=self.title, contents=self.contents, body=self.index_body))
 		fp.close()
 
 
