@@ -26,7 +26,7 @@ from trac import util
 from trac.util import Markup
 from trac.web.chrome import add_stylesheet, ITemplateProvider, add_link
 from trac.web.href import Href
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin.api import IAdminPanelProvider
 from tracdownloader.model import *
 from tracdownloader import form_data
 from string import *
@@ -55,7 +55,7 @@ required_components = ('AboutModule', 'DefaultPermissionGroupProvider',
 
 class DownloaderAdminPage(Component):
 
-    implements(IPermissionRequestor, IAdminPageProvider, ITemplateProvider, 
+    implements(IPermissionRequestor, IAdminPanelProvider, ITemplateProvider, 
                IEnvironmentSetupParticipant)
     
     # IPermissionRequestor method
@@ -87,9 +87,9 @@ class DownloaderAdminPage(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
     
-    # IAdminPageProvider methods
+    # IAdminPanelProvider methods
 
-    def get_admin_pages(self, req):
+    def get_admin_panels(self, req):
         if req.perm.has_permission('DOWNLOADER_ADMIN'):
             yield ('general', 'General', 'downloader', 'Downloader')
 
