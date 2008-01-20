@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-import os, shutil, re, mimetypes
+import os, shutil, re, mimetypes, unicodedata
 from datetime import *
 
 from trac.core import *
@@ -9,7 +9,8 @@ from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
-from trac.util.text import to_unicode, unicode_unquote
+from trac.util.text import to_unicode, unicode_unquote, unicode_quote, \
+  pretty_size
 
 
 class IDownloadChangeListener(Interface):
@@ -504,11 +505,11 @@ class DownloadsApi(Component):
                 context.req.perm.assert_permission('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                file, filename, file_size = self._get_file_from_req(context.req)
+                file, filename, file_size = self._get_file_from_req(context)
                 download = {'file' : filename,
                             'description' : context.req.args.get('description'),
                             'size' : file_size,
-                            'time' : int(datetime.now(utc)),
+                            'time' : to_timestamp(datetime.now(utc)),
                             'author' : context.req.authname,
                             'tags' : context.req.args.get('tags'),
                             'component' : context.req.args.get('component'),
@@ -534,9 +535,13 @@ class DownloadsApi(Component):
                     raise TracError('Unsupported uploaded file type.')
 
                 # Prepare file paths
-                path = os.path.join(self.path, str(download['id']))
-                filepath = os.path.join(path, download['file'])
-                self.log.debug('filepath: %s' % (filepath))
+                filepath = os.path.join(self.path, unicode(download['id']),
+                  download['file'])
+                filepath = unicodedata.normalize('NFC', filepath)
+                filepath = filepath.replace('\\', '/').replace(':', '/')
+                path = os.path.dirname(filepath)
+                self.log.debug('filepath: %s' % ((filepath,)))
+                self.log.debug('path: %s' % ((path,)))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -545,19 +550,23 @@ class DownloadsApi(Component):
                 # Store uploaded image.
                 try:
                     os.mkdir(path)
-                    out_file = open(filepath, "bw+")
+                    out_file = open(filepath, "wb+")
                     shutil.copyfileobj(file, out_file)
                     out_file.close()
-                except:
+                except Exception, error:
+                    self.log.debug(error)
                     self.delete_download(context, download['id'])
                     try:
                         os.remove(filepath)
+                    except:
+                        pass
+                    try:
                         os.rmdir(path)
                     except:
                         pass
-                    raise TracError('Error storing file %s! Is directory specified' \
-                      ' in path config option in [downloads] section of' \
-                      ' trac.ini existing?' % (download['file']))
+                    raise TracError('Error storing file %s! Is directory' \
+                      ' specified in path config option in [downloads] section' \
+                      ' of trac.ini existing?' % (download['file'],))
 
             elif mode == 'downloads-post-edit':
                 context.req.perm.assert_permission('DOWNLOADS_ADMIN')

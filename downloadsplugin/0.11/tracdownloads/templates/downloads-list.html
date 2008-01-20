@@ -7,9 +7,6 @@
   </head>
 
   <body>
-    <div id="ctxtnav" class="nav">
-    </div>
-
     <div id="content" class="downloads">
       <div class="title">
         <h1>${downloads.title}</h1>
@@ -17,7 +14,7 @@
 
       ${downloads.description[1]}
 
-      <form py:if="'DOWNLOADS_ADMIN' in perm(context)" method="post" action="${href.downloads()}">
+      <form py:if="'DOWNLOADS_ADMIN' in perm" method="post" action="${href.downloads()}">
         <fieldset>
           <legend>
             Edit Description:

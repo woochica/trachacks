@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 
 from trac.core import *
+from trac.mimeview import Context
 from trac.admin import IAdminPanelProvider
 
 from tracdownloads.api import *
@@ -23,12 +24,10 @@ class DownloadsWebAdmin(Component):
             yield ('downloads', 'Downloads System', 'types', 'Types')
 
     def render_admin_panel(self, req, category, page, path_info):
-        # Get cursor.
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        # Create request context.
+        context = Context.from_request(req)('downloads-admin')
 
-        # Prepare arguments and HDF structure.
-        req.args['context'] = 'admin'
+        # Set page name to request.
         req.args['page'] = page
         if page == 'architectures':
             req.args['architecture'] = path_info
@@ -39,8 +38,6 @@ class DownloadsWebAdmin(Component):
         elif page == 'downloads':
             req.args['download'] = path_info
 
-        # Return page content.
+        # Process request and return content.
         api = self.env[DownloadsApi]
-        content = api.process_downloads(req, cursor)
-        db.commit()
-        return content
+        return api.process_downloads(context)

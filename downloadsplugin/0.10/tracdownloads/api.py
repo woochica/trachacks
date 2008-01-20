@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-import os, shutil, time, re, mimetypes
+import os, shutil, time, re, mimetypes, unicodedata
 
 from trac.core import *
 from trac.config import Option
@@ -531,9 +531,13 @@ class DownloadsApi(Component):
                     raise TracError('Unsupported uploaded file type.')
 
                 # Prepare file paths
-                path = os.path.join(self.path, str(download['id']))
-                filepath = os.path.join(path, download['file'])
-                self.log.debug('filepath: %s' % (filepath))
+                filepath = os.path.join(self.path, unicode(download['id']),
+                  download['file'])
+                filepath = unicodedata.normalize('NFC', filepath)
+                filepath = filepath.replace('\\', '/').replace(':', '/')
+                path = os.path.dirname(filepath)
+                self.log.debug('filepath: %s' % ((filepath,)))
+                self.log.debug('path: %s' % ((path,)))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -542,19 +546,23 @@ class DownloadsApi(Component):
                 # Store uploaded image.
                 try:
                     os.mkdir(path)
-                    out_file = open(filepath, "bw+")
+                    out_file = open(filepath, "wb+")
                     shutil.copyfileobj(file, out_file)
                     out_file.close()
-                except:
-                    self.delete_download(cursor, download['id'])
+                except Exception, error:
+                    self.log.debug(error)
+                    self.delete_download(context, download['id'])
                     try:
                         os.remove(filepath)
+                    except:
+                        pass
+                    try:
                         os.rmdir(path)
                     except:
                         pass
-                    raise TracError('Error storing file %s! Is directory specified' \
-                      ' in path config option in [downloads] section of' \
-                      ' trac.ini existing?' % (download['file']))
+                    raise TracError('Error storing file %s! Is directory' \
+                      ' specified in path config option in [downloads] section' \
+                      ' of trac.ini existing?' % (download['file'],))
 
             elif mode == 'downloads-post-edit':
                 req.perm.assert_permission('DOWNLOADS_ADMIN')
