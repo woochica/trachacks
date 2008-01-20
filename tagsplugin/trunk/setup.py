@@ -5,7 +5,8 @@ setup(
     version='0.6',
     packages=['tractags'],
 	package_data={'tractags' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']},
-    author='Muness Alrubaie',
+    # With acknowledgement to Muness Albrae for the original idea :)
+    author='Alec Thomas',
     license='BSD',
     url='http://trac-hacks.org/wiki/TagsPlugin',
     description='Tags plugin for Trac',
