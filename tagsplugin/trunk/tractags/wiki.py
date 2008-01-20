@@ -96,7 +96,7 @@ class WikiTagInterface(Component):
                 Context.from_request(req, resource), resource)
             li.append(tag.li(anchor, ' '))
 
-        insert = tag.ul(class_='tags')(tag.lh('Tags'), li)
+        insert = tag.ul(class_='tags')(tag.li('Tags', class_='header'), li)
         return stream | Transformer('//div[@class="buttons"]').before(insert)
 
     def _update_tags(self, req, page):

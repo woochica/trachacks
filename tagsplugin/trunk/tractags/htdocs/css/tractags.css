@@ -1,6 +1,6 @@
-.listtagged lh { font-weight: bold; text-decoration: underline; }
+.listtagged li.header { font-weight: bold; text-decoration: underline; }
 
-.listtags .listtagged lh { font-weight: normal; } 
+.listtags .listtagged li.header { font-weight: normal; } 
 .listtags .listtagged ul { margin: 0px; padding: 0px; }
 
 #content ul.tags {
@@ -11,7 +11,7 @@
 }
 #content .tags li { display: inline; text-align: center; }
 
-#content .tags lh {
+#content .tags li.header {
 	font-weight: bold;
 	font-size: large;
 	text-align: center;
