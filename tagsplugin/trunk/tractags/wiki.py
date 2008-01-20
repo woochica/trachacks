@@ -132,10 +132,10 @@ class TagWikiSyntaxProvider(Component):
                lambda f, n, m: self._format_tagged(f,
                                     m.group('tlpexpr'),
                                     m.group('tlptitle')))
-        yield (r'''tag(?:ged)?:(?P<texpr>(?:'.*?'|".*?"|\S)+)''',
+        yield (r'''(?P<tagsyn>tag(?:ged)?):(?P<texpr>(?:'.*?'|".*?"|\S)+)''',
                lambda f, n, m: self._format_tagged(f,
                                     m.group('texpr'),
-                                    'tagged:' + m.group('texpr')))
+                                    '%s:%s' % (m.group('tagsyn'), m.group('texpr'))))
 
     def get_link_resolvers(self):
         return []
@@ -143,16 +143,8 @@ class TagWikiSyntaxProvider(Component):
     def _format_tagged(self, formatter, target, label):
         if label:
             href = formatter.context.href
-            if target[0] in '\'"':
-                q = target.strip('\'"')
-                target = None
-            else:
-                q = None
-            url = get_resource_url(
-                self.env, Resource('tag', target),
-                formatter.context.href
-                )
-            return tag.a(label, href=href(url, q=q))
+            url = get_resource_url(self.env, Resource('tag', target), href)
+            return tag.a(label, href=url)
         return render_resource_link(self.env, formatter.context,
                                     Resource('tag', target))
 

@@ -246,7 +246,7 @@ class TagSystem(Component):
         page = WikiPage(self.env, resource.id)
         if page.exists:
             return get_resource_url(self.env, page.resource, href, **kwargs)
-        return href('tags', "'%s'" % unicode(resource.id).replace("'", "\\'"))
+        return href("tags/'%s'" % unicode(resource.id).replace("'", "\\'"))
 
     def get_resource_description(self, resource, format='default', context=None,
                                  **kwargs):
