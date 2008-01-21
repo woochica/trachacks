@@ -2,11 +2,14 @@
 
 import time
 
-from trac.core import *
-from trac.wiki import wiki_to_html, wiki_to_oneliner
-from trac.util import Markup
+from genshi.builder import tag
 
-from trac.Timeline import ITimelineEventProvider
+from trac.core import *
+from trac.mimeview import *
+from trac.wiki import wiki_to_html, wiki_to_oneliner
+from trac.util.text import pretty_size
+
+from trac.timeline import ITimelineEventProvider
 
 from tracdownloads.api import *
 
@@ -19,39 +22,38 @@ class DownloadsTimeline(Component):
 
     # ITimelineEventProvider
 
+    def get_timeline_filters(self, req):
+        if 'DOWNLOADS_VIEW' in req.perm:
+            yield ('downloads', 'Downloads changes')
+
     def get_timeline_events(self, req, start, stop, filters):
         self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
           filters))
-        if 'downloads' in filters:
-            # Create database context
+        if ('downloads' in filters) and ('DOWNLOADS_VIEW' in req.perm):
+            # Create context.
+            context = Context.from_request(req)('downloads-timeline')
             db = self.env.get_db_cnx()
-            cursor = db.cursor()
+            context.cursor = db.cursor()
 
             # Get API component.
             api = self.env[DownloadsApi]
 
-            format = req.args.get('format')
-            self.log.debug("format: %s" % (format))
+            self.log.debug(api.get_new_downloads(context, start, stop))
 
             # Get message events
-            for download in api.get_new_downloads(req, cursor, start, stop):
-                kind = 'newticket'
+            for download in api.get_new_downloads(context, start, stop):
+                yield ('newticket', download['time'], download['author'],
+                  (download['id'], download['file'], download['description'],
+                  download['size']))
 
-                title = Markup("New download <em>%s</em> created by %s" %
-                  (download['file'], download['author']))
-                time = download['time']
-                author = download['author']
+    def render_timeline_event(self, context, field, event):
+        # Decompose event data.
+        id, name, description, size = event[3]
 
-                if format == 'rss':
-                    href = req.abs_href.downloads(download['id'])
-                    message = wiki_to_html(download['description'], self.env,
-                      req)
-                else:
-                    href = req.href.downloads(download['id'])
-                    message = wiki_to_oneliner(download['description'], self.env)
-
-                yield kind, href, title, time, author, message
-
-    def get_timeline_filters(self, req):
-        if req.perm.has_permission('DOWNLOADS_VIEW'):
-            yield ('downloads', 'Downloads changes')
+        # Return apropriate content.
+        if field == 'url':
+           return context.req.href.downloads(id)
+        elif field == 'title':
+           return tag('New download ', tag.em(name), ' created')
+        elif field == 'description':
+           return tag('(%s) %s' % (pretty_size(size), description))

@@ -59,6 +59,11 @@ class DownloadsCore(Component):
             req.args['action'] = 'get-file'
             req.args['id'] = match.group(1)
             return True
+        match = re.match(r'''^/downloads/([^/]+)$''', req.path_info)
+        if match:
+            req.args['action'] = 'get-file'
+            req.args['file'] = match.group(1)
+            return True
         return False
 
     def process_request(self, req):

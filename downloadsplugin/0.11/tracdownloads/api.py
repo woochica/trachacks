@@ -4,7 +4,7 @@ import os, shutil, re, mimetypes, unicodedata
 from datetime import *
 
 from trac.core import *
-from trac.config import Option
+from trac.config import Option, BoolOption	
 from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
@@ -49,6 +49,8 @@ class DownloadsApi(Component):
     visible_fields = Option('downloads', 'visible_fields',
       ' '.join(all_fields), 'List of downloads table fields that should'
       ' be visible to users on Downloads section.')
+    unique_filename = BoolOption('downloads', 'unique_filename', False,
+      'If enabled checks if uploaded file has unique name.')
 
     # Get list functions.
 
@@ -120,7 +122,7 @@ class DownloadsApi(Component):
           " component, version, architecture, platform, type FROM download " \
           "WHERE time BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
-        context.cursor.execute(sql, (start, stop))
+        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
         downloads = []
         for row in context.cursor:
             row = dict(zip(columns, row))
@@ -209,6 +211,20 @@ class DownloadsApi(Component):
             row['count'] = row['count'] or 0
             return row
 
+    def get_download_by_file(self, context, file):
+        columns = ('id', 'file', 'description', 'size', 'time', 'count',
+          'author', 'tags', 'component', 'version', 'architecture', 'platform',
+          'type')
+        sql = "SELECT id, file, description, size, time, count, author, tags," \
+          " component, version, architecture, platform, type FROM download" \
+          " WHERE file = %s"
+        self.log.debug(sql % (file,))
+        context.cursor.execute(sql, (file,))
+        for row in context.cursor:
+            row = dict(zip(columns, row))
+            row['count'] = row['count'] or 0
+            return row
+
     def get_architecture(self, context, id):
         columns = ('id', 'name', 'description')
         sql = "SELECT id, name, description FROM architecture WHERE id = %s"
@@ -276,7 +292,7 @@ class DownloadsApi(Component):
         context.cursor.execute(sql, tuple(values + [id]))
 
     def edit_download(self, context, id, download):
-        self._edit_item(contex, 'download', id, download)
+        self._edit_item(context, 'download', id, download)
 
     def edit_architecture(self, context, id, architecture):
         self._edit_item(context, 'architecture', id, architecture)
@@ -421,9 +437,13 @@ class DownloadsApi(Component):
 
                 # Get form values.
                 download_id = context.req.args.get('id') or 0
+                download_file = context.req.args.get('file')
 
                 # Get download.
-                download = self.get_download(context, download_id)
+                if download_id:
+                    download = self.get_download(context, download_id)
+                else:
+                    download = self.get_download_by_file(context, download_file)
 
                 if download:
                     path = os.path.join(self.path, to_unicode(download['id']),
@@ -517,6 +537,12 @@ class DownloadsApi(Component):
                             'architecture' : context.req.args.get('architecture'),
                             'platform' : context.req.args.get('platform'),
                             'type' : context.req.args.get('type')}
+
+                # Check for file name uniqueness.
+                if self.unique_filename:
+                    if self.get_download_by_file(context, filename):
+                        raise TracError('File with same name is already' \
+                          ' uploaded and unique file names are enabled.')
 
                 # Add new download.
                 self.add_download(context, download)
@@ -769,6 +795,8 @@ class DownloadsApi(Component):
         # Test if file is uploaded.
         if not hasattr(file, 'filename') or not file.filename:
             raise TracError('No file uploaded.')
+
+        # Get file size.
         if hasattr(file.file, 'fileno'):
             size = os.fstat(file.file.fileno())[6]
         else:

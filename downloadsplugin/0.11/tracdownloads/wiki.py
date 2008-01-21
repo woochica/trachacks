@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 
 from trac.core import *
+from trac.mimeview import Context
 from trac.util.html import html
 
 from trac.wiki import IWikiSyntaxProvider
@@ -25,20 +26,25 @@ class DownloadsWiki(Component):
     def _download_link(self, formatter, ns, params, label):
         if ns == 'download':
             if formatter.req.perm.has_permission('DOWNLOADS_VIEW'):
-                # Get cursor.
+                # Create context.
+                context = Context.from_request(formatter.req)('downloads-wiki')
                 db = self.env.get_db_cnx()
-                cursor = db.cursor()
+                context.cursor = db.cursor()
 
                 # Get API component.
                 api = self.env[DownloadsApi]
 
                 # Get download.
-                download = api.get_download(cursor, params)
+                if re.match(r'\d+', params): 
+                    download = api.get_download(context, params)
+                else:
+                    download = api.get_download_by_file(context, params)
 
                 if download:
                     # Return link to existing file.
                     return html.a(label, href = formatter.href.downloads(params),
-                      title = download['file'])
+                      title = '%s (%s)' % (download['file'],
+                      pretty_size(download['size'])))
                 else:
                     # Return link to non-existing file.
                     return html.a(label, href = '#', title = 'File not found.',

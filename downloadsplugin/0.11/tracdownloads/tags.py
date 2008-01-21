@@ -3,6 +3,7 @@
 import sets
 
 from trac.core import *
+from trac.mimeview import *
 from trac.util.html import html
 
 from tractags.api import ITaggingSystemProvider, DefaultTaggingSystem, \
@@ -104,16 +105,16 @@ class DownloadsTags(Component):
     # Private methods
 
     def _resolve_ids(self, download):
-
-        # Get database access.
+        # Create context.
+        context = Context('downloads-core')
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        context.cursor = db.cursor()
 
         # Resolve architecture platform and type names.
         api = self.env[DownloadsApi]
-        architecture = api.get_architecture(cursor, download['architecture'])
-        platform = api.get_platform(cursor, download['platform'])
-        type = api.get_type(cursor, download['type'])
+        architecture = api.get_architecture(context, download['architecture'])
+        platform = api.get_platform(context, download['platform'])
+        type = api.get_type(context, download['type'])
         self.log.debug(architecture)
         download['architecture'] = architecture['name']
         download['platform'] = platform['name']
