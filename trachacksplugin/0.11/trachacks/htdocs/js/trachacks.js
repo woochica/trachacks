@@ -1,3 +1,24 @@
+/* Add helpers to tag cloud. */
+var clean_tags = function(tags) {
+var split = tags.replace(/^ +| +$/g, '').split(/ +/);
+
+  split.sort();
+  return split.join(' ');
+};
+
+/* Highlight tags from the mini-cloud that are in the tags field. */
+var highlight_tags = function() {
+var tags = clean_tags($('#tags').attr('value')).split(/ +/);
+
+  $('#cloud a').each(function() {
+    if (tags.indexOf($(this).text()) != -1) {
+      $(this).css('background-color', 'yellow');
+    } else {
+      $(this).css('background-color', 'transparent');
+    }
+  });
+};
+
 $(document).ready(function() {
   // Move the label for each field into the hint block.
   $('.hint').each(function() {
@@ -51,13 +72,8 @@ $(document).ready(function() {
     $(fields[0]).focus();
   }
 
-  /* Add helpers to tag cloud. */
-  var clean_tags = function(tags) {
-  var split = tags.replace(/^ +| +$/g, '').split(/ +/);
-
-    split.sort();
-    return split.join(' ');
-  };
+  $('#tags').keyup(highlight_tags);
+  $('#tags').change(highlight_tags);
 
   $('#cloud a').click(function() {
   var a = this;
@@ -76,13 +92,7 @@ $(document).ready(function() {
     return false;
   });
 
-  $('#tags').each(function() {
-  var tags = clean_tags(this.value).split(/ +/);
 
-    $('#cloud a').each(function() {
-      if (tags.indexOf($(this).text()) != -1) {
-        $(this).css('background-color', 'yellow');
-      }
-    });
-  });
+  highlight_tags();
+
 });

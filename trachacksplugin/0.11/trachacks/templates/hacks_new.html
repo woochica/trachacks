@@ -108,9 +108,11 @@
               <py:for each="t in types">
                 <input tabindex="4" checked="${t == type or None}" type="radio" value="${t}"
                   id="${t}" name="type"/>
-                <label for="${t}">
-                  <a href="${href.wiki(t)}">${t}</a>
-                </label>
+                <nobr>
+                  <label for="${t}">
+                    <a href="${href.wiki(t)}">${t}</a>
+                  </label>
+                </nobr>
               </py:for>
             </dd>
 

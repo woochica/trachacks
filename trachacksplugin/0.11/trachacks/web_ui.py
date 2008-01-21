@@ -29,7 +29,6 @@ from genshi.filters.transform import Transformer
 from trachacks.validate import *
 
 
-
 def pluralise(n, word):
     """Return a (naively) pluralised phrase from a count and a singular
     word."""
@@ -118,7 +117,11 @@ class TracHacksHandler(Component):
         data['types'] = types
         data['releases'] = releases
 
-        hacks = self.fetch_hacks(req, data, types)
+        selected_releases = req.args.get('release', set(['0.10', '0.11', 'anyrelease']))
+
+        data['selected_releases'] = selected_releases
+
+        hacks = self.fetch_hacks(req, data, types, selected_releases)
 
         add_stylesheet(req, 'tags/css/tractags.css')
         add_stylesheet(req, 'hacks/css/trachacks.css')
@@ -202,6 +205,7 @@ class TracHacksHandler(Component):
         max_px = 20
 
         def cloud_renderer(tag, count, percent):
+            self.env.log.debug(percent)
             return builder.a(tag, href='#', style='font-size: %ipx' %
                              int(min_px + percent * (max_px - min_px)))
 
@@ -223,6 +227,7 @@ class TracHacksHandler(Component):
             data['type'] = 'plugin'
             data['release'] = ['0.11']
 
+        self.env.log.debug('MUPPETS AHOY')
         return 'hacks_new.html', data, None
 
     def render_list(self, req, data, hacks):
@@ -255,7 +260,7 @@ class TracHacksHandler(Component):
 
         return 'hacks_view.html', data, None
 
-    def fetch_hacks(self, req, data, types):
+    def fetch_hacks(self, req, data, types, releases):
         """Return a list of hacks in the form
 
         [votes, rank, resource, tags, title]
@@ -263,7 +268,10 @@ class TracHacksHandler(Component):
         tag_system = TagSystem(self.env)
         vote_system = VoteSystem(self.env)
 
-        tagged = tag_system.query(req, 'realm:wiki (' + ' or '.join(types) + ')')
+        query = 'realm:wiki (%s) (%s)' % \
+                (' or '.join(releases), ' or '.join(types))
+        self.env.log.debug(query)
+        tagged = tag_system.query(req, query)
 
         # Limit
         try:
@@ -298,26 +306,29 @@ class TracHacksHandler(Component):
 
         # Rank
         total_hack_count = len(hacks)
-        hacks = sorted(hacks, key=lambda i: -i[0])[:limit]
+        hacks = sorted(hacks, key=lambda i: -i[0])
+        remainder = hacks[limit:]
+        hacks = hacks[:limit] + random.sample(remainder,
+                                              min(limit, len(remainder)))
 
         # Navigation
         if len(hacks) >= limit:
-            add_ctxtnav(req, builder.a('More', href='?limit=%i&q=%s' % (limit + 10, q)))
+            add_ctxtnav(req, builder.a('More', href='?action=more'))
             limit = len(hacks)
             data['limit'] = data['limit_message'] = limit
         else:
             add_ctxtnav(req, 'More')
         if q or limit != self.limit:
-            add_ctxtnav(req, builder.a('Default', href='?limit=%i' % self.limit))
+            add_ctxtnav(req, builder.a('Default', href='?action=default'))
         else:
             add_ctxtnav(req, 'Default')
         if total_hack_count > limit:
-            add_ctxtnav(req, builder.a('All', href='?limit=all&q=' + q))
+            add_ctxtnav(req, builder.a('All', href='?action=all'))
         else:
             add_ctxtnav(req, 'All')
         if limit > 10:
             limit = min(limit, len(hacks))
-            add_ctxtnav(req, builder.a('Less', href='?limit=%i&q=%s' % (limit - 10 > 0 and limit - 10 or 0, q)))
+            add_ctxtnav(req, builder.a('Less', href='?action=less'))
         else:
             add_ctxtnav(req, 'Less')
         for i, hack in enumerate(hacks):
@@ -327,7 +338,7 @@ class TracHacksHandler(Component):
 
 
 class TracHacksAccountManager(HtPasswdStore):
-    """ Do some basic validation on new users, and create a new user page. """
+    """Do some basic validation on new users and create a new user page."""
     implements(IPasswordStore)
 
     # IPasswordStore

@@ -13,19 +13,39 @@
 
   <body>
     <div id="content" class="tags">
-      <form id="query" method="get">
+      <form id="query" method="post">
         <div>
           <input type="text" id="tag-query" name="q" size="40" accesskey="t"
             value="${query}"/>
-          <input type="submit" value="Filter Hacks"/>
+          <input type="submit" value="Search Hacks"/>
+        </div>
+        <div>
+          <py:for each="release in releases">
+            <input type="checkbox" name="release" value="${release}"
+              checked="${release in selected_releases or None}"/> ${release}
+          </py:for>
         </div>
         <div py:if="query_error" id="query-error">
           <strong>Error:</strong> ${query_error}
         </div>
         <div>
+          <p>
+            <em>This is a full-text search of the content of all hack pages.</em>
+          </p>
+          <p>
+            Showing <strong>${limit_message}</strong> results.
+          </p>
+          <p><strong>Search help:</strong></p>
           <ul>
-            <li>Showing <strong>${limit_message}</strong> results.</li>
+            <li>Use <strong>term1 term2</strong> to match <em>all</em> terms.</li>
+            <li><strong>term1 or term2</strong> will match <em>any</em> term.</li>
+            <li>Negate a term with <strong>-term1</strong>.</li>
+            <li>Group sub-queries with <strong>(term1 or term2)</strong>.</li>
+            <li>Quote strings to include special characters.</li>
           </ul>
+          <p>
+            eg. <a href="${href('hacks', q='pdf or latex')}">pdf or latex</a>
+          </p>
         </div>
       </form>
 
