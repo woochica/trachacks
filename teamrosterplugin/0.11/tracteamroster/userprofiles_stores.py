@@ -12,7 +12,7 @@ from trac.core import *
 from trac.config import *
 from trac.env import open_environment
 
-from tracteamroster.api import UserProfile, IUserProfilesStore
+from tracteamroster.api import UserProfile, UserProfilesSystem, IUserProfilesStore
 
 __all__=['SafeUserProfilesStore', 'DefaultUserProfilesStore', 'MasterEnvironmentUserProfilesStore']
 
