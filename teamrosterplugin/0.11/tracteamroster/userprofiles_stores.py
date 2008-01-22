@@ -6,6 +6,7 @@
 # @author: Catalin BALAN <cbalan@optaros.com>
 #
 import traceback
+import time
 from StringIO import StringIO
 
 from trac.core import *
@@ -116,6 +117,16 @@ class SafeUserProfilesStore(Component):
         if userProfile.id<0:
             return False
         
+        # initialize user session
+        db = self.env.get_db_cnx()
+        cursor=db.cursor()
+        try:
+            cursor.execute("INSERT INTO session (sid, last_visit, authenticated)"
+                           " VALUES(%s,%s,1)", [userProfile.id, int(time.time())])
+        except Exception, e:
+            self.log.debug("Session for %s exists, no need to re-create it."%(userProfile.id))
+        
+        # enable user
         userProfile.enabled = "1"
         userProfile.store = self
         return self.save_userProfile(userProfile)
@@ -130,6 +141,7 @@ class SafeUserProfilesStore(Component):
         """
         if not isinstance(userProfile, UserProfile):
             raise TracError("Class %s is not a instance of UserProfile class"%(userProfile.__class__.__name__))
+        
         
         # grabing the old version in order identify the changes
         _oldUserProfile = self.get_userProfile(userProfile.id, grabAllFieldsFromDB=False)
@@ -316,6 +328,16 @@ class DefaultUserProfilesStore(Component):
         if userProfile.id<0:
             return False
         
+        # initialize user session
+        db = self.env.get_db_cnx()
+        cursor=db.cursor()
+        try:
+            cursor.execute("INSERT INTO session (sid, last_visit, authenticated)"
+                           " VALUES(%s,%s,1)", [userProfile.id, int(time.time())])
+        except Exception, e:
+            self.log.debug("Session for %s exists, no need to re-create it."%(userProfile.id))
+
+        # enable user
         userProfile.enabled = "1"
         userProfile.store = self
         return self.save_userProfile(userProfile)
