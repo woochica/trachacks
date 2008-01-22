@@ -635,11 +635,12 @@ class File(object):
     def serve_file(self, req):
         """Find, open, find mime type and serve file to user."""
         
+        """ Old way for serving file to user.
         try:
             file_obj = file(self.file, "rb")
         except IOError:
             raise TracError, 'Sorry. Error reading the file ' + self.file + '.'
-        
+        """
         mime = MimeTypes(self.env).dict
         mime_type = 'application/octet-stream'
         
@@ -650,10 +651,11 @@ class File(object):
             if mime.has_key(ext):
                 mime_type = mime[ext]
         
+        """ Old way for serving file to user.
         req.send_response(200)
         req.send_header('Content-Type', mime_type)
         req.end_headers()
-
+        
         # Serve file kilobyte by kilobyte
         while True:
             part = file_obj.read(1024)
@@ -662,6 +664,9 @@ class File(object):
             req.write(part)
             
         file_obj.close()
+        """
+        # Serve file to user
+        req.send_file(self.file, mime_type)
     
     def delete(self):
         """Deletes this File."""
@@ -785,6 +790,8 @@ class DownloadData:
                         "VALUES(%s, %s)", (self.file_id, self.timestamp))
         id = self.db.get_last_id(cursor, 'downloader_downloaded')
         self.db.commit()
+        
+        self.env.log.warning("Inserted: %d" % id)
         
         for item in self.schema:
             # Skip non input items
@@ -1007,6 +1014,8 @@ class DownloadData:
             items.append(['Timestamp:', util.format_datetime(self.timestamp)])
             
         for item in label_list:
+            if (item[0] not in self.attr):
+                 continue
             if strip(self.attr[item[0]]) != '':
                 items.append([item[1], self.attr[item[0]]])
                     
@@ -1077,6 +1086,7 @@ class DownloadData:
             # Text
             elif item['type'] == 'text':
                 req.session[prefix + item['name']] = item['value']
+        req.session.save()
             
     def load_from_session(self):
         """

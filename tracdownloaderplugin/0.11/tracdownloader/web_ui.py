@@ -445,6 +445,7 @@ class DownloaderModule(Component):
         # Some preset to session
         if not req.session.get('downloader_files'):
             req.session['downloader_files'] = ''
+            req.session.save()
         #self.env.log.info("Files: " + req.session.get('downloader_files'))
         
         filter = None
@@ -483,6 +484,7 @@ class DownloaderModule(Component):
         else:
             # Test if session works
             req.session['downloader_test'] = 'test'
+            req.session.save()
         
         render_downloads_table(self.env, req, filter=filter, f_id=f_id)
         
@@ -559,7 +561,7 @@ class DownloaderModule(Component):
     def _serve_link(self, req, conf, file_name, file):
         """
         Serve to hdf set variables for final download link.
-        Returns False if file has not to be server directly.
+        Returns False if file has not to be served directly.
         """
         # Cannot serve link to people without session
         if req.session.get('downloader_test') \
@@ -596,7 +598,7 @@ class DownloaderModule(Component):
             else:
                 return True
         
-        # Check if file number is input list
+        # Check if the file number is in list
         files = split(files, ',')
         if str(id) in files:
             return True

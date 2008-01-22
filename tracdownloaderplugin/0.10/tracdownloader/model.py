@@ -1007,6 +1007,8 @@ class DownloadData:
             items.append(['Timestamp:', util.format_datetime(self.timestamp)])
             
         for item in label_list:
+            if (item[0] not in self.attr):
+                 continue
             if strip(self.attr[item[0]]) != '':
                 items.append([item[1], self.attr[item[0]]])
                     
@@ -1077,6 +1079,7 @@ class DownloadData:
             # Text
             elif item['type'] == 'text':
                 req.session[prefix + item['name']] = item['value']
+        req.session.save()
             
     def load_from_session(self):
         """
