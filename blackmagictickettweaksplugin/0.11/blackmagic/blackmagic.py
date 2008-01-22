@@ -1,5 +1,5 @@
 from trac.core import Component, implements, TracError
-from trac.config import Option, IntOption, ListOption
+from trac.config import Option, IntOption, ListOption, BoolOption
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from pkg_resources import resource_filename
 from trac.web.api import ITemplateStreamFilter
@@ -22,6 +22,9 @@ class TicketTweaks(Component):
     implements(ITemplateStreamFilter, ITemplateProvider, IPermissionRequestor)
     
     permissions = ListOption('blackmagic', 'permissions', [])
+    gray_disabled = Option('blackmagic', 'gray_disabled', '', 
+        doc="""If not set, disabled items will have their label striked through. 
+        Otherwise, this color will be used to gray them out. Suggested #cccccc.""")
     ## IPermissionRequestor methods
     
     def get_permission_actions(self):
@@ -51,11 +54,15 @@ class TicketTweaks(Component):
                     
                 if disabled or istrue(self.config.get('blackmagic', '%s.disable' % field, False)):
                     stream = stream | Transformer('//*[@id="field-%s"]' % field).attr("disabled", "disabled")
-                    if not self.config.get('blackmagic', '%s.label' % field, None):
+                    if not self.gray_disabled:
                         stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
                             tag.strike()('%s:' % field.capitalize())
                         )
-                        
+                    else:
+                        stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
+                            tag.span(style="color:%s" % self.gray_disabled)('%s:' % field.capitalize())
+                        )
+
                 if self.config.get('blackmagic', '%s.label' % field, None):
                     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
                         self.config.get('blackmagic', '%s.label' % field)
