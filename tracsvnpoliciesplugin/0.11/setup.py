@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 #
-# Copyright (C) 2007 Optaros, Inc
-# All rights reserved.
 
 from setuptools import setup
 
