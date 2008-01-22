@@ -1,0 +1,322 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>SVN Policies</title>
+  </head>
+  <body>
+    <h2>SVN Policies</h2>
+	<table ><tr><td style="width: 100%; vertical-align: top;">
+		<form class="mod" id="svnpolicies" method="post">
+			<div class="field">
+		        <div >
+		          <label for="svnpolicies_enabled">
+					<input id="svnpolicies_enabled" type="checkbox" value="true" name="svnpolicies_enabled" checked="${config.getbool('svnpolicies','svnpolicies_enabled') or None}" />
+					Policies enabled
+		          </label>
+				  <p class="hint">Enables svn policy plugin.</p>
+		        </div>
+				<div id="all_controlls" style="display: block;">
+			 		
+			 		<fieldset >
+			 			<legend>Commit Notifications</legend> 		
+						<div>
+							<label for="email_enabled">
+							<input id="email_enabled" type="checkbox" value="true" name="email.enabled" checked="${config.getbool('svnpolicies','email.enabled') or None}" />
+			 				Send email notifications</label>
+							<p class="hint">Enables email notifications for SVN commits.</p>
+			 			</div>
+						<div id="email_container" style="display: block;">
+					    	<ul class="tabs_anchors">
+								<li class="on">
+									<a href="#email_simple">simple</a>
+								</li>
+								<li class="">
+									<a href="#email_advanced">advanced</a>
+								</li>
+							</ul>
+							
+							<div class="tabs_anchor" id="email_simple">
+								<div style="display: block;">
+						 			<div>
+						 				<label for="email.list">Recipient list</label>
+										<input type="text" name="email.list" value="${','.join(config.getlist('svnpolicies','email.list'))}" />
+										<p class="hint">Enables email notifications for SVN commits.</p>
+									</div>
+									<div>
+						 				<div>
+											<label for="email_from_enabled">From address?</label>
+											<input id="email_from_enabled" type="checkbox" value="true" name="email_from_enabled" checked="${config.getbool('svnpolicies','email_from_enabled') or None}" />
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+											<input id="email_from_address" type="text" name="email_from_address" value="${config.get('svnpolicies','email_from_address')}" />
+											<p class="hint">Sets an email address for the FROM header of the commit mail.</p>
+										</div>
+										
+									</div>
+						 			<div>
+						 				<label for="email.prefix">Email Prefix</label>
+										<input type="text" name="email.prefix" value="${config.get('svnpolicies','email.prefix')}" />
+										<p class="hint">Subject prefix for messages</p>
+									</div>
+									<div>
+										<input id="email_subject_cx" type="checkbox" value="true" name="email_subject_cx" checked="${config.getbool('svnpolicies','email_subject_cx') or None}" />
+						 				<label for="email_subject_cx">Add the path?</label>
+										<p class="hint">Include the context of the commit in the subject.</p>
+									</div>
+						 			<div>
+										<input id="email_attachment" type="checkbox" value="true" name="email.attachment" checked="${config.getbool('svnpolicies','email.attachment') or None}" />
+						 				<label for="email_attachment">Attachment?</label>
+										<p class="hint">Send unified diff as an attachment</p>
+									</div>
+						 			<div id="email_attach_controls" style="display: block;"><label for="email.attachment_limit">Attachment Size
+										<input type="text" name="email.attachment_limit" value="${config.get('svnpolicies','email.attachment_limit')}" /></label>
+										<p class="hint">Attachment size limit (in bytes)</p>
+						 			</div>
+								</div>
+	    					</div>
+							<div class="tabs_anchor" id="email_advanced" style="display: none;">
+								<label for="advanced_postcomit_enabled">
+									<input id="advanced_postcomit_enabled" type="checkbox" value="true" name="advanced_postcomit_enabled" 
+									checked="${config.getbool('svnpolicies','advanced_postcomit_enabled') or None}" /> Enable advanced commands?
+								</label>
+								<p class="hint">Edit the content of the post-commit file.</p>
+								<textarea id="advanced_postcomit_content" name="advanced_postcomit_content" rows="15" style="width:100%" >${postcomit_advanced_text}</textarea>
+								<p class="hint">This file has to contain commands that will be run after the commit.</p>
+	    					</div>
+		
+						</div>
+			 		</fieldset>
+			 		<fieldset >
+			 			<legend>Log messages</legend>
+			 			<div>
+							<label for="log_message_required">
+							<input id="log_message_required" type="checkbox" value="true" name="log_message.required" checked="${config.getbool('svnpolicies','log_message.required') or None}" />
+							Require log messages for commits
+							</label>
+							<p class="hint">Commits without a log message will be rejected</p>
+						</div>
+						<div id="log_controls" style="display: block;">
+							<ul class="tabs_anchors">
+								<li class="on">
+									<a href="#log_simple">simple</a>
+								</li>
+								<li class="">
+									<a href="#log_advanced">advanced</a>
+								</li>
+							</ul>
+							<div class="tabs_anchor" id="log_simple">
+					 			<div>
+					 				<label for="log_message.minimum">Minumum length
+									<input type="text" name="log_message.minimum" value="${config.get('svnpolicies','log_message.minimum')}" />
+					 				</label>
+									<p class="hint">Minimum number of characters required in a log message</p>
+								</div>
+					 			<div>
+					 				<label for="log_message.pattern">Pattern
+									<input type="text" name="log_message.pattern" value="${config.get('svnpolicies','log_message.pattern')}" /></label>
+					 				<p class="hint">Regex pattern to match for log message (example: ^ticket #[0-9]+)</p>
+								</div>
+							</div>
+							<div class="tabs_anchor" id="log_advanced" style="display: none;">
+								<label for="advanced_precomit_enabled">
+									<input id="advanced_precomit_enabled" type="checkbox" value="true" name="advanced_precomit_enabled" 
+									checked="${config.getbool('svnpolicies','advanced_precomit_enabled') or None}" /> Enable advanced commands?
+								</label>
+								<p class="hint">Edit the content of the pre-commit file.</p>
+								<textarea id="advanced_precomit_content" name="advanced_precomit_content" rows="15" style="width:100%" >${precomit_advanced_text}</textarea>
+								<p class="hint">This file has to contain commands that will be run before the commit. If the script exit's with a value different of zero then the svn commit is rejected.</p>
+	    					</div>
+						</div>
+			 		</fieldset>
+			 		<fieldset >
+			 			<legend>Ticket Management Command Controls</legend>
+			 			<div>
+			 				<label for="commands.enabled">
+							<input type="checkbox" value="true" id="commands.enabled" name="commands.enabled" checked="${config.getbool('svnpolicies','commands.enabled') or None}" />
+							Enable ticket control commands</label>
+							<p class="hint">Commands in commit messages will update ticket statuses.  See the <a href="?help=1#Ticketcontrolfromsvncommitlogs" target="_blank" >SVNPoliciesGuide</a> for commands.</p>
+						</div>
+			 		</fieldset>
+					<fieldset >
+			 			<legend>Property Change Controls</legend>
+			 			<div>
+			 				<label for="svn_property">
+							<input type="checkbox" value="true" id="svn_property" name="svn_property" checked="${config.getbool('svnpolicies','svn_property') or None}" />
+							Enable only authors to update their own checkin comments</label>
+							<p class="hint">Enable only authors to update their own checkin comments, and rejects all other property changes.</p>
+						</div>
+			 		</fieldset>
+                    <fieldset >
+			 			<legend>SVN Repository Write Policy</legend>
+			 			<div>
+			 				<label for="readonly_repository">
+							<input type="checkbox" value="true" id="readonly_repository" name="readonly_repository" checked="${config.getbool('svnpolicies','readonly_repository') or None}" />
+							Disable commits?</label>
+							<p class="hint">This checkbox makes the svn repository readonly. All the commits will be rejected.</p>
+						</div>
+			 		</fieldset>
+			  	</div>
+				<div class="buttons">
+			    	<input type="submit" value="Apply changes"/>
+			  	</div>	
+			</div>    
+	 	</form>
+	</td>
+	<td style="vertical-align: top; text-align: left; padding-left: 20px; padding-right: 10px; white-space: nowrap;">
+	
+		<fieldset id="message_field" py:if="status" style="padding-bottom: 20px; display: none;" >
+ 			<legend >Messages</legend>
+			<div id="backend-message" py:if="svn_errors" class="system-message">
+				<ul>
+					<li py:for="message in status">${message}</li>
+				</ul>
+			</div>
+			<div py:if="not svn_errors">
+				<ul>
+					<li py:for="message in status">${message}</li>
+				</ul>
+			</div>
+ 		</fieldset>
+	
+    	<fieldset>
+    		<legend>Status</legend>
+			<div id="general_status">
+				<h2>State</h2>
+				The svn policy plugin features are 
+				<span py:if="not config.getbool('svnpolicies','svnpolicies_enabled')" style="font-variant:small-caps; font-weight: bold;">
+					not
+				</span>
+				<span style="font-variant:small-caps; font-weight: bold;">
+					activated.
+				</span>
+				<br />
+				<br />
+			</div>
+			<div id="precommit_status">
+				<h2>Before the commit</h2>
+                <div py:if="config.getbool('svnpolicies','readonly_repository')" class="system-message">
+                    The <span style="font-variant:small-caps; font-weight: bold;">SVN</span> repository is <span style="font-variant:small-caps; font-weight: bold;">READONLY</span>!
+                </div>
+				<ul py:if="not config.getbool('svnpolicies','readonly_repository')">
+					<li>logging 
+					<span py:if="not config.getbool('svnpolicies','log_message.required')" style="font-variant:small-caps; font-weight: bold;">
+						not 
+					</span>
+					<span style="font-weight: bold;">required</span>;
+					</li>
+					<div py:if="config.getbool('svnpolicies','log_message.required')">
+					<li>
+						minimum length  -  
+						<span style="font-weight: bold;">
+						${config.get('svnpolicies','log_message.minimum')}
+						</span> characters;
+					</li>
+					<li py:if="config.get('svnpolicies','log_message.pattern').strip() != ''">
+						must follow a 
+						<span style="font-weight: bold;">
+						pattern
+						</span>
+					</li>
+					<li py:if="config.getbool('svnpolicies','advanced_precomit_enabled')">
+						there are 
+						<span style="font-weight: bold;">
+						advanced commands
+						</span> set to run
+					</li>
+					<li py:if="config.getbool('svnpolicies','svn_property')">
+						only 
+						<span style="font-weight: bold;">
+						authors
+						</span> of a commit  
+						<span style="font-weight: bold;">
+						can change 
+						</span> the log message
+					</li>
+					</div>
+				</ul>
+				<br />
+				<br />
+			</div>
+			<div py:if="not config.getbool('svnpolicies','readonly_repository')" id="postcommit_status">
+				<h2>After the commit</h2>
+				<ul>
+					<li>svn commit email notification 
+					<span py:if="not config.getbool('svnpolicies','email.enabled')" style="font-variant:small-caps; font-weight: bold;">
+						not 
+					</span>
+					<span style="font-weight: bold;">required</span>;
+					</li>
+					<div py:if="config.getbool('svnpolicies','email.enabled')">
+					<li >the email is sent to the follwing addresses:
+						<ul>
+							<li py:for="email in config.getlist('svnpolicies','email.list')">${email}</li>
+						</ul>
+					</li>
+					<li py:if="config.get('svnpolicies','email.prefix').strip() != ''">
+						the email subject will have 
+						<span style="font-weight: bold;">
+							${config.get('svnpolicies','email.prefix')}
+						</span> prefix
+					</li>
+					<li>
+						the FROM header of the commit email will be set to <br />
+						<span py:if="config.getbool('svnpolicies','email_from_enabled')" style="font-weight: bold;">
+							${config.get('svnpolicies','email_from_address')}
+						</span>
+						<span py:if="not config.getbool('svnpolicies','email_from_enabled')" style="font-weight: bold;">
+							the commiter email address
+						</span>
+					</li>
+					<li py:if="config.getbool('svnpolicies','email_subject_cx')">
+						the email subject will have the
+						<span style="font-weight: bold;">
+							path of commit files
+						</span>.
+					</li>
+					<li py:if="config.getbool('svnpolicies','email.attachment')">
+						the diff will be 
+						<span style="font-variant:small-caps; font-weight: bold;">
+							atached 
+						</span> the size limit set to 
+						<span style="font-variant:small-caps; font-weight: bold;">
+							${config.get('svnpolicies','email.attachment_limit')} bytes
+						</span>
+					</li>
+					<li py:if="config.getbool('svnpolicies','advanced_postcomit_enabled')">
+						there are 
+						<span style="font-weight: bold;">
+						advanced commands
+						</span> set to run
+					</li>
+					</div>
+					<br />
+					<br />
+				</ul>
+			</div>
+			<div py:if="not config.getbool('svnpolicies','readonly_repository')" id="postcommit_commands">
+				<h2>Ticket commands</h2>
+				<ul>
+					<li>the ticket management is
+						<span py:if="not config.getbool('svnpolicies','commands.enabled')" style="font-variant:small-caps; font-weight: bold;">
+							not 
+						</span>
+						<span style="font-weight: bold;">activated</span>;
+					</li>
+					<li py:if="config.getbool('svnpolicies','commands.enabled')">
+						the follwing command are enabled:
+						<ul>
+							<li>close, closed, closes, fix, fixed, fixes</li>
+							<li>references, refs, addresses, re, see</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+            <div><a href="?help=1" target="_blank">help page</a></div>
+    	</fieldset>
+    </td></tr></table>
+  </body>
+</html>

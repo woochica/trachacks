@@ -1,0 +1,58 @@
+.tabs_anchors {
+	list-style-image:none;
+	list-style-position:outside;
+	list-style-type:none;
+	margin:0pt;
+	padding:0pt 0pt 1px;
+}
+.tabs_anchors:after {
+	clear:both;
+	content:" ";
+	display:block;
+}
+.tabs_anchors li {
+	float:left;
+	margin:0pt 1px 0pt 0pt;
+}
+.tabs_anchors a {
+	border-color:#EAEAEA rgb(234, 234, 234) -moz-use-text-color;
+	border-style:solid solid none;
+	border-width:1px 1px 0pt;
+	color:#000000;
+	display:block;
+	padding:2px 9px 1px;
+	position:relative;
+	text-decoration:none;
+	top:1px;
+	z-index:2;
+}
+.tabs_anchors .on a {
+	font-weight:bold;
+	padding-bottom:2px;
+}
+.tabs_anchors a:focus, .tabs_anchors a:active {
+	outline-color:invert;
+	outline-style:none;
+	outline-width:medium;
+}
+.tabs_anchors .on a, .tabs_anchors a:hover, .tabs_anchors a:focus, .tabs_anchors a:active, .tabs_anchor {
+	background:#EAEAEA none repeat scroll 0%;
+}
+.tabs_anchors .on a:link, .tabs_anchors .on a:visited {
+	cursor:text;
+}
+.tabs_anchors a:hover, .tabs_anchors a:focus, .tabs_anchors a:active {
+	cursor:pointer;
+}
+.tabs_anchor {
+	padding:10px;
+}
+
+.system-message {
+	background:#FFDDCC none repeat scroll 0%;
+	border:2px solid #DD0000;
+	color:#550000;
+	margin:1em 0pt;
+	padding:0.5em;
+}
+

@@ -1,0 +1,102 @@
+= Svn Policy Trac Plugin =
+
+This wiki page describes how Svn Policies Plugin works and what can be controlled through the trac admin page plugin. Before this plugin was implemented a project administrator that wanted this kind of functionality had to write a hook script and deploy it in the project svn repository. Now this kind of script can be generated from the trac admin page.
+
+== Svn Hooks ==
+The svn hooks are executable scripts that are run by the svn server when a commit is done or a property is changed. This plugin knows to handle three type of hooks scripts:
+ * post commit scripts
+ * pre commit script
+ * pre revision property change scripts
+The hook scrips are located in the hooks directory of the svn repository. The hook scripts must have a special name and must be executable. For more information, the svn documentation can be of help [http://svnbook.red-bean.com/nightly/en/svn.reposadmin.create.html#svn.reposadmin.create.hooks hooks section].
+
+== Global Configuration File ==
+The plugin has a configuration file that must be edited with the proper settings before it's installed as an egg. The configuration file is named '''svnpolicy.conf''' and is in the root of the plugin. The settings that have to be configured are:
+ * PYTHON_SITE_DIR - the path to the directory in which is installed the trac egg. This setting is used to set the PYTHONPATH environment variable of the scripts that run at commit time. 
+ * TRAC_CODE_PATH - the path to the directory in which the trac code is stored. This setting is used to find on the file system the trac-post-commit-hook file, from the contrib directory. 
+ * AUTHOR_URL_TEMPLATE - this string is used to create the URL at which the author of the commit has it's profile. 
+ * CHANGESET_URL - this string is used to create the URL at which the chageset with the commit can be found. 
+ * SVNNOTIFY - path on the file system where the '''svnnotify''' script can be found.
+ * SVNLOOK - - path on the file system where the '''svnlook''' script can be found.
+ * SMTP_HOST - the server that sends emails for trac.
+ * SMTP_USER - the user with whom the trac authenticates to the mail server.
+ * SMTP_PASSWORD - the password with whom the trac authenticates to the mail server.
+
+The configuration file must be a valid python file.
+{{{
+PYTHON_SITE_DIR="/usr/local/lib/python2.4/site-packages/";
+TRAC_CODE_PATH="/etf/trunk/vendor/trac-0.11dev";
+AUTHOR_URL_TEMPLATE= "https://optaros.com/user/%s";
+CHANGESET_URL= "https://optaros.com/trac/%s/changeset/%s";
+SVNNOTIFY= "/usr/bin/svnnotify"
+SVNLOOK= "/usr/bin/svnlook"
+SMTP_HOST= "optaros.com"
+SMTP_USER= "mail_user"
+SMTP_PASSWORD= "mail_password"
+}}}
+
+== Features ==
+This Trac plugin implements the most used features now in production servers and other features nice to have. From this plugin the administrator of the project can:
+ * add the email addresses to which the svn commit mails to be sent;
+ * enforce a svn log message format;
+ * enable the control of tickets from the svn commit messages;
+ * control the svn properties set for revisions;
+ * set the svn repository as readonly;
+ * write custom scripts to run at post-commit and pre-commit.
+
+=== Status Section ===
+In the right of the plugin page is the status section. In that section you can see at a glance what features are enable and what aren't. 
+
+=== Commit emails ===
+At every svn commit the plugin can configure the svn server to send mails to a list of emails. The email addresses should be entered as a comma separated list under the '''Recipient list''' input field and a email subject prefix can be set the  under the '''Email Prefix''' input field. If the project administrator wants the subject email to contain the path of the commit then it should check the '''Add the path''' check-box. If the project administrator wants to receive the svn diff as a attachment then it should check the '''Attachment''' check-box.
+
+=== Svn commit logs ===
+Through this plugin the project administrator can enforce a svn log message format. There are two options that can be configured:
+ * a minimum number of characters that the log must contain 
+ * a log message format described through a python regex([http://docs.python.org/lib/re-syntax.html regex syntax]). 
+
+If the svn commit log message is not conform to the format specified by the project administrator then the svn commit is rejected.
+
+=== Ticket control from svn commit logs ===
+A new featured has been added through this plugin. Now, from the svn log message, tickets can be closed or referenced. For enabling this option the project administrator must check the '''Enable ticket control commands'''. If enabled, at post commit, the svn server will run a script that will search through the log message for valid commands and then execute them.
+
+It searches commit messages for text in the form of:
+ * `command #1`
+ * `command #1, #2`
+ * `command #1 & #2` 
+ * `command #1 and #2`
+
+Instead of the short-hand syntax "`#1`", "`ticket:1`" can be used as well, e.g.:
+ * `command ticket:1`
+ * `command ticket:1, ticket:2`
+ * `command ticket:1 & ticket:2` 
+ * `command ticket:1 and ticket:2`
+
+In addition, the ':' character can be omitted and issue or bug can be used instead of ticket. You can have more then one command in a message. The following commands are supported. There is more then one spelling for each command, to make this as user-friendly as possible:
+
+ * close, closed, closes, fix, fixed, fixes
+     The specified issue numbers are closed with the contents of this commit message being added to it. 
+ * references, refs, addresses, re, see 
+     The specified issue numbers are left in their current status, but the contents of this commit message are added to their notes. 
+
+A fairly complicated example of what you can do is with a commit message of:
+{{{
+    Changed blah and foo to do this or that. Fixes #10 and #12, and refs #12.
+}}}
+This will close `#10` and `#12`, and add a note to `#12`.
+
+=== Svn property change ===
+Some projects have a pre-revprop-change hook script. The '''Enable only authors to update their own checkin comments''' checkbox allows the project administrator to permit updates on the log messages to be done only by the original author of the log message. All other properties that are set on a specific revision will be rejected. This functionality is '''popular''' so it was implemented like a separate option. 
+
+=== Advanced processing ===
+Currently there are some projects that are using some advanced processing at svn commit. This kind of processing wasn't implemented directly in the plugin page. For advanced customization the plugin offers a '''Advanced''' tab, for post and pre commit. The advanced tab allows the project administrator to create a standalone script that would be run at commit time. This scripts can be bash, python, perl scripts, and it should follow the svn documentation regarding hook scripts [http://svnbook.red-bean.com/nightly/en/svn.reposadmin.create.html#svn.reposadmin.create.hooks hooks section]. '''This feature allows the project administrator to run commands on the projects.optaros.com machine so be very very careful when using the advanced tab.''' 
+
+== Implementation ==
+
+This plugin was created in a such manner that all trac environments will use the same hook files. If the hooks code will change then the deployment won't have to be changed. This makes the maintenance to be low. The plugin creates, at every save of settings, a mesh of symlinks that points to the proper hook script from the svn plugin egg. The mesh of symlinks are created in order to know at runtime for which project the script runs. The plugin creates 2 links:
+ * one that resides in the hooks directory of the svn repository for the specific project and that points to a hooks directory from the trac environment(at the first use the plugin creates the hooks directory from the trac environment)
+ * one that resides in the hooks directory of the trac environment(created at the first save) and that points to the original plugin hook script. 
+The hook script gets the path the symlink from the svn repository points to and determines the path to the trac environment. Using this path the script reads the trac.ini file of the project and determines the settings the administrator entered in the plugin page. After that the script does it actual job. The hook scripts are written in python.
+ 
+== Installation notes ==
+ * the plugin will not create hook scripts, if in the svn repository, there are hook scripts with the same name. This "feature" was implemented in order to not delete the current hook scripts written by Dave.
+ * EDIT the '''svnpolicy.conf''' file before installation!
