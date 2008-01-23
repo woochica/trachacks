@@ -2,11 +2,12 @@ TracChineseTranslation
 
 文档属主： ZoomQuiet
 文档版本：
-    0.7-071109::Zoomq Creat
+    0.8-080123::ZoomQuiet fixed
+    0.7-071109::ZoomQuiet Creat
     
 = 概述 =
 快速完成两个主要版本的中文化翻译; 工程目录组织:
-详细目录结构:
+详细目录结构(修订ing..):
 '''
 ./
 |-- 0.10
