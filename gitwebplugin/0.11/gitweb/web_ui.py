@@ -11,8 +11,10 @@ from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.perm import IPermissionRequestor
 from trac.mimeview.api import MIME_MAP as BASE_MIME_MAP
+from trac.prefs.api import IPreferencePanelProvider
 from trac.config import Option, BoolOption
 from trac.util.text import to_unicode
+from trac.util.translation import _
 
 from genshi.builder import tag
 from genshi.core import Markup
@@ -26,7 +28,7 @@ MIME_MAP.update({
 class GitwebModule(Component):
     """A plugin to embed gitweb into Trac."""
     
-    implements(IRequestHandler, INavigationContributor, IPermissionRequestor, ITemplateProvider)
+    implements(IRequestHandler, INavigationContributor, IPermissionRequestor, ITemplateProvider, IPreferencePanelProvider)
     
     gitweb_url = Option('gitweb', 'url', doc='URL to gitweb')
     send_mime = BoolOption('gitweb', 'send_mime', default=False,
@@ -34,13 +36,19 @@ class GitwebModule(Component):
     
     patterns = [
         # (regex, replacement) 
-        (r'^.*?<div class', '<div class'),
-        (r'<\/body.*', ''),
-        (r'git\?{1,}a=git-logo.png', 'www/images/git.png'),
-        (r'[\'\"]\/git\?{0,}([^\'\"]*)', '"?\\1'),
-        (r'git\.do\?(\S+)?\;a\=rss', 'git?\\1;a=rss'),
+        (r'^.*?<div class', '<div class', False),
+        (r'<\/body.*', '', False),
+        (r'git\?{1,}a=git-logo.png', 'www/images/git.png', False),
+        (r'[\'\"]\/git\?{0,}([^\'\"]*)', '"?\\1', False),
+        (r'git\.do\?(\S+)?\;a\=rss', 'git?\\1;a=rss', False),
+        (r'<img src="git-logo.png" width="72" height="27" alt="git" class="logo"/>', 
+         lambda req: '<img src="%s" width="72" height="27" alt="git" class="git-logo"/>' % \
+                     req.href.chrome('gitweb', 'git-logo.png'), True),
+        (r'<link rel="stylesheet" type="text/css" href="/pub/gitweb.css"/>',
+         lambda req: '<link rel="stylesheet" type="text/css" href="%s"/>\n<link rel="stylesheet" type="text/css" href="%s"/>' % \
+                (req.href.chrome('gitweb', 'gitweb-full.css'), req.href.chrome('gitweb', 'gitweb-trac.css')), True),
     ]
-    patterns = [(re.compile(pat, re.S|re.I|re.U), rep) for pat, rep in patterns]
+    patterns = [(re.compile(pat, re.S|re.I|re.U), rep, chrome) for pat, rep, chrome in patterns]
     
     # IRequestHandler methods
     def match_request(self, req):
@@ -68,25 +76,34 @@ class GitwebModule(Component):
             req.send(page, mime_type)
             
         # Check for RSS
-        if args.get('a') == 'rss':
+        if args.get('a') in ('rss', 'opml', 'project_index', 'atom'):
             req.send(page, urlf.info().type)
         
         # Proceed with normal page serving
+        chrome_enabled = req.session.get('gitweb_chrome_enabled', '0') == '1'
         page = to_unicode(page)
-        for pat, rep in self.patterns:
-            page = pat.sub(rep, page)
+        for pat, rep, chrome in self.patterns:
+            if chrome_enabled or chrome:
+                if callable(rep):
+                    rep = rep(req)
+                page = pat.sub(rep, page)
             
+        # If chrome wrapping is disabled, send back the page
+        if not chrome_enabled:
+            req.send(page, urlf.info().type)
+
         data = {
             'gitweb_page': Markup(page),
         }
         #add_link(req, 'stylesheet', 'http://dev.laptop.org/www/styles/gitbrowse.css', 'text/css')
         add_stylesheet(req, 'gitweb/gitweb.css')
+        add_stylesheet(req, 'gitweb/gitweb-trac.css')
         return 'gitweb.html', data, urlf.info().type
 
     # INavigationContributor methods
     def get_navigation_items(self, req):
         if 'BROWSER_VIEW' in req.perm:
-            yield 'mainnav', 'gitweb', tag.a('Browse Source', 
+            yield 'mainnav', 'gitweb', tag.a(_('Browse Source'),
                                              href=req.href.browser())
                                              
     def get_active_navigation_item(self, req):
@@ -105,4 +122,17 @@ class GitwebModule(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
+    # IPreferencePanelProvider methods
+    def get_preference_panels(self, req):
+        yield 'gitweb', _('Gitweb')
 
+    def render_preference_panel(self, req, panel):
+        if req.method == 'POST':
+            chrome_enabled = 'chrome_enabled' in req.args
+            req.session['gitweb_chrome_enabled'] = chrome_enabled and '1' or '0'
+            req.redirect(req.href.prefs('gitweb'))
+
+        data = {
+            'chrome_enabled': req.session.get('gitweb_chrome_enabled', '0')
+        }
+        return 'prefs_gitweb.html', data

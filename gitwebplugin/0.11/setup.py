@@ -19,7 +19,7 @@ setup(
         'Framework :: Trac',
     ],
     
-    install_requires = [],
+    install_requires = ['Trac'],
 
     entry_points = {
         'trac.plugins': [
