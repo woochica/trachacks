@@ -1,0 +1,128 @@
+= zhTrac0.10.4 guide =
+
+== Version history ==
+ Document owner:: jessinio( jessinio AT gmail.com )
+ Document history::
+    * 0712011 create, and change to TracWiki format.
+
+`This document is for Linux and Unix users only.`
+
+zhTrac has two installation mode:
+    * As a patch: for users who have installed English version trac.
+    * New install.
+
+
+== Prepare to install ==
+First, check out zhTrac from repository:
+{{{
+    $ svn co http://svn.rdev.kingsoft.net/kdoc/tangle/kspigrp/kspi.tasks/TracChineseTranslation/0.10/install Trac0.10.4_zh
+}}}
+
+=== check if trac installed ===
+{{{
+    $ python -c 'import trac'
+If no exception, it means trac is installed.
+    Traceback (most recent call last):
+     File "<stdin>", line 1, in <module>
+    ImportError: No module named  trac
+}}}
+
+
+== GNU/Linux install guide ==
+
+=== Patch zhTrac to Trac0.10.4  ===
+{{{
+$ cd /path/to/u/Trac0.10.4_zh
+$ sudo ./setup.py cn /path/to/environment
+}}}
+ * /path/to/environment is trac environment path
+
+ Note::
+ * All default wiki pages will be patched and will install Chinese wiki pages.
+ * If default wiki pages have been modified, zhTrac can't ensure patch is safe!
+
+==== Back to English version ====
+{{{
+$ sudo ./setup.py en /path/to/environment
+}}}
+ * /path/to/environment is trac environment path.
+
+=== New install ===
+If you are sure that no trac is installed after check(describes as above), you can install zhTrac as following:
+{{{
+$ cd /path/to/u/Trac0.10.4_zh
+$ sudo ./setup.py install
+}}}     
+
+If trac is installed this way, you can not revert zhTrac to English version. Or you will have to remove zhTrac and reinstall English version trac.
+
+==== Upgrade Trac0.10.4zhX to higher version ====
+This section apply to users who have installed early development version of Trac0.10.4zhX. The following is about how to upgrade from lower version to higher version of Trac0.10.4zhX:
+{{{
+$ cd /path/to/u/Trac0.10.4_zhX (path to high version trac)
+$ sudo ./setup.py upgrade /path/to/environment
+}}}
+
+== Unix user guide ==
+The following introductions are only for `FreeBSD`6.2 and above:
+
+ * Prerequisite:
+  * python
+  * sqlite3
+  * and it's python extension : py-pysqlite
+  * clearsilver 
+  * and it's python extension : clearsilver-python 
+    
+== Check system support state ==
+This section is just to make sure that all nessessary supports are ready in your FreeBSD system. You can skip these steps if you are sure all above supports are ready.
+
+ * check python support:
+
+{{{
+$ python --version
+}}}
+
+If any error messages, please install python first:
+
+{{{
+# cd /usr/local/bin/python
+# make install clean
+}}}
+
+ * check sqlite support:
+
+{{{
+$ find /usr/local/lib -name sqlite3
+}}}
+
+If no messages found, please install sqlite:
+
+{{{
+# cd /usr/local/bin/sqlite3
+# make install clean
+}}}
+
+ * check pysqlite extension support:
+
+{{{
+$ ls /usr/local/lib/python2.5/site-packages/ | grep sqlite
+}}}
+
+If no messages found, please install pysqlite:
+
+{{{
+# cd /usr/ports/databases/py-sqlite3
+# make install clean
+}}}
+
+ * install clearsilver
+
+{{{
+# cd /usr/ports/www/clearsilver
+# make install clean
+# cd /usr/ports/www/clearsilver-python
+# make install clean
+}}}
+
+After install all supports that trac need, install zhTrac0.10.4 as "GNU/Linux install usage" section describes.
+

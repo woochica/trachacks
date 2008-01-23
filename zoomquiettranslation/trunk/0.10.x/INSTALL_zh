@@ -1,0 +1,114 @@
+= 中文版Trac0.10.4使用方法 =
+
+== 版本历史 ==
+ 文档属主:: jessinio ( jessinio AT gmail.com)
+ 文档版本:: 
+    * 0712011 创立文档，并根据TracWiki 格式进行了修订
+
+`本文档只适合Linux与Unix用户使用.`
+
+Trac汉化版有两种使用方法:
+    * 以补丁的形式使用: 针对已经安装了英文版的用户使用
+    * 全新安装一个中文Trac实例
+
+
+== 安装准备 ==
+两种方式都是先下载svn上的install文件夹.
+{{{
+    $ svn co http://svn.rdev.kingsoft.net/kdoc/tangle/kspigrp/kspi.tasks/TracChineseTranslation/0.10/install Trac0.10.4_zh
+}}}
+
+=== 判断系统是否安装Trac方法 ===
+{{{
+    $ python -c 'import trac'
+如果没有出现下面异常就表明系统已经安装trac:
+    Traceback (most recent call last):
+     File "<stdin>", line 1, in <module>
+    ImportError: No module named  trac
+}}}
+
+
+== GNU/Linux 安装使用 ==
+
+=== 在原版 Trac0.10.4 基础上使用补丁模式汉化 ===
+{{{
+$ cd /path/to/u/Trac0.10.4_zh
+$ sudo ./setup.py cn /path/to/environment
+}}}
+ * /path/to/environment是trac环境的路径
+
+ 注意::
+ * 将汉化所有页面和内置的默认维基文章
+ * 如果有原版维基文章自行修订过，不保证安全合并
+
+==== 返回到英文界面的方法 ====
+{{{
+$ sudo ./setup.py en /path/to/environment
+}}}
+ * /path/to/environment是trac环境的路径
+
+=== 以全新安装方式中文版Trac0.10.4 ===
+如果通过上面的判断trac是否安装的方法判断自己的系统没有安装trac的用户,使用下面的方法安装汉化版trac
+{{{
+$ cd /path/to/u/Trac0.10.4_zh
+$ sudo ./setup.py install
+}}}        
+以这种方法安装的trac, 无法回退成原版的trac, 要使用英文版的trac,请把本软件删除,重新安装英文版的trac
+==== 从Trac0.10.4zhX升级到Trac0.10.4zhX高版本 ====
+本用法,只要是针对安装了早期开发版本中文Trac0.10.4zhX的用户的.从低版本的中文Trac0.10.4zhX升级到高版本的中文Trac0.10.4zhX方法如下:
+{{{
+$ cd /path/to/u/Trac0.10.4_zhX (为最高版本的路径)
+$ sudo ./setup.py upgrade /path/to/environment
+}}}
+
+==  Unix用户指南 ==
+下面只以`FreeBSD` 6.2以上环境进行说明
+
+ * 要在Unix下使用trac,需要多个库和python模块的支持:
+
+    * python
+    * sqlite3
+    * python扩展:py-pysqlite
+    * clearsilver
+    * python扩展:clearsilver-python 
+    
+== 了解系统安装软件 ==
+本节只要是测试FreeBSD系统是否安装运行Trac需要的软件,如果用户确认系统已经安装了上面的软件,可以跳过本节.
+ * 判断python是安装:
+{{{
+$ python --version
+}}}
+没有安装会出现错误,安装python的方法:  
+{{{
+# cd /usr/local/bin/python
+# make install clean
+}}}
+ * 判断是否安装sqlite3
+{{{
+$ find /usr/local/lib -name sqlite3
+}}}
+如果没有查找到信息,使用下面的方法安装:
+{{{
+# cd /usr/local/bin/sqlite3
+# make install clean
+}}}
+ * 判断是否安装pysqlite
+{{{
+$ ls /usr/local/lib/python2.5/site-packages/ | grep sqlite
+}}}
+如果有信息就表示安装,没有安装使用下面的方法安装:
+{{{
+# cd /usr/ports/databases/py-sqlite3
+# make install clean
+}}}
+ * 安装clearsilver
+{{{
+# cd /usr/ports/www/clearsilver
+# make install clean
+# cd /usr/ports/www/clearsilver-python
+# make install clean
+}}}
+
+安装后上面的软件后,
+使用中文版Trac 0.10.4 的方式方法同上面提及的 GNU/Linux 安装使用.
+

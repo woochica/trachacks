@@ -1,0 +1,44 @@
+
+
+= Trac配置文件 =
+[[ZhTracGuideToc]]
+
+Trac的配置是通过编辑'''`trac.ini`'''配置文件实现的, 其位于<项目环境>/conf/trac.ini.
+
+== 全局配置 ==
+
+自0.9版本后, Trac也可以从一个全局`trac.ini`文件中读取配置. 这些全局选项会合并到具体环境的局部选项中, 其中局部选项将优先起作用.
+
+默认情况下, 全局配置位于`$prefix/share/trac/conf/trac.ini`. 可以把它移动到另外的位置, 例如`/etc/trac.ini`, 但这样就要求改变安装Trac时创建的`trac/siteconfig.py`文件.
+
+== 参考 ==
+
+下面是可用配置选项的简明参考.
+
+[[TracIni]]
+
+== [组件] ==
+(''自 0.9之后'')
+
+该节是用于启用或禁用插件提供的组件以及Trac本身的组件. 启用或禁用的组件是通过选项的名字来指定的. 能否启用是由选项值决定的, 将值设定为''enabled''或''on''会启用该组件, 其他任意值则禁用该组件, 一般是''disabled''或''off''.
+
+选项名可以是组件的全名, 或模块/安装包的前缀. 前者启用或禁用一个具体的组件, 但后者却可以启用或禁用指定的包或模块中的任意组件.
+
+考虑下列的配置片断:
+{{{
+[components]
+trac.ticket.report.ReportModule = disabled
+webadmin.* = enabled
+}}}
+
+第一个选项让Trac禁用[wiki:ZhTracReports 报表模块]. 第二个选项让Trac启用`webadmin`包中的所有组件. 注意, 要匹配模块/包, 结尾的通配符是必不可少的.
+
+参见''关于Trac''的''插件''页以获得所有可用组件的列表(要求`CONFIG_VIEW` [wiki:ZhTracPermissions 权限]).
+
+相关信息:[ZhTracPlugins Trac插件]
+
+  ''注意, 在Trac r2335(应用于0.9b1和0.9b2)之前, 你可以使用`[disabled_components]`节. 细节请参见该页中的[http://projects.edgewall.com/trac/wiki/TracIni?version=42 上一版本].''
+----
+原文版本: TracIni[[BR]]
+相关信息: [ZhTracGuide Traqc导览],  [ZhTracAdmin Trac管理],  [ZhTracEnvironment Trac环境][[BR]]
+See also: TracGuide,  TracAdmin,  TracEnvironment
