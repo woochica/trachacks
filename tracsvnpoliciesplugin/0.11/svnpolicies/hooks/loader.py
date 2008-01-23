@@ -1,55 +1,54 @@
-from pkg_resources import Requirement, resource_string
+
+import os
 
 _variables = None
 
-def get_global_configurations(variable_name=None):
+def get_real_path(link, cut_by=2):
     """
-    Reads the plugin configuration file and returns all the values 
-    in a dictionary or the variable_name passed as parameter.
+    This function determines the real file that hides under symlinks.
     
-    @param variable_name: String
+    @return: String
+    @param link: String
     """
-    global _variables
-    if _variables is not None :
-        if _variables.has_key(variable_name) :
-            return _variables[variable_name]
-    global_conf = resource_string(Requirement.parse("TracSVNPoliciesPlugin"), '/svnpolicies/svnpolicy.conf')
-    prev = locals().copy()
-    exec(global_conf)
-    next = locals().copy()
-    next.pop('prev')
-    _variables={}
-    for value_name in next.keys() :
-        if not prev.has_key(value_name):
-            _variables[value_name] = next[value_name]
-    if variable_name is not None:
-        if _variables.has_key(variable_name) :
-            return _variables[variable_name]
-    return _variables
+    hook_file= os.path.realpath(link)
+    return os.path.sep.join(hook_file.split(os.path.sep)[:-cut_by])
 
+def get_trac_path(link, cut_by=2):
+    """
+    This function determines the target of a symlink.
+    
+    @return: String
+    @param link: String
+    """
+    hook_file= os.readlink(link)
+    return os.path.sep.join(hook_file.split(os.path.sep)[:-cut_by])
 
-production= True
+PYTHONPATH = ''
+production= False
 try :
     from svnpolicies import api
 except Exception :
     import site
-    site.addsitedir(get_global_configurations('PYTHON_SITE_DIR'))
+    # get the python path from the pth file
+    pth_handle = file(get_real_path(__file__, 1) + os.sep +'packages.pth','r')
+    PYTHONPATH = pth_handle.readline().strip()
+    pth_handle.close()
+    # load it
+    site.addsitedir(PYTHONPATH)
     production= True
     from svnpolicies import api
 
-AUTHOR_URL_TEMPLATE= get_global_configurations('AUTHOR_URL_TEMPLATE');
-CHANGESET_URL= get_global_configurations('CHANGESET_URL');
-SVNNOTIFY= get_global_configurations('SVNNOTIFY');
-SVNLOOK= get_global_configurations('SVNLOOK');
-SMTP_HOST= get_global_configurations('SMTP_HOST');
-SMTP_USER= get_global_configurations('SMTP_USER');
-SMTP_PASSWORD= get_global_configurations('SMTP_PASSWORD');
-CREDENTIALS= "-S" + \
+AUTHOR_URL_TEMPLATE = api.get_global_configurations('AUTHOR_URL_TEMPLATE');
+CHANGESET_URL = api.get_global_configurations('CHANGESET_URL');
+SVNNOTIFY = api.get_global_configurations('SVNNOTIFY');
+SVNLOOK = api.get_global_configurations('SVNLOOK');
+SMTP_HOST = api.get_global_configurations('SMTP_HOST');
+SMTP_USER = api.get_global_configurations('SMTP_USER');
+SMTP_PASSWORD = api.get_global_configurations('SMTP_PASSWORD');
+CREDENTIALS = "-S" + \
             " --smtp " + SMTP_HOST + \
             " --smtp-user " + SMTP_USER + \
             " --smtp-password " + SMTP_PASSWORD
 
-PYTHONPATH= get_global_configurations('PYTHON_SITE_DIR')
-
-TRAC_CODE_PATH=get_global_configurations('TRAC_CODE_PATH');
+TRAC_CODE_PATH = api.get_global_configurations('TRAC_CODE_PATH');
 

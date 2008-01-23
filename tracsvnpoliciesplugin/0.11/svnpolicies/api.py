@@ -2,13 +2,20 @@
 #
 
 
-
 from trac import config
 from os import path
 import re
 from pkg_resources import Requirement, resource_string, resource_filename
 
-all= ['IniReader', 'validate_email', 'get_global_configurations', 'get_resource_path', 'get_hook_path']
+all= ['IniReader', 
+      'validate_email', 
+      'get_global_configurations', 
+      'get_resource_path', 
+      'get_hook_path',
+      'get_site_packages']
+
+def get_site_packages():
+    return path.sep.join(__file__.split(path.sep)[:-3])
 
 def validate_email(email):
     """
@@ -52,8 +59,19 @@ def get_resource_path(resource_name):
 def get_hook_path(hook_name):
     """
     """
-    # exctract the loader
-    resource_filename(Requirement.parse("TracSVNPoliciesPlugin"),"/svnpolicies/hooks/loader.py" )
+    
+    # exctract the loader and get the path
+    loader_path =resource_filename(Requirement.parse("TracSVNPoliciesPlugin"), "/svnpolicies/hooks/loader.py" )
+    hooks_directory = path.sep.join(loader_path.split(path.sep)[:-1])
+    # write the packages.pth file
+    pth_file = hooks_directory + path.sep + 'packages.pth'
+    hook_file = hooks_directory + path.sep + hook_name
+    if not path.isfile(pth_file) or not path.isfile(hook_file):
+        sitepck_dir = get_site_packages()
+        file_handler = file(pth_file,'w')
+        file_handler.write(sitepck_dir)
+        file_handler.close()
+    
     # return the resource name
     return get_resource_path("/svnpolicies/hooks/" + hook_name)
 

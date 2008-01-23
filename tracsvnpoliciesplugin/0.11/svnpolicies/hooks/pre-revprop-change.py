@@ -58,16 +58,6 @@ def user_author_policy(author, user, property_name, settings):
     
     return False
 
-def get_trac_path(link):
-    """
-    This function determines the target of a symlink.
-    
-    @return: String
-    @param link: String
-    """
-    hook_file= os.readlink(link)
-    return os.path.sep.join(hook_file.split(os.path.sep)[:-2])
-
 if __name__ == "__main__":
     
     #######################################

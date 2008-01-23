@@ -95,26 +95,7 @@ def check_log(log, settings):
             if regex.match(log) is None :
                 return False
     return True
-    
-def get_real_path(link):
-    """
-    This function determines the real file that hides under symlinks.
-    
-    @return: String
-    @param link: String
-    """
-    hook_file= os.path.realpath(link)
-    return os.path.sep.join(hook_file.split(os.path.sep)[:-2])
 
-def get_trac_path(link):
-    """
-    This function determines the target of a symlink.
-    
-    @return: String
-    @param link: String
-    """
-    hook_file= os.readlink(link)
-    return os.path.sep.join(hook_file.split(os.path.sep)[:-2])
 
 def run_trac_advanced(settings, repos, rev):
     """

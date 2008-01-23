@@ -21,7 +21,7 @@ def epopen(cmd):
     prefix= ""
     if PYTHONPATH != "" and production:
         prefix= "export \"PYTHONPATH=%s\"; \n" % PYTHONPATH
-
+    print prefix
     p = subprocess.Popen(prefix + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     out_text= p.stdout.readlines()
     pid, status = os.waitpid(p.pid, 0)
@@ -93,26 +93,6 @@ def build_command(repos, rev, settings, project_name):
             "--author-url", AUTHOR_URL_TEMPLATE,
             "-U", CHANGESET_URL % (project_name, '%s')])
     return command
-
-def get_trac_path(link):
-    """
-    This function determines the target of a symlink.
-    
-    @return: String
-    @param link: String
-    """
-    hook_file= os.readlink(link)
-    return os.path.sep.join(hook_file.split(os.path.sep)[:-2])
-
-def get_real_path(link):
-    """
-    This function determines the real file that hides under symlinks.
-    
-    @return: String
-    @param link: String
-    """
-    hook_file= os.path.realpath(link)
-    return os.path.sep.join(hook_file.split(os.path.sep)[:-2])
 
 
 def run_trac_advanced(settings, repos, rev):
