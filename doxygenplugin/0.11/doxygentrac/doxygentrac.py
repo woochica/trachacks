@@ -12,13 +12,14 @@ import re
 import mimetypes
 
 from genshi.builder import tag
+from genshi.core import Markup
 
 from trac.config import Option
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
-  add_stylesheet
+                            add_stylesheet, add_ctxtnav
 from trac.search.api import ISearchSource
 from trac.wiki.api import WikiSystem, IWikiSyntaxProvider
 from trac.wiki.model import WikiPage
@@ -145,11 +146,9 @@ class DoxygenPlugin(Component):
                 else:
                     text = 'Doxygen index page [wiki:%s] does not exist.' % \
                            wiki
-                text = wiki_to_html(text, self.env, req)
-                req.hdf['doxygen.text'] = text
-                req.hdf['doxygen.wiki_href'] = req.href.wiki(wiki)
-                req.hdf['doxygen.wiki_page'] = wiki
-                return 'doxygen.cs', 'text/html'
+                data = {'doxygen_text': wiki_to_html(text, self.env, req)}
+                add_ctxtnav(req, "View %s page" % wiki, req.href.wiki(wiki))
+                return 'doxygen.html', data, 'text/html'
             # use configured Doxygen index
             path = os.path.join(self.base_path, self.default_doc,
                                 self.html_output, self.index)
@@ -165,8 +164,14 @@ class DoxygenPlugin(Component):
         mimetype = mimetypes.guess_type(path)[0]
         if mimetype == 'text/html':
             add_stylesheet(req, 'doxygen/css/doxygen.css')
-            req.hdf['doxygen.path'] = path
-            return 'doxygen.cs', 'text/html'
+            # Genshi can't include an unparsed file
+            # data = {'doxygen_path': path}
+            try:
+                content = Markup(file(path).read())
+                data = {'doxygen_content': content}
+                return 'doxygen.html', data, 'text/html'
+            except OSError, e:
+                raise TracError("Can't read doxygen content: %s" % e)
         else:
             req.send_file(path, mimetype)            
 
