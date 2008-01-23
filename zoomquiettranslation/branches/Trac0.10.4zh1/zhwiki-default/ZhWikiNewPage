@@ -1,0 +1,11 @@
+= 添加一个新维基网页的步骤 =
+
+ 1. 为你的新网页选择一个名字。关于命名规定，请见ZhWikiPageNames。
+ 2. 编辑一个现有网页（或任何其他支持ZhWikiFormattting的资源）并添加一个[ZhTracLinks link]到你的新网页中。保存你的更改。
+ 3. 根随着你创建的链接带你到该新网页。Trac会显示一个信息“describe !PageName here"”。
+ 4. 单击“编辑此页”按钮来编辑和添加内容。保存你的更改。
+ 5. 所有完成。你的新网页可以发布了。
+
+你可以通过在网页的顶端的快速搜索域中输入该页的ZhCamelCase名字，从而跳过第二步。但注意，该网页会“变成孤页”除非你从其他别的地方链接到此处。
+----
+相关信息：ZhTracWiki, ZhWikiFormatting, ZhTracLinks, ZhWikiDeletePage

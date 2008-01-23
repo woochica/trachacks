@@ -1,0 +1,12 @@
+= Trac支持 =
+
+像大多数[http://www.opensource.org/ open source projects]中的一样，“免费”Trac支持首先是通过社区本身来实现，主要是通过[http://trac.edgewall.org/wiki/MailingList mailing list]和项目wiki。
+
+还有一个[http://trac.edgewall.org/wiki/IrcChannel IRC channel]，在那里人们可以帮助别人。很多的“现场”开发讨论都在那里发生。
+
+在你开始一个新的支持查询前，请确认你已经进行了恰当的搜索：
+ * 在项目的[http://trac.edgewall.org/wiki/TracFaq FAQ]中
+ * 在给Trac[http://blog.gmane.org/gmane.comp.version-control.subversion.trac.general?set_user_css=http%3A%2F%2Fwww.edgewall.com%2Fcss%2Fgmane.css&do_set_user_css=t Mailing List]的过去的消息中。
+ * 在Trac传票系统中，使用[http://trac.edgewall.org/search?q=&ticket=on&wiki=on full search]或[http://trac.edgewall.org/query?summary=~&keywords=~" ticket query]。
+----
+相关信息：[http://trac.edgewall.org/wiki/MailingList MailingList], [http://trac.edgewall.org/wiki/CommercialServices CommercialServices]

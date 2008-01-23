@@ -1,0 +1,117 @@
+= 传票改变的邮件通知 =
+[[ZhTracGuideToc]]
+
+Trac支持通过电子邮件来通知传票的改变。
+
+电子邮件通知对于让用户时刻了解传票很有帮助，并且提拱了一个发送所有的传票改变到一个特定邮件发送清单的便捷方法。例如，这是如何创建[http://lists.edgewall.com/archive/trac-tickets/ Trac-tickets]邮件发送清单的描述。
+
+默认情况下通知是禁止的，可以在[wiki:ZhTracIni trac.ini]中激活和进行配置。
+
+== 收到通知邮件 ==
+当报告一个新的传票或添加一个评论时，在''reporter''、''assigned to/owner''或''cc''域中输入一个有效邮件地址。Trac会自动给你发一封电子邮件当传票有任何改动时，这取决于如何配置通知。
+
+它还可以帮助你时刻关注你感兴趣的事情或enhancement request。
+
+== 配置SMTP通知 ==
+
+=== 配置选项 ===
+下列时trac.ini中的''[notification]''节的可用选项：
+ * '''smtp_server''': 用于通知消息的SMTP服务器。
+ * '''smtp_user''': (自0.9后)验证SMTP帐户的用户名。
+ * '''smtp_user''': (自0.9后)验证SMTP帐户的密码。
+ * '''smtp_from''': 在通知邮件中用于"发送者"标题中的邮件地址。
+ * '''smtp_from''': 在通知邮件中用于"发送到"标题中的邮件地址。
+ * '''smtp_default_domain''': （自0.10后）将指定的域附加到不包含域的地址中。完全有资格的地址不进行更改。默认的域要附加到所有的用户名或注册中，邮件地址不能在用户设置中找到。
+ * '''smtp_always_cc''': 始终发送通知的电子邮件地址列表。通常用于把传票的改变发送到某个特定的邮件发送清单中。
+ * '''smtp_always_bcc''': （自0.10后）始终发送通知的电子邮件地址列表，但使通知邮件的其他收件人看不见地址。
+ * '''always_notify_reporter''': 始终将通知发送到报告人域中的任意地址。
+ * '''always_notify_owner''': （自0.9后）始终将通知发送给所有者域中的地址。
+ * '''always_notify_updater''': （自0.10后）始终向传票的更新者发送通知。
+ * '''use_public_cc''': （自0.10后）所有的收件人都能看到“To（所有者，报告人）”和Cc 列表中的地址。（默认是''Bcc:'' - 隐藏的副本）
+ * '''use_short_addr''': (自0.10后)激活发送通知到不包含域的地址，例如不以@<domain.com>作为结尾的域。该选项对内网很有用，SMTP服务器可以处理本地的地址并把用户名或注册映射到一个本地的邮箱。请见`smtp_default_domain`。不要将此选项用于一个公共的SMTP服务器。
+ * '''mime_encoding''': （自0.10后）电子邮件通知一直以7位模式发送的。该选项允许选择MIME编码方案。支持的值有：  
+   * `base64`: 默认值，与其他内容一起合作。可能会和一些敏感的反垃圾邮件或反病毒引擎引起点麻烦。
+   * `qp` or `quoted-printable`: 最适合欧洲语言（比base64更复杂），不推荐用于非ASCII文本（没有base64复杂）。
+   * “注意”：没有编码。只是用易懂的英语(ASCII)。使用非ASCII字符的邮件不能发送。
+      
+必需设置'''smtp_from'''或'''smtp_replyto'''（或两者），否则Trac拒绝发送通知邮件。
+
+=== 配置样例 ===
+
+{{{
+[notification]
+smtp_enabled = true
+smtp_server = mail.example.com
+smtp_from = notifier@example.com
+smtp_replyto = myproj@projects.example.com
+smtp_always_cc = ticketmaster@example.com, theboss+myproj@example.com
+}}}
+
+== 电子邮件样例 ==
+{{{
+#42: testing
+---------------------------+------------------------------------------------
+       Id:  42             |      Status:  assigned                
+Component:  report system  |    Modified:  Fri Apr  9 00:04:31 2004
+ Severity:  major          |   Milestone:  0.9                     
+ Priority:  lowest         |     Version:  0.6                     
+    Owner:  anonymous      |    Reporter:  jonas@example.com               
+---------------------------+------------------------------------------------
+Changes:
+  * component:  changset view => search system
+  * priority:  low => highest
+  * owner:  jonas => anonymous
+  * cc:  daniel@example.com =>
+         daniel@example.com, jonas@example.com
+  * status:  new => assigned
+
+Comment:
+I'm interested too!
+
+--
+Ticket URL: <http://example.com/trac/ticket/42>
+My Project <http://myproj.example.com/>
+}}}
+
+== 疑难解答 ==
+
+如果你不能发送通知，首先要确定是否激活了日志然后查看日志是否有任何错误信息被记录。关于日志特征的帮助，请参考ZhTracLogging。
+
+通知错误不通过网络界面进行报道，因此提交了一个更改或一个新传票的用户从来得不到通知失败的消息。Trac管理者需要查看日志找到错误的的踪迹。
+
+=== ''否定的许可''的错误 ===
+
+典型的错误信息：
+{{{
+  ...
+  File ".../smtplib.py", line 303, in connect
+    raise socket.error, msg
+  error: (13, 'Permission denied')
+}}}
+
+该错误通常来自服务器上的安全设置，许多Linux分发不让网络服务器将电子邮件的信息发送到本地的SMTP服务器。
+
+当用户手动尝试连接SMTP服务器取得成功的时候，他们会很困惑：
+{{{
+telnet localhost 25
+}}}
+问题是，一个常规的用户可能会连接到SMTP服务器上，但是网络服务器却不会：
+{{{
+sudo -u www-data telnet localhost 25
+}}}
+
+这样，你需要配置你的服务器，这样网络服务器就授权发送到SMTP服务器。实际的设置取决于你的Linux分布和现行的安全政策。通过流览Trac MailingList文件你可以找到帮助。
+
+相应的ML论坛：
+ * SELinux: http://article.gmane.org/gmane.comp.version-control.subversion.trac.general/7518
+ 
+=== ''可疑垃圾邮件''错误 ===
+
+一些SMTP服务器可能会拒绝Trac发送的通知邮件。
+
+默认的Trac配置使用Base64编码来发送邮件给收件人。邮件的整个正文部分是编码的，有时会触发对敏感的邮件服务器的“假阳性”垃圾邮件监控。这样，建议使用`mime_encoding`选项将默认的编码改为"quoted-printable"。
+
+引用的可打印的编码与使用某个拉丁子集的语言合作的更好。对于亚洲子集，建议坚持Base64编码。
+
+----
+相关信息：ZhTracTickets, ZhTracIni, ZhTracGuide

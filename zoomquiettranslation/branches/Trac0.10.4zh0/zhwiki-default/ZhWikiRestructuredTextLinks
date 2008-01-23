@@ -1,0 +1,71 @@
+= 重构文字的Trac链接 =
+
+本文阐明了如何在reStructure中使用``..trac::``目录。该页是以下面的格式写的：
+
+{{{
+{{{
+#!rst 
+
+例子：
+ * Tickets: :trac:`#1` or :trac:`ticket:1`
+ * Ticket comments: :trac:`comment:ticket:1:2`
+ * Reports: :trac:`{1}` or :trac:`report:1`
+ * Changesets: :trac:`r1`, :trac:`[1]` or :trac:`changeset:1`
+ * Revision log: :trac:`r1:3`, :trac:`[1:3]` or :trac:`log:@1:3`, :trac:`log:trunk@1:3`
+ * Diffs (since version 0.10): :trac:`diff:@20:30`, :trac:`diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default` or :trac:`diff:trunk/trac@3538//sandbox/vc-refactoring/trac@3539`
+ * Wiki pages: :trac:`CamelCase` or :trac:`wiki:CamelCase`
+ * Milestones: :trac:`milestone:1.0`
+ * Attachment: :trac:`attachment:ticket:944:attachment.1073.diff`
+ * Files: :trac:`source:trunk/COPYING`
+ * A specific file revision: :trac:`source:/trunk/COPYING@200`
+ * A particular line of a specific file revision: :trac:`source:/trunk/COPYING@200#L25`
+
+}}}
+}}}
+
+如果你安装了docutils，上段代码可以渲染为：
+----
+{{{
+#!rst 
+
+例子：
+ * 传票: :trac:`#1` or :trac:`ticket:1`
+ * 传票评论: :trac:`comment:ticket:1:2`
+ * 报告: :trac:`{1}` or :trac:`report:1`
+ * Changesets: :trac:`r1`, :trac:`[1]` or :trac:`changeset:1`
+ * 修订日志: :trac:`r1:3`, :trac:`[1:3]` or :trac:`log:@1:3`, :trac:`log:trunk@1:3`
+ * 区别 (0.10版本后): :trac:`diff:@20:30`, :trac:`diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default` or :trac:`diff:trunk/trac@3538//sandbox/vc-refactoring/trac@3539`
+ * Wiki网页: :trac:`CamelCase` or :trac:`wiki:CamelCase`
+ * 里程碑: :trac:`milestone:1.0`
+ * 附件: :trac:`attachment:ticket:944:attachment.1073.diff`
+ * 文件: :trac:`source:trunk/COPYING`
+ * 一个具体的文件修订：:trac:`source:/trunk/COPYING@200`
+ * 一个具体的文件修订的某一特别行：:trac:`source:/trunk/COPYING@200#L25`
+
+}}}
+----
+
+请注意，上述任意一个都可以用规则的替代语法来编写：
+{{{
+{{{
+#!rst
+
+See `ticket:123`_
+
+ .. :trac: ticket:123 Ticket 123
+}}}
+}}}
+----
+
+{{{
+#!rst
+
+See _`ticket:123`
+
+.. trac:: ticket:123 Ticket 123
+}}}
+----
+上面的表格有一个附加利益，你可以为链接指定一个外部的标签。
+
+----
+相关信息：ZhWikiRestructuredText, ZhTracLinks

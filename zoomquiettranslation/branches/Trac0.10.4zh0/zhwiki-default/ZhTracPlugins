@@ -1,0 +1,140 @@
+= Trac插件 =
+[[ZhTracGuideToc]]
+
+自0.9后，Trac支持能扩展内置功能的插件。插件的功能是基于[http://trac.edgewall.org/wiki/TracDev/ComponentArchitecture component architecture]的。
+
+== 要求 ==
+
+要在Trac中使用插件，你需要安装[http://peak.telecommunity.com/DevCenter/setuptools setuptools](version 0.6)。
+
+插件还可以包含一个单独的`.py`文件，进入环境或全球`plugins`目录。（自里程碑0.10后）
+
+要安装`setuptools`，下载bootstrap module[http://peak.telecommunity.com/dist/ez_setup.py ez_setup.py]并按照下列执行：
+{{{
+$ python ez_setup.py
+}}}
+
+如果脚本不能安装setuptools版本，你可以从[http://www.python.org/pypi/setuptools PyPI]上下载它然后手动安装它。
+
+== 安装一个Trac插件 ==
+=== 单独项目 ===
+
+插件打包成[http://peak.telecommunity.com/DevCenter/PythonEggs Python eggs]。意味着，他们是ZIP文件，文件扩展名是`.egg`。如果你已下载了一个插件的源分布，你可以运行：
+{{{
+$ python setup.py bdist_egg
+}}}
+to build the `.egg` file.
+
+一旦你有插件当安，你需要将其复制到[wiki:ZhTracEnvironment project environment]的“插件”目录。还有，确认网络服务器有足够的许可可以读取插件egg。
+
+注意，创建了egg的Python版本必须匹配运行Trac的Python版本。比如，你在Python2.3下运行Trac，
+但已将你的独立Python升级到2.4，eggs就不被识别了。
+
+=== 所有的项目 ===
+
+==== With an .egg file ====
+
+一些插件，例如[http://trac.edgewall.org/wiki/WebAdmin WebAdmin]，是可以作为一个`.egg`文件进行下载，可以和`easy_install`程序一起安装：
+{{{
+easy_install TracWebAdmin-0.1.1dev_r2765-py2.3.egg
+}}}
+
+如果`easy_install`不在你的系统上，请参考上节中的“要求”来安装。Windows用户还需要将Python安装包的“脚本”目录，例如`C:\Python23\Scripts`，添加到`PATH`环境变量中。更多信息，请参考[http://peak.telecommunity.com/DevCenter/EasyInstall#windows-notes easy_install Windows notes]。
+
+如果安装完一个解压的egg后，Trac报告许可错误，并且你宁愿不麻烦网络服务器提供一个egg cache目录，你只需解压这个egg来绕开这个问题。只需把`--always-unzip`转为`easy_install`：
+{{{
+easy_install --always-unzip TracWebAdmin-0.1.1dev_r2765-py2.3.egg
+}}}
+你应与压缩的egg有同样的名字作为一个目录的结尾（以`.egg`扩展名为结尾）并且要包含其未压缩的内容。
+
+Trac还搜索`$prefix/share/trac/plugins`目录下的全球安装的插件。（自0.10版本后）
+
+==== 来自资源 ====
+
+如果你从Subversion中下载了插件的资源，或者一个使用包含的`setup.py`文件安装的源压缩文件：
+{{{
+$ python setup.py install
+}}}
+
+==== 激活插件 ====
+不像每个环境都安装的那些插件，你还要通过[wiki:ZhTracIni trac.ini]激活全球安装的插件。这是在配置文件的`[组件]`节中完成的，例如：
+{{{
+[components]
+webadmin.* = enabled
+}}}
+
+选项的名称是插件的Python安装包。插件的相应文档中应该明确指定，但通过查看源可以很容易发现。
+
+注意：安装完插件后，你还需要重启Apache。
+
+== 创建插件Cache ==
+
+一些插件需要由Python egg的运行时间(`pkg_resources`)提取出来。因此他们的内容是文件系统上的真实文件。系统中提取的目录默认是现在用户的主目录，这可能是也可能不是个问题。但你可以用环境变量`PYTHON_EGG_CACHE`越过默认位置。
+
+要从Apache配置中实现它，按下列指示使用`SetEnv`：
+{{{
+SetEnv PYTHON_EGG_CACHE /path/to/dir
+}}}
+
+无论你使用[wiki:ZhTracCgi CGI]或[wiki:ZhTracModPython mod_python]前端该指示都起作用。将该指示放在你设置到[wiki:ZhTracEnvironment Trac environment]的路径处的旁边，比如说在同样的`<Location>`组内。
+
+For example (for CGI):
+{{{
+ <Location /trac>
+   SetEnv TRAC_ENV /path/to/projenv
+   SetEnv PYTHON_EGG_CACHE /path/to/dir
+ </Location>
+}}}
+
+or (for mod_python):
+{{{
+ <Location /trac>
+   SetHandler mod_python
+   ...
+   SetEnv PYTHON_EGG_CACHE /path/to/dir
+ </Location>
+}}}
+
+ “注意：这要求`mod_env`模式”
+
+对于[wiki:ZhTracFastCgi FastCGI]，你需要选项，或你的网络服务器提供的无论什么设置环境变量的选项。
+
+=== 关于hook脚本 ===
+
+如果你已经创建了SVN hook脚本，例如`/contrib`目录中提供的粘贴－提交hook脚本。确定你也在这些脚本中定义了环境变量`PYTHON_EGG_CACHE`。
+
+== 疑难解答 ==
+
+=== 安装工具安装好了吗？ ===
+
+从命令行尝试它：
+{{{
+$ python -c "import pkg_resources"
+}}}
+
+如果你得到“无输出”，安装工具“是”安装了。否则，你需要在插件在Trac中工作之前安装它。
+
+=== 你得到Python egg的正确版本了吗？ ===
+
+Python egges在他们的文件名中包含了Python的版本号。例如，`MyPlugin-1.0-py2.4.egg`是一个Python2.4的egg，如果你在运行一个不同的Python版本，比如说2.3或2.5，它无法被加载进来。
+
+还有，验证你下载的egg文件实际是一个ZIP文件。如果你从一个Trac网站上下载的它，
+
+=== 插件激活了吗？ ===
+
+如果你安装了一个插件，例如不是在Trac项目环境的“插件”目录中，你需要在[ZhTracIni trac.ini]中激活它。确认以下几个事情：
+ * 事实上你向`[组件]`章节添加了必要的行
+ * 安装包或模式的名字是正确的
+ * 如果你引用一个模式，你已经添加了必要的“.*”
+ * 值被“激活”，不是“可激活的”
+ 
+=== 查看egg文件的许可 ===
+
+Trac当然必须能够读取文件。是的，你知道的！
+
+=== 查看日志文件 ===
+
+激活Trac中的[ZhTracLogging logging]，设置日志级别为`DEBUG`，然后查看日志中关于加载插件的信息。
+
+----
+相关信息：ZhTracGuide, [http://trac.edgewall.org/wiki/PluginList plugin list], [http://trac.edgewall.org/wiki/TracDev/ComponentArchitecture component architecture]

@@ -1,0 +1,81 @@
+= InterTrac链接  =
+自0.10版本以来，Trac支持一种Wiki置标的内部markup方便的方法使用其它服务器。
+== 定义 ==
+一个ZhInterTrac链接可被看做一个跳转!Trac链接。它用来引用位于另外一个Trac环境中的Trac资源，例如Wiki网页，更改集，传票，等等。
+
+== 动态InterTrac前缀表 ==
+[[InterTrac]]
+
+== 链接语法 ==
+将另外一个Trac环境的名字作为一个前缀，后面跟着一个冒号，以位于另一环境中的资源为结尾。
+{{{
+<target_environment>:<TracLinks>
+}}}
+
+使用一个常规的ZhTracLinks去指定另外一个资源。
+
+该目标环境的名字可以是该环境的实名，也可以是一个别名。
+
+关于别名，要在`trac.ini`中将对其进行定义。（见下面的部分）
+
+前缀是区分大小写的。
+
+为了方便，还有一些速记方式。用户可使用某个别名做前缀，来作为一个传票、更改集或者报告的标识符。
+(例如 `#T234`, `[T1508]`, `[trac 1508]`, ...)
+
+== 例子 ==
+{{{
+#!comment
+ Besides the other environments run by the same server process
+ (called ''sibling'' environments), which are automatically detected,
+Support for sibling environments has been disabled.
+See http://thread.gmane.org/gmane.comp.version-control.subversion.trac.devel/157
+}}}
+
+It is necessary to setup a configuration for the InterTrac facility.
+This configuration has to be done in the TracIni file, `[intertrac]` section.
+有必要创建一个!InterTrac配置表。该配置表必须在`[intertrac]` 节中的TracIni文件里实现。
+Example configuration:
+{{{
+...
+[intertrac]
+# -- 创建一个别名的例子
+t = trac
+
+# -- 到一个外部Trac的链接：
+trac.title = Edgewall's Trac for Trac
+trac.url = http://projects.edgewall.com/trac
+trac.compat = false
+}}}
+
+`.url`是强制的，用于定位其他Trac。如果Trac的环境位于同一个服务器，它可以作为一个相对URL.
+
+当你将鼠标移动到一个ZhInterTrac链接时，`.title`会提供一个有用的提示。
+
+最后，`.compat`会被用来激活或禁止某“兼容性”模式：
+ * 如果目标Trac在运行里程碑0.10下的一个版本，那么它并不知道如何调配一个ZhInterTrac链接，并且它需要一个本地的!Trac来准备正确的链接。并不是所有的链接都是这样运行的，但绝大多数都是这样的。这个叫做“兼容”模式，并却默认为“true”。
+
+   你可以直接禁用该兼容模式，那么任何!Trac链接会变成ZhInterTrac链接。
+
+现在，有了上述的配置，你可以创造以下链接：
+ * to this InterTrac page:
+   * `trac:wiki:InterTrac` trac:wiki:InterTrac
+   * `t:wiki:InterTrac` t:wiki:InterTrac
+   * Keys are case insensitive: `T:wiki:InterTrac` T:wiki:InterTrac
+ * to the ticket #234:
+   * `trac:ticket:234` trac:ticket:234
+   * `trac:#234` trac:#234 
+   * `#T234` #T234
+ * to the changeset [1912]:
+   * `trac:changeset:1912` trac:changeset:1912
+   * `[T1912]` [T1912]
+ * to the log range [3300:3330]: '''(Note: the following ones need `trac.compat=false`)'''
+   * `trac:log:@3300:3330` trac:log:@3300:3330  
+   * `[trac 3300:3330]` [trac 3300:3330] 
+
+普通形式`intertrac_prefix:module:id`被翻译为对应的URL`<remote>/module/id`。速记链接对于一些模式和剩余的其他模式(`intertrac_prefix:something`)而言是明确的。
+----
+=== 讨论 ===
+我认为在`[intertrac]` TracIni节中，`trac`前缀甚至可以设置为一个默认的项。--CB
+----
+相关请见：ZhTracLinks, ZhInterWiki

@@ -1,0 +1,88 @@
+= InterMapTxt =
+== 这是定义Interwiki前缀的地方 ==
+该页是效仿MeatBall:InterMapTxt页的。另外，在绘图后可以选择添加一个评论。
+
+!Trac以一种特殊的方式来调用该页，为了能构以一种灵活的和动态的方式支持ZhInterWiki链接。
+
+该页中第一个行分隔符后的代码区将被作为ZhInterWiki说明书的一个列表来解释：
+{{{
+prefix <space> URL [<space> # comment]
+}}}
+
+通过使用URL内的`$1`, `$2`等，可以创建支持多参数的ZhInterWiki链接，例如!Trac:ticket:40。URL本身可以添加评论，该评论会用来修饰那些使用了该前缀的链接。
+
+新的ZhInterWiki链接可通过添加到那个列表中而创建出来。
+
+注意，“删除的内容”也会立即生效。
+因此可能使用评论来关闭前缀可能会更好一些。相关链接{{{- RFC 2616 Hypertext Transfer Protocol-HTTP/1.1, The Internet Society, Berners-Lee, T., R. Fielding, H. Frystyk, J. Gettys, P.Leach, L. Masinter, and J. Mogul, 1999, http://www.rfc-editor.org. 
+- RFC 3986 Uniform Resource Identifier (URI): Generic Syntax, The Internet Society, Berners-Lee, T., R. Fielding, and L. Masinter, 2005, http://www.rfc-editor.org. 
+- RFC 3987 Internationalized Resource Identifiers (IRIs), The Internet Society, Duerst, M. and M. Suignard, 2005, http://www.rfc-editor.org. 
+- RFC 4234 Augmented BNF for Syntax Specifications: ABNF, The Internet Society, Crocker, D., (editor), 2005, 21 http://www.rfc-editor.org.
+}}}
+
+[厂商说明书]
+- ZIP File Format Specification, Version 6.2.1, PKWARE Inc., 2005. (PKWARE, Inc)
+- ZIP 文件格式说明书，版本6.2.1，PKWARE Inc., 2005. (PKWARE, Inc)
+<< Part 3: Primer >>
+Bibliography N/A
+
+<< Part 4: Markup Language Reference >>
+<< 第4部分: 置标语言引用 >>
+Bibliography N/A
+
+<< Part 5: Markup Compatibility and Extensibility >>
+<< Part 5: 置标兼容性和扩展性 >>
+Annex B. Bibliography
+
+[ISO]
+- ISO/IEC 197575-4, Information technology信息技术 - Document Schema Definition Languages (DSDL) 文献模式定义语言- Part 4: Namespace-based Validation Dispatching Language (NVDL).
+- ISO/IEC Directives Part 2, Rules for the structure and drafting of International Standards, Fourth edition, 2001, ISBN 92-67-01070-0. 
+
+[W3C]
+- Extensible Markup Language (XML) 1.0 (Fourth Edition), W3C Recommendation, 16 August 2006. 
+- Namespaces in XML 1.0 (Second Edition), W3C Recommendation, 16 August 2006.  
+- XML Base, W3C Recommendation, 27 June 2001. 
+- XML Schema Part 1: Structures Second Edition, W3C Recommendation, 28 October 2004. 
+- XML Schema Part 2: Datatypes Second Edition, W3C Recommendation, 28 October 2004.
+
+Also note that ZhInterWiki prefixes are case insensitive.
+还要注意一点，InterWiki的前缀是区分大小写的。
+
+== List of Active Prefixes ==
+== 动态前缀列表 ==
+[[InterWiki]]
+
+
+----
+
+== 前缀定义 ==
+{{{
+PEP     http://www.python.org/peps/pep-$1.html                                       # Python Enhancement Proposal 
+Trac-ML  http://thread.gmane.org/gmane.comp.version-control.subversion.trac.general/ # Message $1 in Trac Mailing List
+trac-dev http://thread.gmane.org/gmane.comp.version-control.subversion.trac.devel/   # Message $1 in Trac Development Mailing List
+
+Mercurial http://www.selenic.com/mercurial/wiki/index.cgi/ # the wiki for the Mercurial distributed SCM
+RFC       http://rfc.net/rfc$1.html # IETF's RFC $1
+
+#
+# A arbitrary pick of InterWiki prefixes...
+#
+Acronym          http://www.acronymfinder.com/af-query.asp?String=exact&Acronym=
+C2find           http://c2.com/cgi/wiki?FindPage&value=
+Cache            http://www.google.com/search?q=cache:
+CPAN             http://search.cpan.org/perldoc?
+DebianBug        http://bugs.debian.org/
+DebianPackage    http://packages.debian.org/
+Dictionary       http://www.dict.org/bin/Dict?Database=*&Form=Dict1&Strategy=*&Query=
+Google           http://www.google.com/search?q=
+GoogleGroups     http://groups.google.com/group/$1/msg/$2        # Message $2 in $1 Google Group
+JargonFile       http://downlode.org/perl/jargon-redirect.cgi?term=
+MeatBall         http://www.usemod.com/cgi-bin/mb.pl?
+MetaWiki         http://sunir.org/apps/meta.pl?
+MetaWikiPedia    http://meta.wikipedia.org/wiki/
+MoinMoin         http://moinmoin.wikiwikiweb.de/
+WhoIs            http://www.whois.sc/
+Why              http://clublet.com/c/c/why?
+c2Wiki             http://c2.com/cgi/wiki?
+WikiPedia        http://en.wikipedia.org/wiki/
+}}}

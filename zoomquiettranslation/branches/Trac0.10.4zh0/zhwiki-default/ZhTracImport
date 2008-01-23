@@ -1,0 +1,76 @@
+= 导入传票数据 =
+
+== Bugzilla ==
+传票数据可以通过使用[http://projects.edgewall.com/trac/browser/trunk/contrib/bugzilla2trac.py bugzilla2trac.py]脚本从Bugzilla中导入。该脚本在Trac分布的目录中。
+
+{{{
+$ bugzilla2trac.py
+bugzilla2trac - 从Bugzilla中导入一个bug数据库到Trac中。
+
+使用：bugzilla2trac.py [选项]
+
+现有的选项：
+  --db <MySQL dbname>              - Bugzilla's database（Bugzilla的数据库）
+  --tracenv /path/to/trac/env      - full path to Trac db environment（通往Trac db环境的全称路径）
+  -h | --host <MySQL hostname>     - Bugzilla's DNS host name（Bugzilla的DNS主机名）
+  -u | --user <MySQL username>     - effective Bugzilla's database user（有效的Bugzilla的数据库用户）
+  -p | --passwd <MySQL password>   - Bugzilla's user password（Bugzilla的用户密码）
+  -c | --clean                     - remove current Trac tickets before importing（在导入前移除现有的Trac传票）
+  --help | help                    - this help info（该帮助信息）
+
+在脚本中额外的配置选项可以直接定义。
+}}}
+
+目前，从Bugzilla中导入了下列数据：
+
+  * bugs
+  * bug活动（字段改变）
+  * bug附件
+  * 用户名和密码（放进一个htpasswd文件）
+
+该脚本提供了许多特征，可以将转换的过程变得轻松一些，例如：
+
+  * PRODUCT_KEYWORDS:  Trac没有产品的概念，因此脚本提供了一个附加一个传票关键字的功能。
+
+  * IGNORE_COMMENTS:  不导入匹配某个正则表达式的Bugzilla评论。
+
+  * STATUS_KEYWORDS:  为Trac中不可用的Bugzilla状态附加传票关键字。'VERIFIED'和'RELEASED' Bugzilla状态默认是翻译为Trac关键字。
+
+现有选项的更多细节，请见脚本上方的配置部分。
+== Sourceforge ==
+
+传票数据可通过使用[http://projects.edgewall.com/trac/browser/trunk/contrib/sourceforge2trac.py sourceforge2trac.py]脚本从Sourceforge2trac.py中导入。该脚本可在Trac分布的目录中得到。
+== Mantis（一种Php语言实现的bugtracker 系统） ==
+
+Mantis bug可通过使用附加的脚本来导入。
+
+目前，下列数据是从Mantis中导入的：
+  * bugs
+  * bug comments
+  * bug activity (field changes)
+
+附件不被导入。如果你使用脚本，请阅读注意那一节（在该文件的上部）并确认你调整了适合你的环境的config参数。
+
+mantis2trac.py与bugzilla2trac.py脚本有同样的参数：
+{{{
+mantis2trac - 从Mantis中导入一个bug数据库到Trac中。
+
+使用：mantis2trac.py [选项] 
+
+现有的选项：
+  --db <MySQL dbname>              - Mantis database （Mantis数据库）
+  --tracenv /path/to/trac/env      - Full path to Trac db environment （通往Trac db环境的全称路径）
+  -h | --host <MySQL hostname>     - Mantis DNS host name （Mantis DNS主机名）
+  -u | --user <MySQL username>     - Effective Mantis database user（有效的Mantis数据库用户）
+  -p | --passwd <MySQL password>   - Mantis database user password（Mantis数据库用户密码）
+  -c | --clean                     - Remove current Trac tickets before importing（在导入前移除现有的Trac传票）
+  --help | help                    - This help info（该帮助信息）
+
+可以在脚本中直接定义额外的配置选项。
+}}} 
+
+== 其他 ==
+
+因为trac用一个SQL数据库来存储数据，你可以通过检查数据库的表格从其他系统中导入。只需进入[http://www.sqlite.org/sqlite.html sqlite]命令行来查看表格并从你的程序中导入到表格中。
+=== 使用一个逗号为界限的文件-CSV ===
+细节请见[http://trac.edgewall.org/attachment/wiki/TracSynchronize/csv2trac.2.py]。如果有人需要手动输入大量的传票，那么该方法会非常有用。（注意该脚本也需要传票字段类型与更多新发行的Trac一起合作，例如task，等等）

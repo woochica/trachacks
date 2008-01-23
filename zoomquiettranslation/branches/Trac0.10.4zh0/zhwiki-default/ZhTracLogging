@@ -1,0 +1,28 @@
+= Trac日志 =
+[[ZhTracGuideToc]]
+
+Trac支持通过使用与Python一起供给的标准的[http://docs.python.org/lib/module-logging.html logging module]来记录系统消息。
+
+日志记录在[wiki:ZhTracIni trac.ini]的{{{[logging]}}}该节中进行配置。
+
+== 支持的日志记录方法 ==
+
+记录日志的方法通过使用`log_type`配置选项来设置，配置选项采用了下列的某个值：
+ '''none'':: 禁止所有的日志消息。
+ '''file''':: 将消息记录到一个[wiki:ZhTracIni trac.ini]中log_file`选项指定的文件中。
+ '''stderr''':: 输出所有的日志选项到控制台。(只是[wiki:ZhTracStandalone tracd]).
+ '''syslog''':: (UNIX)通过命名的管道`/dev/log`发送消息到本地的syslogd .
+ '''eventlog''':: (Windows)使用系统的NT事件日志为Trac记录日志。 
+== 日志等级 ==
+
+记录的消息的长度等级可通过用[wiki:ZhTracIni trac.ini]中的''log_level''目录来进行设置。日志等级定义了一个需要记录的消息所要求的最低紧急等级。
+
+这些级别有：
+ '''CRITICAL''':: 只记录最重要的错误（一般是致命的错误）。
+ '''ERROR''':: 记录失败，bug和错误。 
+ '''WARN''':: 记录警告,不中断的事件等。
+ '''INFO''':: 诊断信息，关于所有进程的日志信息。
+ '''DEBUG''':: 追踪消息，等等。
+
+----
+相关信息：ZhTracIni, ZhTracGuide, ZhTracEnvironment

@@ -1,0 +1,30 @@
+= Wiki网页名 =
+
+Wiki网页名主要使用驼峰式规则。在Wiki文字中，驼峰式的词都自动变成一个用这个名字链接到wiki网页的超链接。
+
+驼峰式的网页名称必须遵循下面这些规则：
+
+ 1. 名字必须包含“仅字母符号”。不允许有小数点，空格，标点符号或下划线。
+ 2. 一个名字必须至少有两个大写字母。
+ 3. 第一个字符必须是大写的。
+ 4. 每个大写字母后面必须有一个或一个以上的小写字母根随。
+ 5. 在网页名中允许使用斜线（/），它可能是代表层级的。
+
+如果你想创建一个不遵循驼峰式规则的wiki网页，你可以使用以下语法：
+{{{
+ * [wiki:Wiki_page], [wiki:ISO9000]
+ * [wiki:"Space Matters"] that page name embeds space characters
+ * or simply: ["WikiPageName"]s (!MoinMoin's internal free links style)
+}}}
+
+它会被描述为：
+
+ * [wiki:Wiki_page], [wiki:ISO9000]
+ * [wiki:"Space Matters"] 网页名插入间隔符号
+ * 或只是["WikiPageName"]（!MoinMoin的内部自由链接样式）
+
+请参见[ZhTracLinks#QuotingspaceinTracLinks 链接]
+
+最后，如上面示范的一样，为了链接到该页中一个特定的章节，你可以为wiki网页名添加一个锚。把鼠标放在章节的标题上，很容易看到这个锚，然后单击其尾部的[[html(&para;)]]标志。这个锚通常是自动生成的，也很容易清楚地指定它，请参见[ZhWikiFormatting#using-explicit-id-in-heading 维基格式说明]
+----
+相关信息：[ZhWikiNewPage 新建维基页面], [ZhWikiFormatting 维基格式说明], [ZhTracWiki 维基], [ZhTracLinks 链接]

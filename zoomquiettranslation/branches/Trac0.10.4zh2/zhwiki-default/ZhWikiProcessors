@@ -1,0 +1,130 @@
+= Wiki处理器 =
+
+处理器是指Wiki宏，为[TracWiki Wiki系统]提供替代的标示格式而设计。处理器可被当作“处理用户编辑的文字的宏函数”。
+
+Wiki引擎使用处理器，从而允许使用Trac中以任意Wiki文字写的[wiki:ZhWikiRestructuredText 结构文本]、[wiki:ZhWikiHtml raw HTML]和 [http://www.textism.com/tools/textile/ textile]。
+== 使用处理器 ==
+
+要在某一区域的文字上使用处理器，使用一个Wiki代码组，通过使用''shebang notation'
+
+“实例1” （在wiki文字中插入原生态的HTML）
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="color: orange"&gt;This is raw HTML&lt;/h1&gt;
+}}}</pre>
+}}}
+
+'''Results in:'''
+{{{
+#!html
+<h1 style="color: orange">This is raw HTML</h1>
+}}}
+
+----
+
+“实例2” （在wiki文字中插入重构文字 ）：
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!rst
+A header
+--------
+这是有脚注的**文字**[*]_。
+
+.. [*] 这是脚注。
+}}}</pre>
+}}}
+
+'''Results in:'''
+{{{
+#!rst
+A header
+--------
+这是有脚注的**文字**[*]_。
+
+
+.. [*] 这是脚注。
+}}}
+----
+“实例3” （在wiki文字中插入一组C源代码）：
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!c
+int main(int argc, char *argv[])
+{
+  printf("Hello World\n");
+  return 0;
+}
+}}}</pre>
+}}}
+
+'''Results in:'''
+{{{
+#!c
+int main(int argc, char *argv[])
+{
+  printf("Hello World\n");
+  return 0;
+}
+}}}
+
+----
+
+== 现有处理器 ==
+下列处理器包含在Trac分布中：
+ * '''html''' -- 在wiki网页中插入自定义HTML。见WikiHtml。
+ * '''rst''' -- Trac支持重构文字。见[ZhWikiRestructuredText  结构化文字]。
+ * '''textile''' -- 如果安装了[http://dealmeida.net/projects/textile/ Textile]则支持。请见[http://hobix.com/textile/ a Textile reference]。
+ 
+上面的Textile链接是无用的。[http://www.textism.com/tools/textile/ this one]有作用，可以测试实例。
+
+=== 代码高亮显示支持 ===
+Trac包含处理器去提供下列语言的联机[wiki:ZhTracSyntaxColoring syntax highlighting]：
+ * '''c''' -- C
+ * '''cpp''' -- C++
+ * '''python''' -- Python
+ * '''perl''' -- Perl
+ * '''ruby''' -- Ruby
+ * '''php''' -- PHP
+ * '''asp''' --- ASP
+ * '''sql''' -- SQL
+ * '''xml''' -- XML
+“注意”：“Trac依靠外部软件包进行语法高亮显示。更多信息请见ZhTracSyntaxColoring。”
+
+将MIME类型作为处理器来使用，在流览源代码是可以将支持的同样的语言进行语法高亮显示。例如，你可以写：
+{{{
+{{{
+#!text/html
+<h1>text</h1>
+}}}
+}}}
+
+结果会是语法高亮显示的HTML代码。同样也适用于所有其他支持的mime类型。
+
+
+要想看更多的用户开发和/或贡献的处理器宏，请访问：
+ * [http://projects.edgewall.com/trac/wiki/ProcessorBazaar ProcessorBazaar]
+ * [http://projects.edgewall.com/trac/wiki/MacroBazaar MacroBazaar]
+
+
+== 高级话提：开发处理器宏 ==
+开发处理器和Wiki宏并没有不同。事实上他们以同样的方式运行，只是使用语法有些不同而已。更多信息请见ZhWikiMacros。
+
+“实例：” （重构文本处理器）：
+{{{
+#!python
+from docutils.core import publish_string
+
+def execute(hdf, text, env):
+    html = publish_string(text, writer_name = 'html')
+    return html[html.find('<body>')+6:html.find('</body>')].strip()
+}}}
+
+----
+相关信息：[ZhWikiMacros 宏], [ZhWikiHtml 维基页面], [ZhWikiRestructuredText 结构化文字], [ZhTracSyntaxColoring 语法着钯], [ZhWikiFormatting 维基格式说明], [ZhTracGuide 帮助向导]

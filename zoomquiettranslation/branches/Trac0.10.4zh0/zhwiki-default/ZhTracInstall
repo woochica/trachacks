@@ -1,0 +1,138 @@
+= Trac安装向导 = 
+[[ZhTracGuideToc]]
+
+Trac是一个轻量级的项目管理工具，是以一个基于网络的应用程序而进行操作的。Trac是以Python编程语言书写的，并需要一个数据库，可以是http://sqlite.org/ SQLite]，[http://www.postgresql.org/ PostgreSQL]或者[http://mysql.com/ MySQL]。为了HTML显示，Trac使用http://www.clearsilver.net/ ClearSilver]模板系统。
+
+以下是安装和设置Trac的指导和要求。你可以在Trac主网站的http://projects.edgewall.com/trac/wiki/TracInstallPlatforms TracInstallPlatforms]上找到在某些特定系统上安装Trac的指导。请确定认真阅读了这些指导，很好地了解会涉及到的任务。
+
+== 要求 ==
+
+要安装Trac，以下软件包必须要安装：
+
+ * [http://www.python.org/ Python], version >= 2.3.
+   * 对于以RPM为基础的系统，你还需要`python-devel`和`python-xml`安装包。
+   * 如果你想在Windows系统上使用Trac的子版本，请注意，没有Python2.4的先行编译的子版本绑定，因此你可能需要Python2.3。
+    * 2006-09-20: 似乎不是真的，请见http://subversion.tigris.org/servlets/ProjectDocumentList?folderID=91。对于子版本1.4.0，python2.4二进制绑定是可用的。
+ * [http://www.clearsilver.net/ ClearSilver], version >= 0.9.3
+   * With python-bindings (`./configure --with-python=/usr/bin/python`)
+ * 你还需要一个数据库系统和相应的python驱动器。数据库可以是SQLite，PostgreSQL或者MySQL（实验性的）。
+=== For SQLite ===
+
+ * [http://www.sqlite.org/ SQLite], version 2.8.x or 3.x (preferred)
+ * [http://pysqlite.org/ PySQLite], version 1.x (for SQLite 2.x) or version 2.x (for SQLite 3.x). For details see [http://trac.edgewall.org/wiki/PySqlite PySqlite]
+
+“ 注意：0.9之前的Trac版本不与PySQLite2.x一起运行。”
+
+“ 注意：如果你打算使用资源库中'contrib'的'trac-post-commit-hook.py'，可能Trac 0.9+/SQLite 3.x要求PySQLite 2.x。”
+
+“注意：Mac OS X的使用者请注意，Apple提供的SQLite包括额外的代码来支持像AFP或SMB的网络文件系统的文件锁定。目前的版本（3.3.6）中的主行资源没有这个特点。因此，如果你从资源中创建自己的SQLite，在这些文件系统上SQLite不能正常的运行。它会有类似"{{{数据库被锁定}}}"的错误。[http://www.alastairs-place.net/2006/07/sqlite_and_mac/ A patch]在3.3.6版本上可用，以Apple的代码为基础。如果你不想用该patch，你最好使用Apple提供的版本，目前是3.1.3版本。”
+
+=== For PostgreSQL ===
+
+ * [http://www.postgresql.org/ PostgreSQL]
+ * [http://initd.org/projects/psycopg2 psycopg2] or [http://pypgsql.sourceforge.net/ pyPgSQL]
+
+“ 注意：PostgreSQL支持要求Trac0.9或以后的版本。”
+=== For MySQL ===
+
+“ 警告：MySQL支持目前是实验性的。这意味它可以为某些人服务，但还没有经过广泛的测试。”
+ * [http://mysql.com/ MySQL], version 4.1 or later
+ * [http://sf.net/projects/mysql-python MySQLdb], version 1.2.1 or later
+
+“ 注意：MySQL支持要求Trac 0.10或以后的版本。”
+=== 可选的要求 ===
+
+==== 版本控制系统 ====
+ * [http://subversion.tigris.org/ Subversion], version >= 1.0. (either 1.2.3 or >= 1.3.1 recommended) and corresponding [http://svnbook.red-bean.com/svnbook-1.1/ch08s02.html#svn-ch-8-sect-2.3 Python bindings]. For troubleshooting, check [http://projects.edgewall.com/trac/wiki/TracSubversion TracSubversion]（关于疑难解答部分，请见[http://projects.edgewall.com/trac/wiki/TracSubversion TracSubversion]）
+
+   * Trac使用子版本分布中的[http://www.swig.org/ SWIG]绑定，而不是 [http://pysvn.tigris.org/ PySVN]（有时会和标准的SWIG绑定混淆）。
+   * 如果subversion已经在没有安装SWIG的情况下安装好后,你将要重配置subversion和使用选择makn swig-py,make install-swig-py
+ * 对其他版本控制系统的支持由第三方提供。请见[http://projects.edgewall.com/trac/wiki/PluginList PluginList]和[http://projects.edgewall.com/trac/wiki/VersioningSystemBackend VersioningSystemBackend]。
+==== 网络服务器 ====
+ * 一个支持CGI的网络服务器（监TracCgi）或
+ * 一个支持[http://www.fastcgi.com/ FastCGI]的网络服务器（监TracFastCgi）或
+ * [http://httpd.apache.org/ Apache] with [http://www.modpython.org/ mod_python 3.1.3+] (see TracModPython)
+    * 安装mod_python，要求Python的开发版本和Apache（实际上是程序库和页面文件）。
+
+对那些受Apache1.3困扰的程序，可以让Trac0.8.4与[http://www.modpython.org/ mod_python 2.7]一起运行。（见[wiki:TracModPython2.7 TracModPython2.7]）。它还没有用Trac 0.9测试，因此它可能运行也可能不运行。
+
+==== 其他Python应用程序 ====
+ * [http://docutils.sourceforge.net/ docutils], version >= 0.3.9 for WikiRestructuredText.
+请参考这些安装包包的文档，找出他们应如何最好地安装。另外，[http://projects.edgewall.com/trac/wiki/TracInstallPlatforms platform-specific instructions]中的大多数文档也描述了这些附属文件的安装。而请记住，那里的信息可能会包含旧版本的Trac而不是你在安装的版本。特别是，还有些网页是关于Trac 0.8的。
+== 安装Trac ==
+
+像大多数Python程序一样，通过运行源目录顶端的下列命令来安装Trac Python安装包：
+{{{
+$ python ./setup.py install
+}}}
+
+''Note: you'll need root permissions or equivalent for this step.''
+“ 注意：你会需要root权限。”
+
+这样会字节编译python源代码以及在你的Python安装包的`site-packages`目录中安装它。
+`cgi-bin`, `templates`, `htdocs`, `wiki-default`和`wiki-macros`目录都会复制到`$prefix/share/trac/`。`conf`和`plugins`子目录也创建在`$prefix/share/trac/` (''自 [milestone:0.10]'')之下。
+
+该脚本还会安装[wiki:ZhTracAdmin trac-admin]命令行工具，用来创建和维护[wiki:ZhTracEnvironment project environments]和独立服务器wiki:ZhTracStandalone tracd]。
+=== 高级选项 ===
+
+要将Trac安装到一个自定义位置中或者找到其他高级的安装选项，运行：
+{{{
+$ python ./setup.py install --help
+}}}
+
+详细信息请参见[http://docs.python.org/inst/inst.html Installing Python Modules]。
+
+具体地说，你可能对以下东西感兴趣：
+{{{
+$ python ./setup.py install --prefix=/path/to/installdir
+}}}
+
+== 创建一个项目环境 ==
+
+[wiki:ZhTracEnvironment Trac environment]使Trac存储像wiki网页、传票、报告、设置等的信息的后端存储。环境基本上是一个包含了一个可读的配置文件和各式的其他文件、目录的一个目录。
+
+用[wiki:ZhTracAdmin trac-admin]来创建一个新的环境：
+
+{{{
+$ trac-admin /path/to/myproject initenv
+}}}
+
+[wiki:ZhTracAdmin trac-admin]会提示你一些它需要创建环境的信息，例如项目名称，类型和通往一个现有[wiki:ZhTracEnvironment#SourceCodeRepository source code repository]的路径，[wiki:ZhTracEnvironment#DatabaseConnectionStrings database connection string]，等等。如果其中某个选型，你不确定为它指定什么，就把它空着而使用默认值。只要你安装了SQLite，数据库连接字符串都会有作用。将访问源代码储存库的路径设为空，会使所有与版本控制有关的功能都失效。但是当基本系统在运行时，你还是可以将空白处添入内容。
+
+还要注意，此处你指定的值稍后可以通过直接编辑配置文件[wiki:ZhTracIni]来进行更改。
+
+“ 注意：网络服务器运行下的用户帐号会要求拥有环境目录及里面所有文件的写权限。”
+
+
+== 运行独立服务器 ==
+
+创建了一个Trac环境后，你可以运行独立服务器[wiki:ZhTracStandalone tracd]轻松地尝试web界面：
+{{{
+$ tracd --port 8000 /path/to/myproject
+}}}
+
+然后，激活一个流览器并访问`http://localhost:8000/`。你该得到一个tracd了解的所有环境的简单列表。点击链接到你刚创建的环境，你应查看活动中的Trac。
+
+== 在网络服务器上运行Trac ==
+
+Trac为链接到一个真实的网络服务器而提供了三个选项：[wiki:ZhTracCgi CGI], [wiki:ZhTracFastCgi FastCGI] 和[wiki:ZhTracModPython mod_python]。如果想表现出色，建议你使用FastCGI或mod_python。
+
+== 配置认证 ==
+
+添加，删除和配置认证的用户帐户的过程，取决于你具体运行Trac的方式。基本的步骤在ZhTracCgi网页的[wiki:ZhTracCgi#AddingAuthentication "Adding Authentication"]该节中有详细的描述。想学习如何设置你在使用的前端的认证，请参考以下网页：
+ * ZhTracStandalone，如果你使用独立服务器，`tracd`。
+ * ZhTracCgi，如果你使用CGI或FastCGI。.
+ * ZhTracModPython，如果你使用mod_python。
+
+== 使用Trac ==
+
+如果你创建了你的Trac站点并在运行它，你应该流览你的子版本储存库，创建传票，产看时间表，等等。
+
+请记住，匿名的用户（没有注册的用户）默认可以使用大多数的特征但不是全部的。你需要配置认真和想通过认证的用户提供额外的[wiki:ZhTracPermissions permissions]，让他们可以看到全套的所有的特征。
+
+'' Enjoy! ''
+
+[http://projects.edgewall.com/trac/wiki/TracTeam The Trac Team]
+
+----
+相关信息： ZhTracGuide, ZhTracCgi, ZhTracFastCgi, ZhTracModPython, ZhTracUpgrade, ZhTracPermissions

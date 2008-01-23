@@ -1,0 +1,123 @@
+= Trac许可 =
+[[ZhTracGuideToc]]
+
+Trac使用一种简单的许可系统来控制用户可以及不能访问的资源。
+
+许可特权是由[wiki:ZhTracAdmin trac-admin]工具管理的。
+
+
+未验证的用户访问系统时，系统分配给他的名字是“匿名的”。为匿名的用户分配许可，从而可以以匿名的/游客身份的用户设置特权。用户没有特权的Trac部分不会显示在导航中。
+
+除这些特权外，当用户认证并登录到系统时，还能得到其他的单独权利。所有登录的用户属于“已认证”的组，他们继承“匿名”用户的许可。
+
+== 可用的特权 ==
+
+要让用户的所有特权生效，使用`TRAC_ADMIN`许可。拥有`TRAC_ADMIN`许可就像是*NIX系统上的一个“根”，它会让你执行任何操作。 
+
+否则，单独的特权可以分配给用户用于Trac各个不同的功能领域。（注意，特权名是区分大小写的）
+
+=== 储存库流览器 ===
+
+|| `BROWSER_VIEW` || 在[wiki:ZhTracBrowser svn库浏览器]中查看目录清单 ||
+|| `LOG_VIEW` || 在[wiki:ZhTracBrowser svn库浏览器]中查看文件和目录的版本记录 ||
+|| `FILE_VIEW` || 在[wiki:ZhTracBrowser svn库浏览器中查看文件] ||
+|| `CHANGESET_VIEW` || 查看[wiki:ZhTracChangeset svn库变更集] ||
+
+=== 传票系统 ===
+
+|| `TICKET_VIEW` || 查看现有的[wiki:ZhTracTickets 传票]和操作[wiki:TracQuery 传票查询] ||
+|| `TICKET_CREATE` || 创建新的[wiki:ZhTracTickets 传票] ||
+|| `TICKET_APPEND` || 为[wiki:ZhTracTickets 传票]添加评论或附件 ||
+|| `TICKET_CHGPROP` || 更改[wiki:ZhTracTickets 传票]属性，包括优先级，分配，关键字等等，描写域除外 ||
+|| `TICKET_MODIFY` || 包括`TICKET_APPEND`和`TICKET_CHGPROP`。另外，允许解决[wiki:TracTickets 传票] ||
+|| `TICKET_ADMIN` || 所有的`TICKET_*`许可，还有删除传票附件和描写域的更改 ||
+
+=== 路标 ===
+
+|| `MILESTONE_VIEW` || 查看里程碑 ||
+|| `MILESTONE_CREATE` || 创建一个新里程碑 ||
+|| `MILESTONE_ADMIN` || 所有的`MILESTONE_*`许可 ||
+|| `ROADMAP_VIEW` || 查看[wiki:ZhTracRoadmap 路线图]网页 ||
+
+=== 报告 ===
+
+|| `REPORT_VIEW` || 查看[wiki:ZhTracReports 报表] ||
+|| `REPORT_SQL_VIEW` || 查看[wiki:ZhTracReports 报表]的潜在SQL查询 ||
+|| `REPORT_CREATE` || 创建新的[wiki:ZhTracReports 报表] ||
+|| `REPORT_MODIFY` || 更改现有的[wiki:ZhTracReports 报表] ||
+|| `REPORT_DELETE` || 删除[wiki:ZhTracReports 报表] ||
+|| `REPORT_ADMIN` || 所有的`REPORT_*`许可 ||
+
+=== Wiki系统 ===
+
+|| `WIKI_VIEW` || 查看现有的[wiki:ZhTracWiki 维基] 页面 ||
+|| `WIKI_CREATE` || 创建新的[wiki:ZhTracWiki 维基]网页 ||
+|| `WIKI_MODIFY` || 更改[wiki:ZhTracWiki 维基]网页 ||
+|| `WIKI_DELETE` || 删除[wiki:ZhTracWiki 维基]网页和附件 ||
+|| `WIKI_ADMIN` || 所有的`WIKI_*`许可，和“只读”页面的管理 ||
+
+=== 其他 ===
+
+|| `TIMELINE_VIEW` || 查看[wiki:ZhTracTimeline 时间线索]网页 ||
+|| `SEARCH_VIEW` || 查看和执行[wiki:ZhTracSearch 搜索]查询 ||
+|| `CONFIG_VIEW` || 激活关于“About Trac”的其余页面，显示现在的配置或安装的插件的列表 ||
+
+== 授予特权 ==
+
+你可用[wiki:TracAdmin trac-admin]授予用户特权。现有的特权集可以用下面命令列出来：
+{{{
+  $ trac-admin /path/to/projenv permission list
+}}}
+
+下面命令允许 ''bob'' 删除报表:
+{{{
+  $ trac-admin /path/to/projenv permission add bob REPORT_DELETE
+}}}
+
+`permission add` 一次多个权限:
+{{{
+  $ trac-admin /path/to/projenv permission add bob REPORT_DELETE WIKI_CREATE
+}}}
+
+== 许可组合 ==
+
+许可可以按照“开发者”、“管理”等角色进行分组。
+{{{
+  $ trac-admin /path/to/projenv permission add developer WIKI_ADMIN
+  $ trac-admin /path/to/projenv permission add developer REPORT_ADMIN
+  $ trac-admin /path/to/projenv permission add developer TICKET_MODIFY
+  $ trac-admin /path/to/projenv permission add bob developer
+  $ trac-admin /path/to/projenv permission add john developer
+}}}
+
+组内成员资格可通过做一个{{{权限列表}}}（没有其他更多的参数）来进行核查。结果会包含组成员资格。组名用小写字母，大写字母供许可所用。
+
+== 删除许可 ==
+
+通过“删除”命令来删除许可。例如：
+
+该命令会组织用户“bob”删除报告：
+{{{
+  $ trac-admin /path/to/projenv permission remove bob REPORT_DELETE
+}}}
+
+就像`permission add`，该命令接受多个特权名。
+
+你还可以删除某个用户的全部特权：
+{{{
+  $ trac-admin /path/to/projenv permission remove bob *
+}}}
+
+或者所有用户的某个特权：
+{{{
+  $ trac-admin /path/to/projenv permission remove * REPORT_ADMIN
+}}}
+
+== 默认许可 ==
+
+向特殊用户“匿名的”授予特权可以用来控制该匿名用户登录前能进行的操作。
+
+同样地，授予特殊用户“已认证”的特权会适用于所有已认证的用户。
+
+----
+相关信息：[ZhTracAdmin 管理员], [ZhTracGuide 帮助向导] 和[http://trac.edgewall.org/wiki/FineGrainedPermissions 细微权限]

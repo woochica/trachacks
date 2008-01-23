@@ -1,0 +1,31 @@
+= 使用搜索 =
+
+Trac有一个内置的搜索引擎，找到wiki网页、传票和changeset描述中的关键字和子字符串。
+
+使用Trac搜索工具是直接的方法并且大多数用户也很熟悉它的界面。
+
+除了[Zhsearch: Search module]之外，你总会在导航栏上方发现一个小的搜索域。它提供了一个方便的进入所有页面的搜索部分的入口。
+
+== "Quickjump"搜索 ==
+要快速访问各个项目资源，每一页顶部的快速搜索域可以用来输入一个[ZhTracLinks wiki link]，它会把你直接带到该链接连接的资源。
+
+例如：
+
+ * ![42] -- 打开change set42
+ * !#42 -- 打开42号传票
+ * !{1} -- 打开报告1
+ * /trunk -- 打开流览器到“主干”目录
+
+== 高级 ==
+
+=== 禁用Quickjumps ===
+要对某个搜索关键字禁用quickjump特征，比如说当搜索文字!TracGuide时，使此查询以一个感叹号作为开始。
+
+=== 搜索链接 ===
+在Wiki中，使用“搜索”链接可以链接到某个具体的搜索：
+
+ * `search:?q=crash` 会搜索字符串“crash”
+ * `search:?q=trac+link&wiki=on` 会只在wiki网页中搜索“trac”和“link”
+ 
+----
+相关信息: ZhTracGuide, ZhTracLinks, ZhTracQuery

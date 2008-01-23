@@ -1,0 +1,107 @@
+= 安装Trac作为CGI（公共网关接口） =
+把Trac作为一个CGI脚本安装，你需要将`trac.cgi`成为一个网络服务器可以执行的CGI.
+
+  “请注意，通过CGI来使用Trac，与其他任何方法相比，其速度要慢得多，请使用[ZhTracModPython mod_python] 或 [ZhTracFastCgi FastCGI]。
+
+如果你在使用[http://httpd.apache.org/ Apache HTTPD]，有很多方法可以用：
+
+ 1. 用`ScriptAlias`将一个URL映射到`trac.cgi`脚本。
+ 2. 将`trac.cgi`文件复制到你的网络服务器的CGI文件的目录（通常叫做“公共网关借口程序索引簿”）中。你还可以创建一个象征性的链接，但要确保对于公共网关借口程序索引簿`FollowSymLinks`选项是激活状态的。
+
+推荐第一个选项，因为它还可以让你将CGI映射到一个友好的URL中。
+现在，编辑Apache配置文件并添加以下这段摘录、文件名和更改的位置等来匹配你的安装：
+{{{
+ScriptAlias /trac /usr/share/trac/cgi-bin/trac.cgi
+}}}
+
+ “注意该指示要求安装和激活`mod_alias`模块。”
+
+如果你正在某个独立项目中使用Trac，你需要用TRAC_ENV`环境变量来设置其位置：
+{{{
+<Location "/trac">
+  SetEnv TRAC_ENV "/path/to/projectenv"
+</Location>
+}}}
+
+或者使用多个项目，通过`TRAC_ENV_PARENT_DIR`变量来指定他们的父目录：
+{{{
+<Location "/trac">
+  SetEnv TRAC_ENV_PARENT_DIR "/path/to/project/parent/dir"
+</Location>
+}}}
+
+ “注意，`SetEnv`指示要求安装和激活`mod_env`模块。”
+这将使Trac在`http://yourhost.example.org/trac`上可用。
+如果你在使用[http://httpd.apache.org/docs/suexec.html Apache suEXEC]特征，请参见[http://trac.edgewall.org/wiki/ApacheSuexec]。
+
+某些系统中，你“或许”需要在`trac.cgi`中编辑shebang line而指向你真正的Python安装路径。在Windows系统中，你可能需要将Windows配置成知道如何运行一个cgi文件的系统。(资源管理器 -> 工具 -> 文件夹选项 -> 文件类型 -> CGI)
+== 映射静态资源 ==
+
+在box外，Trac会服务静态的资源，例如样式表或图片。尽管CGI组织很不希望这样子，因为它会使得CGI脚本被某些文件所调用，本来网络服务器服务那些文件可能效率会更高。
+通过像[http://httpd.apache.org/ Apache HTTPD]的网络服务器，你可以给那些资源创建“别名”，这样给那些资源一个虚拟的URL，不会与服务器文件系统的版本有任何雷同之处。对CGI脚本定义“脚本别名”时，我们已经使用过上述的性能，我们现在会用它将静态资源的请求映射到文件系统上的目录上，这样就避免了使用CGI脚本来处理这类请求。
+再次编辑Apache配置文件并添加CGI脚本的“脚本别名”之前的以下片断、文件名和更改的位置来匹配你的安装：
+{{{
+Alias /trac/chrome/common /usr/share/trac/htdocs
+<Directory "/usr/share/trac/htdocs">
+  Order allow,deny
+  Allow from all
+</Directory>
+}}}
+
+注意，无论你将`trac.cgi`脚本映射到哪个URL路径，`/chrome/common`路径是你必须追加的位置，来拦截访问静态资源的请求。
+例如，如果Trac映射到你的服务器上的`/cgi-bin/trac.cgi`，“别名”的URL应该是`/cgi-bin/trac.cgi/chrome/common`。
+或者，你可以在[wiki:TracIni trac.ini]中设置配置`htdocs_location`选项：
+{{{
+[trac]
+htdocs_location = /trac-htdocs
+}}}
+
+当把静态资源加入到HTML页面中时Trac会使用该URL。当然，你还需通过某个指定的URL上的网络服务器使Trac`htdocs`目录可用。例如，将目录复制或链接到网络服务器的文件根。
+{{{
+$ ln -s /usr/share/trac/htdocs /var/www/your_site.com/htdocs/trac-htdocs
+}}}
+
+== 添加证明 ==
+
+激活Apache验证的最简单的方法是创建一个密码文件。用`htpasswd`程序来创建该密码文件：
+{{{
+$ htpasswd -c /somewhere/trac.htpasswd admin
+New password: <type password>
+Re-type new password: <type password again>
+Adding password for user admin
+}}}
+
+第一个用户之后，你不再需要"-c"选项：
+{{{
+$ htpasswd /somewhere/trac.htpasswd john
+New password: <type password>
+Re-type new password: <type password again>
+Adding password for user john
+}}}
+
+
+你已经创建了用户之后，你可以设置他们使用TracPermissions的权限。
+现在，你还需要通过Apache配置中的密码文件来激活验证：
+{{{
+<Location "/trac/login">
+  AuthType Basic
+  AuthName "Trac"
+  AuthUserFile /somewhere/trac.htpasswd
+  Require valid-user
+</Location>
+}}}
+
+如果你在接管多个项目，你可以对所有的项目都使用同一个密码文件：
+{{{
+<LocationMatch "/trac/[^/]+/login">
+  AuthType Basic
+  AuthName "Trac"
+  AuthUserFile /somewhere/trac.htpasswd
+  Require valid-user
+</LocationMatch>
+}}}
+
+为了更加安全，建议你激活SSL或者至少要使用“Digest”验证而不是“Basic”。请阅读[http://httpd.apache.org/docs/2.0/ Apache HTTPD documentation]详细了解情况。
+
+----
+相关信息：ZhTracGuide, ZhTracInstall, ZhTracFastCgi, ZhTracModPython

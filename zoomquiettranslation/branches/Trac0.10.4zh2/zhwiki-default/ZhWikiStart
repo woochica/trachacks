@@ -1,0 +1,30 @@
+= 欢迎使用Trac 0.10.4 =
+
+Trac是一个最低限要求的管理软件项目的方式。它的目的是简化追踪和处理软件事项，改进以及全部进程。
+
+Trac是按照其“帮助开发者写出伟大的软件”的目的而进行设计的，尽量少地将其强加在一个团队已经建立好的项目和文化上。
+
+像所有的wiki网页一样，该页是可编辑的，这就是说你只需通过使用你的网络
+服务器来更改该页的内容。只需点击该页底部的“编辑此页”链接。[ZhWikiFormatting 维基格式说明]
+会给你一个详细的关于现有wiki格式化命令的描述。
+
+"[wiki:ZhTracAdmin trac-admin] ''yourenvdir'' initenv" 创建了一个新的Trac环境，
+包含了一个默认的wiki网页集和一些样例数据。这个新创建的环境还包含了[wiki:ZhTracGuide 帮助文档],
+帮助你开始执行你的项目。
+
+你可以使用[wiki:ZhTracAdmin trac-admin]来配置[http://trac.edgewall.org/ Trac]从而更好地适应你的项目，
+特别是关于“组件”、“版本”和“里程碑”方面。
+
+[ZhTracGuide 帮助文档]是一个开始的好地方。
+
+享受! [[BR]]
+''Trac 团队''
+
+== 起点 ==
+
+ * [ZhTracGuide 内置文档]
+ * [http://trac.edgewall.org/ Trac开源项目]
+ * [http://trac.edgewall.org/wiki/TracFaq 常见问答]
+ * [ZhTracSupport 技术支持]
+
+本地wiki网页的完整目录，请参见[ZhTitleIndex 标题索引]。

@@ -1,0 +1,132 @@
+= 升级指示 =
+[[ZhTracGuideToc]]
+
+有时，Trac环境在使用一个新的Trac版本前需要升级。该篇文档描述了升级环境的必需步骤。
+
+“注意”：“除非特别强调，否则没有为次要版本升级的必要。例如，安装0.8.4（或其他0.8.X版本）时，不需要升级0.8.0创建的Trac环境。”
+== 总介绍 ==
+
+一般，将Trac升级到一个新版本需要四个步骤：
+
+=== 更新Trac代码 ===
+
+下载一个官方安装包或从[http://projects.edgewall.com/trac/wiki/SubversionRepository Subversion repository]中检出，获得Trac的新版本。
+
+如果你在进行一个主版本的升级，例如从0.8升级到0.9，强烈推荐你首先将现有的Trac代码清除。要清除代码，你需要从Python`lib/site-packages`目录中删除`trac`目录。你还可以删除Trac`cgi-bin`, `htdocs`, `templates`和 `wiki-default`目录，他们通常位于一个叫做`share/trac` 的目录中（具体位置取决于你的平台）。
+
+如果你有源分布，需要运行
+{{{
+python setup.py install
+}}}
+
+来安装新版本。如果你已下载了Windows安装程序，你运行它。
+
+=== 升级Trac环境 ===
+
+如果没有特别提到，主版本间的升级，例如0.8和0.9，包含了数据库模式的改变，还可能有[wiki:ZhTracEnvironment environment directory]的版式。这些脚本是通过[wiki:ZhTracAdmin trac-admin]运行的。
+{{{
+trac-admin /path/to/projenv upgrade
+}}}
+
+如果环境已经是最新的了，该命令不起任何作用。
+
+注意，如果你在使用一个PostgreSQL数据库，该命令会失败。失败的消息会是“当你使用一个SQLite数据库时，环境才能被备份。”这意味着，你必须要手动备份储存库和数据库。然后，要进行实际升级，运行
+{{{
+trac-admin /path/to/projenv upgrade --no-backup
+}}}
+
+=== 更新Trac文档 ===
+
+每个[wiki:ZhTracEnvironment Trac environment]包含了一份安装版本的Trac文档副本。因为你可能想要使文档与安装的Trac版本保持同步，[wiki:ZhTracAdmin trac-admin]提供了一个升级文档的命令：
+{{{
+trac-admin /path/to/projenv wiki upgrade
+}}}
+
+注意，该程序一定会让你的`WikiStart`页面和原来一样。
+
+=== 重启网络服务器 ===
+
+要重新加载新的Trac代码，你需要重启你的网络服务器。注意，对[wiki:ZhTracCgi CGI]是不需要的。
+
+== 具体版本 ==
+
+下面的章节讨论了升级某些Trac版本，需要做的额外步骤。
+
+== 从0.9.x升级到0.10.x ==
+
+由于Wiki语法的一些改变，你可能会注意到，你的网页的某些部分不再按预想一样的运行：
+ * 以前，图片的链接会让该图片嵌入网页中。自0.10后，图片的链接还是空白链接。如果你想把某个图片嵌入网页中，使用`[[Image]]`宏。 
+ * 你不能再在wiki链接中使用`%20`来编译空格。相反，你应引用包含空格的名字。例如使用`wiki:"My page"`而不是wiki:My%20page`。
+
+版本控制子系统已经有几处改进，特别是改进了scoped储存库的支持。
+推荐你执行[ZhTracAdmin#InteractiveMode trac-admin] 的'''`resync`'''操作来充分利用这些改进。
+
+还要注意， [ZhTracAdmin trac-admin]的'''`initenv`'''命令的参数列表已经改变。有一个决定版本控制系统的类型的新的参数。旧的用法是：
+{{{
+   initenv <projectname> <db> <repospath> <templatepath>
+}}}
+The new usage is:
+新的用法是：
+{{{
+   initenv <projectname> <db> <repostype> <repospath> <templatepath>
+}}}
+如果你在使用任何自动创建Trac环境的脚本，你需要更新他们。如果你在使用SVN，为`<repostype>`参数指定`svn`。
+
+== 从0.9.3到0.9.4 ==
+
+在Pysqlite 1.x中有一个bug，导致使用"%"字符、`LIKE`子句或日期格式的报告失败。你需要
+
+== 从0.9.x到0.9.3或更晚 ==
+
+如果你在使用插件，你可能要升级他们。具体细节，请见http://projects.edgewall.com/trac/milestone/0.9.3。
+
+== 从0.9-beta到0.9 ==
+
+如果包含静态资源（像样式表，java描述语言，图像）不起作用的话，查看trac.ini中的`htdocs_location`值。对于[wiki:ZhTracModPython mod_python]、[wiki:ZhTracStandalone Tracd]和[wiki:ZhTracFastCgi FastCGI]，你只需删除该选项即可。对于[wiki:ZhTracCgi CGI]，你应修复它，让它指向你把Trac`htdocs`映射到的URL。尽管你也可以删除它，然后是[wiki:ZhTracCgi#MappingStaticResources map the static resources]。如果删除选项后你还是有问题的话，查看`trac/siteconfig.py` 文件中的路径。如果路径有误，修复它们。
+
+如果你已在Trac0.9的beta版本中使用插件，或者已经禁用了一些内置的组件，你可能需要更新禁用或激活[wiki:ZhTracIni trac.ini]中的组件的规则。特别是，安装的插件现在需要激活。更多信息，请见ZhTracPlugins和ZhTracIni。
+
+如果你想激活所有的传票的改变在时间轴中的显示（“传票详细资料”选项），你现在必须也在[wiki:ZhTracIni trac.ini]中激活它。
+
+{{{
+[timeline]
+ticket_show_details = true
+}}}
+
+== From 0.8.x to 0.9 ==
+== 从0.8.x到0.9 ==
+
+[wiki:ZhTracModPython mod_python]还需要改变Apache HTTPD配置中的mod_python处理器的名称：
+{{{
+   from: PythonHandler trac.ModPythonHandler
+   to:   PythonHandler trac.web.modpython_frontend
+}}}
+
+如果你安装了[http://initd.org/tracker/pysqlite PySQLite] 2.x，Trac现在会试着用SQLite 3.x文件格式打开你的SQLite数据库。SQLite 2.8.x和SQLite 3.x使用的数据库格式是不兼容的。如果升级后，你得到一个类似“文件被加密或文件不是一个数据库”的错误，那么你必须要转换你的数据库文件。
+
+要这样作，你需要安装了SQLite 2.8.x和SQLite 3.x，他们有不同的文件名所以在同一个系统中可以共存。然后使用下列命令：
+{{{
+ $ mv trac.db trac2.db
+ $ sqlite trac2.db .dump | sqlite3 trac.db
+}}}
+
+要一次在Linux上更新多个数据库文件，你可以使用下了命令（将{{{/var/trac}}}替换为你的Trac安装包的位置）。
+{{{
+ $ find /var/trac/ -iname "trac.db" | xargs -i bash -c "mv {} {}.2; sqlite {}.2 .dump | sqlite3 {};"
+}}}
+
+记得给网络服务器访问trac.db的写许可。
+
+测试完发现转换很成功之后，`trac2.db`文件可以删除。更多关于SQLite升级的信息，请见http://www.sqlite.org/version3.html。
+
+== 从0.7.x到0.8 ==
+
+0.8加了一个新的路标特征，要求额外的许可。尽管一个新的安装包默认情况下会给
+匿名用户ROADMAP_VIEW and MILESTONE_VIEW许可，升级时这些许可必须要手动给予：
+{{{
+ $ trac-admin /path/to/projectenv permission add anonymous MILESTONE_VIEW
+ $ trac-admin /path/to/projectenv permission add anonymous ROADMAP_VIEW
+}}}
+
+-----
+相关信息：ZhTracGuide, ZhTracInstall

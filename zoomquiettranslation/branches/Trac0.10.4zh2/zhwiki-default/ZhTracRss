@@ -1,0 +1,28 @@
+= 用Trac使用RSS =
+[[ZhTracGuideToc]]
+
+好几个Trac模块都支持使用RSS XML格式的内容同步。
+
+使用Trac中的RSS订阅特征，你可以轻松地监控项目的进程，一系列的问题甚至是某个文件的更改。
+
+在下列各项中支持RSS源：
+
+ * Trac时间轴 -- 使用RSS源来订阅项目的事件。在你喜爱的RSS读写器中监控真个的项目进度。 
+ * [ZhTracTickets 传票], [ZhTracReports 报表], [ZhTracQuery 查询] -- 允许报告和传票查询结果的同步。被通知重要的和相关的传票。
+ * [ZhTracBrowser 代码游览] [ZhTracRevisionLog 版本日志]-- 文件更改的同步。与具体文件或目录的更改保持同步。
+== 如何访问RSS数据 ==
+在Trac中任何可用RSS的地方，你会发现一个小的橙色标志，一般位于网页的底部。单击该标志可以访问该资源的RSS源。
+
+注意：不同的模块在他们的RSS源中提供不同的数据。通常，同步信息对应着现在的视图。例如，如果你在一个报告网页上单击RSS链接，源会以该报告为基础。如果你将RSS源看作为一个“目前显示的数据的替换视图”，这个问题就可以得到解答了。
+== 链接 ==
+ * [http://blogs.law.harvard.edu/tech/rss  RSS 2.0 Specification]
+ * [http://www.mozilla.org/products/firefox/  Mozilla Firefox]支持使用RSS的[http://www.mozilla.org/products/firefox/live-bookmarks.html live bookmarks]
+ * [http://sage.mozdev.org  Sage RSS]
+ * [http://pim.kde.org/users.php  Linux/BSD/*n*x 系统的RSS读写器]
+ * [http://www.rssreader.com/  免费又强大的Windows系统的RSS读写器]
+ * [http://liferea.sourceforge.net/  Linux系统的开源GTK2 RSS读写器]
+ * [http://akregator.sourceforge.net/  开源KDE RSS读写器]
+ * [http://www.sharpreader.net/  Windows系统的一款用.NET编写的RSS读写器]
+ * [http://ranchero.com/netnewswire/  Mac OS X的一个优秀的RSS读写器(有免费版和付费版)]
+----
+相关信息：[ZhTracGuide 帮助向导], [ZhTracTimeline 时间线索], [ZhTracReports 报表], [ZhTracBrowser 代码游览]

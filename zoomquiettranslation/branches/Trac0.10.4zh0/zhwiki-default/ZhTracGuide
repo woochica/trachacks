@@ -1,0 +1,34 @@
+= Trac用户和管理指南 =
+[[ZhTracGuideToc]]
+
+!TracGuide旨于作为一个与Trac的使用及环境有关的所有文档的一个起点来服务。指南是一个免费的文档，一个协作的成果，并且是[http://projects.edgewall.com/trac/ Trac Project]本身的一部分。
+
+== 目录 ==
+现有的文档：
+ * ZhTracGuide (本页)  -- 文档起点。
+   * ZhTracInstall -- 如何安装和运行Trac。
+   * ZhTracUpgrade -- 如何升级现在的安装文件。
+   * ZhTracAdmin -- 管理一个Trac项目。
+   * ZhTracImport -- 从其他bug数据库中导入传票。
+   * ZhTracIni -- Trac配置文件参考。
+   * ZhTracPermissions -- 访问控制和许可。
+   * ZhTracInterfaceCustomization -- 自定义Trac界面。
+   * ZhTracPlugins -- 安装和管理Trac插件。
+   * ZhTracWiki -- 如何使用内置的wiki。
+   * ZhTracBrowser -- 用Trac流览源代码。
+   * ZhTracChangeset -- 查看源代码的更改。
+   * ZhTracTickets -- 使用Using the issue tracker.
+   * ZhTracReports -- 撰写和使用报告。
+   * ZhTracQuery -- 执行自定义票查询。
+   * ZhTracRoadmap -- 路标帮助追踪项目的进度。
+   * ZhTracTimeline -- 时间轴为项目提供了历史的记录。
+   * ZhTracLogging -- Trac日志工具。
+   * ZhTracRss -- Trac中的RSS内容组织。
+   * ZhTracNotification -- Email通知。
+
+ * [http://projects.edgewall.com/trac/wiki/TracFaq Trac FAQ] - 一个常问问题的集合（在项目网站上）。
+== 支持和其他的信息资源 ==
+
+如果你在寻找一个能解答你关于Trac的疑问的地方，那么[http://projects.edgewall.com/trac/wiki/MailingList MailingList]是最佳选择。它提供了一个Trac用户与开发者之间自由地讨论的良好的环境。
+
+相关信息：想得到更多的信息资源，请见ZhTracSupport页面。

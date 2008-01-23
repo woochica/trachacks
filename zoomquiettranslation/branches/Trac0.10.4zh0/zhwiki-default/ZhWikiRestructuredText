@@ -1,0 +1,171 @@
+= Trac中重构文字（reStructuredText）支持 =
+
+Trac支持使用''reStructuredText''(RST)来替代使用ZhWikiFormatting的文字中的wiki标示。
+
+摘自reStucturedText网页：
+“reStructuredText是一种读写容易、直接明了的纯文本标示语法和分析系统。它对内嵌程序文档（例如Python doc字符串）、快速创建简单网页以及独立文档有帮助。” reStructuredText是为了某个应用领域的延展性而设计的。
+=== 要求 ===
+
+注意，要激活Trac中的RST支持，必须安装python docutils安装包。
+如果你的操作系统尚没有此安装包，你可以在[http://docutils.sourceforge.net/rst.html RST Website]上下载它。
+
+=== 更多RST的信息 ===
+
+ * reStructuredText网站 -- http://docutils.sourceforge.net/rst.html
+ * RST快速参考 -- http://docutils.sourceforge.net/docs/rst/quickref.html
+
+----
+
+== 在Trac中使用RST ==
+
+要指定某一段文字要用RST来分析的话，使用“rst”处理器。
+
+=== reStructuredText中的Trac链接 ===
+
+ * Trac提供一个自定义的RST参考－指南“trac”，允许RST文字内部的Trac链接。
+
+ 例子:
+ {{{
+ {{{
+ #!rst
+ This is a reference to |a ticket|
+
+ .. |a ticket| trac:: #42
+ }}}
+ }}}
+
+ 想要看一个关于“trac”－指示所有的使用情况的一个完整的例子，请看ZhWikiRestructuredTextLinks。
+
+ * Trac许可一个更简单的在RST中创建Trac链接的方法，通过使用自定义'':trac:''链接命名方案。
+ 例子：
+ {{{
+ {{{
+ #!rst
+ This is a reference to ticket `#12`:trac:
+
+ To learn how to use Trac, see `TracGuide`:trac:
+ }}}
+ }}}
+
+=== reStructuredText中的语法高亮显示 ===
+
+在ReST中也有一个关于如何做Trac语法高亮显示的指示。该指示叫做代码组。
+
+例子
+
+{{{
+{{{
+#!rst
+
+.. code-block:: python
+
+ class Test:
+
+    def TestFunction(self):
+        pass
+
+}}}
+}}}
+
+会导致下面的结果。
+
+{{{
+#!rst
+
+.. code-block:: python
+
+ class Test:
+
+    def TestFunction(self):
+        pass
+
+}}}
+
+=== reStructuredText中的wiki宏 ===
+
+要在ReST中执行wiki宏，你可以使用与语法高亮显示一样的指示，例如代码组。要使其起作用，你必须使用一个应用#801的trac版本。
+
+=== Wiki宏实例 ===
+
+{{{
+{{{
+#!rst
+
+.. code-block:: HelloWorld
+ 
+   Something I wanted to say
+
+
+}}}
+}}}
+
+会导致下面的结果。
+
+[[HelloWorld(Something I wanted to say)]]
+
+
+=== 更大的ReST例子 ===
+下面的例子应该大部分是不需说明的：
+{{{
+#!html
+<pre class="wiki">{{{
+#!rst
+FooBar Header
+=============
+reStructuredText is **nice**. It has its own webpage_.
+reStructuredText是**nice**，它有自己的网页。
+
+一个表格：
+
+=====  =====  ======
+   Inputs     Output
+------------  ------
+  A      B    A or B
+=====  =====  ======
+False  False  False
+True   False  True
+False  True   True
+True   True   True
+=====  =====  ======
+
+RST TracLinks
+-------------
+
+请见传票`#42`:trac:。
+
+.. _webpage: http://docutils.sourceforge.net/rst.html
+}}}</pre>
+}}}
+
+
+Results in:
+{{{
+#!rst
+FooBar Header
+=============
+reStructuredText是**nice**，它有自己的网页。
+
+一个表格：
+
+=====  =====  ======
+   Inputs     Output
+------------  ------
+  A      B    A or B
+=====  =====  ======
+False  False  False
+True   False  True
+False  True   True
+True   True   True
+=====  =====  ======
+
+RST TracLinks
+-------------
+
+请见传票`#42`:trac:。
+
+.. _webpage: http://docutils.sourceforge.net/rst.html
+}}}
+
+
+----
+相关信息：ZhWikiRestructuredTextLinks, ZhWikiProcessors, ZhWikiFormatting

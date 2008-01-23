@@ -1,0 +1,30 @@
+= Trac维基引擎 =
+[[ZhTracGuideToc]]
+
+Trac有一个内置的维基引擎，用于系统中的文字和文档。[ZhWikiFormatting 维基格式说明]用在[wiki:ZhTitleIndex wiki页面]、[wiki:ZhTracTickets 传票]和[wiki:ZhTracChangeset 变更集]中。这就允许了在Trac所有模块中的格式化文字和超链接。
+
+编辑维基文字很简单，通过使用任意网络流览器和一个简单的[ZhWikiFormatting 维基格式说明]，而不是那些复杂的多的标示语言，像HTML.它的设计背后的理念是，HTML有很多的嵌套的标签，太复杂无法实现块节奏的编辑，并且将网页的实际内容变得分散。注意，Trac也支持[wiki:ZhWikiHtml HTML]、[wiki:ZhWikiRestructuredText 结构化文本]和 [http://www.textism.com/tools/textile/ Textile]，作为替换的标示格式。
+
+维基的主要目标实使编辑文字的过程变得更简单以及鼓励人们为项目的文字内容做贡献和注释文字。
+
+维基本身并步执行任何结构，但它看上去却很像一堆空白的纸张。在那里你可以按照你的意愿组织信息和文档，有必要的话可以再重组它们。
+
+更多关于编辑维基文字的帮助，请参考这些网页：
+ * [ZhWikiFormatting  维基格式说明]
+ * [ZhWikiPageNames 维基页面名字]
+ * [ZhWikiNewPage 创建维基页面]
+ * [ZhTracLinks 维基内链接处理]
+ * [ZhWikiMacros 宏]
+ * [ZhWikiProcessors 处理器]
+ * [ZhPageTemplates 模板]
+
+
+如果你想实践编辑文字，请使用沙箱。
+
+网络上其他更多关于维基的信息：
+ * http://wikipedia.org/wiki/Wiki
+ * http://c2.com/cgi/wiki?WikiHistory
+ * http://www.usemod.com/cgi-bin/mb.pl?WhyWikiWorks
+
+----
+相关信息：[ZhTracGuide 帮助手册]

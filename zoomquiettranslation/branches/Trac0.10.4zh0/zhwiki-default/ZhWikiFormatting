@@ -1,0 +1,344 @@
+= Wiki格式化 =
+[[ZhTracGuideToc]]
+
+Wiki置标是Trac中的一个核心特征，紧紧地和其它所有部分结合在一起，组成一个灵活有力的整体。
+
+Trac有一个内置的小而强大的wiki rendering引擎。该wiki引擎执行一个来自其他wiki的一直增长的命令子集，尤其是[http://moinmoin.wikiwikiweb.de/ MoinMoin]。
+
+该页示范了Wiki格式化允许的现有格式语法。
+
+== 字形 ==
+
+Trac wiki支持下列字形：
+{{{
+ * '''bold''', '''!''' can be bold too''', and '''! '''
+ * ''italic''
+ * '''''bold italic'''''
+ * __underline__
+ * {{{monospace}}} or `monospace`
+ * ~~strike-through~~
+ * ^superscript^ 
+ * ,,subscript,,
+}}}
+
+Display:
+显示：
+ * '''bold''', '''!''' can be bold too''', and '''! '''
+ * ''italic''
+ * '''''bold italic'''''
+ * __underline__
+ * {{{monospace}}} or `monospace`
+ * ~~strike-through~~
+ * ^superscript^ 
+ * ,,subscript,,
+
+注意：
+ * `{{{...}}}`和{{{`...`}}}命令不仅选择了一个单空格字体，而且把他们的内容当作逐字文字。这意味着该文本中不运行其他的wiki进程。
+ * {{{ ! }}}告诉wiki剖析器不要将下列字符当作wiki格式，因此注意在！后加入一个空格。 
+ 
+== 标题 ==
+
+你可通过一行的开头有1到5个等号（"="）来创建标题，等号后有一个空格然后是标题文字。该行应该
+以一个空格结束，后面有同样数量的等号（"="）。
+标题可后面跟着一个明显的id。否则，会创建一个不明显单易读的id。
+
+例子：
+{{{
+= Heading =
+== Subheading ==
+=== About ''this'' ===
+=== Explicit id === #using-explicit-id-in-heading
+}}}
+
+显示：
+= Heading =
+== Subheading ==
+=== About ''this'' ===
+=== Explicit id === #using-explicit-id-in-heading
+
+== 段落 ==
+
+只要两块文字由一个或多个空行分隔时，一个新的段落产生了。
+
+可以插入一个被迫的行分隔符，使用下列代码：
+{{{
+Line 1[[BR]]Line 2
+}}}
+显示：
+
+Line 1[[BR]]Line 2
+
+
+== 列表 ==
+
+wiki支持有序的/编号的列表和无序的列表。
+
+例子：
+{{{
+ * Item 1
+   * Item 1.1
+ * Item 2
+
+ 1. Item 1
+   a. Item 1.a
+   a. Item 1.b
+      i. Item 1.b.i
+      i. Item 1.b.ii
+ 1. Item 2
+编号列表还可给予一个明显的编号：
+ 3. Item 3
+}}}
+
+Display:
+ * Item 1
+   * Item 1.1
+ * Item 2
+
+ 1. Item 1
+   a. Item 1.a
+   a. Item 1.b
+      i. Item 1.b.i
+      i. Item 1.b.ii
+ 1. Item 2
+编号列表还可给予一个明显的编号：
+ 3. Item 3
+
+注意在列表符号前必须有一个多个空格，否则该列表会被当作一个普通的段落。
+
+== 定义列表 ==
+
+
+wiki也支持定义列表。
+
+例子：
+{{{
+ llama::
+   some kind of mammal, with hair
+ ppython::
+   some kind of reptile, without hair
+   (can you spot the typo?)
+}}}
+
+显示：
+ llama::
+   some kind of mammal, with hair
+ ppython::
+   some kind of reptile, without hair
+   (can you spot the typo?)
+
+注意，在定义的术语前你需要一个空格。
+
+== 预设格式的文字 ==
+
+代码组包含了适合源代码片断的预设格式的文字，备注和例子。文字周围环绕三个卷曲花括号来定义一个块引用。卷曲花括号要在一个独立的行上。 
+
+  
+例子：
+{{{
+ {{{
+  def HelloWorld():
+      print "Hello World"
+ }}}
+}}}
+
+显示：
+{{{
+ def HelloWorld():
+     print "Hello World"
+}}}
+
+
+== 块引用 ==
+
+要将一个段落标记为一个块引用，将该段缩进两个空格。
+
+例子：
+{{{
+  This text is a quote from someone else.
+}}}
+
+Display:
+  This text is a quote from someone else.
+
+== 讨论引用 ==
+
+要在一个正在进行的讨论贴中定义一个引用，录入传票的评论区域，可能会用到像电子邮件的引用标记，例如">", ">>"，等等。
+
+例子：
+{{{
+>> Someone's original text
+> Someone else's reply text
+My reply text
+}}}
+
+显示：
+>> Someone's original text
+> Someone else's reply text
+My reply text
+
+“注意： 一些Wiki格式化元素，例如列表和预设格式的文本，在引用区域中消失了。一些重定格式可以用来创建一个清晰的引用。”
+== 表格 ==
+
+可以像下面这样创建简单的表格：
+{{{
+||Cell 1||Cell 2||Cell 3||
+||Cell 4||Cell 5||Cell 6||
+}}}
+
+显示：
+||Cell 1||Cell 2||Cell 3||
+||Cell 4||Cell 5||Cell 6||
+
+注意，可以用[wiki:ZhWikiRestructuredText#BiggerReSTExample reStructuredText]创建更多复杂的表格。
+
+== 链接 ==
+
+ZhWikiPageNames和URL的超链接是自动创建的。ZhWikiPageLinks可被禁用，如果前面加入一个感叹号"!"的话。
+
+例子：
+{{{
+ TitleIndex, http://www.edgewall.com/, !NotAlink
+}}}
+
+显示：
+ TitleIndex, http://www.edgewall.com/, !NotAlink
+
+通过写该链接后面伴着一个空格和一个标题，链接可以有一个更具描述性的标题。而且所有这些位于方括号之内。如果省略描述性的标题，而该链接不是一个外部链接的话，明显的前缀被删掉。对于不坚持ZhWikiPageNames协定的wiki网页是有用的。
+
+例子：
+{{{
+ * [http://www.edgewall.com/ Edgewall Software]
+ * [wiki:TitleIndex Title Index]
+ * [wiki:ISO9000]
+}}}
+
+显示：
+ * [http://www.edgewall.com/ Edgewall Software]
+ * [wiki:TitleIndex Title Index]
+ * [wiki:ISO9000]
+
+
+=== Trac链接 ===
+
+Wiki网页可以直接链接到Trac系统的其他部分。网页可以引用传票、报告、改变集、里程碑、源文件和其他使用下列符号的wiki网页：
+{{{
+ * Tickets: #1 or ticket:1
+ * Reports: {1} or report:1
+ * Changesets: r1, [1] or changeset:1
+ * ...
+}}}
+
+Display:
+ * Tickets: #1 or ticket:1
+ * Reports: {1} or report:1
+ * Changesets: r1, [1] or changeset:1
+ * ... 
+
+想知道更深层的信息，请参考ZhTracLinks。
+
+
+== 断开的链接和Wiki网页名称 ==
+
+如果表达式前面加入一个感叹号"!"，你可以避免链接跑出了ZhTracLinks的范围。
+Example:
+{{{
+ !NoHyperLink
+ !#42 is not a link
+}}}
+
+Display:
+ !NoHyperLink
+ !#42 is not a link
+
+
+== 图像 ==
+
+以`.png`, `.gif`或`.jpg`结尾的URL不再主动解释为图像链接，并转换为`<img>`标签。
+
+现在你必须使用![[Image]]宏。请看下面。
+
+
+== 宏 ==
+
+宏是在一个网页中插入动态内容的“自定义公式”。
+
+例子：
+{{{
+ [[Timestamp]]
+}}}
+
+显示：
+ [[Timestamp]]
+
+更多信息请见ZhWikiMacros和已安装宏的列表。
+
+
+== 处理器 ==
+
+Trac支持使用Wiki处理器的置标格式。例如，处理器用来写[wiki:ZhWikiRestructuredText reStructuredText]或[wiki:ZhWikiHtml HTML]中的网页。
+
+例子1：
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="text-align: right; color: blue"&gt;HTML Test&lt;/h1&gt;
+}}}</pre>
+}}}
+
+显示：
+{{{
+#!html
+<h1 style="text-align: right; color: blue">HTML Test</h1>
+}}}
+
+例子：
+{{{
+#!html
+<pre class="wiki">{{{
+#!python
+class Test:
+
+    def __init__(self):
+        print "Hello World"
+if __name__ == '__main__':
+   Test()
+}}}</pre>
+}}}
+
+显示：
+{{{
+#!python
+class Test:
+    def __init__(self):
+        print "Hello World"
+if __name__ == '__main__':
+   Test()
+}}}
+
+Perl:
+{{{
+#!perl
+my ($test) = 0;
+if ($test > 0) {
+    print "hello";
+}
+}}}
+
+更多信息见ZhWikiProcessors。
+
+== Miscellaneous ==
+
+四个或多个破折号将被一个水平线所代替(<HR>)
+
+例子：
+{{{
+ ----
+}}}
+
+显示：
+----
+
+
+----
+相关信息：ZhTracLinks, ZhTracGuide, ZhWikiHtml, ZhWikiMacros, ZhWikiProcessors, ZhTracSyntaxColoring.

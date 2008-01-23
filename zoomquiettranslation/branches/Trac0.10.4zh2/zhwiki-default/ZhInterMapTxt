@@ -1,0 +1,55 @@
+= InterMapTxt =
+== 这是定义内部维基前缀的地方 ==
+该页是效仿MeatBall:InterMapTxt页的。另外，在绘图后可以选择添加一个评论。
+
+Trac以一种特殊的方式来调用该页，为了能构以一种灵活的和动态的方式支持[ZhInterWiki 内部维基]链接。
+
+该页中第一个行分隔符后的代码区将被作为[ZhInterWiki 内部维基]说明书的一个列表来解释：
+{{{
+prefix <space> URL [<space> # comment]
+}}}
+
+通过使用URL内的`$1`, `$2`等，可以创建支持多参数的[ZhInterWiki 内部维基]链接，例如!Trac:ticket:40。URL本身可以添加评论，该评论会用来修饰那些使用了该前缀的链接。
+
+新的[ZhInterWiki 内部维基]链接可通过添加到那个列表中而创建出来。
+
+注意，“删除的内容”也会立即生效。
+因此可能使用评论来关闭前缀可能会更好一些。
+
+还要注意一点，ZhInterWiki的前缀是区分大小写的。
+
+== 动态前缀列表 ==
+[[InterWiki]]
+
+
+== 前缀定义 ==
+{{{
+PEP     http://www.python.org/peps/pep-$1.html                                       # Python Enhancement Proposal 
+Trac-ML  http://thread.gmane.org/gmane.comp.version-control.subversion.trac.general/ # Message $1 in Trac Mailing List
+trac-dev http://thread.gmane.org/gmane.comp.version-control.subversion.trac.devel/   # Message $1 in Trac Development Mailing List
+
+Mercurial http://www.selenic.com/mercurial/wiki/index.cgi/ # the wiki for the Mercurial distributed SCM
+RFC       http://rfc.net/rfc$1.html # IETF's RFC $1
+
+#
+# A arbitrary pick of InterWiki prefixes...
+#
+Acronym          http://www.acronymfinder.com/af-query.asp?String=exact&Acronym=
+C2find           http://c2.com/cgi/wiki?FindPage&value=
+Cache            http://www.google.com/search?q=cache:
+CPAN             http://search.cpan.org/perldoc?
+DebianBug        http://bugs.debian.org/
+DebianPackage    http://packages.debian.org/
+Dictionary       http://www.dict.org/bin/Dict?Database=*&Form=Dict1&Strategy=*&Query=
+Google           http://www.google.com/search?q=
+GoogleGroups     http://groups.google.com/group/$1/msg/$2        # Message $2 in $1 Google Group
+JargonFile       http://downlode.org/perl/jargon-redirect.cgi?term=
+MeatBall         http://www.usemod.com/cgi-bin/mb.pl?
+MetaWiki         http://sunir.org/apps/meta.pl?
+MetaWikiPedia    http://meta.wikipedia.org/wiki/
+MoinMoin         http://moinmoin.wikiwikiweb.de/
+WhoIs            http://www.whois.sc/
+Why              http://clublet.com/c/c/why?
+c2Wiki             http://c2.com/cgi/wiki?
+WikiPedia        http://en.wikipedia.org/wiki/
+}}}

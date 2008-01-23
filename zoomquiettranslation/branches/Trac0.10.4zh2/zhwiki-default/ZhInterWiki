@@ -1,0 +1,47 @@
+= InterWiki链接的帮助 =
+''(自里程碑0.10后)''
+== 定义 ==
+一个[ZhInterWiki 内部维基]链接可用来参阅另一wiki系统中的某个wiki页面，推而广之，如果可以映射一个简单的URL的话，[ZhInterWiki 内部维基]链接可用来参阅其他任何web程序中的某个对象。
+
+[ZhInterWiki 内部维基]前缀甚至可以用来将链接指定到新的协议中，例如!TortoiseSvn使用的`tsvn:`。
+== Link 语法 ==
+{{{
+<target_wiki>(:<identifier>)+
+}}}
+
+链接是由目标!Wiki的名字编写的，后面跟着一个冒号，一个目标中的页内标志。作为[ZhInterTrac 内部Trac]前缀，[ZhInterWiki 内部维基]前缀是不区分大小写的。
+
+在ZhInterMapTxtwiki页中查找目标!WikiURL，模仿MeatBall:InterMapTxt。
+除了传统的!InterWiki链接外，!Trac支持参数的ZhInterWiki !URL。!URL中的标识符`$1`, `$2`,
+...会被相应的参数所替代。参数列表是通过使用":"
+分隔符来拆分页标识符而形成的。对于传统的[ZhInterWiki 内部维基]链接，目标只是简单地添加到!URL中。
+== 例子 ==
+下面是InterMapTxt页面的一个摘录：
+{{{
+= InterMapTxt =
+== 这是定义InterWiki前缀的地方 ==
+目前动态的前缀：[[InterWiki]]
+
+该页是模仿MeatBall:InterMapTxt页的。
+
+另外，在映射后可以允许添加一个评论。
+----
+{{{
+PEP      http://www.python.org/peps/pep-$1.html           # Python Enhancement Proposal $1 
+Trac-ML  http://thread.gmane.org/gmane.comp.version-control.subversion.trac.general/$1  # Message $1 in Trac Mailing List
+
+tsvn     tsvn:                                            # Interact with TortoiseSvn
+...
+MeatBall http://www.usemod.com/cgi-bin/mb.pl?
+MetaWiki http://sunir.org/apps/meta.pl?
+MetaWikiPedia http://meta.wikipedia.org/wiki/
+MoinMoin http://moinmoin.wikiwikiweb.de/
+...
+}}}
+}}}
+
+那么，
+ * `MoinMoin:InterWikiMap`应表示为MoinMoin:InterWikiMap，该链接的“标题”应是"InterWikiMap in MoinMoin"。
+ *  Trac-ML:4346`应表示为Trac-ML:4346，该链接的“标题”应为"Message 4346 in Trac Mailing List"。
+----
+相关信息：[ZhInterTrac 内部Trac], [ZhInterMapTxt 内部内容引用]
