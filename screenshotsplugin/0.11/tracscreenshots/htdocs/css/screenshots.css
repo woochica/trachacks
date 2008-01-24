@@ -1,0 +1,22 @@
+/* Buttons forms styles. */
+div.screenshot_buttons
+{
+  text-align: center;
+}
+
+/* Controls form styles. */
+div.controls
+{
+  text-align: left;
+}
+
+div.controls fieldset
+{
+  margin: 1em;
+  padding: 0.5em;
+}
+
+div.controls div.field
+{
+  display: inline;
+}
