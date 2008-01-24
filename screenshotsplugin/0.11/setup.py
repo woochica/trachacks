@@ -7,7 +7,7 @@ setup(
   name = 'TracScreenshots',
   version = '0.6',
   packages = ['tracscreenshots', 'tracscreenshots.db'],
-  package_data = {'tracscreenshots' : ['templates/*.cs', 'htdocs/css/*.css',
+  package_data = {'tracscreenshots' : ['templates/*.html', 'htdocs/css/*.css',
     'htdocs/js/*.js']},
   entry_points = {'trac.plugins': ['TracScreenshots.api = tracscreenshots.api',
     'TracScreenshots.core = tracscreenshots.core',

@@ -65,7 +65,7 @@ class ScreenshotsMatrixView(Component):
         data['prev_index'] = prev_index
         data['next_index'] = next_index
 
-        return ('screenshots-matrix-view.cs', None)
+        return ('screenshots-matrix-view.html', None)
 
     def get_screenshots_view(req):
         yield ('matrix', 'Matrix View')

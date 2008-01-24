@@ -122,7 +122,7 @@ class ScreenshotsCore(Component):
 
         # Return template and its data.
         db.commit()
-        return (template + '.cs', {'screenshots' : self.data}, content_type)
+        return (template + '.html', {'screenshots' : self.data}, content_type)
 
     # Internal functions.
 
