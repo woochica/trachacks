@@ -139,7 +139,7 @@ class PerforceConnector(Component):
                 message="Could not connect to Perforce repository.",
                 title="Perforce connection error")
 
-        if 'user' == '':
+        if self.user == '':
             raise TracError(
                 message="Missing 'user' value in [perforce] config section.",
                 title="Perforce configuration error")
