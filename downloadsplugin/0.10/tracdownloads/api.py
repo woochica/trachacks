@@ -551,7 +551,7 @@ class DownloadsApi(Component):
                     out_file.close()
                 except Exception, error:
                     self.log.debug(error)
-                    self.delete_download(context, download['id'])
+                    self.delete_download(cursor, download['id'])
                     try:
                         os.remove(filepath)
                     except:
