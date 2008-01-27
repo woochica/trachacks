@@ -129,7 +129,7 @@ class WorkLogPage(Component):
 
                 comment = ''
                 if req.args.has_key('comment'):
-                    comment = str(req.args['comment'])
+                    comment = req.args['comment']
 
                 if not mgr.stop_work(stoptime, comment):
                     addMessage(mgr.get_explanation())
