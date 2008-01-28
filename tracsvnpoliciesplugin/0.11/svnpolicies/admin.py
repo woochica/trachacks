@@ -11,6 +11,7 @@ from os import path
 from trac.core import implements, Component
 from trac.config import Option, ListOption, BoolOption
 from trac.admin.api import IAdminPanelProvider
+from trac.perm import IPermissionRequestor, PermissionSystem
 from trac.util.translation import _
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.wiki.formatter import wiki_to_html
@@ -27,7 +28,7 @@ class SVNPoliciesAdminPlugin(Component):
     valid_email_flag = None
     errors= False
     
-    implements(IAdminPanelProvider, ITemplateProvider)
+    implements(IPermissionRequestor, IAdminPanelProvider, ITemplateProvider)
     
     svnpolicies_enabled = BoolOption('svnpolicies', 'svnpolicies_enabled', 'false',
       "Enable the svnpolicies plugin")
@@ -75,6 +76,19 @@ class SVNPoliciesAdminPlugin(Component):
     
     readonly_repository = BoolOption('svnpolicies', 'readonly_repository', 'false',
       "If enabled then the repository will not permit commits.")
+    
+    def get_permission_actions(self):
+        """
+        This method returnes a list with all the 
+        permission that this controller requires.
+        
+        @return: list
+        """
+        permission_system = PermissionSystem(self.env)
+        for subject, action in permission_system.get_all_permissions():
+            if action == 'PROJECT_ADMIN' :
+                return []
+        return ['PROJECT_ADMIN']
     
     def get_admin_panels(self, req):
         if 'PROJECT_ADMIN' in req.perm:
