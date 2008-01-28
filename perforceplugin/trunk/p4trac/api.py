@@ -189,8 +189,7 @@ class PerforceRepository(Repository):
         self._job_prefix_length = jobPrefixLength
         self.options = options
         self._connection = connection
-        name = 'p4://%s:%s@%s' % (connection.user, 
-                                  connection.password, connection.port)
+        name = 'p4://%s@%s' % (connection.user, connection.port)
         Repository.__init__(self, name, authz, log)
         from p4trac.repos import P4Repository
         self._repos = P4Repository(connection, log)
