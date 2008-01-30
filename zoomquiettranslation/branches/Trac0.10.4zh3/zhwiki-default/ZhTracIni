@@ -1,0 +1,150 @@
+
+
+= Trac配置文件 =
+[[ZhTracGuideToc]]
+
+Trac的配置是通过编辑'''`trac.ini`'''配置文件实现的, 其位于<项目环境>/conf/trac.ini.
+
+== 全局配置 ==
+
+自0.9版本后, Trac也可以从一个全局`trac.ini`文件中读取配置. 这些全局选项会合并到具体环境的局部选项中, 其中局部选项将优先起作用.
+
+默认情况下, 全局配置位于`$prefix/share/trac/conf/trac.ini`. 可以把它移动到另外的位置, 例如`/etc/trac.ini`, 但这样就要求改变安装Trac时创建的`trac/siteconfig.py`文件.
+
+== 参考 ==
+
+下面是可用配置选项的简明参考.
+
+=== [attachment] ===
+|| render_unsafe_content || 是否应该在浏览器中渲染附件, 或者只是将附件变为可下载的. 浏览器可以将任意文件解析为HTML格式, 这样恶意用户可以附加一个包含了跨网站(cross-site)脚本攻击的文件. 对于匿名用户可以创建附件的公共网站, 建议将该选项设为禁用(是默认选项). ||
+|| max_size || 传票和Wiki的附件最大文件大小. ||
+
+=== [browser] ===
+|| downloadable_paths || 可下载的SVN仓库路径的列表. 如果你想禁止所有下载, 将该选项设为空, 否则将它设置为用逗号分隔的列表(这些路径都是全局匹配, 例如, "*"可被用做一个通配符)(自0.10版本). ||
+|| render_unsafe_content || 是否应该在浏览器中渲染附件, 或者只是将附件变为可下载的. 浏览器可以将任意文件解析为HTML格式, 这样恶意用户可以附加一个包含了跨网站(cross-site)脚本攻击的文件. 对于匿名用户可以创建附件的公共网站, 建议将该选项设为禁用(是默认选项). ||
+|| hide_properties || 在源码游览中隐藏的SVN属性的列表. (自0.9版本) ||
+
+=== [changeset] ===
+|| wiki_format_messages || 是否要将Wiki格式应用于变更集消息. 如果禁用该选项, 变更集消息会被渲染为预格式(pre-formatted)文本.  ||
+|| max_diff_files || 变更集视图中，以内嵌方式显示区别(diffs)的最大文件数(自0.10) ||
+|| max_diff_bytes || 变更集视图中，以内嵌方式显示区别(diffs)的最大总文件大小(新旧文件的大小之和)(自0.10)  ||
+
+=== [header_logo] ===
+|| src || 页眉logo图片的URL. ||
+|| height || 页眉logo图片的高度(像素). ||
+|| link || 到页眉logo链接的URL.  ||
+|| alt || 页眉logo的替代文字.  ||
+|| width || 页眉logo图片的宽度(像素).  ||
+
+=== [logging] ===
+|| log_type || 使用的日志工具. 应该是(none, file, stderr, syslog, winlog)中的一个.  ||
+|| log_level || 日志中的详细程度. 应该是(CRITICAL, ERROR, WARN, INFO, DEBUG)中的一个.  ||
+|| log_format || 自定义日志格式. 如果没有进行设置, 将使用如下设置: Trac[$(module)s] $(levelname)s: $(message)s. 除了Python日志库支持的通常的键名(请见http://docs.python.org/lib/node422.html), 你可以使用: - $(path)s 当前环境的路径 - $(basename)s 当前环境的最后一个路径元素 - $(project)s 项目名称. 注意: 使用$(...)s而不是%(...)s, 因为后者会被ConfigParser解析. 例如: ($(thread)d) Trac[$(basename)s:$(module)s] $(levelname)s: $(message)s (自 0.11) ||
+|| log_file || 如果log_type是文件的话, 则给选项为日志文件的路径.  ||
+
+=== [mimeviewer] ===
+|| enscript_modes  || Enscript知道的额外MIME类型的列表. 对于每个类型, 必须要指定元组mimetype:mode:quality, 这里mimetype是MIME类型, mode是用来转换的相应的Enscript模式, 而quality是和该转换对应的质量比率.  也可以用来重载Enscript渲染器使用的默认质量比率2(自0.10).  ||
+|| tab_width || 文件预览中显示的tab宽度(自0.9).  ||
+|| silvercity_modes || SilverCity知道的额外MIME类型的列表. 对于每个类型, 必须要指定一个元组mimetype:mode:quality. 这里mimetype是MIME类型, mode是用来转换的对应的SilverCity模式, 而quality是和该转换对应的质量比率.  也可以用来重载SilverCity渲染器使用的默认质量比率3(自0.10).  ||
+|| php_path || 到PHP可执行文件的路径(自0.9).  ||
+|| enscript_path || 到Enscript可执行文件的路径.  ||
+|| max_preview_size || HTML预览的最大文件大小. (自0.9).  ||
+|| mime_map || 额外的MIME类型和关键字映射的列表. 映射由逗号隔开, 对于每个MIME类型, 有一个相关关键字或文件扩展名的冒号(":")分隔的列表. (自0.10) ||
+
+=== [notification] ===
+|| always_notify_reporter || 总是向属主域中的所有地址发送提醒.  ||
+|| always_notify_owner || 总是向传票所有者发送提醒(自0.9).  ||
+|| smtp_subject_prefix || 添加到提醒邮件主题行的前缀文字. 如果没有定义, 那么使用[$project_name]前缀. 如果不需要前缀, 那么指定一个空选项会禁用它. (自0.10.1) ||
+|| smtp_always_bcc || 总是发送提醒的邮件地址, 这些地址将不会公开显示出来(密件抄送). (自0.10).  ||
+|| smtp_replyto || 提醒邮件中使用的答复地址.  ||
+|| smtp_port || 邮件提醒使用的SMTP服务器端口.  ||
+|| use_tls || 使用SSL/TLS来发送提醒(自1.10).  ||
+|| smtp_enabled || 启用SMTP(邮件)提醒.  ||
+|| smtp_from || 提醒邮件中使用的发送者地址.  ||
+|| always_notify_updater || 总是向改变传票属性的人发送提醒.  ||
+|| mime_encoding || 为邮件指定MIME编码方案. 有效的选项是'base64'--Base64编码, 'qp--Quoted-Printable, 还有'none'--无编码. 注意: 无编码意味着如果文本中包含非-ASCII字符, 会导致提醒邮件错误(自0.10).  ||
+|| smtp_always_cc || 总是发送提醒的邮件地址, 所有的收件人都能看到该地址(因为是抄送的).  ||
+|| smtp_default_domain || 添加到邮件地址中的缺省主机/域.  ||
+|| smtp_password || SMTP服务器的密码. (自0.9).  ||
+|| smtp_server || 邮件提醒使用的SMTP服务器主机名.  ||
+|| smtp_user || SMTP服务器的用户名. (自0.9).  ||
+|| use_short_addr || 允许地址不带主机/域(即, 只有用户名). SMTP服务器应该接受这些地址, 或者附加一个FQDN或者使用本地发送(自0.10).  ||
+|| use_public_cc || 收件人可以看到其他抄送到的收件人的有想地址. 如果禁用该选项(它是默认的), 收件人是密件抄送的(自0.10).  ||
+
+=== [project] ===
+|| descr || 项目的简短介绍.  ||
+|| url || 项目主站的URL. ||
+|| icon || 项目图标的URL.  ||
+|| name || 项目名称.  ||
+|| footer || 页面的页脚文字(右对齐).  ||
+
+=== [search] ===
+|| min_query_length || 进行搜索时, 查询字符串的最小长度.  ||
+
+=== [theme] ===
+|| theme || 使用的主题.  ||
+|| override_logo || 允许主题重载你的页眉_logo.  ||
+
+=== [ticket] ===
+|| default_priority || 新创建传票的默认优先级.  ||  
+|| restrict_owner || 使得传票的所有者域使用一个下拉菜单. 参见[ZhTracTickets 使指派到成为下拉列表](自0.9).  ||
+|| default_type || 新创建的传票的默认类型(自0.9).  ||
+|| default_milestone || 新创建传票的默认里程碑.  ||
+|| default_component || 新创建传票的默认组件.  ||
+|| default_version || 新传见传票的默认版本.  ||
+
+=== [timeline] ===
+|| ticket_show_details || 在时间线中显示所有的传票更改(自0.9).  ||
+|| changeset_long_messages || Wiki格式的变更集消息是否是多行. 如果不指定该选项或者该选项为flase而wiki_format_messages设为true, 变更集消息将会只是单行, 因此将失去一些格式(项目符号, 等等).  ||
+|| changeset_show_files || 显示的文件的数量(-1是'无限的', 0是禁用).  ||
+|| default_daysback || 时间线中显示的默认的天数, 以天为单位. (自0.9) ||
+
+=== [trac] ===
+|| check_auth_ip || 用户的IP地址是否应该验证(自0.9).  ||
+|| ignore_auth_case || 登录名是否应该忽略大小写(自0.9).  ||
+|| permission_store || 实现IPermissionStore的组件名称, 该组件用来管理用户和组权限.  ||
+|| mainnav || 在主导航栏中显示的项目ID列表.  ||
+|| templates_dir || 到ClearSilver模板的路径.  ||
+|| mainnav || 在主导航栏中显示的项目ID列表.  ||
+|| authz_module_name || 在authz_file中使用的模块前缀.  ||
+|| default_handler || 处理对基本URL的请求的组件名称. 选项包含!TimelineModule, !RoadmapModule, !BrowserModule, !QueryModule, !ReportModule和!NewticketModule(自0.9).   ||
+|| htdocs_location || 核心静态资源的基本URL.  ||
+|| authz_file || SVN[http://svnbook.red-bean.com/en/1.1/ch06s04.html#svn-ch-6-sect-4.4.2 验证文件]的路径.  ||
+|| repository_dir || 本地SVN仓库的路径.  ||
+|| database || 该项目的数据库连接字符串.  ||
+|| repository_type || SVN仓库连接器类型. (自0.10) ||
+|| default_charset || 当不确定时使用的字符集.  ||
+|| request_filters || 应用于所有请求的过滤器的有序列表(自0.10).  ||
+|| base_url || Trac部署的基本URL. 在大多数配置文件中, Trac会自动地重建用来自动访问Trac的URL. 然而, 在更复杂的安装中, 通常会在代理HTTP后运行Trac, 你可能需要使用该选项来迫使Trac使用正确的URL.  ||
+|| timeout || 数据库连接的超时值, 以秒为单位. '0'为没有超时. (自0.11) ||
+
+=== [wiki] ===
+|| ignore_missing_pages || 启用/禁用丢失页面的[ZhCamelCase 驼峰式]链接的高亮显示(自0.9).  ||
+|| split_page_names || 启用/禁用使用间隔字符来拆分[ZhWikiPageNames Wiki页面名称](自0.10).  ||
+|| render_unsafe_content || 启用/禁用在HTML的[ZhWikiProcessors Wiki解析器]使用不安全的HTML标签, 例如<script>或者<embed>(自0.10.4). 对于匿名用户可以在其中编辑Wiki的公共网站来, 建议禁用该选项(默认).  ||
+
+== [components] ==
+(''自 0.9之后'')
+
+该节是用于启用或禁用插件提供的组件以及Trac本身的组件. 启用或禁用的组件是通过选项的名字来指定的. 能否启用是由选项值决定的, 将值设定为''enabled''或''on''会启用该组件, 其他任意值则禁用该组件, 一般是''disabled''或''off''.
+
+选项名可以是组件的全名, 或模块/安装包的前缀. 前者启用或禁用一个具体的组件, 但后者却可以启用或禁用指定的包或模块中的任意组件.
+
+考虑下列的配置片断:
+{{{
+[components]
+trac.ticket.report.ReportModule = disabled
+webadmin.* = enabled
+}}}
+
+第一个选项让Trac禁用[wiki:ZhTracReports 报表模块]. 第二个选项让Trac启用`webadmin`包中的所有组件. 注意, 要匹配模块/包, 结尾的通配符是必不可少的.
+
+参见''关于Trac''的''插件''页以获得所有可用组件的列表(要求`CONFIG_VIEW` [wiki:ZhTracPermissions 权限]).
+
+相关信息:[ZhTracPlugins Trac插件]
+
+  ''注意, 在Trac r2335(应用于0.9b1和0.9b2)之前, 你可以使用`[disabled_components]`节. 细节请参见该页中的[http://projects.edgewall.com/trac/wiki/TracIni?version=42 上一版本].''
+----
+原文版本: TracIni[[BR]]
+相关信息: [ZhTracGuide Traqc导览],  [ZhTracAdmin Trac管理],  [ZhTracEnvironment Trac环境][[BR]]
+See also: TracGuide,  TracAdmin,  TracEnvironment

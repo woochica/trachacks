@@ -1,0 +1,37 @@
+= 在Wiki中使用HTML =
+
+
+Trac支持向任意 Wiki文字中插入HTML, 通过使用HTML [wiki:ZhWikiProcessors Wiki解析器]来完成.
+
+支持HTML是内置的功能, 不需要安装任何其他软件包.
+
+== 如何使用HTML ==
+
+要告诉 Wiki引擎, 这段文字应被当作HTML, 请使用''html''解析器声明.
+
+例子:
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="text-align: right; color: blue"&gt;HTML Test&lt;/h1&gt;
+}}}</pre>
+}}}
+
+结果:
+{{{
+#!html
+<h1 style="text-align: right; color: blue">HTML Test</h1>
+}}}
+
+注意, 在显示你的HTML代码前, Trac做了一些清理工作. 就是说, 如果你想使用一些可能有危险的代码, 例如Javascript事件处理代码, 这些代码都会从输出中被自动删除掉.
+
+== 更多信息 ==
+
+ * http://www.w3.org/ -- World Wide Web Consortium
+ * http://www.w3.org/MarkUp/ -- HTML Markup Home Page
+
+----
+原文版本: WikiHtml[[BR]]
+相关信息: [ZhWikiProcessors Wiki解析器], [ZhWikiFormatting Wiki格式], [ZhWikiRestructuredText 新结构化文本][[BR]]
+See also: WikiProcessors, WikiFormatting, WikiRestructuredText
