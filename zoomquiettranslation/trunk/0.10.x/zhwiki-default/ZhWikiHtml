@@ -1,13 +1,13 @@
 = 在Wiki中使用HTML =
 
 
-Trac支持向任意wiki文字中插入HTML, 通过使用HTML [wiki:ZhWikiProcessors Wiki解析器]来完成.
+Trac支持向任意 Wiki文字中插入HTML, 通过使用HTML [wiki:ZhWikiProcessors Wiki解析器]来完成.
 
 支持HTML是内置的功能, 不需要安装任何其他软件包.
 
 == 如何使用HTML ==
 
-要告诉wiki引擎, 这段文字应被当作HTML, 请使用''html''解析器.
+要告诉 Wiki引擎, 这段文字应被当作HTML, 请使用''html''解析器声明.
 
 例子:
 {{{

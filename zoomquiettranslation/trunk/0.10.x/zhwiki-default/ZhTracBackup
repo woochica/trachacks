@@ -3,7 +3,8 @@
 = Trac备份 =
 [[ZhTracGuideToc]]
 
-由于Trac使用了数据库后端, 为了安全地备份一个[wiki:ZhTracEnvironment Trac环境], 需要额外做一些事情. 幸运的是[wiki:ZhTracAdmin trac-admin]有一个给创建备份减轻负担的命令: `hotcopy`.
+由于Trac使用了数据库后端, 为了安全地备份一个[wiki:ZhTracEnvironment Trac环境], 需要额外做一些事情. 幸运的是[wiki:ZhTracAdmin trac-admin]提供了一个轻松安全创建备份的命令: 
+ * `hotcopy`.
 
   ''注意: Trac使用`hotcopy`术语来对应[http://subversion.tigris.org/ SVN]的术语,  以在同时管理Trac和SVN两种服务器时, 能减少记忆的负担.''
 

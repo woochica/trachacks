@@ -505,7 +505,7 @@ class QueryModule(Component):
         add_script(req, 'common/js/query.js')
 
         db = self.env.get_db_cnx()
-        ZhField = {'Status': u'状态', 'Description': u'详细描述', 'Reporter': u'报表人', 'Cc': u'抄送', 'Resolution': u'方案', 
+        ZhField = {'Status': u'状态', 'Description': u'详细描述', 'Reporter': u'报表人', 'Cc': u'抄送', 'Resolution': u'处置', 
                 'Component': u'组件', 'Summary': u'描述', 'Priority': u'优先级', 'Keywords': u'关键字',
                  'Version': u'版本', 'Milestone': u'里程碑', 'Owner': u'属主', 'Type': u'类型'}
         for field in query.fields:

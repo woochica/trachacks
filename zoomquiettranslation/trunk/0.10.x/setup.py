@@ -10,6 +10,7 @@ from distutils.command.install import install
 from distutils.command.install_data import install_data
 from distutils.command.install_scripts import install_scripts
 from stat import ST_MODE, S_ISDIR
+import re
 import time
 
 # 自己加入的,不改变trac本身的安装程序
@@ -21,122 +22,122 @@ seeAlso = {
 [u'相关请见：[ZhInterTrac Trac内部引用], [ZhInterMapTxt 链接前缀表]',
 '[[BR]]See also: InterTrac, InterMapTxt '],
 'PageTemplates':
-[u'相关请见：[ZhTracWiki 维基]',
+[u'相关请见：[ZhTracWiki Trac内置Wiki]',
 '[[BR]]See also:TracWiki'],
 'TracAccessibilit':
-[u'相关信息：[ZhTracGuide 帮助]]',
+[u'相关信息：[ZhTracGuide Trac导览]]',
 '[[BR]]See also: TracGuide'],
 'tracAdmin':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracBackup 备份], [ZhTracPermissions 权限], [ZhTracEnvironment 环境], [ZhTracIni ini配置文件]',
+[u'相关信息：[ZhTracGuide 帮助], [ZhTracBackup 备份], [ZhTracPermissions TracACL], [ZhTracEnvironment 环境], [ZhTracIni Trac配置]',
 '[[BR]]See also: TracGuide, TracBackup, TracPermissions'],
 'TracBackup':
-[u'相关信息：[ZhTracAdmin 管理], [ZhTracEnvironment 环境], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracAdmin Trac管理], [ZhTracEnvironment 环境], [ZhTracGuide 帮助]',
 '[[BR]]See also：TracAdmin, TracEnvironment, TracGuide'],
 
 'TracBrowser':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracChangeset 变更集]',
+[u'相关信息：[ZhTracGuide 帮助], [ZhTracChangeset Trac变更集]',
 '[[BR]]See also: TracGuide, TracChangeset'],
 'TracCgi':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracInstall 安装], [ZhTracFastCgi FastCgi], [ZhTracModPython ModPython]',
+[u'相关信息：[ZhTracGuide 帮助], [ZhTracInstall Trac安装], [ZhTracFastCgi FastCgi], [ZhTracModPython ModPython]',
 'See also: TracGuide, TracInstall, TracFastCgi, TracModPython'],
 'TracChangeset':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracBrowser 代码浏览器]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracBrowser Trac游览]',
 'See also: TracGuide, TracBrowser'],
 'TracEnvironment':
-[u'相关信息：[ZhTracAdmin 管理], [ZhTracBackup 备份], [ZhTracIni ini配置文件], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracAdmin Trac管理], [ZhTracBackup 备份], [ZhTracIni Trac配置], [ZhTracGuide Trac导览]',
 'See also: TracAdmin, TracBackup, TracIni, TracGuide'],
 'TracFastCgi':
-[u'相关信息：[ZhTracCgi Cgi环境], [ZhTracModPython ModPython], [ZhTracInstall 安装], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracCgi Cgi环境], [ZhTracModPython ModPython], [ZhTracInstall Trac安装], [ZhTracGuide Trac导览]',
 'See also: TracCgi, TracModPython, TracInstall, TracGuide'],
 'TracGuide':
 [u'相关信息：[ZhTracSupport Trac支持]',
 'See also: TracSupport'],
 'TracIni':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracAdmin 管理], [ZhTracEnvironment 环境]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracAdmin Trac管理], [ZhTracEnvironment 环境]',
 'See also: TracGuide, TracAdmin, TracEnvironment'],
 'TracInstall':
-[u'相关信息： [ZhTracGuide 帮助], [ZhTracCgi Cgi环境], [ZhTracFastCgi FastCgi], [ZhTracModPython ModPython], [ZhTracUpgrade 升级], [ZhTracPermissions 权限]',
+[u'相关信息： [ZhTracGuide Trac导览], [ZhTracCgi Cgi环境], [ZhTracFastCgi FastCgi], [ZhTracModPython ModPython], [ZhTracUpgrade Trac升级], [ZhTracPermissions TracACL]',
 'See also: TracGuide, TracCgi, TracFastCgi, TracModPython, TracUpgrade, TracPermissions'],
 'TracInterfaceCustomization':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracIni ini配置文件]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracIni Trac配置]',
 'See also: TracGuide, TracIni'],
 'TracLinks':
-[u'相关信息：[ZhWikiFormatting Wiki排板],[ ZhTracWiki 维基], [ZhWikiPageNames Wiki页面名], [ZhInterTrac Trac内部引用], [ZhInterWiki 内部引用]',
+[u'相关信息：[ZhWikiFormatting Wiki排板],[ ZhTracWiki Trac内置Wiki], [ZhWikiPageNames Wiki页面名], [ZhInterTrac Trac内部引用], [ZhInterWiki 内部引用]',
 'See also: WikiFormatting, TracWiki, WikiPageNames, InterTrac, InterWiki'],
 'TracLogging':
-[u'相关信息：[ZhTracIni ini配置文件], [ZhTracGuide 帮助], [ZhTracEnvironment 环境]',
+[u'相关信息：[ZhTracIni Trac配置], [ZhTracGuide Trac导览], [ZhTracEnvironment 环境]',
 'See also: TracIni, TracGuide, TracEnvironment'],
 'TracModPython':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracInstall 安装], [ZhTracCgi Cgi环境], [ZhTracFastCgi FastCgi]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracInstall Trac安装], [ZhTracCgi Cgi环境], [ZhTracFastCgi FastCgi]',
 'See also: TracGuide, TracInstall, TracCgi, TracFastCg'],
 'TracNotification':
-[u'相关信息：[ZhTracTickets 传票], [ZhTracIni ini配置文件], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracTickets Trac传票], [ZhTracIni Trac配置], [ZhTracGuide Trac导览]',
 'See also: TracTickets, TracIni, TracGuide'],
 'TracPermissions':
-[u'相关信息：[ZhTracAdmin 管理], [ZhTracGuide 帮助 ]',
+[u'相关信息：[ZhTracAdmin Trac管理], [ZhTracGuide Trac导览]',
 'See also: TracAdmin, TracGuide'],
 'TracPlugins':
-[u'相关信息：[ZhTracGuide 帮助], [http://trac.edgewall.org/wiki/PluginList plugin list], [http://trac.edgewall.org/wiki/TracDev/ComponentArchitecture 组件结构]',
+[u'相关信息：[ZhTracGuide Trac导览], [http://trac.edgewall.org/wiki/PluginList plugin list], [http://trac.edgewall.org/wiki/TracDev/ComponentArchitecture 组件结构]',
 'See also TracGuide, [http://trac.edgewall.org/wiki/PluginList plugin list], [http://trac.edgewall.org/wiki/TracDev/ComponentArchitecture component architecture]'],
 'TracQuery':
-[u'相关信息：[ZhTracTickets 传票], [ZhTracReports 报表], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracTickets Trac传票], [ZhTracReports Trac报表], [ZhTracGuide Trac导览]',
 'See also: TracTickets, TracReports, TracGuide'],
 'TracReports':
-[u'相关信息：[ZhTracTickets 传票], [ZhTracQuery 查询], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracTickets Trac传票], [ZhTracQuery Trac查询], [ZhTracGuide Trac导览]',
 'See also: TracTickets, TracQuery, TracGuide'],
 'TracRevisionLog':
-[u'相关信息：[ZhTracBrowser 代码浏览器], [ZhTracChangeset 变更集], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracBrowser Trac游览], [ZhTracChangeset Trac变更集], [ZhTracGuide Trac导览]',
 'See also: TracBrowser, TracChangeset, TracGuide'],
 'TracRoadmap':
-[u'相关信息：[ZhTracTickets 传票], [ZhTracReports 报表], [ZhTracQuery 查询], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracTickets Trac传票], [ZhTracReports Trac报表], [ZhTracQuery Trac查询], [ZhTracGuide Trac导览]',
 'See also: TracTickets, TracReports, TracQuery, TracGuide'],
 'TracRss':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracTimeline 时间轴], [ZhTracReports 报表], [ZhTracBrowser 代码浏览器]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracTimeline Trac项目时间线索], [ZhTracReports Trac报表], [ZhTracBrowser Trac游览]',
 'See also: TracGuide, TracTimeline, TracReports, TracBrowser'],
 'TracSearch':
-[u'相关信息: [ZhTracGuide 帮助], [ZhTracLinks Trac链接处理], [ZhTracQuery 查询]',
+[u'相关信息: [ZhTracGuide Trac导览], [ZhTracLinks Trac链接处理], [ZhTracQuery Trac查询]',
 'See also: TracGuide, TracLinks, TracQuery'],
 'TracStandalone':
-[u'相关信息: [ZhTracInstall 安装], [ZhTracCgi Cgi环境], [ZhTracModPython ModPython], [ZhTracGuide 帮助]',
+[u'相关信息: [ZhTracInstall Trac安装], [ZhTracCgi Cgi环境], [ZhTracModPython ModPython], [ZhTracGuide Trac导览]',
 'See also: TracInstall, TracCgi, TracModPython, TracGuide'],
 'TracSupport':
 [u'相关信息：[http://trac.edgewall.org/wiki/MailingList 邮件列表], [http://trac.edgewall.org/wiki/CommercialServices 社区]',
 'See also: [http://trac.edgewall.org/wiki/MailingList MailingList], [http://trac.edgewall.org/wiki/CommercialServices CommercialServices]'],
 'TracSyntaxColoring':
-[u'相关信息：[ZhWikiProcessors 处理器], [ZhWikiFormatting Wiki排板], [ZhTracWiki 维基], [ZhTracBrowser 代码浏览器]',
+[u'相关信息：[ZhWikiProcessors 处理器], [ZhWikiFormatting Wiki排板], [ZhTracWiki Trac内置Wiki], [ZhTracBrowser Trac游览]',
 'See slao: WikiProcessors, WikiFormatting, TracWiki, TracBrowser'],
 'TracTickets':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracWiki 维基], [ZhTracNotification 通知]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracWiki Trac内置Wiki], [ZhTracNotification Trac提醒]',
 'See also: TracGuide, TracWiki,  TracNotification'],
 'TracTicketsCustomFields':
-[u'相关信息： [ZhTracTickets 传票], [ZhTracIni ini配置文件]',
+[u'相关信息： [ZhTracTickets Trac传票], [ZhTracIni Trac配置]',
 'See also: TracTickets, TracIni'],
 'TracTimeline':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracWiki 维基], [ZhWikiFormatting Wiki排板], [ZhTracRss Rss], [ZhTracNotification 通知]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracWiki Trac内置Wiki], [ZhWikiFormatting Wiki排板], [ZhTracRss rac的RSS], [ZhTracNotification Trac提醒]',
 'See also: TracGuide, TracWiki, WikiFormatting, TracRss, TracNotification'],
 'TracUpgrade':
-[u'相关信息：[ZhTracGuide 帮助], [ZhTracInstall 安装]',
+[u'相关信息：[ZhTracGuide Trac导览], [ZhTracInstall Trac安装]',
 'See also: TracGuide, TracInstall'],
 'TracWiki':
-[u'相关信息：[ZhTracGuide 帮助]',
+[u'相关信息：[ZhTracGuide Trac导览]',
 'See also: TracGuide'],
 'WikiDeletePage':
-[u'现关信息：[ZhTracWiki 维基], [ZhTracPermissions 权限]',
+[u'现关信息：[ZhTracWiki Trac内置Wiki], [ZhTracPermissions TracACL]',
 'See also: TracWiki, TracPermissions'],
 'WikiFormatting':
-[u'相关信息：[ZhTracLinks Trac链接处理], [ZhTracGuide 帮助], [ZhWikiHtml html格式], [ZhWikiMacros wiki宏], [ZhWikiProcessors 权限], [ZhTracSyntaxColoring 语法颜色]',
+[u'相关信息：[ZhTracLinks Trac链接处理], [ZhTracGuide Trac导览], [ZhWikiHtml html格式], [ZhWikiMacros wiki宏], [ZhWikiProcessors 权限], [ZhTracSyntaxColoring 语法颜色]',
 'See also: TracLinks, TracGuide, WikiHtml, WikiMacros, WikiProcessors, TracSyntaxColoring'],
 'WikiHtml':
 [u'相关信息：[ZhWikiProcessors 处理器],[ ZhWikiFormatting Wiki排板], [ZhWikiRestructuredText 重构文字]',
 'See also: WikiProcessors, WikiFormatting, WikiRestructuredText'],
 'WikiMacros':
-[u'相关信息：[ZhWikiProcessors 处理器], [ZhWikiFormatting Wiki排板], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhWikiProcessors 处理器], [ZhWikiFormatting Wiki排板], [ZhTracGuide Trac导览]',
 'See also: WikiProcessors, WikiFormatting, TracGuide'],
 'WikNewPage':
-[u'相关信息：[ZhTracWiki 维基], [ZhWikiFormatting wiki排板], [ZhTracLinks Trac链接处理], [ZhWikiDeletePage 删除页面]',
+[u'相关信息：[ZhTracWiki Trac内置Wiki], [ZhWikiFormatting wiki排板], [ZhTracLinks Trac链接处理], [ZhWikiDeletePage 删除页面]',
 'See also: TracWiki, WikiFormatting, TracLinks, WikiDeletePage'],
 'WikiProcessors':
-[u'相关信息：[ZhWikiMacros wiki宏], [ZhWikiHtml html格式], [ZhWikiRestructuredText 重构文字], [TZhracSyntaxColoring 语法颜色], [ZhWikiFormatting wiki排板], [ZhTracGuide 帮助]',
+[u'相关信息：[ZhWikiMacros wiki宏], [ZhWikiHtml html格式], [ZhWikiRestructuredText 重构文字], [TZhracSyntaxColoring 语法颜色], [ZhWikiFormatting wiki排板], [ZhTracGuide Trac导览]',
 'See also: WikiMacros, WikiHtml, WikiRestructuredText, ZhTracSyntaxColoring, WikiFormatting, TracGuide'],
 'WikiRestructuredText':
 [u'相关信息：[ZhWikiRestructuredTextLinks 重构文字链接], [ZhWikiProcessors 处理器], [ZhWikiFormatting wiki排板]',
@@ -278,6 +279,10 @@ if sys.argv[1] in ('cn','en','upgrade'):
         try:
             # 防止两次调用translate
             try:
+                if os.path.exists(os.path.abspath(templateDir + '/../zhwiki-default')):
+                    print "Sorry,Can't tanslate zhtrac to zhtrac!"
+                    print 'use upgrade option to grade your zhtrac please!'
+                    sys.exit()
                 os.mkdir(backupdir)
             except OSError:
                 print 'Error: exsit back up file,can not be second time translate trac'
@@ -343,7 +348,7 @@ if sys.argv[1] in ('cn','en','upgrade'):
                 help_zh = os.listdir(curdir + '/zhwiki-default')
                 # \n 是后面安全去除添加内容的重要凭据
                 headString = '\n\n[Zh%s 中文版本][[BR]]%s\n\n\n'
-                headStringCN = '\n\n原文版本:%s[[BR]]%s\n\n\n'
+                headStringCN = '\n\n[[BR]]%s\n\n\n'
                 for docName in help_zh:
                     # 防止.svn目录
                     if not os.path.isdir(curdir + '/zhwiki-default/' + docName):
@@ -370,7 +375,7 @@ if sys.argv[1] in ('cn','en','upgrade'):
                         # %的两边要达到统一编码
                         seealso[0] = seealso[0].encode('utf8')
                         seealsoStr = '[[BR]]'.join(seealso)
-                        addString = headStringCN % (doc,seealsoStr)
+                        addString = headStringCN % seealsoStr
                         addString = addString.decode('utf8')
                         page.text = addString + page.text
                         page.save('Trac','','')                        
@@ -506,7 +511,26 @@ if sys.argv[1] in ('cn','en','upgrade'):
             DoNotImport = []
             for member in ChangedWiki:
                 DoNotImport.append(member[2])
-                member[1] = member[1] + (u'\n\n[[BR]][wiki:%s 最新汉化wiki%s]\n\n' % (member[2]+str(member[0]),member[0]))
+                suffix = (u'\n\n[[BR]][wiki:%s Trac0.10.4zh本页汉化]\n\n' % (member[2]+str(member[0])))
+                #print suffix
+                #print member[1]
+                
+                try:
+                    subResult = re.sub(u"(\[\[BR\]\]\[wiki:.* Trac0\.10\.4zh.*?\])",suffix,member[1])
+                    #print type(subResult)
+                    #print repr(re.group(1))
+                    
+                except  Exception, e:
+                    pass
+                #没有加过后缀的
+                #print type(subResult),type(member[1])
+                #print subResult.encode('utf8')
+                #print member[1].encode('utf8')
+                if subResult == member[1]:
+                    member[1] = member[1] + suffix
+                    #print member[1]
+                else:
+                    member[1] = subResult
                 # 版本号增加1
                 # 增加wiki文章链接
                 myAdmin.db_update("INSERT INTO wiki(version,name,time,author,ipnr,text) "

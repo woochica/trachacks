@@ -1,7 +1,7 @@
 
-
 = 自定义传票字段 =
-Trac支持向传票模型中添加自定义的字段. 使用自定义的字段, 你可以向传票中添加站点特有的属性.
+
+Trac支持向传票模型中添加自定义的字段. 使用自定义的字段, 你可以向传票中添加项目特有的属性.
 
 == 配置 ==
 自定义传票字段是在[wiki:ZhTracIni trac.ini]文件中配置的. 所有字段定义应位于`[ticket-custom]`段中.
@@ -73,7 +73,7 @@ test_six.cols = 60
 test_six.rows = 30
 }}}
 
-''注意: 要使`select`类型的字段可输入文字, 需要在`fieldname.options`选项中加上前导的`|`''
+'''注意''': 要使`select`类型的字段可输入文字, 需要在`fieldname.options`选项中加上前导的`|`
 
 === 与报表相关的自定义字段 ===
 
@@ -96,7 +96,7 @@ SELECT p.value AS __color__,
   ORDER BY p.value, milestone, severity, time
 }}}
 
-特别要注意此处的LEFT OUTER JOIN语句.
+特别要注意此处的'''LEFT OUTER JOIN语句'''.
 
 ----
 原文版本: TracTicketsCustomFields[[BR]]

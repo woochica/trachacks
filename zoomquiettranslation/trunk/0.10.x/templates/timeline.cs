@@ -3,14 +3,14 @@
 <div id="ctxtnav" class="nav"></div>
 
 <div id="content" class="timeline">
-<h1>时间线索</h1>
+<h1>时间线</h1>
 
 <form id="prefs" method="get" action="<?cs var:trac.href.timeline ?>">
  <div>
   <label>显示从 <input type="text" size="10" name="from" value="<?cs
     var:timeline.from ?>" /></label> 到
   <label><input type="text" size="3" name="daysback" value="<?cs
-    var:timeline.daysback ?>" /> 日前的信息</label>.
+    var:timeline.daysback ?>" /> 日间的更新</label>.
  </div>
  <fieldset><?cs
   each:filter = timeline.filters ?>
@@ -43,7 +43,7 @@ if:len(timeline.events) ?></dl><?cs /if ?>
 
 <div id="help">
  <hr />
- <strong>提示:</strong>查看<a href="<?cs var:trac.href.wiki ?>/ZhTracTimeline">时间线索</a> 
+ <strong>提示:</strong>查看<a href="<?cs var:trac.href.wiki ?>/ZhTracTimeline">时间线</a> 
  对本页面的帮助.
 </div>
 

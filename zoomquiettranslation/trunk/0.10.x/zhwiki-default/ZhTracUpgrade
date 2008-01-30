@@ -98,7 +98,7 @@ trac-admin /path/to/projenv wiki upgrade
 ticket_show_details = true
 }}}
 
-== From 0.8.x to 0.9 ==
+
 == 从0.8.x到0.9 ==
 
 [wiki:ZhTracModPython mod_python]还需要改变Apache HTTPD配置中的mod_python处理器的名称:

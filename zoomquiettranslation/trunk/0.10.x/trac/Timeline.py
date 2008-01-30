@@ -77,7 +77,7 @@ class TimelineModule(Component):
         if not req.perm.has_permission('TIMELINE_VIEW'):
             return
         yield ('mainnav', 'timeline',
-               html.A(u'时间线索', href=req.href.timeline(), accesskey=2))
+               html.A(u'时间线', href=req.href.timeline(), accesskey=2))
 
     # IPermissionRequestor methods
 
@@ -195,7 +195,7 @@ class TimelineModule(Component):
                                      daysback=90, max=50, format='rss')
         add_link(req, 'alternate', rss_href, 'RSS Feed', 'application/rss+xml',
                  'rss')
-        ZhAvailable_filters = {'milestone':u'里程碑','ticket':u'被更新的传票','changeset':u'svn库更新'}
+        ZhAvailable_filters = {'milestone':u'里程碑更新','ticket':u'传票更新','changeset':u'SVN仓库更新'}
         for idx,fltr in enumerate(available_filters):
             req.hdf['timeline.filters.%d' % idx] = {'name': fltr[0],
                 'label': ZhAvailable_filters.get(fltr[0],fltr[1]), 'enabled': int(fltr[0] in filters)}

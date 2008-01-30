@@ -133,7 +133,7 @@ SELECT id AS ticket, summary FROM ticket WHERE owner='$USER'
 Trac还可以生成更高级的报表, 包括自定义版式, 结果分组和用户自定义CSS样式. 要创建这样的报表, 我们要用专门的SQL语句来控制Trac报表引擎的输出.
 
 == 特殊列 ==
-要格式化报表, [ZhTracReport Trac报表]在查询结果中寻找'魔法'列名. 对这些'魔法'名称的处理将影响报表的最终版式和样式.
+要格式化报表, [ZhTracReports Trac报表]在查询结果中寻找'魔法'列名. 对这些'魔法'名称的处理将影响报表的最终版式和样式.
 
 === 自动格式化的列 ===
  * '''ticket''' -- 传票ID号, 作为该传票的链接.
@@ -198,7 +198,7 @@ SELECT p.value AS __color__,
 
 如果你的传票中添加了自定义字段(0.8版本中的实验性的特征, 参见[ZhTracTicketsCustomFields 传票自定义字段]), 你可以写一个包含他们的SQL查询. 你需要一个对ticket_custom表的连接, 但这不是那么容易.
 
-如果声明trac.ini中的额外字段之前, 在ticket_custom表中就不能有相关数据. 要绕开这个问题, 可使用SQL的"LEFT OUTER JOIN"语句. 参见TracIniReportCustomFieldSample中的一些例子.
+如果声明trac.ini中的额外字段之前, 在ticket_custom表中就不能有相关数据. 要绕开这个问题, 可使用SQL的"LEFT OUTER JOIN"语句. 参见[http://trac.edgewall.org/wiki/TracIniReportCustomFieldSample TracIniReportCustomFieldSample]中的一些例子.
 
 ----
 原文版本: TracReports[[BR]]

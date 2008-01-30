@@ -1,13 +1,11 @@
-
-
 =  Wiki宏 =
-Trac宏是用Python写的自定义函数, 用以扩展Trac引擎的插件. 宏可在任何支持[ZhWikiFormatting Wiki格式]的环境中插入动态的HTML数据.
+Trac宏是用Python写的自定义函数, 用以扩展Trac引擎功能的插件. 宏可在任何支持[ZhWikiFormatting Wiki格式]的环境中插入动态的HTML数据.
 
 另一种宏是Wiki处理器. 他们一般处理替代的标记格式和大块区域信息的显示(就像源代码的高亮显示一样).
 
 == 使用宏 ==
 
-宏的调用是放在两个''方括号''中. 像Python函数一样, 宏可以有参数(括号内用逗号分隔的列表).
+宏的调用是放在两个'''方括号'''中. 像Python函数一样, 宏可以有参数(括号内用逗号分隔的列表).
 
 === 例子 ===
 
@@ -30,7 +28,7 @@ Trac宏是用Python写的自定义函数, 用以扩展Trac引擎的插件. 宏�
 
 == 来自世界各地的宏 ==
 
-[http://trac-hacks.org/ Trac Hacks]网站提供了广泛收集的宏,以及Trac社区贡献的其他Trac[TracPlugins 插件]. 如果你要找新的宏, 或写了一个想和全世界分享的宏, 请不要犹豫马上访问该网站.
+[http://trac-hacks.org/ Trac Hacks]网站汇集了丰富的宏,以及Trac社区贡献的其他[TracPlugins Trac插件]. 如果你要找新的宏, 或写了一个想和全世界分享的宏, 请不要犹豫马上访问该网站.
 
 == 开发自定义宏 ==
 宏, 像Trac本身, 是用[http://www.python.org/ Python编程语言]写的. 他们是很简单的模块, 通过文件名来标识, 并且只包含了一个`execute()`函数. Trac会在宏被调用的地方, 在wiki页面的HTML表示中插入宏的返回值.

@@ -6,31 +6,31 @@ Trac链接是Trac的一个基本特征, 因为他们允许在诸如传票, 报�
 Trac链接通常是''type:id''形式, ''id''代表了项目的号码, 名称或路径, 尽管一些常用项目也有简化符号.
 
 一些例子:
- * Tickets: '''!#1''' or '''!ticket:1'''
- * Ticket comments: '''!comment:ticket:1:2''' 
- * Reports: '''!{1}''' or '''!report:1'''
- * Changesets: '''!r1''', '''![1]''', '''!changeset:1''' or (restricted) '''![1/trunk]''', '''!changeset:1/trunk'''
- * Revision log: '''!r1:3''', '''![1:3]''' or '''!log:@1:3''', '''!log:trunk@1:3'''
- * Diffs (requires [milestone:0.10 0.10]): '''!diff:@1:3''', '''!diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default''' or '''!diff:trunk/trac@3538//sandbox/vc-refactoring@3539'''
- * Wiki pages: '''!CamelCase''' or '''!wiki:CamelCase'''
- * Milestones: '''!milestone:1.0'''
- * Attachment: '''!attachment:ticket:944:attachment.1073.diff'''
- * Files: '''!source:trunk/COPYING'''
- * A specific file revision: '''!source:/trunk/COPYING@200'''
- * A particular line of a specific file revision: '''!source:/trunk/COPYING@200#L25'''
+ * 传票: '''!#1''' or '''!ticket:1'''
+ * 传票注释: '''!comment:ticket:1:2''' 
+ * 报表: '''!{1}''' or '''!report:1'''
+ * 变更集: '''!r1''', '''![1]''', '''!changeset:1''' or (restricted) '''![1/trunk]''', '''!changeset:1/trunk'''
+ * 检入日志: '''!r1:3''', '''![1:3]''' or '''!log:@1:3''', '''!log:trunk@1:3'''
+ * 对比 (需0.10以上版本): '''!diff:@1:3''', '''!diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default''' or '''!diff:trunk/trac@3538//sandbox/vc-refactoring@3539'''
+ * Wiki页面: '''!CamelCase''' or '''!wiki:CamelCase'''
+ * 里程碑: '''!milestone:1.0'''
+ * 附件: '''!attachment:ticket:944:attachment.1073.diff'''
+ * 文件: '''!source:trunk/COPYING'''
+ * 指定版本文件: '''!source:/trunk/COPYING@200'''
+ * 指定版本文件行: '''!source:/trunk/COPYING@200#L25'''
 显示:
- * Tickets: #1 or ticket:1
- * Ticket comments: comment:ticket:1:2 
- * Reports: {1} or report:1
- * Changesets: r1, [1], changeset:1, or (restricted) [1/trunk], changeset:1/trunk
- * Revision log: r1:3, [1:3] or log:@1:3, log:trunk@1:3
- * Diffs (requires [milestone:0.10 0.10]): diff:@20:30, diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default or diff:trunk/trac@3538//sandbox/vc-refactoring/trac@3539
- * Wiki pages: CamelCase or wiki:CamelCase
- * Milestones: milestone:1.0
- * Attachment: attachment:ticket:944:attachment.1073.diff
- * Files: source:trunk/COPYING
- * A specific file revision: source:/trunk/COPYING@200
- * A particular line of a specific file revision: source:/trunk/COPYING@200#L25
+ * 传票: #1 or ticket:1
+ * 传票注释: comment:ticket:1:2 
+ * 报表: {1} or report:1
+ * 变更集: r1, [1], changeset:1, or (restricted) [1/trunk], changeset:1/trunk
+ * 检入日志: r1:3, [1:3] or log:@1:3, log:trunk@1:3
+ * 对比 (需0.10以上版本): diff:@20:30, diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default or diff:trunk/trac@3538//sandbox/vc-refactoring/trac@3539
+ * Wiki页面: CamelCase or wiki:CamelCase
+ * 里程碑: milestone:1.0
+ * 附件: attachment:ticket:944:attachment.1073.diff
+ * 文件: source:trunk/COPYING
+ * 指定版本文件: source:/trunk/COPYING@200
+ * 指定版本文件行: source:/trunk/COPYING@200#L25
 
 ''注意'': 很少用到[ZhCamelCase 驼峰式], 但用它来引用那些名称不遵守Wiki页面名称规则的那些页面非常方便, 即, 单个词, 非字母字符等. 更多关于Wiki页面名称的链接的特征, 请见[ZhWikiPageNames Wiki页面名].
 

@@ -2,13 +2,13 @@
 
 = Wiki解析器 =
 
-解析器是指为[TracWiki Wiki引擎]提供替代标记格式而设计的[ZhWikiMacros Wiki宏], 解析器可被当作''处理用户编辑的文字的宏函数''.
+解析器是指为[TracWiki Wiki引擎]提供内容格式而设计的[ZhWikiMacros Wiki宏]声明, 解析器可以理解为''根据用户文字的格式进行HTML输出处理的宏函数''.
 
-Wiki引擎使用解析器, 使Trac中的所有Wiki文本, 都可以使用[wiki:ZhWikiRestructuredText 新结构化文本], [wiki:ZhWikiHtml HTML]和 [http://www.textism.com/tools/textile/ textile] 解析器.
+Wiki引擎使用解析器, 使Trac中的所有Wiki文本, 可以分别使用[wiki:ZhWikiRestructuredText 新结构化文本], [wiki:ZhWikiHtml HTML]和 [http://www.textism.com/tools/textile/ textile] 格式来进行内容组织.
 
 == 使用解析器 ==
 
-要在一个文本块上使用解析器, 使用Wiki代码块, 在''shebang notation''(大多数UNIX用户应该很熟悉)中选择一个解析器.
+要在一个文本块上套用解析器, 在Wiki代码块 ''shebang notation''部分(大多数UNIX用户应该很熟悉)中声明一个解析器.
 
 ''例1'' (在wiki文本中插入HTML)
 
@@ -85,15 +85,15 @@ int main(int argc, char *argv[])
 
 下列解析器包含在Trac发行版中:
 
- * '''html''' -- 在Wiki网页中插入自定义HTML.见[ZhWikiHtml WikiHtml].
- * '''rst''' -- Trac支持新结构化文本.见[wiki:ZhWikiRestructuredText  新结构化文本].
+ * '''html''' -- 在Wiki页面中插入自定义HTML. 见[ZhWikiHtml WikiHtml].
+ * '''rst''' -- Trac支持新结构化文本. 见[wiki:ZhWikiRestructuredText  新结构化文本].
  * '''textile''' -- 如果安装了[http://dealmeida.net/projects/textile/ Textile]则支持. 请见[http://hobix.com/textile/ Textile参考手册].
  
 上面的Textile链接是无用的. [http://www.textism.com/tools/textile/ 这个]可以用, 可用来测试例子.
 
 === 代码语法高亮显示支持 ===
 
-Trac包含解析器, 支持下列语言的内嵌[wiki:ZhTracSyntaxColoring 语法高亮]:
+Trac包含的解析器支持下列语言的内嵌[wiki:ZhTracSyntaxColoring 语法高亮]:
  * '''c''' -- C
  * '''cpp''' -- C++
  * '''python''' -- Python
@@ -106,7 +106,7 @@ Trac包含解析器, 支持下列语言的内嵌[wiki:ZhTracSyntaxColoring 语�
 
 '''注意''':''Trac依靠外部软件包进行语法高亮显示. 更多信息请见[ZhTracSyntaxColoring 语法高亮].''
 
-通过将MIME类型作为解析器来使用, 在浏览源代码时, 同样可以支持语言语法高亮显示. 例如, 你可以写:
+通过将MIME类型作为解析器来使用, 在浏览源代码时, 同样可以支持语法高亮显示. 例如, 你可以写:
 {{{
 {{{
 #!text/html
@@ -117,12 +117,12 @@ Trac包含解析器, 支持下列语言的内嵌[wiki:ZhTracSyntaxColoring 语�
 结果会是语法高亮显示的HTML代码. 同样也适用于其他支持的mime类型.
 
 
-要想了解更多的用户开发和贡献的解析器宏, 请访问:
+要想了解更多用户开发和贡献的解析器宏, 请访问:
  * [http://projects.edgewall.com/trac/wiki/ProcessorBazaar ProcessorBazaar]
  * [http://projects.edgewall.com/trac/wiki/MacroBazaar MacroBazaar]
 
 
-== 高级话题:开发解析器宏 ==
+== 高级话题: 开发解析器宏 ==
 开发解析器和[ZhWikiMacros Wiki宏]并没有不同之处. 事实上他们以同样的方式运行, 只是使用语法有些不同而已. 更多信息请见[ZhWikiMacros Wiki宏].
 
 ''例:'' (新结构化文本解析器):

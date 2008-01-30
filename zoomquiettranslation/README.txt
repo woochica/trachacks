@@ -2,6 +2,7 @@ TracChineseTranslation
 
 文档属主： ZoomQuiet
 文档版本：
+    0.9-080130::ZoomQuiet 完成目录重整
     0.8-080123::ZoomQuiet fixed
     0.7-071109::ZoomQuiet Creat
     
@@ -9,26 +10,17 @@ TracChineseTranslation
 快速完成两个主要版本的中文化翻译; 工程目录组织:
 详细目录结构(修订ing..):
 '''
-./
-|-- 0.10
-|   |-- templates
-|   |   |-- README
-|   |   `-- ....
-|   `-- wiki
-|       |-- default-pages
-|       `-- templates
-|-- 0.11 基于 071109 版本 Trunk 目录内容进行
-|   |-- ui
-|   |   |-- admin
-|   |   |-- prefs
-|   |   |-- search
-|   |   |-- templates
-|   |   |-- ticket
-|   |   |-- timeline
-|   |   `-- versioncontrol
-|   `-- wiki
-|       |-- default-pages
-|       `-- templates
+zoomquiettranslation/
+|-- branches 主要版本分支
+|   |-- Trac0.10.4zh0
+|   |-- Trac0.10.4zh1
+|   |-- Trac0.10.4zh2
+|   `-- Trac0.10.4zh3
+|-- plugins 自定插件收集
+|   `-- KSTracTicketTemplate
+|-- trunk 汉化Trac 主线
+|   |-- 0.10.x
+|   `-- 0.11.x
 `-- README.txt
 '''
 
@@ -39,3 +31,6 @@ TracChineseTranslation
 = 进度 =
  * 071106 创立工程
  * 071109 建立目录
+ * 080128 Trac0.10.4zh3 完成,投放,可以使用
+ 
+ 

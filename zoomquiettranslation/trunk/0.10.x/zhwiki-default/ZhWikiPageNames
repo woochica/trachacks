@@ -1,12 +1,11 @@
 
-
 = Wiki页面名 =
 
-Wiki页面名主要使用驼峰式规则. 在Wiki文本中, 所有驼峰式的词都自动变成一个用此名字的超链接.
+Wiki页面名主要使用[ZhCamelCase 驼峰式]规则. 在Wiki文本中, 所有[ZhCamelCase 驼峰式]的词都自动变成一个用此名字的超链接.
 
-驼峰式的页面名称必须遵循以下规则:
+[ZhCamelCase 驼峰式]的页面名称必须遵循以下规则:
 
- 1. 名字必须包含''仅字母符号''. 不允许有小数点, 空格, 标点符号或下划线.
+ 1. 名字必须'''仅字母符号'''. 不允许有小数点, 空格, 标点符号或下划线.
  2. 名字必须至少有两个大写字母.
  3. 第一个字符必须是大写的.
  4. 每个大写字母后面必须有一个及以上的小写字母.
@@ -30,6 +29,6 @@ Wiki页面名主要使用驼峰式规则. 在Wiki文本中, 所有驼峰式的�
 最后, 如上面的例子, 为了链接到该页中一个特定的章节, 你可以在wiki页面名添加一个锚点. 把鼠标放在章节的标题上, 很容易看到这个锚点, 然后单击其尾部的[[html(&para;)]]标志. 这个锚点通常是自动生成的, 也很容易明确指定, 请参见[ZhWikiFormatting#using-explicit-id-in-heading Wiki格式]
 ----
 原文版本: WikiPageNames[[BR]]
-相关信息: [ZhWikiNewPage 新建Wiki页面], [ZhWikiFormatting Wiki格式], [ZhTracWiki Trac内置Wiki], [ZhTracLinks 链接][[BR]]
-See also: WikiNewPage, WikiFormatting, TracWiki, TracLinks
+相关信息: [ZhWikiNewPage 新建Wiki页面], [ZhWikiFormatting Wiki格式], [ZhTracWiki Trac内置Wiki], [ZhTracLinks 链接],[ZhCamelCase 驼峰式][[BR]]
+See also: WikiNewPage, WikiFormatting, TracWiki, TracLinks , CamelCase
 

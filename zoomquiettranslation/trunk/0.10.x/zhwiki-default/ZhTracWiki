@@ -5,7 +5,7 @@
 
 Trac有一个内置的Wiki引擎, 用于系统中的文本和文档. [ZhWikiFormatting Wiki格式]用在[wiki:ZhTitleIndex Wiki页面], [wiki:ZhTracTickets 传票]和[wiki:ZhTracChangeset 检入日志消息]中. 因此在所有Trac模块中, 都可以使用格式化文本和超链接.
 
-编辑Wiki文本很简单, 使用任意Web浏览器和简单的[ZhWikiFormatting Wiki格式], 而不是那些复杂的标记语言(如HTML). 背后的设计理念是, HTML有太多的嵌套的标签, 太复杂, 无法实现快节奏的编辑, 并且使网页的实际内容分散. 注意, Trac也支持[wiki:ZhWikiHtml HTML], [wiki:ZhWikiRestructuredText 结构化文本]和 [http://www.textism.com/tools/textile/ Textile], 作为替换的标记格式.
+编辑Wiki文本很简单, 使用任意Web浏览器和简单的[ZhWikiFormatting Wiki格式], 而不是那些复杂的标记语言(如HTML). 背后的设计理念是, HTML有太多的嵌套的标签, 太复杂, 无法实现快节奏的编辑, 并且使网页的实际内容分散. 注意, Trac也支持[wiki:ZhWikiHtml HTML], [wiki:ZhWikiRestructuredText 结构化文本]和 [http://www.textism.com/tools/textile/ Textile], 作为替换的内容格式.
 
 Wiki的主要目标是使编辑文字的过程变得更简单, 以及鼓励人们贡献和评论项目的文字内容.
 

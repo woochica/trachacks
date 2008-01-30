@@ -5,7 +5,7 @@
 Trac支持在[ZhWikiFormatting Wiki格式]文本中使用''新结构化文本''(RST)作为Wiki标记的替代使用.
 
 摘自新结构化文本网页:
- "''新结构化文本是一种容易阅读, 所见即所得纯文本标记语法和解析系统. 它用于内嵌程序文档(例如Python的docstring),  快速创建简单网页, 以及独立文档."新结构化文本是为扩展特定应用领域而设计的."''
+ "''新结构化文本是一种容易阅读, WYTIWYG~'''所想即所得'''纯文本标记语法和解析系统. 它用于内嵌程序文档(例如Python的docstring),  快速创建简单网页, 以及独立文档."新结构化文本是为扩展特定应用领域而设计的."''
 
 === 要求 ===
 
@@ -109,36 +109,35 @@ Trac支持在[ZhWikiFormatting Wiki格式]文本中使用''新结构化文本''(
 
 === 更多的ReST例子 ===
 
-下面的例子应该大部分是不需说明的:
+下面的例子大部分应该是无需说明的:
 
 {{{
 #!html
 <pre class="wiki">{{{
 #!rst
-FooBar Header
+表头
 =============
-reStructuredText is **nice**. It has its own webpage_.
+新结构化文档 是种 **美妙的体验**. 官网_.
 
-A table:
+表格:
 
-=====  =====  ======
-   Inputs     Output
-------------  ------
-  A      B    A or B
-=====  =====  ======
-False  False  False
-True   False  True
-False  True   True
-True   True   True
-=====  =====  ======
+=====  =====  ========
+   输入        输出
+------------  --------
+ 甲     乙     甲 戓 乙
+=====  =====  ========
+徦      徦      徦
+真      徦      真
+徦      真      真
+真      真      真
+=====  =====  ========
 
-RST TracLinks
--------------
+新结构化文本Trac链接
+--------------------
 
-See also ticket `#42`:trac:.
+参考传票 `#42`:trac:.
 
-.. _webpage: http://docutils.sourceforge.net/rst.html
-}}}</pre>
+.. _官网: http://docutils.sourceforge.net/rst.html}}}</pre>
 }}}
 
 
@@ -146,29 +145,29 @@ See also ticket `#42`:trac:.
 
 {{{
 #!rst
-FooBar Header
+表头
 =============
-reStructuredText is **nice**. It has its own webpage_.
+新结构化文档 是种 **美妙的体验**. 官网_.
 
-A table:
+表格:
 
-=====  =====  ======
-   Inputs     Output
-------------  ------
-  A      B    A or B
-=====  =====  ======
-False  False  False
-True   False  True
-False  True   True
-True   True   True
-=====  =====  ======
+=====  =====  ========
+   输入        输出
+------------  --------
+ 甲     乙     甲 戓 乙
+=====  =====  ========
+徦      徦      徦
+真      徦      真
+徦      真      真
+真      真      真
+=====  =====  ========
 
-RST TracLinks
--------------
+新结构化文本Trac链接
+--------------------
 
-See also ticket `#42`:trac:.
+参考传票 `#42`:trac:.
 
-.. _webpage: http://docutils.sourceforge.net/rst.html
+.. _官网: http://docutils.sourceforge.net/rst.html
 }}}
 
 
