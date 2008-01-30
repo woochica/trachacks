@@ -5,10 +5,11 @@ from genshi.builder import tag
 from trac.core import *
 from trac.mimeview import Context
 from trac.config import Option
-from trac.timeline import ITimelineEventProvider
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc
 from trac.util.text import to_unicode
+
+from trac.timeline import ITimelineEventProvider
 
 class DiscussionTimeline(Component):
     """

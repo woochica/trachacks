@@ -3,6 +3,7 @@
 from datetime import *
 
 from trac.core import *
+from trac.mimeview import Context
 from trac.perm import PermissionError
 from trac.web.chrome import add_stylesheet, add_script, add_ctxtnav
 from trac.wiki.formatter import format_to_html, format_to_oneliner

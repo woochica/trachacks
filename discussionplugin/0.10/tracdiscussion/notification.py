@@ -12,6 +12,7 @@ class DiscussionNotifyEmail(NotifyEmail):
     message = None
     torcpts = []
     ccrcpts = []
+    from_email = 'trac+discussion@localhost'
     COLS = 75
 
     def __init__(self, env):
@@ -94,11 +95,15 @@ class DiscussionNotifyEmail(NotifyEmail):
         subject = to_unicode(self.hdf.render('discussion-notify-subject.cs'))
         NotifyEmail.notify(self, id, subject)
 
-    def get_topic_id(self, forum_id, topic_id):
-        return "%s-%s-%s" % (forum_id, topic_id, 0)
-
     def get_message_id(self, forum_id, topic_id, message_id):
-        return "%s-%s-%s" % (forum_id, topic_id, message_id)
+        # Fix ID of messages replying to topic.
+        if message_id < 0:
+            message_id = 0
+
+        # Construct Message-ID according to RFC 2822.
+        id = '%s.%s.%s' % (forum_id, topic_id, message_id)
+        host = self.from_email[self.from_email.find('@') + 1:]
+        return '<%s@%s>' % (id, host)
 
     def get_recipients(self, resid):
         return (self.torcpts, self.ccrcpts)
@@ -111,23 +116,19 @@ class DiscussionNotifyEmail(NotifyEmail):
             # Get this messge ID.
             header['Message-ID'] = self.get_message_id(self.forum['id'],
               self.topic['id'], self.message['id'])
-            header['X-Trac-Message-ID'] = str(self.message['id'])
+            header['X-Trac-Message-ID'] = to_unicode(self.message['id'])
             header['X-Trac-Discussion-URL'] = self.message['link']
 
             # Get replied message ID.
-            if self.message['replyto'] == -1:
-                reply_id = self.get_topic_id(self.forum['id'],
-                  self.topic['id'])
-            else:
-                reply_id = self.get_message_id(self.forum['id'],
-                  self.topic['id'], self.message['replyto'])
+            reply_id = self.get_message_id(self.forum['id'], self.topic['id'],
+              self.message['replyto'])
             header['In-Reply-To'] = reply_id
             header['References'] = reply_id
         else:
             # Get this message ID.
-            header['Message-ID'] = self.get_topic_id(self.forum['id'],
-              self.topic['id'])
-            header['X-Trac-Topic-ID'] = str(self.topic['id'])
+            header['Message-ID'] = self.get_message_id(self.forum['id'],
+              self.topic['id'], 0)
+            header['X-Trac-Topic-ID'] = to_unicode(self.topic['id'])
             header['X-Trac-Discussion-URL'] = self.topic['link']
 
         print torcpts, ccrcpts, header
