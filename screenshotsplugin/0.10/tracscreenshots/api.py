@@ -72,15 +72,16 @@ class ScreenshotsApi(Component):
         has_none_component = True
         columns = ('id', 'name', 'description', 'time', 'author', 'tags',
           'file', 'width', 'height')
+        versions_str = (', '.join(['%s'] * len(versions))) or 'NULL'
+        components_str = (', '.join(['%s'] * len(components))) or 'NULL'
         sql = 'SELECT DISTINCT ' + ', '.join(columns) + ' FROM screenshot s ' \
           'LEFT JOIN (SELECT screenshot, version FROM screenshot_version) v ' \
           'ON s.id = v.screenshot LEFT JOIN (SELECT screenshot, component ' \
           'FROM screenshot_component) c ON s.id = c.screenshot WHERE ' \
-          'v.version IN (' + ', '.join(['%s'] * len(versions)) + ')' + \
-          (('none' in versions) and ' OR v.version IS NULL' or '') + \
-          ' OR c.component IN (' + ', '.join(['%s'] * len(components)) + \
-          ')' + (('none' in components) and ' OR c.component IS NULL' or '')
-        self.log.debug(sql)
+          'v.version IN (' + versions_str + ')' + (('none' in versions) and \
+          ' OR v.version IS NULL' or '') + ' OR c.component IN (' + \
+          components_str + ')' + (('none' in components) and \
+          ' OR c.component IS NULL' or '')
         self.log.debug(versions + components)
         self.log.debug(sql % tuple(versions + components))
         cursor.execute(sql, versions + components)

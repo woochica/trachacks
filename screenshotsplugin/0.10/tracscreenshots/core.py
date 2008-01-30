@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-import sets, re, os, os.path, time, mimetypes, Image
+import sets, re, os, os.path, time, mimetypes, unicodedata, Image
 
 from trac.core import *
 from trac.config import Option
@@ -34,9 +34,9 @@ class ScreenshotsCore(Component):
 
     # Items for not specified component and version.
     none_component = {'name' : 'none',
-                  'description' : 'none'}
+                      'description' : 'none'}
     none_version = {'name' : 'none',
-                  'description' : 'none'}
+                    'description' : 'none'}
 
     # Configuration options.
     title = Option('screenshots', 'title', 'Screenshots',
@@ -45,7 +45,7 @@ class ScreenshotsCore(Component):
       'Path where to store uploaded screenshots.')
     ext = Option('screenshots', 'ext', 'jpg png',
       'List of screenshot file extensions that can be uploaded. Must be'
-      ' supported by ImageMagick.')
+      ' supported by PIL.')
     formats = Option('screenshots', 'formats', 'raw html jpg png',
       'List of allowed formats for screenshot download.')
     default_format = Option('screenshots', 'default_format', 'html',
@@ -268,11 +268,14 @@ class ScreenshotsCore(Component):
                 self.log.debug(screenshot)
 
                 # Prepare file paths
-                path = os.path.join(self.path, unicode(screenshot['id']))
-                filename = os.path.join(path, '%s-%ix%i.%s' % (result.group(1),
-                  screenshot['width'], screenshot['height'], result.group(2)))
-                filename = filename.encode('utf-8')
+                filename = os.path.join(self.path, unicode(screenshot['id']),
+                  '%s-%ix%i.%s' % (result.group(1), screenshot['width'],
+                  screenshot['height'], result.group(2)))
+                filename = unicodedata.normalize('NFC', filename)
+                filename = filename.replace('\\', '/').replace(':', '/')
+                path = os.path.dirname(filename)
                 self.log.debug('filename: %s' % (filename,))
+                self.log.debug('filename: %s' % (path,))
 
                 # Store uploaded image.
                 try:
@@ -282,12 +285,15 @@ class ScreenshotsCore(Component):
                     api.delete_screenshot(cursor, screenshot['id'])
                     try:
                         os.remove(filename)
+                    except:
+                        pass
+                    try:
                         os.rmdir(path)
                     except:
                         pass
-                    raise TracError('Error storing file. Is directory specified' \
-                      ' in path config option in [screenshots] section of' \
-                      ' trac.ini existing?')
+                    raise TracError('Error storing file. Is directory' \
+                      ' specified in path config option in [screenshots]' \
+                      ' section of trac.ini existing?')
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
