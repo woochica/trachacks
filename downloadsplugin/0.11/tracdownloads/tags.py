@@ -3,7 +3,7 @@
 import sets
 
 from trac.core import *
-from trac.mimeview import *
+from trac.mimeview import Context
 from trac.util.html import html
 
 from tractags.api import ITaggingSystemProvider, DefaultTaggingSystem, \

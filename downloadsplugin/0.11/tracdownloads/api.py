@@ -448,6 +448,7 @@ class DownloadsApi(Component):
                 if download:
                     path = os.path.join(self.path, to_unicode(download['id']),
                       download['file'])
+                    path = os.path.normpath(path)
                     self.log.debug('path: %s' % (path,))
 
                     # Increase downloads count.
@@ -561,11 +562,10 @@ class DownloadsApi(Component):
                     raise TracError('Unsupported uploaded file type.')
 
                 # Prepare file paths
-                filepath = os.path.join(self.path, unicode(download['id']),
-                  download['file'])
-                filepath = unicodedata.normalize('NFC', filepath)
-                filepath = filepath.replace('\\', '/').replace(':', '/')
-                path = os.path.dirname(filepath)
+                path = os.path.join(self.path, unicode(download['id']))
+                filepath = os.path.join(path, download['file'])
+                path = os.path.normpath(path)
+                filepath = os.path.normpath(filepath)
                 self.log.debug('filepath: %s' % ((filepath,)))
                 self.log.debug('path: %s' % ((path,)))
 
@@ -628,11 +628,15 @@ class DownloadsApi(Component):
                     for download_id in selection:
                         download = self.get_download(context, download_id)
                         self.log.debug(download)
+
                         try:
                             self.delete_download(context, download['id'])
-                            path = os.path.join(self.path, to_unicode(
-                              download['id']))
-                            os.remove(os.path.join(path, download['file']))
+                            path = os.path.join(self.path,
+                              to_unicode(download['id']))
+                            filepath = os.path.join(path, download['file'])
+                            path = os.path.normpath(path)
+                            filepath = os.path.normpath(filepath)
+                            os.remove(filepath)
                             os.rmdir(path)
 
                             # Notify change listeners.

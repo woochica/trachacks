@@ -1,12 +1,9 @@
 # -*- coding: utf8 -*-
 
-import time
-
 from genshi.builder import tag
 
 from trac.core import *
-from trac.mimeview import *
-from trac.wiki import wiki_to_html, wiki_to_oneliner
+from trac.mimeview import Context
 from trac.util.text import pretty_size
 
 from trac.timeline import ITimelineEventProvider
