@@ -1,0 +1,23 @@
+Name: BackLinksMenu
+Version: 1.0
+Released: 2008-02-04
+Type: Trac Macro
+Author: Trapanator
+Homepage: http://www.trapanator.com/blog/archives/category/trac
+
+
+==============
+HOW TO INSTALL
+==============
+
+1. Put BackLinksMenu.py into: 
+  /usr/share/trac/wiki-macros/
+2. Restart Apache2/Tracd server if needed.
+
+=============
+CHANGELOG
+=============
+
+1.0 2008-02-04
+
+ * Initial Release
