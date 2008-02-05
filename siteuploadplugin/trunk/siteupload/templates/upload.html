@@ -12,7 +12,7 @@
 <body>
 <h2>Manage Site Files</h2>
 
-<py:if test="'SITEUPLOAD_UPLOAD' in perm(context)">
+<py:if test="'SITEUPLOAD_UPLOAD' in perm(context.resource)">
 <form id="addfile" class="addnew" method="post" enctype="multipart/form-data">
  <fieldset>
   <legend>Upload File:</legend>
@@ -45,7 +45,7 @@
         <tbody>
             <tr py:for="file in siteupload.files" >
                 <td>
-                    <py:if test="'SITEUPLOAD_MANAGE' in perm(context)">
+                    <py:if test="'SITEUPLOAD_MANAGE' in perm(context.resource)">
                     <input type="checkbox" name="sel" value="${file.name}" />
                     </py:if>
                 </td>
@@ -54,7 +54,7 @@
             </tr>
         </tbody>
     </table>
-    <py:if test="'SITEUPLOAD_MANAGE' in perm(context)">
+    <py:if test="'SITEUPLOAD_MANAGE' in perm(context.resource)">
     <div class="buttons">
         <input type="submit" name="delete" value="Delete selected files"
          disabled="${siteupload.readonly and 'disabled' or None}" />
