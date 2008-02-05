@@ -68,7 +68,7 @@ class SiteuploadAdminPage(Component):
 
         data = {'siteupload' : {'readonly' : readonly}} 
         self._render_view(req, data)
-        return 'upload.html', data, None
+        return 'upload.html', data
 
     def _render_view(self, req, data):
         """Display list of files in trac env htdocs dir"""
