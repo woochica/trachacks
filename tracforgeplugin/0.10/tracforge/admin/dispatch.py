@@ -12,6 +12,7 @@ from trac.web.chrome import INavigationContributor
 from trac.perm import PermissionCache
 from trac.util.text import to_unicode
 from trac.web.href import Href
+from trac.mimeview.api import Mimeview
 from trac.util.html import html as tag
 
 import os
@@ -33,6 +34,7 @@ class TracForgeIndexModule(Component):
         #env_paths = dict([(filename, os.path.join(parent_dir, filename))
         #                  for filename in os.listdir(parent_dir)])
         projects = []
+        charset = Mimeview(self.env).default_charset
                           
         for env_name in os.listdir(parent_dir):
             env_path = os.path.join(parent_dir, env_name)
@@ -50,22 +52,22 @@ class TracForgeIndexModule(Component):
                     #self.log.debug(env_perm.perms)
                     if env_perm.has_permission('PROJECT_VIEW'):
                         projects.append({
-                            'name': env.project_name,
-                            'description': env.project_description,
+                            'name': env.project_name.encode(charset),
+                            'description': env.project_description.encode(charset),
                             'href': req.href.projects(env_name),
                         })
                 except Exception, e:
                     # Only show errors to admins to prevent excessive disclosure
                     if req.perm.has_permission('TRACFORGE_ADMIN'):
                         projects.append({
-                            'name': env.project_name,
-                            'description': to_unicode(e)
+                            'name': env.project_name.encode(charset),
+                            'description': to_unicode(e).encode(charset)
                         })
             except Exception, e:
                 if req.perm.has_permission('TRACFORGE_ADMIN'):
                     projects.append({
                         'name': env_path,
-                        'description': to_unicode(e),
+                        'description': to_unicode(e).encode(charset),
                     })
             
         projects.sort(lambda x, y: cmp(x['name'].lower(), y['name'].lower()))
