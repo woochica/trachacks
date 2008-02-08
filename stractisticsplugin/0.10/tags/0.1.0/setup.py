@@ -22,7 +22,7 @@
 from setuptools import setup
 
 PACKAGE = 'STractistics'
-VERSION = '0.1.0beta'
+VERSION = '0.1.0'
 
 setup(name=PACKAGE, 
       version=VERSION, 
