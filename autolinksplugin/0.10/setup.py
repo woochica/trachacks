@@ -13,7 +13,7 @@ setup(
     long_description = "",
     license = "BSD",
     keywords = "trac plugin wiki proper case acronym links",
-    url = "",
+    url = "http://trac-hacks.org/wiki/AutoLinksPlugin",
     classifiers = [
         'Framework :: Trac',
     ],
