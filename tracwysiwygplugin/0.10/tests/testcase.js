@@ -620,6 +620,32 @@ addEvent(window, "load", function() {
                 '__[wiki:WikiStart]__' ].join(" "));
         });
 
+        unit.add("token + br", function() {
+            var dom = fragment(
+                element("p", "head ", a("http://localhost/", "http://localhost/"), element("br"), "tail"),
+                element("p", "head http://localhost/", element("br"), "tail"),
+                element("p", "head ", element("tt", "teletype"), element("br"), "tail"),
+                element("p", "head ", a("wiki:TracLinks", "TracLinks"), element("br"), "tail"),
+                element("p",
+                    "head ", a("http://localhost/", "http://localhost/"), " ",
+                    a("wiki:TracLinks", "wiki:TracLinks"),
+                    element("br"),
+                    "tail"),
+                element("p", "head http://localhost/ wiki:TracLinks", element("br"), "tail"));
+            generateWikitext.call(this, dom, [
+                "head http://localhost/ [[BR]]tail",
+                "",
+                "head !http://localhost/ [[BR]]tail",
+                "",
+                "head `teletype`[[BR]]tail",
+                "",
+                "head TracLinks[[BR]]tail",
+                "",
+                "head http://localhost/ wiki:TracLinks [[BR]]tail",
+                "",
+                "head !http://localhost/ !wiki:TracLinks [[BR]]tail" ].join("\n"));
+        });
+
         unit.add("citation", function() {
             var dom = fragment(
                 element("blockquote", { "class": "citation" },

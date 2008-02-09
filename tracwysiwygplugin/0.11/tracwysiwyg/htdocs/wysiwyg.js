@@ -2276,14 +2276,15 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         if (skipNode) {
             return;
         }
+        var _texts = texts;
         var token = wikiOpenTokens[name];
         if (token) {
             if (name in wikiBlockTags && self.isInlineNode(node.previousSibling)) {
-                texts.push("\n");
+                _texts.push("\n");
             }
             if (token !== true) {
                 if (name in wikiInlineTags && isTailEscape()) {
-                    texts.push(" ");
+                    _texts.push(" ");
                 }
                 pushOpenToken(token);
             }
@@ -2306,17 +2307,18 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                         }
                     }
                     if (value) {
-                        var prev = texts.length > 0 ? texts[texts.length - 1] : null;
+                        var length = _texts.length;
+                        var prev = length > 0 ? _texts[length - 1] : null;
                         if (prev && prev["tracwysiwyg-traclink"] && tracLinkPattern.test(prev + value.substring(0, 1))) {
-                            texts[texts.length - 1] = prev["tracwysiwyg-traclink"];
+                            _texts[length - 1] = prev["tracwysiwyg-traclink"];
                         }
-                        texts.push(value);
+                        _texts.push(value);
                     }
                 }
                 break;
             case "p":
                 if (quoteDepth > 0) {
-                    texts.push(string(quoteCitation ? "> " : "  ", quoteDepth));
+                    _texts.push(string(quoteCitation ? "> " : "  ", quoteDepth));
                 }
                 else if (!/[^ \t\r\n\f\v]/.test(getTextContent(node))) {
                     skipNode = node;
@@ -2327,37 +2329,37 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 pushAnchor(node);
                 break;
             case "li":
-                texts.push(" " + string("  ", listDepth - 1));
+                _texts.push(" " + string("  ", listDepth - 1));
                 var container = node.parentNode;
                 if ((container.tagName || "").toLowerCase() == "ol") {
                     var start = container.getAttribute("start") || "";
                     if (start != "1" && /^(?:[0-9]+|[a-zA-Z]|[ivxIVX]{1,5})$/.test(start)) {
-                        texts.push(start, ". ");
+                        _texts.push(start, ". ");
                     }
                     else {
                         switch (container.className) {
-                        case "arabiczero":  texts.push("0. "); break;
-                        case "lowerroman":  texts.push("i. "); break;
-                        case "upperroman":  texts.push("I. "); break;
-                        case "loweralpha":  texts.push("a. "); break;
-                        case "upperalpha":  texts.push("A. "); break;
-                        default:            texts.push("1. "); break;
+                        case "arabiczero":  _texts.push("0. "); break;
+                        case "lowerroman":  _texts.push("i. "); break;
+                        case "upperroman":  _texts.push("I. "); break;
+                        case "loweralpha":  _texts.push("a. "); break;
+                        case "upperalpha":  _texts.push("A. "); break;
+                        default:            _texts.push("1. "); break;
                         }
                     }
                 }
                 else {
-                    texts.push("* ");
+                    _texts.push("* ");
                 }
                 break;
             case "ul": case "ol":
                 if (listDepth == 0) {
                     if (self.isInlineNode(node.previousSibling)) {
-                        texts.push("\n");
+                        _texts.push("\n");
                     }
                 }
                 else if (listDepth > 0) {
                     if (node.parentNode.tagName.toLowerCase() == "li") {
-                        texts.push("\n");
+                        _texts.push("\n");
                     }
                 }
                 listDepth++;
@@ -2391,24 +2393,39 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                             break;
                         }
                     }
-                    else if (isTailEscape()) {
-                        value = " [[BR]]";
-                    }
                     else {
-                        value = "[[BR]]";
+                        var length = _texts.length;
+                        if (length > 0) {
+                            var lastText = _texts[length - 1];
+                            var tmp = lastText + "[[BR]]";
+                            var _wikiInlineRulesPattern = wikiInlineRulesPattern;
+                            _wikiInlineRulesPattern.lastIndex = 0;
+                            var lastMatch, match;
+                            while (match = _wikiInlineRulesPattern.exec(tmp)) {
+                                lastMatch = match;
+                            }
+                            if (lastMatch && lastMatch.index < lastText.length
+                                && lastMatch.index + lastMatch[0].length > lastText.length)
+                            {
+                                value = " [[BR]]";
+                            }
+                        }
+                        if (!value) {
+                            value = "[[BR]]";
+                        }
                     }
-                    texts.push(value);
+                    _texts.push(value);
                 }
                 break;
             case "pre":
-                texts.push(
+                _texts.push(
                     /^(?:li|dd)$/i.test(node.parentNode.tagName) || self.isInlineNode(node.previousSibling)
                     ? "\n{{{\n" : "{{{\n");
                 inCodeBlock = true;
                 break;
             case "blockquote":
                 if (self.isInlineNode(node.previousSibling)) {
-                    texts.push("\n");
+                    _texts.push("\n");
                 }
                 quoteDepth++;
                 if (quoteDepth == 1) {
@@ -2417,15 +2434,15 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 break;
             case "td": case "th":
                 skipNode = node;
-                texts.push("||");
+                _texts.push("||");
                 var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]");
                 if (text) {
-                    texts.push(text);
+                    _texts.push(text);
                 }
                 break;
             case "tr":
                 if (quoteDepth > 0) {
-                    texts.push(string(quoteCitation ? ">" : "  ", quoteDepth));
+                    _texts.push(string(quoteCitation ? ">" : "  ", quoteDepth));
                 }
                 break;
             case "tt":
@@ -2434,7 +2451,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 var text;
                 if (value) {
                     if (isTailEscape()) {
-                        texts.push(" ");
+                        _texts.push(" ");
                     }
                     if (!/`/.test(value)) {
                         text = "`" + value + "`";
@@ -2454,7 +2471,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 var token = tokenFromSpan(node);
                 if (token) {
                     if (name in wikiInlineTags && isTailEscape()) {
-                        texts.push(" ");
+                        _texts.push(" ");
                     }
                     pushOpenToken(token);
                 }
@@ -2474,30 +2491,31 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
             }
             return;
         }
+        var _texts = texts;
         var token = wikiCloseTokens[name];
         if (token === true) {
             // nothing to do
         }
         else if (token) {
             if (name in wikiInlineTags && isTailEscape()) {
-                texts.push(" ");
+                _texts.push(" ");
             }
-            texts.push(token);
+            _texts.push(token);
         }
         else {
             switch (name) {
             case "p":
-                texts.push(quoteDepth == 0 ? "\n\n" : "\n");
+                _texts.push(quoteDepth == 0 ? "\n\n" : "\n");
                 break;
             case "li":
                 if (node.getElementsByTagName("li").length == 0) {
-                    texts.push("\n");
+                    _texts.push("\n");
                 }
                 break;
             case "ul": case "ol":
                 listDepth--;
                 if (listDepth == 0) {
-                    texts.push("\n");
+                    _texts.push("\n");
                 }
                 break;
             case "pre":
@@ -2524,36 +2542,36 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 else {
                     text = "\n}}}\n";
                 }
-                texts.push(text);
+                _texts.push(text);
                 inCodeBlock = false;
                 break;
             case "blockquote":
                 quoteDepth--;
                 if (quoteDepth == 0) {
-                    texts.push("\n");
+                    _texts.push("\n");
                 }
                 break;
             case "span":
                 var token = tokenFromSpan(node);
                 if (token) {
                     if (name in wikiInlineTags && isTailEscape()) {
-                        texts.push(" ");
+                        _texts.push(" ");
                     }
-                    texts.push(token);
+                    _texts.push(token);
                 }
                 break;
             case "table":
                 if (quoteDepth == 0) {
-                    texts.push("\n");
+                    _texts.push("\n");
                 }
                 break;
             }
         }
         if (/^h[1-6]$/.test(name)) {
             if (/^[\w:][-\w\d.:]*$/.test(node.id || "")) {
-                texts.push(" #", node.id);
+                _texts.push(" #", node.id);
             }
-            texts.push("\n");
+            _texts.push("\n");
         }
     }
 
