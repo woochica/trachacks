@@ -34,7 +34,7 @@ def execute(hdf, args, env):
     authname = to_unicode(hdf.getValue("trac.authname", "anonymous"))
     db = env.get_db_cnx()
     perm = trac.perm.PermissionCache(env, authname)
-    pagename = hdf.getValue("wiki.page_name", "WikiStart")
+    pagename = to_unicode(hdf.getValue("wiki.page_name", "WikiStart"))
     page = WikiPage(env, pagename, None, db)
     wikipreview = hdf.getValue("wiki.preview", "")
     appendonly = (args == 'appendonly')
