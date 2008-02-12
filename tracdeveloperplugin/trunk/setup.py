@@ -12,7 +12,7 @@ setup(
     license='BSD',
     entry_points = {
         'trac.plugins': [
-            'developer = tracdeveloper',
+            'developer = tracdeveloper.main',
             'developer.debugger = tracdeveloper.debugger',
             'developer.plugins = tracdeveloper.plugins'
         ]

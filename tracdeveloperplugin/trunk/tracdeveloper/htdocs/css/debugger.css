@@ -1,7 +1,7 @@
 /* Object browser */
 
 #content.debug .vars { background: #f9f9f9; border: 1px solid #d7d7d7;
-  padding: 5px;
+  margin: 0 0 2em 0; overflow: auto; padding: 5px;
 }
 #content.debug .vars label { color: #333; float: right; font-size: 95%; }
 #content.debug .vars ol, #content.debug .vars ul, #content.debug .vars dl {
@@ -19,7 +19,7 @@
 }
 #content.debug .vars p { margin: 0; }
 #content.debug .vars p.empty { color: #999; font-size: 90%;
-  padding: .3em 0 0 1.5em;
+  padding: .3em 0 .3em 1.5em;
 }
 #content.debug .vars q { color: #666; font-family: monospace; }
 #content.debug .vars p { margin: 0; }

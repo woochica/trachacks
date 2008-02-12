@@ -1,33 +1,20 @@
 $(document).ready(function () {
-  var once = true;
-  $('.interface div, .component div').hide();
-  $('a.implements').click(function () {
-  var id = $(this).attr('href');
-
-    $('.selected').removeClass('selected');
-    $(id).addClass('selected');
-    if ($(id).find('div').css('display') == 'none') {
-      $(id).find('div').slideDown();
+  $("#content.plugins li div.info").hide();
+  $("#content.plugins li h3 a").click(function() {
+    var item = $(this).parents("li:first");
+    var info = item.find("div.info");
+    var showing = info.is(":visible");
+    $("div.listing li").removeClass("highlighted").removeClass("expanded").find("div.info").hide();
+    if (!showing) {
+      item.toggleClass("expanded");
+      info.toggle().find("a.xref").each(function() {
+        $(this.getAttribute("href")).parents("li:first").addClass("highlighted");
+      });
     }
+    this.blur();
+    return false;
   });
-
-  // Component and interface browsing
-  $('#components h3, #interfaces h3').each(function() {
-    $(this).wrap('<a href="javascript:void(0)"></a>').click(function() {
-    var root = this.parentNode.parentNode;
-
-      $('.selected').removeClass('selected');
-      if ($(root).find('div').css('display') == 'none') {
-        $('.expanded').toggleClass('expanded').slideToggle();
-        $(root).find('div').slideDown().addClass('expanded');
-        $(root).find('a.implements').each(function () {
-        var id = $(this).attr('href');
-
-          $(id).find('div').slideDown().addClass('expanded');
-        });
-      } else {
-        $('.expanded').slideUp().removeClass('expanded');
-      }
-    });
+  $("#content.plugins li div.info a.xref").click(function() {
+    $(this.getAttribute("href")).parents("li:first").find("h3 a").click();
   });
 });

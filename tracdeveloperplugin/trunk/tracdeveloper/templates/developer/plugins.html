@@ -1,0 +1,66 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="../layout.html" />
+  <head>
+    <title>Plugin Registry</title>
+  </head>
+  <body>
+    <a py:def="qname(name, classname=None)" py:with="name_parts=name.split('.')"
+       href="#${'_'.join(name_parts)}" class="$classname">
+      ${'.'.join(name_parts[0:-1])}.<em>${name_parts[-1]}</em>
+    </a>
+    <div id="content" class="plugins">
+      <h1>Plugin Registry</h1>
+      <div class="listing" id="interfaces">
+        <h2>Interfaces</h2>
+        <ul>
+          <li class="interface" py:for="_, interface in sorted(interfaces.items())">
+            <h3 id="${interface.name.replace('.', '_')}">${qname(interface.name)}</h3>
+            <div class="info">
+              <p class="docstring" py:if="interface.doc">${interface.doc}</p>
+              <div class="implemented_by" py:if="interface.implemented_by">
+                <h4>Implemented by:</h4>
+                <ul>
+                  <li py:for="name in sorted(interface.implemented_by)">
+                    ${qname(name, classname='xref')}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="listing" id="components">
+        <h2>Components</h2>
+        <ul>
+          <li class="component" py:for="_, component in sorted(components.items())">
+            <h3 id="${component.name.replace('.', '_')}">${qname(component.name)}</h3>
+            <div class="info">
+              <p class="docstring" py:if="component.doc">${component.doc}</p>
+              <div py:if="component.extension_points" class="extensionpoints">
+                <h4>Provides the extension points:</h4>
+                <ul>
+                  <li py:for="xtnpt in sorted(component.extension_points)">
+                    ${qname(xtnpt.interface.name, classname='xref')}
+                  </li>
+                </ul>
+              </div>
+              <div class="implements" py:if="component.implements">
+                <h4>Implements the extension points:</h4>
+                <ul>
+                  <li py:for="name in sorted(component.implements)">
+                    ${qname(name, classname='xref')}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

@@ -9,6 +9,8 @@ import re
 from types import BuiltinFunctionType, FunctionType, GeneratorType, MethodType
 from UserDict import DictMixin
 
+from genshi import Markup
+from genshi.builder import tag
 from trac.context import Context
 from trac.core import *
 from trac.mimeview import Mimeview
@@ -17,8 +19,7 @@ from trac.web import HTTPBadRequest, HTTPNotFound, IRequestFilter, \
                      IRequestHandler
 from trac.web.chrome import add_script, add_stylesheet, Chrome
 
-from genshi import Markup
-from genshi.builder import tag
+__all__ = ['TemplateDebugger']
 
 
 class TemplateDebugger(Component):
@@ -65,7 +66,7 @@ class TemplateDebugger(Component):
         add_script(req, 'developer/js/debugger.js')
         add_stylesheet(req, 'common/css/code.css')
         add_stylesheet(req, 'developer/css/debugger.css')
-        return 'debug_view.html', new_data, 'text/html'
+        return 'developer/debug.html', new_data, 'text/html'
 
     # IRequestHandler methods
 
@@ -80,7 +81,7 @@ class TemplateDebugger(Component):
         if not header or header.lower() != 'xmlhttprequest':
             # Not an XHR request from the debugger, so send a help page
             add_stylesheet(req, 'common/css/code.css')
-            return 'debug_help.html', {}, None
+            return 'developer/debug_help.html', {}, None
 
         path = req.args['path']
         token = req.args['token']
@@ -91,7 +92,7 @@ class TemplateDebugger(Component):
                 raise HTTPNotFound()
             node = data.lookup(path)
             data = {'node': node, 'drillable': self._is_drillable(req)}
-            output = Chrome(self.env).render_template(req, 'debug_node.html',
+            output = Chrome(self.env).render_template(req, 'developer/debug_node.html',
                                                       data, fragment=True)
             req.send(output.render('xhtml'), 'text/html')
 
@@ -252,27 +253,3 @@ class ObjectNode(object):
     def long_type(self):
         return str(type(self.value))
     long_type = property(long_type)
-
-    def long_doc(self):
-        return Markup(apidoc(self.value))
-    long_doc = property(long_doc)
-
-
-def apidoc(obj):
-    buf = []
-    doc = inspect.getdoc(obj)
-    parser = doctest.DocTestParser()
-    for part in parser.parse(doc):
-        if isinstance(part, basestring):
-            if part.strip():
-                buf.append(linebreaks(part))
-        else:
-            buf.append('<pre>%s</pre>' % part.source)
-    return ''.join(buf)
-
-def linebreaks(value):
-    "Converts newlines into <p> and <br />s"
-    value = re.sub(r'\r\n|\r|\n', '\n', value) # normalize newlines
-    paras = re.split('\n{2,}', value)
-    paras = ['<p>%s</p>' % p.strip().replace('\n', '<br />') for p in paras]
-    return ''.join(paras)
