@@ -1,4 +1,3 @@
-import tracdeveloper.plugins
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
 
@@ -13,4 +12,4 @@ class DeveloperTemplates(Component):
 
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        return [('tracdeveloper', resource_filename(__name__, 'htdocs'))]
+        return [('developer', resource_filename(__name__, 'htdocs'))]

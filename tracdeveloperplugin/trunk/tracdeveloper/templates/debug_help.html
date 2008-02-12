@@ -1,0 +1,46 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>Debugger Help</title>
+  </head>
+
+  <body>
+    <div id="ctxtnav" class="nav"></div>
+
+    <div id="content" class="debug">
+      <h1>Debugger Help</h1>
+
+      <p>To use the debugger, add the query string parameter
+      <code>debug=true</code> to the URL of the resource that interests you.
+      Note that the actual value of the parameter does not matter, so you could
+      also use <code>1</code> or <code>yes</code> there.</p>
+
+      <h2>Examples</h2>
+
+      <p>For example, if you'd like to debug the processing of the resourse at:</p>
+      <div class="code">
+        <pre>http://localhost:8080/wiki/WikiStart?action=history</pre>
+      </div>
+      <p>you simply make that:</p>
+      <div class="code">
+        <pre>http://localhost:8080/wiki/WikiStart?action=history&amp;debug=true</pre>
+      </div>
+
+      <h2>Bookmarklet</h2>
+
+      <p>For easier access, you can also install the following bookmarklet:</p>
+      <ul>
+        <li><a href="javascript:if(window.location.search){window.location.search+='&amp;debug=true'}else{window.location.search='?debug=true'}">Trac Debugger</a></li>
+      </ul>
+      <p>Drag this link to your bookmarks bar, or right-click it and choose
+      “Add bookmark/favorite”.</p>
+
+    </div>
+  </body>
+</html>

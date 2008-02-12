@@ -1,0 +1,28 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+  <py:choose py:with="nodes=list(node)">
+    <dl py:when="len(nodes)">
+      <py:for each="node in nodes">
+        <dt id="${node.path}" class="${classes(highlight=node.highlight)}">
+          <span class="def">
+            <a href="#${node.path}" class="toggle"
+               py:strip="not drillable or not node.is_expandable">
+              <span class="name">${node.name}<py:if
+                    test="node.is_function">()</py:if></span>
+            </a>
+            <span class="type">${node.short_type}</span>
+          </span>
+          <py:if test="not node.is_function">
+            = <span class="value">${node.short_value}</span>
+          </py:if>
+        </dt>
+        <dd class="${classes(highlight=node.highlight)}">
+          <py:if test="node.is_string and node.is_expandable">
+            <blockquote>“${node.value}”</blockquote>
+          </py:if>
+        </dd>
+      </py:for>
+    </dl>
+    <p py:otherwise="" class="empty">(no members)</p>
+  </py:choose>
+</html>
