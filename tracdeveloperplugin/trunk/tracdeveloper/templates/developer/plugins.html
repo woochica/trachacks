@@ -7,6 +7,13 @@
   <xi:include href="../layout.html" />
   <head>
     <title>Plugin Registry</title>
+    <script type="text/javascript">/*<![CDATA[*/
+      $(document).ready(function() {
+        $(".listing p.docstring", this).click(function() {
+          $(this).showDocs("${href.developer('doc')}/" + this.title);
+        });
+      });
+    /*]]>*/</script>
   </head>
   <body>
     <a py:def="qname(name, classname=None)" py:with="name_parts=name.split('.')"
@@ -21,7 +28,9 @@
           <li class="interface" py:for="_, interface in sorted(interfaces.items())">
             <h3 id="${interface.name.replace('.', '_')}">${qname(interface.name)}</h3>
             <div class="info">
-              <p class="docstring" py:if="interface.doc">${interface.doc}</p>
+              <p class="docstring" title="${interface.type}">
+                ${shorten_line(interface.doc) or '(doc)'}
+              </p>
               <div class="implemented_by" py:if="interface.implemented_by">
                 <h4>Implemented by:</h4>
                 <ul>
@@ -40,7 +49,9 @@
           <li class="component" py:for="_, component in sorted(components.items())">
             <h3 id="${component.name.replace('.', '_')}">${qname(component.name)}</h3>
             <div class="info">
-              <p class="docstring" py:if="component.doc">${component.doc}</p>
+              <p class="docstring" title="${component.type}">
+                ${shorten_line(component.doc) or "(doc)"}
+              </p>
               <div py:if="component.extension_points" class="extensionpoints">
                 <h4>Provides the extension points:</h4>
                 <ul>

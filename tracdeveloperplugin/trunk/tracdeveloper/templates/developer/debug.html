@@ -9,10 +9,17 @@
     <title>Debugger</title>
     <script type="text/javascript">/*<![CDATA[*/
       $(document).ready(function() {
-        $("div.vars").initTree("${href.developer('debug')}");
+        $("#context").initTree("${href.developer('debug')}", function(detail) {
+          $("span.type", detail).click(function() {
+            $(this).showDocs("${href.developer('doc')}/" + this.title);
+          });
+        });
         if (!$("#context input:checked").length) {
           $("#context dt, #context dd").not(".highlight").hide();
         }
+        $("#context span.type", this).click(function() {
+          $(this).showDocs("${href.developer('doc')}/" + this.title);
+        });
         $("#context :checkbox").click(function() {
           $("#context dt, #context dd").not(".highlight").toggle()
         });

@@ -2,15 +2,20 @@
      xmlns:py="http://genshi.edgewall.org/"
      xmlns:xi="http://www.w3.org/2001/XInclude"
      class="apidoc">
-  <h1>$name</h1>
-  <div>$doc</div>
-  <py:if test="methods">
-    <h2>Methods</h2>
-    <dl class="methods">
-      <py:for each="method in methods">
-        <dt><code><strong>${method.name}</strong>${method.args}</code></dt>
-        <dd><p>${method.doc}</p></dd>
-      </py:for>
-    </dl>
-  </py:if>
+  <div class="title">
+    <h1>$name</h1>
+    <h2 py:if="module != '__builtin__'">$module</h2>
+  </div>
+  <div class="doc">
+    <div>$doc</div>
+    <py:if test="methods">
+      <h2>Methods</h2>
+      <dl class="methods">
+        <py:for each="method in methods">
+          <dt><code><strong>${method.name}</strong>${method.args}</code></dt>
+          <dd><p>${method.doc}</p></dd>
+        </py:for>
+      </dl>
+    </py:if>
+  </div>
 </div>

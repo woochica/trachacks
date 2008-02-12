@@ -28,9 +28,11 @@
   padding: .3em;
 }
 #content.debug span.type, #content.debug span.size { color: #999;
-  font-size: 85%; 
+  font-size: 85%; position: relative;
 }
-#content.debug span.type { font-family: monospace; font-weight: normal; }
+#content.debug span.type { cursor: help; font-family: monospace;
+  font-weight: normal;
+}
 #content.debug span.value { color: #999; }
 
 #content.debug .vars span.name { padding-left: 16px; }

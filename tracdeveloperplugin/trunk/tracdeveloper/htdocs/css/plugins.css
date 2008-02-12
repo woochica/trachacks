@@ -20,7 +20,9 @@
 #content.plugins li div.info { font-size: 95%; margin: 0 0 1em;
   padding: 0 0 0 1em;
 }
-#content.plugins li div.info p.docstring { font-size: 90%; font-style: italic; }
+#content.plugins li div.info p.docstring { cursor: help; font-size: 90%;
+  font-style: italic;
+}
 #content.plugins li div.info h4, #content.plugins li div.info p,
 #content.plugins li div.info ul { margin: 0 0 .5em; }
 #content.plugins li div.info h4 { margin-bottom: 0; }

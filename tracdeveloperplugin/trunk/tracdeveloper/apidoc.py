@@ -4,8 +4,10 @@ import inspect
 import re
 
 from trac.core import *
-from trac.web import IRequestHandler
+from trac.web import HTTPNotFound, IRequestHandler
 from trac.web.chrome import Chrome
+
+from tracdeveloper.util import linebreaks
 
 __all__ = ['APIDocumentation']
 
@@ -22,18 +24,18 @@ class APIDocumentation(Component):
             return True
 
     def process_request(self, req):
-        header = req.get_header('X-Requested-With')
-        is_xhr = header and header.lower() == 'xmlhttprequest'
-
-        modname, attrname = req.args['name'].split(':')
-        module = __import__(modname, {}, {}, filter(None, [attrname]))
-        obj = getattr(module, attrname)
-        docstring = inspect.getdoc(obj)
+        modname, attrname = str(req.args['name']).split(':')
+        print (modname, attrname)
+        try:
+            module = __import__(modname, {}, {}, filter(None, [attrname]))
+            obj = getattr(module, attrname)
+        except (ImportError, AttributeError), e:
+            raise HTTPNotFound(e)
 
         data = {
             'module': modname,
             'name': attrname or modname,
-            'doc': docstring,
+            'doc': linebreaks(inspect.getdoc(obj)),
             'methods': self._get_methods(obj)
         }
         output = Chrome(self.env).render_template(req, 'developer/apidoc.html',
@@ -47,5 +49,5 @@ class APIDocumentation(Component):
                    and m not in (exclude_methods or [])]
         return [{'name': m.__name__,
                  'args': inspect.formatargspec(*inspect.getargspec(m)),
-                 'doc': inspect.getdoc(m)}
+                 'doc': linebreaks(inspect.getdoc(m))}
                 for m in methods if inspect.ismethod(m)]

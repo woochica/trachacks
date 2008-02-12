@@ -57,8 +57,10 @@ class TemplateDebugger(Component):
         new_data['context'] = ctxt
 
         del req.chrome # reset chrome info
+        add_script(req, 'developer/js/apidoc.js')
         add_script(req, 'developer/js/debugger.js')
         add_stylesheet(req, 'common/css/code.css')
+        add_stylesheet(req, 'developer/css/apidoc.css')
         add_stylesheet(req, 'developer/css/debugger.css')
         return 'developer/debug.html', new_data, 'text/html'
 
@@ -246,5 +248,8 @@ class ObjectNode(object):
     short_type = property(short_type)
 
     def long_type(self):
-        return str(type(self.value))
+        obj = self.value
+        if type(obj) not in (BuiltinFunctionType, FunctionType):
+            obj = type(obj)
+        return ':'.join([obj.__module__, obj.__name__])
     long_type = property(long_type)

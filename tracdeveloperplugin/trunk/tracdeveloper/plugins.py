@@ -21,7 +21,7 @@ class PluginRegistry(Component):
     def process_request(self, req):
         interfaces = {}
         for interface in Interface.__subclasses__():
-            data = self.base_data(req, interface)
+            data = self._base_data(req, interface)
             data['implemented_by'] = []
             interfaces[data['name']] = data
 
@@ -32,14 +32,16 @@ class PluginRegistry(Component):
                         for i in component._implements]
             else:
                 impl = []
-            data = self.base_data(req, component)
-            data['extension_points'] = self.extension_points(req, component)
+            data = self._base_data(req, component)
+            data['_extension_points'] = self._extension_points(req, component)
             data['implements'] = [i['name'] for i in impl]
             for imp in impl:
                 imp['implemented_by'].append(data['name'])
             components[data['name']] = data
 
+        add_script(req, 'developer/js/apidoc.js')
         add_script(req, 'developer/js/plugins.js')
+        add_stylesheet(req, 'developer/css/apidoc.css')
         add_stylesheet(req, 'developer/css/plugins.css')
         return 'developer/plugins.html', {
             'components': components,
@@ -48,14 +50,15 @@ class PluginRegistry(Component):
 
     # Internal methods
 
-    def base_data(self, req, cls):
+    def _base_data(self, req, cls):
         return {
             'name': '%s.%s' % (cls.__module__, cls.__name__),
+            'type': '%s:%s' % (cls.__module__, cls.__name__),
             'doc': inspect.getdoc(cls)
         }
 
-    def extension_points(self, req, cls):
+    def _extension_points(self, req, cls):
         xp = [(m, getattr(cls, m)) for m in dir(cls) if not m.startswith('_')]
         return [{'name': name,
-                 'interface': self.base_data(req, m.interface)}
+                 'interface': self._base_data(req, m.interface)}
                 for name, m in xp if isinstance(m, ExtensionPoint)]

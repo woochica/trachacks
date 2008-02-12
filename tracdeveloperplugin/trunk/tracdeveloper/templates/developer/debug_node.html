@@ -10,7 +10,7 @@
               <span class="name">${node.name}<py:if
                     test="node.is_function">()</py:if></span>
             </a>
-            <span class="type">${node.short_type}</span>
+            <span class="type" title="${node.long_type}">${node.short_type}</span>
           </span>
           <py:if test="not node.is_function">
             = <span class="value">${node.short_value}</span>

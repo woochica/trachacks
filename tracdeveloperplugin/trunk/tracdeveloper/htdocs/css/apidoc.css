@@ -1,0 +1,17 @@
+#apidoc { background: #fbfbda; border: 1px solid #aaa; font-size: 90%;
+  padding: .5em; position: absolute; min-width: 30em; max-width: 54em;
+  z-index: 99; -webkit-box-shadow: #999 10px 10px 20px;
+}
+#apidoc .title { border-bottom: 1px solid #aaa; margin-bottom: .5em;
+  padding-bottom: .5em;
+}
+#apidoc .title button { background: transparent; border: none; color: #999;
+  cursor: pointer; float: right; font-size: 90%; margin: 0; padding: 0;
+}
+#apidoc .title h1 { color: #666; font-family: monospace; font-size: 110%;
+  margin: 0; padding: 0;
+}
+#apidoc .title h2 { color: #999; font-size: 90%; margin: 0; padding: 0; }
+#apidoc .doc { max-height: 20em; overflow: auto; padding: 0 .5em; }
+#apidoc .doc p { margin: 0 0 .5em; white-space: pre; }
+#apidoc .doc h2 { color: #666; font-size: 110%; margin: 1em 0 0 -.5em; }
