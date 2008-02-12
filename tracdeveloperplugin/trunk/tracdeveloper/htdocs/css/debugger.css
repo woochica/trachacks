@@ -3,6 +3,7 @@
 #content.debug .vars { background: #f9f9f9; border: 1px solid #d7d7d7;
   padding: 5px;
 }
+#content.debug .vars label { color: #333; float: right; font-size: 95%; }
 #content.debug .vars ol, #content.debug .vars ul, #content.debug .vars dl {
   margin: 0;
 }
@@ -25,7 +26,7 @@
 #content.debug .vars blockquote { background: #fff; color: #333;
   border: 1px solid #d7d7d7; font-family: monospace; margin: 0 0 0 1em;
   padding: .3em;
-} 
+}
 #content.debug span.type, #content.debug span.size { color: #999;
   font-size: 85%; 
 }

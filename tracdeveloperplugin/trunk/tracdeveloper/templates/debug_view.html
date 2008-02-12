@@ -11,6 +11,12 @@
     <script type="text/javascript">
       $(document).ready(function() {
         $("div.vars").initTree("${href.developer('debug')}");
+        if (!$("#context input:checked").length) {
+          $("#context dt, #context dd").not(".highlight").hide();
+        }
+        $("#context :checkbox").click(function() {
+          $("#context dt, #context dd").not(".highlight").toggle()
+        });
       });
     </script>
   </head>
@@ -25,6 +31,7 @@
       <div class="tab">
         <h2>Template Context</h2>
         <div id="context" class="vars">
+          <label><input type="checkbox" /> Show chrome data</label>
           <xi:include href="debug_node.html" py:with="node=context" />
         </div>
       </div>
