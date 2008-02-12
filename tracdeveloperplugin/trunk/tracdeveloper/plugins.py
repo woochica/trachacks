@@ -17,8 +17,8 @@ class DeveloperPlugins(Component):
 
     def render_admin_panel(self, req, category, page, path_info):
         if 'TRAC_ADMIN' not in req.perm: return
-        add_script(req, 'tracdeveloper/js/plugins.js')
-        add_stylesheet(req, 'tracdeveloper/css/plugins.css')
+        add_script(req, 'developer/js/plugins.js')
+        add_stylesheet(req, 'developer/css/plugins.css')
         data = self.get_api(req)
         return 'plugins.html', data
 
