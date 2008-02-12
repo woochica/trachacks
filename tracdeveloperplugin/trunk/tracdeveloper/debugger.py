@@ -44,8 +44,7 @@ class TemplateDebugger(Component):
             del self._cache_bytime[time]
 
         local_keys = list(data.keys())
-        chrome = Chrome(self.env)
-        data = chrome.populate_data(req, data)
+        data = Chrome(self.env).populate_data(req, data)
 
         token = str(id(req))
         new_data = {
