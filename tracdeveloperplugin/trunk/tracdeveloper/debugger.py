@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, timedelta
-import doctest
-import inspect
-import os
-import pydoc
 import re
 from types import BuiltinFunctionType, FunctionType, GeneratorType, MethodType
 from UserDict import DictMixin
 
 from genshi import Markup
 from genshi.builder import tag
-from trac.context import Context
 from trac.core import *
-from trac.mimeview import Mimeview
 from trac.util.text import shorten_line
 from trac.web import HTTPBadRequest, HTTPNotFound, IRequestFilter, \
                      IRequestHandler
@@ -85,16 +79,17 @@ class TemplateDebugger(Component):
 
         path = req.args['path']
         token = req.args['token']
-        if path is not None and token is not None:
-            key = token + ':' + path.split(':', 1)[0]
-            data = self._cache.get(key)
-            if not data:
-                raise HTTPNotFound()
-            node = data.lookup(path)
-            data = {'node': node, 'drillable': self._is_drillable(req)}
-            output = Chrome(self.env).render_template(req, 'developer/debug_node.html',
-                                                      data, fragment=True)
-            req.send(output.render('xhtml'), 'text/html')
+        assert path is not None and token is not None
+
+        key = token + ':' + path.split(':', 1)[0]
+        data = self._cache.get(key)
+        if not data:
+            raise HTTPNotFound()
+        node = data.lookup(path)
+        data = {'node': node, 'drillable': self._is_drillable(req)}
+        output = Chrome(self.env).render_template(req, 'developer/debug_node.html',
+                                                  data, fragment=True)
+        req.send(output.render('xhtml'), 'text/html')
 
     # Internal methods
 

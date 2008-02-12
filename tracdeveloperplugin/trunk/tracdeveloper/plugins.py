@@ -1,11 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import inspect
 import re
 
 from trac.core import *
-from trac.util.compat import set, sorted
 from trac.web import IRequestHandler
 from trac.web.chrome import add_script, add_stylesheet
-from trac.wiki.formatter import wiki_to_html
 
 __all__ = ['PluginRegistry']
 

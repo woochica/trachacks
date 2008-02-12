@@ -13,6 +13,7 @@ setup(
     entry_points = {
         'trac.plugins': [
             'developer = tracdeveloper.main',
+            'developer.apidoc = tracdeveloper.apidoc',
             'developer.debugger = tracdeveloper.debugger',
             'developer.plugins = tracdeveloper.plugins'
         ]
