@@ -61,6 +61,7 @@ class TemplateDebugger(Component):
         self._cache_bytime[datetime.now()] = cache_key
         new_data['context'] = ctxt
 
+        del req.chrome # reset chrome info
         add_script(req, 'developer/js/debugger.js')
         add_stylesheet(req, 'common/css/code.css')
         add_stylesheet(req, 'developer/css/debugger.css')
@@ -69,7 +70,7 @@ class TemplateDebugger(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/developer/debug/(.*)$', req.path_info)
+        match = re.match(r'/developer/debug(?:/(.*))?$', req.path_info)
         if match:
             req.args['path'] = match.group(1)
             return True

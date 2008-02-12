@@ -22,18 +22,13 @@
   </head>
 
   <body>
-    <div id="ctxtnav" class="nav"></div>
-
     <div id="content" class="debug">
       <h1>Debugger</h1>
       <input type="hidden" id="token" name="token" value="$token" />
 
-      <div class="tab">
-        <h2>Template Context</h2>
-        <div id="context" class="vars">
-          <label><input type="checkbox" /> Show chrome data</label>
-          <xi:include href="debug_node.html" py:with="node=context" />
-        </div>
+      <div id="context" class="vars">
+        <label><input type="checkbox" /> Show chrome data</label>
+        <xi:include href="debug_node.html" py:with="node=context" />
       </div>
 
     </div>
