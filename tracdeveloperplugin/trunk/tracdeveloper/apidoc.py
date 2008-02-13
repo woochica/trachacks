@@ -6,7 +6,7 @@ import re
 from trac.core import *
 from trac.web import HTTPNotFound, IRequestHandler
 from trac.web.chrome import Chrome
-from trac.wiki.formatter import wiki_to_html
+from trac.mimeview import Mimeview, Context
 
 from tracdeveloper.util import linebreaks
 
@@ -15,6 +15,11 @@ __all__ = ['APIDocumentation']
 
 class APIDocumentation(Component):
     implements(IRequestHandler)
+
+    mimetype_map = {
+        'tracwiki': 'text/x-trac-wiki',
+        'restructuredtext': 'text/x-rst',
+    }
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -46,13 +51,16 @@ class APIDocumentation(Component):
     # Internal methods
     def _get_formatter(self, module):
         format = getattr(module, '__docformat__', 'default').split()[0]
-        return getattr(self, '_format_' + format, self._format_default)
+        if format == 'default':
+            return self._format_default
 
-    def _format_tracwiki(self, req, text):
-        return wiki_to_html(text, self.env, req)
+        mimetype = self.mimetype_map.get(format, 'text/plain')
 
-    def _format_restructuredtext(self, req, text):
-        return linebreaks(text)
+        def mimeview_formatter(req, text):
+            mimeview = Mimeview(self.env)
+            context = Context.from_request(req)
+            return mimeview.render(context, mimetype, text)
+        return formatter
 
     def _format_default(self, req, text):
         return linebreaks(text)

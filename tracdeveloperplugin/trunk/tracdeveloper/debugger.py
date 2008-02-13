@@ -14,9 +14,11 @@ from trac.web import HTTPBadRequest, HTTPNotFound, IRequestFilter, \
 from trac.web.chrome import add_script, add_stylesheet, Chrome
 
 __all__ = ['TemplateDebugger']
+__docformat__ = 'tracwiki en'
 
 
 class TemplateDebugger(Component):
+    """Something ''wicked'' this way comes."""
     _cache = {}
     _cache_bytime = {}
 
