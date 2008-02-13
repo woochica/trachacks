@@ -37,7 +37,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.perm import IPermissionRequestor
 from trac.config import Option, BoolOption, ListOption
 
-from tBlog.parseargs import parseargs
+from tracblog.parseargs import parseargs
 
 #from tractags.api import TagEngine
 #from tractags.parseargs import parseargs

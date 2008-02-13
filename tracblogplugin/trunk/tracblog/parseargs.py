@@ -86,27 +86,27 @@ def parseargs(arguments):
             lexer.push_token((type, token))
             return parse_value(lexer)
             
-    lexer = Lexer(arguments)
     args = []
     kwargs = {}
-
-    try:
-        while True:
-            arg = parse_value(lexer)
-            try:
-                type, token = lexer.next()
-            except StopIteration:
-                args.append(arg)
-                break
-            if token == '=':
-                kwargs[str(arg)] = parse_node(lexer)
-                type, token = lexer.next()
-                if token != ',':
-                    raise UnexpectedToken(token)
-            elif token == ',':
-                args.append(arg)
-    except StopIteration:
-        pass
+    if  arguments:
+        lexer = Lexer(arguments)
+        try:
+            while True:
+                arg = parse_value(lexer)
+                try:
+                    type, token = lexer.next()
+                except StopIteration:
+                    args.append(arg)
+                    break
+                if token == '=':
+                    kwargs[str(arg)] = parse_node(lexer)
+                    type, token = lexer.next()
+                    if token != ',':
+                        raise UnexpectedToken(token)
+                elif token == ',':
+                    args.append(arg)
+        except StopIteration:
+            pass
     return args, kwargs
 
 if __name__ == '__main__':

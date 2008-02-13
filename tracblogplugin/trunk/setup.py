@@ -2,19 +2,19 @@
 
 from setuptools import setup, find_packages
 
-PACKAGE = 'tBlog'
+PACKAGE = 'TracBlogPlugin'
 VERSION = '0.3'
 
 setup(  name=PACKAGE, version=VERSION,
         author = 'John Hampton',
         author_email = 'pacopablo@pacopablo.com',
         url = 'http://trac-hacks.org/wiki/TracBlogPlugin',
-        description = 'Bloging system plugin for Trac',
+        description = 'Blogging plugin for Trac',
         license='BSD',
 
-        packages = ['tBlog'],
-        package_data = { 'tBlog' : ['htdocs/css/*.css', 'htdocs/img/*',
+        packages = ['tracblog'],
+        package_data = { 'tracblog' : ['htdocs/css/*.css', 'htdocs/img/*',
                                     'templates/*.html', ]},
-        entry_points = {'trac.plugins': ['tBlog = tBlog']},
+        entry_points = {'trac.plugins': ['tracblog = tracblog']},
         install_requires = ['TracTags>=0.6']
 )
