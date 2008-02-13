@@ -51,10 +51,9 @@ class APIDocumentation(Component):
     # Internal methods
     def _get_formatter(self, module):
         format = getattr(module, '__docformat__', 'default').split()[0]
-        if format == 'default':
+        mimetype = self.mimetype_map.get(format)
+        if not mimetype:
             return self._format_default
-
-        mimetype = self.mimetype_map.get(format, 'text/plain')
 
         def mimeview_formatter(req, text):
             mimeview = Mimeview(self.env)
