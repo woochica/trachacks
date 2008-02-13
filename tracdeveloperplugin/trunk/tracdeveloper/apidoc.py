@@ -26,7 +26,6 @@ class APIDocumentation(Component):
 
     def process_request(self, req):
         modname, attrname = str(req.args['name']).split(':')
-        print (modname, attrname)
         try:
             module = __import__(modname, {}, {}, filter(None, [attrname]))
             obj = getattr(module, attrname)
