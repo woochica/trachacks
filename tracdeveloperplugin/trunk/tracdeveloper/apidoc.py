@@ -6,6 +6,7 @@ import re
 from trac.core import *
 from trac.web import HTTPNotFound, IRequestHandler
 from trac.web.chrome import Chrome
+from trac.wiki.formatter import wiki_to_html
 
 from tracdeveloper.util import linebreaks
 
@@ -35,8 +36,8 @@ class APIDocumentation(Component):
         data = {
             'module': modname,
             'name': attrname or modname,
-            'doc': linebreaks(inspect.getdoc(obj)),
-            'methods': self._get_methods(obj)
+            'doc': wiki_to_html(inspect.getdoc(obj), self.env, req),
+            'methods': self._get_methods(req, obj)
         }
         output = Chrome(self.env).render_template(req, 'developer/apidoc.html',
                                                   data, fragment=True)
@@ -44,10 +45,10 @@ class APIDocumentation(Component):
 
     # Internal methods
 
-    def _get_methods(self, cls, exclude_methods=None):
+    def _get_methods(self, req, cls, exclude_methods=None):
         methods = [getattr(cls, m) for m in dir(cls) if not m.startswith('_')
                    and m not in (exclude_methods or [])]
         return [{'name': m.__name__,
                  'args': inspect.formatargspec(*inspect.getargspec(m)),
-                 'doc': linebreaks(inspect.getdoc(m))}
+                 'doc': wiki_to_html(inspect.getdoc(m), self.env, req)}
                 for m in methods if inspect.ismethod(m)]
