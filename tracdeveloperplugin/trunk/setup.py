@@ -22,7 +22,7 @@ setup(
         'tracdeveloper' : [
             'htdocs/css/*.css',
             'htdocs/js/*.js',
-            'templates/*.html',
+            'templates/developer/*.html',
         ]
     }
 )
