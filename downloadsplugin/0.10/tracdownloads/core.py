@@ -55,7 +55,7 @@ class DownloadsCore(Component):
         match = re.match(r'''^/downloads($|/$)''', req.path_info)
         if match:
             return True
-        match = re.match(r'''^/downloads/(\d+)$''', req.path_info)
+        match = re.match(r'''^/downloads/(\d+)($|/$)''', req.path_info)
         if match:
             req.args['action'] = 'get-file'
             req.args['id'] = match.group(1)

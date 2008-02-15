@@ -531,11 +531,10 @@ class DownloadsApi(Component):
                     raise TracError('Unsupported uploaded file type.')
 
                 # Prepare file paths
-                filepath = os.path.join(self.path, unicode(download['id']),
-                  download['file'])
-                filepath = unicodedata.normalize('NFC', filepath)
-                filepath = filepath.replace('\\', '/').replace(':', '/')
-                path = os.path.dirname(filepath)
+                path = os.path.join(self.path, unicode(download['id']))
+                filepath = os.path.join(path, download['file'])
+                path = os.path.normpath(path)
+                filepath = os.path.normpath(filepath)
                 self.log.debug('filepath: %s' % ((filepath,)))
                 self.log.debug('path: %s' % ((path,)))
 
