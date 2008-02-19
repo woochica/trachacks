@@ -6,12 +6,13 @@ from genshi.builder import tag
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.prefs.api import IPreferencePanelProvider
 
 __all__ = ['DeveloperPlugin']
 
 
 class DeveloperPlugin(Component):
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
+    implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPreferencePanelProvider)
 
     # INavigationContributor methods
 
@@ -39,3 +40,12 @@ class DeveloperPlugin(Component):
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('developer', resource_filename(__name__, 'htdocs'))]
+
+    # IPreferencePanelProvider methods
+    def get_preference_panels(self, req):
+        yield 'developer', 'Developer Options'
+
+    def render_preference_panel(self, req, panel):
+        if req.method == 'POST':
+            req.session['developer.js.enable_debug'] = req.args.get('enable_debug', '0')
+        return 'developer/prefs_developer.html', {}

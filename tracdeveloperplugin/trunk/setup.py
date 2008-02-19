@@ -15,7 +15,8 @@ setup(
             'developer = tracdeveloper.main',
             'developer.apidoc = tracdeveloper.apidoc',
             'developer.debugger = tracdeveloper.debugger',
-            'developer.plugins = tracdeveloper.plugins'
+            'developer.plugins = tracdeveloper.plugins',
+            'developer.javascript = tracdeveloper.javascript',
         ]
     },
     package_data = {
