@@ -1,0 +1,29 @@
+table.listing tr.header { background: #f7f7f0 }
+table.listing tr.header th {
+ border: 1px solid #d7d7d7;
+ border-bottom-color: #999;
+ font-size: 11px;
+ font-weight: bold;
+ padding: 2px .5em;
+ vertical-align: bottom;
+}
+table.listing tr.header th :link:hover, table.listing thead th :visited:hover {
+ background-color: transparent;
+}
+table.listing tr.header th a { border: none; padding-right: 12px }
+
+table.listing tr.mem-inactive td { color: #999  }
+
+table.listing tr.mem-active td, table.listing tr.mem-inactive td {
+    //padding: 0px;
+}
+
+table.listing tr.mem-active td div, table.listing tr.mem-inactive td div {
+    padding: 0px;
+    margin: 0px;
+}
+
+table.listing tr.mem-active td div input[type="text"], table.listing tr.mem-inactive td div input[type="text"] {
+    padding: 0px;
+    margin: 0px;
+}

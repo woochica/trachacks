@@ -1,0 +1,33 @@
+#steps {
+    width: 400px;
+}
+
+.step {
+    background-color: #ffd;
+    border: 2px groove #000;
+    margin: 4px 0;
+    padding: 3px 4px;
+    width: 400px;
+    height: 150px;
+}
+
+.step .step-buttons {
+    float: right;
+}
+
+.step .step-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.step hr {
+    margin: 4px 0;
+}
+
+#addstep {
+    height: 50px;
+}
+
+#buttons {
+    float: right;
+}
