@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
+import os
+if os.getlogin() != 'coderanger':
+    print 'DO NOT USE THIS CODE YET.'
+    import sys
+    sys.exit(1)
+
 from setuptools import setup
 
 setup(
