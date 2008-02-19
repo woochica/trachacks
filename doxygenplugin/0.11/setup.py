@@ -45,5 +45,5 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.""",
     """,
     zip_safe=True,
     packages=['doxygentrac'],
-    package_data={'doxygentrac': ['templates/*.cs', 'htdocs/css/*.css']},
+    package_data={'doxygentrac': ['templates/*.html', 'htdocs/css/*.css']},
     entry_points={'trac.plugins': 'doxygentrac = doxygentrac.doxygentrac'})
