@@ -35,7 +35,6 @@ setup(
         'trac.plugins': [
             'tracforge.perms = tracforge.perms',
             'tracforge.resources = tracforge.resources',
-            'tracforge.subscriptions = tracforge.subscriptions',
             'tracforge.admin = tracforge.admin',
             'tracforge.linker = tracforge.linker',
         ],
