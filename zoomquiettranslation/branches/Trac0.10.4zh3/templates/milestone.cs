@@ -215,7 +215,7 @@
    <div class="buttons"><?cs
     if:trac.acl.MILESTONE_MODIFY ?>
      <form method="get" action=""><div>
-      <input type="hidden" name="action" value="编辑" /><?cs
+      <input type="hidden" name="action" value="edit" /><?cs
       if:milestone.id_param ?>
        <input type="hidden" name="id" value="<?cs var:milestone.name ?>" /><?cs
       /if ?>
@@ -224,7 +224,7 @@
     /if ?><?cs
     if:trac.acl.MILESTONE_DELETE ?>
      <form method="get" action=""><div>
-      <input type="hidden" name="action" value="删除" /><?cs
+      <input type="hidden" name="action" value="delete" /><?cs
       if:milestone.id_param ?>
        <input type="hidden" name="id" value="<?cs var:milestone.name ?>" /><?cs
       /if ?>
