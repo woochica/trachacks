@@ -34,7 +34,8 @@ class BatchModifyModule(Component):
                 not self.env.is_component_enabled(ReportModule):
             yield ('mainnav', 'tickets',
                    html.A('View Tickets', href=req.href.query()))
-        yield ('mainnav', 'query',
+        elif req.perm.has_permission('TICKET_BATCH_MODIFY'):
+            yield ('mainnav', 'query',
                    html.A('Custom Query', href=req.href.query()))
 
 
