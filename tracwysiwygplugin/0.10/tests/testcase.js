@@ -175,14 +175,36 @@ addEvent(window, "load", function() {
             generate.call(this, dom, wikitext);
         });
         unit.add("bold", function() {
-            var dom = element("p", element("b", "bold"));
-            var wikitext = "'''bold'''";
-            generate.call(this, dom, wikitext);
+            var wikitext = [
+                "The quick '''brown''' fox.",
+                "",
+                "The quick '''brown''' fox." ].join("\n");
+            generateWikitext.call(this,
+                fragment(
+                    element("p", "The quick ", element("b", "brown"), " fox."),
+                    element("p", "The quick ", element("strong", "brown"), " fox.")),
+                wikitext);
+            generateFragment.call(this,
+                fragment(
+                    element("p", "The quick ", element("b", "brown"), " fox."),
+                    element("p", "The quick ", element("b", "brown"), " fox.")),
+                wikitext);
         });
         unit.add("italic", function() {
-            var dom = element("p", element("i", "italic"));
-            var wikitext = "''italic''";
-            generate.call(this, dom, wikitext);
+            var wikitext = [
+                "The quick ''brown'' fox.",
+                "",
+                "The quick ''brown'' fox." ].join("\n");
+            generateWikitext.call(this,
+                fragment(
+                    element("p", "The quick ", element("i", "brown"), " fox."),
+                    element("p", "The quick ", element("em", "brown"), " fox.")),
+                wikitext);
+            generateFragment.call(this,
+                fragment(
+                    element("p", "The quick ", element("i", "brown"), " fox."),
+                    element("p", "The quick ", element("i", "brown"), " fox.")),
+                wikitext);
         });
         unit.add("underline", function() {
             var dom = element("p", element("u", "underline"));

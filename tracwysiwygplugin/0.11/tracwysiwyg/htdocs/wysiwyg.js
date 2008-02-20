@@ -1988,9 +1988,9 @@ TracWysiwyg.prototype.wikiBlockTags = {
     "table": true, "dl": true, "hr": true };
 
 TracWysiwyg.prototype.wikiInlineTags = {
-    "a": true, "tt": true, "b": true, "strong": true, "i": true, "u": true,
-    "del": true, "strike": true, "sub": true, "sup": true, "br": true,
-    "span": true };
+    "a": true, "tt": true, "b": true, "strong": true, "i": true, "em": true,
+    "u": true, "del": true, "strike": true, "sub": true, "sup": true,
+    "br": true, "span": true };
 
 TracWysiwyg.prototype.domToWikitext = function(root, options) {
     options = options || {};
