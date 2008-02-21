@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracIncludeMacro',
-    version = '1.0',
+    version = '2.0',
     packages = ['includemacro'],
     #package_data = { 'includemacro': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
@@ -19,7 +19,7 @@ setup(
         'Framework :: Trac',
     ],
     
-    #install_requires = ['TracWebAdmin'],
+    install_requires = ['Trac'],
 
     entry_points = {
         'trac.plugins': [

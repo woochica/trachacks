@@ -3,7 +3,7 @@ from trac.core import *
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import system_message
 from trac.wiki.model import WikiPage
-from trac.mimeview.api import Mimeview, get_mimetype
+from trac.mimeview.api import Mimeview, get_mimetype, Context
 from trac.perm import IPermissionRequestor
 
 import urllib2
@@ -43,7 +43,7 @@ class IncludeMacro(WikiMacroBase):
                 dest_format = self.default_formats[source_format]
             except KeyError:
                 pass
-            
+        
         if source_format in ('http', 'https', 'ftp'):
             # Since I can't really do recursion checking, and because this 
             # could be a source of abuse allow selectively blocking it.
@@ -59,6 +59,7 @@ class IncludeMacro(WikiMacroBase):
                 return system_message('Error while retrieving file', str(e))
             except TracError, e:
                 return system_message('Error while previewing', str(e))
+            ctxt = Context.from_request(req)
         elif source_format == 'wiki':
             # XXX: Check for recursion in page includes. <NPK>
             if not req.perm.has_permission('WIKI_VIEW'):
@@ -67,6 +68,7 @@ class IncludeMacro(WikiMacroBase):
             if not page.exists:
                 return system_message('Wiki page %s does not exist'%source_obj)
             out = page.text
+            ctxt = Context.from_request(req, 'wiki', source_obj)
         elif source_format == 'source':
             if not req.perm.has_permission('FILE_VIEW'):
                 return ''
@@ -75,6 +77,7 @@ class IncludeMacro(WikiMacroBase):
             out = node.get_content().read()
             if dest_format is None:
                 dest_format = get_mimetype(source_obj, out)
+            ctxt = Context.from_request(req, 'source', source_obj)
         # RFE: Add ticket: and comment: sources. <NPK>
         # RFE: Add attachment: source. <NPK>
         else:
@@ -82,7 +85,7 @@ class IncludeMacro(WikiMacroBase):
             
         # If we have a preview format, use it
         if dest_format:
-            out = Mimeview(self.env).render(req, dest_format, out)
+            out = Mimeview(self.env).render(ctxt, dest_format, out)
         return out
             
     # IPermissionRequestor methods
