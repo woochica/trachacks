@@ -39,14 +39,16 @@
           <input type="file" id="image" name="image" value=""/><br/>
         </div>
       <?cs /if ?>
-      <div class="field">
-        <label for="tags">Additional tags:</label><br/>
-        <?cs if:args.action == 'add' ?>
-          <input type="text" id="tags" name="tags" value=""/><br/>
-        <?cs else ?>
-          <input type="text" id="tags" name="tags" value="<?cs var:screenshots.screenshot.tags ?>"/><br/>
-        <?cs /if ?>
-      </div>
+      <?cs if:screenshots.has_tags ?>
+        <div class="field">
+          <label for="tags">Additional tags:</label><br/>
+          <?cs if:args.action == 'add' ?>
+            <input type="text" id="tags" name="tags" value=""/><br/>
+          <?cs else ?>
+            <input type="text" id="tags" name="tags" value="<?cs var:screenshots.screenshot.tags ?>"/><br/>
+          <?cs /if ?>
+        </div>
+      <?cs /if ?>
       <div class="field">
         <label for="components">Components:</label><br/>
         <select id="components" name="components" multiple="on">

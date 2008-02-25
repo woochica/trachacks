@@ -4,6 +4,7 @@ import sets
 
 from tracscreenshots.api import *
 from trac.core import *
+
 from tractags.api import ITaggingSystemProvider, DefaultTaggingSystem, \
   TagEngine
 

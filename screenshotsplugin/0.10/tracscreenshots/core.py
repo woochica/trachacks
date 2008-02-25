@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-import sets, re, os, os.path, time, mimetypes, unicodedata, Image
+import sets, re, os, os.path, shutil, time, mimetypes, unicodedata, Image
 
 from trac.core import *
 from trac.config import Option
@@ -39,8 +39,10 @@ class ScreenshotsCore(Component):
                     'description' : 'none'}
 
     # Configuration options.
-    title = Option('screenshots', 'title', 'Screenshots',
+    mainnav_title = Option('screenshots', 'mainnav_title', 'Screenshots',
       'Main navigation bar button title.')
+    metanav_title = Option('screenshots', 'metanav_title', '',
+      'Meta navigation bar link title.')
     path = Option('screenshots', 'path', '/var/lib/trac/screenshots',
       'Path where to store uploaded screenshots.')
     ext = Option('screenshots', 'ext', 'jpg png',
@@ -77,8 +79,12 @@ class ScreenshotsCore(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('SCREENSHOTS_VIEW'):
-            yield 'mainnav', 'screenshots', html.a(self.title,
-              href = req.href.screenshots())
+            if self.mainnav_title:
+                yield 'mainnav', 'screenshots', html.a(self.mainnav_title,
+                  href = req.href.screenshots())
+            if self.metanav_title:
+                yield 'metanav', 'screenshots', html.a(self.metanav_title,
+                  href = req.href.screenshots())
 
     # IRequestHandler methods.
 
@@ -106,7 +112,11 @@ class ScreenshotsCore(Component):
         # Prepare HDF structure and return template.
         req.hdf['screenshots'] = data
         req.hdf['screenshots.href'] = req.href.screenshots()
-        req.hdf['screenshots.title'] = self.title
+        req.hdf['screenshots.title'] = self.mainnav_title or self.metanav_title
+        req.hdf['screenshots.has_tags'] = self.env.is_component_enabled(
+          'tracscreenshots.tags.ScreenshotsTags')
+        #req.hdf['screenshots.has_tags'] = self.config.get('components',
+        #  'tracscreenshots.tags.screenshotstags') == 'enabled'
         return template, content_type
 
     # Internal functions.
@@ -240,7 +250,6 @@ class ScreenshotsCore(Component):
                 # Add new screenshot.
                 api.add_screenshot(cursor, screenshot)
 
-
                 # Get inserted screenshot to with new id.
                 screenshot = api.get_screenshot_by_time(cursor,
                    screenshot['time'])
@@ -268,21 +277,27 @@ class ScreenshotsCore(Component):
                 self.log.debug(screenshot)
 
                 # Prepare file paths
-                filename = os.path.join(self.path, unicode(screenshot['id']),
-                  '%s-%ix%i.%s' % (result.group(1), screenshot['width'],
-                  screenshot['height'], result.group(2)))
-                filename = unicodedata.normalize('NFC', filename)
-                filename = filename.replace('\\', '/').replace(':', '/')
-                path = os.path.dirname(filename)
-                self.log.debug('filename: %s' % (filename,))
-                self.log.debug('filename: %s' % (path,))
+                path = os.path.join(self.path, unicode(screenshot['id']))
+                filepath = os.path.join(path, '%s-%ix%i.%s' % (result.group(1),
+                  screenshot['width'], screenshot['height'], result.group(2)))
+                path = os.path.normpath(path)
+                filepath = os.path.normpath(filepath)
+                self.log.debug('path: %s' % (path,))
+                self.log.debug('filepath: %s' % (filepath,))
 
                 # Store uploaded image.
                 try:
                     os.mkdir(path)
-                    image.save(filename)
-                except:	
+                    out_file = open(filepath, 'wb+')
+                    file.seek(0)
+                    shutil.copyfileobj(file, out_file)
+                    out_file.close()
+                except Exception, error:
                     api.delete_screenshot(cursor, screenshot['id'])
+                    try:
+                       self.log.debug(error)
+                    except:
+                       pass
                     try:
                         os.remove(filename)
                     except:
@@ -293,7 +308,8 @@ class ScreenshotsCore(Component):
                         pass
                     raise TracError('Error storing file. Is directory' \
                       ' specified in path config option in [screenshots]' \
-                      ' section of trac.ini existing?')
+                      ' section of trac.ini existing? Original message was: %s' \
+                      % (error,))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:

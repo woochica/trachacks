@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-import sets, re, os, os.path, mimetypes, unicodedata, Image
+import sets, re, os, os.path, shutil, mimetypes, unicodedata, Image
 from datetime import *
 
 from trac.core import *
@@ -40,8 +40,10 @@ class ScreenshotsCore(Component):
                     'description' : 'none'}
 
     # Configuration options.
-    title = Option('screenshots', 'title', 'Screenshots',
+    mainnav_title = Option('screenshots', 'mainnav_title', 'Screenshots',
       'Main navigation bar button title.')
+    metanav_title = Option('screenshots', 'metanav_title', '',
+      'Meta navigation bar link title.')
     path = Option('screenshots', 'path', '/var/lib/trac/screenshots',
       'Path where to store uploaded screenshots.')
     ext = Option('screenshots', 'ext', 'jpg png',
@@ -78,8 +80,12 @@ class ScreenshotsCore(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('SCREENSHOTS_VIEW'):
-            yield 'mainnav', 'screenshots', html.a(self.title,
-              href = req.href.screenshots())
+            if self.mainnav_title:
+                yield 'mainnav', 'screenshots', html.a(self.mainnav_title,
+                  href = req.href.screenshots())
+            if self.metanav_title:
+                yield 'metanav', 'screenshots', html.a(self.metanav_title,
+                  href = req.href.screenshots())
 
     # IRequestHandler methods.
 
@@ -106,7 +112,9 @@ class ScreenshotsCore(Component):
         context.cursor = db.cursor()
 
         # Prepare data structure.
-        self.data['title'] = self.title
+        self.data['title'] = self.mainnav_title or self.metanav_title
+        self.data['has_tags'] = self.env.is_component_enabled(
+          'tracscreenshots.tags.ScreenshotsTags')
 
         # Get action from request and perform them.
         actions = self._get_actions(context)
@@ -116,9 +124,6 @@ class ScreenshotsCore(Component):
         # Add CSS style and JavaScript scripts.
         add_stylesheet(req, 'screenshots/css/screenshots.css')
         add_script(req, 'screenshots/js/screenshots.js')
-
-        # Prepare HDF structure.
-        req.hdf['screenshots'] = self.data
 
         # Return template and its data.
         db.commit()
@@ -262,7 +267,6 @@ class ScreenshotsCore(Component):
                 # Add new screenshot.
                 api.add_screenshot(context, screenshot)
 
-
                 # Get inserted screenshot to with new id.
                 screenshot = api.get_screenshot_by_time(context,
                    screenshot['time'])
@@ -290,19 +294,21 @@ class ScreenshotsCore(Component):
                 self.log.debug(screenshot)
 
                 # Prepare file paths
-                filename = os.path.join(self.path, to_unicode(screenshot['id']),
-                  '%s-%ix%i.%s' % (result.group(1), screenshot['width'],
-                  screenshot['height'], result.group(2)))
-                filename = unicodedata.normalize('NFC', filename)
-                filename = filename.replace('\\', '/').replace(':', '/')
-                path = os.path.dirname(filename)
-                self.log.debug('filename: %s' % (filename,))
-                self.log.debug('filename: %s' % (path,))
+                path = os.path.join(self.path, unicode(screenshot['id']))
+                filepath = os.path.join(path, '%s-%ix%i.%s' % (result.group(1),
+                  screenshot['width'], screenshot['height'], result.group(2)))
+                path = os.path.normpath(path)
+                filepath = os.path.normpath(filepath)
+                self.log.debug('path: %s' % (path,))
+                self.log.debug('filename: %s' % (filepath,))
 
                 # Store uploaded image.
                 try:
                     os.mkdir(path)
-                    image.save(filename)
+                    out_file = open(filepath, 'wb+') 
+                    file.seek(0)
+                    shutil.copyfileobj(file, out_file)
+                    out_file.close()
                 except Exception, error:
                     api.delete_screenshot(context, screenshot['id'])
                     try:
@@ -319,7 +325,8 @@ class ScreenshotsCore(Component):
                         pass
                     raise TracError('Error storing file. Is directory' \
                       ' specified in path config option in [screenshots]' \
-                      ' section of trac.ini existing?')
+                      ' section of trac.ini existing? Original message was: %s' \
+                      % (error,))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:

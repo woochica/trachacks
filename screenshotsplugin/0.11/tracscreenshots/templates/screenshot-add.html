@@ -28,7 +28,7 @@
             <label for="image">Image File:</label><br/>
             <input type="file" id="image" name="image" value=""/><br/>
           </div>
-          <div class="field">
+          <div py:if="screenshots.has_tags" class="field">
             <label for="tags">Additional tags:</label><br/>
             <input type="text" id="tags" name="tags" value="${(req.args.action == 'edit') and screenshots.screenshot.tags or ''}"/><br/>
           </div>
