@@ -11,13 +11,14 @@
 
 <script type="text/javascript">
 {
+
 	function onTypeChanged() { 
 		descriptionElem = document.getElementById('description');
 		defaultElem = document.getElementById('description_default');
 		typeElem = document.getElementById('type');
 
 		// update description textarea
-		specElem = document.getElementById('description_' + typeElem.options[typeElem.selectedIndex].text);
+		specElem = document.getElementById('description_' + typeElem.selectedIndex);
 		descriptionElem.value = specElem.value ? specElem.value : defaultElem.value;
 
 	}

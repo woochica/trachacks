@@ -60,7 +60,7 @@ class TicketTemplateModule(Component):
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        return 'tickettemplate'
+        return 'newtplticket'
 
     def get_navigation_items(self, req):
         """ hijack the original Trac's 'New Ticket' handler to ticket template
@@ -68,17 +68,17 @@ class TicketTemplateModule(Component):
         if not req.perm.has_permission('TICKET_CREATE'):
             return
         yield ('mainnav', 'newticket', 
-               html.A(u'兴建传票', href= req.href.tickettemplate()))
+               html.A(u'兴建传票', href= req.href.newtplticket()))
 
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info in ['/tickettemplate' ]
+        return req.path_info in ['/newtplticket' ]
 
 
     def process_request(self, req):
         req.perm.assert_permission('TICKET_CREATE')
         
-        if req.path_info == '/tickettemplate':
+        if req.path_info == '/newtplticket':
             # setup permission
             really_has_perm = req.perm.has_permission('TICKET_CREATE')
             req.perm.perms['TICKET_CREAT'] = True
@@ -90,11 +90,13 @@ class TicketTemplateModule(Component):
 
             # get all templates for hdf
             tt_list = []
+            indx = 0
             for tt_name in self._getTicketTypeNames():
                 tt_item = {}
-                tt_item["name"] = "description_%s" % tt_name
+                tt_item["name"] = "description_%s" % indx
                 tt_item["text"] = self._loadTemplateText(tt_name)
                 tt_list.append(tt_item)
+                indx += 1
 
             req.hdf['tt_list'] = tt_list
             
@@ -204,12 +206,14 @@ class TicketTemplateModule(Component):
     def _getTicketTypeNames(self):
         """ get ticket type names
         """
-        options = ["default"]
+        options = []
 
         ticket = Ticket(self.env)
         for field in ticket.fields:
             if field['name'] == 'type':
                 options.extend(field['options'])
+
+        options.extend(["default"])
 
         return options
 
