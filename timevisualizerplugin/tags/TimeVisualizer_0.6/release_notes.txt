@@ -1,0 +1,123 @@
+
+TracTimeVisualizerPlugin v. 0.6
+--------------------------------------------------------------------------------
+
+This is a Trac plugin to render burn down graphs from ticket history
+information.
+
+
+Usage
+--------------------------------------------------------------------------------
+
+1. uninstall previous installation if such exist, e.g. remove
+   `./TracTimeVisualizerPlugin-0.5-py2.4.egg` from
+   `/usr/lib/python2.4/site-packages/easy-install.pth`
+
+2. stop web server, e.g. `apache -k stop`
+
+3. Download & install latest plugin::
+
+    svn co http://trac-hacks.org/svn/timevisualizerplugin/tags/TimeVisualizer_0.6
+    cd TimeVisualizer_0.6
+    python setup.py install
+
+4. congigure custom fields to trac.ini, e.g.::
+
+    [ticket-custom]
+    workleft = text
+    workleft.label = WL
+    workleft.order = 0
+    workleft.value = 0
+
+5. define to trac.ini, where from graph is rendered::
+
+    [timevisualizer]
+    calc_fields = workleft
+
+  or make timing and estimation plugin compatible::
+
+    [timevisualizer]
+    calc_fields = estimatedhours-totalhours
+
+6. enable plugin component in trac.ini::
+
+    [components]
+    tractimevisualizerplugin.* = enabled
+
+7. Start your web server, e.g. `apache2 -k start`
+
+Using ISO 8601 format
+~~~~~~~~~~~~~~~~~~~~~
+
+To enable ISO 8601 dates, times & timedeltas, configure trac.ini::
+
+    [timevisualizer]
+    time_format = iso8601
+
+Format can be also set in the actual query. Then just use new formats, e.g.
+burndown from 2007 2nd half using one week time delta
+
+ time_format=iso8601&datestart=2007-07&dateend=2008-01&timeinterval=7D
+
+Dates shall be passed in form YYYY-MM-DDThh:mm:ss. Components can be left
+out from right side (but not from left). For example 2008 is same as
+`2008-01-01T00:00:00Z`
+
+Timedelta shall be passed in form xxYxxMxDTxxHxxMxxS. Any component is allowed,
+e.g. 4 days and 5 seconds period is `4DT5S`.
+
+Version 0.6
+--------------------------------------------------------------------------------
+
+- Implementation is now Trac 0.11 (dev-r6368) compatible (closes #1956)
+- Support added for ISO8601 datatime and period formats (closes #2149). All
+  users having users from more than one time zone should migrate burndown macros
+  asap.
+- Sql routines rewritten => ticket footprint at certain 'revision' may contain
+  all ticket fields, including custom ones! Requires small source tuning
+  before installation though. This is preparation for custom graph data
+  suppliers planned for v.0.7.
+- Debug logging was simplified
+- Usage documentation moved to pluginwrapper so that WikiMacros page
+  or `[[MacroList(BurnDown)]]` renders documentation (requires that
+  PythonOptimize disabled is enabled for mod_python).
+
+Version 0.5
+--------------------------------------------------------------------------------
+
+- Timing And Estimation plugin no more required, still compatible by default
+- Burndown graph can be now rendered from custom fields through configuration.
+  Two options available:
+
+  1. specify the field, which contains the work left, e.g::
+
+        [ticket-custom]
+        workleft = text
+        workleft.label = WL
+        workleft.order = 0
+        workleft.value = 0
+
+        [timevisualizer]
+        calc_fields = workleft
+
+  2. specify fields, wherefrom delta is calculated, e.g::
+
+        [ticket-custom]
+        estimatedhours = text
+        estimatedhours.label = Estimated Number of Hours
+        estimatedhours.order = 1
+        estimatedhours.value = 0
+        totalhours = text
+        totalhours.label = Total Hours
+        totalhours.order = 4
+        totalhours.value = 0
+
+        [timevisualizer]
+        calc_fields = estimatedhours-totalhours
+
+- Fixed #2223: casting & division by zero issues
+
+Older versions
+--------------------------------------------------------------------------------
+
+0.4 First 'production' quality release. Depends on Timing And Estimation plugin.
