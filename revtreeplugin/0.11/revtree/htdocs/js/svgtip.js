@@ -9,31 +9,34 @@
  */
 
 var jttimer = null;
-function JT_init(){
+
+(function($){
+
+window.JT_init = function(){
   $('a[@id^=rev]').hover(function(){JT_show(this)},
                          function(){jttimer=setTimeout("JT_remove();", 250);});
 }
 
-function JT_cancel() {
+window.JT_cancel = function() {
    if (jttimer) {
       clearTimeout(jttimer);
       jttimer = null;
    }
 }
 
-function JT_remove() {
+window.JT_remove = function() {
    var jt = $('#JT');
-   if ( jt ) {  jt.remove(); }
+   if ( jt ) { jt.remove(); }
    var jt_connect = $('#JT_connect');
    if ( jt_connect ) { jt_connect.remove(); }
 }
 
-function JT_hide() {
+window.JT_hide = function() {
    JT_cancel();
    JT_remove();
 }
 
-function JT_show(object) {
+window.JT_show = function(object) {
   if ( $('#JT') ) {
      JT_hide();
   }
@@ -116,14 +119,14 @@ function JT_show(object) {
           url: logurl, success: updateJT});
 }
 
-function updateJT(data) {
+window.updateJT = function(data) {
   // cannot use innerHTML with jQuery ($('#JT_copy').innerHTML)
   var copy = document.getElementById('JT_copy');
   // why innerHTML work with application/xhtml+xml doctype here?
   copy.innerHTML = data;
 }
 
-function getSvgPosition(objectId) {
+window.getSvgPosition = function(objectId) {
    // The following loop could be simplified to use JQuery
    // JQuery has some trouble with XML documents for now
    var svg = document.getElementsByTagName('svg')[0];
@@ -175,7 +178,7 @@ function getSvgPosition(objectId) {
    }
 }
 
-function findPos(obj) {
+window.findPos = function(obj) {
 	var curleft = curtop = 0;
 	if (obj.offsetParent) {
 		curleft = obj.offsetLeft
@@ -188,7 +191,7 @@ function findPos(obj) {
 	return [curleft,curtop];
 }
 
-function posLeft() {
+window.posLeft = function() {
    return typeof window.pageXOffset != 'undefined' ? 
       window.pageXOffset :
       document.documentElement && 
@@ -197,7 +200,7 @@ function posLeft() {
             document.body.scrollLeft ? document.body.scrollLeft : 0; 
 }
  
-function posTop() {
+window.posTop = function() {
    return typeof window.pageYOffset != 'undefined' ?  
       window.pageYOffset : 
       document.documentElement && 
@@ -205,3 +208,6 @@ function posTop() {
             document.documentElement.scrollTop : 
             document.body.scrollTop ? document.body.scrollTop : 0;
 } 
+
+})(jQuery);
+

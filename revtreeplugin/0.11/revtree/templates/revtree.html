@@ -14,19 +14,22 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>${rt.title}</title>
     <script type="text/javascript">
-    function updateLimits() {
-      $('#period').enable($('#limperiod').checked());
-      $('#revmin').enable($('#limrev').checked());
-      $('#revmax').enable($('#limrev').checked());
-    }
-    $(document).ready(function() {
+    
+    (function($){
+      window.updateLimits = function() {
+        $('#period').enable($('#limperiod').checked());
+        $('#revmin').enable($('#limrev').checked());
+        $('#revmax').enable($('#limrev').checked());
+      }
+    })(jQuery);
+    jQuery(document).ready(function($) {
       $("#limits input[@name='limits']").click(function() { 
           updateLimits(); 
-          });
-       JT_init();
-       updateLimits();
-     // the following function is required for Safari to operate properly
-     $(window).unload(function(){JT_hide()});
+      });
+      JT_init();
+      updateLimits();
+      // the following function is required for Safari to operate properly
+      $(window).unload(function(){JT_hide()});
     });
     </script>    
   </head>
