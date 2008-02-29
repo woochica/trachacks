@@ -3,6 +3,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_style
 from trac.web.main import IRequestHandler
 from trac.util import Markup, TracError
 from trac.util.text import to_unicode
+import re
 
 import xmlrpclib, pkg_resources
 
@@ -48,9 +49,18 @@ class BuildBotPlugin(Component):
 
 	# IRequestHandler methods
 	def match_request(self, req):
-		return req.path_info == '/buildbot'
+		match = re.match(r'/buildbot(/([^\/]*))?(/(\d+))?$', req.path_info)
+		if match:
+			if match.group(2):
+				req.args['builder'] = match.group(2)
+				if match.group(4):
+					req.args['buildnum'] = match.group(4)
+			return True
+		return False
 
-	def get_builders(self):
+
+
+	def get_builders(self, req):
 		server = None
 		try:
 			server = self.get_server()
@@ -62,7 +72,7 @@ class BuildBotPlugin(Component):
 			lastbuild = server.getLastBuilds(builder,1)[0]
 			build = { 'name' : builder,
 				'status' : server.getStatus(builder),
-				'url' : self.get_builder_url(builder),
+				'url' : req.href.buildbot(builder),
 				'lastbuild' : lastbuild[1],
 				'lastbuildurl' : self.get_build_url(builder, lastbuild[1])
 				}
@@ -70,13 +80,39 @@ class BuildBotPlugin(Component):
 
 		return ret
 
+	def get_last_builds(self, builder):
+		server = None
+		builds = None
+		try:
+			server = self.get_server()
+			builds = server.getLastBuilds(builder, 5)
+		except:
+			raise TracError("Can't get builder %s on url %s" % (builder, self.get_xmlrpc_url()))
+		#last build first
+		builds.reverse()
+		ret = []
+		for build in  builds:
+			thisbuild = { 'status' : build[5],
+				'number' : build[1],
+				'url' : self.get_build_url(builder, build[1])
+				}
+			ret.append(thisbuild)
+
+		return ret
+
+
 
 	def process_request(self, req):
-		add_stylesheet(req, 'trackbb/trackbb.css')
+		if not req.args.has_key('builder'):
+			req.hdf['title'] = 'BuildBot'
 
-		req.hdf['title'] = 'BuildBot'
-		req.hdf['bb.baseLink'] = self.env.href.buildbot()
+			req.hdf['bb.builders'] = self.get_builders(req)
 
-		req.hdf['bb.builders'] = self.get_builders()
-
-		return 'tracbb_overview.cs', None
+			return 'tracbb_overview.cs', None
+		else:
+			builder = req.args['builder']
+			builds = self.get_last_builds(builder)
+			req.hdf['title'] = 'Builder ' + builder
+			req.hdf['bb.builder'] = builder
+			req.hdf['bb.builds'] = builds
+			return 'tracbb_builder.cs', None
