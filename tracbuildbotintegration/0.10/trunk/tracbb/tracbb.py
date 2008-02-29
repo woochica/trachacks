@@ -13,13 +13,14 @@ class BuildBotPlugin(Component):
 	implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
 	def get_buildbot_url(self):
-		return self.config.get("buildbot", "url")
+		url=self.config.get("buildbot", "url")
+		return url.strip('/')
 
 	def get_xmlrpc_url(self):
-		return self.config.get("buildbot", "url") + "/xmlrpc"
+		return self.get_buildbot_url() + "/xmlrpc"
 
 	def get_builder_url(self, builder_name):
-		return self.config.get("buildbot", "url") + "/builders/" + builder_name
+		return self.get_buildbot_url() + "/builders/" + builder_name
 
 	def get_build_url(self, builder_name, build_number):
 		return ("%s/builds/%d" % (self.get_builder_url(builder_name), build_number))
@@ -49,7 +50,7 @@ class BuildBotPlugin(Component):
 	def match_request(self, req):
 		return req.path_info == '/buildbot'
 
-	def getBuilders(self):
+	def get_builders(self):
 		server = None
 		try:
 			server = self.get_server()
@@ -76,6 +77,6 @@ class BuildBotPlugin(Component):
 		req.hdf['title'] = 'BuildBot'
 		req.hdf['bb.baseLink'] = self.env.href.buildbot()
 
-		req.hdf['bb.builders'] = self.getBuilders()
+		req.hdf['bb.builders'] = self.get_builders()
 
 		return 'tracbb_overview.cs', None
