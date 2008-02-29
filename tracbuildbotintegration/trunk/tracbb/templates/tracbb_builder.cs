@@ -9,7 +9,7 @@
 <?cs else ?>
 	<img src="<?cs var:chrome.href ?>/tracbb/bberror.png" border="0"/> 
 <?cs /if ?>
-   <a href="<?cs var:build.url ?>">build #<?cs var:build.number ?></a>
+<a href="<?cs var:build.url ?>">build #<?cs var:build.number ?></a>
 </p>
 <?cs /each ?>
 </div>
