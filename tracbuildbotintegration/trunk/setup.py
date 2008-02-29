@@ -1,6 +1,6 @@
 #! /bin/env python
 #
-# Copyright (C) 2008 Etienne PIERRE <e.ti.n.pierre@gmail.com>
+# Copyright (C) 2008 Etienne PIERRE <e.ti.n.pierre_AT_gmail.com>
 #
 # TracBuildbot is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Author: Etienne PIERRE <e.ti.n.pierre@gmail.com>
+# Author: Etienne PIERRE <e.ti.n.pierre_AT_gmail.com>
 from setuptools import setup
 
 from tracbb import __version__ as VERSION
