@@ -98,7 +98,7 @@ class WorkLogTicketAddon(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         match = re.match(r'/ticket/([0-9]+)$', req.path_info)
-        if match:
+        if match and req.perm.has_permission('WORK_LOG'):
             ticket = int(match.group(1))
             add_script(req, 'worklog/jqModal.js')
             add_stylesheet(req, 'worklog/jqModal.css')

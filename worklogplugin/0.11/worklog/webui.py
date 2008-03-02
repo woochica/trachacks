@@ -6,6 +6,7 @@ from usermanual import *
 from manager import WorkLogManager
 from trac.log import logger_factory
 from trac.core import *
+from trac.perm import IPermissionRequestor
 from trac.web import IRequestHandler, IRequestFilter
 from trac.util.datefmt import format_date, format_time
 from trac.util import Markup
@@ -17,10 +18,14 @@ from trac.wiki.formatter import wiki_to_html
 from trac.util.text import CRLF
 
 class WorkLogPage(Component):
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider, IRequestFilter)
+    implements(IPermissionRequestor, INavigationContributor, IRequestHandler, ITemplateProvider, IRequestFilter)
 
     def __init__(self):
         pass
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['WORK_LOG', ('WORK_VIEW', ['WORK_LOG']), ('WORK_ADMIN', ['WORK_VIEW'])]
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -31,7 +36,7 @@ class WorkLogPage(Component):
 
     def get_navigation_items(self, req):
         url = req.href.worklog()
-        if req.perm.has_permission("REPORT_VIEW"):
+        if req.perm.has_permission("WORK_VIEW"):
             yield 'mainnav', "worklog", \
                   Markup('<a href="%s">%s</a>' % \
                          (url , "Work Log"))

@@ -13,7 +13,7 @@ class WorklogAdminPage(TicketAdminPage):
     _label = ('Work Log', 'Work Log')
 
     def _render_admin_panel(self, req, cat, page, component):
-        req.perm.require('TICKET_ADMIN')
+        req.perm.require('TICKET_ADMIN') and req.perm.require('WORK_ADMIN') 
 
         bools = [ "timingandestimation", "comment",
                   "autostop", "autostopstart", "autoreassignaccept" ]

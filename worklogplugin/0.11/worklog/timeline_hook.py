@@ -18,8 +18,9 @@ class WorkLogTimelineAddon(Component):
     # ITimelineEventProvider methods
 
     def get_timeline_filters(self, req):
-        yield ('workstart', 'Work started', True)
-        yield ('workstop', 'Work stopped', True)
+        if req.perm.has_permission('WORK_VIEW'):
+            yield ('workstart', 'Work started', True)
+            yield ('workstop', 'Work stopped', True)
 
     def get_timeline_events(self, req, start, stop, filters):
         # Worklog changes
