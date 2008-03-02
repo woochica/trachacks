@@ -20,3 +20,32 @@ div.controls div.field
 {
   display: inline;
 }
+
+span.thumbnail > a > img
+{
+  display: inline;
+  margin: 0em;
+  padding: 0em;
+}
+
+span.thumbnail > a
+{
+  display: inline-block;
+  border-color: #b00;
+  border-style: solid;
+  padding: 0em;
+  margin: 0.2em;
+}
+
+span.thumbnail > span.description
+{
+  display: inline-block;
+}
+
+span.thumbnail
+{
+  display: inline-block;
+  padding: 1em;
+  font-size: 75%;
+  vertical-align: middle;
+}

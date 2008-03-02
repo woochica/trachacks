@@ -60,7 +60,11 @@ class ScreenshotsCore(Component):
     # IPermissionRequestor methods.
 
     def get_permission_actions(self):
-        return ['SCREENSHOTS_VIEW', 'SCREENSHOTS_FILTER', 'SCREENSHOTS_ADMIN']
+        view = 'SCREENSHOTS_VIEW'
+        filter = ('SCREENSHOTS_FILTER', ['SCREENSHOTS_VIEW'])
+        admin = ('SCREENSHOTS_ADMIN', ['SCREENSHOTS_FILTER',
+          'SCREENSHOTS_VIEW'])
+        return [view, filter, admin]
 
     # ITemplateProvider methods.
 
@@ -479,19 +483,29 @@ class ScreenshotsCore(Component):
         return image.file, filename
 
     def _get_enabled_components(self, req):
-        # Check if session is initialized.
-        if not req.session.has_key('enabled_components'):
-            req.session['enabled_components'] = str(self.default_components \
-              .split())
-
-        # Return enabled components from session.
-        return eval(req.session.get('enabled_components'))
+        if req.perm.has_permission('SCREENSHOTS_FILTER'):
+            # Return existing filter from session or create default.
+            if req.session.has_key('enabled_components'):
+                return eval(req.session.get('enabled_components'))
+            else:
+                enabled_components = self.default_components.split()
+                req.session['enabled_components'] = str(enabled_components)
+                return enabled_components
+        else:
+            # Users without SCREENSHOTS_FILTER permission uses
+            # 'default_components' configuration option.
+            return self.default_components.split()
 
     def _get_enabled_versions(self, req):
-        # Check if session is initialized.
-        if not req.session.has_key('enabled_versions'):
-            req.session['enabled_versions'] = str(self.default_versions \
-              .split())
-
-        # Return enabled versions from session.
-        return eval(req.session.get('enabled_versions'))
+        if req.perm.has_permission('SCREENSHOTS_FILTER'):
+            # Return existing filter from session or create default.
+            if req.session.has_key('enabled_versions'):
+                return eval(req.session.get('enabled_versions'))
+            else:
+                enabled_versions = self.default_versions.split()
+                req.session['enabled_versions'] = str(enabled_versions)
+                return enabled_versions
+        else:
+            # Users without SCREENSHOTS_FILTER permission uses
+            # 'default_versions' configuration option.
+            return self.default_versions.split()
