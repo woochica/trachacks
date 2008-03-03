@@ -61,7 +61,7 @@ class ExtendedTicketCustomizer(Component):
             field, prop = option.split('.')
             if field == 'type':
                 template = 'efp_' + template
-             if prop == 'label':
+            if prop == 'label':
                 req.hdf['%s.fields.%s.label' % (place, field, )] = value
             elif prop == 'skip' and config.getbool(option):
                 req.hdf['%s.fields.%s.skip' % (place, field, )] = True
