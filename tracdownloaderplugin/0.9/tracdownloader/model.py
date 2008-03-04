@@ -15,6 +15,7 @@ import time
 import string
 import locale
 
+from trac.web import RequestDone
 from string import *
 from tracdownloader import form_data
 from trac.core import *
@@ -635,11 +636,12 @@ class File(object):
     def serve_file(self, req):
         """Find, open, find mime type and serve file to user."""
         
+        """ Old way for serving file to user.
         try:
             file_obj = file(self.file, "rb")
         except IOError:
             raise TracError, 'Sorry. Error reading the file ' + self.file + '.'
-        
+        """
         mime = MimeTypes(self.env).dict
         mime_type = 'application/octet-stream'
         
@@ -650,10 +652,11 @@ class File(object):
             if mime.has_key(ext):
                 mime_type = mime[ext]
         
+        """ Old way for serving file to user.
         req.send_response(200)
         req.send_header('Content-Type', mime_type)
         req.end_headers()
-
+        
         # Serve file kilobyte by kilobyte
         while True:
             part = file_obj.read(1024)
@@ -662,6 +665,9 @@ class File(object):
             req.write(part)
             
         file_obj.close()
+        """
+        # Serve file to user
+        req.send_file(self.file, mime_type)
     
     def delete(self):
         """Deletes this File."""
