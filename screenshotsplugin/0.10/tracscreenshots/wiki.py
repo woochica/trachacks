@@ -95,7 +95,9 @@ class ScreenshotsWiki(Component):
                   attributes['description'], screenshot)
 
                 # Make copy of attributes for image tag.
-                img_attributes = {}
+                img_attributes = {'align' : 'center',
+                                  'style' : 'border-width: %spx;' % (
+                                    attributes['border'],)}
                 for attribute in attributes.keys():
                     if attribute not in ('align', 'border', 'description',
                       'format'):
@@ -109,13 +111,16 @@ class ScreenshotsWiki(Component):
                   width = attributes['width'], height = attributes['height'],
                   format = 'raw'), **img_attributes)
                 link = html.a(image, href = req.href.screenshots(screenshot['id'],
-                  format = attributes['format']), title = screenshot['description'],
-                  style = 'border-width: %spx;' % (attributes['border']))
+                  format = attributes['format']), title =
+                  screenshot['description'])
                 description = html.span(attributes['description'], class_ =
                   'description')
-                thumbnail = html.span(link, description, class_ = 'thumbnail',
-                  style = 'float: %s; width: %dpx;' % (attributes['align'],
-                  int(attributes['width']) + 2 * int(attributes['border'])))
+                thumbnail_class = 'thumbnail' + ((attributes['align'] == 'left')
+                  and '-left' or (attributes['align'] == 'right') and '-right'
+                  or '')
+                thumbnail = html.span(link, ' ', description, class_ =
+                  thumbnail_class, style = "width: %spx;" % (
+                  int(attributes['width']) + 2 * int(attributes['border'],)))
                 return thumbnail
             else:
                 return html.a(screenshot_id, href = req.href.screenshots(),

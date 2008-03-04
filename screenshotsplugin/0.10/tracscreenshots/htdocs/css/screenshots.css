@@ -21,9 +21,13 @@ div.controls div.field
   display: inline;
 }
 
+
+/* Wiki [[Screenshot()]] macro styles. */
 span.thumbnail > a > img
 {
   display: inline;
+  border-color: #b00;
+  border-style: solid;
   margin: 0em;
   padding: 0em;
 }
@@ -31,10 +35,9 @@ span.thumbnail > a > img
 span.thumbnail > a
 {
   display: inline-block;
-  border-color: #b00;
-  border-style: solid;
-  padding: 0em;
+  border: 0px none;
   margin: 0.2em;
+  padding: 0em;
 }
 
 span.thumbnail > span.description
@@ -42,11 +45,22 @@ span.thumbnail > span.description
   display: inline-block;
 }
 
-span.thumbnail
+span.thumbnail, span.thumbnail-left, span.thumbnail-right
 {
   display: inline-block;
-  padding: 1em;
+  margin: 1em;
+  padding: 0em;
   font-size: 75%;
   text-align: center;
   vertical-align: middle;
+}
+
+span.thumbnail-left
+{
+  float: left;
+}
+
+span.thumbnail-right
+{
+  float: right;
 }
