@@ -60,7 +60,7 @@
     </tr>
   </py:match>
   <py:match path="//div/table[@class='listing tickets']" once="true">
-    <form id="create" method="post" action="/tasklist">
+    <form id="create" method="post" action="${href.tasklist()}">
       <table class="listing tickets">
         ${select('*|text()')}
       </table>
