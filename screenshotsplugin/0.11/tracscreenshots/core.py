@@ -5,8 +5,9 @@ from datetime import *
 
 from trac.core import *
 from trac.mimeview import Context
-from trac.config import Option
-from trac.web.chrome import add_stylesheet, add_script
+from trac.config import Option, ListOption
+from trac.web.chrome import add_stylesheet, add_script, format_to_oneliner, \
+  pretty_timedelta
 from trac.util.html import html
 from trac.util.text import to_unicode
 
@@ -41,27 +42,31 @@ class ScreenshotsCore(Component):
 
     # Configuration options.
     mainnav_title = Option('screenshots', 'mainnav_title', 'Screenshots',
-      'Main navigation bar button title.')
+      doc = 'Main navigation bar button title.')
     metanav_title = Option('screenshots', 'metanav_title', '',
-      'Meta navigation bar link title.')
+      doc = 'Meta navigation bar link title.')
     path = Option('screenshots', 'path', '/var/lib/trac/screenshots',
-      'Path where to store uploaded screenshots.')
-    ext = Option('screenshots', 'ext', 'jpg png',
-      'List of screenshot file extensions that can be uploaded. Must be'
+      doc = 'Path where to store uploaded screenshots.')
+    ext = ListOption('screenshots', 'ext', 'jpg,png',
+      doc = 'List of screenshot file extensions that can be uploaded. Must be'
       ' supported by PIL.')
-    formats = Option('screenshots', 'formats', 'raw html jpg png',
-      'List of allowed formats for screenshot download.')
+    formats = ListOption('screenshots', 'formats', 'raw,html,jpg,png',
+      doc = 'List of allowed formats for screenshot download.')
     default_format = Option('screenshots', 'default_format', 'html',
-      'Default format for screenshot download links.')
-    default_components = Option('screenshots', 'default_components', 'none',
-      'List of components enabled by default.')
-    default_versions = Option('screenshots', 'default_versions', 'none',
-      'List of versions enabled by default.')
+      doc = 'Default format for screenshot download links.')
+    default_components = ListOption('screenshots', 'default_components', 'none',
+      doc = 'List of components enabled by default.')
+    default_versions = ListOption('screenshots', 'default_versions', 'none',
+      doc = 'List of versions enabled by default.')
 
     # IPermissionRequestor methods.
 
     def get_permission_actions(self):
-        return ['SCREENSHOTS_VIEW', 'SCREENSHOTS_FILTER', 'SCREENSHOTS_ADMIN']
+        view = 'SCREENSHOTS_VIEW'
+        filter = ('SCREENSHOTS_FILTER', ['SCREENSHOTS_VIEW'])
+        admin = ('SCREENSHOTS_ADMIN', ['SCREENSHOTS_FILTER',
+          'SCREENSHOTS_VIEW'])
+        return [view, filter, admin]
 
     # ITemplateProvider methods.
 
@@ -166,7 +171,7 @@ class ScreenshotsCore(Component):
                 height =  int(context.req.args.get('height') or 0)
 
                 # Check if requested format is allowed.
-                if not format in self.formats.split():
+                if not format in self.formats:
                     raise TracError('Requested screenshot format that is not'
                       ' allowed.', 'Requested format not allowed.')
 
@@ -246,7 +251,7 @@ class ScreenshotsCore(Component):
                 reg = re.compile(r'^(.*)[.](.*)$')
                 result = reg.match(filename)
                 if result:
-                    if not result.group(2).lower() in self.ext.split():
+                    if not result.group(2).lower() in self.ext:
                         raise TracError('Unsupported uploaded file type.')
                 else:
                     raise TracError('Unsupported uploaded file type.')
@@ -447,9 +452,25 @@ class ScreenshotsCore(Component):
                     raise TracError('No screenshots renderer enabled. Enable'
                       ' at least one.', 'No screenshots renderer enabled')
 
+                # Get all available components and versions.
+                components = [self.none_component] + api.get_components(
+                  context.cursor)
+                versions = [self.none_version] + api.get_versions(
+                  context.cursor)
+
                 # Get enabled components and versions from request or session.
                 enabled_components = self._get_enabled_components(context.req)
                 enabled_versions = self._get_enabled_versions(context.req)
+                if 'all' in enabled_components:
+                    enabled_components = [component['name'] for component in
+                    components]
+                if 'all' in enabled_versions:
+                    enabled_versions = [version['name'] for version in
+                    versions]
+
+                self.log.debug(enabled_components)
+
+                # Filter screenshots.
                 screenshots = api.get_filtered_screenshots(context,
                   enabled_components, enabled_versions)
 
@@ -461,10 +482,8 @@ class ScreenshotsCore(Component):
 
                 # Fill data dictionary.
                 self.data['id'] = screenshot_id
-                self.data['components'] = [self.none_component] + \
-                  api.get_components(context)
-                self.data['versions'] = [self.none_version] + \
-                  api.get_versions(context)
+                self.data['components'] = components
+                self.data['versions'] = versions
                 self.data['screenshots'] = screenshots
                 self.data['href'] = context.req.href.screenshots()
                 self.data['enabled_versions'] = enabled_versions
@@ -508,19 +527,31 @@ class ScreenshotsCore(Component):
         return image.file, filename
 
     def _get_enabled_components(self, req):
-        # Check if session is initialized.
-        if not req.session.has_key('enabled_components'):
-            req.session['enabled_components'] = str(self.default_components \
-              .split())
-
-        # Return enabled components from session.
-        return eval(req.session.get('enabled_components'))
+        if req.perm.has_permission('SCREENSHOTS_FILTER'):
+            # Return existing filter from session or create default.
+            if req.session.has_key('enabled_components'):
+                components = eval(req.session.get('enabled_components'))
+            else:
+                components = self.default_components
+                req.session['enabled_components'] = str(components)
+        else:
+            # Users without SCREENSHOTS_FILTER permission uses
+            # 'default_components' configuration option.
+            components = self.default_components
+        self.log.debug('enabled_components: %s' % (components,))
+        return components
 
     def _get_enabled_versions(self, req):
-        # Check if session is initialized.
-        if not req.session.has_key('enabled_versions'):
-            req.session['enabled_versions'] = str(self.default_versions \
-              .split())
-
-        # Return enabled versions from session.
-        return eval(req.session.get('enabled_versions'))
+        if req.perm.has_permission('SCREENSHOTS_FILTER'):
+            # Return existing filter from session or create default.
+            if req.session.has_key('enabled_versions'):
+                versions = eval(req.session.get('enabled_versions'))
+            else:
+                versions = self.default_versions
+                req.session['enabled_versions'] = str(versions)
+        else:
+            # Users without SCREENSHOTS_FILTER permission uses
+            # 'default_versions' configuration option.
+            versions = self.default_versions
+        self.log.debug('enabled_versions: %s' % (versions,))
+        return versions

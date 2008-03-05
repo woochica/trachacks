@@ -8,6 +8,7 @@ from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.web.chrome import add_stylesheet, add_script
 from trac.util.html import html
 from trac.util.text import to_unicode
+from trac.util.datefmt import format_datetime
 
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 
@@ -15,7 +16,41 @@ from tracscreenshots.api import *
 
 class ScreenshotsWiki(Component):
 
-    screenshot_macro_doc = ""
+    screenshot_macro_doc = """Allows embed screenshot image in wiki page.
+First mandatory argument is ID of the screenshot. Number or image attributes
+can be specified next:
+
+ * {{{align}}} - Specifies image alignment in wiki page. Possible values are:
+   {{{left}}}, {{{right}}} and {{{center}}}.
+ * {{{alt}}} - Alternative description of image.
+ * {{{border}}} - Sets image border of specified width in pixels.
+ * {{{class}}} - Class of image for CSS styling.
+ * {{{description}}} - Brief description under the image. Accepts several
+   variables (see bellow).
+ * {{{format}}} - Format of returned image or screenshot behind link.
+ * {{{height}}} - Height of image. Set to 0 if you want original image height.
+ * {{{id}}} - ID of image for CSS styling.
+ * {{{longdesc}}} - Detailed description of image.
+ * {{{title}}} - Title of image.
+ * {{{usemap}}} - Image map for clickable images.
+ * {{{width}}} - Width of image. Set to 0 if you want original image width.
+
+Attribute {{{description}}} displays several variables:
+
+ * {{{$id}}} - ID of image.
+ * {{{$name}}} - Name of image.
+ * {{{$author}}} - User name who uploaded image.
+ * {{{$time}}} - Time when image was uploaded.
+ * {{{$file}}} - File name of image.
+ * {{{$description}}} - Detailed description of image.
+ * {{{$width}}} - Original width of image.
+ * {{{$height}}} - Original height of image.
+
+Example:
+
+{{{
+ [[Screenshot(2,width=400,height=300,description=The $name by $author: $description,align=left)]]
+}}}"""
 
     """
         The wiki module implements macro for screenshots referencing.
@@ -52,6 +87,11 @@ class ScreenshotsWiki(Component):
 
     def render_macro(self, req, name, content):
         if name == 'Screenshot':
+            # Check permission.
+            if not req.perm.has_permission('SCREENSHOTS_VIEW'):
+               return html.div('No permissions to see screenshots.',
+               class_ = 'system-message')
+
             # Get database access.
             db = self.env.get_db_cnx()
             cursor = db.cursor()
@@ -164,7 +204,8 @@ class ScreenshotsWiki(Component):
         description = description.replace('$name', screenshot['name'])
         description = description.replace('$file',
           to_unicode(screenshot['file']))
-        description = description.replace('$time', screenshot['time'])
+        description = description.replace('$time', format_datetime(
+          screenshot['time']))
         description = description.replace('$author', screenshot['author'])
         description = description.replace('$description',
           screenshot['description'])

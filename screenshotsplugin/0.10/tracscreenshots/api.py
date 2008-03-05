@@ -102,16 +102,6 @@ class ScreenshotsApi(Component):
             row = dict(zip(columns, row))
             return row
 
-    def _format_screenshot(self, screenshot):
-        #screenshot['author'] = wiki_to_oneliner(screenshot['author'], self.env)
-        #screenshot['name'] = wiki_to_oneliner(screenshot['name'], self.env)
-        #screenshot['description'] = wiki_to_oneliner(screenshot['description'],
-        #  self.env)
-        screenshot['width'] = int(screenshot['width'])
-        screenshot['height'] = int(screenshot['height'])
-        screenshot['time'] = pretty_timedelta(screenshot['time'])
-        return screenshot
-
     def get_screenshot(self, cursor, id):
         # Get screenshot from database.
         screenshot = self._get_item(cursor, 'screenshot', ('id', 'name',
@@ -124,7 +114,7 @@ class ScreenshotsApi(Component):
               screenshot['id'])
             screenshot['versions'] = self.get_screenshot_versions(cursor,
               screenshot['id'])
-            return self._format_screenshot(screenshot)
+            return screenshot
         else:
             return None
 
@@ -135,11 +125,14 @@ class ScreenshotsApi(Component):
           'time = %s', (time,))
 
         # Append components and versions.
-        screenshot['components'] = self.get_screenshot_components(cursor,
-          screenshot['id'])
-        screenshot['versions'] = self.get_screenshot_versions(cursor,
-          screenshot['id'])
-        return self._format_screenshot(screenshot)
+        if screenshot:
+            screenshot['components'] = self.get_screenshot_components(cursor,
+              screenshot['id'])
+            screenshot['versions'] = self.get_screenshot_versions(cursor,
+              screenshot['id'])
+            return screenshot
+        else:
+            return None
 
     def get_screenshot_components(self, cursor, id):
         sql = 'SELECT component FROM screenshot_component WHERE screenshot = %s'

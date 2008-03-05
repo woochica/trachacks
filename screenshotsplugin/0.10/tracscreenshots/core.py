@@ -7,7 +7,7 @@ from trac.config import Option, ListOption
 from trac.web.main import populate_hdf
 from trac.web.chrome import Chrome, add_stylesheet, add_script
 from trac.web.clearsilver import HDFWrapper
-from trac.util import Markup, format_datetime, TracError
+from trac.util import format_datetime, pretty_timedelta, TracError
 from trac.util.html import html
 
 from trac.web.main import IRequestHandler
@@ -119,8 +119,6 @@ class ScreenshotsCore(Component):
         req.hdf['screenshots.title'] = self.mainnav_title or self.metanav_title
         req.hdf['screenshots.has_tags'] = self.env.is_component_enabled(
           'tracscreenshots.tags.ScreenshotsTags')
-        #req.hdf['screenshots.has_tags'] = self.config.get('components',
-        #  'tracscreenshots.tags.screenshotstags') == 'enabled'
         return template, content_type
 
     # Internal functions.
@@ -166,8 +164,6 @@ class ScreenshotsCore(Component):
                 width = int(req.args.get('width') or 0)
                 height =  int(req.args.get('height') or 0)
 
-                self.log.debug(self.formats)
-
                 # Check if requested format is allowed.
                 if not format in self.formats:
                     raise TracError('Requested screenshot format that is not allowed.',
@@ -182,6 +178,9 @@ class ScreenshotsCore(Component):
                     height = height or screenshot['height']
 
                     if format == 'html':
+                        # Format screenshot attributes.
+                        screenshot['time'] = pretty_timedelta(screenshot['time'])
+
                         # Prepare data dictionary.
                         data['screenshot'] = screenshot
 
