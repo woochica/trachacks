@@ -1,0 +1,15 @@
+This is russian half-translation of Trac 0.10.4.
+Only user interface translated (most error and logging stil has eng description).
+
+Unzip & untar to temp dir, make backup of destination folders and copy there.
+
+I have Ubuntu and next paths...
+
+/usr/share/python-support/trac/trac/ - trac.tar.gz
+/usr/share/trac/templates/ -  templates.tar.gz
+/usr/share/trac/htdocs/ - htdocs.tar.gz
+
+Good luck! (:
+
+Roman,
+ grundic2@gmail.com
