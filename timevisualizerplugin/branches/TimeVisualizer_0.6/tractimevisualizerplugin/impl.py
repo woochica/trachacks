@@ -394,30 +394,34 @@ if __name__ == "__main__":
 def process_request(plugin, req):
     """Renders a svg graph based on request attributes and returns a http response (or traceback in case of error)"""
 
-    old_sys_stdout = sys.stdout
+    req.send_response(200)
+    req.send_header('Content-Type', "image/svg+xml")
+    req.send_header('Last-Modified', trac.util.datefmt.http_date(time.time()))
+    req.end_headers()
 
-    import tractimevisualizerplugin
-    if tractimevisualizerplugin.DEVELOPER_MODE:
-        sys.stdout = StringIO.StringIO()
-    else:
-        sys.stdout = NullOut()
-    try:
-        req.send_response(200)
-        req.send_header('Content-Type', "image/svg+xml")
-        req.send_header('Last-Modified', trac.util.datefmt.http_date(time.time()))
-        req.end_headers()
+    if req.method != 'HEAD':
+        db = plugin.env.get_db_cnx()
+        args = req.args.copy()
+        if not args.get('calc_fields'):
+            args['calc_fields'] = plugin.env.config.get('timevisualizer','calc_fields','estimatedhours-totalhours')
+        if not args.get('time_format'):
+            args['time_format'] = plugin.env.config.get('timevisualizer','time_format', None)
 
-        if req.method != 'HEAD':
-            db = plugin.env.get_db_cnx()
-            args = req.args.copy()
-            if not args.get('calc_fields'):
-                args['calc_fields'] = plugin.env.config.get('timevisualizer','calc_fields','estimatedhours-totalhours')
-            if not args.get('time_format'):
-                args['time_format'] = plugin.env.config.get('timevisualizer','time_format', None)
-            req.write(build_svg(db, args))
-        raise trac.web.RequestDone
-    finally:
-        log = sys.stdout
-        sys.stdout = old_sys_stdout
-        if isinstance(log, StringIO.StringIO):
-            plugin.log.debug(log.getvalue())
+        old_sys_stdout = sys.stdout
+        import tractimevisualizerplugin
+        if tractimevisualizerplugin.DEVELOPER_MODE:
+            sys.stdout = StringIO.StringIO()
+        else:
+            sys.stdout = NullOut()
+
+        svg = None
+        try:
+            svg = build_svg(db, args)
+        finally:
+            log = sys.stdout
+            sys.stdout = old_sys_stdout
+            if isinstance(log, StringIO.StringIO):
+                plugin.log.debug(log.getvalue())
+        if svg:
+            req.write(svg)
+    raise trac.web.RequestDone
