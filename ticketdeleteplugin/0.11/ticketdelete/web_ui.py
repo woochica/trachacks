@@ -2,12 +2,12 @@
 
 from trac import __version__ as TRAC_VERSION
 from trac import ticket
+from trac.admin.api import IAdminPanelProvider
 from trac.core import *
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.util import sorted
 
-from webadmin.web_ui import IAdminPageProvider
 import re
 import traceback
 import pprint
@@ -18,7 +18,7 @@ __all__ = ['TicketDeletePlugin']
 class TicketDeletePlugin(Component):
     """A small ticket deletion plugin."""
     
-    implements(ITemplateProvider, IAdminPageProvider, IRequestFilter)
+    implements(ITemplateProvider, IAdminPanelProvider, IRequestFilter)
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -31,9 +31,9 @@ class TicketDeletePlugin(Component):
             add_stylesheet(req, 'ticketdelete/ticketdelete.css')
         return template, content_type
  
-    # IAdminPageProvider methods
-    def get_admin_pages(self, req):
-        if req.perm.has_permission('TICKET_ADMIN'):
+    # IAdminPanelProvider methods
+    def get_admin_panels(self, req):
+        if 'TICKET_ADMIN' in req.perm:
             yield ('ticket', 'Ticket System', 'delete', 'Delete')
             yield ('ticket', 'Ticket System', 'comments', 'Delete Changes')
             
