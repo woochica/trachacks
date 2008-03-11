@@ -47,7 +47,8 @@ class ChecklistUpdaterComponent(Component):
 
     def process_request(self, req):
         try:
-            context = req.args.get('__context__')
+            args = dict(req.args)
+            context = args.pop('__context__', None)
             if context is None:
                 raise BadRequest('__context__ is required')
         except Exception, e:
@@ -64,5 +65,4 @@ class ChecklistUpdaterComponent(Component):
             req.send_header('Content-Type', 'text/plain')
             req.end_headers()
             req.write('OK')
-
 
