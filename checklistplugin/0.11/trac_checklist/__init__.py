@@ -4,5 +4,5 @@
 #   Adds database backed checklists to anywhere there's a wiki!
 #
 
-from trac_plugin import *
+from updater import ChecklistUpdaterComponent
 
