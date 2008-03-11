@@ -1,4 +1,4 @@
-<?cs include "header.cs"?>
+<?cs include "tracbb_header.cs"?>
 <div id="content">
 <h1><?cs var:bb.builder ?> Status Page</h1>
 <h2>Builders</h2>

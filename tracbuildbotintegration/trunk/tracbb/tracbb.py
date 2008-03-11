@@ -103,6 +103,7 @@ class BuildBotPlugin(Component):
 
 
 	def process_request(self, req):
+		req.hdf['buildbot.url'] = self.get_buildbot_url()
 		if not req.args.has_key('builder'):
 			req.hdf['title'] = 'BuildBot'
 
