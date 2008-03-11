@@ -6,4 +6,5 @@
 
 from db import ChecklistDBComponent
 from updater import ChecklistUpdaterComponent
+from macros import ChecklistMacro
 
