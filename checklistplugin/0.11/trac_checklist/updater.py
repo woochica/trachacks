@@ -63,7 +63,9 @@ class ChecklistUpdaterComponent(Component):
                 fields = (fields,)
             for name in set(fields):
                 value = bool(args.get(name)) and 'on' or ''
-                self.updateField(context, name, value, who)
+                oldvalue = bool(args.get('old:' + name)) and 'on' or ''
+                if value != oldvalue:
+                    self.updateField(context, name, value, who)
         except Exception, e:
             code = getattr(e, '__http_status__', 500)
             msg = str(e)

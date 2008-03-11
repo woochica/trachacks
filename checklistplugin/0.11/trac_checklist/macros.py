@@ -5,7 +5,7 @@
 from genshi.builder import tag
 
 from trac.wiki.macros import WikiMacroBase
-from trac.wiki.formatter import Formatter
+from trac.wiki.formatter import Formatter, extract_link
 from trac.util.html import Markup
 from trac.core import ExtensionPoint
 
@@ -33,6 +33,17 @@ class ChecklistMacro(WikiMacroBase):
                 break
         text = '\n'.join(lines)
         context = flags.get('context', formatter.req.path_info)
+        # There MUST be an easier way...
+        link = extract_link(formatter.env, formatter.context, context)
+        if link is not None:
+            for op in link.generate():
+                self.log.debug('HERE >>>>>>>>>>>>>> ', str(op))
+                if isinstance(op, tuple):
+                    if op[0] == 'a':
+                        for name, value in op[1]:
+                            if name == 'href':
+                                context = value
+                                break
         section = flags.get('section')
         if section:
             context += '::' + section
@@ -79,6 +90,8 @@ class ChecklistMacro(WikiMacroBase):
         checked = data.get(field, (False, None, None))[0]
         return ''.join((
             '<INPUT type="hidden" name="__fields__" value=%r>' % str(field),
+            '<INPUT type="hidden" name=%r value=%r>' %
+                ('old:' + str(field), checked and 'on' or ''),
             '<INPUT type="checkbox" name=%r' % str(field),
                 checked and ' checked' or '',
                 '>',
