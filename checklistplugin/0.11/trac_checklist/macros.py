@@ -53,23 +53,11 @@ class ChecklistMacro(WikiMacroBase):
         html = ''.join(checklistRE.sub(replacer, self.wikize(formatter, text)))
 
         href = formatter.req.href('checklist/update')
-        action = ''.join(('javascript:',
-            'var formdata={};',
-            'var form=document.getElementById(%r);' % str(id(self)),
-            'for (var idx = 0; idx < form.elements.length; ++idx)',
-            '{ formdata[form.elements[idx].name] = form.elements[idx].value }',
-            'jQuery.ajax({url:%r,data:formdata,complete:' % href,
-            'function(r, s) { alert(r.responseText) },dataType:\'text\'});'
-            ))
-
         return ''.join((
-            '<IFRAME id="if_%s" name="if_%s"' % (id(self), id(self)),
-                ' onload="',
-                    'var t=this.contentDocument.body.textContent;',
-                    'if (t) { alert(t) }"',
-                ' style="display:none"></IFRAME>',
-            '<FORM action="%s" target="if_%s"' % (href, id(self)),
+            '<FORM method="GET" action="%s"' % href,
                 '>',
+            '<INPUT type="hidden" name="__backpath__" value=%r>' 
+                % formatter.req.href(formatter.req.path_info),
             '<INPUT type="hidden" name="__context__" value=%r>' % str(context),
             html,
             not notes.get('submit') and self.op_submit(None, data, notes) or '',

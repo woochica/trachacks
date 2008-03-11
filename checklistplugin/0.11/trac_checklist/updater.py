@@ -53,12 +53,15 @@ class ChecklistUpdaterComponent(Component):
         try:
             self.log.debug('UPDATE ARGS: ' + str(req.args))
             args = dict(req.args)
+            backpath = args.pop('__backpath__', None)
             context = args.pop('__context__', None)
             if context is None:
                 raise BadRequest('__context__ is required')
-            who = 'whoknows'
-            fields = set(args.pop('__fields__', ()))
-            for name in fields:
+            who = str(req.session.sid)
+            fields = args.pop('__fields__', ())
+            if isinstance(fields, basestring):
+                fields = (fields,)
+            for name in set(fields):
                 value = bool(args.get(name)) and 'on' or ''
                 self.updateField(context, name, value, who)
         except Exception, e:
@@ -72,8 +75,13 @@ class ChecklistUpdaterComponent(Component):
             req.end_headers()
             req.write(msg)
         else:
-            req.send_response(200)
-            req.send_header('Content-Type', 'text/plain')
+            if backpath:
+                req.send_response(302)
+                req.send_header('Content-Type', 'text/plain')
+                req.send_header('Location', backpath)
+            else:
+                req.send_response(200)
+                req.send_header('Content-Type', 'text/plain')
             req.end_headers()
             req.write('OK')
 
