@@ -61,11 +61,25 @@ class ChecklistUpdaterComponent(Component):
             fields = args.pop('__fields__', ())
             if isinstance(fields, basestring):
                 fields = (fields,)
+            updates =[]
             for name in set(fields):
                 value = bool(args.get(name)) and 'on' or ''
                 oldvalue = bool(args.get('old:' + name)) and 'on' or ''
+                can_set = args.get('can-set:' + name) or args.get('can-set:*')
+                can_get = args.get('can-get:' + name) or args.get('can-get:*')
+                can_change = args.get('can-change:' + name) \
+                    or args.get('can-change:*')
                 if value != oldvalue:
-                    self.updateField(context, name, value, who)
+                    if value:
+                        perm = can_set or can_change
+                    else:
+                        perm = can_get or can_change
+                    perm = str(perm)
+                    if perm and not req.perm.has_permission(perm):
+                        raise PermissionDenied(
+                            'You must have %r to do this.' % perm)
+                    updates.append((context, name, value, who))
+                self.updateFields(updates)
         except Exception, e:
             code = getattr(e, '__http_status__', 500)
             msg = str(e)
@@ -87,8 +101,8 @@ class ChecklistUpdaterComponent(Component):
             req.end_headers()
             req.write('OK')
 
-    def updateField(self, context, name, value, who):
+    def updateFields(self, updates):
         # Broadcast the updates.
         for observer in self.clobservers:
-            observer.checklist_setValue(context, name, value, who)
+            observer.checklist_updateFields(updates)
 

@@ -16,6 +16,9 @@ class IChecklistDBObserver(Interface):
     def checklist_setValue(context, field, value, who):
         "Adds or updates a value for the context field specified."
 
+    def checklist_updateFields(fields):
+        "Performs setValue calls based on the 4-tuple list fields"
+
 class ChecklistDBComponent(Component):
     implements(IEnvironmentSetupParticipant, IChecklistDBObserver)
 
@@ -61,7 +64,18 @@ class ChecklistDBComponent(Component):
         return result
 
     def checklist_setValue(self, context, field, value, who):
-        when = datetime.now().isoformat(':')
+        self.updateField(context, field, value, who)
+        self.commit()
+
+    def checklist_updateFields(self, fields):
+        for context, field, value, who in fields:
+            self.updateField(context, field, value, who)
+        self.commit()
+
+    #
+    # Database access/update methods
+    def updateField(self, context, field, value, who):
+        when = datetime.now().isoformat(' ')
         self.log.debug('checklist_setValue(%r, %r, %r, %r, %r)' %
             (context, field, value, who, when))
         if self.getValue("""
@@ -70,7 +84,7 @@ class ChecklistDBComponent(Component):
             WHERE   context = %s AND field = %s
             """, context, field):
 
-            self.commit("""
+            self.execute("""
                 UPDATE  checklist_value
                 SET     value = %s,
                         updated_when = %s,
@@ -79,7 +93,7 @@ class ChecklistDBComponent(Component):
                     AND field = %s
                 """, value, when, who, context, field)
         else:
-            self.commit("""
+            self.execute("""
                 INSERT  INTO checklist_value(
                         context, field, value, updated_when, updater)
                 VALUES  (%s, %s, %s, %s, %s)
@@ -175,10 +189,10 @@ class ChecklistDBComponent(Component):
         return cursor
 
     def rollback(self):
-        self.db.rollback()
+        self.env.get_db_cnx().rollback()
 
     def commit(self, sql=None, *params, **kw):
         if sql is not None:
             cursor = self.execute(sql, *params, **kw)
-        self.db.commit()
+        self.env.get_db_cnx().commit()
 

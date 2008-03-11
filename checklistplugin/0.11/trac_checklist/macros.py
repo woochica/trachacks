@@ -45,6 +45,9 @@ class ChecklistMacro(WikiMacroBase):
                                 context = value
                                 break
         section = flags.get('section')
+        can_set = str(flags.get('can-set', ''))
+        can_get = str(flags.get('can-get', ''))
+        can_change = str(flags.get('can-change', ''))
         if section:
             context += '::' + section
         data = self.fetchContext(context)
@@ -54,9 +57,12 @@ class ChecklistMacro(WikiMacroBase):
 
         def replacer(match):
             op, field = match.groups()
-            fn = getattr(self, 'op_' + (op or 'checkbox'), None)
+            op, argstr = (op.split(':', 1) + [''])[:2]
+            fn = getattr(self,
+                'op_' + (op or 'checkbox').replace('-', '_'), None)
             if fn is not None:
-                return fn(field, data, notes)
+                args = [arg.strip() for arg in argstr.split(':')]
+                return fn(field, data, notes, *(arg for arg in args if arg))
             else:
                 return 'ERROR: No function for operation %r' % op
 
@@ -67,6 +73,9 @@ class ChecklistMacro(WikiMacroBase):
         return ''.join((
             '<FORM method="GET" action="%s"' % href,
                 '>',
+            '<INPUT type="hidden" name="can-set:*" value=%r>' % can_set,
+            '<INPUT type="hidden" name="can-get:*" value=%r>' % can_get,
+            '<INPUT type="hidden" name="can-change:*" value=%r>' % can_change,
             '<INPUT type="hidden" name="__backpath__" value=%r>' 
                 % formatter.req.href(formatter.req.path_info),
             '<INPUT type="hidden" name="__context__" value=%r>' % str(context),
@@ -109,5 +118,23 @@ class ChecklistMacro(WikiMacroBase):
         field = str(field or 'Update ' + notes['name'])
         return ''.join((
             '<INPUT type="submit" value=%r>' % field
+            ))
+
+    def op_can_set(self, field, data, notes, right=''):
+        return ''.join((
+            '<INPUT type="hidden" name=%r value=%r>' %
+                ('can-set:' + field, right)
+            ))
+
+    def op_can_get(self, field, data, notes, right=''):
+        return ''.join((
+            '<INPUT type="hidden" name=%r value=%r>' %
+                ('can-get:' + field, right)
+            ))
+
+    def op_can_change(self, field, data, notes, right=''):
+        return ''.join((
+            '<INPUT type="hidden" name=%r value=%r>' %
+                ('can-change:' + field, right)
             ))
 
