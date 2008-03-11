@@ -1,91 +1,43 @@
-# Restricted ticket entry module
+# Created by Noah Kantrowitz on 2008-03-11.
+# Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
 
 from trac.core import *
-from trac.web.chrome import INavigationContributor
-from trac.web import IRequestHandler
-from trac.perm import IPermissionRequestor, PermissionCache
-from trac.util import Markup
-from trac.config import ListOption
-
-from trac.ticket.web_ui import NewticketModule
-
-class PseudoPermCache(PermissionCache):
-    
-    def __init__(self, perm):
-        self.perms = {'TICKET_CREATE': True}
-        if perm.has_permission('TICKET_APPEND'):
-            self.perms['TICKET_APPEND'] = True
-        
-
-class PseudoRequest(object):
-    def __init__(self, env, req):
-        self.env = env
-        self.req = req
-        
-    def __getattr__(self, name):
-        return getattr(self.req,name)
-        
-    def redirect(self, dest):
-        if dest.startswith(self.env.href.ticket()):
-            if not self.req.perm.has_permission('TICKET_VIEW'):
-                self.req.redirect(self.env.href.simpleticket())
-        self.req.redirect(dest)
-        
-    def _perm(self):
-        if self.req.authname == 'anonymous':
-            return PseudoPermCache(self.req.perm)
-        return self.req.perm
-    perm = property(_perm)
+from trac.web.api import IRequestFilter
+from trac.perm import IPermissionRequestor
+from trac.config import ListOption, BoolOption
+from trac.util.compat import set
 
 class SimpleTicketModule(Component):
-    """Restricted ticket entry form."""
+    """A request filter to implement the SimpleTicket reduced ticket entry form."""
     
     hide_fields = ListOption('simpleticket', 'hide', default='',
                              doc='What fields to hide for the simple ticket entry form.')
-                             
-    implements(IRequestHandler, INavigationContributor, IPermissionRequestor)
     
-    # INavigationContributer methods
-    def get_active_navigation_item(self, req):
-        return 'simpleticket'
-        
-    def get_navigation_items(self, req):
-        if req.perm.has_permission('TICKET_CREATE_SIMPLE') and \
-           not req.perm.has_permission('TICKET_CREATE'):
-            yield ('mainnav', 'simpleticket', Markup('<a href="%s" accesskey="7">New Ticket</a>',self.env.href.simpleticket()))
-            
-    # IRequestHandler methods
-    def match_request(self, req):
-        return req.path_info.startswith('/simpleticket')
-        
-    def process_request(self, req):
-        req.perm.assert_permission('TICKET_CREATE_SIMPLE')
-    
-        # Force TICKET_CREATE
-        really_has_perm = req.perm.has_permission('TICKET_CREATE')
-        req.perm.perms['TICKET_CREATE'] = True
-        
-        # Intercept redirects
-        new_req = PseudoRequest(self.env, req)
+    allow_override = BoolOption('simpleticket', 'allow_override', default=False,
+                              doc='Allow the user to use the normal entry form even if they have TICKET_CREATE_SIMPLE')
 
-        # Process the request via the original newticket module
-        template, content_type = NewticketModule(self.env).process_request(new_req)
-        
-        # Hide the fields
-        for f in self.hide_fields:
-            req.hdf['newticket.fields.%s.skip'%f] = True
+    implements(IRequestFilter, IPermissionRequestor)
+
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
             
-        # Redirect the POST
-        req.hdf['trac.href.newticket'] = self.env.href.simpleticket()
-        
-        # Restore TICKET_CREATE
-        if not really_has_perm:
-            del req.perm.perms['TICKET_CREATE']
+    def post_process_request(self, req, template, data, content_type):
+        if req.path_info == '/newticket':
+            do_filter = req.perm.has_permission('TICKET_CREATE_SIMPLE')
             
-        return (template, content_type)
+            # Should we allow a session override?
+            allow_override = self.allow_override or req.perm.has_permission('TRAC_ADMIN')
+            if allow_override:
+                do_filter = req.session.get('simpleticket.do_filter', do_filter)
+            
+            if do_filter:
+                hide_fields = set(self.hide_fields)
+                self.log.debug('SimpleTicket: Filtering new ticket form for %s', req.authname)
+                data['fields'] = [f for f in data['fields'] if f['name'] not in hide_fields]
+                
+        return template, data, content_type
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        yield 'TICKET_CREATE_SIMPLE'
-
-
+        yield 'TICKET_CREATE_SIMPLE', ['TICKET_CREATE']
