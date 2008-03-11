@@ -4,6 +4,7 @@ from trac import __version__ as TRAC_VERSION
 from trac import ticket
 from trac.admin.api import IAdminPanelProvider
 from trac.core import *
+from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.util import sorted
@@ -25,8 +26,7 @@ class TicketDeletePlugin(Component):
         return handler
 
     def post_process_request(self, req, template, content_type):
-        if template == 'ticket.cs' and req.perm.has_permission('TICKET_ADMIN'):
-            add_script(req, 'ticketdelete/jquery.js')
+        if template == 'ticket.html' and 'TICKET_ADMIN' in req.perm:
             add_script(req, 'ticketdelete/ticketdelete.js')
             add_stylesheet(req, 'ticketdelete/ticketdelete.css')
         return template, content_type
@@ -37,14 +37,16 @@ class TicketDeletePlugin(Component):
             yield ('ticket', 'Ticket System', 'delete', 'Delete')
             yield ('ticket', 'Ticket System', 'comments', 'Delete Changes')
             
-    def process_admin_request(self, req, cat, page, path_info):
-        req.perm.assert_permission('TICKET_ADMIN')
+    def render_admin_panel(self, req, cat, page, path_info):
+        req.perm.require('TICKET_ADMIN')
         
         data = {}
 
-        data['ticketdelete.href'] = req.href('admin', cat, page)
-        data['ticketdelete.page'] = page
-        data['ticketdelete.redir'] = 1
+        data['href'] = req.href('admin', cat, page)
+        data['page'] = page
+        data['redir'] = 1
+        data['changes'] = {}
+        data['id'] = 0
 
         if req.method == 'POST':
             if page == 'delete':
@@ -53,17 +55,17 @@ class TicketDeletePlugin(Component):
                         t = self._validate(req, req.args.get('ticketid'))
                         if t:
                             self._delete_ticket(t.id)
-                            data['ticketdelete.message'] = "Ticket #%s has been deleted." % t.id
+                            data['message'] = "Ticket #%s has been deleted." % t.id
                             
                     else:
-                        data['ticketdelete.message'] = "The two IDs did not match. Please try again."
+                        data['message'] = "The two IDs did not match. Please try again."
             elif page == 'comments':
                 if 'ticketid' in req.args:
                     req.redirect(req.href.admin(cat, page, req.args.get('ticketid')))
                 else:
                     t = self._validate(req, path_info)
                     if t:
-                        data['ticketdelete.href'] = req.href('admin', cat, page, path_info)
+                        data['href'] = req.href('admin', cat, page, path_info)
                         try:
                             deletions = None
                             if "multidelete" in req.args:
@@ -78,12 +80,12 @@ class TicketDeletePlugin(Component):
                                     ts = int(ts)
                                     self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
                                     self._delete_change(t.id, ts, field)
-                                    data['ticketdelete.message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
-                                    data['ticketdelete.redir'] = 0
+                                    data['message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
+                                    data['redir'] = 0
                         except ValueError, e:
                             self.log.debug("TicketDelete: Error is %s"%e)
                             self.log.debug("TicketDelete: args = '%s'"%req.args.items())
-                            data['ticketdelete.message'] = "Timestamp '%s' not valid" % req.args.get('ts')                    
+                            data['message'] = "Timestamp '%s' not valid" % req.args.get('ts')                    
                     
                 
         if path_info:
@@ -97,10 +99,12 @@ class TicketDeletePlugin(Component):
 
                     ticket_data = {}
                     for time, author, field, oldvalue, newvalue, perm in t.get_changelog():
-                        data = ticket_data.setdefault(str(time), {})
-                        data.setdefault('fields', {})[field] = {'old': oldvalue, 'new': newvalue}
-                        data['author'] = author
-                        data['prettytime'] = strftime('%a, %d %b %Y %H:%M:%S',localtime(time))
+                        c_data = ticket_data.setdefault(str(time), {})
+                        c_data.setdefault('fields', {})[field] = {'old': oldvalue, 'new': newvalue}
+                        c_data['author'] = author
+                        # FIXME: The datetime handling is not working - enable
+                        # for traceback
+                        c_data['prettytime'] = strftime('%a, %d %b %Y %H:%M:%S',localtime(time))
                     
                     # Remove all attachment changes                    
                     for k, v in ticket_data.items():
@@ -111,11 +115,11 @@ class TicketDeletePlugin(Component):
                     time_list = list(sorted(ticket_data.iterkeys()))
                     if selected is not None and selected < len(time_list):
                         ticket_data[time_list[selected]]['checked'] = True
-                    data['ticketdelete.changes'] = ticket_data
+                    data['changes'] = ticket_data
                 elif page == 'delete':
-                    data['ticketdelete.id'] = t.id
+                    data['id'] = t.id
  
-        return 'ticketdelete_admin.html', data, None
+        return 'ticketdelete_admin.html', {'ticketdelete': data}
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -156,9 +160,9 @@ class TicketDeletePlugin(Component):
             t = Ticket(self.env, id)
             return t
         except TracError:
-            data['ticketdelete.message'] = "Ticket #%s not found. Please try again." % id
+            data['message'] = "Ticket #%s not found. Please try again." % id
         except ValueError:
-            data['ticketdelete.message'] = "Ticket ID '%s' is not valid. Please try again." % arg
+            data['message'] = "Ticket ID '%s' is not valid. Please try again." % arg
         return False
                                                                                                                 
     

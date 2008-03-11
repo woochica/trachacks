@@ -1,7 +1,19 @@
-<div xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:py="http://genshi.edgewall.org/"
-  id="page">
-  <h2>Delete Ticket<py:if ticketdelete.page="comments"> Changes</py:if></h2>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:py="http://genshi.edgewall.org/">
+
+  <xi:include href="admin.html" />
+
+  <head>
+    <title>Delete Ticket${ticketdelete.page=='comments' and ' Changes' or None}</title>
+  </head>
+
+  <body>
+
+    <h2>Delete Ticket${ticketdelete.page=='comments' and ' Changes' or None}</h2>
 
   <py:choose>
     <py:when test="ticketdelete.message and ticketdelete.redir">
@@ -22,11 +34,11 @@
       </form>
     </py:when>
     <py:when test="ticketdelete.page == 'comments'">
-      <py:choose has_tickets="len(ticketdelete.changes)">
-        <py:when has_tickets="True">
-          <py:if test="ticketdelete.message">
-            <p><b>${ticketdelete.message}</b></p>
-          </py:if>
+      <py:choose>
+        <py:when test="len(ticketdelete.changes)">
+          <p py:if="ticketdelete.message">
+            <b>${ticketdelete.message}</b>
+          </p>
           <p>Please selet a change to delete</p>
         
           <p><form method="post"><table class="listing">
@@ -104,4 +116,5 @@
       </py:choose>
     </py:when>
   </py:choose>
-</div>
+  </body>
+</html>
