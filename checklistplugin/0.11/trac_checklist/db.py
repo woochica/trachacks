@@ -169,11 +169,8 @@ class ChecklistDBComponent(Component):
 
     def execute(self, sql, *params, **kw):
         self.log.debug('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
-        try:
-            cursor = self.db.cursor()
-        except:
-            self.db = self.env.get_db_cnx()
-            cursor = self.db.cursor()
+        self.db = self.env.get_db_cnx()
+        cursor = self.db.cursor()
         cursor.execute(sql, params)
         return cursor
 

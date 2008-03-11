@@ -51,20 +51,22 @@ class ChecklistUpdaterComponent(Component):
 
     def process_request(self, req):
         try:
+            self.log.debug('UPDATE ARGS: ' + str(req.args))
             args = dict(req.args)
             context = args.pop('__context__', None)
             if context is None:
                 raise BadRequest('__context__ is required')
             who = 'whoknows'
-            fields = args.pop('__fields__', ())
+            fields = set(args.pop('__fields__', ()))
             for name in fields:
-                value = bool(args.get(name)) and 'on' or 'off'
+                value = bool(args.get(name)) and 'on' or ''
                 self.updateField(context, name, value, who)
         except Exception, e:
             code = getattr(e, '__http_status__', 500)
             msg = str(e)
             if code == 500:
                 msg = e.__class__.__name__ + ': ' + msg
+            self.log.debug('ERROR DURING UPDATE: ' + msg)
             req.send_response(code)
             req.send_header('Content-Type', 'text/plain')
             req.end_headers()

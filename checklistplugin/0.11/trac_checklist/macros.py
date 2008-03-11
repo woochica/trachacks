@@ -11,7 +11,7 @@ from trac.core import ExtensionPoint
 
 from db import IChecklistDBObserver
 
-import re, StringIO
+import re, StringIO, cgi
 
 checklistRE = re.compile('\[cl:(.*?)\{(.*?)\}\]', re.M | re.S)
 
@@ -52,12 +52,25 @@ class ChecklistMacro(WikiMacroBase):
         # Replace cl fields.
         html = ''.join(checklistRE.sub(replacer, self.wikize(formatter, text)))
 
-        action = formatter.req.href('checklist/update')
+        href = formatter.req.href('checklist/update')
+        action = ''.join(('javascript:',
+            'var formdata={};',
+            'var form=document.getElementById(%r);' % str(id(self)),
+            'for (var idx = 0; idx < form.elements.length; ++idx)',
+            '{ formdata[form.elements[idx].name] = form.elements[idx].value }',
+            'jQuery.ajax({url:%r,data:formdata,complete:' % href,
+            'function(r, s) { alert(r.responseText) },dataType:\'text\'});'
+            ))
 
         return ''.join((
-            '<FORM method="GET" action=%r' % action,
+            '<IFRAME id="if_%s" name="if_%s"' % (id(self), id(self)),
+                ' onload="',
+                    'var t=this.contentDocument.body.textContent;',
+                    'if (t) { alert(t) }"',
+                ' style="display:none"></IFRAME>',
+            '<FORM action="%s" target="if_%s"' % (href, id(self)),
                 '>',
-            '<INPUT type="hidden" name="__context__" value=%r>' % context,
+            '<INPUT type="hidden" name="__context__" value=%r>' % str(context),
             html,
             not notes.get('submit') and self.op_submit(None, data, notes) or '',
             '</FORM>',
@@ -77,16 +90,18 @@ class ChecklistMacro(WikiMacroBase):
     def op_checkbox(self, field, data, notes):
         checked = data.get(field, (False, None, None))[0]
         return ''.join((
+            '<INPUT type="hidden" name="__fields__" value=%r>' % str(field),
             '<INPUT type="checkbox" name=%r' % str(field),
                 checked and ' checked' or '',
                 '>',
             ))
 
     def op_who(self, field, data, notes):
-        return data.get(field, (False, None, '<noone>'))[2]
+        return cgi.escape(data.get(field, (False, None, '<noone>'))[2])
 
     def op_when(self, field, data, notes):
-        return str(data.get(field, (False, '<unknown>', None))[1])[:19]
+        return cgi.escape(
+            str(data.get(field, (False, '<unknown>', None))[1])[:19])
 
     def op_submit(self, field, data, notes):
         notes['submit'] = True
