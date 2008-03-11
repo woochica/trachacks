@@ -55,9 +55,9 @@ class ChecklistMacro(WikiMacroBase):
         action = formatter.req.href('checklist/update')
 
         return ''.join((
-            '<FORM method="POST" action=%r' % action,
+            '<FORM method="GET" action=%r' % action,
                 '>',
-            '<INPUT type="hidden" name="__context__" value=%r>' % context
+            '<INPUT type="hidden" name="__context__" value=%r>' % context,
             html,
             not notes.get('submit') and self.op_submit(None, data, notes) or '',
             '</FORM>',
