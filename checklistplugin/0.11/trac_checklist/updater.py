@@ -5,9 +5,10 @@
 #
 
 import re, sys
-from trac.core import *
+from trac.core import Component, ExtensionPoint, implements
 from trac.web import IRequestHandler
 from genshi.builder import tag
+from db import IChecklistDBObserver
 
 class BadRequest(Exception):
     __http_status__ = 400
@@ -21,6 +22,7 @@ class ChecklistUpdaterComponent(Component):
     provided to .../checklist/update.  The information contained is:
 
     __context__ : The context string to use for the fields provided.
+    __fields__ : The other fields to be processed.
 
     All other query items are the checklist items that are turned "on".  These
     are then applied to the database.  The following response codes are
@@ -41,6 +43,8 @@ class ChecklistUpdaterComponent(Component):
 
     implements(IRequestHandler)
 
+    clobservers = ExtensionPoint(IChecklistDBObserver)
+
     # IRequestHandler methods
     def match_request(self, req):
         return req.path_info.endswith('/checklist/update')
@@ -51,6 +55,11 @@ class ChecklistUpdaterComponent(Component):
             context = args.pop('__context__', None)
             if context is None:
                 raise BadRequest('__context__ is required')
+            who = 'whoknows'
+            fields = args.pop('__fields__', ())
+            for name in fields:
+                value = bool(args.get(name)) and 'on' or 'off'
+                self.updateField(context, name, value, who)
         except Exception, e:
             code = getattr(e, '__http_status__', 500)
             msg = str(e)
@@ -65,4 +74,9 @@ class ChecklistUpdaterComponent(Component):
             req.send_header('Content-Type', 'text/plain')
             req.end_headers()
             req.write('OK')
+
+    def updateField(self, context, name, value, who):
+        # Broadcast the updates.
+        for observer in self.clobservers:
+            observer.checklist_setValue(context, name, value, who)
 

@@ -4,6 +4,7 @@
 
 from trac.core import Component, Interface, implements
 from trac.env import IEnvironmentSetupParticipant
+from datetime import datetime
 
 class IChecklistDBObserver(Interface):
     def checklist_getDBVersion():
@@ -11,6 +12,9 @@ class IChecklistDBObserver(Interface):
 
     def checklist_getValues(context):
         "Returns a list of (value, when, who) tuples for the context passed."
+
+    def checklist_setValue(context, field, value, who):
+        "Adds or updates a value for the context field specified."
 
 class ChecklistDBComponent(Component):
     implements(IEnvironmentSetupParticipant, IChecklistDBObserver)
@@ -46,21 +50,26 @@ class ChecklistDBComponent(Component):
         return self.getInstalledVersion()
 
     def checklist_getValues(self, context):
-        return dict((name, (value, when, who))
+        result = dict((name, (value, when, who))
             for name, value, when, who in
             self.iterate("""
-                SELECT  field, int_value, updated_when, updater
+                SELECT  field, value, updated_when, updater
                 FROM    checklist_value
                 WHERE   context = %s
                 """, context))
+        self.log.debug('checklist_getValues(%r) = %r' % (context, result))
+        return result
 
     def checklist_setValue(self, context, field, value, who):
-        value = self.getValue("""
-            SELECT  value
+        when = datetime.now().isoformat(':')
+        self.log.debug('checklist_setValue(%r, %r, %r, %r, %r)' %
+            (context, field, value, who, when))
+        if self.getValue("""
+            SELECT  COUNT(*)
             FROM    checklist_value
             WHERE   context = %s AND field = %s
-            """)
-        if value is None:
+            """, context, field):
+
             self.commit("""
                 UPDATE  checklist_value
                 SET     value = %s,
@@ -104,7 +113,7 @@ class ChecklistDBComponent(Component):
             CREATE TABLE checklist_value(
                 context         VARCHAR(255) NOT NULL,
                 field           VARCHAR(255) NOT NULL,
-                int_value       INTEGER NOT NULL,
+                value           text NOT NULL,
                 updated_when    DATETIME NOT NULL,
                 updater         VARCHAR(32) NOT NULL
                 )
@@ -159,15 +168,20 @@ class ChecklistDBComponent(Component):
             yield row
 
     def execute(self, sql, *params, **kw):
-        cursor = self.env.get_db_cnx().cursor()
+        self.log.debug('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
+        try:
+            cursor = self.db.cursor()
+        except:
+            self.db = self.env.get_db_cnx()
+            cursor = self.db.cursor()
         cursor.execute(sql, params)
         return cursor
 
     def rollback(self):
-        self.db.cursor().rollback()
+        self.db.rollback()
 
     def commit(self, sql=None, *params, **kw):
         if sql is not None:
             cursor = self.execute(sql, *params, **kw)
-        cursor.commit()
+        self.db.commit()
 
