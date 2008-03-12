@@ -174,7 +174,7 @@ class SendClientEmails:
     def __init__(self):
         def myformat_date(dte):
           if dte:
-            return format_date(dte)
+            return format_date(dte, '%e %b %Y')
           return 'No date set'
         
         locale.setlocale(locale.LC_ALL, '')
