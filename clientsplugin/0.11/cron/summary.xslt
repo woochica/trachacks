@@ -7,8 +7,6 @@
   <xsl:output method="html" indent="yes" encoding="UTF-8" omit-xml-declaration="yes"/>
   <xsl:decimal-format name="GBP" decimal-separator="." grouping-separator=","/>
   
-  <xsl:param name="view" />
-  
   <!-- Match the root of the XML render the three views -->
   <xsl:template match="/">
     <xsl:choose>

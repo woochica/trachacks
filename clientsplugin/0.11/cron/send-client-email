@@ -33,8 +33,8 @@ import os
 import sys
 import locale
 import time
-import libxml2
-import libxslt
+from lxml import etree
+import codecs
 from datetime import datetime
 from optparse import OptionParser
 from StringIO import StringIO
@@ -45,6 +45,7 @@ from trac.env import open_environment
 from trac.util.datefmt import format_date, to_datetime
 from trac.wiki import wiki_to_html
 from genshi import escape
+
 
 parser = OptionParser()
 depr = '(not used anymore)'
@@ -71,7 +72,7 @@ class SendClientMailer(object):
     self.config = env.config
     self.encoding = 'us-ascii'
   
-  def Send(self, subject, addresses, info, formatter):
+  def Send(self, subject, addresses, xml, transform):
     if not self.config.getbool('notification', 'smtp_enabled'):
       return
     smtp_server = self.config['notification'].get('smtp_server')
@@ -111,38 +112,38 @@ class SendClientMailer(object):
     msg_root.preamble = 'This is a multi-part message in MIME format.'
     
     view = 'plain'
-    result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
-    msg_text = MIMEText(formatter.saveResultToString(result), view, self.encoding)
+    arg = "'%s'" % view
+    result = transform(xml, view=arg)
+    msg_text = MIMEText(str(result), view, self.encoding)
     msg_root.attach(msg_text)
-    result.freeDoc()
     
     msg_related = MIMEMultipart('related')
     msg_root.attach(msg_related)
     
     view = 'html'
-    result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
-    msg_text = MIMEText(formatter.saveResultToString(result), view, self.encoding)
+    arg = "'%s'" % view
+    result = transform(xml, view=arg)
+    msg_text = MIMEText(str(result), view, self.encoding)
     msg_related.attach(msg_text)
-    result.freeDoc()
     
     # Handle image embedding...
     view = 'images'
-    result = formatter.applyStylesheet(info, {'view': '"%s"' % view })
-    if result and result.children and result.children.children:
-      for img in result.children.children:
-        if 'img' != img.name:
+    arg = "'%s'" % view
+    result = transform(xml, view=arg)
+    if result:
+      for img in result.getroot():
+        if 'img' != img.tag:
           continue
-        if not img.hasProp('id') or not img.hasProp('src'):
+        if not img.get('id') or not img.get('src'):
           continue
         
-        fp = open(img.prop('src'), 'rb')
+        fp = open(img.get('src'), 'rb')
         if not fp:
           continue
         msg_img = MIMEImage(fp.read())
         fp.close()
-        msg_img.add_header('Content-ID', '<%s>' % img.prop('id'))
+        msg_img.add_header('Content-ID', '<%s>' % img.get('id'))
         msg_related.attach(msg_img)
-    result.freeDoc()
     
     # Send the email
     import smtplib
@@ -195,8 +196,8 @@ class SendClientEmails:
           stylesheet = options.xslt
         
         try:
-          styledoc = libxml2.parseFile(stylesheet)
-          style = libxslt.parseStylesheetDoc(styledoc)
+          ss = open(stylesheet, 'r')
+          transform = etree.XSLT(etree.parse(ss))
         except:
           print "Error: Cannot load/parse stylesheet '%s'" % stylesheet
           exit(1)
@@ -241,15 +242,13 @@ class SendClientEmails:
               print "  No email addresses registered. Skipping."
             continue
           
-          xml = StringIO()
-          xml.write('<clientsplugin>')
+          xml = etree.Element('clientsplugin')
           
           # Place basic client info here
-          xml.write('<client>')
-          xml.write('<name>%s</name>' % name)
-          xml.write('<lastupdate>%s</lastupdate>' % myformat_date(lastupdate))
-          xml.write('</client>')
-          
+          client = etree.SubElement(xml, 'client')
+          etree.SubElement(client, 'name').text = name
+          etree.SubElement(client, 'lastupdate').text = myformat_date(lastupdate)
+
           have_data = False
           if 'summary' == field:
             # Load in a summary of the client's tickets
@@ -264,22 +263,19 @@ class SendClientEmails:
               """)
             cur2 = db.cursor()
             cur2.execute(sql, (name,))
-            xml.write('<summary>')
+            xsummary = etree.SubElement(xml, 'summary')
             for tid, summary, description, status, milestone, due in cur2:
               have_data = True
               if options.debug:
                 print "  Summarising ticket #%s" % tid
-              xml.write('<ticket>')
-              xml.write('<id>%s</id>' % tid)
-              xml.write('<summary>%s</summary>' % escape(summary))
-              xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
-              xml.write('<status>%s</status>' % status)
-              xml.write('<milestone>%s</milestone>' % milestone)
-              xml.write('<due>%s</due>' % myformat_date(due))
-              xml.write('</ticket>')
-            
-            xml.write('</summary>')
-          
+              ticket = etree.SubElement(xsummary, 'ticket')
+              etree.SubElement(ticket, 'id').text = str(tid)
+              etree.SubElement(ticket, 'summary').text = summary
+              ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
+              etree.SubElement(ticket, 'status').text = status
+              etree.SubElement(ticket, 'milestone').text = milestone
+              etree.SubElement(ticket, 'due').text = myformat_date(due)
+
           elif 'changes' == field:
             # Load in any changes that have happend
             sql = ("""\
@@ -297,7 +293,7 @@ class SendClientEmails:
               """)
             cur2 = db.cursor()
             cur2.execute(sql, (name, lastupdate, now))
-            xml.write('<changes>')
+            changes = etree.SubElement(xml, 'changes')
             lasttid = 0
             for tid, summary, description, status, milestone, due, cgfield, oldvalue, newvalue in cur2:
               text = ''
@@ -319,44 +315,34 @@ class SendClientEmails:
               if options.debug:
                 print "  Change notification (%s) for ticket #%s" % (cgfield, tid)
               have_data = True
-              if lasttid and lasttid != tid:
-                xml.write('</changelog>')
-                xml.write('</ticket>')
-              
               if lasttid != tid:
-                xml.write('<ticket>')
-                xml.write('<id>%s</id>' % tid)
-                xml.write('<summary>%s</summary>' % escape(summary))
-                xml.write('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req))
-                xml.write('<status>%s</status>' % status)
-                xml.write('<milestone>%s</milestone>' % milestone)
-                xml.write('<due>%s</due>' % myformat_date(due))
-                xml.write('<changelog>')
-              
-              xml.write('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req))
+                ticket = etree.SubElement(changes, 'ticket')
+                etree.SubElement(ticket, 'id').text = str(tid)
+                etree.SubElement(ticket, 'summary').text = summary
+                ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
+                etree.SubElement(ticket, 'status').text = status
+                etree.SubElement(ticket, 'milestone').text = milestone
+                etree.SubElement(ticket, 'due').text = myformat_date(due)
+                changelog = etree.SubElement(ticket, 'changelog')
+
+              changelog.append(etree.XML('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req)))
               lasttid = tid
             
-            if lasttid:
-              xml.write('</changelog>')
-              xml.write('</ticket>')
-            xml.write('</changes>')
-          
-          xml.write('</clientsplugin>')
-
-          #if options.debug:
-          #  print xml.getvalue()
+          if options.debug:
+            file = open('/tmp/send-client-email.xml', 'w')
+            file.write(etree.tostring(xml, pretty_print=True))
+            file.close()
+            print " Wrote XML to /tmp/send-client-email.xml"
 
           if not have_data:
             continue
-          
-          doc = libxml2.parseDoc(xml.getvalue())
+
           subject = 'Ticket Summary for %s' % name
           if 'changes' == field:
             subject = 'Ticket Change Summary for %s' % name
           if options.debug:
             print "  Sending email '%s'" % subject
-          mailer.Send(subject, emails, doc, style)
-          doc.freeDoc()
+          mailer.Send(subject, emails, xml, transform)
 
           if not options.debug:
             # Update the date field
@@ -365,7 +351,6 @@ class SendClientEmails:
             cursor2 = db.cursor()
             cursor2.execute(sql, (now, name))
           
-        style.freeStylesheet()
         db.commit()
         db.close()
 
