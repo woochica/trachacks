@@ -21,6 +21,7 @@ class ChecklistMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, args):
         lines = iter(args.split('\n'))
         flags = {}
+        header = ''
         for line in lines:
             line = line.strip()
             if line[:1] == '#':
@@ -30,20 +31,10 @@ class ChecklistMacro(WikiMacroBase):
                 flags[name.strip()] = \
                     isinstance(value, basestring) and value.strip() or value
             else:
+                header = line + '\n'
                 break
-        text = '\n'.join(lines)
+        text = header + '\n'.join(lines)
         context = flags.get('context', formatter.req.path_info)
-        # There MUST be an easier way...
-        link = extract_link(formatter.env, formatter.context, context)
-        if link is not None:
-            for op in link.generate():
-                self.log.debug('HERE >>>>>>>>>>>>>> ', str(op))
-                if isinstance(op, tuple):
-                    if op[0] == 'a':
-                        for name, value in op[1]:
-                            if name == 'href':
-                                context = value
-                                break
         section = flags.get('section')
         can_set = str(flags.get('can-set', ''))
         can_get = str(flags.get('can-get', ''))

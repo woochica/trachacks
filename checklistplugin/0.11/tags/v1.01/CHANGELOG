@@ -1,0 +1,9 @@
+
+1.0 -- Initial Release
+
+1.01 -- Bug fixes
+* Setup script
+* Parsing issue
+* Removed failed attempt at converting trac links.
+
+
