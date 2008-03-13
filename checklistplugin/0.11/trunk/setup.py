@@ -15,7 +15,7 @@ setup(
         'trac_checklist': ['templates/*.html',
                            'htdocs/css/*.css',
                            'htdocs/images/*'],
-    }
+    },
     url='http://trac-hacks.org/wiki/ChecklistPlugin',
     author='Rich Harkins',
     author_email='rich@worldsinfinite.com',
