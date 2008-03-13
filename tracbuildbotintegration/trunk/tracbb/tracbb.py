@@ -69,13 +69,24 @@ class BuildBotPlugin(Component):
 			raise TracError("Can't get access to buildbot at " + self.get_xmlrpc_url())
 		ret = []
 		for builder in builders:
-			lastbuild = server.getLastBuilds(builder,1)[0]
-			build = { 'name' : builder,
-				'status' : server.getStatus(builder),
-				'url' : req.href.buildbot(builder),
-				'lastbuild' : lastbuild[1],
-				'lastbuildurl' : self.get_build_url(builder, lastbuild[1])
-				}
+			lastbuilds = server.getLastBuilds(builder,1)
+			lastnumber=0
+			if len(lastbuilds) > 0:
+				lastbuild = lastbuilds[0]
+				lastnumber=lastbuild[1]
+				build = { 'name' : builder,
+					'status' : server.getStatus(builder),
+					'url' : req.href.buildbot(builder),
+					'lastbuild' : lastnumber,
+					'lastbuildurl' : self.get_build_url(builder, lastnumber)
+					}
+			else:
+				build = { 'name' : builder,
+						'status' : "missing",
+						'url' : req.href.buildbot(builder),
+						'lastbuild' : None,
+						'lastbuildurl' : None }
+
 			ret.append(build)
 
 		return ret

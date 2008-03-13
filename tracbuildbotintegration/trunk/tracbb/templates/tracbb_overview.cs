@@ -9,7 +9,13 @@
 <?cs else ?>
 	<img src="<?cs var:chrome.href ?>/tracbb/bberror.png" border="0"/> 
 <?cs /if ?>
-   <a href="<?cs var:build.url ?>"><?cs var:build.name ?></a> last build is <a href="<?cs var:build.lastbuildurl ?>">#<?cs var:build.lastbuild ?></a>
+	
+   <a href="<?cs var:build.url ?>"><?cs var:build.name ?></a>
+   <?cs if:build.lastbuildurl ?>
+   last build is <a href="<?cs var:build.lastbuildurl ?>">#<?cs var:build.lastbuild ?></a>
+   <?cs else ?>
+   no build available
+   <?cs /if ?>
 </p>
 <?cs /each ?>
 </div>
