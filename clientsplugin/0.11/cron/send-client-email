@@ -279,14 +279,14 @@ class SendClientEmails:
           elif 'changes' == field:
             # Load in any changes that have happend
             sql = ("""\
-              SELECT t.id, t.summary, t.description, t.status, t.milestone, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
+              SELECT t.id, t.summary, t.description, t.status, t.resolution, t.milestone, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
               FROM ticket_custom tcust
               INNER JOIN ticket t ON tcust.ticket=t.id
               INNER JOIN ticket_change tchng ON t.id=tchng.ticket
               LEFT JOIN milestone m ON t.milestone=m.name
               WHERE tcust.name = 'client'
                 AND tcust.value = %s
-                AND tchng.field IN ('comment', 'status', 'milestone')
+                AND tchng.field IN ('comment', 'status', 'resolution', 'milestone')
                 AND tchng.time >= %s
                 AND tchng.time < %s
               ORDER BY t.time
@@ -295,12 +295,19 @@ class SendClientEmails:
             cur2.execute(sql, (name, lastupdate, now))
             changes = etree.SubElement(xml, 'changes')
             lasttid = 0
-            for tid, summary, description, status, milestone, due, cgfield, oldvalue, newvalue in cur2:
+            for tid, summary, description, status, resolution, milestone, due, cgfield, oldvalue, newvalue in cur2:
               text = ''
               if 'status' == cgfield:
                 text = 'Status changed from "%s" to "%s"' % (oldvalue, newvalue)
               elif 'milestone' == cgfield:
                 text = 'Milestone changed from "%s" to "%s" - please check for revised delivery date.' % (oldvalue, newvalue)
+              elif 'resolution' == cgfield:
+                if oldvalue and not newvalue:
+                  text = 'Resolution removed'
+                elif not oldvalue and newvalue:
+                  text = 'Resolution set to "%s"' % (newvalue)
+                else:
+                  text = 'Resolution changed from "%s" to "%s"' % (oldvalue, newvalue)
               elif 'comment' == cgfield:
                 # Todo - extract...
                 text = extract_client_text(newvalue).strip()
@@ -321,11 +328,18 @@ class SendClientEmails:
                 etree.SubElement(ticket, 'summary').text = summary
                 ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
                 etree.SubElement(ticket, 'status').text = status
+                etree.SubElement(ticket, 'resolution').text = resolution
                 etree.SubElement(ticket, 'milestone').text = milestone
                 etree.SubElement(ticket, 'due').text = myformat_date(due)
                 changelog = etree.SubElement(ticket, 'changelog')
 
-              changelog.append(etree.XML('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req)))
+              detail = etree.XML('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req))
+              detail.set('field', cgfield)
+              if oldvalue:
+                detail.set('oldvalue', oldvalue)
+              if newvalue:
+                detail.set('newvalue', newvalue)
+              changelog.append(detail)
               lasttid = tid
             
           if options.debug:
