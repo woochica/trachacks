@@ -17,4 +17,4 @@
 # Author: Etienne PIERRE <e.ti.n.pierre_AT_gmail.com>
 from tracbb import *
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
