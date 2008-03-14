@@ -18,7 +18,7 @@ class EstimatorMacroProvider(Component):
         """
 
     def estimate_macro(self,  id, req ):
-        html = getHtmlEstimate(id)
+        html = getHtmlEstimate(self.env, id)
         if html:
             add_stylesheet(req, "Estimate/estimate.css")
             html+= '<br /><a href="%s?id=%s">edit this estimate</a>' % (req.href.Estimate(), id)

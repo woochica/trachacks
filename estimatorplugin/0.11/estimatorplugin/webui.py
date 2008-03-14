@@ -19,14 +19,14 @@ class EstimationsPage(Component):
     def load(self, id, addMessage, data):
         try:
             data["estimate"]["id"] = id
-            estimate_rs = getEstimateResultSet(id)
+            estimate_rs = getEstimateResultSet(self.env, id)
             if estimate_rs:
                 data["estimate"]["id"] = id
                 data["estimate"]["rate"] = estimate_rs.value("rate", 0)
                 data["estimate"]["tickets"] = estimate_rs.value("tickets", 0)
                 data["estimate"]["variability"] = estimate_rs.value("variability", 0)
                 data["estimate"]["communication"] = estimate_rs.value("communication", 0)
-                rs = getEstimateLineItemsResultSet(id)
+                rs = getEstimateLineItemsResultSet(self.env, id)
                 if rs:
                     data["estimate"]["lineItems"] = rs.json_out()
             else:
@@ -51,7 +51,7 @@ class EstimationsPage(Component):
 
     def notify_old_tickets(self, req, id, addMessage, changer):
         try:
-            estimate_rs = getEstimateResultSet(id)
+            estimate_rs = getEstimateResultSet(self.env, id)
             tickets = estimate_rs.value('tickets', 0)
             comment = estimate_rs.value('comment', 0)
             tickets = [int(t.strip()) for t in tickets.split(',')]
@@ -99,7 +99,7 @@ class EstimationsPage(Component):
             if id == None or id == '' :
                 self.log.debug('Saving new estimate')
                 sql = estimateInsert
-                id = nextEstimateId ()
+                id = nextEstimateId (self.env)
             else:
                 self.log.debug('Saving edited estimate')
                 old_tickets = self.notify_old_tickets(req, id, addMessage, req.authname)
@@ -110,7 +110,7 @@ class EstimationsPage(Component):
                              args['comment'], id]
             saveEstimate = (sql, estimate_args)
             saveLineItems = []
-            newLineItemId = nextEstimateLineItemId ()
+            newLineItemId = nextEstimateLineItemId (self.env)
 
             # we want to delete any rows that were not included in the form request
             # we will not use -1 as a valid id, so this will allow us to use the same sql reguardless of anything else
@@ -142,7 +142,7 @@ class EstimationsPage(Component):
             if old_tickets:
                 sqlToRun.extend(old_tickets)
             
-            result = dbhelper.execute_in_trans(*sqlToRun)
+            result = dbhelper.execute_in_trans(self.env, *sqlToRun)
             #will be true or Exception
             if result == True:
                 if self.notify_new_tickets( req, id, tickets, addMessage):

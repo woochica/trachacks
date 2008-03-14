@@ -15,7 +15,6 @@ class EstimatorSetupParticipant(Component):
     implements(IEnvironmentSetupParticipant)
     def __init__(self):
         # Setup logging
-        dbhelper.env = self.env
         dbhelper.mylog = self.log
 
     def environment_created(self):
@@ -29,7 +28,7 @@ class EstimatorSetupParticipant(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
-        ver = dbhelper.get_system_value(dbkey)
+        ver = dbhelper.get_system_value(self.env, dbkey)
         ans = (not ver) or (ver < dbversion)
         self.log.debug('Estimator needs upgrade? %s [installed version:%s  pluginversion:%s '%(ans, ver, dbversion))
         return ans
@@ -42,11 +41,11 @@ class EstimatorSetupParticipant(Component):
         performed the upgrades they need without an error being raised.
         """
         success = True
-        ver = dbhelper.get_system_value(dbkey)
+        ver = dbhelper.get_system_value(self.env, dbkey)
         self.log.debug('Estimator about to upgrade from ver:%s' % ver)
         if ver < 1:
             self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
-            success &= dbhelper.execute_in_trans(
+            success &= dbhelper.execute_in_trans(self.env, 
                 ("""CREATE TABLE estimate(
                      id integer PRIMARY KEY,
                      rate DECIMAL,
@@ -64,5 +63,5 @@ class EstimatorSetupParticipant(Component):
                 )""",[]))
         # SHOULD BE LAST IN THIS FUNCTION
         if success:
-            dbhelper.set_system_value(dbkey, dbversion)
+            dbhelper.set_system_value(self.env, dbkey, dbversion)
     
