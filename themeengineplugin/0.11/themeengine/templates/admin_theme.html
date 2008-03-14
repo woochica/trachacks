@@ -1,0 +1,62 @@
+<!--!
+	admin_theme
+	Created by Noah Kantrowitz on 2007-08-05.
+	Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="admin.html" />
+      
+      <head>
+        <title>Theme</title>
+      </head>
+      
+      <body>
+        <h2>Theme</h2>
+        
+        <div id="carousel"><!--
+         <img src="${href.chrome('themeengine', 'img', 'prev.gif')}" border="0" class="jcarousel-prev" />
+         <img src="${href.chrome('themeengine', 'img', 'next.gif')}" border="0" class="jcarousel-next" />-->
+         <ul id="foo" class="jcarousel-skin-tango">
+          <li py:for="name, theme in themeengine.info.iteritems()">
+            <img height="400" width="640" src="${href.themeengine('screenshot', name)}" id="$name" />
+          </li>
+         </ul>
+         <div id="theme_name" style="text-align: center; font-weight: bold; font-size: 1.4em">$themeengine.current</div>
+         <div id="theme_desc" style="text-align: center"></div>
+         <div style="text-align: center">
+          <form method="post">
+           <input type="hidden" name="theme" id="form_theme_name" />
+           <input type="submit" value="Use this theme" />
+          </form>
+         </div>
+        </div>
+        
+        <script type="text/javascript">
+          var descriptions = {};
+          <py:for each="name, theme in themeengine.info.iteritems()">
+          descriptions['$name'] = '$theme.description';
+          </py:for>
+
+          function change_handler(car, elm, ind, state) {
+              var theme = $(elm).find('img').attr('id');
+              $('#theme_name').html(theme);
+              $('#form_theme_name').val(theme);
+              $('#theme_desc').html(descriptions[theme]);
+          }
+
+          $(function() {
+              $('#foo').jcarousel({
+                  start: $themeengine.current_index,
+                  visible: 1,
+                  scroll: 1,
+                  itemVisibleInCallback: change_handler
+              });
+          });
+        </script>
+      </body>
+</html>
