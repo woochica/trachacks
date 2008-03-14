@@ -1,5 +1,6 @@
 # Created by Noah Kantrowitz on 2007-07-16.
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+import os.path
 import inspect
 
 from trac.core import *
@@ -16,8 +17,8 @@ class IThemeProvider(Interface):
         
          description::
            A breif description of the theme.
-         theme::
-           The name of the theme file. 
+         template::
+           The name of the theme template file. 
          css::
            The filename of the CSS file.
          htdocs::
@@ -87,7 +88,7 @@ class ThemeBase(Component):
         info = {}
         
         info['description'] = inspect.getdoc(self.__class__)
-        self._set_info(info, 'theme', self.get_theme_names().next()+'_theme.html')
+        self._set_info(info, 'template', os.path.join('templates', self.get_theme_names().next().lower()+'_theme.html'))
         self._set_info(info, 'css', self.get_theme_names().next().lower()+'.css')
         self._set_info(info, 'htdocs', 'htdocs')
         self._set_info(info, 'screenshot', 'htdocs/screenshot.png')

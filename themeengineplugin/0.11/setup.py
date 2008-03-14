@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
-if __import__('os').getlogin() != 'coderanger':
-    print 'DO NOT USE THIS CODE YET.'
-    __import__('sys').exit(1)
-
 from setuptools import setup
 
 setup(
@@ -23,7 +19,7 @@ setup(
         'Framework :: Trac',
     ],
     
-    install_requires = [],
+    install_requires = ['Trac>=0.11dev-r6696,>=0.11'],
 
     entry_points = {
         'trac.plugins': [
