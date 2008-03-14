@@ -1,7 +1,7 @@
 mylog = None;
 env = None;
 
-def get_all(sql, *params):
+def get_all(env, sql, *params):
     """Executes the query and returns the (description, data)"""
     db = env.get_db_cnx()
     cur = db.cursor()
@@ -23,7 +23,7 @@ with parameters:%s\nException:%s'%(sql, params, e));
     
     return (desc, data)
 
-def execute_non_query( sql, *params):
+def execute_non_query(env, sql, *params):
     """Executes the query on the given project"""
     db = env.get_db_cnx()
     cur = db.cursor()
@@ -39,7 +39,7 @@ with parameters:%s\nException:%s'%(sql, params, e));
     except:
         pass
     
-def get_first_row( sql,*params):
+def get_first_row(env, sql,*params):
     """ Returns the first row of the query results as a tuple of values (or None)"""
     db = env.get_db_cnx()
     cur = db.cursor()
@@ -58,15 +58,15 @@ def get_first_row( sql,*params):
         pass
     return data;
 
-def get_scalar(sql, col=0, *params):
+def get_scalar(env, sql, col=0, *params):
     """ Gets a single value (in the specified column) from the result set of the query"""
-    data = get_first_row(sql, *params);
+    data = get_first_row(env, sql, *params);
     if data:
         return data[col]
     else:
         return None;
 
-def execute_in_trans(*args):
+def execute_in_trans(env, *args):
     db = env.get_db_cnx()
     cur = db.cursor()
     result = True
@@ -85,7 +85,7 @@ def execute_in_trans(*args):
         pass
     return result
 
-def db_table_exists( table):
+def db_table_exists(env,  table):
     db = env.get_db_cnx()
     sql = "SELECT * FROM %s LIMIT 1" % table;
     cur = db.cursor()
@@ -103,18 +103,18 @@ def db_table_exists( table):
         pass
     return has_table
 
-def get_column_as_list(sql, col=0, *params):
-    data = get_all(sql, *params)[1] or ()
+def get_column_as_list(env, sql, col=0, *params):
+    data = get_all(env, sql, *params)[1] or ()
     return [valueList[col] for valueList in data]
 
-def get_system_value(key):
-    return get_scalar("SELECT value FROM system WHERE name=%s", 0, key)
+def get_system_value(env, key):
+    return get_scalar(env, "SELECT value FROM system WHERE name=%s", 0, key)
 
-def set_system_value(key, value):
+def set_system_value(env, key, value):
     if get_system_value(key):
-        execute_non_query("UPDATE system SET value=%s WHERE name=%s", value, key)        
+        execute_non_query(env, "UPDATE system SET value=%s WHERE name=%s", value, key)        
     else:
-        execute_non_query("INSERT INTO system (value, name) VALUES (%s, %s)",
+        execute_non_query(env, "INSERT INTO system (value, name) VALUES (%s, %s)",
             value, key)
 
 

@@ -20,17 +20,17 @@ WHERE id=%s
 estimateIdSql = "SELECT MAX(id) FROM estimate"
 estimateLineItemIdSql = "SELECT MAX(id) FROM estimate_line_item"
 
-def nextEstimateId ():
-    return (dbhelper.get_scalar(estimateIdSql) or 0)+1
+def nextEstimateId (env):
+    return (dbhelper.get_scalar(env, estimateIdSql) or 0)+1
 
-def nextEstimateLineItemId ():
-    return (dbhelper.get_scalar(estimateLineItemIdSql) or 0)+1
+def nextEstimateLineItemId (env):
+    return (dbhelper.get_scalar(env, estimateLineItemIdSql) or 0)+1
 
-def getEstimateResultSet(id):
-    return dbhelper.get_result_set("SELECT * FROM estimate WHERE id=%s", id)
+def getEstimateResultSet(env, id):
+    return dbhelper.get_result_set(env, "SELECT * FROM estimate WHERE id=%s", id)
 
-def getEstimateLineItemsResultSet(id):
-    return dbhelper.get_result_set("SELECT * FROM estimate_line_item WHERE estimate_id=%s", id)
+def getEstimateLineItemsResultSet(env, id):
+    return dbhelper.get_result_set(env, "SELECT * FROM estimate_line_item WHERE estimate_id=%s", id)
 
 removeLineItemsNotInListSql = """
 DELETE FROM estimate_line_item
@@ -38,8 +38,8 @@ WHERE estimate_id=%%s and id not in (%s)
 """
 
     
-def getHtmlEstimate(id):
-    return dbhelper.get_scalar("SELECT COMMENT FROM estimate WHERE ID=%s", 0, id)
+def getHtmlEstimate(env, id):
+    return dbhelper.get_scalar(env, "SELECT COMMENT FROM estimate WHERE ID=%s", 0, id)
 
 estimateChangeTicketComment = """
 INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue)
