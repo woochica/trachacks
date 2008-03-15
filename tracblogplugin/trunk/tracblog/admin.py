@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 John Hampton <pacopablo@asylumware.com>
+# Copyright (C) 2006-2008 John Hampton <pacopablo@pacopablo.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -13,6 +13,9 @@
 # http://trac-hacks.org/wiki/TracBlogPlugin
 #
 # Author: John Hampton <pacopablo@asylumware.com>
+import os
+import os.path
+from pkg_resources import resource_filename
 
 from trac.core import *
 from trac.web import IRequestHandler
@@ -20,11 +23,8 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.perm import IPermissionRequestor
 from trac.util import escape, Markup, format_date, format_datetime
 from trac.wiki.formatter import wiki_to_html
-from webadmin.web_ui import IAdminPageProvider
+from trac.admin import IAdminPanelProvider
 
-import os
-import os.path
-from pkg_resources import resource_filename
 
 __all__ = ['BlogAdminPlugin']
 
@@ -33,7 +33,7 @@ class BlogAdminPlugin(Component):
         Provides functions related to registration
     """
 
-    implements(ITemplateProvider, IAdminPageProvider, IPermissionRequestor)
+    implements(ITemplateProvider, IAdminPanelProvider, IPermissionRequestor)
 
     # IPermissionRequestor
     def get_permission_actions(self):

@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-PACKAGE = 'TracBlogPlugin'
+PACKAGE = 'TracBlog'
 VERSION = '0.3'
 
 setup(  name=PACKAGE, version=VERSION,

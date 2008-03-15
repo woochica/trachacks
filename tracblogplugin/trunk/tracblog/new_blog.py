@@ -18,6 +18,7 @@ import os.path
 import time
 import inspect
 import re
+import urlparse
 from pkg_resources import resource_filename
 
 from genshi.builder import tag
@@ -41,6 +42,8 @@ from tractags.api import TagSystem
 __all__ = ['BlogPost']
 
 _tag_split = re.compile('[,\s]+')
+
+ENTRY_BASE = '/blog/new'
 
 class BlogPost(WikiMacroBase):
     """Inserts a link to create a new blog post
@@ -100,7 +103,7 @@ class BlogPost(WikiMacroBase):
         return ''
 
     def match_request(self, req):
-        return req.path_info == '/blog/new'
+        return req.path_info == ENTRY_BASE
 
     def process_request(self, req):
         req.perm.assert_permission('BLOG_POSTER')
@@ -116,7 +119,7 @@ class BlogPost(WikiMacroBase):
         blogtitle = req.args.get('blogtitle', '')
         page_format = req.args.get('pagename', self.page_format) 
         tags = self._get_tags(req)
-        referer = req.args.get('referer') or req.get_header('Referer') or req.href.blog()
+        referer = self._get_referer(req)
 
         author = req.authname
         pagename = self._generate_pagename(page_format, blogtitle, author) 
@@ -215,6 +218,26 @@ class BlogPost(WikiMacroBase):
             username = re.sub(r'[^\w]+', '_', author)
             pagename = pagename.replace('$U', username)
         return pagename
+
+    def _get_referer(self, req):
+        """ Return the referring page.
+
+        If the referring page is the new blog entry page, redirect to the main
+        blog page.
+
+        Also protects against referring to an external site.
+
+        """
+        ref = req.args.get('referer') or req.get_header('Referer') or req.href.blog()
+        base_scheme, base_host = urlparse.urlparse(req.base_url)[:2]
+        ref_scheme, ref_host = urlparse.urlparse(ref)[:2]
+        if ref and (ref.startswith('http://')  or ref.startswith('https://')) \
+           and not (ref_host == base_host):
+             # don't redirect to external sites
+             ref = req.href.blog()
+        if urlparse.urlparse(ref)[2] == ENTRY_BASE:
+            ref = req.href.blog()
+        return ref
 
     def var_subs(self, author, s): 
         s = s.replace('$U', author) 
