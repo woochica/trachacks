@@ -1,17 +1,17 @@
 Index: trac/ticket/web_ui.py
 ===================================================================
---- trac/ticket/web_ui.py	(revision 5856)
+--- trac/ticket/web_ui.py	(revision 6697)
 +++ trac/ticket/web_ui.py	(working copy)
-@@ -432,6 +432,8 @@
+@@ -476,6 +476,8 @@
                           # Store a timestamp for detecting "mid air collisions"
                           'timestamp': str(ticket.time_changed)})
  
 +        data['backrefs'] = self._get_backrefs(context, ticket)
 + 
-         self._insert_ticket_data(context, data, get_reporter_id(req, 'author'),
-                                  field_changes)
+         self._insert_ticket_data(req, ticket, data,
+                                  get_reporter_id(req, 'author'), field_changes)
  
-@@ -892,6 +894,39 @@
+@@ -1000,6 +1002,39 @@
          for key in field_changes:
              ticket[key] = field_changes[key]['new']
  
@@ -49,15 +49,15 @@ Index: trac/ticket/web_ui.py
 +        return refs
 +
      def _prepare_fields(self, req, ticket):
+         context = Context.from_request(req, ticket.resource)
          fields = []
-         for field in ticket.fields:
 Index: trac/ticket/templates/ticket.html
 ===================================================================
---- trac/ticket/templates/ticket.html	(revision 5856)
+--- trac/ticket/templates/ticket.html	(revision 6697)
 +++ trac/ticket/templates/ticket.html	(working copy)
-@@ -205,6 +205,21 @@
-                 ${wiki_to_html(context, ticket.description, escape_newlines=True)}
+@@ -186,6 +186,21 @@
                </div>
+               <br py:if="not ticket.description" style="clear: both" />
              </div>
 +
 +            <div py:if="backrefs">
@@ -79,18 +79,18 @@ Index: trac/ticket/templates/ticket.html
        <!--! End of ticket box -->
 Index: trac/versioncontrol/web_ui/changeset.py
 ===================================================================
---- trac/versioncontrol/web_ui/changeset.py	(revision 5856)
+--- trac/versioncontrol/web_ui/changeset.py	(revision 6697)
 +++ trac/versioncontrol/web_ui/changeset.py	(working copy)
-@@ -594,6 +594,8 @@
+@@ -611,6 +611,8 @@
                  info = None
              changes.append(info) # the sequence should be immutable
  
 +        data['backrefs'] = self._get_backrefs(context, rev)
 +
          data.update({'has_diffs': has_diffs, 'changes': changes, 'xhr': xhr,
-                      'filestats': filestats,
+                      'filestats': filestats, 'annotated': annotated,
                       'files': files, 'location': self._get_location(files),
-@@ -907,6 +909,42 @@
+@@ -931,6 +933,42 @@
                                              old=data['old_rev']) + query
          return tag.a(label, class_="changeset", title=title, href=href)
  
@@ -135,9 +135,9 @@ Index: trac/versioncontrol/web_ui/changeset.py
      def get_search_filters(self, req):
 Index: trac/versioncontrol/templates/changeset.html
 ===================================================================
---- trac/versioncontrol/templates/changeset.html	(revision 5856)
+--- trac/versioncontrol/templates/changeset.html	(revision 6697)
 +++ trac/versioncontrol/templates/changeset.html	(working copy)
-@@ -130,6 +130,19 @@
+@@ -116,6 +116,19 @@
              </py:when>
              <py:otherwise><pre>${changeset.message}</pre></py:otherwise>
            </dd>
@@ -159,20 +159,20 @@ Index: trac/versioncontrol/templates/changeset.html
            <dt class="property location">Location:</dt>
 Index: trac/wiki/web_ui.py
 ===================================================================
---- trac/wiki/web_ui.py	(revision 5856)
+--- trac/wiki/web_ui.py	(revision 6697)
 +++ trac/wiki/web_ui.py	(working copy)
-@@ -514,6 +514,8 @@
-                      WikiSystem(self.env).get_pages(prefix) if 'WIKI_VIEW'
-                      in req.perm(context(id=t))]
+@@ -491,6 +491,8 @@
+                      WikiSystem(self.env).get_pages(prefix) if
+                      'WIKI_VIEW' in req.perm('wiki', template)]
  
 +        data['backrefs'] = self._get_backrefs(context, page)
 + 
          # -- prev/up/next links
          if prev_version:
-             add_link(req, 'prev', req.href.wiki(page.name,
-@@ -535,6 +537,35 @@
-         })
-         return 'wiki_view.html', data, None
+             add_link(req, 'prev',
+@@ -532,6 +534,35 @@
+                                                     action='diff',
+                                                     version=page.version))
  
 +    def _get_backrefs(self, context, page):
 +        id = page.id
@@ -208,9 +208,9 @@ Index: trac/wiki/web_ui.py
      def get_timeline_filters(self, req):
 Index: trac/wiki/templates/wiki_view.html
 ===================================================================
---- trac/wiki/templates/wiki_view.html	(revision 5856)
+--- trac/wiki/templates/wiki_view.html	(revision 6697)
 +++ trac/wiki/templates/wiki_view.html	(working copy)
-@@ -61,6 +61,16 @@
+@@ -43,6 +43,16 @@
  
        ${list_of_attachments(attachments, compact=True)}
  
@@ -224,6 +224,6 @@ Index: trac/wiki/templates/wiki_view.html
 +         </py:for></p>
 +      </py:if>
 +
-       <py:with vars="modify_perm = 'WIKI_MODIFY' in perm(context);
-                      delete_perm = 'WIKI_DELETE' in perm(context);
-                      admin_perm = 'WIKI_ADMIN' in perm(context)">
+       <py:with vars="modify_perm = 'WIKI_MODIFY' in perm(page.resource);
+                      delete_perm = 'WIKI_DELETE' in perm(page.resource);
+                      admin_perm = 'WIKI_ADMIN' in perm(page.resource)">
