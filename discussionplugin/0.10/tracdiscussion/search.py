@@ -2,8 +2,10 @@
 
 from trac.core import *
 from trac.config import Option
-from trac.Search import ISearchSource, shorten_result
+from trac.Search import shorten_result
 from trac import util
+
+from trac.Search import ISearchSource
 
 class DiscussionSearch(Component):
     """

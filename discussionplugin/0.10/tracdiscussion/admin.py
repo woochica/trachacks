@@ -1,12 +1,15 @@
 # -*- coding: utf8 -*-
 
-from tracdiscussion.api import *
+import time
+
 from trac.core import *
-from trac.perm import IPermissionRequestor
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
+
+from trac.perm import IPermissionRequestor
 from webadmin.web_ui import IAdminPageProvider
-import time
+
+from tracdiscussion.api import *
 
 class DiscussionWebAdmin(Component):
     """
@@ -14,6 +17,9 @@ class DiscussionWebAdmin(Component):
         via WebAdminPlugin.
     """
     implements(IAdminPageProvider)
+
+    # Extension points.
+    discussion_manipulators = ExtensionPoint(IDiscussionManipulator)
 
     # IAdminPageProvider
     def get_admin_pages(self, req):

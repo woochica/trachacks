@@ -22,7 +22,11 @@ class DiscussionWiki(Component):
     """
     implements(IWikiSyntaxProvider, IWikiMacroProvider, IRequestFilter)
 
+    # Extension points.
+    discussion_manipulators = ExtensionPoint(IDiscussionManipulator)
+
     # IWikiSyntaxProvider methods
+
     def get_link_resolvers(self):
         yield ('forum', self._discussion_link)
         yield ('topic', self._discussion_link)
@@ -32,6 +36,7 @@ class DiscussionWiki(Component):
         return []
 
     # IWikiMacroProvider methods
+
     def get_macros(self):
         yield 'ViewTopic'
 

@@ -1,11 +1,13 @@
 # -*- coding: utf8 -*-
 
+import time
+
 from trac.core import *
-from trac.Timeline import ITimelineEventProvider
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.util import Markup
 from trac.util.html import html
-import time
+
+from trac.Timeline import ITimelineEventProvider
 
 class DiscussionTimeline(Component):
     """
@@ -15,6 +17,7 @@ class DiscussionTimeline(Component):
     implements(ITimelineEventProvider)
 
     # ITimelineEventProvider
+
     def get_timeline_events(self, req, start, stop, filters):
         self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
           filters))

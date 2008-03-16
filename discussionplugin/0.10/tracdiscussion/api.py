@@ -1,18 +1,41 @@
 # -*- coding: utf8 -*-
 
-from tracdiscussion.notification import *
+import time
+
 from trac.core import *
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.perm import PermissionError
 from trac.util import format_datetime, pretty_timedelta
 from trac.util.text import to_unicode
-import time
+
+from tracdiscussion.notification import *
+
+class InvalidDiscussionPost(TracError):
+    """Exception raised when a ticket fails validation."""
+
+class IDiscussionManipulator(Interface):
+    """Miscellaneous manipulation of forum posts."""
+
+    def validate_message(self, req, author, body):
+        """Validate a new message post in a topic.
+
+        Must return a list of `(field, message)` tuples, one for each problem
+        detected. `field` can be `None` to indicate an overall problem with the
+        ticket. Therefore, a return value of `[]` means everything is OK."""
+
+    def validate_topic(self, req, author, subject, body):
+        """Validate a new topic.
+
+        Must return a list of `(field, message)` tuples, one for each problem
+        detected. `field` can be `None` to indicate an overall problem with the
+        ticket. Therefore, a return value of `[]` means everything is OK."""
 
 class DiscussionApi(object):
     def __init__(self, component, req):
         self.env = component.env
         self.log = component.log
+        self.discussion_manipulators = component.discussion_manipulators
 
     # Main request processing function
 
@@ -532,6 +555,17 @@ class DiscussionApi(object):
                 new_body = req.args.get('body')
                 new_time = int(time.time())
 
+                # Manipulate new topic.
+                for manipulator in self.discussion_manipulators:
+                    for field, message in manipulator.validate_topic(req,
+                      new_author, new_subject, new_body):
+                        if field:
+                            raise InvalidDiscussionPost("The field %s in"
+                              " message is invalid: %s" % (field, message))
+                        else:
+                            raise InvalidDiscussionPost("Invalid post: %s" %
+                              message)
+
                 # Add topic.
                 self.add_topic(cursor, forum['id'], new_subject, new_time,
                   new_author, new_body)
@@ -641,6 +675,17 @@ class DiscussionApi(object):
                 new_author = req.args.get('author')
                 new_body = req.args.get('body')
                 new_time = int(time.time())
+
+                # Custom validation rules
+                for manipulator in self.discussion_manipulators:
+                    for field, message in manipulator.validate_message(req,
+                      new_author, new_body):
+                        if field:
+                            raise InvalidDiscussionPost("The field %s in"
+                              " message is invalid: %s" % (field, message))
+                        else:
+                            raise InvalidDiscussionPost("Invalid post: %s" %
+                              message)
 
                 # Add message.
                 if message:

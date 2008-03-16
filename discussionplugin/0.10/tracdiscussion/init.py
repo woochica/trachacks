@@ -2,6 +2,7 @@
 
 from trac.core import *
 from trac.db import *
+
 from trac.env import IEnvironmentSetupParticipant
 
 # Last discussion database shcema version

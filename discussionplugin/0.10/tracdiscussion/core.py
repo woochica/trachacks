@@ -1,13 +1,16 @@
 # -*- coding: utf8 -*-
 
-from tracdiscussion.api import *
-from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider
-from trac.web.main import IRequestHandler
-from trac.config import Option
-from trac.perm import IPermissionRequestor
-from trac.util.html import html
 import re
+
+from trac.core import *
+from trac.config import Option
+from trac.util.html import html
+
+from trac.perm import IPermissionRequestor
+from trac.web.main import IRequestHandler
+from trac.web.chrome import INavigationContributor, ITemplateProvider
+
+from tracdiscussion.api import *
 
 class DiscussionCore(Component):
     """
@@ -16,6 +19,9 @@ class DiscussionCore(Component):
     """
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
       IPermissionRequestor)
+
+    # Extension points.
+    discussion_manipulators = ExtensionPoint(IDiscussionManipulator)
 
     title = Option('discussion', 'title', 'Discussion',
       'Main navigation bar button title.')
