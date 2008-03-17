@@ -16,7 +16,7 @@ tables = [
         Column('stdout'),
         Column('stderr'),
     ],
-    #Table('tracforge_project_output', key=('ts'
+#    Table('tracforge_project_output', key=('ts'
     Table('tracforge_members', key=('project', 'username'))[
         Column('project'),
         Column('username'),

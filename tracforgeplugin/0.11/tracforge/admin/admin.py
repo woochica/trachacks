@@ -1,20 +1,27 @@
-from trac.core import *
+# Created by Noah Kantrowitz on 2008-02-19.
+# Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+import os.path
 
-from webadmin.web_ui import IAdminPageProvider
+from trac.core import *
+from trac.admin.api import IAdminPanelProvider
+from trac.web.chrome import add_script
+from trac.util.compat import sorted
 
 from model import Project, Prototype
 
 class TracForgeAdminModule(Component):
     """A module to manage projects in TracForge."""
 
-    implements(IAdminPageProvider)    
+    implements(IAdminPanelProvider)    
     
     # IAdminPageProvider methods
-    def get_admin_pages(self, req):
+    def get_admin_panels(self, req):
         if req.perm.has_permission('TRACFORGE_ADMIN'):
             yield ('tracforge', 'TracForge', 'admin', 'Project Admin')
             
-    def process_admin_request(self, req, cat, page, path_info):
+    def render_admin_panel(self, req, cat, page, path_info):
+        data = {}
+        
         if req.method == 'POST':
             if 'create' in req.args.keys(): # Project creation
                 name = req.args.get('shortname', '').strip()
@@ -58,23 +65,11 @@ class TracForgeAdminModule(Component):
                 req.redirect(req.href.admin(cat, page))
             elif 'delete' in req.args.keys(): # Project deleteion
                 raise TracError, 'Not implemented yet. Sorry.'
-
-        #self.log.debug('TracForge: Starting data grab')
-        projects = [Project(self.env, n) for n in Project.select(self.env)]
-        #self.log.debug('TracForge: Done with data grab')
-    
-        #self.log.debug('TracForge: Starting data grab')
-        project_data = {}
-        for proj in projects:
-            #self.log.debug('TracForge: Getting data for %s', proj.name)
-            project_data[proj.name] = {
-                'fullname': proj.valid and proj.env.project_name or '',
-                'env_path': proj.env_path,
-            }
-        #self.log.debug('TracForge: Done with data grab')
-            
-        req.hdf['tracforge.projects'] = project_data
-        req.hdf['tracforge.prototypes'] = Prototype.select(self.env)
-    
-        return 'admin_tracforge.cs', None
+        
+        data['projects'] = sorted([Project(self.env, n) for n in Project.select(self.env)], key=lambda p: p.name)
+        data['prototypes'] = Prototype.select(self.env)
+        data['env_base_path'] = os.path.join(os.path.dirname(self.env.path), '')
+        
+        add_script(req, 'tracforge/js/typewatch1.1.js')
+        return 'admin_tracforge_projects.html', data
              

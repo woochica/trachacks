@@ -13,7 +13,6 @@ setup(
     name = 'TracForge',
     version = '1.1',
     packages = ['tracforge',
-                'tracforge/subscriptions',
                 'tracforge/admin',
                 'tracforge/linker',
                ],
@@ -38,7 +37,10 @@ setup(
             'tracforge.admin = tracforge.admin',
             'tracforge.linker = tracforge.linker',
         ],
+        'console_scripts': [
+            'tracforge-helper = tracforge.admin.constructor:main',
+        ],
     },
 
-    install_requires = [ 'TracWebAdmin' ],
+    install_requires = ['Trac'],
 )

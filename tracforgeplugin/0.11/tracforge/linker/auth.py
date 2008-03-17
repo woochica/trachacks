@@ -57,6 +57,7 @@ class TracForgeCookieMunger(Component):
 
     def pre_process_request(self, req, handler):
         if req.path_info.startswith('/login') or req.path_info.startswith('/logout'):
+            old_redirect = req.redirect
             def my_redirect(*args, **kwords):
                 # Munge the cookie path
                 if 'trac_auth' in req.outcookie:
@@ -72,9 +73,8 @@ class TracForgeCookieMunger(Component):
                     if parts[2].startswith(self.uri_root) and (not parts[1] or parts[1] == req.server_name):
                         Request.redirect(req, referer)
 
-                Request.redirect(req, *args, **kwords)
+                old_redirect(req, *args, **kwords)
             
-            assert repr(req.redirect).startswith('<bound method'), 'Someone else changed req.redirect first'
             req.redirect = my_redirect
             
         return handler

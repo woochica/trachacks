@@ -1,5 +1,4 @@
-from trac.env import Environment
-from trac.web.main import _open_environment
+from trac.env import open_environment
 from trac.config import Configuration, Section
 
 from UserDict import DictMixin
@@ -69,6 +68,7 @@ class Members(object, DictMixin):
         for row in cursor:
             yield row[0]
 
+
 class Project(object):
     """Model object for TracForge projects."""
     
@@ -91,23 +91,25 @@ class Project(object):
             self.env_path = row[0]
             
     exists = property(lambda self: self.env_path is not None)
-    
+
     def _get_env(self):
         if not self._env:
             assert self.exists, "Can't use a non-existant project"
             try:
-                self._env = _open_environment(self.env_path)
+                self._env = open_environment(self.env_path, use_cache=True)
                 self._valid = True
             except Exception, e:
                 self._env = BadEnv(self.env_path, e)
         return self._env
     env = property(_get_env)    
-    
+
     def _get_valid(self):
-        unused = self.env # This will make sure that we have tried loading the env at least once
+        self._get_env() # This will make sure that we have tried loading the env at least once
         return self._valid
     valid = property(_get_valid)
-        
+
+    full_name = property(lambda self: self.valid and self.env.project_name or '')
+
     def save(self, db=None):
         handle_commit = False
         if not db:
@@ -119,10 +121,10 @@ class Project(object):
         cursor.execute('UPDATE tracforge_projects SET env_path=%s WHERE name=%s',(self.env_path or '', self.name))
         if not cursor.rowcount:
             cursor.execute('INSERT INTO tracforge_projects (name, env_path) VALUES (%s, %s)',(self.name, self.env_path or ''))
-            
+        
         if handle_commit:
             db.commit()
-    
+
     def delete(self, db=None):
         assert self.exists
         handle_commit = False
@@ -135,7 +137,6 @@ class Project(object):
             
         if handle_commit:
             db.commit()
-
 
     def __contains__(self, key):
         """Allow the nice syntax of `if 'user' in project:`"""
@@ -150,6 +151,7 @@ class Project(object):
             yield row[0]
     select = classmethod(select)            
 
+    # XXX: Should be from_env_path <NPK>
     def by_env_path(cls, env, env_path, db=None):
         """Find a Project based on its env_path."""
         db = db or env.get_db_cnx()
@@ -162,13 +164,14 @@ class Project(object):
         if row:
             name = row[0]
         return Project(env, name, db)
-    by_env_path = classmethod(by_env_path)            
+    by_env_path = classmethod(by_env_path)
+
 
 class Prototype(list):
     """A model object for a project prototype."""
     
     def __init__(self, env, tag, db=None):
-        """Initialize a new Prototype. `env in the master environment."""
+        """Initialize a new Prototype. `env` is the master environment."""
         self.env = env
         self.tag = tag
         
@@ -188,17 +191,8 @@ class Prototype(list):
         cursor = db.cursor()
         
         cursor.execute('DELETE FROM tracforge_prototypes WHERE tag=%s', (self.tag,))
-        for data, i in zip(self, xrange(len(self))):
-            action = args = None
-            if isinstance(data, dict):
-                action = data['action']
-                args = data['args']
-            elif isinstance(data, (tuple, list)):
-                action = data[0]
-                args = data[1]
-            else:
-                raise TypeError('Invalid type %s in prototype'%type(data))
-            cursor.execute('INSERT INTO tracforge_prototypes (tag, step, action, args) VALUES (%s, %s, %s, %s)', (self.tag, i, action, args))
+        for i, data in enumerate(self):
+            cursor.execute('INSERT INTO tracforge_prototypes (tag, step, action, args) VALUES (%s, %s, %s, %s)', (self.tag, i, data[0], data[1]))
             
         if handle_commit:
             db.commit()
@@ -214,20 +208,15 @@ class Prototype(list):
         cursor.execute('DELETE FROM tracforge_prototypes WHERE tag=%s', (self.tag,))
         
         if handle_commit:
-            db.commit()        
+            db.commit()
             
     def __contains__(self, other):
-        fn = None
-        if isinstance(other, (str, unicode)):
+        if isinstance(other, basestring):
             fn = lambda a,b: a == b[0] # Check if the string is an action in this prototype
-        elif isinstance(other, (tuple, list)):
+        else:
             fn = lambda a,b: a[0] == b[0] and a[1] == b[1]
-        elif isinstance(other, dict):
-            fn = lambda a,b: a['action'] == b[0] and a['args'] == b[1]
 
         for x in self:
-            if isinstance(x, dict):
-                x = (x['action'], x['args'])
             if fn(other, x):
                 return True
         return False        
