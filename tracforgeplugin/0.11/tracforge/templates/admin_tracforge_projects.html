@@ -1,0 +1,76 @@
+<!--!
+	admin_tracforge_projects
+	Created by Noah Kantrowitz on 2008-02-19.
+	Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Project Admin</title>
+    <script type="text/javascript">
+      $(function() {
+        $('#shortname').typeWatch({
+          callback: function() {
+            $('#env_path').val('$env_base_path' + $('#shortname').val());
+          },
+          wait: 250
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <h2>TracForge Admin</h2>
+    
+    <form id="addproject" class="addnew" method="post">
+      <fieldset>
+        <legend>Add New Project</legend>
+          <div class="field">
+            <label for="shortname">Short Name:</label>
+            <input type="text" id="shortname" name="shortname" class="textwidget" />
+          </div>
+          <div class="field">
+            <label for="fullname">Full Name:</label>
+            <input type="text" id="fullname" name="fullname" class="textwidget" />
+          </div>
+          <div class="field">
+            <label for="env_path">Environment:</label>
+            <input type="text" id="env_path" name="env_path" class="textwidget" size="30" />
+          </div>
+          <div class="field">
+            <label for="prototype">Prototype:</label>
+            <select id="prototype" name="prototype">
+              <option py:for="p in prototypes" value="$p">$p</option>
+            </select>
+          </div>
+          <p class="help">Create a new project</p>
+          <div class="buttons">
+            <input type="submit" name="create" value="Create" />
+          </div>        
+      </fieldset>
+    </form>
+
+    <form method="post">
+      <table class="listing" id="projectlist">
+        <thead>
+          <tr><th class="sel">&nbsp;</th><th>Short Name</th><th>Full Name</th><th>Env Path</th></tr>
+        </thead>
+        <tbody>
+          <tr py:for="proj in projects">
+            <td>&nbsp;</td>
+            <td>$proj.name</td>
+            <td>$proj.full_name</td>
+            <td>$proj.env_path</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="buttons">
+        <input type="submit" name="delete" value="Delete selected projects" />
+      </div>
+    </form>
+  </body>
+</html>
