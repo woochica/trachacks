@@ -1,21 +1,26 @@
 #! /bin/sh
 
+echo $PATH
+
 case "$1" in
-  9)
-    ENV=/Users/peter/projects/env0.9
-    PORT=9009
-    ;;
+
   10)
-    ENV=/Users/peter/projects/env0.10
+    ENV=/opt/trac/py25/env0.10
     PORT=9010
     ;;
+
+  11)
+    ENV=/opt/trac/py25/env0.11
+    PORT=9011
+    ;;
+
   *)
-    echo "build.sh 9|10"
+    echo "build.sh 10|11"
     exit 1
 esac
 
 
-export PATH=$ENV/bin:$PATHRESET
+export PATH=$ENV/bin:$PATH_RESET
 
 echo "cleaning out old build"
 rm -rf build dist
