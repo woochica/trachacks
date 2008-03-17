@@ -196,6 +196,7 @@ class DoxygenPlugin(Component):
         for doc in os.listdir(self.base_path):
             # Search in documentation directories
             path = os.path.join(self.base_path, doc)
+            path = os.path.join(path, self.html_output)
             if os.path.isdir(path):
                 index = os.path.join(path, 'search.idx')
                 if os.path.exists(index):
@@ -207,7 +208,8 @@ class DoxygenPlugin(Component):
                           'doxygen', None
 
             # Search in common documentation directory
-            index = os.path.join(self.base_path, 'search.idx')
+            index = os.path.join(self.base_path, self.html_output)
+            index = os.path.join(index, 'search.idx')
             if os.path.exists(index):
                 creation = os.path.getctime(index)
                 for result in self._search_in_documentation('', keywords):
@@ -341,7 +343,7 @@ class DoxygenPlugin(Component):
 
     def _search_in_documentation(self, doc, keywords):
         # Open index file for documentation
-        index = os.path.join(self.base_path, doc, 'search.idx')
+        index = os.path.join(self.base_path, doc, self.html_output, 'search.idx')
         if os.path.exists(index):
             fd = open(index)
 
@@ -387,7 +389,10 @@ class DoxygenPlugin(Component):
 
                     for i in range(numDocs):
                         idx = self._readInt(fd)
-                        freq = self._readInt(fd)
+                        if idx == -1:
+                            freq = 0
+                        else:
+                            freq = self._readInt(fd)
                         results.append({'idx': idx, 'freq': freq >> 1,
                           'hi': freq & 1, 'multi': multiplier})
                         if freq & 1:
@@ -397,11 +402,16 @@ class DoxygenPlugin(Component):
                             totalFreqLo += freq * multiplier
 
                     for i in range(numDocs):
+                        if results[count]['idx'] == -1:
+                            results[count]['name'] = ''
+                            results[count]['url'] = ''
+                            count += 1
+                            continue
                         fd.seek(results[count]['idx'])
                         name = self._readString(fd)
                         url = self._readString(fd)
                         results[count]['name'] = name
-                        results[count]['url'] = url
+                        results[count]['url'] = self.html_output + '/' + url
                         count += 1
 
                 totalFreq = (totalHi + 1) * totalFreqLo + totalFreqHi
@@ -435,6 +445,9 @@ class DoxygenPlugin(Component):
         b2 = fd.read(1)
         b3 = fd.read(1)
         b4 = fd.read(1)
+        
+        if not b1 or not b2 or not b3 or not b4:
+            return -1;
 
         return (ord(b1) << 24) | (ord(b2) << 16) | (ord(b3) << 8) | ord(b4)
 
