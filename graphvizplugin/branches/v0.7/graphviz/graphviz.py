@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.7.0'
+__version__   = '0.7.1'
 
 
 try:
@@ -171,12 +171,12 @@ class Graphviz(Component):
 
         else:
             self.log.error('render_macro: requested processor (%s) not found.' % self.processor)
-            buf.write('<p>Graphviz macro processor error: requested processor <b>(%s)</b> not found.</p>' % self.processor)
+            buf.write('<p>Graphviz macro processor error: requested processor (%s) not found.</p>' % self.processor)
             return buf.getvalue()
            
         if self.out_format not in Graphviz.Formats:
             self.log.error('render_macro: requested format (%s) not found.' % self.out_format)
-            buf.write('<p>Graphviz macro processor error: requested format <b>(%s)</b> not valid.</p>' % self.out_format)
+            buf.write('<p>Graphviz macro processor error: requested format (%s) not valid.</p>' % self.out_format)
             return buf.getvalue()
 
         encoding = 'utf-8'
@@ -303,17 +303,17 @@ class Graphviz(Component):
         buf = StringIO()
 
         if 'graphviz' not in self.config.sections():
-            msg = 'The <b>graphviz</b> section was not found in the trac configuration file.'
+            msg = 'The [graphviz] section was not found in the trac configuration file.'
             return (True, self.show_err(msg))
 
         # check for the cache_dir entry
         self.cache_dir = self.config.get('graphviz', 'cache_dir')
         if not self.cache_dir:
-            msg = 'The <b>graphviz</b> section is missing the <b>cache_dir</b> field.'
+            msg = 'The [graphviz] section is missing the cache_dir field.'
             return True, self.show_err(msg)
 
         if not os.path.exists(self.cache_dir):
-            msg = 'The <b>cache_dir</b> is set to <b>%s</b> but that path does not exist.' % self.cache_dir
+            msg = 'The cache_dir is set to "%s" but that path does not exist.' % self.cache_dir
             return True, self.show_err(msg)
         #self.log.debug('self.cache_dir: %s' % self.cache_dir)
 
@@ -332,19 +332,19 @@ class Graphviz(Component):
         cfg_path = self.config.get('graphviz', 'cmd_path')
         if cfg_path:
             if not os.path.exists(cfg_path):
-                msg = 'The <b>cmd_path</b> is set to <b>%s</b> but that path does not exist.' % cfg_path
+                msg = 'The cmd_path is set to "%s" but that path does not exist.' % cfg_path
                 return True, self.show_err(msg)
             cmd_paths = [cfg_paths]
 
         if not cmd_paths:
-            msg = 'The <b>graphviz</b> section is missing the <b>cmd_path</b> field and there is no default for %s.' % sys.platform
+            msg = 'The [graphviz] section is missing the cmd_path field and there is no default for %s.' % sys.platform
             return True, self.show_err(msg)
 
 
         self.cmds = {}
         pname = self.find_cmd(self.processor, cmd_paths)
         if not pname:
-            msg = 'The default processor, <b>%s</b>, was not found in %s.' % (self.processor, str(cmd_paths))
+            msg = 'The default processor, %s, was not found in %s.' % (self.processor, str(cmd_paths))
             return True, self.show_err(msg)
 
         for name in Graphviz.Processors:
@@ -368,7 +368,7 @@ class Graphviz(Component):
             self.rsvg_path = self.config.get('graphviz', 'rsvg_path', self.find_cmd('rsvg', cmd_paths))
 
             if not os.path.exists(self.rsvg_path):
-                err = 'The rsvg program is set to <b>%s</b> but that path does not exist.' % self.rsvg_path
+                err = 'The rsvg program is set to "%s" but that path does not exist.' % self.rsvg_path
                 return True, self.show_err(err)
         #self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
 
