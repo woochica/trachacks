@@ -16,7 +16,7 @@ jQuery.fn.extend({
     
     function typewatchCheck( thisWinSaved, override ) {
       var timer = typewatch_data[thisWinSaved];
-      var elTxt = $(timer.el).val();
+      var elTxt = jQuery(timer.el).val();
 
       if (elTxt.toUpperCase() != timer.text || override) {
         timer.text = elTxt.toUpperCase();

@@ -2,9 +2,10 @@ from trac.env import open_environment
 from trac.config import Configuration, Section
 
 from UserDict import DictMixin
-from tempfile import mkstemp, TemporaryFile
 import os
 import sys
+import time
+import traceback
 
 class BadEnv(object):
     def __init__(self, env_path, exc):
@@ -167,6 +168,21 @@ class Project(object):
     by_env_path = classmethod(by_env_path)
 
 
+class _CaptureOutput(object):
+    """A file-like object to replace sys.stdout/err."""
+    
+    def __init__(self, cursor, project, action, stream):
+        self.cursor = cursor
+        self.project = project
+        self.action = action
+        self.stream = stream
+
+    def write(self, msg):
+        self.cursor.execute('INSERT INTO tracforge_project_output ' \
+            '(ts, project, action, stream, data) VALUES (%s, %s, %s, %s, %s)',
+            (time.time(), self.project, self.action, self.stream, msg))
+
+
 class Prototype(list):
     """A model object for a project prototype."""
     
@@ -179,7 +195,7 @@ class Prototype(list):
         cursor = db.cursor()
         
         cursor.execute('SELECT action, args FROM tracforge_prototypes WHERE tag=%s ORDER BY step', (self.tag,))
-        list.__init__(self,[{'action':action, 'args':args} for action,args in cursor.fetchall()])
+        list.__init__(self, cursor)
 
     exists = property(lambda self: len(self)>0)
         
@@ -221,59 +237,56 @@ class Prototype(list):
                 return True
         return False        
 
-    def apply(self, req, proj):
+    def execute(self, data):
         """Run this prototype on a new project.
         NOTE: If you pass in a project that isn't new, this could explode. Don't do that.
         """
         from api import TracForgeAdminSystem
         steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
         
+        # Clear out the last attempt at making this project, if any
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('DELETE FROM tracforge_project_log WHERE project=%s', (proj.name,))
+        cursor.execute('DELETE FROM tracforge_project_log WHERE project=%s', (data['name'],))
+        cursor.execute('DELETE FROM tracforge_project_output WHERE project=%s', (data['name'],))
         db.commit()
+        
+        # Grab the current stdout/err
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
 
-        for step in self:
-            action = args = None
-            if isinstance(step, dict):
-                action = step['action']
-                args = step['args']
-            else:
-                action, args = step
-                
-            pid = os.fork()
-            if not pid:
-                #o_fd, o_file = mkstemp('tracforge-step', text=True)
-                #e_fd, e_file = mkstemp('tracforge-step', text=True)
-                
-                o_file = TemporaryFile(prefix='tracforge-step', bufsize=0)
-                e_file = TemporaryFile(prefix='tracforge-step', bufsize=0)
-                
-                sys.stdout = o_file
-                sys.stderr = e_file
-                
-                os.dup2(o_file.fileno(), 1)
-                os.dup2(e_file.fileno(), 2)
-            
-                rv = steps[action]['provider'].execute_setup_action(req, proj, action, args)
-                self.env.log.debug('TracForge: %s() => %r', action, rv)
-                
-                o_file.seek(0,0)
-                o_data = o_file.read()
-                o_file.close()
-                e_file.seek(0,0)
-                e_data = e_file.read()
-                e_file.close()
-                
-                db = self.env.get_db_cnx()
-                cursor = db.cursor()
-                cursor.execute('INSERT INTO tracforge_project_log (project, action, args, return, stdout, stderr) VALUES (%s, %s, %s, %s, %s, %s)',
-                               (proj.name, action, args, int(rv), o_data, e_data))
-                db.commit()
-                db.close()
-                
-                os._exit(0)
-        os.waitpid(pid, 0)
+        for i, (action, args) in enumerate(self):
+            cursor.execute('INSERT INTO tracforge_project_log (project, step, action, args) VALUES (%s, %s, %s, %s)',
+                           (data['name'], i, action, args))
+            db.commit()
+            def log_cb(stdout, stderr):
+                now = time.time()
+                #print '!', stdout, '!', stderr
+                values = []
+                if stdout:
+                    values.append((now, data['name'], action, 'stdout', stdout))
+                if stderr:
+                    values.append((now, data['name'], action, 'stderr', stderr))
+                if values:
+                    cursor.executemany('INSERT INTO tracforge_project_output ' \
+                                 '(ts, project, action, stream, data) VALUES ' \
+                                 '(%s, %s, %s, %s, %s)',
+                     values)
+                    db.commit()
+            if getattr(steps[action]['provider'], 'capture_output', True):
+                sys.stdout = _CaptureOutput(cursor, data['name'], action, 'stdout')
+                sys.stderr = _CaptureOutput(cursor, data['name'], action, 'stderr')
+            try:
+                rv = steps[action]['provider'].execute_setup_action(action, args, data, log_cb)
+            except Exception, e:
+                log_cb('', traceback.format_exc())
+                rv = False
+            cursor.execute('UPDATE tracforge_project_log SET return=%s WHERE project=%s AND action=%s',
+                            (rv, data['name'], action))
+            db.commit()
+        
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
 
     def select(cls, env, db=None):

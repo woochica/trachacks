@@ -3,7 +3,7 @@
 import sys
 
 import pkg_resources
-pkg_resource.require('Trac')
+pkg_resources.require('Trac')
 
 from trac.env import open_environment
 
@@ -15,7 +15,7 @@ def main(argv=None):
     
     # Load initial parameters from the command-line
     master_path = argv[0]
-    prototype_name = argv[1],
+    prototype_name = argv[1]
     data = {
         'name': argv[2],
         'full_name': argv[3],

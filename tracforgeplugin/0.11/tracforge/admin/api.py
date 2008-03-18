@@ -12,7 +12,7 @@ class IProjectSetupParticipant(Interface):
     def get_setup_action_description(self, action):
         """Return a string description of the given action."""
         
-    def execute_setup_action(self, req, proj, action, args):
+    def execute_setup_action(self, action, args, data, log_cb):
         """Perform the given setup action on an environment."""
     
 class IProjectChangeListener(Interface):

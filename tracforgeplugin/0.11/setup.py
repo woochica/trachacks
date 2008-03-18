@@ -38,7 +38,7 @@ setup(
             'tracforge.linker = tracforge.linker',
         ],
         'console_scripts': [
-            'tracforge-helper = tracforge.admin.constructor:main',
+            'tracforge-helper = tracforge.admin.helper:main',
         ],
     },
 
