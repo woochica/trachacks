@@ -1,0 +1,29 @@
+= Graphviz Eamples Map Nodes, PNG Image =
+
+The individual nodes of the image point to the various pages on the Edgewall Trac project site.
+
+{{{
+#!graphviz.circo/png
+digraph G {
+    Trac [URL="http://trac.edgewall.com/"];
+    TracProject [URL="http://projects.edgewall.com/trac/"];
+    Guide [URL="http://projects.edgewall.com/trac/wiki/TracGuide"];
+    FAQ [URL="http://projects.edgewall.com/trac/wiki/TracFaq"];
+    Download [URL="http://projects.edgewall.com/trac/wiki/TracDownload"];
+    ChangeLog [URL="http://projects.edgewall.com/trac/wiki/ChangeLog"];
+    MailingList [URL="http://projects.edgewall.com/trac/wiki/MailingList"];
+    TracProject [URL="http://projects.edgewall.com/trac/wiki/TracProject"];
+    RoadMap [URL="http://projects.edgewall.com/trac/wiki/RoadMap"];
+    Team [URL="http://projects.edgewall.com/trac/wiki/TracTeam"];
+
+    Trac -> TracProject;
+    Trac -> Guide;
+    Trac -> FAQ;
+    Trac -> Download;
+    Trac -> ChangeLog;
+    Trac -> MailingList;
+    Trac -> RoadMap;
+    Trac -> Team;
+}
+}}}
+
