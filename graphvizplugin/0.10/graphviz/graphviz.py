@@ -55,7 +55,8 @@ class Graphviz(Component):
         'linux2':   ['/usr/bin',
                      '/usr/local/bin',],
         
-        'win32':    ['c:\\Program Files\\ATT\\Graphviz\\bin',
+        'win32':    ['c:\\Program Files\\Graphviz\\bin',
+                     'c:\\Program Files\\ATT\\Graphviz\\bin',
                      ],
         
         'freebsd6': ['/usr/local/bin',
