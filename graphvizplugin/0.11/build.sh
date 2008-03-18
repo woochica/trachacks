@@ -2,23 +2,8 @@
 
 echo $PATH
 
-case "$1" in
-
-  10)
-    ENV=/opt/trac/py25/env0.10
-    PORT=9010
-    ;;
-
-  11)
-    ENV=/opt/trac/py25/env0.11
-    PORT=9011
-    ;;
-
-  *)
-    echo "build.sh 10|11"
-    exit 1
-esac
-
+ENV=/opt/trac/py25/env0.11
+PORT=9011
 
 export PATH=$ENV/bin:$PATH_RESET
 
