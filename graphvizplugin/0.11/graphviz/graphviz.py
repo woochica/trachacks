@@ -234,7 +234,7 @@ class Graphviz(Component):
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
-                    cmd = [proc_cmd, self.procesor_options, '-Tcmap', '-o%s' % map_path]
+                    cmd = [proc_cmd, self.processor_options, '-Tcmap', '-o%s' % map_path]
                     #self.log.debug('render_macro: create map if not in cache - running command %s' % cmd)
                     out, err = self.launch(cmd, content)
                     if len(out) or len(err):
