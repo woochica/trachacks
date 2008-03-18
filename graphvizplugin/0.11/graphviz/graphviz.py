@@ -286,13 +286,21 @@ class Graphviz(Component):
 
     def expand_wiki_links(self, match):
         wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
+        #self.log.debug('wiki_url: %s' % wiki_url)
+        #self.log.debug('self.env: %s' % str(self.env))
+        #self.log.debug('self.formatter.req: %s' % str(self.formatter.req))
         html_url = wiki_to_oneliner(wiki_url, self.env, req=self.formatter.req)  # <a href="http://someurl">...</a>
+
+        #self.log.debug('html_url: %s' % html_url)
         href     = re.search('href="(.*?)"', html_url)   # http://someurl
+        #self.log.debug('href: %s' % href)
         url      = href and href.groups()[0] or html_url
+        #self.log.debug('url: %s' % url)
         if self.out_format == 'svg':
             format = 'URL="javascript:window.parent.location.href=\'%s\'"'
         else:
             format = 'URL="%s"'
+        #self.log.debug('expand_wiki_links url: %s' % str(format % url))
         return format % url
 
 
