@@ -2,7 +2,7 @@
 $Id$
 $HeadURL$
 
-Copyright (c) 2005, 2006 Peter Kropf. All rights reserved.
+Copyright (c) 2005, 2006, 2008 Peter Kropf. All rights reserved.
 
 Module documentation goes here.
 """
@@ -31,7 +31,7 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
 from trac.util import escape
 from trac.wiki.formatter import wiki_to_oneliner
-from trac.web.main import IRequestHandler
+from trac.web.api import IRequestHandler
 
 
 _TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
@@ -98,10 +98,10 @@ class Graphviz(Component):
             return None
 
 
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
         """Return the HTML output of the macro.
 
-        req - ?
+        formatter - ?
 
         name - Wiki macro command that resulted in this method being
                called. In this case, it should be 'graphviz', followed
@@ -124,15 +124,10 @@ class Graphviz(Component):
         content - The text the user entered for the macro to process.
         """
 
-        #self.log.debug('dir(req): %s' % str(dir(req)))
-        #if hasattr(req, 'args'):
-        #    self.log.debug('req.args: %s' % str(req.args))
-        #else:
-        #    self.log.debug('req.args attribute does not exist')
-        #if hasattr(req, 'base_url'):
-        #    self.log.debug('req.base_url: %s' % str(req.base_url))
-        #else:
-        #    self.log.debug('req.base_url attribute does not exist')
+        #self.log.debug('dir(self): %s' % str(dir(self)))
+        self.formatter = formatter
+        self.env = formatter.env
+        req = formatter.req
 
         # check and load the configuration
         trouble, msg = self.load_config()
@@ -202,6 +197,7 @@ class Graphviz(Component):
 
             #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
+                #self.log.debug('content: %s' % content)
                 content = re.sub(r'URL="(.*?)"', self.expand_wiki_links, content)
 
 
@@ -288,7 +284,7 @@ class Graphviz(Component):
 
     def expand_wiki_links(self, match):
         wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
-        html_url = wiki_to_oneliner(wiki_url, self.env)  # <a href="http://someurl">...</a>
+        html_url = wiki_to_oneliner(wiki_url, self.env, req=self.formatter.req)  # <a href="http://someurl">...</a>
         href     = re.search('href="(.*?)"', html_url)   # http://someurl
         url      = href and href.groups()[0] or html_url
         if self.out_format == 'svg':
