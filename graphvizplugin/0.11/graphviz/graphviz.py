@@ -25,6 +25,7 @@ import os
 import sys
 import re
 import inspect
+import subprocess
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
@@ -55,7 +56,8 @@ class Graphviz(Component):
         'linux2':   ['/usr/bin',
                      '/usr/local/bin',],
         
-        'win32':    ['c:\\Program Files\\ATT\\Graphviz\\bin',
+        'win32':    ['c:\\Program Files\\Graphviz\\bin',
+                     'c:\\Program Files\\ATT\\Graphviz\\bin',
                      ],
         
         'freebsd6': ['/usr/local/bin',
@@ -198,13 +200,13 @@ class Graphviz(Component):
             #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
                 #self.log.debug('content: %s' % content)
-                content = re.sub(r'URL="(.*?)"', self.expand_wiki_links, content)
+                content = re.sub(r'URL="(.*?)"', self.expand_wiki_links, unicode(content, 'utf-8'))
 
 
             # Antialias PNGs with rsvg, if requested
             if self.out_format == 'png' and self.png_anti_alias == True:
                 # 1. SVG output
-                cmd = '"%s" %s -Tsvg -o%s.svg' % (proc_cmd, self.processor_options, img_path)
+                cmd = [proc_cmd, self.processor_options, '-Tsvg', '-o%s.svg' % img_path]
                 #self.log.debug('render_macro: svg output - running command %s' % cmd)
                 out, err = self.launch(cmd, content)
                 if len(out) or len(err):
@@ -212,7 +214,7 @@ class Graphviz(Component):
                     return self.show_err(msg).getvalue()
 
                 # 2. SVG to PNG rasterization
-                cmd = '"%s" --dpi-x=%d --dpi-y=%d %s.svg %s' % (self.rsvg_path, self.dpi, self.dpi, img_path, img_path)
+                cmd = [self.rsvg_path, '--dpi-x=%d' % self.dpi, '--dpi-y=%d' % self.dpi, '%s.svg' % img_path, img_path]
                 #self.log.debug('render_macro: svg to png - running command %s' % cmd)
                 out, err = self.launch(cmd, None)
                 if len(out) or len(err):
@@ -220,7 +222,7 @@ class Graphviz(Component):
                     return self.show_err(msg).getvalue()
             
             else: # Render other image formats
-                cmd = '"%s" %s -T%s -o%s' % (proc_cmd, self.processor_options, self.out_format, img_path)
+                cmd = [proc_cmd, self.processor_options, '-T%s' % self.out_format, '-o%s' % img_path]
                 #self.log.debug('render_macro: render other image formats - running command %s' % cmd)
                 out, err = self.launch(cmd, content)
                 if len(out) or len(err):
@@ -232,7 +234,7 @@ class Graphviz(Component):
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
-                    cmd = '"%s" %s -Tcmap -o%s' % (proc_cmd, self.processor_options, map_path)
+                    cmd = [proc_cmd, self.procesor_options, '-Tcmap', '-o%s' % map_path]
                     #self.log.debug('render_macro: create map if not in cache - running command %s' % cmd)
                     out, err = self.launch(cmd, content)
                     if len(out) or len(err):
@@ -366,7 +368,7 @@ class Graphviz(Component):
             if not os.path.exists(self.rsvg_path):
                 err = 'The rsvg program is set to "%s" but that path does not exist.' % self.rsvg_path
                 return True, self.show_err(err)
-        #self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
+            #self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
 
         # get default graph/node/edge attributes
         self.processor_options = ''
@@ -411,12 +413,16 @@ class Graphviz(Component):
 
     def launch(self, cmd, input):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
-        p_in, p_out, p_err = os.popen3(cmd)
+        p = subprocess.Popen(cmd,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+
         if input:
-            p_in.write(input)
-        p_in.close()
-        out = p_out.read()
-        err = p_err.read()
+            p.stdin.write(input)
+        p.stdin.close()
+        out = p.stdout.read()
+        err = p.stderr.read()
         return out, err
 
 

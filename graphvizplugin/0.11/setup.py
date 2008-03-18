@@ -2,7 +2,7 @@
 $Id$
 $HeadURL$
 
-Copyright (c) 2005, 2006 Peter Kropf. All rights reserved.
+Copyright (c) 2005, 2006, 2008 Peter Kropf. All rights reserved.
 
 Python egg setup file for the graphviz trac wiki processor.
 """
@@ -12,7 +12,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.7.0'
+__version__   = '0.7.1'
 
 from setuptools import setup, find_packages
 
@@ -26,13 +26,13 @@ setup (
     author = "Peter Kropf",
     author_email = "pkropf@gmail.com",
     keywords = "trac graphviz",
-    url = "http://trac-hacks.swapoff.org/wiki/GraphvizPlugin",
-    description = "Graphviz plugin for Trac 0.9",
+    url = "http://trac-hacks.org/wiki/GraphvizPlugin",
+    description = "Graphviz plugin for Trac 0.11",
     long_description = """The graphviz wiki processor is a plugin for Trac that allows the the
 dynamic generation of diagrams by the various graphviz programs. The
 text of a wiki page can contain the source text for graphviz and the
 web browser will show the resulting image.""",
-    license = """Copyright (C) 2005, 2006 Peter Kropf
+    license = """Copyright (C) 2005, 2006, 2008 Peter Kropf
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
