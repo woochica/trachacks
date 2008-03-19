@@ -118,9 +118,9 @@ def set_system_value(env, key, value):
             value, key)
 
 
-def get_result_set(sql, *params):
+def get_result_set(env, sql, *params):
     """Executes the query and returns a Result Set"""
-    tpl = get_all(sql, *params);
+    tpl = get_all(env, sql, *params);
     if tpl and tpl[0] and tpl[1]:
         return ResultSet(tpl)
     else:
