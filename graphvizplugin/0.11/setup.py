@@ -12,7 +12,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.7.1'
+__version__   = '0.7.2'
 
 from setuptools import setup, find_packages
 

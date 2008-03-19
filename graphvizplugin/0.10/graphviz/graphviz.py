@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.6.10'
+__version__   = '0.6.11'
 
 
 try:
@@ -335,7 +335,7 @@ class Graphviz(Component):
             if not os.path.exists(cfg_path):
                 msg = 'The cmd_path is set to "%s" but that path does not exist.' % cfg_path
                 return True, self.show_err(msg)
-            cmd_paths = [cfg_paths]
+            cmd_paths = [cfg_path]
 
         if not cmd_paths:
             msg = 'The [graphviz] section is missing the cmd_path field and there is no default for %s.' % sys.platform
