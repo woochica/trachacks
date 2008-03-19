@@ -26,6 +26,6 @@ setup(
             'themeengine.web_ui = themeengine.web_ui',
             'themeengine.api = themeengine.api',
             'themeengine.admin = themeengine.admin',
-        ]
+        ],
     },
 )

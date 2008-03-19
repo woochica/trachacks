@@ -18,12 +18,12 @@
       <body>
         <h2>Theme</h2>
         
-        <div id="carousel"><!--
+        <div id="carousel"><!--!
          <img src="${href.chrome('themeengine', 'img', 'prev.gif')}" border="0" class="jcarousel-prev" />
          <img src="${href.chrome('themeengine', 'img', 'next.gif')}" border="0" class="jcarousel-next" />-->
          <ul id="foo" class="jcarousel-skin-tango">
           <li py:for="name, theme in themeengine.info.iteritems()">
-            <img height="400" width="640" src="${href.themeengine('screenshot', name)}" id="$name" />
+            <img height="240" width="420" src="${href.themeengine('screenshot', name)}" id="${name}_theme" />
           </li>
          </ul>
          <div id="theme_name" style="text-align: center; font-weight: bold; font-size: 1.4em">$themeengine.current</div>
@@ -43,14 +43,16 @@
           </py:for>
 
           function change_handler(car, elm, ind, state) {
-              var theme = $(elm).find('img').attr('id');
-              $('#theme_name').html(theme);
-              $('#form_theme_name').val(theme);
-              $('#theme_desc').html(descriptions[theme]);
+              console.log(elm.getAttribute('id'));
+              var theme = jQuery(elm).find('img').attr('id');
+              theme = theme.substr(0, theme.length-6);
+              jQuery('#theme_name').html(theme);
+              jQuery('#form_theme_name').val(theme);
+              jQuery('#theme_desc').html(descriptions[theme] || '');
           }
-
-          $(function() {
-              $('#foo').jcarousel({
+        
+          jQuery(function() {
+              jQuery('#foo').jcarousel({
                   start: $themeengine.current_index,
                   visible: 1,
                   scroll: 1,

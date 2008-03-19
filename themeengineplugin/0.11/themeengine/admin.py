@@ -21,9 +21,16 @@ class ThemeAdminModule(Component):
     # IAdminPanelProvider methods
     def get_admin_panels(self, req):
         if req.perm.has_permission('THEME_ADMIN'):
-            yield 'general', 'General', 'theme', 'Theme'
+            yield 'theme', 'Theme', 'simple', 'Simple'
+            yield 'theme', 'Theme', 'advanced', 'Advanced'
 
     def render_admin_panel(self, req, cat, page, path_info):
+        if req.method == 'POST':
+            self.config.set('theme', 'theme', req.args['theme'])
+            self.config.save()
+            
+            req.redirect(req.href.admin(cat, page)) 
+        
         data = {
             'themeengine': {
                 'info': self.system.info,
