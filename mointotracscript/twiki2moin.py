@@ -98,5 +98,43 @@ def copyAttachments(new_dir, data_dir, topic, txt):
                 % (attachment, topic)
             pass
 
+
+twikidir = "/var/lib/twiki/data/Main"
+twikidata = "/var/lib/twiki/pub/Main"
+moinout   = "moin"
+quiet = False
+
+def defaults():
+    print "current defaults:"
+    print "   --twiki=%s --data=%s -o=%s" %(twikidir, twikidata, moinout)
+def usage():
+    print "usage twiki2moin [-ho] [--twiki=<twiki pages>][--data=<twiki data>]"
+    print "   -h    print help"
+    print "   -o    output dir"
+    print "   -q    quiet run"
+    defaults()
+
 if __name__ == '__main__':
-    main("/var/lib/twiki/data/Main", "moin", "/var/lib/twiki/pub/Main")
+    import sys, getopt
+    quiet = False
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hoq:", ["twiki", "data"])
+    except getopt.GetoptError, err:
+        print str(err)
+        usage()
+        sys.exit(2)
+    for o, a in opts:
+        if o=="-h":
+            usage()
+            sys.exit(0)
+        elif o=="-o":
+            moinout = a
+        elif o=="--twiki":
+            twikidir = a
+        elif o=="--data":
+            twikidata = a
+
+    if not quiet:
+        defaults()
+        
+    main(twikidir, moinout, twikidata )

@@ -21,8 +21,13 @@ usage:
 '''
 
 import sys,os
-import	trac.scripts.admin
 from trac.attachment import Attachment
+# Work for 0.10.3 and 0.11
+try:
+    from  trac.scripts.admin import TracAdmin
+except:
+    from trac.admin.console import TracAdmin
+
 
 def convert(moindir, tracdir = None, mapfile = None):
     pagemap = None
@@ -39,24 +44,26 @@ def convert(moindir, tracdir = None, mapfile = None):
         if pagemap:
             if not pagemap.has_key(page): continue
             wikidir = pagemap[page]
-            
-        admin  = trac.scripts.admin.TracAdmin()
+
+        admin  = TracAdmin()
         admin.env_set (wikidir)
         revdir = moindir + '/' + page + '/revisions'
-        revisions = os.listdir(revdir)
-        for rev in revisions:
-            cmd='wiki import %s %s' % ( page,  revdir +'/'+rev)
-            print cmd, "->", wikidir
-            admin.onecmd(cmd)
+        if os.access(revdir, os.F_OK):
+            revisions = os.listdir(revdir)
+            for rev in revisions:
+                cmd='wiki import %s %s' % ( page,  revdir +'/'+rev)
+                print cmd, "->", wikidir
+                admin.onecmd(cmd)
         # Process attachments
         attdir = moindir + '/' + page + '/attachments'
-        attachments = os.listdir(attdir)
-        for att in attachments:
-            attachment = Attachment(admin.env_open(), 'wiki', page)
-            size = os.stat(attdir + '/'+ att)[6]
-            print "attaching " + att + ' = ' + str(size)
-            attfile = open (attdir + '/'+ att)
-            attachment.insert (att, attfile, size)
+        if os.access(attdir, os.F_OK):
+            attachments = os.listdir(attdir)
+            for att in attachments:
+                attachment = Attachment(admin.env_open(), 'wiki', page)
+                size = os.stat(attdir + '/'+ att)[6]
+                print "attaching " + att + ' = ' + str(size)
+                attfile = open (attdir + '/'+ att)
+                attachment.insert (att, attfile, size)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
