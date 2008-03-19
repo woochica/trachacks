@@ -44,12 +44,16 @@ class ProjectSetupParticipantBase(Component):
 
 
 class MakeTracEnvironmentAction(ProjectSetupParticipantBase):
-    """DO NOT USE. Make a new Trac environment using trac-admin initenv."""
+    """Make a new Trac environment using trac-admin initenv."""
     #capture_output = False
     def execute_setup_action(self, action, args, data, log_cb):
         from trac.admin.console import run
         
-        return run([data['path'], 
+        if '%s' not in args:
+            args = os.path.join(args, '%s')
+        path = args%data['name']
+        
+        return run([path, 
                     'initenv', 
                     data['full_name'], 
                     'sqlite:db/trac.db', 
@@ -59,7 +63,7 @@ class MakeTracEnvironmentAction(ProjectSetupParticipantBase):
 
 
 class MakeSubversionRepositoryAction(ProjectSetupParticipantBase):
-    """DO NOT USE. Make a new Subversion repository using `svnadmin create`."""
+    """Make a new Subversion repository using `svnadmin create`."""
     capture_output = False
     def execute_setup_action(self, action, args, data, log_cb):
         if '%s' not in args:

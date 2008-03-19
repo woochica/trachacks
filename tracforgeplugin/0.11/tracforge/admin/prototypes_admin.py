@@ -1,22 +1,21 @@
-# TracForge Config Set admin panel
+# TracForge prototype admin panel
 from trac.core import *
 from trac.web.chrome import add_stylesheet, add_script
+from trac.admin.web_ui import IAdminPanelProvider
 
-from webadmin.web_ui import IAdminPageProvider
-
-from model import Prototype, ConfigSet
-from api import IProjectSetupParticipant, TracForgeAdminSystem
+from tracforge.admin.model import Prototype, ConfigSet
+from tracforge.admin.api import IProjectSetupParticipant, TracForgeAdminSystem
 
 class TracForgePrototypesAdminModule(Component):
     """Configuration screen for TracForge new project settings."""
 
     #setup_participants = ExtensionPoint(IProjectSetupParticipant)
 
-    implements(IAdminPageProvider)
+    implements(IAdminPanelProvider)
     
-    def get_admin_pages(self, req):
-        if req.perm.has_permission('TRACFORGE_ADMIN'):
-            yield ('tracforge', 'TracForge', 'prototypes', 'Project Prototypes')
+    def get_admin_panels(self, req):
+        if 'TRACFORGE_ADMIN' in req.perm:
+            yield 'tracforge', 'TracForge', 'prototypes', 'Project Prototypes'
             
     def process_admin_request(self, req, cat, page, path_info):
         # Page locations

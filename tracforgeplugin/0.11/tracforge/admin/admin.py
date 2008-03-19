@@ -9,7 +9,8 @@ from trac.web.chrome import add_script
 from trac.config import Option
 from trac.util.compat import sorted
 
-from model import Project, Prototype
+from tracforge.admin.model import Project, Prototype
+from tracforge.admin.util import locate
 
 class TracForgeAdminModule(Component):
     """A module to manage projects in TracForge."""
@@ -35,9 +36,8 @@ class TracForgeAdminModule(Component):
             if 'create' in req.args.keys(): # Project creation
                 name = req.args.get('shortname', '').strip()
                 full_name = req.args.get('fullname', '').strip()
-                env_path = req.args.get('env_path', '').strip()
                 proto_name = req.args.get('prototype', '').strip()
-                if not (name and full_name and env_path and proto_name):
+                if not (name and full_name and proto_name):
                     raise TracError('All arguments are required')
                 
                 # Make the models
@@ -53,7 +53,7 @@ class TracForgeAdminModule(Component):
                 
                 # Spawn the helper script
                 helper = self.helper_script.split()
-                helper += [self.env.path, proto_name, name, full_name, env_path]
+                helper += [self.env.path, proto_name, name, full_name]
                 helper.insert(1, os.path.basename(helper[0]))
                 spawn(os.P_NOWAIT, helper.pop(0), helper)
                 

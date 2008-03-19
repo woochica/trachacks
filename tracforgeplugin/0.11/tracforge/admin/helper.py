@@ -19,7 +19,6 @@ def main(argv=None):
     data = {
         'name': argv[2],
         'full_name': argv[3],
-        'path': argv[4],
     }
     
     # Load master env and the prototype
