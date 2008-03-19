@@ -21,6 +21,7 @@ usage:
 '''
 
 import sys,os
+import re
 from trac.attachment import Attachment
 # Work for 0.10.3 and 0.11
 try:
@@ -28,6 +29,11 @@ try:
 except:
     from trac.admin.console import TracAdmin
 
+
+def recodeName (filename):
+    return re.sub (r'\(([\dabcdefABCDEF]+)\)',
+                   lambda m: m.group(1).decode('hex'),
+                   filename)
 
 def convert(moindir, tracdir = None, mapfile = None):
     pagemap = None
@@ -51,7 +57,7 @@ def convert(moindir, tracdir = None, mapfile = None):
         if os.access(revdir, os.F_OK):
             revisions = os.listdir(revdir)
             for rev in revisions:
-                cmd='wiki import %s %s' % ( page,  revdir +'/'+rev)
+                cmd='wiki import %s %s' % ( recodeName(page),  revdir +'/'+rev)
                 print cmd, "->", wikidir
                 admin.onecmd(cmd)
         # Process attachments
