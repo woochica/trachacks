@@ -93,10 +93,11 @@ class TracForgePrototypesAdminModule(Component):
         proto = None
         if req.method == 'POST':
             proto = Prototype(self.env, '')
+            
             for i in itertools.count():
-                a = req.args.get('step%s'%i)
+                a = req.args.get('step-%s'%i)
                 if a is not None:
-                    proto.append((a, req.args[a]))
+                    proto.append((a, req.args['args-%s'%a]))
                 else:
                     break
             
@@ -104,6 +105,30 @@ class TracForgePrototypesAdminModule(Component):
                 i = int(req.args['movedown'])
                 x = proto.pop(i)
                 proto.insert(i+1, x)
+            elif 'moveup' in req.args:
+                i = int(req.args['moveup'])
+                x = proto.pop(i)
+                proto.insert(i-1, x)
+            elif 'remove' in req.args:
+                i = int(req.args['remove'])
+                del proto[i]
+            elif 'add' in req.args:
+                proto.append((req.args['type'], ''))
+            elif 'save' in req.args:
+                proto.save()
+                req.redirect(req.href.admin('tracforge/prototypes', proto.tag))
+            elif 'cancel' in req.args:
+                req.redirect(req.href.admin('tracforge/prototypes'))
+            elif 'delete' in req.args:
+                proto.tag = data['name']
+                proto.delete()
+                req.redirect(req.href.admin('tracforge/prototypes'))
+            
+            # Try to figure out the name
+            if action == 'new':
+                proto.tag = req.args['name']
+            else:
+                proto.tag = '(modified) %s'%data['name']
             
             
         #steps = {}

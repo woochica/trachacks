@@ -19,22 +19,25 @@
       <form id="form" method="post">
         <!--! The current steps -->
         <div py:for="i, (action, args) in enumerate(proto)" py:if="action in steps" id="step_$action" class="step">
-          <input type="hidden" name="step$i" value="$action" />
+          <input type="hidden" name="step-$i" value="$action" />
           <div class="step-buttons">
-            <img src="${href.chrome('tracforge/img/greyscale/x.gif')}" alt="Remove" />
+            <input type="image" src="${href.chrome('tracforge/img/greyscale/x.gif')}" alt="Remove" 
+                   name="remove" value="$i" />
             <input type="image" src="${href.chrome('tracforge/img/greyscale/down.gif')}" alt="Down" 
                    name="movedown" value="$i" />
-            <img src="${href.chrome('tracforge/img/greyscale/up.gif')}" alt="Up" />
+            <input type="image" src="${href.chrome('tracforge/img/greyscale/up.gif')}" alt="Up" 
+                   name="moveup" value="$i" />
           </div>
           <div class="step-name">$action</div>
-          <div class="step-args"><label>Arguments:<input type="text" name="$action" value="$args" size="50" /></label></div>
+          <div class="step-args"><label>Arguments:<input type="text" name="args-$action" value="$args" size="50" /></label></div>
           <hr />
           <div class="step-text">${steps[action].description}</div>
         </div>
     
         <div id="addstep" class="step">
           <div class="step-buttons">
-            <img src="${href.chrome('tracforge/img/greyscale/plus.gif')}" alt="Add" />
+            <input type="image" src="${href.chrome('tracforge/img/greyscale/plus.gif')}" alt="Add"
+                   name="add" value="add" />
           </div>
           <select name="type">
             <option py:for="step in sorted(steps)" py:if="step not in proto" value="$step">$step</option>
@@ -49,7 +52,7 @@
           </div>
           <py:if test="action == 'new'">
             <label for="name">Name:</label> 
-            <input type="text" name="name" id="name" />
+            <input type="text" name="name" id="name" value="$proto.tag" />
           </py:if>
           <input type="hidden" name="data" />
         </div>
