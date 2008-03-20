@@ -302,7 +302,7 @@ class Prototype(list):
     def default(cls, env):
         """Return a prototype for the defaults on the new prototype screen."""
         proto = cls(env, '')
-        proto.append({'action':'MakeTracEnvironment', 'args':''})
+        proto.append(('MakeTracEnvironment', os.path.dirname(env.path)))
         return proto
     default = classmethod(default)
 

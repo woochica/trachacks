@@ -1,4 +1,6 @@
 # TracForge prototype admin panel
+import itertools
+
 from trac.core import *
 from trac.web.chrome import add_stylesheet, add_script
 from trac.admin.web_ui import IAdminPanelProvider
@@ -16,35 +18,23 @@ class TracForgePrototypesAdminModule(Component):
     def get_admin_panels(self, req):
         if 'TRACFORGE_ADMIN' in req.perm:
             yield 'tracforge', 'TracForge', 'prototypes', 'Project Prototypes'
+            yield 'tracforge', 'TracForge', 'configset', 'Configset Management'
             
-    def process_admin_request(self, req, cat, page, path_info):
-        # Page locations
-        req.hdf['tracforge.href'] = {
-            'prototypes': req.href.admin(cat, page),
-            'configset': req.href.admin(cat, page, 'configset'),
-            'new': req.href.admin(cat, page, 'new'),
-            'htdocs': req.href.chrome('tracforge'),
-        }
+    def render_admin_panel(self, req, cat, page, path_info):
+        data = {}
         
         # General stuff
         add_stylesheet(req, 'tracforge/css/admin.css')
-        add_script(req, 'tracforge/js/jquery.js')
-        req.cat = cat
-        req.page = page
 
         # Subpage dispatchers
         if path_info:
-            if path_info == 'configset':
-                return self.process_configset_admin_request(req, cat, page, path_info)
-            elif path_info == 'new':
+            if path_info == 'new':
                 return self._show_prototype(req, path_info, action='new')
             else:
                 return self._show_prototype(req, path_info, action='edit')
         
-    
-        req.hdf['tracforge.prototypes.tags'] = list(Prototype.select(self.env))
-        
-        return 'admin_tracforge_prototypes.cs', None
+        data['prototypes'] = Prototype.select(self.env)
+        return 'admin_tracforge_prototypes.html', data
         
     def process_configset_admin_request(self, req, cat, page, path_info):
         tags = ['*'] + list(ConfigSet.select(self.env))
@@ -95,47 +85,27 @@ class TracForgePrototypesAdminModule(Component):
 
     def _show_prototype(self, req, path_info, action):
         """Handler for creating a new prototype."""
-        add_stylesheet(req, 'tracforge/css/prototypes_new.css')
-        add_script(req, 'tracforge/js/interface/iutil.js')
-        add_script(req, 'tracforge/js/jquery.animatedswap.js')
-        req.hdf['tracforge.prototypes.name'] = path_info.strip('/')
+        data = {
+            'name': path_info,
+            'action': action,
+        }
         
+        proto = None
         if req.method == 'POST':
-            if req.args.get('save'): # Save either a new prototype or a changed existing ones
-                name = req.args.get('name')
-                if action == 'edit':
-                    name = path_info.strip('/')
-                if not name:
-                    raise TracError('You must specify a name for the prototype')
-                if name in ('new', 'configset'):
-                    raise TracError('"new" and "configset" are reserved names')
+            proto = Prototype(self.env, '')
+            for i in itertools.count():
+                a = req.args.get('step%s'%i)
+                if a is not None:
+                    proto.append((a, req.args[a]))
+                else:
+                    break
             
-                data = req.args.get('data')
-                if not data:
-                    raise TracError("Warning: Peguins on fire. You might have JavaScript off, don't do that")
-                data = data[4:] # Strip off the 'data' literal at the start
-                if not data:
-                    raise TracError("You must have at least one step in a prototype")
-                
-                proto = Prototype(self.env, name)
-                if action == 'new' and proto.exists:
-                    raise TracError("Prototype %s already exists"%name)
-                del proto[:]
-                for x in data.split('|'):
-                    proto.append(x.split(',',1))
-                proto.save()
-            elif req.args.get('cancel'): 
-                pass # This should just redirect back
-            elif req.args.get('delete') and action == 'edit': # Show the confirmation screen
-                return 'admin_tracforge_prototypes_delete.cs', None
-            elif req.args.get('reallydelete') and action == 'edit': # Actually delete this prototype
-                name = path_info.strip('/')
-                proto = Prototype(self.env, name)
-                if not proto.exists:
-                    raise TracError('Prototype %s does not exist'%name)
-                proto.delete()
-            req.redirect(req.href.admin(req.cat, req.page))
-
+            if 'movedown' in req.args:
+                i = int(req.args['movedown'])
+                x = proto.pop(i)
+                proto.insert(i+1, x)
+            
+            
         #steps = {}
         #for p in self.setup_participants:
         #    for a in p.get_setup_actions():
@@ -143,22 +113,21 @@ class TracForgePrototypesAdminModule(Component):
         #            'provider': p,
         #            'description': p.get_setup_action_description(a),
         #        }
-        steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
+        data['steps'] = TracForgeAdminSystem(self.env).get_project_setup_participants()
         
-        initial_steps = []        
         if action == 'new': # For a new one, use the specified defaults 
-            initial_steps = Prototype.default(self.env) # XXX: This should really read from trac.ini somehow
+            if proto is None:
+                proto = Prototype.default(self.env) # XXX: This should really read from trac.ini somehow
         elif action == 'edit': 
-            proto = Prototype(self.env, path_info.strip('/'))
-            if not proto.exists:
-                raise TracError('Unknown prototype %s'%proto.tag)
-            initial_steps = proto
+            if proto is None:
+                proto = Prototype(self.env, data['name'])
+                if not proto.exists:
+                    raise TracError('Unknown prototype %s'%proto.tag)
         else:
             raise TracError('Invalid action %s'%action)
-
-        req.hdf['tracforge.prototypes.action'] = action
-        req.hdf['tracforge.prototypes.steps'] = steps
-        req.hdf['tracforge.prototypes.initialsteps'] = initial_steps
-        req.hdf['tracforge.prototypes.liststeps'] = [k for k in steps.iterkeys() if k not in initial_steps]
+        data['proto'] = proto
         
-        return 'admin_tracforge_prototypes_show.cs', None
+        add_stylesheet(req, 'tracforge/css/prototypes_new.css')
+        #add_script(req, 'tracforge/js/interface/iutil.js')
+        #add_script(req, 'tracforge/js/jquery.animatedswap.js')
+        return 'admin_tracforge_prototype.html', data

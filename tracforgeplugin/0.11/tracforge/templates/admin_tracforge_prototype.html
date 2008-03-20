@@ -1,0 +1,59 @@
+<!--!
+	admin_tracforge_prototype
+	Created by  on 2008-03-19.
+	Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html" />
+  <head>
+    <title>${action == 'new' and 'New' or proto.tag} Prototype</title>
+  </head>
+  <body>
+    <h2>${action == 'new' and 'New' or proto.tag} Prototype</h2>
+    <div id="steps">
+      <form id="form" method="post">
+        <!--! The current steps -->
+        <div py:for="i, (action, args) in enumerate(proto)" py:if="action in steps" id="step_$action" class="step">
+          <input type="hidden" name="step$i" value="$action" />
+          <div class="step-buttons">
+            <img src="${href.chrome('tracforge/img/greyscale/x.gif')}" alt="Remove" />
+            <input type="image" src="${href.chrome('tracforge/img/greyscale/down.gif')}" alt="Down" 
+                   name="movedown" value="$i" />
+            <img src="${href.chrome('tracforge/img/greyscale/up.gif')}" alt="Up" />
+          </div>
+          <div class="step-name">$action</div>
+          <div class="step-args"><label>Arguments:<input type="text" name="$action" value="$args" size="50" /></label></div>
+          <hr />
+          <div class="step-text">${steps[action].description}</div>
+        </div>
+    
+        <div id="addstep" class="step">
+          <div class="step-buttons">
+            <img src="${href.chrome('tracforge/img/greyscale/plus.gif')}" alt="Add" />
+          </div>
+          <select name="type">
+            <option py:for="step in sorted(steps)" py:if="step not in proto" value="$step">$step</option>
+          </select>
+        </div>
+        
+        <div>
+          <div id="buttons">
+            <input type="submit" name="delete" value="Delete" py:if="action != 'new'"/>
+            <input type="submit" name="cancel" value="Cancel" />
+            <input type="submit" name="save" value="Save" />
+          </div>
+          <py:if test="action == 'new'">
+            <label for="name">Name:</label> 
+            <input type="text" name="name" id="name" />
+          </py:if>
+          <input type="hidden" name="data" />
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

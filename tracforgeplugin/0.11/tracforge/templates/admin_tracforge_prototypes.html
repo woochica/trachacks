@@ -1,0 +1,24 @@
+<!--!
+	admin_tracforge_prototypes
+	Created by  on 2008-03-19.
+	Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Project Prototypes</title>
+  </head>
+  <body>
+    <h2>Project Prototypes</h2>
+    <ul>
+      <li py:for="tag in prototypes">
+        <a href="${panel_href(tag)}">$tag</a>
+      </li>
+    </ul>
+  </body>
+</html>
