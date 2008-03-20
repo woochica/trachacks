@@ -105,155 +105,37 @@ class TracForgeDispatcherModule(Component):
                     
                 # Assert permissions on the desination environment
                 try:
-                    project_env = _open_environment(os.path.join(os.path.dirname(self.env.path), project))
+                    project_env = open_environment(os.path.join(os.path.dirname(self.env.path), project), use_cache=True)
                 except IOError:
                     raise TracError('No such project "%s"'%project)
-               
+                
+                # Check that we have permissions in the desired project
                 authname = RequestDispatcher(self.env).authenticate(req)
                 project_perm = PermissionCache(project_env, authname)
-                project_perm.assert_permission('PROJECT_VIEW')
-                self.debug('TracForgeDispath: Access granted, running relaunch')
-                self.debug('TracForgeDispatch: Status of req.args is %r', req.__dict__.get('args', 'NOT FOUND'))
-                self._send_project(req, path_info)
-                self.debug('TracForgeDispatch: Relaunch completed, terminating request')
-                self.debug('TracForgeDispatch: Response was %r', req._response)
+                project_perm.require('PROJECT_LIST')
                 
-                req._tf_print = True
+                start_response = req._start_response
+                environ = copy.copy(req.environ)
                 
-                return True
+                # Setup the environment variables
+                environ['SCRIPT_NAME'] = req.href.projects('/')
+                environ['PATH_INFO'] = path_info
+                environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
+                if 'TRAC_ENV' in environ:
+                    del environ['TRAC_ENV']
+                if 'trac.env_path' in environ:
+                    del environ['trac.env_path']
+                environ['tracforge_master_link'] = req.href.projects()
+
+                # Remove mod_python options to avoid conflicts
+                if 'mod_python.subprocess_env' in environ:
+                    del environ['mod_python.subprocess_env']
+                if 'mod_python.options' in environ:
+                    del environ['mod_python.options']
+
+                req._response = dispatch_request(environ, start_response)
+                raise RequestDone
 
     def process_request(self, req):
         raise TracError('How did I get here?')
 
-    # Internal methods
-    def _send_project(self, req, path_info):
-        start_response = req._start_response
-        environ = copy.copy(req.environ)
-        
-        class hacked_start_response(object):
-        
-            def __init__(self, start_response, log):
-                if hasattr(start_response, 'log'):
-                    raise Exception("BOOM!")
-                self.start_response = start_response
-                self.log = log
-                
-            def __call__(self, *args):
-                self.log('TracForgeDispatch: start_response called with (%s)', ', '.join(repr(x) for x in args))
-                return self.start_response(*args)
-        
-        environ['SCRIPT_NAME'] = req.href.projects('/')
-        environ['PATH_INFO'] = path_info
-        environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
-        if 'TRAC_ENV' in environ:
-            del environ['TRAC_ENV']
-        if 'trac.env_path' in environ:
-            del environ['trac.env_path']
-        environ['tracforge_master_link'] = req.href.projects()
-        
-        # Remove mod_python option to avoid conflicts
-        if 'mod_python.subprocess_env' in environ:
-            del environ['mod_python.subprocess_env']
-        if 'mod_python.options' in environ:
-            del environ['mod_python.options']
-        
-        
-        self.debug('TracForgeDispatch: environ %r', environ)
-        self.debug('TracForgeDispatch: Calling next dispatch_request')
-        try:
-            if not hasattr(start_response, 'log'):
-                self.debug('TracForgeDispatch: Setting start_request logging hack')
-                #start_response = hacked_start_response(start_response, self.log)
-            req._response = dispatch_request(environ, start_response)
-        except RequestDone:
-            self.debug('TracForgeDispatch: Masking inner RequestDone')
-        self.debug('TracForgeDispatch: Done')
-        
-    def _evil_phase_1(self):
-        self.debug('TracForgeDispatch: Sending early_error')
-        raise Exception # Dump into early_error mode
-    anonymous_request = property(_evil_phase_1)
-
-    def _evil_phase_2(self):
-        for frame in inspect.stack()[1:]:
-            locals = frame[0].f_locals
-            if 'early_error' in locals:
-                self.debug('TracForgeDispatch: Erasing early_error')
-                locals['early_error'][:] = []
-                break
-        else:
-            self.log.error('TracForgeDispatch: evil_phase_2 unable to isolate early error. Contact coderanger ASAP!')
-            raise TracError('Something went wrong, check the log and contact coderanger')
-        self.debug('TracForgeDispatch: Sending evil RequestDone')
-        raise RequestDone
-    use_template = property(_evil_phase_2)
-
-    def debug(self, *args):
-        # self.log.debug(*args)
-        pass
-
-# Evil
-# env = None
-# for frame in inspect.stack()[1:]:
-#     locals = frame[0].f_locals
-#     if locals.get('env'):
-#         env = locals['env']
-#         break
-
-# Make sure we are first
-#ComponentMeta._registry[IRequestHandler].remove(TracForgeDispatcherModule)
-#ComponentMeta._registry[IRequestHandler].insert(0, TracForgeDispatcherModule)
-
-# Monkey patch Request to lazily evaluate req.args
-def __init__(self, environ, start_response):
-    self.environ = environ
-    self._start_response = start_response
-    self._write = None
-    self._status = '200 OK'
-    self._response = None
-
-    self._inheaders = [(name[5:].replace('_', '-').lower(), value)
-                       for name, value in environ.items()
-                       if name.startswith('HTTP_')]
-    if 'CONTENT_LENGTH' in environ:
-        self._inheaders.append(('content-length',
-                                environ['CONTENT_LENGTH']))
-    if 'CONTENT_TYPE' in environ:
-        self._inheaders.append(('content-type', environ['CONTENT_TYPE']))
-    self._outheaders = []
-    self._outcharset = None
-
-    self.incookie = Cookie()
-    cookie = self.get_header('Cookie')
-    if cookie:
-        self.incookie.load(cookie, ignore_parse_errors=True)
-    self.outcookie = Cookie()
-
-    self.base_url = self.environ.get('trac.base_url')
-    if not self.base_url:
-        self.base_url = self._reconstruct_url()
-    self.href = Href(self.base_path)
-    self.abs_href = Href(self.base_url)
- 
-    self._args = None
-    #env.log.debug('TracForgeEvil: Using patched init (%s)', id(self))
-    
-#Request.__init__ = __init__
-
-def get_args(req):
-    if not req._args:
-        #env.log.debug('TracForgeEvil: Expanding req.args (%s)', id(req))
-        #env.log.debug('TracForgeEvil: %s', traceback.format_stack())
-        req._args = req._parse_args()
-    return req._args
-
-#Request.args = property(lambda self: get_args(self))
-
-# Monkey patch sys.exc_info
-exc_info = sys.exc_info
-def new_exc_info():
-    rv = exc_info()
-    if isinstance(rv, tuple):
-        rv = list(rv)
-    return rv
-#sys.exc_info = new_exc_info
