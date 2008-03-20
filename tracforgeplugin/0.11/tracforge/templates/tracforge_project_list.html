@@ -1,0 +1,30 @@
+<!--!
+	tracforge_project_list
+	Created by  on 2008-03-20.
+	Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>Project Index</title>
+  </head>
+  <body>
+    <h2>Project Index</h2>
+
+    <ul>
+      <li py:for="project in sorted(projects, key=lambda p: p.name.lower())" py:choose="">
+        <a py:when="'href' in project" href="$project.href" title="$project.description">
+          $project.name
+        </a>
+        <small py:otherwise="">$project.name: <em>Error:</em> <br />
+          ($project.description)
+        </small>
+      </li>
+    </ul>
+  </body>
+</html>

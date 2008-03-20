@@ -2,22 +2,23 @@
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
 import sys
 import inspect
+import os
+import os.path
+import copy
 import traceback
 
 from trac.core import *
 from trac.core import ComponentMeta
+from trac.env import open_environment
 from trac.web.api import IRequestHandler, Request, Cookie
-from trac.web.main import dispatch_request, _open_environment, RequestDispatcher, RequestDone
+from trac.web.main import dispatch_request, RequestDispatcher, RequestDone
 from trac.web.chrome import INavigationContributor
 from trac.perm import PermissionCache
 from trac.util.text import to_unicode
 from trac.web.href import Href
 from trac.mimeview.api import Mimeview
-from trac.util.html import html as tag
 
-import os
-import os.path
-import copy
+from genshi.builder import tag
 
 class TracForgeIndexModule(Component):
     """A request handler to show a nicer project index."""
@@ -28,13 +29,13 @@ class TracForgeIndexModule(Component):
         return req.path_info == '/projects'
 
     def process_request(self, req):
-        req.perm.assert_permission('PROJECT_LIST')
+        data = {}
+        req.perm.require('PROJECT_LIST')
     
         parent_dir = os.path.dirname(self.env.path)
         #env_paths = dict([(filename, os.path.join(parent_dir, filename))
         #                  for filename in os.listdir(parent_dir)])
         projects = []
-        charset = Mimeview(self.env).default_charset
                           
         for env_name in os.listdir(parent_dir):
             env_path = os.path.join(parent_dir, env_name)
@@ -43,43 +44,46 @@ class TracForgeIndexModule(Component):
             if env_path == self.env.path:
                 continue
             
+            # Only bother looking at folders
+            if not os.path.isdir(env_path):
+                continue
+            
             try:
-                env = _open_environment(env_path)
+                env = open_environment(env_path, use_cache=True)
 
                 try:
-                    #self.log.debug(env.path)
+                    self.log.debug('TracForge: %s', env.path)
                     env_perm = PermissionCache(env, req.authname)
                     #self.log.debug(env_perm.perms)
-                    if env_perm.has_permission('PROJECT_VIEW'):
+                    if 'PROJECT_VIEW' in env_perm:
                         projects.append({
-                            'name': env.project_name.encode(charset),
-                            'description': env.project_description.encode(charset),
+                            'name': env.project_name,
+                            'description': env.project_description,
                             'href': req.href.projects(env_name),
                         })
                 except Exception, e:
                     # Only show errors to admins to prevent excessive disclosure
-                    if req.perm.has_permission('TRACFORGE_ADMIN'):
+                    if 'TRACFORFGE_ADMIN' in req.perm:
                         projects.append({
-                            'name': env.project_name.encode(charset),
-                            'description': to_unicode(e).encode(charset)
+                            'name': env.project_name,
+                            'description': e
                         })
             except Exception, e:
-                if req.perm.has_permission('TRACFORGE_ADMIN'):
+                if 'TRACFORGE_ADMIN' in req.perm:
                     projects.append({
                         'name': env_path,
-                        'description': to_unicode(e).encode(charset),
+                        'description': e,
                     })
-            
-        projects.sort(lambda x, y: cmp(x['name'].lower(), y['name'].lower()))
-        req.hdf['tracforge.projects'] = projects
-        return 'tracforge_project_index.cs', None
+        
+        data['projects'] = projects
+        return 'tracforge_project_list.html', data, None
         
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         return 'projects'
 
     def get_navigation_items(self, req):
-        if req.perm.has_permission('PROJECT_LIST'):
+        if 'PROJECT_LIST' in req.perm:
             yield 'mainnav', 'projects', tag.a('Projects', href=req.href.projects())
             
 
@@ -189,16 +193,16 @@ class TracForgeDispatcherModule(Component):
         pass
 
 # Evil
-env = None
-for frame in inspect.stack()[1:]:
-    locals = frame[0].f_locals
-    if locals.get('env'):
-        env = locals['env']
-        break
+# env = None
+# for frame in inspect.stack()[1:]:
+#     locals = frame[0].f_locals
+#     if locals.get('env'):
+#         env = locals['env']
+#         break
 
 # Make sure we are first
-ComponentMeta._registry[IRequestHandler].remove(TracForgeDispatcherModule)
-ComponentMeta._registry[IRequestHandler].insert(0, TracForgeDispatcherModule)
+#ComponentMeta._registry[IRequestHandler].remove(TracForgeDispatcherModule)
+#ComponentMeta._registry[IRequestHandler].insert(0, TracForgeDispatcherModule)
 
 # Monkey patch Request to lazily evaluate req.args
 def __init__(self, environ, start_response):
@@ -234,7 +238,7 @@ def __init__(self, environ, start_response):
     self._args = None
     #env.log.debug('TracForgeEvil: Using patched init (%s)', id(self))
     
-Request.__init__ = __init__
+#Request.__init__ = __init__
 
 def get_args(req):
     if not req._args:
@@ -243,7 +247,7 @@ def get_args(req):
         req._args = req._parse_args()
     return req._args
 
-Request.args = property(lambda self: get_args(self))
+#Request.args = property(lambda self: get_args(self))
 
 # Monkey patch sys.exc_info
 exc_info = sys.exc_info
@@ -252,4 +256,4 @@ def new_exc_info():
     if isinstance(rv, tuple):
         rv = list(rv)
     return rv
-sys.exc_info = new_exc_info
+#sys.exc_info = new_exc_info
