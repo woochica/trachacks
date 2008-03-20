@@ -111,7 +111,7 @@ def get_system_value(env, key):
     return get_scalar(env, "SELECT value FROM system WHERE name=%s", 0, key)
 
 def set_system_value(env, key, value):
-    if get_system_value(key):
+    if get_system_value(env, key):
         execute_non_query(env, "UPDATE system SET value=%s WHERE name=%s", value, key)        
     else:
         execute_non_query(env, "INSERT INTO system (value, name) VALUES (%s, %s)",
