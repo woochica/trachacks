@@ -19,7 +19,7 @@ setup(
         'Framework :: Trac',
     ],
     
-    install_requires = ['Trac>=0.11dev-r6696,>=0.11'],
+    install_requires = ['Trac>=0.11dev-r6696'],
 
     entry_points = {
         'trac.plugins': [
