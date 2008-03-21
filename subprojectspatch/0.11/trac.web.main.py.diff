@@ -1,0 +1,20 @@
+345,356d344
+<             if len(path_info) and path_info[0] == 'p':
+<                 path_info.pop(0) # pop off the p
+<                 env_parent_dir = os.path.join(env_parent_dir, env_name, 'projects')
+<                 environ['trac.env_parent_dir'] = env_parent_dir
+<                 parent_env = env_name
+<                 if len(path_info):
+<                     env_name = path_info.pop(0)
+<                 else:
+<                     env_name = None
+<             else:
+<                 parent_env = None
+< 
+367,370c355
+<             if parent_env:
+<                 environ['SCRIPT_NAME'] = Href(environ['SCRIPT_NAME'])(parent_env, 'p', env_name)
+<             else:
+<                 environ['SCRIPT_NAME'] = Href(environ['SCRIPT_NAME'])(env_name)
+---
+>             environ['SCRIPT_NAME'] = Href(environ['SCRIPT_NAME'])(env_name)
