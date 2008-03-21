@@ -65,8 +65,9 @@ class TasklistPlugin(QueryModule):
         return 'tasklist'
 
     def get_navigation_items(self, req):
-        yield ('mainnav', 'tasklist',
-               tag.a('Tasklist', href=req.href.tasklist()))
+        if req.perm.has_permission('TICKET_VIEW'):
+            yield ('mainnav', 'tasklist',
+                   tag.a('Tasklist', href=req.href.tasklist()))
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -166,6 +167,7 @@ class TasklistPlugin(QueryModule):
 
         data['title'] = 'Task List'
         data['all_columns'].remove(self.field_name)
+        pprint(data['tickets'])
         for ticket in data['tickets']:
             summary = ticket['summary']
             action = ticket[self.field_name]
@@ -225,6 +227,10 @@ class TasklistPlugin(QueryModule):
                       if k.startswith('field_')])
         if not fields.has_key('status'):
             fields['status'] = 'new'
+
+        if not fields.has_key('owner') and \
+           req.perm.has_permission('TICKET_MODIFY'):
+            fields['owner'] = req.authname
         ticket.populate(fields)
                               
 

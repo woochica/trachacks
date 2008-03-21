@@ -8,3 +8,4 @@
 #
 # Author: John Hampton <pacopablo@pacopablo.com>
 from main import TasklistPlugin
+from fields import *
