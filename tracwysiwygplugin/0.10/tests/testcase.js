@@ -975,6 +975,40 @@ addEvent(window, "load", function() {
                 " 1. item 1" ].join("\n"));
         });
 
+        unit.add("list + citation", function() {
+            var dom = fragment(
+                element('ol', element('li', 'item 1')),
+                element('blockquote', { 'class': 'citation' }, element("p", "citation 1")),
+                element('ul',
+                    element('li', 'item 2'),
+                    element("ol",
+                        element('li', 'item 2.1'),
+                        element('li', 'item 2.2'))),
+                element('blockquote', { 'class': 'citation' }, element("p", "citation 2 citation 3")),
+                element('ol', element('li', 'item 3')));
+            generateFragment.call(this, dom, [
+                ' 1. item 1',
+                '> citation 1',
+                ' * item 2',
+                '   1. item 2.1',
+                '   1. item 2.2',
+                '> citation 2',
+                '> citation 3',
+                ' 1. item 3' ].join("\n"));
+            generateWikitext.call(this, dom, [
+                ' 1. item 1',
+                '',
+                '> citation 1',
+                '',
+                ' * item 2',
+                '   1. item 2.1',
+                '   1. item 2.2',
+                '',
+                '> citation 2 citation 3',
+                '',
+                ' 1. item 3' ].join("\n"));
+        });
+
         unit.add("definition", function() {
             var dom = element("dl",
                 element("dt", "python"),

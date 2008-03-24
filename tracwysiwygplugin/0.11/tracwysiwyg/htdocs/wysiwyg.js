@@ -1298,7 +1298,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         var depth = quote.replace(/ +/g, "").length;
 
         if (depth > quoteDepth.length) {
-            closeParagraph();
+            closeToFragment("blockquote");
             while (depth > quoteDepth.length) {
                 openQuote((new RegExp("^(?: *>){" + (quoteDepth.length + 1) + "}")).exec(quote)[0].length, true);
             }
@@ -1509,7 +1509,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
 
         var last = listDepth.length - 1;
         if (depth > (last >= 0 ? listDepth[last] : 0)) {
-            closeParagraph();
+            closeToFragment("li");
             openList(tag, className, start, depth);
         }
         else {
