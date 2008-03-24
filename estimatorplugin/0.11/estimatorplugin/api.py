@@ -45,7 +45,7 @@ class EstimatorSetupParticipant(Component):
         self.log.debug('Estimator about to upgrade from ver:%s' % ver)
         if ver < 1:
             self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
-            success &= dbhelper.execute_in_trans(self.env, 
+            success = success and dbhelper.execute_in_trans(self.env, 
                 ("""CREATE TABLE estimate(
                      id integer PRIMARY KEY,
                      rate DECIMAL,
