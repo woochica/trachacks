@@ -83,12 +83,23 @@ class TOCMacro(WikiMacroBase):
     || {{{noheading}}}   || Suppress display of the heading. ||
     || {{{depth=<n>}}}   || Display headings of ''subsequent'' pages to a maximum depth of '''<n>'''. ||
     || {{{inline}}}      || Display TOC inline rather than as a side-bar. ||
+    || {{{sectionindex}}} || Only display the page name and title of each page in the wiki section. ||
     || {{{titleindex}}}  || Only display the page name and title of each page, similar to TitleIndex. ||
     || {{{notitle}}}     || Supress display of page title. ||
     For 'titleindex' argument, an empty pagelist will evaluate to all pages:
     {{{
     [[TOC(titleindex, notitle, heading=All pages)]]
     }}}
+    'sectionindex' allows to generate a title index for all pages in a given section of the wiki.
+    A section is defined by wiki page name, using '/' as a section level delimiter (like directories in a
+    file system). Giving '/' or '*' as the page name produces the same result as 'titleindex' (title of all pages).
+    If a page name ends with a '/', only children of this page will be processed. Else the page given in
+    the argument is also included, if it exists. For 'sectionindex' argument, an empty pagelist will evaluate
+    to all page below the same parent as the current page:
+    {{{
+    [[TOC(sectionindex, notitle, heading=This section pages)]]
+    }}}
+
     """
     
     def expand_macro(self, formatter, name, args):
