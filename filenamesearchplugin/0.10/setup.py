@@ -10,7 +10,7 @@ setup(
     #package_data = { 'filenamesearch': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Filename search for Trac.",
     long_description = "Search provider for Trac to query filenames in the repository.",
     license = "BSD",

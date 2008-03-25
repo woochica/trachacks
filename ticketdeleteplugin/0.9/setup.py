@@ -10,7 +10,7 @@ setup(
     package_data = { 'ticketdelete': ['templates/*.cs' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "A small plugin to remove tickets and ticket changes from Trac.",
     long_description = "Provides a web interface to removing whole tickets, and ticket changes.",
     license = "BSD",

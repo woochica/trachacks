@@ -35,7 +35,7 @@ setup(
     packages = ['stimeline'],
     package_data={ 'stimeline' : [ 'templates/*.cs', 'htdocs/js/*.js' ] + [ 'htdocs/js/simile'+d+'/*.*' for d in simile_dirs ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Enhanced timeline using the Simile Timeline.",
     license = "BSD",
     keywords = "trac plugin simile simile",

@@ -10,7 +10,7 @@ setup(
     package_data = { 'authform': ['templates/*.cs' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Implements form-based login against HTTP authentication",
     license = "BSD",
     keywords = "trac authentication form",

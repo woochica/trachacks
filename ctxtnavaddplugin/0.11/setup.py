@@ -9,7 +9,7 @@ setup(
     packages = ['ctxtnavadd'],
     package_data={ 'ctxtnavadd' : [ 'templates/*.js' , 'htdocs/js/*.js' ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Allow adding to the ctxtnav bar of other plugins.",
     long_description = "Exposes an extension point interface for manipulating the ctxtnav bar (the little bar below the main navigation bar) of other plugins",
     license = "BSD",

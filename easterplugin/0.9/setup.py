@@ -10,7 +10,7 @@ setup(
     package_data = { 'easter': ['htdocs/img/*.gif' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "A macro to tell you when Easter is.",
     license = "BSD",
     keywords = "trac macro easter",

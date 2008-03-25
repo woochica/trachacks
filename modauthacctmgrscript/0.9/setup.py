@@ -10,7 +10,7 @@ setup(
     #package_data={ 'mod_auth_acctmgr' : [ ] },
     
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "mod_python authentication handler for Trac's AccountManager",
     long_description = "Provide HTTP authentication using the AccountManager plugin through mod_python.",
     license = "BSD",

@@ -9,7 +9,7 @@ setup(
     packages = ['traccas'],
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "A modified authentication plugin to use the Yale CAS system.",
     license = "BSD",
     keywords = "trac cas authentication plugin",

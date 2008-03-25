@@ -10,7 +10,7 @@ setup(
     package_data = { 'footnotemacro': ['htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
-    author_email = 'coderanger@yahoo.com',
+    author_email = 'noah@coderanger.net',
     description = '',
     license = 'BSD',
     keywords = 'trac plugin',

@@ -10,7 +10,7 @@ setup(
     package_data = { 'projectmenu': ['htdocs/*.js'] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Provide a menu entry to switch between projects in TRAC_ENV_PARENT_DIR-type setup.",
     license = "BSD",
     keywords = "trac plugin multiproject",

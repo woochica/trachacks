@@ -9,7 +9,7 @@ setup(
     packages = ['datamover'],
     package_data={ 'datamover' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Move data between Trac instances.",
     long_description = "Move/copy tickets and wiki pages from one Trac instance to another on the same server.",
     license = "BSD",

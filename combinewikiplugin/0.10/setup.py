@@ -9,7 +9,7 @@ setup(
     packages = ['combinewiki'],
     package_data={ 'combinewiki' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Export a subset of a Trac wiki as a single file.",
     long_description = "Export multiple wiki pages to a single file. Automatically generates a title page and table of contents.",
     license = "BSD",

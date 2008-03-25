@@ -10,7 +10,7 @@ setup(
     package_data = { 'dropbears': ['templates/*.html', 'templates/*.js', 'htdocs/*.gif', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
-    author_email = 'coderanger@yahoo.com',
+    author_email = 'noah@coderanger.net',
     description = 'Aaaaaaaaah! The Dropbears cometh!',
     license = 'BSD',
     keywords = 'trac plugin dropbears',

@@ -10,7 +10,7 @@ setup(
     package_data={ 'wikirename' : [ 'templates/*.cs' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Add simple support for renaming/moving wiki pages",
     long_description = """Adds basic support for renaming wiki pages. A console script is provided, as is a WebAdmin module. \
                           Please read the notice on the homepage for a list of known shortcomings.""",

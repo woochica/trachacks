@@ -9,7 +9,7 @@ setup(
     packages = ['simpleticket'],
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Restricted ticket entry form for Trac",
     long_description = "A Trac plugin that provides a configurable ticket entry form, with selected fields hidden from the user.",
     license = "BSD",

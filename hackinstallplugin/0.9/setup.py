@@ -10,7 +10,7 @@ setup(
     package_data = { 'hackinstall': ['templates/*.cs','htdocs/*' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "A plugin manager for Trac-Hacks plugins.",
     license = "BSD",
     keywords = "trac plugin manager hacks",

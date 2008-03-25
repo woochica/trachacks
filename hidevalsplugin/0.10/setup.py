@@ -10,7 +10,7 @@ setup(
     package_data = { 'hidevals': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
-    author_email = 'coderanger@yahoo.com',
+    author_email = 'noah@coderanger.net',
     description = 'Hide ticket option values from certain users.',
     license = 'BSD',
     keywords = 'trac plugin',

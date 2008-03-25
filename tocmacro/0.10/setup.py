@@ -12,7 +12,7 @@ setup(
     author = "Alec Thomas",
     #author_email = "",
     maintainer = "Noah Kantrowitz",
-    maintainer_email = "coderanger@yahoo.com",
+    maintainer_email = "noah@coderanger.net",
     description = "A macro to create tables of contents.",
     long_description = """A macro to create a table of contents for either a \
                           single page, or a collection of pages.""",

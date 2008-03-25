@@ -10,7 +10,7 @@ setup(
     package_data = { 'consultanttheme': ['templates/*.cs', 'htdocs/images/*.*', 'htdocs/*.*' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "A theme for Trac based on the G-Consultant theme from templateworld.com",
     license = "BSD",
     keywords = "trac plugin theme",

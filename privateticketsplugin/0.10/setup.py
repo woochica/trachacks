@@ -10,7 +10,7 @@ setup(
     #package_data = { 'privatetickets': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Modified ticket security for Trac.",
     long_description = "Allow users to only see tickets are involved with.",
     license = "BSD",

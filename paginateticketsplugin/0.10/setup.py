@@ -9,7 +9,7 @@ setup(
     packages = ['paginate'],
     package_data={ 'paginate' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Paginate ticket views.",
     license = "BSD",
     keywords = "trac plugin paginate ticket",

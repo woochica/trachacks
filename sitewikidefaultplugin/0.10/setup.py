@@ -9,7 +9,7 @@ setup(
     packages = ['sitewikidefault'],
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Modify pages in the Trac wiki at initialization",
     #long_description = "Provides a web interface to removing whole tickets and ticket changes in Trac.",
     license = "BSD",

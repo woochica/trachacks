@@ -9,7 +9,7 @@ setup(
     packages = ['hierwiki', 'hierwiki/macros' ],
     #package_data={ 'hierwiki' : [ ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Hierarchical wiki utilities for Trac.",
     long_description = "Various things related to using the Trac wiki in hierarchical way.",
     license = "BSD",

@@ -10,7 +10,7 @@ setup(
     package_data = { 'robotstxt': ['templates/*.cs' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Serve a robots.txt file from Trac.",
     long_description = "Allows simple management of a robots.txt file from within Trac.",
     license = "BSD",

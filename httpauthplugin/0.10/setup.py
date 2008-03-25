@@ -10,7 +10,7 @@ setup(
     #package_data = { 'httpauth': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Use the AccountManager plugin to provide HTTP authentication from Trac itself.",
     license = "BSD",
     keywords = "trac plugin http auth",

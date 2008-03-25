@@ -11,7 +11,7 @@ setup(
     author = "Team5",
     author_email = "UNKNOWN",
     maintainer = "Noah Kantrowitz",
-    maintainer_email = "coderanger@yahoo.com",
+    maintainer_email = "noah@coderanger.net",
     description = "Framework for realtime code review within Trac.",
     license = "BSD",
     keywords = "trac plugin code peer review",

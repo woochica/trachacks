@@ -12,7 +12,7 @@ setup(
     #},
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Trac version of mod_rewrite",
     license = "BSD",
     keywords = "trac plugin mod_rewrite",

@@ -10,7 +10,7 @@ setup(
     package_data = { 'ticketdelete': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Remove tickets and ticket changes from Trac.",
     long_description = "Provides a web interface to removing whole tickets and ticket changes in Trac.",
     license = "BSD",

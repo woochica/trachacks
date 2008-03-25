@@ -10,7 +10,7 @@ setup(
     package_data = {  },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Provides a few useful macros to get data about wiki pages",
     license = "BSD",
     keywords = "trac wiki info macro",

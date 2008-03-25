@@ -10,7 +10,7 @@ setup(
     #package_data = { 'selfdelete': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Remove Trac wiki pages and attachments that you created.",
     long_description = "Allows users to delete wiki pages and attachments that they created..",
     license = "BSD",

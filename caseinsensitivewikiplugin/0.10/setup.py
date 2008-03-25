@@ -9,7 +9,7 @@ setup(
     packages = ['caseinsensitivewiki'],
     #package_data={ 'caseinsensitivewiki' : [ 'templates/*.cs' ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Make the Trac wiki case-insensitive.",
     long_description = "",
     license = "BSD",

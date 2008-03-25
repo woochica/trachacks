@@ -9,7 +9,7 @@ setup(
     packages = ['macropost'],
     package_data={ 'macropost' : [ ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Allow wiki macros to use POSTs",
     license = "BSD",
     keywords = "trac plugin wiki",

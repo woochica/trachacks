@@ -10,7 +10,7 @@ setup(
     #package_data = { 'navhider': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Remove items from the Trac navigation bars.",
     license = "BSD",
     keywords = "trac plugin navigation menu remove hide",

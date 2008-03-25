@@ -10,7 +10,7 @@ setup(
     #package_data = { 'cachesystem': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Modular caching framework for Trac, currently using memcached as a backend.",
     license = "BSD",
     keywords = "trac plugin cache",

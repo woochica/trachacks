@@ -10,7 +10,7 @@ setup(
     package_data = { 'fakeusername': ['htdocs/*.js'] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Report tickets using a different name than that of the logged in user.",
     license = "BSD",
     keywords = "trac plugin ticket",

@@ -11,7 +11,7 @@ setup(
                                       'htdocs/*.*', 'htdocs/img/*.*' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Provide a modular interface to styling Trac.",
     license = "BSD",
     keywords = "trac plugin theme style",

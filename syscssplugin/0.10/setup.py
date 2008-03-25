@@ -9,7 +9,7 @@ setup(
     packages = ['syscss'],
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Provides a system-wide CSS file for Trac",
     license = "BSD",
     keywords = "trac plugin system css",

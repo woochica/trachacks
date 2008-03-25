@@ -10,7 +10,7 @@ setup(
     package_data = { 'gitweb': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
-    author_email = 'coderanger@yahoo.com',
+    author_email = 'noah@coderanger.net',
     description = 'Embed gitweb in Trac in place of the Trac browser.',
     license = 'BSD',
     keywords = 'trac plugin',

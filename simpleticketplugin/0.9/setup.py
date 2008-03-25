@@ -9,7 +9,7 @@ setup(
     packages = ['simpleticket'],
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Restricted ticket entry form",
     license = "BSD",
     keywords = "trac plugin restricted ticket",

@@ -10,7 +10,7 @@ setup(
     package_data = { 'themeengine': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
-    author_email = 'coderanger@yahoo.com',
+    author_email = 'noah@coderanger.net',
     description = 'Provide a modular interface to styling Trac.',
     license = 'BSD',
     keywords = 'trac plugin theme style',

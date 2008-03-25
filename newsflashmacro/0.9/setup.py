@@ -9,7 +9,7 @@ setup(
     packages = ['newsflash'],
     package_data={ 'newsflash' : [ 'htdocs/css/*.css' ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Make a colored box.",
     license = "BSD",
     keywords = "trac plugin macro news flash",

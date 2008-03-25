@@ -23,7 +23,7 @@ setup(
                                    'htdocs/js/interface/*.js',
                                   ] },
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Experimental multi-project support.",
     long_description = "A suite of plugins to link a set of related projects.",
     license = "BSD",

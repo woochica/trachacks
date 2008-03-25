@@ -10,7 +10,7 @@ setup(
     package_data = { 'gamedevtheme': ['templates/*.cs', 'htdocs/*.*' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "A theme for Trac from the RPI game development club.",
     license = "BSD",
     keywords = "trac plugin theme",

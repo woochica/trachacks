@@ -10,7 +10,7 @@ setup(
     package_data = { 'tracbl': ['templates/*.cs', 'htdocs/js/*.js', 'htdocs/css/*.css' ] },
 
     author = "Noah Kantrowitz",
-    author_email = "coderanger@yahoo.com",
+    author_email = "noah@coderanger.net",
     description = "Domain blacklisting for Trac.",
     license = "BSD",
     keywords = "trac plugin ticket delete",

@@ -12,7 +12,7 @@ setup(
     author = "Jeroen Ruigrok van der Werven",
     author_email = 'asmodai@in-nomine.org',
     maintainer = 'Noah Kantrowitz',
-    maintainer_email = "coderanger@yahoo.com",
+    maintainer_email = "noah@coderanger.net",
     description = "A theme for Trac based on python.org",
     license = "BSD",
     keywords = "trac plugin theme",
