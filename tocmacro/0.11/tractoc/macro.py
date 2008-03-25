@@ -120,7 +120,10 @@ class TOCMacro(WikiMacroBase):
                 default_heading = ''
             elif arg == 'notitle':
                 params['min_depth'] = 2     # Skip page title
-            elif arg == 'titleindex':
+            elif (arg == 'titleindex') or (arg == 'sectionindex'):
+                # sectionindex is a page-context sensitive titleindex
+                if arg == 'sectionindex':
+                    params['section_index'] = True
                 params['title_index'] = True
                 default_heading = default_heading and 'Page Index'
             elif arg == 'nofloat':
@@ -134,7 +137,15 @@ class TOCMacro(WikiMacroBase):
 
         # Has the user supplied a list of pages?
         if not pagenames:
-            if 'title_index' in params:
+            # Be sure to test section_index first as title_index is also true in this case
+            if 'section_index' in params:
+                # Use 'parent' of current page (level delimiter is /), if any
+                toks = re.match('^(?P<parent>.*)/[^/]*$',current_page)
+                if toks:
+                    pagenames.append(toks.group('parent')+'/')
+                else:
+                    pagenames.append('*')
+            elif 'title_index' in params:
                 pagenames.append('*')       # A marker for 'all'
             else:
                 pagenames.append(current_page)
@@ -143,6 +154,12 @@ class TOCMacro(WikiMacroBase):
         # Check for wildcards and expand lists
         temp_pagenames = []
         for pagename in pagenames:
+            if 'section_index' in params:
+                # / is considered an equivalent to * in sectionindex
+                if pagename == '/':
+                    pagename = '*'
+                if not pagename.endswith('*'):
+                    pagename += '*'
             if pagename.endswith('*'):
                 temp_pagenames.extend(sorted(
                         WikiSystem(self.env).get_pages(pagename[:-1])))
