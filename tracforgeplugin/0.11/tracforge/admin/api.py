@@ -5,14 +5,32 @@ import db_default
 
 class IProjectSetupParticipant(Interface):
     """An extension-point interface for performing actions on project creation."""
-    
-    def get_setup_actions(self):
+
+    def get_setup_actions():
         """Return an iterable of names."""
+
+    def get_setup_action_info(action):
+        """Return a dict with zero or more of the following keys:
         
-    def get_setup_action_description(self, action):
-        """Return a string description of the given action."""
+        description
+          A string description for the step.
         
-    def execute_setup_action(self, action, args, data, log_cb):
+        depends
+          A list of data keys step uses.
+        
+        optional_depends
+          A list of data keys step could use.
+        
+        provides
+          A list of data keys step creates.
+        """
+
+    def get_setup_action_default(action, env):
+        """Return a string corresponding to the default argument for a given step,
+        or None if the step shouldn't be included.
+        """
+
+    def execute_setup_action(action, args, data, log_cb):
         """Perform the given setup action on an environment."""
     
 class IProjectChangeListener(Interface):
@@ -32,10 +50,8 @@ class TracForgeAdminSystem(Component):
         data = {}
         for provider in self.setup_participants:
             for action in provider.get_setup_actions():
-                data[action] = {
-                    'provider': provider,
-                    'description': provider.get_setup_action_description(action),
-                }
+                data[action] = provider.get_setup_action_info(action)
+                data[action]['provider'] = provider
         return data
 
     # IEnvironmentSetupParticipant methods

@@ -1,11 +1,13 @@
 from trac.env import open_environment
 from trac.config import Configuration, Section
+from trac.util.compat import set, all
 
 from UserDict import DictMixin
 import os
 import sys
 import time
 import traceback
+import itertools
 
 class BadEnv(object):
     def __init__(self, env_path, exc):
@@ -287,8 +289,33 @@ class Prototype(list):
         
         sys.stdout = old_stdout
         sys.stderr = old_stderr
-
-
+    
+    def sort(self):
+        """Do an in-place topological sort of this prototype."""
+        from api import TracForgeAdminSystem
+        steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
+        
+        old = set([action for action, args in self])
+        new = []
+        tags = set()
+        for i, key in itertools.izip(xrange(len(self)*2), itertools.cycle(('depends', 'optional_depends'))):
+            for action in old:
+                self.env.log.debug('TracForge: %s %s %s %s %s %s', i, key, action, old, new, tags)
+                if all([tag in tags for tag in steps[action].get(key, [])]):
+                    if key == 'depends' and 'optional_depends' in steps[action]:
+                        continue
+                    new.append(action)
+                    tags |= set(steps[action].get('provides', []))
+                    old.remove(action)
+                    break
+            if not old:
+                break
+        if old:
+            raise ValueError('Cant solve')
+        action_map = dict(self)
+        self[:] = [(action, action_map[action]) for action in new]
+                    
+    
     def select(cls, env, db=None):
         """Return an iterable of valid tags."""
         db = db or env.get_db_cnx()
@@ -301,8 +328,16 @@ class Prototype(list):
     
     def default(cls, env):
         """Return a prototype for the defaults on the new prototype screen."""
+        from api import TracForgeAdminSystem
+        steps = TracForgeAdminSystem(env).get_project_setup_participants()
+        
         proto = cls(env, '')
-        proto.append(('MakeTracEnvironment', os.path.dirname(env.path)))
+        for action, info in steps.iteritems():
+            default = info['provider'].get_setup_action_default(action, env)
+            if default is not None:
+                proto.append((action, default))
+        env.log.debug('TracForge: %s', proto)
+        proto.sort()
         return proto
     default = classmethod(default)
 
