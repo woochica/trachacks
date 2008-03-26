@@ -35,7 +35,7 @@ if:admin.customfield.name ?>
       var:admin.customfield.label ?>" /></label>
    </div>
    <div class="field">
-    <label>Default value (regular text for Text, Textarea, or Select):<br />
+    <label>Default value (regular text for Text, Textarea, Radio or Select):<br />
     <input type="text" name="value" value="<?cs
       var:admin.customfield.value ?>" /></label>
    </div>
