@@ -295,15 +295,26 @@ class Prototype(list):
         from api import TracForgeAdminSystem
         steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
         
+        all_provides = set()
+        for action, args in self:
+            all_provides |= set(steps[action].get('provides', ()))
+        
+        effective_depends = {}
+        for action, args in self:
+            # All real deps are always used
+            effective_depends.setdefault(action, []).extend(steps[action].get('depends', ()))
+            for tag in steps[action].get('optional_depends', ()):
+                # Any optional dep that is provided by something else is used
+                if tag in all_provides:
+                    effective_depends[action].append(tag)
+        
         old = set([action for action, args in self])
         new = []
         tags = set()
-        for i, key in itertools.izip(xrange(len(self)*2), itertools.cycle(('depends', 'optional_depends'))):
+        for i in xrange(len(self)):
             for action in old:
-                self.env.log.debug('TracForge: %s %s %s %s %s %s', i, key, action, old, new, tags)
-                if all([tag in tags for tag in steps[action].get(key, [])]):
-                    if key == 'depends' and 'optional_depends' in steps[action]:
-                        continue
+                self.env.log.debug('TracForge: %s %s %s %s %s', i, action, old, new, tags)
+                if all([tag in tags for tag in effective_depends[action]]):
                     new.append(action)
                     tags |= set(steps[action].get('provides', []))
                     old.remove(action)
