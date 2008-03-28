@@ -32,6 +32,14 @@ is used as $USER if not specified explicitly.
 
 import re
 import string
+from trac.wiki.formatter import wiki_to_oneliner
+from trac.ticket.report import ReportModule
+
+## Mock request object
+class MockReq(object):
+    def __init__(self):
+        self.hdf = dict()
+        self.authname = 'anonymous'
 
 ## default style values
 styles = { "float": "right",
@@ -99,16 +107,19 @@ def execute(hdf, txt, env):
             #env.log.debug('dynamic variables = %s' % dv)
             db = env.get_db_cnx()
             curs = db.cursor()
+            req = MockReq()
             try:
                 curs.execute('SELECT sql FROM report WHERE id=%s' % num)
-                (sql,) = curs.fetchone()
-                # replace dynamic variables
-                for k, v in dv.iteritems():
-                    s = r'\$%s' % k
-                    s = '(?:"%s"|\'%s\'|%s\\b)' % (s, s, s)
-                    sql = re.sub(s, sqlstr(v), sql)
-                #env.log.debug('sql = %s' % sql)
-                curs.execute(sql)
+                (query,) = curs.fetchone()
+                # replace dynamic variables with sql_sub_vars()
+                # NOTE: sql_sub_vars() takes different arguments in
+                #       several trac versions.
+                #       For 0.10 or before, arguments are (req, query, args)
+                #       For 0.10.x, arguments are (req, query, args, db)
+                #       For 0.11 or later, arguments are (query, args, db)
+                query, dv = ReportModule(env).sql_sub_vars(req, query, dv)
+                #env.log.debug('query = %s' % query)
+                curs.execute(query, dv)
                 rows = curs.fetchall()
                 if rows:
                     descriptions = [desc[0] for desc in curs.description]
@@ -125,12 +136,6 @@ def execute(hdf, txt, env):
     items = uniq(items)
     items.sort()
     html = ''
-    try:
-        # for trac 0.9 or later
-        from trac.wiki.formatter import wiki_to_oneliner
-    except:
-        # for trac 0.8.x
-        from trac.WikiFormatter import wiki_to_oneliner
 
     if show_summary:
         html = string.join([wiki_to_oneliner("%s (#%d)" % (v,k),

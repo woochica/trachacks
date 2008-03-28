@@ -32,6 +32,8 @@ is used as $USER if not specified explicitly.
 
 import re
 import string
+from trac.wiki.formatter import wiki_to_oneliner
+from trac.ticket.report import ReportModule
 
 ## default style values
 styles = { "float": "right",
@@ -105,13 +107,15 @@ def execute(formatter, args):
             try:
                 curs.execute('SELECT query FROM report WHERE id=%s' % num)
                 (query,) = curs.fetchone()
-                # replace dynamic variables
-                for k, v in dv.iteritems():
-                    s = r'\$%s' % k
-                    s = '(?:"%s"|\'%s\'|%s\\b)' % (s, s, s)
-                    query = re.sub(s, sqlstr(v), query)
+                # replace dynamic variables with sql_sub_vars()
+                # NOTE: sql_sub_vars() takes different arguments in
+                #       several trac versions.
+                #       For 0.10 or before, arguments are (req, query, args)
+                #       For 0.10.x, arguments are (req, query, args, db)
+                #       For 0.11 or later, arguments are (query, args, db)
+                query, dv = ReportModule(env).sql_sub_vars(query, dv, db)
                 #env.log.debug('query = %s' % query)
-                curs.execute(query)
+                curs.execute(query, dv)
                 rows = curs.fetchall()
                 if rows:
                     descriptions = [desc[0] for desc in curs.description]
@@ -128,7 +132,6 @@ def execute(formatter, args):
     items = uniq(items)
     items.sort()
     html = ''
-    from trac.wiki.formatter import wiki_to_oneliner
     if show_summary:
         html = string.join([wiki_to_oneliner("%s (#%d)" % (v,k),
                                              env, env.get_db_cnx()) for k,v in long_items.iteritems()], "<br>")

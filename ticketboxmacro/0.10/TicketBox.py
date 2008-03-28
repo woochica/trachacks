@@ -32,6 +32,18 @@ is used as $USER if not specified explicitly.
 
 import re
 import string
+from trac import __version__ as version
+from trac.wiki.formatter import wiki_to_oneliner
+from trac.ticket.report import ReportModule
+
+## Mock request object
+class MockReq(object):
+    def __init__(self):
+        self.hdf = dict()
+        self.authname = 'anonymous'
+
+# get trac version
+ver = [int(x) for x in version.split(".")]
 
 ## default style values
 styles = { "float": "right",
@@ -99,16 +111,25 @@ def execute(hdf, txt, env):
             #env.log.debug('dynamic variables = %s' % dv)
             db = env.get_db_cnx()
             curs = db.cursor()
+            req = MockReq()
             try:
                 curs.execute('SELECT query FROM report WHERE id=%s' % num)
                 (query,) = curs.fetchone()
-                # replace dynamic variables
-                for k, v in dv.iteritems():
-                    s = r'\$%s' % k
-                    s = '(?:"%s"|\'%s\'|%s\\b)' % (s, s, s)
-                    query = re.sub(s, sqlstr(v), query)
+                # replace dynamic variables with sql_sub_vars()
+                # NOTE: sql_sub_vars() takes different arguments in
+                #       several trac versions.
+                #       For 0.10 or before, arguments are (req, query, args)
+                #       For 0.10.x, arguments are (req, query, args, db)
+                #       For 0.11 or later, arguments are (query, args, db)
+                if ver <= [0, 10]:
+                    args = (req, query, dv)     # for 0.10 or before
+                elif ver < [0, 11]:
+                    args = (req, query, dv, db) # for 0.10.x
+                else:
+                    args = (query, dv, db)      # for 0.11 or later
+                query, dv = ReportModule(env).sql_sub_vars(*args)
                 #env.log.debug('query = %s' % query)
-                curs.execute(query)
+                curs.execute(query, dv)
                 rows = curs.fetchall()
                 if rows:
                     descriptions = [desc[0] for desc in curs.description]
@@ -125,12 +146,6 @@ def execute(hdf, txt, env):
     items = uniq(items)
     items.sort()
     html = ''
-    try:
-        # for trac 0.9 or later
-        from trac.wiki.formatter import wiki_to_oneliner
-    except:
-        # for trac 0.8.x
-        from trac.WikiFormatter import wiki_to_oneliner
 
     if show_summary:
         html = string.join([wiki_to_oneliner("%s (#%d)" % (v,k),
