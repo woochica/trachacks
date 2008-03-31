@@ -159,26 +159,29 @@ class SetupSubversionHooks(ProjectSetupParticipantBase):
                 return self.arg_map.get((pre, post))
     
     def execute_setup_action(self, action, args, data, log_cb):
-        if data['repo_type'] == 'svn':
-            pre, post = dict([(v,k) for k, v in self.arg_map.iteritems()]).get(args, (False, False))
-            if pre:
-                hookf, trachook = self._install_hook(data['repo_dir'], 'pre-commit')
-                svnlook = locate('svnlook')
-                if os.name == 'nt':
-                    hookf.write('%s log -t %%2 %%1 > C:\\temp\\svnlog-%%2\n'%svnlook)
-                    hookf.write('%s %s %s file:"C:\\temp\\svnlook-%%2\n"'%
-                                (sys.executable, trachook, data['env'].path))
-                    hookf.write('IF ERRORLEVEL 1 SET TRAC_CANCEL=YES\n')
-                    hookf.write('DEL /F C:\\temp\\svnlog-%2\n')
-                    hookf.write('IF DEFINED TRAC_CANCEL EXIT 1\n')
-                else:
-                    hookf.write('%s %s %s "${%s log -t "$2" "$1"}"\n'%
-                                (sys.executable, trachook, data['env'].path, svnlook))
-            if post:
-                hookf, trachook = self._install_hook(data['repo_dir'], 'post-commit')
-                revarg = os.name == 'nt' and '%2' or '$2'
-                hookf.write('%s %s -p "%s" -r "%s"\n'%
-                            (sys.executable, trachook, data['env'].path, revarg))
+        if data['repo_type'] != 'svn':
+            print >>sys.stderr, 'Cannot install hook scripts for repository type %s'%data['repo_type']
+            return False
+        
+        pre, post = dict([(v,k) for k, v in self.arg_map.iteritems()]).get(args, (False, False))
+        if pre:
+            hookf, trachook = self._install_hook(data['repo_dir'], 'pre-commit')
+            svnlook = locate('svnlook')
+            if os.name == 'nt':
+                hookf.write('%s log -t %%2 %%1 > C:\\temp\\svnlog-%%2\n'%svnlook)
+                hookf.write('%s %s %s file:"C:\\temp\\svnlook-%%2\n"'%
+                            (sys.executable, trachook, data['env'].path))
+                hookf.write('IF ERRORLEVEL 1 SET TRAC_CANCEL=YES\n')
+                hookf.write('DEL /F C:\\temp\\svnlog-%2\n')
+                hookf.write('IF DEFINED TRAC_CANCEL EXIT 1\n')
+            else:
+                hookf.write('%s %s %s "${%s log -t "$2" "$1"}"\n'%
+                            (sys.executable, trachook, data['env'].path, svnlook))
+        if post:
+            hookf, trachook = self._install_hook(data['repo_dir'], 'post-commit')
+            revarg = os.name == 'nt' and '%2' or '$2'
+            hookf.write('%s %s -p "%s" -r "%s"\n'%
+                        (sys.executable, trachook, data['env'].path, revarg))
         return True
     
     # Internal methods
