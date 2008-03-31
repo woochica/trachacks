@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
+from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_ctxtnav
 from trac.web.main import IRequestHandler
 from trac.util import Markup, TracError
 from trac.util.text import to_unicode
@@ -111,20 +111,33 @@ class BuildBotPlugin(Component):
 
 		return ret
 
+	def _ctxt_nav(self, req):
+		add_ctxtnav(req, 'Buildbot Server', self.get_buildbot_url())
+		add_ctxtnav(req, 'Waterfall display', self.get_buildbot_url()+'/waterfall')
+		add_ctxtnav(req, 'Latest Build', self.get_buildbot_url()+'/one_box_per_builder')
+
 
 
 	def process_request(self, req):
-		req.hdf['buildbot.url'] = self.get_buildbot_url()
+		self._ctxt_nav(req)
+		#req.hdf['buildbot.url'] = self.get_buildbot_url()
+		data = { 'buildbot_url': self.get_buildbot_url() }
 		if not req.args.has_key('builder'):
-			req.hdf['title'] = 'BuildBot'
+			data['title'] = 'BuildBot'
+			#req.hdf['title'] = 'BuildBot'
 
-			req.hdf['bb.builders'] = self.get_builders(req)
+			#req.hdf['bb.builders'] = self.get_builders(req)
+			data['bb_builders'] = self.get_builders(req)
 
-			return 'tracbb_overview.cs', None
+			#return 'tracbb_overview.cs', None
+			return 'tracbb_overview.html', data, None
 		else:
 			builder = req.args['builder']
 			builds = self.get_last_builds(builder)
-			req.hdf['title'] = 'Builder ' + builder
-			req.hdf['bb.builder'] = builder
-			req.hdf['bb.builds'] = builds
-			return 'tracbb_builder.cs', None
+			data['title'] = 'Builder ' + builder
+			#req.hdf['title'] = 'Builder ' + builder
+			#req.hdf['bb.builder'] = builder
+			data['bb_builder'] = builder
+			#req.hdf['bb.builds'] = builds
+			data['bb_builds'] = builds
+			return 'tracbb_builder.html', data, None
