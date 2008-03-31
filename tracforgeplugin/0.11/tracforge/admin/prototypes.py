@@ -6,9 +6,21 @@ import os.path
 import time
 
 from trac.core import *
+from trac.util.compat import reversed
+from pkg_resources import resource_stream
 
 from tracforge.admin.api import IProjectSetupParticipant
 from tracforge.admin.util import CommandLine, locate
+
+# Try and use ctypes to get fchmod
+try:
+    import ctypes
+    import ctypes.util
+    have_ctypes = True
+    
+    libc = ctypes.CDLL(ctypes.util.find_library('c'))
+except ImportError:
+    have_ctypes = False
 
 class ProjectSetupParticipantBase(Component):
     """Base class for project setup participants."""
@@ -133,3 +145,71 @@ class DoNothingAction(ProjectSetupParticipantBase):
         return True
 
 
+class SetupSubversionHooks(ProjectSetupParticipantBase):
+    """Activate the pre and/or post-commit hooks for Subversion.
+    
+    Valid arguments are `pre`, `post`, or `both`.
+    
+    '''NOTE''': You cannot automatically activate the pre-commit hook on 
+    Windows at this time.
+    """
+    
+    depends = ['repo_type', 'repo_dir']
+    
+    arg_map = {
+        (True, True): 'both',
+        (True, False): 'pre',
+        (False, True): 'post',
+    }
+    
+    def get_setup_action_defaults(self, action, env):
+        if env.config.get('trac', 'repository_type') == 'svn':
+            repo_dir = env.config.get('trac', 'repository_dir')
+            if repo_dir:
+                pre = self._check_hook(repo_dir, 'pre-commit')
+                post = self._check_hook(repo_dir, 'post-commit')
+                return self.arg_map.get((pre, post))
+    
+    def execute_setup_action(self, action, args, data, log_cb):
+        if data['repo_type'] == 'svn':
+            pre, post = dict(reversed(self.arg_map.itertitems())).get(args, (False, False))
+            if pre
+    
+    # Internal methods
+    def _check_hook(self, path, hook):
+        hook_file = os.path.join(path, 'hooks', hook)
+        if os.name == 'nt':
+            hook_file += '.bat'
+        if not os.path.exists(hook_file):
+            return False
+        for line in open(hook_file):
+            line = line.strip()
+            if os.name == 'nt':
+                if line.startswith('REM') or line.startswith('::'):
+                    continue
+            else:
+                line = line.split('#', 1)[0]
+            if 'trac-'+hook+'-hook' in line:
+                return True
+        return False
+    
+    def _install_hook(self, path, hook):
+        # Open source and sink for the trac hook
+        script = resource_stream(__name__, 'scripts/trac-'+hook+'-hook')
+        trachook_file = os.path.join(path, 'hooks', 'trac-'+hook+'-hook') 
+        out = open(trachook_file, 'w')
+        # Copy over the given trac hook
+        data = script.read(1024)
+        while data:
+            out.write(data)
+            data = script.read(1024)
+        script.close()
+        out.close()
+        
+        # Add the trac hook to the main hook
+        # creating it if needed
+        hook_file = os.path.join(path, 'hooks', hook)
+        if os.name == 'nt':
+            hook_file += '.bat'
+        hookf = open(hook_file, 'a')
+        hookf.write('%s %s -')  
