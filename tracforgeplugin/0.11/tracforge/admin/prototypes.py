@@ -4,6 +4,7 @@ import sys
 import os
 import os.path
 import time
+import stat
 
 from trac.core import *
 from trac.util.compat import reversed
@@ -11,16 +12,6 @@ from pkg_resources import resource_stream
 
 from tracforge.admin.api import IProjectSetupParticipant
 from tracforge.admin.util import CommandLine, locate
-
-# Try and use ctypes to get fchmod
-try:
-    import ctypes
-    import ctypes.util
-    have_ctypes = True
-    
-    libc = ctypes.CDLL(ctypes.util.find_library('c'))
-except ImportError:
-    have_ctypes = False
 
 class ProjectSetupParticipantBase(Component):
     """Base class for project setup participants."""
@@ -149,12 +140,9 @@ class SetupSubversionHooks(ProjectSetupParticipantBase):
     """Activate the pre and/or post-commit hooks for Subversion.
     
     Valid arguments are `pre`, `post`, or `both`.
-    
-    '''NOTE''': You cannot automatically activate the pre-commit hook on 
-    Windows at this time.
     """
     
-    depends = ['repo_type', 'repo_dir']
+    depends = ['repo_type', 'repo_dir', 'env']
     
     arg_map = {
         (True, True): 'both',
@@ -172,8 +160,26 @@ class SetupSubversionHooks(ProjectSetupParticipantBase):
     
     def execute_setup_action(self, action, args, data, log_cb):
         if data['repo_type'] == 'svn':
-            pre, post = dict(reversed(self.arg_map.itertitems())).get(args, (False, False))
-            if pre
+            pre, post = dict([(v,k) for k, v in self.arg_map.iteritems()]).get(args, (False, False))
+            if pre:
+                hookf, trachook = self._install_hook(data['repo_dir'], 'pre-commit')
+                svnlook = locate('svnlook')
+                if os.name == 'nt':
+                    hookf.write('%s log -t %%2 %%1 > C:\\temp\\svnlog-%%2\n'%svnlook)
+                    hookf.write('%s %s %s file:"C:\\temp\\svnlook-%%2\n"'%
+                                (sys.executable, trachook, data['env'].path))
+                    hookf.write('IF ERRORLEVEL 1 SET TRAC_CANCEL=YES\n')
+                    hookf.write('DEL /F C:\\temp\\svnlog-%2\n')
+                    hookf.write('IF DEFINED TRAC_CANCEL EXIT 1\n')
+                else:
+                    hookf.write('%s %s %s "${%s log -t "$2" "$1"}"\n'%
+                                (sys.executable, trachook, data['env'].path, svnlook))
+            if post:
+                hookf, trachook = self._install_hook(data['repo_dir'], 'post-commit')
+                revarg = os.name == 'nt' and '%2' or '$2'
+                hookf.write('%s %s -p "%s" -r "%s"\n'%
+                            (sys.executable, trachook, data['env'].path, revarg))
+        return True
     
     # Internal methods
     def _check_hook(self, path, hook):
@@ -196,7 +202,8 @@ class SetupSubversionHooks(ProjectSetupParticipantBase):
     def _install_hook(self, path, hook):
         # Open source and sink for the trac hook
         script = resource_stream(__name__, 'scripts/trac-'+hook+'-hook')
-        trachook_file = os.path.join(path, 'hooks', 'trac-'+hook+'-hook') 
+        trachook_file = os.path.join(path, 'hooks', 'trac-'+hook+'-hook')
+        print 'Installing script file to %s'%trachook_file
         out = open(trachook_file, 'w')
         # Copy over the given trac hook
         data = script.read(1024)
@@ -212,4 +219,7 @@ class SetupSubversionHooks(ProjectSetupParticipantBase):
         if os.name == 'nt':
             hook_file += '.bat'
         hookf = open(hook_file, 'a')
-        hookf.write('%s %s -')  
+        if os.name != 'nt' and not os.access(hook_file, os.X_OK):
+            print 'Making %s executable'%hook_file
+            os.chmod(hook_file, os.stat(hook_file).st_mode|stat.S_IXUSR)
+        return hookf, trachook_file

@@ -115,6 +115,7 @@ class TracForgePrototypesAdminModule(Component):
             elif 'add' in req.args:
                 proto.append((req.args['type'], ''))
             elif 'save' in req.args:
+                proto.tag = data['name']
                 proto.save()
                 req.redirect(req.href.admin('tracforge/prototypes', proto.tag))
             elif 'cancel' in req.args:
