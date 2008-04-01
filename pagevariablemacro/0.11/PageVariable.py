@@ -29,16 +29,19 @@ class PageVariable(WikiMacroBase):
 	If the parameter value is ommitted, the currently known value is returned. If no value is known, an error is raised.
 	"""
 
-    def expand_macro(self, formatter, name, args):
-	self.req = formatter.req
-	if len(args) == 1:
-		return getValue(args[0])
-	else: 
-		if len(args) == 2:
-			setValue(args[0],args[1])
-			return ''
-		else:
-			return 'ERROR: Invalid number of arguments supplied to PageVariable macro: ' + str(args)
+	revision = "$Rev$"
+	url = "$URL$"
+
+	def expand_macro(self, formatter, name, args):
+		self.req = formatter.req
+		if len(args) == 1:
+			return getValue(args[0])
+		else: 
+			if len(args) == 2:
+				setValue(args[0],args[1])
+				return ''
+			else:
+				return 'ERROR: Invalid number of arguments supplied to PageVariable macro: ' + str(args)
     
 	def getValue(self, name):
 		if hasattr(self.req,name):
