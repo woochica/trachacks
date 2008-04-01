@@ -153,7 +153,7 @@ class peerReviewBrowser(Component):
                 'browser_href': util.escape(self.env.href.peerReviewBrowser(entry.path,
                                                                   rev=rev))
             })
-        changes = get_changes(self.env, repos, [i['rev'] for i in info])
+        changes = get_changes(repos, [i['rev'] for i in info])
 
         def cmp_func(a, b):
             dir_cmp = (a['is_dir'] and -1 or 0) + (b['is_dir'] and 1 or 0)
