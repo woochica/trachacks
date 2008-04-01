@@ -66,6 +66,7 @@ else ?>
    <legend>Add Custom Field:</legend>
    <div class="field">
     <label>Name:<br /><input type="text" name="name" id="name" /></label>
+   </div>
    <div class="field">
     <label>Type:<br /><select name="type" id="type">
     <option value="text">Text</option>
