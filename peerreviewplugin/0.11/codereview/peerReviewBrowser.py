@@ -23,6 +23,8 @@ from trac.web.chrome import add_link, add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner, IWikiSyntaxProvider
 from trac.versioncontrol.web_ui.util import *
 
+from genshi.builder import tag
+
 IMG_RE = re.compile(r"\.(gif|jpg|jpeg|png)(\?.*)?$", re.IGNORECASE)
 
 CHUNK_SIZE = 4096
@@ -49,11 +51,13 @@ class peerReviewBrowser(Component):
 
     # ITextAnnotator methods
     def get_annotation_type(self):
-    	return 'addFileNums', 'Line', 'Line numbers'
-    
-    def annotate_line(self, number, content):
-    	return '<th id="L%s"><a href="javascript:setLineNum(%s)">%s</a></th>' % (number, number, number)
+    	return 'lineno', 'Line', 'Line numbers'
 
+    def annotate_row(self, context, row, lineno, line, data):
+        row.append(tag.th(id='L%s' % lineno)(
+            tag.a(lineno, href='javascript:setLineNum(%s)' % lineno)
+        ))
+    
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
@@ -173,19 +177,19 @@ class peerReviewBrowser(Component):
         req.hdf['browser.items'] = info
         req.hdf['browser.changes'] = changes
 
-    def _render_file(self, req, repos, node, rev=None):
-        req.perm.assert_permission('FILE_VIEW')
+    def _render_file(self, req, context, repos, node, rev=None):
+        req.perm(context.resource).require('FILE_VIEW')
 
-        changeset = repos.get_changeset(node.rev)  
-        req.hdf['file'] = {  
-            'rev': node.rev,  
-            'changeset_href': util.escape(self.env.href.changeset(node.rev)),
-            'date': util.format_datetime(changeset.date),
-            'age': util.pretty_timedelta(changeset.date),
-            'author': changeset.author or 'anonymous',
-            'message': wiki_to_html(changeset.message or '--', self.env, req,
-                                    escape_newlines=True)
-        } 
+        changeset = repos.get_changeset(node.rev)
+        #req.hdf['file'] = {
+        #    'rev': node.rev,
+        #    'changeset_href': util.escape(self.env.href.changeset(node.rev)),
+        #    'date': util.format_datetime(changeset.date),
+        #    'age': util.pretty_timedelta(changeset.date),
+        #    'author': changeset.author or 'anonymous',
+        #    'message': wiki_to_html(changeset.message or '--', self.env, req,
+        #                            escape_newlines=True)
+        #}
         mime_type = node.content_type
         if not mime_type or mime_type == 'application/octet-stream':
             mime_type = get_mimetype(node.name) or mime_type or 'text/plain'
@@ -198,8 +202,11 @@ class peerReviewBrowser(Component):
         else:
             charset = None
 
+        content = node.get_content()
+        chunk = content.read(CHUNK_SIZE)
+
         format = req.args.get('format')
-        if format in ['raw', 'txt']:
+        if format in ('raw', 'txt'):
             req.send_response(200)
             req.send_header('Content-Type',
                             format == 'txt' and 'text/plain' or mime_type)
@@ -207,34 +214,54 @@ class peerReviewBrowser(Component):
             req.send_header('Last-Modified', util.http_date(node.last_modified))
             req.end_headers()
 
-            content = node.get_content()
             while 1:
-                chunk = content.read(CHUNK_SIZE)
                 if not chunk:
                     raise RequestDone
                 req.write(chunk)
+                chunk = content.read(CHUNK_SIZE)
         else:
             # Generate HTML preview
             mimeview = Mimeview(self.env)
-            content = node.get_content().read(mimeview.max_preview_size)
-            if not is_binary(content):
-                if mime_type != 'text/plain':
-                    plain_href = self.env.href.peerReviewBrowser(node.path,
-                                                       rev=rev and node.rev,
-                                                       format='txt')
-                    add_link(req, 'alternate', plain_href, 'Plain Text',
-                             'text/plain')
+
+            # The changeset corresponding to the last change on `node`
+            # is more interesting than the `rev` changeset.
+            changeset = repos.get_changeset(node.rev)
+
+            # add ''Plain Text'' alternate link if needed
+            if not is_binary(chunk) and mime_type != 'text/plain':
+                plain_href = req.href.browser(node.path, rev=rev, format='txt')
+                add_link(req, 'alternate', plain_href, 'Plain Text',
+                         'text/plain')
+
+            # content = node.get_content().read(mimeview.max_preview_size)
+            #if not is_binary(content):
+            #    if mime_type != 'text/plain':
+            #        plain_href = self.env.href.peerReviewBrowser(node.path,
+            #                                           rev=rev and node.rev,
+            #                                           format='txt')
+            #        add_link(req, 'alternate', plain_href, 'Plain Text',
+            #                 'text/plain')
 
             raw_href = self.env.href.peerReviewBrowser(node.path, rev=rev and node.rev,
                                              format='raw')
-            req.hdf['file'] = mimeview.preview_to_hdf(req, content, len(content),
-                                                      mime_type, node.created_path,
-                                                      raw_href, annotations=['addFileNums'])
+            preview_data = mimeview.preview_data(context, node.get_content(),
+                                                    node.get_content_length(),
+                                                    mime_type, node.created_path,
+                                                    raw_href,
+                                                    annotations=['lineno'])
+
+            req.hdf['file'] = preview_data
 
             add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
 
             add_stylesheet(req, 'common/css/code.css')
 
+            return {
+                'changeset': changeset,
+                'size': node.content_length,
+                'preview': preview_data,
+                'annotate': False,
+                }
     # IWikiSyntaxProvider methods
     
     def get_wiki_syntax(self):
