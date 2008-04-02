@@ -67,7 +67,7 @@
 
 <!-- displays the contents of the file being reviewed -->
 <div id="FilePreview">
-<?cs var:file.preview ?>
+<?cs var:file.rendered ?>
 </div>
 
 <br>

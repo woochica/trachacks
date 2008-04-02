@@ -29,6 +29,8 @@ from trac.versioncontrol.web_ui.util import *
 from trac.web.chrome import add_link, add_stylesheet
 import string
 
+from genshi.builder import tag
+
 class UserbaseModule(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider, IHTMLPreviewAnnotator)
 
@@ -43,21 +45,36 @@ class UserbaseModule(Component):
     def get_annotation_type(self):
     	return 'performCodeReview', 'Line', 'Line numbers'
 
+    def get_annotation_data(self, context):
+        return None
+
     #line annotator for Perform Code Review page
     #if line has a comment, places an icon to indicate comment
     #if line is not in the rage of reviewed lines, it makes
     #the color a light gray
-    def annotate_line(self, number, content):
+    def annotate_row(self, context, row, lineno, line, data):
         htmlImageString = '<img src="' + self.imagePath + '">'
         #make line number light gray
-        if(number <= self.lineEnd and number >= self.lineStart):
+        if(lineno <= self.lineEnd and lineno >= self.lineStart):
             #if there is a comment on this line
-            if(self.comments.has_key(number)):
+            if(self.comments.has_key(lineno)):
                 #if there is more than 0 comments
-                if(self.comments[number] > 0):
-                    return ('<th id="L%s"><a href="javascript:getComments(%s, %s)">' % (number, number, self.fileID)) + htmlImageString + ('&nbsp;%s</a></th>' % (number))
-            return '<th id="L%s"><a href="javascript:addComment(%s, %s, -1)">%s</a></th>' % (number, number, self.fileID, number)
-        return '<th id="L%s"><font color="#CCCCCC">%s</font></th>' % (number, number)
+                if(self.comments[lineno] > 0):
+                    return row.append(tag.th(id='L%s' % lineno)(tag.a(tag.img(src='%s' % self.imagePath) + ' ' + str(lineno), href='javascript:getComments(%s, %s)' % (lineno, self.fileID))))
+            return row.append(tag.th(id='L%s' % lineno)(tag.a(lineno, href='javascript:addComment(%s, %s, -1)' % (lineno, self.fileID))))
+        return row.append(tag.th(id='L%s' % lineno)(tag.font(lineno, color='#CCCCCC')))
+
+    #def annotate_line(self, number, content):
+    #    htmlImageString = '<img src="' + self.imagePath + '">'
+    #    #make line number light gray
+    #    if(number <= self.lineEnd and number >= self.lineStart):
+    #        #if there is a comment on this line
+    #        if(self.comments.has_key(number)):
+    #            #if there is more than 0 comments
+    #            if(self.comments[number] > 0):
+    #                return ('<th id="L%s"><a href="javascript:getComments(%s, %s)">' % (number, number, self.fileID)) + htmlImageString + ('&nbsp;%s</a></th>' % (number))
+    #        return '<th id="L%s"><a href="javascript:addComment(%s, %s, -1)">%s</a></th>' % (number, number, self.fileID, number)
+    #    return '<th id="L%s"><font color="#CCCCCC">%s</font></th>' % (number, number)
         
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -140,7 +157,7 @@ class UserbaseModule(Component):
             req.hdf['error.title'] = "Subversion Repository Error"
             req.hdf['error.message'] = "Unable to acquire subversion repository."
             return 'error.cs', None
-        
+
         #get the correct location - using revision number and repository path
         node = get_existing_node(self.env, repos, resultFile.Path, resultFile.Version)
         #if the node can't be found - display error message
@@ -160,20 +177,26 @@ class UserbaseModule(Component):
             charset = mime_type[ctpos + 8:]
         else:
             charset = None
-            
+
         mimeview = Mimeview(self.env)
+        path = req.args.get('path', '/')
         rev = None
         content = node.get_content().read(mimeview.max_preview_size)
         if not is_binary(content):
             if mime_type != 'text/plain':
                 plain_href = self.env.href.peerReviewBrowser(node.path, rev=rev and node.rev, format='txt')
                 add_link(req, 'alternate', plain_href, 'Plain Text', 'text/plain')
-                
+
         #assign the preview to a variable for clearsilver
-        req.hdf['file'] = mimeview.preview_to_hdf(req, content, len(content), mime_type, node.created_path, None, annotations=['performCodeReview'])
-        
-	add_stylesheet(req, 'common/css/code.css')
-	add_stylesheet(req, 'common/css/browser.css')	
+        context = Context.from_request(req, 'source', path, node.created_rev)
+        req.hdf['file'] =  mimeview.preview_data(context, content, len(content),
+                                                 mime_type, node.created_path,
+                                                 None,
+                                                 annotations=['performCodeReview'])
+
+        add_stylesheet(req, 'common/css/code.css')
+        add_stylesheet(req, 'common/css/browser.css')	
+
         return 'peerReviewPerform.cs', None
                 
     # ITemplateProvider methods
