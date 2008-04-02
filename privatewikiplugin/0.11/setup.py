@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+# -*- coding: iso-8859-1 -*-
+
+from setuptools import setup
+
+setup(
+    name = 'PrivateWikis',
+    version = '1.0.0',
+    packages = ['privatewiki'],
+
+    author = "Eric Hodges",
+    author_email = "eric.hodges@gmail.com",
+    description = "Add private wiki ability.",
+    long_description = "Allow admins to restrict access to wikis.",
+    license = "BSD",
+    keywords = "trac plugin wiki permissions security",
+    url = "",
+    classifiers = [
+        'Framework :: Trac',
+    ],
+    entry_points = {
+        'trac.plugins': [
+            'privatewiki = privatewiki',
+        ]
+    }    
+)
