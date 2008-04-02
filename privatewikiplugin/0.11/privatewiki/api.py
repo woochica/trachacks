@@ -44,7 +44,8 @@ class PrivateWikiSystem(Component):
         try:
             wiki = WikiPage(self.env, res.id)
 	    self.env.log.debug('Now accessing %s,%s' % (wiki.name,action))
-	    if not (wiki.name in self.wikis):
+	    if not True in [(wiki.name == p) or wiki.name.startswith(p + '/') \
+               for p in self.wikis]:
 		self.env.log.debug('Not a protected page')
 		return True
 	    if action == 'WIKI_VIEW':
