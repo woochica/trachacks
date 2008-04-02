@@ -53,6 +53,9 @@ class peerReviewBrowser(Component):
     def get_annotation_type(self):
     	return 'lineno', 'Line', 'Line numbers'
 
+    def get_annotation_data(self, context):
+        return None
+
     def annotate_row(self, context, row, lineno, line, data):
         row.append(tag.th(id='L%s' % lineno)(
             tag.a(lineno, href='javascript:setLineNum(%s)' % lineno)
@@ -104,6 +107,8 @@ class peerReviewBrowser(Component):
             'log_href': util.escape(self.env.href.log(path, rev=rev or None))
         }
 
+        context = Context.from_request(req, 'source', path, node.created_rev)
+
         path_links = self.get_path_links_CRB(self.env.href, path, rev)
         if len(path_links) > 1:
             add_link(req, 'up', path_links[-2]['href'], 'Parent directory')
@@ -113,7 +118,7 @@ class peerReviewBrowser(Component):
             req.hdf['browser.is_dir'] = True
             self._render_directory(req, repos, node, rev)
         else:
-            self._render_file(req, repos, node, rev)
+            self._render_file(req, context, repos, node, rev)
 
         add_stylesheet(req, 'common/css/browser.css')
         return 'peerReviewBrowser.cs', None
@@ -181,15 +186,15 @@ class peerReviewBrowser(Component):
         req.perm(context.resource).require('FILE_VIEW')
 
         changeset = repos.get_changeset(node.rev)
-        #req.hdf['file'] = {
-        #    'rev': node.rev,
-        #    'changeset_href': util.escape(self.env.href.changeset(node.rev)),
-        #    'date': util.format_datetime(changeset.date),
-        #    'age': util.pretty_timedelta(changeset.date),
-        #    'author': changeset.author or 'anonymous',
-        #    'message': wiki_to_html(changeset.message or '--', self.env, req,
-        #                            escape_newlines=True)
-        #}
+        req.hdf['file'] = {
+            'rev': node.rev,
+            'changeset_href': util.escape(self.env.href.changeset(node.rev)),
+            'date': util.format_datetime(changeset.date),
+            'age': util.pretty_timedelta(changeset.date),
+            'author': changeset.author or 'anonymous',
+            'message': wiki_to_html(changeset.message or '--', self.env, req,
+                                    escape_newlines=True)
+        }
         mime_type = node.content_type
         if not mime_type or mime_type == 'application/octet-stream':
             mime_type = get_mimetype(node.name) or mime_type or 'text/plain'
