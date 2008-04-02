@@ -95,8 +95,8 @@
  
  if:!browser.is_dir ?>
     <div id="preview" style="overflow: auto; max-height: 400px"><?cs
-   if:file.preview ?><?cs
-    var:file.preview ?><?cs
+   if:file.rendered ?><?cs
+    var:file.rendered ?><?cs
    elif:file.max_file_size_reached ?>
 	<br><br><strong>No HTML preview is available (the file size exceeds <?cs var:file.max_file_size ?> bytes) - you cannot add it to a code review</strong>.<br><br> 
    <?cs else ?>
