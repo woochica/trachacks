@@ -27,44 +27,60 @@ class PrivateWikiSystem(Component):
 		return None
 
 	if resource.realm == 'wiki' and action in ('WIKI_VIEW','WIKI_MODIFY'):
-		return self.check_wiki_access(perm, resource, action)
+		wiki = WikiPage(self.env, resource.id)
+		return self.check_wiki_access(perm, resource, action, wiki.name)
 	return None;
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        view_actions = ['PRIVATE_'+a+'_VIEW' for a in self.wikis]
-	edit_actions = ['PRIVATE_'+a+'_EDIT' for a in self.wikis]
+        view_actions = ['PRIVATE_VIEW_' + a for a in self.wikis]
+	edit_actions = ['PRIVATE_EDIT_' + a for a in self.wikis]
         return view_actions + edit_actions + \
-               [('PRIVATE_ALL_VIEW', view_actions),('PRIVATE_ALL_EDIT', edit_actions)]
+               [('PRIVATE_VIEW_ALL', view_actions),('PRIVATE_EDIT_ALL', edit_actions+view_actions)]
 
+    def _prep_page(self, page):
+	return page.upper().replace('/','_')
+
+    def _protected_page(self, page):
+	page = self._prep_page(page)
+	member_of = []
+	for base_page in self.wikis:
+		if page.startswith(base_page + '_') or page == base_page:
+			member_of.append(base_page)
+	def compare_len(a, b):
+		return cmp(len(b), len(a))
+
+	return sorted(member_of, compare_len)
+	
     # Public methods
-    def check_wiki_access(self, perm, res, action):
+    def check_wiki_access(self, perm, res, action, page):
         """Return if this req is permitted access to the given ticket ID."""
 
         try:
-            wiki = WikiPage(self.env, res.id)
-	    self.env.log.debug('Now accessing %s,%s' % (wiki.name,action))
-	    if not True in [(wiki.name == p) or wiki.name.startswith(p + '/') \
-               for p in self.wikis]:
-		self.env.log.debug('Not a protected page')
-		return True
-	    if action == 'WIKI_VIEW':
-		self.env.log.debug('Protecting against VIEW')
-		if perm.has_permission('PRIVATE_ALL_VIEW') or \
-		   perm.has_permission('PRIVATE_ALL_EDIT'):
-                    return True
-		if perm.has_permission('PRIVATE_' + wiki.name + '_VIEW') or \
-		   perm.has_permission('PRIVATE_' + wiki.name + '_EDIT'):
-		    return True
-	    if action == 'WIKI_MODIFY':
-		self.env.log.debug('Protecting against MODIFY')
-                if perm.has_permission('PRIVATE_ALL_EDIT'):
-                    return True
-                if perm.has_permission('PRIVATE_' + wiki.name + '_EDIT'):
-                    return True
-	    return False
+            page = self._prep_page(page)
+	    self.env.log.debug('Now checking for %s on %s' % (action, page))
+	    member_of = self._protected_page(page)
+	    if not member_of:
+		self.env.log.debug('%s is not a private page' % page)
+		return None
+	    for p in member_of:
+		    self.env.log.debug('Checking protected area: %s' % p)
+	 	    view_perm = 'PRIVATE_VIEW_%s' % p;
+		    edit_perm = 'PRIVATE_EDIT_%s' % p;
+
+		    if action == 'WIKI_VIEW':
+			self.env.log.debug('Protecting against VIEW')
+			if perm.has_permission('PRIVATE_ALL_VIEW') or \
+			   perm.has_permission(view_perm):
+        	            return True
+	    
+		    if action == 'WIKI_MODIFY':
+			self.env.log.debug('Protecting against MODIFY')
+                	if perm.has_permission('PRIVATE_ALL_EDIT') or \
+			   perm.has_permission(edit_perm):
+        	            return True
         except TracError:
-            return True # Ticket doesn't exist
+            return None
 
         return False
 
