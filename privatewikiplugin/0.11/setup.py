@@ -14,7 +14,7 @@ setup(
     long_description = "Allow admins to restrict access to wikis.",
     license = "BSD",
     keywords = "trac plugin wiki permissions security",
-    url = "",
+    url = "http://trac-hacks.org/wiki/PrivateWikiPlugin",
     classifiers = [
         'Framework :: Trac',
     ],
