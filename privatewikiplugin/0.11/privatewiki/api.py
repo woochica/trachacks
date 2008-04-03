@@ -47,10 +47,8 @@ class PrivateWikiSystem(Component):
 	for base_page in self.wikis:
 		if page.startswith(base_page + '_') or page == base_page:
 			member_of.append(base_page)
-	def compare_len(a, b):
-		return cmp(len(b), len(a))
 
-	return sorted(member_of, compare_len)
+	return member_of
 	
     # Public methods
     def check_wiki_access(self, perm, res, action, page):
@@ -70,14 +68,14 @@ class PrivateWikiSystem(Component):
 
 		    if action == 'WIKI_VIEW':
 			self.env.log.debug('Protecting against VIEW')
-			if perm.has_permission('PRIVATE_ALL_VIEW') or \
-			   perm.has_permission(view_perm):
+			if 'PRIVATE_ALL_VIEW' in perm(res) or \
+			   view_perm in perm(res) or edit_perm in perm(res):
         	            return True
 	    
 		    if action == 'WIKI_MODIFY':
 			self.env.log.debug('Protecting against MODIFY')
-                	if perm.has_permission('PRIVATE_ALL_EDIT') or \
-			   perm.has_permission(edit_perm):
+                	if 'PRIVATE_ALL_EDIT' in perm(res) or \
+			   edit_perm in perm(res):
         	            return True
         except TracError:
             return None
