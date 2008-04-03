@@ -87,7 +87,7 @@ class UserbaseModule(Component):
             popFiles = []
             # Set up the file information
             for struct in files:
-                returnFiles+=struct.Path + "," + struct.Version + "," + struct.LineStart + "," + struct.LineEnd + "#"
+                returnFiles+= "%s,%s,%s, %s#" % (struct.Path, struct.Version, struct.LineStart, struct.LineEnd ) 
                 tempFiles = []
                 tempFiles.append(struct.Path)
                 tempFiles.append(struct.Version)
