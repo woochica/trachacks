@@ -190,14 +190,17 @@ Example:
             # Try to get screenshots of that ID.
             screenshot = api.get_screenshot(cursor, screenshot_id)
 
+            self.log.debug((params, label, arguments))
+
             # Return macro content
             if screenshot:
                 return html.a(label, href = formatter.href.screenshots(
                   screenshot['id']) + arguments, title =
                   screenshot['description'])
             else:
-                return html.a(arguments[0], href = formatter.href.screenshots(),
-                  title = params, class_ = 'missing')
+                return html.a(screenshot_id, href =
+                  formatter.href.screenshots(), title = params, class_ =
+                  'missing')
 
     def _format_description(self, template, screenshot):
         description = template.replace('$id', to_unicode(screenshot['id']))

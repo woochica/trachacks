@@ -202,7 +202,7 @@ Example:
                   screenshot['id']) + arguments, title =
                   screenshot['description'])
             else:
-                return html.a(arguments[0], href = formatter.href.screenshots(),
+                return html.a(screenshot_id, href = formatter.href.screenshots(),
                   title = params, class_ = 'missing')
 
     def _format_description(self, context, template, screenshot):
