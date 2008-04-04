@@ -14,6 +14,7 @@ from genshi.builder import tag
 
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
+from trac.wiki.api import IWikiSyntaxProvider
 from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
 from trac.web import IRequestHandler
 from trac.util import escape
@@ -42,7 +43,7 @@ reGARBAGE = [
             ]
 
 class TracMathPlugin(Component):
-    implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler)
+    implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler, IWikiSyntaxProvider)
 
     def __init__(self):
         self.load_config()
@@ -81,6 +82,15 @@ class TracMathPlugin(Component):
                    </div></div>' % escape(msg))
         self.log.error(msg)
         return buf
+
+    # IWikiSyntaxProvider methods
+    def get_wiki_syntax(self):
+        def format(formatter, ns, match):
+            return self.internal_render(formatter.req,'latex',match.group(0))
+        yield (r"\$[^$]+\$", format)
+
+    def get_link_resolvers(self):
+        return []
 
     # IWikiMacroProvider methods
     def get_macros(self):
