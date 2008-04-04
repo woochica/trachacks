@@ -1,6 +1,6 @@
 """ TracMath - A trac plugin that renders latex formulas within a wiki page.
 
-This has currently been tested only on trac 0.11.
+This has currently been tested only on trac 0.10.4 and 0.11.
 """
 
 import codecs
@@ -41,6 +41,7 @@ reGARBAGE = [
              re.compile(r'.+tex$'),
              re.compile(r'.+dvi$'),
             ]
+reLABEL = re.compile(r'\\label\{(.*?)\}')
 
 class TracMathPlugin(Component):
     implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler, IWikiSyntaxProvider)
@@ -65,6 +66,8 @@ class TracMathPlugin(Component):
         self.dvipng_cmd = self.config.get('tracmath', 'dvipng_cmd') or dvipng
         self.max_png = self.config.get('tracmath', 'max_png') or max_png
         self.max_png = int(self.max_png)
+        self.use_dollars = self.config.get('tracmath', 'use_dollars') or "False"
+        self.use_dollars = self.use_dollars.lower() in ("true", "on", "enabled")
 
         if not os.path.exists(self.cacheDirectory):
             os.mkdir(self.cacheDirectory, 0777)
@@ -92,17 +95,52 @@ class TracMathPlugin(Component):
     def get_link_resolvers(self):
         return []
 
+    # IWikiSyntaxProvider methods
+    #   stolen from http://trac-hacks.org/ticket/248
+
+    def get_wiki_syntax(self):
+        if self.use_dollars:
+            yield (r"\$\$(?P<displaymath>.*?)\$\$",
+                   lambda formatter, ns, match: "<blockquote>" + self.expand_macro(formatter, 'latex', ns) + "</blockquote>")
+            yield (r"\$(?P<latex>.*?)\$",
+                   lambda formatter, ns, match: self.expand_macro(formatter, 'latex', ns))
+
+    def get_link_resolvers(self):
+        return []
+
     # IWikiMacroProvider methods
     def get_macros(self):
         yield 'latex'
 
     def get_macro_description(self, name):
         if name == 'latex':
-            return 'LaTeX'
+            return """
+            This plugin allows embedded equations in Trac markup.
+            Basically a port of http://www.amk.ca/python/code/mt-math to Trac.
+
+            Simply use
+            {{{
+              {{{
+              #!latex
+              [latex code]
+              }}}
+            }}}
+            for a block of LaTeX code.
+
+            If `use_dollars` is enabled in `trac.ini`, then you can also use
+            `$[latex formula]$` for inline math or `$$[latex formula]$$` for
+            display math.
+            """
 
     def internal_render(self, req, name, content):
         if not name == 'latex':
             return 'Unknown macro %s' % (name)
+
+        label = None
+        for line in content.split("\n"):
+            m = reLABEL.match(content)
+            if m:
+                label = m.group(1)
 
         key = sha.new(content.encode('utf-8')).hexdigest()
 
@@ -146,7 +184,10 @@ class TracMathPlugin(Component):
 
             self.manage_cache()
 
-        return '<img src="%s/tracmath/%s" />' % (req.base_url, imgname)
+        result = '<img src="%s/tracmath/%s" alt="%s" />' % (req.base_url, imgname, content)
+        if label:
+            result = '<a name="%s">(%s)<a/>&nbsp;%s' % (label, label, result)
+        return result
 
     def manage_cache(self):
 
@@ -175,6 +216,10 @@ class TracMathPlugin(Component):
 
     def expand_macro(self, formatter, name, content):
         return self.internal_render(formatter.req, name, content)
+
+    # needed for Trac 0.10.4
+    def render_macro(self, req, name, content):
+        return self.internal_render(req, name, content)
 
     # IHTMLPreviewRenderer methods
     def get_quality_ratio(self, mimetype):
