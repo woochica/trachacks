@@ -105,9 +105,9 @@ class DiscussionWiki(Component):
             for row in cursor:
                 row = dict(zip(columns, row))
                 return html.a(label, href = formatter.href.discussion(id),
-                  title = row['subject'])
+                  title = row['subject'].replace('"', ''))
             return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label, class_ = 'missing')
+              id), title = label.replace('"', ''), class_ = 'missing')
         elif ns == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
             sql = "SELECT t.forum, f.subject, t.subject FROM topic t LEFT" \
@@ -118,9 +118,10 @@ class DiscussionWiki(Component):
                 row = dict(zip(columns, row))
                 return html.a(label, href = '%s#-1' % \
                   (formatter.href.discussion(row['forum'], id),), title =
-                  '%s: %s' % (row['forum_subject'], row['subject']))
+                  ('%s: %s' % (row['forum_subject'], row['subject']))
+                  .replace('"', ''))
             return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label, class_ = 'missing')
+              id), title = label.replace('"', ''), class_ = 'missing')
         elif ns == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
             sql = "SELECT m.forum, m.topic, f.subject, t.subject FROM" \
@@ -133,10 +134,10 @@ class DiscussionWiki(Component):
                 row = dict(zip(columns, row))
                 return html.a(label, href = '%s#%s' % \
                   (formatter.href.discussion(row['forum'], row['topic'], id),
-                  id), title = '%s: %s' % (row['forum_subject'],
-                  row['subject']))
+                  id), title = ('%s: %s' % (row['forum_subject'],
+                  row['subject'])).replace('"', ''))
             return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label, class_ = 'missing')
+              id), title = label.replace('"', ''), class_ = 'missing')
         else:
             return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label, class_ = 'missing')
+              id), title = label.replace('"', ''), class_ = 'missing')

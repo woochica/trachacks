@@ -16,7 +16,7 @@ setup(
     'TracDiscussion.search = tracdiscussion.search',
     'TracDiscussion.notification = tracdiscussion.notification',
     'TracDiscussion.spamfilter = tracdiscussion.spamfilter']},
-  install_requires = ['TracWebAdmin'],
+  install_requires = ['TracWebAdmin', 'TracSpamFilter'],
   keywords = 'trac discussion',
   author = 'Alec Thomas, Radek Bartoň',
   author_email = 'trac-hacks@swapoff.org',
