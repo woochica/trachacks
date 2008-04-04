@@ -5,9 +5,8 @@ from setuptools import setup
 
 setup(
     name = 'TracPrivateTickets',
-    version = '1.1.1',
+    version = '2.0',
     packages = ['privatetickets'],
-    #package_data = { 'privatetickets': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = "Noah Kantrowitz",
     author_email = "noah@coderanger.net",
@@ -19,16 +18,10 @@ setup(
     classifiers = [
         'Framework :: Trac',
     ],
-    
-    #install_requires = ['TracWebAdmin'],
 
     entry_points = {
         'trac.plugins': [
-            'privatetickets.api = privatetickets.api',
-            'privatetickets.view = privatetickets.view',
-            'privatetickets.query = privatetickets.query',
-            'privatetickets.report = privatetickets.report',
-            'privatetickets.search = privatetickets.search',
-        ]
-    }
+            'privatetickets.policy = privatetickets.policy',
+        ],
+    },
 )
