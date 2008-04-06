@@ -1,52 +1,16 @@
 # Created by Noah Kantrowitz on 2008-04-04.
 # Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
-
+import types
+import copy
 from datetime import datetime, timedelta
 
 from trac.core import *
+from trac.web.api import IRequestHandler
 from trac.ticket.query import Query, QueryModule
 from trac.db import get_column_names
 from trac.util.datefmt import to_timestamp, utc
 
 from tracforge.admin.api import TracForgeAdminSystem
-
-class MultiDb(list):
-    """Run a query against multiple databases."""
-    
-    def cursor(self):
-        return MultiCursor(self)
-    
-    def commit(self):
-        for db in self:
-            db.commit()
-    
-    def rollback(self):
-        for db in self:
-            db.rollback()
-
-
-class MultiCursor(object):
-    """Cursor that groks multiple databases."""
-    
-    def __init__(self, dbs):
-        self.cursors = [db.cursor() for db in dbs]
-    
-    def execute(self, query, args):
-        for cursor in self.cursors:
-            cursor.execute(query, args)
-        self.description = self.cursors[0].description
-    
-    def __iter__(self):
-        for cursor in self.cursors:
-            for row in cursor:
-                yield row
-    
-    def fetchall(self):
-        buf = []
-        for cursor in self.cursors:
-            buf += cursor.fetchall()
-        return buf
-
 
 class MultiQuery(Query):
     """A query model object enhanced to handle multiple projects."""
@@ -60,7 +24,7 @@ class MultiQuery(Query):
             'options': ['tf_client1', 'tf_client2'],
         })
     
-    def execute(self, req, cached_ids=None):
+    def execute(self, req, db=None, cached_ids=None):
         if not self.cols:
             self.get_columns()
 
@@ -102,10 +66,52 @@ class MultiQuery(Query):
             cursor.close()
         return results
     
+    def get_all_columns(self):
+        cols = super(MultiQuery, self).get_all_columns()
+        cols.insert(1, 'project')
+        return cols
 
-class TracForgeQueryModule(Component):
+class TracForgeQueryModule(QueryModule):
     """A cross-environment query handler."""
+
+    def __init__(self):
+        # If you are not coderanger, please don't try to mess with this.
+        _old_func = QueryModule.process_request.im_func
+        new_globals = copy.copy(_old_func.func_globals)
+        new_globals['Query'] = MultiQuery
+        self.process_request = types.MethodType(
+            types.FunctionType(
+                _old_func.func_code,
+                new_globals,
+                _old_func.func_name,
+                _old_func.func_defaults,
+                _old_func.func_closure,
+            ),
+            self,
+            type(self),
+        )
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info == '/tracforge/query'
     
-    implements()
+    # def process_request(self, req):
+    # See __init__ for definition
 
+    # INavigationContributor methods
+    def get_active_navigation_item(self, req):
+        return ''
 
+    def get_navigation_items(self, req):
+        return []
+    
+    # IContentConverter methods
+    def get_supported_conversions(self):
+        return []
+    
+    def convert_content(self, req, mimetype, query, key):
+        pass
+    
+    # IWikiSyntaxProvider methods
+    def get_link_resolvers(self):
+        return []

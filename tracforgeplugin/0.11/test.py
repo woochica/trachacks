@@ -22,6 +22,8 @@ class FakeReq(object):
         self.authname = 'anonymous'
 req = FakeReq()
 
-from tracforge.admin.query import MultiQuery
-q = MultiQuery(env, 'id!=0')
-d = q.execute(req)
+from tracforge.admin.query import MultiQuery, TracForgeQueryModule
+from trac.ticket.query import QueryModule
+# q = MultiQuery(env, 'id!=0')
+# d = q.execute(req)
+
