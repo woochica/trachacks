@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.env import IEnvironmentSetupParticipant
+from trac.env import IEnvironmentSetupParticipant, open_environment
 
 import db_default
 
@@ -53,6 +53,15 @@ class TracForgeAdminSystem(Component):
                 data[action] = provider.get_setup_action_info(action)
                 data[action]['provider'] = provider
         return data
+    
+    def get_projects(self, db=None):
+        """Return an iterable of (shotname, env) for all known projects."""
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('SELECT name, env_path FROM tracforge_projects')
+        for name, path in cursor:
+            env = open_environment(path, use_cache=True)
+            yield name, env
 
     # IEnvironmentSetupParticipant methods
     def environment_created(self):

@@ -24,7 +24,15 @@ def main(argv=None):
     # Load master env and the prototype
     env = open_environment(master_path)
     prototype = Prototype(env, prototype_name)
+    
+    # Run the prototype and add the project to the master table
     prototype.execute(data)
+    db = env.get_db_cnx()
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO tracforge_projects (name, env_path) VALUES (%s, %s)',
+                   (data['name'], data['env'].path))
+    db.commit()
+    
 
 if __name__ == '__main__':
     sys.exit(main())
