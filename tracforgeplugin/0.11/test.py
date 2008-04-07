@@ -24,6 +24,6 @@ req = FakeReq()
 
 from tracforge.admin.query import MultiQuery, TracForgeQueryModule
 from trac.ticket.query import QueryModule
-# q = MultiQuery(env, 'id!=0')
-# d = q.execute(req)
+q = MultiQuery(env, 'id!=0')
+d = q.execute(req)
 
