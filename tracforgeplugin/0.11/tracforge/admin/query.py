@@ -28,12 +28,16 @@ class MultiQuery(Query):
             'name': 'project',
             'label': 'Project',
             'type': 'select',
-            'options': ['tf_client1', 'tf_client2'],
+            'options': [shortname for shortname, env in 
+                        TracForgeAdminSystem(self.env).get_projects()],
         })
         field_names = [f['name'] for f in self.fields]
         self.cols = [c for c in cols or [] if c in field_names or 
                      c in ('id', 'time', 'changetime')]
         self.rows = [c for c in rows if c in field_names]
+        self.group = group
+        if self.group not in field_names:
+            self.group = None
     
     def execute(self, req, db=None, cached_ids=None):
         if not self.cols:
@@ -99,10 +103,13 @@ class MultiQuery(Query):
     
     def get_sql(self, *args, **kwargs):
         old_constraints = copy.copy(self.constraints)
+        old_group = self.group
         if 'project' in self.constraints:
             del self.constraints['project']
+        self.group = None
         rv = super(MultiQuery, self).get_sql(*args, **kwargs)
         self.constraints = old_constraints
+        self.group = old_group
         return rv
 
 
