@@ -111,6 +111,19 @@ class WorkLogPage(Component):
                   }
           return 'worklog_user.html', data, None
 
+        match = re.search('/worklog/stop/([0-9]+)', req.path_info)
+        if match:
+          ticket = match.group(1)
+          data = {'worklog_href': req.href.worklog(),
+                  'ticket_href':  req.href.ticket(ticket),
+                  'ticket':       ticket,
+                  'action':       'stop',
+                  'label':        'Stop Work'}
+          xhr = req.get_header('X-Requested-With') == 'XMLHttpRequest'
+          if xhr:
+              data['xhr'] = True
+          return 'worklog_stop.html', data, None
+        
         mgr = WorkLogManager(self.env, self.config, req.authname)
         if req.args.has_key('format') and req.args['format'] == 'csv':
             self.worklog_csv(req, mgr.get_work_log())
