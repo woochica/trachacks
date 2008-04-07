@@ -16,7 +16,7 @@ setup(
                 'tracforge/admin',
                 'tracforge/linker',
                ],
-    package_data={ 'tracforge' : [ 'templates/*.cs', 
+    package_data = {'tracforge': [ 'templates/*.cs', 
                                    'htdocs/css/*.css', 
                                    'htdocs/img/greyscale/*.gif', 
                                    'htdocs/js/*.js',

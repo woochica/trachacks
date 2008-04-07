@@ -4,8 +4,8 @@
 from trac.core import *
 from trac.config import Option
 from trac.web.auth import LoginModule
-from trac.web.main import _open_environment
 from trac.web.href import Href
+from trac.env import open_environment
 from trac.util.html import escape, html
 from trac.web.api import IRequestFilter, Request
 
@@ -17,7 +17,7 @@ class TracForgeLoginModule(LoginModule):
     master_path = Option('tracforge', 'master_path',
                          doc='Path to master Trac')
 
-    master_env = property(lambda self: _open_environment(self.master_path))
+    master_env = property(lambda self: open_environment(self.master_path, use_cache=True))
     master_href = property(lambda self: Href(self.master_env.base_url))
             
     # INavigationContributor methods

@@ -65,11 +65,7 @@ class MultiQuery(Query):
                 results.append(result)
             cursor.close()
         return results
-    
-    def get_all_columns(self):
-        cols = super(MultiQuery, self).get_all_columns()
-        cols.insert(1, 'project')
-        return cols
+
 
 class TracForgeQueryModule(QueryModule):
     """A cross-environment query handler."""
