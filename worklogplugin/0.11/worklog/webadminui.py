@@ -5,10 +5,10 @@ from trac import util
 from trac.core import *
 from trac.perm import IPermissionRequestor, PermissionSystem
 from trac.util import Markup
-from trac.ticket.admin import TicketAdminPage
+from trac.ticket.admin import TicketAdminPanel
 
 
-class WorklogAdminPage(TicketAdminPage):
+class WorklogAdminPanel(TicketAdminPanel):
     _type = 'worklog'
     _label = ('Work Log', 'Work Log')
 
