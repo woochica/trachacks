@@ -104,12 +104,15 @@ class MultiQuery(Query):
     def get_sql(self, *args, **kwargs):
         old_constraints = copy.copy(self.constraints)
         old_group = self.group
+        old_cols = copy.copy(self.cols)
         if 'project' in self.constraints:
             del self.constraints['project']
         self.group = None
+        self.cols.remove('project')
         rv = super(MultiQuery, self).get_sql(*args, **kwargs)
         self.constraints = old_constraints
         self.group = old_group
+        self.cols = old_cols
         return rv
 
 
