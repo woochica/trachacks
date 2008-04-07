@@ -4,7 +4,6 @@ import time
 from datetime import date, datetime
 
 from trac.attachment import Attachment
-from trac.context import ResourceNotFound
 from trac.core import TracError
 from trac.ticket.api import TicketSystem
 from trac.util import sorted, embedded_numbers
