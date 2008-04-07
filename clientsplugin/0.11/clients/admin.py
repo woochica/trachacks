@@ -2,7 +2,7 @@ from trac.core import *
 from trac.perm import PermissionSystem
 #from trac.ticket.model import AbstractEnum
 #from trac.ticket.admin import AbstractEnumAdminPage
-from trac.ticket.admin import TicketAdminPage
+from trac.ticket.admin import TicketAdminPanel
 
 
 from clients import model
@@ -10,12 +10,12 @@ from trac.util.datefmt import utc, parse_date, get_date_format_hint, \
                               get_datetime_format_hint
 from trac.web.chrome import add_link, add_script
 
-class ClientAdminPage(TicketAdminPage):
+class ClientAdminPanel(TicketAdminPanel):
     
     _type = 'clients'
     _label = ('Client', 'Clients')
 
-    # TicketAdminPage methods
+    # TicketAdminPanel methods
     def _render_admin_panel(self, req, cat, page, client):
         # Detail view?
         if client:
