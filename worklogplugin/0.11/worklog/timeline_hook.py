@@ -6,7 +6,7 @@ from trac.core import *
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.text import shorten_line
 from trac.ticket.api import TicketSystem
-from trac.timeline import ITimelineEventProvider
+from trac.timeline.api import ITimelineEventProvider
 from trac.wiki.formatter import format_to_oneliner
 from trac.resource import Resource, get_resource_url, \
                          render_resource_link, get_resource_shortname, \
