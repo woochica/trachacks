@@ -254,7 +254,8 @@ class NoticeManagerAdminPage(Component):
             	infos = userinfos
             ainfo = infos.get(id)
             if not ainfo:
-            	infos[username] = {'id': username, 'name' : name, 'email' : email}
+            	infos[id] = {'id': id, 'name' : name, 'email' : email}
+		ainfo = infos.get(id)
 	    else:
 		if (ainfo['name'] == "") or ((self.options['overwrite'] == 1) and (name!='')):
 			ainfo['name'] = name
