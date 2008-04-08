@@ -56,10 +56,10 @@ This module was created using the SVG specification of www.w3c.org and the
 O'Reilly (www.oreilly.com) python books as information sources. A svg viewer
 is available from www.adobe.com"""
 
-# Note: Emmanuel Blot, 2007:
+# Note: Emmanuel Blot, 2007, 2008:
 # The version has been updated to reflect the small changes made to
 # support SVG 1.1 and the hack to support inline SVG (in XHTML host document)
-__version__="1.0a"
+__version__="1.0b"
 
 # there are two possibilities to generate svg:
 # via a dom implementation and directly using <element>text</element> strings
@@ -885,7 +885,8 @@ class svg(SVGelement):
             self.attributes['height']=height
         ns = svgns and 'xmlns:svg' or 'xmlns'
         self.namespace = { ns: "http://www.w3.org/2000/svg",
-                           'xmlns:xlink': "http://www.w3.org/1999/xlink" }
+                           'xmlns:xlink': "http://www.w3.org/1999/xlink",
+                           'version': '1.1' }
                            
     def toXml(self,level,f):
         SVGelement.toXml(self,level,f,self._svgns and 'svg:' or '')

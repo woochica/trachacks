@@ -5,30 +5,69 @@
  * JTip is built on top of the very light weight jquery library.
  *
  * Badly hacked & tweaked to support XHTML/XML and SVG for the RevtreePlugin
- * by Emmanuel Blot <emmanuel.blot@free.fr> 2006-2007
+ * by Emmanuel Blot <emmanuel.blot@free.fr> 2006-2008
+ *
+ * You might wonder why the hell regular Javascript functions are mixed with
+ * jQuery ones... The trouble is that JQuery exhibits many difficulties with
+ * XML documents for now (jQuery 1.2.3) and is sometimes unable to cope with
+ * XML+SVG document. The funny part is that code that works on some browsers
+ * (Presto, Webkit for ex.) does not work with the lastest releases of Gecko,
+ * and vice-versa.  
  */
 
 var jttimer = null;
 
 (function($){
+    
+window.JT_get_svganchors = function() {
+  if ( (jQuery.browser.mozilla && 
+        (parseFloat(jQuery.browser.version) < 1.9)) ||
+        (jQuery.browser.safari && 
+              (parseFloat(jQuery.browser.version) < 523)) ) {
+    // Firefox 1.x, 2.x, OmniWeb 5.x
+    var vanchors = [];
+    jQuery.each($('a[@id^=rev]'), function(index, value) {
+      vanchors.push(value);
+    });
+    return vanchors;
+  }
+  else {
+    // Firefox 3.x, Opera, Safari, ...
+    var anchors;
+    anchors = document.getElementsByTagNameNS('http://www.w3.org/2000/svg', 
+                                              'a');
+    var vanchors = [];
+    for(var i in anchors) {
+      if ( anchors[i].id && anchors[i].id.substring(0, 3) == 'rev' ) {
+          vanchors.push(anchors[i]);
+      }
+    }
+    return vanchors;
+  }
+}
 
 window.JT_init = function(){
-  $('a[@id^=rev]').hover(function(){JT_show(this)},
-                         function(){jttimer=setTimeout("JT_remove();", 250);});
+  var anchors = JT_get_svganchors();
+  for (var n = 0; n < anchors.length; n++){
+    jQuery(anchors[n]).hover(
+           function(){JT_show(this)},
+           function(){jttimer=setTimeout("JT_remove();", 250);}
+    );
+  }
 }
 
 window.JT_cancel = function() {
-   if (jttimer) {
-      clearTimeout(jttimer);
-      jttimer = null;
-   }
+  if (jttimer) {
+    clearTimeout(jttimer);
+    jttimer = null;
+  }
 }
 
 window.JT_remove = function() {
-   var jt = $('#JT');
-   if ( jt ) { jt.remove(); }
-   var jt_connect = $('#JT_connect');
-   if ( jt_connect ) { jt_connect.remove(); }
+  var jt = $('#JT');
+  if ( jt ) { jt.remove(); }
+  var jt_connect = $('#JT_connect');
+  if ( jt_connect ) { jt_connect.remove(); }
 }
 
 window.JT_hide = function() {
@@ -127,86 +166,84 @@ window.updateJT = function(data) {
 }
 
 window.getSvgPosition = function(objectId) {
-   // The following loop could be simplified to use JQuery
-   // JQuery has some trouble with XML documents for now
-   var svg = document.getElementsByTagName('svg')[0];
-   var anodes = svg.getElementsByTagName('a');
-   var object;
-	for ( var e = 0; e < anodes.length; e++ ) {
-      if ( anodes[e].getAttribute('id') == objectId ) {
-         object = anodes[e];
-         break;
-      }
-   }
-   var cnodes = object.childNodes
-   var elem;
-	for ( var n = 0; n < cnodes.length; n++ ) {
-      if ( cnodes[n].tagName == "svg:g" ) {
-         elem = cnodes[n]
-         break;
-      } 
-   }
+  var svg = document.getElementById('svgbox');
+  var anodes = JT_get_svganchors();
+  var object;
+  for ( var e = 0; e < anodes.length; e++ ) {
+    if ( anodes[e].getAttribute('id') == objectId ) {
+      object = anodes[e];
+      break;
+    }
+  }
+  var cnodes = object.childNodes
+  var elem;
+  for ( var n = 0; n < cnodes.length; n++ ) {
+    if ( cnodes[n].tagName == "svg:g" ) {
+      elem = cnodes[n]
+      break;
+    } 
+  }
    
-   var r = Object();
-   var mx = svg.getScreenCTM();
-   var box = elem.getBBox();
-   var svgpos = findPos(svg);
-   
-   // Not sure who's right or wrong here: Opera, Gecko ?
-   // Anyway the following hack seems to work. Javascript, oh my...
-   if ( jQuery.browser.opera || jQuery.browser.safari ) {
-      r.x = Math.floor(box.x*mx.a)+svgpos[0];
-      r.y = Math.floor(box.y*mx.d)+svgpos[1];
-      r.w = Math.floor(box.width*mx.a);
-      r.h = Math.floor(box.height*mx.d);
-      return r;
-   }
-   else {
-      var p1 = svg.createSVGPoint();
-      var p2 = svg.createSVGPoint();
-      p1.x = box.x;
-      p1.y = box.y;
-      p2.x = p1.x + box.width;
-      p2.y = p1.y + box.height;
-      p1 = p1.matrixTransform(mx);
-      p2 = p2.matrixTransform(mx);
-      r.x = Math.floor(p1.x)+posLeft();
-      r.y = Math.floor(p1.y)+posTop();
-      r.w = Math.floor(p2.x-p1.x);
-      r.h = Math.floor(p2.y-p1.y);
-      return r;
-   }
+  var r = Object();
+  var mx = svg.getScreenCTM();
+  var box = elem.getBBox();
+  var svgpos = findPos(svg);
+  
+  // Not sure who's right or wrong here: Gecko, Webkit, Presto, ...?
+  // Anyway the following hack seems to work. Javascript, oh my...
+  if ( jQuery.browser.opera || jQuery.browser.safari ) {
+    r.x = Math.floor(box.x*mx.a)+svgpos[0];
+    r.y = Math.floor(box.y*mx.d)+svgpos[1];
+    r.w = Math.floor(box.width*mx.a);
+    r.h = Math.floor(box.height*mx.d);
+    return r;
+  }
+  else {
+    var p1 = svg.createSVGPoint();
+    var p2 = svg.createSVGPoint();
+    p1.x = box.x;
+    p1.y = box.y;
+    p2.x = p1.x + box.width;
+    p2.y = p1.y + box.height;
+    p1 = p1.matrixTransform(mx);
+    p2 = p2.matrixTransform(mx);
+    r.x = Math.floor(p1.x)+posLeft();
+    r.y = Math.floor(p1.y)+posTop();
+    r.w = Math.floor(p2.x-p1.x);
+    r.h = Math.floor(p2.y-p1.y);
+    return r;
+  }
 }
 
 window.findPos = function(obj) {
-	var curleft = curtop = 0;
-	if (obj.offsetParent) {
-		curleft = obj.offsetLeft
-		curtop = obj.offsetTop
-		while (obj = obj.offsetParent) {
-			curleft += obj.offsetLeft
-			curtop += obj.offsetTop
-		}
-	}
-	return [curleft,curtop];
+  var curleft = curtop = 0;
+  if (obj.offsetParent) {
+    curleft = obj.offsetLeft
+    curtop = obj.offsetTop
+    while (obj = obj.offsetParent) {
+      curleft += obj.offsetLeft
+      curtop += obj.offsetTop
+    }
+  }
+  return [curleft,curtop];
 }
 
 window.posLeft = function() {
-   return typeof window.pageXOffset != 'undefined' ? 
-      window.pageXOffset :
-      document.documentElement && 
-         document.documentElement.scrollLeft ? 
-            document.documentElement.scrollLeft : 
-            document.body.scrollLeft ? document.body.scrollLeft : 0; 
+  return typeof window.pageXOffset != 'undefined' ? 
+    window.pageXOffset :
+    document.documentElement && 
+      document.documentElement.scrollLeft ? 
+        document.documentElement.scrollLeft : 
+        document.body.scrollLeft ? document.body.scrollLeft : 0; 
 }
  
 window.posTop = function() {
-   return typeof window.pageYOffset != 'undefined' ?  
-      window.pageYOffset : 
-      document.documentElement && 
-         document.documentElement.scrollTop ? 
-            document.documentElement.scrollTop : 
-            document.body.scrollTop ? document.body.scrollTop : 0;
+  return typeof window.pageYOffset != 'undefined' ?  
+    window.pageYOffset : 
+    document.documentElement && 
+      document.documentElement.scrollTop ? 
+        document.documentElement.scrollTop : 
+        document.body.scrollTop ? document.body.scrollTop : 0;
 } 
 
 })(jQuery);

@@ -26,8 +26,8 @@
       $("#limits input[@name='limits']").click(function() { 
           updateLimits(); 
       });
-      JT_init();
-      updateLimits();
+      window.JT_init();
+      window.updateLimits();
       // the following function is required for Safari to operate properly
       $(window).unload(function(){JT_hide()});
     });

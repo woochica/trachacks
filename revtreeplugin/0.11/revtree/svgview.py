@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2008 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -935,7 +935,7 @@ class SvgRevtree(object):
         """Render the revision tree"""
         self._svg = SVG.svg((0, 0, self._extent[0], self._extent[1]),
                             scale*self._extent[0], scale*self._extent[1],
-                            True)
+                            True, id='svgbox')
         self._arrows.render()
         # FIXME: only two levels for enhancers (background, foreground)
         map(lambda e: e.render(self._addons[e], 1), self.enhancers)
