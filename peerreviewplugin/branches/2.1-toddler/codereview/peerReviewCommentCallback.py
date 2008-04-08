@@ -18,7 +18,7 @@ from trac.web.main import IRequestHandler
 from trac import util
 from trac.util import escape, Markup
 from codereview.dbBackend import *
-from trac.web.chrome import add_stylesheet
+from trac.web.chrome import add_stylesheet, add_script 
 
 
 class UserbaseModule(Component):
@@ -31,28 +31,33 @@ class UserbaseModule(Component):
     #This page should never be called directly.  It should only be called
     #by javascrpit HTTPRequest calls.
     def process_request(self, req):
-        if not (req.perm.has_permission('CODE_REVIEW_MGR') or req.perm.has_permission('CODE_REVIEW_DEV')):
-            req.hdf['invalid'] = 4
-            return 'peerReviewCommentCallback.cs', None
+
+        data = {}
+
+        if not (req.perm.has_permission('CODE_REVIEW_MGR') or
+                req.perm.has_permission('CODE_REVIEW_DEV')):
+
+            data['invalid'] = 4
+            return 'peerReviewCommentCallback.html', data, None
 
 
-        req.hdf['invalid'] = 0
-        req.hdf['trac.href.peerReviewCommentCallback'] = self.env.href.peerReviewCommentCallback()
+        data['invalid'] = 0
+        data['trac.href.peerReviewCommentCallback'] = self.env.href.peerReviewCommentCallback()
         actionType = req.args.get('actionType')
 
         if actionType == 'addComment':
-            self.createComment(req)
+            self.createComment(req, data)
         
         elif actionType == 'getCommentTree':
-            self.getCommentTree(req)
+            self.getCommentTree(req, data)
 
         elif actionType == 'getCommentFile':
-            self.getCommentFile(req)
+            self.getCommentFile(req, data)
             
         else:
-            req.hdf['invalid'] = 5
+            data['invalid'] = 5
 
-        return 'peerReviewCommentCallback.cs', None
+        return 'peerReviewCommentCallback.html', data, None
                 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -68,8 +73,8 @@ class UserbaseModule(Component):
         return [('hw', resource_filename(__name__, 'htdocs'))]
 
     #Used to send a file that is attached to a comment
-    def getCommentFile(self, req):
-        req.hdf['invalid'] = 6
+    def getCommentFile(self, req, data):
+        data['invalid'] = 6
         shortPath = req.args.get('fileName')
         idFile = req.args.get('IDFile')
         if idFile == None or shortPath == None:
@@ -83,11 +88,11 @@ class UserbaseModule(Component):
         assert commonprefix == attachments_dir
         fullPath = os.path.join(self.path,shortPath)
         req.send_header('Content-Disposition', 'attachment; filename=' + shortPath)
-        req.send_file(fullPath)        
+        req.send_file(fullPath)
 
     #Creates a comment based on the values from the request
-    def createComment(self, req):
-        req.hdf['invalid'] = 5
+    def createComment(self, req, data):
+        data['invalid'] = 5
         struct = ReviewCommentStruct(None)
         struct.IDParent = req.args.get('IDParent')
         struct.IDFile = req.args.get('IDFile')
@@ -96,12 +101,17 @@ class UserbaseModule(Component):
         struct.Text = req.args.get('Text')
         struct.DateCreate = int(time.time())
 
-        if (struct.IDFile == None) or (struct.LineNum == None) or (struct.Author == None) or (struct.Text == None):
+        if (struct.IDFile == None or struct.LineNum == None or
+            struct.Author == None or struct.Text == None):
+
             return
-        if (struct.IDFile == "") or (struct.LineNum == "") or (struct.Author == ""):
+
+        if (struct.IDFile == "" or struct.LineNum == "" or struct.Author == ""):
             return
+
         if (struct.Text == ""):
             return
+
         if (struct.IDParent == None or struct.IDParent == ""):
             struct.IDParent = "-1"
 
@@ -141,11 +151,11 @@ class UserbaseModule(Component):
 
     #Returns a comment tree for the requested line number
     #in the requested file
-    def getCommentTree(self, req):
+    def getCommentTree(self, req, data):
         IDFile = req.args.get('IDFile')
         LineNum = req.args.get('LineNum')
         if (IDFile == None) or (LineNum == None):
-            req.hdf['invalid'] = 1
+            data['invalid'] = 1
             return
         db = self.env.get_db_cnx()
         dbBack = dbBackend(db)
@@ -160,9 +170,9 @@ class UserbaseModule(Component):
                 first = False;
         if commentHtml == "":
             commentHtml = "No Comments on this Line"
-        req.hdf['lineNum'] = LineNum
-        req.hdf['fileID'] = IDFile
-        req.hdf['commentHTML'] = Markup(commentHtml) 
+        data['lineNum'] = LineNum
+        data['fileID'] = IDFile
+        data['commentHTML'] = Markup(commentHtml) 
 
     #Recursively builds the comment html to send back.
     def buildCommentHTML(self, comment, nodesIn, LineNum, IDFile, first):
@@ -179,7 +189,7 @@ class UserbaseModule(Component):
         factor = 15
         width = (5+nodesIn*factor);
         
-        html = "<table width=\"400px\" style=\"border-collapse: collapse\" id=\"" + str(comment.IDParent) + ":" + str(comment.IDComment) + "\">"
+        html = "<table width=\"400px\" style=\"border-collapse: collapse; display: block;\" id=\"" + str(comment.IDParent) + ":" + str(comment.IDComment) + "\">"
         if not first:
             html += "<tr><td width=\"" + `width` + "px\"></td>"
             html += "<td colspan=\"3\" width=\"" + `(400-width)` + "px\" style=\"border-top: 1px solid #C0C0C0;\"></td></tr>"

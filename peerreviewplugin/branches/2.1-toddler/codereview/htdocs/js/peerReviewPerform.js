@@ -134,10 +134,10 @@ function resetInnerDivSize()
 
 function collapseComments(parentID)
 {
-    var area = document.getElementById('innerCommentDiv');
+    var area = document.getElementById('innerCommentSpan');
     for(var i =0; i<area.childNodes.length; i++)
-        {
-            if(area.childNodes[i].id != null)
+    {
+        if(area.childNodes[i].id != null)
 		{
 		    var ids = area.childNodes[i].id.split(':');
 		    if(ids.length == 2 && ids[0] == parentID)
@@ -157,7 +157,7 @@ function collapseComments(parentID)
 
 function expandComments(parentID)
 {
-    var area = document.getElementById('innerCommentDiv');
+    var area = document.getElementById('innerCommentSpan');
     for(var i =0; i<area.childNodes.length; i++)
         {
             if(area.childNodes[i].id != null)

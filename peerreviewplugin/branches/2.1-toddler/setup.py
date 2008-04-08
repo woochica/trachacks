@@ -7,7 +7,7 @@ setup(
     name = 'TracCodeReview',
     version = '2.0dev',
     packages = ['codereview'],
-    package_data={ 'codereview' : [ 'templates/*.cs', 'htdocs/images/*.*', 'htdocs/js/*.js' ] },
+    package_data={ 'codereview' : [ 'templates/*.cs', 'templates/*.html', 'htdocs/images/*.*', 'htdocs/js/*.js' ] },
     author = "Team5",
     author_email = "UNKNOWN",
     maintainer = "Noah Kantrowitz",
