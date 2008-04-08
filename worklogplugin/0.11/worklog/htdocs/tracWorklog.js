@@ -9,19 +9,15 @@ var tracWorklog = {
   start: function() { return true; },
   stop: function() {
     var mynow = new Date();
-    change_handler = function() {
-      var chosen_date = $.datepicker.getDateFor('#worklogStopDate');
-      var chosen_time = $.timeEntry.getTimeFor('#worklogStopTime');
+    var change_handler = function()
+    {
+      var chosen_date = $('#worklogStopDate').datepicker('getDate');
+      var chosen_time = $('#worklogStopTime').timeEntry('getTime');
       
       var chosen = new Date();
       chosen.setTime(chosen_date.getTime() + (((chosen_time.getHours() * 60) + chosen_time.getMinutes()) * 60) * 1000);
       
-      var now = new Date();
-      if (chosen > now)
-        $('#worklogSubmit')[0].disabled = true;
-      else
-        $('#worklogSubmit')[0].disabled = false;
-      
+      $('#worklogSubmit')[0].disabled = (chosen > (new Date()));
       $('#worklogStoptime')[0].value = (chosen.getTime() / 1000);
     };
     
@@ -29,12 +25,14 @@ var tracWorklog = {
                                     maxDate: new Date()});
     $('#worklogPopup').jqm({modal: true}).jqmShow();
     
-    try {
-    $('#worklogStopTime').timeEntry({show24Hours: true, spinnerImage: ''});
-    $.timeEntry.setTimeFor('#worklogStopTime', mynow);
-    $('#worklogStopTime').bind('change', change_handler);
+    try
+    {
+      $('#worklogStopTime').timeEntry({show24Hours: true, spinnerImage: ''});
+      $('#worklogStopTime').timeEntry('setTime', mynow);
+      $('#worklogStopTime').bind('change', change_handler);
     }
-    catch (er) {
+    catch (er) 
+    {
       alert(er);
     }
     return false;
