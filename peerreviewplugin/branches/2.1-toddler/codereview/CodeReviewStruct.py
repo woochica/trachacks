@@ -46,7 +46,7 @@ class CodeReviewStruct(object):
         cursor = db.cursor()
         #Add information to a new database entry
         if self.IDReview == "":
-            query = "INSERT INTO CodeReviews VALUES(NULL,'" + dbEscape(self.Author) + "','" + dbEscape(self.Status) + "','" + `self.DateCreate` + "','" + dbEscape(self.Name) + "','" + dbEscape(self.Notes) + "')"
+            query = "INSERT INTO CodeReviews (Author, Status, DateCreate, Name, Notes) VALUES('" + dbEscape(self.Author) + "', '" + dbEscape(self.Status) + "', '" + dbEscape(self.DateCreate) + "', '" + dbEscape(self.Name) + "', '" + dbEscape(self.Notes) + "')"
             cursor.execute(query)
             db.commit()
             self.IDReview = cursor.lastrowid;
