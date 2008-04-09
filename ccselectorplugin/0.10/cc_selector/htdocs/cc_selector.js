@@ -21,8 +21,11 @@ function show_selection(e)
   thisurl = document.location.href;
   
   nurl = thisurl.split('/');
-  nurl.pop();
-  nurl.pop();
+  if ( nurl.pop() != 'newticket')
+  {
+    // remove one more component, unless we're doing "new ticket"
+    nurl.pop();
+  }
   nurl = nurl.join('/');
   nurl = nurl + "/chrome/cc_selector/cc_selector.html";
 
