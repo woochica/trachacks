@@ -163,6 +163,7 @@ class SendClientFakeReq:
       def wiki(self, *args, **keywords):
         return ''
     self.href = SendClientFakeHref()
+    self.abs_href = SendClientFakeHref()
   
   def perm(self, *args, **keywords):
     return []
