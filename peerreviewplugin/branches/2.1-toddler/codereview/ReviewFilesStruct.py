@@ -45,13 +45,16 @@ class ReviewFileStruct(object):
         cursor = db.cursor()
         if self.IDFile == "":
         #Add information to a new database entry
-            query = "INSERT INTO ReviewFiles VALUES(NULL,'" + dbEscape(self.IDReview) + "', '" + dbEscape(self.Path) + "','" + dbEscape(self.LineStart) + "','" + dbEscape(self.LineEnd) + "','" + dbEscape(self.Version) + "')"
-            cursor.execute(query)
+            cursor.execute("INSERT INTO ReviewFiles "
+                           "(IDReview, Path, LineStart, LineEnd, Version) "
+                           "VALUES (%s, %s, %s, %s, %s) ",
+                           (self.IDReview, self.Path, self.LineStart, self.LineEnd, self.Version))
+            self.IDFile = db.get_last_id(cursor, 'ReviewFiles', 'IDFile')
             db.commit()
-            self.IDFile = cursor.lastrowid;
         else:
         #Update information in existing database entry
-            query = "UPDATE ReviewFiles SET IDReview = '" + dbEscape(self.IDReview) + "', Path = '" + dbEscape(self.Path) + + "', LineStart = '" + dbEscape(self.LineStart) + "', LineEnd = '" + dbEscape(self.LineEnd) + "', Version = '" + dbEscape(self.Version) + "' WHERE IDFile = '" + dbEscape(self.IDFile) + "'"
-            cursor.execute(query)
+            cursor.execute("UPDATE ReviewFiles SET "
+                           "IDReview=%s, Path=%s, LineStart=%s, LineEnd=%s, Version=%s WHERE IDFile=%s",
+                           (self.IDReview, self.Path, self.LineStart, self.LineEnd, self.Version, self.IDFile))
             db.commit()
         return self.IDFile
