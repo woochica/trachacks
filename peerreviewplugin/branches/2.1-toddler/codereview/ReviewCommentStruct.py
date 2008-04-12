@@ -58,13 +58,16 @@ class ReviewCommentStruct(object):
         cursor = db.cursor()
         #Add information to a new database entry
         if self.IDComment == "-1":
-            query = "INSERT INTO ReviewComments VALUES(NULL,'" + dbEscape(self.IDFile) + "', '" + dbEscape(self.IDParent) + "','" + dbEscape(self.LineNum) + "','" + dbEscape(self.Author) + "','" + dbEscape(self.Text) + "','" + dbEscape(self.AttachmentPath) + "','" + `self.DateCreate` + "')"
-            cursor.execute(query)
+            cursor.execute("INSERT INTO ReviewComments "
+                           "(IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate) "
+                           "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                           (self.IDFile, self.IDParent, self.LineNum, self.Author, self.Text, self.AttachmentPath, self.DateCreate))
+            self.IDComment = db.get_last_id(cursor, 'ReviewComments', 'IDComment')
             db.commit()
-            self.IDComment = cursor.lastrowid;
         else:
         #Update information in existing database entry
-            query = "UPDATE ReviewComments SET IDFile = '" + dbEscape(self.IDFile) + "', IDParent = '" + dbEscape(self.IDParent) + "', LineNum = '" + dbEscape(self.LineNum) + "', Author = '" + dbEscape(self.Author) + "', Text = '" + dbEscape(self.Text) + "', AttachmentPath = '" + dbEscape(self.AttachmentPath) + "', DateCreate = '" + `self.DateCreate` + "' WHERE IDComment = '" + dbEscape(self.IDComment) + "'"
-            cursor.execute(query)
+            cursor.execute("UPDATE ReviewComments SET "
+                           "IDFile=%s, IDParent=%s, LineNum=%s, Author=%s, Text=%s, AttachmentPath=%s, DateCreate=%s WHERE IDComment=%s",
+                           (self.IDFile, self.IDParent, self.LineNum, self.Author, self.Text, self.AttachmentPath, self.DateCreate, self.IDComment))
             db.commit()
         return self.IDComment
