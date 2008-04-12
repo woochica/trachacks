@@ -17,7 +17,7 @@ version = 1
 #The tables for the Code Review Plugin
 tables = [
     Table('CodeReviews', key='IDReview')[
-        Column('IDReview', auto_increment=True),
+        Column('IDReview', auto_increment=True, type='int'),
         Column('Author'),
         Column('Status'),
         Column('DateCreate', type='int'),
@@ -31,7 +31,7 @@ tables = [
         Column('Vote', type='int'),
     ],
     Table('ReviewFiles', key='IDFile')[
-        Column('IDFile', auto_increment=True),
+        Column('IDFile', auto_increment=True, type='int'),
         Column('IDReview', type='int'),
         Column('Path'),
         Column('LineStart', type='int'),
@@ -39,7 +39,7 @@ tables = [
         Column('Version', type='int'),
     ],
     Table('ReviewComments', key='IDComment')[
-        Column('IDComment', auto_increment=True),
+        Column('IDComment', auto_increment=True, type='int'),
         Column('IDFile', type='int'),
         Column('IDParent', type='int'),
         Column('LineNum', type='int'),
