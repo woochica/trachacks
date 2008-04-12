@@ -175,7 +175,7 @@ class UserbaseModule(Component):
         struct.Name = req.args.get('Name')
         struct.Notes = req.args.get('Notes')
         id = struct.save(self.env.get_db_cnx())
-        
+        self.log.debug('BEN %s', id)       
         # loop here through all the reviewers
         # and create new reviewer structs based on them
         string = req.args.get('ReviewersSelected')
@@ -185,7 +185,7 @@ class UserbaseModule(Component):
                 struct = ReviewerStruct(None)
                 struct.IDReview = id
                 struct.Reviewer = token
-                struct.Status = 'Not Reviewed'
+                struct.Status = 0
                 struct.Vote = "-1"
                 struct.save(self.env.get_db_cnx())
 
