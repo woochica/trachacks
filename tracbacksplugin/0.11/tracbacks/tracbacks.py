@@ -37,6 +37,24 @@ from trac.ticket import ITicketChangeListener, Ticket
 class TracBacksPlugin(Component):
     implements(ITicketChangeListener)
 
+    TRACBACK_MAGIC_NUMBER = "{{{\n#!html\n<div class=\"tracback\"></div>\n}}}\n"
+    TRACBACK_PREFACE = "This ticket has been referenced in ticket #"
+    
+    TICKET_REGEX = r"""
+        (?=                    # Don't return '#' character:
+           (?<=^\#)            # Look for a TracLink Ticket at the beginning of the string
+          |(?<=[\s,.;:!]\#)    # or on a whitespace boundary or some punctuation
+        )
+        (\d+)                  # Any length ticket number (return the digits)
+        (?=
+           (?=\b)              # Don't return word boundary at the end
+          |$                   # Don't return end of string
+        )
+        """
+
+    EXCERPT_CHARACTERS = 80
+    WEED_BUFFER = 2
+
     # ITicketChangeListener methods
 
     def ticket_created(self, ticket):
@@ -47,17 +65,9 @@ class TracBacksPlugin(Component):
         pass
 
     def ticket_changed(self, ticket, comment, author, old_values):
-        pattern = re.compile(r"""
-        (?=                    # Don't return '#' character:
-           (?<=^\#)            # Look for a TracLink Ticket at the beginning of the string
-          |(?<=[\s,.;:!]\#)    # or on a whitespace boundary or some punctuation
-        )
-        (\d+)                  # Any length ticket number (return the digits)
-        (?=
-           (?=\b)              # Don't return word boundary at the end
-          |$                   # Don't return end of string
-        )
-        """, re.VERBOSE)
+        
+        pattern = re.compile(self.TICKET_REGEX, re.VERBOSE)
+        
         tickets_referenced = pattern.findall(comment)
         # convert from strings to ints and discard duplicates
         tickets_referenced = set(int(t) for t in tickets_referenced)
@@ -65,15 +75,122 @@ class TracBacksPlugin(Component):
         tickets_referenced.discard(ticket.id)
 
         # put trackbacks on the tickets that we found
-        trackback_preface = "Trackback: #"
-        if trackback_preface not in comment: # prevent infinite recursion
-            for ticket_to_trackback in tickets_referenced:
+        if not self.is_tracback(comment): # prevent infinite recursion
+            for ticket_to_tracback in tickets_referenced:
                 try:
-                    t = Ticket(self.env, ticket_to_trackback)
+                    t = Ticket(self.env, ticket_to_tracback)
                 except ResourceNotFound: # referenced ticket does not exist
                     continue
-                trackback_string = trackback_preface + str(ticket.id)
-                t.save_changes(author, trackback_string)
+                    
+                tracback = self.create_tracbacks(ticket, t, comment)
+                print tracback
+                t.save_changes(author, tracback)
 
     def ticket_deleted(self, ticket):
         pass
+        
+    def is_tracback(self, comment):
+        return comment.startswith(self.TRACBACK_MAGIC_NUMBER)
+        
+    def create_tracbacks(self, ticket, ticket_to_tracback, comment):
+        tracback = self.TRACBACK_MAGIC_NUMBER + self.TRACBACK_PREFACE + str(ticket.id) + ":"
+        
+        # find all occurrences of ticket_to_tracback. This is error prone.
+        # we'll weed the errors out later.
+        string_representation = "#" + str(ticket_to_tracback.id)
+        
+        excerpts = []
+        
+        index = -1
+        while comment.find(string_representation, index + 1) > -1:
+            # Get two characters in context so we can make sure this is really
+            # a reference to a ticket, and not anything else.
+            index = comment.find(string_representation, index + 1)
+            
+            print str(index) + " ::: "
+            
+            if not self.is_weed(comment, index, index + len(string_representation)):
+                start = index - self.EXCERPT_CHARACTERS
+                end = index + len(string_representation) + self.EXCERPT_CHARACTERS  
+                    
+                # Make sure we don't go into the negative.
+                if start < 0:
+                    start = 0
+                
+                excerpt = comment[start:end]
+                excerpt = excerpt.replace("\n", "")
+                
+                # There's probably a better way to say this in python, but Tim doesn't know
+                # how to do it. (He's tried """ but something's foobar'ed.)
+                excerpts.append("\n> ''...%s...''\n" % excerpt)
+            
+        tracback += ''.join(excerpts)
+        return tracback
+        
+    def is_weed(self, comment, start, end):
+        start -= self.WEED_BUFFER
+        end += self.WEED_BUFFER
+        
+        # Make sure we don't have a negative starting value.
+        if start < 0:
+            start = 0
+            
+        try:
+            match = re.search(self.TICKET_REGEX, comment[start:end])
+            return False
+        except: # Not a match. This must be a weed.
+            return True
+        
+        
+        
+        
+#        Doug, with some very very cool regular expression prowess, produced
+#        the following regular expression that returns sentences with ticket
+#        links in them. We could use this -- and almost should -- but I'm 
+#        going to use the easy method for now as it takes less expertise.
+#        
+#        sentence_pattern = r"""
+#        (?:                       # This initial group isn't a matching group
+#            (?<=\.)               # End of previous sentence is a period
+#           |(?<=\.\s)             #     or period with one space
+#           |(?<=\.\s\s)           #     or period with two space
+#           |(?<=\.\s\s\s)         #     or period with three spaces
+#           |(?<=\.\s\s\s\s)       #     or period with four spaces
+#           |^                     # Or we match the beginning of the line
+#        )
+#        (                         # We match everything else and return it
+#                                  # Because of this, we don't return any other
+#                                  # matches
+#                [^\s]             # A sentence does not begin with a space
+#                (?:               # Match the beginning of the sentence
+#                    [^.]          # A sentence does not contain a period
+#                   |\.[^\s]       # unless it's part of a word, like a URL
+#                )*                # Match any length
+#    
+#            (?=                   # Starting here is a duplicate of the ticketlink
+#                                  # above, but without returning any text
+#               (?<=^\#)           # Look for a TracLink Ticket at the beginning of the string
+#              |(?<=[\s,.;:!]\#)   # or on a whitespace boundary or some punctuation
+#            )
+#            (?=\d+)               # Any length ticket number (return the digits)
+#            (?=                   # Don't return the end of the ticke tink
+#               (?=\b)             # Whether it's a word boundary
+#              |$                  # Or an end of string
+#            )
+#            (?:                   # Here we match the end of the sentence
+#                                  # It follows the same rules as the beginning
+#                [^.]              # Don't match a period
+#               |\.[^\s]           # unless it's inside a word
+#            )*                    # Any length to the end of the sentence
+#            (?:                   # Here we will match the end of the sentence
+#                (?:\.             # Which is a period (returned as part of the
+#                                  # above expression
+#                    (?=\s+|$)     # then followed by unmatched whitespace or the
+#                                  # end of the line
+#                )
+#               |$                 # if there's no period, jus tthe end of the line
+#                                  # We'll accept that too
+#            )
+#        )
+#        """
+#        excerpt = re.compile(sentence_pattern, re.VERBOSE | re.MULTILINE)
