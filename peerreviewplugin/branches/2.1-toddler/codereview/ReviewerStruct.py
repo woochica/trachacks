@@ -20,7 +20,7 @@ class ReviewerStruct(object):
     Reviewer = ""
 
     #Status of the reviewer's voting capability
-    Status = ""
+    Status = 0
 
     #Reviewer's vote
     Vote = "-1"
@@ -35,13 +35,16 @@ class ReviewerStruct(object):
 
     def save(self, db):
         #Add information to a new database entry
-        query = "INSERT INTO Reviewers VALUES('" + dbEscape(self.IDReview) + "', '" + dbEscape(self.Reviewer) + "','" + dbEscape(self.Status) + "','" + dbEscape(self.Vote) + "')"
         cursor = db.cursor();
         try:
-            cursor.execute(query)
+            cursor.execute("INSERT INTO Reviewers "
+                           "(IDReview, Reviewer, Status, Vote) "
+                           "VALUES(%s, %s, %s, %s) ",
+                           (self.IDReview, self.Reviewer, self.Status, self.Vote))
             db.commit()
         except:
             #Update information in existing database entry
-            query = "UPDATE Reviewers SET Status = '" + dbEscape(self.Status) + "', Vote = '" + dbEscape(self.Vote) + "' WHERE IDReview = '" + dbEscape(self.IDReview) + "' AND Reviewer = '" + dbEscape(self.Reviewer) + "'"
-            cursor.execute(query)
+            cursor.execute("UPDATE Reviewers SET "
+                           "Status=%s, Vote=%s WHERE IDReview=%s AND Reviewer=%s",
+                           (self.Status, self.Vote, self.IDReview, self.Reviewer))
             db.commit()
