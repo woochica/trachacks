@@ -42,18 +42,19 @@ class CodeReviewStruct(object):
             self.Notes = row[5]
 
     def save(self, db):
-        query = ""
         cursor = db.cursor()
         #Add information to a new database entry
         if self.IDReview == "":
-            query = "INSERT INTO CodeReviews (Author, Status, DateCreate, Name, Notes) VALUES('" + dbEscape(self.Author) + "', '" + dbEscape(self.Status) + "', '" + dbEscape(self.DateCreate) + "', '" + dbEscape(self.Name) + "', '" + dbEscape(self.Notes) + "')"
-            cursor.execute(query)
+            cursor.execute("INSERT INTO CodeReviews "
+                           "(Author, Status, DateCreate, Name, Notes) "
+                           "VALUES (%s, %s, %s, %s, %s)",
+                           (self.Author, self.Status, self.DateCreate, self.Name, self.Notes))
+            self.IDReview = db.get_last_id(cursor, 'CodeReviews', 'IDReview')
             db.commit()
-            self.IDReview = cursor.lastrowid;
         else:
         #Update information in existing database entry
-            query = "UPDATE CodeReviews SET Author = '" + dbEscape(self.Author) + "', Status = '" + dbEscape(self.Status) + "', DateCreate = '" + `self.DateCreate` + "', Name = '" + dbEscape(self.Name) + "', Notes = '" + dbEscape(self.Notes) +  "' WHERE IDReview = '" + dbEscape(self.IDReview) + "'"
-            cursor.execute(query)
+            cursor.execute("UPDATE CodeReviews SET "
+                           "Author=%s, Status=%s, DateCreate=%s, Name=%s, Notes=%s WHERE IDReview=%s",
+                           (self.Author, self.Status, self.DateCreate, self.Name, self.Notes, self.IDReview))
             db.commit()
         return self.IDReview
-    
