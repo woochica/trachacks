@@ -74,7 +74,7 @@ class TrashTalkPlugin(Component):
             Column('external_url'),            # The url linking to the ticket.
             Column('click_count'),             # The number of times the external url has been clicked on.
             Column('first', type='int'),       # The first time the external_url linked to the ticket.
-            Column('most_recent', type='int')  # The most recent time the external_url link to the ticket.
+            Column('most_recent', type='int')  # The most recent time the external_url linked to the ticket.
         ]
     ]
     
