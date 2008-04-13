@@ -27,7 +27,7 @@ each ticket. Using TrashTalk, developers can get a better sense of
 how their bugs affect the community by paying attention to "who's talking" 
 about each ticket. 
 
-Some functions below were legally pilferred from the tracpasteplugin:
+Some methods below were legally pilferred from the tracpasteplugin:
 http://www.trac-hacks.org/wiki/TracPastePlugind
 """
 
@@ -41,9 +41,28 @@ from trac.db import Table, Column, Index
 from trac.resource import ResourceNotFound
 from trac.web.api import *
 from trac.ticket import Ticket
+from trac.util.datefmt import utc, to_timestamp
+from datetime import datetime
 
-class TrashTalkBackend(Component):
-    implements()
+def sql_escape_percent(sql):
+    import re
+    return re.sub("'((?:[^']|(?:''))*)'", lambda m: m.group(0).replace('%', '%%'), sql)
+
+def get_incoming_links_for_ticket(env, ticket, db=None):
+    """Return all incoming links for the given ticket."""
+    cursor = (db or env.get_db_cnx()).cursor()
+    cursor.execute('select * from incoming_links where id=%s order by first desc', (ticket,))
+    result = []
+    for row in cursor:
+        result.append({
+            'id':                   row[0],
+            'ticket':               row[1],
+            'external_url':         row[2],
+            'click_count':          row[3],
+            'first':                datetime.fromtimestamp(row[4], utc),
+            'most_recent':          datetime.fromtimestamp(row[5], utc)
+        })
+    return result
 
 class TrashTalkPlugin(Component):
     implements(IRequestFilter, IEnvironmentSetupParticipant)
@@ -53,11 +72,20 @@ class TrashTalkPlugin(Component):
             Column('id', auto_increment=True),
             Column('ticket'),                  # The id of the ticket that has been linked to.
             Column('external_url'),            # The url linking to the ticket.
-            Column('count'),                   # The number of times the external url referred to the ticket.
+            Column('click_count'),             # The number of times the external url has been clicked on.
             Column('first', type='int'),       # The first time the external_url linked to the ticket.
             Column('most_recent', type='int')  # The most recent time the external_url link to the ticket.
         ]
     ]
+    
+    SCHEMA_LOOKUP = {
+        'id':           0,
+        'ticket':       1,
+        'external_url': 2,
+        'click_count':  3,
+        'first':        4,
+        'most_recent':  5
+    }
 
     TICKET_URI_PATTERN = re.compile("^/ticket/(\d+)(?:$|.*$)", re.VERBOSE)
 
@@ -68,7 +96,7 @@ class TrashTalkPlugin(Component):
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         try:
-            cursor.execute('select count(*) from trashtalk')
+            cursor.execute('select count(*) from incoming_links')
             cursor.fetchone()
             return False
         except:
@@ -96,13 +124,37 @@ class TrashTalkPlugin(Component):
     # Private methods
     def _talk_about(self, req):
         
-        ticket_id = int(self.TICKET_URI_PATTERN.findall(req.path_info)[0])
-        ticket = Ticket(self.env, ticket_id)
+        # Eventually, some kind of model should be created for incoming links.
+        # Right now though, for a first implementation, this will suffice.
         
-        ticket.save_changes("tcoulter", req.get_header("referer"))
+        ticket = int(self.TICKET_URI_PATTERN.findall(req.path_info)[0])
+        external_url = req.get_header("referer")
+        click_count = 1
+        most_recent = datetime.now(utc)
+        first = most_recent
         
-        print "::: " + req.get_header("referer")
-        print "--> " + req.abs_href() + req.path_info
+        # See if the current link is already in the database for this ticket.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        
+        cursor.execute('select * from incoming_links where ticket = %s and external_url = %s limit 1', (ticket, external_url))
+        
+        row = cursor.fetchone()
+        
+        # Have we recorded the external_url for this ticket before?
+        if row:
+            # Yes. Let's update the click count and the most_recent timestamp.
+            id = row[self.SCHEMA_LOOKUP['id']]
+            click_count = int(row[self.SCHEMA_LOOKUP['click_count']]) + 1
+            
+            cursor.execute('update incoming_links set click_count = %s, most_recent = %s where id = %s', (click_count, most_recent, id)) 
+        else:
+            # No. Let's create a new row.
+            cursor.execute('insert into incoming_links (ticket, external_url, click_count, first, most_recent) values (%s, %s, %s, %s, %s)',
+                           (ticket, external_url, click_count, first, most_recent))
+
+        # Commit changes...
+        db.commit()
         
         
     def _is_external(self, req):
