@@ -113,16 +113,24 @@ class TracBacksPlugin(Component):
                 start = index - self.EXCERPT_CHARACTERS
                 end = index + len(string_representation) + self.EXCERPT_CHARACTERS  
                     
-                # Make sure we don't go into the negative.
-                if start < 0:
+                left_ellipsis = "..."
+                right_ellipsis = "..."
+                    
+                # Make sure we don't go into the negative. Also, make the ellipsis'
+                # disappear if we're not actually cutting up the comment.
+                if start <= 0:
+                    left_ellipsis = ""
                     start = 0
+                
+                if end >= len(comment):
+                    right_ellipsis = ""
                 
                 excerpt = comment[start:end]
                 excerpt = excerpt.replace("\n", "")
                 
                 # There's probably a better way to say this in python, but Tim doesn't know
                 # how to do it. (He's tried """ but something's foobar'ed.)
-                excerpts.append("\n> ''...%s...''\n" % excerpt)
+                excerpts.append("\n> ''%s%s%s''\n" % (left_ellipsis, excerpt, right_ellipsis))
             
         tracback += ''.join(excerpts)
         return tracback
