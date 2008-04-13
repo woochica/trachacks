@@ -20,7 +20,7 @@
 """
 TracBacks Plugin
 author: Mel Chua <mchua@openplans.org>
-version: 0.1
+version: 0.11
 
 Detects when a ticket A is referenced in another ticket B and adds
 a comment "TracBack: #B" to ticket A.
@@ -38,7 +38,7 @@ class TracBacksPlugin(Component):
     implements(ITicketChangeListener)
 
     TRACBACK_MAGIC_NUMBER = "{{{\n#!html\n<div class=\"tracback\"></div>\n}}}\n"
-    TRACBACK_PREFACE = "This ticket has been referenced in ticket #"
+    TRACBACK_PREFIX = "This ticket has been referenced in ticket #"
     
     TICKET_REGEX = r"""
         (?=                    # Don't return '#' character:
@@ -93,7 +93,7 @@ class TracBacksPlugin(Component):
         return comment.startswith(self.TRACBACK_MAGIC_NUMBER)
         
     def create_tracbacks(self, ticket, ticket_to_tracback, comment):
-        tracback = self.TRACBACK_MAGIC_NUMBER + self.TRACBACK_PREFACE + str(ticket.id) + ":"
+        tracback = self.TRACBACK_MAGIC_NUMBER + self.TRACBACK_PREFIX + str(ticket.id) + ":"
         
         # find all occurrences of ticket_to_tracback. This is error prone.
         # we'll weed the errors out later.
