@@ -133,10 +133,11 @@ class TrashTalkPlugin(Component):
         most_recent = datetime.now(utc)
         first = most_recent
         
-        # See if the current link is already in the database for this ticket.
+        # Let's get a database connection.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
+        # See if the current link is already in the database for this ticket.
         cursor.execute('select * from incoming_links where ticket = %s and external_url = %s limit 1', (ticket, external_url))
         
         row = cursor.fetchone()
