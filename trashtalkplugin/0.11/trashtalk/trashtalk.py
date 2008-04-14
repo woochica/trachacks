@@ -28,51 +28,35 @@ how their bugs affect the community by paying attention to "who's talking"
 about each ticket. 
 
 Some methods below were legally pilferred from the tracpasteplugin:
-http://www.trac-hacks.org/wiki/TracPastePlugind
+http://www.trac-hacks.org/wiki/TracPastePlugin
 """
 
 import re
 
+from genshi.core import Markup
 from genshi.builder import tag
+from genshi.filters.transform import Transformer
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import Table, Column, Index
 from trac.resource import ResourceNotFound
-from trac.web.api import *
 from trac.ticket import Ticket
 from trac.util.datefmt import utc, to_timestamp
 from datetime import datetime
 
-def sql_escape_percent(sql):
-    import re
-    return re.sub("'((?:[^']|(?:''))*)'", lambda m: m.group(0).replace('%', '%%'), sql)
-
-def get_incoming_links_for_ticket(env, ticket, db=None):
-    """Return all incoming links for the given ticket."""
-    cursor = (db or env.get_db_cnx()).cursor()
-    cursor.execute('select * from incoming_links where id=%s order by first desc', (ticket,))
-    result = []
-    for row in cursor:
-        result.append({
-            'id':                   row[0],
-            'ticket':               row[1],
-            'external_url':         row[2],
-            'click_count':          row[3],
-            'first':                datetime.fromtimestamp(row[4], utc),
-            'most_recent':          datetime.fromtimestamp(row[5], utc)
-        })
-    return result
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
+from trac.web.chrome import ITemplateProvider, add_stylesheet
 
 class TrashTalkPlugin(Component):
-    implements(IRequestFilter, IEnvironmentSetupParticipant)
+    implements(IEnvironmentSetupParticipant, ITemplateStreamFilter, ITemplateProvider, IRequestFilter)
 
     SCHEMA = [
         Table('incoming_links', key='id')[
             Column('id', auto_increment=True),
             Column('ticket'),                  # The id of the ticket that has been linked to.
             Column('external_url'),            # The url linking to the ticket.
-            Column('click_count'),             # The number of times the external url has been clicked on.
+            Column('click_count', type='int'), # The number of times the external url has been clicked on.
             Column('first', type='int'),       # The first time the external_url linked to the ticket.
             Column('most_recent', type='int')  # The most recent time the external_url linked to the ticket.
         ]
@@ -88,7 +72,7 @@ class TrashTalkPlugin(Component):
     }
 
     TICKET_URI_PATTERN = re.compile("^/ticket/(\d+)(?:$|.*$)", re.VERBOSE)
-
+    
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
         self._upgrade_db(self.env.get_db_cnx())
@@ -106,20 +90,64 @@ class TrashTalkPlugin(Component):
     def upgrade_environment(self, db):
         self._upgrade_db(db)
 
+    # ITemplateStreamFilter methods
+    def filter_stream(self, req, method, filename, stream, data):
+        
+        if self._is_ticket(req):
+            
+            if self._is_external(req):
+                self._talk_about(req)
+            
+            ticket = self._get_ticket_from_request(req)
+            links = self._get_incoming_links_for_ticket(ticket)
+            
+            if len(links) != 0:
+        
+                ticket = self._get_ticket_from_request(req)
+                
+                div = tag.div(id="trashtalk")
+    
+                for link in links:
+                    a = tag.a(href=link['external_url'])
+                    a(link['external_url'])
+                    div(a)
+                    div(" (%s)" % link['click_count'])
+                    div(tag.br)
+                
+                stream |= Transformer('//div[@id="ticket"]').after(div).after(tag.h2("Incoming Links"))
 
+        return stream
+    
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        if self._is_external(req) and self._is_ticket(req):
-            self._talk_about(req)
         return handler
-    
+
     # for ClearSilver templates
     def post_process_request(self, req, template, content_type):
         return (template, content_type)
-    
+
     # for Genshi templates
     def post_process_request(self, req, template, data, content_type):
+        #if self._is_ticket(req):
+        add_stylesheet(req, 'trashtalk/trashtalk.css')
+
         return (template, data, content_type)
+    
+    # ITemplateProvider methods
+    def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
+        from pkg_resources import resource_filename
+        return [('trashtalk', resource_filename(__name__, 'htdocs'))]
+
+    def get_templates_dirs(self):
+        """Return the absolute path of the directory containing the provided
+        ClearSilver templates.
+        """
+        #from pkg_resources import resource_filename
+        #return [resource_filename(__name__, 'templates')]
+        return []
     
     # Private methods
     def _talk_about(self, req):
@@ -127,7 +155,7 @@ class TrashTalkPlugin(Component):
         # Eventually, some kind of model should be created for incoming links.
         # Right now though, for a first implementation, this will suffice.
         
-        ticket = int(self.TICKET_URI_PATTERN.findall(req.path_info)[0])
+        ticket = self._get_ticket_from_request(req)
         external_url = req.get_header("referer")
         click_count = 1
         most_recent = datetime.now(utc)
@@ -165,6 +193,29 @@ class TrashTalkPlugin(Component):
     def _is_ticket(self, req):
         return len(self.TICKET_URI_PATTERN.findall(req.path_info)) > 0
     
+    def _get_ticket_from_request(self, req):
+        return int(self.TICKET_URI_PATTERN.findall(req.path_info)[0])
+    
+    def _get_incoming_links_for_ticket(self, ticket):
+        # Let's get a database connection.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('select * from incoming_links where ticket=%s order by first desc', str(ticket))
+        
+        rows = cursor.fetchall()
+        
+        result = []
+        for row in rows:
+            result.append({
+                'id':                   row[self.SCHEMA_LOOKUP['id']],
+                'ticket':               row[self.SCHEMA_LOOKUP['ticket']],
+                'external_url':         row[self.SCHEMA_LOOKUP['external_url']],
+                'click_count':          row[self.SCHEMA_LOOKUP['click_count']],
+                'first':                row[self.SCHEMA_LOOKUP['first']],
+                'most_recent':          row[self.SCHEMA_LOOKUP['most_recent']]
+            })
+        return result
+    
     def _upgrade_db(self, db):
         try:
             try:
@@ -183,4 +234,6 @@ class TrashTalkPlugin(Component):
             db.rollback()
             self.env.log.error(e, exc_info=1)
             raise TracError(str(e))
+        
+
     

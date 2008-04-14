@@ -1,14 +1,25 @@
 from setuptools import find_packages, setup
 
-# name can be any name.  This name will be used to create .egg file.
-# name that is used in packages is the one that is used in the trac.ini file.
-# use package name as entry_points
 setup(
-    name='TrashTalk', version='0.1',
-    packages=find_packages(exclude=['*.tests*']),
-    entry_points = """
-        [trac.plugins]
-        trashtalk = trashtalk
-    """,
+    name='TrashTalk',
+    version='0.1',
+    packages=['trashtalk'],
+    package_data={ 'trashtalk' : ['htdocs/*.css'] },
+    
+    author='Tim Coulter',
+    author_email='tim@timothyjcoulter.com',
+    description='Logs URLs linking to tickets in order to show community impact.',
+    url='http://trac-hacks.org/wiki/TrashTalkPlugin',
+    
+    classifiers=[
+        'Framework :: Trac',
+    ],
+    
+    install_requires = ['Trac', 'Genshi >= 0.5.dev-r698,==dev'],
+    
+    entry_points = {
+        'trac.plugins': ['trashtalk = trashtalk']
+    }
+    
 )
 
