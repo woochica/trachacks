@@ -15,6 +15,7 @@
 <div id="content" class="wiki">
    <div class="wikipage">
     <div id="searchable">
+    <?cs var:blog.header ?>
 <?cs /if ?>
 
 <?cs include:"blog_calendar.cs" ?>

@@ -27,6 +27,7 @@ from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_link
 from trac.web.chrome import INavigationContributor 
 from trac.util import Markup, format_date, format_datetime, http_date
+from trac.mimeview.api import Mimeview
 try:
     from trac.util.text import to_unicode
 except ImportError:
@@ -397,7 +398,12 @@ class TracBlogPlugin(Component):
         if not hidecal:
             self._generate_calendar(req, tallies)
         req.hdf['blog.hidecal'] = hidecal
-        pass
+        # Insert /wiki/BlogHeader into /blog.  If the page does not exist,
+        # this'll be a no-op
+        blog_header = WikiPage(self.env, name='BlogHeader').text
+        req.hdf['blog.header'] = Mimeview(self.env).render(req,
+                                                           'text/x-trac-wiki',
+                                                           blog_header)
 
     def _generate_calendar(self, req, tallies):
         """Generate data necessary for the calendar
