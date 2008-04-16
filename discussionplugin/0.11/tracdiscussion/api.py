@@ -4,6 +4,7 @@ from datetime import *
 
 from trac.core import *
 from trac.mimeview import Context
+from trac.config import Option
 from trac.perm import PermissionError
 from trac.web.chrome import add_stylesheet, add_script, add_ctxtnav
 from trac.wiki.formatter import format_to_html, format_to_oneliner
@@ -17,6 +18,19 @@ from genshi.template import TemplateLoader
 from tracdiscussion.notification import *
 
 class DiscussionApi(Component):
+
+    default_display = Option('discussion', 'default_display', 'tree',
+      'Default display mode of topic message list.')
+    forum_sort = Option('discussion', 'forum_sort', 'id', 'Column by which will' +
+      ' be sorted forum lists. Possible values are: id group name subject' +
+      ' time moderators description topics replies lasttopic lastreply')
+    forum_sort_direction = Option('discussion', 'forum_sort_direction', 'asc',
+      'Direction of forum lists sorting. Possible values are: asc desc.')
+    topic_sort = Option('discussion', 'topic_sort', 'id', 'Column by which will' +
+      ' be sorted topic lists. Possible values are: id forum subject time' +
+      ' author body replies lastreply.')
+    topic_sort_direction = Option('discussion', 'topic_sort_direction', 'asc',
+      'Direction of topic lists sorting. Possible values are: asc desc.')
 
     # Main request processing function.
 
@@ -386,8 +400,8 @@ class DiscussionApi(Component):
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values.
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.forum_sort
+                desc = context.req.args.get('desc') or self.forum_sort_direction
 
                 # Display forums.
                 self.data['order'] = order
@@ -505,8 +519,8 @@ class DiscussionApi(Component):
                 context.visited_forums[forum['id']] = to_timestamp(datetime.now(utc))
 
                 # Get form values
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.topic_sort
+                desc = context.req.args.get('desc') or self.topic_sort_direction
 
                 # Display topics.
                 self.data['order'] = order
@@ -761,17 +775,20 @@ class DiscussionApi(Component):
             self.data['body'] = format_to_html(self.env, context, new_body)
 
         # Prepare display of messages.
-        display = context.req.session.get('message-list-display')
+        display = context.req.session.get('message-list-display') or \
+          self.default_display
         self.data['display'] = display
         if display == 'flat-asc':
             self.data['messages'] = self.get_flat_messages(context,
               topic['id'], visit_time)
-        elif display == 'flat-desc':
+        elif display == 'flat-desc' or display == 'flat':
             self.data['messages'] = self.get_flat_messages(context,
               topic['id'], visit_time, 'ORDER BY time DESC')
-        else:
+        elif display == 'tree' or display == '':
             self.data['messages'] = self.get_messages(context, topic['id'],
               visit_time)
+        else:
+            raise TracError('Unsupported display mode: %s' % (display))
 
     # Get one item functions.
 

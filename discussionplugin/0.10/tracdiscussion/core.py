@@ -20,9 +20,7 @@ class DiscussionCore(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
       IPermissionRequestor)
 
-    # Extension points.
-    discussion_manipulators = ExtensionPoint(IDiscussionManipulator)
-
+    # Configuration options.
     title = Option('discussion', 'title', 'Discussion',
       'Main navigation bar button title.')
 
@@ -77,5 +75,5 @@ class DiscussionCore(Component):
         req.args['component'] = 'core'
 
         # Return page content
-        api = DiscussionApi(self, req)
+        api = self.env[DiscussionApi]
         return api.render_discussion(req)

@@ -22,9 +22,6 @@ class DiscussionWiki(Component):
     """
     implements(IWikiSyntaxProvider, IWikiMacroProvider, IRequestFilter)
 
-    # Extension points.
-    discussion_manipulators = ExtensionPoint(IDiscussionManipulator)
-
     # IWikiSyntaxProvider methods
 
     def get_link_resolvers(self):
@@ -61,7 +58,7 @@ class DiscussionWiki(Component):
             cursor = db.cursor()
 
             # Get topic by subject
-            api = DiscussionApi(self, req)
+            api = self.env[DiscussionApi]
             topic = api.get_topic_by_subject(cursor, subject)
             self.log.debug('subject: %s' % (subject,))
             self.log.debug('topic: %s' % (topic,))

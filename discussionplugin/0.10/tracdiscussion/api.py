@@ -3,6 +3,7 @@
 import time
 
 from trac.core import *
+from trac.config import Option
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.perm import PermissionError
@@ -31,11 +32,23 @@ class IDiscussionManipulator(Interface):
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
 
-class DiscussionApi(object):
-    def __init__(self, component, req):
-        self.env = component.env
-        self.log = component.log
-        self.discussion_manipulators = component.discussion_manipulators
+class DiscussionApi(Component):
+
+    # Extension points.
+    discussion_manipulators = ExtensionPoint(IDiscussionManipulator)
+
+    default_display = Option('discussion', 'default_display', 'tree',
+      'Default display mode of topic message list.')
+    forum_sort = Option('discussion', 'forum_sort', 'id', 'Column by which will' +
+      ' be sorted forum lists. Possible values are: id group name subject' +
+      ' time moderators description topics replies lasttopic lastreply')
+    forum_sort_direction = Option('discussion', 'forum_sort_direction', 'asc',
+      'Direction of forum lists sorting. Possible values are: asc desc.')
+    topic_sort = Option('discussion', 'topic_sort', 'id', 'Column by which will' +
+      ' be sorted topic lists. Possible values are: id forum subject time' +
+      ' author body replies lastreply.')
+    topic_sort_direction = Option('discussion', 'topic_sort_direction', 'asc',
+      'Direction of topic lists sorting. Possible values are: asc desc.')
 
     # Main request processing function
 
@@ -389,8 +402,8 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                order = req.args.get('order') or self.forum_sort
+                desc = req.args.get('desc') or self.forum_sort_direction
 
                 # Display forums.
                 req.hdf['discussion.order'] = order
@@ -403,8 +416,8 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                order = req.args.get('order') or self.forum_sort
+                desc = req.args.get('desc') or self.forum_sort_direction
 
                 # Display forums.
                 req.hdf['discussion.order'] = order
@@ -509,8 +522,8 @@ class DiscussionApi(object):
                 req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values
-                order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                order = req.args.get('order') or self.topic_sort
+                desc = req.args.get('desc') or self.topic_sort_direction
 
                 # Display topics.
                 req.hdf['discussion.order'] = order
@@ -795,17 +808,20 @@ class DiscussionApi(object):
             req.hdf['discussion.body'] = wiki_to_html(new_body, self.env, req)
 
         # Prepare display of messages
-        display = req.session.get('message-list-display')
+        display = req.session.get('message-list-display') or \
+          self.default_display
         req.hdf['discussion.display'] = display
         if display == 'flat-asc':
             req.hdf['discussion.messages'] = self.get_flat_messages(req, cursor,
               topic['id'], visit_time)
-        elif display == 'flat-desc':
+        elif display == 'flat-desc' or display == 'flat':
             req.hdf['discussion.messages'] = self.get_flat_messages(req, cursor,
               topic['id'], visit_time, 'ORDER BY time DESC')
-        else:
+        elif display == 'tree' or display == '':
             req.hdf['discussion.messages'] = self.get_messages(req, cursor,
              topic['id'], visit_time)
+        else:
+            raise TracError('Unsupported display mode: %s' % (display))
 
     # Get one item functions
 

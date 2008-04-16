@@ -18,9 +18,6 @@ class DiscussionWebAdmin(Component):
     """
     implements(IAdminPageProvider)
 
-    # Extension points.
-    discussion_manipulators = ExtensionPoint(IDiscussionManipulator)
-
     # IAdminPageProvider
     def get_admin_pages(self, req):
         if req.perm.has_permission('DISCUSSION_ADMIN'):
@@ -40,5 +37,5 @@ class DiscussionWebAdmin(Component):
         req.args['component'] = 'admin'
 
         # Retrun page content
-        api = DiscussionApi(self, req)
+        api = self.env[DiscussionApi]
         return api.render_discussion(req)
