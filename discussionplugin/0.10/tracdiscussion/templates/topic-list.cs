@@ -10,12 +10,12 @@
   <table class="listing">
     <thead>
       <tr>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'author', 'Author', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '/' + discussion.forum.id + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'id', 'ID', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'subject', 'Subject', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'author', 'Author', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'lastreply', 'Last Reply', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'time', 'Founded', discussion.href + '/' + discussion.forum.id + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'replies', 'Replies', discussion.href + '/' + discussion.forum.id + '?') ?>
       </tr>
     </thead>
     <tbody>

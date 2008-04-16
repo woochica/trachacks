@@ -16,15 +16,15 @@
           </th>
         </tr>
         <tr>
-          ${sortable_th(discussion.order, discussion.desc, 'id', 'ID', href.discussion())}
-          ${sortable_th(discussion.order, discussion.desc, 'subject', 'Forum', href.discussion())}
-          ${sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', href.discussion())}
-          ${sortable_th(discussion.order, discussion.desc, 'lasttopic', 'Last Topic', href.discussion())}
-          ${sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', href.discussion())}
-          ${sortable_th(discussion.order, discussion.desc, 'time', 'Founded', href.discussion())}
-          ${sortable_th(discussion.order, discussion.desc, 'topics', 'Topics', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'id', 'ID', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'subject', 'Forum', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'moderators', 'Moderators', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'lasttopic', 'Last Topic', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'lastreply', 'Last Reply', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'time', 'Founded', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'topics', 'Topics', href.discussion())}
           <th>New Topics</th>
-          ${sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', href.discussion())}
+          ${sortable_th(discussion.order, discussion.direction, 'replies', 'Replies', href.discussion())}
           <th>New Replies</th>
         </tr>
       </thead>

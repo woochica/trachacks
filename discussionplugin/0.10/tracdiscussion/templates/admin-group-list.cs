@@ -52,9 +52,9 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/group' + '?') ?>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/group' + '?') ?>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/group' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'id', 'ID', discussion.href + '/group' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'name', 'Name', discussion.href + '/group' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'description', 'Description', discussion.href + '/group' + '?') ?>
         </tr>
       </thead>
       <tbody>

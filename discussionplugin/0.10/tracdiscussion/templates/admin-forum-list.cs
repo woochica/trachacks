@@ -122,13 +122,13 @@
       <thead>
         <tr>
           <th class="sel">&nbsp;</th>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '/forum' + '?') ?>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'name', 'Name', discussion.href + '/forum' + '?') ?>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', discussion.href + '/forum' + '?') ?>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'description', 'Description', discussion.href + '/forum' + '?') ?>
-          <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', discussion.href + '/forum' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'id', 'ID', discussion.href + '/forum' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'name', 'Name', discussion.href + '/forum' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'subject', 'Subject', discussion.href + '/forum' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'description', 'Description', discussion.href + '/forum' + '?') ?>
+          <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'moderators', 'Moderators', discussion.href + '/forum' + '?') ?>
           <?cs if:discussion.groups.1.id ?>
-            <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'forum_group', 'Group', discussion.href + '/forum' + '?') ?>
+            <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'forum_group', 'Group', discussion.href + '/forum' + '?') ?>
           <?cs /if ?>
         </tr>
       </thead>

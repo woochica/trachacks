@@ -332,7 +332,7 @@ class DiscussionApi(Component):
 
                 # Get form values.
                 order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                direction = context.req.args.get('direction') or 'asc'
 
                 # Prepare values for edit form.
                 if group:
@@ -341,8 +341,9 @@ class DiscussionApi(Component):
 
                 # Display groups.
                 self.data['order'] = order
-                self.data['desc'] = desc
-                self.data['groups'] = self.get_groups(context, order, desc)
+                self.data['direction'] = direction
+                self.data['groups'] = self.get_groups(context, order,
+                  direction == 'desc')
 
             elif mode == 'group-add':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -401,21 +402,28 @@ class DiscussionApi(Component):
 
                 # Get form values.
                 order = context.req.args.get('order') or self.forum_sort
-                desc = context.req.args.get('desc') or self.forum_sort_direction
+                direction = context.req.args.get('direction') or \
+                  self.forum_sort_direction
+
+
+                self.log.debug('direction: %s' % (direction,))
+
 
                 # Display forums.
                 self.data['order'] = order
-                self.data['desc'] = desc
+                self.data['direction'] = direction
                 self.data['groups'] = self.get_groups(context)
-                self.data['forums'] = self.get_forums(context, order, desc)
+                self.data['forums'] = self.get_forums(context, order,
+                  direction == 'desc')
                 self.data['forum'] = None
 
             elif mode == 'admin-forum-list':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get ordering arguments values.
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.forum_sort
+                direction = context.req.args.get('direction') or \
+                  self.forum_sort_direction
 
                 # Prepare values for edit form.
                 if forum:
@@ -427,10 +435,11 @@ class DiscussionApi(Component):
 
                 # Display forums.
                 self.data['order'] = order
-                self.data['desc'] = desc
+                self.data['direction'] = direction
                 self.data['users'] = self.get_users(context)
                 self.data['groups'] = self.get_groups(context)
-                self.data['forums'] = self.get_forums(context, order, desc)
+                self.data['forums'] = self.get_forums(context, order,
+                  direction == 'desc')
 
             elif mode == 'forum-add':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -520,13 +529,14 @@ class DiscussionApi(Component):
 
                 # Get form values
                 order = context.req.args.get('order') or self.topic_sort
-                desc = context.req.args.get('desc') or self.topic_sort_direction
+                direction = context.req.args.get('direction') or \
+                  self.topic_sort_direction
 
                 # Display topics.
                 self.data['order'] = order
-                self.data['desc'] = desc
+                self.data['direction'] = direction
                 self.data['topics'] = self.get_topics(context, forum['id'],
-                  order, desc)
+                  order, direction == 'desc')
 
             elif mode == 'topic-add':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')

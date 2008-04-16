@@ -20,12 +20,12 @@
           <table py:when="len(discussion.topics)" class="listing">
             <thead>
               <tr>
-                ${sortable_th(discussion.order, discussion.desc, 'id', 'ID', href.discussion(discussion.forum.id))}
-                ${sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', href.discussion(discussion.forum.id))}
-                ${sortable_th(discussion.order, discussion.desc, 'author', 'Author', href.discussion(discussion.forum.id))}
-                ${sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', href.discussion(discussion.forum.id))}
-                ${sortable_th(discussion.order, discussion.desc, 'time', 'Founded', href.discussion(discussion.forum.id))}
-                ${sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', href.discussion(discussion.forum.id))}
+                ${sortable_th(discussion.order, discussion.direction, 'id', 'ID', href.discussion(discussion.forum.id))}
+                ${sortable_th(discussion.order, discussion.direction, 'subject', 'Subject', href.discussion(discussion.forum.id))}
+                ${sortable_th(discussion.order, discussion.direction, 'author', 'Author', href.discussion(discussion.forum.id))}
+                ${sortable_th(discussion.order, discussion.direction, 'lastreply', 'Last Reply', href.discussion(discussion.forum.id))}
+                ${sortable_th(discussion.order, discussion.direction, 'time', 'Founded', href.discussion(discussion.forum.id))}
+                ${sortable_th(discussion.order, discussion.direction, 'replies', 'Replies', href.discussion(discussion.forum.id))}
                 <th class="new_replies">New Replies</th>
               </tr>
             </thead>

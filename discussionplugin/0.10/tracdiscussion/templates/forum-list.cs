@@ -13,14 +13,14 @@
         </tr>
       <?cs /if ?>
       <tr>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'id', 'ID', discussion.href + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'subject', 'Forum', discussion.href + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', discussion.href + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'lasttopic', 'Last Topic', discussion.href + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', discussion.href + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'time', 'Founded', discussion.href + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'topics', 'Topics', discussion.href + '?') ?>
-        <?cs call:discussion_sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'id', 'ID', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'subject', 'Forum', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'moderators', 'Moderators', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'lasttopic', 'Last Topic', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'lastreply', 'Last Reply', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'time', 'Founded', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'topics', 'Topics', discussion.href + '?') ?>
+        <?cs call:discussion_sortable_th(discussion.order, discussion.direction, 'replies', 'Replies', discussion.href + '?') ?>
       </tr>
     </thead>
     <tbody>

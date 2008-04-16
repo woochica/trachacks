@@ -332,16 +332,17 @@ class DiscussionApi(Component):
 
                 # Get form values
                 order = req.args.get('order') or 'id'
-                desc = req.args.get('desc')
+                direction = req.args.get('direction') or 'asc'
 
                 # Display groups.
                 req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
+                req.hdf['discussion.direction'] = direction
                 if group:
                     req.hdf['discussion.name'] = group['name']
                     req.hdf['discussion.description'] = \
                       group['description']
-                req.hdf['discussion.groups'] = self.get_groups(req, cursor, order, desc)
+                req.hdf['discussion.groups'] = self.get_groups(req, cursor, order,
+                  direction == 'desc')
 
             elif mode == 'group-add':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -403,25 +404,25 @@ class DiscussionApi(Component):
 
                 # Get form values
                 order = req.args.get('order') or self.forum_sort
-                desc = req.args.get('desc') or self.forum_sort_direction
+                direction = req.args.get('direction') or self.forum_sort_direction
 
                 # Display forums.
                 req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
+                req.hdf['discussion.direction'] = direction
                 req.hdf['discussion.groups'] = self.get_groups(req, cursor)
                 req.hdf['discussion.forums'] = self.get_forums(req, cursor,
-                  order, desc)
+                  order, direction == 'desc')
 
             elif mode == 'admin-forum-list':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values
                 order = req.args.get('order') or self.forum_sort
-                desc = req.args.get('desc') or self.forum_sort_direction
+                direction = req.args.get('direction') or self.forum_sort_direction
 
                 # Display forums.
                 req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
+                req.hdf['discussion.direction'] = direction
                 if forum:
                     req.hdf['discussion.name'] = forum['name']
                     req.hdf['discussion.subject'] = forum['subject']
@@ -432,7 +433,7 @@ class DiscussionApi(Component):
                 req.hdf['discussion.users'] = self.get_users()
                 req.hdf['discussion.groups'] = self.get_groups(req, cursor)
                 req.hdf['discussion.forums'] = self.get_forums(req, cursor,
-                  order, desc)
+                  order, direction == 'desc')
 
             elif mode == 'forum-add':
                 req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -523,13 +524,13 @@ class DiscussionApi(Component):
 
                 # Get form values
                 order = req.args.get('order') or self.topic_sort
-                desc = req.args.get('desc') or self.topic_sort_direction
+                direction = req.args.get('direction') or self.topic_sort_direction
 
                 # Display topics.
                 req.hdf['discussion.order'] = order
-                req.hdf['discussion.desc'] = desc
+                req.hdf['discussion.direction'] = direction
                 req.hdf['discussion.topics'] = self.get_topics(req, cursor,
-                  forum['id'], order, desc)
+                  forum['id'], order, direction == 'desc')
 
             elif mode == 'topic-add':
                 req.perm.assert_permission('DISCUSSION_APPEND')
