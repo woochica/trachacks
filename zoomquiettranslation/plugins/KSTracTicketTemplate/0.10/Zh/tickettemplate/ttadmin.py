@@ -22,6 +22,7 @@ from webadmin.web_ui import IAdminPageProvider
 from pkg_resources import resource_filename
 
 import os
+import base64
 
 __all__ = ['TicketTemplateModule']
 
@@ -166,7 +167,7 @@ class TicketTemplateModule(Component):
     def _getTTFilePath(self, tt_name):
         """ get ticket template file path
         """
-        tt_file_name = "description_%s.tmpl" % tt_name
+        tt_file_name = "description_%s.tmpl" % base64.encodestring(tt_name.encode("utf-8"))
         tt_file = os.path.join(self.env.path, "templates", tt_file_name)
         return tt_file
 
@@ -174,7 +175,7 @@ class TicketTemplateModule(Component):
         """ load ticket template text from file.
         """
         tt_file         = self._getTTFilePath(tt_name)
-        tt_file_default = self._getTTFilePath("default")
+        tt_file_default = self._getTTFilePath(u"default")
 
         try:
             fp = open(tt_file,'r')
@@ -197,7 +198,7 @@ class TicketTemplateModule(Component):
 
         try:
             fp = open(tt_file,'w')
-        except:
+        except Exception, e:
             raise TracError("Can't write ticket template file %s" % tt_file)
         else:
             fp.write(tt_text.encode("utf-8"))
