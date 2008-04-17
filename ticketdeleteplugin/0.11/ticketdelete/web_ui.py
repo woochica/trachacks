@@ -8,11 +8,13 @@ from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.util import sorted
+from trac.util.datefmt import to_datetime, utc, to_timestamp
 
 import re
 import traceback
 import pprint
-from time import strftime, localtime
+from time import strftime, localtime, mktime
+from datetime import datetime
 
 __all__ = ['TicketDeletePlugin']
 
@@ -66,26 +68,22 @@ class TicketDeletePlugin(Component):
                     t = self._validate(req, path_info)
                     if t:
                         data['href'] = req.href('admin', cat, page, path_info)
-                        try:
-                            deletions = None
-                            if "multidelete" in req.args:
-                                deletions = [x.split('_') for x in req.args.getlist('mdelete')]
-                                deletions.sort(lambda a,b: cmp(b[1],a[1]))
-                            else:
-                                buttons = [x[6:] for x in req.args.keys() if x.startswith('delete')]
-                                deletions = [buttons[0].split('_')]
-                            if deletions:
-                                for field, ts in deletions:
-                                    #field, ts = button.split('_')
-                                    ts = int(ts)
+                        
+                        deletions = None
+                        if "multidelete" in req.args:
+                            deletions = [x.split('_') for x in req.args.getlist('mdelete')]
+                            deletions.sort(lambda a,b: cmp(b[1],a[1]))
+                        else:
+                            buttons = [x[6:] for x in req.args.keys() if x.startswith('delete')]
+                            deletions = [buttons[0].split('_')]
+                            
+                        if deletions:
+                            for field, ts in deletions:
+                                if ts != '':
                                     self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
                                     self._delete_change(t.id, ts, field)
-                                    data['message'] = "Change to ticket #%s at %s has been modified" % (t.id, strftime('%a, %d %b %Y %H:%M:%S',localtime(ts)))
+                                    data['message'] = "Change to ticket #%s at %s has been modified" % (t.id, ts)
                                     data['redir'] = 0
-                        except ValueError, e:
-                            self.log.debug("TicketDelete: Error is %s"%e)
-                            self.log.debug("TicketDelete: args = '%s'"%req.args.items())
-                            data['message'] = "Timestamp '%s' not valid" % req.args.get('ts')                    
                     
                 
         if path_info:
@@ -99,18 +97,13 @@ class TicketDeletePlugin(Component):
 
                     ticket_data = {}
                     for time, author, field, oldvalue, newvalue, perm in t.get_changelog():
-                        c_data = ticket_data.setdefault(str(time), {})
+                        c_data = ticket_data.setdefault(to_timestamp(time), {})
                         c_data.setdefault('fields', {})[field] = {'old': oldvalue, 'new': newvalue}
                         c_data['author'] = author
                         # FIXME: The datetime handling is not working - enable
                         # for traceback
-                        c_data['prettytime'] = strftime('%a, %d %b %Y %H:%M:%S',localtime(time))
+                        c_data['prettytime'] = strftime('%a, %d %b %Y %H:%M:%S',time.timetuple())
                     
-                    # Remove all attachment changes                    
-                    for k, v in ticket_data.items():
-                        if 'attachment' in v.get('fields', {}):
-                            del ticket_data[k]
-                            
                     # Check the boxes next to change number `selected`
                     time_list = list(sorted(ticket_data.iterkeys()))
                     if selected is not None and selected < len(time_list):
@@ -188,7 +181,7 @@ class TicketDeletePlugin(Component):
         ticket = Ticket(self.env,id)
         if field:
             if field == 'attachment':
-                pass # Better handling still pending
+                cursor.execute("DELETE FROM attachment WHERE type = 'ticket' AND id = %s AND time = %s", (id, ts))
             else:
                 custom_fields = [f['name'] for f in ticket.fields if f.get('custom')]
                 if field != "comment" and not [1 for time, author, field2, oldval, newval, _ in ticket.get_changelog() if time > ts and field == field2]:
@@ -199,7 +192,7 @@ class TicketDeletePlugin(Component):
                         cursor.execute("UPDATE ticket SET %s=%%s WHERE id=%%s" % field, (oldval, id))
                 cursor.execute("DELETE FROM ticket_change WHERE ticket = %s AND time = %s AND field = %s", (id, ts, field))
         else:
-            for _, _, field, _, _, _ in ticket.get_changelog(ts):
+            for _, _, field, _, _, _ in ticket.get_changelog(to_datetime(int(ts), utc)):
                 self._delete_change(id, ts, field)
             
         db.commit()

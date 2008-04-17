@@ -47,21 +47,15 @@
               <py:for each="change in ticketdelete.changes">
                 <tr>
                   <td><input type="checkbox" name="dontcare" value="dontcare" id="checkbox_${change}" checked="${change.checked or None}" /></td>
-                  <td colspan="3"><b>Change at ${change.prettytime} by ${change.author}</b></td>
+                  <td colspan="3"><b>Change at ${ticketdelete.changes[change].prettytime} by ${ticketdelete.changes[change].author}</b></td>
                   <td><input type="submit" name="delete_${change}" value="Delete change" /></td>
                   <tr>
-                    <py:for each="field in change.fields">
+                    <py:for each="field in ticketdelete.changes[change].fields">
                       <tr>
-                        <td><input type="checkbox" id="checkbox${field}_${change}" name="mdelete" value="${field}_${change}" checked="${change.checked or None}" /></td>
+                        <td><input type="checkbox" id="checkbox${field}_${change}" name="mdelete" value="${field}_${change}" checked="${ticketdelete.changes[change].checked or None}" /></td>
                         <td>${field}</td>
-                        <py:choose test="name(field)">
-                          <td py:when="comment" colspan="2">${field.new}</td>
-
-                          <py:otherwise>
-                            <td>${field.old}</td>
-                            <td>${field.new}</td>
-                          </py:otherwise>
-                        </py:choose>
+                        <td>${ticketdelete.changes[change].fields[field].old}</td>
+                        <td>${ticketdelete.changes[change].fields[field].new}</td>
                         <td><input type="submit" name="delete${field}_${change}" value="Delete field" /></td>
                       </tr>
                     </py:for>
