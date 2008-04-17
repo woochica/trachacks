@@ -12,6 +12,7 @@ from trac.util.html import html
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor
 from trac.web.chrome import *
+from trac.wiki import wiki_to_html, wiki_to_oneliner
 
 from trac.ticket import Milestone, Ticket, TicketSystem, ITicketManipulator
 
@@ -22,7 +23,7 @@ from webadmin.web_ui import IAdminPageProvider
 from pkg_resources import resource_filename
 
 import os
-import base64
+import pickle
 
 __all__ = ['TicketTemplateModule']
 
@@ -119,11 +120,11 @@ class TicketTemplateModule(Component):
         req.hdf['type'] = req.args.get('type')
 
         if req.method == 'POST':
-            tt_file_name = "description_%s.tmpl" % req.args.get('type')
-            tt_file_name_default = "description_%s.tmpl" % "default"
-            
-            tt_file = os.path.join(self.env.path, "templates", tt_file_name)
-            tt_file_default = os.path.join(self.env.path, "templates", tt_file_name_default)
+#            tt_file_name = "description_%s.tmpl" % req.args.get('type')
+#            tt_file_name_default = "description_%s.tmpl" % "default"
+#            
+#            tt_file = os.path.join(self.env.path, "templates", tt_file_name)
+#            tt_file_default = os.path.join(self.env.path, "templates", tt_file_name_default)
 
             # Load
             if req.args.get('loadtickettemplate'):
@@ -133,13 +134,30 @@ class TicketTemplateModule(Component):
 
             # Save
             elif req.args.get('savetickettemplate'):
-                tt_text = req.args.get('description').strip().replace('\r', '')
+                tt_text = req.args.get('description').replace('\r', '')
                 tt_name = req.args.get('type')
 
                 self._saveTemplateText(tt_name, tt_text)
                 req.hdf['tt_text'] = tt_text
+                
+            # Save
+            elif req.args.get('preview'):
+                tt_text = req.args.get('description').replace('\r', '')
+                tt_name = req.args.get('type')
+
+                description_preview = self._previewTemplateText(tt_name, tt_text, req)
+                req.hdf['tt_text'] = tt_text
+                req.hdf['description_preview'] = description_preview
 
         return 'admin_tickettemplate.cs', None
+
+    def _previewTemplateText(self, tt_name, tt_text, req):
+        """ preview ticket template
+        """
+        db = self.env.get_db_cnx()        
+        description_preview = wiki_to_html(tt_text, self.env, req, db)
+        return description_preview
+    
 
     # ITemplateProvider
     def get_templates_dirs(self):
@@ -164,44 +182,54 @@ class TicketTemplateModule(Component):
         return [('tt', resource_filename(__name__, 'htdocs'))]
     
     # private methods
-    def _getTTFilePath(self, tt_name):
+    def _getTTFilePath(self):
         """ get ticket template file path
         """
-        tt_file_name = "description_%s.tmpl" % base64.encodestring(tt_name.encode("utf-8"))
-        tt_file = os.path.join(self.env.path, "templates", tt_file_name)
-        return tt_file
+        return os.path.join(self.env.path, "templates", "description.tmpl")
 
-    def _loadTemplateText(self, tt_name):
-        """ load ticket template text from file.
+    def _loadTTDict(self):
+        """ load ticket template dict from file.
         """
-        tt_file         = self._getTTFilePath(tt_name)
-        tt_file_default = self._getTTFilePath(u"default")
+        tt_file = self._getTTFilePath()
 
         try:
-            fp = open(tt_file,'r')
-            tt_text = fp.read()
+            fp = open(tt_file,'rb')
+            tt_stream = fp.read()
             fp.close()
         except:
-            try:
-                fp = open(tt_file_default, 'r')
-                tt_text = fp.read()
-                fp.close()
-            except:
-                tt_text = ""
-                
-        return tt_text
+            tt_stream = ""
 
+        try:
+            tt_dict = pickle.loads(tt_stream)
+        except:
+            tt_dict = {}
+
+        return tt_dict
+    
+    def _loadTemplateText(self, tt_name):
+        """ get tempate text from tt_dict.
+            return tt_text if found in tt_dict
+                or default tt_text if exists
+                or empty string if default not exists.
+        """
+        tt_dict = self._loadTTDict()
+        return tt_dict.get(tt_name, tt_dict.get("default", ""))
+        
     def _saveTemplateText(self, tt_name, tt_text):
         """ save ticket template text to file.
         """
-        tt_file = self._getTTFilePath(tt_name)
-
+        # dump tt_dict
+        tt_dict = self._loadTTDict()
+        tt_dict[tt_name] = tt_text
+        tt_stream = pickle.dumps(tt_dict)
+        
+        tt_file = self._getTTFilePath()
         try:
-            fp = open(tt_file,'w')
-        except Exception, e:
+            fp = open(tt_file,'wb')
+        except:
             raise TracError("Can't write ticket template file %s" % tt_file)
         else:
-            fp.write(tt_text.encode("utf-8"))
+            fp.write(tt_stream)
             fp.close()
 
     def _getTicketTypeNames(self):

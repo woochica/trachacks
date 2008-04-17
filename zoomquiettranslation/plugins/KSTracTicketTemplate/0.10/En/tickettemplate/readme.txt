@@ -7,6 +7,9 @@
  * This version tested with Trac 10.4. Other Trac versions may work too.
 
 = Install =
+
+ '''IMPORTANT''': Please BACKUP you ticket templates if you are upgrading this plugin.
+
  You can install this software as normal Trac plugin.
 
  1. Uninstall TracTicketTemplate if you have installed before.
@@ -29,6 +32,7 @@ cp dist/*.egg /srv/trac/env/plugins
 tickettemplate.* = enabled
 }}}
 
+ 6. If you are installing this plugin first time, you can copy description.tmpl to your/trac/environment/templates to utilize some default ticket templates.
 
 = Prerequisite =
  * [http://trac-hacks.org/wiki/WebAdminPlugin WebAdminPlugin]
