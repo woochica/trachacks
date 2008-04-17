@@ -9,11 +9,12 @@
 
 
 
-<form id="savetickettemplate" method="post">
+<form id="savetickettemplate" action="tickettemplate" method="post">
 
   <div class="field"><label for="type">Type:</label> <?cs
    call:hdf_select(options, 'type', type, 0) ?>
     <input type="submit" name="loadtickettemplate" value=" Load " />
+    <input type="submit" name="loadhistory" value=" History " />
     <input type="submit" name="savetickettemplate" value=" Apply changes " />
     <input type="reset" value=" Reset " />  
   </div>
@@ -37,7 +38,6 @@
 
  <div class="buttons">
   <input type="submit" name="preview" value="preview" accesskey="r" />&nbsp;
-  <input type="submit" value="submit" />
  </div>
   
 </form>

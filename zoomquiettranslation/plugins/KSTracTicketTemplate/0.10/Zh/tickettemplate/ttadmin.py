@@ -8,11 +8,13 @@
 #----------------------------------------------------------------------------
 
 from trac.core import *
+from trac.db import DatabaseManager
 from trac.util.html import html
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor
 from trac.web.chrome import *
 from trac.wiki import wiki_to_html, wiki_to_oneliner
+from trac.perm import IPermissionRequestor
 
 from trac.ticket import Milestone, Ticket, TicketSystem, ITicketManipulator
 
@@ -24,6 +26,12 @@ from pkg_resources import resource_filename
 
 import os
 import pickle
+import inspect
+import time
+import textwrap
+
+from tickettemplate.model import schema, schema_version, TT_Template
+from default_templates import DEFAULT_TEMPLATES
 
 __all__ = ['TicketTemplateModule']
 
@@ -34,31 +42,64 @@ class TicketTemplateModule(Component):
                IAdminPageProvider, 
                INavigationContributor, 
                IRequestHandler, 
-#               IEnvironmentSetupParticipant, 
+               IEnvironmentSetupParticipant, 
+               IPermissionRequestor,
                )
+
+    # IPermissionRequestor methods
+
+    def get_permission_actions(self):
+        actions = ['TT_ADMIN']
+        return actions
 
     # IEnvironmentSetupParticipant methods
 
-#    def environment_created(self):
-#        """Create the `site_newticket.cs` template file in the environment."""
-#        if self.env.path:
-#            templates_dir = os.path.join(self.env.path, 'templates')
-#            if not os.path.exists(templates_dir):
-#                os.mkdir(templates_dir)
-#            template_name = os.path.join(templates_dir, 'site_newticket.cs')
-#            template_file = file(template_name, 'w')
-#            template_file.write("""<?cs
-#####################################################################
-## New ticket prelude - Included directly above the new ticket form
-#?>
-#""")
-#
-#    def environment_needs_upgrade(self, db):
-#        return False
-#
-#    def upgrade_environment(self, db):
-#        pass
+    def environment_created(self):
+        # Create the required tables
+        db = self.env.get_db_cnx()
+        connector, _ = DatabaseManager(self.env)._get_connector()
+        cursor = db.cursor()
+        for table in schema:
+            for stmt in connector.to_sql(table):
+                cursor.execute(stmt)
 
+        # Insert a global version flag
+        cursor.execute("INSERT INTO system (name,value) "
+                       "VALUES ('tt_version',%s)", (schema_version,))
+
+        # Create some default templates
+        for tt_name, tt_text in DEFAULT_TEMPLATES:
+            TT_Template.insert(self.env, tt_name, tt_text, 0)
+        
+        db.commit()
+
+    def environment_needs_upgrade(self, db):
+        cursor = db.cursor()
+        cursor.execute("SELECT value FROM system WHERE name='tt_version'")
+        row = cursor.fetchone()
+        if not row or int(row[0]) < schema_version:
+            return True
+
+    def upgrade_environment(self, db):
+        cursor = db.cursor()
+        cursor.execute("SELECT value FROM system WHERE name='tt_version'")
+        row = cursor.fetchone()
+        if not row:
+            self.environment_created()
+            current_version = 0
+        else:    
+            current_version = int(row[0])
+            
+        from tickettemplate import upgrades
+        for version in range(current_version + 1, schema_version + 1):
+            for function in upgrades.map.get(version):
+                print textwrap.fill(inspect.getdoc(function))
+                function(self.env, db)
+                print 'Done.'
+        cursor.execute("UPDATE system SET value=%s WHERE "
+                       "name='tt_version'", (schema_version,))
+        self.log.info('Upgraded tt tables from version %d to %d',
+                      current_version, schema_version)
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -114,23 +155,46 @@ class TicketTemplateModule(Component):
 
 
     def process_admin_request(self, req, cat, page, path_info):
-        req.perm.assert_permission('TRAC_ADMIN')
+        req.perm.assert_permission('TT_ADMIN')
         
         req.hdf['options'] = self._getTicketTypeNames()
         req.hdf['type'] = req.args.get('type')
 
-        if req.method == 'POST':
-#            tt_file_name = "description_%s.tmpl" % req.args.get('type')
-#            tt_file_name_default = "description_%s.tmpl" % "default"
-#            
-#            tt_file = os.path.join(self.env.path, "templates", tt_file_name)
-#            tt_file_default = os.path.join(self.env.path, "templates", tt_file_name_default)
+        
+        if req.args.has_key("id"):
+            # after load history
+            id = req.args.get("id")
+            req.hdf['tt_text'] = self._loadTemplateTextById(id)
+            req.hdf['type'] = self._getNameById(id)
+
+        
+        elif req.method == 'POST':
 
             # Load
             if req.args.get('loadtickettemplate'):
                 tt_name = req.args.get('type')
 
                 req.hdf['tt_text'] = self._loadTemplateText(tt_name)
+
+            # Load history
+            if req.args.get('loadhistory'):
+                tt_name = req.args.get('type')
+                
+                req.hdf['tt_name'] = tt_name
+                
+                tt_history = []
+                for id,modi_time,tt_name,tt_text in TT_Template.selectByName(self.env, tt_name):
+                    history = {}
+                    history["id"] = id
+                    history["tt_name"] = tt_name
+                    history["modi_time"] = self._formatTime(int(modi_time))
+                    history["tt_text"] = tt_text
+                    history["href"] = req.abs_href.admin(cat, page, {"id":id})
+                    tt_history.append(history)
+                
+                req.hdf['tt_history'] = tt_history
+                                
+                return 'loadhistory.cs', None
 
             # Save
             elif req.args.get('savetickettemplate'):
@@ -140,7 +204,7 @@ class TicketTemplateModule(Component):
                 self._saveTemplateText(tt_name, tt_text)
                 req.hdf['tt_text'] = tt_text
                 
-            # Save
+            # preview
             elif req.args.get('preview'):
                 tt_text = req.args.get('description').replace('\r', '')
                 tt_name = req.args.get('type')
@@ -182,55 +246,40 @@ class TicketTemplateModule(Component):
         return [('tt', resource_filename(__name__, 'htdocs'))]
     
     # private methods
-    def _getTTFilePath(self):
-        """ get ticket template file path
-        """
-        return os.path.join(self.env.path, "templates", "description.tmpl")
 
-    def _loadTTDict(self):
-        """ load ticket template dict from file.
-        """
-        tt_file = self._getTTFilePath()
-
-        try:
-            fp = open(tt_file,'rb')
-            tt_stream = fp.read()
-            fp.close()
-        except:
-            tt_stream = ""
-
-        try:
-            tt_dict = pickle.loads(tt_stream)
-        except:
-            tt_dict = {}
-
-        return tt_dict
-    
     def _loadTemplateText(self, tt_name):
         """ get tempate text from tt_dict.
-            return tt_text if found in tt_dict
+            return tt_text if found in db
                 or default tt_text if exists
                 or empty string if default not exists.
         """
-        tt_dict = self._loadTTDict()
-        return tt_dict.get(tt_name, tt_dict.get("default", ""))
+        tt_text = TT_Template.fetch(self.env, tt_name)
+        if not tt_text:
+            tt_text = TT_Template.fetch(self.env, "default")
+        
+        return tt_text
+
+    def _getNameById(self, id):
+        """ get tempate name from tt_dict.
+        """
+        tt_name = TT_Template.getNameById(self.env, id)
+        
+        return tt_name        
+        
+        
+    def _loadTemplateTextById(self, id):
+        """ get tempate text from tt_dict.
+        """
+        tt_text = TT_Template.fetchById(self.env, id)
+        
+        return tt_text        
         
     def _saveTemplateText(self, tt_name, tt_text):
-        """ save ticket template text to file.
+        """ save ticket template text to db.
         """
-        # dump tt_dict
-        tt_dict = self._loadTTDict()
-        tt_dict[tt_name] = tt_text
-        tt_stream = pickle.dumps(tt_dict)
         
-        tt_file = self._getTTFilePath()
-        try:
-            fp = open(tt_file,'wb')
-        except:
-            raise TracError("Can't write ticket template file %s" % tt_file)
-        else:
-            fp.write(tt_stream)
-            fp.close()
+        id = TT_Template.insert(self.env, tt_name, tt_text, time.time())
+        return id
 
     def _getTicketTypeNames(self):
         """ get ticket type names
@@ -246,3 +295,7 @@ class TicketTemplateModule(Component):
 
         return options
 
+    def _formatTime(self, modi_time):
+        """
+        """
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(modi_time))

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name = 'TracTicketTemplate',
-    version = '0.3',
+    version = '0.5',
     packages = ['tickettemplate'],
     package_data = { 'tickettemplate': [ '*.txt', 'templates/*.*', 'htdocs/*.*', 'tests/*.*' ] },
 

@@ -14,6 +14,7 @@
   <div class="field"><label for="type">种类:</label> <?cs
    call:hdf_select(options, 'type', type, 0) ?>
     <input type="submit" name="loadtickettemplate" value=" 载入模板 " />
+    <input type="submit" name="loadhistory" value=" 载入历史 " />
     <input type="submit" name="savetickettemplate" value=" 应用修改 " />
     <input type="reset" value=" 重置 " />  
   </div>
@@ -36,7 +37,6 @@
 
  <div class="buttons">
   <input type="submit" name="preview" value="预览" accesskey="r" />&nbsp;
-  <input type="submit" value="发送" />
  </div>
   
 </form>
