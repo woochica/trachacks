@@ -14,6 +14,7 @@ import re
 from genshi.builder import tag
 from genshi.core import Markup
 
+from trac.util.compat import sorted
 from trac.util.presentation import group
 
 
