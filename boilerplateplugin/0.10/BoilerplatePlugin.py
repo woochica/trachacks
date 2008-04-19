@@ -30,6 +30,13 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# INSTALLATION
+#
+# Copy the BoilerplatePlugin.py file to your trac plugins directory
+# (/usr/share/trac/plugins on my machine).
+#
+# No other configuration is neccessary. 
+
 import re
 from trac.core import *
 from trac.wiki.api import IWikiChangeListener, IWikiMacroProvider
