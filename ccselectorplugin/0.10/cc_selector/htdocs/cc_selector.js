@@ -42,28 +42,59 @@ function show_selection(e)
   return;
 }
 
+function guess_cc_field()
+{
+  doc = document;
+
+  if (window.opener)
+  {
+    // alert("QQ1: shifting to parent");
+    doc = window.opener.document;
+  }
+
+  cc_field = "cc";
+  if (doc.getElementById(cc_field))
+    return cc_field;
+
+  cc_field = "field-cc";
+  if (doc.getElementById(cc_field))
+    return cc_field;
+
+
+  // alert("QQ2: could not find cc field, giving up");
+}
+
 // onload function. Used in both ticket window and in pop-up.
 function afterLoad()
 {
-  after_field = "cc";
-  p = document.getElementById(after_field);
-  if ( ! p )  
+  
+  // guess fromid (possible values: cc, from-cc)
+  cc_field = guess_cc_field()
+
+  nurl = document.location.href.split('/');
+  if ( nurl.pop() == 'cc_selector.html')
   {
-    split_into_checkboxes('cc', 'ccdiv')
-    return;
+    // we're in pop-up window
+    // create checkboxes
+    split_into_checkboxes(cc_field, 'ccdiv')
   }
-  
-  p = p.parentNode;
-  
-  var ccb = document.createElement('input');
-  ccb.setAttribute("type", "button");
-  ccb.setAttribute("id", "ccbutton");
-  ccb.setAttribute("name", "ccbutton");
-  ccb.setAttribute("value", ">");
-  ccb.setAttribute("alt", "Extended CC selection");
-  // ccb.setAttribute("onClick", "show_selection()");
-  ccb.onclick = show_selection;
-  p.appendChild(ccb);
+  else
+  {
+    // we're on ticket window
+    // create button
+    p = document.getElementById(cc_field);
+    p = p.parentNode;
+    
+    var ccb = document.createElement('input');
+    ccb.setAttribute("type", "button");
+    ccb.setAttribute("id", "ccbutton");
+    ccb.setAttribute("name", "ccbutton");
+    ccb.setAttribute("value", ">");
+    ccb.setAttribute("alt", "Extended CC selection");
+    // ccb.setAttribute("onClick", "show_selection()");
+    ccb.onclick = show_selection;
+    p.appendChild(ccb);
+  }
 }
 
 // split CC string into object
@@ -126,7 +157,7 @@ function cc_toggle(name, field, ckbox) {
 // Fill given div with CC field contents
 function split_into_checkboxes(fromid, toid) {
   t = document.getElementById(toid);
- 
+  
   devs = split_field(fromid);
 
   for (var w in devs) {
