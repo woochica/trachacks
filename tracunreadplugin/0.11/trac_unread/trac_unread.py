@@ -67,13 +67,8 @@ class TracUnreadFilter(Component):
 
         # now, save this view into DB
         self.save_view_into_db(username, last_read_on, type, id)
-
-    # for ClearSilver templates (trac 0.10 and below)
-    def post_process_request(self, req, template, content_type):
-        self._post_process_request(req)
-        return (template, content_type)
     
     # for Genshi templates (trac 0.11)
-    # def post_process_request(self, req, template, data, content_type):
-    #     self._post_process_request(req)
-    #     return (template, data, content_type)
+    def post_process_request(self, req, template, data, content_type):
+        self._post_process_request(req)
+        return (template, data, content_type)
