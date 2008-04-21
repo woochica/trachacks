@@ -24,6 +24,7 @@
 
 from trac.core import Component, implements
 from trac.db.api import DatabaseManager
+from trac.config import Option
 from acct_mgr.api import IPasswordStore
 
 from phpbbauth.phpass import crypt_private
@@ -42,13 +43,18 @@ class PhpBBAuthStore(Component):
     def config_key(self):
         """ Deprecated """
 
-    def get_users(self):
+    def get_users(self, populate_session=True):
         """ Pull list of current users from PhpBB3 """
         cnx = PhpDatabaseManager(self.env).get_connection()
         cur = cnx.cursor()
-        cur.execute('SELECT username FROM phpbb_users WHERE user_type <> 2')
+        cur.execute('SELECT username, user_email, user_lastvisit'
+                    '  FROM phpbb_users '
+                    ' WHERE user_type <> 2')
+        userinfo = [u for u in cur]
         cnx.close()
-        return cur and [u for u in cur] or []
+        if populate_session:
+            self._populate_user_session(userinfo)
+        return [u[0] for u in userinfo]
 
     def has_user(self, user):
         """ Check for a user in PhpBB3 """
@@ -56,8 +62,9 @@ class PhpBBAuthStore(Component):
         cur = cnx.cursor()
         cur.execute('SELECT username FROM phpbb_users WHERE user_type <> 2'
                     ' AND username = %s', (user,))
+        result = [u for u in cur]
         cnx.close()
-        return cur and True or False
+        return result and True or False
 
 #    def set_password(self, user, password):
 #        """ Set the password for the selected user. """
@@ -84,6 +91,45 @@ class PhpBBAuthStore(Component):
 
     def _get_pwhash(self, user):
         """ Return the password hash from the database """
+        cnx = PhpDatabaseManager(self.env).get_connection()
+        cur = cnx.cursor()
+        cur.execute('SELECT user_password'
+                    '  FROM phpbb_users'
+                    ' WHERE user_type <> 2'
+                    '   AND username = %s', (user,))
+        result = cur.fetchone()
+        pwhash = result and result[0] or None
+        cnx.close()
+        return pwhash
+
+    def _populate_user_session(self, userinfo):
+        """ Create user session entries and populate email and last visit """
+
+        # Kind of ugly.  First try to insert a new session record.  If it
+        # fails, don't worry, means it's already there.  Second, insert the
+        # email address session attribute.  If it fails, don't worry, it's
+        # already there.
+        cnx = self.env.get_db_cnx()
+        for uname, email, lastvisit in userinfo:
+            try:
+		cur = cnx.cursor()
+                cur.execute('INSERT INTO session (sid, authenticated, '
+                            'last_visit) VALUES (%s, 1, %s)',
+                            (uname, lastvisit))
+                cnx.commit()
+            except:
+                cnx.rollback()
+            try:
+		cur = cnx.cursor()
+                cur.execute("INSERT INTO session_attribute"
+                            "    (sid, authenticated, name, value)"
+                            " VALUES (%s, 1, 'email', %s)",
+                            (uname, email))
+                cnx.commit()
+            except:
+                cnx.rollback()
+            continue
+        cnx.close()
          
 
 

@@ -10,7 +10,7 @@ setup(
     url = 'http://trac-hacks.org/wiki/PhpBbAuthPlugin',
     description = 'Authentication against PhpBB3.  Requires Account Manager',
 
-    license = 'MIT'
+    license = 'MIT',
     zip_safe=True,
     packages=['phpbbauth'],
     install_requires = [
@@ -19,7 +19,7 @@ setup(
 
     entry_points = {
         'trac.plugins': [
-            'phpbbauth.main = main.main',
+            'phpbbauth.main = phpbbauth.main',
         ]
     },
 
