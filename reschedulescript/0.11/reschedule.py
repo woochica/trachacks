@@ -27,6 +27,10 @@ def makeParser():
                       help="name of schema containing milestone table")
     parser.add_option("-c", "--commit", default=False, action='store_true',
                       help="commit changes to table")
+    parser.add_option("-C", "--comment", default=False, action='store_true',
+                      help="include 'Rescheduled from YYYY/MM/DD to YYYY/MM/DD' comments")
+    parser.add_option("-v", "--verbose", default=False, action='store_true',
+                      help="show SQL")
 
     return parser
 
@@ -52,8 +56,12 @@ def main():
     else:
         conn = dbmod.connect(dsn=connectString)
     curs = conn.cursor()
-    fDue, fName, fNew = range(3)  # names of fields, fNew to be derived later
-    curs.execute('select due, name from %smilestone order by due' % opt.schema)
+
+    fDue, fName, fComp, fNew = range(4)
+    # names of fields, fNew to be derived later
+
+    curs.execute('select due, name, completed from %smilestone order by due'
+                 % opt.schema)
     res = [list(i) for i in curs.fetchall()]
 
     fmt = '%Y%m%d'
@@ -67,18 +75,35 @@ def main():
         else:
             setattr(opt, o, ts(time.strptime(getattr(opt, o), fmt)))
 
+    comp = []
     for i in res:
-        i.append( float(i[fDue]-opt.old) / (res[-1][fDue]-opt.old) *
-                  (opt.end - opt.start) + opt.start);
-        print '%s -> %s: %s' % (ds(i[fDue]), ds(i[fNew]), i[fName])
+        if i[fComp]:
+            comp.append('%s due %s, completed %s' 
+                % (i[fName],ds(i[fDue]),ds(i[fComp])))
+        else:
+            i.append( float(i[fDue]-opt.old) / (res[-1][fDue]-opt.old) *
+                      (opt.end - opt.start) + opt.start);
+            print '%s -> %s: %s' % (ds(i[fDue]), ds(i[fNew]), i[fName])
 
-        if opt.commit:
             q = ( "update %smilestone set due = %d where name='%s'"
                   % (opt.schema, int(i[fNew]), i[fName]))
-            curs.execute(q)
+            if opt.verbose: print q
+            if opt.commit:
+                curs.execute(q)
+            if opt.comment:
+                q = ( "update %smilestone set description = description || "
+                      "'\\n\\nRescheduled from %s to %s' where name='%s'"
+                      % (opt.schema, ds(i[fDue]), ds(i[fNew]), i[fName]))
+                if opt.verbose: print q
+                if opt.commit:
+                    curs.execute(q)
 
     if opt.commit:
         conn.commit()
+
+    if comp:
+        print ('Completed milestones unchanged:\n%s' 
+               % '\n'.join(['  '+i for i in comp]))
 
 if __name__ == '__main__':
 
