@@ -19,7 +19,7 @@ from trac import util
 from trac.util import escape, Markup
 from codereview.dbBackend import *
 from trac.web.chrome import add_stylesheet
-
+import itertools
 
 class UserbaseModule(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor)
@@ -46,28 +46,23 @@ class UserbaseModule(Component):
                                         
 
     def process_request(self, req):
+
+        data = {}
         # test whether this user is a manager or not
         if req.perm.has_permission('CODE_REVIEW_MGR'):
-            req.hdf['author'] = "manager"
-            req.hdf['manager'] = 1
+            data['author'] = "manager"
+            data['manager'] = 1
         else:
             req.perm.assert_permission('CODE_REVIEW_DEV')
-            req.hdf['author'] = "notmanager"
-            req.hdf['manager'] = 0
+            data['author'] = "notmanager"
+            data['manager'] = 0
 
-        # set up dynamic links
-        req.hdf['trac.href.peerReviewMain'] = self.env.href.peerReviewMain()
-        req.hdf['trac.href.peerReviewNew'] = self.env.href.peerReviewNew()
-        req.hdf['trac.href.peerReviewSearch'] = self.env.href.peerReviewSearch()
-        req.hdf['trac.href.peerReviewOptions'] = self.env.href.peerReviewOptions()
+        data['main'] = "yes"
+        data['create'] = "no"
+        data['search'] = "no"
+        data['option'] = "no"
 
-        req.hdf['main'] = "yes"
-        req.hdf['create'] = "no"
-        req.hdf['search'] = "no"
-        req.hdf['options'] = "no"
-
-        req.hdf['trac.href.peerReviewView'] = self.env.href.peerReviewView()
-        req.hdf['username'] = util.get_reporter_id(req)
+        data['username'] = util.get_reporter_id(req)
 
         db = self.env.get_db_cnx()
         codeReview = CodeReviewStruct(None)
@@ -100,11 +95,11 @@ class UserbaseModule(Component):
                 dataArray.append(struct.Name)
                 dataArray.append(util.format_date(struct.DateCreate))            
                 reviewstruct = dbBack.getReviewerEntry(struct.IDReview, util.get_reporter_id(req))
-                if reviewstruct.Vote == "-1":
+                if reviewstruct.Vote == -1:
                     dataArray.append('Not voted')
-                elif reviewstruct.Vote == "0":
+                elif reviewstruct.Vote == 0:
                     dataArray.append('Rejected')
-                elif reviewstruct.Vote == "1":
+                elif reviewstruct.Vote == 1:
                     dataArray.append('Accepted')
                 assignedReturnArray.append(dataArray)
                 dataArray = []
@@ -120,17 +115,21 @@ class UserbaseModule(Component):
                 managerReturnArray.append(dataArray)
                 dataArray = []
 
-        req.hdf['reviewReturnArrayLength'] = len(reviewReturnArray)
-        req.hdf['assignedReturnArrayLength'] = len(assignedReturnArray)
-        req.hdf['managerReviewArrayLength'] = len(managerReviewArray)
+        data['reviewReturnArrayLength'] = len(reviewReturnArray)
+        data['assignedReturnArrayLength'] = len(assignedReturnArray)
+        data['managerReviewArrayLength'] = len(managerReviewArray)
 
-        req.hdf['myCodeReviews'] = reviewReturnArray
-        req.hdf['assignedReviews'] = assignedReturnArray
-        req.hdf['managerReviews'] = managerReturnArray
+        data['myCodeReviews'] = reviewReturnArray
+        data['assignedReviews'] = assignedReturnArray
+        data['managerReviews'] = managerReturnArray
+
         add_stylesheet(req, 'common/css/code.css')
         add_stylesheet(req, 'common/css/browser.css')	
-        return 'peerReviewMain.cs', None
-                
+
+        data['cycle'] = itertools.cycle
+
+        return 'peerReviewMain.html', data, None
+
     # ITemplateProvider methods
     def get_templates_dirs(self):
         """
