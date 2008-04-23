@@ -184,8 +184,8 @@ class TicketDeletePlugin(Component):
                 cursor.execute("DELETE FROM attachment WHERE type = 'ticket' AND id = %s AND time = %s", (id, ts))
             else:
                 custom_fields = [f['name'] for f in ticket.fields if f.get('custom')]
-                if field != "comment" and not [1 for time, author, field2, oldval, newval, _ in ticket.get_changelog() if time > ts and field == field2]:
-                    oldval = [old for _, _, field2, old, _, _ in ticket.get_changelog(ts) if field2 == field][0]
+                if field != "comment" and not [1 for time, author, field2, oldval, newval, _ in ticket.get_changelog() if to_timestamp(time) > int(ts) and field == field2]:
+                    oldval = [old for _, _, field2, old, _, _ in ticket.get_changelog(to_datetime(int(ts))) if field2 == field][0]
                     if field in custom_fields:
                         cursor.execute("UPDATE ticket_custom SET value=%s WHERE ticket=%s AND name=%s", (oldval, id, field))
                     else:
