@@ -21,6 +21,7 @@ from codereview.dbBackend import *
 from codereview.ReviewerStruct import *
 from trac.web.chrome import add_stylesheet
 import time
+import itertools
 
 class UserbaseModule(Component):
     implements(IRequestHandler, ITemplateProvider, INavigationContributor)
@@ -40,41 +41,39 @@ class UserbaseModule(Component):
                                         
 
     def process_request(self, req):
+        
+        data = {}
+
         if req.perm.has_permission('CODE_REVIEW_MGR'):
-            req.hdf['manager'] = 1
+            data['manager'] = 1
         else:
             req.perm.assert_permission('CODE_REVIEW_DEV')
-            req.hdf['manager'] = 0
+            data['manager'] = 0
 
-        # set up the dynamic links
-        req.hdf['trac.href.peerReviewMain'] = self.env.href.peerReviewMain()
-        req.hdf['trac.href.peerReviewNew'] = self.env.href.peerReviewNew()
-        req.hdf['trac.href.peerReviewSearch'] = self.env.href.peerReviewSearch()
-        req.hdf['trac.href.peerReviewOptions'] = self.env.href.peerReviewOptions()
+        data['main'] = "no"
+        data['create'] = "yes"
+        data['search'] = "no"
+        data['option'] = "no"
 
-        req.hdf['main'] = "no"
-        req.hdf['create'] = "yes"
-        req.hdf['search'] = "no"
-        req.hdf['options'] = "no"
-            
         db = self.env.get_db_cnx()
         dbBack = dbBackend(db)
         allUsers = dbBack.getPossibleUsers()
+
         reviewID = req.args.get('resubmit')
-        req.hdf['oldid'] = -1
+        data['oldid'] = -1
 
         # if we tried resubmitting and the reviewID is not a valid number or not a valid code review, error
         if reviewID != None and (not reviewID.isdigit() or dbBack.getCodeReviewsByID(reviewID) == None):
-            req.hdf['error.type'] = "TracError"
-            req.hdf['error.title'] = "Resubmit ID error"
-            req.hdf['error.message'] = "Invalid resubmit ID supplied - unable to load page correctly."
-            return 'error.cs', None
-            
+            data['error.type'] = "TracError"
+            data['error.title'] = "Resubmit ID error"
+            data['error.message'] = "Invalid resubmit ID supplied - unable to load page correctly."
+            return 'error.html', data, None
+
         # if we are resubmitting a code review and we are the author or the manager
         if reviewID != None and (dbBack.getCodeReviewsByID(reviewID).Author == util.get_reporter_id(req) or req.perm.has_permission('CODE_REVIEW_MGR')):
             review = dbBack.getCodeReviewsByID(reviewID)
-            req.hdf['new'] = "no"
-            req.hdf['oldid'] = reviewID
+            data['new'] = "no"
+            data['oldid'] = reviewID
             # get code review data and populate
             userStructs = dbBack.getReviewers(reviewID)
             returnUsers = ""
@@ -82,6 +81,7 @@ class UserbaseModule(Component):
             for struct in userStructs:
                 returnUsers+=struct.Reviewer + "#"
                 popUsers.append(struct.Reviewer)
+
             files = dbBack.getReviewFiles(reviewID)
             returnFiles = ""
             popFiles = []
@@ -94,12 +94,13 @@ class UserbaseModule(Component):
                 tempFiles.append(struct.LineStart)
                 tempFiles.append(struct.LineEnd)
                 popFiles.append(tempFiles);
-            req.hdf['files'] = returnFiles
-            req.hdf['name'] = review.Name
-            req.hdf['notes'] = review.Notes
-            req.hdf['reviewers'] = returnUsers
-            req.hdf['prevUsers'] = popUsers
-            req.hdf['prevFiles'] = popFiles
+
+            data['files'] = returnFiles
+            data['name'] = review.Name
+            data['notes'] = review.Notes
+            data['reviewers'] = returnUsers
+            data['prevUsers'] = popUsers
+            data['prevFiles'] = popFiles
 
             # Figure out the users that were not included
             # in the previous code review so that they can be
@@ -115,20 +116,20 @@ class UserbaseModule(Component):
                             break
                     if match == "no":
                         notUsers.append(user)
-                req.hdf['notPrevUsers'] = notUsers
-                req.hdf['emptyList'] = 0
+                data['notPrevUsers'] = notUsers
+                data['emptyList'] = 0
             else:
-                req.hdf['notPrevUsers'] = []
-                req.hdf['emptyList'] = 1
+                data['notPrevUsers'] = []
+                data['emptyList'] = 1
         #if we resubmitting a code review, and are neiter the author and the manager
         elif reviewID != None and not dbBack.getCodeReviewsByID(reviewID).Author == util.get_reporter_id(req) and not req.perm.has_permission('CODE_REVIEW_MGR'):
-            req.hdf['error.type'] = "TracError"
-            req.hdf['error.title'] = "Access error"
-            req.hdf['error.message'] = "You need to be a manager or the author of this code review to resubmit it."
-            return 'error.cs', None
+            data['error.type'] = "TracError"
+            data['error.title'] = "Access error"
+            data['error.message'] = "You need to be a manager or the author of this code review to resubmit it."
+            return 'error.html', data, None
         #if we are not resubmitting
         else:
-            if req.args.get('reqAction') == 'createCodeReview':              
+            if req.args.get('reqAction') == 'createCodeReview':
                 oldid = req.args.get('oldid')
                 if oldid != None:
                     review = dbBack.getCodeReviewsByID(oldid)
@@ -138,14 +139,19 @@ class UserbaseModule(Component):
                 #If no errors then redirect to the viewCodeReview page
                 req.redirect(self.env.href.peerReviewView() + '?Review=' + str(returnid))
             else:
-                req.hdf['new'] = "yes"
-                
-        req.hdf['users'] = allUsers
-        req.hdf['trac.href.peerReviewBrowser'] = self.env.href.peerReviewBrowser()
-	add_stylesheet(req, 'common/css/code.css')
-        add_stylesheet(req, 'common/css/browser.css')
-        return 'peerReviewNew.cs', None
-                
+                data['new'] = "yes"
+
+        if data['new'] == "yes":
+            data['reviewersSelectedValue'] = {'value': ''}
+            data['filesSelectedValue'] = {'value': ''} 
+        else:
+            data['reviewersSelectedValue'] = {'value': returnUsers}
+            data['filesSelectedValue'] = {'value': returnFiles} 
+
+        data['users'] = allUsers
+        data['cycle'] = itertools.cycle
+
+        return 'peerReviewNew.html', data, None
 
     # ITemplateProvider methods
     def get_templates_dirs(self):

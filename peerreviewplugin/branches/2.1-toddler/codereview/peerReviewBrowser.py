@@ -22,6 +22,7 @@ from trac.web import IRequestHandler, RequestDone
 from trac.web.chrome import add_link, add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner, IWikiSyntaxProvider
 from trac.versioncontrol.web_ui.util import *
+from trac.util import sorted, embedded_numbers
 
 from genshi.builder import tag
 
@@ -81,6 +82,8 @@ class peerReviewBrowser(Component):
             return True
 
     def process_request(self, req):
+
+        data = {}
         path = req.args.get('path', '/')
         rev = req.args.get('rev')
 
@@ -95,59 +98,83 @@ class peerReviewBrowser(Component):
         hidden_properties = [p.strip() for p
                              in self.config.get('browser', 'hide_properties',
                                                 'svk:merge').split(',')]
-        req.hdf['title'] = path
-        req.hdf['browser'] = {
-            'path': path,
-            'revision': rev or repos.youngest_rev,
-            'props': dict([(util.escape(name), util.escape(value))
-                           for name, value in node.get_properties().items()
-                           if not name in hidden_properties]),
-            'href': util.escape(self.env.href.peerReviewBrowser(path, rev=rev or
-                                                      repos.youngest_rev)),
-            'log_href': util.escape(self.env.href.log(path, rev=rev or None))
-        }
-
         context = Context.from_request(req, 'source', path, node.created_rev)
 
         path_links = self.get_path_links_CRB(self.env.href, path, rev)
         if len(path_links) > 1:
             add_link(req, 'up', path_links[-2]['href'], 'Parent directory')
-        req.hdf['browser.path'] = path_links
 
-        if node.isdir:
-            req.hdf['browser.is_dir'] = True
-            self._render_directory(req, repos, node, rev)
-        else:
-            self._render_file(req, context, repos, node, rev)
+        data = {
+            'path': path, 'rev': node.rev, 'stickyrev': rev,
+            'revision': rev or repos.youngest_rev,
+            'props': dict([(util.escape(name), util.escape(value))
+                           for name, value in node.get_properties().items()
+                           if not name in hidden_properties]),
+            'log_href': util.escape(self.env.href.log(path, rev=rev or None)),
+            'path_links': path_links,
+            'dir': node.isdir and self._render_directory(req, repos, node, rev),
+            'file': node.isfile and self._render_file(req, context, repos, node, rev) 
+        }
 
         add_stylesheet(req, 'common/css/browser.css')
-        return 'peerReviewBrowser.cs', None
+        add_stylesheet(req, 'common/css/code.css')
+        
+	return 'peerReviewBrowser.html', data, None
 
     # Internal methods
 
-    def get_path_links_CRB(self, href, path, rev):
-        links = []
-        parts = path.split('/')
-        if not parts[-1]:
-            parts.pop()
+    def get_path_links_CRB(self, href, fullpath, rev):
+
         path = '/'
-        for part in parts:
-            path = path + part + '/'
+        links = [{'name': 'root',
+                  'href': href.peerReviewBrowser(path, rev=rev)}]
+
+        for part in [p for p in fullpath.split('/') if p]:
+            path += part + '/'
             links.append({
-                'name': part or 'root',
-                'href': util.escape(href.peerReviewBrowser(path, rev=rev))
-            })
+                'name': part,
+                'href': href.peerReviewBrowser(path, rev=rev)
+                })
         return links
 
     def _render_directory(self, req, repos, node, rev=None):
         req.perm.assert_permission('BROWSER_VIEW')
 
         order = req.args.get('order', 'name').lower()
-        req.hdf['browser.order'] = order
         desc = req.args.has_key('desc')
-        req.hdf['browser.desc'] = desc and 1 or 0
+
+        # Entries metadata
+        class entry(object):
+            __slots__ = 'name rev kind isdir path content_length'.split()
+            def __init__(self, node):
+                for f in entry.__slots__:
+                    setattr(self, f, getattr(n, f))
+            def display(self):
+                result = ''
+                for f in entry.__slots__:
+                    result = "%s slot: %s, value: %s;" % (result, f, getattr(n, f))
+
+                return result
+
 
         info = []
+
+        if order == 'date':
+            def file_order(a):
+                return changes[a.rev].date
+        elif order == 'size':
+            def file_order(a):
+                return (a.content_length,
+                        embedded_numbers(a.name.lower()))
+        else:
+            def file_order(a):
+                return embedded_numbers(a.name.lower())
+
+        dir_order = desc and 1 or -1
+
+        def browse_order(a):
+            return a.isdir and dir_order or 0, file_order(a)
+
         for entry in node.get_entries():
             entry_rev = rev and entry.rev
             info.append({
@@ -179,22 +206,14 @@ class peerReviewBrowser(Component):
                                             b['name'].lower())
         info.sort(cmp_func)
 
-        req.hdf['browser.items'] = info
-        req.hdf['browser.changes'] = changes
+        return {'order': order, 'desc': desc and 1 or None,
+                'items': info, 'changes': changes }
 
     def _render_file(self, req, context, repos, node, rev=None):
         req.perm(context.resource).require('FILE_VIEW')
 
         changeset = repos.get_changeset(node.rev)
-        req.hdf['file'] = {
-            'rev': node.rev,
-            'changeset_href': util.escape(self.env.href.changeset(node.rev)),
-            'date': util.format_datetime(changeset.date),
-            'age': util.pretty_timedelta(changeset.date),
-            'author': changeset.author or 'anonymous',
-            'message': wiki_to_html(changeset.message or '--', self.env, req,
-                                    escape_newlines=True)
-        }
+
         mime_type = node.content_type
         if not mime_type or mime_type == 'application/octet-stream':
             mime_type = get_mimetype(node.name) or mime_type or 'text/plain'
@@ -238,14 +257,7 @@ class peerReviewBrowser(Component):
                 add_link(req, 'alternate', plain_href, 'Plain Text',
                          'text/plain')
 
-            # content = node.get_content().read(mimeview.max_preview_size)
-            #if not is_binary(content):
-            #    if mime_type != 'text/plain':
-            #        plain_href = self.env.href.peerReviewBrowser(node.path,
-            #                                           rev=rev and node.rev,
-            #                                           format='txt')
-            #        add_link(req, 'alternate', plain_href, 'Plain Text',
-            #                 'text/plain')
+            add_stylesheet(req, 'common/css/code.css')
 
             raw_href = self.env.href.peerReviewBrowser(node.path, rev=rev and node.rev,
                                              format='raw')
@@ -255,17 +267,20 @@ class peerReviewBrowser(Component):
                                                     raw_href,
                                                     annotations=['lineno'])
 
-            req.hdf['file'] = preview_data
-
             add_link(req, 'alternate', raw_href, 'Original Format', mime_type)
-
-            add_stylesheet(req, 'common/css/code.css')
 
             return {
                 'changeset': changeset,
                 'size': node.content_length,
-                'preview': preview_data,
+                'preview': preview_data['rendered'],
                 'annotate': False,
+                'rev': node.rev,
+                'changeset_href': util.escape(self.env.href.changeset(node.rev)),
+                'date': util.format_datetime(changeset.date),
+                'age': util.pretty_timedelta(changeset.date),
+                'author': changeset.author or 'anonymous',
+                'message': wiki_to_html(changeset.message or '--', self.env, req,
+                                        escape_newlines=True)
                 }
     # IWikiSyntaxProvider methods
     
