@@ -764,6 +764,8 @@ class DownloadsApi(Component):
         # Test if file is uploaded.
         if not hasattr(file, 'filename') or not file.filename:
             raise TracError('No file uploaded.')
+
+        # Get file size.
         if hasattr(file.file, 'fileno'):
             size = os.fstat(file.file.fileno())[6]
         else:
@@ -772,5 +774,8 @@ class DownloadsApi(Component):
             file.file.seek(0)
         if size == 0:
             raise TracError('Can\'t upload empty file.')
+
+        # Strip path from filename.
+        filename = os.path.basename(file.filename)
 
         return file.file, unicode_unquote(file.filename), size

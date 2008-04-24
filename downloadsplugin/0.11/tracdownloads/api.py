@@ -810,4 +810,7 @@ class DownloadsApi(Component):
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 
-        return file.file, unicode_unquote(file.filename), size
+        # Strip path from filename.
+        filename = os.path.basename(file.filename)
+
+        return file.file, unicode_unquote(filename), size
