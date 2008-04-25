@@ -29,7 +29,10 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import hashlib
+try:
+    from hashlib import sha1
+except ImportError:
+     from sha import new as sha1
 
 from trac.core import Component, implements
 from trac.config import Option
@@ -88,7 +91,7 @@ class TracAuthStore(Component):
         hashed = self._get_pwhash(user)
         if not hashed:
             return False
-        return hashlib.sha1(password).hexdigest() == hashed
+        return sha1(password).hexdigest() == hashed
 
     def delete_user(self, user):
         """ Delete the user """
