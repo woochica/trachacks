@@ -33,6 +33,9 @@ class IProjectSetupParticipant(Interface):
     def execute_setup_action(action, args, data, log_cb):
         """Perform the given setup action on an environment."""
     
+    def undo_setup_action(action, args, data, log_cb):
+        """Reverse the given setup action."""
+    
 class IProjectChangeListener(Interface):
     """An extension-point interface for performing actions on project changes."""
     pass # TODO: Implement this

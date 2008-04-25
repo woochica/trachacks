@@ -79,19 +79,20 @@ class TracForgeAdminModule(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
-        cursor.execute('SELECT action, args, return FROM tracforge_project_log WHERE project=%s ORDER BY step', (data['project'],))
-        for action, args, rv in cursor:
+        cursor.execute('SELECT action, step_direction, args, return FROM tracforge_project_log WHERE project=%s ORDER BY step', (data['project'],))
+        for action, step_direction, args, rv in cursor:
             d = {
                 'action': action,
+                'direction': step_direction,
                 'args': args,
                 'rv': rv == '1',
                 'output': [],
             }
             data['actions'].append(d)
-            action_map[action] = d
+            action_map[action,step_direction] = d
         
-        cursor.execute('SELECT ts, action, stream, data FROM tracforge_project_output WHERE project=%s ORDER BY ts, stream DESC', (data['project'],))
-        for ts, action, stream, msg in cursor:
-            action_map[action]['output'].append((float(ts), stream, msg))
+        cursor.execute('SELECT ts, action, step_direction, stream, data FROM tracforge_project_output WHERE project=%s ORDER BY ts, stream DESC', (data['project'],))
+        for ts, action, step_direction, stream, msg in cursor:
+            action_map[action, step_direction]['output'].append((float(ts), stream, msg))
         
         return 'admin_tracforge_project.html', data

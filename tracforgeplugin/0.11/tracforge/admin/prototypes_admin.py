@@ -115,13 +115,15 @@ class TracForgePrototypesAdminModule(Component):
             elif 'add' in req.args:
                 proto.append((req.args['type'], ''))
             elif 'save' in req.args:
-                proto.tag = data['name']
+                proto.tag = (action == 'new' and req.args['name'] or data['name']).strip()
+                if not proto.tag or proto.tag == 'new':
+                    raise TracError('Invalid prototype name "%s"', proto.tag)
                 proto.save()
                 req.redirect(req.href.admin('tracforge/prototypes', proto.tag))
             elif 'cancel' in req.args:
                 req.redirect(req.href.admin('tracforge/prototypes'))
             elif 'delete' in req.args:
-                proto.tag = data['name']
+                proto.tag =  data['name']
                 proto.delete()
                 req.redirect(req.href.admin('tracforge/prototypes'))
             

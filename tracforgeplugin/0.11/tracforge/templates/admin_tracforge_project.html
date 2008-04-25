@@ -20,7 +20,7 @@
   <body>
     <h2>Project View: $project</h2>
     <div py:for="step in actions">
-      <h3>$step.action($step.args) = ${step.rv and 'Pass' or 'Fail'}</h3>
+      <h3>${step.direction.title()} $step.action($step.args) = ${step.rv and 'Pass' or 'Fail'}</h3>
       <table id="project-output">
         <tr py:for="ts, stream, data in step.output" class="$stream">
           <td>${format_datetime(ts)}</td>

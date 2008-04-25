@@ -3,6 +3,7 @@ import inspect
 import sys
 import os
 import os.path
+import shutil
 import time
 import stat
 
@@ -47,6 +48,9 @@ class ProjectSetupParticipantBase(Component):
     def execute_setup_action(self, action, args, data, log_cb):
         raise NotImplementedError
     
+    def undo_setup_action(self, action, args, data, log_cb):
+        pass
+    
     def call_external(self, log_cb, executable, *args):
         path = executable
         if not os.path.isabs(path):
@@ -87,6 +91,21 @@ class MakeTracEnvironmentAction(ProjectSetupParticipantBase):
                  ])
         data['env'] = open_environment(path, use_cache=True)
         return rv == 0
+    
+    def undo_setup_action(self, action, args, data, log_cb):
+        if '%s' not in args:
+            args = os.path.join(args, '%s')
+        path = args%data['name']
+        
+        print 'Removing %s'%path
+        try:
+            shutil.rmtree(path)
+            print 'Successful'
+            return True
+        except os.error, e:
+            print >>sys.stderr,'Error:'
+            print >>sys.stderr, e
+            return False
 
 
 class MakeSubversionRepositoryAction(ProjectSetupParticipantBase):
@@ -127,10 +146,6 @@ class ApplyConfigSetAction(ProjectSetupParticipantBase):
 
 class DoNothingAction(ProjectSetupParticipantBase):
     """Do nothing, just like it says.."""
-    
-    provides = ['foo']
-    
-    depends = ['foo']
     
     def execute_setup_action(self, action, args, data, log_cb):
         return True
@@ -226,3 +241,32 @@ class SetupSubversionHooks(ProjectSetupParticipantBase):
             print 'Making %s executable'%hook_file
             os.chmod(hook_file, os.stat(hook_file).st_mode|stat.S_IXUSR)
         return hookf, trachook_file
+
+
+class TestOneAction(ProjectSetupParticipantBase):
+    """For testing."""
+    
+    execute_text = 'Running execute'
+    execute_rv = True
+    undo_text = 'Running undo'
+    undo_rv = True
+    
+    def execute_setup_action(self, action, args, data, log_cb):
+        from trac.env import open_environment
+        data['env'] = open_environment('/Users/coderanger/trac/install/trunk/tracs/tf_master', use_cache=True)
+        print self.execute_text
+        return self.execute_rv
+    
+    def undo_setup_action(self, action, args, data, log_cb):
+        print self.undo_text
+        return self.undo_rv
+
+class TestTwoAction(TestOneAction):
+    execute_text = 'Running execute in two'
+    undo_rv = False
+
+class TestThreeAction(TestOneAction):
+    execute_rv = False
+    
+class TestFourAction(TestOneAction):
+    execute_rv = False

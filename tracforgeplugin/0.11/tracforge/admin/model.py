@@ -1,6 +1,6 @@
 from trac.env import open_environment
 from trac.config import Configuration, Section
-from trac.util.compat import set, all
+from trac.util.compat import set, all, reversed
 
 from UserDict import DictMixin
 import os
@@ -173,16 +173,18 @@ class Project(object):
 class _CaptureOutput(object):
     """A file-like object to replace sys.stdout/err."""
     
-    def __init__(self, cursor, project, action, stream):
+    def __init__(self, cursor, project, direction, action, stream, step_direction):
         self.cursor = cursor
         self.project = project
+        self.direction = direction
         self.action = action
         self.stream = stream
+        self.step_direction = step_direction
 
     def write(self, msg):
         self.cursor.execute('INSERT INTO tracforge_project_output ' \
-            '(ts, project, action, stream, data) VALUES (%s, %s, %s, %s, %s)',
-            (time.time(), self.project, self.action, self.stream, msg))
+            '(ts, project, direction, action, stream, step_direction, data) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+            (time.time(), self.project, self.direction, self.action, self.stream, self.step_direction, msg))
 
 
 class Prototype(list):
@@ -239,53 +241,70 @@ class Prototype(list):
                 return True
         return False        
 
-    def execute(self, data):
+    def execute(self, data, direction='execute', project=None):
         """Run this prototype on a new project.
         NOTE: If you pass in a project that isn't new, this could explode. Don't do that.
         """
         from api import TracForgeAdminSystem
         steps = TracForgeAdminSystem(self.env).get_project_setup_participants()
         
+        # Store this for later
+        orig_direction = direction
+        
         # Clear out the last attempt at making this project, if any
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('DELETE FROM tracforge_project_log WHERE project=%s', (data['name'],))
-        cursor.execute('DELETE FROM tracforge_project_output WHERE project=%s', (data['name'],))
+        cursor.execute('DELETE FROM tracforge_project_log WHERE project=%s AND direction=%s', (data['name'], direction))
+        cursor.execute('DELETE FROM tracforge_project_output WHERE project=%s AND direction=%s', (data['name'], direction))
         db.commit()
         
         # Grab the current stdout/err
         old_stdout = sys.stdout
         old_stderr = sys.stderr
+        
+        if direction == 'execute':
+            run_buffer = [(action, args, 'execute') for action, args in self]
+        else:
+            cursor.execute('SELECT action, args WHERE project=%s AND direction=%s AND undone=%s ORDER BY step DESC',
+                           (project, direction, 0))
+            run_buffer = [(action, args, 'undo') for action, args in cursor]
 
-        for i, (action, args) in enumerate(self):
-            cursor.execute('INSERT INTO tracforge_project_log (project, step, action, args) VALUES (%s, %s, %s, %s)',
-                           (data['name'], i, action, args))
+        for i, (action, args, step_direction) in enumerate(run_buffer):
+            #print data['name'], orig_direction, action, step_direction
+            cursor.execute('INSERT INTO tracforge_project_log (project, step, direction, action, step_direction, args, undone) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                           (data['name'], i, orig_direction, action, step_direction, args, 0))
             db.commit()
             def log_cb(stdout, stderr):
                 now = time.time()
-                #print '!', stdout, '!', stderr
+                #print '!'1, stdout, '!', stderr
                 values = []
                 if stdout:
-                    values.append((now, data['name'], action, 'stdout', stdout))
+                    values.append((now, data['name'], orig_direction, action, 'stdout', step_direction, stdout))
                 if stderr:
-                    values.append((now, data['name'], action, 'stderr', stderr))
+                    values.append((now, data['name'], orig_direction, action, 'stderr', step_direction, stderr))
                 if values:
                     cursor.executemany('INSERT INTO tracforge_project_output ' \
-                                 '(ts, project, action, stream, data) VALUES ' \
-                                 '(%s, %s, %s, %s, %s)',
+                                 '(ts, project, direction, action, stream, step_direction, data) VALUES ' \
+                                 '(%s, %s, %s, %s, %s, %s, %s)',
                      values)
                     db.commit()
             if getattr(steps[action]['provider'], 'capture_output', True):
-                sys.stdout = _CaptureOutput(cursor, data['name'], action, 'stdout')
-                sys.stderr = _CaptureOutput(cursor, data['name'], action, 'stderr')
+                sys.stdout = _CaptureOutput(cursor, data['name'], orig_direction, action, 'stdout', step_direction)
+                sys.stderr = _CaptureOutput(cursor, data['name'], orig_direction, action, 'stderr', step_direction)
             try:
-                rv = steps[action]['provider'].execute_setup_action(action, args, data, log_cb)
+                rv = getattr(steps[action]['provider'], step_direction+'_setup_action')(action, args, data, log_cb)
             except Exception, e:
                 log_cb('', traceback.format_exc())
                 rv = False
-            cursor.execute('UPDATE tracforge_project_log SET return=%s WHERE project=%s AND action=%s',
-                            (rv, data['name'], action))
+            cursor.execute('UPDATE tracforge_project_log SET return=%s WHERE project=%s AND direction=%s AND action=%s AND step_direction=%s',
+                            (int(rv), data['name'], orig_direction, action, step_direction))
             db.commit()
+            
+            if not rv and direction == 'execute':
+                # Failure, initiate rollback
+                direction = 'undo'
+                del run_buffer[i+1:]
+                run_buffer.extend([(action, args, 'undo') for action, args, _ in reversed(run_buffer)])
         
         sys.stdout = old_stdout
         sys.stderr = old_stderr
