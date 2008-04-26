@@ -17,6 +17,12 @@ setup(
         'TracAccountManager>=0.2dev',
     ],
 
+    classifiers = [
+        'Framework :: Trac',
+    ],
+
+    keywords="acct_mgr tg",
+
     entry_points = {
         'trac.plugins': [
             'tgauth.main = tgauth.main',
