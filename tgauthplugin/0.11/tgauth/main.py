@@ -45,10 +45,6 @@ def epochtime(t):
     """ Return seconds from epoch from a datetime object """
     return int(time.mktime(t.timetuple()))
 
-# When adding option to auth against TG in a different db
-# use the following
-# cnx = TgDatabaseManager(self.env).get_connection()
-
 class TgAuthStore(Component):
     """ IPasswordStore implementation for authentication against TG """
 
