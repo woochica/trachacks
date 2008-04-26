@@ -34,43 +34,60 @@ try:
 except ImportError:
      from sha import new as sha1
 
+import time
+
 from trac.core import Component, implements
 from trac.config import Option
+from trac.db.api import DatabaseManager
 from acct_mgr.api import IPasswordStore
+
+def epochtime(t):
+    """ Return seconds from epoch from a datetime object """
+    return int(time.mktime(t.timetuple()))
 
 # When adding option to auth against TG in a different db
 # use the following
 # cnx = TgDatabaseManager(self.env).get_connection()
 
-class TracAuthStore(Component):
+class TgAuthStore(Component):
     """ IPasswordStore implementation for authentication against TG """
 
     implements(IPasswordStore)
 
-    tg_schema = Option('account-manager', 'tg_schema',  
+    tg_schema = Option('account-manager', 'tg_schema', None,
                          'Schema containing TG tables.')
+
+    # This is here so that the account manager Configuratino page will pick 
+    # it up.
+    tg_database = Option('account-manager', 'tg_database', None, 
+                            'Database URI for the TG database to auth ' \
+                            'against')
+    def __init__(self):
+        self.table = self.tg_schema and self.tg_schema + '.tg_user' or \
+                    'tg_user'
 
     def config_key(self):
         """ Deprecated """
 
     def get_users(self, populate_session=True):
         """ Pull list of current users from PhpBB3 """
-        cnx = self.env.get_db_cnx()
+        cnx = self.get_db_cnx()
         cur = cnx.cursor()
-        cur.execute('SELECT user_name, email_address, created'
-                    '  FROM tg_user WHERE active = True')
+        cur.execute('SELECT user_name, email_address, created, display_name'
+                    '  FROM %s WHERE active = True' % self.table)
         userinfo = [u for u in cur]
         cnx.close()
+        print userinfo
         if populate_session:
             self._populate_user_session(userinfo)
         return [u[0] for u in userinfo]
 
     def has_user(self, user):
         """ Check for a user in TG """
-        cnx = self.env.get_db_cnx()
+        cnx = self.get_db_cnx()
         cur = cnx.cursor()
-        cur.execute('SELECT user_name FROM tg_user WHERE active = True'
-                    ' AND user_name = %s', (user,))
+        cur.execute('SELECT user_name FROM %s WHERE active = True'
+                    ' AND user_name = %%s' % self.table, (user,))
         result = [u for u in cur]
         cnx.close()
         return result and True or False
@@ -91,6 +108,7 @@ class TracAuthStore(Component):
         hashed = self._get_pwhash(user)
         if not hashed:
             return False
+        self._populate_user_session(self._get_userinfo(user))
         return sha1(password).hexdigest() == hashed
 
     def delete_user(self, user):
@@ -98,18 +116,37 @@ class TracAuthStore(Component):
         # Imlement later
         return False
 
+    def get_db_cnx(self):
+        """ Return a connection to the database for TG access """
+        if self.tg_database:
+            cnx = TgDatabaseManager(self.env).get_connection()
+        else:
+            cnx = self.env.get_db_cnx()
+        return cnx
+
     def _get_pwhash(self, user):
         """ Return the password hash from the database """
-        cnx = self.env.get_db_cnx()
+        cnx = self.get_db_cnx()
         cur = cnx.cursor()
         cur.execute('SELECT password'
-                    '  FROM tg_user'
+                    '  FROM %s'
                     ' WHERE active = True'
-                    '   AND user_name = %s', (user,))
+                    '   AND user_name = %%s' % self.table, (user,))
         result = cur.fetchone()
         pwhash = result and result[0] or None
         cnx.close()
         return pwhash
+
+    def _get_userinfo(self, user):
+        """ Pull user info from TG """
+        cnx = self.get_db_cnx()
+        cur = cnx.cursor()
+        cur.execute('SELECT user_name, email_address, created, display_name'
+                    '  FROM %s WHERE active = True AND user_name = %%s'
+                    % self.table, (user,))
+        userinfo = [u for u in cur]
+        cnx.close()
+        return userinfo
 
     def _populate_user_session(self, userinfo):
         """ Create user session entries and populate email and last visit """
@@ -118,13 +155,13 @@ class TracAuthStore(Component):
         # fails, don't worry, means it's already there.  Second, insert the
         # email address session attribute.  If it fails, don't worry, it's
         # already there.
-        cnx = self.env.get_db_cnx()
-        for uname, email, lastvisit in userinfo:
+        cnx = self.get_db_cnx()
+        for uname, email, lastvisit, name in userinfo:
             try:
                 cur = cnx.cursor()
                 cur.execute('INSERT INTO session (sid, authenticated, '
                             'last_visit) VALUES (%s, 1, %s)',
-                            (uname, lastvisit))
+                            (uname, epochtime(lastvisit)))
                 cnx.commit()
             except:
                 cnx.rollback()
@@ -137,6 +174,15 @@ class TracAuthStore(Component):
                 cnx.commit()
             except:
                 cnx.rollback()
+            try:
+                cur = cnx.cursor()
+                cur.execute("INSERT INTO session_attribute"
+                            "    (sid, authenticated, name, value)"
+                            " VALUES (%s, 1, 'name', %s)",
+                            (uname, name))
+                cnx.commit()
+            except:
+                cnx.rollback()
             continue
         cnx.close()
          
@@ -145,8 +191,8 @@ class TracAuthStore(Component):
 class TgDatabaseManager(DatabaseManager):
     """ Class providing access to the PHP databse """
 
-    connection_uri = Option('account-manager', 'phpbb_database', None, 
-                            'Database URI for the phpBB database to auth ' \
+    connection_uri = Option('account-manager', 'tg_database', None, 
+                            'Database URI for the TG database to auth ' \
                             'against')
 
     
