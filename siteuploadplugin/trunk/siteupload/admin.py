@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006 John Hampton <pacopablo@asylumware.com>
+# Copyright (C) 2006 John Hampton <pacopablo@pacopablo.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -10,9 +10,9 @@
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at:
-# http://trac-hacks.org/wiki/TracBlogPlugin
+# http://trac-hacks.org/wiki/SiteUploadPlugin
 #
-# Author: John Hampton <pacopablo@asylumware.com>
+# Author: John Hampton <pacopablo@pacopablo.com>
 
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
@@ -79,7 +79,7 @@ class SiteuploadAdminPage(Component):
             for f in dlist:
                 fsize = os.stat(os.path.join(target_path, f))[stat.ST_SIZE]
                 filelist.append({'name' : f,
-                                 'link' : Markup('<a href="%s">%s</a>',
+                                 'link' : Markup('<a href="%s">%s</a>') % (
                                           self.env.href.chrome('site', f), f), 
                                  'size' : pretty_size(fsize),})
                 continue
