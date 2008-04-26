@@ -40,6 +40,12 @@ class PhpBBAuthStore(Component):
     hash_prefix = Option('account-manager', 'phpbb_hash_prefix', '$H$', 
                          'Hash prefix used for phpBB passwords.')
 
+    # This is here so that the account manager configuration page will pick 
+    # it up.
+    database = Option('account-manager', 'phpbb_database', None, 
+                      'Database URI for the phpBB database to auth '
+                      'against')
+
     def config_key(self):
         """ Deprecated """
 
@@ -107,9 +113,9 @@ class PhpBBAuthStore(Component):
         """ Pull user info from TG """
         cnx = PhpDatabaseManager(self.env).get_connection()
         cur = cnx.cursor()
-        cur.execute('SELECT user_name, email_address, created, display_name'
-                    '  FROM %s WHERE active = True AND user_name = %%s'
-                    % self.table, (user,))
+        cur.execute('SELECT username, user_email, user_lastvisit'
+                    '  FROM phpbb_users '
+                    ' WHERE username = %s', (user,))
         userinfo = [u for u in cur]
         cnx.close()
         return userinfo
@@ -124,7 +130,7 @@ class PhpBBAuthStore(Component):
         cnx = self.env.get_db_cnx()
         for uname, email, lastvisit in userinfo:
             try:
-		cur = cnx.cursor()
+                cur = cnx.cursor()
                 cur.execute('INSERT INTO session (sid, authenticated, '
                             'last_visit) VALUES (%s, 1, %s)',
                             (uname, lastvisit))
@@ -132,7 +138,7 @@ class PhpBBAuthStore(Component):
             except:
                 cnx.rollback()
             try:
-		cur = cnx.cursor()
+                cur = cnx.cursor()
                 cur.execute("INSERT INTO session_attribute"
                             "    (sid, authenticated, name, value)"
                             " VALUES (%s, 1, 'email', %s)",
