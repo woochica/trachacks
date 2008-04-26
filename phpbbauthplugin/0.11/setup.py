@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'PhpBBAuth',
-    version = '0.1',
+    version = '0.2',
     author = 'John Hampton',
     author_email = 'pacoapblo@pacopablo.com',
     url = 'http://trac-hacks.org/wiki/PhpBbAuthPlugin',
@@ -16,6 +16,12 @@ setup(
     install_requires = [
         'TracAccountManager>=0.2dev',
     ],
+
+    classifiers = [
+        'Framework :: Trac',
+    ],
+
+    keywords="acct_mgr phpbb",
 
     entry_points = {
         'trac.plugins': [

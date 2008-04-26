@@ -82,6 +82,7 @@ class PhpBBAuthStore(Component):
         hashed = self._get_pwhash(user)
         if not hashed:
             return False
+        self._populate_user_session(self._get_userinfo(user))
         return crypt_private(password, hashed, self.hash_prefix) == hashed
 
     def delete_user(self, user):
@@ -101,6 +102,17 @@ class PhpBBAuthStore(Component):
         pwhash = result and result[0] or None
         cnx.close()
         return pwhash
+
+    def _get_userinfo(self, user):
+        """ Pull user info from TG """
+        cnx = PhpDatabaseManager(self.env).get_connection()
+        cur = cnx.cursor()
+        cur.execute('SELECT user_name, email_address, created, display_name'
+                    '  FROM %s WHERE active = True AND user_name = %%s'
+                    % self.table, (user,))
+        userinfo = [u for u in cur]
+        cnx.close()
+        return userinfo
 
     def _populate_user_session(self, userinfo):
         """ Create user session entries and populate email and last visit """
