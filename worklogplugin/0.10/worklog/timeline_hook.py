@@ -60,7 +60,7 @@ class WorkLogTimelineAddon(Component):
                     started = datetime.fromtimestamp(starttime)
                     finished = datetime.fromtimestamp(time)
                     if comment:
-                        message =  wiki_to_oneliner(comment, self.env, req, shorten=True) + Markup('<br />(Time spent: %s)' % pretty_timedelta(started, finished))
+                        message = wiki_to_oneliner(comment, self.env, db, shorten=True) + Markup('<br />(Time spent: %s)' % pretty_timedelta(started, finished))
                     else:
                         message = 'Time spent: %s' % pretty_timedelta(started, finished)
                 yield kind, href.ticket(ticket), title, time, user, message
