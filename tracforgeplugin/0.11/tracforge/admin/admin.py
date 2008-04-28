@@ -93,6 +93,11 @@ class TracForgeAdminModule(Component):
         
         cursor.execute('SELECT ts, action, step_direction, stream, data FROM tracforge_project_output WHERE project=%s ORDER BY ts, stream DESC', (data['project'],))
         for ts, action, step_direction, stream, msg in cursor:
-            action_map[action, step_direction]['output'].append((float(ts), stream, msg))
+            ts = float(ts)
+            output = action_map[action, step_direction]['output']
+            if output and abs(output[-1][0] - ts) <= 1e-2 and output[-1][1] == stream:
+                output[-1] = (output[-1][0], output[-1][1], output[-1][2]+msg)
+            else: 
+                output.append((float(ts), stream, msg))
         
         return 'admin_tracforge_project.html', data
