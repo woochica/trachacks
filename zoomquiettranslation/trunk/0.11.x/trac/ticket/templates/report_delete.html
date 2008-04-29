@@ -1,0 +1,32 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+    <div id="content" class="report">
+      <h1>$report.title</h1>
+      <form action="${href.report()}" method="post">
+        <input type="hidden" name="id" value="$report.id"/>
+        <input type="hidden" name="action" value="delete" />
+        <p><strong>确定删除此报表吗?</strong></p>
+        <div class="buttons">
+          <input type="submit" name="cancel" value="取消"/>
+          <input type="submit" value="删除报表"/>
+        </div>
+      </form>
+
+      <div id="help">
+        <strong>注:</strong>
+        参见 <a href="${href.wiki('TracReports')}">TracReports</a> 使用和创建报表的帮助.
+      </div>
+    </div>
+  </body>
+</html>
+

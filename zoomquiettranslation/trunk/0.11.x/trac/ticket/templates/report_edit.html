@@ -1,0 +1,54 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+    <div id="content" class="report">
+
+      <h1>${action == 'new' and 'New Report' or report.title}</h1>
+      <form action="${href.report(report.id)}" method="post">
+        <div>
+          <input type="hidden" name="action" value="$action" />
+          <div class="field">
+            <label for="title">报表标题:</label><br />
+            <input type="text" id="title" name="title" value="$report.title" size="50"/><br />
+          </div>
+          <div class="field">
+            <label for="description" i18n:msg="">
+              描述: (你可以在此使用 <a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a> )
+            </label>
+            <br />
+            <textarea id="description" name="description" class="wikitext" rows="10" cols="78">
+$report.description</textarea>
+          </div>
+          <div class="field">
+            <div class="system-message" py:if="error">
+              <strong>错误:</strong> $error
+            </div>
+            <label for="query">用于报表的查询: (可以是SQL，或者如果开始于<tt>查询</tt>, 一个 <a tabindex="42" href="${href.wiki('TracQuery') + '#QueryLanguage'}">TracQuery</a> 表达式)</label><br />
+            <textarea id="query" name="query" cols="85" rows="20">
+$report.sql</textarea>
+          </div>
+          <div class="buttons">
+            <input type="submit" value="保存报表"/>
+            <input type="submit" name="cancel" value="取消"/>
+          </div>
+        </div>
+        <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+      </form>
+
+      <div id="help">
+        <strong>注:</strong>
+        参见 <a href="${href.wiki('TracReports')}">TracReports</a> 使用和创建报表的帮助..
+      </div>
+    </div>
+  </body>
+</html>

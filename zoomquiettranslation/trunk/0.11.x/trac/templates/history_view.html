@@ -1,0 +1,57 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+    <div id="content" class="ticket">
+      <h1>变更历史 <a href="${url_of(resource)}">${name_of(resource)}</a></h1>
+
+      <form py:if="history" class="printableform" method="get" action="">
+        <input type="hidden" name="action" value="diff" />
+        <div class="buttons">
+          <input type="submit" value="查看修改" />
+        </div>
+        <table id="fieldhist" class="listing" summary="变更历史">
+          <thead>
+            <tr>
+              <th class="diff"></th>
+              <th class="version">版本</th>
+              <th class="date">日期</th>
+              <th class="author">作者</th>
+              <th class="comment">评论</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr py:for="idx, item in enumerate(history)" class="${idx % 2 and 'odd' or 'even'}">
+              <td class="diff">
+                <input type="radio" name="old_version" value="$item.version"
+                       checked="${idx == 1 or None}" />
+                <input type="radio" name="version" value="$item.version"
+                       checked="${idx == 0 or None}" />
+              </td>
+              <td class="version">
+                <a href="${url_of(resource, version=item.version)}" title="查看该版本">$item.version</a>
+              </td>
+              <td class="date">${dateinfo(item.date)}</td>
+              <td class="author" title="${item.ipnr and 'IP-Address: ' + item.ipnr or None}">${authorinfo(item.author)}</td>
+              <td class="comment">${wiki_to_oneliner(context(resource), item.comment, shorten=True)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <py:if test="len(history) &gt; 10">
+          <div class="buttons">
+            <input type="submit" value="查看修改" />
+          </div>
+        </py:if>
+      </form>
+    </div>
+  </body>
+</html>

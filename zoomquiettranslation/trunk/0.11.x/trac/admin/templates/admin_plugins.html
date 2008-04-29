@@ -1,0 +1,107 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>插件</title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/folding.js"></script>
+    <script type="text/javascript">
+      jQuery(document).ready(function($){ $("div.plugin h3").enableFolding(true) });
+    </script>
+  </head>
+
+  <body>
+    <h2>管理插件</h2>
+
+    <form id="addplug" class="addnew" method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>安装插件:</legend>
+        <div class="field">
+          <label>
+            文件: <input type="file" name="plugin_file" disabled="${readonly or None}" />
+          </label>
+        </div>
+        <p class="help" py:choose="readonly">
+          <py:when test="True">
+            Web服务器没有足够的权限在环境的插件目录中保存文件.
+          </py:when>
+          <py:otherwise>
+            上传一个作为插件的Python egg文件.
+          </py:otherwise>
+        </p>
+        <div class="buttons">
+          <input type="submit" name="install" value="安装"
+                 disabled="${readonly or None}" />
+        </div>
+      </fieldset>
+    </form>
+
+    <form py:for="idx, plugin in enumerate(plugins)" method="post">
+      <div class="plugin">
+        <h3>${plugin.name} ${plugin.version}</h3>
+        <div class="uninstall buttons">
+          <input type="hidden" name="plugin_filename"
+                 value="${plugin.plugin_filename}" />
+          <input type="submit" name="uninstall" value="卸载"
+                 disabled="${plugin.readonly or None}" />
+        </div>
+        <py:if test="plugin.info">
+          <p class="summary">${plugin.info.get('summary')}</p>
+          <dl py:if="'home_page' in plugin.info or
+                     'author' in plugin.info or
+                     'author_email' in plugin.info"
+              class="info">
+            <py:if test="'author' in plugin.info or 'author_email' in plugin.info">
+              <dt>作者:</dt>
+              <dd>
+                <a py:strip="not plugin.info.get('author_email')"
+                   href="mailto:${plugin.info.author_email}">
+                  ${plugin.info.author_email or plugin.info.author}
+                </a>
+              </dd>
+            </py:if>
+            <py:if test="plugin.info.get('home_page')">
+              <dt>主页:</dt>
+              <dd>
+                <a onclick="window.open(this.href); return false"
+                   href="${plugin.info.home_page}">${plugin.info.home_page}</a>
+              </dd>
+            </py:if>
+            <py:if test="plugin.info.get('license')">
+              <dt>授权:</dt>
+              <dd>${plugin.info.license}</dd>
+            </py:if>
+          </dl>
+        </py:if>
+        <table class="listing">
+          <thead>
+            <tr><th>组件</th><th class="sel">启用</th></tr>
+          </thead>
+          <tbody>
+            <tr py:for="component in plugin.components">
+              <td class="name" title="${component.description}">
+                ${component.name}<p class="module">${component.module}</p>
+              </td>
+              <td class="sel">
+                <input py:if="not component.required" type="hidden" name="component"
+                       value="${component.module}.${component.name}" />
+                <input type="checkbox" name="enable"
+                       value="${component.module}.${component.name}"
+                       checked="${component.enabled or None}"
+                       disabled="${component.required or None}" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="update buttons">
+          <input type="hidden" name="plugin" value="$idx" />
+          <input type="submit" name="update" value="应用修改" />
+        </div>
+      </div>
+    </form>
+  </body>
+
+</html>

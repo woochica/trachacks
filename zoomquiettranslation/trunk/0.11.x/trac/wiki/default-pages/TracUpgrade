@@ -1,0 +1,75 @@
+= Upgrade Instructions =
+[[TracGuideToc]]
+
+在使用Trac 0.11版本时, 需要升级[ZhTracEnvironment Trac环境]. 本文档描述了升级环境必需的步骤.
+
+除非特别强调, 否则没有必要为次要版本进行升级. 
+
+
+== 总体介绍 ==
+
+一般, 将Trac升级到一个新版本需要四个步骤:
+
+=== Update the Trac Code ===
+
+Get the new version as described in TracInstall, or your operation system specific procedure.
+
+If you do a manual (not operating system specific) upgrade, you may also later on want to remove the existing Trac code by deleting the `trac` directory from the Python `lib/site-packages` directory.
+
+The location of the site-packages directory depends on the operating system, and the location in which Python was installed. However, the following locations are common:
+ * If you’re using Linux: /usr/lib/python2.X/site-packages
+ * If you’re using Windows: C:\Python2.X\lib\site-packages
+ * If you’re using MacOSX: /Library/Python2.X/site-packages
+
+You may also want to remove the Trac `cgi-bin`, `htdocs`, `templates` and `wiki-default` directories that are commonly found in a directory called `share/trac` (the exact location depends on your platform).
+
+> If you had the webadmin plugin installed, you can now uninstall it as it is now part of the Trac code base.
+
+
+=== Upgrade the Trac Environment ===
+
+After restarting, Trac should show the instances which need a manual upgrade via the automated upgrade scripts to ease the pain. These scripts are run via [TracAdmin trac-admin]:
+{{{
+trac-admin /path/to/projenv upgrade
+}}}
+
+如果环境已经是最新的了, 该命令不起任何作用.
+
+注意, 如果你使用的是PostgreSQL数据库, 该命令会失败. 失败的消息会是''只有当你使用SQLite数据库时, 才能备份环境.'' 这意味着, 你必须手动备份仓库和数据库. 然后, 要进行实际升级, 运行
+{{{
+trac-admin /path/to/projenv upgrade --no-backup
+}}}
+
+=== 更新Trac文档 ===
+
+每个[wiki:ZhTracEnvironment Trac环境]包含了一份安装版本的Trac文档副本. 因为你可能想要使文档与安装的Trac版本保持同步, [wiki:ZhTracAdmin trac-admin]提供了一个升级文档的命令:
+{{{
+trac-admin /path/to/projenv wiki upgrade
+}}}
+
+注意, 该程序绝不会改动你的`WikiStart`页面.
+
+=== Trac Macros, Plugins ===
+The Trac macros will need to be adapted, as the old-style wiki-macros are not supported anymore (due to the drop of ClearSilver and the HDF); they need to be converted to the new-style macros, see TracWikiMacros.
+
+
+=== Restart the Web Server ===
+If you are not running [wiki:TracCgi CGI], reload the new Trac code by restarting your web server.
+
+== Known Issues ==
+=== parent dir ===
+If you use a trac parent env configuration and one of the plugins in one child does not work, none of the children work.
+
+== Changing Database Backend ==
+== SQLite to PostgreSQL ==
+
+The [http://trac-hacks.org/wiki/SqliteToPgScript sqlite2pg] script on [http://trac-hacks.org trac-hacks.org] has been written to assist in migrating a SQLite database to a PostgreSQL database
+
+== Older Versions ==
+
+For upgrades from former versions refer to wiki:0.10/TracUpgrade.
+
+-----
+原文版本: TracUpgrade[[BR]]
+相关信息: [ZhTracGuide Trac导览], [ZhTracInstall Trac安装][[BR]]
+See also: TracGuide, TracInstall

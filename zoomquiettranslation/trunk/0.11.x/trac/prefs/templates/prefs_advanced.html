@@ -1,0 +1,33 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="prefs.html" />
+  <head>
+    <title>高级</title>
+  </head>
+  <body>
+
+    <div class="field">
+      <label>会话标志:
+        <input type="text" name="newsid" size="30"
+               value="${settings.session_id}" />
+      </label>
+      <p class="hint">会话标志用于标识保存在服务器上的定制设置和会话数据. 
+	  尽管它缺省是自动生成的, 你可以把它修改成容易记忆的名字, 
+	  以便于你在多个浏览器中重新载入.</p>
+    </div>
+
+    <div class="field">
+      <label>恢复会话:
+        <input type="text" name="loadsid" size="30" value="" />
+      </label>
+      <input type="submit" name="restore" value="${_('Load')}" />
+      <p class="hint">通过在下面输入相应的会话标志, 你可以载入上次创建的会话. 
+	  这将是你能在多个计算机和浏览器中共享设置.</p>
+    </div>
+
+  </body>
+</html>

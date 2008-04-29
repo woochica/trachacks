@@ -1,0 +1,192 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>${title or 'Error'}</title>
+    <script py:if="frames" type="text/javascript">/*<![CDATA[*/
+      jQuery(document).ready(function($) {
+        $("#traceback a").click(function() {
+          $("div", this.parentNode).slideToggle("fast");
+          return false;
+        });
+        $("#tbtoggle").click(function() {
+          if (this.value.indexOf("interactive") < 0) {
+            this.value = "Switch to interactive view";
+            $("#traceback ul").fadeOut("fast", function() {
+              $("#traceback pre").fadeIn("fast");
+            });
+          } else {
+            this.value = "Switch to plain text view";
+            $("#traceback pre").fadeOut("fast", function() {
+              $("#traceback ul").fadeIn("fast");
+            });
+          }
+          return false;
+        });
+       /* Only activate interactive view if Javascript is enabled */
+       $("#traceback ul").show();
+       $("#traceback pre").hide();
+       $("#tbtoggle").parent().show();
+       
+       $("#systeminfo").append("<tr><th>jQuery:</th><td>"+$().jquery+"</td></tr>");
+       $("#systeminfo").before("<p>User Agent: <tt>"+navigator.userAgent+"</tt></p>");
+      });
+    /*]]>*/</script>
+    <script type="text/javascript">/*<![CDATA[*/
+      jQuery(document).ready(function($) {
+       var descr = $("#description").text();
+       descr = descr.replace(/==== System Information ====\s+/m,
+         "User Agent was: `" + navigator.userAgent + "`\n\n$&"
+       );
+       descr = descr.replace(/\|\|\s+==== Python Traceback ====/m,
+         "||\n|| '''jQuery:''' || `" + $().jquery + "` $&"
+       );
+       $("#description").text(descr);
+      });
+    /*]]>*/</script>
+  </head>
+
+  <py:def function="create_ticket(teo=False)">
+    <input type="hidden" name="__preview" value="1" />
+    <input type="hidden" name="reporter" value="${get_reporter_id(req)}" />
+    <input py:if="teo" type="hidden" name="version"
+           value="${'dev' in trac.version and 'devel' or trac.version}" />
+    <input type="hidden" name="summary" value="$message" />
+    <textarea id="description" name="description" rows="3" cols="10">
+
+==== 如何重现 ====
+
+当执行 $req.method 操作于 `$req.path_info`, Trac产生内部错误.
+
+''(请在此附加详细情况)''
+
+<py:if test="req.args">
+请求参数:
+{{{
+${pprint(req.args)}
+}}}
+</py:if>
+
+==== 系统信息 ====
+<py:for each="k, v in trac.systeminfo">
+|| '''$k''' || ${'`%s`' % (v and v.replace('\n', '` [[br]] `'))} ||</py:for>
+
+==== Python Traceback ====
+{{{
+${traceback}
+}}}
+    </textarea>
+    <span class="inlinebuttons">
+      <input type="submit" name="create" value="创建" />
+    </span>
+  </py:def>
+
+  <body>
+    <div id="content" class="error">
+      <py:choose test="type">
+        <py:when test="'TracError'">
+          <h1>$title</h1>
+          <py:choose test="">
+            <p py:when="istext(message)" class="message">$message</p>
+            <py:otherwise>$message</py:otherwise>
+          </py:choose>
+        </py:when>
+        <py:when test="'internal'">
+          <h1>Oops&hellip;</h1>
+          <div class="message">
+            <strong>Trac检测到一个内部错误:</strong>
+            <pre>$message</pre>
+          </div>
+          <py:choose>
+            <py:when test="'TRAC_ADMIN' not in perm">
+              <p>Trac中有一个内部错误. 建议你通知你的本地
+              <a py:strip="not project.admin" href="mailto:${project.admin}">Trac
+              管理员</a> 并将如何重现该问题的所有信息都告诉他.
+              </p>
+              <py:if test="not project.admin">
+                <form class="newticket" method="get" action="${href.newticket()}#">
+                  <p>最后, 你可以 ${create_ticket()} 一个传票于这个站点..</p>
+                </form>
+              </py:if>
+              <p>
+                触发此错误的动作是:
+                <pre>${req.method}: ${req.path_info}</pre>
+              </p>
+            </py:when>
+            <py:otherwise>
+              <p>如果你认为你这应当工作, 你也可以重现该问题,
+			  你应当考虑向Trac开发团队报告这个问题.</p>
+              <p>然而, 在你这样做之前, 请先尝试
+                <a py:with="q = quote_plus(message[:80])"
+                   href="${trac.homepage}/search?ticket=yes&amp;noquickjump=1&amp;q=$q">搜索</a>
+                类似问题, 因为通常这个问题已经被其他人报告了. 
+				对于有关Trac安装和配置的问题. 
+				请尝试
+                <a href="${trac.homepage}/wiki/MailingList">邮件列表</a>
+                而不是发出一个传票
+              </p>
+              <form class="newticket" method="get" action="${trac.homepage}/newticket">
+                <p>然而, 请 ${create_ticket(True)} 一个新传票于Trac项目站点, 
+				在此你可以描述问题并解释如何重现这个问题.</p>
+              </form>
+              <py:if test="traceback">
+                <h2>Python Traceback</h2>
+                <div id="traceback">
+                  Most recent call last:
+                  <ul py:if="frames" style="display: none">
+                    <li class="frame" py:for="idx, frame in enumerate(frames)">
+                      <a href="#frame${idx}" id="frame${idx}">
+                        <span class="file">File "${frame.filename}",
+                        line <b>${frame.lineno + 1}</b>, in</span>
+                        <var>${frame.function}</var>
+                      </a>
+                      <div py:if="frame.line" class="source" style="display: none">
+                        <h3>部分代码:</h3>
+                        <ol start="${frame.lineno + 1 - len(frame.lines_before)}">
+                          <li py:for="line in frame.lines_before"><code>${line or u'\xa0'}</code></li>
+                          <li class="current"><code>${frame.line or u'\xa0'}</code></li>
+                          <li py:for="line in frame.lines_after"><code>${line or u'\xa0'}</code></li>
+                        </ol>
+                      </div>
+                      <div py:if="frame.vars" class="vars" style="display: none">
+                        <h3>局部变量:</h3>
+                        <table class="listing">
+                          <thead><tr><th>Name</th><th>Value</th></tr></thead>
+                          <tbody>
+                            <tr py:for="idx, (name, value) in enumerate(sorted(frame.vars.items()))"
+                                class="${idx % 2 and 'odd' or None}">
+                              <th scope="row"><var>$name</var></th>
+                              <td><code>${shorten_line(repr(value))}</code></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </li>
+                  </ul>
+                  <pre><py:for each="frame in frames">File "${frame.filename}", line ${frame.lineno + 1}, in ${frame.function}<py:if test="frame.line">
+  ${frame.line.lstrip()}
+</py:if></py:for><py:if test="not frames">${traceback}</py:if></pre>
+                  <p style="display: none"><input type="button" id="tbtoggle" value="切换为纯文本" /></p>
+                </div>
+              </py:if>
+              <h2>系统信息:</h2>
+              <table class="listing" id="systeminfo">
+                <tr py:for="name, value in trac.systeminfo">
+                  <th>$name:</th>
+                  <td>$value</td>
+                </tr>
+              </table>
+            </py:otherwise>
+          </py:choose>
+        </py:when>
+      </py:choose>
+      <p>
+        <a href="${href.wiki('TracGuide')}">TracGuide</a> &mdash; Trac用户和管理员指南
+      </p>
+    </div>
+  </body>
+</html>

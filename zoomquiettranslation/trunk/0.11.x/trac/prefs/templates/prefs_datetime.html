@@ -1,0 +1,42 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="prefs.html" />
+  <head>
+    <title>日期和时间</title>
+  </head>
+  <body>
+
+    <div class="field" py:with="session_tzname = settings.session.get('tz');
+                                selected_tz = timezone(session_tzname) or utc">
+      <label>时区:
+      <select name="tz">
+        <option>缺省时区</option>
+        <option py:for="tzname in timezones"
+                selected="${session_tzname != None and
+                            session_tzname.startswith('Etc/') and
+                            selected_tz == timezone(tzname) or
+                            session_tzname == tzname or None}">$tzname</option>
+      </select></label>
+      <p class="hint">配置你的时区
+	  "配置你的时区将导致这个站点使用你的时区设置来显示时期和时间而不是使用服务器上的设置.</p>
+
+      <p class="hint" py:with="now = datetime.now(utc)">
+        例如: 当前时间是 <strong>${format_time(now, 'iso8601', tzinfo=utc)}</strong> (UTC).
+        <br />
+        在 ${session_tzname and 'your' or '缺省'} 时区 ${session_tzname and ' ' + selected_tz.tzname(None) or ''}, 将显示为
+        <strong>${format_time(now, 'iso8601', tzinfo=(session_tzname and selected_tz or localtz))}</strong>.
+      </p>
+
+      <p class="hint">
+        注: 全球统一时间 (UTC) 也被称为格林威治标准时间 (GMT). <br />
+        正值表示在格林威治东方的事前, 即: 比标准时间早.
+      </p>
+
+    </div>
+
+  </body>
+</html>

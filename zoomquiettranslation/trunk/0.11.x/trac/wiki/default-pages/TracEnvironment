@@ -1,0 +1,126 @@
+= Trac环境 =
+
+Trac用目录和数据库来储存项目信息, 叫做''环境''.
+
+== 创建一个环境 ==
+
+一个新的Trac环境是通过使用[wiki:ZhTracAdmin trac-admin]创建出来的:
+{{{
+$ trac-admin /path/to/myproject initenv
+}}}
+
+[wiki:ZhTracAdmin trac-admin]会要求你给出项目的名称, 数据库类型和你的源代码仓库的类型和路径.
+
+''注意: Web服务器用户会要求对环境目录及其内部所有文件的写权限. 请记得设置恰当的权限. 这同样适用于Trac最终使用的SVN仓库, 虽然只要你没有使用BDB文件系统, Trac就仅仅要求读访问.''
+
+== 数据库连接字符串 ==
+
+自0.9版本后, Trac支持[http://sqlite.org/ SQLite],  [http://www.postgresql.org/ PostgreSQL]和[http://mysql.com/ MySQL]作为数据库的后端. 默认使用SQLite, 这对大多数项目都是适用的. 数据库文件存储在环境目录中, 可轻松地与环境中的其余部分一起[wiki:ZhTracBackup 备份].
+
+=== Embedded SQLite Connection String ===
+一个连接到SQLite数据库的连接字符串是:
+{{{
+sqlite:db/trac.db
+}}}
+
+如果想使用PostgreSQL或MySQL, 你必须使用不同的连接字符串. 例如, 要连接到同一个机器上的一个名叫trac的PostgreSQL数据库, 用户名是`johndoe`, 密码`letmein`, 需要使用:
+{{{
+postgres://johndoe:letmein@localhost/trac
+}}}
+''Note that due to the way the above string is parsed, the "/" and "@" characters cannot be part of the password.''
+
+如果PstgreSQL运行在一个非标准的端口上, 例如9342, 使用:
+{{{
+postgres://johndoe:letmein@localhost:9342/trac
+}}}
+
+On UNIX, you might want to select a UNIX socket for the transport,
+either the default socket as defined by the PGHOST environment variable:
+{{{
+postgres://user:password@/database
+}}}
+or a specific one:
+{{{
+postgres://user:password@/database?host=/path/to/socket/dir
+}}}
+
+Note that with PostgreSQL you will have to create the database before running
+`trac-admin initenv`.
+
+See the [http://www.postgresql.org/docs/ PostgreSQL documentation] for detailed instructions on how to administer [http://postgresql.org PostgreSQL].
+Generally, the following is sufficient to create a database user named `tracuser`, and a database named `trac`.
+{{{
+createuser -U postgres -E -P tracuser
+createdb -U postgres -O tracuser -E UTF8 trac
+}}}
+When running `createuser` you will be prompted for the password for the user 'tracuser'. This new user will not be a superuser, will not be allowed to create other databases and will not be allowed to create other roles. These privileges are not needed to run a trac instance. If no password is desired for the user, simply remove the `-P` and `-E` options from the `createuser` command.  Also note that the database should be created as UTF8. LATIN1 encoding causes errors trac's use of unicode in trac.  SQL_ASCII also seems to work.
+
+Under some default configurations (debian) one will have run the `createuser` and `createdb` scripts as the `postgres` user.  For example:
+{{{
+sudo su - postgres -c 'createuser -U postgres -S -D -R -E -P tracuser'
+sudo su - postgres -c 'createdb -U postgres -O tracuser -E UTF8 trac'
+}}}
+
+Trac uses the `public` schema by default but you can specify a different schema in the connection string:
+{{{
+postgres://user:pass@server/database?schema=yourschemaname
+}}}
+
+=== MySQL Connection String ===
+
+If you want to use MySQL instead, you'll have to use a
+different connection string. For example, to connect to a MySQL
+database on the same machine called `trac`, that allows access to the
+user `johndoe` with the password `letmein`, the mysql connection string is:
+{{{
+mysql://johndoe:letmein@localhost:3306/trac
+}}}
+
+== Source Code Repository ==
+
+首先你需要提供你的仓库的''类型''(例如`svn`, 这是默认的), 然后定位仓库的"路径".
+
+如果你不想和一个源代码仓库一起使用Trac, 只需将"路径"留为空.(这时, "类型"信息就没有关系了)
+
+在某些系统中, 你不但可以指定仓库的路径, 还可以指定仓库内的''范围''. 那么Trac只会显示与该范围下的文件和变更集有关的信息. Trac的SVN后端支持此功能. 对于其他系统, 你需查看相应插件的文档.
+
+一个SVN仓库的配置的例子:
+{{{
+[trac]
+repository_type = svn
+repository_dir = /path/to/your/repository
+}}}
+
+一个指定SVN仓库范围的配置应是:
+{{{
+[trac]
+repository_type = svn
+repository_dir = /path/to/your/repository/scope/within/repos
+}}}
+
+== 目录结构 ==
+
+一份环境目录通常要包含下列文件和目录:
+
+ * `README` - 环境的简短介绍.
+ * `VERSION` - 包含了环境版本.
+ * `attachments` -此处存储wiki页面和传票的附件.
+ * `conf`
+   * `trac.ini` - 主要配置文件.请见[ZhTracIni 配置文件]
+ * `db`
+   * `trac.db` - SQLite数据库(如果你在使用SQLite的话).
+ * `plugins` - 环境特定的[wiki:ZhTracPlugins 插件] (Python egg)
+ * `templates` - 定制环境特定的模板.
+   * `site_css.cs` - 定制CSS规则.
+   * `site_footer.cs` - 定制页脚.
+   * `site_header.cs` - 定制页眉.
+ * `wiki-macros` - 环境特定的[wiki:ZhWikiMacros Wiki 宏].
+
+  '''注意: 不要将Trac环境目录与源代码仓库目录弄混.'''
+
+上述结构稍微模仿了SVN仓库的目录结构, 但他们没有, 也绝对不能位于同一位置.
+
+----
+原文版本: TracEnvironment[[BR]]
+相关信息: [ZhTracAdmin Trac管理],  [ZhTracBackup Trac备份],  [ZhTracIni Trac配置],  [ZhTracGuide Trac导览][[BR]]
+See also: TracAdmin,  TracBackup,  TracIni,  TracGuide

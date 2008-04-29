@@ -1,0 +1,95 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>里程碑 ${milestone.name}</title>
+    <script type="text/javascript">
+      jQuery(document).ready(function($) {
+        $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+      });
+    </script>
+    <link rel="stylesheet" type="text/css"
+          href="${chrome.htdocs_location}css/roadmap.css" />
+  </head>
+
+  <body>
+    <div id="content" class="milestone">
+      <h1>里程碑 ${milestone.name}</h1>
+      <div class="info">
+        <py:choose>
+          <p py:when="milestone.completed" class="date">
+            完成 ${dateinfo(milestone.completed)} 前
+            (${format_date(milestone.completed)})
+          </p>
+          <p py:when="milestone.is_late" class="date">
+            <strong>${dateinfo(milestone.due)} 后</strong>
+            (${format_date(milestone.due)})
+          </p>
+          <p py:when="milestone.due" class="date">
+            预期于 ${dateinfo(milestone.due)}
+            (${format_date(milestone.due)})
+          </p>
+          <p py:otherwise="" class="date">
+            没有设置日期
+          </p>
+        </py:choose>
+        <py:if test="stats.count">${progress_bar(stats, interval_hrefs, stats_href=stats_href)}</py:if>
+      </div>
+
+      <form py:if="available_groups" id="stats" action="">
+        <fieldset>
+          <legend>
+            <label for="by">${stats.title.capitalize()} 由</label>
+            <select id="by" name="by" onchange="this.form.submit()">
+              <option py:for="group in available_groups"
+                      value="${group.name}" py:content="group.label"
+                      selected="${grouped_by == group.name or None}" />
+            </select>
+            <noscript><input type="submit" value="更新" /></noscript>
+          </legend>
+          <table summary="Shows the milestone completion status grouped by ${grouped_by}">
+            <tr py:for="group in groups">
+              <th scope="row"><a href="${group.stats_href}">${group.name}</a></th>
+              <td>
+                ${progress_bar(group.stats, group.interval_hrefs,
+                               '%d / %d' % (group.stats.done_count, group.stats.count),
+                               legend=False, style="width: %d%%" % (group.percent_of_max_total * 0.8))}
+              </td>
+            </tr>
+          </table>
+        </fieldset>
+      </form>
+
+      <div class="description" xml:space="preserve">
+        ${wiki_to_html(context, milestone.description)}
+      </div>
+
+      ${list_of_attachments(attachments, compact=True)}
+
+      <div py:if="'MILESTONE_MODIFY' in perm(milestone.resource) or
+                  'MILESTONE_DELETE' in perm(milestone.resource) or
+                  attachments.can_create"
+           class="buttons">
+        <form py:if="'MILESTONE_MODIFY' in perm(milestone.resource)" method="get" action="">
+          <input type="hidden" name="action" value="edit" />
+          <input type="submit" value="编辑里程碑" />
+        </form>
+        <form py:if="'MILESTONE_DELETE' in perm(milestone.resource)" method="get" action="">
+          <input type="hidden" name="action" value="delete" />
+          <input type="submit" value="删除里程碑" />
+        </form>
+        ${attach_file_form(attachments)}
+      </div>
+
+      <div id="help"><strong>注:</strong> 参见
+        <a href="${href.wiki('TracRoadmap')}">TracRoadmap</a> 使用路标的帮助.
+      </div>
+
+    </div>
+  </body>
+</html>
