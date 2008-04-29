@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -13,6 +14,8 @@ import os
 import popen2
 import re
 import gzip
+import Image
+
 
 from genshi.builder import tag
 
@@ -115,10 +118,20 @@ class DiaVisViewMacro(WikiMacroBase):
             png_mtime = os.path.getmtime(png_path)
         except Exception:
             png_mtime = 0
+        else:
+            try:
+                im = Image.open(png_path)
+            except Exception, e:
+                self.env.log.info('Error checking original png file width for Dia = %s',e)
+                raise Exception('Error checking original png file width for Dia.')
+            existing_width = im.size[0]
+
 
         self.env.log.info('Comparing dia and png file modification times : %s, %s',dia_mtime,dia_mtime)
 
-        if dia_mtime > png_mtime:
+
+
+        if (dia_mtime > png_mtime) or (existing_width != width):
             try:
                 # The file maybe compressed.  The name has to be prepended to keep the extension.
                 (attachDir, attachFile) = os.path.split(dia_path)
