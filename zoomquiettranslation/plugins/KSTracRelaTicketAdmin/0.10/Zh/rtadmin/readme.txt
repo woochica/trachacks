@@ -42,11 +42,11 @@ base_path = /path/to/output/html/files    #/tracs/ctrl/keylist/KSTracRelaTicket/
 
 == Download and Source ==
 
-Check out [/svn/KSTracRelaTicketAdmin using Subversion], or [source:KSTracRelaTicketAdmin browse the source] with Trac.
+Check out [/svn/zoomquiettranslation/plugins/KSTracRelaTicketAdmin using Subversion], or [source:zoomquiettranslation/plugins/KSTracRelaTicketAdmin browse the source] with Trac.
 
 == Recent Changes ==
 
-[[ChangeLog(KSTracRelaTicketAdmin, 3)]]
+[[ChangeLog(zoomquiettranslation/plugins/KSTracRelaTicketAdmin, 3)]]
 
 == Author/Contributors ==
 
