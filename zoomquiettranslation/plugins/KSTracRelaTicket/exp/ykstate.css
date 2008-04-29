@@ -1,0 +1,108 @@
+body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background: #ffffff;
+    font-family: helvetica, arial, verdana, sans-serif;
+    font-size: 11px;
+    color: #634320;
+}
+
+img {
+    border: 0;
+}
+a.closed:link, a.closed:visited { text-decoration: line-through }
+/*border-collapse :  separate | collapse*/
+table { border-collapse: collapse; }
+
+th {
+	color: #343;
+    font-size: 12px; 
+    background: #ffffff;
+}
+th a{
+	color: #454;
+    font-size: 11px; 
+}
+
+th.matter SUP{
+	color: #093;
+	font-size: 90%;
+}
+th.matter SUB{
+	color: #039;
+	font-size: 90%;
+}
+
+
+/* table style */
+table#relaTickets{
+	color: #434;    
+    font-size: 10.5px;
+}
+/*border-bottom: 1pt solid black;*/
+table#relaTickets th{
+	border: none;
+	border-bottom:1pt solid #787;
+	border-top:1pt dotted #565;
+	background: #ffefff;
+}
+table#relaTickets h5{
+	padding:0em;
+	margin: 0em;
+	border: none;
+	border-bottom:1pt solid #787;
+	border-top:1pt dotted #565;
+	background: #ffefff;
+}
+table#relaTickets td{
+	vertical-align: top;
+	border: none;
+	border-bottom:1pt solid #343;
+	background: white;
+}
+table#relaTickets tr{
+	border-bottom: 1pt solid #343;
+	background: #565;
+}
+table#relaTickets td ul{
+	width:210px;
+	padding:0em;
+	margin: 0em;
+}
+
+#relaTickets ul ul li{
+	padding:0em;
+	margin: 0em 0em 0em 1em;
+	font-size: 90%;
+}
+table#relaTickets td li{
+	padding:0em;
+	margin: 0em 0em 0em .5em;
+    list-style-type : none;
+}
+table#relaTickets td li a{
+	color: #930;
+	font-size: 11px;
+}
+
+/* zoomq::070823 for 扩展的月度唱片公司播放数据汇报 */
+div#allcompstat{
+    width:930px;
+    border:0px dotted #930;
+}
+div#comonthly{
+    width:300px;
+    float:left;
+    margin:5px;
+}
+
+/* Zoomq::071229 扩展 Trac测试组统计链接 */
+div#tickets {
+    width:120px;
+    word-break :  break-all ;
+    word-wrap :  break-word;
+}
+div#tickets A{
+    font-size: 8px;
+}
