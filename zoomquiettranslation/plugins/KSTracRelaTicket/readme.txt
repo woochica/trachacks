@@ -1,18 +1,16 @@
 = RelaTicket =
 
-== Description ==
+== 描述 ==
  * http://trac-hacks.org/wiki/RelaTicket
- * This software are helper scripts for [http://trac-hacks.org/wiki/RelaTicketAdmin RelaTicketAdmin] trac plugin.
- * RelaTicket are used to periodically generate keylist burndown statistic html files.
+ * 该脚本是 [http://trac-hacks.org/wiki/RelaTicketAdmin RelaTicketAdmin] 的辅助脚本.
+ * 用于定期生成关联传票视图HTML文件.
 
-== Dependencies ==
+== 依赖 ==
  * [http://adodb.sourceforge.net Python Adodb]
  * [http://www.advsofteng.com ChartDirector for Python]
 
-== Configuration ==
- 1. Checkout or download these source files.
-
- 2. Modify ''Settings'' in ini.py according to your environment.
+== 配置 ==
+ 1. 修改ini.py的''Settings''
  {{{
     'rootpath':'/path/to/the/parent/of/trac/environment'
     ,'projname':'TracProjectName'	# trac1
@@ -21,22 +19,15 @@
     ,'reporturl':'/url/of/trac/report'	# http://trac.abc.com/trac1/report
 }}}
 
- 3. Test: run below command, and you will get result html files in the directory 'exp'.
+ 2. 测试: 执行下面的命令, 在'exp'可以看到输出结果.
  {{{
 python run_burndown.py
 }}}
 
- 4. If test passed, you should add above command to your crontab to make it run periodically.
+ 3. 如果通过测试，需要将上述命令增加到crontab中.
 
-== Download and Source ==
+== 下载 ==
 
-Check out [/svn/zoomquiettranslation/plugins/KSTracRelaTicket using Subversion], or [source:zoomquiettranslation/plugins/KSTracRelaTicket browse the source] with Trac.
+ * [/svn/zoomquiettranslation/plugins/KSTracRelaTicket SVN]
 
-== Recent Changes ==
-
-[[ChangeLog(zoomquiettranslation/plugins/KSTracRelaTicket, 3)]]
-
-== Author/Contributors ==
-
-'''Author:''' [wiki:richard] [[BR]]
-'''Contributors:'''
+ * [source:zoomquiettranslation/plugins/KSTracRelaTicket 浏览]
