@@ -1,32 +1,22 @@
-= RelaTicketAdmin Plugin =
+= RelaTicketAdmin插件 =
 
-== Description ==
+== 描述 ==
  * http://trac-hacks.org/wiki/RelaTicketAdmin
- * RelaTicketAdmin is a Trac plugin. 
- * RelaTicketAdmin enable users to add/remove rela ticket by Trac Webadmin.
+ * Trac关联传票视图统计里程碑的完成状况,并能显示父子关系的传票关系 
 
-== Dependencies ==
+== 依赖 ==
  * [http://trac-hacks.org/wiki/WebAdminPlugin WebAdminPlugin]
 
-== Configuration ==
+== 配置 ==
 
- You can install this software as normal Trac plugin.
+ 1. 请先卸载现有安装.
 
- 1. Uninstall RelaTicketAdmin if you have installed before.
-
- 2. Change to the directory containning setup.py.
-
- 3. If you want to install this plugin globally, that will install this plugin to the python path:
-  * python setup.py install
-
- 4. If you want to install this plugin to trac instance only:
-  * python setup.py bdist_egg
-  * copy the generated egg file to the trac instance's plugin directory
+ 2. 执行
   {{{
 cp dist/*.egg /srv/trac/env/plugins
 }}}
 
- 5. Config trac.ini:
+ 3. 配置trac.ini:
   {{{
 [components]
 rtadmin.* = enabled
@@ -35,20 +25,12 @@ rtadmin.* = enabled
 base_path = /path/to/output/html/files    #/tracs/ctrl/keylist/KSTracRelaTicket/exp
 }}}
 
-== Usage ==
- * Trac administrator can specify which milestone should be handled by relaticket:
-  * Login as administrator, open Admin -> Ticket System -> RelaTicket
-  * 'check' milestones that will be handled by relaticket
+== 用法 ==
+ * Trac管理员设置要生成视图的里程碑:
+  * 作为管理员登录, 打开Admin -> Ticket System -> RelaTicket
+  * 选择需要相应的里程碑
 
-== Download and Source ==
+== 下载 ==
 
-Check out [/svn/zoomquiettranslation/plugins/KSTracRelaTicketAdmin using Subversion], or [source:zoomquiettranslation/plugins/KSTracRelaTicketAdmin browse the source] with Trac.
-
-== Recent Changes ==
-
-[[ChangeLog(zoomquiettranslation/plugins/KSTracRelaTicketAdmin, 3)]]
-
-== Author/Contributors ==
-
-'''Author:''' [wiki:richard] [[BR]]
-'''Contributors:'''
+ * [/svn/zoomquiettranslation/plugins/KSTracRelaTicketAdmin SVB]
+ * [source:zoomquiettranslation/plugins/KSTracRelaTicketAdmin 浏览]
