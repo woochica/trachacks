@@ -41,13 +41,10 @@ class SimpleEnhancer(Component):
         enhancer = SimpleContainer()
         enhancer.repos = repos
         enhancer.creations = []
-        enhancer.deliveries = []
-        enhancer.groups = []
         enhancer.svgrevtree = svgrevtree
         # z-depth indexed widgets: back=1, fore=2
         enhancer.widgets = ([], [], [])
         
-        #self._sort()
         for branch in enhancer.repos.branches().values():
             svgbranch = enhancer.svgrevtree.svgbranch(branch=branch)
             if not svgbranch:
@@ -85,7 +82,7 @@ class SimpleEnhancer(Component):
                 continue
             svgdstchg = svgdstbr.svgchangeset(dstchg)
             op = SvgOperation(enhancer.svgrevtree, svgsrcchg, svgdstchg, \
-                              '#5faf5f')
+                              '#3f3f3f')
             enhancer.widgets[2].append(op)
                     
         for wl in enhancer.widgets:

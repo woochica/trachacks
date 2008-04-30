@@ -734,14 +734,22 @@ class SvgArrows(object):
     def create(self, color, head):
         name = self._get_name(color, head)
         if not self._markers.has_key(name):
+            # It seems that WebKit needs some adjustements ...
+            # xos = (3.0*UNIT/100)
+            # yos = (3.0*UNIT/100)
+            # ... but Gecko does not
+            xos = 0
+            yos = 0
             if head:
                 marker = SVG.marker(name, (0,0,10,8), 0, 4, UNIT/4, UNIT/4,
                                     fill=SvgColor(color), orient='auto')
-                marker.addElement(SVG.polyline(((0,4),(10,0),(10,8),(0,4))))
+                marker.addElement(SVG.polyline(((0-xos,4-yos),(10-xos,0-yos),
+                                                (10-xos,8-yos),(0-xos,4-yos))))
             else:
                 marker = SVG.marker(name, (0,0,10,8), 10, 4, UNIT/4, UNIT/4,
                                     fill=SvgColor(color), orient='auto')
-                marker.addElement(SVG.polyline(((0,0),(0,8),(10,4),(0,0))))
+                marker.addElement(SVG.polyline(((0+xos,0-yos),(0+xos,8-yos),
+                                                (10+xos,4-yos),(0+xos,0-yos))))
             self._markers[name] = marker
         return name
         
