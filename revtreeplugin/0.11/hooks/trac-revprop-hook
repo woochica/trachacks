@@ -2,7 +2,7 @@
 
 # trac-revprop-hook
 # ----------------------------------------------------------------------------
-# Copyright (c) 2007 Emmanuel Blot
+# Copyright (c) 2007-2008 Emmanuel Blot
 # ----------------------------------------------------------------------------
 
 # This Subversion unified pre/post-revprop-change hook script is meant to 
@@ -34,14 +34,15 @@ from repproxy import RepositoryProxy
 OK = 0
 ERROR = 1
 
-configpath = 'C:/Var/svn/config/access.conf'
+configpath = '/local/var/svn/config/access.conf'
+
+changeset_cmd_pattern = r'^(?P<action>delivers|brings)(?P<force>\!)?\s+((\[(?P<first>\d+)\])(:\[(?P<second>\d+)\])?)?'
 
 class RevpropHook(object):
     '''Hook script for revision property changes'''
     
     def __init__(self, post, project, rev, name, value, 
                  action=None, author=None, repos=None):
-        os.environ['PYTHON_EGG_CACHE'] = os.path.join(project, '..', '..', 'eggcache')
         if not os.path.isdir(os.environ['PYTHON_EGG_CACHE']):
             raise AssertionError("Invalid egg cache directory: %s" % os.environ['PYTHON_EGG_CACHE']);
         self.env = open_environment(project)
@@ -88,20 +89,23 @@ class RevpropHook(object):
         sys.exit(-ERROR) 
 
     def _verify_log_msg(self):
-        regex = re.compile(r'^(?P<action>delivers|brings).?\s+((\[(?P<first>\d+)\])(:\[(?P<second>\d+)\])?)?', 
-                           re.IGNORECASE)
+        regex = re.compile(changeset_cmd_pattern, re.IGNORECASE)
         self.proxy = RepositoryProxy(self.repospath)
         oldlog = self.proxy.get_revision_log_message(self.rev)
         oldmo = regex.search(oldlog)
         if oldmo:
             newmo = regex.search(self.value)
-            if (not newmo) or \
-               (oldmo.group('first') != newmo.group('first')) or \
-               (oldmo.group('second') != newmo.group('second')):
+            if (not newmo):
                 print >> sys.stderr, \
-                    'Original parameters should be kept unaltered:\n  "%s"' % \
-                                     oldlog.split('\n')[0]
+                    'Missing message:\n  was: "%s"' % oldlog.split('\n')[0]
                 sys.exit(-ERROR) 
+            if (oldmo.group('first') != newmo.group('first')) or \
+               (oldmo.group('second') != newmo.group('second')):
+                if not self._is_admin(self.author) or not newmo.group('force'):
+                    print >> sys.stderr, \
+                        'Original parameters should be kept unaltered:\n' \
+                        '  "%s"' % oldlog.split('\n')[0]
+                    sys.exit(-ERROR) 
 
     def _verify_rth_deliver(self):
         # check that source revision are ordered integers
@@ -133,6 +137,21 @@ class RevpropHook(object):
         # update Trac cache with the updated value
         repos = self.env.get_repository()
         repos.sync_changeset(self.rev)
+
+    def _is_admin(self, author):
+        '''
+        Verify whether the author has administrator priviledges
+        '''
+        config = ConfigParser()
+        if not os.path.isfile(configpath):
+            raise AssertionError('Unable to find Subversion ACL for admins')
+        config.read(configpath)
+        admins = config.get('groups','admins')
+        if not admins:
+            raise AssertionError('Unable to retrieve Subversion ACL for admins')
+        if not author.lower() in [s.strip() for s in admins.lower().split(',')]:
+            return False
+        return True
 
 
 if __name__ == "__main__":

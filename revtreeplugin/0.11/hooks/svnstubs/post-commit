@@ -1,32 +1,27 @@
 #!/bin/sh
 
-# POST-COMMIT HOOK
-#
-#   [1] REPOS-PATH   (the path to this repository)
-#   [2] TRANSACTION  (the transaction being processed)
-
 REPOS="$1"
 REV="$2"
-CONFIG_PATH=`dirname $0`
 
-# Load global config
-if [ -f "${CONFIG_PATH}/config" ]; then
-  . ${CONFIG_PATH}/config
+SELF=`readlink -f $0`
+CONF=`dirname ${SELF}`/hook.conf
+if [ -f ${CONF} ]; then
+    . ${CONF}
 else
-  echo "Missing config file" >&2
+    echo "Missing hook configuration file" >&2
+    exit -1
 fi
 
-REPOSNAME=`echo "$REPOS" | sed -r 's/^.*\/([^\/]+)$/\1/'`
-TRAC_ENV="${TRAC_ENV_PARENT_DIR}/${REPOSNAME}"
-LOGFILE="${TRAC_ENV}/log/svn-postcommit.log"
-
-export PYTHONPATH=$TRACPATH
+export PYTHONPATH=$TRACPATH:$GENSHIPATH
+export PYTHON_EGG_CACHE
+export PYTHON=`which python2.5`
 date >> "$LOGFILE"
 echo "Revision: $REV" >> "$LOGFILE"
-${PYTHON} ${TRAC_PATH}/hooks/trac-commit-hook \
-    -d "$REPOS" -r "$REV" -p "$TRAC_ENV" 2>> "$LOGFILE"
+${PYTHON} ${HOOKPATH}/trac-commit-hook -d "$REPOS" -r "$REV" -p "$TRAC_ENV" \
+     2>> "$LOGFILE"
 if [ $? -ne 0 ]; then
-  if [ -n ${MAIL_ADMIN} ];
-    tail -5 "$LOGFILE" | mail ${MAIL_ADMIN} \
-      -s "[${REPOSNAME}] Unable to post-commit revision ${REV}"
+    tail -5 "$LOGFILE" | \
+      cat
+      #mail admin -s "[${REPOSNAME}] Unable to post-commit revision ${REV}"
 fi
+

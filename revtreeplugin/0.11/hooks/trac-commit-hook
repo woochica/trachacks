@@ -3,7 +3,7 @@
 # trac-commit-hook
 # ----------------------------------------------------------------------------
 # Copyright (c) 2004 Stephen Hansen 
-# Copyright (c) 2005-2007 Emmanuel Blot, Jerome Souquieres
+# Copyright (c) 2005-2008 Emmanuel Blot, Jerome Souquieres
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -15,36 +15,6 @@
 #   The above copyright notice and this permission notice shall be included in
 #   all copies or substantial portions of the Software. 
 # ----------------------------------------------------------------------------
-
-# This Subversion unified pre/post-commit hook script is meant to interface
-# to the Trac (http://www.edgewall.com/products/trac/) issue tracking/wiki/etc 
-# system.
-#
-# It should be called from the 'pre-commit' script in Subversion, such as
-# via:
-#
-#  REPOS="$1"
-#  TXN="$2"
-#  TRAC_ENV="/somewhere/trac/project/"
-#
-# /usr/bin/python /usr/local/src/trac/contrib/trac-uni-commit-hook \
-#  -d "$REPOS" \
-#  -p "$TRAC_ENV"  \
-#  -t "$TXN"
-#
-# 
-# It should be called from the 'post-commit' script in Subversion, such as
-# via:
-#
-# REPOS="$1"
-# REV="$2"
-# TRAC_ENV='/somewhere/trac/project/'
-#
-# /usr/bin/python /usr/local/src/trac/contrib/trac-uni-commit-hook \
-#  -d "$REPOS" \
-#  -p "$TRAC_ENV"  \
-#  -r "$REV"
-#
 
 import re
 import os
@@ -83,9 +53,9 @@ parser.add_option('-d', '--repos', dest='rep',
 # Patterns to match message logs
 #
 ticket_cmd_pattern = re.compile(r'^(?P<action>refs|closes|fixes).?#(?P<ticket>[0-9]+)', re.IGNORECASE)
-changeset_cmd_pattern = re.compile(r'^(?P<action>delivers|brings)(?P<force>.?)\s+((\[(?P<first>\d+)\])(:\[(?P<second>\d+)\])?)?', re.IGNORECASE)
+changeset_cmd_pattern = re.compile(r'^(?P<action>delivers|brings)(?P<force>\!)?\s+((\[(?P<first>\d+)\])(\s*:\s*\[(?P<second>\d+)\])?)?', re.IGNORECASE)
 create_pattern = re.compile(r'^(?P<action>creates)', re.IGNORECASE)
-terminate_pattern = re.compile(r'^(?P<action>terminates)(?P<force>.?)\s', re.IGNORECASE)
+terminate_pattern = re.compile(r'^(?P<action>terminates)(?P<force>\!)?\s', re.IGNORECASE)
 admin_pattern = re.compile(r'^(?P<action>admins)', re.IGNORECASE)
 
 #
@@ -98,9 +68,9 @@ export_prop_name = 'rth:export'
 #
 # SVN directories
 #
-branch_directory = '/branches'
+dev_branch_dirs = ['/sandboxes', '/branches']
 trunk_directory = '/trunk'
-configpath = 'C:/Var/svn/config/access.conf'
+configpath = '/local/var/svn/config/access.conf'
 
 #
 # Milestones 
@@ -136,8 +106,6 @@ class CommitHook(object):
         self.project = project
         self.author = self._get_author()
         self.log = self._get_log()
-        os.environ['PYTHON_EGG_CACHE'] = \
-            os.path.join(project, '..', '..', 'eggcache')
         if not os.path.isdir(os.environ['PYTHON_EGG_CACHE']):
             raise AssertionError("Invalid egg cache directory: %s" % \
                     os.environ['PYTHON_EGG_CACHE']);
@@ -147,6 +115,11 @@ class CommitHook(object):
                   r'^(?P<branch>trunk|(?:branches|tags|vendor)/[^/]+)'
                   r'(?:/(?P<path>.*))?$')
         self.bcre = re.compile(bre)
+        
+        # Nearly empty log message
+        if not self.log:
+            print>>sys.stderr, 'Log message is invalid'
+            self.finalize(ERROR)  
 
         # Administration commit
         administration = admin_pattern.search(self.log)
@@ -157,7 +130,7 @@ class CommitHook(object):
         # Branch deletion
         terminate = terminate_pattern.search(self.log)
         if terminate:            
-            rc = self._cmd_terminates(terminate.group('force'))
+            rc = self._cmd_terminates(terminate.group('force') and True)
             self.finalize(OK)
 
         # Branch creation
@@ -173,7 +146,7 @@ class CommitHook(object):
             if CommitHook._changeset_cmds.has_key(cmd):
                 func = getattr(self, CommitHook._changeset_cmds[cmd])
                 rc = func(chgset_cmd.group('first'), chgset_cmd.group('second'), 
-                          chgset_cmd.group('force'))
+                          chgset_cmd.group('force') and True)
                 self.finalize(rc)
             else:
                 print >> sys.stderr, 'Invalid changeset action'
@@ -188,11 +161,11 @@ class CommitHook(object):
                 rc = func(int(ticket_cmd.group('ticket')))
                 self.finalize(rc)
             else:
-                print>>sys.stderr, 'No supported action specified in log message !'
+                print>>sys.stderr, 'No supported action in log message !'
                 self.finalize(ERROR)
 
         # Unrecognized log message
-        print>>sys.stderr, 'No action specified in log message !'
+        print>>sys.stderr, 'No known action in log message !'
         self.finalize(ERROR)  
 
     def _next_milestone(self):
@@ -269,7 +242,8 @@ class CommitHook(object):
         '''
         ticket_dict = {}
         for rev in revisions:
-            bring_prop = self.proxy.get_revision_property(int(rev), bring_prop_name)
+            bring_prop = self.proxy.get_revision_property(int(rev), \
+                                                          bring_prop_name)
             if bring_prop and len(bring_prop) > 0:
                 bring_revs = bring_prop.split(',')
                 subticket_dict = self._collect_tickets(bring_revs)
@@ -293,6 +267,30 @@ class CommitHook(object):
         ticket = Ticket(self.env, ticket_id)
         is_open = ticket['status'] != 'closed'
         return is_open
+
+    def _is_admin(self, author):
+        '''
+        Verify whether the author has administrator priviledges
+        '''
+        config = ConfigParser()
+        if not os.path.isfile(configpath):
+            raise AssertionError('Unable to find Subversion ACL for admins')
+        config.read(configpath)
+        admins = config.get('groups','admins')
+        if not admins:
+            raise AssertionError('Unable to retrieve Subversion ACL for admins')
+        if not author.lower() in [s.strip() for s in admins.lower().split(',')]:
+            return False
+        return True
+
+    def _is_dev_branch(self, dir_path):
+        '''
+        Tell whether a directory is located inside a development branch or not
+        '''
+        for dev_br in dev_branch_dirs:
+            if dir_path[:len(dev_br)] == dev_br:
+                return True
+        return False
 
 
 class PreCommitHook(CommitHook):
@@ -322,35 +320,36 @@ class PreCommitHook(CommitHook):
         Get the transaction log message
         '''
         log = self.proxy.get_txn_log_message()
+        if len(log) < 2:
+            return None
+        # Be sure the first letter is uppercased
+        log = log[0].upper() + log[1:]
         return log
+
+    def _update_log(self, log):
+        '''
+        Update the transaction log message
+        '''
+        self.proxy.set_txn_log_message(log)
 
     def _is_txn_branch_directory(self):
         '''
         Check if the directory of the transaction is a branch directory
-        (located under /branches)
+        (located under the branches directory)
         '''
         dst_branch = self.proxy.find_txn_branch(self.bcre)
-        is_branch = dst_branch[:len(branch_directory)] == branch_directory
-        return is_branch
+        return self._is_dev_branch(dst_branch)
 
     def finalize(self, result):
+        if OK == result:
+            self._update_log(self.log)
         sys.exit(result) 
 
     def _cmd_admins(self):
         '''
         Administrative commit
-        Check that the author has administrator rights
         '''
-        config = ConfigParser()
-        if not os.path.isfile(configpath):
-            print >>sys.stderr, 'Unable to find Subversion ACL for admins'
-            self.finalize(ERROR)
-        config.read(configpath)
-        admins = config.get('groups','admins')
-        if not admins:
-            print >>sys.stderr, 'Unable to retrieve Subversion ACL for admins'
-            self.finalize(ERROR)
-        if not self.author.lower() in map(string.strip, admins.lower().split(',')):
+        if not self._is_admin(self.author):
             print >>sys.stderr, 'Only administrator can execute admin commits'
             self.finalize(ERROR)
         return OK
@@ -367,9 +366,9 @@ class PreCommitHook(CommitHook):
                                  '(not a copy ?)'
             self.finalize(ERROR)
         dstbranch = self.proxy.find_txn_branch(self.bcre)
-        if dstbranch[:len(branch_directory)] != branch_directory:
+        if not self._is_dev_branch(dstbranch):
             print >> sys.stderr, 'Cannot create a new branch outside %s' \
-                                  % branch_directory
+                                  % dev_branch_dirs
             self.finalize(ERROR)
         return OK
 
@@ -382,25 +381,26 @@ class PreCommitHook(CommitHook):
         try:
             item = change_gen.next()
         except StopIteration:
-            print >> sys.stderr, "No deleted path in the submitted revision"
+            print >> sys.stderr, 'No deleted path in the submitted revision'
             self.finalize(ERROR)
         try:
             change_gen.next()
         except StopIteration:
             pass
         else:
-            print >> sys.stderr, "Termination of more than one branch is not allowed"
+            print >> sys.stderr, 'Termination of more than one branch is not ' \
+                                 'allowed'
             self.finalize(ERROR)
         (path, change) = item
         if change is not RepositoryProxy.PATH_DELETE:
             print >> sys.stderr, "The branch %s is not being deleted" % path
             self.finalize(ERROR)
         dstbranch = self.proxy.find_txn_branch(self.bcre)
-        if dstbranch[:len(branch_directory)] != branch_directory:
+        if not self._is_dev_branch(dstbranch):
             print >> sys.stderr, 'Cannot terminates a non-branch dir (%s)' \
-                                  % branch_directory
+                                  % dev_branch_dirs
             self.finalize(ERROR)
-        if force != '!':
+        if not force:
             youngest = self.proxy.get_youngest_path_revision(path) 
             # now checks that the deleter is the creator of the branch
             revs = [h[0] for h in self.proxy.get_history(youngest, path, 0)]
@@ -427,8 +427,8 @@ class PreCommitHook(CommitHook):
                   'message must be open.' % ticket_id
             self.finalize(ERROR)
         if not self._is_txn_branch_directory():
-            print >> sys.stderr, 'Cannot apply changes to a non-branch dir (%s)' \
-                                  % branch_directory
+            print >> sys.stderr, 'Cannot apply changes to a non-branch dir' \
+                                 ' (%s)' % dev_branch_dirs
             self.finalize(ERROR)
         return OK
 
@@ -488,6 +488,7 @@ class PreCommitHook(CommitHook):
         if not revisions:
             print >> sys.stderr, "Revisions %s %s %s" % (rev1, rev2, revisions)
             self.finalize(ERROR)
+
         # On error, the transaction is destroyed, so it is safe to apply the
         # property even if the hook fails.
         self.proxy.set_txn_property(deliver_prop_name, ','.join(revisions))
@@ -497,10 +498,20 @@ class PreCommitHook(CommitHook):
         if not dstbranch:
             print >> sys.stderr, 'Unable to locate delivery destination'
             self.finalize(ERROR)
+
+        # Ensure the branch is not delivered to self
         branch1 = self.proxy.find_revision_branch(int(rev1), self.bcre)
         if dstbranch == branch1:
             print >> sys.stderr, 'Cannot deliver to self (%s -> %s)' % \
                                   (branch1, dstbranch)
+            self.finalize(ERROR)
+
+        # Ensure that the 'branch creation' revision is not selected as a source
+        print >> sys.stderr, "BRANCH1: (%s) [%s]" % (rev1, branch1)
+        brevs = [h[0] for h in self.proxy.get_history(int(rev1), branch1, None)]
+        if rev1 == brevs[0]:
+            print >> sys.stderr, \
+                'Cannot deliver the initial branch revision (%d)' % rev1
             self.finalize(ERROR)
 
         # if dstbranch == trunk_directory:
@@ -522,23 +533,24 @@ class PreCommitHook(CommitHook):
                 #    print >> sys.stderr, 'Cannot deliver to the trunk ' \
                 #    'as the latest CC export (rev %d on %s) has not been ' \
                 #    'tagged and imported back into SVN' % (rev, exportval)
-                #    if force != '!':
+                #    if not force:
                 #        # Aborts if no force mode is specified
                 #        self.finalize(ERROR)
 
         # Build the new log including all tickets
         # @todo there's probably a better way to format this
         tickets = self._collect_tickets(revisions)
-        full_log = self.log
-        full_log += '\n'
+        full_log = self.log.decode('utf8')
+        full_log += u'\n'
         for tkt_id in tickets:
             ticket = Ticket(self.env, tkt_id)
-            full_log += '\n* #%s: %s\n' % (tkt_id, ticket['summary'])
-            full_log += '\n'.join( [ "%s - %s" % (revi[0], revi[1]) for revi in tickets[tkt_id] ])
-            full_log += '\n'
-        # print >> sys.stderr, full_log
-        self.proxy.set_txn_log_message(str(full_log))
-
+            full_log += u'\n* #%s: %s\n' % (tkt_id, ticket['summary'])
+            full_log += u'\n'.join([u'  %s' % (revi[1].decode('utf8')) \
+                                    for revi in tickets[tkt_id]])
+            full_log += u'\n'
+        full_log = full_log[0].upper() + full_log[1:]
+        self.log = full_log.encode('utf8')
+ 
         # Check if there is a next milestone defined in Trac
         # This is a bit too conservative, as a next milestone is only needed if
         # tickets are to be closed. Oh well...

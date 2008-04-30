@@ -16,22 +16,22 @@ REV="$2"
 USER="$3"
 PROPNAME="$4"
 ACTION="$5"
-CONFIG_PATH=`dirname $0`
 
-if [ -f "${CONFIG_PATH}/config" ]; then
-  . ${CONFIG_PATH}/config
+SELF=`readlink -f $0`
+CONF=`dirname ${SELF}`/hook.conf
+if [ -f ${CONF} ]; then
+    . ${CONF}
 else
-  echo "Missing config file" >&2
+    echo "Missing hook configuration file" >&2
+    exit -1
 fi
 
-REPOSNAME=`echo "$REPOS" | sed -r 's/^.*\/([^\/]+)$/\1/'`
-TRAC_ENV="${TRAC_ENV_PARENT_DIR}/${REPOSNAME}"
-LOGFILE="${TRAC_ENV}/log/svn-postrevpropchange.log"
-
-export PYTHONPATH=$TRACPATH
+export PYTHONPATH=$TRACPATH:$GENSHIPATH
+export PYTHON_EGG_CACHE
+export PYTHON=`which python2.5`
 date >> "$LOGFILE"
 echo "Revprop: $REV $PROPNAME" >> $LOGFILE
-${PYTHON} ${TRACPATH}/hooks/trac-revprop-hook -p "$TRAC_ENV" -u "$USER" \
+${PYTHON} ${HOOKPATH}/trac-revprop-hook -p "$TRAC_ENV" -u "$USER" \
     -n "$PROPNAME" -d "$REPOS" -r "$REV" -a "$ACTION" post 2>> "$LOGFILE"
 if [ $? -ne 0 ]; then
     tail -5 "$LOGFILE" | \

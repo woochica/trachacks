@@ -1,9 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf8 -*-
 #
-# repproxy.py
-# ----------------------------------------------------------------------------
-# Copyright (c) 2005-2007 Emmanuel Blot
-# ----------------------------------------------------------------------------
+# Copyright (c) 2005-2008 Emmanuel Blot
+#
 
 import sys
 
@@ -77,6 +76,7 @@ class RepositoryProxy(object):
         chgpaths = fs.svn_fs_paths_changed(root, self.pool)
         for chgpath in chgpaths:
             (srcrev, srcpath) = fs.svn_fs_copied_from(root, chgpath, self.pool)
+            #print >>sys.stderr, "chgpath: %s -> %s @ %d" % (chgpath, srcpath, srcrev)
             if srcrev > 0 and srcpath is not None:
                 return (srcrev, srcpath)
         return None
@@ -92,6 +92,7 @@ class RepositoryProxy(object):
         chgpaths = fs.svn_fs_paths_changed(root, self.pool)
         for chgpath in chgpaths:
             (srcrev, srcpath) = fs.svn_fs_copied_from(root, chgpath, self.pool)
+            #print >>sys.stderr, "chgpath: %s -> %s @ %d" % (chgpath, srcpath, srcrev)
             if srcrev > 0 and srcpath is not None:
                 return (srcrev, srcpath)
         return None
@@ -134,8 +135,7 @@ class RepositoryProxy(object):
 
     def get_revision_changed_paths(self, revision):
         root = self.get_revision_root(revision)
-        for (path, change) in self._get_changed_paths(root):
-            yield path
+        return self._get_changed_paths(root)
 
     def _get_changed_paths(self, root):
         if not root:
@@ -151,7 +151,7 @@ class RepositoryProxy(object):
         rev = fs.svn_fs_youngest_rev(self.fs, self.pool)
         return rev
 
-    def get_history(self, revision, path, traverse=1):
+    def get_history(self, revision, path, traverse=True):
         """Provides a generator to iterate through the history of a path
           
            revision is the younger revision to start from iterating backwards
@@ -163,10 +163,8 @@ class RepositoryProxy(object):
             history.append((r, p))
  
         # svn_repos_history does not support the None argument
-        if not traverse:
-            traverse = 0
         repos.svn_repos_history(self.fs, path, history_cb, 0, revision, \
-                                traverse, self.pool)
+                                traverse and 1 or 0, self.pool)
         for h in history:
             yield h
 
@@ -176,7 +174,7 @@ class RepositoryProxy(object):
         length = len(path)
         for rev in range(youngest,0,-1):
             root = self.get_revision_root(rev)
-            for revpath in self.get_revision_changed_paths(rev):
+            for (revpath, change) in self.get_revision_changed_paths(rev):
                 if revpath[:length] == path:
                     return rev
         return None 

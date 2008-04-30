@@ -1,28 +1,22 @@
 #!/bin/sh
 
-# PRE-COMMIT HOOK
-#
-#   [1] REPOS-PATH   (the path to this repository)
-#   [2] TRANSACTION  (the transaction being processed)
-
 REPOS="$1"
 TXN="$2"
-CONFIG_PATH=`dirname $0`
 
-if [ -f "${CONFIG_PATH}/config" ]; then
-  . ${CONFIG_PATH}/config
+SELF=`readlink -f $0`
+CONF=`dirname ${SELF}`/hook.conf
+if [ -f ${CONF} ]; then
+    . ${CONF}
 else
-  echo "Missing config file" >&2
+    echo "Missing hook configuration file (${CONF})" >&2
+    exit -1
 fi
 
-REPOSNAME=`echo "$REPOS" | sed -r 's/^.*\/([^\/]+)$/\1/'`
-TRAC_ENV="${TRAC_ENV_PARENT_DIR}/${REPOSNAME}"
-LOGFILE="${TRAC_ENV}/log/svn-precommit.log"
-
-export PYTHONPATH=$TRACPATH
+export PYTHONPATH=$TRACPATH:$GENSHIPATH
+export PYTHON_EGG_CACHE
+export PYTHON=`which python2.5`
 echo "Transaction: $TXN" >> $LOGFILE
-${PYTHON} ${TRACPATH}/hooks/trac-commit-hook \
-    -d "$REPOS" -t "$TXN" -p "$TRAC_ENV" 
+${PYTHON} ${HOOKPATH}/trac-commit-hook -d "$REPOS" -t "$TXN" -p "$TRAC_ENV" 
 RC=$?
 echo "RESULT $RC" >>  $LOGFILE
 [ $RC == 0 ] || exit 1
