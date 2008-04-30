@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2007-2008 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -11,4 +11,4 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
 
-from mergeenhancer import *
+from enhancer import *

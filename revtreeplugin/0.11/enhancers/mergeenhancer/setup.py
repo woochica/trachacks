@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2007-2008 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -15,12 +15,12 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevtreeMergeEnhancer'
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 setup (
     name = PACKAGE,
     version = VERSION,
-    description = 'Enhancer for the RevtreePlugin, based on svnmerge info',
+    description = 'Enhancer for the RevtreePlugin, based on svnmerge.py info',
     author = 'Emmanuel Blot',
     author_email = 'emmanuel.blot@free.fr',
     license='BSD', 
@@ -31,7 +31,7 @@ setup (
     packages = find_packages(exclude=['ez_setup', '*.tests*']),
     entry_points = {
         'trac.plugins': [
-            'mergeenhancer = mergeenhancer'
+            'revtree.enhancer = mergeenhancer'
         ]
     }
 )
