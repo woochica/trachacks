@@ -46,6 +46,12 @@ class CasLoginModule(LoginModule):
             yield ('metanav', 'login', Markup('<a href="%s">Login</a>' % escape(self.cas.login_url(req.abs_href.login()))))
         
 
+    # Internal methods
+    def _do_login(self, req):
+        if not req.remote_user:
+            req.redirect(self.cas.login_url(req.abs_href.login()))
+        super(CasLoginModule, self)._do_login(req)
+
     def _do_logout(self, req):
         if req.authname:
             super(CasLoginModule, self)._do_logout(req)
