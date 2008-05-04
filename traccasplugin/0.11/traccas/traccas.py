@@ -6,6 +6,8 @@ from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.chrome import INavigationContributor
 from trac.util import escape, hex_entropy, Markup
 from trac.web.auth import LoginModule
+from genshi.builder import tag
+
 from pycas import PyCAS
 
 class CasLoginModule(LoginModule):
@@ -18,14 +20,6 @@ class CasLoginModule(LoginModule):
                         doc='Path component for the logout system')
     validate_path = Option('cas', 'validate_path', default='/validate', 
                         doc='Path component for the validation system')
-    
-    def __init__(self):
-        paths = {
-            'login_path': self.login_path,
-            'logout_path': self.logout_path,
-            'validate_path': self.validate_path,
-        }
-        self.cas = PyCAS(self.server, **paths)
         
     # IAuthenticatorMethods
     def authenticate(self, req):
@@ -40,11 +34,10 @@ class CasLoginModule(LoginModule):
     # INavigationContributor methods
     def get_navigation_items(self, req):        
         if req.authname and req.authname != 'anonymous':
-            yield ('metanav', 'login', 'logged in as %s' % req.authname)
-            yield ('metanav', 'logout', Markup('<a href="%s">Logout</a>' % escape(req.href.logout())))
+            yield 'metanav', 'login', 'logged in as %s' % req.authname
+            yield 'metanav', 'logout', tag.a('Logout', href=req.href.logout())
         else:
-            yield ('metanav', 'login', Markup('<a href="%s">Login</a>' % escape(self.cas.login_url(req.abs_href.login()))))
-        
+            yield 'metanav', 'login', tag.a('Login', href=self.cas.login_url(req.abs_href.login()))
 
     # Internal methods
     def _do_login(self, req):
@@ -58,3 +51,12 @@ class CasLoginModule(LoginModule):
             req.redirect(self.cas.logout_url(req.abs_href()))
         else:
             req.redirect(req.abs_href())
+    
+    def cas(self):
+        paths = {
+            'login_path': self.login_path,
+            'logout_path': self.logout_path,
+            'validate_path': self.validate_path,
+        }
+        return PyCAS(self.server, **paths)
+    cas = property(cas)

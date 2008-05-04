@@ -5,15 +5,17 @@ from setuptools import setup
 
 setup(
     name = 'TracCAS',
-    version = '1.0',
+    version = '2.0',
     packages = ['traccas'],
 
-    author = "Noah Kantrowitz",
-    author_email = "noah@coderanger.net",
-    description = "A modified authentication plugin to use the Yale CAS system.",
-    license = "BSD",
-    keywords = "trac cas authentication plugin",
-    url = "http://trac-hacks.org/wiki/TracCASPlugin",
+    author = 'Noah Kantrowitz',
+    author_email = 'noah@coderanger.net',
+    description = 'A modified authentication plugin to use the Yale CAS system.',
+    license = 'BSD',
+    keywords = 'trac plugin cas authentication',
+    url = 'http://trac-hacks.org/wiki/TracCASPlugin',
+
+    install_requires = ['Trac'],
 
     entry_points = {
         'trac.plugins': [
