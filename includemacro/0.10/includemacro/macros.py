@@ -74,7 +74,7 @@ class IncludeMacro(WikiMacroBase):
             node = repo.get_node(source_obj)
             out = node.get_content().read()
             if dest_format is None:
-                dest_format = get_mimetype(source_obj, out)
+                dest_format = node.content_type or get_mimetype(source_obj, out)
         # RFE: Add ticket: and comment: sources. <NPK>
         # RFE: Add attachment: source. <NPK>
         else:
