@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># ITicketManipulator methods
+def prepare_ticket(self, req, ticket, fields, actions):
+    pass
+
+def validate_ticket(self, req, ticket):
+    ${1:pass}</string>
+	<key>name</key>
+	<string>ITicketManipulator</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>ITicketManipulator</string>
+	<key>uuid</key>
+	<string>4F222AAB-7FA5-4D56-95DD-165F48EF94C3</string>
+</dict>
+</plist>

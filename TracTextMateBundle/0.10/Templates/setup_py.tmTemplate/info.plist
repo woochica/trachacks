@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>command</key>
+	<string>if [[ ! -f "$TM_NEW_FILE" ]]; then
+   TM_YEAR=`date +%Y` \
+   TM_DATE=`date +%Y-%m-%d` \
+   TM_USERNAME=`niutil -readprop / /users/\$USER realname` \
+   #$DIALOG /Users/coderanger/Documents/setuppy.nib
+   res="$(CocoaDialog standard-inputbox --informative-text "Name of plugin" --title "New Plugin")"
+   [[ "$(head -n1 &lt;&lt;&lt;"$res")" == "2" ]] &amp;&amp; exit_discard
+   export PLUGIN_NAME="$(tail -n1 &lt;&lt;&lt;"$res")"
+   export MODULE_NAME="$(tr "[:upper:]" "[:lower:]" &lt;&lt;&lt;"$PLUGIN_NAME")"
+   mkdir "$TM_NEW_FILE_DIRECTORY/$MODULE_NAME"
+   touch "$TM_NEW_FILE_DIRECTORY/$MODULE_NAME/__init__.py"
+   perl -pe 's/\$\{([^}]*)\}/$ENV{$1}/g' \
+      &lt; template.py &gt; "$TM_NEW_FILE"
+fi</string>
+	<key>extension</key>
+	<string>py</string>
+	<key>name</key>
+	<string>setup.py</string>
+	<key>uuid</key>
+	<string>5050A1CC-DB66-46B8-9126-2EE5460C4F05</string>
+</dict>
+</plist>

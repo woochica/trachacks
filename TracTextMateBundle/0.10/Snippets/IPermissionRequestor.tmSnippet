@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># IPermissionRequestor methods
+def get_permission_actions(self):
+    yield '$1'</string>
+	<key>name</key>
+	<string>IPermissionRequestor</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>IPermissionRequestor</string>
+	<key>uuid</key>
+	<string>67245EC0-8453-49B5-8F94-28D7B75A1289</string>
+</dict>
+</plist>

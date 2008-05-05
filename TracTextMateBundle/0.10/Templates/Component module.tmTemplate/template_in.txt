@@ -1,0 +1,11 @@
+# Created by ${TM_USERNAME} on ${TM_DATE}.
+# Copyright (c) ${TM_YEAR} ${TM_ORGANIZATION_NAME}. All rights reserved.
+
+from trac.core import *
+
+class Module(Component):
+    """ """
+
+    implements()
+
+

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Trac</string>
+	<key>ordering</key>
+	<array>
+		<string>5050A1CC-DB66-46B8-9126-2EE5460C4F05</string>
+		<string>67245EC0-8453-49B5-8F94-28D7B75A1289</string>
+		<string>E80C3F8E-D845-4F06-9172-45235424C92E</string>
+		<string>C8E8E10F-CB2E-4F59-AA34-FD6C842F6B7D</string>
+		<string>D420225D-7742-4390-93E3-F4E9530955DB</string>
+		<string>B025476A-9EFE-493C-BEB8-47FDFC65338C</string>
+		<string>4F222AAB-7FA5-4D56-95DD-165F48EF94C3</string>
+		<string>BE0DED5B-B2CF-4E56-9473-12FA3537F277</string>
+		<string>40EF24E3-1C37-4B07-8956-277E1D1CFB4C</string>
+		<string>BA2EA45E-7D29-40CE-8BBB-94C8E8922CF8</string>
+		<string>3F0A76F0-649F-4207-8027-A9FA138E7A21</string>
+		<string>53BB41AD-623F-4C95-8535-3E857C55B1F9</string>
+		<string>117B26C1-0FA5-4ECF-9D04-2B02011ED6C6</string>
+		<string>29CF8284-C075-444C-8692-9533A133DC0F</string>
+		<string>3A187BD5-B9DF-42BF-8739-04304A51DC54</string>
+		<string>4F55F0F6-B31A-4E8D-AD74-F40E2B693CD7</string>
+		<string>960753F2-96BC-4F83-BD47-09C5AF45D72B</string>
+	</array>
+	<key>uuid</key>
+	<string>2C31D4E3-926D-468C-962C-7E4BBFEADFAE</string>
+</dict>
+</plist>

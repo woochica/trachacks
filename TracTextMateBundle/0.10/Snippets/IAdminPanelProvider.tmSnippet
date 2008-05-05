@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># IAdminPanelProvider methods
+def get_admin_panels(self, req):
+    if req.perm.has_permission('${1:TRAC_ADMIN}'):
+        yield '${2:general}', '${3:General}', '${4:panel}', '${5:Label}'
+
+def render_admin_panel(self, req, cat, page, path_info):
+    ${6:pass}</string>
+	<key>name</key>
+	<string>IAdminPanelProvider</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>IAdminPanelProvider</string>
+	<key>uuid</key>
+	<string>960753F2-96BC-4F83-BD47-09C5AF45D72B</string>
+</dict>
+</plist>
