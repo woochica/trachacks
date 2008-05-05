@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># IRequestHandler methods
+def match_request(self, req):
+    return req.path_info.startswith('$1')
+
+def process_request(self, req):
+    ${2:pass}</string>
+	<key>name</key>
+	<string>IRequestHandler</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>IRequestHandler</string>
+	<key>uuid</key>
+	<string>B025476A-9EFE-493C-BEB8-47FDFC65338C</string>
+</dict>
+</plist>

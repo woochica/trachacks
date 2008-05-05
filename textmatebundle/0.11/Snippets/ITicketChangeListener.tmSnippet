@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># ITicketChangeListener methods
+def ticket_created(self, tkt):
+    ${1:pass}
+
+def ticket_changed(self, tkt, comment, author, old_values):
+    ${2:pass}
+
+def ticket_deleted(self, tkt):
+    ${3:pass}</string>
+	<key>name</key>
+	<string>ITicketChangeListener</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>ITicketChangeListener</string>
+	<key>uuid</key>
+	<string>D420225D-7742-4390-93E3-F4E9530955DB</string>
+</dict>
+</plist>

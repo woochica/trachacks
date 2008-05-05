@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># ITemplateStreamFilter methods
+def filter_stream(self, req, method, filename, stream, data):
+    if req.path_info.startswith('/$1'):
+        stream |= Transformer('$2').${3:replace}('$4')
+    return stream</string>
+	<key>name</key>
+	<string>ITemplateStreamFilter</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>ITemplateStreamFilter</string>
+	<key>uuid</key>
+	<string>4F55F0F6-B31A-4E8D-AD74-F40E2B693CD7</string>
+</dict>
+</plist>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># INavigationContributor methods
+def get_active_navigation_item(self, req):
+    return '$1'
+
+def get_navigation_items(self, req):
+    if req.perm.has_permission('$2'):
+        yield 'mainnav', '$1', tag.a('$3', href=req.href.$1())</string>
+	<key>name</key>
+	<string>INavigationContributor</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>INavigationContributor</string>
+	<key>uuid</key>
+	<string>BA2EA45E-7D29-40CE-8BBB-94C8E8922CF8</string>
+</dict>
+</plist>

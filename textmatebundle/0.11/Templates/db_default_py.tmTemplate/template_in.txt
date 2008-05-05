@@ -1,0 +1,12 @@
+# Created by ${TM_USERNAME} on ${TM_DATE}.
+# Copyright (c) ${TM_YEAR} ${TM_ORGANIZATION_NAME}. All rights reserved.
+
+from trac.db import Table, Column
+
+name = '${MODULE_NAME}'
+version = 1
+tables = [
+    Table('${MODULE_NAME}', key='id')[
+        Column('id', auto_increment=True),
+    ],
+]

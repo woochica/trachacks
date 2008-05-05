@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># IRequestFilter methods
+def pre_process_request(self, req, handler):
+    ${1:return handler}
+        
+def post_process_request(self, req, template, data, content_type):
+    ${2:return template, data, content_type}</string>
+	<key>name</key>
+	<string>IRequestFilter</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>IRequestFilter</string>
+	<key>uuid</key>
+	<string>40EF24E3-1C37-4B07-8956-277E1D1CFB4C</string>
+</dict>
+</plist>

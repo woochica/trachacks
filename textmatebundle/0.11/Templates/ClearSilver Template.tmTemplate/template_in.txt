@@ -1,0 +1,12 @@
+<?cs include "header.cs" ?><?cs include "macros.cs" ?>
+
+<div id="ctxtnav" class="nav">
+  <ul>
+  </ul>
+</div>
+
+<div id="content" class="">
+  <h1></h1>
+</div>
+
+<?cs include "footer.cs" ?>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string># ITemplateProvider methods
+def get_htdocs_dirs(self):
+    from pkg_resources import resource_filename
+    return [('$1', resource_filename(__name__, 'htdocs'))]
+        
+def get_templates_dirs(self):
+    from pkg_resources import resource_filename
+    return [resource_filename(__name__, 'templates')]</string>
+	<key>name</key>
+	<string>ITemplateProvider</string>
+	<key>scope</key>
+	<string>source.python</string>
+	<key>tabTrigger</key>
+	<string>ITemplateProvider</string>
+	<key>uuid</key>
+	<string>3F0A76F0-649F-4207-8027-A9FA138E7A21</string>
+</dict>
+</plist>
