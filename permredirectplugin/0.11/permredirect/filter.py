@@ -1,7 +1,6 @@
 # Created by Noah Kantrowitz on 2007-08-27.
 # Copyright (c) 2007-2008 Noah Kantrowitz. All rights reserved.
 import sys
-import inspect
 
 from trac.core import *
 from trac.web.api import IRequestFilter, RequestDone
@@ -19,7 +18,6 @@ class PermRedirectModule(Component):
             
     def post_process_request(self, req, template, data, content_type):    
         if template is None:
-            self.log.debug('PermRedirect: Got an error page')
             # Some kind of exception in progress
             if req.authname != 'anonymous':
                 # Already logged in
@@ -43,5 +41,4 @@ class PermRedirectModule(Component):
                 pass
             
         return template, data, content_type
-
 
