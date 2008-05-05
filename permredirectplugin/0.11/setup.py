@@ -5,9 +5,8 @@ from setuptools import setup
 
 setup(
     name = 'TracPermRedirect',
-    version = '1.0.1',
+    version = '2.0',
     packages = ['permredirect'],
-    #package_data = { 'permredirect': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
@@ -19,7 +18,7 @@ setup(
         'Framework :: Trac',
     ],
     
-    install_requires = [],
+    install_requires = ['Trac'],
 
     entry_points = {
         'trac.plugins': [
