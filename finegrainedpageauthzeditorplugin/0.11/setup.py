@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2007 Chris Liechti <cliechti@gmx.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution. It is the
+# new BSD license.
+
+from setuptools import setup
+
+setup(
+    name = 'PageAuthzPolicyEditor',
+    version = '0.1',
+    author = 'Robert Martin',
+    author_email = 'robert.martin@arqiva.com',
+    url = '',
+    description = 'Page Authz File management plugin for Trac',
+    license = 'BSD',
+
+    zip_safe=True,
+    packages=['page_authz_policy_editor'],
+    package_data={'page_authz_policy_editor': ['templates/*.html']},
+
+    install_requires = [
+        #'trac>=0.11',
+    ],
+
+    entry_points = {
+        'trac.plugins': [
+            'page_authz_policy_editor.admin = page_authz_policy_editor.pape_admin',
+        ]
+    },
+
+    #~ test_suite = 'htgroups_edit.tests.suite',
+)
+

@@ -1,0 +1,45 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Pages Authz</title>
+  </head>
+
+  <body>
+    <h2>Authz Page Permissions</h2>
+
+    <form class="mod" id="modbasic" method="post">
+      <fieldset>
+        <legend>File ${pages_authz.file_name}</legend>
+        <div class="field">
+          <label>
+            Contents:
+            <br />
+            <textarea name="authz_file_contents" rows="20" cols="80" wrap="off">${pages_authz.contents}</textarea>
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Available Permission Types</legend>
+        <div class="field">See the Wiki Trac Permissions Page for a listing and description</div>
+      </fieldset>
+      <fieldset>
+        <legend>Current Project Users</legend>
+        <div class="field">${pages_authz.users}</div>
+      </fieldset>
+      <fieldset>
+        <legend>Current Project Groups - specified with a leading '@'</legend>
+        <div class="field">${pages_authz.groups}</div>
+      </fieldset>
+      <div class="buttons">
+        <input type="submit" value="Apply changes"/>
+        <input type="reset" name="reset" value="Reset" />
+      </div>
+    </form>
+  </body>
+
+</html>
