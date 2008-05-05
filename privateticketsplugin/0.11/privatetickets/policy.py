@@ -7,9 +7,6 @@ from trac.ticket.model import Ticket
 from trac.config import IntOption, ListOption
 from trac.util.compat import set
 
-__all__ = ['PrivateTicketsSystem']
-
-
 class PrivateTicketsPolicy(Component):
     """Central tasks for the PrivateTickets plugin."""
     
