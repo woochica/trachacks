@@ -20,13 +20,24 @@ class PrivateTicketsPolicy(Component):
     blacklist = ListOption('privatetickets', 'group_blacklist', default='anonymous, authenticated',
                            doc='Groups that do not affect the common membership check.')
     
+    ignore_permissions = set([
+        'TRAC_ADMIN',
+        'TICKET_VIEW_REPORTER',
+        'TICKET_VIEW_OWNER',
+        'TICKET_VIEW_CC',
+        'TICKET_VIEW_REPORTER_GROUP',
+        'TICKET_VIEW_OWNER_GROUP',
+        'TICKET_VIEW_CC_GROUP',
+    ])
+    
     # IPermissionPolicy(Interface)
     def check_permission(self, action, username, resource, perm):
-        if 'TRAC_ADMIN' in perm:
-            return None
-        if username == 'anonymous' or resource is None:
-            return None
-        if resource.realm == 'ticket' and action == 'TICKET_VIEW':
+        if username != 'anonymous' and \
+           resource is not None and \
+           resource.realm == 'ticket' and \
+           resource.id is not None and \
+           action not in self.ignore_permissions and \
+           'TRAC_ADMIN' not in perm:
             return self.check_ticket_access(perm, resource)
         return None
     
@@ -45,7 +56,6 @@ class PrivateTicketsPolicy(Component):
         except TracError:
             return False # Ticket doesn't exist
         
-        # TODO: These should be checking in the context of the ticket. <NPK>
         if perm.has_permission('TICKET_VIEW_REPORTER') and \
            tkt['reporter'] == perm.username:
             return None
