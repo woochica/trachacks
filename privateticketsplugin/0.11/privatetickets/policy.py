@@ -1,8 +1,8 @@
-# Created by  on 2008-04-04.
+# Created by Noah Kantrowitz on 2008-04-04.
 # Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
 
 from trac.core import *
-from trac.perm import IPermissionRequestor, IPermissionPolicy
+from trac.perm import IPermissionRequestor, IPermissionGroupProvider, IPermissionPolicy, PermissionSystem
 from trac.ticket.model import Ticket
 from trac.config import IntOption, ListOption
 from trac.util.compat import set
@@ -10,7 +10,7 @@ from trac.util.compat import set
 __all__ = ['PrivateTicketsSystem']
 
 
-class PrivateTicketsSystem(Component):
+class PrivateTicketsPolicy(Component):
     """Central tasks for the PrivateTickets plugin."""
     
     implements(IPermissionRequestor, IPermissionPolicy)
@@ -43,31 +43,32 @@ class PrivateTicketsSystem(Component):
         except TracError:
             return False # Ticket doesn't exist
         
+        # TODO: These should be checking in the context of the ticket. <NPK>
         if perm.has_permission('TICKET_VIEW_REPORTER') and \
            tkt['reporter'] == perm.username:
-            return True
+            return None
         
         if perm.has_permission('TICKET_VIEW_CC') and \
            perm.username in [x.strip() for x in tkt['cc'].split(',')]:
-            return True
+            return None
         
         if perm.has_permission('TICKET_VIEW_OWNER') and \
            perm.username == tkt['owner']:
-            return True
+            return None
         
         if perm.has_permission('TICKET_VIEW_REPORTER_GROUP') and \
            self._check_group(perm.username, tkt['reporter']):
-            return True
+            return None
         
         if perm.has_permission('TICKET_VIEW_OWNER_GROUP') and \
            self._check_group(perm.username, tkt['owner']):
-            return True
+            return None
         
         if perm.has_permission('TICKET_VIEW_CC_GROUP'):
             for user in tkt['cc'].split(','):
                 #self.log.debug('Private: CC check: %s, %s', req.authname, user.strip())
                 if self._check_group(perm.username, user.strip()):
-                    return True
+                    return None
                     
         return False
 
