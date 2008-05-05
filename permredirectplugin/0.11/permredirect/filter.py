@@ -18,14 +18,14 @@ class PermRedirectModule(Component):
         return handler
             
     def post_process_request(self, req, template, data, content_type):    
-        self.log.debug('PermRedirect: Got some page')
         if template is None:
             self.log.debug('PermRedirect: Got an error page')
             # Some kind of exception in progress
             if req.authname != 'anonymous':
                 # Already logged in
                 return template, data, content_type
-                
+            
+            exctype, exc = sys.exc_info()[0:2]
             if issubclass(exctype, PermissionError):
                 req.redirect(req.href.login())
             
