@@ -22,6 +22,8 @@ class PrivateTicketsPolicy(Component):
     
     # IPermissionPolicy(Interface)
     def check_permission(self, action, username, resource, perm):
+        if 'TRAC_ADMIN' in perm:
+            return None
         if username == 'anonymous' or resource is None:
             return None
         if resource.realm == 'ticket' and action == 'TICKET_VIEW':
