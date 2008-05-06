@@ -30,6 +30,8 @@ from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, \
 from trac.config import Option, ListOption
 from trac.util import get_reporter_id
 
+from pkg_resources import resource_filename
+
 __all__ = ['TasklistPlugin', 'pprint']
 
 def pprint(object, prefix=""):
@@ -197,11 +199,9 @@ class TasklistPlugin(QueryModule):
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('tasklist', resource_filename(__name__, 'htdocs'))]
 
     # Internal methods
