@@ -18,6 +18,9 @@
 
 import os
 import pkg_resources
+from configobj import ConfigObj
+#import ConfigParser
+from StringIO import StringIO
 
 from genshi import HTML
 from genshi.builder import tag
@@ -83,19 +86,42 @@ class PageAuthzPolicyEditor(Component):
             password_file = file(password_file_name)
             try:
                 for user_line in password_file:
-                    group = user_line.strip()
                     # Ignore blank lines and lines starting with #
                     if user_line and not user_line.startswith('#'):
                         user_name = user_line.split(':', 1)[0]
-                        users_list.append(user_name)
+                        users_list.append(user_name.strip())
             finally:
                 password_file.close()
         users = ', '.join(sorted(users_list))
         return users
 
+    # Get the groups and their members so they can easily be included in the
+    # groups section of the authz file.  Need it as a dictionary of arrays so it be easily
+    # iterated.
+    def _get_groups_and_members(self):
+        group_file_name = self.config.get('account-manager', 'group_file')
+        if os.path.exists(group_file_name):
+            group_file = file(group_file_name)
+            try:
+                groups_dict = dict()
+                for group_line in group_file:
+                    group = group_line.strip()
+                    # Ignore blank lines and lines starting with #
+                    if group_line and not group_line.startswith('#'):
+                        group_name = group_line.split(':', 1)[0]
+                        group_members = group_line.split(':', 2)[1].split(' ')
+                        groups_dict[group_name] = [ x for x in [member.strip() for member in group_members] if x ]
+            finally:
+                group_file.close()
+        if len(groups_dict):
+            return groups_dict
+        else:
+            return None
+
     def render_admin_panel(self, req, cat, page, path_info):
         req.perm.require('TRAC_ADMIN')
         authz_policy_file_name = self.config.get('authz_policy', 'authz_file')
+        group_details = self._get_groups_and_members()
         # Handle the return data
         if req.method == 'POST':
              if req.args.get('authz_file_contents'):
@@ -104,10 +130,21 @@ class PageAuthzPolicyEditor(Component):
                 authz_policy_file.write(edited_contents)
                 authz_policy_file.close()
 
-        contents = open(authz_policy_file_name).readlines()
+        authz_policy_file = ConfigObj(authz_policy_file_name)
+
+        # If there isn't a group file, don't destroy the existing entries
+        if (group_details):
+            authz_policy_file['groups'] = group_details
+
+        # This is purely to fill in the text area with the contents.
+        contents = StringIO()
+        authz_policy_file.write(contents)
+
+
+        #contents = open(authz_policy_file_name).readlines()
         data = {
             'file_name' : authz_policy_file_name,
-            'contents': contents,
+            'contents': contents.getvalue(),
             'users' : self._get_users(),
             'groups' : self._get_groups()
         }
