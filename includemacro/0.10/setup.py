@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracIncludeMacro',
-    version = '1.0.1',
+    version = '1.1',
     packages = ['includemacro'],
     #package_data = { 'includemacro': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 
