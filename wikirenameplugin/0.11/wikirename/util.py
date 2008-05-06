@@ -1,13 +1,13 @@
 #! /usr/bin/python
-from trac.core import *
-from trac.env import *
-
 import sys
-import sre
+import re
 import os
 import time
 import optparse
 import urllib
+
+from trac.core import *
+from trac.env import *
 
 __all__ = ['main', 'rename_page']
 
@@ -82,7 +82,7 @@ def rename_page(env, oldname, newname, user, ip, debug=False, db=None):
     # Rewrite all links to the old page, such as to point to the new page
     for row in list(cursor):
         debug("Found a page with a backlink in it: %s (v%s)", row[1], row[0])
-        newtext = sre.sub('\[wiki:%s'%oldname,'[wiki:%s'%newname,row[2])
+        newtext = re.sub('\[wiki:%s'%oldname,'[wiki:%s'%newname,row[2])
         cursor.execute('UPDATE wiki SET text=%s WHERE name=%s AND version=%s', (newtext,row[1],row[0]))
 
     if handle_commit:

@@ -1,6 +1,11 @@
+#!/usr/bin/env python
+import sys
+import os
+import time
+import optparse
+
 from trac.core import *
 from trac.env import Environment
-import sys, sre, os, time, optparse
 
 from wikirename.util import rename_page
 
@@ -10,7 +15,6 @@ def username():
         return os.environ['USERNAME']
     else:
         return os.getlogin()
-
 
 def main(*argv):
     parser = optparse.OptionParser(usage='Usage: %prog old-name new-name trac-env', version='RenamePage 2.0')

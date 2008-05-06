@@ -1,17 +1,21 @@
+# Created by Noah Kantrowitz
+# Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+import urllib
+
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import ITemplateProvider, add_ctxtnav
+from trac.web.api import IRequestFilter
 from trac.admin.web_ui import IAdminPanelProvider
 from genshi.core import Markup
 
 from wikirename.util import rename_page
 
-import urllib
-
 class WikiRenameModule(Component):
     """An evil module that adds a rename button to the wiki UI."""
  
-    implements(IPermissionRequestor, IAdminPanelProvider, ITemplateProvider)
+    implements(IPermissionRequestor, IAdminPanelProvider, ITemplateProvider,
+               IRequestFilter)
     
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -19,7 +23,8 @@ class WikiRenameModule(Component):
 
     # IAdminPanelProvider methods
     def get_admin_panels(self, req):
-        if req.perm.has_permission('WIKI_RENAME') or req.perm.has_permission('WIKI_ADMIN'):
+        perm = req.perm('wiki')
+        if 'WIKI_RENAME' in perm or 'WIKI_ADMIN' in perm:
             yield ('general', 'General', 'wikirename', 'Wiki Rename')
             
     def render_admin_panel(self, req, cat, page, path_info):
@@ -29,7 +34,7 @@ class WikiRenameModule(Component):
             'redir': req.args.get('redirect','') == '1',
         }
         
-        if 'submit' in req.args.keys():
+        if req.method == 'POST':
             if not data['src'] or not data['dest']:
                 raise TracError, "Please provide both the old and new names"
             rename_page(self.env, data['src'], data['dest'], req.authname, req.remote_addr, debug=self.log.debug)
@@ -49,3 +54,17 @@ class WikiRenameModule(Component):
         
     def get_htdocs_dirs(self):
         return []
+    
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+            
+    def post_process_request(self, req, template, data, content_type):
+        if req.path_info.startswith('/wiki') or req.path_info == '/':
+            page = data['page']
+            perm = req.perm(page.resource)
+            if 'WIKI_RENAME' in perm or 'WIKI_ADMIN' in perm:
+                href = req.href.admin('general','wikirename', 
+                                      redirect='1', src_page=page.name)
+                add_ctxtnav(req, 'Rename page', href)
+        return template, data, content_type

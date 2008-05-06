@@ -1,0 +1,43 @@
+Notes
+=====
+
+This plugin allows you to rename wiki pages. It is an evolution of the
+WikiRenameScript_, and currently has the same limitations.
+
+It will move a page and its history, and will rewrite explicit links
+(``[wiki:PageName Label]``) leading to it from other wiki pages. It
+will also move any attachments on the page.
+
+:warn: Currently this plugin doesn't interact well with the TagsPlugin_.
+       You should be careful to remove any tags on a page before 
+       renaming it, and then re-adding them to the new page.
+
+You can access the page rename form through the Admin system. For
+convenience, a link is also added to the context navigation bar in the
+wiki.
+
+Script
+======
+
+A script named ``trac-wikirename`` will automatically be installed.
+
+To use it::
+
+    trac-wikirenmate OldName NewName /path/to/trac/env
+
+Permissions
+===========
+
+A ``WIKI_RENAME`` permission is available, though anyone with 
+``WIKI_ADMIN`` will also be allowed to rename pages.
+
+Configuration
+=============
+
+To enable the plugin::
+
+    [components]
+    wikirename.* = enabled
+
+.. _WikiRenameScript: http://trac-hacks.org/wiki/WikiRenameScript
+.. _TagsPlugin: http://trac-hacks.org/wiki/TagsPlugin
