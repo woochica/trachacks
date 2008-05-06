@@ -72,7 +72,7 @@ class DepgraphMacro(Component):
 		tickets = cursor.fetchall()
 
 		for ticket in tickets:
-			bgcolor, border = get_color(str(ticket[1]))
+			bgcolor, border = get_color(str(ticket[1]).decode('ascii','ignore'))
 			result += "\"" + str(ticket[0]) + "\" [ URL=\"" \
 					+ req.href.ticket(int(ticket[0])) \
 					+ "\" fontcolor=\"#bb0000\" fillcolor=\"" + bgcolor \
