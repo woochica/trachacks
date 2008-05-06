@@ -1,0 +1,34 @@
+
+
+= Trac線路圖 =
+[[ZhTracGuideToc]]
+
+線路圖提供了查看[wiki:ZhTracTickets Trac傳票]的一個視圖, 幫助你規劃和管理項目的未來開發.
+
+== 線路圖視圖 ==
+
+基本上, 線路圖只是一個未來的里程碑的列表. 你可以為里程碑添加描述(用[ZhWikiFormatting Wiki格式]), 例如描述主要目標. 另外, 以某個里程碑為目標的傳票被集合起來, 並且現有傳票和已處理傳票間的比率, 將顯示為里程碑進度條.
+
+== 里程碑視圖 ==
+
+通過進入一個里程碑頁面, 可以查看簡單的統計信息. 默認情況下, 現有/已處理傳票的比率是按照組件來分組和顯示的. 你也可以按照其他的標準來重組他們, 例如傳票的屬主或者嚴重程度. 傳票號碼鏈接到顯示對應的傳票的[wiki:ZhTracQuery 定制查詢].
+
+== 管理線路圖 ==
+
+可以通過[ZhTracAdmin Trac管理]或者Web界面添加, 修改和刪除里程碑.
+
+'''注意''': 目前只能在Web界面中編輯里程碑的描述. 如果有權限, 你可以在線路圖和里程碑頁面上, 看到管理里程碑的按鈕.
+
+== iCalendar支持 ==
+
+線路圖支持從你最愛的日曆軟件中, 用[http://www.ietf.org/rfc/rfc2445.txt iCalendar]格式, 來跟蹤計劃內的里程碑和相關傳票. 支持iCalendar規範的日曆程序包括[http://www.apple.com/ical/ Apple iCal](適用於Mac OS X)和跨平台的[http://www.mozilla.org/projects/calendar/ Mozilla Calendar].[http://kdepim.kde.org/components/korganizer.php Korganizer] ([http://www.kde.org/ KDE]項目的日曆程序), [http://www.novell.com/de-de/products/desktop/features/evolution.html Evolution]也支持iCalendar.
+
+要訂閱線路圖, 從線路圖(在頁面的底部)中複製iCalendar鏈接. 在你的日曆程序中, 選擇''訂閱遠程的日曆''(或類似的行為), 然後插入剛剛複製的URL.
+
+'''注意''': 要想把傳票作為日曆中的任務, 你需要登錄後再複製鏈接. 你只能看到指派給你的, 與某個里程碑相關的傳票.
+
+關於更多關於iCalendar的信息可以訪問[http://en.wikipedia.org/wiki/ICalendar Wikipedia].
+----
+原文版本: TracRoadmap[[BR]]
+相關信息: [ZhTracTickets Trac傳票], [ZhTracReports Trac報表], [ZhTracQuery Trac查詢], [ZhTracGuide Trac導覽][[BR]]
+See also: TracTickets, TracReports, TracQuery, TracGuide

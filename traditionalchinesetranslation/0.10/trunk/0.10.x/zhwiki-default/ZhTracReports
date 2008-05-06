@@ -1,0 +1,206 @@
+
+
+= Trac報表 =
+[[ZhTracGuideToc]]
+
+
+Trac報表模塊提供了一個簡單卻強大的報表工具, 來展示Trac數據庫中傳票的信息.
+
+Trac報表採用標準的SQL''SELECT''語句來自定義報表, 而不是自己的報表定義格式.
+
+  ''注意:在現有的形式中, 報表模塊會漸漸淘汰, 因為它嚴重限制了Trac團隊調整底層數據庫結構的能力. 我們相信[wiki:ZhTracQuery 查詢模塊]是個更好的替代品, 可以提供更靈活性和更好的功能. 然而, 有一些報表還不能用查詢模塊來處理, 我們打算進一步加強它, 這樣報表模塊可以完全刪除掉. 這也就是說報表模塊不再有增強.''
+
+  ''你可以在[wiki:ZhTracIni trac.ini]中, 用查詢模塊來替代報表模塊.''
+  {{{
+  [components]
+  trac.ticket.report.* = disabled
+  }}}
+  ''它會使查詢模塊成為''傳票檢索''導航的默認處理器. 我們鼓勵你嘗試該配置, 並告訴我們你還希望增加哪些報表的特性.''
+
+一個報表包含下列基本部分:
+ * '''ID''' -- 唯一的(順序增長)標識
+ * '''標題'''  -- 描述性的標題
+ * '''描述'''  -- 報表的簡要描述([ZhWikiFormatting Wiki格式]).
+ * '''報表正文''' -- 報表查詢的結果列表, 格式參照下列描述的方法.
+ * '''頁腳''' -- 包含該報表可選下載格式的鏈接.
+
+== 改變排序順序 ==
+簡單報表(沒有分組的報表): 可通過單擊列標題, 按列進行排序.
+
+如果一個列標題是一個鏈接(紅色的), 單擊你想要排序的列. 再次點擊同樣的標題反轉順序.
+
+== 可選的下載格式 ==
+除了默認的HTML視圖, 報表還可以用許多其他格式導出. 在報表頁的底部, 你會發現一個現有數據格式的列表. 單擊想要的鏈接, 用此報表格式下載.
+
+=== 逗號分隔的 - CSV (逗號分隔的值) ===
+
+報表導出為純文本, 每列用逗號分隔開. '''注意:''' 回車, 換行和逗號會從列數據中抽離出來, 以保護CSV結構.
+
+=== Tab分隔的 ===
+像上述的一樣, 但是用tab(\t)而不是逗號.
+
+=== RSS - XML內容聚合 ===
+所有的報表支持通過XML/RSS 2.0進行聚合. 要訂閱RSS, 單擊頁面底部的橙色''XML''圖標. 想知道Trac中RSS支持的一般說明, 請參見[ZhTracRss Trac的RSS].
+
+----
+
+== 創建自定義報表 ==
+
+''創建一個自定義報表要求對SQL有足夠的瞭解.''
+
+一個報表基本上是一個命名的SQL查詢, 由Trac執行並輸出執行結果. 可以從Web界面中直接查看和創建報表自定義的SQL表達式. 
+
+一個報表通常由一個查詢ticket表的SELECT表達式構成, 可以選擇所有可用的列, 按你想要的方式排序.
+
+== 傳票的列 ==
+
+ticket表有如下的列字段:
+ * id
+ * time
+ * changetime
+ * component
+ * severity  
+ * priority 
+ * owner
+ * reporter
+ * cc
+ * version
+ * milestone
+ * status
+ * resolution
+ * summary
+ * description
+
+關於列字段的詳細描述, 請見[ZhTracTickets Trac傳票].
+
+`所有的活動傳票, 按照優先級和時間進行排序.`
+
+`例子`: ''所有的活動傳票, 按照優先級和時間進行排序.''
+{{{
+SELECT id AS ticket, status, severity, priority, owner, 
+       time as created, summary FROM ticket 
+  WHERE status IN ('new', 'assigned', 'reopened')
+  ORDER BY priority, time
+}}}
+
+
+----
+
+
+== 高級報表: 動態變量 ==
+Trac支持在報表SQL語句中使用''動態變量''. 簡而言之, 動態變量是進行查詢前被自定義數據替換的特定字符串.
+
+=== 在查詢中使用變量 ===
+
+動態變量的語法是很簡單的, 任何以'$'及大寫字母的為開頭的詞都被當作一個變量.
+
+例如:
+{{{
+SELECT id AS ticket, summary FROM ticket WHERE priority='$PRIORITY'
+}}}
+
+查看報表時, 需要為$PRIORITY指定一個值, 你應該將其定義為報表URL中的一個參數, 不考慮開頭的'$'符號.
+
+例如:
+{{{
+ http://projects.edgewall.com/trac/reports/14?PRIORITY=high
+}}}
+
+要使用多個變量, 用'&'進行分隔.
+
+例如:
+{{{
+ http://projects.edgewall.com/trac/reports/14?PRIORITY=high&SEVERITY=critical
+}}}
+
+
+=== 特殊變量或常量 ===
+有一個''魔法''動態變量, 其值將自動設置, 不需要修改URL.
+
+ * $USER -- 登錄用戶的用戶名.
+
+例如 (''列出所有給我的傳票''):
+{{{
+SELECT id AS ticket, summary FROM ticket WHERE owner='$USER'
+}}}
+
+
+----
+
+
+== 高級報表: 自定義格式 ==
+
+Trac還可以生成更高級的報表, 包括自定義版式, 結果分組和用戶自定義CSS樣式. 要創建這樣的報表, 我們要用專門的SQL語句來控制Trac報表引擎的輸出.
+
+== 特殊列 ==
+要格式化報表, [ZhTracReports Trac報表]在查詢結果中尋找'魔法'列名. 對這些'魔法'名稱的處理將影響報表的最終版式和樣式.
+
+=== 自動格式化的列 ===
+ * '''ticket''' -- 傳票ID號, 作為該傳票的鏈接.
+ * '''created, modified, date, time''' -- 按日期或時間格式格式化單元格.
+ * '''description''' -- 傳票的描述字段, 可以被Wiki引擎轉換為HTML格式.
+ 
+'''例子:'''
+{{{
+SELECT id as ticket, created, status, summary FROM ticket 
+}}}
+
+=== 自定義格式列 ===
+名字的開頭和結尾是兩個下劃線的列, 例如(__color__), 是格式化提示, 將影響行的外觀.
+ 
+ * '''`__group__`''' -- 將結果按照值的大小在該列中進行分組. 每一組都有他們自己的標題和表格.
+ * '''`__color__`''' -- 從1到5的值中選擇一個定義好的顏色. 一般按照事務的優先級著色.
+ * '''`__style__`''' -- 用於該行的一個自定義CSS樣式表達式.
+
+'''例子:''' ''列舉活動傳票, 按照里程碑進行分組, 按照優先級進行著色.''
+{{{
+SELECT p.value AS __color__, 
+     t.milestone AS __group__, 
+     (CASE owner WHEN 'daniel' THEN 'font-weight: bold; background: red;' ELSE '' END) AS __style__, 
+       t.id AS ticket, summary
+  FROM ticket t, enum p
+  WHERE t.status IN ('new', 'assigned', 'reopened') 
+    AND p.name=t.priority AND p.type='priority'
+  ORDER BY t.milestone, p.value, t.severity, t.time
+}}}
+
+
+`注意`: 使用了一個表連接(table join), 以表示傳票的優先級及其在''enum''表中對應的數字值.
+
+=== 改變報表的行的版式 ===
+
+默認情況下, 每行的所有列都顯示在HTML報表的一行中, 格式如上所述. 然而, 還可以創建多行的報表項.
+
+ * '''`column_`''' -- ''在其之後分行''.通過向列名中添加一個下劃線('_'), 剩下的列會在的第二行繼續.
+ * '''`_column_`''' -- ''整行''. 通過在列名的開頭和結尾添加一個下劃線('_'), 數據會顯示在單獨的一行.
+ * '''`_column`'''  --  ''隱藏數據''. 給一個列名添加一個下劃線('_'), 指導Trac隱藏HTML輸出的內容. 它只對用其他格式下載的信息有用. 這些格式包括CSV或RSS/XML.
+
+'''例子:''' ''列舉活動傳票, 按里程碑進行分組, 按優先級進行著色, 還有描述以及多行版式.''
+
+{{{
+SELECT p.value AS __color__, 
+       t.milestone AS __group__, 
+       (CASE owner 
+          WHEN 'daniel' THEN 'font-weight: bold; background: red;' 
+          ELSE '' END) AS __style__, 
+       t.id AS ticket, summary AS summary_,             -- ## Break line here
+       component, version, severity, milestone, status, owner, 
+       time AS created, changetime AS modified,         -- ## Dates are formatted
+       description AS _description_,                    -- ## Uses a full row
+       changetime AS _changetime, reporter AS _reporter -- ## Hidden from HTML output
+  FROM ticket t, enum p
+  WHERE t.status IN ('new', 'assigned', 'reopened') 
+    AND p.name=t.priority AND p.type='priority'
+  ORDER BY t.milestone, p.value, t.severity, t.time
+}}}
+
+=== 關於報表的自定義字段 ===
+
+如果你的傳票中添加了自定義字段(0.8版本中的實驗性的特徵, 參見[ZhTracTicketsCustomFields 傳票自定義字段]), 你可以寫一個包含他們的SQL查詢. 你需要一個對ticket_custom表的連接, 但這不是那麼容易.
+
+如果聲明trac.ini中的額外字段之前, 在ticket_custom表中就不能有相關數據. 要繞開這個問題, 可使用SQL的"LEFT OUTER JOIN"語句. 參見[http://trac.edgewall.org/wiki/TracIniReportCustomFieldSample TracIniReportCustomFieldSample]中的一些例子.
+
+----
+原文版本: TracReports[[BR]]
+相關信息: [ZhTracTickets Trac傳票], [ZhTracQuery Trac查詢], [ZhTracGuide Trac導覽][[BR]]
+See also: TracTickets, TracQuery, TracGuide

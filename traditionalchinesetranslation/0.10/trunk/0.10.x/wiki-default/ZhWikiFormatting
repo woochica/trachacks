@@ -1,0 +1,349 @@
+
+
+= Wiki格式 =
+[[ZhTracGuideToc]]
+
+Wiki標記是Trac的一個核心特徵, 和其它所有部分緊密結合, 組成一個靈活強大的整體.
+
+Trac有一個內置的小巧強大的Wiki渲染引擎. 該Wiki引擎實現了來自其他Wiki的持續增長的命令子集, 尤其是[http://moinmoin.wikiwikiweb.de/ MoinMoin].
+
+該頁演示了[WikiFormatting Wiki格式]的語法.
+
+== 字體樣式 ==
+
+Trac的Wiki支持下列字體樣式:
+{{{
+ * '''粗體''', '''!''' 一樣加粗''', 以及 '''! '''
+ * ''斜體''
+ * '''''粗斜體'''''
+ * __下劃線__
+ * {{{塊引用}}} 或是 `行引用`
+ * ~~中劃線~~
+ * ^上標^ 
+ * ,,下標,,
+}}}
+
+顯示:
+ * '''粗體''', '''!''' 一樣加粗''', 以及 '''! '''
+ * ''斜體''
+ * '''''粗斜體'''''
+ * __下劃線__
+ * {{{塊引用}}} 或是 `行引用`
+ * ~~中劃線~~
+ * ^上標^ 
+ * ,,下標,,
+
+注意:
+ * `{{{...}}}`和{{{`...`}}}命令不僅使用等寬字體, 而且會原封不動地顯示其內容. 就是說, 這些文本將不會被Wiki處理.
+ * {{{ ! }}}告訴Wiki解析器不要將下列字符當作Wiki格式, 因此注意在!後加入一個空格. 
+ 
+== 標題 ==
+
+你可在一行的開頭用1到5個等號("=")來創建標題, 等號後是一個空格, 然後是標題文字. 該行應該以一個空格結束, 後面是同樣數量的等號("="). 標題可後面跟一個顯式的id, 否則, 將隱含創建一個不容易記憶的id.
+
+例子:
+{{{
+= 標題 =
+== 副標 ==
+=== 有''關'' ===
+=== 詳標號 === #using-explicit-id-in-heading
+}}}
+
+顯示:
+= 標題 =
+== 副標 ==
+=== 有''關'' ===
+=== 詳標號 === #using-explicit-id-in-heading
+[[BR]]
+== 段落 ==
+
+只要兩塊文字間有一行以上空行時, 就產生了一個新的段落.
+
+要強制分行, 使用下列代碼:
+{{{
+Line 1[[BR]]Line 2
+}}}
+
+顯示:
+
+Line 1[[BR]]Line 2
+
+
+== 列表 ==
+
+Wiki支持有序的/編號的列表和無序列表.
+
+例子:
+{{{
+ * 條目 1
+   * 條目 1.1
+ * 條目 2
+
+ 1. 條目 1
+   a. 條目 1.a
+   a. 條目 1.b
+      i. 條目 1.b.i
+      i. 條目 1.b.ii
+ 1. 條目 2
+編號列表還可給予一個明顯的編號:
+ 3. 條目 3
+}}}
+
+顯示:
+ * 條目 1
+   * 條目 1.1
+ * 條目 2
+
+ 1. 條目 1
+   a. 條目 1.a
+   a. 條目 1.b
+      i. 條目 1.b.i
+      i. 條目 1.b.ii
+ 1. 條目 2
+編號列表還可給予一個明顯的編號:
+ 3. 條目 3
+
+注意在列表符號前必須有一個以上空格, 否則該列表會被當作一個普通的段落.
+
+== 定義列表 ==
+
+
+Wiki也支持定義列表.
+
+例子:
+{{{
+ 羊駝::
+   一種哺乳動物,有頭髮
+ 蟒::
+   一種爬行動物,沒有頭髮
+   (你可辨認它們?)
+}}}
+
+顯示:
+ 羊駝::
+   一種哺乳動物,有頭髮
+ 蟒::
+   一種爬行動物,沒有頭髮
+   (你可辨認它們?)
+
+注意, 在定義的術語前你需要一個空格.
+
+== 預格式的文本 ==
+
+代碼塊包含了源代碼片斷, 註解和例子的預格式的文本. 用三個花括號來定義. 花括號要在單獨的行上. 
+
+  
+例子:
+{{{
+ {{{
+  def HelloWorld():
+      print "Hello World"
+ }}}
+}}}
+
+顯示:
+{{{
+ def HelloWorld():
+     print "Hello World"
+}}}
+
+
+== 塊引用 ==
+
+要將一個段落標記為一個塊引用, 將該段縮進兩個空格.
+
+例子:
+{{{
+  此文本是種塊級引用
+}}}
+
+顯示:
+  此文本是種塊級引用
+
+== 討論引用 ==
+
+要在一個正在進行的討論貼中定義一個引用, 例如在傳票的評論區域, 可以用類似郵件中的引用標記, 例如">",  ">>", 等等.
+
+例子:
+{{{
+>> 某人的原話
+> 某人的回復
+俺的回復
+}}}
+
+顯示:
+>> 某人的原話
+> 某人的回復
+俺的回復
+
+''注意: 一些[ZhWikiFormatting Wiki格式]元素, 例如列表和預格式的文本, 在引用區域中消失了. 可以重新組織格式以創建清晰的引用.''
+
+== 表格 ==
+
+如下方式創建簡單的表格:
+{{{
+||Cell 1||Cell 2||Cell 3||
+||Cell 4||Cell 5||Cell 6||
+}}}
+
+顯示:
+||Cell 1||Cell 2||Cell 3||
+||Cell 4||Cell 5||Cell 6||
+
+注意, 可以用[wiki:ZhWikiRestructuredText#BiggerReSTExample 新結構化文本]創建更複雜的表格.
+
+== 鏈接 ==
+
+[ZhWikiPageNames Wiki頁面名]和URL的超鏈接是自動創建的. 如果前面加入一個感歎號"!", 可禁用Wiki頁面鏈接.
+
+例子:
+{{{
+ TitleIndex, http://www.edgewall.com/, !NotAlink
+}}}
+
+顯示:
+ TitleIndex, http://www.edgewall.com/, !NotAlink
+
+通過在該鏈接後面增加空格和一個標題, 可以給鏈接一個更具描述性的標題, 所有內容都被一對方括號包圍. 如果省略描述性的標題, 而該鏈接又不是一個外部鏈接的話, 顯式的前綴被刪掉. 對於不符合[ZhWikiPageNames Wiki頁面名]協定的Wiki頁面尤其有用.
+
+例子:
+{{{
+ * [http://www.edgewall.com/ Edgewall Software]
+ * [wiki:TitleIndex Title Index]
+ * [wiki:ISO9000]
+}}}
+
+顯示:
+ * [http://www.edgewall.com/ Edgewall Software]
+ * [wiki:TitleIndex Title Index]
+ * [wiki:ISO9000]
+
+
+=== Trac鏈接 ===
+
+Wiki頁面可以直接鏈接到Trac系統的其他部分. 頁面可以引用傳票, 報表, 變更集, 里程碑, 源文件和其他使用下列符號的Wiki頁面:
+{{{
+ * 傳票: #1 or ticket:1
+ * 報表: {1} or report:1
+ * 變更集: r1, [1] or changeset:1
+ * ...
+}}}
+
+顯示:
+ * 傳票: #1 or ticket:1
+ * 報表: {1} or report:1
+ * 變更集: r1, [1] or changeset:1
+ * ...
+
+想知道更深入的信息, 請參考[ZhTracLinks Trac鏈接].
+
+
+== 轉義鏈接和Wiki頁面名稱 ==
+
+如果表達式前面加入一個感歎號"!", 你可以避免鏈接應用[ZhTracLinks Trac鏈接].
+例子:
+{{{
+ !NoHyperLink
+ !#42 is not a link
+}}}
+
+顯示:
+ !NoHyperLink
+
+ !#42 is not a link
+
+
+== 圖像 ==
+
+不再將以`.png`, `.gif`或`.jpg`結尾的URL自動解釋為圖像鏈接, 並轉換為`<img>`標籤.
+
+現在你必須使用![[Image]]宏. 請看下面.
+
+
+== Wiki宏 ==
+
+Wiki宏是在一個頁面中插入動態內容的''自定義函數''.
+
+例子:
+{{{
+ [[Timestamp]]
+}}}
+
+顯示:
+ [[Timestamp]]
+
+更多信息請見[ZhWikiMacros Wiki宏]和已安裝的宏的列表.
+
+
+== 解析器 ==
+
+Trac支持使用Wiki解析器的標記格式. 例如, 用[wiki:ZhWikiRestructuredText 新結構化文本]或[wiki:ZhWikiHtml HTML]解析器來寫頁面.
+
+例子1:
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="text-align: right; color: blue"&gt;HTML Test&lt;/h1&gt;
+}}}</pre>
+}}}
+
+顯示:
+{{{
+#!html
+<h1 style="text-align: right; color: blue">HTML Test</h1>
+}}}
+
+例子:
+{{{
+#!html
+<pre class="wiki">{{{
+#!python
+class Test:
+
+    def __init__(self):
+        print "Hello World"
+if __name__ == '__main__':
+   Test()
+}}}</pre>
+}}}
+
+顯示:
+{{{
+#!python
+class Test:
+    def __init__(self):
+        print "Hello World"
+if __name__ == '__main__':
+   Test()
+}}}
+
+Perl:
+{{{
+#!perl
+my ($test) = 0;
+if ($test > 0) {
+    print "hello";
+}
+}}}
+
+更多信息見[ZhWikiProcessors Wiki解析器].
+
+
+== 雜項 ==
+
+四個以上的破折號將生成一個水平線(<HR>)
+
+例子:
+{{{
+ ----
+}}}
+
+顯示:
+----
+
+
+----
+原文版本: WikiFormatting[[BR]]
+相關信息:[ZhTracLinks Trac鏈接處理], [ZhTracGuide Trac導覽], [ZhWikiHtml html], [ZhWikiMacros Wiki宏], [ZhWikiProcessors Wiki解析器], [ZhTracSyntaxColoring 語法高亮]. [[BR]]
+See also: TracLinks, TracGuide, WikiHtml, WikiMacros, WikiProcessors, TracSyntaxColoring

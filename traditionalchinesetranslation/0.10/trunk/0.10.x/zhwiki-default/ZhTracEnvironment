@@ -1,0 +1,94 @@
+
+
+= Trac環境 =
+Trac用目錄和數據庫來儲存項目信息, 叫做''環境''.
+
+== 創建一個環境 ==
+
+一個新的Trac環境是通過使用[wiki:ZhTracAdmin trac-admin]創建出來的:
+{{{
+$ trac-admin /path/to/projectenv initenv
+}}}
+
+[wiki:ZhTracAdmin trac-admin]會要求你給出項目的名稱, 數據庫類型和你的源代碼倉庫的類型和路徑.
+
+''注意: Web服務器用戶會要求對環境目錄及其內部所有文件的寫權限. 請記得設置恰當的權限. 這同樣適用於Trac最終使用的SVN倉庫, 雖然只要你沒有使用BDB文件系統, Trac就僅僅要求讀訪問.''
+
+== 數據庫連接字符串 ==
+
+自0.9版本後, Trac支持[http://sqlite.org/ SQLite],  [http://www.postgresql.org/ PostgreSQL]和[http://mysql.com/ MySQL]作為數據庫的後端. 默認使用SQLite, 這對大多數項目都是適用的. 數據庫文件存儲在環境目錄中, 可輕鬆地與環境中的其餘部分一起[wiki:ZhTracBackup 備份].
+
+一個連接到SQLite數據庫的連接字符串是:
+{{{
+sqlite:db/trac.db
+}}}
+
+如果想使用PostgreSQL或MySQL, 你必須使用不同的連接字符串. 例如, 要連接到同一個機器上的一個名叫trac的PostgreSQL數據庫, 用戶名是`johndoe`, 密碼`letmein`, 需要使用:
+{{{
+postgres://johndoe:letmein@localhost/trac
+}}}
+
+如果PstgreSQL運行在一個非標準的端口上, 例如9342, 使用:
+{{{
+postgres://johndoe:letmein@localhost:9342/trac
+}}}
+
+注意, 使用PostgreSQL, 你必須在運行`trac-admin initenv`之前創建一個數據庫.
+
+並確定PostgreSQL數據庫名字是"trac", 而且大寫的trac用戶名不起作用.
+{{{
+sudo su - postgres -c createdb trac
+sudo su - postgres -c psql trac
+CREATE USER trac-user-name WITH PASSWORD 'trac-pass-name';
+}}}
+
+(只是提醒你, 如果你沒有使用sudo/su安裝, 你只需使用createdb和psql語句)
+
+== 源代碼倉庫 ==
+
+首先你需要提供你的倉庫的''類型''(例如`svn`, 這是默認的), 然後定位倉庫的"路徑".
+
+如果你不想和一個源代碼倉庫一起使用Trac, 只需將"路徑"留為空.(這時, "類型"信息就沒有關係了)
+
+在某些系統中, 你不但可以指定倉庫的路徑, 還可以指定倉庫內的''範圍''. 那麼Trac只會顯示與該範圍下的文件和變更集有關的信息. Trac的SVN後端支持此功能. 對於其他系統, 你需查看相應插件的文檔.
+
+一個SVN倉庫的配置的例子:
+{{{
+[trac]
+repository_type = svn
+repository_dir = /path/to/your/repository
+}}}
+
+一個指定SVN倉庫範圍的配置應是:
+{{{
+[trac]
+repository_type = svn
+repository_dir = /path/to/your/repository/scope/within/repos
+}}}
+
+== 目錄結構 ==
+
+一份環境目錄通常要包含下列文件和目錄:
+
+ * `README` - 環境的簡短介紹.
+ * `VERSION` - 包含了環境版本.
+ * `attachments` -此處存儲wiki頁面和傳票的附件.
+ * `conf`
+   * `trac.ini` - 主要配置文件.請見[ZhTracIni 配置文件]
+ * `db`
+   * `trac.db` - SQLite數據庫(如果你在使用SQLite的話).
+ * `plugins` - 環境特定的[wiki:ZhTracPlugins 插件] (Python egg)
+ * `templates` - 定制環境特定的模板.
+   * `site_css.cs` - 定制CSS規則.
+   * `site_footer.cs` - 定制頁腳.
+   * `site_header.cs` - 定制頁眉.
+ * `wiki-macros` - 環境特定的[wiki:ZhWikiMacros Wiki 宏].
+
+  '''注意: 不要將Trac環境目錄與源代碼倉庫目錄弄混.'''
+
+上述結構稍微模仿了SVN倉庫的目錄結構, 但他們沒有, 也絕對不能位於同一位置.
+
+----
+原文版本: TracEnvironment[[BR]]
+相關信息: [ZhTracAdmin Trac管理],  [ZhTracBackup Trac備份],  [ZhTracIni Trac配置],  [ZhTracGuide Trac導覽][[BR]]
+See also: TracAdmin,  TracBackup,  TracIni,  TracGuide

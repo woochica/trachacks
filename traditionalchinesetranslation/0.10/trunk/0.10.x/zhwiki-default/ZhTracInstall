@@ -1,0 +1,158 @@
+
+
+= Trac安裝嚮導 = 
+[[ZhTracGuideToc]]
+
+Trac是一個基於Web的輕量級項目管理工具. Trac是用Python語言編寫的, 並需要一個數據庫, 可以是[http://sqlite.org/ SQLite], [http://www.postgresql.org/ PostgreSQL]或者[http://mysql.com/ MySQL]. Trac使用[http://www.clearsilver.net/ ClearSilver]模板系統來獲得HTML渲染.
+
+以下是安裝和設置Trac及其所依賴組件的一般說明. 你可以在Trac官方網站的[http://projects.edgewall.com/trac/wiki/TracInstallPlatforms Trac安裝平台]上找到在某些特定系統上安裝Trac的說明. 請首先認真通讀這些說明, 以理解所涉及到的任務.
+
+== 要求 ==
+
+安裝Trac, 必須先安裝以下軟件包:
+
+ * [http://www.python.org/ Python], 版本 >= 2.3.
+   * 對基於RPM的系統, 你還需要`python-devel`和`python-xml`安裝包.
+   * 如果你想在Windows上使用SVN, 注意, 目前沒有Python2.4的預編譯的SVN綁定, 因此也許你需要Python2.3.
+    * 2006-09-20: 似乎不是真的, 請見[http://sub版本.tigris.org/servlets/ProjectDocumentList?folderID=91]. 對於SVN 1.4.0, python2.4二進制綁定是可用的.
+
+ * [http://www.clearsilver.net/ ClearSilver], 版本 >= 0.9.3
+   * 帶有python綁定 (`./configure --with-python=/usr/bin/python`)
+
+ * 你還需要一個數據庫系統和相應的python驅動. 數據庫可以是SQLite, PostgreSQL或者MySQL(實驗性的).
+
+=== 對SQLite ===
+
+ * [http://www.sqlite.org/ SQLite], 版本2.8.x或者3.x (首選)
+ * [http://pysqlite.org/ PySQLite], 版本1.x (對SQLite 2.x)或版本2.x (對SQLite 3.x). 詳情請見[http://trac.edgewall.org/wiki/PySqlite PySqlite]
+
+'' 注意:0.9c版之前的Tra不能與PySQLite2.x一起運行.''
+
+'' 注意: 如果你打算使用源代碼庫中'contrib'節的'trac-post-commit-hook.py'腳本, Trac 0.9+/SQLite 3.x可能需要PySQLite 2.x.''
+
+''注意: Mac OS X的使用者請注意, Apple提供的SQLite包括額外的代碼來支持像AFP或SMB的網絡文件系統的文件鎖定. 當前版本(3.3.6)中沒有包含該特性. 因此, 如果你從源代碼中自己構建SQLite, 在這些文件系統上SQLite無法正常運行. 它會有類似"{{{數據庫被鎖定}}}"的錯誤. [http://www.alastairs-place.net/2006/07/sqlite_and_mac/ 補丁](在3.3.6版本上可用的, 基於Apple代碼). 如果你不想用該補丁, 你最好使用Apple提供的版本, 目前是3.1.3版本.''
+
+=== 對PostgreSQL ===
+
+ * [http://www.postgresql.org/ PostgreSQL]
+ * [http://initd.org/projects/psycopg2 psycopg2] 或 [http://pypgsql.sourceforge.net/ pyPgSQL]
+
+'' 注意: PostgreSQL支持要求0.9及之後版本的Trac.''
+
+=== 對MySQL ===
+
+'' 警告:MySQL支持目前是實驗性的. 這意味它對有些人有用, 但還沒有經過廣泛的測試.''
+ * [http://mysql.com/ MySQL], 4.1及之後版本
+ * [http://sf.net/projects/mysql-python MySQLdb], 1.2.1及之後版本
+
+'' 注意:MySQL支持要求0.10及之後版本的Trac.''
+
+=== 可選的要求 ===
+
+==== 版本控制系統 ====
+ * [http://subversion.tigris.org/ SVN], 版本 >= 1.0. (1.2.3或>= 1.3.1推薦) 和 [http://svnbook.red-bean.com/svnbook-1.1/ch08s02.html#svn-ch-8-sect-2.3 Python綁定]. 如有問題, 可以訪問 [http://projects.edgewall.com/trac/wiki/TracSubversion Trac與SVN]
+   * Trac使用SVN發行版中的[http://www.swig.org/ SWIG]綁定, 而不是 [http://pysvn.tigris.org/ PySVN](有時會和標準的SWIG綁定混淆).
+   * 如果SVN在沒有SWIG綁定的情況下已經安裝好了, 你需要''re-configure'' SVN, 並''makn swig-py, make install-swig-py''.
+
+ * 對其他版本控制系統的支持由第三方提供. 請見[http://projects.edgewall.com/trac/wiki/PluginList 插件列表]和[http://projects.edgewall.com/trac/wiki/VersioningSystemBackend 版本系統後端].
+
+==== Web服務器 ====
+
+ * 一個支持CGI的Web服務器(見[ZhTracCgi TracCgi])
+ * 一個支持[http://www.fastcgi.com/ FastCGI]的Web服務器(見[ZhTracFastCgi TracFastCgi])
+ * 帶[http://www.modpython.org/ mod_python 3.1.3+]的[http://httpd.apache.org/ Apache] (見[ZhTracModPython TracModPython])
+    * 安裝mod_python, 要求Python和Apache的開發版本(實際上是程序庫和頭文件).
+
+對那些受Apache1.3困擾的程序, 可以讓Trac0.8.4與[http://www.modpython.org/ mod_python 2.7]一起運行. (見[wiki:ZhTracModPython2.7 TracModPython2.7]). 它還沒有用Trac 0.9測試, 因此它也許能, 也許不能正常工作.
+
+==== 其他Python工具 ====
+
+ * [http://peak.telecommunity.com/DevCenter/setuptools setuptools], 版本 >= 0.6 以使用插件 (見[ZhTracPlugins Trac插件])
+ * [http://docutils.sourceforge.net/ docutils], 版本 >= 0.3.9以使用 [ZhWikiRestructuredText 型結構化文本].
+ * [http://silvercity.sourceforge.net/ SilverCity]及 [http://www.gnu.org/software/enscript/enscript.html Enscript]以使用 [wiki:TracSyntaxColoring 語法高亮].
+    * 注意 !SilverCity 0.9.6有一個 [http://sourceforge.net/tracker/index.php?func=detail&aid=1424436&group_id=45693&atid=443739 bug], 會破壞Trac中的Python語法高亮功能. 在出現一個有效更新前, 推薦使用版本0.9.5.
+
+'''注意''': 這些依賴組件的各種版本不一定能互換, 所以請注意上面提到的版本號. 如果你遇到問題, 在[http://projects.edgewall.com/trac/wiki/MailingList 郵件列表]或者 [http://projects.edgewall.com/trac/wiki/IrcChannel IrcChannel]中提問前, 請先仔細檢查所有依賴組件. 
+
+請參考這些安裝包的文檔, 以最好地安裝它們. 另外, [http://projects.edgewall.com/trac/wiki/TracInstallPlatforms 特定平台指南]中的大多數文檔也描述了這些依賴組件的安裝. 而請記住, 那裡的信息可能說的是較老版本的Trac, 而不是你正在安裝的版本(特殊情況下, 有些網頁還是針對Trac 0.8的).
+
+== 安裝Trac ==
+
+像大多數Python程序一樣, 通過運行源代碼頂級目錄的下列命令來安裝Trac Python安裝包:
+{{{
+$ python ./setup.py install
+}}}
+
+''注意:你需要root權限.''
+
+這會將python源代碼編譯為字節碼, 並安裝在你的Python安裝的`site-packages`目錄中.
+
+`cgi-bin`, `templates`, `htdocs`, `wiki-default`和`wiki-macros`目錄都會複製到`$prefix/share/trac/`. `conf`和`plugins`子目錄也創建在`$prefix/share/trac/` (''自 [milestone:0.10]'')之下.
+
+該腳本還會安裝[wiki:ZhTracAdmin trac-admin]命令行工具, 用來創建和維護[wiki:ZhTracEnvironment Trac環境]和獨立服務器[wiki:ZhTracStandalone tracd].
+
+=== 高級選項 ===
+
+要自定義Trac安裝位置, 或查看其他高級安裝選項, 運行:
+{{{
+$ python ./setup.py install --help
+}}}
+
+詳細信息請參見[http://docs.python.org/inst/inst.html 安裝Python模塊].
+
+你可能對以下命令感興趣:
+{{{
+$ python ./setup.py install --prefix=/path/to/installdir
+}}}
+
+== 創建一個項目環境 ==
+
+[wiki:ZhTracEnvironment Trac環境]是Trac存儲像wiki頁, 傳票, 報表, 設置等的信息的後端存儲. 環境基本上是一個目錄, 包含了一個可讀的配置文件和各式的其他文件及目錄.
+
+用[wiki:ZhTracAdmin trac-admin]來創建一個新的環境:
+
+{{{
+$ trac-admin /path/to/myproject initenv
+}}}
+
+[wiki:ZhTracAdmin trac-admin]會提示你一些創建環境所需的信息, 例如項目名稱, 類型和現有[wiki:ZhTracEnvironment#SourceCodeRepository SVN倉庫]的路徑, [wiki:ZhTracEnvironment#DatabaseConnectionStrings 數據庫連接字符串], 等等. 如果你不確定其中某個選項, 就把它空著而使用默認值. 只要你安裝了SQLite, 數據庫連接字符串都會有作用. 將訪問源代碼倉庫的路徑設為空, 會使所有與版本控制有關的功能都失效. 但是當基本系統運行時, 你仍然可以將其添加進來.
+
+還要注意, 稍後可以通過直接編輯[wiki:ZhTracIni Trac配置]來更改此處你指定的值.
+
+'' 注意:Web服務器運行用戶帳號需要擁有環境目錄及裡面所有文件的寫權限.''
+
+
+== 運行獨立服務器 ==
+
+創建了一個Trac環境後, 你可以運行獨立服務器[wiki:ZhTracStandalone tracd]輕鬆地嘗試Web界面:
+{{{
+$ tracd --port 8000 /path/to/myproject
+}}}
+
+然後, 啟動一個瀏覽器並訪問`http://localhost:8000/`. 你將獲得tracd中所有環境的簡單列表. 點擊鏈接到你剛創建的環境, 你會看到Trac已經能用了.
+
+== 在Web服務器上運行Trac ==
+
+Trac提供了三種方法來連接到一個真實的Web服務器: [wiki:ZhTracCgi CGI], [wiki:ZhTracFastCgi FastCGI] 和[wiki:ZhTracModPython mod_python]. 如果想有出色的性能, 建議你使用FastCGI或mod_python.
+
+== 配置驗證 ==
+
+添加, 刪除和配置用戶帳戶的驗證的過程, 取決於你運行Trac的具體方式. 基本的步驟在[ZhTracCgi TracCgi]頁的[wiki:ZhTracCgi#AddingAuthentication 增加驗證]節中有詳細的描述. 想知道如何設置你在使用的前端的驗證, 請參考以下網頁:
+ * [ZhTracStandalone  Trac獨立服務器], 如果你使用`tracd`獨立服務器方式.
+ * [ZhTracCgi TracCgi], 如果你使用CGI或FastCGI方式.
+ * [ZhTracModPython TracModPython], 如果你使用mod_python方式.
+
+== 使用Trac ==
+
+如果你創建了你的Trac站點並在運行它, 你應該能瀏覽SVN倉庫, 創建傳票, 查看時間線索, 等等.
+
+請記住, 匿名用戶(沒有註冊的用戶)默認可以使用大多數的功能, 但不是全部. 你需要配置驗證, 並為通過驗證的用戶提供額外的[wiki:ZhTracPermissions 權限], 以使他們可以看到全部功能.
+
+'' 享受吧! ''
+
+[http://projects.edgewall.com/trac/wiki/TracTeam Trac團隊]
+
+----
+原文版本: TracInstall[[BR]]
+相關信息: [ZhTracGuide Trac導覽], [ZhTracCgi TracCgi], [ZhTracFastCgi TracFastCgi], [ZhTracModPython TracModPython], [ZhTracUpgrade Trac升級], [ZhTracPermissions Trac權限][[BR]]
+See also: TracGuide, TracCgi, TracFastCgi, TracModPython, TracUpgrade, TracPermissions

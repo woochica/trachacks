@@ -1,0 +1,29 @@
+= 關於漢化版Trac =
+ * 漢化Trac的目的是為了給每個不喜歡英文界面的用戶一個方便,舒適的工作環境.
+ * 我們提供了:
+  1. 漢化的操作頁面
+  1. 翻譯了默認內置維基文章
+
+== 製作小組 ==
+
+ * 技術指導與策劃: Zoom.Quiet(zoom.quiet AT gmail.com)
+ * 文檔翻譯: Alice Liang(liangshujiao AT hotmail.com)
+ * 界面漢化: jessinio(jessinio AT gmail.com)
+
+[[Image(http://www.kingsoft.com/about/images/about_02.gif)]]
+Power by [http://www.kingsoft.com kingsoft.com]
+
+=  About the Chinese Version of Trac  =
+ * The purpose of Chinesizing Trac is to provide a convenient and comfortable working environment to those,  who  are not fond of working with the English interface.
+
+ * What we have done:
+  1. The operation pages of the Chinese version
+  1. Translated the default built-in wiki documentations
+   
+== Developing Team ==
+
+    * Project owner         : Zoom.Quiet(zoom.quiet AT gmail.com)
+    * Document translation  : Alice Liang(liangshujiao AT hotmail.com)
+    * Web Chinesization     : jessinio(jessinio AT gmail.com)
+
+

@@ -1,0 +1,89 @@
+
+
+= Trac傳票查詢 =
+[[ZhTracGuideToc]]
+
+除[wiki:ZhTracReports 報表]之外, Trac支持''自定義傳票查詢'', 用於顯示滿足特定條件的傳票列表.
+
+要配置和執行一個自定義查詢, 從導航欄切換到''傳票檢索''模塊, 然後選擇''自定義查詢''鏈接.
+
+== 過濾器 ==
+當你首次訪問查詢頁面時, 默認的過濾器會顯示所有打開的傳票. 如果你登錄了, 它會顯示分配給你的打開的傳票. 單擊右側有減號標誌的標籤, 可以將當前過濾器刪除掉. 通過過濾框右下角的折疊菜單可以添加新的過濾器. 帶有文本框或下拉菜單的過濾器可被多次添加來生成一個''or''條件.
+
+你可以用過濾框下方的字段, 來按照某個字段對結果進行分組, 或者顯示每個傳票的完整描述.
+
+當你已編輯好過濾器, 單擊''更新''按鈕來刷新結果.
+
+== 傳票導航 ==
+單擊某個查詢結果會將你帶到該傳票處. 你可以通過單擊主菜單欄下方的''下一傳票''或''上一傳票''鏈接在結果中瀏覽, 或者是單擊''回到查詢''鏈接返回到查詢頁面.
+
+你能安全的編輯, 保存這些傳票, 然後繼續在結果中瀏覽(使用''下一傳票''或''上一傳票''). 當你返回查詢, 所有被編輯過的傳票將顯示成斜體字. 如果其中有些傳票被編輯後不再匹配查詢條件, 其文字將是灰色的. 最後, 如果有新創建的匹配傳票, 將被顯示為粗體字.
+
+再次單擊''更新''按鈕, 可以刷新查詢結果並清除掉這些狀態提示符.
+
+== 保存查詢 ==
+
+雖然Trac還不能允許保存一個命名的查詢(由此能將其放在導航列表中), 你可以在Wiki中保存對查詢的引用, 如下所示.
+
+=== 使用Trac鏈接 ===
+
+你可能需要保存查詢結果以供下次使用. 你可以在任何Wiki頁面中通過鏈接到查詢頁面實現.
+{{{
+[query:status=new|assigned|reopened&version=1.0 Active tickets against 1.0]
+}}}
+
+顯示為:
+  [query:status=new|assigned|reopened&version=1.0 Active tickets against 1.0]
+
+下面使用簡單的查詢語句 (查看 [wiki:ZhTracQuery#QueryLanguage 查詢語言]).
+
+可以複製查詢語句, 並粘貼到Wiki鏈接中(包括前面的問號"?")
+{{{
+[query:?status=new&status=assigned&status=reopened&group=owner Assigned tickets by owner]
+}}}
+
+顯示為:
+  [query:?status=new&status=assigned&status=reopened&group=owner Assigned tickets by owner]
+
+=== 使用`[[TicketQuery]]`宏 ===
+
+`[[TicketQuery]]`宏使你能在任何可以使用[ZhWikiFormatting Wiki格式]的地方顯示符合條件的傳票列表.
+
+例如:
+{{{
+[[TicketQuery(version=1.0|2.0&resolution=duplicate)]]
+}}}
+
+顯示為:
+  [[TicketQuery(version=1.0|2.0&resolution=duplicate)]]
+
+就像[wiki:ZhTracQuery#UsingTracLinks query: wiki links], 宏的參數是符合簡單 [wiki:ZhTracQuery#QueryLanguage 傳票查詢語言]格式的查詢字符串.
+
+更緊湊的, 沒有傳票概要的方法:
+{{{
+[[TicketQuery(version=1.0|2.0&resolution=duplicate, compact)]]
+}}}
+
+顯示為:
+  [[TicketQuery(version=1.0|2.0&resolution=duplicate, compact)]]
+
+=== 查詢語言 ===
+
+`query:`Trac鏈接`和[[TicketQuery]]`宏都使用一個迷你查詢語言來指定查詢過濾器. 基本上, 過濾器由&符號(`&`)隔開. 每個過濾器包含傳票字段名, 一個操作符和一個以上的值. 值之間被(`|`)分隔, 表示匹配任一值. 
+
+可用的運算符是:
+|| '''=''' || 精確匹配其中某個值的字段內容 ||
+|| '''~=''' || 字段內容包含一個或多個值 ||
+|| '''!^=''' || 字段內容以某個或某幾個值開始 ||
+|| '''$=''' || 字段內容以某個或某幾個值結尾 ||
+
+所有這些運算符還可以取反:
+|| '''!=''' || 字段內容不匹配任何值 ||
+|| '''!~=''' || 字段內容不包含任何值 ||
+|| '''!!^=''' || 字段內容不以任何值開始 ||
+|| '''!$=''' || 字段內容不以任何值結尾 ||
+
+----
+原文版本: TracQuery[[BR]]
+相關信息: [ZhTracTickets Trac傳票], [ZhTracReports Trac報表], [ZhTracGuide Trac導覽][[BR]]
+See also: TracTickets, TracReports, TracGuide

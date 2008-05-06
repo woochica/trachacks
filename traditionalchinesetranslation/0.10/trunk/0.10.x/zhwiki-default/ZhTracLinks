@@ -1,0 +1,139 @@
+
+
+= Trac鏈接 =
+Trac鏈接是Trac的一個基本特徵, 因為他們允許在諸如傳票, 報表, 變更集, Wiki頁面, 里程碑和源文件等(只要是使用[ZhWikiFormatting Wiki格式])的各種實體間流暢的鏈接.
+
+Trac鏈接通常是''type:id''形式, ''id''代表了項目的號碼, 名稱或路徑, 儘管一些常用項目也有簡化符號.
+
+一些例子:
+ * 傳票: '''!#1''' or '''!ticket:1'''
+ * 傳票註釋: '''!comment:ticket:1:2''' 
+ * 報表: '''!{1}''' or '''!report:1'''
+ * 變更集: '''!r1''', '''![1]''', '''!changeset:1''' or (restricted) '''![1/trunk]''', '''!changeset:1/trunk'''
+ * 檢入日誌: '''!r1:3''', '''![1:3]''' or '''!log:@1:3''', '''!log:trunk@1:3'''
+ * 對比 (需0.10以上版本): '''!diff:@1:3''', '''!diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default''' or '''!diff:trunk/trac@3538//sandbox/vc-refactoring@3539'''
+ * Wiki頁面: '''!CamelCase''' or '''!wiki:CamelCase'''
+ * 里程碑: '''!milestone:1.0'''
+ * 附件: '''!attachment:ticket:944:attachment.1073.diff'''
+ * 文件: '''!source:trunk/COPYING'''
+ * 指定版本文件: '''!source:/trunk/COPYING@200'''
+ * 指定版本文件行: '''!source:/trunk/COPYING@200#L25'''
+顯示:
+ * 傳票: #1 or ticket:1
+ * 傳票註釋: comment:ticket:1:2 
+ * 報表: {1} or report:1
+ * 變更集: r1, [1], changeset:1, or (restricted) [1/trunk], changeset:1/trunk
+ * 檢入日誌: r1:3, [1:3] or log:@1:3, log:trunk@1:3
+ * 對比 (需0.10以上版本): diff:@20:30, diff:tags/trac-0.9.2/wiki-default//tags/trac-0.9.3/wiki-default or diff:trunk/trac@3538//sandbox/vc-refactoring/trac@3539
+ * Wiki頁面: CamelCase or wiki:CamelCase
+ * 里程碑: milestone:1.0
+ * 附件: attachment:ticket:944:attachment.1073.diff
+ * 文件: source:trunk/COPYING
+ * 指定版本文件: source:/trunk/COPYING@200
+ * 指定版本文件行: source:/trunk/COPYING@200#L25
+
+''注意'': 很少用到[ZhCamelCase 駝峰式], 但用它來引用那些名稱不遵守Wiki頁面名稱規則的那些頁面非常方便, 即, 單個詞, 非字母字符等. 更多關於Wiki頁面名稱的鏈接的特徵, 請見[ZhWikiPageNames Wiki頁面名].
+
+使用完整(非簡化的)符號的Trac鏈接, 還可以給它一個類似這樣的自定義鏈接標題:
+
+{{{
+[ticket:1 這是一個到傳票1號的鏈接].
+}}}
+
+顯示:[ticket:1 這是一個到傳票1號的鏈接].
+
+如果省略標題, 只有id(在冒號後面)能顯示出來:
+
+{{{
+[ticket:1]
+}}}
+
+顯示: [ticket:1]
+
+如果省略一個完整的鏈接的名稱空間部分(自0.10版本後), 將默認是`wiki`:
+
+{{{
+[SandBox the sandbox]
+}}}
+
+顯示: [SandBox the sandbox]
+
+Trac鏈接是一個非常簡單的想法, 但實際上可以是一個非常複雜的信息網絡. 實踐中, 它用起來很直觀並且簡單, 我們發現''鏈接軌跡''相當有助於更好理解在項目中發生的事情, 或者為何有一個特定的變化.
+
+下列章節詳細描述了獨立鏈接類型, 以及幾個關於鏈接高級用法的註解.
+
+== 附件: 鏈接 ==
+
+附件的鏈接語法如下所示:
+ * !attachment:the_file.txt 創建了一個當前對象的附件the_file.txt的鏈接
+ * !attachment:wiki:MyPage:the_file.txt 創建了一個到!MyPage Wiki頁面的附件的鏈接
+* !attachment:ticket:753:the_file.txt 創建了一個傳票753的附件文件the_file.txt的鏈接
+
+== 源碼:鏈接 ==
+
+如果路徑指向一個目錄的話, source:/some/path鏈接的默認行為是打開此目錄, 否則會打開日誌視圖. 還可以直接鏈接到某個文件的修訂, 像: source:/some/file@123, 或鏈接到最新的修訂: source:/some/file@latest. 如果指定了修訂, 你甚至可以鏈接到一個特定的行號: source:/some/file@123#L10.
+
+== 搜索和查詢鏈接 ==
+
+請見[ZhTracSearch#SearchLinks 搜索鏈接]和[ZhTracQuery#UsingTracLinks 使用Trac鏈接] .
+
+== 子Wiki鏈接 ==
+要創建一個到子Wiki頁面的鏈接, 只需使用一個'/':
+{{{
+ [wiki:WikiPage/SubWikiPage].
+}}}
+
+== [ZhInterWiki 外部Wiki]鏈接 ==
+
+可以自由地定義指向其他Web應用的資源的前綴. 這些前綴的定義以及相應Web應用的URL被定義在一個特殊的Wiki頁面中——[ZhInterMapTxt 鏈接前綴表]頁面. 注意, 雖然它也可被用來創建到其他Trac環境的鏈接, 但已經有一個比這更特定, 更靈活的方法.
+
+== [ZhInterTrac 外部Trac]鏈接 ==
+
+如果用另一個Trac環境的名字作為前綴的話(另一個Trac環境名加冒號":"), 上述所有形式的Trac鏈接都可引用另一個Trac環境中的資源. 因此, 另一個Trac環境必須在這個Trac環境中註冊. 細節請參考[ZhInterTrac 外部Trac].
+
+== 服務器相關的鏈接 ==
+
+通常要求能夠鏈接到沒有內置Trac鏈接機制的服務器的對象, 例如, 靜態資源, `/register`頁面等. 只需使用服務器根部的絕對路徑或者當前頁面的URL的相對鏈接, 就可以實現.
+
+{{{
+[../newticket newticket]
+[/ home]
+}}}
+
+顯示:[../newticket newticket] [/ home]
+
+== 用引號包圍Trac鏈接中的空格 ==
+
+Trac鏈接的前綴後, 如果目標包含空格, 應使用一對單引號或雙引號來包圍.
+
+例子:
+ * !wiki:"The whitespace convention"
+ * !attachment:'the file.txt' 或
+ * !attachment:"the file.txt" 
+ * !attachment:"ticket:123:the file.txt" 
+
+== 在哪裡使用Trac鏈接 ==
+
+你可以在下列地方使用[ZhTracLinks Trac鏈接]:
+ * SVN的源代碼提交消息
+ * Wiki頁面
+ * 傳票, 報表和里程碑的詳細描述
+ 
+以及其他明確標明支持Wiki格式的文字域.
+
+== 鏈接轉義 ==
+
+要防止解析一個Trac鏈接(轉義), 可以在前面加一個感歎號'!'.
+{{{
+ !NoLinkHere.
+ ![42] is not a link either.
+}}}
+
+顯示:
+ !NoLinkHere.
+ ![42] is not a link either.
+
+----
+原文版本: TracLinks[[BR]]
+相關信息: [ZhWikiFormatting Wiki格式], [ZhTracWiki Trac內置Wiki], [ZhWikiPageNames Wiki頁面名], [ZhInterTrac 外部Trac], [ZhInterWiki 外部Wiki][[BR]]
+See also: WikiFormatting, TracWiki, WikiPageNames, InterTrac, InterWiki

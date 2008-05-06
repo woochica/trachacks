@@ -1,0 +1,33 @@
+
+
+= Trac備份 =
+[[ZhTracGuideToc]]
+
+由於Trac使用了數據庫後端, 為了安全地備份一個[wiki:ZhTracEnvironment Trac環境], 需要額外做一些事情. 幸運的是[wiki:ZhTracAdmin trac-admin]提供了一個輕鬆安全創建備份的命令: 
+ * `hotcopy`.
+
+  ''注意: Trac使用`hotcopy`術語來對應[http://subversion.tigris.org/ SVN]的術語,  以在同時管理Trac和SVN兩種服務器時, 能減少記憶的負擔.''
+
+== 創建備份 ==
+
+為了創建Trac環境的熱備份, 只需運行:
+{{{
+  $ trac-admin /path/to/projenv hotcopy /path/to/backupdir
+}}}
+
+在複製的過程中, [wiki:ZhTracAdmin trac-admin]會鎖住數據庫.
+
+備份的結果目錄將能被標準的基於文件的備份工具(比如:tar和dump/restore)安全處理.
+
+=== 從備份中恢復 ===
+
+備份文件僅僅是整個[wiki:ZhTracEnvironment 項目環境]目錄的一個快照(包含了SQLite數據庫).
+
+為了從某個備份中恢復Trac環境, 只需停止運行Trac的程序(比如, Web服務器或[wiki:ZhTracStandalone tracd]), 從備份中恢復目錄結構, 並重新啟動服務.
+
+  ''注意: 目前還不支持不使用SQLite作為數據庫後端的環境的自動備份. 提示一個可行的方法: 我們建議你停止該服務器, 備份Trac環境的目錄結構, 並創建一個數據庫的備份文件(可以使用任何該數據庫能提供的機制).
+----
+
+原文版本: TracBackup[[BR]]
+相關信息: [ZhTracAdmin Trac管理],  [ZhTracEnvironment Trac環境],  [ZhTracGuide Trac導覽][[BR]]
+See also: TracAdmin,  TracEnvironment,  TracGuide

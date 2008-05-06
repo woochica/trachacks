@@ -1,0 +1,20 @@
+= 添加一個新Wiki頁面的步驟 =
+
+ 1. 為你的新頁面選擇一個名字. 關於命名約定, 參考[ZhWikiPageNames Wiki頁面名] .
+ 
+ 2. 編輯一個現有頁面(或其他支持[ZhWikiFormatting Wiki格式]的資源), 並添加一個到你的新頁面的[ZhTracLinks Trac鏈接] 比如說:`FooPage`, 保存你的修改.
+
+ 3. 點擊你插入的''新頁面''鏈接,來到''新頁面''. Trac會顯示"創建 `FooPage`"信息. 
+
+ 4. 單擊''創建頁面''按鈕來編輯和添加內容, 並保存你的修改.
+
+ 5. 全部完成, 你的''新頁面''(`FooPage`)已經發佈了.
+
+你也可以在頁面的頂端的快速搜索欄中,輸入該頁的[ZhCamelCase 駝峰式]名字, 從而跳過第二步. 但注意, 除非你從其他別的地方鏈接到此頁, 否則該頁會成為'''孤懸頁面'''
+
+(即沒有和任何網頁發送關係只能通過搜索訪問到的頁面).
+
+----
+原文版本: WikiNewPage[[BR]]
+相關信息: [ZhTracWiki Trac內置Wiki], [ZhWikiFormatting Wiki格式], [ZhTracLinks Trac鏈接], [ZhWikiDeletePage 刪除Wiki頁面][[BR]]
+See also: TracWiki, WikiFormatting, TracLinks, WikiDeletePage

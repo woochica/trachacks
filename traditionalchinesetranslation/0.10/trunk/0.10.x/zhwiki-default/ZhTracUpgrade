@@ -1,0 +1,138 @@
+
+
+= 升級指南 =
+[[ZhTracGuideToc]]
+
+有時在使用一個新的Trac版本前, 需要升級Trac環境. 本文檔描述了升級環境必需的步驟.
+
+'''注意''': ''除非特別強調, 否則沒有必要為次要版本進行升級. 例如, 安裝0.8.4(或其他0.8.X版本)時, 不需要升級0.8.0創建的Trac環境.''
+
+== 總體介紹 ==
+
+一般, 將Trac升級到一個新版本需要四個步驟:
+
+=== 更新Trac代碼 ===
+
+下載一個官方安裝包或從[http://projects.edgewall.com/trac/wiki/SubversionRepository SVN庫]中檢出Trac的新版本.
+
+如果你在進行一個主版本的升級, 例如從0.8升級到0.9, 強烈推薦你首先刪除現有的Trac代碼. 要刪除代碼, 你需要從Python`lib/site-packages`目錄中刪除`trac`目錄. 你還可以刪除Trac的`cgi-bin`, `htdocs`, `templates`和`wiki-default`目錄, 他們通常位於一個叫做`share/trac` 的目錄中(具體位置取決於你的平台).
+
+如果你有源代碼安裝包, 則運行
+{{{
+python setup.py install
+}}}
+
+來安裝新版本. 如果你已下載了Windows安裝程序, 則直接運行它, 等等.
+
+=== 升級Trac環境 ===
+
+如果沒有特別提及, 主版本間的升級(例如從0.8到0.9)包含了數據庫結構的改變, 還可能改變[wiki:ZhTracEnvironment 環境目錄]. 幸運的是, Trac提供了自動升級腳本. 這些腳本通過[wiki:ZhTracAdmin trac-admin]運行.
+{{{
+trac-admin /path/to/projenv upgrade
+}}}
+
+如果環境已經是最新的了, 該命令不起任何作用.
+
+注意, 如果你使用的是PostgreSQL數據庫, 該命令會失敗. 失敗的消息會是''只有當你使用SQLite數據庫時, 才能備份環境.'' 這意味著, 你必須手動備份倉庫和數據庫. 然後, 要進行實際升級, 運行
+{{{
+trac-admin /path/to/projenv upgrade --no-backup
+}}}
+
+=== 更新Trac文檔 ===
+
+每個[wiki:ZhTracEnvironment Trac環境]包含了一份安裝版本的Trac文檔副本. 因為你可能想要使文檔與安裝的Trac版本保持同步, [wiki:ZhTracAdmin trac-admin]提供了一個升級文檔的命令:
+{{{
+trac-admin /path/to/projenv wiki upgrade
+}}}
+
+注意, 該程序絕不會改動你的`WikiStart`頁面.
+
+=== 重啟Web服務器 ===
+
+要重新加載新的Trac代碼, 你需要重啟你的Web服務器. 注意, 對[wiki:ZhTracCgi CGI]不需要.
+
+== 特定版本 ==
+
+下面討論了升級某些特定Trac版本, 需要做的額外步驟.
+
+== 從0.9.x升級到0.10.x ==
+
+由於Wiki語法的一些改變, 你可能會注意到, 你的頁面的某些部分不再按預想一樣的運行:
+ * 以前, 圖片的鏈接會讓該圖片嵌入頁面中. 自0.10後, 圖片的鏈接將只是簡單鏈接. 如果你想把某個圖片嵌入頁面中, 使用`[[Image]]`宏. 
+ * 你不能再在Wiki鏈接中使用`%20`來對空格編碼. 相反, 你應使用包含空格的名稱. 例如使用`wiki:"My page"`而不是`wiki:My%20page`.
+
+版本控制子系統已經有幾處改進, 特別是改進了指定範圍的倉庫的支持.
+
+推薦你執行[ZhTracAdmin#InteractiveMode trac-admin]的'''`resync`'''操作來充分利用這些改進.
+
+還要注意, [ZhTracAdmin trac-admin]的'''`initenv`'''命令的參數列表已經改變. 有一個決定版本控制系統的類型的新的參數. 舊的用法是:
+{{{
+   initenv <projectname> <db> <repospath> <templatepath>
+}}}
+
+新的用法是:
+{{{
+   initenv <projectname> <db> <repostype> <repospath> <templatepath>
+}}}
+
+如果你在使用任何自動創建Trac環境的腳本, 你需要更新他們. 如果你在使用SVN, 將`<repostype>`參數指定為`svn`.
+
+== 從0.9.3到0.9.4 ==
+
+在Pysqlite 1.x中有一個bug, 導致使用"%"字符, `LIKE`子句或日期格式的報表失敗. 你需要使用兩個百分號: "%%"來轉義一個"%".
+
+== 從0.9.x到0.9.3或更晚 ==
+
+如果你在使用插件, 你可能要升級他們. 具體細節, 請見http://projects.edgewall.com/trac/milestone/0.9.3.
+
+== 從0.9-beta到0.9 ==
+
+如果包含的靜態資源(像樣式表, javascript, 圖像)不起作用的話, 查看trac.ini中的`htdocs_location`值. 對於[wiki:ZhTracModPython mod_python], [wiki:ZhTracStandalone tracd]和[wiki:ZhTracFastCgi FastCGI], 你只需刪除該選項即可. 對於[wiki:ZhTracCgi CGI], 你應修復它, 讓它指向你把Trac的`htdocs`映射到的URL(儘管你也可以刪除它, 然後[wiki:ZhTracCgi#MappingStaticResources 映射靜態資源]). 如果刪除選項後你還是有問題的話, 查看`trac/siteconfig.py` 文件中的路徑. 如果路徑有誤, 修復它們.
+
+如果你已在Trac0.9的beta版本中使用插件, 或者已經禁用了一些內置的組件, 你可能需要更新禁用或啟用[wiki:ZhTracIni trac.ini]中的組件的規則. 特別是, 安裝的插件現在需要啟用. 更多信息, 請見[ZhTracPlugins Trac插件]和[ZhTracIni Trac配置].
+
+如果你想啟用所有的傳票的改變在時間線中的顯示(''傳票詳細資料''選項), 你現在必須也在[wiki:ZhTracIni trac.ini]中啟用它.
+
+{{{
+[timeline]
+ticket_show_details = true
+}}}
+
+
+== 從0.8.x到0.9 ==
+
+[wiki:ZhTracModPython mod_python]還需要改變Apache HTTPD配置中的mod_python處理器的名稱:
+{{{
+   from: PythonHandler trac.ModPythonHandler
+   to:   PythonHandler trac.web.modpython_frontend
+}}}
+
+如果你安裝了[http://initd.org/tracker/pysqlite PySQLite] 2.x, Trac現在會試著用SQLite 3.x文件格式打開你的SQLite數據庫. SQLite 2.8.x和SQLite 3.x使用的數據庫格式是不兼容的. 如果升級後, 你得到一個類似''文件被加密或文件不是一個數據庫''的錯誤, 那麼你必須要轉換你的數據庫文件.
+
+要這樣做, 你需要安裝了SQLite 2.8.x和SQLite 3.x, 他們有不同的文件名, 所以在同一個系統中可以共存. 然後使用下列命令:
+{{{
+ $ mv trac.db trac2.db
+ $ sqlite trac2.db .dump | sqlite3 trac.db
+}}}
+
+要一次在Linux上更新多個數據庫文件, 你可以使用下了命令(將{{{/var/trac}}}替換為你的Trac安裝包的位置).
+{{{
+ $ find /var/trac/ -iname "trac.db" | xargs -i bash -c "mv {} {}.2; sqlite {}.2 .dump | sqlite3 {};"
+}}}
+
+記得給Web服務器訪問trac.db的寫權限.
+
+測試完發現轉換成功之後, `trac2.db`文件可以刪除. 更多關於SQLite升級的信息, 請見http://www.sqlite.org/version3.html.
+
+== 從0.7.x到0.8 ==
+
+0.8加了一個新的里程碑特徵, 要求額外的權限. 儘管一個新的安裝包默認情況下會給匿名用戶ROADMAP_VIEW和MILESTONE_VIEW權限, 升級時這些權限必須要手動授予:
+{{{
+ $ trac-admin /path/to/projectenv permission add anonymous MILESTONE_VIEW
+ $ trac-admin /path/to/projectenv permission add anonymous ROADMAP_VIEW
+}}}
+
+-----
+原文版本: TracUpgrade[[BR]]
+相關信息: [ZhTracGuide Trac導覽], [ZhTracInstall Trac安裝][[BR]]
+See also: TracGuide, TracInstall

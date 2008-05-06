@@ -1,0 +1,60 @@
+=  Wiki宏 =
+Trac宏是用Python寫的自定義函數, 用以擴展Trac引擎功能的插件. 宏可在任何支持[ZhWikiFormatting Wiki格式]的環境中插入動態的HTML數據.
+
+另一種宏是Wiki處理器. 他們一般處理替代的標記格式和大塊區域信息的顯示(就像源代碼的高亮顯示一樣).
+
+== 使用宏 ==
+
+宏的調用是放在兩個'''方括號'''中. 像Python函數一樣, 宏可以有參數(括號內用逗號分隔的列表).
+
+=== 例子 ===
+
+{{{
+ [[Timestamp]]
+}}}
+顯示:
+ [[Timestamp]]
+
+{{{
+ [[HelloWorld(Testing)]]
+}}}
+顯示:
+ [[HelloWorld(Testing)]]
+
+== 可用的宏 ==
+
+''注意, 如果你沒有啟用`-OO`優化或設置[wiki:TracModPython mod_python]的!PythonOptimize選項, 下面的列表將只包括宏文檔.''
+[[MacroList]]
+
+== 來自世界各地的宏 ==
+
+[http://trac-hacks.org/ Trac Hacks]網站彙集了豐富的宏,以及Trac社區貢獻的其他[TracPlugins Trac插件]. 如果你要找新的宏, 或寫了一個想和全世界分享的宏, 請不要猶豫馬上訪問該網站.
+
+== 開發自定義宏 ==
+宏, 像Trac本身, 是用[http://www.python.org/ Python編程語言]寫的. 他們是很簡單的模塊, 通過文件名來標識, 並且只包含了一個`execute()`函數. Trac會在宏被調用的地方, 在wiki頁面的HTML表示中插入宏的返回值.
+
+最簡單的方法是學習一個例子:
+{{{
+#!python
+# MyMacro.py -- The world's simplest macro
+
+def execute(hdf, args, env):
+    return "Hello World called with args: %s" % args
+}}}
+
+你還可以使用環境(env)對像, 比如說, 去訪問配置數據和數據庫, 例如:
+{{{
+#!python
+def execute(hdf, txt, env):
+    return env.config.get('trac', 'repository_dir')
+}}}
+
+注意, 0.9版本後, Wiki宏還可作為Trac插件(Plugins)來寫. 這樣就給了這些宏一些''經典''宏沒有的能力, 例如可以直接訪問HTTP請求.
+
+關於開發宏的更多信息, 請見主項目網站上的[http://projects.edgewall.com/trac/wiki/TracDev development resources].
+
+----
+
+原文版本: WikiMacros[[BR]]
+相關信息: [ZhWikiProcessors Wiki解析器], [ZhWikiFormatting Wiki格式], [ZhTracGuide Trac導覽][[BR]]
+See also: WikiProcessors, WikiFormatting, TracGuide

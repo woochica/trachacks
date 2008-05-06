@@ -1,0 +1,119 @@
+
+
+= 定制Trac界面 =
+[[ZhTracGuideToc]]
+
+== 介紹 ==
+
+該頁面旨提供有關如何定制Trac界面的建議. 話題涵蓋了編輯HTML模板和CSS文件, 但不包含程序代碼本身. 這些話題想要向用戶展示如何更改Trac的外觀來滿足他們特定的要求. 
+
+== 項目Logo和圖標 ==
+定制Trac界面最簡單的部分是logo和站點的圖標. 他們都可以通過[wiki:ZhTracIni trac.ini]的設置進行配置.
+
+logo或者圖標應放在項目環境目錄中的一個''htdocs''目錄中(注意: 用Trac0.9之前的版本創建的項目, 你需要創建該目錄).
+
+ ''注意: 實際上你可以把logo和圖標放在服務器的任何地方(只要通過服務器能訪問到就可以), 並且在配置中使用他們的絕對URL或服務器的相對URL.''
+
+在你的[wiki:ZhTracIni trac.ini]中的配置相應的段:
+
+=== Logo ===
+將`src`設置改為`site/`, 後面跟著你的圖像文件的名字. 應修改''寬度''和''高度''設置來匹配你的圖像的尺寸(Trac的chrome處理器用"site/"對應位於項目目錄的"htdocs", 用"common/"對應普通文件).
+{{{
+[header_logo]
+src = site/my_logo.gif
+alt = My Project
+width = 300
+height = 100
+}}}
+
+=== 圖標 ===
+圖標應該是`.gif`或`.ico`格式的大小16x16的圖像. 將`icon`選項修改為`site/`, 後面跟著你的圖標文件的名稱. 在你的Web瀏覽器中, 圖標一般會顯示在站點的URL旁邊或者在''書籤''菜單中.
+{{{
+[project]
+icon = site/my_icon.ico
+}}}
+
+'''注意''', 該圖標會被 IE 忽略, 它只接受主機根路徑下名為''favicon.ico''的文件. 要使項目圖標在IE和其他瀏覽器中都起作用的話, 你可以將圖標儲存在主機的根路徑中, 並按照下列方法在``trac.ini``中引用它:
+{{{
+[project]
+icon = /favicon.ico
+}}}
+
+== 站點頁眉和頁腳 ==
+
+在每個Trac項目的環境目錄中, 應該有個叫{{{templates}}}的目錄. 該目錄包含文件{{{site_header.cs}}}和{{{site_footer.cs}}}. 用戶可以通過添加所需的HTML標記到這些文件中, 來定制他們的Trac站點. 這兩個文件的內容分別放在網站中每頁的開始的標籤{{{<body>}}}和結尾的標籤{{{</body>}}}中.
+
+這些文件可以包含靜態HTML, 當然, 如果用戶想要有動態的內容, 他們可以使用頁面內部的[http://www.clearsilver.net/ ClearSilver]模板語言. 當你需要查看模板中有哪些可用變量, 將查詢串''?hdfdump=1''添加到你的Trac站點的URL中. 這樣將顯示出模板數據的結構化視圖.
+
+== 站點樣式表 ==
+
+調整一個Trac網站的佈局的主要方法是添加[http://www.w3.org/TR/REC-CSS2/ CSS]樣式規則來覆蓋默認的規則. 最好是通過編輯項目環境的`templates`目錄下的`site_css.cs`文件來實現. 該模板中的內容會插入到Trac生成的每個HTML頁面的`<style type="text/css"></style>`中.
+
+雖然你可以將定制樣式規則直接添加到`site_css.cs`文件中, 我們建議你只引用一個外部樣式表, 以便使瀏覽器能緩存此CSS文件, 而不是每次都傳輸這些樣式規則.
+
+下面的例子會導入一個位於根`style`目錄下的樣式表:
+{{{
+@import url(/style/mytrac.css);
+}}}
+
+你可以使用一個!ClearSilver變量來引用存儲在項目環境的`htdocs`目錄中的樣式表:
+{{{
+@import url(<?cs var:chrome.href ?>/site/style.css);
+}}}
+
+== 項目列表 ==
+如果你在使用Trac執行多個項目時, 你可以用一個定制!ClearSilver模板來顯示項目的列表.
+
+下面是Trac用來顯示各項目鏈接的列表的基本模板. 對於不能加載的項目, 它會顯示一個錯誤信息. 你可以將它作為你自己的索引模板的一個起點.
+
+{{{
+#!text/html
+<html>
+<head><title>Available Projects</title></head>
+<body>
+ <h1>Available Projects</h1>
+ <ul><?cs
+ each:project = projects ?><li><?cs
+  if:project.href ?>
+   <a href="<?cs var:project.href ?>" title="<?cs var:project.description ?>">
+    <?cs var:project.name ?></a><?cs
+  else ?>
+   <small><?cs var:project.name ?>: <em>Error</em> <br />
+   (<?cs var:project.description ?>)</small><?cs
+  /if ?>
+  </li><?cs
+ /each ?>
+ </ul>
+</body>
+</html>
+}}}
+
+一旦你創建了自己的定制模板, 你需要配置Web服務器, 來告訴Trac該模板的具體位置:
+
+對於 [wiki:ZhTracFastCgi FastCGI]:
+{{{
+FastCgiConfig -initial-env TRAC_ENV_PARENT_DIR=/parent/dir/of/projects \
+              -initial-env TRAC_ENV_INDEX_TEMPLATE=/path/to/template
+}}}
+
+對於 [wiki:ZhTracModPython mod_python]:
+{{{
+PythonOption TracEnvIndexTemplate /path/to/template
+}}}
+
+對於 [wiki:ZhTracCgi CGI]:
+{{{
+SetEnv TRAC_ENV_INDEX_TEMPLATE /path/to/template
+}}}
+
+
+== 主要模板 ==
+!ClearSilver
+也可以使用自己修改的Trac !ClearSilver模板. 注意, 不推薦使用該技術, 因為它使得升級Trac有很多問題: 很不幸的是, 在模板和程序代碼間存在幾個依賴關係, 例如表單域的名稱, 模板數據的結構等, 這些在不同版本的Trac中都可能有變化.
+
+如果你一定要使用修改的模板, 將默認模板目錄(通常是在`$prefix/share/trac/templates`中)中的模板文件複製到項目環境中的`templates`目錄中. 然後修改這些副本, 達到你想要的效果.
+
+----
+原文版本: TracInterfaceCustomization[[BR]]
+相關信息: [ZhTracGuide Trac導覽], [ZhTracIni Trac配置][[BR]]
+See also: TracGuide, TracIni

@@ -1,0 +1,141 @@
+
+
+= Wiki解析器 =
+
+解析器是指為[TracWiki Wiki引擎]提供內容格式而設計的[ZhWikiMacros Wiki宏]聲明, 解析器可以理解為''根據用戶文字的格式進行HTML輸出處理的宏函數''.
+
+Wiki引擎使用解析器, 使Trac中的所有Wiki文本, 可以分別使用[wiki:ZhWikiRestructuredText 新結構化文本], [wiki:ZhWikiHtml HTML]和 [http://www.textism.com/tools/textile/ textile] 格式來進行內容組織.
+
+== 使用解析器 ==
+
+要在一個文本塊上套用解析器, 在Wiki代碼塊 ''shebang notation''部分(大多數UNIX用戶應該很熟悉)中聲明一個解析器.
+
+''例1'' (在wiki文本中插入HTML)
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!html
+&lt;h1 style="color: orange"&gt;This is raw HTML&lt;/h1&gt;
+}}}</pre>
+}}}
+
+'''結果:'''
+{{{
+#!html
+<h1 style="color: orange">This is raw HTML</h1>
+}}}
+
+----
+
+''例2'' (在wiki文字中插入新結構化文本):
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!rst
+A header
+--------
+這是有腳注的**文字**[*]_.
+
+.. [*] 這是腳注.
+}}}</pre>
+}}}
+
+'''結果:'''
+{{{
+#!rst
+A header
+--------
+這是有腳注的**文字**[*]_.
+
+
+.. [*] 這是腳注.
+}}}
+
+----
+
+''例3'' (在Wiki文本中插入一段C源代碼):
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!c
+int main(int argc, char *argv[])
+{
+  printf("Hello World\n");
+  return 0;
+}
+}}}</pre>
+}}}
+
+'''結果:'''
+{{{
+#!c
+int main(int argc, char *argv[])
+{
+  printf("Hello World\n");
+  return 0;
+}
+}}}
+
+----
+
+== 可用解析器 ==
+
+下列解析器包含在Trac發行版中:
+
+ * '''html''' -- 在Wiki頁面中插入自定義HTML. 見[ZhWikiHtml WikiHtml].
+ * '''rst''' -- Trac支持新結構化文本. 見[wiki:ZhWikiRestructuredText  新結構化文本].
+ * '''textile''' -- 如果安裝了[http://dealmeida.net/projects/textile/ Textile]則支持. 請見[http://hobix.com/textile/ Textile參考手冊].
+ 
+上面的Textile鏈接是無用的. [http://www.textism.com/tools/textile/ 這個]可以用, 可用來測試例子.
+
+=== 代碼語法高亮顯示支持 ===
+
+Trac包含的解析器支持下列語言的內嵌[wiki:ZhTracSyntaxColoring 語法高亮]:
+ * '''c''' -- C
+ * '''cpp''' -- C++
+ * '''python''' -- Python
+ * '''perl''' -- Perl
+ * '''ruby''' -- Ruby
+ * '''php''' -- PHP
+ * '''asp''' --- ASP
+ * '''sql''' -- SQL
+ * '''xml''' -- XML
+
+'''注意''':''Trac依靠外部軟件包進行語法高亮顯示. 更多信息請見[ZhTracSyntaxColoring 語法高亮].''
+
+通過將MIME類型作為解析器來使用, 在瀏覽源代碼時, 同樣可以支持語法高亮顯示. 例如, 你可以寫:
+{{{
+{{{
+#!text/html
+<h1>text</h1>
+}}}
+}}}
+
+結果會是語法高亮顯示的HTML代碼. 同樣也適用於其他支持的mime類型.
+
+
+要想瞭解更多用戶開發和貢獻的解析器宏, 請訪問:
+ * [http://projects.edgewall.com/trac/wiki/ProcessorBazaar ProcessorBazaar]
+ * [http://projects.edgewall.com/trac/wiki/MacroBazaar MacroBazaar]
+
+
+== 高級話題: 開發解析器宏 ==
+開發解析器和[ZhWikiMacros Wiki宏]並沒有不同之處. 事實上他們以同樣的方式運行, 只是使用語法有些不同而已. 更多信息請見[ZhWikiMacros Wiki宏].
+
+''例:'' (新結構化文本解析器):
+{{{
+#!python
+from docutils.core import publish_string
+
+def execute(hdf, text, env):
+    html = publish_string(text, writer_name = 'html')
+    return html[html.find('<body>')+6:html.find('</body>')].strip()
+}}}
+
+----
+原文版本: WikiProcessors[[BR]]
+相關信息:[ZhWikiMacros Wiki宏], [ZhWikiHtml WikiHtml], [ZhWikiRestructuredText 新結構化文本], [ZhTracSyntaxColoring 語法高亮], [ZhWikiFormatting Wiki格式], [ZhTracGuide Trac導覽][[BR]]
+See also: WikiMacros, WikiHtml, WikiRestructuredText, TracSyntaxColoring, WikiFormatting, TracGuide

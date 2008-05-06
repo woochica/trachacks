@@ -1,0 +1,43 @@
+
+
+= 在Trac中使用RSS =
+[[ZhTracGuideToc]]
+
+Trac的好幾個模塊都支持使用RSS XML格式的內容聚合. 使用Trac中的RSS訂閱功能, 你可以輕鬆地監控項目的進度, 一系列事件, 甚至是某個文件的更改.
+
+下列各項支持RSS源:
+
+ * Trac時間線 -- 使用RSS源來'''訂閱項目的事件'''.
+
+ 在你喜愛的RSS閱讀器中監控項目的總體進度. 
+
+ * [ZhTracTickets Trac傳票], [ZhTracReports Trac報表]和[ZhTracQuery Trac查詢] -- 允許報表和傳票查詢結果的聚合.
+
+ 獲得對重要傳票和相關事務的提醒.
+
+ * [ZhTracBrowser Trac遊覽] [ZhTracRevisionLog 修訂日誌]-- 文件更改的聚合.
+
+ 保持指定文件或目錄最新的更改.
+
+== 如何訪問RSS數據 ==
+
+在Trac中, 任何可用RSS的地方, 你會發現一個小的橙色'''XML'''標誌, 一般位於網頁的底部. 單擊該標誌可以訪問該資源的RSS源.
+
+'''注意''': 不同的模塊的RSS源中提供不同的數據. 通常, 聚合信息與當前視圖對應. 例如, 如果你在一個報表頁面中單擊RSS鏈接, 則是基於該報表的源. 你可以把RSS源看作是當前顯示數據的另一種視圖.
+
+== 鏈接 ==
+
+ * http://blogs.law.harvard.edu/tech/rss -- RSS 2.0規範
+ * http://www.mozilla.org/products/firefox/ -- Mozilla Firefox使用RSS支持 [http://www.mozilla.org/products/firefox/live-bookmarks.html 活動書籤]
+ * http://sage.mozdev.org -- 用於Mozilla Firefox的Sage RSS和Atom源
+ * http://pim.kde.org/users.php -- [http://kde.org KDE]Linux/BSD/*n*x系統的RSS閱讀器
+ * http://www.rssreader.com/ -- 免費又強大的Windows系統的RSS閱讀器
+ * http://liferea.sourceforge.net/ -- Linux系統的開源GTK2 RSS閱讀器
+ * http://akregator.sourceforge.net/ -- 開源KDE RSS閱讀器(屬於KDE-PIM的一部分)
+ * http://www.sharpreader.net/ -- Windows系統的一款用.NET編寫的RSS閱讀器
+ * http://ranchero.com/netnewswire/ -- Mac OS X的一個優秀的RSS閱讀器(有免費版和付費版)]
+
+----
+原文版本: TracRss[[BR]]
+相關信息: [ZhTracGuide Trac導覽], [ZhTracTimeline Trac時間線], [ZhTracReports Trac報表], [ZhTracBrowser Trac遊覽][[BR]]
+See also: TracGuide, TracTimeline, TracReports, TracBrowser

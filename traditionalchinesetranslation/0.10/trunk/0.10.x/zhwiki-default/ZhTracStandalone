@@ -1,0 +1,124 @@
+
+
+= Tracd =
+
+Tracd是一個獨立的Web服務器. 多數情況下, 它比[wiki:ZhTracCgi CGI腳本]更容易設置, 運行更快.
+
+== 優點 ==
+
+ * 更獨立: 你不需要安裝Apache或其他Web服務器.
+ * 快: 應該幾乎和[wiki:ZhTracModPython mod_python]版本一樣快, 並且比[wiki:ZhTracCgi CGI]快得多.
+ * 自動重新載入: 在開發時, Tracd可工作在''auto_reload''模式中, 這樣無論何時你改變代碼(Trac或插件中), 它會自動重啟服務器.
+
+== 缺點 ==
+
+ * 特性更少: Tracd的定位是一個非常簡單的Web服務器, 沒有象Apache HTTPD那樣的可配置性或可伸縮性.
+ * 不支持本地HTTPS: 可用[http://www.rickk.com/sslwrap/ sslwrap]來代替, 或者 [http://trac.edgewall.org/wiki/STunnelTracd stunnel -- 在tracd中使用管道的教程] 或者在Apache中使用mod_proxy.
+
+== 例子 ==
+
+在端口8080上的單個項目.(http://localhost:8080/)
+{{{
+ $ tracd -p 8080 /path/to/project
+}}}
+
+多個項目.(http://localhost:8080/project1/ 和 http://localhost:8080/project2/)
+{{{
+ $ tracd -p 8080 /path/to/project1 /path/to/project2
+}}}
+
+各項目路徑的最後一部分不能完全相同, 因為Trac使用該名字來區別不同項目的URL. 因此, 如果你使用`/project1/path/to`和`/project2/path/to`, 你只能看到第二個項目.
+
+另一種服務多個項目的方法是指定一個父目錄, 其中每個子目錄是一個Trac項目, 使用`-e`選項. 上面的例子可以改寫為:
+{{{
+ $ tracd -p 8080 -e /path/to
+}}}
+
+== 使用驗證 ==
+
+Tracd支持Basic和Digest驗證. 默認是使用Digest, 要使用Basic驗證, 在下面的例子中將`--auth`替換為`--basic-auth`, 並省略域.
+
+  ''在0.9版本中添加了對Basic驗證支持''
+
+如果文件`/path/to/users.htdigest`包含使用''mycompany.com''域的project1的用戶帳號, 你可以用下列命令行來啟動tracd:
+{{{
+ $ tracd -p 8080 --auth project1, /path/to/users.htdigest, mycompany.com /path/to/project1
+}}}
+
+'''注意''': 傳遞到`--auth`選項的項目''名稱''是項目環境目錄的基本名字(base name).
+
+當然, digest文件可以被多個項目共享:
+{{{
+ $ tracd -p 8080 \
+   --auth project1, /path/to/users.htdigest, mycompany.com \
+   --auth project2, /path/to/users.htdigest, mycompany.com \
+   /path/to/project1 /path/to/project2
+}}}
+
+另一個共享digest文件的方法是將項目名稱指定為"*":
+{{{
+ $ tracd -p 8080 \
+   --auth *, /path/to/users.htdigest, mycompany.com \
+   /path/to/project1 /path/to/project2
+}}}
+
+== 如何創建一個htdigest口令文件 ==
+
+如果你有Apache, 你可以使用htdigest命令來創建口令文件. 鍵入'htdigest'以得到使用說明或者閱讀摘自Apache手冊的[http://httpd.apache.org/docs/2.0/programs/htdigest.html 頁面]得到準確的指導. 你要為創建的每個用戶輸入密碼. 口令文件的名字可以是任何你想要的名字. 但是如果你使用類似`users.htdigest`這樣的名字, 它會提醒你該文件包含的內容. 建議將它和[ZhTracIni trac.ini]文件放在你的<projectname>/conf文件夾中.
+
+注意, 你可以不使用--auth參數來啟動tracd, 但如果你單擊''Login''鏈接, 你將得到一個錯誤.
+
+== 不用Apache創建密碼 ==
+
+如果你沒有Apache, 你可以使用這個簡單的Python腳本來創建你的密碼:
+
+{{{
+from optparse import OptionParser
+import md5
+
+# build the options
+usage = "usage: %prog [options]"
+parser = OptionParser(usage=usage)
+parser.add_option("-u", "--username", action="store", dest="username", type = "string", 
+                  help="the username for whom to generate a password")
+parser.add_option("-p", "--password", action="store", dest="password", type = "string", 
+                  help="the password to use")
+(options, args) = parser.parse_args()
+
+# check options
+if (options.username is None) or (options.password is None):
+   parser.error("You must supply both the username and password")
+   
+# Generate the string to enter into the htdigest file
+realm = 'trac'
+kd = lambda x: md5.md5(':'.join(x)).hexdigest()
+print ':'.join((options.username, realm, kd([options.username, realm, options.password])))
+}}}
+
+注意:如果你使用上述腳本, 你必須使用--auth選項, 而不是--basic-auth, 並且你必須在 --auth值中設置域(沒有引號). 例如(假設你將腳本保存為trac-digest.py):
+
+{{{
+python trac-digest.py -u username -p password >> c:\digest.txt
+python tracd --port 8000 --auth proj_name, c:\digest.txt, trac c:\path\to\proj_name
+}}}
+
+== 提示 ==
+
+=== 服務靜態的內容 ===
+
+如果`tracd`是該項目的唯一Web服務器, 它還可以用於分發靜態內容(tarballs, Doxygen文檔, 等)
+
+該靜態內容應放在`$TRAC_ENV/htdocs`文件夾中, 並且通過類似`<project_URL>/chrome/site/...`的URL來訪問.
+
+例子: 假設一個`$TRAC_ENV/htdocs/software-0.1.tar.gz`文件, 對應的URL應該是`/<project_name>/chrome/site/software-0.1.tar.gz`, 可以使用wiki`[/<project_name>/chrome/site/software-0.1.tar.gz]`中的相關鏈接語法來編寫.
+
+Trac的開發版本支持一個新的`htdocs:`Trac鏈接語法. 這樣, 上面例子中的鏈接可以簡化為`htdocs:software-0.1.tar.gz`.
+
+----
+'''Translation:'''
+ * [https://opensvn.csie.org/traccgi/trac_rus/wiki/StandAloneTracForTeapot Russian] (  )
+
+----
+原文版本: TracStandalone[[BR]]
+相關信息: [ZhTracInstall Trac安裝], [ZhTracCgi TracCgi], [ZhTracModPython TracModPython], [ZhTracGuide Trac導覽][[BR]]
+See also: TracInstall, TracCgi, TracModPython, TracGuide

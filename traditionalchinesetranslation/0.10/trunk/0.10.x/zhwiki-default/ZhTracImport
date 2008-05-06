@@ -1,0 +1,85 @@
+
+
+= 導入傳票數據 =
+
+== Bugzilla ==
+可以通過使用[http://projects.edgewall.com/trac/browser/trunk/contrib/bugzilla2trac.py bugzilla2trac.py]腳本從Bugzilla中導入傳票數據. 該腳本位於Trac的contrib/目錄中.
+
+{{{
+$ bugzilla2trac.py
+bugzilla2trac - 從Bugzilla中導入一個bug數據庫到Trac中.
+
+使用:bugzilla2trac.py [選項]
+
+可用的選項:
+  --db <MySQL dbname>              - Bugzilla的數據庫
+  --tracenv /path/to/trac/env      - Trac db環境的完整路徑
+  -h | --host <MySQL hostname>     - Bugzilla的DNS主機名
+  -u | --user <MySQL username>     - Bugzilla數據庫的有效用戶名
+  -p | --passwd <MySQL password>   - Bugzilla的用戶密碼
+  -c | --clean                     - 在導入前刪除現有的Trac傳票
+  --help | help                    - 本幫助信息
+
+在腳本中可以直接定義額外的配置選項.
+}}}
+
+目前, 從Bugzilla中導入了下列數據:
+
+  * bugs
+  * bug活動(字段改變)
+  * bug附件
+  * 用戶名和密碼(放在htpasswd文件中)
+
+該腳本提供了許多特性, 以使轉換過程輕鬆一些, 例如:
+
+  * PRODUCT_KEYWORDS:  Trac沒有產品的概念, 因此腳本提供了一個附加傳票關鍵字作為替代.
+
+  * IGNORE_COMMENTS:  不導入匹配某個正則表達式的Bugzilla註釋.
+
+  * STATUS_KEYWORDS:  為Trac中不可用的Bugzilla狀態附加傳票關鍵字. 默認情況下, 'VERIFIED'和'RELEASED' Bugzilla狀態是轉換為Trac關鍵字.
+
+可用選項的更多細節, 請見該腳本頭部的配置部分.
+
+== Sourceforge ==
+
+可通過使用[http://projects.edgewall.com/trac/browser/trunk/contrib/sourceforge2trac.py sourceforge2trac.py]腳本從Sourceforge2trac.py中導入傳票數據. 該腳本可在Trac的contrib/目錄中得到.
+
+== Mantis(一種Php語言實現的bugtracker 系統) ==
+
+Mantis bug可通過使用附加的腳本來導入.
+
+目前, 從Mantis中導入下列數據:
+  * bugs
+  * bug 註釋
+  * bug 活動 (字段改變)
+
+不導入附件. 如果你使用該腳本, 請閱讀`注意`那一節(在該文件的頭部), 並確認你調整了適合你的環境的配置參數.
+
+mantis2trac.py與bugzilla2trac.py腳本有同樣的參數:
+{{{
+mantis2trac - 從Mantis中導入一個bug數據庫到Trac中.
+
+使用:mantis2trac.py [選項] 
+
+現有的選項:
+  --db <MySQL dbname>              - Mantis數據庫
+  --tracenv /path/to/trac/env      - Trac db環境的完整路徑
+  -h | --host <MySQL hostname>     - Mantis DNS主機名
+  -u | --user <MySQL username>     - 有效的Mantis數據庫用戶
+  -p | --passwd <MySQL password>   - Mantis數據庫用戶密碼
+  -c | --clean                     - 在導入前刪除現有的Trac傳票
+  --help | help                    - 本幫助信息
+
+在腳本中可以直接定義額外的配置選項.
+}}} 
+
+== 其他 ==
+
+因為trac用一個SQL數據庫來存儲數據, 你可以通過檢查數據庫表格, 以從其他數據庫系統中導入. 只需進入[http://www.sqlite.org/sqlite.html sqlite]命令行查看表格, 然後從你的應用程序中導入它們.
+
+=== 使用一個逗號分隔的文件 - CSV ===
+
+細節請見[http://trac.edgewall.org/attachment/wiki/TracSynchronize/csv2trac.2.py]. 如果有人需要手動輸入大量的傳票, 那麼該方法會非常有用(注意, 該腳本需要傳票類型字段(task等等...), 以使其與後來的Trac發行版一起工作).
+
+----
+原文版本TracImport[[BR]]

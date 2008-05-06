@@ -1,0 +1,83 @@
+
+
+= 源代碼的顏色高亮顯示 =
+
+Trac支持[wiki:ZhWikiFormatting Wiki格式]和[wiki:ZhTracBrowser Trac遊覽]中特定語言的源代碼語法高亮顯示.
+
+為了實現大量編程語言的語法高亮顯示, Trac使用外部程序庫.
+
+目前Trac支持語法高亮顯示使用下列其中一個或多個安裝包:
+
+ * [http://www.codento.com/people/mtr/genscript/ GNU Enscript] 
+ * [http://silvercity.sourceforge.net/ SilverCity]
+
+要激活語法高亮顯示, 只需安裝其中一個(或一個以上)的安裝包. 不需要進行額外的配置, 但要更改顏色, 請看`trac/htdocs/css/code.css`.
+
+如果可能的話, Trac會自動優先使用!SilverCity的高亮顯示設置級(見下面的注意).
+
+如果沒有可用的安裝包, Trac會將數據顯示為純文本.
+
+'''注意''': Enscript支持很多語言, 但總的說來!SilverCity更快, 因為它是一個程序庫, 並且不在外部進程中執行.
+
+=== 關於SilverCity ===
+!SilverCity使用[http://www.scintilla.org/ Scintilla]中的詞法分析程序. Scintilla比!SilverCit支持更多語言. 添加一種Scintilla支持的語言到!SilverCity中並非很困難. 請見[http://projects.edgewall.com/trac/wiki/SilverCityAddLanguage 添加語言到SilverCity].
+
+== 語法高亮顯示支持 ==
+
+|| || !SilverCity || Enscript ||
+|| Ada      ||   || X ||
+|| Asm      ||   || X ||
+|| * ASP    || X || X ||
+|| * C      || X || X ||
+|| * C#     ||   || X(2) ||
+|| * C++    || X || X ||
+|| * Java   ||   || X ||
+|| Awk      ||   || X ||
+|| CSS      || X ||   ||
+|| Diff     ||   || X ||
+|| Eiffel   ||   || X ||
+|| Elisp    ||   || X ||
+|| Fortran  ||   || X ||
+|| Haskell  ||   || X ||
+|| HTML     || X || X ||
+|| IDL      ||   || X ||
+|| Javascript || X || X ||
+|| m4       ||   || X ||
+|| Makefile ||   || X ||
+|| Matlab   ||   || X ||
+|| Objective-C|| || X ||
+|| Pascal   ||   || X ||
+|| * Perl   || X || X ||
+|| * PHP    || X || X ||
+|| PSP      || X ||   ||
+|| Pyrex    ||   || X ||
+|| * Python || X || X ||
+|| * Ruby   || X || X (1) ||
+|| Scheme   ||   || X ||
+|| Shell    ||   || X ||
+|| SQL      || X || X ||
+|| Troff    ||   || X ||
+|| TCL      ||   || X ||
+|| Tex      ||   || X ||
+|| Verilog  ||   || X ||
+|| VHDL     ||   || X ||
+|| Visual Basic |||| X ||
+|| VRML     ||   || X ||
+|| XML      || X ||  ||
+
+''(*) 支持在[wiki:ZhWikiFormatting Wiki文本]中使用[WikiProcessors Wiki解析器]的內嵌代碼塊.''
+
+''(1) 在Enscript發行版中不包含Ruby高亮顯示. Ruby的高亮顯示規則可以從http://neugierig.org/software/ruby/得到.''
+
+''(2) 在Enscript發行版中不包含C#高亮顯示. C#的高亮顯示規則可以從http://wiki.hasno.info/index.php/Csharp.st得到.''
+
+== 另外的軟件 ==
+
+ * GNU Enscript -- http://directory.fsf.org/GNU/enscript.html
+ * GNU Enscript for Windows -- http://gnuwin32.sourceforge.net/packages/enscript.htm
+ * !SilverCity -- http://silvercity.sf.net/
+
+----
+原文版本: TracSyntaxColoring[[BR]]
+相關信息: [ZhWikiProcessors Wiki解析器], [ZhWikiFormatting Wiki格式], [ZhTracWiki Trac內置Wiki], [ZhTracBrowser Trac遊覽][[BR]]
+See also: WikiProcessors, WikiFormatting, TracWiki, TracBrowser

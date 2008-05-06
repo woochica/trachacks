@@ -1,0 +1,38 @@
+= Trac使用及管理指南 =
+[[ZhTracGuideToc]]
+
+'''Trac導覽'''旨在作為一個所有相關Trac的使用/開發文檔的一個索引服務. 
+'''Trac導覽'''本身是一個免費的文檔, 一個協作的成果, 並且是[http://projects.edgewall.com/trac/ Trac Project]本身的一部分.
+
+== 目錄 ==
+現有的文檔:
+ * [ZhTracGuide  Trac導覽(本頁)] -- 內置文檔起點
+   * [ZhTracInstall Trac安裝] -- 如何安裝和運行Trac
+   * [ZhTracUpgrade Trac升級] -- 如何升級已安裝文件
+   * [ZhTracAdmin Trac管理] -- 管理一個Trac項目
+   * [ZhTracImport Trac導入] -- 從其他bug數據庫中導入傳票
+   * [ZhTracIni Trac配置] -- 配置參數指南
+   * [ZhTracPermissions TracACL] -- 訪問控制和許可
+   * [ZhTracInterfaceCustomization Trac定制] -- 自定義Trac界面
+   * [ZhTracPlugins Trac插件] -- 安裝和管理Trac插件
+   * [ZhTracWiki Trac內置Wiki] -- 如何使用內置的Wiki
+   * [ZhTracBrowser Trac遊覽] -- 用Trac瀏覽源代碼
+   * [ZhTracChangeset Trac變更集] -- 查看源代碼的變更集
+   * [ZhTracTickets Trac傳票] -- 使用傳票系統
+   * [ZhTracReports Trac報表] -- 撰寫和使用報告
+   * [ZhTracQuery Trac查詢] -- 執行自定義傳票查詢
+   * [ZhTracRoadmap Trac項目線路圖] -- 定義里程碑,協助項目的進度追蹤
+   * [ZhTracTimeline Trac項目時間線索] -- 為項目提供了完整的歷史記錄
+   * [ZhTracLogging Trac日誌] -- Trac日誌工具
+   * [ZhTracRss Trac的RSS] -- Trac中的RSS內容組織
+   * [ZhTracNotification Trac提醒] -- 郵件通知
+
+ * [http://projects.edgewall.com/trac/wiki/TracFaq 常見問題集(在Trac官方網站上)]
+
+== 支持和其他的信息資源 ==
+
+如果你在尋找一個能解答你關於Trac的疑問的地方, 那麼[http://projects.edgewall.com/trac/wiki/MailingList 郵件列表]是最佳選擇. 它提供了一個Trac用戶與開發者之間自由地討論的良好的環境.
+
+相關信息: 想得到更多的信息資源, 請見[ZhTracSupport Trac技術支持]頁面.
+
+原文版本: TracGuide

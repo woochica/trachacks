@@ -1,0 +1,29 @@
+
+
+= Trac時間線 =
+
+[[ZhTracGuideToc]]
+
+時間線在一個列表中提供了項目的歷史視圖.
+
+它列舉了所有的以時間順序發生的Trac事件, 對每個事件的簡短描述, 還盡可能包含更改的負責人.
+
+時間線列舉了如下事件:
+
+ * '''Wiki頁面事件''' -- 創建和更改
+ * '''傳票事件''' -- 創建和解決/結束(以及任意的其他更改)
+ * '''源代碼更改 ''' -- 檢入倉庫
+ * '''里程碑 ''' -- 里程碑結束
+
+每個事件條目都包含正在討論的指定事件的鏈接, 如可能, 還包含評論或文字的簡短摘錄.
+
+關於時間線的配置選項, 請參見[wiki:ZhTracIni#timeline Trac配置].
+
+== RSS支持 ==
+
+時間線支持使用RSS2.0進行訂閱. 要訂閱項目的事件, 單擊網頁下方的橙色'''XML'''標誌. 關於更多Trac中的RSS支持請見[ZhTracRss Trac的RSS].
+
+----
+原文版本: TracTimeline[[BR]]
+相關信息: [ZhTracGuide Trac導覽], [ZhTracWiki Trac內置Wiki], [ZhWikiFormatting Wiki格式], [ZhTracRss Trac的RSS], [ZhTracNotification Trac提醒][[BR]]
+See also: TracGuide, TracWiki, WikiFormatting, TracRss, TracNotification

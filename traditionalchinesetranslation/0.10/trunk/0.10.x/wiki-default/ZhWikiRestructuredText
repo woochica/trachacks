@@ -1,0 +1,177 @@
+
+
+= Trac中新結構化文本支持 =
+
+Trac支持在[ZhWikiFormatting Wiki格式]文本中使用''新結構化文本''(RST)作為Wiki標記的替代使用.
+
+摘自新結構化文本網頁:
+ "''新結構化文本是一種容易閱讀, WYTIWYG~'''所想即所得'''純文本標記語法和解析系統. 它用於內嵌程序文檔(例如Python的docstring),  快速創建簡單網頁, 以及獨立文檔."新結構化文本是為擴展特定應用領域而設計的."''
+
+=== 要求 ===
+
+注意, 要激活Trac中的RST支持, 必須安裝python docutils安裝包. 如果你的操作系統尚沒有此安裝包, 你可以從[http://docutils.sourceforge.net/rst.html RST網站]下載.
+
+=== 更多關於RST信息 ===
+
+ * 新結構化文本網站 -- http://docutils.sourceforge.net/rst.html
+ * RST快速參考手冊 -- http://docutils.sourceforge.net/docs/rst/quickref.html
+
+----
+
+== 在Trac中使用RST ==
+
+要指定RST來解析某一段文本, 使用'' rst'' 處理器標記.
+
+=== 新結構化文本中的Trac鏈接 ===
+
+ * Trac提供一個自定義的RST參考指令'trac'以允許RST文本內使用[ZhTracLinks Trac鏈接].
+
+ 例子:
+ {{{
+ {{{
+ #!rst
+ This is a reference to |a ticket|
+
+ .. |a ticket| trac:: #42
+ }}}
+ }}}
+
+ 關於所有"trac''指令的完整的例子, 請看[ZhWikiRestructuredTextLinks 新結構化文本中的Trac鏈接].
+
+ * 可以用更簡單的方法在RST中創建[ZhTracLinks Trac鏈接]:通過使用自定義'':trac:''鏈接命名方案.
+
+ 例子:
+ {{{
+ {{{
+ #!rst
+ This is a reference to ticket `#12`:trac:
+
+ To learn how to use Trac,  see `TracGuide`:trac:
+ }}}
+ }}}
+
+=== 新結構化文本中的語法高亮顯示 ===
+
+在ReST中也有一個關於如何實現[TracSyntaxColoring Trac語法高亮顯示]的指令, 該指令叫做code-block.
+
+例子:
+
+{{{
+{{{
+#!rst
+
+.. code-block:: python
+
+ class Test:
+
+    def TestFunction(self):
+        pass
+
+}}}
+}}}
+
+會生成如下結果.
+
+{{{
+#!rst
+
+.. code-block:: python
+
+ class Test:
+
+    def TestFunction(self):
+        pass
+
+}}}
+
+=== 新結構化文本中的Wiki宏 ===
+
+要在ReST中執行[WikiMacros Wiki宏], 你可以使用與語法高亮顯示相同的指令, 即code-block. 要使其起作用, 你必須使用應用#801的trac版本.
+
+=== Wiki宏實例 ===
+
+{{{
+{{{
+#!rst
+
+.. code-block:: HelloWorld
+ 
+   Something I wanted to say
+
+
+}}}
+}}}
+
+會生成如下結果.
+
+[[HelloWorld(Something I wanted to say)]]
+
+
+=== 更多的ReST例子 ===
+
+下面的例子大部分應該是無需說明的:
+
+{{{
+#!html
+<pre class="wiki">{{{
+#!rst
+表頭
+=============
+新結構化文檔 是種 **美妙的體驗**. 官網_.
+
+表格:
+
+=====  =====  ========
+   輸入        輸出
+------------  --------
+ 甲     乙     甲 或 乙
+=====  =====  ========
+徦      徦      徦
+真      徦      真
+徦      真      真
+真      真      真
+=====  =====  ========
+
+新結構化文本Trac鏈接
+--------------------
+
+參考傳票 `#42`:trac:.
+
+.. _官網: http://docutils.sourceforge.net/rst.html}}}</pre>
+}}}
+
+
+會生成如下結果.
+
+{{{
+#!rst
+表頭
+=============
+新結構化文檔 是種 **美妙的體驗**. 官網_.
+
+表格:
+
+=====  =====  ========
+   輸入        輸出
+------------  --------
+ 甲     乙     甲 或 乙
+=====  =====  ========
+徦      徦      徦
+真      徦      真
+徦      真      真
+真      真      真
+=====  =====  ========
+
+新結構化文本Trac鏈接
+--------------------
+
+參考傳票 `#42`:trac:.
+
+.. _官網: http://docutils.sourceforge.net/rst.html
+}}}
+
+
+----
+原文版本: WikiRestructuredText[[BR]]
+相關信息: [ZhWikiRestructuredTextLinks 新結構化文本中的Trac鏈接], [ZhWikiProcessors Wiki解析器], [ZhWikiFormatting Wiki格式][[BR]]
+See also: WikiRestructuredTextLinks, WikiProcessors, WikiFormatting

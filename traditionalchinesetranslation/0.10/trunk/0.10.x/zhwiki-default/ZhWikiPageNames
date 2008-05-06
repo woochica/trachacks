@@ -1,0 +1,34 @@
+
+= Wiki頁面名 =
+
+Wiki頁面名主要使用[ZhCamelCase 駝峰式]規則. 在Wiki文本中, 所有[ZhCamelCase 駝峰式]的詞都自動變成一個用此名字的超鏈接.
+
+[ZhCamelCase 駝峰式]的頁面名稱必須遵循以下規則:
+
+ 1. 名字必須'''僅字母符號'''. 不允許有小數點, 空格, 標點符號或下劃線.
+ 2. 名字必須至少有兩個大寫字母.
+ 3. 第一個字符必須是大寫的.
+ 4. 每個大寫字母后面必須有一個及以上的小寫字母.
+ 5. 在頁面名中允許使用斜線(/)(可表示層次關係).
+
+如果你想創建一個不遵循駝峰式規則的Wiki頁面, 使用以下語法:
+{{{
+ * [wiki:Wiki_page], [wiki:ISO9000]
+ * [wiki:"Space Matters"] 有空格的頁面名
+ * 或者是簡單的方式: ["WikiPageName"] (!MoinMoin的內部自由鏈接方式)
+}}}
+
+它會被渲染為:
+
+ * [wiki:Wiki_page], [wiki:ISO9000]
+ * [wiki:"Space Matters"] 有空格的頁面名
+ * 或者是簡單的方式: ["WikiPageName"] (!MoinMoin的內部自由鏈接樣式)
+
+請參見[wiki:ZhTracLinks#用引號包圍Trac鏈接中的空格 用引號包圍Trac鏈接中的空格]
+
+最後, 如上面的例子, 為了鏈接到該頁中一個特定的章節, 你可以在wiki頁面名添加一個錨點. 把鼠標放在章節的標題上, 很容易看到這個錨點, 然後單擊其尾部的[[html(&para;)]]標誌. 這個錨點通常是自動生成的, 也很容易明確指定, 請參見[ZhWikiFormatting#using-explicit-id-in-heading Wiki格式]
+----
+原文版本: WikiPageNames[[BR]]
+相關信息: [ZhWikiNewPage 新建Wiki頁面], [ZhWikiFormatting Wiki格式], [ZhTracWiki Trac內置Wiki], [ZhTracLinks 鏈接],[ZhCamelCase 駝峰式][[BR]]
+See also: WikiNewPage, WikiFormatting, TracWiki, TracLinks , CamelCase
+

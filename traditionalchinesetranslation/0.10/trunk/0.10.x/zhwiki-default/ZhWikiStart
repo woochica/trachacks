@@ -1,0 +1,31 @@
+= KSPEG =
+ * '''[KspegIndx 過程改進中心]''' ~ Trac 項目環境入口
+
+= 歡迎使用Trac 0.10.4zh =
+
+Trac是一個'''最輕量級別'''的'''基於Web'''的軟件項目管理環境.它的目的是簡化追蹤/處理軟件開發事務,進而改進整體軟件過程.
+
+Trac是圍繞'''"幫助開發者寫出偉大的軟件"'''這一最終目標進行設計的,'''盡量不影響'''一個團隊已經擁有的良好項目過程和文化.
+
+像所有的Wiki網頁一樣,本頁是可編輯的,這就是說你只需通過瀏覽器就能更改本頁的內容.只需點擊底部的''編輯頁面''鏈接.[ZhWikiFormatting 維基格式]中你可以查閱現有Wiki格式的詳細描述.
+
+使用"[wiki:ZhTracAdmin trac-admin] ''path/to/your/env/dir'' initenv" 命令,可以立即創建一個全新的Trac環境,默認已包含了一批Wiki文章和一些樣例數據.這個新創建的環境還包含了豐富的[wiki:ZhTracGuide 幫助文檔],幫助你開始管理你的項目.
+
+你可以使用[wiki:ZhTracAdmin trac-admin]來配置[http://trac.edgewall.org/ Trac]從而更好地適應你的項目,特別是關於''組件'',''版本''和''里程碑''方面.
+
+總之'''[ZhTracGuide 幫助文檔]'''是個開始學習的好地方.
+
+享受Trac 的輕快吧! [[BR]]
+''Trac 團隊''
+ * [ZhAbout Trac漢化團隊]
+ 
+== 起點 ==
+
+ * [ZhTracGuide Trac導覽]
+ * [http://trac.edgewall.org/ Trac項目官網]
+ * [http://trac.edgewall.org/wiki/TracFaq Trac常見問答]
+ * [ZhTracSupport Trac技術支持]
+
+本地Wiki網頁的完整目錄,請參見[ZhTitleIndex 標題索引].
+
+原文版本: WikiStart

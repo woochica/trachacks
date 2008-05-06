@@ -1,0 +1,176 @@
+
+
+= Trac和mod_python =
+[[ZhTracGuideToc]]
+
+Trac支持[http://www.modpython.org/ mod_python], 它顯著加快了Trac的響應時間, 特別是和[ZhTracCgi CGI]相比, 並允許使用許多[wiki:ZhTracStandalone tracd]/mod_proxy無法使用的Apache特徵.
+
+== 簡單的配置 ==
+
+如果你只安裝了mod_python, 你可能還要在Apache配置中添加一行來載入模塊:
+{{{
+LoadModule python_module modules/mod_python.so
+}}}
+
+ ''注意:模塊的準確路逕取決於HTTPD安裝佈局.''
+
+通過添加以下內容到你的httpd.conf, 可以測試你的mod_python安裝. 出於安全, 進行測試後, 你應該將其刪除掉.
+{{{
+<Location /mpinfo>
+   SetHandler mod_python
+   PythonHandler mod_python.testhandler
+</Location>
+}}}
+
+mod_python上的Trac的一個簡單設置如下:
+
+{{{
+<Location /projects/myproject>
+   SetHandler mod_python
+   PythonHandler trac.web.modpython_frontend 
+   PythonOption TracEnv /var/trac/myproject
+   PythonOption TracUriRoot /projects/myproject
+</Location>
+}}}
+
+'''`TracUriRoot`'''選項可有可無. 試試不帶該選項進行配置, 如果Trac構造出的URL看起來是錯的或如果Trac似乎不能正確地識別URL, 就添加'''`TracUriRoot`'''選項. 你將注意到, `Location`和'''`TracUriRoot`'''的路徑是相同的.
+
+=== 配置驗證 ===
+
+配置驗證與在[wiki:ZhTracCgi#AddingAuthentication CGI]中一樣:
+{{{
+<Location "/projects/myproject/login">
+  AuthType Basic
+  AuthName "myproject"
+  AuthUserFile /var/trac/myproject/.htpasswd
+  Require valid-user
+</Location>
+}}}
+
+=== 設置!PythonPath ===
+
+如果Trac安裝包沒有安裝在你的Python路徑中, 你需要使用`PythonPath`指令, 告訴Apache在哪裡找到Trac mod_python處理程序:
+{{{
+<Location /projects/myproject>
+  ...
+  PythonPath "sys.path + ['/path/to/trac']"
+  ...
+</Location>
+}}}
+
+注意一下`PythonPath`指令, ''不是''`SetEnv PYTHONPATH`, 因為後者不起作用.
+
+== 設置多個項目 ==
+
+Trac mod_python處理程序有一個類似SVN的`SvnParentPath`配置選項, 叫做`TracEnvParentDir`:
+{{{
+<Location /projects>
+  SetHandler mod_python
+  PythonHandler trac.web.modpython_frontend 
+  PythonOption TracEnvParentDir /var/trac
+  PythonOption TracUriRoot /projects
+</Location>
+}}}
+
+當你請求`/projects`URL時, 你會得到在`TracEnvParentDir`中設置的目錄下所有Trac環境子目錄的列表. 選擇列表中的任意項目都會把你帶到相應的Trac環境.
+
+如果你不想將子目錄列表作為你的項目主頁, 你可以使用
+{{{
+<LocationMatch "/.+/">
+}}}
+
+它會指導Apache對所有非根目錄的位置使用mod_python, 而同時又允許你在文檔根目錄中放入一個自定義主頁.
+
+你還可以通過使用`<LocationMatch>`指令, 對所有的項目使用同樣的驗證域:
+
+{{{
+<LocationMatch "/projects/[^/]+/login">
+  AuthType Basic
+  AuthName "Trac"
+  AuthUserFile /var/trac/.htpasswd
+  Require valid-user
+</LocationMatch>
+}}}
+
+== 虛擬機配置 ==
+
+下面的配置例子將trac設置為一個虛擬服務器(即:當你在類似!http://trac.mycompany.com的URL上訪問它時):
+
+{{{
+<VirtualHost * >
+    DocumentRoot /var/trac/myproject
+    ServerName trac.mycompany.com
+    <Location />
+        SetHandler mod_python
+        PythonHandler trac.web.modpython_frontend
+        PythonOption TracEnv /var/trac/myproject
+        PythonOption TracUriRoot /
+    </Location>
+    <Location /login>
+        AuthType Basic
+        AuthName "MyCompany Trac Server"
+        AuthUserFile /var/trac/myproject/.htpasswd
+        Require valid-user
+    </Location>
+</VirtualHost>
+}}}
+
+對於支持多個項目的虛擬機, 將"`TracEnv`" /var/trac/myproject替換為"`TracEnvParentDir`" /var/trac/
+
+== 疑難解答 ==
+
+通常, 如果你收到服務器的錯誤網頁, 你可以查看Apache錯誤日誌, 或者啟用`PythonDebug`選項:
+{{{
+<Location /projects/myproject>
+  ...
+  PythonDebug on
+</Location>
+}}}
+
+=== 表格提交問題 ===
+
+如果你在Trac中提交表單時遇到了問題(通常在提交後, 你被重定向到起始頁), 檢查{{{DocumentRoot}}}中是否包含一個與映射到mod_python處理器相同路徑的目錄或文件. 由於某種原因, mod_python映射到一個位置同時又匹配一個靜態資源時, 它會很困惑.
+
+=== 虛擬機配置的問題 ===
+
+如果使用<Location />指令, 設置`DocumentRoot`會造成一個''403 (Forbidden)''錯誤. 刪除`DocumentRoot`指令, 或確認它指向的訪問目錄是允許的(在對應的`<Directory>`塊中).
+
+與`SetHandler`一起使用<Location />, 使得所有文件都要由mod_python來處理, 從而造成不能下載任何CSS或圖片/圖標. 我使用<Location /trac> `SetHandler None` </Location>來繞開這個問題, 儘管我不知道這是否是最好的解決辦法.
+
+=== 使用 .htaccess ===
+
+儘管看起來可以用.htaccess文件來rewrite上述配置為文檔根目錄, 但卻不起作用. Apache會向每個Trac URL中添加一個"/", 這樣會干擾其正常的運行.
+
+用mod_rewrite可能會讓它起作用, 但我沒有做到. 總之, 比起其價值來太麻煩了, 還是用前面提供的指導吧.:)
+
+=== Win32 問題 ===
+如果你在Windows上運行trac和mod_python, 上傳附件將不起作用. 這個問題在3.1.4或之後的mod_python版本中得到了解決, 因此請升級mod_python來修復它.
+
+=== OS X 問題 ===
+
+在OS X上使用mod_python, 你無法用`apachectl restart`重啟Apache. 這個問題在mod_python3.2中已經修復了, 但還有一個更早版本[http://www.dscpl.com.au/projects/vampire/patches.html here]的可用補丁包.
+
+=== SELinux 問題 ===
+
+如果Trac報告類似''無法在db.lock獲得共享鎖'', 存儲庫的安全環境需要進行設置:
+
+{{{
+chcon -R -h -t httpd_sys_content_t PATH_TO_REPOSITORY
+}}}
+
+請參考[[http://subversion.tigris.org/faq.html#reposperms]]
+
+=== FreeBSD issues ===
+
+留意安裝的mod_pyyhon和sqlite安裝包的版本.Ports有新的, 也有舊的, 但pysqlite和mod_python的早期版本無法集成, 因為前者要求在python中的線程支持, 而後者則要求無線程安裝.
+
+=== SVN 問題 ===
+
+如果你只在mod_python下遇到以下Trac錯誤''不支持的版本控制系統"svn"'', 但是在命令行甚至是在[ZhTracStandalone Trac獨立服務器]下運行得很好, 有可能是你忘記了用[TracModPython#ConfiguringPythonPath PythonPath]指令添加Python綁定的路徑了.(更好的辦法是在Python的site-packages目錄中, 增加一個到綁定的鏈接, 或者在該目錄中創建一個.pth文件)
+
+如果不是, 可能是你在使用的SVN庫和apche二進制不兼容(通常原因是`apr`庫不兼容). 如果是這樣, 你在Apache中也不能使用svn模塊(`mod_dav_svn`).
+
+----
+原文版本: TracModPython[[BR]]
+相關信息: [ZhTracGuide Trac導覽], [ZhTracInstall Trac安裝], [ZhTracCgi TracCgi], [ZhTracFastCgi TracFastCgi][[BR]]
+See also: TracGuide, TracInstall, TracCgi, TracFastCgi

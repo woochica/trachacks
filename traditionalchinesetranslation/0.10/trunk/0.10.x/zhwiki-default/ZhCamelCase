@@ -1,0 +1,25 @@
+= 駝峰式 =
+使用多個首字母大寫的單詞組成新單詞.
+
+在Wiki中, 駝峰式約定用於創建超鏈接, 並且要求大寫字母后面必須是小寫字母; 因此, "AlabamA"和"ABc"將不是鏈接.
+
+== 定制Wiki行為 ==
+
+有些人卻不喜歡駝峰式.  雖然Trac忠實於原版Wiki樣式, 它還是提供了一些適應用戶要求的方法:
+ * 有一個選項(在`[wiki]`的`ignore_missing_pages`中), 可以忽略所有沒有對應頁面的駝峰式的鏈接, 而不是將其顯示成一個帶問號("?")的灰色鏈接.[[BR]]
+   這對於將駝峰式用於代碼名稱(比如: 類名), 因而沒有相應頁面的情況非常有用.
+ * 有一個選項(在`[wiki]`的`split_page_names`中), 可以在渲染鏈接時向駝峰式鏈接的單詞中自動插入空格.
+ * 創建顯式Wiki鏈接也相當容易, 詳情請參見[ZhWikiPageNames Wiki頁面名字].
+ * 另外, Wiki格式在某些地方可以被完全禁用(比如, 在渲染提交日誌消息時).
+
+更多選項, 請參見[ZhTracIni Trac配置].
+
+== 更多駝峰式的相關信息 ==
+
+ * http://c2.com/cgi/wiki?WikiCase
+ * http://en.wikipedia.org/wiki/CamelCase
+
+----
+原文版本: CamelCase[[BR]]
+相關信息: [ZhWikiPageNames Wiki頁面名字],  [ZhWikiNewPage 創建Wiki頁面], [ZhWikiFormatting Wiki格式], [ZhTracWiki Trac內置Wiki][[BR]]
+See also: WikiPageNames, WikiNewPage, WikiFormatting, TracWiki

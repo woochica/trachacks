@@ -1,0 +1,63 @@
+
+
+= 鏈接前綴表 =
+
+== 這是定義外部Wiki前綴的地方 ==
+
+本頁效仿了MeatBall:InterMapTxt頁. 另外, 可以在映射後, 添加一個註釋(可選).
+
+Trac以一種特殊的方式來調用該頁, 用於以一種靈活的和動態的方式支持[ZhInterWiki 外部Wiki]鏈接.
+
+該頁中第一個行分隔符後的代碼塊, 將被解釋為[ZhInterWiki 外部Wiki]的規格說明表:
+{{{
+prefix <space> URL [<space> # comment]
+}}}
+
+通過使用URL內的`$1`, `$2`等, 可以創建支持多參數的[ZhInterWiki 外部Wiki]鏈接, 例如, !Trac:ticket:40. 此URL本身可以添加註釋, 該註釋會用來修飾那些使用了該前綴的鏈接.
+
+可以實時向列表添加, 創建新的[ZhInterWiki 外部Wiki]鏈接.
+
+注意, ''刪除前綴''也是立即生效的. 因此如果要禁止前綴, 最好使用註釋的方法.
+
+還要注意一點, [ZhInterWiki 外部Wiki]的前綴是區分大小寫的.
+
+== 活動前綴列表 ==
+[[InterWiki]]
+
+
+== 前綴定義 ==
+{{{
+PEP     http://www.python.org/peps/pep-$1.html                                       # Python Enhancement Proposal 
+Trac-ML  http://thread.gmane.org/gmane.comp.version-control.subversion.trac.general/ # Message $1 in Trac Mailing List
+trac-dev http://thread.gmane.org/gmane.comp.version-control.subversion.trac.devel/   # Message $1 in Trac Development Mailing List
+
+Mercurial http://www.selenic.com/mercurial/wiki/index.cgi/ # the wiki for the Mercurial distributed SCM
+RFC       http://rfc.net/rfc$1.html # IETF's RFC $1
+
+#
+# A arbitrary pick of InterWiki prefixes...
+#
+Acronym          http://www.acronymfinder.com/af-query.asp?String=exact&Acronym=
+C2find           http://c2.com/cgi/wiki?FindPage&value=
+Cache            http://www.google.com/search?q=cache:
+CPAN             http://search.cpan.org/perldoc?
+DebianBug        http://bugs.debian.org/
+DebianPackage    http://packages.debian.org/
+Dictionary       http://www.dict.org/bin/Dict?Database=*&Form=Dict1&Strategy=*&Query=
+Google           http://www.google.com/search?q=
+GoogleGroups     http://groups.google.com/group/$1/msg/$2        # Message $2 in $1 Google Group
+JargonFile       http://downlode.org/perl/jargon-redirect.cgi?term=
+MeatBall         http://www.usemod.com/cgi-bin/mb.pl?
+MetaWiki         http://sunir.org/apps/meta.pl?
+MetaWikiPedia    http://meta.wikipedia.org/wiki/
+MoinMoin         http://moinmoin.wikiwikiweb.de/
+WhoIs            http://www.whois.sc/
+Why              http://clublet.com/c/c/why?
+c2Wiki             http://c2.com/cgi/wiki?
+WikiPedia        http://en.wikipedia.org/wiki/
+}}}
+
+
+----
+原文版本: InterMapTxt[[BR]]
+

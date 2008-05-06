@@ -1,0 +1,119 @@
+
+
+= 將Trac作為CGI安裝 =
+把Trac作為CGI腳本安裝, 你需要使`trac.cgi`成為Web服務器可以執行的一個CGI.
+
+  ''請注意, 通過CGI來使用Trac, 與其他方法(比如[ZhTracModPython mod_python] 或 [ZhTracFastCgi FastCGI].)相比, 其速度要慢得多.''
+
+如果你在使用[http://httpd.apache.org/ Apache HTTPD], 有很多方法可以用:
+
+ 1. 用`ScriptAlias`將一個URL映射到`trac.cgi`腳本.
+ 2. 將`trac.cgi`文件複製到Web服務器的CGI文件的目錄(通常是''cgi-bin'')中. 你還可以創建一個符號鏈接, 但要確保啟用''cgi-bin''目錄的`FollowSymLinks`選項.
+
+推薦第一個選項, 因為它還可以讓你將CGI映射到一個友好的URL中.
+
+現在, 編輯Apache配置文件並添加以下這段代碼(修改文件名和路徑以匹配你的安裝):
+{{{
+ScriptAlias /trac /usr/share/trac/cgi-bin/trac.cgi
+}}}
+
+ ''注意, 該指令要求安裝和啟用`mod_alias`模塊.''
+
+如果你正在某個獨立項目中使用Trac, 你需要用`TRAC_ENV`環境變量來設置其位置:
+{{{
+<Location "/trac">
+  SetEnv TRAC_ENV "/path/to/projectenv"
+</Location>
+}}}
+
+或者如果使用多個項目, 通過`TRAC_ENV_PARENT_DIR`變量來指定他們的共同父目錄:
+{{{
+<Location "/trac">
+  SetEnv TRAC_ENV_PARENT_DIR "/path/to/project/parent/dir"
+</Location>
+}}}
+
+ ''注意, `SetEnv`指令要求安裝和啟用`mod_env`模塊.''
+
+這將使Trac在`http://yourhost.example.org/trac`上可用.
+
+如果你在使用[http://httpd.apache.org/docs/suexec.html Apache suEXEC], 請參見[http://trac.edgewall.org/wiki/ApacheSuexec].
+
+某些系統中, 你''或許''需要在`trac.cgi`中編輯shebang行, 從而指向你真正的Python安裝路徑. 在Windows系統中, 你可能需要配置Windows, 使其知道如何運行一個.cgi文件.(資源管理器 -> 工具 -> 文件夾選項 -> 文件類型 -> CGI)
+
+== 映射靜態資源 ==
+
+Trac天生就知道如何服務靜態資源, 例如樣式表或圖片. 但是對於作為CGI的安裝來說, 則非常不希望如此, 因為它會使得為處理此類文件而調用CGI腳本, 本來直接用Web服務器處理那些文件更高效.
+
+通過像[http://httpd.apache.org/ Apache HTTPD]的Web服務器, 你可以給那些資源創建''別名'', 這樣給那些資源一個虛擬的URL, 不會與服務器文件系統的版本有任何雷同之處. 對CGI腳本定義''!ScriptAlias''時, 我們已經使用過上述的特性. 我們現在會用它將靜態資源的請求映射到文件系統上的目錄上, 這樣就避免了使用CGI腳本來處理這類請求.
+
+再次編輯Apache配置文件, 並在''!ScriptAlias''之前添加以下片斷(修改文件名和路徑以匹配你的安裝):
+{{{
+Alias /trac/chrome/common /usr/share/trac/htdocs
+<Directory "/usr/share/trac/htdocs">
+  Order allow, deny
+  Allow from all
+</Directory>
+}}}
+
+注意, 無論你將`trac.cgi`腳本映射到哪個URL路徑, `/chrome/common`路徑是你必須追加的位置, 來攔截訪問靜態資源的請求.
+
+例如, 在你的服務器上, 如果Trac映射到`/cgi-bin/trac.cgi`, ''別名''的URL應該是`/cgi-bin/trac.cgi/chrome/common`.
+
+或者, 你可以在[wiki:TracIni trac.ini]中設置配置`htdocs_location`選項:
+{{{
+[trac]
+htdocs_location = /trac-htdocs
+}}}
+
+當把靜態資源嵌入到HTML頁面中時, Trac會使用該URL. 當然, 你仍然需要使Trac的`htdocs`目錄對Web服務器可用. 例如, 將目錄複製或鏈接到Web服務器的文檔根目錄中.
+{{{
+$ ln -s /usr/share/trac/htdocs /var/www/your_site.com/htdocs/trac-htdocs
+}}}
+
+== 添加驗證 ==
+
+啟用Apache驗證的最簡單的方法是創建一個口令文件. 用`htpasswd`程序來創建該口令文件:
+{{{
+$ htpasswd -c /somewhere/trac.htpasswd admin
+New password: <type password>
+Re-type new password: <type password again>
+Adding password for user admin
+}}}
+
+創建了第一個用戶後, 不要再使用"-c"選項:
+{{{
+$ htpasswd /somewhere/trac.htpasswd john
+New password: <type password>
+Re-type new password: <type password again>
+Adding password for user john
+}}}
+
+創建用戶後, 你可以使用[ZhTracPermissions Trac權限]設置他們的權限.
+
+現在, 在Apache配置中啟用對此口令文件的驗證:
+{{{
+<Location "/trac/login">
+  AuthType Basic
+  AuthName "Trac"
+  AuthUserFile /somewhere/trac.htpasswd
+  Require valid-user
+</Location>
+}}}
+
+如果同時有多個項目, 你可以對所有項目都使用同一個口令文件:
+{{{
+<LocationMatch "/trac/[^/]+/login">
+  AuthType Basic
+  AuthName "Trac"
+  AuthUserFile /somewhere/trac.htpasswd
+  Require valid-user
+</LocationMatch>
+}}}
+
+為了更加安全, 建議你啟用SSL, 或者至少要使用''Digest''驗證而不是''Basic''驗證. 請閱讀[http://httpd.apache.org/docs/2.0/ Apache HTTPD documentation]詳細瞭解情況.
+
+----
+原文版本: TracCgi[[BR]]
+相關信息: [ZhTracGuide Trac導覽],  [ZhTracInstall Trac安裝],  [ZhTracFastCgi FastCgi],  [ZhTracModPython ModPython][[BR]]
+See also: TracGuide,  TracInstall,  TracFastCgi,  TracModPython

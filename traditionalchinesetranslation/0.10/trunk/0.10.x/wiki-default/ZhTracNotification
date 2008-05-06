@@ -1,0 +1,125 @@
+
+
+= 傳票變化的郵件提醒 =
+[[ZhTracGuideToc]]
+
+Trac支持通過郵件來提醒傳票的變化.
+
+郵件提醒對於讓用戶時刻瞭解傳票很有幫助, 並且提拱了一個發送所有的傳票變化到一個特定郵件列表的便捷方法. 例如, 這是如何創建[http://lists.edgewall.com/archive/trac-tickets/ Trac傳票]郵件列表的描述.
+
+默認情況下提醒是禁用的, 可以在[wiki:ZhTracIni trac.ini]中啟用並進行配置.
+
+== 接收提醒郵件 ==
+
+當報告一個新的傳票或添加一個評論時, 在''報告者'', ''指派到/屬主''或''抄送''欄中輸入一個有效郵件地址. 當傳票有任何改動時, Trac會自動給你發一封郵件(取決於如何配置提醒).
+
+它還可以幫助你時刻關注你感興趣的事情.
+
+== 配置SMTP提醒 ==
+
+=== 配置選項 ===
+
+下列時trac.ini中的''[notification]''段的可用選項:
+ * '''smtp_enabled''': 啟用郵件提醒.
+ * '''smtp_server''': 用於提醒消息的SMTP服務器.
+ * '''smtp_user''': (自0.9後)驗證SMTP帳戶的用戶名.
+ * '''smtp_password''': (自0.9後)驗證SMTP帳戶的密碼.
+ * '''smtp_from''': 在提醒郵件中"發件人"的郵件地址.
+ * '''smtp_replyto''': 在提醒郵件中"回復至"的郵件地址.
+ * '''smtp_default_domain''': (自0.10後)將指定的域附加到沒有包含域的地址中. 完整的地址不會更改. 默認域要附加到所有沒有在用戶設置中找到郵件地址的用戶名中.
+ * '''smtp_always_cc''': 始終發送提醒的郵件地址列表. 通常用於把傳票的變化發送到某個特定的郵件列表中.
+ * '''smtp_always_bcc''': (自0.10後)始終發送提醒的郵件地址列表, 但提醒郵件的其他收件人看不見地址.
+ * '''always_notify_reporter''': 始終將提醒發送到報告人域中的所有地址.
+ * '''always_notify_owner''': (自0.9後)始終將提醒發送給屬主域中的地址.
+ * '''always_notify_updater''': (自0.10後)始終向傳票的更新者發送提醒.
+ * '''use_public_cc''': (自0.10後)所有的收件人都能看到收件人(所有者, 報告人)和抄送列表中的地址(默認是''密件抄送:'' - 隱藏的副本).
+ * '''use_short_addr''': (自0.10後)啟用發送提醒到不包含域的地址, 例如不以@<domain.com>作為結尾的域. 該選項對內網很有用, SMTP服務器可以處理本地的地址並把用戶名或註冊映射到一個本地的郵箱. 請見`smtp_default_domain`. 不要將此選項用於一個公共的SMTP服務器.
+ * '''mime_encoding''': (自0.10後)郵件提醒一直以7位模式發送的. 該選項允許選擇MIME編碼方案.支持的值有:  
+   * `base64`: 默認值, 可用於任何種類的內容. 可能對和一些敏感的反垃圾郵件或反病毒引擎造成麻煩.
+   * `qp` or `quoted-printable`: 最適合歐洲語言(比base64更緊湊), 不推薦用於非ASCII文本(沒有base64緊湊).
+   * 'none': 不編碼.只能用於英語(ASCII)純文本. 使用非ASCII字符的郵件不能發送.
+      
+必須設置'''smtp_from'''或'''smtp_replyto'''(或兩者), 否則Trac拒絕發送提醒郵件.
+
+=== 配置樣例 ===
+
+{{{
+[notification]
+smtp_enabled = true
+smtp_server = mail.example.com
+smtp_from = notifier@example.com
+smtp_replyto = myproj@projects.example.com
+smtp_always_cc = ticketmaster@example.com, theboss+myproj@example.com
+}}}
+
+== 郵件樣例 ==
+{{{
+#42: testing
+---------------------------+------------------------------------------------
+       Id:  42             |      Status:  assigned                
+Component:  report system  |    Modified:  Fri Apr  9 00:04:31 2004
+ Severity:  major          |   Milestone:  0.9                     
+ Priority:  lowest         |     Version:  0.6                     
+    Owner:  anonymous      |    Reporter:  jonas@example.com               
+---------------------------+------------------------------------------------
+Changes:
+  * component:  changset view => search system
+  * priority:  low => highest
+  * owner:  jonas => anonymous
+  * cc:  daniel@example.com =>
+         daniel@example.com, jonas@example.com
+  * status:  new => assigned
+
+Comment:
+I'm interested too!
+
+--
+Ticket URL: <http://example.com/trac/ticket/42>
+My Project <http://myproj.example.com/>
+}}}
+
+== 疑難解答 ==
+
+如果你不能發送提醒, 首先要確定是否啟用了日誌, 然後查看日誌是否有任何錯誤信息被記錄. 關於日誌特徵的幫助, 請參考[ZhTracLogging Trac日誌].
+
+由於郵件提醒的錯誤不能通過Web界面報告, 所以提交修改或者創建傳票的用戶無法知道發送郵件提醒失敗. Trac管理者需要查看日誌, 找到錯誤的的蹤跡.
+
+=== ''拒絕訪問''的錯誤 ===
+
+典型的錯誤信息:
+{{{
+  ...
+  File ".../smtplib.py", line 303, in connect
+    raise socket.error, msg
+  error: (13, 'Permission denied')
+}}}
+
+該錯誤通常來自服務器上的安全設置, 許多Linux發行版不允許Web服務器將郵件的信息發送到本地的SMTP服務器.
+
+當用戶手動嘗試連接SMTP服務器取得成功的時候, 他們會很困惑:
+{{{
+telnet localhost 25
+}}}
+
+問題是, 一個正常用戶能連接到SMTP服務器上, 但是Web服務器卻不能:
+{{{
+sudo -u www-data telnet localhost 25
+}}}
+
+因此, 需要配置你的服務器, 使Web服務器被授權通過SMTP服務器發送郵件. 實際的設置取決於你的Linux發行版和現行的安全策略. 瀏覽Trac郵件列表文件以獲得幫助.
+
+相關郵件列表論壇:
+ * [http://article.gmane.org/gmane.comp.version-control.subversion.trac.general/7518 SELinux]
+ 
+=== ''可疑垃圾郵件''錯誤 ===
+
+一些SMTP服務器可能會拒絕Trac發送的提醒郵件.
+
+默認的Trac配置使用Base64編碼來發送郵件給收件人. 郵件的整個正文部分都是編碼的, 有時會觸發對敏感的郵件服務器的''假陽性''垃圾郵件監控. 因此, 建議使用`mime_encoding`選項將編碼改為"quoted-printable".
+
+"Quoted-printable"編碼與使用拉丁語字符集的語言配合很好. 對於亞洲字符集, 建議堅持Base64編碼.
+
+----
+原文版本: TracNotification[[BR]]
+相關信息: [ZhTracTickets Trac傳票], [ZhTracIni Trac配置], [ZhTracGuide Trac導覽][[BR]]
+See also: TracTickets, TracIni, TracGuide
