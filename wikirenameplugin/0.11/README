@@ -23,7 +23,7 @@ A script named ``trac-wikirename`` will automatically be installed.
 
 To use it::
 
-    trac-wikirenmate OldName NewName /path/to/trac/env
+    trac-wikirename OldName NewName /path/to/trac/env
 
 Permissions
 ===========
