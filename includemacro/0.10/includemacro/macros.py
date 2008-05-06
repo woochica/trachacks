@@ -1,12 +1,14 @@
 # TracIncludeMacro macros
+import urllib2
+from HTMLParser import HTMLParseError
+
 from trac.core import *
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import system_message
 from trac.wiki.model import WikiPage
 from trac.mimeview.api import Mimeview, get_mimetype
 from trac.perm import IPermissionRequestor
-
-import urllib2
+from trac.util.html import Markup
 
 __all__ = ['IncludeMacro']
 
@@ -83,6 +85,14 @@ class IncludeMacro(WikiMacroBase):
         # If we have a preview format, use it
         if dest_format:
             out = Mimeview(self.env).render(req, dest_format, out)
+        
+        # Escape if needed
+        if not self.config.getbool('wiki', 'render_unsafe_content', False):
+            try:
+                out = Markup(out).sanitize()
+            except HTMLParseError:
+                out = Markup(out).escape()
+        
         return out
             
     # IPermissionRequestor methods
