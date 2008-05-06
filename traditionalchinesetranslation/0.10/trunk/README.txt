@@ -1,5 +1,5 @@
-trac-10.4-zh_TW Traditional Chinese translation 繁體中文
-
+trac-10.4-zh_TW Traditional Chinese translation 
+trac-10.4 繁體中文版
 
 Modified from ZoomQuiet version, this version provides translation for Traditional Chinese.
 
