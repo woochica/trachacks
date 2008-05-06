@@ -1,12 +1,16 @@
 # TracIncludeMacro macros
+import urllib2
+from StringIO import StringIO
+
 from trac.core import *
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import system_message
 from trac.wiki.model import WikiPage
 from trac.mimeview.api import Mimeview, get_mimetype, Context
 from trac.perm import IPermissionRequestor
-
-import urllib2
+from genshi.core import escape
+from genshi.input import HTMLParser, ParseError
+from genshi.filters.html import HTMLSanitizer
 
 __all__ = ['IncludeMacro']
 
@@ -86,6 +90,14 @@ class IncludeMacro(WikiMacroBase):
         # If we have a preview format, use it
         if dest_format:
             out = Mimeview(self.env).render(ctxt, dest_format, out)
+        
+        # Escape if needed
+        if not self.config.getbool('wiki', 'render_unsafe_content', False):
+            try:
+                out = HTMLParser(StringIO(out)).parse() | HTMLSanitizer()
+            except ParseError:
+                out = escape(out)
+        
         return out
             
     # IPermissionRequestor methods
