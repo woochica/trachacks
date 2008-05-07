@@ -19,7 +19,6 @@
 import os
 import pkg_resources
 from configobj import ConfigObj
-#import ConfigParser
 from StringIO import StringIO
 
 from genshi import HTML
@@ -41,7 +40,6 @@ except ImportError:
     IAdminPageProvider = None
 
 
-
 class PageAuthzPolicyEditor(Component):
 
     implements(IAdminPanelProvider, ITemplateProvider)
@@ -61,23 +59,6 @@ class PageAuthzPolicyEditor(Component):
     def get_admin_panels(self, req):
         if 'TRAC_ADMIN' in req.perm:
             yield ('accounts', _('Accounts'), 'pages', _('Page Permissions'))
-
-    def _get_groups(self):
-        group_file_name = self.config.get('account-manager', 'group_file')
-        groups_list = list()
-        if os.path.exists(group_file_name):
-            group_file = file(group_file_name)
-            try:
-                for group_line in group_file:
-                    group = group_line.strip()
-                    # Ignore blank lines and lines starting with #
-                    if group_line and not group_line.startswith('#'):
-                        group_name = group_line.split(':', 1)[0]
-                        groups_list.append('@' + group_name)
-            finally:
-                group_file.close()
-        groups = ', '.join(sorted(groups_list))
-        return groups
 
     def _get_users(self):
         password_file_name = self.config.get('account-manager', 'password_file')
@@ -125,28 +106,34 @@ class PageAuthzPolicyEditor(Component):
         # Handle the return data
         if req.method == 'POST':
              if req.args.get('authz_file_contents'):
-                edited_contents = req.args.get('authz_file_contents')
+                # The data needs to be validated, otherwise duplicate
+                # entries can break things.
+                edited_contents = str(req.args.get('authz_file_contents'))
+                edited_contents_stringio = StringIO(edited_contents)
+                try:
+                    test_authz_policy_dict = ConfigObj(edited_contents_stringio)
+                except:
+                    raise TracError(_('Error in edited file.  Re-edit and check for duplicate entries.'))
                 authz_policy_file = open(authz_policy_file_name, 'w')
-                authz_policy_file.write(edited_contents)
+                test_authz_policy_dict.write(authz_policy_file)
                 authz_policy_file.close()
 
-        authz_policy_file = ConfigObj(authz_policy_file_name)
+        authz_policy_dict = ConfigObj(authz_policy_file_name)
 
         # If there isn't a group file, don't destroy the existing entries
         if (group_details):
-            authz_policy_file['groups'] = group_details
+            authz_policy_dict['groups'] = group_details
 
         # This is purely to fill in the text area with the contents.
         contents = StringIO()
-        authz_policy_file.write(contents)
+        authz_policy_dict.write(contents)
 
 
         #contents = open(authz_policy_file_name).readlines()
         data = {
             'file_name' : authz_policy_file_name,
             'contents': contents.getvalue(),
-            'users' : self._get_users(),
-            'groups' : self._get_groups()
+            'users' : self._get_users()
         }
         return 'page_authz_policy_editor.html', {'pages_authz': data}
 
