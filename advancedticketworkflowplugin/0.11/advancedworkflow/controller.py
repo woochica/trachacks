@@ -154,3 +154,47 @@ class TicketWorkflowOpOwnerField(TicketWorkflowOpBase):
         field = self.config.get('ticket-workflow',
                                 action + '.' + self._op_name).strip()
         return ticket[field]
+
+
+class TicketWorkflowOpOwnerPrevious(TicketWorkflowOpBase):
+    """Sets the owner to the previous owner
+
+    Don't forget to add the `TicketWorkflowOpOwnerPrevious` to the workflow
+    option in [ticket].
+    If there is no workflow option, the line will look like this:
+
+    workflow = ConfigurableTicketWorkflow,TicketWorkflowOpOwnerPrevious
+    """
+
+    _op_name = 'set_owner_to_previous'
+
+    # ITicketActionController methods
+
+    def render_ticket_action_control(self, req, ticket, action):
+        """Returns the action control"""
+        actions = ConfigurableTicketWorkflow(self.env).actions
+        label = actions[action]['name']
+        new_owner = self._new_owner(ticket)
+        if new_owner:
+            hint = 'The owner will change to %s' % new_owner
+        else:
+            hint = 'The owner will be deleted.'
+        control = tag('')
+        return (label, control, hint)
+
+    def get_ticket_changes(self, req, ticket, action):
+        """Returns the change of owner."""
+        return {'owner': self._new_owner(ticket)}
+
+    def _new_owner(self, ticket):
+        """Determines the new owner"""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT oldvalue FROM ticket_change WHERE ticket=%s " \
+                       "AND field='owner' ORDER BY -time", (ticket.id, ))
+        row = cursor.fetchone()
+        if row:
+            owner = row[0]
+        else: # The owner has never changed.
+            owner = ''
+        return owner
