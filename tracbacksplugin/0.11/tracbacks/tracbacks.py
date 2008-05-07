@@ -20,7 +20,7 @@
 """
 TracBacks Plugin
 author: Mel Chua <mchua@openplans.org>
-version: 0.11
+version: 0.1
 
 Detects when a ticket A is referenced in another ticket B and adds
 a comment "TracBack: #B" to ticket A.
