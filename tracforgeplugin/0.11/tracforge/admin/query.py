@@ -20,7 +20,7 @@ class MultiQuery(Query):
     
     def __init__(self, env, report=None, constraints=None, cols=None,
                  order=None, desc=0, group=None, groupdesc=0, verbose=0,
-                 rows=None, page=1, max=Nonee):
+                 rows=None, page=1, max=None):
         super(MultiQuery, self).__init__(env, report, constraints, cols,
                                          order, desc, group, groupdesc, 
                                          verbose, rows, page, max)
