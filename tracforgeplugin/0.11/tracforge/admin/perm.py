@@ -1,14 +1,15 @@
+# Created by Noah Kantrowitz
+# Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+import inspect
+
 from trac.core import *
 from trac.config import Option
 from trac.perm import IPermissionGroupProvider, PermissionSystem, DefaultPermissionStore
-from trac.env import Environment
 
-from model import Project
-from config import EnvironmentOption
+from tracforge.admin.model import Project
+from tracforge.admin.config import EnvironmentOption
 
-import inspect
-
-class TracForgePermissionModule(DefaultPermissionStore):
+class TracForgePermissionStore(DefaultPermissionStore):
     """Enhanced permission module to allow for central management."""
 
     master_env = EnvironmentOption('tracforge', 'master_path',
@@ -48,18 +49,21 @@ class TracForgePermissionModule(DefaultPermissionStore):
 
         The permissions are returned as a list of (subject, action)
         formatted tuples."""
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("SELECT username,action FROM permission")
-        rows = cursor.fetchall()
         req = self._extract_req()
-        if req is not None and not req.path_info.startswith('/admin/general/perm'):
+        if req is None or not req.path_info == '/admin/tracforge/perm':
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("SELECT username,action FROM permission")
+            for username, action in cursor:
+                yield username, action
+        
+        if req is None or not req.path_info == '/admin/general/perm':
             master_db = self.master_env.get_db_cnx()
-            master_cursor = master_db.cursor()
-            master_cursor.execute("SELECT username,action FROM tracforge_permission")
-            rows += master_cursor.fetchall()
-        return [(row[0], row[1]) for row in rows]
-
+            cursor = master_db.cursor()
+            cursor.execute("SELECT username,action FROM tracforge_permission")
+            for username, action in cursor:
+                yield username, action
+    
     def _extract_req(self):
         """Truly evil magic to scan for a variable called req in the stack."""
         for record in inspect.stack():
@@ -67,6 +71,24 @@ class TracForgePermissionModule(DefaultPermissionStore):
             if 'req' in locals:
                 return locals['req']
         return None
+        
+    def grant_permission(self, username, action):
+        """Grants a user the permission to perform the specified action for the central table."""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO tracforge_permission VALUES (%s, %s)",
+                       (username, action))
+        self.log.info('Granted central permission for %s to %s' % (action, username))
+        db.commit()
+        
+    def revoke_permission(self, username, action):
+        """Revokes a users' permission to perform the specified action from the central table."""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM tracforge_permission WHERE username=%s AND action=%s",
+                       (username, action))
+        self.log.info('Revoked central permission for %s to %s' % (action, username))
+        db.commit()
 
 class TracForgeGroupsModule(Component):
     """A component to provide virtual groups based on the membership system."""
