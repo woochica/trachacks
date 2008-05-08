@@ -18,7 +18,7 @@ class TracForgePrototypesAdminModule(Component):
     def get_admin_panels(self, req):
         if 'TRACFORGE_ADMIN' in req.perm:
             yield 'tracforge', 'TracForge', 'prototypes', 'Project Prototypes'
-            yield 'tracforge', 'TracForge', 'configset', 'Configset Management'
+            #yield 'tracforge', 'TracForge', 'configset', 'Configset Management'
             
     def render_admin_panel(self, req, cat, page, path_info):
         data = {}
