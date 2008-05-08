@@ -1,0 +1,76 @@
+<!--!
+	admin_tracforge_membership
+	Created by Noah Kantrowitz on 2008-05-08.
+	Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Project Membership</title>
+  </head>
+  <body>
+    <h2>TracForge Project Membership</h2>
+
+    <form id="addrole" class="addnew" method="post">
+        <fieldset>
+            <legend>Add New Role</legend>
+            <div class="field">
+                <label for="inputproject">Project: </label>
+                <select id="inputproject" name="project">
+                    <option py:for="name, proj in projects" value="$name">$name</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="inputuser">User: </label>
+                <input id="inputuser" type="text" name="user" class="textwidget" />
+            </div>
+            <div class="field">
+                <label for="inputrole">Role: </label>
+                <select id="inputrole" name="role">
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <p class="help">Add a new user role</p>
+            <div class="buttons">
+                <input type="submit" name="add" value="Add" />
+            </div>
+        </fieldset>
+    </form>
+
+    <form method="post">
+      <table class="listing">
+        <thead>
+          <tr>
+            <th class="sel">&nbsp;</th>
+            <th>User</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <py:for each="name, proj in projects">
+          <tr class="header">
+            <th colspan="3">$name</th>
+          </tr>
+          <tr py:for="user, role in proj.members.iteritems()">
+            <td><input type="checkbox" name="sel$name" value="$user" /></td>
+            <td>$user</td>
+            <td>$role</td>
+          </tr>
+        </py:for>
+      </table>
+      <div class="buttons">
+        <input type="submit" name="remove" value="Remove selected items" />
+      </div>
+      <p class="help">
+        Add users to groups within each projects. Any groups in the *
+        project will apply to all.
+      </p>
+    </form>
+    
+  </body>
+</html>

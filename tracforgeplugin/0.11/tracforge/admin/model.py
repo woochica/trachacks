@@ -59,7 +59,7 @@ class Members(object, DictMixin):
     def __delitem__(self, key):
         cursor = self.db.cursor()
         
-        cursor.execute('DELETE FROM tracforge_members WHERE project=%s AND user=%s',(self.name, key))
+        cursor.execute('DELETE FROM tracforge_members WHERE project=%s AND username=%s',(self.name, key))
         
         if self.handle_commit:
             self.db.commit()
