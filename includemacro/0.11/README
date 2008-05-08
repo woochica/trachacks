@@ -30,8 +30,9 @@ Configuration
 If ``[wiki] render_unsafe_content`` is off (the default), any produced
 HTML will be sanitized.
 
-:warn: This is a potential security risk! Please review the implications
-       ``render_unsafe_content`` before using this feature.
+.. caution::
+    This is a potential security risk! Please review the implications
+    ``render_unsafe_content`` before using this feature.
 
 To enable the plugin::
 
@@ -51,5 +52,6 @@ Include a reStructuredText__ file from the repository::
 
 __ http://docutils.sf.net/rst.htm
 
-:tip: If you set the ``svn:mime-type`` property on the file, you can
-      leave off the explicit MIME type.
+.. tip::
+    If you set the ``svn:mime-type`` property on the file, you can  
+    leave off the explicit MIME type.
