@@ -26,7 +26,8 @@ To enable the plugin::
     traccas.* = enabled
     trac.web.auth.LoginModule = disabled
 
-:note: Even if installing locally, you must disable the default LoginModule.
+.. note::
+    Even if installing locally, you must disable the default LoginModule.
 
 Example
 =======
