@@ -73,7 +73,6 @@ class TgAuthStore(Component):
                     '  FROM %s WHERE active = True' % self.table)
         userinfo = [u for u in cur]
         cnx.close()
-        print userinfo
         if populate_session:
             self._populate_user_session(userinfo)
         return [u[0] for u in userinfo]
