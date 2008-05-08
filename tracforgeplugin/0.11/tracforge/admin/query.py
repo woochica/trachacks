@@ -20,10 +20,10 @@ class MultiQuery(Query):
     
     def __init__(self, env, report=None, constraints=None, cols=None,
                  order=None, desc=0, group=None, groupdesc=0, verbose=0,
-                 rows=None, limit=None):
+                 rows=None, page=1, max=Nonee):
         super(MultiQuery, self).__init__(env, report, constraints, cols,
                                          order, desc, group, groupdesc, 
-                                         verbose, rows, limit)
+                                         verbose, rows, page, max)
         self.fields.append({
             'name': 'project',
             'label': 'Project',
