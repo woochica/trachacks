@@ -2,16 +2,13 @@
 workflows.
 """
 
+from subprocess import call
 from genshi.builder import tag
 
 from trac.core import implements, Component
 from trac.ticket import model
 from trac.ticket.api import ITicketActionController
 from trac.ticket.default_workflow import ConfigurableTicketWorkflow
-
-# TODO:
-#    set_owner_to_previous
-#    run_external
 
 
 class TicketWorkflowOpBase(Component):
@@ -198,3 +195,61 @@ class TicketWorkflowOpOwnerPrevious(TicketWorkflowOpBase):
         else: # The owner has never changed.
             owner = ''
         return owner
+
+
+class TicketWorkflowOpRunExternal(Component):
+    """Action to allow running an external command as a side-effect.
+
+    If it is a lengthy task, it should daemonize so the webserver can get back
+    to doing its thing.  If the script exits with a non-zero return code, an
+    error will be logged to the Trac log.
+
+    <someaction>.operations = run_external
+    <someaction>.run_external = echo "blah blah blah" >> /var/log/blah
+    <someaction>.run_external_hint = Clue the user in.
+
+    Don't forget to add the `TicketWorkflowOpRunExternal` to the workflow
+    option in [ticket].
+    If there is no workflow option, the line will look like this:
+
+    workflow = ConfigurableTicketWorkflow,TicketWorkflowOpRunExternal
+    """
+
+    implements(ITicketActionController)
+
+    # ITicketActionController methods
+
+    def get_ticket_actions(self, req, ticket):
+        """Finds the actions that use this operation"""
+        controller = ConfigurableTicketWorkflow(self.env)
+        return controller.get_actions_by_operation_for_req(req, ticket,
+                                                           'run_external')
+
+    def get_all_status(self):
+        """Provide any additional status values"""
+        # We don't have anything special here; the statuses will be recognized
+        # by the default controller.
+        return []
+
+    def render_ticket_action_control(self, req, ticket, action):
+        """Returns the action control"""
+        actions = ConfigurableTicketWorkflow(self.env).actions
+        label = actions[action]['name']
+        hint = self.config.get('ticket-workflow',
+                               action + '.run_external_hint').strip()
+        if hint is None:
+            hint = "Will run external script."
+        return (label, tag(''), hint)
+
+    def get_ticket_changes(self, req, ticket, action):
+        """No changes to the ticket"""
+        return {}
+
+    def apply_action_side_effects(self, req, ticket, action):
+        """Run the external script"""
+        script = self.config.get('ticket-workflow',
+                                action + '.run_external').strip()
+        retval = call(script, shell=True)
+        if retval:
+            self.env.log.error("External script %r exited with %s." % (script,
+                                                                       retval))

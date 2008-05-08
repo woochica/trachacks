@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(  
         name='AdvancedTicketWorkflowPlugin',
-        version='0.2',
+        version='0.3',
         author = 'Eli Carter',
         author_email = 'elicarter@retracile.net',
         license='BSD',
