@@ -2,7 +2,8 @@
 workflows.
 """
 
-from subprocess import call
+import os
+from subprocess import check_call, CalledProcessError
 from genshi.builder import tag
 
 from trac.core import implements, Component
@@ -247,10 +248,11 @@ class TicketWorkflowOpRunExternal(Component):
     If it is a lengthy task, it should daemonize so the webserver can get back
     to doing its thing.  If the script exits with a non-zero return code, an
     error will be logged to the Trac log.
+    The plugin will look for a script named <tracenv>/hooks/<someaction>, and
+    will pass it 2 parameters: the ticket number, and the user.
 
     <someaction>.operations = run_external
-    <someaction>.run_external = echo "blah blah blah" >> /var/log/blah
-    <someaction>.run_external_hint = Clue the user in.
+    <someaction>.run_external = Hint for the user
 
     Don't forget to add the `TicketWorkflowOpRunExternal` to the workflow
     option in [ticket].
@@ -280,7 +282,7 @@ class TicketWorkflowOpRunExternal(Component):
         actions = ConfigurableTicketWorkflow(self.env).actions
         label = actions[action]['name']
         hint = self.config.get('ticket-workflow',
-                               action + '.run_external_hint').strip()
+                               action + '.run_external').strip()
         if hint is None:
             hint = "Will run external script."
         return (label, tag(''), hint)
@@ -291,9 +293,8 @@ class TicketWorkflowOpRunExternal(Component):
 
     def apply_action_side_effects(self, req, ticket, action):
         """Run the external script"""
-        script = self.config.get('ticket-workflow',
-                                action + '.run_external').strip()
-        retval = call(script, shell=True)
-        if retval:
-            self.env.log.error("External script %r exited with %s." % (script,
-                                                                       retval))
+        script = os.path.join(self.env.path, 'hooks', action)
+        try:
+            check_call([script, str(ticket.id), req.authname])
+        except (CalledProcessError, OSError), e:
+            self.env.log.error("External script %r exited: %s." % (script, e))
