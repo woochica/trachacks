@@ -8,9 +8,10 @@ It will move a page and its history, and will rewrite explicit links
 (``[wiki:PageName Label]``) leading to it from other wiki pages. It
 will also move any attachments on the page.
 
-:warn: Currently this plugin doesn't interact well with the TagsPlugin_.
-       You should be careful to remove any tags on a page before 
-       renaming it, and then re-adding them to the new page.
+.. caution::
+    Currently this plugin doesn't interact well with the TagsPlugin_.
+    You should be careful to remove any tags on a page before 
+    renaming it, and then re-adding them to the new page.
 
 You can access the page rename form through the Admin system. For
 convenience, a link is also added to the context navigation bar in the
