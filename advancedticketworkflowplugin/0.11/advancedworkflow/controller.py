@@ -197,6 +197,50 @@ class TicketWorkflowOpOwnerPrevious(TicketWorkflowOpBase):
         return owner
 
 
+class TicketWorkflowOpStatusPrevious(TicketWorkflowOpBase):
+    """Sets the status to the previous status
+
+    Don't forget to add the `TicketWorkflowOpStatusPrevious` to the workflow
+    option in [ticket].
+    If there is no workflow option, the line will look like this:
+
+    workflow = ConfigurableTicketWorkflow,TicketWorkflowOpStatusPrevious
+    """
+
+    _op_name = 'set_status_to_previous'
+
+    # ITicketActionController methods
+
+    def render_ticket_action_control(self, req, ticket, action):
+        """Returns the action control"""
+        actions = ConfigurableTicketWorkflow(self.env).actions
+        label = actions[action]['name']
+        new_status = self._new_status(ticket)
+        if new_status != ticket['status']:
+            hint = 'The status will change to %s' % new_status
+        else:
+            hint = ''
+        control = tag('')
+        return (label, control, hint)
+
+    def get_ticket_changes(self, req, ticket, action):
+        """Returns the change of status."""
+        return {'status': self._new_status(ticket)}
+
+    def _new_status(self, ticket):
+        """Determines the new status"""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT oldvalue FROM ticket_change WHERE ticket=%s " \
+                       "AND field='status' ORDER BY -time", (ticket.id, ))
+        row = cursor.fetchone()
+        if row:
+            status = row[0]
+        else: # The status has never changed.
+            status = 'new'
+        return status
+
+
 class TicketWorkflowOpRunExternal(Component):
     """Action to allow running an external command as a side-effect.
 
