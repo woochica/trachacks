@@ -8,6 +8,7 @@
 
 from trac.resource import Resource, get_resource_url, render_resource_link
 from trac.wiki.macros import WikiMacroBase
+from trac.web.chrome import add_stylesheet
 from trac.util.compat import sorted, set
 from tractags.api import TagSystem
 from genshi.builder import tag as builder
@@ -23,6 +24,8 @@ def render_cloud(env, req, cloud, renderer=None):
     min_px = 10.0
     max_px = 30.0
     scale = 1.0
+
+    add_stylesheet(req, 'tags/css/tractags.css')
 
     if renderer is None:
         def default_renderer(tag, count, percent):
@@ -70,6 +73,7 @@ class ListTaggedMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         query_result = TagSystem(self.env).query(req, content)
+        add_stylesheet(req, 'tags/css/tractags.css')
 
         def link(resource):
             return render_resource_link(self.env, formatter.context,
