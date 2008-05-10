@@ -55,6 +55,11 @@ class TracForgeIndexModule(Component):
                             'description': env.project_description,
                             'href': req.href.projects(project.name),
                         })
+                    elif req.perm('tracforge_project', project.name):
+                        projects.append({
+                            'name': env.project_name,
+                            'description': 'PROJECT_VIEW permission not granted.',
+                        })
                 except Exception, e:
                     # Only show errors to admins to prevent excessive disclosure
                     if 'TRACFORGE_ADMIN' in req.perm('tracforge_project', project.name):
