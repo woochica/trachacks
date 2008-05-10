@@ -298,3 +298,54 @@ class TicketWorkflowOpRunExternal(Component):
             check_call([script, str(ticket.id), req.authname])
         except (CalledProcessError, OSError), e:
             self.env.log.error("External script %r exited: %s." % (script, e))
+
+
+class TicketWorkflowOpTriage(TicketWorkflowOpBase):
+    """Action to split a workflow based on a field
+
+    <someaction> = somestatus -> *
+    <someaction>.operations = triage
+    <someaction>.triage_field = type
+    <someaction>.traige_split = defect -> new_defect, task -> new_task, enhancement -> new_enhancement
+
+    Don't forget to add the `TicketWorkflowOpTriage` to the workflow option in
+    [ticket].
+    If there is no workflow option, the line will look like this:
+
+    workflow = ConfigurableTicketWorkflow,TicketWorkflowOpTriage
+    """
+
+    _op_name = 'triage'
+
+    # ITicketActionController methods
+
+    def render_ticket_action_control(self, req, ticket, action):
+        """Returns the action control"""
+        actions = ConfigurableTicketWorkflow(self.env).actions
+        label = actions[action]['name']
+        new_status = self._new_status(ticket, action)
+        if new_status != ticket['status']:
+            hint = 'The status will change.'
+        else:
+            hint = ''
+        control = tag('')
+        return (label, control, hint)
+
+    def get_ticket_changes(self, req, ticket, action):
+        """Returns the change of status."""
+        return {'status': self._new_status(ticket, action)}
+
+    def _new_status(self, ticket, action):
+        """Determines the new status"""
+        field = self.config.get('ticket-workflow',
+                                action + '.triage_field').strip()
+        transitions = self.config.get('ticket-workflow',
+                                      action + '.triage_split').strip()
+        for transition in [x.strip() for x in transitions.split(',')]:
+            value, status = [y.strip() for y in transition.split('->')]
+            if value == ticket[field].strip():
+                break
+        else:
+            self.env.log.error("Bad configuration for 'triage' operation in action '%s'" % action)
+            status = 'new'
+        return status
