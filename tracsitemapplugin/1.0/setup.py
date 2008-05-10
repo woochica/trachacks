@@ -7,6 +7,7 @@ setup(name='TracSitemap',
       description='A plugin for Trac which provides Sitemap data.',
       license='BSD',
       keywords='trac sitemap',
+      url='http://trac-hacks.org/wiki/TracSitemapPlugin',
 
       packages=['sitemap'],
       entry_points={'trac.plugins': 'sitemap = sitemap.sitemap'},
