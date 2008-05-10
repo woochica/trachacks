@@ -43,10 +43,10 @@
     <form method="post">
       <table class="listing" id="projectlist">
         <thead>
-          <tr><th class="sel">&nbsp;</th><th>Short Name</th><th>Full Name</th><th>Env Path</th></tr>
+          <tr><th class="sel">&nbsp;</th><th>Short Name</th><th>Full Name</th></tr>
         </thead>
         <tbody>
-          <tr py:for="proj in projects">
+          <tr py:for="proj in sorted(projects, key=lambda p: p.name)">
             <td>&nbsp;</td>
             <td>$proj.name</td>
             <td>$proj.full_name</td>

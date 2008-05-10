@@ -49,20 +49,20 @@ class TracForgePermissionStore(DefaultPermissionStore):
 
         The permissions are returned as a list of (subject, action)
         formatted tuples."""
+        perms = []
         req = self._extract_req()
         if req is None or not req.path_info == '/admin/tracforge/perm':
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute("SELECT username,action FROM permission")
-            for username, action in cursor:
-                yield username, action
+            perms.extend(cursor)
         
         if req is None or not req.path_info == '/admin/general/perm':
             master_db = self.master_env.get_db_cnx()
             cursor = master_db.cursor()
             cursor.execute("SELECT username,action FROM tracforge_permission")
-            for username, action in cursor:
-                yield username, action
+            perms.extend(cursor)
+        return perms
     
     def _extract_req(self):
         """Truly evil magic to scan for a variable called req in the stack."""

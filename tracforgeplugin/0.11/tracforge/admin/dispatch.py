@@ -17,8 +17,9 @@ from trac.perm import PermissionCache
 from trac.util.text import to_unicode
 from trac.web.href import Href
 from trac.mimeview.api import Mimeview
-
 from genshi.builder import tag
+
+from tracforge.admin.model import Project
 
 class TracForgeIndexModule(Component):
     """A request handler to show a nicer project index."""
@@ -31,25 +32,18 @@ class TracForgeIndexModule(Component):
     def process_request(self, req):
         data = {}
         req.perm.require('PROJECT_LIST')
-    
-        parent_dir = os.path.dirname(self.env.path)
-        #env_paths = dict([(filename, os.path.join(parent_dir, filename))
-        #                  for filename in os.listdir(parent_dir)])
+        
         projects = []
                           
-        for env_name in os.listdir(parent_dir):
-            env_path = os.path.join(parent_dir, env_name)
+        for project_name in Project.select(self.env):
+            project = Project(self.env, project_name)
             
             # Don't list this environment
-            if env_path == self.env.path:
+            if project.env_path == self.env.path:
                 continue
             
-            # Only bother looking at folders
-            if not os.path.isdir(env_path):
-                continue
-            
-            try:
-                env = open_environment(env_path, use_cache=True)
+            if project.valid:
+                env = project.env
 
                 try:
                     self.log.debug('TracForge: %s', env.path)
@@ -59,21 +53,23 @@ class TracForgeIndexModule(Component):
                         projects.append({
                             'name': env.project_name,
                             'description': env.project_description,
-                            'href': req.href.projects(env_name),
+                            'href': req.href.projects(project.name),
                         })
                 except Exception, e:
                     # Only show errors to admins to prevent excessive disclosure
-                    if 'TRACFORFGE_ADMIN' in req.perm:
+                    if 'TRACFORGE_ADMIN' in req.perm('tracforge_project', project.name):
                         projects.append({
                             'name': env.project_name,
                             'description': e
                         })
-            except Exception, e:
-                if 'TRACFORGE_ADMIN' in req.perm:
+                    self.log.debug('tracforge.dispatch: Unable to load project %s:\n%s', project.name, e)
+            else:
+                if 'TRACFORGE_ADMIN' in req.perm('tracforge_project', project.name):
                     projects.append({
-                        'name': env_path,
-                        'description': e,
+                        'name': project.env_path,
+                        'description': project.env.exc,
                     })
+                self.log.debug('tracforge.dispatch: Unable to load project %s:\n%s', project.name, project.env.exc)
         
         data['projects'] = projects
         return 'tracforge_project_list.html', data, None
@@ -94,37 +90,41 @@ class TracForgeDispatcherModule(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        if req.path_info.startswith('/projects'):
-            path_info = req.path_info[10:]
+        if req.path_info.startswith('/projects/'):
+            path_info = req.path_info[10:].lstrip('/')
             if path_info:
                 self.log.debug('TracForgeDispatch: Starting WSGI relaunch for %s (%s)', path_info, req.method)
-                project = path_info.split('/', 1)[0]
+                self.log.debug('SN = %s PI = %s', req.environ['SCRIPT_NAME'], req.environ['PATH_INFO'])
+                project_name = path_info.split('/', 1)[0]
                 # Check that we aren't trying to recurse (possible link loop)
-                if project == os.path.basename(self.env.path):
+                if project_name == os.path.basename(self.env.path):
                     req.redirect(req.href())
+                project = Project(self.env, project_name)
                     
                 # Assert permissions on the desination environment
-                try:
-                    project_env = open_environment(os.path.join(os.path.dirname(self.env.path), project), use_cache=True)
-                except IOError:
-                    raise TracError('No such project "%s"'%project)
+                if not project.exists:
+                    raise TracError('No such project "%s"', project.name)
+                if not project.valid:
+                    raise TracError('Project %s is invalid:\n%s', project.name, project.env.exc)
                 
                 # Check that we have permissions in the desired project
                 authname = RequestDispatcher(self.env).authenticate(req)
-                project_perm = PermissionCache(project_env, authname)
+                project_perm = PermissionCache(project.env, authname)
                 project_perm.require('PROJECT_LIST')
                 
                 start_response = req._start_response
                 environ = copy.copy(req.environ)
                 
                 # Setup the environment variables
-                environ['SCRIPT_NAME'] = req.href.projects('/')
-                environ['PATH_INFO'] = path_info
-                environ['trac.env_parent_dir'] = os.path.dirname(self.env.path)
+                environ['SCRIPT_NAME'] = req.href.projects(project.name)
+                environ['PATH_INFO'] = path_info[len(project.name):]
+                environ['trac.env_path'] = project.env_path
                 if 'TRAC_ENV' in environ:
                     del environ['TRAC_ENV']
-                if 'trac.env_path' in environ:
-                    del environ['trac.env_path']
+                if 'TRAC_ENV_PARENT_DIR' in environ:
+                    del environ['TRAC_ENV_PARENT_DIR']
+                if 'trac.env_parent' in environ:
+                    del environ['trac.env_parent_dir']
                 environ['tracforge_master_link'] = req.href.projects()
 
                 # Remove mod_python options to avoid conflicts
