@@ -29,8 +29,7 @@ setup(
     author = 'Max Stewart',
     author_email = 'max.e.stewart@gmail.com',
     license = 'BSD',
-#    url = 'http://bitten.edgewall.org/',
-#    download_url = 'http://bitten.edgewall.org/wiki/Download',
+    url = 'http://trac-hacks.org/wiki/TicketValidatorPlugin',
 
     zip_safe = False,
 
