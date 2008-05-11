@@ -1,0 +1,63 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+    
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+      
+	<xi:include href="admin.html" />
+  
+	<head>
+		<title>Ticket Validator Settings</title>
+	</head>
+
+	<body>
+		<h2>Ticket Validator Settings</h2>
+
+		<form class="mod" id="modbasic" method="post">
+			<fieldset>
+				<legend>Rules</legend>
+				
+				<p class="hint">
+				State is the 'status' of the ticket when the specified 
+				fields are required.  Fields is a comma separated list 
+				of required ticket properties.
+				</p>
+				
+				<table>
+					<thead>
+						<tr>
+							<th>State</th>
+							<th>Fields</th>
+							<th></th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr py:for="rule in rules">
+							<td>
+								<input type="text" value="${rule.name}" name="name_${rule.name}"/>
+							</td>
+							<td>
+								<input type="text" value="${rule.fields}" name="fields_${rule.name}"/>
+							</td>
+							<td>
+								<input type="submit" value="-" name="remove_${rule.name}"/>
+							</td>
+							<td>
+								<input type="submit" value="+" name="add_${rule.name}"/>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+       
+      		</fieldset>
+     
+			<div class="buttons">
+				<input type="submit" value="Apply changes" name="apply"/>
+			</div>
+		</form>
+	</body>
+
+</html>
