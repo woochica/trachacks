@@ -7,7 +7,7 @@ setup(
     name = 'Trac${PLUGIN_NAME}',
     version = '1.0',
     packages = ['${MODULE_NAME}'],
-    package_data = { '${MODULE_NAME}': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
+    package_data = { '${MODULE_NAME}': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
     author_email = 'coderanger@yahoo.com',
@@ -19,7 +19,7 @@ setup(
         'Framework :: Trac',
     ],
     
-    install_requires = [],
+    install_requires = ['Trac'],
 
     entry_points = {
         'trac.plugins': [
