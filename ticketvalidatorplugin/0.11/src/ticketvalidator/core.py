@@ -31,10 +31,10 @@ class RequiredFieldValidator(Component):
     def _is_empty(self, value):
         """Check if 'value' is empty.
         
-        :param:value the value to check
-        :type:value object"""
+        :param value: the value to check
+        :type value: object"""
         
-        if value == None:
+        if value is None:
             return True
         
         if len(value) == 0:
@@ -47,15 +47,14 @@ class RequiredFieldValidator(Component):
         compatibility."""
 
     def validate_ticket(self, req, ticket):
-        """Validate a ticket after it's been populated from user input.
-        
-        Must return a list of `(field, message)` tuples, one for each problem
-        detected. `field` can be `None` to indicate an overall problem with the
-        ticket. Therefore, a return value of `[]` means everything is OK."""
+        """Make sure required fields for the next state have been 
+        the ticket will be in have been entered."""
 
         state = self._get_state(req, ticket)
 
-        self.log.info('old state = %s, new state = %s' %(ticket['status'], state))
+        # state not changed, no need to re-check
+        if state is None:
+            return []
 
         required_fields = self.config.getlist('ticketvalidator', 
                                               state + '.required')
