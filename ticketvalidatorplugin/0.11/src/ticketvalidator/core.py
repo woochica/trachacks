@@ -52,10 +52,6 @@ class RequiredFieldValidator(Component):
 
         state = self._get_state(req, ticket)
 
-        # state not changed, no need to re-check
-        if state is None:
-            return []
-
         required_fields = self.config.getlist('ticketvalidator', 
                                               state + '.required')
         
@@ -74,7 +70,7 @@ class RequiredFieldValidator(Component):
         for controller in self._get_action_controllers(req, ticket, action):
             action_changes.update(controller.get_ticket_changes(req, ticket, action))
         
-        return 'status' in action_changes and action_changes['status'] or None
+        return 'status' in action_changes and action_changes['status'] or ticket['status']
         
     def _get_action_controllers(self, req, ticket, action):
         
