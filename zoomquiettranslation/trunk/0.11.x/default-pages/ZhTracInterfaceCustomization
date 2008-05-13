@@ -162,7 +162,7 @@ PythonOption TracEnvIndexTemplate /path/to/template
 SetEnv TRAC_ENV_INDEX_TEMPLATE /path/to/template
 }}}
 
-For [wiki:TracStandalone], you'll need to set up the `TRAC_ENV_INDEX_TEMPLATE` environment variable in the shell used to launch tracd:
+对于[wiki:TracStandalone], 你需要在运行tracd的shell中设置`TRAC_ENV_INDEX_TEMPLATE`环境变量:
  - Unix
    {{{
 #!sh
