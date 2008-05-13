@@ -162,6 +162,8 @@ class SendClientFakeReq:
         return ''
       def wiki(self, *args, **keywords):
         return ''
+      def ticket(self, num):
+        return '#%d' % (num)
     self.href = SendClientFakeHref()
     self.abs_href = SendClientFakeHref()
   
