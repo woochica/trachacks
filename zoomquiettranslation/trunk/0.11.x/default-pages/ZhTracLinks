@@ -1,5 +1,5 @@
 = Trac链接 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac链接是Trac的一个基本特征, 因为他们允许在诸如传票, 报表, 变更集, Wiki页面, 里程碑和源文件等(只要是使用[ZhWikiFormatting Wiki格式])的各种实体间流畅的链接.
 

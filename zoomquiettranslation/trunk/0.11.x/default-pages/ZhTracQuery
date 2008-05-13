@@ -1,5 +1,5 @@
 = Trac传票查询 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 除[wiki:ZhTracReports 报表]之外, Trac支持''自定义传票查询'', 用于显示满足特定条件的传票列表.
 

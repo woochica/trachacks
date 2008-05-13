@@ -1,5 +1,5 @@
 = Trac中的Unicode支持 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac使用UTF-8编码储存所有文字, 包括传票和wiki页面的文字. 内部使用Unicode来实际处理文字.
 

@@ -1,5 +1,5 @@
 = Trac和mod_python =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac支持[http://www.modpython.org/ mod_python], 它显著加快了Trac的响应时间, 特别是和[ZhTracCgi CGI]相比, 并允许使用许多[wiki:ZhTracStandalone tracd]/mod_proxy无法使用的Apache特征.
 

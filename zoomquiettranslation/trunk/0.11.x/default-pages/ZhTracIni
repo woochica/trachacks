@@ -1,5 +1,5 @@
 = Trac配置文件 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 Trac的配置是通过编辑'''`trac.ini`'''配置文件实现的, 其位于`<projectenv>/conf/trac.ini`. 对配置文件的修改通常立即起作用, 然而对`[components]`和`[logging]`段的修改将要求重启web服务器. 在创建全局配置文件(当前不存在)后, 你可能被要求重启web服务器.
 
 

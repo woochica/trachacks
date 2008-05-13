@@ -1,5 +1,5 @@
 = Trac报表 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac报表模块提供了一个简单却强大的报表工具, 来展示Trac数据库中传票的信息.
 

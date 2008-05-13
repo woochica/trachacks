@@ -1,5 +1,5 @@
 = TracAdmin =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 跟Trac一起发布的, 有一个强大的命令行配置工具. 该工具可以用来配置和定制您的Trac安装, 从而更好的适应您的需求.
 
 其中一些操作可通过[http://trac.edgewall.org/wiki/WebAdmin WebAdmin](可选的插件, 是单独发布的.)的Web界面实现.

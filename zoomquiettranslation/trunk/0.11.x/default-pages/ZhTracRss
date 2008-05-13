@@ -1,5 +1,5 @@
 = 在Trac中使用RSS =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac的好几个模块都支持使用RSS XML格式的内容聚合. 使用Trac中的RSS订阅功能, 你可以轻松地监控项目的进度, 一系列事件, 甚至是某个文件的更改.
 

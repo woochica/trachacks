@@ -1,5 +1,5 @@
 = Trac日志 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac支持使用与Python自带的标准[http://docs.python.org/lib/module-logging.html 日志模块]来记录系统消息.
 

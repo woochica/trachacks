@@ -1,5 +1,5 @@
 = Trac的Wiki引擎 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac有一个内置的Wiki引擎, 用于系统中的文本和文档. [ZhWikiFormatting Wiki格式]用在[wiki:ZhTitleIndex Wiki页面], [wiki:ZhTracTickets 传票]和[wiki:ZhTracChangeset 检入日志消息]中. 因此在所有Trac模块中, 都可以使用格式化文本和超链接.
 

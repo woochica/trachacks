@@ -1,5 +1,5 @@
 = Trac变更集模块 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac有一个内置功能, 能可视化''diffs''. ''diffs''也就是指对文件的修改产生的变化.
 

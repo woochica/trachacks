@@ -1,5 +1,5 @@
 = 添加一个新Wiki页面的步骤 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
  1. 为你的新页面选择一个名字. 关于命名约定, 参考[ZhWikiPageNames Wiki页面名] .
  2. 编辑一个现有页面(或其他支持[ZhWikiFormatting Wiki格式]的资源), 并添加一个到你的新页面的[ZhTracLinks Trac链接] 比如说:`FooPage`, 保存你的修改.

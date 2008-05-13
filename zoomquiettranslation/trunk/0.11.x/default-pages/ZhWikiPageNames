@@ -1,5 +1,5 @@
 = Wiki页面名 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Wiki页面名主要使用[ZhCamelCase 驼峰式]规则. 在Wiki文本中, 所有[ZhCamelCase 驼峰式]的词都自动变成一个用此名字的超链接.
 

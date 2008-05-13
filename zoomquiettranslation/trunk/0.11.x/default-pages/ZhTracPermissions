@@ -1,5 +1,5 @@
 = Trac权限 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 Trac使用一种简单的权限系统来控制用户能否访问资源.
 

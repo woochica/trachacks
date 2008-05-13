@@ -1,5 +1,5 @@
 = Trac插件 =
-[[TracGuideToc]]
+[[ZhTracGuideToc]]
 
 自0.9后, Trac支持插件来扩展内置功能. 插件的功能是基于[http://trac.edgewall.org/wiki/TracDev/ComponentArchitecture 组件架构]的.
 
