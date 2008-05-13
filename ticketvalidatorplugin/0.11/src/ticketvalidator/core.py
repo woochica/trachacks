@@ -64,6 +64,9 @@ class RequiredFieldValidator(Component):
     def _get_state(self, req, ticket):
         """Get the state this ticket is going to be in."""
         
+        if 'action' not in req.args:
+            return 'new'
+        
         action = req.args['action']
         action_changes = {}
         
