@@ -7,20 +7,22 @@ Trac 0.11先仅提供默认wiki页面的完整中文版本.
 
 = 下载/更新 =
 从trac-hacks.org下载/更新本软件包:
-
+  {{{
 svn co http://trac-hacks.org/svn/zoomquiettranslation/trunk/0.11.x
+}}}
 
 = 安装 =
 
  1. 安装默认wiki页面到项目环境中, 执行命令:
-
-    trac-admin /path/to/your/env wiki load default-pages/
+  {{{
+trac-admin /path/to/your/env wiki load default-pages/
+}}}
 
  2. 配置trac.ini, 增加如下配置:
+  {{{
+[mainnav]
+wiki.href = /wiki/ZhWikiStart
 
-    [mainnav]
-    wiki.href = ZhWikiStart
-
-    [metanav]
-    help.href = ZhTracGuide
-
+[metanav]
+help.href = /wiki/ZhTracGuide
+}}}
