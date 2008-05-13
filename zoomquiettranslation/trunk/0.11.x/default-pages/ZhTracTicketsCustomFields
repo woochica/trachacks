@@ -1,0 +1,111 @@
+= 自定义传票字段 =
+Trac支持向传票模型中添加自定义的字段. 使用自定义的字段, 你可以向传票中添加项目特有的属性.
+
+== 配置 ==
+自定义传票字段是在[wiki:ZhTracIni trac.ini]文件中配置的. 所有字段定义应位于`[ticket-custom]`段中.
+
+字段定义的语法:
+{{{
+ FIELD_NAME = TYPE
+ (FIELD_NAME.OPTION = VALUE)
+ ...
+}}}
+
+=== 可用字段类型和选项 ===
+ * '''text''': 简单文字字段(一行).
+   * label: 描述性标签.
+   * value: 默认值.
+   * order: 排序位置.(在表单中决定与其他定制字段的相对位置)
+ * '''checkbox''': 复选框(布尔值).
+   * label: 描述性标签.
+   * value: 默认值 (0 或 1).
+   * order: 排序位置.
+ * '''select''': 下拉选择框(值的列表).
+   * label: 描述性标签.
+   * options: 值的列表, 用'''|'''分隔.
+   * value: 默认值 (条目号, 从0开始).
+   * order: 排序位置.
+ * '''radio''': 单选按钮, 实质上跟'''select'''一样.
+   * label: 描述性标签.
+   * options: 值的列表, 用'''|'''分隔
+   * value: 默认值 (条目号, 从0开始).
+   * order: 排序位置.
+ * '''textarea''': 多行文本字段.
+   * label: 描述性标签.
+   * value: 默认文本.
+   * cols: 列宽.
+   * rows: 行高.
+   * order: 排序位置.
+
+=== 配置范例 ===
+{{{
+[ticket-custom]
+
+test_one = text
+test_one.label = Just a text box
+
+test_two = text
+test_two.label = Another text-box
+test_two.value = Just a default value
+
+test_three = checkbox
+test_three.label = Some checkbox
+test_three.value = 1
+
+test_four = select
+test_four.label = My selectbox
+test_four.options = one|two|third option|four
+test_four.value = two
+
+test_five = radio
+test_five.label = Radio buttons are fun
+test_five.options = uno|dos|tres|cuatro|cinco
+test_five.value = 1
+
+test_six = textarea
+test_six.label = This is a large textarea
+test_six.value = Default text
+test_six.cols = 60
+test_six.rows = 30
+}}}
+
+'''注意''': 要使`select`类型的字段可输入文字, 需要在`fieldname.options`选项中加上前导的`|`
+
+=== 与报表相关的自定义字段 ===
+
+要在[ZhTracReports 报表]的SQL包含自定义传票字段, 相对比较难一些.对每个涉及到的自定义字段, 你都需要与`ticket_custom`表`JOIN`. 下面的报表例子中, 包括了一个名为`progress`的自定义字段:
+
+{{{
+#!sql
+SELECT p.value AS __color__,
+   id AS ticket, summary, owner, c.value AS progress
+  FROM ticket t, enum p, ticket_custom c
+  WHERE status IN ('assigned') AND t.id = c.ticket AND c.name = 'progress'
+AND p.name = t.priority AND p.type = 'priority'
+  ORDER BY p.value
+}}}
+'''Note''' that this will only show tickets that have progress set in them, which is '''not the same as showing all tickets'''. If you created this custom ticket field ''after'' you have already created some tickets, they will not have that field defined, and thus they will never show up on this ticket query. If you go back and modify those tickets, the field will be defined, and they will appear in the query. If that's all you want, you're set.
+
+However, if you want to show all ticket entries (with progress defined and without), you need to use a `JOIN` for every custom field that is in the query.
+{{{
+#!sql
+SELECT p.value AS __color__,
+   id AS ticket, summary, component, version, milestone, severity,
+   (CASE status WHEN 'assigned' THEN owner||' *' ELSE owner END) AS owner,
+   time AS created,
+   changetime AS _changetime, description AS _description,
+   reporter AS _reporter,
+  (CASE WHEN c.value = '0' THEN 'None' ELSE c.value END) AS progress
+  FROM ticket t
+     LEFT OUTER JOIN ticket_custom c ON (t.id = c.ticket AND c.name = 'progress')
+     JOIN enum p ON p.name = t.priority AND p.type='priority'
+  WHERE status IN ('new', 'assigned', 'reopened')
+  ORDER BY p.value, milestone, severity, time
+}}}
+
+特别要注意此处的'''LEFT OUTER JOIN语句'''.
+
+----
+原文版本: TracTicketsCustomFields[[BR]]
+相关信息: [ZhTracTickets Trac传票], [ZhTracIni Trac配置][[BR]]
+See also: TracTickets, TracIni
