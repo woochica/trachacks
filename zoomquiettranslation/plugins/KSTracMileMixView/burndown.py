@@ -5,11 +5,15 @@ import adodb
 from ini import Settings, sqltrac
 
 import logging
+#----------------------------------------------------------------------------
+abspath = os.path.abspath(sys.argv[0])
+dirname = os.path.dirname(abspath)
+
 daylog = "%s"%(time.strftime("%y%m%d",time.localtime()))
 logging.basicConfig(level=logging.DEBUG,
                    format='[%(asctime)s]%(levelname)-8s"%(message)s"',
                     datefmt='%Y-%m-%d %a %H:%M:%S',
-                    filename='log/burn-%s.log'%daylog,
+                    filename=os.path.join(dirname, 'log/burn-%s.log'%daylog),
                     filemode='a+')
 
 
@@ -37,7 +41,7 @@ class burndown:
         self.mapUnplan=('accidental')
 
         # load setting from ini
-        self.fDict = "%s/%s.dump"%(self.init['dumpath'],milestone)
+        self.fDict = os.path.join(dirname, "%s/%s.dump"%(self.init['dumpath'],milestone))
         self.expRoot = self.init['expath']
         self.projname = self.init['projname']
         self.rootpath = self.init['rootpath']
@@ -189,7 +193,7 @@ class burndown:
         '''
         from extchart import extstate
 
-        chart = extstate(self.milestone,self.init['expath'],self.TicketQuery)
+        chart = extstate(self.milestone,os.path.join(dirname, self.init['expath']),self.TicketQuery)
         chart.hisChart(self.init['defont'])
 
         return

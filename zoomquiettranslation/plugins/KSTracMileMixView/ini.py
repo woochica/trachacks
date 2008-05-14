@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-'''for KSTracRelaTicket
+'''for KSTracMileMixView
     init all relational var
 '''
 
 Settings = {
     'rootpath':'/tracs/retracs'
-    ,'projname':'KXEngine'
+    ,'projname':'trac1'
     ,'dbname':'db/trac.db'
-    ,'ticketurl':'http://trac.rdev.kingsoft.net/KXEngine/ticket'
-    ,'reporturl':'http://trac.rdev.kingsoft.net/KXEngine/report'
+    ,'ticketurl':'http://trac.example.com/trac1/ticket'
+    ,'reporturl':'http://trac.example.com/trac1/report'
     ,'dumpath':'data'
     ,'logpath':'log'
     ,'expath':'exp'
@@ -56,28 +56,3 @@ sqltrac={
             and time < %d ;'''
 }
 
-#SELECT id, time, status 
-#FROM ticket
-#WHERE milestone like "WSS.m1.1%"
-#ORDER BY time
-#
-#SELECT *
-#FROM ticket_change
-#WHERE milestone like "WSS.m1.1%"
-#ORDER BY time
-#
-#
-#SELECT 
-#            status, id , time
-#            FROM ticket
-#            WHERE time < 1209848000
-#and milestone like "WSS.m1.1%"
-
-
-#SELECT tc.ticket, tc.newvalue, datetime(tc.time, 'unixepoch', 'localtime'), datetime(t.time, 'unixepoch', 'localtime'), tcu.value
-#FROM ticket_change tc, ticket t, ticket_custom tcu
-#WHERE tc.ticket = t.id and tcu.ticket = t.id
-#and tcu.name = 'duetime' 
-#and t.milestone like "WSS.m1.1%"
-#and field='status'
-#ORDER BY t.id, tc.time

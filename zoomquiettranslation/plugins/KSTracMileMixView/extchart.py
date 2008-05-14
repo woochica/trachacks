@@ -72,7 +72,11 @@ class extstate:
         cwidth = 80+pwidth
         #pheight = 2*int(self.data[labels[-1]]['total']['due'])#len(labels)*15
         hs = [int(self.data[label]['total']['due']) for label in labels]
-        pheight = 2 * max(hs)
+        if hs:
+            pheight = 2 * max(hs)
+        else:
+            pheight = 10
+
         cheight = 100+pheight
         
         #c = XYChart(cwidth,250, 0xffffc0, 0x000000, 1)

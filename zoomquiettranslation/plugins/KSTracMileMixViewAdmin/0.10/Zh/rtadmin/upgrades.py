@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #----------------------------------------------------------------------------
 # Name:         upgrades.py
-# Purpose:      The relaticket admin Trac plugin upgrade module
+# Purpose:      The MileMixView admin Trac plugin upgrade module
 #
 # Author:       Richard Liao <richard.liao.i@gmail.com>
 #

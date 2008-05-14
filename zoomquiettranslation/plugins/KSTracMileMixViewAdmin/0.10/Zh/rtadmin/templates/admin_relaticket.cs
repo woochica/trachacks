@@ -14,7 +14,7 @@
 
   <table class="listing" id="millist">
    <thead>
-    <tr><th class="sel">启用</th><th>里程碑</th>
+    <tr><th class="sel">启用</th><th>里程碑</th><th>更新</th>
     </tr>
    </thead><tbody><?cs
    each:milestone = milestones ?>
@@ -23,6 +23,9 @@
      if:milestone.enabled ?> checked="checked"<?cs
      /if ?> /></td>
     <td><?cs var:milestone.name ?></td>
+    <td><input type="submit" name="update_<?cs var:milestone.update ?>" value="刷新视图" <?cs 
+     if:!milestone.enabled ?> disabled="true"<?cs
+     /if ?> /></td>
    </tr><?cs
    /each ?></tbody>
   </table>

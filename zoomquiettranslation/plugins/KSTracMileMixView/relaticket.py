@@ -5,11 +5,15 @@ import adodb
 from ini import Settings, sqltrac
 
 import logging
+#----------------------------------------------------------------------------
+abspath = os.path.abspath(sys.argv[0])
+dirname = os.path.dirname(abspath)
+
 daylog = "%s"%(time.strftime("%y%m%d",time.localtime()))
 logging.basicConfig(level=logging.DEBUG,
                    format='[%(asctime)s]%(levelname)-8s"%(message)s"',
                     datefmt='%Y-%m-%d %a %H:%M:%S',
-                    filename='log/relati-%s.log'%daylog,
+                    filename=os.path.join(dirname, 'log/relati-%s.log'%daylog),
                     filemode='a+')
 
 
@@ -42,7 +46,7 @@ class relaticket:
             }
         
         # load setting from ini
-        self.fDict = "data/%s.dump"%milestone
+        self.fDict = os.path.join(dirname, "data/%s.dump"%milestone)
         self.expRoot = self.init['expath']
         self.projname = self.init['projname']
         self.rootpath = self.init['rootpath']
@@ -52,8 +56,8 @@ class relaticket:
         self.ticketurl = self.init['ticketurl']
 
 
-        self.tplIdx = "%s/idx.relat.tpl"%self.init['tplpath']
-        self.expIdx = "%s/idx-%s.html"%(self.init['expath'],milestone)
+        self.tplIdx = os.path.join(dirname, "%s/idx.relat.tpl"%self.init['tplpath'])
+        self.expIdx = os.path.join(dirname, "%s/idx-%s.html"%(self.init['expath'],milestone))
         
         
         self.sqls = sqltrac

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #----------------------------------------------------------------------------
 # Name:         model.py
-# Purpose:      The relaticket admin Trac plugin db model module
+# Purpose:      The MileMixView admin Trac plugin db model module
 #
 # Author:       Richard Liao <richard.liao.i@gmail.com>
 #

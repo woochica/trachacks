@@ -13,9 +13,9 @@
 by:<sub>%(myVer)s </sub>
 at:<sup> %(creaTime)s generated</sup>
 <sub>
-<a href="http://trac.rdev.kingsoft.net/kspeg/ticket/213">abt.Ticket</a>
+<a href="http://trac-hacks.org/wiki/MileMixView">About</a>
 </sub>
-<h4>%(projname)s 项目传票关联状态报表::
+<h4>%(projname)s 里程综合视图::
 </h4>
 
 <img src="%(optproj)s-burndown.png">

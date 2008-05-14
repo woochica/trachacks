@@ -53,6 +53,17 @@ def log(msg):
     f.write(msg + "\n")
     f.close
 
+def stripMilestoneName(m):
+    # strip milestone name
+    mm = []
+    for s in m.split("."):
+        try:
+            s.encode("ascii")
+            mm.append(s)
+        except:
+            break
+    return ".".join(mm)    
+
 def getMilestones():
     # connect trac.db
     conn = adodb.NewADOConnection('sqlite')
@@ -68,45 +79,57 @@ def getMilestones():
     # strip milestone name
     milestone = []
     for m in reAllMilestone:
-        mm = []
-        for s in m.split("."):
-            try:
-                s.encode("ascii")
-                mm.append(s)
-            except:
-                break
-        milestone.append(".".join(mm))
+        milestone.append(stripMilestoneName(m))
 
     print "\n"*3, "milestone", milestone
     #return ['kxedem2', 'kxewssm11', 'kxefeng1', 'kxefeng2a']
     return milestone
 
 #----------------------------------------------------------------------------
+update = ""
+if len(sys.argv) > 2:
+    update = sys.argv[1].decode("utf-8")
+
+abspath = os.path.abspath(sys.argv[0])
+dirname = os.path.dirname(abspath)
+
+#----------------------------------------------------------------------------
 # init milestones
 allMilestones = getMilestones()
+if update:
+    if update not in allMilestones:
+        sys.exit(1)
 
 #----------------------------------------------------------------------------
 # init settings for burndown
-LOGFILE = "log/burndown-%(today)s.log" % {"today": today()}
+LOGFILE = os.path.join(dirname, "log/burndown-%(today)s.log" % {"today": today()})
 
 # starting burndown
 log("###%(VER)s::start@ " % {"VER":VER} + date())
 
-for PROJ in allMilestones:
-    run("burndown.py", PROJ)
+if update:
+    PROJ = update
+    run(os.path.join(dirname, "burndown.py"), PROJ)
+else:
+    for PROJ in allMilestones:
+        run(os.path.join(dirname, "burndown.py"), PROJ)
 
 # end burndown
 log("###%(VER)s::end ALL@ " % {"VER":VER} + date())
 
 #----------------------------------------------------------------------------
 # init settings for relaticket
-LOGFILE = "log/relati-%(today)s.log" % {"today": today()}
+LOGFILE = os.path.join(dirname, "log/relati-%(today)s.log" % {"today": today()})
 
 # starting relaticket
 log("###%(VER)s::start@ " % {"VER":VER} + date())
 
-for PROJ in allMilestones:
-    run("relaticket.py", PROJ)
+if update:
+    PROJ = update
+    run(os.path.join(dirname, "relaticket.py"), PROJ)
+else:
+    for PROJ in allMilestones:
+        run(os.path.join(dirname, "relaticket.py"), PROJ)
 
 # end relaticket
 log("###%(VER)s::end ALL@ " % {"VER":VER} + date())

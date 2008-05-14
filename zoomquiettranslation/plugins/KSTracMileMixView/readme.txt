@@ -1,8 +1,8 @@
-= RelaTicket =
+= MileMixView =
 
 == 描述 ==
- * http://trac-hacks.org/wiki/RelaTicket
- * 该脚本是 [http://trac-hacks.org/wiki/RelaTicketAdmin RelaTicketAdmin] 的辅助脚本.
+ * http://trac-hacks.org/wiki/MileMixView
+ * 该脚本是 [http://trac-hacks.org/wiki/MileMixView MileMixView] 的辅助脚本.
  * 用于定期生成关联传票视图HTML文件.
 
 == 依赖 ==
@@ -28,6 +28,6 @@ python run_burndown.py
 
 == 下载 ==
 
- * [/svn/zoomquiettranslation/plugins/KSTracRelaTicket SVN]
+ * [/svn/zoomquiettranslation/plugins/KSTracMileMixView SVN]
 
- * [source:zoomquiettranslation/plugins/KSTracRelaTicket 浏览]
+ * [source:zoomquiettranslation/plugins/KSTracMileMixView 浏览]

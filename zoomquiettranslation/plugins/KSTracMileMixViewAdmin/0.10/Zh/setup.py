@@ -1,8 +1,8 @@
 from setuptools import find_packages, setup
 
 setup(
-    name = 'TracRelaTicketAdmin',
-    version = '0.1',
+    name = 'TracMileMixViewAdmin',
+    version = '0.2',
     packages = ['rtadmin'],
     package_data = { 'rtadmin': [ '*.txt', 'templates/*.*', 'htdocs/*.*', 'tests/*.*' ] },
 
@@ -10,10 +10,10 @@ setup(
     author_email = 'richard.liao.i@gmail.com',
     maintainer = 'Richard Liao',
     maintainer_email = "richard.liao.i@gmail.com",
-    description = "RelaTicket Admin plugin for Trac.",
+    description = "MileMixView Admin plugin for Trac.",
     license = "BSD",
     keywords = "trac rela ticket admin",
-    url = "http://trac-hacks.org/wiki/RelaTicketAdmin",
+    url = "http://trac-hacks.org/wiki/MileMixViewAdmin",
     classifiers = [
         'Framework :: Trac',
     ],

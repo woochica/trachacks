@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #----------------------------------------------------------------------------
 # Name:         rtadmin.py
-# Purpose:      The relaticket admin Trac plugin handler module
+# Purpose:      The MileMixView admin Trac plugin handler module
 #
 # Author:       Richard Liao <richard.liao.i@gmail.com>
 #
@@ -33,9 +33,9 @@ import textwrap
 
 from model import schema, schema_version, RT_Template
 
-__all__ = ['RelaTicketAdminModule']
+__all__ = ['MileMixViewAdminModule']
 
-class RelaTicketAdminModule(Component):
+class MileMixViewAdminModule(Component):
     
     implements(ITemplateProvider, 
                IAdminPageProvider, 
@@ -101,35 +101,48 @@ class RelaTicketAdminModule(Component):
         self.env.log.info('get_admin_pages')
 
         if req.perm.has_permission('RT_ADMIN'):
-            yield 'ticket', 'Ticket', 'rtadmin', 'RelaTicket Admin'
+            yield 'ticket', 'Ticket', 'rtadmin', 'MileMixView Admin'
 
 
     def process_admin_request(self, req, cat, page, path_info):
         req.perm.assert_permission('RT_ADMIN')
 
-        if req.method == 'POST':
-            if req.args.get('save') and req.args.get('sel'):
+        update = ""
+        for key in req.args.keys():
+            if key.startswith("update_"):
+                update = key[len("update_"):]
+                break
 
-                # empty table first
-                RT_Template.deleteAll(self.env)
-                
-                # insert selected milestone into table
-                sel = req.args.get('sel')
-                sel = isinstance(sel, list) and sel or [sel]
-                db = self.env.get_db_cnx()
-                for milestone in sel:
-                    RT_Template.insert(self.env, milestone)
-                db.commit()
-                req.redirect(self.env.href.admin(cat, page))
+        if update:
+            # update now
+            base_path = self.env.config.get('rtadmin', 'base_path')
+            run_burndown = "python " + os.path.join(base_path, "run_burndown.py %s" % update.encode("utf-8"))
+            os.system(run_burndown)
+
+        elif req.args.get('save') and req.args.get('sel'):
+
+            # empty table first
+            RT_Template.deleteAll(self.env)
+            
+            # insert selected milestone into table
+            sel = req.args.get('sel')
+            sel = isinstance(sel, list) and sel or [sel]
+            db = self.env.get_db_cnx()
+            for milestone in sel:
+                RT_Template.insert(self.env, milestone)
+            db.commit()
+            req.redirect(self.env.href.admin(cat, page))
 
         # get all enabled milestones
         enabledMilestones = RT_Template.getMilestones(self.env)
 
         ms = Milestone.select(self.env)
         ms.sort(cmp=lambda x,y: cmp(x.name, y.name))
+
         req.hdf['milestones'] = [{'name': m.name,
               'href': self.env.href.admin(cat, page, m.name),
               'enabled': m.name in enabledMilestones,
+              'update': stripMilestoneName(m.name),
              } for m in ms]
 
         return 'admin_relaticket.cs', None
@@ -203,14 +216,7 @@ class RelaTicketAdminModule(Component):
             # strip milestone name
             milestone = []
             for m in reAllMilestone:
-                mm = []
-                for s in m.split("."):
-                    try:
-                        s.encode("ascii")
-                        mm.append(s)
-                    except:
-                        break
-                milestone.append(".".join(mm))
+                milestone.append(stripMilestoneName(m))
 
             data = []
             for m, m_full in zip(milestone, reAllMilestone):
@@ -234,11 +240,12 @@ class RelaTicketAdminModule(Component):
         """
         # get trac.ini
         base_path = self.env.config.get('rtadmin', 'base_path')
+        exp_path = self.env.config.get('rtadmin', 'exp_path')
 
 
         # formart return string
         try:
-            returnStr = open("%s/%s" % (base_path, filepath)).read()
+            returnStr = open(os.path.join(base_path, exp_path, filepath)).read()
         except:
             returnStr = "No result yet."
 
@@ -258,3 +265,15 @@ class RelaTicketAdminModule(Component):
         if req.method != 'HEAD':
             req.write(message)
         raise RequestDone
+
+
+def stripMilestoneName(m):
+    # strip milestone name
+    mm = []
+    for s in m.split("."):
+        try:
+            s.encode("ascii")
+            mm.append(s)
+        except:
+            break
+    return ".".join(mm)    
