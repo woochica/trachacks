@@ -41,7 +41,15 @@ function tadm {
 
 # Edit trac.ini
 function tini {
+    (
+    if [ "$1" ]
+    then
+        tset $1
+    fi
+    
     $EDITOR $TRAC/conf/trac.ini
+    
+    )
 }
 
 # Find the nearest enclosing plugin directory
@@ -211,6 +219,7 @@ function _tset {
     return 0
 }
 complete -F _tset tset
+complete -F _tset tini
 
 # Control the nginx and tracd servers
 function tserver {
@@ -235,27 +244,39 @@ function tserver {
             # Spawn tracds for each found version
             echo "<html><head><title>Trac Development System</title></head><body>" >$TRAC_BASE/.www/index.html
             echo -e "location /src {\n  alias $TRAC_BASE/plugins;\n  autoindex on;\n}" >$TRAC_BASE/.www/conf
+            echo -e "location /pypi {\n  fastcgi_pass 127.0.0.1:1025;\n}" >>$TRAC_BASE/.www/conf
             for version in $INSTALL_BASE/*
             do
-                (
-                tversion "$(basename $version)"
-                echo "Starting tracd for version $TRAC_VERSION on port $port"
-                tracd -p $port -r -e $version/tracs --base-path="$TRAC_VERSION" >$version/.tracd.log 2>&1 &
-                echo "<h3><a href=\"/$(basename $version)\">Trac $(basename $version)</a></h3><ul>" >>$TRAC_BASE/.www/index.html
-                for t in $version/tracs/*
-                do
-                    echo "<li><a href=\"/$(basename $version)/$(basename $t)\">$(basename $t)</li>" >>$TRAC_BASE/.www/index.html
-                done
-                echo "</ul>" >>$TRAC_BASE/.www/index.html
+                if [ ! -f "$version/.disable" ]
+                then
+                  (
+                  tversion "$(basename $version)"
+                  echo "Starting tracd for version $TRAC_VERSION on port $port"
+                  tracd -p $port -r -e $version/tracs --base-path="$TRAC_VERSION" >$version/.tracd.log 2>&1 &
+                  echo "<h3><a href=\"/$(basename $version)\">Trac $(basename $version)</a></h3><ul>" >>$TRAC_BASE/.www/index.html
+                  for t in $version/tracs/*
+                  do
+                      if [ -d "$t" ]
+                      then
+                        echo "<li><a href=\"/$(basename $version)/$(basename $t)\">$(basename $t)</li>" >>$TRAC_BASE/.www/index.html
+                      fi
+                  done
+                  echo "</ul>" >>$TRAC_BASE/.www/index.html
                 
-                # Output proxy directives
-                echo "location /$TRAC_VERSION {" >>$TRAC_BASE/.www/conf
-                echo "  proxy_pass http://127.0.0.1:$port;" >>$TRAC_BASE/.www/conf
-                echo "  include $NGINX_BASE/conf/proxy.conf;" >>$TRAC_BASE/.www/conf
-                echo "}" >>$TRAC_BASE/.www/conf
-                )
-                
-                port=$(($port + 1))
+                  # Output proxy directives
+                  echo "location /$TRAC_VERSION {" >>$TRAC_BASE/.www/conf
+                  echo "  proxy_pass http://127.0.0.1:$port;" >>$TRAC_BASE/.www/conf
+                  echo "  include $NGINX_BASE/conf/proxy.conf;" >>$TRAC_BASE/.www/conf
+                  echo "}" >>$TRAC_BASE/.www/conf
+                  )
+                  
+                  port=$(($port + 1))
+                else
+                  (
+                  tversion "$(basename $version)"
+                  echo "Skipping version $TRAC_VERSION"
+                  )
+                fi
             done
             echo "</body></html>" >>$TRAC_BASE/.www/index.html
         
@@ -309,6 +330,18 @@ function tserver {
             if [ -f $TRAC_BASE/.server.running ]
             then
                 echo "Server is running"
+                
+                # Check for running tracd
+                for version in $INSTALL_BASE/*
+                do
+                    pids="$(ps -axwwo pid,command | grep $version/bin/tracd | grep -v grep | awk '{print $1}')"
+                    if [ "$pids" ] 
+                    then
+                        echo -n "tracd running for $(basename $version) ("
+                        echo -n "$pids" | sort -n | tr '\n' ' '
+                        echo ")"
+                    fi
+                done
                 return 0
             else
                 echo "Server is not running"
