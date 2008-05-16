@@ -41,9 +41,9 @@ def rename_page(env, oldname, newname, user, ip, debug=False, db=None):
         '(SELECT name, MAX(version) AS max_version FROM wiki GROUP BY name) w2 ' + \
         'WHERE w1.version = w2.max_version AND w1.name = w2.name '
 
-    sql = 'SELECT w1.version,w1.text' + sqlbase + 'AND w1.name = \'%s\'' % oldname
+    sql = 'SELECT w1.version,w1.text' + sqlbase + 'AND w1.name = %s'
     debug('Running query %r', sql)
-    cursor.execute(sql)
+    cursor.execute(sql, (oldname,))
 
     row = cursor.fetchone()
 
@@ -75,9 +75,9 @@ def rename_page(env, oldname, newname, user, ip, debug=False, db=None):
 
     # Get a list of all wiki pages containing links to the old page
     debug("Trying to fix links")
-    sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + "AND w1.text like '%%[wiki:%s%%'" % oldname
+    sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + 'AND w1.text like %s'
     debug('Running query %r', sql)
-    cursor.execute(sql)
+    cursor.execute(sql, ('%[wiki:'+oldname+'%',))
 
     # Rewrite all links to the old page, such as to point to the new page
     for row in list(cursor):
