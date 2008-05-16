@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWikiRename',
-    version = '2.1',
+    version = '2.1.1',
     packages = ['wikirename'],
     package_data = {'wikirename': ['templates/*.html']},
 
