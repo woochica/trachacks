@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>command</key>
@@ -14,6 +14,7 @@
    export MODULE_NAME="$(tr "[:upper:]" "[:lower:]" &lt;&lt;&lt;"$PLUGIN_NAME")"
    mkdir "$TM_NEW_FILE_DIRECTORY/$MODULE_NAME"
    touch "$TM_NEW_FILE_DIRECTORY/$MODULE_NAME/__init__.py"
+   touch "$TM_NEW_FILE_DIRECTORY/README"
    perl -pe 's/\$\{([^}]*)\}/$ENV{$1}/g' \
       &lt; template.py &gt; "$TM_NEW_FILE"
 fi</string>
