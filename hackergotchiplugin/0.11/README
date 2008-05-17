@@ -1,0 +1,59 @@
+Notes
+=====
+Adds user-specific icons to the timeline view.
+
+.. image:: http://trac-hacks.org/attachment/wiki/HackergotchiPlugin/hackergotchi.png?format=raw
+
+Providers
+=========
+
+Identicon
+---------
+
+Locally generate identicons__ using the author information. This provider
+requires PIL__ to be installed.
+
+__ http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification
+__ http://pythonware.com/products/pil/
+
+Identicon implementation is courtesy of `Shin Adachi <shn@glucose.jp>`_.
+
+Gravatar
+--------
+
+Uses the Gravatar.com__ service to generate images.
+
+__ http://gravatar.com
+
+Configuration
+=============
+
+All configuration options go in the ``[hackergotchi]`` section.
+
+``providers`` : *optional, default: GravatarHackergotchiProvider, IdenticonHackergotchiProvider*
+    Order to try providers when looking for an image. Any providers enabled
+    but not listed will be tried in a pseudo-random order.
+
+``gravatar_default`` : *optional, default: identicon*
+    Value to pass along to Gravatar to use if the email doesn't match
+    anything. Valid values are ``identicon``, ``monsterid``, ``wavatar``,
+    or a URL to an image. In the first three cases, a icon will be
+    procedurally generated.
+
+To enable the plugin::
+
+    [components]
+    hackergotchi.* = enabled
+
+Example
+=======
+
+To never use the Gravatar provider::
+
+    [hackergotchi]
+    providers = IdenticonHackergotchiProvider
+    
+    [components]
+    hackergotchi.* = enabled
+    hackergotchi.providers.GravatarHackergotchiProvider = disabled
+
