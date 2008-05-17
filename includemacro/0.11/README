@@ -50,7 +50,7 @@ Include a reStructuredText__ file from the repository::
 
     [[Include(source:trunk/docs/README, text/x-rst)]]
 
-__ http://docutils.sf.net/rst.htm
+__ http://docutils.sf.net/rst.html
 
 .. tip::
     If you set the ``svn:mime-type`` property on the file, you can  
