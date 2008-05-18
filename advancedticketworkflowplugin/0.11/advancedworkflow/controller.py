@@ -349,3 +349,50 @@ class TicketWorkflowOpTriage(TicketWorkflowOpBase):
             self.env.log.error("Bad configuration for 'triage' operation in action '%s'" % action)
             status = 'new'
         return status
+
+
+class TicketWorkflowOpXRef(TicketWorkflowOpBase):
+    """Adds a cross reference to another ticket
+
+    <someaction>.operations = xref
+    <someaction>.xref = "Ticket %s is related to this ticket"
+
+    Don't forget to add the `TicketWorkflowOpXRef` to the workflow
+    option in [ticket].
+    If there is no workflow option, the line will look like this:
+
+    workflow = ConfigurableTicketWorkflow,TicketWorkflowOpXRef
+    """
+
+    _op_name = 'xref'
+
+    # ITicketActionController methods
+
+    def render_ticket_action_control(self, req, ticket, action):
+        """Returns the action control"""
+        id = 'action_%s_xref' % action
+        ticketnum = req.args.get(id, '')
+        actions = ConfigurableTicketWorkflow(self.env).actions
+        label = actions[action]['name']
+        hint = 'The specified ticket will be cross-referenced with this ticket'
+        control = tag.input(type='text', id=id, name=id, value=ticketnum)
+        return (label, control, hint)
+
+    def get_ticket_changes(self, req, ticket, action):
+        """Returns no changes."""
+        return {}
+
+    def apply_action_side_effects(self, req, ticket, action):
+        """Add a cross-reference comment to the other ticket"""
+        # TODO: This needs a lot more error checking.
+        id = 'action_%s_xref' % action
+        ticketnum = req.args.get(id).strip('#')
+        actions = ConfigurableTicketWorkflow(self.env).actions
+        format_string = actions[action].get('xref',
+                                        'Ticket %s is related to this ticket')
+        author = req.authname
+        comment = format_string % ('#%s' % ticket.id)
+        xticket = model.Ticket(self.env, ticketnum)
+        # We _assume_ we have sufficient permissions to comment on the other
+        # ticket.
+        xticket.save_changes(author, comment)
