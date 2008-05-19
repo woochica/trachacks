@@ -163,9 +163,11 @@
                     <py:choose test="">
                       <py:when test="'rendered' in field">${field.rendered}</py:when>
                       <py:otherwise>
+		      <py:if test="ticket[field.name]">
 			<a href="${query_link(field.name, ticket[field.name])}">
 			  ${ticket[field.name]}
 			</a>
+			</py:if>		
 		      </py:otherwise>
                     </py:choose>
                   </py:if>
