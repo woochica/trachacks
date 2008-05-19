@@ -9,10 +9,11 @@ e.g., http://mytrac.com/wiki/ParentPage/ChildPage/GrandchildPage
 Start Page / ParentPage / ChildPage / GrandchildPage
 ..where all are links except for the current, GrandchildPage.
 
- - http://trac.edgewall.org/wiki/MacroBazaar#ShowPath
- - http://trac-hacks.org/wiki/TracShowPathPatch
+ * http://trac-hacks.org/wiki/ShowPathPlugin
 
-Just drop in your trac/<projectname>/plugins dir.
+Just drop in your trac/<projectname>/plugins dir. If you are using
+an inherited plugins_dir in Trac, that will also work to place this
+file there.
 
 Supports one optional trac.ini setting, sep_character, which
 specifies the character to use in the path display:
@@ -26,6 +27,7 @@ only the first non-whitespace character will be used.
 2007 Morris - gt4329b@pobox.com
 rfmorris on irc://freenode/trac
 
+2008 Modification by Jason Winnebeck
 """
 
 from pprint import pprint, pformat
@@ -61,6 +63,7 @@ class ShowPath(Component):
     # ITemplateStreamFilter methods
     
     def filter_stream(self, req, method, filename, stream, data):
+        href = self.env.href
         page_path = req.args.get('page',None)
         if not page_path or page_path == 'WikiStart':
             return stream
@@ -70,18 +73,17 @@ class ShowPath(Component):
         page_paths.reverse()
 
         _links = []
-        _base = "/wiki"
-        _prev_path = ""        
+        _prev_path = "" 
         while page_paths:
             page_path = page_paths.pop()
             _prev_path += "/" + page_path
             _link = None
             if page_paths:
-                _link = _base + _prev_path
+                _link = href.wiki( _prev_path )
             t = (page_path, _link)
             _links.append(t)
         # always prepend the default start page link
-        _links = [('Start Page','/wiki/WikiStart')] + _links
+        _links = [('Start Page',href.wiki('WikiStart'))] + _links
         
         r = []
         for link in _links:
@@ -98,7 +100,7 @@ class ShowPath(Component):
         # http://genshi.edgewall.org/wiki/GenshiRecipes/HtmlTransform
         # http://genshi.edgewall.org/browser/trunk/genshi/filters/transform.py
         t1 = Transformer(
-            "//div[@id='ctxtnav']//a[@href='/wiki/WikiStart']") \
+            "//div[@id='ctxtnav']//a[contains(@href,'%s')]" % href.wiki('WikiStart')) \
                 .replace(r)
         stream |= t1
         return stream
