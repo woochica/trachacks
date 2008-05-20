@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+from trac.web.api import IRequestFilter
+from trac.web.chrome import *
+from trac.core import *
+
+from genshi.builder import tag
 
 """
 0.11dev rewrite of original ShowPath functionality.  Replaces 
@@ -18,7 +22,7 @@ file there.
 Supports one optional trac.ini setting, sep_character, which
 specifies the character to use in the path display:
     [showpath]
-    sep_character = »
+    sep_character = .
 The default is a forward slash (/); note that no matter what character
 is specified, it will always be rendered with a single space on
 either side.  If you specify a string of more than one character,
@@ -30,25 +34,10 @@ rfmorris on irc://freenode/trac
 2008 Modification by Jason Winnebeck
 """
 
-from pprint import pprint, pformat
-
-from trac.core import *
-#from trac.ticket.query import TicketQueryMacro
-#from trac.wiki.macros import WikiMacroBase
-from trac.wiki.api import parse_args
-from trac.web import IRequestHandler, IRequestFilter, ITemplateStreamFilter
-
-## genshi imports (genshi.filters.Transformer requires Genshi 0.5+)
-##  http://genshi.edgewall.org/
-from genshi.builder import tag
-from genshi.filters import Transformer
-from genshi.core import TEXT
-from genshi.input import HTML
-
 _DEFAULT_SEP = '/'
 
 class ShowPath(Component):
-    implements(ITemplateStreamFilter)
+    implements(IRequestFilter)
 
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
@@ -58,15 +47,24 @@ class ShowPath(Component):
         if self.sep_character == '':
             self.sep_character = _DEFAULT_SEP
         self.sep_character = self.sep_character[0]
-            
 
-    # ITemplateStreamFilter methods
-    
-    def filter_stream(self, req, method, filename, stream, data):
-        href = self.env.href
+    # IRequestFilter methods
+
+    def post_process_request(self, req, template, data, content_type):
         page_path = req.args.get('page',None)
         if not page_path or page_path == 'WikiStart':
-            return stream
+            return template, data, content_type
+
+        href = req.href
+        nav = req.chrome['ctxtnav']
+        wikiStartIndex = None
+        for i, elm in enumerate( nav ):
+            if elm.tag == 'a' and elm.attrib.get('href') == href.wiki('WikiStart'):
+                wikiStartIndex = i
+                break
+
+        if wikiStartIndex is None:
+            return template, data, content_type
 
         page_paths = page_path.split('/')
         # reverse it so we can .pop() in the necessary order
@@ -96,11 +94,11 @@ class ShowPath(Component):
                 #  ..so _href is None 
                 #  ..so no sep char appended
                 r += tag(text)
-                
-        # http://genshi.edgewall.org/wiki/GenshiRecipes/HtmlTransform
-        # http://genshi.edgewall.org/browser/trunk/genshi/filters/transform.py
-        t1 = Transformer(
-            "//div[@id='ctxtnav']//a[contains(@href,'%s')]" % href.wiki('WikiStart')) \
-                .replace(r)
-        stream |= t1
-        return stream
+
+        nav[i] = r
+
+        print r
+        return template, data, content_type
+
+    def pre_process_request(self, req, handler):
+        return handler
