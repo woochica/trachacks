@@ -76,8 +76,7 @@ class AutoqueryPlugin(Component):
 
         (Since 0.11)
         """
-        path = req.environ.get('PATH_INFO')
-        if path.startswith('/ticket'):
+        if template == 'ticket.html':
             query = self.env.href() + '/query?%s=%s' + self.query_args
             data['query_link'] = lambda x, y: query % (x, urllib.quote_plus(y))
             template = 'autoquery_ticket.html'
