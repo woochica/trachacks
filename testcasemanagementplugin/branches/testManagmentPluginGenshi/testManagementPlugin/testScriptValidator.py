@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+#Author:   Eoin Dunne
+#email:   edunnesoftwaretesting@hotmail.com
+#May 2008
+#
+#
+#Thanks to the guys at TRAC and the author of the TRAC admin tool.  The main controller is based on your design.
+#
+#Long live open source!
 
 import re
 
@@ -24,21 +31,23 @@ class TestScriptValidator(Component):
     
     properties = Properties() #get set up with with a properties instance...
         
-    def process_testmanager_request(self, req ):
+    def process_testmanager_request(self, req, data=None ):
         #check for errors in the testcases and configuration, if there are no errors let the user know, and vice versa
         try:
             errors = self.properties.validateTestCases( self, req )
             
             if errors : 
-                req.hdf['testcase.run.errormessage'] = errors
-                return "testRunNotConfigured.cs", None
+                data["errorMessage"] = "error fetching test case list"
+                data["errorsList"] = errors
+                return "testRunNotConfigured.html", data, None
             else:
-                req.hdf['testcase.validate.pathConfiguration'] = self.properties.getTestCasePath( self, req)
-                req.hdf['testcase.validate.urlPath'] = req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath( self, req) 
-                return "validated.cs", None
+                data['validate_pathConfiguration'] = self.properties.getTestCasePath( self, req)
+                data['validate_urlPath'] = req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath( self, req) 
+                return "validated.html", data, None
         except Exception, ex:
-            req.hdf['testcase.run.errormessage'] = str( ex )
-            return "testRunNotConfigured.cs", None
+            data["errorMessage"] = "error fetching test case list"
+            data["errorsList"] = str( ex )
+            return "testRunNotConfigured.html", data, None
             
     def get_path( self, req ):
         return "validate"

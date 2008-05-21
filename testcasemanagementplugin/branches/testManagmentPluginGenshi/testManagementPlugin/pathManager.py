@@ -22,20 +22,21 @@ class SetPathManager (Component):
     
     properties = Properties() #get set up with with a properties instance...
         
-    def process_testmanager_request(self, req ):
+    def process_testmanager_request(self, req, data=None ):
         if req.method == "POST":
 
             allTestcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
             
             if errors :
-                req.hdf['testcase.run.errormessage'] = errors
-                return "testRunNotConfigured.cs", None      
+                data["errorMessage"] = "error fetching test case list"
+                data["errorsList"] = errors
+                return "testRunNotConfigured.html", data, None      
             else : 
                  req.redirect( req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath( self, req) )
 
         else:
-            req.hdf['testcases.path.path'] = self.properties.getTestCasePath( self, req)
-            return "choosePathForTestRun.cs", None
+            data['pathManager_path'] = self.properties.getTestCasePath( self, req)
+            return "choosePathForTestRun.html", data, None
 
     def get_path( self, req ):
         return "testrunbranch"

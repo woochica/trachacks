@@ -1,0 +1,29 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+<head></head>
+<body>
+    <br/>
+    <xi:include href="header.html" />
+    <br/>
+    <br/>
+    <h2>Validated successfully</h2>
+    <fieldset>
+        <p>
+            Congrats! You should be able to succesfully create a test run for the testcases and testtemplates.xml file located at: 
+            <br/>
+            <br/>
+            <b>$validate_pathConfiguration</b>
+            <br/>
+            <p>
+                Click on the following link to continue <a href="$validate_urlPath">CLICK HERE TO CREATE A TESTRUN FOR THE ABOVE PATH</a>
+            </p>
+            <br/>
+        </p>
+    </fieldset>
+</body>
+</html>

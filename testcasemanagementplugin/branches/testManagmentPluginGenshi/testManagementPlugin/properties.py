@@ -1,3 +1,12 @@
+#Author:   Eoin Dunne
+#email:   edunnesoftwaretesting@hotmail.com
+#May 2008
+#
+#
+#Thanks to the guys at TRAC and the author of the TRAC admin tool.  The main controller is based on your design.
+#
+#Long live open source!
+
 import re
 
 import string
@@ -36,14 +45,18 @@ class Properties :
         return milestones
         
     def hasTestCases(self, component, req ):
-        #check to see if the path to the testcases has been specified for this component in this project.
-             
-        testcasePath = self.getTestCasePath( component, req )
-        repository = self.getRepository( component, req )
-        
-        #return repository.has_node( testcasePath ), testcasePath  
-        return True, testcasePath
+        try: 
+            #check to see if the path to the testcases has been specified for this component in this project.
+                 
+            testcasePath = self.getTestCasePath( component, req )
+            repository = self.getRepository( component, req )
             
+            #return repository.has_node( testcasePath ), testcasePath  
+            return True, testcasePath, None
+            
+        except Exception, ex: 
+            return FALSE, testcasePath, str( ex )    
+        
     def getTestCasePath(self, component, req):
         #potentially a user wants to use the branch for testcases so check that first
         path = req.args.get('pathConfiguration')
@@ -88,27 +101,25 @@ class Properties :
                 if match:
                     try:
                         content = entry.get_content().read()
-                        testcase = TestCase( entry.get_name(), str(content), component )
+                        testcase = TestCase( entry.get_name(), str(content), component, entry.get_name() )
                         testcases[ testcase.getId().encode('ascii', 'ignore').strip() ] =  testcase 
+                    
                     except Exception, ex:
-                        errors.append( "The testcsae  :" + entry.get_name() + "  is not well formed xml...a parse error occured " )
-                        component.env.log.debug( "The testcsae  :" + entry.get_name() + "  is not well formed xml...a parse error occured " )
-                        
+                        errors.append( "The testcase  :" + entry.get_name() + "  is not well formed xml...a parse error occured " )
                         
         #first let's do some validation on the testcases...
         components = self.getComponents( component, req )
         currentTestcase = None
         component.env.log.debug( "testcases length is : " + repr( len( testcases ) ) )
-        try:
-            for key, value in testcases.iteritems():
-                currentTestcase = value #incase we do toss an exception I'll want some information from this testcase
-                components.index( value.getComponent().encode('ascii', 'ignore').strip() ) #this will toss an exception if the component in the testcase doesn't exist in the trac project
-        except Exception, ex:
-            errors.append( "The component :" + currentTestcase.getComponent() + ", in the testcase : " + currentTestcase.getId() + ", does not exist in the trac project "  )
-            component.env.log.debug( "The component :" + currentTestcase.getComponent() + ", in the testcase : " + currentTestcase.getId() + ", does not exist in the trac project "  )
-            
-        component.env.log.debug( "testcases length is : " + repr( len( testcases ) ) )
-
+        for key, value in testcases.iteritems():
+            try:
+                    currentTestcase = value #in case we do toss an exception I'll want some information from this testcase
+                    components.index( value.getComponent().encode('ascii', 'ignore').strip() ) #this will toss an exception if the component in the testcase doesn't exist in the trac project
+                    
+            except Exception, ex:
+                errors.append( "The component :" + currentTestcase.getComponent() + ", in the testcase : " + currentTestcase.getId() + "  in the file : " + currentTestcase.getFileName() + ", does not exist in the trac project "  )
+                
+                
         return testcases, errors #ok return the testcases
         
     def getTemplates( self, component, req ):
@@ -171,7 +182,7 @@ class Properties :
                 allTestcases, errors = self.getTestCases( component, req ) #fetch the testcases...
                 
                 #append the error message saying testtemplates.xml doesn't exist, then exit.
-                errors.append( "No file called testtemplates.xml file found.  This is the file necessary for grouping testcases into predefined test scripts...like a smoke test" )
+                errors.append( "No file called testtemplates.xml file found.  This is the file necessary for grouping testcases into predefined test scripts even if it is just a stub (i.e) one template name and one testid..." )
                 
         except Exception, ex:
             errors.append( "An uspecified error occured...the most likely cause is either the path subversionpathtotestcases or repository_dir configuration values are set wrong in the trac.conf file.  Error message included hopefully it will be useful")
@@ -180,6 +191,24 @@ class Properties :
         return errors
         
         
+    def trimOutAnyProblemStrings( self, input ):
+        #trim out any characters/strings that could cause issues in the sql statement.  I should just escape them but for now this is a quick hack
+        #this method doesn't really belong here.  But I jammed it in because I'm a little rushed.  Probably should dump it into a seperate python util file.
+        
+        #make sure input is a real string
+        if not (input) :
+            return input
+        input = input.replace('\'', '-') #replace anything that will cause issues in the sql statement
+        input = input.replace(',', '-') #replace anything that will cause issues in the sql statement
+        input = input.replace('"', '-') #replace anything that will cause issues in the sql statement
+        input = input.replace('&', '-') #replace anything that will cause issues in the sql statement
+        input = input.replace('%', '-') #replace anything that will cause issues in the sql statement
+        input = input.replace('delete', '-') #replace anything that will cause issues in the sql statement
+        input = input.replace('drop', '-') #replace anything that will cause issues in the sql statement
+        input = input.replace('insert', '-') #replace anything that will cause issues in the sql statement
+        
+        return input
+            
 class Templates:
     
     def getTestsForTemplate( self, templateName ):
@@ -219,6 +248,9 @@ class Templates:
 
 class TestCase :
     #accessor methods for private properties
+    def getFileName(self) :
+        return self.fileName
+    
     def getId(self) : 
         return self.id.encode('ascii', 'ignore').strip()
     
@@ -234,12 +266,15 @@ class TestCase :
     def getExpectedResult(self):
         return self.expectedresult
         
-    def __init__(self, testcasename, testCaseContent, component ) : 
+    def __init__(self, testcasename, testCaseContent, component, fileName = None ) : 
         self.id = ""
         self.summary = ""
         self.description = ""
         self.expectedresult = ""
         self.component = ""
+        self.fileName = ""
+        
+        self.fileName = fileName
 
         attributesList = ['id', 'summary','description','expectedresult', 'component']
         

@@ -1,4 +1,12 @@
-#!/usr/bin/env python
+#Author:   Eoin Dunne
+#email:   edunnesoftwaretesting@hotmail.com
+#May 2008
+#
+#
+#Thanks to the guys at TRAC and the author of the TRAC admin tool.  The main controller is based on your design.
+#
+#Long live open source!
+
 
 import re
 
@@ -33,11 +41,10 @@ class TestRunManager(Component):
     
     properties = Properties() #get set up with with a properties instance...
     
-    def process_testmanager_request(self, req):
-        
-        req.hdf['testcase.run.basepath'] = req.base_url  
-        
-        hasTestCases, path = self.properties.hasTestCases( self, req )
+    def process_testmanager_request(self, req, data ):
+        hasTestCases, testCaseSVNpath, errors = self.properties.hasTestCases( self, req )
+        data["hasTestCases"] = hasTestCases
+        data["testrun_svn_path"] =  testCaseSVNpath
         
         if hasTestCases :
             if req.method == "POST":
@@ -50,21 +57,81 @@ class TestRunManager(Component):
                     req.redirect( errorMessage_orQueryURL )
                 
                 else:
-                    req.hdf['testcase.run.errormessage'] = errorMessage_orQueryURL
-                    req.hdf['testcase.run.pathConfiguration'] = self.properties.getTestCasePath(self, req)
-                    req.hdf['testcase.run.urlPath'] = req.base_url + "/testmanagement/runs?pathConfiguration=" + self.properties.getTestCasePath(self, req)
-                    return "testRunNotConfigured.cs", None
+                    
+                    data["errorMessage"] = errorMessage_orQueryURL 
+                    return "testRunNotConfigured.html", data, None
                 
-            else :
+            elif errors != None :
+                self.env.log.info( "ARG!")
+                data["errorMessage"] = errors
+                return template, data, content_type
+                
+            else: 
                 # Show Test Run Generation Form: allows a manager to assign testruns to QA staff.
-                return self.provideDefaultCreateTestRunPage( req )
-            
+                self.env.log.info( "it wasn't a post....so we know where we are....trying to generate the default page" )
+                template, data, content_type = self.provideDefaultCreateTestRunPage( req, data )
+                return template, data, content_type
+                
         else:
+            return "testRunNotConfigured.html", data, None
             #handle when we don't have any test cases...for whatever reason....
-            req.hdf['testcase.run.errormessage'] = "Path in config file is does not exist in subversion...resolved path was: " + path
-            return "testRunNotConfigured.cs", None
+            #req.hdf['testcase.run.errormessage'] = "Path in config file is does not exist in subversion...resolved path was: " + path
+            #return "testRunNotConfigured.cs", None
             
+        return "testrun.html", data, None
+        
+    def get_path( self, req ):
+        return "runs"
+    
+    def get_descriptive_name(self):
+        return "Create Test Run from main line"
+    
+    
+    def provideDefaultCreateTestRunPage( self, req, data ) : 
+        """
+            this method will retrive a list of users, milestones, versions, testcases, and test templates.
+            Test case information and test template information comes from subversion while version and user information comes from TRAC.
+        
+        """
+        testcaseNames = []
+        testcaseTemplates = []
+        
+        #ok now let's extract out of testcases what we need which is mostly testcase ids and template names..
+        
+        testcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
 
+        self.env.log.info( "TESTCASES" + repr(testcases) + " ERRORS : " + repr(errors) )
+        
+        if testcases == None or len(errors) > 0 : 
+            data["errorMessage"] = "No test cases found or other error...see list below if any"
+            data["errorsList"] = errors
+            return "testRunNotConfigured.html", data, None
+            
+        for key, testcase in testcases.iteritems():
+            testcaseNames.append( testcase.getId() )
+        testcaseNames.sort()
+                
+        templates = self.properties.getTemplates(self, req )
+        templateNames = []
+        if templates != None : 
+            templateNames = templates.getTemplateNames()
+        
+        milestones = self.properties.getMilestones(self, req )
+        milestones.append("")   #this is so there is a blank in the drop down select...default is none...
+        versions = self.properties.getVersions(self, req )
+        versions.append("")  #ditto
+        
+        self.env.log.info( "KNOWN USERS : " + repr ( self.properties.getKnownUserNamesOnly(self, req) ) )
+        
+        data['testrun_users'] = self.properties.getKnownUserNamesOnly(self, req)
+        data['testrun_testcases'] = testcaseNames
+        data['testrun_testtemplates'] = templateNames
+        data['testrun_versions'] = versions
+        data['testrun_milestones'] =  milestones
+        data['testrun_validatePath'] = req.base_url + "/testmanagement/validate?pathConfiguration=" + self.properties.getTestCasePath(self, req)
+                
+        return "testrun.html", data, None
+        
     def generateTracTickets( self, req ) :
         """
             ok, it's a post so we know we are supposed to go ahead and create some TRAC tickets...the parameters that we care about are:
@@ -80,16 +147,20 @@ class TestRunManager(Component):
         """
         
         #grab the parameters that we care about out of the request object
-        testRunDescription = str( req.args.get('testrundescription') )
-        users = req.args.get('users')
-        testTemplates = req.args.get('testtemplates')
-        testcases = req.args.get('testcases')
-        version = str( req.args.get('selectedversion'))
-        milestone = str( req.args.get('selectedmilestone'))
-        testConfiguration = str( req.args.get('testconfiguration'))
+        testRunKeyWord = str( req.args.get('testrun_keyword') )
+        users = req.args.get('testrun_users')
+        testTemplates = req.args.get('testrun_selectedtemplates')
+        testcases = req.args.get('testrun_selectedtestcases')
+        version = str( req.args.get('testrun_selectedversion'))
+        milestone = str( req.args.get('testrun_selectedmilestone'))
+        testConfiguration = str( req.args.get('testrun_testconfiguration'))
         
         #-----------------------------------ERROR CHECKING ON PARAMETERS--------------------------------------------
         #it might make sense to create a new method to validate the parameters passed in but for now we'll leave it.
+        
+        if testRunKeyWord == None : 
+            testRunKeyWord = ""
+        testRunKeyWord = self.properties.trimOutAnyProblemStrings(testRunKeyWord)  #this is manually typed in...so it's probably to look for sqlInjection etc...
         
         if version == None:
             version = ""
@@ -125,7 +196,7 @@ class TestRunManager(Component):
             testcases = [] #so we don't get a blow up later...
             if testTemplates == None :
                 return False, "must select at least one testcase or test template to create a test run"
-                return 'errorCreatingTestRun.cs', None
+    
         elif testTemplates == None :
             testTemplates = []
     
@@ -174,7 +245,7 @@ class TestRunManager(Component):
                     ticket.values['owner'] = aUser
                     ticket.values['version'] = version
                     ticket.values['milestone'] = milestone
-                    ticket.values['keywords'] = "Test_ver" + version + "_mile_" + milestone
+                    ticket.values['keywords'] = testRunKeyWord  
                     #self._validate_ticket(req, ticket)   #probably should validate the ticket here.
                     ticket.insert(db=db)
                     db.commit()
@@ -188,7 +259,7 @@ class TestRunManager(Component):
                     del req.session[var]
         
         #redirect to a custom query report showing the created tickets
-        return True, req.base_url + "/query?status=new&status=assigned&status=reopened&testcase_result=&version=" + version + "&milestone=" + milestone + "&type=testcase&order=priority&group=owner"
+        return True, req.base_url + "/query?status=new&status=assigned&status=reopened&status=accepted&testcase_result=&version=" + version + "&milestone=" + milestone + "&type=testcase&order=priority&group=owner"
 
     def createCombinedTestCaseList( self, testTemplates, testcases, req ) :
                  
@@ -199,6 +270,7 @@ class TestRunManager(Component):
             tempTestCaseList = []
             for name in testTemplates : 
                 name = name.encode('ascii', 'ignore')
+                name  = self.properties.trimOutAnyProblemStrings(name )
                 testIds = projTemplates.getTestsForTemplate( name )
                 if testIds != None : 
                     for id in testIds : 
@@ -212,53 +284,4 @@ class TestRunManager(Component):
                         tempTestCaseList.append( test )
             
             return tempTestCaseList
-        
-    def provideDefaultCreateTestRunPage( self, req ) : 
-        """
-            this method will retrive a list of users, milestones, versions, testcases, and test templates.
-            Test case information and test template information comes from subversion while version and user information comes from TRAC.
-        
-        """
-        testcaseNames = []
-        testcaseTemplates = []
-        
-        #ok now let's extract out of testcases what we need which is mostly testcase ids and template names..
-        
-        testcases, errors = self.properties.getTestCases( self, req ) #fetch the testcases...
-        
-        if testcases == None or errors : 
-            #there was an error of some kind fetching the testcases...    
-            req.hdf['testcase.run.errormessage'] = errors
-                    
-            return "testRunNotConfigured.cs", None 
-            
-        for key, testcase in testcases.iteritems():
-            testcaseNames.append( testcase.getId() )
-        testcaseNames.sort()
-                
-        templates = self.properties.getTemplates(self, req )
-        templateNames = []
-        if templates != None : 
-            templateNames = templates.getTemplateNames()
-        
-        sprints = self.properties.getMilestones(self, req )
-        sprints.append("")   #this is so there is a blank in the drop down select...default is none...
-        versions = self.properties.getVersions(self, req )
-        versions.append("")  #ditto
-        
-        req.hdf['testcase.run.validatePath'] = req.base_url + "/testmanagement/validate?pathConfiguration=" + self.properties.getTestCasePath(self, req)
-        req.hdf['testcase.run.pathConfiguration'] = self.properties.getTestCasePath(self, req)
-        req.hdf['testcase.run.users']= self.properties.getKnownUserNamesOnly(self, req)
-        req.hdf['testcase.run.testcases']= testcaseNames
-        req.hdf['testcase.run.testtemplates']= templateNames
-        req.hdf['testcase.run.sprints']= sprints
-        req.hdf['testcase.run.versions']= versions
-                
-        return 'testRuns.cs', None
-        
-
-    def get_path( self, req ):
-        return "runs"
-    
-    def get_descriptive_name(self):
-        return "Create Test Run from mainline"
+   

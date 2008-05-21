@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+<head>Testcase Managment Error Page</head>
+<body>
+<h2>Configuration Problem</h2>
+
+<fieldset>
+<table >
+<tr>
+<td>
+There appears to be a configuration problem for the testcaseplugin.  The reason could be one of the following:
+<li>there are no testcases in subversion at the specified path...check some tests into Subversion and try again</li>
+<li>the trac.ini file is missing the config variable SubversionPathToTestCases under the section 'testManagementExtension'</li>
+<li>the current user is not allowed to access the subversion repository using the current trac acount</li>
+</td>
+</tr>
+</table>
+<p>
+Error message if any specified here : <b>$errorMessage</b>
+<fieldset>
+<py:for each="error in errorsList" >
+<li>$error</li>
+</py:for >
+<br/>
+<br/>
+<br/>
+<p>
+SubversionPathToTestCases (from trac.conf): <b>$testrun_svn_path</b>
+</p>
+<br/>
+</fieldset>
+</p>
+
+</fieldset>
+</body>
+</html>

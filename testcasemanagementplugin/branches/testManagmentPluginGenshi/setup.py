@@ -1,26 +1,14 @@
-from setuptools import setup, find_packages
-#setup(
-#    name = "sprintReports",
-#    version = "0.1",
-#    packages = find_packages(),
-#)
-
-
-from setuptools import setup, find_packages
-
-PACKAGE = 'testManagementPlugin'
-VERSION = '0.4.0'
+from setuptools import find_packages, setup
 
 setup(
-    name=PACKAGE, version=VERSION,
-    description='test case management tool',
-    author="Eoin Dunne", author_email="eoin.dunne@divestco.com",
+    name='testManagementPlugin', version='0.11.1',
+    author="Eoin Dunne", author_email="edunnesoftwaretesting@hotmail.com",
     license='BSD', url='http://www.trac-hacks.org/wiki/TestCaseManagementPlugin',
     packages=['testManagementPlugin'],
     package_data={
         'testManagementPlugin': [
             'htdocs/css/*.css',
-            'templates/*.cs',
+            'templates/*.html',
             'htdocs/img/*.png',
             'htdocs/js/*.js'
         ]
@@ -29,29 +17,10 @@ setup(
         'trac.plugins' : [
          'testManagement=testManagementPlugin.testManager',
          'manageTestRuns=testManagementPlugin.testRuns',
-         'setPathForTestcases=testManagementPlugin.pathManager',
          'testRunResults=testManagementPlugin.testResults',
+         'setPathForTestcases=testManagementPlugin.pathManager',
          'validateTestRun=testManagementPlugin.testScriptValidator'
         ]
     },
 )
-
-
-#package_data={
-    #    'webadmin': [
-    #        'htdocs/css/*.css',
-    #        'htdocs/img/*.png',
-    #        'htdocs/js/*.js',
-    #        'templates/*.cs'
-    #    ]
-    #},
-    #entry_points = {
-    #    'trac.plugins': [
-    #        'webadmin.web_ui = webadmin.web_ui',
-    #        'webadmin.basics = webadmin.basics',
-    #        'webadmin.logging = webadmin.logging',
-    #        'webadmin.perm = webadmin.perm',
-    #        'webadmin.plugin = webadmin.plugin',
-    #        'webadmin.ticket = webadmin.ticket'
-    #    ]
     

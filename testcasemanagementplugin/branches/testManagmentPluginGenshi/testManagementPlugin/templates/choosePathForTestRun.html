@@ -1,8 +1,19 @@
-
-    <h2>Enter the path to the location of the testcases in a branch</h2>
-    
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+<head></head>
+<body>
+<br/>
+<xi:include href="header.html" />
+<br/>
+<h2>Enter the path to the location of the testcases in a branch</h2>   
+    <h2>Manage Test Run</h2>
     <form class="mod" id="orgTemp" method="post">
-         <fieldset>
+    <fieldset>
             <legend>Set Temporary path to Testcase location </legend>
             <div id="createNewRun">
                 <table>
@@ -13,7 +24,7 @@
                                 <br/>
                                 <p>Subversion is case sensative so make sure the path is correct...</p>
                                 <br/>
-                                <input type="text" name="pathConfiguration" size="60" value=<?cs var:testcases.path.path ?> />
+                                <input type="text" name="pathConfiguration" size="60" value="$pathManager_path" />
                                 <br/>
                                 <br/>
                                 <p>
@@ -24,8 +35,11 @@
                         </td>
                     </tr>
                 </table>
+            </div>
             <div class="buttons">
-                <input type="submit" name="setbranchlocation" value="Set Branch Location">
+                <input type="submit" name="setbranchlocation" value="Set Branch Location"/>
             </div>
         </fieldset>
     </form>
+    </body>
+</html>

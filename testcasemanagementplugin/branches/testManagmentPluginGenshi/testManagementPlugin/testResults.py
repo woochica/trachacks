@@ -20,7 +20,7 @@ from testManager import ITestManagerRequestHandler
 class TestResults(Component):
     implements(ITestManagerRequestHandler)
     
-    def process_testmanager_request(self, req ):
+    def process_testmanager_request(self, req, data=None ):
         #for now let's just re-direct to a query page that shows all open testcases grouped by owner and ordered by milestone 
         query_URL = req.base_url + "/query?status=new&status=assigned&status=reopened&testcase_result=&type=testcase&order=milestone&group=owner"
         req.redirect( query_URL )
