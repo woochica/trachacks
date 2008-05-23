@@ -85,15 +85,15 @@
 		<!-- Display a full reviewer drop-down list if it's a new CodeReview, display unassigned reviewers if resubmitted -->
 		<py:choose test="new">
 			<span py:when="'yes'">
-				<select py:for="item in users" id="Reviewers">
-					<option value="${item}">${item}</option>
+				<select id="Reviewers">
+					<option py:for="item in users" value="${item}">${item}</option>
 				</select>
 			</span>
 			<span py:otherwise="">
 				<py:choose test="emptyList">
 					<span py:when="0">
-						<select py:for="item in notPrevUsers" id="Reviewers">
-							<option value="${item}">${item}</option>
+						<select id="Reviewers">
+							<option py:for="item in notPrevUsers" value="${item}">${item}</option>
 						</select>
 					</span>
 					<span py:otherwise="">
@@ -101,7 +101,7 @@
 							<option value="-1">--All users exhausted--</option>
 						</select>
 					</span>
-				</py:choose>>
+				</py:choose>
 			</span>
 		</py:choose>
 		<py:choose test="emptyList">
