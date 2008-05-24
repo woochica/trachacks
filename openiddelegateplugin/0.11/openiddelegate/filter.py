@@ -19,7 +19,7 @@ class OpenIDDelegateFilter(Component):
                       doc='Identity to use for OpenID delegation.')
 
     known_servers = {
-        r'http://[^.]+.livejournal.com': 'http://www.livejournal.com/openid/server.bml',
+        r'^http://[^.]+.livejournal.com$': 'http://www.livejournal.com/openid/server.bml',
     }
     
     def __init__(self):
@@ -36,7 +36,7 @@ class OpenIDDelegateFilter(Component):
             server = self.server
             if not server:
                 for id_regex, server_href in self.known_servers.iteritems():
-                    if id_regex.match(self.delegate):
+                    if id_regex.search(self.delegate):
                         server = server_href
                         break
                 else:

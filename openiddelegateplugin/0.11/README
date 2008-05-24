@@ -3,3 +3,37 @@ Notes
 
 A simple plugin to provide OpenID__ delegation services to a Trac page.
 
+__ http://openid.net
+
+Configuration
+=============
+
+All configuration options go in the ``[openid]`` section.
+
+``delegate`` : *required*
+    The OpenID identity to delegate to.
+
+``server`` : *mostly optional*
+    The location of the OpenID server to use when verifying the delegate
+    identity. If not specified, an attempt is made to provide the server for
+    well-known identity end points:
+    
+    * LiveJournal
+
+To enable the plugin::
+
+    [components]
+    openiddelegate.* = enabled
+
+Example
+=======
+
+::
+
+    [openid]
+    delegate = http://username.livejournal.com
+    
+    [components]
+    openiddelegate.* = enabled
+
+
