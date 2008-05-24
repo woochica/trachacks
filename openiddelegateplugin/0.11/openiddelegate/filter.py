@@ -35,7 +35,7 @@ class OpenIDDelegateFilter(Component):
             add_link(req, 'openid.delegate', self.delegate)
             server = self.server
             if not server:
-                for id_regex, server_href in self.known_servers:
+                for id_regex, server_href in self.known_servers.iteritems():
                     if id_regex.match(self.delegate):
                         server = server_href
                         break
