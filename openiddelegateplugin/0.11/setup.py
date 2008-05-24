@@ -12,7 +12,7 @@ setup(
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
     description = 'Add OpenID delegation links to a Trac site.',
-    long_description = open(os.path.join(os.path.dirname(__file__), 'README').read(),
+    long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
     license = 'BSD',
     keywords = 'trac plugin',
     url = 'http://trac-hacks.org/wiki/OpenIDDelegatePlugin',
