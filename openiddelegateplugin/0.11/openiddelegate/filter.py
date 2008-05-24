@@ -19,7 +19,8 @@ class OpenIDDelegateFilter(Component):
                       doc='Identity to use for OpenID delegation.')
 
     known_servers = {
-        r'^http://[^.]+.livejournal.com$': 'http://www.livejournal.com/openid/server.bml',
+        r'^http://[^.]+.myopenid.com(/)?$': 'http://www.myopenid.com/server',
+        r'^http://[^.]+.livejournal.com(/)?$': 'http://www.livejournal.com/openid/server.bml',
     }
     
     def __init__(self):

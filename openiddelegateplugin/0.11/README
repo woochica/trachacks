@@ -18,6 +18,7 @@ All configuration options go in the ``[openid]`` section.
     identity. If not specified, an attempt is made to provide the server for
     well-known identity end points:
     
+    * MyOpenID
     * LiveJournal
 
 To enable the plugin::
