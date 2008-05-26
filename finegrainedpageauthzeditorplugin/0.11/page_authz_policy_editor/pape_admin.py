@@ -81,10 +81,10 @@ class PageAuthzPolicyEditor(Component):
     # iterated.
     def _get_groups_and_members(self):
         group_file_name = self.config.get('account-manager', 'group_file')
+        groups_dict = dict()
         if os.path.exists(group_file_name):
             group_file = file(group_file_name)
             try:
-                groups_dict = dict()
                 for group_line in group_file:
                     group = group_line.strip()
                     # Ignore blank lines and lines starting with #
