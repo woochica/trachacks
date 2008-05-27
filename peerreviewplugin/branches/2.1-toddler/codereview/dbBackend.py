@@ -13,7 +13,6 @@ from codereview.CodeReviewStruct import *
 from codereview.ReviewerStruct import *
 from codereview.ReviewFilesStruct import *
 from codereview.ReviewCommentStruct import *
-from codereview.dbEscape import dbEscape
 import string
 
 class dbBackend(object):
@@ -35,25 +34,21 @@ class dbBackend(object):
     #Returns an array of all the code reviews whose author is the given user
     def getMyCodeReviews(self, user):
         query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE Author = '%s' ORDER BY DateCreate" % (user)
-        #query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE Author= '" + dbEscape(user) + "' ORDER BY DateCreate"
         return self.execCodeReviewQuery(query, False)
 
     #Returns an array of all the code reviews who have the given user assigned to them as a reviewer
     def getCodeReviews(self, user):
         query = "SELECT cr.IDReview, cr.Author, cr.Status, cr.DateCreate, cr.Name, cr.Notes FROM CodeReviews cr, Reviewers r WHERE r.IDReview = cr.IDReview AND r.Reviewer = '%s' ORDER BY cr.DateCreate" % (user)
-        #query = "SELECT CodeReviews.IDReview, CodeReviews.Author, CodeReviews.Status, CodeReviews.DateCreate, CodeReviews.Name, CodeReviews.Notes FROM CodeReviews, Reviewers WHERE Reviewers.IDReview = CodeReviews.IDReview AND Reviewer = '" + dbEscape(user) + "' ORDER BY CodeReviews.DateCreate"
         return self.execCodeReviewQuery(query, False)
 
     #Returns an array of all the code reviews with the given status
     def getCodeReviewsByStatus(self, status):
         query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE Status = '%s' ORDER BY DateCreate" % (status)
-        #query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE Status= '" + dbEscape(status) + "'ORDER BY DateCreate"
         return self.execCodeReviewQuery(query, False)
 
     #Returns the number of votes of type 'type' for the given code review
     def getVotesByID(self, type, id):
         query = "SELECT Count(Reviewer) FROM Reviewers WHERE IDReview = '%s' AND Vote = '%s'" % (id, type)
-        #query = "SELECT Count(Reviewer) FROM Reviewers WHERE IDReview = '" + dbEscape(id) +"' AND Vote = '" + dbEscape(type) + "'"
         cursor = self.db.cursor()
         cursor.execute(query)
         row = cursor.fetchone()
@@ -64,70 +59,61 @@ class dbBackend(object):
     #Returns the code review requested by ID
     def getCodeReviewsByID(self, id):
         query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE IDReview = '%s'" % (id)
-        #query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE IDReview= '" + dbEscape(id) + "'"
         return self.execCodeReviewQuery(query, True)
 
     #Returns an array of code reviews which have a name like any of the
     #names given in the 'name' string
     def searchCodeReviewsByName(self, name):
-        queryPart = self.createORLoop(dbEscape(name), "Name")
+        queryPart = self.createORLoop(name, "Name")
         if len(queryPart) == 0:
             query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews"
         else:
             query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE %s" % (queryPart)
-            #query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE " + dbEscape(query)
         return self.execCodeReviewQuery(query, True)
 
     #Returns an array of code reviews that match the values in the given
     #code review structure.  The 'name' part is treated as a keyword list
     def searchCodeReviews(self, crStruct):
         query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE "
-        queryPart = self.createORLoop(dbEscape(crStruct.Name), "Name")
+        queryPart = self.createORLoop(crStruct.Name, "Name")
         if len(queryPart) != 0:
-            query = query + "(%s) AND " % queryPart
-        query = query + "Author LIKE '%%s%' AND Status LIKE '%%s%' AND DateCreate >= '%s'" % crStruct.Author, crStruct.Status, crStruct.DateCreate
+            query = query + "(%s) AND " % (queryPart)
+        query = query + "Author LIKE '%%s%' AND Status LIKE '%%s%' AND DateCreate >= '%s'" % (crStruct.Author, crStruct.Status, crStruct.DateCreate)
         return self.execCodeReviewQuery(query, False)
 
     #Returns an array of all the reviewers for a code review
     def getReviewers(self, id):
-        query = "SELECT IDReview, Reviewer, Status, Vote FROM Reviewers WHERE IDReview = %s" % (id)
-        #query = "SELECT IDReview, Reviewer, Status, Vote FROM Reviewers WHERE IDReview = '" + dbEscape(id) + "'"
+        query = "SELECT IDReview, Reviewer, Status, Vote FROM Reviewers WHERE IDReview = '%s'" % (id)
         return self.execReviewerQuery(query, False)
 
     #Returns a specific reviewer entry for the given code review and name
     def getReviewerEntry(self, id, name):
         query = "SELECT IDReview, Reviewer, Status, Vote FROM Reviewers WHERE IDReview = '%s' AND Reviewer = '%s'" % (id, name)
-        #query = "SELECT IDReview, Reviewer, Status, Vote FROM Reviewers WHERE IDReview = '" + dbEscape(id) + "' AND Reviewer = '" + dbEscape(name) + "'"
         return self.execReviewerQuery(query, True)
 
     #Returns an array of the files associated with the given review id
     def getReviewFiles(self, id):
-        query = "SELECT IDFile, IDReview, Path, LineStart, LineEnd, Version FROM ReviewFiles WHERE IDReview = %s" % (id)
-        #query = "SELECT IDFile, IDReview, Path, LineStart, LineEnd, Version FROM ReviewFiles WHERE IDReview = '" + dbEscape(id) + "'"
+        query = "SELECT IDFile, IDReview, Path, LineStart, LineEnd, Version FROM ReviewFiles WHERE IDReview = '%s'" % (id)
         return self.execReviewFileQuery(query, False)
 
     #Returns the requested review file
     def getReviewFile(self, id):
-        query = "SELECT IDFile, IDReview, Path, LineStart, LineEnd, Version FROM ReviewFiles WHERE IDFile = %s" % (id)
-        #query = "SELECT IDFile, IDReview, Path, LineStart, LineEnd, Version FROM ReviewFiles WHERE IDFile = '" + dbEscape(id) + "'"
+        query = "SELECT IDFile, IDReview, Path, LineStart, LineEnd, Version FROM ReviewFiles WHERE IDFile = '%s'" % (id)
         return self.execReviewFileQuery(query, True)
 
     #Returns the requested comment
     def getCommentByID(self, id):
-        query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDComment = %s" % (id)
-        #query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDComment = '" + dbEscape(id) + "'"
+        query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDComment = '%s'" % (id)
         return self.execReviewCommentQuery(query, True)
 
     #Returns an array of comments for the given file
     def getCommentsByFileID(self, id):
-        query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDFile = %s ORDER BY DateCreate" % (id)
-        #query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDFile = '" + dbEscape(id) + "' ORDER BY DateCreate"
+        query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDFile = '%s' ORDER BY DateCreate" % (id)
         return self.execReviewCommentQuery(query, False)
 
     #Returns all the comments for the given file on the given line
     def getCommentsByFileIDAndLine(self, id, line):
         query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDFile = '%s' AND LineNum = '%s' ORDER BY DateCreate" % (id, line)
-        #query = "SELECT IDComment, IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate FROM ReviewComments WHERE IDFile = '" + dbEscape(id) + "' AND LineNum = '" + dbEscape(line) + "' ORDER BY DateCreate"
         return self.execReviewCommentQuery(query, False)
 
     #Returns the current "Threshold" for code to be ready for inclusion
@@ -147,7 +133,7 @@ class dbBackend(object):
 
     #Sets the "Threshold" to the given value
     def setThreshold(self, val):
-        query = "UPDATE system SET value = '" + val + "' WHERE name = 'CodeReviewVoteThreshold'"
+        query = "UPDATE system SET value = '%s' WHERE name = 'CodeReviewVoteThreshold'" % (val)
         cursor = self.db.cursor()
         cursor.execute(query)
         self.db.commit()
@@ -155,7 +141,6 @@ class dbBackend(object):
     #Returns a dictionary where the key is the line number and the value is the number of comments on that line
     #for the given file id.
     def getCommentDictForFile(self, id):
-        #query = "SELECT LineNum, Count(IDComment) FROM ReviewComments WHERE IDFile = '" + dbEscape(id) + "' GROUP BY LineNum"
         query = "SELECT LineNum, Count(IDComment) FROM ReviewComments WHERE IDFile = '%s' GROUP BY LineNum" % (id)
         cursor = self.db.cursor()
         cursor.execute(query)
