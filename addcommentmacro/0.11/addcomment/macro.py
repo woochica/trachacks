@@ -13,6 +13,7 @@ from trac.web.chrome import add_script
 from trac.wiki.api import parse_args, IWikiMacroProvider
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
+from trac.wiki.web_ui import WikiModule
 
 from macropost.api import IMacroPoster
 
@@ -111,15 +112,40 @@ class AddCommentMacro(WikiMacroBase):
                 newtext += line+"\n"
             if submitted:
                 page.text = newtext
-                page.save(authname, 'Comment added.', req.environ['REMOTE_ADDR'])
-                # We can't redirect from macro as it will raise RequestDone
-                # which like other macro errors gets swallowed in the Formatter.
-                # We need to re-raise it in a post_process_request instead.
+                
+                # Let the wiki page manipulators have a look at the
+                # submission.
+                valid = True
+                req.args.setdefault('comment', 'Comment added.')
                 try:
-                    req._outheaders = []
-                    req.redirect(page_url)
-                except RequestDone:
-                    req.addcomment_raise = True
+                    for manipulator in WikiModule(self.env).page_manipulators:
+                        for field, message in manipulator.validate_wiki_page(req, page):
+                            valid = False
+                            if field:
+                                the_message += tag.div(tag.strong("invalid field '%s': " % field),
+                                                       message,
+                                                       class_="system-message")
+                            else:
+                                the_message += tag.div(tag.strong("invalid: "),
+                                                       message,
+                                                       class_="system-message")
+
+                # The TracSpamfilterPlugin does not generate messages,
+                # but throws RejectContent.
+                except TracError, s:
+                    valid = False
+                    the_message += tag.div(tag.strong("ERROR: "), s, class_="system-message")
+
+                if valid:        
+                    page.save(authname, req.args['comment'], req.environ['REMOTE_ADDR'])
+                    # We can't redirect from macro as it will raise RequestDone
+                    # which like other macro errors gets swallowed in the Formatter.
+                    # We need to re-raise it in a post_process_request instead.
+                    try:
+                        req._outheaders = []
+                        req.redirect(page_url)
+                    except RequestDone:
+                        req.addcomment_raise = True
             else:
                 the_message = tag.div(tag.strong("ERROR: "), "[[AddComment]] "
                           "macro call must be the only content on its line. "
