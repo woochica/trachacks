@@ -3,7 +3,7 @@ workflows.
 """
 
 import os
-from subprocess import check_call, CalledProcessError
+from subprocess import call
 from genshi.builder import tag
 
 from trac.core import implements, Component
@@ -294,10 +294,9 @@ class TicketWorkflowOpRunExternal(Component):
     def apply_action_side_effects(self, req, ticket, action):
         """Run the external script"""
         script = os.path.join(self.env.path, 'hooks', action)
-        try:
-            check_call([script, str(ticket.id), req.authname])
-        except (CalledProcessError, OSError), e:
-            self.env.log.error("External script %r exited: %s." % (script, e))
+        retval = call([script, str(ticket.id), req.authname])
+        if retval:
+            self.env.log.error("External script %r exited with return code %s." % (script, retval))
 
 
 class TicketWorkflowOpTriage(TicketWorkflowOpBase):
