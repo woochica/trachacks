@@ -70,6 +70,9 @@ class DoxygenPlugin(Component):
     encoding = Option('doxygen', 'encoding', 'iso-8859-1',
       """Default encoding used by the generated documentation files.""")
 
+    default_namespace = Option('doxygen', 'default_namespace', '',
+      """Default namespace to search for named objects in.""")
+
     SUMMARY_PAGES = """
     annotated classes dirs files functions globals hierarchy
     index inherits main namespaces namespacemembers
@@ -192,6 +195,7 @@ class DoxygenPlugin(Component):
             yield('doxygen', self.title)
 
     def get_search_results(self, req, keywords, filters):
+        self.log.debug("DOXYBUG: kw=%s f=%s" % (keywords, filters))
         if not 'doxygen' in filters:
             return
 
@@ -202,6 +206,7 @@ class DoxygenPlugin(Component):
             # Search in documentation directories
             path = os.path.join(self.base_path, doc)
             path = os.path.join(path, self.html_output)
+            self.log.debug("looking in doc (%s) dir: %s:" % (doc, path))
             if os.path.isdir(path):
                 index = os.path.join(path, 'search.idx')
                 if os.path.exists(index):
@@ -215,6 +220,7 @@ class DoxygenPlugin(Component):
             # Search in common documentation directory
             index = os.path.join(self.base_path, self.html_output)
             index = os.path.join(index, 'search.idx')
+            self.log.debug("looking in doc (%s) search.idx: %s:" % (doc, index))
             if os.path.exists(index):
                 creation = os.path.getctime(index)
                 for result in self._search_in_documentation('', keywords):
@@ -323,11 +329,36 @@ class DoxygenPlugin(Component):
         #  - do something about dirs
         #  - expand with enum, defs, etc.
         #  - this doesn't work well with the CREATE_SUBDIRS Doxygen option
-        path, link = lookup('class%s.html' % file, 'class')
+
+        # do doxygen-style name->file mapping
+        # this is a little different than doxygen, but I don't see another way
+        # way to make doxygen:Type<bool> links work, as it inserts a ' ' (or
+        # '_01') after/before the type name.
+        charmap = { '_':'__', ':':'_1', '/':'_2', '<':'_3_01', '>':'_01_4', \
+                    '*':'_5', '&':'_6', '|':'_7', '.':'_8', '!':'_9', \
+                    ',':'_00',' ':'_01' }
+        mangledfile = ''
+        for i in file:
+            if i in charmap.keys():
+                mangledfile += charmap[i]
+            else:
+                mangledfile += i
+
+        path, link = lookup('class%s.html' % mangledfile, 'class')
         if not path:
-            path, link = lookup('struct%s.html' % file, 'struct')
+            path, link = lookup('struct%s.html' % mangledfile, 'struct')
         if path:
             return 'view', path, link
+
+        # Try in the default_namespace
+        if self.default_namespace != "":
+            mangledfile = self.default_namespace + '_1_1' + mangledfile
+            path, link = lookup('class%s.html' % mangledfile, 'class')
+            if not path:
+                path, link = lookup('struct%s.html' % mangledfile, 'struct')
+            if path:
+                return 'view', path, link
+
 
         # Revert to search...
         results = self._search_in_documentation(doc, [file])
