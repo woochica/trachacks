@@ -21,6 +21,7 @@ from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_ctxtnav
 from trac.search.api import ISearchSource
+from trac.util.text import to_unicode
 from trac.wiki.api import WikiSystem, IWikiSyntaxProvider
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
@@ -170,7 +171,9 @@ class DoxygenPlugin(Component):
             # Genshi can't include an unparsed file
             # data = {'doxygen_path': path}
             try:
-                content = Markup(file(path).read())
+                charset = (self.encoding or 
+                           self.env.config['trac'].get('default_charset'))
+                content = Markup(to_unicode(file(path).read(), charset))
                 data = {'doxygen_content': content}
                 return 'doxygen.html', data, 'text/html'
             except OSError, e:
