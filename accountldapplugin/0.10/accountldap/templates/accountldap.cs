@@ -5,13 +5,9 @@
 
 <div id="content" class="settings">
 
- <h1>Contraseñas de LDAP</h1>
+ <h1>Change your LDAP password</h1>
 
-  <p>
- Esta página te permite cambiar la contraseña del LDAP. 
- Tener en cuenta que este cambio se realizará de forma <b>centralizada</b> y afectará a todos los 
- sistemas que utilizando el mismo LDAP, como por ejemplo el <b>Subversion</b>.
- </p>
+  <p>This page let you change your LDAP password. If you happen to use LDAP as centrlize authentication for other system such as Subversion, this will also change every passwords associate with LDAP server</p>
  
  <?cs if:accountldap.message != None ?>
  <fieldset>
@@ -24,17 +20,17 @@
  <fieldset>
  <legend>Cambio de contraseña</legend>
   <div>
-   <label for="oldpassword" style="float:left;text-align:right;margin-top:5px;width:15em;">Contraseña antigua:</label>
+   <label for="oldpassword" style="float:left;text-align:right;margin-top:5px;width:15em;">Old password: </label>
    <input type="password" id="oldpassword" name="oldpassword" class="textwidget" size="30" />
   </div>
   &nbsp;
   &nbsp;
   <div>
-   <label for="password1" style="float:left;text-align:right;margin-top:5px;width:15em;">Nueva contraseña:</label>
+   <label for="password1" style="float:left;text-align:right;margin-top:5px;width:15em;">New password: </label>
    <input type="password" id="password1" name="password1" class="textwidget" size="30" />
   </div>
   <div>
-   <label for="password2" style="float:left;text-align:right;margin-top:5px;width:15em;">Confirmar contraseña:</label>
+   <label for="password2" style="float:left;text-align:right;margin-top:5px;width:15em;">Confirm password: </label>
    <input type="password" id="password2" name="password2" class="textwidget" size="30" />
   </div>  
   <div>

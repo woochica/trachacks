@@ -59,20 +59,26 @@ class AccountLDAP(Component):
         p2 = req.args.get('password2')
         old = req.args.get('oldpassword')
         if p1 != p2:
-            req.hdf['accountldap.message'] = Markup('<center style="color: chocolate">%s<b>%s</b></center>' % (u'Las contraseñas suministradas no coinciden.',  u' Por favor, revise las contraseñas.'))
+            req.hdf['accountldap.message'] = Markup('<center style="color: chocolate">%s<b>%s</b></center>' % (u'Password mismatch',  u' please use exactly the same password'))
             return template, None
         if old == p1:
-            req.hdf['accountldap.message'] = Markup('<center style="color: chocolate">%s<b>%s</b></center>' % (u'Las contraseña antigua y la nueva contraseña es la misma.',  u' Por favor, realice un cambio en la nueva contraseña.'))
+            req.hdf['accountldap.message'] = Markup('<center style="color: chocolate">%s<b>%s</b></center>' % (u'Password is not changed',  u' please change your password'))
             return template, None
-        dn = 'uid=%s,%s,%s' % (req.authname, self.userdn, self.basedn)
+        #dn = 'uid=%s,%s,%s' % (req.authname, self.userdn, self.basedn)
         try:
-            self.log.warn('Ldap chnage password dn. %s' % dn)
-            self.ldap.passwd_s(dn, old, p1)
+            base = self.userdn + ',' + self.basedn
+            ld_results = self.ldap.search_s(base, ldap.SCOPE_SUBTREE, 'uid=%s' % req.authname, ['dn'])
+            # FIXME: Use only the first found DN. We should only have single DN here
+            if ld_results :
+                dn = ld_results[0][0]
+                self.ldap.passwd_s(dn, old, p1)
+            else :
+                raise LDAPError('Failed to find user in LDAP')
         except ldap.LDAPError, e:
-            req.hdf['accountldap.message'] = Markup('<center style="color: chocolate">%s<b>%s</b></center>' % (u'Se produjo un error durante el cambio de contraseña.',  u' Por favor, comprueba que la contraseña antigua es la correcta.'))
+            req.hdf['accountldap.message'] = Markup('<center style="color: chocolate">%s<b>%s</b></center>' % (u'Failed to change your password',  u' An error occurred during LDAP pasword operation. Please consult your log file.'))
             self.log.warn('Ldap change password. %s' % e)
             return template, None
-        req.hdf['accountldap.message'] = Markup('<center style="color: green"><b>%s</b></center>' %  u'La contraseña se ha cambiado correctamente.')             
+        req.hdf['accountldap.message'] = Markup('<center style="color: green"><b>%s</b></center>' %  u'Password successfully changed')             
         return template, None
     #
     #------------------------------------------------------------------------------- IRequestFilter interface
@@ -96,10 +102,15 @@ class AccountLDAP(Component):
         return self.MODULE_NAME
                 
     def get_navigation_items(self, req):
-        if not req.authname or not req.session.has_key('email'):
+#        if not req.authname or not req.session.has_key('email') :
+#            return
+#        uid = req.remote_user.lower()
+#       XXX: it seems that password changing should be OK even without email
+        if not req.authname :
             return
-        uid = req.remote_user.lower()
-        yield 'metanav', self.MODULE_NAME,  Markup('<a href="%s">%s</a>' % (self.env.href.accountldap(), u'Contraseñas')) 
+        if req.authname == 'anonymous' :
+            return
+        yield 'metanav', self.MODULE_NAME,  Markup('<a href="%s">%s</a>' % (self.env.href.accountldap(), u'Password'))
     #
     # ----------------------------------------------------------------------------------------- helper methods
     #
