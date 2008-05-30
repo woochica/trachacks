@@ -17,6 +17,7 @@ setup(
     license = 'BSD',
     keywords = 'trac plugin ticket permissions security',
     url = 'http://trac-hacks.org/wiki/PrivateTicketsPlugin',
+    download_url = 'http://trac-hacks.org/svn/privateticketsplugin/0.11#egg=TracPrivateTickets-dev',
     classifiers = [
         'Framework :: Trac',
     ],
