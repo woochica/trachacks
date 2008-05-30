@@ -1,13 +1,13 @@
 from setuptools import find_packages, setup
 
-version='0.0'
+version='0.1'
 
 setup(name='svnsyncplugin',
       version=version,
       description="sets up trac access to a remote repository via svnsync",
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
-      url='http://www.openplans.org',
+      url='http://trac-hacks.org/wiki/SvnsyncPlugin',
       keywords='trac plugin',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),

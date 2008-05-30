@@ -49,7 +49,8 @@ class SvnsyncConnector(SubversionConnector):
 
         # these commands need to work for the plugin to work
         required_commands = ( ( 'svnsync', 'help' ),
-                              ( 'svnadmin', 'help' ) )
+                              ( 'svnadmin', 'help' ),
+                              ( 'svn', 'help'), )
         
         for command in required_commands:
             try:

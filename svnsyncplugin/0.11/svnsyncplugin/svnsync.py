@@ -57,7 +57,20 @@ def sync(directory, repository, username='svnsync'):
         if retval[-1] != 0:
             return retval
 
-    return sh('svnsync', 'sync', 'file://%s' % os.path.abspath(directory))
+    repo = 'file://%s' % os.path.abspath(directory)
+
+    # ensure that the repository is pointed at the right place
+    propget = sh('svn', 'propget',  'svn:sync-from-url', '--revprop', '-r', '0', repo)
+    
+    url = propget[0].strip()
+    if url != repository.rstrip('/'):
+        print '>>> repository changed! %s -> %s' % (url, repository.strip())
+        print '> resyncing to new repository'
+        import shutil
+        shutil.rmtree(directory)
+        sync(directory, repository, username)
+
+    return sh('svnsync', 'sync', repo)
 
 if __name__ == '__main__':
     import optparse
