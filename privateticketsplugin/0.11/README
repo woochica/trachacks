@@ -26,6 +26,9 @@ These extra permissions can only deny access, not allow it. This means the
 user must still have ``TICKET_VIEW`` granted as normal.
 
 Finally, users with ``TRAC_ADMIN`` will not be restricted by this plugin.
+The meta-user "anonymous" also cannot be restricted by this plugin, as their
+identity isn't known to be checked. Be sure to not grant ``TICKET_VIEW`` to
+anonymous, or unauthenticated users will be able to see all tickets.
 
 Configuration
 =============

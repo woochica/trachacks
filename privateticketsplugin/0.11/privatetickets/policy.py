@@ -29,12 +29,18 @@ class PrivateTicketsPolicy(Component):
     
     # IPermissionPolicy(Interface)
     def check_permission(self, action, username, resource, perm):
-        if username != 'anonymous' and \
-           resource is not None and \
-           resource.realm == 'ticket' and \
-           resource.id is not None and \
-           action not in self.ignore_permissions and \
-           'TRAC_ADMIN' not in perm:
+        if username == 'anonymous' or \
+           action in self.ignore_permissions or \
+           'TRAC_ADMIN' in perm:
+            # In these three cases, checking makes no sense
+            return None
+        
+        # Look up the resource parentage for a ticket.
+        while resource:
+            if resource.realm == 'ticket':
+                break
+            resource = resource.parent
+        if resource and resouce.realm == 'ticket' and resource.id is not None:
             return self.check_ticket_access(perm, resource)
         return None
     
@@ -51,34 +57,46 @@ class PrivateTicketsPolicy(Component):
         try:
             tkt = Ticket(self.env, res.id)
         except TracError:
-            return False # Ticket doesn't exist
+            return None # Ticket doesn't exist
         
-        if perm.has_permission('TICKET_VIEW_REPORTER') and \
-           tkt['reporter'] == perm.username:
-            return None
+        had_any = False
         
-        if perm.has_permission('TICKET_VIEW_CC') and \
-           perm.username in [x.strip() for x in tkt['cc'].split(',')]:
-            return None
+        if perm.has_permission('TICKET_VIEW_REPORTER'):
+            had_any = True
+            if tkt['reporter'] == perm.username:
+                return None
         
-        if perm.has_permission('TICKET_VIEW_OWNER') and \
-           perm.username == tkt['owner']:
-            return None
+        if perm.has_permission('TICKET_VIEW_CC'):
+            had_any = True
+            if perm.username in [x.strip() for x in tkt['cc'].split(',')]:
+                return None
         
-        if perm.has_permission('TICKET_VIEW_REPORTER_GROUP') and \
-           self._check_group(perm.username, tkt['reporter']):
-            return None
+        if perm.has_permission('TICKET_VIEW_OWNER'):
+            had_any = True
+            if perm.username == tkt['owner']:
+                return None
         
-        if perm.has_permission('TICKET_VIEW_OWNER_GROUP') and \
-           self._check_group(perm.username, tkt['owner']):
-            return None
+        if perm.has_permission('TICKET_VIEW_REPORTER_GROUP'):
+            had_any = True
+            if self._check_group(perm.username, tkt['reporter']):
+                return None
+        
+        if perm.has_permission('TICKET_VIEW_OWNER_GROUP'):
+            had_any = True
+            if self._check_group(perm.username, tkt['owner']):
+                return None
         
         if perm.has_permission('TICKET_VIEW_CC_GROUP'):
+            had_any = True
             for user in tkt['cc'].split(','):
                 #self.log.debug('Private: CC check: %s, %s', req.authname, user.strip())
                 if self._check_group(perm.username, user.strip()):
                     return None
-                    
+        
+        # No permissions assigned, punt
+        if not had_any:
+            return None
+        
         return False
 
     # Internal methods
