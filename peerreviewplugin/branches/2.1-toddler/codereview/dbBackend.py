@@ -46,6 +46,10 @@ class dbBackend(object):
         query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE Status = '%s' ORDER BY DateCreate" % (status)
         return self.execCodeReviewQuery(query, False)
 
+    def getCodeReviewsInPeriod(self, date_from, date_to):
+        query = "SELECT IDReview, Author, Status, DateCreate, Name, Notes FROM CodeReviews WHERE DateCreate >= '%s' AND DateCreate <= '%s' ORDER BY DateCreate" % (date_from, date_to)
+        return self.execCodeReviewQuery(query, False)
+
     #Returns the number of votes of type 'type' for the given code review
     def getVotesByID(self, type, id):
         query = "SELECT Count(Reviewer) FROM Reviewers WHERE IDReview = '%s' AND Vote = '%s'" % (id, type)

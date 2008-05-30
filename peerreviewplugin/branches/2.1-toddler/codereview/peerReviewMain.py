@@ -11,10 +11,15 @@
 # Provides functionality for main page
 # Works with peerReviewMain.cs
 
+from genshi.builder import tag
+
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.timeline.api import ITimelineEventProvider
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
+from trac.resource import *
+from trac.util.datefmt import to_timestamp
 from trac import util
 from trac.util import escape, Markup
 from codereview.dbBackend import *
@@ -22,7 +27,7 @@ from trac.web.chrome import add_stylesheet
 import itertools
 
 class UserbaseModule(Component):
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor)
+    implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor,ITimelineEventProvider)
         
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -142,3 +147,36 @@ class UserbaseModule(Component):
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('hw', resource_filename(__name__, 'htdocs'))]
+
+    # ITimelineEventProvider methods
+    def get_timeline_filters(self, req):
+        if 'CODE_REVIEW_DEV' in req.perm:
+            yield ('codereview', 'Code Reviews')
+
+    def get_timeline_events(self, req, start, stop, filters):
+        if 'codereview' in filters:
+            codereview_realm = Resource('codereview')
+
+            db = self.env.get_db_cnx()
+            dbBack = dbBackend(db)
+            codeReviewDetails = dbBack.getCodeReviewsInPeriod(to_timestamp(start), to_timestamp(stop))
+
+            for codeReview in codeReviewDetails:
+                codereview_page = codereview_realm(id=codeReview.IDReview)
+                reviewers = dbBack.getReviewers(codeReview.IDReview)
+
+                reviewersList = ''
+                for reviewer in reviewers:
+                     reviewersList = reviewersList + reviewer.Reviewer + ','
+            
+                yield('codereview', codeReview.DateCreate, codeReview.Author, (codereview_page, codeReview.Name, codeReview.Notes, reviewersList))
+
+    def render_timeline_event(self, context, field, event):
+        codereview_page, name, notes, reviewersList = event[3]
+
+        if field == 'url':
+            return context.href.peerReviewView(Review=codereview_page.id)
+        if field == 'title':
+            return tag('Code review ', tag.em(name), ' has been raised')
+        if field == 'description':
+            return tag('Assigned to: ', reviewersList, tag.br(), ' Additional notes: ', notes)
