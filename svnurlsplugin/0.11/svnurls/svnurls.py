@@ -16,7 +16,7 @@ class SVNURLs(Component):
 
     ### class data
     
-    svn_base_url = Option('svnurls', 'svn_base_url',
+    svn_base_url = Option('svn', 'repository_url',
                           doc="base URL of svn repository")
     link_text = Option('svnurls', 'link_text', default='[svn]',
                          doc="text display for svn url links")

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='SVN URLs',
-    version='0.4',
+    version='0.5',
     author='Jeff Hammel',
     description='Provide links to the actual URLs of svn versioned resources',
     license='GPL',
