@@ -33,20 +33,17 @@ class UserbaseModule(Component):
         return []
                                         
     def process_request(self, req):
+
+        data = {}
         #check permissions
         req.perm.assert_permission('CODE_REVIEW_MGR')
-        req.hdf['manager'] = 1
+        data['manager'] = 1
 
         # set up the dynamic links
-        req.hdf['trac.href.peerReviewMain'] = self.env.href.peerReviewMain()
-        req.hdf['trac.href.peerReviewNew'] = self.env.href.peerReviewNew()
-        req.hdf['trac.href.peerReviewSearch'] = self.env.href.peerReviewSearch()
-        req.hdf['trac.href.peerReviewOptions'] = self.env.href.peerReviewOptions()
-
-        req.hdf['main'] = "no"
-        req.hdf['create'] = "no"
-        req.hdf['search'] = "no"
-        req.hdf['options'] = "yes"
+        data['main'] = "no"
+        data['create'] = "no"
+        data['search'] = "no"
+        data['option'] = "yes"
 
         db = self.env.get_db_cnx()
         dbBack = dbBackend(db)
@@ -55,7 +52,7 @@ class UserbaseModule(Component):
        
         #Set the new threshold value
         if (newThreshold != None):
-            req.hdf['success'] = 1
+            data['success'] = 1
             dbBack.setThreshold(newThreshold)
             newThreshold = float(newThreshold)/100
             openArray = dbBack.getCodeReviewsByStatus("Open for review")
@@ -84,10 +81,10 @@ class UserbaseModule(Component):
                     struct.save(db)
 
         #Get the threshold value
-        req.hdf['percentage'] = dbBack.getThreshold()
+        data['percentage'] = dbBack.getThreshold()
 
-        return 'peerReviewOptions.cs', None
-                
+        return 'peerReviewOptions.html', data, None
+
     # ITemplateProvider methods
     def get_templates_dirs(self):
         """
