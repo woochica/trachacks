@@ -89,7 +89,7 @@ class GrowlNotifierSystem(Component):
         if 'ticket' not in self.sources:
             return
         gnp = GrowlNotificationPacket(notification='ticket',
-                                      title='Ticket created',
+                                      title='Ticket #%d created' % ticket.id,
                                       description=self._ticket_repr(ticket))
         self._notify(gnp)
 
@@ -98,7 +98,7 @@ class GrowlNotifierSystem(Component):
         if 'ticket' not in self.sources:
             return
         gnp = GrowlNotificationPacket(notification='ticket',
-                                      title='Ticket updated',
+                                      title='Ticket #%d updated' % ticket.id,
                                       description=self._ticket_repr(ticket))
         self._notify(gnp)
 
@@ -107,7 +107,7 @@ class GrowlNotifierSystem(Component):
         if 'ticket' not in self.sources:
             return
         gnp = GrowlNotificationPacket(notification='ticket',
-                                      title='Ticket deleted',
+                                      title='Ticket #%d deleted' % ticket.id,
                                       description=self._ticket_repr(ticket))
         self._notify(gnp)
 
@@ -217,7 +217,7 @@ class GrowlNotifierSystem(Component):
 
     def _ticket_repr(self, ticket):
         """String representation of a Trac ticket"""
-        rep = '%s #%d (%s)' % (ticket['summary'], ticket.id, ticket['status'])
+        rep = '%s (%s)' % (ticket['summary'], ticket['status'])
         return rep
         
     def _wiki_repr(self, page, comment=None):
