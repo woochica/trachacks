@@ -28,7 +28,7 @@ class dbBackend(object):
         for str in array:
             if len(newStr) != 0:
                 newStr = newStr + "OR "
-            newStr = newStr + colName + " LIKE '%%s%' " % str
+            newStr = newStr + colName + " LIKE '%s%s%s' " % ('%', str, '%')
         return newStr
 
     #Returns an array of all the code reviews whose author is the given user
@@ -82,7 +82,7 @@ class dbBackend(object):
         queryPart = self.createORLoop(crStruct.Name, "Name")
         if len(queryPart) != 0:
             query = query + "(%s) AND " % (queryPart)
-        query = query + "Author LIKE '%%s%' AND Status LIKE '%%s%' AND DateCreate >= '%s'" % (crStruct.Author, crStruct.Status, crStruct.DateCreate)
+        query = query + "Author LIKE '%s%s%s' AND Status LIKE '%s%s%s' AND DateCreate >= '%s'" % ('%', crStruct.Author, '%', '%', crStruct.Status, '%', crStruct.DateCreate)
         return self.execCodeReviewQuery(query, False)
 
     #Returns an array of all the reviewers for a code review
