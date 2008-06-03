@@ -37,8 +37,7 @@ class UserbaseModule(Component):
         if not (req.perm.has_permission('CODE_REVIEW_DEV') or req.perm.has_permission('CODE_REVIEW_MGR')):
             return
         yield ('mainnav', 'peerReviewMain',
-               Markup('<a href="%s">Peer Review</a>',
-                      self.env.href.peerReviewMain()))
+               Markup('<a href="%s">Peer Review</a>') % req.href.peerReviewMain())
         
     # IRequestHandler methods
     def match_request(self, req):
