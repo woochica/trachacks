@@ -3,7 +3,6 @@ display SVN URLs in trac's respository browser
 """
 
 from genshi.builder import tag 
-from genshi.filters.transform import StreamBuffer
 from genshi.filters.transform import Transformer
 from genshi.input import TEXT
 
