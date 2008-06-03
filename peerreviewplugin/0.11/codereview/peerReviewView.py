@@ -135,18 +135,18 @@ class UserbaseModule(Component):
         if req.hdf['manager'] == '1':
             for reviewer in reviewers:
                 newrvpair.append(reviewer.Reviewer)
-                if reviewer.Vote == '-1':
+                if reviewer.Vote == -1:
                     newrvpair.append("Not voted")
-                elif reviewer.Vote == '0':
+                elif reviewer.Vote == 0:
                     newrvpair.append("No")
-                elif reviewer.Vote == '1':
+                elif reviewer.Vote == 1:
                     newrvpair.append("Yes")
                 rvs.append(newrvpair)
                 newrvpair = []
         elif review.Author == util.get_reporter_id(req):
             for reviewer in reviewers:
                 newrvpair.append(reviewer.Reviewer)
-                if reviewer.Vote == '-1':
+                if reviewer.Vote == -1:
                     newrvpair.append("Not voted")
                 else:
                     newrvpair.append("Voted")
