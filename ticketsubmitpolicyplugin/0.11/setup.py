@@ -15,7 +15,7 @@ function according to the value of other ticket fields.
 """,
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
-      url='http://trac-hacks.org/wiki/k0s',
+      url='http://trac-hacks.org/wiki/TicketSubmitPolicyPlugin',
       keywords='trac plugin',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
