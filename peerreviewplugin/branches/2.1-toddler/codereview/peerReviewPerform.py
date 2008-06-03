@@ -88,33 +88,30 @@ class UserbaseModule(Component):
         return req.path_info == '/peerReviewPerform'
                                         
     def process_request(self, req):
+
+        data = {}
+
         if req.perm.has_permission('CODE_REVIEW_MGR'):
-            req.hdf['manager'] = 1
+            data['manager'] = 1
         else:
             req.perm.assert_permission('CODE_REVIEW_DEV')
-            req.hdf['manager'] = 0
-
-        #get some link locations for the template
-        req.hdf['trac.href.peerReviewMain'] = self.env.href.peerReviewMain()
-        req.hdf['trac.href.peerReviewNew'] = self.env.href.peerReviewNew()
-        req.hdf['trac.href.peerReviewSearch'] = self.env.href.peerReviewSearch()
-        req.hdf['trac.href.peerReviewOptions'] = self.env.href.peerReviewOptions()
+            data['manager'] = 0
 
         #for top-right navigation links
-        req.hdf['main'] = "no"
-        req.hdf['create'] = "no"
-        req.hdf['search'] = "no"
-        req.hdf['options'] = "no"
+        data['main'] = "no"
+        data['create'] = "no"
+        data['search'] = "no"
+        data['options'] = "no"
 
         #get the fileID from the request arguments
         idFile = req.args.get('IDFile')
         self.fileID = idFile
         #if the file id is not set - display an error message
-	if idFile == None:
-            req.hdf['error.type'] = "TracError"
-            req.hdf['error.title'] = "File ID Error"
-            req.hdf['error.message'] = "No file ID given - unable to load page."
-            return 'error.cs', None
+        if idFile == None:
+            data['error.type'] = "TracError"
+            data['error.title'] = "File ID Error"
+            data['error.message'] = "No file ID given - unable to load page."
+            return 'error.cs', data, None
 
         #get the database
         db = self.env.get_db_cnx()
@@ -125,47 +122,41 @@ class UserbaseModule(Component):
         resultFile = dbBack.getReviewFile(idFile)
         #make the thumbtac image global so the line annotator has access to it
         self.imagePath = self.env.href.chrome() + '/hw/images/thumbtac11x11.gif'
-        #get image and link locations
-        req.hdf['trac.href.peerReviewCommentCallback'] = self.env.href.peerReviewCommentCallback()
-        req.hdf['trac.href.peerReviewView'] = self.env.href.peerReviewView()
-        req.hdf['trac.htdocs.thumbtac'] = self.imagePath
-        req.hdf['trac.htdocs.plus'] = self.env.href.chrome() + '/hw/images/plus.gif'
-        req.hdf['trac.htdocs.minus'] = self.env.href.chrome() + '/hw/images/minus.gif'
 
         #if the file is not found in the database - display an error message
         if resultFile == None:
-            req.hdf['error.type'] = "TracError"
-            req.hdf['error.title'] = "File ID Error"
-            req.hdf['error.message'] = "Unable to locate given file ID in database."
-            return 'error.cs', None
+            data['error.type'] = "TracError"
+            data['error.title'] = "File ID Error"
+            data['error.message'] = "Unable to locate given file ID in database."
+            return 'error.cs', data, None
 
         #get the respository
         repos = self.env.get_repository(req.authname)
         #get the file attributes
-        req.hdf['review.path'] = resultFile.Path
-        req.hdf['review.version'] = resultFile.Version
-        req.hdf['review.lineStart'] = resultFile.LineStart
-        req.hdf['review.lineEnd'] = resultFile.LineEnd
-        req.hdf['review.reviewID'] = resultFile.IDReview
+        data['review_path'] = resultFile.Path
+        data['review_version'] = resultFile.Version
+        data['review_lineStart'] = resultFile.LineStart
+        data['review_lineEnd'] = resultFile.LineEnd
+        data['review_reviewID'] = resultFile.IDReview
         #make these global for the line annotator
         self.lineEnd = resultFile.LineEnd
         self.lineStart = resultFile.LineStart
 
         #if the repository can't be found - display an error message
         if(repos == None):
-            req.hdf['error.type'] = "TracError"
-            req.hdf['error.title'] = "Subversion Repository Error"
-            req.hdf['error.message'] = "Unable to acquire subversion repository."
-            return 'error.cs', None
+            data['error.type'] = "TracError"
+            data['error.title'] = "Subversion Repository Error"
+            data['error.message'] = "Unable to acquire subversion repository."
+            return 'error.cs', data, None
 
         #get the correct location - using revision number and repository path
         node = get_existing_node(self.env, repos, resultFile.Path, resultFile.Version)
         #if the node can't be found - display error message
         if(node == None):
-            req.hdf['error.type'] = "TracError"
-            req.hdf['error.title'] = "Subversion Node Error"
-            req.hdf['error.message'] = "Unable to locate subversion node for this file."
-            return 'error.cs', None
+            data['error.type'] = "TracError"
+            data['error.title'] = "Subversion Node Error"
+            data['error.message'] = "Unable to locate subversion node for this file."
+            return 'error.cs', data, None
 
         # Generate HTML preview - this code take from Trac - refer to their documentation
         mime_type = node.content_type
@@ -189,15 +180,16 @@ class UserbaseModule(Component):
 
         #assign the preview to a variable for clearsilver
         context = Context.from_request(req, 'source', path, node.created_rev)
-        req.hdf['file'] =  mimeview.preview_data(context, content, len(content),
-                                                 mime_type, node.created_path,
-                                                 None,
-                                                 annotations=['performCodeReview'])
-
+        preview_data = mimeview.preview_data(context, content, len(content),
+                                             mime_type, node.created_path,
+                                             None,
+                                             annotations=['performCodeReview'])
+        
+        data['file'] = preview_data['rendered'];
+        
+        add_stylesheet(req, 'common/css/browser.css')
         add_stylesheet(req, 'common/css/code.css')
-        add_stylesheet(req, 'common/css/browser.css')	
-
-        return 'peerReviewPerform.cs', None
+        return 'peerReviewPerform.html', data, None
                 
     # ITemplateProvider methods
     def get_templates_dirs(self):
