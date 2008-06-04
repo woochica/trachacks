@@ -10,24 +10,19 @@ class ListTransformer(object):
         self.transform = transform
 
     def __call__(self, stream):
-        ctr = 0
+        ctr = 0 # reset counter
         for mark, (kind, data, pos) in stream:
             if mark is not None:
 
                 # create a tag -> stream 
                 if kind == 'START':
                     # invoke a new transformer from the applicable item
-                    item = items[ctr]
-                    transform = self.transform(item) # XXX assumes a single argument to the ctor
+                    transform = self.transform(items[ctr]) # XXX assumes a single argument to the ctor
                     xstream = [ (mark, (kind, data, pos)) ]
-
-                    name = data[0]
-                    attrs = dict([ (str(i), str(j)) for i, j in data[1]])
-                if kind == 'TEXT':
-                    text = data
+                else:
                     xstream.append((mark, (kind,data, pos)))
+
                 if kind == 'END':
-                    newstream = getattr(tag, name)(text, **attrs).generate()
                     xstream.append((mark, (kind, data, pos)))
 
                     # make a generator
@@ -35,22 +30,13 @@ class ListTransformer(object):
                         for mark, event in xstream:
                             yield mark, event
 
+                    # yield the transformed items
                     for xmark, xevent in transform(genstream()):
                         yield xmark, xevent
 
-#                    transformer = Transformer().apply(transform)
-                    
-#                    # lifted from Transformer.__call__
-#                    transforms = transformer._mark(stream)
-#                    for link in transformer.transforms:
-#                        transforms = link(transforms)
-
-
-                    
-#                    for xmark, xevent in transform(newstream):
-#                        yield xmark, xevent
-                    ctr += 1
+                    ctr += 1 # increment counter
             else:
+                # if mark is None, just yield stream bits
                 yield mark, (kind, data, pos)
 
 if __name__ == '__main__':
@@ -69,19 +55,33 @@ if __name__ == '__main__':
                                          for i, j in enumerate(row) ]) 
               for row in table ]
 
-    table = HTML('<table>%s</table>' % '\n'.join(table))
+    table = '<table>%s</table>' % '\n'.join(table)
+    
+    # data for the transforms
+    items = [ 'f' * (i % 7) for i in range(nrows) ]
 
     # time old method
+    stream = HTML(table)
     start = datetime.datetime.now()
+    for idx, entry in enumerate(items):
+        xpath = "//table//tr[%s]/td[@class='foo-2']" % (idx + 1)
+        stream |= Transformer(xpath).apply(ReplaceTransformation(entry))
+    oldresult = str(stream)
     end = datetime.datetime.now()
+    oldtime = end-start
 
     # create a ListTransformer
-    items = [ 'f' * i for i in range(nrows) ]
     listtransformer = ListTransformer(items, ReplaceTransformation)
 
     # time ListTransformer
+    stream = HTML(table)
     start = datetime.datetime.now()
-    result = table | Transformer("//td[@class='foo-2']").apply(listtransformer)
+    result = stream | Transformer("//td[@class='foo-2']").apply(listtransformer)
+    result = str(result)
     end = datetime.datetime.now()
+    newtime = end-start
 
-    print result
+    assert oldresult == result
+
+    print 'Incremental method: %s' % oldtime
+    print 'ListTransformer: %s' % newtime
