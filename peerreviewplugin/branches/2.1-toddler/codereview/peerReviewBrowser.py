@@ -48,7 +48,7 @@ def _natural_order(x, y):
 
 
 class peerReviewBrowser(Component):
-    implements(IPermissionRequestor, IRequestHandler, IWikiSyntaxProvider, IHTMLPreviewAnnotator)
+    implements(IPermissionRequestor, IRequestHandler, IHTMLPreviewAnnotator)
 
     # ITextAnnotator methods
     def get_annotation_type(self):
@@ -282,30 +282,6 @@ class peerReviewBrowser(Component):
                 'message': wiki_to_html(changeset.message or '--', self.env, req,
                                         escape_newlines=True)
                 }
-    # IWikiSyntaxProvider methods
-    
-    def get_wiki_syntax(self):
-        return []
-
-    def get_link_resolvers(self):
-        return [('repos', self._format_link),
-                ('source', self._format_link),
-                ('browser', self._format_link)]
-
-    def _format_link(self, formatter, ns, path, label):
-        match = IMG_RE.search(path)
-        if formatter.flavor != 'oneliner' and match:
-            return '<img src="%s" alt="%s" />' % \
-                   (formatter.href.file(path, format='raw'), label)
-        path, rev, line = get_path_rev_line(path)
-        if line is not None:
-            anchor = '#L%d' % line
-        else:
-            anchor = ''
-        label = urllib.unquote(label)
-        return '<a class="source" href="%s%s">%s</a>' \
-               % (util.escape(formatter.href.peerReviewBrowser(path, rev=rev)), anchor,
-                  label)
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
