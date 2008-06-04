@@ -16,18 +16,39 @@ class ListTransformer(object):
 
                 # create a tag -> stream 
                 if kind == 'START':
+                    # invoke a new transformer from the applicable item
+                    item = items[ctr]
+                    transform = self.transform(item) # XXX assumes a single argument to the ctor
+                    xstream = [ (mark, (kind, data, pos)) ]
+
                     name = data[0]
                     attrs = dict([ (str(i), str(j)) for i, j in data[1]])
                 if kind == 'TEXT':
                     text = data
+                    xstream.append((mark, (kind,data, pos)))
                 if kind == 'END':
-                    newstream = getattr(tag, name)(text, attrs).generate()
+                    newstream = getattr(tag, name)(text, **attrs).generate()
+                    xstream.append((mark, (kind, data, pos)))
 
-                    # invoke a new transformer from the applicable item
-                    item = items[ctr]
-                    transform = self.transform(item) # XXX assumes a single argument to the ctor
-                    for xmark, xevent in transform(newstream):
+                    # make a generator
+                    def genstream():
+                        for mark, event in xstream:
+                            yield mark, event
+
+                    for xmark, xevent in transform(genstream()):
                         yield xmark, xevent
+
+#                    transformer = Transformer().apply(transform)
+                    
+#                    # lifted from Transformer.__call__
+#                    transforms = transformer._mark(stream)
+#                    for link in transformer.transforms:
+#                        transforms = link(transforms)
+
+
+                    
+#                    for xmark, xevent in transform(newstream):
+#                        yield xmark, xevent
                     ctr += 1
             else:
                 yield mark, (kind, data, pos)
@@ -55,7 +76,7 @@ if __name__ == '__main__':
     end = datetime.datetime.now()
 
     # create a ListTransformer
-    items = [ 'foo' ] * nrows
+    items = [ 'f' * i for i in range(nrows) ]
     listtransformer = ListTransformer(items, ReplaceTransformation)
 
     # time ListTransformer
