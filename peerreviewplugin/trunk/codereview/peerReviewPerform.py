@@ -159,7 +159,12 @@ class UserbaseModule(Component):
             return 'error.cs', None
 
         #get the correct location - using revision number and repository path
-        node = get_existing_node(self.env, repos, resultFile.Path, resultFile.Version)
+        try:
+            node = get_existing_node(self.env, repos, resultFile.Path, resultFile.Version)
+        except:
+            youngest_rev = repos.youngest_rev
+            node = get_existing_node(self.env, repos, resultFile.Path, youngest_rev)
+
         #if the node can't be found - display error message
         if(node == None):
             req.hdf['error.type'] = "TracError"
