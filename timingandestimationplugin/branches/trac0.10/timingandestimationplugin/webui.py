@@ -2,7 +2,7 @@ import re
 import time
 import datetime
 import dbhelper
-from usermanual import * 
+from usermanual import *
 from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
@@ -33,10 +33,10 @@ class TimingEstimationAndBillingPage(Component):
         INSERT INTO bill_date (time, set_when, str_value)
         VALUES (%s, %s, %s)
         """
-        dbhelper.execute_non_query(sql, when, now, strwhen)
-        
-        
-            
+        dbhelper.execute_non_query(self, sql, when, now, strwhen)
+
+
+
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         if re.search('/Billing', req.path_info):
@@ -58,7 +58,7 @@ class TimingEstimationAndBillingPage(Component):
         SELECT DISTINCT time as value, str_value as text
         FROM bill_date
         """
-        rs = dbhelper.get_result_set(billing_time_sql)
+        rs = dbhelper.get_result_set(self, billing_time_sql)
         if rs:
             for (value, text) in rs.rows:
                 billing_info = {'text':text , 'value':value}
@@ -98,8 +98,8 @@ class TimingEstimationAndBillingPage(Component):
         add_stylesheet(req, "Billing/billingplugin.css")
         add_script(req, "Billing/linkifyer.js")
         return 'billing.cs', 'text/html'
-        
-        
+
+
     # ITemplateProvider
     def get_htdocs_dirs(self):
         """Return the absolute path of a directory containing additional
@@ -114,4 +114,4 @@ class TimingEstimationAndBillingPage(Component):
         """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
-    
+

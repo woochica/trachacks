@@ -8,16 +8,16 @@ from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor, PermissionSystem
-from webui import * 
+from webui import *
 from ticket_webui import *
 from reportmanager import CustomReportManager
 
 ## report columns
 ## id|author|title|query|description
-   
+
 class TimeTrackingSetupParticipant(Component):
     """ This is the config that must be there for this plugin to work:
-        
+
         [ticket-custom]
         totalhours = text
         totalhours.value = 0
@@ -30,25 +30,23 @@ class TimeTrackingSetupParticipant(Component):
         hours = text
         hours.value = 0
         hours.label = Hours to Add
-        
+
         estimatedhours = text
         estimatedhours.value = 0
         estimatedhours.label = Estimated Hours?
-        
+
         """
     implements(IEnvironmentSetupParticipant)
 
     db_version_key = None
     db_version = None
     db_installed_version = None
-    
+
     """Extension point interface for components that need to participate in the
     creation and upgrading of Trac environments, for example to create
     additional database tables."""
     def __init__(self):
         # Setup logging
-        dbhelper.mylog = self.log
-        dbhelper.env = self.env
         self.db_version_key = 'TimingAndEstimationPlugin_Db_Version'
         self.db_version = 7
         self.db_installed_version = None
@@ -71,20 +69,20 @@ class TimeTrackingSetupParticipant(Component):
         """Called when a new Trac environment is created."""
         if self.environment_needs_upgrade(None):
             self.upgrade_environment(None)
-            
+
     def system_needs_upgrade(self):
         return self.db_installed_version < self.db_version
-        
+
     def do_db_upgrade(self):
         # Legacy support hack (supports upgrades from 0.1.6 to 0.1.7)
         if self.db_installed_version == 0:
-            bill_date = dbhelper.db_table_exists('bill_date');
-            report_version = dbhelper.db_table_exists('report_version');
+            bill_date = dbhelper.db_table_exists(self, 'bill_date');
+            report_version = dbhelper.db_table_exists(self, 'report_version');
             if bill_date and report_version:
                 self.db_installed_version = 1
         # End Legacy support hack
-        
-        
+
+
         if self.db_installed_version < 1:
             print "Creating bill_date table"
             sql = """
@@ -94,8 +92,8 @@ class TimeTrackingSetupParticipant(Component):
             str_value text
             );
             """
-            dbhelper.execute_non_query( sql)
-            
+            dbhelper.execute_non_query(self,  sql)
+
             print "Creating report_version table"
             sql = """
             CREATE TABLE report_version (
@@ -104,14 +102,14 @@ class TimeTrackingSetupParticipant(Component):
             UNIQUE (report, version)
             );
             """
-            dbhelper.execute_non_query(sql)
+            dbhelper.execute_non_query(self, sql)
 
         if self.db_installed_version < 4:
             print "Upgrading report_version table to v4"
             sql ="""
             ALTER TABLE report_version ADD COLUMN tags varchar(1024) null;
             """
-            dbhelper.execute_non_query(sql)
+            dbhelper.execute_non_query(self, sql)
 
         if self.db_installed_version < 5:
             # In this version we convert to using reportmanager.py
@@ -120,17 +118,17 @@ class TimeTrackingSetupParticipant(Component):
             print "Dropping report_version table"
             sql = "DELETE FROM report " \
                   "WHERE author=%s AND id IN (SELECT report FROM report_version)"
-            dbhelper.execute_non_query( sql, 'Timing and Estimation Plugin')
-            
+            dbhelper.execute_non_query(self,  sql, 'Timing and Estimation Plugin')
+
             sql = "DROP TABLE report_version"
-            dbhelper.execute_non_query( sql)
-        
+            dbhelper.execute_non_query(self,  sql)
+
         # 6 & 7 are report upgrades
-        
+
         # This statement block always goes at the end this method
-        dbhelper.set_system_value(self.db_version_key, self.db_version)
+        dbhelper.set_system_value(self, self.db_version_key, self.db_version)
         self.db_installed_version = self.db_version
-    
+
 
     def do_reports_upgrade(self):
         self.log.debug( "Beginning Reports Upgrade");
@@ -149,7 +147,7 @@ class TimeTrackingSetupParticipant(Component):
                                "Timing and Estimation Plugin",
                                group_title)
 
-    
+
     def ticket_fields_need_upgrade(self):
         ticket_custom = "ticket-custom"
         return not ( self.config.get( ticket_custom, "totalhours" ) and \
@@ -157,34 +155,34 @@ class TimeTrackingSetupParticipant(Component):
                      #(self.config.get( ticket_custom, "billable" ) == "checkbox") and \
                      #self.config.get( ticket_custom, "billable.order") and \
                      #(not self.config.get( ticket_custom, "lastbilldate" )) and \
-                     
+
                      self.config.get( ticket_custom, "hours" ) and \
                      self.config.get( ticket_custom, "totalhours.order") and \
                      self.config.get( ticket_custom, "hours.order") and \
                      self.config.get( ticket_custom, "estimatedhours.order") and \
                      self.config.get( ticket_custom, "estimatedhours"))
-    
+
     def do_ticket_field_upgrade(self):
         ticket_custom = "ticket-custom"
-        
+
         self.config.set(ticket_custom,"totalhours", "text")
         if not self.config.get( ticket_custom, "totalhours.order") :
             self.config.set(ticket_custom,"totalhours.order", "4")
         self.config.set(ticket_custom,"totalhours.value", "0")
-        self.config.set(ticket_custom,"totalhours.label", "Total Hours")                
+        self.config.set(ticket_custom,"totalhours.label", "Total Hours")
 
         self.config.set(ticket_custom,"billable", "checkbox")
         self.config.set(ticket_custom,"billable.value", "1")
         if not self.config.get( ticket_custom, "billable.order") :
             self.config.set(ticket_custom,"billable.order", "3")
         self.config.set(ticket_custom,"billable.label", "Billable?")
-            
+
         self.config.set(ticket_custom,"hours", "text")
         self.config.set(ticket_custom,"hours.value", "0")
         if not self.config.get( ticket_custom, "hours.order") :
             self.config.set(ticket_custom,"hours.order", "2")
         self.config.set(ticket_custom,"hours.label", "Add Hours to Ticket")
-            
+
         self.config.set(ticket_custom,"estimatedhours", "text")
         self.config.set(ticket_custom,"estimatedhours.value", "0")
         if not self.config.get( ticket_custom, "estimatedhours.order") :
@@ -194,7 +192,7 @@ class TimeTrackingSetupParticipant(Component):
         self.config.save();
 
     def needs_user_man(self):
-        maxversion = dbhelper.get_scalar("SELECT MAX(version) FROM wiki WHERE name like %s", 0,
+        maxversion = dbhelper.get_scalar(self, "SELECT MAX(version) FROM wiki WHERE name like %s", 0,
                                          user_manual_wiki_title)
         if (not maxversion) or maxversion < user_manual_version:
             return True
@@ -207,27 +205,27 @@ class TimeTrackingSetupParticipant(Component):
         INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly)
         VALUES ( %s, %s, %s, 'Timing and Estimation Plugin', '127.0.0.1', %s,'',0)
         """
-        dbhelper.execute_non_query(sql,
+        dbhelper.execute_non_query(self, sql,
                                    user_manual_wiki_title,
                                    user_manual_version,
                                    when,
                                    user_manual_content)
-            
-        
+
+
     def environment_needs_upgrade(self, db):
         """Called when Trac checks whether the environment needs to be upgraded.
-        
+
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
 
         """
         return (self.system_needs_upgrade()) or \
                (self.ticket_fields_need_upgrade()) or \
-               (self.needs_user_man()) 
-            
+               (self.needs_user_man())
+
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade.
-        
+
         Implementations of this method should not commit any database
         transactions. This is done implicitly after all participants have
         performed the upgrades they need without an error being raised.
@@ -250,7 +248,7 @@ class TimeTrackingSetupParticipant(Component):
         print "Done Upgrading"
 
 
-        
+
 
 
 
