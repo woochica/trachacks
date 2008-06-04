@@ -1,17 +1,30 @@
-
-
+from genshi.builder import tag
+from genshi.core import Markup
 from genshi.filters.transform import Transformer
 
 class ListTransformer(object):
     """apply transforms to a list of items"""
 
-    def __init__(self, items):
+    def __init__(self, items, transform):
         self.items = items
+        self.transform = transform
 
     def __call__(self, stream):
+        ctr = 0
         for mark, (kind, data, pos) in stream:
             if mark is not None:
-                pass
+                if kind == 'START':
+                    name = data[0]
+                    attrs = dict([ (str(i), str(j)) for i, j in data[1]])
+                if kind == 'TEXT':
+                    text = data
+                if kind == 'END':
+
+                    newstream = getattr(tag, name)(text, attrs).generate()
+                    transform = self.transform(item) # XXX assumes a single argument to the ctor
+                    
+                    ctr += 1
+
             yield mark, (kind, data, pos)
 
 if __name__ == '__main__':
