@@ -12,6 +12,7 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 
 
+from trac.config import BoolOption, ListOption
 from trac.core import *
 from trac.wiki import IWikiChangeListener
 from trac.ticket import ITicketChangeListener 
@@ -60,6 +61,18 @@ class GrowlNotifierSystem(Component):
         SOURCES.append(u'bitten')
     except:
         pass
+
+
+    # settings
+    userprefs_enabled = BoolOption('growl', 'userprefs', 'false',
+        doc="""Enable per-user to define Growl notification option.""")
+
+    dest_hosts = ListOption('growl', 'hosts', '',
+        doc="""List of hosts to notify (default: broadcast to subnet)""")
+
+    avail_sources = ListOption('growl', 'sources', ','.join(SOURCES),
+        doc="""List of event sources (default: all available sources)""")
+
         
     # IAttachmentChangeListener Interface
 
@@ -188,22 +201,34 @@ class GrowlNotifierSystem(Component):
         self._notify(gnp)
 
 
+    # API
+    
+    def get_available_sources(self):
+        return self.sources
+        
+    def is_userprefs_enabled(self):
+        return self.userprefs_enabled
+        
+    def register_notifications(self):
+        """Asks Growl clients to register Trac application. A bit suboptimal, 
+        but that's the only way to register without an explicit user 
+        registration""" 
+        grp = GrowlRegistrationPacket()
+        for n in self.avail_sources:
+            grp.addNotification(n, n in self.sources)
+        gs = GrowlSender()
+        gs.notify(grp)
+        
     # Implementation
     
     def __init__(self):
-        sources = self.config.get('growl', 'sources', ', '.join(self.SOURCES))
-        sources = [s.strip().lower() for s in sources.split(',')]
-        hosts = self.config.get('growl', 'hosts', '')
-        self.hosts = [h.strip() for h in hosts]
-        # Asks Growl clients to register Trac application every time Trac
-        # is started. A bit suboptimal, but that's the only way to register
-        # without an explicit user registration
-        grp = GrowlRegistrationPacket()
-        for n in self.SOURCES:
-            grp.addNotification(n, n in sources)
-            self.sources = sources
-        gs = GrowlSender()
-        gs.notify(grp)
+        self.sources = [s.strip().lower() for s in self.avail_sources]
+        self.hosts = self.dest_hosts
+        #self.sources = [s.strip().lower() for s in \
+        #                self.config.get('growl', 'sources', '').split(',')]
+        #hosts = self.config.get('growl', 'hosts', '').split(',')
+        #self.hosts = [h.strip() for h in hosts]
+        self.register_notifications()
         
     def _notify(self, gp):
         """Wrapper to notify growl clients"""

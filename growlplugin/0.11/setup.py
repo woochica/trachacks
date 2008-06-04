@@ -29,6 +29,10 @@ setup (
     install_requires = [ 'Trac>=0.11dev', 'Trac<0.12'],
     packages = find_packages(exclude=['ez_setup']),
     package_data={
+        'revtree': [
+            'htdocs/images/*.png',
+            'templates/*.html'
+        ]
     },
     entry_points = {
         'trac.plugins': [

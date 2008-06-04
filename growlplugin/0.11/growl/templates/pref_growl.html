@@ -1,0 +1,33 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="prefs.html" />
+  <head>
+    <title>Growl Notification</title>
+  </head>
+  <body>
+
+    <div class="field growl">
+      <p class="hint">Trac notifies Growl-enabled clients.</p>
+      <div id="growl-icon"></div>
+      <table>
+        <tr class="field">
+          <th><label for="host">Host address:</label></th>
+          <td><input type="text" id="host" name="host" size="30"
+            value="${host}" /></td>
+        </tr>
+      </table>
+      <fieldset id="sources">
+       <legend>Event notifications</legend>
+       <label py:for="source in sources" class="growl">
+         <input type="checkbox" name="${source.name}"
+                checked="${source.enabled or None}"/> ${source.label}
+       </label>
+      </fieldset>
+    </div>
+
+  </body>
+</html>

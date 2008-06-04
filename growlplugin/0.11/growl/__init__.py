@@ -12,3 +12,4 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 
 from growl.notifier import *
+from growl.web_ui import *
