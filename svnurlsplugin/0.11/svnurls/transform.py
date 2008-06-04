@@ -1,3 +1,5 @@
+
+
 from genshi.filters.transform import Transformer
 
 class ListTransformer(object):
@@ -15,6 +17,7 @@ class ListTransformer(object):
 if __name__ == '__main__':
     
     import datetime
+    from genshi.input import HTML
 
     # make a times-table to test
     nrows = 100
@@ -26,14 +29,18 @@ if __name__ == '__main__':
                                          for i, j in enumerate(row) ]) 
               for row in table ]
 
-    table = '<table>%s</table>' % '\n'.join(table)
+    table = HTML('<table>%s</table>' % '\n'.join(table))
 
     # time old method
     start = datetime.datetime.now()
     end = datetime.datetime.now()
 
-    # time new method
+    # create a ListTransformer
+    listtransformer = ListTransformer([])
+
+    # time ListTransformer
     start = datetime.datetime.now()
+    result = table | Transformer("//td[@class='foo-2']").apply(listtransformer)
     end = datetime.datetime.now()
 
-    print table
+    print result
