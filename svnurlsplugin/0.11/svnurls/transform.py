@@ -13,24 +13,30 @@ class ListTransformer(object):
         ctr = 0
         for mark, (kind, data, pos) in stream:
             if mark is not None:
+
+                # create a tag -> stream 
                 if kind == 'START':
                     name = data[0]
                     attrs = dict([ (str(i), str(j)) for i, j in data[1]])
                 if kind == 'TEXT':
                     text = data
                 if kind == 'END':
-
                     newstream = getattr(tag, name)(text, attrs).generate()
-                    transform = self.transform(item) # XXX assumes a single argument to the ctor
-                    
-                    ctr += 1
 
-            yield mark, (kind, data, pos)
+                    # invoke a new transformer from the applicable item
+                    item = items[ctr]
+                    transform = self.transform(item) # XXX assumes a single argument to the ctor
+                    for xmark, xevent in transform(newstream):
+                        yield xmark, xevent
+                    ctr += 1
+            else:
+                yield mark, (kind, data, pos)
 
 if __name__ == '__main__':
     
     import datetime
     from genshi.input import HTML
+    from genshi.filters.transform import ReplaceTransformation
 
     # make a times-table to test
     nrows = 100
@@ -49,7 +55,8 @@ if __name__ == '__main__':
     end = datetime.datetime.now()
 
     # create a ListTransformer
-    listtransformer = ListTransformer([])
+    items = [ 'foo' ] * nrows
+    listtransformer = ListTransformer(items, ReplaceTransformation)
 
     # time ListTransformer
     start = datetime.datetime.now()
