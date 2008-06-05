@@ -14,17 +14,15 @@ class ListTransformer(object):
         for mark, (kind, data, pos) in stream:
             if mark is not None:
 
-                # create a tag -> stream 
                 if kind == 'START':
                     # invoke a new transformer from the applicable item
-                    transform = self.transform(items[ctr]) # XXX assumes a single argument to the ctor
+                    transform = self.transform(self.items[ctr]) # XXX assumes a single argument to the ctor
                     xstream = [ (mark, (kind, data, pos)) ]
                 else:
                     xstream.append((mark, (kind,data, pos)))
 
                 if kind == 'END':
-                    xstream.append((mark, (kind, data, pos)))
-
+                    
                     # make a generator
                     def genstream():
                         for mark, event in xstream:
@@ -44,10 +42,14 @@ if __name__ == '__main__':
     import datetime
     from genshi.input import HTML
     from genshi.filters.transform import ReplaceTransformation
+    from genshi.filters.transform import AppendTransformation
+    from genshi.filters.transform import AfterTransformation
+
+    transformation = AfterTransformation
 
     # make a times-table to test
-    nrows = 100
-    ncols = 10
+    nrows = 2
+    ncols = 4
 
     table = [ [ i*j for i in range(ncols) ] for j in range(nrows) ]
     
@@ -58,20 +60,20 @@ if __name__ == '__main__':
     table = '<table>%s</table>' % '\n'.join(table)
     
     # data for the transforms
-    items = [ 'f' * (i % 7) for i in range(nrows) ]
+    items = [ 'e' + 'f' * (i % 7) for i in range(nrows) ]
 
     # time old method
     stream = HTML(table)
     start = datetime.datetime.now()
     for idx, entry in enumerate(items):
         xpath = "//table//tr[%s]/td[@class='foo-2']" % (idx + 1)
-        stream |= Transformer(xpath).apply(ReplaceTransformation(entry))
+        stream |= Transformer(xpath).apply(transformation(entry))
     oldresult = str(stream)
     end = datetime.datetime.now()
     oldtime = end-start
 
     # create a ListTransformer
-    listtransformer = ListTransformer(items, ReplaceTransformation)
+    listtransformer = ListTransformer(items, transformation)
 
     # time ListTransformer
     stream = HTML(table)
