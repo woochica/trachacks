@@ -12,6 +12,7 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 
 from trac.core import *
+from trac.perm import IPermissionRequestor, PermissionError
 from trac.prefs.api import IPreferencePanelProvider
 from trac.web.chrome import add_stylesheet, ITemplateProvider
 from growl.notifier import GrowlNotifierSystem
@@ -21,7 +22,9 @@ __all__ = ['GrowlPreferencePanel']
 
 class GrowlPreferencePanel(Component):
 
-    implements(ITemplateProvider, IPreferencePanelProvider)
+    implements(ITemplateProvider, 
+               IPermissionRequestor,
+               IPreferencePanelProvider)
     
     # ITemplateProvider
     
@@ -38,22 +41,39 @@ class GrowlPreferencePanel(Component):
         return [resource_filename(__name__, 'templates')]
 
 
+    # IPermissionRequestor methods
+
+    def get_permission_actions(self):
+        actions = ['GROWL_MODIFY']
+        return actions + [('GROWL_ADMIN', actions)]
+
+        
     # IPreferencePanelProvider Interface 
 
     def get_preference_panels(self, req):
         """Return a list of available preference panels."""
-        if self.env[GrowlNotifierSystem].is_userprefs_enabled():
-            self.log.info("ENABLED")
-            yield('growl', 'Growl Notification')
+        if not self.env[GrowlNotifierSystem].is_userprefs_enabled():
+            self.log.info("Growl: User notifications not enabled")
+            return
+        if not req.perm.has_permission('GROWL_MODIFY'):
+            self.log.info("Growl: User does not have GROWL_MODIFY permission")
+            return
+        yield('growl', 'Growl Notification')
 
     def render_preference_panel(self, req, panel):
         """Process a request for a preference panel."""
-        sources = self.env[GrowlNotifierSystem].get_available_sources()
+        notifier = self.env[GrowlNotifierSystem] 
+        sources = notifier.get_available_sources()
 
         if req.method == 'POST':
+            if not req.perm.has_permission('GROWL_MODIFY'):
+                raise PermissionError("No permission to change Growl settings")
             host = req.args.get('host')
-            if True: #host_is_valid():
+            if notifier.validate_host(req.perm.has_permission('GROWL_ADMIN'),
+                                      host):
                 req.session['growl.host'] = host
+                # send a registration request to the host
+                notifier.register_notifications([host])
             if True:
                 for source in sources:
                     key = 'growl.source.%s' % source
@@ -72,6 +92,8 @@ class GrowlPreferencePanel(Component):
             enabled = req.session.has_key(key) and req.session[key]
             data['sources'].append({'name': source, 'label': label,
                                     'enabled': enabled})
+        data['host'] = req.session.has_key('growl.host') and \
+                           req.session['growl.host']
         data['settings'] = {'session': req.session }
 
         # add custom stylesheet
