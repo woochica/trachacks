@@ -3,6 +3,7 @@ display SVN URLs in trac's respository browser
 """
 
 from genshi.builder import tag 
+from genshi.filters.transform import StreamBuffer
 from genshi.filters.transform import Transformer
 from genshi.input import TEXT
 
@@ -22,6 +23,21 @@ class SVNURLs(Component):
 
     link_title = "URL of SVN location"
     element_class = "name" # class of the div after which to insert the svn url
+
+    class GenerateSVNUrl(object):
+        """class to generate svn urls from table data"""
+
+        def __init__(self, buffer, svn_base_url, link_text, browser_link):
+            self.buffer = buffer
+            self.svn_base_url = svn_base_url.rstrip('/')
+            self.link_text = link_text
+            self.browser_link = browser_link
+
+        def __iter__(self):
+            link = self.buffer.events[0][1][1].get('href').split(self.browser_link)[-1]
+            link = self.svn_base_url + link
+            return iter(tag.td(tag.a(self.link_text, href=link, title=SVNURLs.link_title)))
+
     
     def url(self, path):
         return u'/'.join((self.svn_base_url.rstrip(u'/'), path.lstrip(u'/')))
@@ -35,9 +51,7 @@ class SVNURLs(Component):
             # this probably means that there is an upstream error
             return stream
 
-        # mark up the title
-        # XXX disabled due to a bug in Transformer.substitute
-        # - see http://genshi.edgewall.org/ticket/226
+        # mark up the title (disabled)
         # stream |= Transformer('//title/text()').substitute('/', data['svn_base_url'] + '/')
 
         # provide a link to the svn repository
@@ -58,17 +72,15 @@ class SVNURLs(Component):
             stream |= Transformer(xpath).after(tag.th('URL', **{'class': "url"}))
 
             # add table cells
-            for idx, entry in enumerate(data['dir']['entries']):
-                xpath = "//table[@id='dirlist']//tr[%s]/td[@class='%s']" % (offset + idx, self.element_class)
-                stream |= Transformer(xpath).after(tag.td(tag.a(self.link_text, href=self.url(entry.path), title=self.link_title)))
+            b = StreamBuffer()
+            stream |= Transformer("//table[@id='dirlist']//td[@class='name']/a/@href").copy(b).end().select("//table[@id='dirlist']//td[@class='%s']" % self.element_class).after(self.GenerateSVNUrl(b, self.svn_base_url, self.link_text, data['path_links'][0]['href']))
 
         return stream
 
     def dir_entries(self, stream, data):
         # add table cells
-        for idx, entry in enumerate(data['dir']['entries']):
-            xpath = "//td[@class='%s'][%s]" % (self.element_class, 1 + idx)
-            stream |= Transformer(xpath).after(tag.td(tag.a(self.link_text, href=self.url(entry.path), title=self.link_title)))
+        b = StreamBuffer()
+        stream |= Transformer("//td[@class='name']/a/@href").copy(b).end().select("//td[@class='%s']" % self.element_class).after(self.GenerateSVNUrl(b, self.svn_base_url, self.link_text, data['path_links'][0]['href']))
         return stream
 
     def svnlog(self, stream, data):
