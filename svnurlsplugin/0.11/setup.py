@@ -8,7 +8,7 @@ setup(
     url='http://trac-hacks.org/wiki/SvnUrlsPlugin',
     description='Provide links to the actual URLs of svn versioned resources',
     license='GPL',
-    keyworkds='trag plugin svn',
+    keywords='trag plugin svn',
     packages=find_packages(exclude=['*.tests*']),
     package_data={'svnurls': ['templates/*.html']},
     install_requires=["Genshi>=0.5dev"],
