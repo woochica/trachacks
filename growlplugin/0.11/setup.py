@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracGrowlPlugin'
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 setup (
     name = PACKAGE,
@@ -30,6 +30,7 @@ setup (
     packages = find_packages(exclude=['ez_setup']),
     package_data={
         'revtree': [
+            'htdocs/css/*.css',
             'htdocs/images/*.png',
             'templates/*.html'
         ]
@@ -37,6 +38,7 @@ setup (
     entry_points = {
         'trac.plugins': [
             'growl.notifier = growl.notifier',
+            'growl.web_ui = growl.web_ui'
         ]
     }
 )

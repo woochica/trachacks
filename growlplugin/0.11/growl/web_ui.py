@@ -55,7 +55,7 @@ class GrowlPreferencePanel(Component):
         if not self.env[GrowlNotifierSystem].is_userprefs_enabled():
             self.log.info("Growl: User notifications not enabled")
             return
-        if not req.perm.has_permission('GROWL_MODIFY'):
+        if 'GROWL_MODIFY' not in req.perm:
             self.log.info("Growl: User does not have GROWL_MODIFY permission")
             return
         yield('growl', 'Growl Notification')
@@ -66,11 +66,10 @@ class GrowlPreferencePanel(Component):
         sources = notifier.get_available_sources()
 
         if req.method == 'POST':
-            if not req.perm.has_permission('GROWL_MODIFY'):
+            if 'GROWL_MODIFY' not in req.perm:
                 raise PermissionError("No permission to change Growl settings")
             host = req.args.get('host')
-            if notifier.validate_host(req.perm.has_permission('GROWL_ADMIN'),
-                                      host):
+            if notifier.validate_host('GROWL_ADMIN' in req.perm, host):
                 req.session['growl.host'] = host
                 # send a registration request to the host
                 notifier.register_notifications([host])

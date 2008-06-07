@@ -11,11 +11,12 @@
   <body>
 
     <div class="field growl">
-      <p class="hint">Trac notifies Growl-enabled clients.</p>
+      <p class="hint">Notify remote Growl clients when Trac events occur.<br/>
+      This plugin sends notifications onto standard Growl UDP port 9887.</p>
       <div id="growl-icon"></div>
       <table>
         <tr class="field">
-          <th><label for="host">Host address:</label></th>
+          <th><label for="host">Remote host address:</label></th>
           <td><input type="text" id="host" name="host" size="30"
             value="${host}" /></td>
         </tr>

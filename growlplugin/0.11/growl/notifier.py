@@ -18,7 +18,8 @@ from trac.core import *
 from trac.perm import PermissionError
 from trac.ticket import ITicketChangeListener 
 from trac.wiki import IWikiChangeListener
-from socket import AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST, socket
+from socket import AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST, \
+                   socket, gaierror, gethostbyname
 from netgrowl import GrowlRegistrationPacket, GrowlNotificationPacket
 
 __all__ = ['GrowlNotifierSystem']
@@ -36,16 +37,24 @@ class GrowlSender(object):
         s = socket(AF_INET, SOCK_DGRAM)
         payload = growlpacket.payload()
         broadcast = False
+        # we do not want a Growl notification failure to be dispatched
+        # to the web client, so any error is catched, logged and ignored
         for host in hosts:
             if host != '<broadcast>':
-                self.log.info("Growl: send to %s" % host)
-                s.sendto(payload, (host, self.GROWL_UDP_PORT))
+                self.log.debug("Growl: sendto %s" % host)
+                try:
+                    s.sendto(payload, (host, self.GROWL_UDP_PORT))
+                except Exception, e:
+                    self.log.error('Grow notification error: %s', e)
             else:
                 broadcast = True
         if broadcast:
             self.log.info("Growl: broadcast")
-            s.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-            s.sendto(payload, ('<broadcast>', self.GROWL_UDP_PORT))
+            try:
+                s.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+                s.sendto(payload, ('<broadcast>', self.GROWL_UDP_PORT))
+            except Exception, e:
+                self.log.error('Grow notification error: %s', e)
         s.close()
 
 
@@ -69,7 +78,7 @@ class GrowlNotifierSystem(Component):
         pass
 
 
-    # settings
+    # project settings
     userprefs_enabled = BoolOption('growl', 'userprefs', 'false',
         doc="""Enable per-user to define Growl notification option.""")
 
@@ -78,7 +87,7 @@ class GrowlNotifierSystem(Component):
 
     avail_sources = ListOption('growl', 'sources', ','.join(SOURCES),
         doc="""List of event sources (default: all available sources)""")
-
+        
 
     # IAttachmentChangeListener Interface
 
@@ -89,7 +98,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='attachment',
                                       title='Attachment added',
                                       description=attachment.title)
-        self._notify(self._get_hosts('attachment'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('attachment'), gnp)
 
     def attachment_deleted(self, attachment):
         """Called when an attachment is deleted."""
@@ -98,7 +108,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='ticket',
                                       title='Attachment deleted',
                                       description=attachment.title)
-        self._notify(self._get_hosts('attachment'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('attachment'), gnp)
 
 
     # ITicketChangeListener Interface
@@ -110,7 +121,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='ticket',
                                       title='Ticket #%d created' % ticket.id,
                                       description=self._ticket_repr(ticket))
-        self._notify(self._get_hosts('ticket'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('ticket'), gnp)
 
     def ticket_changed(self, ticket, comment, author, old_values):
         """Called when a ticket is modified."""
@@ -119,7 +131,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='ticket',
                                       title='Ticket #%d updated' % ticket.id,
                                       description=self._ticket_repr(ticket))
-        self._notify(self._get_hosts('ticket'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('ticket'), gnp)
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
@@ -128,7 +141,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='ticket',
                                       title='Ticket #%d deleted' % ticket.id,
                                       description=self._ticket_repr(ticket))
-        self._notify(self._get_hosts('ticket'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('ticket'), gnp)
 
 
     # IWikiChangeListener Interface
@@ -140,7 +154,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='wiki',
                                       title='Page created',
                                       description=page.name)
-        self._notify(self._get_hosts('wiki'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('wiki'), gnp)
 
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
         """Called when a page has been modified."""
@@ -150,7 +165,8 @@ class GrowlNotifierSystem(Component):
                                       title='Page updated',
                                       description=self._wiki_repr(page,
                                                                   comment))
-        self._notify(self._get_hosts('wiki'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('wiki'), gnp)
 
     def wiki_page_deleted(self, page):
         """Called when a page has been deleted."""
@@ -159,7 +175,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='wiki',
                                       title='Page deleted',
                                       description=self._wiki_repr(page))
-        self._notify(self._get_hosts('wiki'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('wiki'), gnp)
 
     def wiki_page_version_deleted(self, page):
         """Called when a version of a page has been deleted."""
@@ -168,7 +185,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='wiki',
                                       title='Page suppressed',
                                       description=self._wiki_repr(page))
-        self._notify(self._get_hosts('wiki'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('wiki'), gnp)
 
 
     # IBuildListener Interface
@@ -181,7 +199,8 @@ class GrowlNotifierSystem(Component):
                                       title='Build started',
                                       description=self._bitten_repr(build),
                                       priority=-2)
-        self._notify(self._get_hosts('bitten'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('bitten'), gnp)
     
     def build_aborted(build):
         """Called when a build slave cancels a build or disconnects."""
@@ -190,7 +209,8 @@ class GrowlNotifierSystem(Component):
         gnp = GrowlNotificationPacket(notification='bitten',
                                       title='Build aborted',
                                       description=self._bitten_repr(build))
-        self._notify(self._get_hosts('bitten'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('bitten'), gnp)
     
     def build_completed(build):
         """Called when a build slave has completed a build, regardless of the
@@ -204,7 +224,8 @@ class GrowlNotifierSystem(Component):
                                       description=self._bitten_repr(build),
                                       sticky=failure,
                                       priority=failure and 2 or 0)
-        self._notify(self._get_hosts('bitten'), gnp)
+        gs = GrowlSender(self.env)
+        gs.notify(self._get_hosts('bitten'), gnp)
 
 
     # API
@@ -222,12 +243,20 @@ class GrowlNotifierSystem(Component):
         grp = GrowlRegistrationPacket()
         for n in self.avail_sources:
             grp.addNotification(n, n in self.sources)
-        self._notify(hosts, grp)
+        gs = GrowlSender(self.env)
+        gs.notify(hosts, grp)
 
     def validate_host(self, admin, host):
         if host == '<broadcast>':
-            raise PermissionError("Broadcast: GROWL_ADMIN")
+            if not admin:
+                raise PermissionError('Broadcast: GROWL_ADMIN')
+            return True
         # TODO: implement host validation
+        try:
+            r = gethostbyname(host)
+            self.log.info("Address of %s: %s" % (host, r))
+        except gaierror:
+            raise TracError("Host '%s' is invalid" % host)
         return True
 
     # Implementation
@@ -238,16 +267,6 @@ class GrowlNotifierSystem(Component):
         # register project-defined hosts
         self.register_notifications(self.hosts)
         
-    def _notify(self, hosts, gp):
-        """Wrapper to notify growl clients"""
-        try:
-            # we do not want a Growl notification failure to be dispatched
-            # to the web client
-            gs = GrowlSender(self.env)
-            gs.notify(hosts, gp)
-        except IOError, e:
-            self.log.error('Grow notification error: %s', e)
-
     def _ticket_repr(self, ticket):
         """String representation of a Trac ticket"""
         rep = '%s (%s)' % (ticket['summary'], ticket['status'])
@@ -271,22 +290,23 @@ class GrowlNotifierSystem(Component):
     
     def _get_hosts(self, source):
         # get user-specific hosts
-        hosts = self._get_users_hosts()
+        hosts = self._get_user_hosts(source)
         # add hosts defined in the project config, removing duplicates
         hosts.extend([h for h in self.hosts if h not in hosts])
+        return hosts
 
     def _get_user_hosts(self, source):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT DISTINCT H.value" \
-            "FROM session_attribute src, session_attribute h" \
-            "WHERE (S.name=%s AND S.value='1')" \
-            "AND H.name='growl.host' AND S.sid=H.sid",
-            ('growl.source.%s' % source),)
+        cursor.execute("SELECT DISTINCT H.value " \
+            "FROM session_attribute S, session_attribute H " \
+            "WHERE (S.name=%s AND S.value='1') " \
+            "AND H.name='growl.host' AND S.sid=H.sid", 
+            ("growl.source.%s" % source,))
         hosts = []
-        for host in cursor:
+        for host, in cursor:
             if host:
                 hosts.append(host)
-        self.log.info("Hosts for %s: %s" % (source, hosts))
+        self.log.debug("Hosts for %s: %s" % (source, hosts))
         # filter out empty hosts
         return filter(None, hosts)

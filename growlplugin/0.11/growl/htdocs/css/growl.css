@@ -1,12 +1,14 @@
-div#growl-icon {
-  float: right;
-  margin-right: 40px;
-  min-width: 64px; min-height: 64px;
-  /* TODO: ask Growl team if growl icon inclusion is ok in the plugin... 
-     and/or remove it */
-  background: url(../images/growl.png) no-repeat 0 0;
+div.growl {
+  /* TODO: waiting for Growl team to validate use of the growl image 
+     in the plugin... */
+  /*background: url(../images/growl-180.png) no-repeat 380px -15px;*/
+  min-height: 150px;
 }
-
+div.buttons {
+  position: relative;
+  background: transparent;
+  margin-top: -30px;
+}
 label.growl {
   padding-right: 1em;
 }
