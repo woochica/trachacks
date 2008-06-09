@@ -1,0 +1,35 @@
+.edit, .delete, .add, .copy, .move, .unknown {
+	border: 1px solid #999;
+	float: left;
+	margin: .2em .5em 0 0;
+	overflow: hidden;
+	width: .8em; height: .8em;
+	display: inline;
+}
+
+.insidelist, .legendinfo{
+	float: left;
+}
+
+.legendinfo{
+	margin-right: .8em;
+}
+
+#legendsection{
+	font-size: 80%;
+}
+
+#backtoticket{
+	clear: both;
+	margin-top: 2em;
+}
+
+li {list-style-type: none;}
+
+/* Colors for change types */
+.edit    { background: #fd8 }
+.delete  { background: #f88 }
+.add     { background: #bfb }
+.copy    { background: #88f }
+.move    { background: #ccc }
+.unknown { background: #fff }
