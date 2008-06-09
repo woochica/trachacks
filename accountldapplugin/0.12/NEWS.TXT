@@ -1,0 +1,5 @@
+
+Version 0.2. Last changes:
+
+ * Eliminate dependency with tracldapplugin.
+ * The code is compatible with 0.11rc1 and 0.12dev version of TRAC.
