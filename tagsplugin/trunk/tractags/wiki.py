@@ -53,7 +53,8 @@ class WikiTagInterface(Component):
                 and req.path_info.startswith('/wiki') and 'save' in req.args:
             if self._update_tags(req, page) and \
                     page.text == page.old_text and \
-                    page.readonly == int('readonly' in req.args):
+                    page.readonly == int('readonly' in req.args) and \
+                    page.version > 0:
                 req.redirect(get_resource_url(self.env, page.resource, req.href, version=None))
         return []
 
