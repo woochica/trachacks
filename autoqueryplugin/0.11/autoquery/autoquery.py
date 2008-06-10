@@ -78,6 +78,13 @@ class AutoqueryPlugin(Component):
         """
         if template == 'ticket.html':
             query = self.env.href() + '/query?%s=%s' + self.query_args
-            data['query_link'] = lambda x, y: query % (x, urllib.quote_plus(y))
+            def query_link(x, y):
+                try:
+                    y = urllib.quote_plus(y)
+                except KeyError:
+                    pass
+                return query % ( x, y )
+
+            data['query_link'] = query_link
             template = 'autoquery_ticket.html'
         return (template, data, content_type)
