@@ -6,8 +6,10 @@ from genshi.builder import tag
 from genshi.filters import Transformer
 
 from trac.core import *
-from trac.web import IRequestHandler
+from trac.admin.api import IAdminPanelProvider
 from trac.web import ITemplateStreamFilter
+from trac.web.chrome import ITemplateProvider
+
 
 def camelCase(string):
     """returns the camelCase representation of a string"""
@@ -79,6 +81,8 @@ return true;
     def onsubmit(self, field, comparitor, value, requiredfield):
         requires = "requires('%s', %s, %s, '%s');" % (field, comparitor, value, requiredfield)
         return requires
+
+### 
 
 class TicketExcludes(Component):
     """bits for exluding field under a condition"""
@@ -357,3 +361,39 @@ return !isIn(x,y);
 """
         return string
 
+    ### methods for IAdminPanelProvider
+
+    def get_admin_panels(self, req):
+        """Return a list of available admin panels.
+        
+        The items returned by this function must be tuples of the form
+        `(category, category_label, page, page_label)`.
+        """
+        return []
+
+    def render_admin_panel(self, req, category, page, path_info):
+        """Process a request for an admin panel.
+        
+        This function should return a tuple of the form `(template, data)`,
+        where `template` is the name of the template to use and `data` is the
+        data to be passed to the template.
+        """
+        
+    ### methods for ITemplateProvider
+
+    def get_htdocs_dirs():
+        """Return a list of directories with static resources (such as style
+        sheets, images, etc.)
+
+        Each item in the list must be a `(prefix, abspath)` tuple. The
+        `prefix` part defines the path in the URL that requests to these
+        resources are prefixed with.
+        
+        The `abspath` is the absolute path to the directory containing the
+        resources on the local file system.
+        """
+
+    def get_templates_dirs():
+        """Return a list of directories containing the provided template
+        files.
+        """
