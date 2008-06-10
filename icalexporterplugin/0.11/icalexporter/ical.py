@@ -88,7 +88,7 @@ class iCal(object):
             feed = self.feedparser.parse(url)
             events = []
 
-            attrmap = { 'id': 'UID',
+            attrmap = { 
                         'link': 'URL',
                         'title': 'SUMMARY',
                         'summary': 'DESCRIPTION',
@@ -105,6 +105,7 @@ class iCal(object):
                     event.append(Property('DTSTAMP', date.strftime('%Y%m%dT%H%M%SZ')))
                     event.append(Property('DTSTART', date.strftime('%Y%m%d'),
                                           {'VALUE': 'DATE'}))
+                event.append(Property('UID', '<%s;%s>' % (entry.link, entry.get('id', ''))))
                 for key in attrmap:
                     if key in entry:
                         event.append(Property(attrmap[key], entry[key]))
