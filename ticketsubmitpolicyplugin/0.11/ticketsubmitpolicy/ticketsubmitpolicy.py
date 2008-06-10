@@ -131,7 +131,10 @@ So yes, I think
     implements(ITemplateStreamFilter) 
     policies = ExtensionPoint(ITicketSubmitPolicy)
 
-    comparitors =  {'!=': 'is', '==': 'isNot'}
+    comparitors =  {'!=': 'is', 
+                    '==': 'isNot',
+                    'in': 'isIn',
+                    'not in': 'isNotIn' }
 
     def policy_dict(self):
         retval = {}
@@ -179,14 +182,6 @@ So yes, I think
 
     # method for ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
-
-        # temporary staging ground for ticket policy behavior
-        # XXX things here should be abstracted
-#        policies = [ {'contingentfield': 'type', 'value': 'defect', 
-#                      'function': 'requires', 'args': [ 'version' ]},
-#                     {'contingentfield': 'type', 'value': 'defect', 
-#                      'function': 'excludes', 'args': [ 'version' ]},
-#                     ]
 
         if filename == 'ticket.html':
 
@@ -309,6 +304,26 @@ function isNot(x, y)
 {
 return (x != y);
 }
+
+function isIn(x, y)
+{
+for (index in y)
+{
+
+if(x == y[index])
+{
+return true;
+}
+
+}
+return false;
+}
+
+function isNotIn(x, y)
+{
+return !isIn(x,y);
+}
+
 """
         return string
 
