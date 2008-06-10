@@ -54,16 +54,23 @@
       <py:choose>
         <py:when test="len(files) > 0 or len(deletedfiles) > 0">
           <py:choose>
-            <py:when test="len(conflictingtickets) > 0">
-              <h3><span style="text-decoration: underline;">WARNING:</span> ${len(conflictingtickets)} conflicting ticket<py:choose><py:when test="len(conflictingtickets) > 1">s</py:when></py:choose> <py:choose><py:when test="len(conflictingtickets) > 1">have</py:when><py:otherwise>has</py:otherwise></py:choose> been detected:</h3>
-              <ul>
-                <li py:for="relticketid, relticketdesc, relticketstatus, relticketowner in conflictingtickets">
-                  <a href="${href.ticket(relticketid)}">#${relticketid}</a> (${relticketdesc}, <span style="text-decoration: underline;">status:</span> ${relticketstatus}, <span style="text-decoration: underline;">owner:</span> ${relticketowner})
-                </li>
-              </ul>
+            <py:when test="ticketisclosed == False">
+              <py:choose>
+                <py:when test="len(conflictingtickets) > 0">
+                  <h3><span style="text-decoration: underline;">WARNING:</span> ${len(conflictingtickets)} conflicting ticket<py:choose><py:when test="len(conflictingtickets) > 1">s</py:when></py:choose> <py:choose><py:when test="len(conflictingtickets) > 1">have</py:when><py:otherwise>has</py:otherwise></py:choose> been detected:</h3>
+                  <ul>
+                    <li py:for="relticketid, relticketdesc, relticketstatus, relticketowner in conflictingtickets">
+                      <a href="${href.ticket(relticketid)}">#${relticketid}</a> (${relticketdesc}, <span style="text-decoration: underline;">status:</span> ${relticketstatus}, <span style="text-decoration: underline;">owner:</span> ${relticketowner})
+                    </li>
+                  </ul>
+                </py:when>
+                <py:otherwise>
+                  <h3>No conflicting ticket has been detected.</h3>
+                </py:otherwise>
+              </py:choose>
             </py:when>
             <py:otherwise>
-              <h3>No conflicting ticket has been detected.</h3>
+              <h3>Conflicting tickets are not detected for closed tickets.</h3>
             </py:otherwise>
           </py:choose>
           

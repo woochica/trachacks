@@ -27,9 +27,9 @@ class TicketModifiedFilesPlugin(Component):
             return True
     
     def process_request(self, req):
-        (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets) = self.__process_ticket_request(req)
+        (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed) = self.__process_ticket_request(req)
         #Pack the information to send it to the html file
-        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets}
+        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets, 'ticketisclosed':ticketisclosed}
         add_stylesheet(req, 'tmf/css/ticketmodifiedfiles.css')
         return 'ticketmodifiedfiles.html', data, None
     
@@ -66,14 +66,20 @@ class TicketModifiedFilesPlugin(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if 'modifiedfiles' in data:
-            numconflictingtickets = self.__process_ticket_request(req, True)
             #If there are conflicting tickets, display a warning message
-            if numconflictingtickets > 0:
-                text = " There "
-                if numconflictingtickets == 1: text += "is one ticket that is"
-                else: text += "are " + str(numconflictingtickets) + " tickets that are"
-                text += " in conflict with this one!"
-                stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(tag.p(tag.strong("Warning:"), text, style='background: #def; border: 2px solid #00d; padding: 3px;'))
+            #Only show the message when the current ticket is not closed
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("SELECT status FROM ticket WHERE id=" + str(req.args.get('id')))
+            for status, in cursor:
+                if status != "closed":
+                    numconflictingtickets = self.__process_ticket_request(req, True)
+                    if numconflictingtickets > 0:
+                        text = " There "
+                        if numconflictingtickets == 1: text += "is one ticket that is"
+                        else: text += "are " + str(numconflictingtickets) + " tickets that are"
+                        text += " in conflict with this one!"
+                        stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(tag.p(tag.strong("Warning:"), text, style='background: #def; border: 2px solid #00d; padding: 3px;'))
             
             #Display the link to this ticket's modifiedfiles page
             stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(
@@ -153,15 +159,22 @@ class TicketModifiedFilesPlugin(Component):
                         ticketsperfile[file].append(ticket)
         
         #Get the global list of conflicting tickets
+        #Only if the ticket is not already closed
         conflictingtickets=[]
-        for fn, relticketids in ticketsperfile.items():
-            for relticketid in relticketids:
-                cursor.execute("SELECT summary, status, owner FROM ticket WHERE id=" + str(relticketid))
-                for summary, status, owner, in cursor:
-                    conflictingtickets.append((relticketid, summary, status, owner))
+        cursor.execute("SELECT status FROM ticket WHERE id=" + str(req.args.get('id')))
+        for status, in cursor:
+            if status != "closed":
+                ticketisclosed = False
+                for fn, relticketids in ticketsperfile.items():
+                    for relticketid in relticketids:
+                        cursor.execute("SELECT summary, status, owner FROM ticket WHERE id=" + str(relticketid))
+                        for summary, status, owner, in cursor:
+                            conflictingtickets.append((relticketid, summary, status, owner))
         
-        #Remove duplicated values
-        conflictingtickets = self.__remove_duplicated_elements_and_sort(conflictingtickets)
+                #Remove duplicated values
+                conflictingtickets = self.__remove_duplicated_elements_and_sort(conflictingtickets)
+            else:
+                ticketisclosed = True
         
         #Separate the deleted files from the others
         deletedfiles = []
@@ -170,9 +183,13 @@ class TicketModifiedFilesPlugin(Component):
                 deletedfiles.append(file)
         for deletedfile in deletedfiles:
             files.remove(deletedfile)
+        
+        #Return only the number of conflicting tickets (if asked for)
         if justnumconflictingtickets:
             return len(conflictingtickets)
-        return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets)
+        
+        #Return all the needed information
+        return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed)
     
     def __remove_duplicated_elements_and_sort(self, list):
         d = {}
