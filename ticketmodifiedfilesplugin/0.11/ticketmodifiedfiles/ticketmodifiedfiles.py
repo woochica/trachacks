@@ -27,9 +27,11 @@ class TicketModifiedFilesPlugin(Component):
             return True
     
     def process_request(self, req):
+        #Retrieve the information needed to display in the /modifiedfiles/ page
         (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed) = self.__process_ticket_request(req)
-        #Pack the information to send it to the html file
+        #Pack the information to send to the html file
         data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets, 'ticketisclosed':ticketisclosed}
+        #Add the custom stylesheet
         add_stylesheet(req, 'tmf/css/ticketmodifiedfiles.css')
         return 'ticketmodifiedfiles.html', data, None
     

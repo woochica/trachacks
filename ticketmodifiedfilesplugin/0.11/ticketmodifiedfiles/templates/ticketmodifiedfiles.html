@@ -34,8 +34,8 @@
               </py:choose>
               <span class="insidelist"><a href="${href.log(filename)}">${filename}</a>
               <py:choose>
-                <py:when test="len(ticketsperfile[filename]) > 0">
-                  (tickets <py:for each="relticketid in ticketsperfile[filename]"><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid != ticketsperfile[filename][-1]">, </py:when></py:choose><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid == ticketsperfile[filename][-1]"> and </py:when></py:choose><a href="${href.ticket(relticketid)}">#${relticketid}</a></py:for>)
+                <py:when test="ticketisclosed == False and len(ticketsperfile[filename]) > 0">
+                  (ticket<py:choose><py:when test="len(ticketsperfile[filename]) > 1">s</py:when></py:choose> <py:for each="relticketid in ticketsperfile[filename]"><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid != ticketsperfile[filename][-1]">, </py:when></py:choose><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid == ticketsperfile[filename][-1]"> and </py:when></py:choose><a href="${href.ticket(relticketid)}">#${relticketid}</a></py:for>)
                 </py:when>
               </py:choose>
               </span>
