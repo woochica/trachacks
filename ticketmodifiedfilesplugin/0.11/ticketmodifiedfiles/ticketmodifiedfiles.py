@@ -27,7 +27,11 @@ class TicketModifiedFilesPlugin(Component):
             return True
     
     def process_request(self, req):
-        return self._process_ticket_request(req)
+        (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets) = self.__process_ticket_request(req)
+        #Pack the information to send it to the html file
+        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets}
+        add_stylesheet(req, 'tmf/css/ticketmodifiedfiles.css')
+        return 'ticketmodifiedfiles.html', data, None
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -62,6 +66,16 @@ class TicketModifiedFilesPlugin(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if 'modifiedfiles' in data:
+            numconflictingtickets = self.__process_ticket_request(req, True)
+            #If there are conflicting tickets, display a warning message
+            if numconflictingtickets > 0:
+                text = " There "
+                if numconflictingtickets == 1: text += "is one ticket that is"
+                else: text += "are " + str(numconflictingtickets) + " tickets that are"
+                text += " in conflict with this one!"
+                stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(tag.p(tag.strong("Warning:"), text, style='background: #def; border: 2px solid #00d; padding: 3px;'))
+            
+            #Display the link to this ticket's modifiedfiles page
             stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(
                        tag.p(
                              'Have a look at the ',
@@ -72,7 +86,7 @@ class TicketModifiedFilesPlugin(Component):
         return stream
 
     # Internal methods
-    def _process_ticket_request(self, req):
+    def __process_ticket_request(self, req, justnumconflictingtickets = False):
         id = int(req.args.get('id'))
         req.perm('ticket', id, None).require('TICKET_VIEW')
         
@@ -107,7 +121,7 @@ class TicketModifiedFilesPlugin(Component):
                     files.append(path)
         
         #Remove duplicated values
-        files = self._remove_duplicated_elements_and_sort(files)
+        files = self.__remove_duplicated_elements_and_sort(files)
         
         filestatus = {}
         #Get the last status of each file
@@ -128,7 +142,7 @@ class TicketModifiedFilesPlugin(Component):
                     #Don't add yourself
                     if ticket != id:
                         tempticketslist.append(ticket)
-            tempticketslist = self._remove_duplicated_elements_and_sort(tempticketslist)
+            tempticketslist = self.__remove_duplicated_elements_and_sort(tempticketslist)
             ticketsperfile[file] = []
             
             #Keep only the active tickets
@@ -147,7 +161,7 @@ class TicketModifiedFilesPlugin(Component):
                     conflictingtickets.append((relticketid, summary, status, owner))
         
         #Remove duplicated values
-        conflictingtickets = self._remove_duplicated_elements_and_sort(conflictingtickets)
+        conflictingtickets = self.__remove_duplicated_elements_and_sort(conflictingtickets)
         
         #Separate the deleted files from the others
         deletedfiles = []
@@ -156,13 +170,11 @@ class TicketModifiedFilesPlugin(Component):
                 deletedfiles.append(file)
         for deletedfile in deletedfiles:
             files.remove(deletedfile)
-        
-        #Pack the information to send it to the html file
-        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets}
-        add_stylesheet(req, 'tmf/css/ticketmodifiedfiles.css')
-        return 'ticketmodifiedfiles.html', data, None
+        if justnumconflictingtickets:
+            return len(conflictingtickets)
+        return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets)
     
-    def _remove_duplicated_elements_and_sort(self, list):
+    def __remove_duplicated_elements_and_sort(self, list):
         d = {}
         for x in list: d[x]=1
         return sorted(d.keys())
