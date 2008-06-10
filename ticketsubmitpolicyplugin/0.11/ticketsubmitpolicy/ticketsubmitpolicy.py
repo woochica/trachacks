@@ -1,14 +1,23 @@
 # Plugin for trac 0.11
 
+import re
+
 from genshi.builder import tag 
 from genshi.filters import Transformer
-
 
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web import ITemplateStreamFilter
 
+def camelCase(string):
+    """returns the camelCase representation of a string"""
 
+    args = string.split()
+    args = [args[0]] + [ i.capitalize() for i in args[1:] ]
+    return ''.join(args)
+
+
+### policies
 
 class ITicketSubmitPolicy(Interface):
     """interface for ticket submission policy enforcers"""
@@ -46,7 +55,7 @@ var val=getValue("field-" + contingentfield);
 var element=document.getElementById("field-" + requiredfield);
 var field=getValue("field-" + requiredfield);
 
-if (! comparitor(val, value))
+if (comparitor(val, value))
 {
 
 if (!field)
@@ -68,7 +77,7 @@ return true;
         return
 
     def onsubmit(self, field, comparitor, value, requiredfield):
-        requires = "requires('%s', %s, '%s', '%s');" % (field, comparitor, value, requiredfield)
+        requires = "requires('%s', %s, %s, '%s');" % (field, comparitor, value, requiredfield)
         return requires
 
 class TicketExcludes(Component):
@@ -79,7 +88,7 @@ class TicketExcludes(Component):
         return 'excludes'
 
     def filter_stream(self, stream, field, comparitor, value, excludedfield):
-        exclude = "exclude('%s', %s, '%s', '%s')" % ( field, comparitor, value, excludedfield )
+        exclude = "exclude('%s', %s, %s, '%s')" % ( field, comparitor, value, excludedfield )
         stream |= Transformer("//select[@id='field-%s']" % field).attr('onchange', exclude)
         return stream
 
@@ -91,18 +100,18 @@ var element=document.getElementById("field-" + excludedfield);
 
 if (comparitor(val, value))
 {
-element.style.display="";
+element.style.display="none";
 }
 else
 {
-element.style.display="none";
+element.style.display="";
 }
 
 }
 """
 
     def onload(self, field, comparitor, value, excludedfield):
-        return "exclude('%s', %s, '%s', '%s');" % ( field, comparitor, value, excludedfield )
+        return "exclude('%s', %s, %s, '%s');" % ( field, comparitor, value, excludedfield )
 
     def onsubmit(self, field, comparitor, value, excludedfield):
         return
@@ -131,10 +140,15 @@ So yes, I think
     implements(ITemplateStreamFilter) 
     policies = ExtensionPoint(ITicketSubmitPolicy)
 
-    comparitors =  {'!=': 'is', 
-                    '==': 'isNot',
-                    'in': 'isIn',
-                    'not in': 'isNotIn' }
+#     comparitors =  {'!=': 'is', 
+#                     '==': 'isNot',
+#                     'in': 'isIn',
+#                     'not in': 'isNotIn' }
+
+    comparitors = { 'is': 1,
+                    'is not': 1,
+                    'is in': 'Array',
+                    'is not in': 'Array' }
 
     def policy_dict(self):
         retval = {}
@@ -146,7 +160,11 @@ So yes, I think
         """
         parse the [ticket-submit-policy] section of the config for policy rules
         """
+
+        # XXX wtf?
         section = dict([i for i in self.config.options('ticket-submit-policy')])
+
+
         policies = {} # XXX this should probably be a real class, not an abused dict
         for key in section:
             try:
@@ -159,13 +177,25 @@ So yes, I think
 
             if action == 'condition':
                 condition = section[key]
-                for comparitor in self.comparitors:
-                    if comparitor in condition:
-                        field, value = [i.strip() for i in condition.split(comparitor)]
-                        policies[name]['condition'] = dict(field=field,value=value,comparitor=comparitor)
-                        break
+
+                # look for longest match to prevent substring matching
+                comparitors = sorted(self.comparitors.keys(), key=lambda x: len(x), reverse=True)
+                match = re.match('.* (%s) .*' % '|'.join(comparitors), condition)
+                if match:
+                    comparitor = match.groups()[0]
+                    field, value = [i.strip() for i in condition.split(comparitor, 1)]
+                    if self.comparitors[comparitor] == 'Array':
+                        value = ', '.join(["'%s'" % i.strip() 
+                                           for i in value.split(',')])
+                        value = '[%s]' % value
+                    else:
+                        value = "'%s'" % value
+                    comparitor = camelCase(comparitor)
+                    policies[name]['condition'] = dict(field=field,value=value,comparitor=comparitor)
+
                 else:
                     self.log.error("Invalid condition: %s" % condition)
+                                        
                 continue
 
             if not policies[name].has_key('actions'):
@@ -198,12 +228,12 @@ So yes, I think
                     javascript.append(policy_javascript)
 
             policies = self.parse()
+            
             for key, policy in policies.items():
 
                 # condition 
                 field = policy['condition']['field']
                 comparitor = policy['condition']['comparitor']
-                comparitor = self.comparitors[comparitor]
                 value = policy['condition']['value']
 
                 # find the correct handler for the policy
