@@ -1,5 +1,8 @@
-
+Version 0.1. Creation.
+ * Integration with LDAP server.
+ * Propagation of the user information from LDAP system to TRAC system.
+ * Allow to change password from LDAP.
+ 
 Version 0.2. Last changes:
-
- * Eliminate dependency with tracldapplugin.
+ * Eliminate dependency with tracldapplugin in setuptools.
  * The code is compatible with 0.11rc1 and 0.12dev version of TRAC.
