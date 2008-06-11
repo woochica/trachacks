@@ -135,7 +135,7 @@ def execute(formatter, args):
     if show_summary:
         html = string.join([wiki_to_oneliner("%s (#%d)" % (v,k),
                                              env,
-                                             env.get_db_cnx()
+                                             env.get_db_cnx(),
                                              req=formatter.req) for k,v in long_items.iteritems()], "<br>")
     else:
         html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
