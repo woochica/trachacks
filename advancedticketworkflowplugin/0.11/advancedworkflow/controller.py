@@ -3,6 +3,7 @@ workflows.
 """
 
 import os
+import time
 from subprocess import call
 from genshi.builder import tag
 
@@ -355,6 +356,7 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
 
     <someaction>.operations = xref
     <someaction>.xref = "Ticket %s is related to this ticket"
+    <someaction>.xref_local = "Ticket %s was marked as related to this ticket"
 
     Don't forget to add the `TicketWorkflowOpXRef` to the workflow
     option in [ticket].
@@ -387,11 +389,28 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
         id = 'action_%s_xref' % action
         ticketnum = req.args.get(id).strip('#')
         actions = ConfigurableTicketWorkflow(self.env).actions
+        author = req.authname
+
+        # Add a comment to the "remote" ticket to indicate this ticket is
+        # related to it.
         format_string = actions[action].get('xref',
                                         'Ticket %s is related to this ticket')
-        author = req.authname
         comment = format_string % ('#%s' % ticket.id)
+        # FIXME: This assumes the referenced ticket exists.
         xticket = model.Ticket(self.env, ticketnum)
-        # We _assume_ we have sufficient permissions to comment on the other
-        # ticket.
+        # FIXME: We _assume_ we have sufficient permissions to comment on the
+        # other ticket.
         xticket.save_changes(author, comment)
+
+        # Add a comment to this ticket to indicate that the "remote" ticket is
+        # related to it.  (But only if <action>.xref_local was set in the
+        # config.)
+        format_string = actions[action].get('xref_local',
+            'Ticket %s was marked as related to this ticket')
+        if format_string:
+            comment = format_string % ('#%s' % ticketnum)
+            time.sleep(1) # FIXME: Hack around IntegrityError
+            # HACK: Grab a new ticket object to avoid getting
+            # "OperationalError: no such column: new"
+            xticket = model.Ticket(self.env, ticket.id)
+            xticket.save_changes(author, comment)
