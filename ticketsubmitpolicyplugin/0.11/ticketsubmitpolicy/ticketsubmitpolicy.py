@@ -3,7 +3,9 @@
 import re
 
 from genshi.builder import tag 
+from genshi.core import Markup
 from genshi.filters import Transformer
+from genshi.input import HTML
 
 from trac.core import *
 from trac.admin.api import IAdminPanelProvider
@@ -27,17 +29,18 @@ class ITicketSubmitPolicy(Interface):
     def name():
         """name of the policy"""
 
-    def filter_stream(stream, field, comparitor, value, *args):
-        """filter the stream and return it"""
-
     def javascript():
         """returns javascript functions"""
 
-    def onload(field, comparitor, value, *args):
+    def onload(policy, condition, *args):
         """returns code to be executable on page load"""
 
-    def onsubmit(field, comparitor, value, *args):
+    def onsubmit(policy, condition, *args):
         """returns code to be executed on form submission"""
+
+    def filter_stream(stream, policy, condition, *args):
+        """filter the stream and return it"""
+
 
 class TicketRequires(Component):
     """bits for requiring a field"""
@@ -46,23 +49,19 @@ class TicketRequires(Component):
     def name(self):
         return 'requires'
 
-    def filter_stream(self, stream, field, comparitor, value, requiredfield):
-        return stream
-
     def javascript(self):
         return """
-function requires(contingentfield, comparitor, value, requiredfield)
+function requires(policy, requiredfield)
 {
-var val=getValue("field-" + contingentfield);
 var element=document.getElementById("field-" + requiredfield);
 var field=getValue("field-" + requiredfield);
 
-if (comparitor(val, value))
+if (condition(policy))
 {
 
 if (!field)
 {
-return "Please provide a " + requiredfield + " for this " + contingentfield + " " + value + " ticket";
+return "Please provide a " + requiredfield + " for this ticket";
 }
 
 }
@@ -75,12 +74,17 @@ return true;
 }
 """ 
 
-    def onload(self, field, comparitor, value, *args):
+    def onload(self, policy, condition, *args):
         return
 
-    def onsubmit(self, field, comparitor, value, requiredfield):
-        requires = "requires('%s', %s, %s, '%s');" % (field, comparitor, value, requiredfield)
+    def onsubmit(self, policy, condition, requiredfield):
+        requires = "requires(%s, '%s');" % (policy, requiredfield)
         return requires
+
+    def filter_stream(self, stream, policy, condition, requiredfield):
+        return stream
+
+
 
 ### 
 
@@ -91,18 +95,12 @@ class TicketExcludes(Component):
     def name(self):
         return 'excludes'
 
-    def filter_stream(self, stream, field, comparitor, value, excludedfield):
-        exclude = "exclude('%s', %s, %s, '%s')" % ( field, comparitor, value, excludedfield )
-        stream |= Transformer("//select[@id='field-%s']" % field).attr('onchange', exclude)
-        return stream
-
     def javascript(self):
-        return """function exclude(contingentfield, comparitor, value, excludedfield)
+        return """function exclude(policy, excludedfield)
 {
-var val=getValue("field-" + contingentfield);
 var element=document.getElementById("field-" + excludedfield);
 
-if (comparitor(val, value))
+if (condition(policy))
 {
 element.style.display="none";
 }
@@ -114,15 +112,30 @@ element.style.display="";
 }
 """
 
-    def onload(self, field, comparitor, value, excludedfield):
-        return "exclude('%s', %s, %s, '%s');" % ( field, comparitor, value, excludedfield )
+    def onload(self, policy, condition, excludedfield):
+        return "exclude(%s, '%s');" % (policy, excludedfield )
 
-    def onsubmit(self, field, comparitor, value, excludedfield):
+    def onsubmit(self, policy, condition, excludedfield):
         return
+
+    def filter_stream(self, stream, policy, condition, excludedfield):
+        exclude = "exclude(%s, '%s')" % ( policy, excludedfield )
+
+        # XXX this is unsafe, in the case onchange is already specified on this field;
+        # see http://trac-hacks.org/ticket/3128
+        for c in condition:
+            field = c['field']
+            stream |= Transformer("//select[@id='field-%s']" % field).attr('onchange', exclude)
+
+        return stream
+
 
 
 class TicketSubmitPolicyPlugin(Component):
     """
+    enforce a policy for allowing ticket submission based on fields
+    
+    
     get the selected option from HTML like this:
 
 <select id="field-type" name="field_type">
@@ -144,11 +157,6 @@ So yes, I think
     implements(ITemplateStreamFilter) 
     policies = ExtensionPoint(ITicketSubmitPolicy)
 
-#     comparitors =  {'!=': 'is', 
-#                     '==': 'isNot',
-#                     'in': 'isIn',
-#                     'not in': 'isNotIn' }
-
     comparitors = { 'is': 1,
                     'is not': 1,
                     'is in': 'Array',
@@ -168,6 +176,8 @@ So yes, I think
         # XXX wtf?
         section = dict([i for i in self.config.options('ticket-submit-policy')])
 
+        def parse_list(string):
+            return [ i.strip() for i in string.split(',') if i.strip()] 
 
         policies = {} # XXX this should probably be a real class, not an abused dict
         for key in section:
@@ -182,20 +192,24 @@ So yes, I think
             if action == 'condition':
                 condition = section[key]
 
+                # TODO:  split by '&&' and parse disparate conditions
+
                 # look for longest match to prevent substring matching
                 comparitors = sorted(self.comparitors.keys(), key=lambda x: len(x), reverse=True)
                 match = re.match('.* (%s) .*' % '|'.join(comparitors), condition)
                 if match:
-                    comparitor = match.groups()[0]
+                    comparitor = str(match.groups()[0]) # needs to be a str to be JS compatible via repr
                     field, value = [i.strip() for i in condition.split(comparitor, 1)]
+                    field = str(field)
                     if self.comparitors[comparitor] == 'Array':
-                        value = ', '.join(["'%s'" % i.strip() 
-                                           for i in value.split(',')])
-                        value = '[%s]' % value
+                        value = parse_list(value)
+
                     else:
-                        value = "'%s'" % value
-                    comparitor = camelCase(comparitor)
-                    policies[name]['condition'] = dict(field=field,value=value,comparitor=comparitor)
+                        value = str(value)
+
+                    if 'condition' not in policies[name]:
+                        policies[name]['condition'] = []
+                    policies[name]['condition'].append(dict(field=field,value=value,comparitor=comparitor))
 
                 else:
                     self.log.error("Invalid condition: %s" % condition)
@@ -204,7 +218,7 @@ So yes, I think
 
             if not policies[name].has_key('actions'):
                 policies[name]['actions'] = []
-            args = [ i.strip() for i in section[key].split(',') if i.strip()]
+            args = parse_list(section[key])
             policies[name]['actions'].append({'name': action, 'args': args})
 
         for policy in policies:
@@ -221,24 +235,30 @@ So yes, I think
 
             # setup variables
             javascript = [self.javascript()]
+
             onload = []
             onsubmit = []
             policy_dict = self.policy_dict()
 
             # add JS functions to the head block
             for policy in self.policies:
+
                 policy_javascript = policy.javascript()
                 if policy_javascript:
                     javascript.append(policy_javascript)
 
             policies = self.parse()
             
-            for key, policy in policies.items():
+            for name, policy in policies.items():
 
-                # condition 
-                field = policy['condition']['field']
-                comparitor = policy['condition']['comparitor']
-                value = policy['condition']['value']
+                # insert the condition into the JS
+                conditions = policy['condition']
+                conditions = ["{field: '%s', comparitor: %s, value: '%s'}" % (condition['field'], 
+                                                                              camelCase(condition['comparitor']),
+                                                                              condition['value'])
+                              for condition in conditions]
+                condition = '%s = [ %s ];' % (name, ', '.join(conditions))
+                javascript.append(condition)
 
                 # find the correct handler for the policy
                 for action in policy['actions']:
@@ -248,28 +268,29 @@ So yes, I think
                         continue
                 
                     # filter the stream
-                    stream = handler.filter_stream(stream, field, comparitor, value, *action['args'])
+                    stream = handler.filter_stream(stream, name, policy['condition'], *action['args'])
 
 
                     # add other necessary JS to the page
-                    policy_onload = handler.onload(field, comparitor, value, *action['args'])
+                    policy_onload = handler.onload(name, policy['condition'], *action['args'])
                     if policy_onload:
                         onload.append(policy_onload)
-                    policy_onsubmit = handler.onsubmit(field, comparitor, value, *action['args'])
+                    policy_onsubmit = handler.onsubmit(name, policy['condition'], *action['args'])
                     if policy_onsubmit:
                         onsubmit.append(policy_onsubmit)
 
             # insert onload, onsubmit hooks if supplied
             if onload:
                 javascript.append(self.onload(onload))
-                stream |= Transformer("body").attr('onload', 'onload()')
+                stream |= Transformer("body").attr('onload', 'load()')
             if onsubmit:
                 javascript.append(self.onsubmit(onsubmit))
                 stream |= Transformer("//form[@id='propertyform']").attr('onsubmit', 'return onsubmit')
 
             # insert head javascript
-            javascript = tag.script('\n'.join(javascript), **{ "type": "text/javascript"})
-            stream |= Transformer("head").append(javascript)
+            if javascript:
+                javascript = tag.script('\n'.join(javascript), **{ "type": "text/javascript"})
+                stream |= Transformer("head").append(javascript)
 
         return stream
 
@@ -277,7 +298,7 @@ So yes, I think
 
     def onload(self, items):
         return """
-function onload()
+function load()
 {
 %s
 }
@@ -297,6 +318,7 @@ errors[errors.length] = message;
         return """
 function onsubmit()
 {
+
 var errors = new Array();
 %s
 if (errors.length)
@@ -322,6 +344,8 @@ return true;
 
     def javascript(self):
         """head javascript required to enforce ticket submission policy"""
+        # XXX this should probably go into a separate file
+
         string = """
 function getValue(id)
 {
@@ -356,6 +380,23 @@ return false;
 function isNotIn(x, y)
 {
 return !isIn(x,y);
+}
+
+function condition(policy)
+{
+    length = policy.length;
+    for ( var i=0; i != length; i++ )
+        {
+            field = getValue('field-' + policy[i].field);
+            comparitor = policy[i].comparitor;
+            value = policy[i].value;
+
+            if ( !comparitor(field, value) )
+                {
+                    return false;
+                }
+        }
+    return true;
 }
 
 """
