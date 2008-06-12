@@ -61,7 +61,7 @@ if (condition(policy))
 
 if (!field)
 {
-return "Please provide a " + requiredfield + " for this ticket";
+return requiredfield + " is a required field for tickets where " + policytostring(policy);
 }
 
 }
@@ -173,13 +173,12 @@ So yes, I think
         parse the [ticket-submit-policy] section of the config for policy rules
         """
 
-        # XXX wtf?
         section = dict([i for i in self.config.options('ticket-submit-policy')])
 
         def parse_list(string):
             return [ i.strip() for i in string.split(',') if i.strip()] 
 
-        policies = {} # XXX this should probably be a real class, not an abused dict
+        policies = {} 
         for key in section:
             try:
                 name, action = key.split('.', 1)
@@ -192,27 +191,30 @@ So yes, I think
             if action == 'condition':
                 condition = section[key]
 
-                # TODO:  split by '&&' and parse disparate conditions
+                conditions = condition.split('&&')
 
-                # look for longest match to prevent substring matching
-                comparitors = sorted(self.comparitors.keys(), key=lambda x: len(x), reverse=True)
-                match = re.match('.* (%s) .*' % '|'.join(comparitors), condition)
-                if match:
-                    comparitor = str(match.groups()[0]) # needs to be a str to be JS compatible via repr
-                    field, value = [i.strip() for i in condition.split(comparitor, 1)]
-                    field = str(field)
-                    if self.comparitors[comparitor] == 'Array':
-                        value = parse_list(value)
+                for condition in conditions:
 
+                    # look for longest match to prevent substring matching
+                    comparitors = sorted(self.comparitors.keys(), key=lambda x: len(x), reverse=True)
+                    match = re.match('.* (%s) .*' % '|'.join(comparitors), condition)
+
+                    if match:
+                        comparitor = str(match.groups()[0]) # needs to be a str to be JS compatible via repr
+                        field, value = [i.strip() for i in condition.split(comparitor, 1)]
+                        field = str(field)
+                        if self.comparitors[comparitor] == 'Array':
+                            value = parse_list(value)
+
+                        else:
+                            value = str(value)
+
+                        if 'condition' not in policies[name]:
+                            policies[name]['condition'] = []
+                        policies[name]['condition'].append(dict(field=field,value=value,comparitor=comparitor))
+                            
                     else:
-                        value = str(value)
-
-                    if 'condition' not in policies[name]:
-                        policies[name]['condition'] = []
-                    policies[name]['condition'].append(dict(field=field,value=value,comparitor=comparitor))
-
-                else:
-                    self.log.error("Invalid condition: %s" % condition)
+                        self.log.error("Invalid condition: %s" % condition)
                                         
                 continue
 
@@ -222,10 +224,10 @@ So yes, I think
             policies[name]['actions'].append({'name': action, 'args': args})
 
         for policy in policies:
-            # don't handle empty conditions (yet)
+            # empty condition ==> true
             if not policies[policy].has_key('condition'):
-                self.log.error("ticket-submit-policy %s has no condition, removing");
-                policies.pop(policy)
+                policies[policy]['condition'] = []
+
         return policies
 
     # method for ITemplateStreamFilter
@@ -397,6 +399,18 @@ function condition(policy)
                 }
         }
     return true;
+}
+
+function policytostring(policy)
+{
+
+    var strings = new Array(policy.length);
+    for ( var i=0; i != policy.length; i++ )
+    {
+        strings[i] = policy[i].field + ' ' + policy[i].comparitor.name + ' ' + policy[i].value;
+    }
+    return strings.join(' and ');
+
 }
 
 """
