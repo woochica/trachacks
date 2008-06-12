@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # -*- coding: utf-8 -*-
 #
@@ -65,7 +65,7 @@ class TableMigration(object):
 
     def migrateTable(self, table):
         """ Migrate the table specified. """
-        if not opts.noclean:
+        if not self.opts.noclean:
             self.cleanTable(table)
         m = getattr(self, ''.join(['migrate_', table.upper()]), None)
         if not m:
@@ -129,7 +129,7 @@ class TableMigration(object):
         scur = self.sdb.cursor()
         pgcur = self.pgdb.cursor()
         rows = row_exists = 0
-        if not opts.plist:
+        if not self.opts.plist:
             sql_select = "SELECT * FROM permission"
         else:
             subs = []
@@ -163,7 +163,7 @@ class TableMigration(object):
         scur = self.sdb.cursor()
         pgcur = self.pgdb.cursor()
         rows = row_exists = 0
-        if not opts.wlist:
+        if not self.opts.wlist:
             sql_select = "SELECT * FROM wiki"
         else:
             subs = []
@@ -255,7 +255,7 @@ def Main(opts):
    
     return rc
 
-def doArgs():
+def doArgs(argv):
     """ Look if you can't guess what this function does, just give up now. """
     global VERSION
    
@@ -290,7 +290,7 @@ def doArgs():
                         help="Do not clear PostgreSQL tables before transfer",
                         default=False)
    
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(argv)
     if not options.tracenv:
         if  not options.tracbase:
             print ("You must specify the --tracenv or the --tracbase option")
@@ -302,12 +302,12 @@ def doArgs():
             options.project = args[0]
             options.tracenv = os.path.join(options.tracbase, args[0])
 
-    if not options.pg_uri.startswith('postgres://'):
+    if not options.pg_uri or not options.pg_uri.startswith('postgres://'):
         print ("You must specify a valid URI for the PostgreSQL database.")
         print ("  eg. postgres://user:password@localhost/dbname")
         sys.exit(1)
  
-    if not options.sqlite_uri.startswith('sqlite:'):
+    if not options.sqlite_uri or not options.sqlite_uri.startswith('sqlite:'):
         print ("You must specify a valid URI for the SQLite database.")
         print ("  eg. sqlite:db/trac.db")
         sys.exit(1)
@@ -326,8 +326,11 @@ def doArgs():
     return options
 
 
-if __name__ == '__main__':
-    opts = doArgs()
+def main(argv):
+    opts = doArgs(argv)
     Main(opts)
-    sys.exit(0)
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
     
