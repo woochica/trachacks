@@ -163,11 +163,16 @@
                     <py:choose test="">
                       <py:when test="'rendered' in field">${field.rendered}</py:when>
                       <py:otherwise>
-		      <py:if test="ticket[field.name]">
-			<a href="${query_link(field.name, ticket[field.name])}">
-			  ${ticket[field.name]}
-			</a>
-			</py:if>		
+			<py:if test="ticket[field.name]">
+			  <py:if test="field.name not in excluded_fields">
+			    <a href="${query_link(field.name, ticket[field.name])}">
+			      ${ticket[field.name]}
+			    </a>
+			  </py:if>
+			  <py:if test="field.name in excluded_fields">
+			    ${ticket[field.name]}
+			  </py:if>
+			</py:if>
 		      </py:otherwise>
                     </py:choose>
                   </py:if>

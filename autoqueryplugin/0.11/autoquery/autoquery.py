@@ -6,6 +6,7 @@ displays links to queries for items in the ticket badge
 import urllib
 
 from trac.core import *
+from trac.config import ListOption
 from trac.config import Option
 from trac.web import IRequestFilter
 from trac.web.chrome import ITemplateProvider
@@ -16,6 +17,9 @@ class AutoqueryPlugin(Component):
     query_args = Option('autoquery', 'query_args', default='&order=priority',
                         doc="additional arguments to the query string")
 
+    excluded_fields = Option('autoquery', 'excluded_fields', 
+                             default=['estimatedhours', 'hours', 'totalhours'],
+                             doc="fields to exclude from AutoQuery markup")
 
     ### methods for ITemplateProvider
 
@@ -86,5 +90,6 @@ class AutoqueryPlugin(Component):
                 return query % ( x, y )
 
             data['query_link'] = query_link
+            data['excluded_fields'] = self.excluded_fields
             template = 'autoquery_ticket.html'
         return (template, data, content_type)
