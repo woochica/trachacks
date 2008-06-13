@@ -53,7 +53,7 @@ class TicketRequires(Component):
         return """
 function requires(policy, requiredfield)
 {
-var element=document.getElementById("field-" + requiredfield);
+
 var field=getValue("field-" + requiredfield);
 
 if (condition(policy))
@@ -64,10 +64,6 @@ if (!field)
 return requiredfield + " is a required field for tickets where " + policytostring(policy);
 }
 
-}
-else
-{
-element.value = "";
 }
 
 return true;
@@ -110,13 +106,25 @@ element.style.display="";
 }
 
 }
+
+function excludeSubmit(policy, excludedfield)
+{
+var element=document.getElementById("field-" + excludedfield);
+if (condition(policy))
+{
+element.value = "";
+}
+return true;
+}
+
 """
 
     def onload(self, policy, condition, excludedfield):
         return "exclude(%s, '%s');" % (policy, excludedfield )
 
     def onsubmit(self, policy, condition, excludedfield):
-        return
+        excludesubmit = "excludeSubmit(%s, '%s');" % (policy, excludedfield)
+        return excludesubmit
 
     def filter_stream(self, stream, policy, condition, excludedfield):
         exclude = "exclude(%s, '%s')" % ( policy, excludedfield )
@@ -403,11 +411,14 @@ function condition(policy)
 
 function policytostring(policy)
 {
+    // this should be replaced by a deCamelCase function
+    names = { is: 'is', isNot: 'is not', isIn: 'is in', isNotIn: 'is not in' }
 
     var strings = new Array(policy.length);
     for ( var i=0; i != policy.length; i++ )
     {
-        strings[i] = policy[i].field + ' ' + policy[i].comparitor.name + ' ' + policy[i].value;
+        funcname = names[policy[i].comparitor.name]
+        strings[i] = policy[i].field + ' ' + funcname + ' ' + policy[i].value;
     }
     return strings.join(' and ');
 
