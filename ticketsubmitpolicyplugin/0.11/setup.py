@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.5.3'
+version='0.6'
 
 setup(name='TicketSubmitPolicy',
       version=version,

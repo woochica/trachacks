@@ -15,3 +15,14 @@ policy1.excludes = version
 policy2.condition = type is defect
 policy2.requires = version
 }}}
+
+{{{&&}}}s may be used to join multiple conditions together, and
+multiple arguments may be supplied to requires and excludes as well:
+
+{{{
+[ticket-submit-policy]
+policy1.condition = type is defect && component is not component2
+policy1.requires = version, milestone
+policy2.condition = type is not defect
+policy2.excludes = version, priority
+}}}

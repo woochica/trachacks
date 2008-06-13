@@ -2,10 +2,10 @@
 
 import re
 
-from genshi.builder import tag 
-from genshi.core import Markup
+from genshi.builder import tag
 from genshi.filters import Transformer
-from genshi.input import HTML
+
+from interface import ITicketSubmitPolicy
 
 from trac.core import *
 from trac.admin.api import IAdminPanelProvider
@@ -21,170 +21,9 @@ def camelCase(string):
     return ''.join(args)
 
 
-### policies
-
-class ITicketSubmitPolicy(Interface):
-    """interface for ticket submission policy enforcers"""
-
-    def name():
-        """name of the policy"""
-
-    def javascript():
-        """returns javascript functions"""
-
-    def onload(policy, condition, *args):
-        """returns code to be executable on page load"""
-
-    def onsubmit(policy, condition, *args):
-        """returns code to be executed on form submission"""
-
-    def filter_stream(stream, policy, condition, *args):
-        """filter the stream and return it"""
-
-
-class TicketRequires(Component):
-    """bits for requiring a field"""
-    implements(ITicketSubmitPolicy)
-
-    def name(self):
-        return 'requires'
-
-    def javascript(self):
-        return """
-function requires(policy, requiredfields)
-{
-
-var missing = new Array();
-
-if (condition(policy))
-{
-
-for ( var i=0; i != requiredfields.length; i++ )
-{
-
-var field=getValue("field-" + requiredfields[i]);
-
-if (!field)
-{
-missing.push(requiredfields[i]);
-}
-
-}
-
-if (missing.length != 0)
-{
-
-if (missing.length == 1)
-{
-prestring = missing[0] + " is a required field ";
-poststring = "Please provide this value.";
-}
-else
-{
-prestring = missing.join(", ") + " are required fields ";
-poststring = "Please provide these values.";
-}
-
-return prestring + "for tickets where " + policytostring(policy) + ".\\n" + poststring;
-}
-
-}
-
-return true;
-}
-""" 
-
-    def onload(self, policy, condition, *args):
-        return
-
-    def onsubmit(self, policy, condition, *requiredfields):
-        fields = repr([ str(i) for i in requiredfields ])
-        requires = "requires(%s, %s);" % (policy, fields)
-        return requires
-
-    def filter_stream(self, stream, policy, condition, *args):
-        return stream
-
-
-
-### 
-
-class TicketExcludes(Component):
-    """bits for exluding field under a condition"""
-    implements(ITicketSubmitPolicy)
-
-    def name(self):
-        return 'excludes'
-
-    def javascript(self):
-        return """function exclude(policy, excludedfield)
-{
-var element=document.getElementById("field-" + excludedfield);
-
-if (condition(policy))
-{
-element.style.display="none";
-}
-else
-{
-element.style.display="";
-}
-
-}
-
-function excludeSubmit(policy, excludedfield)
-{
-var element=document.getElementById("field-" + excludedfield);
-if (condition(policy))
-{
-element.value = "";
-}
-return true;
-}
-
-"""
-
-    def onload(self, policy, condition, excludedfield):
-        return "exclude(%s, '%s');" % (policy, excludedfield )
-
-    def onsubmit(self, policy, condition, excludedfield):
-        excludesubmit = "excludeSubmit(%s, '%s');" % (policy, excludedfield)
-        return excludesubmit
-
-    def filter_stream(self, stream, policy, condition, excludedfield):
-        exclude = "exclude(%s, '%s')" % ( policy, excludedfield )
-
-        # XXX this is unsafe, in the case onchange is already specified on this field;
-        # see http://trac-hacks.org/ticket/3128
-        for c in condition:
-            field = c['field']
-            stream |= Transformer("//select[@id='field-%s']" % field).attr('onchange', exclude)
-
-        return stream
-
-
-
 class TicketSubmitPolicyPlugin(Component):
     """
     enforce a policy for allowing ticket submission based on fields
-    
-    
-    get the selected option from HTML like this:
-
-<select id="field-type" name="field_type">
-<option selected="selected">defect</option><option>enhancement</option><option>task</option>
-</select>
-
-Notes to self:
-Generalizing this would be:
-type == defect -> requires(version)
-type != defect -> excludes(version)
-
-Does this work for http://trac.openplans.org/trac/ticket/5 and the confirmed box?
-
-state != resolved -> excludes(confirmed)
-
-So yes, I think
     """
 
     implements(ITemplateStreamFilter) 
