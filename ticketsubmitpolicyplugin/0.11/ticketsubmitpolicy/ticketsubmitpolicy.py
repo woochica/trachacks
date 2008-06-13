@@ -3,6 +3,7 @@
 import re
 
 from genshi.builder import tag
+from genshi.core import Markup
 from genshi.filters import Transformer
 
 from interface import ITicketSubmitPolicy
@@ -163,7 +164,9 @@ class TicketSubmitPolicyPlugin(Component):
 
             # insert head javascript
             if javascript:
-                javascript = tag.script('\n'.join(javascript), **{ "type": "text/javascript"})
+                javascript = '\n%s\n' % '\n'.join(javascript)
+                javascript = tag.script(Markup(javascript), **{ "type": "text/javascript"})
+                
                 stream |= Transformer("head").append(javascript)
 
         return stream
