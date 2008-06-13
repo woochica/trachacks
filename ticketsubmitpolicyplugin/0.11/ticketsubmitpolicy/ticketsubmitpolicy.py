@@ -51,17 +51,41 @@ class TicketRequires(Component):
 
     def javascript(self):
         return """
-function requires(policy, requiredfield)
+function requires(policy, requiredfields)
 {
 
-var field=getValue("field-" + requiredfield);
+var missing = new Array();
 
 if (condition(policy))
 {
 
+for ( var i=0; i != requiredfields.length; i++ )
+{
+
+var field=getValue("field-" + requiredfields[i]);
+
 if (!field)
 {
-return requiredfield + " is a required field for tickets where " + policytostring(policy);
+missing.push(requiredfields[i]);
+}
+
+}
+
+if (missing.length != 0)
+{
+
+if (missing.length == 1)
+{
+prestring = missing[0] + " is a required field ";
+poststring = "Please provide this value.";
+}
+else
+{
+prestring = missing.join(", ") + " are required fields ";
+poststring = "Please provide these values.";
+}
+
+return prestring + "for tickets where " + policytostring(policy) + ".\\n" + poststring;
 }
 
 }
@@ -73,11 +97,12 @@ return true;
     def onload(self, policy, condition, *args):
         return
 
-    def onsubmit(self, policy, condition, requiredfield):
-        requires = "requires(%s, '%s');" % (policy, requiredfield)
+    def onsubmit(self, policy, condition, *requiredfields):
+        fields = repr([ str(i) for i in requiredfields ])
+        requires = "requires(%s, %s);" % (policy, fields)
         return requires
 
-    def filter_stream(self, stream, policy, condition, requiredfield):
+    def filter_stream(self, stream, policy, condition, *args):
         return stream
 
 
@@ -417,7 +442,7 @@ function policytostring(policy)
     var strings = new Array(policy.length);
     for ( var i=0; i != policy.length; i++ )
     {
-        funcname = names[policy[i].comparitor.name]
+        funcname = names[policy[i].comparitor.name];
         strings[i] = policy[i].field + ' ' + funcname + ' ' + policy[i].value;
     }
     return strings.join(' and ');
