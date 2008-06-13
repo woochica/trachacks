@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+  <?python from genshi.builder import tag ?>
+
+  <head py:match="head" py:attrs="select('@*')">${select('*')}</head>
+
+  <body py:match="body" py:attrs="select('@*')" class="fluid ${chrome['theme_info']['color']}">
+  <div id="wrapper">
+
+    <div id="skit_header" class="clearfix">
+
+      <div id="skit_title" class="clearfix">
+        <div id="header" py:choose="">
+          <a id="logo" py:when="chrome.logo.src" href="${chrome.logo.link}"><img src="${chrome.logo.src}" alt="${chrome.logo.alt}" /></a>
+          <h1 py:otherwise=""><a id="logo" href="${chrome.logo.link}">${project.name}</a></h1>
+        </div>
+      </div>
+
+      <ul id="skit_metamenu" py:if="chrome.nav['metanav']">
+        <li py:for="idx, item in enumerate(chrome.nav['metanav'])" class="${classes(first_last(idx, chrome.nav['metanav']), selected=item.active)}">
+          ${item.label}
+        </li>
+      </ul>
+
+      <ul id="skit_menu" py:if="chrome.nav['mainnav']">
+        <li py:for="idx, item in enumerate(chrome.nav['mainnav'])" class="${classes(first_last(idx, chrome.nav['mainnav']), selected=item.active)}">
+          ${item.label}
+        </li>
+      </ul>
+
+    </div>
+
+    <div id="skit_contentwrapper" class="clearfix">
+      <div id="skit_content">
+        <div id="ctxtnav" class="nav">
+          <ul>
+            <li py:for="i, elm in enumerate(chrome.ctxtnav)" class="${i == 0 and 'first ' or None}${i+1 == len(chrome.ctxtnav) and 'last' or None}">$elm</li>
+          </ul>
+          <hr />
+        </div>
+        ${select('*')}
+      </div>
+    </div>
+
+    <div id="skit_footer">
+      <p>
+        Using <a href="http://evil.che.lu/projects/skittlish">skittlish</a>
+        modified by <a href="http://www.statelesssystems.com">Stateless Systems</a>
+        for <a href="http://trac.edgewall.org">Trac</a>.
+      </p>
+
+      <div id="footer" xml:lang="en">
+        <hr />
+        <a id="tracpowered" href="http://trac.edgewall.org/"><img
+          src="${href.chrome('common/trac_logo_mini.png')}" height="30"
+          width="107" alt="Trac Powered"/></a>
+        <p class="left">
+          Powered by <a href="${href.about()}">Trac ${trac.version}</a><br />
+          By <a href="http://www.edgewall.org/">Edgewall Software</a>.
+        </p>
+        <p class="right">${chrome.footer}</p>
+      </div>
+
+    </div>
+
+  </div>
+  </body>
+
+  <xi:include href="site.html"><xi:fallback /></xi:include>
+
+</html>

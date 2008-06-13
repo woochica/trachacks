@@ -1,0 +1,261 @@
+/* change default html styles */
+* {
+  margin: 0;
+  padding: 0;
+}
+li {
+  list-style-type: none;
+}
+h1, h2, h3, h4, h5, h6, p, pre, blockquote, ul, ol, dl {
+}
+a img {
+  border-style: none;
+}
+
+/* clearfix, the ie part is in the ie css */
+.clearfix:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+/* general styling */
+body {
+  background: #e3e3e3 url(images/bg.gif) repeat-x;
+  color: #1b1b1b;
+  font: normal 76% Verdana, Arial, Helvetica, sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0em;
+  margin-bottom: .25em;
+  font-weight: normal;
+  font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", "Trebuchet MS", Verdana, sans-serif;
+}
+h1 { font-size: 2.6em; }
+h2 { font-size: 2.3em; }
+h3 { font-size: 2.0em; }
+h4 { font-size: 1.8em; }
+h5 { font-size: 1.6em; }
+h6 { font-size: 1.4em; }
+
+p {
+  margin-bottom: 1em;
+  line-height: 1.3;
+}
+a {
+  color: #095eae;
+  font-weight: bold;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+ul.list, ol.list {
+  margin-left: 3em;
+  margin-bottom: 1em;
+}
+.list li {
+  margin-bottom: .5em;
+  color: #1b1b1b;
+}
+ul.list li {
+  list-style-type: disc;
+}
+ol.list li {
+  list-style-type: decimal;
+}
+
+
+/* layout */
+#wrapper {
+  position: relative;
+  width: 980px;
+  margin: 0 auto;
+  padding-right: 5px;
+  border-left: solid 1px #9a9a9a;
+  background: url(images/left_bg.gif) right repeat-y;
+  font-size: 1.11em;
+}
+#skit_header {
+  padding: 30px 0 20px 80px;
+  border-bottom: solid 1px #343434;
+  background: #1c1c1c url(images/header_bg.gif) repeat-x;
+}
+#skit_header h1 {
+  float: left;
+  margin-bottom: 0;
+  font-size: 3em;
+  font-weight: normal;
+}
+#skit_header h1 a {
+  display: block;
+  padding-top: 1em;
+  color: #bababa;
+}
+#skit_header h1 a:hover {
+  text-decoration: none;
+}
+#skit_menu, #skit_metamenu {
+  clear: both;
+  float: right;
+  display: inline;
+  margin-right: 30px;
+  text-align: right;
+}
+#skit_menu li, #skit_metamenu li {
+  display: inline;
+  margin-right: 10px;
+  color: #868686;
+}
+#skit_menu a, #skit_metamenu a {
+  color: #868686;
+  font-weight: bold;
+  text-transform: lowercase;
+}
+#skit_menu a:hover, #skit_metamenu a:hover {
+  background-color: transparent;
+}
+#skit_menu li.selected a, #skit_metamenu li.selected a {
+  color: #fff;
+}
+
+#skit_metamenu {
+  font-size: 0.75em;
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}
+
+
+#skit_contentwrapper {
+  background: #fff url(x_default_sidebar_bg.gif) right top repeat-y;
+}
+
+/* Everything up until this point is pretty much copied from skittlish itself, the rest
+   is fairly different due to the layout of trac unfortunately */
+
+#skit_content {
+  padding: 10px 50px 10px 30px;
+  background: url(images/content_top_bg.gif) repeat-x;
+  font-size: 1.1em;
+  color: #272727;
+}
+
+#skit_content em { color: #272727; }
+
+.blue #ctxtnav a,
+.blue #content a,
+.blue #content h1,
+.blue #content h2,
+.blue #content h3,
+.blue #content h4,
+.blue #content h5,
+.blue #content h6 { color: #0870c9; }
+
+.violet #ctxtnav a,
+.violet #content a,
+.violet #content h1,
+.violet #content h2,
+.violet #content h3,
+.violet #content h4,
+.violet #content h5,
+.violet #content h6 { color: #ae3bd4; }
+
+.cyan #ctxtnav a,
+.cyan #content a,
+.cyan #content h1,
+.cyan #content h2,
+.cyan #content h3,
+.cyan #content h4,
+.cyan #content h5,
+.cyan #content h6 { color: #1088f7; }
+
+.green #ctxtnav a,
+.green #content a,
+.green #content h1,
+.green #content h2,
+.green #content h3,
+.green #content h4,
+.green #content h5,
+.green #content h6 { color: #61ac00; }
+
+.orange #ctxtnav a,
+.orange #content a,
+.orange #content h1,
+.orange #content h2,
+.orange #content h3,
+.orange #content h4,
+.orange #content h5,
+.orange #content h6 { color: #f79910; }
+
+.pink #ctxtnav a,
+.pink #content a,
+.pink #content h1,
+.pink #content h2,
+.pink #content h3,
+.pink #content h4,
+.pink #content h5,
+.pink #content h6 { color: #f122be; }
+
+.red #ctxtnav a,
+.red #content a,
+.red #content h1,
+.red #content h2,
+.red #content h3,
+.red #content h4,
+.red #content h5,
+.red #content h6 { color: #c90808; }
+
+/* footer */
+#wrapper #skit_footer {
+  padding: 14px 5px 5px 5px;
+  border-top: solid 1px #343434;
+  background: #272727 url(images/footer_bg.gif) left bottom repeat-x;
+  color: #bababa;
+  font-size: .8em;
+  text-align: center;
+}
+
+#wrapper #skit_footer a {
+  color: #bababa;
+  text-decoration: underline;
+}
+
+#wrapper #skit_footer a:hover {
+  color: #eaeaea;
+}
+
+#subscribe a {
+  font-weight: normal;
+  font-size: 1.4em;
+}
+
+.fluid #wrapper {
+  width: auto;
+  margin: 0 80px;
+}
+
+.fixed #wrapper {
+  width: 980px;
+  margin: 0 auto;
+}
+
+/* Hacks to override stuff that doesn't work because of trac default styles */
+body {
+  margin: 0px;
+}
+
+body #wrapper a {
+  text-decoration: none;
+  border-bottom: 0px solid;
+}
+
+body #wrapper a:hover {
+  background-color: transparent;
+  text-decoration: underline;
+  border-bottom: 0px solid;
+}
+
+body #wrapper a:visited {
+}
