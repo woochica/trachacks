@@ -1,17 +1,19 @@
 
 from trac.core import Component, implements
 from tracdb import DBComponent
-import unittest, time
+from iface import TracFormDBObserver
+import unittest, time, cgi
 
 class TracFormDBComponent(DBComponent):
     applySchema = True
+    implements(TracFormDBObserver)
 
     ###########################################################################
     #
     #   Form update methods.
     #
     ###########################################################################
-    def get_tracform_meta(self, cursor, src):
+    def get_tracform_meta(self, src, cursor=None):
         """
         Returns the meta information about a form based on a form_id (int or
         long) or context (string or unicode).
@@ -22,7 +24,8 @@ class TracFormDBComponent(DBComponent):
                     context, 
                     updater, 
                     updated_on,
-                    keep_history
+                    keep_history,
+                    track_fields
             FROM    tracform_forms
             """
         if isinstance(src, basestring):
@@ -40,9 +43,9 @@ class TracFormDBComponent(DBComponent):
         else:
             form_id = src
         return (cursor(sql, src).firstrow or 
-                (form_id, context, None, None, None))
+                (form_id, context, None, None, None, None))
 
-    def get_tracform_state(self, cursor, src):
+    def get_tracform_state(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
         sql = """
             SELECT  state
@@ -58,14 +61,18 @@ class TracFormDBComponent(DBComponent):
                 """
         return cursor(sql, src).value
 
-    def save_tracform(self, cursor, src, state, updater,
-                        base_version=None, keep_history=True):
+    def save_tracform(self, src, state, updater,
+                        base_version=None, keep_history=True,
+                        track_fields=True, cursor=None):
         cursor = self.get_cursor(cursor)
-        form_id, context, last_updater, last_updated_on, form_keep_history \
-            = self.get_tracform_meta(cursor, src)
+        (form_id, context, last_updater, last_updated_on,
+            form_keep_history, form_track_fields) = self.get_tracform_meta(src)
+
         if form_keep_history is not None:
             keep_history = form_keep_history
-        old_state = self.get_tracform_state(cursor, src)
+        old_state = self.get_tracform_state(src)
+        if form_track_fields is not None:
+            track_fields = form_track_fields
 
         if ((base_version is None and last_updated_on is None) or
             (base_version == last_updated_on)):
@@ -96,21 +103,71 @@ class TracFormDBComponent(DBComponent):
             else:
                 updated_on = last_updated_on
                 updater = last_updater
+            if track_fields:
+                # Break down old version and new version.
+                old_fields = cgi.parse_qs(old_state or '')
+                new_fields = cgi.parse_qs(state or '')
+                updated_fields = []
+                for field, old_value in old_fields.iteritems():
+                    if new_fields.get(field) != old_value:
+                        updated_fields.append(field)
+                for field in new_fields:
+                    if old_fields.get(field) is None:
+                        updated_fields.append(field)
+                for field in updated_fields:
+                    if cursor("""
+                        SELECT  COUNT(*)
+                        FROM    tracform_fields
+                        WHERE   tracform_id = %s
+                            AND field = %s""", form_id, field).value:
+
+                        cursor("""
+                            UPDATE  tracform_fields
+                                SET updater = %s,
+                                    updated_on = %s
+                            WHERE   tracform_id = %s
+                                AND field = %s
+                            """, updater, updated_on, form_id, field)
+                    else:
+                        cursor("""
+                            INSERT INTO tracform_fields
+                                    (tracform_id, field, updater, updated_on)
+                            VALUES  (%s, %s, %s, %s)
+                            """, tracform_id, field, updater, updated_on)
             return ((form_id, context, state, updater, updated_on),
                     (form_id, context, old_state,
                     last_updater, last_updated_on))
         else:
             raise ValueError("Conflict")
 
-    def get_tracform_history(self, cursor, src):
+    def get_tracform_history(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
-        form_id = self.get_tracform_meta(cursor, src)[0]
+        form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
             SELECT  updater, updated_on, old_states
             FROM    tracform_history
             WHERE   tracform_id = %s
             ORDER   BY updated_on DESC
             """, form_id)
+
+    def get_tracform_fields(self, src, cursor=None):
+        cursor = self.get_cursor(cursor)
+        form_id = self.get_tracform_meta(src, cursor=cursor)[0]
+        return cursor("""
+            SELECT  field, updater, updated_on
+            FROM    tracform_fields
+            WHERE   tracform_id = %s
+            """, form_id)
+
+    def get_tracform_fieldinfo(self, src, field, cursor=None):
+        cursor = self.get_cursor(cursor)
+        form_id = self.get_tracform_meta(src, cursor=cursor)[0]
+        return cursor("""
+            SELECT  updater, updated_on
+            FROM    tracform_fields
+            WHERE   tracform_id = %s
+                AND field = %s
+            """, form_id, field).firstrow or (None, None)
 
     ###########################################################################
     #
@@ -191,7 +248,36 @@ class TracFormDBComponent(DBComponent):
         "Also maintain whether history should me maintained for form."
         cursor("""
             ALTER TABLE tracform_forms
-                ADD keep_history INTEGER NOT NULL DEFAULT 1
+                ADD keep_history INTEGER
+            """)
+
+    def dbschema_2008_06_15_0011(self, cursor):
+        "Make the context a unique index."
+        cursor("""
+            DROP INDEX tracform_forms_context
+            """)
+        cursor("""
+            CREATE UNIQUE INDEX tracform_forms_context
+                ON tracform_forms(context)
+            """)
+
+    def dbschema_2008_06_15_0012(self, cursor):
+        "Track who changes individual fields"
+        cursor("""
+            ALTER TABLE tracform_forms
+                ADD track_fields INTEGER
+            """)
+        cursor("""
+            CREATE TABLE tracform_fields(
+                tracform_id     INTEGER NOT NULL,
+                field           TEXT NOT NULL,
+                updater         TEXT NOT NULL,
+                updated_on      INTEGER NOT NULL
+                )
+            """)
+        cursor("""
+            CREATE UNIQUE INDEX tracform_fields_tracform_id_field
+                ON tracform_fields(tracform_id, field)
             """)
 
 if __name__ == '__main__':
@@ -199,12 +285,12 @@ if __name__ == '__main__':
     env = EnvironmentStub()
     db = TracFormDBComponent(env)
     db.upgrade_environment(None)
-    updated_on_1 = db.save_tracform(None, '/', 'hello world', 'me')[0][4]
-    assert db.get_tracform_state(None, '/') == 'hello world'
+    updated_on_1 = db.save_tracform('/', 'hello world', 'me')[0][4]
+    assert db.get_tracform_state('/') == 'hello world'
     updated_on_2 = \
-        db.save_tracform(None, '/', 'ack oop', 'you', updated_on_1)[0][4]
-    assert db.get_tracform_state(None, '/') == 'ack oop'
-    assert tuple(db.get_tracform_history(None, '/')) == (
+        db.save_tracform('/', 'ack oop', 'you', updated_on_1)[0][4]
+    assert db.get_tracform_state('/') == 'ack oop'
+    assert tuple(db.get_tracform_history('/')) == (
         ('me', updated_on_1, 'hello world'),
         )
 
