@@ -2,31 +2,34 @@
 from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
 from datetime import datetime
+import os, sys
+
+DEBUG_SQL = os.environ.get('DEBUG_SQL', False)
 
 class DBCursor(object):
     cursor = None
 
-    def __init__(self, cursor, log):
-        self.cursor = cursor
+    def __init__(self, db, log):
+        self.db = db
+        self.cursor = db.cursor()
         self.log = log
 
-    def __del__(self):
-        if not self.cursor is not None:
-            self.commit()
-
     def rollback(self):
-        if self.cursor is not None:
-            self.cursor.rollback()
-            self.cursor = None
+        self.db.rollback()
 
     def commit(self):
-        if self.cursor is not None:
-            self.cursor.commit()
-            self.cursor = None
+        self.db.commit()
 
     def execute(self, sql, *params):
-        self.log.debug('EXECUTING SQL:\n%s\n\t\%r' % (sql, params))
-        self.cursor.execute(sql, params)
+        if DEBUG_SQL:
+            print >>sys.stderr, 'EXECUTING SQL:\n%s\n\t%r' % (sql, params)
+        self.log.debug('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
+        try:
+            self.cursor.execute(sql, params)
+        except Exception, e:
+            self.log.error('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
+            self.rollback()
+            raise e
         return self
 
     def __iter__(self):
@@ -42,6 +45,10 @@ class DBCursor(object):
             self.fetchmany(rowno)
         return self.cursor.fetchone()
 
+    @property
+    def firstrow(self):
+        return self.row(0)
+
     def col(self, colno=0):
         def gen():
             for row in self:
@@ -51,12 +58,27 @@ class DBCursor(object):
                     yield row[colno]
         return tuple(gen())
 
-    def value(self, rowno=0, colno=0):
+    @property
+    def firstcol(self):
+        return self.col(0)
+
+    def at(self, default=None, rowno=0, colno=0):
         row = self.row(rowno)
         if row is None or colno >= len(row):
-            return None
+            return default
         else:
             return row[colno]
+
+    @property
+    def value(self):
+        return self.at(None, 0, 0)
+
+    def __call__(self, sql, *args):
+        return self.execute(sql, *args)
+
+    @property
+    def last_id(self):
+        return self("SELECT last_insert_rowid()").value
 
 class DBComponent(Component):
     implements(IEnvironmentSetupParticipant)
@@ -102,8 +124,10 @@ class DBComponent(Component):
             if version > installed:
                 self.log.info(
                     'Upgrading TracForm Plugin Schema to %s' % version)
+                self.log.info('- %s: %s' % (fn.__name__, fn.__doc__))
                 fn(cursor)
                 self.set_installed_version(cursor, version)
+                cursor.commit()
                 installed = version
                 self.log.info('Upgrade to %s successful.' % version)
 
@@ -142,11 +166,15 @@ class DBComponent(Component):
     def get_system_value(self, cursor, key, default=None):
         return self.get_cursor(cursor).execute(
             'SELECT value FROM system WHERE name=%s', key) \
-            .value(default)
+            .value
 
-    def set_system_value(self, cursor, key, default=None):
-        return self.get_cursor(cursor).execute(
-            'UPDATE system SET value=%s WHERE name=%s', key)
+    def set_system_value(self, cursor, key, value):
+        if self.get_system_value(cursor, key) is not None:
+            return self.get_cursor(cursor).execute(
+                'UPDATE system SET value=%s WHERE name=%s', value, key)
+        else:
+            return self.get_cursor(cursor).execute(
+                'INSERT INTO system(name, value) VALUES(%s, %s)', key, value)
 
     ###########################################################################
     #
@@ -157,6 +185,6 @@ class DBComponent(Component):
         if db_or_cursor is None:
             db_or_cursor = self.env.get_db_cnx()
         if not isinstance(db_or_cursor, DBCursor):
-            db_or_cursor = DBCursor(db_or_cursor.cursor(), self.log)
+            db_or_cursor = DBCursor(db_or_cursor, self.log)
         return db_or_cursor
 
