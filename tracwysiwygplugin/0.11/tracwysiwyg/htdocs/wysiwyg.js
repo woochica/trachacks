@@ -533,9 +533,7 @@ TracWysiwyg.prototype.loadWysiwygDocument = function() {
     var fragment = this.wikitextToFragment(this.textarea.value, d);
     if (fragment.childNodes.length == 0) {
         var paragraph = d.createElement("p");
-        if (paragraph.addEventListener) {
-            paragraph.appendChild(d.createElement("br"));
-        }
+        this.appendBogusLineBreak(paragraph);
         fragment.appendChild(paragraph);
     }
     container.appendChild(fragment);
@@ -1526,6 +1524,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             }
             else {
                 list = getSelfOrAncestor(holder, "li");
+                self.appendBogusLineBreak(list);
                 container = list.parentNode;
             }
             if (tag != container.tagName.toLowerCase()) {
@@ -1572,7 +1571,13 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
     function closeList() {
         var h = holder;
         var target = getSelfOrAncestor(h, "li");
-        holder = (target ? target.parentNode : h).parentNode;
+        if (target) {
+            self.appendBogusLineBreak(target);
+            holder = target.parentNode.parentNode;
+        }
+        else {
+            holder = h.parentNode;
+        }
         listDepth.pop();
     }
 
@@ -1645,6 +1650,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             var target = holder;
             if (target != fragment) {
                 target = getSelfOrAncestor(target, "p");
+                self.appendBogusLineBreak(target);
             }
             holder = target.parentNode;
             inParagraph = false;
@@ -1669,6 +1675,13 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         else {
             h = holder;
             tbody = getSelfOrAncestor(h, "tbody");
+        }
+
+        if (inTableRow) {
+            var cell = getSelfOrAncestor(h, "td");
+            if (cell) {
+                self.appendBogusLineBreak(cell);
+            }
         }
 
         var row;
@@ -1937,6 +1950,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             handleTableCell(-1);
         }
     }
+    closeToFragment();
 
     return fragment;
 };
@@ -2365,7 +2379,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 listDepth++;
                 break;
             case "br":
-                if (node.nextSibling) {
+                if (node.getAttribute("type") != "_moz") {
                     var value;
                     if (inCodeBlock) {
                         value = "\n";
@@ -2620,13 +2634,36 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
 };
 
 if (window.getSelection) {
+    TracWysiwyg.prototype.appendBogusLineBreak = function(element) {
+        var wikiInlineTags = this.wikiInlineTags;
+        var last = element.lastChild;
+        for ( ; ; ) {
+            if (!last) {
+                break;
+            }
+            if (last.nodeType != 1) {
+                return;
+            }
+            var name = last.tagName.toLowerCase();
+            if (name == "br" && last.getAttribute("type") != "_moz") {
+                break;
+            }
+            if (!(name in wikiInlineTags)) {
+                return;
+            }
+            last = last.lastChild || last.previousSibling;
+        }
+        var br = this.contentDocument.createElement("br");
+        br.setAttribute("type", "_moz");
+        element.appendChild(br);
+    };
     TracWysiwyg.prototype.tableHTML = function(id, row, col) {
         var html = this._tableHTML(row, col);
-        return html.replace(/<td><\/td>/g, "<td><br /></td>").replace(/<td>/, '<td id="' + id + '">');
+        return html.replace(/<td><\/td>/g, '<td><br type="_moz" /></td>').replace(/<td>/, '<td id="' + id + '">');
     };
     TracWysiwyg.prototype.insertTableCell = function(row, index) {
         var cell = row.insertCell(index);
-        cell.appendChild(this.contentDocument.createElement("br"));
+        this.appendBogusLineBreak(cell);
         return cell;
     };
     TracWysiwyg.prototype.getFocusNode = function() {
@@ -2786,6 +2823,7 @@ if (window.getSelection) {
     };
 }
 else if (document.selection) {
+    TracWysiwyg.prototype.appendBogusLineBreak = function(element) { };
     TracWysiwyg.prototype.tableHTML = function(id, row, col) {
         var html = this._tableHTML(row, col);
         return html.replace(/<td>/, '<td id="' + id + '">');
@@ -3036,6 +3074,7 @@ else if (document.selection) {
     };
 }
 else {
+    TracWysiwyg.prototype.appendBogusLineBreak = function(element) { };
     TracWysiwyg.prototype.insertTableCell = function(row, index) { return null };
     TracWysiwyg.prototype.getFocusNode = function() { return null };
     TracWysiwyg.prototype.selectNode = function(node) { };

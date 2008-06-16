@@ -668,6 +668,101 @@ addEvent(window, "load", function() {
                 "head !http://localhost/ !wiki:TracLinks [[BR]]tail" ].join("\n"));
         });
 
+        if (window.getSelection) {
+            unit.add("block + br", function() {
+                function br() { return element("br"); }
+                function br_moz() { return element("br", { "type": "_moz" }); }
+                var wikitext = [
+                    "text, br{_moz}",
+                    "",
+                    "text'', br[[BR]]''",
+                    "",
+                    "||1,1[[BR]]||||1,3||",
+                    "||||2,2[[BR]][[BR]]||",
+                    "",
+                    " * list, br[[BR]]",
+                    " * list, br{_moz}",
+                    " * ",
+                    "",
+                    "text, br[[BR]]" ].join("\n")
+                generateWikitext.call(this,
+                    fragment(
+                        element("p", "text, br{_moz}", br_moz()),
+                        element("p", "text", element("i", ", br", br()), br_moz()),
+                        element("table", { "class": "wiki" },
+                            element("tbody",
+                                element("tr",
+                                    element("td", "1,1", br(), br_moz()),
+                                    element("td", br_moz()),
+                                    element("td", "1,3", br_moz())),
+                                element("tr",
+                                    element("td", br_moz()),
+                                    element("td", "2,2", br(), br(), br_moz())))),
+                        element("ul",
+                            element("li", "list, br", br()),
+                            element("li", "list, br{_moz}", br_moz()),
+                            element("li")),
+                        element("p", "text, br", br())),
+                    wikitext);
+                generateFragment.call(this,
+                    fragment(
+                        element("p", "text, br{_moz}"),
+                        element("p", "text", element("i", ", br", br()), br_moz()),
+                        element("table", { "class": "wiki" },
+                            element("tbody",
+                                element("tr",
+                                    element("td", "1,1", br(), br_moz()),
+                                    element("td", br_moz()),
+                                    element("td", "1,3")),
+                                element("tr",
+                                    element("td", br_moz()),
+                                    element("td", "2,2", br(), br(), br_moz())))),
+                        element("ul",
+                            element("li", "list, br", br(), br_moz()),
+                            element("li", "list, br{_moz}"),
+                            element("li", br_moz())),
+                        element("p", "text, br", br(), br_moz())),
+                    wikitext);
+            });
+        }
+        else {
+            unit.add("block + br", function() {
+                function br() { return element("br"); }
+                var wikitext = [
+                    "text, br{_moz}",
+                    "",
+                    "text'', br[[BR]]''",
+                    "",
+                    "||1,1[[BR]]||||1,3||",
+                    "||||2,2[[BR]][[BR]]||",
+                    "",
+                    " * list, br[[BR]]",
+                    " * list, br{_moz}",
+                    " * ",
+                    "",
+                    "text, br[[BR]]" ].join("\n")
+                generate.call(this,
+                    fragment(
+                        element("p", "text, br{_moz}"),
+                        element("p", "text", element("i", ", br", br())),
+                        element("table", { "class": "wiki" },
+                            element("tbody",
+                                element("tr",
+                                    element("td", "1,1", br()),
+                                    element("td"),
+                                    element("td", "1,3")),
+                                element("tr",
+                                    element("td"),
+                                    element("td", "2,2", br(), br())))),
+                        element("ul",
+                            element("li", "list, br", br()),
+                            element("li", "list, br{_moz}"),
+                            element("li")),
+                        element("p", "text, br", br())),
+                    wikitext);
+            });
+        }
+
         unit.add("citation", function() {
             var dom = fragment(
                 element("blockquote", { "class": "citation" },
