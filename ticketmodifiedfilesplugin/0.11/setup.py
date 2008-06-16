@@ -2,10 +2,11 @@ from setuptools import find_packages, setup
 
 setup(
     name='TicketModifiedFiles',
-    description='Trac plugin that lists the files that have been modified while resolving a ticket',
-    version='0.5',
-    license='BSD',
+    description='Trac plugin that lists the files that have been modified while resolving a ticket.',
+    version='0.5.1',
+    license='BSD-ish (see the COPYING.txt file)',
     author='Emilien Klein',
+    author_email='Emilien Klein <e2jk AT users DOT sourceforge DOT net>',
     url='http://trac-hacks.org/wiki/TicketModifiedFilesPlugin',
     packages=['ticketmodifiedfiles'],
     entry_points = {'trac.plugins': ['ticketmodifiedfiles = ticketmodifiedfiles']},
