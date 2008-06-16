@@ -74,6 +74,9 @@ class TracFormDBComponent(DBComponent):
         if form_track_fields is not None:
             track_fields = form_track_fields
 
+        if base_version is not None:
+            base_version = int(base_version)
+
         if ((base_version is None and last_updated_on is None) or
             (base_version == last_updated_on)):
             if state != old_state:
@@ -100,40 +103,42 @@ class TracFormDBComponent(DBComponent):
                                     VALUES (%s, %s, %s, %s)
                             """, form_id, last_updated_on,
                                 last_updater, old_state)
+                if track_fields:
+                    # Break down old version and new version.
+                    old_fields = cgi.parse_qs(old_state or '')
+                    new_fields = cgi.parse_qs(state or '')
+                    updated_fields = []
+                    for field, old_value in old_fields.iteritems():
+                        if new_fields.get(field) != old_value:
+                            updated_fields.append(field)
+                    for field in new_fields:
+                        if old_fields.get(field) is None:
+                            updated_fields.append(field)
+                    self.log.debug('UPDATED: ' + str(updated_fields))
+                    for field in updated_fields:
+                        if cursor("""
+                            SELECT  COUNT(*)
+                            FROM    tracform_fields
+                            WHERE   tracform_id = %s
+                                AND field = %s""", form_id, field).value:
+
+                            cursor("""
+                                UPDATE  tracform_fields
+                                    SET updater = %s,
+                                        updated_on = %s
+                                WHERE   tracform_id = %s
+                                    AND field = %s
+                                """, updater, updated_on, form_id, field)
+                        else:
+                            cursor("""
+                                INSERT INTO tracform_fields
+                                        (tracform_id, field, 
+                                        updater, updated_on)
+                                VALUES  (%s, %s, %s, %s)
+                                """, form_id, field, updater, updated_on)
             else:
                 updated_on = last_updated_on
                 updater = last_updater
-            if track_fields:
-                # Break down old version and new version.
-                old_fields = cgi.parse_qs(old_state or '')
-                new_fields = cgi.parse_qs(state or '')
-                updated_fields = []
-                for field, old_value in old_fields.iteritems():
-                    if new_fields.get(field) != old_value:
-                        updated_fields.append(field)
-                for field in new_fields:
-                    if old_fields.get(field) is None:
-                        updated_fields.append(field)
-                for field in updated_fields:
-                    if cursor("""
-                        SELECT  COUNT(*)
-                        FROM    tracform_fields
-                        WHERE   tracform_id = %s
-                            AND field = %s""", form_id, field).value:
-
-                        cursor("""
-                            UPDATE  tracform_fields
-                                SET updater = %s,
-                                    updated_on = %s
-                            WHERE   tracform_id = %s
-                                AND field = %s
-                            """, updater, updated_on, form_id, field)
-                    else:
-                        cursor("""
-                            INSERT INTO tracform_fields
-                                    (tracform_id, field, updater, updated_on)
-                            VALUES  (%s, %s, %s, %s)
-                            """, tracform_id, field, updater, updated_on)
             return ((form_id, context, state, updater, updated_on),
                     (form_id, context, old_state,
                     last_updater, last_updated_on))

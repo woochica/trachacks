@@ -76,6 +76,10 @@ class TracFormProcessor(object):
         self.context = self.page
         state = self.macro.get_tracform_state(self.context)
         self.state = cgi.parse_qs(state or '')
+        (self.form_id, self.form_context,
+            self.form_updater, self.form_updated_on,
+            self.form_keep_history, self.form_track_fields) = \
+            self.macro.get_tracform_meta(self.context)
 
         # Wiki-ize the text, this will allow other macros to execute after
         # which we can do our own replacements within whatever formatted
@@ -96,8 +100,18 @@ class TracFormProcessor(object):
             submit = ''
             if self.needs_submit:
                 submit = '<INPUT type="submit">'
-            text = ('<FORM method="POST" action="/tracform/update">' +
-                    text + submit + '</FORM>')
+            dest = formatter.req.href('/formdata/update')
+            text = ''.join(str(item) for item in (
+                '<FORM method="POST" action="' + dest + '">', text,
+                '<INPUT type="hidden" name="__basever__" value="',
+                    self.form_updated_on, '">',
+                '<INPUT type="hidden" name="__context__" value="',
+                    self.context, '">',
+                '<INPUT type="hidden" name="__backpath__" value="',
+                    formatter.req.href(formatter.req.path_info), '">',
+                '<INPUT type="hidden" name="__FORM_TOKEN" value="',
+                    formatter.req.form_token, '">',
+                submit, '</FORM>') if str(item))
 
         return text
 
@@ -150,9 +164,18 @@ class TracFormProcessor(object):
         return 'VALUE=' + field
 
     def op_checkbox(self, field):
-        value = self.state.get(field)
+        field, value = (field.split('//', 1) + [None])[:2]
+        current = self.state.get(field)
+        if value is not None:
+            if isinstance(current, (list, tuple)):
+                checked = value in current
+            else:
+                checked = value == current
+        else:
+            checked = bool(current)
         return ("<INPUT type='checkbox' name='%s'" % field +
-                (value and ' checked' or '') +
+                (value and (' value="' + value + '"') or '') +
+                (checked and ' checked' or '') +
                 '>')
 
     def op_radio(self, field, *values):
@@ -166,8 +189,9 @@ class TracFormProcessor(object):
         return str(self.context)
 
     def op_who(self, field):
-        return self.macro.get_tracform_fieldinfo(
+        who = self.macro.get_tracform_fieldinfo(
             self.context, field)[0] or 'unknown'
+        return who
         
     def op_when(self, field, format='%m/%d/%Y %H:%M:%S'):
         when = self.macro.get_tracform_fieldinfo(self.context, field)[1]
@@ -180,4 +204,16 @@ class TracFormProcessor(object):
 
     def op_subform(self):
         return self.subform
+
+    def op_form_id(self):
+        return self.form_id
+
+    def op_form_context(self):
+        return self.form_context
+
+    def op_form_updater(self):
+        return self.form_updater
+
+    def op_form_updated_on(self, format='%m/%d/%Y %H:%M:%S'):
+        return time.strftime(format, time.localtime(self.form_updated_on))
 

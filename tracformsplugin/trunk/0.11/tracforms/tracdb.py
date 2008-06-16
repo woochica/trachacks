@@ -14,6 +14,9 @@ class DBCursor(object):
         self.cursor = db.cursor()
         self.log = log
 
+    def __del__(self):
+        self.db.commit()
+
     def rollback(self):
         self.db.rollback()
 
