@@ -75,7 +75,7 @@ class TracFormDBComponent(DBComponent):
             track_fields = form_track_fields
 
         if base_version is not None:
-            base_version = int(base_version)
+            base_version = int(base_version or 0)
 
         if ((base_version is None and last_updated_on is None) or
             (base_version == last_updated_on)):

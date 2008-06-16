@@ -23,7 +23,7 @@ class TracFormProcessor(object):
     # Default state (beyond what is set in expand_macro).
     showErrors = True
     page = None
-    default_op = 'value'
+    default_op = 'checkbox'
     needs_submit = True
 
     def __init__(self, macro, formatter, name, args):
@@ -103,8 +103,9 @@ class TracFormProcessor(object):
             dest = formatter.req.href('/formdata/update')
             text = ''.join(str(item) for item in (
                 '<FORM method="POST" action="' + dest + '">', text,
-                '<INPUT type="hidden" name="__basever__" value="',
-                    self.form_updated_on, '">',
+                self.form_updated_on is not None and (
+                    '<INPUT type="hidden" name="__basever__" value="' +
+                        str(self.form_updated_on) + '">') or '',
                 '<INPUT type="hidden" name="__context__" value="',
                     self.context, '">',
                 '<INPUT type="hidden" name="__backpath__" value="',
