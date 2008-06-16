@@ -2,15 +2,16 @@
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 import sys, StringIO, re, traceback, cgi, time
-from iface import TracFormDBUser
+from iface import TracFormDBUser, TracPasswordStoreUser
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
+argstrRE = re.compile('%(.*?)%')
 tfRE = re.compile('\['
     'tf(?:\.([a-zA-Z_]+?))?'
     '(?::([^\]]*))?'
     '\]')
 
-class TracFormMacro(WikiMacroBase, TracFormDBUser):
+class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
     """
     Docs for TracForm macro...
     """
@@ -23,10 +24,13 @@ class TracFormProcessor(object):
     # Default state (beyond what is set in expand_macro).
     showErrors = True
     page = None
+    subcontext = None
     default_op = 'checkbox'
     needs_submit = True
     keep_history = False
     track_fields = True
+    submit_label = 'Update Form'
+    submit_name = None
 
     def __init__(self, macro, formatter, name, args):
         self.macro = macro
@@ -43,6 +47,7 @@ class TracFormProcessor(object):
         self.subform = getattr(formatter.req, type(self).__name__, False)
         if not self.subform:
             setattr(formatter.req, type(self).__name__, True)
+        self.env = dict(getattr(formatter.req, 'tracform_env', ()))
 
         # Remove leading comments and process commands.
         textlines = []
@@ -76,6 +81,8 @@ class TracFormProcessor(object):
         if self.page is None:
             self.page = formatter.req.path_info
         self.context = self.page
+        if self.subcontext:
+            self.context += ':' + self.subcontext
         state = self.macro.get_tracform_state(self.context)
         self.state = cgi.parse_qs(state or '')
         (self.form_id, self.form_context,
@@ -96,41 +103,67 @@ class TracFormProcessor(object):
             self.updated = False
             text = tfRE.sub(self.process, text)
 
-        # Wrap the entire result with a form, unless we're within an existing
-        # form.  If necessary, add a submit button.
+        return ''.join(self.build_form(text))
+
+    def build_form(self, text):
         if not self.subform:
-            submit = ''
+            dest = self.formatter.req.href('/formdata/update')
+            yield '<FORM method="POST" action=%r>' % str(dest)
+            yield text
             if self.needs_submit:
-                submit = '<INPUT type="submit">'
-            dest = formatter.req.href('/formdata/update')
-            text = ''.join(str(item) for item in (
-                '<FORM method="POST" action="' + dest + '">', text,
-                self.form_updated_on is not None and (
-                    '<INPUT type="hidden" name="__basever__" value="' +
-                        str(self.form_updated_on) + '">') or '',
-                '<INPUT type="hidden" name="__context__" value="',
-                    self.context, '">',
-                self.keep_history and 
-                    '<INPUT type="hidden" name="__keep_history__" value="yes">'
-                    or '',
-                self.track_fields and 
-                    '<INPUT type="hidden" name="__track_fields__" value="yes">'
-                    or '',
-                '<INPUT type="hidden" name="__backpath__" value="',
-                    formatter.req.href(formatter.req.path_info), '">',
-                '<INPUT type="hidden" name="__FORM_TOKEN" value="',
-                    formatter.req.form_token, '">',
-                submit, '</FORM>') if str(item))
+                yield '<INPUT type="submit"'
+                if self.submit_name:
+                    yield ' name=%r' % str(self.submit_name)
+                yield ' value=%r' % str(self.submit_label)
+                yield '>'
+            if self.keep_history:
+                yield '<INPUT type="hidden"'
+                yield ' name="__keep_history__" value="yes">'
+            if self.track_fields:
+                yield '<INPUT type="hidden"'
+                yield ' name="__track_fields__" value="yes">'
+            if self.form_updated_on is not None:
+                yield '<INPUT type="hidden" name="__basever__"'
+                yield ' value="' + str(self.form_updated_on) + '">'
+            yield '<INPUT type="hidden" ' + \
+                'name="__context__" value=%r>' % str(self.context)
+            backpath = self.formatter.req.href(self.formatter.req.path_info)
+            yield '<INPUT type="hidden" ' \
+                    'name="__backpath__" value=%s>' % str(backpath)
+            form_token = self.formatter.req.form_token
+            yield '<INPUT type="hidden" ' \
+                    'name="__FORM_TOKEN" value=%r>' % str(form_token)
+            yield '</FORM>'
+        else:
+            yield text
 
-        return text
-
-    @staticmethod
-    def getargs(argstr):
-        for arg in argRE.findall(argstr or ''):
+    def getargs(self, argstr):
+        for arg in argRE.findall(argstrRE.sub(self.argsub, argstr) or ''):
             if arg[:1] in '"\'':
                 yield arg[1:-1]
             else:
                 yield arg
+
+    def argsub(self, match):
+        name = match.group(1)
+        value = self.env.get(name)
+        if value is not None:
+            return value
+        fn = getattr(self, 'env_' + name.lower(), None)
+        if fn is not None:
+            return fn()
+        else:
+            return ''
+
+    def env_user(self):
+        who = str(self.formatter.req.session.sid)
+        if not self.macro.has_user(who):
+            return 'anonymous'
+        else:
+            return who
+
+    def env_now(self):
+        return time.strftime(time.localtime(time.time()))
 
     def cmd_errors(self, show):
         self.showErrors = show.upper() in ('SHOW', 'YES')
@@ -141,6 +174,12 @@ class TracFormProcessor(object):
         else:
             self.page = page
 
+    def cmd_subcontext(self, context):
+        if context.lower() == 'none':
+            self.subcontext = None
+        else:
+            self.subcontext = str(context)
+
     def cmd_default(self, default):
         self.default_op = default
 
@@ -149,6 +188,15 @@ class TracFormProcessor(object):
 
     def cmd_keep_history(self, track='yes'):
         self.keep_history = track.lower() == 'yes'
+
+    def cmd_submit_label(self, label):
+        self.submit_label = label
+
+    def cmd_submit_name(self, name):
+        self.submit_name
+
+    def cmd_setenv(self, name, value):
+        self.env[name] = value
 
     def wiki(self, text):
         out = StringIO.StringIO()
@@ -177,6 +225,19 @@ class TracFormProcessor(object):
 
     def wikiop_value(self, field):
         return 'VALUE=' + field
+
+    def op_input(self, field):
+        current = self.state.get(field)
+        if isinstance(current, (tuple, list)):
+            if len(current) == 0:
+                current = None
+            elif len(current) == 1:
+                current = current[0]
+            else:
+                return 'ERROR: field %r has too many values' % str(field)
+        return ("<INPUT name='%s'" % field +
+                (current is not None and (" value=%r" % str(current)) or '') +
+                '>')
 
     def op_checkbox(self, field):
         field, value = (field.split('//', 1) + [None])[:2]
