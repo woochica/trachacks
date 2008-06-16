@@ -25,6 +25,8 @@ class TracFormProcessor(object):
     page = None
     default_op = 'checkbox'
     needs_submit = True
+    keep_history = False
+    track_fields = True
 
     def __init__(self, macro, formatter, name, args):
         self.macro = macro
@@ -108,6 +110,12 @@ class TracFormProcessor(object):
                         str(self.form_updated_on) + '">') or '',
                 '<INPUT type="hidden" name="__context__" value="',
                     self.context, '">',
+                self.keep_history and 
+                    '<INPUT type="hidden" name="__keep_history__" value="yes">'
+                    or '',
+                self.track_fields and 
+                    '<INPUT type="hidden" name="__track_fields__" value="yes">'
+                    or '',
                 '<INPUT type="hidden" name="__backpath__" value="',
                     formatter.req.href(formatter.req.path_info), '">',
                 '<INPUT type="hidden" name="__FORM_TOKEN" value="',
@@ -135,6 +143,12 @@ class TracFormProcessor(object):
 
     def cmd_default(self, default):
         self.default_op = default
+
+    def cmd_track_fields(self, track='yes'):
+        self.track_fields = track.lower() == 'yes'
+
+    def cmd_keep_history(self, track='yes'):
+        self.keep_history = track.lower() == 'yes'
 
     def wiki(self, text):
         out = StringIO.StringIO()

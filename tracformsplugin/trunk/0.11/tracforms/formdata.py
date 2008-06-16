@@ -18,6 +18,8 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
             backpath = args.pop('__backpath__', None)
             context = args.pop('__context__', None)
             basever = args.pop('__basever__', None)
+            keep_history = args.pop('__keep_history__', None)
+            track_fields = args.pop('__track_fields__', None)
             args.pop('__FORM_TOKEN', None)  # Ignore.
             if context is None:
                 raise HTTPBadRequest('__context__ is required')
@@ -34,7 +36,9 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
                 else:
                     value = str(value)
                     result.append('%s=%s' % (name, urllib.quote(value)))
-            self.save_tracform(context, '&'.join(result), who, basever)
+            self.save_tracform(context, '&'.join(result), who, basever,
+                                keep_history=keep_history,
+                                track_fields=track_fields)
             if backpath is not None:
                 req.send_response(302)
                 req.send_header('Content-type', 'text/plain')

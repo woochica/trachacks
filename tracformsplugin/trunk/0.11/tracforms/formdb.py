@@ -62,8 +62,8 @@ class TracFormDBComponent(DBComponent):
         return cursor(sql, src).value
 
     def save_tracform(self, src, state, updater,
-                        base_version=None, keep_history=True,
-                        track_fields=True, cursor=None):
+                        base_version=None, keep_history=False,
+                        track_fields=False, cursor=None):
         cursor = self.get_cursor(cursor)
         (form_id, context, last_updater, last_updated_on,
             form_keep_history, form_track_fields) = self.get_tracform_meta(src)

@@ -14,8 +14,8 @@ class TracFormDBObserver(Interface):
         pass
 
     def save_tracform(self, src, state, updater,
-                        base_version=None, keep_history=True,
-                        track_fields=True, cursor=None):
+                        base_version=None, keep_history=False,
+                        track_fields=False, cursor=None):
         pass
 
     def get_tracform_fields(self, src, cursor=None):
