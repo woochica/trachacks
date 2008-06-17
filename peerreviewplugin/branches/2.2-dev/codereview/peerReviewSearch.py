@@ -19,6 +19,7 @@ from codereview.dbBackend import *
 from codereview.CodeReviewStruct import *
 import datetime
 import time
+import itertools
 
 class UserbaseModule(Component):
     implements(IRequestHandler, ITemplateProvider, INavigationContributor)
@@ -35,17 +36,20 @@ class UserbaseModule(Component):
         return []
                                         
     def process_request(self, req):
+
+        data = {}
+
         #check permissions
         if req.perm.has_permission('CODE_REVIEW_MGR'):
-            req.hdf['manager'] = 1
+            data['manager'] = 1
         else:
             req.perm.assert_permission('CODE_REVIEW_DEV')
-            req.hdf['manager'] = 0
+            data['manager'] = 0
             
         #if the doSearch parameter is 'yes', perform the search
         #this parameter is set when someone searches
         if(req.args.get('doSearch') == 'yes'):
-            results = self.performSearch(req);
+            results = self.performSearch(req, data);
             #if there are no results - fill the return array
             #with blank data.
             if(len(results) == 0):
@@ -56,28 +60,21 @@ class UserbaseModule(Component):
                 noValResult.append("")
                 noValResult.append("")
                 results.append(noValResult)        
-            req.hdf['results'] = results;
-            req.hdf['doSearch'] = 'yes';
+            data['results'] = results;
+            data['doSearch'] = 'yes';
             
-        #sets links for ClearSilver
-        req.hdf['trac.href.peerReviewView'] = self.env.href.peerReviewView()
-        req.hdf['trac.href.peerReviewMain'] = self.env.href.peerReviewMain()
-        req.hdf['trac.href.peerReviewNew'] = self.env.href.peerReviewNew()
-        req.hdf['trac.href.peerReviewSearch'] = self.env.href.peerReviewSearch()
-        req.hdf['trac.href.peerReviewOptions'] = self.env.href.peerReviewOptions()
-        
         #for the top-right nav links
-        req.hdf['main'] = "no"
-        req.hdf['create'] = "no"
-        req.hdf['search'] = "yes"
-        req.hdf['options'] = "no"
+        data['main'] = "no"
+        data['create'] = "no"
+        data['search'] = "yes"
+        data['options'] = "no"
         
         #get the database
         db = self.env.get_db_cnx()
         dbBack = dbBackend(db)
         users = dbBack.getPossibleUsers()
         #sets the possible users for the user combo-box
-        req.hdf['users'] = users
+        data['users'] = users
         #creates a year array containing the last 10
         #years - for the year combo-box
         now = datetime.datetime.now()
@@ -86,8 +83,10 @@ class UserbaseModule(Component):
         for i in 0,1,2,3,4,5,6,7,8,9,10:
             years.append(year - i)
 
-        req.hdf['years'] = years
-        return 'peerReviewSearch.cs', None
+        data['years'] = years
+        data['cycle'] = itertools.cycle
+
+        return 'peerReviewSearch.html', data, None
                 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -103,7 +102,7 @@ class UserbaseModule(Component):
         return [('hw', resource_filename(__name__, 'htdocs'))]
 
     #Performs the search
-    def performSearch(self, req):
+    def performSearch(self, req, data):
         #create a code review struct to hold the search parameters
         crStruct = CodeReviewStruct(None)
         #get the search parameters from POST
@@ -125,12 +124,12 @@ class UserbaseModule(Component):
 
         #store date values for ClearSilver - used to reset values to
         #search parameters after a search is performed
-        req.hdf['searchValues.month'] = month;
-        req.hdf['searchValues.day'] = day;
-        req.hdf['searchValues.year'] = year;
-        req.hdf['searchValues.status'] = status;
-        req.hdf['searchValues.author'] = author;
-        req.hdf['searchValues.name'] = name;
+        data['searchValues_month'] = month;
+        data['searchValues_day'] = day;
+        data['searchValues_year'] = year;
+        data['searchValues_status'] = status;
+        data['searchValues_author'] = author;
+        data['searchValues_name'] = name;
 
         #dates are ints in TRAC - convert search date to int
         fromdate = "-1";
@@ -143,7 +142,7 @@ class UserbaseModule(Component):
             fromdate = `fromdate`
 
         selectString = 'Select...'
-        req.hdf['dateSelected'] = fromdate;
+        data['dateSelected'] = fromdate;
         #if user has not selected parameter - leave
         #value in struct NULL
         if(author != selectString):
@@ -159,6 +158,7 @@ class UserbaseModule(Component):
         #get the database
         db = self.env.get_db_cnx()
         dbBack = dbBackend(db)
+
         #perform search
         results = dbBack.searchCodeReviews(crStruct)
         returnArray = []

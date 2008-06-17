@@ -8,8 +8,8 @@
   <xi:include href="macros.html" />
 
   <head>
-	<link rel="stylesheet" href="/trac-mysql/chrome/common/css/code.css" type="text/css" media="screen, projector, print" />
-	<link rel="stylesheet" href="/trac-mysql/chrome/common/css/browser.css" type="text/css" media="screen, projector, print" />
+	<link rel="stylesheet" href="${href.chrome('common/css/code.css')}" type="text/css" media="screen, projector, print" />
+	<link rel="stylesheet" href="${href.chrome('common/css/browser.css')}" type="text/css" media="screen, projector, print" />
   </head>
 
   <body>
@@ -42,30 +42,30 @@
 		<select size="1" name="DateMonth" id="Month"
 			onchange="resetDays(document.getElementById('Month').options[document.getElementById('Month').selectedIndex].value,
 					document.getElementById('Year').options[document.getElementById('Year').selectedIndex].value)">
-			<option value=0>Select...</option>
-			<option value=01>January</option>
-			<option value=02>February</option>
-			<option value=03>March</option>
-			<option value=04>April</option>
-			<option value=05>May</option>
-			<option value=06>June</option>
-			<option value=07>July</option>
-			<option value=08>August</option>
-			<option value=09>September</option>
-			<option value=10>October</option>
-			<option value=11>November</option>
-			<option value=12>December</option>
+			<option value="0">Select...</option>
+			<option value="01">January</option>
+			<option value="02">February</option>
+			<option value="03">March</option>
+			<option value="04">April</option>
+			<option value="05">May</option>
+			<option value="06">June</option>
+			<option value="07">July</option>
+			<option value="08">August</option>
+			<option value="09">September</option>
+			<option value="10">October</option>
+			<option value="11">November</option>
+			<option value="12">December</option>
 		</select>
 	
 		<span id="DaySpan">
 			<select size="1" name="DateDay1" id="Day" onchange="setDateIndex();">
-				<option value=0 selected>Select...</option>
+				<option value="0" selected="selected">Select...</option>
 			</select>
 		</span>,
 		<select size="1" name="DateYear" id="Year" 
 			onchange="resetDays(document.getElementById('Month').options[document.getElementById('Month').selectedIndex].value,
 					document.getElementById('Year').options[document.getElementById('Year').selectedIndex].value)">
-			<option selected value="0">Select...</option>
+			<option selected="selected" value="0">Select...</option>
 			<option py:for="item in years" value="${item}">${item}</option>
 		</select>
 		<br /><br />
@@ -102,7 +102,7 @@
 				</tr>
 			</thead>
 			<tbody py:with="cls=cycle(('odd', 'even'))" id = "myfilebody">
-				<py:for each="item in enumerate(results)"
+				<py:for each="item in results">
 					<tr py:if="item[2] != ''" class="${cls.next()}">
 						<td><a href="${href.peerReviewView()}?Review=${item[0]}">${item[0]}</a></td>
 						<td><a href="${href.peerReviewView()}?Review=${item[0]}">${item[1]}</a></td>
@@ -120,125 +120,22 @@
 				</py:for>
 			</tbody>
 		</table>
-		<br>
+		<br />
 	</py:if>
 
 <script language="Javascript">
 var dateIndexSelected = "01";
 
-var monthSelected = "${searchValues.month}";
-var daySelected = "${searchValues.day}";
-var yearSelected = "${searchValues.year}";
-var statusSelected = "${searchValues.status}";
-var authorSelected = "${searchValues.author}";
-var nameSelected = "${searchValues.name}";
+var monthSelected = "${searchValues_month}";
+var daySelected = "${searchValues_day}";
+var yearSelected = "${searchValues_year}";
+var statusSelected = "${searchValues_status}";
+var authorSelected = "${searchValues_author}";
+var nameSelected = "${searchValues_name}";
 
 setSearchValues();
 
-function setSearchValues()
-{
-	var monthSelect = document.getElementById('Month');
-	var daySelect = document.getElementById('Day');
-	var yearSelect = document.getElementById('Year');
-	var authorSelect = document.getElementById('author');
-	var statusSelect = document.getElementById('status');
-	var textField = document.getElementById('name');
-	nameSelected = nameSelected.replace(/&lt;/g, '<');
-	nameSelected = nameSelected.replace(/&gt;/g, '>');
-	nameSelected = nameSelected.replace(/&#34;/g, '"');
-	nameSelected = nameSelected.replace(/&amp;/g, '&');
-	textField.value = nameSelected;
-	
-
-	for(var i = 0; i < monthSelect.options.length; i++)
-	{
-		if(monthSelect.options[i].value == monthSelected)
-		{
-			monthSelect.options[i].selected = 'true';
-			break;
-		}
-	}
-
-	for(var i = 0; i < yearSelect.options.length; i++)
-	{
-		if(yearSelect.options[i].value == yearSelected)
-		{
-			yearSelect.options[i].selected = 'true';
-			break;
-		}
-	}
-
-	dateIndexSelected = daySelected;
-	resetDays(monthSelected, yearSelected);
-
-	for(var i = 0; i < authorSelect.options.length; i++)
-	{
-		if(authorSelect.options[i].value == authorSelected)
-		{	
-			authorSelect.options[0].selected = 'false';
-			authorSelect.options[i].selected = 'true';
-			break;
-		}
-	}
-	for(var i = 0; i < statusSelect.options.length; i++)
-	{
-		if(statusSelect.options[i].value == statusSelected)
-		{
-			statusSelect.options[0].selected = 'false';
-			statusSelect.options[i].selected = 'true';
-			break;
-		}
-	}
-}
-
-function setDateIndex()
-{
-	dateIndexSelected = (document.getElementById('Day')).value;
-	document.getElementById('dayHolder').value = dateIndexSelected;
-}
-
-function resetDays(month, year)
-{
-	var numDays = 0;
-	var date = new Date();
-	date.setFullYear(year, month - 1, 31);
-	numDays = date.getDate();
-	if(numDays < 4)
-	{
-		numDays = 31 - numDays;
-	}
-	setOptionText(document.getElementById('DaySpan'), numDays);
-	setDateIndex();
-}
-
-function setOptionText(control, numDays)
-{
-	var innerHTML = '<select name=\"DateDay1\" id=\"Day\" onChange=\"setDateIndex();\">'
-	innerHTML += '<option value = \"0\">Select...</option>';
-	var day = '';
-
-	for(var loop=1; loop <= numDays; loop++)
-	{
-		day = '';
-		if(loop < 10)
-		{
-			day = '0'; //add a 0 to day so that all days are 2 digits - 01, 02, etc.
-		}
-		if(day + '' + loop == dateIndexSelected)
-		{
-			innerHTML += '<option selected value=' + day + loop + '>' + loop + '</option>\n';
-		}
-		else
-		{
-			innerHTML += '<option value=' + day + loop + '>' + loop + '</option>\n';
-		}
-	}
-
-	innerHTML += '</select>';
-	
-	control.innerHTML = innerHTML;
-}
 </script>
-
+<script type="text/javascript" src="${href.chrome('hw/js/peerReviewSearch.js')}"/>
   </body>
 </html>
