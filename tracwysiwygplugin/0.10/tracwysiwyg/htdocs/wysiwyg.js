@@ -113,13 +113,14 @@ TracWysiwyg.prototype.initializeEditor = function(d) {
         '<body></body>',
         '</html>' ];
 
-    if (d.addEventListener) {
+    var first = !window.opera && d.addEventListener ? true : false;
+    if (first) {
         d.designMode = "On";
     }
     d.open();
     d.write(html.join(""));
     d.close();
-    if (!d.addEventListener) {
+    if (!first) {
         d.designMode = "On";
         if (d != this.contentWindow.document) {
             this.contentDocument = this.contentWindow.document;
