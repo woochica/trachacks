@@ -1,6 +1,10 @@
 
 from trac.core import Interface, ExtensionPoint, Component
-from acct_mgr.api import IPasswordStore
+try:
+    from acct_mgr.api import IPasswordStore
+    can_check_user = True
+except ImportError:
+    can_check_user = False
 import sys
 
 class TracFormDBObserver(Interface):
@@ -69,10 +73,16 @@ class TracFormDBUser(Component):
     def get_tracform_fieldinfo(self, *_args, **_kw):
         return self.tracformdb_observers
 
-class TracPasswordStoreUser(Component):
-    tracpasswordstore_observers = ExtensionPoint(IPasswordStore)
+if can_check_user:
+    class TracPasswordStoreUser(Component):
+        tracpasswordstore_observers = ExtensionPoint(IPasswordStore)
 
-    @tracob_first
-    def has_user(self, *_args, **_kw):
-        return self.tracpasswordstore_observers
+        @tracob_first
+        def has_user(self, *_args, **_kw):
+            return self.tracpasswordstore_observers
+else:
+    class TracPasswordStoreUser(Component):
+        def has_user(self, *_args, **_kw):
+            "Stub if the user doesn't have acct_mgr installed"
+            return False
 
