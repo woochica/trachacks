@@ -1,3 +1,8 @@
+"""
+Copyright (C) 2008 Prognus Software Livre - www.prognus.com.br
+Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
+"""
+
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
 from trac.wiki.api import WikiSystem
