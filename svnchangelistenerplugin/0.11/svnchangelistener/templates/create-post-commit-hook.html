@@ -1,0 +1,24 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>SVN Change Listener</title>
+  </head>
+  <body>
+    <h2>Install SVN Change Listener</h2>
+
+    Install the post-commit-hook to ${filename}:
+
+    <form method="post">
+      <textarea cols="80" rows="5" wrap="off" name="contents">${file_contents}</textarea><br/>
+
+    Press Okay if this looks fine to install<br/>
+      <input type="submit" name="create" value="Okay" />
+    </form>
+
+  </body>
+</html>
