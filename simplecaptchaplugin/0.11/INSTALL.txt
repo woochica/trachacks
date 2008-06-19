@@ -1,0 +1,10 @@
+To use you SimplecaptchaPlugin you must:
+
+1. Have patched AccountManagerPlugin to provide the IRegistrationConfirmation extension point.
+
+2. Add the following to your trac.ini file
+
+[simplecaptcha]
+dictionary_file = /path/to/dictionary.txt
+
+where /path/to/dictionary.txt is the path to the text file used to generate the words for the captchas. 
