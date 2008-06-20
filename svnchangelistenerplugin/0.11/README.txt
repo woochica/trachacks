@@ -53,3 +53,32 @@ ticketed:
  * the webadmin installer should be smarter in figuring out if the plugin is already installed
 
  * more Option-based customization could be done in TicketChanger
+
+ * handling of other commit hooks (pre-commit, etc)
+
+ * better editting of hooks;  I think the correct solution is showing
+   the hooks in a textarea providing an interface to hook into.  This
+   could look like
+
+{{{
+class HookContributer(Interface):
+
+      def hook():
+      	  """name(s) of hooks to contibute to"""
+
+      def name():
+      	  """name of the contributor;  this will be added to the hook
+      	  with
+
+### ${name} Trac hook
+${commandline}
+
+	  so that the hooks can be removed and installed reliably
+	  without overlapping.  Maybe a format for command line could
+	  be asserted so that this could be parsed too;  i'm thinking
+	  multiple projects
+	  """
+
+     def commandline(<arguments>):
+          """the command line to be added"""
+}}}
