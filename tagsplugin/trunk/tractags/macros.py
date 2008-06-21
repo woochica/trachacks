@@ -81,7 +81,7 @@ class ListTaggedMacro(WikiMacroBase):
 
         ul = builder.ul(class_='taglist')
         for resource, tags in sorted(query_result,
-                                     key=lambda r: str(r[0].id)):
+                                     key=lambda r: unicode(r[0].id)):
             tags = sorted(tags)
             if tags:
                 rendered_tags = [
