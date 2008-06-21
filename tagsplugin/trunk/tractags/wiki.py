@@ -49,13 +49,20 @@ class WikiTagInterface(Component):
         pass
 
     def validate_wiki_page(self, req, page):
+        # If we're saving the wiki page, and can modify tags, do so
         if req and 'TAGS_MODIFY' in req.perm(page.resource) \
                 and req.path_info.startswith('/wiki') and 'save' in req.args:
-            if self._update_tags(req, page) and \
-                    page.text == page.old_text and \
-                    page.readonly == int('readonly' in req.args) and \
-                    page.version > 0:
-                req.redirect(get_resource_url(self.env, page.resource, req.href, version=None))
+            page_modified = req.args.get('text') != page.old_text or \
+                    page.readonly != int('readonly' in req.args)
+            # Always save tags if the page has been otherwise modified
+            if page_modified:
+                self._update_tags(req, page)
+            elif page.version > 0:
+                # If the page hasn't been otherwise modified, save the tags
+                # and redirect so we don't get the "page has not been modified"
+                # warning
+                if self._update_tags(req, page):
+                    req.redirect(get_resource_url(self.env, page.resource, req.href, version=None))
         return []
 
     # IWikiChangeListener methods
