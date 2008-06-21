@@ -97,6 +97,14 @@ class TicketTagProvider(Component):
         ticket['keywords'] = u''
         ticket.save_changes(req.username, u'')
 
+    def describe_tagged_resource(self, resource):
+        assert resource.realm == 'ticket'
+        ticket = Ticket(self.env, resource.id)
+        if ticket.exists:
+            return '%s (%s)' % (ticket['summary'], ticket['status'])
+        else:
+            return ''
+
     # Private methods
     def _ticket_tags(self, ticket):
         split_into_tags = TagSystem(self.env).split_into_tags

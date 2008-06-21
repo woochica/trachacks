@@ -6,6 +6,7 @@
 # you should have received as part of this distribution.
 #
 
+import re
 from trac.core import *
 from tractags.api import DefaultTagProvider, TagSystem
 from trac.web.chrome import add_stylesheet
@@ -14,6 +15,7 @@ from trac.resource import Resource, render_resource_link, get_resource_url
 from trac.mimeview.api import Context
 from trac.web.api import ITemplateStreamFilter
 from trac.wiki.api import IWikiPageManipulator, IWikiChangeListener
+from trac.wiki.model import WikiPage
 from trac.util.compat import sorted
 from genshi.builder import tag
 from genshi.filters.transform import Transformer
@@ -23,10 +25,20 @@ class WikiTagProvider(DefaultTagProvider):
     """Tag provider for the Wiki."""
     realm = 'wiki'
 
+    first_head = re.compile('=\s+([^=]*)=') 
+
     def check_permission(self, perm, operation):
         map = {'view': 'WIKI_VIEW', 'modify': 'WIKI_MODIFY'}
         return super(WikiTagProvider, self).check_permission(perm, operation) \
             and map[operation] in perm
+
+    def describe_tagged_resource(self, resource):
+        assert resource.realm == 'wiki'
+        page = WikiPage(self.env, resource.id)
+        if page.exists:
+            ret = self.first_head.search(page.text)
+            return ret and ret.group(1) or ''
+        return ''
 
 
 class WikiTagInterface(Component):

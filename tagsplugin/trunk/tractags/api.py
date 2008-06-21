@@ -47,6 +47,9 @@ class ITagProvider(Interface):
     def remove_resource_tags(req, resource):
         """Remove all tags from a resource."""
 
+    def describe_tagged_resource(resource):
+        """Return a one line description of the tagged resource."""
+
 
 class DefaultTagProvider(Component):
     """An abstract base tag provider that stores tags in the database.
@@ -153,6 +156,9 @@ class DefaultTagProvider(Component):
             db.rollback()
             raise
 
+    def describe_tagged_resource(self, resource):
+        return ''
+
 
 class TagSystem(Component):
     """Tagging system for Trac."""
@@ -233,6 +239,14 @@ class TagSystem(Component):
     def split_into_tags(self, text):
         """Split plain text into tags."""
         return set([t.strip() for t in self._tag_split.split(text) if t.strip()])
+
+    def describe_tagged_resource(self, resource):
+        """Return a short description of a taggable resource."""
+        provider = self._get_provider(resource.realm)
+        if hasattr(provider, 'describe_tagged_resource'):
+            return provider.describe_tagged_resource(resource)
+        else:
+            return ''
 
     # IPermissionRequestor methods
     def get_permission_actions(self):

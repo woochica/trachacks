@@ -72,7 +72,8 @@ class TagCloudMacro(WikiMacroBase):
 class ListTaggedMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         req = formatter.req
-        query_result = TagSystem(self.env).query(req, content)
+        tag_system = TagSystem(self.env)
+        query_result = tag_system.query(req, content)
         add_stylesheet(req, 'tags/css/tractags.css')
 
         def link(resource):
@@ -83,15 +84,18 @@ class ListTaggedMacro(WikiMacroBase):
         for resource, tags in sorted(query_result,
                                      key=lambda r: unicode(r[0].id)):
             tags = sorted(tags)
+
+            desc = tag_system.describe_tagged_resource(resource)
+
             if tags:
                 rendered_tags = [
                     link(resource('tag', tag))
                     for tag in tags
                     ]
-                li = builder.li(link(resource), ' (', rendered_tags[0],
+                li = builder.li(link(resource), ' ', desc, ' (', rendered_tags[0],
                                 [(' ', tag) for tag in rendered_tags[1:]],
                                 ')')
             else:
-                li = builder.li(link(resource))
+                li = builder.li(link(resource), ' ', desc)
             ul(li, '\n')
         return ul
