@@ -246,6 +246,8 @@ class TagSystem(Component):
         if hasattr(provider, 'describe_tagged_resource'):
             return provider.describe_tagged_resource(resource)
         else:
+            self.env.log.warning('ITagProvider %r does not implement '
+                                 'describe_tagged_resource()' % provider)
             return ''
 
     # IPermissionRequestor methods
