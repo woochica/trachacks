@@ -226,9 +226,9 @@ class TagSystem(Component):
             provider.remove_resource_tags(req, resource)
         else:
             tags = set(tags)
-            current_tags = provider.get_resource_tags(req, resource)
-            current_tags.remove(tags)
-            provider.set_resource_tags(req, resource, tags)
+            current_tags = set(provider.get_resource_tags(req, resource))
+            current_tags.difference_update(tags)
+            provider.set_resource_tags(req, resource, current_tags)
 
     def split_into_tags(self, text):
         """Split plain text into tags."""
