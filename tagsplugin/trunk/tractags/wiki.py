@@ -102,6 +102,7 @@ class WikiTagInterface(Component):
             resource = Resource('tag', tag_)
             anchor = render_resource_link(self.env,
                 Context.from_request(req, resource), resource)
+            anchor = anchor(rel='tag')
             li.append(tag.li(anchor, ' '))
 
         insert = tag.ul(class_='tags')(tag.li('Tags', class_='header'), li)
