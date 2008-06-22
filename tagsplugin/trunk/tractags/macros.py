@@ -10,6 +10,7 @@ from trac.resource import Resource, get_resource_url, render_resource_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.chrome import add_stylesheet
 from trac.util.compat import sorted, set
+from trac.util import embedded_numbers
 from tractags.api import TagSystem
 from genshi.builder import tag as builder
 
@@ -54,22 +55,38 @@ def render_cloud(env, req, cloud, renderer=None):
 
 
 class TagCloudMacro(WikiMacroBase):
+    """Display a tag cloud.
+
+    Show a tag cloud for all tags on resources matching query.
+
+    Usage:
+
+    {{{
+    [[TagCloud(query)]]
+    }}}
+
+    See tags documentation for the query syntax.
+    """
     def expand_macro(self, formatter, name, content):
+        if not content:
+            content = ''
         req = formatter.req
-        query_result = TagSystem(self.env).query(req, content)
-        all_tags = {}
-        # Find tag counts
-        for resource, tags in query_result:
-            for tag in tags:
-                try:
-                    all_tags[tag] += 1
-                except KeyError:
-                    all_tags[tag] = 1
+        all_tags = TagSystem(self.env).get_all_tags(req, content)
         return render_cloud(self.env, req, all_tags)
 
 
 
 class ListTaggedMacro(WikiMacroBase):
+    """List tagged resources.
+
+    Usage:
+
+    {{{
+    [[ListTagged(query)]]
+    }}}
+
+    See tags documentation for the query syntax.
+    """
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         tag_system = TagSystem(self.env)
@@ -82,10 +99,10 @@ class ListTaggedMacro(WikiMacroBase):
 
         ul = builder.ul(class_='taglist')
         for resource, tags in sorted(query_result,
-                                     key=lambda r: unicode(r[0].id)):
+                                     key=lambda r: embedded_numbers(unicode(r[0].id))):
             tags = sorted(tags)
 
-            desc = tag_system.describe_tagged_resource(resource)
+            desc = tag_system.describe_tagged_resource(req, resource)
 
             if tags:
                 rendered_tags = [

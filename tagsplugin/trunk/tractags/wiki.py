@@ -9,7 +9,7 @@
 import re
 from trac.core import *
 from tractags.api import DefaultTagProvider, TagSystem
-from trac.web.chrome import add_stylesheet
+from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.api import IWikiSyntaxProvider
 from trac.resource import Resource, render_resource_link, get_resource_url
 from trac.mimeview.api import Context
@@ -32,8 +32,9 @@ class WikiTagProvider(DefaultTagProvider):
         return super(WikiTagProvider, self).check_permission(perm, operation) \
             and map[operation] in perm
 
-    def describe_tagged_resource(self, resource):
-        assert resource.realm == 'wiki'
+    def describe_tagged_resource(self, req, resource):
+        if not self.check_permission(req.perm(resource), 'view'):
+            return ''
         page = WikiPage(self.env, resource.id)
         if page.exists:
             ret = self.first_head.search(page.text)
@@ -131,11 +132,12 @@ class WikiTagInterface(Component):
         return False
 
     def _wiki_edit(self, req, stream):
+
         insert = tag.div(class_='field')(
             tag.label(
                 'Tag under: (', tag.a('view all tags', href=req.href.tags()), ')',
                 tag.br(),
-                tag.input(id='tags', type='text', name='tags', size='30',
+                tag.input(id='tags', type='text', name='tags', size='50',
                           value=req.args.get('tags', ' '.join(self._page_tags(req)))),
                 )
             )

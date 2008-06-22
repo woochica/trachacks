@@ -43,7 +43,19 @@
       </form>
 
       <div id="tag_body">
-        <h1 py:if="tag_title">${tag_title}</h1>
+        <h1 py:if="tag_title">
+          ${tag_title}
+          <py:if test="tag_page and 'WIKI_VIEW' in perm">
+            <py:choose test="tag_page.exists">
+              <py:when test="True">(go to <a href="${href.wiki(tag_page.name)}">Wiki page</a>)</py:when>
+              <py:when test="False">
+                <py:if test="'WIKI_CREATE' in perm">
+                  (<a href="${href.wiki(tag_page.name, action='edit', text='= %s =\n\n[[ListTagged(%s)]]' % (tag_page.name, tag_page.name))}">Create Wiki page</a> for this tag)
+                </py:if>
+              </py:when>
+            </py:choose>
+          </py:if>
+        </h1>
         ${tag_body}
       </div>
     </div>

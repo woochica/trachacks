@@ -14,12 +14,14 @@ from trac.web.chrome import ITemplateProvider, INavigationContributor, \
                             add_stylesheet, add_ctxtnav
 from genshi.builder import tag as builder
 from trac.util import to_unicode
+from trac.util.text import CRLF
 from trac.util.compat import sorted, set, any
 from tractags.api import TagSystem, ITagProvider
 from tractags.query import InvalidQuery
 from trac.resource import Resource
 from trac.mimeview import Context
 from trac.wiki.formatter import Formatter
+from trac.wiki.model import WikiPage
 
 
 class TagTemplateProvider(Component):
@@ -82,6 +84,12 @@ class TagRequestHandler(Component):
         checked_realms = [r for r in realms if r in req.args] or realms
         data['tag_realms'] = [{'name': realm, 'checked': realm in checked_realms}
                               for realm in realms]
+
+        single_page = re.match(r"""(['"]?)(\w+)\1$""", query)
+        if single_page:
+            page_name = single_page.group(2)
+            page = WikiPage(self.env, page_name)
+            data['tag_page'] = page
 
         if query:
             data['tag_title'] = 'Showing objects matching "%s"' % query

@@ -97,8 +97,9 @@ class TicketTagProvider(Component):
         ticket['keywords'] = u''
         ticket.save_changes(req.username, u'')
 
-    def describe_tagged_resource(self, resource):
-        assert resource.realm == 'ticket'
+    def describe_tagged_resource(self, req, resource):
+        if not 'TICKET_VIEW' in req.perm(resource):
+            return ''
         ticket = Ticket(self.env, resource.id)
         if ticket.exists:
             return '%s (%s)' % (ticket['summary'], ticket['status'])

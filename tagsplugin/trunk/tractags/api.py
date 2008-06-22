@@ -47,7 +47,7 @@ class ITagProvider(Interface):
     def remove_resource_tags(req, resource):
         """Remove all tags from a resource."""
 
-    def describe_tagged_resource(resource):
+    def describe_tagged_resource(req, resource):
         """Return a one line description of the tagged resource."""
 
 
@@ -156,7 +156,7 @@ class DefaultTagProvider(Component):
             db.rollback()
             raise
 
-    def describe_tagged_resource(self, resource):
+    def describe_tagged_resource(self, req, resource):
         return ''
 
 
@@ -203,6 +203,21 @@ class TagSystem(Component):
                 if query(tags, context=resource):
                     yield resource, tags
 
+    def get_all_tags(self, req, query=''):
+        """Return all tags, optionally only on resources matching query.
+
+        Returns a dictionary with tag name as the key and tag frequency as the
+        value.
+        """
+        all_tags = {}
+        for resource, tags in self.query(req, query):
+            for tag in tags:
+                if tag in all_tags:
+                    all_tags[tag] += 1
+                else:
+                    all_tags[tag] = 1
+        return all_tags
+
     def get_tags(self, req, resource):
         """Get tags for resource."""
         return set(self._get_provider(resource.realm) \
@@ -240,11 +255,11 @@ class TagSystem(Component):
         """Split plain text into tags."""
         return set([t.strip() for t in self._tag_split.split(text) if t.strip()])
 
-    def describe_tagged_resource(self, resource):
+    def describe_tagged_resource(self, req, resource):
         """Return a short description of a taggable resource."""
         provider = self._get_provider(resource.realm)
         if hasattr(provider, 'describe_tagged_resource'):
-            return provider.describe_tagged_resource(resource)
+            return provider.describe_tagged_resource(req, resource)
         else:
             self.env.log.warning('ITagProvider %r does not implement '
                                  'describe_tagged_resource()' % provider)
