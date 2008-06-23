@@ -1,7 +1,6 @@
 ## AMB SearchAll - Search multiple trac projects at once
 
 from trac.core import *
-from trac.web.main import _open_environment
 from trac.web.href import Href
 try:
     from trac.search import ISearchSource, shorten_result
