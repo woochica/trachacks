@@ -142,6 +142,8 @@ class AddCommentMacro(WikiMacroBase):
                     # which like other macro errors gets swallowed in the Formatter.
                     # We need to re-raise it in a post_process_request instead.
                     try:
+                        self.env.log.debug(
+                            "AddComment saved - redirecting to: %s" % page_url)
                         req._outheaders = []
                         req.redirect(page_url)
                     except RequestDone:
@@ -189,8 +191,10 @@ class AddCommentMacro(WikiMacroBase):
                     method="post",
                     action=page_url+"#commenting",
                 )
-        
-        add_script(req, 'common/js/wikitoolbar.js')
+
+        if not wikipreview:
+            # Wiki edit preview already adds this javascript file
+            add_script(req, 'common/js/wikitoolbar.js')
         
         return tag.div(the_preview, the_message, the_form, id="commenting")
     
@@ -207,5 +211,6 @@ class AddCommentMacro(WikiMacroBase):
     def post_process_request(self, req, template, data, content_type):
         if hasattr(req, 'addcomment_raise'):
             self.env.log.debug("AddCommentMacro: Re-raising RequestDone from redirect")
+            del(req.addcomment_raise)
             raise RequestDone
         return template, data, content_type
