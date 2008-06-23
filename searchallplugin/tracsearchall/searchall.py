@@ -56,6 +56,9 @@ class SearchAllPlugin(Component):
             project_url = '/'.join( (base_url, project) )  
             
             project_path = os.path.join(search_path,project)
+            if not os.path.isdir( project_path ):
+                continue
+            
             env = open_environment(project_path)
                         
            
