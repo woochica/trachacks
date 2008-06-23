@@ -74,14 +74,15 @@ class SearchAllPlugin(Component):
             env_search = SearchModule(env)
             
             #Update request data
-            newreq = copy.copy(req)
-            newreq.href = Href(project_url)
+            orig_href = req.href
+            req.href = Href(project_url)
             
             for source in env_search.search_sources:
-                results += list(source.get_search_results(newreq, query, subfilters))
+                results += list(source.get_search_results(req, query, subfilters))
             
             for result in results:
                 yield (result[0],
                 '%s: %s' % (env.project_name, result[1]))\
                 + result[2:]
             
+        req.href = orig_href
