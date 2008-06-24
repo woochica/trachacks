@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 from ptrac import Trac
 import csv
 import time
