@@ -265,6 +265,18 @@ class TracFormProcessor(object):
                 (current == value and ' checked' or '') +
                 '>')
 
+    def op_select(self, field, *values):
+        current = self.get_field(field)
+        result = []
+        result.append("<SELECT name='%s'>" % field)
+        for value in values:
+            value, label = (value.split('//', 1) + [value])[:2]
+            result += ("<OPTION value='%s'" % value.strip() +
+                    (current == value and ' selected' or '') +
+                    '>' + label.strip() + '</OPTION>')
+        result.append("</SELECT>")
+        return ''.join(result)
+
     def op_context(self):
         return str(self.context)
 
