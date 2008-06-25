@@ -156,11 +156,7 @@ class TracFormProcessor(object):
             return ''
 
     def env_user(self):
-        who = str(self.formatter.req.session.sid)
-        if not self.macro.has_user(who):
-            return 'anonymous'
-        else:
-            return who
+        return self.req.authname
 
     def env_now(self):
         return time.strftime(time.localtime(time.time()))
