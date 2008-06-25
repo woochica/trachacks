@@ -23,9 +23,7 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
             args.pop('__FORM_TOKEN', None)  # Ignore.
             if context is None:
                 raise HTTPBadRequest('__context__ is required')
-            who = str(req.session.sid)
-            if not self.has_user(who):
-                who = 'anonymous'
+            who = req.authname
             result = []
             for name, value in args.iteritems():
                 name = urllib.quote(str(name))
