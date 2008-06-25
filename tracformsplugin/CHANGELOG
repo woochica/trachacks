@@ -9,3 +9,6 @@ tracforms-0.1.1:
 tracforms-0.1: 
 * Original release
 
+COMMITTED in tracforms-0.2:
+* Fixed #3262 : Added option drop-down lists.
+
