@@ -102,6 +102,7 @@ class TracFormProcessor(object):
         while self.updated:
             self.updated = False
             text = tfRE.sub(self.process, text)
+        setattr(formatter.req, type(self).__name__, None)
 
         return ''.join(self.build_form(text))
 
@@ -156,11 +157,7 @@ class TracFormProcessor(object):
             return ''
 
     def env_user(self):
-        who = str(self.formatter.req.session.sid)
-        if not self.macro.has_user(who):
-            return 'anonymous'
-        else:
-            return who
+        return self.req.authname
 
     def env_now(self):
         return time.strftime(time.localtime(time.time()))
@@ -226,6 +223,17 @@ class TracFormProcessor(object):
     def wikiop_value(self, field):
         return 'VALUE=' + field
 
+    def get_field(self, name, default=None, make_single=True):
+        current = self.state.get(name, default)
+        if make_single and isinstance(current, (tuple, list)):
+            if len(current) == 0:
+                current = default
+            elif len(current) == 1:
+                current = current[0]
+            else:
+                return 'ERROR: field %r has too many values' % str(field)
+        return current
+
     def op_input(self, field):
         current = self.state.get(field)
         if isinstance(current, (tuple, list)):
@@ -239,14 +247,10 @@ class TracFormProcessor(object):
                 (current is not None and (" value=%r" % str(current)) or '') +
                 '>')
 
-    def op_checkbox(self, field):
-        field, value = (field.split('//', 1) + [None])[:2]
-        current = self.state.get(field)
+    def op_checkbox(self, field, value=None):
+        current = self.get_field(field)
         if value is not None:
-            if isinstance(current, (list, tuple)):
-                checked = value in current
-            else:
-                checked = value == current
+            checked = value == current
         else:
             checked = bool(current)
         return ("<INPUT type='checkbox' name='%s'" % field +
@@ -254,12 +258,12 @@ class TracFormProcessor(object):
                 (checked and ' checked' or '') +
                 '>')
 
-    def op_radio(self, field, *values):
-        current = self.state.get(field)
-        for value in values:
-            return ("<INPUT type='radio' name='%s'" % field +
-                    (current == value and ' selected' or '') +
-                    '>')
+    def op_radio(self, field, value):
+        current = self.get_field(field)
+        return ("<INPUT type='radio' name='%s'" % field +
+                " value='%s'" % value +
+                (current == value and ' checked' or '') +
+                '>')
 
     def op_context(self):
         return str(self.context)
