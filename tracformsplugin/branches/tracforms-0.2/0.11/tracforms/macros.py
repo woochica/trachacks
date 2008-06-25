@@ -10,6 +10,10 @@ tfRE = re.compile('\['
     'tf(?:\.([a-zA-Z_]+?))?'
     '(?::([^\]]*))?'
     '\]')
+kwtrans = {
+    'class'     : '_class',
+    'id'        : '_id',
+    }
 
 class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
     """
@@ -31,6 +35,9 @@ class TracFormProcessor(object):
     track_fields = True
     submit_label = 'Update Form'
     submit_name = None
+    form_class = None
+    form_cssid = None
+    form_name = None
 
     def __init__(self, macro, formatter, name, args):
         self.macro = macro
@@ -59,7 +66,8 @@ class TracFormProcessor(object):
                 line = line.strip()[1:]
                 if line[:1] == '!':
                     # It's a command, parse the arguments...
-                    args = list(self.getargs(line[1:]))
+                    kw = {}
+                    args = list(self.getargs(line[1:], kw))
                     if len(args):
                         cmd = args.pop(0)
                         fn = getattr(self, 'cmd_' + cmd.lower(), None)
@@ -68,7 +76,7 @@ class TracFormProcessor(object):
                                 'ERROR: No TracForm command "%s"' % cmd)
                         else:
                             try:
-                                fn(*args)
+                                fn(*args, **kw)
                             except Exception, e:
                                 errors.append(traceback.format_exc())
             else:
@@ -108,8 +116,21 @@ class TracFormProcessor(object):
 
     def build_form(self, text):
         if not self.subform:
+            form_class = self.form_class
+            form_cssid = self.form_cssid or self.subcontext
+            form_name = self.form_name or self.subcontext
             dest = self.formatter.req.href('/formdata/update')
-            yield '<FORM method="POST" action=%r>' % str(dest)
+            yield ('<FORM method="POST" action=%r' % str(dest) + 
+                    (form_cssid is not None 
+                        and ' id="%s"' % form_cssid
+                        or '') +
+                    (form_name is not None 
+                        and ' name="%s"' % form_name
+                        or '') +
+                    (form_class is not None 
+                        and ' class="%s"' % form_class
+                        or '') +
+                    '>')
             yield text
             if self.needs_submit:
                 yield '<INPUT type="submit"'
@@ -138,10 +159,15 @@ class TracFormProcessor(object):
         else:
             yield text
 
-    def getargs(self, argstr):
+    def getargs(self, argstr, kw=None):
+        if kw is None:
+            kw = {}
         for arg in argRE.findall(argstrRE.sub(self.argsub, argstr) or ''):
             if arg[:1] in '"\'':
-                yield arg[1:-1]
+                arg = arg[1:-1]
+            if arg[:1] == '-':
+                name, value = (arg[1:].split('=', 1) + [True])[:2]
+                kw[kwtrans.get(name, name)] = value
             else:
                 yield arg
 
@@ -177,6 +203,15 @@ class TracFormProcessor(object):
         else:
             self.subcontext = str(context)
 
+    def cmd_class(self, value):
+        self.form_class = value
+
+    def cmd_id(self, value):
+        self.form_cssid = value
+
+    def cmd_name(self, value):
+        self.form_name = value
+
     def cmd_default(self, default):
         self.default_op = default
 
@@ -204,7 +239,8 @@ class TracFormProcessor(object):
         self.updated = True
         op, argstr = m.groups()
         op = op or self.default_op
-        args = tuple(self.getargs(argstr))
+        kw = {}
+        args = tuple(self.getargs(argstr, kw))
         fn = getattr(self, 'op_' + op.lower(), None)
         if fn is None:
             return 'ERROR: No TracForm operation "%s"' % str(op)
@@ -213,7 +249,7 @@ class TracFormProcessor(object):
                 if op[:5] == 'wikiop_':
                     return self.wiki(str(fn(*args)))
                 else:
-                    return str(fn(*args))
+                    return str(fn(*args, **kw))
             except Exception, e:
                 return '<PRE>' + traceback.format_exc() + '</PRE>'
 
@@ -234,41 +270,45 @@ class TracFormProcessor(object):
                 return 'ERROR: field %r has too many values' % str(field)
         return current
 
-    def op_input(self, field):
-        current = self.state.get(field)
-        if isinstance(current, (tuple, list)):
-            if len(current) == 0:
-                current = None
-            elif len(current) == 1:
-                current = current[0]
-            else:
-                return 'ERROR: field %r has too many values' % str(field)
+    def op_input(self, field, _id=None, _class=None):
+        current = self.get_field(field)
         return ("<INPUT name='%s'" % field +
+                (_id is not None and ' id="%s"' % _id or '') +
+                (_class is not None and ' class="%s"' % _class or '') +
                 (current is not None and (" value=%r" % str(current)) or '') +
                 '>')
 
-    def op_checkbox(self, field, value=None):
+    def op_checkbox(self, field, value=None, _id=None, _class=None):
         current = self.get_field(field)
         if value is not None:
             checked = value == current
         else:
             checked = bool(current)
         return ("<INPUT type='checkbox' name='%s'" % field +
+                (_id is not None and ' id="%s"' % _id or '') +
+                (_class is not None and ' class="%s"' % _class or '') +
                 (value and (' value="' + value + '"') or '') +
                 (checked and ' checked' or '') +
                 '>')
 
-    def op_radio(self, field, value):
+    def op_radio(self, field, value, _id=None, _class=None):
         current = self.get_field(field)
         return ("<INPUT type='radio' name='%s'" % field +
+                (_id is not None and ' id="%s"' % _id or '') +
+                (_class is not None and ' class="%s"' % _class or '') +
                 " value='%s'" % value +
                 (current == value and ' checked' or '') +
                 '>')
 
-    def op_select(self, field, *values):
+    def op_select(self, field, *values, **kw):
+        _id = kw.pop('_id', None)
+        _class = kw.pop('_class', None)
         current = self.get_field(field)
         result = []
-        result.append("<SELECT name='%s'>" % field)
+        result.append("<SELECT name='%s'" % field +
+                (_id is not None and ' id="%s"' % _id or '') +
+                (_class is not None and ' class="%s"' % _class or '') +
+                '>')
         for value in values:
             value, label = (value.split('//', 1) + [value])[:2]
             result += ("<OPTION value='%s'" % value.strip() +
