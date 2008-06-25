@@ -1,0 +1,11 @@
+tracforms-0.1.2: 
+* Fixed #3259 : Problems with multiple forms on the same page.
+* Fixed #3258 : Radio wasn't working.
+* Fixed #3240 : User wasn't being recorded properly. 
+
+tracforms-0.1.1: 
+* Fixed #3215 : Assuming AccountManagerPlugin was installed.
+
+tracforms-0.1: 
+* Original release
+
