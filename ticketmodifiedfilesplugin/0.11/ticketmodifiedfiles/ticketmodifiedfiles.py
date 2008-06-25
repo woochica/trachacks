@@ -134,7 +134,7 @@ class TicketModifiedFilesPlugin(Component):
         filestatus = {}
         #Get the last status of each file
         for file in files:
-            cursor.execute("SELECT change_type FROM node_change WHERE path='" + file + "' ORDER BY CAST(rev as integer) DESC LIMIT 1")
+            cursor.execute("SELECT change_type FROM node_change WHERE path='" + file + "' ORDER BY 1*rev DESC LIMIT 1")
             for change_type, in cursor:
                 filestatus[file] = change_type
         
