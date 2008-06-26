@@ -261,7 +261,7 @@ class TestCase :
         return self.description
 
     def getComponent(self):
-        return self.component.trim()
+        return self.component.strip()
     
     def getExpectedResult(self):
         return self.expectedresult
