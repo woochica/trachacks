@@ -467,6 +467,26 @@ class TracFormProcessor(object):
     def op_sum(self, *values):
         return str(sum(float(value) for value in values))
 
+    def op_sumif(self, check, *values):
+        return self.op_sum(*self.filter(check, values))
+
+    def op_count(self, *values):
+        return str(len(values))
+
+    def op_countif(self, check, *values):
+        return self.op_count(*self.filter(check, values))
+
+    def op_filter(self, check, *values):
+        return ' '.join(str(item) for item in self.filter(check, values))
+
+    def filter(self, check, values):
+        if check[:1] == '/' and check[-1:] == '/':
+            return re.findall(check[1: -1], values)
+        elif '*' in check or '?' in check or '[' in check:
+            return fnmatch.filter(values, check)
+        else:
+            return [i for i in n if check == i]
+
     def op_sumprod(self, *values, **kw):
         stride = int(kw.pop('stride', 2))
         total = 0
@@ -489,10 +509,10 @@ class TracFormProcessor(object):
 
     def op_zip(self, *names):
         zipped = zip(*(self.argsub(name, aslist=True) for name in names))
-        return ' '.join(' '.join(str(item) for item in level) 
+        return ' '.join(' '.join(str(item) for item in level)
                         for level in zipped)
 
-    def op_env(self, pattern):
+    def op_env_debug(self, pattern):
         result = []
         for key in fnmatch.filter(self.get_sorted_env(), pattern):
             result.append('%s = %s<BR>' % (key, self.env[key]))
