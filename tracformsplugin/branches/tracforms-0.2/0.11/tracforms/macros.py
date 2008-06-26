@@ -167,7 +167,7 @@ class TracFormProcessor(object):
                 arg = arg[1:-1]
             if arg[:1] == '-':
                 name, value = (arg[1:].split('=', 1) + [True])[:2]
-                kw[kwtrans.get(name, name)] = value
+                kw[str(kwtrans.get(name, name))] = value
             else:
                 yield arg
 
@@ -316,6 +316,19 @@ class TracFormProcessor(object):
                     '>' + label.strip() + '</OPTION>')
         result.append("</SELECT>")
         return ''.join(result)
+
+    def op_textarea(self, field, content='',
+                    cols=None, rows=None,
+                    _id=None, _class=None):
+        current = self.get_field(field)
+        if current is not None:
+            content = current
+        return ("<TEXTAREA name='%s'" % field +
+                (cols is not None and ' cols="%s"' % cols or '') +
+                (rows is not None and ' rows="%s"' % rows or '') +
+                (_id is not None and ' id="%s"' % _id or '') +
+                (_class is not None and ' class="%s"' % _class or '') +
+                '>' + content + '</TEXTAREA>')
 
     def op_context(self):
         return str(self.context)
