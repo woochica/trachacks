@@ -1,14 +1,14 @@
 
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
-import sys, StringIO, re, traceback, cgi, time
+import sys, StringIO, re, traceback, cgi, time, fnmatch
 from iface import TracFormDBUser, TracPasswordStoreUser
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
 argstrRE = re.compile('%(.*?)%')
 tfRE = re.compile('\['
     'tf(?:\.([a-zA-Z_]+?))?'
-    '(?::([^\]]*))?'
+    '(?::([^\[\]]*?))?'
     '\]')
 kwtrans = {
     'class'     : '_class',
@@ -38,6 +38,7 @@ class TracFormProcessor(object):
     form_class = None
     form_cssid = None
     form_name = None
+    sorted_env = None
 
     def __init__(self, macro, formatter, name, args):
         self.macro = macro
@@ -55,6 +56,9 @@ class TracFormProcessor(object):
         if not self.subform:
             setattr(formatter.req, type(self).__name__, True)
         self.env = dict(getattr(formatter.req, 'tracform_env', ()))
+
+        # Setup preliminary context
+        self.page = formatter.req.path_info
 
         # Remove leading comments and process commands.
         textlines = []
@@ -86,13 +90,16 @@ class TracFormProcessor(object):
                 textlines.extend(srciter)
 
         # Determine our destination context and load the current state.
-        if self.page is None:
-            self.page = formatter.req.path_info
         self.context = self.page
         if self.subcontext:
             self.context += ':' + self.subcontext
         state = self.macro.get_tracform_state(self.context)
-        self.state = cgi.parse_qs(state or '')
+        #self.state = cgi.parse_qs(state or '')
+        for name, value in cgi.parse_qs(state or '').iteritems():
+            self.env[self.context + ':' + name] = value
+            if self.subcontext is not None:
+                self.env[self.subcontext + ':' + name] = value
+        self.sorted_env = None
         (self.form_id, self.form_context,
             self.form_updater, self.form_updated_on,
             self.form_keep_history, self.form_track_fields) = \
@@ -171,16 +178,79 @@ class TracFormProcessor(object):
             else:
                 yield arg
 
-    def argsub(self, match):
-        name = match.group(1)
-        value = self.env.get(name)
-        if value is not None:
-            return value
-        fn = getattr(self, 'env_' + name.lower(), None)
-        if fn is not None:
-            return fn()
+    def argsub(self, match, NOT_FOUND=KeyError, aslist=False):
+        if isinstance(match, basestring):
+            name = match
         else:
-            return ''
+            name = match.group(1)
+        if name[:1] in '"\'':
+            quote = True
+            name = name[1:-1]
+        else:
+            quote = False
+        if '*' in name or '?' in name or '[' in name:
+            value = []
+            keys = self.get_sorted_env()
+            for key in fnmatch.filter(keys, self.context + ':' + name):
+                obj = self.env[key]
+                if isinstance(obj, (tuple, list)):
+                    value.extend(obj)
+                else:
+                    value.append(obj)
+            if not value and self.page:
+                for key in fnmatch.filter(keys, self.page + ':' + name):
+                    obj = self.env[key]
+                    if isinstance(obj, (tuple, list)):
+                        value.extend(obj)
+                    else:
+                        value.append(obj)
+            if not value and self.subcontext:
+                for key in fnmatch.filter(keys, self.subcontext + ':' + name):
+                    obj = self.env[key]
+                    if isinstance(obj, (tuple, list)):
+                        value.extend(obj)
+                    else:
+                        value.append(obj)
+            if not value:
+                for key in fnmatch.filter(keys, name):
+                    obj = self.env[key]
+                    if isinstance(obj, (tuple, list)):
+                        value.extend(obj)
+                    else:
+                        value.append(obj)
+        else:
+            value = self.env.get(self.context + ':' + name, NOT_FOUND)
+            if self.page is not None and value is NOT_FOUND:
+                value = self.env.get(self.page + ':' + name, NOT_FOUND)
+            if self.subcontext is not None and value is NOT_FOUND:
+                value = self.env.get(self.subcontext + ':' + name, NOT_FOUND)
+            if value is NOT_FOUND:
+                value = self.env.get(name, NOT_FOUND)
+            if value is NOT_FOUND:
+                fn = getattr(self, 'env:' + name.lower(), None)
+                if fn is not None:
+                    value = fn()
+                else:
+                    value = ''
+        if aslist:
+            if isinstance(value, (list, tuple)):
+                return tuple(value)
+            else:
+                return (value,)
+        else:
+            if isinstance(value, (list, tuple)):
+                return ' '.join(
+                    quote and repr(str(item)) or str(item) for item in value)
+            else:
+                value = str(value)
+                if quote:
+                    value = repr(value)
+                return value
+
+    def get_sorted_env(self):
+        if self.sorted_env is None:
+            self.sorted_env = sorted(self.env)
+        return self.sorted_env
 
     def env_user(self):
         return self.req.authname
@@ -202,6 +272,16 @@ class TracFormProcessor(object):
             self.subcontext = None
         else:
             self.subcontext = str(context)
+
+    def cmd_load(self, subcontext, page=None):
+        if page is None:
+            page = self.page
+        context = page + ':' + subcontext
+        state = self.macro.get_tracform_state(context)
+        for name, value in cgi.parse_qs(state or '').iteritems():
+            self.env[context + ':' + name] = value
+            if self.subcontext is not None:
+                self.env[self.subcontext + ':' + name] = value
 
     def cmd_class(self, value):
         self.form_class = value
@@ -229,6 +309,26 @@ class TracFormProcessor(object):
 
     def cmd_setenv(self, name, value):
         self.env[name] = value
+        self.sorted_env = None
+
+    def cmd_setlist(self, name, *values):
+        self.env[name] = tuple(values)
+        self.sorted_env = None
+
+    def cmd_operation(_self, _name, _op, *_args, **_kw):
+        if _op in ('is', 'as'):
+            _op, _args = _args[0], _args[1:]
+        op = getattr(_self, 'op_' + _op, None)
+        if op is None:
+            return 'ERROR: No operation named %r' % str(_name)
+        def partial(*_newargs, **_newkw):
+            if _kw or _newkw:
+                kw = dict(_kw)
+                kw.update(_newkw)
+            else:
+                kw = {}
+            return op(*(_newargs + _args), **kw)
+        _self.env['op:' + _name] = partial
 
     def wiki(self, text):
         out = StringIO.StringIO()
@@ -241,7 +341,9 @@ class TracFormProcessor(object):
         op = op or self.default_op
         kw = {}
         args = tuple(self.getargs(argstr, kw))
-        fn = getattr(self, 'op_' + op.lower(), None)
+        fn = self.env.get('op:' + op.lower())
+        if fn is None:
+            fn = getattr(self, 'op_' + op.lower(), None)
         if fn is None:
             return 'ERROR: No TracForm operation "%s"' % str(op)
         else:
@@ -260,7 +362,7 @@ class TracFormProcessor(object):
         return 'VALUE=' + field
 
     def get_field(self, name, default=None, make_single=True):
-        current = self.state.get(name, default)
+        current = self.env.get(self.context + ':' + name, default)
         if make_single and isinstance(current, (tuple, list)):
             if len(current) == 0:
                 current = default
@@ -361,4 +463,38 @@ class TracFormProcessor(object):
 
     def op_form_updated_on(self, format='%m/%d/%Y %H:%M:%S'):
         return time.strftime(format, time.localtime(self.form_updated_on))
+
+    def op_sum(self, *values):
+        return str(sum(float(value) for value in values))
+
+    def op_sumprod(self, *values, **kw):
+        stride = int(kw.pop('stride', 2))
+        total = 0
+        irange = range(stride)
+        for index in xrange(0, len(values), stride):
+            row = 1.0
+            for inner in irange:
+                row *= float(values[inner + index])
+            total += row
+        return str(total)
+
+    def op_int(self, *values):
+        return ' '.join(str(int(float(value))) for value in values)
+
+    def op_value(self, *names):
+        return ' '.join(self.argsub(name) for name in names)
+
+    def op_quote(self, *names):
+        return ' '.join(repr(self.argsub(name)) for name in names)
+
+    def op_zip(self, *names):
+        zipped = zip(*(self.argsub(name, aslist=True) for name in names))
+        return ' '.join(' '.join(str(item) for item in level) 
+                        for level in zipped)
+
+    def op_env(self, pattern):
+        result = []
+        for key in fnmatch.filter(self.get_sorted_env(), pattern):
+            result.append('%s = %s<BR>' % (key, self.env[key]))
+        return ''.join(result)
 
