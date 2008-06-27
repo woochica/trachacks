@@ -60,6 +60,15 @@ os.environ['TRAC_ENV_PARENT_DIR'] = "/path/to/project/parent/dir"
 
 使用这个方法, 通过使用带不同`ScriptAliases`的`.fcgi`脚本, 复制和相应地重命名`trac.fcgi`, 以及将上面的代码加进来, 以创建每个类似的脚本, 从而可支持不同的项目.
 
+参见 [https://coderanger.net/~coderanger/httpd/fcgi_example.conf fcgid配置例子], 其使用了!ScriptAlias指令如下(在trac.fcgi中使用/后缀):
+{{{
+ScriptAlias / /srv/tracsite/cgi-bin/trac.fcgi/
+}}}
+
+== 简单Cherokee配置 ==
+
+暂无.
+
 == 简单的Lighttpd配置 ==
 
 FastCGI前端主要是为了使用其他Web服务器(如:lighttpd).
@@ -105,11 +114,7 @@ fastcgi.server = ("/first" =>
                 )
 }}}
 
-注意, 域值是不同的. 如果你更喜欢在`.fcgi`脚本中设置环境变量, 那么复制或重命名`trac.fcgi`.
-
-比如说, 将其变为`first.fcgi` 和 `second.fcgi`, 并且在上述设置中引用他们.
-
-注:上述情况会产生不同的进程, 即使二者都运行自同样的`trac.fcgi`脚本.
+注意, 域值是不同的. 如果你更喜欢在`.fcgi`脚本中设置环境变量, 那么复制或重命名`trac.fcgi`. 比如说, 将其变为`first.fcgi` 和 `second.fcgi`, 并且在上述设置中引用他们. 注:上述情况会产生不同的进程, 即使二者都运行自同样的`trac.fcgi`脚本.
 {{{
 #!html
 <p style="background: #fdc; border: 2px solid #d00; font-style: italic; padding: 0 .5em; margin: 1em 0;">
@@ -185,9 +190,7 @@ fastcgi.server = ("/trac" =>
 }
 }}}
 
-通过为每个项目创建一个别名, 并把对fastcgi.server的声明封装在条件配置块中的方法, 可以轻松地应用于多个项目.
-
-还有一个方法来处理多项目, 它是使用TRAC_ENV_PARENT_DIR和全局验证而不是TRAC_ENV, 请看下面的一个例子:
+通过为每个项目创建一个别名, 并把对fastcgi.server的声明封装在条件配置块中的方法, 可以轻松地应用于多个项目. 还有一个方法来处理多项目, 它是使用TRAC_ENV_PARENT_DIR和全局验证而不是TRAC_ENV, 请看下面的一个例子:
 {{{
 #  用于处理多个项目
   alias.url       = ( "/trac/" => "/path/to/trac/htdocs/" )

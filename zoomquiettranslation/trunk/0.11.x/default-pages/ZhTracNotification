@@ -18,18 +18,22 @@ Trac支持通过邮件来提醒传票的变化.
 下列时trac.ini中的''[notification]''段的可用选项:
  * '''smtp_enabled''': 启用邮件提醒.
  * '''smtp_server''': 用于提醒消息的SMTP服务器.
+ * '''smtp_port''': (''自0.9后'') SMTP服务器的端口.
  * '''smtp_user''': (自0.9后)验证SMTP帐户的用户名.
  * '''smtp_password''': (自0.9后)验证SMTP帐户的密码.
  * '''smtp_from''': 在提醒邮件中"发件人"的邮件地址.
+ * '''smtp_from_name''': 发送人名称, 用于提醒邮件''Sender''标头.
  * '''smtp_replyto''': 在提醒邮件中"回复至"的邮件地址.
  * '''smtp_default_domain''': (自0.10后)将指定的域附加到没有包含域的地址中. 完整的地址不会更改. 默认域要附加到所有没有在用户设置中找到邮件地址的用户名中.
  * '''smtp_always_cc''': 始终发送提醒的邮件地址列表. 通常用于把传票的变化发送到某个特定的邮件列表中.
  * '''smtp_always_bcc''': (自0.10后)始终发送提醒的邮件地址列表, 但提醒邮件的其他收件人看不见地址.
+ * '''smtp_subject_prefix''': (''自0.10.1后'') 插入到邮件主题前的文本. 默认设为"!__default!__".
  * '''always_notify_reporter''': 始终将提醒发送到报告人域中的所有地址.
  * '''always_notify_owner''': (自0.9后)始终将提醒发送给承担者域中的地址.
  * '''always_notify_updater''': (自0.10后)始终向传票的更新者发送提醒.
  * '''use_public_cc''': (自0.10后)所有的收件人都能看到收件人(所有者, 报告人)和抄送列表中的地址(默认是''密件抄送:'' - 隐藏的副本).
  * '''use_short_addr''': (自0.10后)启用发送提醒到不包含域的地址, 例如不以@<domain.com>作为结尾的域. 该选项对内网很有用, SMTP服务器可以处理本地的地址并把用户名或注册映射到一个本地的邮箱. 请见`smtp_default_domain`. 不要将此选项用于一个公共的SMTP服务器.
+ * '''use_tls''': (''自0.10后'') 切换使用[http://en.wikipedia.org/wiki/Transport_Layer_Security TLS], 比如GMail, 发送提醒SMTP服务器 .
  * '''mime_encoding''': (自0.10后)邮件提醒一直以7位模式发送的. 该选项允许选择MIME编码方案.支持的值有:  
    * `base64`: 默认值, 可用于任何种类的内容. 可能对和一些敏感的反垃圾邮件或反病毒引擎造成麻烦.
    * `qp` or `quoted-printable`: 最适合欧洲语言(比base64更紧凑), 不推荐用于非ASCII文本(没有base64紧凑).
@@ -74,6 +78,25 @@ Ticket URL: <http://example.com/trac/ticket/42>
 My Project <http://myproj.example.com/>
 }}}
 
+== 使用 GMail 作为 SMTP 主机 ==
+
+使用如下配置片段
+{{{
+[notification]
+smtp_enabled = true
+use_tls = true
+mime_encoding = base64
+smtp_server = smtp.gmail.com
+smtp_port = 587
+smtp_user = user
+smtp_password = password
+}}}
+
+其中, ''user'' 和 ''password'' 对应已有的GMail帐户, ''即'' 你登录[http://gmail.com]的帐户
+
+或者, 你可以使用 `smtp_port = 25`.[[br]]
+你不应使用 `smtp_port = 465`. 这是不起作用的, 你的传票提交可能会死锁. 端口465被保留用于SMTPS协议, 当前不被Trac支持. 详情参见 [comment:ticket:7107:2 #7107].
+ 
 == 过滤自己做的修改的提醒 ==
 在Gmail中, 使用过滤器:
 

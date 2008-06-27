@@ -36,16 +36,15 @@ accept = new,accepted -> accepted
 accept.permissions = TICKET_MODIFY
 accept.operations = set_owner_to_self
 }}}
-例子中的第一行定义了`accept`动作, 及该动作有效时的状态(`new`和`accepted`), 及当动作发生(`accepted`)后的新状态.
-`accept.permissions`行指定了使用该动作的用户所需权限.
-`accept.operations`行动作发生后, 对传票做的操作, 及状态的变化. 在这种情况下, 当用户点击`accept`, 传票承担者字段将更新为登录的用户.  可以用逗号分割列出多个操作.
+例子中的第一行定义了`accept`动作, 及该动作有效时的状态(`new`和`accepted`), 及当动作发生(`accepted`)后的新状态. `accept.permissions`行指定了使用该动作的用户所需权限.
+`accept.operations`行指定动作发生后, 对传票做的操作, 及状态的变化. 在这种情况下, 当用户点击`accept`, 传票承担者字段将更新为登录的用户.  可以用逗号分割列出多个操作.
 
 有效操作为:
  - del_owner -- 清楚承担者字段.
  - set_owner -- 设置承担者为选择或输入的承担者.
    - ''actionname''`.set_owner` 可选为逗号分割的列表或单个值.
  - set_owner_to_self -- 设置承担者为登录的用户.
- - del_resolution -- 清楚决议字段
+ - del_resolution -- 删除决议字段
  - set_resolution -- 设置决议为选择的值.
    - ''actionname''`.set_resolution` 可选为逗号分割的列表或单个值.
 {{{
@@ -58,7 +57,7 @@ resolve_new.permissions = TICKET_MODIFY
 resolve_new.set_resolution = invalid,wontfix
 }}}
  - leave_status -- 显示 "保持 为 <当前状态>" 并不对传票做修改.
-'''注意:''' 制定冲突的操作 (例如`set_owner` 和 `del_owner`) 将有不可预计的结果.
+'''注意:''' 指定冲突的操作 (例如`set_owner` 和 `del_owner`) 将有不可预计的结果.
 
 {{{
 resolve_accepted = accepted -> closed
@@ -90,6 +89,41 @@ sudo ./showworkflow /srv/trac/PlannerSuite/conf/trac.ini
 然后, 打开脚本创建的结果`trac.pdf`文件(它将位于`trac.ini`文件相同的目录中).
 
 当改变了工作流后, 你需要重启apache以使其生效. 这非常重要, 因为当你运行你的脚本时修改仍然显示, 但是所有旧工作流仍将保持到服务器重启.
+
+
+== 例子: 增加可选的测试工作流 ==
+
+通过在trac.ini的[ticket-workflow]节增加下列内容, 你将获得可选的测试工作流. 当传票处于new, accepted或needs_work状态时, 你可以选择提交测试. 当它处在testing状态是, 用户将有reject选项, 并将其发返为needs_work状态, 或者, 通过测试并将其关闭. 如果他们接受, 此传票将自动标记为closed, 解决设为fixed. 由于保留了原所有工作流, 传票可以跳过整个这段.
+
+{{{
+testing = new,accepted,needs_work -> testing
+testing.name = Submit to reporter for testing
+testing.permissions = TICKET_MODIFY
+
+reject = testing -> needs_work
+reject.name = Failed testing, return to developer
+
+pass = testing -> closed
+pass.name = Passes Testing
+pass.operations = set_resolution
+pass.set_resolution = fixed
+}}}
+
+== 例子: 限制新传票的可选解决选项 ==
+
+上述resolve_new操作允许你设置新传票的可选解决选项. 通过修改现有解决动作, 并从`->`前删除new状态, 我们将得到两个解决动作. 一个是新传票的有限制的解决, 另一个是一旦传票被接受后的通常那个.
+
+{{{
+resolve_new = new -> closed
+resolve_new.name = resolve
+resolve_new.operations = set_resolution
+resolve_new.permissions = TICKET_MODIFY
+resolve_new.set_resolution = invalid,wontfix,duplicate
+
+resolve = assigned,accepted,reopened -> closed
+resolve.operations = set_resolution
+resolve.permissions = TICKET_MODIFY
+}}}
 
 == 传票工作流的高级定制 ==
 

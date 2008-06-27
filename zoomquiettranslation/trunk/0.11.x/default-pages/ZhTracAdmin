@@ -2,7 +2,7 @@
 [[ZhTracGuideToc]]
 跟Trac一起发布的, 有一个强大的命令行配置工具. 该工具可以用来配置和定制您的Trac安装, 从而更好的适应您的需求.
 
-其中一些操作可通过[http://trac.edgewall.org/wiki/WebAdmin WebAdmin](可选的插件, 是单独发布的.)的Web界面实现.
+其中一些操作可通过[http://trac.edgewall.org/wiki/WebAdmin WebAdmin]([http://trac.edgewall.org/wiki/WebAdmin WebAdmin] 插件的升级版, 现在(从0.11起)集成在Trac中)Web界面实现.
 
 == 用法 ==
 
@@ -11,7 +11,7 @@
 trac-admin help
 }}}
 
-你需要将Trac环境路径作为第一个参数(除非是运行`help`, `about` 或`version`等子命令), 例如:
+你需要将[ZhTracEnvironment Trac环境]路径作为第一个参数(除非是运行`help`, `about` 或`version`等子命令), 例如:
 {{{
 trac-admin /path/to/projenv wiki list
 }}}
@@ -35,6 +35,11 @@ trac-admin /path/to/projenv wiki list
 == 命令完整参考 ==
 
 [[TracAdminHelp()]]
+
+=== 题注 ===
+
+`initenv`也支持附加的`--inherit`选项, 可用于在创建环境时指定`[inherit] file` 选项, 以仅仅将''没有''在全局配置文件中指定的选项写入新创建环境的conf/trac.ini文件中.
+参见 [ZhTracIni#GlobalConfiguration 全局选项].
 
 ----
 原文版本: TracAdmin[[BR]]

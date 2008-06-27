@@ -1,16 +1,19 @@
 = Trac配置文件 =
-[[ZhTracGuideToc]]
-Trac的配置是通过编辑'''`trac.ini`'''配置文件实现的, 其位于`<projectenv>/conf/trac.ini`. 对配置文件的修改通常立即起作用, 然而对`[components]`和`[logging]`段的修改将要求重启web服务器. 在创建全局配置文件(当前不存在)后, 你可能被要求重启web服务器.
 
+[[ZhTracGuideToc]]
 
 == 全局选项 ==
-在上一版中, 全局选项默认位于`$prefix/share/trac/conf/trac.ini`, 或根据发布版本的不同, 有时位于/etc/trac/trac.ini. 如果你正在升级, 你可能想指定这个要继承的文件.
+在0.11版之前, 全局选项默认位于`$prefix/share/trac/conf/trac.ini`, 或根据发布版本的不同, 有时位于/etc/trac/trac.ini. 如果你正在升级, 你可能想指定这个要继承的文件.
 
 全局选项将与环境特定的选项进行合并, 其中局部选项覆盖全局选项. 选项文件用下面指定:
 {{{
 [inherit]
 file = /usr/share/trac/conf/trac.ini
 }}}
+
+注意, 当创建一个新项目时, 通过增加选项`--inherit=/path/to/global/options` 到 [TracAdmin trac-admin] 的 `initenv`命令中, 你也可以指定全局选项文件.
+如果你不想这样做, 而是想在你的新环境中, 使用全局选项文件,
+你将需要翻阅生成的整个conf/trac.ini文件, 删除会覆盖全局选项的条目.
 
 == 参考 ==
 
@@ -70,10 +73,10 @@ CSS类可以是: new (黄色), open (无色) 或 closed (绿色). 新样式可�
 == [svn:externals] == #svn:externals-section
 ''(自从 0.11)''
 
-TracBrowser(Subversion)天生就可以解析目录的`svn:externals`属性.
+[ZhTracBrowser Trac游览](Subversion)天生就可以解析目录的`svn:externals`属性.
 然而, 如果那些外部目录''不''使用`http:`协议, 或者如果链接到一个不同的仓库浏览器(比如另一个Trac或者[http://www.viewvc.org/ ViewVC]), 那么Trac需要能映射到此URL的外部前缀 .
 
-此映射在TracIni的`[svn:externals]`段完成.
+此映射在[ZhTracIni Trac配置]的`[svn:externals]`段完成.
 
 例如:
 {{{
@@ -83,6 +86,7 @@ svn://anotherserver.com/tools_repository  http://ourserver/trac/support/browser/
 }}}
 上例中, `svn://anotherserver.com/tools_repository/tags/1.1/tools`外部链接将映射到`http://ourserver/trac/support/browser/tags/1.1/tools?rev=` (并且`修订号` 将设置为此外部链接对应的修订号(如果指定了修订号), 更多详情参见[http://svnbook.red-bean.com/en/1.4/svn.advanced.externals.html Subversion Book on externals]).
 
+注意, 上述节中使用的关键字纯粹是用作占位符的, 因为URL本身不能用作关键字(由于配置文件解析器的各种限制). 
 
 ----
 原文版本: TracIni[[BR]]

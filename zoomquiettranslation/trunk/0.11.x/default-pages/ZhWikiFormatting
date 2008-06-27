@@ -216,8 +216,6 @@ Wiki也支持定义列表.
  * [wiki:TitleIndex Title Index]
  * [wiki:ISO9000]
 
-== Trac Links ==
-
 === Trac链接 ===
 
 Wiki页面可以直接链接到Trac系统的其他部分. 页面可以引用传票, 报表, 变更集, 里程碑, 源文件和其他使用下列符号的Wiki页面:
@@ -264,8 +262,10 @@ Wiki页面可以直接链接到Trac系统的其他部分. 页面可以引用传�
  * `[[Image(htdocs:picture.gif)]]` (引用项目的htdocs中的一个文件)
  * `[[Image(source:/trunk/trac/htdocs/trac_logo_mini.png)]]` (仓库中的一个文件)
 
+示例显示: [[Image(htdocs:../common/trac_logo_mini.png)]]
 
-关于`[[Image()]]`宏的更多信息参见TracWikiMacros.
+
+关于`[[Image()]]`宏的更多信息参见 [[ZhWikiMacros Wiki宏]].
 
 == Wiki宏 ==
 

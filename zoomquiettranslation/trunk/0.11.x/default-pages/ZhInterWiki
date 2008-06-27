@@ -43,7 +43,7 @@ MoinMoin http://moinmoin.wikiwikiweb.de/
 
 那么, 
  * `MoinMoin:InterWikiMap`将被解释为 MoinMoin:InterWikiMap , 该链接的''标题''则是"!InterWikiMap in !MoinMoin".
- * `Trac-ML:4346`将被解释为Trac-ML:4346 , 该链接的''标题''则是"Message 4346 in Trac Mailing List".
+ * `Trac-ML:4346`将被解释为 Trac-ML:4346 , 该链接的''标题''则是"Message 4346 in Trac Mailing List".
 ----
 原文版本: InterWiki[[BR]]
 相关信息: [ZhInterTrac 外部Trac],  [ZhInterMapTxt 链接前缀表][[BR]]

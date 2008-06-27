@@ -28,11 +28,11 @@
  * '''概要''' - 总结问题或传票的一个简短介绍.
  * '''描述''' - 传票的正文.一个好的描述应该是明确的, 清楚的, 扼要的.
 
-'''注意''': 0.9版本之前的Trac没有''类型''字段, 但却提供了''严重性''字段和''优先级''字段的不同默认值.该改变通过删掉一些''严重性''和''优先级''之间模糊的差别, 而简化了传票模型.
+'''注意''': 0.9版本之前的Trac没有''类型''字段, 但却提供了''严重性''字段和''优先级''字段的不同默认值.该改变通过删掉一些''严重性''和''优先级''之间模糊的差别, 而简化了传票模型. 然而, 如果你愿意, 旧模型仍然可用: 只需增加/删除''优先级'' 和''严重度''的默认值, 并通过[wiki:ZhTracAdmin trac-admin]删除所有可用值, 可选地隐藏''类型''字段.
 
 '''注意:''' [wiki:ZhTicketTypes 类型], [wiki:ZhTicketComponent 组件], 版本, 优先级和严重性字段都可以通过[wiki:ZhTracAdmin trac-admin]或者WebAdmin插件来管理.
 
-'''注意:''' 内置''优先级''值的描述参见[wiki:TicketTypes#Whyistheseverityfieldgone]
+'''注意:''' 内置''优先级''值的描述参见[wiki:ZhTicketTypes#Whyistheseverityfieldgone]
 
 == 更改和评论传票 ==
 
@@ -46,9 +46,7 @@
 
 '''注意''': 关于如何配置传票变化的邮件提醒 , 请参见[ZhTracNotification Trac提醒 ].
 
-=== 状态图 ===
-[[Image(http://trac.edgewall.org/attachment/wiki/TracTickets/Trac%20Ticket%20State%20Chart%2020060603DF.png?format=raw)]]
-
+'''注意:''' 关于状态转换(传票生命周期), 及如果定制工作流, 参见 [ZhTracWorkflow TracWorkflow].
 
 == 下拉字段的默认值 ==
 

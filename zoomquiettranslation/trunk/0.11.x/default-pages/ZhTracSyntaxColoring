@@ -7,7 +7,7 @@ Trac支持[wiki:ZhWikiFormatting Wiki格式]和[wiki:ZhTracBrowser Trac游览]�
 
  * [http://www.codento.com/people/mtr/genscript/ GNU Enscript] 
  * [http://silvercity.sourceforge.net/ SilverCity]
- * [http://pygments.pocoo.org/ Pygments] (but needs a plugin for 0.10, see [#AboutPygments below])
+ * [http://pygments.pocoo.org/ Pygments] (但是对于0.10, 需要安装插件, 参见 [#AboutPygments 下面])
 
 要激活语法高亮显示, 只需安装其中一个(或一个以上)的安装包. 不需要进行额外的配置, 但要更改颜色, 请看`trac/htdocs/css/code.css`.
 

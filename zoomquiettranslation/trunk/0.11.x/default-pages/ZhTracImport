@@ -43,7 +43,7 @@ bugzilla2trac - 从Bugzilla中导入一个bug数据库到Trac中.
 
 可通过使用[http://projects.edgewall.com/trac/browser/trunk/contrib/sourceforge2trac.py sourceforge2trac.py]脚本从Sourceforge2trac.py中导入传票数据. 该脚本可在Trac的contrib/目录中得到.
 
-== Mantis(一种Php语言实现的bugtracker 系统) ==
+== Mantis ==
 
 注意! mantis2trac脚本现在位于 http://trac-hacks.org/wiki/MantisImportScript . 你总是可以从 http://trac-hacks.org/changeset/latest/mantisimportscript?old_path=/&filename=mantisimportscript&format=zip 得到其最新版本. 
 
@@ -74,8 +74,6 @@ mantis2trac - 从Mantis中导入一个bug数据库到Trac中.
 
 在脚本中可以直接定义额外的配置选项.
 }}} 
-
-已更新的mantis2trac脚本参见 #5855.
 
 
 == 其他 ==

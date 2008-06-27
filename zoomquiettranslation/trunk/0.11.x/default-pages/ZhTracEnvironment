@@ -17,12 +17,13 @@ $ trac-admin /path/to/myproject initenv
 
 自0.9版本后, Trac支持[http://sqlite.org/ SQLite],  [http://www.postgresql.org/ PostgreSQL]和[http://mysql.com/ MySQL]作为数据库的后端. 默认使用SQLite, 这对大多数项目都是适用的. 数据库文件存储在环境目录中, 可轻松地与环境中的其余部分一起[wiki:ZhTracBackup 备份].
 
-=== Embedded SQLite Connection String ===
+=== 嵌入式 SQLite 连接字符串 ===
 一个连接到SQLite数据库的连接字符串是:
 {{{
 sqlite:db/trac.db
 }}}
 
+=== PostgreSQL 连接字符串 ===
 如果想使用PostgreSQL或MySQL, 你必须使用不同的连接字符串. 例如, 要连接到同一个机器上的一个名叫trac的PostgreSQL数据库, 用户名是`johndoe`, 密码`letmein`, 需要使用:
 {{{
 postgres://johndoe:letmein@localhost/trac
@@ -105,12 +106,16 @@ repository_dir = /path/to/your/repository/scope/within/repos
    * `trac.ini` - 主要配置文件.请见[ZhTracIni 配置文件]
  * `db`
    * `trac.db` - SQLite数据库(如果你在使用SQLite的话).
+ * `htdocs` - 包含web资源的目录, 可被Genshi模板引用. '''''(仅0.11)'''''
+ * `log` - 日志文件的缺省目录(如果启用日志, 并提供了此日志文件的相对路径).
  * `plugins` - 环境特定的[wiki:ZhTracPlugins 插件] (Python egg)
- * `templates` - 定制环境特定的模板.
+ * `templates` - 定制环境特定的模板. '''''(仅0.10)'''''
    * `site_css.cs` - 定制CSS规则.
    * `site_footer.cs` - 定制页脚.
    * `site_header.cs` - 定制页眉.
- * `wiki-macros` - 环境特定的[wiki:ZhWikiMacros Wiki 宏].
+ * `templates` - 定制Genshi环境特定模板. '''''(仅0.11)'''''
+   * `site.html` - 定制页头, 页脚和样式的方法, 见 TracInterfaceCustomization#SiteAppearance
+ * `wiki-macros` - 环境特定的[wiki:ZhWikiMacros Wiki 宏]. '''''(仅0.10)'''''
 
   '''注意: 不要将Trac环境目录与源代码仓库目录弄混.'''
 

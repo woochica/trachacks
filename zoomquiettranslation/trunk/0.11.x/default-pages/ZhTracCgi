@@ -32,21 +32,21 @@ ScriptAlias /trac /usr/share/trac/cgi-bin/trac.cgi
 </Location>
 }}}
 
- ''注意, `SetEnv`指令要求安装和启用`mod_env`模块.''
+ ''注意, `SetEnv`指令要求安装和启用`mod_env`模块. 否则, 你可以在trac.cgi中设置TRAC_ENV. 只需要增加如下代码到"try:" 和 "from trac.web ..."之间:''
 
 {{{
     import os
     os.environ['TRAC_ENV'] = "/path/to/projectenv"
 }}}
 
- '' Or for TRAC_ENV_PARENT_DIR: ''
+ '' 或者, 对于TRAC_ENV_PARENT_DIR: ''
 
 {{{
     import os
     os.environ['TRAC_ENV_PARENT_DIR'] = "/path/to/project/parent/dir"
 }}}
 
-This will make Trac available at `http://yourhost.example.org/trac`.
+这将使得`http://yourhost.example.org/trac`生效.
 
 如果你在使用[http://httpd.apache.org/docs/suexec.html Apache suEXEC], 请参见[http://trac.edgewall.org/wiki/ApacheSuexec].
 
@@ -92,6 +92,9 @@ htdocs_location = /trac-htdocs
 $ ln -s /usr/share/trac/htdocs /var/www/your_site.com/htdocs/trac-htdocs
 }}}
 
+注意, 要想获得此`htdocs`目录, 你需要首先使用TracAdmin的`copystatic`命令, 提取相关Trac资源 :
+[[TracAdminHelp(copystatic)]]
+
 == 添加验证 ==
 
 启用Apache验证的最简单的方法是创建一个口令文件. 用`htpasswd`程序来创建该口令文件:
@@ -132,7 +135,7 @@ Adding password for user john
 </LocationMatch>
 }}}
 
-为了更加安全, 建议你启用SSL, 或者至少要使用''Digest''验证而不是''Basic''验证. 请阅读[http://httpd.apache.org/docs/2.0/ Apache HTTPD documentation]详细了解情况.
+为了更加安全, 建议你启用SSL, 或者至少要使用''Digest''验证而不是''Basic''验证. 请阅读[http://httpd.apache.org/docs/2.0/ Apache HTTPD documentation]详细了解情况. 例如, 在 Debian 4.0r1 (etch) 系统中, 相关的apache配置段如下:
 {{{
 <Location "/trac/login">
     LoadModule auth_digest_module /usr/lib/apache2/modules/mod_auth_digest.so

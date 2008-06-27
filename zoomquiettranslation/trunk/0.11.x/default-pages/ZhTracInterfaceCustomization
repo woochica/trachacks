@@ -162,7 +162,7 @@ PythonOption TracEnvIndexTemplate /path/to/template
 SetEnv TRAC_ENV_INDEX_TEMPLATE /path/to/template
 }}}
 
-对于[wiki:TracStandalone], 你需要在运行tracd的shell中设置`TRAC_ENV_INDEX_TEMPLATE`环境变量:
+对于[ZhTracStandalone Trac独立服务器], 你需要在运行tracd的shell中设置`TRAC_ENV_INDEX_TEMPLATE`环境变量:
  - Unix
    {{{
 #!sh

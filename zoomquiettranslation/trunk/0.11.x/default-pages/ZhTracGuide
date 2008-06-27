@@ -29,7 +29,7 @@
      * [ZhTracRevisionLog Trac版本日志] -- 查看修改历史
    * ''传票系统''
      * [ZhTracTickets Trac传票] -- 使用传票系统
-     * [ZhTracReports Trac报表] -- 撰写和使用报告
+     * [ZhTracReports Trac报表] -- 撰写和使用报表
      * [ZhTracQuery Trac查询] -- 执行自定义传票查询
      * [ZhTracRoadmap Trac项目路线图] -- 定义里程碑,协助项目的进度追踪
  * [http://projects.edgewall.com/trac/wiki/TracFaq 常见问题集(在Trac官方网站上)]

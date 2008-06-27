@@ -43,6 +43,8 @@ sudo easy_install Trac
  * [http://www.postgresql.org/ PostgreSQL]
  * [http://initd.org/projects/psycopg2 psycopg2] 或 [http://pypgsql.sourceforge.net/ pyPgSQL]
 
+'''警告''': PostgreSQL 8.3 使用了严格的类型检查机制. 要想将Trac 和 8.3 版本的 PostgreSQL 一同使用, 你需要 [http://trac.edgewall.org/changeset/6512 trac-0.11] 及以上版本.
+
 === 对MySQL ===
 
 '''警告''': MySQL支持目前''仍然''是实验性的. 这意味它对有些人有用, 但还存在几个问题, 特别是使用unicode和在仓库缓存中的键长度. 详情参见MySqlDb.
@@ -56,7 +58,7 @@ sudo easy_install Trac
 '''请注意:''' 如果使用Subversion, Trac必须安装在'''同一台机器上'''. 当前还不支持远程仓库.
 
  * [http://subversion.tigris.org/ Subversion], 版本 >= 1.0. (推荐: 1.2.4, 1.3.2 or 1.4.2) 和 '''''相应的''''' Python绑定. 如有问题, 可以访问[TracSubversion Trac与Subversion]
-   * Trac使用Subversion发行版中的[http://www.swig.org/ SWIG]绑定, 而不是 [http://pysvn.tigris.org/ PySubversion](有时会和标准的SWIG绑定混淆).
+   * Trac使用Subversion发行版中的[http://www.swig.org/ SWIG]绑定, 而不是 [http://pysvn.tigris.org/ PySVN](有时会和标准的SWIG绑定混淆).
    * 如果Subversion在没有SWIG绑定的情况下已经安装好了, 你需要''re-configure'' Subversion, 并''makn swig-py, make install-swig-py''.
    * 有win32可以的[http://subversion.tigris.org/servlets/ProjectDocumentList?folderID=91 预编译绑定]. 
  * 对其他版本控制系统的支持由第三方提供. 请见[PluginList 插件列表]和[VersioningSystemBackend 版本系统后端].
@@ -72,7 +74,7 @@ sudo easy_install Trac
 对那些受Apache1.3困扰的程序, 可以让Trac0.8.4与[http://www.modpython.org/ mod_python 2.7]一起运行. (见[wiki:ZhTracModPython2.7 TracModPython2.7]). 该指南自0.84后就没有更新, 因此它也许能, 也许不能正常工作.
 
 ==== 其他Python工具 ====
- * [http://docutils.sourceforge.net/ docutils], 版本 >= 0.3.9以使用 [ZhWikiRestructuredText 型结构化文本].
+ * [http://docutils.sourceforge.net/ docutils], 版本 >= 0.3.9以使用 [ZhWikiRestructuredText 新结构化文本].
  * [http://pygments.pocoo.org Pygments] 用于 [wiki:TracSyntaxColoring 语法高亮], 及 [http://silvercity.sourceforge.net/ SilverCity] 和 [http://gnu.org/software/enscript/enscript.html Enscript] 仍然在使用.
     * 注意 !SilverCity 0.9.6有一个 [http://sourceforge.net/tracker/index.php?func=detail&aid=1424436&group_id=45693&atid=443739 bug], 会破坏Trac中的Python语法高亮功能. 在出现一个有效更新前, 推荐使用版本0.9.5.
  * [http://pytz.sf.net pytz] 以得到时区的完整列表, 否则Trac将使用内部实现的时区的较短列表.
@@ -115,6 +117,12 @@ easy_install --help
 {{{
 easy_install --prefix=/path/to/installdir
 }}}
+或者, 如果安装Trac到一个Mac OS X系统中:
+{{{
+easy_install --prefix=/usr/local --install-dir=/Library/Python/2.5/site-packages
+}}}
+
+上面会把`tracd` 和 `trac-admin` 命令放入 `/usr/local/bin`中, 并将安装 Trac 库和依赖文件到 `/Library/Python/2.5/site-packages`, 这是 Apple中Python第三方应用程序安装的约定位置.
 
 == 创建一个项目环境 ==
 
@@ -141,7 +149,11 @@ $ trac-admin /path/to/myproject initenv
 $ tracd --port 8000 /path/to/myproject
 }}}
 
-然后, 启动一个浏览器并访问`http://localhost:8000/`. 你将获得tracd中所有环境的简单列表. 点击链接到你刚创建的环境, 你会看到Trac已经能用了.
+然后, 启动一个浏览器并访问`http://localhost:8000/`. 你将获得tracd中所有环境的简单列表. 点击链接到你刚创建的环境, 你会看到Trac已经能用了. 如果你仅仅管理一个项目, 你可以让服务器跳过环境列表, 方法如下:
+{{{
+$ tracd -s --port 8000 /path/to/myproject
+}}}
+
 
 == 在Web服务器上运行Trac ==
 
@@ -155,6 +167,10 @@ Trac提供了三种方法来连接到一个真实的Web服务器: [wiki:ZhTracCg
  * [ZhTracStandalone  Trac独立服务器], 如果你使用`tracd`独立服务器方式.
  * [ZhTracCgi TracCgi], 如果你使用CGI或FastCGI方式.
  * [ZhTracModPython TracModPython], 如果你使用mod_python方式.
+
+== 在 Mac OS X Leopard (10.5) 中的Trac 0.11 与 SVN  ==
+
+ * TracOnLeopardServer
 
 == 使用Trac ==
 

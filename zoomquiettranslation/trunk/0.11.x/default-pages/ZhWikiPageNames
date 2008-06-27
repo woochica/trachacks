@@ -24,6 +24,8 @@ Wiki页面名主要使用[ZhCamelCase 驼峰式]规则. 在Wiki文本中, 所有
  * [wiki:"Space Matters"] 有空格的页面名
  * 或者是简单的方式: ["WikiPageName"] (!MoinMoin的内部自由链接样式)
 
+从Trac 0.11起, 也可以链接到Wiki页面的特定''版本'', 就像指定一个文件版本一样, 例如: WikiStart@1.
+
 请参见[wiki:ZhTracLinks#用引号包围Trac链接中的空格 用引号包围Trac链接中的空格]
 
 最后, 如上面的例子, 为了链接到该页中一个特定的章节, 你可以在wiki页面名添加一个锚点. 把鼠标放在章节的标题上, 很容易看到这个锚点, 然后单击其尾部的[[html(&para;)]]标志. 这个锚点通常是自动生成的, 也很容易明确指定, 请参见[ZhWikiFormatting#using-explicit-id-in-heading Wiki格式]

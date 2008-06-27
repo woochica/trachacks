@@ -33,13 +33,17 @@ $ python setup.py bdist_egg
 
 一旦你有插件文件, 你需要将其复制到[wiki:ZhTracEnvironment Trac环境]的''plugins''目录, 并且确认Web服务器有足够的权限来读取插件egg.
 
+要卸载这种方式安装的插件, 从`plugins`目录中删除egg文件, 然后重启web服务器.
+
 注意, 创建了egg的Python版本必须匹配运行Trac的Python版本. 比如, 你在Python2.3下运行Trac, 但已将你的独立Python升级到2.4, eggs就不被识别了.
+
+注意, 在多项目方式的安装中, Python解释器的实例池将按需动态定位, 由于插件占据了Python模块系统的一个位置, 因此第一个载入的插件版本将用于所有项目. 换句话说, 在多项目方式中, 你不能在两个项目中使用插件的不同版本. 为所有项目安装插件(见下述), 然后基于项目来选择性启用插件则是安全的.
 
 === 用于所有项目 ===
 
 ==== 用.egg文件 ====
 
-一些插件, 例如[http://trac.edgewall.org/wiki/WebAdmin WebAdmin], 可以作为`.egg`文件进行下载, 可以和`easy_install`程序一起安装:
+一些插件(例如[trac:SpamFilter SpamFilter])可以作为`.egg`文件进行下载, 可以和`easy_install`程序一起安装:
 {{{
 easy_install TracSpamFilter
 }}}
@@ -53,7 +57,8 @@ easy_install --always-unzip TracSpamFilter-0.2.1dev_r5943-py2.4.egg
 
 你应该用与egg相同的名字作为目录名(包括结尾的`.egg`), 目录中是解压后的内容.
 
-Trac也会搜索`$prefix/share/trac/plugins`目录下的全局安装的插件(自0.10版本后).
+Trac也会搜索全局安装的插件''(自0.10版本后)'', 参见 TracIni#GlobalConfiguration.
+
 ==== 从源代码 ====
 
 `easy_install`从源代码的快照安装. 只需要Subversion的URL或者源代码的压缩包(tarball/zip):
@@ -69,9 +74,24 @@ easy_install http://svn.edgewall.com/repos/trac/sandbox/spam-filter
 tracspamfilter.* = enabled
 }}}
 
-选项名是插件的Python安装包. 插件的相应文档中应该明确指定, 但通过查看源代码轻易找到(找包含__init__.py的顶级目录).
+选项名是插件的Python安装包. 插件的相应文档中应该明确指定, 但通过查看源代码轻易找到(找包含`__init__.py`的顶级目录).
 
 注意:安装完插件后, 你还需要重启Apache.
+
+==== 卸载 ====
+
+`easy_install` 或 `python setup.py` 还没有卸载功能. 然而, 删除全局安装插件egg的方法通常是:
+ 1. 运行`easy_install -m [plugin name]` 来从 `$PYTHONLIB/site-packages/easy-install.pth` 中删除用setuptools安装的插件.
+ 1. 从`/usr/bin`, `/usr/local/bin` 或 `C:\\Python*\Scripts`删除执行文件. 要搜索可执行文件的位置, 你可以查看`setup.py`的`[console-script]`段.
+ 1.从安装位置中 删除.egg文件或文件夹, 通常位于`$PYTHONLIB/site-packages/`.
+ 1. 重启web服务器.
+
+如果你对egg的位置不确定, 这里有一个小技巧来定位egg(或任意包) - 用插件使用的名字空间(跟启用插件一样)替换:
+{{{
+>>> import myplugin
+>>> print myplugin.__file__
+/opt/local/python24/lib/site-packages/myplugin-0.4.2-py2.4.egg/myplugin/__init__.pyc
+}}}
 
 == 创建插件缓存 ==
 
@@ -105,9 +125,9 @@ SetEnv PYTHON_EGG_CACHE /path/to/dir
 
 对于[wiki:ZhTracFastCgi FastCGI], 你需要''-initial-env''选项, 或你的Web服务器提供的环境变量设置.
 
- ''Note: that if you already use -initial-env to set the project directory for either a single project or parent you will need to add atleast one environment variable inside trac.fcgi as expressed in the example on [wiki:TracFastCgi TracFastCgi].
+ ''注意: 如果你已经使用 -initial-env 设置了项目目录(单个项目或项目父目录), 你需要在trac.fcgi中添加一个在[wiki:ZhTracFastCgi TracFastCgi]的例子中所示的环境变量.
 
-=== About hook scripts ===
+=== 关于hook脚本 ===
 
 如果你创建了调用Trac引擎的Subversion hook脚本(例如`/contrib`目录中提供的post-commit hook脚本), 确保你在这些脚本中也定义了`PYTHON_EGG_CACHE`环境变量.
 
@@ -131,14 +151,14 @@ Python egges在他们的文件名中包含了Python的版本号. 例如, `MyPlug
 === 插件启用了吗? ===
 
 如果你安装了一个全局插件(即: 不是在Trac项目环境的''plugins''目录中), 你需要在[ZhTracIni trac.ini]中启用它. 确认以下几个事情:
- * 你确实在`[components]`段增加了所需的几行配置
- * 包/模块名是正确的
- * 其值是"enabled", 而不是"enable”
+ * 事实上你向`[components]`段添加了必要的行
+ * 事实上你向`[components]`段添加了必要的行
+ * 值是"enabled", 而不是"enable"
 
  
 === 查看egg文件的权限 ===
 
-Trac当然必须能够读取文件. 当然, 你肯定知道!
+Trac当然必须能够读取文件.
 
 === 查看日志文件 ===
 

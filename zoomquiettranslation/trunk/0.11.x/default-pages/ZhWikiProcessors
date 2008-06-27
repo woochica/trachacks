@@ -2,7 +2,7 @@
 
 解析器是指为[TracWiki Wiki引擎]提供内容格式而设计的[ZhWikiMacros Wiki宏]声明, 解析器可以理解为''根据用户文字的格式进行HTML输出处理的宏函数''.
 
-Wiki引擎使用解析器, 使Trac中的所有Wiki文本, 可以分别使用[wiki:ZhWikiRestructuredText 新结构化文本], [wiki:ZhWikiHtml HTML]和 [http://www.textism.com/tools/textile/ textile] 格式来进行内容组织.
+Wiki引擎使用解析器, 使Trac中的所有Wiki文本, 可以分别使用[wiki:ZhWikiRestructuredText 新结构化文本], [wiki:ZhWikiHtml raw HTML]和 [http://www.textism.com/tools/textile/ textile] 格式来进行内容组织.
 
 
 == 使用解析器 ==
@@ -35,7 +35,7 @@ Wiki引擎使用解析器, 使Trac中的所有Wiki文本, 可以分别使用[wik
 #!rst
 A header
 --------
-这是有脚注的**文字**[*]_.
+这是有脚注的 **文字** [*]_.
 
 .. [*] 这是脚注.
 }}}</pre>
@@ -46,7 +46,7 @@ A header
 #!rst
 A header
 --------
-这是有脚注的**文字**[*]_.
+这是有脚注的 **文字** [*]_.
 
 
 .. [*] 这是脚注.
@@ -83,10 +83,11 @@ int main(int argc, char *argv[])
 == 可用解析器 ==
 下列解析器包含在Trac发行版中:
  * '''html''' -- 在Wiki页面中插入自定义HTML. 见[ZhWikiHtml WikiHtml].
- * '''div''' -- Wrap an arbitrary Wiki content in a <div> element (''since 0.11''). See WikiHtml.
+ * '''div''' -- 在一个<div>元素中包装任意Wiki内容 (''自0.11''). 参见 [ZhWikiHtml WikiHtml].
+ * '''span''' -- 在一个<span>元素中包装任意Wiki内容 (''自0.11''). 参见 [ZhWikiHtml WikiHtml].
  * '''rst''' -- Trac支持新结构化文本. 见[wiki:ZhWikiRestructuredText  新结构化文本].
  * '''textile''' -- 如果安装了[http://dealmeida.net/projects/textile/ Textile]则支持. 请见[http://hobix.com/textile/ Textile参考手册].
- * '''comment''' -- Do not process the text in this section (i.e. contents exist only in the plain text - not in the rendered page).
+ * '''comment''' -- 在此段中不解析文本 (即, 只出现在原文中 - 不出现在渲染后的页面中).
 
 === 代码语法高亮显示支持 ===
 Trac包含的解析器支持下列语言的内嵌[wiki:ZhTracSyntaxColoring 语法高亮]:
@@ -97,6 +98,8 @@ Trac包含的解析器支持下列语言的内嵌[wiki:ZhTracSyntaxColoring 语�
  * '''ruby''' -- Ruby
  * '''php''' -- PHP
  * '''asp''' --- ASP
+ * '''java''' -- Java
+ * '''js''' -- Javascript
  * '''sql''' -- SQL
  * '''xml''' -- XML
  * '''sh''' -- Bourne/Bash shell
@@ -114,8 +117,9 @@ Trac包含的解析器支持下列语言的内嵌[wiki:ZhTracSyntaxColoring 语�
 
 
 要想了解更多用户开发和贡献的解析器宏, 请访问:
- * [http://trac.edgewall.org/wiki/ProcessorBazaar ProcessorBazaar]
- * [http://trac.edgewall.org/wiki/MacroBazaar MacroBazaar]
+ * [trac:ProcessorBazaar]
+ * [trac:MacroBazaar]
+ * [th:WikiStart Trac Hacks] community site
 
 
 == 高级话题: 开发解析器宏 ==

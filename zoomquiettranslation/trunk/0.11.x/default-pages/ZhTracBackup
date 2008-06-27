@@ -1,14 +1,13 @@
 = Trac备份 =
 [[ZhTracGuideToc]]
 
-由于Trac使用了数据库后端, 为了安全地备份一个[wiki:ZhTracEnvironment Trac环境], 需要额外做一些事情. 幸运的是[wiki:ZhTracAdmin trac-admin]提供了一个轻松安全创建备份的命令: 
- * `hotcopy`.
+由于Trac使用了数据库后端, 为了安全地备份一个[wiki:ZhTracEnvironment Trac环境], 需要额外做一些事情. 幸运的是[wiki:ZhTracAdmin trac-admin]提供了一个轻松安全创建备份的命令:  `hotcopy`.
 
   ''注意: Trac使用`hotcopy`术语来对应[http://subversion.tigris.org/ Subversion]的术语,  以在同时管理Trac和Subversion两种服务器时, 能减少记忆的负担.''
 
 == 创建备份 ==
 
-为了创建Trac环境的热备份, 只需运行:
+为了创建[ZhTracEnvironment Trac环境]的热备份, 只需运行:
 {{{
 
   $ trac-admin /path/to/projenv hotcopy /path/to/backupdir
@@ -19,7 +18,7 @@
 
 备份的结果目录将能被标准的基于文件的备份工具(比如:tar和dump/restore)安全处理.
 
-请注意, 热备份命令不会覆盖目标路径, 当目标路径存在时, 热备份发出错误: `命令失败: [错误号 17] 文件存在:` 此问题的讨论见trac:ticket:3198.
+请注意, 热备份命令不会覆盖目标路径, 当目标路径存在时, 热备份发出错误: `命令失败: [错误号 17] 文件存在:` 此问题的讨论见 trac:ticket:3198.
 
 === 备份恢复 ===
 

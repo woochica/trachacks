@@ -2,15 +2,15 @@
 
 [[PageOutline]]
 
-Trac宏是用Python编写的定制'函数'以扩展Trac引擎的插件. 宏可以在任意上下文中插入支持WikiFormatting的动态HTML数据.
+Trac宏是用Python编写的定制'函数'以扩展Trac引擎的插件. 宏可以在任意上下文中插入支持[ZhWikiFormatting Wiki格式]的动态HTML数据.
 
-另一种宏是WikiProcessors. 它们通常处理替换的标记格式, 展示大块信息(就像源代码语法高亮).
+另一种宏是[ZhWikiProcessors Wiki解析器]. 它们通常处理替换的标记格式, 展示大块信息(就像源代码语法高亮).
 
 == 使用宏 ==
 
-宏的调用是放在两个'''方括号'''中. 像Python函数一样, 宏可以有参数(括号内用逗号分隔的列表).
+宏的调用是放在两个''方括号''中. 像Python函数一样, 宏可以有参数(括号内用逗号分隔的列表).
 
-Trac宏也可以写成TracPlugins. 这赋予其宏所不具有的某些能力, 例如直接访问HTTP请求.
+Trac宏也可以写成[ZhTracPlugins Trac插件]. 这赋予其宏所不具有的某些能力, 例如直接访问HTTP请求.
 
 === 例子 ===
 
@@ -118,6 +118,6 @@ class HelloWorldMacro(WikiMacroBase):
 }}}
 
 ----
-原文版本: WikiMacros[[BR]]
+原文版本: TracWikiMacros[[BR]]
 相关信息: [ZhWikiProcessors Wiki解析器], [ZhWikiFormatting Wiki格式], [ZhTracGuide Trac导览][[BR]]
 See also: WikiProcessors, WikiFormatting, TracGuide

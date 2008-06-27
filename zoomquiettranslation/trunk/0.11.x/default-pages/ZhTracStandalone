@@ -19,7 +19,7 @@ Tracd是一个独立的Web服务器. 多数情况下, 它比[wiki:ZhTracCgi CGI�
 {{{
  $ tracd -p 8080 /path/to/project
 }}}
-Stricly speaking this will make your Trac accessible to everybody from your network rather than ''localhost only''. To truly limit it use ''--hostname'' option.
+严格来讲, 这将使你的Trac可以被你的网络上的所有人访问到, 而不是 ''仅仅localhost''. 要想真正限制, 使用 ''--hostname'' 选项.
 {{{
  $ tracd --hostname=localhost -p 8080 /path/to/project
 }}}
@@ -37,7 +37,23 @@ Stricly speaking this will make your Trac accessible to everybody from your netw
 
 == 使用验证 ==
 
-Tracd支持Basic和Digest验证. 默认是使用Digest, 要使用Basic验证, 在下面的例子中将`--auth`替换为`--basic-auth`, 并省略域.
+使用tracd及Apache .htpasswd文件:
+
+使用htpasswd来创建.htpasswd文件:
+
+{{{
+sudo htpasswd -c /path/to/env/.htpasswd username
+}}}
+然后增加的用户:
+{{{
+sudo htpasswd /var/www/html/.htpasswd-users username2
+}}}
+然后启动tracd:
+{{{
+tracd -p 8080 --basic-auth=environmentname,/fullpath/environmentname/.htpasswd,/fullpath/environmentname /fullpath/environmentname
+}}}
+
+Tracd支持Basic和Digest验证. 默认是使用Digest, 要使用Basic验证, 在下面的例子中将`--auth`替换为`--basic-auth`, 如下列所示. (你必须指定一个"realm", 其可以是BASICAUTH逗号后面的一个空的字符串.)
 
   ''在0.9版本中添加了对Basic验证支持''
 
@@ -116,7 +132,13 @@ python trac-digest.py -u username -p password >> c:\digest.txt
 tracd --port 8000 --auth=proj_name,c:\digest.txt,trac c:\path\to\proj_name
 }}}
 
-注意: 如果你要使用 --basic-auth, 你需要使用apache服务器的htpasswd工具来生成.htpasswd文件. 剩下的都很类似, 但是确认使用的是空realm (即, 路径中逗号后的). 当使用Windows时, 请确认使用-m选项(没有在*nix上测试, 所以不确定是否也这样).
+注意: 如果你要使用 --basic-auth, 你需要使用apache服务器的htpasswd工具来生成.htpasswd文件. 剩下的都很类似, 但是确认使用的是空realm (即, 路径中逗号后的). 当使用Windows时, 请确认使用-m选项(没有在*nix上测试, 所以不确定是否也这样). 如果你没有Apache, [trac:source:/tags/trac-0.11b2/contrib/htpasswd.py htpasswd.py] 也许有帮助.  (注意, 这要求 `crypt` 或 `fcrypt` 模块; 详情参见源代码中的注释.)
+
+可以使用md5sum工具来生成 digest-password 文件:
+{{{
+echo -e "${user}:trac:${password}\c" | md5sum - >>to-file
+}}}
+并从行尾手工删除" -", 并从'to-file'增加 "${user}:trac:" 到行首. 详情参见 attachment:trac-digest-corrected.sh.
 
 == 提示 ==
 

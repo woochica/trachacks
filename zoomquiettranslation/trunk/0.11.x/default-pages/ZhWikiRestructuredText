@@ -48,7 +48,7 @@ Trac支持在[ZhWikiFormatting Wiki格式]文本中使用''新结构化文本''(
 
 === 新结构化文本中的语法高亮显示 ===
 
-在ReST中也有一个关于如何实现[TracSyntaxColoring Trac语法高亮显示]的指令, 该指令叫做code-block.
+在ReST中也有一个关于如何实现[ZhTracSyntaxColoring Trac语法高亮显示]的指令, 该指令叫做code-block.
 
 例子:
 
@@ -82,7 +82,7 @@ Trac支持在[ZhWikiFormatting Wiki格式]文本中使用''新结构化文本''(
 
 === 新结构化文本中的Wiki宏 ===
 
-要在ReST中执行[WikiMacros Wiki宏], 你可以使用与语法高亮显示相同的指令, 即code-block. 要使其起作用, 你必须使用应用#801的trac版本.
+要在ReST中执行[ZhWikiMacros Wiki宏], 你可以使用与语法高亮显示相同的指令, 即code-block. 要使其起作用, 你必须使用应用#801的trac版本.
 
 === Wiki宏实例 ===
 

@@ -5,7 +5,7 @@ Trac使用一种简单的权限系统来控制用户能否访问资源.
 
 权限由[wiki:ZhTracAdmin trac-admin]工具管理, 或者web界面''管理''中的''一般 / 权限''面板.
 
-除了本页中描述的默认权限策略, 可以启用插件来激活附加的权限, 并在TracIni的`[trac] permission_policies` 配置栏目中列出. 详情参见TracFineGrainedPermissions.
+除了本页中描述的默认权限策略, 可以启用插件来激活附加的权限, 并在[ZhTracIni TracIni]的`[trac] permission_policies` 配置栏目中列出. 详情参见[ZhTracFineGrainedPermissions TracFineGrainedPermissions].
 
 未验证的用户访问系统时, 系统分配给他的名字是"anonymous". 为"anonymous"用户分配权限, 从而可以给匿名/访客身份的用户设置特权. 用户没有特权的Trac部分不会显示在导航中.
 除这些特权外, 当用户认证并登录到系统时, 还能得到其他的单独权利. 所有登录的用户属于"authenticated"的组, 他们继承"anonymous"用户的权限.
@@ -18,9 +18,9 @@ Trac使用一种简单的权限系统来控制用户能否访问资源.
 
 === 仓库浏览器 ===
 
-|| `BROWSER_VIEW` || 在[wiki:ZhTracBrowser Subversion仓库浏览器]中查看目录清单 ||
-|| `LOG_VIEW` || 在[wiki:ZhTracBrowser Subversion仓库浏览器]中查看文件和目录的修订日志 ||
-|| `FILE_VIEW` || 在[wiki:ZhTracBrowser Subversion仓库浏览器中查看文件] ||
+|| `BROWSER_VIEW` || 在[wiki:ZhTracBrowser 仓库浏览器]中查看目录清单 ||
+|| `LOG_VIEW` || 在[wiki:ZhTracBrowser 仓库浏览器]中查看文件和目录的修订日志 ||
+|| `FILE_VIEW` || 在[wiki:ZhTracBrowser 仓库浏览器]中查看文件 ||
 || `CHANGESET_VIEW` || 查看[wiki:ZhTracChangeset Subversion仓库检入] ||
 
 === 传票系统 ===
@@ -29,6 +29,8 @@ Trac使用一种简单的权限系统来控制用户能否访问资源.
 || `TICKET_APPEND` || 为[wiki:ZhTracTickets 传票]添加评论或附件 ||
 || `TICKET_CHGPROP` || 更改[wiki:ZhTracTickets 传票]属性, 包括优先级, 指派到, 关键字等等(描述域除外) ||
 || `TICKET_MODIFY` || 包括`TICKET_APPEND`和`TICKET_CHGPROP`. 另外, 允许解决[wiki:TracTickets 传票] ||
+|| `TICKET_EDIT_CC` || 更改抄送字段 ||
+|| `TICKET_EDIT_DESCRIPTION` || 更改描述字段 ||
 || `TICKET_ADMIN` || 所有`TICKET_*`权限, 还有删除传票附件和描述域的更改 ||
 
 注意: 需要`REPORT_VIEW`权限以显示"查看传票"按钮.
@@ -37,10 +39,10 @@ Trac使用一种简单的权限系统来控制用户能否访问资源.
 
 || `MILESTONE_VIEW` || 查看里程碑 ||
 || `MILESTONE_CREATE` || 创建一个新里程碑 ||
-|| `MILESTONE_ADMIN` || 所有`MILESTONE_*`权限 ||
-|| `ROADMAP_VIEW` || 查看[wiki:ZhTracRoadmap 路线图]页面 ||
 || `MILESTONE_MODIFY` || 修改现有里程碑 ||
 || `MILESTONE_DELETE` || 删除里程碑 ||
+|| `MILESTONE_ADMIN` || 所有`MILESTONE_*`权限 ||
+|| `ROADMAP_VIEW` || 查看[wiki:ZhTracRoadmap 路线图]页面 ||
 || `ROADMAP_ADMIN` || 从#3022中删除, 由MILESTONE_ADMIN替换 ||
 
 === 报表 ===
