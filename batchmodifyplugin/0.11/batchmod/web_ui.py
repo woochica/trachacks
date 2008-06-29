@@ -53,12 +53,8 @@ class BatchModifyModule(Component):
         # TODO: improve validation and better handle advanced statuses
         for field in TicketSystem(self.env).get_ticket_fields():
             name = field['name']
-            if name not in ('summary', 'reporter', \
-                        'description', 'status',
-                        'resolution'):
+            if name not in ('summary', 'reporter', 'description'):
                 if req.args.has_key('bmod_flag_' + name):
-                    if name == 'owner':
-                        values['status'] = 'assigned'
                     values[name] = req.args.get('bmod_value_' + name)
 
         selectedTickets = req.args.get('selectedTickets')
