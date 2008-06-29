@@ -67,27 +67,25 @@
 <input py:if="req.args['groupdesc']" type="hidden" name="groupdesc" value="${req.args['groupdesc']}" />
 </fieldset>
 <script type="text/javascript">
-$(document).ready(function(){
-<!--
-  $("//table.listing//tr//td[@class=id]").each(
+jQuery(document).ready(function($){
+  $("table.listing tr td.id").each(
     function() {
       tId=$(this).text().substring(1); 
       $(this).before('<td><input type="checkbox" name="selectedTicket" class="bmod_selector" value="'+tId+'"/></td>');
     }  
   ) 
-  $("//table.listing//tr//th[@class=id]").each(
+  $("table.listing tr th.id").each(
     function() { 
       $(this).before('<th class="bmod_selector"><input type="checkbox" name="bmod_toggleGroup" /></th>');
     }  
   ) 
-  $("input[@name=bmod_toggleGroup]").change(function() { 
-    $("../../../..//input[@type=checkbox]",this).attr("checked",this.checked);
+  $("input[@name='bmod_toggleGroup']").click(function() { 
+    $("tr td input.bmod_selector",$(this).parents("table.listing")).attr("checked",this.checked);
   })
--->
   <py:for each="field in fields">
-    $("input[@id=bmod_flag_${field.name}]").change(function() { $("*[@name=bmod_value_${field.name}]").enable(this.checked);} )
+    $("input[@id=bmod_flag_${field.name}]").click(function() { $("*[@name=bmod_value_${field.name}]").enable(this.checked);} )
   </py:for>
-  $("input#bmod_flag_comment").change(function() {enableControl("bmod_value_comment",this.checked);} )
+  $("input#bmod_flag_comment").click(function() {enableControl("bmod_value_comment",this.checked);} )
   $("form#batchmod-form").submit(function() {
     var selectedTix=[];    
     $("input[@name=selectedTicket]:checked").each( function(){ selectedTix.push(this.value);} ); 
