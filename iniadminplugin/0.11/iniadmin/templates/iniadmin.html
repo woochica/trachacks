@@ -32,6 +32,9 @@
                   <label><input type="radio" name="${option.name}" value="true" checked="${option.value == 'true' or None}" /> true</label>
                   <label><input type="radio" name="${option.name}" value="false" checked="${option.value == 'false' or None}" /> false</label>
                 </div>
+                <div class="text" py:when="option.type == 'password'">
+                  <input type="password" name="${option.name}" value="${option.value}" />
+                </div>
                 <div class="text" py:otherwise="">
                   <input type="text" name="${option.name}" value="${option.value}" />
                 </div>

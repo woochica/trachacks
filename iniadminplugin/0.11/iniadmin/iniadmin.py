@@ -12,7 +12,20 @@ except:
     from sets import Set as set
 
 class IniAdminPlugin(Component):
+
     implements(ITemplateProvider, IAdminPanelProvider)
+
+    excludes = ListOption('iniadmin', 'excludes',
+                          'iniadmin:excludes,iniadmin:passwords',
+        doc="""Excludes this options.
+        Comma separated list as `section:name`.
+        """)
+
+    passwords = ListOption('iniadmin', 'passwords',
+                           'trac:database,notification:smtp_password',
+        doc="""Show input-type as password instead of text.
+        Comma separated list as `section:name`.
+        """)
 
     # IAdminPageProvider methods
     def get_admin_panels(self, req):
@@ -25,10 +38,18 @@ class IniAdminPlugin(Component):
         if page not in set([s for s, _ in Option.registry]):
             raise TracError("Invalid section %s" % page)
 
+        _exc = [name for section, name in
+                [opt.split(':') for opt in self.excludes]
+                if section == page]
+        _pwd = [name for section, name in
+                [opt.split(':') for opt in self.passwords]
+                if section == page]
+
         # Apply changes
         if req.method == 'POST':
             options = [option.name for (section, _), option in
-                       Option.registry.iteritems() if section == page]
+                       Option.registry.iteritems() if section == page and
+                       option.name not in _exc]
             modified = False
             for option, value in req.args.iteritems():
                 if option in options:
@@ -44,7 +65,8 @@ class IniAdminPlugin(Component):
         add_stylesheet(req, 'iniadmin/css/iniadmin.css')
 
         options = sorted([option for (section, _), option in
-                          Option.registry.iteritems() if section == page],
+                          Option.registry.iteritems() if section == page and
+                          option.name not in _exc],
                          key=lambda a: a.name)
 
         options_data = []
@@ -61,6 +83,8 @@ class IniAdminPlugin(Component):
                     options.append(impl.__class__.__name__)
                 options.sort()
                 option_data['options'] = options
+            elif type == 'text' and option.name in _pwd:
+                option_data['type'] = 'password'
             options_data.append(option_data)
 
         data = {'iniadmin': {
