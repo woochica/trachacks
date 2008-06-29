@@ -84,10 +84,12 @@ class BatchModifyModule(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, formdata):
         """Adds BatchModify form to the query page"""
-        if filename != 'query.html' or not req.perm.has_permission('TICKET_BATCH_MODIFY'):
-            return stream
-
-        return stream | Transformer('//div[@id="help"]').before(self._generate_form(req, formdata) )
+        if filename == 'query.html' and (
+                    req.perm.has_permission('TICKET_ADMIN') or
+                    req.perm.has_permission('TICKET_BATCH_MODIFY') ):
+            return stream | Transformer('//div[@id="help"]'). \
+                                before(self._generate_form(req, formdata) )
+        return stream
 
     
     def _generate_form(self, req, data):
