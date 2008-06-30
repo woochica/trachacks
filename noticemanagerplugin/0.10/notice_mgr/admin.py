@@ -279,6 +279,8 @@ class NoticeManagerAdminPage(Component):
 	    else:
 		infos[id] = {'id': id, 'name' : "", 'email' : ""}
 		ainfo = infos.get(id)
+		name = ""
+		email = ""
 	    change_name = req.args.get('change_name')
 	    if change_name and (change_name != ""):
 		name = change_name
@@ -295,13 +297,13 @@ class NoticeManagerAdminPage(Component):
 	cursor = db.cursor()
 	cursor.execute("SELECT count(*) FROM session "
                         "WHERE sid=%s AND authenticated=1",
-                        (username,))
+                        (username))
         exists, = cursor.fetchone()
         if not exists:
 	    cursor.execute("INSERT INTO session "
                        "(sid, authenticated, last_visit) "
                        "VALUES (%s, 1, 0)",
-                       (username,))
+                       (username))
 
         for key in ('name', 'email'):
             value = arr.get(key)
