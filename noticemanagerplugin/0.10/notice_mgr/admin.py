@@ -378,6 +378,8 @@ class NoticeManagerAdminPage(Component):
         sel = isinstance(sel, list) and sel or [sel]
 
         for account in sel:
+	    if (not account) or (account == None):
+		continue
 	    if (account[0] != GROUP_PREFIX):
 		continue
 	    users = self._ldap_search_members(account)
