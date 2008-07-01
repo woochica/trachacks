@@ -86,9 +86,8 @@ class DBCursor(object):
     def __call__(self, sql, *args, **variants):
         return self.execute(sql, *args, **variants)
 
-    @property
-    def last_id(self):
-        return self.db.get_last_id()
+    def last_id(self, cursor, table, column='id'):
+        return self.db.get_last_id(self, table, column)
 
 class DBComponent(Component):
     implements(IEnvironmentSetupParticipant)

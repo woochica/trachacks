@@ -86,7 +86,8 @@ class TracFormDBComponent(DBComponent):
                         INSERT INTO tracform_forms
                             (context, state, updater, updated_on)
                             VALUES (%s, %s, %s, %s)
-                        """, context, state, updater, updated_on).last_id
+                        """, context, state, updater, updated_on) \
+                        .last_id('tracform_forms', 'tracform_id')
                 else:
                     cursor("""
                         UPDATE  tracform_forms
