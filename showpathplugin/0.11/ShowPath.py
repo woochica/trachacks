@@ -59,7 +59,7 @@ class ShowPath(Component):
         nav = req.chrome['ctxtnav']
         wikiStartIndex = None
         for i, elm in enumerate( nav ):
-            if elm.tag == 'a' and elm.attrib.get('href') == href.wiki('WikiStart'):
+            if type(elm) == Element and elm.tag == 'a' and elm.attrib.get('href') == href.wiki('WikiStart'):
                 wikiStartIndex = i
                 break
 
