@@ -194,12 +194,29 @@ class TracFormDBComponent(DBComponent):
                 updater         TEXT NOT NULL,
                 updated_on      INTEGER NOT NULL
                 )
+            """,
+            mysql = """
+            CREATE TABLE tracform_forms(
+                tracform_id     INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
+                context         VARCHAR(255) NOT NULL,
+                state           TEXT NOT NULL,
+                updater         VARCHAR(127) NOT NULL,
+                updated_on      INTEGER NOT NULL,
+                PRIMARY KEY     (tracform_id)
+                )
             """)
         cursor("""
             CREATE TABLE tracform_history(
                 tracform_id     INTEGER NOT NULL,
                 updated_on      INTEGER NOT NULL,
                 updater         TEXT NOT NULL,
+                old_states      TEXT NOT NULL
+                );
+            """, mysql="""
+            CREATE TABLE tracform_history(
+                tracform_id     INTEGER NOT NULL,
+                updated_on      INTEGER NOT NULL,
+                updater         VARCHAR(127) NOT NULL,
                 old_states      TEXT NOT NULL
                 );
             """)
@@ -243,6 +260,8 @@ class TracFormDBComponent(DBComponent):
         "Recreating updated_on index for tracform_forms to be descending."
         cursor("""
             DROP INDEX tracform_forms_updated_on
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_forms_updated_on
             """)
         cursor("""
             CREATE INDEX tracform_froms_updated_on
@@ -260,6 +279,8 @@ class TracFormDBComponent(DBComponent):
         "Make the context a unique index."
         cursor("""
             DROP INDEX tracform_forms_context
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_forms_context
             """)
         cursor("""
             CREATE UNIQUE INDEX tracform_forms_context
@@ -277,6 +298,13 @@ class TracFormDBComponent(DBComponent):
                 tracform_id     INTEGER NOT NULL,
                 field           TEXT NOT NULL,
                 updater         TEXT NOT NULL,
+                updated_on      INTEGER NOT NULL
+                )
+            """, mysql="""
+            CREATE TABLE tracform_fields(
+                tracform_id     INTEGER NOT NULL,
+                field           VARCHAR(127) NOT NULL,
+                updater         VARCHAR(127) NOT NULL,
                 updated_on      INTEGER NOT NULL
                 )
             """)

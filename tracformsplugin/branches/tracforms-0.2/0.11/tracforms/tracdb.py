@@ -13,6 +13,12 @@ class DBCursor(object):
         self.db = db
         self.cursor = db.cursor()
         self.log = log
+        # Please, please tell me there's a better way to do this...
+        dbtypename = type(self.db.cnx).__name__.split('.')[-1]
+        self.dbtype = (
+            (dbtypename == 'MySQLConnection' and 'mysql') or
+            (dbtypename == 'PostgreSQLConnection' and 'postgres') or
+            'sqlite')
 
     def __del__(self):
         self.db.commit()
@@ -23,9 +29,10 @@ class DBCursor(object):
     def commit(self):
         self.db.commit()
 
-    def execute(self, sql, *params):
+    def execute(self, sql, *params, **variants):
         if DEBUG_SQL:
             print >>sys.stderr, 'EXECUTING SQL:\n%s\n\t%r' % (sql, params)
+        sql = variants.get(self.dbtype, sql)
         self.log.debug('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
         try:
             self.cursor.execute(sql, params)
@@ -76,12 +83,12 @@ class DBCursor(object):
     def value(self):
         return self.at(None, 0, 0)
 
-    def __call__(self, sql, *args):
-        return self.execute(sql, *args)
+    def __call__(self, sql, *args, **variants):
+        return self.execute(sql, *args, **variants)
 
     @property
     def last_id(self):
-        return self("SELECT last_insert_rowid()").value
+        return self.db.get_last_id()
 
 class DBComponent(Component):
     implements(IEnvironmentSetupParticipant)
