@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from trac.env import IEnvironmentSetupParticipant
 from trac.core import Component, implements
+from trac.db import Table, Column, Index, DatabaseManager
 
 class TracUnreadSetupParticipant(Component):
     implements(IEnvironmentSetupParticipant)
@@ -54,29 +55,63 @@ class TracUnreadSetupParticipant(Component):
         cur = db.cursor()
         if self.db_installed_version < 1:
             print "Creating trac_unread table"
-            sql = """
-            CREATE TABLE trac_unread (
-            username text,
-            last_read_on integer,
-            type text,
-            id text,
-            UNIQUE (type, id, username)
-            );
-            """
-            try:
-                cur.execute(sql)
-                
-                # This statement block always goes at the end this method
+            
+            unread_table = Table('trac_unread', key=('type', 'id', 'username'))[
+                Column('username'),
+                Column('last_read_on', type='int'),
+                Column('type'),
+                Column('id'),
+                Index(['type']),
+                Index(['id']),
+                Index(['username'])]
+            
+            db_backend, _ = DatabaseManager(self.env)._get_connector()
+            
+            for stmt in db_backend.to_sql(unread_table):
                 try:
-                    cur.execute("UPDATE system SET value=%s WHERE name=%s",
-                        (self.db_version, self.db_version_key))
-                except:
-                    cur.execute("INSERT INTO system (value, name) VALUES (%s, %s)",
-                        (self.db_version, self.db_version_key))
+                    cur.execute(stmt)
+                except Exception, e:
+                    print "Upgrade failed\nSQL:\n%s\nError message: %s" % (stmt, e)
+                    db.rollback();
+                    return
+            
+            # This statement block always goes at the end this method
+            try:
+                cur.execute("UPDATE system SET value=%s WHERE name=%s",
+                    (self.db_version, self.db_version_key))
+            except:
+                cur.execute("INSERT INTO system (value, name) VALUES (%s, %s)",
+                    (self.db_version, self.db_version_key))
 
-                self.db_installed_version = self.db_version
-                
-                db.commit()
-            except Exception, e:
-                print "Upgrade failed\nSQL:\n%s\nError message: %s" % (sql, e)
-                db.rollback();
+            self.db_installed_version = self.db_version
+            
+            db.commit()
+
+if __name__ == '__main__':
+
+    from trac.core import ComponentManager
+    import trac.db.mysql_backend
+    import trac.db.sqlite_backend
+    import trac.db.postgres_backend
+    
+    unread_table = Table('trac_unread', key=('type', 'id', 'username'))[
+        Column('username'),
+        Column('last_read_on', type='int'),
+        Column('type'),
+        Column('id'),
+        Index(['type']),
+        Index(['id']),
+        Index(['username'])]
+    cman = ComponentManager()
+    c_mysql  = trac.db.mysql_backend.MySQLConnector(cman);
+    c_psql   = trac.db.postgres_backend.PostgreSQLConnector(cman);
+    c_sqlite = trac.db.sqlite_backend.SQLiteConnector(cman);
+    
+    for stmt in c_mysql.to_sql(unread_table):
+      print "mysql: ", stmt
+    
+    for stmt in c_psql.to_sql(unread_table):
+      print "psql: ", stmt
+    
+    for stmt in c_sqlite.to_sql(unread_table):
+      print "sqlite: ", stmt
