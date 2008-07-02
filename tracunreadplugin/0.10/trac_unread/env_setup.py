@@ -87,31 +87,3 @@ class TracUnreadSetupParticipant(Component):
             
             db.commit()
 
-if __name__ == '__main__':
-
-    from trac.core import ComponentManager
-    import trac.db.mysql_backend
-    import trac.db.sqlite_backend
-    import trac.db.postgres_backend
-    
-    unread_table = Table('trac_unread', key=('type', 'id', 'username'))[
-        Column('username'),
-        Column('last_read_on', type='int'),
-        Column('type'),
-        Column('id'),
-        Index(['type']),
-        Index(['id']),
-        Index(['username'])]
-    cman = ComponentManager()
-    c_mysql  = trac.db.mysql_backend.MySQLConnector(cman);
-    c_psql   = trac.db.postgres_backend.PostgreSQLConnector(cman);
-    c_sqlite = trac.db.sqlite_backend.SQLiteConnector(cman);
-    
-    for stmt in c_mysql.to_sql(unread_table):
-      print "mysql: ", stmt
-    
-    for stmt in c_psql.to_sql(unread_table):
-      print "psql: ", stmt
-    
-    for stmt in c_sqlite.to_sql(unread_table):
-      print "sqlite: ", stmt
