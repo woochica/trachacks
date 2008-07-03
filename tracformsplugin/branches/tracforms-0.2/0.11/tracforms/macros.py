@@ -369,7 +369,7 @@ class TracFormProcessor(object):
             elif len(current) == 1:
                 current = current[0]
             else:
-                return 'ERROR: field %r has too many values' % str(field)
+                return 'ERROR: field %r has too many values' % str(name)
         return current
 
     def op_input(self, field, _id=None, _class=None):
