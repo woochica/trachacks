@@ -357,7 +357,9 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
     <someaction>.operations = xref
     <someaction>.xref = "Ticket %s is related to this ticket"
     <someaction>.xref_local = "Ticket %s was marked as related to this ticket"
+    <someaction>.xref_hint = "The specified ticket will be cross-referenced with this ticket"
 
+    The example values shown are the default values.
     Don't forget to add the `TicketWorkflowOpXRef` to the workflow
     option in [ticket].
     If there is no workflow option, the line will look like this:
@@ -375,7 +377,8 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
         ticketnum = req.args.get(id, '')
         actions = ConfigurableTicketWorkflow(self.env).actions
         label = actions[action]['name']
-        hint = 'The specified ticket will be cross-referenced with this ticket'
+        hint = actions[action].get('xref_hint',
+            'The specified ticket will be cross-referenced with this ticket')
         control = tag.input(type='text', id=id, name=id, value=ticketnum)
         return (label, control, hint)
 
