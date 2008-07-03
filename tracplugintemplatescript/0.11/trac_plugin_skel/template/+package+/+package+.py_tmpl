@@ -1,0 +1,26 @@
+"""
+${project}:
+${description}
+Plugin for trac:  http://trac.edgewall.org
+See also:  http://trac-hacks.org
+"""
+
+from trac.core import * # core trac functionality
+
+### interfaces:  
+### (these are just samples; remove the ones you don't need, add ones you do)
+### See http://trac.edgewall.org/wiki/TracDev/PluginDevelopment
+from trac.admin.api immport IAdminPanelProvider
+from trac.versioncontrol.api import IRepositoryConnector
+from trac.web.api import IRequestFilter
+from trac.web.api import IRequestHandler
+from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import INavigationContributor
+from trac.web.chrome import ITemplateProvider
+from trac.wiki.api import IWikiSyntaxProvider
+
+
+class ${project.capitalize()}Plugin(Component):
+    implements() # Put methods that you implement here
+
+    # Define methods from the interfaces that you implement here
