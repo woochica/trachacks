@@ -1,7 +1,5 @@
 div.growl {
-  /* TODO: waiting for Growl team to validate use of the growl image 
-     in the plugin... */
-  /*background: url(../images/growl-180.png) no-repeat 380px -15px;*/
+  background: url(../images/growl-180.png) no-repeat 380px -15px;
   min-height: 150px;
 }
 div.buttons {

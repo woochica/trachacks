@@ -82,7 +82,7 @@ class GrowlNotifierSystem(Component):
     userprefs_enabled = BoolOption('growl', 'userprefs', 'false',
         doc="""Enable per-user to define Growl notification option.""")
 
-    dest_hosts = ListOption('growl', 'hosts', '',
+    dest_hosts = ListOption('growl', 'hosts', '<broadcast>',
         doc="""List of hosts to notify (default: broadcast to subnet)""")
 
     avail_sources = ListOption('growl', 'sources', ','.join(SOURCES),

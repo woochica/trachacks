@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracGrowlPlugin'
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 
 setup (
     name = PACKAGE,
@@ -29,7 +29,7 @@ setup (
     install_requires = [ 'Trac>=0.11dev', 'Trac<0.12'],
     packages = find_packages(exclude=['ez_setup']),
     package_data={
-        'revtree': [
+        'growl': [
             'htdocs/css/*.css',
             'htdocs/images/*.png',
             'templates/*.html'
