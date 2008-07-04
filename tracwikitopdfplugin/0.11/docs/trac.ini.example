@@ -1,0 +1,29 @@
+[wikitopdf]
+base_dir = /path/to/DocumentRoot
+titlefile = /path/to/capa_file.html
+
+[wikitopdf-admin]
+size = A4
+right = 1.5cm
+left = 1.5cm
+top = 1.5cm
+bottom = 1.5cm
+no-links = None
+toctitle = Sumário
+numbered = None
+linkstyle = plain
+header = l
+footer = .r1
+logoimage = /path/to/header-logo.png
+
+[wikitopdf-page]
+size = A4
+right = 1.5cm
+left = 1.5cm
+top = 1.5cm
+bottom = 1.5cm
+no-links = None
+linkstyle = plain
+header = l
+footer = .r1
+logoimage = /path/to/header-logo.png
