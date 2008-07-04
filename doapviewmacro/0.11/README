@@ -1,0 +1,16 @@
+DoapViend
+=========
+
+DoapView is a Trac macro for displaying `DOAP <http://trac.usefulinc.com/doap>`_ (Description of a Project) RDF files in human-readable format.
+
+To use simply create an attachment on your Trac wiki page with your DOAP file then add this macro:
+
+[[DoapView(doap.rdf)]]
+
+
+And add this to your trac.ini:
+
+[components]
+doapview.* = enabled
+
+

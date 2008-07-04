@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:doap="http://usefulinc.com/ns/doap#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<head>
+ <style type="text/css">
+<!-- CSS snarfed from Danny Ayers hDOAP http://dannyayers.com -->
+body{
+    background: #ffffff
+}
+
+h1{
+    font-family: arial, sans-serif;
+    padding-left: 20px
+}
+
+h2, h3, h4{
+    font-family: arial, sans-serif
+}
+
+/* Non-DOAP hDOAP selectors */
+.project-details{
+    padding-left: 30px;
+    border-bottom: 3px solid #600
+}
+
+.literal-label{
+    font-family: arial, sans-serif;
+    font-style: normal; 
+    font-weight: bold
+}
+
+.literal-value{
+    font-family: courier, serif;
+    font-style: normal; 
+    font-weight: normal;
+}
+
+.resource-label{
+    font-family: arial, sans-serif;
+    font-style: normal; 
+    font-weight: bold;
+}
+
+.resource-value{
+    font-family: courier, serif;
+    font-style: italic; 
+    font-weight: normal;
+} 
+
+/* hDOAP Selectors */
+
+.Project{
+    border: 2px solid;
+    border-color: #660000;
+    /* top, right, bottom, left */
+    margin: 10px 10px 10px 10px; 
+    padding: 10px 10px 10px 10px;
+} 
+
+.Version{
+    padding-left: 10px
+}
+
+.Repository{
+}
+
+.SVNRepository{
+}
+
+.BKRepository{
+
+}
+
+.CVSRepository{
+
+}
+
+.ArchRepository{
+
+}
+
+.name{
+
+}
+
+.homepage{
+
+}
+
+.old-homepage{
+
+}
+
+.created{
+
+}
+
+.shortdesc{
+
+}
+
+.description{
+
+}
+
+.release{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 10px
+}
+
+.mailing-list{
+
+}
+
+.category{
+
+}
+
+.license{
+
+}
+
+.repository{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 10px
+}
+
+.anon-root{
+
+}
+
+.browse{
+
+}
+
+.module{
+
+}
+
+.location{
+
+}
+
+.download-page{
+
+}
+
+.download-mirror{
+
+}
+
+.revision{
+
+}
+
+.wiki{
+
+}
+
+.bug-database{
+
+}
+
+.screenshots{
+
+}
+
+.maintainer{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 10px
+}
+
+.developer{
+
+}
+
+.documenter{
+
+}
+
+.translator{
+
+}
+
+.tester{
+
+}
+
+.helper{
+
+}
+
+.programming-language{
+
+}
+
+.os{
+
+}
+
+/* From other vocabularies */
+
+.Person{
+
+}
+
+/*
+.name{
+
+}
+*/
+
+.mbox_sha1sum{
+
+}
+
+.seeAlso{
+
+}
+
+.maker{
+    background: #fffafa;
+    border: 1px dashed;
+    border-color: #660000;
+    /* top, right, bottom, left */
+    margin: 10px 10px 10px 10px; 
+    padding: 10px 10px 10px 10px;
+}
+
+.mbox{
+
+}
+
+
+
+</head>
+  <body>
+    <div class="Project">
+      <h1>Project: $doap.name</h1>
+      <div class="project-details">
+        <p py:if="doap.name"><span class="literal-label">Name</span> :  <span class="name">$doap.name</span>
+    </p>
+        <p py:if="doap.shortname"><span class="literal-label">Shortname</span> :  <span class="shortname">$doap.shortname</span>
+    </p>
+        <p py:if="doap.created"><span class="literal-label">DOAP created</span> :  <span class="created">$doap.created</span>
+    </p>
+        <p py:if="doap.shortdesc"><span class="literal-label">Shortdesc</span> :  <span class="shortdesc" xml:lang="en">$doap.shortdesc</span>
+    </p>
+        <p py:if="doap.description"><span class="literal-label">Description</span> :
+    <span class="description" xml:lang="en">$doap.description</span>
+    </p>
+        <p py:if="doap.bug_database"><span class="resource-label">Bug-database</span> : <span class="resource-value"><a href="$doap.bug_database.resUri" class="bug-database">$doap.bug_database.resUri</a></span>
+    </p>
+        <p py:if="doap.download_page"><span class="resource-label">Download-page</span> : <span class="resource-value"><a href="$doap.download_page.resUri" class="bug-database">$doap.download_page.resUri</a></span>
+    </p>
+        <p py:if="doap.download_mirror"><span class="resource-label">Download-mirror</span> : <span class="resource-value"><a href="$doap.download_mirror.resUri" class="bug-database">$doap.download_mirror.resUri</a></span>
+    </p>
+        <p py:if="doap.homepage"><span class="resource-label">Homepage</span> :
+    <span class="resource-value"><a href="$doap.homepage.resUri" class="homepage">$doap.homepage.resUri</a></span>
+    </p>
+        <p py:if="doap.license"><span class="resource-label">Licenses</span> :
+    <ul><li py:for="license in doap.license"><span class="resource-value"><a href="${license.resUri}" class="license">${license.resUri}</a></span></li></ul>
+</p>
+        <p py:if="doap.wiki"><span class="resource-label">Wikis</span> :
+    <ul><li py:for="wiki in doap.wiki"><span class="resource-value"><a href="${wiki.resUri}" class="wiki">${wiki.resUri}</a></span></li></ul>
+</p>
+        <p py:if="doap.programming_language"><span class="literal-label">Programming-language</span> :
+    <span class="programming-language">$doap.programming_language</span></p>
+      </div>
+      <div py:for="release in doap.releases" class="release">
+        <h2>Release</h2>
+        <div class="Version">
+          <p><span class="literal-label">Name</span> : <span class="name">$release.name</span></p>
+          <p><span class="literal-label">Created</span> : <span class="created">$release.created</span></p>
+          <p><span class="literal-label">Revision</span> : <span class="revision">$release.revision</span></p>
+          <p py:if="doap.changelog"><span class="literal-label">ChangeLog</span> : <span class="changelog">$release.changelog</span></p>
+          <p><span class="resource-label">File-releases</span> :
+  <ul><li py:for="frel in release.file_releases"><span class="resource-value"><a href="${frel.resUri}" class="file-release">${frel.resUri}</a></span></li></ul>
+
+</p>
+        </div>
+      </div>
+      <div py:if="doap.svn_repository" class="repository">
+      <h2 class="repository">SVN Repository</h2>
+        <div py:if="doap.svn_repository.location" class="SVNRepository">
+          <p><span class="resource-label">location</span> :
+          <span class="resource-value"><a href="${doap.svn_repository.location.resUri}" class="location">${doap.svn_repository.location.resUri}</a></span></p>
+          <p><span class="resource-label">browse</span> :
+          <span class="resource-value"><a href="$doap.svn_repository.svn_browse.resUri" class="browse">$doap.svn_repository.svn_browse.resUri</a></span></p>
+        </div>
+      </div>
+      <div py:if="doap.cvs_repository" class="repository">
+      <h2 class="repository">CVS Repository</h2>
+        <div py:if="doap.cvs_repository.module" class="CVSRepository">
+          <p><span class="literal-label">module</span> : <span class="module">${doap.cvs_repository.module}</span></p>
+          <p><span class="literal-label">anon-root</span> : <span class="anon-root">${doap.cvs_repository.anon_root}</span></p>
+          <p><span class="resource-label">browse</span> : <span class="resource-value"><a href="$doap.cvs_repository.cvs_browse.resUri" class="browse">$doap.cvs_repository.cvs_browse.resUri</a></span></p>
+        </div>
+      </div>
+      <!-- This could be done in one section by passing a list perhaps? ['developer', 'maintainer',...] -->
+      <div py:for="maintainer in doap.maintainer" class="maintainer">
+        <h2>Maintainers</h2>
+        <div class="Person">
+          <p py:if="maintainer[foaf.name]"><span class="literal-label">name</span> :
+          <span class="name">${maintainer[foaf.name]}</span></p>
+          <p py:if="maintainer[foaf.homepage]"><span class="resource-label">homepage</span> :
+          <span class="resource-value"><a href="${maintainer[foaf.homepage].resUri}" class="homepage">${maintainer[foaf.homepage].resUri}</a></span></p>
+          <p py:if="maintainer[foaf.mbox]"><span class="resource-label">mbox</span> :
+          <span class="resource-value"><a href="${maintainer[foaf.mbox].resUri}" class="mbox">${maintainer[foaf.mbox].resUri}</a></span></p>
+          <p py:if="maintainer[foaf.mbox_sha1sum]"><span class="literal-label">mbox_sha1sum</span> :
+          <span class="mbox_sha1sum">${maintainer[foaf.mbox_sha1sum]}</span></p>
+        </div>
+      </div>
+      <div py:for="developer in doap.developer" class="developer">
+        <h2>Developers</h2>
+        <div class="Person">
+          <p py:if="developer[foaf.name]"><span class="literal-label">name</span> :
+          <span class="name">${developer[foaf.name]}</span></p>
+          <p py:if="developer[foaf.homepage]"><span class="resource-label">homepage</span> :
+          <span class="resource-value"><a href="${developer[foaf.homepage].resUri}" class="homepage">${developer[foaf.homepage].resUri}</a></span></p>
+          <p py:if="developer[foaf.mbox]"><span class="resource-label">mbox</span> :
+          <span class="resource-value"><a href="${developer[foaf.mbox].resUri}" class="mbox">${developer[foaf.mbox].resUri}</a></span></p>
+          <p py:if="developer[foaf.mbox_sha1sum]"><span class="literal-label">mbox_sha1sum</span> :
+          <span class="mbox_sha1sum">${developer[foaf.mbox_sha1sum]}</span></p>
+        </div>
+      </div>
+      <div py:for="documenter in doap.documenter" class="documenter">
+        <h2>Documenters</h2>
+        <div class="Person">
+          <p py:if="documenter[foaf.name]"><span class="literal-label">name</span> :
+          <span class="name">${documenter[foaf.name]}</span></p>
+          <p py:if="documenter[foaf.homepage]"><span class="resource-label">homepage</span> :
+          <span class="resource-value"><a href="${documenter[foaf.homepage].resUri}" class="homepage">${documenter[foaf.homepage].resUri}</a></span></p>
+          <p py:if="documenter[foaf.mbox]"><span class="resource-label">mbox</span> :
+          <span class="resource-value"><a href="${documenter[foaf.mbox].resUri}" class="mbox">${documenter[foaf.mbox].resUri}</a></span></p>
+          <p py:if="documenter[foaf.mbox_sha1sum]"><span class="literal-label">mbox_sha1sum</span> :
+          <span class="mbox_sha1sum">${documenter[foaf.mbox_sha1sum]}</span></p>
+        </div>
+      </div>
+      <div py:for="translator in doap.translator" class="translator">
+        <h2>Translators</h2>
+        <div class="Person">
+          <p py:if="translator[foaf.name]"><span class="literal-label">name</span> :
+          <span class="name">${translator[foaf.name]}</span></p>
+          <p py:if="translator[foaf.homepage]"><span class="resource-label">homepage</span> :
+          <span class="resource-value"><a href="${translator[foaf.homepage].resUri}" class="homepage">${translator[foaf.homepage].resUri}</a></span></p>
+          <p py:if="translator[foaf.mbox]"><span class="resource-label">mbox</span> :
+          <span class="resource-value"><a href="${translator[foaf.mbox].resUri}" class="mbox">${translator[foaf.mbox].resUri}</a></span></p>
+          <p py:if="translator[foaf.mbox_sha1sum]"><span class="literal-label">mbox_sha1sum</span> :
+          <span class="mbox_sha1sum">${translator[foaf.mbox_sha1sum]}</span></p>
+        </div>
+      </div>
+      <div py:for="tester in doap.tester" class="tester">
+        <h2>Testers</h2>
+        <div class="Person">
+          <p py:if="tester[foaf.name]"><span class="literal-label">name</span> :
+          <span class="name">${tester[foaf.name]}</span></p>
+          <p py:if="tester[foaf.homepage]"><span class="resource-label">homepage</span> :
+          <span class="resource-value"><a href="${tester[foaf.homepage].resUri}" class="homepage">${tester[foaf.homepage].resUri}</a></span></p>
+          <p py:if="tester[foaf.mbox]"><span class="resource-label">mbox</span> :
+          <span class="resource-value"><a href="${tester[foaf.mbox].resUri}" class="mbox">${tester[foaf.mbox].resUri}</a></span></p>
+          <p py:if="tester[foaf.mbox_sha1sum]"><span class="literal-label">mbox_sha1sum</span> :
+          <span class="mbox_sha1sum">${tester[foaf.mbox_sha1sum]}</span></p>
+        </div>
+      </div>
+      <div py:for="helper in doap.helper" class="helper">
+        <h2>Helpers</h2>
+        <div class="Person">
+          <p py:if="helper[foaf.name]"><span class="literal-label">name</span> :
+          <span class="name">${helper[foaf.name]}</span></p>
+          <p py:if="helper[foaf.homepage]"><span class="resource-label">homepage</span> :
+          <span class="resource-value"><a href="${helper[foaf.homepage].resUri}" class="homepage">${helper[foaf.homepage].resUri}</a></span></p>
+          <p py:if="helper[foaf.mbox]"><span class="resource-label">mbox</span> :
+          <span class="resource-value"><a href="${helper[foaf.mbox].resUri}" class="mbox">${helper[foaf.mbox].resUri}</a></span></p>
+          <p py:if="helper[foaf.mbox_sha1sum]"><span class="literal-label">mbox_sha1sum</span> :
+          <span class="mbox_sha1sum">${helper[foaf.mbox_sha1sum]}</span></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
