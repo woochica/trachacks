@@ -18,6 +18,7 @@ Example:
 [[TicketBox('Different Title',#1,#2)]] ... Specify title
 [[TicketBox(\"Other Title\",#1,#2)]]     ... likewise
 [[TicketBox('%d tickets',#1,#2)]]      ... embed ticket count in title
+[[TicketBox({1}, nosort)]]             ... display numbers without sort
 }}}
 
 [wiki:TracReports#AdvancedReports:DynamicVariables Dynamic Variables] 
@@ -56,8 +57,7 @@ args_pat = [r"#?(?P<tktnum>\d+)",
             r"{(?P<rptnum>\d+)}",
             r"\[report:(?P<rptnum2>\d+)(?P<dv>\?.*)?\]",
             r"(?P<width>\d+(pt|px|%))",
-            r"(?P<summary>summary)",
-            r"(?P<inline>inline)",
+            r"(?P<keyword>nosort|summary|inline)",
             r"(?P<title1>'.*')",
             r'(?P<title2>".*")']
 
@@ -79,6 +79,7 @@ def execute(hdf, txt, env):
     long_items = {}
     show_summary = False
     inline = False
+    nosort = False
     title = "Tickets"
     args_re = re.compile("^(?:" + string.join(args_pat, "|") + ")$")
     for arg in [string.strip(s) for s in txt.split(',')]:
@@ -94,10 +95,14 @@ def execute(hdf, txt, env):
             styles['width'] = match.group('width')
         elif match.group('tktnum'):
             items.append(int(match.group('tktnum')))
-        elif match.group('summary'):
-            show_summary = True
-        elif match.group('inline'):
-            inline = True
+        elif match.group('keyword'):
+            kw = match.group('keyword').lower()
+            if kw == 'summary':
+                show_summary = True
+            elif kw == 'inline':
+                inline = True
+            elif kw == 'nosort':
+                nosort = True
         elif match.group('rptnum') or match.group('rptnum2'):
             num = match.group('rptnum') or match.group('rptnum2')
             dv = {}
@@ -144,7 +149,8 @@ def execute(hdf, txt, env):
                     curs.close()
                     db.close()
     items = uniq(items)
-    items.sort()
+    if not nosort:
+        items.sort()
     html = ''
 
     if show_summary:
