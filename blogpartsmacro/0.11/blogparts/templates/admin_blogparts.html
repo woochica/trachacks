@@ -1,0 +1,124 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>BlogParts</title>
+  </head>
+
+  <body>
+    <h2>BlogParts Management</h2>
+
+    <py:choose test="view">
+      <form py:when="'detail'" class="mod" id="modifyblogpart" method="post">
+        <fieldset>
+          <legend>Modify BlogParts:</legend>
+          <div class="field">
+            <label>Name:<br />
+              <input type="text" name="name" value="${blogpart.name}" />
+            </label>
+          </div>
+          <div class="field">
+            <fieldset class="iefix">
+              <label for="description">
+                  Description (you may use <a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a> here):
+              </label>
+              <p>
+                <textarea id="description" name="description" class="wikitext" rows="6" cols="60">
+$blogpart.description</textarea>
+              </p>
+            </fieldset>
+          </div>
+          <div class="field">
+            <fieldset class="iefix">
+              <label for="body">
+                Body HTML:
+              </label>
+              <p>
+                <textarea id="body" name="body" class="x-form-textarea x-form-field" rows="6" cols="60">
+$blogpart.body</textarea>
+              </p>
+            </fieldset>
+          </div>
+
+          <div class="buttons">
+            <input type="submit" name="cancel" value="Cancel"/>
+            <input type="submit" name="save" value="Save"/>
+          </div>
+        </fieldset>
+      </form>
+
+      <py:otherwise>
+        <form class="addnew" id="addblogpart" method="post">
+          <fieldset>
+            <legend>Add BlogParts:</legend>
+            <div class="field">
+              <label>Name:<br /><input type="text" name="name" id="name" /></label>
+            </div>
+            <div class="field">
+              <fieldset class="iefix">
+                <label for="description">
+                  Description (you may use <a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a> here):
+                </label>
+                <p>
+                  <textarea id="description" name="description" class="wikitext" rows="6" cols="44">
+</textarea>
+                </p>
+              </fieldset>
+            </div>
+            <div class="field">
+              <fieldset class="iefix">
+                <label for="body">
+                  Body HTML:
+                </label>
+                <p>
+                  <textarea id="body" name="body" class="x-form-textarea x-form-field" rows="6" cols="44">
+</textarea>
+                </p>
+              </fieldset>
+            </div>
+
+            <div class="buttons">
+              <input type="submit" name="add" value="Add" />
+            </div>
+          </fieldset>
+        </form>
+
+        <py:choose>
+          <form py:when="blogparts" id="blogpart_table" method="POST">
+            <table class="listing" id="verlist">
+              <thead>
+                <tr><th class="sel">&nbsp;</th>
+                  <th>Name</th><th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr py:for="blogpart in blogparts">
+                  <td><input type="checkbox" name="sel" value="${blogpart.name}"/></td>
+                  <td><a href="${panel_href(blogpart.name)}">${blogpart.name}</a></td>
+                  <td>${wiki_to_html(context, blogpart.description)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="buttons">
+              <input type="submit" name="remove" value="Delete selected item" />
+            </div>
+            <p class="help">
+              You can remove all items from this list to completely hide this
+              field from the user interface.
+            </p>
+          </form>
+
+          <p py:otherwise="" class="help">
+            As long as you don't add any items to the list, this field
+            will remain completely hidden from the user interface.
+          </p>
+        </py:choose>
+      </py:otherwise>
+    </py:choose>
+  </body>
+
+</html>
