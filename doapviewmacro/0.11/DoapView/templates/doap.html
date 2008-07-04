@@ -105,7 +105,7 @@ h2, h3, h4{
 .release{
     border-left: 3px solid #600;
     border-bottom: 3px solid #600;
-    padding-left: 10px
+    padding-left: 30px
 }
 
 .mailing-list{
@@ -120,6 +120,9 @@ h2, h3, h4{
 
 }
 
+.repo{
+    padding-left: 10px
+}
 .repository{
     border-left: 3px solid #600;
     border-bottom: 3px solid #600;
@@ -169,26 +172,41 @@ h2, h3, h4{
 .maintainer{
     border-left: 3px solid #600;
     border-bottom: 3px solid #600;
-    padding-left: 10px
+    padding-left: 30px
 }
 
 .developer{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 30px
 
 }
 
 .documenter{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 30px
 
 }
 
 .translator{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 30px
 
 }
 
 .tester{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 30px
 
 }
 
 .helper{
+    border-left: 3px solid #600;
+    border-bottom: 3px solid #600;
+    padding-left: 30px
 
 }
 
@@ -234,7 +252,7 @@ h2, h3, h4{
 }
 
 
-
+</style>
 </head>
   <body>
     <div class="Project">
@@ -283,7 +301,7 @@ h2, h3, h4{
         </div>
       </div>
       <div py:if="doap.svn_repository" class="repository">
-      <h2 class="repository">SVN Repository</h2>
+      <h2 class="repo">SVN Repository</h2>
         <div py:if="doap.svn_repository.location" class="SVNRepository">
           <p><span class="resource-label">location</span> :
           <span class="resource-value"><a href="${doap.svn_repository.location.resUri}" class="location">${doap.svn_repository.location.resUri}</a></span></p>
@@ -292,7 +310,7 @@ h2, h3, h4{
         </div>
       </div>
       <div py:if="doap.cvs_repository" class="repository">
-      <h2 class="repository">CVS Repository</h2>
+      <h2 class="repo">CVS Repository</h2>
         <div py:if="doap.cvs_repository.module" class="CVSRepository">
           <p><span class="literal-label">module</span> : <span class="module">${doap.cvs_repository.module}</span></p>
           <p><span class="literal-label">anon-root</span> : <span class="anon-root">${doap.cvs_repository.anon_root}</span></p>
