@@ -3,7 +3,7 @@
 from setuptools import setup
 
 PACKAGE = 'DoapViewPlugin'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(name=PACKAGE, version=VERSION,
       author = 'Rob Cakebread',
@@ -24,6 +24,7 @@ setup(name=PACKAGE, version=VERSION,
       description='Renders DOAP (Description of a Project) RDF in a Trac wiki',
       license='GPL-2',
       package_dir={ 'DoapView' : 'DoapView'},
+      zip_safe=True,
       packages=['DoapView'],
       package_data={ 'DoapView' : ['DoapView/*', 'DoapView/templates/*.html']},
       entry_points={'trac.plugins': ['DoapView.DoapView = DoapView.DoapView']},
