@@ -69,7 +69,7 @@ def execute(formatter, args):
     if not txt:
         txt = ''
     items = []
-    long_items = {}
+    summaries = {}
     show_summary = False
     inline = False
     nosort = False
@@ -128,7 +128,7 @@ def execute(formatter, args):
                     summ = descriptions.index('summary')
                     for row in rows:
                         items.append(row[idx])
-                        long_items[row[idx]] = row[summ]
+                        summaries[row[idx]] = row[summ]
             finally:
                 if not hasattr(env, 'get_cnx_pool'):
                     # without db connection pool, we should close db.
@@ -139,10 +139,10 @@ def execute(formatter, args):
         items.sort()
     html = ''
     if show_summary:
-        html = string.join([wiki_to_oneliner("%s (#%d)" % (v,k),
+        html = string.join([wiki_to_oneliner("%s (#%d)" % (summaries[n],n),
                                              env,
                                              env.get_db_cnx(),
-                                             req=formatter.req) for k,v in long_items.iteritems()], "<br>")
+                                             req=formatter.req) for n in items], "<br>")
     else:
         html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
                                 env, env.get_db_cnx(), req=formatter.req)

@@ -72,7 +72,7 @@ def execute(hdf, txt, env):
     if not txt:
         txt = ''
     items = []
-    long_items = {}
+    summaries = {}
     show_summary = False
     inline = False
     nosort = False
@@ -132,7 +132,7 @@ def execute(hdf, txt, env):
                     summ = descriptions.index('summary')
                     for row in rows:
                         items.append(row[idx])
-                        long_items[row[idx]] = row[summ]
+                        summaries[row[idx]] = row[summ]
             finally:
                 if not hasattr(env, 'get_cnx_pool'):
                     # without db connection pool, we should close db.
@@ -144,8 +144,8 @@ def execute(hdf, txt, env):
     html = ''
 
     if show_summary:
-        html = string.join([wiki_to_oneliner("%s (#%d)" % (v,k),
-                                             env, env.get_db_cnx()) for k,v in long_items.iteritems()], "<br>")
+        html = string.join([wiki_to_oneliner("%s (#%d)" % (summaries[n]),
+                                             env, env.get_db_cnx()) for n in items], "<br>")
     else:
         html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
                                 env, env.get_db_cnx())
