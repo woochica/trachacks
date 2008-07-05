@@ -1,3 +1,16 @@
+tracforms-0.2.1:
+* Fixed #3300 : /wiki versus /wiki/WikiStart
+* Fixed #3326 : field %r and dealing with errors.
+
+tracforms-0.2:
+* Fixed #3262 : Added option drop-down lists.
+* Fixed #3261 : Added support for textarea.  This also triggered the ability
+                to add -class and -id as well as commands to set the form's
+                CSS state.
+* Fixed #3267 : Added operation templates
+* Fixed #3268 : Added sum, sumif, count, countif, sumprod, zip, filter, int
+                quote, and value functions.
+
 tracforms-0.1.2: 
 * Fixed #3259 : Problems with multiple forms on the same page.
 * Fixed #3258 : Radio wasn't working.
@@ -8,13 +21,4 @@ tracforms-0.1.1:
 
 tracforms-0.1: 
 * Original release
-
-COMMITTED in tracforms-0.2:
-* Fixed #3262 : Added option drop-down lists.
-* Fixed #3261 : Added support for textarea.  This also triggered the ability
-                to add -class and -id as well as commands to set the form's
-                CSS state.
-* Fixed #3267 : Added operation templates
-* Fixed #3268 : Added sum, sumif, count, countif, sumprod, zip, filter, int
-                quote, and value functions.
 
