@@ -3,6 +3,10 @@ from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 import sys, StringIO, re, traceback, cgi, time, fnmatch
 from iface import TracFormDBUser, TracPasswordStoreUser
+from errors import TracFormError, \
+    TracFormTooManyValuesError, \
+    TracFormNoOperationError, \
+    TracFormNoCommandError
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
 argstrRE = re.compile('%(.*?)%')
@@ -59,6 +63,8 @@ class TracFormProcessor(object):
 
         # Setup preliminary context
         self.page = formatter.req.path_info
+        if self.page == '/wiki' or self.page == '/wiki/':
+            self.page = '/wiki/WikiStart'
 
         # Remove leading comments and process commands.
         textlines = []
@@ -81,6 +87,8 @@ class TracFormProcessor(object):
                         else:
                             try:
                                 fn(*args, **kw)
+                            except TracFormError, e:
+                                errors.append(str(e))
                             except Exception, e:
                                 errors.append(traceback.format_exc())
             else:
@@ -320,7 +328,7 @@ class TracFormProcessor(object):
             _op, _args = _args[0], _args[1:]
         op = getattr(_self, 'op_' + _op, None)
         if op is None:
-            return 'ERROR: No operation named %r' % str(_name)
+            raise TracFormTooManyValuesError(str(_name))
         def partial(*_newargs, **_newkw):
             if _kw or _newkw:
                 kw = dict(_kw)
@@ -345,13 +353,15 @@ class TracFormProcessor(object):
         if fn is None:
             fn = getattr(self, 'op_' + op.lower(), None)
         if fn is None:
-            return 'ERROR: No TracForm operation "%s"' % str(op)
+            raise TracFormTooManyValuesError(str(op))
         else:
             try:
                 if op[:5] == 'wikiop_':
                     return self.wiki(str(fn(*args)))
                 else:
                     return str(fn(*args, **kw))
+            except TracFormError, e:
+                return '<PRE>' + str(e) + '</PRE>'
             except Exception, e:
                 return '<PRE>' + traceback.format_exc() + '</PRE>'
 
@@ -369,7 +379,7 @@ class TracFormProcessor(object):
             elif len(current) == 1:
                 current = current[0]
             else:
-                return 'ERROR: field %r has too many values' % str(name)
+                raise TracFormTooManyValuesError(str(name))
         return current
 
     def op_input(self, field, _id=None, _class=None):
