@@ -1,4 +1,8 @@
-# Plugin for trac 0.11
+"""
+TicketSubmitPolicy:
+Plugin for trac 0.11
+controls ticket submission form via JS
+"""
 
 import re
 
@@ -10,6 +14,7 @@ from interface import ITicketSubmitPolicy
 
 from trac.admin.api import IAdminPanelProvider
 from trac.core import *
+from trac.ticket import Ticket
 from trac.web import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider
 
@@ -27,13 +32,16 @@ class TicketSubmitPolicyPlugin(Component):
     enforce a policy for allowing ticket submission based on fields
     """
 
-    implements(ITemplateStreamFilter) 
+    implements(ITemplateStreamFilter, IAdminPanelProvider, ITemplateProvider) 
     policies = ExtensionPoint(ITicketSubmitPolicy)
 
     comparitors = { 'is': 1,
                     'is not': 1,
                     'is in': 'Array',
                     'is not in': 'Array' }
+
+    ### methods for accessing the policies
+    # XXX the naming convention for these is horrible
 
     def policy_dict(self):
         retval = {}
@@ -302,7 +310,8 @@ function policytostring(policy)
         The items returned by this function must be tuples of the form
         `(category, category_label, page, page_label)`.
         """
-        return []
+        if req.perm.has_permission('TRAC_ADMIN'): # XXX needed?
+            yield ('ticket', 'Ticket System', 'policy', 'Submit Policy')
 
     def render_admin_panel(self, req, category, page, path_info):
         """Process a request for an admin panel.
@@ -311,6 +320,11 @@ function policytostring(policy)
         where `template` is the name of the template to use and `data` is the
         data to be passed to the template.
         """
+        data = { 'policies': self.parse() } # data for template
+        data['fields'] = Ticket(self.env).fields
+        data['comparitors'] = self.comparitors
+
+        return ('ticketsubmitpolicy.html', data)
 
 
     ### methods for ITemplateProvider

@@ -1,0 +1,87 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Ticket Submit Policy</title>
+  </head>
+  <body>
+    <div py:for="name in sorted(policies.keys())" class="plugin">
+      <h2>${name}</h2>
+      <form id="${name}" method="post">
+
+      <div>
+	<h3>Condition</h3>
+	
+	  <table>
+	    <tr py:for="condition in policies[name]['condition']">
+	      
+	      <td class="field">
+		<select name="${name}-condition-field">
+		  <py:for each="field in fields">
+		    <option py:attrs="{'selected': condition['field']
+				      == field['name'] or None}">
+		      ${field['name']}
+		    </option>
+		  </py:for>
+		</select>
+	      </td>
+	      
+	      <td class="operator">
+		<select name="${name}-condition-operator">
+		  <py:for each="comparitor in comparitors">
+		     <option py:attrs="{'selected':
+				       condition['comparitor'] ==
+				       comparitor or None}">
+		       ${comparitor}
+		     </option>
+		  </py:for>
+		</select>
+	      </td>
+	      
+	      <td>
+		<input type="text" value="${condition['value']}"/>
+	      </td>
+	    </tr>
+	  </table>
+      </div>
+
+      <div>
+	<h3>Policy</h3>
+	
+	<tr py:for="action in policies[name]['actions']">
+	  <td>
+	    <b>${action['name']}</b>
+	  </td>
+	  <td>
+	    <py:for each="field in fields">
+	      <input type="checkbox"
+		     name="${name}-${action['name']}"
+		     value="${field['name']}"
+		     py:attrs="{'checked': field['name'] in
+		     action['args'] or None}"
+		     />
+	      <label for="${name}-${action['name']}">${field['name']}</label>
+	    </py:for>
+	  </td>
+	</tr>
+      </div>
+
+      <input type="submit" name="apply" value="Apply Changes"/>
+      <input type="submit" name="remove" value="Remove"/>
+      </form>
+
+    </div>
+
+    <div>
+      <form id="new-policy" name="new-policy">
+	<input type="text"/>
+	<input type="submit" name="add-policy" value="Add Policy"/>
+      </form>
+    </div>
+    
+  </body>
+</html>
