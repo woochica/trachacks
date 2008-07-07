@@ -17,7 +17,7 @@
 	<h3>Condition</h3>
 	
 	  <table>
-	    <tr py:for="condition in policies[name]['condition']">
+	    <tr py:for="index, condition in enumerate(policies[name]['condition'])">
 	      
 	      <td class="field">
 		<select name="${name}-condition-field">
@@ -45,8 +45,13 @@
 	      <td>
 		<input type="text" value="${condition['value']}"/>
 	      </td>
+
+	      <td class="actions">
+		<input type="submit" name="rm_condition_${index}" value="-"/>
+	      </td>
 	    </tr>
 	  </table>
+	  <input type="submit" name="add_condition}" value="+"/>
       </div>
 
       <div>
@@ -66,6 +71,9 @@
 		     />
 	      <label for="${name}-${action['name']}">${field['name']}</label>
 	    </py:for>
+	  </td>
+	  <td class="actions">
+	    <input type="submit" name="rm_policy_${action['name']}" value="-"/>
 	  </td>
 	</tr>
       </div>
