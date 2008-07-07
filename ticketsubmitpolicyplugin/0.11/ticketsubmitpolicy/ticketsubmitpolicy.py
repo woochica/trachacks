@@ -8,8 +8,8 @@ from genshi.filters import Transformer
 
 from interface import ITicketSubmitPolicy
 
-from trac.core import *
 from trac.admin.api import IAdminPanelProvider
+from trac.core import *
 from trac.web import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider
 
@@ -311,10 +311,11 @@ function policytostring(policy)
         where `template` is the name of the template to use and `data` is the
         data to be passed to the template.
         """
-        
+
+
     ### methods for ITemplateProvider
 
-    def get_htdocs_dirs():
+    def get_htdocs_dirs(self):
         """Return a list of directories with static resources (such as style
         sheets, images, etc.)
 
@@ -325,8 +326,11 @@ function policytostring(policy)
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
+        return []
 
-    def get_templates_dirs():
+    def get_templates_dirs(self):
         """Return a list of directories containing the provided template
         files.
         """
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
