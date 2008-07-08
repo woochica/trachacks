@@ -329,8 +329,6 @@ function policytostring(policy)
 
         if req.method == 'POST':
 
-            import pdb;  pdb.set_trace()
-
             # get the conditions and policies from the request
 
             # added conditions

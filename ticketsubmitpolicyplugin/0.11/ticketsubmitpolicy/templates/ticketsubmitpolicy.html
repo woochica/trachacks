@@ -85,6 +85,7 @@
 		     len(self_actions)">
 	  Add action: 
 	  <select name="add_action_${name}">
+	    <option></option>
 	    <py:for each="action in [ i.name() for i in self_actions
 	  if i.name() not in [ j['name'] for j in policies[name]['actions']]]">
 	      <option>${action}</option>
