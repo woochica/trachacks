@@ -33,6 +33,8 @@ class TicketSubmitPolicyPlugin(Component):
     """
 
     implements(ITemplateStreamFilter, IAdminPanelProvider, ITemplateProvider) 
+    
+    # XXX this should be renamed -> actions
     policies = ExtensionPoint(ITicketSubmitPolicy)
 
     comparitors = { 'is': 1,
@@ -321,8 +323,24 @@ function policytostring(policy)
         data to be passed to the template.
         """
         data = { 'policies': self.parse() } # data for template
-        data['fields'] = Ticket(self.env).fields
-        data['comparitors'] = self.comparitors
+        data['fields'] = Ticket(self.env).fields # possible ticket fields
+        data['comparitors'] = self.comparitors # implemented comparitors
+        data['self_actions'] = self.policies # available policies
+
+        if req.method == 'POST':
+
+            import pdb;  pdb.set_trace()
+
+            # get the conditions and policies from the request
+
+            # added conditions
+            new_conditions = [ i.split('add_condition_', 1)[-1] 
+                               for i in req.args.keys() 
+                               if i.startswith('add_condition_') ]
+            for name in new_conditions:
+                data['policies'][name]['condition'].append(dict(comparitor='', field='', value=''))
+
+            # added actions
 
         return ('ticketsubmitpolicy.html', data)
 

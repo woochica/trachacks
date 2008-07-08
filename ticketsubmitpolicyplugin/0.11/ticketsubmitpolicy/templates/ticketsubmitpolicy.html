@@ -9,9 +9,10 @@
     <title>Ticket Submit Policy</title>
   </head>
   <body>
+
+    <form method="post">
     <div py:for="name in sorted(policies.keys())" class="plugin">
       <h2>${name}</h2>
-      <form id="${name}" method="post">
 
       <div>
 	<h3>Condition</h3>
@@ -20,7 +21,7 @@
 	    <tr py:for="index, condition in enumerate(policies[name]['condition'])">
 	      
 	      <td class="field">
-		<select name="${name}-condition-field">
+		<select name="condition_field_${name}">
 		  <py:for each="field in fields">
 		    <option py:attrs="{'selected': condition['field']
 				      == field['name'] or None}">
@@ -31,7 +32,7 @@
 	      </td>
 	      
 	      <td class="operator">
-		<select name="${name}-condition-operator">
+		<select name="condition_operator_${name}">
 		  <py:for each="comparitor in comparitors">
 		     <option py:attrs="{'selected':
 				       condition['comparitor'] ==
@@ -43,7 +44,7 @@
 	      </td>
 	      
 	      <td>
-		<input type="text" value="${condition['value']}"/>
+		<input type="text" name="condition_value_${name}" value="${condition['value']}"/>
 	      </td>
 
 	      <td class="actions">
@@ -51,12 +52,13 @@
 	      </td>
 	    </tr>
 	  </table>
-	  <input type="submit" name="add_condition}" value="+"/>
+	  <input type="submit" name="add_condition_${name}" value="+"/>
       </div>
 
       <div>
 	<h3>Policy</h3>
 	
+	<table>
 	<tr py:for="action in policies[name]['actions']">
 	  <td>
 	    <b>${action['name']}</b>
@@ -73,23 +75,36 @@
 	    </py:for>
 	  </td>
 	  <td class="actions">
-	    <input type="submit" name="rm_policy_${action['name']}" value="-"/>
+	    <input type="submit" name="rm_action_${action['name']}_${name}" value="-"/>
 	  </td>
 	</tr>
+	</table>
+	
+	<!-- new policy checkbox -->
+	<py:if test="len(policies[name]['actions']) !=
+		     len(self_actions)">
+	  Add action: 
+	  <select name="add_action_${name}">
+	    <py:for each="action in [ i.name() for i in self_actions
+	  if i.name() not in [ j['name'] for j in policies[name]['actions']]]">
+	      <option>${action}</option>
+	    </py:for>	      	      
+	  </select>
+	</py:if>
+
       </div>
 
       <input type="submit" name="apply" value="Apply Changes"/>
       <input type="submit" name="remove" value="Remove"/>
-      </form>
 
     </div>
 
     <div>
-      <form id="new-policy" name="new-policy">
-	<input type="text"/>
-	<input type="submit" name="add-policy" value="Add Policy"/>
-      </form>
+      <input type="text"/>
+      <input type="submit" name="add-policy" value="Add Policy"/>
     </div>
+
+    </form>
     
   </body>
 </html>
