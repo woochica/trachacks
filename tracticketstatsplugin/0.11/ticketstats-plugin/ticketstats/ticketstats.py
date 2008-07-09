@@ -1,6 +1,13 @@
+## $Id$ ###
 #
+# FILE:         $URL: http://dev.phluidcorp.com/svn/software/dev/u
+# REVISION      $Rev$
+#    
+# PROJECT:      TracTicketStatistics 
+# ORIGINAL AUTHOR:  Prentice Wongvibulisn
+# $LastChangedBy$
 #
-#
+#############################################################
 
 import re
 
@@ -9,6 +16,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.perm import IPermissionRequestor
 
 from datetime import datetime, time, timedelta
 from trac.util.datefmt import to_timestamp, utc
@@ -19,16 +27,20 @@ DEFAULT_INTERVAL = 30
 # ************************
 
 class TicketStatsPlugin(Component):
-	implements(INavigationContributor, IRequestHandler, ITemplateProvider)
+	implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor)
 
 	# ==[ INavigationContributor methods ]==
 
 	def get_active_navigation_item(self, req):
 		return 'ticketstats'
 
+	def get_permission_actions(self):
+		return ['TSTATS_VIEW']
+
 	def get_navigation_items(self, req):
-		yield ('mainnav', 'ticketstats', 
-			tag.a('Ticket Stats', href=req.href.ticketstats()))
+		if req.perm.has_permission('TSTATS_VIEW'):
+			yield ('mainnav', 'ticketstats', 
+				tag.a('Ticket Stats', href=req.href.ticketstats()))
 
 	# ==[ Helper functions ]==
 	def _get_num_closed_tix(self, from_date, at_date, req):

@@ -35,7 +35,7 @@ YAHOO.widget.Chart.SWFURL = "http://yui.yahooapis.com/2.5.2/build/charts/assets/
 var mychartdata = 
 [
 //
-	<?cs each:item = ticket_data.chart_data ?>{ date: "<?cs var:item.date ?>", new_tickets: <?cs var:item.new ?>, closed: <?cs var:item.closed ?>, open: <?cs var:item.open ?> },
+	<?cs each:item = ticket_data.chart_data ?>{ date: "<?cs var:item.date ?>", new_tickets: <?cs vAr:item.new ?>, closed: <?cs var:item.closed ?>, open: <?cs var:item.open ?> },
 	<?cs /each ?>
 ];
 
@@ -50,7 +50,7 @@ var seriesDef =
 [
 	{ displayName: "New Tickets", yField: "new_tickets", style: {color: 0xff0000, size: 40} },
 	{ displayName: "Closed Tickets", yField: "closed", style: {color: 0x00ff00, size:40} },
-	{ type: "line", displayName: "Open Tickets", yField: "open", style: {color: 0x0000ff} },
+	{ type: "line", displayName: "Open Tickets", yField: "open", style: {color: 0x0000ff} }
 ];
 
 var numtixAxis = new YAHOO.widget.NumericAxis();
@@ -69,7 +69,7 @@ var mychart = new YAHOO.widget.ColumnChart( "chart", myDataSource,
 	series: seriesDef,
 	yAxis: numtixAxis,
 	dataTipFunction: YAHOO.example.getDataTipText,
-	style: {legend: {display: "bottom"}},
+	style: {legend: {display: "bottom"}}
 });
 
 
