@@ -18,6 +18,8 @@
     <div py:for="name in sorted(policies.keys())" class="plugin">
       <h2>${name}</h2>
 
+      <input type="hidden" name="policy" value="${name}"/>
+
       <div>
 	<h3>Condition</h3>
 	
@@ -107,7 +109,7 @@
     </div>
 
     <div>
-      <input type="text"/>
+      <input type="text" name="new-policy"/>
       <input type="submit" name="add-policy" value="Add Policy"/>
     </div>
 

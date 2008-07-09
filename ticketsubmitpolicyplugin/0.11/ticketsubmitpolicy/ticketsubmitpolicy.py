@@ -348,7 +348,7 @@ function policytostring(policy)
         where `template` is the name of the template to use and `data` is the
         data to be passed to the template.
         """
-        data = { 'policies': self.parse() } # data for template
+        data = {} # data for template
         data['fields'] = Ticket(self.env).fields # possible ticket fields
         data['comparitors'] = self.comparitors # implemented comparitors
         data['self_actions'] = self.policies # available policies
@@ -360,15 +360,17 @@ function policytostring(policy)
             data['saved'] = False
 
             # organize request args based on policy
-            args = dict([(key, {}) for key in data['policies']])
+            policies = req.args.get('policy', [])
+            if isinstance(policies, basestring):
+                policies = [ policies ]
+            args = dict([(policy, {}) for policy in policies ])
             for arg, value in req.args.items():
-                for policy in data['policies']:
+                for policy in policies:
                     token = '_%s' % policy
                     if arg.endswith(token):
                         args[policy][arg.rsplit(token, 1)[0]] = value
                 
             # get the conditions and policies from the request
-            old_policies = data['policies'] # XXX for debugging
             data['policies'] = {}
             for policy in args:
                 if 'remove' in args[policy]:
@@ -414,10 +416,18 @@ function policytostring(policy)
                 data['policies'][name]['condition'].append(dict(comparitor='', field='', value=''))
 
 
+            # added policy
+            new_policy = req.args.get('new-policy')
+            if new_policy:
+                data['policies'][new_policy] = dict(actions=[], condition=[])
+
             # save the data if the user clicks apply
             if 'apply' in req.args:
                 self.save(data['policies'])
                 data['saved'] = True
+
+        if req.method == 'GET' or 'apply' in req.args:
+            data['policies'] = self.parse() 
 
         return ('ticketsubmitpolicy.html', data)
 
