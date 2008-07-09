@@ -329,7 +329,48 @@ function policytostring(policy)
 
         if req.method == 'POST':
 
+            # organize request args based on policy
+            args = dict([(key, {}) for key in data['policies']])
+            for arg, value in req.args.items():
+                for policy in data['policies']:
+                    token = '_%s' % policy
+                    if arg.endswith(token):
+                        args[policy][arg.rsplit(token, 1)[0]] = value
+                
             # get the conditions and policies from the request
+            old_policies = data['policies']
+            data['policies'] = {}
+            for policy in args:
+                if 'remove' in args[policy]:
+                    continue ### remove this policy
+                conditions = {}
+                data['policies'][policy] = dict(condition=[], actions=[])
+                for field, value in args[policy].items():
+
+                    token = 'condition_'
+                    if field.startswith(token):
+                        name, index = field.split(token, 1)[1].rsplit('_', 1)
+                        index = int(index)
+                        if not conditions.has_key(index):
+                            conditions[index] = {}
+                        conditions[index][name] = value
+                        continue
+
+                    token = 'action_'
+                    if field.startswith(token):
+                        name = field.split(token, 1)[1]
+                        action_args = [ i.strip() for i in value.split(',') ]
+                        data['policies'][policy]['actions'].append(dict(name=name, args=action_args))
+                        
+                # added action
+                new_action =  args[policy].get('add_action')
+                if new_action:
+                    data['policies'][policy]['actions'].append(dict(name=new_action, args=[]))
+
+                for index in sorted(conditions.keys()):
+                    if 'rm_condition_%s' % index not in args[policy]:
+                        data['policies'][policy]['condition'].append(conditions[index])
+
 
             # added conditions
             new_conditions = [ i.split('add_condition_', 1)[-1] 
@@ -338,7 +379,10 @@ function policytostring(policy)
             for name in new_conditions:
                 data['policies'][name]['condition'].append(dict(comparitor='', field='', value=''))
 
-            # added actions
+
+            # save the data if the user clicks apply
+            if 'apply' in req.args:
+                pass
 
         return ('ticketsubmitpolicy.html', data)
 

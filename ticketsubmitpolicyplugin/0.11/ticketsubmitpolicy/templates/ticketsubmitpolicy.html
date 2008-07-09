@@ -21,7 +21,7 @@
 	    <tr py:for="index, condition in enumerate(policies[name]['condition'])">
 	      
 	      <td class="field">
-		<select name="condition_field_${name}">
+		<select name="condition_field_${index}_${name}">
 		  <py:for each="field in fields">
 		    <option py:attrs="{'selected': condition['field']
 				      == field['name'] or None}">
@@ -31,8 +31,8 @@
 		</select>
 	      </td>
 	      
-	      <td class="operator">
-		<select name="condition_operator_${name}">
+	      <td class="comparitor">
+		<select name="condition_comparitor_${index}_${name}">
 		  <py:for each="comparitor in comparitors">
 		     <option py:attrs="{'selected':
 				       condition['comparitor'] ==
@@ -44,11 +44,11 @@
 	      </td>
 	      
 	      <td>
-		<input type="text" name="condition_value_${name}" value="${condition['value']}"/>
+		<input type="text" name="condition_value_${index}_${name}" value="${condition['value']}"/>
 	      </td>
 
 	      <td class="actions">
-		<input type="submit" name="rm_condition_${index}" value="-"/>
+		<input type="submit" name="rm_condition_${index}_${name}" value="-"/>
 	      </td>
 	    </tr>
 	  </table>
@@ -66,12 +66,12 @@
 	  <td>
 	    <py:for each="field in fields">
 	      <input type="checkbox"
-		     name="${name}-${action['name']}"
+		     name="action_${action['name']}_${name}"
 		     value="${field['name']}"
 		     py:attrs="{'checked': field['name'] in
 		     action['args'] or None}"
 		     />
-	      <label for="${name}-${action['name']}">${field['name']}</label>
+	      <label for="action_${action['name']}_${name}">${field['name']}</label>
 	    </py:for>
 	  </td>
 	  <td class="actions">
@@ -95,14 +95,17 @@
 
       </div>
 
-      <input type="submit" name="apply" value="Apply Changes"/>
-      <input type="submit" name="remove" value="Remove"/>
+      <input type="submit" name="remove_${name}" value="Remove"/>
 
     </div>
 
     <div>
       <input type="text"/>
       <input type="submit" name="add-policy" value="Add Policy"/>
+    </div>
+
+    <div>
+      <input type="submit" name="apply" value="Apply Changes"/>
     </div>
 
     </form>
