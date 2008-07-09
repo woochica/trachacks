@@ -51,6 +51,32 @@ class TicketSubmitPolicyPlugin(Component):
             retval[policy.name()] = policy
         return retval
 
+    def save(self, policies):
+
+        # shorthand
+        section = 'ticket-submit-policy'
+        config = self.env.config
+
+        # remove the old section
+        for key, value in config.options(section):
+            config.remove(section, key)
+
+        # create new section from policy dictionary
+        for policy in policies:
+            condition = policies[policy]['condition']
+            if condition:
+                value = ' && '.join(['%s %s %s' % (i['field'], i['comparitor'], i['value']) for i in condition])
+                config.set(section, 
+                           '%s.condition' % policy,
+                           value)
+            for action in policies[policy]['actions']:
+                config.set(section,
+                           '%s.%s' % (policy, action['name']),
+                           ', '.join(action['args']))
+
+        # save the policy
+        config.save()
+
     def parse(self):
         """
         parse the [ticket-submit-policy] section of the config for policy rules
@@ -326,8 +352,12 @@ function policytostring(policy)
         data['fields'] = Ticket(self.env).fields # possible ticket fields
         data['comparitors'] = self.comparitors # implemented comparitors
         data['self_actions'] = self.policies # available policies
+        data['saved'] = True
 
         if req.method == 'POST':
+
+            # mark the page as unsaved
+            data['saved'] = False
 
             # organize request args based on policy
             args = dict([(key, {}) for key in data['policies']])
@@ -338,7 +368,7 @@ function policytostring(policy)
                         args[policy][arg.rsplit(token, 1)[0]] = value
                 
             # get the conditions and policies from the request
-            old_policies = data['policies']
+            old_policies = data['policies'] # XXX for debugging
             data['policies'] = {}
             for policy in args:
                 if 'remove' in args[policy]:
@@ -359,8 +389,12 @@ function policytostring(policy)
                     token = 'action_'
                     if field.startswith(token):
                         name = field.split(token, 1)[1]
-                        action_args = [ i.strip() for i in value.split(',') ]
-                        data['policies'][policy]['actions'].append(dict(name=name, args=action_args))
+                        if args[policy].get('rm_action_%s' % name, False):
+                            continue
+
+                        if isinstance(value, basestring):      
+                            value = [ value ]
+                        data['policies'][policy]['actions'].append(dict(name=name, args=value))
                         
                 # added action
                 new_action =  args[policy].get('add_action')
@@ -382,7 +416,8 @@ function policytostring(policy)
 
             # save the data if the user clicks apply
             if 'apply' in req.args:
-                pass
+                self.save(data['policies'])
+                data['saved'] = True
 
         return ('ticketsubmitpolicy.html', data)
 

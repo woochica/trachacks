@@ -10,6 +10,10 @@
   </head>
   <body>
 
+    <div py:if="not saved">
+      The policy is not saved.  Please click 'Apply Changes' to save
+    </div>
+
     <form method="post">
     <div py:for="name in sorted(policies.keys())" class="plugin">
       <h2>${name}</h2>
@@ -91,6 +95,9 @@
 	      <option>${action}</option>
 	    </py:for>	      	      
 	  </select>
+
+	  <!-- dummy submit button for action adding -->
+	  <input type="submit" name="actionbutton_${name}" value="+"/>
 	</py:if>
 
       </div>
