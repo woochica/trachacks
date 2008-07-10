@@ -21,7 +21,7 @@ function show_selection(e)
   thisurl = document.location.href;
   
   nurl = thisurl.split('/');
-  if ( nurl.pop() != 'newticket')
+  if ( nurl.pop().indexOf('newticket') != 0)
   {
     // remove one more component, unless we're doing "new ticket"
     nurl.pop();
