@@ -134,10 +134,10 @@ class TicketStatsPlugin(Component):
 			#	strptime() appear as the Trac error.
 			#	Maybe a wrapper should be written.
 
-			at_date = datetime.strptime(grab_at_date, "%m/%d/%Y")
+			at_date = datetime(*strptime(grab_at_date, "%m/%d/%Y")[0:6])
 			at_date = datetime.combine(at_date, time(11,59,59,0,utc)) # Add tzinfo
 
-			from_date = datetime.strptime(grab_from_date, "%m/%d/%Y")
+			from_date = datetime(*strptime(grab_from_date, "%m/%d/%Y")[0:6])
 			from_date = datetime.combine(from_date, time(0,0,0,0,utc)) # Add tzinfo
 
 			graph_res = int(grab_resolution)
