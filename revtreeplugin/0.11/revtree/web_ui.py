@@ -20,6 +20,8 @@ from genshi import Markup
 from genshi.builder import tag
 from revtree.api import EmptyRangeError, RevtreeSystem
 from revtree.model import Repository
+from trac.config import Option, IntOption, BoolOption, ListOption, \
+                        Section, ConfigurationError
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import TracError
@@ -119,16 +121,80 @@ class RevtreeStore(object):
         return self.values        
 
 
+class FloatOption(Option):
+    """Descriptor for float configuration options.
+       Option for real number is missing in Trac
+    """
+    
+    def accessor(self, section, name, default=''):
+        """Return the value of the specified option as float.
+        
+        If the specified option can not be converted to a float, a
+        `ConfigurationError` exception is raised.
+        
+        Valid default input is a string or a float. Returns an float.
+        """
+        value = section.get(name, default)
+        if not value:
+            return 0.0
+        try:
+            return float(value)
+        except ValueError:
+            raise ConfigurationError('expected real number, got %s' % \
+                                     repr(value))
+
+class ChoiceOption(Option):
+    """Descriptor for choice configuration options."""
+
+    def __init__(self, section, name, default=None, choices='', doc=''):
+        Option.__init__(self, section, name, default, doc)
+        self.choices = filter(None, [c.strip() for c in choices.split(',')])
+
+    def accessor(self, section, name, default):
+        value = section.get(name, default)
+        if value not in self.choices:
+            raise ConfigurationError('expected a choice among "%s", got %s' % \
+                                     (', '.join(self.choices), repr(value)))
+        return value
+
+    
 class RevtreeModule(Component):
     """Implements the revision tree feature"""
     
     implements(IPermissionRequestor, INavigationContributor, \
                IRequestFilter, IRequestHandler, ITemplateProvider)
-                   
+             
+    # Timeline ranges
     PERIODS = { 1: 'day', 2: '2 days', 3: '3 days', 5: '5 days', 7:'week',
                 14: 'fortnight', 31: 'month', 61: '2 months', 
                 91: 'quarter', 183: 'semester', 366: 'year', 0: 'all' }
+  
+    # Configuration Options
+    branchre = Option('revtree', 'branch_re',
+        r'^(?P<branch>trunk|(?:branches|tags)/[^/]+)(?:/(?P<path>.*))?$',
+        doc = """Regular expression to extract branches from paths""")
     
+    abstime = BoolOption('revtree', 'abstime', 'true',
+        doc = """Timeline filters start on absolute time or on the youngest
+                 revision.""")
+
+    contexts = ListOption('revtree', 'contexts',
+        doc = """Navigation contexts where the Revtree item appears.
+                 If empty, the Revtree item appears in the main navigation
+                 bar.""")
+                 
+    trunks = ListOption('revtree', 'trunks',
+        doc = """Branches that are considered as trunks""")
+    
+    oldest = IntOption('revtree', 'revbase', '1',
+        doc = """Oldest revision to consider (older revisions are ignored)""")
+    
+    style = ChoiceOption('revtree', 'style', 'compact', 'compact,timeline',
+        doc = """Revtree style, 'compact' or 'timeline'""")
+        
+    scale = FloatOption('revtree', 'scale', '1',
+        doc = """Default rendering scale for the SVG graph""")
+        
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
@@ -154,9 +220,10 @@ class RevtreeModule(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if req.perm.has_permission('REVTREE_VIEW'):
-            url_parts = req.path_info.split(u'/')
-            if (url_parts > 1) and (url_parts[1] in self.contexts):
-                add_ctxtnav(req, 'Revtree', href=req.href.revtree())
+            url_parts = filter(None, req.path_info.split(u'/'))
+            if url_parts and (url_parts[0] in self.contexts):
+                add_ctxtnav(req, 'Revtree' % self.contexts, 
+                            href=req.href.revtree())
         return (template, data, content_type)
 
     # IRequestHandler methods
@@ -187,7 +254,7 @@ class RevtreeModule(Component):
     
     def get_templates_dirs(self):
         """Return the absolute path of the directory containing the provided
-        ClearSilver templates.
+        Genshi templates.
         """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
@@ -196,21 +263,7 @@ class RevtreeModule(Component):
             
     def __init__(self):
         """Reads the configuration and run sanity checks"""
-        bre = self.config.get('revtree', 'branch_re',
-                  r'^(?P<branch>trunk|(?:branches|tags)/[^/]+)'
-                  r'(?:/(?P<path>.*))?$')
-        self.bcre = re.compile(bre)
-        self.trunks = self.env.config.get('revtree', 'trunks', 
-                                          'trunk').split(' ')
-        self.scale = float(self.env.config.get('revtree', 'scale', '1'))
-        self.oldest = int(self.env.config.get('revtree', 'revbase', '1'))
-        self.abstime = self.config.getbool('revtree', 'abstime', True)
-        self.style = self.config.get('revtree', 'style', 'compact')
-        if self.style not in [ 'compact', 'timeline']:
-            self.env.log.warning("Unsupported style: %s" % self.style)
-            self.style = 'compact'
-        contexts = self.config.get('revtree', 'contexts', None)
-        self.contexts = contexts and [c.strip() for c in contexts.split(u',')]
+        self.bcre = re.compile(self.branchre)
         self.rt = RevtreeSystem(self.env)
 
     def _process_log(self, req):
