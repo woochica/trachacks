@@ -89,26 +89,41 @@ class FlatTableProcessor(WikiMacroBase):
             return Markup('<br>'.join([format_to_oneliner(self.env, formatter.context, line) \
                                 for line in text.splitlines()]))
 
-        columns = self.parse_doc(args)
-        if not columns:
+        def has_keys(dict, keys):
+            for key in keys:
+                if dict.has_key(key):
+                    return True
+            return False
+
+        rows = self.parse_doc(args)
+        if not rows:
             return Markup()
 
-        header = tag.thead()
+        seen = []
         for desc, keys in config:
-            header(tag.th(tag.b(desc)))
+            if [row for row in rows if has_keys(row, keys)]:
+                seen.append(desc)
 
-        body = tag.tbody()
-        for column in columns:
-            row = tag.tr()
+        thead = tag.thead()
+        for desc, keys in config:
+            if not desc in seen:
+                continue
+            thead(tag.td(tag.b(desc)))
+
+        tbody = tag.tbody()
+        for row in rows:
+            trow = tag.tr()
             for desc, keys in config:
-                col = tag.td()
+                if not desc in seen:
+                    continue
+                tcol = tag.td()
                 for key in keys:
-                    if column.has_key(key):
-                        col(to_html(column[key]))
-                row(col)
-            body(row)
+                    if row.has_key(key):
+                        tcol(to_html(row[key]))
+                trow(tcol)
+            tbody(trow)
 
-        return tag.table([header, body], class_='wiki')
+        return tag.table([thead, tbody], class_='wiki')
 
     def parse_doc(self, text):
         columns = []
