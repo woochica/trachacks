@@ -18,7 +18,8 @@ from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.perm import IPermissionRequestor
 
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
+from time import strptime
 from trac.util.datefmt import to_timestamp, utc
 
 # ************************
@@ -146,10 +147,21 @@ class TicketStatsPlugin(Component):
 			global DEFAULT_INTERVAL
 
 			# default data
-			todays_date = datetime.today()
+			todays_date = date.today()
 			at_date = datetime.combine(todays_date,time(11,59,59,0,utc))
 			from_date = at_date - timedelta( DEFAULT_DAYS_BACK )
 			graph_res = DEFAULT_INTERVAL
+	
+			at_date_str = at_date.strftime("%m/%d/%Y")
+			from_date_str=  from_date.strftime("%m/%d/%Y")
+
+			# 2.5 only: at_date = datetime.strptime(at_date_str, "%m/%d/%Y")
+			at_date = datetime(*strptime(at_date_str, "%m/%d/%Y")[0:6])
+			at_date = datetime.combine(at_date, time(11,59,59,0,utc)) # Add tzinfo
+			
+			# 2.5 only: from_date = datetime.strptime(from_date_str, "%m/%d/%Y")
+			from_date = datetime(*strptime(from_date_str, "%m/%d/%Y")[0:6])
+			from_date = datetime.combine(from_date, time(0,0,0,0,utc)) # Add tzinfo
 			
 		count = []
 
