@@ -19,10 +19,11 @@ class Property(object):
 
 class iCal(object):
 
-    def __init__(self, writer=None):
+    def __init__(self, writer=None, title=''):
         if writer is None:
             self.buffer = StringIO()
             writer = self.buffer.write
+        self.title = title
         self.writer = writer
 
     ### methods stolen from Trac's roadmap module:
@@ -77,9 +78,6 @@ class iCal(object):
 
     ### 
 
-    def date(self):
-        pass
-
     try: 
         import feedparser
 
@@ -110,8 +108,9 @@ class iCal(object):
                     if key in entry:
                         event.append(Property(attrmap[key], entry[key]))
                 events.append(event)
-                
-            return self.write(feed.feed.title, events)
+
+            title = feed.feed.get('title', self.title)
+            return self.write(title, events)
 
     except ImportError:
         pass

@@ -63,7 +63,6 @@ class iCalExporterPlugin(Component):
         calendar = iCal(req.write)
         calendar.from_rss(rss)
 
-
     ### methods for IRequestFilter
 
     def pre_process_request(self, req, handler):
@@ -109,7 +108,6 @@ class iCalExporterPlugin(Component):
 
         (Since 0.11 - not yet stabilized)
         """
-
 
         for link in req.chrome.get('links', {}).get('alternate', ()):
             if link['class'] == 'rss':
