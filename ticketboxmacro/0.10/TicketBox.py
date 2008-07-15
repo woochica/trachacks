@@ -154,7 +154,7 @@ def execute(hdf, txt, env):
     html = ''
 
     if show_summary:
-        html = string.join([wiki_to_oneliner("%s (#%d)" % (summaries[n]),
+        html = string.join([wiki_to_oneliner("%s (#%d)" % (summaries[n], n),
                                              env, env.get_db_cnx()) for n in items], "<br>")
     else:
         html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
