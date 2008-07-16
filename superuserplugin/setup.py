@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'tracsuperuser'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(name='tracsuperuser',
       version='0.1',
