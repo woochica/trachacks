@@ -3,8 +3,8 @@ from setuptools import setup
 PACKAGE = 'tracsuperuser'
 VERSION = '0.2'
 
-setup(name='tracsuperuser',
-      version='0.1',
+setup(name=PACKAGE,
+      version=VERSION,
       packages=['tracsuperuser'],
       author='Alvaro J. Iradier (AMB Sistemas)',
       url="http://www.trac-hacks.org/wiki/SuperUserPlugin",
