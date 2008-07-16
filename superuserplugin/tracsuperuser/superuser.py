@@ -18,13 +18,13 @@ class SuperUserPlugin(Component):
     """ Adds a superuser with TRAC_ADMIN permissions """
     implements(IPermissionStore)
     
-    store = ExtensionOption('trac', 'wrapped_permission_store', IPermissionStore,
+    store = ExtensionOption('superuser', 'wrapped_permission_store', IPermissionStore,
         'DefaultPermissionStore', """Name of the component implementing `IPermissionStore`, which is used
         for managing user and group permissions.""")
     
 
     def get_user_permissions(self, username):
-        superuser = self.env.config.get('trac', 'superuser', 'admin')
+        superuser = self.env.config.get('superuser', 'superuser', 'admin')
 
         if username == superuser:
             return ['TRAC_ADMIN'] + self.store.get_user_permissions(username)
@@ -32,11 +32,11 @@ class SuperUserPlugin(Component):
             return self.store.get_user_permissions(username)
 
     def get_users_with_permissions(self, permissions):
-        superuser = self.env.config.get('trac', 'superuser', 'admin')
+        superuser = self.env.config.get('superuser', 'superuser', 'admin')
         return [superuser] +  self.store.get_users_with_permissions(permissions)
             
     def get_all_permissions(self):
-        superuser = self.env.config.get('trac', 'superuser', 'admin')        
+        superuser = self.env.config.get('superuser', 'superuser', 'admin')        
         return self.store.get_all_permissions() + [(superuser, 'TRAC_ADMIN')]
         
     def grant_permission(self, username, action):
