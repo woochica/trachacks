@@ -30,13 +30,13 @@ SQRT2=sqrt(2)
 SQRT3=sqrt(3)
 
 # Debug functions to place debug circles on the SVG graph
-#debugw = []
-#def dbgPt(x,y,c='red',d=5):
-#    debugw.append(SVG.circle(x,y,d, 'white', c, '2'))
-#def dbgLn(x1,y1,x2,y2,c='red',w=3):
-#    debugw.append(SVG.line(x1,y1,x2,y2,c,w))
-#def dbgDump(svg):
-#    map(svg.addElement, debugw)
+debugw = []
+def dbgPt(x,y,c='red',d=5):
+    debugw.append(SVG.circle(x,y,d, 'white', c, '2'))
+def dbgLn(x1,y1,x2,y2,c='red',w=3):
+    debugw.append(SVG.line(x1,y1,x2,y2,c,w))
+def dbgDump(svg):
+    map(svg.addElement, debugw)
     
 def textwidth(text):
     # kludge, this should get the actual font parameters, etc...
@@ -290,6 +290,24 @@ class SvgChangeset(SvgBaseChangeset):
             self._link.attributes['id'] = 'rev%d' % self._revision
             self._link.attributes['class'] = ' '.join(self._classes)
                     
+    def strokewidth(self):
+        return self._parent.strokewidth()
+
+    def strokecolor(self):
+        return self._parent.strokecolor()
+    
+    def fillcolor(self):
+        return self._parent.fillcolor()
+        
+    def fontsize(self):
+        return self._parent.fontsize()
+        
+    def fontname(self):
+        return self._parent.fontname()
+
+    def urlbase(self):
+        return self._parent.urlbase()
+        
     def visible(self):
         return True
                
@@ -300,9 +318,11 @@ class SvgChangeset(SvgBaseChangeset):
 class SvgBranchHeader(object):
     """Branch title"""
     
-    def __init__(self, parent, title):
+    def __init__(self, parent, path, title, lastrev):
         self._parent = parent
         self._title = title or ''
+        self._path = path
+        self._rev = lastrev
         self._tw = textwidth(self._title)+UNIT/2
         self._w = max(self._tw, 6*UNIT)
         self._h = 2*UNIT
@@ -335,17 +355,81 @@ class SvgBranchHeader(object):
         rect.attributes['ry'] = r        
         text = SVG.text(self._position[0]++self._w/2, 
                         self._position[1]+self._h/2+UNIT/6,
-                        "/%s" % self._title.encode('utf-8'), 
+                        self._title.encode('utf-8'), 
                         self._parent.fontsize(), self._parent.fontname())
         text.attributes['style'] = 'text-anchor: middle'
         name = self._title.encode('utf-8').replace('/','')
         g = SVG.group('grp%s' % name, elements=[rect, text])
         href = Href(self._parent.urlbase())
-        self._link = SVG.link(href.browser(self._title), elements=[g])
+        self._link = SVG.link(href.browser(self._path, rev='%d' % self._rev), 
+                              elements=[g])
         
     def render(self):
         self._parent.svg().addElement(self._link)
         
+
+class SvgTag(object):
+    """Graphical view of a tag"""
+    
+    def __init__(self, parent, path, title, rev, src):
+        self._parent = parent
+        self._title = title or ''
+        self._path = path
+        self._revision = rev
+        self._srcchgset = src
+        self._tw = textwidth(self._title)+UNIT/2
+        self._w = self._tw
+        self._h = 1.2*UNIT
+        self._opacity = 75
+        
+    def position(self, anchor=''):
+        (x,y) = (self._position[0]+self._w/2, self._position[1]) 
+        if 'n' in anchor:
+            pass;
+        if 's' in anchor:
+            y += self._h;
+        if 'w' in anchor:
+            pass;
+        if 'e' in anchor:
+            x += self._w;
+        return (x,y)
+        
+    def extent(self):
+        return (self._w, self._h)
+        
+    def build(self, h_offset):
+        (sx, sy) = self._srcchgset.position()
+        self._position = (sx + (self._srcchgset.extent()[0])/2,
+                          sy - (3*self._h)/2 + h_offset)
+        x = self._position[0]+(self._w-self._tw)/2
+        y = self._position[1]
+        r = UNIT/2
+        rect = SVG.rect(x,y,self._tw,self._h,
+                        self._srcchgset.strokecolor(),
+                        self._srcchgset.fillcolor(), 
+                        self._srcchgset.strokewidth())
+        rect.attributes['rx'] = r
+        rect.attributes['ry'] = r        
+        rect.attributes['opacity'] = str(self._opacity/100.0) 
+        text = SVG.text(self._position[0]+self._w/2, 
+                        self._position[1]+self._h/2+UNIT/4,
+                        "%s" % self._title.encode('utf-8'), 
+                        self._srcchgset.fontsize(), 
+                        self._srcchgset.fontname())
+        txc = SvgColor('white')
+        text.attributes['style'] = 'fill:%s; text-anchor: middle' % txc.rgb()
+        name = self._title.encode('utf-8').replace('/','')
+        g = SVG.group('grp%d' % self._revision, elements=[rect, text])
+        link = "%s/changeset/%d" % (self._parent.urlbase(), self._revision)
+        self._link = SVG.link(link, elements=[g])
+        self._link.attributes['id'] = 'rev%d' % self._revision
+        self._link.attributes['style'] = \
+            'color: %s; background-color: %s' % \
+                (self._srcchgset.fillcolor(), self._srcchgset.strokecolor())
+        
+    def render(self):
+        self._parent.svg().addElement(self._link)
+
 
 class SvgBranch(object):
     """Branch (set of changesets which whose commits share a common base
@@ -354,9 +438,9 @@ class SvgBranch(object):
     def __init__(self, parent, branch, style):
         self._parent = parent
         self._branch = branch
-        self._svgheader = SvgBranchHeader(self, branch.name)
         self._svgchangesets = {}
-        self._svgwidgets = []
+        self._svgtags = {}
+        self._svgwidgets = [[] for l in IRevtreeEnhancer.ZLEVELS]
         self._maxchgextent = [0,0]
         self._fillcolor = self._get_color(branch.name, parent.trunks)
         self._strokecolor = self._fillcolor.strongify()
@@ -370,6 +454,14 @@ class SvgBranch(object):
         changesets = branch.changesets(parent.revrange);
         changesets.sort()
         changesets.reverse()
+        if changesets[0].last:
+            # it would require parsing the history another time to find
+            # the previous changeset when it is not in the specified range
+            lastrev = changesets[len(changesets) > 1 and 1 or 0].rev
+        else:
+            lastrev = changesets[0].rev
+        self._svgheader = \
+            SvgBranchHeader(self, branch.name, branch.prettyname, lastrev)
         for c in changesets:
             svgc = SvgChangeset(self, c)
             self._update_chg_extent(svgc.extent())
@@ -378,13 +470,13 @@ class SvgBranch(object):
             else:
                 transitions.append(SvgTransition(self, pw, svgc, 'gray'))
             self._svgchangesets[c] = svgc
-            self._svgwidgets.append(svgc)
+            self._svgwidgets[IRevtreeEnhancer.ZMID].append(svgc)
             pw = svgc
         svgc = SvgBaseChangeset(self, 0)
         self._update_chg_extent(svgc.extent())
         self._svgchangesets[0] = svgc
-        self._svgwidgets.append(svgc)
-        self._svgwidgets.extend(transitions)
+        self._svgwidgets[IRevtreeEnhancer.ZMID].append(svgc)
+        self._svgwidgets[IRevtreeEnhancer.ZMID].extend(transitions)
         
     def __cmp__(self, other):
         xs = self._position[0]+self._extent[0]
@@ -406,15 +498,29 @@ class SvgBranch(object):
                                                         '#cfcfcf'))
         else:
             return SvgColor(name=name)
+
+    def create_tag(self, tag):
+        svgcs = self.svgchangeset(tag.source())
+        self._svgwidgets[IRevtreeEnhancer.ZFORE].append(\
+            SvgTag(self, tag.name, tag.prettyname, tag.rev, svgcs))
                       
     def build(self, position):
+        tag_h_off = 0
         self._position = position
         self._slot = self._slotgen()
         self._svgheader.build()
         (w, h) = self._svgheader.extent()
-        for wdgt in self._svgwidgets:
-            wdgt.build()
-            h += wdgt.extent()[1]
+        for wl in self._svgwidgets:
+            for wdgt in wl:
+                if not isinstance(wdgt, SvgTag):
+                    wdgt.build()
+                    h += wdgt.extent()[1]
+                else:
+                    wdgt.build(tag_h_off)
+                    (tw, th) = wdgt.extent()
+                    tag_h_off -= th
+                    nw = tw/2 + wdgt.position()[0]-position[0]
+                    if nw > w: w = nw 
         self._extent = (w, h)
             
     def svgarrow(self, color, head):
@@ -458,7 +564,7 @@ class SvgBranch(object):
             y = self._svgchangesets[oldest].position()[1]
             y += 2*self._maxchgextent[1]
         return (x,y)
-        
+            
     def strokewidth(self):
         return self._parent.strokewidth()
 
@@ -475,7 +581,7 @@ class SvgBranch(object):
         return self._parent.fontname
 
     def urlbase(self):
-        return self._parent.urlbase
+        return self._parent.urlbase()
         
     def _slotgen(self):
         x = self._position[0] + self._svgheader.extent()[0]/2
@@ -492,9 +598,13 @@ class SvgBranch(object):
     def svg(self):
         return self._parent.svg()
 
-    def render(self):
+    def render(self, level=None):
         self._svgheader.render()
-        map(lambda x: x.render(), self._svgwidgets)
+        if level:
+            map(lambda w: w.render(), self._svgwidgets[level])
+        else:
+            for wl in self._svgwidgets:
+                map(lambda w: w.render(), wl)
 
 
 class SvgAxis(object):
@@ -768,7 +878,7 @@ class SvgRevtree(object):
         # Environment
         self.env = env
         # URL base of the repository
-        self.urlbase = urlbase
+        self.url_base = urlbase
         # Repository instance
         self.repos = repos
         # Range of revision to process
@@ -785,7 +895,7 @@ class SvgRevtree(object):
         self.fontname = self.env.config.get('revtree', 'fontname', 'arial')
         # Font size
         self.fontsize = self.env.config.get('revtree', 'fontsize', '14pt')
-        # Dictionnary of branch widgets (branches as keys)
+        # Dictionary of branch widgets (branches as keys)
         self._svgbranches = {}
         # Markers
         self._arrows = SvgArrows(self)
@@ -796,7 +906,7 @@ class SvgRevtree(object):
         # Operation points
         self._oppoints = {}
         # Add-on elements (from enhancers)
-        self._addons = {}
+        self._addons = []
         # Init color generator with a predefined value
         seed(0)
                 
@@ -818,6 +928,10 @@ class SvgRevtree(object):
         if not branch:
             if rev:
                 chg = self.repos.changeset(rev)
+                if not chg:
+                    self.env.log.warn("No changeset %d" % rev)
+                    return None
+                self.env.log.info("Changeset %d, branch %s" % (rev, chg.branchname))
                 branch = self.repos.branch(chg.branchname)
             elif branchname:
                 branch = self.repos.branch(branchname)
@@ -863,8 +977,14 @@ class SvgRevtree(object):
             self._vtimes[r] = vtime
             vtime += 1
         for enhancer in self.enhancers:
-            self._addons[enhancer] = \
-                enhancer.create(self.env, req, self.repos, self)
+            self._addons.append(enhancer.create(self.env, req, 
+                                                self.repos, self))
+        for tag in self.repos.tags().values():
+            self.env.log.info("Found tag: %r" % tag.name)
+            if tag.clone:
+                svgbr = self.svgbranch(rev=tag.clone[0])
+                if svgbr:
+                    svgbr.create_tag(tag)
                      
     def build(self):
         """Build the graph"""
@@ -874,8 +994,13 @@ class SvgRevtree(object):
         svgbranches = [self.svgbranch(branch=b) for b in branches]
         for svgbranch in svgbranches:
             svgbranch.build((branch_xpos, UNIT/6))
-            branch_xpos += svgbranch.header().extent()[0] + UNIT
-        map(lambda e: e.build(self._addons[e]), self.enhancers)
+            #branch_xpos += svgbranch.header().extent()[0] + UNIT
+            branch_xpos += svgbranch.extent()[0] + UNIT
+        # TODO: discard tags for which source changeset do not exist 
+        #for svgtag in self.svgtags().values():
+        #    self.env.log.info("Build Tag %s" % svgtag)
+        #    svgtag.build()
+        map(lambda e: e.build(), self._addons)
         # FIXME: why not using svgbranches ?
         svgbranches = self._svgbranches.values()
         svgbranches.sort()
@@ -890,7 +1015,10 @@ class SvgRevtree(object):
             svgbranches[-1].extent()[0] + 2*UNIT
         maxheight += UNIT 
         self._extent = (w,maxheight)
-                
+            
+    def urlbase(self):
+        return self.url_base
+
     def chgoffset(self, revision):
         return self._vtimes[revision]
         
@@ -945,8 +1073,13 @@ class SvgRevtree(object):
                             scale*self._extent[0], scale*self._extent[1],
                             True, id='svgbox')
         self._arrows.render()
-        # FIXME: only two levels for enhancers (background, foreground)
-        map(lambda e: e.render(self._addons[e], 1), self.enhancers)
-        map(lambda b: b.render(), self._svgbranches.values())
-        map(lambda e: e.render(self._addons[e], 2), self.enhancers)
-        #dbgDump(self._svg)
+        map(lambda e: e.render(IRevtreeEnhancer.ZBACK), self._addons)
+        map(lambda b: b.render(IRevtreeEnhancer.ZBACK), 
+                               self._svgbranches.values())
+        map(lambda e: e.render(IRevtreeEnhancer.ZMID), self._addons)
+        map(lambda b: b.render(IRevtreeEnhancer.ZMID), 
+                               self._svgbranches.values())
+        map(lambda e: e.render(IRevtreeEnhancer.ZFORE), self._addons)
+        map(lambda b: b.render(IRevtreeEnhancer.ZFORE), 
+                               self._svgbranches.values())
+        dbgDump(self._svg)

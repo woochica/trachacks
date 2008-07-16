@@ -236,7 +236,7 @@ class CommitHook(object):
         following bring links
         
         @param revisions a list of revisions
-        @return a dictionnary of tickets: the key is the ticket number, the value is
+        @return a dictionary of tickets: the key is the ticket number, the value is
                 the list of revisions related to this ticket. Each revision is
                 itself a list [author, log]
         '''

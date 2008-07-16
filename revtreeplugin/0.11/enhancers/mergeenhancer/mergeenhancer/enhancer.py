@@ -119,7 +119,7 @@ class MergeEnhancer(Component):
             lsvg = svgsrcbr.svgchangeset(last)
             color = svgdstbr.fillcolor().lighten()
             group = SvgGroup(svgrt, fsvg, lsvg, color, 40)
-            enhancer._widgets[1].append(group)
+            enhancer._widgets[IRevtreeEnhancer.ZBACK].append(group)
 
         # create inter-branch operations
         for (srcchg, dstchg) in enhancer._merges:
@@ -131,7 +131,7 @@ class MergeEnhancer(Component):
             svgdstchg = svgdstbr.svgchangeset(dstchg)
             op = SvgOperation(svgrt, svgsrcchg, svgdstchg, 
                               svgdstbr.strokecolor())
-            enhancer._widgets[2].append(op)
+            enhancer._widgets[IRevtreeEnhancer.ZMID].append(op)
 
         # build widgets
         for wl in enhancer._widgets:

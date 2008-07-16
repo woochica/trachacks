@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2008 Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -12,41 +12,28 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 
-from revtree.api import IRevtreeEnhancer
+from revtree.api import IRevtreeEnhancer, RevtreeEnhancer
 from revtree.svgview import SvgOperation, SvgGroup
 from trac.core import *
 
-__all__ = ['SimpleEnhancer']
+__all__ = ['SimpleEnhancerModule']
 
-class SimpleContainer(object):
-    """Simple container for enhancer parameters"""
-    
-    def __init__(self):
-        pass
-        
 
-class SimpleEnhancer(Component):
-    """Enhance the appearance of the RevTree with site-specific properties.
-    
-    Create branch clone operation (on branch/tag operations)
-    
-    This class is a very basic skeleton that needs to customized, to provide
-    SvgOperation, SvgGroup and other widgets in the RevTree graphic
+class SimpleEnhancer(RevtreeEnhancer):
+    """This class is a very basic skeleton that needs to customized, to 
+       provide SvgOperation, SvgGroup and other widgets in the RevTree graphic
     """
-    
-    implements(IRevtreeEnhancer)    
-    
-    def create(self, env, req, repos, svgrevtree):
-        """Creates the internal data from the repository"""
-        enhancer = SimpleContainer()
-        enhancer.repos = repos
-        enhancer.creations = []
-        enhancer.svgrevtree = svgrevtree
-        # z-depth indexed widgets: back=1, fore=2
-        enhancer.widgets = ([], [], [])
         
-        for branch in enhancer.repos.branches().values():
-            svgbranch = enhancer.svgrevtree.svgbranch(branch=branch)
+    def __init__(self, env, req, repos, svgrevtree):
+        """Creates the internal data from the repository"""
+        self.repos = repos
+        self.creations = []
+        self.svgrevtree = svgrevtree
+        # z-depth indexed widgets
+        self._widgets = [[] for l in IRevtreeEnhancer.ZLEVELS]
+        
+        for branch in self.repos.branches().values():
+            svgbranch = self.svgrevtree.svgbranch(branch=branch)
             if not svgbranch:
                 # branch has probably been filtered out
                 continue
@@ -57,11 +44,11 @@ class SimpleEnhancer(Component):
                 # tweak the appearance of this changeset ..
                 svgbranch.svgchangeset(firstchgset).mark_first()
                 (rev, path) = branch.source()
-                srcchg = enhancer.repos.changeset(rev)
+                srcchg = self.repos.changeset(rev)
                 if srcchg is None:
                     continue
                 # .. and create an operation between both changesets
-                enhancer.creations.append((srcchg, firstchgset))
+                self.creations.append((srcchg, firstchgset))
             lastchgset = branch.youngest()
             if lastchgset:
                 # if the last changeset of the branch is the very last
@@ -70,29 +57,39 @@ class SimpleEnhancer(Component):
                     svgbranch.svgchangeset(lastchgset).mark_last()
         return enhancer
 
-    def build(self, enhancer):
+    def build(self):
         """Build the enhanced widgets"""
-        for (srcchg, dstchg) in enhancer.creations:
-            svgsrcbr = enhancer.svgrevtree.svgbranch(branchname=srcchg.branchname)
+        for (srcchg, dstchg) in self.creations:
+            svgsrcbr = self.svgrevtree.svgbranch(branchname=srcchg.branchname)
             if svgsrcbr is None:
                 continue
             svgsrcchg = svgsrcbr.svgchangeset(srcchg)
-            svgdstbr = enhancer.svgrevtree.svgbranch(branchname=dstchg.branchname)
+            svgdstbr = self.svgrevtree.svgbranch(branchname=dstchg.branchname)
             if svgdstbr is None:
                 continue
             svgdstchg = svgdstbr.svgchangeset(dstchg)
-            op = SvgOperation(enhancer.svgrevtree, svgsrcchg, svgdstchg, \
-                              '#3f3f3f')
-            enhancer.widgets[2].append(op)
+            op = SvgOperation(self.svgrevtree, svgsrcchg, svgdstchg, '#3f3f3f')
+            self.widgets[IRevtreeEnhancer.ZFORE].append(op)
                     
-        for wl in enhancer.widgets:
+        for wl in self.widgets:
             map(lambda w: w.build(), wl)
         
-    def render(self, enhancer, level):
+    def render(self, level):
         """Renders the widgets, from background plane to foreground plane"""
-        if level < len(enhancer.widgets):
-            map(lambda w: w.render(), enhancer.widgets[level])
-            
+        if level < len(IRevtreeEnhancer.ZLEVELS):
+            map(lambda w: w.render(), self._widgets[level])
 
 
-        
+class SimpleEnhancerModule(Component):
+    """Enhance the appearance of the RevTree with site-specific properties.
+    
+    Create branch clone operation (on branch/tag operations)
+    
+    This class is a very basic skeleton that needs to customized, to provide
+    SvgOperation, SvgGroup and other widgets in the RevTree graphic
+    """
+    
+    implements(IRevtreeEnhancer)    
+
+    def create(self, env, req, repos, svgrevtree):
+        return SimpleEnhancer(env, req, repos, svgrevtree)

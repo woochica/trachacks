@@ -15,21 +15,32 @@
 from trac.config import ExtensionOption
 from trac.core import *
 
-__all__ = ['IRevtreeEnhancer', 'IRevtreeOptimizer', 
+__all__ = ['IRevtreeEnhancer', 'IRevtreeOptimizer', 'RevtreeEnhancer',
            'EmptyRangeError', 'BranchPathError', 'RevtreeSystem']
+
+
+class RevtreeEnhancer(object):
+    """Enhancer interface"""
+    
+    def build(self):
+        """Build the widgets"""
+        raise NotImplementedError
+    
+    def render(self, level):
+        """Render the widgets"""
+        raise NotImplementedError
 
 
 class IRevtreeEnhancer(Interface):
     """Provide graphical enhancements to a revision tree"""
+    
+    # Rendering Z levels
+    (ZBACK, ZMID, ZFORE) = ZLEVELS = range(3)
 
     def create(env, req, repos, svgrevtree):
-        """Create the internal data from the repository"""
-        
-    def build(enhancer):
-        """Build the widgets"""
-
-    def render(enhancer, level):
-        """Render the widgets"""
+        """Create the internal data from the repository
+           Return a RevtreeEnhancer instance
+        """
 
 
 class IRevtreeOptimizer(Interface):

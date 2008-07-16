@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (C) 2006-2007 Emmanuel Blot <emmanuel.blot@free.fr>x
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -20,11 +20,13 @@ from revtree import EmptyRangeError, BranchPathError, IRevtreeOptimizer
 from trac.core import *
 from trac.util.datefmt import utc
 from trac.util.text import to_unicode
-from trac.versioncontrol import Node, Changeset
+from trac.versioncontrol import NoSuchNode, Node as TracNode, \
+                                Changeset as TracChangeset
 
 __all__ = ['Repository']
 
-class BranchChangeset(object):
+
+class Changeset(object):
     """Represents a Subversion revision with additionnal properties"""
 
     def __init__(self, repos, changeset):
@@ -36,8 +38,6 @@ class BranchChangeset(object):
         self.changeset = changeset
         # revision number
         self.rev = self.changeset.rev
-        # branch name
-        self.branchname = None
         # clone information (if any)
         self.clone = None
         # very last changeset of a branch (deleted branch)
@@ -45,21 +45,27 @@ class BranchChangeset(object):
         # SVN properties
         self.properties = None
         
+    @staticmethod
+    def get_chgset_info(tracchgset):
+        chgit = tracchgset.get_changes()
+        item = chgit.next()
+        info = {}
+        try:
+            chgit.next()
+        except StopIteration:
+            info['unique'] = True
+        else:
+            # more changes are available, i.e. this is not a simple changeset 
+            info['unique'] = False
+        enum = ('path', 'kind', 'change', 'base_path', 'base_rev')
+        for (pos, name) in enumerate(enum):
+            info[name] = item[pos]
+        return info
+    
     def __cmp__(self, other):
         """Compares to another changeset, based on the revision number"""
         return cmp(self.rev, other.rev)
             
-    def build(self, bcre):
-        """Loads a changeset from a SVN repository
-        bcre should define two named groups 'branch' and 'path'
-        """
-        try:
-            if not self._find_simple_branch(bcre):
-                self._find_plain_branch(bcre)
-        except BranchPathError, e:
-            self.env.log.warn("%s @ rev %s" % (e, self.rev or 0))
-            self.branchname = None 
-        
     def _load_properties(self):
         if not isinstance(self.properties, dict):
             self.properties = self.repos.get_revision_properties(self.rev)
@@ -80,8 +86,22 @@ class BranchChangeset(object):
                 if len(items) and (items[0] == majtype):
                     props[items[1]] = v
             return props
-            
+
+
+class BranchChangeset(Changeset):
+    """Represents a Subversion revision with lies in a regular branch"""
+    
+    def __init__(self, repos, changeset):
+        Changeset.__init__(self, repos, changeset)
+        # branch name
+        self.branchname = None
+        self.prettyname = None
+
     def _find_simple_branch(self, bcre):
+        """A 'simple' changeset is described with a changeset whose only 
+           change is a (branch) directory creation or deletion. Neither a file
+           nor a subdirectory should be altered in any way
+        """
         change_gen = self.changeset.get_changes()
         item = change_gen.next()
         try:
@@ -91,12 +111,12 @@ class BranchChangeset(object):
         else:
             return False
         (path, kind, change, base_path, base_rev) = item
-        if kind is not Node.DIRECTORY:
+        if kind is not TracNode.DIRECTORY:
             return False
-        if change is Changeset.COPY:
+        if change is TracChangeset.COPY:
             path_mo = bcre.match(path)
             src_mo = bcre.match(base_path)
-        elif change is Changeset.DELETE:
+        elif change is TracChangeset.DELETE:
             path_mo = bcre.match(base_path)
             if path_mo and not path_mo.group('path'):
                 self.last = True
@@ -107,12 +127,16 @@ class BranchChangeset(object):
             return False
         if path_mo.group('path'):
             return False
-        self.branchname = path_mo.group('branch')
         if src_mo:
             self.clone = (int(base_rev), src_mo.group('branch'))
+        self.branchname = path_mo.group('branch')
+        self.prettyname = path_mo.group('branchname') or self.branchname
         return True
 
     def _find_plain_branch(self, bcre):
+        """A 'plain' changeset is a regular changeset, with file addition, 
+           deletion or modification
+        """
         branch = None
         for item in self.changeset.get_changes():
             (path, kind, change, base_path, base_rev) = item
@@ -129,15 +153,83 @@ class BranchChangeset(object):
             elif branch != br:
                 raise BranchPathError, "'%s' != '%s'" % (br, branch)
         self.branchname = branch
+        self.prettyname = mo.group('branchname') or self.branchname
         return True
+
+    def build(self, bcre):
+        """Loads a changeset from a SVN repository
+        bcre should define two named groups 'branch' and 'path'
+        """
+        try:
+            if self._find_simple_branch(bcre):
+                return True
+            if self._find_plain_branch(bcre):
+                return True
+        except BranchPathError, e:
+            self.env.log.warn("%s @ rev %s" % (e, self.rev or 0))
+        return True
+
+
+class TagChangeset(Changeset):
+    """Represent a Subversion 'tags' which is barely not more than a regular
+       changeset tied to a specific directory
+    """
+    
+    def __init__(self, repos, changeset):
+        Changeset.__init__(self, repos, changeset)
+        self.repos = repos
+        self.name =  None
+        self.prettyname = None
+
+    def _find_tagged_changeset(self, bcre):
+        info = self.get_chgset_info(self.changeset)
+        if not info:
+            return False
+        if not info['unique']:
+            self.env.log.warn('Tag: too complex')
+            return False
+        if info['kind'] is not TracNode.DIRECTORY:
+            self.env.log.warn('Tag: not a dir: %s: %s' % \
+                                (info['kind'], info['path']))
+            return False
+        if info['change'] is not TracChangeset.COPY:
+            self.env.log.warn('Tag: not a copy: %s: %s' % \
+                                (info['change'], info['path']))
+            return False
+        path_mo = bcre.match(info['path'])
+        if not path_mo: # or not src_mo:
+            self.env.log.warn('Tag: with path: %s <- %s' % \
+                                (info['path'], info['base_path']))
+            return False
+        if path_mo.group('path'):
+            self.env.log.warn('Tag: cannot have path')
+            return False
+        try:
+            node = self.repos.get_node(info['path'], self.changeset.rev)
+        except NoSuchNode:
+            return False
+        (prev_path, prev_rev, prev_chg) = node.get_previous()
+        self.env.log.info("PREV: %s %s %s" % (prev_path, prev_rev, prev_chg))
+        self.clone = (int(prev_rev), prev_path)
+        self.name = path_mo.group('tag')
+        self.prettyname = path_mo.group('tagname') or self.name
+        return True
+
+    def build(self, bcre):
+        return self._find_tagged_changeset(bcre)
+            
+    def source(self):
+        return self.clone and self.repos.changeset(self.clone[0])
+
 
 class Branch(object):
     """Represents a branch in Subversion, tracking the associated 
        changesets"""
 
-    def __init__(self, name):
+    def __init__(self, name, prettyname):
         # Name (path)
         self.name = name
+        self.prettyname = prettyname
         # Source
         self._source = None
         # Changesets instances tied to the branch
@@ -208,7 +300,8 @@ class Branch(object):
             if clone:
                 node = repos.find_node(clone[1], clone[0])
                 self._source = (int(node[1]), node[0])
-
+    
+    
 class Repository(object):
     """Represents a Subversion repositories as a set of branches and a set
        of changesets"""
@@ -220,18 +313,26 @@ class Repository(object):
         self.log = env.log
         # Trac version control
         self._crepos = self.env.get_repository(authname)
-        # Dictionnary of changesets
+        # Dictionary of changesets
         self._changesets = {}
-        # Dictionnary of branches
+        # Dictionary of branches
         self._branches = {}
+        # Dictionary of tags
+        self._tags = {}
 
-    def _build_branches(self):
-        """Constructs the branch dictionnary from the changeset dictionnary""" 
+    def _dispatch(self):
+        """Constructs the branch and tag dictionaries from the changeset 
+           dictionary""" 
         for chgset in self._changesets.values():
-            br = chgset.branchname
-            if not self._branches.has_key(br):
-                self._branches[br] = Branch(br)
-            self._branches[br].add_changeset(chgset)
+            if isinstance(chgset, BranchChangeset):
+                br = chgset.branchname
+                if not self._branches.has_key(br):
+                    self._branches[br] = Branch(br, chgset.prettyname)
+                self._branches[br].add_changeset(chgset)
+            elif isinstance(chgset, TagChangeset):
+                if self._tags.has_key(chgset.name):
+                    self.log.warn('Ubiquitous tag: %s', chgset.name)
+                self._tags[chgset.name] = chgset 
         map(lambda b: b.build(self), self._branches.values())
 
     def changeset(self, revision):
@@ -253,12 +354,16 @@ class Repository(object):
             return self._branches[branchname]
 
     def changesets(self):
-        """Returns the dictionnary of changesets (keys are rev. numbers)"""
+        """Returns the dictionary of changesets (keys are rev. numbers)"""
         return self._changesets
 
     def branches(self):
-        """Returns the dictionnary of branches (keys are branch names)"""
+        """Returns the dictionary of branches (keys are branch names)"""
         return self._branches
+        
+    def tags(self):
+        """Returns the dictionary of tags (keys are tag names)"""
+        return self._tags
 
     def revision_range(self):
         """Returns a tuple representing the extent of tracked revisions 
@@ -281,6 +386,9 @@ class Repository(object):
         
     def get_node_properties(self, path, revision):
         return self._crepos.get_node(path, revision).get_properties()
+        
+    def get_node(self, path, revision):
+        return self._crepos.get_node(path, revision)
                                            
     def find_node(self, path, rev):
         node = self._crepos.get_node(path, rev)
@@ -316,10 +424,20 @@ class Repository(object):
         self._revrange = (vcsort[0][1].rev,vcsort[-1][1].rev)
         vcsort.reverse()
         for (rev, vc) in vcsort:
-            chgset = BranchChangeset(self, vc)
-            chgset.build(bcre)
-            self._changesets[rev] = chgset
-        self._build_branches()
+            info = Changeset.get_chgset_info(vc)
+            chgset = None
+            mo = info and bcre.match(info['path'])
+            if mo:
+                if mo.group('branch'):
+                    chgset = BranchChangeset(self, vc)
+                elif mo.group('tag'):
+                    chgset = TagChangeset(self, vc)
+            if chgset and chgset.build(bcre):
+                self._changesets[rev] = chgset
+            else:
+                self.log.warn('Changeset neither a known branch or tag: %s' % 
+                              (info or vc))
+        self._dispatch()
 
     def __str__(self):
         """Returns a string representation of the repository"""

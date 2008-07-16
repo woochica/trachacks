@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevtreeMergeInfoEnhancer'
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 setup (
     name = PACKAGE,
@@ -26,8 +26,8 @@ setup (
     license='BSD', 
     url='http://trac-hacks.org/wiki/RevtreePlugin/MergeInfoEnhancer',
     keywords = "trac revision svg graphical tree browser log",
-    install_requires = [ 'TracRevtreePlugin >= 0.5.7', 
-                         'TracRevtreePlugin < 0.6 '],
+    install_requires = [ 'TracRevtreePlugin >= 0.6dev', 
+                         'TracRevtreePlugin < 0.7 '],
     packages = find_packages(exclude=['ez_setup', '*.tests*']),
     entry_points = {
         'trac.plugins': [

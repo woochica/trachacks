@@ -12,21 +12,12 @@
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 
-from revtree import IRevtreeEnhancer
+from revtree import IRevtreeEnhancer, RevtreeEnhancer
 from revtree.svgview import SvgOperation, SvgGroup
 from trac.core import *
 from trac.util.text import to_unicode
 
-# debug
-import sys
-
-__all__ = ['MergeInfoEnhancer']
-
-class SimpleContainer(object):
-    """Simple container for enhancer parameters"""
-    
-    def __init__(self):
-        pass
+__all__ = ['MergeInfoEnhancerModule']
 
 
 def get_merge_info(repos, path, rev):
@@ -36,24 +27,18 @@ def get_merge_info(repos, path, rev):
     return mergeprop and mergeprop.split('\n') or []
 
 
-class MergeInfoEnhancer(Component):
+class MergeInfoEnhancer(RevtreeEnhancer):
     """Enhancer to show merge operation, based on svn:mergeinfo properties.
-    
-       This enhancer requires a SVN >= 1.5 repository. Previous releases of
-       SVN do not manage the required information. This enhancer cannnot be
-       used with repositories managed with the svnmerge.py tool 
     """
 
-    implements(IRevtreeEnhancer)
-
-    def create(self, env, req, repos, svgrevtree):
+    def __init__(self, env, req, repos, svgrevtree):
         """Creates the internal data from the repository"""
         enhancer = SimpleContainer()
-        enhancer._repos = repos
-        enhancer._svgrevtree = svgrevtree
-        enhancer._widgets = ([], [], [])
-        enhancer._merges = []
-        enhancer._groups = []
+        self._repos = repos
+        self._svgrevtree = svgrevtree
+        self._widgets = [[] for l in IRevtreeEnhancer.ZLEVELS]
+        self._merges = []
+        self._groups = []
         
         for branch in repos.branches().values():
             # FIXME: revtree should not contain an empty branch
@@ -112,8 +97,8 @@ class MergeInfoEnhancer(Component):
                             fchg = repos.changeset(srcrevs[0])
                             lchg = repos.changeset(srcrevs[-1])
                             cchg = repos.changeset(rev)
-                            enhancer._groups.append((branch, fchg, lchg))
-                            enhancer._merges.append((lchg, cchg))
+                            self._groups.append((branch, fchg, lchg))
+                            self._merges.append((lchg, cchg))
                         
                             # update the list of non-merged source changesets
                             srcbrs[srcbr] = filter(lambda x: x not in srcrevs, 
@@ -122,11 +107,11 @@ class MergeInfoEnhancer(Component):
                     prevmerge = merges
         return enhancer
                 
-    def build(self, enhancer):
+    def build(self):
         """Build the enhanced widgets"""
-        svgrt = enhancer._svgrevtree
+        svgrt = self._svgrevtree
         # create groups of changesets
-        for (dstbranch, first, last) in enhancer._groups:
+        for (dstbranch, first, last) in self._groups:
             svgsrcbr = svgrt.svgbranch(branchname=first.branchname)
             svgdstbr = svgrt.svgbranch(branch=dstbranch)
             if not svgsrcbr:
@@ -135,10 +120,10 @@ class MergeInfoEnhancer(Component):
             lsvg = svgsrcbr.svgchangeset(last)
             color = svgdstbr.fillcolor().lighten()
             group = SvgGroup(svgrt, fsvg, lsvg, color, 40)
-            enhancer._widgets[1].append(group)
+            self._widgets[IRevtreeEnhancer.ZBACK].append(group)
 
         # create inter-branch operations
-        for (srcchg, dstchg) in enhancer._merges:
+        for (srcchg, dstchg) in self._merges:
             svgsrcbr = svgrt.svgbranch(branchname=srcchg.branchname)
             svgdstbr = svgrt.svgbranch(branchname=dstchg.branchname)
             if not svgsrcbr or not svgdstbr:
@@ -147,13 +132,27 @@ class MergeInfoEnhancer(Component):
             svgdstchg = svgdstbr.svgchangeset(dstchg)
             op = SvgOperation(svgrt, svgsrcchg, svgdstchg, 
                               svgdstbr.strokecolor())
-            enhancer._widgets[2].append(op)
+            self._widgets[IRevtreeEnhancer.ZMID].append(op)
 
         # build widgets
-        for wl in enhancer._widgets:
+        for wl in self._widgets:
             map(lambda w: w.build(), wl)
 
-    def render(self, enhancer, level):
+    def render(self, level):
         """Renders the widgets, from background plane to foreground plane"""
-        if level < len(enhancer._widgets):
-            map(lambda w: w.render(), enhancer._widgets[level])
+        if level < len(IRevtreeEnhancer.ZLEVELS):
+            map(lambda w: w.render(), self._widgets[level])
+
+
+class MergeInfoEnhancerModule(Component):
+    """Enhancer to show merge operation, based on svn:mergeinfo properties.
+    
+       This enhancer requires a SVN >= 1.5 repository. Previous releases of
+       SVN do not manage the required information. This enhancer cannnot be
+       used with repositories managed with the svnmerge.py tool 
+    """
+
+    implements(IRevtreeEnhancer)
+
+    def create(self, env, req, repos, svgrevtree):
+        return MergeInfoEnhancer(env, req, repos, svgrevtree)

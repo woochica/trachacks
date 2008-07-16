@@ -171,7 +171,9 @@ class RevtreeModule(Component):
   
     # Configuration Options
     branchre = Option('revtree', 'branch_re',
-        r'^(?P<branch>trunk|(?:branches|tags)/[^/]+)(?:/(?P<path>.*))?$',
+        r'^(?:(?P<branch>trunk|(?:branches|sandboxes|vendor)/'
+        r'(?P<branchname>[^/]+))|'
+        r'(?P<tag>tags/(?P<tagname>[^/]+)))(?:/(?P<path>.*))?$',
         doc = """Regular expression to extract branches from paths""")
     
     abstime = BoolOption('revtree', 'abstime', 'true',
