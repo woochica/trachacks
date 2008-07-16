@@ -135,7 +135,8 @@ class TracFormProcessor(object):
             form_cssid = self.form_cssid or self.subcontext
             form_name = self.form_name or self.subcontext
             dest = self.formatter.req.href('/formdata/update')
-            yield ('<FORM method="POST" action=%r' % str(dest) + 
+            yield ('<FORM class="printableform" ' +
+                    'method="POST" action=%r' % str(dest) +
                     (form_cssid is not None 
                         and ' id="%s"' % form_cssid
                         or '') +
@@ -148,7 +149,7 @@ class TracFormProcessor(object):
                     '>')
             yield text
             if self.needs_submit:
-                yield '<INPUT type="submit"'
+                yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
                 yield ' value=%r' % str(self.submit_label)
