@@ -10,7 +10,7 @@ from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web import IRequestHandler
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 
 #WARNING: genshi.filters.Transformer requires Genshi 0.5+
 from genshi.filters import Transformer
@@ -28,11 +28,13 @@ class TicketModifiedFilesPlugin(Component):
     
     def process_request(self, req):
         #Retrieve the information needed to display in the /modifiedfiles/ page
-        (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed) = self.__process_ticket_request(req)
+        (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions) = self.__process_ticket_request(req)
         #Pack the information to send to the html file
-        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets, 'ticketisclosed':ticketisclosed}
+        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets, 'ticketisclosed':ticketisclosed, 'revisions':revisions}
         #Add the custom stylesheet
+        add_stylesheet(req, 'common/css/timeline.css')
         add_stylesheet(req, 'tmf/css/ticketmodifiedfiles.css')
+        add_script(req, 'tmf/js/ticketmodifiedfiles.js')
         return 'ticketmodifiedfiles.html', data, None
     
     # IRequestFilter methods
@@ -103,13 +105,14 @@ class TicketModifiedFilesPlugin(Component):
         
         #Get the list of modified files
         files = []
+        revisions = []
         ticketsperfile = {}
         
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         #Retrieve all the revisions which's messages contain "#<TICKETID>"
-        cursor.execute("SELECT rev, message FROM revision WHERE message LIKE '%#" + str(id) + "%'")
-        for rev, message, in cursor:
+        cursor.execute("SELECT rev, author, message FROM revision WHERE message LIKE '%#" + str(id) + "%'")
+        for rev, author, message, in cursor:
             #Filter out non-related revisions.
             #for instance, you are lookink for #19, so you don't want #190, #191, #192, etc. to interfere
             #To filter, check what the eventual char after "#19" is.
@@ -125,6 +128,7 @@ class TicketModifiedFilesPlugin(Component):
             if validrevision:
                 cursor2 = db.cursor()
                 cursor2.execute("SELECT path FROM node_change WHERE rev=" + rev)
+                revisions.append((rev, author))
                 for path, in cursor2:
                     files.append(path)
         
@@ -191,7 +195,7 @@ class TicketModifiedFilesPlugin(Component):
             return len(conflictingtickets)
         
         #Return all the needed information
-        return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed)
+        return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions)
     
     def __remove_duplicated_elements_and_sort(self, list):
         d = {}

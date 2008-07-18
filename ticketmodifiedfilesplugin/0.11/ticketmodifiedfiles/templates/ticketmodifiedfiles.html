@@ -19,7 +19,7 @@
           
           <ul>
             <py:for each="filename in list">
-            <li>
+            <li style='clear: both;'>
               <py:choose>
                 <py:when test="filestatus[filename] == 'E' or filestatus[filename] == 'D' or filestatus[filename] == 'A' or filestatus[filename] == 'C' or filestatus[filename] == 'M'">
                   <py:choose><py:when test="filestatus[filename] == 'E'"><span class="edit">&nbsp;</span></py:when></py:choose>
@@ -40,9 +40,9 @@
               </py:choose>
               </span>
             </li>
-            <div style='clear: both;'></div>
             </py:for>
           </ul>
+          <div style='clear: both;'></div>
         </py:when>
       </py:choose>
     </py:def>
@@ -80,6 +80,32 @@
           <!-- List of deleted files -->
           ${showfileslist(deletedfiles, "deleted")}
           
+          <div id="legendsection">
+            <strong>Legend:</strong>
+            <py:choose><py:when test="'E' in filestatus.values()"><span class="edit">&nbsp;</span><span class="legendinfo">Edited</span></py:when></py:choose>
+            <py:choose><py:when test="'D' in filestatus.values()"><span class="delete">&nbsp;</span><span class="legendinfo">Deleted</span></py:when></py:choose>
+            <py:choose><py:when test="'A' in filestatus.values()"><span class="add">&nbsp;</span><span class="legendinfo">Added</span></py:when></py:choose>
+            <py:choose><py:when test="'C' in filestatus.values()"><span class="copy">&nbsp;</span><span class="legendinfo">Copied</span></py:when></py:choose>
+            <py:choose><py:when test="'M' in filestatus.values()"><span class="move">&nbsp;</span><span class="legendinfo">Moved</span></py:when></py:choose>
+          </div>
+          
+          <div id="changesetslist">
+            <h3 class="backtonormalflow"><a id="changesetslink" href="javascript:togglevisibility('listofchangesets');">Display the list of changesets relative to this ticket.</a></h3>
+            <dl id="listofchangesets">
+            <py:for each="rev, author in revisions">
+			  <dt class="changeset">
+			    <a href="${href.changeset(rev)}">
+				  Changeset
+				  <em>[${rev}]</em>
+				  by
+				  <span class="author">${author}</span>
+			    </a>
+			  </dt>
+            </py:for>
+            </dl>
+            <div style='clear: both;'></div>
+          </div>
+          
         </py:when>
         <py:otherwise>
           <h3>No file has been modified relating to this ticket.</h3>
@@ -87,15 +113,9 @@
         </py:otherwise>
       </py:choose>
       
-      <div id="legendsection">
-        <strong>Legend:</strong>
-        <py:choose><py:when test="'E' in filestatus.values()"><span class="edit">&nbsp;</span><span class="legendinfo">Edited</span></py:when></py:choose>
-        <py:choose><py:when test="'D' in filestatus.values()"><span class="delete">&nbsp;</span><span class="legendinfo">Deleted</span></py:when></py:choose>
-        <py:choose><py:when test="'A' in filestatus.values()"><span class="add">&nbsp;</span><span class="legendinfo">Added</span></py:when></py:choose>
-        <py:choose><py:when test="'C' in filestatus.values()"><span class="copy">&nbsp;</span><span class="legendinfo">Copied</span></py:when></py:choose>
-        <py:choose><py:when test="'M' in filestatus.values()"><span class="move">&nbsp;</span><span class="legendinfo">Moved</span></py:when></py:choose>
+      <div>
       </div>
-      <p id="backtoticket">Back to ticket <a href="${href.ticket(ticketid)}">#${ticketid}</a>.</p>
+      <p class="backtonormalflow">Back to ticket <a href="${href.ticket(ticketid)}">#${ticketid}</a>.</p>
       
     </div>
   </body>

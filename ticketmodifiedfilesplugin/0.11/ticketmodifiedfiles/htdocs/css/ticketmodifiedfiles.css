@@ -19,12 +19,16 @@
 	font-size: 80%;
 }
 
-#backtoticket{
+.backtonormalflow{
 	clear: both;
 	margin-top: 2em;
 }
 
 li {list-style-type: none;}
+
+#listofchangesets{
+	display: none;
+}
 
 /* Colors for change types */
 .edit    { background: #fd8 }
