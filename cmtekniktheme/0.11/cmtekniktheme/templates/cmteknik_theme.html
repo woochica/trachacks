@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC
+  "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+  
+  <head py:match="head" py:attrs="select('@*')">
+    ${select('*')}
+  </head>
+
+  <body py:match="body" py:attrs="select('@*')">
+    <div id="PageHeader" class="noprint">
+      <ul>
+        <li py:for="idx, item in enumerate(chrome.nav['metanav'])">
+          ${item.label}
+        </li>
+      </ul>
+      <a id="logo" href="${chrome.logo.link}">${chrome.logo.alt}</a>
+    </div>
+
+    <div id="MenuBar" class="noprint">
+      <div id="MenuBarHighlight">
+      <ul>
+        <li py:for="idx, item in enumerate(chrome.nav['mainnav'])" class="${classes(first_last(idx, chrome.nav['mainnav']), active=item.active)}">
+          ${item.label}
+        </li>
+      </ul>
+      </div>
+    </div>
+
+    <py:if test="len(chrome.ctxtnav) > 0">
+      <div id="SubMenuBar" class="noprint">
+        <ul>
+          <li py:for="i, elm in enumerate(chrome.ctxtnav)" class="${classes(first_last(i, chrome.ctxtnav), active=elm.active)}">$elm</li>
+        </ul>
+      </div>
+    </py:if>
+
+    <div id="MenuBarShadow" class="noprint"></div>
+      
+    <div id="Container">
+      ${select('*')}
+    </div>
+
+    <div id="Footer" class="noprint">
+      © 2008 Cronholm &amp; Magnusson Teknik AB<br/>
+    </div>
+  </body>
+</html>
+      
