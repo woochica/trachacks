@@ -11,6 +11,11 @@
 	float: left;
 }
 
+.helpcheckbox{
+    float: left;
+    margin-right: .5em;
+}
+
 .legendinfo{
 	margin-right: .8em;
 }
@@ -24,7 +29,11 @@
 	margin-top: 2em;
 }
 
-li {list-style-type: none;}
+.fileslist{
+	list-style-type: none;
+	clear: both;
+	margin-left: -25px;
+}
 
 #listofchangesets{
 	display: none;

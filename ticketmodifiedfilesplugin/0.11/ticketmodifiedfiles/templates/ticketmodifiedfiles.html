@@ -19,7 +19,8 @@
           
           <ul>
             <py:for each="filename in list">
-            <li style='clear: both;'>
+            <li class="fileslist">
+              <input class="helpcheckbox" type="checkbox"></input>
               <py:choose>
                 <py:when test="filestatus[filename] == 'E' or filestatus[filename] == 'D' or filestatus[filename] == 'A' or filestatus[filename] == 'C' or filestatus[filename] == 'M'">
                   <py:choose><py:when test="filestatus[filename] == 'E'"><span class="edit">&nbsp;</span></py:when></py:choose>
