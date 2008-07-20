@@ -46,6 +46,11 @@ class PhpBBAuthStore(Component):
                       'Database URI for the phpBB database to auth '
                       'against')
 
+    table_prefix = Option('account-manager', 'phpbb_table_prefix', 'phpbb_',
+                          'Prefix for phpBB table names.  This should be '
+                          'everything before "user" including an underscore '
+                          'if present.')
+
     def config_key(self):
         """ Deprecated """
 
@@ -54,8 +59,8 @@ class PhpBBAuthStore(Component):
         cnx = PhpDatabaseManager(self.env).get_connection()
         cur = cnx.cursor()
         cur.execute('SELECT username, user_email, user_lastvisit'
-                    '  FROM phpbb_users '
-                    ' WHERE user_type <> 2')
+                    '  FROM %susers '
+                    ' WHERE user_type <> 2' % self.table_prefix)
         userinfo = [u for u in cur]
         cnx.close()
         if populate_session:
@@ -66,8 +71,8 @@ class PhpBBAuthStore(Component):
         """ Check for a user in PhpBB3 """
         cnx = PhpDatabaseManager(self.env).get_connection()
         cur = cnx.cursor()
-        cur.execute('SELECT username FROM phpbb_users WHERE user_type <> 2'
-                    ' AND username = %s', (user,))
+        cur.execute('SELECT username FROM %susers WHERE user_type <> 2'
+                    ' AND username = %%s' % self.table_prefix, (user,))
         result = [u for u in cur]
         cnx.close()
         return result and True or False
@@ -101,9 +106,9 @@ class PhpBBAuthStore(Component):
         cnx = PhpDatabaseManager(self.env).get_connection()
         cur = cnx.cursor()
         cur.execute('SELECT user_password'
-                    '  FROM phpbb_users'
+                    '  FROM %susers'
                     ' WHERE user_type <> 2'
-                    '   AND username = %s', (user,))
+                    '   AND username = %%s' % self.table_prefix, (user,))
         result = cur.fetchone()
         pwhash = result and result[0] or None
         cnx.close()
@@ -114,8 +119,8 @@ class PhpBBAuthStore(Component):
         cnx = PhpDatabaseManager(self.env).get_connection()
         cur = cnx.cursor()
         cur.execute('SELECT username, user_email, user_lastvisit'
-                    '  FROM phpbb_users '
-                    ' WHERE username = %s', (user,))
+                    '  FROM %susers '
+                    ' WHERE username = %%s' % self.table_prefix, (user,))
         userinfo = [u for u in cur]
         cnx.close()
         return userinfo
