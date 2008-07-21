@@ -80,9 +80,10 @@ class SearchAllPlugin(Component):
             for source in env_search.search_sources:
                 results += list(source.get_search_results(req, query, subfilters))
             
+            req.href = orig_href
+            
             for result in results:
                 yield (result[0],
                 '%s: %s' % (env.project_name, result[1]))\
                 + result[2:]
             
-        req.href = orig_href

@@ -1,10 +1,10 @@
 from setuptools import setup
 
 PACKAGE = 'tracsearchall'
-VERSION = '0.1'
+VERSION = '0.2'
 
-setup(name='tracsearchall',
-      version='0.1',
+setup(name=PACKAGE,
+      version=VERSION,
       packages=['tracsearchall'],
       author='Alvaro J. Iradier',
       url="http://www.trac-hacks.org/wiki/SearchAllPlugin",
