@@ -1,0 +1,36 @@
+Index: trac/web/main.py
+===================================================================
+--- trac/web/main.py	(revision 7355)
++++ trac/web/main.py	(working copy)
+@@ -342,6 +342,19 @@
+         env_paths = environ.get('trac.env_paths')
+         if env_parent_dir or env_paths:
+             # The first component of the path is the base name of the
++            path_info = environ.get('PATH_INFO')
++            if len(path_info) and path_info[0] == 'p':
++                path_info.pop(0) # pop off the p
++                env_parent_dir = os.path.join(env_parent_dir, env_name, 'projects')
++                environ['trac.env_parent_dir'] = env_parent_dir
++                parent_env = env_name
++                if len(path_info):
++                    env_name = path_info.pop(0)
++                else:
++                    env_name = None
++            else:
++                parent_env = None
++
+             # environment
+             path_info = environ.get('PATH_INFO', '').lstrip('/').split('/')
+             env_name = path_info.pop(0)
+@@ -356,7 +369,10 @@
+             # To make the matching patterns of request handlers work, we append
+             # the environment name to the `SCRIPT_NAME` variable, and keep only
+             # the remaining path in the `PATH_INFO` variable.
+-            environ['SCRIPT_NAME'] = Href(environ['SCRIPT_NAME'])(env_name)
++            if parent_env:
++                environ['SCRIPT_NAME'] = Href(environ['SCRIPT_NAME'])(parent_env, 'p', env_name)
++            else:
++                environ['SCRIPT_NAME'] = Href(environ['SCRIPT_NAME'])(env_name)
+             environ['PATH_INFO'] = '/' + '/'.join(path_info)
+ 
+             if env_parent_dir:
