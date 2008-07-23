@@ -39,6 +39,7 @@ import re
 import string
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.ticket.report import ReportModule
+from trac.ticket.model import Ticket
 
 ## Mock request object
 class MockReq(object):
@@ -165,6 +166,16 @@ def execute(hdf, txt, env):
                     # without db connection pool, we should close db.
                     curs.close()
                     db.close()
+    if summary:
+        # get summary text
+        for id in items:
+            if summaries.get(id):
+                continue
+            tkt = Ticket(env, tkt_id=id)
+            if not tkt:
+                continue
+            summaries[id] = tkt['summary']
+    
     items = uniq(items)
     if not nosort:
         items.sort()
