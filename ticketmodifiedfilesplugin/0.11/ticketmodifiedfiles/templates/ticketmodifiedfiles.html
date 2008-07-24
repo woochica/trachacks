@@ -94,13 +94,14 @@
           <div id="changesetslist">
             <h3 class="backtonormalflow"><a id="changesetslink" href="#" onclick="javascript:togglevisibility('listofchangesets'); return false;">Display the list of changesets relative to this ticket.</a></h3>
             <dl id="listofchangesets">
-            <py:for each="rev, author in revisions">
+            <py:for each="rev, author, date in revisions">
 			  <dt class="changeset">
 			    <a href="${href.changeset(rev)}">
 				  Changeset
 				  <em>[${rev}]</em>
 				  by
 				  <span class="author">${author}</span>
+                  <span class="time">(${date})</span>
 			    </a>
 			  </dt>
             </py:for>
