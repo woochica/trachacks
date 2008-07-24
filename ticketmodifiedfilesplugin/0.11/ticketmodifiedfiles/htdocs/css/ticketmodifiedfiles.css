@@ -14,6 +14,7 @@
 .helpcheckbox{
     float: left;
     margin-right: .5em;
+    display: none;
 }
 
 .legendinfo{
@@ -21,7 +22,8 @@
 }
 
 #legendsection{
-	font-size: 80%;
+    margin-top: 20px;
+    font-size: 80%;
 }
 
 .backtonormalflow{

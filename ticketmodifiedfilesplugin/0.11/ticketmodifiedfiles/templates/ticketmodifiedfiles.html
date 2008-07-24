@@ -82,6 +82,7 @@
           ${showfileslist(deletedfiles, "deleted")}
           
           <div id="legendsection">
+            <div><a id="togglecheckboxlink" href="#" onclick="javascript:togglevisibility('checkboxes'); return false;" title="Can be helpful to for instance track which files have already been uploaded">Display the checkboxes</a></div>
             <strong>Legend:</strong>
             <py:choose><py:when test="'E' in filestatus.values()"><span class="edit">&nbsp;</span><span class="legendinfo">Edited</span></py:when></py:choose>
             <py:choose><py:when test="'D' in filestatus.values()"><span class="delete">&nbsp;</span><span class="legendinfo">Deleted</span></py:when></py:choose>
@@ -91,7 +92,7 @@
           </div>
           
           <div id="changesetslist">
-            <h3 class="backtonormalflow"><a id="changesetslink" href="javascript:togglevisibility('listofchangesets');">Display the list of changesets relative to this ticket.</a></h3>
+            <h3 class="backtonormalflow"><a id="changesetslink" href="#" onclick="javascript:togglevisibility('listofchangesets'); return false;">Display the list of changesets relative to this ticket.</a></h3>
             <dl id="listofchangesets">
             <py:for each="rev, author in revisions">
 			  <dt class="changeset">

@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name='TicketModifiedFiles',
     description='Trac plugin that lists the files that have been modified while resolving a ticket.',
-    version='0.8',
+    version='0.8.1',
     license='BSD-ish (see the COPYING.txt file)',
     author='Emilien Klein',
     author_email='Emilien Klein <e2jk AT users DOT sourceforge DOT net>',
