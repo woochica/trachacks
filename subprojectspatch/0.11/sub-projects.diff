@@ -1,6 +1,5 @@
-diff -r cf8531ae211a trac/web/main.py
---- a/trac/web/main.py	Mon Jul 21 01:44:40 2008 -0700
-+++ b/trac/web/main.py	Sat Jul 26 00:50:24 2008 -0700
+--- trac/web/main.py	Mon Jul 21 01:44:40 2008 -0700
++++ trac/web/main.py	Sat Jul 26 00:50:24 2008 -0700
 @@ -345,6 +345,18 @@
              # environment
              path_info = environ.get('PATH_INFO', '').lstrip('/').split('/')
