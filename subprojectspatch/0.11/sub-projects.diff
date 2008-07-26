@@ -1,12 +1,11 @@
-Index: trac/web/main.py
-===================================================================
---- trac/web/main.py	(revision 7355)
-+++ trac/web/main.py	(working copy)
-@@ -342,6 +342,19 @@
-         env_paths = environ.get('trac.env_paths')
-         if env_parent_dir or env_paths:
-             # The first component of the path is the base name of the
-+            path_info = environ.get('PATH_INFO')
+diff -r cf8531ae211a trac/web/main.py
+--- a/trac/web/main.py	Mon Jul 21 01:44:40 2008 -0700
++++ b/trac/web/main.py	Sat Jul 26 00:50:24 2008 -0700
+@@ -345,6 +345,18 @@
+             # environment
+             path_info = environ.get('PATH_INFO', '').lstrip('/').split('/')
+             env_name = path_info.pop(0)
++            
 +            if len(path_info) and path_info[0] == 'p':
 +                path_info.pop(0) # pop off the p
 +                env_parent_dir = os.path.join(env_parent_dir, env_name, 'projects')
@@ -18,11 +17,10 @@ Index: trac/web/main.py
 +                    env_name = None
 +            else:
 +                parent_env = None
-+
-             # environment
-             path_info = environ.get('PATH_INFO', '').lstrip('/').split('/')
-             env_name = path_info.pop(0)
-@@ -356,7 +369,10 @@
+ 
+             if not env_name:
+                 # No specific environment requested, so render an environment
+@@ -356,7 +368,10 @@
              # To make the matching patterns of request handlers work, we append
              # the environment name to the `SCRIPT_NAME` variable, and keep only
              # the remaining path in the `PATH_INFO` variable.
