@@ -26,3 +26,7 @@ wiki.href = /wiki/ZhWikiStart
 [metanav]
 help.href = /wiki/ZhTracGuide
 }}}
+
+ * 也可以不加mainnav配置, 使用默认的/wiki/WikiStart作为其实页.
+
+ 3. 复制ZhTracGuideToc.py到项目环境的plugins目录下.
