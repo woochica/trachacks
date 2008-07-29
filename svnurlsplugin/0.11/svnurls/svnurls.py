@@ -63,24 +63,20 @@ class SVNURLs(Component):
             if data['path'] != '/':                
                 offset += 1 # parent directory row
 
+            xpath_prefix = "//table[@id='dirlist']"
             # add the table header
-            # XXX this xpath expression is really nasty;  
-            # ideally we should check 'is self.element_class one of the classes present?'
-            xpath = "//table[@id='dirlist']//th[@class='%s' or @class='%s asc' or @class='%s desc']" % (self.element_class,
-                                                                                                        self.element_class,
-                                                                                                        self.element_class)
+            xpath = xpath_prefix + "//th[contains(@class, '%s')]" % self.element_class
             stream |= Transformer(xpath).after(tag.th('URL', **{'class': "url"}))
 
             # add table cells
-            b = StreamBuffer()
-            stream |= Transformer("//table[@id='dirlist']//td[@class='name']/a/@href").copy(b).end().select("//table[@id='dirlist']//td[@class='%s']" % self.element_class).after(self.GenerateSVNUrl(b, self.svn_base_url, self.link_text, data['path_links'][0]['href']))
-
+            stream = self.dir_entries(stream, data, xpath_prefix)
         return stream
 
-    def dir_entries(self, stream, data):
+    def dir_entries(self, stream, data, xpath_prefix=''):
         # add table cells
         b = StreamBuffer()
-        stream |= Transformer("//td[@class='name']/a/@href").copy(b).end().select("//td[@class='%s']" % self.element_class).after(self.GenerateSVNUrl(b, self.svn_base_url, self.link_text, data['path_links'][0]['href']))
+        xpath = "//td[@class='%s']"
+        stream |= Transformer(xpath_prefix + (xpath % 'name') + "/a/@href").copy(b).end().select(xpath_prefix + (xpath % self.element_class)).after(self.GenerateSVNUrl(b, self.svn_base_url, self.link_text, data['path_links'][0]['href']))
         return stream
 
     def svnlog(self, stream, data):
