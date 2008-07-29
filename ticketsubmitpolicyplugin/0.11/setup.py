@@ -18,8 +18,8 @@ function according to the value of other ticket fields.
       url='http://trac-hacks.org/wiki/TicketSubmitPolicyPlugin',
       keywords='trac plugin',
       license="GPL",
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
-      include_package_data=True,
+      packages=['ticketsubmitpolicy'],
+      package_data={'ticketsubmitpolicy' : ['templates/*.html']},
       zip_safe=False,
       entry_points = """
       [trac.plugins]
