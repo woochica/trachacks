@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.1'
+version='0.1.1'
 
 setup(name='svnsyncplugin',
       version=version,
@@ -8,7 +8,7 @@ setup(name='svnsyncplugin',
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
       url='http://trac-hacks.org/wiki/SvnsyncPlugin',
-      keywords='trac plugin',
+      keywords='trac plugin svn',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
