@@ -78,7 +78,7 @@
   <h1>关于Trac <?cs var:trac.version ?>zh3</h1>
   <p>Trac是一个基于Web的软件项目管理及bug/事务追踪系统, 强调使用方便, 而不是其外在形式. 它提供了集成Wiki/版本控制系统界面, 以及更多方便的项目管理渠道, 来掌控项目的事件和变化.
 </p>
-  <p>Trac是以[http://sk.nvg.org/python/license.html 修订BSD许可证]分发的. 可以查看<a href="http://trac.edgewall.org/wiki/TracLicense">在线</a>的许可证的完整内容, 也可以查看分发中包含的[http://trac.edgewall.org/browser/branches/0.10-stable/COPYING COPYING文件]. </p>
+  <p>Trac是以<a href = "http://sk.nvg.org/python/license.html">修订BSD许可证</a>分发的. 可以查看<a href="http://trac.edgewall.org/wiki/TracLicense">在线</a>的许可证的完整内容, 也可以查看分发中包含的<a href="http://trac.edgewall.org/browser/branches/0.10-stable/COPYING">COPYING文件</a>. </p>
   <a href="http://www.python.org/" style="border: none; float: right">
    <img style="display: block" src="<?cs var:htdocs_location ?>python.png"
      alt="python powered" width="140" height="56" />

@@ -48,7 +48,7 @@
  <div class="buttons">
   <form method="post" action=""><div id="delete">
    <input type="hidden" name="action" value="delete" />
-   <input type="submit" name="cancel" value="删除" />
+   <input type="submit" name="cancel" value="取消" />
    <input type="submit" value="删除附件" />
   </div></form>
  </div>

@@ -315,10 +315,10 @@
     </fieldset>
     <div class="buttons"><?cs
      if wiki.action == "collision" ?>
-      <input type="submit" name="preview" value="浏览" disabled="disabled" />&nbsp;
+      <input type="submit" name="preview" value="预览" disabled="disabled" />&nbsp;
       <input type="submit" name="save" value="提交" disabled="disabled" />&nbsp;
      <?cs else ?>
-      <input type="submit" name="preview" value="浏览" accesskey="r" />&nbsp;
+      <input type="submit" name="preview" value="预览" accesskey="r" />&nbsp;
       <input type="submit" name="save" value="提交" />&nbsp;
      <?cs /if ?>
      <input type="submit" name="cancel" value="放弃" />

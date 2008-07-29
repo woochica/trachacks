@@ -7,7 +7,7 @@ addEvent(window, 'load', function() { document.getElementById('summary').focus()
 <div id="ctxtnav" class="nav"></div>
 
 <div id="content" class="ticket">
-<h1>创建新传票</h1>
+<h1>兴建传票</h1>
 <?cs include:"site_newticket.cs" ?>
 <form id="newticket" method="post" action="<?cs
   var:trac.href.newticket ?>#preview">

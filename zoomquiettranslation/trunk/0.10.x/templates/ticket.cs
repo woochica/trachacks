@@ -201,7 +201,7 @@
 <?cs var:ticket.description ?></textarea>
     </td>
    </tr><tr>
-    <th><label for="reporter">报表人:</label></th>
+    <th><label for="reporter">汇报者:</label></th>
     <td class="fullrow" colspan="3"><input type="text" value="<?cs 
       var:ticket.reporter ?>" id="reporter" name="reporter" size="70" /></td>
    </tr><?cs
