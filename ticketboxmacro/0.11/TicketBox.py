@@ -11,8 +11,7 @@ Example:
 [[TicketBox({1})]]                     ... expand report result as ticket list
 [[TicketBox([report:1])]]              ... alternate format of report
 [[TicketBox([report:9?name=val])]]     ... report with dynamic variable
-[[TicketBox([query:status=new])]]]     ... query string
-[[TicketBox({1},[query:status=new])]]  ... conbination
+[[TicketBox({1},#50,{2},100)]]         ... convination of above
 [[TicketBox(500pt,{1})]]               ... with box width as 50 point
 [[TicketBox(200px,{1})]]               ... with box width as 200 pixel
 [[TicketBox(25%,{1})]]                 ... with box width as 25%
@@ -44,18 +43,16 @@ import string
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.ticket.report import ReportModule
 from trac.ticket.model import Ticket
-from trac.ticket.query import Query
 
 ## default style values
-styles = { "float": "right",
-           "background": "#f7f7f0",
-           "width": "25%",
-           }
+default_styles = { "float": "right",
+                   "background": "#f7f7f0",
+                   "width": "25%",
+                   }
 
 args_pat = [r"#?(?P<tktnum>\d+)",
             r"{(?P<rptnum>\d+)}",
             r"\[report:(?P<rptnum2>\d+)(?P<dv>\?.*)?\]",
-            r"\[query:(?P<query>[^\]]*)\]",
             r"(?P<width>\d+(pt|px|%))",
             r"(?P<title>'[^']*'|\"[^\"]*\")",
             r"(?P<keyword>[^,= ]+)(?: *= *(?P<kwarg>\"[^\"]*\"|'[^']*'|[^,]*))?",
@@ -141,15 +138,6 @@ def execute(formatter, content):
     req = formatter.req
     env = formatter.env
     args = parse(content or '')
-    try:
-        db = env.get_db_cnx()
-        return doit(req, env, args, db)
-    finally:
-        if db and not hasattr(env, 'get_cnx_pool'):
-            # without db connection pool, we should close db.
-            db.close()
-
-def doit(req, env, args, db):
     items = []
     summary = None
     ticket = default_ticket_field
@@ -157,6 +145,7 @@ def doit(req, env, args, db):
     inline = False
     nosort = False
     title = "Tickets"
+    styles = default_styles.copy()
     args_re = re.compile("^(?:" + string.join(args_pat, "|") + ")$")
     # process options first
     for arg in args:
@@ -183,61 +172,44 @@ def doit(req, env, args, db):
                 styles[kw] = kwarg
     # pick up ticket numbers and report numbers
     for arg in args:
-        sql = None
-        params = []
         match = args_re.match(arg)
-        id_name = ticket
-        sidx = iidx = -1
         if not match:
             continue
         elif match.group('tktnum'):
             items.append(int(match.group('tktnum')))
-        elif match.group('query'):
-            q = Query.from_string(env, match.group('query'))
-            sql, params = q.get_sql(req)
-            id_name = 'id'
         elif match.group('rptnum') or match.group('rptnum2'):
             num = match.group('rptnum') or match.group('rptnum2')
+            dv = {}
+            # username, do not override if specified
+            if not dv.has_key('USER'):
+                dv['USER'] = req.authname
+            if match.group('dv'):
+                for expr in string.split(match.group('dv')[1:], '&'):
+                    k, v = string.split(expr, '=')
+                    dv[k] = v
             #env.log.debug('dynamic variables = %s' % dv)
+            db = env.get_db_cnx()
             curs = db.cursor()
             try:
                 curs.execute('SELECT query FROM report WHERE id=%s' % num)
-                rows = curs.fetchall()
-                if len(rows) == 0:
-                    raise Exception("No such report: %s"  % num)
-                sql = rows[0][0]
-            finally:
-                curs.close()
-            if sql:
-                sql = sql.strip()
-                if sql.lower().startswith("query:"):
-                    if sql.lower().startswith('query:?'):
-                        raise Exception('URL style of query string is not supported.')
-                    q = Query.from_string(env, sql[6:])
-                    sql, params = q.get_sql(req)
-                    id_name = 'id'
-        if sql:
-            if not params:
-                # handle dynamic variables
+                (query,) = curs.fetchone()
+                # replace dynamic variables with sql_sub_vars()
                 # NOTE: sql_sub_vars() takes different arguments in
                 #       several trac versions.
                 #       For 0.10 or before, arguments are (req, query, args)
                 #       For 0.10.x, arguments are (req, query, args, db)
                 #       For 0.11 or later, arguments are (query, args, db)
-                dv = ReportModule(env).get_var_args(req)
-                sql, params = ReportModule(env).sql_sub_vars(sql, dv, db)
-            try:
-                #env.log.debug('sql = %s' % sql)
-                curs = db.cursor()
-                curs.execute(sql, params)
+                query, dv = ReportModule(env).sql_sub_vars(query, dv, db)
+                #env.log.debug('query = %s' % query)
+                curs.execute(query, dv)
                 rows = curs.fetchall()
                 if rows:
                     descriptions = [desc[0] for desc in curs.description]
                     try:
-                        iidx = descriptions.index(id_name)
+                        idx = descriptions.index(ticket)
                     except:
-                        raise Exception('No such column for ticket number: %r'
-                                        % id_name )
+                        raise Exception('No such column for ticket: %r'
+                                        % ticket )
                     if summary:
                         try:
                             sidx = descriptions.index(summary)
@@ -245,12 +217,14 @@ def doit(req, env, args, db):
                             raise Exception('No such column for summary: %r'
                                             % summary)
                     for row in rows:
-                        items.append(row[iidx])
-                        if summary and 0 <= sidx:
-                            summaries[row[iidx]] = row[sidx]
+                        items.append(row[idx])
+                        if summary:
+                            summaries[row[idx]] = row[sidx]
             finally:
-                curs.close()
-
+                if not hasattr(env, 'get_cnx_pool'):
+                    # without db connection pool, we should close db.
+                    curs.close()
+                    db.close()
     if summary:
         # get summary text
         for id in items:
@@ -268,21 +242,20 @@ def doit(req, env, args, db):
     if summary:
         html = string.join([wiki_to_oneliner("%s (#%d)" % (summaries[n],n),
                                              env,
-                                             db,
-                                             req=req) for n in items], "<br>")
+                                             env.get_db_cnx(),
+                                             req=formatter.req) for n in items], "<br>")
     else:
         html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
-                                env, db, req=req)
+                                env, env.get_db_cnx(), req=formatter.req)
     if html != '':
         try:
             title = title % len(items)  # process %d in title
         except:
             pass
-        sty = styles.copy()
         if inline:
             for key in ['float', 'width']:
-                del sty[key]
-        style = ';'.join(["%s:%s" % (k,v) for k,v in sty.items() if v])
+                del styles[key]
+        style = ';'.join(["%s:%s" % (k,v) for k,v in styles.items() if v])
         return '<fieldset class="ticketbox" style="%s"><legend>%s</legend>%s</fieldset>' % \
                (style, title, html)
     else:
