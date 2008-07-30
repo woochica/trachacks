@@ -15,13 +15,16 @@ Example:
 [[TicketBox(500pt,{1})]]               ... with box width as 50 point
 [[TicketBox(200px,{1})]]               ... with box width as 200 pixel
 [[TicketBox(25%,{1})]]                 ... with box width as 25%
+[[TicketBox(width=25%,{1})]]           ... another style for with
+[[TicketBox(float=left,{1})]]          ... place box on the left
+[[TicketBox(background=yellow,{1})]]   ... set background color as yellow
 [[TicketBox('Different Title',#1,#2)]] ... Specify title
 [[TicketBox(\"Other Title\",#1,#2)]]     ... likewise
 [[TicketBox('%d tickets',#1,#2)]]      ... embed ticket count in title
 [[TicketBox({1}, inline)]]             ... display the box as block element.
 [[TicketBox({1}, summary)]]            ... display with summary per line
 [[TicketBox({1}, summary=Titre)]]      ... specify field name of summary
-[[TicketBox({1}, ticket=ID)]]          ... specify field name of ticket num.
+[[TicketBox({1}, ticket=ID)]]          ... specify sql field name of ticket num.
 [[TicketBox({1}, nosort)]]             ... display numbers without sort
 }}}
 
@@ -47,12 +50,13 @@ styles = { "float": "right",
            "width": "25%",
            }
 inline_styles = { "background": "#f7f7f0", }
+style_keywords = styles.keys()
 
 args_pat = [r"#?(?P<tktnum>\d+)",
             r"{(?P<rptnum>\d+)}",
             r"\[report:(?P<rptnum2>\d+)(?P<dv>\?.*)?\]",
             r"(?P<width>\d+(pt|px|%))",
-            r"(?P<keyword>nosort|summary|inline|ticket)(?:=(?P<kwarg>.*))?",
+            r"(?P<keyword>[-a-z]+)(?: *= *(?P<kwarg>.*))?",
             r"(?P<title1>'.*')",
             r'(?P<title2>".*")']
 
@@ -109,6 +113,8 @@ def execute(formatter, args):
                 inline = True
             elif kw == 'nosort':
                 nosort = True
+            elif kw in styles and kwarg:
+                styles[kw] = kwarg
     # pick up ticket numbers and report numbers
     for arg in args:
         match = args_re.match(arg)
