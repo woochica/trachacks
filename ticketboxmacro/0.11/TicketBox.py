@@ -18,8 +18,8 @@ Example:
 [[TicketBox(width=25%,{1})]]           ... another style for with
 [[TicketBox(float=left,{1})]]          ... place box on the left
 [[TicketBox(background=yellow,{1})]]   ... set background color as yellow
-[[TicketBox('Different Title',#1,#2)]] ... Specify title
-[[TicketBox(\"Other Title\",#1,#2)]]     ... likewise
+[[TicketBox('Hello, world',#1,#2)]]    ... Specify title
+[[TicketBox("Other Title",#1,#2)]]     ... likewise
 [[TicketBox('%d tickets',#1,#2)]]      ... embed ticket count in title
 [[TicketBox({1}, inline)]]             ... display the box as block element.
 [[TicketBox({1}, summary)]]            ... display with summary per line
@@ -56,9 +56,9 @@ args_pat = [r"#?(?P<tktnum>\d+)",
             r"{(?P<rptnum>\d+)}",
             r"\[report:(?P<rptnum2>\d+)(?P<dv>\?.*)?\]",
             r"(?P<width>\d+(pt|px|%))",
-            r"(?P<keyword>[-a-z]+)(?: *= *(?P<kwarg>.*))?",
-            r"(?P<title1>'.*')",
-            r'(?P<title2>".*")']
+            r"(?P<title>'[^']*'|\"[^\"]*\")",
+            r"(?P<keyword>[^,= ]+)(?: *= *(?P<kwarg>\"[^\"]*\"|'[^']*'|[^,]*))?",
+            ]
 
 # default name of fields
 default_summary_field = 'summary'
@@ -97,12 +97,34 @@ def sqlstr(x):
     else:
         return x
 
-def execute(formatter, args):
-    txt = args
+def parse(content):
+    """Split macro argument string by comma considering quotation/escaping.
+
+    >>> parse("1,2,3")
+    ['1', '2', '3']
+    >>> parse('"Hello, world", {1}')
+    ['"Hello, world"', '{1}']
+    >>> parse("key='a,b,c',key2=\\"d,e\\"")
+    ["key='a,b,c'", 'key2="d,e"']
+    """
+    result = []
+    args_re = re.compile("^(" + string.join(args_pat, "|") + ") *(,|$)")
+    content = content.lstrip()
+    while content:
+        m = args_re.match(content)
+        if m:
+            item = m.group(1)
+            content = content[m.end(0):].lstrip()
+        else:
+            item, content = [x.strip() for x in content.split(',', 1)]
+        item = item.strip()
+        result.append(item)
+    return result
+    
+def execute(formatter, content):
     req = formatter.req
     env = formatter.env
-    if not txt:
-        txt = ''
+    args = parse(content or '')
     items = []
     summary = None
     ticket = default_ticket_field
@@ -111,17 +133,14 @@ def execute(formatter, args):
     nosort = False
     title = "Tickets"
     args_re = re.compile("^(?:" + string.join(args_pat, "|") + ")$")
-    args = [string.strip(s) for s in txt.split(',')]
     # process options first
     for arg in args:
         match = args_re.match(arg)
         if not match:
             env.log.debug('TicketBox: unknown arg: %s' % arg)
             continue
-        elif match.group('title1'):
-            title = match.group('title1')[1:-1]
-        elif match.group('title2'):
-            title = match.group('title2')[1:-1]
+        elif match.group('title'):
+            title = match.group('title')[1:-1]
         elif match.group('width'):
             styles['width'] = match.group('width')
         elif match.group('keyword'):
