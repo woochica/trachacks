@@ -97,6 +97,21 @@ def sqlstr(x):
     else:
         return x
 
+def unquote(s):
+    """remove quotation chars on both side.
+
+    >>> unquote('"abc"')
+    'abc'
+    >>> unquote("'abc'")
+    'abc'
+    >>> unquote('abc')
+    'abc'
+    """
+    if 2 <= len(s) and s[0] + s[-1] in ['""', "''"]:
+        return s[1:-1]
+    else:
+        return s
+
 def parse(content):
     """Split macro argument string by comma considering quotation/escaping.
 
@@ -145,7 +160,7 @@ def execute(formatter, content):
             styles['width'] = match.group('width')
         elif match.group('keyword'):
             kw = match.group('keyword').lower()
-            kwarg = match.group('kwarg')
+            kwarg = unquote(match.group('kwarg') or '')
             if kw == 'summary':
                 summary = kwarg or default_summary_field
             elif kw == 'ticket':
