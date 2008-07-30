@@ -65,6 +65,13 @@ default_summary_field = 'summary'
 default_ticket_field = 'ticket'
 
 def uniq(x):
+    """Remove duplicated items and return new list.
+    If there are duplicated items, first appeared item remains and
+    others are removed.
+
+    >>> uniq([1,2,3,3,2,4,1])
+    [1, 2, 3, 4]
+    """
     y=[]
     for i in x:
         if not y.count(i):
@@ -72,8 +79,23 @@ def uniq(x):
     return y
 
 def sqlstr(x):
-    """Make quoted value string for SQL."""
-    return "'%s'" % x.replace( "'","''" )
+    """Make quoted value string for SQL.
+    Return single quotated string with escaping.
+    Return itself if argument is not string,
+
+    >>> sqlstr('abc')
+    "'abc'"
+    >>> sqlstr(u'abc')
+    u"'abc'"
+    >>> sqlstr("a'bc")
+    "'a''bc'"
+    >>> sqlstr(1)
+    1
+    """
+    if isinstance(x, basestring):
+        return "'%s'" % x.replace( "'","''" )
+    else:
+        return x
 
 def execute(formatter, args):
     txt = args
@@ -221,3 +243,8 @@ class TicketBoxMacro(WikiMacroBase):
           [[HelloWorld]]), then `args` is `None`.
         """
         return execute(formatter, args)
+
+
+if __name__ == '__main__':
+    import sys, doctest
+    doctest.testmod(sys.modules[__name__])
