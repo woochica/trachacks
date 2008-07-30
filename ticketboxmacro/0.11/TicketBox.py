@@ -103,6 +103,8 @@ def execute(formatter, args):
             kwarg = match.group('kwarg')
             if kw == 'summary':
                 summary = kwarg or default_summary_field
+            elif kw == 'ticket':
+                ticket = kwarg or default_ticket_field
             elif kw == 'inline':
                 inline = True
             elif kw == 'nosort':
