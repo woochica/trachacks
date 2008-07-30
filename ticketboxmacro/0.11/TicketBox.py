@@ -11,7 +11,8 @@ Example:
 [[TicketBox({1})]]                     ... expand report result as ticket list
 [[TicketBox([report:1])]]              ... alternate format of report
 [[TicketBox([report:9?name=val])]]     ... report with dynamic variable
-[[TicketBox({1},#50,{2},100)]]         ... convination of above
+[[TicketBox([query:status=new])]]]     ... query string
+[[TicketBox({1},[query:status=new])]]  ... conbination
 [[TicketBox(500pt,{1})]]               ... with box width as 50 point
 [[TicketBox(200px,{1})]]               ... with box width as 200 pixel
 [[TicketBox(25%,{1})]]                 ... with box width as 25%
@@ -40,19 +41,56 @@ is used as $USER if not specified explicitly.
 
 import re
 import string
+from trac import __version__ as version
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.ticket.report import ReportModule
 from trac.ticket.model import Ticket
+try:
+    from trac.ticket.query import Query
+    has_query = True
+except:
+    has_query = False
+
+## Mock request object for trac 0.10.x or before
+class MockReq(object):
+    def __init__(self, hdf):
+        self.hdf = dict()
+        self.args = {}
+        self.authname = hdf.getValue('trac.authname', 'anonymous')
+        
+
+# get trac version
+verstr = re.compile('([0-9.]+).*').match(version).group(1)
+ver = [int(x) for x in verstr.split(".")]
+
+if ver <= [0, 10]:
+    report_query_field = 'sql'
+    call_args = dict(get_sql=[],
+                     sql_sub_vars=['req', 'sql', 'dv'],
+                     )
+elif ver < [0, 11]:
+    report_query_field = 'query'
+    call_args = dict(get_sql=[],
+                     sql_sub_vars=['req', 'sql', 'dv', 'db'],
+                     )
+else:
+    report_query_field = 'query'
+    call_args = dict(get_sql=['req'],
+                     sql_sub_vars=['sql', 'dv', 'db'],
+                     )
 
 ## default style values
 default_styles = { "float": "right",
+                   "color": None,
                    "background": "#f7f7f0",
                    "width": "25%",
+                   "border-color": None,
                    }
 
 args_pat = [r"#?(?P<tktnum>\d+)",
             r"{(?P<rptnum>\d+)}",
             r"\[report:(?P<rptnum2>\d+)(?P<dv>\?.*)?\]",
+            r"\[query:(?P<query>[^\]]*)\]",
             r"(?P<width>\d+(pt|px|%))",
             r"(?P<title>'[^']*'|\"[^\"]*\")",
             r"(?P<keyword>[^,= ]+)(?: *= *(?P<kwarg>\"[^\"]*\"|'[^']*'|[^,]*))?",
@@ -133,10 +171,15 @@ def parse(content):
         item = item.strip()
         result.append(item)
     return result
+
+def call(func, vars):
+    from win32api import OutputDebugString as dbg
+    names = call_args[func.__name__]
+    args = [vars[x] for x in names]
+    dbg('call: ' + ', '.join(['%s=%s' % (k,v) for k,v in zip(names, args)]))
+    return func(*args)
     
-def execute(formatter, content):
-    req = formatter.req
-    env = formatter.env
+def run0(req, env, db, content):
     args = parse(content or '')
     items = []
     summary = None
@@ -168,48 +211,70 @@ def execute(formatter, content):
                 inline = True
             elif kw == 'nosort':
                 nosort = True
+            elif kw == 'nowrap':
+                styles['white-space'] = 'nowrap'
             elif kw in styles and kwarg:
                 styles[kw] = kwarg
     # pick up ticket numbers and report numbers
     for arg in args:
+        sql = None
+        params = []
         match = args_re.match(arg)
+        id_name = ticket
+        sidx = iidx = -1
         if not match:
             continue
         elif match.group('tktnum'):
             items.append(int(match.group('tktnum')))
+        elif match.group('query'):
+            if not has_query:
+                raise Exception('You cannot use trac query for this version of trac')
+            q = Query.from_string(env, match.group('query'))
+            sql, params = call(q.get_sql, locals())
+            id_name = 'id'
         elif match.group('rptnum') or match.group('rptnum2'):
             num = match.group('rptnum') or match.group('rptnum2')
-            dv = {}
-            # username, do not override if specified
-            if not dv.has_key('USER'):
-                dv['USER'] = req.authname
-            if match.group('dv'):
-                for expr in string.split(match.group('dv')[1:], '&'):
-                    k, v = string.split(expr, '=')
-                    dv[k] = v
             #env.log.debug('dynamic variables = %s' % dv)
-            db = env.get_db_cnx()
             curs = db.cursor()
             try:
-                curs.execute('SELECT query FROM report WHERE id=%s' % num)
-                (query,) = curs.fetchone()
-                # replace dynamic variables with sql_sub_vars()
+                curs.execute('SELECT %s FROM report WHERE id=%s'
+                             % (report_query_field, num))
+                rows = curs.fetchall()
+                if len(rows) == 0:
+                    raise Exception("No such report: %s"  % num)
+                sql = rows[0][0]
+            finally:
+                curs.close()
+            if sql:
+                sql = sql.strip()
+                if has_query and sql.lower().startswith("query:"):
+                    if sql.lower().startswith('query:?'):
+                        raise Exception('URL style of query string is not supported.')
+                    q = Query.from_string(env, sql[6:])
+                    sql, params = call(q.get_sql, locals())
+                    id_name = 'id'
+        if sql:
+            if not params:
+                # handle dynamic variables
                 # NOTE: sql_sub_vars() takes different arguments in
                 #       several trac versions.
                 #       For 0.10 or before, arguments are (req, query, args)
                 #       For 0.10.x, arguments are (req, query, args, db)
                 #       For 0.11 or later, arguments are (query, args, db)
-                query, dv = ReportModule(env).sql_sub_vars(query, dv, db)
-                #env.log.debug('query = %s' % query)
-                curs.execute(query, dv)
+                dv = ReportModule(env).get_var_args(req)
+                sql, params = call(ReportModule(env).sql_sub_vars, locals())
+            try:
+                #env.log.debug('sql = %s' % sql)
+                curs = db.cursor()
+                curs.execute(sql, params)
                 rows = curs.fetchall()
                 if rows:
                     descriptions = [desc[0] for desc in curs.description]
                     try:
-                        idx = descriptions.index(ticket)
+                        iidx = descriptions.index(id_name)
                     except:
-                        raise Exception('No such column for ticket: %r'
-                                        % ticket )
+                        raise Exception('No such column for ticket number: %r'
+                                        % id_name )
                     if summary:
                         try:
                             sidx = descriptions.index(summary)
@@ -217,14 +282,12 @@ def execute(formatter, content):
                             raise Exception('No such column for summary: %r'
                                             % summary)
                     for row in rows:
-                        items.append(row[idx])
-                        if summary:
-                            summaries[row[idx]] = row[sidx]
+                        items.append(row[iidx])
+                        if summary and 0 <= sidx:
+                            summaries[row[iidx]] = row[sidx]
             finally:
-                if not hasattr(env, 'get_cnx_pool'):
-                    # without db connection pool, we should close db.
-                    curs.close()
-                    db.close()
+                curs.close()
+
     if summary:
         # get summary text
         for id in items:
@@ -239,15 +302,25 @@ def execute(formatter, content):
     if not nosort:
         items.sort()
     html = ''
-    if summary:
-        html = string.join([wiki_to_oneliner("%s (#%d)" % (summaries[n],n),
-                                             env,
-                                             env.get_db_cnx(),
-                                             req=formatter.req) for n in items], "<br>")
+
+    if ver < [0, 11]:
+        fargs = dict(db=db)
     else:
-        html = wiki_to_oneliner(string.join(["#%d" % c for c in items], ", "),
-                                env, env.get_db_cnx(), req=formatter.req)
-    if html != '':
+        fargs = dict(db=db, req=req)
+    if summary:
+        format = '%(summary)s (%(id)s)'
+        sep = '<br/>'
+    else:
+        format = '%(id)s'
+        sep = ', '
+    lines = []
+    for n in items:
+        kwds = dict(id="#%d" % n)
+        if summary:
+            kwds['summary'] = summaries[n]
+        lines.append(wiki_to_oneliner(format % kwds, env, **fargs))
+    html = sep.join(lines)
+    if html:
         try:
             title = title % len(items)  # process %d in title
         except:
@@ -261,22 +334,52 @@ def execute(formatter, content):
     else:
         return ''
 
+def run(req, env, content):
+    db = env.get_db_cnx()
+    try:
+        return run0(req, env, db, content)
+    finally:
+        if db and not hasattr(env, 'get_cnx_pool'):
+            # for old version which does not have db connection pool,
+            # we should close db.
+            db.close()
 
-from trac.wiki.macros import WikiMacroBase
+# single file macro I/F (not plugin, for 0.10.x or before)
+def execute(hdf, txt, env):
+    req = MockReq(hdf)
+    return run(req, env, txt)
 
-class TicketBoxMacro(WikiMacroBase):
 
-    def expand_macro(self, formatter, name, args):
-        """Return some output that will be displayed in the Wiki content.
+try:
+    from trac.wiki.macros import WikiMacroBase
 
-        `name` is the actual name of the macro (no surprise, here it'll be
-        `'HelloWorld'`),
-        `args` is the text enclosed in parenthesis at the call of the macro.
-          Note that if there are ''no'' parenthesis (like in, e.g.
-          [[HelloWorld]]), then `args` is `None`.
-        """
-        return execute(formatter, args)
+    class TicketBoxMacro(WikiMacroBase):
 
+        # plugin macro I/F for trac 0.10.x
+        def render_macro(self, req, name, content):
+            db = env.get_db_cnx()
+            try:
+                run(req, self.env, db, content)
+            finally:
+                if db and not hasattr(env, 'get_cnx_pool'):
+                    # for old version which does not have db connection pool,
+                    # we should close db.
+                    db.close()
+
+        # plugin macro I/F for trac 0.11 or later
+        def expand_macro(self, formatter, name, args):
+            """Return some output that will be displayed in the Wiki content.
+
+            `name` is the actual name of the macro (no surprise, here it'll be
+            `'HelloWorld'`),
+            `args` is the text enclosed in parenthesis at the call of the macro.
+              Note that if there are ''no'' parenthesis (like in, e.g.
+              [[HelloWorld]]), then `args` is `None`.
+            """
+            return run(formatter.req, formatter.env, args)
+except ImportError:
+    # trac 0.9
+    pass
 
 if __name__ == '__main__':
     import sys, doctest
