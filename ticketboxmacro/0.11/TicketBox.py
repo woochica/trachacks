@@ -49,8 +49,6 @@ styles = { "float": "right",
            "background": "#f7f7f0",
            "width": "25%",
            }
-inline_styles = { "background": "#f7f7f0", }
-style_keywords = styles.keys()
 
 args_pat = [r"#?(?P<tktnum>\d+)",
             r"{(?P<rptnum>\d+)}",
@@ -253,10 +251,11 @@ def execute(formatter, content):
             title = title % len(items)  # process %d in title
         except:
             pass
+        sty = styles.copy()
         if inline:
-            style = string.join(["%s:%s" % (k,v) for k,v in inline_styles.items() if v <> ""], "; ")
-        else:
-            style = string.join(["%s:%s" % (k,v) for k,v in styles.items() if v <> ""], "; ")
+            for key in ['float', 'width']:
+                del sty[key]
+        style = ';'.join(["%s:%s" % (k,v) for k,v in sty.items() if v])
         return '<fieldset class="ticketbox" style="%s"><legend>%s</legend>%s</fieldset>' % \
                (style, title, html)
     else:
