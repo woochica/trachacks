@@ -202,7 +202,10 @@ def doit(req, env, args, db):
             curs = db.cursor()
             try:
                 curs.execute('SELECT query FROM report WHERE id=%s' % num)
-                (sql,) = curs.fetchone()
+                rows = curs.fetchall()
+                if len(rows) == 0:
+                    raise Exception("No such report: %s"  % num)
+                sql = rows[0][0]
             finally:
                 curs.close()
             if sql:
