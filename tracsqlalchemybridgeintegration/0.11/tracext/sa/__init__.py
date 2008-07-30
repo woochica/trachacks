@@ -37,7 +37,7 @@
 #    Armin Ronacher <armin.ronacher@active-4.com>
 #    Pedro Algarvio <ufs@ufsoft.org>
 
-__version__     = '0.1.0'
+__version__     = '0.1.1'
 __author__      = 'Armin Ronacher, Pedro Algarvio'
 __email__       = 'armin.ronacher@active-4.com, ufs@ufsoft.org'
 __package__     = 'TracSQLAlchemyBridge'
@@ -78,9 +78,12 @@ def engine(env):
                                creator=connect, echo=echo)
         if echo:
             # make sqlalchemy log to trac's logger
-            engine.logger = env.log
+            if hasattr(env, 'get_logger'):
+                engine.logger = env.get_logger(__name__)
+            else:
+                engine.logger = env.log
+        _engines[env] = engine
 
-            _engines[env] = engine
     return engine
 
 
