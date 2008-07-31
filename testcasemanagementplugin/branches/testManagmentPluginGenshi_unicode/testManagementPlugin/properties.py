@@ -15,6 +15,7 @@ import sys, traceback
 import time
 import logging
 import logging.handlers
+import trac.util.text as TracText
 from trac import env
 from trac.versioncontrol import api
 from trac.ticket import Component, Version, Milestone, Ticket, TicketSystem
@@ -35,7 +36,7 @@ class Properties :
     def getComponents( self, component, req ):
         components = []
         for c in Component.select(component.env) :
-            components.append(c.name)
+            components.append(TracText.to_unicode( c.name ))
         return components
         
     def getMilestones(self, component, req ):
@@ -101,9 +102,9 @@ class Properties :
                 if match:
                     try:
                         content = entry.get_content().read()
-                        testcase = TestCase( entry.get_name(), str(content), component, entry.get_name() )
-                        testcases[ testcase.getId().encode('ascii', 'ignore').strip() ] =  testcase 
-                    
+                        testcase = TestCase( TracText.to_unicode( entry.get_name() ), TracText.to_unicode(content), component, entry.get_name() )
+                        testcases[ TracText.to_unicode ( testcase.getId() ).strip() ] =  testcase 
+                        component.env.log.debug( "added testcase : " + testcase.getId() + "  FROM file : " + TracText.to_unicode( entry.get_name() ) )
                     except Exception, ex:
                         errors.append( "The testcase  :" + entry.get_name() + "  is not well formed xml...a parse error occured " )
                         
@@ -114,7 +115,7 @@ class Properties :
         for key, value in testcases.iteritems():
             try:
                     currentTestcase = value #in case we do toss an exception I'll want some information from this testcase
-                    components.index( value.getComponent().encode('ascii', 'ignore').strip() ) #this will toss an exception if the component in the testcase doesn't exist in the trac project
+                    components.index( TracText.to_unicode( value.getComponent() ).strip() ) #this will toss an exception if the component in the testcase doesn't exist in the trac project
                     
             except Exception, ex:
                 errors.append( "The component :" + currentTestcase.getComponent() + ", in the testcase : " + currentTestcase.getId() + "  in the file : " + currentTestcase.getFileName() + ", does not exist in the trac project "  )
@@ -267,12 +268,12 @@ class TestCase :
         return self.expectedresult
         
     def __init__(self, testcasename, testCaseContent, component, fileName = None ) : 
-        self.id = ""
-        self.summary = ""
-        self.description = ""
-        self.expectedresult = ""
-        self.component = ""
-        self.fileName = ""
+        self.id = unicode( '' )
+        self.summary = unicode( '' )
+        self.description = unicode( '' )
+        self.expectedresult = unicode( '' )
+        self.component = unicode( '' )
+        self.fileName = unicode( '' )
         
         self.fileName = fileName
 
@@ -286,7 +287,7 @@ class TestCase :
                 #should only be one node...
                 for child in aNode.childNodes:
                     if child.nodeType == xml.dom.minidom.Node.TEXT_NODE :
-                        self.__dict__[a] += child.data
+                        self.__dict__[a] += TracText.to_unicode( child.data )
                     #else...we don't care about other kinds of nodes...not that there should be any.
         
         testcaseDOM.unlink()

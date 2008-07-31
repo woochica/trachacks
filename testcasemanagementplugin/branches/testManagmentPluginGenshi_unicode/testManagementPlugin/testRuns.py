@@ -16,6 +16,7 @@ import sys, traceback
 import time
 import logging
 import logging.handlers
+import trac.util.text as TracText
 from trac.core import *
 from trac.ticket import Component as TracComponent, Milestone, Ticket, TicketSystem 
 from testManagementPlugin.properties import Properties
@@ -50,21 +51,22 @@ class TestRunManager(Component):
             if req.method == "POST":
                 #ok generate some tickets already...
                 req.perm.assert_permission('TICKET_CREATE') #but first check to make sure they are allowed to create tickets...
-                success, errorMessage_orQueryURL = self.generateTracTickets( req )
+                success, errorMessage_orQueryURL = self.generateTracTickets( req)
                 
                 if success:
                     #redirect to trac's custom reporting page with the pre-built query that should show the created test cases (and existing tickets that match the query parameters)
                     req.redirect( errorMessage_orQueryURL )
                 
                 else:
-                    
-                    data["errorMessage"] = errorMessage_orQueryURL 
+                    data["errorMessage"] = "There is a configuration problem...issues listed below"
+                    data["errorsList"] = errorMessage_orQueryURL
                     return "testRunNotConfigured.html", data, None
                 
             elif errors != None :
-                self.env.log.info( "ARG!")
-                data["errorMessage"] = errors
-                return template, data, content_type
+                #self.env.log.info( "ARG!")
+                data["errorMessage"] = "There is a configuration problem...issues listed below" 
+                data["errorsList"] = errors
+                return "testRunNotConfigured.html", data, None
                 
             else: 
                 # Show Test Run Generation Form: allows a manager to assign testruns to QA staff.
@@ -102,6 +104,8 @@ class TestRunManager(Component):
 
         self.env.log.info( "TESTCASES" + repr(testcases) + " ERRORS : " + repr(errors) )
         
+        self.env.log.info( "LENGTH OF TESTCASES : " + str ( len( testcases ) ) )
+        
         if testcases == None or len(errors) > 0 : 
             data["errorMessage"] = "No test cases found or other error...see list below if any"
             data["errorsList"] = errors
@@ -109,6 +113,8 @@ class TestRunManager(Component):
             
         for key, testcase in testcases.iteritems():
             testcaseNames.append( testcase.getId() )
+            self.env.log.info( "Added test case id : " + testcase.getId()   + " to the list " )
+        
         testcaseNames.sort()
                 
         templates = self.properties.getTemplates(self, req )
@@ -160,7 +166,7 @@ class TestRunManager(Component):
         
         if testRunKeyWord == None : 
             testRunKeyWord = ""
-        testRunKeyWord = self.properties.trimOutAnyProblemStrings(testRunKeyWord)  #this is manually typed in...so it's probably to look for sqlInjection etc...
+        testRunKeyWord = self.properties.trimOutAnyProblemStrings(testRunKeyWord)  #this is manually typed in...so it's probably a good idea to look for sqlInjection etc...
         
         if version == None:
             version = ""
@@ -171,26 +177,26 @@ class TestRunManager(Component):
             
         #check to see if the user, templates or testcases parameters is a str/unicode or a list (well if it isn't a unicode or str then it is a list)
         if isinstance( users, unicode): 
-            users = [users.encode('ascii', 'ignore')]
+            users = [users]
             
         if isinstance( users, str): 
-            users = [users]   
+            users = [TracText.to_unicode ( users )]   
 
         if isinstance( testcases, unicode) :
-            testcases = [testcases.encode('ascii', 'ignore')]
+            testcases = [testcases]
         
         if isinstance( testcases, str ):
             testcases = [testcases]
         
         if isinstance( testTemplates, unicode) :
-            testTemplates = [testTemplates.encode('ascii', 'ignore')]
+            testTemplates = [testTemplates]
             
         if isinstance( testTemplates, str ):
-            testTemplates = [testTemplates]
+            testTemplates = [TracText.to_unicode ( testTemplates) ]
         
         
-        version = version.encode('ascii', 'ignore').strip()  
-        milestone = milestone.encode('ascii', 'ignore').strip()
+        version = TracText.to_unicode ( version).strip()  
+        milestone = TracText.to_unicode ( milestone ).strip()
 
         if testcases == None :
             testcases = [] #so we don't get a blow up later...
@@ -217,11 +223,13 @@ class TestRunManager(Component):
         errorMessages = []
         for aUser in users : 
             for testId in testcases : 
-                testId = testId.encode('ascii', 'ignore').strip()
+                testId = TracText.to_unicode( testId ).strip()
                 if testId in allTestcases :
                     continue
                 else:
-                     errorMessages.append( "The test: " + testId + ", doesn't match it's file name or you've specified it wrong in the testtemplates.xml file" )
+                    self.env.log.info( "Testcase : " + testId + "  not found in master list " )
+                    errorMessages.append( "The test: " + testId + ", doesn't match it's file name or you've specified it wrong in the testtemplates.xml file" )
+        
         if errorMessages:
             return False, errorMessages
         
@@ -262,14 +270,14 @@ class TestRunManager(Component):
         return True, req.base_url + "/query?status=new&status=assigned&status=reopened&status=accepted&testcase_result=&version=" + version + "&milestone=" + milestone + "&type=testcase&order=priority&group=owner"
 
     def createCombinedTestCaseList( self, testTemplates, testcases, req ) :
-                 
+        
         if len(testTemplates) < 1 :
             return testcases #hopefully testcases isn't < 1 as well...
         else:
             projTemplates = self.properties.getTemplates(self, req )
             tempTestCaseList = []
             for name in testTemplates : 
-                name = name.encode('ascii', 'ignore')
+                name = TracText.to_unicode ( name )
                 name  = self.properties.trimOutAnyProblemStrings(name )
                 testIds = projTemplates.getTestsForTemplate( name )
                 if testIds != None : 
