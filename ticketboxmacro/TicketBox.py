@@ -173,10 +173,8 @@ def parse(content):
     return result
 
 def call(func, vars):
-    from win32api import OutputDebugString as dbg
     names = call_args[func.__name__]
     args = [vars[x] for x in names]
-    dbg('call: ' + ', '.join(['%s=%s' % (k,v) for k,v in zip(names, args)]))
     return func(*args)
     
 def run0(req, env, db, content):
