@@ -31,11 +31,11 @@ class SVNURLs(Component):
             self.buffer = buffer
             self.svn_base_url = svn_base_url.rstrip('/')
             self.link_text = link_text
-            self.browser_link = browser_link
+            self.browser_link = browser_link.rsplit('?', 1)[0]
 
         def __iter__(self):
             link = self.buffer.events[0][1][1].get('href').split(self.browser_link)[-1]
-            link = self.svn_base_url + link
+            link = self.svn_base_url + link.rsplit('?', 1)[0]
             return iter(tag.td(tag.a(self.link_text, href=link, title=SVNURLs.link_title)))
 
     
