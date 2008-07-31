@@ -1,0 +1,26 @@
+/* Your CSS goes here */
+.poll ul {
+	padding: 0;
+}
+
+.poll li {
+	display: block;
+	list-style-type: none;
+}
+
+.poll li.ticket.prio1 { background: #fdc; border-color: #e88 }
+.poll li.ticket.even.prio1 { background: #fed; border-color: #e99 }
+.poll li.ticket.prio2 { background: #ffb; border-color: #eea }
+.poll li.ticket.even.prio2 { background: #ffd; border-color: #dd8 }
+.poll li.ticket.prio3  { background: #fbfbfb; border-color: #ddd }
+.poll li.ticket.even.prio3 { background: #f6f6f6; border-color: #ccc }
+.poll li.ticket.prio4 { background: #e7ffff; border-color: #cee }
+.poll li.ticket.even.prio4 { background: #dff; border-color: #bee }
+.poll li.ticket.prio5 { background: #e7eeff; border-color: #cde }
+.poll li.ticket.even.prio5 { background: #dde7ff }
+.poll li.ticket.prio6 { background: #f0f0f0; border-color: #ddd }
+.poll li.ticket.even.prio6 { background: #f7f7f7 }
+
+.poll legend:before { content: "Poll: " }
+
+.poll span.voters { font-weight: bold; }
