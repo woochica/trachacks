@@ -1,0 +1,106 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+<head>TestCase Managment Generate Test Run</head>
+<body>
+<br/>
+<xi:include href="header.html" />
+<h2>Manage Test Run</h2>
+    <form class="mod" id="orgTemp" method="post">
+         <fieldset>
+            <legend>Create new test run</legend>
+            <div id="createNewRun">
+                <fieldset>
+                    <label>
+                        The current testcase path location is: <input type="text" name="pathConfiguration" size="60" value="$testrun_svn_path" readonly="true" /> 
+                        <br/>To Validate the test configuration for the tests in the above location click the following link: <a href="$testrun_validatePath">Validate Link</a>
+                    </label>        
+                </fieldset>
+                <table>
+                    <tr>
+                        <td>   
+                            <fieldset>
+                                <label>Enter a test configuration keyword.  This keyword can be used to differentiate between test runs.  An example would be internal versus an external client test configuration.  This is not a required field</label><br/>
+                                <input type="text" name="testrun_keyword"/>
+                                <br/>
+                            </fieldset>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <fieldset>
+                                <legend>REQUIRED FIELD</legend>
+                                <label><b>Select users to generate tickets for:</b></label><br/>                    
+                                    <select name="testrun_users" cols="10"  MULTIPLE="true" size="10">
+                                         <py:for each="name in testrun_users" >
+                                             <option value="$name">$name</option>
+                                        </py:for >
+                                    </select>
+                            </fieldset>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <fieldset>
+                                <legend>Select Appropriate Version and or Milestone</legend>
+                                <table cellspacing="4" cellpadding="4">
+                                    <th><b>Version</b></th><th><b>Milestone/Sprint</b></th>
+                                    <tr>
+                                        <td>    
+                                            <select name="testrun_selectedversion">
+                                                <option value=""  selected="selected"></option>
+                                                <py:for each="version in testrun_versions" >
+                                                    <option value="$version" >$version</option>                                                
+                                                </py:for>
+                                            </select>
+                                        </td>
+                                        <td>    
+                                            <select name="testrun_selectedmilestone" >
+                                                <option value="" selected="selected"></option>
+                                                <py:for each="milestone in testrun_milestones" >
+                                                    <option value="$milestone" >$milestone</option>
+                                                </py:for>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </fieldset>
+                        </td> 
+                    </tr>
+                    <tr>
+                        <td>
+                            <table cellpadding="3" cellspacing="3" border="1">
+                                <th>Select Template(s)</th>
+                                <th>Select Additional Test(s)</th>
+                                <tr>
+                                    <td>
+                                        <select name="testrun_selectedtemplates" cols="10" MULTIPLE="true" size="10">
+                                            <py:for each="template in testrun_testtemplates" >
+                                                <option value="$template">$template</option>
+                                            </py:for>                                              
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="testrun_selectedtestcases" cols="10" MULTIPLE="true" size="10">
+                                            <py:for each="test in testrun_testcases" >
+                                                <option value="$test">$test</option>
+                                            </py:for>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>            
+            <div class="buttons">
+                <input type="submit" name="GenerateTestRun" value="Generate Test Run"/> 
+            </div>
+        </fieldset>
+    </form>
+</body>
+</html>
