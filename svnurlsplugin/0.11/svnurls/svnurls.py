@@ -45,7 +45,7 @@ class SVNURLs(Component):
     ### methods for handling different views
     ### these should return the stream
 
-    def browser(self, stream, data):
+    def browser(self, req, stream, data):
 
         if not data.has_key('path'):
             # this probably means that there is an upstream error
@@ -69,17 +69,17 @@ class SVNURLs(Component):
             stream |= Transformer(xpath).after(tag.th('URL', **{'class': "url"}))
 
             # add table cells
-            stream = self.dir_entries(stream, data, xpath_prefix)
+            stream = self.dir_entries(req, stream, data, xpath_prefix)
         return stream
 
-    def dir_entries(self, stream, data, xpath_prefix=''):
+    def dir_entries(self, req, stream, data, xpath_prefix=''):
         # add table cells
         b = StreamBuffer()
         xpath = "//td[@class='%s']"
         stream |= Transformer(xpath_prefix + (xpath % 'name') + "/a/@href").copy(b).end().select(xpath_prefix + (xpath % self.element_class)).after(self.GenerateSVNUrl(b, self.svn_base_url, self.link_text, data['path_links'][0]['href']))
         return stream
 
-    def svnlog(self, stream, data):
+    def svnlog(self, req, stream, data):
 
         if not data.has_key('path'):
             # this probably means that there is an upstream error
@@ -90,10 +90,15 @@ class SVNURLs(Component):
         
         return stream
 
-    def changelog(self, stream, data):
+    def changelog(self, req, stream, data):
         changes = data['changes']
         url = self.url(data['location'])
         stream |= Transformer("//dt[@class='property files']").before(tag.dt('URL:', **{'class': "property url"}) + tag.dd(tag.a(url, **{'class': "url", 'href': url, 'title': self.link_title})))
+
+        # make the header link to the canonical location if just at '/changeset'
+        if req.path_info.strip('/') == 'changeset':
+            stream |= Transformer("//h1").wrap(tag.a(None, href=req.href('changeset', data['new_rev'])))
+
         return stream
 
     # method for ITemplateStreamFilter
@@ -120,7 +125,7 @@ class SVNURLs(Component):
 
         if svn_base_url:
             handler = handlers.get(filename, lambda stream, data: stream)
-            return handler(stream, data)
+            return handler(req, stream, data)
     
         return stream
 
