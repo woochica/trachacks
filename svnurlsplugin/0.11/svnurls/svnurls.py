@@ -124,7 +124,7 @@ class SVNURLs(Component):
                     }
 
         if svn_base_url:
-            handler = handlers.get(filename, lambda stream, data: stream)
+            handler = handlers.get(filename, lambda req, stream, data: stream)
             return handler(req, stream, data)
     
         return stream
