@@ -121,7 +121,8 @@ class PollMacro(WikiMacroBase):
     base_dir = Option('poll', 'base_dir', '/tmp',
                       'Path where poll pickle dumps should be stored.')
 
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
+        req = formatter.req
         content = filter(None, [i.strip() for i in
                                 content.replace(';', '\n').split('\n')])
         title = content.pop(0)
