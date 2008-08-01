@@ -253,7 +253,7 @@ class TestCase :
         return self.fileName
     
     def getId(self) : 
-        return self.id.encode('ascii', 'ignore').strip()
+        return self.id.strip()
     
     def getSummary(self):
         return self.summary
