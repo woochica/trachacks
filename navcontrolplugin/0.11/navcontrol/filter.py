@@ -29,7 +29,7 @@ class NavControlModule(Component):
     labels = ListOption('navcontrol', 'labels',
                               doc='Labels to assign to navigation items. \
                                    They should be specified as navitem:label e.g \
-                                   !wiki:\'My Wiki\',!browser:\'code\'')
+                                   !wiki:My Wiki,!browser:Code')
 
     implements(IRequestFilter)
 
@@ -66,7 +66,6 @@ class NavControlModule(Component):
             nav_from = 'metanav'
             nav_to   = 'mainnav'
         items |= self._get_items(req, nav_from, prefix_list)
-        #for item in items:
         nav_from_items = req.chrome['nav'][nav_from]
         nav_to_items   = req.chrome['nav'][nav_to]
         for item in items:
@@ -75,21 +74,12 @@ class NavControlModule(Component):
                     nav_from_items.remove(navitem)
                     nav_to_items.append(navitem)
 
-    # general helper method
-    def _get_items(self, req, name, prefix_list):
-      items = set() 
-      for item in self.config.get('trac', name, default='').split(','):
-        item = item.strip()
-        try:
-          prefix_list.index(item[0])
-          items.add(item[1:])
-        except:
-          pass
-        return items
-
     def _relabel_items(self, req):
       nvp_dict = {}
       items = set(getattr(self, 'labels'))
+      prefix_list=['%', '*']
+      items |= self._get_items(req, 'mainnav', prefix_list) \
+          |  self._get_items(req, 'metanav', prefix_list)
       if len(items) > 0:
         for nvp in items:
           try:
@@ -97,12 +87,22 @@ class NavControlModule(Component):
             nvp_dict[nvp[0:index].strip()] = nvp[index+1:].strip()
           except:
             pass
-        for item in req.chrome['nav']['mainnav'] + req.chrome['nav']['metanav']:
-          name = item['name']
-          if nvp_dict.has_key(name):
-            re_href=re.compile('<a\s+?href="(.*?)"[\s.]*', re.I | re.S | re.M)
-            href_val=re_href.findall(item['label'].__str__())
-            if len(href_val) > 0:
-              item['label'] = html.A(nvp_dict[name], href=href_val[0])
+        if len(nvp_dict) > 0:
+          for item in req.chrome['nav']['mainnav'] + req.chrome['nav']['metanav']:
+            name = item['name']
+            if nvp_dict.has_key(name):
+              re_href=re.compile('<a.+?href="(.*?)"[\s.]*', re.I | re.S | re.M)
+              href_val=re_href.findall(item['label'].__str__())
+              if len(href_val) > 0:
+                item['label'] = html.A(nvp_dict[name], href=href_val[0])
+
+    # general helper method
+    def _get_items(self, req, name, prefix_list):
+      items = set() 
+      for item in self.config.getlist('trac', name):
+        item = item.strip()
+        if item[0] in prefix_list:
+          items.add(item[1:])
+      return items
 
 
