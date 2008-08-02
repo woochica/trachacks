@@ -38,22 +38,20 @@ class NavControlModule(Component):
         return handler
         
     def post_process_request(self, req, template, data, content_type):
-        self._remove_items(req)
+        self._remove_items(req, 'mainnav')
+        self._remove_items(req, 'metanav')    
         self._move_items(req, 'main2meta')
         self._move_items(req, 'meta2main')
         self._relabel_items(req)
         return template, data, content_type
 
     # Internal methods
-    def _remove_items(self, req):
-        items = set(getattr(self, 'mainnav')) \
-            | set(getattr(self, 'metanav'))
+    def _remove_items(self, req, name):
+        items = set(getattr(self, name))
         prefix_list=['-', '!']
-        items |= self._get_items(req, 'mainnav', prefix_list) \
-            | self._get_items(req, 'metanav', prefix_list)
+        items |= self._get_items(req, name, prefix_list)
         for item in items:
-            navitems = req.chrome['nav']['mainnav'] \
-                + req.chrome['nav']['metanav']
+            navitems = req.chrome['nav'][name]
             for navitem in navitems:
               if navitem['name'] == item:
                 navitems.remove(navitem)
