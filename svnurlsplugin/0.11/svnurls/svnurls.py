@@ -68,6 +68,9 @@ class SVNURLs(Component):
             xpath = xpath_prefix + "//th[contains(@class, '%s')]" % self.element_class
             stream |= Transformer(xpath).after(tag.th('URL', **{'class': "url"}))
 
+            if 'up' in data['chrome']['links']:
+                stream |= Transformer(xpath_prefix + "//td[@colspan='5']").attr('colspan', None)
+
             # add table cells
             stream = self.dir_entries(req, stream, data, xpath_prefix)
         return stream
