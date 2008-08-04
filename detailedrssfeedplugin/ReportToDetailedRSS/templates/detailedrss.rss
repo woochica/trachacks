@@ -1,0 +1,73 @@
+<?xml version="1.1"?>
+<?xml-stylesheet type="text/css" href="http://localhost/trac/chrome/common/css/ticket.css"?>
+<rss version="2.0" xmlns:py="http://genshi.edgewall.org/"
+                   xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="macros.rss" />
+    <channel>
+        <title>$project.name: $title</title>
+        <link>${abs_href.report(report.id)}</link>
+        <description>Trac Report - $description</description>
+        <language>en-us</language>
+        <image py:if="chrome.logo.src_abs">
+            <title>$project.name</title>
+            <url>$chrome.logo.src_abs</url>
+            <link>${abs_href.report(report.id != -1 and report.id or '')}</link>
+        </image>
+		<generator>Trac v${trac.version}</generator>
+
+		<py:for each="id,changeset in items.items()">
+			<item py:for="changetime,item in changeset.items()">
+				<py:with vars="ticketdata = item[0]">
+					<author>$ticketdata.reporter</author>
+					<pubDate>${http_date(changetime)}</pubDate>
+					<title>#$ticketdata.id: $ticketdata.summary</title>
+					<link>${abs_href.ticket(ticketdata.id)}<py:if test="item.id   ">#comment:__item.id   </py:if></link>
+					<!--!    <guid isPermaLink="false">__{abs_href.ticket(ticket.id)}<py:if test="item.id   ">#comment:__item.id   </py:if></guid>-->
+					<guid isPermaLink="false">$item.id $changetime</guid>
+					<description>
+						&lt;ul&gt;
+						<py:for each="change in item">
+							<py:with vars="value = dict([(f[3:],v) for f,v in change.items() if f[0:3] == 'tc_'])">
+								<py:choose test="value.field">
+									<py:when test="None"><!--! 'None' will happen on creation of a new ticket  -->
+										&lt;li&gt;&lt;strong&gt;Ticket created.&lt;/strong&gt;
+										&lt;/li&gt;
+									</py:when>
+									<py:when test="'comment'"><!--!pass--></py:when>
+									<py:otherwise>
+										&lt;li&gt;&lt;strong&gt;$value.field&lt;/strong&gt;
+										<py:choose>
+											<py:when test="not value.oldvalue">
+												set to &lt;em&gt;$value.newvalue&lt;/em&gt;
+											</py:when>
+											<py:when test="value.newvalue">
+												changed from &lt;em&gt;$value.oldvalue&lt;/em&gt; to &lt;em&gt;$value.newvalue&lt;/em&gt;.
+											</py:when>
+											<py:otherwise>
+												deleted (was &lt;em&gt;$value.oldvalue&lt;/em&gt;)
+											</py:otherwise>
+										</py:choose>
+										&lt;/li&gt;
+									</py:otherwise>
+								</py:choose>
+							</py:with>
+						</py:for>
+						<!--! the comment needs to go at the bottom -->
+						<py:with vars="commentdictionary = [c for c in item if c.tc_field == 'comment']">
+							<!--! turns out *every* change has a comment attached. It's just blank for a lot of 'em
+							we need to check if the list is empty because new tickets don't have comments -->
+							<py:if test="commentdictionary != [] and commentdictionary[0].tc_newvalue != ''">
+								&lt;li&gt;
+								&lt;strong&gt;comment added:&lt;/strong&gt;&lt;br /&gt;
+								${unicode(wiki_to_html(context,commentdictionary[0].tc_newvalue))}
+								&lt;/li&gt;
+							</py:if>
+						</py:with>
+						&lt;/ul&gt;
+					</description>
+					<category>Ticket</category>
+				</py:with>
+			</item>
+		</py:for>
+	</channel>
+</rss>
