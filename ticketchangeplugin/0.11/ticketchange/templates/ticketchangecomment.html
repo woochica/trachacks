@@ -1,0 +1,56 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head>
+    <title>
+       Change Ticket Comments
+    </title>
+  </head>
+
+  <body>
+
+    <div id="content" class="ticket_change">
+
+<h1>Change Ticket Comments</h1>
+
+<py:choose>
+<py:when test="ticketchange.message">
+    <b>${ticketchange.message}</b><br />
+    <a href="${ticketchange.href}">Back</a>
+</py:when>
+<py:when test="ticketchange.change">
+    <form py:with="change=ticketchange.change" action="" method="post">
+        <hr />
+	    <h2>Comment ${dateinfo(change.time)} ago by ${authorinfo(change.author)}</h2>
+	    <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78">${change.fields.comment.new}</textarea></p>
+
+	    <fieldset py:if="ticketchange.comment_preview" id="preview">
+		    <legend>Comment Preview</legend>
+			 ${ticketchange.comment_preview}
+	    </fieldset>
+
+	    <div class="buttons">
+		    <input type="hidden" name="ticketid" value="${ticket.id}" />
+		    <input type="hidden" name="time" value="${format_datetime(change.time)}" />
+		    <input type="hidden" name="author" value="${change.author}" />
+		    <input type="hidden" name="href" value="${ticketchange.href}" />
+		    <input type="hidden" name="href2" value="${ticketchange.href2}" />
+		    <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+		    <input type="submit" value="Submit changes" />
+		    <input type="submit" name="cancel" value="Cancel" />
+	    </div>
+    </form>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+</py:when>
+</py:choose>
+
+    </div>
+  </body>
+</html>
+
