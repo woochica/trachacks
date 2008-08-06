@@ -33,7 +33,7 @@ class BlogPartsAdminPanel(Component):
     # IAdminPanelProvider methods
 
     def get_admin_panels(self, req):
-        if 'WIKI_ADMIN' in req.perm:
+        if 'TRAC_ADMIN' in req.perm:
             yield ('blogparts', _('BlogParts'), self._type, self._label[1])
 
     def render_admin_panel(self, req, cat, page, blogpart):
