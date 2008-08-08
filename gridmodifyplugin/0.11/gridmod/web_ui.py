@@ -32,7 +32,7 @@ class GridModifyModule(Component):
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
+        return []
     
     # IRequestHandler methods
     def match_request(self, req):
