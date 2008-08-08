@@ -1,10 +1,17 @@
+/* 
+ * -*- coding: utf-8 -*-
+ * Copyright (C) 2008 Abbywinters.com
+ * trac-dev@abbywinters.com
+ * Contributor: Zach Miller
+ */
+
 if(!window.console)
     window.console = {};
 if(!window.console.firebug || !window.console.log)
     window.console.log = function() {};
 
 $(document).ready(function() {
-	$(".gridmod_form").each(function(i) {
+    $(".gridmod_form").each(function(i) {
         var gridmod_default = $.trim($(this).next('.gridmod_default').text());
         $(this).find('option[value="'+gridmod_default+'"]').attr('selected', 'selected');
         $(this).children('select').change(function() {
@@ -31,6 +38,6 @@ $(document).ready(function() {
                 }
             });
 
-		});
-	});
+        });
+    });
 });

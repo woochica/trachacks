@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008 Zach Miller
+# Copyright (C) 2008 Abbywinters.com
+# trac-dev@abbywinters.com
+# Contributor: Zach Miller
 
 import re
 from datetime import datetime 
