@@ -27,7 +27,7 @@ def main():
     cursor.execute("UPDATE ticket SET status = 'pending' "
                    "FROM ticket_custom "
 		   "WHERE ticket.status <> 'closed' "
-                   "AND ticket_custom.id = ticket.id "
+                   "AND ticket_custom.ticket = ticket.id "
 		   "AND ticket_custom.name = 'pending' "
 		   "AND ticket_custom.value = '1' ")
     #I don't think these hurt anything
