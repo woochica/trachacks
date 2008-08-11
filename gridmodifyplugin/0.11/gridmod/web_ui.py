@@ -84,7 +84,7 @@ class GridModifyModule(Component):
                     # value among the options in field['options'] so
                     # we force a blank option in in the case where the
                     # _default_ value is blank.
-                    if(field['value'] == '' and not ('' in field['options'])):
+                    if(field.has_key('value') and field['value'] == '' and not ('' in field['options'])):
                         select.append(tag.option())
                     for option in field['options']:
                         select.append(tag.option(option, value=option))
