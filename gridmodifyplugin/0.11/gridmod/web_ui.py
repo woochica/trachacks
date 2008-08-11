@@ -13,7 +13,7 @@ from trac.web.chrome import ITemplateProvider, add_script
 from trac.web.main import IRequestHandler
 from trac.util.datefmt import utc
 from trac.ticket.notification import TicketNotifyEmail
-from genshi.filters.transform import Transformer, StreamBuffer
+from genshi.filters.transform import Transformer
 from genshi.builder import tag
 
 __all__ = ['GridModifyModule']
@@ -81,9 +81,7 @@ class GridModifyModule(Component):
                     select = tag.select(name=field['name'])
                     for option in field['options']:
                         select.append(tag.option(option, value=option))
-                    buffer = StreamBuffer()
-                    stream |= Transformer(xpath).select('text()').cut(buffer)
-                    stream |= Transformer(xpath).append(tag.form(select, class_='gridmod_form')).append(tag.div(buffer, style='display:none', class_='gridmod_default'))
+                    stream |= Transformer(xpath).wrap(tag.td(class_=field['name'])).rename('div').attr('class', 'gridmod_default').attr('style', 'display: none').before(tag.form(select, class_='gridmod_form'))
         return stream
     
 
