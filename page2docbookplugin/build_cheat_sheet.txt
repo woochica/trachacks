@@ -1,0 +1,5 @@
+DEVELOPMENT
+python setup.py develop -md /var/local/trac/MYPROJECT/plugins
+
+EGG COOKING
+python setup.py bdist_egg
