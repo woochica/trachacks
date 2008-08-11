@@ -48,7 +48,7 @@ class GridModifyModule(Component):
                 ticket = Ticket(self.env, id)
                 for field in TicketSystem(self.env).get_ticket_fields():
                     val = req.args.get(field['name'])
-                    if(val and field['type'] == 'select' and val in field['options']):
+                    if(field['type'] == 'select' and ((val in field['options']) or (val == ''))):
                         ticket[field['name']] = val;
                 ticket.save_changes(author=req.authname, comment='updated by gridmod plugin')
                 tn = TicketNotifyEmail(self.env)
@@ -79,6 +79,13 @@ class GridModifyModule(Component):
                 if field['type'] == 'select':
                     xpath = '//*[contains(@class, "tickets")]//td[contains(@class, "%s")]' % (field['name'])
                     select = tag.select(name=field['name'])
+                    # HACK: For some reason custom fields that have a blank value
+                    # as a valid option don't actually have that blank
+                    # value among the options in field['options'] so
+                    # we force a blank option in in the case where the
+                    # _default_ value is blank.
+                    if(field['value'] == '' and not ('' in field['options'])):
+                        select.append(tag.option())
                     for option in field['options']:
                         select.append(tag.option(option, value=option))
                     stream |= Transformer(xpath).wrap(tag.td(class_=field['name'])).rename('div').attr('class', 'gridmod_default').attr('style', 'display: none').before(tag.form(select, class_='gridmod_form'))
