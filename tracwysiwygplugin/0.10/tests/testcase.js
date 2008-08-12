@@ -3,6 +3,37 @@ addEvent(window, "load", function() {
     var instance = new TracWysiwyg(document.getElementById("textarea"));
     var contentDocument = instance.contentDocument;
 
+    var d = document;
+    var wysiwygHtml = d.getElementById("wysiwyg-html");
+    var showWysiwygHtml = d.getElementById("show-wysiwyg-html");
+    setTimeout(function() {
+        if (showWysiwygHtml.checked) {
+            var body = contentDocument.body;
+            var browserIE = body.attachEvent ? true : false;
+            var elements = body.getElementsByTagName("br");
+            var count = 0;
+            var html = body.innerHTML.replace(/<[Bb][Rr] *[^>\/]*/g, function(value) {
+                var element = elements[count++];
+                var attributes = element.attributes;
+                var length = attributes.length;
+                if (length == 0)
+                    return value;
+                var texts = [ value ];
+                for (var i = 0; i < length; i++) {
+                    var attr = attributes[i];
+                    if (!browserIE || !!element[attr.name]) {
+                        texts.push(' ', attr.name, '="', attr.value, '"');
+                    }
+                }
+                return texts.join("");
+            });
+            if (wysiwygHtml.value != html) {
+                wysiwygHtml.value = html;
+            }
+        }
+        setTimeout(arguments.callee, 500);
+    }, 500);
+
     function generate(dom, wikitext, withoutDomToWikitext, withoutWikitextToFragment) {
         dom = dom.cloneNode(true);
         var anonymous = dom.ownerDocument.createElement("div");
@@ -671,9 +702,8 @@ addEvent(window, "load", function() {
         if (window.getSelection) {
             unit.add("block + br", function() {
                 function br() { return element("br"); }
-                function br_moz() { return element("br", { "type": "_moz" }); }
                 var wikitext = [
-                    "text, br{_moz}",
+                    "text, br",
                     "",
                     "text'', br[[BR]]''",
                     "",
@@ -681,47 +711,47 @@ addEvent(window, "load", function() {
                     "||||2,2[[BR]][[BR]]||",
                     "",
                     " * list, br[[BR]]",
-                    " * list, br{_moz}",
+                    " * list, br",
                     " * ",
                     "",
                     "text, br[[BR]]" ].join("\n")
                 generateWikitext.call(this,
                     fragment(
-                        element("p", "text, br{_moz}", br_moz()),
-                        element("p", "text", element("i", ", br", br()), br_moz()),
+                        element("p", "text, br", br()),
+                        element("p", "text", element("i", ", br", br()), br()),
                         element("table", { "class": "wiki" },
                             element("tbody",
                                 element("tr",
-                                    element("td", "1,1", br(), br_moz()),
-                                    element("td", br_moz()),
-                                    element("td", "1,3", br_moz())),
+                                    element("td", "1,1", br(), br()),
+                                    element("td", br()),
+                                    element("td", "1,3", br())),
                                 element("tr",
-                                    element("td", br_moz()),
-                                    element("td", "2,2", br(), br(), br_moz())))),
+                                    element("td", br()),
+                                    element("td", "2,2", br(), br(), br())))),
                         element("ul",
+                            element("li", "list, br", br(), br()),
                             element("li", "list, br", br()),
-                            element("li", "list, br{_moz}", br_moz()),
                             element("li")),
-                        element("p", "text, br", br())),
+                        element("p", "text, br", br(), br())),
                     wikitext);
                 generateFragment.call(this,
                     fragment(
-                        element("p", "text, br{_moz}"),
-                        element("p", "text", element("i", ", br", br()), br_moz()),
+                        element("p", "text, br"),
+                        element("p", "text", element("i", ", br", br()), br()),
                         element("table", { "class": "wiki" },
                             element("tbody",
                                 element("tr",
-                                    element("td", "1,1", br(), br_moz()),
-                                    element("td", br_moz()),
+                                    element("td", "1,1", br(), br()),
+                                    element("td", br()),
                                     element("td", "1,3")),
                                 element("tr",
-                                    element("td", br_moz()),
-                                    element("td", "2,2", br(), br(), br_moz())))),
+                                    element("td", br()),
+                                    element("td", "2,2", br(), br(), br())))),
                         element("ul",
-                            element("li", "list, br", br(), br_moz()),
-                            element("li", "list, br{_moz}"),
-                            element("li", br_moz())),
-                        element("p", "text, br", br(), br_moz())),
+                            element("li", "list, br", br(), br()),
+                            element("li", "list, br"),
+                            element("li", br())),
+                        element("p", "text, br", br(), br())),
                     wikitext);
             });
         }
@@ -729,7 +759,7 @@ addEvent(window, "load", function() {
             unit.add("block + br", function() {
                 function br() { return element("br"); }
                 var wikitext = [
-                    "text, br{_moz}",
+                    "text, br",
                     "",
                     "text'', br[[BR]]''",
                     "",
@@ -737,13 +767,13 @@ addEvent(window, "load", function() {
                     "||||2,2[[BR]][[BR]]||",
                     "",
                     " * list, br[[BR]]",
-                    " * list, br{_moz}",
+                    " * list, br",
                     " * ",
                     "",
                     "text, br[[BR]]" ].join("\n")
                 generate.call(this,
                     fragment(
-                        element("p", "text, br{_moz}"),
+                        element("p", "text, br"),
                         element("p", "text", element("i", ", br", br())),
                         element("table", { "class": "wiki" },
                             element("tbody",
@@ -756,7 +786,7 @@ addEvent(window, "load", function() {
                                     element("td", "2,2", br(), br())))),
                         element("ul",
                             element("li", "list, br", br()),
-                            element("li", "list, br{_moz}"),
+                            element("li", "list, br"),
                             element("li")),
                         element("p", "text, br", br())),
                     wikitext);
@@ -1361,6 +1391,9 @@ addEvent(window, "load", function() {
                 }
             }
             var body = d.body;
+            while (body.childNodes.length > 0) {
+                body.removeChild(body.lastChild);
+            }
             body.appendChild(fragment(d,
                 _element("p",
                     "The", " quick", " brown",
