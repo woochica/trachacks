@@ -33,7 +33,9 @@ class ReportToDetailedRSS(Component):
         Always returns the request handler, even if unchanged.
         """
         rmodule = ReportModule(self.env)
-        if rmodule.match_request(req): #report's match request. if it's gonna be true then we'll stick in our translator
+        #report's match request. if it's gonna be true then we'll stick in our translator,
+        #but only if there's a report id (i.e. it's actually a report page)
+        if rmodule.match_request(req) and 'id' in req.args and req.args.get('action', 'view') == 'view':
             add_link(req, 'alternate', '?format=rss&detailed=true' , _('Detailed RSS Feed'),
                 'application/rss+xml', 'rss')
         return handler
