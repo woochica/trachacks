@@ -39,24 +39,22 @@ class ReportToDetailedRSS(Component):
             add_link(req, 'alternate', '?format=rss&detailed=true' , _('Detailed RSS Feed'),
                 'application/rss+xml', 'rss')
         return handler
-
+        
     # for ClearSilver templates
     def post_process_request(self, req, template, content_type):
         """Always returns a tuple of (template, content_type), even if
         unchanged."""
         return (template, content_type)
-
+        
     # for Genshi templates
     def post_process_request(self, req, template, data, content_type):
         """Do any post-processing the request might need; typically adding
         values to the template `data` dictionary, or changing template or
         mime type.
-        
-        Always returns a tuple of (template, data, content_type), even if
-        unchanged.
         """
         
         if template == "report.rss" and req.args.get('detailed','false') == 'true':
+            self.env.log.debug("Detailed Feed Requested.")
             return self.intercept_report_rss(req,data)
         return (template, data, content_type)
     
@@ -76,6 +74,7 @@ class ReportToDetailedRSS(Component):
         # - I need to check each row group, but the rss feed won't be grouped (it's only time-sorted) so I can then ignore the groupings
         ticket_ids = set()
         ticket_ids.update([row['resource'].id for (_, row_group) in data['row_groups'] for row in row_group])
+        self.env.log.debug("Tickets in Report: %s" % ticket_ids)
         
         #generate data based on the headers and the ticket ids
         # - actually, for now I'm just going by the ticket ids because the headers will be tricky: SQL aliasing will make it so I can't just use them verbatim
@@ -88,7 +87,9 @@ class ReportToDetailedRSS(Component):
         cursor = db.cursor()
         
         idstring = ','.join([str(s) for s in ticket_ids])
-        limit = self.config.getint('report','items_per_page_rss',0)
+        
+        #if their limit is set to '0', sqlite will return 0 rows. thus, make it -1 instead
+        limit = self.config.getint('report','items_per_page_rss',-1) or -1
         
         #all the fields starting with 'tc_' will get printed for *all* changes.
         #fields without this prefix will only get printed once for each set of changes.
@@ -134,12 +135,14 @@ class ReportToDetailedRSS(Component):
                     items[rowAsDict['id']][rowAsDict['changetime']] = [rowAsDict]
             else:
                 items[rowAsDict['id']] = {rowAsDict['changetime']:[rowAsDict]}
-        
+        self.env.log.debug('Tickets in Feed: %s' % items.values())
         #because we're using our own template, we can just blow away the current data structure
         # - keep the report's title, and description, and, uh, report (report is a dictionary that has an id and a resource object pointing to the report)
-        for key in data.keys():
-            if key not in ('title','description','report','context'):
-                del(data[key])
-        data['items'] = items
+        # - context lets us use wiki_to_html
+        data = {'items':items,
+                'title':data['title'],
+                'description':data['description'],
+                'report':data['report'],
+                'context':data['context']}
         
         return ('detailedrss.rss',data,'application/rss+xml')        
