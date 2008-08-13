@@ -83,7 +83,6 @@ class TracBacksPlugin(Component):
                     continue
                     
                 tracback = self.create_tracbacks(ticket, t, comment)
-                print tracback
                 t.save_changes(author, tracback)
 
     def ticket_deleted(self, ticket):
@@ -106,8 +105,6 @@ class TracBacksPlugin(Component):
             # Get two characters in context so we can make sure this is really
             # a reference to a ticket, and not anything else.
             index = comment.find(string_representation, index + 1)
-            
-            print str(index) + " ::: "
             
             if not self.is_weed(comment, index, index + len(string_representation)):
                 start = index - self.EXCERPT_CHARACTERS
