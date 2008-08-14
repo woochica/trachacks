@@ -1,14 +1,16 @@
 from setuptools import setup
 
 PACKAGE = 'PageToDocbook'
-VERSION = '0.6'
+VERSION = '0.6.1'
 
 setup(name=PACKAGE,
       version=VERSION,
       packages=['pagetodocbook'],
       entry_points={'trac.plugins': '%s = pagetodocbook' % PACKAGE},
 
-      package_data={'pagetodocbook': ['data/*.*']},
+      package_data={'pagetodocbook': ['data/*.txt',
+             'data/headingsNormalizer/*.xsl',
+             'data/html2db/*']},
 
       # dependencies
       install_requires = ['setuptools',
