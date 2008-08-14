@@ -28,6 +28,9 @@ class PageToDocbookPlugin(Component):
         yield ('docbook', 'Docbook', 'docbook', 'text/x-trac-wiki', 'application/docbook+xml', 7)
 
     def convert_content(self, req, input_type, source, output_type):
+        #extract all data resources
+        datadir = resource_filename(__name__, 'data')
+
         html = wiki_to_html(source, self.env, req)
 	options = dict(output_xhtml=1, add_xml_decl=1, indent=1, tidy_mark=0, input_encoding='utf8', output_encoding='utf8', doctype='omit', wrap=0, char_encoding='utf8')
 	xhtml = parseString(html.encode("utf-8"), **options)

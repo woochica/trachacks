@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'PageToDocbook'
-VERSION = '0.6.1'
+VERSION = '0.6.2'
 
 setup(name=PACKAGE,
       version=VERSION,
@@ -13,8 +13,10 @@ setup(name=PACKAGE,
              'data/html2db/*']},
 
       # dependencies
-      install_requires = ['setuptools',
-                          ],
+      install_requires = ['setuptools'],
+
+      # automatically extract everything bellow 'data'
+      #eager_resources=['data'],
 
       #extras_require = {'tidy':['ctypes','utidylib']},
 
