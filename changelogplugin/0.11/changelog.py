@@ -35,8 +35,6 @@ class ChangeLogMacro(WikiMacroBase):
 
         if rev is None:
             rev = repo.get_youngest_rev()
-        else:
-            rev = int(rev)
         rev = repo.normalize_rev(rev)
         path = repo.normalize_path(path)
         if limit is None:
