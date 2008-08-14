@@ -37,7 +37,7 @@ class ReportToDetailedRSS(Component):
         #but only if there's a report id (i.e. it's actually a report page)
         if rmodule.match_request(req) and 'id' in req.args and req.args.get('action', 'view') == 'view':
             add_link(req, 'alternate', '?format=rss&detailed=true' , _('Detailed RSS Feed'),
-                'application/rss+xml', 'rss')
+                'application/xhtml+xml', 'rss')
         return handler
         
     # for ClearSilver templates

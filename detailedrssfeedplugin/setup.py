@@ -1,8 +1,12 @@
+# Copyright (C) 2003-2008 Fetch Softworks LLC
+# All rights reserved.
+#
+# This software is licensed as described in the file license.txt, which
+# you should have received as part of this distribution.
+
+
 from setuptools import find_packages, setup
 
-# name can be any name.  This name will be used to create .egg file.
-# name that is used in packages is the one that is used in the trac.ini file.
-# use package name as entry_points
 setup(
     name='ReportToDetailedRSS', version='1.0',
     packages=find_packages(exclude=['*.tests*']),
