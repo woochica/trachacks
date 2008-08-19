@@ -1,0 +1,25 @@
+Name: BackLinks
+Version: 5.0
+Released: 2008-01-31
+Type: Trac Macro
+Author: Trapanator
+Homepage: http://www.trapanator.com/blog/archives/category/trac
+
+
+==============
+HOW TO INSTALL
+==============
+
+1. Rename BackLinks.5.py to BackLinks.py
+2. Put it into: 
+  /usr/share/trac/wiki-macros/
+3. Restart Apache2/Tracd server if needed.
+
+
+=============
+CHANGELOG
+=============
+
+5.0 2008-01-31
+
+ * Initial Release
