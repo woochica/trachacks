@@ -1,15 +1,22 @@
+[components]
+wikitopdf.* = enabled
+
 [wikitopdf]
+# base_dir is the Apache DocumentRoot, It is need to get PDF files with images.
 base_dir = /path/to/DocumentRoot
-titlefile = /path/to/capa_file.html
+
+# path to folder used to get a cover files.
+pathtocover = /path/to/cover
 
 [wikitopdf-admin]
+# HTMLDOC options. See the link above.
 size = A4
 right = 1.5cm
 left = 1.5cm
 top = 1.5cm
 bottom = 1.5cm
 no-links = None
-toctitle = Sumário
+toctitle = Summary
 numbered = None
 linkstyle = plain
 header = l
@@ -17,6 +24,7 @@ footer = .r1
 logoimage = /path/to/header-logo.png
 
 [wikitopdf-page]
+# HTMLDOC options. See the link above.
 size = A4
 right = 1.5cm
 left = 1.5cm
@@ -27,3 +35,4 @@ linkstyle = plain
 header = l
 footer = .r1
 logoimage = /path/to/header-logo.png
+
