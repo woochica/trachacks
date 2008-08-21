@@ -47,7 +47,6 @@ class WikiToPdfOutput(Component):
         
         #Setup the title and license pages
         title_template = self.env.config.get('wikitopdf', 'pathtocover') + '/cover.html'
-        self.log.debug('WikiToPdf => DFG %s', title_template)
         titlefile = title_template and self.get_titlepage(title_template, title, subject, date, version) or None
         
         # Prepare html doc arguments
@@ -97,6 +96,7 @@ class WikiToPdfOutput(Component):
 
         hfile, hfilename = mkstemp('wikitopdf')
         codepage = Mimeview(self.env).default_charset
+	string_page = ''
 
         try:
             file_page = open(template_path, 'r')

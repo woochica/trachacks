@@ -72,8 +72,13 @@ class WikiToPdfAdmin(Component):
 
             if not format or format not in formats:
                 raise TracError('Bad format given for WikiToPdf output.')
-            
-            return formats[format]['provider'].process_wikitopdf(req, format, title, subject, rightpages, date, version, rightpages[0])
+
+            pdfbookname = title 
+ 	    pdfbookname = pdfbookname.replace(' ', '') 
+	    pdfbookname = pdfbookname.replace(':', '') 
+	    pdfbookname = pdfbookname.replace(',', '') 
+
+            return formats[format]['provider'].process_wikitopdf(req, format, title, subject, rightpages, date, version, pdfbookname)
             
             req.redirect(req.href.admin(cat, page))
         
