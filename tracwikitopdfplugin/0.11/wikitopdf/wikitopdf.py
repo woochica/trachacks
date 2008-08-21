@@ -29,9 +29,14 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
     page = wiki_to_html(text, env, req).encode(codepage, 'replace')
     page = page.replace('raw-attachment', 'attachments')
     page = page.replace('<img', '<img border="0"')
-    page = page.replace('?format=raw','')
+    page = page.replace('?format=raw', '')
+
+    """I need improve this... Ticket #3427"""
+    page = page.replace('<a class="wiki" href="/' + env.config.get('wikitopdf', 'folder_name') + '/wiki/', '<a class="wiki" href="' 
+			+ env.config.get('wikitopdf', 'link') + '/wiki/')
+
     page = page.replace('<pre class="wiki">', '<table align="center" width="95%" border="1" bordercolor="#d7d7d7">'
-        + '<tr><td bgcolor="#f7f7f7"><pre class="wiki">')
+                        + '<tr><td bgcolor="#f7f7f7"><pre class="wiki">')
     page = page.replace('</pre>', '</pre></td></tr></table>')
     page = page.replace('<table class="wiki">', '<table class="wiki" border="1" width="100%">')
 
