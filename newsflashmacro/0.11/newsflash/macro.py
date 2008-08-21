@@ -2,61 +2,42 @@ from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html
-
-import inspect
-
-__all__ = ['NewsFlashMacro', 'NewsFlashStartMacro', 'NewsFlashEndMacro']
-
-class WikiMacroBase(Component):
-    """Abstract base class for wiki macros."""
-
-    def get_macros(self):
-        """Yield the name of the macro based on the class name."""
-        name = self.__class__.__name__
-        if name.endswith('Macro'):
-            name = name[:-5]
-        yield name
-
-    def get_macro_description(self, name):
-        """Return the subclass's docstring."""
-        return inspect.getdoc(self.__class__)
-
-    def render_macro(self, req, name, content):
-        raise NotImplementedError
+from trac.wiki.macros import WikiMacroBase
+from genshi import Markup
+from genshi.builder import tag
+from pkg_resources import resource_filename
 
 class NewsFlashMacro(WikiMacroBase):
     """Makes a colored box from the contents of the macro."""
     
-    implements(ITemplateProvider, IWikiMacroProvider)
+    implements(ITemplateProvider)
     
     # ITemplateProvider
     def get_templates_dirs(self):
         return []
         
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('newsflash', resource_filename(__name__, 'htdocs'))]
+        yield 'newsflash', resource_filename(__name__, 'htdocs')
 
     # IWikiMacroProvier methods
-    def render_macro(self, req, name, content):
-        add_stylesheet(req, 'newsflash/css/newsflash.css')
-        return '<div class="newsflash">%s</div>'%wiki_to_html(content, self.env, req)
+    def expand_macro(self, formatter, name, content):
+        add_stylesheet(formatter.req, 'newsflash/css/newsflash.css')
+        return tag.div(format_to_html(self.env, formatter.context, content),
+                       class_='newsflash')
+
 
 class NewsFlashStartMacro(WikiMacroBase):
     """Start a newflash box."""
     
-    implements(IWikiMacroProvider)
-    
-    def render_macro(self, req, name, content):
-        add_stylesheet(req, 'newsflash/css/newsflash.css')
-        return '<div class="newsflash">'
+    def expand_macro(self, formatter, name, content):
+        add_stylesheet(formatter.req, 'newsflash/css/newsflash.css')
+        return Markup('<div class="newsflash">')
+
 
 class NewsFlashEndMacro(WikiMacroBase):
     """End a newflash box."""
     
-    implements(IWikiMacroProvider)
-    
-    def render_macro(self, req, name, content):
-        return '</div>'
-        
-        
+    def expand_macro(self, formatter, name, content):
+        return Markup('</div>')
+
+
