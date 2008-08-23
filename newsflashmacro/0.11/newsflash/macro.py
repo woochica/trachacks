@@ -1,7 +1,7 @@
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.formatter import wiki_to_html
+from trac.wiki.formatter import format_to_html
 from trac.wiki.macros import WikiMacroBase
 from genshi import Markup
 from genshi.builder import tag

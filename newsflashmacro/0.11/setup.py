@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracNewsFlash',
-    version = '1.0',
+    version = '1.0.1',
     packages = ['newsflash'],
     package_data = { 'newsflash' : [ 'htdocs/css/*.css' ] },
     author = 'Noah Kantrowitz',
