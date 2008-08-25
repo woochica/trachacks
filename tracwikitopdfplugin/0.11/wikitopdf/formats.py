@@ -60,7 +60,7 @@ class WikiToPdfOutput(Component):
         htmldoc_args.update(dict(self.env.config.options('wikitopdf-admin')))
 
         #render
-        out = html_to_pdf(self.env, htmldoc_args, files)
+        out = html_to_pdf(self.env, htmldoc_args, files, codepage)
 
         # Clean up
         if titlefile: os.unlink(titlefile)

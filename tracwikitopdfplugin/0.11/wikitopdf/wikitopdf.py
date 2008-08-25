@@ -20,13 +20,15 @@ EXCLUDE_RES = [
 
 def wiki_to_pdf(text, env, req, base_dir, codepage):
     
+    env.log.debug('WikiToPdf => Start function wiki_to_pdf')
+
     #Remove exclude expressions
     for r in EXCLUDE_RES:
         text = r.sub('', text)
     
     env.log.debug('WikiToPdf => Wiki intput for WikiToPdf: %r' % text)
     
-    page = wiki_to_html(text, env, req).encode(codepage, 'replace')
+    page = wiki_to_html(text, env, req)
     page = page.replace('raw-attachment', 'attachments')
     page = page.replace('<img', '<img border="0"')
     page = page.replace('?format=raw', '')
@@ -44,7 +46,7 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
 
     while imgpos != -1:
         addrpos = page.find('src=',imgpos)
-	base_dir = base_dir.encode('ascii')
+	#base_dir = base_dir.encode('ascii')
         page = page[:addrpos+5] + base_dir + page[addrpos+5:]
         imgpos = page.find('<img', addrpos)
     
@@ -52,11 +54,15 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
 
     page = '<html><head>' + meta + '</head><body>' + page + '</body></html>'
     
-    env.log.debug('WikiToPdf => HTML output for WikiToPdf in charset %s is: %r' % (codepage, page))
-    
-    return page
+    env.log.debug('WikiToPdf => HTML output for WikiToPdf in charset %s is: %r' % (codepage, page))    
+    env.log.debug('WikiToPdf => Finish function wiki_to_pdf')
 
-def html_to_pdf(env, htmldoc_args, files):
+    return page.encode(codepage)
+
+def html_to_pdf(env, htmldoc_args, files, codepage):
+
+    env.log.debug('WikiToPdf => Start function html_to_pdf')
+
     os.environ["HTMLDOC_NOCGI"] = 'yes'
     
     args_string = ' '.join(['--%s %s' % (arg, value or '') for arg, value
@@ -67,17 +73,17 @@ def html_to_pdf(env, htmldoc_args, files):
     
     cmd_string = 'htmldoc %s %s -f %s'%(args_string, ' '.join(files), pfilename)
     env.log.debug('WikiToPdf => Htmldoc command line: %s' % cmd_string)
-    os.system(cmd_string.encode(env.config.get('trac', 'charset', 'iso-8859-1')))
+    os.system(cmd_string.encode(codepage))
     
-    infile = open(pfilename, 'rb')
+    infile = open(pfilename, 'rb') 
     out = infile.read()
     infile.close()
     
     os.unlink(pfilename)
     
+    env.log.debug('WikiToPdf => Finish function html_to_pdf')
+
     return out
-
-
 
 class WikiToPdfPage(Component):
     """Convert Wiki pages to PDF using HTMLDOC (http://www.htmldoc.org/)."""
@@ -103,7 +109,7 @@ class WikiToPdfPage(Component):
         htmldoc_args = { 'webpage': '', 'format': 'pdf14', 'charset': codepage }
         htmldoc_args.update(dict(self.env.config.options('wikitopdf-page')))
 
-        out = html_to_pdf(self.env, htmldoc_args, [hfilename])
+        out = html_to_pdf(self.env, htmldoc_args, [hfilename], codepage)
         os.unlink(hfilename)
 
         return (out, 'application/pdf')
