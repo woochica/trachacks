@@ -1,5 +1,3 @@
-= make SVN's post-commit-hook a pluggable Extension Point =
-
 == Description ==
 
 SvnChangeListenerPlugin turns the SVN post-commit-hook into an
