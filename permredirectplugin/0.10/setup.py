@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracPermRedirect',
-    version = '1.0.1',
+    version = '1.0.2',
     packages = ['permredirect'],
     #package_data = { 'permredirect': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
 

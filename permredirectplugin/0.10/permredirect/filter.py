@@ -26,6 +26,8 @@ class PermRedirectModule(Component):
         if template is None:
             # Some kind of exception in progress
             exctype, exc = sys.exc_info()[0:2]
+            if exc is None or exctype is None:
+                return template, content_type
             if req.authname == 'anonymous' and \
                (issubclass(exctype, PermissionError) or \
                 (issubclass(exctype, TracError) and \
