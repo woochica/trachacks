@@ -7,12 +7,13 @@ import re
 from datetime import datetime 
 from trac.core import *
 from trac.perm import IPermissionRequestor        
-from trac.ticket import TicketSystem, Ticket
+from trac.ticket import TicketSystem
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.web.main import IRequestHandler
 from trac.util.datefmt import utc
 from trac.ticket.notification import TicketNotifyEmail
+from trac.ticket.model import Ticket
 from genshi.filters.transform import Transformer
 from genshi.builder import tag
 
@@ -46,14 +47,30 @@ class GridModifyModule(Component):
                 now = datetime.now(utc)
                 id = req.args.get('ticket')
                 ticket = Ticket(self.env, id)
+                action = 'leave'
+
+                # Save the action controllers we need to call side-effects for before
+                # we save the changes to the ticket.
+                controllers = list(self._get_action_controllers(req, ticket, action))
+        
                 for field in TicketSystem(self.env).get_ticket_fields():
                     val = req.args.get(field['name'])
                     if(field['type'] == 'select' and ((val in field['options']) or (val == ''))):
                         ticket[field['name']] = val;
                 ticket.save_changes(author=req.authname, comment='updated by gridmod plugin')
-                tn = TicketNotifyEmail(self.env)
-                tn.notify(ticket, newticket=False, modtime=now)
-                # Add support for workflow actions
+
+                try:
+                    tn = TicketNotifyEmail(self.env)
+                    tn.notify(ticket, newticket=False, modtime=now)
+                except Exception, e:
+                    self.log.info("Failure sending notification on change to "
+                                  "ticket #%s: %s" % (ticket.id, e))
+
+                # After saving the changes, apply the side-effects.
+                for controller in controllers:
+                    self.env.log.info('Side effect for %s' %
+                                       controller.__class__.__name__)
+                    controller.apply_action_side_effects(req, ticket, action)
             else:
                 raise Exception('Permission denied')
         except Exception, e:
@@ -91,5 +108,12 @@ class GridModifyModule(Component):
                     stream |= Transformer(xpath).wrap(tag.td(class_=field['name'])).rename('div').attr('class', 'gridmod_default').attr('style', 'display: none').before(tag.form(select, class_='gridmod_form'))
         return stream
     
+    def _get_action_controllers(self, req, ticket, action):
+        """Generator yielding the controllers handling the given `action`"""
+        for controller in TicketSystem(self.env).action_controllers:
+            actions = [a for w,a in
+                       controller.get_ticket_actions(req, ticket)]
+            if action in actions:
+                yield controller
 
 
