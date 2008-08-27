@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'GridModify'
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 setup(
     name=PACKAGE, version=VERSION,
