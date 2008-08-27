@@ -1,0 +1,32 @@
+= NoticeManagerPlugin =
+
+A notice email information gathering plugin for Trac.
+
+== Installation ==
+ 1. Run: python setup.py bdist_egg
+either
+ 2. If necessary create a folder called "plugins" in your Trac environment.
+ 3. Copy the .egg file from the dist folder created by step 1 into the "plugins"
+    directory of your Trac environment.
+or
+ 2. Use easy_install to install the .egg file
+
+== Configuration ==
+No configuration is required for this plugin. However, to use the LDAP feature, the settings from the LDAP-plugin are imported. 
+Also, please note, to use LDAP-Groups as destination for notice-emails,
+the group prefix in the LDAP-plugin has to be changed from '@' to '*'.
+To activate the Noticemanagerplugin, add the following line to the trac.ini file.
+ 
+{{{
+[components]
+notice_mgr.* = enabled
+}}}
+
+== Acknowledgment == 
+
+This plugin depends heavily on code found in the following (old) plugins:
+
+1. TracWebAdmin, by Edgewall Software
+2. TracAccountManager, by Matthew Good
+3. LdapPlugin, by Emmanuel Blot
+
