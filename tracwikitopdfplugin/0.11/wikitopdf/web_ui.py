@@ -61,14 +61,14 @@ class WikiToPdfAdmin(Component):
         
         if req.method == 'POST':
             rightpages = req.args.get('rightpages_all')
-            title = req.args.get('title').encode('latin-1') or self.env.project_name.encode('latin-1')
-            subject = req.args.get('subject').encode('latin-1')
-            date = req.args.get('date').encode('latin-1');
-            version = req.args.get('version').encode('latin-1');
-            toctitle = req.args.get('toctitle')
+            title = req.args.get('title') or self.env.project_name
+            subject = req.args.get('subject')
+            date = req.args.get('date')
+            version = req.args.get('version')
+            format = req.args.get('format')
+
             req.session['wikitopdf_rightpages'] = rightpages
             rightpages = rightpages.split(',')
-            format = req.args.get('format')
 
             if not format or format not in formats:
                 raise TracError('Bad format given for WikiToPdf output.')
@@ -80,8 +80,6 @@ class WikiToPdfAdmin(Component):
 
             return formats[format]['provider'].process_wikitopdf(req, format, title, subject, rightpages, date, version, pdfbookname)
             
-            req.redirect(req.href.admin(cat, page))
-        
         req.hdf['wikitopdf.allpages'] = allpages
         leftpages = [x for x in allpages if x not in rightpages]
         leftpages.sort()
