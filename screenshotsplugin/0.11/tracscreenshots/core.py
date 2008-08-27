@@ -410,11 +410,11 @@ class ScreenshotsCore(Component):
 
                     # Delete screenshot files. Don't append any other files there :-).
                     path = os.path.join(self.path, to_unicode(screenshot['id']))
-                    path = unicodedata.normalize('NFC', path)
-                    path = path.replace('\\', '/').replace(':', '/')
+                    path = os.path.normpath(path)
                     self.log.debug('path: %s' % (path,))
                     for file in os.listdir(path):
                         file = os.path.join(path, file)
+                        file = os.path.normpath(file)
                         os.remove(file)
                     os.rmdir(path)
                 except Exception, error:

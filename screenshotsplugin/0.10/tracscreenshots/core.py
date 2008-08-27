@@ -381,9 +381,12 @@ class ScreenshotsCore(Component):
                     api.delete_screenshot(cursor, screenshot['id'])
 
                     # Delete screenshot files. Don't append any other files there :-).
-                    path = os.path.join(self.path, unicode(screenshot['id']))
+                    path = os.path.join(self.path, to_unicode(screenshot['id']))
+                    path = os.path.normpath(path)
+                    self.log.debug('path: %s' % (path,))
                     for file in os.listdir(path):
                         file = os.path.join(path, file)
+                        file = os.path.normpath(file)
                         os.remove(file)
                     os.rmdir(path)
                 except:
