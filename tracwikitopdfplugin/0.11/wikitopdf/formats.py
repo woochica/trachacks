@@ -50,7 +50,7 @@ class WikiToPdfOutput(Component):
         titlefile = title_template and self.get_titlepage(title_template, title, subject, date, version) or None
         
         # Prepare html doc arguments
-        codepage = self.env.config.get('trac', 'charset', 'iso-8859-1')
+        codepage = self.env.config.get('trac', 'default_charset', 'iso-8859-1')
 
         htmldoc_args = { 'book': '', 'format': 'pdf14', 'charset': codepage }
             
@@ -80,7 +80,7 @@ class WikiToPdfOutput(Component):
         """Slight modification of some code from Alec's PageToPdf plugin."""
 
         # htmldoc doesn't support utf-8, we need to use some other input encoding
-        codepage = self.env.config.get('trac', 'charset', 'iso-8859-1')
+        codepage = self.env.config.get('trac', 'default_charset', 'iso-8859-1')
         base_dir = self.env.config.get('wikitopdf', 'base_dir')
         
         page = wiki_to_pdf(WikiPage(self.env, pagename).text, self.env, req, base_dir, codepage)

@@ -97,7 +97,7 @@ class WikiToPdfPage(Component):
     def convert_content(self, req, input_type, text, output_type):
 
         # htmldoc doesn't support utf-8, we need to use some other input encoding
-        codepage = self.env.config.get('trac', 'charset', 'iso-8859-1')
+        codepage = self.env.config.get('trac', 'default_charset', 'iso-8859-1') 
         base_dir = self.env.config.get('wikitopdf', 'base_dir')
 
         page = wiki_to_pdf(text, self.env, req, base_dir, codepage)
