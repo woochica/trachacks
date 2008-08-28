@@ -27,8 +27,8 @@ class ComponentsProcessor(Component):
 
         cursor = self.env.get_db_cnx().cursor()
 
-	query = "SELECT name, description from component order by name;"
-	cursor.execute(query)
+        query = "SELECT name, description from component order by name;"
+        cursor.execute(query)
 
         comps = [comp for comp in cursor]
 
@@ -41,9 +41,20 @@ class ComponentsProcessor(Component):
 
         for name, descrip in comps:
             if pattern and not re.match(pattern, name): continue
-            dt = ' [wiki:%s]' % name
+            
+            # Get number of tickets
+            count = 0
+            query = "SELECT count(id) FROM ticket WHERE component='%s'" % name
+            cursor.execute(query)
+            for count, in cursor:
+                break
+            
+            p = re.compile(' ')
+            wiki_str = p.sub('',name)
+            ticket_str = p.sub('+',name)
+            dt = ' [wiki:%s %s]' % (wiki_str, name)
             if name in tickets:
-                dt += ' ([query:component=%s tickets])' % name
+                dt += ' ([query:component=%s %d tickets])' % (ticket_str,count)
             dt += '::'
             content.append(dt)
             if descrip != None and descrip.strip() != '':
@@ -52,7 +63,8 @@ class ComponentsProcessor(Component):
         content = '\n'.join(content)
 
         content = format_to_html(self.env, formatter.context, content)
-
+        p = re.compile('%2B')
+        content = p.sub('+',content)
         content = '<div class="component-list">%s</div>' % content
 
         # to avoid things like the above it might be nicer to use
