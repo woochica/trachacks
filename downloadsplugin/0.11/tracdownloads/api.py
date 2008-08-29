@@ -461,6 +461,10 @@ class DownloadsApi(Component):
                     for listener in self.change_listeners:
                         listener.download_changed(new_download, download)
 
+                    # Commit DB before file send.
+                    db = self.env.get_db_cnx()
+                    db.commit()
+
                     # Return uploaded file to request.
                     self.log.debug(download['file'])
                     context.req.send_header('Content-Disposition',
