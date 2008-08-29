@@ -12,16 +12,16 @@ class IScreenshotChangeListener(Interface):
     """Extension point interface for components that require notification
     when screenshots are created, modified, or deleted."""
 
-    def screenshot_created(screenshot):
+    def screenshot_created(req, screenshot):
         """Called when a screenshot is created. Only argument `screenshot` is
         a dictionary with screenshot field values."""
 
-    def screenshot_changed(screenshot, old_screenshot):
+    def screenshot_changed(req, screenshot, old_screenshot):
         """Called when a screenshot is modified.
         `old_screenshot` is a dictionary containing the previous values of the
         fields and `screenshot` is a dictionary with new values. """
 
-    def screenshot_deleted(screenshot):
+    def screenshot_deleted(req, screenshot):
         """Called when a screenshot is deleted. `screenshot` argument is
         a dictionary with values of fields of just deleted screenshot."""
 

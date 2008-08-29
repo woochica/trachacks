@@ -335,7 +335,7 @@ class ScreenshotsCore(Component):
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
-                    listener.screenshot_created(screenshot)
+                    listener.screenshot_created(context.req, screenshot)
 
                 # Clear ID to prevent display of edit and delete button.
                 context.req.args['id'] = None
@@ -386,7 +386,8 @@ class ScreenshotsCore(Component):
 
                     # Notify change listeners.
                     for listener in self.change_listeners:
-                        listener.screenshot_changed(screenshot, old_screenshot)
+                        listener.screenshot_changed(context.req, screenshot,
+                          old_screenshot)
 
                     # Clear id to prevent display of edit and delete button.
                     context.req.args['id'] = None
@@ -423,7 +424,7 @@ class ScreenshotsCore(Component):
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
-                    listener.screenshot_deleted(screenshot)
+                    listener.screenshot_deleted(context.req, screenshot)
 
                 # Clear id to prevent display of edit and delete button.
                 context.req.args['id'] = None
