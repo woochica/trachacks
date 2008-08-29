@@ -5,7 +5,7 @@
 <!-- Variablen -->
   <xsl:variable name="bezeichner_bildbeschriftung">Abbildung</xsl:variable>
   <xsl:variable name="bezeichner_tabellenbeschriftung">Tabelle</xsl:variable>
-  <xsl:variable name="quelle_tabellenbeschriftung">Title</xsl:variable>
+  <xsl:variable name="quelle_tabellenbeschriftung">title</xsl:variable>
 	
 	<!-- Einstiegspunkt -->
 	<xsl:template match="/">
@@ -35,7 +35,7 @@
 	</xsl:template>
 
 
-<!-- Überschriften -->
+<!-- Ueberschriften -->
 <xsl:template match="h1|h2|h3|h4|h5|h6|h7">
    <xsl:element name = "{name()}" >
 		<a name="{@id}">
@@ -71,9 +71,11 @@
 
 <!-- Tabellendefinition -->
 <xsl:template match="table">
+	<table>
+		<xsl:apply-templates/>
+	</table>
 	<!-- Tabellenbeschriftung -->
-		
-		<xsl:if test="tbody/tr/td[substring-before(text()[1],':')=$quelle_tabellenbeschriftung] or tr/td[substring-before(text()[1],':')=$quelle_tabellenbeschriftung]">
+		<xsl:if test="substring-before(tbody/tr[last()]/td[1],':')=$quelle_tabellenbeschriftung or substring-before(tr[last()]/td[1],':')=$quelle_tabellenbeschriftung">
 		<p class="MsoCaption">
 		<xsl:value-of select="$bezeichner_tabellenbeschriftung"/>
 		<!-- Markierung als Feld -->
@@ -84,17 +86,15 @@
 		<xsl:text disable-output-escaping="yes"><![CDATA[</span><!--[if supportFields]><span style='mso-element:field-end'></span><![endif]-->: ]]></xsl:text>
 		<!-- Bezeichnung -->
 		<xsl:if test="tbody">
-			<xsl:value-of select="substring-after(tbody/tr[1]/td[text()],':')"/>
+			<xsl:value-of select="substring-after(tbody/tr[last()]/td[1],':')"/>
 		</xsl:if>
 		<xsl:if test="tr">
-			<xsl:value-of select="substring-after(tr[1]/td[text()],':')"/>
+			<xsl:value-of select="substring-after(tr[last()]/td[1],':')"/>
 		</xsl:if>
 			 
 		</p>
 	</xsl:if>
-	<table>
-		<xsl:apply-templates/>
-	</table>
+
 </xsl:template>
 
 <!-- Tabellenzeilen -->
@@ -143,11 +143,21 @@
 
 
 <!-- praeformatierter Text -->
-<xsl:template match="pre|tt">
-	<!-- WORKAROUND. Um den Urzustand herzustellen, in der folgenden Zeile tt durch {name()} ersetzen -->
-	<xsl:element name="tt">
-		<xsl:apply-templates/>
-	</xsl:element>
+<xsl:template match="tt">
+		<tt><xsl:apply-templates/></tt>
+</xsl:template>
+
+<xsl:template match="pre">
+   <xsl:variable name="pre_string">
+      <xsl:call-template name="replace-string"> <!-- imported template -->
+        <xsl:with-param name="text" select="."/>
+        <xsl:with-param name="replace" select="'a'"/>
+        <xsl:with-param name="with" select="'a'"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <pre>
+      <xsl:value-of select="$pre_string"/>
+    </pre>
 </xsl:template>
 
 
@@ -160,27 +170,18 @@
 
 <!-- Links -->
 <xsl:template match="a">
-	<!-- Fuer interne Referenzen -->
-	
+	<!-- Fuer interne Referenzen: Links in Text konvertieren -->
+	<!-- normale Wiki-Links -->
 	<xsl:if test="@class='wiki'">
-		<!-- Erzeugung Link Word-Stil-->
-		<!--<xsl:text disable-output-escaping="yes">
-			<![CDATA[<span style='mso-field-code:" REF ]]>
-		</xsl:text>
-		<xsl:value-of select="substring-after(@href,'#')"/>
-		<xsl:text disable-output-escaping="yes">
-			<![CDATA[ \\h "'>]]>
-		</xsl:text>
-		<xsl:value-of select="text()"/>
-		<xsl:text disable-output-escaping="yes">
-				<![CDATA[</span>]]>
-			</xsl:text>-->
-			
-		<!-- Erzeugung Link HTML-Stil -->
-		<!--<a href="#{substring-after(@href,'#')}">
-			<xsl:value-of select="text()"/>
-		</a>-->
 		<xsl:apply-templates/>	
+	</xsl:if>
+	<!-- fehlende Wiki-Links -->
+	<xsl:if test="@class='missing wiki'">
+		<xsl:apply-templates />
+	</xsl:if>
+	<!-- Links ins SVN -->
+	<xsl:if test="@class='source'">
+		<xsl:apply-templates />
 	</xsl:if>
 	
 	<!-- Externe Links werden ausgeschrieben -->
@@ -197,5 +198,27 @@
 	
 	
 </xsl:template>	
+
+	<!-- string replacement function http://www.dpawson.co.uk/xsl/sect2/replace.html#d9550e61 -->
+  <xsl:template name="replace-string">
+    <xsl:param name="text"/>
+    <xsl:param name="replace"/>
+    <xsl:param name="with"/>
+    <xsl:choose>
+      <xsl:when test="contains($text,$replace)">
+        <xsl:value-of select="substring-before($text,$replace)"/>
+        <xsl:value-of select="$with"/>
+        <xsl:call-template name="replace-string">
+          <xsl:with-param name="text"
+select="substring-after($text,$replace)"/>
+          <xsl:with-param name="replace" select="$replace"/>
+          <xsl:with-param name="with" select="$with"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$text"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 	
 </xsl:stylesheet>

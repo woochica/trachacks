@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 setup(name='PageToDoc',
-      version='0.1.5',
+      version='0.2',
       packages=['pagetodoc'],
       author='Lucas Eisenzimmer',
       author_email='lucas.eisenzimmer@t-systems-mms.com',
