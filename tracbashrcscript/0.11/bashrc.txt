@@ -1,7 +1,7 @@
 export TRAC_BASE="$HOME/trac"
 export INSTALL_BASE="$TRAC_BASE/install"
 export NGINX_BASE="$TRAC_BASE/nginx"
-export DEFAULT_VERSION="trunk"
+export DEFAULT_VERSION="0.11-stable"
 export START_PORT="8080"
 
 # Reboot apache
@@ -172,7 +172,7 @@ function _tversion {
     
     local cur opts
     cur="${COMP_WORDS[COMP_CWORD]}"
-    opts="$(ls $INSTALL_BASE)"
+    opts="$(for ver in `ls $INSTALL_BASE`; do if [ ! -f "$INSTALL_BASE/$ver/.disable" ]; then echo $ver; fi; done)"
     
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
     return 0
