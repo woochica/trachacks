@@ -14,7 +14,7 @@ class JavascriptDeveloperModule(Component):
         if req.session.get('developer.js.enable_debug') == '1' and \
            req.path_info == '/chrome/common/js/jquery.js':
             req.args['prefix'] = 'developer'
-            req.args['filename'] = 'js/jquery-1.2.1.js'
+            req.args['filename'] = 'js/jquery-1.2.6.js'
         return handler
             
     def post_process_request(self, req, template, content_type):
