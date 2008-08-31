@@ -51,79 +51,88 @@ Please enable the HTML view or use an HTML compatible email client.
       <head>
         <title>Ticket Summary for <xsl:value-of select="/clientsplugin/client/name"/></title>
         <style type="text/css">
-        body {
-          background: #f3f3f3;
-        }
-        .ticket {
-          background: #eee;
-          padding: 0;
-          margin: 2px;
-          margin-bottom: 20px;
-          border: 1px solid #222;
-        }
-        .id {
-          float: left;
-          margin: 0;
-          padding: 5px;
-          text-align: center;
-          background: #222;
-          color: #eee;
-          width: 5em;
-          font-weight: bold;
-        }
-        .summary {
-          float: left;
-          margin: 0 0 0 1em;
-          padding: 5px;
-          font-style: italic;
-        }
-        .description {
-          clear: both;
-          margin: 2em;
-          margin-top: 3em;
-          padding: 1em;
-          border: 1px solid #222;
-          background: #fff;
-        }
-        .status {
-          clear: both;
-        }
-        .status, .due {
-          float: left;
-          margin: 4px;
-          padding: 0;
-          font-variant: small-caps;
-        }
-        .status:before {
-          content: "Status: ";
-        }
-        .due {
-          float: right;
-        }
-        .due:before {
-          content: "Expected Delivery Date: ";
-        }
-        .fin {
-          clear: both;
-        }
+  body {
+    background: #f3f3f3;
+  }
+  fieldset.milestone {
+    margin-top: 3em;
+  }
+  fieldset.ticket {
+    margin-top: 2em;
+    background: #eee;
+  }
+  .description {
+    margin: 0.5em;
+    padding: 0.5em;
+    border: 1px solid #222;
+    background: #fff;
+  }
+  .status {
+    margin: 4px;
+    padding: 0;
+    font-variant: small-caps;
+  }
+  .status:before {
+    content: "Status: ";
+  }
+  dl.milestone dt {
+    float: left;
+    margin-right: 0.5em;
+    font-style: italic;
+  }
+  dl.milestone dt:after {
+    content: ':';
+  }
         </style>
       </head>
       <body>
         <h1>Ticket Summary for <xsl:value-of select="/clientsplugin/client/name"/></h1>
         <xsl:choose>
           <xsl:when test="/clientsplugin/summary/ticket">
-            <xsl:for-each select="/clientsplugin/summary/ticket">
-              <div class="ticket">
-                <div class="id">#<xsl:value-of select="id"/></div>
-                <div class="summary"><xsl:value-of select="summary"/></div>
-                <xsl:if test="description!=''">
-                  <div class="description"><xsl:copy-of select="ticket/description"/></div>
-                </xsl:if>
-                <div class="status"><xsl:value-of select="status"/></div>
-                <div class="due"><xsl:value-of select="due"/></div>
-                <div class="fin"></div>
-              </div>
+            <xsl:for-each select="/clientsplugin/milestones/milestone">
+              <xsl:sort select="duetimestamp" order="asscending"/>
+              <xsl:variable name="ms" select="./name" />
+              <xsl:if test="/clientsplugin/summary/ticket[milestone=$ms]">
+                <fieldset class="milestone">
+                  <legend class="milestone">
+                    <xsl:text>Milestone: </xsl:text>
+                    <xsl:value-of select="$ms" />
+                  </legend>
+                  <xsl:if test="./description!=''">
+                    <div class="milestone description">
+                      <xsl:value-of select="./description" />
+                    </div>
+                  </xsl:if>
+                  <xsl:if test="./due">
+                    <dl class="milestone">
+                      <dt>Due on</dt>
+                      <dd><xsl:value-of select="./due" /></dd>
+                      <xsl:if test="./completed">
+                        <dt>Completed on</dt>
+                        <dd><xsl:value-of select="./completed" /></dd>
+                      </xsl:if>
+                    </dl>
+                  </xsl:if>
+                  <xsl:for-each select="/clientsplugin/summary/ticket[milestone=$ms]">
+                    <xsl:call-template name="print-ticket" />
+                  </xsl:for-each>
+                </fieldset>
+              </xsl:if>
             </xsl:for-each>
+            <xsl:variable name="ms" select="''" />
+            <xsl:if test="/clientsplugin/summary/ticket[milestone=$ms]">
+              <fieldset class="milestone">
+                <legend class="milestone">
+                  Tickets not allocated to specific milestones
+                </legend>
+                <div class="milestone description">
+                  <p>The following tickets are not allocated to any specific milestone.</p>
+                </div>
+                <xsl:for-each select="/clientsplugin/summary/ticket[milestone=$ms]">
+                  <xsl:call-template name="print-ticket" />
+                </xsl:for-each>
+              </fieldset>
+            </xsl:if>
           </xsl:when>
           <xsl:otherwise>
             <p>You do not currently have any active tickets</p>
@@ -131,5 +140,18 @@ Please enable the HTML view or use an HTML compatible email client.
         </xsl:choose>
       </body>
     </xsl:element>
+  </xsl:template>
+
+  <xsl:template name="print-ticket">
+    <fieldset class="ticket">
+      <legend class="ticket">
+        Ticket #<xsl:value-of select="id"/>: <xsl:value-of select="summary"/>
+      </legend>
+      <xsl:if test="description!=''">
+        <div class="ticket description"><xsl:copy-of select="description"/></div>
+      </xsl:if>
+      <div class="status"><xsl:value-of select="status"/></div>
+      <!-- <div class="due"><xsl:value-of select="due"/></div> -->
+    </fieldset>
   </xsl:template>
 </xsl:stylesheet>

@@ -70,7 +70,7 @@ class SendClientMailer(object):
   def __init__(self, env):
     self.env = env
     self.config = env.config
-    self.encoding = 'us-ascii'
+    self.encoding = 'utf-8'
   
   def Send(self, subject, addresses, xml, transform):
     if not self.config.getbool('notification', 'smtp_enabled'):
@@ -94,7 +94,9 @@ class SendClientMailer(object):
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
     from email.MIMEImage import MIMEImage
-    
+    from email.Charset import add_charset, SHORTEST
+    add_charset( 'utf-8', SHORTEST, None, None )
+
     projname = self.config.get('project', 'name')
     
     # Create the root message and fill in the from, to, and subject headers
@@ -123,6 +125,10 @@ class SendClientMailer(object):
     view = 'html'
     arg = "'%s'" % view
     result = transform(xml, view=arg)
+    #file = open('/tmp/send-client-email.html', 'w')
+    #file.write(str(result))
+    #file.close()
+
     msg_text = MIMEText(str(result), view, self.encoding)
     msg_related.attach(msg_text)
     
@@ -131,19 +137,21 @@ class SendClientMailer(object):
     arg = "'%s'" % view
     result = transform(xml, view=arg)
     if result:
-      for img in result.getroot():
-        if 'img' != img.tag:
-          continue
-        if not img.get('id') or not img.get('src'):
-          continue
-        
-        fp = open(img.get('src'), 'rb')
-        if not fp:
-          continue
-        msg_img = MIMEImage(fp.read())
-        fp.close()
-        msg_img.add_header('Content-ID', '<%s>' % img.get('id'))
-        msg_related.attach(msg_img)
+      images = result.getroot()
+      if images:
+        for img in images:
+          if 'img' != img.tag:
+            continue
+          if not img.get('id') or not img.get('src'):
+            continue
+          
+          fp = open(img.get('src'), 'rb')
+          if not fp:
+            continue
+          msg_img = MIMEImage(fp.read())
+          fp.close()
+          msg_img.add_header('Content-ID', '<%s>' % img.get('id'))
+          msg_related.attach(msg_img)
     
     # Send the email
     import smtplib
@@ -166,6 +174,7 @@ class SendClientFakeReq:
         return '#%d' % (num)
     self.href = SendClientFakeHref()
     self.abs_href = SendClientFakeHref()
+    self.perm = []
   
   def perm(self, *args, **keywords):
     return []
@@ -248,9 +257,13 @@ class SendClientEmails:
           xml = etree.Element('clientsplugin')
           
           # Place basic client info here
-          client = etree.SubElement(xml, 'client')
-          etree.SubElement(client, 'name').text = name
-          etree.SubElement(client, 'lastupdate').text = myformat_date(lastupdate)
+          xclient = etree.SubElement(xml, 'client')
+          etree.SubElement(xclient, 'name').text = name
+          etree.SubElement(xclient, 'lastupdate').text = myformat_date(lastupdate)
+
+          # Information about milestones
+          milestones = []
+          xmilestones = etree.SubElement(xml, 'milestones')
 
           have_data = False
           if 'summary' == field:
@@ -269,6 +282,8 @@ class SendClientEmails:
             xsummary = etree.SubElement(xml, 'summary')
             for tid, summary, description, status, milestone, due in cur2:
               have_data = True
+              if not milestone in milestones:
+                milestones.append(milestone)
               if options.debug:
                 print "  Summarising ticket #%s" % tid
               ticket = etree.SubElement(xsummary, 'ticket')
@@ -299,6 +314,8 @@ class SendClientEmails:
             changes = etree.SubElement(xml, 'changes')
             lasttid = 0
             for tid, summary, description, status, resolution, milestone, due, cgfield, oldvalue, newvalue in cur2:
+              if not milestone in milestones:
+                milestones.append(milestone)
               text = ''
               if 'status' == cgfield:
                 text = 'Status changed from "%s" to "%s"' % (oldvalue, newvalue)
@@ -344,7 +361,28 @@ class SendClientEmails:
                 detail.set('newvalue', newvalue)
               changelog.append(detail)
               lasttid = tid
-            
+          
+          # Now we have to load information about the milestones
+          sql = ("""\
+            SELECT m.name, m.due, m.completed, m.description
+            FROM milestone AS m
+            """)
+          # The above should say: WHERE m.name IN (blah)
+          
+          cur2 = db.cursor()
+          cur2.execute(sql, )
+          for mname, due, completed, description in cur2:
+            xmilestone = etree.SubElement(xmilestones, 'milestone')
+            etree.SubElement(xmilestone, 'name').text = mname
+            etree.SubElement(xmilestone, 'duetimestamp').text = str(due)
+            etree.SubElement(xmilestone, 'due').text = myformat_date(due)
+            if completed:
+              etree.SubElement(xmilestone, 'completed').text = myformat_date(completed)
+            if description:
+              xmilestone.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
+            else:
+              etree.SubElement(xmilestone, 'description').text = ''
+          
           if options.debug:
             file = open('/tmp/send-client-email.xml', 'w')
             file.write(etree.tostring(xml, pretty_print=True))
