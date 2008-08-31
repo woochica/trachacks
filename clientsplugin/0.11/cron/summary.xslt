@@ -72,9 +72,6 @@ Please enable the HTML view or use an HTML compatible email client.
     padding: 0;
     font-variant: small-caps;
   }
-  .status:before {
-    content: "Status: ";
-  }
   dl.milestone dt {
     float: left;
     margin-right: 0.5em;
@@ -105,11 +102,15 @@ Please enable the HTML view or use an HTML compatible email client.
                   </xsl:if>
                   <xsl:if test="./due">
                     <dl class="milestone">
-                      <dt>Due on</dt>
+                      <dt>Estimated delivery date</dt>
                       <dd><xsl:value-of select="./due" /></dd>
                       <xsl:if test="./completed">
                         <dt>Completed on</dt>
                         <dd><xsl:value-of select="./completed" /></dd>
+                      </xsl:if>
+                      <xsl:if test="./estimatedhours">
+                        <dt>Total estimated development time</dt>
+                        <dd><xsl:value-of select="./estimatedhours" /></dd>
                       </xsl:if>
                     </dl>
                   </xsl:if>
@@ -150,7 +151,10 @@ Please enable the HTML view or use an HTML compatible email client.
       <xsl:if test="description!=''">
         <div class="ticket description"><xsl:copy-of select="description"/></div>
       </xsl:if>
-      <div class="status"><xsl:value-of select="status"/></div>
+      <div class="status">Status: <xsl:value-of select="status"/></div>
+      <xsl:if test="estimatedhours">
+        <div class="estimate">Estimated development time: <xsl:value-of select="estimatedhours"/></div>
+      </xsl:if>
       <!-- <div class="due"><xsl:value-of select="due"/></div> -->
     </fieldset>
   </xsl:template>

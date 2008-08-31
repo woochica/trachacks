@@ -188,6 +188,26 @@ class SendClientEmails:
           if dte:
             return format_date(dte, '%e %b %Y')
           return 'No date set'
+        def myformat_hours(hrs):
+          from math import floor
+          if hrs:
+            hrs = float(hrs)
+            if 0==hrs:
+              return '0'
+            neg = False
+            if hrs < 0:
+              neg = True
+              hours *= -1
+            mins = floor((hrs - floor(hrs)) * 60)
+            str = ''
+            if neg:
+              str = '-'
+            if hrs:
+              str = "%s%sh" % (str, int(floor(hrs)))
+            if mins:
+              str = "%s %sm" % (str, int(mins))
+            return str;
+          return 'No estimate available'
         
         locale.setlocale(locale.LC_ALL, '')
         self.env = open_environment(options.envpath)
@@ -262,16 +282,19 @@ class SendClientEmails:
           etree.SubElement(xclient, 'lastupdate').text = myformat_date(lastupdate)
 
           # Information about milestones
-          milestones = []
+          milestones = {}
           xmilestones = etree.SubElement(xml, 'milestones')
 
           have_data = False
           if 'summary' == field:
             # Load in a summary of the client's tickets
             sql = ("""\
-              SELECT t.id, t.summary, t.description, t.status, t.milestone, m.due
-              FROM ticket_custom tcust
-              INNER JOIN ticket t ON tcust.ticket=t.id
+              SELECT t.id, t.summary, t.description, t.status, t.milestone,
+                m.due, m.completed, m.description AS mdesc,
+                tcust2.value AS estimatedhours
+              FROM ticket_custom AS tcust
+              INNER JOIN ticket AS t ON tcust.ticket=t.id
+              LEFT JOIN ticket_custom AS tcust2 ON t.id=tcust2.ticket AND tcust2.name='estimatedhours'
               LEFT JOIN milestone m ON t.milestone=m.name
               WHERE tcust.name = 'client'
                 AND tcust.value = %s
@@ -280,10 +303,27 @@ class SendClientEmails:
             cur2 = db.cursor()
             cur2.execute(sql, (name,))
             xsummary = etree.SubElement(xml, 'summary')
-            for tid, summary, description, status, milestone, due in cur2:
+            for tid, summary, description, status, milestone, due, completed, mdescription, estimatedhours in cur2:
               have_data = True
-              if not milestone in milestones:
-                milestones.append(milestone)
+              if milestone:
+                if not milestones.has_key(milestone):
+                  xmilestone = etree.SubElement(xmilestones, 'milestone')
+                  etree.SubElement(xmilestone, 'name').text = milestone
+                  etree.SubElement(xmilestone, 'duetimestamp').text = str(due)
+                  etree.SubElement(xmilestone, 'due').text = myformat_date(due)
+                  if completed:
+                    etree.SubElement(xmilestone, 'completed').text = myformat_date(completed)
+                  if mdescription:
+                    xmilestone.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(mdescription), self.env, self.req)))
+                  else:
+                    etree.SubElement(xmilestone, 'description').text = ''
+                  # Store for use
+                  milestones[milestone] = { 'hours': 0, 'xml': xmilestone }
+                
+                # Add hours to create a total.
+                if estimatedhours:
+                  milestones[milestone]['hours'] += float(estimatedhours) 
+
               if options.debug:
                 print "  Summarising ticket #%s" % tid
               ticket = etree.SubElement(xsummary, 'ticket')
@@ -292,12 +332,16 @@ class SendClientEmails:
               ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
               etree.SubElement(ticket, 'status').text = status
               etree.SubElement(ticket, 'milestone').text = milestone
+              # For conveneince, put the date here too (keeps the XSLTs simpler)
               etree.SubElement(ticket, 'due').text = myformat_date(due)
+              if estimatedhours:
+                etree.SubElement(ticket, 'estimatedhours').text = myformat_hours(estimatedhours)
 
           elif 'changes' == field:
             # Load in any changes that have happend
             sql = ("""\
-              SELECT t.id, t.summary, t.description, t.status, t.resolution, t.milestone, m.due, tchng.field, tchng.oldvalue, tchng.newvalue
+              SELECT t.id, t.summary, t.description, t.status, t.resolution, t.milestone, m.due,
+                tchng.field, tchng.oldvalue, tchng.newvalue
               FROM ticket_custom tcust
               INNER JOIN ticket t ON tcust.ticket=t.id
               INNER JOIN ticket_change tchng ON t.id=tchng.ticket
@@ -362,26 +406,9 @@ class SendClientEmails:
               changelog.append(detail)
               lasttid = tid
           
-          # Now we have to load information about the milestones
-          sql = ("""\
-            SELECT m.name, m.due, m.completed, m.description
-            FROM milestone AS m
-            """)
-          # The above should say: WHERE m.name IN (blah)
-          
-          cur2 = db.cursor()
-          cur2.execute(sql, )
-          for mname, due, completed, description in cur2:
-            xmilestone = etree.SubElement(xmilestones, 'milestone')
-            etree.SubElement(xmilestone, 'name').text = mname
-            etree.SubElement(xmilestone, 'duetimestamp').text = str(due)
-            etree.SubElement(xmilestone, 'due').text = myformat_date(due)
-            if completed:
-              etree.SubElement(xmilestone, 'completed').text = myformat_date(completed)
-            if description:
-              xmilestone.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
-            else:
-              etree.SubElement(xmilestone, 'description').text = ''
+          # Put the total hours into the milestone info
+          for milestone in milestones:
+            etree.SubElement(milestones[milestone]['xml'], 'estimatedhours').text = myformat_hours(milestones[milestone]['hours'])
           
           if options.debug:
             file = open('/tmp/send-client-email.xml', 'w')
