@@ -358,6 +358,14 @@ class SendClientEmails:
                 AND tchng.field IN ('comment', 'status', 'resolution', 'milestone')
                 AND tchng.time >= %s
                 AND tchng.time < %s
+                AND t.milestone IN (
+                  SELECT DISTINCT st.milestone
+                  FROM ticket_custom AS stcust
+                  INNER JOIN ticket AS st ON stcust.ticket=st.id
+                  INNER JOIN milestone AS sm ON st.milestone=sm.name
+                  WHERE stcust.name = tcust.name
+                  AND stcust.value = tcust.value
+                  AND sm.due > 0)
               ORDER BY t.time
               """)
             cur2 = db.cursor()
