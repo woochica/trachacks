@@ -297,7 +297,15 @@ class SendClientEmails:
               LEFT JOIN milestone m ON t.milestone=m.name
               WHERE tcust.name = 'client'
                 AND tcust.value = %s
-                AND t.status != 'closed'
+                AND t.milestone IN (
+                  SELECT DISTINCT st.milestone
+                  FROM ticket_custom AS stcust
+                  INNER JOIN ticket AS st ON stcust.ticket=st.id
+                  INNER JOIN milestone AS sm ON st.milestone=sm.name
+                  WHERE stcust.name = tcust.name
+                  AND stcust.value = tcust.value
+                  AND st.status != 'closed'
+                  AND sm.due > 0)
               """)
             cur2 = db.cursor()
             cur2.execute(sql, (name,))
@@ -342,9 +350,9 @@ class SendClientEmails:
               SELECT t.id, t.summary, t.description, t.status, t.resolution, t.milestone, m.due,
                 tchng.field, tchng.oldvalue, tchng.newvalue
               FROM ticket_custom tcust
-              INNER JOIN ticket t ON tcust.ticket=t.id
-              INNER JOIN ticket_change tchng ON t.id=tchng.ticket
-              LEFT JOIN milestone m ON t.milestone=m.name
+              INNER JOIN ticket AS t ON tcust.ticket=t.id
+              INNER JOIN ticket_change AS tchng ON t.id=tchng.ticket
+              LEFT JOIN milestone AS m ON t.milestone=m.name
               WHERE tcust.name = 'client'
                 AND tcust.value = %s
                 AND tchng.field IN ('comment', 'status', 'resolution', 'milestone')
