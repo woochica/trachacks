@@ -132,6 +132,28 @@ addEvent(window, "load", function() {
             doTreeWalk.call(this, expected, dom);
         });
 
+        unit.add("isLastChildInBlockNode", function() {
+            var dom = fragment(
+                element("p", element("br")),
+                element("p", "foobar", element("br"), "foobar"),
+                element("p", element("b", "foobar", element("br"))),
+                element("p", element("b", "foobar"), element("br")),
+                element("br"));
+            var count = 0;
+            function assert(expected, node) {
+                this.assertEqual(expected, instance.isLastChildInBlockNode(node), "#" + (count++));
+            }
+            assert.call(this, true,  dom.childNodes[0].childNodes[0]);
+            assert.call(this, false, dom.childNodes[1].childNodes[0]);
+            assert.call(this, false, dom.childNodes[1].childNodes[1]);
+            assert.call(this, true,  dom.childNodes[1].childNodes[2]);
+            assert.call(this, false, dom.childNodes[2].childNodes[0].childNodes[0]);
+            assert.call(this, true,  dom.childNodes[2].childNodes[0].childNodes[1]);
+            assert.call(this, false, dom.childNodes[3].childNodes[0].childNodes[0]);
+            assert.call(this, true,  dom.childNodes[3].childNodes[1]);
+            assert.call(this, true,  dom.childNodes[4]);
+        });
+
         unit.add("code block", function() {
             var dom = fragment(
                 element("p", element("tt", "abc")),

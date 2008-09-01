@@ -1273,9 +1273,9 @@ TracWysiwyg.prototype.isInlineNode = function(node) {
                 }
                 node = node.parentNode;
                 if (!node) {
-                    return false;
+                    return true;
                 }
-                if (node.tagName.toLowerCase() in blocks) {
+                if (node.nodeType == 1 && node.tagName.toLowerCase() in blocks) {
                     return true;
                 }
             }
