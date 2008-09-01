@@ -5,6 +5,7 @@ definition of a trac project
 
 import os
 import pkg_resources
+import subprocess
 from paste.script import templates
 
 class TracProject(templates.Template):
@@ -30,7 +31,10 @@ class TracProject(templates.Template):
     ### attrs for PasteScript Template
     
     def pre(self, command, output_dir, vars):
-        pass
+
+        if os.environ.has_key('VIRTUAL_ENV'):  # install the requirements
+            for requirement in getattr(self, 'requirements', ()):
+                subprocess.call(['poach-eggs', '-r', requirement])
 
     def post(self, command, output_dir, vars):
         pass

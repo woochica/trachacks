@@ -23,8 +23,10 @@ setup(name='TracLegos',
         'Genshi',
         'Paste',
         'PasteScript',
+        'PoachEggs',
         'WebOb',
       ],
+      dependency_links=['https://svn.openplans.org/svn/PoachEggs/trunk#egg=PoachEggs'],
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
