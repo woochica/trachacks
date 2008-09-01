@@ -45,7 +45,7 @@ parser.add_option('-d', '--daysback', type='int', dest='maxage', default=14,
 class CloseOldPendingTickets:
 
     def __init__(self, project=options.project, author=AUTHOR,
-                     maxage=options.maxage, url=options.url):
+                     maxage=options.maxage):
 
         self.env = open_environment(project)
         db = self.env.get_db_cnx()
