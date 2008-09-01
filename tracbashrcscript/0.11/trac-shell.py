@@ -1,8 +1,12 @@
-import os, sys
+import sys
+import os
 
-if os.environ['TRAC_VERSION'] in ('trunk', 'renderfilter', '0.11-stable'):
-    import pkg_resources
-    pkg_resources.require('Trac >= 0.11dev')
+import pkg_resources
+
+try:
+    pkg_resources.require('Trac')
+except pkg_resources.DistributionNotFound:
+    pass
 
 from trac.core import *
 from trac.env import Environment
@@ -11,6 +15,6 @@ from trac.ticket.model import Ticket
 from genshi.core import *
 from genshi.builder import tag
 
-env = Environment(os.environ['TRAC'])
+env = Environment(os.environ.get('TRAC', os.getcwd()))
 db = env.get_db_cnx()
 cursor = db.cursor()
