@@ -3,6 +3,8 @@
 [ this is a work in progress;  this is more of a roadmap than a README ]
 
 TracLegos is software designed to assist with trac project creation.  
+The idea is that project templates may be created according to project
+type and need.
 Its goal is to make project creation easy and flexible, allowing
 flexibility with regards to creation methodology as well as
 extensibility as a project factory for environments with advanced
@@ -34,7 +36,7 @@ Typical trac project configuration consists of:
 
  * plugins required for the project
 
- * a repository [TODO]
+ * a repository 
 
  * a database [TODO]
 
@@ -145,13 +147,9 @@ defined in this .ini file.
 
 == Project Creation Procedure ==
 
-[rough]
-
 For each project, the following steps are applied:
 
- * the PasteScript templates are invoked
-
- * [TODO] repository creation/configuration, database creation
+ * database creation
 
  * the {{{trac.ini}}} templates (both PasteScrpt and other) are munged
    together, site-wide templates applied at the end (they override)
@@ -160,6 +158,10 @@ For each project, the following steps are applied:
    missing variables are sought (via PasteScript or TTW)
 
  * the project is created
+
+ * repository setup
+
+ * the PasteScript templates are invoked
 
  * [TODO] any inherited/master configuration is updated
 
