@@ -278,6 +278,9 @@ def parse(parser, args=None):
     legos = TracLegos(directory=options.directory, inherit=options.inherit, vars=vars)
     
     # XXX this is hackish
+    # should return:
+    # { project: { 'repository': repository, 'templates': options.templates, }
+    # for each project
     return legos, projects, options.templates, repository
 
 def main(args=None):
