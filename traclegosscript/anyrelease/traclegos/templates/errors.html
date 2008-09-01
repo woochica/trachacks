@@ -1,0 +1,19 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+
+
+<div class="errors" py:if="errors is not None">
+  <py:choose test="len(errors) == 1">
+  <py:when test="True">
+  ${errors[0]}
+  </py:when>
+  <py:otherwise>
+  <ul>
+    <li py:for="error in errors">$error</li>
+  </ul>
+  </py:otherwise>
+  </py:choose>
+</div>
+
+</html>

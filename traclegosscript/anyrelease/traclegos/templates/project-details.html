@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15"/>
+<title>Project Details: $project</title>
+</head>
+
+<body>
+<h1>Project Details: $project</h1>
+
+<form method="post" enctype="multipart/form-data">
+
+<!-- database choice [TODO] -->
+<div>
+</div>
+  
+<!-- repository choice [TODO] -->
+<div py:if="repositories">
+  <h2>Source Repository</h2>
+
+  <p py:for="index, repository in enumerate(repositories)" 
+     py:with="options = [option for option in repository.options if
+  option.name not in excluded_fields.get(repository.name, ())]">
+  <input type="radio" 
+	 py:attrs="{'checked': not index and 'true' or None }"
+	 name="repository" value="${repository.name}"/>
+  ${repository.description}<py:if test="len(options)">:
+  <py:choose test="len(options)">
+  <py:when test="1">
+    <input type="text" 
+	   name="${repository.name}_${options[0].name}"
+	   value="${options[0].default}"/>
+  </py:when>
+  <py:otherwise>
+  <ul>
+    <li py:for="option in options">
+    <input type="text" 
+	   name="${repository.name}_${option.name}"
+	   value="${option.default}"/> 
+    <b><small>${option.description}</small></b>
+    </li>
+  </ul>
+  </py:otherwise>
+  </py:choose>
+  </py:if>
+  </p>
+    
+</div>
+
+<!-- database choice [TODO] -->
+
+<!-- mailing lists setup [TODO] -->
+
+<input type="hidden" name="project" value="$project"/>
+
+<input type="submit" value="Next &gt;&gt;"/><br/>
+<i><small>Project Variables</small></i>
+
+</form>
+</body>
+</html>

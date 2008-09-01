@@ -1,0 +1,22 @@
+from setuptools import find_packages, setup
+
+version='0.0'
+
+setup(name=${repr(project)},
+      version=version,
+      description="${description|nothing}",
+      author=${repr(author)|empty},
+      author_email=${repr(author_email)|empty},
+      url=${repr(url)|empty},
+      keywords='trac plugin',
+      license="",
+      packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
+      include_package_data=True,
+      install_requires = [ 'PasteScript' ],
+      zip_safe=False,
+      entry_points = """
+      [paste.paster_create_template]
+      ${package} = ${package}:${project}
+      """,
+      )
+

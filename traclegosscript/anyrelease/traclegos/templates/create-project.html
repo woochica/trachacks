@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15" />
+<title>create trac project</title>
+</head>
+
+<body>
+<h1>create a trac project</h1>
+
+<xi:include href="errors.html" />
+
+<form method="post" enctype="multipart/form-data">
+
+<div>
+  <b>Project Name:</b> <input type="text" name="project_name"/><br/>
+  <b>URL:</b> ${URL}<input type="text" name="project" /><br/>
+  <b>Alternate website:</b> <input type="text" name="alternate_url"/> <i>(Optional)</i>
+</div>
+
+<div>
+  <p>
+  <i>(Optional)</i>
+  Enter the full filesystem path or absolute URL of the projectlogo
+  </p>
+  <center>
+  <input type="text" name="logo"/>
+  </center>
+  <p>or upload one</p>
+  <center>
+  <input type="file" name="logo_file"/>
+  </center>
+</div>
+
+<!-- project type, TBI -->
+<div py:if="len(projects) &gt; 1">
+  <b>Project Type:</b>
+  <select name="project_type">
+    <option py:for="project_type in projects" value="${project_type}">
+      ${project_type}
+      </option>
+  </select>  
+</div>
+
+<input type="hidden" py:if="len(projects) == 1" name="project_type" value="${projects[0]}"/>
+
+<input type="submit" value="Next &gt;&gt;"/><br/>
+<i><small>${next}</small></i>
+</form>
+
+</body>
+</html>
