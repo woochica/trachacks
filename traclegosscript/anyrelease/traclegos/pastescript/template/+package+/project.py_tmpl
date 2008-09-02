@@ -1,13 +1,10 @@
+from traclegos.project import TracProject
 from paste.script import templates
 
 var = templates.var
 
-class ${project}(templates.Template):
+class ${project}(TracProject):
     _template_dir = 'template'
     summary = ${repr(description)}
-    vars = [
-        var('description', 'One-line description of the package'),
-        var('author', 'Author name'),
-        var('author_email', 'Author email'),
-        var('url', 'URL of homepage'),
-        ] 
+    vars = [ ] # variables needing interpolation
+    requirements = [ ] # requirements needing to be poached
