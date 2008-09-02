@@ -14,7 +14,7 @@ setup(name='TOPPTracProject',
       include_package_data=True,
       install_requires = [ 'PasteScript', 'TracLegos' ],
       dependency_links = [
-      "https://svn.openplans.org/svn/trac/install/TracLegos#egg=TracLegos",
+      "http://trac-hacks.org/svn/traclegosscript/anyrelease#egg=TracLegos",
       ],
       zip_safe=False,
       entry_points = """
