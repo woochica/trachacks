@@ -95,7 +95,7 @@ class WikiToPdfOutput(Component):
     def get_titlepage(self, template_path, title, subject, version, date):
 
         hfile, hfilename = mkstemp('wikitopdf')
-        codepage = Mimeview(self.env).default_charset
+        #codepage = Mimeview(self.env).default_charset
 	string_page = ''
 
         try:

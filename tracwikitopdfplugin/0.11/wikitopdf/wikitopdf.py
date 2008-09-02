@@ -46,18 +46,18 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
 
     while imgpos != -1:
         addrpos = page.find('src=',imgpos)
-	#base_dir = base_dir.encode('ascii')
         page = page[:addrpos+5] + base_dir + page[addrpos+5:]
         imgpos = page.find('<img', addrpos)
     
-    meta = ('<meta http-equiv="Content-Type" content="text/html; charset=%s"/>' % codepage).encode(codepage)
+    meta = ('<meta http-equiv="Content-Type" content="text/html; charset=%s"/>' % codepage)
 
     page = '<html><head>' + meta + '</head><body>' + page + '</body></html>'
+    page = page.encode(codepage,'replace')
     
     env.log.debug('WikiToPdf => HTML output for WikiToPdf in charset %s is: %r' % (codepage, page))    
     env.log.debug('WikiToPdf => Finish function wiki_to_pdf')
 
-    return page.encode(codepage)
+    return page
 
 def html_to_pdf(env, htmldoc_args, files, codepage):
 
@@ -96,7 +96,6 @@ class WikiToPdfPage(Component):
 
     def convert_content(self, req, input_type, text, output_type):
 
-        # htmldoc doesn't support utf-8, we need to use some other input encoding
         codepage = self.env.config.get('trac', 'default_charset', 'iso-8859-1') 
         base_dir = self.env.config.get('wikitopdf', 'base_dir')
 
