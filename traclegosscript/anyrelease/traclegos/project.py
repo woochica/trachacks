@@ -32,9 +32,11 @@ class TracProject(templates.Template):
     
     def pre(self, command, output_dir, vars):
 
-        if os.environ.has_key('VIRTUAL_ENV'):  # install the requirements
-            for requirement in getattr(self, 'requirements', ()):
-                subprocess.call(['poach-eggs', '-r', requirement])
+        # XXX unhooked for now:  poach-eggs will fuxor if the one
+        # requirements file is poached twice
+#        if os.environ.has_key('VIRTUAL_ENV'):  # install the requirements
+#            for requirement in getattr(self, 'requirements', ()):
+#                subprocess.call(['poach-eggs', '-r', requirement])
 
     def post(self, command, output_dir, vars):
         pass
