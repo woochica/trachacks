@@ -16,8 +16,8 @@
 # Author: Felix Tiede
 
 """
-$Id: web_ui.py 2647 2007-09-20 08:46:26Z ftiede $
-$HeadURL: http://trac-hacks.org/svn/tracticketdepgraphplugin/0.10/depgraph/web_ui.py $
+$Id$
+$HeadURL$
 
 Copyright (c) 2007, 2008 Felix Tiede. All rights reserved.
 Copyright (c) 2007, 2008 EyeC GmbH. All rights reserved.
@@ -25,9 +25,9 @@ Copyright (c) 2007, 2008 EyeC GmbH. All rights reserved.
 TODO: Get me module documentation here! ASAP!
 """
 
-__revision__  = '$LastChangedRevision: 2647 $'
-__id__        = '$Id: web_ui.py 2647 2007-09-20 08:46:26Z ftiede $'
-__headurl__   = '$HeadURL: http://trac-hacks.org/svn/tracticketdepgraphplugin/0.10/depgraph/web_ui.py $'
+__revision__  = '$LastChangedRevision$'
+__id__        = '$Id$'
+__headurl__   = '$HeadURL$'
 __version__   = '0.11'
 
 import re
@@ -42,9 +42,9 @@ from trac.wiki.formatter import Formatter
 #from trac.ticket.model import Ticket
 from trac.util.html import html, Markup
 
-from depgraph import DepgraphMacro
+from depgraph import DepGraphMacro
 
-class DepgraphModule(Component):
+class DepGraphModule(Component):
 	"""Provides a direct link to a ticket's dependency graph"""
 
 	implements(IRequestFilter, IRequestHandler, ITemplateProvider)

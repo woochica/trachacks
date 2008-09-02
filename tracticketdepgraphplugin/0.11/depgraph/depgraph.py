@@ -16,8 +16,8 @@
 # Author: Felix Tiede
 
 """
-$Id: depgraph.py 3626 2008-05-06 17:45:54Z ftiede $
-$HeadURL: http://trac-hacks.org/svn/tracticketdepgraphplugin/0.10/depgraph/depgraph.py $
+$Id$
+$HeadURL$
 
 Copyright (c) 2007, 2008 Felix Tiede. All rights reserved.
 Copyright (c) 2007, 2008 EyeC GmbH. All rights reserved.
@@ -38,9 +38,9 @@ question!
 }}}
 """
 
-__revision__  = '$LastChangedRevision: 3626 $'
-__id__        = '$Id: depgraph.py 3626 2008-05-06 17:45:54Z ftiede $'
-__headurl__   = '$HeadURL: http://trac-hacks.org/svn/tracticketdepgraphplugin/0.10/depgraph/depgraph.py $'
+__revision__  = '$LastChangedRevision$'
+__id__        = '$Id$'
+__headurl__   = '$HeadURL$'
 __version__   = '0.11'
 
 from util import get_color
@@ -53,7 +53,7 @@ from trac.wiki.formatter import wiki_to_html
 from graphviz import Graphviz
 from mastertickets.model import TicketLinks
 
-class DepgraphMacro(WikiMacroBase):
+class DepGraphMacro(WikiMacroBase):
 	"""
 	DepgraphMacro provides a plugin for Trac to render a dependency graph
 	using graphviz for blocked tickets within a Trac wiki page.
@@ -131,10 +131,10 @@ class DepgraphMacro(WikiMacroBase):
 	def __init__(self):
 		self.log.info('version: %s - id: %s' % (__version__, str(__id__)))
 
-#	def get_macros(self):
-#		"""Return an iterable that provides the names of the provided macros."""
-#		yield 'DepGraph'
-#
+	def get_macros(self):
+		"""Return an iterable that provides the names of the provided macros."""
+		yield 'DepGraph'
+
 	def get_macro_description(self, name):
 		from inspect import getdoc, getmodule
 		return getdoc(getmodule(self))
