@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='SVN URLs',
+    name='SVN_URLs',
     version='0.6',
     author='Jeff Hammel',
     author_email='jhammel@openplans.org',
