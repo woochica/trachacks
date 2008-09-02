@@ -7,7 +7,8 @@ class ToppTracProject(TracProject):
     _template_dir = 'template'
     summary = 'The Open Planning Project Trac Template'
 
-    vars = [ var('basedir', 'base directory for trac'),
+    vars = [ var('basedir', 'base directory for trac',
+                 default='.'),
              var('domain', 'domain name where this project is to be served', 
                  default='localhost'),
              var('footer', '',
