@@ -22,7 +22,6 @@ from traclegos.pastescript.var import vars2dict, dict2vars
 from traclegos.project import project_dict
 from traclegos.project import TracProject
 from traclegos.repository import available_repositories
-from traclegos.repository import repository_fields
 from traclegos.templates import ProjectTemplates
 from StringIO import StringIO
 
@@ -71,6 +70,12 @@ class TracLegos(object):
         return ProjectTemplates(*(templates + self.site_templates))
     # TODO: add the self.options to the templates
 
+    # arguments to RepositorySetup.setup that may be interpolated from variables
+    def repository_fields(self, project):
+        return { 'SVNSync': {'repository_dir': os.path.join(self.directory, project, 'mirror') },
+                 'NewSVN': {'repository_dir': os.path.join(self.directory, project, 'svn') }
+                 }
+
     def create_project(self, project, templates, vars=None,
                        repository=None):
         """
@@ -101,7 +106,7 @@ class TracLegos(object):
         repo_fields = {}
         if repository:
             vars2dict(optdict, *repository.options)
-            repo_fields = repository_fields(dirname).get(repository.name, {})
+            repo_fields = self.repository_fields(project).get(repository.name, {})
 
         ### interpolate configuration
 

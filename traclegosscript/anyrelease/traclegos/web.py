@@ -13,7 +13,6 @@ from traclegos.config import ConfigMunger
 from traclegos.legos import TracLegos
 from traclegos.project import project_dict
 from traclegos.repository import available_repositories
-from traclegos.repository import repository_fields
 from webob import Request, Response, exc
 
 # TODO: better handling of errors (not very friendly, currently)
@@ -66,10 +65,6 @@ class View(object):
                 if name not in self.available_repositories:
                     del self.repositories[name]
                     
-        # known fields for repositories
-        # XXX could add these via the paste .ini file
-        self.repository_fields = repository_fields(self.directory)
-
         # TODO: pop project-details if this is an empty step
 
     ### methods dealing with HTTP
@@ -211,9 +206,10 @@ class View(object):
         """second project creation step: project details
         svn repo, mailing lists (TODO)
         """
-        data = {'project': req.GET['project'],
+        project = req.GET['project']
+        data = {'project': project,
                 'repositories': [ self.repositories[name] for name in self.available_repositories ],
-                'excluded_fields': dict((key, value.keys()) for key, value in self.repository_fields.items())} 
+                'excluded_fields': dict((key, value.keys()) for key, value in self.legos.repository_fields(project).items())} 
 
         # TODO: databases (and some day mailing lists)
         return data
@@ -236,6 +232,7 @@ class View(object):
                         if arg.startswith('%s_' % repository))
             project_data['repository'] = self.repositories[repository]
             project_data['vars'].update(args)
+            project_data['vars'].update(self.legos.repository_fields(project).get(repository, {}))
 
         return errors
 

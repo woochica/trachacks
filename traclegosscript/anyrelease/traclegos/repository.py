@@ -109,15 +109,6 @@ class SVNSync(RepositorySetup):
             raise RepositorySetupError("Missing options")
         raise NotImplementedError # TODO
 
-
-# arguments to RepositorySetup.setup that may be interpolated from variables
-# XXX this doesn't seem like it belongs here;  
-# maybe the data belongs in the subclasses (or elsewhere)
-def repository_fields(env_path):
-    return { 'SVNSync': {'repository_dir': os.path.join(env_path, 'mirror') },
-             'NewSVN': {'repository_dir': os.path.join(env_path, 'svn') }
-             }
-
 def available_repositories():
     """return installed and enabled repository setup methods"""
     repositories = []
