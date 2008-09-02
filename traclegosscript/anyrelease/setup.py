@@ -37,7 +37,7 @@ setup(name='TracLegos',
       main = traclegos.wsgiapp:make_app
 
       [paste.paster_create_template]
-      trac_project = traclegos.pastescript.template:TracProject
+      trac_project = traclegos.pastescript.template:TracProjectTemplate
 
       [traclegos.respository]
       None = traclegos.repository:NoRepository

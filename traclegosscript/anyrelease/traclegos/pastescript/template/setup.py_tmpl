@@ -8,7 +8,7 @@ setup(name=${repr(project)},
       author=${repr(author)|empty},
       author_email=${repr(author_email)|empty},
       url=${repr(url)|empty},
-      keywords='trac plugin',
+      keywords='trac template',
       license="",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
@@ -16,7 +16,7 @@ setup(name=${repr(project)},
       zip_safe=False,
       entry_points = """
       [paste.paster_create_template]
-      ${package} = ${package}:${project}
+      ${package} = ${package}.project:${project}
       """,
       )
 
