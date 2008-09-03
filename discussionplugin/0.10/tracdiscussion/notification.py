@@ -131,7 +131,5 @@ class DiscussionNotifyEmail(NotifyEmail):
             header['X-Trac-Topic-ID'] = to_unicode(self.topic['id'])
             header['X-Trac-Discussion-URL'] = self.topic['link']
 
-        print torcpts, ccrcpts, header
-
         # Send e-mail.
         NotifyEmail.send(self, torcpts, ccrcpts, header)
