@@ -40,9 +40,9 @@ class UserStatsProcessor(Component):
         how_long = now - last
         last_date = time.strftime("%Y/%m/%d %H:%M:%S", when)
         if how_long.days>0:
-            return "|| %s || %s || %s day(s)||\n" % (user, last_date, how_long.days)
+            return "|| [query:?status=assigned&status=new&status=reopened&group=milestone&order=priority&col=id&col=summary&col=status&col=owner&col=type&col=priority&col=component&col=due_close&type=task&owner=%s %s] || %s || %s day(s)||\n" % (user, user, last_date, how_long.days)
         else:
-            return "|| %s || %s || <24h ||\n" % (user, last_date)
+            return "|| [query:?status=assigned&status=new&status=reopened&group=milestone&order=priority&col=id&col=summary&col=status&col=owner&col=type&col=priority&col=component&col=due_close&type=task&owner=%s %s]|| %s || <24h ||\n" % (user, user,last_date)
     
     def get_users_last_login(self):
         db = self.env.get_db_cnx()
