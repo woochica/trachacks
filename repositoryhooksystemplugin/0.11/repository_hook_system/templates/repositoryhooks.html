@@ -1,0 +1,70 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Ticket Submit Policy</title>
+  </head>
+  <body>
+    <h2>Repository Hooks</h2>
+    <form method="post">
+      <fieldset>
+	<legend>${hook}</legend>
+	<div class="field">
+	  <b>Enabled:</b>
+	    <input type="checkbox" name="enable" value="enable" 
+		   py:attrs="{'checked': enabled or None}"/>
+	</div>
+	<div>
+	  ${snippet}
+	</div>
+	<div class="field">
+	  <b>Listeners on this hook:</b>
+	  <py:for each="listener in listeners">
+	    <div>
+	      <fieldset>
+	      <legend>
+	      <input type="checkbox" id="${hook}:${listener['name']}" name="listeners" value="${listener['name']}"
+		     py:attrs="{'checked': listener['activated'] or None}"/>
+	      ${listener['name']}
+	      </legend>
+	      ${listener['description']}
+	      <py:for each="option_name, option in sorted(listener['options'].items())">
+	      <div>
+		<fieldset>
+		<legend>${option_name}</legend>
+		<py:choose test="option['type']">
+		  <py:when test="'bool'">
+		  <input type="checkbox" 
+			 name="${listener['name']}-${option_name}" 
+			 checked="${option['value'] and 'checked' or None}" />
+		  </py:when>
+		  <py:when text="'list'">
+		    <input type="text" 
+			   name="${listener['name']}-${option_name}"
+			   value="${', '.join(option['value'])}"/>
+		  </py:when>
+		  <py:otherwise>
+		    <input type="text" 
+			   name="${listener['name']}-${option_name}"
+			   value="${option['value']}"/>
+		  </py:otherwise>
+		</py:choose>
+		${option['description']}
+		</fieldset>
+	      </div>
+	      </py:for>
+	      </fieldset>
+	    </div>	    
+	  </py:for>
+	</div>
+      </fieldset>
+      <div class="buttons">
+        <input type="submit" value="Apply changes" />
+      </div>
+    </form>
+  </body>
+</html>

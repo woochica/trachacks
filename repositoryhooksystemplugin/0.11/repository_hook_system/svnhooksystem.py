@@ -1,0 +1,94 @@
+"""
+implementation of the RepositoryChangeListener interface for svn
+"""
+
+import os
+
+from genshi.builder import tag
+from repository_hook_system.filesystemhooks import FileSystemHooks
+from repository_hook_system.interface import IRepositoryChangeListener
+from repository_hook_system.interface import IRepositoryHookSubscriber
+from repository_hook_system.interface import IRepositoryHookSystem
+from trac.config import ListOption
+from trac.core import *
+from trac.util.text import CRLF
+from utils import iswritable
+
+class SVNHookSystem(FileSystemHooks):
+    """implementation of IRepositoryChangeListener for SVN repositories"""
+
+    implements(IRepositoryHookSystem, IRepositoryChangeListener)
+    listeners = ExtensionPoint(IRepositoryHookSubscriber)
+    hooks = [ 'pre-commit', 'post-commit', 'pre-revprop-change', 'post-revprop-change' ]
+
+    ### methods for FileSystemHooks
+
+    def filename(self, hookname):
+        location = self.env.config.get('trac', 'repository_dir')
+        return os.path.join(location, 'hooks', hookname)
+
+    def args(self):
+        return [ '$2' ]
+
+    ### methods for IRepositoryHookAdminContributer
+
+    def render(self, hookname, req):
+        filename = self.filename(hookname)
+        try:
+            contents = file(filename).read() # check for CRLF here too?
+            return tag.textarea(contents, rows='25', cols='80', name='hook-file-contents')
+        except IOError:
+            if iswritable(filename):
+                text = "No %s hook file yet exists;  enable this hook to create one" % hookname
+            else:
+                text = "The file, %s, is unwritable;  enabling this hook will have no effect"
+            return text
+
+    def process_post(self, hookname, req):
+        
+        contents = req.args.get('hook-file-contents', None)
+        if contents is None:
+            return
+        if os.linesep != CRLF:
+            contents = os.linesep.join(contents.split(CRLF)) # form contents will have this
+
+        filename = self.filename(hookname)
+        if not os.path.exists(filename):
+            if not iswritable(filename):
+                return # XXX error handling?
+            os.mknod(self.mode)
+        f = file(filename, 'w')
+        print >> f, contents
+
+    ### methods for IRepositoryChangeListener
+
+    def type(self):
+        return ['svn', 'svnsync']
+
+    def available_hooks(self):
+        return self.hooks
+
+    def subscribers(self, hookname):
+        """returns the active subscribers for a given hook name"""
+        
+        # XXX this is all SCM-agnostic;  should be moved out
+        return [ subscriber for subscriber in self.listeners 
+                 if subscriber.__class__.__name__ 
+                 in getattr(self, hookname, []) 
+                 and subscriber.is_available(self.type(), hookname) ]
+
+    def changeset(self, repo, revision):
+        """ 
+        return the changeset given the repository object and revision number
+        """
+        try:
+            chgset = repo.get_changeset(revision)
+        except NoSuchChangeset:
+            # XXX should probably throw an exception (same one?)
+            return # out of scope changesets are not cached
+        return chgset
+
+for hook in SVNHookSystem.hooks:
+    setattr(SVNHookSystem, hook, 
+            ListOption('repository-hooks', hook, default=[],
+                       doc="active listeners for SVN changes on the %s hook" % hook))
