@@ -18,10 +18,14 @@ from statuses import get_statuses
 #get_statuses = api.get_statuses
 
 class TimingEstimationAndBillingPage(Component):
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
+    implements(IPermissionRequestor, INavigationContributor, IRequestHandler, ITemplateProvider)
 
     def __init__(self):
         pass
+
+    # IPermissionRequestor methods 
+    def get_permission_actions(self): 
+        return ["TIME_VIEW", ("TIME_ADMIN", ["TIME_VIEW"]), ("TRAC_ADMIN", ["TIME_VIEW", "TIME_ADMIN"])] 
 
     def set_bill_date(self, username="Timing and Estimation Plugin",  when=0):
         now = time.time()
@@ -52,10 +56,10 @@ class TimingEstimationAndBillingPage(Component):
 
     def get_navigation_items(self, req):
         url = req.href.Billing()
-        if req.perm.has_permission("REPORT_VIEW"):
+        if req.perm.has_permission("TIME_VIEW"):
             yield 'mainnav', "Billing", \
                   Markup('<a href="%s">%s</a>' % \
-                         (url , "Management"))
+                         (url , "Time Reports"))
 
     # IRequestHandler methods
     def set_request_billing_dates(self, data):
@@ -82,12 +86,17 @@ class TimingEstimationAndBillingPage(Component):
             messages.extend([s]);
 
         if req.method == 'POST':
-            if req.args.has_key('setbillingtime'):
-                self.set_bill_date(req.authname)
-                addMessage("All tickets last bill date updated")
+            if req.perm.has_permission("TIME_ADMIN"): 
+                if req.args.has_key('setbillingtime'):
+                    self.set_bill_date(req.authname)
+                    addMessage("All tickets last bill date updated") 
+            else: 
+                addMessage("You don't have permission to set a new bill date!") 
+
 
         mgr = CustomReportManager(self.env, self.log)
         data = {};
+        data["is_time_admin"] = req.perm.has_permission("TIME_ADMIN")
         data["statuses"] = get_statuses(self)
         data["reports"] = mgr.get_reports_by_group(CustomReportManager.TimingAndEstimationKey);
         #self.log.debug("DEBUG got %s, %s" % (data["reports"], type(data["reports"])));

@@ -5,15 +5,16 @@ from setuptools import setup
 PACKAGE = 'timingandestimationplugin'
 
 setup(name=PACKAGE,
-      description='Plugin to make Trac support time estimation and tracking',
-      keywords='trac plugin estimation timetracking',
-      version='0.7.0',
+      description='Plugin to make Trac support time estimation and tracking with permissions',
+      keywords='trac plugin estimation timetracking permissions',
+      version='0.7.1',
       url='http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',
       author='Russ Tyndall at Acceleration.net',
       author_email='russ@acceleration.net',
       long_description="""
-      This Trac 0.11 plugin provides support for Time estimation and tracking.
+      This Trac 0.11 plugin provides support for Time estimation and tracking,
+      and permissions to view and set those fields
 
       See http://trac-hacks.org/wiki/TimingAndEstimationPlugin for details.
       """,
@@ -21,6 +22,14 @@ setup(name=PACKAGE,
       package_data={PACKAGE : ['templates/*.html', 'htdocs/*']},
       entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)})
 
+
+#### FINANCIAL CONTRIBUTERS ####
+#
+# Obsidian Software: http://www.obsidiansoft.com/
+#   Enterprise Solutions for Functional Processor 
+#   Design Verification
+#
+################################
 
 #### AUTHORS ####
 ## Primary Author:
