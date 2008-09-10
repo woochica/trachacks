@@ -2,6 +2,8 @@ import re
 import dbhelper
 import time
 from tande_filters import *
+from reports_filter import *
+from blackmagic import *
 from ticket_daemon import *
 from usermanual import *
 from trac.log import logger_factory
@@ -10,7 +12,6 @@ from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor, PermissionSystem
 from webui import *
-from ticket_webui import *
 from query_webui import *
 from reportmanager import CustomReportManager
 from statuses import *

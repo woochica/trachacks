@@ -26,7 +26,7 @@ class TimingEstimationAndBillingPage(Component):
 
     # IPermissionRequestor methods 
     def get_permission_actions(self): 
-        return ["TIME_VIEW", ("TIME_ADMIN", ["TIME_VIEW"])] 
+        return ["TIME_VIEW", "TIME_RECORD", ("TIME_ADMIN", ["TIME_RECORD", "TIME_VIEW"])] 
 
     def set_bill_date(self, username="Timing and Estimation Plugin",  when=0):
         now = time.time()
@@ -87,13 +87,10 @@ class TimingEstimationAndBillingPage(Component):
             messages.extend([s]);
 
         if req.method == 'POST':
-            if req.perm.has_permission("TIME_ADMIN"): 
-                if req.args.has_key('setbillingtime'):
-                    self.set_bill_date(req.authname)
-                    addMessage("All tickets last bill date updated") 
-            else: 
-                addMessage("You don't have permission to set a new bill date!") 
-
+            req.perm.require("TIME_VIEW")
+            if req.args.has_key('setbillingtime'):
+                self.set_bill_date(req.authname)
+                addMessage("All tickets last bill date updated")
 
         mgr = CustomReportManager(self.env, self.log)
         data = {};

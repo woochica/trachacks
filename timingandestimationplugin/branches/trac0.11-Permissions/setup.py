@@ -19,7 +19,7 @@ setup(name=PACKAGE,
       See http://trac-hacks.org/wiki/TimingAndEstimationPlugin for details.
       """,
       packages=[PACKAGE],
-      package_data={PACKAGE : ['templates/*.html', 'htdocs/*']},
+      package_data={PACKAGE : ['templates/*.html', 'htdocs/js/*', 'htdocs/*.css', 'htdocs/*.js']},
       entry_points={'trac.plugins': '%s = %s' % (PACKAGE, PACKAGE)})
 
 
