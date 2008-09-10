@@ -89,7 +89,7 @@ class DepGraphModule(Component):
 
 		context = Context.from_request(req, '')
 		formatter = Formatter(self.env, context)
-		graph = DepgraphMacro(self.env).expand_macro(formatter, 'DepGraph', \
+		graph = DepGraphMacro(self.env).expand_macro(formatter, 'DepGraph', \
 				('%s,%s' %(ticket, depth)))
 		data['ticket'] = "%s" %ticket
 		data['depgraph'] = Markup(graph)
