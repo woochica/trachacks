@@ -77,8 +77,8 @@ class TicketChanger(Component):
         ticket_command = r'%s%s%s' % (re.escape(self.envelope_open), 
                                       ticket_command,
                                       re.escape(self.envelope_close))
-        command_re = re.compile(ticket_command)
-        ticket_re = re.compile(ticket_prefix + '([0-9]+)')
+        command_re = re.compile(ticket_command, re.IGNORECASE)
+        ticket_re = re.compile(ticket_prefix + '([0-9]+)', re.IGNORECASE)
 
         # other variables
         msg = "(In [%s]) %s" % (chgset.rev, chgset.message)        
