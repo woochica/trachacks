@@ -20,6 +20,8 @@ class RecaptchaRegistrationModule(RegistrationModule):
     def process_request(self, req):
         ret = super(RecaptchaRegistrationModule, self).process_request(req)
         h, data, n = ret
+        html = captcha.displayhtml(self.public_key)
+        data['recaptcha_javascript'] = html
         return "recaptcharegister.html", data, n
 
 
@@ -45,7 +47,6 @@ class RecaptchaRegistrationModule(RegistrationModule):
         self.check_config()
 
         html = captcha.displayhtml(self.public_key)
-        #req.hdf.set_unescaped('recaptcha_javascript', html)
         data['recaptcha_javascript'] = html
 
         return (template, data, content_type)
