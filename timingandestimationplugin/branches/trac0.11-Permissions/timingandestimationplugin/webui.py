@@ -8,6 +8,7 @@ from usermanual import *
 from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
+from trac.perm import IPermissionRequestor
 from trac.util import Markup
 from trac.web.chrome import add_stylesheet, add_script, \
      INavigationContributor, ITemplateProvider
@@ -25,7 +26,7 @@ class TimingEstimationAndBillingPage(Component):
 
     # IPermissionRequestor methods 
     def get_permission_actions(self): 
-        return ["TIME_VIEW", ("TIME_ADMIN", ["TIME_VIEW"]), ("TRAC_ADMIN", ["TIME_VIEW", "TIME_ADMIN"])] 
+        return ["TIME_VIEW", ("TIME_ADMIN", ["TIME_VIEW"])] 
 
     def set_bill_date(self, username="Timing and Estimation Plugin",  when=0):
         now = time.time()
@@ -58,8 +59,8 @@ class TimingEstimationAndBillingPage(Component):
         url = req.href.Billing()
         if req.perm.has_permission("TIME_VIEW"):
             yield 'mainnav', "Billing", \
-                  Markup('<a href="%s">%s</a>' % \
-                         (url , "Time Reports"))
+                Markup('<a href="%s">%s</a>' % \
+                           (url , "Time Reports"))
 
     # IRequestHandler methods
     def set_request_billing_dates(self, data):
@@ -81,7 +82,7 @@ class TimingEstimationAndBillingPage(Component):
 
     def process_request(self, req):
         messages = []
-
+        req.perm.require("TIME_VIEW")
         def addMessage(s):
             messages.extend([s]);
 
