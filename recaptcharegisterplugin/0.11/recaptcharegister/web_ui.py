@@ -18,12 +18,30 @@ class RecaptchaRegistrationModule(RegistrationModule):
 
     # IRequestHandler methods
     def process_request(self, req):
-        ret = super(RecaptchaRegistrationModule, self).process_request(req)
-        h, data, n = ret
-        html = captcha.displayhtml(self.public_key)
-        data['recaptcha_javascript'] = html
-        return "recaptcharegister.html", data, n
+        self.check_config()
+        action = req.args.get('action')
 
+        if req.method == 'POST' and action == 'create':
+            response = captcha.submit(
+                req.args['recaptcha_challenge_field'],
+                req.args['recaptcha_response_field'],
+                self.private_key,
+                req.remote_addr,
+                )
+            if not response.is_valid:
+                data = {}
+                data['registration_error'] = 'Captcha incorrect. Please try again.'
+                data['recaptcha_javascript'] = captcha.displayhtml(self.public_key)
+                return "recaptcharegister.html", data, None
+            else:
+                ret = super(RecaptchaRegistrationModule, self).process_request(req)
+                h, data, n = ret
+                return "recaptcharegister.html", data, n
+        else:
+            ret = super(RecaptchaRegistrationModule, self).process_request(req)
+            h, data, n = ret
+            data['recaptcha_javascript'] = captcha.displayhtml(self.public_key)
+            return "recaptcharegister.html", data, n
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -32,22 +50,3 @@ class RecaptchaRegistrationModule(RegistrationModule):
         """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
-
-
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        return handler
-
-
-    def post_process_request(self, req, template, data, content_type):
-        print "T", template
-        if template not in ['recaptcharegister.html']:
-            return (template, data, content_type)
-
-        self.check_config()
-
-        html = captcha.displayhtml(self.public_key)
-        data['recaptcha_javascript'] = html
-
-        return (template, data, content_type)
-
