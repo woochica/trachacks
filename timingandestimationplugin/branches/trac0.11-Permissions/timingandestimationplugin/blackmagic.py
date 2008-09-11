@@ -12,8 +12,12 @@ from trac.perm import IPermissionRequestor
 #@staticmethod
 def disable_field(stream, field):
     def helper(field_stream):
-        value = Stream(field_stream).select('@value').render()
+        s = Stream(field_stream)
+        value = s.select('@value').render()
+        name = s.select('@name').render()
         for kind,data,pos in tag.span(value, id=("field-%s"%field)).generate():
+            yield kind,data,pos
+        for kind,data,pos in tag.input(value=value, name=name, type="hidden").generate():
             yield kind,data,pos
 
     return stream | Transformer(
@@ -47,11 +51,11 @@ def hide_field(stream , field):
     def helper (field_stream):
         value = Stream(field_stream).select('@value').render()
         name = Stream(field_stream).select('@name').render()
-        for kind,data,pos in tag.input( value=value, id=("field-%s"%field),
+        for kind,data,pos in tag.input( value=value,
                                         type="hidden", name=name).generate():
             yield kind,data,pos
     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
-    stream = stream | Transformer('//input[@id="field-%s"]' % field).replace(" ")
+    stream = stream | Transformer('//input[@id="field-%s"]' % field).filter(helper)
 
     return remove_changelog(remove_header(stream , field), field)
 
@@ -73,18 +77,7 @@ def istrue(v, otherwise=None):
 csection = 'field settings'
 
 class TicketTweaks(Component):
-    implements(ITemplateStreamFilter, ITemplateProvider, IPermissionRequestor)    
-
-    def get_permission_actions(self):
-        fields = self.config.getlist(csection, 'fields', [])
-        permissions = self.config.getlist(csection, 'permissions', [])
-        perms = []
-        for field in fields:
-            perms.extend(self.config.getlist(csection, '%s.permission' % field, []))
-        for (perm, denial) in [s.split(":") for s in perms]:
-            permissions.append(perm)
-        return [x.upper() for x in permissions]
-    
+    implements(ITemplateStreamFilter, ITemplateProvider)    
     ## ITemplateStreamFilter
     
     def filter_stream(self, req, method, filename, stream, data):

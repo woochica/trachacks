@@ -25,18 +25,7 @@ class TicketFormatFilter(Component):
 
 class QueryColumnPermissionFilter(Component):
     """ Filtering the stream to remove """
-    implements(ITemplateStreamFilter, IPermissionRequestor)    
-    ## IPermissionRequestor methods
-    
-    def get_permission_actions(self):
-        fields = self.config.getlist(csection, 'fields', [])
-        permissions = self.config.getlist(csection, 'permissions', [])
-        perms = []
-        for field in fields:
-            perms.extend(self.config.getlist(csection, '%s.permission' % field, []))
-        for (perm, denial) in [s.split(":") for s in perms]:
-            permissions.append(perm)
-        return (x.upper() for x in permissions)
+    implements(ITemplateStreamFilter)    
     
     ## ITemplateStreamFilter
     

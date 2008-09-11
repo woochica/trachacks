@@ -1,5 +1,4 @@
 from trac.ticket import ITicketChangeListener, Ticket
-from trac.perm import IPermissionRequestor
 from trac.core import *
 import datetime
 
@@ -61,16 +60,11 @@ def save_ticket_change( db, ticket_id, author, change_time, field, oldvalue, new
     db.commit()
 
 class TimeTrackingTicketObserver(Component):
-    implements(ITicketChangeListener, IPermissionRequestor)
+    implements(ITicketChangeListener)
     def __init__(self):
         pass
 
-    # IPermissionRequestor methods 
-    def get_permission_actions(self): 
-        return ["TIME_RECORD", ("TIME_ADMIN", ["TIME_RECORD"])] 
-
     def watch_hours(self, ticket):
-        
         def readTicketValue(name, tipe, default=0):
             if ticket.values.has_key(name):        
                 return tipe(ticket.values[name] or default)
