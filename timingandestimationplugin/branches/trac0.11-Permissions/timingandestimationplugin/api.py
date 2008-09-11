@@ -55,7 +55,7 @@ class TimeTrackingSetupParticipant(Component):
         # Setup logging
         self.statuses_key = 'T&E-statuses'
         self.db_version_key = 'TimingAndEstimationPlugin_Db_Version'
-        self.db_version = 7
+        self.db_version = 8
         # Initialise database schema version tracking.
         self.db_installed_version = dbhelper.get_system_value(self, \
             self.db_version_key) or 0
@@ -113,15 +113,19 @@ class TimeTrackingSetupParticipant(Component):
 
         #version 6 upgraded reports
 
-        # This statement block always goes at the end this method
-        dbhelper.set_system_value(self, self.db_version_key, self.db_version)
-        self.db_installed_version = self.db_version
+
         if self.db_installed_version < 7:
             field_settings = "field settings"
             self.config.set( field_settings, "fields", "billable, totalhours, hours, estimatedhours" )
             self.config.set( field_settings, "billable.permission", "TIME_VIEW:hide, TIME_RECORD:disable" )
             self.config.set( field_settings, "hours.permission", "TIME_VIEW:remove, TIME_RECORD:disable" )
             self.config.set( field_settings, "estimatedhours.permission", "TIME_RECORD:disable" )
+
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # This statement block always goes at the end this method
+        dbhelper.set_system_value(self, self.db_version_key, self.db_version)
+        self.db_installed_version = self.db_version
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             
 

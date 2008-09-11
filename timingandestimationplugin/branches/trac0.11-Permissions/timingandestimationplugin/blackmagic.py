@@ -74,14 +74,16 @@ csection = 'field settings'
 
 class TicketTweaks(Component):
     implements(ITemplateStreamFilter, ITemplateProvider, IPermissionRequestor)    
-    permissions = ListOption(csection, 'permissions', [])
-    gray_disabled = Option(csection, 'gray_disabled', '', 
-        doc="""If not set, disabled items will have their label striked through. 
-        Otherwise, this color will be used to gray them out. Suggested #cccccc.""")
-    ## IPermissionRequestor methods
-    
+
     def get_permission_actions(self):
-        return (x.upper() for x in self.permissions)
+        fields = self.config.getlist(csection, 'fields', [])
+        permissions = self.config.getlist(csection, 'permissions', [])
+        perms = []
+        for field in fields:
+            perms.extend(self.config.getlist(csection, '%s.permission' % field, []))
+        for (perm, denial) in [s.split(":") for s in perms]:
+            permissions.append(perm)
+        return (x.upper() for x in permissions)
     
     ## ITemplateStreamFilter
     
