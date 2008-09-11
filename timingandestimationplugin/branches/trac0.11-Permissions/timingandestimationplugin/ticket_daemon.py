@@ -1,4 +1,5 @@
 from trac.ticket import ITicketChangeListener, Ticket
+from trac.perm import PermissionCache
 from trac.core import *
 import datetime
 
@@ -59,6 +60,18 @@ def save_ticket_change( db, ticket_id, author, change_time, field, oldvalue, new
                            (ticket_id, change_time, author, field, oldvalue, newvalue))
     db.commit()
 
+def delete_ticket_change( comp, ticket_id, author, change_time, field):
+    """ removes a ticket change from the database """
+    db=comp.env.get_db_cnx()
+    cursor = db.cursor();
+    sql = """DELETE FROM ticket_change  
+             WHERE ticket=%s and author=%s and time=%s and field=%s""" 
+    cursor.execute(sql, (ticket_id, author, change_time, field))
+    db.commit()
+
+    
+    
+
 class TimeTrackingTicketObserver(Component):
     implements(ITicketChangeListener)
     def __init__(self):
@@ -88,7 +101,7 @@ class TimeTrackingTicketObserver(Component):
         self.log.debug("found hours: "+str(hours ));
         #self.log.debug("Dir_ticket:"+str(dir(ticket)))
         #self.log.debug("ticket.values:"+str(ticket.values))
-        #self.log.debug("changelog:"+str(cl)) 
+        #self.log.debug("changelog:"+str(cl))
     
         most_recent_change = None
         if cl:
@@ -98,7 +111,22 @@ class TimeTrackingTicketObserver(Component):
         else:
             change_time = ticket.time_created
             author = ticket.values["reporter"]
-            
+
+        self.log.debug("Checking permissions")
+        perm = PermissionCache(self.env, author)
+        if not perm or not perm.has_permission("TIME_RECORD"):
+            self.log.debug("Skipping recording because no permission to affect time")
+            if hours != 0:
+                
+                tup = (ticket_id, author, change_time, "hours")
+                self.log.debug("deleting ticket change %s %s %s %s" % tup)
+                try:
+                    delete_ticket_change(self, ticket_id, author, change_time, "hours")
+                except Exception, e:
+                    self.log.debug("FAIL: %s" % e)
+                self.log.debug("hours change deleted")
+            return
+        self.log.debug("passed permissions check")
 
         ## SAVE estimated hour
         estimatedhours = readTicketValue("estimatedhours", convertfloat)        
