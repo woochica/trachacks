@@ -83,7 +83,7 @@ class TicketTweaks(Component):
             perms.extend(self.config.getlist(csection, '%s.permission' % field, []))
         for (perm, denial) in [s.split(":") for s in perms]:
             permissions.append(perm)
-        return (x.upper() for x in permissions)
+        return [x.upper() for x in permissions]
     
     ## ITemplateStreamFilter
     
