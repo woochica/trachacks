@@ -1,7 +1,8 @@
 user_manual_title = "Timing and Estimation Plugin User Manual"
-user_manual_version = 11
+user_manual_version = 12
 user_manual_wiki_title = "TimingAndEstimationPluginUserManual"
 user_manual_content = """
+
 [[PageOutline]]
 = Timing and Estimation Plugin User Manual =
 [http://trac-hacks.org/wiki/TimingAndEstimationPlugin TimingAndEstimationPlugin on TracHacks] | [http://trac-hacks.org/report/9?COMPONENT=TimingAndEstimationPlugin Open Tickets] | [http://trac-hacks.org/newticket?component=TimingAndEstimationPlugin&owner=bobbysmith007 New Ticket]  | 
@@ -22,14 +23,20 @@ In adhering to our design goal, rather than creating a new ticket interface, I c
 === Future Fields ===
  * '''Ticket Rate''' The ability to attach a cost per hour or total amount to an individual ticket
 
-== Management Page ==
+== Billing / Management Page / Time Reports ==
 This page provide a small interface for querying the tickets and adding a bill date at the current time.  
 This interface mostly just gives you links that match the interface to open any of the give reports,
 providing it the correct set of input parameters
 
+The direct url is '/Billing'.
+
+=== No Permissions Branch ===
 The 'Management' button should be in the main title bar.  It is possible that if you are viewing at a low resolution, it was pushed off the edge of the screen.  Also if you are not logged in with report_view permissions, it will not show that button.
 
-The direct url is '/Billing'.
+=== Permissions Branch ===
+The 'Time Reports' button should be in the main title bar.  Whether or not you see this will be based on whether your user has TIME_VIEW permissions.
+
+
 
 
 === Set Bill Date ===
@@ -74,11 +81,34 @@ Remember to fill in the @reportID of the report you want to modify.
 === TAKE NOTE ===
  '''The reports can only be called from the Management Page. They will not work from the Trac View Tickets page. (Due to the custom variables that need values).'''
 
+== Permissions Branch ==
+Recently a branch of this plugin was sponsored by [http://www.obsidiansoft.com/ Obsidian Software] so that it would support per field permissions.  
+
+This is accomplished with Genshi 5 stream filters in trac 11.  This code draws from the [http://trac-hacks.org/wiki/BlackMagicTicketTweaksPlugin BlackMagicTicketTweaksPlugin]
+
+=== Configuration ===
+There is a new trac.ini configuration section which is filled in by default as follows.
+{{{
+#!ini
+[field settings] # per field permissions
+
+# a list of all the fields to apply permissions to
+fields = billable, totalhours, hours, estimatedhours
+
+# a bunch of:
+# field.permission = PERMISSION:consequence
+# where consequence is one of: hide, remove, disable
+#    hide - replaces with hidden input
+#    remove - removes element
+#    disable - removes input in favor of text
+billable.permission = TIME_VIEW:hide, TIME_RECORD:disable
+totalhours.permission = TIME_VIEW:remove, TIME_RECORD:disable
+hours.permission = TIME_RECORD:remove
+estimatedhours.permission = TIME_RECORD:disable
+}}}
+
 == Future Improvements ==
  * [http://trac-hacks.org/wiki/TimingAndEstimationPlugin See tickets] at the [http://trac-hacks.org/wiki/TimingAndEstimationPlugin project trac]
- * Would like to suggest a couple of interfaces to Trac project, and perhaps write an implementation for them.
-   * ''' ICustomTicketFieldProvider ''' This should allow a plugin to provide a custom field with the ability to add html attributes and specify at least the tag name. (hopefully with a full template) This should hopefully also allow these provided custom controls to set permissions causing them to not render or to not editable.
-   * ''' ICustomReportProvider ''' This allows custom reports to be provided in a way that permissions can be enforced on them. 
- * work with advise and feedback from the user community to make this Plugin do this job adequately
+
 
 """

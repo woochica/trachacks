@@ -55,7 +55,7 @@ class TimeTrackingSetupParticipant(Component):
         # Setup logging
         self.statuses_key = 'T&E-statuses'
         self.db_version_key = 'TimingAndEstimationPlugin_Db_Version'
-        self.db_version = 6
+        self.db_version = 7
         # Initialise database schema version tracking.
         self.db_installed_version = dbhelper.get_system_value(self, \
             self.db_version_key) or 0
@@ -70,15 +70,6 @@ class TimeTrackingSetupParticipant(Component):
         return self.db_installed_version < self.db_version
 
     def do_db_upgrade(self):
-        # Legacy support hack (supports upgrades from 0.1.6 to 0.1.7)
-        if self.db_installed_version == 0:
-            bill_date = dbhelper.db_table_exists(self, 'bill_date');
-            report_version = dbhelper.db_table_exists(self, 'report_version');
-            if bill_date and report_version:
-                self.db_installed_version = 1
-        # End Legacy support hack
-
-
         if self.db_installed_version < 1:
             print "Creating bill_date table"
             sql = """
@@ -125,6 +116,14 @@ class TimeTrackingSetupParticipant(Component):
         # This statement block always goes at the end this method
         dbhelper.set_system_value(self, self.db_version_key, self.db_version)
         self.db_installed_version = self.db_version
+        if self.db_installed_version < 7:
+            field_settings = "field settings"
+            self.config.set( field_settings, "fields", "billable, totalhours, hours, estimatedhours" )
+            self.config.set( field_settings, "billable.permission", "TIME_VIEW:hide, TIME_RECORD:disable" )
+            self.config.set( field_settings, "hours.permission", "TIME_VIEW:remove, TIME_RECORD:disable" )
+            self.config.set( field_settings, "estimatedhours.permission", "TIME_RECORD:disable" )
+
+            
 
     def reports_need_upgrade(self):
         mgr = CustomReportManager(self.env, self.log)
@@ -184,7 +183,6 @@ class TimeTrackingSetupParticipant(Component):
                      self.config.get( ticket_custom, "totalhours.order") and \
                      self.config.get( ticket_custom, "hours.order") and \
                      self.config.get( ticket_custom, "estimatedhours.order") and \
-
                      self.config.get( ticket_custom, "estimatedhours"))
 
     def do_ticket_field_upgrade(self):
