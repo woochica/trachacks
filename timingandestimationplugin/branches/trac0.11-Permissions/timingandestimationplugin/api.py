@@ -82,34 +82,15 @@ class TimeTrackingSetupParticipant(Component):
             dbhelper.execute_non_query(self,  sql)
 
 
-            print "Creating report_version table"
-            sql = """
-            CREATE TABLE report_version (
-            report integer,
-            version integer,
-            UNIQUE (report, version)
-            );
-            """
-            dbhelper.execute_non_query(self, sql)
-
-        if self.db_installed_version < 4:
-            print "Upgrading report_version table to v4"
-            sql ="""
-            ALTER TABLE report_version ADD COLUMN tags varchar(1024) null;
-            """
-            dbhelper.execute_non_query(self, sql)
-
         if self.db_installed_version < 5:
-            # In this version we convert to using reportmanager.py
-            # The easiest migration path is to remove all the reports!!
-            # They will be added back in later but all custom reports will be lost (deleted)
-            print "Dropping report_version table"
-            sql = "DELETE FROM report " \
-                  "WHERE author=%s AND id IN (SELECT report FROM report_version)"
-            dbhelper.execute_non_query(self, sql, 'Timing and Estimation Plugin')
+            if dbhelper.db_table_exists(self, 'report_version'):
+                print "Dropping report_version table"
+                sql = "DELETE FROM report " \
+                    "WHERE author=%s AND id IN (SELECT report FROM report_version)"
+                dbhelper.execute_non_query(self, sql, 'Timing and Estimation Plugin')
 
-            sql = "DROP TABLE report_version"
-            dbhelper.execute_non_query(self, sql)
+                sql = "DROP TABLE report_version"
+                dbhelper.execute_non_query(self, sql)
 
         #version 6 upgraded reports
 
