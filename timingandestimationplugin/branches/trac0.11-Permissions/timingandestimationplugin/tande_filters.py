@@ -41,7 +41,6 @@ class QueryColumnPermissionFilter(Component):
     ## ITemplateStreamFilter
     
     def filter_stream(self, req, method, filename, stream, data):
-        self.log.debug('IN QueryColumn')
         if not filename == "query.html":
             self.log.debug('Not a query returning')
             return stream
