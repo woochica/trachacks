@@ -90,19 +90,19 @@ class TicketTweaks(Component):
         if not filename == "ticket.html":
             self.log.debug('Not a ticket returning')
             return stream
-        enchants = self.config.getlist(csection, 'fields', [])
-        self.log.debug('read enchants = %r' % enchants)
-        for field in enchants:
-            self.log.debug('BlackMagicing: %s' % field)
+        fields = self.config.getlist(csection, 'fields', [])
+        self.log.debug('read enchants = %r' % fields)
+        for field in fields:
+            self.log.debug('starting : %s' % field)
             disabled = False
             hidden = False
             hide_summary = False
             remove = False
             perms = self.config.getlist(csection, '%s.permission' % field, [])
-            self.log.debug('BlackMagicing - read permission config: %s has %s' % (field, perms))
+            self.log.debug('read permission config: %s has %s' % (field, perms))
             for (perm, denial) in [s.split(":") for s in perms] :
                 perm = perm.upper()
-                self.log.debug('BlackMagicing - testing permission: %s:%s should act= %s' %
+                self.log.debug('testing permission: %s:%s should act= %s' %
                                (field, perm, (not req.perm.has_permission(perm) or perm == "ALWAYS")))
                 if (not req.perm.has_permission(perm) or perm == "ALWAYS"): 
                     if denial:
@@ -119,17 +119,17 @@ class TicketTweaks(Component):
                         disabled = True
                     
                 if disabled or istrue(self.config.get(csection, '%s.disable' % field, False)):
-                    self.log.debug('BlackMagic disabling: %s' % field)
+                    self.log.debug('disabling: %s' % field)
                     stream = disable_field(stream, field)
 
                 if self.config.get(csection, '%s.label' % field, None):
-                    self.log.debug('BlackMagic labeling: %s' % field)
+                    self.log.debug('labeling: %s' % field)
                     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
                         self.config.get(csection, '%s.label' % field)
                     )
                     
                 if self.config.get(csection, '%s.notice' % field, None):
-                    self.log.debug('BlackMagic noticing: %s' % field)
+                    self.log.debug('noticing: %s' % field)
                     stream = stream | Transformer('//*[@id="field-%s"]' % field).after(
                         tag.br() + tag.small()(
                             tag.em()(
@@ -140,7 +140,7 @@ class TicketTweaks(Component):
                     
                 tip = self.config.get(csection, '%s.tip' % field, None)
                 if tip:
-                    self.log.debug('BlackMagic tipping: %s' % field)
+                    self.log.debug('tipping: %s' % field)
                     stream = stream | Transformer('//div[@id="banner"]').before(
                         tag.script(type="text/javascript", 
                         src=req.href.chrome("blackmagic", "js", "wz_tooltip.js"))()
@@ -151,11 +151,11 @@ class TicketTweaks(Component):
                     )
                     
                 if remove or istrue(self.config.get(csection, '%s.remove' % field, None)):
-                    self.log.debug('BlackMagic removing: %s' % field)
+                    self.log.debug('removing: %s' % field)
                     stream = remove_field(stream, field)
 
                 if hidden or istrue(self.config.get(csection, '%s.hide' % field, None)):
-                    self.log.debug('BlackMagic hiding: %s' % field)
+                    self.log.debug('hiding: %s' % field)
                     stream = hide_field(stream, field)
                     
         return stream
