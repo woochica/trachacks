@@ -23,16 +23,43 @@ def disable_field(stream, field):
 
 def remove_header(stream, field):
     """ Removes the display from the ticket properties """
-    stream = stream | Transformer('//th[@id="h_%s"]' % field).replace(tag.th(id="h_%s" % field))
-    stream = stream | Transformer('//td[@headers="h_%s"]' % field).replace(tag.th(id="h_%s" % field))
+    stream = stream | \
+        Transformer('//th[@id="h_%s"]' % field).replace(tag.th(id="h_%s" % field))
+    stream = stream | \
+        Transformer('//td[@headers="h_%s"]' % field).replace(tag.th(id="h_%s" % field))
     return stream
+
+def remove_changelog(stream, field):
+    """ Removes entries from the visible changelog"""
+    def helper(field_stream):
+        s =  Stream(field_stream)
+        f = s.select('//strong/text()').render()
+        if field != f: #if we are the field just skip it
+            #identity stream filter
+            for kind, data, pos in s:
+                yield kind, data, pos
+    stream = stream | Transformer('//ul[@class="changes"]/li').filter(helper)
+    return stream
+    
+
+def hide_field(stream , field):
+    """ Replaces a field from the form area with an input type=hidden"""
+    def helper (field_stream):
+        value = Stream(field_stream).select('@value').render()
+        name = Stream(field_stream).select('@name').render()
+        for kind,data,pos in tag.input( value=value, id=("field-%s"%field),
+                                        type="hidden", name=name).generate():
+            yield kind,data,pos
+    stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
+    stream = stream | Transformer('//input[@id="field-%s"]' % field).replace(" ")
+
+    return remove_changelog(remove_header(stream , field), field)
 
 def remove_field(stream , field):
     """ Removes a field from the form area"""
     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
-    stream = stream | Transformer('//*[@id="field-%s"]' % field).replace(" ")
-    return remove_header(stream , field)
-
+    stream = stream | Transformer('//input[@id="field-%s"]' % field).replace(" ")
+    return remove_changelog(remove_header(stream , field), field)
 
 def istrue(v, otherwise=None):
     if v.lower() in ('yes', 'true', '1', 'on'):
@@ -43,11 +70,12 @@ def istrue(v, otherwise=None):
         else:
             return otherwise   
 
+csection = 'field settings'
+
 class TicketTweaks(Component):
-    implements(ITemplateStreamFilter, ITemplateProvider, IPermissionRequestor)
-    
-    permissions = ListOption('blackmagic', 'permissions', [])
-    gray_disabled = Option('blackmagic', 'gray_disabled', '', 
+    implements(ITemplateStreamFilter, ITemplateProvider, IPermissionRequestor)    
+    permissions = ListOption(csection, 'permissions', [])
+    gray_disabled = Option(csection, 'gray_disabled', '', 
         doc="""If not set, disabled items will have their label striked through. 
         Otherwise, this color will be used to gray them out. Suggested #cccccc.""")
     ## IPermissionRequestor methods
@@ -58,60 +86,59 @@ class TicketTweaks(Component):
     ## ITemplateStreamFilter
     
     def filter_stream(self, req, method, filename, stream, data):
+        self.log.debug('IN BlackMagic')
         if not filename == "ticket.html":
+            self.log.debug('Not a ticket returning')
             return stream
-        enchants = self.config.getlist('field settings', 'fields', '')
+        enchants = self.config.getlist(csection, 'fields', [])
+        self.log.debug('read enchants = %r' % enchants)
         for field in enchants:
             self.log.debug('BlackMagicing: %s' % field)
             disabled = False
             hidden = False
             hide_summary = False
-            perms = self.config.getlist('field settings', '%s.permission' % field, [])
+            remove = False
+            perms = self.config.getlist(csection, '%s.permission' % field, [])
             self.log.debug('BlackMagicing - read permission config: %s has %s' % (field, perms))
             for (perm, denial) in [s.split(":") for s in perms] :
                 perm = perm.upper()
-                self.log.debug('BlackMagicing - testing permission: %s has %s = %s' % (field, perm, (perm not in req.perm or perm == "ALWAYS")))
-                if (perm not in req.perm or perm == "ALWAYS"): 
+                self.log.debug('BlackMagicing - testing permission: %s:%s should act= %s' %
+                               (field, perm, (not req.perm.has_permission(perm) or perm == "ALWAYS")))
+                if (not req.perm.has_permission(perm) or perm == "ALWAYS"): 
                     if denial:
                         denial = denial.lower()
                         if denial == "disable":
                             disabled = True
                         elif denial == "hide":
                             hidden = True
+                        elif denial == "remove":
+                            remove = True
                         else:
                             disabled = True
                     else:
                         disabled = True
                     
-                if disabled or istrue(self.config.get('field settings', '%s.disable' % field, False)):
+                if disabled or istrue(self.config.get(csection, '%s.disable' % field, False)):
                     self.log.debug('BlackMagic disabling: %s' % field)
-                    stream = stream | Transformer('//*[@id="field-%s"]' % field).attr("disabled", "disabled")
-                    if not self.gray_disabled:
-                        stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
-                            tag.strike()('%s:' % field.capitalize())
-                        )
-                    else:
-                        stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
-                            tag.span(style="color:%s" % self.gray_disabled)('%s:' % field.capitalize())
-                        )
+                    stream = disable_field(stream, field)
 
-                if self.config.get('field settings', '%s.label' % field, None):
+                if self.config.get(csection, '%s.label' % field, None):
                     self.log.debug('BlackMagic labeling: %s' % field)
                     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
-                        self.config.get('field settings', '%s.label' % field)
+                        self.config.get(csection, '%s.label' % field)
                     )
                     
-                if self.config.get('field settings', '%s.notice' % field, None):
+                if self.config.get(csection, '%s.notice' % field, None):
                     self.log.debug('BlackMagic noticing: %s' % field)
                     stream = stream | Transformer('//*[@id="field-%s"]' % field).after(
                         tag.br() + tag.small()(
                             tag.em()(
-                                Markup(self.config.get('field settings', '%s.notice' % field))
+                                Markup(self.config.get(csection, '%s.notice' % field))
                             )
                         )
                     )
                     
-                tip = self.config.get('field settings', '%s.tip' % field, None)
+                tip = self.config.get(csection, '%s.tip' % field, None)
                 if tip:
                     self.log.debug('BlackMagic tipping: %s' % field)
                     stream = stream | Transformer('//div[@id="banner"]').before(
@@ -123,9 +150,13 @@ class TicketTweaks(Component):
                         "onmouseover", "Tip('%s')" % tip.replace(r"'", r"\'")
                     )
                     
-                if hidden or istrue(self.config.get('field settings', '%s.hide' % field, None)):
+                if remove or istrue(self.config.get(csection, '%s.remove' % field, None)):
+                    self.log.debug('BlackMagic removing: %s' % field)
+                    stream = remove_field(stream, field)
+
+                if hidden or istrue(self.config.get(csection, '%s.hide' % field, None)):
                     self.log.debug('BlackMagic hiding: %s' % field)
-                    stream = remove_field(field)
+                    stream = hide_field(stream, field)
                     
         return stream
 

@@ -5,6 +5,7 @@ from tande_filters import *
 from reports_filter import *
 from blackmagic import *
 from ticket_daemon import *
+from ticket_webui import *
 from usermanual import *
 from trac.log import logger_factory
 from trac.ticket import ITicketChangeListener, Ticket

@@ -85,7 +85,7 @@
       }
       catch (er) {}
   
-  
+      /*
       // Hide the Add Hours in the title table
       // if we fail, then no harm done.
       try
@@ -96,7 +96,7 @@
 	 b.innerHTML = '';
       }
       catch (er) {}
-      
+      */
       
       // Convert hours from float to hours minutes seconds
       // if we fail, then no harm done.
