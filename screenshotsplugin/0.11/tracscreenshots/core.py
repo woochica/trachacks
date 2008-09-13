@@ -478,6 +478,7 @@ class ScreenshotsCore(Component):
                 # Convert enabled components and versions to dictionary.
                 enabled_components = dict(zip(enabled_components, [True] *
                   len(enabled_components)))
+                self.log.debug('!!!' + str(enabled_components))
                 enabled_versions = dict(zip(enabled_versions, [True] *
                   len(enabled_versions)))
 

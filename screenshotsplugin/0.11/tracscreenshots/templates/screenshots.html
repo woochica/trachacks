@@ -1,4 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<?python
+  test = {'ř': 1}
+?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="layout.html"/>
   <head>
@@ -53,7 +56,7 @@
 
               <div>
                 <py:choose py:for="component in screenshots.components">
-                  <input py:when="screenshots.enabled_components[component.name]" type="checkbox" name="components" value="${component.name}" checked="yes">
+                  <input py:when="screenshots.enabled_components.has_key(component.name)" type="checkbox" name="components" value="${component.name}" checked="yes">
                     ${component.name}
                   </input>
                   <input py:otherwise="" type="checkbox" name="components" value="${component.name}">
@@ -72,7 +75,7 @@
 
               <div>
                 <py:choose py:for="version in screenshots.versions">
-                  <input py:when="screenshots.enabled_versions[version.name]" type="checkbox" name="versions" value="${version.name}" checked="yes">
+                  <input py:when="screenshots.enabled_versions.has_key(version.name)" type="checkbox" name="versions" value="${version.name}" checked="yes">
                     ${version.name}
                   </input>
                   <input py:otherwise="" type="checkbox" name="versions" value="${version.name}">
