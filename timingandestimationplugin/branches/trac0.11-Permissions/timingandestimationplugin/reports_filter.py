@@ -114,7 +114,7 @@ def _send_csv(self, req, cols, rows, sep=',', mimetype='text/plain',
     
     id = report_id_from_filename(filename)
     reports = get_billing_reports(self)
-    if id in reports:
+    if id in reports and not req.perm.has_permission("TIME_VIEW"):
         raise RequestDone
     
     def iso_time(t):
