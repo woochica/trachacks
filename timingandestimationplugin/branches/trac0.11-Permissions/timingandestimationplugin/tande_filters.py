@@ -47,7 +47,6 @@ def new_csv_export(self, req, query, sep=',', mimetype='text/plain'):
             values = []
             for col in cols:
                 if col not in hidden_fields:
-                    self.log.debug("not hiding %s" % col)
                     value = result[col]
                     if col in ('cc', 'reporter'):
                         value = Chrome(self.env).format_emails(context(ticket),
