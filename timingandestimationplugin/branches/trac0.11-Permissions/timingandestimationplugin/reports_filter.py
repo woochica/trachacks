@@ -6,6 +6,11 @@ from sets import Set as set
 from genshi.filters.transform import Transformer
 import re
 
+from trac.ticket.report import ReportModule
+from trac.util.datefmt import format_datetime, format_time
+import csv
+from trac.web.api import RequestDone
+
 billing_report_regex = re.compile("\{(?P<reportid>\d*)\}")
 def report_id_from_text(text):
     m = billing_report_regex.match(text)
@@ -89,3 +94,54 @@ class ReportScreenFilter(Component):
         stream = stream | Transformer('//div[@id="content"]/h1/text()').filter(idhelper)
         stream = stream | Transformer('//div[@id="content"]').filter(permhelper)
         return stream
+
+## ENFORCE PERMISSIONS ON report exports
+
+billing_report_fname_regex = re.compile("report_(?P<reportid>\d*)")
+def report_id_from_filename(text):
+    m = billing_report_fname_regex.match(text)
+    if m:
+        return int(m.groupdict()["reportid"])
+
+
+def _send_csv(self, req, cols, rows, sep=',', mimetype='text/plain',
+              filename=None):
+    req.send_response(200)
+    req.send_header('Content-Type', mimetype + ';charset=utf-8')
+    if filename:
+        req.send_header('Content-Disposition', 'filename=' + filename)
+    req.end_headers()
+    
+    id = report_id_from_filename(filename)
+    reports = get_billing_reports(self)
+    if id in reports:
+        raise RequestDone
+    
+    def iso_time(t):
+        return format_time(t, 'iso8601')
+
+    def iso_datetime(dt):
+        return format_datetime(dt, 'iso8601')
+
+    col_conversions = {
+        'time': iso_time,
+        'datetime': iso_datetime,
+        'changetime': iso_datetime,
+        'date': iso_datetime,
+        'created': iso_datetime,
+        'modified': iso_datetime,
+        }
+    
+    converters = [col_conversions.get(c.strip('_'), unicode) for c in cols]
+    
+    writer = csv.writer(req, delimiter=sep)
+    writer.writerow([unicode(c).encode('utf-8') for c in cols])
+    for row in rows:
+        row = list(row)
+        for i in xrange(len(row)):
+            row[i] = converters[i](row[i]).encode('utf-8')
+        writer.writerow(row)
+
+    raise RequestDone
+
+ReportModule._send_csv = _send_csv
