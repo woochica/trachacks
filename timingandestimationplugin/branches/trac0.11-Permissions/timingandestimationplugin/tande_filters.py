@@ -6,6 +6,57 @@ from genshi.builder import tag
 from sets import Set as set
 from genshi.filters.transform import Transformer
 from blackmagic import *
+from trac.ticket.query import QueryModule
+
+from StringIO import StringIO
+import csv
+from trac.mimeview.api import Context
+from trac.resource import Resource
+
+## MONKEY PATCH THE QUERY MODULE CSV EXPORT FN TO ENFORCE PERMISSIONS
+def new_csv_export(self, req, query, sep=',', mimetype='text/plain'):
+    self.log.debug("T&E plugin has overridden QueryModule.csv_export so to enforce field permissions")
+
+    ## find the columns that should be hidden
+    hidden_fields = []
+    fields = self.config.getlist(csection, 'fields', [])
+    self.log.debug('QueryModule.csv_export: found : %s' % fields)
+    for field in fields:
+        perms = self.config.getlist(csection, '%s.permission' % field, [])
+        #self.log.debug('QueryModule.csv_export: read permission config: %s has %s' % (field, perms))
+        for (perm, denial) in [s.split(":") for s in perms] :
+            perm = perm.upper()
+            #self.log.debug('QueryModule.csv_export: testing permission: %s:%s should act= %s' %
+            #               (field, perm, (not req.perm.has_permission(perm) or perm == "ALWAYS")))
+            if (not req.perm.has_permission(perm) or perm == "ALWAYS") and denial.lower() in ["remove","hide"]:
+                hidden_fields.append(field)
+    ## END find the columns that should be hidden
+    
+    content = StringIO()
+    cols = query.get_columns()
+    writer = csv.writer(content, delimiter=sep)
+    writer = csv.writer(content, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
+    writer.writerow([unicode(c).encode('utf-8') for c in cols if c not in hidden_fields])
+    
+    context = Context.from_request(req)
+    results = query.execute(req, self.env.get_db_cnx())
+    self.log.debug('QueryModule.csv_export: hidding columns %s' %  hidden_fields)
+    for result in results:
+        ticket = Resource('ticket', result['id'])
+        if 'TICKET_VIEW' in req.perm(ticket):
+            values = []
+            for col in cols:
+                if col not in hidden_fields:
+                    self.log.debug("not hiding %s" % col)
+                    value = result[col]
+                    if col in ('cc', 'reporter'):
+                        value = Chrome(self.env).format_emails(context(ticket),
+                                                               value)
+                    values.append(unicode(value).encode('utf-8'))
+            writer.writerow(values)
+    return (content.getvalue(), '%s;charset=utf-8' % mimetype)
+
+QueryModule.export_csv = new_csv_export
 
 class TicketFormatFilter(Component):
     """Filtering the streams to alter the base format of the ticket"""
@@ -53,7 +104,7 @@ class QueryColumnPermissionFilter(Component):
                 perm = perm.upper()
                 self.log.debug('testing permission: %s:%s should act= %s' %
                                (field, perm, (not req.perm.has_permission(perm) or perm == "ALWAYS")))
-                if (not req.perm.has_permission(perm) or perm == "ALWAYS"):
+                if (not req.perm.has_permission(perm) or perm == "ALWAYS") and denial.lower() in ["remove","hide"]:
                     # remove from the list of addable 
                     stream = stream | Transformer(
                         '//select[@id="add_filter"]/option[@value="%s"]' % field
