@@ -9,11 +9,13 @@ class RecaptchaRegistrationModule(RegistrationModule):
         doc='The public key given to you from the reCAPTCHA site')
     private_key = Option('recaptcha', 'private_key',
         doc='The private key given to you from the reCAPTCHA site')
+    theme = Option('recaptcha', 'theme', default='white',
+        doc='Can be red, white (default), blackglass, clean or custom. Please see http://wiki.recaptcha.net/index.php/Theme')
 
     def check_config(self):
         if not self.public_key or not self.private_key:
             raise ConfigurationError('public_key and private_key needs ' \
-                'to be in the [captcha] section of your trac.ini file. ' \
+                'to be in the [recaptcha] section of your trac.ini file. ' \
                 'Get these keys from http://recaptcha.net/')
 
     # IRequestHandler methods
@@ -32,15 +34,18 @@ class RecaptchaRegistrationModule(RegistrationModule):
                 data = {}
                 data['registration_error'] = 'Captcha incorrect. Please try again.'
                 data['recaptcha_javascript'] = captcha.displayhtml(self.public_key)
+                data['recaptcha_theme'] = self.theme
                 return "recaptcharegister.html", data, None
             else:
                 ret = super(RecaptchaRegistrationModule, self).process_request(req)
                 h, data, n = ret
+                data['recaptcha_theme'] = self.theme
                 return "recaptcharegister.html", data, n
         else:
             ret = super(RecaptchaRegistrationModule, self).process_request(req)
             h, data, n = ret
             data['recaptcha_javascript'] = captcha.displayhtml(self.public_key)
+            data['recaptcha_theme'] = self.theme
             return "recaptcharegister.html", data, n
 
     # ITemplateProvider methods
