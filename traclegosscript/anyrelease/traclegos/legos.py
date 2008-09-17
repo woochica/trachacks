@@ -143,7 +143,7 @@ class TracLegos(object):
         env = Environment(dirname, create=True, options=options)
 
         ### repository setup
-        if repository is not None:
+        if repository:
             repository.setup(**vars)
             repos = env.get_repository()
             repos.sync()
