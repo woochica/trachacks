@@ -154,21 +154,16 @@ class TracLegos(object):
         fp.close()
 
 
-        ### apply pastescript templates
-        
-        # run the pastescript templates
+        ### run pastescript templates
         command.interactive = False
         for paste_template in templates.pastescript_templates:
             paste_template.run(command, dirname, vars)
 
         # write back munged configuration 
-        import pdb;  pdb.set_trace()
-        munger = ConfigMunger()
-        if '_conf' in locals():
-            fp = file(_conf_file, 'w')
-            print >> fp, _conf
-            fp.close()
-
+        munger = ConfigMunger(_conf, options)
+        fp = file(_conf_file, 'w')
+        print >> fp, _conf
+        fp.close()
 
         # TODO: update the inherited file:
         # * intertrac
