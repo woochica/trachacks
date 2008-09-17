@@ -65,6 +65,8 @@ class TracLegos(object):
 
         self.vars['directory'] = self.directory
 
+    ### utility functions
+
     def project_templates(self, templates):
         # apply site configuration last (override)
         return ProjectTemplates(*(templates + self.site_templates))
