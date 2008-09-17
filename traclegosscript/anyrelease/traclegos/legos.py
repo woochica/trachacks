@@ -7,7 +7,6 @@ the head of the octopus
 import os
 import pkg_resources
 import sys
-import ConfigParser
 
 from optparse import OptionParser
 from paste.script.templates import var
@@ -148,24 +147,23 @@ class TracLegos(object):
             repos = env.get_repository()
             repos.sync()
 
+        ### read the generated configuration 
+        _conf_file = os.path.join(dirname, 'conf', 'trac.ini')
+        fp = file(_conf_file)
+        _conf = fp.read()
+        fp.close()
+
+
         ### apply pastescript templates
-
-        # read the configuration as it will be clobbered by the 
-        # PasteScript templates
-        # (really, trac should allow an existing directory structure)
-        pastescript_templates = templates.pastescript_templates
-        if pastescript_templates:            
-            _conf_file = os.path.join(dirname, 'conf', 'trac.ini')
-            fp = file(_conf_file)
-            _conf = fp.read()
-            fp.close()
-
+        
         # run the pastescript templates
         command.interactive = False
-        for paste_template in pastescript_templates:
+        for paste_template in templates.pastescript_templates:
             paste_template.run(command, dirname, vars)
 
-        # write back munged configuration if overwritten
+        # write back munged configuration 
+        import pdb;  pdb.set_trace()
+        munger = ConfigMunger()
         if '_conf' in locals():
             fp = file(_conf_file, 'w')
             print >> fp, _conf

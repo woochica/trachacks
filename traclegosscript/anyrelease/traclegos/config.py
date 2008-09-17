@@ -9,6 +9,7 @@ from StringIO import StringIO
 
 def file_pointer(resource):
     """returns a file-like object given a string"""
+    # could go in utils if it exists
 
     if not isinstance(resource, basestring):
         # assume resource is already a file-like object
@@ -47,8 +48,21 @@ class ConfigMunger(ConfigParser):
                 for section, contents in _ini.items():
                     if section not in self.sections():
                         self.add_section(section)
+                        # XXX override self.set to add the 
+                        # section automagically
                     for option, value in contents.items():
                         self.set(section, option, value)
+            elif isinstance(_ini, list) or isinstance(_ini, tuple):
+
+                # ensure list or tuple of 3-tuples
+                assert len([option for option in _ini
+                            if isinstance(option, tuple) 
+                            and len(option) == 3])
+
+                for section, option, value in _ini:
+                    if section not in self.sections():
+                        self.add_section(section)
+                    self.set(section, option, value)                
             else:
                 fp = file_pointer(_ini)
                 self.readfp(fp)
