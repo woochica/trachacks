@@ -24,7 +24,7 @@ TracLegos can be invoked in a number of ways:
 
 Different methods of invocation are differently important to different
 environments. TracLegos (in {{{legos.py}}}) is meant to be the "head"
-of the "octopus", and ideally will do little else but coordinate the
+of the octopus, and ideally will do little else but coordinate the
 other moving parts.
 
 
@@ -40,7 +40,7 @@ Typical trac project configuration consists of:
 
  * a database [TODO]
 
- * permissions, groups, milestones, etc that live in the database
+ * permissions, groups, milestones, etc that live in the database [TODO]
 
 TracLegos abstracts this to:
 
@@ -56,8 +56,7 @@ TracLegos abstracts this to:
 The templates use the form ${variable} to denote variables.  The
 templates can be .ini files or the can be PasteScript templates.  In
 the latter case, the templates may also contain requirements files and
-other information and procedures to be applied when they are invoked
-[currently they aren't invoked].
+other information and procedures to be applied when they are invoked.
 
 
 == TracProject templates ==

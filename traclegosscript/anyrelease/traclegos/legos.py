@@ -153,7 +153,6 @@ class TracLegos(object):
         _conf = fp.read()
         fp.close()
 
-
         ### run pastescript templates
         command.interactive = False
         for paste_template in templates.pastescript_templates:
