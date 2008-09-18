@@ -1,5 +1,5 @@
 user_manual_title = "Timing and Estimation Plugin User Manual"
-user_manual_version = 12
+user_manual_version = 13
 user_manual_wiki_title = "TimingAndEstimationPluginUserManual"
 user_manual_content = """
 
@@ -106,6 +106,19 @@ totalhours.permission = TIME_VIEW:remove, TIME_RECORD:disable
 hours.permission = TIME_RECORD:remove
 estimatedhours.permission = TIME_RECORD:disable
 }}}
+
+
+It also adds an "Internal" checkbox which allows you to set a ticket as internal.  For this policy to work correctly you need to add a line to the trac section of the config telling it which permission policies to use.  (The setup will attempt to put this line of configuration in place. )  The permission that looks at currently is 'TIME_ADMIN'.  To change that group set the internalgroup of the ticket section in the trac.ini as follows:
+
+{{{
+#!ini
+[ticket]
+internalgroup = TRAC_ADMIN
+
+[trac]
+permission_policies = InternalTicketsPolicy, DefaultPermissionPolicy, LegacyAttachmentPolicy
+}}}
+
 
 == Future Improvements ==
  * [http://trac-hacks.org/wiki/TimingAndEstimationPlugin See tickets] at the [http://trac-hacks.org/wiki/TimingAndEstimationPlugin project trac]

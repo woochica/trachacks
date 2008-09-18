@@ -7,6 +7,7 @@ from blackmagic import *
 from ticket_daemon import *
 from ticket_webui import *
 from usermanual import *
+from ticket_policy import *
 from trac.log import logger_factory
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
@@ -41,6 +42,10 @@ class TimeTrackingSetupParticipant(Component):
         estimatedhours = text
         estimatedhours.value = 0
         estimatedhours.label = Estimated Hours?
+
+        internal = checkbox
+        internal.value = 0
+        internal.label = Internal?
 
         """
     implements(IEnvironmentSetupParticipant)
@@ -97,10 +102,11 @@ class TimeTrackingSetupParticipant(Component):
 
         if self.db_installed_version < 7:
             field_settings = "field settings"
-            self.config.set( field_settings, "fields", "billable, totalhours, hours, estimatedhours" )
+            self.config.set( field_settings, "fields", "billable, totalhours, hours, estimatedhours, internal" )
             self.config.set( field_settings, "billable.permission", "TIME_VIEW:hide, TIME_RECORD:disable" )
             self.config.set( field_settings, "hours.permission", "TIME_VIEW:remove, TIME_RECORD:disable" )
             self.config.set( field_settings, "estimatedhours.permission", "TIME_RECORD:disable" )
+            self.config.set( field_settings, "internal.permission", "TIME_RECORD:hide")
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # This statement block always goes at the end this method
@@ -158,44 +164,55 @@ class TimeTrackingSetupParticipant(Component):
     def ticket_fields_need_upgrade(self):
         ticket_custom = "ticket-custom"
         return not ( self.config.get( ticket_custom, "totalhours" ) and \
-
-                     #self.config.get( ticket_custom, "billable" ) and \
-                     #self.config.get( ticket_custom, "billable.order") and \
-                     #(self.config.get( ticket_custom, "billable" ) == "checkbox") and \
-                     #(not self.config.get( ticket_custom, "lastbilldate" )) and \
-
-                     self.config.get( ticket_custom, "hours" ) and \
-                     self.config.get( ticket_custom, "totalhours.order") and \
-                     self.config.get( ticket_custom, "hours.order") and \
-                     self.config.get( ticket_custom, "estimatedhours.order") and \
-                     self.config.get( ticket_custom, "estimatedhours"))
+                         self.config.get( ticket_custom, "hours" ) and \
+                         self.config.get( ticket_custom, "totalhours.order") and \
+                         self.config.get( ticket_custom, "hours.order") and \
+                         self.config.get( ticket_custom, "estimatedhours.order") and \
+                         self.config.get( ticket_custom, "estimatedhours") and \
+                         self.config.get( ticket_custom, "internal") and \
+                         "InternalTicketsPolicy" in self.config.getlist("trac", "permission_policies"))
 
     def do_ticket_field_upgrade(self):
         ticket_custom = "ticket-custom"
 
-        self.config.set(ticket_custom,"totalhours", "text")
-        if not self.config.get( ticket_custom, "totalhours.order") :
+        if not self.config.get(ticket_custom,"totalhours"):
+            self.config.set(ticket_custom,"totalhours", "text")
             self.config.set(ticket_custom,"totalhours.order", "4")
-        self.config.set(ticket_custom,"totalhours.value", "0")
-        self.config.set(ticket_custom,"totalhours.label", "Total Hours")
+            self.config.set(ticket_custom,"totalhours.value", "0")
+            self.config.set(ticket_custom,"totalhours.label", "Total Hours")
 
-        self.config.set(ticket_custom,"billable", "checkbox")
-        self.config.set(ticket_custom,"billable.value", "1")
-        if not self.config.get( ticket_custom, "billable.order") :
+
+        if not self.config.get(ticket_custom,"billable"):
+            self.config.set(ticket_custom,"billable", "checkbox")
+            self.config.set(ticket_custom,"billable.value", "1")
             self.config.set(ticket_custom,"billable.order", "3")
-        self.config.set(ticket_custom,"billable.label", "Billable?")
+            self.config.set(ticket_custom,"billable.label", "Billable?")
 
-        self.config.set(ticket_custom,"hours", "text")
-        self.config.set(ticket_custom,"hours.value", "0")
-        if not self.config.get( ticket_custom, "hours.order") :
+        if not self.config.get(ticket_custom,"hours"):
+            self.config.set(ticket_custom,"hours", "text")
+            self.config.set(ticket_custom,"hours.value", "0")
             self.config.set(ticket_custom,"hours.order", "2")
-        self.config.set(ticket_custom,"hours.label", "Add Hours to Ticket")
+            self.config.set(ticket_custom,"hours.label", "Add Hours to Ticket")
 
-        self.config.set(ticket_custom,"estimatedhours", "text")
-        self.config.set(ticket_custom,"estimatedhours.value", "0")
-        if not self.config.get( ticket_custom, "estimatedhours.order") :
+        if not self.config.get(ticket_custom,"estimatedhours"):
+            self.config.set(ticket_custom,"estimatedhours", "text")
+            self.config.set(ticket_custom,"estimatedhours.value", "0")
             self.config.set(ticket_custom,"estimatedhours.order", "1")
-        self.config.set(ticket_custom,"estimatedhours.label", "Estimated Number of Hours")
+            self.config.set(ticket_custom,"estimatedhours.label", "Estimated Number of Hours")
+
+        if not self.config.get( ticket_custom, "internal"):
+            self.config.set(ticket_custom, "internal", "checkbox")
+            self.config.set(ticket_custom, "internal.value", "0")
+            self.config.set(ticket_custom, "internal.label", "Internal?")
+            self.config.set(ticket_custom,"internal.order", "5")
+
+        if "InternalTicketsPolicy" not in self.config.getlist("trac", "permission_policies"):
+            perms = ["InternalTicketsPolicy"]
+            other_policies = self.config.getlist("trac", "permission_policies")
+            if "DefaultPermissionPolicy" not in other_policies:
+                perms.append("DefaultPermissionPolicy")
+            perms.extend( other_policies )
+            self.config.set("trac", "permission_policies", ', '.join(perms))
 
         self.config.save();
 

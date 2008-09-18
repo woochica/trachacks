@@ -60,6 +60,7 @@ class ReportsFilter(Component):
             ).filter(RowFilter(self))
 
 class ReportScreenFilter(Component):
+    """Hides TandE reports even when you just go to the url"""
     implements(ITemplateStreamFilter)
     def __init__(self):
         self.billing_reports = get_billing_reports(self)
