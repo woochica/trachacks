@@ -26,17 +26,15 @@ class TracProject(templates.Template):
     # methodologies is favored
 
     # PoachEggs requirements files for the template
-    requirements = [] # XXX not yet used -- what if they aren't in a virtualenv
+    requirements = [] 
 
     ### attrs for PasteScript Template
     
     def pre(self, command, output_dir, vars):
-        return
-        # XXX unhooked for now:  poach-eggs will fuxor if the one
-        # requirements file is poached twice
-#        if os.environ.has_key('VIRTUAL_ENV'):  # install the requirements
-#            for requirement in getattr(self, 'requirements', ()):
-#                subprocess.call(['poach-eggs', '-r', requirement])
+
+        # install the requirements
+        for requirement in getattr(self, 'requirements', ()):
+            subprocess.call(['poacheggs', '-r', requirement])
 
     def post(self, command, output_dir, vars):
         pass

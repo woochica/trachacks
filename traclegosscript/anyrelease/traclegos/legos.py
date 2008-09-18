@@ -182,10 +182,12 @@ class TracLegos(object):
         admin._do_wiki_load(pages_dir, cursor) # should probably make this silent
         cnx.commit()
 
-        # TODO: trac-admin upgrade the project
-        
+        # trac-admin upgrade the project
+        env = Environment(dirname)
+        if env.needs_upgrade():
+            env.upgrade()
 
-        # TODO (wishlist):  addition of groups, milestones, versions, etc
+        # TODO:  addition of groups, milestones, versions, etc
         # via trac-admin
 
 
