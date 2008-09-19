@@ -173,6 +173,11 @@ class TracLegos(object):
         # remove the default items
         admin.delete_all()
 
+        # trac-admin upgrade the project
+        env = Environment(dirname)
+        if env.needs_upgrade():
+            env.upgrade()
+
         # get the default wiki pages
         # TODO: add options for importing existing wiki pages
         cnx = env.get_db_cnx()
@@ -181,11 +186,6 @@ class TracLegos(object):
                                                     'default-pages') 
         admin._do_wiki_load(pages_dir, cursor) # should probably make this silent
         cnx.commit()
-
-        # trac-admin upgrade the project
-        env = Environment(dirname)
-        if env.needs_upgrade():
-            env.upgrade()
 
         # TODO:  addition of groups, milestones, versions, etc
         # via trac-admin
