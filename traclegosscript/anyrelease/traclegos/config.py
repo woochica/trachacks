@@ -30,7 +30,8 @@ class ConfigMunger(ConfigParser):
         self.read(*conf)
     
     def __getitem__(self, section):
-        """return an object with __getitem__ defined appropriately
+        """
+        return an object with __getitem__ defined appropriately
         to allow referencing like self['foo']['bar']
         """
         return dict(self.items(section))

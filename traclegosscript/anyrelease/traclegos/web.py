@@ -37,12 +37,12 @@ class View(object):
             setattr(self, key, kw.get(key, self.defaults[key]))
 
         # site configuration
-        conf = site_configuration(*self.conf)
+        self.conf = site_configuration(*self.conf)
 
         assert self.directory # ensure the directory exists        
 
         # trac project creator
-        self.legos = TracLegos(self.directory, vars=conf['variables'])
+        self.legos = TracLegos(self.directory, vars=self.conf['variables'])
         self.legos.interactive = False
 
         # trac projects available
@@ -184,10 +184,11 @@ class View(object):
         # process the request and save necessary data
         project_data = self.projects[project]
         project_data['type'] = project_type
-        project_data['vars'] = {'project': project,
-                                'description': req.POST.get('project_name').strip() or project,
-                                'url': req.POST.get('alternate_url')
-                                }
+        project_data['vars'] = self.conf['variables']
+        project_data['vars'].update({'project': project,
+                                     'description': req.POST.get('project_name').strip() or project,
+                                     'url': req.POST.get('alternate_url')
+                                     })
 
         project_data['config'] = {}
         project_data['config']['header_logo'] = {'link': req.POST['alternate_url'] }
