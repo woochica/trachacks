@@ -10,6 +10,7 @@ import tempfile
 from genshi.template import TemplateLoader
 from trac.web.main import dispatch_request
 from traclegos.config import ConfigMunger
+from traclegos.legos import site_configuration
 from traclegos.legos import TracLegos
 from traclegos.project import project_dict
 from traclegos.repository import available_repositories
@@ -24,18 +25,24 @@ class View(object):
 
     # default values for instance variables 
     # (settable through **kw to __init__)
-    # XXX this looks like the wrong pattern here, maybe
-    defaults = {'directory': None, 
+    defaults = {'conf': (),
+                'directory': None, 
                 'available_templates': None,
                 'available_repositories': None }
 
     def __init__(self, **kw):
+
+        # set instance variables
         for key in self.defaults:
             setattr(self, key, kw.get(key, self.defaults[key]))
-        assert self.directory
+
+        # site configuration
+        conf = site_configuration(*self.conf)
+
+        assert self.directory # ensure the directory exists        
 
         # trac project creator
-        self.legos = TracLegos(self.directory)
+        self.legos = TracLegos(self.directory, vars=conf['variables'])
         self.legos.interactive = False
 
         # trac projects available
@@ -49,13 +56,13 @@ class View(object):
         # storage of intermittent projects
         self.projects = {} 
 
-        # URL to redirect to after project creation [TBI]
+        # URL to redirect to after project creation
         self.done = '/%(project)s'
 
         # steps of project creation
         self.steps = [ 'create-project', 'project-details', 'project-variables' ]
 
-        # available SCM repositories
+        # available SCM repository types
         self.repositories = available_repositories()
         if self.available_repositories is None:
             self.available_repositories = ['NoRepository'] + [ name for name in self.repositories.keys() if name is not 'NoRepository' ]

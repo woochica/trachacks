@@ -191,6 +191,17 @@ class TracLegos(object):
         # via trac-admin
 
 
+### method for site_configuration
+
+def site_configuration(*ini_files):
+    """returns a dictionary of configuration from .ini files"""
+    sections = ( 'variables', )
+    conf = ConfigMunger(*ini_files).dict()
+    for section in sections:
+        if section not in conf:
+            conf[section] = {}
+    return conf
+
 ### functions for the command line front-end to TracLegos
 
 def get_parser():
@@ -235,10 +246,9 @@ def parse(parser, args=None):
     vars = {} # defined variables
 
     # parse and apply site-configuration (including variables)
-    conf = ConfigMunger(*options.conf)
-    if 'variables' in conf.sections():
-        vars.update(conf['variables'])
-    # TODO: set options from configuration
+    conf = site_configuration(*options.conf)
+    vars.update(conf['variables'])
+    # TODO: set other options from configuration
 
     # parse command line variables and determine list of projects
     projects = []
