@@ -68,6 +68,15 @@ class ScreenshotsApi(Component):
         return self._get_items(context, 'screenshot', ('id', 'name',
           'description', 'time', 'author', 'tags', 'file', 'width', 'height'))
 
+    def get_screenshots_complete(self, context):
+        screenshots = self.get_screenshots(context)
+        for screenshot in screenshots:
+            screenshot['components'] = self.get_screenshot_components(context,
+              screenshot['id'])
+            screenshot['versions'] = self.get_screenshot_versions(context,
+              screenshot['id'])
+        return screenshots
+
     def get_filtered_screenshots(self, context, components, versions):
         has_none_version = True
         has_none_component = True
