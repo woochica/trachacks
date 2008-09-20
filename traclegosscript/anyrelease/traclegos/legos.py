@@ -83,9 +83,12 @@ class TracLegos(object):
         # apply site configuration last (override)
         return ProjectTemplates(*(templates + self.site_templates))
     # TODO: add the self.options to the templates
-
-    # arguments to RepositorySetup.setup that may be interpolated from variables
+    
     def repository_fields(self, project):
+        """
+        arguments to RepositorySetup.setup that may be interpolated 
+        from variables
+        """
         return { 'SVNSync': {'repository_dir': os.path.join(self.directory, project, 'mirror') },
                  'NewSVN': {'repository_dir': os.path.join(self.directory, project, 'svn') }
                  }
@@ -204,7 +207,7 @@ class TracLegos(object):
         # via trac-admin
 
 
-### method for site_configuration
+### method for site configuration
 
 def site_configuration(*ini_files):
     """returns a dictionary of configuration from .ini files"""
@@ -214,6 +217,19 @@ def site_configuration(*ini_files):
         if section not in conf:
             conf[section] = {}
     return conf
+
+def traclegos_argspec(*dictionaries):
+    """
+    returns an argspec from a list of dictionaries appropriate to 
+    constructing a TracLegos instance;
+    later dictionaries take precedence over earlier dictionaries
+    """
+    argspec = TracLegos.arguments()
+    for key in argspec:
+        args = [ dictionary.get(key) for dictionary in dictionaries ]
+        argspec[key] = reduce(lambda x, y: y or x, args, argspec[key])
+
+    return argspec
 
 ### functions for the command line front-end to TracLegos
 
