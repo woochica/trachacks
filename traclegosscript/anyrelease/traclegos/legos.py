@@ -161,7 +161,7 @@ class TracLegos(object):
         # write back munged configuration 
         munger = ConfigMunger(_conf, options)
         fp = file(_conf_file, 'w')
-        print >> fp, _conf
+        munger.write(fp)
         fp.close()
 
         # TODO: update the inherited file:
