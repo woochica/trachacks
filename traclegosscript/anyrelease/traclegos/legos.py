@@ -4,6 +4,7 @@ driver to create trac projects --
 the head of the octopus
 """
 
+import inspect
 import os
 import pkg_resources
 import sys
@@ -65,6 +66,18 @@ class TracLegos(object):
         self.vars['directory'] = self.directory
 
     ### utility functions
+
+    @classmethod
+    def arguments(cls):
+        """
+        returns a dictionary arguments to the constructor, __init__, 
+        and their defaults or None for required arguments
+        """
+        argspec = inspect.getargspec(cls.__init__)
+        args = dict([(i, None) for i in argspec[0][1:]])
+        args.update(dict(zip(argspec[0][len(argspec[0])- len(argspec[-1]):], 
+                             argspec[-1])))
+        return args
 
     def project_templates(self, templates):
         # apply site configuration last (override)
