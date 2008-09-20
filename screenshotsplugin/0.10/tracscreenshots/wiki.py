@@ -52,6 +52,28 @@ Example:
  [[Screenshot(2,width=400,height=300,description=The $name by $author: $description,align=left)]]
 }}}"""
 
+    screenshots_list_macro_doc = """Displays list of all available screenshots
+on wiki page. Accepts one argument which is template for list items fromatting.
+Possible variables in this template are:
+
+ * {{{$id}}} - ID of image.
+ * {{{$name}}} - Name of image.
+ * {{{$author}}} - User name who uploaded image.
+ * {{{$time}}} - Time when image was uploaded.
+ * {{{$file}}} - File name of image.
+ * {{{$description}}} - Detailed description of image.
+ * {{{$width}}} - Original width of image.
+ * {{{$height}}} - Original height of image.
+ * {{{$tags}}} - Comma separated list of screenshot tags.
+ * {{{$components}}} - Comma separated list of screenshot components.
+ * {{{$versions}}} - Comma separated list of screenshot versions.
+
+Example:
+
+{{{
+ [[ScreenshotsList($name - $description ($widthx$height))]]
+}}}"""
+
     """
         The wiki module implements macro for screenshots referencing.
     """
@@ -67,6 +89,9 @@ Example:
     # Configuration options.
     default_description = Option('screenshots', 'default_description',
       '$description', 'Template for embended image description.')
+    default_list_item = Option('screenshots', 'default_list_item', '$id - $name - $description',
+      doc = 'Default format of list item description of [[ScreenshotsList()]]' \
+      ' macro.')
 
     # IWikiSyntaxProvider
 
@@ -80,24 +105,29 @@ Example:
 
     def get_macros(self):
         yield 'Screenshot'
+        yield 'ScreenshotsList'
 
     def get_macro_description(self, name):
         if name == 'Screenshot':
             return self.screenshot_macro_doc
+        elif name == 'ScreenshotsList':
+            return self.screenshots_list_macro_doc
+
 
     def render_macro(self, req, name, content):
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        # Get API component.
+        api = self.env[ScreenshotsApi]
+
         if name == 'Screenshot':
             # Check permission.
             if not req.perm.has_permission('SCREENSHOTS_VIEW'):
                return html.div('No permissions to see screenshots.',
                class_ = 'system-message')
-
-            # Get database access.
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-
-            # Get API component.
-            api = self.env[ScreenshotsApi]
 
             # Get macro arguments.
             arguments = content.split(',')
@@ -166,6 +196,27 @@ Example:
                 return html.a(screenshot_id, href = req.href.screenshots(),
                   title = content, class_ = 'missing')
 
+        elif name == 'ScreenshotsList':
+            # Check permission.
+            if not req.perm.has_permission('SCREENSHOTS_VIEW'):
+               return html.div('No permissions to see screenshots.',
+               class_ = 'system-message')
+
+            # Get desired list item description
+            list_item_description = content or self.default_list_item
+
+            # Get all screenshots.
+            screenshots = api.get_screenshots_complete(cursor)
+
+            # Create and return HTML list of screenshots.
+            list_items = []
+            for screenshot in screenshots:
+                list_item = self._format_description(list_item_description,
+                  screenshot)
+                list_items.append(html.li(html.a(list_item, href =
+                  req.href.screenshots(screenshot['id']))))
+            return html.ul(list_items)
+
     # Internal functions
 
     def _screenshot_link(self, formatter, ns, params, label):
@@ -216,5 +267,11 @@ Example:
           screenshot['width']))
         description = description.replace('$height', to_unicode(
           screenshot['height']))
+        description = description.replace('$tags', to_unicode(
+          screenshot['tags']))
+        description = description.replace('$components',
+          ', '.join(screenshot['components']))
+        description = description.replace('$versions',
+          ', '.join(screenshot['versions']))
         return wiki_to_oneliner(description, self.env)
 
