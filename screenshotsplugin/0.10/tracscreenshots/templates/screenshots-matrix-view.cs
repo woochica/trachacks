@@ -20,6 +20,7 @@
                   &nbsp;
                 </div>
               <?cs /if ?>
+              <div class="name"><?cs alt:image.name ?>&nbsp;<?cs /alt ?></div>
               <?cs if:trac.acl.SCREENSHOTS_ADMIN ?>
                 <div class="controls">
                   <?cs if:image.id != -1 ?>

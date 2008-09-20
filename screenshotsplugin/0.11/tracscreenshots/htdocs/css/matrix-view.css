@@ -24,6 +24,12 @@ div.screenshots div.images div.noimage
   border: 2px solid #f7f7f7;
 }
 
+div.screenshots div.images div.name
+{
+  font-size: 75%;
+  text-align: center;
+}
+
 /* Controls style. */
 div.screenshots div.controls
 {

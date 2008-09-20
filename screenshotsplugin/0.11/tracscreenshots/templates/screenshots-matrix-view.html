@@ -18,6 +18,7 @@
                     &nbsp;
                   </div>
                 </py:choose>
+               <div class="name">${image.name or '&nbsp;'}</div>
                 <div py:if="'SCREENSHOTS_ADMIN' in perm" class="controls">
                   <py:choose>
                     <py:when test="image.id != -1">
