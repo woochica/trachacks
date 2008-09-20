@@ -26,14 +26,14 @@ class KeywordSuggestModule(Component):
         mustmatch = 'mustMatch: true,' \
             if self.config.getbool('keywordsuggest','mustmatch') else ""
 
-		# inject transient part of javascript directly into ticket.html template
+        # inject transient part of javascript directly into ticket.html template
         js = """
         $(function($) {
         $('#field-keywords').autocomplete([%s], {multiple: true, 
                                           %s autoFill: true}); 
         });""" % (keywords, mustmatch)
         stream = stream | Transformer('.//head').append \
-		                  (tag.script(js, type='text/javascript'))
+                          (tag.script(js, type='text/javascript'))
         return stream
 
     # ITemplateProvider methods
