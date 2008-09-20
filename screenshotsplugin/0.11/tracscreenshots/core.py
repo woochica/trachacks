@@ -360,41 +360,39 @@ class ScreenshotsCore(Component):
                 # Get old screenshot
                 old_screenshot = api.get_screenshot(context, screenshot_id)
 
-                if old_screenshot:
-                    # Construct screenshot dictionary from form values.
-                    screenshot = {'name' :  context.req.args.get('name'),
-                                  'description' : context.req.args.get(
-                                    'description'),
-                                  'author' : context.req.authname,
-                                  'tags' : context.req.args.get('tags'),
-                                  'components' : context.req.args.get(
-                                    'components') or [],
-                                  'versions' : context.req.args.get('versions') or []}
-
-                    # Convert components and versions to list if only one item is
-                    # selected.
-                    if not isinstance(screenshot['components'], list):
-                         screenshot['components'] = [screenshot['components']]
-                    if not isinstance(screenshot['versions'], list):
-                         screenshot['versions'] = [screenshot['versions']]
-
-                    self.log.debug(screenshot)
-
-                    # Edit screenshot.
-                    api.edit_screenshot(context, screenshot_id, screenshot)
-
-
-                    # Notify change listeners.
-                    for listener in self.change_listeners:
-                        listener.screenshot_changed(context.req, screenshot,
-                          old_screenshot)
-
-                    # Clear id to prevent display of edit and delete button.
-                    context.req.args['id'] = None
-
-                else:
+                # Check if requested screenshot exits.
+                if not old_screenshot:
                     raise TracError('Edited screenshot not found.',
                       'Screenshot not found.')
+
+                # Construct screenshot dictionary from form values.
+                screenshot = {'name' :  context.req.args.get('name'),
+                              'description' : context.req.args.get(
+                                'description'),
+                              'author' : context.req.authname,
+                              'tags' : context.req.args.get('tags'),
+                              'components' : context.req.args.get(
+                                'components') or [],
+                              'versions' : context.req.args.get('versions') or []}
+
+                # Convert components and versions to list if only one item is
+                # selected.
+                if not isinstance(screenshot['components'], list):
+                     screenshot['components'] = [screenshot['components']]
+                if not isinstance(screenshot['versions'], list):
+                     screenshot['versions'] = [screenshot['versions']]
+
+                # Edit screenshot.
+                api.edit_screenshot(context, screenshot_id, screenshot)
+
+
+                # Notify change listeners.
+                for listener in self.change_listeners:
+                    listener.screenshot_changed(context.req, screenshot,
+                      old_screenshot)
+
+                # Clear id to prevent display of edit and delete button.
+                context.req.args['id'] = None
 
             elif action == 'delete':
                 context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
@@ -405,6 +403,10 @@ class ScreenshotsCore(Component):
                 # Get screenshot.
                 screenshot = api.get_screenshot(context, screenshot_id)
 
+                # Check if requested screenshot exits.
+                if not screenshot:
+                    raise TracError('Deleted screenshot not found.',
+                      'Screenshot not found.')
                 try:
                     # Delete screenshot.
                     api.delete_screenshot(context, screenshot['id'])

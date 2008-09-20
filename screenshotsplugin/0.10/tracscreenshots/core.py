@@ -9,6 +9,7 @@ from trac.web.chrome import Chrome, add_stylesheet, add_script
 from trac.web.clearsilver import HDFWrapper
 from trac.util import format_datetime, pretty_timedelta, TracError
 from trac.util.html import html
+from trac.util.text import to_unicode
 
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
@@ -340,35 +341,35 @@ class ScreenshotsCore(Component):
                 screenshot_id = int(req.args.get('id') or 0)
                 old_screenshot = api.get_screenshot(cursor, screenshot_id)
 
-                if old_screenshot:
-                    # Construct screenshot dictionary from form values.
-                    screenshot = {'name' :  req.args.get('name'),
-                                  'description' : req.args.get('description'),
-                                  'author' : req.authname,
-                                  'tags' : req.args.get('tags'),
-                                  'components' : req.args.get('components') or [],
-                                  'versions' : req.args.get('versions') or []}
-
-                    # Converst components and versions to list if only one item is
-                    # selected.
-                    if not isinstance(screenshot['components'], list):
-                         screenshot['components'] = [screenshot['components']]
-                    if not isinstance(screenshot['versions'], list):
-                         screenshot['versions'] = [screenshot['versions']]
-
-                    # Edit screenshot.
-                    api.edit_screenshot(cursor, screenshot_id, screenshot)
-
-                    # Notify change listeners.
-                    for listener in self.change_listeners:
-                        listener.screenshot_changed(screenshot, old_screenshot)
-
-                    # Clear id to prevent display of edit and delete button.
-                    req.args['id'] = None
-
-                else:
+                # Check if requested screenshot exits.
+                if not old_screenshot:
                     raise TracError('Edited screenshot not found.',
                       'Screenshot not found.')
+
+                # Construct screenshot dictionary from form values.
+                screenshot = {'name' :  req.args.get('name'),
+                              'description' : req.args.get('description'),
+                              'author' : req.authname,
+                              'tags' : req.args.get('tags'),
+                              'components' : req.args.get('components') or [],
+                              'versions' : req.args.get('versions') or []}
+
+                # Converst components and versions to list if only one item is
+                # selected.
+                if not isinstance(screenshot['components'], list):
+                     screenshot['components'] = [screenshot['components']]
+                if not isinstance(screenshot['versions'], list):
+                     screenshot['versions'] = [screenshot['versions']]
+
+                # Edit screenshot.
+                api.edit_screenshot(cursor, screenshot_id, screenshot)
+
+                # Notify change listeners.
+                for listener in self.change_listeners:
+                    listener.screenshot_changed(screenshot, old_screenshot)
+
+                # Clear id to prevent display of edit and delete button.
+                req.args['id'] = None
 
             elif action == 'delete':
                 req.perm.assert_permission('SCREENSHOTS_ADMIN')
@@ -376,11 +377,16 @@ class ScreenshotsCore(Component):
                 # Get screenshot.
                 screenshot = api.get_screenshot(cursor, req.args.get('id'))
 
-                try:
-                    # Delete screenshot.
-                    api.delete_screenshot(cursor, screenshot['id'])
+                # Check if requested screenshot exits.
+                if not screenshot:
+                    raise TracError('Deleted screenshot not found.',
+                      'Screenshot not found.')
 
-                    # Delete screenshot files. Don't append any other files there :-).
+                # Delete screenshot.
+                api.delete_screenshot(cursor, screenshot['id'])
+
+                # Delete screenshot files. Don't append any other files there :-).
+                try:
                     path = os.path.join(self.path, to_unicode(screenshot['id']))
                     path = os.path.normpath(path)
                     self.log.debug('path: %s' % (path,))
