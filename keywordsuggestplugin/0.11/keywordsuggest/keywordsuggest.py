@@ -16,24 +16,24 @@ class KeywordSuggestModule(Component):
         if (filename <> 'ticket.html'):
             return stream
        
-        keywords = self.config.getlist('keywordsuggest','tags')
+        keywords = self.config.getlist('keywordsuggest','keywords')
         if not keywords:
-            self.log.debug('List of tags not found in trac.ini. '\
+            self.log.debug('List of keywords not found in trac.ini. '\
                            'Plugin keywordsuggest disabled.')
             return stream
 
-        keywords = ','.join( ("'%s'"%keyw for keyw in keywords) )
+        keywords = ','.join(("'%s'" % keyword for keyword in keywords))
         mustmatch = 'mustMatch: true,' \
             if self.config.getbool('keywordsuggest','mustmatch') else ""
 
+		# inject transient part of javascript directly into ticket.html template
         js = """
         $(function($) {
         $('#field-keywords').autocomplete([%s], {multiple: true, 
                                           %s autoFill: true}); 
-        });
-        """ % (keywords, mustmatch)
-        autocomplete_keywords = tag.script(js, type='text/javascript')
-        stream = stream | Transformer('.//head').append(autocomplete_keywords)
+        });""" % (keywords, mustmatch)
+        stream = stream | Transformer('.//head').append \
+		                  (tag.script(js, type='text/javascript'))
         return stream
 
     # ITemplateProvider methods
