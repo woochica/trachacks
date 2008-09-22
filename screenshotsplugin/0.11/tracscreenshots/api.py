@@ -243,7 +243,6 @@ class ScreenshotsApi(Component):
         del tmp_screenshot['versions']
         self._edit_item(context, 'screenshot', id, tmp_screenshot)
 
-
     # Delete item functions
 
     def delete_screenshot(self, context, id):

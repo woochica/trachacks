@@ -178,52 +178,58 @@ class ScreenshotsCore(Component):
                 # Get screenshot.
                 screenshot = api.get_screenshot(context, screenshot_id)
 
-                if screenshot:
-                    # Set missing dimensions.
-                    width = width or screenshot['width']
-                    height = height or screenshot['height']
-
-                    if format == 'html':
-                        # Format screenshot for presentation.
-                        screenshot['author'] = format_to_oneliner(self.env, context,
-                          screenshot['author'])
-                        screenshot['name'] = format_to_oneliner(self.env, context,
-                          screenshot['name'])
-                        screenshot['description'] = format_to_oneliner(self.env,
-                          context, screenshot['description'])
-                        screenshot['time'] = pretty_timedelta(to_datetime(
-                          screenshot['time'], utc))
-
-                        # For HTML preview format return template.
-                        self.data['screenshot'] = screenshot
-                        return ('screenshot', None)
+                # Check if requested screenshot exists.
+                if not screenshot:
+                    if context.req.perm.has_permission('SCREENSHOTS_ADMIN'):
+                        context.req.redirect(context.req.href.screenshots(
+                          action = 'add'))
                     else:
-                        # Prepare screenshot filename.
-                        name, ext = os.path.splitext(screenshot['file'])
-                        format = (format == 'raw') and ext or '.' + format
-                        path = os.path.join(self.path, to_unicode(
-                          screenshot['id']))
-                        filename = os.path.join(path, '%s-%sx%s%s' % (name,
-                          width, height, format))
-                        orig_name = os.path.join(path, '%s-%sx%s%s' % (name,
-                          screenshot['width'], screenshot['height'], ext))
-                        self.log.debug('filemame: %s' % (filename,))
+                        raise TracError('Screenshot not found.')
 
-                        # Create requested file from original if not exists.
-                        if not os.path.exists(filename):
-                            self._create_image(orig_name, path, name, format,
-                              width, height)
+                # Set missing dimensions.
+                width = width or screenshot['width']
+                height = height or screenshot['height']
 
-                        # Send file to request.
-                        context.req.send_header('Content-Disposition',
-                          'attachment;filename=%s' % (os.path.basename(
-                          filename)))
-                        context.req.send_header('Content-Description',
-                          screenshot['description'])
-                        context.req.send_file(filename, mimetypes.guess_type(filename)
-                          [0])
+                if format == 'html':
+                    # Format screenshot for presentation.
+                    screenshot['author'] = format_to_oneliner(self.env, context,
+                      screenshot['author'])
+                    screenshot['name'] = format_to_oneliner(self.env, context,
+                      screenshot['name'])
+                    screenshot['description'] = format_to_oneliner(self.env,
+                      context, screenshot['description'])
+                    screenshot['time'] = pretty_timedelta(to_datetime(
+                      screenshot['time'], utc))
+
+                    # For HTML preview format return template.
+                    self.data['screenshot'] = screenshot
+                    return ('screenshot', None)
                 else:
-                    raise TracError('Screenshot not found.')
+                    # Prepare screenshot filename.
+                    name, ext = os.path.splitext(screenshot['file'])
+                    format = (format == 'raw') and ext or '.' + format
+                    path = os.path.join(self.path, to_unicode(
+                      screenshot['id']))
+                    filename = os.path.join(path, '%s-%sx%s%s' % (name,
+                      width, height, format))
+                    orig_name = os.path.join(path, '%s-%sx%s%s' % (name,
+                      screenshot['width'], screenshot['height'], ext))
+
+                    self.log.debug('filemame: %s' % (filename,))
+
+                    # Create requested file from original if not exists.
+                    if not os.path.exists(filename):
+                        self._create_image(orig_name, path, name, format,
+                          width, height)
+
+                    # Send file to request.
+                    context.req.send_header('Content-Disposition',
+                      'attachment;filename=%s' % (os.path.basename(
+                      filename)))
+                    context.req.send_header('Content-Description',
+                      screenshot['description'])
+                    context.req.send_file(filename, mimetypes.guess_type(filename)
+                      [0])
 
             elif action == 'add':
                 context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
@@ -246,15 +252,6 @@ class ScreenshotsCore(Component):
                 file, filename = self._get_file_from_req(context.req)
                 name, ext = os.path.splitext(filename)
                 filename = name + ext.lower()
-
-                # Check correct file type.
-                reg = re.compile(r'^(.*)[.](.*)$')
-                result = reg.match(filename)
-                if result:
-                    if not result.group(2).lower() in self.ext:
-                        raise TracError('Unsupported uploaded file type.')
-                else:
-                    raise TracError('Unsupported uploaded file type.')
 
                 # Create image object.
                 image = Image.open(file)
@@ -299,11 +296,13 @@ class ScreenshotsCore(Component):
                 self.log.debug(screenshot)
 
                 # Prepare file paths
+                name, ext = os.path.splitext(screenshot['file'])
                 path = os.path.join(self.path, unicode(screenshot['id']))
-                filepath = os.path.join(path, '%s-%ix%i.%s' % (result.group(1),
-                  screenshot['width'], screenshot['height'], result.group(2)))
+                filepath = os.path.join(path, '%s-%ix%i%s' % (name,
+                  screenshot['width'], screenshot['height'], ext))
                 path = os.path.normpath(path)
                 filepath = os.path.normpath(filepath)
+
                 self.log.debug('path: %s' % (path,))
                 self.log.debug('filename: %s' % (filepath,))
 
@@ -316,10 +315,6 @@ class ScreenshotsCore(Component):
                     out_file.close()
                 except Exception, error:
                     api.delete_screenshot(context, screenshot['id'])
-                    try:
-                       self.log.debug(error)
-                    except:
-                       pass
                     try:
                         os.remove(filename)
                     except:
@@ -365,6 +360,15 @@ class ScreenshotsCore(Component):
                     raise TracError('Edited screenshot not found.',
                       'Screenshot not found.')
 
+                # Get image file from request.
+                image = context.req.args['image']
+                if hasattr(image, 'filename') and image.filename:
+                    in_file, filename = self._get_file_from_req(context.req)
+                    name, ext = os.path.splitext(filename)
+                    filename = name + ext.lower()
+                else:
+                    filename = None
+
                 # Construct screenshot dictionary from form values.
                 screenshot = {'name' :  context.req.args.get('name'),
                               'description' : context.req.args.get(
@@ -373,7 +377,15 @@ class ScreenshotsCore(Component):
                               'tags' : context.req.args.get('tags'),
                               'components' : context.req.args.get(
                                 'components') or [],
-                              'versions' : context.req.args.get('versions') or []}
+                              'versions' : context.req.args.get('versions') or \
+                                []}
+
+                # Update dimensions and filename if image file is updated.
+                if filename:
+                    image = Image.open(in_file)
+                    screenshot['file'] = filename
+                    screenshot['width'] = image.size[0]
+                    screenshot['height'] = image.size[1]
 
                 # Convert components and versions to list if only one item is
                 # selected.
@@ -382,16 +394,55 @@ class ScreenshotsCore(Component):
                 if not isinstance(screenshot['versions'], list):
                      screenshot['versions'] = [screenshot['versions']]
 
+                self.log.debug(screenshot)
+
                 # Edit screenshot.
                 api.edit_screenshot(context, screenshot_id, screenshot)
 
+                # Prepare file paths.
+                if filename:
+                    name, ext = os.path.splitext(screenshot['file'])
+                    path = os.path.join(self.path, unicode(screenshot_id))
+                    filepath = os.path.join(path, '%s-%ix%i%s' % (name,
+                      screenshot['width'], screenshot['height'], ext))
+                    path = os.path.normpath(path)
+                    filepath = os.path.normpath(filepath)
+
+                    self.log.debug('path: %s' % (path,))
+                    self.log.debug('filepath: %s' % (filepath,))
+
+                    # Delete present images.
+                    try:
+                        for file in os.listdir(path):
+                            file = os.path.join(path, file)
+                            file = os.path.normpath(file)
+                            os.remove(file)
+                    except Exception, error:
+                        raise TracError('Error deleting screenshot. Original' \
+                          ' message was: %s' % (error,))
+
+                    # Store uploaded image.
+                    try:
+                        out_file = open(filepath, 'wb+') 
+                        in_file.seek(0)
+                        shutil.copyfileobj(in_file, out_file)
+                        out_file.close()
+                    except Exception, error:
+                        try:
+                            os.remove(filename)
+                        except:
+                            pass
+                        raise TracError('Error storing file. Is directory' \
+                          ' specified in path config option in [screenshots]' \
+                          ' section of trac.ini existing? Original message was: %s' \
+                          % (error,))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
                     listener.screenshot_changed(context.req, screenshot,
                       old_screenshot)
 
-                # Clear id to prevent display of edit and delete button.
+                # Clear ID to prevent display of edit and delete button.
                 context.req.args['id'] = None
 
             elif action == 'delete':
@@ -407,14 +458,17 @@ class ScreenshotsCore(Component):
                 if not screenshot:
                     raise TracError('Deleted screenshot not found.',
                       'Screenshot not found.')
-                try:
-                    # Delete screenshot.
-                    api.delete_screenshot(context, screenshot['id'])
 
-                    # Delete screenshot files. Don't append any other files there :-).
-                    path = os.path.join(self.path, to_unicode(screenshot['id']))
-                    path = os.path.normpath(path)
-                    self.log.debug('path: %s' % (path,))
+                # Delete screenshot.
+                api.delete_screenshot(context, screenshot['id'])
+
+                # Delete screenshot files. Don't append any other files there :-).
+                path = os.path.join(self.path, to_unicode(screenshot['id']))
+                path = os.path.normpath(path)
+
+                self.log.debug('path: %s' % (path,))
+
+                try:
                     for file in os.listdir(path):
                         file = os.path.join(path, file)
                         file = os.path.normpath(file)
@@ -526,7 +580,16 @@ class ScreenshotsCore(Component):
         if size == 0:
             raise TracError('Can\'t upload empty file.')
         filename = os.path.basename(image.filename).decode('utf-8')
-        self.log.debug(filename)
+
+        # Check correct file type.
+        reg = re.compile(r'^(.*)[.](.*)$')
+        result = reg.match(filename)
+        if result:
+            if not result.group(2).lower() in self.ext:
+                raise TracError('Unsupported uploaded file type.')
+        else:
+            raise TracError('Unsupported uploaded file type.')
+
         return image.file, filename
 
     def _get_enabled_components(self, req):

@@ -24,7 +24,7 @@
             <label for="description">Description:</label><br/>
             <input type="text" id="description" name="description" value="${(req.args.action == 'edit') and screenshots.screenshot.description or ''}"/><br/>
           </div>
-          <div py:if="req.args.action == 'add'" class="field">
+          <div class="field">
             <label for="image">Image File:</label><br/>
             <input type="file" id="image" name="image" value=""/><br/>
           </div>
