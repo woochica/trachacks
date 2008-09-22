@@ -29,5 +29,5 @@ site_configuration should return a dictionary for every section
 supported by site-configuration .ini files.  In the case where no
 arguments are passed, these should be empty dictionaries:
 
-    >>> set(site_configuration.keys()) == sections
+    >>> set(site_configuration().keys()) == sections
     True
