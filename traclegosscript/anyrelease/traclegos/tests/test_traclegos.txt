@@ -1,12 +1,24 @@
 Test TracLegos class and associated functions
 =============================================
 
-The obligatory imports:
+The imports:
 
     >>> from pprint import pprint
+    >>> from traclegos.legos import traclegos_argspec
     >>> from traclegos.legos import TracLegos
 
-Test the constructor argument specification:
+Test the constructor argument specification.  This will have to be
+changed if TracLegos.__init__ is changed:
 
     >>> sorted(TracLegos.arguments().keys())
     ['directory', 'inherit', 'master', 'options', 'site_templates', 'vars']
+
+traclegos_argspec should use the left-most non-false value of a list
+of dictionaries to provide the arugments to construct TracLegos:
+
+    >>> print repr(traclegos_argspec()['directory'])
+    None
+    >>> traclegos_argspec({'directory': 'foo'}, {'directory': 'bar'})['directory']
+    'bar'
+    >>> traclegos_argspec({'directory': 'foo'}, {'directory': None})['directory']
+    'foo'
