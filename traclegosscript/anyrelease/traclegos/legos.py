@@ -53,6 +53,7 @@ class TracLegos(object):
         """
 
         self.directory = directory
+        assert self.directory # must have a directory to work in!
         self.site_templates = site_templates or []
         self.vars = { 'url': '', 'favicon': ''}
         self.vars.update(vars or {})
@@ -236,7 +237,7 @@ def traclegos_factory(ini_files, configuration, variables):
     returns configuration needed to drive a TracLegos constructor
     * ini_files: site configuration .ini files    
     * configuration: dictionary of overrides to TracLegos arguments
-    * variables: 
+    * variables: used for template substitution
     """
     conf = site_configuration(*ini_files)
     argspec = traclegos_argspec(conf['site-configuration'],
@@ -287,21 +288,15 @@ def parse(parser, args=None):
 
     options, args = parser.parse_args(args)
 
-    vars = {} # defined variables
-
     # parse command line variables and determine list of projects
-    projects = []
+    projects = [] # projects to create
+    vars = {} # defined variables
     for arg in args:
         if '=' in arg:
             variable, value = arg.split('=', 1)
             vars[variable] = value
         else:
             projects.append(arg)
-
-    # parse and apply site-configuration (including variables)
-    conf = site_configuration(*options.conf)
-    conf['variables'].update(vars)
-    vars = conf['variables']
 
     # list the packaged pastescript TracProject templates
     if options.listprojects:
@@ -330,13 +325,18 @@ def parse(parser, args=None):
         parser.print_help()
         return
 
+    # parse and apply site-configuration (including variables)
+    argspec = traclegos_factory(options.conf, options.__dict__, vars)
     # project creator
-    legos = TracLegos(directory=options.directory, inherit=options.inherit, vars=vars)
+    legos = TracLegos(**argspec)
     
     # XXX this is hackish
     # should return:
     # { project: { 'repository': repository, 'templates': options.templates, }
     # for each project
+    # or, better yet, legos, { dictionary of arugments to legos.create_project }
+    # (except projects isn't an argument....hmmmm)
+    # maybe the easy solution is just to make one project per invocation
     return legos, projects, options.templates, repository
 
 def main(args=None):
