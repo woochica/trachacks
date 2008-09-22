@@ -239,6 +239,7 @@ def traclegos_factory(ini_files, configuration, variables):
     * configuration: dictionary of overrides to TracLegos arguments
     * variables: used for template substitution
     """
+    # XXX could instead return a constructed TracLegos instance
     conf = site_configuration(*ini_files)
     argspec = traclegos_argspec(conf['site-configuration'],
                                 configuration)

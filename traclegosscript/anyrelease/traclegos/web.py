@@ -11,6 +11,7 @@ from genshi.template import TemplateLoader
 from trac.web.main import dispatch_request
 from traclegos.config import ConfigMunger
 from traclegos.legos import site_configuration
+from traclegos.legos import traclegos_factory
 from traclegos.legos import TracLegos
 from traclegos.project import project_dict
 from traclegos.repository import available_repositories
@@ -23,31 +24,18 @@ template_directory = os.path.join(os.path.dirname(__file__), 'templates')
 class View(object):
     """WebOb view which wraps trac and allows TTW project creations"""
 
-    # default values for instance variables 
-    # (settable through **kw to __init__)
-    defaults = {'conf': (),
-                'directory': None, 
-                'available_templates': None,
-                'available_repositories': None }
-
     def __init__(self, **kw):
 
-        # set instance variables
-        for key in self.defaults:
-            setattr(self, key, kw.get(key, self.defaults[key]))
-
-        # site configuration
-        self.conf = site_configuration(*self.conf)
-
-        assert self.directory # ensure the directory exists        
-
         # trac project creator
-        self.legos = TracLegos(self.directory, vars=self.conf['variables'])
+        argspec = traclegos_factory(kw.get('conf', ()),
+                                    kw,
+                                    kw.get('variables', {}))
+        self.legos = TracLegos(**argspec)
         self.legos.interactive = False
+        self.directory = self.legos.directory # XXX needed?
 
         # trac projects available
-        if self.available_templates is None:
-            self.available_templates = project_dict().keys()
+        self.available_templates = kw.get('available_templates') or project_dict().keys()
         assert self.available_templates
             
         # genshi template loader
@@ -64,6 +52,7 @@ class View(object):
 
         # available SCM repository types
         self.repositories = available_repositories()
+        self.available_repositories = kw.get('available_repositories')
         if self.available_repositories is None:
             self.available_repositories = ['NoRepository'] + [ name for name in self.repositories.keys() if name is not 'NoRepository' ]
             
@@ -184,7 +173,7 @@ class View(object):
         # process the request and save necessary data
         project_data = self.projects[project]
         project_data['type'] = project_type
-        project_data['vars'] = self.conf['variables']
+        project_data['vars'] = self.legos.vars.copy()
         project_data['vars'].update({'project': project,
                                      'description': req.POST.get('project_name').strip() or project,
                                      'url': req.POST.get('alternate_url')

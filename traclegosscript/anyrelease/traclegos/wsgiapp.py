@@ -12,11 +12,19 @@ def str2list(string):
 def make_app(global_conf, **app_conf):
     """create the traclegos view and wrap it in middleware"""
     key_str = 'traclegos.'
-    list_items = [ 'conf' ]
+
+    # constructor arguments
+    list_items = [ 'conf', 'site_templates', 
+                   'available_templates', 'available_repositories' ]
     args = dict([(key.split(key_str, 1)[-1], value)
                  for key, value in app_conf.items()
                  if key.startswith(key_str) ])
     for item in list_items:
         args[item] = str2list(args.get(item, ''))
+
+    # variables
+    args['variables'] = dict([(key.split(key_str, 1)[-1], value)
+                              for key, value in global_conf.items()
+                              if key.startswith(key_str) ])
     app = View(**args)
     return HTTPExceptionHandler(app)
