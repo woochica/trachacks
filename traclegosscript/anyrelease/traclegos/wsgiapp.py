@@ -20,7 +20,8 @@ def make_app(global_conf, **app_conf):
                  for key, value in app_conf.items()
                  if key.startswith(key_str) ])
     for item in list_items:
-        args[item] = str2list(args.get(item, ''))
+        if args.has_key(item):
+            args[item] = str2list(args[item])
 
     # variables
     args['variables'] = dict([(key.split(key_str, 1)[-1], value)
