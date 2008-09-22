@@ -207,11 +207,12 @@ class TracLegos(object):
         # via trac-admin
 
 
-### method for site configuration
+### site configuration
+
+sections = set(('site-configuration', 'variables', ))
 
 def site_configuration(*ini_files):
     """returns a dictionary of configuration from .ini files"""
-    sections = ( 'variables', 'site-configuration')
     conf = ConfigMunger(*ini_files).dict()
     for section in sections:
         if section not in conf:
@@ -228,16 +229,22 @@ def traclegos_argspec(*dictionaries):
     for key in argspec:
         args = [ dictionary.get(key) for dictionary in dictionaries ]
         argspec[key] = reduce(lambda x, y: y or x, args, argspec[key])
-
     return argspec
 
 def traclegos_factory(ini_files, configuration, variables):
     """
     returns configuration needed to drive a TracLegos constructor
     * ini_files: site configuration .ini files    
+    * configuration: dictionary of overrides to TracLegos arguments
+    * variables: 
     """
     conf = site_configuration(*ini_files)
-    
+    argspec = traclegos_argspec(conf['site-configuration'],
+                                configuration)
+    argspec['vars'] = argspec['vars'] or {}
+    argspec['vars'].update(conf['variables'])
+    argspec['vars'].update(variables)
+    return argspec
 
 ### functions for the command line front-end to TracLegos
 
@@ -282,11 +289,6 @@ def parse(parser, args=None):
 
     vars = {} # defined variables
 
-    # parse and apply site-configuration (including variables)
-    conf = site_configuration(*options.conf)
-    vars.update(conf['variables'])
-    # TODO: set other options from configuration
-
     # parse command line variables and determine list of projects
     projects = []
     for arg in args:
@@ -296,6 +298,11 @@ def parse(parser, args=None):
         else:
             projects.append(arg)
 
+    # parse and apply site-configuration (including variables)
+    conf = site_configuration(*options.conf)
+    conf['variables'].update(vars)
+    vars = conf['variables']
+
     # list the packaged pastescript TracProject templates
     if options.listprojects:
         print 'Available projects:'
@@ -303,8 +310,9 @@ def parse(parser, args=None):
             print '%s: %s' % (name, template.summary)
         return
 
+    # get the repository
     repository = None
-    if options.repository: # get the repository
+    if options.repository: 
         repository = available_repositories().get(options.repository)
         if not repository:
             print 'Error: repository type "%s" not available\n' % options.repository
