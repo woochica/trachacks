@@ -1,0 +1,12 @@
+Test TracLegos class and associated functions
+=============================================
+
+The obligatory imports:
+
+    >>> from pprint import pprint
+    >>> from traclegos.legos import TracLegos
+
+Test the constructor argument specification:
+
+    >>> sorted(TracLegos.arguments().keys())
+    ['directory', 'inherit', 'master', 'options', 'site_templates', 'vars']
