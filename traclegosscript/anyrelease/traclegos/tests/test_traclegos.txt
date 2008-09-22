@@ -4,6 +4,8 @@ Test TracLegos class and associated functions
 The imports:
 
     >>> from pprint import pprint
+    >>> from traclegos.legos import sections
+    >>> from traclegos.legos import site_configuration
     >>> from traclegos.legos import traclegos_argspec
     >>> from traclegos.legos import TracLegos
 
@@ -22,3 +24,10 @@ of dictionaries to provide the arugments to construct TracLegos:
     'bar'
     >>> traclegos_argspec({'directory': 'foo'}, {'directory': None})['directory']
     'foo'
+
+site_configuration should return a dictionary for every section
+supported by site-configuration .ini files.  In the case where no
+arguments are passed, these should be empty dictionaries:
+
+    >>> set(site_configuration.keys()) == sections
+    True
