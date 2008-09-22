@@ -211,7 +211,7 @@ class TracLegos(object):
 
 def site_configuration(*ini_files):
     """returns a dictionary of configuration from .ini files"""
-    sections = ( 'variables', )
+    sections = ( 'variables', 'site-configuration')
     conf = ConfigMunger(*ini_files).dict()
     for section in sections:
         if section not in conf:
@@ -230,6 +230,14 @@ def traclegos_argspec(*dictionaries):
         argspec[key] = reduce(lambda x, y: y or x, args, argspec[key])
 
     return argspec
+
+def traclegos_factory(ini_files, configuration, variables):
+    """
+    returns configuration needed to drive a TracLegos constructor
+    * ini_files: site configuration .ini files    
+    """
+    conf = site_configuration(*ini_files)
+    
 
 ### functions for the command line front-end to TracLegos
 
