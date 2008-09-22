@@ -38,7 +38,7 @@ Test variable interpolation:
      ... except InterpolationMissingOptionError, e:
      ... 	print e.reference
      value
-     >>> munger.write(vars=dict(value='interpolated'))
+     >>> munger.write(sys.stdout, vars=dict(value='interpolated'))
      [foo]
      bar = thorg
      blah = florg
@@ -63,7 +63,7 @@ You can read from a dictionary too:
     >>> munger.read({'foo': {'bar': 'baz'}})
     >>> munger['foo']['bar']
     'baz'
-    >>> munger.write()
+    >>> munger.write(sys.stdout)
     [foo]
     bar = baz
 	
