@@ -23,8 +23,9 @@ class KeywordSuggestModule(Component):
             return stream
 
         keywords = ','.join(("'%s'" % keyword for keyword in keywords))
-        mustmatch = 'mustMatch: true,' \
-            if self.config.getbool('keywordsuggest','mustmatch') else ""
+        mustmatch = 'mustMatch: true,'
+        if not self.config.getbool('keywordsuggest','mustmatch'):
+            mustmatch = ""
 
         # inject transient part of javascript directly into ticket.html template
         js = """
