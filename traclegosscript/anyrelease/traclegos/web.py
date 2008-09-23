@@ -159,7 +159,6 @@ class View(object):
         logo = req.POST['logo']
         logo_file = None
         if logo:
-            # TODO:  check for existence of logo if given as a URL
             if not logo.startswith('http://') or logo.startswith('https://'):
                 if os.path.exists(logo):
                     logo_file = file(logo, 'rb')

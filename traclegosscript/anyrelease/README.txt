@@ -1,6 +1,6 @@
 = TracLegos =
 
-[ this is a work in progress;  this is more of a roadmap than a README ]
+For full documentation and examples, see http://trac-hacks.org/wiki/TracLegosScript
 
 TracLegos is software designed to assist with trac project creation.  
 The idea is that project templates may be created according to project
@@ -8,7 +8,7 @@ type and need.
 Its goal is to make project creation easy and flexible, allowing
 flexibility with regards to creation methodology as well as
 extensibility as a project factory for environments with advanced
-needs.  TracLegos is not [at least by design, yet] meant for project
+needs.  TracLegos is not intended for project
 upgrading or maintainence, but only to setup a project with sensible
 defaults. 
 
@@ -23,7 +23,7 @@ TracLegos can be invoked in a number of ways:
  * programmatically
 
 Different methods of invocation are differently important to different
-environments. TracLegos (in {{{legos.py}}}) is meant to be the "head"
+environments. The TracLegos class (in {{{legos.py}}}) is meant to be the head
 of the octopus, and ideally will do little else but coordinate the
 other moving parts.
 
@@ -99,10 +99,12 @@ A TracProject template typically contains:
 
   * any other code required for executation to make the template
 
-Tools may be provided [TODO] that convert a user's trac.ini file into
-a TracProject template (and will do so with a PasteScript template).
+Tools are provided (ini2trac) that convert a user's trac.ini file into
+a TracProject template.
 
 PasteScript may also be used to create projects instead of TracLegos.
+In this case, currently, the skeleton is fleshed out but the project
+is not created via trac.
 [I'm not sure if running PasteScript will be fully capable of doing
 all the steps that TracLegos does.  Worth investigating.]
 
@@ -111,8 +113,9 @@ all the steps that TracLegos does.  Worth investigating.]
 
 TracLegos also provides a web interface to project creation which
 provides a custom index.html file and allows TTW project creation for
-authorized individuals [authorization TBD...in fact, most of the web
-interface TBD].  The project creation as viewed TTW is as follows:
+authorized individuals [TBD -- right now if you can see the webpage,
+you *are* authorized].  
+The project creation as viewed TTW is as follows:
 
  * Initial project creation:  project name, logo, and type of project.
    The type of project is chosen from a drop-down menu that contains
@@ -164,7 +167,7 @@ For each project, the following steps are applied:
 
  * [TODO] any inherited/master configuration is updated
 
- * [TODO] the project is upgraded
+ * the project is upgraded
 
  * [TODO] addition of groups, milestones, and other database items
 
