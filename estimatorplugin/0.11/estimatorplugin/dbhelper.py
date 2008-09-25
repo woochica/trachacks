@@ -169,7 +169,7 @@ class ResultSet:
         json = "[%s]" % ',\r\n'. join(
             [("{%s}" % ','.join(
             ["'%s':'%s'" %
-             (key, str(self.value(val, row)).
+             (key, unicode(self.value(val, row)).
               replace("'","\\'").
               replace('"','\\"').
               replace('\r','\\r').
