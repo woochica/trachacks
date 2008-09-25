@@ -16,7 +16,7 @@ def sh(*args, **kw):
     command = ' '.join(args)
     verbose = kw.get('verbose', True)
     if verbose:
-        print '> %s' % command
+        print '> %s' % str(command)
     try:
         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError, e:
