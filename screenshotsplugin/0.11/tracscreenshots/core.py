@@ -58,15 +58,26 @@ class ScreenshotsCore(Component):
       doc = 'List of components enabled by default.')
     default_versions = ListOption('screenshots', 'default_versions', 'none',
       doc = 'List of versions enabled by default.')
+    default_filter_relation = Option('screenshots', 'default_filter_relation',
+      'or', doc = 'Logical relation between component and version part of'
+      ' screenshots filter.')
+    default_orders = ListOption('screenshots', 'default_orders',
+      'id', doc = 'List of names of database fields that are used to'
+      ' sort screenshots.')
+    default_order_directions = ListOption('screenshots',
+      'default_order_directions', 'asc', doc = 'List of ordering '
+      'directions for fields specified in default_orders configuration '
+      'options.')
 
     # IPermissionRequestor methods.
 
     def get_permission_actions(self):
         view = 'SCREENSHOTS_VIEW'
         filter = ('SCREENSHOTS_FILTER', ['SCREENSHOTS_VIEW'])
-        admin = ('SCREENSHOTS_ADMIN', ['SCREENSHOTS_FILTER',
-          'SCREENSHOTS_VIEW'])
-        return [view, filter, admin]
+        order = ('SCREENSHOTS_ORDER', ['SCREENSHOTS_VIEW'])
+        admin = ('SCREENSHOTS_ADMIN', ['SCREENSHOTS_ORDER',
+          'SCREENSHOTS_FILTER', 'SCREENSHOTS_VIEW'])
+        return [view, filter, order, admin]
 
     # ITemplateProvider methods.
 
@@ -153,6 +164,8 @@ class ScreenshotsCore(Component):
             return ['delete', 'view']
         elif action == 'filter':
             return ['filter', 'view']
+        elif action == 'order':
+            return ['order', 'view']
         else:
             return ['view']
 
@@ -264,7 +277,9 @@ class ScreenshotsCore(Component):
                               'tags' : context.req.args.get('tags'),
                               'file' : filename,
                               'width' : image.size[0],
-                              'height' : image.size[1]}
+                              'height' : image.size[1],
+                              'priority' : int(context.req.args.get('priority')
+                                or '0')}
 
                 # Add new screenshot.
                 api.add_screenshot(context, screenshot)
@@ -293,7 +308,7 @@ class ScreenshotsCore(Component):
                     api.add_version(context, version)
                 screenshot['versions'] = versions
 
-                self.log.debug(screenshot)
+                self.log.debug('screenshot: %s' % (screenshot,))
 
                 # Prepare file paths
                 name, ext = os.path.splitext(screenshot['file'])
@@ -326,7 +341,7 @@ class ScreenshotsCore(Component):
                     raise TracError('Error storing file. Is directory' \
                       ' specified in path config option in [screenshots]' \
                       ' section of trac.ini existing? Original message was: %s' \
-                      % (error,))
+                      % (to_unicode(error),))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -344,7 +359,6 @@ class ScreenshotsCore(Component):
                 # Prepare data dictionary.
                 self.data['screenshot'] = api.get_screenshot(context,
                   screenshot_id)
-                self.log.debug(self.data['screenshot'])
 
             elif action == 'post-edit':
                 context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
@@ -378,7 +392,9 @@ class ScreenshotsCore(Component):
                               'components' : context.req.args.get(
                                 'components') or [],
                               'versions' : context.req.args.get('versions') or \
-                                []}
+                                [],
+                              'priority' : int(context.req.args.get('priority')
+                                or '0')}
 
                 # Update dimensions and filename if image file is updated.
                 if filename:
@@ -394,7 +410,7 @@ class ScreenshotsCore(Component):
                 if not isinstance(screenshot['versions'], list):
                      screenshot['versions'] = [screenshot['versions']]
 
-                self.log.debug(screenshot)
+                self.log.debug('screenshot: %s' % (screenshot))
 
                 # Edit screenshot.
                 api.edit_screenshot(context, screenshot_id, screenshot)
@@ -419,7 +435,7 @@ class ScreenshotsCore(Component):
                             os.remove(file)
                     except Exception, error:
                         raise TracError('Error deleting screenshot. Original' \
-                          ' message was: %s' % (error,))
+                          ' message was: %s' % (to_unicode(error),))
 
                     # Store uploaded image.
                     try:
@@ -435,7 +451,7 @@ class ScreenshotsCore(Component):
                         raise TracError('Error storing file. Is directory' \
                           ' specified in path config option in [screenshots]' \
                           ' section of trac.ini existing? Original message was: %s' \
-                          % (error,))
+                          % (to_unicode(error),))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -476,7 +492,7 @@ class ScreenshotsCore(Component):
                     os.rmdir(path)
                 except Exception, error:
                     raise TracError('Error deleting screenshot. Original' \
-                      ' message was: %s' % (error,))
+                      ' message was: %s' % (to_unicode(error),))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -486,17 +502,35 @@ class ScreenshotsCore(Component):
                 context.req.args['id'] = None
 
             elif action == 'filter':
+                context.req.perm.assert_permission('SCREENSHOTS_FILTER')
+
                 # Update enabled components from request.
                 components = context.req.args.get('components') or []
                 if not isinstance(components, list):
                     components = [components]
-                context.req.session['enabled_components'] = str(components)
+                self._set_enabled_components(context.req, components)
 
                 # Update enabled versions from request.
                 versions = context.req.args.get('versions') or []
                 if not isinstance(versions, list):
                     versions = [versions]
-                context.req.session['enabled_versions'] = str(versions)
+                self._set_enabled_versions(context.req, versions)
+
+                # Update filter relation from request.
+                relation = context.req.args.get('filter_relation') or 'or'
+                self._set_filter_relation(context.req, relation)
+
+            elif action == 'order':
+                context.req.perm.assert_permission('SCREENSHOTS_ORDER')
+
+                # Get three order fields from request and store them to session.
+                orders = []
+                I = 0
+                while context.req.args.has_key('order_%s' % (I,)):
+                    orders.append((context.req.args.get('order_%s' % (I,)) or 'id',
+                      context.req.args.get('order_direction_%s' % (I,)) or 'asc'))
+                    I += 1
+                self._set_orders(context.req, orders)
 
             elif action == 'view':
                 context.req.perm.assert_permission('SCREENSHOTS_VIEW')
@@ -515,9 +549,11 @@ class ScreenshotsCore(Component):
                 versions = [self.none_version] + api.get_versions(
                   context.cursor)
 
-                # Get enabled components and versions from request or session.
+                # Get enabled components, versions and filter relation from
+                # request or session.
                 enabled_components = self._get_enabled_components(context.req)
                 enabled_versions = self._get_enabled_versions(context.req)
+                relation = self._get_filter_relation(context.req)
                 if 'all' in enabled_components:
                     enabled_components = [component['name'] for component in
                     components]
@@ -525,11 +561,16 @@ class ScreenshotsCore(Component):
                     enabled_versions = [version['name'] for version in
                     versions]
 
-                self.log.debug(enabled_components)
+                self.log.debug('enabled_components: %s' % (enabled_components,))
+                self.log.debug('enabled_versions: %s' % (enabled_versions,))
+                self.log.debug('filter_relation: %s' % (relation,))
+
+                # Get order fields of screenshots.
+                orders = self._get_orders(context.req)
 
                 # Filter screenshots.
                 screenshots = api.get_filtered_screenshots(context,
-                  enabled_components, enabled_versions)
+                  enabled_components, enabled_versions, relation, orders)
 
                 # Convert enabled components and versions to dictionary.
                 enabled_components = dict(zip(enabled_components, [True] *
@@ -545,6 +586,8 @@ class ScreenshotsCore(Component):
                 self.data['href'] = context.req.href.screenshots()
                 self.data['enabled_versions'] = enabled_versions
                 self.data['enabled_components'] = enabled_components
+                self.data['filter_relation'] = relation
+                self.data['orders'] = orders
 
                 # Get screenshots content template and data.
                 template, content_type = self.renderers[0]. \
@@ -595,29 +638,73 @@ class ScreenshotsCore(Component):
     def _get_enabled_components(self, req):
         if req.perm.has_permission('SCREENSHOTS_FILTER'):
             # Return existing filter from session or create default.
-            if req.session.has_key('enabled_components'):
-                components = eval(req.session.get('enabled_components'))
+            if req.session.has_key('screenshots_enabled_components'):
+                components = eval(req.session.get('screenshots_enabled_'
+                  'components'))
             else:
                 components = self.default_components
-                req.session['enabled_components'] = str(components)
+                req.session['screenshots_enabled_components'] = str(components)
         else:
             # Users without SCREENSHOTS_FILTER permission uses
             # 'default_components' configuration option.
             components = self.default_components
-        self.log.debug('enabled_components: %s' % (components,))
         return components
+
+    def _set_enabled_components(self, req, components):
+        req.session['screenshots_enabled_components'] = str(components)
 
     def _get_enabled_versions(self, req):
         if req.perm.has_permission('SCREENSHOTS_FILTER'):
             # Return existing filter from session or create default.
-            if req.session.has_key('enabled_versions'):
-                versions = eval(req.session.get('enabled_versions'))
+            if req.session.has_key('screenshots_enabled_versions'):
+                versions = eval(req.session.get('screenshots_enabled_versions'))
             else:
                 versions = self.default_versions
-                req.session['enabled_versions'] = str(versions)
+                req.session['screenshots_enabled_versions'] = str(versions)
         else:
             # Users without SCREENSHOTS_FILTER permission uses
             # 'default_versions' configuration option.
             versions = self.default_versions
-        self.log.debug('enabled_versions: %s' % (versions,))
         return versions
+
+    def _set_enabled_versions(self, req, versions):
+        req.session['screenshots_enabled_versions'] = str(versions)
+
+    def _get_filter_relation(self, req):
+        if req.perm.has_permission('SCREENSHOTS_FILTER'):
+            # Return existing filter relation from session or create default.
+            if req.session.has_key('screenshots_filter_relation'):
+                relation = req.session.get('screenshots_filter_relation')
+            else:
+                relation = self.default_filter_relation
+                req.session['screenshots_filter_relation'] = relation
+        else:
+            # Users without SCREENSHOTS_FILTER permission uses
+            # 'default_filter_relation' configuration option.
+            relation = self.default_filter_relation
+        return relation
+
+    def _set_filter_relation(self, req, relation):
+        req.session['screenshots_filter_relation'] = relation
+
+    def _get_orders(self, req):
+        if req.perm.has_permission('SCREENSHOTS_ORDER'):
+            # Get ordering fields from session or default ones.
+            if req.session.has_key('screenshots_orders'):
+                orders = eval(req.session.get('screenshots_orders'))
+            else:
+                orders = tuple(self.default_orders)
+                directions = tuple(self.default_order_directions)
+                orders = [(orders[I], directions[I]) for I in \
+                  xrange(len(orders))]
+                req.session['screenshots_orders'] = str(orders)
+        else:
+            # Users without SCREENSHOTS_ORDER permission uses
+            # 'default_orders' configuration option.
+            orders = tuple(self.default_orders)
+            directions = tuple(self.default_order_directions)
+            orders = [(orders[I], directions[I]) for I in xrange(len(orders))]
+        return tuple(orders)
+
+    def _set_orders(self, req, orders):
+        req.session['screenshots_orders'] = str(orders)

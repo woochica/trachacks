@@ -168,8 +168,7 @@ Example:
                   attributes['description'], screenshot)
 
                 # Make copy of attributes for image tag.
-                img_attributes = {'align' : 'center',
-                                  'style' : 'border-width: %spx;' % (
+                img_attributes = {'style' : 'border-width: %spx;' % (
                                     attributes['border'],)}
                 for attribute in attributes.keys():
                     if attribute not in ('align', 'border', 'description',
@@ -186,14 +185,16 @@ Example:
                 link = html.a(image, href = formatter.req.href.screenshots(
                   screenshot['id'], format = attributes['format']), title =
                   screenshot['description'])
+                width_and_border = int(attributes['width']) + 2 * \
+                  int(attributes['border'])
                 description = html.span(attributes['description'], class_ =
-                  'description')
+                  'description', style = "width: %spx;" % (width_and_border,))
+                auxilary = html.span(link, description, class_ = 'aux',
+                  style = "width: %spx;" % (width_and_border,))
                 thumbnail_class = 'thumbnail' + ((attributes['align'] == 'left')
                   and '-left' or (attributes['align'] == 'right') and '-right'
                   or '')
-                thumbnail = html.span(link, ' ', description, class_ =
-                  thumbnail_class, style = "width: %spx;" % (
-                  int(attributes['width']) + 2 * int(attributes['border'],)))
+                thumbnail = html.span(auxilary, class_ = thumbnail_class)
                 return thumbnail
             else:
                 return html.a(screenshot_id, href =

@@ -54,6 +54,10 @@
               </py:for>
             </select><br/>
           </div>
+          <div class="field">
+            <label for="priority">Priority (number 0..x):</label><br/>
+            <input type="text" onkeypress="return checkNumber(event)" name="priority" value="${(req.args.action == 'edit') and screenshots.screenshot.priority or '0'}"/>
+          </div>
           <div class="buttons">
             <input type="submit" name="submit" value="Submit"/>
             <input type="button" name="cancel" value="Cancel" onclick="history.back()"/>

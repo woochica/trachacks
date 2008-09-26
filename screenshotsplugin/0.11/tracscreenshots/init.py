@@ -5,7 +5,7 @@ from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 
 # Last screenshots database shcema version
-last_db_version = 3
+last_db_version = 4
 
 class ScreenshotsInit(Component):
     """
@@ -29,7 +29,6 @@ class ScreenshotsInit(Component):
 
         # Get current database schema version
         db_version = self._get_db_version(cursor)
-
 
         # Is this clean installation?
         if db_version == 0:
