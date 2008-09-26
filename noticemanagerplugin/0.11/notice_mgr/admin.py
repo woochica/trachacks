@@ -295,13 +295,13 @@ class NoticeManagerAdminPage(Component):
 	cursor = db.cursor()
 	cursor.execute("SELECT count(*) FROM session "
                         "WHERE sid=%s AND authenticated=1",
-                        (username))
+                        (username,))
         exists, = cursor.fetchone()
         if not exists:
 	    cursor.execute("INSERT INTO session "
                        "(sid, authenticated, last_visit) "
                        "VALUES (%s, 1, 0)",
-                       (username))
+                       (username,))
 
         for key in ('name', 'email_verification_sent_to', 'email'):
             value = arr.get(key)
@@ -326,8 +326,8 @@ class NoticeManagerAdminPage(Component):
         for account in sel:
 	    if (not account) or (account == None):
 		continue
-            cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (account))
-            cursor.execute("DELETE FROM session WHERE sid=%s", (account))
+            cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (account,))
+            cursor.execute("DELETE FROM session WHERE sid=%s", (account,))
 	    if (account[0] == GROUP_PREFIX):
 		del groupinfos[account]
 	    else:
@@ -343,7 +343,7 @@ class NoticeManagerAdminPage(Component):
         for account in sel:
 	    if (not account) or (account == None):
 		continue
-            cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (account))
+            cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (account,))
 	    if (account[0] == GROUP_PREFIX):
 		groupinfos[account] = { 'id' : account, 'name' : "", 'email' : ""}
 	    else:
@@ -362,8 +362,8 @@ class NoticeManagerAdminPage(Component):
 	    sel.append(account)
 
         for account in sel:
-            cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (account))
-            cursor.execute("DELETE FROM session WHERE sid=%s", (account))
+            cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (account,))
+            cursor.execute("DELETE FROM session WHERE sid=%s", (account,))
 	    if (account[0] == GROUP_PREFIX):
 		del groupinfos[account]
 	    else:
