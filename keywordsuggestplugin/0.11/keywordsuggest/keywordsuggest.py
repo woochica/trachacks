@@ -1,9 +1,8 @@
 # copyright (c) 2008 Dmitry Dianov. All rights reserved.
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.web.api import ITemplateStreamFilter
 from genshi.builder import tag
-from genshi.core import Attrs
 from genshi.filters.transform import Transformer
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from pkg_resources import resource_filename
