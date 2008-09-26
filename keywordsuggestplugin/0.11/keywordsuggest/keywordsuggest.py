@@ -3,6 +3,7 @@
 from trac.core import *
 from trac.web.api import ITemplateStreamFilter
 from genshi.builder import tag
+from genshi.core import Attrs
 from genshi.filters.transform import Transformer
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from pkg_resources import resource_filename
@@ -35,6 +36,16 @@ class KeywordSuggestModule(Component):
         });""" % (keywords, mustmatch)
         stream = stream | Transformer('.//head').append \
                           (tag.script(js, type='text/javascript'))
+
+        # turn keywords field label into link to wiki page
+        helppage = self.config.get('keywordsuggest','helppage')
+        if helppage:
+            link = tag.a(href='wiki/%s' % helppage, target='blank')
+            if not self.config.getbool('keywordsuggest','helppage.newwindow',
+                                       'false'):
+                link.attrib -= 'target'
+            stream = stream | Transformer\
+                         ('//label[@for="field-keywords"]/text()').wrap(link)
         return stream
 
     # ITemplateProvider methods
@@ -54,6 +65,7 @@ class KeywordSuggestModule(Component):
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket'):
+            add_script(req, 'keywordsuggest/jquery.bgiframe.min.js')
             add_script(req, 'keywordsuggest/jquery.autocomplete.pack.js')
             add_stylesheet(req, 'keywordsuggest/autocomplete.css')
         return template, data, content_type
