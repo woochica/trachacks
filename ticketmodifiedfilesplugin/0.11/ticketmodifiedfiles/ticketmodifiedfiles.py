@@ -3,15 +3,13 @@
 # should have received as part of this distribution.
 
 import re
-from time import strftime, strptime
-
-import genshi.filters
 
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web import IRequestHandler
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
+from trac.util.datefmt import format_time
 
 #WARNING: genshi.filters.Transformer requires Genshi 0.5+
 from genshi.filters import Transformer
@@ -112,8 +110,8 @@ class TicketModifiedFilesPlugin(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         #Retrieve all the revisions which's messages contain "#<TICKETID>"
-        cursor.execute("SELECT rev, datetime(time, 'unixepoch', 'localtime') as date, author, message FROM revision WHERE message LIKE '%#" + str(id) + "%'")
-        for rev, date, author, message, in cursor:
+        cursor.execute("SELECT rev, time, author, message FROM revision WHERE message LIKE '%#" + str(id) + "%'")
+        for rev, time, author, message, in cursor:
             #Filter out non-related revisions.
             #for instance, you are lookink for #19, so you don't want #190, #191, #192, etc. to interfere
             #To filter, check what the eventual char after "#19" is.
@@ -127,7 +125,10 @@ class TicketModifiedFilesPlugin(Component):
                 except: pass
                 
             if validrevision:
-                date = strftime("%d/%m/%Y %H:%M", strptime(date, "%Y-%m-%d %H:%M:%S"))
+                try:
+                    date = "(" + format_time(time, str('%d/%m/%Y - %H:%M')) + ")"
+                except:
+                    date = ""
                 cursor2 = db.cursor()
                 cursor2.execute("SELECT path FROM node_change WHERE rev=" + rev)
                 revisions.append((rev, author, date))
