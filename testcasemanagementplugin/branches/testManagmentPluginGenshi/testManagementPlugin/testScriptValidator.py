@@ -39,6 +39,7 @@ class TestScriptValidator(Component):
             if errors : 
                 data["errorMessage"] = "error fetching test case list"
                 data["errorsList"] = errors
+                data['testrun_svn_path'] = self.properties.getTestCasePath( self, req) 
                 return "testRunNotConfigured.html", data, None
             else:
                 data['validate_pathConfiguration'] = self.properties.getTestCasePath( self, req)

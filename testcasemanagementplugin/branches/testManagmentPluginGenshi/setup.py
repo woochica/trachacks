@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='testManagementPlugin', version='0.11.1',
+    name='testManagementPlugin', version='0.11.3',
     author="Eoin Dunne", author_email="edunnesoftwaretesting@hotmail.com",
     license='BSD', url='http://www.trac-hacks.org/wiki/TestCaseManagementPlugin',
     packages=['testManagementPlugin'],
