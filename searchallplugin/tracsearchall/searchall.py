@@ -59,7 +59,10 @@ class SearchAllPlugin(Component):
             if not os.path.isdir( project_path ):
                 continue
             
-            env = open_environment(project_path)
+            try:
+                env = open_environment(project_path)
+            except:
+                continue
                         
            
             self.env.log.debug("Searching project %s" % project )
