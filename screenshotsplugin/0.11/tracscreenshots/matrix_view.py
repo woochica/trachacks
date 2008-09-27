@@ -38,12 +38,21 @@ class ScreenshotsMatrixView(Component):
         add_stylesheet(req, 'screenshots/css/matrix-view.css')
 
         # Get custom request arguments.
-        index = int(req.args.get('index') or 0)
+        index = int(req.args.get('index') or -1)
+        page = int(req.args.get('page') or -1)
 
-        # Compute current page, page count, next and previous page id.
+        # Count index or page depending on user input.
         count = len(data['screenshots'])
         count_on_page = self.rows * self.columns
-        page = (index / count_on_page) + 1
+        if index != -1:
+            page = (index / count_on_page) + 1
+        else:
+            index = (page - 1) * count_on_page
+
+        self.log.debug('index: %s' % (index))
+        self.log.debug('page: %s' % (page))
+
+        # Compute page count, next and previous page id.
         page_cout = (count + (count_on_page - 1)) / count_on_page
         prev_index = (index - count_on_page)
         next_index = (index + count_on_page)
@@ -64,6 +73,7 @@ class ScreenshotsMatrixView(Component):
         data['page_count'] = page_cout
         data['prev_index'] = prev_index
         data['next_index'] = next_index
+        data['screenshot_count'] = len(data['screenshots'])
 
         return ('screenshots-matrix-view.html', None)
 

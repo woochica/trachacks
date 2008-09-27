@@ -40,3 +40,27 @@ div.screenshots div.controls td a
 {
   margin: 0em 0.5em;
 }
+
+div.screenshots div.controls div.position
+{
+  font-weight: bold;
+  margin: 1em;
+}
+
+/* Go to form style. */
+div.screenshots form.goto
+{
+  display: inline;
+  margin: 0em;
+}
+
+div.screenshots form.goto input[type="input"]
+{
+  width: 2em;
+  margin: 0em;
+}
+
+div.screenshots form.goto input[type="submit"]
+{
+  margin: 0em;
+}

@@ -39,22 +39,51 @@
   </div>
 
   <div class="controls">
+    <div class="position">Page ${screenshots.page}/${screenshots.page_count}</div>
+    &larr;
     <py:choose>
       <py:when test="screenshots.prev_index != -1">
-        <a href="${href.screenshots()}?index=${screenshots.prev_index}">&larr; Previous Page</a>
+        <a href="${href.screenshots()}?index=0">First Page</a>
       </py:when>
       <py:otherwise>
-        &larr; Previous Page
+        First Page
       </py:otherwise>
     </py:choose>
-    &nbsp;${screenshots.page}/${screenshots.page_count}&nbsp;
+    |
+    <py:choose>
+      <py:when test="screenshots.prev_index != -1">
+        <a href="${href.screenshots()}?index=${screenshots.prev_index}">Previous Page</a>
+      </py:when>
+      <py:otherwise>
+        Previous Page
+      </py:otherwise>
+    </py:choose>
+    |
+    <span>
+      <form class="goto" method="get" action="${href.screenshots()}">
+        <input type="input" name="page" value="${screenshots.page or '1'}" onkeypress="return checkNumber(event)"/>
+        <input type="submit" value="Go"></input>
+      </form>
+    </span>
+    |
     <py:choose>
       <py:when test="screenshots.next_index != -1">
-        <a href="${href.screenshots()}?index=${screenshots.next_index}">Next Page &rarr;</a>
+        <a href="${href.screenshots()}?index=${screenshots.next_index}">Next Page</a>
       </py:when>
       <py:otherwise>
-        Next Page &rarr;
+        Next Page
       </py:otherwise>
     </py:choose>
+    |
+    <py:choose>
+      <py:when test="screenshots.next_index != -1">
+        <a href="${href.screenshots()}?index=${screenshots.screenshot_count - 1}">Last Page</a>
+      </py:when>
+      <py:otherwise>
+        Last Page
+      </py:otherwise>
+    </py:choose>
+    &rarr;
+
   </div>
 </html>
