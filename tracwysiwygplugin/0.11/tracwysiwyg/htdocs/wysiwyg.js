@@ -437,6 +437,7 @@ TracWysiwyg.prototype.execCommand = function(name, arg) {
 };
 
 TracWysiwyg.prototype.setupEditorEvents = function() {
+    var getSelfOrAncestor = TracWysiwyg.getSelfOrAncestor;
     var self = this;
     var d = this.contentDocument;
     var w = this.contentWindow;
@@ -446,10 +447,35 @@ TracWysiwyg.prototype.setupEditorEvents = function() {
         var method = null;
         var args = null;
         event = event || self.contentWindow.event;
-        if (event.keyCode == 0xe5) {
+        var keyCode = event.keyCode;
+        switch (keyCode) {
+        case 0x09:  // TAB
+            var range = self.getSelectionRange();
+            var element = getSelfOrAncestor(range.startContainer, /^(?:li|pre|table)$/);
+            if (element) {
+                switch (element.tagName.toLowerCase()) {
+                case "li":
+                    self.execCommand(event.shiftKey ? "outdent" : "indent");
+                    self.selectionChanged();
+                    break;
+                case "pre":
+                    self.insertHTML("\t");
+                    break;
+                case "table":
+                    if (getSelfOrAncestor(range.endContainer, "table") == element) {
+                        self.moveFocusInTable(!event.shiftKey);
+                        self.selectionChanged();
+                    }
+                    break;
+                }
+            }
+            TracWysiwyg.stopEvent(event);
+            return;
+        case 0xe5:
             ime = true;
+            break;
         }
-        switch ((event.keyCode & 0x00fffff) | (event.ctrlKey ? 0x40000000 : 0)
+        switch ((keyCode & 0x00fffff) | (event.ctrlKey ? 0x40000000 : 0)
             | (event.shiftKey ? 0x20000000 : 0) | (event.altKey ? 0x10000000 : 0))
         {
         case 0x40000042:  // C-b
@@ -481,6 +507,12 @@ TracWysiwyg.prototype.setupEditorEvents = function() {
             TracWysiwyg.stopEvent(event);
             method.apply(self, args);
             self.selectionChanged();
+        }
+        else if (keyCode) {
+            var focus = self.getFocusNode();
+            if (!getSelfOrAncestor(focus, /^(?:p|li|h[1-6]|t[dh]|d[td]|pre|blockquote)$/)) {
+                self.execCommand("formatblock", "<p>");
+            }
         }
     }
     addEvent(d, window.opera ? "keypress" : "keydown", listenerKeydown);
@@ -547,11 +579,6 @@ TracWysiwyg.prototype.loadWysiwygDocument = function() {
         container.removeChild(tmp);
     }
     var fragment = this.wikitextToFragment(this.textarea.value, d);
-    if (fragment.childNodes.length == 0) {
-        var paragraph = d.createElement("p");
-        this.appendBogusLineBreak(paragraph);
-        fragment.appendChild(paragraph);
-    }
     container.appendChild(fragment);
     this.savedWysiwygHTML = container.innerHTML;
 };
@@ -873,6 +900,72 @@ TracWysiwyg.prototype.deleteTableColumn = function() {
             var row = rows[i];
             if (cellIndex < row.cells.length) {
                 row.deleteCell(cellIndex);
+            }
+        }
+    }
+};
+
+TracWysiwyg.prototype.moveFocusInTable = function(forward) {
+    var getSelfOrAncestor = TracWysiwyg.getSelfOrAncestor;
+    var focus = this.getFocusNode();
+    var element = getSelfOrAncestor(focus, /^(?:t[dhr]|table)$/);
+    var target, table, rows, cells;
+    switch (element.tagName.toLowerCase()) {
+    case "td": case "th":
+        focus = element;
+        var row = getSelfOrAncestor(element, "tr");
+        cells = row.cells;
+        if (forward) {
+            if (focus.cellIndex + 1 < cells.length) {
+                target = cells[focus.cellIndex + 1];
+            }
+            else {
+                table = getSelfOrAncestor(row, /^(?:tbody|table)$/);
+                rows = table.rows;
+                target = row.rowIndex + 1 < rows.length ? rows[row.rowIndex + 1].cells[0] : null;
+            }
+        }
+        else {
+            if (focus.cellIndex > 0) {
+                target = cells[focus.cellIndex - 1];
+            }
+            else {
+                table = getSelfOrAncestor(row, /^(?:tbody|table)$/);
+                rows = table.rows;
+                if (row.rowIndex > 0) {
+                    cells = rows[row.rowIndex - 1].cells;
+                    target = cells[cells.length - 1];
+                }
+                else {
+                    target = null;
+                }
+            }
+        }
+        break;
+    case "tr":
+        cells = element.cells;
+        target = cells[forward ? 0 : cells.length - 1];
+        break;
+    case "tbody": case "table":
+        rows = element.rows;
+        cells = rows[forward ? 0 : rows.length - 1].cells;
+        target = cells[forward ? 0 : cells.length - 1];
+        break;
+    }
+    if (target) {
+        this.selectNodeContents(target);
+    }
+    else if (table) {
+        table = getSelfOrAncestor(table, "table");
+        var parent = table.parentNode;
+        var elements = parent.childNodes;
+        var length = elements.length;
+        for (var offset = 0; offset < length; offset++) {
+            if (table == elements[offset]) {
+                if (forward) {
+                    offset++;
+                }
+                this.selectRange(parent, offset, parent, offset);
             }
         }
     }
@@ -2972,20 +3065,32 @@ else if (document.selection) {
         var d = this.contentDocument;
         var body = d.body;
         d.selection.empty();
+        var range = endPoint(start, startOffset);
+        if (start != end || startOffset != endOffset) {
+            range.setEndPoint("EndToEnd", endPoint(end, endOffset));
+        }
+        range.select();
 
         function endPoint(node, offset) {
-            var range = body.createTextRange();
-            var childNodes = node.childNodes;
+            var range;
             if (node.nodeType == 1) {
+                var childNodes = node.childNodes;
                 if (offset >= childNodes.length) {
+                    range = body.createTextRange();
                     range.moveToElementText(node);
                     range.collapse(false);
                     return range;
                 }
                 node = childNodes[offset];
                 if (node.nodeType == 1) {
+                    range = body.createTextRange();
                     range.moveToElementText(node);
                     range.collapse(true);
+                    switch (node.tagName.toLowerCase()) {
+                    case "table":
+                        range.move("character", -1);
+                        break;
+                    }
                     return range;
                 }
                 return endPoint(node, 0);
@@ -2994,6 +3099,7 @@ else if (document.selection) {
                 throw "selectRange: nodeType != @".replace(/@/, node.nodeType);
             }
 
+            range = body.createTextRange();
             var element = node.previousSibling;
             while (element) {
                 var nodeType = element.nodeType;
@@ -3011,20 +3117,33 @@ else if (document.selection) {
                 range.moveToElementText(node.parentNode);
                 range.collapse(true);
             }
-            range.move("character", offset);
+            if (offset != 0) {
+                range.move("character", offset);
+            }
             return range;
         }
-
-        var range = body.createTextRange();
-        range.setEndPoint("StartToStart", endPoint(start, startOffset));
-        range.setEndPoint("EndToEnd", endPoint(end, endOffset));
-        range.select();
     };
     TracWysiwyg.prototype.getSelectionRange = function() {
         var body = this.contentDocument.body;
-        var start = this.getNativeSelectionRange();
-        var end = start.duplicate();
         var pseudo = {};
+        var start = this.getNativeSelectionRange();
+        if (start.item) {
+            var element = start.item(0);
+            var parent = element.parentNode;
+            var childNodes = parent.childNodes;
+            var length = childNodes.length;
+            for (var i = 0; i < length; i++) {
+                if (childNodes[i] == element) {
+                    pseudo.startOffset = i;
+                    pseudo.endOffset = i + 1;
+                    break;
+                }
+            }
+            pseudo.collapsed = false;
+            pseudo.startContainer = pseudo.endContainer = parent;
+            return pseudo;
+        }
+        var end = start.duplicate();
         pseudo.collapsed = start.compareEndPoints("StartToEnd", end) == 0;
         start.collapse(true);
         end.collapse(false);
@@ -3068,9 +3187,10 @@ else if (document.selection) {
             var element = nextElement(range);
             var index = 0;
             var node = element ? element.previousSibling : parent.lastChild;
-            while (node.nodeType == 3) {
-                var length = node.nodeValue.length;
-                var offset = nodeOffset(range, parent, element, index, length);
+            var offset, length;
+            while (node && node.nodeType == 3) {
+                length = node.nodeValue.length;
+                offset = nodeOffset(range, parent, element, index, length);
                 if (offset !== null) {
                     pseudo[containerKey] = node;
                     pseudo[offsetKey] = offset;
@@ -3079,6 +3199,24 @@ else if (document.selection) {
                 index += length;
                 node = node.previousSibling;
             }
+            var childNodes = parent.childNodes;
+            length = childNodes.length;
+            if (length > 0) {
+                pseudo[containerKey] = parent;
+                pseudo[offsetKey] = containerKey == "startContainer" ? 0 : length - 1;
+                return;
+            }
+            element = parent;
+            parent = element.parentNode;
+            childNodes = parent.childNodes;
+            length = childNodes.length;
+            for (offset = 0; offset < length; offset++) {
+                if (element == childNodes[offset]) {
+                    pseudo[containerKey] = parent;
+                    pseudo[offsetKey] = offset;
+                    return;
+                }
+            }
         }
 
         setContainerOffset(start, "startContainer", "startOffset");
@@ -3086,19 +3224,21 @@ else if (document.selection) {
         return pseudo;
     };
     TracWysiwyg.prototype.getNativeSelectionRange = function() {
-        var range = this.contentDocument.selection.createRange();
-        if (range && range.item) {
-            range = range.item(0);
-        }
-        return range;
+        return this.contentDocument.selection.createRange();
     };
     TracWysiwyg.prototype.getSelectionText = function() {
         var range = this.getNativeSelectionRange();
-        return range ? range.text : null;
+        if (range) {
+            return range.item ? range.item(0).innerText : range.text;
+        }
+        return null;
     };
     TracWysiwyg.prototype.getSelectionHTML = function() {
         var range = this.getNativeSelectionRange();
-        return range ? range.htmlText : null;
+        if (range) {
+            return range.item ? range.item(0).innerHTML : range.htmlText;
+        }
+        return null;
     };
     TracWysiwyg.prototype.getSelectionFragment = function() {
         var d = this.contentDocument;
@@ -3178,7 +3318,12 @@ else if (document.selection) {
     };
     TracWysiwyg.prototype.insertHTML = function(html) {
         var range = this.contentDocument.selection.createRange();
-        range.pasteHTML(html);
+        if (/^\s+$/.exec(html)) {
+            range.text = html;
+        }
+        else {
+            range.pasteHTML(html.replace(/\t/g, "&#9;"));
+        }
     };
 }
 else {
