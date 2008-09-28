@@ -3,6 +3,7 @@
 from trac.core import Component, implements
 from trac.web.api import ITemplateStreamFilter
 from genshi.builder import tag
+from genshi.core import Markup
 from genshi.filters.transform import Transformer
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from pkg_resources import resource_filename
@@ -26,15 +27,27 @@ class KeywordSuggestModule(Component):
         mustmatch = 'mustMatch: true,'
         if not self.config.getbool('keywordsuggest','mustmatch'):
             mustmatch = ""
+        sep = self.config.get('keywordsuggest','multipleseparator', '')[1:-1] or ', '
+        matchcontains = 'matchContains: true,'
+        if not self.config.getbool('keywordsuggest','matchcontains',True):
+            matchcontains = ""
 
         # inject transient part of javascript directly into ticket.html template
         js = """
         $(function($) {
-        $('#field-keywords').autocomplete([%s], {multiple: true, 
-                                          %s autoFill: true}); 
-        });""" % (keywords, mustmatch)
+          var sep = '%s'
+          $('#field-keywords').autocomplete([%s], {multiple: true, %s
+                                            %s multipleSeparator: sep, autoFill: true}); 
+          $("form").submit(function() {
+              // remove trail separator if any
+              keywords = $("input#field-keywords").attr('value')
+              if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
+                  $("input#field-keywords").attr('value', keywords.substring(0, keywords.length-sep.length))
+              }
+          });
+        });""" % (sep, keywords, matchcontains, mustmatch)
         stream = stream | Transformer('.//head').append \
-                          (tag.script(js, type='text/javascript'))
+                          (tag.script(Markup(js), type='text/javascript'))
 
         # turn keywords field label into link to wiki page
         helppage = self.config.get('keywordsuggest','helppage')
