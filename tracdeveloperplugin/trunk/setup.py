@@ -17,6 +17,7 @@ setup(
             'developer.debugger = tracdeveloper.debugger',
             'developer.plugins = tracdeveloper.plugins',
             'developer.javascript = tracdeveloper.javascript',
+            'developer.log = tracdeveloper.log',
         ]
     },
     package_data = {
