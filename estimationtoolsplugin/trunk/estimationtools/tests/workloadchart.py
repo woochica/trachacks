@@ -5,7 +5,7 @@ from trac.web.href import Href
 import unittest
 
 
-class BurndownChartTestCase(unittest.TestCase):
+class WorkloadChartTestCase(unittest.TestCase):
     
     def setUp(self):
         self.env = EnvironmentStub(default_data = True)

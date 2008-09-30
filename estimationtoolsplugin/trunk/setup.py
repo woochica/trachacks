@@ -11,7 +11,7 @@ setup(
     version = '0.3',
     license='BSD',
     packages=['estimationtools'],
-    package_data = { 'estimationtools': ['htdocs/*.js', 'templates/*.cs'] },
+    package_data = { 'estimationtools': ['htdocs/*.js', 'templates/*.html'] },
     entry_points = {
         'trac.plugins': [
             'estimationtools = estimationtools'

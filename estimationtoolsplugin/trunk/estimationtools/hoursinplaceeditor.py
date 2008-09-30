@@ -19,31 +19,22 @@ class HoursInPlaceEditor(Component):
         return req.path_info.startswith('/estimationtools')
 
     def process_request(self, req):
-        req.hdf['edithours.field'] = self.estimation_field
-        
-        return 'edithours.cs', 'text/javascript' 
+        data = {}
+        data['field'] = self.estimation_field 
+        return 'edithours.html', {'data': data}, 'text/javascript' 
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
             
-    def post_process_request(self, req, template, content_type):
+    def post_process_request(self, req, template, data, content_type):
         if (req.path_info.startswith('/query')
             and req.perm.has_permission('TICKET_MODIFY') 
             and req.perm.has_permission('XML_RPC')):
-            add_script(req, 'estimationtools/jquery-1.2.3.min.js')
+            # add_script(req, 'estimationtools/jquery-1.2.3.min.js')
             add_script(req, 'estimationtools/jquery.jeditable.mini.js')
-            idx = 0
-            while True:
-                js = req.hdf.get('chrome.scripts.%i.href'%idx)
-                if not js:
-                    break
-                idx += 1
-            req.hdf['chrome.scripts.%i' % idx] = {
-                'href': req.href.estimationtools('edithours.js'), 
-                'type': 'text/javascript',
-            }
-        return template, content_type
+            add_script(req, '/estimationtools/edithours.js')
+        return template, data, content_type
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):

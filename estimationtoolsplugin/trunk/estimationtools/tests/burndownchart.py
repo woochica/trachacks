@@ -2,6 +2,7 @@ from estimationtools.burndownchart import *
 from estimationtools.utils import *
 from trac.test import EnvironmentStub
 from trac.ticket.model import Ticket
+from trac.util.datefmt import utc
 import time
 import unittest
 
@@ -26,7 +27,7 @@ class BurndownChartTestCase(unittest.TestCase):
         keys.sort()
         for key in keys:
             ticket['hours_remaining'] = history[key]
-            ticket.save_changes("me", "testing", time.mktime(key.timetuple()))
+            ticket.save_changes("me", "testing", datetime.combine(key, datetime.now(utc).timetz()))
             
     def test_parse_options(self):
         db = self.env.get_db_cnx()
@@ -49,7 +50,7 @@ class BurndownChartTestCase(unittest.TestCase):
         
     def test_calculate_timetable_simple(self):
         chart = BurndownChart(self.env)
-        day1 = datetime.now().date()
+        day1 = datetime.now(utc).date()
         day2 = day1 + timedelta(days=1)
         day3 = day2 + timedelta(days=1)
         options = {'today': day3, 'milestone': "milestone1", 'startdate': day1, 'enddate': day3}
@@ -59,7 +60,7 @@ class BurndownChartTestCase(unittest.TestCase):
         
     def test_calculate_timetable_with_simple_changes(self):
         chart = BurndownChart(self.env)
-        day1 = datetime.now().date()
+        day1 = datetime.now(utc).date()
         day2 = day1 + timedelta(days=1)
         day3 = day2 + timedelta(days=1)
         options = {'today': day3, 'milestone': "milestone1", 'startdate': day1, 'enddate': day3}
@@ -71,7 +72,7 @@ class BurndownChartTestCase(unittest.TestCase):
         
     def test_calculate_timetable_with_simple_changes_2(self):
         chart = BurndownChart(self.env)
-        day1 = datetime.now().date()
+        day1 = datetime.now(utc).date()
         day2 = day1 + timedelta(days=1)
         day3 = day2 + timedelta(days=1)
         options = {'today': day3, 'milestone': "milestone1", 'startdate': day1, 'enddate': day3}
@@ -85,7 +86,7 @@ class BurndownChartTestCase(unittest.TestCase):
 
     def test_calculate_timetable_with_recent_changes(self):
         chart = BurndownChart(self.env)
-        day1 = datetime.now().date()
+        day1 = datetime.now(utc).date()
         day2 = day1 + timedelta(days=1)
         day3 = day2 + timedelta(days=1)
         day4 = day3 + timedelta(days=1)
