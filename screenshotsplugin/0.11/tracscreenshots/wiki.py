@@ -150,8 +150,6 @@ Example:
                 attributes = {'align' : 'none',
                               'border' : '1',
                               'format' : 'raw',
-                              'width' : screenshot['width'],
-                              'height' : screenshot['height'],
                               'alt' : screenshot['description'],
                               'description' : self.default_description}
 
@@ -161,6 +159,33 @@ Example:
                     match = self.attributes_re.match(argument)
                     if match:
                         attributes[str(match.group(1))] = match.group(2)
+
+                # Zero width or height means keep original.
+                if attributes.has_key('width'):
+                    if attributes['width'] == 0:
+                        attributes['width'] = screenshot['width']
+                if attributes.has_key('height'):
+                    if attributes['height'] == 0:
+                        attributes['height'] = screenshot['height']
+
+                # If one dimension is missing compute second to keep aspect.
+                if not attributes.has_key('width') and \
+                  attributes.has_key('height'):
+                    attributes['width'] = int(int(attributes['height']) * (
+                      float(screenshot['width']) / float(screenshot['height']))
+                      + 0.5)
+                if not attributes.has_key('height') and \
+                  attributes.has_key('width'):
+                    attributes['height'] = int(int(attributes['width']) * (
+                      float(screenshot['height']) / float(screenshot['width']))
+                      + 0.5)
+
+                # If both dimensions are missing keep original.
+                if not attributes.has_key('width') and not \
+                  attributes.has_key('height'):
+                    attributes['width'] = screenshot['width']
+                    attributes['height'] = screenshot['height']
+
                 self.log.debug('attributes: %s' % (attributes,))
 
                 # Format screenshot description from template.
@@ -168,11 +193,10 @@ Example:
                   attributes['description'], screenshot)
 
                 # Make copy of attributes for image tag.
-                img_attributes = {'style' : 'border-width: %spx;' % (
-                                    attributes['border'],)}
+                img_attributes = {}
                 for attribute in attributes.keys():
                     if attribute not in ('align', 'border', 'description',
-                      'format'):
+                      'format', 'width', 'height'):
                         img_attributes[attribute] = attributes[attribute]
 
                 # Add CSS for image.
@@ -180,11 +204,12 @@ Example:
 
                 # Build screenshot image and/or screenshot link.
                 image = html.img(src = formatter.req.href.screenshots(
-                  screenshot['id'], width = attributes['width'], height =
-                  attributes['height'], format = 'raw'), **img_attributes)
+                  screenshot['id'], format = 'raw', width = attributes['width'],
+                  height = attributes['height']), **img_attributes)
                 link = html.a(image, href = formatter.req.href.screenshots(
                   screenshot['id'], format = attributes['format']), title =
-                  screenshot['description'])
+                  screenshot['description'], style = 'border-width: %spx;' % (
+                  attributes['border'],))
                 width_and_border = int(attributes['width']) + 2 * \
                   int(attributes['border'])
                 description = html.span(attributes['description'], class_ =

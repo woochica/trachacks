@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-import sets, re, os, os.path, shutil, mimetypes, unicodedata, Image
+import sets, re, os, os.path, shutil, mimetypes, unicodedata, Image, ImageOps
 from datetime import *
 
 from trac.core import *
@@ -606,7 +606,7 @@ class ScreenshotsCore(Component):
 
     def _create_image(self, orig_name, path, name, ext, width, height):
         image = Image.open(orig_name)
-        image = image.resize((width, height), Image.BICUBIC)
+        image = image.resize((width, height), Image.ANTIALIAS)
         image.save(os.path.join(path, '%s-%sx%s%s' % (name, width, height,
           ext)))
 

@@ -41,13 +41,19 @@ class ScreenshotsMatrixView(Component):
         index = int(req.args.get('index') or -1)
         page = int(req.args.get('page') or -1)
 
+        self.log.debug('index: %s' % (index))
+        self.log.debug('page: %s' % (page))
+
         # Count index or page depending on user input.
         count = len(data['screenshots'])
         count_on_page = self.rows * self.columns
         if index != -1:
             page = (index / count_on_page) + 1
-        else:
+        elif page != -1:
             index = (page - 1) * count_on_page
+        else:
+            index = 0
+            page = 1
 
         self.log.debug('index: %s' % (index))
         self.log.debug('page: %s' % (page))
@@ -92,7 +98,7 @@ class ScreenshotsMatrixView(Component):
         matrix = []
         for I in xrange(count):
             # Add screenshot.
-            if (index + I) < len(screenshots):
+            if ((index + I) < len(screenshots)) and ((index + I) > 0):
                 row.append(screenshots[index + I])
             else:
                 row.append(self.null_screenshot)

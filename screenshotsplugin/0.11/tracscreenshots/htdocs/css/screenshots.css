@@ -60,13 +60,14 @@ span.thumbnail span.aux
 span.thumbnail a
 {
   display: block;
+  border-color: #b00;
+  border-style: solid;
 }
 
 span.thumbnail a img
 {
   display: block;
-  border-color: #b00;
-  border-style: solid;
+  margin: auto;
 }
 
 span.thumbnail span.description
@@ -78,28 +79,30 @@ span.thumbnail span.description
 span.thumbnail-left, span.thumbnail-righ
 {
   display: block;
-  margin: 0em;
+  margin: 0em 2em;
   padding: 0em;
 }
 
 span.thumbnail-left span.aux, span.thumbnail-righ span.aux
 {
   display: block;
-  margin: 0em;
-  margin-top: 0.5em;
+  margin: 0.5em 0em;
   padding: 0em;
 }
 
-span.thumbnail-left a, span.thumbnail-right a,
+span.thumbnail-left a, span.thumbnail-right a
 {
   display: block;
+  margin: 0em;
+  padding: 0em;
+  border-color: #b00;
+  border-style: solid;
 }
 
 span.thumbnail-left a img, span.thumbnail-right a img
 {
   display: block;
-  border-color: #b00;
-  border-style: solid;
+  margin: auto;
 }
 
 span.thumbnail-left span.description, span.thumbnail-right span.description
@@ -110,9 +113,6 @@ span.thumbnail-left span.description, span.thumbnail-right span.description
 
 span.thumbnail, span.thumbnail-left, span.thumbnail-right
 {
-  margin: 16px;
-  margin-top: 0em;
-  padding: 0em;
   font-size: 75%;
   text-align: center;
 }

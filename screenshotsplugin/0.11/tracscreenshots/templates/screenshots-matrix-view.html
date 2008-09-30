@@ -8,10 +8,20 @@
             <py:for each="image in row">
               <td>
                 <py:choose>
-                  <div py:when="image.id != -1" class="image">
-                    <a href="${href.screenshots(image.id)}" title="${image.id}">
-                      <img src="${href.screenshots(image.id)}?width=${screenshots.width};height=${screenshots.height};format=raw"
-                        alt="${image.description}" width="${screenshots.width}" height="${screenshots.height}"/>
+                  <div py:when="image.id != -1" class="image" style="width: ${screenshots.width}px; height: ${screenshots.height}px">
+                    <?python
+                      frame_aspect = float(screenshots['width']) / float(screenshots['height'])
+                      image_aspect = float(image['width']) / float(image['height'])
+                      if frame_aspect < image_aspect:
+                          image_width = screenshots['width']
+                          image_height = int(screenshots['width'] / image_aspect + 0.5)
+                      else:
+                          image_width = int(screenshots['height'] * image_aspect + 0.5)
+                          image_height = screenshots['height']
+                    ?>
+                    <a href="${href.screenshots(image.id)}" title="${image.id}" style="line-height: ${screenshots.height - 4}px">
+                      <img src="${href.screenshots(image.id)}?width=${image_width};height=${image_height};format=raw"
+                        alt="${image.description}"/>
                     </a>
                   </div>
                   <div py:otherwise="" class="image noimage" style="width: ${screenshots.width}px; height: ${screenshots.height}px">
