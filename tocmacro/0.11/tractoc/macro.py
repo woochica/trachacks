@@ -103,16 +103,15 @@ class TOCMacro(WikiMacroBase):
     """
     
     def expand_macro(self, formatter, name, args):
-        self.formatter = formatter
-        self.context = formatter.context
-        self.resource = formatter.context.resource
+        context = formatter.context
+        resource = formatter.context.resource
         
         # Bail out if we are in a no-float zone
         if hasattr(formatter, 'properties') and \
                'macro_no_float' in formatter.properties:
             return ''
         
-        current_page = self.resource.id
+        current_page = resource.id
          
         # Split the args
         args, kw = parse_args(args)
@@ -184,33 +183,34 @@ class TOCMacro(WikiMacroBase):
 
         active = len(pagenames) > 1
         for pagename in pagenames:
-            page_resource = self.resource(id=pagename)
-            if not 'WIKI_VIEW' in self.context.perm(page_resource):
+            page_resource = resource(id=pagename)
+            if not 'WIKI_VIEW' in context.perm(page_resource):
                 # Not access to the page, so should not be included
                 continue
             if 'title_index' in params:
-                self._render_title_index(ol, page_resource, active and \
-                            pagename == current_page,
+                self._render_title_index(formatter, ol, page_resource,
+                            active and pagename == current_page,
                             params['min_depth'] < 2)
             else:
-                self._render_page_outline(ol, page_resource, active, params)
+                self._render_page_outline(formatter, ol, page_resource,
+                                                        active, params)
         return base
 
-    def get_page_text(self, page_resource):
+    def get_page_text(self, formatter, page_resource):
         """Return a tuple of `(text, exists)` for the given page (resource)."""
-        if page_resource.id == self.resource.id:
-            return (self.formatter.source, True)
+        if page_resource.id == formatter.context.resource.id:
+            return (formatter.source, True)
         else:
             page = WikiPage(self.env, page_resource)
             return (page.text, page.exists)
 
-    def _render_title_index(self, ol, page_resource, active, show_title):
-        page_text, page_exists = self.get_page_text(page_resource)
+    def _render_title_index(self, formatter, ol, page_resource, active, show_title):
+        page_text, page_exists = self.get_page_text(formatter, page_resource)
         if not page_exists:
             ol.append(system_message('Error: No page matching %s found' %
                                      page_resource.id))
             return
-        ctx = self.context(page_resource)
+        ctx = formatter.context(page_resource)
         fmt = OutlineFormatter(self.env, ctx)
         fmt.format(page_text, NullOut())
         title = ''
@@ -221,16 +221,16 @@ class TOCMacro(WikiMacroBase):
                       Markup(title),
                       class_= active and 'active' or None)))
 
-    def _render_page_outline(self, ol, page_resource, active, params):
+    def _render_page_outline(self, formatter, ol, page_resource, active, params):
         page = params.get('root', '') + page_resource.id
-        page_text, page_exists = self.get_page_text(page_resource)
+        page_text, page_exists = self.get_page_text(formatter, page_resource)
         if page_exists:
-            ctx = self.context(page_resource)
+            ctx = formatter.context(page_resource)
             fmt = OutlineFormatter(self.env, ctx)
             fmt.format(page_text, NullOut())
             outline_tree(self.env, ol, fmt.outline, ctx,
-                         active and page_resource.id == self.resource.id,
-                         params['min_depth'], params['max_depth'])
+                    active and page_resource.id == formatter.context.resource.id,
+                    params['min_depth'], params['max_depth'])
         else:
             ol.append(system_message('Error: Page %s does not exist' %
                                      page_resource.id))
