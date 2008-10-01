@@ -35,8 +35,9 @@ class TracUnreadSetupParticipant(Component):
 
     def environment_created(self):
         """Called when a new Trac environment is created."""
-        if self.environment_needs_upgrade(None):
-            self.upgrade_environment(None)
+        db = self.env.get_db_cnx()
+        if self.environment_needs_upgrade(db):
+            self.upgrade_environment(db)
 
     def environment_needs_upgrade(self, db):
         """Called when Trac checks whether the environment needs to be upgraded.
