@@ -91,7 +91,7 @@ Example:
     default_description = Option('screenshots', 'default_description',
       '$description', 'Template for embended image description.')
     default_list_item = Option('screenshots', 'default_list_item', '$id - $name - $description',
-      doc = 'Default format of list item description of [[ScreenshotsList()]]' \
+      doc = 'Default format of list item description of ![[ScreenshotsList()]]' \
       ' macro.')
 
     # IWikiSyntaxProvider
