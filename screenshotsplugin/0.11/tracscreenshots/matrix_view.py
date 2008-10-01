@@ -80,7 +80,6 @@ class ScreenshotsMatrixView(Component):
         data['prev_index'] = prev_index
         data['next_index'] = next_index
         data['screenshot_count'] = len(data['screenshots'])
-
         return ('screenshots-matrix-view.html', None)
 
     def get_screenshots_view(req):
@@ -98,7 +97,7 @@ class ScreenshotsMatrixView(Component):
         matrix = []
         for I in xrange(count):
             # Add screenshot.
-            if ((index + I) < len(screenshots)) and ((index + I) > 0):
+            if ((index + I) < len(screenshots)) and ((index + I) >= 0):
                 row.append(screenshots[index + I])
             else:
                 row.append(self.null_screenshot)

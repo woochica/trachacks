@@ -99,7 +99,6 @@ class ScreenshotsApi(Component):
           'OR') + ' (c.component IN (' + components_str + ')' + (('none' in 
           components) and ' OR c.component IS NULL) ' or ') ') + 'ORDER BY ' + \
             orders_str
-        self.log.debug(versions + components)
         self.log.debug(sql % tuple(versions + components))
         context.cursor.execute(sql, versions + components)
         screenshots = []

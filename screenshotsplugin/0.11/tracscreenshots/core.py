@@ -2,6 +2,8 @@
 
 import sets, re, os, os.path, shutil, mimetypes, unicodedata, Image, ImageOps
 from datetime import *
+from zipfile import *
+from StringIO import *
 
 from trac.core import *
 from trac.mimeview import Context
@@ -264,88 +266,38 @@ class ScreenshotsCore(Component):
                 # Get image file from request.
                 file, filename = self._get_file_from_req(context.req)
                 name, ext = os.path.splitext(filename)
-                filename = name + ext.lower()
+                ext = ext.lower()
+                filename = name + ext
 
-                # Create image object.
-                image = Image.open(file)
+                # Is uploaded file archive or single image?
+                if ext == '.zip':
+                    # Get global timestamp for all files in archive.
+                    timestamp = to_timestamp(datetime.now(utc))
 
-                # Construct screenshot dictionary from form values.
-                screenshot = {'name' :  context.req.args.get('name'),
-                              'description' : context.req.args.get('description'),
-                              'time' : to_timestamp(datetime.now(utc)),
-                              'author' : context.req.authname,
-                              'tags' : context.req.args.get('tags'),
-                              'file' : filename,
-                              'width' : image.size[0],
-                              'height' : image.size[1],
-                              'priority' : int(context.req.args.get('priority')
-                                or '0')}
+                    # List files in archive.
+                    zip_file = ZipFile(file)
+                    for filename in zip_file.namelist():
+                        # Test file extensions for supported type.
+                        name, ext = os.path.splitext(filename)
+                        tmp_ext = ext.lower()[1:]
+                        if tmp_ext in self.ext and tmp_ext != 'zip':
+                            # Decompress image file
+                            data = zip_file.read(filename)
+                            file = StringIO(data)
+                            filename = to_unicode(os.path.basename(filename))
 
-                # Add new screenshot.
-                api.add_screenshot(context, screenshot)
+                            # Screenshots must be identified by timestamp.
+                            timestamp += 1
 
-                # Get inserted screenshot to with new id.
-                screenshot = api.get_screenshot_by_time(context,
-                   screenshot['time'])
+                            # Save screenshot file and add DB entry.
+                            self._add_screenshot(context, api, file, filename,
+                              timestamp)
 
-                # Add components to screenshot.
-                components = context.req.args.get('components') or []
-                if not isinstance(components, list):
-                    components = [components]
-                for component in components:
-                    component = {'screenshot' : screenshot['id'],
-                                 'component' : component}
-                    api.add_component(context, component)
-                screenshot['components'] = components
-
-                # Add versions to screenshots
-                versions = context.req.args.get('versions') or []
-                if not isinstance(versions, list):
-                    versions = [versions]
-                for version in versions:
-                    version = {'screenshot' : screenshot['id'],
-                               'version' : version}
-                    api.add_version(context, version)
-                screenshot['versions'] = versions
-
-                self.log.debug('screenshot: %s' % (screenshot,))
-
-                # Prepare file paths
-                name, ext = os.path.splitext(screenshot['file'])
-                path = os.path.join(self.path, unicode(screenshot['id']))
-                filepath = os.path.join(path, '%s-%ix%i%s' % (name,
-                  screenshot['width'], screenshot['height'], ext))
-                path = os.path.normpath(path)
-                filepath = os.path.normpath(filepath)
-
-                self.log.debug('path: %s' % (path,))
-                self.log.debug('filename: %s' % (filepath,))
-
-                # Store uploaded image.
-                try:
-                    os.mkdir(path)
-                    out_file = open(filepath, 'wb+') 
-                    file.seek(0)
-                    shutil.copyfileobj(file, out_file)
-                    out_file.close()
-                except Exception, error:
-                    api.delete_screenshot(context, screenshot['id'])
-                    try:
-                        os.remove(filename)
-                    except:
-                        pass
-                    try:
-                        os.rmdir(path)
-                    except:
-                        pass
-                    raise TracError('Error storing file. Is directory' \
-                      ' specified in path config option in [screenshots]' \
-                      ' section of trac.ini existing? Original message was: %s' \
-                      % (to_unicode(error),))
-
-                # Notify change listeners.
-                for listener in self.change_listeners:
-                    listener.screenshot_created(context.req, screenshot)
+                    zip_file.close()
+                else:
+                    # Add single image.
+                    self._add_screenshot(context, api, file, filename,
+                      to_timestamp(datetime.now(utc)))
 
                 # Clear ID to prevent display of edit and delete button.
                 context.req.args['id'] = None
@@ -481,7 +433,6 @@ class ScreenshotsCore(Component):
                 # Delete screenshot files. Don't append any other files there :-).
                 path = os.path.join(self.path, to_unicode(screenshot['id']))
                 path = os.path.normpath(path)
-
                 self.log.debug('path: %s' % (path,))
 
                 try:
@@ -490,9 +441,8 @@ class ScreenshotsCore(Component):
                         file = os.path.normpath(file)
                         os.remove(file)
                     os.rmdir(path)
-                except Exception, error:
-                    raise TracError('Error deleting screenshot. Original' \
-                      ' message was: %s' % (to_unicode(error),))
+                except:
+                    pass
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -571,6 +521,7 @@ class ScreenshotsCore(Component):
                 # Filter screenshots.
                 screenshots = api.get_filtered_screenshots(context,
                   enabled_components, enabled_versions, relation, orders)
+                self.log.debug('screenshots: %s' % (screenshots,))
 
                 # Convert enabled components and versions to dictionary.
                 enabled_components = dict(zip(enabled_components, [True] *
@@ -603,6 +554,86 @@ class ScreenshotsCore(Component):
                 # Get screenshot
                 screenshot = api.get_screenshot(context, self.id)
                 self.log.debug('screenshot: %s' % (screenshot,))
+
+    def _add_screenshot(self, context, api, file, filename, time):
+        # Create image object.
+        image = Image.open(file)
+
+        # Construct screenshot dictionary from form values.
+        screenshot = {'name' :  context.req.args.get('name'),
+                      'description' : context.req.args.get('description'),
+                      'time' : time,
+                      'author' : context.req.authname,
+                      'tags' : context.req.args.get('tags'),
+                      'file' : filename,
+                      'width' : image.size[0],
+                      'height' : image.size[1],
+                      'priority' : int(context.req.args.get('priority')
+                        or '0')}
+
+        # Add new screenshot.
+        api.add_screenshot(context, screenshot)
+
+        # Get inserted screenshot to with new id.
+        screenshot = api.get_screenshot_by_time(context, screenshot['time'])
+
+        # Add components to screenshot.
+        components = context.req.args.get('components') or []
+        if not isinstance(components, list):
+            components = [components]
+        for component in components:
+            component = {'screenshot' : screenshot['id'],
+                         'component' : component}
+            api.add_component(context, component)
+        screenshot['components'] = components
+
+        # Add versions to screenshots
+        versions = context.req.args.get('versions') or []
+        if not isinstance(versions, list):
+            versions = [versions]
+        for version in versions:
+            version = {'screenshot' : screenshot['id'],
+                       'version' : version}
+            api.add_version(context, version)
+        screenshot['versions'] = versions
+
+        self.log.debug('screenshot: %s' % (screenshot,))
+
+        # Prepare file paths
+        name, ext = os.path.splitext(screenshot['file'])
+        path = os.path.join(self.path, unicode(screenshot['id']))
+        filepath = os.path.join(path, '%s-%ix%i%s' % (name, screenshot['width'],
+          screenshot['height'], ext))
+        path = os.path.normpath(path)
+        filepath = os.path.normpath(filepath)
+
+        self.log.debug('path: %s' % (path,))
+        self.log.debug('filename: %s' % (filepath,))
+
+        # Store uploaded image.
+        try:
+            os.mkdir(path)
+            out_file = open(filepath, 'wb+') 
+            file.seek(0)
+            shutil.copyfileobj(file, out_file)
+            out_file.close()
+        except Exception, error:
+            api.delete_screenshot(context, screenshot['id'])
+            try:
+                os.remove(filename)
+            except:
+                pass
+            try:
+                os.rmdir(path)
+            except:
+                pass
+            raise TracError('Error storing file. Is directory specified in path' \
+              ' config option in [screenshots] section of trac.ini existing?' \
+              ' Original message was: %s' % (to_unicode(error),))
+
+        # Notify change listeners.
+        for listener in self.change_listeners:
+            listener.screenshot_created(context.req, screenshot)
 
     def _create_image(self, orig_name, path, name, ext, width, height):
         image = Image.open(orig_name)
