@@ -42,10 +42,10 @@ On using this plugin, do not forget enabling plugin
 
 {{{
 [components]
-tracnegotiator.* = enabled
+wikinegotiator.* = enabled
 
 [wiki]
-default_language = en
+default_lang = en
 
 }}}
 
