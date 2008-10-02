@@ -6,6 +6,7 @@ from trac.core import *
 from trac.web.api import IRequestFilter, RequestDone
 from trac.perm import PermissionError
 from trac.admin.web_ui import AdminModule
+from trac.config import ListOption
 
 class NoAnonymousModule(Component):
     """Redirect all anonymous users to the login screen on PermissionError."""
@@ -17,9 +18,15 @@ class NoAnonymousModule(Component):
         return handler
             
     def post_process_request(self, req, template, data, content_type):
+        
+        paths =['/login', '/reset_password']
+        
         try:
-            if req.authname == 'anonymous' and \
-               not req.path_info.startswith('/login'):
+            if req.authname == 'anonymous':
+                for p in paths:
+                    if req.path_info.startswith(p):
+                        return template, data, content_type
+                    
                 # Anonymous user redirect to log in.
                 req.redirect(req.href.login())
         except RequestDone:
@@ -31,4 +38,3 @@ class NoAnonymousModule(Component):
             pass
             
         return template, data, content_type
-
