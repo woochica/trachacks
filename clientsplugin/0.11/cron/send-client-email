@@ -176,10 +176,10 @@ class SendClientFakeReq:
     self.abs_href = SendClientFakeHref()
     self.perm = []
   
+  def __call__(self, *args, **keywords):
+    return ''
   def perm(self, *args, **keywords):
     return []
-
-    return SendClientFakeWiki()
 
 class SendClientEmails:
 
@@ -266,170 +266,23 @@ class SendClientEmails:
               print "  Overriding emails ('%s') to '%s'" % (emaillist, options.mail)
             emails = []
             emails.append(options.mail)
-            
+
           if not emails:
             # No emails, so no where to send it.
             if options.debug:
               print "  No email addresses registered. Skipping."
             continue
-          
-          xml = etree.Element('clientsplugin')
-          
-          # Place basic client info here
-          xclient = etree.SubElement(xml, 'client')
-          etree.SubElement(xclient, 'name').text = name
-          etree.SubElement(xclient, 'lastupdate').text = myformat_date(lastupdate)
 
-          # Information about milestones
-          milestones = {}
-          xmilestones = etree.SubElement(xml, 'milestones')
-
-          have_data = False
+          summeriser = None
           if 'summary' == field:
-            # Load in a summary of the client's tickets
-            sql = ("""\
-              SELECT t.id, t.summary, t.description, t.status, t.milestone,
-                m.due, m.completed, m.description AS mdesc,
-                tcust2.value AS estimatedhours
-              FROM ticket_custom AS tcust
-              INNER JOIN ticket AS t ON tcust.ticket=t.id
-              LEFT JOIN ticket_custom AS tcust2 ON t.id=tcust2.ticket AND tcust2.name='estimatedhours'
-              LEFT JOIN milestone m ON t.milestone=m.name
-              WHERE tcust.name = 'client'
-                AND tcust.value = %s
-                AND t.milestone IN (
-                  SELECT DISTINCT st.milestone
-                  FROM ticket_custom AS stcust
-                  INNER JOIN ticket AS st ON stcust.ticket=st.id
-                  INNER JOIN milestone AS sm ON st.milestone=sm.name
-                  WHERE stcust.name = tcust.name
-                  AND stcust.value = tcust.value
-                  AND st.status != 'closed'
-                  AND sm.due > 0)
-              """)
-            cur2 = db.cursor()
-            cur2.execute(sql, (name,))
-            xsummary = etree.SubElement(xml, 'summary')
-            for tid, summary, description, status, milestone, due, completed, mdescription, estimatedhours in cur2:
-              have_data = True
-              if milestone:
-                if not milestones.has_key(milestone):
-                  xmilestone = etree.SubElement(xmilestones, 'milestone')
-                  etree.SubElement(xmilestone, 'name').text = milestone
-                  etree.SubElement(xmilestone, 'duetimestamp').text = str(due)
-                  etree.SubElement(xmilestone, 'due').text = myformat_date(due)
-                  if completed:
-                    etree.SubElement(xmilestone, 'completed').text = myformat_date(completed)
-                  if mdescription:
-                    xmilestone.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(mdescription), self.env, self.req)))
-                  else:
-                    etree.SubElement(xmilestone, 'description').text = ''
-                  # Store for use
-                  milestones[milestone] = { 'hours': 0, 'xml': xmilestone }
-                
-                # Add hours to create a total.
-                if estimatedhours:
-                  milestones[milestone]['hours'] += float(estimatedhours) 
+            from clients.milestonesummary import ClientMilestoneSummary
+            summariser = ClientMilestoneSummary(self.env, self.req)
+          else:
+            from clients.ticketchanges import ClientTicketChanges
+            summariser = ClientTicketChanges(self.env, self.req)
 
-              if options.debug:
-                print "  Summarising ticket #%s" % tid
-              ticket = etree.SubElement(xsummary, 'ticket')
-              etree.SubElement(ticket, 'id').text = str(tid)
-              etree.SubElement(ticket, 'summary').text = summary
-              ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
-              etree.SubElement(ticket, 'status').text = status
-              etree.SubElement(ticket, 'milestone').text = milestone
-              # For conveneince, put the date here too (keeps the XSLTs simpler)
-              etree.SubElement(ticket, 'due').text = myformat_date(due)
-              if estimatedhours:
-                etree.SubElement(ticket, 'estimatedhours').text = myformat_hours(estimatedhours)
-
-          elif 'changes' == field:
-            # Load in any changes that have happend
-            sql = ("""\
-              SELECT t.id, t.summary, t.description, t.status, t.resolution, t.milestone, m.due,
-                tchng.field, tchng.oldvalue, tchng.newvalue
-              FROM ticket_custom tcust
-              INNER JOIN ticket AS t ON tcust.ticket=t.id
-              INNER JOIN ticket_change AS tchng ON t.id=tchng.ticket
-              LEFT JOIN milestone AS m ON t.milestone=m.name
-              WHERE tcust.name = 'client'
-                AND tcust.value = %s
-                AND tchng.field IN ('comment', 'status', 'resolution', 'milestone')
-                AND tchng.time >= %s
-                AND tchng.time < %s
-                AND t.milestone IN (
-                  SELECT DISTINCT st.milestone
-                  FROM ticket_custom AS stcust
-                  INNER JOIN ticket AS st ON stcust.ticket=st.id
-                  INNER JOIN milestone AS sm ON st.milestone=sm.name
-                  WHERE stcust.name = tcust.name
-                  AND stcust.value = tcust.value
-                  AND sm.due > 0)
-              ORDER BY t.time
-              """)
-            cur2 = db.cursor()
-            cur2.execute(sql, (name, lastupdate, now))
-            changes = etree.SubElement(xml, 'changes')
-            lasttid = 0
-            for tid, summary, description, status, resolution, milestone, due, cgfield, oldvalue, newvalue in cur2:
-              text = ''
-              if 'status' == cgfield:
-                text = 'Status changed from "%s" to "%s"' % (oldvalue, newvalue)
-              elif 'milestone' == cgfield:
-                text = 'Milestone changed from "%s" to "%s" - please check for revised delivery date.' % (oldvalue, newvalue)
-              elif 'resolution' == cgfield:
-                if oldvalue and not newvalue:
-                  text = 'Resolution removed'
-                elif not oldvalue and newvalue:
-                  text = 'Resolution set to "%s"' % (newvalue)
-                else:
-                  text = 'Resolution changed from "%s" to "%s"' % (oldvalue, newvalue)
-              elif 'comment' == cgfield:
-                # Todo - extract...
-                text = extract_client_text(newvalue).strip()
-                if '' == text:
-                  # No comments for the client here so ignore it.
-                  continue
-                text = "''Comment for your information:''[[BR]][[BR]]" + text
-              else:
-                # Client should not know any more than this
-                continue
-              
-              if options.debug:
-                print "  Change notification (%s) for ticket #%s" % (cgfield, tid)
-              have_data = True
-              if lasttid != tid:
-                ticket = etree.SubElement(changes, 'ticket')
-                etree.SubElement(ticket, 'id').text = str(tid)
-                etree.SubElement(ticket, 'summary').text = summary
-                ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
-                etree.SubElement(ticket, 'status').text = status
-                etree.SubElement(ticket, 'resolution').text = resolution
-                etree.SubElement(ticket, 'milestone').text = milestone
-                etree.SubElement(ticket, 'due').text = myformat_date(due)
-                changelog = etree.SubElement(ticket, 'changelog')
-
-              detail = etree.XML('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req))
-              detail.set('field', cgfield)
-              if oldvalue:
-                detail.set('oldvalue', oldvalue)
-              if newvalue:
-                detail.set('newvalue', newvalue)
-              changelog.append(detail)
-              lasttid = tid
-          
-          # Put the total hours into the milestone info
-          for milestone in milestones:
-            etree.SubElement(milestones[milestone]['xml'], 'estimatedhours').text = myformat_hours(milestones[milestone]['hours'])
-          
-          if options.debug:
-            file = open('/tmp/send-client-email.xml', 'w')
-            file.write(etree.tostring(xml, pretty_print=True))
-            file.close()
-            print " Wrote XML to /tmp/send-client-email.xml"
-
-          if not have_data:
+          xml = summariser.get_summary(name, lastupdate, now)
+          if xml is None:
             continue
 
           subject = 'Ticket Summary for %s' % name
