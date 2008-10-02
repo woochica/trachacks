@@ -8,10 +8,10 @@ setup(
     version = '1.0.1',
     packages = ['restrictedarea'],
 
-    author = "Christian Spurk, DFKI",
+    author = "Christian Spurk, DFKI GmbH",
     author_email = "Christian.Spurk@dfki.de",
     description = "Allows the setup of restricted areas with access only for privileged users.",
-    license = "BSD",
+    license = "revised BSD license",
     keywords = "trac plugin restricted area access",
     url = "http://trac-hacks.org/wiki/RestrictedAreaPlugin",
     classifiers = [
