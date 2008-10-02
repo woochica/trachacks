@@ -23,7 +23,10 @@ setup(name=PACKAGE,
             'clients.admin = clients.admin',
             'clients.client = clients.client',
             'clients.model = clients.model',
-            'clients.processor = clients.processor'
+            'clients.processor = clients.processor',
+            'clients.summaryinterface = clients.summaryinterface',
+            'clients.milestonesummary = clients.milestonesummary',
+            'clients.ticketchanges = clients.ticketchanges'
         ]
     })
 
