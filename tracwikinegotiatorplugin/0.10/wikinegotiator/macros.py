@@ -32,7 +32,27 @@ def _list_wiki_default_pages():
         if re_wiki_page.match(f):
             pages.append(f)
     return pages
-            
+
+def _exclude(pages, excludes):
+    if not excludes:
+        return pages, []                        # nothing excluded
+    items = []
+    for item in excludes:
+        if item.endswith('*'):
+            # prefix
+            items.append(re.escape(item[:-1]) + '.*')
+        else:
+            # exact
+            items.append(re.escape(item))
+    re_exclude = re.compile('|'.join(items))
+    filtered = []
+    excluded = []
+    for page in pages:
+        if re_exclude.match(page):
+            excluded.append(page)
+        else:
+            filtered.append(page)
+    return filtered, excluded
 
 class MultiLangTitleIndex(WikiMacroBase):
     """Inserts an alphabetic list of all wiki pages cosidering suffixes.
@@ -51,24 +71,40 @@ class MultiLangTitleIndex(WikiMacroBase):
 
     Left most page name is for usual access with negotiation.
     Items in paren are existing language variants for the page.
+
+    System pages are decided by listing files in wiki-default
+    directory. As described before, you can exclude some pages as user
+    page by spcifying `_explicit_user_pages`. Likewise, you can
+    specify the system pages via `_explicit_system_pages` option.
+    
+    These two options are list of page names separated by comma. If
+    the page name ends with '*' character, it works as prefix for
+    matching. For exmaple, 'Trac*' means "page names staring with
+    'Trac'".
     
     """
     _explicit_user_pages = ListOption('multi-lang-title-index',
                                       'explicit_user_pages',
                                       'WikiStart, SandBox',
                                       doc="List of page names to be grouped"
-                                      " in user page.")
+                                      " in user page. If the name ends"
+                                      " with '*', it works as prefix.")
+
+    _explicit_system_pages = ListOption('multi-lang-title-index',
+                                        'explicit_system_pages',
+                                        '', #'GraphViz*',
+                                        doc="List of page names to be grouped"
+                                        " in system page. If the name ends"
+                                        " with '*', it works as prefix.")
 
     _wiki_default_pages = _list_wiki_default_pages()
     
     def render_macro(self, req, name, content):
         env = self.env
         wiki = WikiSystem(env)
-        # Get system provided pages excluding some.
-        system_pages = list(self._wiki_default_pages) # pages provided by trac
-        for page in self._explicit_user_pages:
-            if page in system_pages:
-                system_pages.remove(page)
+        # process explicit user pages
+        system_pages, exc = _exclude(self._wiki_default_pages,
+                                     self._explicit_user_pages)
         # Pick all wiki pages and make list of master pages and also
         # make list of language variations for each master page.
         # The name of master page should not have language suffix.
@@ -88,7 +124,10 @@ class MultiLangTitleIndex(WikiMacroBase):
                 lang_map[p] = langs + [l]
             if p not in system_pages and p not in user_pages:
                 user_pages.append(p)
-        # generate output
+        # process explicit system pages
+        user_pages, exc = _exclude(user_pages, self._explicit_system_pages)
+        system_pages += exc
+        # generate output        
         prefix = content
         tr = html.TR(valign='top')
         for title, pages in (('Project', user_pages),
