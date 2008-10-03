@@ -19,7 +19,9 @@ function datasaver($)
     }
 
     // Keep a copy of form data every minute and keep a copy if the page is 
-    datasaver_watcher()
+    //datasaver_watcher()
+
+    // Also track when the page is left.
     $(window).unload(datasaver_savior)
 })
 
@@ -56,7 +58,7 @@ function datasaver_watcher()
     setTimeout(datasaver_watcher, 60000);
 }
 
-function datasaver_savior()
+function datasaver_savior(event)
 {
     datasaver_save()
 }
