@@ -25,18 +25,15 @@ import re
 import inspect
 import subprocess
 
-from trac.config import Option
+from trac.config import BoolOption, IntOption, Option
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
 from trac.util import escape
 from trac.util.text import to_unicode
+from trac.util.translation import _
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.web.api import IRequestHandler
-
-
-_TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
-
 
 
 class Graphviz(Component):
@@ -46,18 +43,6 @@ class Graphviz(Component):
     drawings within a Trac wiki page.
     """
     implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler)
-
-    cache_dir_option = Option("graphviz", "cache_dir", "gvcache",
-            """The directory that will be used to cache the generated images
-            (note that the directory must exist).
-            If not given as an absolute path, the path will be relative to 
-            the Trac environment's directory.
-            """)
-
-    encoding = Option("graphviz", "encoding", 'utf-8',
-            """The encoding which should be used for communicating with
-            Graphviz (should match -Gcharset if given).
-            """)
 
     # Available formats and processors, default first (dot/png)
     Processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
@@ -83,12 +68,106 @@ class Graphviz(Component):
         
         }
 
+    # Note: the following options named "..._option" are those which need
+    #       some additional processing, see `load_config()` below.
+
+
+    cache_dir_option = Option("graphviz", "cache_dir", "gvcache",
+            """The directory that will be used to cache the generated images
+            (note that the directory must exist).
+            If not given as an absolute path, the path will be relative to 
+            the Trac environment's directory.
+            """)
+
+    encoding = Option("graphviz", "encoding", 'utf-8',
+            """The encoding which should be used for communicating with
+            Graphviz (should match -Gcharset if given).
+            """)
+
+    cmd_path = Option("graphviz", "cmd_path", '',
+            r"""Full path to the directory where the graphviz
+            programs are located. If not specified, the
+            default is /usr/bin on Linux, c:\Program
+            Files\ATT\Graphviz\bin on Windows and
+            /usr/local/bin on FreeBSD 6.
+            """)
+
+    out_format = Option("graphviz", "out_format", Formats[0],
+            """Graph output format. Valid formats are: png, jpg,
+            svg, svgz, gif. If not specified, the default is
+            png. This setting can be overrided on a per-graph
+            basis.
+            """)
+
+    processor = Option("graphviz", "processor", Processors[0],
+            """Graphviz default processor. Valid processors
+            are: dot, neato, twopi, fdp, circo. If not
+            specified, the default is dot. This setting can
+            be overrided on a per-graph basis.
+
+            GraphvizMacro will verify that the default
+            processor is installed and will not work if it
+            is missing. All other processors are optional.
+            If any of the other processors are missing, a
+            warning message will be sent to the trac log and
+            GraphvizMacro will continue to work.
+            """)
+
+    png_anti_alias = BoolOption("graphviz", "png_antialias", False,
+            """If this entry exists in the configuration file,
+            then PNG outputs will be antialiased.
+            Note that this requires `rsvg` to be installed.
+            """)
+
+    rsvg_path_option = Option("graphviz", "rsvg_path", "",
+            """Full path to where the rsvg binary can be found.
+            The default is cmd_path + rsvg.
+            """)
+
+    cache_manager = BoolOption("graphviz", "cache_manager", False,
+            """If this entry exists and set to true in the configuration file,
+            then the cache management logic will be invoked
+            and the cache_max_size, cache_min_size,
+            cache_max_count and cache_min_count must be
+            defined.
+            """)
+
+    cache_max_size = IntOption("graphviz", "cache_max_size", 1024*1024*10,
+            """The maximum size in bytes that the cache should
+            consume. This is the high watermark for disk space
+            used.
+            """)
+
+    cache_min_size = IntOption("graphviz", "cache_min_size", 1024*1024*5,
+            """When cleaning out the cache, remove files until
+            this size in bytes is used by the cache. This is
+            the low watermark for disk space used.
+            """)
+
+    cache_max_count = IntOption("graphviz", "cache_max_count", 2000,
+            """The maximum number of files that the cache should
+            contain. This is the high watermark for the
+            directory entry count.
+            """)
+
+    cache_min_count = IntOption("graphviz", "cache_minax_count", 1500,
+            """The maximum number of files that the cache should
+            contain. This is the high watermark for the
+            directory entry count.
+            """)
+
+    dpi = IntOption('graphviz', 'default_graph_dpi', 96,
+            """Default dpi setting for graphviz, used during SVG to PNG 
+            rasterization.
+            """)
+
 
     def __init__(self):
         self.log.info('version: %s - id: %s' % (__version__, str(__id__)))
         #self.log.info('processors: %s' % str(Graphviz.Processors))
         #self.log.info('formats: %s' % str(Graphviz.Formats))
 
+    # IWikiMacroProvider methods
 
     def get_macros(self):
         """Return an iterable that provides the names of the provided macros."""
@@ -137,25 +216,22 @@ class Graphviz(Component):
 
         content - The text the user entered for the macro to process.
         """
-
-        self.formatter = formatter
-        self.env = formatter.env
         req = formatter.req
 
         # check and load the configuration
-        trouble, msg = self.load_config()
-        if trouble:
-            return msg.getvalue()
+        errmsg = self.load_config()
+        if errmsg:
+            return self.show_err(errmsg)
 
         buf = StringIO()
 
         ## Extract processor and format from name
-        l_proc = l_out_format = ''
+        processor = out_format = None
 
         # first try with the RegExp engine
         try: 
             m = re.match('graphviz\.?([a-z]*)\/?([a-z]*)', name)
-            (l_proc, l_out_format) = m.group(1, 2)
+            (processor, out_format) = m.group(1, 2)
 
         # or use the string.split method
         except:
@@ -163,37 +239,41 @@ class Graphviz(Component):
             if len(d_sp) > 1:
                 s_sp = d_sp[1].split('/')
                 if len(s_sp) > 1:
-                    l_out_format = s_sp[1]
-                l_proc = s_sp[0]
+                    out_format = s_sp[1]
+                processor = s_sp[0]
             elif len(s_sp) > 1:
-                l_out_format = s_sp[1]
+                out_format = s_sp[1]
             
         # assign default values, if instance ones are empty
-        self.out_format = (self.out_format, l_out_format)[bool(len(l_out_format))]
-        self.processor  = (self.processor,  l_proc)      [bool(len(l_proc))]
+        if not out_format:
+            out_format = self.out_format
+        if not processor:
+            processor = self.processor
 
-
-        if self.processor in Graphviz.Processors:
-            proc_cmd = self.cmds[self.processor]
+        if processor in Graphviz.Processors:
+            proc_cmd = self.cmds[processor]
 
         else:
-            self.log.error('render_macro: requested processor (%s) not found.' % self.processor)
-            buf.write('<p>Graphviz macro processor error: requested processor (%s) not found.</p>' % self.processor)
-            return buf.getvalue()
+            self.log.error('render_macro: requested processor (%s) not found.' %
+                           processor)
+            return self.show_err('requested processor (%s) not found.' % 
+                                 processor)
            
-        if self.out_format not in Graphviz.Formats:
-            self.log.error('render_macro: requested format (%s) not found.' % self.out_format)
-            buf.write('<p>Graphviz macro processor error: requested format (%s) not valid.</p>' % self.out_format)
-            return buf.getvalue()
+        if out_format not in Graphviz.Formats:
+            self.log.error('render_macro: requested format (%s) not found.' %
+                           out_format)
+            return self.show_err(
+                    '<p>Graphviz macro processor '
+                    'error: requested format (%s) not valid.</p>' % out_format)
 
-        encoded_cmd = (self.processor + unicode(self.processor_options)) \
+        encoded_cmd = (processor + unicode(self.processor_options)) \
                 .encode(self.encoding)
         encoded_content = content.encode(self.encoding)
         sha_key  = sha.new(encoded_cmd + encoded_content).hexdigest()
-        img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format)
+        img_name = '%s.%s.%s' % (sha_key, processor, out_format)
         # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
-        map_name = '%s.%s.map' % (sha_key, self.processor)
+        map_name = '%s.%s.map' % (sha_key, processor)
         # cache: hash.<dot>.map
         map_path = os.path.join(self.cache_dir, map_name)
 
@@ -206,10 +286,10 @@ class Graphviz(Component):
 
             #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
-                content = self.expand_wiki_links(content)
+                content = self.expand_wiki_links(formatter, out_format, content)
 
             # Antialias PNGs with rsvg, if requested
-            if self.out_format == 'png' and self.png_anti_alias == True:
+            if out_format == 'png' and self.png_anti_alias == True:
                 # 1. SVG output
                 cmd = [proc_cmd] + self.processor_options + \
                         ['-Tsvg', '-o%s.svg' % img_path]
@@ -227,14 +307,14 @@ class Graphviz(Component):
             
             else: # Render other image formats
                 cmd = [proc_cmd] + self.processor_options + \
-                        ['-T%s' % self.out_format, '-o%s' % img_path]
+                        ['-T%s' % out_format, '-o%s' % img_path]
                 out, err = self.launch(cmd, encoded_content)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
 
             # Generate a map file for binary formats
-            if URL_in_graph and self.out_format in Graphviz.Bitmap_Formats:
+            if URL_in_graph and out_format in Graphviz.Bitmap_Formats:
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
@@ -248,7 +328,7 @@ class Graphviz(Component):
 
         # Generate HTML output
         # for SVG(z)
-        if self.out_format in Graphviz.Vector_Formats:
+        if out_format in Graphviz.Vector_Formats:
             try: # try to get SVG dimensions
                 f = open(img_path, 'r')
                 svg = f.readlines()
@@ -286,95 +366,82 @@ class Graphviz(Component):
         return buf.getvalue()
 
 
-    def expand_wiki_links(self, content):
+    def expand_wiki_links(self, formatter, out_format, content):
         """Expand TracLinks that follow all URL= patterns."""
-        return re.sub(r'URL="(.*?)"', self._expand_wiki_links, content)
+        def expand(match):
+            wiki_url = match.groups()[0] # TracLink ([1], source:file/, ...)
+            html_url = wiki_to_oneliner(wiki_url, self.env, req=formatter.req)
+            # <a href="http://someurl">...</a>
 
-    def _expand_wiki_links(self, match):
-        wiki_url = match.groups()[0] # TracLink ([1], source:file/, ...)
-        html_url = wiki_to_oneliner(wiki_url, self.env, req=self.formatter.req)
-        # <a href="http://someurl">...</a>
+            href     = re.search('href="(.*?)"', html_url)   # http://someurl
+            url      = href and href.groups()[0] or html_url
+            if out_format == 'svg':
+                format = 'URL="javascript:window.parent.location.href=\'%s\'"'
+            else:
+                format = 'URL="%s"'
+            return format % url
+        return re.sub(r'URL="(.*?)"', expand, content)
 
-        href     = re.search('href="(.*?)"', html_url)   # http://someurl
-        url      = href and href.groups()[0] or html_url
-        if self.out_format == 'svg':
-            format = 'URL="javascript:window.parent.location.href=\'%s\'"'
-        else:
-            format = 'URL="%s"'
-        return format % url
 
     def load_config(self):
-        """Load the graphviz trac.ini configuration into object instance variables."""
-        buf = StringIO()
+        """Preprocess the graphviz trac.ini configuration."""
 
-        if 'graphviz' not in self.config.sections():
-            msg = 'The [graphviz] section was not found in the trac configuration file.'
-            return (True, self.show_err(msg))
+        # if 'graphviz' not in self.config.sections():
+        # ... so what? the defaults might be good enough
 
         # check for the cache_dir entry
         self.cache_dir = self.cache_dir_option
         if not self.cache_dir:
-            msg = 'The [graphviz] section is missing the cache_dir field.'
-            return True, self.show_err(msg)
+            return _("The [graphviz] section is missing the cache_dir field.")
 
         if not os.path.isabs(self.cache_dir):
             self.cache_dir = os.path.join(self.env.path, self.cache_dir)
 
         if not os.path.exists(self.cache_dir):
-            msg = "The cache_dir '%s' doesn't exist, please create it." % \
-                    self.cache_dir
-            return True, self.show_err(msg)
+            return _("The cache_dir '%(path)s' doesn't exist, "
+                    "please create it.", path=self.cache_dir)
 
         # Get optional configuration parameters from trac.ini.
 
-        # check for the default processor - processor
-        self.processor = self.config.get('graphviz', 'processor', Graphviz.Processors[0])
-
-        # check for the cmd_path entry and setup the various program command paths
+        # check for the cmd_path entry and setup the various command paths
         cmd_paths = Graphviz.Cmd_Paths.get(sys.platform, [])
 
-        cfg_path = self.config.get('graphviz', 'cmd_path')
-        if cfg_path:
-            if not os.path.exists(cfg_path):
-                msg = 'The cmd_path is set to "%s" but that path does not exist.' % cfg_path
-                return True, self.show_err(msg)
-            cmd_paths = [cfg_path]
+        if self.cmd_path:
+            if not os.path.exists(self.cmd_path):
+                return _("The '[graphviz] cmd_path' configuration entry "
+                         "is set to '%(path)s' but that path does not exist.", 
+                         path=self.cmd_path)
+            cmd_paths = [self.cmd_path]
 
         if not cmd_paths:
-            msg = 'The [graphviz] section is missing the cmd_path field and there is no default for %s.' % sys.platform
-            return True, self.show_err(msg)
-
+            return _("The '[graphviz] cmd_path' configuration entry "
+                     "is not set and there is no default for %(platform)s.",
+                     platform=sys.platform)
 
         self.cmds = {}
         pname = self._find_cmd(self.processor, cmd_paths)
         if not pname:
-            msg = 'The default processor, %s, was not found in %s.' % (self.processor, str(cmd_paths))
-            return True, self.show_err(msg)
+            return _("The default processor '%(proc)s' was not found "
+                     "in '%(paths)s'.", proc=self.processor, paths=cmd_paths)
 
         for name in Graphviz.Processors:
             pname = self._find_cmd(name, cmd_paths)
 
             if not pname:
-                self.log.warn('The %s program was not found. The graphviz/%s macro will be disabled.' % (pname, name))
+                self.log.warn('The %s program was not found. '
+                              'The graphviz/%s macro will be disabled.' %
+                              (pname, name))
                 Graphviz.Processors.remove(name)
 
             self.cmds[name] = pname
 
-        # check for the default output format - out_format
-        self.out_format = self.config.get('graphviz', 'out_format', 
-                                          Graphviz.Formats[0])
-
-        # check if png anti aliasing should be done - png_antialias
-        self.png_anti_alias = self.config.getbool(
-                'graphviz', 'png_antialias', False)
-
         if self.png_anti_alias:
-            self.rsvg_path = self.config.get('graphviz', 'rsvg_path',
-                                             self._find_cmd('rsvg', cmd_paths))
-
+            self.rsvg_path = self.rsvg_path_option or \
+                    self._find_cmd('rsvg', cmd_paths)
+            
             if not os.path.exists(self.rsvg_path):
-                err = 'The rsvg program is set to "%s" but that path does not exist.' % self.rsvg_path
-                return True, self.show_err(err)
+                return _("The rsvg program is set to '%(path)s' but that path "
+                         "does not exist.", path=self.rsvg_path)
 
         # get default graph/node/edge attributes
         self.processor_options = []
@@ -389,26 +456,12 @@ class Graphviz(Component):
                     self.processor_options.append("%s%s=%s" % 
                             (optkey, name.replace(prefix,''), value))
 
-        # check if we should run the cache manager
-        self.cache_manager = self.boolean(self.config.get('graphviz', 'cache_manager', False))
-        if self.cache_manager:
-            # use IntOption
-            self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size',  10000000))
-            self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size',  5000000))
-            self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count', 2000))
-            self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count', 1500))
-
-        # is there a graphviz default DPI setting?
-        self.dpi = int(self.config.get('graphviz', 'default_graph_dpi', 96))
-
         # setup mimetypes to support the IHTMLPreviewRenderer interface
         if 'graphviz' not in MIME_MAP:
             MIME_MAP['graphviz'] = 'application/graphviz'
         for processor in Graphviz.Processors:
             if processor not in MIME_MAP:
                 MIME_MAP[processor] = 'application/graphviz'
-
-        return False, buf
 
 
     def launch(self, cmd, encoded_input):
@@ -502,14 +555,6 @@ class Graphviz(Component):
                         count = count - 1
                         size = size - entry_list[file][6]
 
-    # Extra helper functions
-    def boolean(self, value):
-        # This code is almost directly from trac.config in the 0.10 line...
-        if isinstance(value, basestring):
-            value = value.lower() in _TRUE_VALUES
-        return bool(value)
-
-
     MIME_TYPES = ('application/graphviz')
 
     # IHTMLPreviewRenderer methods
@@ -520,11 +565,11 @@ class Graphviz(Component):
             return 2
         return 0
 
-    def render(self, req, mimetype, content, filename=None, url=None):
+    def render(self, context, mimetype, content, filename=None, url=None):
         ext = filename.split('.')[1]
         name = ext == 'graphviz' and 'graphviz' or 'graphviz.%s' % ext
         text = hasattr(content, 'read') and content.read() or content
-        return self.render_macro(req, name, text)
+        return self.render_macro(context, name, text)
 
 
     # IRequestHandler methods
@@ -535,9 +580,9 @@ class Graphviz(Component):
 
     def process_request(self, req):
         # check and load the configuration
-        trouble, msg = self.load_config()
-        if trouble:
-            return msg.getvalue()
+        errmsg = self.load_config()
+        if errmsg:
+            return self.show_err(errmsg)
 
         pieces = [item for item in req.path_info.split('/graphviz') if item]
 

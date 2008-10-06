@@ -112,7 +112,7 @@ A new section called graphviz should be added to the conf/trac.ini
 file with these fields:
 
     cache_dir       - The directory that will be used to cache the 
-                      generated images.
+                      generated images. That directory must exist.
 
     cmd_path        - Full path to the directory where the graphviz
                       programs are located. If not specified, the
