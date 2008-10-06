@@ -51,6 +51,8 @@ class Graphviz(Component):
     cache_dir_option = Option("graphviz", "cache_dir", "gvcache",
             """The directory that will be used to cache the generated images
             (note that the directory must exist).
+            If not given as an absolute path, the path will be relative to 
+            the Trac environment's directory.
             """)
 
     # Available formats and processors, default first (dot/png)
@@ -323,6 +325,9 @@ class Graphviz(Component):
         if not self.cache_dir:
             msg = 'The [graphviz] section is missing the cache_dir field.'
             return True, self.show_err(msg)
+
+        if not os.path.isabs(self.cache_dir):
+            self.cache_dir = os.path.join(self.env.path, self.cache_dir)
 
         if not os.path.exists(self.cache_dir):
             msg = "The cache_dir '%s' doesn't exist, please create it." % \
