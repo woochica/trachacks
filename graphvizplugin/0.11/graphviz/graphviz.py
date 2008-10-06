@@ -16,10 +16,7 @@ __docformat__ = 'restructuredtext'
 __version__   = '0.7.2'
 
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+from StringIO import StringIO
 import sha
 import os
 import sys
@@ -32,6 +29,7 @@ from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
 from trac.util import escape
+from trac.util.text import to_unicode
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.web.api import IRequestHandler
 
@@ -53,6 +51,11 @@ class Graphviz(Component):
             (note that the directory must exist).
             If not given as an absolute path, the path will be relative to 
             the Trac environment's directory.
+            """)
+
+    encoding = Option("graphviz", "encoding", 'utf-8',
+            """The encoding which should be used for communicating with
+            Graphviz.
             """)
 
     # Available formats and processors, default first (dot/png)
@@ -184,10 +187,10 @@ class Graphviz(Component):
             buf.write('<p>Graphviz macro processor error: requested format (%s) not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        encoding = 'utf-8'
         if type(content) == type(u''):
-            content  = content.encode(encoding)
-            sha_text = self.processor.encode(encoding) + self.processor_options.encode(encoding) + content
+            content  = content.encode(self.encoding)
+            sha_text = self.processor.encode(self.encoding) + \
+                    self.processor_options.encode(self.encoding) + content
 
         else:
             sha_text = self.processor + self.processor_options + content
@@ -208,8 +211,7 @@ class Graphviz(Component):
             #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
                 #self.log.debug('content: %s' % content)
-                content = re.sub(r'URL="(.*?)"', self.expand_wiki_links, unicode(content, 'utf-8'))
-
+                content = self.expand_wiki_links(content)
 
             # Antialias PNGs with rsvg, if requested
             if self.out_format == 'png' and self.png_anti_alias == True:
@@ -277,7 +279,7 @@ class Graphviz(Component):
             buf.write('<object data="%s/graphviz/%s" type="image/svg+xml" %s><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed></object>' % (req.base_url, img_name, dimensions, req.base_url, img_name, dimensions))
 
         # for binary formats, add map
-        elif URL_in_graph:
+        elif URL_in_graph and os.path.exists(map_path):
             f = open(map_path, 'r')
             map = f.readlines()
             f.close()
@@ -292,8 +294,17 @@ class Graphviz(Component):
         return buf.getvalue()
 
 
-    def expand_wiki_links(self, match):
-        wiki_url = match.groups()[0]                     # TracLink ([1], source:file/, ...)
+    def expand_wiki_links(self, content):
+        """Expand TracLinks that follow all URL= patterns.
+        The `content` input is a `str` encoding using `sel.fencoding` and 
+        the result should have the same encoding.
+        """
+        u_content = unicode(content, self.encoding)
+        u_content = re.sub(r'URL="(.*?)"', self._expand_wiki_links, u_content)
+        return u_content.encode(self.encoding)
+
+    def _expand_wiki_links(self, match):
+        wiki_url = match.groups()[0] # TracLink ([1], source:file/, ...)
         #self.log.debug('wiki_url: %s' % wiki_url)
         #self.log.debug('self.env: %s' % str(self.env))
         #self.log.debug('self.formatter.req: %s' % str(self.formatter.req))
@@ -452,7 +463,7 @@ class Graphviz(Component):
         buf.write('<div id="content" class="error"><div class="message"> \n\
                    <strong>Graphviz macro processor has detected an error. Please fix the problem before continuing.</strong> \n\
                    <pre>%s</pre> \n\
-                   </div></div>' % escape(msg))
+                   </div></div>' % escape(to_unicode(msg)))
         self.log.error(msg)
         return buf
 
