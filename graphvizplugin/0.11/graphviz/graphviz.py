@@ -27,6 +27,7 @@ import re
 import inspect
 import subprocess
 
+from trac.config import Option
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
@@ -46,6 +47,11 @@ class Graphviz(Component):
     drawings within a Trac wiki page.
     """
     implements(IWikiMacroProvider, IHTMLPreviewRenderer, IRequestHandler)
+
+    cache_dir_option = Option("graphviz", "cache_dir", "gvcache",
+            """The directory that will be used to cache the generated images
+            (note that the directory must exist).
+            """)
 
     # Available formats and processors, default first (dot/png)
     Processors = ['dot', 'neato', 'twopi', 'circo', 'fdp']
@@ -313,13 +319,14 @@ class Graphviz(Component):
             return (True, self.show_err(msg))
 
         # check for the cache_dir entry
-        self.cache_dir = self.config.get('graphviz', 'cache_dir')
+        self.cache_dir = self.cache_dir_option
         if not self.cache_dir:
             msg = 'The [graphviz] section is missing the cache_dir field.'
             return True, self.show_err(msg)
 
         if not os.path.exists(self.cache_dir):
-            msg = 'The cache_dir is set to "%s" but that path does not exist.' % self.cache_dir
+            msg = "The cache_dir '%s' doesn't exist, please create it." % \
+                    self.cache_dir
             return True, self.show_err(msg)
         #self.log.debug('self.cache_dir: %s' % self.cache_dir)
 
