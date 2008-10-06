@@ -138,7 +138,6 @@ class Graphviz(Component):
         content - The text the user entered for the macro to process.
         """
 
-        #self.log.debug('dir(self): %s' % str(dir(self)))
         self.formatter = formatter
         self.env = formatter.env
         req = formatter.req
@@ -149,7 +148,6 @@ class Graphviz(Component):
             return msg.getvalue()
 
         buf = StringIO()
-
 
         ## Extract processor and format from name
         l_proc = l_out_format = ''
@@ -192,9 +190,11 @@ class Graphviz(Component):
                 .encode(self.encoding)
         encoded_content = content.encode(self.encoding)
         sha_key  = sha.new(encoded_cmd + encoded_content).hexdigest()
-        img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
+        img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format)
+        # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
-        map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
+        map_name = '%s.%s.map' % (sha_key, self.processor)
+        # cache: hash.<dot>.map
         map_path = os.path.join(self.cache_dir, map_name)
 
         # Check for URL="" presence in graph code
@@ -206,7 +206,6 @@ class Graphviz(Component):
 
             #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
-                #self.log.debug('content: %s' % content)
                 content = self.expand_wiki_links(content)
 
             # Antialias PNGs with rsvg, if requested
@@ -214,7 +213,6 @@ class Graphviz(Component):
                 # 1. SVG output
                 cmd = [proc_cmd] + self.processor_options + \
                         ['-Tsvg', '-o%s.svg' % img_path]
-                #self.log.debug('render_macro: svg output - running command %s' % cmd)
                 out, err = self.launch(cmd, encoded_content)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
@@ -222,7 +220,6 @@ class Graphviz(Component):
 
                 # 2. SVG to PNG rasterization
                 cmd = [self.rsvg_path, '--dpi-x=%d' % self.dpi, '--dpi-y=%d' % self.dpi, '%s.svg' % img_path, img_path]
-                #self.log.debug('render_macro: svg to png - running command %s' % cmd)
                 out, err = self.launch(cmd, None)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
@@ -231,7 +228,6 @@ class Graphviz(Component):
             else: # Render other image formats
                 cmd = [proc_cmd] + self.processor_options + \
                         ['-T%s' % self.out_format, '-o%s' % img_path]
-                #self.log.debug('render_macro: render other image formats - running command %s' % cmd)
                 out, err = self.launch(cmd, encoded_content)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
@@ -244,7 +240,6 @@ class Graphviz(Component):
                 if not os.path.exists(map_path):
                     cmd = [proc_cmd] + self.processor_options + \
                             ['-Tcmap', '-o%s' % map_path]
-                    #self.log.debug('render_macro: create map if not in cache - running command %s' % cmd)
                     out, err = self.launch(cmd, encoded_content)
                     if len(out) or len(err):
                         msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
@@ -264,17 +259,16 @@ class Graphviz(Component):
                 (w_val, w_unit) = w.group(1,2)
                 (h_val, h_unit) = h.group(1,2)
                 # Graphviz seems to underestimate height/width for SVG images,
-                # so we have to adjust them. The correction factor seems to be constant.
+                # so we have to adjust them. 
+                # The correction factor seems to be constant.
                 [w_val, h_val] = [ 1.35 * x for x in (int(w_val), int(h_val))]
-                dimensions = 'width="%(w_val)s%(w_unit)s" height="%(h_val)s%(h_unit)s"' % locals()
+                dimensions = ('width="%(w_val)s%(w_unit)s" '
+                              'height="%(h_val)s%(h_unit)s"' % locals())
 
             except:
                 dimensions = 'width="100%" height="100%"'
 
             # insert SVG, IE compatibility
-            #buf.write('<!--[if IE]><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed><![endif]--> ' % (req.base_url, img_name, dimensions))
-            #buf.write('<![if !IE]><object data="%s/graphviz/%s" type="image/svg+xml" %s>SVG Object</object><![endif]>' % (req.base_url, img_name, dimensions))
-
             buf.write('<object data="%s/graphviz/%s" type="image/svg+xml" %s><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed></object>' % (req.base_url, img_name, dimensions, req.base_url, img_name, dimensions))
 
         # for binary formats, add map
@@ -289,7 +283,6 @@ class Graphviz(Component):
         else:
             buf.write('<img src="%s/graphviz/%s"/>' % (req.base_url, img_name))
 
-        #self.log.debug('buf.getvalue(): "%s"' % buf.getvalue())
         return buf.getvalue()
 
 
@@ -299,23 +292,16 @@ class Graphviz(Component):
 
     def _expand_wiki_links(self, match):
         wiki_url = match.groups()[0] # TracLink ([1], source:file/, ...)
-        #self.log.debug('wiki_url: %s' % wiki_url)
-        #self.log.debug('self.env: %s' % str(self.env))
-        #self.log.debug('self.formatter.req: %s' % str(self.formatter.req))
-        html_url = wiki_to_oneliner(wiki_url, self.env, req=self.formatter.req)  # <a href="http://someurl">...</a>
+        html_url = wiki_to_oneliner(wiki_url, self.env, req=self.formatter.req)
+        # <a href="http://someurl">...</a>
 
-        #self.log.debug('html_url: %s' % html_url)
         href     = re.search('href="(.*?)"', html_url)   # http://someurl
-        #self.log.debug('href: %s' % href)
         url      = href and href.groups()[0] or html_url
-        #self.log.debug('url: %s' % url)
         if self.out_format == 'svg':
             format = 'URL="javascript:window.parent.location.href=\'%s\'"'
         else:
             format = 'URL="%s"'
-        #self.log.debug('expand_wiki_links url: %s' % str(format % url))
         return format % url
-
 
     def load_config(self):
         """Load the graphviz trac.ini configuration into object instance variables."""
@@ -338,16 +324,11 @@ class Graphviz(Component):
             msg = "The cache_dir '%s' doesn't exist, please create it." % \
                     self.cache_dir
             return True, self.show_err(msg)
-        #self.log.debug('self.cache_dir: %s' % self.cache_dir)
 
-
-        #Get optional configuration parameters from trac.ini.
-
+        # Get optional configuration parameters from trac.ini.
 
         # check for the default processor - processor
         self.processor = self.config.get('graphviz', 'processor', Graphviz.Processors[0])
-        #self.log.debug('self.processor: %s' % self.processor)
-
 
         # check for the cmd_path entry and setup the various program command paths
         cmd_paths = Graphviz.Cmd_Paths.get(sys.platform, [])
@@ -365,13 +346,13 @@ class Graphviz(Component):
 
 
         self.cmds = {}
-        pname = self.find_cmd(self.processor, cmd_paths)
+        pname = self._find_cmd(self.processor, cmd_paths)
         if not pname:
             msg = 'The default processor, %s, was not found in %s.' % (self.processor, str(cmd_paths))
             return True, self.show_err(msg)
 
         for name in Graphviz.Processors:
-            pname = self.find_cmd(name, cmd_paths)
+            pname = self._find_cmd(name, cmd_paths)
 
             if not pname:
                 self.log.warn('The %s program was not found. The graphviz/%s macro will be disabled.' % (pname, name))
@@ -380,20 +361,20 @@ class Graphviz(Component):
             self.cmds[name] = pname
 
         # check for the default output format - out_format
-        self.out_format = self.config.get('graphviz', 'out_format', Graphviz.Formats[0])
-        #self.log.debug('self.out_format: %s' % self.out_format)
+        self.out_format = self.config.get('graphviz', 'out_format', 
+                                          Graphviz.Formats[0])
 
         # check if png anti aliasing should be done - png_antialias
-        self.png_anti_alias = self.boolean(self.config.get('graphviz', 'png_antialias', False))
-        #self.log.debug('self.png_anti_alias: %s' % self.png_anti_alias)
+        self.png_anti_alias = self.config.getbool(
+                'graphviz', 'png_antialias', False)
 
-        if self.png_anti_alias == True:
-            self.rsvg_path = self.config.get('graphviz', 'rsvg_path', self.find_cmd('rsvg', cmd_paths))
+        if self.png_anti_alias:
+            self.rsvg_path = self.config.get('graphviz', 'rsvg_path',
+                                             self._find_cmd('rsvg', cmd_paths))
 
             if not os.path.exists(self.rsvg_path):
                 err = 'The rsvg program is set to "%s" but that path does not exist.' % self.rsvg_path
                 return True, self.show_err(err)
-            #self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
 
         # get default graph/node/edge attributes
         self.processor_options = []
@@ -411,15 +392,11 @@ class Graphviz(Component):
         # check if we should run the cache manager
         self.cache_manager = self.boolean(self.config.get('graphviz', 'cache_manager', False))
         if self.cache_manager:
+            # use IntOption
             self.cache_max_size  = int(self.config.get('graphviz', 'cache_max_size',  10000000))
             self.cache_min_size  = int(self.config.get('graphviz', 'cache_min_size',  5000000))
             self.cache_max_count = int(self.config.get('graphviz', 'cache_max_count', 2000))
             self.cache_min_count = int(self.config.get('graphviz', 'cache_min_count', 1500))
-
-            #self.log.debug('self.cache_max_count: %d' % self.cache_max_count)
-            #self.log.debug('self.cache_min_count: %d' % self.cache_min_count)
-            #self.log.debug('self.cache_max_size: %d'  % self.cache_max_size)
-            #self.log.debug('self.cache_min_size: %d'  % self.cache_min_size)
 
         # is there a graphviz default DPI setting?
         self.dpi = int(self.config.get('graphviz', 'default_graph_dpi', 96))
@@ -448,7 +425,6 @@ class Graphviz(Component):
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
-
         if input:
             p.stdin.write(encoded_input)
         p.stdin.close()
@@ -518,17 +494,13 @@ class Graphviz(Component):
             # multiple entries are have the same last access
             # time. Same for cache_min_size.
             if count > self.cache_max_count or size > self.cache_max_size:
-                while len(atime_keys) and (self.cache_min_count < count or self.cache_min_size < size):
+                while atime_keys and (self.cache_min_count < count or  
+                                      self.cache_min_size < size):
                     key = atime_keys.pop(0)
                     for file in atime_list[key]:
-                        #self.log.debug('clean_cache.unlink: %s' % file)
                         os.unlink(os.path.join(self.cache_dir, file))
                         count = count - 1
                         size = size - entry_list[file][6]
-        else:
-            #self.log.debug('clean_cache: cache_manager not set')
-            pass
-
 
     # Extra helper functions
     def boolean(self, value):
@@ -556,6 +528,7 @@ class Graphviz(Component):
 
 
     # IRequestHandler methods
+
     def match_request(self, req):
         return req.path_info.startswith('/graphviz')
 
@@ -566,19 +539,20 @@ class Graphviz(Component):
         if trouble:
             return msg.getvalue()
 
-        pieces = [item for item in req.path_info.split('/graphviz') if len(item)]
+        pieces = [item for item in req.path_info.split('/graphviz') if item]
 
-        if len(pieces):
-            pieces = [item for item in pieces[0].split('/') if len(item)]
+        if pieces:
+            pieces = [item for item in pieces[0].split('/') if item]
 
-            if len(pieces):
+            if pieces:
                 name = pieces[0]
                 img_path = os.path.join(self.cache_dir, name)
                 return req.send_file(img_path)
         return
 
+    # private methods
 
-    def find_cmd(self, cmd, paths):
+    def _find_cmd(self, cmd, paths):
         exe_suffix = ''
         if sys.platform == 'win32':
             exe_suffix = '.exe'
