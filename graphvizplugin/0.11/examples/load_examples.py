@@ -3,14 +3,17 @@
 
 import sys
 import os
-from trac.scripts import admin
+from trac.admin.console import TracAdmin
 
 
 def main(trac_env, examples_dir='.'):
     loaded = False
+    admin = TracAdmin()
+    admin.env_set(trac_env)
     for file in os.listdir(examples_dir):
         if 'GraphvizExamples' in file:
-            admin.run([trac_env, 'wiki', 'import', file.replace('%2F', '/'), os.path.join(examples_dir, file)] )
+            admin._do_wiki_import(os.path.join(examples_dir, file), 
+                                  file.replace('%2F', '/'))
             loaded = True
 
     if not loaded:
