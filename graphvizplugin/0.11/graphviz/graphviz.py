@@ -17,6 +17,7 @@ __version__   = '0.7.2'
 
 
 from StringIO import StringIO
+import locale
 import sha
 import os
 import sys
@@ -55,7 +56,7 @@ class Graphviz(Component):
 
     encoding = Option("graphviz", "encoding", 'utf-8',
             """The encoding which should be used for communicating with
-            Graphviz.
+            Graphviz (should match -Gcharset if given).
             """)
 
     # Available formats and processors, default first (dot/png)
@@ -187,15 +188,10 @@ class Graphviz(Component):
             buf.write('<p>Graphviz macro processor error: requested format (%s) not valid.</p>' % self.out_format)
             return buf.getvalue()
 
-        if type(content) == type(u''):
-            content  = content.encode(self.encoding)
-            sha_text = self.processor.encode(self.encoding) + \
-                    self.processor_options.encode(self.encoding) + content
-
-        else:
-            sha_text = self.processor + self.processor_options + content
-
-        sha_key  = sha.new(sha_text).hexdigest()
+        encoded_cmd = (self.processor + unicode(self.processor_options)) \
+                .encode(self.encoding)
+        encoded_content = content.encode(self.encoding)
+        sha_key  = sha.new(encoded_cmd + encoded_content).hexdigest()
         img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
         map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
@@ -216,9 +212,10 @@ class Graphviz(Component):
             # Antialias PNGs with rsvg, if requested
             if self.out_format == 'png' and self.png_anti_alias == True:
                 # 1. SVG output
-                cmd = [proc_cmd, self.processor_options, '-Tsvg', '-o%s.svg' % img_path]
+                cmd = [proc_cmd] + self.processor_options + \
+                        ['-Tsvg', '-o%s.svg' % img_path]
                 #self.log.debug('render_macro: svg output - running command %s' % cmd)
-                out, err = self.launch(cmd, content)
+                out, err = self.launch(cmd, encoded_content)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
@@ -232,9 +229,10 @@ class Graphviz(Component):
                     return self.show_err(msg).getvalue()
             
             else: # Render other image formats
-                cmd = [proc_cmd, self.processor_options, '-T%s' % self.out_format, '-o%s' % img_path]
+                cmd = [proc_cmd] + self.processor_options + \
+                        ['-T%s' % self.out_format, '-o%s' % img_path]
                 #self.log.debug('render_macro: render other image formats - running command %s' % cmd)
-                out, err = self.launch(cmd, content)
+                out, err = self.launch(cmd, encoded_content)
                 if len(out) or len(err):
                     msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                     return self.show_err(msg).getvalue()
@@ -244,9 +242,10 @@ class Graphviz(Component):
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
-                    cmd = [proc_cmd, self.processor_options, '-Tcmap', '-o%s' % map_path]
+                    cmd = [proc_cmd] + self.processor_options + \
+                            ['-Tcmap', '-o%s' % map_path]
                     #self.log.debug('render_macro: create map if not in cache - running command %s' % cmd)
-                    out, err = self.launch(cmd, content)
+                    out, err = self.launch(cmd, encoded_content)
                     if len(out) or len(err):
                         msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
                         return self.show_err(msg).getvalue()
@@ -295,13 +294,8 @@ class Graphviz(Component):
 
 
     def expand_wiki_links(self, content):
-        """Expand TracLinks that follow all URL= patterns.
-        The `content` input is a `str` encoding using `sel.fencoding` and 
-        the result should have the same encoding.
-        """
-        u_content = unicode(content, self.encoding)
-        u_content = re.sub(r'URL="(.*?)"', self._expand_wiki_links, u_content)
-        return u_content.encode(self.encoding)
+        """Expand TracLinks that follow all URL= patterns."""
+        return re.sub(r'URL="(.*?)"', self._expand_wiki_links, content)
 
     def _expand_wiki_links(self, match):
         wiki_url = match.groups()[0] # TracLink ([1], source:file/, ...)
@@ -402,19 +396,17 @@ class Graphviz(Component):
             #self.log.debug('self.rsvg_path: %s' % self.rsvg_path)
 
         # get default graph/node/edge attributes
-        self.processor_options = ''
-        default_attributes = [ o for o in self.config.options('graphviz') if o[0].startswith('default_') ]
-        if default_attributes:
-           graph_attributes   = [ o for o in default_attributes if o[0].startswith('default_graph_') ]
-           node_attributes    = [ o for o in default_attributes if o[0].startswith('default_node_') ]
-           edge_attributes    = [ o for o in default_attributes if o[0].startswith('default_edge_') ]
-           if graph_attributes:
-               self.processor_options += " ".join([ "-G" + o[0].replace('default_graph_', '') + "=" + o[1] for o in graph_attributes]) + " "
-           if node_attributes:
-               self.processor_options += " ".join([ "-N" + o[0].replace('default_node_', '') + "=" + o[1] for o in node_attributes]) + " "
-           if edge_attributes:
-               self.processor_options += " ".join([ "-E" + o[0].replace('default_edge_', '') + "=" + o[1] for o in edge_attributes])
-
+        self.processor_options = []
+        defaults = [opt for opt in self.config.options('graphviz') 
+                    if opt[0].startswith('default_')]
+        for name, value in defaults:
+            for prefix, optkey in [
+                    ('default_graph_', '-G'), 
+                    ('default_node_', '-N'),
+                    ('default_edge_', '-E')]:
+                if name.startswith(prefix):
+                    self.processor_options.append("%s%s=%s" % 
+                            (optkey, name.replace(prefix,''), value))
 
         # check if we should run the cache manager
         self.cache_manager = self.boolean(self.config.get('graphviz', 'cache_manager', False))
@@ -442,15 +434,23 @@ class Graphviz(Component):
         return False, buf
 
 
-    def launch(self, cmd, input):
+    def launch(self, cmd, encoded_input):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
-        p = subprocess.Popen([arg for arg in cmd if arg],
+        # Note: subprocess.Popen doesn't support unicode options arguments
+        # (http://bugs.python.org/issue1759845) so we have to encode them.
+        # Anyway, dot expects utf-8 or the encoding specified with -Gcharset.
+        encoded_cmd = []
+        for arg in cmd:
+            if isinstance(arg, unicode):
+                arg = arg.encode(self.encoding, 'replace')
+            encoded_cmd.append(arg)
+        p = subprocess.Popen(encoded_cmd,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
 
         if input:
-            p.stdin.write(input)
+            p.stdin.write(encoded_input)
         p.stdin.close()
         out = p.stdout.read()
         err = p.stderr.read()
