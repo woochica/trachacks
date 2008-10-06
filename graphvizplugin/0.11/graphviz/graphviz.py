@@ -24,7 +24,7 @@ import sha
 import subprocess
 import sys
 
-from genshi.builder import tag
+from genshi.builder import Element, tag
 from genshi.core import Markup
 
 from trac.config import BoolOption, IntOption, Option
@@ -35,7 +35,7 @@ from trac.util.text import to_unicode
 from trac.util.translation import _
 from trac.web.api import IRequestHandler
 from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.formatter import wiki_to_oneliner
+from trac.wiki.formatter import extract_link
 
 
 class Graphviz(Component):
@@ -359,18 +359,19 @@ class Graphviz(Component):
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
-                    errmsg = self._launch(encoded_content, proc_cmd, '-Tcmap',
+                    errmsg = self._launch(encoded_content, proc_cmd, '-Tcmapx',
                                           '-o%s' % map_path,
                                           *self.processor_options)
                     if errmsg:
                         return self._error_div(errmsg)
 
         # Generate HTML output
+        img_url = formatter.href.graphviz(img_name)
         # for SVG(z)
         if out_format in Graphviz.Vector_Formats:
             try: # try to get SVG dimensions
                 f = open(img_path, 'r')
-                svg = f.readlines()
+                svg = f.readlines(1024) # don't read all
                 f.close()
                 svg = "".join(svg).replace('\n', '')
                 w = re.search('width="([0-9]+)(.*?)" ', svg)
@@ -388,10 +389,10 @@ class Graphviz(Component):
 
             # insert SVG, IE compatibility
             return tag.object(
-                    tag.embed(src="%s/graphviz/%s", type="image/svg+xml", 
+                    tag.embed(src=img_url, type="image/svg+xml", 
                               width=width, height=height),
-                    data="%s/graphviz/%s" % (req.base_url, img_name),
-                    type="image/svg+xml", width=width, height=height)
+                    data=img_url, type="image/svg+xml", 
+                    width=width, height=height)
 
         # for binary formats, add map
         elif URL_in_graph and os.path.exists(map_path):
@@ -399,31 +400,37 @@ class Graphviz(Component):
             map = f.readlines()
             f.close()
             map = "".join(map).replace('\n', '')
-            return tag(tag.map(Markup(map), id=sha_key, name=sha_key),
-                       tag.img(id=sha_key, 
-                               src="%s/graphviz/%s" % (req.base_url, img_name),
-                               usemap="#"+sha_key, alt="GraphViz image"))
+            return tag(tag.map(Markup(map), id='G'+sha_key, name='G'+sha_key),
+                       tag.img(src=img_url, usemap="#G"+sha_key, 
+                               alt=_("GraphViz image")))
         else:
-            return tag.img(src="%s/graphviz/%s" % (req.base_url, img_name))
+            return tag.img(src=img_url, alt=_("GraphViz image"))
 
 
     # Private methods
 
     def _expand_wiki_links(self, formatter, out_format, content):
         """Expand TracLinks that follow all URL= patterns."""
-        def _expand(match):
-            wiki_url = match.groups()[0] # TracLink ([1], source:file/, ...)
-            html_url = wiki_to_oneliner(wiki_url, self.env, req=formatter.req)
-            # <a href="http://someurl">...</a>
-
-            href     = re.search('href="(.*?)"', html_url)   # http://someurl
-            url      = href and href.groups()[0] or html_url
+        def expand(match):
+            wiki_text = match.groups()[0] # TracLink ([1], source:file/, ...)
+            link = extract_link(self.env, formatter.context, wiki_text)
+            if isinstance(link, Element):
+                href = link.attrib.get('href')
+                name = link.children
+                description = link.attrib.get('title', '')
+            else:
+                href = wiki_text
+                description = None
             if out_format == 'svg':
                 format = 'URL="javascript:window.parent.location.href=\'%s\'"'
             else:
                 format = 'URL="%s"'
-            return format % url
-        return re.sub(r'URL="(.*?)"', _expand, content)
+            url = format % href
+            if description:
+                url += '\ntooltip="%s"' % description \
+                        .replace('"', '').replace('\n', '')
+            return url
+        return re.sub(r'URL="(.*?)"', expand, content)
 
     def _load_config(self):
         """Preprocess the graphviz trac.ini configuration."""
