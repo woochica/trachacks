@@ -444,7 +444,7 @@ class Graphviz(Component):
 
     def launch(self, cmd, input):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
-        p = subprocess.Popen(cmd,
+        p = subprocess.Popen([arg for arg in cmd if arg],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
