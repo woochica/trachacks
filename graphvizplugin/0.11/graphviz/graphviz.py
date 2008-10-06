@@ -16,24 +16,26 @@ __docformat__ = 'restructuredtext'
 __version__   = '0.7.2'
 
 
-from StringIO import StringIO
-import locale
-import sha
-import os
-import sys
-import re
 import inspect
+import locale
+import os
+import re
+import sha
 import subprocess
+import sys
+
+from genshi.builder import tag
+from genshi.core import Markup
 
 from trac.config import BoolOption, IntOption, Option
 from trac.core import *
-from trac.wiki.api import IWikiMacroProvider
 from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
 from trac.util import escape
 from trac.util.text import to_unicode
 from trac.util.translation import _
-from trac.wiki.formatter import wiki_to_oneliner
 from trac.web.api import IRequestHandler
+from trac.wiki.api import IWikiMacroProvider
+from trac.wiki.formatter import wiki_to_oneliner
 
 
 class Graphviz(Component):
@@ -195,7 +197,7 @@ class Graphviz(Component):
         # check and load the configuration
         errmsg = self._load_config()
         if errmsg:
-            return self._show_err(errmsg)
+            return self._error_div(errmsg)
 
         pieces = [item for item in req.path_info.split('/graphviz') if item]
 
@@ -206,7 +208,6 @@ class Graphviz(Component):
                 name = pieces[0]
                 img_path = os.path.join(self.cache_dir, name)
                 return req.send_file(img_path)
-        return
 
     # IWikiMacroProvider methods
 
@@ -262,9 +263,7 @@ class Graphviz(Component):
         # check and load the configuration
         errmsg = self._load_config()
         if errmsg:
-            return self._show_err(errmsg)
-
-        buf = StringIO()
+            return self._error_div(errmsg)
 
         ## Extract processor and format from name
         processor = out_format = None
@@ -297,15 +296,16 @@ class Graphviz(Component):
         else:
             self.log.error('render_macro: requested processor (%s) not found.' %
                            processor)
-            return self._show_err('requested processor (%s) not found.' % 
-                                 processor)
+            return self._error_div('requested processor (%s) not found.' % 
+                                  processor)
            
         if out_format not in Graphviz.Formats:
             self.log.error('render_macro: requested format (%s) not found.' %
                            out_format)
-            return self._show_err(
-                    '<p>Graphviz macro processor '
-                    'error: requested format (%s) not valid.</p>' % out_format)
+            return self._error_div(
+                    tag.p(_("Graphviz macro processor error: "
+                            "requested format (%(fmt)s) not valid.",
+                            fmt=out_format)))
 
         encoded_cmd = (processor + unicode(self.processor_options)) \
                 .encode(self.encoding)
@@ -323,7 +323,7 @@ class Graphviz(Component):
 
         # Create image if not in cache
         if not os.path.exists(img_path):
-            self.clean_cache()
+            self._clean_cache()
 
             if URL_in_graph: # translate wiki TracLinks in URL
                 content = self._expand_wiki_links(formatter, out_format, 
@@ -336,7 +336,7 @@ class Graphviz(Component):
                                       '-o%s.svg' % img_path,
                                       *self.processor_options)
                 if errmsg:
-                    return self._show_err(errmsg)
+                    return self._error_div(errmsg)
 
                 # 2. SVG to PNG rasterization
                 errmsg = self._launch(None, self.rsvg_path, 
@@ -344,7 +344,7 @@ class Graphviz(Component):
                                       '--dpi-y=%d' % self.dpi,
                                       '%s.svg' % img_path, img_path)
                 if errmsg:
-                    return self._show_err(errmsg)
+                    return self._error_div(errmsg)
             
             else: # Render other image formats
                 errmsg = self._launch(encoded_content, proc_cmd, 
@@ -352,7 +352,7 @@ class Graphviz(Component):
                                       '-o%s' % img_path, 
                                       *self.processor_options)
                 if errmsg:
-                    return self._show_err(errmsg)
+                    return self._error_div(errmsg)
 
             # Generate a map file for binary formats
             if URL_in_graph and out_format in Graphviz.Bitmap_Formats:
@@ -363,7 +363,7 @@ class Graphviz(Component):
                                           '-o%s' % map_path,
                                           *self.processor_options)
                     if errmsg:
-                        return self._show_err(errmsg)
+                        return self._error_div(errmsg)
 
         # Generate HTML output
         # for SVG(z)
@@ -380,15 +380,18 @@ class Graphviz(Component):
                 # Graphviz seems to underestimate height/width for SVG images,
                 # so we have to adjust them. 
                 # The correction factor seems to be constant.
-                [w_val, h_val] = [ 1.35 * x for x in (int(w_val), int(h_val))]
-                dimensions = ('width="%(w_val)s%(w_unit)s" '
-                              'height="%(h_val)s%(h_unit)s"' % locals())
-
-            except:
-                dimensions = 'width="100%" height="100%"'
+                w_val, h_val = [1.35 * float(x) for x in (w_val, h_val)]
+                width = unicode(w_val) + w_unit
+                height = unicode(h_val) + h_unit
+            except ValueError:
+                width = height = '100%'
 
             # insert SVG, IE compatibility
-            buf.write('<object data="%s/graphviz/%s" type="image/svg+xml" %s><embed src="%s/graphviz/%s" type="image/svg+xml" %s></embed></object>' % (req.base_url, img_name, dimensions, req.base_url, img_name, dimensions))
+            return tag.object(
+                    tag.embed(src="%s/graphviz/%s", type="image/svg+xml", 
+                              width=width, height=height),
+                    data="%s/graphviz/%s" % (req.base_url, img_name),
+                    type="image/svg+xml", width=width, height=height)
 
         # for binary formats, add map
         elif URL_in_graph and os.path.exists(map_path):
@@ -396,13 +399,12 @@ class Graphviz(Component):
             map = f.readlines()
             f.close()
             map = "".join(map).replace('\n', '')
-            buf.write('<map id="%s" name="%s">%s</map>' % (sha_key, sha_key, map))
-            buf.write('<img id="%s" src="%s/graphviz/%s" usemap="#%s" alt="GraphViz image"/>' % (sha_key, req.base_url, img_name, sha_key))
-
+            return tag(tag.map(Markup(map), id=sha_key, name=sha_key),
+                       tag.img(id=sha_key, 
+                               src="%s/graphviz/%s" % (req.base_url, img_name),
+                               usemap="#"+sha_key, alt="GraphViz image"))
         else:
-            buf.write('<img src="%s/graphviz/%s"/>' % (req.base_url, img_name))
-
-        return buf.getvalue()
+            return tag.img(src="%s/graphviz/%s" % (req.base_url, img_name))
 
 
     # Private methods
@@ -527,18 +529,16 @@ class Graphviz(Component):
                      "failed with the the following output:\n"
                      "%(out)s\n%(err)s", cmd=unicode(args), out=out, err=err)
 
-    def _show_err(self, msg):
+    def _error_div(self, msg):
         """Display msg in an error box, using Trac style."""
-        buf = StringIO()
-        buf.write('<div id="content" class="error"><div class="message"> \n\
-                   <strong>Graphviz macro processor has detected an error. Please fix the problem before continuing.</strong> \n\
-                   <pre>%s</pre> \n\
-                   </div></div>' % escape(to_unicode(msg)))
-        self.log.error(msg)
-        return buf.getvalue()
+        self.log.error(unicode(msg))
+        return tag.div(
+                tag.strong("Graphviz macro processor has detected an error. "
+                            "Please fix the problem before continuing."),
+                tag.pre(escape(to_unicode(msg))),
+                class_="system-message")
 
-
-    def clean_cache(self):
+    def _clean_cache(self):
         """
         The cache manager (clean_cache) is an attempt at keeping the
         cache directory under control. When the cache manager
