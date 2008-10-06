@@ -10,8 +10,9 @@ setup(name='AutocompleteUsers',
       url='http://trac-hacks.org/wiki/k0s',
       keywords='trac plugin',
       license="",
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
+      packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),      
       include_package_data=True,
+      package_data={'autocompleteusers': ['htdocs/*']},
       zip_safe=False,
       entry_points = """
       [trac.plugins]
