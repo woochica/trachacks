@@ -69,7 +69,7 @@ class Graphviz(Component):
         }
 
     # Note: the following options named "..._option" are those which need
-    #       some additional processing, see `load_config()` below.
+    #       some additional processing, see `_load_config()` below.
 
 
     cache_dir_option = Option("graphviz", "cache_dir", "gvcache",
@@ -167,11 +167,52 @@ class Graphviz(Component):
         #self.log.info('processors: %s' % str(Graphviz.Processors))
         #self.log.info('formats: %s' % str(Graphviz.Formats))
 
+
+    # IHTMLPreviewRenderer methods
+
+    MIME_TYPES = ('application/graphviz')
+
+    def get_quality_ratio(self, mimetype):
+        self.log.error(mimetype)
+        if mimetype in self.MIME_TYPES:
+            return 2
+        return 0
+
+    def render(self, context, mimetype, content, filename=None, url=None):
+        ext = filename.split('.')[1]
+        name = ext == 'graphviz' and 'graphviz' or 'graphviz.%s' % ext
+        text = hasattr(content, 'read') and content.read() or content
+        return self.render_macro(context, name, text)
+
+
+    # IRequestHandler methods
+
+    def match_request(self, req):
+        return req.path_info.startswith('/graphviz')
+
+
+    def process_request(self, req):
+        # check and load the configuration
+        errmsg = self._load_config()
+        if errmsg:
+            return self._show_err(errmsg)
+
+        pieces = [item for item in req.path_info.split('/graphviz') if item]
+
+        if pieces:
+            pieces = [item for item in pieces[0].split('/') if item]
+
+            if pieces:
+                name = pieces[0]
+                img_path = os.path.join(self.cache_dir, name)
+                return req.send_file(img_path)
+        return
+
     # IWikiMacroProvider methods
 
     def get_macros(self):
         """Return an iterable that provides the names of the provided macros."""
-        self.load_config()
+        self._load_config()
         for p in ['.' + p for p in Graphviz.Processors] + ['']: 
             for f in ['/' + f for f in Graphviz.Formats] + ['']:
                 yield 'graphviz%s%s' % (p, f)
@@ -219,9 +260,9 @@ class Graphviz(Component):
         req = formatter.req
 
         # check and load the configuration
-        errmsg = self.load_config()
+        errmsg = self._load_config()
         if errmsg:
-            return self.show_err(errmsg)
+            return self._show_err(errmsg)
 
         buf = StringIO()
 
@@ -256,13 +297,13 @@ class Graphviz(Component):
         else:
             self.log.error('render_macro: requested processor (%s) not found.' %
                            processor)
-            return self.show_err('requested processor (%s) not found.' % 
+            return self._show_err('requested processor (%s) not found.' % 
                                  processor)
            
         if out_format not in Graphviz.Formats:
             self.log.error('render_macro: requested format (%s) not found.' %
                            out_format)
-            return self.show_err(
+            return self._show_err(
                     '<p>Graphviz macro processor '
                     'error: requested format (%s) not valid.</p>' % out_format)
 
@@ -284,47 +325,45 @@ class Graphviz(Component):
         if not os.path.exists(img_path):
             self.clean_cache()
 
-            #self.log.debug('render_macro.URL_in_graph: %s' % str(URL_in_graph))
             if URL_in_graph: # translate wiki TracLinks in URL
-                content = self.expand_wiki_links(formatter, out_format, content)
+                content = self._expand_wiki_links(formatter, out_format, 
+                                                  content)
 
             # Antialias PNGs with rsvg, if requested
             if out_format == 'png' and self.png_anti_alias == True:
                 # 1. SVG output
-                cmd = [proc_cmd] + self.processor_options + \
-                        ['-Tsvg', '-o%s.svg' % img_path]
-                out, err = self.launch(cmd, encoded_content)
-                if len(out) or len(err):
-                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
-                    return self.show_err(msg).getvalue()
+                errmsg = self._launch(encoded_content, proc_cmd, '-Tsvg', 
+                                      '-o%s.svg' % img_path,
+                                      *self.processor_options)
+                if errmsg:
+                    return self._show_err(errmsg)
 
                 # 2. SVG to PNG rasterization
-                cmd = [self.rsvg_path, '--dpi-x=%d' % self.dpi, '--dpi-y=%d' % self.dpi, '%s.svg' % img_path, img_path]
-                out, err = self.launch(cmd, None)
-                if len(out) or len(err):
-                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
-                    return self.show_err(msg).getvalue()
+                errmsg = self._launch(None, self.rsvg_path, 
+                                      '--dpi-x=%d' % self.dpi,
+                                      '--dpi-y=%d' % self.dpi,
+                                      '%s.svg' % img_path, img_path)
+                if errmsg:
+                    return self._show_err(errmsg)
             
             else: # Render other image formats
-                cmd = [proc_cmd] + self.processor_options + \
-                        ['-T%s' % out_format, '-o%s' % img_path]
-                out, err = self.launch(cmd, encoded_content)
-                if len(out) or len(err):
-                    msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
-                    return self.show_err(msg).getvalue()
+                errmsg = self._launch(encoded_content, proc_cmd, 
+                                      '-T%s' % out_format,
+                                      '-o%s' % img_path, 
+                                      *self.processor_options)
+                if errmsg:
+                    return self._show_err(errmsg)
 
             # Generate a map file for binary formats
             if URL_in_graph and out_format in Graphviz.Bitmap_Formats:
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
-                    cmd = [proc_cmd] + self.processor_options + \
-                            ['-Tcmap', '-o%s' % map_path]
-                    out, err = self.launch(cmd, encoded_content)
-                    if len(out) or len(err):
-                        msg = 'The command\n   %s\nfailed with the the following output:\n%s\n%s' % (cmd, out, err)
-                        return self.show_err(msg).getvalue()
-
+                    errmsg = self._launch(encoded_content, proc_cmd, '-Tcmap',
+                                          '-o%s' % map_path,
+                                          *self.processor_options)
+                    if errmsg:
+                        return self._show_err(errmsg)
 
         # Generate HTML output
         # for SVG(z)
@@ -366,9 +405,11 @@ class Graphviz(Component):
         return buf.getvalue()
 
 
-    def expand_wiki_links(self, formatter, out_format, content):
+    # Private methods
+
+    def _expand_wiki_links(self, formatter, out_format, content):
         """Expand TracLinks that follow all URL= patterns."""
-        def expand(match):
+        def _expand(match):
             wiki_url = match.groups()[0] # TracLink ([1], source:file/, ...)
             html_url = wiki_to_oneliner(wiki_url, self.env, req=formatter.req)
             # <a href="http://someurl">...</a>
@@ -380,10 +421,9 @@ class Graphviz(Component):
             else:
                 format = 'URL="%s"'
             return format % url
-        return re.sub(r'URL="(.*?)"', expand, content)
+        return re.sub(r'URL="(.*?)"', _expand, content)
 
-
-    def load_config(self):
+    def _load_config(self):
         """Preprocess the graphviz trac.ini configuration."""
 
         # if 'graphviz' not in self.config.sections():
@@ -463,14 +503,13 @@ class Graphviz(Component):
             if processor not in MIME_MAP:
                 MIME_MAP[processor] = 'application/graphviz'
 
-
-    def launch(self, cmd, encoded_input):
+    def _launch(self, encoded_input, *args):
         """Launch a process (cmd), and returns exitcode, stdout + stderr"""
         # Note: subprocess.Popen doesn't support unicode options arguments
         # (http://bugs.python.org/issue1759845) so we have to encode them.
         # Anyway, dot expects utf-8 or the encoding specified with -Gcharset.
         encoded_cmd = []
-        for arg in cmd:
+        for arg in args:
             if isinstance(arg, unicode):
                 arg = arg.encode(self.encoding, 'replace')
             encoded_cmd.append(arg)
@@ -483,10 +522,12 @@ class Graphviz(Component):
         p.stdin.close()
         out = p.stdout.read()
         err = p.stderr.read()
-        return out, err
+        if out or err:
+            return _("The command\n   %(cmd)s\n"
+                     "failed with the the following output:\n"
+                     "%(out)s\n%(err)s", cmd=unicode(args), out=out, err=err)
 
-
-    def show_err(self, msg):
+    def _show_err(self, msg):
         """Display msg in an error box, using Trac style."""
         buf = StringIO()
         buf.write('<div id="content" class="error"><div class="message"> \n\
@@ -494,7 +535,7 @@ class Graphviz(Component):
                    <pre>%s</pre> \n\
                    </div></div>' % escape(to_unicode(msg)))
         self.log.error(msg)
-        return buf
+        return buf.getvalue()
 
 
     def clean_cache(self):
@@ -554,48 +595,6 @@ class Graphviz(Component):
                         os.unlink(os.path.join(self.cache_dir, file))
                         count = count - 1
                         size = size - entry_list[file][6]
-
-    MIME_TYPES = ('application/graphviz')
-
-    # IHTMLPreviewRenderer methods
-
-    def get_quality_ratio(self, mimetype):
-        self.log.error(mimetype)
-        if mimetype in self.MIME_TYPES:
-            return 2
-        return 0
-
-    def render(self, context, mimetype, content, filename=None, url=None):
-        ext = filename.split('.')[1]
-        name = ext == 'graphviz' and 'graphviz' or 'graphviz.%s' % ext
-        text = hasattr(content, 'read') and content.read() or content
-        return self.render_macro(context, name, text)
-
-
-    # IRequestHandler methods
-
-    def match_request(self, req):
-        return req.path_info.startswith('/graphviz')
-
-
-    def process_request(self, req):
-        # check and load the configuration
-        errmsg = self.load_config()
-        if errmsg:
-            return self.show_err(errmsg)
-
-        pieces = [item for item in req.path_info.split('/graphviz') if item]
-
-        if pieces:
-            pieces = [item for item in pieces[0].split('/') if item]
-
-            if pieces:
-                name = pieces[0]
-                img_path = os.path.join(self.cache_dir, name)
-                return req.send_file(img_path)
-        return
-
-    # private methods
 
     def _find_cmd(self, cmd, paths):
         exe_suffix = ''
