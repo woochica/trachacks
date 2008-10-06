@@ -11,6 +11,10 @@
  *
  */
 
+/* see: 
+ * http://www.dyve.net/jquery/autocomplete.txt
+ * http://www.dyve.net/jquery/?autocomplete */
+
 ;(function($) {
 	
 $.fn.extend({

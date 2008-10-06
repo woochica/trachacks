@@ -3,21 +3,27 @@ AutocompleteUsers:
 complete the owner field for the ticket text input for known users
 """
 
+import fnmatch
+
 from pkg_resources import resource_filename
 
 from trac.core import *
 
+from trac.config import ListOption
 from trac.web.api import IRequestFilter
 from trac.web.api import IRequestHandler
 from trac.web.chrome import add_script
 from trac.web.chrome import add_stylesheet
 from trac.web.chrome import Chrome
 from trac.web.chrome import ITemplateProvider 
+from trac.web.chrome import ITemplateStreamFilter
 
 class AutocompleteUsers(Component):
 
-    implements(IRequestHandler, IRequestFilter, ITemplateProvider)
-    prefix = "common" # prefix for htdocs -- /chrome/prefix/...
+    implements(IRequestHandler, IRequestFilter, ITemplateProvider, ITemplateStreamFilter)
+    selectfields = ListOption('autocomplete', 'fields', default='',
+                              doc='select fields to transform to autocomplete text boxes')
+    prefix = "common" # prefix for htdocs -- /chrome/prefix/...    
 
     ### methods for IRequestHandler
 
@@ -95,7 +101,6 @@ class AutocompleteUsers(Component):
 
     ### methods for IRequestFilter
 
-
     def post_process_request(self, req, template, data, content_type):
         """Do any post-processing the request might need; typically adding
         values to the template `data` dictionary, or changing template or
@@ -134,3 +139,24 @@ class AutocompleteUsers(Component):
         Always returns the request handler, even if unchanged.
         """
         return handler
+
+    ### methods for ITemplateStreamFilter
+
+    def filter_stream(self, req, method, filename, stream, data):
+        """Return a filtered Genshi event stream, or the original unfiltered
+        stream if no match.
+
+        `req` is the current request object, `method` is the Genshi render
+        method (xml, xhtml or text), `filename` is the filename of the template
+        to be rendered, `stream` is the event stream and `data` is the data for
+        the current template.
+
+        See the Genshi documentation for more information.
+        """
+        if filename == 'ticket.html':
+            fields = [ field['name'] for field in data['ticket'].fields 
+                       if field['type'] == 'select' ]
+            fields = set(sum([ fnmatch.filter(fields, pattern)
+                               for pattern in self.selectfields ], []))
+            
+        return stream
