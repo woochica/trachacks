@@ -73,13 +73,15 @@ class Graphviz(Component):
     # Note: the following options named "..._option" are those which need
     #       some additional processing, see `_load_config()` below.
 
+    DEFAULT_CACHE_DIR = 'gvcache'
 
-    cache_dir_option = Option("graphviz", "cache_dir", "gvcache",
-            """The directory that will be used to cache the generated images
-            (note that the directory must exist).
+    cache_dir_option = Option("graphviz", "cache_dir", DEFAULT_CACHE_DIR,
+            """The directory that will be used to cache the generated images.
+            Note that if different than the default (%s), this directory must
+            exist.
             If not given as an absolute path, the path will be relative to 
             the Trac environment's directory.
-            """)
+            """ % DEFAULT_CACHE_DIR)
 
     encoding = Option("graphviz", "encoding", 'utf-8',
             """The encoding which should be used for communicating with
@@ -447,8 +449,11 @@ class Graphviz(Component):
             self.cache_dir = os.path.join(self.env.path, self.cache_dir)
 
         if not os.path.exists(self.cache_dir):
-            return _("The cache_dir '%(path)s' doesn't exist, "
-                    "please create it.", path=self.cache_dir)
+            if self.cache_dir_option == self.DEFAULT_CACHE_DIR:
+                os.mkdir(self.cache_dir)
+            else:
+                return _("The cache_dir '%(path)s' doesn't exist, "
+                         "please create it.", path=self.cache_dir)
 
         # Get optional configuration parameters from trac.ini.
 
