@@ -522,28 +522,34 @@ class Graphviz(Component):
             if isinstance(arg, unicode):
                 arg = arg.encode(self.encoding, 'replace')
             encoded_cmd.append(arg)
-        p = subprocess.Popen(encoded_cmd,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        p = subprocess.Popen(encoded_cmd, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if input:
             p.stdin.write(encoded_input)
         p.stdin.close()
         out = p.stdout.read()
         err = p.stderr.read()
-        if out or err:
-            return _("The command\n   %(cmd)s\n"
-                     "failed with the the following output:\n"
-                     "%(out)s\n%(err)s", cmd=unicode(args), out=out, err=err)
+        reason = None
+        if p.wait() != 0:
+            reason = _("failed with the following output:")
+        if err or out:
+            reason = _("succeeded but emitted the following output:")
+        if reason:
+            return tag.p(tag.br(), _("The command:"), 
+                         tag.pre(repr(' '.join(encoded_cmd))), reason, 
+                         out and tag.pre(repr(out)), err and tag.pre(repr(err)))
 
     def _error_div(self, msg):
         """Display msg in an error box, using Trac style."""
-        self.log.error(unicode(msg))
+        if isinstance(msg, str):
+            msg = to_unicode(msg)
+        self.log.error(msg)
+        if isinstance(msg, unicode):
+            msg = tag.pre(escape(msg))
         return tag.div(
-                tag.strong("Graphviz macro processor has detected an error. "
-                            "Please fix the problem before continuing."),
-                tag.pre(escape(to_unicode(msg))),
-                class_="system-message")
+                tag.strong(_("Graphviz macro processor has detected an error. "
+                             "Please fix the problem before continuing.")),
+                msg, class_="system-message")
 
     def _clean_cache(self):
         """
