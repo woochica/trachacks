@@ -359,7 +359,7 @@ class Graphviz(Component):
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
-                    errmsg = self._launch(encoded_content, proc_cmd, '-Tcmapx',
+                    errmsg = self._launch(encoded_content, proc_cmd, '-Tcmap',
                                           '-o%s' % map_path,
                                           *self.processor_options)
                     if errmsg:
