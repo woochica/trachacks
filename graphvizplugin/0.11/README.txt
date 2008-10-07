@@ -13,12 +13,10 @@ web browser will show the resulting image.
 Simple Example
 ++++++++++++++
 
-A simple example would be:
+A simple example would be::
 
-{{{
-#!graphviz
-digraph G {Hello->World->Graphviz->Rules}
-}}}
+  #!graphviz
+  digraph G {Hello->World->Graphviz->Rules}
 
 There are also several additional examples available in the examples
 directory.  They can be loaded into a Trac installation by the
@@ -33,25 +31,25 @@ The graphviz wiki processor supports all 5 graphviz drawing programs:
 dot, neato, twopi, circo and fdp. By default, the dot program is used
 to generate the images.
 
-The different programs can be invoked using one of these:
+The different programs can be invoked using one of these::
 
-#!graphviz
-#!graphviz.dot
-#!graphviz.neato
-#!graphviz.twopi
-#!graphviz.circo
-#!graphviz.fdp
-
+ #!graphviz
+ #!graphviz.dot
+ #!graphviz.neato
+ #!graphviz.twopi
+ #!graphviz.circo
+ #!graphviz.fdp
+ 
 
 The supported image formats are: png (default), gif, jpg, svg and svgz.
 The format can be specified using a "/format" modifier, in the hashbang,
-as shown below:
+as shown below::
 
-#!graphviz/svg
-#!graphviz.dot/png
-#!graphviz.circo/gif
-
-
+ #!graphviz/svg
+ #!graphviz.dot/png
+ #!graphviz.circo/gif
+ 
+ 
 Platform Specific Requirements
 ==============================
 
@@ -87,7 +85,7 @@ http://trac-hacks.swapoff.org/download/graphvizplugin.zip or checkout
 the source from the trac hacks subversion repository at:
 http://trac-hacks.swapoff.org/svn/graphvizplugin.
 
-Change to the graphvizplugin/0.11 directory and run:
+Change to the graphvizplugin/0.11 directory and run::
 
     python setup.py bdist_egg
 
@@ -109,7 +107,7 @@ Once the graphviz plugin has been installed either via source or via a
 python egg, some configuration is needed before it can be used.
 
 A new section called graphviz should be added to the conf/trac.ini
-file with these fields:
+file with these fields::
 
     cache_dir       - The directory that will be used to cache the 
                       generated images. That directory must exist,
@@ -147,7 +145,7 @@ file with these fields:
                       The default is cmd_path + rsvg.
 
     default_*       - These settings define the default graph, node and
-                      edge attributes. They must be written as :
+                      edge attributes. They must be written as:
                             default_TYPE_ATTRIBUTE = VALUE
                       where TYPE      is one of graph, node, edge
                             ATTRIBUTE is a valid graphviz attribute
@@ -190,27 +188,27 @@ be deleted first.
 Configuration Example
 +++++++++++++++++++++
 
-Here is a sample graphviz section:
+Here is a sample graphviz section::
 
-[graphviz]
-cache_dir = /tmp/trac/htdocs/graphviz
-png_antialias = true
-default_graph_fontname = "Andale Mono"
-default_graph_fontsize = 10
+ [graphviz]
+ cache_dir = /tmp/trac/htdocs/graphviz
+ png_antialias = true
+ default_graph_fontname = "Andale Mono"
+ default_graph_fontsize = 10
 
 
-Here is a sample graphviz section that activates the cache manager:
+Here is a sample graphviz section that activates the cache manager::
 
-[graphviz]
-cache_dir = /tmp/trac/htdocs/graphviz
-png_antialias = true
-default_graph_fontname = "Andale Mono"
-default_graph_fontsize = 10
-cache_manager = yes
-cache_max_size = 10000000
-cache_min_size = 5000000
-cache_max_count = 2000
-cache_min_count = 1500
+ [graphviz]
+ cache_dir = /tmp/trac/htdocs/graphviz
+ png_antialias = true
+ default_graph_fontname = "Andale Mono"
+ default_graph_fontsize = 10
+ cache_manager = yes
+ cache_max_size = 10000000
+ cache_min_size = 5000000
+ cache_max_count = 2000
+ cache_min_count = 1500
 
 The cache manager is turned on since there is an entry in the graphviz
 section called cache_manager. The value doesn't matter. To turn off
@@ -222,15 +220,14 @@ When the size of all the files in the cache directory exceeds
 bytes and the number of files is less than 1,500.
 
 
-Here's the same example but for Windows systems:
+Here's the same example but for Windows systems::
 
-[graphviz]
-cache_dir = C:\projects\plugins\env\trac\htdocs\graphviz
-cache_manager = yes
-cache_max_size = 10000000
-cache_min_size = 5000000
-cache_max_count = 2000
-cache_min_count = 1500
+ [graphviz] cache_dir = C:\projects\plugins\env\trac\htdocs\graphviz
+ cache_manager = yes
+ cache_max_size = 10000000
+ cache_min_size = 5000000
+ cache_max_count = 2000
+ cache_min_count = 1500
 
 Notice that the png_antialias, rsvg_path, default_graph_fontname and
 default_graph_fontsize are not defined. This is because rsvg is not
