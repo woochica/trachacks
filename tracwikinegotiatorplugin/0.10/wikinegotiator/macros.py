@@ -231,7 +231,7 @@ try:
                 page = WikiPage(self.env, name)
                 return (page.text, page.exists)
 
-    if _override_toc_macro:
+    if NTOCMacro._override_toc_macro:
         # alter 'TOC' macro by NTOCMacro
         class TOCMacro(NTOCMacro):
             pass
