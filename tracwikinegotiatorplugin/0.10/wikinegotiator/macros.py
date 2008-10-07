@@ -171,13 +171,18 @@ try:
     class NTOCMacro(tractoc.macro.TOCMacro):
         """Language-aware version of TOC Macro.
 
+        === Dependency ===
+         * trac 0.11 or later
+         * tractoc macro for trac 0.11
+
+        === Description ===
         This macro is an alternative of TOC macro (written by
         coderanger) extending to use content of localized page if
         exist. You can write TOC macro entry by normal page name
         wihtout lang suffix.
 
-        For example, if you specify the page 'SubPage' in argument on
-        the Japanese localized page 'BasePage.ja', find 'SubPage.ja'
+        For example, if you specify the page '!SubPage' in argument on
+        the Japanese localized page '!BasePage.ja', find '!SubPage.ja'
         first and return it's content if exist.  Or find localized
         page regarding preferred languages from browser's
         Accept-Language: header.  Or, finally, exact given page name
