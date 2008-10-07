@@ -1,0 +1,10 @@
+= Graphviz Example Invoking Circo =
+{{{
+#!graphviz.circo
+digraph G {
+    Hello->World
+    Hello->Goodbye
+    World->Graphviz
+    Graphviz->Rules
+}
+}}}

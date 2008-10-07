@@ -1,0 +1,14 @@
+= Graphviz Example Map Whole Image =
+
+The '''TracProject''' portion points to the Trac project page at Edgewall while the rest of the image points to the Edgewall site.
+
+{{{
+#!graphviz
+digraph G {
+    URL="http://www.edgewall.com/";
+    label = "Edgewall"
+
+    TracProject [URL="http://projects.edgewall.com/trac/"];
+    TracProject;
+}
+}}}
