@@ -272,6 +272,8 @@ try:
                     # with suffix, exact page is used
                     name = page_resource.id
                 page = WikiPage(self.env, name)
+                # update resource id to highlight current page.
+                page_resource.id = name
                 return (page.text, page.exists)
 
 except:
