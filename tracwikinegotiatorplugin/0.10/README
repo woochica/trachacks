@@ -34,7 +34,6 @@ $ python setup.py bdist_egg
 $ cp dist/*.egg /your/trac/project/plugins
 }}}
 
-
 == How to Setup ==
 
 On using this plugin, do not forget enabling plugin 
@@ -50,7 +49,7 @@ default_lang = en
 }}}
 
 
-== How to Use ===
+== How to Use ==
 
 Using the negotiation feature is simply providing suffixed page like
 'Foo.ja' for Japanese, 'Foo.fr' for French, so on.  When Japanese user
@@ -75,10 +74,14 @@ with a way described above, then press "Edit" button.
 
 ==  Bonus Macro ==
 
-For bonus, this plugin contains one new macro: `MultiLangTitleIndex`.
-This is alternative macro of `TitleIndex`. 
+For bonus, this plugin contains two new macro: `MultiLangTitleIndex`
+and `NTOC`.
+The former is an alternative macro of `TitleIndex`.
+The later is an alternative of `TOC` macro.
+(see [th:wiki:tocmacro] in Trac-Hacs for more detail)
 
-The difference of two are:
+=== `MultiLangTitleIndex` ===
+The differences against `TitleIndex` are:
  * Display in one line for variants like: "* WikiStart (ja, en, other)".
  * List pages in two columns: one is for user's pages, one is for
    system provided pages. System pages are the pages made by trac.
@@ -87,6 +90,21 @@ The difference of two are:
 
 It is useful for the site having many localized pages.
 You can use it by editing `TitleIndex` page.
+
+=== `NTOC` ===
+`NTOC` macro delives `TOC` macro, so all the features in `TOC` macro
+are available except handling lang suffixed pages.
+If you specify normal page name without explicit lang suffix 
+(i.e. `!WikiStart`), `NTOC` look up localized page for language same to 
+parent page the macro is put on. If not exist, look up localized page
+for preferred langs. If not found, use specified name as is.
+So, it is easy to get localized TOC by simply specifyng base page names
+in argument.
+
+`NTOC` also handles wildcard page argument by expanding and removing
+suffixed pages.
+
+So, `TOC` can be simply replaced to `NTOC`.
 
 == How it Works ==
 
