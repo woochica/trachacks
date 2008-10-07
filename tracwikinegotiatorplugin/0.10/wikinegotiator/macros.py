@@ -3,11 +3,16 @@ import os, re
 from trac import __version__ as version
 from trac.core import *
 from trac.config import Option, ListOption
-from trac.util import sorted
 from trac.wiki import WikiSystem, html
 from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
+try:
+    # for trac 0.10 or 0.11
+    from trac.util import sorted
+except ImportError:
+    # for trac 0.11.x or later
+    from trac.util.compat import sorted
 
 ## alternative TitleIndex macro
 
