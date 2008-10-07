@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import os, re
+from trac import __version__ as version
 from trac.core import *
 from trac.config import Option, ListOption, BoolOption
 from trac.util import sorted
 from trac.wiki import WikiSystem, html
 from trac.wiki.macros import WikiMacroBase
+from trac.wiki.model import WikiPage
 
 
-
-## macro
+## alternative TitleIndex macro
 
 def _list_wiki_default_pages():
     """List wiki page files in 'wiki-default' directory.
@@ -157,3 +158,85 @@ class MultiLangTitleIndex(WikiMacroBase):
                         item.append(')')
                     ul.append(html.LI(item))
         return html.TABLE(tr)
+
+
+
+# alternative TOC macro
+
+try:
+    # for delived new NTOC macro, require trac 0.11 and tractoc enabled.
+    assert [int(x) for x in version.split('.')] >= [0, 11] # need 0.11
+    import tractoc.macro                        # need enabled
+    import wikinegotiator.negotiator
+
+    class NTOCMacro(tractoc.macro.TOCMacro):
+        """Language-aware version of TOC Macro.
+
+        This macro is an alternative of TOC macro (written by
+        coderanger) extending to use content of localized page if
+        exist. You can write TOC macro entry by normal page name
+        wihtout lang suffix.
+
+        For example, if you specify the page 'SubPage' in argument on
+        the Japanese localized page 'BasePage.ja', find 'SubPage.ja'
+        first and return it's content if exist.  Or find localized
+        page regarding preferred languages from browser's
+        Accept-Language: header.  Or, finally, exact given page name
+        is used.
+
+        If you specify the page with lang suffix, that page is used.
+
+        === LIMITATION ===
+        
+        TOC macro accepts wildcard like `Trac*` to list multiple pages
+        but NTOC macro cannot hook it. In such case, all the variants
+        will match and be used. It'd be better not to use wildcard
+        with NTOC macro.
+        """
+        
+        _override_toc_macro = BoolOption('wiki-negotiator',
+                                         'override_toc_macro',
+                                         'enabled',
+                                         doc="""Expose  NTOC macro as TOC macro.""")
+
+        def get_page_text(self, formatter, page_resource):
+            """Return a tuple of `(text, exists)` for the given page (resource).
+            The page is altered if lang suffix is not exist in page name
+            like wiki page negotiation. 
+            """
+            if page_resource.id == formatter.context.resource.id:
+                return (formatter.source, True)
+            else:
+                req = formatter.context(page_resource).req
+                nego = wikinegotiator.negotiator.WikiNegotiator(self.env)
+                # know lang of parent page where this macro is on.
+                parent = req.args.get('page', 'WikiStart')
+                bname, blang = nego._split_lang(parent)
+                # get body name and lang from given page name.
+                name, lang = nego._split_lang(page_resource.id)
+                wiki = WikiSystem(self.env)
+                if lang is None:
+                    # When no lang suffix is in given page name,
+                    # find localized page for lang of parent page,
+                    # then preferred language.
+                    langs = [blang or nego._default_lang]
+                    langs += nego._get_preferred_langs(req)
+                    for lang in langs:
+                        dname = '%s.%s' % (name, lang)
+                        if wiki.has_page(dname):
+                            name = dname
+                else:
+                    # with suffix, exact page is used
+                    name = page_resource.id
+                page = WikiPage(self.env, name)
+                return (page.text, page.exists)
+
+    if _override_toc_macro:
+        # alter 'TOC' macro by NTOCMacro
+        class TOCMacro(NTOCMacro):
+            pass
+
+except:
+   # TOCMacro load fail
+   pass
+
