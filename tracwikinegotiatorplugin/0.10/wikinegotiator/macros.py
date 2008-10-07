@@ -2,12 +2,11 @@
 import os, re
 from trac import __version__ as version
 from trac.core import *
-from trac.config import Option, ListOption, BoolOption
+from trac.config import Option, ListOption
 from trac.util import sorted
 from trac.wiki import WikiSystem, html
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
-
 
 ## alternative TitleIndex macro
 
@@ -194,11 +193,6 @@ try:
         with NTOC macro.
         """
         
-        _override_toc_macro = BoolOption('wiki-negotiator',
-                                         'override_toc_macro',
-                                         'enabled',
-                                         doc="""Expose  NTOC macro as TOC macro.""")
-
         def get_page_text(self, formatter, page_resource):
             """Return a tuple of `(text, exists)` for the given page (resource).
             The page is altered if lang suffix is not exist in page name
@@ -230,11 +224,6 @@ try:
                     name = page_resource.id
                 page = WikiPage(self.env, name)
                 return (page.text, page.exists)
-
-    if NTOCMacro._override_toc_macro:
-        # alter 'TOC' macro by NTOCMacro
-        class TOCMacro(NTOCMacro):
-            pass
 
 except:
    # TOCMacro load fail
