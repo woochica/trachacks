@@ -87,7 +87,7 @@ http://trac-hacks.swapoff.org/download/graphvizplugin.zip or checkout
 the source from the trac hacks subversion repository at:
 http://trac-hacks.swapoff.org/svn/graphvizplugin.
 
-Change to the graphvizplugin/0.9 directory and run:
+Change to the graphvizplugin/0.11 directory and run:
 
     python setup.py bdist_egg
 
@@ -112,7 +112,10 @@ A new section called graphviz should be added to the conf/trac.ini
 file with these fields:
 
     cache_dir       - The directory that will be used to cache the 
-                      generated images. That directory must exist.
+                      generated images. That directory must exist,
+                      unless you keep the default 'gvcache' value,
+                      in which case the plugin is allowed to create
+                      the folder inside the Trac environment.
 
     cmd_path        - Full path to the directory where the graphviz
                       programs are located. If not specified, the
