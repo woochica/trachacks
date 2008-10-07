@@ -5,6 +5,7 @@ from trac.core import *
 from trac.config import Option, ListOption
 from trac.util import sorted
 from trac.wiki import WikiSystem, html
+from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
 
@@ -164,15 +165,15 @@ class MultiLangTitleIndex(WikiMacroBase):
 
 try:
     # for delived new NTOC macro, require trac 0.11 and tractoc enabled.
-    import tractoc.macro                        # need enabled
+    from tractoc.macro import TOCMacro          # need enabled
     import wikinegotiator.negotiator
 
     # require tractoc macro for 0.11 or later which has get_page_text()
     # method.
-    if not hasattr(tractoc.macro.TOCMacro, 'get_page_text'):
+    if not hasattr(TOCMacro, 'get_page_text'):
         raise Exception('NTOC macro needs tractoc macro for 0.11 (or later).')
     
-    class NTOCMacro(tractoc.macro.TOCMacro):
+    class NTOCMacro(TOCMacro):
         """Language-aware version of TOC Macro.
 
         === Dependency ===
@@ -201,6 +202,32 @@ try:
         will match and be used. It'd be better not to use wildcard
         with NTOC macro.
         """
+
+        def expand_macro(self, formatter, name, args):
+            """Expand wildcard page spec to non-suffixed page names.
+            """
+            args, kw = parse_args(args)
+
+            wiki = WikiSystem(self.env)
+            nego = wikinegotiator.negotiator.WikiNegotiator(self.env)
+            newargs = []
+            for arg in args:
+                newargs.append(arg)
+                arg = arg.strip()
+                if arg.endswith('*'):
+                    newargs.pop()
+                    # expand wildcard as indivisual pages with removing
+                    # suffixed pages.
+                    prefix = arg[:-1]
+                    pages = []
+                    for page in wiki.get_pages(prefix):
+                        name, lang = nego._split_lang(page)
+                        if name not in pages:
+                            pages.append(name)
+                    newargs += pages
+            # reconstruct 'args' argument and call ancestor
+            args = ','.join(newargs + ['%s=%s' % pair for pair in kw.items()])
+            return TOCMacro.expand_macro(self, formatter, name, args)
         
         def get_page_text(self, *args):
             """Return a tuple of `(text, exists)` for the given page (resource).
