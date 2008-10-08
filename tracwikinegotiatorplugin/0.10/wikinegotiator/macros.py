@@ -152,7 +152,7 @@ class MultiLangTitleIndex(WikiMacroBase):
                     if lang_map.has_key(page):
                         item.append(' (')
                         langs = lang_map[page]
-                        for lang in sorted(langs):
+                        for lang in sorted(langs) + ['other']:
                             p = '%s.%s' % (page, lang)
                             item.append(html.A(lang,
                                                href=env.href.wiki(page) + '?lang='+lang,
