@@ -169,16 +169,17 @@ class MultiLangTitleIndex(WikiMacroBase):
 # alternative TOC macro
 
 try:
-    # for delived new NTOC macro, require trac 0.11 and tractoc enabled.
-    from tractoc.macro import TOCMacro          # need enabled
+    # For delived new NTOC macro, require trac 0.11 and tractoc enabled.
+    # Renamed as BaseTOCMacro since we may redefine TOCMacro.
+    from tractoc.macro import TOCMacro as BaseTOCMacro
     import wikinegotiator.negotiator
 
     # require tractoc macro for 0.11 or later which has get_page_text()
     # method.
-    if not hasattr(TOCMacro, 'get_page_text'):
+    if not hasattr(BaseTOCMacro, 'get_page_text'):
         raise Exception('NTOC macro needs tractoc macro for 0.11 (or later).')
     
-    class NTOCMacro(TOCMacro):
+    class NTOCMacro(BaseTOCMacro):
         """Language-aware version of TOC Macro.
 
         === Dependency ===
@@ -232,7 +233,7 @@ try:
                     newargs += pages
             # reconstruct 'args' argument and call ancestor
             args = ','.join(newargs + ['%s=%s' % pair for pair in kw.items()])
-            return TOCMacro.expand_macro(self, formatter, name, args)
+            return BaseTOCMacro.expand_macro(self, formatter, name, args)
         
         def get_page_text(self, *args):
             """Return a tuple of `(text, exists)` for the given page (resource).
@@ -283,5 +284,6 @@ except:
 ## Bonus Wild TIPS:
 ## Uncomment following two lines if you want to override TOC macro itself.
 ## It means, you can use TOC macro in a page as before with NTOC feature.
+## NOTE: After uncomment, 'class' should not have any preceding space.
 #class TOCMacro(NTOCMacro):
-#    pass
+#     pass
