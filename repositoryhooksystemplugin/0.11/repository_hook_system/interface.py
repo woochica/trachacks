@@ -15,13 +15,20 @@ class IRepositoryHookSubscriber(Interface):
     def is_available(repository, hookname):
         """can this subscriber be invoked on this hook?"""        
 
-    def invoke(changeset):
-        """what to do on a commit"""
+    def after_commit(changeset):
+        """what to do after a commit"""
+
+    def before_commit(changeset):
+        """what to do before a commit"""
+
+    def other_repository_action(*args):
+        """what to do in the case of some other repositiory action"""
 
 ### interfaces for the hook system
 
 class IRepositoryChangeListener(Interface):
-    """listeners to changes from repository hooks"""
+    """This is a particular type of repository (SVN, Git, etc)'s change
+    listener."""
 
     def type():
         """list of types of repository to listen for changes"""

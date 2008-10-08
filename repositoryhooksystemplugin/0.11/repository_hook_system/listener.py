@@ -32,14 +32,17 @@ class RepositoryChangeListener(object):
 
         # find the active listeners
         listeners = ExtensionPoint(IRepositoryChangeListener).extensions(env)
-        
+
         # find the listener for the given repository type and invoke the hook
         for listener in listeners:
             if env.config.get('trac', 'repository_type') in listener.type():
-                changeset = listener.changeset(repo, *args)
+                changeset = listener.changeset(repo, hook, *args)
                 subscribers = listener.subscribers(hook)
                 for subscriber in subscribers:
-                    subscriber.invoke(changeset)
+                    funcname = hook.replace("-","_")
+                    func = getattr(subscriber, funcname, None)
+                    if func:
+                        func(changeset)
         
 def filename():
     return os.path.abspath(__file__.rstrip('c'))

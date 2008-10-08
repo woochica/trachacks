@@ -12,6 +12,7 @@ from repository_hook_system.interface import IRepositoryHookSystem
 from trac.config import ListOption
 from trac.core import *
 from trac.util.text import CRLF
+from trac.versioncontrol.api import NoSuchChangeset
 from utils import iswritable
 
 class SVNHookSystem(FileSystemHooks):
@@ -77,12 +78,15 @@ class SVNHookSystem(FileSystemHooks):
                  in getattr(self, hookname, []) 
                  and subscriber.is_available(self.type(), hookname) ]
 
-    def changeset(self, repo, revision):
+    def changeset(self, repo, hook, revision):
         """ 
         return the changeset given the repository object and revision number
         """
         try:
-            chgset = repo.get_changeset(revision)
+            if hook == 'pre-commit':
+                chgset = {'transaction' : revision} #Trac has no way to get a transaction out of svn
+            else:
+                chgset = repo.get_changeset(revision)
         except NoSuchChangeset:
             # XXX should probably throw an exception (same one?)
             return # out of scope changesets are not cached
