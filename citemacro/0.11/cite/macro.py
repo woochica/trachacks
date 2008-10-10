@@ -124,12 +124,20 @@ class CiteMacro(WikiMacroBase):
                 
                 setattr(formatter, CITE_LIST, cite_list)
                 setattr(formatter, CITE_DICT, cite_dict)
+                backref = True
+            else:
+                backref = False
             
             index = cite_list.index(label) + 1
-            return ''.join(['[', str(tag.a(href='#%s' % label)('%d' % index)), ']'])
+            
+            if backref:
+                return ''.join(['[', str(tag.a(name='cite_%s' % label)), str(tag.a(href='#%s' % label)('%d' % index)), ']'])
+            else:
+                return ''.join(['[', str(tag.a(href='#%s' % label)('%d' % index)), ']'])
         
         else:
             h = kwargs.get('h', '1')
+            backref = kwargs.get('backref')
             
             tags = []
             if h == '1':
@@ -168,12 +176,21 @@ class CiteMacro(WikiMacroBase):
                 
                 if entry:
                     if url:
-                        li.append(tag.li()(tag.a(name=label), entry, tag.br(), tag.a(href=url)(url)))
+                        if backref:
+                            li.append(tag.li()(tag.a(name=label), tag.a(href='#cite_%s' % label)('^'), ' ', entry, tag.br(), tag.a(href=url)(url)))
+                        else:
+                            li.append(tag.li()(tag.a(name=label), entry, tag.br(), tag.a(href=url)(url)))
                     else:
-                        li.append(tag.li()(tag.a(name=label), entry))
+                        if backref:
+                            li.append(tag.li()(tag.a(name=label), tag.a(href='#cite_%s' % label)('^'), ' ', entry))
+                        else:
+                            li.append(tag.li()(tag.a(name=label), entry))
                 else:
                     if url:
-                        li.append(tag.li()(tag.a(name=label), tag.a(href=url)(url)))
+                        if backref:
+                            li.append(tag.li()(tag.a(name=label), tag.a(href='#cite_%s' % label)('^'), ' ', tag.a(href=url)(url)))
+                        else:
+                            li.append(tag.li()(tag.a(name=label), tag.a(href=url)(url)))
             
             ol = tag.ol()(*li)
             tags.append(ol)
