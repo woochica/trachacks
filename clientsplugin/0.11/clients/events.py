@@ -217,13 +217,27 @@ class ClientEvent(object):
             handle_ta = False
 
         cursor = db.cursor()
-        self.env.log.info('Updating client event "%s"' % self.name)
+        self.env.log.info('Updating client event "%s"' % self._old_name)
         cursor.execute("UPDATE client_events SET lastrun=%s "
                        "WHERE name=%s",
                        (int(self.lastrun), self._old_name))
 
         if handle_ta:
             db.commit()
+
+    def trigger(self, req, client, fromdate, todate, db=None):
+        assert self.exists, 'Cannot trigger a client event that does not exits'
+        system = ClientEventsSystem(self.env);
+        summary = system.get_summary(self.summary)
+        assert summary is not None , 'Invalid summary'
+        action = system.get_action(self.action)
+        assert action is not None, 'Invalid action'
+
+        if not summary.init(self, client) or not action.init(self, client):
+          return False
+
+        return action.perform(req, summary.get_summary(req, fromdate, todate))
+
 
     def select(cls, env, client=None, db=None):
         if not db:
@@ -242,3 +256,25 @@ class ClientEvent(object):
             clev._load_options(client, db)
             yield clev
     select = classmethod(select)
+
+    def triggerall(cls, env, req, event, db=None):
+        if not db:
+            db = env.get_db_cnx()
+
+        try:
+          ev = cls(env, event, None, db)
+        except:
+          print "Could not run the event %s" % (event,)
+          return
+        ev.lastrun
+        now = int(time.time())
+
+        cursor = db.cursor()
+        cursor.execute("SELECT name FROM client ORDER BY name")
+        for client in cursor:
+          print "Running event for client: %s" % (client, )
+          clev = cls(env, event, str(client))
+          clev.trigger(req, client, ev.lastrun, now)
+        ev.lastrun = now
+        ev.update()
+    triggerall = classmethod(triggerall)

@@ -18,7 +18,7 @@ class IClientSummaryProvider(Interface):
     """Return a series of tupoles defining the options
     """
 
-  def init(instance, client):
+  def init(event, client):
     """Initialise the summary for a specific instance and client combo
     """
 

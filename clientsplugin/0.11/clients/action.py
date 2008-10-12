@@ -19,6 +19,10 @@ class IClientActionProvider(Interface):
        If the client option is None then these options are defined as being per instance.
     """
 
-  def perform(summary):
+  def init(event, client):
+    """Todo
+    """
+
+  def perform(req, summary):
     """Perform the action. This must return an etree object
     """

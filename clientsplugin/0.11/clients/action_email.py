@@ -5,7 +5,6 @@ import locale
 import time
 import codecs
 from datetime import datetime
-from optparse import OptionParser
 from StringIO import StringIO
 
 from trac.core import *
@@ -37,9 +36,120 @@ class ClientActionEmail(Component):
       yield {'name': 'Email Addresses', 'description': 'Comma separated list of email addresses'}
 
 
-  def init(self, instance, client):
+  def init(self, event, client):
     self.client = client
+    if not event.action_options.has_key('XSLT'):
+      return False
+    try:
+      self.transform = etree.XSLT(etree.fromstring(event.action_options['XSLT']))
+    except:
+      print "Error: Cannot load/parse stylesheet"
+      return False
+
+    if not event.action_client_options.has_key('Email Addresses'):
+      return False
+
+    self.emails = []
+    for email in event.action_client_options['Email Addresses'].replace(',', ' ').split(' '):
+      if '' != email.strip():
+        self.emails.append(email.strip())
+
+    if not self.emails:
+      return False
+
     return True
 
-  def perform(self, summary):
-    return None
+
+  def perform(self, req, summary):
+    self.config = self.env.config
+    self.encoding = 'utf-8'
+    subject = 'Ticket Summary for %s' % self.client
+
+    if not self.config.getbool('notification', 'smtp_enabled'):
+      return
+    smtp_server = self.config['notification'].get('smtp_server')
+    smtp_port = self.config['notification'].getint('smtp_port')
+    from_email = self.config['notification'].get('smtp_from')
+    from_name = self.config['notification'].get('smtp_from_name')
+    replyto_email = self.config['notification'].get('smtp_replyto')
+    from_email = from_email or replyto_email
+    if not from_email:
+      return
+    
+    # Authentication info (optional)
+    user_name = self.config['notification'].get('smtp_user')
+    password = self.config['notification'].get('smtp_password')
+    
+    # Thanks to the author of this recipe:
+    # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473810
+    
+    from email.MIMEMultipart import MIMEMultipart
+    from email.MIMEText import MIMEText
+    from email.MIMEImage import MIMEImage
+    from email.Charset import add_charset, SHORTEST
+    add_charset( 'utf-8', SHORTEST, None, None )
+
+    projname = self.config.get('project', 'name')
+    
+    # Create the root message and fill in the from, to, and subject headers
+    msg_root = MIMEMultipart('alternative')
+    msg_root['To'] = str(', ').join(self.emails)
+    
+    msg_root['X-Mailer'] = 'ClientsPlugin for Trac'
+    msg_root['X-Trac-Version'] =  __version__
+    msg_root['X-Trac-Project'] =  projname
+    msg_root['Precedence'] = 'bulk'
+    msg_root['Auto-Submitted'] = 'auto-generated'
+    msg_root['Subject'] = subject
+    msg_root['From'] = '%s <%s>' % (from_name or projname, from_email)
+    msg_root['Reply-To'] = replyto_email
+    msg_root.preamble = 'This is a multi-part message in MIME format.'
+    
+    view = 'plain'
+    arg = "'%s'" % view
+    result = self.transform(summary, view=arg)
+    msg_text = MIMEText(str(result), view, self.encoding)
+    msg_root.attach(msg_text)
+    
+    msg_related = MIMEMultipart('related')
+    msg_root.attach(msg_related)
+    
+    view = 'html'
+    arg = "'%s'" % view
+    result = self.transform(summary, view=arg)
+    #file = open('/tmp/send-client-email.html', 'w')
+    #file.write(str(result))
+    #file.close()
+
+    msg_text = MIMEText(str(result), view, self.encoding)
+    msg_related.attach(msg_text)
+    
+    # Handle image embedding...
+    view = 'images'
+    arg = "'%s'" % view
+    result = self.transform(summary, view=arg)
+    if result:
+      images = result.getroot()
+      if images:
+        for img in images:
+          if 'img' != img.tag:
+            continue
+          if not img.get('id') or not img.get('src'):
+            continue
+          
+          fp = open(img.get('src'), 'rb')
+          if not fp:
+            continue
+          msg_img = MIMEImage(fp.read())
+          fp.close()
+          msg_img.add_header('Content-ID', '<%s>' % img.get('id'))
+          msg_related.attach(msg_img)
+    
+    # Send the email
+    import smtplib
+    smtp = smtplib.SMTP() #smtp_server, smtp_port)
+    if False and user_name:
+        smtp.login(user_name, password)
+    smtp.connect()
+    smtp.sendmail(from_email, self.emails, msg_root.as_string())
+    smtp.quit()

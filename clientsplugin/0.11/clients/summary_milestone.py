@@ -34,7 +34,7 @@ class ClientMilestoneSummary(Component):
   def options(self, client=None):
     return []
 
-  def init(self, instance, client):
+  def init(self, event, client):
     self.client = client
     return True
 
