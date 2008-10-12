@@ -15,7 +15,7 @@ from trac.wiki import wiki_to_html
 from genshi import escape
 
 from lxml import etree
-from clients.summaryinterface import IClientSummaryProvider
+from clients.summary import IClientSummaryProvider
 from clients.processor import extract_client_text
 
 
@@ -31,14 +31,15 @@ class ClientMilestoneSummary(Component):
   def get_description(self):
     return "Provide a summary of tickets within all milestones that have completion dates set and give summaries of a milestone"
 
-  def instance_options():
+  def instance_options(self):
     return []
 
-  def client_options():
+  def client_options(self):
     return []
 
   def init(self, instance, client):
     self.client = client
+    return True
 
   def get_summary(self, req, fromdate = None, todate = None):
     def myformat_date(dte):
