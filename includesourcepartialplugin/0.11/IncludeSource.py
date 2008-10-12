@@ -77,6 +77,21 @@ class IncludeSourceMacro(WikiMacroBase):
 
         file_name = largs[0]
         rev = kwargs.get('rev', None)
+        
+        if kwargs.has_key('header'):
+            header = kwargs.get('header')   # user specified header
+        else:
+            href = '../browser/%s%s' % (file_name, make_rev_str(rev))
+            header = tag.a(file_name, href=href)
+        if not header:
+            header = u'\xa0'    # default value from trac.mimeview.api.py
+            
+        # TODO - 'content' is default from mimeview.api.py, but it picks
+        # up text-align: center, which probably isn't the best thing if
+        # we are adding a file name in the header. There isn't an obvious
+        # replacement in the delivered CSS to pick over this for now though
+        header_class = kwargs.get('header_class', 'content')
+            
         src = repos.get_node(file_name, rev).get_content().read()
 
         context = formatter.context
@@ -102,9 +117,15 @@ class IncludeSourceMacro(WikiMacroBase):
         # givenlineno that mimics lineno, but it's cleaner to just 
         # tweak the output here by running the genshi stream from
         # src through a transformer that will make the change
-        xp = 'thead/tr/th[@class="givenlineno"]'
+        
+        xpath1 = 'thead/tr/th[@class="givenlineno"]'
+        xpath2 = 'thead/tr/th[2]'   # last() not supported by Genshi?
+        xpath3 = 'thead/tr/th[2]/text()'
+        
         # TODO - does genshi require a QName here? Seems to work w/o it
-        src = src.generate() | Transformer(xp).attr('class', 'lineno')
+        src = src.generate() | Transformer(xpath1).attr('class', 'lineno') \
+                             | Transformer(xpath2).attr('class', header_class) \
+                             | Transformer(xpath3).replace(header)
 
         return src
 
@@ -157,7 +178,7 @@ class GivenLineNumberAnnotator(Component):
         if file_name[0] == '/':
             file_name = file_name[1:]
 
-        rev = context.rev and '?rev=' + str(context.rev) or ''
+        rev = make_rev_str(context.rev)
 
         lineno = context.startline + lineno - 1
         
@@ -165,3 +186,6 @@ class GivenLineNumberAnnotator(Component):
             tag.a(lineno, href='../browser/%s%s#L%s' % (file_name, rev, lineno))
         ))
 
+def make_rev_str(rev=None):
+    return rev and '?rev=' + str(rev) or ''
+    
