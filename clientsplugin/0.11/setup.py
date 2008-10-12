@@ -20,13 +20,17 @@ setup(name=PACKAGE,
     entry_points = {
         'trac.plugins': [
             'clients.api = clients.api',
-            'clients.admin = clients.admin',
             'clients.client = clients.client',
             'clients.model = clients.model',
+            'clients.admin = clients.admin',
+            'clients.events = clients.events',
+            'clients.eventsadmin = clients.eventsadmin',
             'clients.processor = clients.processor',
-            'clients.summaryinterface = clients.summaryinterface',
-            'clients.milestonesummary = clients.milestonesummary',
-            'clients.ticketchanges = clients.ticketchanges'
+            'clients.summary = clients.summary',
+            'clients.summary_milestone = clients.summary_milestone',
+            'clients.summary_ticketchanges = clients.summary_ticketchanges',
+            'clients.action = clients.action',
+            'clients.action_email = clients.action_email',
         ]
     })
 
