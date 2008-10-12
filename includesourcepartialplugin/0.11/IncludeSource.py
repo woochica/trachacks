@@ -45,6 +45,15 @@ class IncludeSourceMacro(WikiMacroBase):
         # include entire file but formatted plain
         [[IncludeSource(trunk/proj/file.py, mimetype=text/plain)]]
 
+        # includes line 20-50 inclusive and overrides file name link
+        # in header text
+        [[IncludeSource(trunk/proj/file.py, start=20, end=50, header=New header text)]]
+        
+        # includes line 20-50 inclusive and overrides file name link
+        # in header text, along with a specific CSS class (class must exist
+        # in CSS on page; there is no provision for defining it in this macro)
+        [[IncludeSource(trunk/proj/file.py, start=20, end=50, header=New header text, header_class=my_class)]]
+        
     }}}
 
     See TracLinks, TracSyntaxColoring and trac/mimeview/api.py
