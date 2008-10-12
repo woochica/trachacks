@@ -37,7 +37,7 @@
               <div py:for="option in options.values()" class="field">
                 <label>$option.name</label><br />
                 <!-- Todo: Support more modes other than textarea... -->
-                <textarea name="${field}-option-${option.name}" rows="10" cols="100">$option.value</textarea>
+                <textarea name="${field}-option-${option.md5}" rows="10" cols="100">$option.value</textarea>
                 <p class="help">$option.description</p>
               </div>
             </py:with>

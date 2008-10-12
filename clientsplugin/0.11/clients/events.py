@@ -1,14 +1,14 @@
-import re
+import md5
 import sys
 import time
-from datetime import date, datetime
 
 from trac.core import *
-from trac.util import sorted, embedded_numbers
-from trac.util.datefmt import utc, utcmax, to_timestamp
 
 from clients.summary import IClientSummaryProvider
 from clients.action import IClientActionProvider
+
+
+
 __all__ = ['ClientEvent']
 
 def simplify_whitespace(name):
@@ -66,6 +66,7 @@ class ClientEvent(object):
             self.action = ''
             self.lastrun = 0
 
+
     def loadoptions(self, db):
         assert self.exists, 'Cannot load options for a non-existent client event'
         system = ClientEventsSystem(self.env);
@@ -83,6 +84,7 @@ class ClientEvent(object):
           options[name] = value
         self.summary_options = {}
         for option in summary.instance_options():
+          option['md5'] = md5.new(option['name']).hexdigest()
           if options.has_key(option['name']):
             option['value'] = options[option['name']]
           self.summary_options[option['name']] = option
@@ -96,6 +98,7 @@ class ClientEvent(object):
           options[name] = value
         self.action_options = {}
         for option in action.instance_options():
+          option['md5'] = md5.new(option['name']).hexdigest()
           if options.has_key(option['name']):
             option['value'] = options[option['name']]
           else:
@@ -103,6 +106,7 @@ class ClientEvent(object):
           self.action_options[option['name']] = option
 
     exists = property(fget=lambda self: self._old_name is not None)
+
 
     def delete(self, db=None):
         assert self.exists, 'Cannot deleting non-existent client event'

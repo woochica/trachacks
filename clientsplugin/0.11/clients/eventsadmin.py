@@ -11,6 +11,7 @@ from trac.util.datefmt import utc, parse_date, get_date_format_hint, \
                               get_datetime_format_hint
 from trac.web.chrome import add_link, add_script
 
+
 class ClientEventsAdminPanel(TicketAdminPanel):
     
     _type = 'clientevents'
@@ -25,10 +26,10 @@ class ClientEventsAdminPanel(TicketAdminPanel):
                 if req.args.get('save'):
                     # Client Events are not saved... just deleted or viewed...
                     for option in clev.summary_options:
-                      arg = 'summary-option-%s' % option
+                      arg = 'summary-option-%s' % clev.summary_options[option]['md5']
                       clev.summary_options[option]['value'] = req.args.get(arg)
                     for option in clev.action_options:
-                      arg = 'action-option-%s' % option
+                      arg = 'action-option-%s' % clev.action_options[option]['md5']
                       clev.action_options[option]['value'] = req.args.get(arg)
                     clev.update_options()
                     req.redirect(req.href.admin(cat, page))
