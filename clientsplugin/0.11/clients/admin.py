@@ -5,7 +5,7 @@ from trac.perm import PermissionSystem
 from trac.ticket.admin import TicketAdminPanel
 
 
-from clients import model
+from clients.model import Client
 from trac.util.datefmt import utc, parse_date, get_date_format_hint, \
                               get_datetime_format_hint
 from trac.web.chrome import add_link, add_script
@@ -19,7 +19,7 @@ class ClientAdminPanel(TicketAdminPanel):
     def _render_admin_panel(self, req, cat, page, client):
         # Detail view?
         if client:
-            clnt = model.Client(self.env, client)
+            clnt = Client(self.env, client)
             if req.method == 'POST':
                 if req.args.get('save'):
                     clnt.name = req.args.get('name')
@@ -42,7 +42,7 @@ class ClientAdminPanel(TicketAdminPanel):
             if req.method == 'POST':
                 # Add Client
                 if req.args.get('add') and req.args.get('name'):
-                    clnt = model.Client(self.env)
+                    clnt = Client(self.env)
                     clnt.name = req.args.get('name')
                     clnt.insert()
                     req.redirect(req.href.admin(cat, page))
@@ -55,7 +55,7 @@ class ClientAdminPanel(TicketAdminPanel):
                         raise TracError('No client selected')
                     db = self.env.get_db_cnx()
                     for name in sel:
-                        clnt = model.Client(self.env, name, db=db)
+                        clnt = Client(self.env, name, db=db)
                         clnt.delete(db=db)
                     db.commit()
                     req.redirect(req.href.admin(cat, page))
@@ -71,7 +71,7 @@ class ClientAdminPanel(TicketAdminPanel):
 
             default = self.config.get('ticket', 'default_client')
             data = {'view': 'list',
-                    'clients': model.Client.select(self.env),
+                    'clients': Client.select(self.env),
                     'default': default}
 
         return 'admin_clients.html', data
