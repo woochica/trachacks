@@ -41,7 +41,7 @@ class ClientEventsSystem(Component):
 
 class ClientEvent(object):
 
-    def __init__(self, env, name=None, db=None):
+    def __init__(self, env, name=None, client=None, db=None):
         self.env = env
         if name:
             name = simplify_whitespace(name)
@@ -55,11 +55,12 @@ class ClientEvent(object):
             row = cursor.fetchone()
             if not row:
                 raise TracError('Client Event %s does not exist.' % name)
+            self.md5 = md5.new(name).hexdigest()
             self.name = self._old_name = name
             self.summary = row[0] or ''
             self.action = row[1] or ''
             self.lastrun = row[2] or 0
-            self.loadoptions(db)
+            self.loadoptions(client, db)
         else:
             self.name = self._old_name = None
             self.summary = ''
@@ -67,7 +68,7 @@ class ClientEvent(object):
             self.lastrun = 0
 
 
-    def loadoptions(self, db):
+    def loadoptions(self, client, db):
         assert self.exists, 'Cannot load options for a non-existent client event'
         system = ClientEventsSystem(self.env);
         summary = system.get_summary(self.summary)
@@ -79,11 +80,12 @@ class ClientEvent(object):
         cursor = db.cursor()
         cursor.execute("SELECT name, value "
                        "FROM client_event_summary_options "
-                       "WHERE client_event=%s AND client=''", (self._old_name,))
+                       "WHERE client_event=%s AND client=%s",
+                       (self._old_name, client or ''))
         for name, value in cursor:
           options[name] = value
         self.summary_options = {}
-        for option in summary.instance_options():
+        for option in summary.options(client):
           option['md5'] = md5.new(option['name']).hexdigest()
           if options.has_key(option['name']):
             option['value'] = options[option['name']]
@@ -93,11 +95,12 @@ class ClientEvent(object):
         cursor = db.cursor()
         cursor.execute("SELECT name, value "
                        "FROM client_event_action_options "
-                       "WHERE client_event=%s AND client=''", (self._old_name,))
+                       "WHERE client_event=%s AND client=%s",
+                       (self._old_name, client or ''))
         for name, value in cursor:
           options[name] = value
         self.action_options = {}
-        for option in action.instance_options():
+        for option in action.options(client):
           option['md5'] = md5.new(option['name']).hexdigest()
           if options.has_key(option['name']):
             option['value'] = options[option['name']]
@@ -162,17 +165,17 @@ class ClientEvent(object):
         self.env.log.info('Updating client event "%s"' % self._old_name)
         cursor.execute("DELETE FROM " + table + " "
                        "WHERE client_event=%s AND client=%s",
-                       (self._old_name, client))
+                       (self._old_name, client or ''))
         for option in options.values():
           cursor.execute("INSERT INTO " + table + " (client_event, client, name, value) "
                          "VALUES (%s, %s, %s, %s)",
-                         (self._old_name, client, option['name'], option['value']))
+                         (self._old_name, client or '', option['name'], option['value']))
 
         if handle_ta:
             db.commit()
 
 
-    def update_options(self, db=None):
+    def update_options(self, client=None, db=None):
         assert self.exists, 'Cannot update non-existent client event'
         if not db:
             db = self.env.get_db_cnx()
@@ -180,8 +183,8 @@ class ClientEvent(object):
         else:
             handle_ta = False
 
-        self.update_client_options('', 'summary', self.summary_options, db)
-        self.update_client_options('', 'action', self.action_options, db)
+        self.update_client_options(client, 'summary', self.summary_options, db)
+        self.update_client_options(client, 'action', self.action_options, db)
 
         if handle_ta:
             db.commit()
@@ -206,7 +209,7 @@ class ClientEvent(object):
         if handle_ta:
             db.commit()
 
-    def select(cls, env, db=None):
+    def select(cls, env, client=None, db=None):
         if not db:
             db = env.get_db_cnx()
         cursor = db.cursor()
@@ -214,11 +217,12 @@ class ClientEvent(object):
                        "FROM client_events "
                        "ORDER BY name")
         for name, summary, action, lastrun in cursor:
-            client = cls(env)
-            client.name = client._old_name = name
-            client.summary = summary or ''
-            client.action = action or ''
-            client.lastrun = lastrun or 0
-            client.loadoptions(db)
-            yield client
+            clev = cls(env)
+            clev.md5 = md5.new(name).hexdigest()
+            clev.name = clev._old_name = name
+            clev.summary = summary or ''
+            clev.action = action or ''
+            clev.lastrun = lastrun or 0
+            clev.loadoptions(client, db)
+            yield clev
     select = classmethod(select)

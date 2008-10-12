@@ -14,6 +14,11 @@ class IClientActionProvider(Interface):
     """Return the description of the action (for use in UI)
     """
 
+  def options(client=None):
+    """The options for this action
+       If the client option is None then these options are defined as being per instance.
+    """
+
   def perform(summary):
     """Perform the action. This must return an etree object
     """

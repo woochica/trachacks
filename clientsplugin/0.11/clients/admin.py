@@ -6,6 +6,7 @@ from trac.ticket.admin import TicketAdminPanel
 
 
 from clients.model import Client
+from clients.events import ClientEvent
 from trac.util.datefmt import utc, parse_date, get_date_format_hint, \
                               get_datetime_format_hint
 from trac.web.chrome import add_link, add_script
@@ -20,6 +21,7 @@ class ClientAdminPanel(TicketAdminPanel):
         # Detail view?
         if client:
             clnt = Client(self.env, client)
+            events = ClientEvent.select(self.env, client)
             if req.method == 'POST':
                 if req.args.get('save'):
                     clnt.name = req.args.get('name')
@@ -31,12 +33,24 @@ class ClientAdminPanel(TicketAdminPanel):
                     clnt.default_rate = req.args.get('default_rate')
                     clnt.currency = req.args.get('currency')
                     clnt.update()
+
+                    for clev in events:
+                      for option in clev.summary_options:
+                        arg = 'summary-option-%s-%s' % (clev.md5, clev.summary_options[option]['md5'])
+                        clev.summary_options[option]['value'] = req.args.get(arg)
+                      for option in clev.action_options:
+                        arg = 'action-option-%s-%s' % (clev.md5, clev.action_options[option]['md5'])
+                        print arg
+                        print req.args.get(arg)
+                        clev.action_options[option]['value'] = req.args.get(arg)
+                      clev.update_options(client)
+
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('cancel'):
                     req.redirect(req.href.admin(cat, page))
 
             add_script(req, 'common/js/wikitoolbar.js')
-            data = {'view': 'detail', 'client': clnt}
+            data = {'view': 'detail', 'client': clnt, 'events': events}
 
         else:
             if req.method == 'POST':

@@ -30,11 +30,12 @@ class ClientActionEmail(Component):
   def get_description(self):
     return "Send an email to a certain list of addresses"
 
-  def instance_options(self):
-    yield {'name': 'XSLT', 'description': 'Formatting XSLT to convert the summary to an email'}
+  def options(self, client=None):
+    if client is None:
+      yield {'name': 'XSLT', 'description': 'Formatting XSLT to convert the summary to an email'}
+    else:
+      yield {'name': 'Email Addresses', 'description': 'Comma separated list of email addresses'}
 
-  def client_options(self):
-    return []
 
   def init(self, instance, client):
     self.client = client

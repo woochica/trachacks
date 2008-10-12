@@ -14,13 +14,8 @@ class IClientSummaryProvider(Interface):
     """Return the description of the summary (for use in UI)
     """
 
-  def instance_options():
-    """Return a series of tupoles defining the option that can be set on this instance
-    """
-
-  def client_options():
-    """Return a series of tupoles defining the option that can be set on this client
-       for this specific instance.
+  def options(client=None):
+    """Return a series of tupoles defining the options
     """
 
   def init(instance, client):

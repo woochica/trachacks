@@ -48,6 +48,24 @@ $client.description</textarea>
             <p class="contextual help">The default numeric hourly rate for this client (will be copied to the ticket on creation)</p>
           </div>
         </fieldset>
+        <py:for each="event in events">
+          <py:for each="options in (event.summary_options, event.action_options)">
+            <fieldset py:if="options">
+              <py:with vars="field = options==event.summary_options and 'summary' or 'action'">
+                <legend py:if="'summary'==field">Client Specific Summary Options for $event.name</legend>
+                <legend py:if="'action'==field">Client Specific Action Options for $event.name</legend>
+                <div py:for="option in options.values()" class="field">
+                  <label>$option.name</label><br />
+                  <!-- Todo: Support more modes other than intput type=text... -->
+                  <input type="text" name="${field}-option-${event.md5}-${option.md5}" size="60" value="$option.value"/>
+                  <p class="help">$option.description</p>
+                </div>
+              </py:with>
+            </fieldset>
+          </py:for>
+        </py:for>
+
+
         <fieldset>
           <legend>Change Notification Settings</legend>
           <p class="help">

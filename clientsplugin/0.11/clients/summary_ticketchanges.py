@@ -31,10 +31,7 @@ class ClientTicketChanges(Component):
   def get_description(self):
     return "Provide a summary of ticket changes since the last run"
 
-  def instance_options(self):
-    return []
-
-  def client_options(self):
+  def options(self, client=None):
     return []
 
   def init(self, instance, client):
