@@ -276,12 +276,13 @@ class SendClientEmails:
           summeriser = None
           if 'summary' == field:
             from clients.milestonesummary import ClientMilestoneSummary
-            summariser = ClientMilestoneSummary(self.env, self.req)
+            summariser = ClientMilestoneSummary(self.env)
           else:
             from clients.ticketchanges import ClientTicketChanges
-            summariser = ClientTicketChanges(self.env, self.req)
+            summariser = ClientTicketChanges(self.env)
 
-          xml = summariser.get_summary(name, lastupdate, now)
+          summariser.init("instancedummy", name)
+          xml = summariser.get_summary(self.req, lastupdate, now)
           if xml is None:
             continue
 

@@ -22,13 +22,8 @@ from clients.processor import extract_client_text
 class ClientTicketChanges(Component):
   implements(IClientSummaryProvider)
 
-  env = None
-  req = None
+  client = None
   debug = False
-  def __init__(self, env, req, debug = False):
-    self.env = env
-    self.req = req
-    self.debug = debug
 
   def get_name(self):
     return "Ticket Change Summary"
@@ -36,7 +31,16 @@ class ClientTicketChanges(Component):
   def get_description(self):
     return "Provide a summary of ticket changes since the last run"
 
-  def get_summary(self, client, fromdate = None, todate = None):
+  def instance_options():
+    return []
+
+  def client_options():
+    return []
+
+  def init(self, instance, client):
+    self.client = client
+
+  def get_summary(self, req, fromdate = None, todate = None):
     def myformat_date(dte):
       if dte:
         return format_date(dte, '%e %b %Y')
@@ -61,6 +65,7 @@ class ClientTicketChanges(Component):
           return str;
       return 'No estimate available'
 
+    client = self.client
     xml = etree.Element('clientsplugin')
 
     # Place basic client info here
@@ -129,14 +134,14 @@ class ClientTicketChanges(Component):
         ticket = etree.SubElement(changes, 'ticket')
         etree.SubElement(ticket, 'id').text = str(tid)
         etree.SubElement(ticket, 'summary').text = summary
-        ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
+        ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, req)))
         etree.SubElement(ticket, 'status').text = status
         etree.SubElement(ticket, 'resolution').text = resolution
         etree.SubElement(ticket, 'milestone').text = milestone
         etree.SubElement(ticket, 'due').text = myformat_date(due)
         changelog = etree.SubElement(ticket, 'changelog')
 
-      detail = etree.XML('<detail>%s</detail>' % wiki_to_html(text, self.env, self.req))
+      detail = etree.XML('<detail>%s</detail>' % wiki_to_html(text, self.env, req))
       detail.set('field', cgfield)
       if oldvalue:
         detail.set('oldvalue', oldvalue)

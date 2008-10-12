@@ -22,13 +22,8 @@ from clients.processor import extract_client_text
 class ClientMilestoneSummary(Component):
   implements(IClientSummaryProvider)
 
-  env = None
-  req = None
+  client = None
   debug = False
-  def __init__(self, env, req, debug = False):
-    self.env = env
-    self.req = req
-    self.debug = debug
 
   def get_name(self):
     return "Milestone Summary"
@@ -36,7 +31,16 @@ class ClientMilestoneSummary(Component):
   def get_description(self):
     return "Provide a summary of tickets within all milestones that have completion dates set and give summaries of a milestone"
 
-  def get_summary(self, client, fromdate = None, todate = None):
+  def instance_options():
+    return []
+
+  def client_options():
+    return []
+
+  def init(self, instance, client):
+    self.client = client
+
+  def get_summary(self, req, fromdate = None, todate = None):
     def myformat_date(dte):
       if dte:
         return format_date(dte, '%e %b %Y')
@@ -61,6 +65,7 @@ class ClientMilestoneSummary(Component):
           return str;
       return 'No estimate available'
 
+    client = self.client
     xml = etree.Element('clientsplugin')
 
     # Place basic client info here
@@ -110,7 +115,7 @@ class ClientMilestoneSummary(Component):
           if completed:
             etree.SubElement(xmilestone, 'completed').text = myformat_date(completed)
           if mdescription:
-            xmilestone.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(mdescription), self.env, self.req)))
+            xmilestone.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(mdescription), self.env, req)))
           else:
             etree.SubElement(xmilestone, 'description').text = ''
           # Store for use
@@ -125,7 +130,7 @@ class ClientMilestoneSummary(Component):
       ticket = etree.SubElement(xsummary, 'ticket')
       etree.SubElement(ticket, 'id').text = str(tid)
       etree.SubElement(ticket, 'summary').text = summary
-      ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, self.req)))
+      ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, req)))
       etree.SubElement(ticket, 'status').text = status
       etree.SubElement(ticket, 'milestone').text = milestone
       # For conveneince, put the date here too (keeps the XSLTs simpler)
