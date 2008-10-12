@@ -35,14 +35,12 @@ class ClientAdminPanel(TicketAdminPanel):
                     clnt.update()
 
                     for clev in events:
-                      for option in clev.summary_options:
-                        arg = 'summary-option-%s-%s' % (clev.md5, clev.summary_options[option]['md5'])
-                        clev.summary_options[option]['value'] = req.args.get(arg)
-                      for option in clev.action_options:
-                        arg = 'action-option-%s-%s' % (clev.md5, clev.action_options[option]['md5'])
-                        print arg
-                        print req.args.get(arg)
-                        clev.action_options[option]['value'] = req.args.get(arg)
+                      for option in clev.summary_client_options:
+                        arg = 'summary-option-%s-%s' % (clev.md5, clev.summary_client_options[option]['md5'])
+                        clev.summary_client_options[option]['value'] = req.args.get(arg)
+                      for option in clev.action_client_options:
+                        arg = 'action-option-%s-%s' % (clev.md5, clev.action_client_options[option]['md5'])
+                        clev.action_client_options[option]['value'] = req.args.get(arg)
                       clev.update_options(client)
 
                     req.redirect(req.href.admin(cat, page))

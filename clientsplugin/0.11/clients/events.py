@@ -60,53 +60,13 @@ class ClientEvent(object):
             self.summary = row[0] or ''
             self.action = row[1] or ''
             self.lastrun = row[2] or 0
-            self.loadoptions(client, db)
+            self._load_options(client, db)
         else:
             self.name = self._old_name = None
             self.summary = ''
             self.action = ''
             self.lastrun = 0
 
-
-    def loadoptions(self, client, db):
-        assert self.exists, 'Cannot load options for a non-existent client event'
-        system = ClientEventsSystem(self.env);
-        summary = system.get_summary(self.summary)
-        assert summary is not None, 'Invalid summary %s for client event' % self.summary
-        action = system.get_action(self.action)
-        assert action is not None, 'Invalid action %s for client event' % self.action
-
-        options = {}
-        cursor = db.cursor()
-        cursor.execute("SELECT name, value "
-                       "FROM client_event_summary_options "
-                       "WHERE client_event=%s AND client=%s",
-                       (self._old_name, client or ''))
-        for name, value in cursor:
-          options[name] = value
-        self.summary_options = {}
-        for option in summary.options(client):
-          option['md5'] = md5.new(option['name']).hexdigest()
-          if options.has_key(option['name']):
-            option['value'] = options[option['name']]
-          self.summary_options[option['name']] = option
-
-        options = {}
-        cursor = db.cursor()
-        cursor.execute("SELECT name, value "
-                       "FROM client_event_action_options "
-                       "WHERE client_event=%s AND client=%s",
-                       (self._old_name, client or ''))
-        for name, value in cursor:
-          options[name] = value
-        self.action_options = {}
-        for option in action.options(client):
-          option['md5'] = md5.new(option['name']).hexdigest()
-          if options.has_key(option['name']):
-            option['value'] = options[option['name']]
-          else:
-            option['value'] = ''
-          self.action_options[option['name']] = option
 
     exists = property(fget=lambda self: self._old_name is not None)
 
@@ -151,9 +111,56 @@ class ClientEvent(object):
         if handle_ta:
             db.commit()
 
-    def update_client_options(self, client, opttype, options, db=None):
+    def _load_client_options(self, client, opttype, db):
         assert self.exists, 'Cannot update non-existent client event'
         assert opttype in ('summary', 'action'), 'Invalid options type'
+        system = ClientEventsSystem(self.env);
+        if 'summary' == opttype:
+          thing = system.get_summary(self.summary)
+          assert thing is not None , 'Invalid summary'
+        else:
+          thing = system.get_action(self.action)
+          assert thing is not None, 'Invalid action'
+
+        options = {}
+        table = 'client_event_' + opttype + '_options'
+        cursor = db.cursor()
+        cursor.execute("SELECT name, value "
+                       "FROM " + table + " "
+                       "WHERE client_event=%s AND client=%s",
+                       (self._old_name, client or ''))
+        for name, value in cursor:
+          options[name] = value
+        rv = {}
+        for option in thing.options(client):
+          option['md5'] = md5.new(option['name']).hexdigest()
+          if options.has_key(option['name']):
+            option['value'] = options[option['name']]
+          else:
+            option['value'] = ''
+          rv[option['name']] = option
+        return rv
+
+
+    def _load_options(self, client, db):
+        self.summary_options = self._load_client_options(None, 'summary', db)
+        self.action_options = self._load_client_options(None, 'action', db)
+        if client:
+          self.summary_client_options = self._load_client_options(client, 'summary', db)
+          self.action_client_options = self._load_client_options(client, 'action', db)
+
+
+    def _update_client_options(self, client, opttype, options, db=None):
+        assert self.exists, 'Cannot update non-existent client event'
+        assert opttype in ('summary', 'action'), 'Invalid options type'
+        system = ClientEventsSystem(self.env);
+        if 'summary' == opttype:
+          thing = system.get_summary(self.summary)
+          assert thing is not None , 'Invalid summary'
+        else:
+          thing = system.get_action(self.action)
+          assert thing is not None, 'Invalid action'
+
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
@@ -166,10 +173,15 @@ class ClientEvent(object):
         cursor.execute("DELETE FROM " + table + " "
                        "WHERE client_event=%s AND client=%s",
                        (self._old_name, client or ''))
+
+        valid_options = []
+        for option in thing.options(client):
+          valid_options.append(option['name'])
         for option in options.values():
-          cursor.execute("INSERT INTO " + table + " (client_event, client, name, value) "
-                         "VALUES (%s, %s, %s, %s)",
-                         (self._old_name, client or '', option['name'], option['value']))
+          if option['name'] in valid_options:
+            cursor.execute("INSERT INTO " + table + " (client_event, client, name, value) "
+                           "VALUES (%s, %s, %s, %s)",
+                           (self._old_name, client or '', option['name'], option['value']))
 
         if handle_ta:
             db.commit()
@@ -183,8 +195,12 @@ class ClientEvent(object):
         else:
             handle_ta = False
 
-        self.update_client_options(client, 'summary', self.summary_options, db)
-        self.update_client_options(client, 'action', self.action_options, db)
+        if client:
+          self._update_client_options(client, 'summary', self.summary_client_options, db)
+          self._update_client_options(client, 'action', self.action_client_options, db)
+        else:
+          self._update_client_options(None, 'summary', self.summary_options, db)
+          self._update_client_options(None, 'action', self.action_options, db)
 
         if handle_ta:
             db.commit()
@@ -223,6 +239,6 @@ class ClientEvent(object):
             clev.summary = summary or ''
             clev.action = action or ''
             clev.lastrun = lastrun or 0
-            clev.loadoptions(client, db)
+            clev._load_options(client, db)
             yield clev
     select = classmethod(select)

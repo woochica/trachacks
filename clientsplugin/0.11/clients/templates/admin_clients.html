@@ -49,7 +49,7 @@ $client.description</textarea>
           </div>
         </fieldset>
         <py:for each="event in events">
-          <py:for each="options in (event.summary_options, event.action_options)">
+          <py:for each="options in (event.summary_client_options, event.action_client_options)">
             <fieldset py:if="options">
               <py:with vars="field = options==event.summary_options and 'summary' or 'action'">
                 <legend py:if="'summary'==field">Client Specific Summary Options for $event.name</legend>
