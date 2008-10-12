@@ -20,8 +20,8 @@ class WorkloadChart(WikiMacroBase):
      
     Examples:
     {{{
-        [[WorkloadChart(milestone = Sprint 1)]]
-        [[WorkloadChart(milestone = Sprint 1, width = 600, height = 100, color = 00ff00)]]
+        [[WorkloadChart(milestone=Sprint 1)]]
+        [[WorkloadChart(milestone=Sprint 1, width=600, height=100, color=00ff00)]]
     }}}
     """
 

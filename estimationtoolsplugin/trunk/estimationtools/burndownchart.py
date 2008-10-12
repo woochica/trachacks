@@ -17,7 +17,7 @@ class BurndownChart(WikiMacroBase):
     The macro has the following parameters:
      * a comma-separated list of query parameters for the ticket selection, in the form "key=value" as specified in TracQuery#QueryLanguage.
      * `startdate`: '''mandatory''' parameter that specifies the start date of the period (ISO8601 format)
-     * `enddate`: end date of the period. If omitted, it defaults to either the milestones `completed' date, 
+     * `enddate`: end date of the period. If omitted, it defaults to either the milestones (if given) `completed' date, 
        or `due` date, or today (in that order) (ISO8601 format)
      * `width`: width of resulting diagram (defaults to 800)
      * `height`: height of resulting diagram (defaults to 200)
@@ -74,6 +74,10 @@ class BurndownChart(WikiMacroBase):
         # or ends with Saturday
         if len(dates) > 0 and dates[ - 1].weekday() == 5:
             weekends.append("R,f1f1f1,0,%s,1.0" % (1.0 - halfday))
+            
+        title = ''
+        if options.get('milestone'):
+            title = options['milestone'].split('|')[0]
                 
         return Markup("<img src=\"http://chart.apis.google.com/chart?"
                "chs=%sx%s" 
@@ -89,7 +93,7 @@ class BurndownChart(WikiMacroBase):
                "alt=\'Burndown Chart\' />" 
                % (options['width'], options['height'],
                   ",".join(xdata), ",".join(ydata), bottomaxis, leftaxis,
-                  "|".join(weekends), options['color'], options['milestone'].strip('\'\"')))
+                  "|".join(weekends), options['color'], title))
                 
     def _calculate_timetable(self, options, query_args, req):
         db = self.env.get_db_cnx()

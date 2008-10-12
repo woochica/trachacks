@@ -20,10 +20,6 @@ def parse_options(db, content, options):
     cursor = db.cursor()
 
     # check arguments
-    options['milestone'] = options.get('milestone')
-#    if not options['milestone']:
-#        raise TracError("No milestone specified!")
-
     _, parsed_options = parse_args(content, strict=False)
     
     options.update(parsed_options)
@@ -36,9 +32,8 @@ def parse_options(db, content, options):
     options['enddate'] = None
     if enddatearg:
         options['enddate'] = datetime(*strptime(enddatearg, "%Y-%m-%d")[0:5]).date()
-    options['milestone'] = options.get('milestone')
 
-    if not options['enddate'] and options['milestone']:   
+    if not options['enddate'] and options.get('milestone'):   
         # use first milestone
         milestone = options['milestone'].split('|')[0]         
         # try to get end date from db
