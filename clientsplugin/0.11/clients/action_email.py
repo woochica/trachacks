@@ -38,19 +38,19 @@ class ClientActionEmail(Component):
 
   def init(self, event, client):
     self.client = client
-    if not event.action_options.has_key('XSLT'):
+    if not event.action_options.has_key('XSLT') or not event.action_options['XSLT']['value']:
       return False
     try:
-      self.transform = etree.XSLT(etree.fromstring(event.action_options['XSLT']))
+      self.transform = etree.XSLT(etree.fromstring(str(event.action_options['XSLT']['value'])))
     except:
       print "Error: Cannot load/parse stylesheet"
       return False
 
-    if not event.action_client_options.has_key('Email Addresses'):
+    if not event.action_client_options.has_key('Email Addresses') or not event.action_client_options['Email Addresses']['value']:
       return False
 
     self.emails = []
-    for email in event.action_client_options['Email Addresses'].replace(',', ' ').split(' '):
+    for email in event.action_client_options['Email Addresses']['value'].replace(',', ' ').split(' '):
       if '' != email.strip():
         self.emails.append(email.strip())
 
@@ -61,12 +61,14 @@ class ClientActionEmail(Component):
 
 
   def perform(self, req, summary):
+    if summary is None:
+      return False
     self.config = self.env.config
     self.encoding = 'utf-8'
     subject = 'Ticket Summary for %s' % self.client
 
     if not self.config.getbool('notification', 'smtp_enabled'):
-      return
+      return False
     smtp_server = self.config['notification'].get('smtp_server')
     smtp_port = self.config['notification'].getint('smtp_port')
     from_email = self.config['notification'].get('smtp_from')
@@ -74,7 +76,7 @@ class ClientActionEmail(Component):
     replyto_email = self.config['notification'].get('smtp_replyto')
     from_email = from_email or replyto_email
     if not from_email:
-      return
+      return False
     
     # Authentication info (optional)
     user_name = self.config['notification'].get('smtp_user')
@@ -96,7 +98,7 @@ class ClientActionEmail(Component):
     msg_root['To'] = str(', ').join(self.emails)
     
     msg_root['X-Mailer'] = 'ClientsPlugin for Trac'
-    msg_root['X-Trac-Version'] =  __version__
+    #msg_root['X-Trac-Version'] =  __version__
     msg_root['X-Trac-Project'] =  projname
     msg_root['Precedence'] = 'bulk'
     msg_root['Auto-Submitted'] = 'auto-generated'
@@ -153,3 +155,4 @@ class ClientActionEmail(Component):
     smtp.connect()
     smtp.sendmail(from_email, self.emails, msg_root.as_string())
     smtp.quit()
+    return True
