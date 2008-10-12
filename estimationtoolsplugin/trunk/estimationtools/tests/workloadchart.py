@@ -1,5 +1,5 @@
 from estimationtools.workloadchart import WorkloadChart
-from trac.test import EnvironmentStub, Mock
+from trac.test import EnvironmentStub, Mock, MockPerm
 from trac.ticket.model import Ticket
 from trac.web.href import Href
 import unittest
@@ -13,7 +13,8 @@ class WorkloadChartTestCase(unittest.TestCase):
         self.env.config.set('estimation-tools', 'estimation_field', 'hours_remaining')
         self.req = Mock(href = Href('/'),
                         abs_href = Href('http://www.example.com/'),
-                        perm = Mock(has_permission=lambda x: x == 'TICKET_VIEW'))
+                        perm = MockPerm(),
+                        authname='anonymous')
        
     def _insert_ticket(self, estimation, owner):
         ticket = Ticket(self.env)
@@ -30,7 +31,7 @@ class WorkloadChartTestCase(unittest.TestCase):
         self._insert_ticket('30', 'C')
         result = workload_chart.render_macro(self.req, "", "milestone=milestone1")
         self.assertEqual(result, u'<img src="http://chart.apis.google.com/chart?chs=400x100&amp;'\
-                         'chd=t:10,30,20&amp;cht=p3&amp;chtt=Workload 60h (1 workdays left)&amp;'\
+                         'chd=t:10,30,20&amp;cht=p3&amp;chtt=Workload 60h (0 workdays left)&amp;'\
                          'chl=A 10h|C 30h|B 20h&amp;chco=ff9900" alt=\'Workload Chart\' />')
 
     def test_invalid_value(self):
@@ -42,5 +43,5 @@ class WorkloadChartTestCase(unittest.TestCase):
         self._insert_ticket('xxx', 'D')
         result = workload_chart.render_macro(self.req, "", "milestone=milestone1")
         self.assertEqual(result, u'<img src="http://chart.apis.google.com/chart?chs=400x100&amp;'\
-                         'chd=t:10,30,20&amp;cht=p3&amp;chtt=Workload 60h (1 workdays left)&amp;'\
+                         'chd=t:10,30,20&amp;cht=p3&amp;chtt=Workload 60h (0 workdays left)&amp;'\
                          'chl=A 10h|C 30h|B 20h&amp;chco=ff9900" alt=\'Workload Chart\' />' )

@@ -7,12 +7,12 @@ import copy
 DEFAULT_OPTIONS = {'width': '400', 'height': '100', 'color': 'ff9900'}
 
 class WorkloadChart(WikiMacroBase):
-    """Creates workload chart for given milestone.
+    """Creates workload chart for the selected tickets.
 
     This macro creates a pie chart that shows the remaining estimated workload per ticket owner,
     and the remaining work days.
     It has the following parameters:
-     * `milestone`: '''mandatory''' parameter that specifies the milestone. 
+     * a comma-separated list of query parameters for the ticket selection, in the form "key=value" as specified in TracQuery#QueryLanguage.
      * `width`: width of resulting diagram (defaults to 400)
      * `height`: height of resulting diagram (defaults to 100)
      * `color`: color specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
@@ -28,31 +28,24 @@ class WorkloadChart(WikiMacroBase):
     estimation_field = get_estimation_field()
     
     def render_macro(self, req, name, content):
-        if not (req.perm.has_permission('TICKET_VIEW') or 
-                req.perm.has_permission('TICKET_VIEW_CC')):
-            raise TracError('TICKET_VIEW or TICKET_VIEW_CC permission required')
-        options = copy.copy(DEFAULT_OPTIONS)
-        if content:
-            for arg in content.split(','):
-                i = arg.index('=')
-                options[arg[:i].strip()] = arg[i+1:].strip()
         db = self.env.get_db_cnx()
-        options = parse_options(db, options)
-        milestone = options['milestone']
-        cursor = db.cursor()
-        cursor.execute("SELECT owner, p.value "
-                       "  FROM ticket t, ticket_custom p"
-                       "  WHERE p.ticket = t.id and p.name = %s"
-                       "  AND t.milestone = %s", [self.estimation_field, milestone])
+        # prepare options
+        options, query_args = parse_options(db, content, copy.copy(DEFAULT_OPTIONS))
+        
+        query_args[self.estimation_field + "!"] = None
+        tickets = execute_query(self.env, req, query_args)
+        
         sum = 0.0
         estimations = {}
-        for owner, estimation in cursor:
+        for ticket in tickets:
             try:
-                sum += float(estimation)
+                estimation = float(ticket[self.estimation_field])
+                owner = ticket['owner']
+                sum += estimation
                 if estimations.has_key(owner):
-                    estimations[owner] += float(estimation)
+                    estimations[owner] += estimation
                 else:
-                    estimations[owner] = float(estimation)
+                    estimations[owner] = estimation
             except:
                 pass
 

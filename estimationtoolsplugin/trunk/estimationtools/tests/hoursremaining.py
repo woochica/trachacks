@@ -1,5 +1,5 @@
 from estimationtools.hoursremaining import HoursRemaining
-from trac.test import EnvironmentStub, Mock
+from trac.test import EnvironmentStub, Mock, MockPerm
 from trac.ticket.model import Ticket
 from trac.web.href import Href
 import unittest
@@ -13,7 +13,8 @@ class HoursRemainingTestCase(unittest.TestCase):
         self.env.config.set('estimation-tools', 'estimation_field', 'hours_remaining')
         self.req = Mock(href = Href('/'),
                         abs_href = Href('http://www.example.com/'),
-                        perm = Mock(has_permission=lambda x: x == 'TICKET_VIEW'))
+                        perm = MockPerm(),
+                        authname='anonymous')
        
     def _insert_ticket(self, estimation):
         ticket = Ticket(self.env)

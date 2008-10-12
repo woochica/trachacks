@@ -1,11 +1,12 @@
-from estimationtools.utils import get_estimation_field
-from trac.core import TracError
+from estimationtools.utils import get_estimation_field, execute_query
 from trac.wiki.macros import WikiMacroBase
+from trac.wiki.api import parse_args
 
 class HoursRemaining(WikiMacroBase):
-    """Calculates remaining estimated hours for given milestone.
+    """Calculates remaining estimated hours for the queried tickets.
 
-    `milestone` is a mandatory parameter.
+    The macro accepts a comma-separated list of query parameters for the ticket selection, 
+    in the form "key=value" as specified in TracQuery#QueryLanguage.
     
     Example:
     {{{
@@ -16,29 +17,18 @@ class HoursRemaining(WikiMacroBase):
     estimation_field = get_estimation_field()
     
     def render_macro(self, req, name, content):
-        # you need 'TICKT_VIEW' or 'TICKET_VIEW_CC' (see PrivateTicketPatch) permissions
-        if not (req.perm.has_permission('TICKET_VIEW') or 
-                req.perm.has_permission('TICKET_VIEW_CC')):
-            raise TracError('TICKET_VIEW or TICKET_VIEW_CC permission required')
-        options = {}
-        if content:
-            for arg in content.split(','):
-                i = arg.index('=')
-                options[arg[:i].strip()] = arg[i+1:].strip()
-        milestone = options.get('milestone')
-        if not milestone:
-            raise TracError("No milestone specified!")
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("SELECT p.value as estimation"
-                       "  FROM ticket t, ticket_custom p"
-                       "  WHERE p.ticket = t.id and p.name = %s"
-                       "  AND t.milestone = %s", [self.estimation_field, milestone])
+        _, options = parse_args(content, strict=False)
+
+        # we have to add custom estimation field to query so that field is added to
+        # resulting ticket list
+        options[self.estimation_field + "!"] = None
+
+        tickets = execute_query(self.env, req, options)
         
         sum = 0.0
-        for estimation, in cursor:
+        for t in tickets:
             try:
-                sum += float(estimation)
+                sum += float(t[self.estimation_field])
             except:
                 pass
 

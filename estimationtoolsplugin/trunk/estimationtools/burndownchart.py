@@ -4,24 +4,21 @@ from trac.core import TracError
 from trac.util.html import Markup
 from trac.wiki.macros import WikiMacroBase
 import copy
-import re
 
 DEFAULT_OPTIONS = {'width': '800', 'height': '200', 'color': 'ff9900'}
 
 class BurndownChart(WikiMacroBase):
-    """Creates burn down chart for given milestone.
+    """Creates burn down chart for selected tickets.
 
-    This macro creates a chart that can be used to visualize the progress in a milestone (aka sprint or 
+    This macro creates a chart that can be used to visualize the progress in a milestone (e.g., sprint or 
     product backlog). 
-    For a given milestone and time frame, the remaining, estimated effort is calculated.
+    For a given set of tickets and a time frame, the remaining estimated effort is calculated.
     
     The macro has the following parameters:
-     * `milestone`: '''mandatory''' parameter that specifies the milestone.
+     * a comma-separated list of query parameters for the ticket selection, in the form "key=value" as specified in TracQuery#QueryLanguage.
      * `startdate`: '''mandatory''' parameter that specifies the start date of the period (ISO8601 format)
      * `enddate`: end date of the period. If omitted, it defaults to either the milestones `completed' date, 
-       or `due`date, or today (in that order) (ISO8601 format)
-     * `sprints`: list of comma-separated name of sprints to be included in calculation. Must be surrounded by
-       brackets.
+       or `due` date, or today (in that order) (ISO8601 format)
      * `width`: width of resulting diagram (defaults to 800)
      * `height`: height of resulting diagram (defaults to 200)
      * `color`: color specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
@@ -29,44 +26,23 @@ class BurndownChart(WikiMacroBase):
      
     Examples:
     {{{
-        [[BurndownChart(milestone = Sprint 1, startdate = 2008-01-01)]]
-        [[BurndownChart(milestone = Release 3.0, startdate = 2008-01-01, enddate = 2008-01-15,
-            width = 600, height = 100, color = 0000ff, sprints = (Sprint 1, Sprint 2))]]
+        [[BurndownChart(milestone=Sprint 1, startdate=2008-01-01)]]
+        [[BurndownChart(milestone=Release 3.0|Sprint 1, startdate=2008-01-01, enddate=2008-01-15,
+            width=600, height=100, color=0000ff)]]
     }}}
     """
 
     estimation_field = get_estimation_field()
     
     def render_macro(self, req, name, content):
-        # you need 'TICKT_VIEW' or 'TICKET_VIEW_CC' (see PrivateTicketPatch) permissions
-        if not (req.perm.has_permission('TICKET_VIEW') or 
-                req.perm.has_permission('TICKET_VIEW_CC')):
-            raise TracError('TICKET_VIEW or TICKET_VIEW_CC permission required')
-        options = copy.copy(DEFAULT_OPTIONS)
-        
-        # replace all ',' in brackets with ';' to avoid splitting list of sprints
-        def repl(match):
-            return match.group().replace(',', ';')
-        regexp = re.compile(r'\((.*)\)')
-        content = regexp.sub(repl, content)
-        
-        if content:
-            for arg in content.split(','):
-                i = arg.index('=')
-                options[arg[:i].strip()] = arg[i + 1:].strip()
-
         # prepare options
-        options = parse_options(self.env.get_db_cnx(), options)
+        options, query_args = parse_options(self.env.get_db_cnx(), content, copy.copy(DEFAULT_OPTIONS))
+
         if not options['startdate']:
             raise TracError("No start date specified!")
-        
-        # parse list of sprints
-        sprintsarg = options.get('sprints')
-        if sprintsarg:
-            options['sprints'] = sprintsarg.strip('()').split(';')
-        
+               
         # calculate data
-        timetable = self._calculate_timetable(options)
+        timetable = self._calculate_timetable(options, query_args, req)
         
         # scale data      
         xdata, ydata, maxhours = self._scale_data(timetable, options)
@@ -115,9 +91,8 @@ class BurndownChart(WikiMacroBase):
                   ",".join(xdata), ",".join(ydata), bottomaxis, leftaxis,
                   "|".join(weekends), options['color'], options['milestone'].strip('\'\"')))
                 
-    def _calculate_timetable(self, options):
+    def _calculate_timetable(self, options, query_args, req):
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
 
         # create dictionary with entry for each day of the required time period
         timetable = {}
@@ -128,22 +103,15 @@ class BurndownChart(WikiMacroBase):
             currentdate += timedelta(days=1)
 
         # get current values for all tickets within milestone and sprints     
-        sprints = options.get('sprints')
-        if not sprints:
-            sprints = []
-            
-        sprints = [options['milestone']] + sprints
-
-        select_tickets = ("SELECT "
-           "id, time, p.value as estimation "
-           "FROM ticket t, ticket_custom p "
-           "WHERE p.ticket = t.id and p.name = %%s and (t.milestone in (%s)) "
-           "ORDER BY t.id" % (',').join(['%s' for sprint in sprints]))
-            
-        cursor.execute(select_tickets, [self.estimation_field] + sprints)
         
-        for id, time, estimation in cursor:
-            creationdate = datetime.fromtimestamp(time).date()
+        query_args[self.estimation_field + "!"] = None
+        tickets = execute_query(self.env, req, query_args)
+
+        # print tickets
+
+        for t in tickets:
+            creationdate = t['time'].date()
+            estimation = t[self.estimation_field]
             
             # get change history for each ticket
             history_cursor = db.cursor()
@@ -151,13 +119,13 @@ class BurndownChart(WikiMacroBase):
                 "DISTINCT c.time AS time, c.oldvalue as oldvalue " 
                 "FROM ticket t, ticket_change c "
                 "WHERE t.id = %s and c.ticket = t.id and c.field=%s "
-                "ORDER BY c.time DESC", [id, self.estimation_field])
+                "ORDER BY c.time DESC", [t['id'], self.estimation_field])
             
             nextchangedate = None
             nextvalue = None 
             row = history_cursor.fetchone()
             if row:
-                nextchangedate = datetime.fromtimestamp(row[0]).date()
+                nextchangedate = datetime.fromtimestamp(row[0], utc).date()
                 nextvalue = row[1]
 
             # iterate backwards through period and add estimations
@@ -168,7 +136,7 @@ class BurndownChart(WikiMacroBase):
                     estimation = nextvalue
                     row = history_cursor.fetchone()
                     if row:
-                        nextchangedate = datetime.fromtimestamp(row[0]).date()
+                        nextchangedate = datetime.fromtimestamp(row[0], utc).date()
                         nextvalue = row[1]
                     else:
                         nextchangedate = None
