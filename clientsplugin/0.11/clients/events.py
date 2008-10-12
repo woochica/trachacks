@@ -144,6 +144,30 @@ class ClientEvent(object):
         if handle_ta:
             db.commit()
 
+    def update_client_options(self, client, opttype, options, db=None):
+        assert self.exists, 'Cannot update non-existent client event'
+        assert opttype in ('summary', 'action'), 'Invalid options type'
+        if not db:
+            db = self.env.get_db_cnx()
+            handle_ta = True
+        else:
+            handle_ta = False
+
+        table = 'client_event_' + opttype + '_options'
+        cursor = db.cursor()
+        self.env.log.info('Updating client event "%s"' % self._old_name)
+        cursor.execute("DELETE FROM " + table + " "
+                       "WHERE client_event=%s AND client=%s",
+                       (self._old_name, client))
+        for option in options.values():
+          cursor.execute("INSERT INTO " + table + " (client_event, client, name, value) "
+                         "VALUES (%s, %s, %s, %s)",
+                         (self._old_name, client, option['name'], option['value']))
+
+        if handle_ta:
+            db.commit()
+
+
     def update_options(self, db=None):
         assert self.exists, 'Cannot update non-existent client event'
         if not db:
@@ -152,26 +176,12 @@ class ClientEvent(object):
         else:
             handle_ta = False
 
-        cursor = db.cursor()
-        self.env.log.info('Updating client event "%s"' % self._old_name)
-        cursor.execute("DELETE FROM client_event_summary_options "
-                       "WHERE client_event=%s AND client=''",
-                       (self._old_name,))
-        for option in self.summary_options:
-          cursor.execute("INSERT INTO client_event_summary_options (client_event, client, name, value) "
-                         "VALUES (%s, %s, %s, %s)",
-                         (self._old_name, '', option, self.summary_options[option]['value']))
-
-        cursor.execute("DELETE FROM client_event_action_options "
-                       "WHERE client_event=%s AND client=''",
-                       (self._old_name,))
-        for option in self.action_options:
-          cursor.execute("INSERT INTO client_event_action_options (client_event, client, name, value) "
-                         "VALUES (%s, %s, %s, %s)",
-                         (self._old_name, '', option, self.action_options[option]['value']))
+        self.update_client_options('', 'summary', self.summary_options, db)
+        self.update_client_options('', 'action', self.action_options, db)
 
         if handle_ta:
             db.commit()
+
 
     def update(self, db=None):
         assert self.exists, 'Cannot update non-existent client event'
