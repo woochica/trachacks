@@ -25,8 +25,8 @@
 					<option py:for="option in field.options" py:content="option"/>
 				</select>
 				<textarea py:when="'textarea'" id="bmod_value_${field.name}"
-					name="bmod_value_${field.name}" cols="${field.width}"
-					rows="${field.height}" disabled="disabled" />
+					name="bmod_value_${field.name}" cols="${field.width or 80}"
+					rows="${field.height or 5}" disabled="disabled" />
 				<span py:when="'checkbox'"> <input type="checkbox"
 					id="bmod_value_${field.name}" name="bmod_value_${field.name}"
 					value="1" disabled="disabled" /> <input type="hidden"
