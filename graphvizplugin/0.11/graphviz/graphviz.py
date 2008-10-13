@@ -330,6 +330,7 @@ class Graphviz(Component):
             if URL_in_graph: # translate wiki TracLinks in URL
                 content = self._expand_wiki_links(formatter, out_format, 
                                                   content)
+                encoded_content = content.encode(self.encoding)
 
             # Antialias PNGs with rsvg, if requested
             if out_format == 'png' and self.png_anti_alias == True:
