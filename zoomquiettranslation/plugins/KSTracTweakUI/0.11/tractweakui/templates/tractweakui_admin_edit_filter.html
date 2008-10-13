@@ -1,0 +1,30 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head><title>Trac Tweak UI</title></head>
+<body>
+
+<h2>TracTweakUI Admin</h2>
+
+<form id="edit_filter_script" action="edit_filter_script" method="post">
+
+	<label for="tweak_script">javascript</label>
+	<p />
+    <textarea id="tweak_script" name="tweak_script" rows="20" cols="60">${tweak_script}</textarea>
+	<p />
+    <input type="hidden" name="filter_name" value="${filter_name}" />
+    <input type="hidden" name="path_pattern" value="${path_pattern}" />
+    <input type="submit" name="save" value="Save" accesskey="s" />
+    <input type="submit" name="load_default" value="Load Default" accesskey="d" />
+
+</form>
+
+</body>
+
+</html>
