@@ -32,9 +32,9 @@ class ClientActionEmail(Component):
 
   def options(self, client=None):
     if client is None:
-      yield {'name': 'XSLT', 'description': 'Formatting XSLT to convert the summary to an email'}
+      yield {'name': 'XSLT', 'description': 'Formatting XSLT to convert the summary to an email', 'type': 'large'}
     else:
-      yield {'name': 'Email Addresses', 'description': 'Comma separated list of email addresses'}
+      yield {'name': 'Email Addresses', 'description': 'Comma separated list of email addresses', 'type': 'medium'}
 
 
   def init(self, event, client):

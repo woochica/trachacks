@@ -57,7 +57,11 @@ $client.description</textarea>
                 <div py:for="option in options.values()" class="field">
                   <label>$option.name</label><br />
                   <!-- Todo: Support more modes other than intput type=text... -->
-                  <input type="text" name="${field}-option-${event.md5}-${option.md5}" size="60" value="$option.value"/>
+                  <py:choose test="option.type">
+                    <textarea py:when="'large'" name="${field}-option-${event.md5}-${option.md5}" rows="10" cols="70">$option.value</textarea>
+                    <input py:when="'small'" name="${field}-option-${event.md5}-${option.md5}" type="text" size="5" value="$option.value" />
+                    <input py:otherwise="" name="${field}-option-${event.md5}-${option.md5}" type="text" size="60" value="$option.value" />
+                  </py:choose>
                   <p class="help">$option.description</p>
                 </div>
               </py:with>

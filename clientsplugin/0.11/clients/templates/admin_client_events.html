@@ -36,8 +36,11 @@
               <legend py:if="'action'==field">Action Options</legend>
               <div py:for="option in options.values()" class="field">
                 <label>$option.name</label><br />
-                <!-- Todo: Support more modes other than textarea... -->
-                <textarea name="${field}-option-${option.md5}" rows="10" cols="100">$option.value</textarea>
+                <py:choose test="option.type">
+                  <textarea py:when="'large'" name="${field}-option-${option.md5}" rows="10" cols="70">$option.value</textarea>
+                  <input py:when="'small'" name="${field}-option-${option.md5}" type="text" size="5" value="$option.value" />
+                  <input py:otherwise="" name="${field}-option-${option.md5}" type="text" size="60" value="$option.value" />
+                </py:choose>
                 <p class="help">$option.description</p>
               </div>
             </py:with>
