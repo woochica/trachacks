@@ -7,6 +7,7 @@ import codecs
 from datetime import datetime
 from StringIO import StringIO
 
+from trac import __version__
 from trac.core import *
 from trac.env import open_environment
 from trac.util.datefmt import format_date, to_datetime
@@ -98,7 +99,7 @@ class ClientActionEmail(Component):
     msg_root['To'] = str(', ').join(self.emails)
     
     msg_root['X-Mailer'] = 'ClientsPlugin for Trac'
-    #msg_root['X-Trac-Version'] =  __version__
+    msg_root['X-Trac-Version'] =  __version__
     msg_root['X-Trac-Project'] =  projname
     msg_root['Precedence'] = 'bulk'
     msg_root['Auto-Submitted'] = 'auto-generated'
