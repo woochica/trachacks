@@ -48,6 +48,7 @@ $client.description</textarea>
             <p class="contextual help">The default numeric hourly rate for this client (will be copied to the ticket on creation)</p>
           </div>
         </fieldset>
+
         <py:for each="event in events">
           <py:for each="options in (event.summary_client_options, event.action_client_options)">
             <fieldset py:if="options">
@@ -69,48 +70,6 @@ $client.description</textarea>
           </py:for>
         </py:for>
 
-
-        <fieldset>
-          <legend>Change Notification Settings</legend>
-          <p class="help">
-            An email showing the changes made to tickets assigned to this client can be sent
-            out automatically.<br />
-            This email will (by default) highlight any state changes (opened, closed etc.)
-            and any milestone changes (and thus an updated delivery date).<br />
-            Any comments left in the ticket using the &quot;#!clients&quot; formatter will 
-            also be included in this mail.
-          </p>
-          <p><em>Last notification sent on: ${(client.changes_lastupdate>0 and format_date(client.changes_lastupdate)) or 'Never'}</em></p>
-          <div class="field">
-            <label>Change Notification List (emails):<br />
-            <input type="text" name="changes_list" size="60" value="$client.changes_list"/></label>
-            <p class="contextual help">Comma or space separated list of email addresses</p>
-          </div>
-          <div class="field">
-            <label>Change Notification Period:<br />
-            <input type="text" name="changes_period" value="$client.changes_period"/></label>
-            <p class="contextual help">Period name as used in the corresponding crontab</p>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Summary Notification Settings</legend>
-          <p class="help">
-            A summary email of tickets assigned to this client can be sent out automatically.<br />
-            This email will (by default) show the current state and delivery date (by milestone)
-            of all active tickets for this client.
-          </p>
-          <p><em>Last notification sent on: ${(client.summary_lastupdate>0 and format_date(client.summary_lastupdate)) or 'Never'}</em></p>
-          <div class="field">
-            <label>Summary Notification List (emails):<br />
-            <input type="text" name="summary_list" size="60" value="$client.summary_list"/></label>
-            <p class="contextual help">Comma or space separated list of email addresses</p>
-          </div>
-          <div class="field">
-            <label>Summary Notification Period:<br />
-            <input type="text" name="summary_period" value="$client.summary_period"/></label>
-            <p class="contextual help">Period name as used in the corresponding crontab</p>
-          </div>
-        </fieldset>
         <div class="buttons">
           <input type="submit" name="cancel" value="Cancel" />
           <input type="submit" name="save" value="Save" />

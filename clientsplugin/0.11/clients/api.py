@@ -12,7 +12,7 @@ class ClientsSetupParticipant(Component):
     
     def __init__(self):
         self.db_version_key = 'clients_plugin_version'
-        self.db_version = 4
+        self.db_version = 5
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
@@ -82,9 +82,42 @@ class ClientsSetupParticipant(Component):
                                'name               TEXT,'
                                'value              TEXT'
                                ')')
+
+            if self.db_installed_version < 5:
+                print 'Updating clients table (v5)'
+                cursor.execute('INSERT INTO client_events '
+                               'SELECT "Weekly Summary", "Milestone Summary", "Send Email", MAX(summary_lastupdate) '
+                               'FROM client')
+                cursor.execute('INSERT INTO client_event_action_options '
+                               'SELECT "Weekly Summary", name, "Email Addresses", summary_list '
+                               'FROM client '
+                               'WHERE summary_list!=""')
+                cursor.execute('INSERT INTO client_events '
+                               'SELECT "Ticket Changes", "Ticket Change Summary", "Send Email", MAX(changes_lastupdate) '
+                               'FROM client')
+                cursor.execute('INSERT INTO client_event_action_options '
+                               'SELECT "Ticket Changes", name, "Email Addresses", changes_list '
+                               'FROM client '
+                               'WHERE changes_list!=""')
+                cursor.execute('CREATE TEMPORARY TABLE client_tmp ('
+                               'name               TEXT,'
+                               'description        TEXT,'
+                               'default_rate       INTEGER,'
+                               'currency           TEXT'
+                               ')')
+                cursor.execute('INSERT INTO client_tmp SELECT name, description, default_rate, currency FROM client')
+                cursor.execute('DROP TABLE client')
+                cursor.execute('CREATE TABLE client ('
+                               'name               TEXT,'
+                               'description        TEXT,'
+                               'default_rate       INTEGER,'
+                               'currency           TEXT'
+                               ')')
+                cursor.execute('INSERT INTO client SELECT name, description, default_rate, currency FROM client_tmp')
+                cursor.execute('DROP TABLE client_tmp')
             
-            #if self.db_installed_version < 5:
-            #    print 'Updating clients table (v5)'
+            #if self.db_installed_version < 6:
+            #    print 'Updating clients table (v6)'
             #    cursor.execute('...')
             
             # Updates complete, set the version
