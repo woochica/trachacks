@@ -41,6 +41,10 @@ class BurndownChart(WikiMacroBase):
         if not options['startdate']:
             raise TracError("No start date specified!")
                
+        # minimum time frame is one day
+        if (options['startdate'] >= options['enddate']):
+            options['enddate'] = options['startdate'] + timedelta(days=1)
+
         # calculate data
         timetable = self._calculate_timetable(options, query_args, req)
         

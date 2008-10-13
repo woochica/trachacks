@@ -51,6 +51,11 @@ class BurndownChartTestCase(unittest.TestCase):
         self.assertEqual(ydata, ['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '0.0'])
         self.assertEqual(maxhours, 100.0)
         
+    def test_build_zero_day_chart(self):
+        chart = BurndownChart(self.env)
+        # shouldn't throw
+        chart.render_macro(self.req, "", "startdate=2008-01-01, enddate=2008-01-01")
+        
     def test_calculate_timetable_simple(self):
         chart = BurndownChart(self.env)
         day1 = datetime.now(utc).date()
