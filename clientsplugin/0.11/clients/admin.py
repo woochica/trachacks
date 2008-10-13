@@ -34,6 +34,7 @@ class ClientAdminPanel(TicketAdminPanel):
                     clnt.currency = req.args.get('currency')
                     clnt.update()
 
+                    db = self.env.get_db_cnx()
                     for clev in events:
                       for option in clev.summary_client_options:
                         arg = 'summary-option-%s-%s' % (clev.md5, clev.summary_client_options[option]['md5'])
@@ -41,7 +42,8 @@ class ClientAdminPanel(TicketAdminPanel):
                       for option in clev.action_client_options:
                         arg = 'action-option-%s-%s' % (clev.md5, clev.action_client_options[option]['md5'])
                         clev.action_client_options[option]['value'] = req.args.get(arg)
-                      clev.update_options(client)
+                      clev.update_options(client, db)
+                    db.commit()
 
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('cancel'):
