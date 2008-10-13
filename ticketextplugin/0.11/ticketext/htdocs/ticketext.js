@@ -59,11 +59,12 @@ Localizer.strings = {
  * @param typeIdValue The ticket type element id.
  * @param descIdValue The ticket description element id.
  */
-var TicketTemplate = function(typeIdValue, descIdValue) {
+var TicketTemplate = function(baseUrlValue, typeIdValue, descIdValue) {
         
     this.STYLE_CLASS_EXCLUDE = "te_exclude";
     this.DELIM               = ",";
     
+    this.baseUrl          = "/";
     this.typeId           = "type";
     this.descId           = "template";
     this.enablefieldsId   = "enablefields";
@@ -75,6 +76,9 @@ var TicketTemplate = function(typeIdValue, descIdValue) {
                              "field_component", "field_version", "field_keywords", "field_cc",
                              "__EDITOR__1"];
     
+    if (baseUrlValue) {
+    	this.baseUrl = baseUrlValue;
+    }
     if (typeIdValue) {
         this.typeId = typeIdValue;
     }
@@ -122,10 +126,7 @@ TicketTemplate.prototype.selectTemplate = function(typeElem) {
     var selectedIndex = typeElem.selectedIndex;
     var typeValue = typeElem.options[selectedIndex].text;
     
-    var prjUriLastIndex = (location.pathname).indexOf("/", 1);
-    var prjUri = (location.pathname).substring(0, prjUriLastIndex);
-    
-    var reqUrl = prjUri + "/ticketext/template?"
+    var reqUrl = this.baseUrl + "/ticketext/template?"
                + "type=" + encodeURI(typeValue)
                + "&timestamp=" + (new Date()).getTime();
     
@@ -325,6 +326,6 @@ TicketTemplate.prototype.applyCustomfieldsForTicket = function(enablePropArray) 
  * @param typeId The ticket type element id.
  * @param descId The ticket description element id.
  */
-TicketTemplate.initialize = function(typeId, descId) {
-    var ticketTemplateObj = new TicketTemplate(typeId, descId);
+TicketTemplate.initialize = function(baseUrl, typeId, descId) {
+    var ticketTemplateObj = new TicketTemplate(baseUrl, typeId, descId);
 };

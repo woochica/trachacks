@@ -42,7 +42,7 @@ class TicketTemplateModule(Component):
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'ticket.html' and req.path_info == '/newticket':
             script = '\n<script type="text/javascript">'\
-                   + 'TicketTemplate.initialize(\'field-type\', \'field-description\');'\
+                   + 'TicketTemplate.initialize(\'' + req.base_path + '\', \'field-type\', \'field-description\');'\
                    + '</script>\n'
             return stream | Transformer('//div[@id="footer"]').before(MarkupTemplate(script).generate())
         
