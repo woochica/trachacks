@@ -64,6 +64,8 @@ class ClientEventsAdminPanel(TicketAdminPanel):
                     req.redirect(req.href.admin(cat, page))
 
             data = {'view': 'list',
-                    'events': ClientEvent.select(self.env)}
+                    'events': ClientEvent.select(self.env),
+                    'summaries': ClientEventsSystem(self.env).get_summaries(),
+                    'actions': ClientEventsSystem(self.env).get_actions()}
 
         return 'admin_client_events.html', data
