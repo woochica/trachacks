@@ -21,7 +21,7 @@ class RepositorySetup(object):
     def __init__(self):
         self.name = self.__class__.__name__
         if not hasattr(self, 'description'):
-            self.description = self.__doc__
+            self.description = self.__doc__ 
 
     def options_fulfilled(self, vars):
         """returns whether all of the options are provided in vars"""

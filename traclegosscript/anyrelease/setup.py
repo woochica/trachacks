@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1'
+version = '0.1.1'
 
 setup(name='TracLegos',
       version=version,
@@ -38,6 +38,10 @@ setup(name='TracLegos',
 
       [paste.paster_create_template]
       trac_project = traclegos.pastescript.template:TracProjectTemplate
+
+      [traclegos.database]
+      SQLite = traclegos.database:SQLite
+      MySQL = traclegos.database:MySQL
 
       [traclegos.respository]
       None = traclegos.repository:NoRepository
