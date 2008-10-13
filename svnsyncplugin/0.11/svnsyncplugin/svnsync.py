@@ -14,9 +14,9 @@ windows = [ 'nt' ] # special-casing for windows OS;  POSIX assumed otherwise
 def sh(*args, **kw):
     """execute command line arguments.  return stdout, stderr, returncode"""
     command = ' '.join(args)
-    verbose = kw.get('verbose', True)
-    if verbose:
-        print '> %s' % str(command)
+    logger = kw.get('logger', None) # should be a function taking a string
+    if logger:
+        logger(str(command))
     try:
         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError, e:
@@ -33,12 +33,14 @@ def file_uri(path):
         uri = 'file://' + os.path.abspath(path) 
     return uri
 
-def create(directory, repository, username='svnsync'):
+def create(directory, repository, username='svnsync', logger=None):
     """create a mirror of remote repository at directory"""
 
     ### create the repository
+    if logger:
+        logger("Creating repository:  mirroring %s at %s" % (repository, directory))
 
-    sh('svnadmin', 'create', directory)
+    sh('svnadmin', 'create', directory, logger=logger)
 
     filename = 'pre-revprop-change'
     if os in windows:
@@ -55,34 +57,37 @@ def create(directory, repository, username='svnsync'):
     ### initialize the sync
 
     return sh('svnsync', 'init', '--username', username, 
-              file_uri(directory), repository)
+              file_uri(directory), repository, logger=logger)
 
-def sync(directory, repository, username='svnsync'):
+def sync(directory, repository, username='svnsync', logger=None):
 
     # create the mirror if it doesn't exist
     if not os.path.exists(directory):
-        retval = create(directory, repository, username)
+        retval = create(directory, repository, username, logger=logger)
         if retval[-1] != 0:
             return retval
 
     repo = file_uri(directory)
 
     # ensure that the repository is pointed at the right place
-    propget = sh('svn', 'propget',  'svn:sync-from-url', '--revprop', '-r', '0', repo)
+    propget = sh('svn', 'propget',  'svn:sync-from-url', '--revprop', '-r', '0', repo, logger=logger)
     
     url = propget[0].strip()
     if url != repository.rstrip('/'):
-        print '>>> repository changed! %s -> %s' % (url, repository.strip())
-        print '> resyncing to new repository'
+        if logger:
+            logger('repository changed! %s -> %s' % (url, repository.strip()))
+            logger('resyncing to new repository')
         import shutil
         shutil.rmtree(directory)
-        sync(directory, repository, username)
+        sync(directory, repository, username, logger=logger)
 
-    return sh('svnsync', 'sync', repo)
+    return sh('svnsync', 'sync', repo, logger=logger)
 
 if __name__ == '__main__':
     import optparse
     import sys
+
+    logger = sys.stdout.write # log to command line
 
     # parse command line options
     parser = optparse.OptionParser()
@@ -99,7 +104,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
     # sync the repository, setting up if necessary
-    result = sync(options.directory, options.repository, options.username)
+    result = sync(options.directory, options.repository, options.username, logger=logger)
 
     if result[2] != 0:
         print '--ERROR--'

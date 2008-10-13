@@ -32,7 +32,7 @@ class SvnsyncConnector(SubversionConnector):
 
         # sync the repository
         directory = self.env.config.get('trac', 'repository_dir')
-        svnsync.sync(directory, self.repository_url)
+        svnsync.sync(directory, self.repository_url, logger=self.env.log.info)
 
         repos = SubversionRepository(repos_dir, None, self.log)
         return repos
