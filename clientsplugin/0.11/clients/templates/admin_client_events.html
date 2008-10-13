@@ -39,6 +39,9 @@
                 <py:choose test="option.type">
                   <textarea py:when="'large'" name="${field}-option-${option.md5}" rows="10" cols="70">$option.value</textarea>
                   <input py:when="'small'" name="${field}-option-${option.md5}" type="text" size="5" value="$option.value" />
+                  <select py:when="'list'" name="${field}-option-${option.md5}">
+                    <option py:for="val in option.vals">$val</option>
+                  </select>
                   <input py:otherwise="" name="${field}-option-${option.md5}" type="text" size="60" value="$option.value" />
                 </py:choose>
                 <p class="help">$option.description</p>
