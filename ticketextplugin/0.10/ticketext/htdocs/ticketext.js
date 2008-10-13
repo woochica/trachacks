@@ -30,23 +30,30 @@ Localizer.strings = {
     
     // ja
     "template.confirm.clear_ja" : "説明の内容にテンプレートを適用します。\n" +
-                                  "編集中の説明の内容は破棄されますが、よろしいですか？"
+                                  "編集中の説明の内容は破棄されますが、よろしいですか？",
+    
+    // end
+    "end" : ""
 };
 
 
 /**
  * Apply the template to a trac ticket.
  */
-var TicketTemplate = function(typeIdValue, descIdValue) {
+var TicketTemplate = function(baseUrlValue, typeIdValue, descIdValue) {
         
     this.STYLE_CLASS_EXCLUDE = "te_exclude";
     this.DELIM               = ",";
     
+    this.baseUrl          = "/";
     this.typeId           = "type";
     this.descId           = "template";
     this.enablefieldsId   = "enablefields";
     this.defaultPropArray = ["priority", "milestone", "component", "version", "keywords", "owner", "cc"];
     
+    if (baseUrlValue) {
+        this.baseUrl = baseUrlValue;
+    }
     if (typeIdValue) {
         this.typeId = typeIdValue;
     }
@@ -88,13 +95,14 @@ TicketTemplate.prototype.selectTemplate = function(typeElem) {
     var selectedIndex = typeElem.selectedIndex;
     var typeValue = typeElem.options[selectedIndex].text;
     
-    var prjUriLastIndex = (location.pathname).indexOf("/", 1);
-    var prjUri = (location.pathname).substring(0, prjUriLastIndex);
+    var reqUrl = this.baseUrl + "/ticketext/template?"
+               + "type=" + encodeURI(typeValue)
+               + "&timestamp=" + (new Date()).getTime();
     
     var responseData;
     $.ajax({
         type: "GET",
-        url: prjUri + "/ticketExtTemplate?type=" + encodeURI(typeValue),
+        url: reqUrl,
         async: false,
         success: function(jsonData){
             var responseData;
@@ -272,6 +280,6 @@ TicketTemplate.prototype.applyCustomfieldsForTicket = function(enablePropArray) 
 /**
  * Initialize TicketTemplate.
  */
-TicketTemplate.initialize = function(typeId, descId) {
-    var ticketTemplateObj = new TicketTemplate(typeId, descId);
+TicketTemplate.initialize = function(baseUrl, typeId, descId) {
+    var ticketTemplateObj = new TicketTemplate(baseUrl, typeId, descId);
 };

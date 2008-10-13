@@ -19,5 +19,5 @@ setup(
             'ticketext.template_admin = ticketext.template_admin',
         ]
     },
-    package_data={'ticketext': [ 'htdocs/*.js', 'templates/*.cs' ],}
+    package_data={'ticketext': [ 'templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ],}
 )

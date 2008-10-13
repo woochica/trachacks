@@ -34,7 +34,7 @@ class TicketTemplateFilter(Component):
             add_script(req, 'ticketext/ticketext.js')
             add_stylesheet(req, 'ticketext/ticketext.css')
             footer = req.hdf['project.footer'] + '\n<script type="text/javascript">'\
-                                               + 'TicketTemplate.initialize(\'type\', \'description\');'\
+                                               + 'TicketTemplate.initialize(\'' + req.base_path + '\', \'type\', \'description\');'\
                                                + '</script>\n'
             req.hdf['project.footer'] = Markup(footer)
             
@@ -46,7 +46,7 @@ class TicketTypeChangeHandler(Component):
 
     # IRequestHandler method
     def match_request(self, req):
-        if req.path_info == '/ticketExtTemplate':
+        if req.path_info == '/ticketext/template':
             return True
         else:
             return False

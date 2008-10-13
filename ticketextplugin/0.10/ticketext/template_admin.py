@@ -56,7 +56,7 @@ class TicketTemplateAdmin(Component):
         add_script(req, 'ticketext/jquery.js')
         add_script(req, 'ticketext/ticketext.js')
         footer = req.hdf['project.footer'] + '\n<script type="text/javascript">'\
-                                           + 'TicketTemplate.initialize();'\
+                                           + 'TicketTemplate.initialize(\'' + req.base_path + '\');'\
                                            + '</script>\n'
         req.hdf['project.footer'] = Markup(footer)
         
