@@ -6,3 +6,9 @@ Version 0.1. Creation.
 Version 0.2. Last changes:
  * Eliminate dependency with tracldapplugin in setuptools.
  * The code is compatible with 0.11rc1 and 0.12dev version of TRAC.
+ 
+Version 0.3. Last changes:
+ * Adds the concept of connection attempts, because of latencies ldap servers.
+ 
+  
+ 

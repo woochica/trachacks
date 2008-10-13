@@ -26,15 +26,22 @@ class AccountLDAP(Component):
         """
         self.basedn = self.config.get('ldap', 'basedn')
         self.userdn = self.config.get('ldap', 'user_rdn')
-        try:
-            self.ldap = ldap.open(self.config.get('ldap', 'host'))
-            self.ldap.simple_bind(self.config.get('ldap', 'bind_user'),  
-                                  self.config.get('ldap', 'bind_passwd'))
-        except ldap.LDAPError, e:
-            self.log.error('Connection LDAP problems. Check trac.ini ldap options')
-            self.enabled = false
-        self.log.info('Connection LDAP basdn %s" userdn "%s"' % (self.basedn, 
-                                                                 self.userdn))
+        if self.config.has_option('ldap', 'attempts'):
+            self.attempts = self.config.getint('ldap', 'attempts')
+        else:
+            self.attempts = 1
+        self.enabled = True
+        for i in range(self.attempts):
+            try:
+                self.ldap = ldap.open(self.config.get('ldap', 'host'))
+                self.ldap.simple_bind(self.config.get('ldap', 'bind_user'),  
+                                      self.config.get('ldap', 'bind_passwd'))
+                break
+            except ldap.LDAPError, e:
+                self.log.error('Connection LDAP problems. Check trac.ini ldap options. Attempt', (i + 1))
+                self.enabled = False
+        self.log.info('Connection LDAP basdn %s" userdn "%s". Attempt %i' % (self.basedn, 
+                                                                 self.userdn, (i + 1)))
         
     #
     #------------------------------------------------- IRequestFilter interface
