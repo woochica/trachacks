@@ -10,7 +10,7 @@ setup(
     author_email = 'lcordier@gmail.com',
     description = "Macro to allow for the citation of resources."
                   "Gives wikipages the equivalent to LaTeX's \cite{} and \makeindex commands.",
-    url = '',
+    url = 'http://www.trac-hacks.org/wiki/CiteMacro',
     license = 'BSD',
     keywords = 'trac plugin cite macro',
     classifiers = ['Framework :: Trac'],
