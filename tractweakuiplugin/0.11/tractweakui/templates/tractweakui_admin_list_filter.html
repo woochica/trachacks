@@ -1,0 +1,59 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head><title>Trac Tweak UI</title></head>
+<body>
+
+<h2>TracTweakUI Admin</h2>
+
+
+  <div class="field">
+
+	<form id="tractweakui_admin" class="addnew" action="edit_path_pattern" method="post">
+		<fieldset>
+		<legend>Edit:</legend>
+		  <div class="field">
+		  <table>
+		  <tr><td>
+			<label for="path_pattern"> Url path: </label>
+		  </td><td>
+			<input type="text" name="path_pattern" size="16px" value="${path_pattern}"/>
+		  </td></tr>
+		  <tr><td/><td>
+			Please input path regular expression
+	      </td></tr>
+		  <tr><td>
+			<input type="hidden" name="path_pattern_orig" value="${path_pattern}" />
+			<input type="submit" name="save" value="Save" />
+		  </td><td>
+			<input type="submit" name="delete" value="Delete" />
+		  </td></tr>
+		  </table>
+		  </div>
+		</fieldset>
+	</form>
+
+	<table class="listing" id="pathlist" >
+	<thead>
+		<tr>
+			<th> Filter </th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr py:for="filter_name in filter_names">
+			<td><a href="${encode_url('edit_filter_script', {'path_pattern': path_pattern, 'filter_name': filter_name})}" >${filter_name}</a></td>
+		</tr>
+	</tbody>
+	</table>
+  </div>
+
+</body>
+
+</html>
+
