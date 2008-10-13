@@ -70,7 +70,7 @@ class MySQL(DatabaseSetup):
 
     def enabled(self):
         try:
-            subprocess.call(['mysql', '--help'])
+            subprocess.call(['mysql', '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return True
         except OSError:
             return False

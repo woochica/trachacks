@@ -40,8 +40,8 @@ setup(name='TracLegos',
       trac_project = traclegos.pastescript.template:TracProjectTemplate
 
       [traclegos.database]
-      SQLite = traclegos.database:SQLite
-      MySQL = traclegos.database:MySQL
+      SQLite = traclegos.db:SQLite
+      MySQL = traclegos.db:MySQL
 
       [traclegos.respository]
       None = traclegos.repository:NoRepository
