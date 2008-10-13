@@ -31,6 +31,7 @@ setup(name=PACKAGE,
             'clients.summary_ticketchanges = clients.summary_ticketchanges',
             'clients.action = clients.action',
             'clients.action_email = clients.action_email',
+            'clients.action_zendesk_forum = clients.action_zendesk_forum',
         ]
     })
 
