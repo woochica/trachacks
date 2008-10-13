@@ -12,7 +12,7 @@ setup(
     description = "Trac Tweak UI plugin for Trac.",
     license = "BSD",
     keywords = "trac tweak ui",
-    url = "http://trac-hacks.org/wiki/TracTweakUi",
+    url = "http://trac-hacks.org/wiki/TracTweakUiPlugin",
     classifiers = [
         'Framework :: Trac',
     ],
