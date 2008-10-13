@@ -1,0 +1,50 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head><title>Available Projects</title></head>
+<body>
+
+<h2>传票: 模板</h2>
+
+
+
+<form id="savetickettemplate" action="tickettemplate" method="post">
+
+  <div class="field">
+    <label for="type">种类:</label>
+    <p>
+    <select size="1" id="type" name="type">
+      <option py:for="option in options"
+              selected="${option==type or None}">${option}</option>
+      <option py:if="type and type not in options"
+              selected="selected">${type}</option>
+    </select>
+    <input type="submit" name="loadtickettemplate" value="${_('Load')}" />
+    <input type="submit" name="loadhistory" value="${_('History')}" />
+    <input type="submit" name="savetickettemplate" value="${_('Apply changes')}" />
+    <input type="reset" value="${_('Reset')}" />  
+    </p>
+  </div>
+
+  <div class="field">
+    <label for="description">描述:</label>
+    <p>
+      <textarea id="description" name="description"
+                class="wikitext" rows="10" cols="68"
+                py:content="tt_text"></textarea>
+    </p>
+  </div>
+
+
+</form>
+
+
+</body>
+
+</html>

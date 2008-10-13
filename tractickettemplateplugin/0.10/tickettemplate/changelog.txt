@@ -1,0 +1,33 @@
+TicketTemplate 0.5 (April 11, 2008)
+
+ * use trac db to store all templates data
+ * implement history manipulation feature
+ * implement upgrade template data from old version
+
+TicketTemplate 0.4 (Mar 25, 2008)
+
+ * add preview to admin page
+ * use one persistence file to store all template texts
+ * fixed bug: leading space in template text is not stripped now
+ * add some default template text for trac's default install: 
+  * defect
+  * enhancement
+  * task
+  * default
+
+TicketTemplate 0.3 (Jan 2, 2008)
+
+ * Implement replace Trac's original 'New Ticket' handler
+ * Add tests scripts
+ * Add documents
+
+
+TicketTemplate 0.2 (Dec 29, 2007)
+
+ * Implement WebAdmin support
+
+
+TicketTemplate 0.1 (Dec 26, 2007)
+
+ * First release
+ * Support dynamic ticket template
