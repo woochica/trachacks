@@ -97,7 +97,6 @@ class ShowPath(Component):
 
         nav[i] = r
 
-        print r
         return template, data, content_type
 
     def pre_process_request(self, req, handler):
