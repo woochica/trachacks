@@ -33,6 +33,7 @@ class ClientActionEmail(Component):
   def options(self, client=None):
     if client is None:
       yield {'name': 'XSLT', 'description': 'Formatting XSLT to convert the summary to an email', 'type': 'large'}
+      yield {'name': 'Subject', 'description': 'Email subject (use %s to replace the active client name)', 'type': 'medium'}
     else:
       yield {'name': 'Email Addresses', 'description': 'Comma separated list of email addresses', 'type': 'medium'}
 
@@ -58,6 +59,14 @@ class ClientActionEmail(Component):
     if not self.emails:
       return False
 
+    if not event.action_options.has_key('Subject') or not event.action_options['Subject']['value']:
+      self.subject = 'Ticket Summary for %s'
+    else:
+      self.subject = event.action_options['Subject']['value']
+
+    if self.subject.find('%s') >= 0:
+      self.subject = self.subject % (client,)
+
     return True
 
 
@@ -66,7 +75,7 @@ class ClientActionEmail(Component):
       return False
     self.config = self.env.config
     self.encoding = 'utf-8'
-    subject = 'Ticket Summary for %s' % self.client
+    subject = self.subject
 
     if not self.config.getbool('notification', 'smtp_enabled'):
       return False
