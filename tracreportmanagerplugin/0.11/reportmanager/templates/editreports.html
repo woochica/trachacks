@@ -1,0 +1,87 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head>
+ <title>Report Manager</title>
+ <script type="text/javascript">
+ {
+
+	function onDeleteEntry(parentNode, event) { 
+		parentNode.parentNode.parentNode.removeChild(parentNode.parentNode);
+	}
+
+	function onIdChange(src, event) { 
+		sortById();
+	}
+
+	function sortById() { 
+		reportlist = window.document.getElementById("reportlist");
+	}
+
+ }
+ </script>
+
+</head>
+<body>
+
+<h2>Edit History: #${editHistoryId}(${reports_log})
+</h2>
+
+
+<form id="editreports" action="reportmanager" method="post">
+
+  <div class="field">
+	<label> History log: </label>
+	<input type="text" name="reports_log" />
+	<input type="submit" name="applyedit" value="Save" />
+	<input type="submit" name="cancel" value="Cancel" />
+	<input type="hidden" name="history_id" value="${editHistoryId}" />
+  </div>
+
+  <input type="reset" name="reset" value="Reset" />
+
+  <table class="listing" id="reportlist">
+   <thead>
+    <tr>
+	 <th>Id</th>
+	 <th>New Id</th>
+	 <th>Title</th>
+	 <th>Delete</th>
+	</tr>
+   </thead>
+   <py:for each="report_entry in report_list">
+
+	<tr>
+     <td class="name">
+	   ${report_entry.id}
+     </td>
+
+     <td class="name">
+	   <input  size="3" type="text" onchange="onIdChange(this, event)" name="report_${report_entry.id}"  
+	     value="${report_entry.id}" />
+	 </td>
+
+     <td class="name">
+	   ${report_entry.title}
+	 </td>
+
+	 <td class="name">
+	  <input type="button"  onclick="onDeleteEntry(this.parentNode, event)" value="Delete" />
+	 </td>
+
+    </tr>  
+    </py:for>
+
+  </table>
+
+  
+</form>
+</body>
+
+</html>
