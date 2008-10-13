@@ -184,30 +184,6 @@ class SendClientFakeReq:
 class SendClientEmails:
 
     def __init__(self):
-        def myformat_date(dte):
-          if dte:
-            return format_date(dte, '%e %b %Y')
-          return 'No date set'
-        def myformat_hours(hrs):
-          from math import floor
-          if hrs:
-            hrs = float(hrs)
-            if 0 != hrs:
-              neg = False
-              if hrs < 0:
-                neg = True
-                hours *= -1
-              mins = floor((hrs - floor(hrs)) * 60)
-              str = ''
-              if neg:
-                str = '-'
-              if hrs:
-                str = "%s%sh" % (str, int(floor(hrs)))
-              if mins:
-                str = "%s %sm" % (str, int(mins))
-              return str;
-          return 'No estimate available'
-        
         locale.setlocale(locale.LC_ALL, '')
         self.env = open_environment(options.envpath)
         self.req = SendClientFakeReq()
