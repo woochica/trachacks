@@ -1,0 +1,13 @@
+MMVAdmin 0.2 (July 2, 2008)
+ * Full refactoring
+ * Rename to MMV
+ * abandon MMV shell script component to eliminate dependency of crontab
+ * support to specify milestone date range for burndown graph
+ * all graphics are generate at run time and in memory
+ * all db methods are native to eliminate dependency of adodb
+ * support all db backends
+
+RelaTicketAdmin 0.1 (April 22, 2008)
+ * First release
+ * Support add/remove milestones for rela ticket
+ * Support display keylist in main nav bar
