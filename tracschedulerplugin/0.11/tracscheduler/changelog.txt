@@ -1,0 +1,2 @@
+Trac Scheduler 0.1 (2008-09-16)
+ * First release

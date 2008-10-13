@@ -1,0 +1,30 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head><title>Trac Scheduler</title></head>
+<body>
+
+<h2>TS: Admin milestones</h2>
+
+<form id="ts_admin" action="ts_admin" method="post">
+
+	<label for="type">Type:</label>
+    <p>
+    <select size="1" id="type" name="type">
+      <option py:for="item in data.subdata">${item}</option>
+    </select>
+    </p>
+    <input type="submit" name="save" value="Save" accesskey="s" />
+  </div>
+
+</form>
+
+</body>
+
+</html>
