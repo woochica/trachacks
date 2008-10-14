@@ -104,151 +104,34 @@ class ClientActionZendesk(Component):
 
     host, port, path = parseuri(uri)
 
-    redirect = set([301, 302, 307])
-    authenticate = set([401])
     okay = set([200, 201, 204])
 
-    authorized = False
-    authorization = None
-    tries = 0
-    verbose = True
+    import base64
+    userpass = username + ':' + password
+    userpass = base64.encodestring(userpass).strip()
+    authorization = 'Basic ' + userpass
 
-    while True: 
-      # Attempt to HTTP PUT the data
-      h = httplib.HTTPConnection(host, port)
+    # Attempt to HTTP PUT the data
+    h = httplib.HTTPConnection(host, port)
 
-      h.putrequest('PUT', path)
+    data = str(result)
+    h.putrequest('PUT', path)
 
-      h.putheader('User-Agent', 'Trac/1.0')
-      h.putheader('Connection', 'keep-alive')
-      h.putheader('Transfer-Encoding', 'chunked')
-      h.putheader('Expect', '100-continue')
-      h.putheader('Accept', 'application/xml')
-      h.putheader('Content-Type', 'text/xml')
-      h.putheader('Content-Length', len(str(result)))
-      if authorization: 
-         h.putheader('Authorization', authorization)
-      h.endheaders()
+    h.putheader('User-Agent', 'Trac/1.0')
+    h.putheader('Accept', 'application/xml')
+    h.putheader('Content-Type', 'text/xml')
+    h.putheader('Authorization', authorization)
+    h.putheader('Content-Length', len(data))
+    h.endheaders()
 
-      # Chunked transfer encoding
-      # Cf. 'All HTTP/1.1 applications MUST be able to receive and 
-      # decode the "chunked" transfer-coding'
-      # - http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html
-      while True: 
-         #bytes = f.read(2048)
-         bytes = str(result)
-         if not bytes: break
+    h.send(str(data))
 
-         length = len(bytes)
-         h.send('%X\r\n' % length)
-         h.send(bytes + '\r\n')
-         break
-      h.send('0\r\n\r\n')
+    resp = h.getresponse()
+    status = resp.status # an int
 
-      resp = h.getresponse()
-      status = resp.status # an int
+    # Got a response, now decide how to act upon it
+    if status not in okay: 
+      print 'Got "%s %s"' % (status, resp.reason)
+      return False
 
-      # Got a response, now decide how to act upon it
-      if status in redirect: 
-         location = resp.getheader('Location')
-         uri = urlparse.urljoin(uri, location)
-         host, port, path = parseuri(uri)
-
-         # We may have to authenticate again
-         if authorization: 
-            authorization = None
-
-      elif status in authenticate: 
-         # If we've done this already, break
-         if authorization: 
-            # barf("Going around in authentication circles")
-            print "Authentication failed"
-            return False
-
-         if not (username and password): 
-            print "Need a username and password to authenticate with"
-            return False
-
-         # Get the scheme: Basic or Digest?
-         wwwauth = resp.msg['www-authenticate'] # We may need this again
-         wauth = wwwauth.lstrip(' \t') # Hence use wauth not wwwauth here
-         wauth = wwwauth.replace('\t', ' ')
-         i = wauth.index(' ')
-         scheme = wauth[:i].lower()
-
-         if scheme in set(['basic', 'digest']): 
-            if verbose: 
-               msg = "Performing %s Authentication..." % scheme.capitalize()
-               print >> sys.stderr, msg
-         else:
-            print "Unknown authentication scheme: %s" % scheme
-            return False
-
-         if scheme == 'basic': 
-            import base64
-            userpass = username + ':' + password
-            userpass = base64.encodestring(userpass).strip()
-            authorized, authorization = True, 'Basic ' + userpass
-
-         elif scheme == 'digest': 
-            if verbose: 
-               msg = "uses fragile, undocumented features in urllib2"
-               print >> sys.stderr, "Warning! Digest Auth %s" % msg
-
-            import urllib2 # See warning above
-
-            passwd = type('Password', (object,), {
-               'find_user_password': lambda self, *args: (username, password), 
-               'add_password': lambda self, *args: None
-            })()
-
-            xreq = type('Request', (object,), { 
-               'get_full_url': lambda self: uri, 
-               'has_data': lambda self: None, 
-               'get_method': lambda self: 'PUT', 
-               'get_selector': lambda self: path
-            })()
-
-            # Cf. urllib2.AbstractDigestAuthHandler.retry_http_digest_auth
-            auth = urllib2.AbstractDigestAuthHandler(passwd)
-            token, challenge = wwwauth.split(' ', 1)
-            chal = urllib2.parse_keqv_list(urllib2.parse_http_list(challenge))
-            userpass = auth.get_authorization(xreq, chal)
-            authorized, authorization = True, 'Digest ' + userpass
-
-      elif status in okay: 
-         if (username and password) and (not authorized): 
-            msg = "Warning! The supplied username and password went unused"
-            print >> sys.stderr, msg
-
-         if verbose: 
-            resultLine = "Success! Resource %s"
-            statuses = {200: 'modified', 201: 'created', 204: 'modified'}
-            print resultLine % statuses[status]
-
-            statusLine = "Response-Status: %s %s"
-            print statusLine % (status, resp.reason)
-
-            body = resp.read(58)
-            body = body.rstrip('\r\n')
-            body = body.encode('string_escape')
-
-            if len(body) >= 58: 
-               body = body[:57] + '[...]'
-
-            bodyLine = 'Response-Body: "%s"'
-            print bodyLine % body
-         break
-
-      # @@ raise PutError, do the catching in main?
-      else: 
-        print 'Got "%s %s"' % (status, resp.reason)
-        return False
-
-      tries += 1
-      if tries >= 50: 
-         print "Too many redirects"
-         return False
-
-    print str(result)
     return True
