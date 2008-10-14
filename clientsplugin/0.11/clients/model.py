@@ -105,6 +105,13 @@ class Client(object):
             cursor.execute("UPDATE ticket_custom SET value=%s "
                            "WHERE name=%s AND value=%s",
                            (self.name, 'client', self._old_name))
+            # Update event options
+            cursor.execute("UPDATE client_event_summary_options SET client=%s "
+                           "WHERE client=%s",
+                           (self.name, self._old_name))
+            cursor.execute("UPDATE client_event_action_options SET client=%s "
+                           "WHERE client=%s",
+                           (self.name, self._old_name))
             self._old_name = self.name
 
         if handle_ta:
