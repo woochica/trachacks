@@ -26,10 +26,12 @@ class AccountLDAP(Component):
         """
         self.basedn = self.config.get('ldap', 'basedn')
         self.userdn = self.config.get('ldap', 'user_rdn')
+        self.attempts = 1
         if self.config.has_option('ldap', 'attempts'):
             self.attempts = self.config.getint('ldap', 'attempts')
-        else:
-            self.attempts = 1
+        self.userFilter = 'uid'
+        if self.config.has_option('ldap', 'user_filter'):
+            self.userFilter = self.config.get('ldap', 'user_filter')
         self.enabled = True
         for i in range(self.attempts):
             try:
@@ -88,7 +90,7 @@ class AccountLDAP(Component):
         if old == p1:
             data['accountldap_message'] = tag.center(u'Las contraseña antigua y la nueva contraseña es la misma.', tag.b(u' Por favor, realice un cambio en la nueva contraseña.'), style='color:chocolate')
             return template, data, None
-        dn = 'uid=%s,%s,%s' % (req.authname, self.userdn, self.basedn)
+        dn = '%s=%s,%s,%s' % (self.userFilter, req.authname, self.userdn, self.basedn)
         try:
             self.log.warn('Ldap change password dn. %s' % dn)
             self.ldap.passwd_s(dn, old, p1)
@@ -113,7 +115,7 @@ class AccountLDAP(Component):
     def _getUserAttributes(self, uid):
         """Devuelve el nombre completo y el correo definido en el ldap
         """
-        filter = 'uid=%s' % uid
+        filter = '%s=%s' % (self.userFilter, uid)
         result = []
         try:
             id = self.ldap.search(self.basedn, ldap.SCOPE_SUBTREE, filter, None)

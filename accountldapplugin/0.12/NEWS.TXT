@@ -10,5 +10,8 @@ Version 0.2. Last changes:
 Version 0.3. Last changes:
  * Adds the concept of connection attempts, because of latencies ldap servers.
  
+Version 0.31. Last changes:
+ * Adds the user filter option in trac.ini for compatibility with Active Directory. View README.txt for details
+ 
   
  
