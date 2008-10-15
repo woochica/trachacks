@@ -123,8 +123,7 @@ class ClientMilestoneSummary(Component):
         if estimatedhours:
           milestones[milestone]['hours'] += float(estimatedhours) 
 
-      if self.debug:
-        print "  Summarising ticket #%s" % tid
+      self.env.log.debug("  Summarising ticket #%s" % tid)
       ticket = etree.SubElement(xsummary, 'ticket')
       etree.SubElement(ticket, 'id').text = str(tid)
       etree.SubElement(ticket, 'summary').text = summary
@@ -145,7 +144,7 @@ class ClientMilestoneSummary(Component):
       file = open('/tmp/send-client-email.xml', 'w')
       file.write(etree.tostring(xml, pretty_print=True))
       file.close()
-      print " Wrote XML to /tmp/send-client-email.xml"
+      self.env.log.debug(" Wrote XML to /tmp/send-client-email.xml")
 
     if not have_data:
       return None

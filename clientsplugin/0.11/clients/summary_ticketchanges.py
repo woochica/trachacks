@@ -126,7 +126,7 @@ class ClientTicketChanges(Component):
         continue
       
       if self.debug:
-        print "  Change notification (%s) for ticket #%s" % (cgfield, tid)
+        self.env.log.debug("  Change notification (%s) for ticket #%s" % (cgfield, tid))
       have_data = True
       if lasttid != tid:
         ticket = etree.SubElement(changes, 'ticket')
@@ -152,7 +152,7 @@ class ClientTicketChanges(Component):
       file = open('/tmp/send-client-email.xml', 'w')
       file.write(etree.tostring(xml, pretty_print=True))
       file.close()
-      print " Wrote XML to /tmp/send-client-email.xml"
+      self.env.log.debug(" Wrote XML to /tmp/send-client-email.xml")
 
     if not have_data:
       return None

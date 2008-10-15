@@ -45,7 +45,7 @@ class ClientActionEmail(Component):
     try:
       self.transform = etree.XSLT(etree.fromstring(str(event.action_options['XSLT']['value'])))
     except:
-      print "Error: Cannot load/parse stylesheet"
+      self.env.log.error("Error: Cannot load/parse stylesheet")
       return False
 
     if not event.action_client_options.has_key('Email Addresses') or not event.action_client_options['Email Addresses']['value']:

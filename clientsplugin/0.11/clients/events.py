@@ -236,13 +236,13 @@ class ClientEvent(object):
         assert action is not None, 'Invalid action'
 
         if not summary.init(self, client):
-          print "Could not init summary"
+          self.env.log.info("Could not init summary")
           return False
         if not action.init(self, client):
-          print "Could not init action"
+          self.env.log.info("Could not init action")
           return False
 
-        print "Performing action"
+        self.env.log.debug("Performing action")
         return action.perform(req, summary.get_summary(req, fromdate, todate))
 
 
@@ -271,7 +271,7 @@ class ClientEvent(object):
         try:
           ev = cls(env, event, None, db)
         except:
-          print "Could not run the event %s" % (event,)
+          env.log.error("Could not run the event %s" % (event,))
           return
         #ev.lastrun = 1
         now = int(time.time())
@@ -279,7 +279,7 @@ class ClientEvent(object):
         cursor = db.cursor()
         cursor.execute("SELECT name FROM client ORDER BY name")
         for client, in cursor:
-          print "Running event for client: %s" % (client, )
+          env.log.info("Running event for client: %s" % (client, ))
           clev = cls(env, event, client)
           clev.trigger(req, client, ev.lastrun, now)
         ev.lastrun = now
