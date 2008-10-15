@@ -163,6 +163,12 @@ class FreemindMacro(WikiMacroBase):
         
         kwargs['style'] = xform_style(style_dict)
         
+        # You can't touch this...
+        kwargs.pop('id', None)
+        
+        if 'class' in kwargs:
+            kwargs['class_'] = kwargs.pop('class')
+        
         tags = []
         tags.append(tag.div('Flash plugin or JavaScript are turned off. Activate both and reload to view the mindmap.',
                             id='flashcontent%02d' % embed_count, **kwargs))
