@@ -20,8 +20,8 @@ def get_absolute_url(base, url):
             http://example.com/filename.ext
                 ie. http://www.google.com/logo.jpg
             
-            chrome://site/filename.ext
-            htdocs://img/filename.ext
+            htdocs://site/filename.ext
+            htdocs://plugin/dir/filename.ext
                 note: `chrome` is an alias for `htdocs`
             
             ticket://number/attachment.pdf
