@@ -57,10 +57,12 @@ $client.description</textarea>
                 <legend py:if="'action'==field">Client Specific Action Options for $event.name</legend>
                 <div py:for="option in options.values()" class="field">
                   <label>$option.name</label><br />
-                  <!-- Todo: Support more modes other than intput type=text... -->
                   <py:choose test="option.type">
                     <textarea py:when="'large'" name="${field}-option-${event.md5}-${option.md5}" rows="10" cols="70">$option.value</textarea>
                     <input py:when="'small'" name="${field}-option-${event.md5}-${option.md5}" type="text" size="5" value="$option.value" />
+                    <select py:when="'list'" name="${field}-option-${event.md5}-${option.md5}">
+                      <option py:for="val in option.vals" selected="${val == option.value and 'selected' or None}">$val</option>
+                    </select>
                     <input py:otherwise="" name="${field}-option-${event.md5}-${option.md5}" type="text" size="60" value="$option.value" />
                   </py:choose>
                   <p class="help">$option.description</p>
