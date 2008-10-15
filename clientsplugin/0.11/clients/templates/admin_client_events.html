@@ -18,15 +18,17 @@
     <py:choose test="view">
       <form py:when="'detail'" class="mod" id="modclient" method="post">
         <fieldset>
-          <legend>Modify Client:</legend>
+          <legend>Event Overview:</legend>
           <div class="field">
-            <label>Name: $event.name</label>
+            <label><b>Name:</b> $event.name</label>
           </div>
           <div class="field">
-            <label>Summary: $event.summary</label>
+            <label><b>Summary:</b> $event.summary</label>
+            <p class="help">$event.summary_description</p>
           </div>
           <div class="field">
-            <label>Action: $event.action</label>
+            <label><b>Action:</b> $event.action</label>
+            <p class="help">$event.action_description</p>
           </div>
         </fieldset>
         <py:for each="options in (event.summary_options, event.action_options)">

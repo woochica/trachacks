@@ -118,9 +118,11 @@ class ClientEvent(object):
         if 'summary' == opttype:
           thing = system.get_summary(self.summary)
           assert thing is not None , 'Invalid summary'
+          self.summary_description = thing.get_description()
         else:
           thing = system.get_action(self.action)
           assert thing is not None, 'Invalid action'
+          self.action_description = thing.get_description()
 
         options = {}
         table = 'client_event_' + opttype + '_options'
