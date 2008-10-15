@@ -29,7 +29,7 @@ class ClientMilestoneSummary(Component):
     return "Milestone Summary"
 
   def get_description(self):
-    return "Provide a summary of tickets within all milestones that have completion dates set and give summaries of a milestone"
+    return "Provide a summary of all tickets within milestones that have completion dates set where at least one ticket for that client is not closed in that milestone"
 
   def options(self, client=None):
     return []
