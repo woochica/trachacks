@@ -30,4 +30,4 @@ def execute(hdf, args, env):
     if len(args) == 2 :
       return '<span style="background-color:%s;padding: 0.1ex 0.4em;">%s</span>' % args
     else:
-      return '<span style="background-color:%s;padding: 0.1ex 0.4em;color:%s;">%s</span>' % args
+      return '<span style="background-color:%s;padding: 0.1ex 0.4em;color:%s;">%s</span>' % (args[0], args[1], ','.join(args[2:]))
