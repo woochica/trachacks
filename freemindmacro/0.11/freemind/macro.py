@@ -96,6 +96,7 @@ class FreemindMacro(WikiMacroBase):
     # IWikiMacroProvider methods
     def expand_macro(self, formatter, name, content):
         args, kwargs = parse_args(content, strict=False)
+        kwargs = string_keys(kwargs)
         
         if len(args) >= 1:
             url = args[0]
@@ -150,7 +151,6 @@ class FreemindMacro(WikiMacroBase):
             'css': get_absolute_url(formatter.href.base, 'htdocs://freemind/css/flashfreemind.css'),
         }
         
-        kwargs = string_keys(kwargs)
         style_dict = xform_style(kwargs.get('style', ''))
         
         width = kwargs.pop('width', style_dict.get('width', '800px'))
