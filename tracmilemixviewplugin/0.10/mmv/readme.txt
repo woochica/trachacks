@@ -30,10 +30,24 @@ show_burndown_done = false
 enable_unplanned = true
 enable_relaticket = true
 mmv_title = MMV
+
+[ticket-custom]
+duetime = text
+duetime.label = duetime
+duetime.value = 1d
+
 }}}
 
 = Prerequisite =
  * [http://trac-hacks.org/wiki/WebAdminPlugin WebAdminPlugin]
 
 = Usage =
- * TBD
+=== Trac administrators should setup which milstone to be displayed ===
+  * Open Admin -> Ticket System -> MMVTicket
+  * Select appropriate milstones
+
+=== Create parent-child tickets ===
+ 1. Create parent ticket (eg, 1234) as normal, with empty duetime
+ 1. Create child tickets
+  * Child tickets summary MUST start with {{{<#1234>}}}
+  * Child tickets MUST set duetime value
