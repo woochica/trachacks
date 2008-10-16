@@ -1,5 +1,5 @@
 = About this software =
- * http://trac-hacks.org/wiki/TracScheduler
+ * http://trac-hacks.org/wiki/TracSchedulerPlugin
  * Trac Scheduler is a Trac plugin.
 
 = Install =
@@ -22,7 +22,13 @@ cp dist/*.egg /srv/trac/env/plugins
  5. Config trac.ini:
   {{{
 [components]
-ts.* = enabled
+tracscheduler.* = enabled
+
+[tracscheduler]
+; tasks poll interval is 60 sec
+poll_interval = 60
+; task invoke interval is 1 sec
+worker_interval = 1
 }}}
 
 = Prerequisite =
