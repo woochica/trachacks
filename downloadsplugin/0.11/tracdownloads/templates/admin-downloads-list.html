@@ -8,8 +8,7 @@
 
   <body>
     <h2>Downloads</h2>
-
-    <form id="{downloads.architecture.id and 'edit' or 'add'}-architecture-form-download-form" enctype="multipart/form-data"  class="addnew" method="post" action="${panel_href()}">
+    <form class="addnew" enctype="multipart/form-data" method="post" action="${panel_href()}">
       <fieldset>
         <legend>
           <py:choose>
@@ -118,7 +117,7 @@
 
     <py:choose>
       <py:when test="len(downloads.downloads) > 0">
-        <form method="post" action="${panel_href()}?order=${downloads.order};desc=${downloads.desc}">
+        <form id="downloads_table" method="post" action="${panel_href()}?order=${downloads.order};desc=${downloads.desc}">
           <table class="listing">
             <thead>
               <tr>
@@ -258,6 +257,7 @@
             <input type="hidden" name="action" value="delete"/>
           </div>
         </form>
+
       </py:when>
 
       <py:otherwise>

@@ -2,107 +2,103 @@
 
 import sets
 
-from trac.core import *
-from trac.mimeview import Context
-from trac.util.html import html
-
-from tractags.api import ITaggingSystemProvider, DefaultTaggingSystem, \
-  TagEngine
-
 from tracdownloads.api import *
+from trac.core import *
+from trac.resource import *
 
-class DownloadsTaggingSystem(DefaultTaggingSystem):
+from tractags.api import DefaultTagProvider, TagSystem
+
+class DownloadsTagProvider(DefaultTagProvider):
     """
-      Tagging system which returns tags of all created downloads.
+      Tag provider for downloads.
     """
-    def __init__(self, env):
-        DefaultTaggingSystem.__init__(self, env, 'downloads')
+    realm = 'downloads'
 
-    def name_details(self, name):
-        # Get cursor.
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+    def check_permission(self, perm, operation):
+        # Permission table for download tags.
+        permissions = {'view' : 'WIKI_VIEW', 'modify' : 'WIKI_ADMIN'}
 
-        # Get API object.
-        api = self.env[DownloadsApi]
-
-        # Get tagged download.
-        download = api.get_download(cursor, name)
-
-        # Return a tuple of (href, wikilink, title)
-        defaults = DefaultTaggingSystem.name_details(self, name)
-        if download:
-            return (defaults[0], html.a(download['file'], href =
-              self.env.href.downloads(download['id']), title =
-              download['description']), download['description'])
-        else:
-            return defaults
+        # First check permissions in default provider then for downloads.
+        return super(DownloadsTagProvider, self).check_permission(perm,
+          operation) and permissions[operation] in perm
 
 class DownloadsTags(Component):
     """
         The tags module implements plugin's ability to create tags related
         to downloads.
     """
-    implements(ITaggingSystemProvider, IDownloadChangeListener)
-
-    # ITaggingSystemProvider methods.
-
-    def get_tagspaces_provided(self):
-        yield 'downloads'
-
-    def get_tagging_system(self, tagspace):
-        return DownloadsTaggingSystem(self.env)
+    implements(IDownloadChangeListener)
 
     # IDownloadChangeListener methods.
 
     def download_created(self, download):
-        tags = TagEngine(self.env).tagspace.downloads
+        # Create temporary resource.
+        resource = Resource()
+        resource.realm = 'downloads'
+        resource.id = download['id']
 
-        # Prepare tag names.
-        self._resolve_ids(download)
-        tag_names = [download['author'], download['component'],
-          download['version'], download['architecture'],
-          download['platform'], download['type']]
-        if download['tags']:
-            tag_names.extend(download['tags'].split(' '))
+        # Delete tags of download with same ID for sure.
+        tag_system = TagSystem(self.env)
+        tag_system.delete_tags(req, resource)
 
-        # Add tags to download.
-        self.log.debug(tag_names)
-        tags.replace_tags(None, download['id'], list(sets.Set(tag_names)))
+        # Add tags of new download.
+        new_tags = self._get_tags(download)
+        tag_system.add_tags(req, resource, new_tags)
 
     def download_changed(self, download, old_download):
-        tags = TagEngine(self.env).tagspace.downloads
-
-        # Prepare tag names.
+        # Update old download with new values.
         old_download.update(download)
-        download = old_download
-        self._resolve_ids(download)
-        tag_names = [download['author'], download['component'],
-          download['version'], download['architecture'],
-          download['platform'], download['type']]
-        if download['tags']:
-            tag_names.extend(download['tags'].split(' '))
 
-        # Add tags to download.
-        self.log.debug(tag_names)
-        tags.replace_tags(None, download['id'], list(sets.Set(tag_names)))
+        # Create temporary resource.
+        resource = Resource()
+        resource.realm = 'downloads'
+        resource.id = old_download['id']
+
+        # Delete old tags.
+        tag_system = TagSystem(self.env)
+        tag_system.delete_tags(req, resource)
+
+        # Add new ones.
+        new_tags = self._get_tags(old_download)
+        tag_system.add_tags(req, resource, new_tags)
 
     def download_deleted(self, download):
-        tags = TagEngine(self.env).tagspace.downloads
+        # Create temporary resource.
+        resource = Resource()
+        resource.realm = 'downloads'
+        resource.id = download['id']
 
-        # Prepare tag names.
-        self._resolve_ids(download)
-        tag_names = [download['author'], download['component'],
-          download['version'], download['architecture'],
-          download['platform'], download['type']]
-        if download['tags']:
-            tag_names.extend(download['tags'].split(' '))
-
-        # Add tags to download.
-        self.log.debug(tag_names)
-        tags.remove_tags(None, download['id'], list(sets.Set(tag_names)))
+        # Delete tags of download.
+        tag_system = TagSystem(self.env)
+        tag_system.delete_tags(req, resource)
 
     # Private methods
+
+    def _get_tags(self, download):
+        # Translate architecture, platform and type ID to its names.
+        self._resolve_ids(download)
+
+        # Prepare tag names.
+        tags = [download['author']]
+        if download['components']:
+            tags += [component for component in download['components']]
+        if download['versions']:
+            tags += [version for version in download['versions']]
+        if download['architecture']:
+            tags += download['architecture']
+        if download['platform']:
+            tags += download['platform']
+        if download['type']:
+            tags += download['type']
+        if download['tags']:
+            tags += download['tags'].split()
+        return sorted(tags)
+
+    def _get_stored_tags(self, req, download_id):
+        tag_system = TagSystem(self.env)
+        resource = Resource('downloads', download_id)
+        tags = tag_system.get_tags(req, resource)
+        return sorted(tags)
 
     def _resolve_ids(self, download):
         # Create context.

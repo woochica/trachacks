@@ -1,7 +1,8 @@
 /*  General styles */
 
-form.addnew
+form#downloads_table
 {
+  width: 66%;
   overflow: auto;
 }
 
