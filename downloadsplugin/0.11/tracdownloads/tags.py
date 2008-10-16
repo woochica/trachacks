@@ -5,6 +5,7 @@ import sets
 from tracdownloads.api import *
 from trac.core import *
 from trac.resource import *
+from trac.mimeview import Context
 
 from tractags.api import DefaultTagProvider, TagSystem
 
@@ -31,7 +32,7 @@ class DownloadsTags(Component):
 
     # IDownloadChangeListener methods.
 
-    def download_created(self, download):
+    def download_created(self, req, download):
         # Create temporary resource.
         resource = Resource()
         resource.realm = 'downloads'
@@ -45,7 +46,7 @@ class DownloadsTags(Component):
         new_tags = self._get_tags(download)
         tag_system.add_tags(req, resource, new_tags)
 
-    def download_changed(self, download, old_download):
+    def download_changed(self, req, download, old_download):
         # Update old download with new values.
         old_download.update(download)
 
@@ -62,7 +63,7 @@ class DownloadsTags(Component):
         new_tags = self._get_tags(old_download)
         tag_system.add_tags(req, resource, new_tags)
 
-    def download_deleted(self, download):
+    def download_deleted(self, req, download):
         # Create temporary resource.
         resource = Resource()
         resource.realm = 'downloads'
@@ -80,16 +81,16 @@ class DownloadsTags(Component):
 
         # Prepare tag names.
         tags = [download['author']]
-        if download['components']:
-            tags += [component for component in download['components']]
-        if download['versions']:
-            tags += [version for version in download['versions']]
+        if download['component']:
+            tags += [download['component']]
+        if download['version']:
+            tags += [download['version']]
         if download['architecture']:
-            tags += download['architecture']
+            tags += [download['architecture']]
         if download['platform']:
-            tags += download['platform']
+            tags += [download['platform']]
         if download['type']:
-            tags += download['type']
+            tags += [download['type']]
         if download['tags']:
             tags += download['tags'].split()
         return sorted(tags)

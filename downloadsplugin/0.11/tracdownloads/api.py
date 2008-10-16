@@ -17,16 +17,16 @@ class IDownloadChangeListener(Interface):
     """Extension point interface for components that require notification
     when downloads are created, modified, or deleted."""
 
-    def download_created(download):
+    def download_created(req, download):
         """Called when a download is created. Only argument `download` is
         a dictionary with download field values."""
 
-    def download_changed(download, old_download):
+    def download_changed(req, download, old_download):
         """Called when a download is modified.
         `old_download` is a dictionary containing the previous values of the
         fields and `download` is a dictionary with new values. """
 
-    def download_deleted(download):
+    def download_deleted(req, download):
         """Called when a download is deleted. `download` argument is
         a dictionary with values of fields of just deleted download."""
 
@@ -459,7 +459,8 @@ class DownloadsApi(Component):
 
                     # Notify change listeners.
                     for listener in self.change_listeners:
-                        listener.download_changed(new_download, download)
+                        listener.download_changed(context.req, new_download,
+                          download)
 
                     # Commit DB before file send.
                     db = self.env.get_db_cnx()
@@ -575,7 +576,7 @@ class DownloadsApi(Component):
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
-                    listener.download_created(download)
+                    listener.download_created(context.req, download)
 
                 # Store uploaded image.
                 try:
@@ -617,7 +618,8 @@ class DownloadsApi(Component):
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
-                    listener.download_changed(download, old_download)
+                    listener.download_changed(context.req, download,
+                      old_download)
 
             elif mode == 'downloads-delete':
                 context.req.perm.assert_permission('DOWNLOADS_ADMIN')
@@ -645,7 +647,7 @@ class DownloadsApi(Component):
 
                             # Notify change listeners.
                             for listener in self.change_listeners:
-                                listener.download_deleted(download)
+                                listener.download_deleted(context.req, download)
                         except:
                             pass
 
@@ -808,13 +810,11 @@ class DownloadsApi(Component):
         if hasattr(file.file, 'fileno'):
             size = os.fstat(file.file.fileno())[6]
         else:
-            file.file.seek(0, 2)
-            size = file.file.tell()
-            file.file.seek(0)
+            size = file.file.len
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 
         # Strip path from filename.
-        filename = os.path.basename(file.filename)
+        filename = os.path.basename(file.filename).decode('utf-8')
 
-        return file.file, unicode_unquote(filename), size
+        return file.file, filename, size
