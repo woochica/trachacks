@@ -150,7 +150,9 @@ class DepGraphMacro(WikiMacroBase):
 				% (options[0])
 		
 		graphviz = Graphviz(self.env)
-		graphviz.load_config()
+		# not needed since graphvizplugin v0.7.3, maybe earlier though
+		# no error in graphvizplugin v0.7.2
+		#graphviz.load_config()
 
 		if len(options) > 1 and options[1] is not '':
 			self._maxdepth = int(options[1])
