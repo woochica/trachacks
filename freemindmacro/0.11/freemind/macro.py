@@ -1,12 +1,17 @@
 """ Freemind plugin for Trac.
     
     Embeds Freemind mindmaps.
+    
+    Contributers:
+      * Martin Scharrer <martin@scharrer-online.de>
+        FreemindRenderer reference implementation.
 """
 from genshi.builder import tag
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider, parse_args
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.wiki.macros import WikiMacroBase
+from trac.mimeview.api import IHTMLPreviewRenderer
 
 
 EMBED_COUNT = '_freemindmacro_embed_count'
@@ -188,3 +193,71 @@ class FreemindMacro(WikiMacroBase):
     
     def get_templates_dirs(self):
         return []  # must return an iterable
+
+
+class FreemindRenderer(Component):
+    """ Preview mindmaps when browsing the repository or attachments.
+    """
+    implements(IHTMLPreviewRenderer)
+    
+    expand_tabs = False
+    returns_source = False
+    
+    def get_quality_ratio(self, mimetype):
+        if mimetype in ('text/x-freemind', 'text/freemind', 'application/x-freemind', 'application/freemind'):
+            return 8
+        return 0
+    
+    def render(self, context, mimetype, content, filename=None, url=None):
+        """ HTML preview mindmaps in svn-browse and attachment views.
+        """
+        base = url[:url.rfind('/')+1]
+        
+        tags = []
+        #add_script(contex.req, 'freemind/js/flashobject.js')
+        #tags.append(tag.script(src=get_absolute_url(context.href.base, 'htdocs://freemind/js/flashobject.js')))
+        tags.append('<script src="%s"></script>' % get_absolute_url(context.href.base, 'htdocs://freemind/js/flashobject.js'))
+        
+        script = '''
+            $(document).ready(function() {
+                $("#flashcontent").mouseover(function() {
+                    document.visorFreeMind.focus();
+                });
+                
+                var fo = new FlashObject("%(visor)s", "visorFreeMind", "100%%", "100%%", 6, "#9999ff");
+                
+                fo.addParam("quality","high");
+                fo.addParam("bgcolor","#a0a0f0");
+                fo.addVariable("openUrl","_blank");
+                fo.addVariable("startCollapsedToLevel","3");
+                fo.addVariable("maxNodeWidth","200");
+                fo.addVariable("mainNodeShape","elipse");
+                fo.addVariable("justMap","false");
+                fo.addVariable("initLoadFile","%(file)s");
+                fo.addVariable("defaultToolTipWordWrap",200);
+                fo.addVariable("offsetX","left");
+                fo.addVariable("offsetY","top");
+                fo.addVariable("buttonsPos","top");
+                fo.addVariable("min_alpha_buttons",20);
+                fo.addVariable("max_alpha_buttons",100);
+                fo.addVariable("scaleTooltips","false");
+                fo.addVariable("baseImagePath","%(base)s");
+                fo.addVariable("CSSFile","%(css)s");
+                //fo.addVariable("toolTipsBgColor","0xa0a0f0");
+                //fo.addVariable("genAllShots","true");
+                //fo.addVariable("unfoldAll","true");
+                fo.write("flashcontent");
+            });
+        ''' % {
+            'visor': get_absolute_url(context.href.base, 'htdocs://freemind/swf/visorFreemind.swf'),
+            'file': url,
+            'base': base,
+            'css': get_absolute_url(context.href.base, 'htdocs://freemind/css/flashfreemind.css'),
+        }
+        
+        tags.append(tag.script(script))
+        tags.append(tag.div('Flash plugin or JavaScript are turned off. Activate both and reload to view the mindmap.',
+                            id='flashcontent',
+                            style='border: 1px solid #cccccc; height: 600px; width: 100%;'))
+        
+        return ''.join([str(i) for i in tags])
