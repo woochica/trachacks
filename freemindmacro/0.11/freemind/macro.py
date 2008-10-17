@@ -14,7 +14,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.mimeview.api import IHTMLPreviewRenderer
 
 
-__version__ = '$id$'
+__version__ = '$Id$'
 
 EMBED_COUNT = '_freemindmacro_embed_count'
 
