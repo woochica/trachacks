@@ -29,7 +29,7 @@ class TicketTemplateAdmin(Component):
             # localization
             locale = TicketExtUtil(self.env).get_locale(req)
             if locale in ['ja', 'ja-JP']:
-                yield ('ticket', 'Ticket System', 'template_admin', 'チケット テンプレート')
+                yield ('ticket', 'Ticket System', 'template_admin', u'チケット テンプレート')
             else:
                 yield ('ticket', 'Ticket System', 'template_admin', 'Ticket Template')
 
