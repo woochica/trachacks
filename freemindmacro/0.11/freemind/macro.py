@@ -189,7 +189,7 @@ class FreemindMacro(WikiMacroBase):
                 
                 'system': str(os.uname()),
                 'time': datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
-                'version': version,
+                'version': __version__,
                 'content': content,
                 'args': str(args),
                 'kwargs': str(kwargs),
