@@ -14,6 +14,8 @@ from trac.wiki.macros import WikiMacroBase
 from trac.mimeview.api import IHTMLPreviewRenderer
 
 
+__version__ = '$id$'
+
 EMBED_COUNT = '_freemindmacro_embed_count'
 
 def get_absolute_url(base, url):
