@@ -78,19 +78,35 @@ class IncludeSourceMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         self.log.warning('Begin expand_macro for req: ' + repr(content))
         largs, kwargs = parse_args(content)
-        repos = self.env.get_repository(formatter.req.authname)
+        ##gwk##repos = self.env.get_repository(formatter.req.authname)
         
         if len(largs) == 0:
             # TODO - don't hardcode this in English
             raise Exception("File name to include is required parameter!")
 
-        file_name = largs[0]
+        ##gwk begin
+        orig_file_name = file_name = largs[0]
+        if (orig_file_name[0] == '/'): orig_file_name = orig_file_name[1:]
+        splitpath = file_name.split('/')
+        if (file_name[0] == '/'):
+            reponame = splitpath[1]
+        else:
+            reponame = splitpath[0]
+        repos = self.env.get_repository(reponame)
+        if (repos):
+            l = len(reponame)
+            if (file_name[0] == '/'):
+                file_name = file_name[1:]
+            file_name = file_name[l:]
+        else:
+            repo = self.env.get_repository()
+        ##gwk end
         rev = kwargs.get('rev', None)
         
         if kwargs.has_key('header'):
             header = kwargs.get('header')   # user specified header
         else:
-            href = '../browser/%s%s' % (file_name, make_rev_str(rev))
+            href = '../browser/%s%s' % (orig_file_name, make_rev_str(rev))
             header = tag.a(file_name, href=href)
         if not header:
             header = u'\xa0'    # default value from trac.mimeview.api.py
