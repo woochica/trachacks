@@ -14,7 +14,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.mimeview.api import IHTMLPreviewRenderer
 
 
-__version__ = '$Id$'
+__version__ = '$Id$'[14:18]
 
 EMBED_COUNT = '_freemindmacro_embed_count'
 
@@ -179,6 +179,7 @@ class FreemindMacro(WikiMacroBase):
                      "=======================\n\n"\
                      "system: %(system)s\n"\
                      "time: %(time)s\n"\
+                     "version: %(version)s\n"\
                      "content: %(content)s\n"\
                      "args: %(args)s\n"\
                      "kwargs: %(kwargs)s\n"\
@@ -188,6 +189,7 @@ class FreemindMacro(WikiMacroBase):
                 
                 'system': str(os.uname()),
                 'time': datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
+                'version': version,
                 'content': content,
                 'args': str(args),
                 'kwargs': str(kwargs),
