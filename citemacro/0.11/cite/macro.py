@@ -192,6 +192,7 @@ class CiteMacro(WikiMacroBase):
         """
         """
         args, kwargs = parse_args(content, strict=False)
+        kwargs = string_keys(kwargs)
         
         cite_list = getattr(formatter, CITE_LIST, [])
         cite_dict = getattr(formatter, CITE_DICT, {})
@@ -307,8 +308,6 @@ class CiteMacro(WikiMacroBase):
             
             if 'class' in kwargs:
                 kwargs['class_'] = kwargs.pop('class')
-            
-            kwargs = string_keys(kwargs)
             
             return tag.pre('\n\n'.join(references), **kwargs)
         
