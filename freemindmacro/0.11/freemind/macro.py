@@ -93,6 +93,15 @@ def xform_style(style):
     
     return result
 
+def deslash(s):
+    """ Temporarily fix issues with flashobject.js, maybe I should rewite
+        it in a proper jQuery kind of way.
+    """
+    if s.startswith('/'):
+        return s[1:]
+    else:
+        return s
+
 
 class FreemindMacro(WikiMacroBase):
     
@@ -121,7 +130,7 @@ class FreemindMacro(WikiMacroBase):
         url = get_absolute_url(formatter.href.base, url)
         base = url[:url.rfind('/')+1]
         
-        script = '''
+        script = '''\
             $(document).ready(function() {
                 $("#flashcontent%(count)02d").mouseover(function() {
                     document.visorFreeMind%(count)02d.focus();
@@ -158,6 +167,34 @@ class FreemindMacro(WikiMacroBase):
             'base': base,
             'css': get_absolute_url(formatter.href.base, 'htdocs://freemind/css/flashfreemind.css'),
         }
+        
+        # Debugging.
+        if 'debug' in args:
+            import os
+            import datetime
+            
+            output = "FreemindMacro Debug Log\n"\
+                     "=======================\n\n"\
+                     "system: %(system)s\n"\
+                     "time: %(time)s\n"\
+                     "content: %(content)s\n"\
+                     "args: %(args)s\n"\
+                     "kwargs: %(kwargs)s\n"\
+                     "formatter.href.base: %(base)s\n"\
+                     "script: \n\n"\
+                     "%(script)s" % {
+                
+                'system': str(os.uname()),
+                'time': datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
+                'content': content,
+                'args': str(args),
+                'kwargs': str(kwargs),
+                'base': str(formatter.href.base),
+                'script': script
+            }
+            
+            return tag.pre(output, style='border: 2px dashed red; padding: 5px; background: #eee;')
+        
         
         style_dict = xform_style(kwargs.get('style', ''))
         
