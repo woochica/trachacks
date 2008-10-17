@@ -95,8 +95,11 @@ class FreemindMacro(WikiMacroBase):
     
     # IWikiMacroProvider methods
     def expand_macro(self, formatter, name, content):
-        args, kwargs = parse_args(content, strict=False)
-        kwargs = string_keys(kwargs)
+        args, kwargs = parse_args(content, strict=True)
+        try:
+            kwargs = string_keys(kwargs)
+        except:
+            raise TracError('Error #3922, content: %s, args: %s, kwargs: %s', (str(content), str(args), kwargs))
         
         if len(args) >= 1:
             url = args[0]
