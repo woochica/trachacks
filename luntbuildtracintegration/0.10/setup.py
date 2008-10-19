@@ -10,6 +10,6 @@ setup(
     package_data={'LuntbuildTracIntegration' : ['htdocs/*.css', 'htdocs/*.gif']},
     entry_points = """
 [trac.plugins]
-LuntbuildTracIntegration = LuntbuildTracIntegration.LuntbuildTracIntegration.Plugin
+LuntbuildTracIntegration = LuntbuildTracIntegration.LuntbuildTracIntegrationPlugin
     """
 )
