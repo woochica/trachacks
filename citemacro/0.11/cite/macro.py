@@ -15,7 +15,7 @@ from trac.wiki.macros import WikiMacroBase
 
 
 # url is special.
-SEQUENCE = [
+REFERENCE_SEQUENCE = [
     'author',
     'assignee',
     'nationality',
@@ -53,7 +53,25 @@ SEQUENCE = [
     'key'
 ]
 
-FORMAT = {
+def reference_yearfiled(yearfiled, params):
+    """ Create a proper looking date.
+    """
+    dayfiled = params.get('dayfiled', '')
+    monthfiled = params.get('monthfiled', '')
+    date = '%s %s %s' % (dayfiled, monthfiled, yearfiled)
+    
+    return 'filed: %s' % date.strip()
+
+def reference_year(year, params):
+    """ Create a proper looking date.
+    """
+    day = params.get('day', '')
+    month = params.get('month', '')
+    date = '%s %s %s' % (day, month, year)
+    
+    return date.strip()
+
+REFERENCE_FORMAT = {
     'author': '%s',
     'assignee': '%s',
     'nationality': '%s',
@@ -73,12 +91,12 @@ FORMAT = {
     'language': '%s',
     'address': '%s',
     'howpublished': '%s',
-    'dayfiled': '%s',
-    'monthfiled': '%s',
-    'yearfiled': '%s',
-    'day': '%s',
-    'month': '%s',
-    'year': '%s',
+    'dayfiled': '',
+    'monthfiled': '',
+    'yearfiled': reference_yearfiled,
+    'day': '',
+    'month': '',
+    'year': reference_year,
     'chapter': '%s',
     'volume': '%s',
     'paper': '%s',
@@ -129,11 +147,11 @@ BIBTEX_SEQUENCE = [
 ]
 
 # We can be more creative with the output, abbreviation, capitalization, etc.
-def format_author(author):
+def bibtex_author(author, params):
     return '{%s}' % author
 
 BIBTEX_FORMAT = {
-    'author': format_author,
+    'author': bibtex_author,
     'assignee': '%s',
     'nationality': '%s',
     'editor': '%s',
@@ -237,10 +255,19 @@ class CiteMacro(WikiMacroBase):
                 else:
                     line = []
                 
-                for key in SEQUENCE:
+                for key in REFERENCE_SEQUENCE:
                     value = params.get(key)
                     if value:
-                        line.append(FORMAT[key] % value)
+                        reference_formatter = REFERENCE_FORMAT[key]
+                        if callable(reference_formatter):
+                            value = reference_formatter(value, params)
+                        elif reference_formatter.find('%s') >= 0:
+                            value = reference_formatter % value
+                        else:
+                            continue
+                        
+                        if value:
+                            line.append(value)
                 
                 entry = ', '.join(line)
                 
@@ -294,11 +321,14 @@ class CiteMacro(WikiMacroBase):
                     if value:
                         bibtex_formatter = BIBTEX_FORMAT[key]
                         if callable(bibtex_formatter):
-                            value = bibtex_formatter(value)
-                        else:
+                            value = bibtex_formatter(value, params)
+                        elif bibtex_formatter.find('%s') >= 0:
                             value = bibtex_formatter % value
+                        else:
+                            continue
                         
-                        reference.append(',\n%s%s = "%s"' % (' ' * indent, key, value))
+                        if value:
+                            reference.append(',\n%s%s = "%s"' % (' ' * indent, key, value))
                 
                 if len(reference) == 1:
                     reference.append(',')
