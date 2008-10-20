@@ -124,8 +124,8 @@ class Graphviz(Component):
             """)
 
     rsvg_path_option = Option("graphviz", "rsvg_path", "",
-            """Full path to where the rsvg binary can be found.
-            The default is cmd_path + rsvg.
+            """Full path to the rsvg program (including the filename).
+            The default is `<cmd_path>/rsvg`.
             """)
 
     cache_manager = BoolOption("graphviz", "cache_manager", False,

@@ -141,8 +141,8 @@ file with these fields::
     png_antialias   - If this entry exists in the configuration file,
                       then PNG outputs will be antialiased.
 
-    rsvg_path       - Full path to where the rsvg binary can be found.
-                      The default is cmd_path + rsvg.
+    rsvg_path       - Full path to the rsvg program (including the filename).
+                      The default is `<cmd_path>/rsvg`.
 
     default_*       - These settings define the default graph, node and
                       edge attributes. They must be written as:
