@@ -13,7 +13,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.7.2'
+__version__   = '0.7.5dev'
 
 
 import inspect
@@ -530,7 +530,7 @@ class Graphviz(Component):
             encoded_cmd.append(arg)
         p = subprocess.Popen(encoded_cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if input:
+        if encoded_input:
             p.stdin.write(encoded_input)
         p.stdin.close()
         out = p.stdout.read()
