@@ -335,26 +335,24 @@ class Graphviz(Component):
             # Antialias PNGs with rsvg, if requested
             if out_format == 'png' and self.png_anti_alias == True:
                 # 1. SVG output
-                errmsg = self._launch(encoded_content, proc_cmd, '-Tsvg', 
-                                      '-o%s.svg' % img_path,
-                                      *self.processor_options)
-                if errmsg:
+                failure, errmsg = self._launch(
+                        encoded_content, proc_cmd, '-Tsvg', 
+                        '-o%s.svg' % img_path, *self.processor_options)
+                if failure:
                     return self._error_div(errmsg)
 
                 # 2. SVG to PNG rasterization
-                errmsg = self._launch(None, self.rsvg_path, 
-                                      '--dpi-x=%d' % self.dpi,
-                                      '--dpi-y=%d' % self.dpi,
-                                      '%s.svg' % img_path, img_path)
-                if errmsg:
+                failure, errmsg = self._launch(
+                        None, self.rsvg_path, '--dpi-x=%d' % self.dpi,
+                        '--dpi-y=%d' % self.dpi, '%s.svg' % img_path, img_path)
+                if failure:
                     return self._error_div(errmsg)
             
             else: # Render other image formats
-                errmsg = self._launch(encoded_content, proc_cmd, 
-                                      '-T%s' % out_format,
-                                      '-o%s' % img_path, 
-                                      *self.processor_options)
-                if errmsg:
+                failure, errmsg = self._launch(
+                        encoded_content, proc_cmd, '-T%s' % out_format,
+                        '-o%s' % img_path, *self.processor_options)
+                if failure:
                     return self._error_div(errmsg)
 
             # Generate a map file for binary formats
@@ -362,11 +360,17 @@ class Graphviz(Component):
 
                 # Create the map if not in cache
                 if not os.path.exists(map_path):
-                    errmsg = self._launch(encoded_content, proc_cmd, '-Tcmap',
-                                          '-o%s' % map_path,
-                                          *self.processor_options)
-                    if errmsg:
+                    failure, errmsg = self._launch(
+                            encoded_content, proc_cmd, '-Tcmap',
+                            '-o%s' % map_path, *self.processor_options)
+                    if failure:
                         return self._error_div(errmsg)
+
+        if errmsg: 
+            # there was a warning. Ideally we should be able to use
+            # `add_warning` here, but that's not possible as the warnings
+            # are already emitted at this point in the template processing
+            return self._error_div(errmsg)
 
         # Generate HTML output
         img_url = formatter.href.graphviz(img_name)
@@ -535,15 +539,16 @@ class Graphviz(Component):
         p.stdin.close()
         out = p.stdout.read()
         err = p.stderr.read()
-        reason = None
-        if p.wait() != 0:
-            reason = _("failed with the following output:")
-        if err or out:
-            reason = _("succeeded but emitted the following output:")
-        if reason:
-            return tag.p(tag.br(), _("The command:"), 
-                         tag.pre(repr(' '.join(encoded_cmd))), reason, 
-                         out and tag.pre(repr(out)), err and tag.pre(repr(err)))
+        failure = p.wait() != 0
+        if failure or err or out:
+            return (failure, tag.p(tag.br(), _("The command:"), 
+                         tag.pre(repr(' '.join(encoded_cmd))), 
+                         (_("succeeded but emitted the following output:"),
+                          _("failed with the following output:"))[failure],
+                         out and tag.pre(repr(out)), 
+                         err and tag.pre(repr(err))))
+        else:
+            return (False, None)
 
     def _error_div(self, msg):
         """Display msg in an error box, using Trac style."""
