@@ -165,11 +165,19 @@ class TicketSubmitPolicyPlugin(Component):
 
                 # insert the condition into the JS
                 conditions = policy['condition']
-                conditions = ["{field: '%s', comparitor: %s, value: '%s'}" % (condition['field'], 
-                                                                              camelCase(condition['comparitor']),
-                                                                              condition['value'])
-                              for condition in conditions]
-                condition = '%s = [ %s ];' % (name, ', '.join(conditions))
+                _conditions = []
+                for condition in conditions:
+                    _condition = {}
+                    _condition['field'] = condition['field']
+                    _condition['comparitor'] = camelCase(condition['comparitor'])
+                    comp_type =  self.comparitors[condition['comparitor']]
+                    value = condition['value']
+                    if comp_type == 'Array':
+                        _condition['value'] = '[ %s ]' % ', '.join(["'%s'" % v for v in value])
+                    else:
+                        _condition['value'] = "'%s'" % value
+                    _conditions.append("{field: '%(field)s', comparitor: %(comparitor)s, value: %(value)s}" % _condition)
+                condition = '%s = [ %s ];' % (name, ', '.join(_conditions))
                 javascript.append(condition)
 
                 # find the correct handler for the policy
