@@ -77,7 +77,7 @@ class Graphviz(Component):
 
     cache_dir_option = Option("graphviz", "cache_dir", DEFAULT_CACHE_DIR,
             """The directory that will be used to cache the generated images.
-            Note that if different than the default (%s), this directory must
+            Note that if different than the default (`%s`), this directory must
             exist.
             If not given as an absolute path, the path will be relative to 
             the Trac environment's directory.
@@ -85,15 +85,15 @@ class Graphviz(Component):
 
     encoding = Option("graphviz", "encoding", 'utf-8',
             """The encoding which should be used for communicating with
-            Graphviz (should match -Gcharset if given).
+            Graphviz (should match `-Gcharset` if given).
             """)
 
     cmd_path = Option("graphviz", "cmd_path", '',
             r"""Full path to the directory where the graphviz
             programs are located. If not specified, the
-            default is /usr/bin on Linux, c:\Program
-            Files\ATT\Graphviz\bin on Windows and
-            /usr/local/bin on FreeBSD 6.
+            default is `/usr/bin` on Linux, 
+            `C:\Program Files\ATT\Graphviz\bin` on Windows and
+            `/usr/local/bin` on FreeBSD 6.
             """)
 
     out_format = Option("graphviz", "out_format", Formats[0],
@@ -109,12 +109,12 @@ class Graphviz(Component):
             specified, the default is dot. This setting can
             be overrided on a per-graph basis.
 
-            GraphvizMacro will verify that the default
+            !GraphvizMacro will verify that the default
             processor is installed and will not work if it
             is missing. All other processors are optional.
             If any of the other processors are missing, a
             warning message will be sent to the trac log and
-            GraphvizMacro will continue to work.
+            !GraphvizMacro will continue to work.
             """)
 
     png_anti_alias = BoolOption("graphviz", "png_antialias", False,
@@ -154,9 +154,9 @@ class Graphviz(Component):
             directory entry count.
             """)
 
-    cache_min_count = IntOption("graphviz", "cache_minax_count", 1500,
-            """The maximum number of files that the cache should
-            contain. This is the high watermark for the
+    cache_min_count = IntOption("graphviz", "cache_min_count", 1500,
+            """The minimum number of files that the cache should
+            contain. This is the low watermark for the
             directory entry count.
             """)
 
