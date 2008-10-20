@@ -494,9 +494,8 @@ class Graphviz(Component):
             self.cmds[name] = pname
 
         if self.png_anti_alias:
-            self.rsvg_path = self.rsvg_path_option or \
-                    self._find_cmd('rsvg', cmd_paths)
-            
+            self.rsvg_path = (self.rsvg_path_option or 
+                              self._find_cmd('rsvg', cmd_paths))
             if not (self.rsvg_path and os.path.exists(self.rsvg_path)):
                 return _("The rsvg program is set to '%(path)s' but that path "
                          "does not exist.", path=self.rsvg_path)
@@ -624,11 +623,7 @@ class Graphviz(Component):
         if sys.platform == 'win32':
             exe_suffix = '.exe'
 
-        pname = None
         for path in paths:
             p = os.path.join(path, cmd) + exe_suffix
             if os.path.exists(p):
-                pname = p
-                break
-
-        return pname
+                return p
