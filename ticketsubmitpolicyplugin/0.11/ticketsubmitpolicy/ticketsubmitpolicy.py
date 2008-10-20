@@ -435,6 +435,7 @@ function policytostring(policy)
                 self.save(data['policies'])
                 data['saved'] = True
 
+        data['current_policy'] = '[ticket-submit-policy]\n%s' % '\n'.join(['%s = %s' % val for val in self.env.config.options('ticket-submit-policy')])
         if req.method == 'GET' or 'apply' in req.args:
             data['policies'] = self.parse() 
 
