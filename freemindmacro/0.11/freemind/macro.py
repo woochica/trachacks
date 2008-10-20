@@ -6,11 +6,14 @@
       * Martin Scharrer <martin@scharrer-online.de>
         FreemindRenderer reference implementation.
 """
-from genshi.builder import tag
+import urlparse
+
+from genshi.builder import tag, Element
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider, parse_args
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.wiki.macros import WikiMacroBase
+from trac.wiki.formatter import extract_link
 from trac.mimeview.api import IHTMLPreviewRenderer
 
 
@@ -18,10 +21,24 @@ __version__ = '$Id$'[14:18]
 
 EMBED_COUNT = '_freemindmacro_embed_count'
 
-def get_absolute_url(base, url):
+def xform_query(query):
+    """ Convert between a query-string and a query-dictionary.
+    """
+    if isinstance(query, dict):
+        result = '&'.join(['%s=%s' % (k, v) for k, v in query.items()])
+    else:
+        result = query.split('&')
+        while '' in result:
+            result.remove('')
+        
+        result = dict((s.strip() for s in i.split('=', 1)) for i in result)
+    
+    return result
+
+def get_absolute_url(url, formatter=None, base=None):
     """ Generate an absolute url from the url with the special schemes
         {htdocs,chrome,ticket,wiki,source} simply return the url if given with
-        {http,https,ftp} schemes.
+        {http,https,ftp} schemes. Also supports TracLinks.
         
         Examples:
             http://example.com/filename.ext
@@ -45,30 +62,48 @@ def get_absolute_url(base, url):
         parts = [part.strip('/') for part in parts]
         return '/' + '/'.join(parts)
     
-    if url.startswith(('ftp', 'http', 'https')):
+    # You must supply a formatter or a base.
+    if not base:
+        base = formatter.href.base
+    
+    if url.find('://') > 0:
+        scheme, netloc, path, query, params, fragment = urlparse.urlparse(url)
+        
+        if scheme in ('ftp', 'http', 'https'):
+            return url
+        
+        if scheme in ('htdocs', 'chrome'):
+            return ujoin(base, 'chrome', path)
+        
+        if scheme in ('source',):
+            return ujoin(base, 'export', path)
+        
+        if scheme in ('ticket',):
+            return ujoin(base, 'raw-attachment/ticket', path)
+        
+        if scheme in ('wiki',):
+            return ujoin(base, 'raw-attachment/wiki', path)
+        
         return url
     
-    if url.startswith('chrome:'):
-        url = url[7:]
-        return ujoin(base, 'chrome', url)
-    
-    if url.startswith('htdocs:'):
-        url = url[7:]
-        return ujoin(base, 'chrome', url)
-    
-    if url.startswith('source:'):
-        url = url[7:]
-        return ujoin(base, 'export', url)
-    
-    if url.startswith('ticket:'):
-        url = url[7:]
-        return ujoin(base, 'raw-attachment/ticket', url)
-    
-    if url.startswith('wiki:'):
-        url = url[5:]
-        return ujoin(base, 'raw-attachment/wiki', url)
-    
-    return url
+    # You'll need a formatter for this, code from #3938, serious testing needed.
+    else:
+        link = extract_link(formatter.env, formatter.context, url)
+        
+        if isinstance(link, Element):
+            url = link.attrib.get('href')
+            
+            scheme, netloc, path, query, params, fragment = urlparse.urlparse(url)
+            if path.startswith('/browser/'):
+                query_dict = xform_query(query)
+                query_dict['format'] = 'raw'
+                query = xfrom_query(query_dict)
+                url = urlparse.urlunparse((scheme, netloc, path, query, params, fragment))
+            
+            elif path.startswith('/attachement/'):
+                url = url.replace('/attachment/', '/raw-attachment/', 1)
+            
+            return url
 
 def string_keys(d):
     """ Convert unicode keys into string keys, suiable for func(**d) use.
@@ -95,15 +130,6 @@ def xform_style(style):
     
     return result
 
-def deslash(s):
-    """ Temporarily fix issues with flashobject.js, maybe I should rewite
-        it in a proper jQuery kind of way.
-    """
-    if s.startswith('/'):
-        return s[1:]
-    else:
-        return s
-
 
 class FreemindMacro(WikiMacroBase):
     
@@ -129,7 +155,7 @@ class FreemindMacro(WikiMacroBase):
         if embed_count == 1:
             add_script(formatter.req, 'freemind/js/flashobject.js')
         
-        url = get_absolute_url(formatter.href.base, url)
+        url = get_absolute_url(url, formatter)
         base = url[:url.rfind('/')+1]
         
         script = '''\
@@ -164,10 +190,10 @@ class FreemindMacro(WikiMacroBase):
             });
         ''' % {
             'count': embed_count,
-            'visor': get_absolute_url(formatter.href.base, 'htdocs://freemind/swf/visorFreemind.swf'),
+            'visor': get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', formatter),
             'file': url,
             'base': base,
-            'css': get_absolute_url(formatter.href.base, 'htdocs://freemind/css/flashfreemind.css'),
+            'css': get_absolute_url('htdocs://freemind/css/flashfreemind.css', formatter),
         }
         
         # Debugging.
@@ -177,7 +203,6 @@ class FreemindMacro(WikiMacroBase):
             
             output = "FreemindMacro Debug Log\n"\
                      "=======================\n\n"\
-                     "system: %(system)s\n"\
                      "time: %(time)s\n"\
                      "version: %(version)s\n"\
                      "content: %(content)s\n"\
@@ -187,7 +212,6 @@ class FreemindMacro(WikiMacroBase):
                      "script: \n\n"\
                      "%(script)s" % {
                 
-                'system': str(os.uname()),
                 'time': datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
                 'version': __version__,
                 'content': content,
@@ -256,8 +280,8 @@ class FreemindRenderer(Component):
         
         tags = []
         #add_script(contex.req, 'freemind/js/flashobject.js')
-        #tags.append(tag.script(src=get_absolute_url(context.href.base, 'htdocs://freemind/js/flashobject.js')))
-        tags.append('<script src="%s"></script>' % get_absolute_url(context.href.base, 'htdocs://freemind/js/flashobject.js'))
+        #tags.append(tag.script(src=get_absolute_url('htdocs://freemind/js/flashobject.js', base=context.href.base)))
+        tags.append('<script src="%s"></script>' % get_absolute_url('htdocs://freemind/js/flashobject.js', base=context.href.base))
         
         script = '''
             $(document).ready(function() {
@@ -290,10 +314,10 @@ class FreemindRenderer(Component):
                 fo.write("flashcontent");
             });
         ''' % {
-            'visor': get_absolute_url(context.href.base, 'htdocs://freemind/swf/visorFreemind.swf'),
+            'visor': get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', base=context.href.base),
             'file': url,
             'base': base,
-            'css': get_absolute_url(context.href.base, 'htdocs://freemind/css/flashfreemind.css'),
+            'css': get_absolute_url('htdocs://freemind/css/flashfreemind.css', base=context.href.base),
         }
         
         tags.append(tag.script(script))
