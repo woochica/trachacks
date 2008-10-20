@@ -26,6 +26,7 @@
 	  <table>
 	    <tr py:for="index, condition in enumerate(policies[name]['condition'])">
 	      
+	      <!-- field -->
 	      <td class="field">
 		<select name="condition_field_${index}_${name}">
 		  <py:for each="field in fields">
@@ -37,6 +38,7 @@
 		</select>
 	      </td>
 	      
+	      <!-- comparitor -->
 	      <td class="comparitor">
 		<select name="condition_comparitor_${index}_${name}">
 		  <py:for each="comparitor in comparitors">
@@ -49,8 +51,11 @@
 		</select>
 	      </td>
 	      
+	      <!-- value(s) for comparison -->
 	      <td>
-		<input type="text" name="condition_value_${index}_${name}" value="${condition['value']}"/>
+		<input type="text"
+		       name="condition_value_${index}_${name}" 
+		       value="${isinstance(condition['value'], list) and ', '.join(condition['value']) or condition['value']}"/>
 	      </td>
 
 	      <td class="actions">
