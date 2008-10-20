@@ -116,7 +116,7 @@ class MovieMacro(WikiMacroBase):
         if len(args) >= 1:
             url = args[0]
         elif len(args) == 0:
-            raise TracError('URL to the movie at least required. %s, %s' % (args, kwargs))
+            raise TracError('URL to a movie at least required.')
         
         embed_count = getattr(formatter, EMBED_COUNT, 0)
         embed_count += 1
