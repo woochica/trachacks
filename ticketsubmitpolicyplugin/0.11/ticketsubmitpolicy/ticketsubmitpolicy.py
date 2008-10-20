@@ -105,7 +105,8 @@ class TicketSubmitPolicyPlugin(Component):
                 for condition in conditions:
 
                     # look for longest match to prevent substring matching
-                    comparitors = sorted(self.comparitors.keys(), key=lambda x: len(x), reverse=True)
+                    comparitors = self.comparitors.keys()
+                    comparitors.sort(key=lambda x: len(x), reverse=True)
                     match = re.match('.* (%s) .*' % '|'.join(comparitors), condition)
 
                     if match:
