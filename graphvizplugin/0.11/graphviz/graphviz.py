@@ -498,7 +498,7 @@ class Graphviz(Component):
             self.rsvg_path = self.rsvg_path_option or \
                     self._find_cmd('rsvg', cmd_paths)
             
-            if not os.path.exists(self.rsvg_path):
+            if not (self.rsvg_path and os.path.exists(self.rsvg_path)):
                 return _("The rsvg program is set to '%(path)s' but that path "
                          "does not exist.", path=self.rsvg_path)
 
