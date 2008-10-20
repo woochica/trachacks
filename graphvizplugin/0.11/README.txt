@@ -104,9 +104,17 @@ Configuration
 =============
 
 Once the graphviz plugin has been installed either via source or via a
-python egg, some configuration is needed before it can be used.
+python egg, some changes to the conf/trac.ini file must be done before it can 
+be used.
 
-A new section called graphviz should be added to the conf/trac.ini
+As for any plugin, if you did a global installation (as opposed to simply 
+dropping the .egg in the plugins folder of your Trac environment), 
+you first need to enable it::
+
+   [components]
+   graphviz.* = enabled
+
+A new section called ``[graphviz]`` should be added to the trac.ini
 file with these fields::
 
     cache_dir       - The directory that will be used to cache the 
