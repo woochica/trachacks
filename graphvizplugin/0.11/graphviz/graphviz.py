@@ -177,7 +177,6 @@ class Graphviz(Component):
     MIME_TYPES = ('application/graphviz')
 
     def get_quality_ratio(self, mimetype):
-        self.log.error(mimetype)
         if mimetype in self.MIME_TYPES:
             return 2
         return 0
