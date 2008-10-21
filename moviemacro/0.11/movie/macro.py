@@ -39,28 +39,22 @@ def get_absolute_url(base, url):
         parts = [part.strip('/') for part in parts]
         return '/' + '/'.join(parts)
     
-    if url.startswith(('ftp', 'http', 'https')):
+    scheme, netloc, path, query, params, fragment = urlparse(url)
+    
+    if scheme in ('ftp', 'http', 'https'):
         return url
     
-    if url.startswith('chrome:'):
-        url = url[7:]
-        return ujoin(base, 'chrome', url)
+    if scheme in ('htdocs', 'chrome'):
+        return ujoin(base, 'chrome', path)
     
-    if url.startswith('htdocs:'):
-        url = url[7:]
-        return ujoin(base, 'chrome', url)
+    if scheme in ('source',):
+        return ujoin(base, 'export', path)
     
-    if url.startswith('source:'):
-        url = url[7:]
-        return ujoin(base, 'export', url)
+    if scheme in ('ticket',):
+        return ujoin(base, 'raw-attachment/ticket', path)
     
-    if url.startswith('ticket:'):
-        url = url[7:]
-        return ujoin(base, 'raw-attachment/ticket', url)
-    
-    if url.startswith('wiki:'):
-        url = url[5:]
-        return ujoin(base, 'raw-attachment/wiki', url)
+    if scheme in ('wiki',):
+        return ujoin(base, 'raw-attachment/wiki', path)
     
     return url
 
