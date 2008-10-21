@@ -2,14 +2,14 @@
 from setuptools import setup
 
 setup(
-    name='FiveStarVote',
-    version='0.1',
-    packages=['fivestarvote'],
+    	name='FiveStarVote',
+    	version='0.1',
+    	packages=['fivestarvote'],
 	package_data={'fivestarvote' : ['htdocs/js/*.js', 'htdocs/css/*.css', 'htdocs/css/*.png']},
-    	author='Dav Glass'
+    	author='Dav Glass',
       	author_email='dav.glass@yahoo.com',
-    license='BSD',
-    url='http://trac-hacks.org/wiki/FiveStarVotePlugin',
-    description='A 5 star plugin for voting on Trac resources.',
-    entry_points = {'trac.plugins': ['fivestarvote = fivestarvote']},
+    	license='BSD',
+    	url='http://trac-hacks.org/wiki/FiveStarVotePlugin',
+    	description='A 5 star plugin for voting on Trac resources.',
+    	entry_points = {'trac.plugins': ['fivestarvote = fivestarvote']},
     )
