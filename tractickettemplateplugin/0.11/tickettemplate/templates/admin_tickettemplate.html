@@ -10,14 +10,14 @@
 <head><title>Available Projects</title></head>
 <body>
 
-<h2>传票: 模板</h2>
+<h2>Ticket: template</h2>
 
 
 
 <form id="savetickettemplate" action="tickettemplate" method="post">
 
   <div class="field">
-    <label for="type">种类:</label>
+    <label for="type">Ticket Type:</label>
     <p>
     <select size="1" id="type" name="type">
       <option py:for="option in options"
@@ -33,7 +33,7 @@
   </div>
 
   <div class="field">
-    <label for="description">描述:</label>
+    <label for="description">Description:</label>
     <p>
       <textarea id="description" name="description"
                 class="wikitext" rows="10" cols="68"

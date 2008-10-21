@@ -12,7 +12,7 @@ function onTypeChanged(evt) {
 
 	if (evt.type == "change")
 	{
-		answer = confirm("用模板的内容替换描述文字吗?");
+		answer = confirm("Apply template by ticket type?");
 		if (!answer)
 		{
 			return;
@@ -40,7 +40,7 @@ function onCustomChanged(evt) {
 
 	if (evt.type == "change")
 	{
-		answer = confirm("用自定义模板的内容替换描述文字吗?");
+		answer = confirm("Apply template by ticket type?");
 		if (!answer)
 		{
 			return;
@@ -62,7 +62,7 @@ function onCustomSave(evt) {
 
 
 	customNameElem = document.getElementById('tt_custom_name');
-	customName = prompt("请输入模板名称");
+	customName = prompt("Please input template name");
 	if (customName)
 	{
 		customNameElem.value = customName;

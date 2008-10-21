@@ -9,24 +9,24 @@
 
 
 DEFAULT_TEMPLATES = [
-("defect", """= 缺陷描述 =
+("defect", """= bug description =
 
-= 缺陷分析 =
+= bug analysis =
 
-= 修订建议 ="""),
-("enhancement", """= 不如意 =
+= fix recommendation ="""),
+("enhancement", """= problem =
 
-= 分析 =
+= analysis =
 
-= 增进建议 ="""),
-("task", """= 问题现象 =
+= enhancement recommendation ="""),
+("task", """= phenomenon =
 
-= 背景分析 =
+= background analysis =
 
-= 实施建议 ="""),
-("default", """= 现象 =
+= implementation recommendation ="""),
+("default", """= phenomenon =
 
-= 思考 =
+= reason =
 
-= 建议 ="""),
+= recommendation ="""),
                      ]

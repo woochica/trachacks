@@ -5,7 +5,7 @@
 <head><title>Available Projects</title></head>
 <body>
 
-<h2>模板: <?cs var:tt_name?>
+<h2>Template: <?cs var:tt_name?>
 </h2>
 
 
@@ -15,7 +15,7 @@
   <table class="listing" id="configlist">
    <thead>
     <tr>
-	 <th>模板历史</th>
+	 <th>Template History</th>
 	</tr>
    </thead><?cs each:history = tt_history ?>
     <tr>
