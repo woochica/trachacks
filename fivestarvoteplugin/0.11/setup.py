@@ -6,9 +6,9 @@ setup(
     version='0.1',
     packages=['fivestarvote'],
 	package_data={'fivestarvote' : ['htdocs/js/*.js', 'htdocs/css/*.css', 'htdocs/css/*.png']},
-    author='Dav Glass [dav.glass@yahoo.com]',
+    author='dav.glass@yahoo.com',
     license='BSD',
-    url='none yet',
+    url='http://trac-hacks.org/wiki/FiveStarVotePlugin',
     description='A 5 star plugin for voting on Trac resources.',
     entry_points = {'trac.plugins': ['fivestarvote = fivestarvote']},
     )
