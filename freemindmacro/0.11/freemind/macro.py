@@ -158,43 +158,73 @@ class FreemindMacro(WikiMacroBase):
         url = get_absolute_url(url, formatter)
         base = url[:url.rfind('/')+1]
         
+        #script = '''\
+        #    $(document).ready(function() {
+        #        $("#flashcontent%(count)02d").mouseover(function() {
+        #            document.visorFreeMind%(count)02d.focus();
+        #        });
+        #        
+        #        var fo = new FlashObject("%(visor)s", "visorFreeMind%(count)02d", "100%%", "100%%", 6, "#9999ff");
+        #        
+        #        fo.addParam("quality","high");
+        #        fo.addParam("bgcolor","#a0a0f0");
+        #        fo.addVariable("openUrl","_blank");
+        #        fo.addVariable("startCollapsedToLevel","3");
+        #        fo.addVariable("maxNodeWidth","200");
+        #        fo.addVariable("mainNodeShape","elipse");
+        #        fo.addVariable("justMap","false");
+        #        fo.addVariable("initLoadFile","%(file)s");
+        #        fo.addVariable("defaultToolTipWordWrap",200);
+        #        fo.addVariable("offsetX","left");
+        #        fo.addVariable("offsetY","top");
+        #        fo.addVariable("buttonsPos","top");
+        #        fo.addVariable("min_alpha_buttons",20);
+        #        fo.addVariable("max_alpha_buttons",100);
+        #        fo.addVariable("scaleTooltips","false");
+        #        fo.addVariable("baseImagePath","%(base)s");
+        #        fo.addVariable("CSSFile","%(css)s");
+        #        //fo.addVariable("toolTipsBgColor","0xa0a0f0");
+        #        //fo.addVariable("genAllShots","true");
+        #        //fo.addVariable("unfoldAll","true");
+        #        fo.write("flashcontent%(count)02d");
+        #    });
+        #''' % {
+        #    'count': embed_count,
+        #    'visor': get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', formatter),
+        #    'file': url,
+        #    'base': base,
+        #    'css': get_absolute_url('htdocs://freemind/css/flashfreemind.css', formatter),
+        #}
+        
         script = '''\
             $(document).ready(function() {
                 $("#flashcontent%(count)02d").mouseover(function() {
                     document.visorFreeMind%(count)02d.focus();
                 });
-                
-                var fo = new FlashObject("%(visor)s", "visorFreeMind%(count)02d", "100%%", "100%%", 6, "#9999ff");
-                
-                fo.addParam("quality","high");
-                fo.addParam("bgcolor","#a0a0f0");
-                fo.addVariable("openUrl","_blank");
-                fo.addVariable("startCollapsedToLevel","3");
-                fo.addVariable("maxNodeWidth","200");
-                fo.addVariable("mainNodeShape","elipse");
-                fo.addVariable("justMap","false");
-                fo.addVariable("initLoadFile","%(file)s");
-                fo.addVariable("defaultToolTipWordWrap",200);
-                fo.addVariable("offsetX","left");
-                fo.addVariable("offsetY","top");
-                fo.addVariable("buttonsPos","top");
-                fo.addVariable("min_alpha_buttons",20);
-                fo.addVariable("max_alpha_buttons",100);
-                fo.addVariable("scaleTooltips","false");
-                fo.addVariable("baseImagePath","%(base)s");
-                fo.addVariable("CSSFile","%(css)s");
-                //fo.addVariable("toolTipsBgColor","0xa0a0f0");
-                //fo.addVariable("genAllShots","true");
-                //fo.addVariable("unfoldAll","true");
-                fo.write("flashcontent%(count)02d");
             });
-        ''' % {
-            'count': embed_count,
-            'visor': get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', formatter),
-            'file': url,
-            'base': base,
-            'css': get_absolute_url('htdocs://freemind/css/flashfreemind.css', formatter),
+        ''' % {'count': embed_count}
+        
+        flash_dict = {
+            'openUrl': '_blank',
+            'initLoadFile': url,
+            'startCollapsedToLevel': '3',
+            'defaultToolTipWordWrap': '200',
+            'baseImagePath': base,
+            'min_alpha_buttons': '20',
+            'max_alpha_buttons': '100'
         }
+        
+        flash_vars = '&'.join(['%s=%s' % (k, v) for k, v in flash_dict.items()])
+        
+        embed = tag.embed(type='application/x-shockwave-flash',
+                          src=get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', formatter),
+                          id='visorFreeMind%02d' % embed_count,
+                          bgcolor='#ffffff',
+                          quality='high',
+                          flashvars=flash_vars,
+                          align='middle',
+                          height='100%',
+                          width='100%')
         
         # Debugging.
         if 'debug' in args:
@@ -243,8 +273,10 @@ class FreemindMacro(WikiMacroBase):
             kwargs['class_'] = kwargs.pop('class')
         
         tags = []
-        tags.append(tag.div('Flash plugin or JavaScript are turned off. Activate both and reload to view the mindmap.',
-                            id='flashcontent%02d' % embed_count, **kwargs))
+        #tags.append(tag.div('Flash plugin or JavaScript are turned off. Activate both and reload to view the mindmap.',
+        #                    id='flashcontent%02d' % embed_count, **kwargs))
+        
+        tags.append(tag.div(embed, id='flashcontent%02d' % embed_count, **kwargs))
         tags.append(tag.script(script))
         
         return ''.join([str(i) for i in tags])
@@ -281,47 +313,82 @@ class FreemindRenderer(Component):
         tags = []
         #add_script(contex.req, 'freemind/js/flashobject.js')
         #tags.append(tag.script(src=get_absolute_url('htdocs://freemind/js/flashobject.js', base=context.href.base)))
-        tags.append('<script src="%s"></script>' % get_absolute_url('htdocs://freemind/js/flashobject.js', base=context.href.base))
         
-        script = '''
+        #tags.append('<script src="%s"></script>' % get_absolute_url('htdocs://freemind/js/flashobject.js', base=context.href.base))
+        #
+        #script = '''
+        #    $(document).ready(function() {
+        #        $("#flashcontent").mouseover(function() {
+        #            document.visorFreeMind.focus();
+        #        });
+        #        
+        #        var fo = new FlashObject("%(visor)s", "visorFreeMind", "100%%", "100%%", 6, "#9999ff");
+        #        
+        #        fo.addParam("quality","high");
+        #        fo.addParam("bgcolor","#a0a0f0");
+        #        fo.addVariable("openUrl","_blank");
+        #        fo.addVariable("startCollapsedToLevel","3");
+        #        fo.addVariable("maxNodeWidth","200");
+        #        fo.addVariable("mainNodeShape","elipse");
+        #        fo.addVariable("justMap","false");
+        #        fo.addVariable("initLoadFile","%(file)s");
+        #        fo.addVariable("defaultToolTipWordWrap",200);
+        #        fo.addVariable("offsetX","left");
+        #        fo.addVariable("offsetY","top");
+        #        fo.addVariable("buttonsPos","top");
+        #        fo.addVariable("min_alpha_buttons",20);
+        #        fo.addVariable("max_alpha_buttons",100);
+        #        fo.addVariable("scaleTooltips","false");
+        #        fo.addVariable("baseImagePath","%(base)s");
+        #        fo.addVariable("CSSFile","%(css)s");
+        #        //fo.addVariable("toolTipsBgColor","0xa0a0f0");
+        #        //fo.addVariable("genAllShots","true");
+        #        //fo.addVariable("unfoldAll","true");
+        #        fo.write("flashcontent");
+        #    });
+        #''' % {
+        #    'visor': get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', base=context.href.base),
+        #    'file': url,
+        #    'base': base,
+        #    'css': get_absolute_url('htdocs://freemind/css/flashfreemind.css', base=context.href.base),
+        #}
+        
+        script = '''\
             $(document).ready(function() {
                 $("#flashcontent").mouseover(function() {
                     document.visorFreeMind.focus();
                 });
-                
-                var fo = new FlashObject("%(visor)s", "visorFreeMind", "100%%", "100%%", 6, "#9999ff");
-                
-                fo.addParam("quality","high");
-                fo.addParam("bgcolor","#a0a0f0");
-                fo.addVariable("openUrl","_blank");
-                fo.addVariable("startCollapsedToLevel","3");
-                fo.addVariable("maxNodeWidth","200");
-                fo.addVariable("mainNodeShape","elipse");
-                fo.addVariable("justMap","false");
-                fo.addVariable("initLoadFile","%(file)s");
-                fo.addVariable("defaultToolTipWordWrap",200);
-                fo.addVariable("offsetX","left");
-                fo.addVariable("offsetY","top");
-                fo.addVariable("buttonsPos","top");
-                fo.addVariable("min_alpha_buttons",20);
-                fo.addVariable("max_alpha_buttons",100);
-                fo.addVariable("scaleTooltips","false");
-                fo.addVariable("baseImagePath","%(base)s");
-                fo.addVariable("CSSFile","%(css)s");
-                //fo.addVariable("toolTipsBgColor","0xa0a0f0");
-                //fo.addVariable("genAllShots","true");
-                //fo.addVariable("unfoldAll","true");
-                fo.write("flashcontent");
             });
-        ''' % {
-            'visor': get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', base=context.href.base),
-            'file': url,
-            'base': base,
-            'css': get_absolute_url('htdocs://freemind/css/flashfreemind.css', base=context.href.base),
+        '''
+        
+        flash_dict = {
+            'openUrl': '_blank',
+            'initLoadFile': url,
+            'startCollapsedToLevel': '3',
+            'defaultToolTipWordWrap': '200',
+            'baseImagePath': base,
+            'min_alpha_buttons': '20',
+            'max_alpha_buttons': '100'
         }
         
-        tags.append(tag.script(script))
-        tags.append(tag.div('Flash plugin or JavaScript are turned off. Activate both and reload to view the mindmap.',
+        flash_vars = '&'.join(['%s=%s' % (k, v) for k, v in flash_dict.items()])
+        
+        embed = tag.embed(type='application/x-shockwave-flash',
+                          src=get_absolute_url('htdocs://freemind/swf/visorFreemind.swf', base=context.href.base),
+                          id='visorFreeMind',
+                          bgcolor='#ffffff',
+                          quality='high',
+                          flashvars=flash_vars,
+                          align='middle',
+                          height='100%',
+                          width='100%')
+        
+        #tags.append(tag.script(script))
+        #tags.append(tag.div('Flash plugin or JavaScript are turned off. Activate both and reload to view the mindmap.',
+        #                    id='flashcontent',
+        #                    style='border: 1px solid #cccccc; height: 600px; width: 100%;'))
+        
+        tags.append(tag.div(embed,
                             id='flashcontent',
                             style='border: 1px solid #cccccc; height: 600px; width: 100%;'))
         
