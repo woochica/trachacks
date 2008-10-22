@@ -4,7 +4,7 @@ import os, shutil, re, mimetypes, unicodedata
 from datetime import *
 
 from trac.core import *
-from trac.config import Option, BoolOption	
+from trac.config import Option, BoolOption
 from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
@@ -815,6 +815,8 @@ class DownloadsApi(Component):
             raise TracError('Can\'t upload empty file.')
 
         # Strip path from filename.
+        self.log.debug(file.filename)
         filename = os.path.basename(file.filename).decode('utf-8')
+        self.log.debug(filename)
 
         return file.file, filename, size

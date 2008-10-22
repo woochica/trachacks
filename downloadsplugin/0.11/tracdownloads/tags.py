@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import sets
 
@@ -16,7 +16,7 @@ class DownloadsTagProvider(DefaultTagProvider):
     realm = 'downloads'
 
     def check_permission(self, perm, operation):
-        # Permission table for download tags.
+        # Permission table for download tags.
         permissions = {'view' : 'WIKI_VIEW', 'modify' : 'WIKI_ADMIN'}
 
         # First check permissions in default provider then for downloads.
@@ -42,7 +42,7 @@ class DownloadsTags(Component):
         tag_system = TagSystem(self.env)
         tag_system.delete_tags(req, resource)
 
-        # Add tags of new download.
+        # Add tags of new download.
         new_tags = self._get_tags(download)
         tag_system.add_tags(req, resource, new_tags)
 
