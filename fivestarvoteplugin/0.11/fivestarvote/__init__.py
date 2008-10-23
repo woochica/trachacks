@@ -180,7 +180,7 @@ class FiveStarVoteSystem(Component):
         if 'VOTE_MODIFY' in req.perm and get_reporter_id(req) != 'anonymous':
             className = 'active'
         title = "Current Vote: %s users voted for a total of %s" % (count[1], count[0]) 
-        add_ctxtnav(req, tag.span(ul, id='fivestarvotes', title=title, class_=className))
+        add_ctxtnav(req, tag.span(tag.object(ul), id='fivestarvotes', title=title, class_=className))
 
 
     def normalise_resource(self, resource):
