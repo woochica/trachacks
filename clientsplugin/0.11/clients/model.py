@@ -73,9 +73,9 @@ class Client(object):
 
         cursor = db.cursor()
         self.env.log.debug("Creating new client '%s'" % self.name)
-        cursor.execute("INSERT INTO client (name,description,"
+        cursor.execute("INSERT INTO client (name, description,"
                        " default_rate, currency) "
-                       "VALUES (%s,%s, %s,%s,%s, %s,%s,%s, %s,%s)",
+                       "VALUES (%s,%s, %s,%s)",
                        (self.name, self.description,
                         self.default_rate, self.currency))
 
