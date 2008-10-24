@@ -24,6 +24,8 @@ _format = """
 />
 """
 
+_test = 1
+
 class GoogleStaticMapMacro(WikiMacroBase):
     """ Provides a static Google Map as HTML image
     """
@@ -51,12 +53,12 @@ class GoogleStaticMapMacro(WikiMacroBase):
 
         # Get height and width
         (width,height) = hargs['size'].split('x')
-        if int(height) < 0:
-            height = "0"
+        if int(height) < 1:
+            height = "1"
         elif int(height) > 640:
             height = "640"
-        if int(width) < 0:
-            width = "0"
+        if int(width) < 1:
+            width = "1"
         elif int(width) > 640:
             width = "640"
         hargs['size'] = "%sx%s" % (width,height)
