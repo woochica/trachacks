@@ -17,6 +17,7 @@ from trac.env import Environment
 from traclegos.admin import TracLegosAdmin
 from traclegos.config import ConfigMunger
 from traclegos.db import available_databases
+from traclegos.db import SQLite
 from traclegos.pastescript.command import create_distro_command
 from traclegos.pastescript.string import PasteScriptStringTemplate
 from traclegos.pastescript.var import vars2dict, dict2vars
@@ -96,7 +97,7 @@ class TracLegos(object):
                  }
 
     def create_project(self, project, templates, vars=None,
-                       repository=None):
+                       database=None, repository=None):
         """
         * project: directory name of project
         * templates to be applied
@@ -111,6 +112,9 @@ class TracLegos(object):
         vars = self.vars.copy()
         vars.update(_vars)
         vars['project'] = project        
+
+        if database is None:
+            database = SQLite()
 
         ### munge configuration
 
@@ -272,6 +276,9 @@ def get_parser():
                       help="repository type to use")
     parser.add_option("-t", dest="templates", action="append", default=[],
                       help="trac.ini templates to be applied in order")
+    parser.add_option("--db", "--database",
+                      dest="database", default="SQLite",
+                      help="database type to use")
     
     parser.add_option("--list-templates", dest="listprojects",
                       action="store_true", default=False,
@@ -329,6 +336,12 @@ def parse(parser, args=None):
                 print '%s: %s' % (name, repository.description)
         return
 
+    # get the database
+    database = available_databases().get(options.database)
+    if not database:
+        print 'Error: database type "%s" not available\n' % options.database
+        options.listdatabases = True
+
     # list the available database setup agents
     if options.listdatabases:
         print 'Available databases:'
@@ -345,14 +358,9 @@ def parse(parser, args=None):
     # project creator
     legos = TracLegos(**argspec)
     
-    # XXX this is hackish
-    # should return:
-    # { project: { 'repository': repository, 'templates': options.templates, }
-    # for each project
-    # or, better yet, legos, { dictionary of arugments to legos.create_project }
-    # (except projects isn't an argument....hmmmm)
-    # maybe the easy solution is just to make one project per invocation
-    return legos, projects, options.templates, repository
+    return legos, projects, { 'templates': options.templates, 
+                              'repository': repository,
+                              'database': database }
 
 def main(args=None):
     """main command line entry point"""
@@ -361,14 +369,14 @@ def main(args=None):
     parser = get_parser()    
     
     # get some legos
-    try:
-        legos, projects, templates, repository = parse(parser)
-    except TypeError:
-        return # XXX potentially fail silently 
+    parsed = parse(parser)
+    if parsed == None:
+        return
+    legos, projects, arguments = parsed
 
     # create the projects
     for project in projects:
-        legos.create_project(project, templates, repository=repository)
+        legos.create_project(project, **arguments)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
