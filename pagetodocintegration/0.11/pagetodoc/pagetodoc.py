@@ -79,7 +79,7 @@ class PageToDocPlugin(Component):
         # replace href with absolute path and if existing, base auth login
         try:
             login = base64.b64decode(req.environ['HTTP_AUTHORIZATION'][6:]) + '@'      
-        except KeyError:
+        except KeyError, TypeError:
             login = ''
         html = re.sub('<img src="(?!\w+://)', '<img src="%s://%s%s:%d' % (req.scheme, login, req.server_name, req.server_port), html)
         
