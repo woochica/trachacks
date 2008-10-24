@@ -28,7 +28,7 @@ class DatabaseSetup(object):
         """
         return False
 
-    def db_string(self, **vars):
+    def db_string(self):
         """returns the string as needed for trac.ini's
         
         [trac]
@@ -51,7 +51,7 @@ class SQLite(DatabaseSetup):
     def enabled(self):
         return True
 
-    def db_string(self, **vars):
+    def db_string(self):
         return 'sqlite:db/trac.db'
 
 
@@ -75,7 +75,7 @@ class MySQL(DatabaseSetup):
         except OSError:
             return False
 
-    def db_string(self, **vars):
+    def db_string(self):
         return 'mysql://${database_user}:${database_password}@localhost:${mysql_port}/${project}'
 
     def setup(self, **vars):
