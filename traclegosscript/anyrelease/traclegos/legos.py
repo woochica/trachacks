@@ -16,6 +16,7 @@ from trac.admin.console import TracAdmin
 from trac.env import Environment
 from traclegos.admin import TracLegosAdmin
 from traclegos.config import ConfigMunger
+from traclegos.db import available_databases
 from traclegos.pastescript.command import create_distro_command
 from traclegos.pastescript.string import PasteScriptStringTemplate
 from traclegos.pastescript.var import vars2dict, dict2vars
@@ -254,7 +255,8 @@ def get_parser():
     """return an OptionParser object for TracLegos"""
 
     parser = OptionParser()
-    # XXX this could (should?) share configuration with TracLegos.options
+
+    # command line parser options
     parser.add_option("-c", "--conf",
                       dest="conf", action="append", default=[],
                       help="site configuration files")
@@ -274,11 +276,16 @@ def get_parser():
     parser.add_option("--list-templates", dest="listprojects",
                       action="store_true", default=False,
                       help="list available TracProject PasteScript templates")
-#    parser.add_option("--list-variables", dest="listvariables",
-#                      help="list variables for a [someday: list of] templates") # TODO
     parser.add_option("--list-repositories", dest="listrepositories",
                       action="store_true", default=False,
-                      help="list repositories available for setup by TracLegos")
+                      help="list repository types available for setup by TracLegos")
+    parser.add_option("--list-databases", dest="listdatabases",
+                      action="store_true", default=False,
+                      help="list available database types available for setup by TracLegos")
+
+#    parser.add_option("--list-variables", dest="listvariables",
+#                      help="list variables for a [someday: list of] templates") # TODO
+
 
     parser.set_usage("%prog [options] project <project2> <...> var1=1 var2=2 ...")
     parser.set_description("assemble a trac project from components")
@@ -320,6 +327,13 @@ def parse(parser, args=None):
         for name, repository in available_repositories().items():
             if name is not 'NoRepository': # no need to print this one
                 print '%s: %s' % (name, repository.description)
+        return
+
+    # list the available database setup agents
+    if options.listdatabases:
+        print 'Available databases:'
+        for name, database in available_databases().items():
+            print '%s: %s' % (name, database.description)
         return
 
     if not projects: # print help if no projects given
