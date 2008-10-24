@@ -103,7 +103,6 @@ class TracLegos(object):
         * templates to be applied
         * vars: variables for interpolation
         """
-        # TODO: db stuff; 
         
         ### set variables
 
@@ -114,7 +113,7 @@ class TracLegos(object):
         vars['project'] = project        
 
         if database is None:
-            database = SQLite()
+            database = SQLite() # TODO: db stuff; 
 
         ### munge configuration
 
@@ -122,11 +121,13 @@ class TracLegos(object):
         if not isinstance(templates, ProjectTemplates):
             if repository:
                 templates.append(repository.config())
+            templates.append({'trac': {'database': database.db_string() }})
             templates = self.project_templates(templates)
 
         # determine the vars
         optdict = templates.vars(self.options)
         repo_fields = {}
+        vars2dict(optdict, *database.options)
         if repository:
             vars2dict(optdict, *repository.options)
             repo_fields = self.repository_fields(project).get(repository.name, {})
