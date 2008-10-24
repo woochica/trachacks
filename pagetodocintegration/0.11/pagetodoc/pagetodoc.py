@@ -27,6 +27,8 @@ class PageToDocPlugin(Component):
     logsubdir = 'log/'
     img_max_x = '0'
     img_max_y = '0'
+    dpi = '96'
+    cm2inch = 2.54
     
     verbose = False
 
@@ -40,6 +42,7 @@ class PageToDocPlugin(Component):
         # get parameters from trac ini file
         self.img_max_x = self.env.config.get('pagetodoc', 'img_max_x', self.img_max_x)
         self.img_max_y = self.env.config.get('pagetodoc', 'img_max_y', self.img_max_y)
+        self.img_max_y = self.env.config.get('pagetodoc', 'dpi', self.dpi)
         
         # XSL-Transformation        
         xsltfilepath = self.env.config.get('pagetodoc', 'xsltfile', '')
@@ -95,7 +98,11 @@ class PageToDocPlugin(Component):
         # workaround namespace
         self.perform_workarounds(htmlfilepath, 'html')
     
-        cmd = 'xsltproc %s -o %s %s %s' % (('-v' if self.verbose else ''),  wordfilepath, xsltfilepath, htmlfilepath)
+        if self.verbose:
+            verb = '-v'
+        else:
+            verb = ''
+        cmd = 'xsltproc %s -o %s %s %s' % (verb, wordfilepath, xsltfilepath, htmlfilepath)
         self.execute_external_program(cmd)
         
         # workaround pre-tags
@@ -199,8 +206,10 @@ class PageToDocPlugin(Component):
         urlretrieve(matchObj.group(1), fn) 
         
         # resize images, if wanted, using ImageMagick
-        if int(self.img_max_x) > 0 and int(self.img_max_y) > 0:
-            args = "-resize '%sx%s>'" % (self.img_max_x, self.img_max_y)
+        if int(self.img_max_x)/self.cm2inch*int(self.dpi) > 0 and int(self.img_max_y)/self.cm2inch*int(self.dpi) > 0:
+            #args = "-density %sd -resize '%sx%s>'" % (self.dpi, self.img_max_x, self.img_max_y)
+            args = "-resize '%sx%s>' -resample %s" % (self.img_max_x, self.img_max_y, self.dpi)
+            
             cmd = 'convert %s %s %s' % (fn, args, fn)
             self.execute_external_program(cmd)
         
