@@ -9,22 +9,11 @@ from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 from StringIO import StringIO
 from trac.util.html import escape,Markup
+from genshi.builder import tag
 
 _allowed_args = ['center','zoom','size','format','maptype',
         'markers','path','span','frame','hl','key']
 _google_src = r"http://maps.google.com/staticmap?"
-
-_format = """
-<img class="googlestaticmap" 
-    height="%(height)s"
-    width="%(width)s" 
-    alt="%(alt)s"
-    title="%(title)s"
-    src="%(src)s"
-/>
-"""
-
-_test = 1
 
 class GoogleStaticMapMacro(WikiMacroBase):
     """ Provides a static Google Map as HTML image
@@ -68,7 +57,7 @@ class GoogleStaticMapMacro(WikiMacroBase):
         hargs['center'] = hargs['center'].replace(':',',')
 
         # Build URL
-        src = escape( _google_src + ('&'.join([ "%s=%s" % (k,v) for k,v in hargs.iteritems() ])) )
+        src = _google_src + ('&'.join([ "%s=%s" % (escape(k),escape(v)) for k,v in hargs.iteritems() ]))
 
         if not 'key' in hargs:
             raise TracError("No Google Maps API key given!\n")
@@ -79,10 +68,12 @@ class GoogleStaticMapMacro(WikiMacroBase):
         if 'title' in kwargs:
             title = kwargs['title']
 
-        out = StringIO()
-        # Create HTML
-        out.write( _format % { 'src':src, 'alt':alt, 'height':height,
-            'width':width, 'title':title } );
-        return Markup(out.getvalue())
-
+        return tag.img(
+                    class_ = "googlestaticmap",
+                    src    = src,
+                    title  = Markup.escape(title, quotes=True),
+                    alt    = Markup.escape(alt,   quotes=True),
+                    height = height,
+                    width  = width,
+               )
 
