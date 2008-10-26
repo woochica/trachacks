@@ -45,6 +45,8 @@ class GoogleMapMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, content):
         args, kwargs = parse_args(content)
+        if len(args) > 0 and not 'address' in kwargs:
+            kwargs['address'] = args[0]
 
         # HTML arguments used in Google Maps URL
         hargs = {
