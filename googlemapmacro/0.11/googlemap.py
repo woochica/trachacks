@@ -121,6 +121,8 @@ class GoogleMapMacro(WikiMacroBase):
                     $(document).ready( function () {
                       if (GBrowserIsCompatible()) {
                         var map = new GMap2(document.getElementById("%(id)s"));
+                        map.addControl(new GLargeMapControl());
+                        map.addControl(new GMapTypeControl());
                         map.setCenter(new GLatLng(%(center)s), %(zoom)s);
                       }
                     } );
