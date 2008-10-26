@@ -13,10 +13,7 @@ from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script
 #import hashlib
 
-_allowed_args = ['center','zoom','size','format','maptype',
-        'markers','path','span','frame','hl']
-_google_src = r"http://maps.google.com/staticmap?"
-
+_allowed_args = ['center','zoom','size','address']
 
 class GoogleMapMacro(WikiMacroBase):
     implements(IRequestFilter)
@@ -88,6 +85,15 @@ class GoogleMapMacro(WikiMacroBase):
         else:
             width = str(width) + "px"
 
+        address = ""
+        if 'address' in hargs:
+            address = hargs['address']
+            if (((address[0] == '"') and (address[-1] == '"')) or
+                ((address[0] == "'") and (address[-1] == "'"))):
+                    address = address[1:-1]
+            if not 'center' in kwargs:
+                hargs['center'] = ""
+
         # Correct separator for 'center' argument because comma isn't allowed in
         # macro arguments
         hargs['center'] = hargs['center'].replace(':',',')
@@ -108,6 +114,7 @@ class GoogleMapMacro(WikiMacroBase):
         #id = "tracgooglemap-%i-%s" % (GoogleMapMacro.nid, idhash.hexdigest())
         id = "tracgooglemap-%i" % GoogleMapMacro.nid
 
+
         html = tag.div(
                 [
         #        tag.script (
@@ -123,13 +130,29 @@ class GoogleMapMacro(WikiMacroBase):
                         var map = new GMap2(document.getElementById("%(id)s"));
                         map.addControl(new GLargeMapControl());
                         map.addControl(new GMapTypeControl());
-                        map.setCenter(new GLatLng(%(center)s), %(zoom)s);
-                      }
-                    } );
+                        if ("%(center)s") {
+                            map.setCenter(new GLatLng(%(center)s), %(zoom)s);
+                        }
+                        var geocoder = new GClientGeocoder();
+                        var address = "%(address)s";
+                        if (address) {
+                        geocoder.getLatLng(
+                          address,
+                          function(point) {
+                            if (!point) {
+                              //alert(address + " not found");
+                            } else {
+                              map.setCenter(point, %(zoom)s);
+                            }
+                          }
+                          )
+                        }
+                    }} );
 
                     $(window).unload( GUnload );
                     //]]>
-                    """ % { 'id':id, 'center':hargs['center'], 'zoom':hargs['zoom'] },
+                    """ % { 'id':id, 'center':hargs['center'],
+                        'zoom':hargs['zoom'], 'address':address },
                     type = "text/javascript"),
                 tag.div (
                     "",
