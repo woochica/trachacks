@@ -56,6 +56,9 @@ class GoogleStaticMapMacro(WikiMacroBase):
         # macro arguments
         hargs['center'] = hargs['center'].replace(':',',')
 
+        if 'markers' in hargs:
+            hargs['markers'] = hargs['markers'].replace(':',',')
+
         # Build URL
         src = _google_src + ('&'.join([ "%s=%s" % (escape(k),escape(v)) for k,v in hargs.iteritems() ]))
 
