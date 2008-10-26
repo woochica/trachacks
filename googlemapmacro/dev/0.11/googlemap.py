@@ -11,6 +11,7 @@ from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script
+from urllib import urlopen,quote_plus
 #import hashlib
 
 _allowed_args = ['center','zoom','size','address']
@@ -42,6 +43,18 @@ class GoogleMapMacro(WikiMacroBase):
                 scriptset.add(url)
         return (template, data, content_type)
 
+    def _get_coords(self, address):
+        response = None
+        url = r'http://maps.google.com/maps/geo?output=csv&q=' + quote_plus(address)
+        try:
+            response = urlopen(url).read()
+        except:
+            return
+        resp = response.split(',')
+        if len(resp) != 4 or not resp[0] == "200":
+            return
+        return resp[2:4]
+
 
     def expand_macro(self, formatter, name, content):
         args, kwargs = parse_args(content)
@@ -50,7 +63,6 @@ class GoogleMapMacro(WikiMacroBase):
 
         # HTML arguments used in Google Maps URL
         hargs = {
-            'center' : "50.805935,10.349121",
             'zoom'   : "6",
             'size'   : self.env.config.get('googlemap', 'default_size', "300x300"),
            # 'hl'     : self.env.config.get('googlemap', 'default_language', ""),
@@ -94,7 +106,12 @@ class GoogleMapMacro(WikiMacroBase):
                 ((address[0] == "'") and (address[-1] == "'"))):
                     address = address[1:-1]
             if not 'center' in kwargs:
-                hargs['center'] = ""
+                coord = self._get_coords(address)
+                if not coord or len(coord) != 2:
+                    raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
+                hargs['center'] = ",".join(coord)
+                hargs['address'] = "" # delete address when coordinates are resolved
+                address = ""
 
         # Correct separator for 'center' argument because comma isn't allowed in
         # macro arguments
