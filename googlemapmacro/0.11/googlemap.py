@@ -32,8 +32,7 @@ class GoogleMapMacro(WikiMacroBase):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
-        key = self.env.config.get('googlemap', 'api_key', None) or
-              self.env.config.get('googlestaticmap', 'api_key', None)
+        key = self.env.config.get('googlemap', 'api_key', None)
         if key:
             #add_script(req, r"http://maps.google.com/maps?file=api&v=2&key=%s" % key )
 
@@ -58,9 +57,8 @@ class GoogleMapMacro(WikiMacroBase):
            # 'hl'     : self.env.config.get('googlemap', 'default_language', ""),
             }
 
-        key = self.env.config.get('googlemap', 'api_key', None) or
-              self.env.config.get('googlestaticmap', 'api_key', None)
-        if not 'key' in hargs:
+        key = self.env.config.get('googlemap', 'api_key', None)
+        if not key:
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
 
 
