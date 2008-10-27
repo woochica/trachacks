@@ -80,7 +80,7 @@ class MySQL(DatabaseSetup):
         return True
 
     def db_string(self):
-        return 'mysql://${database_user}:${database_password}@localhost:${mysql_port}/${project}'
+        return 'mysql://${database_user}:${database_password}@localhost:${mysql_port}/%s${project}' % self.prefix
 
     def setup(self, **vars):
         """create and grant priveleges on a MySQL db"""
