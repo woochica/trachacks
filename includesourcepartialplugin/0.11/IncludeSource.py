@@ -107,7 +107,7 @@ class IncludeSourceMacro(WikiMacroBase):
                     file_name = file_name[1:]
                 file_name = file_name[l:]
             else:
-                raise TracError("Repository %r was not found." % reponame)
+                repos = self.env.get_repository()
                 
         rev = kwargs.get('rev', None)
         
