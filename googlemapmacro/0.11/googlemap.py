@@ -15,8 +15,9 @@ from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script
 #import hashlib
 
-_allowed_args = ('center','zoom','size','address')
-_supported_map_types = ('NORMAL','SATELLITE','HYBRID','PHYSICAL')
+_allowed_args        = ['center','zoom','size','address']
+_default_map_types   = ['NORMAL','SATELLITE','HYBRID']
+_supported_map_types = ['NORMAL','SATELLITE','HYBRID','PHYSICAL']
 
 _javascript_code = """
 //<![CDATA[
@@ -145,6 +146,13 @@ class GoogleMapMacro(WikiMacroBase):
                 types.insert(0, type)
             elif not type in _supported_map_types:
                 type = 'NORMAL'
+            # if types aren't set and a type is set which is supported 
+            # but not a default type:
+            if not 'types' in kwargs and type in _supported_map_types and not type in _default_map_types:
+                   # enable type (and all default types):
+                   types = _default_map_types + [type]
+                   types_str = ','.join(map(gtyp,types))
+
 
         if types_str:
             types_str = '[' + types_str + ']'
