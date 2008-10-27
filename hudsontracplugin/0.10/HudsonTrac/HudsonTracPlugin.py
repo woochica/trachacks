@@ -24,6 +24,8 @@ class HudsonTracPlugin(Component):
 		      'The url of the hudson main page to which the trac nav ' +
 		      'entry should link; if empty, no entry is created in ' +
 		      'the nav bar. This may be a relative url.')
+    disp_tab = BoolOption('hudson', 'display_in_new_tab', 'false',
+		          'Open hudson page in new tab/window')
 
     # INavigationContributor methods
 
@@ -32,7 +34,8 @@ class HudsonTracPlugin(Component):
 
     def get_navigation_items(self, req):
 	if self.nav_url:
-	    yield 'mainnav', 'builds', Markup('<a href="%s">Builds</a>' % self.nav_url)
+	    yield 'mainnav', 'builds', Markup('<a href="%s"%s>Builds</a>' % \
+			(self.nav_url, self.disp_tab and ' target="hudson"' or ''))
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
