@@ -50,10 +50,8 @@ class GoogleMapMacro(WikiMacroBase):
 
         # HTML arguments used in Google Maps URL
         hargs = {
-            'center' : "50.805935,10.349121",
-            'zoom'   : "6",
+            'zoom'   : self.env.config.get('googlemap', 'default_zoom', "6"),
             'size'   : self.env.config.get('googlemap', 'default_size', "300x300"),
-           # 'hl'     : self.env.config.get('googlemap', 'default_language', ""),
             }
 
         key = self.env.config.get('googlemap', 'api_key', None)
