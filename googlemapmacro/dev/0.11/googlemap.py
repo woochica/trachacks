@@ -12,9 +12,15 @@ from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script
 from urllib import urlopen,quote_plus
-#import hashlib
+import md5
+import re
 
 _allowed_args = ['center','zoom','size','address']
+
+_reWHITESPACES = re.compile(r'\s+')
+_reWHITEENDS   = re.compile(r'(?:^\s+|\s+$)')
+_reCOMMA       = re.compile(r',\s*')
+_reCOMMA       = re.compile(r',\s*')
 
 class GoogleMapMacro(WikiMacroBase):
     implements(IRequestFilter)
@@ -43,7 +49,35 @@ class GoogleMapMacro(WikiMacroBase):
                 scriptset.add(url)
         return (template, data, content_type)
 
+    def _format_address(self, address):
+        self.env.log.debug("address before = %s" % address)
+        address = address.replace(';',',')
+        if ((address.startswith('"') and address.endswith('"')) or
+            (address.startswith("'") and address.endswith("'"))):
+                address = address[1:-1]
+        address = _reWHITEENDS.sub('', address)
+        address = _reWHITESPACES.sub(' ', address)
+        address = _reCOMMA.sub(', ', address)
+        self.env.log.debug("address after  = %s" % address)
+        return address
+
     def _get_coords(self, address):
+        m = md5.new()
+        m.update(address)
+        hash = m.hexdigest()
+
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        #try:
+        cursor.execute("SELECT lon,lat FROM googlemapmacro WHERE id='%s'" % hash)
+        #except:
+        #    pass
+        #else:
+        for row in cursor:
+            if len(row) == 2:
+                self.env.log.debug("Reusing coordinates from database")
+                return ( str(row[0]), str(row[1]) )
+
         response = None
         url = r'http://maps.google.com/maps/geo?output=csv&q=' + quote_plus(address)
         try:
@@ -53,7 +87,18 @@ class GoogleMapMacro(WikiMacroBase):
         resp = response.split(',')
         if len(resp) != 4 or not resp[0] == "200":
             return
-        return resp[2:4]
+        lon, lat = resp[2:4]
+
+        #try:
+        cursor.execute(
+            "INSERT INTO googlemapmacro VALUES ('%s', %s, %s)" %
+            (hash, lon, lat))
+        db.commit()
+        self.env.log.debug("Saving coordinates to database")
+        #except:
+        #    pass
+
+        return (lon, lat)
 
 
     def expand_macro(self, formatter, name, content):
@@ -101,10 +146,7 @@ class GoogleMapMacro(WikiMacroBase):
 
         address = ""
         if 'address' in hargs:
-            address = hargs['address']
-            if (((address[0] == '"') and (address[-1] == '"')) or
-                ((address[0] == "'") and (address[-1] == "'"))):
-                    address = address[1:-1]
+            address = self._format_address(hargs['address'])
             if not 'center' in kwargs:
                 coord = self._get_coords(address)
                 if not coord or len(coord) != 2:
@@ -149,23 +191,7 @@ class GoogleMapMacro(WikiMacroBase):
                         var map = new GMap2(document.getElementById("%(id)s"));
                         map.addControl(new GLargeMapControl());
                         map.addControl(new GMapTypeControl());
-                        if ("%(center)s") {
-                            map.setCenter(new GLatLng(%(center)s), %(zoom)s);
-                        }
-                        var geocoder = new GClientGeocoder();
-                        var address = "%(address)s";
-                        if (address) {
-                        geocoder.getLatLng(
-                          address,
-                          function(point) {
-                            if (!point) {
-                              //alert(address + " not found");
-                            } else {
-                              map.setCenter(point, %(zoom)s);
-                            }
-                          }
-                          )
-                        }
+                        map.setCenter(new GLatLng(%(center)s), %(zoom)s);
                     }} );
 
                     $(window).unload( GUnload );
