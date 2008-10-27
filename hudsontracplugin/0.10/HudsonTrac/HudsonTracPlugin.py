@@ -6,11 +6,15 @@ A plugin to display hudson results in the timeline and provide a nav-link
 import time
 import calendar
 import feedparser
+from datetime import datetime
 from trac.core import *
 from trac.config import Option, BoolOption
 from trac.util import Markup, format_datetime
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
-from trac.Timeline import ITimelineEventProvider
+try:
+    from trac.timeline.api import ITimelineEventProvider
+except ImportError:
+    from trac.Timeline import ITimelineEventProvider
 
 class HudsonTracPlugin(Component):
     implements(INavigationContributor, ITimelineEventProvider, ITemplateProvider)
@@ -53,6 +57,11 @@ class HudsonTracPlugin(Component):
             yield ('build', 'Hudson Builds')
 
     def get_timeline_events(self, req, start, stop, filters):
+	if isinstance(start, datetime): # Trac>=0.11
+        	from trac.util.datefmt import to_timestamp
+        	start = to_timestamp(start)
+        	stop = to_timestamp(stop)
+
         if 'build' in filters:
             add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
