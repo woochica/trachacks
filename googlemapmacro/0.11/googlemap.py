@@ -108,6 +108,11 @@ class GoogleMapMacro(WikiMacroBase):
 
         #if 'title' in kwargs:
         #    title = kwargs['title']
+        type = 'NORMAL'
+        if 'type' in kwargs:
+            type = kwargs['type'].upper()
+            if not type in ('NORMAL','SATELLITE','HYBRID','PHYSICAL'):
+                type = 'NORMAL'
 
         # Produce unique id for div tag
         GoogleMapMacro.nid += 1
@@ -132,6 +137,8 @@ class GoogleMapMacro(WikiMacroBase):
                         var map = new GMap2(document.getElementById("%(id)s"));
                         map.addControl(new GLargeMapControl());
                         map.addControl(new GMapTypeControl());
+                        map.addMapType(G_%(type)s_MAP);
+                        map.setMapType(G_%(type)s_MAP);
                         if ("%(center)s") {
                             map.setCenter(new GLatLng(%(center)s), %(zoom)s);
                         }
@@ -154,7 +161,8 @@ class GoogleMapMacro(WikiMacroBase):
                     $(window).unload( GUnload );
                     //]]>
                     """ % { 'id':id, 'center':hargs['center'],
-                        'zoom':hargs['zoom'], 'address':address },
+                        'zoom':hargs['zoom'], 'address':address,
+                        'type':type },
                     type = "text/javascript"),
                 tag.div (
                     "",
