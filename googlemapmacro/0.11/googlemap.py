@@ -11,6 +11,7 @@ from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script
+from string import upper,strip
 #import hashlib
 
 _allowed_args = ('center','zoom','size','address')
@@ -76,7 +77,7 @@ class GoogleMapMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args(content)
-        if len(args) > 0 and not 'address' in kwargs:
+        if len(largs) > 0 and not 'address' in kwargs:
             kwargs['address'] = largs[0]
 
         # Use default values if needed
@@ -111,7 +112,7 @@ class GoogleMapMacro(WikiMacroBase):
         # Format address
         address = ""
         if 'address' in kwargs:
-            address = kwargs['address'].strip
+            address = strip(kwargs['address'])
             if (((address[0] == '"') and (address[-1] == '"')) or
                 ((address[0] == "'") and (address[-1] == "'"))):
                     address = address[1:-1]
@@ -125,7 +126,7 @@ class GoogleMapMacro(WikiMacroBase):
         # Set initial map type
         type = 'NORMAL'
         if 'type' in kwargs:
-            type = kwargs['type'].upper()
+            type = upper(kwargs['type'])
             if not type in _supported_map_types:
                 type = 'NORMAL'
 
