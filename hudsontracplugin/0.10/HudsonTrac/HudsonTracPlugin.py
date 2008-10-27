@@ -6,6 +6,7 @@ A plugin to display hudson results in the timeline and provide a nav-link
 import time
 import calendar
 import feedparser
+import urllib
 from datetime import datetime
 from trac.core import *
 from trac.config import Option, BoolOption
@@ -89,7 +90,15 @@ class HudsonTracPlugin(Component):
 
                 href = entry.link
                 title = entry.title
-                comment = message + ' at ' + format_datetime(completed)
+
+                url = href + '/api/json'
+                line = urllib.urlopen(url).readline()
+                json = eval(line.replace('false', 'False').replace('true','True').replace('null', 'None'))
+
+                if json['description'] == None:
+                    comment = message + ' at ' + format_datetime(completed)
+                else:
+                    comment = unicode(json['description'], 'utf-8') + ' at ' + format_datetime(completed)
 
                 yield kind, href, title, completed, None, comment
 
