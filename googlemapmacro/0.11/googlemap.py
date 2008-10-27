@@ -1,5 +1,6 @@
 """ Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
-    v0.1 - Oct 2008
+    $Id$
+
     This is Free Software under the GPL v3!
 """ 
 from genshi.builder import Element,tag
