@@ -13,7 +13,39 @@ from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script
 #import hashlib
 
-_allowed_args = ['center','zoom','size','address']
+_allowed_args = ('center','zoom','size','address')
+
+_javascript_code = """
+//<![CDATA[
+$(document).ready( function () {
+  if (GBrowserIsCompatible()) {
+    var map = new GMap2(document.getElementById("%(id)s"));
+    map.addControl(new GLargeMapControl());
+    map.addControl(new GMapTypeControl());
+    map.addMapType(G_%(type)s_MAP);
+    map.setMapType(G_%(type)s_MAP);
+    if ("%(center)s") {
+        map.setCenter(new GLatLng(%(center)s), %(zoom)s);
+    }
+    var geocoder = new GClientGeocoder();
+    var address = "%(address)s";
+    if (address) {
+    geocoder.getLatLng(
+      address,
+      function(point) {
+        if (!point) {
+          //alert(address + " not found");
+        } else {
+          map.setCenter(point, %(zoom)s);
+        }
+      }
+      )
+    }
+}} );
+
+$(window).unload( GUnload );
+//]]>
+"""
 
 class GoogleMapMacro(WikiMacroBase):
     implements(IRequestFilter)
@@ -31,8 +63,6 @@ class GoogleMapMacro(WikiMacroBase):
     def post_process_request(self, req, template, data, content_type):
         key = self.env.config.get('googlemap', 'api_key', None)
         if key:
-            #add_script(req, r"http://maps.google.com/maps?file=api&v=2&key=%s" % key )
-
             # add_script hack to support external script files:
             url = r"http://maps.google.com/maps?file=api&v=2&key=%s" % key
             scriptset = req.chrome.setdefault('scriptset', set())
@@ -44,9 +74,9 @@ class GoogleMapMacro(WikiMacroBase):
 
 
     def expand_macro(self, formatter, name, content):
-        args, kwargs = parse_args(content)
+        largs, kwargs = parse_args(content)
         if len(args) > 0 and not 'address' in kwargs:
-            kwargs['address'] = args[0]
+            kwargs['address'] = largs[0]
 
         # HTML arguments used in Google Maps URL
         hargs = {
@@ -57,7 +87,6 @@ class GoogleMapMacro(WikiMacroBase):
         key = self.env.config.get('googlemap', 'api_key', None)
         if not key:
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
-
 
         ## Delete default zoom if user provides 'span' argument:
         #if 'span' in kwargs:
@@ -98,14 +127,6 @@ class GoogleMapMacro(WikiMacroBase):
         # macro arguments
         hargs['center'] = hargs['center'].replace(':',',')
 
-        # Build URL
-        #src = _google_src + ('&'.join([ "%s=%s" % (escape(k),escape(v)) for k,v in hargs.iteritems() ]))
-
-        #title = alt = "Google Static Map at %s" % hargs['center']
-        # TODO: provide sane alternative text and image title
-
-        #if 'title' in kwargs:
-        #    title = kwargs['title']
         type = 'NORMAL'
         if 'type' in kwargs:
             type = kwargs['type'].upper()
@@ -114,60 +135,23 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Produce unique id for div tag
         GoogleMapMacro.nid += 1
-        #idhash = hashlib.md5()
-        #idhash.update( content )
-        #id = "tracgooglemap-%i-%s" % (GoogleMapMacro.nid, idhash.hexdigest())
         id = "tracgooglemap-%i" % GoogleMapMacro.nid
 
-
+        # put everything in a tidy div
         html = tag.div(
                 [
-        #        tag.script (
-        #            "",
-        #            src  = ( r"http://maps.google.com/maps?file=api&v=2&key=%s" % hargs['key'] ),
-        #            type = "text/javascript",
-        #        ),
-                tag.script (
-                    """
-                    //<![CDATA[
-                    $(document).ready( function () {
-                      if (GBrowserIsCompatible()) {
-                        var map = new GMap2(document.getElementById("%(id)s"));
-                        map.addControl(new GLargeMapControl());
-                        map.addControl(new GMapTypeControl());
-                        map.addMapType(G_%(type)s_MAP);
-                        map.setMapType(G_%(type)s_MAP);
-                        if ("%(center)s") {
-                            map.setCenter(new GLatLng(%(center)s), %(zoom)s);
-                        }
-                        var geocoder = new GClientGeocoder();
-                        var address = "%(address)s";
-                        if (address) {
-                        geocoder.getLatLng(
-                          address,
-                          function(point) {
-                            if (!point) {
-                              //alert(address + " not found");
-                            } else {
-                              map.setCenter(point, %(zoom)s);
-                            }
-                          }
-                          )
-                        }
-                    }} );
-
-                    $(window).unload( GUnload );
-                    //]]>
-                    """ % { 'id':id, 'center':hargs['center'],
+                    # Initialization script for this map
+                    tag.script ( _javascript_code % { 'id':id, 'center':hargs['center'],
                         'zoom':hargs['zoom'], 'address':address,
                         'type':type },
-                    type = "text/javascript"),
-                tag.div (
-                    "",
-                    id=id,
-                    style="width: %s; height: %s" % (width,height),
-                )
-                ],
+                        type = "text/javascript"),
+                    # Canvas for this map
+                    tag.div (
+                        "",
+                        id=id,
+                        style="width: %s; height: %s" % (width,height),
+                        )
+                    ],
                 class_ = "tracgooglemaps",
                 );
 
