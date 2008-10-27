@@ -14,6 +14,7 @@ from trac.web.chrome import add_script
 #import hashlib
 
 _allowed_args = ('center','zoom','size','address')
+_supported_map_types = ('NORMAL','SATELLITE','HYBRID','PHYSICAL')
 
 _javascript_code = """
 //<![CDATA[
@@ -78,59 +79,54 @@ class GoogleMapMacro(WikiMacroBase):
         if len(args) > 0 and not 'address' in kwargs:
             kwargs['address'] = largs[0]
 
-        # HTML arguments used in Google Maps URL
-        hargs = {
-            'zoom'   : self.env.config.get('googlemap', 'default_zoom', "6"),
-            'size'   : self.env.config.get('googlemap', 'default_size', "300x300"),
-            }
+        # Use default values if needed
+        if not 'zoom' in kwargs:
+            kwargs['zoom'] = self.env.config.get('googlemap', 'default_zoom', "6"),
+        if not 'size' in kwargs:
+            kwargs['size'] = self.env.config.get('googlemap', 'default_size', "6"),
 
+        # Check if Google API key is set (if not the Google Map script file
+        # wasn't inserted by `post_process_request` and the map wont load)
         key = self.env.config.get('googlemap', 'api_key', None)
         if not key:
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
 
-        ## Delete default zoom if user provides 'span' argument:
-        #if 'span' in kwargs:
-        #    del hargs['zoom']
-
-        # Copy given macro arguments to the HTML arguments
-        for k,v in kwargs.iteritems():
-            if k in _allowed_args:
-                hargs[k] = v
-
         # Get height and width
-        (width,height) = hargs['size'].split('x')
+        (width,height) = kwargs['size'].split('x')
         width = int(width)
         height = int(height)
         if height < 1:
-            height = 1
+            height = "1px"
         elif height > 640:
-            height = 640
+            height = "640px"
         else:
             height = str(height) + "px"
         if width < 1:
-            width = 1
+            width = "1px"
         elif width > 640:
-            width = 640
+            width = "640px"
         else:
             width = str(width) + "px"
 
+        # Format address
         address = ""
-        if 'address' in hargs:
-            address = hargs['address']
+        if 'address' in kwargs:
+            address = kwargs['address'].strip
             if (((address[0] == '"') and (address[-1] == '"')) or
                 ((address[0] == "'") and (address[-1] == "'"))):
                     address = address[1:-1]
             if not 'center' in kwargs:
-                hargs['center'] = ""
+                kwargs['center'] = ""
 
         # Correct separator for 'center' argument because comma isn't allowed in
         # macro arguments
-        hargs['center'] = hargs['center'].replace(':',',')
+        kwargs['center'] = kwargs['center'].replace(':',',')
 
+        # Set initial map type
         type = 'NORMAL'
         if 'type' in kwargs:
             type = kwargs['type'].upper()
-            if not type in ('NORMAL','SATELLITE','HYBRID','PHYSICAL'):
+            if not type in _supported_map_types:
                 type = 'NORMAL'
 
         # Produce unique id for div tag
@@ -141,8 +137,9 @@ class GoogleMapMacro(WikiMacroBase):
         html = tag.div(
                 [
                     # Initialization script for this map
-                    tag.script ( _javascript_code % { 'id':id, 'center':hargs['center'],
-                        'zoom':hargs['zoom'], 'address':address,
+                    tag.script ( _javascript_code % { 'id':id,
+                        'center':kwargs['center'],
+                        'zoom':kwargs['zoom'], 'address':address,
                         'type':type },
                         type = "text/javascript"),
                     # Canvas for this map
