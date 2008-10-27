@@ -130,7 +130,7 @@ class GoogleMapMacro(WikiMacroBase):
         # Set initial map type
         type = 'NORMAL'
         types = ()
-        types_str = 'G_DEFAULT_MAP_TYPES'
+        types_str = None
         def gtyp (stype):
             return "G_%s_MAP" % stype
         if 'types' in kwargs:
@@ -146,8 +146,10 @@ class GoogleMapMacro(WikiMacroBase):
             elif not type in _supported_map_types:
                 type = 'NORMAL'
 
-        if 'types' in kwargs:
+        if types_str:
             types_str = '[' + types_str + ']'
+        else:
+            types_str = 'G_DEFAULT_MAP_TYPES'
 
         # Produce unique id for div tag
         GoogleMapMacro.nid += 1
