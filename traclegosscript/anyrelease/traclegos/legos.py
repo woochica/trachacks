@@ -138,6 +138,7 @@ class TracLegos(object):
         
         # check for missing variables
         missing = templates.missing(vars)
+        missing.update(set(optdict.keys()).difference(vars.keys()))
         if missing:
 
             # use default repo fields if they are missing
@@ -156,6 +157,9 @@ class TracLegos(object):
                 paste_template._read_vars = dict2vars(optdict) # XXX bad touch
                 paste_template.check_vars(vars, command)
         
+
+        # create the database
+        database.setup(**vars)
         
         # create the trac environment
         options = templates.options_tuples(vars)

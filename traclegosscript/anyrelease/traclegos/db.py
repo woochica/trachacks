@@ -71,9 +71,13 @@ class MySQL(DatabaseSetup):
     def enabled(self):
         try:
             subprocess.call(['mysql', '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            return True
         except OSError:
             return False
+        try:
+            import MySQLdb
+        except ImportError:
+            return False
+        return True
 
     def db_string(self):
         return 'mysql://${database_user}:${database_password}@localhost:${mysql_port}/${project}'
