@@ -1,5 +1,6 @@
 """ Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
     $Id$
+    $HeadURL$
 
     This is Free Software under the GPL v3!
 """ 
@@ -21,10 +22,12 @@ _javascript_code = """
 //<![CDATA[
 $(document).ready( function () {
   if (GBrowserIsCompatible()) {
-    var map = new GMap2(document.getElementById("%(id)s"));
+    var map = new GMap2(document.getElementById("%(id)s"),{
+     //   size: { width:%(width)s, height:%(height)s },
+        mapTypes: %(types_str)s
+    });
     map.addControl(new GLargeMapControl());
     map.addControl(new GMapTypeControl());
-    map.addMapType(G_%(type)s_MAP);
     map.setMapType(G_%(type)s_MAP);
     if ("%(center)s") {
         map.setCenter(new GLatLng(%(center)s), %(zoom)s);
@@ -94,20 +97,20 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Get height and width
         (width,height) = kwargs['size'].split('x')
-        width = int(width)
+        width  = int(width)
         height = int(height)
         if height < 1:
-            height = "1px"
+            height = "1"
         elif height > 640:
-            height = "640px"
+            height = "640"
         else:
-            height = str(height) + "px"
+            height = str(height)
         if width < 1:
-            width = "1px"
+            width = "1"
         elif width > 640:
-            width = "640px"
+            width = "640"
         else:
-            width = str(width) + "px"
+            width = str(width)
 
         # Format address
         address = ""
@@ -123,12 +126,28 @@ class GoogleMapMacro(WikiMacroBase):
         # macro arguments
         kwargs['center'] = unicode(kwargs['center']).replace(':',',')
 
+
         # Set initial map type
         type = 'NORMAL'
+        types = ()
+        types_str = 'G_DEFAULT_MAP_TYPES'
+        def gtyp (stype):
+            return "G_%s_MAP" % stype
+        if 'types' in kwargs:
+            types = unicode(kwargs['types']).upper().split(':')
+            types_str = ','.join(map(gtyp,types))
+            type = types[0]
+
         if 'type' in kwargs:
             type = unicode(kwargs['type']).upper()
-            if not type in _supported_map_types:
+            if 'types' in kwargs and not type in types:
+                types_str += ',' + type
+                types.insert(0, type)
+            elif not type in _supported_map_types:
                 type = 'NORMAL'
+
+        if 'types' in kwargs:
+            types_str = '[' + types_str + ']'
 
         # Produce unique id for div tag
         GoogleMapMacro.nid += 1
@@ -141,13 +160,14 @@ class GoogleMapMacro(WikiMacroBase):
                     tag.script ( _javascript_code % { 'id':id,
                         'center':kwargs['center'],
                         'zoom':kwargs['zoom'], 'address':address,
-                        'type':type },
+                        'type':type, 'width':width, 'height':height,
+                        'types_str':types_str},
                         type = "text/javascript"),
                     # Canvas for this map
                     tag.div (
                         "",
                         id=id,
-                        style="width: %s; height: %s" % (width,height),
+                        style="width: %spx; height: %spx" % (width,height),
                         )
                     ],
                 class_ = "tracgooglemaps",
