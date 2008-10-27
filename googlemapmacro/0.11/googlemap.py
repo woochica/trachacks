@@ -11,7 +11,6 @@ from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script
-from string import upper,strip
 #import hashlib
 
 _allowed_args = ('center','zoom','size','address')
@@ -112,7 +111,7 @@ class GoogleMapMacro(WikiMacroBase):
         # Format address
         address = ""
         if 'address' in kwargs:
-            address = strip(kwargs['address'])
+            address = unicode(kwargs['address']).strip()
             if (((address[0] == '"') and (address[-1] == '"')) or
                 ((address[0] == "'") and (address[-1] == "'"))):
                     address = address[1:-1]
@@ -121,12 +120,12 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Correct separator for 'center' argument because comma isn't allowed in
         # macro arguments
-        kwargs['center'] = kwargs['center'].replace(':',',')
+        kwargs['center'] = unicode(kwargs['center']).replace(':',',')
 
         # Set initial map type
         type = 'NORMAL'
         if 'type' in kwargs:
-            type = upper(kwargs['type'])
+            type = unicode(kwargs['type']).upper()
             if not type in _supported_map_types:
                 type = 'NORMAL'
 
