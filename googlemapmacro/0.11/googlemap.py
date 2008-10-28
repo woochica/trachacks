@@ -19,6 +19,9 @@ _allowed_args        = ['center','zoom','size','address']
 _default_map_types   = ['NORMAL','SATELLITE','HYBRID']
 _supported_map_types = ['NORMAL','SATELLITE','HYBRID','PHYSICAL']
 
+_supported_controls = [ 'LargeMap', 'SmallMap', 'SmallZoom', 'Scale', \
+                        'MapType', 'HierarchicalMapType', 'OverviewMap' ]
+
 _javascript_code = """
 //<![CDATA[
 $(document).ready( function () {
@@ -27,8 +30,7 @@ $(document).ready( function () {
      //   size: { width:%(width)s, height:%(height)s },
         mapTypes: %(types_str)s
     });
-    map.addControl(new GLargeMapControl());
-    map.addControl(new GMapTypeControl());
+    %(controls_str)s
     map.setMapType(G_%(type)s_MAP);
     if ("%(center)s") {
         map.setCenter(new GLatLng(%(center)s), %(zoom)s);
@@ -130,13 +132,16 @@ class GoogleMapMacro(WikiMacroBase):
         # macro arguments
         kwargs['center'] = unicode(kwargs['center']).replace(':',',')
 
+        # Internal formatting functions:
+        def gtyp (stype):
+            return "G_%s_MAP" % stype
+        def gcontrol (control):
+            return "map.addControl(new G%sControl());\n" % control
 
         # Set initial map type
         type = 'NORMAL'
-        types = ()
+        types = []
         types_str = None
-        def gtyp (stype):
-            return "G_%s_MAP" % stype
         if 'types' in kwargs:
             types = unicode(kwargs['types']).upper().split(':')
             types_str = ','.join(map(gtyp,types))
@@ -156,11 +161,21 @@ class GoogleMapMacro(WikiMacroBase):
                    types = _default_map_types + [type]
                    types_str = ','.join(map(gtyp,types))
 
-
         if types_str:
             types_str = '[' + types_str + ']'
         else:
             types_str = 'G_DEFAULT_MAP_TYPES'
+
+        # Produce controls
+        control_str = ""
+        controls = ['LargeMap','MapType']
+        if 'controls' in kwargs:
+            controls = []
+            for control in unicode(kwargs['controls']).split(':'):
+                if control in _supported_controls:
+                    controls.append(control)
+        controls_str = ''.join(map(gcontrol,controls))
+
 
         # Produce unique id for div tag
         GoogleMapMacro.nid += 1
@@ -174,7 +189,7 @@ class GoogleMapMacro(WikiMacroBase):
                         'center':kwargs['center'],
                         'zoom':kwargs['zoom'], 'address':address,
                         'type':type, 'width':width, 'height':height,
-                        'types_str':types_str},
+                        'types_str':types_str, 'controls_str':controls_str },
                         type = "text/javascript"),
                     # Canvas for this map
                     tag.div (
