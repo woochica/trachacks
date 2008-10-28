@@ -159,15 +159,6 @@ class GoogleMapMacro(WikiMacroBase):
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
 
 
-        ## Delete default zoom if user provides 'span' argument:
-        #if 'span' in kwargs:
-        #    del hargs['zoom']
-
-        # Copy given macro arguments to the HTML arguments
-        for k,v in kwargs.iteritems():
-            if k in _allowed_args:
-                hargs[k] = v
-
         # Get height and width
         (width,height) = kwargs['size'].split('x')
         width  = int(width)
