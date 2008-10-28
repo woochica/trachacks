@@ -24,8 +24,11 @@ _reCOORDS      = re.compile(r'^\d+(?:\.\d*)?:\d+(?:\.\d*)?$')
 #_allowed_args        = ['center','zoom','size','address']
 _default_map_types   = ['NORMAL','SATELLITE','HYBRID']
 _supported_map_types = ['NORMAL','SATELLITE','HYBRID','PHYSICAL']
-_supported_controls  = [ 'LargeMap', 'SmallMap', 'SmallZoom', 'Scale', \
-                        'MapType', 'HierarchicalMapType', 'OverviewMap' ]
+_supported_controls  = {}
+for control in ( 'LargeMap', 'SmallMap', 'SmallZoom', 'Scale', \
+        'MapType', 'HierarchicalMapType', 'OverviewMap' ):
+    _supported_controls[control.upper()] = control
+
 _css_units = ('em','ex','px','in','cm','mm','pt','pc')
 
 _accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16, 16)
@@ -280,9 +283,9 @@ class GoogleMapMacro(WikiMacroBase):
         controls = ['LargeMap','MapType']
         if 'controls' in kwargs:
             controls = []
-            for control in unicode(kwargs['controls']).split(':'):
+            for control in unicode(kwargs['controls']).upper().split(':'):
                 if control in _supported_controls:
-                    controls.append(control)
+                    controls.append( _supported_controls[control] )
         controls_str = ''.join(map(gcontrol,controls))
 
 
