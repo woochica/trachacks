@@ -31,7 +31,7 @@ _javascript_code = """
 $(document).ready( function () {
   if (GBrowserIsCompatible()) {
     var map = new GMap2(document.getElementById("%(id)s"),{
-     //   size: { width:%(width)s, height:%(height)s },
+        size: new GSize(%(width)s, %(height)s),
         mapTypes: %(types_str)s
     });
     %(controls_str)s
@@ -148,7 +148,7 @@ class GoogleMapMacro(WikiMacroBase):
 
         #try:
         cursor.execute(
-            "INSERT INTO googlemapmacro (hash, lon, lat) VALUES ('%s', %s, %s);" %
+            "INSERT INTO googlemapmacro (id, lon, lat) VALUES ('%s', %s, %s);" %
             (hash, lon, lat))
         db.commit()
         self.env.log.debug("Saving coordinates to database")
@@ -165,9 +165,9 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Use default values if needed
         if not 'zoom' in kwargs:
-            kwargs['zoom'] = self.env.config.get('googlemap', 'default_zoom', "6"),
+            kwargs['zoom'] = self.env.config.get('googlemap', 'default_zoom', "6")
         if not 'size' in kwargs:
-            kwargs['size'] = self.env.config.get('googlemap', 'default_size', "6"),
+            kwargs['size'] = self.env.config.get('googlemap', 'default_size', "300x300")
 
         # Check if Google API key is set (if not the Google Map script file
         # wasn't inserted by `post_process_request` and the map wont load)
@@ -176,21 +176,9 @@ class GoogleMapMacro(WikiMacroBase):
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
 
         # Get height and width
-        (width,height) = kwargs['size'].split('x')
-        width  = int(width)
-        height = int(height)
-        if height < 1:
-            height = "1"
-        elif height > 640:
-            height = "640"
-        else:
-            height = str(height)
-        if width < 1:
-            width = "1"
-        elif width > 640:
-            width = "640"
-        else:
-            width = str(width)
+        (width,height) = unicode(kwargs['size']).split('x')
+        width  = str( int( width  ) )
+        height = str( int( height ) )
 
         # Format address
         address = ""
