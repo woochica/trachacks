@@ -112,8 +112,9 @@ class TracLegos(object):
         vars.update(_vars)
         vars['project'] = project        
 
-        if database is None:
-            database = SQLite() # TODO: db stuff; 
+        # XXX prohibits use of dbstring in templates :(
+        if database is None: 
+            database = SQLite() 
 
         ### munge configuration
 
@@ -121,7 +122,7 @@ class TracLegos(object):
         if not isinstance(templates, ProjectTemplates):
             if repository:
                 templates.append(repository.config())
-            templates.append({'trac': {'database': database.db_string() }})
+            templates.append(database.config())
             templates = self.project_templates(templates)
 
         # determine the vars

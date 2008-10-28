@@ -28,13 +28,16 @@ class DatabaseSetup(object):
         """
         return False
 
+    def config(self):
+        """return template form of the db_string"""
+        # XXX maybe this should just replace db_string?
+        return { 'trac': { 'database': self.db_string() } }
+
     def db_string(self):
-        """returns the string as needed for trac.ini's
+        """returns the string as needed for trac.ini:
         
         [trac]
         database = sqlite:db/trac.db
-
-        parameter
         """
         # XXX could return more general options a la repository.py
         raise NotImplementedError

@@ -4,9 +4,11 @@ TTW view for project creation and serving trac
 
 import cgi
 import os
+import string
 import sys
 import tempfile
 
+from genshi.core import Markup
 from genshi.template import TemplateLoader
 from trac.web.main import dispatch_request
 from traclegos.config import ConfigMunger
@@ -14,6 +16,8 @@ from traclegos.db import available_databases
 from traclegos.legos import site_configuration
 from traclegos.legos import traclegos_factory
 from traclegos.legos import TracLegos
+from traclegos.pastescript.string import PasteScriptStringTemplate
+from traclegos.pastescript.var import vars2dict, dict2vars
 from traclegos.project import project_dict
 from traclegos.repository import available_repositories
 from webob import Request, Response, exc
@@ -219,7 +223,21 @@ class View(object):
                 'excluded_fields': dict((key, value.keys()) for key, value in self.legos.repository_fields(project).items()),
                 'databases': [ self.databases[name] for name in self.available_databases ] } 
 
-        # TODO: databases (and some day mailing lists)
+        # get the database strings
+        data['db_string'] = {}
+        for database in data['databases']:
+            dbstring = database.db_string()
+            dbstring = string.Template(dbstring).safe_substitute(**self.projects[project]['vars'])
+            template = PasteScriptStringTemplate(dbstring)
+            missing = template.missing()
+            if missing:
+                vars = vars2dict(None, *database.options)
+                missing = dict([(i, 
+                                 '<input type="text" name="%s-%s" value="%s"/>' % (database.name, i, getattr(vars.get(i), 'default', '')))
+                                for i in missing])
+                dbstring = string.Template(dbstring).substitute(**missing)
+                dbstring = Markup(dbstring)
+            data['db_string'][database.name] = dbstring
         return data
 
     def validateProjectDetails(self, req):
@@ -231,7 +249,7 @@ class View(object):
         if project_data is None:
             errors.append('Project not found')
 
-        # set information
+        # repository information
         project_data['repository'] = None
         repository = req.POST.get('repository')
         if repository in self.available_repositories:
@@ -241,6 +259,12 @@ class View(object):
             project_data['repository'] = self.repositories[repository]
             project_data['vars'].update(args)
             project_data['vars'].update(self.legos.repository_fields(project).get(repository, {}))
+
+        # database information
+        project_data['database'] = None
+        database = req.POST.get('database')
+        if database in self.available_databases:
+            project_data['database'] = self.databases[database]
 
         return errors
 

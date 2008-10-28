@@ -55,7 +55,7 @@
 	   name="database"
 	   py:attrs="{'checked': not index and 'true' or None }"
 	   value="${database.name}"/>
-    ${database.description}
+    ${database.description}: <tt>${db_string[database.name]}</tt>
   </p>
   
 </div>
