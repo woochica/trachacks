@@ -87,8 +87,6 @@ class TracSchedulerModule(Component):
         if poll_interval < worker_interval + 1:
             poll_interval = worker_interval + 1
 
-        poll_interval = 100000
-
         self.scheduler = Scheduler(self, poll_interval, worker_interval)
         self.scheduler.setDaemon(True)
         self.scheduler.start()
