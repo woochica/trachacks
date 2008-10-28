@@ -26,6 +26,8 @@ _supported_map_types = ['NORMAL','SATELLITE','HYBRID','PHYSICAL']
 _supported_controls  = [ 'LargeMap', 'SmallMap', 'SmallZoom', 'Scale', \
                         'MapType', 'HierarchicalMapType', 'OverviewMap' ]
 
+_accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16)
+
 _javascript_code = """
 //<![CDATA[
 $(document).ready( function () {
@@ -204,8 +206,8 @@ class GoogleMapMacro(WikiMacroBase):
                 #    raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
                 center = ",".join(coord[0:2])
                 address = ""
-                #if not 'zoom' in kwargs:
-                #    zoom = coord[2]
+                if not 'zoom' in kwargs:
+                    zoom = _accuracy_to_zoom[ int( coord[2] ) ]
 
         # Internal formatting functions:
         def gtyp (stype):
