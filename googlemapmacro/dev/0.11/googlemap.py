@@ -66,10 +66,13 @@ class GoogleMapMacro(WikiMacroBase):
     nid  = 0
     dbinit = 0
 
-    def __init__:
+    def __init__(self):
+        # If geocoding is done on the server side
+        self.geocoding = unicode(self.env.config.get('googlemap', 'geocoding',
+            "client")).lower()
         # Create DB table if it not exists.
-        # Execute only once.
-        if not GoogleMapMacro.dbinit:
+        # but execute only once.
+        if self.geocoding == 'server' and not GoogleMapMacro.dbinit:
             self.env.log.debug("Creating DB table (if not already exists).")
             db = self.env.get_db_cnx()
             cursor = db.cursor()
@@ -123,7 +126,7 @@ class GoogleMapMacro(WikiMacroBase):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         #try:
-        cursor.execute("SELECT lon,lat FROM googlemapmacro WHERE id='%s'" % hash)
+        cursor.execute("SELECT lon,lat FROM googlemapmacro WHERE id='%s';" % hash)
         #except:
         #    pass
         #else:
@@ -145,7 +148,7 @@ class GoogleMapMacro(WikiMacroBase):
 
         #try:
         cursor.execute(
-            "INSERT INTO googlemapmacro (hash, lon, lat) VALUES ('%s', %s, %s)" %
+            "INSERT INTO googlemapmacro (hash, lon, lat) VALUES ('%s', %s, %s);" %
             (hash, lon, lat))
         db.commit()
         self.env.log.debug("Saving coordinates to database")
@@ -191,19 +194,22 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Format address
         address = ""
-        if 'address' in hargs:
-            address = self._format_address(hargs['address'])
-            if not 'center' in kwargs:
+        if 'address' in kwargs:
+            address = self._format_address(kwargs['address'])
+            if self.geocoding == 'server':
                 coord = self._get_coords(address)
                 if not coord or len(coord) != 2:
                     raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
-                hargs['center'] = ",".join(coord)
-                hargs['address'] = "" # delete address when coordinates are resolved
+                kwargs['center'] = ",".join(coord)
+                kwargs['address'] = "" # delete address when coordinates are resolved
                 address = ""
 
         # Correct separator for 'center' argument because comma isn't allowed in
         # macro arguments
-        kwargs['center'] = unicode(kwargs['center']).replace(':',',')
+        if 'center' in kwargs:
+            kwargs['center'] = unicode(kwargs['center']).replace(':',',')
+        else:
+            kwargs['center'] = u''
 
         # Internal formatting functions:
         def gtyp (stype):
