@@ -18,8 +18,6 @@ import md5
 import re
 
 _reWHITESPACES = re.compile(r'\s+')
-_reWHITEENDS   = re.compile(r'(?:^\s+|\s+$)')
-_reCOMMA       = re.compile(r',\s*')
 _reCOMMA       = re.compile(r',\s*')
 
 _allowed_args        = ['center','zoom','size','address']
@@ -91,11 +89,10 @@ class GoogleMapMacro(WikiMacroBase):
 
     def _format_address(self, address):
         self.env.log.debug("address before = %s" % address)
-        address = address.replace(';',',')
+        address = unicode(address).strip().replace(';',',')
         if ((address.startswith('"') and address.endswith('"')) or
             (address.startswith("'") and address.endswith("'"))):
                 address = address[1:-1]
-        address = _reWHITEENDS.sub('', address)
         address = _reWHITESPACES.sub(' ', address)
         address = _reCOMMA.sub(', ', address)
         self.env.log.debug("address after  = %s" % address)
@@ -131,7 +128,7 @@ class GoogleMapMacro(WikiMacroBase):
 
         #try:
         cursor.execute(
-            "INSERT INTO googlemapmacro VALUES ('%s', %s, %s)" %
+            "INSERT INTO googlemapmacro (hash, lon, lat) VALUES ('%s', %s, %s)" %
             (hash, lon, lat))
         db.commit()
         self.env.log.debug("Saving coordinates to database")
@@ -157,7 +154,6 @@ class GoogleMapMacro(WikiMacroBase):
         key = self.env.config.get('googlemap', 'api_key', None)
         if not key:
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
-
 
         # Get height and width
         (width,height) = kwargs['size'].split('x')
