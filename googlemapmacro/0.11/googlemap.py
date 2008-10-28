@@ -27,7 +27,7 @@ _supported_controls  = [ 'LargeMap', 'SmallMap', 'SmallZoom', 'Scale', \
                         'MapType', 'HierarchicalMapType', 'OverviewMap' ]
 _css_units = ('em','ex','px','in','cm','mm','pt','pc')
 
-_accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16)
+_accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16, 16)
 
 _javascript_code = """
 //<![CDATA[
