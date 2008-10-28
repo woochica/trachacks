@@ -10,8 +10,8 @@ var Localizer = function() {
     
     // If there isn't the lang attribute, use browser language.
     if (this.lang == null || this.lang == "") {
-    	var currentLanguage;
-    	if (navigator.browserLanguage) {
+        var currentLanguage;
+        if (navigator.browserLanguage) {
             currentLanguage = navigator.browserLanguage; 
         } else if (navigator.language) { 
             currentLanguage = navigator.language; 
@@ -20,7 +20,7 @@ var Localizer = function() {
         }
         
         if (currentLanguage && currentLanguage.length >= 2) {
-        	this.lang = currentLanguage.substr(0,2);
+            this.lang = currentLanguage.substr(0,2);
         }
     }
     
@@ -77,7 +77,7 @@ var TicketTemplate = function(baseUrlValue, typeIdValue, descIdValue) {
                              "__EDITOR__1"];
     
     if (baseUrlValue) {
-    	this.baseUrl = baseUrlValue;
+        this.baseUrl = baseUrlValue;
     }
     if (typeIdValue) {
         this.typeId = typeIdValue;
@@ -91,7 +91,13 @@ var TicketTemplate = function(baseUrlValue, typeIdValue, descIdValue) {
         return;
     }
     
-    this.selectTemplate(typeElem);
+    // Apply template at the first time.
+    // except preview
+    var previewFieldsElem = document.getElementById("preview");
+    if (!previewFieldsElem || previewFieldsElem.tagName != "FIELDSET") {
+        this.selectTemplate(typeElem);
+    }
+    
     $(typeElem).change(this.changeType(typeElem));
 };
 
@@ -172,7 +178,7 @@ TicketTemplate.prototype.applyDescription = function(templateData) {
     // change description value
     var descElem = document.getElementById(this.descId);
     if (!descElem) {
-    	return;
+        return;
     }
     
     var templateValue = templateData.template;
