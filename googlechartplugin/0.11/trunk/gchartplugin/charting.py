@@ -43,8 +43,6 @@ class GChart(WikiMacroBase):
             if key in options:
                 del options[key]
         
-        
-        
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute(query)
