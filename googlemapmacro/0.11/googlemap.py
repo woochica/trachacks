@@ -19,7 +19,7 @@ import re
 
 _reWHITESPACES = re.compile(r'\s+')
 _reCOMMA       = re.compile(r',\s*')
-_reCOORDS      = re.compile(r'^\d+(?:\.\d*)?:\d+(?:\.\d*)?$')
+_reCOORDS      = re.compile(r'^\d+(?:\.\d*)?[:,]\d+(?:\.\d*)?$')
 
 #_allowed_args        = ['center','zoom','size','address']
 _default_map_types   = ['NORMAL','SATELLITE','HYBRID']
@@ -60,6 +60,7 @@ $(document).ready( function () {
       }
       )
     }
+    %(markers_str)s
 }} );
 
 $(window).unload( GUnload );
@@ -148,11 +149,11 @@ class GoogleMapMacro(WikiMacroBase):
         try:
             response = urlopen(url).read()
         except:
-            return
+            raise TracError("Google Maps could not be contacted to resolve address!");
         self.env.log.debug("Google geocoding response: '%s'" % response)
         resp = response.split(',')
         if len(resp) != 4 or not resp[0] == "200":
-            return
+            raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
         acc, lon, lat = resp[1:4]
 
         #try:
@@ -228,7 +229,9 @@ class GoogleMapMacro(WikiMacroBase):
         # macro arguments
         center = ""
         if 'center' in kwargs:
-            center = unicode(kwargs['center']).replace(':',',')
+            center = unicode(kwargs['center']).replace(':',',').strip(' "\'')
+            if not _reCOORDS.match(center):
+                raise TracError("Invalid center coordinates given!")
 
         # Format address
         address = ""
@@ -236,9 +239,6 @@ class GoogleMapMacro(WikiMacroBase):
             address = self._format_address(kwargs['address'])
             if self.geocoding == 'server':
                 coord = self._get_coords(address)
-                self.env.log.debug("coords.len = %i" % len(coord))
-                if not coord or len(coord) != 3:
-                    raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
                 center = ",".join(coord[0:2])
                 address = ""
                 if not 'zoom' in kwargs:
@@ -246,9 +246,22 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Internal formatting functions:
         def gtyp (stype):
-            return "G_%s_MAP" % stype
+            return "G_%s_MAP" % str(stype)
         def gcontrol (control):
-            return "map.addControl(new G%sControl());\n" % control
+            return "map.addControl(new G%sControl());\n" % str(control)
+        def gmarker (lat,lng,letter):
+            letter = str(letter).upper()
+            if len(letter) == 0 or letter[0] == '.':
+                letter = ''
+            else:
+                letter = letter[0]
+            return "map.addOverlay(new GMarker(new GLatLng(%s,%s), " \
+                   "{icon: new GIcon (G_DEFAULT_ICON, " \
+                   "'http://maps.google.com/mapfiles/marker%s.png')}));\n" \
+                   % (str(lat),str(lng),letter)
+        def gmarkercli (lat,lng,letter):
+            # Not implemented yet
+            return ""
 
         # Set initial map type
         type = 'NORMAL'
@@ -288,6 +301,36 @@ class GoogleMapMacro(WikiMacroBase):
                     controls.append( _supported_controls[control] )
         controls_str = ''.join(map(gcontrol,controls))
 
+        # Produce markers
+        markers_str = ""
+        if 'markers' in kwargs:
+            markers = []
+            for marker in unicode(kwargs['markers']).split('|'):
+                if marker.find(';') != -1:
+                    location, letter = marker.rsplit(';',2)
+                else:
+                    location = marker
+                    letter   = ''
+                location = self._format_address(location)
+                if _reCOORDS.match(location):
+                    coord = location.split(':')
+                    markers.append( gmarker( coord[0], coord[1], letter ) )
+                else:
+                    if self.geocoding == 'server':
+                        coord = []
+                        if location == 'center':
+                            if address:
+                                coord = self._get_coords(address)
+                            else:
+                                coord = center.split(',')
+                        else:
+                            coord = self._get_coords(location)
+                        markers.append( gmarker( coord[0], coord[1], letter ) )
+                    else:
+                        markers.append( gmarkercli( location, letter ) )
+                        raise TracError("Client side address map markers not implemented yet!")
+            markers_str = ''.join( markers )
+
 
         # Produce unique id for div tag
         GoogleMapMacro.nid += 1
@@ -301,7 +344,9 @@ class GoogleMapMacro(WikiMacroBase):
                         'center':center,
                         'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
-                        'types_str':types_str, 'controls_str':controls_str },
+                        'types_str':types_str, 'controls_str':controls_str,
+                        'markers_str':markers_str
+                        },
                         type = "text/javascript"),
                     # Canvas for this map
                     tag.div (
