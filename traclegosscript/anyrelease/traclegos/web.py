@@ -10,6 +10,7 @@ import tempfile
 from genshi.template import TemplateLoader
 from trac.web.main import dispatch_request
 from traclegos.config import ConfigMunger
+from traclegos.db import available_databases
 from traclegos.legos import site_configuration
 from traclegos.legos import traclegos_factory
 from traclegos.legos import TracLegos
@@ -60,6 +61,16 @@ class View(object):
             for name in self.repositories.keys():
                 if name not in self.available_repositories:
                     del self.repositories[name]
+
+        # available database types
+        self.databases = available_databases()
+        self.available_databases = kw.get('available_databases')
+        if self.available_databases is None:
+            self.available_databases = [ 'SQLite' ] + [ name for name in self.databases.keys() if name is not 'SQLite' ]
+        else:
+            for name in self.databases.keys():
+                if name not in self.available_databases:
+                    del self.databases[name]
                     
         # TODO: pop project-details if this is an empty step
 
@@ -205,7 +216,8 @@ class View(object):
         project = req.GET['project']
         data = {'project': project,
                 'repositories': [ self.repositories[name] for name in self.available_repositories ],
-                'excluded_fields': dict((key, value.keys()) for key, value in self.legos.repository_fields(project).items())} 
+                'excluded_fields': dict((key, value.keys()) for key, value in self.legos.repository_fields(project).items()),
+                'databases': [ self.databases[name] for name in self.available_databases ] } 
 
         # TODO: databases (and some day mailing lists)
         return data

@@ -14,15 +14,16 @@
 <form method="post" enctype="multipart/form-data">
   
 <!-- repository choice -->
-<div py:if="repositories">
+<div py:if="len(repositories) > 1">
   <h2>Source Repository</h2>
 
   <p py:for="index, repository in enumerate(repositories)" 
      py:with="options = [option for option in repository.options if
   option.name not in excluded_fields.get(repository.name, ())]">
   <input type="radio" 
+	 name="repository" 
 	 py:attrs="{'checked': not index and 'true' or None }"
-	 name="repository" value="${repository.name}"/>
+	 value="${repository.name}"/>
   ${repository.description}<py:if test="len(options)">:
   <py:choose test="len(options)">
   <py:when test="1">
@@ -46,8 +47,17 @@
     
 </div>
 
-<!-- database choice [TODO] -->
-<div>
+<!-- database choice -->
+<div py:if="len(databases) > 1">
+  <h2>Database</h2>
+  <p py:for="index, database in enumerate(databases)">
+    <input type="radio"
+	   name="database"
+	   py:attrs="{'checked': not index and 'true' or None }"
+	   value="${database.name}"/>
+    ${database.description}
+  </p>
+  
 </div>
 
 <!-- mailing lists setup [TODO] -->
