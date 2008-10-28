@@ -268,9 +268,10 @@ class GoogleMapMacro(WikiMacroBase):
                         type = "text/javascript"),
                     # Canvas for this map
                     tag.div (
-                        "",
+                        "Google Map is loading ... (JavaScript enabled?)",
                         id=id,
-                        style="width: %spx; height: %spx" % (width,height),
+                        style= "background-color: rgb(229, 227, 223);" +
+                            "width: %spx; height: %spx;" % (width,height),
                         )
                     ],
                 class_ = "tracgooglemaps",
