@@ -80,7 +80,8 @@ class GoogleMapMacro(WikiMacroBase):
                 CREATE TABLE IF NOT EXISTS googlemapmacro (
                     id char(32) Unique,
                     lon decimal(10,6),
-                    lat decimal(10,6)
+                    lat decimal(10,6),
+                    acc decimal(2,0)
                 );""")
             db.commit()
             GoogleMapMacro.dbinit = 1
@@ -126,14 +127,14 @@ class GoogleMapMacro(WikiMacroBase):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         #try:
-        cursor.execute("SELECT lon,lat FROM googlemapmacro WHERE id='%s';" % hash)
+        cursor.execute("SELECT lon,lat,acc FROM googlemapmacro WHERE id='%s';" % hash)
         #except:
         #    pass
         #else:
         for row in cursor:
-            if len(row) == 2:
+            if len(row) == 3:
                 self.env.log.debug("Reusing coordinates from database")
-                return ( str(row[0]), str(row[1]) )
+                return ( str(row[0]), str(row[1]), str(row[2]) )
 
         response = None
         url = r'http://maps.google.com/maps/geo?output=csv&q=' + quote_plus(address)
@@ -141,15 +142,16 @@ class GoogleMapMacro(WikiMacroBase):
             response = urlopen(url).read()
         except:
             return
+        self.env.log.debug("Google geocoding response: '%s'" % response)
         resp = response.split(',')
         if len(resp) != 4 or not resp[0] == "200":
             return
-        lon, lat = resp[2:4]
+        acc, lon, lat = resp[1:4]
 
         #try:
         cursor.execute(
-            "INSERT INTO googlemapmacro (id, lon, lat) VALUES ('%s', %s, %s);" %
-            (hash, lon, lat))
+            "INSERT INTO googlemapmacro (id, lon, lat, acc) VALUES ('%s', %s, %s, %s);" %
+            (hash, lon, lat, acc))
         db.commit()
         self.env.log.debug("Saving coordinates to database")
         #except:
@@ -164,10 +166,16 @@ class GoogleMapMacro(WikiMacroBase):
             kwargs['address'] = largs[0]
 
         # Use default values if needed
-        if not 'zoom' in kwargs:
-            kwargs['zoom'] = self.env.config.get('googlemap', 'default_zoom', "6")
-        if not 'size' in kwargs:
-            kwargs['size'] = self.env.config.get('googlemap', 'default_size', "300x300")
+        zoom = None
+        size = None
+        if 'zoom' in kwargs:
+            zoom = kwargs['zoom']
+        else:
+            zoom = self.env.config.get('googlemap', 'default_zoom', "6")
+        if 'size' in kwargs:
+            size = kwargs['size']
+        else:
+            size = self.env.config.get('googlemap', 'default_size', "300x300")
 
         # Check if Google API key is set (if not the Google Map script file
         # wasn't inserted by `post_process_request` and the map wont load)
@@ -176,9 +184,15 @@ class GoogleMapMacro(WikiMacroBase):
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
 
         # Get height and width
-        (width,height) = unicode(kwargs['size']).split('x')
+        (width,height) = unicode(size).split('x')
         width  = str( int( width  ) )
         height = str( int( height ) )
+
+        # Correct separator for 'center' argument because comma isn't allowed in
+        # macro arguments
+        center = ""
+        if 'center' in kwargs:
+            center = unicode(kwargs['center']).replace(':',',')
 
         # Format address
         address = ""
@@ -186,18 +200,12 @@ class GoogleMapMacro(WikiMacroBase):
             address = self._format_address(kwargs['address'])
             if self.geocoding == 'server':
                 coord = self._get_coords(address)
-                if not coord or len(coord) != 2:
-                    raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
-                kwargs['center'] = ",".join(coord)
-                kwargs['address'] = "" # delete address when coordinates are resolved
+                #if not coord or len(coord) != 3:
+                #    raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
+                center = ",".join(coord[0:2])
                 address = ""
-
-        # Correct separator for 'center' argument because comma isn't allowed in
-        # macro arguments
-        if 'center' in kwargs:
-            kwargs['center'] = unicode(kwargs['center']).replace(':',',')
-        else:
-            kwargs['center'] = u''
+                #if not 'zoom' in kwargs:
+                #    zoom = coord[2]
 
         # Internal formatting functions:
         def gtyp (stype):
@@ -253,8 +261,8 @@ class GoogleMapMacro(WikiMacroBase):
                 [
                     # Initialization script for this map
                     tag.script ( _javascript_code % { 'id':id,
-                        'center':kwargs['center'],
-                        'zoom':kwargs['zoom'], 'address':address,
+                        'center':center,
+                        'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
                         'types_str':types_str, 'controls_str':controls_str },
                         type = "text/javascript"),
