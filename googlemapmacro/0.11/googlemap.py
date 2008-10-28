@@ -19,6 +19,7 @@ import re
 
 _reWHITESPACES = re.compile(r'\s+')
 _reCOMMA       = re.compile(r',\s*')
+_reCOORDS      = re.compile(r'^\d+(?:\.\d*)?:\d+(?:\.\d*)?$')
 
 #_allowed_args        = ['center','zoom','size','address']
 _default_map_types   = ['NORMAL','SATELLITE','HYBRID']
@@ -160,13 +161,19 @@ class GoogleMapMacro(WikiMacroBase):
         #except:
         #    pass
 
-        return (lon, lat)
+        return (lon, lat, acc)
 
 
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args(content)
-        if len(largs) > 0 and not 'address' in kwargs:
-            kwargs['address'] = largs[0]
+        if len(largs) > 0:
+            arg = unicode(largs[0]).strip(' "\'')
+            if _reCOORDS.match(arg):
+                if not 'center' in kwargs:
+                    kwargs['center'] = arg
+            else:
+                if not 'address' in kwargs:
+                    kwargs['address'] = arg
 
         # Check if Google API key is set (if not the Google Map script file
         # wasn't inserted by `post_process_request` and the map wont load)
@@ -226,8 +233,9 @@ class GoogleMapMacro(WikiMacroBase):
             address = self._format_address(kwargs['address'])
             if self.geocoding == 'server':
                 coord = self._get_coords(address)
-                #if not coord or len(coord) != 3:
-                #    raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
+                self.env.log.debug("coords.len = %i" % len(coord))
+                if not coord or len(coord) != 3:
+                    raise TracError("Given address '%s' couldn't be resolved by Google Maps!" % address);
                 center = ",".join(coord[0:2])
                 address = ""
                 if not 'zoom' in kwargs:
