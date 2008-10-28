@@ -63,7 +63,24 @@ class GoogleMapMacro(WikiMacroBase):
     implements(IRequestFilter)
     """ Provides a macro to insert Google Maps(TM) in Wiki pages
     """
-    nid = 0
+    nid  = 0
+    dbinit = 0
+
+    def __init__:
+        # Create DB table if it not exists.
+        # Execute only once.
+        if not GoogleMapMacro.dbinit:
+            self.env.log.debug("Creating DB table (if not already exists).")
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS googlemapmacro (
+                    id char(32) Unique,
+                    lon decimal(10,6),
+                    lat decimal(10,6)
+                );""")
+            db.commit()
+            GoogleMapMacro.dbinit = 1
 
 
     # IRequestFilter#pre_process_request
