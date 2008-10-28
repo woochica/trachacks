@@ -25,6 +25,7 @@ _default_map_types   = ['NORMAL','SATELLITE','HYBRID']
 _supported_map_types = ['NORMAL','SATELLITE','HYBRID','PHYSICAL']
 _supported_controls  = [ 'LargeMap', 'SmallMap', 'SmallZoom', 'Scale', \
                         'MapType', 'HierarchicalMapType', 'OverviewMap' ]
+_css_units = ('em','ex','px','in','cm','mm','pt','pc')
 
 _accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16)
 
@@ -195,6 +196,13 @@ class GoogleMapMacro(WikiMacroBase):
         try:
             if size.find(':') != -1:
                 (width,height) = size.lower().split(':')
+                # Check for correct units:
+                if    not width[-2:]  in _css_units \
+                   or not height[-2:] in _css_units:
+                       raise TracError("Wrong unit(s)!")
+                # The rest must be a number:
+                float( width[:-2]  )
+                float( height[:-2] )
             else:
                 (width,height) = size.lower().split('x')
                 width  = str( int( width  ) ) + "px"
@@ -202,7 +210,8 @@ class GoogleMapMacro(WikiMacroBase):
         except:
             raise TracError("Invalid value for size given! Please provide "
                             "{width}x{height} in pixels (without unit) or "
-                            "{width}{unit}:{height}{unit} in CSS units.")
+                            "{width}{unit}:{height}{unit} in CSS units (%s)." \
+                                    % ', '.join(_css_units) )
 
 
         # Correct separator for 'center' argument because comma isn't allowed in
