@@ -35,6 +35,29 @@ _accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16, 16)
 
 _javascript_code = """
 //<![CDATA[
+// TODO: move this functions to an external file:
+
+function SetMarkerByCoords(map,lat,lng,letter) {
+    map.addOverlay(new GMarker(new GLatLng(lat,lng),
+        { icon: new GIcon (G_DEFAULT_ICON,
+        'http://maps.google.com/mapfiles/marker'
+        + letter + '.png') }
+     )
+    );
+}
+
+function SetMarkerByAddress(map,address,letter) {
+    var geocoder = new GClientGeocoder();
+    geocoder.getLatLng(
+      address,
+      function(point) {
+        if (point) {
+          SetMarkerByCoords(map, point.lat(), point.lng(), letter);
+        }
+      }
+    )
+}
+
 $(document).ready( function () {
   if (GBrowserIsCompatible()) {
     var map = new GMap2(document.getElementById("%(id)s"),{
@@ -255,13 +278,14 @@ class GoogleMapMacro(WikiMacroBase):
                 letter = ''
             else:
                 letter = letter[0]
-            return "map.addOverlay(new GMarker(new GLatLng(%s,%s), " \
-                   "{icon: new GIcon (G_DEFAULT_ICON, " \
-                   "'http://maps.google.com/mapfiles/marker%s.png')}));\n" \
-                   % (str(lat),str(lng),letter)
-        def gmarkercli (lat,lng,letter):
-            # Not implemented yet
-            return ""
+            return "SetMarkerByCoords(map,%s,%s,'%s');\n" % (str(lat),str(lng),letter)
+        def gmarkeraddr (address,letter):
+            letter = str(letter).upper()
+            if len(letter) == 0 or letter[0] == '.':
+                letter = ''
+            else:
+                letter = letter[0]
+            return "SetMarkerByAddress(map,'%s','%s');\n" % (str(address),letter)
 
         # Set initial map type
         type = 'NORMAL'
@@ -327,8 +351,14 @@ class GoogleMapMacro(WikiMacroBase):
                             coord = self._get_coords(location)
                         markers.append( gmarker( coord[0], coord[1], letter ) )
                     else:
-                        markers.append( gmarkercli( location, letter ) )
-                        raise TracError("Client side address map markers not implemented yet!")
+                        if location == 'center':
+                            if address:
+                                markers.append( gmarkeraddr( address, letter ) )
+                            else:
+                                coord = center.split(',')
+                                markers.append( gmarker( coord[0], coord[1], letter ) )
+                        else:
+                            markers.append( gmarkeraddr( location, letter ) )
             markers_str = ''.join( markers )
 
 
