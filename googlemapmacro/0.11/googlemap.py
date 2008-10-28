@@ -20,7 +20,7 @@ import re
 _reWHITESPACES = re.compile(r'\s+')
 _reCOMMA       = re.compile(r',\s*')
 
-_allowed_args        = ['center','zoom','size','address']
+#_allowed_args        = ['center','zoom','size','address']
 _default_map_types   = ['NORMAL','SATELLITE','HYBRID']
 _supported_map_types = ['NORMAL','SATELLITE','HYBRID','PHYSICAL']
 _supported_controls  = [ 'LargeMap', 'SmallMap', 'SmallZoom', 'Scale', \
@@ -33,7 +33,7 @@ _javascript_code = """
 $(document).ready( function () {
   if (GBrowserIsCompatible()) {
     var map = new GMap2(document.getElementById("%(id)s"),{
-        size: new GSize(%(width)s, %(height)s),
+    //    size: new GSize(%(width)s, %(height)s),
         mapTypes: %(types_str)s
     });
     %(controls_str)s
@@ -167,28 +167,43 @@ class GoogleMapMacro(WikiMacroBase):
         if len(largs) > 0 and not 'address' in kwargs:
             kwargs['address'] = largs[0]
 
+        # Check if Google API key is set (if not the Google Map script file
+        # wasn't inserted by `post_process_request` and the map wont load)
+        if not self.env.config.get('googlemap', 'api_key', None):
+            raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
+
         # Use default values if needed
         zoom = None
         size = None
-        if 'zoom' in kwargs:
-            zoom = kwargs['zoom']
-        else:
-            zoom = self.env.config.get('googlemap', 'default_zoom', "6")
-        if 'size' in kwargs:
-            size = kwargs['size']
-        else:
-            size = self.env.config.get('googlemap', 'default_size', "300x300")
+        try:
+            if 'zoom' in kwargs:
+                zoom = unicode( int( kwargs['zoom'] ) )
+            else:
+                zoom = unicode( int( self.env.config.get('googlemap', 'default_zoom', "6") ) )
+        except:
+            raise TracError("Invalid value for zoom given! Please provide an integer from 0 to 19.")
 
-        # Check if Google API key is set (if not the Google Map script file
-        # wasn't inserted by `post_process_request` and the map wont load)
-        key = self.env.config.get('googlemap', 'api_key', None)
-        if not key:
-            raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
+        if 'size' in kwargs:
+            size = unicode( kwargs['size'] )
+        else:
+            size = unicode( self.env.config.get('googlemap', 'default_size', "300x300") )
+
 
         # Get height and width
-        (width,height) = unicode(size).split('x')
-        width  = str( int( width  ) )
-        height = str( int( height ) )
+        width  = None
+        height = None
+        try:
+            if size.find(':') != -1:
+                (width,height) = size.lower().split(':')
+            else:
+                (width,height) = size.lower().split('x')
+                width  = str( int( width  ) ) + "px"
+                height = str( int( height ) ) + "px"
+        except:
+            raise TracError("Invalid value for size given! Please provide "
+                            "{width}x{height} in pixels (without unit) or "
+                            "{width}{unit}:{height}{unit} in CSS units.")
+
 
         # Correct separator for 'center' argument because comma isn't allowed in
         # macro arguments
@@ -273,7 +288,7 @@ class GoogleMapMacro(WikiMacroBase):
                         "Google Map is loading ... (JavaScript enabled?)",
                         id=id,
                         style= "background-color: rgb(229, 227, 223);" +
-                            "width: %spx; height: %spx;" % (width,height),
+                            "width: %s; height: %s;" % (width,height),
                         )
                     ],
                 class_ = "tracgooglemaps",
