@@ -67,6 +67,9 @@ class GoogleMapMacro(WikiMacroBase):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
+        # reset macro ID counter at start of each wiki page
+        GoogleMapMacro.nid = 0
+        # Add Google Map JavaScript
         key = self.env.config.get('googlemap', 'api_key', None)
         if key:
             # add_script hack to support external script files:
