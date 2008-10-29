@@ -27,3 +27,7 @@
 #calendar tr.weekend {
     background-color: #cccccc;
 }
+
+#calendar .today {
+    font-weight: bold;
+}

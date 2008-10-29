@@ -48,7 +48,8 @@
 				<tbody>
 					<tr py:for="day in timetable"
 						py:attrs="{'class': (day['date'].isoweekday() in (6,7) and 'weekend' or 'weekday')}">
-						<td class="date" py:content="day['date'].strftime('%a %d/%m/%Y')">Date</td>
+						<td py:attrs="{'class': day['date'] == today and 'date today' or 'date'}"
+							py:content="day['date'].strftime('%a %d/%m/%Y')">Date</td>
 						<td class="status" py:for="person in people">
 							<input
 								 py:attrs="dict(name='%s.%s' % (day['date'].isoformat(), person),

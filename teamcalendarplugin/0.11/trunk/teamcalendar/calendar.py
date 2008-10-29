@@ -5,6 +5,7 @@ from pkg_resources import resource_filename
 
 from genshi.builder import tag
 
+from trac.config import Option
 from trac.perm import PermissionSystem, IPermissionRequestor
 from trac.core import Component, implements
 from trac.web import IRequestHandler
@@ -12,6 +13,10 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_style
 
 class TeamCalendar(Component):
     implements(INavigationContributor, IRequestHandler, IPermissionRequestor, ITemplateProvider)
+
+    # How much to display by default?
+    weeks_prior = Option('team-calendar', 'weeks_prior', u"1", doc="Defines how many weeks before the current week to show by default")
+    weeks_after = Option('team-calendar', 'weeks_after', u"3", doc="Defines how many weeks before the current week to show by default")
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -80,13 +85,23 @@ class TeamCalendar(Component):
         except ValueError:
             return fallback
     
+    def find_default_start(self):
+        today = date.today()
+        offset = (today.isoweekday() - 1) + (7 * int(self.weeks_prior))
+        return today - timedelta(offset)
+        
+    def find_default_end(self):
+        today = date.today()
+        offset = (7 - today.isoweekday()) + (7 * int(self.weeks_after))
+        return today + timedelta(offset)
+    
     def process_request(self, req):
         req.perm.require('TEAMCALENDAR_VIEW')
         
         data = {}
                 
-        from_date = self.string_to_date(req.args.get('from_date', ''), date.today() - timedelta(7))
-        to_date = self.string_to_date(req.args.get('to_date', ''), date.today() + timedelta(7))
+        from_date = self.string_to_date(req.args.get('from_date', ''), self.find_default_start())
+        to_date = self.string_to_date(req.args.get('to_date', ''), self.find_default_end())
 
         # Message
         data['message'] = ""
@@ -101,6 +116,7 @@ class TeamCalendar(Component):
         data['can_update'] = (can_update_own or can_update_others)
 
         # Store dates
+        data['today'] = date.today()
         data['from_date'] = from_date
         data['to_date'] = to_date
         
