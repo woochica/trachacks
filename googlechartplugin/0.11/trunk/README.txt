@@ -5,10 +5,10 @@ Google Chart Plugin
 This plugin provides a macro that uses the Google Chart API to graph the
 result of any catalog query.
 
-It uses the google-chartwrapper library, which must be installed as a
+It uses the GChartWrapper library, which must be installed as a
 dependency - see http://code.google.com/p/google-chartwrapper.
 
-To enable the plugin, use a macro like this in the wiki:
+To use the plugin, use a macro like this in the wiki:
 
   [[GChart(query="SELECT id FROM ticket", type="line")]]
 
@@ -31,8 +31,15 @@ data value, pass `tuples=True` as an argument.
 Installation
 ------------
 
-Install gchartplugin and GChartWrapper using `python setup.py install` as
-normal. Then enable the plugin in trac.ini with::
+Install GChartWrapper:
+
+ $ easy_install --find-links http://code.google.com/p/google-chartwrapper GChartWrapper
+
+and the install gchartplugin:
+
+ $ python setup.py install
+
+Then enable the plugin in trac.ini with::
 
  [components]
  gchartplugin.* = enabled
