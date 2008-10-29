@@ -169,13 +169,13 @@ class GoogleMapMacro(WikiMacroBase):
         self.env.log.debug("address after  = %s" % address)
         return address
 
-    def _parse_args(self, argsstr, sep = r',', kw = True):
+    def _parse_args(self, argsstr, sep = ',', quote = '"', kw = True, min = -1, num = -1):
         import csv
         largs, kwargs = [], {}
         self.env.log.debug("Arguments string: %s" % argsstr)
         if argsstr:
             for arg in csv.reader([unicode(argsstr)], delimiter=sep, \
-                    skipinitialspace=True, escapechar='\\' ).next():
+                    skipinitialspace=True, escapechar='\\', quotechar=quote ).next():
                 self.env.log.debug("Argument: %s" % arg)
                 if not kw:
                     largs.append(self._strip(arg))
@@ -186,6 +186,15 @@ class GoogleMapMacro(WikiMacroBase):
                         kwargs[arg[:m.end()-1]] = self._strip(arg[m.end():])
                     else:
                         largs.append(self._strip(arg))
+        if num > 0:
+            if   len(largs) > num:
+                largs = largs[0:num]
+            elif len(largs) < num:
+                min = num
+        if min > 0 and min > len(largs):
+            for i in range(len(largs), min):
+                largs.append(None)
+
         if kw:
             return largs, kwargs
         else:
@@ -315,21 +324,27 @@ class GoogleMapMacro(WikiMacroBase):
         def gmarker (lat,lng,letter='',link='',title=''):
             if not title:
                 title = link
-            letter = str(letter).upper()
-            if len(letter) == 0 or letter[0] == '.':
+            if not letter:
                 letter = ''
             else:
-                letter = letter[0]
+                letter = str(letter).upper()
+                if str(letter).startswith('.'):
+                    letter = ''
+                else:
+                    letter = letter[0]
             return "SetMarkerByCoords(map,%s,%s,'%s','%s','%s');\n" \
                     % (str(lat),str(lng),letter,str(link),str(title))
         def gmarkeraddr (address,letter='',link='',title=''):
             if not title:
                 title = link
-            letter = str(letter).upper()
-            if len(letter) == 0 or letter[0] == '.':
+            if not letter:
                 letter = ''
             else:
-                letter = letter[0]
+                letter = str(letter).upper()
+                if str(letter).startswith('.'):
+                    letter = ''
+                else:
+                    letter = letter[0]
             return "SetMarkerByAddress(map,'%s','%s','%s','%s',geocoder);\n" \
                     % (str(address),letter,str(link),str(title))
 
@@ -375,23 +390,17 @@ class GoogleMapMacro(WikiMacroBase):
         markers_str = ""
         if 'markers' in kwargs:
             markers = []
-            for marker in unicode(kwargs['markers']).split('|'):
-                if marker.find(';') != -1:
-                    parts = marker.rsplit(';',3)
-                    parts.extend( ['', '', '', ''] )
-                    location, letter, link, title = parts[0:4]
+            for marker in self._parse_args(unicode(kwargs['markers']), sep='|', quote=None, kw=False):
+                location, letter, link, title = self._parse_args(marker,
+                        sep=';', kw=False, num=4 )
 
-                    # Convert wiki to HTML link:
-                    link = extract_link(self.env, formatter.context, link)
-                    if isinstance(link, Element):
-                        link = link.attrib.get('href')
-                    else:
-                        link = ''
+                # Convert wiki to HTML link:
+                link = extract_link(self.env, formatter.context, link)
+                if isinstance(link, Element):
+                    link = link.attrib.get('href')
                 else:
-                    location = marker
-                    letter   = ''
-                    link     = ''
-                    title    = ''
+                    link = ''
+
                 location = self._format_address(location)
                 if _reCOORDS.match(location):
                     coord = location.split(':')
