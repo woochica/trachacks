@@ -169,36 +169,63 @@ class GoogleMapMacro(WikiMacroBase):
         self.env.log.debug("address after  = %s" % address)
         return address
 
-    def _parse_args(self, argsstr, sep = ',', quote = '"', kw = True, min = -1, num = -1):
-        import csv
-        largs, kwargs = [], {}
-        self.env.log.debug("Arguments string: %s" % argsstr)
-        if argsstr:
-            for arg in csv.reader([unicode(argsstr)], delimiter=sep, \
-                    skipinitialspace=True, escapechar='\\', quotechar=quote ).next():
-                self.env.log.debug("Argument: %s" % arg)
-                if not kw:
-                    largs.append(self._strip(arg))
-                else:
-                    m = re.match(r'\s*[a-zA-Z_]\w+=', unicode(arg))
-                    if m:
-                        self.env.log.debug("Argument is nvp!")
-                        kwargs[arg[:m.end()-1]] = self._strip(arg[m.end():])
-                    else:
-                        largs.append(self._strip(arg))
+    def _parse_args(self, args, strict=True, sep = ',', quote = '"', kw = True, min = -1, num = -1):
+        """ parses a comma separated string were the values can include multiple
+        quotes """
+        esc    = 0   # last char was escape char
+        quoted = 0   # inside quote
+        start  = 0   # start of current field
+        pos    = 0   # current position
+        largs  = []
+        kwargs = {}
+
+        def checkkey (arg):
+            import re
+            arg = arg.replace(r'\,', ',')
+            if strict:
+                m = re.match(r'\s*[a-zA-Z_]\w+=', arg)
+            else:
+                m = re.match(r'\s*[^=]+=', arg)
+            if m:
+                kw = arg[:m.end()-1].strip()
+                if strict:
+                    kw = unicode(kw).encode('utf-8')
+                kwargs[kw] = self._strip(arg[m.end():])
+            else:
+                largs.append(self._strip(arg))
+
+        if args:
+            for char in args:
+                if esc:
+                    esc = 0
+                elif char == quote:
+                    quoted = not quoted
+                elif char == '\\':
+                    esc = 1
+                elif char == sep and not quoted:
+                    checkkey( args[start:pos] )
+                    start = pos + 1
+                pos = pos + 1
+            checkkey( args[start:] )
+
         if num > 0:
             if   len(largs) > num:
                 largs = largs[0:num]
             elif len(largs) < num:
                 min = num
+
         if min > 0 and min > len(largs):
             for i in range(len(largs), min):
                 largs.append(None)
 
+        self.env.log.debug("Parsed Arguments:")
+        self.env.log.debug(largs)
+        self.env.log.debug(kwargs)
         if kw:
             return largs, kwargs
         else:
             return largs
+
 
     def _get_coords(self, address):
         m = md5.new()
@@ -390,7 +417,7 @@ class GoogleMapMacro(WikiMacroBase):
         markers_str = ""
         if 'markers' in kwargs:
             markers = []
-            for marker in self._parse_args(unicode(kwargs['markers']), sep='|', quote=None, kw=False):
+            for marker in self._parse_args(unicode(kwargs['markers']), sep='|', kw=False):
                 location, letter, link, title = self._parse_args(marker,
                         sep=';', kw=False, num=4 )
 
