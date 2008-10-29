@@ -35,26 +35,6 @@ class RoadmapHoursTicketGroupStatsProvider(Component):
 	    """Number of additional hours assumed needed for tickets that
 	    have gone over their estimates.""")
 
-    def _get_ticket_groups(self):
-        """Returns a list of dict describing the ticket groups
-        in the expected order of appearance in the milestone progress bars.
-        """
-        if 'milestone-groups' in self.config:
-            groups = {}
-            order = 0
-            for groupname, value in self.config.options('milestone-groups'):
-                qualifier = 'status'
-                if '.' in groupname:
-                    groupname, qualifier = groupname.split('.', 1)
-                group = groups.setdefault(groupname, {'name': groupname,
-                                                      'order': order})
-                group[qualifier] = value
-                order = max(order, int(group['order'])) + 1
-            return [group for group in sorted(groups.values(),
-                                              key=lambda g: int(g['order']))]
-        else:
-            return self.default_milestone_groups
-
     def get_ticket_group_stats(self, ticket_ids):
         total_cnt = len(ticket_ids)
         all_statuses = set(TicketSystem(self.env).get_all_status())
@@ -63,8 +43,8 @@ class RoadmapHoursTicketGroupStatsProvider(Component):
         if total_cnt:
             cursor = self.env.get_db_cnx().cursor()
             str_ids = [str(x) for x in sorted(ticket_ids)]
-	    cursor.execute("SELECT status, est.value as 'Est', "
-			   "act.value as 'Act' "
+	    cursor.execute("SELECT status, est.value, "
+			   "act.value "
 			   "FROM ticket t "
 			   "LEFT OUTER JOIN ticket_custom est ON "
 			   "  (t.id=est.ticket AND est.name='estimatedhours') "
