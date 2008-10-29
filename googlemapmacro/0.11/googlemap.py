@@ -38,21 +38,23 @@ _javascript_code = """
 //<![CDATA[
 // TODO: move this functions to an external file:
 
-function SetMarkerByCoords(map,lat,lng,letter,link) {
+function SetMarkerByCoords(map,lat,lng,letter,link,title) {
+    if (!title) { title = link; }
     var marker = new GMarker( new GLatLng(lat,lng),
-        { icon: new GIcon (G_DEFAULT_ICON,
+        { title: title, icon: new GIcon (G_DEFAULT_ICON,
         'http://maps.google.com/mapfiles/marker'
         + letter + '.png') }
      );
     if (link) {
         GEvent.addListener(marker, "click", function() {
-            window.location = link;
+            //window.location = link;
+            window.open(link);
         });
     }
     map.addOverlay(marker);
 }
 
-function SetMarkerByAddress(map,address,letter,link,geocoder) {
+function SetMarkerByAddress(map,address,letter,link,title,geocoder) {
     if (!geocoder) {
         geocoder = new GClientGeocoder();
     }
@@ -60,7 +62,7 @@ function SetMarkerByAddress(map,address,letter,link,geocoder) {
       address,
       function(point) {
         if (point) {
-          SetMarkerByCoords(map, point.lat(), point.lng(), letter, link);
+          SetMarkerByCoords(map, point.lat(), point.lng(), letter, link, title);
         }
       }
     )
@@ -279,20 +281,26 @@ class GoogleMapMacro(WikiMacroBase):
             return "G_%s_MAP" % str(stype)
         def gcontrol (control):
             return "map.addControl(new G%sControl());\n" % str(control)
-        def gmarker (lat,lng,letter,link):
+        def gmarker (lat,lng,letter='',link='',title=''):
+            if not title:
+                title = link
             letter = str(letter).upper()
             if len(letter) == 0 or letter[0] == '.':
                 letter = ''
             else:
                 letter = letter[0]
-            return "SetMarkerByCoords(map,%s,%s,'%s','%s');\n" % (str(lat),str(lng),letter,str(link))
-        def gmarkeraddr (address,letter,link):
+            return "SetMarkerByCoords(map,%s,%s,'%s','%s','%s');\n" \
+                    % (str(lat),str(lng),letter,str(link),str(title))
+        def gmarkeraddr (address,letter='',link='',title=''):
+            if not title:
+                title = link
             letter = str(letter).upper()
             if len(letter) == 0 or letter[0] == '.':
                 letter = ''
             else:
                 letter = letter[0]
-            return "SetMarkerByAddress(map,'%s','%s','%s',geocoder);\n" % (str(address),letter,str(link))
+            return "SetMarkerByAddress(map,'%s','%s','%s','%s',geocoder);\n" \
+                    % (str(address),letter,str(link),str(title))
 
         # Set initial map type
         type = 'NORMAL'
@@ -338,9 +346,9 @@ class GoogleMapMacro(WikiMacroBase):
             markers = []
             for marker in unicode(kwargs['markers']).split('|'):
                 if marker.find(';') != -1:
-                    parts = marker.rsplit(';',2)
-                    parts.extend( ['', '', ''] )
-                    location, letter, link = parts[0:3]
+                    parts = marker.rsplit(';',3)
+                    parts.extend( ['', '', '', ''] )
+                    location, letter, link, title = parts[0:4]
 
                     # Convert wiki to HTML link:
                     link = extract_link(self.env, formatter.context, link)
@@ -352,10 +360,11 @@ class GoogleMapMacro(WikiMacroBase):
                     location = marker
                     letter   = ''
                     link     = ''
+                    title    = ''
                 location = self._format_address(location)
                 if _reCOORDS.match(location):
                     coord = location.split(':')
-                    markers.append( gmarker( coord[0], coord[1], letter, link ) )
+                    markers.append( gmarker( coord[0], coord[1], letter, link, title ) )
                 else:
                     if self.geocoding == 'server':
                         coord = []
@@ -366,16 +375,16 @@ class GoogleMapMacro(WikiMacroBase):
                                 coord = center.split(',')
                         else:
                             coord = self._get_coords(location)
-                        markers.append( gmarker( coord[0], coord[1], letter, link ) )
+                        markers.append( gmarker( coord[0], coord[1], letter, link, title ) )
                     else:
                         if location == 'center':
                             if address:
-                                markers.append( gmarkeraddr( address, letter, link ) )
+                                markers.append( gmarkeraddr( address, letter, link, title ) )
                             else:
                                 coord = center.split(',')
-                                markers.append( gmarker( coord[0], coord[1], letter, link ) )
+                                markers.append( gmarker( coord[0], coord[1], letter, link, title ) )
                         else:
-                            markers.append( gmarkeraddr( location, letter, link ) )
+                            markers.append( gmarkeraddr( location, letter, link, title) )
             markers_str = ''.join( markers )
 
 
