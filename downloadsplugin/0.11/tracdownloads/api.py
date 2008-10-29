@@ -814,9 +814,13 @@ class DownloadsApi(Component):
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 
-        # Strip path from filename.
-        self.log.debug(file.filename)
-        filename = os.path.basename(file.filename).decode('utf-8')
-        self.log.debug(filename)
+        # Try to normalize the filename to unicode NFC if we can.
+        # Files uploaded from OS X might be in NFD.
+        self.log.debug('input filename: %s', (file.filename,))
+        filename = unicodedata.normalize('NFC', to_unicode(file.filename,
+          'utf-8'))
+        filename = filename.replace('\\', '/').replace(':', '/')
+        filename = os.path.basename(filename)
+        self.log.debug('output filename: %s', (filename,))
 
         return file.file, filename, size

@@ -51,9 +51,7 @@ class DownloadsTags(Component):
         old_download.update(download)
 
         # Create temporary resource.
-        resource = Resource()
-        resource.realm = 'downloads'
-        resource.id = old_download['id']
+        resource = Resource('downloads', old_download['id'])
 
         # Delete old tags.
         tag_system = TagSystem(self.env)
@@ -65,9 +63,7 @@ class DownloadsTags(Component):
 
     def download_deleted(self, req, download):
         # Create temporary resource.
-        resource = Resource()
-        resource.realm = 'downloads'
-        resource.id = download['id']
+        resource = Resource('downloads', download['id'])
 
         # Delete tags of download.
         tag_system = TagSystem(self.env)
