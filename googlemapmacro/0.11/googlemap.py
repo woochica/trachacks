@@ -46,8 +46,10 @@ function SetMarkerByCoords(map,lat,lng,letter) {
     );
 }
 
-function SetMarkerByAddress(map,address,letter) {
-    var geocoder = new GClientGeocoder();
+function SetMarkerByAddress(map,address,letter,geocoder) {
+    if (!geocoder) {
+        geocoder = new GClientGeocoder();
+    }
     geocoder.getLatLng(
       address,
       function(point) {
@@ -285,7 +287,7 @@ class GoogleMapMacro(WikiMacroBase):
                 letter = ''
             else:
                 letter = letter[0]
-            return "SetMarkerByAddress(map,'%s','%s');\n" % (str(address),letter)
+            return "SetMarkerByAddress(map,'%s','%s',geocoder);\n" % (str(address),letter)
 
         # Set initial map type
         type = 'NORMAL'
