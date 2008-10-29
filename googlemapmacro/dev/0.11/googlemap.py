@@ -169,16 +169,20 @@ class GoogleMapMacro(WikiMacroBase):
         self.env.log.debug("address after  = %s" % address)
         return address
 
-    def _parse_args(args, sep = r',', kw = True):
+    def _parse_args(self, argsstr, sep = r',', kw = True):
+        import csv
         largs, kwargs = [], {}
-        restr = r'(?<!\\)%(sep)s(?!(?:[^"%(sep)s]|[^"]$(sep)s[^"])+")/' % { sep:sep }
-        if args:
-            for arg in re.split(restr, args):
+        self.env.log.debug("Arguments string: %s" % argsstr)
+        if argsstr:
+            for arg in csv.reader([unicode(argsstr)], delimiter=sep, \
+                    skipinitialspace=True, escapechar='\\' ).next():
+                self.env.log.debug("Argument: %s" % arg)
                 if not kw:
                     largs.append(self._strip(arg))
                 else:
-                    m = re.match(r'\s*[a-zA-Z_]\w=', arg)
+                    m = re.match(r'\s*[a-zA-Z_]\w+=', unicode(arg))
                     if m:
+                        self.env.log.debug("Argument is nvp!")
                         kwargs[arg[:m.end()-1]] = self._strip(arg[m.end():])
                     else:
                         largs.append(self._strip(arg))
@@ -230,6 +234,7 @@ class GoogleMapMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         largs, kwargs = self._parse_args(content)
         if len(largs) > 0:
+            arg = unicode(largs[0])
             if _reCOORDS.match(arg):
                 if not 'center' in kwargs:
                     kwargs['center'] = arg
