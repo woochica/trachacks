@@ -39,7 +39,7 @@ _javascript_code = """
 //<![CDATA[
 // TODO: move this functions to an external file:
 
-function SetMarkerByCoords(map,lat,lng,letter,link,title) {
+function SetMarkerByCoords(map,lat,lng,letter,link,title,target) {
     if (!title) { title = link; }
     var marker = new GMarker( new GLatLng(lat,lng),
         { title: title, icon: new GIcon (G_DEFAULT_ICON,
@@ -48,7 +48,7 @@ function SetMarkerByCoords(map,lat,lng,letter,link,title) {
      );
     if (link) {
         GEvent.addListener(marker, "click", function() {
-            if ('%(newwindow)s') {
+            if (target) {
                 window.open(link);
             } else {
                 window.location = link;
@@ -58,7 +58,7 @@ function SetMarkerByCoords(map,lat,lng,letter,link,title) {
     map.addOverlay(marker);
 }
 
-function SetMarkerByAddress(map,address,letter,link,title,geocoder) {
+function SetMarkerByAddress(map,address,letter,link,title,target,geocoder) {
     if (!geocoder) {
         geocoder = new GClientGeocoder();
     }
@@ -66,7 +66,7 @@ function SetMarkerByAddress(map,address,letter,link,title,geocoder) {
       address,
       function(point) {
         if (point) {
-          SetMarkerByCoords(map, point.lat(), point.lng(), letter, link, title);
+          SetMarkerByCoords(map, point.lat(), point.lng(), letter, link, title, target);
         }
       }
     )
@@ -302,6 +302,12 @@ class GoogleMapMacro(WikiMacroBase):
         else:
             size = unicode( self.env.config.get('googlemap', 'default_size', "300x300") )
 
+        # Set target for hyperlinked markers
+        target = ""
+        if not 'target' in kwargs:
+            kwargs['target'] = unicode( self.env.config.get('googlemap', 'default_target', "") )
+        if kwargs['target'] in ('new','newwindow','_blank'):
+            target = "newwindow"
 
         # Get height and width
         width  = None
@@ -362,8 +368,8 @@ class GoogleMapMacro(WikiMacroBase):
                     letter = ''
                 else:
                     letter = letter[0]
-            return "SetMarkerByCoords(map,%s,%s,'%s','%s','%s');\n" \
-                    % (str(lat),str(lng),letter,str(link),str(title))
+            return "SetMarkerByCoords(map,%s,%s,'%s','%s','%s', '%s');\n" \
+                    % (str(lat),str(lng),letter,str(link),str(title),str(target))
         def gmarkeraddr (address,letter='',link='',title=''):
             if not title:
                 title = link
@@ -375,8 +381,8 @@ class GoogleMapMacro(WikiMacroBase):
                     letter = ''
                 else:
                     letter = letter[0]
-            return "SetMarkerByAddress(map,'%s','%s','%s','%s',geocoder);\n" \
-                    % (str(address),letter,str(link),str(title))
+            return "SetMarkerByAddress(map,'%s','%s','%s','%s','%s',geocoder);\n" \
+                    % (str(address),letter,str(link),str(title),str(target))
 
         # Set initial map type
         type = 'NORMAL'
@@ -464,12 +470,6 @@ class GoogleMapMacro(WikiMacroBase):
         GoogleMapMacro.nid += 1
         id = "tracgooglemap-%i" % GoogleMapMacro.nid
 
-        # Set target for hyperlinked markers
-        newwindow = ""
-        if not 'target' in kwargs:
-            kwargs['target'] = unicode( self.env.config.get('googlemap', 'default_target', "") )
-        if kwargs['target'] in ('new','newwindow','_blank'):
-            newwindow = "1"
 
         # put everything in a tidy div
         html = tag.div(
@@ -480,7 +480,7 @@ class GoogleMapMacro(WikiMacroBase):
                         'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
                         'types_str':types_str, 'controls_str':controls_str,
-                        'markers_str':markers_str, 'newwindow':newwindow
+                        'markers_str':markers_str
                         },
                         type = "text/javascript"),
                     # Canvas for this map
