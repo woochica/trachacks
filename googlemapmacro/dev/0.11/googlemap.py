@@ -420,6 +420,8 @@ class GoogleMapMacro(WikiMacroBase):
             for marker in self._parse_args(unicode(kwargs['markers']), sep='|', kw=False):
                 location, letter, link, title = self._parse_args(marker,
                         sep=';', kw=False, num=4 )
+                if not title:
+                    title = link
 
                 # Convert wiki to HTML link:
                 link = extract_link(self.env, formatter.context, link)
