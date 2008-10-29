@@ -1,0 +1,69 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>About Trac</title>
+  </head>
+
+  <body>
+    <div id="content" class="teamcalendar">
+		
+		<h1>Team availability</h1>
+		
+		<div class="message" py:content="message" />
+		
+		<p>Please indicate your availability by ticking the boxes 
+		   under your name, below. To display a different date range,
+		   use the date selectors below.
+		</p>
+
+		<form id="teamcalendar" method="post" action="">
+
+			<label for="from_date">From:</label>
+				<input id="from_date" type="text" name="from_date" 
+					py:attrs="dict(value=from_date.isoformat())"/>
+			<label for="to_date">To:</label>
+				<input id="to_date" type="text" name="to_date"
+					py:attrs="dict(value=to_date.isoformat())"/>
+        	<input type="submit" name="change_view" value="Change"/>
+
+			<input id="orig_form_date" type="hidden" name="orig_from_date" 
+					py:attrs="dict(value=from_date.isoformat())"/>
+			<input id="orig_to_date" type="hidden" name="orig_to_date" 
+					py:attrs="dict(value=to_date.isoformat())"/>
+			
+			<table id="calendar">
+				<thead>
+					<tr>
+						<th>Date</th>
+						<th py:for="person in people">
+							${person}
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr py:for="day in timetable"
+						py:attrs="{'class': (day['date'].isoweekday() in (6,7) and 'weekend' or 'weekday')}">
+						<td class="date" py:content="day['date'].strftime('%a %d/%m/%Y')">Date</td>
+						<td class="status" py:for="person in people">
+							<input
+								 py:attrs="dict(name='%s.%s' % (day['date'].isoformat(), person),
+												checked=(day['people'][person] > 0) and 'checked' or None,
+												disabled=(not ((can_update_own and person == authname) or can_update_others) and 'disabled' or None))"
+								type="checkbox" value="1" />
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+			<div class="buttons" py:if="can_update">
+	        	<input type="submit" name="update_calendar" value="Apply changes"/>
+			</div>
+		</form>
+    </div>
+  </body>
+</html>

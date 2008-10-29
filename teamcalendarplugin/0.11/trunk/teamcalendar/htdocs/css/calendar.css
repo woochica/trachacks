@@ -1,0 +1,29 @@
+.discreet {
+    font-size: 0.9em;
+    color: #333333;
+}
+
+.message {
+    background-color: #cccccc;
+    font-size: 1.1em;
+}
+
+#calendar th {
+    font-weight: bold;
+}
+
+#calendar td.date {
+    text-align: right;
+}
+
+#calendar td.status {
+    text-align: center;
+}
+
+#calendar tr.weekday {
+    background-color: #eeeeee;
+}
+
+#calendar tr.weekend {
+    background-color: #cccccc;
+}
