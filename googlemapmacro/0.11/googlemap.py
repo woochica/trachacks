@@ -48,8 +48,11 @@ function SetMarkerByCoords(map,lat,lng,letter,link,title) {
      );
     if (link) {
         GEvent.addListener(marker, "click", function() {
-            //window.location = link;
-            window.open(link);
+            if ('%(newwindow)s') {
+                window.open(link);
+            } else {
+                window.location = link;
+            }
         });
     }
     map.addOverlay(marker);
@@ -461,6 +464,13 @@ class GoogleMapMacro(WikiMacroBase):
         GoogleMapMacro.nid += 1
         id = "tracgooglemap-%i" % GoogleMapMacro.nid
 
+        # Set target for hyperlinked markers
+        newwindow = ""
+        if not 'target' in kwargs:
+            kwargs['target'] = unicode( self.env.config.get('googlemap', 'default_target', "") )
+        if kwargs['target'] in ('new','newwindow','_blank'):
+            newwindow = "1"
+
         # put everything in a tidy div
         html = tag.div(
                 [
@@ -470,7 +480,7 @@ class GoogleMapMacro(WikiMacroBase):
                         'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
                         'types_str':types_str, 'controls_str':controls_str,
-                        'markers_str':markers_str
+                        'markers_str':markers_str, 'newwindow':newwindow
                         },
                         type = "text/javascript"),
                     # Canvas for this map
