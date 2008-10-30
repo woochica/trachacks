@@ -1,0 +1,67 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html" />
+  <head>
+    <title>SQL Constants</title>
+  </head>
+
+  <body>
+    <div id="content" class="sqlconstants">
+		
+		<h2>SQL Constants</h2>
+		
+		<p>
+		   You can create or modify constants here. They will be stored
+		   in the <code>${table_name}</code> table in the database.
+		</p>
+		
+		<div class="message" py:content="message" />
+		
+		<form id="sqlconstants-update" method="post" action="">
+			
+			<div py:if="existing">
+			
+				<table>
+					<tbody>
+						<tr py:for="constant in existing">
+							<td>
+								<input type="checkbox" name="delete" py:attrs="{'value':constant['name']}" />
+							</td>
+							<td>
+								<label py:content="constant['name']" />
+							</td>
+							<td>
+								<input type="text" py:attrs="{'name': 'change.' + constant['name'], 'value': constant['stringval']}" />
+							</td>
+						</tr>
+					</tbody>				
+				</table>
+
+				<div class="buttons">
+		        	<input type="submit" name="update_constants" value="Save changes"/>
+					<input type="submit" name="delete_constants" value="Delete selected"/>
+				</div>
+			</div>
+		</form>
+		
+		<h3>Add new constant</h3>
+		
+		<form id="sqlconstants-add" method="post" action="">
+			
+			<label for="new-constant-name">Name:</label>
+			<input id="new-constant-name" type="text" name="name" value="" />
+			
+			<label for="new-constant-value">Value:</label>
+			<input id="new-constant-value" type="text" name="value" value="" />
+
+			<input type="submit" name="add_constant" value="Add"/>
+			
+		</form>
+		
+    </div>
+  </body>
+</html>
