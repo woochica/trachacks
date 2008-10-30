@@ -37,3 +37,15 @@ enable in trac.ini with:
 
 	[components]
 	teamcalendar.* = enabled
+	
+If you want to use a different table name than 'team_availability', add::
+
+	[team-calendar]
+	table_name = some_name
+	
+If you want to display more or fewer weeks before or after the current week
+by default, add::
+
+	[team-calendar]
+	weeks_prior = 2
+	weeks_after = 3

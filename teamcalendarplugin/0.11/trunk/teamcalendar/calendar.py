@@ -14,6 +14,9 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_style
 class TeamCalendar(Component):
     implements(INavigationContributor, IRequestHandler, IPermissionRequestor, ITemplateProvider)
 
+    # Table name
+    table_name = Option('team-calendar', 'table_name', u"team_availability", doc="The table that contains team availability information")
+
     # How much to display by default?
     weeks_prior = Option('team-calendar', 'weeks_prior', u"1", doc="Defines how many weeks before the current week to show by default")
     weeks_after = Option('team-calendar', 'weeks_after', u"3", doc="Defines how many weeks before the current week to show by default")
@@ -53,9 +56,9 @@ class TeamCalendar(Component):
         db = self.env.get_db_cnx()
         timetable_cursor = db.cursor()
         timetable_cursor.execute('SELECT ondate, username, availability '
-                                 'FROM team_availability '
+                                 'FROM %s '
                                  'WHERE ondate >= "%s" AND ondate <= "%s" '
-                                 'GROUP BY ondate, username' % (from_date.isoformat(), to_date.isoformat(),))
+                                 'GROUP BY ondate, username' % (self.table_name, from_date.isoformat(), to_date.isoformat(),))
         
         empty_day = dict([(p, 0.0) for p in people])
         
@@ -74,9 +77,10 @@ class TeamCalendar(Component):
         db = self.env.get_db_cnx()
         insert_cursor = db.cursor()
         # XXX: This is MySQL specific
-        insert_cursor.execute("INSERT INTO team_availability (ondate, username, availability) VALUES %s "
+        insert_cursor.execute("INSERT INTO %s (ondate, username, availability) VALUES %s "
                               "ON DUPLICATE KEY UPDATE availability = VALUES(availability)" %
-                                ", ".join(["('%s', '%s', %d)" % (t[0], t[1], t[2] and 1 or 0,) for t in tuples]))
+                                (self.table_name,
+                                 ", ".join(["('%s', '%s', %d)" % (t[0], t[1], t[2] and 1 or 0,) for t in tuples])))
     
     def string_to_date(self, date_str, fallback=None):
         try:
