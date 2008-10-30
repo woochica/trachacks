@@ -111,7 +111,7 @@ class ScreenshotsCore(Component):
         match = re.match(r'''^/screenshots($|/$)''', req.path_info)
         if match:
             return True
-        match = re.match(r'''^/screenshots/(\d+)$''', req.path_info)
+        match = re.match(r'''^/screenshots/(\d+)($|/$)''', req.path_info)
         if match:
             req.args['action'] = 'get-file'
             req.args['id'] = match.group(1)
@@ -653,7 +653,15 @@ class ScreenshotsCore(Component):
             size = image.file.len
         if size == 0:
             raise TracError('Can\'t upload empty file.')
-        filename = os.path.basename(image.filename).decode('utf-8')
+
+        # Try to normalize the filename to unicode NFC if we can.
+        # Files uploaded from OS X might be in NFD.
+        self.log.debug('input filename: %s', (image.filename,))
+        filename = unicodedata.normalize('NFC', to_unicode(image.filename,
+          'utf-8'))
+        filename = filename.replace('\\', '/').replace(':', '/')
+        filename = os.path.basename(filename)
+        self.log.debug('output filename: %s', (filename,))
 
         # Check correct file type.
         reg = re.compile(r'^(.*)[.](.*)$')
