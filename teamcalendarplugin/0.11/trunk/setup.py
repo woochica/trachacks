@@ -11,8 +11,8 @@ setup(
     version = '0.1',
     license='BSD',
     packages=['teamcalendar'],
-    package_data={'helloworld': ['templates/*.html', 
-                                 'htdocs/css/*.css',]},
+    package_data={'teamcalendar': ['templates/*.html', 
+                                   'htdocs/css/*.css',]},
     entry_points = {
         'trac.plugins': [
             'teamcalendar = teamcalendar'
