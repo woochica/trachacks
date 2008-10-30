@@ -11,7 +11,7 @@ setup(
     version = '0.1',
     license='BSD',
     packages=['wikitable'],
-    package_data={'helloworld': ['htdocs/css/*.css',]},
+    package_data={'wikitable': ['htdocs/css/*.css',]},
     entry_points = {
         'trac.plugins': [
             'wikitable = wikitable'
