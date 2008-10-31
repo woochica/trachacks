@@ -12,7 +12,7 @@ from trac.wiki.api import parse_args
 from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
-from trac.web.chrome import add_script
+from trac.web.chrome import add_link
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
 import md5
@@ -101,19 +101,10 @@ class GoogleMapMacro(WikiMacroBase):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
-        return (template, data, content_type)
-        # reset macro ID counter at start of each wiki page
-        #GoogleMapMacro.nid = 0
-        # Add Google Map JavaScript
+        # Add Google Map API key using a link tag:
         key = self.env.config.get('googlemap', 'api_key', None)
         if key:
-            # add_script hack to support external script files:
-            url = r"http://maps.google.com/maps?file=api&v=2&key=%s" % key
-            scriptset = req.chrome.setdefault('scriptset', set())
-            if not url in scriptset:
-                script = {'href': url, 'type': 'text/javascript'}
-                req.chrome.setdefault('scripts', []).append(script)
-                scriptset.add(url)
+            add_link(req, rel='google-key', href='', title=key, classname='google-key')
         return (template, data, content_type)
 
     def _strip(self, arg):

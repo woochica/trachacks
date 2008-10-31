@@ -59,16 +59,12 @@ function gmapiloaded() {
     }
 }
 
-function loadMaps() {
-    google.load("maps", "2", {"callback" : gmapiloaded});
-}
-
 $(document).ready( function () {
     if ( $("div.tracgooglemap").length ) {
-        var newscript = document.createElement('script');
-        newscript.setAttribute("src", "http://www.google.com/jsapi?key=ABQIAAAAMwTA9mkyZbDS6QMcxvwm2BSQOzMoHhUvKhnbz2J_cl7Q_N79gxT1CsKEV2c42KaWwXzchSDK2PVUzQ&callback=loadMaps");
-        newscript.setAttribute("type","text/javascript");
-        $("head")[0].appendChild(newscript);
+        var key = $("link.google-key").attr('title');
+        jQuery.getScript("http://www.google.com/jsapi?key=" + key, function () {
+            google.load("maps", "2", {"callback" : gmapiloaded})
+        });
     }
 });
 
