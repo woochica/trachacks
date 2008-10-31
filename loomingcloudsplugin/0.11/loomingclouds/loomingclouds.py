@@ -7,8 +7,10 @@ http://trac.edgewall.org
 from genshi.filters.transform import Transformer
 
 from trac.core import *
+from trac.mimeview import Context
 from trac.web.api import ITemplateStreamFilter
-from tractags.api import TagSystem
+from trac.web.chrome import add_stylesheet
+from trac.wiki.formatter import Formatter
 from tractags.macros import TagCloudMacro
 
 class LoomingClouds(Component):
@@ -33,16 +35,8 @@ class LoomingClouds(Component):
 
         if filename == 'ticket.html':
 
-            # code lifted from tractags.macaros.TagCloudMacro
-            query_result = TagSystem(self.env).query(req, None)
-            all_tags = {}
-
-            class DummyFormatter(object):
-                """dummy formatter for TagCloudMacro"""
-            #    req = req
-            formatter = DummyFormatter()
-            formatter.req = req
-
+            add_stylesheet(req, 'tags/css/tractags.css')
+            formatter = Formatter(self.env, Context.from_request(req))
             macro = TagCloudMacro(self.env)
             cloud = macro.expand_macro(formatter, 'TagCloud', '')
 
