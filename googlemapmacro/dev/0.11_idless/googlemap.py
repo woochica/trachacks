@@ -101,6 +101,7 @@ class GoogleMapMacro(WikiMacroBase):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)
         # reset macro ID counter at start of each wiki page
         #GoogleMapMacro.nid = 0
         # Add Google Map JavaScript
@@ -449,11 +450,11 @@ class GoogleMapMacro(WikiMacroBase):
                     tag.div (
                         "Google Map is loading ... (JavaScript enabled?)",
                         #id=id,
-                        style= "background-color: rgb(229, 227, 223);" +
-                            "width: %s; height: %s;" % (width,height),
+                        style = "width: %s; height: %s;" % (width,height),
+                        class_ = "tracgooglemap"
                         )
                     ],
-                class_ = "tracgooglemaps",
+                class_ = "tracgooglemap-parent"
                 );
 
         return html;
