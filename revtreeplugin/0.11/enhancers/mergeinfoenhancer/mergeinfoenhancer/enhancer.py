@@ -33,7 +33,6 @@ class MergeInfoEnhancer(RevtreeEnhancer):
 
     def __init__(self, env, req, repos, svgrevtree):
         """Creates the internal data from the repository"""
-        enhancer = SimpleContainer()
         self._repos = repos
         self._svgrevtree = svgrevtree
         self._widgets = [[] for l in IRevtreeEnhancer.ZLEVELS]
@@ -105,7 +104,6 @@ class MergeInfoEnhancer(RevtreeEnhancer):
                                                    srcbrs[srcbr])
                     # track last useful merge info
                     prevmerge = merges
-        return enhancer
                 
     def build(self):
         """Build the enhanced widgets"""
