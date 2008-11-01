@@ -87,6 +87,9 @@ class WikiExtRPC(Component):
         macros = {}
         for plugin in self.wiki.macro_providers:
             for macro in plugin.get_macros():
-                macros[ macro ] = plugin.get_macro_description( macro )
+                desc = plugin.get_macro_description( macro )
+                if not desc:
+                    desc = ''
+                macros[ macro ] = desc 
         return macros
 
