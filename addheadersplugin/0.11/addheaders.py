@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
     $Id: googlemap.py 4664 2008-10-29 23:17:17Z martin_s $
     $HeadURL: http://trac-hacks.org/svn/googlemapmacro/0.11/googlemap.py $
@@ -23,7 +24,6 @@ class AddHeadersPlugin(Component):
     def post_process_request(self, req, template, data, content_type):
         config        = self.env.config
         section       = 'addheaders'
-        self.env.log.info("Executing ...")
 
         default_base        = config.get(section, 'default_base', 'site/')
         default_script_base = config.get(section, 'default_script_base', default_base)
