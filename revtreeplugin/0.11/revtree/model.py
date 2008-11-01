@@ -130,7 +130,9 @@ class BranchChangeset(Changeset):
         if src_mo:
             self.clone = (int(base_rev), src_mo.group('branch'))
         self.branchname = path_mo.group('branch')
-        self.prettyname = path_mo.group('branchname') or self.branchname
+        mo_dict = path_mo.groupdict()
+        self.prettyname = 'branchname' in mo_dict and mo_dict['branchname'] \
+                            or self.branchname
         return True
 
     def _find_plain_branch(self, bcre):
@@ -153,7 +155,9 @@ class BranchChangeset(Changeset):
             elif branch != br:
                 raise BranchPathError, "'%s' != '%s'" % (br, branch)
         self.branchname = branch
-        self.prettyname = mo.group('branchname') or self.branchname
+        mo_dict = mo.groupdict()
+        self.prettyname = 'branchname' in mo_dict and mo_dict['branchname'] \
+                            or self.branchname
         return True
 
     def build(self, bcre):
@@ -211,8 +215,11 @@ class TagChangeset(Changeset):
         (prev_path, prev_rev, prev_chg) = node.get_previous()
         self.env.log.info("PREV: %s %s %s" % (prev_path, prev_rev, prev_chg))
         self.clone = (int(prev_rev), prev_path)
-        self.name = path_mo.group('tag')
-        self.prettyname = path_mo.group('tagname') or self.name
+        mo_dict = path_mo.groupdict()
+        if 'tag' not in mo_dict:
+            return False
+        self.name = mo_dict['tag']
+        self.prettyname = mo_dict.setdefault('tagname', self.name)
         return True
 
     def build(self, bcre):
@@ -428,9 +435,10 @@ class Repository(object):
             chgset = None
             mo = info and bcre.match(info['path'])
             if mo:
-                if mo.group('branch'):
+                mo_dict = mo.groupdict()
+                if 'branch' in mo_dict and mo_dict['branch']:
                     chgset = BranchChangeset(self, vc)
-                elif mo.group('tag'):
+                if 'tag' in mo_dict and mo_dict['tag']:
                     chgset = TagChangeset(self, vc)
             if chgset and chgset.build(bcre):
                 self._changesets[rev] = chgset

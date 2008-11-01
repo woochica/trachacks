@@ -265,6 +265,7 @@ class RevtreeModule(Component):
             
     def __init__(self):
         """Reads the configuration and run sanity checks"""
+        self.env.log.debug('Revtree RE: %s' % self.branchre)
         self.bcre = re.compile(self.branchre)
         self.rt = RevtreeSystem(self.env)
 
