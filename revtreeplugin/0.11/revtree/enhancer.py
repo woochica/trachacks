@@ -55,7 +55,6 @@ class SimpleEnhancer(RevtreeEnhancer):
                 if lastchgset.last:
                     # tweak the color of this changeset
                     svgbranch.svgchangeset(lastchgset).mark_last()
-        return enhancer
 
     def build(self):
         """Build the enhanced widgets"""
@@ -69,9 +68,9 @@ class SimpleEnhancer(RevtreeEnhancer):
                 continue
             svgdstchg = svgdstbr.svgchangeset(dstchg)
             op = SvgOperation(self.svgrevtree, svgsrcchg, svgdstchg, '#3f3f3f')
-            self.widgets[IRevtreeEnhancer.ZFORE].append(op)
+            self._widgets[IRevtreeEnhancer.ZFORE].append(op)
                     
-        for wl in self.widgets:
+        for wl in self._widgets:
             map(lambda w: w.build(), wl)
         
     def render(self, level):
