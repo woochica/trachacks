@@ -69,17 +69,24 @@ class WikiExtRPC(Component):
         pages.sort()
         children = {}
         for page in pages:
+            # print 'Complete name: "%s"' % page
             relname = page.replace( pagename, '' )
+            # print 'RELNAME: "%s"' % relname
+             
             if relname.find( '/' ) == -1:
                 # We only look for direct children
                 children[ page ] = { 'exists' : True,
                                      'hasChildren' : False }
             else:
                 # The page does not really exists, but it does have
-                # children, so we have to return it, 
+                # children, so we have to return it,
                 name = pagename + relname.split( '/', 1 )[0]
-                children[ name ] = { 'exists' : False, 
-                                     'hasChildren' : True }
+                if not children.has_key( name ):
+                    children[ name ] = { 'exists' : False, 
+                                        'hasChildren' : True }
+                else:
+                    children[ name ][ 'hasChildren' ] = True
+                    
         return children
     
     def getMacros(self, req):
