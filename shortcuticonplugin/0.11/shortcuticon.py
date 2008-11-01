@@ -52,7 +52,8 @@ class ShortcutIconRequestPlugin(Component):
     def match_request(self, req):
         if not self.ishandler:
             return False
-        return req.path_info == self.path
+        return req.path_info == self.path \
+            or req.path_info == req.base_path + self.path
 
 
     def process_request(self, req):
@@ -81,8 +82,9 @@ class ShortcutIconRequestPlugin(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if self.isfilter:
-            add_link(req, 'shortcut icon', self.path, None, self.mimetype)
-            add_link(req, 'icon', self.path, None, self.mimetype)
+            path = req.base_path + self.path
+            add_link(req, 'shortcut icon', path, None, self.mimetype)
+            add_link(req, 'icon', path, None, self.mimetype)
 
         return (template, data, content_type)
 
