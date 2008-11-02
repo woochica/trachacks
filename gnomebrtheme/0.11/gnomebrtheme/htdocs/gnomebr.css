@@ -268,20 +268,22 @@ dt :link:hover, dt :visited:hover { background-color: transparent;}
 
 /* Styles for tabular listings such as those used for displaying directory
    contents and report results. */
+/* Styles for tabular listings such as those used for displaying directory
+   contents and report results. */
 table.listing {
  clear: both;
- border-bottom: 0px solid #d7d7d7;
+ border-bottom: 1px solid #d7d7d7;
  border-collapse: collapse;
  border-spacing: 0;
  margin-top: 1em;
  width: 100%;
- 
 }
-table.listing th { text-align: left; padding: 0 1em .1em 0; font-size: 14px }
-table.listing thead { background: transparent }
+table.listing th { text-align: left; padding: 0 1em .1em 0; font-size: 12px }
+table.listing thead { background: #f7f7f0 }
 table.listing thead th {
- border: 0px;
- font-size: 13px;
+ border: 1px solid #d7d7d7;
+ border-bottom-color: #999;
+ font-size: 11px;
  font-weight: bold;
  padding: 2px .5em;
  vertical-align: bottom;
@@ -294,25 +296,21 @@ table.listing th.asc a, table.listing th.desc a { font-weight: bold }
 table.listing th.asc a, table.listing th.desc a {
  background-position: 100% 50%;
  background-repeat: no-repeat;
- font-size: 14px;
 }
 table.listing th.asc a { background-image: url(../asc.png) }
 table.listing th.desc a { background-image: url(../desc.png) }
 table.listing tbody td, table.listing tbody th {
- border: 0px;
- padding: 0px 0px 0px 0px;
+ border: 1px dotted #ddd;
+ padding: .3em .5em;
  vertical-align: top;
- font-size: 14px;
- font-weight: normal;
- color: black;
 }
 table.listing tbody td a:hover, table.listing tbody th a:hover {
  background-color: transparent;
 }
-table.listing tbody tr { border-top: 0px}
-table.listing tbody tr.even { background-color: transparent }
-table.listing tbody tr.odd { background-color: transparent }
-table.listing tbody tr:hover { background: transparent !important }
-table.listing tbody tr.focus { background: transparent !important }
+table.listing tbody tr { border-top: 1px solid #ddd }
+table.listing tbody tr.even { background-color: #fcfcfc }
+table.listing tbody tr.odd { background-color: #f7f7f7 }
+table.listing tbody tr:hover { background: #eed !important }
+table.listing tbody tr.focus { background: #ddf !important }
 
 .milestone .info h2 em { color: #1153b3; font-style: normal }
