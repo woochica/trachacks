@@ -1,5 +1,12 @@
-// JavaScript functions for Trac GoogleMapMacro
-//
+/* 
+ JavaScript functions for Trac GoogleMapMacro
+
+ Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
+ $Id$
+ $HeadURL$
+
+ This is Free Software under the GPL v3!
+*/
 
 function SetMarkerByCoords(map,lat,lng,letter,link,title,target) {
     if (!title) { title = link; }
