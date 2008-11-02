@@ -17,7 +17,7 @@ setup(
     },
     entry_points = {
         'trac.plugins': [
-            'tracextlinksnewwindow = tracextlinksnewwindow',
+            'tracextlinksnewwindow.plugin = tracextlinksnewwindow.plugin',
         ],
     }
 )
