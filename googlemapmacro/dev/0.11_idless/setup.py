@@ -1,23 +1,20 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
-    name = 'TracGoogleMapMacro',
-    version = '0.5',
-    description = 'Provides Macro for Trac Wikis to allow users to add Google Maps.',
-    license = 'GPLv3',
-    url = 'http://trac-hacks.org/wiki/GoogleMapMacro',
+    name = 'GoogleMapMacro',
+    version = '0.1',
+    packages = ['googlemap'],
     author = 'Martin Scharrer',
-    author_email = 'martin@scharrer-online.de',
-    packages = find_packages(exclude=['*.tests*','tools/*']),
     package_data = {
-        'googlemapmacro' : [ 'htdocs/*.js' ],
+        'googlemap' : [ 'htdocs/*.js' ],
     },
-    entry_points = {
-        'trac.plugins': [
-            'googlemapmacro = googlemapmacro',
-        ],
-    }
+    author_email = 'martin@scharrer-online.de',
+    description = "GoogleMap Trac Macro.",
+    url = 'http://www.trac-hacks.org/wiki/GoogleMapMacro',
+    license = 'GPLv3',
+    keywords = 'trac plugin googlemap macro',
+    classifiers = ['Framework :: Trac'],
+    entry_points = {'trac.plugins': ['googlemap.macro = googlemap.macro']}
 )

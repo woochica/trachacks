@@ -12,7 +12,7 @@ from trac.wiki.api import parse_args
 from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_script
+from trac.web.chrome import ITemplateProvider, add_link, add_script
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
 import md5
@@ -98,7 +98,7 @@ class GoogleMapMacro(WikiMacroBase):
     # ITemplateProvider#get_htdocs_dirs
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        return [('googlemapmacro', resource_filename(__name__, 'htdocs'))]
+        return [('googlemap', resource_filename(__name__, 'htdocs'))]
 
     # ITemplateProvider#get_templates_dirs
     def get_templates_dirs(self):
@@ -109,12 +109,15 @@ class GoogleMapMacro(WikiMacroBase):
     def pre_process_request(self, req, handler):
         return handler
 
+
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
+        # Add Google Map API key using a link tag:
         key = self.env.config.get('googlemap', 'api_key', None)
-        add_script(req, 'googlemapmacro/tracgooglemap.js?key=' + key)
+        if key:
+            add_link (req, rel='google-key', href='', title=key, classname='google-key')
+            add_script (req, 'googlemap/tracgooglemap.js')
         return (template, data, content_type)
-
 
     def _strip(self, arg):
         """Strips spaces and a single pair of double quotes as long there are 

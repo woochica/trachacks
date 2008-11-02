@@ -1,5 +1,5 @@
-
-// TODO: move this functions to an external file:
+// JavaScript functions for Trac GoogleMapMacro
+//
 
 function SetMarkerByCoords(map,lat,lng,letter,link,title,target) {
     if (!title) { title = link; }
@@ -59,15 +59,10 @@ function gmapiloaded() {
     }
 }
 
-var googlekey;
-
-if (!googlekey) {
-    googlekey = $("script[src*=tracgooglemap.js?key=]").attr('src').split('?key=', 2)[1]
-}
-
 $(document).ready( function () {
     if ( $("div.tracgooglemap").length ) {
-        jQuery.getScript("http://www.google.com/jsapi?key=" + googlekey, function () {
+        var key = $("link.google-key").attr('title');
+        jQuery.getScript("http://www.google.com/jsapi?key=" + key, function () {
             google.load("maps", "2", {"callback" : gmapiloaded})
         });
     }
