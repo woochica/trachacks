@@ -59,10 +59,15 @@ function gmapiloaded() {
     }
 }
 
+var googlekey;
+
+if (!googlekey) {
+    googlekey = $("script[src*=tracgooglemap.js?key=]").attr('src').split('?key=', 2)[1]
+}
+
 $(document).ready( function () {
     if ( $("div.tracgooglemap").length ) {
-        var key = $("link.google-key").attr('title');
-        jQuery.getScript("http://www.google.com/jsapi?key=" + key, function () {
+        jQuery.getScript("http://www.google.com/jsapi?key=" + googlekey, function () {
             google.load("maps", "2", {"callback" : gmapiloaded})
         });
     }

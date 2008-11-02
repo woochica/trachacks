@@ -12,7 +12,7 @@ from trac.wiki.api import parse_args
 from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
-from trac.web.chrome import add_link
+from trac.web.chrome import ITemplateProvider, add_script
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
 import md5
@@ -67,7 +67,8 @@ TracGoogleMap( function (mapdiv) {
 """
 
 class GoogleMapMacro(WikiMacroBase):
-    implements(IRequestFilter)
+    implements(IRequestFilter,ITemplateProvider,IRequestFilter)
+
     """ Provides a macro to insert Google Maps(TM) in Wiki pages
     """
     #nid  = 0
@@ -79,7 +80,7 @@ class GoogleMapMacro(WikiMacroBase):
             "client")).lower()
         # Create DB table if it not exists.
         # but execute only once.
-        if self.geocoding == 'server' and not GoogleMapMacro.dbinit:
+        if not GoogleMapMacro.dbinit and self.geocoding == 'server':
             self.env.log.debug("Creating DB table (if not already exists).")
             db = self.env.get_db_cnx()
             cursor = db.cursor()
@@ -94,18 +95,26 @@ class GoogleMapMacro(WikiMacroBase):
             GoogleMapMacro.dbinit = 1
 
 
+    # ITemplateProvider#get_htdocs_dirs
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('googlemapmacro', resource_filename(__name__, 'htdocs'))]
+
+    # ITemplateProvider#get_templates_dirs
+    def get_templates_dirs(self):
+        return []
+
+
     # IRequestFilter#pre_process_request
     def pre_process_request(self, req, handler):
         return handler
 
-
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
-        # Add Google Map API key using a link tag:
         key = self.env.config.get('googlemap', 'api_key', None)
-        if key:
-            add_link(req, rel='google-key', href='', title=key, classname='google-key')
+        add_script(req, 'googlemapmacro/tracgooglemap.js?key=' + key)
         return (template, data, content_type)
+
 
     def _strip(self, arg):
         """Strips spaces and a single pair of double quotes as long there are 
