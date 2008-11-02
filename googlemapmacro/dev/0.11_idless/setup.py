@@ -3,18 +3,18 @@
 from setuptools import setup
 
 setup(
-    name = 'GoogleMapMacro',
-    version = '0.1',
-    packages = ['googlemap'],
+    name = 'TracGoogleMapMacro',
+    version = '0.5',
+    packages = ['tracgooglemap'],
     author = 'Martin Scharrer',
     package_data = {
-        'googlemap' : [ 'htdocs/*.js' ],
+        'tracgooglemap' : [ 'htdocs/*.js' ],
     },
     author_email = 'martin@scharrer-online.de',
     description = "GoogleMap Trac Macro.",
     url = 'http://www.trac-hacks.org/wiki/GoogleMapMacro',
     license = 'GPLv3',
-    keywords = 'trac plugin googlemap macro',
+    keywords = 'trac googlemap macro',
     classifiers = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['googlemap.macro = googlemap.macro']}
+    entry_points = {'trac.plugins': ['tracgooglemap.macro = tracgooglemap.macro']}
 )
