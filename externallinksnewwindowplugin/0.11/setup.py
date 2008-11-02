@@ -5,9 +5,9 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'ExtLinksNewWindow',
-    version = '0.1',
+    version = '0.2',
     description = 'Trac Load External Links in New Window',
-    license = 'BSD',
+    license = 'GPLv3',
     url = 'http://trac-hacks.org/wiki/ExternalLinksNewWindow',
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
