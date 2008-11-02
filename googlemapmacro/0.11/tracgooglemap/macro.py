@@ -12,7 +12,7 @@ from trac.wiki.api import parse_args
 from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
-from trac.web.chrome import add_script
+from trac.web.chrome import ITemplateProvider, add_link, add_script
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
 import md5
@@ -37,44 +37,9 @@ _accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16, 16)
 
 _javascript_code = """
 //<![CDATA[
-// TODO: move this functions to an external file:
 
-function SetMarkerByCoords(map,lat,lng,letter,link,title,target) {
-    if (!title) { title = link; }
-    var marker = new GMarker( new GLatLng(lat,lng),
-        { title: title, icon: new GIcon (G_DEFAULT_ICON,
-        'http://maps.google.com/mapfiles/marker'
-        + letter + '.png') }
-     );
-    if (link) {
-        GEvent.addListener(marker, "click", function() {
-            if (target) {
-                window.open(link);
-            } else {
-                window.location = link;
-            }
-        });
-    }
-    map.addOverlay(marker);
-}
-
-function SetMarkerByAddress(map,address,letter,link,title,target,geocoder) {
-    if (!geocoder) {
-        geocoder = new GClientGeocoder();
-    }
-    geocoder.getLatLng(
-      address,
-      function(point) {
-        if (point) {
-          SetMarkerByCoords(map, point.lat(), point.lng(), letter, link, title, target);
-        }
-      }
-    )
-}
-
-$(document).ready( function () {
-  if (GBrowserIsCompatible()) {
-    var map = new GMap2(document.getElementById("%(id)s"),{
+TracGoogleMap( function (mapdiv) {
+    var map = new GMap2(mapdiv, {
     //    size: new GSize(%(width)s, %(height)s),
         mapTypes: %(types_str)s
     });
@@ -84,31 +49,29 @@ $(document).ready( function () {
         map.setCenter(new GLatLng(%(center)s), %(zoom)s);
     }
     var geocoder = new GClientGeocoder();
-    var address = "%(address)s";
+    var address  = "%(address)s";
     if (address) {
-    geocoder.getLatLng(
-      address,
-      function(point) {
-        if (!point) {
-          //alert(address + " not found");
-        } else {
-          map.setCenter(point, %(zoom)s);
-        }
-      }
-      )
+        geocoder.getLatLng(
+            address,
+            function(point) {
+                if (point) {
+                    map.setCenter(point, %(zoom)s);
+                }
+            }
+        )
     }
     %(markers_str)s
-}} );
+}, "%(id)s" );
 
-$(window).unload( GUnload );
 //]]>
 """
 
 class GoogleMapMacro(WikiMacroBase):
-    implements(IRequestFilter)
+    implements(IRequestFilter,ITemplateProvider,IRequestFilter)
+
     """ Provides a macro to insert Google Maps(TM) in Wiki pages
     """
-    nid  = 0
+    #nid  = 0
     dbinit = 0
 
     def __init__(self):
@@ -117,7 +80,7 @@ class GoogleMapMacro(WikiMacroBase):
             "client")).lower()
         # Create DB table if it not exists.
         # but execute only once.
-        if self.geocoding == 'server' and not GoogleMapMacro.dbinit:
+        if not GoogleMapMacro.dbinit and self.geocoding == 'server':
             self.env.log.debug("Creating DB table (if not already exists).")
             db = self.env.get_db_cnx()
             cursor = db.cursor()
@@ -132,6 +95,16 @@ class GoogleMapMacro(WikiMacroBase):
             GoogleMapMacro.dbinit = 1
 
 
+    # ITemplateProvider#get_htdocs_dirs
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('googlemap', resource_filename(__name__, 'htdocs'))]
+
+    # ITemplateProvider#get_templates_dirs
+    def get_templates_dirs(self):
+        return []
+
+
     # IRequestFilter#pre_process_request
     def pre_process_request(self, req, handler):
         return handler
@@ -139,18 +112,11 @@ class GoogleMapMacro(WikiMacroBase):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
-        # reset macro ID counter at start of each wiki page
-        GoogleMapMacro.nid = 0
-        # Add Google Map JavaScript
+        # Add Google Map API key using a link tag:
         key = self.env.config.get('googlemap', 'api_key', None)
         if key:
-            # add_script hack to support external script files:
-            url = r"http://maps.google.com/maps?file=api&v=2&key=%s" % key
-            scriptset = req.chrome.setdefault('scriptset', set())
-            if not url in scriptset:
-                script = {'href': url, 'type': 'text/javascript'}
-                req.chrome.setdefault('scripts', []).append(script)
-                scriptset.add(url)
+            add_link (req, rel='google-key', href='', title=key, classname='google-key')
+            add_script (req, 'googlemap/tracgooglemap.js')
         return (template, data, content_type)
 
     def _strip(self, arg):
@@ -467,8 +433,8 @@ class GoogleMapMacro(WikiMacroBase):
 
 
         # Produce unique id for div tag
-        GoogleMapMacro.nid += 1
-        id = "tracgooglemap-%i" % GoogleMapMacro.nid
+        #GoogleMapMacro.nid += 1
+        #id = "tracgooglemap-%i" % GoogleMapMacro.nid
 
 
         # put everything in a tidy div
@@ -486,12 +452,12 @@ class GoogleMapMacro(WikiMacroBase):
                     # Canvas for this map
                     tag.div (
                         "Google Map is loading ... (JavaScript enabled?)",
-                        id=id,
-                        style= "background-color: rgb(229, 227, 223);" +
-                            "width: %s; height: %s;" % (width,height),
+                        #id=id,
+                        style = "width: %s; height: %s;" % (width,height),
+                        class_ = "tracgooglemap"
                         )
                     ],
-                class_ = "tracgooglemaps",
+                class_ = "tracgooglemap-parent"
                 );
 
         return html;
