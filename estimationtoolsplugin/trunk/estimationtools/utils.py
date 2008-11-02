@@ -4,9 +4,8 @@ from trac.config import Option
 from trac.core import TracError
 from trac.wiki.api import parse_args
 from trac.ticket.query import Query
-from trac.util.datefmt import utc
 
-AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color']
+AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color', 'closedstates']
 
 def get_estimation_field():    
     return Option('estimation-tools', 'estimation_field', 'estimatedhours', 
@@ -51,7 +50,12 @@ def parse_options(db, content, options):
     todayarg = options.get('today')
     if not todayarg:
         options['today'] = datetime.now().date()
-      
+    
+    if 'closedstates' in options:
+        options['closedstates'] = [s.strip() for s in options['closedstates'].split('|')]
+    else:
+        options['closedstates'] = ['closed']
+        
     # all arguments that are no key should be treated as part of the query  
     query_args = {}
     for key in options.keys():

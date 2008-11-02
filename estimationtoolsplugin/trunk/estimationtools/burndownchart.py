@@ -1,7 +1,10 @@
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from datetime import datetime
 from datetime import timedelta
-from estimationtools.utils import *
+from estimationtools.utils import parse_options, execute_query, get_estimation_field
 from trac.core import TracError
 from trac.util.html import Markup
+from trac.util.datefmt import utc
 from trac.wiki.macros import WikiMacroBase
 import copy
 
@@ -19,6 +22,8 @@ class BurndownChart(WikiMacroBase):
      * `startdate`: '''mandatory''' parameter that specifies the start date of the period (ISO8601 format)
      * `enddate`: end date of the period. If omitted, it defaults to either the milestones (if given) `completed' date, 
        or `due` date, or today (in that order) (ISO8601 format)
+     * `closedstates`: Set to a |-separated list of workflow states that count as "closed", where the effort will be treated as zero,
+        e.g. `closedstates=closed|another_state`. Defaults to `closed`.
      * `width`: width of resulting diagram (defaults to 800)
      * `height`: height of resulting diagram (defaults to 200)
      * `color`: color specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
@@ -35,6 +40,7 @@ class BurndownChart(WikiMacroBase):
     estimation_field = get_estimation_field()
     
     def render_macro(self, req, name, content):
+
         # prepare options
         options, query_args = parse_options(self.env.get_db_cnx(), content, copy.copy(DEFAULT_OPTIONS))
 
@@ -47,13 +53,12 @@ class BurndownChart(WikiMacroBase):
 
         # calculate data
         timetable = self._calculate_timetable(options, query_args, req)
-        
+
         # scale data      
         xdata, ydata, maxhours = self._scale_data(timetable, options)
     
         # build html for google chart api
-        dates = timetable.keys()
-        dates.sort()
+        dates = sorted(timetable.keys())
         bottomaxis = "0:|" + ("|").join([str(date.day) for date in dates]) + \
             "|1:|%s|%s" % (dates[0].month, dates[ - 1].month) + \
             "|2:|%s|%s" % (dates[0].year, dates[ - 1].year)
@@ -63,13 +68,13 @@ class BurndownChart(WikiMacroBase):
         weekends = []
         saturday = None
         index = 0
-        halfday = 0.5 / (len(dates) - 1)
+        halfday = self._round(Decimal("0.5") / (len(dates) - 1))
         for date in dates:
             if date.weekday() == 5:
                 saturday = index
             if saturday and date.weekday() == 6:
-                weekends.append("R,f1f1f1,0,%s,%s" % ((float(xdata[saturday]) / 100) - halfday,
-                                                      (float(xdata[index]) / 100) + halfday))
+                weekends.append("R,f1f1f1,0,%s,%s" % (self._round((Decimal(xdata[saturday]) / 100) - halfday),
+                                                      self._round((Decimal(xdata[index]) / 100) + halfday)))
                 saturday = None
             index += 1
         # special handling if time period starts with Sundays...
@@ -77,12 +82,12 @@ class BurndownChart(WikiMacroBase):
             weekends.append("R,f1f1f1,0,0.0,%s" % halfday)
         # or ends with Saturday
         if len(dates) > 0 and dates[ - 1].weekday() == 5:
-            weekends.append("R,f1f1f1,0,%s,1.0" % (1.0 - halfday))
+            weekends.append("R,f1f1f1,0,%s,1.0" % (Decimal(1) - halfday))
             
         title = ''
         if options.get('milestone'):
             title = options['milestone'].split('|')[0]
-                
+        
         return Markup("<img src=\"http://chart.apis.google.com/chart?"
                "chs=%sx%s" 
                "&amp;chd=t:%s|%s"
@@ -105,56 +110,101 @@ class BurndownChart(WikiMacroBase):
         # create dictionary with entry for each day of the required time period
         timetable = {}
         
-        currentdate = options['startdate']
-        while currentdate <= options['enddate']:
-            timetable[currentdate] = 0.0
-            currentdate += timedelta(days=1)
+        current_date = options['startdate']
+        while current_date <= options['enddate']:
+            timetable[current_date] = Decimal(0)
+            current_date += timedelta(days=1)
 
         # get current values for all tickets within milestone and sprints     
         
         query_args[self.estimation_field + "!"] = None
         tickets = execute_query(self.env, req, query_args)
 
-        # print tickets
+        # add the open effort for each ticket for each day to the timetable
 
         for t in tickets:
-            creationdate = t['time'].date()
-            estimation = t[self.estimation_field]
             
-            # get change history for each ticket
+            # Record the current (latest) status and estimate, and ticket
+            # creation date
+            
+            creation_date = t['time'].date()
+            latest_status = t['status']
+            latest_estimate = self._cast_estimate(t[self.estimation_field])
+            if latest_estimate is None:
+                latest_estimate = Decimal(0)
+            
+            # Fetch change history for status and effort fields for this ticket
             history_cursor = db.cursor()
             history_cursor.execute("SELECT " 
-                "DISTINCT c.time AS time, c.oldvalue as oldvalue " 
+                "DISTINCT c.field as field, c.time AS time, c.oldvalue as oldvalue, c.newvalue as newvalue " 
                 "FROM ticket t, ticket_change c "
-                "WHERE t.id = %s and c.ticket = t.id and c.field=%s "
-                "ORDER BY c.time DESC", [t['id'], self.estimation_field])
+                "WHERE t.id = %s and c.ticket = t.id and (c.field=%s or c.field='status')"
+                "ORDER BY c.time ASC", [t['id'], self.estimation_field])
             
-            nextchangedate = None
-            nextvalue = None 
-            row = history_cursor.fetchone()
-            if row:
-                nextchangedate = datetime.fromtimestamp(row[0], utc).date()
-                nextvalue = row[1]
+            # Build up two dictionaries, mapping dates when effort/status
+            # changed, to the latest effort/status on that day (in case of
+            # several changes on the same day). Also record the oldest known
+            # effort/status, i.e. that at the time of ticket creation
+            
+            estimate_history = {}
+            status_history = {}
+            
+            earliest_estimate = None
+            earliest_status = None
+            
+            for row in history_cursor:
+                row_field, row_time, row_old, row_new = row
+                event_date = datetime.fromtimestamp(row_time, utc).date()
+                if row_field == self.estimation_field:
+                    new_value = self._cast_estimate(row_new)
+                    if new_value is not None:
+                        estimate_history[event_date] = new_value
+                    if earliest_estimate is None:
+                        earliest_estimate = self._cast_estimate(row_old)
+                elif row_field == 'status':
+                    status_history[event_date] = row_new
+                    if earliest_status is None:
+                        earliest_status = row_old
+            
+            # If we don't know already (i.e. the ticket effort/status was 
+            # not changed on the creation date), set the effort on the
+            # creation date. It may be that we don't have an "earliest"
+            # estimate/status, because it was never changed. In this case,
+            # use the current (latest) value.
+            
+            if not creation_date in estimate_history:
+                if earliest_estimate is not None:
+                    estimate_history[creation_date] = earliest_estimate
+                else:
+                    estimate_history[creation_date] = latest_estimate
+            if not creation_date in status_history:
+                if earliest_status is not None:
+                    status_history[creation_date] = earliest_status
+                else:
+                    status_history[creation_date] = latest_status
+            
+            # Finally estimates to the timetable. Treat any period where the
+            # ticket was closed as estimate 0. We need to loop from ticket
+            # creation date, not just from the timetable start date, since
+            # it's possible that the ticket was changed between these two
+            # dates.
 
-            # iterate backwards through period and add estimations
-            currentdate = options['enddate']
-            while currentdate >= options['startdate'] and currentdate >= creationdate:
-                # go back through history until we have the proper value
-                while nextchangedate and nextchangedate > currentdate:
-                    estimation = nextvalue
-                    row = history_cursor.fetchone()
-                    if row:
-                        nextchangedate = datetime.fromtimestamp(row[0], utc).date()
-                        nextvalue = row[1]
-                    else:
-                        nextchangedate = None
-                        
-                try:
-                    timetable[currentdate] += float(estimation)
-                except:
-                    pass
-                currentdate -= timedelta(days=1)
-       
+            current_date = creation_date
+            current_estimate = None
+            is_open = None
+
+            while current_date <= options['enddate']:
+                if current_date in status_history:
+                    is_open = (status_history[current_date] not in options['closedstates'])
+                
+                if current_date in estimate_history:
+                    current_estimate = estimate_history[current_date]
+
+                if current_date >= options['startdate'] and is_open:
+                    timetable[current_date] += current_estimate
+
+                current_date += timedelta(days=1)
+ 
         return timetable
         
     def _scale_data(self, timetable, options):
@@ -164,10 +214,11 @@ class BurndownChart(WikiMacroBase):
 
         maxhours = max(timetable.values())
                 
-        if maxhours <= 0.0:
-            maxhours = 100.0
-        ydata = [str(timetable[d] * 100 / maxhours) for d in dates]
-        xdata = [str(x * 100.0 / (len(dates) - 1)) 
+        if maxhours <= Decimal(0):
+            maxhours = Decimal(100)
+        ydata = [str(self._round(timetable[d] * Decimal(100) / maxhours))
+                 for d in dates]
+        xdata = [str(self._round(x * Decimal(100) / (len(dates) - 1)))
                  for x in range((options['enddate'] - options['startdate']).days + 1)]
         
         # mark ydata invalid that is after today
@@ -177,7 +228,15 @@ class BurndownChart(WikiMacroBase):
         
         return xdata, ydata, maxhours
     
-        
-        
-        
-
+    def _round(self, decimal_):
+        return decimal_.quantize(Decimal("0.01"), ROUND_HALF_UP)
+    
+    def _cast_estimate(self, estimate):
+        # Treat 0, empty string or None as 0.0
+        if not estimate:
+            return Decimal(0)
+        try:
+            return Decimal(estimate)
+        except (TypeError, ValueError, InvalidOperation):
+            # Treat other incorrect values as None
+            return None

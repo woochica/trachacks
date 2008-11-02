@@ -16,11 +16,12 @@ class HoursRemainingTestCase(unittest.TestCase):
                         perm = MockPerm(),
                         authname='anonymous')
        
-    def _insert_ticket(self, estimation):
+    def _insert_ticket(self, estimation, status='open'):
         ticket = Ticket(self.env)
         ticket['summary'] = 'Test Ticket'
         ticket['hours_remaining'] = estimation
         ticket['milestone'] = 'milestone1'
+        ticket['status'] = status
         return ticket.insert()
 
     def test_basic(self):
@@ -46,4 +47,13 @@ class HoursRemainingTestCase(unittest.TestCase):
         self._insert_ticket('30')
         self._insert_ticket('xxx')
         result = hoursRemaining.render_macro(self.req, "", "milestone=milestone1")
+        self.assertEqual(result, '60')
+
+    def test_closed_tickets(self):
+        hoursRemaining = HoursRemaining(self.env)
+        self._insert_ticket('10')
+        self._insert_ticket('20.1')
+        self._insert_ticket('30')
+        self._insert_ticket('30', status='closed')
+        result = hoursRemaining.render_macro(self.req, "", "status!=closed, milestone=milestone1")
         self.assertEqual(result, '60')
