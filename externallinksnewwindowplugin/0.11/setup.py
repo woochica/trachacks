@@ -4,20 +4,20 @@
 from setuptools import setup, find_packages
 
 setup(
-    name = 'ExtLinksNewWindow',
+    name = 'TracExtLinksNewWindow',
     version = '0.2',
     description = 'Trac Load External Links in New Window',
     license = 'GPLv3',
     url = 'http://trac-hacks.org/wiki/ExternalLinksNewWindow',
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
-    packages = find_packages(exclude=['*.tests*']),
+    packages = ['tracextlinksnewwindow'],
     package_data = {
-        'extlinksnewwindow' : [ 'htdocs/*.js' ],
+        'tracextlinksnewwindow' : [ 'htdocs/*.js' ],
     },
     entry_points = {
         'trac.plugins': [
-            'extlinksnewwindow = extlinksnewwindow',
+            'tracextlinksnewwindow = tracextlinksnewwindow',
         ],
     }
 )
