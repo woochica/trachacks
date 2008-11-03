@@ -104,7 +104,7 @@ class GoogleMapMacro(WikiMacroBase):
         cursor = db.cursor()
         try:
             cursor.execute("SELECT count(*) FROM googlemapmacro;")
-            cursor.firstone()
+            cursor.fetchone()
         except:
             return True
         return False
