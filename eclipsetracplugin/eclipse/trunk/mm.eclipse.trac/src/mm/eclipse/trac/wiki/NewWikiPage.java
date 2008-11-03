@@ -49,7 +49,7 @@ public class NewWikiPage extends Wizard implements INewWizard
         String pageName = page.getPageName();
         
         TracServer server = TracServerList.getInstance().getServerByName( serverName );
-        WikiPage wikiPage = new WikiPage( server, pageName, true, false );
+        WikiPage wikiPage = new WikiPage( server, pageName, 0, true, false );
         wikiPage.setDirty( true );
         
         // We now have to find the parent page, that can be different

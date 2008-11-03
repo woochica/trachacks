@@ -10,6 +10,8 @@ class WikiExtRPC(Component):
     """ Additional Wiki XML-RPC API. """
 
     implements(IXMLRPCHandler)
+    
+    VERSION = '1.0'
 
     def __init__(self):
         self.wiki = WikiSystem(self.env)
@@ -22,6 +24,7 @@ class WikiExtRPC(Component):
         yield ('WIKI_VIEW', ((bool, str), ), self.hasChildren)
         yield ('WIKI_VIEW', ((list, str), ), self.getChildren)
         yield ('WIKI_VIEW', ((dict,), ), self.getMacros)
+        yield ('WIKI_VIEW', ((dict,), ), self.getVersion)
 
     def _page_info(self, name, time, author, version, comment=''):
         return dict(name=name, 
@@ -63,31 +66,44 @@ class WikiExtRPC(Component):
 
     def getChildren(self, req, pagename):
         """ Returns a list of all pages. The result is an array of utf8 pagenames. """
+        
+        cond  = ''
+        # params = () 
+        
         if pagename:
             pagename += '/'
-        pages = list( self.wiki.get_pages( pagename ) )
-        pages.sort()
+            cond = "WHERE name LIKE '%s%%'" % pagename
+            # params = (pagename,)
+            
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT name, MAX(version) FROM wiki %s GROUP BY name" % cond )
+
+        pages = []
+        for name, version in cursor:
+            pages.append( (name, version) )
+            
         children = {}
-        for page in pages:
-            # print 'Complete name: "%s"' % page
+        for page, version in pages:
             relname = page.replace( pagename, '' )
-            # print 'RELNAME: "%s"' % relname
-             
+            
             if relname.find( '/' ) == -1:
                 # We only look for direct children
                 children[ page ] = { 'exists' : True,
-                                     'hasChildren' : False }
+                                     'hasChildren' : False, 
+                                     'version' : version }
             else:
                 # The page does not really exists, but it does have
                 # children, so we have to return it,
                 name = pagename + relname.split( '/', 1 )[0]
                 if not children.has_key( name ):
                     children[ name ] = { 'exists' : False, 
-                                        'hasChildren' : True }
+                                         'hasChildren' : True, 
+                                         'version' : version }
                 else:
                     children[ name ][ 'hasChildren' ] = True
                     
-        return children
+        return children    
     
     def getMacros(self, req):
         '''Return the list of registered wiki macros'''
@@ -99,4 +115,8 @@ class WikiExtRPC(Component):
                     desc = ''
                 macros[ macro ] = desc 
         return macros
+    
+    def getVersion( self, req ):
+        '''Return the module version'''
+        return { 'version' : self.VERSION }
 

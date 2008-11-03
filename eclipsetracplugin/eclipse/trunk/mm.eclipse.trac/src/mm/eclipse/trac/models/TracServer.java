@@ -45,7 +45,7 @@ public class TracServer extends ModelBase implements IAdaptable
         connected = false;
         problems = false;
         
-        rootWikiPage = new WikiPage( this, "", true, true );
+        rootWikiPage = new WikiPage( this, "", 0, true, true );
         rootWikiPage.setRoot( true );
     }
     

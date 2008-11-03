@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.templates.ContextTypeRegistry;
 import org.eclipse.jface.text.templates.persistence.TemplateStore;
@@ -30,6 +31,8 @@ public class Activator extends AbstractUIPlugin
     private ResourceBundle                  resourceBundle;
     private ContributionTemplateStore       templateStore;
     private ContributionContextTypeRegistry contextTypeRegistry;
+    
+    private static WikiPageCache wikiPageCache = new WikiPageCache();
     
     /**
      * The constructor
@@ -70,6 +73,11 @@ public class Activator extends AbstractUIPlugin
     public static Activator getDefault()
     {
         return plugin;
+    }
+    
+    public static WikiPageCache wikiPageCache()
+    {
+    	return wikiPageCache;
     }
     
     /**

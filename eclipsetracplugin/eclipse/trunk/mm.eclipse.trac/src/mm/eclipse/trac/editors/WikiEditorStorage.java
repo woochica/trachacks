@@ -1,13 +1,6 @@
 package mm.eclipse.trac.editors;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
 
 import mm.eclipse.trac.Log;
 import mm.eclipse.trac.models.WikiPage;
@@ -27,42 +20,6 @@ public class WikiEditorStorage implements IStorage
         this.page = page;
     }
     
-    private class StreamAdapter extends InputStream
-    {
-        private ByteArrayInputStream istream;
-        
-        public StreamAdapter( Reader reader )
-        {
-            ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-            try
-            {
-                Writer writer = new OutputStreamWriter( ostream, Encoding );
-                while ( true )
-                {
-                    int c = reader.read();
-                    if ( c == -1 )
-                        break;
-                    writer.write( c );
-                }
-                
-                writer.close();
-            } catch ( Exception e )
-            {
-                Log.error( "Conversion error.", e );
-            }
-            
-            Log.info( "Size: " + ostream.size() );
-            
-            istream = new ByteArrayInputStream( ostream.toByteArray() );
-        }
-        
-        @Override
-        public int read() throws IOException
-        {
-            return istream.read();
-        }
-    }
-    
     public String getCharset() throws CoreException
     {
         return Encoding;
@@ -70,8 +27,7 @@ public class WikiEditorStorage implements IStorage
     
     public InputStream getContents() throws CoreException
     {
-        StringReader reader = new StringReader( page.getContent() );
-        return new StreamAdapter( reader );
+        return page.getContent();
     }
     
     public IPath getFullPath()
@@ -90,6 +46,7 @@ public class WikiEditorStorage implements IStorage
         return false;
     }
     
+    @SuppressWarnings("unchecked")
     public Object getAdapter( Class adapter )
     {
         Log.info( "Storage: Requesting adapter for " + adapter );

@@ -15,7 +15,6 @@ import mm.eclipse.trac.Log;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
-import org.apache.xmlrpc.client.XmlRpcSunHttpTransportFactory;
 
 public class Trac
 {

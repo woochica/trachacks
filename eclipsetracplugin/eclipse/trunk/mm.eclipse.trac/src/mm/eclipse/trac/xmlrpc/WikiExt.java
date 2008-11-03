@@ -15,7 +15,7 @@ public interface WikiExt
     
     boolean hasChildren( String pagename );
     
-    Map<String, Map<String,Boolean>> getChildren( String pagename );
+    Map<String, Map<String,Object>> getChildren( String pagename );
     
     /**
      * Return the list of registered wiki macros.
