@@ -100,7 +100,7 @@ class GoogleMapMacro(WikiMacroBase):
         self._create_db_table()
         return
 
-    def environment_needs_upgrade(db):
+    def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         try:
             cursor.execute("SELECT count(*) FROM googlemapmacro;")
@@ -109,7 +109,7 @@ class GoogleMapMacro(WikiMacroBase):
             return True
         return False
 
-    def upgrade_environment(db):
+    def upgrade_environment(self, db):
         self._create_db_table(db, False)
         return
 
