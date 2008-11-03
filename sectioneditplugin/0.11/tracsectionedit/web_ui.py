@@ -38,6 +38,7 @@ class WikiSectionEditModule(Component):
                 section_text = req.args.get('text') 
                 if len(section_text) > 0 and section_text[-1] != '\n':
                     section_text += '\n'
+                req.args['section_text'] = req.args.get('text')
                 req.args['text'] = "%s%s%s"%(req.args.get('section_pre'), 
                                              section_text, 
                                              req.args.get('section_post'))
@@ -51,11 +52,14 @@ class WikiSectionEditModule(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'wiki_edit.html' and 'section' in req.args:
-            pre_section, section_text, post_section = self._split_page_text(data['page'].text, req.args['section'])
+            if 'section_text' in req.args:
+                section_pre, section_text, section_post = req.args.get('section_pre'), req.args.get('section_text'), req.args.get('section_post')
+            else:
+                section_pre, section_text, section_post = self._split_page_text(data['page'].text, req.args['section'])
             
             section_element = html.input(type='hidden', name='section', id='section', value=req.args.get('section'))
-            pre_element = html.input(type='hidden', name='section_pre', id='section_pre', value=''.join(pre_section))
-            post_element = html.input(type='hidden', name='section_post', id='section_post', value=''.join(post_section))
+            pre_element = html.input(type='hidden', name='section_pre', id='section_pre', value=''.join(section_pre))
+            post_element = html.input(type='hidden', name='section_post', id='section_post', value=''.join(section_post))
             
             section_html = html(section_element, pre_element, post_element)
             stream = stream | Transformer('//textarea[@name="text"]').empty().append(''.join(section_text)).before(section_html)
