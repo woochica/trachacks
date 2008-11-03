@@ -13,6 +13,7 @@ from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_script
+from trac.env import IEnvironmentSetupParticipant
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
 import md5
@@ -67,22 +68,21 @@ TracGoogleMap( function (mapdiv) {
 """
 
 class GoogleMapMacro(WikiMacroBase):
-    implements(IRequestFilter,ITemplateProvider,IRequestFilter)
+    implements(IRequestFilter,ITemplateProvider,IRequestFilter,IEnvironmentSetupParticipant)
 
     """ Provides a macro to insert Google Maps(TM) in Wiki pages
     """
-    #nid  = 0
-    dbinit = 0
 
     def __init__(self):
-        # If geocoding is done on the server side
-        self.geocoding = unicode(self.env.config.get('googlemap', 'geocoding',
-            "client")).lower()
-        # Create DB table if it not exists.
-        # but execute only once.
-        if not GoogleMapMacro.dbinit and self.geocoding == 'server':
+        self.geocoding_server = unicode(self.env.config.get('googlemap', 'geocoding',
+            "client")).lower() == "server"
+
+    def _create_db_table(self, db=None, commit=True):
+        """ Create DB table if it not exists. """
+        if self.geocoding_server:
             self.env.log.debug("Creating DB table (if not already exists).")
-            db = self.env.get_db_cnx()
+
+            db = db or self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS googlemapmacro (
@@ -91,8 +91,27 @@ class GoogleMapMacro(WikiMacroBase):
                     lat decimal(10,6),
                     acc decimal(2,0)
                 );""")
-            db.commit()
-            GoogleMapMacro.dbinit = 1
+            if commit:
+                db.commit()
+        return
+
+
+    def environment_created(self):
+        self._create_db_table()
+        return
+
+    def environment_needs_upgrade(db):
+        cursor = db.cursor()
+        try:
+            cursor.execute("SELECT count(*) FROM googlemapmacro;")
+            cursor.firstone()
+        except:
+            return True
+        return False
+
+    def upgrade_environment(db):
+        self._create_db_table(db, False)
+        return
 
 
     # ITemplateProvider#get_htdocs_dirs
@@ -311,7 +330,7 @@ class GoogleMapMacro(WikiMacroBase):
         address = ""
         if 'address' in kwargs:
             address = self._format_address(kwargs['address'])
-            if self.geocoding == 'server':
+            if self.geocoding_server:
                 coord = self._get_coords(address)
                 center = ",".join(coord[0:2])
                 address = ""
@@ -410,7 +429,7 @@ class GoogleMapMacro(WikiMacroBase):
                     coord = location.split(':')
                     markers.append( gmarker( coord[0], coord[1], letter, link, title ) )
                 else:
-                    if self.geocoding == 'server':
+                    if self.geocoding_server:
                         coord = []
                         if location == 'center':
                             if address:
