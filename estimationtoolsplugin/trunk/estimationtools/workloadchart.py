@@ -1,5 +1,6 @@
 from datetime import timedelta
-from estimationtools.utils import parse_options, execute_query, get_estimation_field
+from estimationtools.utils import parse_options, execute_query, get_estimation_field,\
+    get_estimation_suffix
 from trac.util.html import Markup
 from trac.wiki.macros import WikiMacroBase
 import copy
@@ -26,7 +27,8 @@ class WorkloadChart(WikiMacroBase):
     """
 
     estimation_field = get_estimation_field()
-    
+    estimation_suffix = get_estimation_suffix()
+   
     def render_macro(self, req, name, content):
         db = self.env.get_db_cnx()
         # prepare options
@@ -52,7 +54,7 @@ class WorkloadChart(WikiMacroBase):
         estimations_string = []
         labels = []
         for owner, estimation in estimations.iteritems():
-            labels.append("%s %sh" % (owner, str(int(estimation))))
+            labels.append("%s %s%s" % (owner, str(int(estimation)), self.estimation_suffix))
             estimations_string.append(str(int(estimation)))
             
         # Title
@@ -67,8 +69,7 @@ class WorkloadChart(WikiMacroBase):
                 if currentdate.weekday() < 5:
                     days_remaining += 1
                 currentdate += day
-            title += ' %sh (%s workdays left)' % (int(sum), days_remaining)
-                
+            title += ' %s%s (%s workdays left)' % (int(sum), self.estimation_suffix, days_remaining)                
                 
         return Markup("<img src=\"http://chart.apis.google.com/chart?"
                "chs=%sx%s" 

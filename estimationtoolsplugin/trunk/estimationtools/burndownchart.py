@@ -1,7 +1,8 @@
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from datetime import datetime
 from datetime import timedelta
-from estimationtools.utils import parse_options, execute_query, get_estimation_field
+from estimationtools.utils import parse_options, execute_query, get_estimation_field,\
+    get_closed_states
 from trac.core import TracError
 from trac.util.html import Markup
 from trac.util.datefmt import utc
@@ -22,8 +23,6 @@ class BurndownChart(WikiMacroBase):
      * `startdate`: '''mandatory''' parameter that specifies the start date of the period (ISO8601 format)
      * `enddate`: end date of the period. If omitted, it defaults to either the milestones (if given) `completed' date, 
        or `due` date, or today (in that order) (ISO8601 format)
-     * `closedstates`: Set to a |-separated list of workflow states that count as "closed", where the effort will be treated as zero,
-        e.g. `closedstates=closed|another_state`. Defaults to `closed`.
      * `width`: width of resulting diagram (defaults to 800)
      * `height`: height of resulting diagram (defaults to 200)
      * `color`: color specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
@@ -38,6 +37,7 @@ class BurndownChart(WikiMacroBase):
     """
 
     estimation_field = get_estimation_field()
+    closed_states = get_closed_states()
     
     def render_macro(self, req, name, content):
 
@@ -195,7 +195,7 @@ class BurndownChart(WikiMacroBase):
 
             while current_date <= options['enddate']:
                 if current_date in status_history:
-                    is_open = (status_history[current_date] not in options['closedstates'])
+                    is_open = (status_history[current_date] not in self.closed_states)
                 
                 if current_date in estimate_history:
                     current_estimate = estimate_history[current_date]

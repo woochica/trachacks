@@ -49,15 +49,6 @@ class BurndownChartTestCase(unittest.TestCase):
         self.assertNotEqual(query_args['milestone'], None)
         self.assertNotEqual(options['startdate'], None)
         self.assertNotEqual(options['enddate'], None)
-        self.assertEquals(options['closedstates'], ['closed'])
-
-    def test_parse_options_with_custom_closedstates(self):
-        db = self.env.get_db_cnx()
-        options, query_args = parse_options(db, "milestone=milestone1, startdate=2008-02-20, enddate=2008-02-28, closedstates=one|two", {})
-        self.assertNotEqual(query_args['milestone'], None)
-        self.assertNotEqual(options['startdate'], None)
-        self.assertNotEqual(options['enddate'], None)
-        self.assertEquals(options['closedstates'], ['one', 'two'])
         
     def test_build_empty_chart(self):
         chart = BurndownChart(self.env)

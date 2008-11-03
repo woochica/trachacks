@@ -1,16 +1,26 @@
 from datetime import datetime
 from time import strptime
-from trac.config import Option
+from trac.config import Option, ListOption
 from trac.core import TracError
 from trac.wiki.api import parse_args
 from trac.ticket.query import Query
 
-AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color', 'closedstates']
+AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color']
 
 def get_estimation_field():    
     return Option('estimation-tools', 'estimation_field', 'estimatedhours', 
         doc="""Defines what custom field should be used to calculate estimation charts.
         Defaults to 'estimatedhours'""")
+
+def get_closed_states():
+    return ListOption('estimation-tools', 'closed_states', 'closed', 
+        doc="""Set to a comma separated list of workflow states that count as "closed", 
+        where the effort will be treated as zero, e.g. closed_states=closed,another_state. 
+        Defaults to closed.""")
+    
+def get_estimation_suffix():
+    return Option('estimation-tools', 'estimation_suffix', 'h',
+        doc="""Suffix used for estimations. Defaults to 'h'""")
 
 def parse_options(db, content, options):       
     """Parses the parameters, makes some sanity checks, and creates default values
@@ -51,11 +61,6 @@ def parse_options(db, content, options):
     if not todayarg:
         options['today'] = datetime.now().date()
     
-    if 'closedstates' in options:
-        options['closedstates'] = [s.strip() for s in options['closedstates'].split('|')]
-    else:
-        options['closedstates'] = ['closed']
-        
     # all arguments that are no key should be treated as part of the query  
     query_args = {}
     for key in options.keys():
