@@ -4,7 +4,7 @@ Bundle-Name: Jakarta Commons HttpClient Plug-in
 Bundle-SymbolicName: org.apache.commons.httpclient
 Bundle-Version: 3.1
 Bundle-Vendor: Apache Jakarta
-Eclipse-LazyStart: true
+Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: lib/commons-httpclient-3.1-rc1.jar,
  .
 Export-Package: org.apache.commons.httpclient,
