@@ -57,7 +57,7 @@ function gmapiloaded() {
         .each( function (index) {
             var initfunc = tracgooglemapfuncs[index];
             if (initfunc) {
-                initfunc(this);
+                initfunc(this, index);
             }
         });
     }
@@ -67,7 +67,7 @@ $(document).ready( function () {
     if ( $("div.tracgooglemap").length ) {
         var key = $("link.google-key").attr('title');
         jQuery.getScript("http://www.google.com/jsapi?key=" + key, function () {
-            google.load("maps", "2", {"callback" : gmapiloaded})
+            google.load("maps", "2.x", {"callback" : gmapiloaded})
         });
     }
 });

@@ -41,7 +41,7 @@ _accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16, 16)
 _javascript_code = """
 //<![CDATA[
 
-TracGoogleMap( function (mapdiv) {
+TracGoogleMap( function (mapdiv,index) {
     var map = new GMap2(mapdiv, {
     //    size: new GSize(%(width)s, %(height)s),
         mapTypes: %(types_str)s
@@ -64,6 +64,11 @@ TracGoogleMap( function (mapdiv) {
         )
     }
     %(markers_str)s
+    if ("%(directions)s") {
+        dirdiv = document.getElementById("tracgooglemap-directions-" + index));
+        gdir = new GDirections(map, dirdiv);
+        gdir.load("%(directions)s");
+    }
 }, "%(id)s" );
 
 //]]>
@@ -455,12 +460,13 @@ class GoogleMapMacro(WikiMacroBase):
                 )
 
         if 'from' in kwargs and 'to' in kwargs:
+            directions = "from: %s to: %s" % (kwargs['from'],kwargs['to'])
             mapnmore = tag.table(
                             tag.tr(
                                 tag.td(
                                     tag.div( "", 
-                                        class_ =
-                                        'tracgooglemap-directions'
+                                        class_ = 'tracgooglemap-directions',
+                                        id     = 'tracgooglemap-directions-%s' % count
                                     )
                                 ),
                                 tag.td(
@@ -471,6 +477,7 @@ class GoogleMapMacro(WikiMacroBase):
                        )
 
         else:
+            directions = ""
             mapnmore = mapdiv
 
         # put everything in a tidy div
@@ -482,7 +489,7 @@ class GoogleMapMacro(WikiMacroBase):
                         'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
                         'types_str':types_str, 'controls_str':controls_str,
-                        'markers_str':markers_str
+                        'markers_str':markers_str, 'directions':directions,
                         },
                         type = "text/javascript"),
                     mapnmore
