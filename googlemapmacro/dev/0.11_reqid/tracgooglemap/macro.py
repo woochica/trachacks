@@ -19,6 +19,8 @@ from urllib import urlopen,quote_plus
 import md5
 import re
 
+COUNT = '_googlemapmacro_count'
+
 _reWHITESPACES = re.compile(r'\s+')
 _reCOMMA       = re.compile(r',\s*')
 _reCOORDS      = re.compile(r'^\d+(?:\.\d*)?[:,]\d+(?:\.\d*)?$')
@@ -437,6 +439,13 @@ class GoogleMapMacro(WikiMacroBase):
                             markers.append( gmarkeraddr( location, letter, link, title) )
             markers_str = ''.join( markers )
 
+        # Get macro count from request object
+        req = formatter.req
+        count = getattr (req, COUNT, 0)
+        id = 'tracgooglemap-%s' % count
+        count = count + 1
+        setattr (req, COUNT, count)
+
         # put everything in a tidy div
         html = tag.div(
                 [
@@ -452,7 +461,7 @@ class GoogleMapMacro(WikiMacroBase):
                     # Canvas for this map
                     tag.div (
                         "Google Map is loading ... (JavaScript enabled?)",
-                        #id=id,
+                        id=id,
                         style = "width: %s; height: %s;" % (width,height),
                         class_ = "tracgooglemap"
                         )
