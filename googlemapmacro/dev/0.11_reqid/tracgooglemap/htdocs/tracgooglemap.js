@@ -54,9 +54,6 @@ function gmapiloaded() {
         // Go through all GoogleMap divs, set id and execute the 
         // associated init function:
         $("div.tracgooglemap")
-        .attr( 'id', function (index) {
-            return 'tracgooglemap-' + index;
-        })
         .each( function (index) {
             var initfunc = tracgooglemapfuncs[index];
             if (initfunc) {
