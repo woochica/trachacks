@@ -1,22 +1,27 @@
 # Burndown plugin
 # Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
+# Copyright (C) 2006-2008 Daan van Etten <daan@stuq.nl>
 # All rights reserved.
-# vi: et ts=4 sw=4
+
 # This software may at some point consist of voluntary contributions made by
 # many individuals. For the exact contribution history, see the revision
 # history and logs, available at http://projects.edgewall.com/trac/.
 #
 # Author: Sam Bloomquist <spooninator@hotmail.com>
+# Author: Daan van Etten <daan@stuq.nl>
 
 import time
 import datetime
 import sys
 
+from trac import __version__ as tracversion
+tracversion=tracversion[:4]
+
 from trac.core import *
 from trac.config import BoolOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
+from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup, format_date
 from trac.ticket import ITicketChangeListener
@@ -62,7 +67,9 @@ class BurndownComponent(Component):
             cursor.execute('SELECT * FROM burndown LIMIT 1')
         except:
             needsCreate = True
-            
+        
+        db.commit();
+        
         if needsCreate:
             print >> sys.stderr, 'Attempting to create the burndown table'
             # Create the burndown table in the database
@@ -139,7 +146,10 @@ class BurndownComponent(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission("BURNDOWN_VIEW"):
-            yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>', self.env.href.burndown())
+            if tracversion=="0.11":
+                yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>' % req.href.burndown())
+            elif tracversion=="0.10":
+                yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>') % req.href.burndown()
 
     #---------------------------------------------------------------------------
     # IPermissionRequestor methods
@@ -177,25 +187,43 @@ class BurndownComponent(Component):
             selected_milestone = ''
         selected_component = req.args.get('selected_component', 'All Components')
         
-        # expose display data to the clearsilver templates
+        # expose display data to the templates
         req.hdf['milestones'] = milestones
         req.hdf['components'] = components
         req.hdf['selected_milestone'] = selected_milestone
         req.hdf['selected_component'] = selected_component
         req.hdf['draw_graph'] = False
         req.hdf['start'] = False
-        
+        self.log.debug(req.hdf['draw_graph'])
         if req.perm.has_permission("BURNDOWN_ADMIN"):
             req.hdf['start'] = True # show the start and complete milestone buttons to admins
+        
+        req.hdf['burndown_data'] = []
         
         if req.args.has_key('start'):
             self.start_milestone(db, selected_milestone)
         else:
             req.hdf['draw_graph'] = True
-            req.hdf['burndown_data'] = self.get_burndown_data(db, selected_milestone, components, selected_component) # this will be a list of (id, hours_remaining) tuples
-        
+            # this will be a list of (id, hours_remaining) tuples
+                
         add_stylesheet(req, 'hw/css/burndown.css')
-        return 'burndown.cs', None
+        add_script(req, 'hw/js/line.js')
+        add_script(req, 'hw/js/wz_jsgraphics.js')
+        
+        if tracversion=="0.11":
+            data={'milestones': milestones,
+                  'components': components,
+                  'selected_milestone': selected_milestone,
+                  'selected_component': selected_component,
+                  'draw_graph': req.hdf['draw_graph'],
+                  'start': req.hdf['start'],
+                  'burndown_data': self.get_burndown_data(db, selected_milestone, components, selected_component)
+                  }
+            return 'burndown.html', data, None
+        elif tracversion=="0.10":
+            req.hdf['burndown_data'] = self.get_burndown_data(db, selected_milestone, components, selected_component)
+            return 'burndown.cs', None
+        
         
     def get_burndown_data(self, db, selected_milestone, components, selected_component):
         cursor = db.cursor()
@@ -249,8 +277,7 @@ class BurndownComponent(Component):
     #---------------------------------------------------------------------------
     def get_templates_dirs(self):
         """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
+        Return the absolute path of the directory containing the provided templates.
         """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
@@ -288,10 +315,10 @@ class BurndownComponent(Component):
         row = cursor.fetchone()
         needs_update = False
         if row:
-            print >> sys.stderr, 'update_burndown_data has already been run - update needed'
+            self.log.debug('update_burndown_data has already been run - update needed')
             needs_update = True
         else:
-            print >> sys.stderr, 'first run of update_burndown_data - insert needed'
+            self.log.debug('first run of update_burndown_data - insert needed')
         
         # get arrays of the various components and milestones in the trac environment
         cursor.execute("SELECT name AS comp FROM component")
@@ -307,7 +334,7 @@ class BurndownComponent(Component):
                                         "    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'estimatedhours') "\
                                         "    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'totalhours') "\
                                         "WHERE t.component = '%s' AND t.milestone = '%s'"\
-                                        "    AND status IN ('new', 'assigned', 'reopened') "
+                                        "    AND status IN ('new', 'assigned', 'reopened', 'accepted') "
                     cursor.execute(sqlSelect % (comp[0], mile[0]))
                 
                     rows = cursor.fetchall()

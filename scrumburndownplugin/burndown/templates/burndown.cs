@@ -2,8 +2,11 @@
 <?cs include "macros.cs" ?>
 
 <div id="content" class="burndown">
- <h1>Burndown Chart</h1>
-</div>
+<table cellpadding="0" cellspacing="0" border="0">
+<tr><td><img src="<?cs var:chrome.href ?>/hw/images/trac-scrum-burndown-plugin-logo.png" /></td>
+<td><h1 style="left: 20px; position: relative;">Burndown Chart</h1></td>
+</tr></table>
+<br/>
 
 <form action="<?cs var:burndown.href ?>" method="get">
     <label for="selected_milestone">Select milestone:</label>
@@ -59,4 +62,5 @@
 <!-- graph code ends here-->
 <?cs /if ?>
 
+</div>
 <?cs include "footer.cs" ?>

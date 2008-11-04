@@ -1,0 +1,90 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:py="http://genshi.edgewall.org/"
+  xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="layout.html"><xi:fallback/></xi:include>
+  
+  <head><title>Burndown chart</title></head>
+  
+    <body>
+<div id="ctxtnav" class="nav"></div>  
+<div id="content" class="burndown">
+<table cellpadding="0" cellspacing="0" border="0">
+<tr><td><img src="${href.chrome('/hw/images/trac-scrum-burndown-plugin-logo.png')}" /></td>
+<td><h1 style="left: 20px; position: relative;">Burndown Chart</h1></td>
+</tr></table>
+<br/>
+<form action="" method="get">
+    <label for="selected_milestone">Select milestone:</label>
+    <select id="selected_milestone" name="selected_milestone">
+	  <py:for each="mile in milestones">
+	  <py:choose test="selected_milestone">
+        <option py:when="mile" value="${mile}" selected="selected">$mile</option>
+        <option py:otherwise="" value="${mile}">$mile</option>
+	  </py:choose>
+	  </py:for>
+    </select>
+    <label for="selected_component">Select component:</label>
+    <select id="selected_component" name="selected_component">
+        <option>All Components</option>
+	  <py:for each="comp in components">
+	  <py:choose test="selected_component">
+        <option py:when="comp" value="$comp" selected="selected">$comp</option>
+        <option py:otherwise="" value="$comp">$comp</option>
+	  </py:choose>
+	  </py:for>
+    </select>
+
+    <div class="buttons">
+        <py:choose test="start">
+        	<py:when test="True">
+	            <input type="submit" name="start" value="Start Milestone" />
+			</py:when>
+        </py:choose>
+
+        <input type="submit" value="Show Burndown Chart" />
+    </div>
+</form>
+
+<br />
+
+<py:if test="draw_graph">
+	<py:choose test="len(burndown_data)>0">
+	<py:when test="True">
+    <b>Current effort remaining: ${burndown_data[len(burndown_data) - 1][1]} hours</b>
+    </py:when>
+    <py:otherwise>
+    <b>Current effort remaining: 0 hours</b>
+    </py:otherwise>
+    
+    </py:choose>
+    <br/>
+    <br/>
+    
+<!-- graph code begins here-->
+<script type="text/javascript" src="${req.path_info}/hw/js/line.js"></script>
+<script type="text/javascript" src="${req.path_info}/hw/js/wz_jsgraphics.js"></script>
+<div id="myCanvas" style="overflow: auto; position:relative;height:400px;width:800px;"></div>
+
+<script>
+    var g = new line_graph();
+    
+	<py:for each="row in burndown_data">
+        g.add('${row[0]}', ${row[1]});
+    </py:for>
+    
+    //If called without a height parameter, defaults to 250
+    g.render("myCanvas", "hours remaining vs. days of sprint", 300);
+
+</script>
+
+</py:if>
+
+</div>
+
+  </body>
+</html>
