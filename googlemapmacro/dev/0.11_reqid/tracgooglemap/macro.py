@@ -259,6 +259,14 @@ class GoogleMapMacro(WikiMacroBase):
             else:
                 if not 'address' in kwargs:
                     kwargs['address'] = arg
+        if 'from' in kwargs and not 'address' kwargs and not 'center' in kwargs:
+            arg = unicode(kwargs['from'])
+            if _reCOORDS.match(arg):
+                if not 'center' in kwargs:
+                    kwargs['center'] = arg
+            else:
+                if not 'address' in kwargs:
+                    kwargs['address'] = arg
 
         # Check if Google API key is set (if not the Google Map script file
         # wasn't inserted by `post_process_request` and the map wont load)
