@@ -65,7 +65,7 @@ TracGoogleMap( function (mapdiv,index) {
     }
     %(markers_str)s
     if ("%(directions)s") {
-        dirdiv = document.getElementById("tracgooglemap-directions-" + index));
+        dirdiv = document.getElementById("tracgooglemap-directions-" + index);
         gdir = new GDirections(map, dirdiv);
         gdir.load("%(directions)s");
     }
@@ -448,8 +448,7 @@ class GoogleMapMacro(WikiMacroBase):
         req = formatter.req
         count = getattr (req, COUNT, 0)
         id = 'tracgooglemap-%s' % count
-        count = count + 1
-        setattr (req, COUNT, count)
+        setattr (req, COUNT, count + 1)
 
         # Canvas for this map
         mapdiv = tag.div (
