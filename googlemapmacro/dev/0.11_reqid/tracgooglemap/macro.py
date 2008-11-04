@@ -446,6 +446,33 @@ class GoogleMapMacro(WikiMacroBase):
         count = count + 1
         setattr (req, COUNT, count)
 
+        # Canvas for this map
+        mapdiv = tag.div (
+                    "Google Map is loading ... (JavaScript enabled?)",
+                    id=id,
+                    style = "width: %s; height: %s;" % (width,height),
+                    class_ = "tracgooglemap"
+                )
+
+        if 'from' in kwargs and 'to' in kwargs:
+            mapnmore = tag.table(
+                            tag.tr(
+                                tag.td(
+                                    tag.div( "", 
+                                        class_ =
+                                        'tracgooglemap-directions'
+                                    )
+                                ),
+                                tag.td(
+                                    mapdiv
+                                )
+                            ),
+                          class_ = 'tracgooglemaps'
+                       )
+
+        else:
+            mapnmore = mapdiv
+
         # put everything in a tidy div
         html = tag.div(
                 [
@@ -458,13 +485,7 @@ class GoogleMapMacro(WikiMacroBase):
                         'markers_str':markers_str
                         },
                         type = "text/javascript"),
-                    # Canvas for this map
-                    tag.div (
-                        "Google Map is loading ... (JavaScript enabled?)",
-                        id=id,
-                        style = "width: %s; height: %s;" % (width,height),
-                        class_ = "tracgooglemap"
-                        )
+                    mapnmore
                     ],
                 class_ = "tracgooglemap-parent"
                 );
