@@ -40,12 +40,9 @@
     </select>
 
     <div class="buttons">
-        <py:choose test="start">
-        	<py:when test="True">
-	            <input type="submit" name="start" value="Start Milestone" />
-			</py:when>
-        </py:choose>
-
+        <py:if test="start">
+            <input type="submit" name="start" value="Start Milestone" />
+        </py:if>
         <input type="submit" value="Show Burndown Chart" />
     </div>
 </form>
