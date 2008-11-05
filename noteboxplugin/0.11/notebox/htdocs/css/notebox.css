@@ -1,0 +1,54 @@
+/* 
+  Styles for NoteBox
+
+  Copyright 2008
+   *  Bernhard Gruenewaldt (bernhard at gruenewaldt.net)
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+  USA
+
+*/
+
+.noteboxwarn {
+background-color:#FFDDDD;
+background-image:url(../warning.png);
+}
+.noteboxtip {
+background-color:#DDFFDD;
+background-image:url(../tip.png);
+}
+.noteboxnote {
+background-color:#EEEEFF;
+background-image:url(../note.png);
+}
+
+
+.noteboxbase, .noteboxwarn, .noteboxnote, .noteboxtip {
+-moz-border-radius-bottomleft:20px;
+-moz-border-radius-bottomright:20px;
+-moz-border-radius-topleft:20px;
+-moz-border-radius-topright:20px;
+background-position:20px 50%;
+background-repeat:no-repeat;
+border-collapse:collapse;
+clear:both;
+margin:2em auto;
+min-height:40px;
+padding:15px 20px 15px 80px;
+text-align:justify;
+vertical-align:middle;
+width:70% !important;
+}
+

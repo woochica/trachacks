@@ -1,0 +1,70 @@
+----------------------------------------------------------------------
+NoteBox Plugin for Trac
+----------------------------------------------------------------------
+
+
+Description
+-----------
+
+NoteBox Plugin will render a HTML-DivContainer in different colors with different Icons.
+
+The following containers are possible:
+
+ [[NoteBox(warn, my Text)]]
+   will render a red div-container with the given Text and a stopsign-image
+
+ [[NoteBox(tip, my Text)]]
+   will render a green div-container with the given Text and a lightbulb-image
+
+ [[NoteBox(note, my Text)]]
+   will render a blue div-container with the given Text and a notepaper-image
+
+for Examples visit:
+https://www.gruenewaldt.net/trac/wiki/NoteBox
+
+
+
+
+Usage
+-----
+
+either
+ [[NoteBox(warn, my Text)]]
+or
+ [[NoteBox(tip, my Text)]]
+or
+ [[NoteBox(note, my Text)]]
+
+where "my Text" can be replaced with your text.
+
+Installation
+------------
+
+See https://www.gruenewaldt.net/trac/wiki/NoteBox
+
+
+
+Homepage
+--------
+
+See https://www.gruenewaldt.net/trac/wiki/NoteBox
+
+
+Authors and License
+-------------------
+
+Copyright 2008, Bernhard Gruenewaldt (trac at gruenewaldt.net)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
