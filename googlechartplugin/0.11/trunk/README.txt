@@ -21,20 +21,21 @@ and/or the Google Chart API (http://code.google.com/apis/chart/):
 
   [[GChart(type="bvs", chtt="My title" chco="4d89f9,c6d9fd", query="SELECT id, (time - 1225107400) FROM ticket")]]
 
-If you'd like columns from the result set to be used as axis labels (bar,
-line and scatter charts), you can specify the index (starting at 0) of the
-column, e.g.::
+If you'd like columns from the result set to be used as axis labels, or you
+want to auto-scale the values (you either need to set a scale manually or
+provide numbers in a range of 0..100 (i.e. a percentage) otherwise), then
+describe your columns like so:
 
-  [[GChart(type="bvs", query="SELECT label, value FROM my_table", xlabels=0)]]
+  [[GChart(type="bvs", colmns=[('x', 'labels'), ('y', 'scaled')], query="SELECT label, value FROM my_table")]]
 
-The possible axes are xlabels, ylabels, tlabels (top) and rlabels (right).
+If you give a list of columns, it must cover all the columns in the query.
+The first argument is an axis for the column ('x', 'y', 't' or 'r' - each can
+occur multiple times). The second argument is either 'labels', 'scaled' or
+'percentage'.
 
-When constructing a query, it should return columns of numbers - other data
-will be ignored. By default, each column is treated as a chart data set, using
-text encoding. Multiple columns will result in multiple data sets.
+If you want to specify a scale explicitly, you can do:
 
-If instead you want each row to be a data set, where each column provides one
-data value, pass `tuples=True` as an argument.
+    columns=[('x', 'labels'), ('y', 'scaled', 0, 250)]
 
 Installation
 ------------
