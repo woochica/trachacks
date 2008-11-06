@@ -60,7 +60,7 @@ class WikiRenameModule(Component):
         return handler
             
     def post_process_request(self, req, template, data, content_type):
-        if req.path_info.startswith('/wiki') or req.path_info == '/':
+        if (req.path_info.startswith('/wiki') or req.path_info == '/') and data:
             page = data['page']
             perm = req.perm(page.resource)
             if 'WIKI_RENAME' in perm or 'WIKI_ADMIN' in perm:
