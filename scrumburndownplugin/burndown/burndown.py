@@ -188,42 +188,35 @@ class BurndownComponent(Component):
         selected_component = req.args.get('selected_component', 'All Components')
         
         # expose display data to the templates
-        req.hdf['milestones'] = milestones
-        req.hdf['components'] = components
-        req.hdf['selected_milestone'] = selected_milestone
-        req.hdf['selected_component'] = selected_component
-        req.hdf['draw_graph'] = False
-        req.hdf['start'] = False
-        self.log.debug(req.hdf['draw_graph'])
-        if req.perm.has_permission("BURNDOWN_ADMIN"):
-            req.hdf['start'] = True # show the start and complete milestone buttons to admins
+        data = {}
+        data['milestones'] = req.hdf['milestones'] = milestones
+        data['components'] = req.hdf['components'] = components
+        data['selected_milestone'] = req.hdf['selected_milestone'] = selected_milestone
+        data['selected_component'] = req.hdf['selected_component'] = selected_component
+        data['draw_graph'] = req.hdf['draw_graph'] = False
+        data['start'] = req.hdf['start'] = False
         
-        req.hdf['burndown_data'] = []
+        if req.perm.has_permission("BURNDOWN_ADMIN"):
+            data['start'] = req.hdf['start'] = True # show the start and complete milestone buttons to admins
+        
+        data['burndown_data'] = req.hdf['burndown_data'] = []
         
         if req.args.has_key('start'):
             self.start_milestone(db, selected_milestone)
         else:
-            req.hdf['draw_graph'] = True
+            data['draw_graph'] = req.hdf['draw_graph'] = True
             # this will be a list of (id, hours_remaining) tuples
                 
         add_stylesheet(req, 'hw/css/burndown.css')
         add_script(req, 'hw/js/line.js')
         add_script(req, 'hw/js/wz_jsgraphics.js')
+
+        data['burndown_data'] = req.hdf['burndown_data'] = self.get_burndown_data(db, selected_milestone, components, selected_component)
         
         if tracversion=="0.11":
-            data={'milestones': milestones,
-                  'components': components,
-                  'selected_milestone': selected_milestone,
-                  'selected_component': selected_component,
-                  'draw_graph': req.hdf['draw_graph'],
-                  'start': req.hdf['start'],
-                  'burndown_data': self.get_burndown_data(db, selected_milestone, components, selected_component)
-                  }
             return 'burndown.html', data, None
         elif tracversion=="0.10":
-            req.hdf['burndown_data'] = self.get_burndown_data(db, selected_milestone, components, selected_component)
             return 'burndown.cs', None
-        
         
     def get_burndown_data(self, db, selected_milestone, components, selected_component):
         cursor = db.cursor()
