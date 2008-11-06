@@ -61,7 +61,9 @@ class WikiRenameModule(Component):
             
     def post_process_request(self, req, template, data, content_type):
         if (req.path_info.startswith('/wiki') or req.path_info == '/') and data:
-            page = data['page']
+            page = data.get('page')
+            if not page:
+                return template, data, content_type
             perm = req.perm(page.resource)
             if 'WIKI_RENAME' in perm or 'WIKI_ADMIN' in perm:
                 href = req.href.admin('general','wikirename', 
