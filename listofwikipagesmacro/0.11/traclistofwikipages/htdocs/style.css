@@ -1,0 +1,16 @@
+
+table.listofwikipages {
+    border: thin solid;
+    margin: 0.25ex;
+    padding: 0.25ex;
+}
+
+table.listofwikipages th, table.listofwikipages td {
+    padding: 0.5ex 1ex;
+}
+
+table.listofwikipages thead tr th {
+    font-weight: bold;
+    border-bottom: thin solid;
+}
+

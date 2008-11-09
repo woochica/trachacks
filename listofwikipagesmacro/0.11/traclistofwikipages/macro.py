@@ -5,12 +5,33 @@ from trac.wiki.formatter import format_to_oneliner
 from genshi.builder import tag
 from trac.util import format_datetime, pretty_timedelta
 from urllib import quote_plus
+from trac.web.api import IRequestFilter
+from trac.web.chrome import add_stylesheet, ITemplateProvider
 
 class ListOfWikiPagesMacro(WikiMacroBase):
     """ Provides Macro to list wiki pages with last changed date and author.
     """
-    implements(IWikiMacroProvider)
+    implements(IWikiMacroProvider,IRequestFilter,ITemplateProvider)
 
+   # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        add_stylesheet( req, 'listofwikipages/style.css')
+        return (template, data, content_type)
+
+
+   # ITemplateProvider methods
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('listofwikipages', resource_filename(__name__, 'htdocs'))]
+
+    def get_templates_dirs(self):
+        return []
+
+
+   # Macro methods
     def _formattime(self,time):
         """Return formatted time for ListOfWikiPages table."""
         return [ tag.span( format_datetime  ( time ) ),
@@ -78,7 +99,7 @@ class ListOfWikiPagesMacro(WikiMacroBase):
                 tag.th("Last Changed at"),
                 tag.th("By")
             ) )
-        table = tag.table( head, rows, class_ = 'listofwikipages', border = "1pt" )
+        table = tag.table( head, rows, class_ = 'listofwikipages' )
         return table
 
 
