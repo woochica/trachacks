@@ -12,5 +12,6 @@ table.listofwikipages th, table.listofwikipages td {
 table.listofwikipages thead tr th {
     font-weight: bold;
     border-bottom: thin solid;
+    text-align: center;
 }
 
