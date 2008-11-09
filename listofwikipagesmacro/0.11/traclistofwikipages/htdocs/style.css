@@ -9,6 +9,13 @@ table.listofwikipages th, table.listofwikipages td {
     padding: 0.5ex 1ex;
 }
 
+table.listofwikipages tr.even {
+  /*  background-color: #f0f0f0; */
+}
+
+table.listofwikipages tr.odd {
+}
+
 table.listofwikipages thead tr th {
     font-weight: bold;
     border-bottom: thin solid;

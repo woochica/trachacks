@@ -45,21 +45,19 @@ class ListOfWikiPagesMacro(WikiMacroBase):
                     " ago)"
                  )
                ]
-        return format_to_oneliner(self.env, self.formatter.context,
-                  "%s ([timeline:%s %s] ago)" % (
-                        format_datetime  ( time ),
-                        format_datetime  ( time, 'iso8601' ),
-                        pretty_timedelta ( time )
-                      )
-               )
 
     def _formatrow(self,name,time,author):
         time = int(time)
         name = tag.a( name, href = self.base_path + '/wiki/' + name )
+        if self.n:
+            self.n = 0
+        else:
+            self.n = 1
         return tag.tr(
                   tag.td(name),
                   tag.td(self._formattime(time)),
-                  tag.td(author)
+                  tag.td(author),
+                  class_ = ('even','odd')[ self.n ]
                )
 
     # IWikiMacroProvider methods
@@ -73,6 +71,7 @@ class ListOfWikiPagesMacro(WikiMacroBase):
         getlist = self.env.config.getlist
         get     = self.env.config.get
         section = 'listofwikipages'
+        self.n  = 0
 
         ignoreusers = getlist(section, 'ignore_users', ['trac'])
 
