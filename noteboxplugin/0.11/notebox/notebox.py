@@ -61,11 +61,13 @@ class NoteBox(Component):
         buf = StringIO()
         args = args.split(', ',1)
         buf.write('<div class="notebox')
-	buf.write(args[0])
-	buf.write('">')
-	buf.write(args[1])
-	buf.write('</div>')
-	return buf.getvalue()
+        buf.write(args[0])
+        buf.write('">')
+        out = StringIO()
+        Formatter(formatter.env, formatter.context).format(args[1], out)
+        buf.write(out.getvalue())
+        buf.write('</div>')
+        return Markup(buf.getvalue())
 
     def get_macro_description(self, name):
         from inspect import getdoc, getmodule
