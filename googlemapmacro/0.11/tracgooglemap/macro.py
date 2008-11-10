@@ -100,6 +100,8 @@ class GoogleMapMacro(WikiMacroBase):
         return
 
     def environment_needs_upgrade(self, db):
+        if not self.geocoding_server:
+            return False
         cursor = db.cursor()
         try:
             cursor.execute("SELECT count(*) FROM googlemapmacro;")
