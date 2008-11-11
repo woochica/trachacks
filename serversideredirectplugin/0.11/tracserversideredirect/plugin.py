@@ -1,0 +1,150 @@
+""" Example Plug-in file 
+
+    Copy and delete unnecessary parts.
+
+    Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
+    This is Free Software under the BSD or GPL v3 or later license.
+    $Id$
+"""
+__revision = r'$Rev$'[6:-2]
+__date     = r'$Date$'[7:-2]
+__author   = r'$Author$'[9:-2]
+__url      = r'$URL$'[6:-2]
+
+
+from trac.core      import  *
+from trac.web.api   import IRequestHandler,IRequestFilter,RequestDone
+from trac.wiki.api  import IWikiMacroProvider
+from trac.mimeview.api import Context
+from tracextracturl import extract_url
+import re
+
+MACRO = re.compile(r'^\s*\[\[redirect\((.*)\)\]\]', re.MULTILINE)
+
+class ServerSideRedirectPlugin (Component):
+    """ This Trac plug-in implements ...
+
+    """
+    implements ( IRequestHandler, IRequestFilter, IWikiMacroProvider )
+
+    redirect_target = ''
+
+    def expand_macro(self, formatter, name, content):
+        """Print redirect notice after edit."""
+        from genshi.builder import tag
+        from trac.wiki.formatter import format_to_oneliner
+        return tag.div( tag.strong('This page redirects to: '),
+                    format_to_oneliner(self.env, formatter.context, content),
+                    class_ = 'system-message', id = 'notice' )
+
+    def get_macros(self):
+        """Provide but do not redefine the 'redirect' macro."""
+        if self.env.config.get('components','redirect.*') == 'enabled':
+            yield ''
+        else:
+            yield 'redirect'
+
+    def match_request(self, req):
+        """Only handle request when selected from `pre_process_request`."""
+        return False
+
+   # IRequestHandler methods
+    def process_request(self, req):
+        """Redirect to pre-selected target."""
+        from genshi.builder import tag
+        if self.redirect_target or self._check_redirect(req):
+            target = self.redirect_target
+
+            # Check for self-redirect:
+            if target == req.path_info:
+                message = tag.div('Please ',
+                     tag.a( "change the redirect target",
+                            href = target + "?action=edit" ),
+                     ' to another page.',
+                     class_ = "system-message")
+                data = { 'title':"Page redirects to itself!",
+                         'message':message,
+                         'type':'TracError',
+                       }
+                req.send_error(data['title'], status=409, env=self.env, data=data)
+                raise RequestDone
+
+            # Check for redirect pair, i.e. A->B, B->A
+            if target == req.args.get('redirectedfrom',''):
+                message = tag.div('Please change the redirect target from either ',
+                     tag.a( "this page", href = req.path_info + "?action=edit" ),
+                     ' or ',
+                     tag.a( "the redirecting page", href = target + "?action=edit" ),
+                     '.',
+                     class_ = "system-message")
+                data = { 'title':"Redirect target redirects back to this page!",
+                         'message':message,
+                         'type':'TracError',
+                       }
+                req.send_error(data['title'], status=409, env=self.env, data=data)
+                raise RequestDone
+
+            # Add back link information for internal links:
+            if target[0] == '/':
+                redirectfrom =  "redirectedfrom=" + req.path_info
+                if target.find('?') == -1:
+                    target += '?' + redirectfrom
+                else:
+                    target += '&' + redirectfrom
+            req.redirect(target)
+            raise RequestDone
+        raise TracError("Invalid redirect target!")
+
+    def _check_redirect(self, req):
+        """Checks if the request should be redirected."""
+        if not req.path_info.startswith('/wiki/'):
+            return False
+        wiki = req.path_info[6:]
+
+        # Extract Wiki page
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT text,MAX(version) FROM wiki WHERE name='%s';" % (wiki))
+        text = cursor.fetchone();
+        # If not exist or empty:
+        if not text or not text[0]:
+            return False
+        text = text[0]
+
+        # Check for redirect "macro":
+        m = MACRO.match(text)
+        if not m:
+            return False
+        wikitarget = m.groups()[0]
+        self.redirect_target = extract_url(self.env, Context.from_request(req), wikitarget)
+        return True
+
+
+   # IRequestFilter methods
+    """Extension point interface for components that want to filter HTTP
+    requests, before and/or after they are processed by the main handler."""
+
+    def pre_process_request(self, req, handler):
+        """Called after initial handler selection, and can be used to change
+        the selected handler or redirect request.
+
+        Always returns the request handler, even if unchanged.
+        """
+        from trac.wiki.web_ui import WikiModule
+        self.log.info("method = " + req.method)
+        args = req.args
+
+        if isinstance(handler, WikiModule) \
+           and req.path_info.startswith('/wiki/') \
+           and req.method == 'GET' \
+           and not args.has_key('action') \
+           and (not args.has_key('redirect') or args['redirect'].lower() != 'no') \
+           and req.environ.get('HTTP_REFERER','').find('action=edit') == -1 \
+           and self._check_redirect(req):
+                return self
+        self.log.info("Original handler")
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)
+
