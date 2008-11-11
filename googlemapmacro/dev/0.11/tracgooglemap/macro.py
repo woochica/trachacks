@@ -8,7 +8,8 @@ from genshi.builder import Element,tag
 from StringIO import StringIO
 from trac.core import *
 from trac.util.html import escape,Markup
-from trac.wiki.api import parse_args
+#from trac.wiki.api import parse_args
+from tracadvparseargs import parse_args
 from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
@@ -100,6 +101,8 @@ class GoogleMapMacro(WikiMacroBase):
         return
 
     def environment_needs_upgrade(self, db):
+        if not self.geocoding_server:
+            return False
         cursor = db.cursor()
         try:
             cursor.execute("SELECT count(*) FROM googlemapmacro;")
@@ -157,56 +160,7 @@ class GoogleMapMacro(WikiMacroBase):
     def _parse_args(self, args, strict=True, sep = ',', quote = '"', kw = True, min = -1, num = -1):
         """ parses a comma separated string were the values can include multiple
         quotes """
-        esc    = 0   # last char was escape char
-        quoted = 0   # inside quote
-        start  = 0   # start of current field
-        pos    = 0   # current position
-        largs  = []
-        kwargs = {}
-
-        def checkkey (arg):
-            import re
-            arg = arg.replace(r'\,', ',')
-            if strict:
-                m = re.match(r'\s*[a-zA-Z_]\w+=', arg)
-            else:
-                m = re.match(r'\s*[^=]+=', arg)
-            if m:
-                kw = arg[:m.end()-1].strip()
-                if strict:
-                    kw = unicode(kw).encode('utf-8')
-                kwargs[kw] = self._strip(arg[m.end():])
-            else:
-                largs.append(self._strip(arg))
-
-        if args:
-            for char in args:
-                if esc:
-                    esc = 0
-                elif char == quote:
-                    quoted = not quoted
-                elif char == '\\':
-                    esc = 1
-                elif char == sep and not quoted:
-                    checkkey( args[start:pos] )
-                    start = pos + 1
-                pos = pos + 1
-            checkkey( args[start:] )
-
-        if num > 0:
-            if   len(largs) > num:
-                largs = largs[0:num]
-            elif len(largs) < num:
-                min = num
-
-        if min > 0 and min > len(largs):
-            for i in range(len(largs), min):
-                largs.append(None)
-
-        if kw:
-            return largs, kwargs
-        else:
-            return largs
+        parse_args(args, strict=strict, listonly=not kw, minlen=min)
 
 
     def _get_coords(self, address):
@@ -243,7 +197,7 @@ class GoogleMapMacro(WikiMacroBase):
         return (lon, lat, acc)
 
     def expand_macro(self, formatter, name, content):
-        largs, kwargs = self._parse_args(content)
+        largs, kwargs = parse_args(content)
         if len(largs) > 0:
             arg = unicode(largs[0])
             if _reCOORDS.match(arg):
@@ -398,9 +352,10 @@ class GoogleMapMacro(WikiMacroBase):
         markers_str = ""
         if 'markers' in kwargs:
             markers = []
-            for marker in self._parse_args(unicode(kwargs['markers']), sep='|', kw=False):
-                location, letter, link, title = self._parse_args(marker,
-                        sep=';', kw=False, num=4 )
+            for marker in parse_args( unicode(kwargs['markers']), delim='|',
+                                      listonly=True):
+                location, letter, link, title = parse_args( marker,
+                        delim=';', listonly=True, minlen=4 )[:4]
                 if not title:
                     title = link
 
