@@ -112,7 +112,7 @@ class ImageSvg(Component):
                 dimensions = 'width="100%" height="100%"'
 
             data = {
-                "project_url": self.env.project_url,
+                "base_url": self.env.base_url,
                 "module": module,
                 "id": id,
                 "file": file,
@@ -122,7 +122,7 @@ class ImageSvg(Component):
             <div>
             <embed  type="image/svg+xml" 
                 style="margin: 0pt; padding: 0pt;"
-                src="%(project_url)s/svg/attachments/%(module)s/%(id)s/%(file)s"  
+                src="%(base_url)s/svg/attachments/%(module)s/%(id)s/%(file)s"  
                 %(dimensions)s
                 pluginspage="http://www.adobe.com/svg/viewer/install/"> 
             </embed>
