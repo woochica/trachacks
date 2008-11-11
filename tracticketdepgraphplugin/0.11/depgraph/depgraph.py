@@ -43,8 +43,6 @@ __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __version__   = '0.11'
 
-from util import get_color
-
 from trac.core import *
 from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
@@ -61,6 +59,7 @@ class DepGraphMacro(WikiMacroBase):
 
 	_maxdepth = -1		# Maximum depth for dependency graph
 	_seen_tickets = []	# List of tickets already included
+	_priorities = {}	# List of priorities in trac
 
 	def _depgraph_all(self, req):
 		"""
@@ -76,7 +75,7 @@ class DepGraphMacro(WikiMacroBase):
 		tickets = cursor.fetchall()
 
 		for ticket in tickets:
-			bgcolor, border = get_color(str(ticket[1]).decode('ascii','ignore'))
+			bgcolor, border = self._get_color(str(ticket[1]))
 			result += "\"" + str(ticket[0]) + "\" [ URL=\"" \
 					+ req.href.ticket(int(ticket[0])) \
 					+ "\" fontcolor=\"#bb0000\" fillcolor=\"" + bgcolor \
@@ -109,7 +108,7 @@ class DepGraphMacro(WikiMacroBase):
 			bgcolor = "#cceecc"
 			border  = "#00cc00"
 		else:
-			bgcolor, border = get_color(str(priority).decode('ascii','ignore'))
+			bgcolor, border = self._get_color(str(priority))
 
 		result = "\"" + str(ticket) + "\" [ URL=\"" \
 				+ req.href.ticket(int(ticket)) \
@@ -130,6 +129,39 @@ class DepGraphMacro(WikiMacroBase):
 
 	def __init__(self):
 		self.log.info('version: %s - id: %s' % (__version__, str(__id__)))
+
+		from trac.ticket import Priority
+		for priority in Priority.select(self.env):
+			self._priorities[priority.name] = int(priority.value)
+
+	def _get_color(self, priority):
+		"""Set up background and border color for given priority"""
+
+		try:
+			int(priority)
+		except ValueError:
+			priority = self._priorities[priority]
+
+		if priority == 1:
+			bgcolor = "#ffddcc"
+			border  = "#ee8888"
+		elif priority == 2:
+			bgcolor = "#ffffbb"
+			border  = "#eeeeaa"
+		elif priority == 3:
+			bgcolor = "#f6f6f6"
+			border  = "#cccccc"
+		elif priority == 4:
+			bgcolor = "#ddffff"
+			border  = "#bbeeee"
+		elif priority == 5:
+			bgcolor = "#dde7ff"
+			border  = "#ccddee"
+		else:
+			bgcolor = "#f6f6f6"
+			border  = "#cccccc"
+			
+		return [bgcolor, border]
 
 	def get_macros(self):
 		"""Return an iterable that provides the names of the provided macros."""
