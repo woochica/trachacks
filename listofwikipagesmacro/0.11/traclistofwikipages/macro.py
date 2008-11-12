@@ -8,10 +8,9 @@ from urllib import quote_plus
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_stylesheet, ITemplateProvider
 
-class ListOfWikiPagesMacro(WikiMacroBase):
-    """ Provides Macro to list wiki pages with last changed date and author.
-    """
-    implements(IWikiMacroProvider,IRequestFilter,ITemplateProvider)
+
+class StyleSheetProvider(Component):
+    implements(IRequestFilter,ITemplateProvider)
 
    # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -31,9 +30,12 @@ class ListOfWikiPagesMacro(WikiMacroBase):
         return []
 
 
-   # Macro methods
-    def _formattime(self,time):
+class MacroBase(WikiMacroBase):
+    """ Provides Macro Base. """
+
+    def formattime(self,time):
         """Return formatted time for ListOfWikiPages table."""
+        time = int(time)
         return [ tag.span( format_datetime  ( time ) ),
                  tag.span(
                     " (", 
@@ -46,32 +48,30 @@ class ListOfWikiPagesMacro(WikiMacroBase):
                  )
                ]
 
-    def _formatrow(self,name,time,author):
-        time = int(time)
-        name = tag.a( name, href = self.base_path + '/wiki/' + name )
-        if self.n:
-            self.n = 0
-        else:
-            self.n = 1
+    def formatrow(self, n, name, time, author=''):
+        name = tag.a( name, href = self.base_path + self.wiki_path + str(name) )
+        cols = [ tag.td( name ), tag.td( self.formattime( time )) ]
+        if author:
+            cols.append ( tag.td( author )  )
         return tag.tr(
-                  tag.td(name),
-                  tag.td(self._formattime(time)),
-                  tag.td(author),
-                  class_ = ('even','odd')[ self.n ]
+                  cols,
+                  class_ = ('even','odd')[ n % 2 ]
                )
 
-    # IWikiMacroProvider methods
+
+class ListOfWikiPagesMacro(MacroBase):
+    """ Provides Macro ListOfWikiPages. """
+
     def expand_macro(self, formatter, name, content):
-        """ Provides Macro ListOfWikiPages.
-        """
         largs, kwargs = parse_args( content )
 
         self.formatter = formatter
         self.base_path = formatter.req.base_path
+        self.wiki_path = formatter.req.href.wiki()
         getlist = self.env.config.getlist
         get     = self.env.config.get
         section = 'listofwikipages'
-        self.n  = 0
+
 
         ignoreusers = getlist(section, 'ignore_users', ['trac'])
 
@@ -91,7 +91,8 @@ class ListOfWikiPagesMacro(WikiMacroBase):
                      + sql_wikis + \
                      " GROUP BY name "
         cursor.execute ( sqlcommand )
-        rows = [ self._formatrow(name,time,author) for name,time,author in cursor ]
+        rows = [ self.formatrow(n,name,time,author) for n,[name,time,author] in
+                    enumerate(cursor) ]
 
         head = tag.thead ( tag.tr(
                 tag.th("WikiPage"),
@@ -102,4 +103,52 @@ class ListOfWikiPagesMacro(WikiMacroBase):
         return table
 
 
+class LastChangesByMacro(MacroBase):
+    """ Provides Macro LastChangesBy. """
+
+    def expand_macro(self, formatter, name, content):
+        largs, kwargs = parse_args( content )
+
+        self.formatter = formatter
+        self.base_path = formatter.req.base_path
+        self.wiki_path = formatter.req.href.wiki()
+
+        author = len(largs) > 0 and largs[0] or formatter.req.authname
+        count  = len(largs) > 1 and largs[1] or 5
+        try:
+            count = int(count)
+            if count < 1:
+                raise
+        except:
+            raise TracError("Second list argument must be a positive integer!")
+
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        sqlcommand = " SELECT name,MAX(time) " \
+                     " FROM wiki WHERE author == '%s' " \
+                     " GROUP BY name " \
+                     " ORDER BY time DESC " % (author)
+        cursor.execute ( sqlcommand )
+
+        rows = [ self.formatrow(n,name,time) for n,[name,time]
+                    in enumerate(cursor) if n < count ]
+        if count == 1:
+            count = ''
+            s = ''
+        else:
+            s = 's'
+
+        headline = "Last %s Change%s By: " % (count,s)
+        head = tag.thead (
+                tag.tr(
+                    tag.th(headline, tag.strong(author),
+                    colspan = 2 )
+                ),
+                tag.tr(
+                tag.th("WikiPage"),
+                tag.th("Last Changed at")
+            ) )
+        table = tag.table( head, rows, class_ = 'lastchangesby' )
+        return table
 
