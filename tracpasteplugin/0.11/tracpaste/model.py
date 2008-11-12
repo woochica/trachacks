@@ -4,8 +4,7 @@
     ~~~~~~~~~~~~~~~
 """
 from trac.core import *
-from trac.wiki.api import Context
-from trac.mimeview.api import Mimeview
+from trac.mimeview.api import Mimeview, Context
 from trac.util.datefmt import utc, to_timestamp
 from datetime import datetime
 
@@ -111,7 +110,7 @@ class Paste(object):
 
     def render(self, req):
         """Render the data."""
-        context = Context(self.env, req)
+        context = Context.from_request(req)
         mimeview = Mimeview(self.env)
         return mimeview.render(context, self.mimetype, self.data,
                                annotations=['lineno'])

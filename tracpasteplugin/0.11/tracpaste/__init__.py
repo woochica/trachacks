@@ -13,7 +13,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, \
 from trac.web.main import IRequestHandler
 from trac.util.datefmt import http_date
 from trac.util.html import html, Markup
-from trac.mimeview.pygments_renderer import get_all_lexers
+from trac.mimeview.pygments import get_all_lexers
 from trac.db import Table, Column, Index
 from tracpaste.model import Paste, get_recent_pastes
 
