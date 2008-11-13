@@ -34,8 +34,9 @@ class AttachmentNumMacro(WikiMacroBase):
             elif vraw in ('no','false','0','off'):
                 raw = False
 
-        id = get_resource_name(self.env, formatter.resource)
-        type = formatter.resource.realm
+        res  = formatter.resource
+        id   = res.id
+        type = res.realm
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
