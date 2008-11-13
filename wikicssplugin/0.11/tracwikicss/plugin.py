@@ -37,17 +37,19 @@ class WikiCssPlugin (Component):
 
     def process_request(self, req):
         try:
-            if not self.wikipage or req.path_info != '/wikicss.css':
-                raise
+            if req.path_info != '/wikicss.css':
+                raise Exception ("Unsupported path requested!")
+            if not self.wikipage:
+                raise Exception ("WikiCss: Wiki page not configured.")
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute("SELECT text, MAX(version) FROM wiki WHERE name='%s';" % self.wikipage)
             content = cursor.fetchone()[0]
             if content is None:
-                self.log.error("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
-                raise
+                raise Exception("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
             req.send(content, content_type='text/css', status=200)
-        except:
+        except e:
+            self.log.error(e)
             req.send_response(404)
             req.end_headers()
         raise RequestDone
