@@ -43,12 +43,16 @@ class WikiCssPlugin (Component):
                 raise Exception ("WikiCss: Wiki page not configured.")
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            cursor.execute("SELECT text, MAX(version) FROM wiki WHERE name='%s';" % self.wikipage)
-            content = cursor.fetchone()[0]
-            if content is None:
+            cursor.execute( \
+                "SELECT text, MAX(version) FROM wiki WHERE name='%s' " \
+                "GROUP BY text;" % self.wikipage )
+            content = cursor.fetchone()
+            if not content:
                 raise Exception("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
-            req.send(content, content_type='text/css', status=200)
-        except e:
+            req.send(content[0], content_type='text/css', status=200)
+        except RequestDone:
+            pass
+        except Exception, e:
             self.log.error(e)
             req.send_response(404)
             req.end_headers()
