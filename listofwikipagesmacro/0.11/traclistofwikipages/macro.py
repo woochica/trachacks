@@ -67,7 +67,7 @@ class ListOfWikiPagesMacro(MacroBase):
 
         self.formatter = formatter
         self.base_path = formatter.req.base_path
-        self.wiki_path = formatter.req.href.wiki()
+        self.wiki_path = formatter.req.href.wiki('/')
         getlist = self.env.config.getlist
         get     = self.env.config.get
         section = 'listofwikipages'
@@ -111,7 +111,7 @@ class LastChangesByMacro(MacroBase):
 
         self.formatter = formatter
         self.base_path = formatter.req.base_path
-        self.wiki_path = formatter.req.href.wiki()
+        self.wiki_path = formatter.req.href.wiki('/')
 
         author = len(largs) > 0 and largs[0] or formatter.req.authname
         count  = len(largs) > 1 and largs[1] or 5
