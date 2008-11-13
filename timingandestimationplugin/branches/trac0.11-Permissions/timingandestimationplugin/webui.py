@@ -50,7 +50,8 @@ class TimingEstimationAndBillingPage(Component):
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        if re.search('/Billing', req.path_info):
+        val = re.search('/Billing$', req.path_info)
+        if val and val.start() == 0:
             return "Billing"
         else:
             return ""
@@ -78,7 +79,8 @@ class TimingEstimationAndBillingPage(Component):
         data['billing_info']["billdates"] = billing_dates
 
     def match_request(self, req):
-        return req.path_info.startswith('/Billing')
+        val = re.search('/Billing$', req.path_info)
+        return val and val.start() == 0
 
     def process_request(self, req):
         messages = []
