@@ -213,7 +213,7 @@ class GoogleMapMacro(WikiMacroBase):
             else:
                 if not 'address' in kwargs:
                     kwargs['address'] = arg
-        if 'from' in kwargs and not 'address' kwargs and not 'center' in kwargs:
+        if 'from' in kwargs and not 'address' in kwargs and not 'center' in kwargs:
             arg = unicode(kwargs['from'])
             if _reCOORDS.match(arg):
                 if not 'center' in kwargs:
@@ -433,10 +433,12 @@ class GoogleMapMacro(WikiMacroBase):
                                     tag.div( "", 
                                         class_ = 'tracgooglemap-directions',
                                         id     = 'tracgooglemap-directions-%s' % count
-                                    )
+                                    ),
+                                    style="vertical-align:top;",
                                 ),
                                 tag.td(
-                                    mapdiv
+                                    mapdiv,
+                                    style="vertical-align:top;",
                                 )
                             ),
                           class_ = 'tracgooglemaps'
