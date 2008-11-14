@@ -197,7 +197,7 @@ class GoogleMapMacro(WikiMacroBase):
         return (lon, lat, acc)
 
     def expand_macro(self, formatter, name, content):
-        largs, kwargs = parse_args(content)
+        largs, kwargs = parse_args(content, multi=['marker'])
         if len(largs) > 0:
             arg = unicode(largs[0])
             if _reCOORDS.match(arg):
@@ -350,10 +350,14 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Produce markers
         markers_str = ""
+        if not 'marker' in kwargs:
+            kwargs['marker'] = []
         if 'markers' in kwargs:
+            kwargs['marker'].extend( parse_args( unicode(kwargs['markers']), delim='|',
+                                      listonly=True) )
+        if kwargs['marker']:
             markers = []
-            for marker in parse_args( unicode(kwargs['markers']), delim='|',
-                                      listonly=True):
+            for marker in kwargs['marker']:
                 location, letter, link, title = parse_args( marker,
                         delim=';', listonly=True, minlen=4 )[:4]
                 if not title:
