@@ -8,7 +8,7 @@ from genshi.builder import Element,tag
 from StringIO import StringIO
 from trac.core import *
 from trac.util.html import escape,Markup
-from trac.wiki.api import parse_args
+from tracadvparseargs import parse_args
 from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
@@ -18,6 +18,8 @@ from genshi.builder import Element
 from urllib import urlopen,quote_plus
 import md5
 import re
+
+COUNT = '_googlemapmacro_count'
 
 _reWHITESPACES = re.compile(r'\s+')
 _reCOMMA       = re.compile(r',\s*')
@@ -39,7 +41,7 @@ _accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16, 16)
 _javascript_code = """
 //<![CDATA[
 
-TracGoogleMap( function (mapdiv) {
+TracGoogleMap( function (mapdiv,index) {
     var map = new GMap2(mapdiv, {
     //    size: new GSize(%(width)s, %(height)s),
         mapTypes: %(types_str)s
@@ -62,14 +64,18 @@ TracGoogleMap( function (mapdiv) {
         )
     }
     %(markers_str)s
+    if ("%(directions)s") {
+        dirdiv = document.getElementById("tracgooglemap-directions-" + index);
+        gdir = new GDirections(map, dirdiv);
+        gdir.load("%(directions)s");
+    }
 }, "%(id)s" );
 
 //]]>
 """
 
-class GoogleMapMacro(WikiMacroBase):
-    """ Provides a macro to insert Google Maps(TM) in Wiki pages
-    """
+class GoogleMapMacro (WikiMacroBase):
+    """ Provides a macro to insert Google Maps(TM) in Wiki pages."""
     implements(IRequestFilter,ITemplateProvider,IRequestFilter,IEnvironmentSetupParticipant)
 
     def __init__(self):
@@ -156,60 +162,6 @@ class GoogleMapMacro(WikiMacroBase):
         address = _reCOMMA.sub(', ', address)
         return address
 
-    def _parse_args(self, args, strict=True, sep = ',', quote = '"', kw = True, min = -1, num = -1):
-        """ parses a comma separated string were the values can include multiple
-        quotes """
-        esc    = 0   # last char was escape char
-        quoted = 0   # inside quote
-        start  = 0   # start of current field
-        pos    = 0   # current position
-        largs  = []
-        kwargs = {}
-
-        def checkkey (arg):
-            import re
-            arg = arg.replace(r'\,', ',')
-            if strict:
-                m = re.match(r'\s*[a-zA-Z_]\w+=', arg)
-            else:
-                m = re.match(r'\s*[^=]+=', arg)
-            if m:
-                kw = arg[:m.end()-1].strip()
-                if strict:
-                    kw = unicode(kw).encode('utf-8')
-                kwargs[kw] = self._strip(arg[m.end():])
-            else:
-                largs.append(self._strip(arg))
-
-        if args:
-            for char in args:
-                if esc:
-                    esc = 0
-                elif char == quote:
-                    quoted = not quoted
-                elif char == '\\':
-                    esc = 1
-                elif char == sep and not quoted:
-                    checkkey( args[start:pos] )
-                    start = pos + 1
-                pos = pos + 1
-            checkkey( args[start:] )
-
-        if num > 0:
-            if   len(largs) > num:
-                largs = largs[0:num]
-            elif len(largs) < num:
-                min = num
-
-        if min > 0 and min > len(largs):
-            for i in range(len(largs), min):
-                largs.append(None)
-
-        if kw:
-            return largs, kwargs
-        else:
-            return largs
-
 
     def _get_coords(self, address):
         m = md5.new()
@@ -245,9 +197,17 @@ class GoogleMapMacro(WikiMacroBase):
         return (lon, lat, acc)
 
     def expand_macro(self, formatter, name, content):
-        largs, kwargs = self._parse_args(content)
+        largs, kwargs = parse_args(content, multi=['marker','to'])
         if len(largs) > 0:
             arg = unicode(largs[0])
+            if _reCOORDS.match(arg):
+                if not 'center' in kwargs:
+                    kwargs['center'] = arg
+            else:
+                if not 'address' in kwargs:
+                    kwargs['address'] = arg
+        if 'from' in kwargs and not 'address' in kwargs and not 'center' in kwargs:
+            arg = unicode(kwargs['from'])
             if _reCOORDS.match(arg):
                 if not 'center' in kwargs:
                     kwargs['center'] = arg
@@ -398,11 +358,16 @@ class GoogleMapMacro(WikiMacroBase):
 
         # Produce markers
         markers_str = ""
+        if not 'marker' in kwargs:
+            kwargs['marker'] = []
         if 'markers' in kwargs:
+            kwargs['marker'].extend( parse_args( unicode(kwargs['markers']), delim='|',
+                                      listonly=True) )
+        if kwargs['marker']:
             markers = []
-            for marker in self._parse_args(unicode(kwargs['markers']), sep='|', kw=False):
-                location, letter, link, title = self._parse_args(marker,
-                        sep=';', kw=False, num=4 )
+            for marker in kwargs['marker']:
+                location, letter, link, title = parse_args( marker,
+                        delim=';', listonly=True, minlen=4 )[:4]
                 if not title:
                     title = link
 
@@ -439,6 +404,43 @@ class GoogleMapMacro(WikiMacroBase):
                             markers.append( gmarkeraddr( location, letter, link, title) )
             markers_str = ''.join( markers )
 
+        # Get macro count from request object
+        req = formatter.req
+        count = getattr (req, COUNT, 0)
+        id = 'tracgooglemap-%s' % count
+        setattr (req, COUNT, count + 1)
+
+        # Canvas for this map
+        mapdiv = tag.div (
+                    "Google Map is loading ... (JavaScript enabled?)",
+                    id=id,
+                    style = "width: %s; height: %s;" % (width,height),
+                    class_ = "tracgooglemap"
+                )
+
+        if 'from' in kwargs and 'to' in kwargs:
+            directions = "from: %s to: %s" % (kwargs['from'],' to: '.join(list(kwargs['to'])))
+            mapnmore = tag.table(
+                            tag.tr(
+                                tag.td(
+                                    tag.div( "", 
+                                        class_ = 'tracgooglemap-directions',
+                                        id     = 'tracgooglemap-directions-%s' % count
+                                    ),
+                                    style="vertical-align:top;",
+                                ),
+                                tag.td(
+                                    mapdiv,
+                                    style="vertical-align:top;",
+                                )
+                            ),
+                          class_ = 'tracgooglemaps'
+                       )
+
+        else:
+            directions = ""
+            mapnmore = mapdiv
+
         # put everything in a tidy div
         html = tag.div(
                 [
@@ -448,16 +450,10 @@ class GoogleMapMacro(WikiMacroBase):
                         'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
                         'types_str':types_str, 'controls_str':controls_str,
-                        'markers_str':markers_str
+                        'markers_str':markers_str, 'directions':directions,
                         },
                         type = "text/javascript"),
-                    # Canvas for this map
-                    tag.div (
-                        "Google Map is loading ... (JavaScript enabled?)",
-                        #id=id,
-                        style = "width: %s; height: %s;" % (width,height),
-                        class_ = "tracgooglemap"
-                        )
+                    mapnmore
                     ],
                 class_ = "tracgooglemap-parent"
                 );
