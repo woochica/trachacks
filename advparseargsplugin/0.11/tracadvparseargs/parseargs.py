@@ -18,6 +18,13 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
         args:: The argument string; 'content' in `expand_macro.
         strict:: Enables strict checking of keys.
         multi:: Enables folding of muliple given keys into list.
+                If set to `True` values of multiple given keys will be returned
+                as list, but single given keys will return a scalar.
+                If set to a list only the values of the listed keys will be
+                returned as list, but always as list even when there is only one
+                value.
+                If this list contains `'*'`, __all__ values are __always__ 
+                returned as list.
         listonly:: If true only a list is returned, no directionary.
         minlen:: Extend returned list to given minimum length. Only used when
                  `listonly=True`.
@@ -29,6 +36,14 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
     """
     largs  = []
     kwargs = {}
+
+    # Handle multi list:
+    multilist = []
+    alwayslist = False
+    if multi and isinstance(multi, list):
+        multilist = multi
+        multi = True
+        alwayslist = '*' in multilist
 
     def strip (arg):
         """Strips surrounding quotes, but only if the arg doesn't includes any
@@ -54,11 +69,21 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
             value = strip( arg[m.end():] )
             if strict:
                 kw = unicode(kw).encode('utf-8')
-            if multi and kw in kwargs:
-                if isinstance(kwargs[kw], list):
-                    kwargs[kw].append( value )
+
+            if not multi:
+                kwargs[kw] = value
+            elif not multilist:
+                if kw in kwargs:
+                    if isinstance(kwargs[kw], list):
+                        kwargs[kw].append( value )
+                    else:
+                        kwargs[kw] = [ kwargs[kw], value ]
                 else:
-                    kwargs[kw] = [ kwargs[kw], value ]
+                    kwargs[kw] = value
+            elif alwayslist or kw in multilist:
+                if kw not in kwargs:
+                    kwargs[kw] = []
+                kwargs[kw].append(value)
             else:
                 kwargs[kw] = value
         else:
