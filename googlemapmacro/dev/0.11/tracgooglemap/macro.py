@@ -20,6 +20,8 @@ from urllib import urlopen,quote_plus
 import md5
 import re
 
+COUNT = '_googlemapmacro_count'
+
 _reWHITESPACES = re.compile(r'\s+')
 _reCOMMA       = re.compile(r',\s*')
 _reCOORDS      = re.compile(r'^\d+(?:\.\d*)?[:,]\d+(?:\.\d*)?$')
@@ -40,7 +42,7 @@ _accuracy_to_zoom = (3, 4, 8, 10, 12, 14, 14, 15, 16, 16)
 _javascript_code = """
 //<![CDATA[
 
-TracGoogleMap( function (mapdiv) {
+TracGoogleMap( function (mapdiv,index) {
     var map = new GMap2(mapdiv, {
     //    size: new GSize(%(width)s, %(height)s),
         mapTypes: %(types_str)s
@@ -63,6 +65,11 @@ TracGoogleMap( function (mapdiv) {
         )
     }
     %(markers_str)s
+    if ("%(directions)s") {
+        dirdiv = document.getElementById("tracgooglemap-directions-" + index);
+        gdir = new GDirections(map, dirdiv);
+        gdir.load("%(directions)s");
+    }
 }, "%(id)s" );
 
 //]]>
@@ -200,6 +207,14 @@ class GoogleMapMacro(WikiMacroBase):
         largs, kwargs = parse_args(content, multi=['marker'])
         if len(largs) > 0:
             arg = unicode(largs[0])
+            if _reCOORDS.match(arg):
+                if not 'center' in kwargs:
+                    kwargs['center'] = arg
+            else:
+                if not 'address' in kwargs:
+                    kwargs['address'] = arg
+        if 'from' in kwargs and not 'address' kwargs and not 'center' in kwargs:
+            arg = unicode(kwargs['from'])
             if _reCOORDS.match(arg):
                 if not 'center' in kwargs:
                     kwargs['center'] = arg
@@ -396,6 +411,41 @@ class GoogleMapMacro(WikiMacroBase):
                             markers.append( gmarkeraddr( location, letter, link, title) )
             markers_str = ''.join( markers )
 
+        # Get macro count from request object
+        req = formatter.req
+        count = getattr (req, COUNT, 0)
+        id = 'tracgooglemap-%s' % count
+        setattr (req, COUNT, count + 1)
+
+        # Canvas for this map
+        mapdiv = tag.div (
+                    "Google Map is loading ... (JavaScript enabled?)",
+                    id=id,
+                    style = "width: %s; height: %s;" % (width,height),
+                    class_ = "tracgooglemap"
+                )
+
+        if 'from' in kwargs and 'to' in kwargs:
+            directions = "from: %s to: %s" % (kwargs['from'],kwargs['to'])
+            mapnmore = tag.table(
+                            tag.tr(
+                                tag.td(
+                                    tag.div( "", 
+                                        class_ = 'tracgooglemap-directions',
+                                        id     = 'tracgooglemap-directions-%s' % count
+                                    )
+                                ),
+                                tag.td(
+                                    mapdiv
+                                )
+                            ),
+                          class_ = 'tracgooglemaps'
+                       )
+
+        else:
+            directions = ""
+            mapnmore = mapdiv
+
         # put everything in a tidy div
         html = tag.div(
                 [
@@ -405,16 +455,10 @@ class GoogleMapMacro(WikiMacroBase):
                         'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
                         'types_str':types_str, 'controls_str':controls_str,
-                        'markers_str':markers_str
+                        'markers_str':markers_str, 'directions':directions,
                         },
                         type = "text/javascript"),
-                    # Canvas for this map
-                    tag.div (
-                        "Google Map is loading ... (JavaScript enabled?)",
-                        #id=id,
-                        style = "width: %s; height: %s;" % (width,height),
-                        class_ = "tracgooglemap"
-                        )
+                    mapnmore
                     ],
                 class_ = "tracgooglemap-parent"
                 );
