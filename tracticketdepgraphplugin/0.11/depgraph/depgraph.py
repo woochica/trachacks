@@ -51,6 +51,8 @@ from trac.wiki.formatter import wiki_to_html
 from graphviz import Graphviz
 from mastertickets.model import TicketLinks
 
+from cgi import escape
+
 class DepGraphMacro(WikiMacroBase):
 	"""
 	DepgraphMacro provides a plugin for Trac to render a dependency graph
@@ -81,7 +83,10 @@ class DepGraphMacro(WikiMacroBase):
 					+ "\" fontcolor=\"#bb0000\" fillcolor=\"" + bgcolor \
 					+ "\" color=\"" + border \
 					+ "\" tooltip=\"" \
-					+ ticket[2].encode('ascii', 'xmlcharrefreplace') + "\" ]\n"
+					+ escape(ticket[2], 'true') \
+						.encode('ascii', 'xmlcharrefreplace') \
+						.replace('\'', '&apos;') \
+					+ "\" ]\n"
 			# Use blocked_by() from mastertickets.model.TicketLinks
 			blockers = TicketLinks(self.env, int(ticket[0])).blocked_by
 			for blocker in blockers:
@@ -114,7 +119,10 @@ class DepGraphMacro(WikiMacroBase):
 				+ req.href.ticket(int(ticket)) \
 				+ "\" fillcolor=\"" + bgcolor + "\" color=\"" + border \
 				+ "\" fontcolor=\"#bb0000\" tooltip=\"" \
-				+ summary.encode('ascii', 'xmlcharrefreplace') + "\" ]\n"
+				+ escape(summary, 'true') \
+					.encode('ascii', 'xmlcharrefreplace') \
+					.replace('\'', '&apos;') \
+				+ "\" ]\n"
 		if self._maxdepth > 0 and depth >= self._maxdepth:
 			return result
 			
