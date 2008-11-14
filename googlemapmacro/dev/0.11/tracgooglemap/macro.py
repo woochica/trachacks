@@ -204,7 +204,7 @@ class GoogleMapMacro(WikiMacroBase):
         return (lon, lat, acc)
 
     def expand_macro(self, formatter, name, content):
-        largs, kwargs = parse_args(content, multi=['marker'])
+        largs, kwargs = parse_args(content, multi=['marker','to'])
         if len(largs) > 0:
             arg = unicode(largs[0])
             if _reCOORDS.match(arg):
@@ -426,7 +426,7 @@ class GoogleMapMacro(WikiMacroBase):
                 )
 
         if 'from' in kwargs and 'to' in kwargs:
-            directions = "from: %s to: %s" % (kwargs['from'],kwargs['to'])
+            directions = "from: %s to: %s" % (kwargs['from'],' to: '.join(list(kwargs['to'])))
             mapnmore = tag.table(
                             tag.tr(
                                 tag.td(
