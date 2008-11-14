@@ -38,12 +38,12 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
     kwargs = {}
 
     # Handle multi list:
-    multilist = []
+    multiset = set()
     alwayslist = False
     if multi and isinstance(multi, list):
-        multilist = multi
+        multiset = set(multi)
         multi = True
-        alwayslist = '*' in multilist
+        alwayslist = '*' in multiset
 
     def strip (arg):
         """Strips surrounding quotes, but only if the arg doesn't includes any
@@ -72,7 +72,7 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
 
             if not multi:
                 kwargs[kw] = value
-            elif not multilist:
+            elif not multiset:
                 if kw in kwargs:
                     if isinstance(kwargs[kw], list):
                         kwargs[kw].append( value )
@@ -80,7 +80,7 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
                         kwargs[kw] = [ kwargs[kw], value ]
                 else:
                     kwargs[kw] = value
-            elif alwayslist or kw in multilist:
+            elif alwayslist or kw in multiset:
                 if kw not in kwargs:
                     kwargs[kw] = []
                 kwargs[kw].append(value)
