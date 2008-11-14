@@ -55,20 +55,28 @@ class RoadmapHoursTicketGroupStatsProvider(Component):
 	    for status, est, act in cursor:
 		if act:
 		    act = float(act)
-		    if status == 'closed':
-			expected_hours += act
-			worked_hours += act
-		    else:
-			est = float(est)
-			if est < 0.1:
-			    # Assume about a day's work
-			    est = self.assumed_estimate
-			if est > act:
-			    expected_hours += est
-			else:
-			    # Assume about half a day more
-			    expected_hours += act + self.additional_hours
-			worked_hours += act
+                else:
+                    act = 0.0
+
+                if status == 'closed':
+                    expected_hours += act
+                    worked_hours += act
+                else:
+                    if est:
+                        est = float(est)
+                    else:
+                        est = 0.0
+
+                    if est < 0.1:
+                        # Assume about a day's work
+                        est = self.assumed_estimate
+
+                    if est > act:
+                        expected_hours += est
+                    else:
+                        # Assume about half a day more
+                        expected_hours += act + self.additional_hours
+                    worked_hours += act
 
         stat = TicketGroupStats('ticket status', 'hour')
 	query_cols = ["summary", "owner", "type", "priority",
