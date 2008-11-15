@@ -8,6 +8,19 @@ thead, th {
     border-bottom: thin solid;
 }
 
+th, td {
+    padding: 2px 0.5em;
+    white-space: nowrap;
+}
+
+th.comment {
+    text-align: left;
+}
+
+td.comment {
+    width: 100%;
+}
+
 td.version {
     text-align: center;
 }

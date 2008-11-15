@@ -13,6 +13,7 @@ from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
 from  trac.web.chrome  import  ITemplateProvider, add_ctxtnav, add_link, add_script
 from  trac.web.href    import  Href
 from  genshi.builder   import  tag
+from  urllib           import  quote_plus
 
 class nav(Component):
 
@@ -91,22 +92,25 @@ class nav(Component):
 
         if action == "view":
             href = Href(req.base_path)
-            timeline = href('timeline', precision='seconds', from_='')
+            timeline = href('timeline', precision='seconds') + "&from="
+            def timeline_link(time):
+                return timeline + quote_plus( format_datetime (time,'iso8601') )
 
             wikilist = []
             cursor.execute(
-                "SELECT name,author,time,MAX(version) FROM %(realm)s WHERE name IN "
+                "SELECT name,author,time,MAX(version),comment FROM %(realm)s WHERE name IN "
                 "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
-                "GROUP BY name ORDER BY time;" % { 'user':user, 'realm':'wiki' }
+                "GROUP BY name ORDER BY time DESC;" % { 'user':user, 'realm':'wiki' }
             )
-            for name,author,time,version in cursor.fetchall():
+            for name,author,time,version,comment in cursor.fetchall():
                 wikilist.append({
                     'name' : name,
                     'author' : author,
                     'version' : version,
                     'datetime' : format_datetime( time ),
                     'timedelta' : pretty_timedelta( time ),
-                    'timeline_link' : timeline + format_datetime (time,'iso8601')
+                    'timeline_link' : timeline_link( time ),
+                    'comment' : comment,
                 })
                 wldict['wikilist'] = wikilist
 

@@ -63,14 +63,25 @@
           <thead>
               <tr>
                   <th py:for="head in ('Page','Last Changed At', 'By',
-                      'Latest Version', 'Unwatch')">$head</th>
+                      'Version', 'Diff', 'History', 'Unwatch')">$head</th>
+                  <th class="comment">Comment</th>
               </tr>
           </thead>
           <tbody>
               <tr py:for="page in wikilist">
                   <td class="name">${link('wiki',page.name,text=page.name)}</td>
-                  <td py:for="key in ('datetime','author','version')" class="$key">${page.get(key,'')}</td>
+                  <td class="datetime">$page.datetime
+                      <py:if test="page.timedelta"> (<a
+                          href="$page.timeline_link">$page.timedelta</a> ago)</py:if></td>
+                  <td class="author">$page.author</td>
+                  <td class="version"><a
+                          href="${href('wiki',page.name,version=page.version)}">$page.version</a></td>
+                  <td class="diff"><a
+                          href="${href('wiki',page.name,action='diff',version=page.version)}">Diff</a></td>
+                  <td class="history"><a
+                          href="${href('wiki',page.name,action='history')}">History</a></td>
                   <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',id=page.name)}">Unwatch</a></td>
+                  <td class="comment">$page.comment</td>
               </tr>
           </tbody>
           <tfoot>
