@@ -13,11 +13,11 @@ th, td {
     white-space: nowrap;
 }
 
-th.comment, th.summary {
+th.comment, th.summary, th.changes {
     text-align: left;
 }
 
-td.comment, th.summary {
+td.comment, th.summary, th.changes {
     width: 100%;
 }
 

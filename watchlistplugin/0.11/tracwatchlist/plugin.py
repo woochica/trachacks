@@ -12,7 +12,7 @@ from  trac.web.chrome  import  INavigationContributor
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
 from  trac.web.chrome  import  ITemplateProvider, add_ctxtnav, add_link, add_script
 from  trac.web.href    import  Href
-from  genshi.builder   import  tag
+from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
 
 class nav(Component):
@@ -114,6 +114,31 @@ class nav(Component):
                 })
                 wldict['wikilist'] = wikilist
 
+
+            def format_change(field,oldvalue,newvalue):
+                """Formats tickets changes."""
+                fieldstr = "<strong>%s</strong> " % field
+                if field == 'cc':
+                    oldvalues = set(oldvalue.split(', '))
+                    newvalues = set(newvalue.split(', '))
+                    added   = newvalues.difference(oldvalues)
+                    removed = oldvalues.difference(newvalues)
+                    str = fieldstr
+                    if added:
+                        str += "<em>%s</em> added" % ', '.join(added)
+                    if removed:
+                        if added:
+                            str += ', '
+                        str += "<em>%s</em> removed" % ', '.join(removed)
+                    return str
+                elif not oldvalue:
+                    return fieldstr + "<em>%s</em> added" % newvalue
+                elif not newvalue:
+                    return fieldstr + "<em>%s</em> deleted" % oldvalue
+                else:
+                    return fieldstr + "changed from <em>%s</em> to <em>%s</em>"\
+                              % (oldvalue, newvalue)
+
             ticketlist = []
             cursor.execute(
                 "SELECT id,type,time,changetime,summary,reporter FROM %(realm)s WHERE id IN "
@@ -123,10 +148,16 @@ class nav(Component):
             tickets = cursor.fetchall()
             for id,type,time,changetime,summary,reporter in tickets:
                 cursor.execute(
-                    "SELECT author FROM ticket_change WHERE ticket='%s' and time='%s';"
+                    "SELECT author,field,oldvalue,newvalue FROM ticket_change "
+                    "WHERE ticket='%s' and time='%s' ORDER BY field;"
                      % (id, changetime )
                 )
-                author = cursor.fetchone() or reporter
+                changes = []
+                author  = reporter
+                for author_,field,oldvalue,newvalue in cursor.fetchall():
+                    author = author_
+                    changes.append( format_change(field,oldvalue,newvalue) )
+                changes = Markup('; '.join(changes))
                 cursor.execute(
                     "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
                      % (id)
@@ -140,6 +171,7 @@ class nav(Component):
                     'datetime' : format_datetime( changetime ),
                     'timedelta' : pretty_timedelta( changetime ),
                     'timeline_link' : timeline_link( changetime ),
+                    'changes' : changes,
                     'summary' : summary,
                 })
                 wldict['ticketlist'] = ticketlist
