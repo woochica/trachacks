@@ -46,6 +46,7 @@ class nav(Component):
     def match_request(self, req):
         return req.path_info.startswith("/watchlist")
 
+
     def process_request(self, req):
         href = Href(req.base_path)
         user = req.authname
@@ -116,11 +117,23 @@ class nav(Component):
 
             wikilist = []
             if wiki_perm:
+                # Watched wikis which got deleted:
+                cursor.execute(
+                    "SELECT id FROM watchlist WHERE realm='wiki' AND user='%s' "
+                    "AND id NOT IN (SELECT DISTINCT name FROM wiki);" % user )
+                for (name,) in cursor.fetchall():
+                    wikilist.append({
+                        'name' : name,
+                        'author' : '?',
+                        'datetime' : '?',
+                        'comment' : tag.strong("DELETED!", class_='deleted'),
+                        'deleted' : True,
+                    })
+                # Existing watched wikis:
                 cursor.execute(
                     "SELECT name,author,time,MAX(version),comment FROM %(realm)s WHERE name IN "
                     "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
-                    "GROUP BY name ORDER BY time DESC;" % { 'user':user, 'realm':'wiki' }
-                )
+                    "GROUP BY name ORDER BY time DESC;" % { 'user':user, 'realm':'wiki' })
                 for name,author,time,version,comment in cursor.fetchall():
                     wikilist.append({
                         'name' : name,
@@ -131,7 +144,7 @@ class nav(Component):
                         'timeline_link' : timeline_link( time ),
                         'comment' : comment,
                     })
-                    wldict['wikilist'] = wikilist
+                wldict['wikilist'] = wikilist
 
 
             def format_change(field,oldvalue,newvalue):

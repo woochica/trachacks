@@ -79,11 +79,11 @@
                       <py:if test="page.timedelta"> (<a
                           href="$page.timeline_link">$page.timedelta</a> ago)</py:if></td>
                   <td class="author">$page.author</td>
-                  <td class="version"><a
+                  <td class="version"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,version=page.version)}">$page.version</a></td>
-                  <td class="diff"><a
+                  <td class="diff"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,action='diff',version=page.version)}">Diff</a></td>
-                  <td class="history"><a
+                  <td class="history"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,action='history')}">History</a></td>
                   <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',id=page.name)}">Unwatch</a></td>
                   <td class="comment">$page.comment</td>
