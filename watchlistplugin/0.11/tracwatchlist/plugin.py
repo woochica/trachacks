@@ -56,7 +56,10 @@ class nav(Component):
                 id    = args['id']
             except KeyError:
                 raise TracError("Realm and Id needed for watch/unwatch action!")
+            if realm not in ('wiki','ticket'):
+                raise TracError("Only wikis and tickets can be watched/unwatched!")
             is_watching = self.is_watching(realm, id, user)
+            realm_perm  = realm.upper() + '_VIEW' in req.perm
         else:
             is_watching = None
 
@@ -65,7 +68,6 @@ class nav(Component):
         add_ctxtnav(req, "Watched Tickets", href=href + '#tickets')
 
         wldict['is_watching'] = is_watching
-
         wiki_perm   = 'WIKI_VIEW'   in req.perm
         ticket_perm = 'TICKET_VIEW' in req.perm
         wldict['wiki_perm']   = wiki_perm
@@ -77,7 +79,7 @@ class nav(Component):
 
         if action == "watch":
             lst = (user, realm, id)
-            if not is_watching:
+            if realm_perm and not is_watching:
                 cursor.execute(
                     "INSERT INTO watchlist (user, realm, id) "
                     "VALUES ('%s','%s','%s');" % lst
@@ -86,7 +88,7 @@ class nav(Component):
             action = "view"
         elif action == "unwatch":
             lst = (user, realm, id)
-            if is_watching:
+            if realm_perm and is_watching:
                 cursor.execute(
                     "DELETE FROM watchlist "
                     "WHERE user='%s' AND realm='%s' AND id='%s';"
