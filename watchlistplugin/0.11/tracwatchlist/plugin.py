@@ -116,14 +116,27 @@ class nav(Component):
 
             ticketlist = []
             cursor.execute(
-                "SELECT id,type,time,changetime,summary FROM %(realm)s WHERE id IN "
+                "SELECT id,type,time,changetime,summary,reporter FROM %(realm)s WHERE id IN "
                 "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
-                "GROUP BY id ORDER BY changetime;" % { 'user':user, 'realm':'ticket' }
+                "GROUP BY id ORDER BY changetime DESC;" % { 'user':user, 'realm':'ticket' }
             )
-            for id,type,time,changetime,summary in cursor.fetchall():
+            tickets = cursor.fetchall()
+            for id,type,time,changetime,summary,reporter in tickets:
+                cursor.execute(
+                    "SELECT author FROM ticket_change WHERE ticket='%s' and time='%s';"
+                     % (id, changetime )
+                )
+                author = cursor.fetchone() or reporter
+                cursor.execute(
+                    "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
+                     % (id)
+                )
+                (commentnum,) = cursor.fetchone()
                 ticketlist.append({
                     'id' : str(id),
                     'type' : type,
+                    'author' : author,
+                    'commentnum': str(commentnum),
                     'datetime' : format_datetime( changetime ),
                     'timedelta' : pretty_timedelta( changetime ),
                     'timeline_link' : timeline_link( changetime ),

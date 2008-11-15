@@ -21,6 +21,6 @@ td.comment, th.summary {
     width: 100%;
 }
 
-td.version {
+td.version, td.commentnum, td.id {
     text-align: center;
 }
