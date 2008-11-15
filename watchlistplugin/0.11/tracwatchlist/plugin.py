@@ -125,8 +125,8 @@ class nav(Component):
                 """Formats tickets changes."""
                 fieldstr = "<strong>%s</strong> " % field
                 if field == 'cc':
-                    oldvalues = set(oldvalue.split(', '))
-                    newvalues = set(newvalue.split(', '))
+                    oldvalues = set(oldvalue and oldvalue.split(', ') or [])
+                    newvalues = set(newvalue and newvalue.split(', ') or [])
                     added   = newvalues.difference(oldvalues)
                     removed = oldvalues.difference(newvalues)
                     str = fieldstr
