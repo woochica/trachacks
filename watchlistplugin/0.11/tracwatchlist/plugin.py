@@ -66,6 +66,11 @@ class nav(Component):
 
         wldict['is_watching'] = is_watching
 
+        wiki_perm   = 'WIKI_VIEW'   in req.perm
+        ticket_perm = 'TICKET_VIEW' in req.perm
+        wldict['wiki_perm']   = wiki_perm
+        wldict['ticket_perm'] = ticket_perm
+
         # DB look-up
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -97,22 +102,23 @@ class nav(Component):
                 return timeline + quote_plus( format_datetime (time,'iso8601') )
 
             wikilist = []
-            cursor.execute(
-                "SELECT name,author,time,MAX(version),comment FROM %(realm)s WHERE name IN "
-                "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
-                "GROUP BY name ORDER BY time DESC;" % { 'user':user, 'realm':'wiki' }
-            )
-            for name,author,time,version,comment in cursor.fetchall():
-                wikilist.append({
-                    'name' : name,
-                    'author' : author,
-                    'version' : version,
-                    'datetime' : format_datetime( time ),
-                    'timedelta' : pretty_timedelta( time ),
-                    'timeline_link' : timeline_link( time ),
-                    'comment' : comment,
-                })
-                wldict['wikilist'] = wikilist
+            if wiki_perm:
+                cursor.execute(
+                    "SELECT name,author,time,MAX(version),comment FROM %(realm)s WHERE name IN "
+                    "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
+                    "GROUP BY name ORDER BY time DESC;" % { 'user':user, 'realm':'wiki' }
+                )
+                for name,author,time,version,comment in cursor.fetchall():
+                    wikilist.append({
+                        'name' : name,
+                        'author' : author,
+                        'version' : version,
+                        'datetime' : format_datetime( time ),
+                        'timedelta' : pretty_timedelta( time ),
+                        'timeline_link' : timeline_link( time ),
+                        'comment' : comment,
+                    })
+                    wldict['wikilist'] = wikilist
 
 
             def format_change(field,oldvalue,newvalue):
@@ -139,42 +145,43 @@ class nav(Component):
                     return fieldstr + "changed from <em>%s</em> to <em>%s</em>"\
                               % (oldvalue, newvalue)
 
-            ticketlist = []
-            cursor.execute(
-                "SELECT id,type,time,changetime,summary,reporter FROM %(realm)s WHERE id IN "
-                "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
-                "GROUP BY id ORDER BY changetime DESC;" % { 'user':user, 'realm':'ticket' }
-            )
-            tickets = cursor.fetchall()
-            for id,type,time,changetime,summary,reporter in tickets:
+            if ticket_perm:
+                ticketlist = []
                 cursor.execute(
-                    "SELECT author,field,oldvalue,newvalue FROM ticket_change "
-                    "WHERE ticket='%s' and time='%s' ORDER BY field;"
-                     % (id, changetime )
+                    "SELECT id,type,time,changetime,summary,reporter FROM %(realm)s WHERE id IN "
+                    "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
+                    "GROUP BY id ORDER BY changetime DESC;" % { 'user':user, 'realm':'ticket' }
                 )
-                changes = []
-                author  = reporter
-                for author_,field,oldvalue,newvalue in cursor.fetchall():
-                    author = author_
-                    changes.append( format_change(field,oldvalue,newvalue) )
-                changes = Markup('; '.join(changes))
-                cursor.execute(
-                    "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
-                     % (id)
-                )
-                (commentnum,) = cursor.fetchone()
-                ticketlist.append({
-                    'id' : str(id),
-                    'type' : type,
-                    'author' : author,
-                    'commentnum': str(commentnum),
-                    'datetime' : format_datetime( changetime ),
-                    'timedelta' : pretty_timedelta( changetime ),
-                    'timeline_link' : timeline_link( changetime ),
-                    'changes' : changes,
-                    'summary' : summary,
-                })
-                wldict['ticketlist'] = ticketlist
+                tickets = cursor.fetchall()
+                for id,type,time,changetime,summary,reporter in tickets:
+                    cursor.execute(
+                        "SELECT author,field,oldvalue,newvalue FROM ticket_change "
+                        "WHERE ticket='%s' and time='%s' ORDER BY field;"
+                         % (id, changetime )
+                    )
+                    changes = []
+                    author  = reporter
+                    for author_,field,oldvalue,newvalue in cursor.fetchall():
+                        author = author_
+                        changes.append( format_change(field,oldvalue,newvalue) )
+                    changes = Markup('; '.join(changes))
+                    cursor.execute(
+                        "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
+                         % (id)
+                    )
+                    (commentnum,) = cursor.fetchone()
+                    ticketlist.append({
+                        'id' : str(id),
+                        'type' : type,
+                        'author' : author,
+                        'commentnum': str(commentnum),
+                        'datetime' : format_datetime( changetime ),
+                        'timedelta' : pretty_timedelta( changetime ),
+                        'timeline_link' : timeline_link( changetime ),
+                        'changes' : changes,
+                        'summary' : summary,
+                    })
+                    wldict['ticketlist'] = ticketlist
             return ("watchlist.html", wldict, "text/html")
         else:
             raise TracError("Invalid watchlist action '%s'!" % action)
@@ -222,7 +229,8 @@ class nav(Component):
 
         realm, id = parts[:2]
 
-        if realm not in ('wiki','ticket'):
+        if realm not in ('wiki','ticket') \
+          or realm.upper() + '_VIEW' not in req.perm:
             return (template, data, content_type)
 
         href = Href(req.base_path)

@@ -59,6 +59,8 @@
 
       <h2 id="wikis">Wikis</h2>
       <py:choose test="">
+      <div class="system-message" py:when="not wiki_perm">You lack permission to view wikis.</div>
+      <py:choose test="" py:otherwise="">
       <table class="wikilist" py:when="wikilist">
           <thead>
               <tr>
@@ -92,9 +94,12 @@
       </table>
       <span py:otherwise="">No wikis are currently watched.</span>
       </py:choose>
+      </py:choose>
 
       <h2 id="tickets">Tickets</h2>
       <py:choose test="">
+      <div class="system-message" py:when="not ticket_perm">You lack permission to view tickets.</div>
+      <py:choose test="" py:otherwise="">
       <table class="ticketlist" py:when="ticketlist">
           <thead>
               <tr>
@@ -123,6 +128,7 @@
           </tfoot>
       </table>
       <span py:otherwise="">No tickets are currently watched.</span>
+      </py:choose>
       </py:choose>
 
     </div>
