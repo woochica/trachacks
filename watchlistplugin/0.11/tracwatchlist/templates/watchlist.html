@@ -98,15 +98,20 @@
       <table class="ticketlist" py:when="ticketlist">
           <thead>
               <tr>
-                  <th py:for="head in ('Ticket','Last Changed At','Unwatch')">$head</th>
+                  <th py:for="head in (['Ticket','id'],['Last Changed
+                      At','datetime'], ['Unwatch','unwatch'], ['Summary','summary'])"
+                      class="${head[1]}">${head[0]}</th>
               </tr>
           </thead>
           <tbody>
               <tr py:for="ticket in ticketlist">
                   <td class="id">${link('ticket', ticket.id, text='#' + ticket.id)}</td>
-                  <td py:for="key in ('datetime',)" class="$key">${ticket.get(key,'')}</td>
+                  <td class="datetime">$ticket.datetime
+                      <py:if test="ticket.timedelta"> (<a
+                          href="$ticket.timeline_link">$ticket.timedelta</a> ago)</py:if></td>
                   <td class="unwatch"><a
                           href="${href.watchlist(action='unwatch',realm='ticket',id=ticket.id)}">Unwatch</a></td>
+                  <td class="summary">$ticket.summary</td>
               </tr>
           </tbody>
           <tfoot>

@@ -116,18 +116,18 @@ class nav(Component):
 
             ticketlist = []
             cursor.execute(
-                "SELECT id,type,time,changetime FROM %(realm)s WHERE id IN "
+                "SELECT id,type,time,changetime,summary FROM %(realm)s WHERE id IN "
                 "(SELECT id FROM watchlist WHERE user='%(user)s' AND realm='%(realm)s') "
                 "GROUP BY id ORDER BY changetime;" % { 'user':user, 'realm':'ticket' }
             )
-            for id,type,time,changetime in cursor.fetchall():
-                self.log.debug("id = %s" % id)
+            for id,type,time,changetime,summary in cursor.fetchall():
                 ticketlist.append({
                     'id' : str(id),
                     'type' : type,
                     'datetime' : format_datetime( changetime ),
                     'timedelta' : pretty_timedelta( changetime ),
-                    'timeline_link' : timeline + format_datetime (changetime,'iso8601')
+                    'timeline_link' : timeline_link( changetime ),
+                    'summary' : summary,
                 })
                 wldict['ticketlist'] = ticketlist
             return ("watchlist.html", wldict, "text/html")
@@ -167,7 +167,6 @@ class nav(Component):
     def post_process_request(self, req, template, data, content_type):
         # Extract realm and id from path:
         parts = req.path_info[1:].split('/',2)
-        self.log.debug(parts)
 
 
         # Handle special case for '/' and '/wiki'
@@ -177,7 +176,6 @@ class nav(Component):
             parts.append("WikiStart")
 
         realm, id = parts[:2]
-        self.log.debug(parts)
 
         if realm not in ('wiki','ticket'):
             return (template, data, content_type)
