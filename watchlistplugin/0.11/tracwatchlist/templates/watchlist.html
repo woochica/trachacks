@@ -62,9 +62,12 @@
       <table class="wikilist" py:when="wikilist">
           <thead>
               <tr>
-                  <th py:for="head in ('Page','Last Changed At', 'By',
-                      'Version', 'Diff', 'History', 'Unwatch')">$head</th>
-                  <th class="comment">Comment</th>
+                  <th py:for="head in (['Page','name'],['Last Changed
+                      At','datetime'], ['By','author'],
+                      ['Version', 'version'], ['Diff','diff'],
+                      ['History','history'], ['Unwatch','unwatch'],
+                      ['Comment','comment'])"
+                      class="${head[1]}">${head[0]}</th>
               </tr>
           </thead>
           <tbody>
