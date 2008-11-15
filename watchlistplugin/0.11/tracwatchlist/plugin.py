@@ -92,10 +92,17 @@ class nav(Component):
         if action == "watch":
             lst = (user, realm, id)
             if realm_perm and not is_watching:
+                # Check if wiki/ticket exists:
+                cursor.execute(
+                    "SELECT count(*) FROM %s WHERE %s='%s';"
+                      % (realm, realm == 'wiki' and 'name' or 'id', id) )
+                count = cursor.fetchone()
+                if not count or not count[0]:
+                    raise WatchlistError(
+                        "Selected resource %s:%s doesn't exists!" % (realm,id) )
                 cursor.execute(
                     "INSERT INTO watchlist (user, realm, id) "
-                    "VALUES ('%s','%s','%s');" % lst
-                )
+                    "VALUES ('%s','%s','%s');" % lst )
                 db.commit()
             action = "view"
         elif action == "unwatch":
@@ -104,8 +111,7 @@ class nav(Component):
                 cursor.execute(
                     "DELETE FROM watchlist "
                     "WHERE user='%s' AND realm='%s' AND id='%s';"
-                     % lst
-                )
+                     % lst )
                 db.commit()
             action = "view"
 
