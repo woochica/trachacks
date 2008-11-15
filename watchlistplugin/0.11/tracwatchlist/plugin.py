@@ -15,6 +15,15 @@ from  trac.web.href    import  Href
 from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
 
+
+class WatchlistError(TracError):
+    show_traceback = False
+    title = 'Watchlist Error'
+
+    def __init__(self, message):
+        Exception.__init__(self, tag.div(message, class_='system-message') )
+
+
 class nav(Component):
 
     implements( INavigationContributor, IRequestHandler, IRequestFilter,
@@ -38,10 +47,12 @@ class nav(Component):
         return req.path_info.startswith("/watchlist")
 
     def process_request(self, req):
-
+        href = Href(req.base_path)
         user = req.authname
         if not user or user == 'anonymous':
-            raise TracError("Please log in to view or change your watchlist!")
+            raise WatchlistError(
+                    tag( "Please ", tag.a("log in", href=href('login')),
+                        " to view or change your watchlist!" ) )
 
         args = req.args
         wldict = args
@@ -55,17 +66,17 @@ class nav(Component):
                 realm = args['realm']
                 id    = args['id']
             except KeyError:
-                raise TracError("Realm and Id needed for watch/unwatch action!")
+                raise WatchlistError("Realm and Id needed for watch/unwatch action!")
             if realm not in ('wiki','ticket'):
-                raise TracError("Only wikis and tickets can be watched/unwatched!")
+                raise WatchlistError("Only wikis and tickets can be watched/unwatched!")
             is_watching = self.is_watching(realm, id, user)
             realm_perm  = realm.upper() + '_VIEW' in req.perm
         else:
             is_watching = None
 
-        href = Href(req.base_path)("watchlist")
-        add_ctxtnav(req, "Watched Wikis", href=href + '#wikis')
-        add_ctxtnav(req, "Watched Tickets", href=href + '#tickets')
+        wlhref = href("watchlist")
+        add_ctxtnav(req, "Watched Wikis",   href=wlhref + '#wikis')
+        add_ctxtnav(req, "Watched Tickets", href=wlhref + '#tickets')
 
         wldict['is_watching'] = is_watching
         wiki_perm   = 'WIKI_VIEW'   in req.perm
@@ -186,9 +197,9 @@ class nav(Component):
                     wldict['ticketlist'] = ticketlist
             return ("watchlist.html", wldict, "text/html")
         else:
-            raise TracError("Invalid watchlist action '%s'!" % action)
+            raise WatchlistError("Invalid watchlist action '%s'!" % action)
 
-        raise TracError("Watchlist: Unsupported request!")
+        raise WatchlistError("Watchlist: Unsupported request!")
 
     def has_watchlist(self, user):
         """Checks if user has a non-empty watchlist."""
