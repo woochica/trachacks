@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="layout.html"/>
+  <head>
+    <link type="text/css" href="${href.chrome('watchlist/style.css')}" rel="stylesheet" />
+    <title>Watchlist</title>
+    <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
+    <script type="text/javascript">
+       // <![CDATA[
+      jQuery(document).ready(function($) {
+        $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+       // ]]>
+    </script>
+    <py:def function="link(realm, id, text='')">
+        <a href="${href(realm,id)}">${text or ":".join([realm,id])}</a>
+    </py:def>
+  </head>
+
+  <body>
+    <div id="content" class="watchlist">
+
+        <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
+        <div py:if="action" py:choose="action" id="watchlist-${action}">
+            <py:when test="'watch'">
+                <py:choose test="">
+                    <py:when test="is_watching">
+                        <div class="system-message" id="warning">
+                            <p class="system-message-title">Already watched</p>
+                            <p>Selected ${link(realm,id)} is already watched.</p>
+                        </div>
+                    </py:when>
+                    <py:otherwise>
+                        <div class="system-message" id="notice">
+                            <p class="system-message-title">Added to Watchlist</p>
+                            <p>The selected ${link(realm,id)} was added to the watchlist.</p>
+                        </div>
+                    </py:otherwise>
+                </py:choose>
+            </py:when>
+            <py:when test="'unwatch'">
+                <py:choose test="is_watching">
+                    <py:when test="True">
+                        <div class="system-message" id="notice">
+                            <p class="system-message-title">Removed from Watchlist</p>
+                            <p>The selected ${link(realm,id)} was removed from watchlist.</p>
+                        </div>
+                    </py:when>
+                    <py:otherwise>
+                        <div class="system-message" id="warning">
+                            <p class="system-message-title">Not watched</p>
+                            <p>Selected ${link(realm,id)} couldn't be unwatched because it was not watched.</p>
+                        </div>
+                    </py:otherwise>
+                </py:choose>
+            </py:when>
+        </div>
+
+
+      <h2 id="wikis">Wikis</h2>
+      <py:choose test="">
+      <table class="wikilist" py:when="wikilist">
+          <thead>
+              <tr>
+                  <th py:for="head in ('Page','Last Changed At', 'By',
+                      'Latest Version', 'Unwatch')">$head</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr py:for="page in wikilist">
+                  <td class="name">${link('wiki',page.name,text=page.name)}</td>
+                  <td py:for="key in ('datetime','author','version')" class="$key">${page.get(key,'')}</td>
+                  <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',id=page.name)}">Unwatch</a></td>
+              </tr>
+          </tbody>
+          <tfoot>
+          </tfoot>
+      </table>
+      <span py:otherwise="">No wikis are currently watched.</span>
+      </py:choose>
+
+      <h2 id="tickets">Tickets</h2>
+      <py:choose test="">
+      <table class="ticketlist" py:when="ticketlist">
+          <thead>
+              <tr>
+                  <th py:for="head in ('Ticket','Last Changed At','Unwatch')">$head</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr py:for="ticket in ticketlist">
+                  <td class="id">${link('ticket', ticket.id, text='#' + ticket.id)}</td>
+                  <td py:for="key in ('datetime',)" class="$key">${ticket.get(key,'')}</td>
+                  <td class="unwatch"><a
+                          href="${href.watchlist(action='unwatch',realm='ticket',id=ticket.id)}">Unwatch</a></td>
+              </tr>
+          </tbody>
+          <tfoot>
+          </tfoot>
+      </table>
+      <span py:otherwise="">No tickets are currently watched.</span>
+      </py:choose>
+
+    </div>
+  </body>
+</html>

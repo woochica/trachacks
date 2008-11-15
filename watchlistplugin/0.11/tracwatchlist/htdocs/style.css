@@ -1,0 +1,13 @@
+table {
+    border-top: solid;
+    border-bottom: solid;
+}
+
+thead, th {
+    font-weight: bold;
+    border-bottom: thin solid;
+}
+
+td.version {
+    text-align: center;
+}
