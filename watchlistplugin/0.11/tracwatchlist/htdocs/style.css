@@ -17,7 +17,7 @@ th.comment, th.summary, th.changes {
     text-align: left;
 }
 
-td.comment, th.summary, th.changes {
+td.comment, th.summary {
     width: 100%;
 }
 

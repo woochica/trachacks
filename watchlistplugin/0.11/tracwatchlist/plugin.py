@@ -162,26 +162,24 @@ class nav(Component):
                 )
                 tickets = cursor.fetchall()
                 for id,type,time,changetime,summary,reporter in tickets:
-                    cursor.execute(
-                        "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
-                         % (id)
-                    )
-                    (commentnum,) = cursor.fetchone()
+                    self.commentnum = 0
+                    self.comment    = ''
                     cursor.execute(
                         "SELECT author,field,oldvalue,newvalue FROM ticket_change "
-                        "WHERE ticket='%s' and time='%s' ORDER BY field;"
+                        "WHERE ticket='%s' and time='%s' "
+                        "ORDER BY field=='comment' DESC;"
                          % (id, changetime )
                     )
 
                     def format_change(field,oldvalue,newvalue):
                         """Formats tickets changes."""
-                        fieldstr = tag.strong(field)
+                        fieldtag = tag.strong(field)
                         if field == 'cc':
                             oldvalues = set(oldvalue and oldvalue.split(', ') or [])
                             newvalues = set(newvalue and newvalue.split(', ') or [])
                             added   = newvalues.difference(oldvalues)
                             removed = oldvalues.difference(newvalues)
-                            str = fieldstr
+                            str = fieldtag
                             if added:
                                 str += tag(" ", tag.em(', '.join(added)), " added")
                             if removed:
@@ -190,14 +188,18 @@ class nav(Component):
                                 str += tag(" ", tag.em(', '.join(removed)), " removed")
                             return str
                         elif field == 'description':
-                            return fieldstr + tag(" modified (", tag.a("diff", 
+                            return fieldtag + tag(" modified (", tag.a("diff", 
                                href=href('ticket',id,action='diff',version=commentnum)), ")")
+                        elif field == 'comment':
+                            self.commentnum = oldvalue
+                            self.comment    = newvalue
+                            return tag("")
                         elif not oldvalue:
-                            return fieldstr + tag(" ", tag.em(newvalue), " added")
+                            return fieldtag + tag(" ", tag.em(newvalue), " added")
                         elif not newvalue:
-                            return fieldstr + tag(" ", tag.em(oldvalue), " deleted")
+                            return fieldtag + tag(" ", tag.em(oldvalue), " deleted")
                         else:
-                            return fieldstr + tag(" changed from ", tag.em(oldvalue),
+                            return fieldtag + tag(" changed from ", tag.em(oldvalue),
                                                   " to ", tag.em(newvalue))
 
                     changes = []
@@ -205,12 +207,17 @@ class nav(Component):
                     for author_,field,oldvalue,newvalue in cursor.fetchall():
                         author = author_
                         changes.extend( [format_change(field,oldvalue,newvalue), tag("; ") ])
-                    changes = changes and tag(changes[:-1]) or tag()
+                    # changes holds list of formatted changes interleaved with
+                    # tag('; '). The first change is always the comment which
+                    # returns an empty tag, so we skip the first two elements
+                    # [tag(''), tag('; ')] and remove the last tag('; '):
+                    changes = changes and tag(changes[2:-1]) or tag()
                     ticketlist.append({
                         'id' : str(id),
                         'type' : type,
                         'author' : author,
-                        'commentnum': str(commentnum),
+                        'commentnum': str(self.commentnum),
+                        'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
                         'datetime' : format_datetime( changetime ),
                         'timedelta' : pretty_timedelta( changetime ),
                         'timeline_link' : timeline_link( changetime ),
