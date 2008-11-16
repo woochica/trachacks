@@ -24,30 +24,6 @@ class WatchlistError(TracError):
         Exception.__init__(self, tag.div(message, class_='system-message') )
 
 
-def format_change(field,oldvalue,newvalue):
-    """Formats tickets changes."""
-    fieldstr = tag.strong(field)
-    if field == 'cc':
-        oldvalues = set(oldvalue and oldvalue.split(', ') or [])
-        newvalues = set(newvalue and newvalue.split(', ') or [])
-        added   = newvalues.difference(oldvalues)
-        removed = oldvalues.difference(newvalues)
-        str = fieldstr
-        if added:
-            str += tag(" ", tag.em(', '.join(added)), " added")
-        if removed:
-            if added:
-                str += tag(', ')
-            str += tag(" ", tag.em(', '.join(removed)), " removed")
-        return str
-    elif not oldvalue:
-        return fieldstr + tag(" ", tag.em(newvalue), " added")
-    elif not newvalue:
-        return fieldstr + tag(" ", tag.em(oldvalue), " deleted")
-    else:
-        return fieldstr + tag(" changed from ", tag.em(oldvalue),
-                              " to ", tag.em(newvalue))
-
 
 class nav(Component):
 
@@ -141,7 +117,6 @@ class nav(Component):
             action = "view"
 
         if action == "view":
-            href = Href(req.base_path)
             timeline = href('timeline', precision='seconds') + "&from="
             def timeline_link(time):
                 return timeline + quote_plus( format_datetime (time,'iso8601') )
@@ -188,21 +163,49 @@ class nav(Component):
                 tickets = cursor.fetchall()
                 for id,type,time,changetime,summary,reporter in tickets:
                     cursor.execute(
+                        "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
+                         % (id)
+                    )
+                    (commentnum,) = cursor.fetchone()
+                    cursor.execute(
                         "SELECT author,field,oldvalue,newvalue FROM ticket_change "
                         "WHERE ticket='%s' and time='%s' ORDER BY field;"
                          % (id, changetime )
                     )
+
+                    def format_change(field,oldvalue,newvalue):
+                        """Formats tickets changes."""
+                        fieldstr = tag.strong(field)
+                        if field == 'cc':
+                            oldvalues = set(oldvalue and oldvalue.split(', ') or [])
+                            newvalues = set(newvalue and newvalue.split(', ') or [])
+                            added   = newvalues.difference(oldvalues)
+                            removed = oldvalues.difference(newvalues)
+                            str = fieldstr
+                            if added:
+                                str += tag(" ", tag.em(', '.join(added)), " added")
+                            if removed:
+                                if added:
+                                    str += tag(', ')
+                                str += tag(" ", tag.em(', '.join(removed)), " removed")
+                            return str
+                        elif field == 'description':
+                            return fieldstr + tag(" modified (", tag.a("diff", 
+                               href=href('ticket',id,action='diff',version=commentnum)), ")")
+                        elif not oldvalue:
+                            return fieldstr + tag(" ", tag.em(newvalue), " added")
+                        elif not newvalue:
+                            return fieldstr + tag(" ", tag.em(oldvalue), " deleted")
+                        else:
+                            return fieldstr + tag(" changed from ", tag.em(oldvalue),
+                                                  " to ", tag.em(newvalue))
+
                     changes = []
                     author  = reporter
                     for author_,field,oldvalue,newvalue in cursor.fetchall():
                         author = author_
                         changes.extend( [format_change(field,oldvalue,newvalue), tag("; ") ])
                     changes = changes and tag(changes[:-1]) or tag()
-                    cursor.execute(
-                        "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
-                         % (id)
-                    )
-                    (commentnum,) = cursor.fetchone()
                     ticketlist.append({
                         'id' : str(id),
                         'type' : type,
