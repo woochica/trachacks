@@ -16,5 +16,10 @@ setup(
     license = 'BSD',
     keywords = 'trac watchlist wiki plugin',
     classifiers = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['tracwatchlist.plugin = tracwatchlist.plugin']}
+    entry_points = {'trac.plugins':
+        [
+            'tracwatchlist.plugin = tracwatchlist.plugin',
+            'tracwatchlist.core   = tracwatchlist.core',
+            'tracwatchlist.db     = tracwatchlist.db',
+        ]}
 )
