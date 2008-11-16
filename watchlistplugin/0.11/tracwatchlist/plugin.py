@@ -24,6 +24,31 @@ class WatchlistError(TracError):
         Exception.__init__(self, tag.div(message, class_='system-message') )
 
 
+def format_change(field,oldvalue,newvalue):
+    """Formats tickets changes."""
+    fieldstr = tag.strong(field)
+    if field == 'cc':
+        oldvalues = set(oldvalue and oldvalue.split(', ') or [])
+        newvalues = set(newvalue and newvalue.split(', ') or [])
+        added   = newvalues.difference(oldvalues)
+        removed = oldvalues.difference(newvalues)
+        str = fieldstr
+        if added:
+            str += tag(" ", tag.em(', '.join(added)), " added")
+        if removed:
+            if added:
+                str += tag(', ')
+            str += tag(" ", tag.em(', '.join(removed)), " removed")
+        return str
+    elif not oldvalue:
+        return fieldstr + tag(" ", tag.em(newvalue), " added")
+    elif not newvalue:
+        return fieldstr + tag(" ", tag.em(oldvalue), " deleted")
+    else:
+        return fieldstr + tag(" changed from ", tag.em(oldvalue),
+                              " to ", tag.em(newvalue))
+
+
 class nav(Component):
 
     implements( INavigationContributor, IRequestHandler, IRequestFilter,
@@ -153,30 +178,6 @@ class nav(Component):
                 wldict['wikilist'] = wikilist
 
 
-            def format_change(field,oldvalue,newvalue):
-                """Formats tickets changes."""
-                fieldstr = "<strong>%s</strong> " % field
-                if field == 'cc':
-                    oldvalues = set(oldvalue and oldvalue.split(', ') or [])
-                    newvalues = set(newvalue and newvalue.split(', ') or [])
-                    added   = newvalues.difference(oldvalues)
-                    removed = oldvalues.difference(newvalues)
-                    str = fieldstr
-                    if added:
-                        str += "<em>%s</em> added" % ', '.join(added)
-                    if removed:
-                        if added:
-                            str += ', '
-                        str += "<em>%s</em> removed" % ', '.join(removed)
-                    return str
-                elif not oldvalue:
-                    return fieldstr + "<em>%s</em> added" % newvalue
-                elif not newvalue:
-                    return fieldstr + "<em>%s</em> deleted" % oldvalue
-                else:
-                    return fieldstr + "changed from <em>%s</em> to <em>%s</em>"\
-                              % (oldvalue, newvalue)
-
             if ticket_perm:
                 ticketlist = []
                 cursor.execute(
@@ -195,8 +196,8 @@ class nav(Component):
                     author  = reporter
                     for author_,field,oldvalue,newvalue in cursor.fetchall():
                         author = author_
-                        changes.append( format_change(field,oldvalue,newvalue) )
-                    changes = Markup('; '.join(changes))
+                        changes.extend( [format_change(field,oldvalue,newvalue), tag("; ") ])
+                    changes = changes and tag(changes[:-1]) or tag()
                     cursor.execute(
                         "SELECT count(DISTINCT time) FROM ticket_change WHERE ticket='%s';"
                          % (id)
