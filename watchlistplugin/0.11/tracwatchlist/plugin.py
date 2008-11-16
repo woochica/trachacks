@@ -305,17 +305,27 @@ class WatchlinkPlugin(Component):
     # IEnvironmentSetupParticipant methods:
     def _create_db_table(self, db=None):
         """ Create DB table if it not exists. """
-        self.env.log.debug("Creating DB table (if not already exists).")
-
+        from trac.db import Table, Column, Index, DatabaseManager
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("""
-            CREATE TABLE watchlist (
-                wluser  text,
-                realm   text,
-                resid   text
-            );""")
+        db_connector, _ = DatabaseManager(self.env)._get_connector()
+
+        table = Table('watchlist')[
+                    Column('wluser'),
+                    Column('realm'),
+                    Column('resid') ]
+
+        for statement in db_connector.to_sql(table):
+            cursor.execute(statement)
+
+        # Set database schema version.
+        try:
+            cursor.execute("INSERT INTO system (name, value) VALUES"
+              " ('watchlist_version', '1')")
+        except:
+            pass
         return
+
 
     def _update_db_table(self, db=None):
         """ Update DB table. """
@@ -330,6 +340,11 @@ class WatchlinkPlugin(Component):
                 "ALTER TABLE watchlist RENAME COLUMN id   TO resid;")
         except Exception, e:
             raise TracError("Couldn't rename DB table columns: " + str(e))
+        try:
+            cursor.execute("INSERT INTO system (name, value) VALUES"
+              " ('watchlist_version', '1')")
+        except:
+            pass
         return
 
     def environment_created(self):
@@ -342,6 +357,10 @@ class WatchlinkPlugin(Component):
             cursor.execute("SELECT count(wluser),count(resid),count(realm) FROM watchlist;")
             count = cursor.fetchone()
             if count is None:
+                return True
+            cursor.execute("SELECT value FROM system WHERE name='watchlist_version';")
+            (version,) = cursor.fetchone()
+            if not version or int(version) < 1:
                 return True
         except:
             return True
