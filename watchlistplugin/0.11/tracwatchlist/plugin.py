@@ -310,7 +310,7 @@ class nav(Component):
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS watchlist (
+            CREATE TABLE watchlist (
                 user  text,
                 realm text,
                 id    text
