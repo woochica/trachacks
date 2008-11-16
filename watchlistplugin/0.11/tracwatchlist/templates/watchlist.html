@@ -12,8 +12,8 @@
         });
        // ]]>
     </script>
-    <py:def function="link(realm, id, text='')">
-        <a href="${href(realm,id)}">${text or ":".join([realm,id])}</a>
+    <py:def function="link(realm, resid, text='')">
+        <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>
     </py:def>
   </head>
 
@@ -27,13 +27,13 @@
                     <py:when test="is_watching">
                         <div class="system-message" id="warning">
                             <p class="system-message-title">Already watched</p>
-                            <p>Selected ${link(realm,id)} is already watched.</p>
+                            <p>Selected ${link(realm,resid)} is already watched.</p>
                         </div>
                     </py:when>
                     <py:otherwise>
                         <div class="system-message" id="notice">
                             <p class="system-message-title">Added to Watchlist</p>
-                            <p>The selected ${link(realm,id)} was added to the watchlist.</p>
+                            <p>The selected ${link(realm,resid)} was added to the watchlist.</p>
                         </div>
                     </py:otherwise>
                 </py:choose>
@@ -43,13 +43,13 @@
                     <py:when test="True">
                         <div class="system-message" id="notice">
                             <p class="system-message-title">Removed from Watchlist</p>
-                            <p>The selected ${link(realm,id)} was removed from watchlist.</p>
+                            <p>The selected ${link(realm,resid)} was removed from watchlist.</p>
                         </div>
                     </py:when>
                     <py:otherwise>
                         <div class="system-message" id="warning">
                             <p class="system-message-title">Not watched</p>
-                            <p>Selected ${link(realm,id)} couldn't be unwatched because it was not watched.</p>
+                            <p>Selected ${link(realm,resid)} couldn't be unwatched because it was not watched.</p>
                         </div>
                     </py:otherwise>
                 </py:choose>
@@ -85,7 +85,7 @@
                           href="${href('wiki',page.name,action='diff',version=page.version)}">Diff</a></td>
                   <td class="history"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,action='history')}">History</a></td>
-                  <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',id=page.name)}">Unwatch</a></td>
+                  <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">Unwatch</a></td>
                   <td class="comment">$page.comment</td>
               </tr>
           </tbody>
@@ -120,7 +120,7 @@
                       <a href="${href('ticket',ticket.id) + ((ticket.commentnum != '0') and ('#comment:'
                           + ticket.commentnum) or '')}">$ticket.commentnum</a></td>
                   <td class="unwatch"><a
-                          href="${href.watchlist(action='unwatch',realm='ticket',id=ticket.id)}">Unwatch</a></td>
+                          href="${href.watchlist(action='unwatch',realm='ticket',resid=ticket.id)}">Unwatch</a></td>
                   <td class="changes">$ticket.changes</td>
                   <td class="comment">$ticket.comment</td>
               </tr>
