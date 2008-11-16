@@ -49,7 +49,7 @@ class WatchlinkPlugin(Component):
 
     def process_request(self, req):
         href = Href(req.base_path)
-        user = req.authname
+        user = unicode( req.authname )
         if not user or user == 'anonymous':
             raise WatchlistError(
                     tag( "Please ", tag.a("log in", href=href('login')),
@@ -64,8 +64,8 @@ class WatchlinkPlugin(Component):
 
         if action in ('watch','unwatch'):
             try:
-                realm = args['realm']
-                id    = args['id']
+                realm = unicode( args['realm'] )
+                id    = unicode( args['id']    )
             except KeyError:
                 raise WatchlistError("Realm and Id needed for watch/unwatch action!")
             if realm not in ('wiki','ticket'):
