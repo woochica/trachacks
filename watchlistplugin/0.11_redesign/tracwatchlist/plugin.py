@@ -14,8 +14,7 @@ from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
 
 
-class WatchlinkPlugin(Component):
-
+class WatchlistPlugin(Component):
     implements( INavigationContributor, IRequestHandler, IRequestFilter, ITemplateProvider )
 
     ### methods for INavigationContributor
