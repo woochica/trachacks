@@ -1,9 +1,8 @@
 """
-nav:
-a plugin for Trac
-http://trac.edgewall.org
+ Watchlist Plugin for Trac
+ Copyright (c) November 2008  Martin Scharrer <martin@scharrer-online.de>
+ This is Free Software under the BSD license.
 """
-
 from trac.core import *
 
 from  trac.env         import  IEnvironmentSetupParticipant
@@ -25,7 +24,7 @@ class WatchlistError(TracError):
 
 
 
-class nav(Component):
+class WatchlinkPlugin(Component):
 
     implements( INavigationContributor, IRequestHandler, IRequestFilter,
                 IEnvironmentSetupParticipant, ITemplateProvider )
