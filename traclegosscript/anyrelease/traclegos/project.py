@@ -34,6 +34,12 @@ class TracProject(templates.Template):
 
         # install the requirements
         for requirement in getattr(self, 'requirements', ()):
+            
+            # if the path is relative to the template, give the full path
+            path = os.path.join(self.module_dir(), requirement)
+            if os.path.exists(path):
+                requirement = path
+
             subprocess.call(['poacheggs', '-r', requirement])
 
     def post(self, command, output_dir, vars):
