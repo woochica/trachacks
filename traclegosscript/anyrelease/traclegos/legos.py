@@ -49,9 +49,10 @@ class TracLegos(object):
         """
         * directory: directory for project creation
         * master: path to master trac instance
-        * site_ini: global site configuration used for all projects
-        * vars: variables for interpolation of trac.ini
         * inherit: inherited configuration to update
+        * site_templates: global site configuration used for all projects
+        * vars: values of variables for interpolation 
+        * options: descriptions and annotations on variables
         """
 
         self.directory = directory
@@ -85,7 +86,6 @@ class TracLegos(object):
     def project_templates(self, templates):
         # apply site configuration last (override)
         return ProjectTemplates(*(templates + self.site_templates))
-    # TODO: add the self.options to the templates
     
     def repository_fields(self, project):
         """
@@ -99,8 +99,8 @@ class TracLegos(object):
     def create_project(self, project, templates, vars=None,
                        database=None, repository=None):
         """
-        * project: directory name of project
-        * templates to be applied
+        * project: path name of project
+        * templates: templates to be applied on project creation
         * vars: variables for interpolation
         """
         
