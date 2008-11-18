@@ -93,7 +93,7 @@ display="";
 
 for (var i=0; i != excludedfields.length; i++)
 {
-excludedfield = excludedfields[i];
+var excludedfield = excludedfields[i];
 var element=document.getElementById("field-" + excludedfield);
 element.style.display=display;
 }
@@ -102,11 +102,18 @@ element.style.display=display;
 
 function excludeSubmit(policy, excludedfields)
 {
-var element=document.getElementById("field-" + excludedfield);
+
 if (condition(policy))
 {
+
+for (var i=0; i != excludedfields.length; i++)
+{
+var element=document.getElementById("field-" + excludedfields[i]);
 element.value = "";
 }
+
+}
+
 return true;
 }
 
