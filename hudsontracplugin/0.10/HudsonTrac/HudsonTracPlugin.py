@@ -21,16 +21,16 @@ class HudsonTracPlugin(Component):
     implements(INavigationContributor, ITimelineEventProvider, ITemplateProvider)
 
     disp_sub = BoolOption('hudson', 'display_subprojects', 'false',
-		          'Display status of subprojects in timeline too')
+                          'Display status of subprojects in timeline too')
     feed_url = Option('hudson', 'feed_url', 'http://localhost/hudson/rssAll',
-		      'The url of the hudson rss feed containing the build ' +
-		      'statuses. This must be an absolute url.')
+                      'The url of the hudson rss feed containing the build ' +
+                      'statuses. This must be an absolute url.')
     nav_url  = Option('hudson', 'main_page', '/hudson/',
-		      'The url of the hudson main page to which the trac nav ' +
-		      'entry should link; if empty, no entry is created in ' +
-		      'the nav bar. This may be a relative url.')
+                      'The url of the hudson main page to which the trac nav ' +
+                      'entry should link; if empty, no entry is created in ' +
+                      'the nav bar. This may be a relative url.')
     disp_tab = BoolOption('hudson', 'display_in_new_tab', 'false',
-		          'Open hudson page in new tab/window')
+                          'Open hudson page in new tab/window')
 
     # INavigationContributor methods
 
@@ -38,9 +38,9 @@ class HudsonTracPlugin(Component):
         return 'builds'
 
     def get_navigation_items(self, req):
-	if self.nav_url:
-	    yield 'mainnav', 'builds', Markup('<a href="%s"%s>Builds</a>' % \
-			(self.nav_url, self.disp_tab and ' target="hudson"' or ''))
+        if self.nav_url:
+            yield 'mainnav', 'builds', Markup('<a href="%s"%s>Builds</a>' % \
+                        (self.nav_url, self.disp_tab and ' target="hudson"' or ''))
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -58,10 +58,10 @@ class HudsonTracPlugin(Component):
             yield ('build', 'Hudson Builds')
 
     def get_timeline_events(self, req, start, stop, filters):
-	if isinstance(start, datetime): # Trac>=0.11
-        	from trac.util.datefmt import to_timestamp
-        	start = to_timestamp(start)
-        	stop = to_timestamp(stop)
+        if isinstance(start, datetime): # Trac>=0.11
+                from trac.util.datefmt import to_timestamp
+                start = to_timestamp(start)
+                stop = to_timestamp(stop)
 
         if 'build' in filters:
             add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
@@ -73,14 +73,14 @@ class HudsonTracPlugin(Component):
                 if not self.disp_sub and entry.title.find(u'»') >= 0:
                     continue
 
-		# check time range
-		completed = calendar.timegm(entry.updated_parsed)
-		if completed > stop:
-		    continue
-		if completed < start:
-		    break
+                # check time range
+                completed = calendar.timegm(entry.updated_parsed)
+                if completed > stop:
+                    continue
+                if completed < start:
+                    break
 
-		# create timeline entry
+                # create timeline entry
                 if entry.title.find('SUCCESS') >= 0:
                     message = 'Build finished successfully'
                     kind = 'build-successful'
