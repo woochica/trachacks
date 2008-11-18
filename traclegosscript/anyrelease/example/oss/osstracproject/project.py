@@ -11,11 +11,7 @@ class OSSTracProject(TracProject):
                  default='.'),
              var('domain', 'domain name where this project is to be served', 
                  default='localhost'),
-             var('footer', '',
-                 default='Visit <a href="http://www.openplans.org/">The Open Planning Project</a>'),
-             var('repository_url', 'URL of the SVN repository',
-                 default='https://svn.openplans.org/svn')
              ]
 
-    requirements = ['https://svn.openplans.org/svn/trac/install/plugins.txt']
+    requirements = ['plugins.txt']
 
