@@ -102,6 +102,8 @@ class TracLegos(object):
         * project: path name of project
         * templates: templates to be applied on project creation
         * vars: variables for interpolation
+        * database:  type of database to use
+        * repository: type of repository to use
         """
         
         ### set variables
@@ -112,23 +114,21 @@ class TracLegos(object):
         vars.update(_vars)
         vars['project'] = project        
 
-        # XXX prohibits use of dbstring in templates :(
-        if database is None: 
-            database = SQLite() 
-
         ### munge configuration
 
         # get templates
         if not isinstance(templates, ProjectTemplates):
+            if database:
+                templates.append(database.config())
             if repository:
                 templates.append(repository.config())
-            templates.append(database.config())
             templates = self.project_templates(templates)
 
-        # determine the vars
+        # determine the vars/options
         optdict = templates.vars(self.options)
         repo_fields = {}
-        vars2dict(optdict, *database.options)
+        if database:
+            vars2dict(optdict, *database.options)
         if repository:
             vars2dict(optdict, *repository.options)
             repo_fields = self.repository_fields(project).get(repository.name, {})
@@ -159,10 +159,11 @@ class TracLegos(object):
                 paste_template.check_vars(vars, command)
         
 
-        # create the database
-        database.setup(**vars)
+        ### create the database
+        if database:
+            database.setup(**vars)
         
-        # create the trac environment
+        ### create the trac environment
         options = templates.options_tuples(vars)
         options.append(('project', 'name', project)) # XXX needed?
         if self.inherit:
@@ -377,7 +378,7 @@ def main(args=None):
     # get some legos
     parsed = parse(parser)
     if parsed == None:
-        return
+        return # exit condition
     legos, projects, arguments = parsed
 
     # create the projects
