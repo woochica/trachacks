@@ -3,9 +3,9 @@ from paste.script import templates
 
 var = templates.var
 
-class ToppTracProject(TracProject):
+class OSSTracProject(TracProject):
     _template_dir = 'template'
-    summary = 'The Open Planning Project Trac Template'
+    summary = 'Open Source Software project trac template'
 
     vars = [ var('basedir', 'base directory for trac',
                  default='.'),
