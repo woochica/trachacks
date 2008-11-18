@@ -1,15 +1,15 @@
 from setuptools import find_packages, setup
 
-version='0.0'
+version='0.1'
 
-setup(name='TOPPTracProject',
+setup(name='OSSTracProject',
       version=version,
-      description="The Open Planning Project Trac Template",
+      description="Open Source Software Project Trac Template",
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
-      url='http://topp.openplans.org',
-      keywords='trac project',
-      license="",
+      url='http://trac-hacks.org/wiki/k0s',
+      keywords='trac project OSS',
+      license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
       install_requires = [ 'PasteScript', 'TracLegos' ],
@@ -19,7 +19,7 @@ setup(name='TOPPTracProject',
       zip_safe=False,
       entry_points = """
       [paste.paster_create_template]
-      topp_trac_project = topptracproject.project:ToppTracProject
+      oss_project = osstracproject.project:OSSTracProject
       """,
       )
 
