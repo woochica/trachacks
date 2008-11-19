@@ -196,11 +196,19 @@ class TagChangeset(Changeset):
             self.env.log.warn('Tag: not a dir: %s: %s' % \
                                 (info['kind'], info['path']))
             return False
+        path_mo = bcre.match(info['path'])
+        if info['change'] is TracChangeset.DELETE:
+            mo_dict = path_mo.groupdict()
+            if 'tag' not in mo_dict:
+                return False
+            self.name = mo_dict['tag']
+            self.env.log.info('Tag: deleted %s' % info['path'])
+            self.last = True
+            return True 
         if info['change'] is not TracChangeset.COPY:
             self.env.log.warn('Tag: not a copy: %s: %s' % \
                                 (info['change'], info['path']))
             return False
-        path_mo = bcre.match(info['path'])
         if not path_mo: # or not src_mo:
             self.env.log.warn('Tag: with path: %s <- %s' % \
                                 (info['path'], info['base_path']))
@@ -338,6 +346,10 @@ class Repository(object):
                 self._branches[br].add_changeset(chgset)
             elif isinstance(chgset, TagChangeset):
                 if self._tags.has_key(chgset.name):
+                    if chgset.last:
+                        self.log.info('Removing deleted tag %s' % chgset.name)
+                        del self._tags[chgset.name]
+                        continue
                     self.log.warn('Ubiquitous tag: %s', chgset.name)
                 self._tags[chgset.name] = chgset 
         map(lambda b: b.build(self), self._branches.values())

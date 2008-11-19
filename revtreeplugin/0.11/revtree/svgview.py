@@ -203,6 +203,7 @@ class SvgChangeset(SvgBaseChangeset):
         SvgBaseChangeset.__init__(self, parent, changeset.rev)
         self._shape = 'circle'
         self._enhance = False
+        self._tag_offset = 0
         self._fillcolor = self._parent.fillcolor()
         self._strokecolor = self._parent.strokecolor()
         self._textcolor = SvgColor('black')
@@ -290,6 +291,11 @@ class SvgChangeset(SvgBaseChangeset):
             self._link.attributes['id'] = 'rev%d' % self._revision
             self._link.attributes['class'] = ' '.join(self._classes)
                     
+    def tag_offset(self, height):
+        offset = self._tag_offset
+        self._tag_offset += height
+        return offset
+
     def strokewidth(self):
         return self._parent.strokewidth()
 
@@ -397,8 +403,9 @@ class SvgTag(object):
     def extent(self):
         return (self._w, self._h)
         
-    def build(self, h_offset):
+    def build(self):
         (sx, sy) = self._srcchgset.position()
+        h_offset = self._srcchgset.tag_offset(self._h)
         self._position = (sx + (self._srcchgset.extent()[0])/2,
                           sy - (3*self._h)/2 + h_offset)
         x = self._position[0]+(self._w-self._tw)/2
@@ -505,7 +512,6 @@ class SvgBranch(object):
             SvgTag(self, tag.name, tag.prettyname, tag.rev, svgcs))
                       
     def build(self, position):
-        tag_h_off = 0
         self._position = position
         self._slot = self._slotgen()
         self._svgheader.build()
@@ -515,10 +521,9 @@ class SvgBranch(object):
                 if not isinstance(wdgt, SvgTag):
                     wdgt.build()
                     h += wdgt.extent()[1]
-                else:
-                    wdgt.build(tag_h_off)
+                else: 
+                    wdgt.build()
                     (tw, th) = wdgt.extent()
-                    tag_h_off -= th
                     nw = tw/2 + wdgt.position()[0]-position[0]
                     if nw > w: w = nw 
         self._extent = (w, h)
