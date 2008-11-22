@@ -51,6 +51,6 @@ class RegexLinkSyntaxProvider(Component):
 
     def get_wiki_syntax(self):
         for regex, url in self.regex_links:
-            yield (regex, (lambda re:
+            yield (regex, (lambda re, u:
                 lambda formatter, ns, match:
-                    self._format_link(match.group(0), self._replace_url(url, re, match)))(regex))
+                    self._format_link(match.group(0), self._replace_url(u, re, match)))(regex, url))
