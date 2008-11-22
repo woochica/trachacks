@@ -15,6 +15,7 @@ Author:
 
 """
 import re
+from genshi.builder import tag
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider
 
@@ -23,27 +24,33 @@ class RegexLinkSyntaxProvider(Component):
     """
     implements(IWikiSyntaxProvider)
 
+    SECTION_NAME = 'regexlink'
+    REGEX_PREFIX = 'regex'
+    URL_PREFIX = 'url'
+
+    def __init__(self):
+        self.regex_links = []
+        for option in self.config.options(self.SECTION_NAME):
+            m = re.match(self.REGEX_PREFIX + r"(?P<id>[1-9]\d*)", option[0])
+            if m != None:
+                id = m.group('id')
+                regex = option[1]
+                url = self.config.get(self.SECTION_NAME, self.URL_PREFIX + id)
+                self.regex_links += [(regex, url)]
+
     #internal
-    def _cb(self, formatter, ns, match):
-        return '<a href="http://topdesk/query=' + match.group('topdesk1') + '%20' + match.group('topdesk2') + '">' + ns + '</a>'
+    def _format_link(self, label, url):
+        return tag.a(label, href=url)
+
+    def _replace_url(self, url, regex, match):
+      return re.sub(regex, url, match.group(0))
 
     # IWikiSyntaxProvider methods
     def get_link_resolvers(self):
         return []
 
     def get_wiki_syntax(self):
-# matches:
-# 0001 000
-# (1912 999)
-# -0810 123!
-# does not match:
-# a0810 123
-# 0810 123b
-# 9912 123
-# 0800 123
-# 0813 123
-# 0820 123
-# 10813 123
-# 0813 1234
-# 813 123
-        return [(r'\b(?P<topdesk1>[01]\d(?:0[1-9]|1[0-2])) (?P<topdesk2>\d{3})\b', self._cb)] # valid up to and including 2019
+        for regex, url in self.regex_links:
+            yield (regex, (lambda re:
+                lambda formatter, ns, match:
+                    self._format_link(match.group(0), self._replace_url(url, re, match)))(regex))
