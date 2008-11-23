@@ -38,10 +38,6 @@ class RegexLinkSyntaxProvider(Component):
                 url = self.config.get(self.SECTION_NAME, self.URL_PREFIX + id)
                 self.regex_links += [(regex, url)]
 
-    #internal
-    def _format_link(self, label, url):
-        return tag.a(label, href=url)
-
     def _replace_url(self, url, regex, match):
       return re.sub(regex, url, match.group(0))
 
@@ -53,4 +49,4 @@ class RegexLinkSyntaxProvider(Component):
         for regex, url in self.regex_links:
             yield (regex, (lambda re, u:
                 lambda formatter, ns, match:
-                    self._format_link(match.group(0), self._replace_url(u, re, match)))(regex, url))
+                    formatter._make_ext_link(self._replace_url(u, re, match), match.group(0)))(regex, url))
