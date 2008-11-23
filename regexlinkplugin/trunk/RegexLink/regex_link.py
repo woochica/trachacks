@@ -25,12 +25,11 @@ Author:
 
 """
 import re
-from genshi.builder import tag
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider
 
 class RegexLinkSyntaxProvider(Component):
-    """Expands a user defined regex to a link.
+    """ Expands a user defined regex to a link
     """
     implements(IWikiSyntaxProvider)
 
@@ -39,6 +38,8 @@ class RegexLinkSyntaxProvider(Component):
     URL_PREFIX = 'url'
 
     def __init__(self):
+        """ read configuration from trac.ini
+        """
         self.regex_links = []
         for option in self.config.options(self.SECTION_NAME):
             m = re.match(self.REGEX_PREFIX + r"(?P<id>[1-9]\d*)", option[0])
@@ -49,13 +50,18 @@ class RegexLinkSyntaxProvider(Component):
                 self.regex_links += [(regex, url)]
 
     def _replace_url(self, url, regex, match):
-      return re.sub(regex, url, match.group(0))
+        """ perform regex substitution on url
+        """
+        return re.sub(regex, url, match.group(0))
 
-    # IWikiSyntaxProvider methods
     def get_link_resolvers(self):
+        """ IWikiSyntaxProvider method
+        """
         return []
 
     def get_wiki_syntax(self):
+        """ IWikiSyntaxProvider method
+        """
         for regex, url in self.regex_links:
             yield (regex, (lambda re, u:
                 lambda formatter, ns, match:
