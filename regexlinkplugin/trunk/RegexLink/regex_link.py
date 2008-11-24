@@ -27,6 +27,7 @@ Author:
 import re
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider
+from model import RegexLinkInfo
 
 class RegexLinkSyntaxProvider(Component):
     """ Expands a user defined regex to a link
@@ -47,7 +48,7 @@ class RegexLinkSyntaxProvider(Component):
                 id = m.group('id')
                 regex = option[1]
                 url = self.config.get(self.SECTION_NAME, self.URL_PREFIX + id)
-                self.regex_links += [(regex, url)]
+                self.regex_links += [RegexLinkInfo(regex, url)]
 
     def _replace_url(self, url, regex, match):
         """ perform regex substitution on url
@@ -62,7 +63,7 @@ class RegexLinkSyntaxProvider(Component):
     def get_wiki_syntax(self):
         """ IWikiSyntaxProvider method
         """
-        for regex, url in self.regex_links:
-            yield (regex, (lambda re, u:
+        for rli in self.regex_links:
+            yield (rli.regex, (lambda re, u:
                 lambda formatter, ns, match:
-                    formatter._make_ext_link(self._replace_url(u, re, match), match.group(0)))(regex, url))
+                    formatter._make_ext_link(self._replace_url(u, re, match), match.group(0)))(rli.regex, rli.url))
