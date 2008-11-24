@@ -24,21 +24,20 @@ from RegexLink.model import *
 class RegexLinkInfoTestCase(unittest.TestCase):
 
     def test_constructor(self):
-        regex = r'\bexample\b'
-        url = 'http://example.org'
-        rli = RegexLinkInfo(regex, url)
-        self.assertEqual(rli.regex, regex)
-        self.assertEqual(rli.url, url)
+        rli = RegexLinkInfo(r'\bexample\b', r'http://example.org')
+        self.assertEqual(rli.regex, r'\bexample\b')
+        self.assertEqual(rli.url, r'http://example.org')
+        self.assertEqual(rli.wiki_syntax_regex, r'(?<!!)\bexample\b')
 
     def test_replace_url_no_groups(self):
         regex = r'\bexample\d{1,3}\b'
-        url = 'http://example.org'
+        url = r'http://example.org'
         doc = """testdoc
             example123
             end of testdoc
         """
         rli = RegexLinkInfo(regex, url)
-        match = re.search(rli.regex, doc)
+        match = re.search(rli.wiki_syntax_regex, doc)
         result = rli.replace_url(match)
         self.assertEquals(result, 'http://example.org')
 
@@ -50,9 +49,20 @@ class RegexLinkInfoTestCase(unittest.TestCase):
             end of testdoc
         """
         rli = RegexLinkInfo(regex, url)
-        match = re.search(rli.regex, doc)
+        match = re.search(rli.wiki_syntax_regex, doc)
         result = rli.replace_url(match)
         self.assertEquals(result, 'http://example.org/test/123')
+
+    def test_escaping(self):
+        regex = r'\bexample\d{1,3}\b'
+        url = r'http://example.org'
+        doc = """testdoc
+            !example123
+            end of testdoc
+        """
+        rli = RegexLinkInfo(regex, url)
+        match = re.search(rli.wiki_syntax_regex, doc)
+        self.assertEquals(match, None)
 
 if __name__ == '__main__':
     unittest.main()

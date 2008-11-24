@@ -28,8 +28,9 @@ class RegexLinkInfo:
     def __init__(self, regex, url):
         self.regex = regex
         self.url = url
+        self.wiki_syntax_regex = r'(?<!!)' + self.regex
 
     def replace_url(self, match):
         """ perform regex substitution on url using match data object
         """
-        return re.sub(self.regex, self.url, match.group(0))
+        return re.sub(self.wiki_syntax_regex, self.url, match.group(0))

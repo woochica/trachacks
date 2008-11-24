@@ -59,6 +59,6 @@ class RegexLinkSyntaxProvider(Component):
         """ IWikiSyntaxProvider method
         """
         for regex_link in self.regex_links:
-            yield (regex_link.regex, (lambda rli:
+            yield (regex_link.wiki_syntax_regex, (lambda rli:
                 lambda formatter, ns, match:
                     formatter._make_ext_link(rli.replace_url(match), match.group(0)))(regex_link))
