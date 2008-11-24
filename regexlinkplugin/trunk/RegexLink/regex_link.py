@@ -50,11 +50,6 @@ class RegexLinkSyntaxProvider(Component):
                 url = self.config.get(self.SECTION_NAME, self.URL_PREFIX + id)
                 self.regex_links += [RegexLinkInfo(regex, url)]
 
-    def _replace_url(self, url, regex, match):
-        """ perform regex substitution on url
-        """
-        return re.sub(regex, url, match.group(0))
-
     def get_link_resolvers(self):
         """ IWikiSyntaxProvider method
         """
@@ -63,7 +58,7 @@ class RegexLinkSyntaxProvider(Component):
     def get_wiki_syntax(self):
         """ IWikiSyntaxProvider method
         """
-        for rli in self.regex_links:
-            yield (rli.regex, (lambda re, u:
+        for regex_link in self.regex_links:
+            yield (regex_link.regex, (lambda rli:
                 lambda formatter, ns, match:
-                    formatter._make_ext_link(self._replace_url(u, re, match), match.group(0)))(rli.regex, rli.url))
+                    formatter._make_ext_link(rli.replace_url(match), match.group(0)))(regex_link))
