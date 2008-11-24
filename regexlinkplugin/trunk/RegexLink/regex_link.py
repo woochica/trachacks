@@ -27,6 +27,7 @@ Author:
 import re
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider
+from model import RegexLinkInfo
 
 class RegexLinkSyntaxProvider(Component):
     """ Expands a user defined regex to a link
