@@ -37,7 +37,7 @@ class RegexLinkInfoTestCase(unittest.TestCase):
             end of testdoc
         """
         rli = RegexLinkInfo(regex, url)
-        match = re.search(rli.wiki_syntax_regex, doc)
+        match = re.search(r'(unrelated group)|' + rli.wiki_syntax_regex, doc)
         result = rli.replace_url(match)
         self.assertEquals(result, 'http://example.org')
 
@@ -49,9 +49,21 @@ class RegexLinkInfoTestCase(unittest.TestCase):
             end of testdoc
         """
         rli = RegexLinkInfo(regex, url)
-        match = re.search(rli.wiki_syntax_regex, doc)
+        match = re.search(r'(unrelated group)|' + rli.wiki_syntax_regex, doc)
         result = rli.replace_url(match)
         self.assertEquals(result, 'http://example.org/test/123')
+
+    def test_replace_url_unnamed_groups(self):
+        regex = r'\bexample(\d{1,3}):([a-z]+)\b'
+        url = r'http://example.org/\2/\g<1>0/\g<0>'
+        doc = """testdoc
+            example123:test
+            end of testdoc
+        """
+        rli = RegexLinkInfo(regex, url)
+        match = re.search(r'(unrelated group)|' + rli.wiki_syntax_regex, doc)
+        result = rli.replace_url(match)
+        self.assertEquals(result, 'http://example.org/test/1230/example123:test')
 
     def test_escaping(self):
         regex = r'\bexample\d{1,3}\b'
@@ -61,7 +73,7 @@ class RegexLinkInfoTestCase(unittest.TestCase):
             end of testdoc
         """
         rli = RegexLinkInfo(regex, url)
-        match = re.search(rli.wiki_syntax_regex, doc)
+        match = re.search(r'(unrelated group)|' + rli.wiki_syntax_regex, doc)
         self.assertEquals(match, None)
 
 if __name__ == '__main__':
