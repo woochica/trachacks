@@ -21,6 +21,7 @@ class EstimatorMacroProvider(Component):
         html = getHtmlEstimate(self.env, id)
         if html:
             add_stylesheet(req, "Estimate/estimate.css")
+            add_stylesheet(req, "common/css/diff.css")
             html+= '<br /><a href="%s?id=%s">edit this estimate</a>' % (req.href.Estimate(), id)
         else:
             html = "Estimate Does Not Exist: %s" % (id,)

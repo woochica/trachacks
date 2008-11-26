@@ -1,4 +1,4 @@
-.message { 
+.infomessage { 
   color:green;
   border:2px solid green;
   font-weight:bold;
@@ -6,7 +6,15 @@
   margin:5px;
 }
 
-.numberCell{ 
+table.estimateBody tr td {
+   border-top:1px solid #CCC;
+}
+
+table.estimateBody tr.lineItemFooter th {
+   border-top:1px solid #CCC;
+}
+
+.numberCell, table.estimateBody tr td.numberCell { 
   text-align:right;
   border:1px solid blue;
   width:80px;
@@ -24,3 +32,4 @@ th{
 del, del table tr td, del table tr th{ 
 text-decoration: line-through;
 }
+

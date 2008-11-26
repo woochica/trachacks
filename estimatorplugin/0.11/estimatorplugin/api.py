@@ -6,7 +6,7 @@ from macro_provider import *
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 
-dbversion = 1
+dbversion = 2
 dbkey = 'EstimatorPluginDbVersion'
 
 
@@ -29,8 +29,8 @@ class EstimatorSetupParticipant(Component):
         performed, `False` otherwise.
         """
         ver = dbhelper.get_system_value(self.env, dbkey)
-        ans = (not ver) or (ver < dbversion)
-        self.log.debug('Estimator needs upgrade? %s [installed version:%s  pluginversion:%s '%(ans, ver, dbversion))
+        ans = (not ver) or (int(ver) < dbversion)
+        self.log.debug('Estimator needs upgrade? %s [installed version:%s  pluginversion:%s ] '%(ans, ver, dbversion))
         return ans
 
     def upgrade_environment(self, db):
@@ -52,7 +52,7 @@ class EstimatorSetupParticipant(Component):
                      variability DECIMAL,
                      communication DECIMAL,
                      tickets VARCHAR(512),
-                     comment VARCHAR(8000)
+                     comment text
                  )""",[]),
                 ("""CREATE TABLE estimate_line_item(
                      id integer PRIMARY KEY,
@@ -61,6 +61,11 @@ class EstimatorSetupParticipant(Component):
                      low DECIMAL,
                      high DECIMAL
                 )""",[]))
+
+        if ver < 2:
+            self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
+            success = success and dbhelper.execute_in_trans(self.env, (""" ALTER TABLE estimate ADD COLUMN diffcomment text ; """,[]))
+
         # SHOULD BE LAST IN THIS FUNCTION
         if success:
             dbhelper.set_system_value(self.env, dbkey, dbversion)

@@ -23,18 +23,29 @@ function enterMeansNewRow(event){
    return true;
 }
 
-function evenDeeperClone(node){
+function chromeCleanerPredicate ( node ){
+   if(node && node.tagName){
+      //its all text FF plugin adds chrome images
+      if (node.tagName.toLowerCase() == "img" && node.src.search('chrome://') == 0) return false;
+   }
+   return true;
+}
+
+function evenDeeperClone(node /* pred */){
    //firefox 2 has a bug where it wont clone textarea values sometimes
+   // Optional pred arg determines whether or not a node should be cloned
+   var pred = arguments[1] || chromeCleanerPredicate;
    var kid, cloned;
+   if (pred && !pred(node)) return null;
    var newNode = node.cloneNode(false);
    for(var i=0 ; kid=node.childNodes[i] ; i++){
       if(kid.tagName && kid.tagName.toLowerCase()=='textarea'){
-	 cloned = cn('textarea');
-	 cloned.value = kid.value;
+	 cloned = cn('div');
+	 cloned.innerHTML = kid.value.replace('\r\n','<br />', 'g').replace('\r','<br />', 'g').replace('\n','<br />', 'g');
       }else{
 	 cloned = evenDeeperClone(kid);
-      } 
-      newNode.appendChild(cloned);
+      }
+      if(cloned) newNode.appendChild(cloned);
    }
    return newNode;
 }
@@ -50,7 +61,7 @@ function lineItemRow (lineitem){
 
    var tr = cn('tr', {},
 	     cn('td', {},
-		cn('textarea', {id:uid("description"), name:uid("description"), cols:30, style:"height: 34px;"},
+		cn('textarea', {id:uid("description"), name:uid("description"), style:"height: 68px; width:100%;"},
                    valFn('description'))),
 	     cn('td', { valign:'top'},
 		cn('input', {id:uid('low'),name:uid('low'), type:'text', style:"width:80px;", 
@@ -164,7 +175,10 @@ function removeInputsAndIds(parent){
 	 removeInputsAndIds(node);
       }
    }
-   if (parent.id) parent.id = "";
+   if (parent.id){
+      parent.className = (parent.className || "") +" "+ parent.id;
+      parent.id = "";
+   }
    return parent;
 }
 function removeFirstRow( elem ){
@@ -182,11 +196,42 @@ function removeFirstRow( elem ){
    }while(nd = nd.nextSibling);
    return elem;
 }
+
+function prepareComment( preview ){
+   var s = "";
+   function walker ( node ){
+      for (var i=0, kid ; kid = node.childNodes[i]; i++ ){
+	 if(kid && kid.tagName){
+	    var tn = kid.tagName.toLowerCase();
+	    if (tn == 'table'){
+	       var print_sep = false;
+	       for(var row,j=0 ; row = kid.rows[j] ; j++){
+		  if (row.className == "lineItemheader") print_sep = true;
+		  if (row.className == "lineItemFooter") print_sep = false;
+		  for(var cell, k=0 ; cell = row.cells[k] ; k++){
+		     var val = (cell.textContent || cell.innerText);
+		     if(val) s += val + ((k==0 && print_sep) ? "\n|  " :
+					 (print_sep ? "  |  " : "\t"));
+		  }
+		  s += "\n";
+		  if(print_sep)s+="---------------------------\n";
+	       }
+	       s += "\n";
+	    }
+	 }
+      }
+   }
+   walker(preview);
+   return s;
+}
+
 function preparePreview(){
    var preview = $$('estimateoutput');
    while(preview.childNodes.length > 0) preview.removeChild(preview.firstChild);
    preview.appendChild(removeFirstRow(removeInputsAndIds(evenDeeperClone($$('estimateParams')))));
    preview.appendChild(removeInputsAndIds(evenDeeperClone($$('estimateBody'))));
+   //alert(prepareComment( preview ));
+   $$('diffcomment').value = prepareComment( preview );
    $$('comment').value = preview.innerHTML;
 }
 

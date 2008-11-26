@@ -36,13 +36,13 @@
 		      onkeydown="return enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
-	    <td class="fieldLabel" ><label for="rate">Rate:</label></td>
+	    <td class="fieldLabel" ><label for="rate">         Rate:</label></td>
 	    <td><input id="rate" name="rate" type="text" onkeyup="runCalculation()"
 		      value="${estimate.rate}"
 		      onkeydown="return enterMeansNothing(event)" /></td>
 	  </tr>
 	  <tr>
-	    <td class="fieldLabel" ><label for="variability">Variability:</label></td>
+	    <td class="fieldLabel" ><label for="variability">  Variability:</label></td>
 	    <td><input id="variability" name="variability" type="text" onkeyup="runCalculation()"
 		      value="${estimate.variability}"
 		      onkeydown="return enterMeansNothing(event)" /></td>
@@ -67,21 +67,21 @@
 
 
 	  <tr id="lineItemFooter">
-	    <th class="fieldLabel" >Total:</th>
+	    <th class="fieldLabel" >         Total:</th>
 	    <td id="lowTotal" class="numberCell" ></td>
 	    <td id="highTotal" class="numberCell"></td>
 	    <td id="aveTotal" class="numberCell"></td>
 	    <td></td>
 	  </tr>
 	  <tr>
-	    <th class="fieldLabel">Adjusted Hours:</th>
+	    <th class="fieldLabel" >Adjusted Hours:</th>
 	    <td id="lowAdjusted" class="numberCell" ></td>
 	    <td id="highAdjusted" class="numberCell" ></td>
 	    <td id="aveAdjusted" class="numberCell" ></td>
 	    <td></td>
 	  </tr>
 	  <tr>
-	    <th class="fieldLabel">Cost:</th>
+	    <th class="fieldLabel">          Cost:</th>
 	    <td id="lowCost" class="numberCell" ></td>
 	    <td id="highCost" class="numberCell" ></td>
 	    <td id="aveCost" class="numberCell" ></td>
@@ -98,6 +98,7 @@
 	    <div id="estimateoutput" >
 
 	    </div>
+	    <textarea id="diffcomment" name="diffcomment" style="display:none;"></textarea>
 	    <textarea id="comment" name="comment" style="display:none;"></textarea>
 	</div>
 

@@ -1,12 +1,12 @@
 import dbhelper
 
 estimateUpdate = """
-UPDATE estimate SET rate=%s, variability=%s, communication=%s, tickets=%s, comment=%s
+UPDATE estimate SET rate=%s, variability=%s, communication=%s, tickets=%s, comment=%s, diffcomment=%s
 WHERE id=%s
 """
 estimateInsert = """
-INSERT INTO estimate (rate, variability, communication, tickets, comment, id)
-VALUES(%s,%s,%s,%s,%s, %s)
+INSERT INTO estimate (rate, variability, communication, tickets, comment, diffcomment, id)
+VALUES(%s,%s,%s,%s,%s,%s, %s)
 """
 lineItemInsert = """
 INSERT INTO estimate_line_item (estimate_id, description, low, high, id)
@@ -40,6 +40,9 @@ WHERE estimate_id=%%s and id not in (%s)
     
 def getHtmlEstimate(env, id):
     return dbhelper.get_scalar(env, "SELECT COMMENT FROM estimate WHERE ID=%s", 0, id)
+
+def getTextEstimate(env, id):
+    return dbhelper.get_scalar(env, "SELECT DIFFCOMMENT FROM estimate WHERE ID=%s", 0, id)
 
 estimateChangeTicketComment = """
 INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue)
