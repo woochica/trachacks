@@ -33,6 +33,10 @@ class DownloadsTags(Component):
     # IDownloadChangeListener methods.
 
     def download_created(self, req, download):
+        # Check proper permissions to modify tags.
+        if not req.perm.has_permission('TAGS_MODIFY'):
+           return
+
         # Create temporary resource.
         resource = Resource()
         resource.realm = 'downloads'
@@ -47,6 +51,10 @@ class DownloadsTags(Component):
         tag_system.add_tags(req, resource, new_tags)
 
     def download_changed(self, req, download, old_download):
+        # Check proper permissions to modify tags.
+        if not req.perm.has_permission('TAGS_MODIFY'):
+           return
+
         # Update old download with new values.
         old_download.update(download)
 
@@ -62,6 +70,10 @@ class DownloadsTags(Component):
         tag_system.add_tags(req, resource, new_tags)
 
     def download_deleted(self, req, download):
+        # Check proper permissions to modify tags.
+        if not req.perm.has_permission('TAGS_MODIFY'):
+           return
+
         # Create temporary resource.
         resource = Resource('downloads', download['id'])
 
