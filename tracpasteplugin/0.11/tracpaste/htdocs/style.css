@@ -8,9 +8,14 @@ p.error {
     font-weight: bold;
 }
 
-p.information {
+div.information {
     padding: 0 0 15px 30px!important;
     color: #555;
+}
+
+div.information p.metainfo {
+    font-size: smaller;
+    line-height: 100%;
 }
 
 dt {

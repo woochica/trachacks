@@ -169,6 +169,7 @@ class TracpastePlugin(Component):
             data = {
                 'mode':             'show',
                 'paste':            paste,
+                'highlighter':      self._get_highlighter(paste.mimetype),
             }
 
             if self.enable_other_formats:
@@ -201,6 +202,16 @@ class TracpastePlugin(Component):
                 result.append((mimetypes[0], name))
         result.sort(lambda a, b: cmp(a[1].lower(), b[1].lower()))
         return result
+
+    def _get_highlighter(self, mimetype):
+        if not mimetype:
+            return 'unknown'
+
+        mimetypes = self._get_mimetypes()
+        for m, name in mimetypes:
+            if m == mimetype:
+                return name
+        return 'unknown'
 
     def _download_allowed(self, mimetype):
         from fnmatch import fnmatchcase

@@ -44,9 +44,15 @@
         </py:when>
         <py:when test="'show'">
           <h1>${paste.title}</h1>
-          <p class="information">
-            pasted by ${paste.author}, ${dateinfo(paste.time)} ago
-          </p>
+          <div class="information">
+            <p>
+              pasted by <em>${paste.author}</em>, ${dateinfo(paste.time)} ago
+            </p>
+            <p class="metainfo">
+              Content-Type: <em>${paste.mimetype}</em><br />
+              Highlighter: <em>${highlighter}</em>
+            </p>
+          </div>
           <div id="paste" class="searchable">
             ${paste.render(req)}
           </div>
