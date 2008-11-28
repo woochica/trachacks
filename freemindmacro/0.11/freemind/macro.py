@@ -202,7 +202,12 @@ class FreemindMacro(WikiMacroBase):
                     document.visorFreeMind%(count)02d.focus();
                 });
             });
-        ''' % {'count': embed_count}
+            
+            // url: %(url)s
+            // base: %(base)s
+            
+            
+        ''' % {'count': embed_count, 'url': url, 'base': base}
         
         flash_dict = {
             'openUrl': '_blank',
