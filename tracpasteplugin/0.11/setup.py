@@ -9,7 +9,9 @@ setup(
     description='Add a pastebin to the trac',
     author='Armin Ronacher',
     author_email='armin.ronacher@active-4.com',
-    url='http://trac.pocoo.org/',
+    maintainer='Michael Renzmann',
+    maintainer_email='mrenzmann@otaku42.de',
+    url='http://trac-hacks.org/wiki/TracPastePlugin',
     license='BSD',
     packages=['tracpaste'],
     classifiers=[
