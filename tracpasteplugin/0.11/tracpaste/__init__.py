@@ -7,7 +7,7 @@ from trac.core import *
 from trac.web import HTTPNotFound
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
-from trac.config import IntOption, Option
+from trac.config import BoolOption, IntOption, Option
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link
 from trac.web.main import IRequestHandler
@@ -38,6 +38,10 @@ class TracpastePlugin(Component):
     max_recent = IntOption('pastebin', 'max_recent', '10',
         """The maximum number of recent pastes to display on the
            index page. Default is 10.""")
+
+    enable_other_formats = BoolOption('pastebin', 'enable_other_formats', 'true',
+        """Whether pastes should be made available via the \"Download in
+        other formats\" functionality. Enabled by default.""")
 
     # IEnvironmentSetupParticipant
     def environment_created(self):
@@ -136,7 +140,7 @@ class TracpastePlugin(Component):
                                    req.args['paste_id'])
 
             # text format
-            if req.args.get('format') in ('txt', 'raw'):
+            if req.args.get('format') in ('txt', 'raw') and self.enable_other_formats:
                 if req.args['format'] == 'txt':
                     mimetype = 'text/plain'
                 else:
@@ -154,13 +158,14 @@ class TracpastePlugin(Component):
                 'paste':            paste,
             }
 
-            # add link for text format
-            raw_href = req.href.pastebin(paste.id, format='raw')
-            add_link(req, 'alternate', raw_href, 'Original Format', paste.mimetype)
+            if self.enable_other_formats:
+                # add link for text format
+                raw_href = req.href.pastebin(paste.id, format='raw')
+                add_link(req, 'alternate', raw_href, 'Original Format', paste.mimetype)
 
-            if paste.mimetype != 'text/plain':
-                plain_href = req.href.pastebin(paste.id, format='txt')
-                add_link(req, 'alternate', plain_href, 'Plain Text', 'text/plain')
+                if paste.mimetype != 'text/plain':
+                    plain_href = req.href.pastebin(paste.id, format='txt')
+                    add_link(req, 'alternate', plain_href, 'Plain Text', 'text/plain')
 
         return 'pastebin.html', data, None
 
