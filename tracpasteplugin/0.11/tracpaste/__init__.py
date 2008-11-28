@@ -7,7 +7,7 @@ from trac.core import *
 from trac.web import HTTPNotFound
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
-from trac.config import BoolOption, IntOption, Option
+from trac.config import BoolOption, IntOption, ListOption, Option
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link
 from trac.web.main import IRequestHandler
@@ -42,6 +42,13 @@ class TracpastePlugin(Component):
     enable_other_formats = BoolOption('pastebin', 'enable_other_formats', 'true',
         """Whether pastes should be made available via the \"Download in
         other formats\" functionality. Enabled by default.""")
+
+    filter_other_formats = ListOption('pastebin', 'filter_other_formats', '',
+        """List of MIME types for which the \"Download in other formats\"
+        functionality is disabled. Leave this option empty to allow
+        download for all MIME types, otherwise set it to a comma-separated
+        list of MIME types to filter (these are glob patterns, i.e. \"*\"
+        can be used as a wild card).""")
 
     # IEnvironmentSetupParticipant
     def environment_created(self):
@@ -145,13 +152,18 @@ class TracpastePlugin(Component):
                     mimetype = 'text/plain'
                 else:
                     mimetype = paste.mimetype
-                req.send_response(200)
-                req.send_header('Content-Type', mimetype)
-                req.send_header('Content-Length', len(paste.data))
-                req.send_header('Last-Modified', http_date(paste.time))
-                req.end_headers()
-                req.write(paste.data)
-                return
+
+                if self._download_allowed(mimetype):
+                    self.env.log.info("*** serving download")
+                    req.send_response(200)
+                    req.send_header('Content-Type', mimetype)
+                    req.send_header('Content-Length', len(paste.data))
+                    req.send_header('Last-Modified', http_date(paste.time))
+                    req.end_headers()
+                    req.write(paste.data)
+                    return
+                else:
+                    self.env.log.info("*** download denied")
 
             data = {
                 'mode':             'show',
@@ -159,11 +171,13 @@ class TracpastePlugin(Component):
             }
 
             if self.enable_other_formats:
-                # add link for text format
-                raw_href = req.href.pastebin(paste.id, format='raw')
-                add_link(req, 'alternate', raw_href, 'Original Format', paste.mimetype)
+                if self._download_allowed(paste.mimetype):
+                    # add link for original format
+                    raw_href = req.href.pastebin(paste.id, format='raw')
+                    add_link(req, 'alternate', raw_href, 'Original Format', paste.mimetype)
 
-                if paste.mimetype != 'text/plain':
+                if paste.mimetype != 'text/plain' and self._download_allowed('text/plain'):
+                    # add link for text format
                     plain_href = req.href.pastebin(paste.id, format='txt')
                     add_link(req, 'alternate', plain_href, 'Plain Text', 'text/plain')
 
@@ -186,6 +200,21 @@ class TracpastePlugin(Component):
                 result.append((mimetypes[0], name))
         result.sort(lambda a, b: cmp(a[1].lower(), b[1].lower()))
         return result
+
+    def _download_allowed(self, mimetype):
+        from fnmatch import fnmatchcase
+
+        if not self.enable_other_formats:
+            return False
+
+        if not self.filter_other_formats:
+            return True
+
+        patterns = self.config['pastebin'].getlist('filter_other_formats')
+        if filter(None, [fnmatchcase(mimetype, p) for p in patterns]):
+            return False
+        else:
+            return True
 
     def _upgrade_db(self, db):
         try:
