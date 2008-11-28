@@ -3,6 +3,7 @@
     Highlight stuff using pygments
 """
 import re
+from datetime import datetime
 from trac.core import *
 from trac.web import HTTPNotFound
 from trac.env import IEnvironmentSetupParticipant
@@ -15,7 +16,7 @@ from trac.util.datefmt import http_date
 from trac.util.html import html, Markup
 from trac.mimeview.pygments import get_all_lexers
 from trac.db import Table, Column, Index
-from tracpaste.model import Paste, get_recent_pastes
+from tracpaste.model import Paste, get_pastes
 
 
 class TracpastePlugin(Component):
@@ -137,7 +138,7 @@ class TracpastePlugin(Component):
                 'author':           author,
                 'error':            error,
                 'data':             data,
-                'recent':           get_recent_pastes(self.env, self.max_recent)
+                'recent':           get_pastes(env=self.env, number=self.max_recent)
             }
 
         # show post

@@ -9,11 +9,43 @@ from trac.util.datefmt import utc, to_timestamp
 from datetime import datetime
 
 
-def get_recent_pastes(env, n=10, db=None):
-    """Return the last `n` pastes as dicts without data."""
+def get_pastes(env, number=None, from_dt=None, to_dt=None, db=None):
+    """Returns a list of pastes as dicts without data.
+
+    One or more filters need to be set:
+     * number - maximum number of items that may be returned
+     * from_dt - pasted on or after the given time (datetime object)
+     * to_dt - pasted before or on the given time (datetime object)
+
+    Returns dictionary of the form:
+        (id, title, author, time)
+    where time is in UTC.
+
+    To get the paste data, use id to instantiate a Paste object."""
+
     cursor = (db or env.get_db_cnx()).cursor()
-    cursor.execute('select id, title, author, time from pastes order by '
-                   'id desc limit 0, %s', (n,))
+
+    sql = "SELECT id, title, author, time FROM pastes"
+    order_clause = " ORDER BY id DESC"
+    if number:
+        limit_clause = " LIMIT 0, %s" % number
+    else:
+        limit_clause = ""
+
+    where_clause = ""
+    where_values = None
+    args = [from_dt and ("time>%s", to_timestamp(from_dt)) or None,
+            to_dt and ("time<%s", to_timestamp(to_dt)) or None]
+    args = [arg for arg in args if arg]  # Get rid of the None values
+    if args:
+        where_clause = " WHERE " + " AND ".join([arg[0] for arg in args])
+        where_values = tuple([arg[1] for arg in args])
+
+    sql += where_clause + order_clause + limit_clause
+
+    env.log.debug("get_pastes() SQL: %r (%r)" % (sql, where_values))
+    cursor.execute(sql, where_values)
+
     result = []
     for row in cursor:
         result.append({
