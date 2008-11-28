@@ -6,7 +6,7 @@ Added post "${name}" by ${author} at ${time}
 Changed post "${name}" by ${author} at ${time}. 
 Revision: ${version} 
 #end
-Page URL: ${project.url}${link}
+Page URL: ${link}
 
 Content:
 
@@ -25,13 +25,13 @@ Comment: ${comment}
 Deleted post "${name}" by ${author} at ${time}
 #end
 #if action == 'post_deleted_version'
-Page URL: ${project.url}${link}
+Page URL: ${link}
 Deleted version "${version}" of post "${name}" by ${author} at ${time}
 #end
 
 #if action == 'post_comment_added'
 Comment added to post "${name}" by ${author} at ${time}
-Page URL: ${project.url}${link}
+Page URL: ${link}
 
 Content:
 
