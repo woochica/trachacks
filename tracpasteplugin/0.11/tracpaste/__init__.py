@@ -114,6 +114,7 @@ class TracpastePlugin(Component):
                     if not title.startswith('Re:'):
                         title = 'Re: ' + title
                     data = paste.data
+                    mimetype = paste.mimetype
 
             if req.method == 'POST':
                 if not data.strip():
