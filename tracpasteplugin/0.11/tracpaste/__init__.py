@@ -7,7 +7,7 @@ from trac.core import *
 from trac.web import HTTPNotFound
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
-from trac.config import Option
+from trac.config import IntOption, Option
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link
 from trac.web.main import IRequestHandler
@@ -34,6 +34,10 @@ class TracpastePlugin(Component):
             Column('time', type='int')
         ]
     ]
+
+    max_recent = IntOption('pastebin', 'max_recent', '10',
+        """The maximum number of recent pastes to display on the
+           index page. Default is 10.""")
 
     # IEnvironmentSetupParticipant
     def environment_created(self):
@@ -121,7 +125,7 @@ class TracpastePlugin(Component):
                 'author':           author,
                 'error':            error,
                 'data':             data,
-                'recent':           get_recent_pastes(self.env, 10)
+                'recent':           get_recent_pastes(self.env, self.max_recent)
             }
 
         # show post
