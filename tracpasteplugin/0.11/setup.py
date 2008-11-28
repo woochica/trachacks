@@ -1,6 +1,6 @@
 from setuptools import setup
 
-PACKAGE = 'tracpaste'
+PACKAGE = 'TracPaste'
 VERSION = '0.2'
 
 setup(
