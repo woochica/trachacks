@@ -19,7 +19,7 @@ setup(
         'License :: OSI Approved :: BSD License',
     ],
     package_data={
-        'tracpaste' : ['templates/*.html', 'htdocs/*.css']
+        'tracpaste' : ['templates/*.html', 'htdocs/css/*.css', 'htdocs/*.png']
     },
     entry_points = {
         'trac.plugins': ['tracpaste = tracpaste']

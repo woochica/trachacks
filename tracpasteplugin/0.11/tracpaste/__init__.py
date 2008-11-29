@@ -4,6 +4,7 @@
 """
 import re
 from datetime import datetime
+from genshi.builder import tag
 from trac.core import *
 from trac.web import HTTPNotFound
 from trac.env import IEnvironmentSetupParticipant
@@ -12,6 +13,7 @@ from trac.config import BoolOption, IntOption, ListOption, Option
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link
 from trac.web.main import IRequestHandler
+from trac.timeline.api import ITimelineEventProvider
 from trac.util.datefmt import http_date
 from trac.util.html import html, Markup
 from trac.mimeview.pygments import get_all_lexers
@@ -21,7 +23,8 @@ from tracpaste.model import Paste, get_pastes
 
 class TracpastePlugin(Component):
     implements(INavigationContributor, ITemplateProvider, IRequestHandler, \
-               IPermissionRequestor, IEnvironmentSetupParticipant)
+               IPermissionRequestor, IEnvironmentSetupParticipant, \
+               ITimelineEventProvider)
 
     _url_re = re.compile(r'^/pastebin(?:/(\d+))?/?$')
 
@@ -96,7 +99,7 @@ class TracpastePlugin(Component):
 
     def process_request(self, req):
         req.perm.assert_permission('PASTEBIN_USE')
-        add_stylesheet(req, 'pastebin/style.css')
+        add_stylesheet(req, 'pastebin/css/pastebin.css')
         add_stylesheet(req, 'common/css/code.css')
 
         # new post
@@ -194,6 +197,28 @@ class TracpastePlugin(Component):
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('pastebin', resource_filename(__name__, 'htdocs'))]
+
+    # ITimelineEventProvider methods
+    def get_timeline_filters(self, req):
+        if req.perm.has_permission('PASTEBIN_USE'):
+            yield('pastebin', 'Pastebin changes')
+
+    def get_timeline_events(self, req, start, stop, filters):
+        if 'pastebin' in filters:
+            if not req.perm.has_permission('PASTEBIN_USE'):
+                return
+            add_stylesheet(req, 'pastebin/css/timeline.css')
+            pastes = get_pastes(env=self.env, from_dt=start, to_dt=stop)
+            for p in pastes:
+                yield('pastebin', p["time"], p["author"], (p["id"], p["title"]))
+        return
+
+    def render_timeline_event(self, context, field, event):
+        p_id, p_title = event[3]
+        if field == 'url':
+            return context.href.pastebin(p_id)
+        elif field == 'title':
+            return tag('Pastebin: ', tag.em(p_title), ' pasted')
 
     # private methods
     def _get_mimetypes(self):
