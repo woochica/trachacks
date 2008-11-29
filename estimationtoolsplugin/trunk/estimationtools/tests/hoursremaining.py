@@ -57,3 +57,10 @@ class HoursRemainingTestCase(unittest.TestCase):
         self._insert_ticket('30', status='closed')
         result = hoursRemaining.render_macro(self.req, "", "status!=closed, milestone=milestone1")
         self.assertEqual(result, '60')
+
+    def test_to_many_tickets(self):
+        hoursRemaining = HoursRemaining(self.env)
+        for _ in range(200):
+            self._insert_ticket('1')
+        result = hoursRemaining.render_macro(self.req, "", "milestone=milestone1")
+        self.assertEqual(result, '200')

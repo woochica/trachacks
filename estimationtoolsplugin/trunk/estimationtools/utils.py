@@ -69,6 +69,8 @@ def parse_options(db, content, options):
     return options, query_args
 
 def execute_query(env, req, query_args):
+    # set maximum number of returned tickets to 0 to get all tickets at once
+    query_args['max'] = 0
     query_string = '&'.join(['%s=%s' % item for item in query_args.iteritems()])
     query = Query.from_string(env, query_string)
 
