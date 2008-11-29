@@ -147,9 +147,6 @@ class TracpastePlugin(Component):
         # show post
         else:
             paste = Paste(self.env, req.args['paste_id'])
-            if not paste:
-                raise HTTPNotFound('Paste %d does not exist' %
-                                   req.args['paste_id'])
 
             # text format
             if req.args.get('format') in ('txt', 'raw') and self.enable_other_formats:

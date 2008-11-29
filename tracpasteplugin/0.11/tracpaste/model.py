@@ -4,6 +4,7 @@
     ~~~~~~~~~~~~~~~
 """
 from trac.core import *
+from trac.resource import ResourceNotFound
 from trac.mimeview.api import Mimeview, Context
 from trac.util.datefmt import utc, to_timestamp
 from datetime import datetime
@@ -64,17 +65,20 @@ class Paste(object):
     A class representing a paste.
     """
 
+    id_is_valid = staticmethod(lambda num: 0 < int(num) <= (1L << 31))
+
     def __init__(self, env, id=None, title=u'', author=u'',
                  mimetype='text/plain', data=u'', time=None):
         self.env = env
-        self.id = id
+        self.id = None
         self.title = title
         self.author = author
         self.mimetype = mimetype
         self.data = data
         self.time = time
 
-        if id is not None:
+        if id is not None and self.id_is_valid(id):
+            row = None
             db = env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute('select title, author, mimetype, data, time '
@@ -84,7 +88,8 @@ class Paste(object):
                 self.title, self.author, self.mimetype, self.data, time = row
                 self.time = datetime.fromtimestamp(time, utc)
             else:
-                self.id = None
+                raise ResourceNotFound('Paste %s does not exist.' % id,
+                                       'Invalid Paste Number')
 
     def __repr__(self):
         return '<%s %r: %s>' % (
