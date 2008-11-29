@@ -9,11 +9,12 @@ from trac.util.datefmt import utc, to_timestamp
 from datetime import datetime
 
 
-def get_pastes(env, number=None, from_dt=None, to_dt=None, db=None):
+def get_pastes(env, number=None, offset=None, from_dt=None, to_dt=None, db=None):
     """Returns a list of pastes as dicts without data.
 
     One or more filters need to be set:
      * number - maximum number of items that may be returned
+     * offset - number of items to skip in returned results
      * from_dt - pasted on or after the given time (datetime object)
      * to_dt - pasted before or on the given time (datetime object)
 
@@ -27,10 +28,11 @@ def get_pastes(env, number=None, from_dt=None, to_dt=None, db=None):
 
     sql = "SELECT id, title, author, time FROM pastes"
     order_clause = " ORDER BY id DESC"
+    limit_clause = ""
     if number:
-        limit_clause = " LIMIT 0, %s" % number
-    else:
-        limit_clause = ""
+        limit_clause += " LIMIT %s" % number
+    if offset:
+        limit_clause += " OFFSET %s" % offset
 
     where_clause = ""
     where_values = None
