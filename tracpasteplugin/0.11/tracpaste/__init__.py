@@ -9,6 +9,7 @@ from trac.core import *
 from trac.web import HTTPNotFound
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
+from trac.resource import IResourceManager
 from trac.config import BoolOption, IntOption, ListOption, Option
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link
@@ -216,6 +217,22 @@ class TracpastePlugin(Component):
             return context.href.pastebin(p_id)
         elif field == 'title':
             return tag('Pastebin: ', tag.em(p_title), ' pasted')
+
+    # IResourceManager
+    def get_resource_realm(self):
+        yield 'pastebin'
+
+    def get_resource_url(self, resource, href, **kwargs):
+        return href.pastebin(resource.id)
+
+    def get_resource_description(self, resource, format=None, context=None,
+                                 **kwargs):
+        p = Paste(self.env, resource.id)
+        if context:
+            return tag.a('Pastebin: ' + p.title,
+                         href=context.href.pastebin(resource.id))
+        else:
+            return 'Pastebin: ' + p.title
 
     # private methods
     def _get_mimetypes(self):
