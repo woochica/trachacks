@@ -14,6 +14,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, \
 from trac.web.main import IRequestHandler
 from trac.timeline.api import ITimelineEventProvider
 from trac.util.datefmt import http_date
+from trac.util.translation import _
 from trac.mimeview.pygments import get_all_lexers
 from trac.db import Table, Column, Index
 from tracpaste.model import Paste, get_pastes
@@ -75,7 +76,7 @@ class TracpastePlugin(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('PASTEBIN_USE'):
-            yield 'mainnav', 'pastebin', tag.a('Pastebin', href=req.href.pastebin())
+            yield 'mainnav', 'pastebin', tag.a(_('Pastebin'), href=req.href.pastebin())
 
     # IPermissionHandler methods
     def get_permission_actions(self):
@@ -175,12 +176,12 @@ class TracpastePlugin(Component):
                 if self._download_allowed(paste.mimetype):
                     # add link for original format
                     raw_href = req.href.pastebin(paste.id, format='raw')
-                    add_link(req, 'alternate', raw_href, 'Original Format', paste.mimetype)
+                    add_link(req, 'alternate', raw_href, _('Original Format'), paste.mimetype)
 
                 if paste.mimetype != 'text/plain' and self._download_allowed('text/plain'):
                     # add link for text format
                     plain_href = req.href.pastebin(paste.id, format='txt')
-                    add_link(req, 'alternate', plain_href, 'Plain Text', 'text/plain')
+                    add_link(req, 'alternate', plain_href, _('Plain Text'), 'text/plain')
 
         return 'pastebin.html', data, None
 
@@ -196,7 +197,7 @@ class TracpastePlugin(Component):
     # ITimelineEventProvider methods
     def get_timeline_filters(self, req):
         if req.perm.has_permission('PASTEBIN_USE'):
-            yield('pastebin', 'Pastebin changes')
+            yield('pastebin', _('Pastebin changes'))
 
     def get_timeline_events(self, req, start, stop, filters):
         if 'pastebin' in filters:
@@ -213,7 +214,7 @@ class TracpastePlugin(Component):
         if field == 'url':
             return context.href.pastebin(p_id)
         elif field == 'title':
-            return tag('Pastebin: ', tag.em(p_title), ' pasted')
+            return tag(_('Pastebin: '), tag.em(p_title), _(' pasted'))
 
     # IResourceManager
     def get_resource_realm(self):
@@ -226,10 +227,10 @@ class TracpastePlugin(Component):
                                  **kwargs):
         p = Paste(self.env, resource.id)
         if context:
-            return tag.a('Pastebin: ' + p.title,
+            return tag.a(_('Pastebin: ') + p.title,
                          href=context.href.pastebin(resource.id))
         else:
-            return 'Pastebin: ' + p.title
+            return _('Pastebin: ') + p.title
 
     # private methods
     def _get_mimetypes(self):
@@ -242,13 +243,13 @@ class TracpastePlugin(Component):
 
     def _get_highlighter(self, mimetype):
         if not mimetype:
-            return 'unknown'
+            return _('unknown')
 
         mimetypes = self._get_mimetypes()
         for m, name in mimetypes:
             if m == mimetype:
                 return name
-        return 'unknown'
+        return _('unknown')
 
     def _download_allowed(self, mimetype):
         from fnmatch import fnmatchcase

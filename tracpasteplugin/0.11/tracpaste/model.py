@@ -7,6 +7,7 @@ from trac.core import *
 from trac.resource import ResourceNotFound
 from trac.mimeview.api import Mimeview, Context
 from trac.util.datefmt import utc, to_timestamp
+from trac.util.translation import _
 from datetime import datetime
 
 
@@ -88,8 +89,8 @@ class Paste(object):
                 self.title, self.author, self.mimetype, self.data, time = row
                 self.time = datetime.fromtimestamp(time, utc)
             else:
-                raise ResourceNotFound('Paste %s does not exist.' % id,
-                                       'Invalid Paste Number')
+                raise ResourceNotFound(_('Paste %s does not exist.' % id),
+                                       _('Invalid Paste Number'))
 
     def __repr__(self):
         return '<%s %r: %s>' % (
