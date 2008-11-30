@@ -3,20 +3,17 @@
     Highlight stuff using pygments
 """
 import re
-from datetime import datetime
 from genshi.builder import tag
 from trac.core import *
-from trac.web import HTTPNotFound
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
 from trac.resource import IResourceManager
-from trac.config import BoolOption, IntOption, ListOption, Option
+from trac.config import BoolOption, IntOption, ListOption
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link
 from trac.web.main import IRequestHandler
 from trac.timeline.api import ITimelineEventProvider
 from trac.util.datefmt import http_date
-from trac.util.html import html, Markup
 from trac.mimeview.pygments import get_all_lexers
 from trac.db import Table, Column, Index
 from tracpaste.model import Paste, get_pastes
@@ -78,7 +75,7 @@ class TracpastePlugin(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('PASTEBIN_USE'):
-            yield 'mainnav', 'pastebin', html.A('Pastebin', href=req.href.pastebin())
+            yield 'mainnav', 'pastebin', tag.a('Pastebin', href=req.href.pastebin())
 
     # IPermissionHandler methods
     def get_permission_actions(self):
