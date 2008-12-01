@@ -59,47 +59,46 @@ Localizer.strings = {
  * @param typeIdValue The ticket type element id.
  * @param descIdValue The ticket description element id.
  */
-var TicketTemplate = function(baseUrlValue, typeIdValue, descIdValue) {
-        
+var TicketTemplate = function(baseUrlValue) {
+    
     this.STYLE_CLASS_EXCLUDE = "te_exclude";
     this.DELIM               = ",";
     
-    this.baseUrl          = "/";
-    this.typeId           = "type";
-    this.descId           = "template";
-    this.enablefieldsId   = "enablefields";
+    // for TracWysiwygPlugin Parameter
+    this.WYSISYG_MAX_NUM       = 10;
+    this.WYSISYG_EDITOR_PREFIX = "__EDITOR__";
+    
+    this.baseUrl           = "/";
+    this.typeId            = "type";
+    this.descId            = "template";
+    this.enablefieldsId    = "enablefields";
+    this.readyDescription  = false;
+    this.readyCustomfields = true;
     
     // trac default field name
-    // "__EDITOR__1" is for TracWysiwygPlugin
     this.defaultPropArray = ["field_summary", "field_reporter", "field_description",
                              "field_owner", "field_type", "field_priority", "field_milestone",
-                             "field_component", "field_version", "field_keywords", "field_cc",
-                             "__EDITOR__1"];
+                             "field_component", "field_version", "field_keywords", "field_cc"];
     
     if (baseUrlValue) {
         this.baseUrl = baseUrlValue;
-    }
-    if (typeIdValue) {
-        this.typeId = typeIdValue;
-    }
-    if (descIdValue) {
-        this.descId = descIdValue;
-    }
-    
+    }    
+};
+
+/**
+ * Initialize TicketTemplate.
+ */
+TicketTemplate.prototype.initialize = function() {
     var typeElem = document.getElementById(this.typeId);
     if (!typeElem) {
         return;
     }
     
     // Apply template at the first time.
-    // except preview
-    var previewFieldsElem = document.getElementById("preview");
-    if (!previewFieldsElem || previewFieldsElem.tagName != "FIELDSET") {
-        this.selectTemplate(typeElem);
-    }
+    this.selectTemplate(typeElem);
     
     $(typeElem).change(this.changeType(typeElem));
-};
+}
 
 /**
  * This is called when the ticket type changed.
@@ -165,8 +164,18 @@ TicketTemplate.prototype.applyTemplate = function(templateData) {
         return;
     }
 
-    this.applyDescription(templateData);
-    this.applyCustomfields(templateData);
+    // If not ready, not apply only at the first time.
+    // So ready to apply after first time.
+    if (this.readyDescription) {
+        this.applyDescription(templateData);
+    } else {
+        this.readyDescription = true;
+    }
+    if (this.readyCustomfields) {
+        this.applyCustomfields(templateData);
+    } else {
+        this.readyCustomfields = true;
+    }
 }
 
 /**
@@ -186,36 +195,58 @@ TicketTemplate.prototype.applyDescription = function(templateData) {
     // if TracWysiwygPlugin is used,
     // it must be chnage edit mode before change the description value.
     var enableWysiwyg = false;
-    var editorMode;
-    var textareaModeElem;
-    var wysiwygModeElem;
-    
     if(typeof TracWysiwyg == "function") {
         enableWysiwyg = true;
     }
+
+    var editorMode;
+    var txtareaModeElemArray = new Array();
+    var wysiwygModeElemArray = new Array();
     
     if (enableWysiwyg) {
-        editorMode = TracWysiwyg.getEditorMode();
-        textareaModeElem = document.getElementById("editor-textarea-1");
-        wysiwygModeElem = document.getElementById("editor-wysiwyg-1");
+        for (var index = 0; index < this.WYSISYG_MAX_NUM; index++) {
+            var countStr = String(index + 1);
+            var txtareaModeElem = document.getElementById("editor-textarea-" + countStr);
+            var wysiwygModeElem = document.getElementById("editor-wysiwyg-" + countStr);
+            if (txtareaModeElem && wysiwygModeElem) {
+                txtareaModeElemArray.push(txtareaModeElem);
+                wysiwygModeElemArray.push(wysiwygModeElem);
+            } else {
+                break;
+            }
+        }
         
-        if (editorMode != "textarea" && textareaModeElem) {
-            textareaModeElem.click();
+        editorMode = TracWysiwyg.getEditorMode();
+        
+        if (editorMode != "textarea") {
+            for (var index = 0; index < txtareaModeElemArray.length; index++) {
+                var txtareaModeElem = txtareaModeElemArray[index];
+                if (txtareaModeElem) {
+                    txtareaModeElem.click();
+                }
+            }
         }
     }
     
+    // apply template
     descElem.value = templateValue;
     
     if (enableWysiwyg) {
         switch (editorMode) {
         case "textarea":
-            if (textareaModeElem) {
-                textareaModeElem.click();
+            for (var index = 0; index < txtareaModeElemArray.length; index++) {
+                var txtareaModeElem = txtareaModeElemArray[index];
+                if (txtareaModeElem) {
+                    txtareaModeElem.click();
+                }
             }
             break;
         case "wysiwyg":
-            if (wysiwygModeElem) {
-                wysiwygModeElem.click();
+            for (var index = 0; index < wysiwygModeElemArray.length; index++) {
+                var wysiwygModeElem = wysiwygModeElemArray[index];
+                if (wysiwygModeElem) {
+                    wysiwygModeElem.click();
+                }
             }
             break;
         default:
@@ -295,7 +326,12 @@ TicketTemplate.prototype.applyCustomfieldsForTicket = function(enablePropArray) 
     var inputElemArray = fieldsElem.getElementsByTagName("INPUT");
     for (var index = 0; index < inputElemArray.length; index++) {
         var inputType = inputElemArray[index].type;
-        if (inputType.match("(text)|(checkbox)|(radio)|(file)")) {
+        var elemName = inputElemArray[index].name;
+        
+        // include input fields.
+        // exclude TracWysiwygPlugin fields. 
+        if (inputType.match("(text)|(checkbox)|(radio)|(file)")
+         && elemName.indexOf(this.WYSISYG_EDITOR_PREFIX) != 0) {
             propArray.push(inputElemArray[index]);
         }
     }
@@ -327,11 +363,40 @@ TicketTemplate.prototype.applyCustomfieldsForTicket = function(enablePropArray) 
 }
 
 /**
- * Initialize TicketTemplate.
+ * Set element Id.
  * 
  * @param typeId The ticket type element id.
  * @param descId The ticket description element id.
  */
-TicketTemplate.initialize = function(baseUrl, typeId, descId) {
-    var ticketTemplateObj = new TicketTemplate(baseUrl, typeId, descId);
+TicketTemplate.prototype.setElementId = function(typeId, descId) {
+    this.typeId = typeId;
+    this.descId = descId;
+}
+
+/**
+ * Apply the description on load page.
+ * 
+ * @param readyDescription if true, apply the description on load
+ */
+TicketTemplate.prototype.setReadyDescription = function(readyDescription) {
+    this.readyDescription = readyDescription;
+}
+
+/**
+ * Apply the custom fields on load page.
+ * 
+ * @param readyCustomfields if true, apply the custom fields on load
+ */
+TicketTemplate.prototype.setReadyCustomfields = function(readyCustomfields) {
+    this.readyCustomfields = readyCustomfields;
+}
+
+/**
+ * Initialize TicketTemplate as static.
+ * 
+ * @param baseUrl The base URL of the ajax request.
+ */
+TicketTemplate.setUp = function(baseUrl) {
+    var ticketTemplateObj = new TicketTemplate(baseUrl);
+    ticketTemplateObj.initialize();
 };

@@ -31,7 +31,7 @@ class TicketTemplateModule(Component):
 
     # IRequestFilter method
     def post_process_request(self, req, template, data, content_type):
-        if template == 'ticket.html' and req.path_info == '/newticket':
+        if template == 'ticket.html':
             add_script(req, 'ticketext/ticketext.js')
             add_stylesheet(req, 'ticketext/ticketext.css')
             
@@ -40,10 +40,19 @@ class TicketTemplateModule(Component):
     
     # ITemplateStreamFilter method
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == 'ticket.html' and req.path_info == '/newticket':
-            script = '\n<script type="text/javascript">'\
-                   + 'TicketTemplate.initialize(\'' + req.base_path + '\', \'field-type\', \'field-description\');'\
+        if filename == 'ticket.html':
+            readyDescription = False
+            
+            if req.path_info == '/newticket' and 'preview' not in req.args:
+                readyDescription = True
+            
+            script = '\n<script type="text/javascript">\n'\
+                   + 'var tikectTemplate = new TicketTemplate(\'' + req.base_path + '\');\n'\
+                   + 'tikectTemplate.setElementId(\'field-type\', \'field-description\');\n'\
+                   + 'tikectTemplate.setReadyDescription(' + str(readyDescription).lower() + ');\n'\
+                   + 'tikectTemplate.initialize();\n'\
                    + '</script>\n'
+
             return stream | Transformer('//div[@id="footer"]').before(MarkupTemplate(script).generate())
         
         return stream

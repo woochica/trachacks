@@ -2,7 +2,7 @@
 
 import json
 from os import environ
-from trac.core import Component, implements
+from trac.core import *
 
 class TicketExtUtil(Component):
     
@@ -28,10 +28,21 @@ class TicketTemplate(Component):
         ticket_type = req.args.get(type_id)
         template_field = self.get_template_field(ticket_type)
         
-        response = json.write({
+        response_data = {
             "template"     : template_field['template'],
             "enablefields" : template_field['enablefields'],
-        });
+        }
+        
+        if hasattr(json, 'dumps'):
+            # use simplejson(After python2.6 default)
+            response = json.dumps(response_data);
+            response = unicode(response, 'utf-8')        
+        elif hasattr(json, 'write'):
+            # use json-py
+            response = json.write(response_data);
+        else:
+            raise TracError('JSON library import error.')
+        
         
         req.send_response(200)
         req.send_header('Content-Type', 'content=application/json; charset=UTF-8')
