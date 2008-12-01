@@ -86,6 +86,7 @@ class Paste(object):
                            'from pastes where id = %s', (id,))
             row = cursor.fetchone()
             if row:
+                self.id = id
                 self.title, self.author, self.mimetype, self.data, time = row
                 self.time = datetime.fromtimestamp(time, utc)
             else:
