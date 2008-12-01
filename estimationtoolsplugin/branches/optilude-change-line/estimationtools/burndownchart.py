@@ -45,7 +45,7 @@ class BurndownChart(WikiMacroBase):
     closed_states = get_closed_states()
     
     def render_macro(self, req, name, content):
-        
+
         # prepare options
         options, query_args = parse_options(self.env.get_db_cnx(), content, copy.copy(DEFAULT_OPTIONS))
 
@@ -82,15 +82,27 @@ class BurndownChart(WikiMacroBase):
         chart_params['chxt'] = "x,x,x,y"
         
         # Add scaled data
-        maxhours = max(timetable.values())
-        if change:
-            maxhours = max(maxhours, max(timetable_less_change.values()))
+        try:
+	    maxhours = max(timetable.values())
+	except ValueError:
+	    maxhours = 0
+
+        try:
+	    cmaxhours = max(timetable_less_change.values())
+	except ValueError:
+	    cmaxhours = 0
         
-        xdata, ydata,maxhours = self._scale_data(timetable, dates, maxhours, options)
+
+	real_maxhours = max(maxhours, cmaxhours)
+	real_maxhours = Decimal(real_maxhours)
+	if real_maxhours <= Decimal(0):
+	    real_maxhours = Decimal(100)
+
+        xdata, ydata = self._scale_data(timetable, dates, real_maxhours, options)
         chart_params['chd'] = "t:%s|%s" % (",".join(xdata), ",".join(ydata),)
         cxdata = cydata = None
         if change:
-            cxdata, cydata,maxhours = self._scale_data(timetable_less_change, dates, maxhours, options)
+            cxdata, cydata = self._scale_data(timetable_less_change, dates, real_maxhours, options)
             chart_params['chd'] += "|%s|%s" % (",".join(cxdata), ",".join(cydata),)
         
         if change:            
@@ -100,7 +112,7 @@ class BurndownChart(WikiMacroBase):
         chart_params['chxl'] = "0:|" + "|".join([str(date.day) for date in dates]) + \
             "|1:|%s|%s" % (dates[0].month, dates[ - 1].month) + \
             "|2:|%s|%s" % (dates[0].year, dates[ - 1].year)
-        chart_params['chxr'] = "3,0,%s" % maxhours
+        chart_params['chxr'] = "3,0,%d" % real_maxhours
         
         # Add weekends
         downtime = self._mark_downtime(options, dates, xdata, ydata)
@@ -141,7 +153,7 @@ class BurndownChart(WikiMacroBase):
         if estimation_field != initial_estimation_field:
             query_args[initial_estimation_field + "!"] = None
         query_args['status' + "!"] = None
-        
+
         tickets = execute_query(self.env, req, query_args)
 
         # add the open effort for each ticket for each day to the timetable
@@ -269,8 +281,6 @@ class BurndownChart(WikiMacroBase):
     def _scale_data(self, timetable, dates, maxhours, options):
         # create sorted list of dates
         
-        if maxhours <= Decimal(0):
-            maxhours = Decimal(100)
         ydata = [str(self._round(timetable[d] * Decimal(100) / maxhours))
                  for d in dates]
         xdata = [str(self._round(x * Decimal(100) / (len(dates) - 1)))
@@ -281,7 +291,7 @@ class BurndownChart(WikiMacroBase):
             remaining_days = (options['enddate'] - options['today']).days;
             ydata = ydata[: - remaining_days] + ['-1' for x in xrange(0, remaining_days)]
         
-        return xdata, ydata, maxhours
+        return xdata, ydata
     
     def _mark_downtime(self, options, dates, xdata, ydata):
         

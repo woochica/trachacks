@@ -89,6 +89,11 @@ def parse_options(db, content, options):
 def execute_query(env, req, query_args):
     query_string = '&'.join(['%s=%s' % item for item in query_args.iteritems()])
     query = Query.from_string(env, query_string)
+    
+    # oooh, nasty
+    import sys
+    query.max = sys.maxint
+
 
     tickets = query.execute(req)
 
