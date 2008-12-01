@@ -5,12 +5,17 @@ from trac.core import TracError
 from trac.wiki.api import parse_args
 from trac.ticket.query import Query
 
-AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color']
+AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color', 'title', 'change', 'interval_days']
 
 def get_estimation_field():    
     return Option('estimation-tools', 'estimation_field', 'estimatedhours', 
         doc="""Defines what custom field should be used to calculate estimation charts.
         Defaults to 'estimatedhours'""")
+
+def get_initial_estimation_field():    
+    return Option('estimation-tools', 'initial_estimation_field', '', 
+        doc="""When calculating project change, use this field instead of the one set for estimation_field.
+        Defaults to be the same as 'estimation_field'""")
 
 def get_closed_states():
     return ListOption('estimation-tools', 'closed_states', 'closed', 
@@ -61,6 +66,19 @@ def parse_options(db, content, options):
     if not todayarg:
         options['today'] = datetime.now().date()
     
+    if 'interval_days' in options:
+        try:
+            options['interval_days'] = int(options['interval_days'])
+        except (ValueError, TypeError):
+            options['interval_days'] = 1
+    else:
+        options['interval_days'] = 1
+        
+    if 'change' in options and options['change'].lower() not in ('false', '0'):
+        options['change'] = True
+    else:
+        options['change'] = False
+    
     # all arguments that are no key should be treated as part of the query  
     query_args = {}
     for key in options.keys():
@@ -69,8 +87,6 @@ def parse_options(db, content, options):
     return options, query_args
 
 def execute_query(env, req, query_args):
-    # set maximum number of returned tickets to 0 to get all tickets at once
-    query_args['max'] = 0
     query_string = '&'.join(['%s=%s' % item for item in query_args.iteritems()])
     query = Query.from_string(env, query_string)
 
