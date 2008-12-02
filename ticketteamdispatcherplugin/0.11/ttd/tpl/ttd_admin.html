@@ -1,0 +1,59 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head><title>Ticket Team Dispatcher</title>
+<script language="JavaScript">
+<!--
+function addNewLine() {
+    document.forms['ttd'].action.value = "newLine";
+    document.forms['ttd'].submit();
+}
+//-->
+</script>
+</head>
+<body>
+
+<h2>TTD: Admin Teams</h2>
+
+<form id="ttd" action="ttd" method="post">
+	<table>
+	    <tr>
+	        <td><label for="caption">Caption:</label></td>
+            <td><input type="text" name="caption" value="$caption" /></td>
+	    </tr>
+	</table>
+	<br /><br />
+	<table>
+		<tr>
+        	<td>Team</td>
+        	<td>Dispatcher</td>
+    	</tr>
+		<py:for each="team in teams">
+    	<tr>
+       		<td><input type="text" name="team_$team.id" value="$team.name"/></td>
+        	<td><input type="text" name="dispatcher_$team.id" value="$team.dispatcher"/></td>
+    	</tr>
+  		</py:for>
+  		<tr>
+        	<td>
+        	    <input type="hidden" name="action" value="save" />
+        	    <input type="hidden" name="count"    value="$count" />
+        	</td>
+        	<td style="text-align:right"><a href="javascript:addNewLine();">Add a line</a></td>
+    	</tr>
+	</table>
+	<small>Leave team or dispatcher empty to delete a line.</small><br />
+    <br />
+    <br />
+    <input type="submit" name="save" value="Save" accesskey="s" />
+</form>
+
+</body>
+
+</html>
