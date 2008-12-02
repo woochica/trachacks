@@ -4,7 +4,7 @@
     ~~~~~~~~~~~~~~~
 """
 from trac.core import *
-from trac.resource import ResourceNotFound
+from trac.resource import Resource, ResourceNotFound
 from trac.mimeview.api import Mimeview, Context
 from trac.util.datefmt import utc, to_timestamp
 from trac.util.translation import _
@@ -77,6 +77,7 @@ class Paste(object):
         self.mimetype = mimetype
         self.data = data
         self.time = time
+        self.resource = Resource('pastebin', self.id)
 
         if id is not None and self.id_is_valid(id):
             row = None

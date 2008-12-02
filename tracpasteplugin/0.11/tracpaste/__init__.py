@@ -7,7 +7,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
-from trac.resource import IResourceManager
+from trac.resource import Resource, IResourceManager
 from trac.config import BoolOption, IntOption, ListOption
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link
@@ -75,10 +75,11 @@ class TracpastePlugin(Component):
         return 'pastebin'
 
     def get_navigation_items(self, req):
-        if req.perm.has_permission('PASTEBIN_USE'):
-            yield 'mainnav', 'pastebin', tag.a(_('Pastebin'), href=req.href.pastebin())
+        if req.perm('pastebin').has_permission('PASTEBIN_USE'):
+            yield ('mainnav', 'pastebin',
+                  tag.a(_('Pastebin'), href=req.href.pastebin()) )
 
-    # IPermissionHandler methods
+    # IPermissionRequestor methods
     def get_permission_actions(self):
         return ['PASTEBIN_USE']
 
@@ -97,7 +98,7 @@ class TracpastePlugin(Component):
         return True
 
     def process_request(self, req):
-        req.perm.assert_permission('PASTEBIN_USE')
+        req.perm('pastebin').assert_permission('PASTEBIN_USE')
         add_stylesheet(req, 'pastebin/css/pastebin.css')
         add_stylesheet(req, 'common/css/code.css')
 
@@ -196,17 +197,20 @@ class TracpastePlugin(Component):
 
     # ITimelineEventProvider methods
     def get_timeline_filters(self, req):
-        if req.perm.has_permission('PASTEBIN_USE'):
+        if req.perm('pastebin').has_permission('PASTEBIN_USE'):
             yield('pastebin', _('Pastebin changes'))
 
     def get_timeline_events(self, req, start, stop, filters):
         if 'pastebin' in filters:
-            if not req.perm.has_permission('PASTEBIN_USE'):
+            pb_realm = Resource('pastebin')
+            if not req.perm(pb_realm).has_permission('PASTEBIN_USE'):
                 return
             add_stylesheet(req, 'pastebin/css/timeline.css')
             pastes = get_pastes(env=self.env, from_dt=start, to_dt=stop)
             for p in pastes:
-                yield('pastebin', p["time"], p["author"], (p["id"], p["title"]))
+                if req.perm(pb_realm(id=p["id"])).has_permission('PASTEBIN_USE'):
+                    yield('pastebin', p["time"], p["author"], (p["id"],
+                          p["title"]))
         return
 
     def render_timeline_event(self, context, field, event):
