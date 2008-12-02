@@ -198,6 +198,30 @@ class MovieMacro(WikiMacroBase):
                              type='application/x-shockwave-flash',
                              style=xform_style(style))
         
+        # Requested by Zach, #4188.
+        if netloc in ('vimeo.com', 'www.vimeo.com'):
+            parts = path.split('/')
+            
+            while '' in parts:
+                parts.remove('')
+            
+            path = '/moogaloop.swf?clip_id=%s&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=0&amp;color=&amp;fullscreen=1' % parts[0]
+            url = urlunparse((scheme, netloc, path, '', '', ''))
+            
+            width = kwargs.pop('width', style_dict.get('width', '640px'))
+            height = kwargs.pop('height', style_dict.get('height', '401px'))
+            
+            style.update({
+                'width': width,
+                'height': height,
+            })
+            
+            return tag.object(tag.param(name='movie', value=url),
+                              tag.param(name='allowfullscreen', value='true'),
+                              tag.param(name='allowscriptaccess', value='always'),
+                              tag.embed(src=url, type='application/x-shockwave-flash', allowfullscreen='true', allowscriptaccess='always', width=width, height=height),
+                              style=xform_style(style))
+        
         # Local movies.
         tags = []
         
