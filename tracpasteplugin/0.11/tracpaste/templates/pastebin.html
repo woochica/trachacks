@@ -28,8 +28,15 @@
               <dl>
                 <dt>Title</dt>
                 <dd><input type="text" name="title" value="${title}" /></dd>
-                <dt>Author</dt>
-                <dd><input type="text" name="author" value="${author}" /></dd>
+                <py:choose test="perm.username == 'anonymous'">
+                  <py:when test="True">
+                    <dt>Author</dt>
+                    <dd><input type="text" name="author" value="${author}" /></dd>
+                  </py:when>
+                  <py:otherwise>
+                    <input type="hidden" name="author" value="${perm.username}" />
+                  </py:otherwise>
+                </py:choose>
                 <dt>Highlighter</dt>
                 <dd><select name="mimetype">
                   <option py:for="m, name in mimetypes" value="${m}" selected="${mimetype == m and 'selected' or None}">${name}</option>
