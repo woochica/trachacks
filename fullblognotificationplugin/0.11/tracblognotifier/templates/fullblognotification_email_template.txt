@@ -1,5 +1,5 @@
 #if action == 'post_created' or action == 'post_updated'
-#if action == 'added'
+#if action == 'post_created'
 Added post "${name}" by ${author} at ${time}
 #end
 #if action == 'post_updated'
