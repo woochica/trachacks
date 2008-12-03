@@ -79,7 +79,7 @@ class FullBlogNotificationPlugin(Component):
         blog_post = BlogPost(self.env, postname, 0)
         bc = BlogComment(self.env, postname, number)
         notifier = FullBlogNotificationEmail(self.env)
-        notifier.notify(blog_post, action, blog_post.version, bc.time, bc.comment, blog_post.author)
+        notifier.notify(blog_post, action, blog_post.version, bc.time, bc.comment, bc.author)
 
     def blog_comment_deleted(self, postname, number, fields):
         pass # nothing for now
