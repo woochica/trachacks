@@ -17,10 +17,12 @@ import time
 import base64
 from stat import *
 
-global ENV
+ENV = None
 
 def add_tt_table(env, db):
     """Migrate from template files to db."""
+    global ENV
+    
     ENV = env
     
     cursor = db.cursor()
