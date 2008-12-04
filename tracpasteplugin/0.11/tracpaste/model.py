@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-    tracpaste.model
-    ~~~~~~~~~~~~~~~
+TracPastePlugin: entity model for pastes, including:
+ * CRUD (create, read, update, delete)
+ * various helpers to retrieve pastes
 """
+
 from trac.core import *
 from trac.resource import Resource, ResourceNotFound
 from trac.mimeview.api import Mimeview, Context
@@ -83,8 +85,8 @@ class Paste(object):
             row = None
             db = env.get_db_cnx()
             cursor = db.cursor()
-            cursor.execute('select title, author, mimetype, data, time '
-                           'from pastes where id = %s', (id,))
+            cursor.execute('SELECT title, author, mimetype, data, time '
+                           'FROM pastes WHERE id = %s', (id,))
             row = cursor.fetchone()
             if row:
                 self.id = id
@@ -117,7 +119,7 @@ class Paste(object):
 
         if self.id is None:
             raise ValueError('cannot delete not existing paste')
-        cursor.execute('delete from pastes where id = %s', (self.id,))
+        cursor.execute('DELETE FROM pastes WHERE id = %s', (self.id,))
 
         if handle_ta:
             db.commit()
@@ -135,14 +137,14 @@ class Paste(object):
             self.time = datetime.now(utc)
 
         if self.id is None:
-            cursor.execute('insert into pastes (title, author, mimetype, '
-                           'data, time) values (%s, %s, %s, %s, %s)',
+            cursor.execute('INSERT INTO pastes (title, author, mimetype, '
+                           'data, time) VALUES (%s, %s, %s, %s, %s)',
                            (self.title, self.author, self.mimetype, self.data,
                             to_timestamp(self.time)))
             self.id = db.get_last_id(cursor, 'pastes')
         else:
-            cursor.execute('update pastes set title=%s, author=%s, mimetype=%s,'
-                           'data=%s, time=%s where id = %s', (
+            cursor.execute('UPDATE pastes SET title=%s, author=%s, mimetype=%s,'
+                           'data=%s, time=%s WHERE id = %s', (
                 self.title, self.author, self.mimetype, self.data,
                 to_timestamp(self.time), self.id
             ))
