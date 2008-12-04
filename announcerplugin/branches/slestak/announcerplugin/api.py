@@ -50,6 +50,19 @@ class IAnnouncementSubscriber(Interface):
         actually undesirable-- in such a case resolvers will be bypassed
         entirely.
         """
+
+class IAnnouncementSubscriberFilter(Interface)
+    """SubscriberFilters will remove subscribers from announcements that were
+    previously included.
+
+    A subscriber may have been included by more than one test in
+    ticket_compat with always_notify* but invalidated by a follwing
+    never_update*
+    """
+    
+    def filter_subcriptions_for_event(event, subscriptions):
+       """Implement never_update* for SubscriberFilter
+       """
         
 class IAnnouncementFormatter(Interface):
     """Formatters are responsible for converting an event into a message
@@ -269,6 +282,7 @@ class AnnouncementSystem(Component):
         
     subscribers = ExtensionPoint(IAnnouncementSubscriber)
     distributors = ExtensionPoint(IAnnouncementDistributor)
+    filters = ExtensionPoint(IAnnouncementSubscriberFilter)
 
     # IEnvironmentSetupParticipant implementation
     SCHEMA = [
@@ -364,6 +378,22 @@ class AnnouncementSystem(Component):
                 )
             )
             
+            filters = set()
+	    supported_filters = ['never notify updater']
+            for sf in supported_filters:
+                subscriptions.discard(
+                    x for x in sf.filter_subscriptions_for_event(evt) if x
+                )
+                filters.add(x)
+
+            self.log.debug(
+                "AnnouncementSystem has filtered the following subscriptions: %s" % (
+                    ', '.join(
+                        ['[%s(%s) via %s]' % ((s[1] or s[3]), s[2] and 'authenticated' or 'not authenticated',s[0]) for s in filters]
+                    )
+                )
+            )
+
             packages = {}
             for transport, sid, authenticated, address in subscriptions:
                 if transport not in packages:

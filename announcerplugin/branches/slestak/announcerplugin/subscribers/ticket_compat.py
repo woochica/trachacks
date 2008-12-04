@@ -49,6 +49,15 @@ class LegacyTicketSubscriber(Component):
         notification section, except users can opt-out in their preferences. Used
         only if LegacyTicketSubscriber is enabled.""")
 
+    never_notify_updater = BoolOption("announcer", "never_notify_updater", False, 
+        """The never_notify_updater option is used to reduce the chattiness
+	of the announcer component. Used only if LegacyTicketSubscriber is
+	enabled.
+	
+	If both always_update_notifier and never_notify_updater are true, then
+	always_update_notifier wins.  This allows for an explicit updater
+	notification.""")
+
     always_notify_component_owner = BoolOption("announcer", 
             "always_notify_component_owner", True,
             """Whether or not to notify the owner of the ticket's 
@@ -69,6 +78,9 @@ class LegacyTicketSubscriber(Component):
         )
         always_notify_updater = istrue(
             cfg.get('announcer', 'always_notify_updater', None)
+        )
+        never_notify_updater = istrue(
+            cfg.get('announcer', 'never_notify_updater', None)
         )
 
         if req.method == "POST":
