@@ -38,12 +38,15 @@ class TracpasteSetup(Component):
         current_version = self._get_version(db)
         for version in range(current_version + 1, schema_version + 1):
             self.env.log.debug("version=%d", version)
-            for function in version_map.get(version):
+            for function in version_map.get(version, []):
                 self.env.log.debug("function=%s", function)
                 self.log.info(textwrap.fill(inspect.getdoc(function)))
                 function(self.env, db)
                 self.log.info('Done.')
 
+        """ Reget version, since it may have changed during the update
+        update procedure above (when upgrading from v1 to v2) """
+        current_version = self._get_version(db)
         cursor = db.cursor()
         try:
             if current_version == 0:
