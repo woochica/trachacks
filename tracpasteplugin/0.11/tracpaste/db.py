@@ -45,15 +45,21 @@ class TracpasteSetup(Component):
                 self.log.info('Done.')
 
         cursor = db.cursor()
-        if current_version == 0:
-            cursor.execute("INSERT INTO system VALUES "
-                           "('tracpaste_version',%s)", (schema_version,))
-            self.log.info('Created TracPastePlugin tables')
-        else:
-            cursor.execute("UPDATE system SET value=%s WHERE "
-                           "name='tracpaste_version'", (schema_version,))
-            self.log.info('Upgraded TracPastePlugin tables from '
-                          ' version %d to %d', current_version, schema_version)
+        try:
+            if current_version == 0:
+                cursor.execute("INSERT INTO system VALUES "
+                               "('tracpaste_version',%s)", (schema_version,))
+                self.log.info('Created TracPastePlugin tables')
+            else:
+                cursor.execute("UPDATE system SET value=%s WHERE "
+                               "name='tracpaste_version'", (schema_version,))
+                self.log.info('Upgraded TracPastePlugin tables from '
+                              ' version %d to %d', current_version, schema_version)
+            db.commit()
+        except Exception, e:
+            db.rollback()
+            self.env.log.error(e, exc_info=1)
+            raise TracError(str(e))
 
     # private methods
     def _get_version(self, db):
@@ -88,6 +94,7 @@ class TracpasteSetup(Component):
 
 # Helpers
 def _to_sql(env, db, table):
+    from trac.db import DatabaseManager
     connector, _ = DatabaseManager(env)._get_connector()
     return connector.to_sql(table)
 
@@ -106,11 +113,11 @@ def add_paste_table(env, db):
     cursor = db.cursor()
     try:
         for stmt in _to_sql(env, db, table):
-            self.env.log.debug(stmt)
+            env.log.debug(stmt)
             cursor.execute(stmt)
     except Exception, e:
         db.rollback()
-        self.env.log.error(e, exc_info=1)
+        env.log.error(e, exc_info=1)
         raise TracError(str(e))
 
 def add_database_version(env, db):
@@ -121,7 +128,7 @@ def add_database_version(env, db):
                        "('tracpaste_version',%s)", (schema_version,))
     except Exception, e:
         db.rollback()
-        self.env.log.error(e, exc_info=1)
+        env.log.error(e, exc_info=1)
         raise TracError(str(e))
 
 
