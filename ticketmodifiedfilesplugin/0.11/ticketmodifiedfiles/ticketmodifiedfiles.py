@@ -130,7 +130,7 @@ class TicketModifiedFilesPlugin(Component):
                 except:
                     date = ""
                 cursor2 = db.cursor()
-                cursor2.execute("SELECT path FROM node_change WHERE rev=" + rev)
+                cursor2.execute("SELECT path FROM node_change WHERE rev='%s'" % rev)
                 revisions.append((rev, author, date))
                 for path, in cursor2:
                     files.append(path)
@@ -141,7 +141,12 @@ class TicketModifiedFilesPlugin(Component):
         filestatus = {}
         #Get the last status of each file
         for file in files:
-            cursor.execute("SELECT change_type FROM node_change WHERE path='" + file + "' ORDER BY 1*rev DESC LIMIT 1")
+            try:
+                #SQLite > 3.2.3 and Postgres (and MySQL?)
+                cursor.execute("SELECT change_type FROM node_change WHERE path='" + file + "' ORDER BY CAST(rev as integer) DESC LIMIT 1")
+            except:
+                #For SQLite < 3.2.3
+                cursor.execute("SELECT change_type FROM node_change WHERE path='" + file + "' ORDER BY 1*rev DESC LIMIT 1")
             for change_type, in cursor:
                 filestatus[file] = change_type
         
