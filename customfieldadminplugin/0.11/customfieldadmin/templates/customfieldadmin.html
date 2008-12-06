@@ -138,11 +138,17 @@
               <td>${cf.type}</td>
               <td>${cf.label}</td>
               <td class="default">
-                <select name="order_${cf.name}">
-                  <option py:for="other in cfadmin.customfields"
-                      selected="${other.order==cf.order and 'selected' or None}">
-                      ${other.order}
+                <select name="order_${cf.name}" py:with="count = len(cfadmin.customfields)">
+                  <option py:for="num in range(count)"
+                      selected="${num==cf.order and 'selected' or None}">
+                      ${num}
                   </option>
+                  <!--! Extra option in case value is outside regular range -->
+                  <py:if test="cf.order not in range(count)">
+                    <option disabled="disabled">&mdash;</option>
+                    <option selected="selected"
+                        title="Currently outside regular range">${cf.order}</option>
+                  </py:if>
                 </select>
               </td>
             </tr>

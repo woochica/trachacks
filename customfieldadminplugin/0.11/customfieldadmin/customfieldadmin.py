@@ -4,7 +4,7 @@ Trac WebAdmin plugin for administration of custom fields.
 
 License: BSD
 
-(c) 2005-2007 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2005-2008 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 (c) 2007      ::: www.Optaros.com (.....)
 """
 
@@ -38,7 +38,7 @@ class CustomFieldAdminPage(Component):
                       'options': [x.strip() for x in to_unicode(req.args.get('options')).split("\n")],
                       'cols': to_unicode(req.args.get('cols')),
                       'rows': to_unicode(req.args.get('rows')),
-                      'order': req.args.get('order', 0)}
+                      'order': req.args.get('order', '')}
             return cfdict
         
         cfapi = CustomFields(self.env)
@@ -89,8 +89,6 @@ class CustomFieldAdminPage(Component):
                                   in req.args.keys()
                                   if key.startswith('order_')])
                     values = dict([(val, True) for val in order.values()])
-                    if len(order) != len(values):
-                        raise TracError, 'Order numbers must be unique.'
                     cf = cfapi.get_custom_fields(self.env)
                     for cur_cf in cf:
                         cur_cf['order'] = order[cur_cf['name']]
