@@ -1,0 +1,74 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11-strict.dtd">
+<!--
+Copyright 2008 Andrew De Ponte, Patrick Murphy
+
+This file is part of FlashGanttPlugin
+
+FlashGanttPlugin is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+any later version.
+
+FlashGanttPlugin is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with FlashGanttPlugin. If not, see <http://www.gnu.org/licenses/>.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="layout.html" />
+    <head>
+        <title>Flash Gantt</title>
+        <link rel="stylesheet" type="text/css" href="${href.chrome('/fg/css/flashgantt.css')}" />
+        <script language="JavaScript" src="${href.chrome('/fg/js/FusionCharts.js')}"></script>
+    </head>
+
+    <body>
+        <!-- <div id="ctxnav" class="nav"></div> -->
+        <div id="content" class="flashgantt">
+            <h1>Flash Gantt</h1>
+
+            <form id="prefs" method="get" action="">
+                <div>
+                    <input type="checkbox" id="showall" name="show" value="all"
+                           checked="${showall or None}" />
+                    <label for="showall">Show already completed milestones</label>
+                </div>
+                <div class="buttons">
+                    <input type="submit" value="${_('Update')}" />
+                </div>
+            </form>
+
+            <div id="chartdiv" align="center">
+                <script type="text/javascript">
+                    var chart = new
+                    FusionCharts("${href.chrome('/fg/flash/FCF_Gantt.swf')}", "ChartId", "750", "450");
+                    chart.setDataURL("${href.chrome('/fg/data/Gantt.xml')}");
+                    chart.render("chartdiv");
+                </script>
+                <table border="1">
+                    <tr>
+                        <td>Name</td>
+                        <td>Due</td>
+                        <td>Completed</td>
+                        <td>Description</td>
+                    </tr>
+                    <py:for each="milestone in milestones">
+                        <tr>
+                            <td>$milestone.name</td>
+                            <td>${format_date(milestone.due)}</td>
+                            <td>${format_date(milestone.completed)}</td>
+                            <td>$milestone.description</td>
+                        </tr>
+                    </py:for>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
