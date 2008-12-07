@@ -49,7 +49,8 @@ along with FlashGanttPlugin. If not, see <http://www.gnu.org/licenses/>.
                 <script type="text/javascript">
                     var chart = new
                     FusionCharts("${href.chrome('/fg/flash/FCF_Gantt.swf')}", "ChartId", "750", "450");
-                    chart.setDataURL("${href.chrome('/fg/data/Gantt.xml')}");
+                    chart.addParam("wmode", "transparent");
+                    chart.setDataURL("${href.flashgantt('/chartxml')}");
                     chart.render("chartdiv");
                 </script>
                 <table border="1">

@@ -62,7 +62,7 @@ class FlashGanttPlugin(Component):
                 
             # This tuple is for Genshi (template_name, data, content_type)
             # Without data the trac layout will not appear.
-            return ('chart.html', data, None)
+            return ('chart.xml', data, 'text/xml')
         else:
             
             req.perm.require('MILESTONE_VIEW')

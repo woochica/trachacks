@@ -25,6 +25,7 @@ setup(
         flashgantt = flashgantt.flashgantt
     """,
     package_data={'flashgantt': ['templates/*.html',
+                                 'templates/*.xml',
                                  'htdocs/css/*.css',
                                  'htdocs/images/*',
                                  'htdocs/flash/*.swf',
