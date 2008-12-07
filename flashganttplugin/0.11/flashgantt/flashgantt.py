@@ -34,23 +34,52 @@ class FlashGanttPlugin(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info == '/flashgantt'
+        if (req.path_info == '/flashgantt' or req.path_info == '/flashgantt/chartxml'):
+            return True
+        else:
+            return False
     def process_request(self, req):
-        req.perm.require('MILESTONE_VIEW')
-
-        showall = req.args.get('show') == 'all'
-
-        db = self.env.get_db_cnx()
-        milestones = [m for m in Milestone.select(self.env, showall, db)
-                      if 'MILESTONE_VIEW' in req.perm(m.resource)]
-
-        data = {'milestones': milestones, 'showall': showall}
+        if req.path_info == '/flashgantt/chartxml':
+            req.perm.require('MILESTONE_VIEW')
         
-        #add_stylesheet(req, 'fg/css/flashgantt.css')
+            showall = req.args.get('show') == 'all'
+
+            db = self.env.get_db_cnx()
+            #milestones = [m for m in Milestone.select(self.env, showall, db)
+            #              if 'MILESTONE_VIEW' in req.perm(m.resource)]
+            months = [{'name':'March', 'start_date':'1/3/2005', 'end_date':'31/3/2005'},
+                      {'name':'April', 'start_date':'1/4/2005', 'end_date':'30/4/2005'},
+                      {'name':'May', 'start_date':'1/5/2005', 'end_date':'31/5/2005'},
+                      {'name':'June', 'start_date':'1/6/2005', 'end_date':'30/6/2005'},
+                      {'name':'July', 'start_date':'1/7/2005', 'end_date':'31/7/2005'},
+                      {'name':'August', 'start_date':'1/8/2005', 'end_date':'31/8/2005'}]
+            milestones = [{'name':'writing', 'index':'1', 'start_date':'7/3/2005', 'due_date':'18/4/2005', 'completed_date':'22/4/2005'},
+                          {'name':'signing', 'index':'2', 'start_date':'6/4/2005', 'due_date':'2/5/2005', 'completed_date':'12/5/2005'},
+                          {'name':'financing', 'index':'3', 'start_date':'1/5/2005', 'due_date':'2/6/2005', 'completed_date':'2/6/2005'},
+                          {'name':'permission', 'index':'4', 'start_date':'13/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'},
+                          {'name':'plumbing', 'index':'5', 'start_date':'2/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'}]
+            data = {'milestones': milestones, 'showall': showall, 'visible_months':months, 'min_date':'1/3/2005', 'max_date':'31/8/2005'}
+                
+            # This tuple is for Genshi (template_name, data, content_type)
+            # Without data the trac layout will not appear.
+            return ('chart.html', data, None)
+        else:
+            
+            req.perm.require('MILESTONE_VIEW')
         
-        # This tuple is for Genshi (template_name, data, content_type)
-        # Without data the trac layout will not appear.
-        return ('flashgantt.html', data, None)
+            showall = req.args.get('show') == 'all'
+
+            db = self.env.get_db_cnx()
+            milestones = [m for m in Milestone.select(self.env, showall, db)
+                          if 'MILESTONE_VIEW' in req.perm(m.resource)]
+
+            data = {'milestones': milestones, 'showall': showall}
+        
+            #add_stylesheet(req, 'fg/css/flashgantt.css')
+        
+            # This tuple is for Genshi (template_name, data, content_type)
+            # Without data the trac layout will not appear.
+            return ('flashgantt.html', data, None)
 
     # ITemplateProvider methods
     def get_templates_dirs(self):

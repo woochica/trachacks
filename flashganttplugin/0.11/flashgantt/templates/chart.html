@@ -1,0 +1,38 @@
+<chart dateFormat='dd/mm/yyyy' hoverCapBorderColor='2222ff' hoverCapBgColor='e1f5ff' ganttWidthPercent='60' ganttLineAlpha='80' canvasBorderColor='024455' canvasBorderThickness='0' gridBorderColor='4567aa' gridBorderAlpha='20'>
+<categories  bgColor='009999'>
+	<category start='$min_date' end='$max_date' align='center' name='Milestone Gantt Chart'  fontColor='ffffff' isBold='1' fontSize='16' />
+</categories>
+<categories  bgColor='ffffff' fontColor='1288dd' fontSize='10' >
+<py:for each="month in visible_months">
+    <category start='$month.start_date' end='$month.end_date' align='center' name='$month.name' isBold='1' />
+</py:for>
+</categories>
+<processes headerText='Milestones' fontColor='ffffff' fontSize='10' isBold='1' isAnimated='1' bgColor='4567aa'  headerVAlign='right' headerbgColor='4567aa' headerFontColor='ffffff' headerFontSize='16' width='80' align='left'>
+<py:for each="milestone in milestones">
+    <process Name='$milestone.name' id='$milestone.index' />
+</py:for>
+</processes>
+<dataTable showProcessName='1' nameAlign='left' fontColor='000000' fontSize='10' isBold='1' headerBgColor='00ffff' headerFontColor='4567aa' headerFontSize='11' vAlign='right' align='left'>
+	<dataColumn width='70' headerfontcolor='ffffff' headerBgColor='4567aa' bgColor='eeeeee'  headerColor='ffffff' headerText='Start' isBold='0'>
+    <py:for each="milestone in milestones">
+		<text label='$milestone.start_date' /> 
+	</py:for>
+	</dataColumn>
+	<dataColumn width='70' headerfontcolor='ffffff' headerBgColor='4567aa' bgColor='eeeeee'  headerColor='ffffff' headerText='Due' isBold='0'>
+    <py:for each="milestone in milestones">
+		<text label='$milestone.due_date' /> 
+	</py:for>
+	</dataColumn>
+	<dataColumn width='70' headerfontcolor='ffffff' headerBgColor='4567aa' bgColor='eeeeee'  headerColor='ffffff' headerText='Completed' isBold='0'>
+    <py:for each="milestone in milestones">
+		<text label='$milestone.completed_date' /> 
+	</py:for>
+	</dataColumn>
+</dataTable>
+<tasks  width='10' >
+<py:for each="milestone in milestones">
+	<task name='Planned' processId='$milestone.index' start='$milestone.start_date' end='$milestone.due_date' id='${miletone.index}-1' color='4567aa' height='10' topPadding='5' animation='0'/>
+	<task name='Actual' processId='$milestone.index' start='$milestone.start_date' end='$milestone.completed_date' id='$milestone.index' color='cccccc' alpha='100'  topPadding='19' height='10' />
+</py:for>
+</tasks>
+</chart>
