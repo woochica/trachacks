@@ -50,7 +50,7 @@ default_lang = en
 
 Note that `TitleIndex` macro and `TOC` macro (by tractoc plugin) is
 overridden by enabling this plugin. To use original macro, you should
-disable new macro explicitly. See [wiki:#BonusMacro Bonus Macro] for
+disable new macro explicitly. See [#BonusMacro Bonus Macro] for
 more detail.
 
 
@@ -92,18 +92,18 @@ in the menu is grayed.
 
 There are 5 kind of display styles:
 
-`simple`::
-  Solid menu bar above the wiki context navigation menu.
-  This is default style.
-`ctxnav`::
-  Like `simple` but displayed on the right of the wiki context menu.
-  It looks like a one of the context menu item.
-`button`::
-  Button faced selection menu.
-`tab`::
-  Tabbed page style of selector.
-`none`::
-  Hide language menu.
+ `simple`::
+   Solid menu bar above the wiki context navigation menu.
+   This is default style.
+ `ctxnav`::
+   Like `simple` but displayed on the right of the wiki context menu.
+   It looks like a one of the context menu item.
+ `button`::
+   Button faced selection menu.
+ `tab`::
+   Tabbed page style of selector.
+ `none`::
+   Hide language menu.
 
 The style of language menu can be changed by `menu_style` option:
 {{{
@@ -118,7 +118,7 @@ For bonus, this plugin contains two new macro: `MultiLangTitleIndex`
 and `NTOC`.
 The former is an alternative macro of `TitleIndex`.
 The later is an alternative of `TOC` macro.
-(see [th:wiki:tocmacro] in Trac-Hacs for more detail)
+(see [th:wiki:tocmacro tocmacro] in Trac-Hacs for more detail)
 
 And this plugin has the definitions to override original
 `TitleIndexMacro` and `TOCMacro` automatically. So you do not need
@@ -140,13 +140,15 @@ The differences against `TitleIndex` are:
    a page to be edited by user.
 
 It is useful for the site having many localized pages.
-You can use it by editing `TitleIndex` page.
+
+'''This feature is automatically enabled''' by overriding
+`TitleIndexMacro` when this plugin is enabled.
 
 === `NTOC` ===
 `NTOC` macro delives `TOC` macro, so all the features in `TOC` macro
 are available except handling lang suffixed pages.
 If you specify normal page name without explicit lang suffix 
-(i.e. `!WikiStart`), `NTOC` look up localized page for language same to 
+(i.e. `WikiStart`), `NTOC` look up localized page for language same to 
 parent page the macro is put on. If not exist, look up localized page
 for preferred langs. If not found, use specified name as is.
 So, it is easy to get localized TOC by simply specifyng base page names
@@ -155,7 +157,9 @@ in argument.
 `NTOC` also handles wildcard page argument by expanding and removing
 suffixed pages.
 
-So, `TOC` can be simply replaced to `NTOC`.
+'''This feature is automatically enabled''' by overriding `TOCMacro`
+if available when this plugin is enabled.
+
 
 == How it Works ==
 
