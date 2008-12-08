@@ -4,10 +4,10 @@ from trac.perm import IPermissionRequestor
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import format_to_html
 
-LEVELS = {"protected":{"action":"PROTECTED_VIEW", "style":"border-left:2px solid red; padding-left:3px", "unauthorized":"Denied access to protected zone"},
-          "protected-red":{"action":"PROTECTED_RED_VIEW", "style":"border-left:2px solid red; padding-left:3px", "unauthorized":"Denied access to protected red zone"},
-          "protected-blue":{"action":"PROTECTED_BLUE_VIEW", "style":"border-left:2px solid blue; padding-left:3px", "unauthorized":"Denied access to protected blue zone"},
-          "protected-green":{"action":"PROTECTED_GREEN_VIEW", "style":"border-left:2px solid green; padding-left:3px", "unauthorized":"Denied access to protected green zone"}}
+LEVELS = {"protected":{"action":"PROTECTED_VIEW", "style":"border-left:2px solid red; padding-left:3px"},
+          "protected-red":{"action":"PROTECTED_RED_VIEW", "style":"border-left:2px solid red; padding-left:3px"},
+          "protected-blue":{"action":"PROTECTED_BLUE_VIEW", "style":"border-left:2px solid blue; padding-left:3px"},
+          "protected-green":{"action":"PROTECTED_GREEN_VIEW", "style":"border-left:2px solid green; padding-left:3px"}}
 
 class ProtectedMacro(Component):
     implements(IPermissionRequestor, IWikiMacroProvider)
@@ -28,9 +28,16 @@ class ProtectedMacro(Component):
             level = LEVELS[name]
 
             if level["action"] in formatter.req.perm:
+                # authorized
+                content = "\n".join((line for line in content.split("\n") if not line.startswith("#:")))
+            else:
+                # unauthorized
+                content = "\n".join((line[2:] for line in content.split("\n") if line.startswith("#:")))
+
+            if content:
                 return tag.div(format_to_html(self.env, formatter.context, content), style=level["style"])
             else:
-                return tag.div(level["unauthorized"], style=level["style"])
+                return ""
 
     # IPermissionRequestor,
     def get_permission_actions(self):
