@@ -6,7 +6,7 @@ from macro_provider import *
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 
-dbversion = 2
+dbversion = 3
 dbkey = 'EstimatorPluginDbVersion'
 
 
@@ -42,6 +42,7 @@ class EstimatorSetupParticipant(Component):
         """
         success = True
         ver = dbhelper.get_system_value(self.env, dbkey)
+        ver = (ver and int(ver)) or 0
         self.log.debug('Estimator about to upgrade from ver:%s' % ver)
         if ver < 1:
             self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
@@ -61,8 +62,8 @@ class EstimatorSetupParticipant(Component):
                      low DECIMAL,
                      high DECIMAL
                 )""",[]))
-
-        if ver < 2:
+        #ver 2 might have left the database in an invalid state.
+        if ver < 3:
             self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
             success = success and dbhelper.execute_in_trans(self.env, (""" ALTER TABLE estimate ADD COLUMN diffcomment text ; """,[]))
 
