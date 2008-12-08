@@ -62,9 +62,9 @@ Displayed languages are listed from existing wiki pages automatically.
 
     _default_in_menu = BoolOption('wiki-negotiator', 'default_in_menu',
                                   'false',
-                                  doc="""Always show 'default' psudo language in menu bar.
+                                  doc="""Always show 'default' pseudo language in menu bar.
 If this options is false, non-suffixed page is treated like suffixed page
-for deafult lang. """)
+for default lang. """)
     _invalid_suffixes = ListOption('wiki-negotiator', 'invalid_suffixes', 'py',
                                    doc="""List of suffix not shown as language menu.
 Languages in this option are never shown in language menu.
@@ -264,7 +264,7 @@ like "test.py".
 
     def _get_available_langs(self):
         """Get language suffixes from existing wiki pages.
-        Not that this list does not contains 'default' psudo lang.
+        Not that this list does not contains 'default' pseudo lang.
         This function also cache page names for later existing check.
         """
         langs = getattr(self, 'available_langs', None)

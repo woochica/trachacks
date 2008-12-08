@@ -221,6 +221,7 @@ class MultiLangTitleIndex(WikiMacroBase):
         # process explicit system pages
         user_pages, exc = _exclude(user_pages, self._explicit_system_pages)
         system_pages += exc
+        system_pages = sorted(system_pages)
         return user_pages, system_pages
         
     
