@@ -15,6 +15,7 @@ setup(name=PACKAGE, version=VERSION,
       pages for users.
       """,
       packages=['wikinegotiator'],
+      package_data = {'wikinegotiator': ['templates/*.cs', 'htdocs/css/*.css']},
       data_files=['README'],
       entry_points={'trac.plugins': 'TracWikiNegotiator = wikinegotiator'},
       )
