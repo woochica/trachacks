@@ -372,10 +372,3 @@ try:
 except Exception, exc:
     # TOCMacro load fail or not acceptable version.
     pass
-
-## Bonus Wild TIPS:
-## Uncomment following two lines if you want to override TOC macro itself.
-## It means, you can use TOC macro in a page as before with NTOC feature.
-## NOTE: After uncomment, 'class' should not have any preceding space.
-#class TOCMacro(NTOCMacro):
-#     pass
