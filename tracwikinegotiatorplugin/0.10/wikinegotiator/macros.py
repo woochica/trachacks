@@ -4,15 +4,24 @@ from trac import __version__ as version
 from trac.core import *
 from trac.config import Option, ListOption
 from trac.wiki import WikiSystem, html
-from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
+
 try:
     # for trac 0.10 or 0.11
     from trac.util import sorted
 except ImportError:
     # for trac 0.11.x or later
     from trac.util.compat import sorted
+
+try:
+    from trac.util.html import html as tag
+except:
+    from genshi.builder import tag
+    
+import util
+
+groupby = util.groupby
 
 ## alternative TitleIndex macro
 
@@ -72,7 +81,7 @@ class MultiLangTitleIndex(WikiMacroBase):
 
     One entry displayed by this macro has a format like this:
     {{{
-    WikiStart (en, fr, ja, other)
+    WikiStart (en, fr, ja, default)
     }}}
 
     Left most page name is for usual access with negotiation.
@@ -104,11 +113,98 @@ class MultiLangTitleIndex(WikiMacroBase):
                                         " with '*', it works as prefix.")
 
     _wiki_default_pages = _list_wiki_default_pages()
-    
-    def render_macro(self, req, name, content):
-        env = self.env
-        wiki = WikiSystem(env)
-        # process explicit user pages
+
+    SPLIT_RE = re.compile(r"( |/|[0-9])")
+    PAGE_SPLIT_RE = re.compile(r"([a-z])([A-Z])(?=[a-z])")
+
+    # macro entry point for Trac 0.11
+    def expand_macro(self, formatter, name, content):
+        args, kw = util.parse_args(content)
+        prefix = args and args[0] or None
+        format = kw.get('format', '')
+        minsize = max(int(kw.get('min', 2)), 2)
+        depth = int(kw.get('depth', -1))
+        start = prefix and prefix.count('/') or 0
+
+        wiki = formatter.wiki
+        pages = sorted([page for page in wiki.get_pages(prefix) \
+                        if 'WIKI_VIEW' in formatter.perm('wiki', page)])
+        pagelangs = {}
+        for page in pages:
+            name, lang = util.split_lang(page, '')
+            langs = pagelangs.get(name, [])
+            if lang not in langs:
+                langs.append(lang)
+            pagelangs[name] = langs
+        pages = sorted(pagelangs.keys()) # collection of default pages
+
+        upages, spages = self.split_pages(pages)
+
+        def format_page_name(page, split=False):
+            try:
+                # for trac 0.11                
+                return wiki.format_page_name(page, split=split)
+            except:
+                # for trac 0.10
+                if split:
+                    return self.PAGE_SPLIT_RE.sub(r"\1 \2", page)
+                return page
+        def split(page):
+            if format != 'group':
+                return [format_page_name(page)]
+            else:
+                return self.SPLIT_RE.split(format_page_name(page, split=True))
+        
+        # Group by Wiki word and/or Wiki hierarchy
+        upages, spages = [[(split(page), page) for page in pages
+                           if depth < 0 or depth >= page.count('/') - start]
+                          for pages in (upages, spages)]
+                          
+        def split_in_groups(group):
+            """Return list of pagename or (key, sublist) elements"""
+            groups = []
+            for key, subgrp in groupby(group, lambda (k,p): k and k[0] or ''):
+                subgrp = [(k[1:],p) for k,p in subgrp]
+                if key and len(subgrp) >= minsize:
+                    sublist = split_in_groups(sorted(subgrp))
+                    if len(sublist) == 1:
+                        elt = (key+sublist[0][0], sublist[0][1])
+                    else:
+                        elt = (key, sublist)
+                    groups.append(elt)
+                else:
+                    for elt in subgrp:
+                        groups.append(elt[1])
+            return groups
+
+        def render_one(page, langs):
+            result = [tag.a(wiki.format_page_name(page),
+                            href=formatter.href.wiki(page))]
+            if langs:
+                for lang in sorted(langs):
+                    result.append(', ')
+                    p = '%s.%s' % (page, lang)
+                    result.append(tag.a(lang or 'default',
+                                        style='color:#833',
+                                        href=formatter.href.wiki(p)))
+                result[1] = ' ('
+                result.append(')')
+            return result
+
+        def render_groups(groups):
+            return tag.ul(
+                [tag.li(isinstance(elt, tuple) and 
+                        tag(tag.strong(elt[0]), render_groups(elt[1])) or
+                        render_one(elt, pagelangs.get(elt)))
+                 for elt in groups])
+        #return render_groups(split_in_groups(pages))
+        return tag.table(tag.tr([tag.td([tag.b(title + ' pages:'),
+                                         render_groups(split_in_groups(pages))])
+                                 for title, pages in [('User', upages),
+                                                      ('System', spages)]],
+                                valign='top'))
+
+    def split_pages(self, pages):
         system_pages, exc = _exclude(self._wiki_default_pages,
                                      self._explicit_user_pages)
         # Pick all wiki pages and make list of master pages and also
@@ -117,62 +213,45 @@ class MultiLangTitleIndex(WikiMacroBase):
         # And make list of user pages (non system page).
         user_pages = []                       # pages marked as user's
         lang_map = {}                       # language list for each page
-        re_lang = re.compile('^(.*)\.([a-z]{2}(?:-[a-z]{2})?)?$')
-        for page in wiki.get_pages():
+        for page in pages:
             # note: language variant is not stored in system_pages.
-            m = re_lang.match(page)
-            if m:
-                p, l = m.groups()
-            else:
-                p, l = page, None
-            langs = lang_map.get(p,[])
-            if l and l not in langs:
-                lang_map[p] = langs + [l]
+            p, l = util.split_lang(page)
             if p not in system_pages and p not in user_pages:
                 user_pages.append(p)
         # process explicit system pages
         user_pages, exc = _exclude(user_pages, self._explicit_system_pages)
         system_pages += exc
-        # generate output        
-        prefix = content
-        tr = html.TR(valign='top')
-        for title, pages in (('Project', user_pages),
-                             ('System Provided', system_pages)):
-            if 0 < len(pages):
-                td = html.TD
-                tr.append(td)
-                td.append(html.B(title + ' Pages'))
-                ul = html.UL()
-                td.append(ul)
-                for page in sorted(pages):
-                    if prefix and not page.startswith(prefix):
-                        continue
-                    item = [html.A(wiki.format_page_name(page),
-                                   href=env.href.wiki(page))]
-                    if lang_map.has_key(page):
-                        item.append(' (')
-                        langs = lang_map[page]
-                        for lang in sorted(langs) + ['other']:
-                            p = '%s.%s' % (page, lang)
-                            item.append(html.A(lang,
-                                               href=env.href.wiki(page) + '?lang='+lang,
-                                               style='color:#833'
-                                               ))
-                            item.append(', ')
-                        item.pop()
-                        item.append(')')
-                    ul.append(html.LI(item))
-        return html.TABLE(tr)
+        return user_pages, system_pages
+        
+    
+    # macro entry point for Trac 0.10
+    def render_macro(self, req, name, content):
+        from trac.wiki.formatter import Formatter
+        formatter = Formatter(self.env, req)
+        def getparm(category, target):
+            return req.perm.perms
+        formatter.perm = getparm
+        return self.expand_macro(formatter, name, content)
 
+class TitleIndexMacro(MultiLangTitleIndex):
+    """This is placeholder macro to override with `MultiLangTitleIndex` macro.
+    By enabling wikinegotiator plugin, original `TitleIndexMacro` is
+    replaced by `MultiLangTitleIndex` by this definition.
+    To use original, disable this macro in the admin panel or add following
+    line in your `trac.ini`:
+    {{{
+    wikinegotiator.macros.titleindexmacro = disabled
+    }}}
+    """
+    pass
 
-
-# alternative TOC macro
+# bonus: alternative TOC macro
 
 try:
-    # For delived new NTOC macro, require trac 0.11 and tractoc enabled.
+    # define delived TOC macro. Requires trac 0.11 and tractoc enabled.
     # Renamed as BaseTOCMacro since we may redefine TOCMacro.
     from tractoc.macro import TOCMacro as BaseTOCMacro
-    import wikinegotiator.negotiator
+    import wikinegotiator
 
     # require tractoc macro for 0.11 or later which has get_page_text()
     # method.
@@ -212,10 +291,9 @@ try:
         def expand_macro(self, formatter, name, args):
             """Expand wildcard page spec to non-suffixed page names.
             """
-            args, kw = parse_args(args)
+            args, kw = util.parse_args(args)
 
             wiki = WikiSystem(self.env)
-            nego = wikinegotiator.negotiator.WikiNegotiator(self.env)
             newargs = []
             for arg in args:
                 newargs.append(arg)
@@ -227,7 +305,7 @@ try:
                     prefix = arg[:-1]
                     pages = []
                     for page in wiki.get_pages(prefix):
-                        name, lang = nego._split_lang(page)
+                        name, lang = util.split_lang(page)
                         if name not in pages:
                             pages.append(name)
                     newargs += pages
@@ -255,20 +333,20 @@ try:
                 nego = wikinegotiator.negotiator.WikiNegotiator(self.env)
                 # know lang of parent page where this macro is on.
                 parent = req.args.get('page', 'WikiStart')
-                bname, blang = nego._split_lang(parent)
+                bname, blang = util.split_lang(parent, 'default')
                 # get body name and lang from given page name.
-                name, lang = nego._split_lang(page_resource.id)
+                name, lang = util.split_lang(page_resource.id)
                 wiki = WikiSystem(self.env)
                 if lang is None:
                     # When no lang suffix is in given page name,
                     # find localized page for lang of parent page,
                     # then preferred language.
-                    langs = [blang or nego._default_lang]
-                    langs += nego._get_preferred_langs(req)
+                    langs = [blang] + util.get_preferred_langs(req)
                     for lang in langs:
-                        dname = '%s.%s' % (name, lang)
+                        dname = util.make_page_name(name, lang)
                         if wiki.has_page(dname):
                             name = dname
+                            break # from for
                 else:
                     # with suffix, exact page is used
                     name = page_resource.id
@@ -277,9 +355,23 @@ try:
                 page_resource.id = name
                 return (page.text, page.exists)
 
-except:
-   # TOCMacro load fail
-   pass
+    class TOCMacro(NTOCMacro):
+        """This is placeholder macro to override with `NTOC` macro.
+        By enabling wikinegotiator plugin, original `TOCMacro` is
+        replaced by `NTOCMacro` by this definition.
+        To use original, disable this macro in the admin panel or
+        add following line in your `trac.ini`:
+        {{{
+        wikinegotiator.macros.tocmacro = disabled
+        }}}
+        If you cannot get expected result, you may disable original
+        macro.
+        """
+        pass
+    
+except Exception, exc:
+    # TOCMacro load fail or not acceptable version.
+    pass
 
 ## Bonus Wild TIPS:
 ## Uncomment following two lines if you want to override TOC macro itself.

@@ -6,21 +6,72 @@ from trac.core import Component, implements
 from trac.wiki import WikiSystem
 from trac.wiki.web_ui import WikiModule
 from trac.web.api import IRequestFilter
-from trac.config import Option
-from macros import MultiLangTitleIndex
+from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.config import Option, BoolOption, ListOption
+from pkg_resources import resource_filename
+
+try:
+    from trac.web.clearsilver import HDFWrapper
+    from trac.util.html import html as tag
+    with_hdf = True                             # means on Trac 0.10.x
+except:
+    from genshi.builder import tag
+    with_hdf = False
+
+from wikinegotiator import util
 
 class WikiNegotiator(Component):
 
-    _re_page = re.compile(r'(.*)(?:\.([a-z][a-z](?:-[a-z][a-z])?))$')
+    implements(IRequestFilter, ITemplateProvider)
 
-    _re_lang = re.compile(r'^(?P<lang>[a-z]{1,8}(?:-[a-z]{1,8})?|\*)'
-                         +'(?:;\s*q=(?P<q>[0-9.]+))?$')
-
+    # options
     _default_lang = Option('wiki', 'default_lang', 'en',
                           doc="""Language for non-suffixed page.""")
 
 
-    implements(IRequestFilter)
+    _lang_names = ListOption('wiki-negotiator', 'lang_names', '',
+                            doc="""List of language names for suffixes.
+Specify comma separated ''lang''=''name'' items.
+''lang'' is language code to be used as suffix like `en` or `ja`,
+''name'' is display string for the language.
+If ''name'' is omitted or language is not listed here,
+lang code itself is displayed in menu.
+
+For example, if you specified {{{'en=English, fr, ja=Japanese'}}},
+language menu goes like this:
+{{{
+"Language: English | fr | Japanese | default"
+}}}
+
+In this case, en and ja is named but fr is not.
+
+Displayed languages are listed from existing wiki pages automatically.
+""")
+
+    _menu_style = Option('wiki-negotiator', 'menu_style', 'simple',
+                         doc="""Style type of language menu.
+                         Specify one of `simple`, `ctxnav`, `button`,
+                         `tab` and `none`.
+                         `simple` is a solid independent menu bar bellow
+                         the main navigation menu.
+                         `ctxnav` is like a `simple` but displayed in the
+                         context menu. `button` is button faced menu bar.
+                         `tab` is like a tabbed page selecter.
+                         `none` is for hiding language menu.
+""")
+
+    _default_in_menu = BoolOption('wiki-negotiator', 'default_in_menu',
+                                  'false',
+                                  doc="""Always show 'default' psudo language in menu bar.
+If this options is false, non-suffixed page is treated like suffixed page
+for deafult lang. """)
+    _invalid_suffixes = ListOption('wiki-negotiator', 'invalid_suffixes', 'py',
+                                   doc="""List of suffix not shown as language menu.
+Languages in this option are never shown in language menu.
+This option is usefull for the case of having lang suffix like extension
+like "test.py".
+""")
+
 
     # -- implementation of IRequestFilter --
 
@@ -39,7 +90,7 @@ class WikiNegotiator(Component):
                 # page is selected.
                 # TODO: I don't know we should set default language
                 #       for base page.
-                _, lang = self._split_lang(page)
+                _, lang = util.split_lang(page)
                 req.send_header('Content-Language',
                                 lang or self._default_lang)
             # always send Vary header to tell language negitiation is
@@ -48,8 +99,103 @@ class WikiNegotiator(Component):
         return handler
 
     def post_process_request(self, req, template, content_type):
-        # nothing to do
+        # make menubar if trac 0.10
+        if with_hdf and template == 'wiki.cs' and not req.args.get('action'):
+            # As gimic for Trac 0.10, place our template directory on
+            # the top of HDF loadpath to use our modified 'header.cs'.
+            hdf = getattr(req, 'hdf', None)
+            paths = [resource_filename('wikinegotiator', 'templates')]
+            path_fmt = 'hdf.loadpaths.%d'
+            i = 0
+            while hdf.hdf.getObj(path_fmt % i):
+                paths.append(hdf[path_fmt % i])
+                i += 1
+            hdf['hdf.loadpaths'] = paths
+            # set menu bar data into HDF (renderd as nav macro).
+            idx = 0
+            for item, cls in self.make_menu_bar(req):
+                hdf['chrome.nav.langmenu.%d' % idx] = item
+                if 'active' in cls:
+                    hdf['chrome.nav.langmenu.%d.active' % idx] = 1
+                idx += 1
         return template, content_type
+    
+
+    # ITemplateProvider
+    def get_htdocs_dirs(self):
+        dir = resource_filename('wikinegotiator', 'htdocs')
+        return [('wikinegotiator', dir)]
+    
+    def get_templates_dirs(self):
+        return []
+
+    # 
+    def make_menu_bar(self, req):
+        langs = self._get_available_langs()
+        if not langs:
+            return []                   # no need for lang menu
+        
+        dflt = None                            # default language
+        if not self._default_in_menu:
+            dflt = self._default_lang
+            # add default lang for the mean of default lang page
+            if self._default_lang not in langs:
+                langs.append(self._default_lang)
+                langs.sort()
+        
+        page = req.args.get('page', 'WikiStart')
+        thisname, thislang = util.split_lang(page, 'default')
+        selected = req.session.get('wiki_lang', 'default') # selected lang
+        css = 'wikinegotiator/css/langmenu-%s.css' % self._menu_style
+        add_stylesheet(req, css)
+        lang_name_map = util.make_kvmap(self._lang_names)
+        
+        # add selected lang if need
+        if selected not in langs:
+            langs.append(selected)
+        # Move 'default' to tail in menu bar if option is set or having
+        # default_lang page other than default page.
+        if 'default' in langs:
+            langs.remove('default')
+        if self._default_in_menu:
+            langs.append('default')             # always
+        elif dflt and self._has_page(thisname, dflt) and self._has_page(thisname):
+            # both default_lang and default page are exist.
+            langs.append('default')
+
+        # make list of menu item
+        result = [(tag.span('Language:',
+                            title='Select a language of wiki content'),
+                   'first')]
+        for i, lang in enumerate(langs):
+            cls = ''
+            acls = ''
+            title = ''
+            if lang == selected:
+                acls += 'selected'
+                title = 'selected language'
+            if lang == thislang or (lang == dflt and thislang == 'default'
+                                    and 'default' not in langs):
+                cls += ' active'
+                title = 'displaying language (default)'
+            if lang == selected  == thislang:
+                title = 'selected and displaying language'
+            if (lang == dflt and 'default' not in langs) or lang == 'default':
+                # map default lang to default page
+                suffix = ''
+            else:
+                suffix = lang
+            if not self._has_page(thisname, suffix):
+                acls += ' notexist'
+                title += ' (not available)'
+            if i == len(langs)-1:
+                cls += ' last'
+            a = tag.a(lang_name_map.get(lang, lang),
+                      href=req.href.wiki('%s.%s' % (thisname, suffix)),
+                      class_=acls,
+                      title=title.strip())
+            result.append((a, cls))
+        return result
 
 
     # local methods
@@ -67,25 +213,21 @@ class WikiNegotiator(Component):
         if req.args.get('action', None):
             return orig
 
-        # No negotiation to display edited page after commit.
-        # 'Referrer' header can be used to detect this case
-        # by checking 'action=edit' parameter.
-        # ex. "Referer: http://host/wiki/WikiStart?action=edit"
-        referer = req.get_header('Referer')
-        if referer and referer.startswith(req.base_url) and \
-                'action=edit' in urlparse(referer)[4].split('&'):
-            self.env.log.debug('disable negotiation for edited page.')
-            return orig
-
+        # Get language from session to keep selected language if possible.
+        lang = req.session.get('wiki_lang', None)
+        
         # Use requested page itself if the page name has language
         # suffix. As special case, if the name ends with period '.',
         # use non-suffixed page is used.
+        # This action means user choose the language.
         if orig.endswith('.'):
+            req.session['wiki_lang'] = 'default'
             return orig[:-1]                    # force un suffixed page
 
-        page, lang = self._split_lang(orig)
+        page, lang = util.split_lang(orig)
         if lang:
             #debug('case 1 : requested page name has lang suffix')
+            req.session['wiki_lang'] = lang
             return orig
         page = page or 'WikiStart'
 
@@ -95,8 +237,11 @@ class WikiNegotiator(Component):
         # Check language suffixed page existance in order of preffered
         # language codes in http request and use it if exist.
         wiki = WikiSystem(self.env)
-        for lang in self._get_preferred_langs(req):
-            lpage = '%s.%s' % (page, lang)
+        for lang in util.get_preferred_langs(req):
+            if lang in ['default', 'other']:
+                lpage = page
+            else:
+                lpage = '%s.%s' % (page, lang)
             if wiki.has_page(lpage):
                 #debug('case 2 : have suffixed page: %s' % lpage)
                 return lpage
@@ -116,45 +261,57 @@ class WikiNegotiator(Component):
         #debug('case 3 : no page for preffered lang')
         return orig
 
-    def _split_lang(self, page, lang=None):
-        """Split page body name and suffixed language code from
-        requested page name.
-        ex. 'sub/pagename.ja' => ('sub/pagename', 'ja')
-            'sub/pagename.ja-jp' => ('sub/pagename', 'ja-jp')
+
+    def _get_available_langs(self):
+        """Get language suffixes from existing wiki pages.
+        Not that this list does not contains 'default' psudo lang.
+        This function also cache page names for later existing check.
         """
-        m = self._re_page.match(page)
-        if m:
-            return (m.group(1), m.group(2))         # with lang suffix
-        else:
-            return (page, lang)                     # without lang suffix
-
-
-    def _get_preferred_langs(self, req):
-        # decide by language denotation in url parameter: '?lang=xx'
-        if req.args.has_key('lang'):
-            return [req.args.get('lang')]
-        # otherwise, decide by http Accept-Language: header
-        langs = self._parse_langs(req.get_header('accept-language')
-                                  or self._default_lang)
-        if self._default_lang not in langs:
-            langs += [self._default_lang]                 # fallback language
+        langs = getattr(self, 'available_langs', None)
+        pages = []
+        if langs is None:
+            # list up langs from existing pages.
+            pages = list(WikiSystem(self.env).get_pages())
+            langs = util.make_lang_list(pages)
+            # remove invalid suffixes
+            langs = [x for x in langs if x not in self._invalid_suffixes]
+            self.available_langs = langs        # cache
+            self.available_pages = pages        # cache
         return langs
 
+    def _has_page(self, base, lang=None):
+        return util.make_page_name(base, lang) in self.available_pages
 
-    def _parse_langs(self, al):
-        """Make list of language tag in preferred order.
-        For example,
-        Accept-Language: ja,en-us;q=0.8,en;q=0.2
-        or
-        Accept-Language: en;q=0.2,en-us;q=0.8,ja
-        results ['ja', 'en-us', 'en']
-        """
-        infos = []
-        for item in al.split(','):
-            m = self._re_lang.match(item.strip())
-            if m:
-                lang, q = m.groups()
-                infos.append((lang, float(q or '1.0')))
-        # sort by quality descendant
-        infos.sort(lambda x,y: cmp(y[1], x[1]))
-        return [info[0] for info in infos] # returns list of lang string
+
+# trying to install stream filter to make menu bar on Trac 0.11.
+try:
+    from trac.web.api import ITemplateStreamFilter
+    from genshi.filters.transform import Transformer
+
+    class WikiNegotiatorMenuBar(Component):
+        """Additional interface for wiki page
+        NOTE: Trac 0.11 or later is required."""
+        implements(ITemplateStreamFilter)
+
+        _menu_location = Option('wiki-negotiator', 'menu_location',
+                                  '//div[@id="main"]',
+                                  doc="""Location of menu bar block to be inserted before.
+The value should be valid XPATH locator string.
+Default value is '//div[@id="main"]' and inserted after main menubar.
+""")
+        
+        # implementation of ITemplateStreamFilter
+        def filter_stream(self, req, method, filename, stream, data):
+            if filename != 'wiki_view.html':
+                return stream
+            items = WikiNegotiator(self.env).make_menu_bar(req)
+            if not items or len(items) <= 1:
+                return stream
+            li = []
+            for content, cls in items:
+                li.append(tag.li(content, class_=cls))
+            insert = tag.div(tag.ul(li), id='langmenu')
+            return stream | Transformer(self._menu_location).before(insert)
+
+except Exception, exc:
+    pass

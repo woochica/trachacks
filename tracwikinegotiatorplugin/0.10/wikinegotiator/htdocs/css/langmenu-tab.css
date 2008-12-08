@@ -1,0 +1,73 @@
+/* styles for tabbed language selector */
+/* Current language is selected tab.
+   Explicit preferred language has bolded text.
+   Non existing lang has grayed text.
+ */
+
+div#langmenu {
+  text-align: right;
+  color: black;
+}
+
+div#langmenu ul {
+  margin-top: 10px;
+}
+
+div#langmenu li a {
+  /* color: black; */
+  border: none;
+}
+
+div#langmenu li:hover,
+div#langmenu li.active:hover,
+div#langmenu li a:hover {
+  background: lightgray;
+}
+
+div#langmenu li {
+  padding: 0, 0, 0, 0;
+  border: solid lightgray 1px;
+  display: inline;
+  white-space: nowrap;
+  background: #eee;
+}
+
+div#langmenu li.first {
+  color: gray;
+  border-left: solid transparent 1px;
+  border-right: solid transparent 1px;
+  border-top: solid transparent 1px;
+  padding-left: 2em;
+  background: transparent;
+}
+
+div#langmenu a.notexist {
+  color: gray;
+}
+
+div#langmenu a.selected {
+  /* user selected lang => bolded */
+  font-weight: bold;
+}
+
+div#langmenu li.active {
+  border-top: solid gold 3px;
+  border-right: solid gray 1px;
+  border-bottom: solid transparent 1px;
+  background: transparent;
+}
+
+div#langmenu li a {
+  padding-right: 0.75em;
+  padding-left: 0.75em;
+}
+
+div#langmenu li a:link {
+  text-decoration: none;
+}
+
+@media print {
+  div#langmenu {
+    display: none;
+  }
+}

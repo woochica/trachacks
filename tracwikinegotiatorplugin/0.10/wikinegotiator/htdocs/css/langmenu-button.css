@@ -1,0 +1,80 @@
+/* styles for button language selector */
+/* Current language is pushed.
+   Explicit preferred language is bolded.
+   Non existing lang is grayed out.
+ */
+
+div#langmenu {
+  text-align: right;
+  color: black;
+}
+
+div#langmenu ul {
+  margin-top: 10px;
+}
+
+div#langmenu li a {
+  /* color: black; */
+  border: none;
+}
+
+div#langmenu li:hover,
+div#langmenu li.active:hover,
+div#langmenu li a:hover {
+  background: lightgray;
+}
+
+div#langmenu li {
+  padding: 1px;
+  border-left: solid lightgray 1px;
+  border-top: solid lightgray 1px;
+  border-bottom: solid lightgray 1px;
+  display: inline;
+  white-space: nowrap;
+  background: #eee;
+}
+
+div#langmenu li.last {
+  border-right: solid lightgray 1px;
+}
+
+div#langmenu li.first {
+  color: gray;
+  border: none;
+  background: transparent;
+}
+
+div#langmenu a.notexist a {
+  color: gray;
+}
+
+div#langmenu a.selected {
+  /* user selected lang => bolded */
+  font-weight: bold;
+}
+
+div#langmenu li.active {
+}
+
+div#langmenu li a {
+  padding-right: 0.75em;
+  padding-left: 0.75em;
+}
+
+div#langmenu li.active a {
+  border-top: solid gray 1px;
+  border-left: solid gray 1px;
+  border-right: solid #eee 1px;
+  border-bottom: solid #eee 1px;
+  background: lightgray;
+}
+
+div#langmenu li a:link {
+  text-decoration: none;
+}
+
+@media print {
+  div#langmenu {
+    display: none;
+  }
+}

@@ -1,0 +1,5 @@
+/* styles for hidden language selector */
+
+div#langmenu {
+  display: none;
+}

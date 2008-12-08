@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracWikiNegotiator'
-VERSION = '1.4'
+VERSION = '1.6'
 
 setup(name=PACKAGE, version=VERSION,
       description='Content negotiation plugin for Trac wiki page.',

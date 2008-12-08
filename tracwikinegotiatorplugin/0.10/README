@@ -16,7 +16,7 @@ can be served, of course.
 Thus, what you should do is a writing a localized contents.
 Enjoy!
 
-== How to Install ==
+== Install ==
 
 Build egg file and place it appropriate place
 
@@ -48,6 +48,11 @@ default_lang = en
 
 }}}
 
+Note that `TitleIndex` macro and `TOC` macro (by tractoc plugin) is
+overridden by enabling this plugin. To use original macro, you should
+disable new macro explicitly. See [wiki:#BonusMacro Bonus Macro] for
+more detail.
+
 
 == How to Use ==
 
@@ -72,6 +77,41 @@ To edit the page for other language, first, visit the desired page
 with a way described above, then press "Edit" button.
 
 
+== Language Menu ==
+
+By using this plugin, you can see new language menu bar above the
+wiki context navigation menu. It displays available languages
+on this site automatically by finding language suffixes of wiki pages.
+
+You can select language via this menu. Because it is holded in the session
+information, you can walk with the language without re-selection.
+
+The selected language are displayed underlined and bolded on the
+menu. If specific language content is not availabe, the language item
+in the menu is grayed.
+
+There are 5 kind of display styles:
+
+`simple`::
+  Solid menu bar above the wiki context navigation menu.
+  This is default style.
+`ctxnav`::
+  Like `simple` but displayed on the right of the wiki context menu.
+  It looks like a one of the context menu item.
+`button`::
+  Button faced selection menu.
+`tab`::
+  Tabbed page style of selector.
+`none`::
+  Hide language menu.
+
+The style of language menu can be changed by `menu_style` option:
+{{{
+[wiki-negotiator]
+menu_style=ctxnav
+}}}
+
+
 ==  Bonus Macro ==
 
 For bonus, this plugin contains two new macro: `MultiLangTitleIndex`
@@ -80,9 +120,20 @@ The former is an alternative macro of `TitleIndex`.
 The later is an alternative of `TOC` macro.
 (see [th:wiki:tocmacro] in Trac-Hacs for more detail)
 
+And this plugin has the definitions to override original
+`TitleIndexMacro` and `TOCMacro` automatically. So you do not need
+to edit wiki pages to use both two new macros.
+If you want to disable new feature and use original,
+disable new macros explicitly in `trac.ini` like this:
+{{{
+[components]
+wikinegotiator.macros.titleindexmacro = disabled
+wikinegotiator.macros.tocmacro = disabled
+}}}
+
 === `MultiLangTitleIndex` ===
 The differences against `TitleIndex` are:
- * Display in one line for variants like: "* WikiStart (ja, en, other)".
+ * Display in one line for variants like: "* !WikiStart (ja, en, other)".
  * List pages in two columns: one is for user's pages, one is for
    system provided pages. System pages are the pages made by trac.
    `WikiStart` and `SandBox` are exception by default because it is
