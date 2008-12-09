@@ -46,55 +46,38 @@ class FlashGanttPlugin(Component):
         
             showall = req.args.get('show') == 'all'
 
-            quarters = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
-
             # Get the current date and time
-            cur_dt = datetime.today()
+            cur_dt = datetime.date.today()
 
-            # Figure out what month the cur_dt is in.
-            cur_month = cur_dt.month
+            # Get the quarter I am in.
+            cur_quarter = self._get_quarter(cur_dt.month)
+            # Get prev_quarter start end dates
+            (pq_sd, pq_ed) = self._get_prev_quarters_start_end_dates(cur_dt.year, cur_quarter)
+            (nq_sd, nq_ed) = self._get_next_quarters_start_end_dates(cur_dt.year, cur_quarter)
+            min_date = pq_sd.strftime('%d/%m/%Y')
+            max_date = nq_ed.strftime('%d/%m/%Y')
 
-            # Figure out what Quarter the cur_dt is in.
-            cur_quarter = None
-            for quarter_index in range(0,4):
-                if cur_month in quarters[quarter_index]:
-                    cur_quarter = quarter_index
-                    break;
-
-            # Figure out the beginnig of tha Quarter it is in.
-            calendar
-
-            # Calculate the beginning date of the Quarter before that
-            # one.
-            prev_quarter = None
-            if (cur_quarter == 0):
-                prev_quarter = 4
-            else:
-                prev_quarter = cur_quarter - 1
-
-            # Calculate the ending date of the Quarter after that
-            # one.
-            next_quarter = None
-            if (cur_quarter == 4):
-                next_quarter = 1
-            else:
-                next_quarter = cur_quarter + 1
+            months = []
+            for x in range(pq_sd.month, (nq_ed.month + 1)):
+                (cm_sd, cm_ed) = self._get_month_start_end_dates(cur_dt.year, x)
+                months.append({'name': self._get_month_name(x), 'start_date': cm_sd.strftime('%d/%m/%Y'), 'end_date': cm_ed.strftime('%d/%m/%Y')})
 
             db = self.env.get_db_cnx()
             #milestones = [m for m in Milestone.select(self.env, showall, db)
             #              if 'MILESTONE_VIEW' in req.perm(m.resource)]
-            months = [{'name':'March', 'start_date':'1/3/2005', 'end_date':'31/3/2005'},
-                      {'name':'April', 'start_date':'1/4/2005', 'end_date':'30/4/2005'},
-                      {'name':'May', 'start_date':'1/5/2005', 'end_date':'31/5/2005'},
-                      {'name':'June', 'start_date':'1/6/2005', 'end_date':'30/6/2005'},
-                      {'name':'July', 'start_date':'1/7/2005', 'end_date':'31/7/2005'},
-                      {'name':'August', 'start_date':'1/8/2005', 'end_date':'31/8/2005'}]
-            milestones = [{'name':'writing', 'index':'1', 'start_date':'7/3/2005', 'due_date':'18/4/2005', 'completed_date':'22/4/2005'},
-                          {'name':'signing', 'index':'2', 'start_date':'6/4/2005', 'due_date':'2/5/2005', 'completed_date':'12/5/2005'},
-                          {'name':'financing', 'index':'3', 'start_date':'1/5/2005', 'due_date':'2/6/2005', 'completed_date':'2/6/2005'},
-                          {'name':'permission', 'index':'4', 'start_date':'13/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'},
-                          {'name':'plumbing', 'index':'5', 'start_date':'2/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'}]
-            data = {'milestones': milestones, 'showall': showall, 'visible_months':months, 'min_date':'1/3/2005', 'max_date':'31/8/2005'}
+            #months = [{'name':'March', 'start_date':'1/3/2005', 'end_date':'31/3/2005'},
+            #          {'name':'April', 'start_date':'1/4/2005', 'end_date':'30/4/2005'},
+            #          {'name':'May', 'start_date':'1/5/2005', 'end_date':'31/5/2005'},
+            #          {'name':'June', 'start_date':'1/6/2005', 'end_date':'30/6/2005'},
+            #          {'name':'July', 'start_date':'1/7/2005', 'end_date':'31/7/2005'},
+            #          {'name':'August', 'start_date':'1/8/2005', 'end_date':'31/8/2005'}]
+            #milestones = [{'name':'writing', 'index':'1', 'start_date':'7/3/2005', 'due_date':'18/4/2005', 'completed_date':'22/4/2005'},
+            #              {'name':'signing', 'index':'2', 'start_date':'6/4/2005', 'due_date':'2/5/2005', 'completed_date':'12/5/2005'},
+            #              {'name':'financing', 'index':'3', 'start_date':'1/5/2005', 'due_date':'2/6/2005', 'completed_date':'2/6/2005'},
+            #              {'name':'permission', 'index':'4', 'start_date':'13/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'},
+            #              {'name':'plumbing', 'index':'5', 'start_date':'2/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'}]
+            milestones = []
+            data = {'milestones': milestones, 'showall': showall, 'visible_months': months, 'min_date': min_date, 'max_date': max_date}
                 
             # This tuple is for Genshi (template_name, data, content_type)
             # Without data the trac layout will not appear.
@@ -134,7 +117,7 @@ class FlashGanttPlugin(Component):
         end_date = None
         if (month in thirty_months):
             start_date = datetime.date(year, month, 1)
-            end_date = datetime.date(year, month, 31)
+            end_date = datetime.date(year, month, 30)
         elif (month in thirtyone_months):
             start_date = datetime.date(year, month, 1)
             end_date = datetime.date(year, month, 31)
@@ -147,13 +130,17 @@ class FlashGanttPlugin(Component):
                 end_date = datetime.date(year, month, 28)
 
         return (start_date, end_date)
-    
+
+    def _get_month_name(self, month):
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        return month_names[(month - 1)]
+
     def _get_quarter(self, month):
         quarters = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
 
         quarter_its_in = None
         for x in range(0, 4):
-            if (quarter in quarters[x]):
+            if (month in quarters[x]):
                 quarter_its_in = x
                 break;
 
@@ -161,10 +148,10 @@ class FlashGanttPlugin(Component):
     
     def _get_quarter_start_end_months(self, quarter):
         quarters = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
-        return (quarters[quarter][0], quarters[quarter][3])
+        return (quarters[quarter - 1][0], quarters[quarter - 1][2])
 
     def _get_quarter_start_end_dates(self, year, quarter):
-        (qstart_month, qend_month) = _get_quarter_start_end_months(quarter)
+        (qstart_month, qend_month) = self._get_quarter_start_end_months(quarter)
         (qstart_date, _) = self._get_month_start_end_dates(year, qstart_month)
         (_, qend_date) = self._get_month_start_end_dates(year, qend_month)
 
@@ -174,16 +161,16 @@ class FlashGanttPlugin(Component):
         if (quarter == 1):
             # subtract one from the year and use the 4 quarter of that
             # year
-            return _get_quarter_start_end_dates((year - 1), 4)
+            return self._get_quarter_start_end_dates((year - 1), 4)
         else:
             # use the provided year and subtract one from the provided
             # quarter
-            return _get_quarter_start_end_dates(year, (quarter - 1))
+            return self._get_quarter_start_end_dates(year, (quarter - 1))
 
     def _get_next_quarters_start_end_dates(self, year, quarter):
         if (quarter == 4):
             # add one to the year and use the 1 quarter of that year
-            return _get_quarter_start_end_dates((year + 1), 1)
+            return self._get_quarter_start_end_dates((year + 1), 1)
         else:
             # use the provided year and add one to the provided quarter
-            return _get_quarter_start_end_dates(year, (quarter + 1))
+            return self._get_quarter_start_end_dates(year, (quarter + 1))
