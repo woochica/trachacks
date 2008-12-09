@@ -24,6 +24,8 @@ from trac.ticket import Milestone
 
 import datetime
 
+from trac.util.datefmt import format_date
+
 class FlashGanttPlugin(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
@@ -51,33 +53,47 @@ class FlashGanttPlugin(Component):
 
             # Get the quarter I am in.
             cur_quarter = self._get_quarter(cur_dt.month)
-            # Get prev_quarter start end dates
+            prev_quarter = self._get_prev_quarter(cur_quarter)
+            next_quarter = self._get_next_quarter(cur_quarter)
+
+            (cq_sd, cq_ed) = self._get_quarter_start_end_dates(cur_dt.year, cur_quarter)
             (pq_sd, pq_ed) = self._get_prev_quarters_start_end_dates(cur_dt.year, cur_quarter)
             (nq_sd, nq_ed) = self._get_next_quarters_start_end_dates(cur_dt.year, cur_quarter)
             min_date = pq_sd.strftime('%d/%m/%Y')
             max_date = nq_ed.strftime('%d/%m/%Y')
 
+            quarters = []
+            quarters.append({'name': 'Q' + str(prev_quarter) + ' ' + str(pq_sd.year), 'start_date': pq_sd.strftime('%d/%m/%Y'), 'end_date': pq_ed.strftime('%d/%m/%Y')})
+            quarters.append({'name': 'Q' + str(cur_quarter) + ' ' + str(cq_sd.year), 'start_date': cq_sd.strftime('%d/%m/%Y'), 'end_date': cq_ed.strftime('%d/%m/%Y')})
+            quarters.append({'name': 'Q' + str(next_quarter) + ' ' + str(nq_sd.year), 'start_date': nq_sd.strftime('%d/%m/%Y'), 'end_date': nq_ed.strftime('%d/%m/%Y')})
+            
             months = []
-            for x in range(pq_sd.month, (nq_ed.month + 1)):
-                (cm_sd, cm_ed) = self._get_month_start_end_dates(cur_dt.year, x)
+            for x in range(pq_sd.month, (pq_ed.month + 1)):
+                (cm_sd, cm_ed) = self._get_month_start_end_dates(pq_sd.year, x)
+                months.append({'name': self._get_month_name(x), 'start_date': cm_sd.strftime('%d/%m/%Y'), 'end_date': cm_ed.strftime('%d/%m/%Y')})
+            for x in range(cq_sd.month, (cq_ed.month + 1)):
+                (cm_sd, cm_ed) = self._get_month_start_end_dates(cq_sd.year, x)
+                months.append({'name': self._get_month_name(x), 'start_date': cm_sd.strftime('%d/%m/%Y'), 'end_date': cm_ed.strftime('%d/%m/%Y')})
+            for x in range(nq_sd.month, (nq_ed.month + 1)):
+                (cm_sd, cm_ed) = self._get_month_start_end_dates(nq_sd.year, x)
                 months.append({'name': self._get_month_name(x), 'start_date': cm_sd.strftime('%d/%m/%Y'), 'end_date': cm_ed.strftime('%d/%m/%Y')})
 
-            db = self.env.get_db_cnx()
-            #milestones = [m for m in Milestone.select(self.env, showall, db)
-            #              if 'MILESTONE_VIEW' in req.perm(m.resource)]
-            #months = [{'name':'March', 'start_date':'1/3/2005', 'end_date':'31/3/2005'},
-            #          {'name':'April', 'start_date':'1/4/2005', 'end_date':'30/4/2005'},
-            #          {'name':'May', 'start_date':'1/5/2005', 'end_date':'31/5/2005'},
-            #          {'name':'June', 'start_date':'1/6/2005', 'end_date':'30/6/2005'},
-            #          {'name':'July', 'start_date':'1/7/2005', 'end_date':'31/7/2005'},
-            #          {'name':'August', 'start_date':'1/8/2005', 'end_date':'31/8/2005'}]
-            #milestones = [{'name':'writing', 'index':'1', 'start_date':'7/3/2005', 'due_date':'18/4/2005', 'completed_date':'22/4/2005'},
-            #              {'name':'signing', 'index':'2', 'start_date':'6/4/2005', 'due_date':'2/5/2005', 'completed_date':'12/5/2005'},
-            #              {'name':'financing', 'index':'3', 'start_date':'1/5/2005', 'due_date':'2/6/2005', 'completed_date':'2/6/2005'},
-            #              {'name':'permission', 'index':'4', 'start_date':'13/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'},
-            #              {'name':'plumbing', 'index':'5', 'start_date':'2/5/2005', 'due_date':'12/6/2005', 'completed_date':'19/6/2005'}]
             milestones = []
-            data = {'milestones': milestones, 'showall': showall, 'visible_months': months, 'min_date': min_date, 'max_date': max_date}
+            db = self.env.get_db_cnx()
+            ms = [m for m in Milestone.select(self.env, showall, db)
+                  if 'MILESTONE_VIEW' in req.perm(m.resource)]
+            cnt = 0
+            for m in ms:
+                cnt = cnt + 1
+                comp_stat = 0
+                if (m.is_completed):
+                    comp_stat = 1
+                milestones.append({'name': m.name, 'id': str(cnt),
+                'start_date': pq_sd.strftime('%d/%m/%Y'),
+                'due_date': format_date(m.due, format='%d/%m/%Y'),
+                'completed_date': format_date(m.completed, format='%d/%m/%Y'),
+                'completed': comp_stat})
+            data = {'milestones': milestones, 'showall': showall, 'visible_months': months, 'quarters': quarters}
                 
             # This tuple is for Genshi (template_name, data, content_type)
             # Without data the trac layout will not appear.
@@ -92,7 +108,12 @@ class FlashGanttPlugin(Component):
             milestones = [m for m in Milestone.select(self.env, showall, db)
                           if 'MILESTONE_VIEW' in req.perm(m.resource)]
 
-            data = {'milestones': milestones, 'showall': showall}
+            if (showall):
+                xmlcharturl = req.href.flashgantt('/chartxml?show=all')
+            else:
+                xmlcharturl = req.href.flashgantt('/chartxml')
+
+            data = {'milestones': milestones, 'showall': showall, 'xmlcharturl': xmlcharturl}
         
             #add_stylesheet(req, 'fg/css/flashgantt.css')
         
@@ -141,7 +162,7 @@ class FlashGanttPlugin(Component):
         quarter_its_in = None
         for x in range(0, 4):
             if (month in quarters[x]):
-                quarter_its_in = x
+                quarter_its_in = (x + 1)
                 break;
 
         return quarter_its_in
@@ -174,3 +195,15 @@ class FlashGanttPlugin(Component):
         else:
             # use the provided year and add one to the provided quarter
             return self._get_quarter_start_end_dates(year, (quarter + 1))
+
+    def _get_prev_quarter(self, quarter):
+        if (quarter == 1):
+            return 4
+        else:
+            return quarter - 1
+
+    def _get_next_quarter(self, quarter):
+        if (quarter == 4):
+            return 1
+        else:
+            return quarter + 1
