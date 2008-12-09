@@ -1,0 +1,16 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+  <!-- Custom match templates go here -->
+
+  <head py:match="head" py:attrs="select('@*')">
+    ${select('*|comment|text()')}
+
+    <py:if test="req.environ['PATH_INFO'] == '/timeline'">
+      <!-- Timeline specific - changeset comment translations using Google API -->
+      <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+      <script type="text/javascript" src="${href.chrome('site/timeline.translate.js')}"></script>
+    </py:if>
+
+  </head>
+
+</html>
