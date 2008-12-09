@@ -71,12 +71,27 @@
           <div id="paste" class="searchable">
             ${paste.render(req)}
           </div>
-          <div py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" class="buttons">
-            <form action="${href.pastebin()}" method="get">
+          <div class="buttons">
+            <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
               <input type="hidden" name="reply" value="${paste.id}" />
               <input type="submit" value="Reply to Paste" />
             </form>
-            <form action="${href.pastebin()}" method="get">
+            <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
+              <input type="submit" value="New Paste" />
+            </form>
+            <form py:if="'PASTEBIN_DELETE' in req.perm('pastebin')" action="${href.pastebin()}" method="get" onsubmit="return confirm('Do you really want to delete this paste?')">
+              <input type="hidden" name="delete" value="${paste.id}" />
+              <input type="submit" value="Delete" />
+            </form>
+          </div>
+        </py:when>
+        <py:when test="'delete'">
+          <h1>Paste Deleted</h1>
+          <div class="success">
+            Paste #${paste.id} successfully deleted.
+          </div>
+          <div class="buttons">
+            <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
               <input type="submit" value="New Paste" />
             </form>
           </div>

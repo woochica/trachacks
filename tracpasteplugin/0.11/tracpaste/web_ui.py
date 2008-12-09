@@ -56,7 +56,8 @@ class TracpastePlugin(Component):
         """ Permissions supported by the plugin. """
         return ['PASTEBIN_VIEW',
                 ('PASTEBIN_CREATE', ['PASTEBIN_VIEW']),
-                ('PASTEBIN_ADMIN', ['PASTEBIN_REPLY']),
+                ('PASTEBIN_DELETE', ['PASTEBIN_VIEW']),
+                ('PASTEBIN_ADMIN', ['PASTEBIN_CREATE', 'PASTEBIN_DELETE']),
                ]
 
     # IRequestHandler methods
@@ -98,6 +99,18 @@ class TracpastePlugin(Component):
                     mimetype = paste.mimetype
             else:
                 replyto = '0'
+
+            if 'delete' in req.args and req.args['delete'].isdigit():
+                req.perm('pastebin').assert_permission('PASTEBIN_DELETE')
+                delete = req.args['delete']
+                paste = Paste(self.env, id=delete)
+                if paste:
+                    paste.delete()
+                    data = {
+                        'mode':         'delete',
+                        'paste':        paste,
+                    }
+                    return 'pastebin.html', data, None
 
             if req.method == 'POST':
                 req.perm('pastebin').assert_permission('PASTEBIN_CREATE')

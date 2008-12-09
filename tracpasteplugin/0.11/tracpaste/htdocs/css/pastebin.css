@@ -8,6 +8,13 @@ p.error {
     font-weight: bold;
 }
 
+div.success {
+    background: #bfb;
+    border: 2px solid #484;
+    padding: 0.5em;
+    margin: 1em 0;
+}
+
 div.information {
     padding: 0 0 15px 30px!important;
     color: #555;
