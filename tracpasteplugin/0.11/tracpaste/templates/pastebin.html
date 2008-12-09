@@ -19,9 +19,13 @@
                 by ${p.author}, ${dateinfo(p.time)} ago</li>
             </ul>
           </div>
-          <h1>New Paste</h1>
+          <py:choose test="replyto">
+              <h1 py:when="'0'">New Paste</h1>
+              <h1 py:otherwise="">Reply To Paste #${replyto}</h1>
+          </py:choose>
           <div class="formwrapper">
-            <form action="${href.pastebin()}" method="post">
+          <py:choose test="'PASTEBIN_CREATE' in req.perm('pastebin')">
+            <form py:when="True" action="${href.pastebin()}" method="post">
               <p class="error" py:if="error">
                 You have to supply some data for pasting.
               </p>
@@ -47,6 +51,10 @@
                 <input type="submit" value="Paste!" />
               </div>
             </form>
+            <p py:otherwise="">
+              Sorry, you don't have permission to paste.
+            </p>
+          </py:choose>
           </div>
         </py:when>
         <py:when test="'show'">
@@ -63,7 +71,7 @@
           <div id="paste" class="searchable">
             ${paste.render(req)}
           </div>
-          <div class="buttons">
+          <div py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" class="buttons">
             <form action="${href.pastebin()}" method="get">
               <input type="hidden" name="reply" value="${paste.id}" />
               <input type="submit" value="Reply to Paste" />

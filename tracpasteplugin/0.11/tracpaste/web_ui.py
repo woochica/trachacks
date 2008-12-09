@@ -47,13 +47,17 @@ class TracpastePlugin(Component):
         return 'pastebin'
 
     def get_navigation_items(self, req):
-        if req.perm('pastebin').has_permission('PASTEBIN_USE'):
+        if req.perm('pastebin').has_permission('PASTEBIN_VIEW'):
             yield ('mainnav', 'pastebin',
                   tag.a(_('Pastebin'), href=req.href.pastebin()) )
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        return ['PASTEBIN_USE']
+        """ Permissions supported by the plugin. """
+        return ['PASTEBIN_VIEW',
+                ('PASTEBIN_CREATE', ['PASTEBIN_VIEW']),
+                ('PASTEBIN_ADMIN', ['PASTEBIN_REPLY']),
+               ]
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -70,7 +74,7 @@ class TracpastePlugin(Component):
         return True
 
     def process_request(self, req):
-        req.perm('pastebin').assert_permission('PASTEBIN_USE')
+        req.perm('pastebin').assert_permission('PASTEBIN_VIEW')
         add_stylesheet(req, 'pastebin/css/pastebin.css')
         add_stylesheet(req, 'common/css/code.css')
 
@@ -84,15 +88,19 @@ class TracpastePlugin(Component):
 
             # check if we reply to a paste
             if 'reply' in req.args and req.args['reply'].isdigit():
-                paste = Paste(self.env, req.args['reply'])
+                replyto = req.args['reply']
+                paste = Paste(self.env, id=replyto)
                 if paste:
                     title = paste.title
                     if not title.startswith('Re:'):
                         title = 'Re: ' + title
                     data = paste.data
                     mimetype = paste.mimetype
+            else:
+                replyto = '0'
 
             if req.method == 'POST':
+                req.perm('pastebin').assert_permission('PASTEBIN_CREATE')
                 if not data.strip():
                     error = True
                 else:
@@ -107,6 +115,7 @@ class TracpastePlugin(Component):
 
             data = {
                 'mode':             'new',
+                'replyto':          replyto,
                 'mimetypes':        self._get_mimetypes(),
                 'mimetype':         mimetype,
                 'title':            title,
@@ -118,6 +127,8 @@ class TracpastePlugin(Component):
 
         # show post
         else:
+            req.perm('pastebin').assert_permission('PASTEBIN_VIEW')
+
             paste = Paste(self.env, req.args['paste_id'])
 
             # text format
@@ -169,18 +180,18 @@ class TracpastePlugin(Component):
 
     # ITimelineEventProvider methods
     def get_timeline_filters(self, req):
-        if req.perm('pastebin').has_permission('PASTEBIN_USE'):
+        if req.perm('pastebin').has_permission('PASTEBIN_VIEW'):
             yield('pastebin', _('Pastebin changes'))
 
     def get_timeline_events(self, req, start, stop, filters):
         if 'pastebin' in filters:
             pb_realm = Resource('pastebin')
-            if not req.perm(pb_realm).has_permission('PASTEBIN_USE'):
+            if not req.perm(pb_realm).has_permission('PASTEBIN_VIEW'):
                 return
             add_stylesheet(req, 'pastebin/css/timeline.css')
             pastes = get_pastes(env=self.env, from_dt=start, to_dt=stop)
             for p in pastes:
-                if req.perm(pb_realm(id=p["id"])).has_permission('PASTEBIN_USE'):
+                if req.perm(pb_realm(id=p["id"])).has_permission('PASTEBIN_VIEW'):
                     yield('pastebin', p["time"], p["author"], (p["id"],
                           p["title"]))
         return
