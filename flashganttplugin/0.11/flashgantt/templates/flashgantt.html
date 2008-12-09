@@ -45,10 +45,10 @@ along with FlashGanttPlugin. If not, see <http://www.gnu.org/licenses/>.
                 </div>
             </form>
 
-            <div id="chartdiv" align="center">
+            <div id="chartdiv">
                 <script type="text/javascript">
                     var chart = new
-                    FusionCharts("${href.chrome('/fg/flash/FCF_Gantt.swf')}", "ChartId", "750", "450");
+                    FusionCharts("${href.chrome('/fg/flash/FCF_Gantt.swf')}", "ChartId", "850", "$chart_height");
                     chart.setDataURL("$xmlcharturl");
                     chart.render("chartdiv");
                 </script>

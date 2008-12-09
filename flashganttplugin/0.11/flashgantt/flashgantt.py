@@ -108,12 +108,14 @@ class FlashGanttPlugin(Component):
             milestones = [m for m in Milestone.select(self.env, showall, db)
                           if 'MILESTONE_VIEW' in req.perm(m.resource)]
 
+            chart_height = 150 + (len(milestones) * 29)
             if (showall):
                 xmlcharturl = req.href.flashgantt('/chartxml?show=all')
             else:
                 xmlcharturl = req.href.flashgantt('/chartxml')
 
-            data = {'milestones': milestones, 'showall': showall, 'xmlcharturl': xmlcharturl}
+            data = {'milestones': milestones, 'showall': showall,
+            'xmlcharturl': xmlcharturl, 'chart_height': chart_height}
         
             #add_stylesheet(req, 'fg/css/flashgantt.css')
         

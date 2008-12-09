@@ -1,4 +1,4 @@
-<chart dateFormat='dd/mm/yyyy' hoverCapBorderColor='2222ff' hoverCapBgColor='e1f5ff' ganttWidthPercent='60' ganttLineAlpha='80' canvasBorderColor='024455' canvasBorderThickness='0' gridBorderColor='4567aa' gridBorderAlpha='20' xmlns:py="http://genshi.edgewall.org/">
+<chart dateFormat='dd/mm/yyyy' hoverCapBorderColor='2222ff' hoverCapBgColor='e1f5ff' ganttWidthPercent='70' ganttLineAlpha='80' canvasBorderColor='024455' canvasBorderThickness='0' gridBorderColor='4567aa' gridBorderAlpha='20' xmlns:py="http://genshi.edgewall.org/">
 <categories>
 <py:for each="q in quarters">
 <category start='$q.start_date' end='$q.end_date' name='$q.name' />
@@ -16,7 +16,7 @@
 </processes>
 <tasks  width='10' >
 <py:for each="milestone in milestones">
-<task name='Planned' processId='$milestone.id' start='$milestone.start_date' end='$milestone.due_date' id='${milestone.id}-1' color='4567aa' height='10' topPadding='5' animation='0'/>
+<task name='Planned' processId='$milestone.id' start='$milestone.start_date' end='$milestone.due_date' id='${milestone.id}-1' color='4567aa' height='10' topPadding='5' animation='1'/>
 <py:if test="milestone.completed == 1">
 <task name='Actual' processId='$milestone.id' start='$milestone.start_date' end='$milestone.completed_date' id='$milestone.id' color='cccccc' alpha='100'  topPadding='19' height='10' />
 </py:if>
