@@ -1,0 +1,56 @@
+= Convert tracwiki markup to HTML =
+
+== Description ==
+
+Converts tracwiki markup to HTML.
+Originally posted by Erik Bray on http://groups.google.com/group/trac-dev/msg/479decac43883dc0
+
+Assumes that `trac` is installed in `site-packages` folder, or that you added the path to your `trac` folder to `sys.path`. 
+
+>> NOTE: The script will not work if `trac` is not installed locally. If that is the case, in most cases `easy_install trac` will install it.
+
+== Bugs/Feature Requests == 
+
+Existing bugs and feature requests for TracWikiToHtmlConverterScript are 
+[report:9?COMPONENT=TracWikiToHtmlConverterScript here].
+
+If you have any issues, create a 
+[http://trac-hacks.org/newticket?component=TracWikiToHtmlConverterScript&owner=coldpizza new ticket].
+
+== Download ==
+
+Download the zipped source from [download:tracwikitohtmlconverterscript here].
+
+== Source ==
+
+You can check out the script from [http://trac-hacks.org/svn/tracwikitohtmlconverterscript here] using Subversion, or [source:tracwikitohtmlconverterscript browse the source] with Trac.
+
+== Example ==
+{{{
+#!/usr/bin/env python
+# found on trac google group:
+# Originally posted by Erik Bray on http://groups.google.com/group/trac-dev/browse_thread/thread/2c97c6c514487778?q=#msg_479decac43883dc0
+
+import sys
+from trac.test import EnvironmentStub, Mock, MockPerm
+from trac.mimeview import Context
+from trac.wiki.formatter import HtmlFormatter
+from trac.web.href import Href
+
+env = EnvironmentStub()
+req = Mock(href=Href('/'), abs_href=Href('http://www.example.com/'),
+           authname='anonymous', perm=MockPerm(), args={})
+context = Context.from_request(req, 'wiki')
+
+wiki = '= Trac Wiki to HTML conversion demo ='
+
+print HtmlFormatter(env, context, wiki).generate()
+}}}
+== Recent Changes ==
+
+[[ChangeLog(tracwikitohtmlconverterscript, 3)]]
+
+== Author/Contributors ==
+
+'''Author:''' [wiki:coldpizza] [[BR]]
+'''Contributors:'''
