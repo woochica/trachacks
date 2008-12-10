@@ -16,10 +16,10 @@
 # Author: Felix Tiede
 
 """
-$Id$
+$Id$[[BR]]
 $HeadURL$
 
-Copyright (c) 2007, 2008 Felix Tiede. All rights reserved.
+Copyright (c) 2007, 2008 Felix Tiede. All rights reserved.[[BR]]
 Copyright (c) 2007, 2008 EyeC GmbH. All rights reserved.
 
 Thanks to andrei2102 for porting it to trac-0.11
@@ -31,10 +31,14 @@ Draw a dependency graph for a ticket with the specified recursion depth.
 the viewing browser, depending on how many tickets are open for the project in
 question!
 
+There is also support for [http://trac.edgewall.org/wiki/TracQuery Trac's query language].
+
 == Usage ==
 {{{
-[[Depgraph]]                          # Produce a dependency graph for all tickets with infinite depth
-[[Depgraph([<ticket_id>][,<depth>])]] # Produce a dependency graph for the specified ticket (all, if empty) and the specified depth (infinite, if empty)
+[[DepGraph]]                          # Produce a dependency graph for all tickets with infinite depth
+[[DepGraph([<ticket id>][,<depth>])]] # Produce a dependency graph for the specified ticket (all, if empty) and the specified depth (infinite, if empty)
+
+[[DepGraph(query:<ticket query>[,<depth>])]] # Produce a dependency graph for all tickets within the specified query.
 }}}
 """
 
@@ -95,10 +99,31 @@ class DepGraphMacro(WikiMacroBase):
 
 		return result
 
-	def _depgraph(self, req, ticket, depth):
+	def _depgraph(self, req, base, depth):
+		try:
+			ticket = int(base)
+		except ValueError:
+			if base.startswith('query:'):
+				base = base[6:]
+			elif base.startswith('report:'):
+				req.perm.assert_permission('REPORT_VIEW')
+
+				db = self.env.get_db_cnx()
+				cursor = db.cursor()
+				cursor.execute('SELECT query FROM report WHERE id=%s;', 
+								int(base[7:]))
+				base = ''.join([line.strip() for line in cursor.splitlines()])
+			else:
+				raise TracError('Unknown ticket identifier.')
+
+			from trac.ticket.query import Query
+			query = Query.from_string(self.env, base, max=0) 
+			return ''.join(self._depgraph(req, ticket['id'], -1) \
+							for ticket in query.execute(req))
+
 		self.log.debug('called depgraph(%s, %s)' % (str(ticket), str(depth)))
 		if ticket in self._seen_tickets:
-			return ""
+			return ''
 
 		self._seen_tickets.append(ticket)
 
@@ -114,6 +139,8 @@ class DepGraphMacro(WikiMacroBase):
 			border  = "#00cc00"
 		else:
 			bgcolor, border = self._get_color(str(priority))
+
+		depth = (depth > -1 and depth or 0)
 
 		result = "\"" + str(ticket) + "\" [ URL=\"" \
 				+ req.href.ticket(int(ticket)) \
@@ -180,19 +207,19 @@ class DepGraphMacro(WikiMacroBase):
 		return getdoc(getmodule(self))
 
 	def expand_macro(self, formatter, name, content):
+		formatter.req.perm.assert_permission('TICKET_VIEW')
+
 		self._seen_tickets = []
 		options, kw = parse_args(content)
 		if len(options) == 0:
 			options = ['']
 
 		# Generate graph header
-		result = "digraph G%s { rankdir = \"LR\"\n node [ style=filled ]\n" \
-				% (options[0])
+#		result = "digraph G%s { rankdir = \"LR\"\n node [ style=filled ]\n" \
+#				% (options[0])
+		result = 'digraph G { rankdir = \"LR\"\n node [ style=filled ]\n'
 		
 		graphviz = Graphviz(self.env)
-		# not needed since graphvizplugin v0.7.3, maybe earlier though
-		# no error in graphvizplugin v0.7.2
-		#graphviz.load_config()
 
 		if len(options) > 1 and options[1] is not '':
 			self._maxdepth = int(options[1])
@@ -200,7 +227,7 @@ class DepGraphMacro(WikiMacroBase):
 		if len(options) == 0 or (len(options) > 0 and options[0] == ''):
 			result += self._depgraph_all(formatter.req)
 		else:
-			result += self._depgraph(formatter.req, int(options[0]), 0)
+			result += self._depgraph(formatter.req, options[0], 0)
 
 		# Add footer
 		result += "\n}"

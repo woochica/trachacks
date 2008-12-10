@@ -39,8 +39,9 @@ from trac.mimeview.api import Context
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_stylesheet, add_script
 from trac.wiki.formatter import Formatter
-#from trac.ticket.model import Ticket
 from trac.util.html import html, Markup
+
+from genshi.builder import tag
 
 from depgraph import DepGraphMacro
 
@@ -49,6 +50,9 @@ class DepGraphModule(Component):
 
 	implements(IRequestFilter, IRequestHandler, ITemplateProvider)
 
+	def _unescape(self, match):
+		return chr(int(match.group(0)[1:], 16))
+
 	# IRequestFilter methods
 	def pre_process_request(self, req, handler):
 		return handler
@@ -56,7 +60,24 @@ class DepGraphModule(Component):
 	def post_process_request(self, req, template, data, content_type):
 		if req.path_info.startswith('/ticket'):
 			ticket_id = req.path_info[8:]
-			add_ctxtnav(req, "Dependency Graph", req.href.depgraph(ticket_id), "Dependency Graph")
+			add_ctxtnav(req, "Dependency Graph", req.href.depgraph(ticket_id),
+						"Dependency Graph")
+		if req.path_info.startswith('/query'):
+			query = {}
+			percent_enc = re.compile('\%[0-9a-fA-F]')
+			for line in data['query'].to_string().splitlines():
+				if '=' in line:
+					if line.startswith('query:?'):
+						line = line[7:]
+					line = re.sub(percent_enc, self._unescape, line)
+					key, value = line.split('=')
+					if key in query:
+						query[key].append(value)
+					else:
+						query[key] = [value]
+
+			add_ctxtnav(req, tag.a('Dependency Graph',
+							href=req.href('depgraph', **query)))
 
 		return template, data, content_type
 
@@ -66,34 +87,60 @@ class DepGraphModule(Component):
 		if match:
 			req.args['id'] = match.group(1)
 			return True
+		else:
+			return req.path_info == '/depgraph'
 
 	def process_request(self, req):
 		req.perm.assert_permission('TICKET_VIEW')
 
-		ticket = int(req.args.get('id'))
-		db = self.env.get_db_cnx()
-		cursor = db.cursor()
-		cursor.execute("SELECT 1 FROM ticket WHERE id=%s" %ticket)
-		row = cursor.fetchone()
-		if not row:
-			raise TracError('Cannot build dependency graph for non-existent ticket %d.' % ticket)
+		if 'id' in req.args.keys():
+			try:
+				ticket = int(req.args.get('id'))
+			except ValueError:
+				raise TracError('Need integer ticket id.')
 
-#		req.hdf['title'] = "Ticket %s dependency graph" %ticket
+			sql = ("SELECT 1 FROM ticket WHERE id=%s" %ticket)
+		
+			db = self.env.get_db_cnx()
+			cursor = db.cursor()
+			cursor.execute(sql)
+			row = cursor.fetchone()
+			if not row:
+				raise TracError('Cannot build dependency graph for non-existent ticket %d.' % ticket)
 
-		depth  = -1
-		for key in req.args.keys():
-			if key == 'depth':
-				depth = req.args[key]
+			depth  = -1
+			for key in req.args.keys():
+				if key == 'depth':
+					depth = req.args[key]
+
+			options = '%s,%s' %(ticket, depth)
+			add_ctxtnav(req, 'Back to Ticket #%s'%ticket,
+							req.href.ticket(ticket))
+			title = 'Ticket #%s Dependency Graph' %ticket
+			headline = 'Dependency Graph for Ticket #%s' %ticket
+		else:
+			constraints = {}
+			for key in req.args.keys():
+				if isinstance(req.args[key], (list, tuple)):
+					constraints[key] = '|'.join(req.args[key])
+				else:
+					constraints[key] = req.args[key]
+			options = 'query:' + '&'.join(key + '=' +
+						constraints[key] for key in constraints)
+
+			title = 'Ticket query Dependency Graph'
+			headline = 'Dependency Graph for Query'
+			add_ctxtnav(req, 'Back to query', req.href('query', **req.args))
 		
 		data = {}
 
 		context = Context.from_request(req, '')
 		formatter = Formatter(self.env, context)
-		graph = DepGraphMacro(self.env).expand_macro(formatter, 'DepGraph', \
-				('%s,%s' %(ticket, depth)))
-		data['ticket'] = "%s" %ticket
+		graph = DepGraphMacro(self.env).expand_macro(formatter,
+					'DepGraph', options)
+		data['title'] = title
+		data['headline'] = headline
 		data['depgraph'] = Markup(graph)
-		add_ctxtnav(req, 'Back to Ticket #%s'%ticket, req.href.ticket(ticket))
 
 		return 'depgraph.html', data, None
 		
