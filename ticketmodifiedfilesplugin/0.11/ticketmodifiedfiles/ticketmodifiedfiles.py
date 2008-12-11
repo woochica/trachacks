@@ -73,16 +73,15 @@ class TicketModifiedFilesPlugin(Component):
             #Only show the message when the current ticket is not closed
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            cursor.execute("SELECT status FROM ticket WHERE id=" + str(req.args.get('id')))
-            for status, in cursor:
-                if status != "closed":
-                    numconflictingtickets = self.__process_ticket_request(req, True)
-                    if numconflictingtickets > 0:
-                        text = " There "
-                        if numconflictingtickets == 1: text += "is one ticket that is"
-                        else: text += "are " + str(numconflictingtickets) + " tickets that are"
-                        text += " in conflict with this one!"
-                        stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(tag.p(tag.strong("Warning:"), text, style='background: #def; border: 2px solid #00d; padding: 3px;'))
+            thisticket = Ticket(self.env, req.args.get('id'))
+            if thisticket['status'] != "closed":
+                numconflictingtickets = self.__process_ticket_request(req, True)
+                if numconflictingtickets > 0:
+                    text = " There "
+                    if numconflictingtickets == 1: text += "is one ticket that is"
+                    else: text += "are " + str(numconflictingtickets) + " tickets that are"
+                    text += " in conflict with this one!"
+                    stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(tag.p(tag.strong("Warning:"), text, style='background: #def; border: 2px solid #00d; padding: 3px;'))
             
             #Display the link to this ticket's modifiedfiles page
             stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(
@@ -99,8 +98,8 @@ class TicketModifiedFilesPlugin(Component):
         id = int(req.args.get('id'))
         req.perm('ticket', id, None).require('TICKET_VIEW')
         
-        #Check if the ticket exists
-        Ticket(self.env, id, version=None)
+        #Check if the ticket exists (throws an exception if the ticket does not exist)
+        thisticket = Ticket(self.env, id)
         
         #Get the list of modified files
         files = []
@@ -110,7 +109,8 @@ class TicketModifiedFilesPlugin(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         #Retrieve all the revisions which's messages contain "#<TICKETID>"
-        cursor.execute("SELECT rev, time, author, message FROM revision WHERE message LIKE '%#" + str(id) + "%'")
+        cursor.execute("SELECT rev, time, author, message FROM revision WHERE message LIKE '%%#%s%%'" % id)
+        repos = self.env.get_repository()
         for rev, time, author, message, in cursor:
             #Filter out non-related revisions.
             #for instance, you are lookink for #19, so you don't want #190, #191, #192, etc. to interfere
@@ -122,38 +122,35 @@ class TicketModifiedFilesPlugin(Component):
                 try:
                     int(tempstr[1][0])
                     validrevision = False
-                except: pass
+                except:
+                    pass
                 
             if validrevision:
-                try:
+                if not justnumconflictingtickets:
                     date = "(" + format_time(time, str('%d/%m/%Y - %H:%M')) + ")"
-                except:
-                    date = ""
-                cursor2 = db.cursor()
-                cursor2.execute("SELECT path FROM node_change WHERE rev='%s'" % rev)
-                revisions.append((rev, author, date))
-                for path, in cursor2:
-                    files.append(path)
+                    revisions.append((rev, author, date))
+                for node_change in repos.get_changeset(rev).get_changes():
+                    files.append(node_change[0])
+                    
         
         #Remove duplicated values
         files = self.__remove_duplicated_elements_and_sort(files)
         
         filestatus = {}
-        #Get the last status of each file
-        for file in files:
-            try:
-                #SQLite > 3.2.3 and Postgres (and MySQL?)
-                cursor.execute("SELECT change_type FROM node_change WHERE path='" + file + "' ORDER BY CAST(rev as integer) DESC LIMIT 1")
-            except:
-                #For SQLite < 3.2.3
-                cursor.execute("SELECT change_type FROM node_change WHERE path='" + file + "' ORDER BY 1*rev DESC LIMIT 1")
-            for change_type, in cursor:
-                filestatus[file] = change_type
         
-        #Get the list of conflicting tickets per file
         for file in files:
+            #Get the last status of each file
+            if not justnumconflictingtickets:
+                try:
+                    node = repos.get_node(file)
+                    filestatus[file] = node.get_history().next()[2]
+                except:
+                    #If the node doesn't exist (in the last revision) it means that it has been deleted
+                    filestatus[file] = "delete"
+        
+            #Get the list of conflicting tickets per file
             tempticketslist = []
-            cursor.execute("SELECT message FROM revision WHERE rev in (SELECT rev FROM node_change WHERE path='" + file + "')")
+            cursor.execute("SELECT message FROM revision WHERE rev IN (SELECT rev FROM node_change WHERE path='%s')" % file)
             for message, in cursor:
                 #Extract the ticket number
                 match = re.search(r'#([0-9]+)', message)
@@ -163,44 +160,44 @@ class TicketModifiedFilesPlugin(Component):
                     if ticket != id:
                         tempticketslist.append(ticket)
             tempticketslist = self.__remove_duplicated_elements_and_sort(tempticketslist)
-            ticketsperfile[file] = []
             
+            ticketsperfile[file] = []
             #Keep only the active tickets
             for ticket in tempticketslist:
-                cursor.execute("SELECT status FROM ticket WHERE id=" + str(ticket))
-                for status, in cursor:
-                    if status != "closed":
+                try:
+                    if Ticket(self.env, ticket)['status'] != "closed":
                         ticketsperfile[file].append(ticket)
+                except:
+                    pass
         
         #Get the global list of conflicting tickets
         #Only if the ticket is not already closed
         conflictingtickets=[]
-        cursor.execute("SELECT status FROM ticket WHERE id=" + str(req.args.get('id')))
-        for status, in cursor:
-            if status != "closed":
-                ticketisclosed = False
-                for fn, relticketids in ticketsperfile.items():
-                    for relticketid in relticketids:
-                        cursor.execute("SELECT summary, status, owner FROM ticket WHERE id=" + str(relticketid))
-                        for summary, status, owner, in cursor:
-                            conflictingtickets.append((relticketid, summary, status, owner))
+        ticketisclosed = True
+        if thisticket['status'] != "closed":
+            ticketisclosed = False
+            for fn, relticketids in ticketsperfile.items():
+                for relticketid in relticketids:
+                    tick = Ticket(self.env, relticketid)
+                    conflictingtickets.append((relticketid, tick['summary'], tick['status'], tick['owner']))
+    
+            #Remove duplicated values
+            conflictingtickets = self.__remove_duplicated_elements_and_sort(conflictingtickets)
         
-                #Remove duplicated values
-                conflictingtickets = self.__remove_duplicated_elements_and_sort(conflictingtickets)
-            else:
-                ticketisclosed = True
-        
-        #Separate the deleted files from the others
-        deletedfiles = []
-        for file in files:
-            if filestatus[file] == "D":
-                deletedfiles.append(file)
-        for deletedfile in deletedfiles:
-            files.remove(deletedfile)
+        #Close the repository
+        repos.close()
         
         #Return only the number of conflicting tickets (if asked for)
         if justnumconflictingtickets:
             return len(conflictingtickets)
+        
+        #Separate the deleted files from the others
+        deletedfiles = []
+        for file in files:
+            if filestatus[file] == "delete":
+                deletedfiles.append(file)
+        for deletedfile in deletedfiles:
+            files.remove(deletedfile)
         
         #Return all the needed information
         return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions)

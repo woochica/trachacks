@@ -22,12 +22,12 @@
             <li class="fileslist">
               <input class="helpcheckbox" type="checkbox"></input>
               <py:choose>
-                <py:when test="filestatus[filename] == 'E' or filestatus[filename] == 'D' or filestatus[filename] == 'A' or filestatus[filename] == 'C' or filestatus[filename] == 'M'">
-                  <py:choose><py:when test="filestatus[filename] == 'E'"><span class="edit">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'D'"><span class="delete">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'A'"><span class="add">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'C'"><span class="copy">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'M'"><span class="move">&nbsp;</span></py:when></py:choose>
+                <py:when test="filestatus[filename] == 'edit' or filestatus[filename] == 'delete' or filestatus[filename] == 'add' or filestatus[filename] == 'copy' or filestatus[filename] == 'move'">
+                  <py:choose><py:when test="filestatus[filename] == 'edit'"><span class="edit">&nbsp;</span></py:when></py:choose>
+                  <py:choose><py:when test="filestatus[filename] == 'delete'"><span class="delete">&nbsp;</span></py:when></py:choose>
+                  <py:choose><py:when test="filestatus[filename] == 'add'"><span class="add">&nbsp;</span></py:when></py:choose>
+                  <py:choose><py:when test="filestatus[filename] == 'copy'"><span class="copy">&nbsp;</span></py:when></py:choose>
+                  <py:choose><py:when test="filestatus[filename] == 'move'"><span class="move">&nbsp;</span></py:when></py:choose>
                 </py:when>
                 <py:otherwise>
                   <span class="unknown">&nbsp;</span>
@@ -82,17 +82,17 @@
           ${showfileslist(deletedfiles, "deleted")}
           
           <div id="legendsection">
-            <div><a id="togglecheckboxlink" href="#" onclick="javascript:togglevisibility('checkboxes'); return false;" title="Can be helpful to for instance track which files have already been uploaded">Display the checkboxes</a></div>
+            <div><a id="togglecheckboxlink" href="#" onclick="togglevisibility('checkboxes'); return false;" title="Can be helpful to track which files have already been uploaded">Display the checkboxes</a></div>
             <strong>Legend:</strong>
-            <py:choose><py:when test="'E' in filestatus.values()"><span class="edit">&nbsp;</span><span class="legendinfo">Edited</span></py:when></py:choose>
-            <py:choose><py:when test="'D' in filestatus.values()"><span class="delete">&nbsp;</span><span class="legendinfo">Deleted</span></py:when></py:choose>
-            <py:choose><py:when test="'A' in filestatus.values()"><span class="add">&nbsp;</span><span class="legendinfo">Added</span></py:when></py:choose>
-            <py:choose><py:when test="'C' in filestatus.values()"><span class="copy">&nbsp;</span><span class="legendinfo">Copied</span></py:when></py:choose>
-            <py:choose><py:when test="'M' in filestatus.values()"><span class="move">&nbsp;</span><span class="legendinfo">Moved</span></py:when></py:choose>
+            <py:choose><py:when test="'edit' in filestatus.values()"><span class="edit">&nbsp;</span><span class="legendinfo">Edited</span></py:when></py:choose>
+            <py:choose><py:when test="'delete' in filestatus.values()"><span class="delete">&nbsp;</span><span class="legendinfo">Deleted</span></py:when></py:choose>
+            <py:choose><py:when test="'add' in filestatus.values()"><span class="add">&nbsp;</span><span class="legendinfo">Added</span></py:when></py:choose>
+            <py:choose><py:when test="'copy' in filestatus.values()"><span class="copy">&nbsp;</span><span class="legendinfo">Copied</span></py:when></py:choose>
+            <py:choose><py:when test="'move' in filestatus.values()"><span class="move">&nbsp;</span><span class="legendinfo">Moved</span></py:when></py:choose>
           </div>
           
           <div id="changesetslist">
-            <h3 class="backtonormalflow"><a id="changesetslink" href="#" onclick="javascript:togglevisibility('listofchangesets'); return false;">Display the list of changesets relative to this ticket.</a></h3>
+            <h3 class="backtonormalflow"><a id="changesetslink" href="#" onclick="togglevisibility('listofchangesets'); return false;">Display the list of changesets relative to this ticket.</a></h3>
             <dl id="listofchangesets">
             <py:for each="rev, author, date in revisions">
 			  <dt class="changeset">
