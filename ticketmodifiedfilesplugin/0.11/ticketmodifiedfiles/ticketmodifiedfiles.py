@@ -27,9 +27,9 @@ class TicketModifiedFilesPlugin(Component):
     
     def process_request(self, req):
         #Retrieve the information needed to display in the /modifiedfiles/ page
-        (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions) = self.__process_ticket_request(req)
+        (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions, ticketsdescription) = self.__process_ticket_request(req)
         #Pack the information to send to the html file
-        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets, 'ticketisclosed':ticketisclosed, 'revisions':revisions}
+        data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets, 'ticketisclosed':ticketisclosed, 'revisions':revisions, 'ticketsdescription':ticketsdescription}
         #Add the custom stylesheet
         add_stylesheet(req, 'common/css/timeline.css')
         add_stylesheet(req, 'tmf/css/ticketmodifiedfiles.css')
@@ -101,7 +101,6 @@ class TicketModifiedFilesPlugin(Component):
         #Check if the ticket exists (throws an exception if the ticket does not exist)
         thisticket = Ticket(self.env, id)
         
-        #Get the list of modified files
         files = []
         revisions = []
         ticketsperfile = {}
@@ -173,13 +172,16 @@ class TicketModifiedFilesPlugin(Component):
         #Get the global list of conflicting tickets
         #Only if the ticket is not already closed
         conflictingtickets=[]
+        ticketsdescription={}
+        ticketsdescription[id] = thisticket['summary']
         ticketisclosed = True
         if thisticket['status'] != "closed":
             ticketisclosed = False
             for fn, relticketids in ticketsperfile.items():
                 for relticketid in relticketids:
                     tick = Ticket(self.env, relticketid)
-                    conflictingtickets.append((relticketid, tick['summary'], tick['status'], tick['owner']))
+                    conflictingtickets.append((relticketid, tick['status'], tick['owner']))
+                    ticketsdescription[relticketid] = tick['summary']
     
             #Remove duplicated values
             conflictingtickets = self.__remove_duplicated_elements_and_sort(conflictingtickets)
@@ -200,7 +202,7 @@ class TicketModifiedFilesPlugin(Component):
             files.remove(deletedfile)
         
         #Return all the needed information
-        return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions)
+        return (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions, ticketsdescription)
     
     def __remove_duplicated_elements_and_sort(self, list):
         d = {}

@@ -7,7 +7,7 @@
   <xi:include href="layout.html" />
   <head>
     <title>
-      #${ticketid} related files
+      #${ticketid} related files (${ticketsdescription[ticketid]})
     </title>
   </head>
 
@@ -22,12 +22,8 @@
             <li class="fileslist">
               <input class="helpcheckbox" type="checkbox"></input>
               <py:choose>
-                <py:when test="filestatus[filename] == 'edit' or filestatus[filename] == 'delete' or filestatus[filename] == 'add' or filestatus[filename] == 'copy' or filestatus[filename] == 'move'">
-                  <py:choose><py:when test="filestatus[filename] == 'edit'"><span class="edit">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'delete'"><span class="delete">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'add'"><span class="add">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'copy'"><span class="copy">&nbsp;</span></py:when></py:choose>
-                  <py:choose><py:when test="filestatus[filename] == 'move'"><span class="move">&nbsp;</span></py:when></py:choose>
+                <py:when test="filestatus[filename] in ['edit', 'delete', 'add', 'copy', 'move']">
+                  <span class="${filestatus[filename]}">&nbsp;</span>
                 </py:when>
                 <py:otherwise>
                   <span class="unknown">&nbsp;</span>
@@ -36,7 +32,7 @@
               <span class="insidelist"><a href="${href.log(filename)}">${filename}</a>
               <py:choose>
                 <py:when test="ticketisclosed == False and len(ticketsperfile[filename]) > 0">
-                  (ticket<py:choose><py:when test="len(ticketsperfile[filename]) > 1">s</py:when></py:choose> <py:for each="relticketid in ticketsperfile[filename]"><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid != ticketsperfile[filename][-1]">, </py:when></py:choose><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid == ticketsperfile[filename][-1]"> and </py:when></py:choose><a href="${href.ticket(relticketid)}">#${relticketid}</a></py:for>)
+                  (ticket<py:choose><py:when test="len(ticketsperfile[filename]) > 1">s</py:when></py:choose> <py:for each="relticketid in ticketsperfile[filename]"><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid != ticketsperfile[filename][-1]">, </py:when></py:choose><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid == ticketsperfile[filename][-1]"> and </py:when></py:choose><a href="${href.ticket(relticketid)}" title="${ticketsdescription[relticketid]}">#${relticketid}</a></py:for>)
                 </py:when>
               </py:choose>
               </span>
@@ -51,6 +47,7 @@
     <div id="content" class="ticketmodifiedfiles">
     
       <h1>Modified files related to the ticket #${ticketid}</h1>
+      <h3>#${ticketid}: ${ticketsdescription[ticketid]}</h3>
       
       <py:choose>
         <py:when test="len(files) > 0 or len(deletedfiles) > 0">
@@ -60,8 +57,8 @@
                 <py:when test="len(conflictingtickets) > 0">
                   <h3><span style="text-decoration: underline;">WARNING:</span> ${len(conflictingtickets)} conflicting ticket<py:choose><py:when test="len(conflictingtickets) > 1">s</py:when></py:choose> <py:choose><py:when test="len(conflictingtickets) > 1">have</py:when><py:otherwise>has</py:otherwise></py:choose> been detected:</h3>
                   <ul>
-                    <li py:for="relticketid, relticketdesc, relticketstatus, relticketowner in conflictingtickets">
-                      <a href="${href.ticket(relticketid)}">#${relticketid}</a> (${relticketdesc}, <span style="text-decoration: underline;">status:</span> ${relticketstatus}, <span style="text-decoration: underline;">owner:</span> ${relticketowner})
+                    <li py:for="relticketid, relticketstatus, relticketowner in conflictingtickets">
+                      <a href="${href.ticket(relticketid)}">#${relticketid}</a> (${ticketsdescription[relticketid]}, <span style="text-decoration: underline;">status:</span> ${relticketstatus}, <span style="text-decoration: underline;">owner:</span> ${relticketowner})
                     </li>
                   </ul>
                 </py:when>
@@ -82,7 +79,8 @@
           ${showfileslist(deletedfiles, "deleted")}
           
           <div id="legendsection">
-            <div><a id="togglecheckboxlink" href="#" onclick="togglevisibility('checkboxes'); return false;" title="Can be helpful to track which files have already been uploaded">Display the checkboxes</a></div>
+            <div><a id="togglecheckboxlink" href="#" onclick="togglevisibility('checkboxes'); return false;">Display the checkboxes</a></div>
+            <br/>
             <strong>Legend:</strong>
             <py:choose><py:when test="'edit' in filestatus.values()"><span class="edit">&nbsp;</span><span class="legendinfo">Edited</span></py:when></py:choose>
             <py:choose><py:when test="'delete' in filestatus.values()"><span class="delete">&nbsp;</span><span class="legendinfo">Deleted</span></py:when></py:choose>
