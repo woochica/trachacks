@@ -1,0 +1,63 @@
+/* $Id: wikidoc.css 9864 2008-12-11 17:32:20Z cosimo $ /
+
+a.podindex {
+	color: #444; font-family: monospace;
+}
+ul.podindex {
+	list-style: none; padding-left: 10px;
+}
+li.podindexdir {
+		padding: 3px 0px 3px 30px;
+		background-repeat: no-repeat;
+		background-position: top left;
+		background-image: url(/icons/folder.gif)
+}
+li.podindexfile {
+		padding: 3px 0px 3px 30px;
+		background-repeat: no-repeat;
+		background-position: top left;
+		background-image: url(/icons/p.gif);
+}
+span.podindexpath {
+	color: #888;
+}
+
+h1.pod {
+	color: #161;
+	font-size: 2em;
+	background-color: #cfc;
+	border-top: 1px solid #383;
+	border-bottom: 1px solid #383;
+}
+h2.pod {
+	margin-top: 1.2em;
+	font-size: 1.6em;
+	color: #161;
+	border-bottom: 1px solid #383;
+}
+h3.pod {
+	font-size: 1.5em;
+	color: black;
+}
+h4.pod { }
+h5.pod { }
+
+div.poditem {
+	margin-top: 1em;
+	font-weight: bold;
+	font-size: 1em;
+}
+li.poditem {
+	font-size: 1em;
+}
+pre.pod {
+	margin-left: 20px;
+	padding: 10px;
+	background: #efe;
+	border: 1px solid #aca;
+}
+p.pod { } 
+a.pod { color: #383; }
+i.pod { }
+tt.pod { font-family: monospace }
+b.pod { }
