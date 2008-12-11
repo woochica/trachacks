@@ -10,7 +10,7 @@ from trac.perm import IPermissionRequestor
 from trac.resource import Resource, IResourceManager
 from trac.config import BoolOption, IntOption, ListOption
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
-                            add_stylesheet, add_link
+                            add_stylesheet, add_link, Chrome
 from trac.web.main import IRequestHandler
 from trac.timeline.api import ITimelineEventProvider
 from trac.util.datefmt import http_date
@@ -143,6 +143,7 @@ class TracpastePlugin(Component):
             req.perm('pastebin').assert_permission('PASTEBIN_VIEW')
 
             paste = Paste(self.env, req.args['paste_id'])
+            paste.author = Chrome(self.env).format_author(req, paste.author)
 
             # text format
             if req.args.get('format') in ('txt', 'raw') and self.enable_other_formats:
