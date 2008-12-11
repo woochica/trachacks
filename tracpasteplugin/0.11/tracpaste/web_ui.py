@@ -143,7 +143,6 @@ class TracpastePlugin(Component):
             req.perm('pastebin').assert_permission('PASTEBIN_VIEW')
 
             paste = Paste(self.env, req.args['paste_id'])
-            paste.author = Chrome(self.env).format_author(req, paste.author)
 
             # text format
             if req.args.get('format') in ('txt', 'raw') and self.enable_other_formats:

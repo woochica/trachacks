@@ -16,7 +16,7 @@
             <h3>Recent Pastes</h3>
             <ul>
               <li py:for="p in recent"><a href="${href.pastebin(p.id)}">${p.title}</a>
-                by ${p.author}, ${dateinfo(p.time)} ago</li>
+                by ${format_author(p.author)}, ${dateinfo(p.time)} ago</li>
             </ul>
           </div>
           <py:choose test="replyto">
@@ -61,7 +61,7 @@
           <h1>${paste.title}</h1>
           <div class="information">
             <p>
-              pasted by <em>${paste.author}</em>, ${dateinfo(paste.time)} ago
+              pasted by <em>${format_author(paste.author)}</em>, ${dateinfo(paste.time)} ago
             </p>
             <p class="metainfo">
               Content-Type: <em>${paste.mimetype}</em><br />
