@@ -166,9 +166,9 @@ def convert_use_permissions(env, db):
         for row in cursor:
             users.append(row[0])
         for user in users:
-            cursor.execute("INSERT INTO permission ('username', 'action') "
+            cursor.execute("INSERT INTO permission (username, action) "
                                "VALUES (%s, 'PASTEBIN_VIEW')", (user,))
-            cursor.execute("INSERT INTO permission ('username', 'action') "
+            cursor.execute("INSERT INTO permission (username, action) "
                                "VALUES (%s, 'PASTEBIN_CREATE')", (user,))
             cursor.execute("DELETE FROM permission WHERE "
                            "username=%s AND action='PASTEBIN_USE'", (user,))
