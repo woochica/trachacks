@@ -1,103 +1,98 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
-  <head>
-    <title>Screenshots - Matrix View</title>
-  </head>
-  <body>
-    <div class="images">
-      <table>
-        <tbody>
-          <py:for each="row in screenshots.matrix">
-            <tr>
-              <py:for each="image in row">
-                <td>
-                  <py:choose>
-                    <div py:when="image.id != -1" class="image" style="width: ${screenshots.width}px; height: ${screenshots.height}px">
-                      <?python
-                        frame_aspect = float(screenshots['width']) / float(screenshots['height'])
-                        image_aspect = float(image['width']) / float(image['height'])
-                        if frame_aspect < image_aspect:
-                            image_width = screenshots['width']
-                            image_height = int(screenshots['width'] / image_aspect + 0.5)
-                        else:
-                            image_width = int(screenshots['height'] * image_aspect + 0.5)
-                            image_height = screenshots['height']
-                      ?>
-                      <a href="${href.screenshots(image.id)}" title="${image.id}" style="line-height: ${screenshots.height - 4}px">
-                        <img src="${href.screenshots(image.id, width = image_width, height = image_height, format = 'raw')}"
-                          alt="${image.description}"/>
-                      </a>
-                    </div>
-                    <div py:otherwise="" class="image noimage" style="width: ${screenshots.width}px; height: ${screenshots.height}px">
-                      &nbsp;
-                    </div>
-                  </py:choose>
-                <div class="name">${image.name or '&nbsp;'}</div>
-                  <div py:if="'SCREENSHOTS_ADMIN' in perm" class="controls">
-                    <py:choose>
-                      <py:when test="image.id != -1">
-                        <a href="${href.screenshots()}?action=edit;id=${image.id};index=${screenshots.index}">Edit</a>
-                        <a href="${href.screenshots()}?action=delete;id=${image.id};index=${screenshots.index}">Delete</a>
-                      </py:when>
-                      <py:otherwise>
-                        &nbsp;
-                      </py:otherwise>
-                    </py:choose>
+  <div class="images">
+    <table>
+      <tbody>
+        <py:for each="row in screenshots.matrix">
+          <tr>
+            <py:for each="image in row">
+              <td>
+                <py:choose>
+                  <div py:when="image.id != -1" class="image" style="width: ${screenshots.width}px; height: ${screenshots.height}px">
+                    <?python
+                      frame_aspect = float(screenshots['width']) / float(screenshots['height'])
+                      image_aspect = float(image['width']) / float(image['height'])
+                      if frame_aspect < image_aspect:
+                          image_width = screenshots['width']
+                          image_height = int(screenshots['width'] / image_aspect + 0.5)
+                      else:
+                          image_width = int(screenshots['height'] * image_aspect + 0.5)
+                          image_height = screenshots['height']
+                    ?>
+                    <a href="${href.screenshots(image.id)}" title="${image.id}" style="line-height: ${screenshots.height - 4}px">
+                      <img src="${href.screenshots(image.id, width = image_width, height = image_height, format = 'raw')}"
+                        alt="${image.description}"/>
+                    </a>
                   </div>
-                </td>
-              </py:for>
-            </tr>
-          </py:for>
-        </tbody>
-      </table>
-    </div>
+                  <div py:otherwise="" class="image noimage" style="width: ${screenshots.width}px; height: ${screenshots.height}px">
+                    &nbsp;
+                  </div>
+                </py:choose>
+              <div class="name">${image.name or '&nbsp;'}</div>
+                <div py:if="('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="controls">
+                  <py:choose>
+                    <py:when test="image.id != -1">
+                      <a py:if="'SCREENSHOTS_EDIT' in perm" href="${href.screenshots()}?action=edit;id=${image.id};index=${screenshots.index}">Edit</a>
+                      <a py:if="'SCREENSHOTS_DELETE' in perm" href="${href.screenshots()}?action=delete;id=${image.id};index=${screenshots.index}">Delete</a>
+                    </py:when>
+                    <py:otherwise>
+                      &nbsp;
+                    </py:otherwise>
+                  </py:choose>
+                </div>
+              </td>
+            </py:for>
+          </tr>
+        </py:for>
+      </tbody>
+    </table>
+  </div>
 
-    <div class="controls">
-      <div class="position">Page ${screenshots.page}/${screenshots.page_count}</div>
-      &larr;
-      <py:choose>
-        <py:when test="screenshots.prev_index != -1">
-          <a href="${href.screenshots()}?index=0">First Page</a>
-        </py:when>
-        <py:otherwise>
-          First Page
-        </py:otherwise>
-      </py:choose>
-      |
-      <py:choose>
-        <py:when test="screenshots.prev_index != -1">
-          <a href="${href.screenshots()}?index=${screenshots.prev_index}">Previous Page</a>
-        </py:when>
-        <py:otherwise>
-          Previous Page
-        </py:otherwise>
-      </py:choose>
-      |
-      <span>
-        <form class="goto" method="get" action="${href.screenshots()}">
-          <input type="input" name="page" value="${screenshots.page or '1'}" onkeypress="return checkNumber(event)"/>
-          <input type="submit" value="Go"></input>
-        </form>
-      </span>
-      |
-      <py:choose>
-        <py:when test="screenshots.next_index != -1">
-          <a href="${href.screenshots()}?index=${screenshots.next_index}">Next Page</a>
-        </py:when>
-        <py:otherwise>
-          Next Page
-        </py:otherwise>
-      </py:choose>
-      |
-      <py:choose>
-        <py:when test="screenshots.next_index != -1">
-          <a href="${href.screenshots()}?index=${screenshots.screenshot_count - 1}">Last Page</a>
-        </py:when>
-        <py:otherwise>
-          Last Page
-        </py:otherwise>
-      </py:choose>
-      &rarr;
-    </div>
-  </body>
+  <div class="controls">
+    <div class="position">Page ${screenshots.page}/${screenshots.page_count}</div>
+    &larr;
+    <py:choose>
+      <py:when test="screenshots.prev_index != -1">
+        <a href="${href.screenshots()}?index=0">First Page</a>
+      </py:when>
+      <py:otherwise>
+        First Page
+      </py:otherwise>
+    </py:choose>
+    |
+    <py:choose>
+      <py:when test="screenshots.prev_index != -1">
+        <a href="${href.screenshots()}?index=${screenshots.prev_index}">Previous Page</a>
+      </py:when>
+      <py:otherwise>
+        Previous Page
+      </py:otherwise>
+    </py:choose>
+    |
+    <span>
+      <form class="goto" method="get" action="${href.screenshots()}">
+        <input type="input" name="page" value="${screenshots.page or '1'}" onkeypress="return checkNumber(event)"/>
+        <input type="submit" value="Go"></input>
+      </form>
+    </span>
+    |
+    <py:choose>
+      <py:when test="screenshots.next_index != -1">
+        <a href="${href.screenshots()}?index=${screenshots.next_index}">Next Page</a>
+      </py:when>
+      <py:otherwise>
+        Next Page
+      </py:otherwise>
+    </py:choose>
+    |
+    <py:choose>
+      <py:when test="screenshots.next_index != -1">
+        <a href="${href.screenshots()}?index=${screenshots.screenshot_count - 1}">Last Page</a>
+      </py:when>
+      <py:otherwise>
+        Last Page
+      </py:otherwise>
+    </py:choose>
+    &rarr;
+  </div>
 </html>

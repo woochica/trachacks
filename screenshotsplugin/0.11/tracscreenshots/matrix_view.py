@@ -33,7 +33,7 @@ class ScreenshotsMatrixView(Component):
 
     # IScreenshotsRenderer methods.
 
-    def render_screenshots(self, req, data):
+    def render_screenshots(self, req):
         # Add CSS style and JavaScript scripts.
         add_stylesheet(req, 'screenshots/css/matrix-view.css')
 
@@ -45,7 +45,7 @@ class ScreenshotsMatrixView(Component):
         self.log.debug('page: %s' % (page))
 
         # Count index or page depending on user input.
-        count = len(data['screenshots'])
+        count = len(req.data['screenshots'])
         count_on_page = self.rows * self.columns
         if index != -1:
             page = (index / count_on_page) + 1
@@ -69,17 +69,17 @@ class ScreenshotsMatrixView(Component):
              next_index = -1
 
         # Fill data dictionary.
-        data['rows'] = self.rows
-        data['columns'] = self.columns
-        data['width'] = self.width
-        data['height'] = self.height
-        data['matrix'] = self._build_matrix(index, data['screenshots'])
-        data['index'] = index
-        data['page'] = page
-        data['page_count'] = page_cout
-        data['prev_index'] = prev_index
-        data['next_index'] = next_index
-        data['screenshot_count'] = len(data['screenshots'])
+        req.data['rows'] = self.rows
+        req.data['columns'] = self.columns
+        req.data['width'] = self.width
+        req.data['height'] = self.height
+        req.data['matrix'] = self._build_matrix(index, req.data['screenshots'])
+        req.data['index'] = index
+        req.data['page'] = page
+        req.data['page_count'] = page_cout
+        req.data['prev_index'] = prev_index
+        req.data['next_index'] = next_index
+        req.data['screenshot_count'] = len(req.data['screenshots'])
         return ('screenshots-matrix-view.html', None)
 
     def get_screenshots_view(req):

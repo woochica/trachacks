@@ -14,15 +14,15 @@
 
       <xi:include href="${screenshots.content_template}"/>
 
-      <div py:if="'SCREENSHOTS_ADMIN' in perm" class="buttons screenshot_buttons">
-        <form method="post" action="${href.screenshots()}">
+      <div py:if="('SCREENSHOTS_ADD' in perm) or ('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="buttons screenshot_buttons">
+        <form py:if="'SCREENSHOTS_ADD' in perm" method="post" action="${href.screenshots()}">
           <div>
             <input type="submit" name="add" value="Add"/>
             <input type="hidden" name="action" value="add"/>
             <input type="hidden" name="index" value="${screenshots.index}"/>
           </div>
         </form>
-        <form py:if="len(screenshots) > 0 and index" method="post" action="${href.screenshots()}">
+        <form py:if="('SCREENSHOTS_EDIT' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
           <div>
             <input type="submit" name="edit" value="Edit"/>
             <input type="hidden" name="action" value="edit"/>
@@ -30,7 +30,7 @@
             <input type="hidden" name="index" value="${screenshots.index}"/>
           </div>
         </form>
-        <form py:if="len(screenshots) > 0 and index" method="post" action="${href.screenshots()}">
+        <form py:if="('SCREENSHOTS_DELETE' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
           <div>
             <input type="submit" name="delete" value="Delete"/>
             <input type="hidden" name="id" value="${screenshots.id}"/>

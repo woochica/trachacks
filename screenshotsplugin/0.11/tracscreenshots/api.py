@@ -29,7 +29,7 @@ class IScreenshotsRenderer(Interface):
     """Extension point interface for components providing view on
        screenshots."""
 
-    def render_screenshots(req, name, data):
+    def render_screenshots(req, name):
         """Provides template and data for screenshots view. Inputs request
            object and dictionary with screenshots data and should return tuple
            with template name and content type."""

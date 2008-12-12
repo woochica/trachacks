@@ -77,9 +77,13 @@ class ScreenshotsCore(Component):
         view = 'SCREENSHOTS_VIEW'
         filter = ('SCREENSHOTS_FILTER', ['SCREENSHOTS_VIEW'])
         order = ('SCREENSHOTS_ORDER', ['SCREENSHOTS_VIEW'])
+        add = ('SCREENSHOTS_ADD', ['SCREENSHOTS_VIEW'])
+        edit = ('SCREENSHOTS_EDIT', ['SCREENSHOTS_VIEW'])
+        delete = ('SCREENSHOTS_DELETE', ['SCREENSHOTS_VIEW'])
         admin = ('SCREENSHOTS_ADMIN', ['SCREENSHOTS_ORDER',
-          'SCREENSHOTS_FILTER', 'SCREENSHOTS_VIEW'])
-        return [view, filter, order, admin]
+          'SCREENSHOTS_FILTER', 'SCREENSHOTS_ADD', 'SCREENSHOTS_EDIT',
+          'SCREENSHOTS_DELETE', 'SCREENSHOTS_VIEW'])
+        return [view, filter, order, add, edit, delete, admin]
 
     # ITemplateProvider methods.
 
@@ -122,16 +126,16 @@ class ScreenshotsCore(Component):
         # Create request context.
         context = Context.from_request(req)('screenshots-core')
 
-        # Clear data for next request.
-        self.data = {}
+        # Template data dictionary.
+        req.data = {}
 
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
 
         # Prepare data structure.
-        self.data['title'] = self.mainnav_title or self.metanav_title
-        self.data['has_tags'] = self.env.is_component_enabled(
+        req.data['title'] = self.mainnav_title or self.metanav_title
+        req.data['has_tags'] = self.env.is_component_enabled(
           'tracscreenshots.tags.ScreenshotsTags')
 
         # Get action from request and perform them.
@@ -145,7 +149,7 @@ class ScreenshotsCore(Component):
 
         # Return template and its data.
         db.commit()
-        return (template + '.html', {'screenshots' : self.data}, content_type)
+        return (template + '.html', {'screenshots' : req.data}, content_type)
 
     # Internal functions.
 
@@ -195,7 +199,7 @@ class ScreenshotsCore(Component):
 
                 # Check if requested screenshot exists.
                 if not screenshot:
-                    if context.req.perm.has_permission('SCREENSHOTS_ADMIN'):
+                    if context.req.perm.has_permission('SCREENSHOTS_ADD'):
                         context.req.redirect(context.req.href.screenshots(
                           action = 'add'))
                     else:
@@ -217,7 +221,7 @@ class ScreenshotsCore(Component):
                       screenshot['time'], utc))
 
                     # For HTML preview format return template.
-                    self.data['screenshot'] = screenshot
+                    context.req.data['screenshot'] = screenshot
                     return ('screenshot', None)
                 else:
                     # Prepare screenshot filename.
@@ -247,21 +251,21 @@ class ScreenshotsCore(Component):
                       [0])
 
             elif action == 'add':
-                context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                context.req.perm.assert_permission('SCREENSHOTS_ADD')
 
                 # Get request arguments.
                 index = int(context.req.args.get('index') or 0)
 
                 # Fill data dictionary.
-                self.data['index'] = index
-                self.data['versions'] = api.get_versions(context)
-                self.data['components'] = api.get_components(context)
+                context.req.data['index'] = index
+                context.req.data['versions'] = api.get_versions(context)
+                context.req.data['components'] = api.get_components(context)
 
                 # Return template with add screenshot form.
                 return ('screenshot-add', None)
 
             elif action == 'post-add':
-                context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                context.req.perm.assert_permission('SCREENSHOTS_ADD')
 
                 # Get image file from request.
                 file, filename = self._get_file_from_req(context.req)
@@ -303,17 +307,17 @@ class ScreenshotsCore(Component):
                 context.req.args['id'] = None
 
             elif action == 'edit':
-                context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                context.req.perm.assert_permission('SCREENSHOTS_EDIT')
 
                 # Get request arguments.
                 screenshot_id = context.req.args.get('id')
 
                 # Prepare data dictionary.
-                self.data['screenshot'] = api.get_screenshot(context,
+                context.req.data['screenshot'] = api.get_screenshot(context,
                   screenshot_id)
 
             elif action == 'post-edit':
-                context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                context.req.perm.assert_permission('SCREENSHOTS_EDIT')
 
                 # Get screenshot arguments.
                 screenshot_id = int(context.req.args.get('id') or 0)
@@ -414,7 +418,7 @@ class ScreenshotsCore(Component):
                 context.req.args['id'] = None
 
             elif action == 'delete':
-                context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                context.req.perm.assert_permission('SCREENSHOTS_DELETE')
 
                 # Get request arguments.
                 screenshot_id = context.req.args.get('id')
@@ -530,26 +534,26 @@ class ScreenshotsCore(Component):
                   len(enabled_versions)))
 
                 # Fill data dictionary.
-                self.data['id'] = screenshot_id
-                self.data['components'] = components
-                self.data['versions'] = versions
-                self.data['screenshots'] = screenshots
-                self.data['href'] = context.req.href.screenshots()
-                self.data['enabled_versions'] = enabled_versions
-                self.data['enabled_components'] = enabled_components
-                self.data['filter_relation'] = relation
-                self.data['orders'] = orders
+                context.req.data['id'] = screenshot_id
+                context.req.data['components'] = components
+                context.req.data['versions'] = versions
+                context.req.data['screenshots'] = screenshots
+                context.req.data['href'] = context.req.href.screenshots()
+                context.req.data['enabled_versions'] = enabled_versions
+                context.req.data['enabled_components'] = enabled_components
+                context.req.data['filter_relation'] = relation
+                context.req.data['orders'] = orders
 
                 # Get screenshots content template and data.
                 template, content_type = self.renderers[0]. \
-                  render_screenshots(context.req, self.data)
-                self.data['content_template'] = template
+                  render_screenshots(context.req)
+                context.req.data['content_template'] = template
 
                 # Return main template.
                 return ('screenshots', content_type)
 
             elif actions == 'screenshot-add':
-                context.req.perm.assert_permission('SCREENSHOTS_ADMIN')
+                context.req.perm.assert_permission('SCREENSHOTS_ADD')
 
                 # Get screenshot
                 screenshot = api.get_screenshot(context, self.id)
