@@ -94,7 +94,6 @@ class TicketModifiedFilesPlugin(Component):
         req.perm('ticket', id, None).require('TICKET_VIEW')
         #Get the list of status that have to be ignored when looking for conflicts
         ignored_statuses = self.__striplist(self.env.config.get("modifiedfiles", "ignored_statuses", "closed").split(","))
-        print ignored_statuses
         
         #Check if the ticket exists (throws an exception if the ticket does not exist)
         thisticket = Ticket(self.env, id)
