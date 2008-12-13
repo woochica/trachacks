@@ -1,10 +1,15 @@
-from setuptools import find_packages, setup
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-setup(name='TracCia',
-      version='0.2',
-      packages = find_packages(),
-      entry_points="""
-[trac.plugins]
-traccia = traccia
-"""
-      )
+from setuptools import setup
+
+setup(
+    name = 'TracCia',
+    version = '0.3',
+    packages = ['traccia'],
+    entry_points = {
+        'trac.plugins': [
+            'traccia = traccia',
+        ],
+    },
+)
