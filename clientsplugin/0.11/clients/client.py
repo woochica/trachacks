@@ -26,7 +26,7 @@ class ClientModule(Component):
     def post_process_request(self, req, template, data, content_type):
         # Some ticket views do not actually load the data in this way
         # e.g. action=history or action=diff
-        if not data.has_key('fields'):
+        if not data or not data.has_key('fields'):
             return template, data, content_type
 
         newticket = req.path_info.startswith('/newticket')
