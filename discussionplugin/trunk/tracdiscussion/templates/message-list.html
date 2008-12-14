@@ -21,7 +21,7 @@
 
         ${display_discussion(discussion, href.discussion(discussion.forum.id, discussion.topic.id))}
 
-        <div py:if="'DISCUSSION_MODERATE' in perm and discussion.is_moderator" class="buttons">
+        <div py:if="'DISCUSSION_MODERATE' in perm and discussion.moderator" class="buttons">
           <form method="post" action="${href.discussion(discussion.forum.id, discussion.topic.id)}">
             <div>
               <input type="submit" name="deletetopic" value="Delete Topic" onclick="return confirm('Do you realy want to delete this topic?')"/>

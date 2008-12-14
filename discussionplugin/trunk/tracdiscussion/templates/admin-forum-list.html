@@ -6,6 +6,10 @@
     <title>Discussion Forums</title>
   </head>
 
+  <?python
+    from trac.wiki.formatter import format_to_oneliner
+  ?>
+
   <py:with vars="is_edit = discussion.forum.id and not req.args.submit">
     <body>
       <h2>Forums</h2>
@@ -18,17 +22,17 @@
 
           <div class="field">
             <label for="name">Name:</label><br/>
-            <input type="text" id="name" name="name" value="${is_edit and discussion.name or None}"/><br/>
+            <input type="text" id="name" name="name" value="${is_edit and discussion.forum.name or None}"/><br/>
           </div>
 
           <div class="field">
             <label for="subject">Subject:</label><br/>
-            <input type="text" id="subject" name="subject" value="${is_edit and discussion.subject or None}"/><br/>
+            <input type="text" id="subject" name="subject" value="${is_edit and discussion.forum.subject or None}"/><br/>
           </div>
 
           <div class="field">
             <label for="description">Description:</label><br/>
-            <input type="text" id="description" name="description" value="${is_edit and discussion.description or None}"/><br/>
+            <input type="text" id="description" name="description" value="${is_edit and discussion.forum.description or None}"/><br/>
           </div>
 
           <div class="field">
@@ -37,12 +41,12 @@
               <select py:when="len(discussion.users)" id="moderators" name="moderators" multiple="on">
                 <py:for each="user in discussion.users">
                   <py:choose>
-                    <option py:when="is_edit and user in discussion.moderators" value="$user" selected="selected">$user</option>
+                    <option py:when="is_edit and user in discussion.forum.moderators" value="$user" selected="selected">$user</option>
                     <option py:otherwise="" value="$user">$user</option>
                   </py:choose>
                 </py:for>
               </select>
-              <input py:otherwise="" type="text" id="moderators" name="moderators" value="${discussion.moderators}"/>
+              <input py:otherwise="" type="text" id="moderators" name="moderators" value="${discussion.forum.moderators}"/>
             </py:choose><br/>
           </div>
 
@@ -52,7 +56,7 @@
               <select id="group" name="group">
                 <py:for each="group in discussion.groups">
                   <py:choose>
-                    <option py:when="is_edit and user in discussion.moderators" value="${group.id}" selected="selected">${group.name}</option>
+                    <option py:when="is_edit and (group.id == discussion.forum.forum_group)" value="${group.id}" selected="selected">${group.name}</option>
                     <option py:otherwise="" value="${group.id}">${group.name}</option>
                   </py:choose>
                 </py:for>
@@ -109,26 +113,26 @@
                   <td class="subject">
                     <div class="subject">
                       <a href="${panel_href(forum.id)}">
-                        <span>${forum.subject or '&nbsp;'}</span>
+                        <span>${format_to_oneliner(discussion.env, context, forum.subject) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="description">
                     <div class="description">
                       <a href="${panel_href(forum.id)}">
-                        <span>${forum.description or '&nbsp;'}</span>
+                        <span>${format_to_oneliner(discussion.env, context, forum.description) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="moderators">
                     <div class="moderators">
                       <a href="${panel_href(forum.id)}">
-                        <span>${forum.moderators or '&nbsp;'}</span>
+                        <span>${format_to_oneliner(discussion.env, context, forum.moderators) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td py:if="len(discussion.groups) > 1" class="group">
-                    <div py:for="group in discussion.groups" py:if="group.id == forum.group" class="group">
+                    <div py:for="group in discussion.groups" py:if="group.id == forum.forum_group" class="group">
                       <a href="${panel_href(forum.id)}">
                         <span>${group.name}</span>
                       </a>

@@ -30,7 +30,7 @@
       </thead>
       <tbody>
         <py:for each="line, forum in enumerate(forums)">
-          <tr py:if="forum.group == group.id" class="${line % 2 and 'even' or 'odd'}">
+          <tr py:if="forum.forum_group == group.id" class="${line % 2 and 'even' or 'odd'}">
             <td class="id">
               <div class="id">
                  <a href="${href.discussion(forum.id)}">

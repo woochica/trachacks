@@ -36,7 +36,7 @@
           <py:if test="'DISCUSSION_APPEND' in perm">
             <a href="${href}?discussion_action=add;message=-1;#reply">Reply</a>
             <a href="${href}?discussion_action=quote;message=-1;#reply">Quote</a>
-            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.is_moderator) or ((discussion.authname == discussion.topic.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;#reply">Edit</a>
+            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.moderator) or ((discussion.authname == discussion.topic.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;#reply">Edit</a>
           </py:if>
         </div>
 
@@ -170,9 +170,9 @@
           <py:if test="'DISCUSSION_APPEND' in perm">
             <a href="${href}?discussion_action=add;message=${message.id}#reply">Reply</a>
             <a href="${href}?discussion_action=quote;message=${message.id}#reply">Quote</a>
-            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.is_moderator) or ((discussion.authname == message.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;message=${message.id}#reply">Edit</a>
+            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.moderator) or ((discussion.authname == message.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;message=${message.id}#reply">Edit</a>
           </py:if>
-          <a py:if="'DISCUSSION_MODERATE' in perm and discussion.is_moderator" href="${href}?discussion_action=delete;message=${message.id}" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')">Delete</a>
+          <a py:if="'DISCUSSION_MODERATE' in perm and discussion.moderator" href="${href}?discussion_action=delete;message=${message.id}" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')">Delete</a>
         </div>
 
         <div class="footer">
