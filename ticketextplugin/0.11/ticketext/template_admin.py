@@ -29,7 +29,7 @@ class TicketTemplateAdmin(Component):
     def filter_stream(self, req, method, filename, stream, data):
         if req.perm.has_permission('TRAC_ADMIN') and filename.startswith('template_admin'):
             script = '\n<script type="text/javascript">'\
-                   + 'TicketTemplate.setUp(\'' + req.base_path + '\');'\
+                   + 'ticketext.TicketTemplate.setUp(\'' + req.base_path + '\');'\
                    + '</script>\n'
             return stream | Transformer('//div[@id="footer"]').before(MarkupTemplate(script).generate())
         

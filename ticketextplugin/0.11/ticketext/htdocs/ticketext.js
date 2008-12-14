@@ -1,7 +1,10 @@
+var ticketext;
+if (!ticketext) ticketext = {};
+
 /**
  * i18n
  */
-var Localizer = function() {
+ticketext.Localizer = function() {
     this.strings = {};
     this.lang = "?";
     
@@ -26,9 +29,9 @@ var Localizer = function() {
     
     var self = this;
     this.getLocalizedString = function(key) {
-        var message = Localizer.strings[key + "_" + self.lang];
+        var message = ticketext.Localizer.strings[key + "_" + self.lang];
         if (!message || message == "") {
-            message = Localizer.strings[key];
+            message = ticketext.Localizer.strings[key];
         }
         return message;
     };
@@ -36,10 +39,10 @@ var Localizer = function() {
     return this;
 }
 
-Localizer = new Localizer();
-_ = Localizer.getLocalizedString;
+ticketext.Localizer = new ticketext.Localizer();
+_ = ticketext.Localizer.getLocalizedString;
 
-Localizer.strings = {
+ticketext.Localizer.strings = {
     // default
     "template.confirm.clear" : "Apply the template to the description." + "\n" +
                                "The description will be clear, but you sure?",
@@ -59,7 +62,7 @@ Localizer.strings = {
  * @param typeIdValue The ticket type element id.
  * @param descIdValue The ticket description element id.
  */
-var TicketTemplate = function(baseUrlValue) {
+ticketext.TicketTemplate = function(baseUrlValue) {
     
     this.STYLE_CLASS_EXCLUDE = "te_exclude";
     this.DELIM               = ",";
@@ -88,7 +91,7 @@ var TicketTemplate = function(baseUrlValue) {
 /**
  * Initialize TicketTemplate.
  */
-TicketTemplate.prototype.initialize = function() {
+ticketext.TicketTemplate.prototype.initialize = function() {
     var typeElem = document.getElementById(this.typeId);
     if (!typeElem) {
         return;
@@ -105,7 +108,7 @@ TicketTemplate.prototype.initialize = function() {
  * 
  * @param typeElem The ticket type element.
  */
-TicketTemplate.prototype.changeType = function(typeElem) {
+ticketext.TicketTemplate.prototype.changeType = function(typeElem) {
     var self = this;
     
     var func = function(event) {
@@ -125,7 +128,7 @@ TicketTemplate.prototype.changeType = function(typeElem) {
  * 
  * @param typeElem The ticket type element.
  */
-TicketTemplate.prototype.selectTemplate = function(typeElem) {
+ticketext.TicketTemplate.prototype.selectTemplate = function(typeElem) {
     var self = this;
     
     var selectedIndex = typeElem.selectedIndex;
@@ -159,7 +162,7 @@ TicketTemplate.prototype.selectTemplate = function(typeElem) {
  * 
  * @param Template data object of TicketExt.
  */
-TicketTemplate.prototype.applyTemplate = function(templateData) {
+ticketext.TicketTemplate.prototype.applyTemplate = function(templateData) {
     if (!templateData) {
         return;
     }
@@ -183,7 +186,7 @@ TicketTemplate.prototype.applyTemplate = function(templateData) {
  * 
  * @param Template data object of TicketExt.
  */
-TicketTemplate.prototype.applyDescription = function(templateData) {
+ticketext.TicketTemplate.prototype.applyDescription = function(templateData) {
     // change description value
     var descElem = document.getElementById(this.descId);
     if (!descElem) {
@@ -260,7 +263,7 @@ TicketTemplate.prototype.applyDescription = function(templateData) {
  * 
  * @param Template data object of TicketExt.
  */
-TicketTemplate.prototype.applyCustomfields = function(templateData) {
+ticketext.TicketTemplate.prototype.applyCustomfields = function(templateData) {
     
     var enablefieldsValue = templateData.enablefields;
     if (!enablefieldsValue || jQuery.trim(enablefieldsValue).length <= 0) {
@@ -285,7 +288,7 @@ TicketTemplate.prototype.applyCustomfields = function(templateData) {
  * 
  * @param enablePropArray Enable property array
  */
-TicketTemplate.prototype.applyCustomfieldsForAdmin = function(enablePropArray) {
+ticketext.TicketTemplate.prototype.applyCustomfieldsForAdmin = function(enablePropArray) {
     var fieldsElem = document.getElementsByName("cf-enable");
     if (fieldsElem.length <= 0) {
         return;
@@ -311,7 +314,7 @@ TicketTemplate.prototype.applyCustomfieldsForAdmin = function(enablePropArray) {
  * 
  * @param enablePropArray Enable property array.
  */
-TicketTemplate.prototype.applyCustomfieldsForTicket = function(enablePropArray) { 
+ticketext.TicketTemplate.prototype.applyCustomfieldsForTicket = function(enablePropArray) { 
     var fieldsElem = document.getElementById("properties");
     if (!fieldsElem) {
         return;
@@ -368,7 +371,7 @@ TicketTemplate.prototype.applyCustomfieldsForTicket = function(enablePropArray) 
  * @param typeId The ticket type element id.
  * @param descId The ticket description element id.
  */
-TicketTemplate.prototype.setElementId = function(typeId, descId) {
+ticketext.TicketTemplate.prototype.setElementId = function(typeId, descId) {
     this.typeId = typeId;
     this.descId = descId;
 }
@@ -378,7 +381,7 @@ TicketTemplate.prototype.setElementId = function(typeId, descId) {
  * 
  * @param readyDescription if true, apply the description on load
  */
-TicketTemplate.prototype.setReadyDescription = function(readyDescription) {
+ticketext.TicketTemplate.prototype.setReadyDescription = function(readyDescription) {
     this.readyDescription = readyDescription;
 }
 
@@ -387,7 +390,7 @@ TicketTemplate.prototype.setReadyDescription = function(readyDescription) {
  * 
  * @param readyCustomfields if true, apply the custom fields on load
  */
-TicketTemplate.prototype.setReadyCustomfields = function(readyCustomfields) {
+ticketext.TicketTemplate.prototype.setReadyCustomfields = function(readyCustomfields) {
     this.readyCustomfields = readyCustomfields;
 }
 
@@ -396,7 +399,7 @@ TicketTemplate.prototype.setReadyCustomfields = function(readyCustomfields) {
  * 
  * @param baseUrl The base URL of the ajax request.
  */
-TicketTemplate.setUp = function(baseUrl) {
-    var ticketTemplateObj = new TicketTemplate(baseUrl);
+ticketext.TicketTemplate.setUp = function(baseUrl) {
+    var ticketTemplateObj = new ticketext.TicketTemplate(baseUrl);
     ticketTemplateObj.initialize();
 };

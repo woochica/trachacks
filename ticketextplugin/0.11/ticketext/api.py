@@ -36,7 +36,7 @@ class TicketTemplate(Component):
         if hasattr(json, 'dumps'):
             # use simplejson(After python2.6 default)
             response = json.dumps(response_data);
-            response = unicode(response, 'utf-8')        
+            response = unicode(response, 'utf-8')
         elif hasattr(json, 'write'):
             # use json-py
             response = json.write(response_data);

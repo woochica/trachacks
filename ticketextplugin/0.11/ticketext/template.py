@@ -7,6 +7,8 @@ from genshi.filters.transform import Transformer
 from genshi.template import MarkupTemplate
 from api import TicketTemplate
 
+_TRUE_VALUES = ('true', 'enabled', '1', 1, True)
+
 class TicketTemplateModule(Component):
     implements(ITemplateProvider, IRequestFilter, ITemplateStreamFilter)
 
@@ -40,22 +42,30 @@ class TicketTemplateModule(Component):
     
     # ITemplateStreamFilter method
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == 'ticket.html':
-            readyDescription = False
-            
-            if req.path_info == '/newticket' and 'preview' not in req.args:
-                readyDescription = True
-            
-            script = '\n<script type="text/javascript">\n'\
-                   + 'var tikectTemplate = new TicketTemplate(\'' + req.base_path + '\');\n'\
-                   + 'tikectTemplate.setElementId(\'field-type\', \'field-description\');\n'\
-                   + 'tikectTemplate.setReadyDescription(' + str(readyDescription).lower() + ');\n'\
-                   + 'tikectTemplate.initialize();\n'\
-                   + '</script>\n'
-
-            return stream | Transformer('//div[@id="footer"]').before(MarkupTemplate(script).generate())
+        if filename != 'ticket.html':
+            return stream
         
-        return stream
+        # if specify disable, not execute.
+        enable = True
+        if 'ticketext' in req.args:
+            enable = req.args['ticketext']
+            enable = enable.lower() in _TRUE_VALUES
+            enable = bool(enable)
+        if not enable:
+            return stream
+        
+        readyDescription = False
+        if req.path_info == '/newticket' and 'preview' not in req.args:
+            readyDescription = True
+        
+        script = '\n<script type="text/javascript">\n'\
+               + 'var tikectTemplate = new ticketext.TicketTemplate(\'' + req.base_path + '\');\n'\
+               + 'tikectTemplate.setElementId(\'field-type\', \'field-description\');\n'\
+               + 'tikectTemplate.setReadyDescription(' + str(readyDescription).lower() + ');\n'\
+               + 'tikectTemplate.initialize();\n'\
+               + '</script>\n'
+        
+        return stream | Transformer('//div[@id="footer"]').before(MarkupTemplate(script).generate())
 
 
 class TicketTypeChangeHandler(Component):
@@ -63,10 +73,13 @@ class TicketTypeChangeHandler(Component):
 
     # IRequestHandler method
     def match_request(self, req):
+        match = False
         if req.path_info == '/ticketext/template':
-            return True
+            match = True
         else:
-            return False
+            match = False
+        
+        return match
     
     # IRequestHandler method
     def process_request(self, req):
