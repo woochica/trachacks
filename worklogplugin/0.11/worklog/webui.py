@@ -18,7 +18,7 @@ from trac.wiki.formatter import wiki_to_html
 from trac.util.text import CRLF
 
 class WorkLogPage(Component):
-    implements(IPermissionRequestor, INavigationContributor, IRequestHandler, ITemplateProvider, IRequestFilter)
+    implements(IPermissionRequestor, INavigationContributor, IRequestHandler, ITemplateProvider)
 
     def __init__(self):
         pass
@@ -29,10 +29,7 @@ class WorkLogPage(Component):
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        if re.search('/worklog', req.path_info):
-            return "worklog"
-        else:
-            return ""
+        return 'worklog'
 
     def get_navigation_items(self, req):
         url = req.href.worklog()
@@ -70,19 +67,9 @@ class WorkLogPage(Component):
                     .replace('\n', '\\n').replace('\r', '\\r'))
         req.write(CRLF)
     
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        # Add Stylesheet here, so that the ticket page gets it too :)
-        add_stylesheet(req, "worklog/worklogplugin.css")
-        return handler
-    
-    # Noop
-    def post_process_request(self, req, template, data, content_type):
-        return template, data, content_type
-    
     # IRequestHandler methods
     def match_request(self, req):
-        if re.search('/worklog', req.path_info):
+        if re.search('^/worklog', req.path_info):
             return True
         return None
 
@@ -96,6 +83,8 @@ class WorkLogPage(Component):
         if not re.search('/worklog', req.path_info):
             return None
         
+        add_stylesheet(req, "worklog/worklogplugin.css")
+
         # Specific pages:
         match = re.search('/worklog/users/(.*)', req.path_info)
         if match:

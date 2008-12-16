@@ -11,6 +11,7 @@ from trac.wiki.formatter import format_to_oneliner
 from trac.resource import Resource, get_resource_url, \
                          render_resource_link, get_resource_shortname, \
                          get_resource_name
+from trac.web.chrome import add_stylesheet
 
 class WorkLogTimelineAddon(Component):
     implements(ITimelineEventProvider)
@@ -27,6 +28,8 @@ class WorkLogTimelineAddon(Component):
         show_starts = 'workstart' in filters
         show_stops = 'workstop' in filters
         if show_starts or show_stops:
+            add_stylesheet(req, "worklog/worklogplugin.css")
+            
             ts_start = to_timestamp(start)
             ts_stop = to_timestamp(stop)
 
