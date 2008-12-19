@@ -28,7 +28,7 @@ class CustomFieldAdminPage(Component):
     def render_admin_panel(self, req, cat, page, customfield):
         req.perm.require('TICKET_ADMIN')
         
-        add_script(req, 'customfieldadmin/js/CustomFieldAdminPage_actions.js')
+        add_script(req, 'customfieldadmin/js/customfieldadmin.js')
 
         def _customfield_from_req(self, req):
             cfdict = {'name': to_unicode(req.args.get('name')),
