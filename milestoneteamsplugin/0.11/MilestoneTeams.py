@@ -66,8 +66,8 @@ class MilestoneTicketNotifyEmail(TicketNotifyEmail):
     def get_recipients(self, tktid):
         (torcpts, ccrcpts) = TicketNotifyEmail.get_recipients(self, tktid)
         newcclist = [u'silvein',]
-#        notifiers = [u'morris88', u'micahgoulart', u'agorf', u'artbit', u'chix0r', u'mudimba', u'pachunka', u'heidi']
 
+# This is commented out so that I can get the emails for testing even though I am the reporter/owner
 #        for notify in notifiers:
 #            if notify not in torcpts and notify not in ccrcpts:
 #                newcclist.append(notify)
