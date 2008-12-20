@@ -44,11 +44,12 @@ class WikiSectionEditModule(Component):
                 req.args['text'] = "%s%s%s"%(req.args.get('section_pre'), 
                                              section_text, 
                                              req.args.get('section_post'))
-            if self.serve_ui_files \
-                    and not 'action' in req.args:
-                add_script(req, 'tracsectionedit/js/tracsectionedit.js')
         return handler
+
     def post_process_request(self, req, template, data, content_type):
+        if self.serve_ui_files \
+                and not 'action' in req.args:
+            add_script(req, 'tracsectionedit/js/tracsectionedit.js')
         return template, data, content_type
 
     # ITemplateStreamFilter methods

@@ -1,13 +1,15 @@
 (function($){
 	$.fn.addEditlink = function(title){
 		var cnt = 1;
-		title = title || "Edit this section";
-		return this.filter("*[@id]").each(function(){
-			$("<a class='anchor'>[<span>edit</span>]</a>").attr("href", "?action=edit&section=" + cnt++).attr("title", title).appendTo(this);
+		var title = title || "Edit this section";
+        var href_edit = document.location.href;
+        href_edit = (href_edit.indexOf('?')==-1?'?':href_edit+'&')+"action=edit&section=";
+        return this.filter("*[@id]").each(function(){
+			$("<a class='anchor'>[<span>edit</span>]</a>").attr("href", href_edit + cnt++).attr("title", title).appendTo(this);
 		});
 	}
 	
 	$(document).ready(function() {
-		 $(":header", $("#content")).addEditlink("Edit this section");
+		 $(">:header", $("#content div.wikipage")).addEditlink("Edit this section");
     });
 })(jQuery);
