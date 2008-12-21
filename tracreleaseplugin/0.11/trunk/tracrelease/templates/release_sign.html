@@ -1,0 +1,62 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head>
+    <title>Release Control</title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript" py:choose="">
+      $(document).ready(function() {
+          $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+    </script>
+  </head>
+
+  <body>
+    <div id="content" class="release">
+      <div id="releaseId">Release ID: $release.id</div>
+      <div id="releaseVersion">Version: $release.version</div>
+      <div id="releaseDescription">Description: $release.description</div>
+      <div id="releaseAuthor">Author: $release.author</div>
+      <div id="releaseCreationDate">Creation Date: $release.creation_date</div>
+      <div id="releasePlannedDate">Planned Date: $release.planned_date</div>
+      <div id="releaseInstallDate">Install Date: $release.install_date</div>
+      
+      <table id="releaseTickets">
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Summary</th>
+            <th>Type</th>
+            <th>Component</th>
+            <th>Version</th>
+          </tr>
+        </thead>
+        <tbody>
+	  <py:for each="item in release.tickets">
+	    <tr>
+	      <td>
+		<a href="$ticketURL/$item.ticket_id">$item.ticket_id</a>
+	      </td>
+	      <td>
+                <a href="$ticketURL/$item.ticket_id">$item.summary</a>
+              </td>
+	      <td>$item.type</td>
+	      <td>$item.component</td>
+	      <td>$item.version</td>
+	    </tr>
+	  </py:for>
+        </tbody>
+      </table>
+      
+      <div id="releaseDisclaimer">
+        <a href="$baseURL/signed/$release.id">I tested this Software Release and approved it.</a>
+      </div>
+    </div>
+  </body>
+</html>

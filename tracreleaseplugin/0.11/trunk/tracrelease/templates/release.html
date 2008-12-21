@@ -1,0 +1,54 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head>
+    <title>Release Control</title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript" py:choose="">
+      $(document).ready(function() {
+          $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+    </script>
+  </head>
+
+  <body>
+    <div id="content" class="release">  
+      <table id="releases" class="tableRelease">
+	<thead>
+	  <tr>
+	    <th>ID</th>
+	    <th>Version</th>
+	    <th>Author</th>
+	    <th>Description</th>
+	    <th>Creation</th>
+	    <th>Planned</th>
+	    <th>Install</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <py:for each="item in releases">
+	    <tr>
+	      <td>
+		<a href="$baseURL/$item.id">$item.id</a>
+	      </td>
+	      <td>$item.version</td>
+	      <td>$item.author</td>
+	      <td>$item.description</td>
+	      <td>$item.creation_date</td>
+	      <td>$item.planned_date</td>
+	      <td>$item.install_date</td>
+	    </tr>
+	  </py:for>
+	</tbody>
+      </table>
+      <br/>
+      <a py:if="('RELEASE_ADMIN' in perm) or ('RELEASE_CREATE' in perm)" href="$baseURL/add">Add new Release</a>
+    </div>
+  </body>
+</html>
