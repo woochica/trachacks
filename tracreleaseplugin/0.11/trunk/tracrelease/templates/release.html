@@ -37,12 +37,16 @@
 	      <td>
 		<a href="$baseURL/$item.id">$item.id</a>
 	      </td>
-	      <td>$item.version</td>
+	      <td>
+		<a href="$baseURL/$item.id">$item.version</a>
+	      </td>
 	      <td>$item.author</td>
 	      <td>$item.description</td>
-	      <td>$item.creation_date</td>
-	      <td>$item.planned_date</td>
-	      <td>$item.install_date</td>
+	      <td>${pretty_timedelta(item.creation_date)} ago</td>
+	      <td>
+		${item.planned_date and format_date(item.planned_date, '%Y-%m-%d') or ""}
+	      </td>
+	      <td>${item.install_date and format_date(item.install_date, '%Y-%m-%d') or ""}</td>
 	    </tr>
 	  </py:for>
 	</tbody>

@@ -1,0 +1,95 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head>
+    <title>Add New Release</title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript" py:choose="">
+      $(document).ready(function() {
+          $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+    </script>
+  </head>
+
+  <body>
+    <div id="content" class="release">
+      <form action="$baseURL/add" method="post">
+        <input type="hidden" name="hiddenReleaseStep" id="hiddenReleaseStep" value="3"/>
+        <input type="hidden" name="hiddenReleaseTickets" id="hiddenReleaseTickets" value="$releaseTickets"/>
+        <input type="hidden" name="selectReleaseVersion" id="selectReleaseVersion" value="$releaseVersion"/>
+        <input type="hidden" name="txtReleaseDescription" id="txtReleaseDescription" value="$releaseDescription" />
+        <input type="hidden" name="txtPlannedDate" id="txtPlannedDate" value="$releasePlannedDate"/>
+        <input type="hidden" name="hiddenReleaseSignatures" id="hiddenReleaseSignatures" value="$releaseSignatures"/>
+
+        <div id="releaseVersion">
+            Version:
+            $releaseVersion
+        </div>
+        
+        <div id="releaseId">
+            Release Name:
+            <input type="text" name="txtReleaseName" id="txtReleaseName" value="$releaseName"/>
+        </div>
+
+        <div id="releaseDescription">
+            Description: $releaseDescription
+        </div>
+
+        <div id="releaseAuthor">
+            Author:
+            $req.authname
+        </div>
+
+        <div id="releaseCreationDate">
+            Creation Date:
+        </div>
+
+        <div id="releasePlannedDate">
+            Planned Date: $releasePlannedDate
+        </div>
+
+        <div id="releaseInstallDate">
+            Install Date:
+        </div>
+      
+        <br/><br/>
+        <table id="releaseTickets" name="releaseTickets">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Summary</th>
+              <th>Type</th>
+              <th>Component</th>
+              <th>Version</th>
+            </tr>
+          </thead>
+          <tbody>
+            <py:for each="item in releaseTicketItems">
+                <tr>
+                    <td>$item.id</td>
+                    <td>$item.summary</td>
+                    <td>$item.type</td>
+                    <td>$item.component</td>
+                    <td>$item.version</td>
+                </tr>
+            </py:for>
+          </tbody>
+        </table>
+
+        <br/><br/>
+        <div id="releaseSignatures">
+            Signatures: $releaseSignatures
+        </div>        
+
+        <input type="submit" value="Create Ticket"/>
+      </form>
+      
+    </div>
+  </body>
+</html>
