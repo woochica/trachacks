@@ -2,7 +2,6 @@ from trac.core import *
 from trac.wiki.macros import WikiMacroBase
 from trac.mimeview.api import IHTMLPreviewAnnotator, Mimeview
 from trac.wiki.api import parse_args
-from os import linesep
 from genshi.builder import tag
 from genshi.filters import Transformer
 
@@ -173,7 +172,7 @@ class IncludeSourceMacro(WikiMacroBase):
         #    instead of svn_stream_read when fetching data
         # b) have the render method accept a list/iterator of lines
         #    instead of only accepting a string (which it then splits)
-        lines = src.split(linesep)
+        lines = src.split('\n')
         linecount = len(lines)
 
         if start:
@@ -192,7 +191,7 @@ class IncludeSourceMacro(WikiMacroBase):
         else:
             start += 1
 
-        return linesep.join(src), start, end
+        return '\n'.join(src), start, end
 
 class GivenLineNumberAnnotator(Component):
     """Text annotator that adds a column with given line numbers."""
