@@ -1,6 +1,7 @@
 from genshi.builder import tag
+from trac.attachment import Attachment
 from trac.core import *
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, IPermissionPolicy
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import format_to_html
 
@@ -9,7 +10,64 @@ LEVELS = {"protected":{"action":"PROTECTED_VIEW", "style":"border-left:2px solid
           "protected-blue":{"action":"PROTECTED_BLUE_VIEW", "style":"border-left:2px solid blue; padding-left:3px"},
           "protected-green":{"action":"PROTECTED_GREEN_VIEW", "style":"border-left:2px solid green; padding-left:3px"}}
 
+#def LOG(*args):
+#    """Output debug information"""
+#    f = open("/tmp/trac-temp", "w+")
+#    for arg in args:
+#        f.write(str(arg))
+#        f.write("\n\n")
+#    f.close()
+
+class ProtectedAttachmentPolicy(Component):
+    """
+    Apply a permission check to attachments.
+
+    Attachments are protected when the key-string "!protected",
+    "!protected-red", "!protected-blue", or "!protected-green" is
+    present in the attachment's description.
+    
+    When several "!protected-..." key-strings are used they are all
+    evaluated. If all pass the attachment can be accessed.
+
+    To enable the attachment protection the conf/trac.ini must be
+    modified. Add the ProtectedAttachmentPolicy to the
+    permission_policies:
+    [trac]
+    permission_policies = ProtectedAttachmentPolicy, DefaultPermissionPolicy    
+    """
+    implements(IPermissionPolicy)
+    
+    # IPermissionPolicy
+    def check_permission(self, action, username, resource, perm):
+        if action in ("ATTACHMENT_VIEW", "ATTACHMENT_DELETE"):
+            attachment = Attachment(self.env, resource)
+
+            result = True
+            for name, level in LEVELS.iteritems():
+                if "!%s" % name in attachment.description:
+                    if not level["action"] in perm:
+                        result = False
+
+            return result
+
 class ProtectedMacro(Component):
+    """
+    Apply a permission check to (parts of) a wiki page.
+
+    A protected part has the following syntax:
+    {{{
+    #!protected
+    #:This is what an unauthorized user sees (optional)
+    This is what an authorized user sees
+    }}}
+
+    A protected part can use !protected, !protected-red,
+    !protected-blue, or !protected-green to provide access
+    restrictions on different levels. Users will only see these
+    protected sections when they have the permissions
+    "PROTECTED_VIEW", "PROTECTED_RED_VIEW", "PROTECTED_BLUE_VIEW", or
+    "PROTECTED_GREEN_VIEW", respectively.
+    """
     implements(IPermissionRequestor, IWikiMacroProvider)
 
     # IWikiMacroProvider
