@@ -299,3 +299,11 @@ def loadReleaseSignatures(com, releaseId):
     f = lambda row: model.ReleaseSignee(row[0], row[1], loadDateField(row[2]))
     return loadListFromDatabase(com, sql, f, releaseId)
 
+
+
+
+def loadVersion(com, versionId):
+    """Load data from a specific version"""
+    sql = "SELECT name, time, description FROM version WHERE name = %s"
+    f = lambda row: { 'name': row[0], 'time': loadDateField(row[1]), 'description': row[2] }
+    return loadFromDatabase(com, sql, f, versionId)

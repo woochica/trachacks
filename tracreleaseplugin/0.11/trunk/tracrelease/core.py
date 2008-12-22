@@ -29,8 +29,6 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
 
-from tracdiscussion.api import *
-
 class ReleaseCore(Component):
     """
         The core module implements a message board, including wiki links to
@@ -228,7 +226,10 @@ class ReleaseCore(Component):
             return 'release_add_1.html', templateData, None
         
         # here a version has already been selected, assume it's name as the release name
-        templateData['releaseName'] = templateData['releaseVersion']
+        v = data.loadVersion(self, templateData['releaseVersion'])
+        templateData['releaseName'] = v['name']
+        templateData['releasePlannedData'] = v['time']
+        templateData['releaseDescription'] = v['description']
 
         # Setting tickets according to the selected version"
         templateData['releaseTickets'] = ""

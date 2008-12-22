@@ -3,15 +3,15 @@ from setuptools import find_packages, setup
 
 
 setup(name='TracReleasePlugin',
-        version='0.1',
+        version='0.2',
         packages = ['tracrelease', 'tracrelease.db'],
         description="Release Control",
         author='Joao Alexandre de Toledo',
         author_email='tracrelease@toledosp.com.br',
-        url='http://trac-hacks.org/wiki/k0s',
+        url='http://trac-hacks.org/wiki/TracReleasePlugin',
         keywords='trac plugin',
         license="",
-        packages=['tracrelease'],
+        packages=['tracrelease', 'tracrelease.db'],
         package_data={'tracrelease' : ['templates/*.html', 'htdocs/*']},
         include_package_data=True,
         zip_safe=False,
