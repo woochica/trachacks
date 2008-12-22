@@ -17,7 +17,7 @@ setup(
     author = 'Boudewijn Schoon',
     author_email = 'p.b.schoon@frayja.com',
     description = 'A Trac macro to limit access to parts of a trac page and attachments.',
-    long_description = '''With the TracProtected macro it is possible to limit access to parts of a trac page.
+    long_description = '''With the TracProtected macro it is possible to limit access to parts of a wiki page.
 
     A protected part has the following syntax:
     {{{
@@ -32,6 +32,10 @@ setup(
     protected sections when they have the permissions
     "PROTECTED_VIEW", "PROTECTED_RED_VIEW", "PROTECTED_BLUE_VIEW", or
     "PROTECTED_GREEN_VIEW", respectively.
+
+    A #!protected part will be rendered with a red line to the left, a
+    #!protected-blue part will be rendered with a blue line to the
+    left, etc.
 
     Attachments are protected when the key-string "!protected",
     "!protected-red", "!protected-blue", or "!protected-green" is
