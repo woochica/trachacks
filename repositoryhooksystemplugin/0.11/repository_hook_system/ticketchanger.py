@@ -46,7 +46,7 @@ class TicketChanger(Component):
     def is_available(self, repository, hookname):
         return True
 
-    def post_commit(self, chgset):
+    def invoke(self, chgset):
 
         # regular expressions        
         ticket_prefix = '(?:#|(?:ticket|issue|bug)[: ]?)'
