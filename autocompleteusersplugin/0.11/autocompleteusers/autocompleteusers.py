@@ -53,7 +53,7 @@ class AutocompleteUsers(Component):
 
         ### user names, email addressess, full names
         users = []
-        USER=0; NAME=1; EMAIL=2 # indices
+        USER=0; NAME=1; EMAIL=2 # indices 
 
         # instead of known_users, could be
         # perm = PermissionSystem(self.env)
@@ -64,10 +64,18 @@ class AutocompleteUsers(Component):
         for user_data in self.env.get_known_users(): 
             user_data = [ i is not None and chrome.format_author(req, i) or ''
                           for i in user_data ]
-            for index, field in enumerate((USER, EMAIL, NAME)):
-                if user_data[field].lower().startswith(query):
-                    users.append((2-index, user_data))
+            for index, field in enumerate((USER, EMAIL, NAME)): # ordered by how they appear
+                value = user_data[field].lower()
+
+                if value.startswith(query):
+                    users.append((2-index, user_data)) # 2-index is the sort key
                     break
+                if field == NAME:
+                    lastnames = value.split()[1:]
+                    if sum(name.startswith(query) for name in lastnames):
+                        users.append((2-index, user_data)) # 2-index is the sort key
+                        break
+
             
         users = [ '%s|%s%s' % (user[USER], 
                                  user[EMAIL] and '&lt;%s&gt; ' % user[EMAIL] or '',
