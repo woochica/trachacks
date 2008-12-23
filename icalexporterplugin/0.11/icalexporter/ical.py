@@ -79,6 +79,10 @@ class iCal(object):
     ### 
 
     try: 
+        # feedparser should be installed for iCalExporterPlugin
+        # however, this class can be used independently 
+        # in this case feedparser may not be installed so only
+        # have this method for the case when it is
         import feedparser
 
         def from_rss(self, url):
