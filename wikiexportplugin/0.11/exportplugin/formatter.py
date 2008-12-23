@@ -20,13 +20,15 @@ import urllib, Image, tempfile, ImageFile
 
 class Formatter():
     
-    def __init__(self,config):
-        self.exporter = Service(config)
+    def __init__(self,config,template=None):
+        self.exporter = Service(config,template)
         self.config = config
         self.row = -1
         self.col = -1
         self.tableNum = 0
         self.texto = ''
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------            
 
     def addUser(self,texto):
         if len(self.env.config.get('openOffice-exporter','user')) > 0:

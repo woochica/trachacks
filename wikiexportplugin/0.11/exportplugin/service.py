@@ -36,12 +36,15 @@ class Service():
     
     PIX_CONST = 26.46   
     
-    def __init__(self,config):
+    def __init__(self,config,template=None):
         self.desktop = self.__connectOpenOfficeService(config.get('openOffice-exporter','host','localhost'),config.get('openOffice-exporter','port','8100'))
         self.__STYLES = config.get('openOffice-exporter','styles','Predeterminado, Encabezado 1, Encabezado 2, Encabezado 3, Encabezado 4, Encabezado 5').split(', ')
         self.__ENUMSTYLES = config.get('openOffice-exporter','enum-styles','Enumeración 1, Enumeración 2, Enumeración 3, Enumeración 4, Enumeración 5').split(', ')
         self.__NUMSTYLES = config.get('openOffice-exporter','num-styles','Numeración 1, Numeración 2, Numeración 3, Numeración 4, Numeración 5').split(', ')
-        self.document = self.__createDocument()
+        if template == None:
+            self.document = self.__createDocument()
+        else:
+            self.document = self.__createTemplate(template)
         self.text = self.document.Text
         self.cursor = self.text.getEnd()
         self.enumStyles = self.document.getStyleFamilies().getByName('NumberingStyles')
@@ -60,6 +63,15 @@ class Service():
                         
     def __createDocument(self):
         return self.desktop.loadComponentFromURL(self.URL,"_blank",0,())
+        
+#---------------------------------------------------------------------------------------------------------------------------------------------------            
+
+    def __createTemplate(self,url):
+        prop = PropertyValue()
+        prop.Name = "AsTemplate"
+        prop.Value = True
+        return self.desktop.loadComponentFromURL(url,"_blank", 0, (prop, ))
+
         
 #---------------------------------------------------------------------------------------------------------------------------------------------------            
 
