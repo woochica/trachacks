@@ -123,6 +123,7 @@ class RepositoryHookAdmin(Component):
             
 
         data['enabled'] = system.is_enabled(hookname)
+        data['can_enable'] = system.can_enable(hookname)
         activated = [ i.__class__.__name__ for i in system.subscribers(hookname) ]
         data['snippet'] = system.render(hookname, req)
 

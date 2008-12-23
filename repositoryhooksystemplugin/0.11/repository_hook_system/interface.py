@@ -59,6 +59,11 @@ class IRepositoryHookSetup(Interface):
         contingent upon enable marking the hook in such a way that it can be identified as enabled
         """
 
+    def can_enable(hookname):
+        """
+        whether the hook can be set up
+        """
+
 class IRepositoryHookAdminContributer(Interface):
     """
     contributes to the webadmin panel for the RepositoryHookSystem

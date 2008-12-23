@@ -36,12 +36,13 @@ class SVNHookSystem(FileSystemHooks):
         filename = self.filename(hookname)
         try:
             contents = file(filename).read() # check for CRLF here too?
-            return tag.textarea(contents, rows='25', cols='80', name='hook-file-contents')
+            return tag.textarea(contents, rows='25', cols='80', name='hook-file-contents', disabled=not self.can_enable(hookname) or None)
+
         except IOError:
-            if iswritable(filename):
+            if self.can_enable(filename):
                 text = "No %s hook file yet exists;  enable this hook to create one" % hookname
             else:
-                text = "The file, %s, is unwritable;  enabling this hook will have no effect"
+                text = "The file, %s, is unwritable;  enabling this hook will have no effect" % filename
             return text
 
     def process_post(self, hookname, req):

@@ -90,7 +90,7 @@ class FileSystemHooks(Component):
         if self.is_enabled(hookname):
             return # nothing to do
 
-        if not iswritable(hookname):
+        if not self.can_enable(hookname):
             return # XXX err more gracefully
 
         def print_hook(f):
@@ -152,3 +152,6 @@ class FileSystemHooks(Component):
                 if project in projects: 
                     return True
         return False
+
+    def can_enable(self, hookname):
+        return iswritable(self.filename(hookname))

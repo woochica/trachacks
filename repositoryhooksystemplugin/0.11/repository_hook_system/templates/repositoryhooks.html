@@ -16,7 +16,7 @@
 	<div class="field">
 	  <b>Enabled:</b>
 	    <input type="checkbox" name="enable" value="enable" 
-		   py:attrs="{'checked': enabled or None}"/>
+		   py:attrs="{'checked': enabled or None, 'disabled': not can_enable or None}"/>
 	</div>
 	<div>
 	  ${snippet}
