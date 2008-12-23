@@ -20,7 +20,8 @@ class iCalExporterPlugin(Component):
     ics_paths = { u'/timeline/ics': u'/timeline?ticket=on&changeset=on&milestone=on&wiki=on&max=50&daysback=90&format=rss',
                   u'/ticket/([0-9]+)/ics': r'/ticket/\1?format=rss',
                   u'/log(.*)/ics': r'/log\1?limit=100&mode=stop_on_copy&format=rss',
-                  u'/report(.*)/ics': r'/report\1?format=rss'
+                  u'/report(.*)/ics': r'/report\1?format=rss',
+                  u'/query/ics': r'/query?format=rss'
                   }
 
     ### methods for IRequestHandler
