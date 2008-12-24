@@ -31,7 +31,6 @@ class Export(Component):
     DOC = 'msword'
     PDF = 'pdf'
     CONF_QUERY = "SELECT text FROM wiki WHERE name = 'WikiTemplateConf' ORDER BY version DESC LIMIT 1"
-    template_filename = None
     
     def procesar_wiki(self,text,pageName):
         imageMacroPattern = re.compile('\[\[Image\(([^\:)]+)\)\]\]')
@@ -57,13 +56,13 @@ class Export(Component):
 #---------------------------------------------------------------------------------------------------------------------------------------------------            
     
     def convert_content(self,req, input_type,text,output_type):
-        #self.__loadTemplatePage()
-        self.env.log.debug(req.args)
+        template_filename = self.__loadTemplatePage(req.args['page'])
+        self.env.log.debug(template_filename)
         cadena = wiki_to_html(self.procesar_wiki(text, req.args['page']),self.env,req).encode(self.env.config.get('trac', 'charset', 'utf-8'),'replace')
-        if self.template_filename == None:
+        if template_filename == None:
             parser = Formatter(self.env.config)
         else:
-            parser = Formatter(self.env.config,self.template_filename)
+            parser = Formatter(self.env.config,template_filename)
         parser.write(self.env,'<body>' + cadena + '</body>',req.base_url)
         filePath = parser.returnDocument(self.get_formato(req.args['format']))
         req.send_file(filePath)
@@ -78,7 +77,10 @@ class Export(Component):
         
 #---------------------------------------------------------------------------------------------------------------------------------------------------            
         
-    def __loadTemplatePage(self):
+    def __loadTemplatePage(self,pagina):
+        page_content = ''
+        template_list = []
+        template_file = []
         wiki_system = WikiSystem(self.env)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -95,9 +97,10 @@ class Export(Component):
                     template_list = value.split(', ')
                 if name == 'template_file':
                     template_file = value.split(', ')
-                    #self.template_filename = os.path.join(
-                    #    self.env.path, 'attachments', 'wiki',
-                    #    'WikiTemplateConf', value)
-        
-        #self.env.log.debug('El contenido de la pagina es: ' + template_list + ' ' + template_file)
+        i = 0
+        for element in template_list:
+            if pagina.startswith(element):
+                return os.path.join(self.env.path, 'attachments', 'wiki','WikiTemplateConf', template_file[i])
+            i = i + 1
+        return None
                 
