@@ -12,8 +12,8 @@
     <label for="selected_milestone">Select milestone:</label>
     <select id="selected_milestone" name="selected_milestone">
         <?cs each:mile = milestones ?>
-            <option value="<?cs var:mile ?>" <?cs if:selected_milestone == mile ?> selected="selected"<?cs /if ?> >
-                <?cs var:mile ?>
+            <option value="<?cs var:mile['name'] ?>" <?cs if:selected_milestone['name'] == mile['name'] ?> selected="selected"<?cs /if ?> >
+                <?cs var:mile['name'] ?>
             </option>
         <?cs /each ?>
     </select>
@@ -21,8 +21,8 @@
     <select id="selected_component" name="selected_component">
         <option>All Components</option>
         <?cs each:comp = components ?>
-            <option value="<?cs var:comp ?>" <?cs if:selected_component == comp ?> selected="selected"<?cs /if ?> >
-                <?cs var:comp ?>
+            <option value="<?cs var:comp['name'] ?>" <?cs if:selected_component == comp['name'] ?> selected="selected"<?cs /if ?> >
+                <?cs var:comp['name'] ?>
             </option>
         <?cs /each ?>
     </select>

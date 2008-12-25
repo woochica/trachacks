@@ -1,0 +1,70 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Scrum Burndown configuration</title>
+  </head>
+
+  <body>
+    <h2>Scrum Burndown Plugin Settings</h2>
+    
+    <py:choose test="view">
+      <form py:when="'detail'" class="mod" method="post" id="modifymilestone" action="">
+        <fieldset>
+          <legend>Modify Milestone:</legend>
+          <div class="field">
+            <label>Name: <strong>$milestone.name</strong></label>
+          </div>
+          <div class="field">
+            <label>Start date:<br />
+              <input type="text" id="started" name="started" size="${len(date_hint)}"
+                value="${milestone.started and format_date(milestone.started)}" title="Format: $date_hint" />
+              <em>Format: $date_hint</em>
+            </label>
+          </div>
+
+          <div class="buttons">
+            <input type="submit" name="cancel" value="${_('Cancel')}"/>
+            <input type="submit" name="save" value="${_('Save')}"/>
+          </div>
+        </fieldset>
+      </form>
+
+      <py:otherwise>
+    
+          <form id="milestone_table" method="post" action="">
+            <p class="hint">
+              You can set the start date of all milestones below. Click on a milestone to change the start date.
+            </p>
+            <table class="listing" id="millist">
+              <thead>
+                <tr>
+                  <th>Name</th><th>Started</th><th>Due</th><th>Completed</th>
+                </tr>
+              </thead>
+              <tbody><tr py:for="milestone in milestones">
+                <td>
+                  <a href="${panel_href(milestone.name)}">${milestone.name}</a>
+                </td>
+                <td><py:if test="milestone.started">
+                  ${format_date(milestone.started)}
+                </py:if></td>
+                <td><py:if test="milestone.due">
+                  ${format_date(milestone.due)}
+                </py:if></td>
+                <td><py:if test="milestone.completed">
+                  ${format_datetime(milestone.completed)}
+                </py:if></td>
+              </tr></tbody>
+            </table>
+          </form>
+    
+          </py:otherwise>
+    </py:choose>
+  </body>
+
+</html>

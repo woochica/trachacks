@@ -21,6 +21,18 @@ class testBasicFunctionality():
         nav_items = self.burndown.get_navigation_items(self.mockReq)
         nav_items.next()
 
+    def test_get_navigation_items_0_10(self):
+        self.burndown.tracversion="0.10"
+        nav_items = self.burndown.get_navigation_items(self.mockReq)
+        nav_items.next()
+
+    @raises(StopIteration)
+    def test_get_navigation_items_0_10_exactly_one(self):
+        self.burndown.tracversion="0.10"
+        nav_items = self.burndown.get_navigation_items(self.mockReq)
+        nav_items.next()
+        nav_items.next()
+
     @raises(StopIteration)
     def test_get_navigation_items_exactly_one(self):
         nav_items = self.burndown.get_navigation_items(self.mockReq)
@@ -59,14 +71,43 @@ class testBasicFunctionality():
         self.burndown.start_milestone(self.db, milestone)
         self.burndown.start_milestone(self.db, milestone)
         
-#===============================================================================
-#    def test_milestone_with_quotes(self):
-#        milestone="milestone '1"
-#        cursor = self.db.cursor()        
-#        cursor.execute("insert into milestone (name, due, completed, started, description) values (%s, 0, 0, 0, '');", [milestone])
-# 
-#        self.burndown.start_milestone(self.db, milestone)
-#        cursor.execute("SELECT started FROM milestone WHERE name = %s", [milestone])
-#        row = cursor.fetchone()
-#        assert row
-#===============================================================================
+    def test_milestone_with_quotes(self):
+        milestone="milestone '1"
+        cursor = self.db.cursor()        
+        cursor.execute("insert into milestone (name, due, completed, started, description) values (%s, 0, 0, 0, '');", [milestone])
+ 
+        self.burndown.start_milestone(self.db, milestone)
+        cursor.execute("SELECT started FROM milestone WHERE name = %s", [milestone])
+        row = cursor.fetchone()
+        assert row
+
+    def test_milestone_with_specialchars(self):
+        milestone="milesto%$3#&&\g23ne '1"
+        cursor = self.db.cursor()        
+        cursor.execute("insert into milestone (name, due, completed, started, description) values (%s, 0, 0, 0, '');", [milestone])
+ 
+        self.burndown.start_milestone(self.db, milestone)
+        cursor.execute("SELECT started FROM milestone WHERE name = %s", [milestone])
+        row = cursor.fetchone()
+        assert row
+
+    def test_ticket_created(self):
+        self.burndown.ticket_created(None)
+    
+    def test_ticket_changed(self):
+        self.burndown.ticket_changed(None, None, None, None)
+    
+    def test_ticket_deleted(self):
+        self.burndown.ticket_deleted(None)
+        
+    def test_get_templates_dirs(self):
+        dirs=self.burndown.get_templates_dirs()
+        assert dirs[0].endswith("burndown/templates")
+  
+    def test_get_htdocs_dirs(self):
+        dirs=self.burndown.get_htdocs_dirs()
+        assert dirs[0][0] == "hw"
+        assert dirs[0][1].endswith("burndown/htdocs")
+
+    def test_update_burndown_data(self):
+        pass

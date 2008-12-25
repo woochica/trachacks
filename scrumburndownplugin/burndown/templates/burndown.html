@@ -8,7 +8,13 @@
 
   <xi:include href="layout.html"><xi:fallback/></xi:include>
   
-  <head><title>Burndown chart</title></head>
+  <head><title>Scrum Burndown chart</title>
+    <py:choose test="library">
+	  <py:when test="'flot'">
+      <!--[if IE]><script language="javascript" type="text/javascript" src="${href.chrome('/hw/js/excanvas.pack.js')}"></script><![endif]-->
+    </py:when>
+    </py:choose>
+  </head>
   
     <body>
 <div id="ctxtnav" class="nav"></div>  
@@ -22,9 +28,9 @@
     <label for="selected_milestone">Select milestone:</label>
     <select id="selected_milestone" name="selected_milestone">
 	  <py:for each="mile in milestones">
-	  <py:choose test="selected_milestone">
-        <option py:when="mile" value="${mile}" selected="selected">$mile</option>
-        <option py:otherwise="" value="${mile}">$mile</option>
+	  <py:choose test="selected_milestone.name">
+        <option py:when="mile.name" value="${mile.name}" selected="selected">$mile.name</option>
+        <option py:otherwise="" value="${mile.name}">$mile.name</option>
 	  </py:choose>
 	  </py:for>
     </select>
@@ -33,8 +39,8 @@
         <option>All Components</option>
 	  <py:for each="comp in components">
 	  <py:choose test="selected_component">
-        <option py:when="comp" value="$comp" selected="selected">$comp</option>
-        <option py:otherwise="" value="$comp">$comp</option>
+        <option py:when="comp.name" value="$comp.name" selected="selected">$comp.name</option>
+        <option py:otherwise="" value="$comp.name">$comp.name</option>
 	  </py:choose>
 	  </py:for>
     </select>
@@ -43,6 +49,7 @@
         <py:if test="start">
             <input type="submit" name="start" value="Start Milestone" />
         </py:if>
+
         <input type="submit" value="Show Burndown Chart" />
     </div>
 </form>
@@ -61,11 +68,21 @@
     </py:choose>
     <br/>
     <br/>
-    
-<!-- graph code begins here-->
-<script type="text/javascript" src="${req.path_info}/hw/js/line.js"></script>
-<script type="text/javascript" src="${req.path_info}/hw/js/wz_jsgraphics.js"></script>
-<div id="myCanvas" style="overflow: auto; position:relative;height:400px;width:800px;"></div>
+
+
+<py:choose test="library">
+
+	<py:when test="'flot'">
+  		<div id="burndownGraph" style="position:relative;height:400px;width:800px;"></div>
+  		<script language="javascript"> 
+  		    var data=[[<py:for each="idx, row in enumerate(burndown_data)">[${row[0]}, ${row[1]}]<py:if test="idx != (len(burndown_data)-1)">,</py:if></py:for>]];
+  		    $.plot($("#burndownGraph"), data);
+  		
+  		</script>
+    </py:when>
+    <py:otherwise>
+
+<div id="burndownGraph" style="overflow: auto; position:relative;height:400px;width:800px;"></div>
 
 <script>
     var g = new line_graph();
@@ -75,10 +92,12 @@
     </py:for>
     
     //If called without a height parameter, defaults to 250
-    g.render("myCanvas", "hours remaining vs. days of sprint", 300);
+    g.render("burndownGraph", "hours remaining vs. days of sprint", 300);
 
 </script>
-
+    </py:otherwise>
+    
+    </py:choose>
 </py:if>
 
 </div>

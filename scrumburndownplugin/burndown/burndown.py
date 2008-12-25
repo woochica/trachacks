@@ -14,8 +14,11 @@ import time
 import datetime
 import sys
 
-from trac import __version__ as tracversion
-tracversion=tracversion[:4]
+import dbhelper
+
+from trac import __version__ as tracversion_runtime
+
+from datetime import datetime
 
 from trac.core import *
 from trac.config import BoolOption
@@ -25,102 +28,67 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_style
 from trac.web.main import IRequestHandler
 from trac.util import escape, Markup, format_date
 from trac.ticket import ITicketChangeListener
+from trac.ticket import model
 
 class BurndownComponent(Component):
     implements(IEnvironmentSetupParticipant, INavigationContributor,
                     IRequestHandler, ITemplateProvider, IPermissionRequestor, ITicketChangeListener)
+
+    tracversion=tracversion_runtime[:4]
     
     #---------------------------------------------------------------------------
     # IEnvironmentSetupParticipant methods
     #---------------------------------------------------------------------------
     def environment_created(self):
-        pass
+        """Called when a new Trac environment is created."""
+        if self.environment_needs_upgrade(None):
+            self.upgrade_environment(None)
 
     def environment_needs_upgrade(self, db):
-        needsUpgrade = False
-        
-        #get a database connection if we don't already have one
         if not db:
-            db = self.env.get_db_cnx()
-            handle_ta = True
-        else:
-            handle_ta = False
-            
-        # See if the burndown table exists, if not, return True because we need to upgrade the database
-        # the latest version of the burndown table contains a 'week' column
-        cursor = db.cursor()
-        try:
-            cursor.execute('SELECT week FROM burndown LIMIT 1')
-        except:
-            needsUpgrade = True
-            
-        if handle_ta:
-            db.commit()
-            
+            db = self.env.get_db_cnx()            
+
+        needsUpgrade = True
+
+        # See if the burndown table exists, if not, we need an upgrade
+        if dbhelper.table_exists(db, "burndown"):
+            needsUpgrade = False
+            if dbhelper.table_field_exists(db, "burndown", "week"):
+                needsUpgrade = True
+
+        if dbhelper.table_field_exists(db, "milestone", "started"):
+            needsUpgrade = False
+
         return needsUpgrade
 
     def upgrade_environment(self, db):
-        cursor = db.cursor()
+        db = self.env.get_db_cnx()
         
-        needsCreate = False
-        try:
-            cursor.execute('SELECT * FROM burndown LIMIT 1')
-        except:
-            needsCreate = True
+        needsCreate = True
+        needsUpgrade_milestone = True
+        needsUpgrade_burndown = False
         
-        db.commit();
+        if dbhelper.table_exists(db, "burndown"):
+            needsCreate = False
+            if dbhelper.table_field_exists(db, "burndown", "week"):
+                needsUpgrade_burndown = True
+
+        if dbhelper.table_field_exists(db, "milestone", "started"):
+            needsUpgrade_milestone = False
         
         if needsCreate:
             print >> sys.stderr, 'Attempting to create the burndown table'
-            # Create the burndown table in the database
-            sqlBurndownCreate = "CREATE TABLE burndown (" \
-                                            "    id integer PRIMARY KEY NOT NULL,"\
-                                            "    component_name text NOT NULL,"\
-                                            "    milestone_name text NOT NULL," \
-                                            "    date text,"\
-                                            "    week text,"\
-                                            "    year text,"\
-                                            "    hours_remaining integer NOT NULL"\
-                                            ")"
-                                        
-            cursor.execute(sqlBurndownCreate)
-        else:
+            dbhelper.create_burndown_table(db, self.env)
+
+        if needsUpgrade_milestone:
+            print >> sys.stderr, 'Attempting to modify the milestone table'
+            dbhelper.upgrade_milestone_table(db, self.env)
+            
+        if needsUpgrade_burndown:
             print >> sys.stderr, 'Attempting to modify the burndown table'
-            #burndown table already exists, just need to add week and year columns
-            sqlBurndown = [
-            """CREATE TEMP TABLE burndown_old as SELECT * FROM burndown;""",
-            """DROP TABLE burndown;""",
-            """CREATE TABLE burndown (
-                    id integer PRIMARY KEY NOT NULL,
-                    component_name text NOT NULL,
-                    milestone_name text NOT NULL,
-                    date text,
-                    week text,
-                    year text,
-                    hours_remaining integer NOT NULL
-                );""",
-            """INSERT INTO burndown(id,component_name,milestone_name,date,hours_remaining)
-            SELECT id,component_name,milestone_name,date,hours_remaining FROM burndown_old;"""
-            ]
-            for line in sqlBurndown:
-                cursor.execute(line)
-        
-        sqlMilestone = [
-        #-- Add the 'started' column to the milestone table
-        """CREATE TEMP TABLE milestone_old AS SELECT * FROM milestone;""",
-        """DROP TABLE milestone;""",
-        """CREATE TABLE milestone (
-                 name            text PRIMARY KEY,
-                 due             integer, -- Due date/time
-                 completed       integer, -- Completed date/time
-                 started        integer, -- Started date/time
-                 description     text
-        );""",
-        """INSERT INTO milestone(name,due,completed,started,description)
-        SELECT name,due,completed,0,description FROM milestone_old;"""
-        ]
-        for s in sqlMilestone:
-            cursor.execute(s)
+            dbhelper.upgrade_burndown_table(db, self.env)
+
+        db.commit()
             
     #---------------------------------------------------------------------------
     # ITicketChangeListener methods
@@ -146,10 +114,10 @@ class BurndownComponent(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission("BURNDOWN_VIEW"):
-            if tracversion=="0.11":
-                yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>' % req.href.burndown())
-            elif tracversion=="0.10":
+            if self.tracversion=="0.10":
                 yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>') % req.href.burndown()
+            else:
+                yield 'mainnav', 'burndown', Markup('<a href="%s">Burndown</a>' % req.href.burndown())
 
     #---------------------------------------------------------------------------
     # IPermissionRequestor methods
@@ -165,27 +133,22 @@ class BurndownComponent(Component):
     
     def process_request(self, req):
         req.perm.assert_permission('BURNDOWN_VIEW')
-        
+
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
+
+        milestones = dbhelper.get_milestones(db)
+        components = dbhelper.get_components(db)
         
-        cursor.execute("SELECT name FROM milestone")
-        milestone_lists = cursor.fetchall()
-        milestones = []
-        for mile in milestone_lists:
-            milestones.append(mile[0])
-            
-        cursor.execute("SELECT name FROM component")
-        component_lists = cursor.fetchall()
-        components = []
-        for comp in component_lists:
-            components.append(comp[0])
+        selected_milestone = None
+        if (len(milestones)>0):
+            selected_milestone = dbhelper.get_current_milestone(db, req.args.get('selected_milestone', ""))
         
-        if (milestones and milestones[0]):
-            selected_milestone = req.args.get('selected_milestone', milestones[0])
-        else:
-            selected_milestone = ''
         selected_component = req.args.get('selected_component', 'All Components')
+        
+        empty_db_for_testing = req.args.get('empty_db_for_testing', 'false')
+        if empty_db_for_testing == "true":
+            req.perm.assert_permission('TRAC_ADMIN')
+            dbhelper.empty_db_for_testing(db)
         
         # expose display data to the templates
         data = {}
@@ -199,38 +162,49 @@ class BurndownComponent(Component):
         if req.perm.has_permission("BURNDOWN_ADMIN"):
             data['start'] = req.hdf['start'] = True # show the start and complete milestone buttons to admins
         
-        data['burndown_data'] = req.hdf['burndown_data'] = []
-        
         if req.args.has_key('start'):
-            self.start_milestone(db, selected_milestone)
-        else:
-            data['draw_graph'] = req.hdf['draw_graph'] = True
-            # this will be a list of (id, hours_remaining) tuples
-                
-        add_stylesheet(req, 'hw/css/burndown.css')
-        add_script(req, 'hw/js/line.js')
-        add_script(req, 'hw/js/wz_jsgraphics.js')
+            self.start_milestone(db, selected_milestone['name'])
 
+        data['draw_graph'] = req.hdf['draw_graph'] = True
+        self.update_burndown_data()
+                
+        data['burndown_data'] = req.hdf['burndown_data'] = []
         data['burndown_data'] = req.hdf['burndown_data'] = self.get_burndown_data(db, selected_milestone, components, selected_component)
         
-        if tracversion=="0.11":
-            return 'burndown.html', data, None
-        elif tracversion=="0.10":
+        add_stylesheet(req, 'hw/css/burndown.css')
+        
+        self.update_burndown_data()
+        
+        if self.tracversion=="0.10":
+            add_script(req, 'hw/js/line.js')
+            add_script(req, 'hw/js/wz_jsgraphics.js')
             return 'burndown.cs', None
+        else:
+            data['library'] = ''
+            if data['library'] == 'flot':
+                add_script(req, 'hw/js/jquery.flot.js')
+            else:
+                add_script(req, 'hw/js/line.js')
+                add_script(req, 'hw/js/wz_jsgraphics.js')
+            
+            return 'burndown.html', data, None
+        
         
     def get_burndown_data(self, db, selected_milestone, components, selected_component):
         cursor = db.cursor()
         
         component_data = {} # this will be a dictionary of lists of tuples -- e.g. component_data = {'componentName':[(id, hours_remaining), (id, hours_remaining), (id, hours_remaining)]}
         for comp in components:
-            if selected_component == 'All Components' or comp == selected_component:
+            if selected_component == 'All Components' or comp['name'] == selected_component:
+                self.log.debug("comp = %s", comp['name'])
+                self.log.debug("selected_component = %s", selected_component)
                 sqlBurndown = "SELECT id, hours_remaining "\
                                     "FROM burndown "\
-                                    "WHERE milestone_name = '" + selected_milestone + "' AND component_name = '" + comp + "' "\
+                                    "WHERE milestone_name = %s AND component_name = %s "\
                                     "ORDER BY id"
-                
-                cursor.execute(sqlBurndown)
-                component_data[comp] = cursor.fetchall()
+                cursor.execute(sqlBurndown, (selected_milestone['name'], comp['name']))
+                component_data[comp['name']] = cursor.fetchall()
+                self.log.debug(component_data[comp['name']])
             
         if len(component_data) > 0 and component_data[component_data.keys()[0]]:
             burndown_length = len(component_data[component_data.keys()[0]])
@@ -238,13 +212,14 @@ class BurndownComponent(Component):
             burndown_length = 0
         burndown_data = []
         if selected_component == 'All Components':
-            for time_unit in range (0, burndown_length): #burndown can be incremented in days or weeks, so I decided to use the generic 'time_unit'
+            for time_unit in range (0, burndown_length):
                 sumHours = 0
                 for comp in components:
-                    self.log.debug('component: %s', comp);
-                    self.log.debug('time_unit: %i', time_unit);
-                    if (component_data[comp] and len(component_data[comp]) > time_unit):
-                        sumHours += component_data[comp][time_unit][1]
+                    self.log.debug('component: %s', [comp['name']]);
+                    self.log.debug('time_unit: %s', [time_unit]);
+                    if (component_data[comp['name']] and len(component_data[comp['name']]) > time_unit):
+                        self.log.debug('hours: %s', component_data[comp['name']][time_unit][1]);
+                        sumHours += component_data[comp['name']][time_unit][1]
                 
                 burndown_data.append((time_unit+1, sumHours))
                 
@@ -255,41 +230,23 @@ class BurndownComponent(Component):
         return burndown_data
         
     def start_milestone(self, db, milestone):
-        cursor = db.cursor()
-        cursor.execute("SELECT started FROM milestone WHERE name = '%s'" % milestone)
-        row = cursor.fetchone()
-        if row and row[0] > 0:
-            raise TracError("Milestone '%s' was already started on %s" % (milestone, format_date(int(row[0]))))
-            
-        cursor.execute("UPDATE milestone SET started = %i WHERE name = '%s'" % (int(time.time()), milestone))
+        startdate = dbhelper.get_startdate_for_milestone(db, milestone)
         
-        db.commit()
+        if startdate != None:
+            raise TracError("Milestone %s was already started." % milestone)
+
+        dbhelper.set_startdate_for_milestone(db, milestone, int(time.time()))
         
     #---------------------------------------------------------------------------
     # ITemplateProvider methods
     #---------------------------------------------------------------------------
     def get_templates_dirs(self):
-        """
-        Return the absolute path of the directory containing the provided templates.
-        """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        """
-        Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-        
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
         from pkg_resources import resource_filename
         return [('hw', resource_filename(__name__, 'htdocs'))]
-
 
     #------------------------------------------------------------------------
     # update_burndown_data
@@ -301,34 +258,20 @@ class BurndownComponent(Component):
         
         # today's date
         today = format_date(int(time.time()))
-        
-        # make sure that there isn't already an entry for today in the burndown table
-        cursor.execute("SELECT id FROM burndown WHERE date = '%s'" % today)
-            
-        row = cursor.fetchone()
-        needs_update = False
-        if row:
-            self.log.debug('update_burndown_data has already been run - update needed')
-            needs_update = True
-        else:
-            self.log.debug('first run of update_burndown_data - insert needed')
-        
-        # get arrays of the various components and milestones in the trac environment
-        cursor.execute("SELECT name AS comp FROM component")
-        components = cursor.fetchall()
-        cursor.execute("SELECT name, started, completed FROM milestone")
-        milestones = cursor.fetchall()
+
+        milestones = dbhelper.get_milestones(db)
+        components = dbhelper.get_components(db)
         
         for mile in milestones:
-            if mile[1] and not mile[2]: # milestone started, but not completed
+            if mile['started'] and not mile['completed']: # milestone started, but not completed
                 for comp in components:
                     sqlSelect =     "SELECT est.value AS estimate, ts.value AS spent "\
                                         "FROM ticket t "\
                                         "    LEFT OUTER JOIN ticket_custom est ON (t.id = est.ticket AND est.name = 'estimatedhours') "\
                                         "    LEFT OUTER JOIN ticket_custom ts ON (t.id = ts.ticket AND ts.name = 'totalhours') "\
-                                        "WHERE t.component = '%s' AND t.milestone = '%s'"\
+                                        "WHERE t.component = %s AND t.milestone = %s"\
                                         "    AND status IN ('new', 'assigned', 'reopened', 'accepted') "
-                    cursor.execute(sqlSelect % (comp[0], mile[0]))
+                    cursor.execute(sqlSelect, [comp['name'], mile['name']])
                 
                     rows = cursor.fetchall()
                     hours = 0
@@ -341,13 +284,28 @@ class BurndownComponent(Component):
                             if not spent:
                                 spent = 0
                         
-                            hours += float(estimate) - float(spent)
+                            if (float(estimate) - float(spent)) > 0:
+                                hours += float(estimate) - float(spent)
+
+                    cursor.execute("SELECT id FROM burndown WHERE date = %s AND milestone_name = %s"\
+                                        "AND component_name = %s", [today, mile['name'], comp['name']])
+            
+                    row = cursor.fetchone()
                     
-                    if needs_update:
-                        cursor.execute("UPDATE burndown SET hours_remaining = '%f' WHERE date = '%s' AND milestone_name = '%s'"\
-                                        "AND component_name = '%s'" % (hours, today, mile[0], comp[0]))
+                    try:
+                        if row:
+                            cursor.execute("UPDATE burndown SET hours_remaining = %s WHERE date = %s AND milestone_name = %s"\
+                                           "AND component_name = %s", [hours, today, mile['name'], comp['name']])
+                        else:
+                            cursor.execute("INSERT INTO burndown(component_name, milestone_name, date, hours_remaining) "\
+                                           "    VALUES(%s,%s,%s,%s)", [comp['name'], mile['name'], today, hours])
+                    except Exception, inst:
+                        self.log.debug(type(inst))     # the exception instance
+                        self.log.debug(inst.args)      # arguments stored in .args
+                        self.log.debug(inst)           # __str__ allows args to printed directly
+                        cursor.connection.rollback()
                     else:
-                        cursor.execute("INSERT INTO burndown(id,component_name, milestone_name, date, hours_remaining) "\
-                                        "    VALUES(NULL,'%s','%s','%s',%f)" % (comp[0], mile[0], today, hours))
+                        db.commit()
+
                                          
-        db.commit()
+        
