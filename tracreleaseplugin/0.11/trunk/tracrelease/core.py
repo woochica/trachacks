@@ -29,6 +29,11 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
 
+from trac.web.chrome import add_link, add_script, add_stylesheet, \
+                            add_warning, add_ctxtnav, prevnext_nav, Chrome
+
+import trac.wiki.formatter
+
 class ReleaseCore(Component):
     """
         The core module implements a message board, including wiki links to
@@ -80,6 +85,8 @@ class ReleaseCore(Component):
         templateData['baseURL'] = req.href.release()
         templateData['ticketURL'] = req.href.ticket()
         
+        add_stylesheet(req, 'common/css/ticket.css')
+        
         if 'id' in req.args:
             templateData['release'] = data.loadRelease(self, req.args['id'])
 
@@ -108,65 +115,6 @@ class ReleaseCore(Component):
                 templateData['availableVersions'] = data.findAvailableVersions(self)
                 self.log.debug(templateData)
                 return 'release_add_1.html', templateData, None
-
-
-            if req.args['action'] == 'add1':
-                if req.method == "POST":
-                    ## releaseVersion contains the selected version
-                    ## releaseName contains the release name
-                    ## releaseDescription contains the release long description
-                    ## releasePlannedDate contains the date when the release should be installed on Production Environment
-                    ## releaseTickets contains a comma-separated list with all tickets included in the release
-                    ## releaseTicketItems contains all ticket objects
-                    ## releaseSignatures contains all the users who should approve this release
-                    
-                    self.log.debug("Adding: POST")
-                    step = req.args.get("hiddenReleaseStep")
-                    if not step:
-                        step = "1"
-                    
-                    templateData['releaseVersion'] = req.args.get("selectReleaseVersion")
-                    templateData['releaseName'] = req.args.get("txtReleaseName")
-                    if not templateData['releaseName']:
-                        ## default release name is the version name
-                        templateData['releaseName'] = templateData['releaseVersion']
-                        
-                    templateData['releaseDescription'] = req.args.get("txtReleaseDescription")
-                    templateData['releasePlannedDate'] = req.args.get("txtReleasePlannedDate")
-                    templateData['releaseTickets'] = req.args.get("hiddenReleaseTickets")
-                    templateData['releaseSignatures'] = req.args.get("hiddenReleaseSignatures")
-                    
-                    self.log.debug("releaseSignatures: [%s]" % templateData['releaseSignatures'])
-                    self.log.debug("releaseTickets: [%s]" % templateData['releaseTickets'])
-                    
-                    if not templateData['releaseTickets']:
-                        self.log.debug("No ticket has been selected up to now")
-                        if templateData['releaseVersion']:
-                            self.log.debug("Setting tickets according to the selected version")
-                            templateData['releaseTickets'] = ""
-                            templateData['releaseTicketItems'] = data.getVersionTickets(self, templateData['releaseVersion'])
-                            for ticket in templateData['releaseTicketItems']:
-                                templateData['releaseTickets'] = templateData['releaseTickets'] + str(ticket.ticket_id) + ","
-                            
-                    else:
-                        templateData['releaseTicketItems'] = []
-                        for item in templateData['releaseTickets'].split(","):
-                            self.log.debug("Loading Ticket [%s]" % item)
-                            templateData['releaseTicketItems'].append(data.getTicket(self, item))
-                    self.log.debug("releaseTicketItems: [" + str(templateData['releaseTicketItems']) + "]")
-                    
-                    if (step == "2"):
-                        resp = data.createRelease(self, templateData['releaseName'], templateData['releaseDescription'],
-                                                  req.authname, None, templateData['releaseTickets'], templateData['releaseSignatures'])
-                        self.log.debug(resp)
-                        
-                    
-                else:
-                    self.log.debug("Adding: GET")
-                    
-                templateData['availableVersions'] = data.findAvailableVersions(self)
-                self.log.debug(templateData)
-                return 'release_add.html', templateData, None
 
             if req.args['action'] == 'install':
                 return 'release_install.html', templateData, None
@@ -215,9 +163,6 @@ class ReleaseCore(Component):
             
         elif step == "2":
             return self._add_step_2(req, templateData)
-            
-        elif step == "3":
-            return self._add_step_3(req, templateData)
 
 
 
@@ -243,42 +188,39 @@ class ReleaseCore(Component):
 
 
     def _add_step_2(self, req, templateData):
+        templateData['preview']            = 'preview' in req.args
         templateData['releaseVersion']     = req.args.get("selectReleaseVersion")
         templateData['releaseName']        = req.args.get("txtReleaseName")
         templateData['releaseDescription'] = req.args.get("txtReleaseDescription")
         templateData['releasePlannedDate'] = req.args.get("txtReleasePlannedDate")
         templateData['releaseTickets']     = req.args.get("hiddenReleaseTickets")
         templateData['releaseSignatures']  = req.args.get("hiddenReleaseSignatures")
-
-        ## load selected tickets
-        templateData['releaseTicketItems'] = []
-        for item in templateData['releaseTickets'].split(","):
-            templateData['releaseTicketItems'].append(data.getTicket(self, item))
+        
+        if templateData['preview']:
+            self.log.debug("_add_step_2: Preview")
+            ## load selected tickets
+            templateData['releaseTicketItems'] = []
+            for item in templateData['releaseTickets'].split(","):
+                templateData['releaseTicketItems'].append(data.getTicket(self, item))
+                
+            ## load selected install procedures
+            templateData['releaseProcedureItems'] = []
+            procs = data.findInstallProcedures(self)
+            for proc in procs:
+                sel = req.args.get("releaseProcedure_" + str(proc.id))
+                if sel:
+                    templateData['releaseProcedureItems'].append(proc)
             
-        ## load selected install procedures
-        templateData['releaseProcedureItems'] = []
-        procs = data.findInstallProcedures(self)
-        for proc in procs:
-            sel = req.args.get("releaseProcedure_" + str(proc.id))
-            if sel:
-                templateData['releaseProcedureItems'].append(proc)
-        
-        return ('release_add_3.html', templateData, None)
-
-
-        
-    def _add_step_3(self, req, templateData):
-        templateData['releaseVersion']     = req.args.get("selectReleaseVersion")
-        templateData['releaseName']        = req.args.get("txtReleaseName")
-        templateData['releaseDescription'] = req.args.get("txtReleaseDescription")
-        templateData['releasePlannedDate'] = req.args.get("txtReleasePlannedDate")
-        templateData['releaseTickets']     = req.args.get("hiddenReleaseTickets")
-        templateData['releaseSignatures']  = req.args.get("hiddenReleaseSignatures")
-        
-        resp = data.createRelease(self, templateData['releaseName'], templateData['releaseDescription'],
-                                  req.authname, None, templateData['releaseTickets'],
-                                  templateData['releaseSignatures'])
-        if resp:
-            req.redirect(req.href.release() + '/view/' + str(resp))
-        else:
-            return None, None, None
+            return ('release_add_2.html', templateData, None)
+        elif 'submit' in req.args:
+            self.log.debug("_add_step_2: Submit")
+            resp = data.createRelease(self, templateData['releaseName'], templateData['releaseDescription'],
+                                      req.authname, None, templateData['releaseTickets'],
+                                      templateData['releaseSignatures'])
+            if resp:
+                req.redirect(req.href.release() + '/view/' + str(resp))
+            else:
+                return None, None, None
+            
+        self.log.debug("_add_step_2: nada!")
+        return ('release_add_2.html', templateData, None)

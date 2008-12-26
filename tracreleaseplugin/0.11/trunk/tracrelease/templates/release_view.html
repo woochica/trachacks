@@ -18,66 +18,131 @@
   </head>
 
   <body>
-    <div id="content" class="release">
-      <div id="releaseId">Release ID: $release.id</div>
-      <div id="releaseVersion">Version: $release.version</div>
-      <div id="releaseDescription">Description: $release.description</div>
-      <div id="releaseAuthor">Author: $release.author</div>
-      <div id="releaseCreationDate">Creation Date: $release.creation_date</div>
-      <div id="releasePlannedDate">Planned Date: $release.planned_date</div>
-      <div id="releaseInstallDate">Install Date: $release.install_date</div>
-      
-      <table id="releaseTickets">
-        <thead>
-          <tr>
-            <th>Ticket</th>
-            <th>Summary</th>
-            <th>Type</th>
-            <th>Component</th>
-            <th>Version</th>
-          </tr>
-        </thead>
-        <tbody>
-	  <py:for each="item in release.tickets">
+    <div id="content">
+      <fieldset id="properties">
+	<legend>Release</legend>
+
+	<table>
+	  <tr>
+	    <th>Release Id:</th>
+	    <td class="fullrow" colspan="3">$release.id</td>
+	  </tr>
+	  
+	  <tr>
+	    <th>Release Name:</th>
+	    <td class="fullrow" colspan="3">$release.version"</td>
+	  </tr>
+  
+	  <tr>
+	    <th>Description:</th>
+	    <td class="fullrow" colspan="3">
+	      ${wiki_to_html(context, release.description)}
+	    </td>
+	  </tr>
+  
+	  <tr>
+	    <th>Author:</th>
+	    <td>$release.author</td>
+	    <th>Creation Date:</th>
+	    <td>$release.creation_date</td>
+	  </tr>
+  
+	  <tr>
+	    <th>Planned Date:</th>
+	    <td>$release.planned_date</td>
+	    <th><label for="txtInstallDate">Install Date:</label></th>
+	    <td>$release.install_date</td>
+	  </tr>
+	</table>
+      </fieldset>
+	
+      <fieldset id="signatures">
+	<legend>Signatures</legend>
+	<table id="releaseSignatures">
+	  <thead>
 	    <tr>
-	      <td>
-		<a href="$ticketURL/$item.ticket_id">$item.ticket_id</a>
-	      </td>
-	      <td>
-                <a href="$ticketURL/$item.ticket_id">$item.summary</a>
-              </td>
-	      <td>$item.type</td>
-	      <td>$item.component</td>
-	      <td>$item.version</td>
+	      <th>User</th>
+	      <th>Signature Date</th>
 	    </tr>
-	  </py:for>
-        </tbody>
-      </table>
+	  </thead>
+	  <tbody>
+	    <py:for each="item in release.signatures">
+	      <tr>
+		<td>$item.signature</td>
+		<td>
+		  <py:choose>
+		    <py:when test="item.sign_date">
+		      [$item.sign_date]
+		    </py:when>
+		    <py:when test="(not item.sign_date) and (req.authname == item.signature)">
+		      <a href="$baseURL/sign/$release.id">Sign now</a>
+		    </py:when>
+		    <py:otherwise>
+		      &nbsp;
+		    </py:otherwise>
+		  </py:choose>
+		</td>
+	      </tr>
+	    </py:for>
+	  </tbody>
+	</table>
+      </fieldset>
       
-      <table id="releaseSignatures">
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Signature Date</th>
-            <th>&nbsp;</th>
-          </tr>
-        </thead>
-        <tbody>
-	  <py:for each="item in release.signatures">
+      
+      <fieldset id="releaseTickets">
+	<legend>Tickets</legend>
+	<table id="releaseTickets" name="releaseTickets">
+	  <thead>
 	    <tr>
-	      <td>$item.signature</td>
-              <td py:if="item.sign_date">
-                [$item.sign_date]
-              </td>
-              <td py:if="(not item.sign_date) and (req.authname == item.signature)">
-                <a href="$baseURL/sign/$release.id">Sign now</a>
-              </td>
+	      <th>Ticket</th>
+	      <th>Summary</th>
+	      <th>Type</th>
+	      <th>Component</th>
+	      <th>Version</th>
 	    </tr>
-	  </py:for>
-        </tbody>
-      </table>
-      <br/>
-      <a py:if="'RELEASE_ADMIN' in perm" href="$baseURL/edit/$release.id">Edit Release</a>
+	  </thead>
+	  <tbody>
+	    <py:for each="item in release.tickets">
+		<tr>
+		    <td><a href="$ticketURL/$item.ticket_id">$item.ticket_id</a></td>
+		    <td><a href="$ticketURL/$item.ticket_id">${wiki_to_oneliner(context, item.summary)}</a></td>
+		    <td>$item.type</td>
+		    <td>$item.component</td>
+		    <td>$item.version</td>
+		</tr>
+	    </py:for>
+	  </tbody>
+	</table>
+      </fieldset>
+  
+      <fieldset id="releaseProcedures">
+	<legend>Install Procedures</legend>
+	<table>
+	  <thead>
+	    <tr>
+	      <th>Procedure ID</th>
+	      <th>Name</th>
+	      <th>Description</th>
+	      <th>Contains Files</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <py:for each="item in releaseProcedureItems">
+	      <tr>
+		<td>$item.id</td>
+		<td>$item.name</td>
+		<td>${wiki_to_oneliner(context, item.description)}</td>
+		<td>$item.contain_files</td>
+	      </tr>
+	    </py:for>
+	  </tbody>
+	</table>
+      </fieldset>
     </div>
+  
+    <a py:if="'RELEASE_ADMIN' in perm" href="$baseURL/edit/$release.id">Edit Release</a>
+    <br/>
+    <br/>
+    <br/>
   </body>
 </html>

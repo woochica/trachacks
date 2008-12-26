@@ -25,7 +25,6 @@
 	    <th>ID</th>
 	    <th>Version</th>
 	    <th>Author</th>
-	    <th>Description</th>
 	    <th>Creation</th>
 	    <th>Planned</th>
 	    <th>Install</th>
@@ -41,7 +40,6 @@
 		<a href="$baseURL/$item.id">$item.version</a>
 	      </td>
 	      <td>$item.author</td>
-	      <td>$item.description</td>
 	      <td>${pretty_timedelta(item.creation_date)} ago</td>
 	      <td>
 		${item.planned_date and format_date(item.planned_date, '%Y-%m-%d') or ""}

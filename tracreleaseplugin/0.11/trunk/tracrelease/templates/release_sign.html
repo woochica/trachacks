@@ -21,7 +21,7 @@
     <div id="content" class="release">
       <div id="releaseId">Release ID: $release.id</div>
       <div id="releaseVersion">Version: $release.version</div>
-      <div id="releaseDescription">Description: $release.description</div>
+      <div id="releaseDescription">Description: ${wiki_to_html(context, release.description)}</div>
       <div id="releaseAuthor">Author: $release.author</div>
       <div id="releaseCreationDate">Creation Date: $release.creation_date</div>
       <div id="releasePlannedDate">Planned Date: $release.planned_date</div>
@@ -44,7 +44,7 @@
 		<a href="$ticketURL/$item.ticket_id">$item.ticket_id</a>
 	      </td>
 	      <td>
-                <a href="$ticketURL/$item.ticket_id">$item.summary</a>
+                <a href="$ticketURL/$item.ticket_id">${wiki_to_oneliner(context, item.summary)}</a>
               </td>
 	      <td>$item.type</td>
 	      <td>$item.component</td>

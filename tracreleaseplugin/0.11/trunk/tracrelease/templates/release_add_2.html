@@ -18,100 +18,219 @@
   </head>
 
   <body>
+    <py:if test="preview">
+      <div id="content" class="ticketdraft">
+        <fieldset id="properties">
+          <legend>Release</legend>
+  
+          <table>
+            <tr>
+              <th>Version:</th>
+              <td class="fullrow" colspan="3">$releaseVersion</td>
+            </tr>
+            
+            <tr>
+              <th>Release Name:</th>
+              <td class="fullrow" colspan="3">$releaseName"</td>
+            </tr>
+    
+            <tr>
+              <th>Description:</th>
+              <td class="fullrow" colspan="3">
+                ${wiki_to_html(context, releaseDescription)}
+              </td>
+            </tr>
+    
+            <tr>
+              <th>Author:</th>
+              <td>$req.authname</td>
+              <th>Creation Date:</th>
+              <td>$releaseCreationDate</td>
+            </tr>
+    
+            <tr>
+              <th>Planned Date:</th>
+              <td>$releasePlannedDate</td>
+              <th><label for="txtInstallDate">Install Date:</label></th>
+              <td>&nbsp;</td>
+            </tr>
+          
+            <tr>
+              <th>Signatures (comma-separated list):</th>
+              <td class="fullrow" colspan="3">$releaseSignatures</td>
+            </tr>
+
+          </table>
+        </fieldset>
+        
+        
+        <fieldset id="releaseTickets">
+          <legend>Tickets</legend>
+          <table id="releaseTickets" name="releaseTickets">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Summary</th>
+                <th>Type</th>
+                <th>Component</th>
+                <th>Version</th>
+              </tr>
+            </thead>
+            <tbody>
+              <py:for each="item in releaseTicketItems">
+                  <tr>
+                      <td>$item.ticket_id</td>
+                      <td>${wiki_to_oneliner(context, item.summary)}</td>
+                      <td>$item.type</td>
+                      <td>$item.component</td>
+                      <td>$item.version</td>
+                  </tr>
+              </py:for>
+            </tbody>
+          </table>
+        </fieldset>
+    
+        <fieldset id="releaseProcedures">
+          <legend>Install Procedures</legend>
+          <table>
+            <thead>
+              <tr>
+                <th>Procedure ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Contains Files</th>
+              </tr>
+            </thead>
+            <tbody>
+              <py:for each="item in releaseProcedureItems">
+                <tr>
+                  <td>$item.id</td>
+                  <td>$item.name</td>
+                  <td>${wiki_to_oneliner(context, item.description)}</td>
+                  <td>$item.contain_files</td>
+                </tr>
+              </py:for>
+            </tbody>
+          </table>
+        </fieldset>
+      </div>
+    </py:if>
+    
+    <!-- ******************************************************************* -->
     <div id="content" class="release">
       <form action="$baseURL/add" method="post">
         <input type="hidden" name="hiddenReleaseStep" id="hiddenReleaseStep" value="2"/>
         <input type="hidden" name="hiddenReleaseTickets" id="hiddenReleaseTickets" value="$releaseTickets"/>
         <input type="hidden" name="selectReleaseVersion" id="selectReleaseVersion" value="$releaseVersion"/>
+        <fieldset id="properties">
+          <legend>Release</legend>
+  
+          <table>
+            <tr>
+              <th><label for="releaseVersion">Version:</label></th>
+              <td class="fullrow" colspan="3">$releaseVersion</td>
+            </tr>
+            
+            <tr>
+              <th><label for="txtReleaseName">Release Name:</label></th>
+              <td class="fullrow" colspan="3">
+                <input type="text" name="txtReleaseName" id="txtReleaseName" value="$releaseName"/>
+              </td>
+            </tr>
+    
+            <tr>
+              <th><label for="txtReleaseDescription">Description:</label></th>
+              <td class="fullrow" colspan="3">
+                <textarea name="txtReleaseDescription"
+                          id="txtReleaseDescription"
+                          class="wikitext"
+                          rows="10" cols="68">$releaseDescription</textarea>
+              </td>
+            </tr>
+    
+            <tr>
+              <th>Author:</th>
+              <td>$req.authname</td>
+              <th>Creation Date:</th>
+              <td>inserir data atual</td>
+            </tr>
+    
+            <tr>
+              <th><label for="txtPlannedDate">Planned Date:</label></th>
+              <td><input type="text" name="txtPlannedDate" id="txtPlannedDate" value="$releasePlannedDate"/></td>
+              <th><label for="txtInstallDate">Install Date:</label></th>
+              <td>&nbsp;</td>
+            </tr>
+          
+            <tr>
+              <th><label for="hiddenReleaseSignatures">Signatures (comma-separated list):</label></th>
+              <td class="fullrow" colspan="3">
+                <input type="text" name="hiddenReleaseSignatures"
+                       id="hiddenReleaseSignatures"
+                       value="$releaseSignatures"
+                       size="107"/>
+              </td>
+            </tr>
 
-        <div id="releaseVersion">
-            Version:
-            $releaseVersion
-        </div>
+          </table>
+        </fieldset>
         
-        <div id="releaseId">
-            Release Name:
-            <input type="text" name="txtReleaseName" id="txtReleaseName" value="$releaseName"/>
-        </div>
-
-        <div id="releaseDescription">
-            Description:
-            <textarea name="txtReleaseDescription" id="txtReleaseDescription">$releaseDescription</textarea>
-        </div>
-
-        <div id="releaseAuthor">
-            Author:
-            $req.authname
-        </div>
-
-        <div id="releaseCreationDate">
-            Creation Date:
-        </div>
-
-        <div id="releasePlannedDate">
-            Planned Date:
-            <input type="text" name="txtPlannedDate" id="txtPlannedDate" value="$releasePlannedDate"/>
-        </div>
-
-        <div id="releaseInstallDate">
-            Install Date:
-        </div>
-      
-        <br/><br/>
-        <table id="releaseTickets" name="releaseTickets">
-          <thead>
-            <tr>
-              <th>Ticket</th>
-              <th>Summary</th>
-              <th>Type</th>
-              <th>Component</th>
-              <th>Version</th>
-            </tr>
-          </thead>
-          <tbody>
-            <py:for each="item in releaseTicketItems">
-                <tr>
-                    <td>$item.ticket_id</td>
-                    <td>$item.summary</td>
-                    <td>$item.type</td>
-                    <td>$item.component</td>
-                    <td>$item.version</td>
-                </tr>
-            </py:for>
-          </tbody>
-        </table>
-
-        <br/><br/>
-        <table id="releaseProcedures">
-          <thead>
-            <tr>
-              <th>&nbsp;</th>
-              <th>Procedure ID</th>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Contains Files</th>
-            </tr>
-          </thead>
-          <tbody>
-            <py:for each="item in releaseProcedureItems">
+        
+        <fieldset id="releaseTickets">
+          <legend>Tickets</legend>
+          <table id="releaseTickets" name="releaseTickets">
+            <thead>
               <tr>
-                <td><input type="checkbox" id="releaseProcedure_$item.id"/></td>
-                <td>$item.id</td>
-                <td>$item.name</td>
-                <td>$item.description</td>
-                <td>$item.contain_files</td>
+                <th>Ticket</th>
+                <th>Summary</th>
+                <th>Type</th>
+                <th>Component</th>
+                <th>Version</th>
               </tr>
-            </py:for>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <py:for each="item in releaseTicketItems">
+                  <tr>
+                      <td>$item.ticket_id</td>
+                      <td>${wiki_to_oneliner(context, item.summary)}</td>
+                      <td>$item.type</td>
+                      <td>$item.component</td>
+                      <td>$item.version</td>
+                  </tr>
+              </py:for>
+            </tbody>
+          </table>
+        </fieldset>
+    
+        <fieldset id="releaseProcedures">
+          <legend>Install Procedures</legend>
+          <table>
+            <thead>
+              <tr>
+                <th>&nbsp;</th>
+                <th>Procedure ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Contains Files</th>
+              </tr>
+            </thead>
+            <tbody>
+              <py:for each="item in releaseProcedureItems">
+                <tr>
+                  <td><input type="checkbox" id="releaseProcedure_$item.id"/></td>
+                  <td>$item.id</td>
+                  <td>$item.name</td>
+                  <td>${wiki_to_oneliner(context, item.description)}</td>
+                  <td>$item.contain_files</td>
+                </tr>
+              </py:for>
+            </tbody>
+          </table>
+        </fieldset>
+          
+        <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+        <input type="submit" name="submit" value="Create Release"/>
         
-        
-        <br/><br/>
-        <div id="releaseSignatures">
-            Signatures (comma-separated list):
-            <input type="text" name="hiddenReleaseSignatures" id="hiddenReleaseSignatures" value="$releaseSignatures"/>
-        </div>
-        <input type="submit" value="Next"/>
       </form>
       
     </div>
