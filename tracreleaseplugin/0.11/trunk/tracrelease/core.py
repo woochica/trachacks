@@ -187,8 +187,8 @@ class ReleaseCore(Component):
         return ('release_add_2.html', templateData, None)
 
 
-    def _add_step_2(self, req, templateData):
-        templateData['preview']            = 'preview' in req.args
+    def _add_step_2(self, req, templateData):        
+        templateData['preview'] = False
         templateData['releaseVersion']     = req.args.get("selectReleaseVersion")
         templateData['releaseName']        = req.args.get("txtReleaseName")
         templateData['releaseDescription'] = req.args.get("txtReleaseDescription")
@@ -196,7 +196,8 @@ class ReleaseCore(Component):
         templateData['releaseTickets']     = req.args.get("hiddenReleaseTickets")
         templateData['releaseSignatures']  = req.args.get("hiddenReleaseSignatures")
         
-        if templateData['preview']:
+        if 'preview' in req.args:
+            templateData['preview'] = True
             self.log.debug("_add_step_2: Preview")
             ## load selected tickets
             templateData['releaseTicketItems'] = []
@@ -207,11 +208,14 @@ class ReleaseCore(Component):
             templateData['releaseProcedureItems'] = []
             procs = data.findInstallProcedures(self)
             for proc in procs:
+                self.log.debug("_add_step_2: InstallProc: %s" % str(proc))
                 sel = req.args.get("releaseProcedure_" + str(proc.id))
                 if sel:
+                    self.log.debug("_add_step_2: InstallProc: %s selected" % str(proc))
                     templateData['releaseProcedureItems'].append(proc)
             
             return ('release_add_2.html', templateData, None)
+            
         elif 'submit' in req.args:
             self.log.debug("_add_step_2: Submit")
             resp = data.createRelease(self, templateData['releaseName'], templateData['releaseDescription'],
