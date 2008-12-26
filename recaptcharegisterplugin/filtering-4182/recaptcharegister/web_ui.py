@@ -132,7 +132,7 @@ var RecaptchaOptions = {
             if req.method == 'POST' and req.args.get('action') == 'create':
                 response = captcha.submit(
                     req.args.get('recaptcha_challenge_field'),
-                    req.args.args('recaptcha_response_field'),
+                    req.args.get('recaptcha_response_field'),
                     self.private_key, req.remote_addr,
                 )
                 if not response.is_valid:
