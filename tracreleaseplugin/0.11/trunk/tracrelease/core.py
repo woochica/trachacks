@@ -99,6 +99,7 @@ class ReleaseCore(Component):
                 if req.method == "POST":
                     self.log.debug("Adding: POST")
                     ret = self._add_release(req, templateData)
+                    self.log.debug(templateData)
                     self.log.debug(ret)
                     return ret[0], ret[1], ret[2]
                 else:
@@ -230,6 +231,7 @@ class ReleaseCore(Component):
         templateData['releaseName'] = v['name']
         templateData['releasePlannedData'] = v['time']
         templateData['releaseDescription'] = v['description']
+        templateData['releaseProcedureItems'] = data.findInstallProcedures(self)
 
         # Setting tickets according to the selected version"
         templateData['releaseTickets'] = ""
@@ -238,6 +240,7 @@ class ReleaseCore(Component):
             templateData['releaseTickets'] = templateData['releaseTickets'] + str(ticket.ticket_id) + ","
         
         return ('release_add_2.html', templateData, None)
+
 
     def _add_step_2(self, req, templateData):
         templateData['releaseVersion']     = req.args.get("selectReleaseVersion")
@@ -252,7 +255,17 @@ class ReleaseCore(Component):
         for item in templateData['releaseTickets'].split(","):
             templateData['releaseTicketItems'].append(data.getTicket(self, item))
             
+        ## load selected install procedures
+        templateData['releaseProcedureItems'] = []
+        procs = data.findInstallProcedures(self)
+        for proc in procs:
+            sel = req.args.get("releaseProcedure_" + str(proc.id))
+            if sel:
+                templateData['releaseProcedureItems'].append(proc)
+        
         return ('release_add_3.html', templateData, None)
+
+
         
     def _add_step_3(self, req, templateData):
         templateData['releaseVersion']     = req.args.get("selectReleaseVersion")

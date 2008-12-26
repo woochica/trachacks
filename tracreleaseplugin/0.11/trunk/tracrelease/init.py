@@ -5,7 +5,7 @@ from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 
 # Last database schema version
-last_db_version = 1
+last_db_version = 2
 
 class ReleaseInit(Component):
     """ Initialise database and environment for release component """

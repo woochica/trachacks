@@ -82,6 +82,31 @@
         </table>
 
         <br/><br/>
+        <table id="releaseProcedures">
+          <thead>
+            <tr>
+              <th>&nbsp;</th>
+              <th>Procedure ID</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Contains Files</th>
+            </tr>
+          </thead>
+          <tbody>
+            <py:for each="item in releaseProcedureItems">
+              <tr>
+                <td><input type="checkbox" id="releaseProcedure_$item.id"/></td>
+                <td>$item.id</td>
+                <td>$item.name</td>
+                <td>$item.description</td>
+                <td>$item.contain_files</td>
+              </tr>
+            </py:for>
+          </tbody>
+        </table>
+        
+        
+        <br/><br/>
         <div id="releaseSignatures">
             Signatures (comma-separated list):
             <input type="text" name="hiddenReleaseSignatures" id="hiddenReleaseSignatures" value="$releaseSignatures"/>

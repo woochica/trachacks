@@ -3,6 +3,10 @@
 import model
 import trac.util.datefmt as datefmt
 
+
+def _now():
+    return datefmt.to_timestamp(datefmt.to_datetime(None))
+
 def get_all(com, sql, *params):
     """Executes the query and returns the (description, data)"""
     db = com.env.get_db_cnx()
@@ -85,16 +89,15 @@ def findAvailableVersions(com):
 
 def signRelease(com, releaseId, userName):
     """Marks a Release as signed by the indicated user"""
-    sql = "UPDATE release_signatures SET sign_date = UNIX_TIMESTAMP() WHERE release_id = %s AND signature = %s"
-    execute_sql(com, sql, releaseId, userName)
-    
+    sql = "UPDATE release_signatures SET sign_date = %s WHERE release_id = %s AND signature = %s"
+    execute_sql(com, sql, _now(), releaseId, userName)
     
     
     
     
     
 def createRelease(com, name, description, author, planned, tickets, signatures):
-    sql = """INSERT INTO releases (version, description, author, creation_date, planned_date) VALUES (%s, %s, %s, UNIX_TIMESTAMP(), %s)"""
+    sql = """INSERT INTO releases (version, description, author, creation_date, planned_date) VALUES (%s, %s, %s, %s, %s)"""
     sqlTickets = """INSERT INTO release_tickets (release_id, ticket_id) VALUES (%s, %s)"""
     sqlSignatures = """INSERT INTO release_signatures (release_id, signature) VALUES (%s, %s)"""
 
@@ -103,12 +106,13 @@ def createRelease(com, name, description, author, planned, tickets, signatures):
     
     flag = True
     relId = None
+    now = _now()
     
     try:
-        cur.execute(sql, (name, description, author, planned))
+        cur.execute(sql, (name, description, author, now, planned))
     except Exception, e:
         flag = False
-        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sql, (name, description, author, planned), e));
+        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sql, (name, description, author, now, planned), e));
         db.rollback()
         
     if flag:
@@ -170,11 +174,17 @@ def loadListFromDatabase(com, sql, f, *params):
     cur = db.cursor()
     try:
         cur.execute(sql, params)
-        for row in cur.fetchall():
-            result.append(f(row))
-                
+        ret = cur.fetchall()
     except Exception, e:
-        com.log.error('There was a problem executing sql: %s\n\twith params: %s\nException: %s' % (sql, params, e));
+        com.log.error('data.loadListFromDatabase: There was a problem executing sql: %s\n\twith params: %s\nException: %s' % (sql, params, e));
+
+    try:        
+        if ret:
+            com.log.debug('data.loadListFromDatabase: result = %s' % str(ret))
+            for row in ret:
+                result.append(f(row))
+    except Exception, e:
+        com.log.error('data.loadListFromDatabase(%s) with params [%s]: %s' % (sql, params, e))
         
     try:
         db.close()
@@ -197,10 +207,18 @@ def loadFromDatabase(com, sql, f, *params):
     cur = db.cursor()
     try:
         cur.execute(sql, params)
-        result = f(cur.fetchone())
+        result = cur.fetchone()
                 
     except Exception, e:
         com.log.error('There was a problem executing sql: %s\n\twith params: %s\nException: %s' % (sql, params, e));
+
+    try:
+        if result:
+            com.log.debug('loadFromDatabase: result = %s' % str(result))
+            result = f(result)
+    except Exception, e:
+        com.log.error('data.loadListFromDatabase(%s) with params [%s]: %s' % (sql, params, e))
+
         
     try:
         db.close()
@@ -261,6 +279,7 @@ def loadRelease(com, releaseId):
     if result:    
         result.tickets = loadReleaseTickets(com, releaseId)
         result.signatures = loadReleaseSignatures(com, releaseId)
+        result.install_procedure = loadReleaseInstallProcedures(com, releaseId)
     
     return result
 
@@ -307,3 +326,28 @@ def loadVersion(com, versionId):
     sql = "SELECT name, time, description FROM version WHERE name = %s"
     f = lambda row: { 'name': row[0], 'time': loadDateField(row[1]), 'description': row[2] }
     return loadFromDatabase(com, sql, f, versionId)
+    
+    
+def findInstallProcedures(com):
+    """Find all available Install Procedureres"""
+    sql = "SELECT id, name, description, contain_files FROM install_procedures ORDER BY id"
+    f = lambda row: model.InstallProcedures(row[0], row[1], row[2], row[3])
+    return loadListFromDatabase(com, sql, f)
+ 
+
+def loadReleaseInstallProcedures(com, releaseId):
+    """Load all the Install Procedures associated to a specific release"""
+    sql = """SELECT rip.release_id, rip.install_id, ip.name, ip.description, ip.contain_files
+             FROM release_installs rip, install_procedures ip
+             WHERE ip.id = rip.install_id AND rip.release_id = %s"""
+             
+    sqlFiles = """SELECT file_order, file_name FROM release_files WHERE release_id = %s and install_id = %s ORDER BY sequence"""
+             
+    f = lambda row: model.ReleaseInstallProcedure(row[0], model.InstallProcedures(row[1], row[2], row[3], row[4]))
+    ret = loadFromDatabase(com, sql, f, releaseId)
+    if ret:
+        f1 = lambda row: row[1]
+        for proc in ret:        
+            proc.install_files = loadListFromDatabase(com, sqlFiles, f1, releaseId, proc.install_procedure.id)
+            
+    return ret

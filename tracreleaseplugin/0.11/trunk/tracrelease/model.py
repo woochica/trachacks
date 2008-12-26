@@ -13,6 +13,7 @@ class Release(object):
         self.install_date = install
         self.tickets = []
         self.signatures = []
+        self.install_procedures = []
 
 class ReleaseTicket(object):
     def __init__(self, release_id = None, ticket_id = None, summary = None,
@@ -30,4 +31,18 @@ class ReleaseSignee(object):
         self.signature = user
         self.sign_date = date
 
+
+class InstallProcedures(object):
+    def __init__(self, id = None, name = None, description = None, contain_files = None):
+        self.id = id
+        self.name = name
+        self.description = description
+        self.contain_files = contain_files
+
+
+class ReleaseInstallProcedure(object):
+    def __init__(self, release_id = None, install_procedure = None, install_files = None):
+        self.release_id = release_id
+        self.install_procedure = install_procedure
+        self.install_files = install_files
 
