@@ -30,7 +30,7 @@
 	  
 	  <tr>
 	    <th>Release Name:</th>
-	    <td class="fullrow" colspan="3">$release.version"</td>
+	    <td class="fullrow" colspan="3">$release.version</td>
 	  </tr>
   
 	  <tr>
@@ -127,12 +127,12 @@
 	    </tr>
 	  </thead>
 	  <tbody>
-	    <py:for each="item in releaseProcedureItems">
+	    <py:for each="item in release.install_procedures">
 	      <tr>
-		<td>$item.id</td>
-		<td>$item.name</td>
-		<td>${wiki_to_oneliner(context, item.description)}</td>
-		<td>$item.contain_files</td>
+		<td>$item.install_procedure.id</td>
+		<td>$item.install_procedure.name</td>
+		<td>${wiki_to_oneliner(context, item.install_procedure.description)}</td>
+		<td>$item.install_procedure.contain_files</td>
 	      </tr>
 	    </py:for>
 	  </tbody>

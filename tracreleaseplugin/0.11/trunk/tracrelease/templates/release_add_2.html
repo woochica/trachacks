@@ -10,9 +10,28 @@
   <head>
     <title>Add New Release</title>
     <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
-    <script type="text/javascript" py:choose="">
+    <script type="text/javascript" py:choose="True">
+      function loadFiles(elemName, arqs) {
+        elem = document.getElementById(elemName);
+        if (elem) {
+          elem.value = arqs;
+        }
+      }
+      
+      function checkInstallProcedure(elemName) {
+        elem = document.getElementById(elemName);
+        if (elem) {
+          elem.checked = true;
+        }
+      }
+      
       $(document).ready(function() {
           $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+          
+          <py:for each="item in releaseSelectedProcedureItems">
+            checkInstallProcedure("releaseProcedure_$item.id")
+            loadFiles("releaseProcedureFile_$item.id", "$item.files")
+          </py:for>
         });
     </script>
   </head>
@@ -31,7 +50,7 @@
             
             <tr>
               <th>Release Name:</th>
-              <td class="fullrow" colspan="3">$releaseName"</td>
+              <td class="fullrow" colspan="3">$releaseName</td>
             </tr>
     
             <tr>
@@ -99,15 +118,17 @@
                 <th>Name</th>
                 <th>Description</th>
                 <th>Contains Files</th>
+                <th>Files</th>
               </tr>
             </thead>
             <tbody>
-              <py:for each="item in releaseProcedureItems">
+              <py:for each="item in releaseSelectedProcedureItems">
                 <tr>
                   <td>$item.id</td>
                   <td>$item.name</td>
                   <td>${wiki_to_oneliner(context, item.description)}</td>
                   <td>$item.contain_files</td>
+                  <td>$item.files</td>
                 </tr>
               </py:for>
             </tbody>
@@ -120,7 +141,6 @@
     <div id="content" class="release">
       <form action="$baseURL/add" method="post">
         <input type="hidden" name="hiddenReleaseStep" id="hiddenReleaseStep" value="2"/>
-        <input type="hidden" name="hiddenReleaseTickets" id="hiddenReleaseTickets" value="$releaseTickets"/>
         <input type="hidden" name="selectReleaseVersion" id="selectReleaseVersion" value="$releaseVersion"/>
         <fieldset id="properties">
           <legend>Release</legend>
@@ -198,6 +218,15 @@
                       <td>$item.version</td>
                   </tr>
               </py:for>
+              
+              <tr>
+                <th colspan="2">
+                  Ticket List (comma-separated list):
+                </th>
+                <td colspan="2" class="fullrow">
+                  <input type="text" name="hiddenReleaseTickets" id="hiddenReleaseTickets" value="$releaseTickets"/>
+                </td>
+              </tr>
             </tbody>
           </table>
         </fieldset>
@@ -211,17 +240,31 @@
                 <th>Procedure ID</th>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Contains Files</th>
+                <th>Files</th>
               </tr>
             </thead>
             <tbody>
-              <py:for each="item in releaseProcedureItems">
+              <py:for each="item in releaseAvailableProcedureItems">
                 <tr>
-                  <td><input type="checkbox" id="releaseProcedure_$item.id"/></td>
+                  <td>
+                    <input type="checkbox" name="releaseProcedure_$item.id"
+                           id="releaseProcedure_$item.id"/>
+                  </td>
                   <td>$item.id</td>
                   <td>$item.name</td>
                   <td>${wiki_to_oneliner(context, item.description)}</td>
-                  <td>$item.contain_files</td>
+                  <py:if test="item.contain_files">
+                    <td>
+                      <input type="text"
+                             name="releaseProcedureFile_$item.id"
+                             id="releaseProcedureFile_$item.id"
+                             size="100"
+                              />
+                    </td>
+                  </py:if>
+                  <py:if test="not item.contain_files">
+                    <td>&nbsp;</td>
+                  </py:if>
                 </tr>
               </py:for>
             </tbody>

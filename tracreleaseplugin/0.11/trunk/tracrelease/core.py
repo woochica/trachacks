@@ -89,10 +89,10 @@ class ReleaseCore(Component):
         
         if 'id' in req.args:
             templateData['release'] = data.loadRelease(self, req.args['id'])
-
         
         if 'action' in req.args:
             if req.args['action'] == 'view':
+                self.log.debug("VIEW: %s" % str(templateData['release']))
                 return 'release_view.html', templateData, None
 
             if req.args['action'] == 'edit':
@@ -176,7 +176,7 @@ class ReleaseCore(Component):
         templateData['releaseName'] = v['name']
         templateData['releasePlannedData'] = v['time']
         templateData['releaseDescription'] = v['description']
-        templateData['releaseProcedureItems'] = data.findInstallProcedures(self)
+        templateData['releaseAvailableProcedureItems'] = data.findInstallProcedures(self)
 
         # Setting tickets according to the selected version"
         templateData['releaseTickets'] = ""
@@ -195,32 +195,43 @@ class ReleaseCore(Component):
         templateData['releasePlannedDate'] = req.args.get("txtReleasePlannedDate")
         templateData['releaseTickets']     = req.args.get("hiddenReleaseTickets")
         templateData['releaseSignatures']  = req.args.get("hiddenReleaseSignatures")
-        
+
+
+        ## load selected install procedures
+        procs = data.findInstallProcedures(self)
+        templateData['releaseAvailableProcedureItems'] = procs
+        templateData['releaseSelectedProcedureItemsString'] = ""
+        templateData['releaseSelectedProcedureItems'] = []
+        for proc in procs:
+            sel = req.args.get("releaseProcedure_" + str(proc.id))
+            if sel:
+                self.log.debug("_add_step_2: InstallProc: %s selected" % str(proc))
+                templateData['releaseProcedure_' + str(proc.id)] = True
+
+                arqs = req.args.get("releaseProcedureFile_" + str(proc.id))
+                if arqs:
+                    proc.files = arqs
+                    
+                templateData['releaseSelectedProcedureItems'].append(proc)
+                templateData['releaseSelectedProcedureItemsString'] += str(proc.id) + ","
+                
         if 'preview' in req.args:
             templateData['preview'] = True
             self.log.debug("_add_step_2: Preview")
+
             ## load selected tickets
             templateData['releaseTicketItems'] = []
             for item in templateData['releaseTickets'].split(","):
                 templateData['releaseTicketItems'].append(data.getTicket(self, item))
                 
-            ## load selected install procedures
-            templateData['releaseProcedureItems'] = []
-            procs = data.findInstallProcedures(self)
-            for proc in procs:
-                self.log.debug("_add_step_2: InstallProc: %s" % str(proc))
-                sel = req.args.get("releaseProcedure_" + str(proc.id))
-                if sel:
-                    self.log.debug("_add_step_2: InstallProc: %s selected" % str(proc))
-                    templateData['releaseProcedureItems'].append(proc)
-            
             return ('release_add_2.html', templateData, None)
             
         elif 'submit' in req.args:
             self.log.debug("_add_step_2: Submit")
             resp = data.createRelease(self, templateData['releaseName'], templateData['releaseDescription'],
                                       req.authname, None, templateData['releaseTickets'],
-                                      templateData['releaseSignatures'])
+                                      templateData['releaseSignatures'],
+                                      templateData['releaseSelectedProcedureItems'])
             if resp:
                 req.redirect(req.href.release() + '/view/' + str(resp))
             else:

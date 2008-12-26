@@ -14,6 +14,13 @@ class Release(object):
         self.tickets = []
         self.signatures = []
         self.install_procedures = []
+        
+    def __str__(self):
+        t = ",".join([str(ticket) for ticket in self.tickets])
+        s = ",".join([str(sign) for sign in self.signatures])
+        i = ",".join([str(inst) for inst in self.install_procedures])
+        
+        return "<Release: id: %s; version: %s; tickets: %s; signs: %s; installs: %s>" % (self.id, self.version, t, s, i)
 
 class ReleaseTicket(object):
     def __init__(self, release_id = None, ticket_id = None, summary = None,
@@ -24,12 +31,18 @@ class ReleaseTicket(object):
         self.component = component
         self.type = type
         self.version = version
+        
+    def __str__(self):
+        return "<ReleaseTicket: id: %s>" % self.release_id
 
 class ReleaseSignee(object):
     def __init__(self, id = None, user = None, date = None):
         self.release_id = id
         self.signature = user
         self.sign_date = date
+
+    def __str__(self):
+        return "<ReleaseSignee: id: %s; user: %s>" % (self.release_id, self.signature)
 
 
 class InstallProcedures(object):
@@ -38,6 +51,11 @@ class InstallProcedures(object):
         self.name = name
         self.description = description
         self.contain_files = contain_files
+        self.files = []
+        
+    def __str__(self):
+        return "<InstallProcedures id=%s; files=%s>" % (self.id, str(self.files))
+
 
 
 class ReleaseInstallProcedure(object):
@@ -45,4 +63,8 @@ class ReleaseInstallProcedure(object):
         self.release_id = release_id
         self.install_procedure = install_procedure
         self.install_files = install_files
+
+    def __str__(self):
+        return "<ReleaseInstallProcedure: id: %s; procs: %s; files: %s>" % (
+            self.release_id, str(self.install_procedure), str(self.install_files))
 

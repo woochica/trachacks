@@ -96,10 +96,12 @@ def signRelease(com, releaseId, userName):
     
     
     
-def createRelease(com, name, description, author, planned, tickets, signatures):
+def createRelease(com, name, description, author, planned, tickets, signatures, install_procedures):
     sql = """INSERT INTO releases (version, description, author, creation_date, planned_date) VALUES (%s, %s, %s, %s, %s)"""
     sqlTickets = """INSERT INTO release_tickets (release_id, ticket_id) VALUES (%s, %s)"""
     sqlSignatures = """INSERT INTO release_signatures (release_id, signature) VALUES (%s, %s)"""
+    sqlInstallProcedures = """INSERT INTO release_installs (release_id, install_id) VALUES (%s, %s)"""
+    sqlInstallFiles = """INSERT INTO release_files (release_id, install_id, file_order, file_name) VALUES (%s, %s, %s, %s)"""
 
     db = com.env.get_db_cnx()
     cur = db.cursor()
@@ -134,18 +136,37 @@ def createRelease(com, name, description, author, planned, tickets, signatures):
                         db.rollback()
                         break
                     
-            if flag:
-                for sign in signatures.split(","):
-                    sign = sign.strip()
-                    if sign:
-                        try:    
-                            cur.execute(sqlSignatures, (relId, sign))
-                        except Exception, e:
-                            flag = False
-                            com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlSignatures, (relId, sign), e));
-                            db.rollback()
-                            break
+        if relId and flag:
+            for sign in signatures.split(","):
+                sign = sign.strip()
+                if sign:
+                    try:    
+                        cur.execute(sqlSignatures, (relId, sign))
+                    except Exception, e:
+                        flag = False
+                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlSignatures, (relId, sign), e));
+                        db.rollback()
+                        break
         
+        if relId and flag:
+            for inst in install_procedures:
+                inst = inst.id
+                if inst:
+                    try:    
+                        cur.execute(sqlInstallProcedures, (relId, inst.id))
+                        
+                        if inst.files:
+                            cnt = 1
+                            for arq in inst.files:
+                                cur.execute(sqlInstallFiles, (relId, inst.id, cnt, arq))
+                                            
+                    except Exception, e:
+                        flag = False
+                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlInstallProcedures, (relId, inst), e));
+                        db.rollback()
+                        break
+
+
         if flag:
             db.commit();
     try:
@@ -279,7 +300,7 @@ def loadRelease(com, releaseId):
     if result:    
         result.tickets = loadReleaseTickets(com, releaseId)
         result.signatures = loadReleaseSignatures(com, releaseId)
-        result.install_procedure = loadReleaseInstallProcedures(com, releaseId)
+        result.install_procedures = loadReleaseInstallProcedures(com, releaseId)
     
     return result
 
@@ -289,6 +310,7 @@ def loadRelease(com, releaseId):
 
 
 def loadReleaseTickets(com, releaseId):
+    com.log.debug("loadReleaseTickets(%s)" % str(releaseId))
     sql = """SELECT rt.release_id,
                     rt.ticket_id,
                     t.summary,
@@ -308,6 +330,7 @@ def loadReleaseTickets(com, releaseId):
     
     
 def loadReleaseSignatures(com, releaseId):
+    com.log.debug("loadReleaseSignatures(%s)" % str(releaseId))
     """Load all users who should sign this Release."""
     sql = """SELECT rs.release_id,
                     rs.signature,
@@ -336,15 +359,16 @@ def findInstallProcedures(com):
  
 
 def loadReleaseInstallProcedures(com, releaseId):
+    com.log.debug("loadReleaseInstallProcedures(%s)" % str(releaseId))
     """Load all the Install Procedures associated to a specific release"""
     sql = """SELECT rip.release_id, rip.install_id, ip.name, ip.description, ip.contain_files
              FROM release_installs rip, install_procedures ip
              WHERE ip.id = rip.install_id AND rip.release_id = %s"""
              
-    sqlFiles = """SELECT file_order, file_name FROM release_files WHERE release_id = %s and install_id = %s ORDER BY sequence"""
+    sqlFiles = """SELECT file_order, file_name FROM release_files WHERE release_id = %s and install_id = %s ORDER BY file_order"""
              
     f = lambda row: model.ReleaseInstallProcedure(row[0], model.InstallProcedures(row[1], row[2], row[3], row[4]))
-    ret = loadFromDatabase(com, sql, f, releaseId)
+    ret = loadListFromDatabase(com, sql, f, releaseId)
     if ret:
         f1 = lambda row: row[1]
         for proc in ret:        
