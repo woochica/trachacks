@@ -28,9 +28,9 @@
       $(document).ready(function() {
           $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
           
-          <py:for each="item in releaseSelectedProcedureItems">
-            checkInstallProcedure("releaseProcedure_$item.id")
-            loadFiles("releaseProcedureFile_$item.id", "$item.files")
+          <py:for each="item in release.install_procedures">
+            checkInstallProcedure("releaseProcedure_$item.install_procedure.id")
+            loadFiles("releaseProcedureFile_$item.install_procedure.id", "$item.install_files")
           </py:for>
         });
     </script>
@@ -45,7 +45,7 @@
           <table>
             <tr>
               <th>Version:</th>
-              <td class="fullrow" colspan="3">$releaseVersion</td>
+              <td class="fullrow" colspan="3">$release.version</td>
             </tr>
             
             <tr>
@@ -56,32 +56,45 @@
             <tr>
               <th>Description:</th>
               <td class="fullrow" colspan="3">
-                ${wiki_to_html(context, releaseDescription)}
+                ${wiki_to_html(context, release.description)}
               </td>
             </tr>
     
             <tr>
               <th>Author:</th>
-              <td>$req.authname</td>
+              <td>$release.author</td>
               <th>Creation Date:</th>
-              <td>$releaseCreationDate</td>
+              <td>$release.creation_date</td>
             </tr>
     
             <tr>
               <th>Planned Date:</th>
-              <td>$releasePlannedDate</td>
+              <td>$release.planned_date</td>
               <th><label for="txtInstallDate">Install Date:</label></th>
               <td>&nbsp;</td>
             </tr>
-          
-            <tr>
-              <th>Signatures (comma-separated list):</th>
-              <td class="fullrow" colspan="3">$releaseSignatures</td>
-            </tr>
-
           </table>
         </fieldset>
         
+        <fieldset id="signatures">
+          <legend>Signatures</legend>
+          <table id="releaseSignatures">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Signature Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <py:for each="item in release.signatures">
+                <tr>
+                  <td>$item.signature</td>
+                  <td>&nbsp;</td>
+                </tr>
+              </py:for>
+            </tbody>
+          </table>
+        </fieldset>
         
         <fieldset id="releaseTickets">
           <legend>Tickets</legend>
@@ -96,7 +109,7 @@
               </tr>
             </thead>
             <tbody>
-              <py:for each="item in releaseTicketItems">
+              <py:for each="item in release.tickets">
                   <tr>
                       <td>$item.ticket_id</td>
                       <td>${wiki_to_oneliner(context, item.summary)}</td>
@@ -122,13 +135,13 @@
               </tr>
             </thead>
             <tbody>
-              <py:for each="item in releaseSelectedProcedureItems">
+              <py:for each="item in release.install_procedures">
                 <tr>
-                  <td>$item.id</td>
-                  <td>$item.name</td>
-                  <td>${wiki_to_oneliner(context, item.description)}</td>
-                  <td>$item.contain_files</td>
-                  <td>$item.files</td>
+                  <td>$item.install_procedure.id</td>
+                  <td>$item.install_procedure.name</td>
+                  <td>${wiki_to_oneliner(context, item.install_procedure.description)}</td>
+                  <td>$item.install_procedure.contain_files</td>
+                  <td>$item.install_files</td>
                 </tr>
               </py:for>
             </tbody>
@@ -148,7 +161,7 @@
           <table>
             <tr>
               <th><label for="releaseVersion">Version:</label></th>
-              <td class="fullrow" colspan="3">$releaseVersion</td>
+              <td class="fullrow" colspan="3">$release.version</td>
             </tr>
             
             <tr>
@@ -164,20 +177,20 @@
                 <textarea name="txtReleaseDescription"
                           id="txtReleaseDescription"
                           class="wikitext"
-                          rows="10" cols="68">$releaseDescription</textarea>
+                          rows="10" cols="68">$release.description</textarea>
               </td>
             </tr>
     
             <tr>
               <th>Author:</th>
-              <td>$req.authname</td>
+              <td>$release.author</td>
               <th>Creation Date:</th>
               <td>inserir data atual</td>
             </tr>
     
             <tr>
               <th><label for="txtPlannedDate">Planned Date:</label></th>
-              <td><input type="text" name="txtPlannedDate" id="txtPlannedDate" value="$releasePlannedDate"/></td>
+              <td><input type="text" name="txtPlannedDate" id="txtPlannedDate" value="$release.planned_date"/></td>
               <th><label for="txtInstallDate">Install Date:</label></th>
               <td>&nbsp;</td>
             </tr>
@@ -209,7 +222,7 @@
               </tr>
             </thead>
             <tbody>
-              <py:for each="item in releaseTicketItems">
+              <py:for each="item in release.tickets">
                   <tr>
                       <td>$item.ticket_id</td>
                       <td>${wiki_to_oneliner(context, item.summary)}</td>
@@ -244,7 +257,7 @@
               </tr>
             </thead>
             <tbody>
-              <py:for each="item in releaseAvailableProcedureItems">
+              <py:for each="item in releaseAvailableProcedures">
                 <tr>
                   <td>
                     <input type="checkbox" name="releaseProcedure_$item.id"
