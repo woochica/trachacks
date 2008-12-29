@@ -14,7 +14,7 @@ from trac.log import logger_factory
 from datetime import datetime, timedelta
 
 class mtTicketNotification(Component):
-	"""Notifies teams of tickets added to their milestones."""
+    """Notifies teams of tickets added to their milestones."""
     implements(ITicketChangeListener)
 
     def ticket_created(self, ticket):

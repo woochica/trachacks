@@ -5,14 +5,14 @@ from trac.config import *
 # Trac extension point imports
 from trac.admin.api import IAdminPanelProvider
 
-class mtAdminPanel(Component):
-    """Modifies Trac UI for editing Milestone Teams"""
-    implements(IAdminPanelProvider)
-
-    def get_admin_panels(self, req):
-        """Return a list of our administration panels."""
-        return ('milestoneteams', 'Milestone Teams', 'milestoneteams', ('Milestone Team', 'Milestone Teams'))
-
-    def render_admin_panel(self, req, category, page, path_info):
-        """Return the template and data used to render our administration page."""
-		pass
+#class mtAdminPanel(Component):
+#    """Modifies Trac UI for editing Milestone Teams"""
+#    implements(IAdminPanelProvider)
+#
+#    def get_admin_panels(self, req):
+#        """Return a list of our administration panels."""
+#        return ('milestoneteams', 'Milestone Teams', 'milestoneteams', ('Milestone Team', 'Milestone Teams'))
+#
+#    def render_admin_panel(self, req, category, page, path_info):
+#        """Return the template and data used to render our administration page."""
+#        pass
