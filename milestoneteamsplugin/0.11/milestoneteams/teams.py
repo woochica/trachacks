@@ -1,21 +1,20 @@
-from datetime import datetime, timedelta
+# Trac core imports
 from trac.core import *
 from trac.config import *
+
+# Trac extension point imports
 from trac.ticket.api import ITicketChangeListener
+
+# Trac class imports
 from trac.ticket.notification import TicketNotifyEmail
-from trac.ticket.model import Ticket
 from trac.util.datefmt import utc
 from trac.log import logger_factory
 
-class MilestoneTeamSetupParticipant(Component):
-    """Sets up Trac system for the Milestone Teams plugin."""
-    pass
+# Python library imports
+from datetime import datetime, timedelta
 
-class MilestoneTeamConfiguration(Component):
-    """Modifies Trac UI for editing Milestone Teams"""
-    pass
-
-class MilestoneTeamTicketNotification(Component):
+class mtTicketNotification(Component):
+	"""Notifies teams of tickets added to their milestones."""
     implements(ITicketChangeListener)
 
     def ticket_created(self, ticket):
@@ -54,10 +53,10 @@ class MilestoneTeamTicketNotification(Component):
 
     def _send_ticket(self, ticket, newticket=False):
         """Send email to Milestone informatives"""
-        tn=MilestoneTicketNotifyEmail(self.env)
+        tn=mtNotifyEmail(self.env)
         tn.notify(ticket, newticket, datetime.now(utc))
 
-class MilestoneTicketNotifyEmail(TicketNotifyEmail):
+class mtNotifyEmail(TicketNotifyEmail):
     """Sends ticket emails when milestones are modified"""
 
     def __init__(self, env):
@@ -77,18 +76,3 @@ class MilestoneTicketNotifyEmail(TicketNotifyEmail):
         self.env.log.debug("Changed CC: %s " % (newcclist))
 
         return (newcclist, [])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
