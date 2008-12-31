@@ -36,43 +36,88 @@ class mtTicketNotification(Component):
 
     def _check_ticket(self, ticket, old_values=None):
         milestone_changed = False
-        milestone_reactor = False
+        milestone_members = 0
 
+        # First check to see if there even is a milestone
         if old_values == None:
+            # This is a new ticket, check to see if the milestone is set
             if 'milestone' in ticket.values.keys():
                 milestone_changed = True
         else:
+            # This is a pre-existing ticket, check to see if the milestone has changed
             if 'milestone' in old_values.keys():
                 milestone_changed = True
-
-        if ticket.values['milestone'][0:8] == 'Reactor-':
-            milestone_reactor = True
-
-        self.log.debug("Check Ticket: %s" % (milestone_changed and milestone_reactor))
-        return (milestone_changed and milestone_reactor)
+        
+        # If the milestone is not set or changed, then we avoid doing the database hits
+        if milestone_changed:
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("SELECT COUNT(milestone) FROM milestone_teams WHERE milestone=%s AND notify > %s", (ticket.values['milestone'], 0))
+            try:
+                milestone_members = int(cursor.fetchone()[0])
+            except:
+                milestone_members = 0
+            db.close()
+  
+            self.log.debug("Check Ticket: %s" % (milestone_changed and milestone_members > 0))
+            return (milestone_members > 0)
+        else:
+            self.log.debug("Check Ticket: Milestone didn't change.")
+            return (milestone_changed)
 
     def _send_ticket(self, ticket, newticket=False):
         """Send email to Milestone informatives"""
+
+        torcpts = []
+        ccrcpts = []
+
+        # We need to get the team members from the database.
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT username, role FROM milestone_teams WHERE milestone=%s AND notify > 0", (self.db_version_key, ))
+        for row in cursor:
+            if int(row[1]) > 0:
+                torcpts.append(row[0])
+            else:
+                ccrcpts.append(row[0])
+        
         tn=mtNotifyEmail(self.env)
+        tn.set_recipients(torcpts, ccrcpts)
         tn.notify(ticket, newticket, datetime.now(utc))
 
 class mtNotifyEmail(TicketNotifyEmail):
     """Sends ticket emails when milestones are modified"""
+    
+    team_torcpts = None
+    team_ccrcpts = None
 
     def __init__(self, env):
         TicketNotifyEmail.__init__(self, env)
+        self.team_torcpts = []
+        self.team_ccrcpts = []
+        
+    def set_recipients(self, torcpts=None, ccrcpts=None):
+        if isinstance(torcpts, list) and torcpts:
+            self.team_torcpts = torcpts
+        if isinstance(ccrcpts, list) and ccrcpts:
+            self.team_ccrcpts = ccrcpts
 
     def get_recipients(self, tktid):
         (torcpts, ccrcpts) = TicketNotifyEmail.get_recipients(self, tktid)
-        newcclist = [u'silvein',]
+        newtolist = []
+        newcclist = []
 
-# This is commented out so that I can get the emails for testing even though I am the reporter/owner
-#        for notify in notifiers:
+# This is commented out so that I can get the emails for testing even though I am the reporter/owner        
+#        for notify in self.team_torcpts:
+#            if notify not in torcpts and notify not in ccrcpts:
+#                newtolist.append(notify)
+#        for notify in self.team_ccrcpts:
 #            if notify not in torcpts and notify not in ccrcpts:
 #                newcclist.append(notify)
 
         self.env.log.debug("Default To: %s" % (torcpts))
+        self.env.log.debug("Changed To: %s" % (newtolist))
         self.env.log.debug("Default CC: %s" % (ccrcpts))
-        self.env.log.debug("Changed CC: %s " % (newcclist))
+        self.env.log.debug("Changed CC: %s" % (newcclist))
 
-        return (newcclist, [])
+        return (newtolist, newcclist)

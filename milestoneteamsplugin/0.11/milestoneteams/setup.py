@@ -20,12 +20,12 @@ class mtSetupParticipant(Component):
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT value FROM system WHERE name='%s'", (self.db_version_key, ))
+        cursor.execute("SELECT value FROM system WHERE name=%s", (self.db_version_key, ))
         try:
             self.db_installed_version = int(cursor.fetchone()[0])
         except:
             self.db_installed_version = 0
-            cursor.execute("INSERT INTO system (name,value) VALUES('%s','%s')" % (self.db_version_key, self.db_installed_version))
+            cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)", (self.db_version_key, self.db_installed_version))
             db.commit()
 
         db.close()
@@ -40,9 +40,18 @@ class mtSetupParticipant(Component):
         try:
             if self.db_installed_version < 1:
                 print "Creating 'milestone_teams' table."
-                cursor.execute('CREATE TABLE milestone_teams (milestone text PRIMARY KEY, member text, role integer, notify integer, UNIQUE (milestone, member))')
+                cursor.execute("""CREATE TABLE milestone_teams (
+                    milestone text,
+                    username text,
+                    role integer,
+                    notify integer,
+                    UNIQUE (milestone, username),
+                    FOREIGN KEY (milestone) REFERENCES milestone(name),
+                    FOREIGN KEY (username) REFERENCES session(sid)
+                   )""")
 
-            cursor.execute("UPDATE system SET value='%s' WHERE name='%s'" % (self.db_version, self.db_version_key))
+            print "Registering plugin version."
+            cursor.execute("UPDATE system SET value=%s WHERE name=%s", (self.db_version, self.db_version_key))
 
             db.commit()
             db.close()
@@ -52,7 +61,7 @@ class mtSetupParticipant(Component):
 
     def environment_created(self):
         """Peform setup tasks when the environment is first created."""
-        if self.environment_needs_upgrade(self):
+        if self.environment_needs_upgrade(self, None):
             self.upgrade_environment(self)
 
     def environment_needs_upgrade(self, db):
