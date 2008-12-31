@@ -54,7 +54,11 @@ def get_project_tickets(env):
     return tkt_ids
 
 def last_day_of_month(year, month):
-    
+
+    # For december the next month will be january of next year.
+    if month == 12: 
+ 	year = year + 1 
+ 	
     return datetime(year, (month%12)+1 , 1, tzinfo=utc) - timedelta(days=1)
 
 class PDashboard(Component):
