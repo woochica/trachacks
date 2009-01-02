@@ -3,12 +3,14 @@ implementation of the RepositoryChangeListener interface for svn
 """
 
 import os
+import subprocess
 
 from genshi.builder import tag
 from repository_hook_system.filesystemhooks import FileSystemHooks
 from repository_hook_system.interface import IRepositoryChangeListener
 from repository_hook_system.interface import IRepositoryHookSubscriber
 from repository_hook_system.interface import IRepositoryHookSystem
+from trac.config import Option
 from trac.config import ListOption
 from trac.core import *
 from trac.util.text import CRLF
@@ -20,6 +22,9 @@ class SVNHookSystem(FileSystemHooks):
     implements(IRepositoryHookSystem, IRepositoryChangeListener)
     listeners = ExtensionPoint(IRepositoryHookSubscriber)
     hooks = [ 'pre-commit', 'post-commit', 'pre-revprop-change', 'post-revprop-change' ]
+
+
+    _svnlook = Option('svn', 'svnlook', default='/usr/bin/svnlook')
 
     ### methods for FileSystemHooks
 
@@ -78,16 +83,50 @@ class SVNHookSystem(FileSystemHooks):
                  in getattr(self, hookname, []) 
                  and subscriber.is_available(self.type(), hookname) ]
 
-    def changeset(self, repo, revision):
+    def changeset(self, repo, hookname, commit_id):
         """ 
         return the changeset given the repository object and revision number
         """
-        try:
-            chgset = repo.get_changeset(revision)
-        except NoSuchChangeset:
-            # XXX should probably throw an exception (same one?)
-            return # out of scope changesets are not cached
-        return chgset
+
+        if hookname in ['post-commit', 'post-revprop-change']:
+            revision = commit_id
+            try:
+                
+                chgset = repo.get_changeset(revision)
+            except NoSuchChangeset:
+                # XXX should probably throw an exception (same one?)
+                return # out of scope changesets are not cached
+            return chgset
+        else:
+            transaction = commit_id
+            repo = self.env.config.get('trac', 'repository_dir')
+
+            def svnlook(subcommand, *args):
+
+                process = subprocess.Popen([self._svnlook, subcommand, repo, '-r', transaction] + list(args), stdout=subprocess.PIPE)
+                return process.communicate()[0]
+
+            # get the attributes
+            author = svnlook('author').strip()
+            from dateutil.parser import parse
+#            import pdb;  pdb.set_trace()
+            date = parse(svnlook('date').split('(')[0].strip())
+
+            
+            message = svnlook('log').strip()
+            rev = transaction
+
+            # XXX FIXME
+#             from datetime import datetime
+#             date = datetime.now()
+
+            attributes = dict(author=author,
+                              date=date,
+                              message=message,
+                              rev=rev)
+            chgset = type('DummyChangeset', (object,), attributes)
+            return chgset()
+            
 
 for hook in SVNHookSystem.hooks:
     setattr(SVNHookSystem, hook, 
