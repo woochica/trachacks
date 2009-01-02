@@ -36,7 +36,7 @@ class RepositoryChangeListener(object):
         # find the listener for the given repository type and invoke the hook
         for listener in listeners:
             if env.config.get('trac', 'repository_type') in listener.type():
-                changeset = listener.changeset(repo, *args)
+                changeset = listener.changeset(repo, hook, *args)
                 subscribers = listener.subscribers(hook)
                 for subscriber in subscribers:
                     subscriber.invoke(changeset)
