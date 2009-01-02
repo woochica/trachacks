@@ -116,6 +116,7 @@ class TicketChanger(Component):
                 
                 tn = TicketNotifyEmail(self.env)
                 tn.notify(ticket, newticket=0, modtime=now)
+
             except Exception, e:
                 # import traceback
                 # traceback.print_exc(file=sys.stderr)

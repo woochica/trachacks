@@ -5,6 +5,8 @@ implementation of the RepositoryChangeListener interface for svn
 import os
 import subprocess
 
+from dateutil.parser import parse
+
 from genshi.builder import tag
 from repository_hook_system.filesystemhooks import FileSystemHooks
 from repository_hook_system.interface import IRepositoryChangeListener
@@ -103,13 +105,11 @@ class SVNHookSystem(FileSystemHooks):
 
             def svnlook(subcommand, *args):
 
-                process = subprocess.Popen([self._svnlook, subcommand, repo, '-r', transaction] + list(args), stdout=subprocess.PIPE)
+                process = subprocess.Popen([self._svnlook, subcommand, repo, '-t', transaction] + list(args), stdout=subprocess.PIPE)
                 return process.communicate()[0]
 
             # get the attributes
             author = svnlook('author').strip()
-            from dateutil.parser import parse
-#            import pdb;  pdb.set_trace()
             date = parse(svnlook('date').split('(')[0].strip())
 
             
