@@ -1,0 +1,4 @@
+ticket,owner,anyotherfield,priority,component,mycustomfield
+1,me,anything,mypriority,mycomp,mycustomfield1
+2,you,somethingelse,yourpriority,yourcomp,customfield2
+,she,somethingnew,herpriority,hercomp,customfield3

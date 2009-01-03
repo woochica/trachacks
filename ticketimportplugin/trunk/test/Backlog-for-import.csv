@@ -1,0 +1,62 @@
+summary,component,milestone,Dev,Initial,5/4,5/7,5/8,5/9,5/10,5/11,5/14,5/15,5/16,5/17,5/18,5/21,5/22,5/23,5/24,5/25,5/28,5/29,5/30,5/31,6/1,6/4,6/5,6/6,6/7,6/8,6/11,6/12,6/13,6/14,6/15,6/18,6/19,6/20,6/21,6/22,6/25,6/26,6/27,6/28,6/29,7/2,7/3,7/4,7/5,7/6,7/9,7/10,7/11,7/12,7/13,7/16,7/17,7/18,7/19,7/20,7/23,7/24
+xc_archi,architecture,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+xc_archi > introduce register file,architecture,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+xc_archi > introduce 18K ram,architecture,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+xc_archi > modify io blocs,architecture,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+xc_archi > primitive library description,architecture,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+xc_archi > update lgen,architecture,Alpha 3_0,fd,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,0,,,,,,,,,,,,,,,,
+xc_archi > update netgen,architecture,Alpha 3_0,fd,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+xc_archi > update adl (generate kad + dly + zan),architecture,Alpha 3_0,fd,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,,,,,,,,,,,,,,,,,,,,
+xc_archi > modify traits,architecture,Alpha 3_0,fd,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,,,,,,,,,,,,,,,,,,,,
+test & integration,architecture,Alpha 3_0,fd,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0,,,,,,,,,,,,,,,,,,,,
+test & integration > update lgen,architecture,Alpha 3_0,pg,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,0,,,,,,
+test & integration > update netgen,architecture,Alpha 3_0,pg,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0,,,,,,
+test & integration > update adl (generate kad + dly + zan),architecture,Alpha 3_0,pg,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,,,,,,
+test & integration > modify traits,architecture,Alpha 3_0,pg,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,,,,,,
+test & integration > update delay estimator for register file (adl),architecture,Alpha 3_0,pg,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,1
+test & integration 4,architecture,Alpha 3_0,pg,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0,,,,,,
+test & integration > update lgen 2,architecture,Alpha 3_0,fd,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1.5,1.5,1.5,1.5,1.5,,
+test & integration > update netgen 2,architecture,Alpha 3_0,fd,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,3,3,3,3,3,1,1
+test & integration > update adl (generate kad + dly + zan) 2,architecture,Alpha 3_0,fd,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,2,2,2,2,2,0,0
+test & integration > modify traits 2,architecture,Alpha 3_0,fd,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,2,2,2,2,2,0,0
+time scale adjustment,zarkitek,Alpha 3_0,pg,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+introduce 18K ram,builder,Alpha 3_0,fd,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,3,3,2,1.5,0.5,0.5,0.5,0.5,0.5,0,0
+introduce regiser file,builder,Alpha 3_0,fd,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
+test & integration 2,builder,Alpha 3_0,fd,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2.5,2.5,2.5,2.5,2.5,2.5,2,2,2,2,2,2,1,1
+dpram18k & register file in plugin,flat_place,Alpha 3_0,lj,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+test & integration 3,flat_place,Alpha 3_0,lj,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+dpram18k & register file integration,flat_route,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dpram18k & register file integration > update plugin,flat_route,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dpram18k & register file integration > update plugin > orientate functions,flat_route,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dpram18k & register file integration > update plugin > orientate functions > implementation,flat_route,Alpha 3_0,hc,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,,,
+dpram18k & register file integration > update plugin > orientate functions > test & integration,flat_route,Alpha 3_0,hc,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,,,
+dpram18k & register file integration > update plugin > materialize functions,flat_route,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dpram18k & register file integration > update plugin > materialize functions > implementation v4x4,flat_route,Alpha 3_0,hc,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+dpram18k & register file integration > update plugin > materialize functions > test & integration,flat_route,Alpha 3_0,hc,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6
+18K ram & regfile integration,verification,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+18K ram & regfile integration > update verilog model,verification,Alpha 3_0,pg,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+18K ram & regfile integration > simulation with verification model  ,verification,Alpha 3_0,pg,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5
+18K ram & regfile integration > update timming model (.lib),verification,Alpha 3_0,gs,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+18K ram & regfile integration > update pluging ztv,verification,Alpha 3_0,gs,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0
+enable_asynchonous_reset ,timing annalysis,Alpha 3_0,gs,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+asynchonous_path_domain,timing annalysis,Alpha 3_0,gs,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+constrain,timing annalysis,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+constrain > generated_clock,timing annalysis,Alpha 3_0,gs,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5
+exception,timing annalysis,Alpha 3_0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+exception > subgraph extraction (no -through),timing annalysis,Alpha 3_0,gs,15,15,15,15,15,15,15,14,14,14,14,14,14,8,7,7,7,7,7,7,7,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2,2,2,0,,,,,,,,,,,,,,,,,,,,
+exception > false paths,timing annalysis,Alpha 3_0,gs,5,5,5,5,5,5,5,5,5,5,5,5,5,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,,,,,,,,,,,,,,,,,,,,,,,
+exception > false path documentation,timing annalysis,Alpha 3_0,gs,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
+exception > multicycle paths,timing annalysis,Alpha 3_0,gs,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+exception > min/max delay,timing annalysis,Alpha 3_0,gs,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+transfer sdc a.p.i  to top_shell 1,timing annalysis,Alpha 3_0,lj,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0,,,,,,,,,,,,,,,,,,,,
+transfer sdc a.p.i  to top_shell 2,timing annalysis,Alpha 3_0,gs,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
+add command,timing annalysis,Alpha 3_0,gs,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+release,timing annalysis,Alpha 3_0,gs,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6
+clusterization 1,Optimization,Alpha 3_0,ac,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10
+clusterization 2,Optimization,Alpha 3_0,lj,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10
+"integration, quality & regression 1",release,Alpha 3_0,ac,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+"integration, quality & regression 2",release,Alpha 3_0,fd,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+"integration, quality & regression 3",release,Alpha 3_0,gs,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+"integration, quality & regression 4",release,Alpha 3_0,hc,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+"integration, quality & regression 5",release,Alpha 3_0,lj,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"integration, quality & regression 6",release,Alpha 3_0,pg,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
