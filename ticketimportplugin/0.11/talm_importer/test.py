@@ -1,0 +1,248 @@
+#
+# Copyright (c) 2007-2008 by nexB, Inc. http://www.nexb.com/ - All rights reserved.
+# Author: Francois Granade - fg at nexb dot com
+# Licensed under the same license as Trac - http://trac.edgewall.org/wiki/TracLicense
+#
+
+import sys
+import os
+import tempfile
+import shutil
+import unittest
+import pprint
+import filecmp
+
+from trac.web.api import Request
+from trac.env import Environment
+from trac.core import TracError
+from trac.web.clearsilver import HDFWrapper
+
+from talm_importer.importer import ImportModule
+
+def _exec(cursor, sql, args = None): cursor.execute(sql, args)
+
+def _printme(something): print something
+
+
+class ImporterTestCase(unittest.TestCase):
+
+    def _test_preview(self, env, filename):
+        req = Request({'SERVER_PORT': 0, 'SERVER_NAME': 'any', 'wsgi.url_scheme': 'any', 'wsgi.input': 'any', 'REQUEST_METHOD': 'GET' }, lambda x, y: _printme)
+        try:
+           from trac.test import MockPerm
+           req.perm = MockPerm()
+        except ImportError:
+           pass
+        req.authname = 'testuser'
+        req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
+        template, content_type = ImportModule(env)._do_preview(filename, 1, req)
+        #sys.stdout = tempstdout
+        #req.display(template, content_type or 'text/html')
+        #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
+        return str(req.hdf) + "\n"
+
+    def _test_import(self, env, filename, sheet = 1):
+        req = Request({'SERVER_PORT': 0, 'SERVER_NAME': 'any', 'wsgi.url_scheme': 'any', 'wsgi.input': 'any', 'REQUEST_METHOD': 'GET' }, lambda x, y: _printme)
+        try:
+           from trac.test import MockPerm
+           req.perm = MockPerm()
+        except ImportError:
+           pass
+        req.authname = 'testuser'
+        req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "select * from enum")
+        enums_before = cursor.fetchall()
+        _exec(cursor, "select * from component")
+        components_before = cursor.fetchall()
+        #print enums_before
+        # when testing, always use the same time so that the results are comparable
+        #print "importing " + filename + " with tickettime " + str(ImporterTestCase.TICKET_TIME)
+        template, content_type = ImportModule(env)._do_import(filename, sheet, req, filename, ImporterTestCase.TICKET_TIME)
+        #sys.stdout = tempstdout
+        #req.display(template, content_type or 'text/html')
+        #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
+        _exec(cursor, "select * from ticket")
+        tickets = cursor.fetchall()
+        _exec(cursor, "select * from ticket_custom")
+        tickets_custom = cursor.fetchall()
+        _exec(cursor, "select * from ticket_change")
+        tickets_change = cursor.fetchall()
+        _exec(cursor, "select * from enum")
+        enums = [f for f in set(cursor.fetchall()) - set(enums_before)]
+        _exec(cursor, "select * from component")
+        components = [f for f in set(cursor.fetchall()) - set(components_before)]
+        pp = pprint.PrettyPrinter(indent=4)
+        return pp.pformat([ tickets, tickets_custom, tickets_change, enums, components ])
+
+    def _do_test(self, env, filename, testfun):
+        from os.path import join, dirname
+        testdir = join(dirname(dirname(dirname(testfolder))), 'test')
+        outfilename = join(testdir, filename + '.' + testfun.__name__ + '.out')
+        ctlfilename = join(testdir, filename + '.' + testfun.__name__ + '.ctl')
+        open(outfilename, 'w').write(testfun(env, join(testdir, filename)))
+        return filecmp.cmp(outfilename, ctlfilename)
+
+    def _do_test_diffs(self, env, filename, testfun):
+        self._do_test(env, filename, testfun)
+        from os.path import join, dirname
+        testdir = join(dirname(dirname(dirname(testfolder))), 'test')
+        import sys
+        from difflib import Differ
+        d = Differ()
+        def readall(ext): return open(join(testdir, filename + ext), 'rb').readlines()
+        result = d.compare(readall('.' + testfun.__name__ + '.ctl'), readall('.' + testfun.__name__ + '.out'))
+        lines = [ line for line in result if line[0] != ' ']
+        sys.stdout.writelines(lines)
+        self.assertEquals(0, len(lines)) 
+
+    def _do_test_with_exception(self, env, filename, testfun):
+        try:
+           self._do_test(env, filename, testfun)
+        except TracError, e:
+           return str(e)
+
+    def _setup(self, configuration = None):
+        configuration = configuration or '[ticket-custom]\nmycustomfield = text\nmycustomfield.label = My Custom Field\nmycustomfield.order = 1'
+
+        instancedir = os.path.join(tempfile.gettempdir(), 'test-importer._preview')
+        if os.path.exists(instancedir):
+           shutil.rmtree(instancedir, False)
+        env = Environment(instancedir, create=True)
+        open(os.path.join(os.path.join(instancedir, 'conf'), 'trac.ini'), 'a').write('\n' + configuration + '\n')
+        db = env.get_db_cnx()
+        _exec(db.cursor(), "INSERT INTO permission VALUES ('anonymous', 'REPORT_ADMIN')        ")
+        _exec(db.cursor(), "INSERT INTO permission VALUES ('anonymous', 'IMPORT_EXECUTE')        ")
+        db.commit()
+        ImporterTestCase.TICKET_TIME = 1190909220
+        return Environment(instancedir)
+
+    def test_import_1(self):
+        env = self._setup()
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [1245, u'defect', 1191377630, 1191377630, u'component1', None, u'major', u'somebody', u'anonymous', u'', u'', u'', u'new', None, u'sum2', u'', u''])
+        db.commit()
+        self._do_test_diffs(env, 'Backlog-for-import.csv', self._test_preview)
+        self._do_test_diffs(env, 'simple.csv', self._test_preview)
+        self._do_test_diffs(env, 'simple.csv', self._test_preview)
+        self.assert_(self._do_test(env, 'simple.csv', self._test_import))
+        # Run again, to make sure that the lookups are done corrctly
+        ImporterTestCase.TICKET_TIME = 1190909221
+        self.assert_(self._do_test(env, 'simple-copy.csv', self._test_import))
+        # import after modification should throw exception
+        _exec(cursor, "update ticket set changetime = " + str(ImporterTestCase.TICKET_TIME + 10) + " where id = 1245")
+        db.commit()
+        try:
+           pass
+           # TODO: this should throw an exception (a ticket has been modified between preview and import)
+          #_do_test(env, 'simple-copy.csv', self._test_import)
+        except TracError, err_string:
+           print err_string
+        #TODO: change the test case to modify the second or third row, to make sure that db.rollback() works
+
+    def test_import_2(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'various-charsets.xls', self._test_preview)
+        self.assert_(self._do_test(env, 'various-charsets.xls', self._test_import))
+
+    def test_import_3(self):
+        env = self._setup()
+        try:
+           self._do_test_diffs(env, 'with-id.csv', self._test_preview)
+           self.assert_(False)
+        except TracError, e:
+           self.assertEquals(str(e), 'Ticket 1 found in file, but not present in Trac: cannot import.')
+
+    def test_import_4(self):
+        env = self._setup()
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [1, u'defect', 1191377630, 1191377630, u'component1', None, u'major', u'somebody', u'anonymous', u'', u'', u'', u'new', None, u'summary before change', u'', u''])
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [2, u'defect', 1191377630, 1191377630, u'component2', None, u'major', u'somebody2', u'anonymous2', u'', u'', u'', u'new', None, u'summarybefore change', u'', u''])
+        _exec(cursor, "insert into enum values (%s, %s, %s)", ['priority', 'mypriority', '1'])
+        _exec(cursor, "insert into enum values (%s, %s, %s)", ['priority', 'yourpriority', '2'])
+        _exec(cursor, "insert into component values (%s, %s, %s)", ['mycomp', '', ''])
+        _exec(cursor, "insert into component values (%s, %s, %s)", ['yourcomp', '', ''])
+        db.commit()
+        self._do_test_diffs(env, 'with-id.csv', self._test_preview)
+        self.assert_(self._do_test(env, 'with-id.csv', self._test_import))
+
+    def test_import_5(self):
+        env = self._setup()
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [1, u'defect', 1191377630, 1191377630, u'component1', None, u'major', u'somebody', u'anonymous', u'', u'', u'', u'new', None, u'a summary that is duplicated', u'', u''])
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [2, u'defect', 1191377630, 1191377630, u'component2', None, u'major', u'somebody2', u'anonymous2', u'', u'', u'', u'new', None, u'a summary that is duplicated', u'', u''])
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [3, u'defect', 1191377630, 1191377630, u'component2', None, u'major', u'somebody2', u'anonymous2', u'', u'', u'', u'new', None, u'a summary that is duplicated', u'', u''])
+        db.commit()
+        self.assertEquals(self._do_test_with_exception(env, 'test-detect-duplicate-summary-in-trac.csv', self._test_preview), 'Tickets #1, #2 and #3 have the same summary "a summary that is duplicated" in Trac. Ticket reconciliation by summary can not be done. Please modify the summaries to ensure that they are unique.')
+
+    def test_import_6(self):
+        env = self._setup()
+        self.assertEquals(self._do_test_with_exception(env, 'test-detect-duplicate-summary-in-spreadsheet.csv', self._test_import), 'Summary "test & integration" is duplicated in the spreadsheet. Ticket reconciliation by summary can not be done. Please modify the summaries in the spreadsheet to ensure that they are unique.')
+
+    def test_import_7(self):
+        instancedir = os.path.join(tempfile.gettempdir(), 'test-importer.tickets')
+        if os.path.exists(instancedir):
+           shutil.rmtree(instancedir, False)
+        _dbfile = os.path.join(os.path.join(instancedir, 'db'), 'trac.db')
+        env = Environment(instancedir, create=True)
+        os.remove(_dbfile)
+        shutil.copyfile(os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(testfolder))), 'test'), 'tickets.db'), _dbfile)
+        open(os.path.join(os.path.join(instancedir, 'conf'), 'trac.ini'), 'a').write('\n[ticket-custom]\ndomain = text\ndomain.label = Domain\nstage = text\nstage.label = Stage\nusers = text\nusers.label = Users\n')
+        env = Environment(instancedir)
+        self.assert_(self._do_test(env, 'ticket-13.xls', self._test_import))
+
+    def test_import_with_reconciliation_by_owner(self):
+        '''
+        This test covers the two option flags "reconciliate_by_owner_also" and "skip_lines_with_empty_owner".
+        '''
+        env = self._setup('\n[ticket-custom]\neffort = text\neffort.label = My Effort\n\n[importer]\nreconciliate_by_owner_also = true\nskip_lines_with_empty_owner = true\n')
+        self.assert_(self._do_test(env, 'same-summary-different-owners-for-reconcilation-with-owner.xls', self._test_import))
+
+    def test_import_csv_bug(self):
+        '''
+        This test covers the same as precedent, plus a problem I had with CSV:
+        "TracError: Unable to read this file, does not seem to be a valid Excel or CSV file:newline inside string"
+        The problem disapeared when I fixed the issue in test_import_with_reconciliation_by_owner
+        '''
+        env = self._setup('\n[ticket-custom]\neffort = text\neffort.label = My Effort\n\n[importer]\nreconciliate_by_owner_also = true\nskip_lines_with_empty_owner = true\n')
+        self.assert_(self._do_test(env, 'same-summary-different-owners-for-reconcilation-with-owner.csv', self._test_import))
+
+    def test_import_not_first_worksheet(self):
+        '''
+        This test covers importing an index worksheet, plus a prb with an empty milestone:
+  File "/Users/francois/workspace/importer/talm_importer/importer.py", line 416, in _process
+    processor.process_new_lookups(newvalues)
+  File "/Users/francois/workspace/importer/talm_importer/processors.py", line 128, in process_new_lookups
+    lookup.insert()
+  File "/sw/lib/python2.4/site-packages/Trac-0.11b1-py2.4.egg/trac/ticket/model.py", line 650, in insert
+    assert self.name, 'Cannot create milestone with no name'
+        '''
+        env = self._setup('\n[ticket-custom]\neffort = text\neffort.label = My Effort\n\n[importer]\nreconciliate_by_owner_also = true\nskip_lines_with_empty_owner = true\n')
+        def _test_import_fourth_sheet(env, filename): return self._test_import(env, filename, 4)
+        self.assert_(self._do_test(env, 'Backlog.xls', _test_import_fourth_sheet))
+
+    def test_import_with_id_called_id(self):
+        env = self._setup()
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [1, u'defect', 1191377630, 1191377630, u'component1', None, u'major', u'somebody', u'anonymous', u'', u'', u'', u'new', None, u'summary before change', u'', u''])
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [2, u'defect', 1191377630, 1191377630, u'component2', None, u'major', u'somebody2', u'anonymous2', u'', u'', u'', u'new', None, u'summarybefore change', u'', u''])
+        _exec(cursor, "insert into enum values (%s, %s, %s)", ['priority', 'mypriority', '1'])
+        _exec(cursor, "insert into enum values (%s, %s, %s)", ['priority', 'yourpriority', '2'])
+        _exec(cursor, "insert into component values (%s, %s, %s)", ['mycomp', '', ''])
+        _exec(cursor, "insert into component values (%s, %s, %s)", ['yourcomp', '', ''])
+        db.commit()
+        self._do_test_diffs(env, 'with-id-called-id.csv', self._test_preview)
+        self.assert_(self._do_test(env, 'with-id-called-id.csv', self._test_import))
+
+
+def suite():
+    return unittest.makeSuite(ImporterTestCase, 'test')
+    #return unittest.TestSuite( [ ImporterTestCase('test_import_2') ])
+if __name__ == '__main__':
+    testfolder = __file__
+    unittest.main(defaultTest='suite')
