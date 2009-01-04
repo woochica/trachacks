@@ -1,0 +1,40 @@
+TODO
+====
+
+[High priority]
+
+* RSS and iCal links for hours
+
+* other export formats (csv, tsv, etc)
+
+* reports, as desired:
+    a) Display hours logged & estimated hours by milestone.
+    b) Display hours logged by user.
+    c) Run reports for arbitrary time periods.
+    d) Allow export of hours logged (tab delimited text or other)
+
+[Discussed but low priority]
+
+* hours could have types that could be queried on;  types would be
+  selected via checkbox in the /query interface
+
+* tickets could have a sidebar type item that enables adding of hours
+  and maybe also displays recent hours on the ticket
+
+* ability to clock on/clock off for tickets, a la the WorkLog plugin: 
+
+* trac has a SVN post-commit script that will close or annote tickets based on the commit message;  it would be useful to modify this to annote hours to a ticket.  That is something like, if the commit message says:
+
+"developing build infrastructure [2.5 hours:#14]"
+
+this would add 2.5 hours to the counter in ticket #14.  
+the hours description could just be the commit message.
+
+
+[Not yet discussed]
+
+* a view at /hours/<user name> could give the summary of hours logged
+  by <user name> irrespective of tickets;  maybe this is redundant
+  with the /hours view
+
+* once uploaded to trac-hacks, include in http://trac.edgewall.org/wiki/TimeTracking
