@@ -19,9 +19,9 @@
  * tickets could have a sidebar type item that enables adding of hours
    and maybe also displays recent hours on the ticket
 
-* ability to clock on/clock off for tickets, a la the WorkLog plugin: 
+ * ability to clock on/clock off for tickets, a la the WorkLog plugin: 
 
-* trac has a SVN post-commit script that will close or annote tickets based on the commit message;  it would be useful to modify this to annote hours to a ticket.  That is something like, if the commit message says:
+ * trac has a SVN post-commit script that will close or annote tickets based on the commit message;  it would be useful to modify this to annote hours to a ticket.  That is something like, if the commit message says:
 
 "developing build infrastructure [2.5 hours:#14]"
 
@@ -31,7 +31,7 @@ the hours description could just be the commit message.
 
 == Not yet discussed == 
 
-* a view at /hours/<user name> could give the summary of hours logged
+ * a view at /hours/<user name> could give the summary of hours logged
   by <user name> irrespective of tickets;  maybe this is redundant
   with the /hours view
 
