@@ -88,7 +88,11 @@ def engine(env):
 
 
 def session(env):
-    db_session = create_session(engine(env), transactional=True)
+    try:
+        db_session = create_session(engine(env), autocommit=True)
+    except TypeError:
+        # Older SqlAlchemy
+        db_session = create_session(engine(env), transactional=True)
     # Keep session opened for as long as possible by keeping it attached to
     # env; avoids it to be garbage collected since trac explicitly calls gc
     # to avoid memory leaks
