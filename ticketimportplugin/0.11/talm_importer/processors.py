@@ -133,16 +133,15 @@ class ImportProcessor(object):
     def end_process(self, numrows):
         self.db.commit()
 
-        self.req.hdf['title'] = 'Import completed'
-        self.req.hdf['report.title'] = self.req.hdf['title'].lower()
+        data = {}
+        data['title'] = 'Import completed'
+        #data['report.title'] = data['title'].lower()
 
         message = 'Successfully imported ' + str(numrows) + ' tickets (' + str(self.added) + ' added, ' + str(self.modifiedcount) + ' modified, ' + str(self.notmodifiedcount) + ' unchanged).'
 
-        self.req.hdf['report.description'] = Markup("<style type=\"text/css\">#report-notfound { display:none; }</style>\n") + wiki_to_html(message, self.env, self.req)
+        data['message'] = Markup("<style type=\"text/css\">#report-notfound { display:none; }</style>\n") + wiki_to_html(message, self.env, self.req)
 
-        self.req.hdf['report.numrows'] = 0
-        self.req.hdf['report.mode'] = 'list'
-        return 'report.cs', None
+        return 'import_preview.html', data, None
     
 
 class PreviewProcessor(object):
@@ -150,9 +149,9 @@ class PreviewProcessor(object):
     def __init__(self, env, req):
         self.env = env
         self.req = req
+        self.data = {'rows': []}
         self.ticket = None
-        self.modified = 0
-        self.temphdf = None
+        self.modified = False
         self.styles = ''
         self.duplicatessumaries = []
         self.modifiedcount = 0
@@ -160,8 +159,7 @@ class PreviewProcessor(object):
         self.added = 0
 
     def start(self, importedfields, reconciliate_by_owner_also):
-        self.req.hdf['title'] = 'Preview Import'
-        self.req.hdf['report.title'] = self.req.hdf['title'].lower()
+        self.data['title'] = 'Preview Import'
 
         self.message = ''
 
@@ -172,22 +170,15 @@ class PreviewProcessor(object):
         else:
             self.message += ' * A \'\'\'ticket\'\'\' column was not found: tickets will be reconciliated by summary' + (reconciliate_by_owner_also and ' and by owner' or '') + '. If an existing ticket with the same summary' + (reconciliate_by_owner_also and ' and the same owner' or '') + ' is found, values that are changing appear in italics in the preview below. If no ticket with same summary ' + (reconciliate_by_owner_also and ' and same owner' or '') + 'is found, the whole line appears in italics below, and a new ticket will be added.\n' 
                                 
-        idx = 0
-        prefix = 'report.headers.%d' % idx
-        self.req.hdf['%s.real' % prefix] = 'ticket'
-        self.req.hdf[prefix] = 'ticket'
-        idx = idx + 1
+        self.data['headers'] = [{ 'col': 'ticket', 'title': 'ticket' }]
         # we use one more color to set a style for all fields in a row... the CS templates happens 'color' + color + '-odd'
         self.styles = "<style type=\"text/css\">\n.ticket-imported, .modified-ticket-imported { width: 40px; }\n"
         self.styles += ".color-new-odd td, .color-new-even td, .modified-ticket-imported"
         for col in importedfields:
             if col.lower() != 'ticket' and col.lower() != 'id':
                 title=col.capitalize()
-                prefix = 'report.headers.%d' % idx
-                self.req.hdf['%s.real' % prefix] = col
-                self.req.hdf[prefix] = title
+                self.data['headers'].append({ 'col': col, 'title': title })
                 self.styles += ", .modified-%s" % col
-                idx = idx + 1
         self.styles += " { font-style: italic; }\n"
         self.styles += "</style>\n"
 
@@ -210,59 +201,38 @@ class PreviewProcessor(object):
     def start_process_row(self, row_idx, ticket_id):
         from ticket import PatchedTicket
         self.ticket = None
-        self.row_idx = row_idx
-        self.temphdf = []
+        self.cells = []
+        self.modified = False
         if ticket_id > 0:
             # existing ticket. Load the ticket, to see which fields will be modified
             self.ticket = PatchedTicket(self.env, ticket_id)
             
 
     def process_cell(self, column, cell):
-        value = {}
-
         if self.ticket and not (self.ticket.values.has_key(column) and self.ticket[column] == cell):
-            prefix = 'report.items.%d.modified-%s' % (self.row_idx, unicode(column))
-            self.modified = 1
+            self.cells.append( { 'col': column, 'value': cell, 'style': 'modified-' + column })
+            self.modified = True
         else:
-            prefix = 'report.items.%d.%s' % (self.row_idx, unicode(column))
-
-        if column in ('time', 'date', 'changetime', 'created', 'modified'):
-            # TODO: TEST THIS, THIS IS NOT TESTED
-            if cell != 'None':
-                value[column] = format_datetime(cell)
-                
-        self.temphdf += [ {prefix: cell} ]
-        for key in value.keys():
-            self.temphdf += [ {prefix + '.' + key: value[key] }]
+            self.cells.append( { 'col': column, 'value': cell, 'style': column })
 
     def end_process_row(self):
+        odd = len(self.data['rows']) % 2
         if self.ticket:
             if self.modified:
                 self.modifiedcount += 1
+                style = ''
+                ticket = self.ticket.id
             else:
                 self.notmodifiedcount += 1
+                style = ''
+                ticket = self.ticket.id
         else: 
             self.added += 1
+            style = odd and 'color-new-odd' or 'color-new-even'
+            ticket = '(new)'
+            
+        self.data['rows'].append({ 'style': style, 'cells': [{ 'col': 'ticket', 'value': ticket, 'style': '' }] + self.cells })
 
-        prefix = 'report.items.%d.' % self.row_idx
-        if self.ticket:
-            if self.modified:
-                self.req.hdf[prefix + 'modified-ticket-imported'] = str(self.ticket.id)
-            else:
-                self.req.hdf[prefix + 'ticket-imported'] = str(self.ticket.id)
-        else:
-            self.req.hdf[prefix + "__color__"] = '-new'
-            self.req.hdf[prefix + "__color__.hidden"] = 1
-            self.req.hdf[prefix + 'ticket-imported'] = '(new)'
-
-        # We have to do a complex gymnastic because the template relies on the *order* of the values in the list !!!
-        for item in self.temphdf:
-            for k, v in item.iteritems():
-                self.req.hdf[k] = v
-        self.temphdf = None
-
-        self.modified = 0    
-        self.ticket = None
             
     def process_new_lookups(self, newvalues):
         self.message += ' * Some lookup values are not found and will be added to the possible list of values:\n\n'
@@ -278,14 +248,7 @@ class PreviewProcessor(object):
             
     def end_process(self, numrows):
         self.message = 'Scroll to see a preview of the tickets as they will be imported. If the data is correct, select the \'\'\'Execute Import\'\'\' button.\n' + ' * ' + str(numrows) + ' tickets will be imported (' + str(self.added) + ' added, ' + str(self.modifiedcount) + ' modified, ' + str(self.notmodifiedcount) + ' unchanged).\n' + self.message
-        self.req.hdf['report.description'] = Markup(self.styles) + wiki_to_html(self.message, self.env, self.req) + Markup('<br/><form action="importer" method="post"><input type="hidden" name="action" value="import" /><div class="buttons"><input type="submit" name="cancel" value="Cancel" /><input type="submit" value="Execute import" /></div></form>')
+        self.data['message'] = Markup(self.styles) + wiki_to_html(self.message, self.env, self.req) + Markup('<br/>')
 
-        self.req.hdf['report.numrows'] = numrows
-        self.req.hdf['report.mode'] = 'list'
-        return 'report.cs', None
-
-if __name__ == '__main__': 
-    import doctest
-    testfolder = __file__
-    doctest.testmod()
+        return 'import_preview.html', self.data, None
 

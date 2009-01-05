@@ -79,11 +79,10 @@ class ImportModule(Component):
             req.session['uploadedfile'] = None
             req.session['uploadedfilename'] = None
 
-            self._add_field_list(req.hdf)
+            data = { 'reconciliate_by_owner_also': self._reconciliate_by_owner_also(),
+                     'fields': ['ticket or id'] + [field['name'] for field in TicketSystem(self.env).get_ticket_fields()] }
 
-            req.hdf['reconciliate_by_owner_also'] = self._reconciliate_by_owner_also()
-
-            return 'importer.cs', None
+            return 'importer.html', data, None
 
     # ITemplateProvider
 
@@ -131,7 +130,9 @@ class ImportModule(Component):
         if hasattr(upload.file, 'fileno'):
             size = os.fstat(upload.file.fileno())[6]
         else:
-            size = upload.file.len
+            upload.file.seek(0, 2) # seek to end of file
+            size = upload.file.tell()
+            upload.file.seek(0)
         if size == 0:
             raise TracError("Can't upload empty file")
         
@@ -169,82 +170,6 @@ class ImportModule(Component):
             targetfile.close()
         return tempuploadedfile
 
-    def _add_field_list(self, hdf):
-        '''
-        Find case-insentively; returns the last (i.e. random !) element if not found
-        
-        >>> from trac.env import Environment
-        >>> import os
-        >>> instancedir = os.path.join(tempfile.gettempdir(), 'test-importer._add_field_list')
-        >>> for root, dirs, files in os.walk(instancedir, topdown=False):
-        ...     for name in files:
-        ...         os.remove(os.path.join(root, name))
-        ...     for name in dirs:
-        ...         os.rmdir(os.path.join(root, name))
-        ...
-        >>> env = Environment(instancedir, create=True)
-        >>> importmodule = ImportModule(env)
-        >>> from trac.web.clearsilver import HDFWrapper
-        >>> hdf = HDFWrapper([])
-        >>> importmodule._add_field_list(hdf)
-        >>> def _exec(cursor, sql): cursor.execute(sql)
-        >>> print hdf
-        fields {
-          count = 14
-          items {
-            0 = ticket
-            1 = summary
-            2 = reporter
-            3 = owner
-            4 = description
-            5 = type
-            6 = status
-            7 = priority
-            8 = milestone
-            9 = component
-            10 = version
-            11 = resolution
-            12 = keywords
-            13 = cc
-          }
-        }
-        >>> # Just for the fun, see that when removing all values from a field, it doesn't appear anymore
-        >>> db = env.get_db_cnx()
-        >>> cursor = db.cursor()
-        >>> _exec(cursor, "delete from milestone")
-        >>> db.commit()
-        >>> hdf = HDFWrapper([])
-        >>> importmodule._add_field_list(hdf)
-        >>> print hdf
-        fields {
-          count = 13
-          items {
-            0 = ticket
-            1 = summary
-            2 = reporter
-            3 = owner
-            4 = description
-            5 = type
-            6 = status
-            7 = priority
-            8 = component
-            9 = version
-            10 = resolution
-            11 = keywords
-            12 = cc
-          }
-        }
-
-        '''
-        tracfields = [field['name'] for field in TicketSystem(self.env).get_ticket_fields()]
-
-        hdf['fields.count'] = str(len(tracfields) + 1)
-        
-        hdf['fields.items.0'] = 'ticket or id'
-        idx = 1
-        for field in tracfields:
-            hdf['fields.items.%d' % idx] = field
-            idx += 1
 
 
     def _process(self, filereader, reporter, processor):

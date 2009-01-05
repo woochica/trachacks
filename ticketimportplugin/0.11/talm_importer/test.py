@@ -21,7 +21,7 @@ from talm_importer.importer import ImportModule
 
 def _exec(cursor, sql, args = None): cursor.execute(sql, args)
 
-def _printme(something): print something
+def _printme(something): pass # print something
 
 
 class ImporterTestCase(unittest.TestCase):
@@ -34,12 +34,13 @@ class ImporterTestCase(unittest.TestCase):
         except ImportError:
            pass
         req.authname = 'testuser'
-        req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
-        template, content_type = ImportModule(env)._do_preview(filename, 1, req)
+        #req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
+        template, data, content_type = ImportModule(env)._do_preview(filename, 1, req)
         #sys.stdout = tempstdout
         #req.display(template, content_type or 'text/html')
         #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
-        return str(req.hdf) + "\n"
+        pp = pprint.PrettyPrinter(indent=4)
+        return (pp.pformat(data) or '') + "\n"
 
     def _test_import(self, env, filename, sheet = 1):
         req = Request({'SERVER_PORT': 0, 'SERVER_NAME': 'any', 'wsgi.url_scheme': 'any', 'wsgi.input': 'any', 'REQUEST_METHOD': 'GET' }, lambda x, y: _printme)
@@ -49,7 +50,7 @@ class ImporterTestCase(unittest.TestCase):
         except ImportError:
            pass
         req.authname = 'testuser'
-        req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
+        #req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
         db = env.get_db_cnx()
         cursor = db.cursor()
         _exec(cursor, "select * from enum")
@@ -59,7 +60,7 @@ class ImporterTestCase(unittest.TestCase):
         #print enums_before
         # when testing, always use the same time so that the results are comparable
         #print "importing " + filename + " with tickettime " + str(ImporterTestCase.TICKET_TIME)
-        template, content_type = ImportModule(env)._do_import(filename, sheet, req, filename, ImporterTestCase.TICKET_TIME)
+        template, data, content_type = ImportModule(env)._do_import(filename, sheet, req, filename, ImporterTestCase.TICKET_TIME)
         #sys.stdout = tempstdout
         #req.display(template, content_type or 'text/html')
         #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
@@ -94,7 +95,7 @@ class ImporterTestCase(unittest.TestCase):
         def readall(ext): return open(join(testdir, filename + ext), 'rb').readlines()
         result = d.compare(readall('.' + testfun.__name__ + '.ctl'), readall('.' + testfun.__name__ + '.out'))
         lines = [ line for line in result if line[0] != ' ']
-        sys.stdout.writelines(lines)
+       #sys.stdout.writelines(lines)
         self.assertEquals(0, len(lines)) 
 
     def _do_test_with_exception(self, env, filename, testfun):
@@ -139,7 +140,7 @@ class ImporterTestCase(unittest.TestCase):
            # TODO: this should throw an exception (a ticket has been modified between preview and import)
           #_do_test(env, 'simple-copy.csv', self._test_import)
         except TracError, err_string:
-           print err_string
+            print err_string
         #TODO: change the test case to modify the second or third row, to make sure that db.rollback() works
 
     def test_import_2(self):

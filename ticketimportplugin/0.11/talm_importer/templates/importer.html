@@ -1,5 +1,9 @@
-<?cs include "header.cs"?>
-<?cs include "macros.cs"?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
 <!--
 
  Copyright (c) 2007-2008 by nexB, Inc. http://www.nexb.com/ - All rights reserved.
@@ -7,15 +11,22 @@
  Licensed under the same license as Trac - http://trac.edgewall.org/wiki/TracLicense
 
 -->
+  <xi:include href="layout.html" />
+  <head>
+    <title>Ticket import</title>
+  </head>
 
+  <body>
+
+<!--
 <div id="ctxtnav" class="nav">
     <h2>Ticket import</h2>
     <ul>Importing tickets</ul>
 </div>
-    
+-->    
 
 <div id="content" class="report">
-<h1>Import a file</h1>
+<h1>Ticket import</h1>
 
 <p>
 This module lets you import tickets in batch, from an Excel spreadsheet or comma-separated-values (CSV) file.
@@ -29,14 +40,12 @@ The file or worksheet to import should contain:
 </p>
 <p>
 The fields must be Trac fields. The valid fields for this Trac instance are:
-<?cs set numfields = #0 ?>
-<?cs each field = fields.items ?>
-<?cs set numfields = numfields + #1 ?>
-<b><?cs var: field ?></b><?cs if fields.count == $numfields + #1 ?> and <?cs elif fields.count != $numfields ?>, <?cs /if ?><?cs /each ?>. Field names are case-insensitive: 'summary', 'Summary', 'SUMMARY' refer to the same field. The order of the fields does not matter. If you want to import columns that are not Trac fields yet, these fields must have been created as custom fields in Trac (It is easy to create new fields, but must be done by the Trac administrator in the Trac configuration file. Note that it is better for usability to limit the numbers of custom fields).
+<py:for each="numfields, field in enumerate(fields)">
+<b>${field}</b><py:choose test="numfields"><py:when test="len(fields) - 1"> and </py:when><py:when test="len(fields)"></py:when><py:otherwise>, </py:otherwise></py:choose></py:for>. Field names are case-insensitive: 'summary', 'Summary', 'SUMMARY' refer to the same field. The order of the fields does not matter. If you want to import columns that are not Trac fields yet, these fields must have been created as custom fields in Trac (It is easy to create new fields, but must be done by the Trac administrator in the Trac configuration file).
 </p>
 <p>The only required fields are either:
 <ul>
-<li> <b>summary</b>. If tickets are found in Trac with the same 'summary'<?cs if:reconciliate_by_owner_also ?>, and the same owner if present<?cs /if ?>, they will be reconciliated: no ticket will be added, but modified or added values for other fields, will be imported (of course, any replaced value is always kept in the Change History for the ticket). As a consequence, <b>you cannot have two tickets (or two rows in your spreadsheet) with the same summary <?cs if:reconciliate_by_owner_also ?> and owner<?cs /if ?></b>. If the summary <?cs if:reconciliate_by_owner_also ?>and owner don't<?cs else ?>doesn't<?cs /if ?> match any existing ticket, a new ticket will be created.</li>
+<li> <b>summary</b>. If tickets are found in Trac with the same 'summary'<py:if test="reconciliate_by_owner_also">, and the same owner if present</py:if>, they will be reconciliated: no ticket will be added, but modified or added values for other fields, will be imported (of course, any replaced value is always kept in the Change History for the ticket). As a consequence, <b>you cannot have two tickets (or two rows in your spreadsheet) with the same summary <py:if test="reconciliate_by_owner_also"> and owner</py:if></b>. If the summary <py:choose><py:when test="reconciliate_by_owner_also">and owner don't</py:when><py:otherwise>doesn't</py:otherwise></py:choose> match any existing ticket, a new ticket will be created.</li>
 </ul>
 or:
 <ul>
@@ -74,9 +83,9 @@ Components, Milestones, etc... found in the spreadsheet will be added to Trac if
   <div class="buttons">
    <input type="hidden" name="action" value="upload" />
    <input type="submit" value="Upload file and preview import" />
-   <input type="submit" name="cancel" value="Cancel" />
+<!--   <input type="submit" name="cancel" value="Cancel" /> -->
   </div>
  </form>
 </div>
-
-<?cs include:"footer.cs"?>
+  </body>
+</html>

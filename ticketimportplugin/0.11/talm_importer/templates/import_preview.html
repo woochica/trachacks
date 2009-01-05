@@ -1,0 +1,81 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+    <div id="content" class="report">
+
+      <h1>$title</h1>
+
+      <div py:if="message" id="description" xml:space="preserve">
+        $message
+      </div>
+
+      <py:if test="headers and rows">
+	
+	<form action="importer" method="post">
+	  <input type="hidden" name="action" value="import" />
+	  <div class="buttons">
+	    <input type="submit" name="cancel" value="Cancel" />
+	    <input type="submit" value="Execute import" />
+	  </div>
+	</form>
+	<table class="listing tickets">
+          <thead>
+            <tr>
+              <th py:for="header in headers">
+                $header.title
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+<!-- TODO: fix odd/even rows, they don't seem to be working
+              <tr py:for="row in rows"
+                class="${row.__idx__ % 2 and 'odd' or 'even'}"
+                style="TODO">
+-->
+              <tr py:for="row in rows"
+                  class="${row.style}">
+                <py:for each="cell in row.cells">
+                    <py:with vars="col = cell.col.strip('_'); ">
+                      <py:choose>
+                        <!--! generic fields -->
+                        <py:when test="col == 'time'">
+                          <td class="$cell.style">${cell.value != 'None' and format_time(int(cell.value)) or '--'}</td>
+                        </py:when>
+
+                        <py:when test="col in ('date', 'created', 'modified')">
+                          <td class="$cell.style">${cell.value != 'None' and format_date(int(cell.value)) or '--'}</td>
+                        </py:when>
+
+                        <py:when test="col == 'datetime'">
+                          <td class="$cell.style">${cell.value != 'None' and format_datetime(int(cell.value)) or '--'}</td>
+                        </py:when>
+<!-- TODO: support wiki formatting...
+                        <py:when test="col == 'description'">
+                          <td class="$cell.style" xml:space="preserve">
+                            ${wiki_to_html(context(row.resource), cell.value)}
+                          </td>
+                        </py:when>
+-->
+                        <py:otherwise>
+                          <td class="$cell.style">$cell.value</td>
+                        </py:otherwise>
+                      </py:choose>
+                    </py:with>
+                </py:for>
+              </tr>
+          </tbody>
+        </table>
+      </py:if>
+    </div>
+  </body>
+</html>
