@@ -37,7 +37,7 @@
 #    Armin Ronacher <armin.ronacher@active-4.com>
 #    Pedro Algarvio <ufs@ufsoft.org>
 
-__version__     = '0.1.1'
+__version__     = '0.1.2'
 __author__      = 'Armin Ronacher, Pedro Algarvio'
 __email__       = 'armin.ronacher@active-4.com, ufs@ufsoft.org'
 __package__     = 'TracSQLAlchemyBridge'
@@ -83,16 +83,21 @@ def engine(env):
             else:
                 engine.logger = env.log
         _engines[env] = engine
-
-    return engine
+    try:
+        return engine.begin()
+    except AttributeError:
+        # Older SQLAlchemy
+        return engine
 
 
 def session(env):
     try:
         db_session = create_session(engine(env), autocommit=True)
+        db_session.begin()
     except TypeError:
         # Older SqlAlchemy
         db_session = create_session(engine(env), transactional=True)
+        db_session.add = db_session.save
     # Keep session opened for as long as possible by keeping it attached to
     # env; avoids it to be garbage collected since trac explicitly calls gc
     # to avoid memory leaks
