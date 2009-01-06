@@ -14,14 +14,14 @@ PACKAGE='talm_importer'
 
 setup(
     name='TicketImport',
-    version='0.7',
+    version='0.7a',
     author='Francois Granade',
-    author_email='francois@nexb.com',
+    author_email='fg@nexb.com',
     url='http://nexb.com',
     license='BSD',
     description='Import CSV and Excel files',
     zip_safe=True,
     packages=[PACKAGE],
-    package_data={PACKAGE: ['templates/*.cs']},
+    package_data={PACKAGE: ['templates/*.html']},
     entry_points={'trac.plugins': 'TicketImport = %s' % (PACKAGE)}
     )
