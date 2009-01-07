@@ -4,7 +4,7 @@ a time-tracking plugin for Trac (http://trac.edgewall.org)
 
 See: 
  * http://trac-hacks.org/wiki/TracHoursPlugin
- * https://svn.openplans.org/svn/trac/TracHoursPlugin/
+ * http://trac-hacks.org/svn/trachoursplugin
 """
 
 import calendar
