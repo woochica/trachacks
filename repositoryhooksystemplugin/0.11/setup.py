@@ -14,6 +14,7 @@ setup(name='RepositoryHookSystem',
       include_package_data=True,
       package_data={'repository_hook_system': [ 'templates/*']},
       zip_safe=False,
+      install_requires=['python-dateutil'],
       entry_points = """
       [trac.plugins]
       repositoryhooksystem = repository_hook_system
